@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -41,7 +42,7 @@ func getContainer() container {
 	return container{
 		Name:      fmt.Sprintf("%s%s", image.AssemblingContainerNamePrefix, getVersion()),
 		ImageName: ImageName(),
-		Volume:    filepath.Join(CONTAINER_MOUNT_ROOT, "stapel"),
+		Volume:    path.Join(CONTAINER_MOUNT_ROOT, "stapel"),
 	}
 }
 
@@ -170,24 +171,24 @@ func ChownBinPath() string {
  */
 
 func AnsibleToolsOverlayPATH() string {
-	return filepath.Join(CONTAINER_MOUNT_ROOT, "stapel/ansible_tools_overlay/bin")
+	return path.Join(CONTAINER_MOUNT_ROOT, "stapel/ansible_tools_overlay/bin")
 }
 
 func AnsibleLibsOverlayLDPATH() string {
-	return filepath.Join(CONTAINER_MOUNT_ROOT, "stapel/ansible_tools_overlay/lib")
+	return path.Join(CONTAINER_MOUNT_ROOT, "stapel/ansible_tools_overlay/lib")
 }
 
 func SystemPATH() string {
 	return strings.Join([]string{
-		filepath.Join(CONTAINER_MOUNT_ROOT, "stapel/sbin"),
-		filepath.Join(CONTAINER_MOUNT_ROOT, "stapel/embedded/sbin"),
-		filepath.Join(CONTAINER_MOUNT_ROOT, "stapel/bin"),
-		filepath.Join(CONTAINER_MOUNT_ROOT, "stapel/embedded/bin"),
+		path.Join(CONTAINER_MOUNT_ROOT, "stapel/sbin"),
+		path.Join(CONTAINER_MOUNT_ROOT, "stapel/embedded/sbin"),
+		path.Join(CONTAINER_MOUNT_ROOT, "stapel/bin"),
+		path.Join(CONTAINER_MOUNT_ROOT, "stapel/embedded/bin"),
 	}, ":")
 }
 
 func embeddedBinPath(bin string) string {
-	return filepath.Join(CONTAINER_MOUNT_ROOT, "stapel/embedded/bin", bin)
+	return path.Join(CONTAINER_MOUNT_ROOT, "stapel/embedded/bin", bin)
 }
 
 func CreateScript(path string, lines []string) error {

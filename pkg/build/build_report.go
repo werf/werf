@@ -1,22 +1,28 @@
 package build
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/build/image"
+	"github.com/werf/werf/v2/pkg/config"
 	imagePkg "github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/storage"
 	"github.com/werf/werf/v2/pkg/telemetry"
 )
+
+type ReportFormat string
 
 const (
 	ReportJSON    ReportFormat = "json"
@@ -28,10 +34,14 @@ const (
 	BaseImageSourceTypeSecondary = "secondary"
 )
 
-type ReportFormat string
+type RuntimeInfo struct {
+	Backend     string `json:"Backend"`
+	InContainer bool   `json:"InContainer"`
+}
 
 type ReportImageRecord struct {
 	WerfImageName     string
+	ConfigType        string
 	DockerRepo        string
 	DockerTag         string
 	DockerImageID     string
@@ -61,6 +71,7 @@ type ReportStageRecord struct {
 
 type ImagesReport struct {
 	mux              sync.Mutex
+	Runtime          RuntimeInfo `json:"Runtime"`
 	Images           map[string]ReportImageRecord
 	ImagesByPlatform map[string]map[string]ReportImageRecord
 }
@@ -109,9 +120,30 @@ func (report *ImagesReport) ToEnvFileData() []byte {
 	for img, record := range report.Images {
 		buf.WriteString(GenerateImageEnv(img, record.DockerImageName))
 		buf.WriteString("\n")
+
+		prefix := imageEnvPrefix(img)
+		buf.WriteString(fmt.Sprintf("%sDOCKER_IMAGE_ID=%s\n", prefix, record.DockerImageID))
+		buf.WriteString(fmt.Sprintf("%sDOCKER_IMAGE_DIGEST=%s\n", prefix, record.DockerImageDigest))
+		buf.WriteString(fmt.Sprintf("%sDOCKER_REPO=%s\n", prefix, record.DockerRepo))
+		buf.WriteString(fmt.Sprintf("%sDOCKER_TAG=%s\n", prefix, record.DockerTag))
+		buf.WriteString(fmt.Sprintf("%sWERF_IMAGE_NAME=%s\n", prefix, record.WerfImageName))
+		buf.WriteString(fmt.Sprintf("%sFINAL=%t\n", prefix, record.Final))
 	}
 
 	return buf.Bytes()
+}
+
+func imageEnvPrefix(werfImageName string) string {
+	if werfImageName == "" {
+		return "WERF_"
+	}
+
+	normalizedName := strings.ToUpper(werfImageName)
+	for _, l := range []string{"/", "-", "."} {
+		normalizedName = strings.ReplaceAll(normalizedName, l, "_")
+	}
+
+	return fmt.Sprintf("WERF_%s_", normalizedName)
 }
 
 func (report *ImagesReport) sendTelemetry(ctx context.Context) {
@@ -129,6 +161,8 @@ func (report *ImagesReport) sendTelemetry(ctx context.Context) {
 				stage.Name,
 				durationMs,
 				fromCache,
+				stage.SourceType,
+				stage.BaseImagePulled,
 			)
 		}
 
@@ -138,8 +172,29 @@ func (report *ImagesReport) sendTelemetry(ctx context.Context) {
 			record.WerfImageName,
 			durationMs,
 			record.Rebuilt,
+			record.ConfigType,
 		)
 	}
+}
+
+func determineConfigType(werfConfig *config.WerfConfig, imageName string) string {
+	configImage := werfConfig.GetImage(imageName)
+	if configImage == nil {
+		return "unknown"
+	}
+
+	if configImage.IsStapel() {
+		return "stapel"
+	}
+
+	if dockerfileImg, ok := configImage.(*config.ImageFromDockerfile); ok {
+		if dockerfileImg.Staged {
+			return "staged"
+		}
+		return "dockerfile"
+	}
+
+	return "unknown"
 }
 
 func parseBuildTimeMs(buildTime string) int64 {
@@ -164,6 +219,8 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 
 			stages := getStagesReport(img, false)
 
+			configType := determineConfigType(phase.Conveyor.werfConfig, img.Name)
+
 			record := ReportImageRecord{
 				WerfImageName:     img.GetName(),
 				DockerRepo:        stageDesc.Info.Repository,
@@ -177,6 +234,7 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 				Size:              stageDesc.Info.Size,
 				BuildTime:         fmt.Sprintf("%.2f", img.BuildDuration.Seconds()),
 				Stages:            stages,
+				ConfigType:        configType,
 			}
 
 			if os.Getenv("WERF_ENABLE_REPORT_BY_PLATFORM") == "1" {
@@ -272,13 +330,6 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 	return nil
 }
 
-func setBuildTime(b bool, t string) string {
-	if !b {
-		return "0.00"
-	}
-	return t
-}
-
 func getStagesReport(img *image.Image, multiplatform bool) []ReportStageRecord {
 	var stagesRecords []ReportStageRecord
 	for _, stg := range img.GetStages() {
@@ -303,7 +354,7 @@ func getStagesReport(img *image.Image, multiplatform bool) []ReportStageRecord {
 			SourceType:        stgMeta.BaseImageSourceType,
 			BaseImagePulled:   stgMeta.BaseImagePulled,
 			Rebuilt:           stgMeta.Rebuilt,
-			BuildTime:         setBuildTime(stgMeta.Rebuilt, stgMeta.BuildTime),
+			BuildTime:         fmt.Sprintf("%.2f", img.GetStageDuration(stg.Name()).Seconds()),
 		}
 		stagesRecords = append(stagesRecords, record)
 	}
@@ -317,7 +368,13 @@ func LoadBuildReportFromFile(ctx context.Context, path string) (*ImagesReport, e
 	}
 	defer file.Close()
 
-	report, err := parseBuildReport(file)
+	var report *ImagesReport
+	switch filepath.Ext(path) {
+	case ".env":
+		report, err = parseEnvFileBuildReport(file)
+	default:
+		report, err = parseBuildReport(file)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse build report file %q: %w", path, err)
 	}
@@ -423,8 +480,60 @@ func (report *ImagesReport) ToImageInfoGetters(opts imagePkg.InfoGetterOptions) 
 			continue
 		}
 
-		infoGetters = append(infoGetters, imagePkg.NewInfoGetter(record.WerfImageName, record.DockerImageName, opts))
+		infoGetters = append(infoGetters, imagePkg.NewInfoGetter(record.WerfImageName, record.DockerImageName, record.DockerImageDigest, opts))
 	}
 
 	return infoGetters
+}
+
+func parseEnvFileBuildReport(reader io.Reader) (*ImagesReport, error) {
+	scanner := bufio.NewScanner(reader)
+	values := make(map[string]string)
+	lineNumber := 0
+
+	for scanner.Scan() {
+		lineNumber++
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+
+		parts := strings.SplitN(line, "=", 2)
+		if len(parts) != 2 {
+			return nil, fmt.Errorf("malformed env line %d: %q", lineNumber, line)
+		}
+		values[parts[0]] = parts[1]
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("unable to read env build report: %w", err)
+	}
+
+	report := NewImagesReport()
+	imagePrefixes := make(map[string]struct{})
+	for key := range values {
+		if strings.HasSuffix(key, "_DOCKER_IMAGE_NAME") {
+			prefix := strings.TrimSuffix(key, "DOCKER_IMAGE_NAME")
+			imagePrefixes[prefix] = struct{}{}
+		}
+	}
+
+	for prefix := range imagePrefixes {
+		record := ReportImageRecord{
+			WerfImageName:     values[prefix+"WERF_IMAGE_NAME"],
+			DockerImageName:   values[prefix+"DOCKER_IMAGE_NAME"],
+			DockerImageID:     values[prefix+"DOCKER_IMAGE_ID"],
+			DockerImageDigest: values[prefix+"DOCKER_IMAGE_DIGEST"],
+			DockerRepo:        values[prefix+"DOCKER_REPO"],
+			DockerTag:         values[prefix+"DOCKER_TAG"],
+		}
+
+		if finalValue, ok := values[prefix+"FINAL"]; ok {
+			record.Final = finalValue == "true"
+		}
+
+		report.Images[record.WerfImageName] = record
+	}
+
+	return report, nil
 }

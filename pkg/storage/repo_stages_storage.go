@@ -302,7 +302,7 @@ func (storage *RepoStagesStorage) GetStageDesc(ctx context.Context, projectName 
 
 	imgInfo, err := storage.DockerRegistry.GetRepoImage(ctx, stageImageName)
 	if docker_registry.IsImageNotFoundError(err) {
-		return nil, ErrImageNotFound
+		return nil, ErrStageNotFound
 	}
 	if docker_registry.IsBrokenImageError(err) {
 		return nil, ErrBrokenImage
@@ -318,7 +318,7 @@ func (storage *RepoStagesStorage) GetStageDesc(ctx context.Context, projectName 
 		return nil, fmt.Errorf("unable to get repo image %q: %w", rejectedImageName, err)
 	} else if rejectedImgInfo != nil {
 		logboek.Context(ctx).Info().LogF("Stage digest %s creation timestamp %d image is rejected: ignore stage image\n", stageID.Digest, stageID.CreationTs)
-		return nil, nil
+		return nil, ErrStageRejected
 	}
 
 	return &image.StageDesc{
@@ -670,22 +670,24 @@ func (storage *RepoStagesStorage) GetImportMetadata(ctx context.Context, _, id s
 	fullImageName := makeRepoImportMetadataName(storage.RepoAddress, id)
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetImportMetadata full image name: %s\n", fullImageName)
 
-	img, err := storage.DockerRegistry.TryGetRepoImage(ctx, fullImageName)
+	img, err := storage.DockerRegistry.GetRepoImage(ctx, fullImageName)
+	if docker_registry.IsImageNotFoundError(err) {
+		return nil, ErrImportMetadataNotFound
+	}
+	if docker_registry.IsBrokenImageError(err) {
+		return nil, ErrBrokenImage
+	}
 	if err != nil {
 		return nil, fmt.Errorf("unable to get repo image %s: %w", fullImageName, err)
 	}
 
-	if img != nil {
-		return newImportMetadataFromLabels(img.Labels), nil
-	}
-
-	return nil, nil
+	return newImportMetadataFromLabels(img.Labels), nil
 }
 
 func (storage *RepoStagesStorage) PutImportMetadata(ctx context.Context, projectName string, metadata *ImportMetadata) error {
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PutImportMetadata %v\n", metadata)
 
-	tagName := fmt.Sprintf("%s%s", RepoImportMetadata_ImageTagPrefix, metadata.ImportSourceID)
+	tagName := makeRepoImportMetadataTag(metadata.ImportSourceID)
 	tags, err := storage.Tags(ctx, storage.RepoAddress)
 	if err != nil {
 		return fmt.Errorf("unable to get repo %s tags: %w", storage.RepoAddress, err)
@@ -761,6 +763,10 @@ func (storage *RepoStagesStorage) GetImportMetadataIDs(ctx context.Context, _ st
 
 func getImportMetadataIDFromRepoTag(tag string) string {
 	return strings.TrimPrefix(tag, RepoImportMetadata_ImageTagPrefix)
+}
+
+func makeRepoImportMetadataTag(importSourceID string) string {
+	return fmt.Sprintf("%s%s", RepoImportMetadata_ImageTagPrefix, importSourceID)
 }
 
 func makeRepoImportMetadataName(repoAddress, importSourceID string) string {
@@ -968,11 +974,13 @@ func (storage *RepoStagesStorage) PostMultiplatformImage(ctx context.Context, pr
 
 func (storage *RepoStagesStorage) CopyFromStorage(ctx context.Context, src StagesStorage, projectName string, stageID image.StageID, opts CopyFromStorageOptions) (*image.StageDesc, error) {
 	desc, err := storage.GetStageDesc(ctx, projectName, stageID)
-	if err != nil {
-		return nil, fmt.Errorf("unable to get stage %s description: %w", stageID, err)
-	}
-	if desc != nil {
+	switch {
+	case err == nil:
 		return desc, nil
+	case IsErrStageUnavailable(err):
+		// Stage not found in destination — proceed to copy.
+	default:
+		return nil, fmt.Errorf("unable to get stage %s description: %w", stageID, err)
 	}
 
 	srcRef := src.ConstructStageImageName(projectName, stageID.Digest, stageID.CreationTs)

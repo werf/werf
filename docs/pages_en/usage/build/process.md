@@ -419,6 +419,27 @@ export WERF_CONTAINER_REGISTRY_MIRROR_GCR=mirror.gcr.io
 export WERF_CONTAINER_REGISTRY_MIRROR_LOCAL=docker.mirror.local
 ```
 
+Mirrors configured this way are treated as secure (`https`) mirrors by default. If needed, you can enable werf global insecure mode for registry access with `--insecure-registry` or `--skip-tls-verify-registry`.
+
+werf also reads container registry mirrors and standalone insecure registries from `registries.conf`.
+
+The following paths are supported in priority order:
+
+1. the path from `CONTAINERS_REGISTRIES_CONF`;
+2. `~/.config/containers/registries.conf`;
+3. `/etc/containers/registries.conf`.
+
+If `CONTAINERS_REGISTRIES_CONF` is set, werf uses only that file and its neighboring `<path>.d` directory.
+
+If `CONTAINERS_REGISTRIES_CONF` is not set, werf uses the first existing file from the standard paths and the neighboring `<path>.d` directory for that file.
+
+werf uses the following data from this configuration:
+
+- mirrors for `docker.io`;
+- standalone insecure registries from `[[registry]] insecure = true`.
+
+Insecure mirrors should be configured through `registries.conf`. An insecure mirror for `docker.io` does not automatically make the same host a standalone insecure registry. If the same host must be used both as a `docker.io` mirror and as a standalone insecure registry, it must be described by two separate entries.
+
 ## Using container registry
 
 In werf, the container registry is used not only to store the final images, but also to store the build cache and service data required for werf (e.g., metadata for cleaning the container registry based on Git history). The container registry is set by the `--repo` parameter:
@@ -534,37 +555,66 @@ werf converge --repo registry.mydomain.org/repo --synchronization :local
 
 ## Build report
 
-You can generate a build report using the `--save-build-report` flag with commands like `werf build`, `werf converge`, and others:
+A build report captures the results of a build: image names, tags, digests, and other metadata. It can be saved to a file and then consumed by other werf commands to skip rebuilding.
+
+### Saving a build report
+
+Use `--save-build-report` to save a build report to a file:
 
 ```shell
 werf build --save-build-report --repo REPO
 ```
 
-By default, the report is saved to a `.werf-build-report.json` file in `json` format, which contains detailed information about the build:
+By default, the report is saved to `.werf-build-report.json` in JSON format. Use `--build-report-path` to specify a custom path — the format is auto-detected by the file extension (`.json`, `.env`):
+
+```shell
+werf build --save-build-report --build-report-path .werf-build-report.env --repo REPO
+```
+
+The `--save-build-report` flag is supported by all commands that perform a build.
+
+> **Important:** It is impossible to get the tags before the build — they are generated during the build process. To use the tags, save them after the build with `--save-build-report`.
+
+#### JSON format
+
+The JSON report contains detailed information about the build:
+
+* **Runtime** — build runtime information:
+  * Selected container backend (`Backend`: `docker` or `buildah`)
+  * Whether werf is running inside a container (`InContainer`).
 
 * **Images** — list of built images:
-
+  * Image name in werf (`WerfImageName`)
+  * Image config type (`ConfigType`: `stapel`, `dockerfile`, `staged`, `unknown`)
   * Image tags (`DockerImageName`, `DockerRepo`, `DockerTag`)
+  * Target platform (`TargetPlatform`), for example `linux/amd64`
   * Whether the image was rebuilt (`Rebuilt`)
-  * Whether the image is final (`Final`)
-  * Image size in bytes (`Size`) and build time (`BuildTime`)
+  * Whether the image is [final or intermediate]({{ "/usage/build/images.html#using-intermediate-and-final-images" | true_relative_url }}) (`Final`). Final images are available in Helm chart values, can be tagged with custom tags, published to the final repository, and exported. Intermediate images (`final: false`) are used only as build dependencies
+  * Image size in bytes (`Size`) and build time in seconds (`BuildTime`)
   * Build stages (`Stages`) with details:
+    * Stage name (`Name`)
     * Tags (`DockerImageName`, `DockerTag`, `DockerImageID`, `DockerImageDigest`)
-    * Size (`Size`) in bytes
-    * Stage build time (`BuildTime`) in seconds
+    * Stage image creation time in Unix time nanoseconds (`CreatedAt`)
+    * Size in bytes (`Size`)
     * Source of the base image (`SourceType`: `local`, `secondary`, `cache-repo`, `registry`)
     * Whether the base image was pulled (`BaseImagePulled`)
     * Whether the stage was rebuilt (`Rebuilt`)
+    * Stage build time in seconds (`BuildTime`).
 
-* **ImagesByPlatform** — architecture-specific image info (for multiarch builds), same structure as `Images`
+* **ImagesByPlatform** — per-platform breakdown for multiarch builds. This field is populated only when the `WERF_ENABLE_REPORT_BY_PLATFORM=1` environment variable is set. The record structure is the same as in `Images`, but the data is grouped by image name and platform.
 
-Example report in `json` format:
+Example report in JSON format:
 
 ```json
 {
+  "Runtime": {
+    "Backend": "docker",
+    "InContainer": false
+  },
   "Images": {
     "frontend": {
       "WerfImageName": "frontend",
+      "ConfigType": "dockerfile",
       "DockerRepo": "localhost:5000/demo-app",
       "DockerTag": "079dfdd3f51a800c269cdfdd5e4febfcc1676b2c0d533f520255961c-1752501317353",
       "DockerImageID": "sha256:9b3a32dfe5a4aa46d96547e3f8e678626f96741776d78656ea72cab7117612bf",
@@ -608,23 +658,6 @@ Example report in `json` format:
 }
 ```
 
-### Retrieving Tags
-
-You can use the `--build-report-path` option to specify a custom path for the report, as well as the format: `json` or `envfile`. The `envfile` format does not contain detailed build info and is mainly used for retrieving image tags.
-
-Example of generating a report in `envfile` format:
-
-```shell
-werf converge --save-build-report --build-report-path .werf-build-report.env --repo REPO
-```
-
-Example output:
-
-```shell
-WERF_BACKEND_DOCKER_IMAGE_NAME=localhost:5000/demo-app:b94607bcb6e03a6ee07c8dc912739d6ab8ef2efc985227fa82d3de6f-1752510311968
-WERF_FRONTEND_DOCKER_IMAGE_NAME=localhost:5000/demo-app:079dfdd3f51a800c269cdfdd5e4febfcc1676b2c0d533f520255961c-1752501317353
-```
-
 To extract final image tags from a JSON report, you can use the `jq` utility:
 
 ```shell
@@ -640,4 +673,53 @@ Result:
 }
 ```
 
-> **NOTE:** Retrieving tags beforehand without first invoking the build process is currently impossible. You can only retrieve tags from the images you've already built.
+#### envfile format
+
+The envfile report contains a subset of image fields as environment variables. For each image, the following variables are generated:
+
+* `WERF_<IMAGE>_DOCKER_IMAGE_NAME` — full image name with tag
+* `WERF_<IMAGE>_DOCKER_IMAGE_ID` — image ID
+* `WERF_<IMAGE>_DOCKER_IMAGE_DIGEST` — image digest
+* `WERF_<IMAGE>_DOCKER_REPO` — image repository
+* `WERF_<IMAGE>_DOCKER_TAG` — image tag
+* `WERF_<IMAGE>_WERF_IMAGE_NAME` — original image name in werf
+* `WERF_<IMAGE>_FINAL` — whether the image is [final or intermediate]({{ "/usage/build/images.html#using-intermediate-and-final-images" | true_relative_url }}) (`true`/`false`). Final images are available in Helm chart values, can be tagged with custom tags, published to the final repository, and exported. Intermediate images (`final: false`) are used only as build dependencies
+
+Where `<IMAGE>` is the uppercased image name with `/`, `-`, `.` replaced by `_`.
+
+Example report in envfile format:
+
+```shell
+WERF_BACKEND_DOCKER_IMAGE_NAME=localhost:5000/demo-app:b94607bcb6e03a6ee07c8dc912739d6ab8ef2efc985227fa82d3de6f-1752510311968
+WERF_BACKEND_DOCKER_IMAGE_ID=sha256:a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2
+WERF_BACKEND_DOCKER_IMAGE_DIGEST=sha256:f6e5d4c3b2a1f6e5d4c3b2a1f6e5d4c3b2a1f6e5d4c3b2a1f6e5d4c3b2a1f6e5
+WERF_BACKEND_DOCKER_REPO=localhost:5000/demo-app
+WERF_BACKEND_DOCKER_TAG=b94607bcb6e03a6ee07c8dc912739d6ab8ef2efc985227fa82d3de6f-1752510311968
+WERF_BACKEND_WERF_IMAGE_NAME=backend
+WERF_BACKEND_FINAL=true
+WERF_FRONTEND_DOCKER_IMAGE_NAME=localhost:5000/demo-app:079dfdd3f51a800c269cdfdd5e4febfcc1676b2c0d533f520255961c-1752501317353
+WERF_FRONTEND_DOCKER_IMAGE_ID=sha256:9b3a32dfe5a4aa46d96547e3f8e678626f96741776d78656ea72cab7117612bf
+WERF_FRONTEND_DOCKER_IMAGE_DIGEST=sha256:54f564edebb6e0699dc0e43de4165488f86fbc76b0c89d88311d7cc06ae397f5
+WERF_FRONTEND_DOCKER_REPO=localhost:5000/demo-app
+WERF_FRONTEND_DOCKER_TAG=079dfdd3f51a800c269cdfdd5e4febfcc1676b2c0d533f520255961c-1752501317353
+WERF_FRONTEND_WERF_IMAGE_NAME=frontend
+WERF_FRONTEND_FINAL=true
+```
+
+### Using a build report
+
+A build report serves as a contract between CI/CD pipeline stages: the build stage produces it, and downstream stages (deploy, export, render) consume it. This lets you build images once and reuse the results across multiple jobs or environments without rebuilding. See [Deploying using a build report]({{ "/usage/deploy/deployment_scenarios.html#deploying-using-a-build-report" | true_relative_url }}) for a detailed CI/CD example.
+
+Use `--use-build-report` to skip building and read image data from a previously saved report. The report path and format are specified with `--build-report-path` (format is auto-detected by file extension). Both JSON and envfile formats are supported.
+
+The `--use-build-report` flag is supported by all commands that use build results.
+
+Example of a two-step CI pipeline — build in one job, deploy in another:
+
+```shell
+# Step 1: Build and save the report
+werf build --save-build-report --build-report-path .werf-build-report.env --repo REPO
+
+# Step 2: Deploy using the saved report (no rebuild)
+werf converge --use-build-report --build-report-path .werf-build-report.env --repo REPO
+```

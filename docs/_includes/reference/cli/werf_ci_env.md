@@ -115,5 +115,8 @@ werf ci-env CI_SYSTEM [options]
             shell (default $WERF_SHELL).
       --tmp-dir=""
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
+      --use-docker-auth-config=false
+            Generate Docker config from DOCKER_AUTH_CONFIG environment variable instead of copying  
+            current Docker config (default $WERF_USE_DOCKER_AUTH_CONFIG).
 ```
 

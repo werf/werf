@@ -1,5 +1,64 @@
 # Changelog
 
+## [2.65.1](https://github.com/werf/werf/compare/v2.65.0...v2.65.1) (2026-03-31)
+
+
+### Bug Fixes
+
+* **includes:** create local branch refs after fresh clone in CloneAndFetch ([#7425](https://github.com/werf/werf/issues/7425)) ([4c94b0b](https://github.com/werf/werf/commit/4c94b0badd4d1a7daa19542acad79b631e0f0038))
+
+## [2.65.0](https://github.com/werf/werf/compare/v2.64.0...v2.65.0) (2026-03-29)
+
+
+### Features
+
+* **build-report:** support reading .env format build reports ([8e1501c](https://github.com/werf/werf/commit/8e1501ce5ad068e9824dd3f3bc50c9e0bb94d3ad))
+* **ci-env:** add --use-docker-auth-config flag to generate Docker config from DOCKER_AUTH_CONFIG env var ([c2701f7](https://github.com/werf/werf/commit/c2701f7f72ef177ca3edbff14cc64438a5cb025d))
+* **deploy:** add structured image values to $.Values.global.werf.images ([#7413](https://github.com/werf/werf/issues/7413)) ([1b93dcc](https://github.com/werf/werf/commit/1b93dccbc7ae65877d316a16639ccd657ad9558e))
+
+
+### Bug Fixes
+
+* **build:** fix git owner and group with buildah backend ([#7415](https://github.com/werf/werf/issues/7415)) ([7af23b6](https://github.com/werf/werf/commit/7af23b66ec6dd59850abcd80babae4134d34d65e))
+* **build:** use path.Join for container-internal paths in stapel ([#7258](https://github.com/werf/werf/issues/7258)) ([c974594](https://github.com/werf/werf/commit/c974594d3c4d7ade4fe2fe9865bd6dec5c1bd6e4))
+* **deploy:** goroutine leak in watch error channel consumer for ReleaseInstall, ReleaseUninstall and ReleaseRollback ([#7418](https://github.com/werf/werf/issues/7418)) ([f2d817c](https://github.com/werf/werf/commit/f2d817cbef24017ad7073d1e949c16d1873917bd))
+* **deploy:** release had pending status after error instead of failed ([#7416](https://github.com/werf/werf/issues/7416)) ([b523cf2](https://github.com/werf/werf/commit/b523cf2cc1f71b0f78b9cb165e584254ce267682))
+* **host-cleanup:** handle race condition in tmp files GC when entries disappear between readdir and stat ([18ff151](https://github.com/werf/werf/commit/18ff151563b7b22e6062fff5132943102ebb7ee3))
+* **includes:** respect --loose-giterminism for --allow-includes-update ([#7414](https://github.com/werf/werf/issues/7414)) ([db75a5a](https://github.com/werf/werf/commit/db75a5a7fcf2c1abe0eba8033831f1c672bb169f))
+
+## [2.64.0](https://github.com/werf/werf/compare/v2.63.0...v2.64.0) (2026-03-24)
+
+
+### Features
+
+* **build:** respect insecure registries and mirrors from backend-native config ([#7376](https://github.com/werf/werf/issues/7376)) ([fd5a826](https://github.com/werf/werf/commit/fd5a826680ecc2a5c0199462c856df4bec1f7ebd))
+
+
+### Bug Fixes
+
+* **build:** fix stage build time in report ([#7404](https://github.com/werf/werf/issues/7404)) ([74ae247](https://github.com/werf/werf/commit/74ae2474c0610232c9bdacc377bf5b5d76d43f5f))
+* **build:** handle broken import metadata images in container registry ([#7394](https://github.com/werf/werf/issues/7394)) ([0413384](https://github.com/werf/werf/commit/04133847bed3b8842ab1b45609a4f81d468c6af2))
+* **cleanup:** ensure tag is deleted before manifest removal ([#7401](https://github.com/werf/werf/issues/7401)) ([303506e](https://github.com/werf/werf/commit/303506ede573f252d87c2d7b0f14a1b149ffdd59))
+* **deploy:** adopt managed fields after migration from helm to nelm ([#7406](https://github.com/werf/werf/issues/7406)) ([eab87e5](https://github.com/werf/werf/commit/eab87e518f81ea86384f081bb509bae3b00a3104))
+* **deploy:** pass option for yaml validator to allow duplicate map key ([#7408](https://github.com/werf/werf/issues/7408)) ([c9ea743](https://github.com/werf/werf/commit/c9ea743659a900b65c12ebcacc30ddf1b6147a99))
+
+## [2.63.0](https://github.com/werf/werf/compare/v2.62.2...v2.63.0) (2026-03-16)
+
+
+### Features
+
+* **build, stapel, git:** add WERF_DISABLE_GIT_COMMIT_ANCESTRY_CHECK to disable git commit ancestry check ([bae3300](https://github.com/werf/werf/commit/bae3300acc5d212f78f2d8f706c0aa4036e616f5))
+* **deploy:** switch to goccy/go-yaml and improve parse error context ([#7398](https://github.com/werf/werf/issues/7398)) ([3097703](https://github.com/werf/werf/commit/3097703331ede996f9ea04ac0696372f9522ca8a))
+* **import:** provide WERF_EXPERIMENTAL_IMPORT_BY_SOURCE_IMAGE_TAG env to change calculation import checksums method to reduce FD  ([#7392](https://github.com/werf/werf/issues/7392)) ([9abe1b5](https://github.com/werf/werf/commit/9abe1b5c09773917a764b1e89e12a37af217edf0))
+* **telemetry:** extend build metrics with metadata fields ([#7384](https://github.com/werf/werf/issues/7384)) ([09a324e](https://github.com/werf/werf/commit/09a324e383e26367d3b6e2a5190ca181c397b49a))
+
+
+### Bug Fixes
+
+* **deploy:** print engine.Render() result on debug level ([#7396](https://github.com/werf/werf/issues/7396)) ([7237218](https://github.com/werf/werf/commit/7237218b844f3487048234bedf450c26b01a542d))
+* **deploy:** tracking absence for release namespace deletion ([#7397](https://github.com/werf/werf/issues/7397)) ([6d885d9](https://github.com/werf/werf/commit/6d885d92b71ec190ab989c1b6a07e1a997a4cfc0))
+* **includes:** add empty args check ([a6b8766](https://github.com/werf/werf/commit/a6b87668af0fa7fb7478fa6b502c6c98dd62eb11))
+
 ## [2.62.2](https://github.com/werf/werf/compare/v2.62.1...v2.62.2) (2026-03-04)
 
 

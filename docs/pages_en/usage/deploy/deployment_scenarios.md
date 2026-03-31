@@ -21,6 +21,20 @@ werf build --repo example.org/mycompany/myapp
 werf converge --require-built-images --repo example.org/mycompany/myapp
 ```
 
+## Deploying using a build report
+
+You can split build and deploy into separate CI/CD jobs by using a [build report]({{ "/usage/build/process.html#build-report" | true_relative_url }}). The build job saves the report, and the deploy job reads it via `--use-build-report`, skipping the build entirely:
+
+```shell
+werf build --save-build-report --build-report-path .werf-build-report.json --repo example.org/mycompany/myapp
+```
+
+```shell
+werf converge --use-build-report --build-report-path .werf-build-report.json --repo example.org/mycompany/myapp
+```
+
+The report format is auto-detected by file extension (`.json`, `.env`). The envfile format is convenient for CI systems that support dotenv artifacts — the build job saves the report, and the deploy job picks up image variables automatically.
+
 ## Deploying using custom image tags
 
 By default, built images are tagged based on their contents. The tag becomes available in Values and allows those images to be used in templates during deployment. But if you want to use a different tag for the images, you can use the `--use-custom-tag` parameter, for example:

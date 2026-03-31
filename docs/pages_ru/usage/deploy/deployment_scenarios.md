@@ -21,6 +21,20 @@ werf build --repo example.org/mycompany/myapp
 werf converge --require-built-images --repo example.org/mycompany/myapp
 ```
 
+## Развертывание с использованием отчёта по сборке
+
+Сборку и развертывание можно разнести в отдельные задания CI/CD с помощью [отчёта по сборке]({{ "/usage/build/process.html#отчёт-по-сборке" | true_relative_url }}). Задание сборки сохраняет отчёт, а задание развертывания читает его через `--use-build-report`, полностью пропуская сборку:
+
+```shell
+werf build --save-build-report --build-report-path .werf-build-report.json --repo example.org/mycompany/myapp
+```
+
+```shell
+werf converge --use-build-report --build-report-path .werf-build-report.json --repo example.org/mycompany/myapp
+```
+
+Формат отчёта определяется автоматически по расширению файла (`.json`, `.env`). Формат envfile удобен для CI-систем с поддержкой dotenv-артефактов — задание сборки сохраняет отчёт, а задание развертывания автоматически получает переменные с именами образов.
+
 ## Развертывание с использованием произвольных тегов образов
 
 По умолчанию собранные образы получают тег на основе их содержимого, который становится доступен в Values для их дальнейшего использования в шаблонах при развертывании. Но если возникает необходимость тегировать образы иным тегом, то можно использовать параметр `--use-custom-tag`, например:

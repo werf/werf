@@ -98,7 +98,9 @@ func listDirAndFollowSymlinks(dir string, minFileAge time.Duration) ([]string, [
 
 	for _, dirEntry := range dirEntries {
 		info, err := dirEntry.Info()
-		if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			continue
+		} else if err != nil {
 			return nil, nil, fmt.Errorf("file info for %s: %w", dirEntry.Name(), err)
 		}
 
@@ -119,7 +121,9 @@ func listDirAndFollowSymlinks(dir string, minFileAge time.Duration) ([]string, [
 		}
 
 		filePath, err := os.Readlink(linkOrFilePath)
-		if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			continue
+		} else if err != nil {
 			return nil, nil, fmt.Errorf("read link %s: %w", linkOrFilePath, err)
 		}
 		if _, err = os.Stat(filePath); errors.Is(err, fs.ErrNotExist) {

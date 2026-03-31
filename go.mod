@@ -58,7 +58,7 @@ require (
 	github.com/werf/copy-recurse v0.2.7
 	github.com/werf/lockgate v0.1.1
 	github.com/werf/logboek v0.6.1
-	github.com/werf/nelm v1.22.1-0.20260327184702-a1c5169f463e
+	github.com/werf/nelm v1.23.2-0.20260327172522-9fd804c04354
 	go.opentelemetry.io/otel v1.42.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.42.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.42.0

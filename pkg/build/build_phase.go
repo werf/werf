@@ -113,7 +113,20 @@ func (phase *BuildPhase) BeforeImages(ctx context.Context) error {
 	}
 
 	imagesPairs := phase.Conveyor.imagesTree.GetImagesByName(false)
-	telemetry.GetTelemetryWerfIO().BuildStarted(ctx, len(imagesPairs))
+
+	backend := "docker"
+	if phase.Conveyor.ContainerBackend.HasStapelBuildSupport() {
+		backend = "buildah"
+	}
+
+	werfInContainer := os.Getenv("WERF_CONTAINERIZED") == "yes"
+
+	phase.ImagesReport.Runtime = RuntimeInfo{
+		Backend:     backend,
+		InContainer: werfInContainer,
+	}
+
+	telemetry.GetTelemetryWerfIO().BuildStarted(ctx, len(imagesPairs), backend, werfInContainer)
 
 	return nil
 }
@@ -350,9 +363,6 @@ func (phase *BuildPhase) publishMultiplatformImageMetadata(ctx context.Context, 
 	desc, err := primaryStagesStorage.GetStageDesc(ctx, phase.Conveyor.ProjectName(), img.GetStageID())
 	if err != nil {
 		return fmt.Errorf("unable to get image %s %s descriptor: %w", name, img.GetStageID(), err)
-	}
-	if desc == nil {
-		return fmt.Errorf("unable to get image %s %s descriptor: no manifest found", name, img.GetStageID())
 	}
 	img.SetStageDesc(desc)
 
@@ -673,8 +683,6 @@ func (phase *BuildPhase) onImageStage(ctx context.Context, img *image.Image, stg
 			return fmt.Errorf("stages required")
 		}
 
-		start := time.Now()
-
 		// Will build a new stage
 		i := phase.Conveyor.GetOrCreateStageImage(uuid.New().String(), phase.StagesIterator.GetPrevImage(img, stg), stg, img)
 		stg.SetStageImage(i)
@@ -700,13 +708,11 @@ func (phase *BuildPhase) onImageStage(ctx context.Context, img *image.Image, stg
 		if err := phase.buildStage(ctx, img, stg); err != nil {
 			return err
 		}
-		duration := time.Since(start).Seconds()
 
 		stg.SetMeta(&stage.StageMeta{
 			Rebuilt:             true,
 			BaseImagePulled:     fetchInfo.BaseImagePulled,
 			BaseImageSourceType: fetchInfo.BaseImageSource,
-			BuildTime:           fmt.Sprintf("%.2f", duration),
 		})
 	}
 
@@ -1162,7 +1168,7 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 		}
 
 		desc, err := phase.Conveyor.StorageManager.GetStagesStorage().GetStageDesc(ctx, phase.Conveyor.ProjectName(), *imagePkg.NewStageID(stg.GetDigest(), stageCreationTs))
-		if err != nil || desc == nil {
+		if err != nil {
 			return fmt.Errorf("unable to get stage %s digest %s image %s description from repo %s after stages has been stored into repo: %w", stg.LogDetailedName(), stg.GetDigest(), stageImage.Image.Name(), phase.Conveyor.StorageManager.GetStagesStorage().String(), err)
 		}
 		stageImage.Image.SetStageDesc(desc)
