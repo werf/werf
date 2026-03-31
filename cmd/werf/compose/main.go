@@ -325,8 +325,6 @@ func newCmd(ctx context.Context, composeCmdName string, options *newCmdOptions) 
 
 	common.SetupDryRun(&commonCmdData, cmd)
 
-	common.SetupVirtualMerge(&commonCmdData, cmd)
-
 	common.SetupDisableAutoHostCleanup(&commonCmdData, cmd)
 	common.SetupAllowedBackendStorageVolumeUsage(&commonCmdData, cmd)
 	common.SetupAllowedBackendStorageVolumeUsageMargin(&commonCmdData, cmd)

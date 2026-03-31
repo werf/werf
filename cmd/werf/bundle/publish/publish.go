@@ -119,7 +119,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupUseCustomTag(&commonCmdData, cmd)
 	common.SetupAddCustomTag(&commonCmdData, cmd)
-	common.SetupVirtualMerge(&commonCmdData, cmd)
 
 	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultBuildParallelTasksLimit)
 

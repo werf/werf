@@ -91,8 +91,6 @@ type CmdData struct {
 	BuildReportPath *string
 	UseBuildReport  *bool
 
-	VirtualMerge *bool
-
 	ScanContextNamespaceOnly *bool
 
 	// Host storage cleanup options
