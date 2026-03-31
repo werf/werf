@@ -15,9 +15,12 @@ includes:
     flatten: true
     vars:
       golangciPaths: "./cmd/... ./pkg/... ./test/..."
+      golangciLintVersion: "v1.64.8"
   deps:
     taskfile: https://raw.githubusercontent.com/werf/common-ci/refs/heads/main/Taskfile.deps.yml
     flatten: true
+    vars:
+      golangciLintVersion: "v1.64.8"
 
 vars:
   version: "dev"
