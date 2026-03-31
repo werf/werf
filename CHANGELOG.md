@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.65.1](https://github.com/werf/werf/compare/v2.65.0...v2.65.1) (2026-03-31)
+
+
+### Bug Fixes
+
+* **includes:** create local branch refs after fresh clone in CloneAndFetch ([#7425](https://github.com/werf/werf/issues/7425)) ([4c94b0b](https://github.com/werf/werf/commit/4c94b0badd4d1a7daa19542acad79b631e0f0038))
+
 ## [2.65.0](https://github.com/werf/werf/compare/v2.64.0...v2.65.0) (2026-03-29)
 
 
