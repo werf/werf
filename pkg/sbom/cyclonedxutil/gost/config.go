@@ -19,7 +19,7 @@ func (v GostValue) String() string {
 const (
 	GostValueYes       GostValue = "yes"
 	GostValueNo        GostValue = "no"
-	GostValueInherit   GostValue = "inherit"
+	GostValueIndirect  GostValue = "indirect"
 	GostValueUndefined GostValue = ""
 )
 
@@ -42,7 +42,7 @@ func (c Config) Merge(other Config) Config {
 }
 
 func IsValidGostValue(v string) bool {
-	return v == GostValueYes.String() || v == GostValueNo.String() || v == GostValueInherit.String()
+	return v == GostValueYes.String() || v == GostValueNo.String() || v == GostValueIndirect.String()
 }
 
 func (v GostValue) IsUndefined() bool {

@@ -491,7 +491,7 @@ var _ = Describe("MergeOpts", func() {
 			MergeOpts{
 				Gost: gost.Config{
 					AttackSurface:    gost.GostValueYes,
-					SecurityFunction: gost.GostValueInherit,
+					SecurityFunction: gost.GostValueIndirect,
 				},
 			},
 			""),

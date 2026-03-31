@@ -133,19 +133,19 @@ var _ = Describe("rawMetaBuildSbom", func() {
 			Succeed(),
 		),
 		Entry(
-			"should accept gost with inherit",
+			"should accept gost with indirect",
 			map[string]interface{}{
 				"enable":   true,
 				"standard": "cyclonedx@1.6",
 				"gost": map[string]interface{}{
-					"attackSurface": "inherit",
+					"attackSurface": "indirect",
 				},
 			},
 			&MetaBuildSbom{
 				Enable:   true,
 				Standard: sbom.StandardTypeCycloneDX16,
 				Gost: gost.Config{
-					AttackSurface:    gost.GostValueInherit,
+					AttackSurface:    gost.GostValueIndirect,
 					SecurityFunction: gost.GostValueYes,
 				},
 			},

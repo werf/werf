@@ -74,14 +74,14 @@ sections:
                     value: "string"
                     default: "yes"
                     description:
-                      en: "Attack surface property (yes | no | inherit). Default: yes"
-                      ru: "Свойство поверхности атаки (yes | no | inherit). По умолчанию: yes"
+                      en: "Attack surface property (yes | no | indirect). Default: yes"
+                      ru: "Свойство поверхности атаки (yes | no | indirect). По умолчанию: yes"
                   - name: securityFunction
                     value: "string"
                     default: "yes"
                     description:
-                      en: "Security function property (yes | no | inherit). Default: yes"
-                      ru: "Свойство функции безопасности (yes | no | inherit). По умолчанию: yes"
+                      en: "Security function property (yes | no | indirect). Default: yes"
+                      ru: "Свойство функции безопасности (yes | no | indirect). По умолчанию: yes"
           - &image-section-sbom
             name: sbom
             description:

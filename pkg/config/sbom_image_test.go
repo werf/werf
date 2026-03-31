@@ -108,7 +108,7 @@ var _ = Describe("buildImageSbom", func() {
 			},
 			&rawSbom{
 				Gost: &rawGost{
-					AttackSurface: lo.ToPtr("inherit"),
+					AttackSurface: lo.ToPtr("indirect"),
 				},
 			},
 			&doc{RenderFilePath: "werf.yaml", Content: []byte("image: test")},
@@ -116,7 +116,7 @@ var _ = Describe("buildImageSbom", func() {
 			false,
 			func(sbomDirective *Sbom) {
 				Expect(sbomDirective).ToNot(BeNil())
-				Expect(sbomDirective.Gost.AttackSurface).To(Equal(gost.GostValueInherit))
+				Expect(sbomDirective.Gost.AttackSurface).To(Equal(gost.GostValueIndirect))
 				Expect(sbomDirective.Gost.SecurityFunction).To(Equal(gost.GostValueYes))
 			},
 		),

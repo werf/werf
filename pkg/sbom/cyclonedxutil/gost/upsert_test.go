@@ -81,17 +81,17 @@ var _ = Describe("Gost SBOM setter", func() {
 				},
 			},
 			Succeed()),
-		Entry("should inject 'inherit' value",
+		Entry("should inject 'indirect' value",
 			&cdx.BOM{
 				Components: &[]cdx.Component{{Name: "test"}},
 			},
-			Config{AttackSurface: GostValueInherit, SecurityFunction: GostValueInherit},
+			Config{AttackSurface: GostValueIndirect, SecurityFunction: GostValueIndirect},
 			[]cdx.Component{
 				{
 					Name: "test",
 					Properties: &[]cdx.Property{
-						{Name: PropertyAttackSurface, Value: "inherit"},
-						{Name: PropertySecurityFunction, Value: "inherit"},
+						{Name: PropertyAttackSurface, Value: "indirect"},
+						{Name: PropertySecurityFunction, Value: "indirect"},
 					},
 				},
 			},

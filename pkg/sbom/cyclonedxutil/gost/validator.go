@@ -42,14 +42,14 @@ func ValidateComponent(comp *cdx.Component) error {
 	if !asOk {
 		missing = append(missing, PropertyAttackSurface)
 	} else if !IsValidGostValue(as.String()) {
-		return fmt.Errorf("invalid value for %s: %q (expected 'yes', 'no' or 'inherit')", PropertyAttackSurface, as)
+		return fmt.Errorf("invalid value for %s: %q (expected 'yes', 'no' or 'indirect')", PropertyAttackSurface, as)
 	}
 
 	sf, sfOk := a.GetSecurityFunction()
 	if !sfOk {
 		missing = append(missing, PropertySecurityFunction)
 	} else if !IsValidGostValue(sf.String()) {
-		return fmt.Errorf("invalid value for %s: %q (expected 'yes', 'no' or 'inherit')", PropertySecurityFunction, sf)
+		return fmt.Errorf("invalid value for %s: %q (expected 'yes', 'no' or 'indirect')", PropertySecurityFunction, sf)
 	}
 
 	if len(missing) > 0 {

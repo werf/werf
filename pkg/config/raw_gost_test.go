@@ -39,11 +39,11 @@ var _ = Describe("rawGost", func() {
 			},
 			gost.Config{AttackSurface: gost.GostValueYes, SecurityFunction: gost.GostValueNo},
 			Succeed()),
-		Entry("valid inherit",
+		Entry("valid indirect",
 			map[string]interface{}{
-				"attackSurface": "inherit",
+				"attackSurface": "indirect",
 			},
-			gost.Config{AttackSurface: gost.GostValueInherit},
+			gost.Config{AttackSurface: gost.GostValueIndirect},
 			Succeed()),
 		Entry("invalid value",
 			map[string]interface{}{

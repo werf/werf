@@ -62,15 +62,15 @@ var _ = Describe("Gost SBOM validator", func() {
 				},
 			},
 			Succeed()),
-		Entry("should succeed if GOST properties are present and valid (inherit)",
+		Entry("should succeed if GOST properties are present and valid (indirect)",
 			&cdx.BOM{
 				SpecVersion: cdx.SpecVersion1_6,
 				Components: &[]cdx.Component{
 					{
 						Name: "test-comp",
 						Properties: &[]cdx.Property{
-							{Name: PropertyAttackSurface, Value: "inherit"},
-							{Name: PropertySecurityFunction, Value: "inherit"},
+							{Name: PropertyAttackSurface, Value: "indirect"},
+							{Name: PropertySecurityFunction, Value: "indirect"},
 						},
 					},
 				},

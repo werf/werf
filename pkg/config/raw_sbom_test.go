@@ -138,14 +138,14 @@ var _ = Describe("rawSbom (YAML-level validation)", func() {
 		),
 
 		Entry(
-			"should accept gost with inherit",
+			"should accept gost with indirect",
 			map[string]interface{}{
 				"image": "image1",
 				"from":  "alpine:3.20",
 				"sbom": map[string]interface{}{
 					"fragment": "components: []\n",
 					"gost": map[string]interface{}{
-						"attackSurface": "inherit",
+						"attackSurface": "indirect",
 					},
 				},
 			},

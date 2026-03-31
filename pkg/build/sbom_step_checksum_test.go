@@ -28,7 +28,7 @@ var _ = Describe("SbomStep Checksum", func() {
 			cyclonedxutil.MergeOpts{
 				Gost: gost.Config{
 					AttackSurface:    gost.GostValueYes,
-					SecurityFunction: gost.GostValueInherit,
+					SecurityFunction: gost.GostValueIndirect,
 				},
 			},
 			"aa969eabe2faad149265a94e60b173e527e0bc27898afcd0ec4e85a06b28f29b",
