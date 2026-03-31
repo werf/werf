@@ -1421,15 +1421,6 @@ func LogVersion() {
 	logboek.LogF("Version: %s\n", werf.Version)
 }
 
-func SetupVirtualMerge(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.VirtualMerge = new(bool)
-	cmd.Flags().BoolVarP(cmdData.VirtualMerge, "virtual-merge", "", util.GetBoolEnvironmentDefaultFalse("WERF_VIRTUAL_MERGE"), "Enable virtual/ephemeral merge commit mode when building current application state ($WERF_VIRTUAL_MERGE by default)")
-}
-
-func GetVirtualMerge(cmdData *CmdData) bool {
-	return option.PtrValueOrDefault(cmdData.VirtualMerge, false)
-}
-
 func getFlags(cmd *cobra.Command, persistent bool) *pflag.FlagSet {
 	if persistent {
 		return cmd.PersistentFlags()

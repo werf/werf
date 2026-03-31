@@ -274,9 +274,6 @@ werf compose down [IMAGE_NAME...] [options] [--docker-compose-options="OPTIONS"]
             Use build report, previously saved with --save-build-report (by default                 
             $WERF_USE_BUILD_REPORT or false). Its path and format configured with                   
             --build-report-path
-      --virtual-merge=false
-            Enable virtual/ephemeral merge commit mode when building current application state      
-            ($WERF_VIRTUAL_MERGE by default)
       --without-images=false
             Disable building of images defined in the werf.yaml (if any) and usage of such images   
             in the .helm/templates ($WERF_WITHOUT_IMAGES or false by default — e.g. enable all      

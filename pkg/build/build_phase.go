@@ -22,7 +22,6 @@ import (
 	"github.com/werf/werf/v2/pkg/container_backend"
 	backend_instruction "github.com/werf/werf/v2/pkg/container_backend/instruction"
 	"github.com/werf/werf/v2/pkg/docker_registry"
-	"github.com/werf/werf/v2/pkg/git_repo"
 	imagePkg "github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/logging"
 	"github.com/werf/werf/v2/pkg/stapel"
@@ -477,15 +476,6 @@ func (phase *BuildPhase) publishImageGitMetadata(ctx context.Context, imageName 
 
 	headCommit := phase.Conveyor.giterminismManager.HeadCommit(ctx)
 	commits = append(commits, headCommit)
-
-	if phase.Conveyor.GetLocalGitRepoVirtualMergeOptions().VirtualMerge {
-		fromCommit, _, err := git_repo.GetVirtualMergeParents(ctx, phase.Conveyor.giterminismManager.LocalGitRepo(), headCommit)
-		if err != nil {
-			return fmt.Errorf("unable to get virtual merge commit %q parents: %w", headCommit, err)
-		}
-
-		commits = append(commits, fromCommit)
-	}
 
 	stagesStorage := phase.Conveyor.StorageManager.GetStagesStorage()
 

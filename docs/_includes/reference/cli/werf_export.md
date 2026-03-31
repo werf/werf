@@ -251,8 +251,5 @@ werf export [IMAGE_NAME...] [options]
             Use build report, previously saved with --save-build-report (by default                 
             $WERF_USE_BUILD_REPORT or false). Its path and format configured with                   
             --build-report-path
-      --virtual-merge=false
-            Enable virtual/ephemeral merge commit mode when building current application state      
-            ($WERF_VIRTUAL_MERGE by default)
 ```
 
