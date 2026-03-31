@@ -4,11 +4,9 @@ package docker
 
 import (
 	"context"
-	"io"
 	"testing"
 
 	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/image"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -18,10 +16,8 @@ func TestAI_Rm_Success(t *testing.T) {
 	err := Init(ctx, InitOptions{})
 	require.NoError(t, err)
 
-	pullResp, err := apiCli(ctx).ImagePull(ctx, "alpine:latest", image.PullOptions{})
+	err = CliPull(ctx, "alpine:latest")
 	require.NoError(t, err)
-	_, _ = io.Copy(io.Discard, pullResp)
-	_ = pullResp.Close()
 
 	createResp, err := apiCli(ctx).ContainerCreate(ctx, &container.Config{
 		Image: "alpine:latest",
@@ -42,10 +38,8 @@ func TestAI_Rm_Force(t *testing.T) {
 	err := Init(ctx, InitOptions{})
 	require.NoError(t, err)
 
-	pullResp, err := apiCli(ctx).ImagePull(ctx, "alpine:latest", image.PullOptions{})
+	err = CliPull(ctx, "alpine:latest")
 	require.NoError(t, err)
-	_, _ = io.Copy(io.Discard, pullResp)
-	_ = pullResp.Close()
 
 	createResp, err := apiCli(ctx).ContainerCreate(ctx, &container.Config{
 		Image: "alpine:latest",
@@ -69,10 +63,8 @@ func TestAI_Rm_ForceShortFlag(t *testing.T) {
 	err := Init(ctx, InitOptions{})
 	require.NoError(t, err)
 
-	pullResp, err := apiCli(ctx).ImagePull(ctx, "alpine:latest", image.PullOptions{})
+	err = CliPull(ctx, "alpine:latest")
 	require.NoError(t, err)
-	_, _ = io.Copy(io.Discard, pullResp)
-	_ = pullResp.Close()
 
 	createResp, err := apiCli(ctx).ContainerCreate(ctx, &container.Config{
 		Image: "alpine:latest",
@@ -105,10 +97,8 @@ func TestAI_Rm_RecordedOutput_Success(t *testing.T) {
 	err := Init(ctx, InitOptions{})
 	require.NoError(t, err)
 
-	pullResp, err := apiCli(ctx).ImagePull(ctx, "alpine:latest", image.PullOptions{})
+	err = CliPull(ctx, "alpine:latest")
 	require.NoError(t, err)
-	_, _ = io.Copy(io.Discard, pullResp)
-	_ = pullResp.Close()
 
 	createResp, err := apiCli(ctx).ContainerCreate(ctx, &container.Config{
 		Image: "alpine:latest",
@@ -130,10 +120,8 @@ func TestAI_Rm_RecordedOutput_Force(t *testing.T) {
 	err := Init(ctx, InitOptions{})
 	require.NoError(t, err)
 
-	pullResp, err := apiCli(ctx).ImagePull(ctx, "alpine:latest", image.PullOptions{})
+	err = CliPull(ctx, "alpine:latest")
 	require.NoError(t, err)
-	_, _ = io.Copy(io.Discard, pullResp)
-	_ = pullResp.Close()
 
 	createResp, err := apiCli(ctx).ContainerCreate(ctx, &container.Config{
 		Image: "alpine:latest",
