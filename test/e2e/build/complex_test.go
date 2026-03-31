@@ -55,8 +55,16 @@ var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
 				inspectOfDockerfileImage := contRuntime.GetImageInspect(ctx, buildReport.Images["dockerfile"].DockerImageName)
 				dockerfileImgCfg := inspectOfDockerfileImage.Config
 
-				inspectOfStapelShellImg := contRuntime.GetImageInspect(ctx, buildReport.Images["stapel-shell"].DockerImageName)
-				stapelShellImgCfg := inspectOfStapelShellImg.Config
+				var stapelShellImgCfg manifest.Schema2Config
+				{
+					// image spec is not available in local repo after build
+					if testOpts.WithLocalRepo {
+						contRuntime.Pull(ctx, buildReport.Images["stapel-shell"].DockerImageName)
+					}
+
+					inspectOfStapelShellImg := contRuntime.GetImageInspect(ctx, buildReport.Images["stapel-shell"].DockerImageName)
+					stapelShellImgCfg = inspectOfStapelShellImg.Config
+				}
 
 				By(`state0: checking "dockerfile" image metadata`)
 				Expect(dockerfileImgCfg.Env).To(ContainElement("COMPOSED_ENV=env-was_changed"))
@@ -115,8 +123,16 @@ var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
 				inspectOfDockerfileImg := contRuntime.GetImageInspect(ctx, buildReport.Images["dockerfile"].DockerImageName)
 				dockerfileImgCfg := inspectOfDockerfileImg.Config
 
-				inspectOfStapelShellImg := contRuntime.GetImageInspect(ctx, buildReport.Images["stapel-shell"].DockerImageName)
-				stapelShellImgCfg := inspectOfStapelShellImg.Config
+				var stapelShellImgCfg manifest.Schema2Config
+				{
+					// image spec is not available in local repo after build
+					if testOpts.WithLocalRepo {
+						contRuntime.Pull(ctx, buildReport.Images["stapel-shell"].DockerImageName)
+					}
+
+					inspectOfStapelShellImg := contRuntime.GetImageInspect(ctx, buildReport.Images["stapel-shell"].DockerImageName)
+					stapelShellImgCfg = inspectOfStapelShellImg.Config
+				}
 
 				By(`state1: checking "dockerfile" image metadata`)
 				Expect(dockerfileImgCfg.Env).To(ContainElement("COMPOSED_ENV=env-was_changed-state1"))
