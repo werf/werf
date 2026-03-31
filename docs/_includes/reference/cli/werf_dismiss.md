@@ -44,22 +44,26 @@ werf dismiss [options]
       --allowed-backend-storage-volume-usage=70
             Set the cleanup threshold for backend (Docker or Buildah) storage. Plain numbers define 
             the maximum allowed usage percentage, while values with units define the minimum        
-            required free space, e.g. 70 or 10GB (default 70 or                                     
+            required free space, e.g. 70 or 10GB. In bytes mode, if no explicit margin is set, the  
+            default margin is 5% of the specified threshold (default 70 or                          
             $WERF_ALLOWED_BACKEND_STORAGE_VOLUME_USAGE)
       --allowed-backend-storage-volume-usage-margin=5
             Set the cleanup margin for backend (Docker or Buildah) storage. In percentage mode the  
             margin is subtracted from the usage threshold, while in bytes mode it is added to the   
-            minimum required free space threshold, e.g. 5 or 2GB (default 5 or                      
-            $WERF_ALLOWED_BACKEND_STORAGE_VOLUME_USAGE_MARGIN)
+            minimum required free space threshold, e.g. 5 or 2GB. If bytes threshold is set         
+            explicitly and bytes margin is not, the default implicit margin is 5% of that bytes     
+            threshold (default 5 or $WERF_ALLOWED_BACKEND_STORAGE_VOLUME_USAGE_MARGIN)
       --allowed-local-cache-volume-usage=70
             Set the cleanup threshold for local cache (~/.werf/local_cache by default). Plain       
             numbers define the maximum allowed usage percentage, while values with units define the 
-            minimum required free space, e.g. 70 or 10GB (default 70 or                             
+            minimum required free space, e.g. 70 or 10GB. In bytes mode, if no explicit margin is   
+            set, the default margin is 5% of the specified threshold (default 70 or                 
             $WERF_ALLOWED_LOCAL_CACHE_VOLUME_USAGE)
       --allowed-local-cache-volume-usage-margin=5
             Set the cleanup margin for local cache. In percentage mode the margin is subtracted     
             from the usage threshold, while in bytes mode it is added to the minimum required free  
-            space threshold, e.g. 5 or 2GB (default 5 or                                            
+            space threshold, e.g. 5 or 2GB. If bytes threshold is set explicitly and bytes margin   
+            is not, the default implicit margin is 5% of that bytes threshold (default 5 or         
             $WERF_ALLOWED_LOCAL_CACHE_VOLUME_USAGE_MARGIN)
       --backend-storage-path=""
             Use specified path to the local backend (Docker or Buildah) storage to check backend    

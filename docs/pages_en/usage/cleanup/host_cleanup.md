@@ -22,8 +22,7 @@ The `--allowed-backend-storage-volume-usage-margin` (`WERF_ALLOWED_BACKEND_STORA
 
 - In percentage mode, the margin is also a percentage. For example, `70` with margin `5` means cleanup starts above `70%` usage and continues until usage drops below `65%`.
 - In bytes mode, the margin is also an absolute value. For example, `10GB` with margin `2GB` means cleanup starts below `10GB` free space and continues until free space reaches `12GB`.
-
-If `--allowed-backend-storage-volume-usage` is set with units and `--allowed-backend-storage-volume-usage-margin` is not set explicitly, werf uses `0B` as the effective margin.
+- If a bytes threshold is set and the margin is not specified explicitly, the implicit margin is `5%` of the bytes threshold. For example, `10GB` without an explicit margin means cleanup starts below `10GB` free space and continues until free space reaches `10.5GB`.
 
 If both parameters are set explicitly, they must use the same format:
 
@@ -54,8 +53,7 @@ The `--allowed-local-cache-volume-usage-margin` (`WERF_ALLOWED_LOCAL_CACHE_VOLUM
 
 - In percentage mode, the margin is also a percentage. For example, `70` with margin `5` means cleanup starts above `70%` usage and continues until usage drops below `65%`.
 - In bytes mode, the margin is also an absolute value. For example, `10GB` with margin `2GB` means cleanup starts below `10GB` free space and continues until free space reaches `12GB`.
-
-If `--allowed-local-cache-volume-usage` is set with units and `--allowed-local-cache-volume-usage-margin` is not set explicitly, werf uses `0B` as the effective margin.
+- If a bytes threshold is set and the margin is not specified explicitly, the implicit margin is `5%` of the bytes threshold. For example, `10GB` without an explicit margin means cleanup starts below `10GB` free space and continues until free space reaches `10.5GB`.
 
 If both parameters are set explicitly, they must use the same format:
 

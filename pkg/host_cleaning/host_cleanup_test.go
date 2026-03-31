@@ -16,11 +16,11 @@ var _ = Describe("host cleanup threshold resolving", func() {
 			Expect(margin).To(Equal(DefaultAllowedBackendStorageVolumeUsageMarginThreshold()))
 		})
 
-		It("uses zero bytes margin for implicit bytes thresholds", func() {
+		It("uses implicit bytes margin equal to 5 percent of bytes threshold", func() {
 			threshold, margin, err := resolveBackendStorageVolumeUsageThresholds(loToPtr(thresholdpkg.NewBytes(10_000_000_000)), nil, false)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(threshold).To(Equal(thresholdpkg.NewBytes(10_000_000_000)))
-			Expect(margin).To(Equal(thresholdpkg.NewBytes(0)))
+			Expect(margin).To(Equal(thresholdpkg.NewBytes(500_000_000)))
 		})
 
 		It("returns an error for explicitly mixed formats", func() {
@@ -33,7 +33,7 @@ var _ = Describe("host cleanup threshold resolving", func() {
 			Expect(err.Error()).To(ContainSubstring("must use the same format"))
 		})
 
-		It("uses threshold-type default when mixed margin was not explicit", func() {
+		It("uses threshold-type implicit bytes margin when mixed margin was not explicit", func() {
 			threshold, margin, err := resolveBackendStorageVolumeUsageThresholds(
 				loToPtr(thresholdpkg.NewBytes(10_000_000_000)),
 				loToPtr(thresholdpkg.NewPercentage(5)),
@@ -41,7 +41,7 @@ var _ = Describe("host cleanup threshold resolving", func() {
 			)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(threshold).To(Equal(thresholdpkg.NewBytes(10_000_000_000)))
-			Expect(margin).To(Equal(thresholdpkg.NewBytes(0)))
+			Expect(margin).To(Equal(thresholdpkg.NewBytes(500_000_000)))
 		})
 
 		It("passes explicit same-format values", func() {
@@ -64,11 +64,11 @@ var _ = Describe("host cleanup threshold resolving", func() {
 			Expect(margin).To(Equal(DefaultAllowedLocalCacheVolumeUsageMarginThreshold()))
 		})
 
-		It("uses zero bytes margin for implicit bytes thresholds", func() {
+		It("uses implicit bytes margin equal to 5 percent of bytes threshold", func() {
 			threshold, margin, err := resolveLocalCacheVolumeUsageThresholds(loToPtr(thresholdpkg.NewBytes(10_000_000_000)), nil, false)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(threshold).To(Equal(thresholdpkg.NewBytes(10_000_000_000)))
-			Expect(margin).To(Equal(thresholdpkg.NewBytes(0)))
+			Expect(margin).To(Equal(thresholdpkg.NewBytes(500_000_000)))
 		})
 
 		It("returns an error for explicitly mixed formats", func() {

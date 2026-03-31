@@ -121,7 +121,7 @@ func SetupAllowedBackendStorageVolumeUsage(cmdData *CmdData, cmd *cobra.Command)
 	}
 
 	for _, alias := range aliases {
-		setupVolumeUsageThresholdFlag(cmd.Flags(), cmdData.AllowedBackendStorageVolumeUsage, nil, &cmdData.AllowedBackendStorageVolumeUsage, alias.ParamName, defaultValue, fmt.Sprintf("Set the cleanup threshold for backend (Docker or Buildah) storage. Plain numbers define the maximum allowed usage percentage, while values with units define the minimum required free space, e.g. 70 or 10GB (default %s or $%s)", host_cleaning.DefaultAllowedBackendStorageVolumeUsageThreshold().String(), alias.EnvName))
+		setupVolumeUsageThresholdFlag(cmd.Flags(), cmdData.AllowedBackendStorageVolumeUsage, nil, &cmdData.AllowedBackendStorageVolumeUsage, alias.ParamName, defaultValue, fmt.Sprintf("Set the cleanup threshold for backend (Docker or Buildah) storage. Plain numbers define the maximum allowed usage percentage, while values with units define the minimum required free space, e.g. 70 or 10GB. In bytes mode, if no explicit margin is set, the default margin is 5%% of the specified threshold (default %s or $%s)", host_cleaning.DefaultAllowedBackendStorageVolumeUsageThreshold().String(), alias.EnvName))
 	}
 
 	if err := cmd.Flags().MarkHidden(aliases[1].ParamName); err != nil {
@@ -151,7 +151,7 @@ func SetupAllowedBackendStorageVolumeUsageMargin(cmdData *CmdData, cmd *cobra.Co
 	}
 
 	for _, alias := range aliases {
-		setupVolumeUsageThresholdFlag(cmd.Flags(), marginTarget, cmdData.AllowedBackendStorageVolumeUsageMarginExplicit, &cmdData.AllowedBackendStorageVolumeUsageMargin, alias.ParamName, defaultValue, fmt.Sprintf("Set the cleanup margin for backend (Docker or Buildah) storage. In percentage mode the margin is subtracted from the usage threshold, while in bytes mode it is added to the minimum required free space threshold, e.g. 5 or 2GB (default %s or $%s)", host_cleaning.DefaultAllowedBackendStorageVolumeUsageMarginThreshold().String(), alias.EnvName))
+		setupVolumeUsageThresholdFlag(cmd.Flags(), marginTarget, cmdData.AllowedBackendStorageVolumeUsageMarginExplicit, &cmdData.AllowedBackendStorageVolumeUsageMargin, alias.ParamName, defaultValue, fmt.Sprintf("Set the cleanup margin for backend (Docker or Buildah) storage. In percentage mode the margin is subtracted from the usage threshold, while in bytes mode it is added to the minimum required free space threshold, e.g. 5 or 2GB. If bytes threshold is set explicitly and bytes margin is not, the default implicit margin is 5%% of that bytes threshold (default %s or $%s)", host_cleaning.DefaultAllowedBackendStorageVolumeUsageMarginThreshold().String(), alias.EnvName))
 	}
 
 	if marginEnvValue == "" {
@@ -201,7 +201,7 @@ func SetupAllowedLocalCacheVolumeUsage(cmdData *CmdData, cmd *cobra.Command) {
 		cmdData.AllowedLocalCacheVolumeUsage = newVolumeUsageThreshold(defaultValue)
 	}
 
-	setupVolumeUsageThresholdFlag(cmd.Flags(), cmdData.AllowedLocalCacheVolumeUsage, nil, &cmdData.AllowedLocalCacheVolumeUsage, "allowed-local-cache-volume-usage", defaultValue, fmt.Sprintf("Set the cleanup threshold for local cache (~/.werf/local_cache by default). Plain numbers define the maximum allowed usage percentage, while values with units define the minimum required free space, e.g. 70 or 10GB (default %s or $%s)", host_cleaning.DefaultAllowedLocalCacheVolumeUsageThreshold().String(), envVarName))
+	setupVolumeUsageThresholdFlag(cmd.Flags(), cmdData.AllowedLocalCacheVolumeUsage, nil, &cmdData.AllowedLocalCacheVolumeUsage, "allowed-local-cache-volume-usage", defaultValue, fmt.Sprintf("Set the cleanup threshold for local cache (~/.werf/local_cache by default). Plain numbers define the maximum allowed usage percentage, while values with units define the minimum required free space, e.g. 70 or 10GB. In bytes mode, if no explicit margin is set, the default margin is 5%% of the specified threshold (default %s or $%s)", host_cleaning.DefaultAllowedLocalCacheVolumeUsageThreshold().String(), envVarName))
 }
 
 func SetupAllowedLocalCacheVolumeUsageMargin(cmdData *CmdData, cmd *cobra.Command) {
@@ -218,7 +218,7 @@ func SetupAllowedLocalCacheVolumeUsageMargin(cmdData *CmdData, cmd *cobra.Comman
 		cmdData.AllowedLocalCacheVolumeUsageMargin = marginTarget
 	}
 
-	setupVolumeUsageThresholdFlag(cmd.Flags(), marginTarget, cmdData.AllowedLocalCacheVolumeUsageMarginExplicit, &cmdData.AllowedLocalCacheVolumeUsageMargin, "allowed-local-cache-volume-usage-margin", defaultValue, fmt.Sprintf("Set the cleanup margin for local cache. In percentage mode the margin is subtracted from the usage threshold, while in bytes mode it is added to the minimum required free space threshold, e.g. 5 or 2GB (default %s or $%s)", host_cleaning.DefaultAllowedLocalCacheVolumeUsageMarginThreshold().String(), envVarName))
+	setupVolumeUsageThresholdFlag(cmd.Flags(), marginTarget, cmdData.AllowedLocalCacheVolumeUsageMarginExplicit, &cmdData.AllowedLocalCacheVolumeUsageMargin, "allowed-local-cache-volume-usage-margin", defaultValue, fmt.Sprintf("Set the cleanup margin for local cache. In percentage mode the margin is subtracted from the usage threshold, while in bytes mode it is added to the minimum required free space threshold, e.g. 5 or 2GB. If bytes threshold is set explicitly and bytes margin is not, the default implicit margin is 5%% of that bytes threshold (default %s or $%s)", host_cleaning.DefaultAllowedLocalCacheVolumeUsageMarginThreshold().String(), envVarName))
 
 	if marginEnvValue == "" {
 		cmdData.AllowedLocalCacheVolumeUsageMargin = nil

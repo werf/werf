@@ -88,12 +88,23 @@ func ValueOrDefault(optionValue *Threshold, defaultValue Threshold) Threshold {
 	return defaultValue
 }
 
+func implicitBytesMargin(threshold, defaultMargin Threshold) Threshold {
+	if threshold.Type != TypeBytes {
+		panic(fmt.Sprintf("unexpected volume usage threshold type %q", threshold.Type))
+	}
+	if defaultMargin.Type != TypePercentage {
+		panic(fmt.Sprintf("unexpected default margin type %q", defaultMargin.Type))
+	}
+
+	return NewBytes((threshold.Value / 100) * defaultMargin.Value)
+}
+
 func Resolve(thresholdOption, marginOption *Threshold, defaultThreshold, defaultMargin Threshold, marginExplicit bool, thresholdFlagName, marginFlagName string) (Threshold, Threshold, error) {
 	threshold := ValueOrDefault(thresholdOption, defaultThreshold)
 
 	if !marginExplicit || marginOption == nil {
 		if threshold.Type == TypeBytes {
-			return threshold, NewBytes(0), nil
+			return threshold, implicitBytesMargin(threshold, defaultMargin), nil
 		}
 		return threshold, defaultMargin, nil
 	}

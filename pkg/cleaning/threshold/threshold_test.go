@@ -34,11 +34,18 @@ var _ = Describe("threshold", func() {
 			Expect(margin).To(Equal(NewPercentage(5)))
 		})
 
-		It("uses zero-bytes implicit margin for bytes thresholds", func() {
+		It("uses implicit bytes margin equal to 5 percent of bytes threshold", func() {
 			threshold, margin, err := Resolve(ptr(NewBytes(10_000_000_000)), nil, NewPercentage(70), NewPercentage(5), false, "--foo", "--bar")
 			Expect(err).NotTo(HaveOccurred())
 			Expect(threshold).To(Equal(NewBytes(10_000_000_000)))
-			Expect(margin).To(Equal(NewBytes(0)))
+			Expect(margin).To(Equal(NewBytes(500_000_000)))
+		})
+
+		It("uses threshold-type implicit bytes margin when mixed margin was not explicit", func() {
+			threshold, margin, err := Resolve(ptr(NewBytes(10_000_000_000)), ptr(NewPercentage(5)), NewPercentage(70), NewPercentage(5), false, "--foo", "--bar")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(threshold).To(Equal(NewBytes(10_000_000_000)))
+			Expect(margin).To(Equal(NewBytes(500_000_000)))
 		})
 
 		It("returns an error for explicitly mixed formats", func() {
