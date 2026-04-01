@@ -23,7 +23,7 @@ var _ = Describe("config stapel", func() {
 				fileCreateOrAppend("werf.yaml", `
 fromLatest: true
 image: test
-from: alpine
+from: alpine:3.21
 `)
 				gitAddAndCommit(ctx, "werf.yaml")
 
@@ -69,11 +69,11 @@ config:
 			func(ctx SpecContext, e entry) {
 				fileCreateOrAppend("werf.yaml", `
 image: test
-from: alpine
+from: alpine:3.21
 git:
 - url: https://github.com/werf/werf.git
-  branch: test
-  to: /app
+   branch: test
+   to: /app
 `)
 				gitAddAndCommit(ctx, "werf.yaml")
 
@@ -120,10 +120,10 @@ config:
 			func(ctx SpecContext, e entry) {
 				fileCreateOrAppend("werf.yaml", `
 image: test
-from: alpine
+from: alpine:3.21
 mount:
 - from: build_dir
-  to: /test
+   to: /test
 `)
 				gitAddAndCommit(ctx, "werf.yaml")
 
@@ -171,10 +171,10 @@ config:
 			func(ctx SpecContext, e entry) {
 				fileCreateOrAppend("werf.yaml", fmt.Sprintf(`
 image: test
-from: alpine
+from: alpine:3.21
 mount:
 - fromPath: %s
-  to: /test
+   to: /test
 `, e.fromPath))
 				gitAddAndCommit(ctx, "werf.yaml")
 
