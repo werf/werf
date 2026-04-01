@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.65.2](https://github.com/werf/werf/compare/v2.65.1...v2.65.2) (2026-04-01)
+
+
+### Bug Fixes
+
+* **deploy:** restore `global.env` ([5e5defd](https://github.com/werf/werf/commit/5e5defd1833a969a1a6073f7d4bdf5362d31d5f8))
+
 ## [2.65.1](https://github.com/werf/werf/compare/v2.65.0...v2.65.1) (2026-03-31)
 
 
