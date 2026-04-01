@@ -13,7 +13,7 @@ shell:
     - echo VERSION_1 > /artifact/a/b/c/not_added_file4
 ---
 image: app
-from: registry.werf.io/base/alpine
+from: registry.werf.io/base/alpine:3.21
 import:
   - from: artifact
     add: /artifact/a/b/c
