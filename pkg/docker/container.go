@@ -1,11 +1,14 @@
 package docker
 
 import (
+	"fmt"
 	"io"
+	"strings"
 
 	"github.com/docker/cli/cli/command"
-	"github.com/docker/cli/cli/command/container"
+	containerCmd "github.com/docker/cli/cli/command/container"
 	"github.com/docker/docker/api/types"
+	containerType "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	"golang.org/x/net/context"
 )
@@ -45,18 +48,37 @@ func ContainerRemove(ctx context.Context, ref string, options types.ContainerRem
 	return apiCli(ctx).ContainerRemove(ctx, ref, options)
 }
 
-func doCliCreate(ctx context.Context, c command.Cli, args ...string) error {
-	return prepareCliCmd(ctx, container.NewCreateCommand(c), args...).Execute()
-}
-
 func CliCreate(ctx context.Context, args ...string) error {
-	return callCliWithAutoOutput(ctx, func(c command.Cli) error {
-		return doCliCreate(ctx, c, args...)
-	})
+	var containerName string
+	var imageName string
+	var volumes []string
+
+	for _, arg := range args {
+		if strings.HasPrefix(arg, "--name=") {
+			containerName = strings.TrimPrefix(arg, "--name=")
+		} else if strings.HasPrefix(arg, "--volume=") {
+			volumes = append(volumes, strings.TrimPrefix(arg, "--volume="))
+		} else if !strings.HasPrefix(arg, "-") {
+			imageName = arg
+		}
+	}
+
+	if imageName == "" {
+		return fmt.Errorf("create requires image name")
+	}
+
+	_, err := apiCli(ctx).ContainerCreate(ctx,
+		&containerType.Config{Image: imageName},
+		&containerType.HostConfig{Binds: volumes},
+		nil,
+		nil,
+		containerName,
+	)
+	return err
 }
 
 func doCliRun(ctx context.Context, c command.Cli, args ...string) error {
-	return prepareCliCmd(ctx, container.NewRunCommand(c), args...).Execute()
+	return prepareCliCmd(ctx, containerCmd.NewRunCommand(c), args...).Execute()
 }
 
 func CliRun(ctx context.Context, args ...string) error {
