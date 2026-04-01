@@ -18,8 +18,6 @@ import (
 )
 
 func TestAI_FullIntegration(t *testing.T) {
-	t.Setenv("WERF_GIT_USE_WORKTREE", "1")
-
 	ctx := context.Background()
 	repoDir := t.TempDir()
 	repo := initTestRepo(t, repoDir)
