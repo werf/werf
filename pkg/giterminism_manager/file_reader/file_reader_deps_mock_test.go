@@ -15,10 +15,9 @@ import (
 	filepath "path/filepath"
 	reflect "reflect"
 
-	gomock "go.uber.org/mock/gomock"
-
 	git_repo "github.com/werf/werf/v2/pkg/git_repo"
 	path_matcher "github.com/werf/werf/v2/pkg/path_matcher"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockgiterminismConfig is a mock of giterminismConfig interface.

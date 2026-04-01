@@ -14,12 +14,11 @@ import (
 	reflect "reflect"
 	time "time"
 
-	gomock "go.uber.org/mock/gomock"
-
 	git_repo "github.com/werf/werf/v2/pkg/git_repo"
 	repo_handle "github.com/werf/werf/v2/pkg/git_repo/repo_handle"
 	path_matcher "github.com/werf/werf/v2/pkg/path_matcher"
 	ls_tree "github.com/werf/werf/v2/pkg/true_git/ls_tree"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockGitRepo is a mock of GitRepo interface.
