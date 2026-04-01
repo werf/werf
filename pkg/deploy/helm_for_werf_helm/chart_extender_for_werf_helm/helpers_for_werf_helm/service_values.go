@@ -54,6 +54,7 @@ func GetEnvServiceValues(env string) map[string]interface{} {
 		"werf": werfInfo,
 		"global": map[string]interface{}{
 			"werf": werfInfo,
+			"env":  env,
 		},
 	}
 }
@@ -77,12 +78,6 @@ func GetServiceValues(ctx context.Context, projectName, repo string, imageInfoGe
 	legacyImageInfo := map[string]interface{}{
 		"image": map[string]interface{}{},
 		"tag":   map[string]interface{}{},
-	}
-
-	if opts.Env != "" {
-		werfInfo["env"] = opts.Env
-	} else if opts.IsStub && !opts.DisableEnvStub {
-		werfInfo["env"] = ""
 	}
 
 	if opts.Namespace != "" {
@@ -122,13 +117,23 @@ func GetServiceValues(ctx context.Context, projectName, repo string, imageInfoGe
 		}
 	}
 
+	globalRes := map[string]interface{}{}
+
+	if opts.Env != "" {
+		globalRes["env"] = opts.Env
+		werfInfo["env"] = opts.Env
+	} else if opts.IsStub && !opts.DisableEnvStub {
+		globalRes["env"] = ""
+		werfInfo["env"] = ""
+	}
+
+	globalRes["werf"] = lo.Assign(werfInfo, map[string]interface{}{
+		"images": imagesInfo,
+	})
+
 	res := map[string]interface{}{
-		"werf": lo.Assign(werfInfo, legacyImageInfo),
-		"global": map[string]interface{}{
-			"werf": lo.Assign(werfInfo, map[string]interface{}{
-				"images": imagesInfo,
-			}),
-		},
+		"werf":   lo.Assign(werfInfo, legacyImageInfo),
+		"global": globalRes,
 	}
 
 	if opts.SetDockerConfigJsonValue {
@@ -148,7 +153,12 @@ func GetBundleServiceValues(ctx context.Context, opts ServiceValuesOptions) (map
 		"version": werf.Version,
 	}
 
+	globalInfo := map[string]interface{}{
+		"werf": werfInfo,
+	}
+
 	if opts.Env != "" {
+		globalInfo["env"] = opts.Env
 		werfInfo["env"] = opts.Env
 	}
 
@@ -157,10 +167,8 @@ func GetBundleServiceValues(ctx context.Context, opts ServiceValuesOptions) (map
 	}
 
 	res := map[string]interface{}{
-		"werf": werfInfo,
-		"global": map[string]interface{}{
-			"werf": werfInfo,
-		},
+		"werf":   werfInfo,
+		"global": globalInfo,
 	}
 
 	if opts.SetDockerConfigJsonValue {
