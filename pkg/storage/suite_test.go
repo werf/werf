@@ -15,5 +15,8 @@ func TestStorage(t *testing.T) {
 }
 
 var _ = BeforeSuite(func() {
-	Expect(werf.Init("", "")).To(Succeed())
+	t := GinkgoT()
+	tmpDir := t.TempDir()
+	homeDir := t.TempDir()
+	Expect(werf.Init(tmpDir, homeDir)).To(Succeed())
 })

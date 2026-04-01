@@ -102,9 +102,17 @@ func (s *FromStage) PrepareImage(ctx context.Context, c Conveyor, cb container_b
 		stageImage.Builder.StapelStageBuilder().AddLabels(addLabels)
 	}
 
-	// For scratch there is no parent image data to inherit mounts from, so only the build labels
-	// are prepared here. The actual empty image is created later in MutateImage.
+	// For scratch there is no builder execution, so labels added only to the builder would be lost.
+	// Merge them into the build service labels used later by MutateImage.
 	if s.fromScratch {
+		serviceLabels := stageImage.Image.GetBuildServiceLabels()
+		if serviceLabels == nil {
+			serviceLabels = map[string]string{}
+		}
+		for key, value := range addLabels {
+			serviceLabels[key] = value
+		}
+		stageImage.Image.SetBuildServiceLabels(serviceLabels)
 		return nil
 	}
 
@@ -138,6 +146,7 @@ func (s *FromStage) PrepareImage(ctx context.Context, c Conveyor, cb container_b
 	return nil
 }
 
+// ScratchImageStageStorage extends ImageMutatorPusher with PostManifest for creating empty scratch stage images.
 type ScratchImageStageStorage interface {
 	ImageMutatorPusher
 	PostManifest(ctx context.Context, ref string, opts container_backend.PostManifestOpts) error
@@ -161,7 +170,7 @@ func (s *FromStage) MutateImage(ctx context.Context, storage ImageMutatorPusher,
 
 	// Scratch starts from an empty image. First create the manifest with service labels, then mutate
 	// the resulting image config so downstream stages see the same metadata as on regular stage images.
-	if err := scratchStorage.PostManifest(ctx, stageImage.Image.Name(), container_backend.PostManifestOpts{Labels: labelSpecs}); err != nil {
+	if err := scratchStorage.PostManifest(ctx, stageImage.Image.Name(), container_backend.PostManifestOpts{CommonOpts: container_backend.CommonOpts{TargetPlatform: s.targetPlatform}, Labels: labelSpecs}); err != nil {
 		return fmt.Errorf("create scratch stage image: %w", err)
 	}
 

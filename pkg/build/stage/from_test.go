@@ -122,8 +122,9 @@ var _ = Describe("FromStage", func() {
 			stage := &FromStage{fromScratch: true, BaseStage: NewBaseStage(From, &BaseStageOptions{})}
 			stageImage := NewStageImage(NewContainerBackendStub(), "scratch-stage", newLegacyImageForFromScratchTests("scratch-stage"))
 			stageImage.Image.SetBuildServiceLabels(map[string]string{
-				"werf":                      "project",
-				"werf-stage-content-digest": "digest",
+				"werf":                              "project",
+				"werf-stage-content-digest":         "digest",
+				imagePkg.WerfProjectRepoCommitLabel: "commit",
 			})
 
 			storage := &scratchManifestStorageStub{}
@@ -134,12 +135,15 @@ var _ = Describe("FromStage", func() {
 			Expect(storage.postManifestOpts.Labels).To(ContainElements(
 				"werf=project",
 				"werf-stage-content-digest=digest",
+				fmt.Sprintf("%s=%s", imagePkg.WerfProjectRepoCommitLabel, "commit"),
 			))
+			Expect(storage.postManifestOpts.TargetPlatform).To(Equal(stage.targetPlatform))
 			Expect(storage.mutateSrc).To(Equal("scratch-stage"))
 			Expect(storage.mutateDest).To(Equal("scratch-stage"))
 			Expect(storage.mutateConfig.Labels).To(Equal(map[string]string{
-				"werf":                      "project",
-				"werf-stage-content-digest": "digest",
+				"werf":                              "project",
+				"werf-stage-content-digest":         "digest",
+				imagePkg.WerfProjectRepoCommitLabel: "commit",
 			}))
 			Expect(storage.mutateStageImage).To(BeIdenticalTo(stageImage.Image))
 		})

@@ -1168,8 +1168,24 @@ func (storage *RepoStagesStorage) PostLastCleanupRecord(ctx context.Context, pro
 }
 
 func (storage *RepoStagesStorage) PostManifest(ctx context.Context, ref string, opts container_backend.PostManifestOpts) error {
-	if err := storage.ContainerBackend.PostManifest(ctx, ref, opts); err != nil {
-		return fmt.Errorf("post manifest %s: %w", ref, err)
+	if opts.TargetPlatform != "" {
+		return fmt.Errorf("post manifest %s: unsupported target platform %q for repo stages storage", ref, opts.TargetPlatform)
+	}
+	if len(opts.Manifests) > 0 {
+		return fmt.Errorf("post manifest %s: unsupported manifests option for repo stages storage", ref)
+	}
+
+	labels := map[string]string{}
+	for _, label := range opts.Labels {
+		parts := strings.SplitN(label, "=", 2)
+		if len(parts) != 2 || parts[0] == "" {
+			return fmt.Errorf("parse manifest label %q: expected KEY=VALUE", label)
+		}
+		labels[parts[0]] = parts[1]
+	}
+
+	if err := storage.DockerRegistry.PushImage(ctx, ref, &docker_registry.PushImageOptions{Labels: labels}); err != nil {
+		return fmt.Errorf("push manifest image %s: %w", ref, err)
 	}
 
 	return nil

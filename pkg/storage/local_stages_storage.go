@@ -394,7 +394,7 @@ func (storage *LocalStagesStorage) PostLastCleanupRecord(ctx context.Context, pr
 
 func (storage *LocalStagesStorage) PostManifest(ctx context.Context, ref string, opts container_backend.PostManifestOpts) error {
 	if err := storage.ContainerBackend.PostManifest(ctx, ref, opts); err != nil {
-		return fmt.Errorf("post manifest %s: %w", ref, err)
+		return fmt.Errorf("unable to post manifest %s: %w", ref, err)
 	}
 
 	return nil
