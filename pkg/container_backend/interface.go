@@ -16,11 +16,10 @@ type CommonOpts struct {
 }
 
 type (
-	TagOpts                           CommonOpts
-	PushOpts                          CommonOpts
-	PullOpts                          CommonOpts
-	GetImageInfoOpts                  CommonOpts
-	CalculateDependencyImportChecksum CommonOpts
+	TagOpts          CommonOpts
+	PushOpts         CommonOpts
+	PullOpts         CommonOpts
+	GetImageInfoOpts CommonOpts
 )
 
 type RmOpts struct {
@@ -92,7 +91,6 @@ type ContainerBackend interface {
 	BuildDockerfile(ctx context.Context, dockerfile []byte, opts BuildDockerfileOpts) (string, error)
 	BuildDockerfileStage(ctx context.Context, baseImage string, opts BuildDockerfileStageOptions, instructions ...InstructionInterface) (string, error)
 	BuildStapelStage(ctx context.Context, baseImage string, opts BuildStapelStageOptions) (string, error)
-	CalculateDependencyImportChecksum(ctx context.Context, dependencyImport DependencyImportSpec, opts CalculateDependencyImportChecksum) (string, error)
 
 	HasStapelBuildSupport() bool
 	GetDefaultPlatform() string

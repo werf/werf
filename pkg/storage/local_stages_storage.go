@@ -22,9 +22,6 @@ const (
 	FilterReferenceLocalStageByDigestFormat = "%s:%s*"
 	LocalStage_ImageFormat                  = "%s:%s"
 
-	LocalImportMetadata_ImageNameFormat = "werf-import-metadata/%s"
-	LocalImportMetadata_TagFormat       = "%s"
-
 	ImageDeletionFailedDueToUsedByContainerErrorTip = "Use --force option to remove all containers that are based on deleting werf docker images"
 )
 
@@ -132,14 +129,13 @@ func (storage *LocalStagesStorage) GetStageDesc(ctx context.Context, projectName
 		return nil, fmt.Errorf("unable to get image %s info: %w", stageImageName, err)
 	}
 
-	if info == nil {
-		return nil, ErrStageNotFound
+	if info != nil {
+		return &image.StageDesc{
+			StageID: image.NewStageID(stageID.Digest, stageID.CreationTs),
+			Info:    info,
+		}, nil
 	}
-
-	return &image.StageDesc{
-		StageID: image.NewStageID(stageID.Digest, stageID.CreationTs),
-		Info:    info,
-	}, nil
+	return nil, nil
 }
 
 func (storage *LocalStagesStorage) ExportStage(ctx context.Context, stageDesc *image.StageDesc, destinationReference string, mutateConfigFunc func(config v1.Config) (v1.Config, error)) error {
@@ -252,81 +248,6 @@ func (storage *LocalStagesStorage) GetAllAndGroupImageMetadataByImageName(ctx co
 	return map[string]map[string][]string{}, map[string]map[string][]string{}, nil
 }
 
-func (storage *LocalStagesStorage) GetImportMetadata(ctx context.Context, projectName, id string) (*ImportMetadata, error) {
-	logboek.Context(ctx).Debug().LogF("-- LocalStagesStorage.GetImportMetadata %s %s\n", projectName, id)
-
-	fullImageName := makeLocalImportMetadataName(projectName, id)
-	logboek.Context(ctx).Debug().LogF("-- LocalStagesStorage.GetImportMetadata full image name: %s\n", fullImageName)
-
-	info, err := storage.ContainerBackend.GetImageInfo(ctx, fullImageName, container_backend.GetImageInfoOpts{})
-	if err != nil {
-		return nil, fmt.Errorf("unable to get image %s info: %w", fullImageName, err)
-	}
-	if info == nil {
-		return nil, ErrImportMetadataNotFound
-	}
-	return newImportMetadataFromLabels(info.Labels), nil
-}
-
-func (storage *LocalStagesStorage) PutImportMetadata(ctx context.Context, projectName string, metadata *ImportMetadata) error {
-	logboek.Context(ctx).Debug().LogF("-- LocalStagesStorage.PutImportMetadata %s %v\n", projectName, metadata)
-
-	fullImageName := makeLocalImportMetadataName(projectName, metadata.ImportSourceID)
-	logboek.Context(ctx).Debug().LogF("-- LocalStagesStorage.PutImportMetadata full image name: %s\n", fullImageName)
-
-	if info, err := storage.ContainerBackend.GetImageInfo(ctx, fullImageName, container_backend.GetImageInfoOpts{}); err != nil {
-		return fmt.Errorf("unable to check existence of image %s: %w", fullImageName, err)
-	} else if info != nil {
-		return nil
-	}
-
-	labels := metadata.ToLabels()
-	labels = append(labels, fmt.Sprintf("%s=%s", image.WerfLabel, projectName))
-	if err := storage.ContainerBackend.PostManifest(ctx, fullImageName, container_backend.PostManifestOpts{Labels: labels}); err != nil {
-		return fmt.Errorf("unable to post manifest %q: %w", fullImageName, err)
-	}
-	return nil
-}
-
-func (storage *LocalStagesStorage) RmImportMetadata(ctx context.Context, projectName, id string) error {
-	logboek.Context(ctx).Debug().LogF("-- LocalStagesStorage.RmImportMetadata %s %s\n", projectName, id)
-
-	fullImageName := makeLocalImportMetadataName(projectName, id)
-	logboek.Context(ctx).Debug().LogF("-- LocalStagesStorage.RmImportMetadata full image name: %s\n", fullImageName)
-
-	if info, err := storage.ContainerBackend.GetImageInfo(ctx, fullImageName, container_backend.GetImageInfoOpts{}); err != nil {
-		return fmt.Errorf("unable to check existence of image %s: %w", fullImageName, err)
-	} else if info != nil {
-		return nil
-	}
-
-	if err := storage.ContainerBackend.Rmi(ctx, fullImageName, container_backend.RmiOpts{Force: true}); err != nil {
-		return fmt.Errorf("unable to remove image %s: %w", fullImageName, err)
-	}
-	return nil
-}
-
-func (storage *LocalStagesStorage) GetImportMetadataIDs(ctx context.Context, projectName string, opts ...Option) ([]string, error) {
-	logboek.Context(ctx).Debug().LogF("-- LocalStagesStorage.GetImportMetadataIDs %s\n", projectName)
-
-	imagesOpts := container_backend.ImagesOptions{}
-	imagesOpts.Filters = append(imagesOpts.Filters, util.NewPair("reference", fmt.Sprintf(LocalImportMetadata_ImageNameFormat, projectName)))
-	images, err := storage.ContainerBackend.Images(ctx, imagesOpts)
-	if err != nil {
-		return nil, fmt.Errorf("unable to list images: %w", err)
-	}
-
-	var tags []string
-	for _, img := range images {
-		for _, repoTag := range img.RepoTags {
-			_, tag := image.ParseRepositoryAndTag(repoTag)
-			tags = append(tags, tag)
-		}
-	}
-
-	return tags, nil
-}
-
 func (storage *LocalStagesStorage) GetClientIDRecords(_ context.Context, _ string, _ ...Option) ([]*ClientIDRecord, error) {
 	panic("not implemented")
 }
@@ -365,15 +286,6 @@ func (storage *LocalStagesStorage) UnregisterStageCustomTag(_ context.Context, _
 
 func (storage *LocalStagesStorage) CopyFromStorage(_ context.Context, _ StagesStorage, _ string, _ image.StageID, _ CopyFromStorageOptions) (*image.StageDesc, error) {
 	panic("not implemented")
-}
-
-func makeLocalImportMetadataName(projectName, importSourceID string) string {
-	return strings.Join(
-		[]string{
-			fmt.Sprintf(LocalImportMetadata_ImageNameFormat, projectName),
-			fmt.Sprintf(LocalImportMetadata_TagFormat, importSourceID),
-		}, ":",
-	)
 }
 
 func (storage *LocalStagesStorage) GetSyncServerRecords(ctx context.Context, projectName string, opts ...Option) ([]*SyncServerRecord, error) {

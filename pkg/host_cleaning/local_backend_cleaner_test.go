@@ -292,13 +292,11 @@ var _ = Describe("LocalBackendCleaner", func() {
 				util.NewPair("reference", "*client-id-*"),
 				util.NewPair("reference", "*managed-image-*"),
 				util.NewPair("reference", "*meta-*"),
-				util.NewPair("reference", "*import-metadata-*"),
 				util.NewPair("reference", "*-rejected"),
 
 				util.NewPair("reference", "werf-client-id/*"),
 				util.NewPair("reference", "werf-managed-images/*"),
 				util.NewPair("reference", "werf-images-metadata-by-commit/*"),
-				util.NewPair("reference", "werf-import-metadata/*"),
 			)).Return(image.ImagesList{expectedImages[2]}, nil)
 
 			stubs.StubFunc(&cleaner.werfGetWerfLastRunAtV1_1, time.Time{}, nil)
