@@ -4,7 +4,7 @@ configVersion: 1
 image: image
 from: registry.werf.io/base/ubuntu:22.04
 import:
-- image: artifact
+- from: artifact
   add: /app
   to: /app
   after: setup

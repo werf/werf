@@ -13,7 +13,7 @@ import:
 ---
 image: artifact
 final: false
-from: alpine
+from: alpine:3.21
 fromCacheVersion: {{ env "ARTIFACT_CACHE_VERSION" }}
 shell:
   install:
