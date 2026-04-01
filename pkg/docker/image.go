@@ -561,35 +561,16 @@ func doCliBuildSDK(ctx context.Context, inStream io.ReadCloser, args ...string) 
 		solveOpt.Session = append(solveOpt.Session, provider)
 	}
 
-	exportAttrs := map[string]string{
-		"tar": "true",
-	}
+	exportAttrs := map[string]string{}
 	if len(tags) > 0 {
 		exportAttrs[string(buildkitexptypes.OptKeyName)] = strings.Join(tags, ",")
 	}
-	pr, pw := io.Pipe()
 	solveOpt.Exports = []buildkitclient.ExportEntry{
 		{
-			Type:  buildkitclient.ExporterDocker,
+			Type:  "moby",
 			Attrs: exportAttrs,
-			Output: func(map[string]string) (io.WriteCloser, error) {
-				return pw, nil
-			},
 		},
 	}
-
-	loadErr := make(chan error, 1)
-	go func() {
-		defer pr.Close()
-		loadResp, err := apiCli(ctx).ImageLoad(ctx, pr, true)
-		if err != nil {
-			loadErr <- err
-			return
-		}
-		defer loadResp.Body.Close()
-		_, err = io.Copy(io.Discard, loadResp.Body)
-		loadErr <- err
-	}()
 
 	bk, err := buildkitclient.New(ctx, "", dockerbuildkit.ClientOpts(apiCli(ctx))...)
 	if err != nil {
@@ -604,12 +585,8 @@ func doCliBuildSDK(ctx context.Context, inStream io.ReadCloser, args ...string) 
 	}()
 
 	resp, err := bk.Solve(ctx, nil, solveOpt, statusCh)
-	_ = pw.Close()
 	if err != nil {
 		return fmt.Errorf("solve build: %w", err)
-	}
-	if err := <-loadErr; err != nil {
-		return fmt.Errorf("load image: %w", err)
 	}
 
 	if metadataFile != "" {

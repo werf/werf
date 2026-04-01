@@ -58,13 +58,13 @@ func ContainerRemove(ctx context.Context, ref string, options types.ContainerRem
 func CliCreate(ctx context.Context, args ...string) error {
 	var containerName string
 	var imageName string
-	var volumes []string
+	var rawVolumes []string
 
 	for _, arg := range args {
 		if strings.HasPrefix(arg, "--name=") {
 			containerName = strings.TrimPrefix(arg, "--name=")
 		} else if strings.HasPrefix(arg, "--volume=") {
-			volumes = append(volumes, strings.TrimPrefix(arg, "--volume="))
+			rawVolumes = append(rawVolumes, strings.TrimPrefix(arg, "--volume="))
 		} else if !strings.HasPrefix(arg, "-") {
 			imageName = arg
 		}
@@ -74,9 +74,24 @@ func CliCreate(ctx context.Context, args ...string) error {
 		return fmt.Errorf("create requires image name")
 	}
 
+	var binds []string
+	configVolumes := map[string]struct{}{}
+	for _, v := range rawVolumes {
+		if strings.Contains(v, ":") {
+			binds = append(binds, v)
+		} else {
+			configVolumes[v] = struct{}{}
+		}
+	}
+
+	config := &containerType.Config{Image: imageName}
+	if len(configVolumes) > 0 {
+		config.Volumes = configVolumes
+	}
+
 	_, err := apiCli(ctx).ContainerCreate(ctx,
-		&containerType.Config{Image: imageName},
-		&containerType.HostConfig{Binds: volumes},
+		config,
+		&containerType.HostConfig{Binds: binds},
 		nil,
 		nil,
 		containerName,
