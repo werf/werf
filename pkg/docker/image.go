@@ -9,12 +9,14 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v5"
+	"github.com/distribution/reference"
 	"github.com/docker/cli/cli/command"
 	"github.com/docker/cli/cli/command/image"
 	"github.com/docker/cli/cli/streams"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	dockerImage "github.com/docker/docker/api/types/image"
+	registryTypes "github.com/docker/docker/api/types/registry"
 	"github.com/docker/docker/client"
 	"github.com/samber/lo"
 	"golang.org/x/net/context"
@@ -97,22 +99,82 @@ func mapBackendFiltersToImagesPruneFilters(list filter.FilterList) filters.Args 
 	return filters.NewArgs(args...)
 }
 
-func doCliPull(ctx context.Context, c command.Cli, args ...string) error {
-	return prepareCliCmd(ctx, image.NewPullCommand(c), args...).Execute()
+func parseImageRef(imageRef string) (reference.Named, error) {
+	ref, err := reference.ParseNormalizedNamed(imageRef)
+	if err != nil {
+		return nil, err
+	}
+	return ref, nil
+}
+
+func getRegistryAuth(ctx context.Context, imageRef string) (string, error) {
+	ref, err := parseImageRef(imageRef)
+	if err != nil {
+		return "", fmt.Errorf("parse image ref: %w", err)
+	}
+
+	hostname := reference.Domain(ref)
+
+	authConfig := command.ResolveAuthConfig(cli(ctx).ConfigFile(), &registryTypes.IndexInfo{Name: hostname})
+
+	encodedAuth, err := registryTypes.EncodeAuthConfig(authConfig)
+	if err != nil {
+		return "", fmt.Errorf("encode auth config: %w", err)
+	}
+
+	return encodedAuth, nil
+}
+
+func doCliPull(ctx context.Context, args ...string) error {
+	var platform string
+	var imageRef string
+
+	for i := 0; i < len(args); i++ {
+		arg := args[i]
+		if arg == "--platform" && i+1 < len(args) {
+			platform = args[i+1]
+			i++
+		} else {
+			imageRef = arg
+		}
+	}
+
+	if imageRef == "" {
+		return fmt.Errorf("image reference required")
+	}
+
+	registryAuth, err := getRegistryAuth(ctx, imageRef)
+	if err != nil {
+		return fmt.Errorf("get registry auth: %w", err)
+	}
+
+	pullResp, err := apiCli(ctx).ImagePull(ctx, imageRef, types.ImagePullOptions{
+		Platform:     platform,
+		RegistryAuth: registryAuth,
+	})
+	if err != nil {
+		return fmt.Errorf("pull image: %w", err)
+	}
+	defer pullResp.Close()
+
+	_, err = io.Copy(io.Discard, pullResp)
+	if err != nil {
+		return fmt.Errorf("read pull response: %w", err)
+	}
+
+	return nil
 }
 
 func CliPull(ctx context.Context, args ...string) error {
-	return callCliWithAutoOutput(ctx, func(c command.Cli) error {
-		return doCliPull(ctx, c, args...)
-	})
+	return doCliPull(ctx, args...)
 }
 
 const cliPullMaxAttempts uint8 = 5
 
-func doCliPullWithRetries(ctx context.Context, c command.Cli, args ...string) error {
+func doCliPullWithRetries(ctx context.Context, args ...string) error {
 	var attempt uint8
 	op := func() (bool, error) {
-		return false, doCliPull(ctx, c, args...)
+		return false, doCliPull(ctx, args...)
 	}
 	notify := func(err error, duration time.Duration) {
 		logboek.Context(ctx).Warn().LogF("Retrying docker pull in %0.2f seconds (%d/%d) ...\n", duration.Seconds(), attempt, cliPullMaxAttempts)
@@ -165,9 +227,7 @@ func doCliOperationWithRetries(ctx context.Context, op backoff.Operation[bool], 
 }
 
 func CliPullWithRetries(ctx context.Context, args ...string) error {
-	return callCliWithAutoOutput(ctx, func(c command.Cli) error {
-		return doCliPullWithRetries(ctx, c, args...)
-	})
+	return doCliPullWithRetries(ctx, args...)
 }
 
 func doCliPush(ctx context.Context, c command.Cli, args ...string) error {
