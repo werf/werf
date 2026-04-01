@@ -151,7 +151,7 @@ func cli(ctx context.Context) command.Cli {
 	switch {
 	case cliInterf != nil:
 		return cliInterf.(command.Cli)
-	case ctx == context.Background():
+	case defaultCLI != nil:
 		return defaultCLI
 	default:
 		panic("context is not bound with docker cli")
@@ -220,41 +220,10 @@ func callCliWithProvidedOutput(ctx context.Context, stdoutWriter, stderrWriter i
 	return nil
 }
 
-func callCliWithRecordedOutput(ctx context.Context, commandCaller func(c command.Cli) error) (string, error) {
-	var output bytes.Buffer
-
-	if err := cliWithCustomOptions(
-		ctx,
-		[]command.CLIOption{
-			command.WithOutputStream(&output),
-			command.WithErrorStream(&output),
-		},
-		commandCaller,
-	); err != nil {
-		return "", err
-	}
-
-	return output.String(), nil
-}
-
 func prepareCliCmd(ctx context.Context, cmd *cobra.Command, args ...string) *cobra.Command {
 	cmd.SilenceErrors = true
 	cmd.SilenceUsage = true
 	cmd.SetArgs(args)
 	cmd.SetContext(ctx)
 	return cmd
-}
-
-func callCliWithAutoOutput(ctx context.Context, commandCaller func(c command.Cli) error) error {
-	if liveCliOutputEnabled {
-		return commandCaller(cli(ctx))
-	} else {
-		output, err := callCliWithRecordedOutput(ctx, func(c command.Cli) error {
-			return commandCaller(c)
-		})
-		if err != nil {
-			logboek.Context(ctx).Warn().LogF("%s", output)
-		}
-		return err
-	}
 }
