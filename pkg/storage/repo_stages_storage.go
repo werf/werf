@@ -1167,6 +1167,14 @@ func (storage *RepoStagesStorage) PostLastCleanupRecord(ctx context.Context, pro
 	return nil
 }
 
+func (storage *RepoStagesStorage) PostManifest(ctx context.Context, ref string, opts container_backend.PostManifestOpts) error {
+	if err := storage.ContainerBackend.PostManifest(ctx, ref, opts); err != nil {
+		return fmt.Errorf("post manifest %s: %w", ref, err)
+	}
+
+	return nil
+}
+
 func (storage *RepoStagesStorage) MutateAndPushImage(ctx context.Context, src, dest string, newConfig image.SpecConfig, _ container_backend.LegacyImageInterface) error {
 	if err := storage.DockerRegistry.MutateAndPushImage(ctx, src, dest, api.WithConfigFileMutation(func(ctx context.Context, config *v1.ConfigFile) (*v1.ConfigFile, error) {
 		image.UpdateConfigFile(newConfig, config)
