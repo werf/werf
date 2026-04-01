@@ -11,6 +11,7 @@ import (
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/util/option"
+	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
 
 func MapStapelConfigToImagesSets(ctx context.Context, metaConfig *config.Meta, stapelImageConfig config.StapelImageInterface, targetPlatform string, useCustomTag bool, opts CommonImageOptions) (ImagesSets, error) {
@@ -98,6 +99,9 @@ func initStages(ctx context.Context, image *Image, metaConfig *config.Meta, stap
 
 	gitMappingsExist := len(gitMappings) != 0
 
+	// TODO(v3): make this a hard error instead of a warning.
+	warnStageDependenciesWithoutInstructions(ctx, imageBaseConfig, gitMappings)
+
 	imageCacheVersion := option.ValueOrDefault(stapelImageConfig.CacheVersion(), metaConfig.Build.CacheVersion)
 
 	stages = appendIfExist(ctx, stages, stage.GenerateFromStage(imageBaseConfig, image.baseImageRepoId, imageCacheVersion, baseStageOptions))
@@ -139,6 +143,53 @@ func initStages(ctx context.Context, image *Image, metaConfig *config.Meta, stap
 	image.SetStages(stages)
 
 	return nil
+}
+
+// TODO(v3): make this a hard error instead of a warning.
+func warnStageDependenciesWithoutInstructions(ctx context.Context, imageBaseConfig *config.StapelImageBase, gitMappings []*stage.GitMapping) {
+	for _, gitMapping := range gitMappings {
+		for stageName, depsPaths := range gitMapping.StagesDependencies {
+			if len(depsPaths) == 0 {
+				continue
+			}
+
+			if hasStageInstructions(imageBaseConfig, stageName) {
+				continue
+			}
+
+			global_warnings.GlobalWarningLn(ctx, fmt.Sprintf(
+				"git.stageDependencies.%s is defined, but no %s instructions are provided for image %q. "+
+					"Changes to the specified paths will have no effect until corresponding instructions are added.",
+				stageName, stageName, imageBaseConfig.Name,
+			))
+		}
+	}
+}
+
+func hasStageInstructions(imageBaseConfig *config.StapelImageBase, stageName stage.StageName) bool {
+	if imageBaseConfig.Shell != nil {
+		switch stageName {
+		case stage.Install:
+			return len(imageBaseConfig.Shell.Install) > 0
+		case stage.BeforeSetup:
+			return len(imageBaseConfig.Shell.BeforeSetup) > 0
+		case stage.Setup:
+			return len(imageBaseConfig.Shell.Setup) > 0
+		}
+	}
+
+	if imageBaseConfig.Ansible != nil {
+		switch stageName {
+		case stage.Install:
+			return len(imageBaseConfig.Ansible.Install) > 0
+		case stage.BeforeSetup:
+			return len(imageBaseConfig.Ansible.BeforeSetup) > 0
+		case stage.Setup:
+			return len(imageBaseConfig.Ansible.Setup) > 0
+		}
+	}
+
+	return false
 }
 
 func generateGitMappings(ctx context.Context, metaConfig *config.Meta, imageBaseConfig *config.StapelImageBase, opts CommonImageOptions) ([]*stage.GitMapping, error) {
