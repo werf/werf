@@ -518,7 +518,7 @@ func doCliBuildSDK(ctx context.Context, inStream io.ReadCloser, args ...string) 
 	if target != "" {
 		frontendAttrs["target"] = target
 	}
-	if networkMode != "" {
+	if networkMode != "" && networkMode != "default" {
 		frontendAttrs["force-network-mode"] = networkMode
 	}
 	if len(addHosts) > 0 {

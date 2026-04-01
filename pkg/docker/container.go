@@ -150,6 +150,7 @@ func doCliRunSDK(ctx context.Context, args ...string) (string, int, error) {
 		cmdArgs       []string
 		detach        bool
 		exposedPorts  []string
+		networkMode   string
 	)
 
 	for i := 0; i < len(args); i++ {
@@ -236,6 +237,14 @@ func doCliRunSDK(ctx context.Context, args ...string) (string, int, error) {
 			}
 			i++
 			exposedPorts = append(exposedPorts, args[i])
+		case strings.HasPrefix(arg, "--network="):
+			networkMode = strings.TrimPrefix(arg, "--network=")
+		case arg == "--network":
+			if i+1 >= len(args) {
+				return "", -1, fmt.Errorf("flag --network requires value")
+			}
+			i++
+			networkMode = args[i]
 		case strings.HasPrefix(arg, "-"):
 			return "", -1, fmt.Errorf("unsupported docker run flag %q", arg)
 		default:
@@ -282,6 +291,9 @@ func doCliRunSDK(ctx context.Context, args ...string) (string, int, error) {
 	}
 	if detach && autoRemove {
 		hostConfig.AutoRemove = true
+	}
+	if networkMode != "" {
+		hostConfig.NetworkMode = containerType.NetworkMode(networkMode)
 	}
 
 	var platform *specs.Platform
