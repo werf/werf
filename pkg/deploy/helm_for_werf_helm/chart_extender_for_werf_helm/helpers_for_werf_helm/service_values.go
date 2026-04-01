@@ -110,13 +110,8 @@ func GetServiceValues(ctx context.Context, projectName, repo string, imageInfoGe
 		tag := imageInfoGetter.GetTag()
 		image := imageInfoGetter.GetName()
 
-		if imageInfoGetter.IsNameless() {
-			werfInfo["is_nameless_image"] = true
-			werfInfo["nameless_image"] = image
-		} else {
-			werfInfo["image"].(map[string]interface{})[imageInfoGetter.GetWerfImageName()] = image
-			werfInfo["tag"].(map[string]interface{})[imageInfoGetter.GetWerfImageName()] = tag
-		}
+		werfInfo["image"].(map[string]interface{})[imageInfoGetter.GetWerfImageName()] = image
+		werfInfo["tag"].(map[string]interface{})[imageInfoGetter.GetWerfImageName()] = tag
 	}
 
 	res := map[string]interface{}{

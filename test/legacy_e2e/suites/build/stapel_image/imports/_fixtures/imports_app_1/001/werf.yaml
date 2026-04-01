@@ -13,7 +13,7 @@ shell:
   - echo FILE > /myartifact/a/b/FILE
   - touch /myartifact/a/b/c/fffilel
 ---
-image: ~
+image: test
 from: registry.werf.io/base/alpine:3.21
 import:
 - from: myartifact
