@@ -1020,7 +1020,3 @@ func (c *Conveyor) GetImageIDForImageStage(targetPlatform, imageName, stageName 
 func (c *Conveyor) GetStageIDForImageStage(targetPlatform, imageName, stageName string) string {
 	return c.getImageStage(targetPlatform, imageName, stageName).GetStageImage().Image.GetStageDesc().StageID.String()
 }
-
-func (c *Conveyor) RmImportMetadata(ctx context.Context, projectName, id string) error {
-	return c.StorageManager.GetStagesStorage().RmImportMetadata(ctx, projectName, id)
-}

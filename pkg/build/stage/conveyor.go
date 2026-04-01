@@ -9,8 +9,6 @@ import (
 )
 
 type Conveyor interface {
-	RmImportMetadata(ctx context.Context, projectName, id string) error
-
 	GetImageStageContentDigest(targetPlatform, imageName, stageName string) string
 	GetImageContentDigest(targetPlatform, imageName string) string
 
