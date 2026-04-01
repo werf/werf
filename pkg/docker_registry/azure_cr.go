@@ -22,7 +22,7 @@ type AzureCrRepositoryNotFoundError apiError
 
 func NewAzureCrRepositoryNotFoundError(err error) AzureCrRepositoryNotFoundError {
 	return AzureCrRepositoryNotFoundError{
-		error: fmt.Errorf(azureCrRepositoryNotFoundErrPrefix + err.Error()),
+		error: fmt.Errorf("%s%w", azureCrRepositoryNotFoundErrPrefix, err),
 	}
 }
 
