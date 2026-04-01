@@ -98,14 +98,6 @@ func (runtime *PerfCheckContainerBackend) BuildStapelStage(ctx context.Context, 
 	return
 }
 
-func (runtime *PerfCheckContainerBackend) CalculateDependencyImportChecksum(ctx context.Context, dependencyImport DependencyImportSpec, opts CalculateDependencyImportChecksum) (resID string, resErr error) {
-	logboek.Context(ctx).Default().LogProcess("ContainerBackend.BuildDockerfile").
-		Do(func() {
-			resID, resErr = runtime.ContainerBackend.CalculateDependencyImportChecksum(ctx, dependencyImport, opts)
-		})
-	return
-}
-
 func (runtime *PerfCheckContainerBackend) RefreshImageObject(ctx context.Context, img LegacyImageInterface) (resErr error) {
 	logboek.Context(ctx).Default().LogProcess("ContainerBackend.RefreshImageObject %q", img.Name()).
 		Do(func() {

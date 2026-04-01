@@ -81,10 +81,6 @@ func ImageMetadata(ctx context.Context, imageName string) map[string][]string {
 	return utils.ImageMetadata(ctx, SuiteData.StagesStorage, imageName)
 }
 
-func ImportMetadataIDs(ctx context.Context) []string {
-	return utils.ImportMetadataIDs(ctx, SuiteData.StagesStorage)
-}
-
 func CustomTags(ctx context.Context) []string {
 	tags, err := SuiteData.ContainerRegistry.Tags(ctx, SuiteData.StagesStorage.String())
 	Expect(err).ShouldNot(HaveOccurred())

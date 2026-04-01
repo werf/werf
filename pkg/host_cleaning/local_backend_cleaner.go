@@ -198,13 +198,11 @@ func (cleaner *LocalBackendCleaner) werfImagesByLastRun(ctx context.Context) (im
 			util.NewPair("reference", "*client-id-*"),
 			util.NewPair("reference", "*managed-image-*"),
 			util.NewPair("reference", "*meta-*"),
-			util.NewPair("reference", "*import-metadata-*"),
 			util.NewPair("reference", "*-rejected"),
 
 			util.NewPair("reference", "werf-client-id/*"),
 			util.NewPair("reference", "werf-managed-images/*"),
 			util.NewPair("reference", "werf-images-metadata-by-commit/*"),
-			util.NewPair("reference", "werf-import-metadata/*"),
 		))
 		if err != nil {
 			return nil, fmt.Errorf("unable to get werf service images: %w", err)

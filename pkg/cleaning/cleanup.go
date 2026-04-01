@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/go-git/go-git/v5"
@@ -65,9 +64,6 @@ func newCleanupManager(projectName string, storageManager *manager.StorageManage
 
 type cleanupManager struct {
 	stageManager stage_manager.Manager
-
-	checksumSourceStageIDs map[string][]string
-	sourceStageIDImportIDs map[string][]string
 
 	ProjectName                             string
 	StorageManager                          manager.StorageManagerInterface
@@ -850,12 +846,6 @@ func deleteImageMetadata(ctx context.Context, projectName string, storageManager
 }
 
 func (m *cleanupManager) cleanupUnusedStages(ctx context.Context) error {
-	if err := logboek.Context(ctx).Default().LogProcess("Fetching imports metadata").DoError(func() error {
-		return m.initImportsMetadata(ctx)
-	}); err != nil {
-		return fmt.Errorf("unable to init imports metadata: %w", err)
-	}
-
 	// skip kept stages and their relatives.
 	{
 		logboek.Context(ctx).Default().LogProcess("Processing relative stages for saved stages").Do(func() {
@@ -895,39 +885,6 @@ func (m *cleanupManager) cleanupUnusedStages(ctx context.Context) error {
 		return fmt.Errorf("unable to cleanup custom tags metadata: %w", err)
 	}
 
-	if err := m.deleteUnusedImportsMetadata(ctx); err != nil {
-		return fmt.Errorf("unable to cleanup imports metadata: %w", err)
-	}
-
-	return nil
-}
-
-func (m *cleanupManager) deleteUnusedImportsMetadata(ctx context.Context) error {
-	if util.GetBoolEnvironmentDefaultFalse("WERF_EXPERIMENTAL_IMPORT_BY_SOURCE_IMAGE_TAG") || len(m.sourceStageIDImportIDs) == 0 {
-		return nil
-	}
-
-	var importMetadataIDsToDelete []string
-outerLoop:
-	for sourceStageID, importMetadataIDs := range m.sourceStageIDImportIDs {
-		for protectedStageDesc := range m.stageManager.GetProtectedStageDescSet().Iter() {
-			// Skip existent/protected stages.
-			if sourceStageID == protectedStageDesc.StageID.String() {
-				continue outerLoop
-			}
-		}
-
-		importMetadataIDsToDelete = append(importMetadataIDsToDelete, importMetadataIDs...)
-	}
-
-	if len(importMetadataIDsToDelete) != 0 {
-		if err := logboek.Context(ctx).Default().LogProcess("Cleaning imports metadata (%d)", len(importMetadataIDsToDelete)).DoError(func() error {
-			return m.deleteImportsMetadata(ctx, importMetadataIDsToDelete)
-		}); err != nil {
-			return err
-		}
-	}
-
 	return nil
 }
 
@@ -957,79 +914,6 @@ FilterOutFinalStages:
 	}
 
 	return nil
-}
-
-func (m *cleanupManager) initImportsMetadata(ctx context.Context) error {
-	if util.GetBoolEnvironmentDefaultFalse("WERF_EXPERIMENTAL_IMPORT_BY_SOURCE_IMAGE_TAG") {
-		return nil
-	}
-
-	m.checksumSourceStageIDs = map[string][]string{}
-	m.sourceStageIDImportIDs = map[string][]string{}
-
-	importMetadataIDs, err := m.StorageManager.GetStagesStorage().GetImportMetadataIDs(ctx, m.ProjectName, storage.WithCache())
-	if err != nil {
-		return err
-	}
-
-	var mutex sync.Mutex
-	return m.StorageManager.ForEachGetImportMetadata(ctx, m.ProjectName, importMetadataIDs, func(ctx context.Context, metadataID string, metadata *storage.ImportMetadata, err error) error {
-		if storage.IsErrImportMetadataNotFound(err) || storage.IsErrBrokenImage(err) {
-			if err := logboek.Context(ctx).Warn().LogProcess("Deleting invalid import metadata %s", metadataID).
-				DoError(func() error {
-					return m.deleteImportsMetadata(ctx, []string{metadataID})
-				}); err != nil {
-				return fmt.Errorf("unable to delete import metadata %s: %w", metadataID, err)
-			}
-
-			return nil
-		}
-		if err != nil {
-			return err
-		}
-
-		mutex.Lock()
-		defer mutex.Unlock()
-
-		importSourceID := metadata.ImportSourceID
-		sourceStageID := metadata.SourceStageID
-		checksum := metadata.Checksum
-
-		m.checksumSourceStageIDs[checksum] = append(m.checksumSourceStageIDs[checksum], sourceStageID)
-		m.sourceStageIDImportIDs[sourceStageID] = append(m.sourceStageIDImportIDs[sourceStageID], importSourceID)
-
-		return nil
-	})
-}
-
-func (m *cleanupManager) deleteImportsMetadata(ctx context.Context, importMetadataIDs []string) error {
-	return deleteImportsMetadata(ctx, m.ProjectName, m.StorageManager, importMetadataIDs, m.DryRun)
-}
-
-func deleteImportsMetadata(ctx context.Context, projectName string, storageManager manager.StorageManagerInterface, importMetadataIDs []string, dryRun bool) error {
-	if dryRun {
-		for _, importMetadataID := range importMetadataIDs {
-			logboek.Context(ctx).Info().LogFDetails("  importMetadataID: %s\n", importMetadataID)
-			logboek.Context(ctx).Info().LogOptionalLn()
-		}
-		return nil
-	}
-
-	return storageManager.ForEachRmImportMetadata(ctx, projectName, importMetadataIDs, func(ctx context.Context, importMetadataID string, err error) error {
-		if err != nil {
-			if err := handleDeletionError(err); err != nil {
-				return err
-			}
-
-			logboek.Context(ctx).Warn().LogF("WARNING: Import metadata ID %s deletion failed: %s\n", importMetadataID, err)
-
-			return nil
-		}
-
-		logboek.Context(ctx).Info().LogFDetails("  importMetadataID: %s\n", importMetadataID)
-
-		return nil
-	})
 }
 
 func (m *cleanupManager) protectRelativeStageDescSetByStageDesc(targetStageDesc *image.StageDesc, withImportOrDependencySources bool, handledStageDescSet image.StageDescSet) {
@@ -1067,8 +951,26 @@ func (m *cleanupManager) protectRelativeStageDescSetByStageDesc(targetStageDesc 
 				handledStageDescSet.Add(currentStageDesc)
 			}
 
+			// Import or Dependency source checking.
 			if withImportOrDependencySources {
-				m.protectImportAndDependencySources(currentStageDesc, currentStageDescSet)
+				for label, value := range currentStageDesc.Info.Labels {
+					if strings.HasPrefix(label, image.WerfImportSourceStageIDLabelPrefix) {
+						if strings.HasPrefix(value, image.WerfImportSourceExternalImagePrefix) {
+							continue
+						}
+						sourceStageDesc := m.stageManager.GetStageDescByStageID(value)
+						if sourceStageDesc != nil {
+							currentStageDescSet.Add(sourceStageDesc)
+							m.stageManager.MarkStageDescAsProtected(sourceStageDesc, stage_manager.ProtectionReasonImportSource, false)
+						}
+					} else if strings.HasPrefix(label, image.WerfDependencySourceStageIDLabelPrefix) {
+						sourceStageDesc := m.stageManager.GetStageDescByStageID(value)
+						if sourceStageDesc != nil {
+							currentStageDescSet.Add(sourceStageDesc)
+							m.stageManager.MarkStageDescAsProtected(sourceStageDesc, stage_manager.ProtectionReasonDependencySource, false)
+						}
+					}
+				}
 			}
 
 			// Parent stage checking.
@@ -1090,43 +992,6 @@ func (m *cleanupManager) protectRelativeStageDescSetByStageDesc(targetStageDesc 
 			}
 		}
 	}
-}
-
-func (m *cleanupManager) protectImportAndDependencySources(stageDesc *image.StageDesc, currentStageDescSet image.StageDescSet) {
-	for label, value := range stageDesc.Info.Labels {
-		if strings.HasPrefix(label, image.WerfImportSourceStageIDLabelPrefix) || strings.HasPrefix(label, image.WerfImportChecksumLabelPrefix) {
-			for _, sourceStageID := range m.resolveImportSourceStageIDs(label, value) {
-				if strings.HasPrefix(sourceStageID, image.WerfImportSourceExternalImagePrefix) {
-					continue
-				}
-				if sourceStageDesc := m.stageManager.GetStageDescByStageID(sourceStageID); sourceStageDesc != nil {
-					currentStageDescSet.Add(sourceStageDesc)
-					m.stageManager.MarkStageDescAsProtected(sourceStageDesc, stage_manager.ProtectionReasonImportSource, false)
-				}
-			}
-		}
-
-		if strings.HasPrefix(label, image.WerfDependencySourceStageIDLabelPrefix) {
-			if sourceStageDesc := m.stageManager.GetStageDescByStageID(value); sourceStageDesc != nil {
-				currentStageDescSet.Add(sourceStageDesc)
-				m.stageManager.MarkStageDescAsProtected(sourceStageDesc, stage_manager.ProtectionReasonDependencySource, false)
-			}
-		}
-	}
-}
-
-func (m *cleanupManager) resolveImportSourceStageIDs(label, value string) []string {
-	if util.GetBoolEnvironmentDefaultFalse("WERF_EXPERIMENTAL_IMPORT_BY_SOURCE_IMAGE_TAG") {
-		if strings.HasPrefix(label, image.WerfImportSourceStageIDLabelPrefix) {
-			return []string{value}
-		}
-		return nil
-	}
-
-	if strings.HasPrefix(label, image.WerfImportChecksumLabelPrefix) {
-		return m.checksumSourceStageIDs[value]
-	}
-	return nil
 }
 
 func (m *cleanupManager) deleteUnusedCustomTags(ctx context.Context) error {
