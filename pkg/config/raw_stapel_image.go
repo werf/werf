@@ -45,7 +45,7 @@ func (c *rawStapelImage) setAndValidateStapelImage() error {
 		case string:
 			c.Images = []string{value.(string)}
 		case nil:
-			c.Images = []string{""}
+			return newDetailedConfigError("nameless image (`image: ~`) is not supported, please specify an image name!", nil, c.doc)
 		default:
 			return newDetailedConfigError(fmt.Sprintf("invalid image name `%v`!", t), nil, c.doc)
 		}

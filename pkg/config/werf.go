@@ -76,10 +76,6 @@ func (c *WerfConfig) validateConflictBetweenImagesNames() error {
 	imageByName := map[string]ImageInterface{}
 	for _, image := range c.Images(false) {
 		name := image.GetName()
-		if name == "" && len(c.Images(true)) > 1 {
-			return newConfigError(fmt.Sprintf("conflict between images names: a nameless image cannot be specified in the config with multiple images!\n\n%s\n", dumpConfigDoc(image.rawDoc())))
-		}
-
 		if d, ok := imageByName[name]; ok {
 			return newConfigError(fmt.Sprintf("conflict between images names!\n\n%s%s\n", dumpConfigDoc(d.rawDoc()), dumpConfigDoc(image.rawDoc())))
 		} else {
