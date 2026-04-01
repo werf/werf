@@ -1021,14 +1021,6 @@ func (c *Conveyor) GetStageIDForImageStage(targetPlatform, imageName, stageName 
 	return c.getImageStage(targetPlatform, imageName, stageName).GetStageImage().Image.GetStageDesc().StageID.String()
 }
 
-func (c *Conveyor) GetImportMetadata(ctx context.Context, projectName, id string) (*storage.ImportMetadata, error) {
-	return c.StorageManager.GetStagesStorage().GetImportMetadata(ctx, projectName, id)
-}
-
-func (c *Conveyor) PutImportMetadata(ctx context.Context, projectName string, metadata *storage.ImportMetadata) error {
-	return c.StorageManager.GetStagesStorage().PutImportMetadata(ctx, projectName, metadata)
-}
-
 func (c *Conveyor) RmImportMetadata(ctx context.Context, projectName, id string) error {
 	return c.StorageManager.GetStagesStorage().RmImportMetadata(ctx, projectName, id)
 }

@@ -4,13 +4,11 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"crypto/md5"
 	"errors"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
-	"sort"
 	"strconv"
 	"strings"
 
@@ -215,113 +213,6 @@ func (backend *BuildahBackend) applyCommands(ctx context.Context, container *con
 	}
 
 	return nil
-}
-
-func (backend *BuildahBackend) CalculateDependencyImportChecksum(ctx context.Context, dependencyImport DependencyImportSpec, opts CalculateDependencyImportChecksum) (string, error) {
-	// TODO(2.0): Take into account empty dirs
-
-	var container *containerDesc
-	if c, err := backend.createContainers(ctx, []string{dependencyImport.ImageName}, CommonOpts(opts)); err != nil {
-		return "", err
-	} else {
-		container = c[0]
-	}
-	defer func() {
-		if err := backend.removeContainers(ctx, []*containerDesc{container}, CommonOpts(opts)); err != nil {
-			logboek.Context(ctx).Error().LogF("ERROR: unable to remove temporal dependency container %q: %s\n", container.Name, err)
-		}
-	}()
-
-	logboek.Context(ctx).Debug().LogF("Mounting dependency container %s\n", container.Name)
-	if err := backend.mountContainers(ctx, []*containerDesc{container}, CommonOpts(opts)); err != nil {
-		return "", fmt.Errorf("unable to mount build container %s: %w", container.Name, err)
-	}
-	defer func() {
-		logboek.Context(ctx).Debug().LogF("Unmounting build container %s\n", container.Name)
-		if err := backend.unmountContainers(ctx, []*containerDesc{container}, CommonOpts(opts)); err != nil {
-			logboek.Context(ctx).Error().LogF("ERROR: unable to unmount containers: %s\n", err)
-		}
-	}()
-
-	fromPath := filepath.Join(container.RootMount, dependencyImport.FromPath)
-
-	pathMatcher := path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{
-		BasePath:     fromPath,
-		IncludeGlobs: dependencyImport.IncludePaths,
-		ExcludeGlobs: dependencyImport.ExcludePaths,
-	})
-
-	var files []string
-
-	err := filepath.Walk(fromPath, func(path string, f os.FileInfo, err error) error {
-		if err != nil {
-			return fmt.Errorf("error accessing %s: %w", path, err)
-		}
-
-		if !pathMatcher.IsDirOrSubmodulePathMatched(path) {
-			if f.IsDir() {
-				return filepath.SkipDir
-			} else {
-				return nil
-			}
-		}
-
-		if f.IsDir() {
-			return nil
-		}
-
-		if pathMatcher.IsPathMatched(path) {
-			files = append(files, path)
-		}
-		return nil
-	})
-	if err != nil {
-		return "", err
-	}
-
-	hash := md5.New()
-	sort.Strings(files)
-
-	for _, path := range files {
-		logboek.Context(ctx).Debug().LogF("Calculating checksum of container file %s\n", path)
-
-		fileInfo, err := os.Lstat(path)
-		if err != nil {
-			return "", fmt.Errorf("unable to get file info %q: %w", path, err)
-		}
-
-		fileHash := md5.New()
-		if fileInfo.Mode()&os.ModeSymlink != 0 {
-			link, err := os.Readlink(path)
-			if err != nil {
-				return "", fmt.Errorf("unable to read symlink %q: %w", path, err)
-			}
-			if _, err := io.Copy(fileHash, strings.NewReader(link)); err != nil {
-				return "", fmt.Errorf("error calculating hash for symlink %q: %w", path, err)
-			}
-		} else {
-			if err := func() error {
-				f, err := os.Open(path)
-				if err != nil {
-					return fmt.Errorf("unable to open file %q: %w", path, err)
-				}
-				defer f.Close()
-
-				if _, err := io.Copy(fileHash, f); err != nil {
-					return fmt.Errorf("error calculating hash for file %q: %w", path, err)
-				}
-				return nil
-			}(); err != nil {
-				return "", err
-			}
-		}
-
-		if _, err := fmt.Fprintf(hash, "%x  %s\n", fileHash.Sum(nil), filepath.Join("/", util.GetRelativeToBaseFilepath(container.RootMount, path))); err != nil {
-			return "", fmt.Errorf("error calculating file %q checksum: %w", path, err)
-		}
-	}
-
-	return fmt.Sprintf("%x", hash.Sum(nil)), nil
 }
 
 func (backend *BuildahBackend) applyDataArchives(ctx context.Context, container *containerDesc, dataArchives []DataArchiveSpec) error {

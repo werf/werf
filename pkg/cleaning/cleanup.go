@@ -66,7 +66,6 @@ func newCleanupManager(projectName string, storageManager *manager.StorageManage
 type cleanupManager struct {
 	stageManager stage_manager.Manager
 
-	checksumSourceStageIDs map[string][]string
 	sourceStageIDImportIDs map[string][]string
 
 	ProjectName                             string
@@ -960,7 +959,6 @@ FilterOutFinalStages:
 }
 
 func (m *cleanupManager) initImportsMetadata(ctx context.Context) error {
-	m.checksumSourceStageIDs = map[string][]string{}
 	m.sourceStageIDImportIDs = map[string][]string{}
 
 	importMetadataIDs, err := m.StorageManager.GetStagesStorage().GetImportMetadataIDs(ctx, m.ProjectName, storage.WithCache())
@@ -990,9 +988,7 @@ func (m *cleanupManager) initImportsMetadata(ctx context.Context) error {
 
 		importSourceID := metadata.ImportSourceID
 		sourceStageID := metadata.SourceStageID
-		checksum := metadata.Checksum
 
-		m.checksumSourceStageIDs[checksum] = append(m.checksumSourceStageIDs[checksum], sourceStageID)
 		m.sourceStageIDImportIDs[sourceStageID] = append(m.sourceStageIDImportIDs[sourceStageID], importSourceID)
 
 		return nil
@@ -1067,22 +1063,14 @@ func (m *cleanupManager) protectRelativeStageDescSetByStageDesc(targetStageDesc 
 			// Import or Dependency source checking.
 			if withImportOrDependencySources {
 				for label, value := range currentStageDesc.Info.Labels {
-					if strings.HasPrefix(label, image.WerfImportChecksumLabelPrefix) {
-						sourceStageIDs, ok := m.checksumSourceStageIDs[value]
-						if !ok {
+					if strings.HasPrefix(label, image.WerfImportSourceStageIDLabelPrefix) {
+						if strings.HasPrefix(value, image.WerfImportSourceExternalImagePrefix) {
 							continue
 						}
-
-						for _, sourceStageID := range sourceStageIDs {
-							if strings.HasPrefix(sourceStageID, image.WerfImportSourceExternalImagePrefix) {
-								// Skip external image import sources.
-								continue
-							}
-							sourceStageDesc := m.stageManager.GetStageDescByStageID(sourceStageID)
-							if sourceStageDesc != nil {
-								currentStageDescSet.Add(sourceStageDesc)
-								m.stageManager.MarkStageDescAsProtected(sourceStageDesc, stage_manager.ProtectionReasonImportSource, false)
-							}
+						sourceStageDesc := m.stageManager.GetStageDescByStageID(value)
+						if sourceStageDesc != nil {
+							currentStageDescSet.Add(sourceStageDesc)
+							m.stageManager.MarkStageDescAsProtected(sourceStageDesc, stage_manager.ProtectionReasonImportSource, false)
 						}
 					} else if strings.HasPrefix(label, image.WerfDependencySourceStageIDLabelPrefix) {
 						sourceStageDesc := m.stageManager.GetStageDescByStageID(value)

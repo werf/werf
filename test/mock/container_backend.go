@@ -14,12 +14,11 @@ import (
 	io "io"
 	reflect "reflect"
 
-	gomock "go.uber.org/mock/gomock"
-
 	container_backend "github.com/werf/werf/v2/pkg/container_backend"
 	info "github.com/werf/werf/v2/pkg/container_backend/info"
 	prune "github.com/werf/werf/v2/pkg/container_backend/prune"
 	image "github.com/werf/werf/v2/pkg/image"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockContainerBackend is a mock of ContainerBackend interface.
@@ -94,21 +93,6 @@ func (m *MockContainerBackend) BuildStapelStage(ctx context.Context, baseImage s
 func (mr *MockContainerBackendMockRecorder) BuildStapelStage(ctx, baseImage, opts any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BuildStapelStage", reflect.TypeOf((*MockContainerBackend)(nil).BuildStapelStage), ctx, baseImage, opts)
-}
-
-// CalculateDependencyImportChecksum mocks base method.
-func (m *MockContainerBackend) CalculateDependencyImportChecksum(ctx context.Context, dependencyImport container_backend.DependencyImportSpec, opts container_backend.CalculateDependencyImportChecksum) (string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CalculateDependencyImportChecksum", ctx, dependencyImport, opts)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CalculateDependencyImportChecksum indicates an expected call of CalculateDependencyImportChecksum.
-func (mr *MockContainerBackendMockRecorder) CalculateDependencyImportChecksum(ctx, dependencyImport, opts any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CalculateDependencyImportChecksum", reflect.TypeOf((*MockContainerBackend)(nil).CalculateDependencyImportChecksum), ctx, dependencyImport, opts)
 }
 
 // ClaimTargetPlatforms mocks base method.
