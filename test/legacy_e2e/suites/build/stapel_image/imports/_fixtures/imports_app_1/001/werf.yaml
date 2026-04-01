@@ -14,7 +14,7 @@ shell:
   - touch /myartifact/a/b/c/fffilel
 ---
 image: ~
-from: registry.werf.io/base/alpine
+from: registry.werf.io/base/alpine:3.21
 import:
 - from: myartifact
   add: /myartifact/a/b/FILE
