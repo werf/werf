@@ -1,7 +1,7 @@
 configVersion: 1
 project: none
 ---
-image: ~
+image: test
 from: registry.werf.io/base/ubuntu:22.04
 shell:
   installCacheVersion: 0

@@ -89,7 +89,7 @@ var _ = Describe("Build phase", func() {
 						"WERF_CONFIG": "werf_2.yaml",
 					},
 					OutputLineHandler: func(line string) {
-						if strings.Contains(line, "Building stage ~/install") {
+						if strings.Contains(line, "Building stage test/install") {
 							buildingInstall = true
 							stageParserState = "buildingInstall"
 						}
@@ -124,7 +124,7 @@ var _ = Describe("Build phase", func() {
 						"WERF_CONFIG": "werf_2.yaml",
 					},
 					OutputLineHandler: func(line string) {
-						if strings.Contains(line, "Building stage ~/install") {
+						if strings.Contains(line, "Building stage test/install") {
 							buildingInstall = true
 							stageParserState = "buildingInstall"
 						}
@@ -162,7 +162,7 @@ var _ = Describe("Build phase", func() {
 					"WERF_CONFIG": "werf_2.yaml",
 				},
 				OutputLineHandler: func(line string) {
-					if strings.Contains(line, "Use previously built image for ~/install") {
+					if strings.Contains(line, "Use previously built image for test/install") {
 						useCachedInstall = true
 						stageParserState = "usingCachedInstall"
 					}

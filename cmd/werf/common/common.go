@@ -747,7 +747,7 @@ There are the following formats to use:
 * specify IMAGE_NAME/STAGE_NAME to introspect stage STAGE_NAME of image IMAGE_NAME
 * specify STAGE_NAME or */STAGE_NAME for the introspection of all existing stages with name STAGE_NAME
 
-IMAGE_NAME is the name of an image described in werf.yaml, the nameless image specified with ~.
+IMAGE_NAME is the name of an image described in werf.yaml.
 STAGE_NAME should be one of the following: `+strings.Join(allStagesNames(), ", "))
 }
 

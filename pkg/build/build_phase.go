@@ -87,19 +87,12 @@ type BuildPhase struct {
 }
 
 func GenerateImageEnv(werfImageName, imageName string) string {
-	var imageEnvName string
-	if werfImageName == "" {
-		imageEnvName = "WERF_DOCKER_IMAGE_NAME"
-	} else {
-		werfImageName := strings.ToUpper(werfImageName)
-		for _, l := range []string{"/", "-", "."} {
-			werfImageName = strings.ReplaceAll(werfImageName, l, "_")
-		}
-
-		imageEnvName = fmt.Sprintf("WERF_%s_DOCKER_IMAGE_NAME", werfImageName)
+	formattedName := strings.ToUpper(werfImageName)
+	for _, l := range []string{"/", "-", "."} {
+		formattedName = strings.ReplaceAll(formattedName, l, "_")
 	}
 
-	return fmt.Sprintf("%s=%s", imageEnvName, imageName)
+	return fmt.Sprintf("WERF_%s_DOCKER_IMAGE_NAME=%s", formattedName, imageName)
 }
 
 func (phase *BuildPhase) Name() string {

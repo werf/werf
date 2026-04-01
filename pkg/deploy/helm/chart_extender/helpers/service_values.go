@@ -73,20 +73,15 @@ func GetServiceValues(ctx context.Context, projectName, repo string, imageInfoGe
 		tag := imageInfoGetter.GetTag()
 		imageName := imageInfoGetter.GetName()
 
-		if imageInfoGetter.IsNameless() {
-			werfInfo["is_nameless_image"] = true
-			werfInfo["nameless_image"] = imageName
-		} else {
-			legacyImageInfo["image"].(map[string]interface{})[imageInfoGetter.GetWerfImageName()] = imageName
-			legacyImageInfo["tag"].(map[string]interface{})[imageInfoGetter.GetWerfImageName()] = tag
+		legacyImageInfo["image"].(map[string]interface{})[imageInfoGetter.GetWerfImageName()] = imageName
+		legacyImageInfo["tag"].(map[string]interface{})[imageInfoGetter.GetWerfImageName()] = tag
 
-			imageDetails, err := image.BuildImageValuesMap(imageInfoGetter)
-			if err != nil {
-				return nil, fmt.Errorf("get image details for %q: %w", imageName, err)
-			}
-
-			imagesInfo[imageInfoGetter.GetWerfImageName()] = imageDetails
+		imageDetails, err := image.BuildImageValuesMap(imageInfoGetter)
+		if err != nil {
+			return nil, fmt.Errorf("get image details for %q: %w", imageName, err)
 		}
+
+		imagesInfo[imageInfoGetter.GetWerfImageName()] = imageDetails
 	}
 
 	globalRes := map[string]interface{}{}
