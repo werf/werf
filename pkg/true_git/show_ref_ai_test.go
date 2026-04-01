@@ -24,7 +24,7 @@ func TestAI_ShowRef_HeadOnly(t *testing.T) {
 	require.NoError(t, err)
 
 	testFile := filepath.Join(tmpDir, "test.txt")
-	err = os.WriteFile(testFile, []byte("test content"), 0644)
+	err = os.WriteFile(testFile, []byte("test content"), 0o644)
 	require.NoError(t, err)
 
 	_, err = wt.Add("test.txt")
@@ -65,7 +65,7 @@ func TestAI_ShowRef_WithBranches(t *testing.T) {
 	require.NoError(t, err)
 
 	testFile := filepath.Join(tmpDir, "test.txt")
-	err = os.WriteFile(testFile, []byte("test content"), 0644)
+	err = os.WriteFile(testFile, []byte("test content"), 0o644)
 	require.NoError(t, err)
 
 	_, err = wt.Add("test.txt")
@@ -87,7 +87,7 @@ func TestAI_ShowRef_WithBranches(t *testing.T) {
 	require.NoError(t, err)
 
 	// Make a change on the new branch
-	err = os.WriteFile(testFile, []byte("modified content"), 0644)
+	err = os.WriteFile(testFile, []byte("modified content"), 0o644)
 	require.NoError(t, err)
 
 	_, err = wt.Add("test.txt")
@@ -135,7 +135,7 @@ func TestAI_ShowRef_WithLightweightTag(t *testing.T) {
 	require.NoError(t, err)
 
 	testFile := filepath.Join(tmpDir, "test.txt")
-	err = os.WriteFile(testFile, []byte("test content"), 0644)
+	err = os.WriteFile(testFile, []byte("test content"), 0o644)
 	require.NoError(t, err)
 
 	_, err = wt.Add("test.txt")
@@ -181,7 +181,7 @@ func TestAI_ShowRef_WithAnnotatedTag(t *testing.T) {
 	require.NoError(t, err)
 
 	testFile := filepath.Join(tmpDir, "test.txt")
-	err = os.WriteFile(testFile, []byte("test content"), 0644)
+	err = os.WriteFile(testFile, []byte("test content"), 0o644)
 	require.NoError(t, err)
 
 	_, err = wt.Add("test.txt")

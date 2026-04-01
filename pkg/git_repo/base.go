@@ -66,6 +66,18 @@ func (repo *Base) initRepoHandleBackedByWorkTree(ctx context.Context, commit str
 	return repo.initRepoHandleBackedByWorkTreeFunc(ctx, commit)
 }
 
+func useGitWorktree() bool {
+	return os.Getenv("WERF_GIT_USE_WORKTREE") == "1"
+}
+
+func formatSubmoduleValidationError(result *true_git.SubmoduleValidationResult) error {
+	var msgs []string
+	for _, err := range result.Errors {
+		msgs = append(msgs, fmt.Sprintf("submodule %q: %s", err.SubmodulePath, err.Message))
+	}
+	return fmt.Errorf("submodule state validation failed, run 'git submodule update --init --recursive' to fix:\n%s", strings.Join(msgs, "\n"))
+}
+
 func (repo *Base) HeadCommitHash(ctx context.Context) (string, error) {
 	panic("not implemented")
 }
@@ -180,13 +192,13 @@ func (repo *Base) CreatePatch(ctx context.Context, repoPath, gitDir, repoID, wor
 	logboek.Context(ctx).Debug().LogProcess("Creating patch").Do(func() {
 		logboek.Context(ctx).Debug().LogFDetails("repository: %s\noptions: %+v\n", repo.Name, opts)
 		logboek.Context(ctx).Debug().LogOptionalLn()
-		patch, err = repo.createPatch(ctx, repoPath, gitDir, repoID, workTreeCacheDir, opts)
+		patch, err = repo.createPatch(ctx, repoPath, gitDir, repoID, workTreeCacheDir, repoPath, opts)
 	})
 
 	return
 }
 
-func (repo *Base) createPatch(ctx context.Context, repoPath, gitDir, repoID, workTreeCacheDir string, opts PatchOptions) (Patch, error) {
+func (repo *Base) createPatch(ctx context.Context, repoPath, gitDir, repoID, workTreeCacheDir, workTreeDir string, opts PatchOptions) (Patch, error) {
 	if lock, err := CommonGitDataManager.LockGC(ctx, true); err != nil {
 		return nil, err
 	} else {
@@ -240,34 +252,47 @@ func (repo *Base) createPatch(ctx context.Context, repoPath, gitDir, repoID, wor
 	}
 
 	var desc *true_git.PatchDescriptor
-	if hasSubmodules {
-		var retryCount int
+	if useGitWorktree() {
+		if hasSubmodules {
+			var retryCount int
 
-	TryCreatePatch:
-		desc, err = true_git.Patch(ctx, fileHandler, gitDir, workTreeCacheDir, true, true_git.PatchOptions(opts))
+		TryCreatePatch:
+			desc, err = true_git.Patch(ctx, fileHandler, gitDir, workTreeCacheDir, true, true_git.PatchOptions(opts))
 
-		if true_git.IsCommitsNotPresentError(err) && retryCount == 0 {
-			logboek.Context(ctx).Default().LogF("Detected not present commits when creating patch: %s\n", err)
-			logboek.Context(ctx).Default().LogF("Will switch worktree to original commit %q and retry\n", opts.FromCommit)
+			if true_git.IsCommitsNotPresentError(err) && retryCount == 0 {
+				logboek.Context(ctx).Default().LogF("Detected not present commits when creating patch: %s\n", err)
+				logboek.Context(ctx).Default().LogF("Will switch worktree to original commit %q and retry\n", opts.FromCommit)
 
-			if err := fileHandler.Truncate(0); err != nil {
-				return nil, fmt.Errorf("unable to truncate file %s: %w", tmpFile, err)
+				if err := fileHandler.Truncate(0); err != nil {
+					return nil, fmt.Errorf("unable to truncate file %s: %w", tmpFile, err)
+				}
+				if _, err := fileHandler.Seek(0, 0); err != nil {
+					return nil, fmt.Errorf("unable to reset file %s: %w", tmpFile, err)
+				}
+
+				if err := true_git.WithWorkTree(ctx, gitDir, workTreeCacheDir, opts.FromCommit, true_git.WithWorkTreeOptions{HasSubmodules: true}, func(workTreeDir string) error {
+					return nil
+				}); err != nil {
+					return nil, fmt.Errorf("unable to switch worktree to commit %q: %w", opts.FromCommit, err)
+				}
+
+				retryCount++
+				goto TryCreatePatch
 			}
-			if _, err := fileHandler.Seek(0, 0); err != nil {
-				return nil, fmt.Errorf("unable to reset file %s: %w", tmpFile, err)
-			}
-
-			if err := true_git.WithWorkTree(ctx, gitDir, workTreeCacheDir, opts.FromCommit, true_git.WithWorkTreeOptions{HasSubmodules: true}, func(workTreeDir string) error {
-				return nil
-			}); err != nil {
-				return nil, fmt.Errorf("unable to switch worktree to commit %q: %w", opts.FromCommit, err)
-			}
-
-			retryCount++
-			goto TryCreatePatch
+		} else {
+			desc, err = true_git.Patch(ctx, fileHandler, gitDir, workTreeCacheDir, false, true_git.PatchOptions(opts))
 		}
 	} else {
-		desc, err = true_git.Patch(ctx, fileHandler, gitDir, workTreeCacheDir, false, true_git.PatchOptions(opts))
+		if hasSubmodules {
+			validationResult, validationErr := true_git.ValidateSubmoduleState(ctx, repository, toHash, workTreeDir)
+			if validationErr != nil {
+				return nil, fmt.Errorf("validate submodule state: %w", validationErr)
+			}
+			if !validationResult.Valid {
+				return nil, formatSubmoduleValidationError(validationResult)
+			}
+		}
+		desc, err = true_git.GoGitPatch(ctx, fileHandler, gitDir, workTreeDir, hasSubmodules, true_git.PatchOptions(opts))
 	}
 
 	if err != nil {
@@ -366,13 +391,13 @@ func (repo *Base) CreateArchive(ctx context.Context, repoPath, gitDir, repoID, w
 	logboek.Context(ctx).Debug().LogProcess("Creating archive").Do(func() {
 		logboek.Context(ctx).Debug().LogFDetails("repository: %s\noptions: %+v\n", repo.Name, opts)
 		logboek.Context(ctx).Debug().LogOptionalLn()
-		archive, err = repo.createArchive(ctx, repoPath, gitDir, repoID, workTreeCacheDir, opts)
+		archive, err = repo.createArchive(ctx, repoPath, gitDir, repoID, workTreeCacheDir, repoPath, opts)
 	})
 
 	return
 }
 
-func (repo *Base) createArchive(ctx context.Context, repoPath, gitDir, repoID, workTreeCacheDir string, opts ArchiveOptions) (Archive, error) {
+func (repo *Base) createArchive(ctx context.Context, repoPath, gitDir, repoID, workTreeCacheDir, workTreeDir string, opts ArchiveOptions) (Archive, error) {
 	if lock, err := CommonGitDataManager.LockGC(ctx, true); err != nil {
 		return nil, err
 	} else {
@@ -416,10 +441,25 @@ func (repo *Base) createArchive(ctx context.Context, repoPath, gitDir, repoID, w
 	}
 	defer fileHandler.Close()
 
-	if hasSubmodules {
-		err = true_git.ArchiveWithSubmodules(ctx, fileHandler, gitDir, workTreeCacheDir, true_git.ArchiveOptions(opts))
+	if useGitWorktree() {
+		if hasSubmodules {
+			err = true_git.ArchiveWithSubmodules(ctx, fileHandler, gitDir, workTreeCacheDir, true_git.ArchiveOptions(opts))
+		} else {
+			err = true_git.Archive(ctx, fileHandler, gitDir, workTreeCacheDir, true_git.ArchiveOptions(opts))
+		}
 	} else {
-		err = true_git.Archive(ctx, fileHandler, gitDir, workTreeCacheDir, true_git.ArchiveOptions(opts))
+		if hasSubmodules {
+			validationResult, validationErr := true_git.ValidateSubmoduleState(ctx, repository, commitHash, workTreeDir)
+			if validationErr != nil {
+				return nil, fmt.Errorf("validate submodule state: %w", validationErr)
+			}
+			if !validationResult.Valid {
+				return nil, formatSubmoduleValidationError(validationResult)
+			}
+			err = true_git.GoGitArchiveWithSubmodules(ctx, fileHandler, gitDir, workTreeDir, true_git.ArchiveOptions(opts))
+		} else {
+			err = true_git.GoGitArchive(ctx, fileHandler, gitDir, true_git.ArchiveOptions(opts))
+		}
 	}
 
 	if err != nil {
