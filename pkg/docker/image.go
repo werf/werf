@@ -166,9 +166,9 @@ func doCliPull(ctx context.Context, args ...string) error {
 	}
 	defer pullResp.Close()
 
-	_, err = io.Copy(io.Discard, pullResp)
+	err = jsonmessage.DisplayJSONMessagesStream(pullResp, io.Discard, 0, false, nil)
 	if err != nil {
-		return fmt.Errorf("read pull response: %w", err)
+		return fmt.Errorf("pull image: %w", err)
 	}
 
 	return nil
