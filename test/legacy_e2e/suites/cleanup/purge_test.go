@@ -38,7 +38,6 @@ var _ = Describe("purge command", func() {
 				Expect(StagesCount(ctx)).Should(BeNumerically(">", 0))
 				Expect(ManagedImagesCount(ctx)).Should(BeNumerically(">", 0))
 				Expect(len(ImageMetadata(ctx, imageName))).Should(BeNumerically(">", 0))
-				Expect(len(ImportMetadataIDs(ctx))).Should(BeNumerically(">", 0))
 				Expect(len(CustomTags(ctx))).Should(BeNumerically(">", 0))
 				Expect(len(CustomTagsMetadataList(ctx))).Should(BeNumerically(">", 0))
 
@@ -48,7 +47,6 @@ var _ = Describe("purge command", func() {
 					Expect(StagesCount(ctx)).Should(Equal(0))
 					Expect(ManagedImagesCount(ctx)).Should(Equal(0))
 					Expect(len(ImageMetadata(ctx, imageName))).Should(Equal(0))
-					Expect(len(ImportMetadataIDs(ctx))).Should(Equal(0))
 					Expect(len(CustomTags(ctx))).Should(Equal(0))
 					Expect(len(CustomTagsMetadataList(ctx))).Should(Equal(0))
 				}

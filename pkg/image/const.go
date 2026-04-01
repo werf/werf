@@ -12,9 +12,6 @@ const (
 	WerfBaseImageIDLabel                   = "werf.io/base-image-id"
 	WerfParentStageID                      = "werf.io/parent-stage-id"
 
-	WerfImportMetadataSourceStageIDLabel  = "source-stage-id"
-	WerfImportMetadataImportSourceIDLabel = "import-source-id"
-
 	WerfCustomTagMetadataStageIDLabel = "stage-id"
 	WerfCustomTagMetadataTag          = "tag"
 

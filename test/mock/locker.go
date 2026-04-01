@@ -12,8 +12,9 @@ package mock
 import (
 	reflect "reflect"
 
-	lockgate "github.com/werf/lockgate"
 	gomock "go.uber.org/mock/gomock"
+
+	lockgate "github.com/werf/lockgate"
 )
 
 // MockLocker is a mock of Locker interface.

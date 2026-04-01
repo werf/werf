@@ -87,8 +87,6 @@ type StorageManagerInterface interface {
 	ForEachDeleteFinalStage(ctx context.Context, options ForEachDeleteStageOptions, stageDescSet image.StageDescSet, f func(ctx context.Context, stageDesc *image.StageDesc, err error) error) error
 	ForEachRmImageMetadata(ctx context.Context, projectName, imageNameOrID string, stageIDCommitList map[string][]string, f func(ctx context.Context, commit, stageID string, err error) error) error
 	ForEachRmManagedImage(ctx context.Context, projectName string, managedImages []string, f func(ctx context.Context, managedImage string, err error) error) error
-	ForEachGetImportMetadata(ctx context.Context, projectName string, ids []string, f func(ctx context.Context, metadataID string, metadata *storage.ImportMetadata, err error) error) error
-	ForEachRmImportMetadata(ctx context.Context, projectName string, ids []string, f func(ctx context.Context, id string, err error) error) error
 	ForEachGetStageCustomTagMetadata(ctx context.Context, ids []string, f func(ctx context.Context, metadataID string, metadata *storage.CustomTagMetadata, err error) error) error
 	ForEachDeleteStageCustomTag(ctx context.Context, ids []string, f func(ctx context.Context, tag string, err error) error) error
 }
@@ -998,26 +996,6 @@ func (m *StorageManager) ForEachRmManagedImage(ctx context.Context, projectName 
 		managedImage := managedImages[taskId]
 		err := m.StagesStorage.RmManagedImage(ctx, projectName, managedImage)
 		return f(ctx, managedImage, err)
-	})
-}
-
-func (m *StorageManager) ForEachGetImportMetadata(ctx context.Context, projectName string, ids []string, f func(ctx context.Context, metadataID string, metadata *storage.ImportMetadata, err error) error) error {
-	return parallel.DoTasks(ctx, len(ids), parallel.DoTasksOptions{
-		MaxNumberOfWorkers: m.MaxNumberOfWorkers(),
-	}, func(ctx context.Context, taskId int) error {
-		id := ids[taskId]
-		metadata, err := m.StagesStorage.GetImportMetadata(ctx, projectName, id)
-		return f(ctx, id, metadata, err)
-	})
-}
-
-func (m *StorageManager) ForEachRmImportMetadata(ctx context.Context, projectName string, ids []string, f func(ctx context.Context, id string, err error) error) error {
-	return parallel.DoTasks(ctx, len(ids), parallel.DoTasksOptions{
-		MaxNumberOfWorkers: m.MaxNumberOfWorkers(),
-	}, func(ctx context.Context, taskId int) error {
-		id := ids[taskId]
-		err := m.StagesStorage.RmImportMetadata(ctx, projectName, id)
-		return f(ctx, id, err)
 	})
 }
 

@@ -6,13 +6,10 @@ import (
 	"strings"
 
 	"github.com/werf/common-go/pkg/util"
-	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/image"
 )
-
-var ErrNothingToImport = fmt.Errorf("nothing to import")
 
 type getImportsOptions struct {
 	Before StageName
@@ -67,7 +64,6 @@ func (s *DependenciesStage) GetDependencies(ctx context.Context, c Conveyor, _ c
 
 	for _, elm := range s.imports {
 		sourceContentDigest := getSourceImageContentDigest(c, s.targetPlatform, elm)
-		logboek.Context(ctx).Default().LogF("source content digest %s: %s\n", sourceContentDigest, formatImportTitle(elm))
 
 		args = append(args, sourceContentDigest)
 		args = append(args, elm.Add)
@@ -85,17 +81,6 @@ func (s *DependenciesStage) GetDependencies(ctx context.Context, c Conveyor, _ c
 	}
 
 	return util.Sha256Hash(args...), nil
-}
-
-func formatImportTitle(elm *config.Import) string {
-	title := fmt.Sprintf("image=%s add=%s to=%s", elm.From, elm.Add, elm.To)
-	if len(elm.IncludePaths) != 0 {
-		title += fmt.Sprintf(" includePaths=%v", elm.IncludePaths)
-	}
-	if len(elm.ExcludePaths) != 0 {
-		title += fmt.Sprintf(" excludePaths=%v", elm.ExcludePaths)
-	}
-	return fmt.Sprintf("import[%s]", title)
 }
 
 func (s *DependenciesStage) prepareImageWithLegacyStapelBuilder(ctx context.Context, c Conveyor, cr container_backend.ContainerBackend, _, stageImage *StageImage) error {

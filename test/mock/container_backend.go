@@ -14,11 +14,12 @@ import (
 	io "io"
 	reflect "reflect"
 
+	gomock "go.uber.org/mock/gomock"
+
 	container_backend "github.com/werf/werf/v2/pkg/container_backend"
 	info "github.com/werf/werf/v2/pkg/container_backend/info"
 	prune "github.com/werf/werf/v2/pkg/container_backend/prune"
 	image "github.com/werf/werf/v2/pkg/image"
-	gomock "go.uber.org/mock/gomock"
 )
 
 // MockContainerBackend is a mock of ContainerBackend interface.

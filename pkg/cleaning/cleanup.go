@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/go-git/go-git/v5"
@@ -65,8 +64,6 @@ func newCleanupManager(projectName string, storageManager *manager.StorageManage
 
 type cleanupManager struct {
 	stageManager stage_manager.Manager
-
-	sourceStageIDImportIDs map[string][]string
 
 	ProjectName                             string
 	StorageManager                          manager.StorageManagerInterface
@@ -849,12 +846,6 @@ func deleteImageMetadata(ctx context.Context, projectName string, storageManager
 }
 
 func (m *cleanupManager) cleanupUnusedStages(ctx context.Context) error {
-	if err := logboek.Context(ctx).Default().LogProcess("Fetching imports metadata").DoError(func() error {
-		return m.initImportsMetadata(ctx)
-	}); err != nil {
-		return fmt.Errorf("unable to init imports metadata: %w", err)
-	}
-
 	// skip kept stages and their relatives.
 	{
 		logboek.Context(ctx).Default().LogProcess("Processing relative stages for saved stages").Do(func() {
@@ -894,39 +885,6 @@ func (m *cleanupManager) cleanupUnusedStages(ctx context.Context) error {
 		return fmt.Errorf("unable to cleanup custom tags metadata: %w", err)
 	}
 
-	if err := m.deleteUnusedImportsMetadata(ctx); err != nil {
-		return fmt.Errorf("unable to cleanup imports metadata: %w", err)
-	}
-
-	return nil
-}
-
-func (m *cleanupManager) deleteUnusedImportsMetadata(ctx context.Context) error {
-	if len(m.sourceStageIDImportIDs) == 0 {
-		return nil
-	}
-
-	var importMetadataIDsToDelete []string
-outerLoop:
-	for sourceStageID, importMetadataIDs := range m.sourceStageIDImportIDs {
-		for protectedStageDesc := range m.stageManager.GetProtectedStageDescSet().Iter() {
-			// Skip existent/protected stages.
-			if sourceStageID == protectedStageDesc.StageID.String() {
-				continue outerLoop
-			}
-		}
-
-		importMetadataIDsToDelete = append(importMetadataIDsToDelete, importMetadataIDs...)
-	}
-
-	if len(importMetadataIDsToDelete) != 0 {
-		if err := logboek.Context(ctx).Default().LogProcess("Cleaning imports metadata (%d)", len(importMetadataIDsToDelete)).DoError(func() error {
-			return m.deleteImportsMetadata(ctx, importMetadataIDsToDelete)
-		}); err != nil {
-			return err
-		}
-	}
-
 	return nil
 }
 
@@ -956,73 +914,6 @@ FilterOutFinalStages:
 	}
 
 	return nil
-}
-
-func (m *cleanupManager) initImportsMetadata(ctx context.Context) error {
-	m.sourceStageIDImportIDs = map[string][]string{}
-
-	importMetadataIDs, err := m.StorageManager.GetStagesStorage().GetImportMetadataIDs(ctx, m.ProjectName, storage.WithCache())
-	if err != nil {
-		return err
-	}
-
-	var mutex sync.Mutex
-	return m.StorageManager.ForEachGetImportMetadata(ctx, m.ProjectName, importMetadataIDs, func(ctx context.Context, metadataID string, metadata *storage.ImportMetadata, err error) error {
-		if err != nil {
-			return err
-		}
-
-		if metadata == nil {
-			if err := logboek.Context(ctx).Warn().LogProcess("Deleting invalid import metadata %s", metadataID).
-				DoError(func() error {
-					return m.deleteImportsMetadata(ctx, []string{metadataID})
-				}); err != nil {
-				return fmt.Errorf("unable to delete import metadata %s: %w", metadataID, err)
-			}
-
-			return nil
-		}
-
-		mutex.Lock()
-		defer mutex.Unlock()
-
-		importSourceID := metadata.ImportSourceID
-		sourceStageID := metadata.SourceStageID
-
-		m.sourceStageIDImportIDs[sourceStageID] = append(m.sourceStageIDImportIDs[sourceStageID], importSourceID)
-
-		return nil
-	})
-}
-
-func (m *cleanupManager) deleteImportsMetadata(ctx context.Context, importMetadataIDs []string) error {
-	return deleteImportsMetadata(ctx, m.ProjectName, m.StorageManager, importMetadataIDs, m.DryRun)
-}
-
-func deleteImportsMetadata(ctx context.Context, projectName string, storageManager manager.StorageManagerInterface, importMetadataIDs []string, dryRun bool) error {
-	if dryRun {
-		for _, importMetadataID := range importMetadataIDs {
-			logboek.Context(ctx).Info().LogFDetails("  importMetadataID: %s\n", importMetadataID)
-			logboek.Context(ctx).Info().LogOptionalLn()
-		}
-		return nil
-	}
-
-	return storageManager.ForEachRmImportMetadata(ctx, projectName, importMetadataIDs, func(ctx context.Context, importMetadataID string, err error) error {
-		if err != nil {
-			if err := handleDeletionError(err); err != nil {
-				return err
-			}
-
-			logboek.Context(ctx).Warn().LogF("WARNING: Import metadata ID %s deletion failed: %s\n", importMetadataID, err)
-
-			return nil
-		}
-
-		logboek.Context(ctx).Info().LogFDetails("  importMetadataID: %s\n", importMetadataID)
-
-		return nil
-	})
 }
 
 func (m *cleanupManager) protectRelativeStageDescSetByStageDesc(targetStageDesc *image.StageDesc, withImportOrDependencySources bool, handledStageDescSet image.StageDescSet) {
