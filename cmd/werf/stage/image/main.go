@@ -73,7 +73,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified stages storage")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
-	common.StubSetupInsecureHelmDependencies(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 	common.SetupContainerRegistryMirror(&commonCmdData, cmd)
 

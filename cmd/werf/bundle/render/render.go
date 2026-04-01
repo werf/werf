@@ -17,8 +17,8 @@ import (
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/nelm/pkg/action"
-	"github.com/werf/nelm/pkg/helm/pkg/engine"
 	nelmcommon "github.com/werf/nelm/pkg/common"
+	"github.com/werf/nelm/pkg/helm/pkg/engine"
 	"github.com/werf/nelm/pkg/log"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/deploy"
@@ -93,7 +93,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupChartProvenanceKeyring(&commonCmdData, cmd)
 	common.SetupChartProvenanceStrategy(&commonCmdData, cmd)
 	common.SetupExtraAPIVersions(&commonCmdData, cmd)
-	common.SetupForceAdoption(&commonCmdData, cmd)
 	common.SetupKubeVersion(&commonCmdData, cmd)
 	common.SetupNamespace(&commonCmdData, cmd, false)
 	common.SetupNetworkParallelism(&commonCmdData, cmd)
@@ -232,7 +231,6 @@ func runRender(ctx context.Context) error {
 		ExtraAnnotations:            extraAnnotations,
 		ExtraLabels:                 extraLabels,
 		ExtraRuntimeAnnotations:     serviceAnnotations,
-		ForceAdoption:               commonCmdData.ForceAdoption,
 		LegacyChartType:             nelmcommon.LegacyChartTypeBundle,
 		LegacyExtraValues:           serviceValues,
 		LegacyLogRegistryStreamOut:  os.Stdout,

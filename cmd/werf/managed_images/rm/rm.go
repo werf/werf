@@ -59,7 +59,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read and write images to the specified repo")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
-	common.StubSetupInsecureHelmDependencies(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 	common.SetupContainerRegistryMirror(&commonCmdData, cmd)
 

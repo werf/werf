@@ -18,7 +18,6 @@ import (
 	"github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
 	"github.com/werf/nelm/pkg/common"
-	"github.com/werf/nelm/pkg/featgate"
 	"github.com/werf/nelm/pkg/helm/pkg/chart/loader"
 	"github.com/werf/nelm/pkg/helm/pkg/engine"
 	"github.com/werf/nelm/pkg/log"
@@ -1098,8 +1097,6 @@ func SetupValuesFlags(cmdData *CmdData, cmd *cobra.Command) error {
 	cmd.Flags().BoolVarP(&cmdData.DefaultValuesDisable, "disable-default-values", "", util.GetBoolEnvironmentDefaultFalse("WERF_DISABLE_DEFAULT_VALUES"), `Do not use values from the default .helm/values.yaml file (default $WERF_DISABLE_DEFAULT_VALUES or false)`)
 	cmd.Flags().StringArrayVarP(&cmdData.RootSetJSON, "set-root-json", "", []string{}, `Set new keys in arbitrary things in the global root context ("$"), where the key is the value path and the value is JSON. This is meant to be generated inside the program, so use --set-json instead, unless you REALLY know what you are doing. Can specify multiple or separate values with commas: key1=val1,key2=val2.
 Also, can be defined with $WERF_SET_ROOT_JSON_* (e.g. $WERF_SET_ROOT_JSON_1=key1=val1, $WERF_SET_ROOT_JSON_2=key2=val2)`)
-	cmd.Flags().StringArrayVarP(&cmdData.RuntimeSetJSON, "set-runtime-json", "", []string{}, `Set new keys in $.Runtime, where the key is the value path and the value is JSON. This is meant to be generated inside the program, so use --set-json instead, unless you know what you are doing. Can specify multiple or separate values with commas: key1=val1,key2=val2.
-Also, can be defined with $WERF_SET_RUNTIME_JSON_* (e.g. $WERF_SET_RUNTIME_JSON_1=key1=val1, $WERF_SET_RUNTIME_JSON_2=key2=val2)`)
 	cmd.Flags().StringArrayVarP(&cmdData.ValuesFiles, "values", "", []string{}, `Specify helm values in a YAML file or a URL (can specify multiple). Also, can be defined with $WERF_VALUES_* (e.g. $WERF_VALUES_1=.helm/values_1.yaml, $WERF_VALUES_2=.helm/values_2.yaml)`)
 	cmd.Flags().StringArrayVarP(&cmdData.ValuesSet, "set", "", []string{}, `Set helm values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2).
 Also, can be defined with $WERF_SET_* (e.g. $WERF_SET_1=key1=val1, $WERF_SET_2=key2=val2)`)
@@ -1141,16 +1138,10 @@ func SetupTrackingFlags(cmdData *CmdData, cmd *cobra.Command) error {
 		cmd.Flags().IntVarP(&cmdData.LegacyTrackTimeout, "timeout", "t", def, "Resources tracking timeout in seconds ($WERF_TIMEOUT by default)")
 	}
 
-	StubSetupHooksStatusProgressPeriod(cmdData, cmd)
-
 	return nil
 }
 
 func SetupResourceValidationFlags(cmdData *CmdData, cmd *cobra.Command) error {
-	if !featgate.FeatGateResourceValidation.Enabled() {
-		return nil
-	}
-
 	kubeVersion := os.Getenv("WERF_RESOURCE_VALIDATION_KUBE_VERSION")
 	if kubeVersion == "" {
 		kubeVersion = common.DefaultResourceValidationKubeVersion
@@ -1216,26 +1207,6 @@ func SetupLegacyProgressTablePrintInterval(cmdData *CmdData, cmd *cobra.Command)
 
 func SetupChartRepoInsecure(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(&cmdData.ChartRepoInsecure, "insecure-helm-dependencies", "", util.GetBoolEnvironmentDefaultFalse("WERF_INSECURE_HELM_DEPENDENCIES"), "Allow insecure oci registries to be used in the Chart.yaml dependencies configuration (default $WERF_INSECURE_HELM_DEPENDENCIES)")
-}
-
-// TODO(major): remove
-func StubSetupInsecureHelmDependencies(cmdData *CmdData, cmd *cobra.Command) {
-	cmd.Flags().BoolVar(lo.ToPtr(false), "insecure-helm-dependencies", false, "No-op")
-}
-
-// TODO(major): remove
-func StubSetupStatusProgressPeriod(cmdData *CmdData, cmd *cobra.Command) {
-	cmd.PersistentFlags().IntVarP(lo.ToPtr(0), "status-progress-period", "", 0, "No-op")
-}
-
-// TODO(major): remove
-func StubSetupHooksStatusProgressPeriod(cmdData *CmdData, cmd *cobra.Command) {
-	cmd.PersistentFlags().Int64VarP(lo.ToPtr(int64(0)), "hooks-status-progress-period", "", 0, "No-op")
-}
-
-// TODO(major): remove
-func StubSetupTrackTimeout(cmdData *CmdData, cmd *cobra.Command) {
-	cmd.Flags().IntVarP(lo.ToPtr(0), "timeout", "t", 0, "No-op")
 }
 
 func SetupScanContextNamespaceOnly(cmdData *CmdData, cmd *cobra.Command) {

@@ -17,7 +17,6 @@ import (
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/nelm/pkg/action"
 	nelmcommon "github.com/werf/nelm/pkg/common"
-	"github.com/werf/nelm/pkg/featgate"
 	"github.com/werf/nelm/pkg/helm/pkg/engine"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/deploy"
@@ -33,7 +32,6 @@ var cmdData struct {
 	ShowInsignificantDiffs bool
 	ShowSensitiveDiffs     bool
 	ShowVerboseCRDDiffs    bool
-	ShowVerboseDiffs       bool
 	Tag                    string
 }
 
@@ -115,18 +113,10 @@ func NewCmd(ctx context.Context) *cobra.Command {
 		defaultTag = "latest"
 	}
 	cmd.Flags().StringVarP(&cmdData.Tag, "tag", "", defaultTag, "Provide exact tag version or semver-based pattern, werf will install or upgrade to the latest version of the specified bundle ($WERF_TAG or latest by default)")
-	var desc string
-	if featgate.FeatGateMoreDetailedExitCodeForPlan.Enabled() || featgate.FeatGatePreviewV2.Enabled() {
-		desc = "Return exit code 0 if no changes, 1 if error, 2 if resource changes planned, 3 if no resource changes planned, but release still should be installed (default $WERF_EXIT_CODE or false)"
-	} else {
-		desc = "Return exit code 0 if no changes, 1 if error, 2 if any changes planned (default $WERF_EXIT_CODE or false)"
-	}
-	cmd.Flags().BoolVarP(&cmdData.DetailedExitCode, "exit-code", "", util.GetBoolEnvironmentDefaultFalse("WERF_EXIT_CODE"), desc)
+	cmd.Flags().BoolVarP(&cmdData.DetailedExitCode, "exit-code", "", util.GetBoolEnvironmentDefaultFalse("WERF_EXIT_CODE"), "Return exit code 0 if no changes, 1 if error, 2 if resource changes planned, 3 if no resource changes planned, but release still should be installed (default $WERF_EXIT_CODE or false)")
 	cmd.Flags().BoolVarP(&cmdData.ShowInsignificantDiffs, "show-insignificant-diffs", "", util.GetBoolEnvironmentDefaultFalse("WERF_SHOW_INSIGNIFICANT_DIFFS"), "Show insignificant diff lines ($WERF_SHOW_INSIGNIFICANT_DIFFS by default)")
 	cmd.Flags().BoolVarP(&cmdData.ShowSensitiveDiffs, "show-sensitive-diffs", "", util.GetBoolEnvironmentDefaultFalse("WERF_SHOW_SENSITIVE_DIFFS"), "Show sensitive diff lines ($WERF_SHOW_SENSITIVE_DIFFS by default)")
 	cmd.Flags().BoolVarP(&cmdData.ShowVerboseCRDDiffs, "show-verbose-crd-diffs", "", util.GetBoolEnvironmentDefaultFalse("WERF_SHOW_VERBOSE_CRD_DIFFS"), "Show verbose CRD diff lines ($WERF_SHOW_VERBOSE_CRD_DIFFS by default)")
-	// TODO(major): get rid?
-	cmd.Flags().BoolVarP(&cmdData.ShowVerboseDiffs, "show-verbose-diffs", "", util.GetBoolEnvironmentDefaultTrue("WERF_SHOW_VERBOSE_DIFFS"), "Show verbose diff lines ($WERF_SHOW_VERBOSE_DIFFS by default)")
 	var defaultDiffLines int
 	if lines := lo.Must(util.GetIntEnvVar("WERF_DIFF_CONTEXT_LINES")); lines != nil {
 		defaultDiffLines = int(*lines)
@@ -254,7 +244,6 @@ func runPlan(ctx context.Context) error {
 		ResourceDiffOptions: nelmcommon.ResourceDiffOptions{
 			DiffContextLines:       cmdData.DiffContextLines,
 			ShowVerboseCRDDiffs:    cmdData.ShowVerboseCRDDiffs,
-			ShowVerboseDiffs:       cmdData.ShowVerboseDiffs,
 			ShowSensitiveDiffs:     cmdData.ShowSensitiveDiffs,
 			ShowInsignificantDiffs: cmdData.ShowInsignificantDiffs,
 		},

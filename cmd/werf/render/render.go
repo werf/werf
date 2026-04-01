@@ -137,18 +137,14 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupChartProvenanceKeyring(&commonCmdData, cmd)
 	common.SetupChartProvenanceStrategy(&commonCmdData, cmd)
 	common.SetupExtraAPIVersions(&commonCmdData, cmd)
-	common.SetupForceAdoption(&commonCmdData, cmd)
 	common.SetupKubeVersion(&commonCmdData, cmd)
 	common.SetupNamespace(&commonCmdData, cmd, true)
 	common.SetupNetworkParallelism(&commonCmdData, cmd)
 	common.SetupRelease(&commonCmdData, cmd, true)
 	common.SetupReleaseStorageDriver(&commonCmdData, cmd)
 	common.SetupReleaseStorageSQLConnection(&commonCmdData, cmd)
-	common.SetupReleasesHistoryMax(&commonCmdData, cmd) // TODO(major): remove, useless for render
 	common.SetupSetDockerConfigJsonValue(&commonCmdData, cmd)
 	common.SetupTemplatesAllowDNS(&commonCmdData, cmd)
-	common.StubSetupHooksStatusProgressPeriod(&commonCmdData, cmd)
-	common.StubSetupStatusProgressPeriod(&commonCmdData, cmd)
 	commonCmdData.SetupSkipDependenciesRepoRefresh(cmd)
 
 	cmd.Flags().BoolVarP(&cmdData.Validate, "validate", "", util.GetBoolEnvironmentDefaultFalse("WERF_VALIDATE"), "Validate your manifests against the Kubernetes cluster you are currently pointing at (default $WERF_VALIDATE)")
@@ -416,7 +412,6 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 		ExtraAnnotations:            extraAnnotations,
 		ExtraLabels:                 extraLabels,
 		ExtraRuntimeAnnotations:     serviceAnnotations,
-		ForceAdoption:               commonCmdData.ForceAdoption,
 		LegacyExtraValues:           serviceValues,
 		LegacyLogRegistryStreamOut:  os.Stdout,
 		LocalKubeVersion:            commonCmdData.KubeVersion,

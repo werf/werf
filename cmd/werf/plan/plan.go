@@ -15,7 +15,6 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/nelm/pkg/action"
 	nelmcommon "github.com/werf/nelm/pkg/common"
-	"github.com/werf/nelm/pkg/featgate"
 	chart "github.com/werf/nelm/pkg/helm/pkg/chart/v2"
 	"github.com/werf/nelm/pkg/helm/pkg/engine"
 	"github.com/werf/werf/v2/cmd/werf/common"
@@ -42,7 +41,6 @@ var cmdData struct {
 	ShowInsignificantDiffs bool
 	ShowSensitiveDiffs     bool
 	ShowVerboseCRDDiffs    bool
-	ShowVerboseDiffs       bool
 }
 
 var commonCmdData common.CmdData
@@ -183,27 +181,14 @@ werf plan --repo registry.mydomain.com/web --env production`,
 	common.SetupReleaseLabel(&commonCmdData, cmd)
 	common.SetupReleaseStorageDriver(&commonCmdData, cmd)
 	common.SetupReleaseStorageSQLConnection(&commonCmdData, cmd)
-	common.SetupReleasesHistoryMax(&commonCmdData, cmd) // TODO(3.0): remove this, useless
 	common.SetupSetDockerConfigJsonValue(&commonCmdData, cmd)
 	common.SetupTemplatesAllowDNS(&commonCmdData, cmd)
-	common.StubSetupHooksStatusProgressPeriod(&commonCmdData, cmd)
-	common.StubSetupStatusProgressPeriod(&commonCmdData, cmd)
-	common.StubSetupTrackTimeout(&commonCmdData, cmd)
 	commonCmdData.SetupSkipDependenciesRepoRefresh(cmd)
 
-	var desc string
-	if featgate.FeatGateMoreDetailedExitCodeForPlan.Enabled() || featgate.FeatGatePreviewV2.Enabled() {
-		desc = "Return exit code 0 if no changes, 1 if error, 2 if resource changes planned, 3 if no resource changes planned, but release still should be installed (default $WERF_EXIT_CODE or false)"
-	} else {
-		desc = "Return exit code 0 if no changes, 1 if error, 2 if any changes planned (default $WERF_EXIT_CODE or false)"
-	}
-	cmd.Flags().BoolVarP(&cmdData.DetailedExitCode, "exit-code", "", util.GetBoolEnvironmentDefaultFalse("WERF_EXIT_CODE"), desc)
+	cmd.Flags().BoolVarP(&cmdData.DetailedExitCode, "exit-code", "", util.GetBoolEnvironmentDefaultFalse("WERF_EXIT_CODE"), "Return exit code 0 if no changes, 1 if error, 2 if resource changes planned, 3 if no resource changes planned, but release still should be installed (default $WERF_EXIT_CODE or false)")
 	cmd.Flags().BoolVarP(&cmdData.ShowInsignificantDiffs, "show-insignificant-diffs", "", util.GetBoolEnvironmentDefaultFalse("WERF_SHOW_INSIGNIFICANT_DIFFS"), "Show insignificant diff lines ($WERF_SHOW_INSIGNIFICANT_DIFFS by default)")
 	cmd.Flags().BoolVarP(&cmdData.ShowSensitiveDiffs, "show-sensitive-diffs", "", util.GetBoolEnvironmentDefaultFalse("WERF_SHOW_SENSITIVE_DIFFS"), "Show sensitive diff lines ($WERF_SHOW_SENSITIVE_DIFFS by default)")
 	cmd.Flags().BoolVarP(&cmdData.ShowVerboseCRDDiffs, "show-verbose-crd-diffs", "", util.GetBoolEnvironmentDefaultFalse("WERF_SHOW_VERBOSE_CRD_DIFFS"), "Show verbose CRD diff lines ($WERF_SHOW_VERBOSE_CRD_DIFFS by default)")
-	// TODO(major): get rid?
-	cmd.Flags().BoolVarP(&cmdData.ShowVerboseDiffs, "show-verbose-diffs", "", util.GetBoolEnvironmentDefaultTrue("WERF_SHOW_VERBOSE_DIFFS"), "Show verbose diff lines ($WERF_SHOW_VERBOSE_DIFFS by default)")
-
 	cmd.Flags().StringVarP(&cmdData.PlanArtifactPath, "save-plan", "", os.Getenv("WERF_SAVE_PLAN_PATH"), "Save the gzip-compressed JSON install plan to the specified file")
 	cmd.Flags().StringVarP(&cmdData.ShowPlanArtifactPath, "show-plan", "", os.Getenv("WERF_SHOW_PLAN_PATH"), "Show plan artifact planned changes")
 
@@ -286,7 +271,6 @@ func run(
 			ResourceDiffOptions: nelmcommon.ResourceDiffOptions{
 				DiffContextLines:       cmdData.DiffContextLines,
 				ShowVerboseCRDDiffs:    cmdData.ShowVerboseCRDDiffs,
-				ShowVerboseDiffs:       cmdData.ShowVerboseDiffs,
 				ShowSensitiveDiffs:     cmdData.ShowSensitiveDiffs,
 				ShowInsignificantDiffs: cmdData.ShowInsignificantDiffs,
 			},
@@ -540,7 +524,6 @@ func run(
 		ResourceDiffOptions: nelmcommon.ResourceDiffOptions{
 			DiffContextLines:       cmdData.DiffContextLines,
 			ShowVerboseCRDDiffs:    cmdData.ShowVerboseCRDDiffs,
-			ShowVerboseDiffs:       cmdData.ShowVerboseDiffs,
 			ShowSensitiveDiffs:     cmdData.ShowSensitiveDiffs,
 			ShowInsignificantDiffs: cmdData.ShowInsignificantDiffs,
 		},

@@ -125,7 +125,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupUninstallGraphPath(&commonCmdData, cmd)
 	common.SetupUninstallReportPath(&commonCmdData, cmd)
 	common.SetupUseDeployReport(&commonCmdData, cmd)
-	common.StubSetupInsecureHelmDependencies(&commonCmdData, cmd)
 
 	cmd.Flags().BoolVarP(&cmdData.WithNamespace, "with-namespace", "", util.GetBoolEnvironmentDefaultFalse("WERF_WITH_NAMESPACE"), "Delete Kubernetes Namespace after purging Helm Release (default $WERF_WITH_NAMESPACE)")
 
