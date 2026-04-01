@@ -11,13 +11,13 @@ import (
 	"github.com/cenkalti/backoff/v5"
 	"github.com/distribution/reference"
 	"github.com/docker/cli/cli/command"
-	"github.com/docker/cli/cli/command/image"
 	"github.com/docker/cli/cli/streams"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	dockerImage "github.com/docker/docker/api/types/image"
 	registryTypes "github.com/docker/docker/api/types/registry"
 	"github.com/docker/docker/client"
+	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/samber/lo"
 	"golang.org/x/net/context"
 
@@ -230,16 +230,47 @@ func CliPullWithRetries(ctx context.Context, args ...string) error {
 	return doCliPullWithRetries(ctx, args...)
 }
 
-func doCliPush(ctx context.Context, c command.Cli, args ...string) error {
-	return prepareCliCmd(ctx, image.NewPushCommand(c), args...).Execute()
+func doCliPush(ctx context.Context, args ...string) error {
+	var imageRef string
+
+	for i := 0; i < len(args); i++ {
+		arg := args[i]
+		if !strings.HasPrefix(arg, "-") {
+			imageRef = arg
+		}
+	}
+
+	if imageRef == "" {
+		return fmt.Errorf("image reference required")
+	}
+
+	registryAuth, err := getRegistryAuth(ctx, imageRef)
+	if err != nil {
+		return fmt.Errorf("get registry auth: %w", err)
+	}
+
+	pushResp, err := apiCli(ctx).ImagePush(ctx, imageRef, types.ImagePushOptions{
+		RegistryAuth: registryAuth,
+	})
+	if err != nil {
+		return fmt.Errorf("push image: %w", err)
+	}
+	defer pushResp.Close()
+
+	err = jsonmessage.DisplayJSONMessagesStream(pushResp, io.Discard, 0, false, nil)
+	if err != nil {
+		return fmt.Errorf("push image: %w", err)
+	}
+
+	return nil
 }
 
 const cliPushMaxAttempts uint8 = 10
 
-func doCliPushWithRetries(ctx context.Context, c command.Cli, args ...string) error {
+func doCliPushWithRetries(ctx context.Context, args ...string) error {
 	var attempt uint8
 	op := func() (bool, error) {
-		err := doCliPush(ctx, c, args...)
+		err := doCliPush(ctx, args...)
 		return false, err
 	}
 	notify := func(err error, duration time.Duration) {
@@ -249,9 +280,7 @@ func doCliPushWithRetries(ctx context.Context, c command.Cli, args ...string) er
 }
 
 func CliPushWithRetries(ctx context.Context, args ...string) error {
-	return callCliWithAutoOutput(ctx, func(c command.Cli) error {
-		return doCliPushWithRetries(ctx, c, args...)
-	})
+	return doCliPushWithRetries(ctx, args...)
 }
 
 func CliTag(ctx context.Context, args ...string) error {
