@@ -29,7 +29,6 @@ func TestAI_BuildKitConnection(t *testing.T) {
 	ctx, err := NewContext(ctx)
 	require.NoError(t, err)
 
-	// Connect to Docker's embedded buildkitd via Docker API hijack (/grpc + /session).
 	bk, err := buildkitclient.New(ctx, "", dockerbuildkit.ClientOpts(apiCli(ctx))...)
 	require.NoError(t, err)
 	defer bk.Close()
