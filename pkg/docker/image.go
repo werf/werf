@@ -26,6 +26,7 @@ import (
 	buildkitexptypes "github.com/moby/buildkit/exporter/containerimage/exptypes"
 	"github.com/moby/buildkit/session/secrets/secretsprovider"
 	"github.com/moby/buildkit/session/sshforward/sshprovider"
+	entitlements "github.com/moby/buildkit/util/entitlements"
 	"github.com/samber/lo"
 	"golang.org/x/net/context"
 
@@ -544,6 +545,10 @@ func doCliBuildSDK(ctx context.Context, inStream io.ReadCloser, args ...string) 
 			"context":    contextDir,
 			"dockerfile": contextDir,
 		},
+	}
+
+	if networkMode == "host" {
+		solveOpt.AllowedEntitlements = []entitlements.Entitlement{entitlements.EntitlementNetworkHost}
 	}
 
 	if len(secrets) > 0 {

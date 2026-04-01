@@ -13,6 +13,7 @@ import (
 	containerType "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/stdcopy"
+	"github.com/docker/go-connections/nat"
 	specs "github.com/opencontainers/image-spec/specs-go/v1"
 	"golang.org/x/net/context"
 
@@ -147,6 +148,8 @@ func doCliRunSDK(ctx context.Context, args ...string) (string, int, error) {
 		volumesFrom   []string
 		imageName     string
 		cmdArgs       []string
+		detach        bool
+		exposedPorts  []string
 	)
 
 	for i := 0; i < len(args); i++ {
@@ -223,6 +226,16 @@ func doCliRunSDK(ctx context.Context, args ...string) (string, int, error) {
 			}
 			i++
 			volumesFrom = append(volumesFrom, args[i])
+		case arg == "--detach" || arg == "-d":
+			detach = true
+		case strings.HasPrefix(arg, "--expose="):
+			exposedPorts = append(exposedPorts, strings.TrimPrefix(arg, "--expose="))
+		case arg == "--expose":
+			if i+1 >= len(args) {
+				return "", -1, fmt.Errorf("flag --expose requires value")
+			}
+			i++
+			exposedPorts = append(exposedPorts, args[i])
 		case strings.HasPrefix(arg, "-"):
 			return "", -1, fmt.Errorf("unsupported docker run flag %q", arg)
 		default:
@@ -250,12 +263,25 @@ func doCliRunSDK(ctx context.Context, args ...string) (string, int, error) {
 	if workdir != "" {
 		config.WorkingDir = workdir
 	}
+	if len(exposedPorts) > 0 {
+		config.ExposedPorts = nat.PortSet{}
+		for _, p := range exposedPorts {
+			port, err := nat.NewPort("tcp", p)
+			if err != nil {
+				return "", -1, fmt.Errorf("parse expose port %q: %w", p, err)
+			}
+			config.ExposedPorts[port] = struct{}{}
+		}
+	}
 
-	removeAfterRun := autoRemove
+	removeAfterRun := autoRemove && !detach
 
 	hostConfig := &containerType.HostConfig{
 		Binds:       binds,
 		VolumesFrom: volumesFrom,
+	}
+	if detach && autoRemove {
+		hostConfig.AutoRemove = true
 	}
 
 	var platform *specs.Platform
@@ -279,6 +305,10 @@ func doCliRunSDK(ctx context.Context, args ...string) (string, int, error) {
 
 	if err := apiCli(ctx).ContainerStart(ctx, createResp.ID, containerType.StartOptions{}); err != nil {
 		return "", -1, err
+	}
+
+	if detach {
+		return createResp.ID, 0, nil
 	}
 
 	statusCh, errCh := apiCli(ctx).ContainerWait(ctx, createResp.ID, containerType.WaitConditionNotRunning)
