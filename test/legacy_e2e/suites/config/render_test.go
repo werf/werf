@@ -48,14 +48,14 @@ shell:
 image: image_b
 from: ubuntu:22.04
 shell:
-   beforeInstall:
-     - gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3
-     - curl -sSL https://raw.githubusercontent.com/rvm/rvm/master/binscripts/rvm-installer -o /tmp/rvm-installer
-     - bash -e /tmp/rvm-installer
-     - bash -lec "rvm install 2.3.4"
-     - bash -lec "rvm use --default 2.3.4"
-     - bash -lec "gem install bundler --no-ri --no-rdoc"
-     - bash -lec "rvm cleanup all"
+  beforeInstall:
+    - gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3
+    - curl -sSL https://raw.githubusercontent.com/rvm/rvm/master/binscripts/rvm-installer -o /tmp/rvm-installer
+    - bash -e /tmp/rvm-installer
+    - bash -lec "rvm install 2.3.4"
+    - bash -lec "rvm use --default 2.3.4"
+    - bash -lec "gem install bundler --no-ri --no-rdoc"
+    - bash -lec "rvm cleanup all"
 `,
 	}),
 	Entry("image_a", renderEntry{
@@ -130,13 +130,13 @@ shell:
 image: image_b
 from: ubuntu:22.04
 shell:
-   beforeInstall:
-     - gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3
-     - curl -sSL https://raw.githubusercontent.com/rvm/rvm/master/binscripts/rvm-installer -o /tmp/rvm-installer
-     - bash -e /tmp/rvm-installer
-     - bash -lec "rvm install 2.3.4"
-     - bash -lec "rvm use --default 2.3.4"
-     - bash -lec "gem install bundler --no-ri --no-rdoc"
-     - bash -lec "rvm cleanup all"
+  beforeInstall:
+    - gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3
+    - curl -sSL https://raw.githubusercontent.com/rvm/rvm/master/binscripts/rvm-installer -o /tmp/rvm-installer
+    - bash -e /tmp/rvm-installer
+    - bash -lec "rvm install 2.3.4"
+    - bash -lec "rvm use --default 2.3.4"
+    - bash -lec "gem install bundler --no-ri --no-rdoc"
+    - bash -lec "rvm cleanup all"
 `,
 	}))
