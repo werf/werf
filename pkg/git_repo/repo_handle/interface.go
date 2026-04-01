@@ -55,58 +55,15 @@ func newHandleWithSubmodules(repository *git.Repository, mutex *sync.Mutex, opti
 		opts = options[0]
 	}
 
-	var (
-		submoduleHandleList []SubmoduleHandle
-		err                 error
-	)
 	if opts.WorkTreeDir != "" {
-		submoduleHandleList, err = getSubmoduleHandleListFromCommit(repository, mutex, opts.CommitHash, opts.WorkTreeDir)
-	} else {
-		submoduleHandleList, err = getSubmoduleHandleListFromWorktree(repository, mutex)
-	}
-	if err != nil {
-		return nil, err
-	}
-
-	h.submoduleHandleList = submoduleHandleList
-
-	return h, nil
-}
-
-func getSubmoduleHandleListFromWorktree(parentRepository *git.Repository, mutex *sync.Mutex) ([]SubmoduleHandle, error) {
-	var list []SubmoduleHandle
-
-	w, err := parentRepository.Worktree()
-	if err != nil {
-		return nil, err
-	}
-
-	ss, err := w.Submodules()
-	if err != nil {
-		return nil, err
-	}
-
-	for _, s := range ss {
-		submoduleRepository, err := s.Repository()
-		if err != nil {
-			return nil, fmt.Errorf("unable to get submodule %q repository: %w", s.Config().Path, err)
-		}
-
-		submoduleStatus, err := s.Status()
-		if err != nil {
-			return nil, fmt.Errorf("unable to get submodule %q status: %w", s.Config().Path, err)
-		}
-
-		handle, err := newHandleWithSubmodules(submoduleRepository, mutex)
+		submoduleHandleList, err := getSubmoduleHandleListFromCommit(repository, mutex, opts.CommitHash, opts.WorkTreeDir)
 		if err != nil {
 			return nil, err
 		}
-
-		submoduleHandle := newSubmoduleHandle(handle, s.Config(), submoduleStatus)
-		list = append(list, submoduleHandle)
+		h.submoduleHandleList = submoduleHandleList
 	}
 
-	return list, nil
+	return h, nil
 }
 
 func getSubmoduleHandleListFromCommit(parentRepository *git.Repository, mutex *sync.Mutex, commitHash plumbing.Hash, workTreeDir string) ([]SubmoduleHandle, error) {

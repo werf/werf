@@ -15,6 +15,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/filemode"
 	"github.com/go-git/go-git/v5/plumbing/format/index"
 	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/go-git/go-git/v5/storage/memory"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -74,6 +75,21 @@ func TestAI_NewHandle_NestedSubmodules(t *testing.T) {
 	nestedSubmodules := submoduleHandle.Submodules()
 	require.Len(t, nestedSubmodules, 1)
 	assert.Equal(t, nestedCommit, nestedSubmodules[0].Status().Expected)
+}
+
+func TestAI_NewHandle_BareRepo_NoOptions(t *testing.T) {
+	storage := memory.NewStorage()
+	repo, err := git.Init(storage, nil)
+	require.NoError(t, err)
+
+	commitHash := plumbing.ComputeHash(plumbing.CommitObject, []byte("dummy"))
+	ref := plumbing.NewHashReference(plumbing.HEAD, commitHash)
+	err = repo.Storer.SetReference(ref)
+	require.NoError(t, err)
+
+	handle, err := NewHandle(repo)
+	require.NoError(t, err)
+	assert.Empty(t, handle.Submodules())
 }
 
 type submoduleSpec struct {
