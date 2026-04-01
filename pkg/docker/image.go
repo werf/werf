@@ -1,9 +1,13 @@
 package docker
 
 import (
+	"archive/tar"
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
+	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 	"time"
@@ -11,13 +15,17 @@ import (
 	"github.com/cenkalti/backoff/v5"
 	"github.com/distribution/reference"
 	"github.com/docker/cli/cli/command"
-	"github.com/docker/cli/cli/streams"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	dockerImage "github.com/docker/docker/api/types/image"
 	registryTypes "github.com/docker/docker/api/types/registry"
 	"github.com/docker/docker/client"
+	dockerbuildkit "github.com/docker/docker/client/buildkit"
 	"github.com/docker/docker/pkg/jsonmessage"
+	buildkitclient "github.com/moby/buildkit/client"
+	buildkitexptypes "github.com/moby/buildkit/exporter/containerimage/exptypes"
+	"github.com/moby/buildkit/session/secrets/secretsprovider"
+	"github.com/moby/buildkit/session/sshforward/sshprovider"
 	"github.com/samber/lo"
 	"golang.org/x/net/context"
 
@@ -315,27 +323,479 @@ func CliRmi(ctx context.Context, args ...string) error {
 	return nil
 }
 
-type BuildOptions struct {
-	EnableBuildx bool
-}
-
-func doCliBuild(ctx context.Context, c command.Cli, opts BuildOptions, args ...string) error {
-	cmd := NewBuildxCommand(c)
-	finalArgs := append([]string{"build", "--load"}, args...)
-	return prepareCliCmd(ctx, cmd, finalArgs...).Execute()
-}
-
 func CliBuild_LiveOutputWithCustomIn(ctx context.Context, rc io.ReadCloser, args ...string) error {
 	args = append([]string{"--provenance=false"}, args...)
+	return doCliBuildSDK(ctx, rc, args...)
+}
 
-	return cliWithCustomOptions(ctx, []command.DockerCliOption{
-		func(cli *command.DockerCli) error {
-			cli.SetIn(streams.NewIn(rc))
-			return nil
+func doCliBuildSDK(ctx context.Context, inStream io.ReadCloser, args ...string) error {
+	ctx = ensureLogboekContext(ctx)
+
+	var (
+		dockerfilePath string
+		platform       string
+		target         string
+		networkMode    string
+		provenance     string
+		metadataFile   string
+		addHosts       []string
+		buildArgs      = map[string]string{}
+		labels         = map[string]string{}
+		secrets        []secretsprovider.Source
+		sshConfigs     []sshprovider.AgentConfig
+		tags           []string
+		useStdin       bool
+		setProvenance  bool
+	)
+
+	for i := 0; i < len(args); i++ {
+		arg := args[i]
+		switch {
+		case arg == "-":
+			useStdin = true
+		case arg == "--file" || arg == "-f":
+			value, err := getFlagValue(args, &i, arg)
+			if err != nil {
+				return err
+			}
+			dockerfilePath = value
+		case strings.HasPrefix(arg, "--file="):
+			dockerfilePath = strings.TrimPrefix(arg, "--file=")
+		case arg == "--platform":
+			value, err := getFlagValue(args, &i, arg)
+			if err != nil {
+				return err
+			}
+			platform = value
+		case strings.HasPrefix(arg, "--platform="):
+			platform = strings.TrimPrefix(arg, "--platform=")
+		case arg == "--target":
+			value, err := getFlagValue(args, &i, arg)
+			if err != nil {
+				return err
+			}
+			target = value
+		case strings.HasPrefix(arg, "--target="):
+			target = strings.TrimPrefix(arg, "--target=")
+		case arg == "--network":
+			value, err := getFlagValue(args, &i, arg)
+			if err != nil {
+				return err
+			}
+			networkMode = value
+		case strings.HasPrefix(arg, "--network="):
+			networkMode = strings.TrimPrefix(arg, "--network=")
+		case arg == "--ssh":
+			value, err := getFlagValue(args, &i, arg)
+			if err != nil {
+				return err
+			}
+			config, err := parseSSHConfig(value)
+			if err != nil {
+				return err
+			}
+			sshConfigs = append(sshConfigs, config)
+		case strings.HasPrefix(arg, "--ssh="):
+			value := strings.TrimPrefix(arg, "--ssh=")
+			config, err := parseSSHConfig(value)
+			if err != nil {
+				return err
+			}
+			sshConfigs = append(sshConfigs, config)
+		case arg == "--add-host":
+			value, err := getFlagValue(args, &i, arg)
+			if err != nil {
+				return err
+			}
+			addHosts = append(addHosts, value)
+		case strings.HasPrefix(arg, "--add-host="):
+			addHosts = append(addHosts, strings.TrimPrefix(arg, "--add-host="))
+		case arg == "--build-arg":
+			value, err := getFlagValue(args, &i, arg)
+			if err != nil {
+				return err
+			}
+			key, val, err := parseKeyValue(value)
+			if err != nil {
+				return err
+			}
+			buildArgs[key] = val
+		case strings.HasPrefix(arg, "--build-arg="):
+			value := strings.TrimPrefix(arg, "--build-arg=")
+			key, val, err := parseKeyValue(value)
+			if err != nil {
+				return err
+			}
+			buildArgs[key] = val
+		case arg == "--label":
+			value, err := getFlagValue(args, &i, arg)
+			if err != nil {
+				return err
+			}
+			key, val, err := parseKeyValue(value)
+			if err != nil {
+				return err
+			}
+			labels[key] = val
+		case strings.HasPrefix(arg, "--label="):
+			value := strings.TrimPrefix(arg, "--label=")
+			key, val, err := parseKeyValue(value)
+			if err != nil {
+				return err
+			}
+			labels[key] = val
+		case arg == "--secret":
+			value, err := getFlagValue(args, &i, arg)
+			if err != nil {
+				return err
+			}
+			secret, err := parseSecret(value)
+			if err != nil {
+				return err
+			}
+			secrets = append(secrets, secret)
+		case strings.HasPrefix(arg, "--secret="):
+			value := strings.TrimPrefix(arg, "--secret=")
+			secret, err := parseSecret(value)
+			if err != nil {
+				return err
+			}
+			secrets = append(secrets, secret)
+		case arg == "--tag":
+			value, err := getFlagValue(args, &i, arg)
+			if err != nil {
+				return err
+			}
+			tags = append(tags, value)
+		case strings.HasPrefix(arg, "--tag="):
+			tags = append(tags, strings.TrimPrefix(arg, "--tag="))
+		case arg == "--metadata-file":
+			value, err := getFlagValue(args, &i, arg)
+			if err != nil {
+				return err
+			}
+			metadataFile = value
+		case strings.HasPrefix(arg, "--metadata-file="):
+			metadataFile = strings.TrimPrefix(arg, "--metadata-file=")
+		case arg == "--provenance":
+			value, err := getFlagValue(args, &i, arg)
+			if err != nil {
+				return err
+			}
+			provenance = value
+			setProvenance = true
+		case strings.HasPrefix(arg, "--provenance="):
+			provenance = strings.TrimPrefix(arg, "--provenance=")
+			setProvenance = true
+		case strings.HasPrefix(arg, "-"):
+			return fmt.Errorf("unsupported docker build flag %q", arg)
+		default:
+			return fmt.Errorf("unsupported build argument %q", arg)
+		}
+	}
+
+	if !useStdin {
+		return fmt.Errorf("build context must be provided via '-' argument")
+	}
+	if inStream == nil {
+		return fmt.Errorf("build context stream is nil")
+	}
+
+	contextDir, err := extractBuildContext(inStream)
+	if err != nil {
+		return fmt.Errorf("extract build context: %w", err)
+	}
+	defer os.RemoveAll(contextDir)
+
+	frontendAttrs := map[string]string{}
+	if dockerfilePath != "" {
+		frontendAttrs["filename"] = dockerfilePath
+	}
+	if platform != "" {
+		frontendAttrs["platform"] = platform
+	}
+	if target != "" {
+		frontendAttrs["target"] = target
+	}
+	if networkMode != "" {
+		frontendAttrs["force-network-mode"] = networkMode
+	}
+	if len(addHosts) > 0 {
+		frontendAttrs["add-hosts"] = strings.Join(addHosts, ",")
+	}
+	for key, value := range buildArgs {
+		frontendAttrs["build-arg:"+key] = value
+	}
+	for key, value := range labels {
+		frontendAttrs["label:"+key] = value
+	}
+	if setProvenance {
+		if strings.EqualFold(provenance, "false") {
+			frontendAttrs["attest:provenance"] = ""
+		} else if provenance != "" {
+			frontendAttrs["attest:provenance"] = provenance
+		}
+	}
+
+	solveOpt := buildkitclient.SolveOpt{
+		Frontend:      "dockerfile.v0",
+		FrontendAttrs: frontendAttrs,
+		LocalDirs: map[string]string{
+			"context":    contextDir,
+			"dockerfile": contextDir,
 		},
-	}, func(cli command.Cli) error {
-		return doCliBuild(ctx, cli, BuildOptions{}, args...)
-	})
+	}
+
+	if len(secrets) > 0 {
+		store, err := secretsprovider.NewStore(secrets)
+		if err != nil {
+			return fmt.Errorf("create secrets store: %w", err)
+		}
+		solveOpt.Session = append(solveOpt.Session, secretsprovider.NewSecretProvider(store))
+	}
+	if len(sshConfigs) > 0 {
+		provider, err := sshprovider.NewSSHAgentProvider(sshConfigs)
+		if err != nil {
+			return fmt.Errorf("create ssh provider: %w", err)
+		}
+		solveOpt.Session = append(solveOpt.Session, provider)
+	}
+
+	exportAttrs := map[string]string{
+		"tar": "true",
+	}
+	if len(tags) > 0 {
+		exportAttrs[string(buildkitexptypes.OptKeyName)] = strings.Join(tags, ",")
+	}
+	pr, pw := io.Pipe()
+	solveOpt.Exports = []buildkitclient.ExportEntry{
+		{
+			Type:  buildkitclient.ExporterDocker,
+			Attrs: exportAttrs,
+			Output: func(map[string]string) (io.WriteCloser, error) {
+				return pw, nil
+			},
+		},
+	}
+
+	loadErr := make(chan error, 1)
+	go func() {
+		defer pr.Close()
+		loadResp, err := apiCli(ctx).ImageLoad(ctx, pr, true)
+		if err != nil {
+			loadErr <- err
+			return
+		}
+		defer loadResp.Body.Close()
+		_, err = io.Copy(io.Discard, loadResp.Body)
+		loadErr <- err
+	}()
+
+	bk, err := buildkitclient.New(ctx, "", dockerbuildkit.ClientOpts(apiCli(ctx))...)
+	if err != nil {
+		return fmt.Errorf("create buildkit client: %w", err)
+	}
+	defer bk.Close()
+
+	statusCh := make(chan *buildkitclient.SolveStatus)
+	go func() {
+		for range statusCh {
+		}
+	}()
+
+	resp, err := bk.Solve(ctx, nil, solveOpt, statusCh)
+	_ = pw.Close()
+	if err != nil {
+		return fmt.Errorf("solve build: %w", err)
+	}
+	if err := <-loadErr; err != nil {
+		return fmt.Errorf("load image: %w", err)
+	}
+
+	if metadataFile != "" {
+		if resp == nil {
+			return fmt.Errorf("build response is nil")
+		}
+		digest := resp.ExporterResponse["containerimage.digest"]
+		if digest == "" {
+			return fmt.Errorf("containerimage.digest not found in build response")
+		}
+		payload, err := json.Marshal(map[string]string{"containerimage.digest": digest})
+		if err != nil {
+			return fmt.Errorf("marshal metadata: %w", err)
+		}
+		if err := os.MkdirAll(filepath.Dir(metadataFile), 0o755); err != nil {
+			return fmt.Errorf("create metadata directory: %w", err)
+		}
+		if err := os.WriteFile(metadataFile, payload, 0o644); err != nil {
+			return fmt.Errorf("write metadata file: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func extractBuildContext(inStream io.Reader) (string, error) {
+	contextDir, err := os.MkdirTemp("", "werf-buildkit-context-*")
+	if err != nil {
+		return "", err
+	}
+	cleanup := func() {
+		_ = os.RemoveAll(contextDir)
+	}
+
+	tr := tar.NewReader(inStream)
+	for {
+		hdr, err := tr.Next()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			cleanup()
+			return "", err
+		}
+		if hdr == nil {
+			continue
+		}
+
+		target, err := safeJoin(contextDir, hdr.Name)
+		if err != nil {
+			cleanup()
+			return "", err
+		}
+
+		switch hdr.Typeflag {
+		case tar.TypeDir:
+			if err := os.MkdirAll(target, os.FileMode(hdr.Mode)); err != nil {
+				cleanup()
+				return "", err
+			}
+		case tar.TypeReg, tar.TypeRegA:
+			if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
+				cleanup()
+				return "", err
+			}
+			file, err := os.OpenFile(target, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, os.FileMode(hdr.Mode))
+			if err != nil {
+				cleanup()
+				return "", err
+			}
+			if _, err := io.Copy(file, tr); err != nil {
+				_ = file.Close()
+				cleanup()
+				return "", err
+			}
+			if err := file.Close(); err != nil {
+				cleanup()
+				return "", err
+			}
+		case tar.TypeSymlink:
+			if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
+				cleanup()
+				return "", err
+			}
+			if err := os.Symlink(hdr.Linkname, target); err != nil {
+				cleanup()
+				return "", err
+			}
+		case tar.TypeLink:
+			if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
+				cleanup()
+				return "", err
+			}
+			linkTarget, err := safeJoin(contextDir, hdr.Linkname)
+			if err != nil {
+				cleanup()
+				return "", err
+			}
+			if err := os.Link(linkTarget, target); err != nil {
+				cleanup()
+				return "", err
+			}
+		case tar.TypeXGlobalHeader, tar.TypeXHeader, tar.TypeGNULongName, tar.TypeGNULongLink:
+			continue
+		default:
+			cleanup()
+			return "", fmt.Errorf("unsupported tar entry %q", hdr.Name)
+		}
+	}
+
+	return contextDir, nil
+}
+
+func safeJoin(base, name string) (string, error) {
+	cleanName := filepath.Clean(name)
+	cleanName = strings.TrimPrefix(cleanName, string(filepath.Separator))
+	baseClean := filepath.Clean(base)
+	joined := filepath.Join(baseClean, cleanName)
+	if joined != baseClean && !strings.HasPrefix(joined, baseClean+string(filepath.Separator)) {
+		return "", fmt.Errorf("invalid tar path %q", name)
+	}
+	return joined, nil
+}
+
+func getFlagValue(args []string, idx *int, flag string) (string, error) {
+	if *idx+1 >= len(args) {
+		return "", fmt.Errorf("flag %s requires value", flag)
+	}
+	(*idx)++
+	return args[*idx], nil
+}
+
+func parseKeyValue(value string) (string, string, error) {
+	key, val, found := strings.Cut(value, "=")
+	if key == "" {
+		return "", "", fmt.Errorf("invalid value %q", value)
+	}
+	if !found {
+		return key, "", nil
+	}
+	return key, val, nil
+}
+
+func parseSecret(value string) (secretsprovider.Source, error) {
+	var src secretsprovider.Source
+	for _, part := range strings.Split(value, ",") {
+		if part == "" {
+			continue
+		}
+		key, val, found := strings.Cut(part, "=")
+		if !found {
+			return secretsprovider.Source{}, fmt.Errorf("invalid secret value %q", value)
+		}
+		switch key {
+		case "id":
+			src.ID = val
+		case "src":
+			src.FilePath = val
+		case "env":
+			src.Env = val
+		default:
+			return secretsprovider.Source{}, fmt.Errorf("unsupported secret option %q", key)
+		}
+	}
+	if src.ID == "" {
+		return secretsprovider.Source{}, fmt.Errorf("secret id is required")
+	}
+	return src, nil
+}
+
+func parseSSHConfig(value string) (sshprovider.AgentConfig, error) {
+	if value == "" {
+		return sshprovider.AgentConfig{}, fmt.Errorf("ssh config is empty")
+	}
+	key, val, found := strings.Cut(value, "=")
+	if !found {
+		return sshprovider.AgentConfig{ID: key}, nil
+	}
+	if key == "" {
+		return sshprovider.AgentConfig{}, fmt.Errorf("ssh id is required")
+	}
+	paths := []string{}
+	if val != "" {
+		paths = strings.Split(val, ",")
+	}
+	return sshprovider.AgentConfig{ID: key, Paths: paths}, nil
 }
 
 func CliImageSaveToStream(ctx context.Context, imageName string) (io.ReadCloser, error) {
