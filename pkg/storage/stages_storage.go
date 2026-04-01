@@ -15,7 +15,6 @@ import (
 const (
 	LocalStorageAddress             = ":local"
 	DefaultKubernetesStorageAddress = "kubernetes://werf-synchronization"
-	NamelessImageRecordTag          = "__nameless__"
 )
 
 var ErrBrokenImage = errors.New("broken image")

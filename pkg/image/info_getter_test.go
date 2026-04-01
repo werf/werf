@@ -12,29 +12,16 @@ var _ = Describe("InfoGetter", func() {
 		func(data TestInfoGetter) {
 			getter := NewInfoGetter(data.ImageName, data.Ref, data.Opts)
 
-			Expect(getter.IsNameless()).To(Equal(data.ExpectIsNameless))
 			Expect(getter.GetWerfImageName()).To(Equal(data.ExpectWerfImageName))
 			Expect(getter.GetName()).To(Equal(data.ExpectName))
 			Expect(getter.GetTag()).To(Equal(data.ExpectTag))
 		},
-
-		Entry("nameless image",
-			TestInfoGetter{
-				ImageName:           "",
-				Ref:                 "myregistry.domain.com/group/project:abcd",
-				Opts:                InfoGetterOptions{},
-				ExpectIsNameless:    true,
-				ExpectWerfImageName: "",
-				ExpectName:          "myregistry.domain.com/group/project:abcd",
-				ExpectTag:           "abcd",
-			}),
 
 		Entry("named image",
 			TestInfoGetter{
 				ImageName:           "backend",
 				Ref:                 "myregistry.domain.com/group/project:abcd",
 				Opts:                InfoGetterOptions{},
-				ExpectIsNameless:    false,
 				ExpectWerfImageName: "backend",
 				ExpectName:          "myregistry.domain.com/group/project:abcd",
 				ExpectTag:           "abcd",
@@ -49,7 +36,6 @@ var _ = Describe("InfoGetter", func() {
 						return fmt.Sprintf("%s-%s", werfImageName, tag)
 					},
 				},
-				ExpectIsNameless:    false,
 				ExpectWerfImageName: "backend",
 				ExpectName:          "myregistry.domain.com/group/project:backend-abcd",
 				ExpectTag:           "backend-abcd",
@@ -62,7 +48,6 @@ type TestInfoGetter struct {
 	Ref       string
 	Opts      InfoGetterOptions
 
-	ExpectIsNameless    bool
 	ExpectWerfImageName string
 	ExpectName          string
 	ExpectTag           string

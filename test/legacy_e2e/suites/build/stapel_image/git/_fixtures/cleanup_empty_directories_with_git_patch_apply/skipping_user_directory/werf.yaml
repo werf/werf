@@ -1,7 +1,7 @@
 project: none
 configVersion: 1
 ---
-image: ~
+image: test
 from: registry.werf.io/base/alpine:3.21
 git:
 - to: /app

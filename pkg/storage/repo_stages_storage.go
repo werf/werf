@@ -874,10 +874,6 @@ func slugImageName(imageName string) string {
 	res = strings.ReplaceAll(res, "/", "__slash__")
 	res = strings.ReplaceAll(res, "+", "__plus__")
 
-	if imageName == "" {
-		res = NamelessImageRecordTag
-	}
-
 	return res
 }
 
@@ -886,10 +882,6 @@ func unslugImageName(tag string) string {
 	res = strings.ReplaceAll(res, "__space__", " ")
 	res = strings.ReplaceAll(res, "__slash__", "/")
 	res = strings.ReplaceAll(res, "__plus__", "+")
-
-	if res == NamelessImageRecordTag {
-		res = ""
-	}
 
 	return res
 }
