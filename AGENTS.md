@@ -85,6 +85,89 @@ ALWAYS use these `task` commands. NEVER use raw `go build`, `go test`, `go fmt`,
 - Test fixtures go in `testdata/` subdirectory next to the tests.
 - Shared test helpers are in `test/pkg/`.
 
+## Reproducing failed CI tests locally (MANDATORY)
+
+When a CI test fails and you need to reproduce it locally, follow this procedure.
+
+### Step 1: Identify the CI job and map it to a task command
+
+CI job names in `tests.yml` map to `task` commands as follows:
+
+| CI job name | task command | default paths |
+|---|---|---|
+| `unit` | `task test:unit` | `./pkg ./cmd` |
+| `integration_main` | `task test:integration` | `./test/legacy_e2e` |
+| `integration_git` | `task test:integration` | `test/legacy_e2e/suites/build/stapel_image/git` |
+| `e2e_simple` | `task test:e2e:simple` | `./test/e2e` |
+| `e2e_complex` | `task test:e2e:complex` | `./test/e2e` |
+| `e2e_extra` | `task test:e2e:extra` | `./test/e2e` |
+
+All integration and e2e tests use Ginkgo. Unit tests also use Ginkgo (via `test:ginkgo`).
+
+### Step 2: Narrow down to the failing test package
+
+From the CI logs, find the test package path. This is the Go package path of the failing test, e.g. `./test/legacy_e2e/suites/build/stapel_image/build_phase`. Use it as the `paths=` variable.
+
+### Step 3: Narrow down to the failing test case
+
+From the CI logs, find the failing `It(...)` description text. Use Ginkgo's `--focus` flag (passed after `--`) to run only that test. The `--focus` value is a regex matched against the full Ginkgo test path (`Describe` + `Context` + `It` texts joined).
+
+For e2e tests that use `Label(...)`, you can also use `labelFilter="..."` variable instead of `--focus`.
+
+### Step 4: Build the command
+
+Template:
+
+```
+task --yes -p <task-name> paths="<package-path>" -- --focus "<It description text>" -v
+```
+
+- `--yes` — auto-confirm remote taskfile downloads.
+- `-p` — run in parallel mode (same as CI).
+- `--` — separates `task` args from Ginkgo args.
+- `--focus "<regex>"` — Ginkgo flag to run only matching tests.
+- `-v` — verbose Ginkgo output.
+
+### Examples
+
+**Integration test** (from CI job `integration_main`, test `"should build install stage twice"`):
+```
+task --yes -p test:integration paths="./test/legacy_e2e/suites/build/stapel_image/build_phase" -- --focus "should build install stage twice" -v
+```
+
+**E2e test** (from CI job `e2e_simple`, test `"Simple build"`):
+```
+task --yes -p test:e2e:simple paths="./test/e2e/build" -- --focus "Simple build" -v
+```
+
+**E2e test with label filter** (all tests labeled `"build"`):
+```
+task --yes -p test:e2e labelFilter="build" paths="./test/e2e/build"
+```
+
+**Unit test** (a specific test in `./pkg/config`):
+```
+task --yes -p test:unit paths="./pkg/config" -- --focus "should parse config" -v
+```
+
+### Additional useful Ginkgo flags (pass after `--`)
+
+- `--flake-attempts=N` — retry flaky tests N times (CI uses `--flake-attempts=3`).
+- `--keep-going` — don't stop on first package failure.
+- `--skip-package "path1,path2"` — exclude packages.
+- `--until-it-fails` — run repeatedly until failure (useful for flaky test investigation).
+- `--dry-run` — list tests without running them.
+
+### Prerequisites
+
+Before running integration or e2e tests, the local test environment must be set up:
+```
+task --yes deps:install:ginkgo
+task --yes test:setup:environment
+```
+
+This creates a kind cluster and a local Docker registry. Clean up after with `task test:cleanup:environment`.
+
 ## PR review guidelines (MANDATORY)
 
 - NEVER add new external dependencies without flagging to the user first.

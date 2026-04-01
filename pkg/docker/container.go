@@ -306,6 +306,12 @@ func doCliRunSDK(ctx context.Context, args ...string) (string, int, error) {
 	}
 
 	createResp, err := apiCli(ctx).ContainerCreate(ctx, config, hostConfig, nil, platform, containerName)
+	if client.IsErrNotFound(err) {
+		if err := doCliPull(ctx, imageName); err != nil {
+			return "", -1, fmt.Errorf("pull image %s: %w", imageName, err)
+		}
+		createResp, err = apiCli(ctx).ContainerCreate(ctx, config, hostConfig, nil, platform, containerName)
+	}
 	if err != nil {
 		return "", -1, err
 	}
