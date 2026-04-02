@@ -70,8 +70,8 @@ jobs:
         id: lint
         run: task --yes lint
 
-      # - name: Check generated mocks are up to date
-      #   run: task --yes mock:check
+      - name: Check generated mocks are up to date
+        run: task --yes mock:check
 
   unit:
     if: github.ref == 'refs/heads/main' || needs.detect-changes.outputs.workflow_proceed != 'false'
