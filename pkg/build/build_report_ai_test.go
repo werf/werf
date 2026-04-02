@@ -1,6 +1,3 @@
-//go:build ai_tests
-// +build ai_tests
-
 package build
 
 import (
