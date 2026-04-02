@@ -221,7 +221,7 @@ func runApply(ctx context.Context) error {
 		SecretValuesOptions:        commonCmdData.SecretValuesOptions,
 		TrackingOptions:            commonCmdData.TrackingOptions,
 		AutoRollback:               cmdData.AutoRollback,
-		ChartDirPath:               bundlePath,
+		Chart:                      bundlePath,
 		ChartProvenanceKeyring:     commonCmdData.ChartProvenanceKeyring,
 		ChartProvenanceStrategy:    commonCmdData.ChartProvenanceStrategy,
 		ChartRepoSkipUpdate:        commonCmdData.ChartRepoSkipUpdate,

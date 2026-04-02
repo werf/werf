@@ -385,7 +385,7 @@ func runLint(ctx context.Context, imageNameListFromArgs []string) error {
 		ValuesOptions:               commonCmdData.ValuesOptions,
 		SecretValuesOptions:         commonCmdData.SecretValuesOptions,
 		ChartAppVersion:             common.GetHelmChartConfigAppVersion(werfConfig),
-		ChartDirPath:                relChartPath,
+		Chart:                       relChartPath,
 		ChartProvenanceKeyring:      commonCmdData.ChartProvenanceKeyring,
 		ChartProvenanceStrategy:     commonCmdData.ChartProvenanceStrategy,
 		ChartRepoSkipUpdate:         commonCmdData.ChartRepoSkipUpdate,

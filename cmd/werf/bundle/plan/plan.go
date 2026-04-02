@@ -213,7 +213,7 @@ func runPlan(ctx context.Context) error {
 		ChartRepoConnectionOptions: commonCmdData.ChartRepoConnectionOptions,
 		ValuesOptions:              commonCmdData.ValuesOptions,
 		SecretValuesOptions:        commonCmdData.SecretValuesOptions,
-		ChartDirPath:               bundlePath,
+		Chart:                      bundlePath,
 		ChartProvenanceKeyring:     commonCmdData.ChartProvenanceKeyring,
 		ChartProvenanceStrategy:    commonCmdData.ChartProvenanceStrategy,
 		ChartRepoSkipUpdate:        commonCmdData.ChartRepoSkipUpdate,

@@ -476,7 +476,7 @@ func run(
 		TrackingOptions:            commonCmdData.TrackingOptions,
 		AutoRollback:               cmdData.AutoRollback,
 		ChartAppVersion:            common.GetHelmChartConfigAppVersion(werfConfig),
-		ChartDirPath:               relChartPath,
+		Chart:                      relChartPath,
 		ChartProvenanceKeyring:     commonCmdData.ChartProvenanceKeyring,
 		ChartProvenanceStrategy:    commonCmdData.ChartProvenanceStrategy,
 		ChartRepoSkipUpdate:        commonCmdData.ChartRepoSkipUpdate,
