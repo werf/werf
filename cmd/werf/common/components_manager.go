@@ -150,9 +150,6 @@ func InitCommonComponents(ctx context.Context, opts InitCommonComponentsOptions)
 
 	if opts.SetupOndemandKubeInitializer {
 		SetupOndemandKubeInitializer(opts.Cmd.KubeContextCurrent, opts.Cmd.LegacyKubeConfigPath, opts.Cmd.KubeConfigBase64, opts.Cmd.LegacyKubeConfigPathsMergeList, opts.Cmd.KubeBearerTokenData, opts.Cmd.KubeBearerTokenPath)
-		if err := GetOndemandKubeInitializer().Init(ctx); err != nil {
-			return nil, ctx, err
-		}
 	}
 
 	return cmanager, ctx, nil
