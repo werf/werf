@@ -15,7 +15,6 @@ import (
 	"github.com/docker/buildx/util/buildflags"
 	"github.com/docker/buildx/util/progress"
 	"github.com/docker/cli/cli/command"
-	"github.com/docker/cli/cli/command/image"
 	"github.com/docker/docker/api/types/filters"
 	dockerImage "github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
@@ -107,7 +106,11 @@ func mapBackendFiltersToImagesPruneFilters(list filter.FilterList) filters.Args 
 }
 
 func doCliPull(ctx context.Context, c command.Cli, args ...string) error {
-	return prepareCliCmd(ctx, image.NewPullCommand(c), args...).Execute()
+	cmd, err := lookupCliCommand(c, "pull")
+	if err != nil {
+		return err
+	}
+	return prepareCliCmd(ctx, cmd, args...).Execute()
 }
 
 func CliPull(ctx context.Context, args ...string) error {
@@ -180,7 +183,11 @@ func CliPullWithRetries(ctx context.Context, args ...string) error {
 }
 
 func doCliPush(ctx context.Context, c command.Cli, args ...string) error {
-	return prepareCliCmd(ctx, image.NewPushCommand(c), args...).Execute()
+	cmd, err := lookupCliCommand(c, "push")
+	if err != nil {
+		return err
+	}
+	return prepareCliCmd(ctx, cmd, args...).Execute()
 }
 
 const cliPushMaxAttempts uint8 = 10
@@ -204,7 +211,11 @@ func CliPushWithRetries(ctx context.Context, args ...string) error {
 }
 
 func doCliTag(ctx context.Context, c command.Cli, args ...string) error {
-	return prepareCliCmd(ctx, image.NewTagCommand(c), args...).Execute()
+	cmd, err := lookupCliCommand(c, "tag")
+	if err != nil {
+		return err
+	}
+	return prepareCliCmd(ctx, cmd, args...).Execute()
 }
 
 func CliTag(ctx context.Context, args ...string) error {
@@ -214,7 +225,11 @@ func CliTag(ctx context.Context, args ...string) error {
 }
 
 func doCliRmi(ctx context.Context, c command.Cli, args ...string) error {
-	return prepareCliCmd(ctx, image.NewRemoveCommand(c), args...).Execute()
+	cmd, err := lookupCliCommand(c, "rmi")
+	if err != nil {
+		return err
+	}
+	return prepareCliCmd(ctx, cmd, args...).Execute()
 }
 
 func CliRmi(ctx context.Context, args ...string) error {
@@ -242,6 +257,7 @@ type CliBuildOptions struct {
 
 func CliBuild_LiveOutputWithCustomIn(ctx context.Context, rc io.ReadCloser, cliOpts CliBuildOptions) (string, error) {
 	buildOpts := &commands.BuildOptions{
+		ContextPath:            "-",
 		ExportLoad:             true,
 		DockerfileName:         cliOpts.DockerfileName,
 		Tags:                   cliOpts.Tags,

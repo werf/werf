@@ -42,8 +42,8 @@ func getDaemonInfo(ctx context.Context) (*system.Info, error) {
 
 	if IsContext(ctx) {
 		info, err = apiCli(ctx).Info(ctx)
-	} else if IsEnabled() && defaultCLI != nil {
-		info, err = defaultCLI.Client().Info(ctx)
+	} else if IsEnabled() && defaultAPIClient != nil {
+		info, err = defaultAPIClient.Info(ctx)
 	} else {
 		return nil, nil
 	}

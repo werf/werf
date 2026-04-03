@@ -4,7 +4,6 @@ import (
 	"io"
 
 	"github.com/docker/cli/cli/command"
-	"github.com/docker/cli/cli/command/container"
 	"github.com/docker/docker/api/types"
 	dockercontainer "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
@@ -47,7 +46,11 @@ func ContainerRemove(ctx context.Context, ref string, options dockercontainer.Re
 }
 
 func doCliCreate(ctx context.Context, c command.Cli, args ...string) error {
-	return prepareCliCmd(ctx, container.NewCreateCommand(c), args...).Execute()
+	cmd, err := lookupCliCommand(c, "create")
+	if err != nil {
+		return err
+	}
+	return prepareCliCmd(ctx, cmd, args...).Execute()
 }
 
 func CliCreate(ctx context.Context, args ...string) error {
@@ -57,7 +60,11 @@ func CliCreate(ctx context.Context, args ...string) error {
 }
 
 func doCliRun(ctx context.Context, c command.Cli, args ...string) error {
-	return prepareCliCmd(ctx, container.NewRunCommand(c), args...).Execute()
+	cmd, err := lookupCliCommand(c, "run")
+	if err != nil {
+		return err
+	}
+	return prepareCliCmd(ctx, cmd, args...).Execute()
 }
 
 func CliRun(ctx context.Context, args ...string) error {
@@ -83,7 +90,11 @@ func CliRun_RecordedOutput(ctx context.Context, args ...string) (string, error) 
 }
 
 func doCliRm(ctx context.Context, c command.Cli, args ...string) error {
-	return prepareCliCmd(ctx, container.NewRmCommand(c), args...).Execute()
+	cmd, err := lookupCliCommand(c, "rm")
+	if err != nil {
+		return err
+	}
+	return prepareCliCmd(ctx, cmd, args...).Execute()
 }
 
 func CliRm(ctx context.Context, args ...string) error {

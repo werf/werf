@@ -24,6 +24,7 @@ var (
 	liveCliOutputEnabled bool
 	isDebug              bool
 	defaultCLI           command.Cli
+	defaultAPIClient     client.APIClient
 	defaultPlatform      string
 	runtimePlatform      string
 
@@ -32,6 +33,7 @@ var (
 
 const (
 	ctxDockerCliKey = "docker_cli"
+	ctxAPIClientKey = "docker_api_client"
 )
 
 func IsEnabled() bool {
@@ -56,6 +58,11 @@ func Init(ctx context.Context, opts InitOptions) error {
 	liveCliOutputEnabled = opts.Verbose || opts.Debug
 
 	defaultCLI, err = newDockerCli(defaultCliOptions(ctx))
+	if err != nil {
+		return err
+	}
+
+	defaultAPIClient, err = client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		return err
 	}
@@ -102,11 +109,10 @@ func GetRuntimePlatform() string {
 }
 
 func ServerVersion(ctx context.Context) (*types.Version, error) {
-	version, err := cli(ctx).Client().ServerVersion(ctx)
+	version, err := apiCli(ctx).ServerVersion(ctx)
 	if err != nil {
 		return nil, err
 	}
-
 	return &version, nil
 }
 
@@ -159,7 +165,15 @@ func cli(ctx context.Context) command.Cli {
 }
 
 func apiCli(ctx context.Context) client.APIClient {
-	return cli(ctx).Client()
+	apiClientInterf := ctx.Value(ctxAPIClientKey)
+	switch {
+	case apiClientInterf != nil:
+		return apiClientInterf.(client.APIClient)
+	case ctx == context.Background():
+		return defaultAPIClient
+	default:
+		return defaultAPIClient
+	}
 }
 
 func defaultCliOptions(ctx context.Context) []command.CLIOption {
@@ -167,18 +181,30 @@ func defaultCliOptions(ctx context.Context) []command.CLIOption {
 		command.WithInputStream(os.Stdin),
 		command.WithOutputStream(logboek.Context(ctx).OutStream()),
 		command.WithErrorStream(logboek.Context(ctx).ErrStream()),
-		command.WithContentTrust(false),
 	}
 }
 
+func applyCliOptions(c command.Cli, options []command.CLIOption) error {
+	dockerCli, ok := c.(*command.DockerCli)
+	if !ok {
+		return fmt.Errorf("expected *command.DockerCli, got %T", c)
+	}
+	for _, opt := range options {
+		if err := opt(dockerCli); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func cliWithCustomOptions(ctx context.Context, options []command.CLIOption, f func(cli command.Cli) error) error {
-	if err := cli(ctx).Apply(options...); err != nil {
+	if err := applyCliOptions(cli(ctx), options); err != nil {
 		return err
 	}
 
 	err := f(cli(ctx))
 
-	if applyErr := cli(ctx).Apply(defaultCliOptions(ctx)...); applyErr != nil {
+	if applyErr := applyCliOptions(cli(ctx), defaultCliOptions(ctx)); applyErr != nil {
 		if err != nil {
 			return err
 		} else {
@@ -195,7 +221,13 @@ func NewContext(ctx context.Context) (context.Context, error) {
 		return nil, fmt.Errorf("unable to create docker cli: %w", err)
 	}
 
+	apiClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		return nil, fmt.Errorf("unable to create docker api client: %w", err)
+	}
+
 	newCtx := context.WithValue(ctx, ctxDockerCliKey, c)
+	newCtx = context.WithValue(newCtx, ctxAPIClientKey, apiClient)
 	return newCtx, nil
 }
 

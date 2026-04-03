@@ -8,16 +8,19 @@ env:
   KUBECONFIG:
     sh: echo "$HOME/.kube/config"
   PRETTIER_VERSION: "3.5.3"
+  GOLANGCI_LINT_CONFIG: ".golangci.yml"
 
 includes:
-  lint:
+  _remote-lint:
     taskfile: https://raw.githubusercontent.com/werf/common-ci/refs/heads/main/Taskfile.format_lint.yml
-    flatten: true
     vars:
       golangciPaths: "./cmd/... ./pkg/... ./test/..."
+      golangciLintVersion: "v2.11.4"
   deps:
     taskfile: https://raw.githubusercontent.com/werf/common-ci/refs/heads/main/Taskfile.deps.yml
     flatten: true
+    vars:
+      golangciLintVersion: "v2.11.4"
 
 vars:
   version: "dev"
@@ -36,6 +39,48 @@ vars:
   cgoLDFlags: "{{.goLDFlags}} -linkmode external -extldflags=-static"
 
 tasks:
+  format:
+    desc: "Run all code formatters."
+    deps:
+      - _remote-lint:format:gci
+      - _remote-lint:format:gofumpt
+
+  lint:golangci-lint:go:
+    desc: 'Lint with golangci-lint without cgo. Important vars: "golangciPaths", "golangciLintVersion".'
+    cmds:
+      - |
+        if [ ! -f "./bin/golangci-lint-v2.11.4" ]; then
+          echo "golangci-lint not installed, run: task deps:install:golangci-lint"
+          exit 1
+        fi
+        ./bin/golangci-lint-v2.11.4 run --build-tags="{{.goTags}}" -c .golangci.yml {{.CLI_ARGS}} {{.golangciPaths | default "./cmd/... ./pkg/... ./test/..."}}
+    env:
+      CGO_ENABLED: "0"
+
+  lint:golangci-lint:cgo:
+    desc: 'Lint with golangci-lint for cgo. Important vars: "golangciPaths", "golangciLintVersion".'
+    cmds:
+      - |
+        if [ ! -f "./bin/golangci-lint-v2.11.4" ]; then
+          echo "golangci-lint not installed, run: task deps:install:golangci-lint"
+          exit 1
+        fi
+        ./bin/golangci-lint-v2.11.4 run --build-tags="{{.cgoTags}}" -c .golangci.yml {{.CLI_ARGS}} {{.golangciPaths | default "./cmd/... ./pkg/... ./test/..."}}
+    env:
+      CGO_ENABLED: "1"
+
+  lint:golangci-lint:
+    desc: 'Lint with golangci-lint. Important vars: "golangciPaths".'
+    deps:
+      - task: lint:golangci-lint:go
+        vars:
+          golangciPaths: "{{.golangciPaths}}"
+
+  lint:
+    desc: "Run all linters."
+    deps:
+      - lint:golangci-lint
+
   _build-and-lint:
     deps:
       - build
