@@ -3,8 +3,8 @@ package container_backend
 import (
 	"errors"
 
-	"github.com/containers/storage/types"
 	"github.com/docker/cli/cli"
+	"go.podman.io/storage/types"
 
 	"github.com/werf/werf/v2/pkg/log_sanitize"
 )
