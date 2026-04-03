@@ -64,9 +64,11 @@ func (i *LegacyStageImage) Container() LegacyContainer {
 func (i *LegacyStageImage) GetID() string {
 	if i.buildImage != nil {
 		return i.buildImage.Name()
-	} else {
-		return i.legacyBaseImage.GetStageDesc().Info.Name
 	}
+	if stageDesc := i.legacyBaseImage.GetStageDesc(); stageDesc != nil && stageDesc.Info != nil && stageDesc.Info.ID != "" {
+		return stageDesc.Info.ID
+	}
+	return i.legacyBaseImage.GetStageDesc().Info.Name
 }
 
 func (i *LegacyStageImage) Build(ctx context.Context, options BuildOptions) error {
