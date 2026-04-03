@@ -6,8 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/runconfig/opts"
+	dockercontainer "github.com/docker/docker/api/types/container"
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
@@ -266,7 +265,7 @@ func (c *LegacyStageImageContainer) prepareInheritedCommitOptions(ctx context.Co
 		inheritedOptions.Workdir = "/"
 	}
 
-	fromImageEnv := opts.ConvertKVStringsToMap(fromImageInspect.Config.Env)
+	fromImageEnv := convertKVStringsToMap(fromImageInspect.Config.Env)
 	for _, k := range []string{"LANG", "LC_ALL"} {
 		if val, hasKey := fromImageEnv[k]; hasKey {
 			inheritedOptions.Env[k] = val
@@ -346,7 +345,7 @@ func (c *LegacyStageImageContainer) commit(ctx context.Context) (string, error) 
 		return "", err
 	}
 
-	commitOptions := types.ContainerCommitOptions{Changes: commitChanges}
+	commitOptions := dockercontainer.CommitOptions{Changes: commitChanges}
 	id, err := docker.ContainerCommit(ctx, c.name, commitOptions)
 	if err != nil {
 		return "", err
@@ -358,7 +357,7 @@ func (c *LegacyStageImageContainer) commit(ctx context.Context) (string, error) 
 func (c *LegacyStageImageContainer) rm(ctx context.Context) error {
 	_ = c.image.ContainerBackend.(*DockerServerBackend)
 
-	err := docker.ContainerRemove(ctx, c.name, types.ContainerRemoveOptions{RemoveVolumes: true, Force: true})
+	err := docker.ContainerRemove(ctx, c.name, dockercontainer.RemoveOptions{RemoveVolumes: true, Force: true})
 	if err != nil {
 		if strings.Contains(err.Error(), fmt.Sprintf("removal of container %s is already in progress", c.name)) {
 			return nil
@@ -366,4 +365,13 @@ func (c *LegacyStageImageContainer) rm(ctx context.Context) error {
 		return fmt.Errorf("unable to remove container %s: %w", c.name, err)
 	}
 	return nil
+}
+
+func convertKVStringsToMap(values []string) map[string]string {
+	result := make(map[string]string, len(values))
+	for _, value := range values {
+		k, v, _ := strings.Cut(value, "=")
+		result[k] = v
+	}
+	return result
 }

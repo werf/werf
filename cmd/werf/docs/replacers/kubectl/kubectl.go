@@ -34,7 +34,8 @@ func ReplaceKubectlDocs(cmd *cobra.Command) *cobra.Command {
 
 func setNewDocs(cmd *cobra.Command) {
 	switch cmd.Use {
-	case "events [--for TYPE/NAME] [--watch]":
+	case "events [--for TYPE/NAME] [--watch]",
+		"events [--for TYPE/NAME] [--watch] [--types=Normal,Warning]":
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetAlphaEventsDocs().LongMD,
 		}
@@ -43,6 +44,14 @@ func setNewDocs(cmd *cobra.Command) {
 			common.DocsLongMD: GetKubectlDocs().LongMD,
 		}
 	case "alpha":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetAlphaDocs().LongMD,
+		}
+	case "kuberc SUBCOMMAND":
+		cmd.Annotations = map[string]string{
+			common.DocsLongMD: GetAlphaDocs().LongMD,
+		}
+	case "set --section (defaults|aliases) --command COMMAND":
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetAlphaDocs().LongMD,
 		}
@@ -94,7 +103,8 @@ func setNewDocs(cmd *cobra.Command) {
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetAuthReconcileDocs().LongMD,
 		}
-	case "autoscale (-f FILENAME | TYPE NAME | TYPE/NAME) [--min=MINPODS] --max=MAXPODS [--cpu-percent=CPU]":
+	case "autoscale (-f FILENAME | TYPE NAME | TYPE/NAME) [--min=MINPODS] --max=MAXPODS [--cpu-percent=CPU]",
+		"autoscale (-f FILENAME | TYPE NAME | TYPE/NAME) [--min=MINPODS] --max=MAXPODS [--cpu=CPU] [--memory=MEMORY]":
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetAutoscaleDocs().LongMD,
 		}
@@ -354,7 +364,8 @@ func setNewDocs(cmd *cobra.Command) {
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetExecDocs().LongMD,
 		}
-	case "explain TYPE [--recursive=FALSE|TRUE] [--api-version=api-version-group] [--output=plaintext|plaintext-openapiv2]":
+	case "explain TYPE [--recursive=FALSE|TRUE] [--api-version=api-version-group] [--output=plaintext|plaintext-openapiv2]",
+		"explain TYPE [--recursive=FALSE|TRUE] [--api-version=api-version-group] [-o|--output=plaintext|plaintext-openapiv2]":
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetExplainDocs().LongMD,
 		}
@@ -366,7 +377,10 @@ func setNewDocs(cmd *cobra.Command) {
 		}
 	case "get [(-o|--output=)json|yaml|name|go-template|go-template-file|template|templatefile|jsonpath|" +
 		"jsonpath-as-json|jsonpath-file|custom-columns|custom-columns-file|wide] (TYPE[.VERSION][.GROUP] " +
-		"[NAME | -l label] | TYPE[.VERSION][.GROUP]/NAME ...) [flags]":
+		"[NAME | -l label] | TYPE[.VERSION][.GROUP]/NAME ...) [flags]",
+		"get [(-o|--output=)json|yaml|kyaml|name|go-template|go-template-file|template|templatefile|jsonpath|" +
+			"jsonpath-as-json|jsonpath-file|custom-columns|custom-columns-file|wide] (TYPE[.VERSION][.GROUP] " +
+			"[NAME | -l label] | TYPE[.VERSION][.GROUP]/NAME ...) [flags]":
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetGetDocs().LongMD,
 		}
@@ -499,12 +513,15 @@ func setNewDocs(cmd *cobra.Command) {
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetVersionDocs().LongMD,
 		}
-	case "wait ([-f FILENAME] | resource.group/resource.name | resource.group [(-l label | --all)]) [--for=delete|--for condition=available|--for=jsonpath='{}'[=value]]":
+	case "wait ([-f FILENAME] | resource.group/resource.name | resource.group [(-l label | --all)]) [--for=delete|--for condition=available|--for=jsonpath='{}'[=value]]",
+		"wait ([-f FILENAME] | resource.group/resource.name | resource.group [(-l label | --all)]) [--for=create|--for=delete|--for condition=available|--for=jsonpath='{}'[=value]]":
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetWaitDocs().LongMD,
 		}
 	case "events [(-o|--output=)json|yaml|name|go-template|go-template-file|template|templatefile|jsonpath|" +
-		"jsonpath-as-json|jsonpath-file] [--for TYPE/NAME] [--watch] [--types=Normal,Warning]":
+		"jsonpath-as-json|jsonpath-file] [--for TYPE/NAME] [--watch] [--types=Normal,Warning]",
+		"events [(-o|--output=)json|yaml|kyaml|name|go-template|go-template-file|template|templatefile|jsonpath|" +
+			"jsonpath-as-json|jsonpath-file] [--for TYPE/NAME] [--watch] [--types=Normal,Warning]":
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetEventsDocs().LongMD,
 		}

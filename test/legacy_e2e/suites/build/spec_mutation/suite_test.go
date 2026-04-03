@@ -54,12 +54,6 @@ func setupEnv(opts setupEnvOptions) {
 		SuiteData.Stubs.SetEnv("WERF_BUILDAH_MODE", opts.ContainerBackendMode)
 	}
 
-	if opts.ContainerBackendMode == "buildkit-docker" {
-		SuiteData.Stubs.SetEnv("DOCKER_BUILDKIT", "1")
-	} else {
-		SuiteData.Stubs.UnsetEnv("DOCKER_BUILDKIT")
-	}
-
 	if opts.WithLocalRepo {
 		SuiteData.Stubs.SetEnv("WERF_INSECURE_REGISTRY", "1")
 		SuiteData.Stubs.SetEnv("WERF_SKIP_TLS_VERIFY_REGISTRY", "1")

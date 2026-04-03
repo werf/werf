@@ -26,7 +26,6 @@ var (
 	defaultCLI           command.Cli
 	defaultPlatform      string
 	runtimePlatform      string
-	useBuildx            bool
 
 	DockerConfigDir string
 )
@@ -64,26 +63,12 @@ func Init(ctx context.Context, opts InitOptions) error {
 	spec := platforms.DefaultSpec()
 	spec.OS = defaultCLI.ServerInfo().OSType
 	runtimePlatform = platforms.Format(spec)
-	claimPlatforms := opts.ClaimPlatforms
 
 	if opts.DefaultPlatform != "" {
 		defaultPlatform = opts.DefaultPlatform
 		os.Setenv("DOCKER_DEFAULT_PLATFORM", opts.DefaultPlatform)
-		claimPlatforms = append(claimPlatforms, opts.DefaultPlatform)
 	} else {
 		defaultPlatform = runtimePlatform
-	}
-
-	for _, claimPlatform := range claimPlatforms {
-		if claimPlatform != runtimePlatform {
-			useBuildx = true
-			break
-		}
-	}
-
-	useBuildx = true // use buildKit by default
-	if v := os.Getenv("DOCKER_BUILDKIT"); v == "0" || v == "false" {
-		useBuildx = false
 	}
 
 	return nil
@@ -106,15 +91,6 @@ func InitDockerConfig(opts InitOptions) error {
 }
 
 func ClaimTargetPlatforms(claimPlatforms []string) {
-	if defaultPlatform != "" {
-		claimPlatforms = append(claimPlatforms, defaultPlatform)
-	}
-	for _, claimPlatform := range claimPlatforms {
-		if claimPlatform != runtimePlatform {
-			useBuildx = true
-			break
-		}
-	}
 }
 
 func GetDefaultPlatform() string {

@@ -333,7 +333,14 @@ cli: &cli
       - title: werf kubectl
         f:
           - title: werf kubectl alpha
-            url: /reference/cli/werf_kubectl_alpha.html
+            f:
+              - title: werf kubectl alpha kuberc
+                f:
+                  - title: werf kubectl alpha kuberc set
+                    url: /reference/cli/werf_kubectl_alpha_kuberc_set.html
+
+                  - title: werf kubectl alpha kuberc view
+                    url: /reference/cli/werf_kubectl_alpha_kuberc_view.html
 
           - title: werf kubectl annotate
             url: /reference/cli/werf_kubectl_annotate.html

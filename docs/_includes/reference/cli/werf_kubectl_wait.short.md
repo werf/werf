@@ -1,1 +1,1 @@
-experimental: Wait for a specific condition on one or many resources
+wait for a specific condition on one or many resources
