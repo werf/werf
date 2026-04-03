@@ -4,21 +4,24 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"os"
 	"slices"
 	"strings"
 	"time"
 
 	"github.com/cenkalti/backoff/v5"
+	"github.com/docker/buildx/commands"
+	_ "github.com/docker/buildx/driver/docker"
+	_ "github.com/docker/buildx/driver/docker-container"
+	"github.com/docker/buildx/util/buildflags"
+	"github.com/docker/buildx/util/progress"
 	"github.com/docker/cli/cli/command"
 	"github.com/docker/cli/cli/command/image"
-	"github.com/docker/cli/cli/streams"
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	dockerImage "github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
+	"github.com/moby/buildkit/exporter/containerimage/exptypes"
+	"github.com/moby/buildkit/util/progress/progressui"
 	"github.com/samber/lo"
-	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 
 	"github.com/werf/logboek"
@@ -32,7 +35,7 @@ type CreateImageOptions struct {
 }
 
 func CreateImage(ctx context.Context, ref string, opts CreateImageOptions) error {
-	var importOpts types.ImageImportOptions
+	var importOpts dockerImage.ImportOptions
 	if len(opts.Labels) > 0 {
 		changeOption := "LABEL"
 		for _, label := range opts.Labels {
@@ -43,11 +46,11 @@ func CreateImage(ctx context.Context, ref string, opts CreateImageOptions) error
 	if opts.TargetPlatform != "" {
 		importOpts.Platform = opts.TargetPlatform
 	}
-	_, err := apiCli(ctx).ImageImport(ctx, types.ImageImportSource{SourceName: "-"}, ref, importOpts)
+	_, err := apiCli(ctx).ImageImport(ctx, dockerImage.ImportSource{SourceName: "-"}, ref, importOpts)
 	return err
 }
 
-func Images(ctx context.Context, options types.ImageListOptions) ([]types.ImageSummary, error) {
+func Images(ctx context.Context, options dockerImage.ListOptions) ([]dockerImage.Summary, error) {
 	images, err := apiCli(ctx).ImageList(ctx, options)
 	if err != nil {
 		return nil, err
@@ -66,7 +69,7 @@ func ImageExist(ctx context.Context, ref string) (bool, error) {
 	return true, nil
 }
 
-func ImageInspect(ctx context.Context, ref string) (*types.ImageInspect, error) {
+func ImageInspect(ctx context.Context, ref string) (*dockerImage.InspectResponse, error) {
 	inspect, _, err := apiCli(ctx).ImageInspectWithRaw(ctx, ref)
 	if err != nil {
 		return nil, err
@@ -224,75 +227,91 @@ func CliRmi_LiveOutput(ctx context.Context, args ...string) error {
 	return doCliRmi(ctx, cli(ctx), args...)
 }
 
-type BuildOptions struct {
-	EnableBuildx bool
+type CliBuildOptions struct {
+	DockerfileName string
+	Tags           []string
+	BuildArgs      []string
+	Labels         []string
+	Target         string
+	Platforms      []string
+	Network        string
+	ExtraHosts     []string
+	SSH            string
+	Secrets        []string
 }
 
-func doCliBuild(ctx context.Context, c command.Cli, opts BuildOptions, args ...string) error {
-	var finalArgs []string
-	var cmd *cobra.Command
-
-	if opts.EnableBuildx {
-		cmd = NewBuildxCommand(c)
-		finalArgs = append([]string{"build", "--load"}, args...)
-	} else {
-		cmd = image.NewBuildCommand(c)
-		finalArgs = args
+func CliBuild_LiveOutputWithCustomIn(ctx context.Context, rc io.ReadCloser, cliOpts CliBuildOptions) (string, error) {
+	buildOpts := &commands.BuildOptions{
+		ExportLoad:             true,
+		DockerfileName:         cliOpts.DockerfileName,
+		Tags:                   cliOpts.Tags,
+		Target:                 cliOpts.Target,
+		Platforms:              cliOpts.Platforms,
+		NetworkMode:            cliOpts.Network,
+		ExtraHosts:             cliOpts.ExtraHosts,
+		ProvenanceResponseMode: "min",
 	}
 
-	return prepareCliCmd(ctx, cmd, finalArgs...).Execute()
-}
+	if len(cliOpts.BuildArgs) > 0 {
+		buildOpts.BuildArgs = make(map[string]string, len(cliOpts.BuildArgs))
+		for _, arg := range cliOpts.BuildArgs {
+			k, v, _ := strings.Cut(arg, "=")
+			buildOpts.BuildArgs[k] = v
+		}
+	}
 
-func CliBuild_LiveOutputWithCustomIn(ctx context.Context, rc io.ReadCloser, args ...string) error {
-	buildOpts := BuildOptions{}
+	if len(cliOpts.Labels) > 0 {
+		buildOpts.Labels = make(map[string]string, len(cliOpts.Labels))
+		for _, label := range cliOpts.Labels {
+			k, v, _ := strings.Cut(label, "=")
+			buildOpts.Labels[k] = v
+		}
+	}
 
-	if useBuildx {
-		buildOpts.EnableBuildx = true
-
-		// TODO: --provenance=false is a workaround for index manifests that we cannot handle properly with current code base (fix in v3).
-		args = append([]string{"--provenance=false"}, args...)
-	} else {
-		var err error
-		args, err = checkForUnsupportedOptions(ctx, args...)
+	if cliOpts.SSH != "" {
+		sshSpecs, err := buildflags.ParseSSHSpecs([]string{cliOpts.SSH})
 		if err != nil {
-			return err
+			return "", fmt.Errorf("parse ssh specs: %w", err)
 		}
-		// ensure buildkit not enabled
-		if err := os.Setenv("DOCKER_BUILDKIT", "0"); err != nil {
-			return err
-		}
+		buildOpts.SSH = sshSpecs
 	}
 
-	return cliWithCustomOptions(ctx, []command.DockerCliOption{
-		func(cli *command.DockerCli) error {
-			cli.SetIn(streams.NewIn(rc))
-			return nil
-		},
-	}, func(cli command.Cli) error {
-		return doCliBuild(ctx, cli, buildOpts, args...)
-	})
-}
-
-func checkForUnsupportedOptions(ctx context.Context, args ...string) ([]string, error) {
-	borderIndex := 0
-	for i := 0; i < len(args); i++ {
-		arg := args[i]
-		if strings.Contains(arg, "--secret") {
-			return nil, fmt.Errorf("secrets are only available with Docker BuildKit")
+	if len(cliOpts.Secrets) > 0 {
+		secrets, err := buildflags.ParseSecretSpecs(cliOpts.Secrets)
+		if err != nil {
+			return "", fmt.Errorf("parse secret specs: %w", err)
 		}
-		// since we use our ssh agent as default we need to pop ssh options
-		// to be able to run build with legacy backend
-		if strings.Contains(arg, "--ssh") {
-			logboek.Context(ctx).Info().LogF("--ssh is not supported by legacy Docker builder so it will be skipped")
-			if i+1 < len(args) {
-				i++
-			}
-			continue
-		}
-		args[borderIndex] = args[i]
-		borderIndex++
+		buildOpts.Secrets = secrets
 	}
-	return args[:borderIndex], nil
+
+	progressMode := progressui.PlainMode
+	if liveCliOutputEnabled {
+		progressMode = progressui.AutoMode
+	}
+
+	dockerCli := cli(ctx)
+
+	printer, err := progress.NewPrinter(ctx, logboek.Context(ctx).OutStream(), progressMode)
+	if err != nil {
+		return "", fmt.Errorf("create progress printer: %w", err)
+	}
+
+	resp, _, err := commands.RunBuild(ctx, dockerCli, buildOpts, rc, printer, nil)
+
+	printErr := printer.Wait()
+	if err == nil {
+		err = printErr
+	}
+	if err != nil {
+		return "", err
+	}
+
+	imageID := resp.ExporterResponse[exptypes.ExporterImageDigestKey]
+	if imageID == "" {
+		imageID = resp.ExporterResponse[exptypes.ExporterImageConfigDigestKey]
+	}
+
+	return imageID, nil
 }
 
 func CliImageSaveToStream(ctx context.Context, imageName string) (io.ReadCloser, error) {
@@ -300,7 +319,7 @@ func CliImageSaveToStream(ctx context.Context, imageName string) (io.ReadCloser,
 }
 
 func CliLoadFromStream(ctx context.Context, input io.Reader) (string, error) {
-	loadResponse, err := apiCli(ctx).ImageLoad(ctx, input, true)
+	loadResponse, err := apiCli(ctx).ImageLoad(ctx, input)
 	if err != nil {
 		return "", fmt.Errorf("load failed: %w", err)
 	}

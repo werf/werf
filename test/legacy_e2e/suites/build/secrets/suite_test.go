@@ -42,12 +42,6 @@ func setupEnv(opts testOptions) {
 		SuiteData.Stubs.SetEnv("WERF_BUILDAH_MODE", opts.ContainerBackendMode)
 	}
 
-	if opts.ContainerBackendMode == "buildkit-docker" {
-		SuiteData.Stubs.SetEnv("DOCKER_BUILDKIT", "1")
-	} else {
-		SuiteData.Stubs.SetEnv("DOCKER_BUILDKIT", "0")
-	}
-
 	if opts.WithStagedDockerfileBuilder {
 		SuiteData.Stubs.SetEnv("WERF_FORCE_STAGED_DOCKERFILE", "1")
 	} else {

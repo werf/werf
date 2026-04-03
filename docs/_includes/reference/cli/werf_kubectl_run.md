@@ -55,6 +55,10 @@ werf kubectl run NAME --image=image [--env="key=value"] [--port=port] [--dry-run
             attach ...` were called.  Default false, unless `-i/--stdin` is set, in which case the  
             default is true. With `--restart=Never` the exit code of the container process is       
             returned.
+      --cascade="background"
+            Must be "background", "orphan", or "foreground". Selects the deletion cascading         
+            strategy for the dependents (e.g. Pods created by a ReplicationController). Defaults to 
+            background.
       --command=false
             If true and extra arguments are present, use them as the `command` field in the         
             container, rather than the `args` field which is the default.
@@ -68,11 +72,23 @@ werf kubectl run NAME --image=image [--env="key=value"] [--port=port] [--dry-run
             If true, create a ClusterIP service associated with the pod.  Requires `--port`.
       --field-manager="kubectl-run"
             Name of the manager used to track field ownership.
+  -f, --filename=[]
+            to use to replace the resource.
+      --force=false
+            If true, immediately remove resources from API and bypass graceful deletion. Note that  
+            immediate deletion of some resources may result in inconsistency or data loss and       
+            requires confirmation.
+      --grace-period=-1
+            Period of time in seconds given to the resource to terminate gracefully. Ignored if     
+            negative. Set to 1 for immediate shutdown. Can only be set to 0 when --force is true    
+            (force deletion).
       --image=""
             The image for the container to run.
       --image-pull-policy=""
             The image pull policy for the container.  If left empty, this value will not be         
             specified by the client and defaulted by the server.
+  -k, --kustomize=""
+            Process a kustomization directory. This flag can`t be used together with -f or -R.
   -l, --labels=""
             Comma separated labels to apply to the pod. Will override previous values.
       --leave-stdin-open=false
@@ -80,8 +96,8 @@ werf kubectl run NAME --image=image [--env="key=value"] [--port=port] [--dry-run
             first attach completes. By default, stdin will be closed after the first attach         
             completes.
   -o, --output=""
-            Output format. One of: (json, yaml, name, go-template, go-template-file, template,      
-            templatefile, jsonpath, jsonpath-as-json, jsonpath-file).
+            Output format. One of: (json, yaml, kyaml, name, go-template, go-template-file,         
+            template, templatefile, jsonpath, jsonpath-as-json, jsonpath-file).
       --override-type="merge"
             The method used to override the generated object: json, merge, or strategic.
       --overrides=""
@@ -96,6 +112,9 @@ werf kubectl run NAME --image=image [--env="key=value"] [--port=port] [--dry-run
             If true, run the container in privileged mode.
   -q, --quiet=false
             If true, suppress prompt messages.
+  -R, --recursive=false
+            Process the directory used in -f, --filename recursively. Useful when you want to       
+            manage related manifests organized within the same directory.
       --restart="Always"
             The restart policy for this Pod.  Legal values [Always, OnFailure, Never].
       --rm=false
@@ -113,8 +132,13 @@ werf kubectl run NAME --image=image [--env="key=value"] [--port=port] [--dry-run
             Template string or path to template file to use when -o=go-template,                    
             -o=go-template-file. The template format is golang templates                            
             [http://golang.org/pkg/text/template/#pkg-overview].
+      --timeout=0s
+            The length of time to wait before giving up on a delete, zero means determine a timeout 
+            from the size of the object
   -t, --tty=false
             Allocate a TTY for the container in the pod.
+      --wait=false
+            If true, wait for resources to be gone before returning. This waits for finalizers.
 ```
 
 {{ header }} Options inherited from parent commands
@@ -128,6 +152,9 @@ werf kubectl run NAME --image=image [--env="key=value"] [--port=port] [--dry-run
             groups.
       --as-uid=""
             UID to impersonate for the operation.
+      --as-user-extra=[]
+            User extras to impersonate for the operation, this flag can be repeated to specify      
+            multiple values for the same key.
       --cache-dir="~/.kube/cache"
             Default cache directory
       --certificate-authority=""
@@ -153,6 +180,9 @@ werf kubectl run NAME --image=image [--env="key=value"] [--port=port] [--dry-run
       --kubeconfig=""
             Path to the kubeconfig file to use for CLI requests (default $WERF_KUBE_CONFIG, or      
             $WERF_KUBECONFIG, or $KUBECONFIG). Ignored if kubeconfig passed as base64.
+      --kuberc=""
+            Path to the kuberc file to use for preferences. This can be disabled by exporting       
+            KUBECTL_KUBERC=false feature gate or turning off the feature KUBERC=off.
       --log-flush-frequency=5s
             Maximum number of seconds between log flushes
       --match-server-version=false
@@ -162,7 +192,8 @@ werf kubectl run NAME --image=image [--env="key=value"] [--port=port] [--dry-run
       --password=""
             Password for basic authentication to the API server
       --profile="none"
-            Name of profile to capture. One of (none|cpu|heap|goroutine|threadcreate|block|mutex)
+            Name of profile to capture. One of                                                      
+            (none|cpu|heap|goroutine|threadcreate|block|mutex|trace)
       --profile-output="profile.pprof"
             Name of the file to write the profile to
       --request-timeout="0"

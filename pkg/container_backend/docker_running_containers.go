@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/docker/docker/api/types"
+	dockercontainer "github.com/docker/docker/api/types/container"
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/docker"
@@ -50,7 +50,7 @@ func TerminateRunningDockerContainers() error {
 	for _, container := range runningDockerContainers {
 		logboek.Context(container.Ctx).Info().LogF("Removing container %q...\n", container.Name)
 
-		err := docker.ContainerRemove(container.Ctx, container.Name, types.ContainerRemoveOptions{RemoveVolumes: true, Force: true})
+		err := docker.ContainerRemove(container.Ctx, container.Name, dockercontainer.RemoveOptions{RemoveVolumes: true, Force: true})
 		if err != nil {
 			logboek.Context(container.Ctx).Error().LogF("WARNING: Unable to remove container %q: %w\n", container.Name, err.Error())
 		}
