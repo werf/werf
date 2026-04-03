@@ -309,7 +309,7 @@ func mapLegacyDockerfileToImage(ctx context.Context, metaConfig *config.Meta, do
 		return nil, fmt.Errorf("unable to parse dockerfile %s: %w", relDockerfilePath, err)
 	}
 
-	dockerStages, dockerMetaArgs, err := instructions.Parse(p.AST)
+	dockerStages, dockerMetaArgs, err := instructions.Parse(p.AST, nil)
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse dockerfile %s: %w", relDockerfilePath, err)
 	}

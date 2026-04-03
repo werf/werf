@@ -40,7 +40,7 @@ var _ = It("should rotate secret key", func(ctx SpecContext) {
 	}, os.Environ()...)
 
 	res, err = cmd.Output()
-	_, _ = fmt.Fprintf(GinkgoWriter, string(res))
+	_, _ = fmt.Fprint(GinkgoWriter, string(res))
 	Expect(err).ShouldNot(HaveOccurred())
 
 	filesShouldBeRegenerated := []string{".helm/secret/test", ".helm/secret/subdir/test", ".helm/secret-values.yaml"}

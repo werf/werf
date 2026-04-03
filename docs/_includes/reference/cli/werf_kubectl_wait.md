@@ -14,7 +14,7 @@ A successful message will be printed to stdout indicating when the specified con
 {{ header }} Syntax
 
 ```shell
-werf kubectl wait ([-f FILENAME] | resource.group/resource.name | resource.group [(-l label | --all)]) [--for=delete|--for condition=available|--for=jsonpath='{}'[=value]] [options]
+werf kubectl wait ([-f FILENAME] | resource.group/resource.name | resource.group [(-l label | --all)]) [--for=create|--for=delete|--for condition=available|--for=jsonpath='{}'[=value]] [options]
 ```
 
 {{ header }} Examples
@@ -32,8 +32,12 @@ werf kubectl wait ([-f FILENAME] | resource.group/resource.name | resource.group
   # Wait for pod "busybox1" to be Ready
   kubectl wait --for='jsonpath={.status.conditions[?(@.type=="Ready")].status}=True' pod/busybox1
   
-  # Wait for the service "loadbalancer" to have ingress.
+  # Wait for the service "loadbalancer" to have ingress
   kubectl wait --for=jsonpath='{.status.loadBalancer.ingress}' service/loadbalancer
+  
+  # Wait for the secret "busybox1" to be created, with a timeout of 30s
+  kubectl create secret generic busybox1
+  kubectl wait --for=create secret/busybox1 --timeout=30s
   
   # Wait for the pod "busybox1" to be deleted, with a timeout of 60s, after having issued the "delete" command
   kubectl delete pod/busybox1
@@ -59,15 +63,15 @@ werf kubectl wait ([-f FILENAME] | resource.group/resource.name | resource.group
             identifying the resource.
       --for=""
             The condition to wait on:                                                               
-            [delete|condition=condition-name[=condition-value]|jsonpath=`{JSONPath                  
-            expression}`=[JSONPath value]]. The default condition-value is true.  Condition values  
+            [create|delete|condition=condition-name[=condition-value]|jsonpath=`{JSONPath           
+            expression}`=[JSONPath value]]. The default condition-value is true. Condition values   
             are compared after Unicode simple case folding, which is a more general form of         
             case-insensitivity.
       --local=false
             If true, annotation will NOT contact api-server but run locally.
   -o, --output=""
-            Output format. One of: (json, yaml, name, go-template, go-template-file, template,      
-            templatefile, jsonpath, jsonpath-as-json, jsonpath-file).
+            Output format. One of: (json, yaml, kyaml, name, go-template, go-template-file,         
+            template, templatefile, jsonpath, jsonpath-as-json, jsonpath-file).
   -R, --recursive=true
             Process the directory used in -f, --filename recursively. Useful when you want to       
             manage related manifests organized within the same directory.
@@ -81,7 +85,7 @@ werf kubectl wait ([-f FILENAME] | resource.group/resource.name | resource.group
             -o=go-template-file. The template format is golang templates                            
             [http://golang.org/pkg/text/template/#pkg-overview].
       --timeout=30s
-            The length of time to wait before giving up.  Zero means check once and don`t wait,     
+            The length of time to wait before giving up. Zero means check once and don`t wait,      
             negative means wait for a week.
 ```
 
@@ -96,6 +100,9 @@ werf kubectl wait ([-f FILENAME] | resource.group/resource.name | resource.group
             groups.
       --as-uid=""
             UID to impersonate for the operation.
+      --as-user-extra=[]
+            User extras to impersonate for the operation, this flag can be repeated to specify      
+            multiple values for the same key.
       --cache-dir="~/.kube/cache"
             Default cache directory
       --certificate-authority=""
@@ -121,6 +128,9 @@ werf kubectl wait ([-f FILENAME] | resource.group/resource.name | resource.group
       --kubeconfig=""
             Path to the kubeconfig file to use for CLI requests (default $WERF_KUBE_CONFIG, or      
             $WERF_KUBECONFIG, or $KUBECONFIG). Ignored if kubeconfig passed as base64.
+      --kuberc=""
+            Path to the kuberc file to use for preferences. This can be disabled by exporting       
+            KUBECTL_KUBERC=false feature gate or turning off the feature KUBERC=off.
       --log-flush-frequency=5s
             Maximum number of seconds between log flushes
       --match-server-version=false
@@ -130,7 +140,8 @@ werf kubectl wait ([-f FILENAME] | resource.group/resource.name | resource.group
       --password=""
             Password for basic authentication to the API server
       --profile="none"
-            Name of profile to capture. One of (none|cpu|heap|goroutine|threadcreate|block|mutex)
+            Name of profile to capture. One of                                                      
+            (none|cpu|heap|goroutine|threadcreate|block|mutex|trace)
       --profile-output="profile.pprof"
             Name of the file to write the profile to
       --request-timeout="0"
