@@ -1,1 +1,0 @@
-download the notes for a named release

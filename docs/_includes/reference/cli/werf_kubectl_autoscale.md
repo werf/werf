@@ -3,15 +3,14 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Creates an autoscaler that automatically chooses and sets the number of pods that run in a Kubernetes cluster.
+Creates an autoscaler that automatically chooses and sets the number of pods that run in a Kubernetes cluster. The command will attempt to use the autoscaling/v2 API first, in case of an error, it will fall back to autoscaling/v1 API.
 
-Looks up a deployment, replica set, stateful set, or replication controller by name and creates an autoscaler that uses the given resource as a reference.
-An autoscaler can automatically increase or decrease number of Pods deployed within the system as needed.
+ Looks up a deployment, replica set, stateful set, or replication controller by name and creates an autoscaler that uses the given resource as a reference. An autoscaler can automatically increase or decrease number of pods deployed within the system as needed.
 
 {{ header }} Syntax
 
 ```shell
-werf kubectl autoscale (-f FILENAME | TYPE NAME | TYPE/NAME) [--min=MINPODS] --max=MAXPODS [--cpu-percent=CPU] [options]
+werf kubectl autoscale (-f FILENAME | TYPE NAME | TYPE/NAME) [--min=MINPODS] --max=MAXPODS [--cpu=CPU] [--memory=MEMORY] [options]
 ```
 
 {{ header }} Examples
@@ -21,7 +20,13 @@ werf kubectl autoscale (-f FILENAME | TYPE NAME | TYPE/NAME) [--min=MINPODS] --m
   kubectl autoscale deployment foo --min=2 --max=10
   
   # Auto scale a replication controller "foo", with the number of pods between 1 and 5, target CPU utilization at 80%
-  kubectl autoscale rc foo --max=5 --cpu-percent=80
+  kubectl autoscale rc foo --max=5 --cpu=80%
+  
+  # Auto scale a deployment "bar", with the number of pods between 3 and 6, target average CPU of 500m and memory of 200Mi
+  kubectl autoscale deployment bar --min=3 --max=6 --cpu=500m --memory=200Mi
+  
+  # Auto scale a deployment "bar", with the number of pods between 2 and 8, target CPU utilization 60% and memory utilization 70%
+  kubectl autoscale deployment bar --min=3 --max=6 --cpu=60% --memory=70%
 ```
 
 {{ header }} Options
@@ -30,9 +35,11 @@ werf kubectl autoscale (-f FILENAME | TYPE NAME | TYPE/NAME) [--min=MINPODS] --m
       --allow-missing-template-keys=true
             If true, ignore any errors in templates when a field or map key is missing in the       
             template. Only applies to golang and jsonpath output formats.
-      --cpu-percent=-1
-            The target average CPU utilization (represented as a percent of requested CPU) over all 
-            the pods. If it`s not specified or negative, a default autoscaling policy will be used.
+      --cpu=""
+            Target CPU utilization over all the pods. When specified as a percentage (e.g."70%" for 
+            70% of requested CPU) it will target average utilization. When specified as quantity    
+            (e.g."500m" for 500 milliCPU) it will target average value. Value without units is      
+            treated as a quantity with miliCPU being the unit (e.g."500" is "500m").
       --dry-run="none"
             Must be "none", "server", or "client". If client strategy, only print the object that   
             would be sent, without sending it. If server strategy, submit server-side request       
@@ -45,6 +52,12 @@ werf kubectl autoscale (-f FILENAME | TYPE NAME | TYPE/NAME) [--min=MINPODS] --m
             Process the kustomization directory. This flag can`t be used together with -f or -R.
       --max=-1
             The upper limit for the number of pods that can be set by the autoscaler. Required.
+      --memory=""
+            Target memory utilization over all the pods. When specified  as a percentage (e.g."60%" 
+            for 60% of requested memory) it will target average utilization. When specified as      
+            quantity (e.g."200Mi" for 200 MiB, "1Gi" for 1 GiB) it will target average value. Value 
+            without units is treated as a quantity with mebibytes being the unit (e.g."200" is      
+            "200Mi").
       --min=-1
             The lower limit for the number of pods that can be set by the autoscaler. If it`s not   
             specified or negative, the server will apply a default value.
@@ -52,8 +65,8 @@ werf kubectl autoscale (-f FILENAME | TYPE NAME | TYPE/NAME) [--min=MINPODS] --m
             The name for the newly created object. If not specified, the name of the input resource 
             will be used.
   -o, --output=""
-            Output format. One of: (json, yaml, name, go-template, go-template-file, template,      
-            templatefile, jsonpath, jsonpath-as-json, jsonpath-file).
+            Output format. One of: (json, yaml, kyaml, name, go-template, go-template-file,         
+            template, templatefile, jsonpath, jsonpath-as-json, jsonpath-file).
   -R, --recursive=false
             Process the directory used in -f, --filename recursively. Useful when you want to       
             manage related manifests organized within the same directory.
@@ -80,6 +93,9 @@ werf kubectl autoscale (-f FILENAME | TYPE NAME | TYPE/NAME) [--min=MINPODS] --m
             groups.
       --as-uid=""
             UID to impersonate for the operation.
+      --as-user-extra=[]
+            User extras to impersonate for the operation, this flag can be repeated to specify      
+            multiple values for the same key.
       --cache-dir="~/.kube/cache"
             Default cache directory
       --certificate-authority=""
@@ -105,6 +121,9 @@ werf kubectl autoscale (-f FILENAME | TYPE NAME | TYPE/NAME) [--min=MINPODS] --m
       --kubeconfig=""
             Path to the kubeconfig file to use for CLI requests (default $WERF_KUBE_CONFIG, or      
             $WERF_KUBECONFIG, or $KUBECONFIG). Ignored if kubeconfig passed as base64.
+      --kuberc=""
+            Path to the kuberc file to use for preferences. This can be disabled by exporting       
+            KUBECTL_KUBERC=false feature gate or turning off the feature KUBERC=off.
       --log-flush-frequency=5s
             Maximum number of seconds between log flushes
       --match-server-version=false
@@ -114,7 +133,8 @@ werf kubectl autoscale (-f FILENAME | TYPE NAME | TYPE/NAME) [--min=MINPODS] --m
       --password=""
             Password for basic authentication to the API server
       --profile="none"
-            Name of profile to capture. One of (none|cpu|heap|goroutine|threadcreate|block|mutex)
+            Name of profile to capture. One of                                                      
+            (none|cpu|heap|goroutine|threadcreate|block|mutex|trace)
       --profile-output="profile.pprof"
             Name of the file to write the profile to
       --request-timeout="0"

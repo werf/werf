@@ -163,8 +163,6 @@ werf build [IMAGE_NAME...] [options]
             (default $WERF_GITERMINISM_CONFIG or werf-giterminism.yaml in working directory)
       --home-dir=""
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
-      --insecure-helm-dependencies=false
-            No-op
       --insecure-registry=false
             Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
       --introspect-before-error=false

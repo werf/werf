@@ -52,7 +52,8 @@ werf bundle plan [options]
       --env=""
             Use specified environment (default $WERF_ENV)
       --exit-code=false
-            Return exit code 0 if no changes, 1 if error, 2 if any changes planned (default         
+            Return exit code 0 if no changes, 1 if error, 2 if resource changes planned, 3 if no    
+            resource changes planned, but release still should be installed (default                
             $WERF_EXIT_CODE or false)
       --force-adoption=false
             Always adopt resources, even if they belong to a different Helm release (default        
@@ -258,13 +259,6 @@ werf bundle plan [options]
             or separate values with commas: key1=val1,key2=val2.
             Also, can be defined with $WERF_SET_ROOT_JSON_* (e.g. $WERF_SET_ROOT_JSON_1=key1=val1,  
             $WERF_SET_ROOT_JSON_2=key2=val2)
-      --set-runtime-json=[]
-            Set new keys in $.Runtime, where the key is the value path and the value is JSON. This  
-            is meant to be generated inside the program, so use --set-json instead, unless you know 
-            what you are doing. Can specify multiple or separate values with commas:                
-            key1=val1,key2=val2.
-            Also, can be defined with $WERF_SET_RUNTIME_JSON_* (e.g.                                
-            $WERF_SET_RUNTIME_JSON_1=key1=val1, $WERF_SET_RUNTIME_JSON_2=key2=val2)
       --set-string=[]
             Set STRING helm values on the command line (can specify multiple or separate values     
             with commas: key1=val1,key2=val2).
@@ -276,8 +270,6 @@ werf bundle plan [options]
             Show sensitive diff lines ($WERF_SHOW_SENSITIVE_DIFFS by default)
       --show-verbose-crd-diffs=false
             Show verbose CRD diff lines ($WERF_SHOW_VERBOSE_CRD_DIFFS by default)
-      --show-verbose-diffs=true
-            Show verbose diff lines ($WERF_SHOW_VERBOSE_DIFFS by default)
   -L, --skip-dependencies-repo-refresh=false
             Do not refresh helm chart repositories locally cached index
       --skip-tls-verify-helm-dependencies=false

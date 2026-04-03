@@ -82,6 +82,9 @@ werf dismiss [options]
             (Buildah-only) Use specified mirrors for docker.io
       --debug-templates=false
             Enable debug mode for Go templates (default $WERF_DEBUG_TEMPLATES or false)
+      --delete-propagation=""
+            Set default delete propagation strategy (default $WERF_DELETE_PROPAGATION or            
+            Foreground).
       --deploy-report-path=""
             Change deploy report path and format (by default $WERF_DEPLOY_REPORT_PATH or            
             ".werf-deploy-report.json" if not set). Extension must be .json for JSON format. If     
@@ -138,10 +141,6 @@ werf dismiss [options]
             (default $WERF_GITERMINISM_CONFIG or werf-giterminism.yaml in working directory)
       --home-dir=""
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
-      --hooks-status-progress-period=0
-            No-op
-      --insecure-helm-dependencies=false
-            No-op
       --insecure-registry=false
             Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
       --kube-api-server=""
@@ -288,6 +287,9 @@ werf dismiss [options]
             repo Harbor username (default $WERF_REPO_HARBOR_USERNAME)
       --repo-quay-token=""
             repo quay.io token (default $WERF_REPO_QUAY_TOKEN)
+      --save-uninstall-report=false
+            Save uninstall report (by default $WERF_SAVE_UNINSTALL_REPORT or false). Its path and   
+            format configured with --uninstall-report-path
       --secondary-repo=[]
             Specify one or multiple secondary read-only repos with images that will be used as a    
             cache.
@@ -316,13 +318,18 @@ werf dismiss [options]
             Resources tracking timeout in seconds ($WERF_TIMEOUT by default)
       --tmp-dir=""
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
+      --uninstall-graph-path=""
+            Save uninstall graph path to the specified file (by default                             
+            $WERF_UNINSTALL_GRAPH_PATH). Extension must be .dot or not specified. If extension not  
+            specified, then .dot is used
+      --uninstall-report-path=""
+            Change uninstall report path and format (by default $WERF_UNINSTALL_REPORT_PATH or      
+            ".werf-uninstall-report.json" if not set). Extension must be .json for JSON format. If  
+            extension not specified, then .json is used
       --use-deploy-report=false
             Use deploy report, previously saved with --save-deploy-report (by default               
             $WERF_USE_DEPLOY_REPORT or false). Its path and format configured with                  
             --deploy-report-path
-      --with-hooks=true
-            Delete Helm Release hooks getting from existing revisions (default $WERF_WITH_HOOKS or  
-            true)
       --with-namespace=false
             Delete Kubernetes Namespace after purging Helm Release (default $WERF_WITH_NAMESPACE)
 ```

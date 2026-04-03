@@ -5,16 +5,16 @@
 {% endif %}
 Display one or many resources.
 
-Prints a table of the most important information about the specified resources. You can filter the list using a label selector and the `--selector` flag. If the desired resource type is namespaced you will only see results in your current namespace unless you pass `--all-namespaces`.
+ Prints a table of the most important information about the specified resources. You can filter the list using a label selector and the --selector flag. If the desired resource type is namespaced you will only see results in the current namespace if you don't specify any namespace.
 
-By specifying the output as `template` and providing a Go template as the value of the `--template` flag, you can filter the attributes of the fetched resources.
+ By specifying the output as 'template' and providing a Go template as the value of the --template flag, you can filter the attributes of the fetched resources.
 
-Use `kubectl api-resources` for a complete list of supported resources.
+Use "kubectl api-resources" for a complete list of supported resources.
 
 {{ header }} Syntax
 
 ```shell
-werf kubectl get [(-o|--output=)json|yaml|name|go-template|go-template-file|template|templatefile|jsonpath|jsonpath-as-json|jsonpath-file|custom-columns|custom-columns-file|wide] (TYPE[.VERSION][.GROUP] [NAME | -l label] | TYPE[.VERSION][.GROUP]/NAME ...) [flags] [options]
+werf kubectl get [(-o|--output=)json|yaml|kyaml|name|go-template|go-template-file|template|templatefile|jsonpath|jsonpath-as-json|jsonpath-file|custom-columns|custom-columns-file|wide] (TYPE[.VERSION][.GROUP] [NAME | -l label] | TYPE[.VERSION][.GROUP]/NAME ...) [flags] [options]
 ```
 
 {{ header }} Examples
@@ -55,6 +55,12 @@ werf kubectl get [(-o|--output=)json|yaml|name|go-template|go-template-file|temp
   
   # List the 'status' subresource for a single pod
   kubectl get pod web-pod-13je7 --subresource status
+  
+  # List all deployments in namespace 'backend'
+  kubectl get deployments.apps --namespace backend
+  
+  # List all pods existing in all namespaces
+  kubectl get pods --all-namespaces
 ```
 
 {{ header }} Options
@@ -67,8 +73,7 @@ werf kubectl get [(-o|--output=)json|yaml|name|go-template|go-template-file|temp
             If true, ignore any errors in templates when a field or map key is missing in the       
             template. Only applies to golang and jsonpath output formats.
       --chunk-size=500
-            Return large lists in chunks rather than all at once. Pass 0 to disable. This flag is   
-            beta and may change in the future.
+            Return large lists in chunks rather than all at once. Pass 0 to disable.
       --field-selector=""
             Selector (field query) to filter on, supports `=`, `==`, and `!=`.(e.g.                 
             --field-selector key1=value1,key2=value2). The server only supports a limited number of 
@@ -76,7 +81,9 @@ werf kubectl get [(-o|--output=)json|yaml|name|go-template|go-template-file|temp
   -f, --filename=[]
             Filename, directory, or URL to files identifying the resource to get from a server.
       --ignore-not-found=false
-            If the requested object does not exist the command will return exit code 0.
+            If set to true, suppresses NotFound error for specific objects that do not exist. Using 
+            this flag with commands that query for collections of resources has no effect when no   
+            resources are found.
   -k, --kustomize=""
             Process the kustomization directory. This flag can`t be used together with -f or -R.
   -L, --label-columns=[]
@@ -87,8 +94,8 @@ werf kubectl get [(-o|--output=)json|yaml|name|go-template|go-template-file|temp
             When using the default or custom-column output format, don`t print headers (default     
             print headers).
   -o, --output=""
-            Output format. One of: (json, yaml, name, go-template, go-template-file, template,      
-            templatefile, jsonpath, jsonpath-as-json, jsonpath-file, custom-columns,                
+            Output format. One of: (json, yaml, kyaml, name, go-template, go-template-file,         
+            template, templatefile, jsonpath, jsonpath-as-json, jsonpath-file, custom-columns,      
             custom-columns-file, wide). See custom columns                                          
             [https://kubernetes.io/docs/reference/kubectl/#custom-columns], golang template         
             [http://golang.org/pkg/text/template/#pkg-overview] and jsonpath template               
@@ -103,9 +110,9 @@ werf kubectl get [(-o|--output=)json|yaml|name|go-template|go-template-file|temp
             Process the directory used in -f, --filename recursively. Useful when you want to       
             manage related manifests organized within the same directory.
   -l, --selector=""
-            Selector (label query) to filter on, supports `=`, `==`, and `!=`.(e.g. -l              
-            key1=value1,key2=value2). Matching objects must satisfy all of the specified label      
-            constraints.
+            Selector (label query) to filter on, supports `=`, `==`, `!=`, `in`, `notin`.(e.g. -l   
+            key1=value1,key2=value2,key3 in (value3)). Matching objects must satisfy all of the     
+            specified label constraints.
       --server-print=true
             If true, have the server return the appropriate table output. Supports extension APIs   
             and CRDs.
@@ -120,8 +127,7 @@ werf kubectl get [(-o|--output=)json|yaml|name|go-template|go-template-file|temp
             is expressed as a JSONPath expression (e.g. `{.metadata.name}`). The field in the API   
             resource specified by this JSONPath expression must be an integer or a string.
       --subresource=""
-            If specified, gets the subresource of the requested object. Must be one of [status      
-            scale]. This flag is beta and may change in the future.
+            If specified, gets the subresource of the requested object.
       --template=""
             Template string or path to template file to use when -o=go-template,                    
             -o=go-template-file. The template format is golang templates                            
@@ -143,6 +149,9 @@ werf kubectl get [(-o|--output=)json|yaml|name|go-template|go-template-file|temp
             groups.
       --as-uid=""
             UID to impersonate for the operation.
+      --as-user-extra=[]
+            User extras to impersonate for the operation, this flag can be repeated to specify      
+            multiple values for the same key.
       --cache-dir="~/.kube/cache"
             Default cache directory
       --certificate-authority=""
@@ -168,6 +177,9 @@ werf kubectl get [(-o|--output=)json|yaml|name|go-template|go-template-file|temp
       --kubeconfig=""
             Path to the kubeconfig file to use for CLI requests (default $WERF_KUBE_CONFIG, or      
             $WERF_KUBECONFIG, or $KUBECONFIG). Ignored if kubeconfig passed as base64.
+      --kuberc=""
+            Path to the kuberc file to use for preferences. This can be disabled by exporting       
+            KUBECTL_KUBERC=false feature gate or turning off the feature KUBERC=off.
       --log-flush-frequency=5s
             Maximum number of seconds between log flushes
       --match-server-version=false
@@ -177,7 +189,8 @@ werf kubectl get [(-o|--output=)json|yaml|name|go-template|go-template-file|temp
       --password=""
             Password for basic authentication to the API server
       --profile="none"
-            Name of profile to capture. One of (none|cpu|heap|goroutine|threadcreate|block|mutex)
+            Name of profile to capture. One of                                                      
+            (none|cpu|heap|goroutine|threadcreate|block|mutex|trace)
       --profile-output="profile.pprof"
             Name of the file to write the profile to
       --request-timeout="0"

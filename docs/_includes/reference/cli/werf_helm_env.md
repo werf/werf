@@ -3,7 +3,9 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-`env` prints out all the environment information in use by Helm.
+
+Env prints out all the environment information in use by Helm.
+
 
 {{ header }} Syntax
 
@@ -14,16 +16,6 @@ werf helm env
 {{ header }} Options inherited from parent commands
 
 ```shell
-      --hooks-status-progress-period=0
-            No-op
-      --kube-config=""
-            Kubernetes config file path (default $WERF_KUBE_CONFIG, or $WERF_KUBECONFIG, or         
-            $KUBECONFIG)
-      --kube-config-base64=""
-            Kubernetes config data as base64 string (default $WERF_KUBE_CONFIG_BASE64 or            
-            $WERF_KUBECONFIG_BASE64 or $KUBECONFIG_BASE64)
-      --kube-context=""
-            Kubernetes config context (default $WERF_KUBE_CONTEXT)
       --log-color-mode="auto"
             Set log color mode.
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        
@@ -48,10 +40,5 @@ werf helm env
             Specify custom log time format (default $WERF_LOG_TIME_FORMAT or RFC3339 format).
       --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
-  -n, --namespace=""
-            namespace scope for this request
-      --status-progress-period=5
-            Status progress period in seconds. Set -1 to stop showing status progress. Defaults to  
-            $WERF_STATUS_PROGRESS_PERIOD_SECONDS or 5 seconds
 ```
 

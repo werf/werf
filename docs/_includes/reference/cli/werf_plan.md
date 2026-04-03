@@ -145,7 +145,8 @@ werf plan --repo registry.mydomain.com/web --env production
       --env=""
             Use specified environment (default $WERF_ENV)
       --exit-code=false
-            Return exit code 0 if no changes, 1 if error, 2 if any changes planned (default         
+            Return exit code 0 if no changes, 1 if error, 2 if resource changes planned, 3 if no    
+            resource changes planned, but release still should be installed (default                
             $WERF_EXIT_CODE or false)
       --final-images-only=true
             Process final images only ($WERF_FINAL_IMAGES_ONLY or true by default)
@@ -187,8 +188,6 @@ werf plan --repo registry.mydomain.com/web --env production
             (default $WERF_GITERMINISM_CONFIG or werf-giterminism.yaml in working directory)
       --home-dir=""
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
-      --hooks-status-progress-period=0
-            No-op
       --ignore-secret-key=false
             Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)
       --insecure-helm-dependencies=false
@@ -357,8 +356,6 @@ werf plan --repo registry.mydomain.com/web --env production
       --release-storage-sql-connection=""
             SQL Connection String for Helm SQL Storage (default                                     
             $WERF_RELEASE_STORAGE_SQL_CONNECTION)
-      --releases-history-max=5
-            Max releases to keep in release storage ($WERF_RELEASES_HISTORY_MAX or 5 by default)
       --repo=""
             Container registry storage address (default $WERF_REPO)
       --repo-container-registry=""
@@ -437,13 +434,6 @@ werf plan --repo registry.mydomain.com/web --env production
             or separate values with commas: key1=val1,key2=val2.
             Also, can be defined with $WERF_SET_ROOT_JSON_* (e.g. $WERF_SET_ROOT_JSON_1=key1=val1,  
             $WERF_SET_ROOT_JSON_2=key2=val2)
-      --set-runtime-json=[]
-            Set new keys in $.Runtime, where the key is the value path and the value is JSON. This  
-            is meant to be generated inside the program, so use --set-json instead, unless you know 
-            what you are doing. Can specify multiple or separate values with commas:                
-            key1=val1,key2=val2.
-            Also, can be defined with $WERF_SET_RUNTIME_JSON_* (e.g.                                
-            $WERF_SET_RUNTIME_JSON_1=key1=val1, $WERF_SET_RUNTIME_JSON_2=key2=val2)
       --set-string=[]
             Set STRING helm values on the command line (can specify multiple or separate values     
             with commas: key1=val1,key2=val2).
@@ -457,8 +447,6 @@ werf plan --repo registry.mydomain.com/web --env production
             Show sensitive diff lines ($WERF_SHOW_SENSITIVE_DIFFS by default)
       --show-verbose-crd-diffs=false
             Show verbose CRD diff lines ($WERF_SHOW_VERBOSE_CRD_DIFFS by default)
-      --show-verbose-diffs=true
-            Show verbose diff lines ($WERF_SHOW_VERBOSE_DIFFS by default)
   -L, --skip-dependencies-repo-refresh=false
             Do not refresh helm chart repositories locally cached index
       --skip-tls-verify-helm-dependencies=false
@@ -475,8 +463,6 @@ werf plan --repo registry.mydomain.com/web --env production
             Can be specified with $WERF_SSH_KEY_* (e.g. $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa,         
             $WERF_SSH_KEY_NODEJS=~/.ssh/nodejs_rsa).
             Defaults to $WERF_SSH_KEY_*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}
-      --status-progress-period=0
-            No-op
       --stub-tags=false
             Use stubs instead of real tags (default $WERF_STUB_TAGS)
   -S, --synchronization=""
@@ -491,8 +477,6 @@ werf plan --repo registry.mydomain.com/web --env production
             repo. :local address allows execution of werf processes from a single host only
       --templates-allow-dns=false
             Allow performing DNS requests in templating (default $WERF_TEMPLATES_ALLOW_DNS)
-  -t, --timeout=0
-            No-op
       --tmp-dir=""
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
       --use-build-report=false

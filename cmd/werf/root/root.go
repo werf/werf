@@ -46,6 +46,7 @@ import (
 	managed_images_rm "github.com/werf/werf/v2/cmd/werf/managed_images/rm"
 	"github.com/werf/werf/v2/cmd/werf/plan"
 	"github.com/werf/werf/v2/cmd/werf/purge"
+	release_get "github.com/werf/werf/v2/cmd/werf/release/get"
 	"github.com/werf/werf/v2/cmd/werf/render"
 	"github.com/werf/werf/v2/cmd/werf/rollback"
 	"github.com/werf/werf/v2/cmd/werf/run"
@@ -113,6 +114,7 @@ func ConstructRootCmd(ctx context.Context) (*cobra.Command, error) {
 				managedImagesCmd(ctx),
 				hostCmd(ctx),
 				helmCmd,
+				releaseCmd(ctx),
 				crCmd(ctx),
 				kubectl2.ReplaceKubectlDocs(kubectl.NewCmd(ctx)),
 			},
@@ -174,6 +176,18 @@ func bundleCmd(ctx context.Context) *cobra.Command {
 		bundle_plan.NewCmd(ctx),
 		bundle_render.NewCmd(ctx),
 		bundle_copy.NewCmd(ctx),
+	)
+
+	return cmd
+}
+
+func releaseCmd(ctx context.Context) *cobra.Command {
+	cmd := common.SetCommandContext(ctx, &cobra.Command{
+		Use:   "release",
+		Short: "Work with releases",
+	})
+	cmd.AddCommand(
+		release_get.NewCmd(ctx),
 	)
 
 	return cmd

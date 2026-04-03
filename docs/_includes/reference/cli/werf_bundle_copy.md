@@ -33,8 +33,6 @@ werf bundle copy [options]
             OCI registry requirements. Default true or $WERF_HELM_COMPATIBLE_CHART.
       --home-dir=""
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
-      --insecure-helm-dependencies=false
-            No-op
       --insecure-registry=false
             Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
       --log-color-mode="auto"

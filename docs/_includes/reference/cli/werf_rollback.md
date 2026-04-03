@@ -76,8 +76,6 @@ werf rollback --revision 10
             (default $WERF_GITERMINISM_CONFIG or werf-giterminism.yaml in working directory)
       --home-dir=""
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
-      --hooks-status-progress-period=0
-            No-op
       --kube-api-server=""
             Kubernetes API server address (default $WERF_KUBE_API_SERVER)
       --kube-auth-password=""
