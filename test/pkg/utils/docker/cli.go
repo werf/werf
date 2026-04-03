@@ -8,11 +8,11 @@ import (
 	"time"
 
 	"github.com/docker/cli/cli/command"
-	"github.com/docker/cli/cli/command/container"
-	"github.com/docker/cli/cli/command/image"
+	"github.com/docker/cli/cli/command/commands"
 	"github.com/docker/cli/cli/flags"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
+	mobyclient "github.com/moby/moby/client"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/sirupsen/logrus"
@@ -38,7 +38,6 @@ func init() {
 
 func initCli() error {
 	cliOpts := []command.CLIOption{
-		command.WithContentTrust(false),
 		command.WithOutputStream(GinkgoWriter),
 		command.WithErrorStream(GinkgoWriter),
 	}
@@ -62,7 +61,7 @@ func initCli() error {
 
 func initApiClient() error {
 	ctx := context.Background()
-	serverVersion, err := cli.Client().ServerVersion(ctx)
+	serverVersion, err := cli.Client().ServerVersion(ctx, mobyclient.ServerVersionOptions{})
 	if err != nil {
 		return err
 	}
@@ -108,28 +107,55 @@ func ImageInspect(ctx context.Context, imageName string) *types.ImageInspect {
 	return inspect
 }
 
+func lookupCliCommand(c command.Cli, name string) (*cobra.Command, error) {
+	root := &cobra.Command{Use: "docker"}
+	commands.AddCommands(root, c)
+	for _, cmd := range root.Commands() {
+		if cmd.Name() == name {
+			root.RemoveCommand(cmd)
+			return cmd, nil
+		}
+	}
+	return nil, fmt.Errorf("docker CLI command %q not found", name)
+}
+
 func CliRm(ctx context.Context, args ...string) error {
-	cmd := container.NewRmCommand(cli)
+	cmd, err := lookupCliCommand(cli, "rm")
+	if err != nil {
+		return err
+	}
 	return cmdExecute(ctx, cmd, args)
 }
 
 func CliPull(ctx context.Context, args ...string) error {
-	cmd := image.NewPullCommand(cli)
+	cmd, err := lookupCliCommand(cli, "pull")
+	if err != nil {
+		return err
+	}
 	return cmdExecute(ctx, cmd, args)
 }
 
 func CliPush(ctx context.Context, args ...string) error {
-	cmd := image.NewPushCommand(cli)
+	cmd, err := lookupCliCommand(cli, "push")
+	if err != nil {
+		return err
+	}
 	return cmdExecute(ctx, cmd, args)
 }
 
 func CliTag(ctx context.Context, args ...string) error {
-	cmd := image.NewTagCommand(cli)
+	cmd, err := lookupCliCommand(cli, "tag")
+	if err != nil {
+		return err
+	}
 	return cmdExecute(ctx, cmd, args)
 }
 
 func CliRmi(ctx context.Context, args ...string) error {
-	cmd := image.NewRemoveCommand(cli)
+	cmd, err := lookupCliCommand(cli, "rmi")
+	if err != nil {
+		return err
+	}
 	return cmdExecute(ctx, cmd, args)
 }
 
