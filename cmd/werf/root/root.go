@@ -47,6 +47,7 @@ import (
 	"github.com/werf/werf/v2/cmd/werf/plan"
 	"github.com/werf/werf/v2/cmd/werf/purge"
 	release_get "github.com/werf/werf/v2/cmd/werf/release/get"
+	release_list "github.com/werf/werf/v2/cmd/werf/release/list"
 	"github.com/werf/werf/v2/cmd/werf/render"
 	"github.com/werf/werf/v2/cmd/werf/rollback"
 	"github.com/werf/werf/v2/cmd/werf/run"
@@ -188,6 +189,7 @@ func releaseCmd(ctx context.Context) *cobra.Command {
 	})
 	cmd.AddCommand(
 		release_get.NewCmd(ctx),
+		release_list.NewCmd(ctx),
 	)
 
 	return cmd
