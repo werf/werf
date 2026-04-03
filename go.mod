@@ -28,7 +28,6 @@ require (
 	github.com/docker/go-units v0.5.0
 	github.com/dustin/go-humanize v1.0.1
 	github.com/fluxcd/flagger v1.36.1
-	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/go-git/go-billy/v5 v5.6.0
 	github.com/go-git/go-git/v5 v5.12.0
 	github.com/go-openapi/spec v0.21.0
@@ -55,8 +54,8 @@ require (
 	github.com/rodaine/table v1.1.1
 	github.com/samber/lo v1.49.1
 	github.com/sirupsen/logrus v1.9.3
-	github.com/spf13/cobra v1.8.0
-	github.com/spf13/pflag v1.0.5
+	github.com/spf13/cobra v1.10.2
+	github.com/spf13/pflag v1.0.9
 	github.com/werf/3p-helm-for-werf-helm v0.0.0-20241217155820-089f92cd5c9d
 	github.com/werf/common-go v0.0.0-20260414103517-0558f83edc6d
 	github.com/werf/copy-recurse v0.2.7
@@ -121,6 +120,7 @@ require (
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	github.com/yannh/kubeconform v0.6.7 // indirect
 	github.com/zeebo/xxh3 v1.0.2 // indirect
+	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/mod v0.26.0 // indirect
 	mvdan.cc/sh/v3 v3.10.0 // indirect
 	oras.land/oras-go v1.2.5 // indirect
@@ -187,7 +187,7 @@ require (
 	github.com/containers/luksy v0.0.0-20240312134643-3d2cf0e19c84 // indirect
 	github.com/containers/ocicrypt v1.1.10 // indirect
 	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
-	github.com/cpuguy83/go-md2man/v2 v2.0.4 // indirect
+	github.com/cpuguy83/go-md2man/v2 v2.0.6 // indirect
 	github.com/cyberphone/json-canonicalization v0.0.0-20231217050601-ba74d44ecf5f // indirect
 	github.com/cyphar/filepath-securejoin v0.2.5 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
@@ -414,6 +414,5 @@ replace (
 	github.com/containers/buildah => github.com/werf/3p-buildah v1.35.2-0.20241120093816-5b80b7b735de // needs version upgrade with refactoring
 	github.com/deislabs/oras => github.com/werf/3p-oras v0.9.1-0.20240115121544-03962ecbd40a // upstream not maintained
 	github.com/docker/buildx => github.com/werf/3p-docker-buildx v0.13.0-rc2.0.20241111114615-d77c2e1444ad // upstream not maintained
-	github.com/jaguilar/vt100 => github.com/tonistiigi/vt100 v0.0.0-20190402012908-ad4c4a574305 // upstream not maintained
-	github.com/spf13/cobra => github.com/andremueller/cobra v0.0.0-20241025091859-0d550c15a8a4 // remove after merge to upstream
+	github.com/spf13/cobra => github.com/werf/3p-cobra v0.0.0-20260403075225-552c82797324 // adds EnableErrorOnUnknownSubcommand, not yet in upstream
 )
