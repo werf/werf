@@ -95,7 +95,7 @@ func (server *handler) handleLanding(w http.ResponseWriter, r *http.Request) {
 
 <p>Werf uses --synchronization=%s as a default synchronization service.</p>
 
-<p>Use "werf synchronization" command to run own synchronization http server. You can also configure werf to use local or kubernetes based synchronization backend.</p>
+<p>Use "werf synchronization" command to run own synchronization http server. You can also configure werf to use local synchronization backend.</p>
 </body>
 </html>
 `, DefaultAddress)

@@ -521,26 +521,6 @@ werf build --repo registry.mydomain.org/repo --synchronization https://synchroni
 werf converge --repo registry.mydomain.org/repo --synchronization https://synchronization.domain.org
 ```
 
-#### Специальный ресурс в Kubernetes
-
-Требуется лишь предоставить рабочий кластер Kubernetes, и выбрать namespace, в котором будет хранится сервисный ConfigMap/werf, через аннотации которого будет происходить распределённая блокировка.
-
-Далее во всех командах werf, которые используют параметр `--repo` дополнительно указывается параметр `--synchronization=kubernetes://NAMESPACE[:CONTEXT][@(base64:CONFIG_DATA)|CONFIG_PATH]`, например:
-
-```shell
-# Используем стандартный ~/.kube/config или KUBECONFIG.
-werf build --repo registry.mydomain.org/repo --synchronization kubernetes://mynamespace
-werf converge --repo registry.mydomain.org/repo --synchronization kubernetes://mynamespace
-
-# Явно указываем содержимое kubeconfig через base64.
-werf build --repo registry.mydomain.org/repo --synchronization kubernetes://mynamespace@base64:YXBpVmVyc2lvbjogdjEKa2luZDogQ29uZmlnCnByZWZlcmVuY2VzOiB7fQoKY2x1c3RlcnM6Ci0gY2x1c3RlcjoKICBuYW1lOiBkZXZlbG9wbWVudAotIGNsdXN0ZXI6CiAgbmFtZTogc2NyYXRjaAoKdXNlcnM6Ci0gbmFtZTogZGV2ZWxvcGVyCi0gbmFtZTogZXhwZXJpbWVudGVyCgpjb250ZXh0czoKLSBjb250ZXh0OgogIG5hbWU6IGRldi1mcm9udGVuZAotIGNvbnRleHQ6CiAgbmFtZTogZGV2LXN0b3JhZ2UKLSBjb250ZXh0OgogIG5hbWU6IGV4cC1zY3JhdGNoCg==
-
-# Используем контекст mycontext в конфиге /etc/kubeconfig.
-werf build --repo registry.mydomain.org/repo --synchronization kubernetes://mynamespace:mycontext@/etc/kubeconfig
-```
-
-> **ЗАМЕЧАНИЕ:** Данный способ неудобен при доставке проекта в разные кластера Kubernetes из одного Git-репозитория из-за сложности корректной настройки. В этом случае для всех команд werf требуется указывать один и тот же адрес кластера и ресурс, даже если деплой происходит в разные контура, чтобы обеспечить консистивность данных в container registry. Поэтому для такого случая рекомендуется запустить отдельный общий сервис синхронизации, чтобы исключить вероятность некорректной конфигурации.
-
 #### Локальная синхронизация
 
 Включается опцией `--synchronization=:local`. Локальный _менеджер блокировок_ использует файловые блокировки, предоставляемые операционной системой.
