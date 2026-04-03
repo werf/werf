@@ -119,7 +119,7 @@ var _ = Describe("FromStage", func() {
 		})
 
 		It("creates manifest first and then mutates the same stage image reference", func(ctx SpecContext) {
-			stage := &FromStage{fromScratch: true, BaseStage: NewBaseStage(From, &BaseStageOptions{})}
+			stage := &FromStage{fromScratch: true, BaseStage: NewBaseStage(From, &BaseStageOptions{TargetPlatform: "linux/amd64"})}
 			stageImage := NewStageImage(NewContainerBackendStub(), "scratch-stage", newLegacyImageForFromScratchTests("scratch-stage"))
 			stageImage.Image.SetBuildServiceLabels(map[string]string{
 				"werf":                              "project",
@@ -137,7 +137,7 @@ var _ = Describe("FromStage", func() {
 				"werf-stage-content-digest=digest",
 				fmt.Sprintf("%s=%s", imagePkg.WerfProjectRepoCommitLabel, "commit"),
 			))
-			Expect(storage.postManifestOpts.TargetPlatform).To(Equal(stage.targetPlatform))
+			Expect(storage.postManifestOpts.TargetPlatform).To(Equal("linux/amd64"))
 			Expect(storage.mutateSrc).To(Equal("scratch-stage"))
 			Expect(storage.mutateDest).To(Equal("scratch-stage"))
 			Expect(storage.mutateConfig.Labels).To(Equal(map[string]string{

@@ -413,7 +413,7 @@ func (storage *LocalStagesStorage) MutateAndPushImage(ctx context.Context, src, 
 		return err
 	}
 
-	newId, err := container_backend.MutateAndPushImage(ctx, src, newConfig, storage.ContainerBackend)
+	newId, err := container_backend.MutateAndPushImage(ctx, src, stageImage.GetTargetPlatform(), newConfig, storage.ContainerBackend)
 	if err != nil {
 		return err
 	}

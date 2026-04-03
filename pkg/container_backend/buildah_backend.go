@@ -647,6 +647,11 @@ func (backend *BuildahBackend) GetImageInfo(ctx context.Context, ref string, opt
 		}
 	}
 
+	imageID := ""
+	if inspect.Docker.ID != "" {
+		imageID = fmt.Sprintf("sha256:%x", inspect.Docker.ID)
+	}
+
 	return &image.Info{
 		Name:              ref,
 		Repository:        repository,
@@ -656,7 +661,7 @@ func (backend *BuildahBackend) GetImageInfo(ctx context.Context, ref string, opt
 		CreatedAtUnixNano: inspect.Docker.Created.UnixNano(),
 		OnBuild:           inspect.Docker.Config.OnBuild,
 		Env:               inspect.Docker.Config.Env,
-		ID:                fmt.Sprintf("sha256:%x", inspect.Docker.ID),
+		ID:                imageID,
 		ParentID:          parentID,
 		Size:              inspect.Docker.Size,
 		Volumes:           inspect.Docker.Config.Volumes,

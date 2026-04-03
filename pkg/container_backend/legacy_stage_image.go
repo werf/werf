@@ -6,6 +6,8 @@ import (
 	"os"
 	"strings"
 
+	"github.com/opencontainers/go-digest"
+
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/docker"
@@ -64,9 +66,17 @@ func (i *LegacyStageImage) Container() LegacyContainer {
 func (i *LegacyStageImage) GetID() string {
 	if i.buildImage != nil {
 		return i.buildImage.Name()
-	} else {
-		return i.legacyBaseImage.GetStageDesc().Info.Name
 	}
+	stageDesc := i.legacyBaseImage.GetStageDesc()
+	if stageDesc != nil && stageDesc.Info != nil {
+		if _, err := digest.Parse(stageDesc.Info.ID); err == nil {
+			return stageDesc.Info.ID
+		}
+		if stageDesc.Info.Name != "" {
+			return stageDesc.Info.Name
+		}
+	}
+	return i.legacyBaseImage.Name()
 }
 
 func (i *LegacyStageImage) Build(ctx context.Context, options BuildOptions) error {
