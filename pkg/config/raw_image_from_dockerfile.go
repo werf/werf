@@ -53,6 +53,12 @@ func (c *rawImageFromDockerfile) setAndValidateImage() error {
 		}
 	}
 
+	for _, img := range c.Images {
+		if img == "<no value>" {
+			return newDetailedConfigError("`image: <no value>` usually indicates an undefined template variable; please check werf.yaml", nil, c.doc)
+		}
+	}
+
 	return nil
 }
 

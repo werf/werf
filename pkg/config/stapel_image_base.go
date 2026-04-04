@@ -147,6 +147,10 @@ func (c *StapelImageBase) validate(giterminismManager giterminism_manager.Interf
 		}
 	}
 
+	if c.From == "<no value>" || c.raw.FromImage == "<no value>" || c.raw.FromArtifact == "<no value>" || c.FromArtifactName == "<no value>" {
+		return newDetailedConfigError("`from`, `fromImage`, `fromArtifact` or related fields cannot be `<no value>` (this usually indicates an undefined template variable)", nil, c.raw.doc)
+	}
+
 	if c.From == "" && c.raw.FromImage == "" && c.raw.FromArtifact == "" && c.FromArtifactName == "" {
 		return newDetailedConfigError("`from: DOCKER_IMAGE`, `fromImage: IMAGE_NAME`, `fromArtifact: IMAGE_ARTIFACT_NAME` required!", nil, c.raw.doc)
 	}
