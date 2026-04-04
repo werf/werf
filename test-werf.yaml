@@ -1,0 +1,18 @@
+project: project-name
+configVersion: 1
+---
+image: builder
+final: false
+from: alpine:3.22
+shell:
+  install:
+    - echo "test" > /tmp/test.file
+---
+image: result-image
+from: alpine:3.22
+import:
+  - image: builder
+    add: /tmp/test.file
+    to: /apps/temp-file
+    after: install
+
