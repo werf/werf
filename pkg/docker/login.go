@@ -15,7 +15,7 @@ func Login(ctx context.Context, username, password, repo string) error {
 
 	return cliWithCustomOptions(
 		ctx,
-		[]command.DockerCliOption{
+		[]command.CLIOption{
 			command.WithInputStream(nil),
 			command.WithOutputStream(&outb),
 			command.WithErrorStream(&errb),

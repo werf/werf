@@ -39,4 +39,7 @@ type BuilderInfo struct {
 	// IDMappingOptions      define.IDMappingOptions
 	History []v1.History
 	// Devices               define.ContainerDevices
+	GroupAdd     []string
+	DeviceSpecs  []string
+	CDIConfigDir string
 }

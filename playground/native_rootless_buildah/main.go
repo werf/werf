@@ -24,12 +24,6 @@ func init() {
 		return
 	}
 
-	result, err := unshare.HasCapSysAdmin()
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Printf("has_cap_sys_admin=%t", result)
-
 	unshare.MaybeReexecUsingUserNamespace(false)
 }
 

@@ -5,11 +5,11 @@ import (
 	"net"
 	"strings"
 
-	"github.com/docker/docker/api/types"
+	dockersystem "github.com/docker/docker/api/types/system"
 	dockerclient "github.com/docker/docker/client"
 )
 
-func Info(ctx context.Context) (types.Info, error) {
+func Info(ctx context.Context) (dockersystem.Info, error) {
 	return apiCli(ctx).Info(ctx)
 }
 
@@ -36,8 +36,8 @@ func isDaemonUnavailableErr(err error) bool {
 	return false
 }
 
-func getDaemonInfo(ctx context.Context) (*types.Info, error) {
-	var info types.Info
+func getDaemonInfo(ctx context.Context) (*dockersystem.Info, error) {
+	var info dockersystem.Info
 	var err error
 
 	if IsContext(ctx) {

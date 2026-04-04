@@ -12,7 +12,9 @@ import (
 	"time"
 
 	"github.com/docker/docker/api/types"
+	dockercontainer "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
+	dockerimage "github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
 	"github.com/tidwall/gjson"
 
@@ -323,7 +325,7 @@ func (backend *DockerServerBackend) Rmi(ctx context.Context, ref string, opts Rm
 }
 
 func (backend *DockerServerBackend) Rm(ctx context.Context, ref string, opts RmOpts) error {
-	err := docker.ContainerRemove(ctx, ref, types.ContainerRemoveOptions{Force: opts.Force})
+	err := docker.ContainerRemove(ctx, ref, dockercontainer.RemoveOptions{Force: opts.Force})
 	switch {
 	case docker.IsErrContainerPaused(err):
 		return errors.Join(ErrCannotRemovePausedContainer, err)
@@ -383,7 +385,7 @@ func (backend *DockerServerBackend) Images(ctx context.Context, opts ImagesOptio
 	for _, item := range opts.Filters {
 		filterSet.Add(item.First, item.Second)
 	}
-	images, err := docker.Images(ctx, types.ImageListOptions{Filters: filterSet})
+	images, err := docker.Images(ctx, dockerimage.ListOptions{Filters: filterSet})
 	if err != nil {
 		return nil, fmt.Errorf("unable to get docker images: %w", err)
 	}
@@ -416,7 +418,7 @@ func (backend *DockerServerBackend) Containers(ctx context.Context, opts Contain
 		}
 	}
 
-	containersOptions := types.ContainerListOptions{}
+	containersOptions := dockercontainer.ListOptions{}
 	containersOptions.All = true
 	containersOptions.Filters = filterSet
 
