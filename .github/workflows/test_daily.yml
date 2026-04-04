@@ -9,14 +9,17 @@ on:
 
 jobs:
   lint:
+    if: github.repository == 'werf/werf'
     uses: ./.github/workflows/_lint.yml
 
   unit:
+    if: github.repository == 'werf/werf'
     uses: ./.github/workflows/_test_unit.yml
     with:
       coverage: true
 
   e2e_simple_per-k8s-version:
+    if: github.repository == 'werf/werf'
     uses: ./.github/workflows/_test_e2e_per-k8s-version.yml
     with:
       scope: simple
@@ -24,6 +27,7 @@ jobs:
     secrets: inherit
 
   e2e_complex_per-k8s-version:
+    if: github.repository == 'werf/werf'
     uses: ./.github/workflows/_test_e2e_per-k8s-version.yml
     with:
       scope: complex
@@ -32,6 +36,7 @@ jobs:
     secrets: inherit
 
   e2e_extra_per-k8s-version:
+    if: github.repository == 'werf/werf'
     uses: ./.github/workflows/_test_e2e_per-k8s-version.yml
     with:
       scope: extra
@@ -39,6 +44,7 @@ jobs:
     secrets: inherit
 
   integration_main:
+    if: github.repository == 'werf/werf'
     uses: ./.github/workflows/_test_integration_regular.yml
     with:
       packages: test/legacy_e2e/suites
@@ -48,6 +54,7 @@ jobs:
     secrets: inherit
 
   integration_git:
+    if: github.repository == 'werf/werf'
     uses: ./.github/workflows/_test_integration_regular.yml
     with:
       packages: test/legacy_e2e/suites/build/stapel_image/git
@@ -55,6 +62,7 @@ jobs:
     secrets: inherit
 
   integration_ansible:
+    if: github.repository == 'werf/werf'
     uses: ./.github/workflows/_test_integration_regular.yml
     with:
       packages: test/legacy_e2e/suites/ansible
@@ -62,24 +70,28 @@ jobs:
     secrets: inherit
 
   integration_per-k8s:
+    if: github.repository == 'werf/werf'
     uses: ./.github/workflows/_test_integration_per-k8s-version.yml
     with:
       coverage: true
     secrets: inherit
 
   integration_per-cr:
+    if: github.repository == 'werf/werf'
     uses: ./.github/workflows/_test_integration_per-container-registry.yml
     with:
       coverage: true
     secrets: inherit
 
   integration_per-k8s-and-cr:
+    if: github.repository == 'werf/werf'
     uses: ./.github/workflows/_test_integration_per-k8s-version-and-container-registry.yml
     with:
       coverage: true
     secrets: inherit
 
   coverage_report:
+    if: github.repository == 'werf/werf'
     uses: ./.github/workflows/_coverage_report.yml
     needs:
       - unit
@@ -95,7 +107,7 @@ jobs:
     secrets: inherit
 
   notify:
-    if: always()
+    if: github.repository == 'werf/werf' && always()
     needs:
       - lint
       - coverage_report

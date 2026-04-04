@@ -18,6 +18,7 @@ on:
 
 jobs:
   manage:
+    if: github.repository == 'werf/werf'
     runs-on: ubuntu-22.04
     timeout-minutes: 20
     steps:
@@ -41,7 +42,7 @@ jobs:
             }
 
   notify:
-    if: github.event_name == 'schedule' && always()
+    if: github.repository == 'werf/werf' && github.event_name == 'schedule' && always()
     needs: manage
     uses: werf/common-ci/.github/workflows/notification.yml@main
     secrets:

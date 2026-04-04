@@ -12,6 +12,7 @@ defaults:
 
 jobs:
   cleanup:
+    if: github.repository == 'werf/werf'
     name: cleanup werf-storage
     runs-on: ubuntu-22.04
     steps:
@@ -36,7 +37,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.WERF_IN_IMAGE_CLEANUP_GHCR }}
 
   notify:
-    if: always()
+    if: github.repository == 'werf/werf' && always()
     needs:
       - cleanup
     uses: werf/common-ci/.github/workflows/notification.yml@main
