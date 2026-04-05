@@ -18,6 +18,7 @@ on:
 
 jobs:
   manage:
+    if: github.repository == 'werf/werf'
     runs-on: ubuntu-22.04
     timeout-minutes: 20
     steps:

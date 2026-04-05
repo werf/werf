@@ -16,6 +16,7 @@ env:
 
 jobs:
   cr-cleanup:
+    if: github.repository == 'werf/werf'
     strategy:
       fail-fast: false
       matrix:
@@ -60,7 +61,7 @@ jobs:
         run: ./scripts/ci/integration_tests_registries_cleaner.sh ${{ matrix.implementation }}
 
   notify:
-    if: always()
+    if: always() && github.repository == 'werf/werf'
     needs: cr-cleanup
     uses: werf/common-ci/.github/workflows/notification.yml@main
     secrets:
