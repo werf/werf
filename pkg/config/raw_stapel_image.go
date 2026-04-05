@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
 	"github.com/werf/werf/v2/pkg/util/option"
@@ -53,6 +54,12 @@ func (c *rawStapelImage) setAndValidateStapelImage() error {
 			c.Images = []string{""}
 		default:
 			return newDetailedConfigError(fmt.Sprintf("invalid image name `%v`!", t), nil, c.doc)
+		}
+	}
+
+	for _, imageName := range c.Images {
+		if strings.TrimSpace(imageName) == "" && imageName != "" {
+			return newDetailedConfigError("image name cannot be blank (contains only whitespace)", nil, c.doc)
 		}
 	}
 
