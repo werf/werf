@@ -318,10 +318,16 @@ func (i *Image) SetupBaseImage(ctx context.Context, storageManager manager.Stora
 						}
 					}
 				} else {
-					info = &image.Info{Name: i.baseImageReference, Env: nil}
+					info = &image.Info{
+						Name: i.baseImageReference,
+						Env:  nil,
+					}
 				}
 
-				i.baseStageImage.Image.SetStageDesc(&image.StageDesc{StageID: nil, Info: info})
+				i.baseStageImage.Image.SetStageDesc(&image.StageDesc{
+					StageID: nil, // this is not a stage actually, TODO
+					Info:    info,
+				})
 			}
 		}
 
