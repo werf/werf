@@ -1,0 +1,16 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.5",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2025-01-01T00:00:00Z",
+    "component": {
+      "type": "application",
+      "name": "test-app",
+      "version": "1.0.0",
+      "manufacturer": {
+        "name": "Test Org"
+      }
+    }
+  }
+}

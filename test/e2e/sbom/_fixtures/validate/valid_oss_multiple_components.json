@@ -1,0 +1,48 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2025-01-01T00:00:00Z",
+    "component": {
+      "type": "application",
+      "name": "test-app",
+      "version": "1.0.0",
+      "manufacturer": {
+        "name": "Test Org"
+      }
+    }
+  },
+  "components": [
+    {
+      "type": "library",
+      "name": "lib-alpha",
+      "version": "0.1.0",
+      "properties": [
+        {"name": "GOST:attack_surface", "value": "no"},
+        {"name": "GOST:security_function", "value": "no"},
+        {"name": "GOST:provided_by", "value": "vendor"}
+      ]
+    },
+    {
+      "type": "library",
+      "name": "lib-beta",
+      "version": "2.3.1",
+      "properties": [
+        {"name": "GOST:attack_surface", "value": "yes"},
+        {"name": "GOST:security_function", "value": "no"},
+        {"name": "GOST:provided_by", "value": "vendor"}
+      ]
+    },
+    {
+      "type": "framework",
+      "name": "framework-gamma",
+      "version": "5.0.0",
+      "properties": [
+        {"name": "GOST:attack_surface", "value": "no"},
+        {"name": "GOST:security_function", "value": "yes"},
+        {"name": "GOST:provided_by", "value": "vendor"}
+      ]
+    }
+  ]
+}

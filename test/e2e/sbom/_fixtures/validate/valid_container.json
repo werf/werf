@@ -1,0 +1,39 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2025-01-01T00:00:00Z",
+    "component": {
+      "type": "application",
+      "name": "test-app",
+      "version": "1.0.0",
+      "manufacturer": {
+        "name": "Test Org"
+      }
+    }
+  },
+  "components": [
+    {
+      "type": "container",
+      "name": "test-container",
+      "version": "1.0.0",
+      "properties": [
+        {"name": "GOST:attack_surface", "value": "yes"},
+        {"name": "GOST:security_function", "value": "yes"}
+      ],
+      "components": [
+        {
+          "type": "library",
+          "name": "inner-lib",
+          "version": "0.1.0",
+          "properties": [
+            {"name": "GOST:attack_surface", "value": "yes"},
+            {"name": "GOST:security_function", "value": "yes"},
+            {"name": "GOST:provided_by", "value": "vendor"}
+          ]
+        }
+      ]
+    }
+  ]
+}

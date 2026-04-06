@@ -61,6 +61,10 @@ type SbomGetOptions struct {
 	CommonOptions
 }
 
+type SbomValidateOptions struct {
+	CommonOptions
+}
+
 type VerifyOptions struct {
 	CommonOptions
 }

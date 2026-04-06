@@ -263,6 +263,40 @@ func (p *Project) SbomGet(ctx context.Context, opts *SbomGetOptions) (combinedOu
 	return string(outb)
 }
 
+func (p *Project) SbomValidate(ctx context.Context, opts *SbomValidateOptions) (combinedOut string) {
+	if opts == nil {
+		opts = &SbomValidateOptions{}
+	}
+	args := append([]string{"sbom", "validate"}, opts.ExtraArgs...)
+
+	outb := p.RunCommand(ctx, args, CommonOptions{
+		ShouldFail: opts.ShouldFail,
+	})
+
+	return string(outb)
+}
+
+func (p *Project) SbomValidateWithErr(ctx context.Context, opts *SbomValidateOptions) (combinedOut string, err error) {
+	if opts == nil {
+		opts = &SbomValidateOptions{}
+	}
+
+	args := append([]string{"sbom", "validate"}, opts.ExtraArgs...)
+	outb, err := iutils.RunCommandWithOptions(
+		ctx,
+		p.GitRepoPath,
+		p.WerfBinPath,
+		args,
+		iutils.RunCommandOptions{
+			ShouldSucceed:         false,
+			ExtraEnv:              opts.Envs,
+			CancelOnOutput:        opts.CancelOnOutput,
+			CancelOnOutputTimeout: opts.CancelOnOutputTimeout,
+		})
+
+	return string(outb), err
+}
+
 func (p *Project) Verify(ctx context.Context, opts *VerifyOptions) (combinedOut string) {
 	if opts == nil {
 		opts = &VerifyOptions{}

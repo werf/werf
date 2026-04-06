@@ -1,0 +1,1 @@
+validate SBOM file against ISPRAS schemas

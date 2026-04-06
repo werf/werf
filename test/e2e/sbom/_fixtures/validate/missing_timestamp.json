@@ -1,0 +1,15 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "version": 1,
+  "metadata": {
+    "component": {
+      "type": "application",
+      "name": "test-app",
+      "version": "1.0.0",
+      "manufacturer": {
+        "name": "Test Org"
+      }
+    }
+  }
+}
