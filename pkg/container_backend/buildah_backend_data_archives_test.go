@@ -13,7 +13,10 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
+	copyrec "github.com/werf/copy-recurse"
 	"github.com/werf/werf/v2/pkg/logging"
 	"github.com/werf/werf/v2/pkg/werf"
 )
@@ -103,6 +106,130 @@ var _ = Describe("BuildahBackend data archives", func() {
 		Expect(err).ToNot(HaveOccurred())
 		Expect(string(data)).To(Equal("data"))
 	})
+
+	It("normalizes dependency import destination for regular file into root directory", func() {
+		sourceRoot := GinkgoT().TempDir()
+		containerRoot := GinkgoT().TempDir()
+
+		require.NoError(GinkgoT(), os.MkdirAll(filepath.Join(sourceRoot, "src"), 0o755))
+		require.NoError(GinkgoT(), os.WriteFile(filepath.Join(sourceRoot, "src", "webhook"), []byte("webhook\n"), 0o644))
+		require.NoError(GinkgoT(), os.WriteFile(filepath.Join(containerRoot, "sentinel"), []byte("keep\n"), 0o644))
+
+		absFrom := filepath.Join(sourceRoot, "src", "webhook")
+		absTo, err := normalizeDependencyImportDestination(absFrom, containerRoot)
+		require.NoError(GinkgoT(), err)
+		assert.Equal(GinkgoT(), filepath.Join(containerRoot, "webhook"), absTo)
+
+		copyRec, err := copyrec.New(absFrom, absTo, copyrec.Options{})
+		require.NoError(GinkgoT(), err)
+		require.NoError(GinkgoT(), copyRec.Run(context.Background()))
+
+		info, err := os.Lstat(containerRoot)
+		require.NoError(GinkgoT(), err)
+		assert.True(GinkgoT(), info.IsDir())
+
+		data, err := os.ReadFile(filepath.Join(containerRoot, "webhook"))
+		require.NoError(GinkgoT(), err)
+		assert.Equal(GinkgoT(), "webhook\n", string(data))
+
+		data, err = os.ReadFile(filepath.Join(containerRoot, "sentinel"))
+		require.NoError(GinkgoT(), err)
+		assert.Equal(GinkgoT(), "keep\n", string(data))
+	})
+
+	It("keeps explicit dependency import file destination unchanged", func() {
+		sourceRoot := GinkgoT().TempDir()
+		containerRoot := GinkgoT().TempDir()
+
+		require.NoError(GinkgoT(), os.MkdirAll(filepath.Join(sourceRoot, "src"), 0o755))
+		require.NoError(GinkgoT(), os.WriteFile(filepath.Join(sourceRoot, "src", "webhook"), []byte("webhook\n"), 0o644))
+		require.NoError(GinkgoT(), os.WriteFile(filepath.Join(containerRoot, "sentinel"), []byte("keep\n"), 0o644))
+
+		absFrom := filepath.Join(sourceRoot, "src", "webhook")
+		explicitTarget := filepath.Join(containerRoot, "webhook")
+		absTo, err := normalizeDependencyImportDestination(absFrom, explicitTarget)
+		require.NoError(GinkgoT(), err)
+		assert.Equal(GinkgoT(), explicitTarget, absTo)
+
+		copyRec, err := copyrec.New(absFrom, absTo, copyrec.Options{})
+		require.NoError(GinkgoT(), err)
+		require.NoError(GinkgoT(), copyRec.Run(context.Background()))
+
+		info, err := os.Lstat(containerRoot)
+		require.NoError(GinkgoT(), err)
+		assert.True(GinkgoT(), info.IsDir())
+
+		data, err := os.ReadFile(filepath.Join(containerRoot, "webhook"))
+		require.NoError(GinkgoT(), err)
+		assert.Equal(GinkgoT(), "webhook\n", string(data))
+
+		data, err = os.ReadFile(filepath.Join(containerRoot, "sentinel"))
+		require.NoError(GinkgoT(), err)
+		assert.Equal(GinkgoT(), "keep\n", string(data))
+	})
+
+	It("normalizes dependency import destination for symlink into root directory", func() {
+		sourceRoot := GinkgoT().TempDir()
+		containerRoot := GinkgoT().TempDir()
+
+		require.NoError(GinkgoT(), os.MkdirAll(filepath.Join(sourceRoot, "src"), 0o755))
+		require.NoError(GinkgoT(), os.WriteFile(filepath.Join(sourceRoot, "src", "webhook"), []byte("webhook\n"), 0o644))
+		createTestSymlink(filepath.Join(sourceRoot, "src", "webhook"), filepath.Join(sourceRoot, "src", "webhook-link"))
+		require.NoError(GinkgoT(), os.WriteFile(filepath.Join(containerRoot, "sentinel"), []byte("keep\n"), 0o644))
+
+		absFrom := filepath.Join(sourceRoot, "src", "webhook-link")
+		absTo, err := normalizeDependencyImportDestination(absFrom, containerRoot)
+		require.NoError(GinkgoT(), err)
+		assert.Equal(GinkgoT(), filepath.Join(containerRoot, "webhook-link"), absTo)
+
+		copyRec, err := copyrec.New(absFrom, absTo, copyrec.Options{})
+		require.NoError(GinkgoT(), err)
+		require.NoError(GinkgoT(), copyRec.Run(context.Background()))
+
+		info, err := os.Lstat(containerRoot)
+		require.NoError(GinkgoT(), err)
+		assert.True(GinkgoT(), info.IsDir())
+
+		linkTarget, err := os.Readlink(filepath.Join(containerRoot, "webhook-link"))
+		require.NoError(GinkgoT(), err)
+		assert.Equal(GinkgoT(), filepath.Join(sourceRoot, "src", "webhook"), linkTarget)
+
+		data, err := os.ReadFile(filepath.Join(containerRoot, "sentinel"))
+		require.NoError(GinkgoT(), err)
+		assert.Equal(GinkgoT(), "keep\n", string(data))
+	})
+
+	It("keeps explicit dependency import symlink destination unchanged", func() {
+		sourceRoot := GinkgoT().TempDir()
+		containerRoot := GinkgoT().TempDir()
+
+		require.NoError(GinkgoT(), os.MkdirAll(filepath.Join(sourceRoot, "src"), 0o755))
+		require.NoError(GinkgoT(), os.WriteFile(filepath.Join(sourceRoot, "src", "webhook"), []byte("webhook\n"), 0o644))
+		createTestSymlink(filepath.Join(sourceRoot, "src", "webhook"), filepath.Join(sourceRoot, "src", "webhook-link"))
+		require.NoError(GinkgoT(), os.WriteFile(filepath.Join(containerRoot, "sentinel"), []byte("keep\n"), 0o644))
+
+		absFrom := filepath.Join(sourceRoot, "src", "webhook-link")
+		explicitTarget := filepath.Join(containerRoot, "webhook-link")
+		absTo, err := normalizeDependencyImportDestination(absFrom, explicitTarget)
+		require.NoError(GinkgoT(), err)
+		assert.Equal(GinkgoT(), explicitTarget, absTo)
+
+		copyRec, err := copyrec.New(absFrom, absTo, copyrec.Options{})
+		require.NoError(GinkgoT(), err)
+		require.NoError(GinkgoT(), copyRec.Run(context.Background()))
+
+		info, err := os.Lstat(containerRoot)
+		require.NoError(GinkgoT(), err)
+		assert.True(GinkgoT(), info.IsDir())
+
+		linkTarget, err := os.Readlink(filepath.Join(containerRoot, "webhook-link"))
+		require.NoError(GinkgoT(), err)
+		assert.Equal(GinkgoT(), filepath.Join(sourceRoot, "src", "webhook"), linkTarget)
+
+		data, err := os.ReadFile(filepath.Join(containerRoot, "sentinel"))
+		require.NoError(GinkgoT(), err)
+		assert.Equal(GinkgoT(), "keep\n", string(data))
+	})
 })
 
 func assertOwnership(path string, uid, gid uint32) {
@@ -112,6 +239,14 @@ func assertOwnership(path string, uid, gid uint32) {
 	Expect(ok).To(BeTrue())
 	Expect(stat.Uid).To(Equal(uid))
 	Expect(stat.Gid).To(Equal(gid))
+}
+
+func createTestSymlink(oldname, newname string) {
+	if runtime.GOOS == "windows" {
+		Skip("skip on windows")
+	}
+
+	require.NoError(GinkgoT(), os.Symlink(oldname, newname))
 }
 
 func newTestTarArchive(files map[string]string) io.ReadCloser {

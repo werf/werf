@@ -446,6 +446,9 @@ func (backend *BuildahBackend) applyDependenciesImports(ctx context.Context, con
 
 			absFrom := filepath.Join(dep.RootMount, imp.FromPath)
 			absTo := filepath.Join(container.RootMount, imp.ToPath)
+			if absTo, err = normalizeDependencyImportDestination(absFrom, absTo); err != nil {
+				return fmt.Errorf("normalize destination path for dependency import from %q to %q: %w", imp.FromPath, imp.ToPath, err)
+			}
 
 			var uid, gid *uint32
 			if uid, gid, err = getUIDAndGID(imp.Owner, imp.Group, container.RootMount); err != nil {
@@ -488,6 +491,33 @@ func (backend *BuildahBackend) applyDependenciesImports(ctx context.Context, con
 	}
 
 	return nil
+}
+
+func normalizeDependencyImportDestination(absFrom, absTo string) (string, error) {
+	fileInfo, err := os.Lstat(absFrom)
+	if err != nil {
+		return "", fmt.Errorf("lstat source path %q: %w", absFrom, err)
+	}
+
+	if fileInfo.IsDir() {
+		return absTo, nil
+	}
+
+	if !fileInfo.Mode().IsRegular() && fileInfo.Mode()&os.ModeSymlink == 0 {
+		return absTo, nil
+	}
+
+	destInfo, err := os.Stat(absTo)
+	switch {
+	case errors.Is(err, os.ErrNotExist):
+		return absTo, nil
+	case err != nil:
+		return "", fmt.Errorf("stat destination path %q: %w", absTo, err)
+	case destInfo.IsDir():
+		return filepath.Join(absTo, filepath.Base(absFrom)), nil
+	default:
+		return absTo, nil
+	}
 }
 
 func (backend *BuildahBackend) BuildDockerfileStage(ctx context.Context, baseImage string, opts BuildDockerfileStageOptions, instructions ...InstructionInterface) (string, error) {
