@@ -15,7 +15,14 @@ env:
   DEBIAN_FRONTEND: "noninteractive"
 
 jobs:
+  gate:
+    if: github.repository == 'werf/werf'
+    runs-on: ubuntu-22.04
+    steps:
+      - run: true
+
   cr-cleanup:
+    needs: gate
     strategy:
       fail-fast: false
       matrix:
@@ -60,8 +67,10 @@ jobs:
         run: ./scripts/ci/integration_tests_registries_cleaner.sh ${{ matrix.implementation }}
 
   notify:
-    if: always()
-    needs: cr-cleanup
+    if: ${{ !cancelled() && needs.gate.result == 'success' }}
+    needs:
+      - gate
+      - cr-cleanup
     uses: werf/common-ci/.github/workflows/notification.yml@main
     secrets:
       loopNotificationGroup: ${{ secrets.LOOP_NOTIFICATION_GROUP }}
