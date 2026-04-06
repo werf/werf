@@ -182,11 +182,6 @@ func (runtime *PerfCheckContainerBackend) TagImageByName(ctx context.Context, im
 	return
 }
 
-func (runtime *PerfCheckContainerBackend) ClaimTargetPlatforms(ctx context.Context, targetPlatforms []string) {
-	logboek.Context(ctx).Default().LogProcess("ContainerBackend.ClaimTargetPlatforms %v", targetPlatforms).
-		Do(func() { runtime.ContainerBackend.ClaimTargetPlatforms(ctx, targetPlatforms) })
-}
-
 func (runtime *PerfCheckContainerBackend) PruneImages(ctx context.Context, options prune.Options) (report prune.Report, err error) {
 	logboek.Context(ctx).Default().LogProcess("ContainerBackend.PruneImages %v", options).
 		Do(func() {

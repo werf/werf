@@ -14,12 +14,11 @@ import (
 	io "io"
 	reflect "reflect"
 
-	gomock "go.uber.org/mock/gomock"
-
 	container_backend "github.com/werf/werf/v2/pkg/container_backend"
 	info "github.com/werf/werf/v2/pkg/container_backend/info"
 	prune "github.com/werf/werf/v2/pkg/container_backend/prune"
 	image "github.com/werf/werf/v2/pkg/image"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockContainerBackend is a mock of ContainerBackend interface.
@@ -94,18 +93,6 @@ func (m *MockContainerBackend) BuildStapelStage(ctx context.Context, baseImage s
 func (mr *MockContainerBackendMockRecorder) BuildStapelStage(ctx, baseImage, opts any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BuildStapelStage", reflect.TypeOf((*MockContainerBackend)(nil).BuildStapelStage), ctx, baseImage, opts)
-}
-
-// ClaimTargetPlatforms mocks base method.
-func (m *MockContainerBackend) ClaimTargetPlatforms(ctx context.Context, targetPlatforms []string) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "ClaimTargetPlatforms", ctx, targetPlatforms)
-}
-
-// ClaimTargetPlatforms indicates an expected call of ClaimTargetPlatforms.
-func (mr *MockContainerBackendMockRecorder) ClaimTargetPlatforms(ctx, targetPlatforms any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ClaimTargetPlatforms", reflect.TypeOf((*MockContainerBackend)(nil).ClaimTargetPlatforms), ctx, targetPlatforms)
 }
 
 // Containers mocks base method.

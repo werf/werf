@@ -15,8 +15,8 @@ func NewInfoFromInspect(ref string, inspect *dockerImage.InspectResponse) *image
 		repoDigest = image.ExtractRepoDigest(inspect.RepoDigests, repository)
 	}
 
-	parentID := inspect.Parent
-	if parentID == "" {
+	var parentID string
+	if inspect.Config != nil && inspect.Config.Labels != nil {
 		if id, ok := inspect.Config.Labels[image.WerfBaseImageIDLabel]; ok {
 			parentID = id
 		}

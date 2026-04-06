@@ -968,15 +968,10 @@ func (b *NativeBuildah) Images(ctx context.Context, opts ImagesOptions) (image.I
 		return nil, err
 	}
 
-	var images []*libimage.Image
-	if len(opts.Names) > 0 {
-		images, err = runtime.ListImagesByNames(opts.Names)
-	} else {
-		listOpts := &libimage.ListImagesOptions{
-			Filters: mapBackendOldFiltersToBuildahImageFilters(opts.Filters),
-		}
-		images, err = runtime.ListImages(ctx, listOpts)
+	listOpts := &libimage.ListImagesOptions{
+		Filters: mapBackendOldFiltersToBuildahImageFilters(opts.Filters),
 	}
+	images, err := runtime.ListImages(ctx, listOpts)
 	if err != nil {
 		return nil, err
 	}
