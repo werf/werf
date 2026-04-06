@@ -58,10 +58,6 @@ func (backend *DockerServerBackend) Info(ctx context.Context) (info.Info, error)
 	return res, nil
 }
 
-func (backend *DockerServerBackend) ClaimTargetPlatforms(ctx context.Context, targetPlatforms []string) {
-	docker.ClaimTargetPlatforms(targetPlatforms)
-}
-
 func (backend *DockerServerBackend) GetDefaultPlatform() string {
 	return docker.GetDefaultPlatform()
 }

@@ -548,10 +548,9 @@ func (backend *BuildahBackend) GetImageInfo(ctx context.Context, ref string, opt
 		return nil, nil
 	}
 
-	// TODO: remove this legacy logic in v3.
-	parentID := string(inspect.Docker.Parent)
-	if parentID == "" {
-		if id, ok := inspect.Docker.Config.Labels[image.WerfBaseImageIDLabel]; ok { // built with werf
+	var parentID string
+	if inspect.Docker.Config.Labels != nil {
+		if id, ok := inspect.Docker.Config.Labels[image.WerfBaseImageIDLabel]; ok {
 			parentID = id
 		}
 	}
@@ -559,7 +558,9 @@ func (backend *BuildahBackend) GetImageInfo(ctx context.Context, ref string, opt
 	var repository, tag, repoDigest string
 	if !strings.HasPrefix(ref, "sha256:") {
 		repository, tag = image.ParseRepositoryAndTag(ref)
-		list, err := backend.buildah.Images(ctx, buildah.ImagesOptions{Names: []string{ref}})
+		list, err := backend.buildah.Images(ctx, buildah.ImagesOptions{
+			Filters: []util.Pair[string, string]{util.NewPair("reference", ref)},
+		})
 		if err != nil {
 			return nil, fmt.Errorf("error getting buildah info for image %q: %w", ref, err)
 		}
@@ -1029,8 +1030,6 @@ func (backend *BuildahBackend) PostManifest(ctx context.Context, ref string, opt
 	}
 	return nil
 }
-
-func (backend *BuildahBackend) ClaimTargetPlatforms(ctx context.Context, targetPlatforms []string) {}
 
 func (backend *BuildahBackend) PruneImages(ctx context.Context, options prune.Options) (prune.Report, error) {
 	report, err := backend.buildah.PruneImages(ctx, buildah.PruneImagesOptions{

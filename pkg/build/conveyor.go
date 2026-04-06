@@ -608,20 +608,6 @@ func (c *Conveyor) GetImageNameForLastImageStageFromReport(image ReportImageReco
 	return image.Stages[len(image.Stages)-1].DockerImageName
 }
 
-func (c *Conveyor) checkContainerBackendSupported(ctx context.Context) error {
-	targetPlatforms, err := c.GetTargetPlatforms()
-	if err != nil {
-		return fmt.Errorf("error getting target platforms: %w", err)
-	}
-	c.ContainerBackend.ClaimTargetPlatforms(ctx, targetPlatforms)
-
-	if _, isBuildah := c.ContainerBackend.(*container_backend.BuildahBackend); !isBuildah {
-		return nil
-	}
-
-	return nil
-}
-
 // prepareBuildCtx creates buffer and a new logger context if printing build log should be deferred.
 func (c *Conveyor) prepareBuildCtx(ctx context.Context) (context.Context, *bytes.Buffer) {
 	if !c.DeferBuildLog {
@@ -652,10 +638,6 @@ func (c *Conveyor) Build(ctx context.Context, opts BuildOptions) ([]*ImagesRepor
 				return nil, fmt.Errorf("staged Dockerfile build (staged: true) is not supported with --network option (use staged: false for %q image or remove --network option)", img.Name)
 			}
 		}
-	}
-
-	if err := c.checkContainerBackendSupported(ctx); err != nil {
-		return nil, err
 	}
 
 	if err := c.determineStages(ctx); err != nil {

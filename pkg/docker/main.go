@@ -11,7 +11,6 @@ import (
 	"github.com/docker/cli/cli/command"
 	cliconfig "github.com/docker/cli/cli/config"
 	"github.com/docker/cli/cli/flags"
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/tlsconfig"
 	"github.com/spf13/cobra"
@@ -97,23 +96,12 @@ func InitDockerConfig(opts InitOptions) error {
 	return nil
 }
 
-func ClaimTargetPlatforms(claimPlatforms []string) {
-}
-
 func GetDefaultPlatform() string {
 	return defaultPlatform
 }
 
 func GetRuntimePlatform() string {
 	return runtimePlatform
-}
-
-func ServerVersion(ctx context.Context) (*types.Version, error) {
-	version, err := apiCli(ctx).ServerVersion(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return &version, nil
 }
 
 func newDockerCli(opts []command.CLIOption) (command.Cli, error) {
