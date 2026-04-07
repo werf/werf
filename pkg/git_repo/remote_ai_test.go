@@ -1,5 +1,3 @@
-//go:build ai_tests
-
 package git_repo
 
 import (

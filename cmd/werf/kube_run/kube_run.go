@@ -256,6 +256,10 @@ func runMain(ctx context.Context) error {
 		return fmt.Errorf("component init error: %w", err)
 	}
 
+	if err := common.GetOndemandKubeInitializer().Init(ctx); err != nil {
+		return err
+	}
+
 	defer func() {
 		if err := tmp_manager.DelegateCleanup(ctx); err != nil {
 			logboek.Context(ctx).Warn().LogF("Temporary files cleanup preparation failed: %s\n", err)

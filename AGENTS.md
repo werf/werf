@@ -81,8 +81,8 @@ ALWAYS use these `task` commands. NEVER use raw `go build`, `go test`, `go fmt`,
 ## Testing (MANDATORY)
 
 - ALWAYS use `testify` (`assert`, `require`) when writing new tests.
-- When writing tests as an AI agent → ALWAYS name the file `*_ai_test.go`, add `//go:build ai_tests` build tag, prefix test functions with `TestAI_`.
 - ALWAYS place tests alongside source files, not in a separate directory.
+- When writing tests as an AI agent → ALWAYS name the file `*_ai_test.go`, prefix test functions with `TestAI_`.
 - Test helpers go in `helpers_test.go` (or `helpers_ai_test.go` for AI-written helpers).
 - Test fixtures go in `testdata/` subdirectory next to the tests.
 - Shared test helpers are in `test/pkg/`.

@@ -11,7 +11,14 @@ defaults:
     shell: bash
 
 jobs:
+  gate:
+    if: github.repository == 'werf/werf'
+    runs-on: ubuntu-22.04
+    steps:
+      - run: true
+
   cleanup:
+    needs: gate
     name: cleanup werf-storage
     runs-on: ubuntu-22.04
     steps:
@@ -36,8 +43,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.WERF_IN_IMAGE_CLEANUP_GHCR }}
 
   notify:
-    if: always()
+    if: ${{ !cancelled() && needs.gate.result == 'success' }}
     needs:
+      - gate
       - cleanup
     uses: werf/common-ci/.github/workflows/notification.yml@main
     secrets:

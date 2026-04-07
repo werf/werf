@@ -13,6 +13,7 @@ defaults:
 
 jobs:
   cleanup:
+    if: github.repository == 'werf/werf'
     runs-on: prod-github-runner-0
     steps:
       - name: Checkout code
