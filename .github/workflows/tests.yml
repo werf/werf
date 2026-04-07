@@ -12,6 +12,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: true
 
+env:
+  WERF_PLATFORM: linux/arm64
+
 jobs:
   detect-changes:
     runs-on: ubuntu-22.04
