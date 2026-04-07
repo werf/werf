@@ -107,13 +107,28 @@ func InitProcessContainerBackend(ctx context.Context, cmdData *CmdData, registry
 
 		insecure := *cmdData.InsecureRegistry || *cmdData.SkipTlsVerifyRegistry
 
+		var insecureHosts []string
+		var standaloneInsecureHosts []string
+		if !insecure {
+			insecureHosts, err = GetInsecureRegistryHosts(ctx, cmdData, *buildahMode)
+			if err != nil {
+				return nil, ctx, fmt.Errorf("get insecure registry hosts: %w", err)
+			}
+			standaloneInsecureHosts, err = buildah.GetStandaloneInsecureRegistriesFromConfig(ctx)
+			if err != nil {
+				return nil, ctx, fmt.Errorf("get standalone insecure registries from containers config: %w", err)
+			}
+		}
+
 		b, err := buildah.NewBuildah(*buildahMode, buildah.BuildahOpts{
 			CommonBuildahOpts: buildah.CommonBuildahOpts{
-				TmpDir:          filepath.Join(werf.GetServiceDir(), "tmp", "buildah"),
-				Insecure:        insecure,
-				Isolation:       buildahIsolation,
-				StorageDriver:   storageDriver,
-				RegistryMirrors: registryMirrors,
+				TmpDir:                       filepath.Join(werf.GetServiceDir(), "tmp", "buildah"),
+				Insecure:                     insecure,
+				Isolation:                    buildahIsolation,
+				StorageDriver:                storageDriver,
+				RegistryMirrors:              registryMirrors,
+				InsecureRegistries:           insecureHosts,
+				StandaloneInsecureRegistries: standaloneInsecureHosts,
 			},
 			NativeModeOpts: buildah.NativeModeOpts{},
 		})

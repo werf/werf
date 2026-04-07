@@ -11,6 +11,7 @@ import (
 	"github.com/samber/lo"
 
 	"github.com/werf/werf/v2/test/pkg/report"
+	"github.com/werf/werf/v2/test/pkg/suite_init"
 	"github.com/werf/werf/v2/test/pkg/werf"
 )
 
@@ -26,6 +27,15 @@ var _ = Describe("Custom tag build", Label("e2e", "build", "simple"), func() {
 		func(ctx SpecContext, opts customTagTestOptions) {
 			By("initializing")
 			setupEnv(opts.setupEnvOptions)
+
+			expectedCustomTags := opts.ExpectedCustomTags
+			if opts.WithFinalRepo {
+				finalRepo := suite_init.TestRepo(SuiteData.ProjectName + "-final")
+				expectedCustomTags = lo.Map(opts.CustomTags, func(t string, _ int) string {
+					tag := strings.ReplaceAll(t, "%image%", opts.BuildImages[0])
+					return finalRepo + ":" + tag
+				})
+			}
 
 			By("state0: starting")
 
@@ -52,10 +62,9 @@ var _ = Describe("Custom tag build", Label("e2e", "build", "simple"), func() {
 				},
 			})
 
-			Expect(strings.Count(buildOut, "Adding custom tags") / 2).To(Equal(len(opts.ExpectedCustomTags)))
+			Expect(strings.Count(buildOut, "Adding custom tags") / 2).To(Equal(len(expectedCustomTags)))
 
-			// validate custom-tag refs
-			for _, expectedCustomTag := range opts.ExpectedCustomTags {
+			for _, expectedCustomTag := range expectedCustomTags {
 				Expect(buildOut).To(ContainSubstring(expectedCustomTag))
 			}
 		},
@@ -95,6 +104,24 @@ var _ = Describe("Custom tag build", Label("e2e", "build", "simple"), func() {
 				ExpectedCustomTags: []string{
 					os.Getenv("WERF_REPO") + ":dockerfile-my-tag",
 					os.Getenv("WERF_REPO") + ":stapel-my-tag",
+				},
+			},
+		),
+		Entry(
+			"with repo and final repo, vanilla-docker, select multiplatform image, "+
+				"and add the custom tag pushed to the final repo",
+			customTagTestOptions{
+				setupEnvOptions: setupEnvOptions{
+					ContainerBackendMode:        "vanilla-docker",
+					WithLocalRepo:               true,
+					WithFinalRepo:               true,
+					WithStagedDockerfileBuilder: false,
+				},
+				BuildImages: []string{
+					"dockerfile",
+				},
+				CustomTags: []string{
+					"my-tag",
 				},
 			},
 		),

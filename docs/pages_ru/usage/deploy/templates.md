@@ -78,7 +78,7 @@ helloworld
 {% raw %}
 
 ```
-{{ $.Values.werf.env }}
+{{ $.Values.global.werf.env }}
 ```
 
 {% endraw %}
@@ -567,7 +567,7 @@ myvalue
 ```
 {{ with $.Values.backend }}
 - command: {{ .command }}
-  image: {{ $.Values.werf.image.backend }}
+  image: {{ $.Values.global.werf.images.backend.ref_tag }}
 {{ end }}
 ```
 

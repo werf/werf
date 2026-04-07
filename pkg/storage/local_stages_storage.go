@@ -132,13 +132,14 @@ func (storage *LocalStagesStorage) GetStageDesc(ctx context.Context, projectName
 		return nil, fmt.Errorf("unable to get image %s info: %w", stageImageName, err)
 	}
 
-	if info != nil {
-		return &image.StageDesc{
-			StageID: image.NewStageID(stageID.Digest, stageID.CreationTs),
-			Info:    info,
-		}, nil
+	if info == nil {
+		return nil, ErrStageNotFound
 	}
-	return nil, nil
+
+	return &image.StageDesc{
+		StageID: image.NewStageID(stageID.Digest, stageID.CreationTs),
+		Info:    info,
+	}, nil
 }
 
 func (storage *LocalStagesStorage) ExportStage(ctx context.Context, stageDesc *image.StageDesc, destinationReference string, mutateConfigFunc func(config v1.Config) (v1.Config, error)) error {
@@ -262,7 +263,7 @@ func (storage *LocalStagesStorage) GetImportMetadata(ctx context.Context, projec
 		return nil, fmt.Errorf("unable to get image %s info: %w", fullImageName, err)
 	}
 	if info == nil {
-		return nil, nil
+		return nil, ErrImportMetadataNotFound
 	}
 	return newImportMetadataFromLabels(info.Labels), nil
 }

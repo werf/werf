@@ -8,15 +8,24 @@ on:
   workflow_dispatch:
 
 jobs:
+  gate:
+    if: github.repository == 'werf/werf'
+    runs-on: ubuntu-22.04
+    steps:
+      - run: true
+
   lint:
+    needs: gate
     uses: ./.github/workflows/_lint.yml
 
   unit:
+    needs: gate
     uses: ./.github/workflows/_test_unit.yml
     with:
       coverage: true
 
   e2e_simple_per-k8s-version:
+    needs: gate
     uses: ./.github/workflows/_test_e2e_per-k8s-version.yml
     with:
       scope: simple
@@ -24,6 +33,7 @@ jobs:
     secrets: inherit
 
   e2e_complex_per-k8s-version:
+    needs: gate
     uses: ./.github/workflows/_test_e2e_per-k8s-version.yml
     with:
       scope: complex
@@ -32,6 +42,7 @@ jobs:
     secrets: inherit
 
   e2e_extra_per-k8s-version:
+    needs: gate
     uses: ./.github/workflows/_test_e2e_per-k8s-version.yml
     with:
       scope: extra
@@ -39,6 +50,7 @@ jobs:
     secrets: inherit
 
   integration_main:
+    needs: gate
     uses: ./.github/workflows/_test_integration_regular.yml
     with:
       packages: test/legacy_e2e/suites
@@ -48,6 +60,7 @@ jobs:
     secrets: inherit
 
   integration_git:
+    needs: gate
     uses: ./.github/workflows/_test_integration_regular.yml
     with:
       packages: test/legacy_e2e/suites/build/stapel_image/git
@@ -55,6 +68,7 @@ jobs:
     secrets: inherit
 
   integration_ansible:
+    needs: gate
     uses: ./.github/workflows/_test_integration_regular.yml
     with:
       packages: test/legacy_e2e/suites/ansible
@@ -62,18 +76,21 @@ jobs:
     secrets: inherit
 
   integration_per-k8s:
+    needs: gate
     uses: ./.github/workflows/_test_integration_per-k8s-version.yml
     with:
       coverage: true
     secrets: inherit
 
   integration_per-cr:
+    needs: gate
     uses: ./.github/workflows/_test_integration_per-container-registry.yml
     with:
       coverage: true
     secrets: inherit
 
   integration_per-k8s-and-cr:
+    needs: gate
     uses: ./.github/workflows/_test_integration_per-k8s-version-and-container-registry.yml
     with:
       coverage: true
@@ -95,8 +112,9 @@ jobs:
     secrets: inherit
 
   notify:
-    if: always()
+    if: ${{ !cancelled() && needs.gate.result == 'success' }}
     needs:
+      - gate
       - lint
       - coverage_report
     uses: werf/common-ci/.github/workflows/notification.yml@main

@@ -142,6 +142,10 @@ func (r *dockerHub) getToken(ctx context.Context) (string, error) {
 }
 
 func (r *dockerHub) handleFailedApiResponse(resp *http.Response, err error) error {
+	if resp == nil {
+		return err
+	}
+
 	switch resp.StatusCode {
 	case http.StatusUnauthorized:
 		return NewDockerHubUnauthorizedError(err)
@@ -149,7 +153,7 @@ func (r *dockerHub) handleFailedApiResponse(resp *http.Response, err error) erro
 		return NewDockerHubRepositoryNotFoundError(err)
 	}
 
-	return nil
+	return err
 }
 
 func (r *dockerHub) String() string {
