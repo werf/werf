@@ -1,0 +1,62 @@
+project: werf-test-e2e-sbom-merge
+configVersion: 1
+build:
+  sbom:
+    enable: true
+    standard: cyclonedx@1.6
+---
+image: frontend
+from: registry.werf.io/werf/scratch
+sbom:
+  fragment: |
+    components:
+      - name: lodash
+        type: library
+        version: 4.17.21
+        purl: pkg:npm/lodash@4.17.21
+        properties:
+          - name: "GOST:attack_surface"
+            value: "yes"
+          - name: "GOST:security_function"
+            value: "no"
+      - name: axios
+        type: library
+        version: 1.6.0
+        purl: pkg:npm/axios@1.6.0
+        properties:
+          - name: "GOST:attack_surface"
+            value: "no"
+          - name: "GOST:security_function"
+            value: "no"
+    dependencies:
+      - ref: pkg:npm/lodash@4.17.21
+        dependsOn:
+          - pkg:npm/axios@1.6.0
+---
+image: backend
+from: registry.werf.io/werf/scratch
+sbom:
+  fragment: |
+    components:
+      - name: lodash
+        type: library
+        version: 4.17.21
+        purl: pkg:npm/lodash@4.17.21
+        properties:
+          - name: "GOST:attack_surface"
+            value: "yes"
+          - name: "GOST:security_function"
+            value: "no"
+      - name: express
+        type: library
+        version: 4.18.2
+        purl: pkg:npm/express@4.18.2
+        properties:
+          - name: "GOST:attack_surface"
+            value: "no"
+          - name: "GOST:security_function"
+            value: "yes"
+    dependencies:
+      - ref: pkg:npm/express@4.18.2
+        dependsOn:
+          - pkg:npm/lodash@4.17.21

@@ -297,6 +297,19 @@ func (p *Project) SbomValidateWithErr(ctx context.Context, opts *SbomValidateOpt
 	return string(outb), err
 }
 
+func (p *Project) SbomMerge(ctx context.Context, opts *SbomMergeOptions) (combinedOut string) {
+	if opts == nil {
+		opts = &SbomMergeOptions{}
+	}
+	args := append([]string{"sbom", "merge"}, opts.ExtraArgs...)
+
+	outb := p.RunCommand(ctx, args, CommonOptions{
+		ShouldFail: opts.ShouldFail,
+	})
+
+	return string(outb)
+}
+
 func (p *Project) Verify(ctx context.Context, opts *VerifyOptions) (combinedOut string) {
 	if opts == nil {
 		opts = &VerifyOptions{}

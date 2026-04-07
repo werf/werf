@@ -51,6 +51,7 @@ import (
 	"github.com/werf/werf/v2/cmd/werf/rollback"
 	"github.com/werf/werf/v2/cmd/werf/run"
 	sbom_get "github.com/werf/werf/v2/cmd/werf/sbom/get"
+	sbom_merge "github.com/werf/werf/v2/cmd/werf/sbom/merge"
 	sbom_validate "github.com/werf/werf/v2/cmd/werf/sbom/validate"
 	"github.com/werf/werf/v2/cmd/werf/slugify"
 	stage_image "github.com/werf/werf/v2/cmd/werf/stage/image"
@@ -197,6 +198,7 @@ func sbomCmd(ctx context.Context) *cobra.Command {
 	cmd.AddCommand(
 		sbom_get.NewCmd(ctx),
 		sbom_validate.NewCmd(ctx),
+		sbom_merge.NewCmd(ctx),
 	)
 
 	return cmd

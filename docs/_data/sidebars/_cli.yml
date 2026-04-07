@@ -103,6 +103,9 @@ cli: &cli
           - title: werf sbom validate
             url: /reference/cli/werf_sbom_validate.html
 
+          - title: werf sbom merge
+            url: /reference/cli/werf_sbom_merge.html
+
       - title: werf stages
         f:
           - title: werf stages copy

@@ -32,3 +32,13 @@ func SetComponent(comp *cdx.Component, config Config) {
 	a.SetAttackSurface(config.AttackSurface)
 	a.SetSecurityFunction(config.SecurityFunction)
 }
+
+func GetComponent(comp *cdx.Component) Config {
+	a := newAccessor(comp)
+	attack, _ := a.GetAttackSurface()
+	security, _ := a.GetSecurityFunction()
+	return Config{
+		AttackSurface:    attack,
+		SecurityFunction: security,
+	}
+}

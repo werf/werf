@@ -1,0 +1,1 @@
+merge per-image SBOMs into a product-level SBOM
