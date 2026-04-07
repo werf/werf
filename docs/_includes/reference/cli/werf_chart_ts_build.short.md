@@ -1,1 +1,1 @@
-build TypeScript chart
+build TypeScript chart.

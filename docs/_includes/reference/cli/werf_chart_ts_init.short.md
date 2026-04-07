@@ -1,1 +1,1 @@
-initialize a new TypeScript chart project
+initialize the files needed to render manifests using TypeScript.

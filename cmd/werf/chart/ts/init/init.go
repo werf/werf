@@ -20,8 +20,8 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	ctx = common.NewContextWithCmdData(ctx, &commonCmdData)
 	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:                   "init [PATH]",
-		Short:                 "Initialize TypeScript directory for chart",
-		Long:                  common.GetLongCommandDescription("Initialize the TypeScript directory for an existing werf chart. Creates ts/ directory with TypeScript boilerplate and ensures ignore files include necessary paths. Requires an existing werf.yaml. If PATH is not specified, uses the current directory."),
+		Short:                 "Initialize the files needed to render manifests using TypeScript.",
+		Long:                  common.GetLongCommandDescription("Initialize the files needed to render manifests using TypeScript. If PATH is not specified, uses the current directory."),
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()

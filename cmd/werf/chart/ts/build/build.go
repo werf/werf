@@ -20,8 +20,8 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	ctx = common.NewContextWithCmdData(ctx, &commonCmdData)
 	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:                   "build [PATH]",
-		Short:                 "Build TypeScript chart",
-		Long:                  common.GetLongCommandDescription("Build bundle for TypeScript chart."),
+		Short:                 "Build TypeScript chart.",
+		Long:                  common.GetLongCommandDescription("Build TypeScript chart in the specified directory. If PATH is not specified, uses the current directory."),
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()

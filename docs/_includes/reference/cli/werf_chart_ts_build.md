@@ -3,7 +3,8 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Build bundle for TypeScript chart.
+Build TypeScript chart in the specified directory. If PATH is not specified, uses the current       
+directory.
 
 {{ header }} Syntax
 
