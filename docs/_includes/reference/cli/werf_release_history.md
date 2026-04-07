@@ -105,9 +105,6 @@ werf release history [options]
             Specify custom log time format (default $WERF_LOG_TIME_FORMAT or RFC3339 format).
       --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
-      --max=0
-            Maximum number of revisions to show. 0 means no limit (default                          
-            $WERF_RELEASE_HISTORY_MAX or 0)
       --namespace=""
             Use specified Kubernetes namespace (default $WERF_NAMESPACE)
       --output-format="table"
@@ -119,6 +116,9 @@ werf release history [options]
       --release-storage-sql-connection=""
             SQL Connection String for Helm SQL Storage (default                                     
             $WERF_RELEASE_STORAGE_SQL_CONNECTION)
+      --revisions-limit=0
+            Maximum number of revisions to show. 0 means no limit (default                          
+            $WERF_RELEASE_HISTORY_REVISIONS_LIMIT or 0)
       --skip-tls-verify-kube=false
             Skip TLS certificate validation when accessing a Kubernetes cluster (default            
             $WERF_SKIP_TLS_VERIFY_KUBE)
