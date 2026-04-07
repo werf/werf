@@ -1436,6 +1436,8 @@ github.com/werf/nelm v1.23.2-0.20260327152115-ead28823369d h1:Hu6lmRInr5NITQ7bIs
 github.com/werf/nelm v1.23.2-0.20260327152115-ead28823369d/go.mod h1:ys2WqkKuZOLvnW1r8dGl20k1oWkOxLFKF5CPXT4MEyo=
 github.com/werf/nelm v1.23.2-0.20260327172522-9fd804c04354 h1:iBA2cM83CS5ou3M1CMaUvBFWaIBv5jNmntpBOWdguxQ=
 github.com/werf/nelm v1.23.2-0.20260327172522-9fd804c04354/go.mod h1:ys2WqkKuZOLvnW1r8dGl20k1oWkOxLFKF5CPXT4MEyo=
+github.com/werf/nelm v1.23.3-0.20260407195144-942d8aad2341 h1:k/rx0R2Or9Y7ymkw003/A1dioXWy41Eg4tXi0gBsMTE=
+github.com/werf/nelm v1.23.3-0.20260407195144-942d8aad2341/go.mod h1:Gy6XJ42rwJVA+UyB6ka9/DVFPzm+lh7lmcjLAZECdIs=
 github.com/werf/nelm-for-werf-helm v0.0.0-20241217155925-b0e6734d1dbf h1:K51qz209c1yJgKzPw8AeS72T21F/ACp0VI3RJvT4THA=
 github.com/werf/nelm-for-werf-helm v0.0.0-20241217155925-b0e6734d1dbf/go.mod h1:7RJXSGPKKPEvfPqrTwNA8jT7y52O0ebwhSbSn29ESMA=
 github.com/xanzy/go-gitlab v0.31.0/go.mod h1:sPLojNBn68fMUWSxIJtdVVIP8uSBYqesTfDUseX11Ug=
