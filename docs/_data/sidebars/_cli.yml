@@ -263,6 +263,9 @@ cli: &cli
           - title: werf release get
             url: /reference/cli/werf_release_get.html
 
+          - title: werf release history
+            url: /reference/cli/werf_release_history.html
+
           - title: werf release list
             url: /reference/cli/werf_release_list.html
 
