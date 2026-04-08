@@ -262,6 +262,10 @@ func (cache *Cache) ProvideIngester() orascontent.ProvideIngester {
 // init creates files needed necessary for OCI layout store
 func (cache *Cache) init() error {
 	if cache.ociStore == nil {
+		if err := os.MkdirAll(cache.rootDir, 0o755); err != nil {
+			return err
+		}
+
 		ociStore, err := orascontent.NewOCIStore(cache.rootDir)
 		if err != nil {
 			return err
