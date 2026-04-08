@@ -8,8 +8,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/werf/nelm/pkg/action"
-	"github.com/werf/nelm/pkg/export/helm/werf/file"
-	"github.com/werf/nelm/pkg/log"
+	nelmcommon "github.com/werf/nelm/pkg/common"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/true_git"
 )
@@ -82,7 +81,7 @@ func runChartTSBuild(ctx context.Context, chartDir string) error {
 		return err
 	}
 
-	file.SetChartFileReader(giterminismManager.FileManager)
+	nelmcommon.ChartFileReader = giterminismManager.FileManager
 
 	werfConfigPath, werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
 	if err != nil {
@@ -96,7 +95,7 @@ func runChartTSBuild(ctx context.Context, chartDir string) error {
 
 	chartPath := filepath.Join(giterminismManager.ProjectDir(), relChartPath)
 
-	ctx = log.SetupLogging(ctx, common.GetNelmLogLevel(&commonCmdData), log.SetupLoggingOptions{
+	ctx = action.SetupLogging(ctx, common.GetNelmLogLevel(&commonCmdData), action.SetupLoggingOptions{
 		ColorMode: *commonCmdData.LogColorMode,
 	})
 

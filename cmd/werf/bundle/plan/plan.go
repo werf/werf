@@ -209,7 +209,7 @@ func runPlan(ctx context.Context) error {
 	})
 	engine.Debug = commonCmdData.DebugTemplates
 
-	if err := action.ReleasePlanInstall(ctx, releaseName, releaseNamespace, action.ReleasePlanInstallOptions{
+	if _, err := action.ReleasePlanInstall(ctx, releaseName, releaseNamespace, action.ReleasePlanInstallOptions{
 		KubeConnectionOptions:      commonCmdData.KubeConnectionOptions,
 		ChartRepoConnectionOptions: commonCmdData.ChartRepoConnectionOptions,
 		ValuesOptions:              commonCmdData.ValuesOptions,
