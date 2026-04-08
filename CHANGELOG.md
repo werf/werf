@@ -1,5 +1,21 @@
 # Changelog
 
+## [2.66.0](https://github.com/werf/werf/compare/v2.65.2...v2.66.0) (2026-04-08)
+
+
+### Features
+
+* **deploy:** deno runtime for typescript ([#7365](https://github.com/werf/werf/issues/7365)) ([c27c4d2](https://github.com/werf/werf/commit/c27c4d29d2b4c46cf34b6ab33d37b1eeb81133ce))
+
+
+### Bug Fixes
+
+* **buildah:** normalize dependency import file targets ([69cf22f](https://github.com/werf/werf/commit/69cf22f133de280b2bf6297e359ca69e067efa71))
+* **build:** push custom tags to final repo during multiplatform builds ([a402ac6](https://github.com/werf/werf/commit/a402ac63d42ac92f7d9870ceca559bfce93fa937))
+* **import:** add check to handle symlinks before md5sum launch ([679bc6a](https://github.com/werf/werf/commit/679bc6a104c605c1f8a8284349d58ed8d5f530a2))
+* **import:** add one fs rsync flag ([c64e3e7](https://github.com/werf/werf/commit/c64e3e72eb81a507821e6865f6af5ed0631d7a3a))
+* make kube initialization lazy for commands that don't need eager kube client ([#7440](https://github.com/werf/werf/issues/7440)) ([98028f2](https://github.com/werf/werf/commit/98028f28ce629da894a8bad00a5cbe96ca2bceb7))
+
 ## [2.65.2](https://github.com/werf/werf/compare/v2.65.1...v2.65.2) (2026-04-01)
 
 
