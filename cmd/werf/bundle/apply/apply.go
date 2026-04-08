@@ -111,6 +111,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupSetDockerConfigJsonValue(&commonCmdData, cmd)
 	common.SetupTemplatesAllowDNS(&commonCmdData, cmd)
 	commonCmdData.SetupSkipDependenciesRepoRefresh(cmd)
+	common.SetupTSOptions(&commonCmdData, cmd)
 
 	defaultTag := os.Getenv("WERF_TAG")
 	if defaultTag == "" {
@@ -252,6 +253,8 @@ func runApply(ctx context.Context) error {
 			ReleaseStorageDriver:        commonCmdData.ReleaseStorageDriver,
 			ReleaseStorageSQLConnection: commonCmdData.ReleaseStorageSQLConnection,
 		},
+		IgnoreBundleJS: commonCmdData.IgnoreBundleJS,
+		DenoBinaryPath: commonCmdData.DenoBinaryPath,
 	}); err != nil {
 		return fmt.Errorf("release install: %w", err)
 	}

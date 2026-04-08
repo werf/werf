@@ -475,13 +475,7 @@ func generateChecksumScript(from string, includePaths, excludePaths []string, re
 		}
 	}
 
-	// Exclude the stapel container mount root, as in the previous implementation.
-	if from == "/" {
-		excludePathsCopy = append(excludePathsCopy, stapel.CONTAINER_MOUNT_ROOT)
-	}
-
-	// Do not follow symlinks when calculating checksums to avoid runner hang-ups (-L)
-	rsyncCommand := stapel.RsyncBinPath() + " -r --dry-run"
+	rsyncCommand := stapel.RsyncBinPath() + " -rx --dry-run"
 	// Run rsync from the container root to avoid problems with relative paths in the output.
 	rsyncCommand += import_server.PrepareRsyncFilters("", includePathsCopy, excludePathsCopy)
 	rsyncCommand += " " + "/"
@@ -513,16 +507,19 @@ func generateChecksumScript(from string, includePaths, excludePaths []string, re
 }
 
 func generateChecksumBashFunction() []string {
-	var calculateChecksum string
+	md5sum := stapel.Md5sumBinPath()
+	cut := stapel.CutBinPath()
+	stat := stapel.StatBinPath()
 
+	var calculateChecksum string
 	// TODO: remove in v3 (WERF_EXPERIMENTAL_STAPEL_IMPORT_PERMISSIONS=1 as default)
 	switch util.GetBoolEnvironmentDefaultFalse("WERF_EXPERIMENTAL_STAPEL_IMPORT_PERMISSIONS") {
 	case true:
-		calculateChecksum = fmt.Sprintf(`printf '%%s\t%%s\t%%s\n' "$(%[1]s "${line}" | %[2]s -c 1-32)" "$(%[3]s --format=%%A "${line}")" "${line}"`,
-			stapel.Md5sumBinPath(), stapel.CutBinPath(), stapel.StatBinPath())
+		calculateChecksum = fmt.Sprintf(`if [ -L "${line}" ]; then printf '%%s\t%%s\t%%s\n' "$(printf 'symlink:%%s' "$(readlink "${line}")" | %[1]s | %[2]s -c 1-32)" "$(%[3]s --format=%%A "${line}")" "${line}"; else printf '%%s\t%%s\t%%s\n' "$(%[1]s "${line}" | %[2]s -c 1-32)" "$(%[3]s --format=%%A "${line}")" "${line}"; fi`,
+			md5sum, cut, stat)
 	default:
-		calculateChecksum = fmt.Sprintf(`%[1]s "${line}"`,
-			stapel.Md5sumBinPath())
+		calculateChecksum = fmt.Sprintf(`if [ -L "${line}" ]; then printf '%%s  %%s\n' "$(printf 'symlink:%%s' "$(readlink "${line}")" | %[1]s | %[2]s -c 1-32)" "${line}"; else %[1]s "${line}"; fi`,
+			md5sum, cut, stat)
 	}
 
 	return []string{

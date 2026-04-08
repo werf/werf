@@ -107,6 +107,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupSetDockerConfigJsonValue(&commonCmdData, cmd)
 	common.SetupTemplatesAllowDNS(&commonCmdData, cmd)
 	commonCmdData.SetupSkipDependenciesRepoRefresh(cmd)
+	common.SetupTSOptions(&commonCmdData, cmd)
 
 	defaultTag := os.Getenv("WERF_TAG")
 	if defaultTag == "" {
@@ -247,6 +248,8 @@ func runPlan(ctx context.Context) error {
 			ShowSensitiveDiffs:     cmdData.ShowSensitiveDiffs,
 			ShowInsignificantDiffs: cmdData.ShowInsignificantDiffs,
 		},
+		IgnoreBundleJS: commonCmdData.IgnoreBundleJS,
+		DenoBinaryPath: commonCmdData.DenoBinaryPath,
 	}); err != nil {
 		return fmt.Errorf("release plan install: %w", err)
 	}
