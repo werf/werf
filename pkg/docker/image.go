@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"os"
 	"slices"
 	"strings"
 	"time"
@@ -13,6 +14,7 @@ import (
 	_ "github.com/docker/buildx/driver/docker"
 	_ "github.com/docker/buildx/driver/docker-container"
 	"github.com/docker/buildx/util/buildflags"
+	"github.com/docker/buildx/util/confutil"
 	"github.com/docker/buildx/util/progress"
 	"github.com/docker/cli/cli/command"
 	"github.com/docker/docker/api/types/filters"
@@ -265,7 +267,7 @@ func CliBuild_LiveOutputWithCustomIn(ctx context.Context, rc io.ReadCloser, cliO
 		Platforms:              cliOpts.Platforms,
 		NetworkMode:            cliOpts.Network,
 		ExtraHosts:             cliOpts.ExtraHosts,
-		ProvenanceResponseMode: "min",
+		ProvenanceResponseMode: string(confutil.MetadataProvenanceModeDisabled),
 	}
 
 	if len(cliOpts.BuildArgs) > 0 {
@@ -299,6 +301,18 @@ func CliBuild_LiveOutputWithCustomIn(ctx context.Context, rc io.ReadCloser, cliO
 		}
 		buildOpts.Secrets = secrets
 	}
+
+	// TODO: properly handle index manifests instead of disabling provenance.
+	// Provenance attestations create index manifests that werf cannot handle correctly.
+	prevNoAttest, hadNoAttest := os.LookupEnv("BUILDX_NO_DEFAULT_ATTESTATIONS")
+	os.Setenv("BUILDX_NO_DEFAULT_ATTESTATIONS", "1")
+	defer func() {
+		if hadNoAttest {
+			os.Setenv("BUILDX_NO_DEFAULT_ATTESTATIONS", prevNoAttest)
+		} else {
+			os.Unsetenv("BUILDX_NO_DEFAULT_ATTESTATIONS")
+		}
+	}()
 
 	progressMode := progressui.PlainMode
 	if liveCliOutputEnabled {
