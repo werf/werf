@@ -69,23 +69,13 @@ var _ = Describe("Simple build", Label("e2e", "build", "simple"), func() {
 				)
 			}
 		},
-		Entry("without repo using Vanilla Docker", simpleTestOptions{setupEnvOptions{
-			ContainerBackendMode:        "vanilla-docker",
+		Entry("without repo using Docker", simpleTestOptions{setupEnvOptions{
+			ContainerBackendMode:        "docker",
 			WithLocalRepo:               false,
 			WithStagedDockerfileBuilder: false,
 		}}),
-		Entry("with local repo using Vanilla Docker", simpleTestOptions{setupEnvOptions{
-			ContainerBackendMode:        "vanilla-docker",
-			WithLocalRepo:               true,
-			WithStagedDockerfileBuilder: false,
-		}}),
-		Entry("without repo using BuildKit Docker", simpleTestOptions{setupEnvOptions{
-			ContainerBackendMode:        "buildkit-docker",
-			WithLocalRepo:               false,
-			WithStagedDockerfileBuilder: false,
-		}}),
-		Entry("with local repo using BuildKit Docker", simpleTestOptions{setupEnvOptions{
-			ContainerBackendMode:        "buildkit-docker",
+		Entry("with local repo using Docker", simpleTestOptions{setupEnvOptions{
+			ContainerBackendMode:        "docker",
 			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: false,
 		}}),
