@@ -769,7 +769,13 @@ func (phase *BuildPhase) findAndFetchStageFromSecondaryStagesStorage(ctx context
 				if exist {
 					stg.SetContentDigest(contentDigest)
 				} else {
-					panic(fmt.Sprintf("expected stage %q content digest label to be set!", stg.Name()))
+					logboek.Context(ctx).Warn().LogF("Stage %s content digest label is missing, recalculating\n", stg.LogDetailedName())
+
+					contentDigest, err := calculateDigest(ctx, fmt.Sprintf("%s-content", stg.Name()), "", stg, phase.Conveyor, calculateDigestOptions{TargetPlatform: img.TargetPlatform})
+					if err != nil {
+						return fmt.Errorf("unable to calculate stage %s content digest: %w", stg.Name(), err)
+					}
+					stg.SetContentDigest(contentDigest)
 				}
 
 				logboek.Context(ctx).Default().LogFHighlight("Use previously built image for %s\n", stg.LogDetailedName())
@@ -903,7 +909,12 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, s
 		if exist {
 			stageContentSig = contentDigest
 		} else {
-			panic(fmt.Sprintf("expected stage %q content digest label to be set!", stg.Name()))
+			logboek.Context(ctx).Warn().LogF("Stage %s content digest label is missing, recalculating\n", stg.LogDetailedName())
+
+			stageContentSig, err = calculateDigest(ctx, fmt.Sprintf("%s-content", stg.Name()), "", stg, phase.Conveyor, calculateDigestOptions{TargetPlatform: img.TargetPlatform})
+			if err != nil {
+				return false, phase.Conveyor.GetStageDigestMutex(stg.GetDigest()).Unlock, fmt.Errorf("unable to calculate stage %s content digest: %w", stg.Name(), err)
+			}
 		}
 	} else {
 		stageContentSig, err = calculateDigest(ctx, fmt.Sprintf("%s-content", stg.Name()), "", stg, phase.Conveyor, calculateDigestOptions{TargetPlatform: img.TargetPlatform})
@@ -1112,7 +1123,13 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 			if exist {
 				stg.SetContentDigest(contentDigest)
 			} else {
-				panic(fmt.Sprintf("expected stage %q content digest label to be set!", stg.Name()))
+				logboek.Context(ctx).Warn().LogF("Stage %s content digest label is missing, recalculating\n", stg.LogDetailedName())
+
+				contentDigest, err := calculateDigest(ctx, fmt.Sprintf("%s-content", stg.Name()), "", stg, phase.Conveyor, calculateDigestOptions{TargetPlatform: img.TargetPlatform})
+				if err != nil {
+					return fmt.Errorf("unable to calculate stage %s content digest: %w", stg.Name(), err)
+				}
+				stg.SetContentDigest(contentDigest)
 			}
 			return nil
 		}
