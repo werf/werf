@@ -15,15 +15,8 @@ type VolumeUsage struct {
 	TotalBytes uint64
 }
 
-func (vu VolumeUsage) Percentage() float64 {
-	return (float64(vu.UsedBytes) / float64(vu.TotalBytes)) * 100
-}
-
-func (vu VolumeUsage) BytesToFree(targetVolumeUsagePercentage float64) uint64 {
-	diffPercentage := vu.Percentage() - targetVolumeUsagePercentage
-	allowedVolumeUsageToFree := math.Max(diffPercentage, 0)
-	bytesToFree := uint64((float64(vu.TotalBytes) / 100.0) * allowedVolumeUsageToFree)
-	return bytesToFree
+func (vu VolumeUsage) PercentageToBytes(percentage float64) uint64 {
+	return uint64(math.Round(float64(vu.TotalBytes) * (percentage / 100.0)))
 }
 
 func GetVolumeUsageByPath(ctx context.Context, path string) (VolumeUsage, error) {
