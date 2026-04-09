@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strconv"
 
+	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/filemode"
 
 	"github.com/werf/common-go/pkg/util"
@@ -86,7 +87,8 @@ func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir s
 		return fmt.Errorf("git open failed: %w", err)
 	}
 
-	repoHandle, err := repo_handle.NewHandle(repository)
+	commitHash := plumbing.NewHash(opts.Commit)
+	repoHandle, err := repo_handle.NewHandle(repository, repo_handle.NewHandleOptions{CommitHash: commitHash, WorkTreeDir: workTreeDir})
 	if err != nil {
 		return err
 	}

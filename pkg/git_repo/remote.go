@@ -424,11 +424,181 @@ func (repo *Remote) TagCommit(ctx context.Context, tag string) (string, error) {
 }
 
 func (repo *Remote) GetOrCreatePatch(ctx context.Context, opts PatchOptions) (Patch, error) {
-	return repo.getOrCreatePatch(ctx, repo.GetClonePath(), repo.GetClonePath(), repo.getRepoID(), repo.getWorkTreeCacheDir(repo.getRepoID()), opts)
+	repository, err := repo.PlainOpen()
+	if err != nil {
+		return nil, fmt.Errorf("cannot open repo %q: %w", repo.GetClonePath(), err)
+	}
+
+	toHash, err := newHash(opts.ToCommit)
+	if err != nil {
+		return nil, fmt.Errorf("bad `to` commit hash %q: %w", opts.ToCommit, err)
+	}
+
+	toCommit, err := repository.CommitObject(toHash)
+	if err != nil {
+		return nil, fmt.Errorf("bad `to` commit %q: %w", opts.ToCommit, err)
+	}
+
+	hasSubmodules, err := HasSubmodulesInCommit(toCommit)
+	if err != nil {
+		return nil, err
+	}
+
+	repoID := repo.getRepoID()
+	workTreeCacheDir := repo.getWorkTreeCacheDir(repoID)
+	if !hasSubmodules {
+		return repo.getOrCreatePatch(ctx, repo.GetClonePath(), repo.GetClonePath(), repoID, workTreeCacheDir, opts)
+	}
+
+	patchID := true_git.PatchOptions(opts).ID()
+	checksumMutex := util.MapLoadOrCreateMutex(&repo.Cache.patchesMutex, patchID)
+	checksumMutex.Lock()
+	defer checksumMutex.Unlock()
+
+	if val, ok := repo.Cache.Patches.Load(patchID); ok {
+		return val.(Patch), nil
+	}
+
+	lock, err := CommonGitDataManager.LockGC(ctx, true)
+	if err != nil {
+		return nil, err
+	}
+	defer werf.HostLocker().ReleaseLock(lock)
+
+	if patch, err := CommonGitDataManager.GetPatchFile(ctx, repoID, opts); err != nil {
+		return nil, err
+	} else if patch != nil {
+		repo.Cache.Patches.Store(patchID, patch)
+		return patch, nil
+	}
+
+	tmpFile, err := CommonGitDataManager.NewTmpFile()
+	if err != nil {
+		return nil, err
+	}
+
+	fileHandler, err := os.OpenFile(tmpFile, os.O_RDWR|os.O_CREATE, 0o755)
+	if err != nil {
+		return nil, fmt.Errorf("cannot open file %s: %w", tmpFile, err)
+	}
+
+	var retryCount int
+	gitDir := repo.GetClonePath()
+
+TryCreatePatch:
+	desc, err := true_git.Patch(ctx, fileHandler, gitDir, workTreeCacheDir, true, true_git.PatchOptions(opts))
+	if true_git.IsCommitsNotPresentError(err) && retryCount == 0 {
+		logboek.Context(ctx).Default().LogF("Detected not present commits when creating patch: %s\n", err)
+		logboek.Context(ctx).Default().LogF("Will switch worktree to original commit %q and retry\n", opts.FromCommit)
+		if err := fileHandler.Truncate(0); err != nil {
+			return nil, fmt.Errorf("unable to truncate file %s: %w", tmpFile, err)
+		}
+		if _, err := fileHandler.Seek(0, 0); err != nil {
+			return nil, fmt.Errorf("unable to reset file %s: %w", tmpFile, err)
+		}
+		if err := true_git.WithWorkTree(ctx, gitDir, workTreeCacheDir, opts.FromCommit, true_git.WithWorkTreeOptions{HasSubmodules: true}, func(workTreeDir string) error {
+			return nil
+		}); err != nil {
+			return nil, fmt.Errorf("unable to switch worktree to commit %q: %w", opts.FromCommit, err)
+		}
+		retryCount++
+		goto TryCreatePatch
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("error creating patch between %q and %q commits: %w", opts.FromCommit, opts.ToCommit, err)
+	}
+
+	if err := fileHandler.Close(); err != nil {
+		return nil, fmt.Errorf("error creating patch file %s: %w", tmpFile, err)
+	}
+
+	patch, err := CommonGitDataManager.CreatePatchFile(ctx, repoID, opts, tmpFile, desc)
+	if err != nil {
+		return nil, err
+	}
+
+	repo.Cache.Patches.Store(patchID, patch)
+
+	return patch, nil
 }
 
 func (repo *Remote) GetOrCreateArchive(ctx context.Context, opts ArchiveOptions) (Archive, error) {
-	return repo.getOrCreateArchive(ctx, repo.GetClonePath(), repo.GetClonePath(), repo.getRepoID(), repo.getWorkTreeCacheDir(repo.getRepoID()), opts)
+	repository, err := repo.PlainOpen()
+	if err != nil {
+		return nil, fmt.Errorf("cannot open repo %q: %w", repo.GetClonePath(), err)
+	}
+
+	commitHash, err := newHash(opts.Commit)
+	if err != nil {
+		return nil, fmt.Errorf("bad commit hash %q: %w", opts.Commit, err)
+	}
+
+	commit, err := repository.CommitObject(commitHash)
+	if err != nil {
+		return nil, fmt.Errorf("bad commit %q: %w", opts.Commit, err)
+	}
+
+	hasSubmodules, err := HasSubmodulesInCommit(commit)
+	if err != nil {
+		return nil, err
+	}
+
+	repoID := repo.getRepoID()
+	workTreeCacheDir := repo.getWorkTreeCacheDir(repoID)
+	if !hasSubmodules {
+		return repo.getOrCreateArchive(ctx, repo.GetClonePath(), repo.GetClonePath(), repoID, workTreeCacheDir, opts)
+	}
+
+	repo.Cache.archivesMutex.Lock()
+	defer repo.Cache.archivesMutex.Unlock()
+
+	archiveID := true_git.ArchiveOptions(opts).ID()
+	if archive, hasKey := repo.Cache.Archives[archiveID]; hasKey {
+		return archive, nil
+	}
+
+	lock, err := CommonGitDataManager.LockGC(ctx, true)
+	if err != nil {
+		return nil, err
+	}
+	defer werf.HostLocker().ReleaseLock(lock)
+
+	if archive, err := CommonGitDataManager.GetArchiveFile(ctx, repoID, opts); err != nil {
+		return nil, err
+	} else if archive != nil {
+		repo.Cache.Archives[archiveID] = archive
+		return archive, nil
+	}
+
+	tmpFile, err := CommonGitDataManager.NewTmpFile()
+	if err != nil {
+		return nil, err
+	}
+
+	fileHandler, err := os.OpenFile(tmpFile, os.O_RDWR|os.O_CREATE, 0o755)
+	if err != nil {
+		return nil, fmt.Errorf("cannot open archive file: %w", err)
+	}
+
+	gitDir := repo.GetClonePath()
+	err = true_git.ArchiveWithSubmodules(ctx, fileHandler, gitDir, workTreeCacheDir, true_git.ArchiveOptions(opts))
+	if err != nil {
+		return nil, fmt.Errorf("error creating archive for commit %q: %w", opts.Commit, err)
+	}
+
+	if err := fileHandler.Close(); err != nil {
+		return nil, fmt.Errorf("unable to close file %s: %w", tmpFile, err)
+	}
+
+	archive, err := CommonGitDataManager.CreateArchiveFile(ctx, repoID, opts, tmpFile)
+	if err != nil {
+		return nil, err
+	}
+
+	repo.Cache.Archives[archiveID] = archive
+
+	return archive, nil
 }
 
 func (repo *Remote) GetOrCreateChecksum(ctx context.Context, opts ChecksumOptions) (checksum string, err error) {

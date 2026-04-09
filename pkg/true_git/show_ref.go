@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"strings"
+
+	"github.com/go-git/go-git/v5/plumbing"
 )
 
 type RefDescriptor struct {
@@ -25,45 +27,66 @@ type ShowRefResult struct {
 }
 
 func ShowRef(ctx context.Context, repoDir string) (*ShowRefResult, error) {
-	headRefCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: repoDir}, "show-ref", "--head")
-	if err := headRefCmd.Run(ctx); err != nil {
-		return nil, fmt.Errorf("git get refs from HEAD command failed: %w", err)
+	repository, err := PlainOpenWithOptions(repoDir, &PlainOpenOptions{EnableDotGitCommonDir: true})
+	if err != nil {
+		return nil, fmt.Errorf("open repository: %w", err)
 	}
 
 	res := &ShowRefResult{}
 
-	outputLines := strings.Split(headRefCmd.OutBuf.String(), "\n")
-	for _, line := range outputLines {
-		parts := strings.SplitN(line, " ", 2)
-		if len(parts) != 2 {
-			continue
+	head, err := repository.Head()
+	if err == nil {
+		res.Refs = append(res.Refs, RefDescriptor{
+			IsHEAD:   true,
+			Commit:   head.Hash().String(),
+			FullName: "HEAD",
+		})
+	}
+
+	refIter, err := repository.References()
+	if err != nil {
+		return nil, fmt.Errorf("iterate references: %w", err)
+	}
+
+	err = refIter.ForEach(func(ref *plumbing.Reference) error {
+		commit := ref.Hash().String()
+		fullName := ref.Name().String()
+
+		if ref.Name().IsTag() {
+			if tag, err := repository.TagObject(ref.Hash()); err == nil {
+				commit = tag.Target.String()
+			}
 		}
 
-		ref := RefDescriptor{
-			Commit:   parts[0],
-			FullName: parts[1],
+		refDesc := RefDescriptor{
+			Commit:   commit,
+			FullName: fullName,
 		}
 
 		switch {
-		case ref.FullName == "HEAD":
-			ref.IsHEAD = true
-		case strings.HasPrefix(ref.FullName, "refs/tags/"):
-			ref.IsTag = true
-			ref.TagName = strings.TrimPrefix(ref.FullName, "refs/tags/")
-		case strings.HasPrefix(ref.FullName, "refs/heads/"):
-			ref.IsBranch = true
-			ref.BranchName = strings.TrimPrefix(ref.FullName, "refs/heads/")
-		case strings.HasPrefix(ref.FullName, "refs/remotes/"):
-			ref.IsBranch = true
-			ref.IsRemote = true
-			parts := strings.SplitN(strings.TrimPrefix(ref.FullName, "refs/remotes/"), "/", 2)
-			if len(parts) != 2 {
-				continue
+		case fullName == "HEAD":
+			refDesc.IsHEAD = true
+		case strings.HasPrefix(fullName, "refs/tags/"):
+			refDesc.IsTag = true
+			refDesc.TagName = strings.TrimPrefix(fullName, "refs/tags/")
+		case strings.HasPrefix(fullName, "refs/heads/"):
+			refDesc.IsBranch = true
+			refDesc.BranchName = strings.TrimPrefix(fullName, "refs/heads/")
+		case strings.HasPrefix(fullName, "refs/remotes/"):
+			refDesc.IsBranch = true
+			refDesc.IsRemote = true
+			parts := strings.SplitN(strings.TrimPrefix(fullName, "refs/remotes/"), "/", 2)
+			if len(parts) == 2 {
+				refDesc.RemoteName = parts[0]
+				refDesc.BranchName = parts[1]
 			}
-			ref.RemoteName, ref.BranchName = parts[0], parts[1]
 		}
 
-		res.Refs = append(res.Refs, ref)
+		res.Refs = append(res.Refs, refDesc)
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("process references: %w", err)
 	}
 
 	return res, nil

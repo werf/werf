@@ -518,26 +518,14 @@ func (repo *Local) initRepoHandleBackedByWorkTree(ctx context.Context, commit st
 	}
 
 	if hasSubmodules {
-		if lock, err := CommonGitDataManager.LockGC(ctx, true); err != nil {
-			return nil, err
-		} else {
-			defer werf.HostLocker().ReleaseLock(lock)
+		validationResult, validationErr := true_git.ValidateSubmoduleState(ctx, repository, commitHash, repo.WorkTreeDir)
+		if validationErr != nil {
+			return nil, fmt.Errorf("validate submodule state: %w", validationErr)
 		}
-
-		var repoHandle repo_handle.Handle
-		if err := true_git.WithWorkTree(ctx, repo.GitDir, repo.getRepoWorkTreeCacheDir(repo.getRepoID()), commit, true_git.WithWorkTreeOptions{HasSubmodules: hasSubmodules}, func(preparedWorkTreeDir string) error {
-			repositoryWithPreparedWorktree, err := true_git.GitOpenWithCustomWorktreeDir(repo.GitDir, preparedWorkTreeDir)
-			if err != nil {
-				return err
-			}
-
-			repoHandle, err = repo_handle.NewHandle(repositoryWithPreparedWorktree)
-			return err
-		}); err != nil {
-			return nil, err
+		if !validationResult.Valid {
+			return nil, formatSubmoduleValidationError(validationResult)
 		}
-
-		return repoHandle, nil
+		return repo_handle.NewHandle(repository, repo_handle.NewHandleOptions{CommitHash: commitHash, WorkTreeDir: repo.WorkTreeDir})
 	} else {
 		return repo_handle.NewHandle(repository)
 	}
