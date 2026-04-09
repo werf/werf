@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.66.1](https://github.com/werf/werf/compare/v2.66.0...v2.66.1) (2026-04-09)
+
+
+### Bug Fixes
+
+* stop retrying 301 redirects in registry transport ([#7457](https://github.com/werf/werf/issues/7457)) ([f588d4c](https://github.com/werf/werf/commit/f588d4ca3ef8d74009e451e640b7d40f0b3938e6))
+
 ## [2.66.0](https://github.com/werf/werf/compare/v2.65.2...v2.66.0) (2026-04-08)
 
 
