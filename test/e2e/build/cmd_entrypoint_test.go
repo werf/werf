@@ -67,9 +67,9 @@ var _ = Describe("CMD and ENTRYPOINT combinations", Label("e2e", "build", "extra
 		options setupEnvOptions
 	}{
 		{
-			name: "vanilla-docker",
+			name: "docker",
 			options: setupEnvOptions{
-				ContainerBackendMode:        "vanilla-docker",
+				ContainerBackendMode:        "docker",
 				WithLocalRepo:               false,
 				WithStagedDockerfileBuilder: false,
 			},

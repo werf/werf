@@ -130,8 +130,8 @@ var _ = Describe("build and mutate image spec", Label("integration", "build", "m
 				}
 			}
 		},
-		Entry("without local repo using BuildKit Docker", simpleTestOptions{setupEnvOptions{
-			ContainerBackendMode: "buildkit-docker",
+		Entry("without local repo using Docker", simpleTestOptions{setupEnvOptions{
+			ContainerBackendMode: "docker",
 		}}),
 	)
 })
