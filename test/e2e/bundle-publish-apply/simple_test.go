@@ -8,7 +8,6 @@ import (
 	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/nelm/pkg/export/helm/release"
 	"github.com/werf/werf/v2/test/pkg/report"
-	"github.com/werf/werf/v2/test/pkg/utils"
 	"github.com/werf/werf/v2/test/pkg/werf"
 )
 
@@ -16,20 +15,21 @@ var _ = Describe("Simple bundle publish/apply", Label("e2e", "bundle-publish-app
 	var repoDirname string
 	var werfProject *werf.Project
 
-	AfterEach(func(ctx SpecContext) {
-		utils.RunSucceedCommand(ctx, SuiteData.GetTestRepoPath(repoDirname), SuiteData.WerfBinPath, "dismiss", "--release", werfProject.Release(ctx), "--namespace", werfProject.Namespace(ctx), "--with-namespace")
-
-		werfProject.KubeCtl(ctx, &werf.KubeCtlOptions{
-			werf.CommonOptions{
-				ExtraArgs: []string{
-					"delete",
-					"namespace",
-					"--ignore-not-found",
-					werfProject.Namespace(ctx),
-				},
-			},
-		})
-	})
+	// TEMP: commented out to confirm dismiss hang hypothesis
+	// AfterEach(func(ctx SpecContext) {
+	// 	utils.RunSucceedCommand(ctx, SuiteData.GetTestRepoPath(repoDirname), SuiteData.WerfBinPath, "dismiss", "--release", werfProject.Release(ctx), "--namespace", werfProject.Namespace(ctx), "--with-namespace")
+	//
+	// 	werfProject.KubeCtl(ctx, &werf.KubeCtlOptions{
+	// 		werf.CommonOptions{
+	// 			ExtraArgs: []string{
+	// 				"delete",
+	// 				"namespace",
+	// 				"--ignore-not-found",
+	// 				werfProject.Namespace(ctx),
+	// 			},
+	// 		},
+	// 	})
+	// })
 
 	It("should succeed and deploy expected resources",
 		func(ctx SpecContext) {
