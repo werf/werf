@@ -148,23 +148,13 @@ var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
 				contRuntime.ExpectCmdsToSucceed(ctx, buildReport.Images["stapel-shell"].DockerImageName, "test -f /app/README.md", "stat -c %u:%g /app/README.md | diff <(echo 1050:1051) -", "grep -qF 'https://cloud.google.com/sdk/' /app/README.md", "test -f /app/static/index.html", "stat -c %u:%g /app/static/index.html | diff <(echo 1050:1051) -", "grep -qF '<title>Hello, world</title>' /app/static/index.html", "! test -e /app/static/style.css", "test -f /app/app.go", "stat -c %u:%g /app/app.go | diff <(echo 1050:1051) -", "grep -qF 'package hello' /app/app.go", "! test -e /app/static/script.js", "test -f /triggered-stages", "stat -c %u:%g /triggered-stages | diff <(echo 0:0) -", "echo 'beforeInstall\ninstall\nbeforeSetup\nsetup' | diff /triggered-stages -", "! test -e /tmp_dir/file", "test -f /basedir/file", "stat -c %u:%g /basedir/file | diff <(echo 0:0) -", "echo 'content' | diff /basedir/file -", "test -f /basedir-imported/file", "stat -c %u:%g /basedir-imported/file | diff <(echo 1060:1061) -", "echo 'content' | diff /basedir-imported/file -")
 			}
 		},
-		Entry("without repo using Vanilla Docker", complexTestOptions{setupEnvOptions{
-			ContainerBackendMode:        "vanilla-docker",
+		Entry("without repo using Docker", complexTestOptions{setupEnvOptions{
+			ContainerBackendMode:        "docker",
 			WithLocalRepo:               false,
 			WithStagedDockerfileBuilder: false,
 		}}),
-		Entry("with local repo using Vanilla Docker", complexTestOptions{setupEnvOptions{
-			ContainerBackendMode:        "vanilla-docker",
-			WithLocalRepo:               true,
-			WithStagedDockerfileBuilder: false,
-		}}),
-		Entry("without repo using BuildKit Docker", complexTestOptions{setupEnvOptions{
-			ContainerBackendMode:        "buildkit-docker",
-			WithLocalRepo:               false,
-			WithStagedDockerfileBuilder: false,
-		}}),
-		Entry("with local repo using BuildKit Docker", complexTestOptions{setupEnvOptions{
-			ContainerBackendMode:        "buildkit-docker",
+		Entry("with local repo using Docker", complexTestOptions{setupEnvOptions{
+			ContainerBackendMode:        "docker",
 			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: false,
 		}}),

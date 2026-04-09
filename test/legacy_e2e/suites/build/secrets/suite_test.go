@@ -2,10 +2,7 @@ package common_test
 
 import (
 	"context"
-	"strings"
 	"testing"
-
-	. "github.com/onsi/ginkgo/v2"
 
 	"github.com/werf/werf/v2/test/pkg/suite_init"
 	"github.com/werf/werf/v2/test/pkg/utils"
@@ -36,11 +33,7 @@ var (
 )
 
 func setupEnv(opts testOptions) {
-	if opts.ContainerBackendMode == "docker" || strings.HasSuffix(opts.ContainerBackendMode, "-docker") {
-		SuiteData.Stubs.SetEnv("WERF_BUILDAH_MODE", "docker")
-	} else {
-		SuiteData.Stubs.SetEnv("WERF_BUILDAH_MODE", opts.ContainerBackendMode)
-	}
+	SuiteData.Stubs.SetEnv("WERF_BUILDAH_MODE", "docker")
 
 	if opts.WithStagedDockerfileBuilder {
 		SuiteData.Stubs.SetEnv("WERF_FORCE_STAGED_DOCKERFILE", "1")

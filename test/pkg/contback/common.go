@@ -15,7 +15,7 @@ var ErrRuntimeUnavailable = errors.New("requested runtime unavailable")
 
 func NewContainerBackend(mode string) (ContainerBackend, error) {
 	switch mode {
-	case "docker", "vanilla-docker", "buildkit-docker":
+	case "docker":
 		return NewDockerBackend(), nil
 	case "native-rootless":
 		if runtime.GOOS != "linux" {

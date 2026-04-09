@@ -1,10 +1,7 @@
 package common_test
 
 import (
-	"strings"
 	"testing"
-
-	. "github.com/onsi/ginkgo/v2"
 
 	"github.com/werf/werf/v2/test/pkg/suite_init"
 	"github.com/werf/werf/v2/test/pkg/utils"
@@ -48,11 +45,7 @@ var (
 )
 
 func setupEnv(opts setupEnvOptions) {
-	if opts.ContainerBackendMode == "docker" || strings.HasSuffix(opts.ContainerBackendMode, "-docker") {
-		SuiteData.Stubs.SetEnv("WERF_BUILDAH_MODE", "docker")
-	} else {
-		SuiteData.Stubs.SetEnv("WERF_BUILDAH_MODE", opts.ContainerBackendMode)
-	}
+	SuiteData.Stubs.SetEnv("WERF_BUILDAH_MODE", "docker")
 
 	if opts.WithLocalRepo {
 		SuiteData.Stubs.SetEnv("WERF_INSECURE_REGISTRY", "1")
