@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/image"
 )
@@ -20,15 +19,11 @@ const (
 )
 
 func getVersion() string {
+	version := VERSION
 	if v := os.Getenv("WERF_STAPEL_IMAGE_VERSION"); v != "" {
-		return v
+		version = v
 	}
-
-	if util.GetBoolEnvironmentDefaultFalse("WERF_EXPERIMENTAL_STAPEL_ARM") {
-		return "dev"
-	}
-
-	return VERSION
+	return version
 }
 
 func getImage() string {
