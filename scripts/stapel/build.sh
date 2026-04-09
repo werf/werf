@@ -1,68 +1,30 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
-set -e
+REGISTRY="${STAPEL_REGISTRY:-registry-write.werf.io/werf}"
+TAG="${STAPEL_TAG:-dev}"
+DOCKERFILE="${STAPEL_DOCKERFILE:-stapel/Dockerfile}"
+IMAGE="${REGISTRY}/stapel:${TAG}"
 
-REGISTRY="registry-write.werf.io/werf"
-TAG="dev"
-DOCKERFILE="stapel/Dockerfile"
-PLATFORM="${STAPEL_PLATFORM:-}"
+PLATFORMS="${STAPEL_PLATFORMS:-linux/amd64,linux/arm64}"
 
-if [ -n "$PLATFORM" ]; then
-    case "$PLATFORM" in
-        linux/amd64)
-            TARGETARCH="amd64"
-            ;;
-        linux/arm64)
-            TARGETARCH="arm64"
-            ;;
-        *)
-            echo "Unsupported STAPEL_PLATFORM: $PLATFORM" 1>&2
-            exit 1
-            ;;
-    esac
+BUILDER="${STAPEL_BUILDER:-werf-stapel-builder}"
+
+if ! docker buildx inspect "${BUILDER}" >/dev/null 2>&1; then
+  docker buildx create --name "${BUILDER}" --driver docker-container --use
 else
-    case "$(uname -m)" in
-        x86_64|amd64)
-            TARGETARCH="amd64"
-            ;;
-        arm64|aarch64)
-            TARGETARCH="arm64"
-            ;;
-        *)
-            echo "Unsupported host architecture: $(uname -m)" 1>&2
-            exit 1
-            ;;
-    esac
+  docker buildx use "${BUILDER}"
 fi
 
-case "$TARGETARCH" in
-    amd64)
-        LFS_TGT="x86_64-lfs-linux-gnu"
-        ;;
-    arm64)
-        LFS_TGT="aarch64-lfs-linux-gnu"
-        ;;
-    *)
-        echo "Unsupported target architecture: $TARGETARCH" 1>&2
-        exit 1
-        ;;
-esac
+docker buildx inspect --bootstrap >/dev/null
 
-build() {
-    local image=$1
-    local target=$2
+docker buildx build \
+  --file "${DOCKERFILE}" \
+  --target final \
+  --platform "${PLATFORMS}" \
+  --tag "${IMAGE}" \
+  --push \
+  .
 
-    local build_args=(
-        --build-arg "TARGETARCH=${TARGETARCH}"
-        --build-arg "LFS_TGT=${LFS_TGT}"
-    )
-
-    if [ -n "$PLATFORM" ]; then
-        build_args+=(--platform "$PLATFORM")
-    fi
-
-    docker build -t "${REGISTRY}/${image}:${TAG}" --target "$target" --file "$DOCKERFILE" "${build_args[@]}" .
-}
-
-build stapel-base base
-build stapel final
+echo "Published: ${IMAGE}"
+docker buildx imagetools inspect "${IMAGE}" | sed -n '/Platform:/p'
