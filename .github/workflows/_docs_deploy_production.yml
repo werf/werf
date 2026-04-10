@@ -9,18 +9,16 @@ on:
       kubeConfigSecretPath:
         required: true
         type: string
+      githubRefOverride:
+        required: false
+        default: ""
+        type: string
       persistent:
         default: true
         type: boolean
       runner:
         default: prod-github-runner-0
         type: string
-      ruHostOverride:
-        default: ""
-        type: string
-      ruTlsEnabled:
-        default: true
-        type: boolean
 
 defaults:
   run:
@@ -42,10 +40,18 @@ jobs:
 
       - name: Set dynamic WERF_* env vars
         run: |
+          github_ref_override='${{ inputs.githubRefOverride }}'
+
           if ${{ inputs.persistent }}; then
+            if [[ -n "$github_ref_override" ]]; then
+              github_ref_value="$github_ref_override"
+            else
+              github_ref_value='${{ github.ref }}'
+            fi
+
             cat >> "$GITHUB_ENV" <<EOF
           WERF_RELEASE=werfio-$(echo $GITHUB_REF | cut -d/ -f 3 | sed 's/\+/-plus-/' | sed 's/\_/-u-/')-production
-          WERF_SET_GITHUB_REF=global.github_ref=${{ github.ref }}
+          WERF_SET_GITHUB_REF=global.github_ref=$github_ref_value
           EOF
           else
             cat >> "$GITHUB_ENV" <<EOF
@@ -93,19 +99,7 @@ jobs:
       - name: Deploy production docs
         run: |
           . $(werf ci-env github --as-file)
-
-          args=(
-            --set "global.targetCluster=${{ inputs.targetCluster }}"
-          )
-
-          if [[ "${{ inputs.targetCluster }}" == "ru" ]]; then
-            args+=(--set "productionDeploy.ru.tlsEnabled=${{ inputs.ruTlsEnabled }}")
-            if [[ -n "${{ inputs.ruHostOverride }}" ]]; then
-              args+=(--set "productionDeploy.ru.hostOverride=${{ inputs.ruHostOverride }}")
-            fi
-          fi
-
-          werf converge "${args[@]}"
+          werf converge --set "global.targetCluster=${{ inputs.targetCluster }}"
         env:
           WERF_NAMESPACE: werfio-production
           WERF_DIR: docs
@@ -114,4 +108,6 @@ jobs:
           WERF_ENV: production
           WERF_KUBE_CONFIG_BASE64: ${{ steps.kubeconfig.outputs.kubeconfig_base64 }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+
 
