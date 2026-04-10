@@ -1166,9 +1166,33 @@ func (backend *BuildahBackend) LoadImageFromStream(ctx context.Context, input io
 	return imageID, nil
 }
 
+func lchownIfSet(path string, uid, gid *uint32) error {
+	if uid == nil && gid == nil {
+		return nil
+	}
+
+	numUID, numGID := -1, -1
+	if uid != nil {
+		numUID = int(*uid)
+	}
+	if gid != nil {
+		numGID = int(*gid)
+	}
+
+	if err := os.Lchown(path, numUID, numGID); err != nil {
+		return fmt.Errorf("chown %q: %w", path, err)
+	}
+
+	return nil
+}
+
 func extractTarWithChown(tarFileReader io.Reader, dstDir string, uid, gid *uint32) error {
 	if err := os.MkdirAll(dstDir, os.ModePerm); err != nil {
 		return fmt.Errorf("create dir %q: %w", dstDir, err)
+	}
+
+	if err := lchownIfSet(dstDir, uid, gid); err != nil {
+		return err
 	}
 
 	tarReader := tar.NewReader(tarFileReader)
@@ -1220,17 +1244,8 @@ func extractTarWithChown(tarFileReader io.Reader, dstDir string, uid, gid *uint3
 			return fmt.Errorf("tar entry %q has unexpected type %d", hdr.Name, hdr.Typeflag)
 		}
 
-		if uid != nil || gid != nil {
-			chownUID, chownGID := -1, -1
-			if uid != nil {
-				chownUID = int(*uid)
-			}
-			if gid != nil {
-				chownGID = int(*gid)
-			}
-			if err := os.Lchown(entryPath, chownUID, chownGID); err != nil {
-				return fmt.Errorf("chown %q: %w", entryPath, err)
-			}
+		if err := lchownIfSet(entryPath, uid, gid); err != nil {
+			return err
 		}
 	}
 
