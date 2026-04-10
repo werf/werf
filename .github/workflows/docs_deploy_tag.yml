@@ -9,23 +9,56 @@ on:
   repository_dispatch:
     types: ["docs:deploy:tag"]
   workflow_dispatch:
+    inputs:
+      targetCluster:
+        description: "Target cluster"
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - ru
+          - eu
+      ruHostOverride:
+        description: "Temporary RU host override for manual testing"
+        required: false
+        default: ""
+        type: string
+      ruTlsEnabled:
+        description: "Enable TLS for RU manual deploy"
+        required: true
+        default: true
+        type: boolean
 
 jobs:
-  deploy-prod:
-    uses: ./.github/workflows/_docs_deploy.yml
+  deploy-prod-ru:
+    if: ${{ github.event_name == 'push' || github.event_name == 'repository_dispatch' || github.event.inputs.targetCluster == 'all' || github.event.inputs.targetCluster == 'ru' }}
+    uses: ./.github/workflows/_docs_deploy_production.yml
     with:
       persistent: true
-      env: production
+      targetCluster: ru
       runner: prod-github-runner-0
-    secrets:
-      kubeConfig: ${{ secrets.KUBECONFIG_BASE64_PRODUCTION }}
+      kubeConfigSecretPath: projects/data/b454e6aa-39f0-45f4-aa7c-a9465ab154cb/KUBE_CONFIG_RU
+      ruHostOverride: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.ruHostOverride || '' }}
+      ruTlsEnabled: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.ruTlsEnabled }}
+
+  deploy-prod-eu:
+    if: ${{ github.event_name == 'push' || github.event_name == 'repository_dispatch' || github.event.inputs.targetCluster == 'all' || github.event.inputs.targetCluster == 'eu' }}
+    uses: ./.github/workflows/_docs_deploy_production.yml
+    with:
+      persistent: true
+      targetCluster: eu
+      runner: prod-github-runner-0
+      kubeConfigSecretPath: projects/data/b454e6aa-39f0-45f4-aa7c-a9465ab154cb/KUBE_CONFIG
 
   notify:
     if: always()
     needs:
-      - deploy-prod
+      - deploy-prod-ru
+      - deploy-prod-eu
     uses: werf/common-ci/.github/workflows/notification.yml@main
     secrets:
       loopNotificationGroup: ${{ secrets.LOOP_NOTIFICATION_GROUP }}
       webhook: ${{ secrets.LOOP_NOTIFICATION_WEBHOOK }}
       notificationChannel: ${{ secrets.LOOP_NOTIFICATION_CHANNEL }}
+

@@ -19,6 +19,8 @@
 {{- if hasPrefix "review" $.Values.werf.env }}
 {{- $host = printf "%s.%s" $.Values.werf.env (pluck "dev" $.Values.host | first | default $.Values.host._default ) | lower }}
 {{- end }}
+{{- $targetCluster := include "targetCluster" $ }}
+{{- $ruHost := printf "ru.%s" $host }}
 {{- if eq $.Values.werf.env "production" }}
 ---
 apiVersion: networking.k8s.io/v1
@@ -33,22 +35,18 @@ metadata:
 {{ include "rewrites" $ | indent 6 }}
     nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
 spec:
-  ingressClassName: {{ pluck $.Values.werf.env $.Values.ingressClassName | first | default $.Values.ingressClassName._default }}
+  ingressClassName: {{ include "ingressClassName" $ }}
   tls:
   - hosts:
+{{- if eq $targetCluster "eu" }}
       - {{ $host }}
-{{- if eq $.Values.werf.env "production" }}
-      - ru.{{ $host }}
-{{- else }}
-      - ru-{{ $host }}
-{{- end }}
       - www.{{ $host }}
-{{- if eq $.Values.werf.env "production" }}
-    secretName: tls-{{ $host }}
 {{- else }}
-    secretName: {{ pluck $.Values.werf.env $.Values.ingressSecretName | first | default $.Values.ingressSecretName._default }}
+      - {{ $ruHost }}
 {{- end }}
+    secretName: tls-{{ $host }}
   rules:
+{{- if eq $targetCluster "eu" }}
   - host: {{ $host }}
     http:
       paths:
@@ -66,11 +64,8 @@ spec:
             name: {{ $.Chart.Name }}-{{ $versionDNSNormalized }}
             port:
               name: http
-{{- if eq $.Values.werf.env "production" }}
-  - host: ru.{{ $host }}
 {{- else }}
-  - host: ru-{{ $host }}
-{{- end }}
+  - host: {{ $ruHost }}
     http:
       paths:
       - path: /docs/{{ $versionURLNormalized }}/
@@ -87,6 +82,7 @@ spec:
             name: {{ $.Chart.Name }}-{{ $versionDNSNormalized }}
             port:
               name: http
+{{- end }}
 {{- else }}
 
 ---
@@ -104,7 +100,7 @@ metadata:
     nginx.ingress.kubernetes.io/auth-signin: https://$host/dex-authenticator/sign_in
     nginx.ingress.kubernetes.io/auth-url: https://werfio-dex-authenticator.{{ $.Values.werf.namespace }}.svc.cluster.local/dex-authenticator/auth
 spec:
-  ingressClassName: {{ pluck $.Values.werf.env $.Values.ingressClassName | first | default $.Values.ingressClassName._default }}
+  ingressClassName: {{ include "ingressClassName" $ }}
   tls:
   - hosts:
       - {{ $host }}
@@ -148,7 +144,7 @@ metadata:
     nginx.ingress.kubernetes.io/auth-signin: https://$host/dex-authenticator/sign_in
     nginx.ingress.kubernetes.io/auth-url: https://werfio-ru-dex-authenticator.{{ $.Values.werf.namespace }}.svc.cluster.local/dex-authenticator/auth
 spec:
-  ingressClassName: {{ pluck $.Values.werf.env $.Values.ingressClassName | first | default $.Values.ingressClassName._default }}
+  ingressClassName: {{ include "ingressClassName" $ }}
   tls:
   - hosts:
 {{- if eq $.Values.werf.env "production" }}
