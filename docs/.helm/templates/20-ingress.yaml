@@ -20,7 +20,7 @@
 {{- $host = printf "%s.%s" $.Values.werf.env (pluck "dev" $.Values.host | first | default $.Values.host._default ) | lower }}
 {{- end }}
 {{- $targetCluster := include "targetCluster" $ }}
-{{- $ruHost := printf "ru.%s" $host }}
+{{- $ruHost := printf "ru-test.%s" $host }}
 {{- if eq $.Values.werf.env "production" }}
 ---
 apiVersion: networking.k8s.io/v1
