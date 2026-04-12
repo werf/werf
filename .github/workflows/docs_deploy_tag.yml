@@ -19,37 +19,40 @@ on:
           - all
           - ru
           - eu
-      ruHostOverride:
-        description: "Temporary RU host override for manual testing"
+      gitRef:
+        description: "Tag or ref to deploy manually (for example: v2.66.1)"
         required: false
         default: ""
         type: string
-      ruTlsEnabled:
-        description: "Enable TLS for RU manual deploy"
-        required: true
-        default: true
-        type: boolean
 
 jobs:
   deploy-prod-ru:
     if: ${{ github.event_name == 'push' || github.event_name == 'repository_dispatch' || github.event.inputs.targetCluster == 'all' || github.event.inputs.targetCluster == 'ru' }}
+    permissions:
+      contents: read
+      id-token: write
+      packages: write
     uses: ./.github/workflows/_docs_deploy_production.yml
     with:
       persistent: true
       targetCluster: ru
       runner: prod-github-runner-0
       kubeConfigSecretPath: projects/data/b454e6aa-39f0-45f4-aa7c-a9465ab154cb/KUBE_CONFIG_RU
-      ruHostOverride: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.ruHostOverride || '' }}
-      ruTlsEnabled: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.ruTlsEnabled }}
+      githubRefOverride: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.gitRef || '' }}
 
   deploy-prod-eu:
     if: ${{ github.event_name == 'push' || github.event_name == 'repository_dispatch' || github.event.inputs.targetCluster == 'all' || github.event.inputs.targetCluster == 'eu' }}
+    permissions:
+      contents: read
+      id-token: write
+      packages: write
     uses: ./.github/workflows/_docs_deploy_production.yml
     with:
       persistent: true
       targetCluster: eu
       runner: prod-github-runner-0
       kubeConfigSecretPath: projects/data/b454e6aa-39f0-45f4-aa7c-a9465ab154cb/KUBE_CONFIG
+      githubRefOverride: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.gitRef || '' }}
 
   notify:
     if: always()

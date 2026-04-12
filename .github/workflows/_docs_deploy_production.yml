@@ -49,8 +49,15 @@ jobs:
               github_ref_value='${{ github.ref }}'
             fi
 
+            release_ref_value="$(echo "$github_ref_value" | cut -d/ -f 3-)"
+            if [[ -z "$release_ref_value" ]]; then
+              release_ref_value="$github_ref_value"
+            fi
+
+            release_ref_value="$(echo "$release_ref_value" | sed 's/\+/-plus-/g' | sed 's/\_/-u-/g' | sed 's/\./-dot-/g' | sed 's#/#-#g')"
+
             cat >> "$GITHUB_ENV" <<EOF
-          WERF_RELEASE=werfio-$(echo $GITHUB_REF | cut -d/ -f 3 | sed 's/\+/-plus-/' | sed 's/\_/-u-/')-production
+          WERF_RELEASE=werfio-${release_ref_value}-production
           WERF_SET_GITHUB_REF=global.github_ref=$github_ref_value
           EOF
           else
@@ -108,6 +115,7 @@ jobs:
           WERF_ENV: production
           WERF_KUBE_CONFIG_BASE64: ${{ steps.kubeconfig.outputs.kubeconfig_base64 }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 
 
 
