@@ -1,3 +1,18 @@
+global:
+  targetCluster: ""
+
+clusters:
+  eu:
+    placement:
+      nodeSelector: {}
+      tolerations: []
+      affinity: {}
+  ru:
+    placement:
+      nodeSelector: {}
+      tolerations: []
+      affinity: {}
+
 priorityClassName:
   _default: develop
   production: production-medium
