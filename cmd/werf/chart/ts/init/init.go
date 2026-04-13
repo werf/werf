@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/werf/nelm/pkg/action"
+	nelmcommon "github.com/werf/nelm/pkg/common"
 	"github.com/werf/nelm/pkg/export/helm/werf/file"
 	"github.com/werf/nelm/pkg/log"
 	"github.com/werf/werf/v2/cmd/werf/common"
@@ -100,8 +101,9 @@ func runChartTSInit(ctx context.Context, chartDir string) error {
 	})
 
 	if err := action.ChartTSInit(ctx, action.ChartTSInitOptions{
-		ChartDirPath: chartPath,
-		ChartName:    werfConfig.Meta.Project,
+		ChartDirPath:      chartPath,
+		ChartName:         werfConfig.Meta.Project,
+		RenderContextType: nelmcommon.TSWerfRenderContextType,
 	}); err != nil {
 		return fmt.Errorf("chart ts init: %w", err)
 	}
