@@ -299,7 +299,7 @@ func (cmdData *CmdData) validateHostCleanupFlags() error {
 	for _, g := range groups {
 		if g.usage != nil && g.margin != nil {
 			if g.usage.IsBytes != g.margin.IsBytes {
-				return fmt.Errorf("mixing percentages and absolute units in %s group is not allowed", g.name)
+				return fmt.Errorf("mixing percentages and absolute units in %s group is not allowed (usage: %q, margin: %q)", g.name, g.usage.String(), g.margin.String())
 			}
 		}
 	}
