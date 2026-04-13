@@ -13,9 +13,11 @@ The `--backend-storage-path` parameter (or the `WERF_BACKEND_STORAGE_PATH` envir
 
 ## Changing the space usage threshold and cleanup depth of build backend (Docker or Buildah) storage
 
-The `--allowed-backend-storage-volume-usage` (`WERF_ALLOWED_BACKEND_STORAGE_VOLUME_USAGE`) parameter allows you to adjust the volume usage threshold (the default is 70%). Reaching it will trigger a backend storage cleanup.
+The `--allowed-backend-storage-volume-usage` (`WERF_ALLOWED_BACKEND_STORAGE_VOLUME_USAGE`) parameter allows you to adjust the volume usage threshold (the default is 70%). Reaching it will trigger a backend storage cleanup. You can specify the value as a percentage (e.g., `70`) or in absolute units (e.g., `50GB`, `100GiB`).
 
 The `--allowed-backend-storage-volume-usage-margin` (`WERF_ALLOWED_BACKEND_STORAGE_VOLUME_USAGE_MARGIN`) parameter allows you to set the extra cleanup margin relative to the backend storage usage threshold (the default is 5%).
+
+> **Note:** Options within the same group (e.g., usage and margin for backend storage) must use the same units. Mixing percentages and absolute units (e.g., `--allowed-backend-storage-volume-usage=100GB --allowed-backend-storage-volume-usage-margin=5`) is not allowed.
 
 ## Cleaning a build backend cache (Docker or Buildah)
 
@@ -30,9 +32,11 @@ Similarly, users can set up a custom cleanup strategy for Buildah.
 
 ## Changing the space usage threshold and cleanup depth of the local cache
 
-The `--allowed-local-cache-volume-usage` (`WERF_ALLOWED_LOCAL_CACHE_VOLUME_USAGE`) parameter allows you to adjust the threshold of space used on the volume at which the local cache cleanup is triggered (the default is 70%).
+The `--allowed-local-cache-volume-usage` (`WERF_ALLOWED_LOCAL_CACHE_VOLUME_USAGE`) parameter allows you to adjust the threshold of space used on the volume at which the local cache cleanup is triggered (the default is 70%). You can specify the value as a percentage (e.g., `70`) or in absolute units (e.g., `10GB`, `500MiB`).
 
-The `--allowed-local-storage-volume-usage-margin` (`WERF_ALLOWED_LOCAL_CACHE_VOLUME_USAGE_MARGIN`) parameter allows to set the cleanup margin relative to the local cache usage threshold (the default is 5%).
+The `--allowed-local-cache-volume-usage-margin` (`WERF_ALLOWED_LOCAL_CACHE_VOLUME_USAGE_MARGIN`) parameter allows to set the cleanup margin relative to the local cache usage threshold (the default is 5%).
+
+> **Note:** Options within the same group (e.g., usage and margin for local cache) must use the same units. Mixing percentages and absolute units (e.g., `--allowed-local-cache-volume-usage=10GB --allowed-local-cache-volume-usage-margin=5`) is not allowed.
 
 ## Turning off automatic cleaning
 
