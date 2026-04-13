@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.66.2](https://github.com/werf/werf/compare/v2.66.1...v2.66.2) (2026-04-13)
+
+
+### Bug Fixes
+
+* **deploy:** restore WERF_EXPERIMENT_NO_GLOBAL_SERVICE_VALUES env ([#7468](https://github.com/werf/werf/issues/7468)) ([e2e0999](https://github.com/werf/werf/commit/e2e0999a5e49094c76c81fb35625d145810892cf))
+
 ## [2.66.1](https://github.com/werf/werf/compare/v2.66.0...v2.66.1) (2026-04-09)
 
 
