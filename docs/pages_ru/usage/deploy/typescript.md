@@ -34,7 +34,7 @@ werf render
 
 TypeScript-манифесты будут сгенерированы и объединены с результатами Helm-шаблонов из `templates/`.
 
-### Пример `Deployment` в Helm-шаблонах и TypeScript
+### Сравнение с Helm-шаблонами
 
 В Helm-шаблонах:
 
@@ -146,14 +146,7 @@ export function newDeployment($: WerfRenderContext): object {
 
 ### Точка входа
 
-werf ищет точку входа в следующем порядке:
-
-1. `ts/src/index.ts`
-2. `ts/src/index.js`
-
-Если ни один из файлов не найден, TypeScript-рендеринг для данного чарта пропускается.
-
-### Файл `index.ts`
+werf ищет точку входа в следующем порядке: `ts/src/index.ts`, затем `ts/src/index.js`. Если ни один из файлов не найден, TypeScript-рендеринг для данного чарта пропускается.
 
 Файл `index.ts` вызывает `render` с функцией, которая принимает контекст рендеринга и возвращает массив манифестов:
 
@@ -208,7 +201,7 @@ $.Values.global.werf.commit     // информация о коммите (hash,
 $.Values.global.werf.images     // собранные образы с тегами и digest'ами
 ```
 
-### Поле `Release`
+**Release:**
 
 ```typescript
 $.Release.Name        // имя релиза
@@ -218,7 +211,7 @@ $.Release.IsInstall   // true, если это первая установка
 $.Release.IsUpgrade   // true, если это обновление
 ```
 
-### Поле `Chart`
+**Chart:**
 
 ```typescript
 $.Chart.Name          // имя чарта
@@ -230,7 +223,7 @@ $.Chart.Home          // домашняя страница
 $.Chart.Sources       // ссылки на исходный код
 ```
 
-### Поле `Capabilities`
+**Capabilities:**
 
 ```typescript
 $.Capabilities.KubeVersion.Version  // например, "v1.28.0"
@@ -425,7 +418,7 @@ TypeScript-манифесты и Helm-шаблоны могут сосущест
 Для явной сборки TypeScript-кода в JavaScript-бандл используйте команду:
 
 ```shell
-werf chart ts build .helm
+werf chart ts build
 ```
 
 Сформированный бандл записывается в файл `ts/dist/bundle.js`. Это может быть полезно для отладки или для подготовки чарта к публикации вручную. Обратите внимание, что из-за [гиттерминизма]({{ "/usage/project_configuration/giterminism.html" | true_relative_url }}) сгенерированный файл должен быть закоммичен в Git, либо следует использовать флаг `--dev`.
@@ -450,15 +443,19 @@ werf bundle publish --repo registry.example.org/myapp
 werf bundle apply --repo registry.example.org/myapp --env production
 ```
 
-Предварительный просмотр изменений с `werf plan` поддерживает TypeScript-манифесты так же, как и Helm-шаблоны:
+Рендеринг манифестов из бандла без применения:
 
 ```shell
-werf plan --repo registry.example.org/myapp --env production
+werf bundle render --repo registry.example.org/myapp --env production
+```
+
+Предварительный просмотр изменений перед применением бандла:
+
+```shell
+werf bundle plan --repo registry.example.org/myapp --env production
 ```
 
 ## Активация и окружение выполнения
-
-### Включение функции
 
 Функция TypeScript-рендеринга является экспериментальной и по умолчанию отключена. Для включения установите переменную окружения:
 
