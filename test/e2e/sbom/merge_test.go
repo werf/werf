@@ -1,9 +1,7 @@
 package e2e_build_test
 
 import (
-	"context"
 	"encoding/json"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -12,9 +10,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/build"
-	"github.com/werf/werf/v2/pkg/docker_registry"
 	"github.com/werf/werf/v2/test/pkg/report"
 	"github.com/werf/werf/v2/test/pkg/werf"
 )
@@ -40,9 +36,7 @@ var _ = Describe("Sbom merge", Label("e2e", "sbom", "merge", "simple"), func() {
 				_, buildReport := reportProject.BuildWithReport(ctx, buildReportPath, nil)
 
 				By("creating merge input mapping")
-				registry, err := common.CreateDockerRegistry(ctx, os.Getenv("WERF_REPO"), true, true)
-				Expect(err).NotTo(HaveOccurred(), "failed to create docker registry")
-				mapping := mergeInputMappingFromReport(ctx, buildReport, registry, os.Getenv("WERF_REPO"))
+				mapping := mergeInputMappingFromReport(buildReport)
 				Expect(mapping).To(HaveLen(2), "fixture must have exactly 2 images: frontend and backend")
 				writeMergeJSON(mappingPath, mapping)
 
@@ -253,23 +247,14 @@ func assertMergeContainerInvariants(bom *cdx.BOM, expectedImages []string) {
 	Expect(*bom.Dependencies).NotTo(BeEmpty())
 }
 
-func mergeInputMappingFromReport(ctx context.Context, buildReport build.ImagesReport, registry docker_registry.Interface, repo string) map[string]string {
+func mergeInputMappingFromReport(buildReport build.ImagesReport) map[string]string {
 	mapping := make(map[string]string, len(buildReport.Images))
 	for imageName, record := range buildReport.Images {
-		sbomTag := fmt.Sprintf("%s-sbom", record.DockerTag)
-		sbomRef := fmt.Sprintf("%s:%s", repo, sbomTag)
-
-		imgInfo, err := registry.GetRepoImage(ctx, sbomRef)
-		Expect(err).NotTo(HaveOccurred(), "failed to get image info for sbom ref %s", sbomRef)
-
-		sbomDigest := imgInfo.GetDigest()
-		Expect(sbomDigest).NotTo(BeEmpty(), "empty digest for sbom ref %s", sbomRef)
-
-		if !strings.HasPrefix(sbomDigest, "sha256:") {
-			sbomDigest = "sha256:" + sbomDigest
+		digest := record.DockerImageDigest
+		if !strings.HasPrefix(digest, "sha256:") {
+			digest = "sha256:" + digest
 		}
-
-		mapping[imageName] = sbomDigest
+		mapping[imageName] = digest
 	}
 	return mapping
 }
