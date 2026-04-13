@@ -12,6 +12,7 @@ import (
 	"github.com/samber/lo"
 	"sigs.k8s.io/yaml"
 
+	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/werf"
@@ -132,8 +133,11 @@ func GetServiceValues(ctx context.Context, projectName, repo string, imageInfoGe
 	})
 
 	res := map[string]interface{}{
-		"werf":   lo.Assign(werfInfo, legacyImageInfo),
-		"global": globalRes,
+		"werf": lo.Assign(werfInfo, legacyImageInfo),
+	}
+
+	if exposeGlobalServiceValues() {
+		res["global"] = globalRes
 	}
 
 	if opts.SetDockerConfigJsonValue {
@@ -208,4 +212,9 @@ func writeDockerConfigJsonValue(ctx context.Context, values map[string]interface
 	logboek.Context(ctx).Default().LogF("NOTE: and in such case should not be used as imagePullSecrets.\n")
 
 	return nil
+}
+
+// TODO(3.0): remove global service values completely
+func exposeGlobalServiceValues() bool {
+	return !util.GetBoolEnvironmentDefaultFalse("WERF_EXPERIMENT_NO_GLOBAL_SERVICE_VALUES")
 }
