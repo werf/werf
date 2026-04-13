@@ -22,196 +22,24 @@ werf sbom merge [options]
 {{ header }} Options
 
 ```shell
-      --allowed-backend-storage-volume-usage=70
-            Set allowed percentage of backend (Docker or Buildah) storage volume usage which will   
-            cause cleanup of least recently used local backend images (default 70% or               
-            $WERF_ALLOWED_BACKEND_STORAGE_VOLUME_USAGE)
-      --allowed-backend-storage-volume-usage-margin=5
-            During cleanup of least recently used local backend (Docker or Buildah) images werf     
-            would delete images until volume usage becomes below                                    
-            "allowed-backend-storage-volume-usage - allowed-backend-storage-volume-usage-margin"    
-            level (default 5% or $WERF_ALLOWED_BACKEND_STORAGE_VOLUME_USAGE_MARGIN)
-      --allowed-local-cache-volume-usage=70
-            Set allowed percentage of local cache (~/.werf/local_cache by default) volume usage     
-            which will cause cleanup of least recently used data from the local cache (default 70%  
-            or $WERF_ALLOWED_LOCAL_CACHE_VOLUME_USAGE)
-      --allowed-local-cache-volume-usage-margin=5
-            During cleanup of local cache werf would delete local cache data until volume usage     
-            becomes below "allowed-local-cache-volume-usage -                                       
-            allowed-local-cache-volume-usage-margin" level (default 5% or                           
-            $WERF_ALLOWED_LOCAL_CACHE_VOLUME_USAGE_MARGIN)
       --app-name=""
             Application/product name for the merged SBOM metadata
       --app-version=""
             Application/product version for the merged SBOM metadata
-      --backend-storage-path=""
-            Use specified path to the local backend (Docker or Buildah) storage to check backend    
-            storage volume usage while performing garbage collection of local backend images        
-            (detect local backend storage path by default or use $WERF_BACKEND_STORAGE_PATH)
-      --build-report-path=""
-            Change build report path and format (by default $WERF_BUILD_REPORT_PATH or              
-            ".werf-build-report.json" if not set). Extension must be either .json for JSON format   
-            or .env for env-file format. If extension not specified, then .json is used
-      --cache-repo=[]
-            Specify one or multiple cache repos with images that will be used as a cache. Cache     
-            will be populated when pushing newly built images into the primary repo and when        
-            pulling existing images from the primary repo. Cache repo will be used to pull images   
-            and to get manifests before making requests to the primary repo.
-            Also, can be specified with $WERF_CACHE_REPO_* (e.g. $WERF_CACHE_REPO_1=...,            
-            $WERF_CACHE_REPO_2=...)
-      --config=""
-            Use custom configuration file (default $WERF_CONFIG or werf.yaml in the project         
-            directory)
-      --config-templates-dir=""
-            Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf   
-            in working directory)
       --container-registry-mirror=[]
             (Buildah-only) Use specified mirrors for docker.io
-      --dev=false
-            Enable development mode (default $WERF_DEV).
-            The mode allows working with project files without doing redundant commits during       
-            debugging and development
-      --dev-branch="_werf-dev"
-            Set dev git branch name (default $WERF_DEV_BRANCH or "_werf-dev")
-      --dev-ignore=[]
-            Add rules to ignore tracked and untracked changes in development mode (can specify      
-            multiple).
-            Also, can be specified with $WERF_DEV_IGNORE_* (e.g. $WERF_DEV_IGNORE_TESTS=*_test.go,  
-            $WERF_DEV_IGNORE_DOCS=path/to/docs)
-      --dir=""
-            Use specified project directory where project’s werf.yaml and other configuration files 
-            should reside (default $WERF_DIR or current working directory)
-      --disable-auto-host-cleanup=false
-            Disable auto host cleanup procedure in main werf commands like werf-build,              
-            werf-converge and other (default disabled or WERF_DISABLE_AUTO_HOST_CLEANUP)
       --docker-config=""
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)
-            Command needs granted permissions to read, pull and push images into the specified repo 
-            and to pull base images
-      --env=""
-            Use specified environment (default $WERF_ENV)
-      --final-repo=""
-            Container registry storage address (default $WERF_FINAL_REPO)
-      --final-repo-container-registry=""
-            Choose final-repo container registry implementation.
-            The following container registries are supported: ecr, acr, default, dockerhub, gcr,    
-            github, gitlab, harbor, quay.
-            Default $WERF_FINAL_REPO_CONTAINER_REGISTRY or auto mode (detect container registry by  
-            repo address).
-      --final-repo-docker-hub-password=""
-            final-repo Docker Hub password (default $WERF_FINAL_REPO_DOCKER_HUB_PASSWORD)
-      --final-repo-docker-hub-token=""
-            final-repo Docker Hub token (default $WERF_FINAL_REPO_DOCKER_HUB_TOKEN)
-      --final-repo-docker-hub-username=""
-            final-repo Docker Hub username (default $WERF_FINAL_REPO_DOCKER_HUB_USERNAME)
-      --final-repo-github-token=""
-            final-repo GitHub token (default $WERF_FINAL_REPO_GITHUB_TOKEN)
-      --final-repo-harbor-password=""
-            final-repo Harbor password (default $WERF_FINAL_REPO_HARBOR_PASSWORD)
-      --final-repo-harbor-username=""
-            final-repo Harbor username (default $WERF_FINAL_REPO_HARBOR_USERNAME)
-      --final-repo-quay-token=""
-            final-repo quay.io token (default $WERF_FINAL_REPO_QUAY_TOKEN)
-      --git-work-tree=""
-            Use specified git work tree dir (default $WERF_WORK_TREE or lookup for directory that   
-            contains .git in the current or parent directories)
+            Command needs granted permissions to pull SBOM images from the specified repo
       --home-dir=""
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --input=""
             Path to JSON mapping file (image name -> sha256:digest)
       --insecure-registry=false
             Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
-      --introspect-before-error=false
-            Introspect failed stage in the clean state, before running all assembly instructions of 
-            the stage
-      --introspect-error=false
-            Introspect failed stage in the state, right after running failed assembly instruction
-      --introspect-stage=[]
-            Introspect a specific stage. The option can be used multiple times to introspect        
-            several stages.
-            
-            There are the following formats to use:
-            * specify IMAGE_NAME/STAGE_NAME to introspect stage STAGE_NAME of either image or       
-            artifact IMAGE_NAME
-            * specify STAGE_NAME or */STAGE_NAME for the introspection of all existing stages with  
-            name STAGE_NAME
-            
-            IMAGE_NAME is the name of an image or artifact described in werf.yaml, the nameless     
-            image specified with ~.
-            STAGE_NAME should be one of the following: from, beforeInstall,                         
-            dependenciesBeforeInstall, gitArchive, install, dependenciesAfterInstall, beforeSetup,  
-            dependenciesBeforeSetup, setup, dependenciesAfterSetup, gitCache, gitLatestPatch,       
-            dockerInstructions, dockerfile, imageSpec
       --ispras-format=""
             ISPRAS SBOM format: "oss" or "container"
-      --kube-api-server=""
-            Kubernetes API server address (default $WERF_KUBE_API_SERVER)
-      --kube-auth-password=""
-            Basic auth password for Kubernetes API (default $WERF_KUBE_AUTH_PASSWORD)
-      --kube-auth-provider=""
-            Auth provider name for authentication in Kubernetes API (default                        
-            $WERF_KUBE_AUTH_PROVIDER)
-      --kube-auth-provider-config=[]
-            Auth provider config for authentication in Kubernetes API (default                      
-            $WERF_KUBE_AUTH_PROVIDER_CONFIG)
-      --kube-auth-username=""
-            Basic auth username for Kubernetes API (default $WERF_KUBE_AUTH_USERNAME)
-      --kube-burst-limit=100
-            Kubernetes client burst limit (default $WERF_KUBE_BURST_LIMIT or 100)
-      --kube-ca-data=""
-            Pass Kubernetes API server TLS CA data (default $WERF_KUBE_CA_DATA)
-      --kube-ca-path=""
-            Kubernetes API server CA path (default $WERF_KUBE_CA_PATH)
-      --kube-cert=""
-            Path to PEM-encoded TLS client cert for connecting to Kubernetes API (default           
-            $WERF_KUBE_CERT
-      --kube-cert-data=""
-            Pass PEM-encoded TLS client cert for connecting to Kubernetes API (default              
-            $WERF_KUBE_CERT_DATA)
-      --kube-config=""
-            Kubernetes config file path (default $WERF_KUBE_CONFIG, or $WERF_KUBECONFIG, or         
-            $KUBECONFIG)
-      --kube-config-base64=""
-            Kubernetes config data as base64 string (default $WERF_KUBE_CONFIG_BASE64 or            
-            $WERF_KUBECONFIG_BASE64 or $KUBECONFIG_BASE64)
-      --kube-context=""
-            Kubernetes config context (default $WERF_KUBE_CONTEXT)
-      --kube-context-cluster=""
-            Use cluster from Kubeconfig for current context (default $WERF_KUBE_CONTEXT_CLUSTER)
-      --kube-context-user=""
-            Use user from Kubeconfig for current context (default $WERF_KUBE_CONTEXT_USER)
-      --kube-impersonate-group=[]
-            Sets Impersonate-Group headers when authenticating in Kubernetes. Can be also set with  
-            $WERF_KUBE_IMPERSONATE_GROUP_* environment variables
-      --kube-impersonate-uid=""
-            Sets Impersonate-Uid header when authenticating in Kubernetes (default                  
-            $WERF_KUBE_IMPERSONATE_UID)
-      --kube-impersonate-user=""
-            Sets Impersonate-User header when authenticating in Kubernetes (default                 
-            $WERF_KUBE_IMPERSONATE_USER)
-      --kube-key=""
-            Path to PEM-encoded TLS client key for connecting to Kubernetes API (default            
-            $WERF_KUBE_KEY)
-      --kube-key-data=""
-            Pass PEM-encoded TLS client key for connecting to Kubernetes API (default               
-            $WERF_KUBE_KEY_DATA)
-      --kube-proxy-url=""
-            Proxy URL to use for proxying all requests to Kubernetes API (default                   
-            $WERF_KUBE_PROXY_URL)
-      --kube-qps-limit=30
-            Kubernetes client QPS limit (default $WERF_KUBE_QPS_LIMIT or 30)
-      --kube-request-timeout=0s
-            Timeout for all requests to Kubernetes API (default $WERF_KUBE_REQUEST_TIMEOUT)
-      --kube-tls-server=""
-            Server name to use for Kubernetes API server certificate validation. If it is not       
-            provided, the hostname used to contact the server is used (default                      
-            $WERF_KUBE_TLS_SERVER)
-      --kube-token=""
-            Kubernetes bearer token used for authentication (default $WERF_KUBE_TOKEN)
-      --kube-token-path=""
-            Path to file with bearer token for authentication in Kubernetes (default                
-            $WERF_KUBE_TOKEN_PATH)
       --log-color-mode="auto"
             Set log color mode.
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        
@@ -222,8 +50,6 @@ werf sbom merge [options]
       --log-pretty=true
             Enable emojis, auto line wrapping and log process border (default $WERF_LOG_PRETTY or   
             true).
-      --log-project-dir=false
-            Print current project directory path (default $WERF_LOG_PROJECT_DIR)
       --log-quiet=false
             Disable explanatory output (default $WERF_LOG_QUIET).
       --log-terminal-width=-1
@@ -238,8 +64,6 @@ werf sbom merge [options]
             Specify custom log time format (default $WERF_LOG_TIME_FORMAT or RFC3339 format).
       --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
-      --loose-giterminism=false
-            Loose werf giterminism mode restrictions
       --manufacturer=""
             Manufacturer name for the merged SBOM metadata
   -o, --output=""
@@ -249,9 +73,6 @@ werf sbom merge [options]
       --parallel-tasks-limit=5
             Parallel tasks limit, set -1 to remove the limitation (default                          
             $WERF_PARALLEL_TASKS_LIMIT or 5)
-      --platform=[]
-            Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT]     
-            ($WERF_PLATFORM or $DOCKER_DEFAULT_PLATFORM by default)
       --repo=""
             Container registry storage address (default $WERF_REPO)
       --repo-container-registry=""
@@ -274,39 +95,10 @@ werf sbom merge [options]
             repo Harbor username (default $WERF_REPO_HARBOR_USERNAME)
       --repo-quay-token=""
             repo quay.io token (default $WERF_REPO_QUAY_TOKEN)
-      --save-build-report=false
-            Save build report (by default $WERF_SAVE_BUILD_REPORT or false). Its path and format    
-            configured with --build-report-path
-      --secondary-repo=[]
-            Specify one or multiple secondary read-only repos with images that will be used as a    
-            cache.
-            Also, can be specified with $WERF_SECONDARY_REPO_* (e.g. $WERF_SECONDARY_REPO_1=...,    
-            $WERF_SECONDARY_REPO_2=...)
-      --skip-tls-verify-kube=false
-            Skip TLS certificate validation when accessing a Kubernetes cluster (default            
-            $WERF_SKIP_TLS_VERIFY_KUBE)
       --skip-tls-verify-registry=false
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)
-      --ssh-key=[]
-            Use only specific ssh key(s).
-            Can be specified with $WERF_SSH_KEY_* (e.g. $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa,         
-            $WERF_SSH_KEY_NODEJS=~/.ssh/nodejs_rsa).
-            Defaults to $WERF_SSH_KEY_*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}
-  -S, --synchronization=""
-            Address of synchronizer for multiple werf processes to work with a single repo.
-            
-            Default:
-             - $WERF_SYNCHRONIZATION, or
-             - :local if --repo is not specified, or
-             - https://synchronization.werf.io if --repo has been specified.
-            
-            The same address should be specified for all werf processes that work with a single     
-            repo. :local address allows execution of werf processes from a single host only
       --tmp-dir=""
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
-      --virtual-merge=false
-            Enable virtual/ephemeral merge commit mode when building current application state      
-            ($WERF_VIRTUAL_MERGE by default)
 ```
 
