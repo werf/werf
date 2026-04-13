@@ -103,7 +103,7 @@ func runChartTSInit(ctx context.Context, chartDir string) error {
 	if err := action.ChartTSInit(ctx, action.ChartTSInitOptions{
 		ChartDirPath:      chartPath,
 		ChartName:         werfConfig.Meta.Project,
-		RenderContextType: nelmcommon.WerfRenderContextType,
+		RenderContextType: nelmcommon.TSWerfRenderContextType,
 	}); err != nil {
 		return fmt.Errorf("chart ts init: %w", err)
 	}
