@@ -747,7 +747,7 @@ entries:
               - title: Parametrize templates
                 url: /usage/deploy/values.html
 
-              - title: TypeScript manifests
+              - title: TypeScript templates
                 url: /usage/deploy/typescript.html
 
               - title: Debug templates
@@ -908,7 +908,7 @@ entries:
               - title: Параметризация шаблонов
                 url: /usage/deploy/values.html
 
-              - title: Описание манифестов в TypeScript
+              - title: TypeScript-шаблоны
                 url: /usage/deploy/typescript.html
 
               - title: Отладка шаблонов

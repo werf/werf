@@ -1,137 +1,44 @@
 ---
-title: Описание манифестов в TypeScript
+title: TypeScript-шаблоны
 permalink: usage/deploy/typescript.html
 ---
 
-> Обратите внимание, что функция TypeScript-рендеринга является экспериментальной. Для её включения установите переменную окружения `NELM_FEAT_TYPESCRIPT=true`.
+> Обратите внимание, что TypeScript-шаблоны — экспериментальная функция. Для включения установите переменную окружения `NELM_FEAT_TYPESCRIPT=true`.
 
-## Особенности TypeScript-рендеринга
+## Особенности
 
-Помимо стандартного способа описания Kubernetes-манифестов через [Helm-шаблоны]({{ "/usage/deploy/templates.html" | true_relative_url }}), werf поддерживает описание манифестов на TypeScript. При использовании TypeScript становятся доступны:
+Помимо стандартного способа описания Kubernetes-манифестов через [Helm-шаблоны]({{ "/usage/deploy/templates.html" | true_relative_url }}), werf поддерживает описание манифестов на TypeScript:
 
-- типизация — опечатка в имени параметра обнаруживается на этапе написания кода, а не при развертывании;
-- поддержка IDE — автодополнение, навигация по коду и рефакторинг;
-- стандартная отладка — сообщения об ошибках содержат стектрейсы и указывают на конкретное место в коде;
-- стандартный синтаксис — обычные функции, циклы и условия вместо специфичных конструкций шаблонизатора.
+- типизация и автодополнение в IDE;
+- подключение сторонних библиотек (например, [kubernetes-models](https://github.com/tommy351/kubernetes-models-ts) для строгой типизации Kubernetes-ресурсов);
+- стандартный синтаксис — обычные функции, циклы и условия вместо конструкций шаблонизатора;
+- тестирование — возможность покрывать логику генерации манифестов обычными тестами;
+- безопасность — код выполняется в изолированной песочнице без доступа к сети, переменным окружения и файловой системе.
 
-TypeScript-код получает тот же контекст, что и Helm-шаблоны (`Values`, `Release`, `Chart` и т. д.), и может сосуществовать с ними в одном чарте.
+TypeScript-код получает тот же [корневой контекст]({{ "/usage/deploy/values.html" | true_relative_url }}), что и Helm-шаблоны (`Values`, `Release`, `Chart` и т. д.), и может сосуществовать с Helm-шаблонами в одном чарте.
 
-## Простой пример
+## Быстрый старт
 
-Инициализация TypeScript-структуры в существующем чарте:
+Инициализация TypeScript-файлов в существующем чарте:
 
 ```shell
 werf chart ts init
 ```
 
-Результат: в директории чарта появится поддиректория `ts/` с готовым примером — `Deployment` и `Service`.
-
-Теперь можно отрендерить чарт:
+В директории чарта появится поддиректория `ts/` с готовым примером. Отредактируйте сгенерированные файлы в `ts/src/` и запустите:
 
 ```shell
-werf render
+werf converge
 ```
 
-TypeScript-манифесты будут сгенерированы и объединены с результатами Helm-шаблонов из `templates/`.
+Манифесты генерируются из директории `ts/` TypeScript-движком и из директории `templates/` Helm-шаблонизатором, после чего объединяются в один YAML-документ.
 
-### Сравнение с Helm-шаблонами
-
-В Helm-шаблонах:
-
-{% raw %}
-
-```yaml
-# .helm/templates/deployment.yaml:
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: {{ $.Release.Name }}-myapp
-  labels:
-    app.kubernetes.io/name: {{ $.Chart.Name }}
-    app.kubernetes.io/instance: {{ $.Release.Name }}
-spec:
-  replicas: {{ $.Values.replicaCount | default 1 }}
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: {{ $.Chart.Name }}
-      app.kubernetes.io/instance: {{ $.Release.Name }}
-  template:
-    metadata:
-      labels:
-        app.kubernetes.io/name: {{ $.Chart.Name }}
-        app.kubernetes.io/instance: {{ $.Release.Name }}
-    spec:
-      containers:
-      - name: {{ $.Release.Name }}-myapp
-        image: {{ $.Values.image.repository }}:{{ $.Values.image.tag | default "latest" }}
-        ports:
-        - name: http
-          containerPort: {{ $.Values.service.port | default 80 }}
-```
-
-{% endraw %}
-
-В TypeScript:
-
-```typescript
-// .helm/ts/src/deployment.ts:
-import type { WerfRenderContext } from '@nelm/chart-ts-sdk';
-
-export function newDeployment($: WerfRenderContext): object {
-  const name = `${$.Release.Name}-myapp`;
-
-  return {
-    apiVersion: 'apps/v1',
-    kind: 'Deployment',
-    metadata: {
-      name,
-      labels: {
-        'app.kubernetes.io/name': $.Chart.Name,
-        'app.kubernetes.io/instance': $.Release.Name,
-      },
-    },
-    spec: {
-      replicas: $.Values.replicaCount ?? 1,
-      selector: {
-        matchLabels: {
-          'app.kubernetes.io/name': $.Chart.Name,
-          'app.kubernetes.io/instance': $.Release.Name,
-        },
-      },
-      template: {
-        metadata: {
-          labels: {
-            'app.kubernetes.io/name': $.Chart.Name,
-            'app.kubernetes.io/instance': $.Release.Name,
-          },
-        },
-        spec: {
-          containers: [
-            {
-              name,
-              image: ($.Values.image?.repository ?? 'nginx') + ':' + ($.Values.image?.tag ?? 'latest'),
-              ports: [{ name: 'http', containerPort: $.Values.service?.port ?? 80 }],
-            },
-          ],
-        },
-      },
-    },
-  };
-}
-```
-
-Оба варианта формируют одинаковый манифест.
-
-## Структура TypeScript-чарта
-
-После `werf chart ts init` в чарте появляется директория `ts/`:
+### Структура
 
 ```
 .helm/
   templates/              # Helm-шаблоны (как обычно)
-    deployment.yaml
-    _helpers.tpl
-  ts/                     # TypeScript-манифесты
+  ts/                     # TypeScript-шаблоны
     src/
       index.ts            # Точка входа
       helpers.ts          # Вспомогательные функции
@@ -139,16 +46,13 @@ export function newDeployment($: WerfRenderContext): object {
       service.ts          # Генерация Service
     deno.json             # Конфигурация Deno и зависимости
     tsconfig.json         # Конфигурация TypeScript
-    input.example.yaml    # Пример контекста рендеринга для локальной разработки
   values.yaml
   Chart.yaml
 ```
 
+werf ищет точку входа в порядке: `ts/src/index.ts`, затем `ts/src/index.js`. Если ни один из файлов не найден, TypeScript-рендеринг пропускается.
+
 ### Точка входа
-
-werf ищет точку входа в следующем порядке: `ts/src/index.ts`, затем `ts/src/index.js`. Если ни один из файлов не найден, TypeScript-рендеринг для данного чарта пропускается.
-
-Файл `index.ts` вызывает `render` с функцией, которая принимает контекст рендеринга и возвращает массив манифестов:
 
 ```typescript
 // .helm/ts/src/index.ts:
@@ -171,27 +75,25 @@ function generate($: WerfRenderContext): RenderResult {
 await render(generate);
 ```
 
-Функция, переданная в `render`, получает контекст рендеринга `$` типа `WerfRenderContext` и возвращает объект `RenderResult` с массивом `manifests` — Kubernetes-манифестов в виде обычных JavaScript-объектов. Каждый объект будет сериализован в YAML.
+Функция `generate` получает корневой контекст `$` типа `WerfRenderContext` и возвращает `RenderResult` с массивом манифестов — обычных JavaScript-объектов, которые будут сериализованы в YAML.
 
-## Контекст рендеринга
+## Корневой контекст
 
-TypeScript-код получает тот же контекст, что и Helm-шаблоны. При инициализации через `werf chart ts init` контекст передаётся как типизированный объект `WerfRenderContext` из пакета [`@nelm/chart-ts-sdk`](https://github.com/werf/nelm-chart-ts-sdk). Этот пакет устанавливается автоматически при инициализации чарта и содержит типы и функцию `render` для запуска рендеринга.
+TypeScript-код получает тот же контекст, что и Helm-шаблоны, через переменную `$` типа `WerfRenderContext`:
 
-Тип `WerfRenderContext` расширяет базовый `RenderContext`, добавляя типизацию для сервисных параметров werf в `$.Values.global.werf`.
+| Поле | Тип | Описание |
+|------|-----|----------|
+| `$.Values` | `WerfServiceValues` | Параметры чарта с типизированными сервисными значениями werf |
+| `$.Release` | `Release` | Информация о релизе |
+| `$.Chart` | `ChartMetadata` | Метаданные из Chart.yaml |
+| `$.Capabilities` | `Capabilities` | Возможности кластера (API-версии, версия Kubernetes) |
+| `$.Files` | `Record<string, Uint8Array>` | Файлы чарта (кроме `templates/` и `ts/`) |
 
-| Поле | Тип | Описание | Аналог в Helm-шаблонах |
-|------|-----|----------|---------------------|
-| `$.Values` | `WerfServiceValues` | Параметры чарта с типизированными сервисными значениями werf | `$.Values` |
-| `$.Release` | `Release` | Информация о релизе | `$.Release` |
-| `$.Chart` | `ChartMetadata` | Метаданные из Chart.yaml | `$.Chart` |
-| `$.Capabilities` | `Capabilities` | Возможности кластера (API-версии, версия Kubernetes) | `$.Capabilities` |
-| `$.Files` | `Record<string, Uint8Array>` | Дополнительные файлы чарта (не из `templates/` и не из `ts/`) | `$.Files` |
+Подробнее о параметрах и их формировании — в разделе [Параметризация шаблонов]({{ "/usage/deploy/values.html" | true_relative_url }}).
 
-### Поле `Values`
+### Сервисные значения werf
 
-Словарь `$.Values` формируется так же, как и для Helm-шаблонов: из `values.yaml`, `secret-values.yaml`, опций `--set`, `--values` и других [источников параметров]({{ "/usage/deploy/values.html" | true_relative_url }}). Все механизмы параметризации работают одинаково.
-
-При использовании `WerfRenderContext` в `$.Values.global.werf` доступны типизированные сервисные параметры werf:
+При использовании `WerfRenderContext` в `$.Values.global.werf` доступны типизированные сервисные параметры:
 
 ```typescript
 $.Values.global.werf.name       // имя проекта
@@ -201,167 +103,16 @@ $.Values.global.werf.commit     // информация о коммите (hash,
 $.Values.global.werf.images     // собранные образы с тегами и digest'ами
 ```
 
-**Release:**
+## Сторонние библиотеки
 
-```typescript
-$.Release.Name        // имя релиза
-$.Release.Namespace   // Namespace релиза
-$.Release.Revision    // номер ревизии
-$.Release.IsInstall   // true, если это первая установка
-$.Release.IsUpgrade   // true, если это обновление
-```
-
-**Chart:**
-
-```typescript
-$.Chart.Name          // имя чарта
-$.Chart.Version       // версия чарта
-$.Chart.AppVersion    // версия приложения
-$.Chart.Description   // описание
-$.Chart.Keywords      // ключевые слова
-$.Chart.Home          // домашняя страница
-$.Chart.Sources       // ссылки на исходный код
-```
-
-**Capabilities:**
-
-```typescript
-$.Capabilities.KubeVersion.Version  // например, "v1.28.0"
-$.Capabilities.KubeVersion.Major    // "1"
-$.Capabilities.KubeVersion.Minor    // "28"
-$.Capabilities.APIVersions          // список доступных API-версий
-```
-
-## Написание манифестов
-
-### Условное создание ресурсов
-
-В Helm-шаблонах условное создание ресурса требует обернуть весь файл в блок `if`:
-
-{% raw %}
-
-```
-# templates/service.yaml:
-{{ if $.Values.service.enabled }}
-apiVersion: v1
-kind: Service
-# ...
-{{ end }}
-```
-
-{% endraw %}
-
-В TypeScript это обычный `if` в функции `render`:
-
-```typescript
-await render(($: WerfRenderContext): RenderResult => {
-  const manifests: object[] = [];
-
-  manifests.push(newDeployment($));
-
-  if ($.Values.service?.enabled) {
-    manifests.push(newService($));
-  }
-
-  return { manifests };
-});
-```
-
-### Циклы и трансформации данных
-
-В Helm-шаблонах итерация по данным выполняется через `range`:
-
-{% raw %}
-
-```yaml
-# templates/configmaps.yaml:
-{{ range $name, $data := $.Values.configmaps }}
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: {{ $name }}
-data:
-  {{ $data | toYaml | nindent 2 }}
-{{ end }}
-```
-
-{% endraw %}
-
-В TypeScript — стандартными средствами языка:
-
-```typescript
-await render(($: WerfRenderContext): RenderResult => {
-  const manifests: object[] = [];
-
-  for (const [name, data] of Object.entries($.Values.configmaps ?? {})) {
-    manifests.push({
-      apiVersion: 'v1',
-      kind: 'ConfigMap',
-      metadata: { name },
-      data,
-    });
-  }
-
-  return { manifests };
-});
-```
-
-### Переиспользование кода
-
-В Helm-шаблонах для переиспользования используются именованные шаблоны в файлах `_*.tpl`:
-
-{% raw %}
-
-```
-# templates/_helpers.tpl:
-{{ define "myapp.labels" }}
-app.kubernetes.io/name: {{ $.Chart.Name }}
-app.kubernetes.io/instance: {{ $.Release.Name }}
-{{ end }}
-```
-
-{% endraw %}
-
-В TypeScript — обычные функции и модули:
-
-```typescript
-// ts/src/helpers.ts:
-import type { WerfRenderContext } from '@nelm/chart-ts-sdk';
-
-export function getLabels($: WerfRenderContext): Record<string, string> {
-  return {
-    'app.kubernetes.io/name': $.Chart.Name,
-    'app.kubernetes.io/instance': $.Release.Name,
-  };
-}
-```
-
-```typescript
-// ts/src/deployment.ts:
-import { getLabels } from './helpers.ts';
-
-export function newDeployment($: WerfRenderContext): object {
-  return {
-    // ...
-    metadata: {
-      labels: getLabels($),
-    },
-    // ...
-  };
-}
-```
-
-### Сторонние библиотеки
-
-В TypeScript-чартах можно использовать сторонние библиотеки. Для установки используйте команду `deno install` из директории `ts/` чарта — например, для подключения [kubernetes-models](https://github.com/tommy351/kubernetes-models-ts) со строгой типизацией Kubernetes-ресурсов:
+Для установки библиотек используйте `deno install` из директории `ts/` чарта:
 
 ```shell
 cd .helm/ts
 deno install npm:kubernetes-models
 ```
 
-Зависимость будет добавлена в секцию `imports` файла `deno.json` автоматически.
+Зависимость будет добавлена в `deno.json` автоматически. Пример использования:
 
 ```typescript
 // .helm/ts/src/deployment.ts:
@@ -384,52 +135,25 @@ export function newDeployment($: WerfRenderContext): object {
 }
 ```
 
-При использовании таких библиотек IDE будет подсказывать допустимые поля ресурсов, их типы и обязательность — ошибки в структуре манифестов обнаруживаются ещё до рендеринга.
-
-## Совместная работа с Helm-шаблонами
-
-TypeScript-манифесты и Helm-шаблоны могут сосуществовать в одном чарте. Результаты обоих способов рендеринга объединяются перед развертыванием.
-
-Это позволяет мигрировать постепенно:
-
-1. Добавьте TypeScript-структуру в существующий чарт: `werf chart ts init`.
-2. Перенесите один ресурс из `templates/` в `ts/src/`.
-3. Убедитесь, что `werf render` выдаёт ожидаемый результат.
-4. Повторите для остальных ресурсов.
-
-> Обратите внимание, что TypeScript-манифесты и Helm-шаблоны являются независимыми источниками ресурсов. Именованные шаблоны (`define`/`include`) из `templates/_*.tpl` недоступны в TypeScript-коде, и наоборот.
-
-### Зависимые чарты
-
-Зависимые чарты тоже могут содержать TypeScript-код. Рендеринг выполняется рекурсивно: для каждого зависимого чарта, имеющего точку входа (`ts/src/index.ts` или `ts/src/index.js`), будет выполнен TypeScript-рендеринг.
-
-Пересборка бандла из исходников возможна только для локальных зависимых чартов. Если зависимый чарт загружен из репозитория, но уже содержит готовый `ts/dist/bundle.js` (например, собранный при публикации через `werf bundle publish`), рендеринг будет выполнен из него.
-
-Для зависимых чартов действуют те же правила, что и для Helm-шаблонов: параметры (`Values`) ограничиваются областью видимости зависимого чарта, а информация о релизе, возможностях кластера и рантайме наследуется от родительского чарта.
-
 ## Сборка и дистрибуция
 
-### Автоматическая сборка
+При выполнении `werf converge`, `werf render`, `werf lint` и `werf plan` TypeScript-код собирается автоматически — бандл формируется в памяти и передаётся в Deno для исполнения.
 
-При выполнении команд `werf converge`, `werf render`, `werf lint` и `werf plan` TypeScript-код собирается автоматически. Явный вызов команды сборки не требуется — бандл формируется в памяти и передаётся в Deno для исполнения.
-
-### Явная сборка
-
-Для явной сборки TypeScript-кода в JavaScript-бандл используйте команду:
+Для явной сборки в JavaScript-бандл:
 
 ```shell
 werf chart ts build
 ```
 
-Сформированный бандл записывается в файл `ts/dist/bundle.js`. Это может быть полезно для отладки или для подготовки чарта к публикации вручную. Обратите внимание, что из-за [гиттерминизма]({{ "/usage/project_configuration/giterminism.html" | true_relative_url }}) сгенерированный файл должен быть закоммичен в Git, либо следует использовать флаг `--dev`.
+Сформированный бандл записывается в файл `ts/dist/bundle.js`. Обратите внимание, что из-за [гиттерминизма]({{ "/usage/project_configuration/giterminism.html" | true_relative_url }}) этот файл должен быть закоммичен в Git, либо следует использовать флаг `--dev`.
 
-По умолчанию, если файл `ts/dist/bundle.js` уже существует, при рендеринге он будет использован как есть. Чтобы принудительно пересобрать бандл из исходников, используйте флаг `--ignore-bundle-js`:
+Если файл `ts/dist/bundle.js` уже существует, при рендеринге он используется как есть. Для принудительной пересборки из исходников:
 
 ```shell
 werf render --ignore-bundle-js
 ```
 
-### Публикация и применение бандлов
+### Бандлы
 
 При публикации бандла TypeScript-бандл автоматически собирается и включается в пакет:
 
@@ -437,7 +161,7 @@ werf render --ignore-bundle-js
 werf bundle publish --repo registry.example.org/myapp
 ```
 
-При применении бандла TypeScript-рендеринг также выполняется автоматически:
+При применении бандла TypeScript-рендеринг выполняется автоматически:
 
 ```shell
 werf bundle apply --repo registry.example.org/myapp --env production
@@ -449,29 +173,29 @@ werf bundle apply --repo registry.example.org/myapp --env production
 werf bundle render --repo registry.example.org/myapp --env production
 ```
 
-Предварительный просмотр изменений перед применением бандла:
+Предварительный просмотр изменений:
 
 ```shell
 werf bundle plan --repo registry.example.org/myapp --env production
 ```
 
+### Зависимые чарты
+
+Зависимые чарты тоже могут содержать TypeScript-код — рендеринг выполняется рекурсивно. Пересборка бандла из исходников возможна только для локальных зависимых чартов. Если зависимый чарт загружен из репозитория, но содержит готовый `ts/dist/bundle.js` (например, собранный при публикации через `werf bundle publish`), рендеринг будет выполнен из него.
+
 ## Активация и окружение выполнения
 
-Функция TypeScript-рендеринга является экспериментальной и по умолчанию отключена. Для включения установите переменную окружения:
+Функция является экспериментальной и по умолчанию отключена:
 
 ```shell
 export NELM_FEAT_TYPESCRIPT=true
 ```
 
-Без этой переменной:
-- команды `werf chart ts init` и `werf chart ts build` завершатся с ошибкой;
-- TypeScript-рендеринг при `werf converge`, `werf render` и других командах будет пропущен без ошибки.
+Без этой переменной команды `werf chart ts init` и `werf chart ts build` завершатся с ошибкой, а TypeScript-рендеринг при `werf converge`, `werf render` и других командах будет пропущен без ошибки.
 
 ### Deno
 
-TypeScript-код исполняется рантаймом [Deno](https://deno.com/). Бинарный файл Deno скачивается автоматически при первом использовании и кешируется локально.
-
-Если автоматическое скачивание недоступно (например, в закрытом контуре), укажите путь к предустановленному бинарнику:
+TypeScript-код исполняется рантаймом [Deno](https://deno.com/). Бинарный файл Deno скачивается автоматически при первом использовании и кешируется локально. Если автоматическое скачивание недоступно (например, в закрытом контуре), укажите путь к предустановленному бинарнику:
 
 ```shell
 werf render --deno-binary-path /usr/local/bin/deno
@@ -481,13 +205,6 @@ werf render --deno-binary-path /usr/local/bin/deno
 
 Из-за [гиттерминизма]({{ "/usage/project_configuration/giterminism.html" | true_relative_url }}) файл `deno.lock` необходимо закоммитить в Git, иначе последующие запуски werf завершатся с ошибкой. Альтернативно можно использовать флаг `--dev`.
 
-### Ограничения песочницы
+### Песочница
 
-TypeScript-код выполняется в изолированной песочнице со строгими ограничениями:
-
-- **нет доступа к сети** — нельзя выполнять HTTP-запросы или открывать сокеты;
-- **нет доступа к переменным окружения** — `Deno.env` недоступен;
-- **нет запуска процессов** — `Deno.run` недоступен;
-- **файловая система ограничена** — доступ только к файлам обмена данными между werf и Deno.
-
-Это гарантирует, что рендеринг манифестов остаётся детерминированным и безопасным.
+TypeScript-код выполняется в изолированной песочнице: нет доступа к сети, переменным окружения, запуску процессов; файловая система ограничена файлами обмена данными между werf и Deno. Это гарантирует детерминированность и безопасность рендеринга.
