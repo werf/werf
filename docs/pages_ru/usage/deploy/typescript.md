@@ -75,9 +75,9 @@ spec:
 
 ```typescript
 // .helm/ts/src/deployment.ts:
-import type { RenderContext } from '@nelm/chart-ts-sdk';
+import type { WerfRenderContext } from '@nelm/chart-ts-sdk';
 
-export function newDeployment($: RenderContext): object {
+export function newDeployment($: WerfRenderContext): object {
   const name = `${$.Release.Name}-myapp`;
 
   return {
@@ -155,15 +155,15 @@ werf ищет точку входа в следующем порядке:
 
 ### Файл `index.ts`
 
-Файл `index.ts` содержит функцию рендеринга и вызов `runRender`:
+Файл `index.ts` вызывает `render` с функцией, которая принимает контекст рендеринга и возвращает массив манифестов:
 
 ```typescript
 // .helm/ts/src/index.ts:
-import { RenderContext, RenderResult, runRender } from '@nelm/chart-ts-sdk';
+import { render, WerfRenderContext, RenderResult } from '@nelm/chart-ts-sdk';
 import { newDeployment } from './deployment.ts';
 import { newService } from './service.ts';
 
-function render($: RenderContext): RenderResult {
+function generate($: WerfRenderContext): RenderResult {
   const manifests: object[] = [];
 
   manifests.push(newDeployment($));
@@ -175,18 +175,20 @@ function render($: RenderContext): RenderResult {
   return { manifests };
 }
 
-await runRender(render);
+await render(generate);
 ```
 
-Функция `render` получает контекст рендеринга `$` и возвращает объект с массивом `manifests` — Kubernetes-манифестов в виде обычных JavaScript-объектов. Каждый объект будет сериализован в YAML.
+Функция, переданная в `render`, получает контекст рендеринга `$` типа `WerfRenderContext` и возвращает объект `RenderResult` с массивом `manifests` — Kubernetes-манифестов в виде обычных JavaScript-объектов. Каждый объект будет сериализован в YAML.
 
 ## Контекст рендеринга
 
-TypeScript-код получает тот же контекст, что и Helm-шаблоны. Контекст передаётся в функцию `render` как типизированный объект `RenderContext` из пакета [`@nelm/chart-ts-sdk`](https://github.com/werf/nelm-chart-ts-sdk). Этот пакет устанавливается автоматически при инициализации чарта и содержит типы и функцию `runRender` для запуска рендеринга.
+TypeScript-код получает тот же контекст, что и Helm-шаблоны. При инициализации через `werf chart ts init` контекст передаётся как типизированный объект `WerfRenderContext` из пакета [`@nelm/chart-ts-sdk`](https://github.com/werf/nelm-chart-ts-sdk). Этот пакет устанавливается автоматически при инициализации чарта и содержит типы и функцию `render` для запуска рендеринга.
+
+Тип `WerfRenderContext` расширяет базовый `RenderContext`, добавляя типизацию для сервисных параметров werf в `$.Values.global.werf`.
 
 | Поле | Тип | Описание | Аналог в Helm-шаблонах |
 |------|-----|----------|---------------------|
-| `$.Values` | `Record<string, any>` | Параметры чарта из values.yaml и всех переопределений | `$.Values` |
+| `$.Values` | `WerfServiceValues` | Параметры чарта с типизированными сервисными значениями werf | `$.Values` |
 | `$.Release` | `Release` | Информация о релизе | `$.Release` |
 | `$.Chart` | `ChartMetadata` | Метаданные из Chart.yaml | `$.Chart` |
 | `$.Capabilities` | `Capabilities` | Возможности кластера (API-версии, версия Kubernetes) | `$.Capabilities` |
@@ -195,6 +197,16 @@ TypeScript-код получает тот же контекст, что и Helm-
 ### Поле `Values`
 
 Словарь `$.Values` формируется так же, как и для Helm-шаблонов: из `values.yaml`, `secret-values.yaml`, опций `--set`, `--values` и других [источников параметров]({{ "/usage/deploy/values.html" | true_relative_url }}). Все механизмы параметризации работают одинаково.
+
+При использовании `WerfRenderContext` в `$.Values.global.werf` доступны типизированные сервисные параметры werf:
+
+```typescript
+$.Values.global.werf.name       // имя проекта
+$.Values.global.werf.version    // версия werf
+$.Values.global.werf.repo       // адрес container registry
+$.Values.global.werf.commit     // информация о коммите (hash, date)
+$.Values.global.werf.images     // собранные образы с тегами и digest'ами
+```
 
 ### Поле `Release`
 
@@ -249,7 +261,7 @@ kind: Service
 В TypeScript это обычный `if` в функции `render`:
 
 ```typescript
-function render($: RenderContext): RenderResult {
+await render(($: WerfRenderContext): RenderResult => {
   const manifests: object[] = [];
 
   manifests.push(newDeployment($));
@@ -259,7 +271,7 @@ function render($: RenderContext): RenderResult {
   }
 
   return { manifests };
-}
+});
 ```
 
 ### Циклы и трансформации данных
@@ -286,7 +298,7 @@ data:
 В TypeScript — стандартными средствами языка:
 
 ```typescript
-function render($: RenderContext): RenderResult {
+await render(($: WerfRenderContext): RenderResult => {
   const manifests: object[] = [];
 
   for (const [name, data] of Object.entries($.Values.configmaps ?? {})) {
@@ -299,7 +311,7 @@ function render($: RenderContext): RenderResult {
   }
 
   return { manifests };
-}
+});
 ```
 
 ### Переиспользование кода
@@ -322,9 +334,9 @@ app.kubernetes.io/instance: {{ $.Release.Name }}
 
 ```typescript
 // ts/src/helpers.ts:
-import type { RenderContext } from '@nelm/chart-ts-sdk';
+import type { WerfRenderContext } from '@nelm/chart-ts-sdk';
 
-export function getLabels($: RenderContext): Record<string, string> {
+export function getLabels($: WerfRenderContext): Record<string, string> {
   return {
     'app.kubernetes.io/name': $.Chart.Name,
     'app.kubernetes.io/instance': $.Release.Name,
@@ -336,7 +348,7 @@ export function getLabels($: RenderContext): Record<string, string> {
 // ts/src/deployment.ts:
 import { getLabels } from './helpers.ts';
 
-export function newDeployment($: RenderContext): object {
+export function newDeployment($: WerfRenderContext): object {
   return {
     // ...
     metadata: {
@@ -362,7 +374,7 @@ deno install npm:kubernetes-models
 // .helm/ts/src/deployment.ts:
 import { Deployment } from 'kubernetes-models/apps/v1';
 
-export function newDeployment($: RenderContext): object {
+export function newDeployment($: WerfRenderContext): object {
   return new Deployment({
     metadata: { name: 'myapp' },
     spec: {
@@ -375,7 +387,7 @@ export function newDeployment($: RenderContext): object {
         },
       },
     },
-  });
+  }).toJSON();
 }
 ```
 
