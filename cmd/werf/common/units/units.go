@@ -47,7 +47,7 @@ func (s *UnitValue) Set(input string) error {
 // Type is required to satisfy the pflag.Value interface used by cobra flags.
 // It defines the value type displayed in the CLI help message.
 func (s *UnitValue) Type() string {
-	return "storageValue"
+	return "unitValue"
 }
 
 // ParseUnitValue parses the input string into a UnitValue.
@@ -88,5 +88,5 @@ func (s *UnitValue) String() string {
 	if s.IsBytes {
 		return units.BytesSize(float64(s.Value))
 	}
-	return fmt.Sprintf("%d%%", s.Value)
+	return fmt.Sprintf("%d", s.Value)
 }

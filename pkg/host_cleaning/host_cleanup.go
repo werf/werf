@@ -7,10 +7,10 @@ import (
 
 	"github.com/werf/common-go/pkg/graceful"
 	"github.com/werf/logboek"
+	"github.com/werf/werf/v2/cmd/werf/common/units"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
 	"github.com/werf/werf/v2/pkg/tmp_manager"
-	"github.com/werf/werf/v2/cmd/werf/common/units"
 	"github.com/werf/werf/v2/pkg/volumeutils"
 	"github.com/werf/werf/v2/pkg/werf"
 	"github.com/werf/werf/v2/pkg/werf/exec"
@@ -42,7 +42,7 @@ type HostCleanupOptions struct {
 	Force  bool
 }
 
-func getRequirementInBytes(val *units.UnitValue, defaultPercent uint64, totalBytes uint64) uint64 {
+func getRequirementInBytes(val *units.UnitValue, defaultPercent, totalBytes uint64) uint64 {
 	if val != nil {
 		return val.ToBytes(totalBytes)
 	}

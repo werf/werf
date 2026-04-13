@@ -9,7 +9,7 @@ import (
 
 var _ = Describe("HostCleanup", func() {
 	DescribeTable("getRequirementInBytes",
-		func(sv *units.UnitValue, defaultPercent uint64, totalBytes uint64, expected uint64) {
+		func(sv *units.UnitValue, defaultPercent, totalBytes, expected uint64) {
 			actual := getRequirementInBytes(sv, defaultPercent, totalBytes)
 			Expect(actual).To(Equal(expected))
 		},

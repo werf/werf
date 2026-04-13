@@ -48,7 +48,7 @@ var _ = Describe("UnitValue", func() {
 	)
 
 	DescribeTable("ToBytes",
-		func(sv *UnitValue, total uint64, expected uint64) {
+		func(sv *UnitValue, total, expected uint64) {
 			Expect(sv.ToBytes(total)).To(Equal(expected))
 		},
 		Entry("From percentage 10% of 1000",
@@ -74,7 +74,7 @@ var _ = Describe("UnitValue", func() {
 		},
 		Entry("Format percentage",
 			&UnitValue{Value: 70, IsBytes: false},
-			"70%",
+			"70",
 		),
 		Entry("Format bytes (KiB)",
 			&UnitValue{Value: 1024, IsBytes: true},
