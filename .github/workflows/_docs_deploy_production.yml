@@ -13,6 +13,10 @@ on:
         required: false
         default: ""
         type: string
+      releaseRefOverride:
+        required: false
+        default: ""
+        type: string
       persistent:
         default: true
         type: boolean
@@ -41,6 +45,7 @@ jobs:
       - name: Set dynamic WERF_* env vars
         run: |
           github_ref_override='${{ inputs.githubRefOverride }}'
+          release_ref_override='${{ inputs.releaseRefOverride }}'
 
           if ${{ inputs.persistent }}; then
             if [[ -n "$github_ref_override" ]]; then
@@ -49,9 +54,15 @@ jobs:
               github_ref_value='${{ github.ref }}'
             fi
 
-            release_ref_value="$(echo "$github_ref_value" | cut -d/ -f 3-)"
+            if [[ -n "$release_ref_override" ]]; then
+              release_ref_source="$release_ref_override"
+            else
+              release_ref_source='${{ github.ref }}'
+            fi
+
+            release_ref_value="$(echo "$release_ref_source" | cut -d/ -f 3)"
             if [[ -z "$release_ref_value" ]]; then
-              release_ref_value="$github_ref_value"
+              release_ref_value="$release_ref_source"
             fi
 
             release_ref_value="$(echo "$release_ref_value" | sed 's/\+/-plus-/g' | sed 's/\_/-u-/g' | sed 's/\./-dot-/g' | sed 's#/#-#g')"
@@ -115,7 +126,3 @@ jobs:
           WERF_ENV: production
           WERF_KUBE_CONFIG_BASE64: ${{ steps.kubeconfig.outputs.kubeconfig_base64 }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-
-
-
