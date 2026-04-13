@@ -10,27 +10,15 @@ import (
 )
 
 var _ = Describe("sbom validate", Label("e2e", "sbom", "validate", "simple"), func() {
-	var gitWorkTree string
-
-	BeforeEach(func() {
-		absPath, err := filepath.Abs("../../..")
-		Expect(err).NotTo(HaveOccurred())
-		gitWorkTree = absPath
-	})
-
 	fixturePath := func(name string) string {
 		absPath, err := filepath.Abs(filepath.Join("_fixtures", "validate", name+".json"))
 		Expect(err).NotTo(HaveOccurred())
 		return absPath
 	}
 
-	commonArgs := func() []string {
-		return []string{"--git-work-tree", gitWorkTree, "--dir", gitWorkTree}
-	}
-
 	DescribeTable("should pass validation",
 		func(ctx SpecContext, fixtures []string, isprasFormat string, extraFlags []string) {
-			args := commonArgs()
+			var args []string
 			for _, f := range fixtures {
 				args = append(args, "--path", fixturePath(f))
 			}
@@ -56,7 +44,7 @@ var _ = Describe("sbom validate", Label("e2e", "sbom", "validate", "simple"), fu
 
 	DescribeTable("should fail validation",
 		func(ctx SpecContext, fixtures []string, isprasFormat, expectedSubstring string) {
-			args := commonArgs()
+			var args []string
 			for _, f := range fixtures {
 				args = append(args, "--path", fixturePath(f))
 			}
@@ -94,8 +82,7 @@ var _ = Describe("sbom validate", Label("e2e", "sbom", "validate", "simple"), fu
 	)
 
 	It("should fail when file does not exist", func(ctx SpecContext) {
-		args := commonArgs()
-		args = append(args, "--path", "/nonexistent/sbom.json", "--ispras-format", "oss")
+		args := []string{"--path", "/nonexistent/sbom.json", "--ispras-format", "oss"}
 
 		werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.TmpDir)
 		_, err := werfProject.SbomValidateWithErr(ctx, &werf.SbomValidateOptions{
