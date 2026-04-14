@@ -93,7 +93,7 @@ func (i *LegacyStageImage) Build(ctx context.Context, options BuildOptions) erro
 		if !(experimentalStapelArm && isArm64Platform(defaultPlatform)) {
 			logboek.Context(ctx).Error().LogF("Detected your default build platform as %s.\n", defaultPlatform)
 			logboek.Context(ctx).Error().LogF("Building of stapel-type images using Docker-Server backend for platforms other than linux/amd64 is not supported.\n")
-			logboek.Context(ctx).Error().LogF("Please either:\n * confirm emulation of linux/amd64 by exlicitly setting --platform=linux/amd64 param;\n * or use Dockerfile-type image instead.\n")
+			logboek.Context(ctx).Error().LogF("Please either:\n * confirm emulation of linux/amd64 by explicitly setting --platform=linux/amd64 param;\n * or use Dockerfile-type image instead.\n")
 			logboek.Context(ctx).Error().LogLn()
 			return fmt.Errorf("building of stapel image using Docker-Server backend is unsupported on your current platform %q", defaultPlatform)
 		}
