@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.67.0](https://github.com/werf/werf/compare/v2.66.2...v2.67.0) (2026-04-14)
+
+
+### Features
+
+* **build:** scratch stapel docker backend ([#7441](https://github.com/werf/werf/issues/7441)) ([490d6e0](https://github.com/werf/werf/commit/490d6e0df8d0c559afb30736e09b6ef5bfb811c9))
+* **deploy:** ability to init ts files with WerfRenderContext type ([#7464](https://github.com/werf/werf/issues/7464)) ([1609845](https://github.com/werf/werf/commit/160984521d67a403f34ec161afce8381fe9e422f))
+* **stapel:** provide WERF_EXPERIMENTAL_STAPEL_ARM env for arm64 support ([#7454](https://github.com/werf/werf/issues/7454)) ([f911913](https://github.com/werf/werf/commit/f911913c70d523039a9dc808781b2a3a509158b3))
+
+
+### Bug Fixes
+
+* **cleanup:** skip invalid custom tag metadata with warning log ([65ff126](https://github.com/werf/werf/commit/65ff12612bf9487fe1e49f4064f3354a059a3b15))
+
 ## [2.66.2](https://github.com/werf/werf/compare/v2.66.1...v2.66.2) (2026-04-13)
 
 
