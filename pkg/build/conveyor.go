@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/opencontainers/go-digest"
 	"github.com/samber/lo"
 
 	"github.com/werf/common-go/pkg/util"
@@ -958,12 +959,24 @@ func (c *Conveyor) GetOrCreateStageImage(name string, prevStageImage *stage.Stag
 
 	i := container_backend.NewLegacyStageImage(extractLegacyStageImage(prevStageImage), name, c.ContainerBackend, img.TargetPlatform)
 
+	resolvePrevStageBaseImage := func(prevStageImage *stage.StageImage) string {
+		if prevStageImage == nil || prevStageImage.Image == nil {
+			return ""
+		}
+		if stageDesc := prevStageImage.Image.GetStageDesc(); stageDesc != nil && stageDesc.Info != nil {
+			if _, err := digest.Parse(stageDesc.Info.ID); err == nil {
+				return stageDesc.Info.ID
+			}
+		}
+		return prevStageImage.Image.Name()
+	}
+
 	var baseImage string
 	if stg != nil {
 		if stg.HasPrevStage() {
-			baseImage = prevStageImage.Image.Name()
+			baseImage = resolvePrevStageBaseImage(prevStageImage)
 		} else if stg.IsStapelStage() && stg.Name() == "from" {
-			baseImage = prevStageImage.Image.Name()
+			baseImage = resolvePrevStageBaseImage(prevStageImage)
 		} else {
 			baseImage = img.GetBaseImageReference()
 		}

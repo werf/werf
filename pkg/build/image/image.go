@@ -330,6 +330,13 @@ func (i *Image) SetupBaseImage(ctx context.Context, storageManager manager.Stora
 				})
 			}
 		}
+
+		if !i.IsDockerfileImage && i.baseImageReference == "scratch" {
+			i.baseStageImage.Image.SetStageDesc(&image.StageDesc{
+				StageID: nil,
+				Info:    &image.Info{Name: i.baseImageReference, Env: nil},
+			})
+		}
 	case NoBaseImage:
 
 	default:
@@ -379,10 +386,6 @@ func (i *Image) FetchBaseImage(ctx context.Context) (FetchBaseImageInfo, error) 
 	switch i.baseImageType {
 	case ImageFromRegistryAsBaseImage:
 		if i.baseStageImage.Image.Name() == "scratch" {
-			if !i.IsDockerfileImage {
-				return FetchBaseImageInfo{}, fmt.Errorf(`invalid base image: "scratch" is not allowed for stapel images. Please use a Dockerfile image or an alternative scratch image, such as "registry.werf.io/werf/scratch"`)
-			}
-
 			return FetchBaseImageInfo{}, nil
 		}
 

@@ -13,6 +13,8 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/tarball"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	werfimage "github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/werf"
@@ -84,7 +86,7 @@ var _ = Describe("MutateAndPushImage", func() {
 		sourceTarData := newDockerSaveTar(sourceImage)
 		backend := &fakeBackendLoaderStorer{saveStream: io.NopCloser(bytes.NewReader(sourceTarData))}
 
-		newID, err := MutateAndPushImage(ctx, "example.com/test:latest", werfimage.SpecConfig{
+		newID, err := MutateAndPushImage(ctx, "example.com/test:latest", "", werfimage.SpecConfig{
 			Author:     "werf",
 			Cmd:        []string{"/app", "serve"},
 			Env:        []string{"KEY=VALUE"},
@@ -109,7 +111,7 @@ var _ = Describe("MutateAndPushImage", func() {
 	It("returns save errors before attempting to load the mutated image", func(ctx SpecContext) {
 		backend := &fakeBackendLoaderStorer{saveErr: fmt.Errorf("save boom")}
 
-		_, err := MutateAndPushImage(ctx, "example.com/test:latest", werfimage.SpecConfig{}, backend)
+		_, err := MutateAndPushImage(ctx, "example.com/test:latest", "", werfimage.SpecConfig{}, backend)
 		Expect(err).To(MatchError("failed to save image: save boom"))
 		Expect(backend.loadCalls).To(Equal(0))
 	})
@@ -118,10 +120,29 @@ var _ = Describe("MutateAndPushImage", func() {
 		brokenStream := &errReadCloser{err: fmt.Errorf("stream boom")}
 		backend := &fakeBackendLoaderStorer{saveStream: brokenStream}
 
-		_, err := MutateAndPushImage(ctx, "example.com/test:latest", werfimage.SpecConfig{}, backend)
+		_, err := MutateAndPushImage(ctx, "example.com/test:latest", "", werfimage.SpecConfig{}, backend)
 		Expect(err).To(MatchError("failed to persist image tarball: stream boom"))
 		Expect(backend.loadCalls).To(Equal(0))
 		Expect(brokenStream.closed).To(BeTrue())
+	})
+
+	It("preserves target platform in mutated image config", func(ctx SpecContext) {
+		t := GinkgoT()
+
+		sourceImage := newPlatformSourceImage()
+		sourceTarData := newDockerSaveTar(sourceImage)
+		backend := &fakeBackendLoaderStorer{saveStream: io.NopCloser(bytes.NewReader(sourceTarData))}
+
+		newID, err := MutateAndPushImage(ctx, "example.com/test:latest", "linux/amd64", werfimage.SpecConfig{}, backend)
+		require.NoError(t, err)
+		assert.Equal(t, "sha256:mutated", newID)
+		require.NotNil(t, backend.loadedImg)
+
+		cfg, err := backend.loadedImg.ConfigFile()
+		require.NoError(t, err)
+		assert.Equal(t, "linux", cfg.OS)
+		assert.Equal(t, "amd64", cfg.Architecture)
+		assert.Empty(t, cfg.Variant)
 	})
 })
 
@@ -134,6 +155,19 @@ func newSourceImage() v1.Image {
 	cfg.Config.Env = []string{"BASE=1"}
 	cfg.Config.Labels = map[string]string{"base": "true"}
 	cfg.Config.WorkingDir = "/base"
+
+	img, err := mutate.ConfigFile(empty.Image, cfg)
+	Expect(err).ToNot(HaveOccurred())
+
+	return img
+}
+
+func newPlatformSourceImage() v1.Image {
+	cfg, err := empty.Image.ConfigFile()
+	Expect(err).ToNot(HaveOccurred())
+
+	cfg.OS = "linux"
+	cfg.Architecture = "arm64"
 
 	img, err := mutate.ConfigFile(empty.Image, cfg)
 	Expect(err).ToNot(HaveOccurred())
