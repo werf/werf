@@ -404,6 +404,13 @@ func (storage *RepoStagesStorage) GetStageCustomTagMetadata(ctx context.Context,
 	fullImageName := makeRepoCustomTagMetadataRecord(storage.RepoAddress, tagOrID)
 	img, err := storage.DockerRegistry.GetRepoImage(ctx, fullImageName)
 	if err != nil {
+		if docker_registry.IsImageNotFoundError(err) {
+			return nil, ErrCustomTagMetadataNotFound
+		}
+		if docker_registry.IsBrokenImageError(err) {
+			return nil, ErrBrokenImage
+		}
+
 		return nil, fmt.Errorf("unable to get repo image %s: %w", fullImageName, err)
 	}
 
