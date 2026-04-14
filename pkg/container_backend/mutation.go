@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 
+	"github.com/containerd/containerd/platforms"
 	"github.com/google/go-containerregistry/pkg/v1/mutate"
 	"github.com/google/go-containerregistry/pkg/v1/tarball"
 
@@ -18,7 +19,7 @@ type BackendLoaderStorer interface {
 	LoadImageFromStream(ctx context.Context, input io.Reader) (string, error)
 }
 
-func MutateAndPushImage(ctx context.Context, imageName string, newConfig image.SpecConfig, backend BackendLoaderStorer) (string, error) {
+func MutateAndPushImage(ctx context.Context, imageName, targetPlatform string, newConfig image.SpecConfig, backend BackendLoaderStorer) (string, error) {
 	imageStream, err := backend.SaveImageToStream(ctx, imageName)
 	if err != nil {
 		return "", fmt.Errorf("failed to save image: %w", err)
@@ -57,6 +58,17 @@ func MutateAndPushImage(ctx context.Context, imageName string, newConfig image.S
 	config, err := img.ConfigFile()
 	if err != nil {
 		return "", fmt.Errorf("error set config: %w", err)
+	}
+
+	if targetPlatform != "" {
+		platformSpec, err := platforms.Parse(targetPlatform)
+		if err != nil {
+			return "", fmt.Errorf("parse target platform %q: %w", targetPlatform, err)
+		}
+
+		config.OS = platformSpec.OS
+		config.Architecture = platformSpec.Architecture
+		config.Variant = platformSpec.Variant
 	}
 
 	image.UpdateConfigFile(newConfig, config)

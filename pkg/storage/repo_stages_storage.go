@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/containerd/containerd/platforms"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 
 	"github.com/werf/common-go/pkg/util"
@@ -1174,8 +1175,40 @@ func (storage *RepoStagesStorage) PostLastCleanupRecord(ctx context.Context, pro
 	return nil
 }
 
-func (storage *RepoStagesStorage) MutateAndPushImage(ctx context.Context, src, dest string, newConfig image.SpecConfig, _ container_backend.LegacyImageInterface) error {
+func (storage *RepoStagesStorage) PostManifest(ctx context.Context, ref string, opts container_backend.PostManifestOpts) error {
+	if len(opts.Manifests) > 0 {
+		return fmt.Errorf("post manifest %s: unsupported manifests option for repo stages storage", ref)
+	}
+
+	labels := map[string]string{}
+	for _, label := range opts.Labels {
+		parts := strings.SplitN(label, "=", 2)
+		if len(parts) != 2 || parts[0] == "" {
+			return fmt.Errorf("parse manifest label %q: expected KEY=VALUE", label)
+		}
+		labels[parts[0]] = parts[1]
+	}
+
+	if err := storage.DockerRegistry.PushImage(ctx, ref, &docker_registry.PushImageOptions{Labels: labels}); err != nil {
+		return fmt.Errorf("push manifest image %s: %w", ref, err)
+	}
+
+	return nil
+}
+
+func (storage *RepoStagesStorage) MutateAndPushImage(ctx context.Context, src, dest string, newConfig image.SpecConfig, stageImage container_backend.LegacyImageInterface) error {
 	if err := storage.DockerRegistry.MutateAndPushImage(ctx, src, dest, api.WithConfigFileMutation(func(ctx context.Context, config *v1.ConfigFile) (*v1.ConfigFile, error) {
+		if targetPlatform := stageImage.GetTargetPlatform(); targetPlatform != "" {
+			platformSpec, err := platforms.Parse(targetPlatform)
+			if err != nil {
+				return nil, fmt.Errorf("parse target platform %q: %w", targetPlatform, err)
+			}
+
+			config.OS = platformSpec.OS
+			config.Architecture = platformSpec.Architecture
+			config.Variant = platformSpec.Variant
+		}
+
 		image.UpdateConfigFile(newConfig, config)
 
 		return config, nil

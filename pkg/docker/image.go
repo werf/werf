@@ -27,7 +27,8 @@ import (
 )
 
 type CreateImageOptions struct {
-	Labels []string
+	Labels         []string
+	TargetPlatform string
 }
 
 func CreateImage(ctx context.Context, ref string, opts CreateImageOptions) error {
@@ -38,6 +39,9 @@ func CreateImage(ctx context.Context, ref string, opts CreateImageOptions) error
 			changeOption += fmt.Sprintf(" %s", label)
 		}
 		importOpts.Changes = append(importOpts.Changes, changeOption)
+	}
+	if opts.TargetPlatform != "" {
+		importOpts.Platform = opts.TargetPlatform
 	}
 	_, err := apiCli(ctx).ImageImport(ctx, types.ImageImportSource{SourceName: "-"}, ref, importOpts)
 	return err
