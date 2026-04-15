@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/lockgate"
@@ -272,8 +273,7 @@ func (repo *Local) HeadCommitHash(_ context.Context) (string, error) {
 }
 
 func (repo *Local) HeadCommitTime(ctx context.Context) (*time.Time, error) {
-	time, err := baseHeadCommitTime(repo, ctx)
-	return time, err
+	return baseHeadCommitTime(repo, ctx)
 }
 
 func (repo *Local) GetOrCreatePatch(ctx context.Context, opts PatchOptions) (Patch, error) {
@@ -299,6 +299,28 @@ func (repo *Local) IsCommitExists(ctx context.Context, commit string) (bool, err
 
 func (repo *Local) TagsList(_ context.Context) ([]string, error) {
 	return repo.tagsList(repo.WorkTreeDir)
+}
+
+func (repo *Local) TagCommit(_ context.Context, tag string) (string, error) {
+	repository, err := repo.PlainOpen()
+	if err != nil {
+		return "", fmt.Errorf("open repo: %w", err)
+	}
+
+	ref, err := repository.Tag(tag)
+	if err != nil {
+		return "", fmt.Errorf("tag %q: %w", tag, err)
+	}
+
+	obj, err := repository.TagObject(ref.Hash())
+	switch err {
+	case nil:
+		return obj.Target.String(), nil
+	case plumbing.ErrObjectNotFound:
+		return ref.Hash().String(), nil
+	default:
+		return "", fmt.Errorf("resolve tag %q: %w", tag, err)
+	}
 }
 
 func (repo *Local) RemoteBranchesList(_ context.Context) ([]string, error) {

@@ -72,6 +72,7 @@ type GitRepo interface {
 	ResolveAndCheckCommitFilePath(ctx context.Context, commit, path string, checkSymlinkTargetFunc func(resolvedPath string) error) (string, error)
 	ResolveCommitFilePath(ctx context.Context, commit, path string) (string, error)
 	TagCommit(ctx context.Context, tag string) (string, error)
+	TagsList(ctx context.Context) ([]string, error)
 	WalkCommitFiles(ctx context.Context, commit, dir string, pathMatcher path_matcher.PathMatcher, fileFunc func(notResolvedPath string) error) error
 
 	StatusPathList(ctx context.Context, pathMatcher path_matcher.PathMatcher) (list []string, err error)

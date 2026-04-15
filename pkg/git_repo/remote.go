@@ -333,8 +333,7 @@ func (repo *Remote) HeadCommitHash(ctx context.Context) (string, error) {
 }
 
 func (repo *Remote) HeadCommitTime(ctx context.Context) (*time.Time, error) {
-	time, err := baseHeadCommitTime(repo, ctx)
-	return time, err
+	return baseHeadCommitTime(repo, ctx)
 }
 
 func (repo *Remote) findReference(rawRepo *git.Repository, reference string) (string, error) {

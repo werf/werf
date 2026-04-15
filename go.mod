@@ -76,6 +76,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.39.0
 	go.uber.org/mock v0.5.0
 	golang.org/x/crypto v0.46.0
+	golang.org/x/mod v0.30.0
 	golang.org/x/net v0.48.0
 	golang.org/x/sys v0.39.0
 	gopkg.in/ini.v1 v1.67.0
@@ -135,7 +136,6 @@ require (
 	github.com/yannh/kubeconform v0.6.7 // indirect
 	github.com/zeebo/xxh3 v1.0.2 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
-	golang.org/x/mod v0.30.0 // indirect
 	mvdan.cc/sh/v3 v3.10.0 // indirect
 	oras.land/oras-go v1.2.5 // indirect
 )

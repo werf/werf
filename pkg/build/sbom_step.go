@@ -25,6 +25,12 @@ import (
 	"github.com/werf/werf/v2/pkg/storage"
 )
 
+//go:generate mockgen -source sbom_step.go -package mock -destination ../../test/mock/bom_patcher.go -mock_names BOMPatcherInterface=MockBOMPatcher
+
+type BOMPatcherInterface interface {
+	Apply(ctx context.Context, bom *cdx.BOM) (*cdx.BOM, error)
+}
+
 // ErrSbomNotAvailable indicates that SBOM for the given image is not available
 // (e.g. it was not built by werf, or the SBOM image is missing from the registry/local storage).
 // Callers should handle this as a non-fatal condition by emitting a warning.
@@ -49,7 +55,7 @@ func newSbomStep(
 	}
 }
 
-func (step *sbomStep) ConvergeWithMerge(ctx context.Context, werfImgName string, stageDesc *image.StageDesc, scanOpts scanner.ScanOptions, mergeOpts cyclonedxutil.MergeOpts) error {
+func (step *sbomStep) ConvergeWithMerge(ctx context.Context, werfImgName string, stageDesc *image.StageDesc, scanOpts scanner.ScanOptions, mergeOpts cyclonedxutil.MergeOpts, patcher BOMPatcherInterface) error {
 	sourceImageName := stageDesc.Info.Name
 	sbomImageName := sbomImage.ImageName(sourceImageName)
 
@@ -121,6 +127,13 @@ func (step *sbomStep) ConvergeWithMerge(ctx context.Context, werfImgName string,
 			resultBOM, err = cyclonedxutil.MergeBOMs(targetBOM, mergeOpts)
 			if err != nil {
 				return fmt.Errorf("merge BOMs: %w", err)
+			}
+		}
+
+		if patcher != nil {
+			resultBOM, err = patcher.Apply(ctx, resultBOM)
+			if err != nil {
+				return err
 			}
 		}
 

@@ -1,0 +1,15 @@
+project: werf-test-e2e-build-sbom-go-replace
+configVersion: 1
+build:
+  sbom:
+    enable: true
+    standard: cyclonedx@1.6
+---
+image: app
+from: golang:1.23-alpine
+git:
+  - add: /
+    to: /app
+shell:
+  install:
+    - cd /app && CGO_ENABLED=0 go build -o /bin/app .

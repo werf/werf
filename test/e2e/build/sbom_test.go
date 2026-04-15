@@ -911,7 +911,7 @@ var _ = Describe("SBOM cross-project merge", Label("e2e", "build", "sbom", "merg
 	)
 })
 
-var _ = Describe("GOST SBOM fields", Label("e2e", "build", "sbom", "gost"), func() {
+var _ = Describe("GOST SBOM fields", Label("e2e", "build", "sbom", "gost", "simple"), func() {
 	type expectedGostConfig struct {
 		AttackSurface    string
 		SecurityFunction string
@@ -1004,6 +1004,72 @@ var _ = Describe("GOST SBOM fields", Label("e2e", "build", "sbom", "gost"), func
 				SecurityFunction: "yes",
 			},
 		),
+	)
+})
+
+var _ = Describe("SBOM go-replace", Label("e2e", "build", "sbom", "go-replace", "simple"), func() {
+	DescribeTable("should resolve versions for locally-replaced Go modules",
+		func(ctx SpecContext, testOpts simpleTestOptions) {
+			By("initializing")
+			setupEnv(testOpts.setupEnvOptions)
+
+			contRuntime, err := contback.NewContainerBackend(testOpts.ContainerBackendMode)
+			if err == contback.ErrRuntimeUnavailable {
+				Skip(err.Error())
+			} else if err != nil {
+				Fail(err.Error())
+			}
+
+			By("preparing test repo")
+			repoDirname := "repo_sbom_go_replace"
+			fixtureRelPath := "sbom/go_replace"
+			SuiteData.InitTestRepo(ctx, repoDirname, fixtureRelPath)
+
+			// Create a git tag so version resolution picks it up
+			testRepoPath := SuiteData.GetTestRepoPath(repoDirname)
+			utils.RunSucceedCommand(ctx, testRepoPath, "git", "tag", "v1.0.0")
+
+			By("building images")
+			werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
+			reportProject := report.NewProjectWithReport(werfProject)
+			buildOut, buildReport := reportProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath("report_sbom_go_replace.json"), nil)
+
+			Expect(buildOut).To(ContainSubstring("Building stage"))
+
+			By("extracting and verifying SBOM")
+			reportRecord, ok := buildReport.Images["app"]
+			Expect(ok).To(BeTrue(), "app should be in build report")
+
+			bom := extractBOMFromSbomImage(ctx, contRuntime, reportRecord.DockerImageName)
+
+			By("verifying SBOM structure")
+			Expect(bom.BOMFormat).To(Equal("CycloneDX"))
+			Expect(bom.SpecVersion).To(Equal(cdx.SpecVersion1_6))
+			Expect(bom.Components).NotTo(BeNil())
+
+			components := *bom.Components
+
+			By("verifying main module version is resolved (not UNKNOWN)")
+			mainModule := findComponentByName(components, "example.com/app")
+			Expect(mainModule).NotTo(BeNil(), "main module example.com/app should be in SBOM components")
+			Expect(mainModule.Version).To(Equal("v1.0.0"))
+
+			By("verifying locally-replaced module version and name are resolved")
+			mylibModule := findComponentByName(components, "example.com/mylib")
+			Expect(mylibModule).NotTo(BeNil(), "locally-replaced module example.com/mylib should be in SBOM components")
+			Expect(mylibModule.Version).To(Equal("v1.0.0"))
+			Expect(mylibModule.PackageURL).To(Equal("pkg:golang/example.com/mylib@v1.0.0"))
+		},
+		Entry("with local repo using Vanilla Docker", simpleTestOptions{setupEnvOptions{
+			ContainerBackendMode:        "vanilla-docker",
+			WithLocalRepo:               true,
+			WithStagedDockerfileBuilder: false,
+		}}),
+		Entry("with local repo using BuildKit Docker", simpleTestOptions{setupEnvOptions{
+			ContainerBackendMode:        "buildkit-docker",
+			WithLocalRepo:               true,
+			WithStagedDockerfileBuilder: false,
+		}}),
 	)
 })
 

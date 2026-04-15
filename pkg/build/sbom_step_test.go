@@ -22,6 +22,7 @@ import (
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/logging"
 	"github.com/werf/werf/v2/pkg/sbom/cyclonedxutil"
+	"github.com/werf/werf/v2/pkg/sbom/gomod"
 	sbomImage "github.com/werf/werf/v2/pkg/sbom/image"
 	"github.com/werf/werf/v2/pkg/sbom/scanner"
 	"github.com/werf/werf/v2/test/mock"
@@ -103,6 +104,7 @@ var _ = Describe("SbomStep", func() {
 			ctx context.Context,
 			isLocalStorage bool,
 			mergeOpts cyclonedxutil.MergeOpts,
+			setupGitRepo func(ctx context.Context, repo *mock.MockGitRepo, commit, imageContext string) []byte,
 			setupMocks func(
 				ctx context.Context,
 				backend *mock.MockContainerBackend,
@@ -120,6 +122,14 @@ var _ = Describe("SbomStep", func() {
 			step.isLocalStorage = isLocalStorage
 
 			ctx = logging.WithLogger(ctx)
+			var patcher BOMPatcherInterface
+			if setupGitRepo != nil {
+				repo := mock.NewMockGitRepo(gomock.NewController(GinkgoT()))
+				commit := "0123456789abcdef0123456789abcdef01234567"
+				imageContext := "app"
+				setupGitRepo(ctx, repo, commit, imageContext)
+				patcher = gomod.NewBOMPatcher(repo, commit, imageContext)
+			}
 			stageDesc := &image.StageDesc{
 				Info: &image.Info{
 					Name: "docker.io/namespace/repo:e5c6ebcd2718ccfe74d01069a0d758e03d5a2554155ccdc01be0daff-1747987463184",
@@ -139,12 +149,13 @@ var _ = Describe("SbomStep", func() {
 			sbomImgLabels := step.prepareSbomLabelsWithMerge(ctx, stageDesc.Info.Labels, scanOpts, mergeOpts)
 			setupMocks(ctx, backend, stagesStorage, stageDesc, scanOpts, sbomImgLabels, imgFilters)
 
-			Expect(step.ConvergeWithMerge(ctx, "some-name", stageDesc, scanOpts, mergeOpts)).To(Succeed())
+			Expect(step.ConvergeWithMerge(ctx, "some-name", stageDesc, scanOpts, mergeOpts, patcher)).To(Succeed())
 		},
 		Entry(
 			"[local storage]: should not scan source image if sbom image already exists",
 			true,
 			cyclonedxutil.MergeOpts{},
+			nil,
 			func(
 				ctx context.Context,
 				backend *mock.MockContainerBackend,
@@ -163,6 +174,7 @@ var _ = Describe("SbomStep", func() {
 			"[local storage]: should scan source image if sbom image does not exist",
 			true,
 			cyclonedxutil.MergeOpts{},
+			nil,
 			func(
 				ctx context.Context,
 				backend *mock.MockContainerBackend,
@@ -189,6 +201,7 @@ var _ = Describe("SbomStep", func() {
 			"[remote storage]: should push sbom image if it exists locally",
 			false,
 			cyclonedxutil.MergeOpts{},
+			nil,
 			func(
 				ctx context.Context,
 				backend *mock.MockContainerBackend,
@@ -208,6 +221,7 @@ var _ = Describe("SbomStep", func() {
 			"[remote storage]: should not scan if sbom image is pulled from registry",
 			false,
 			cyclonedxutil.MergeOpts{},
+			nil,
 			func(
 				ctx context.Context,
 				backend *mock.MockContainerBackend,
@@ -225,6 +239,7 @@ var _ = Describe("SbomStep", func() {
 			"[remote storage]: should scan, build and push sbom image if not found",
 			false,
 			cyclonedxutil.MergeOpts{},
+			nil,
 			func(
 				ctx context.Context,
 				backend *mock.MockContainerBackend,
@@ -251,19 +266,102 @@ var _ = Describe("SbomStep", func() {
 				stagesStorage.EXPECT().PushIfNotExistSbomImage(ctx, sbomImage.ImageName(stageDesc.Info.Name)).Return(true, nil)
 			},
 		),
+		Entry(
+			"[go.mod]: should skip version resolution when go.mod is missing",
+			true,
+			cyclonedxutil.MergeOpts{},
+			func(ctx context.Context, repo *mock.MockGitRepo, commit, imageContext string) []byte {
+				repo.EXPECT().IsCommitFileExist(ctx, commit, filepath.Join(imageContext, "go.mod")).Return(false, nil)
+
+				return nil
+			},
+			func(
+				ctx context.Context,
+				backend *mock.MockContainerBackend,
+				stagesStorage *mock.MockStagesStorage,
+				stageDesc *image.StageDesc,
+				scanOpts scanner.ScanOptions,
+				sbomImgLabels label.LabelList,
+				imgFilters []util.Pair[string, string],
+			) {
+				backend.EXPECT().Images(ctx, container_backend.ImagesOptions{Filters: imgFilters}).Return(image.ImagesList{}, nil)
+
+				tmpImgId := "tmp-sbom-img-id"
+				backend.EXPECT().GenerateSBOM(ctx, scanOpts, gomock.Any()).Return(tmpImgId, nil)
+				backend.EXPECT().SaveImageToStream(ctx, tmpImgId).DoAndReturn(func(_ context.Context, _ string) (io.ReadCloser, error) {
+					return createEmptyBOMStream(), nil
+				}).AnyTimes()
+				backend.EXPECT().Rmi(ctx, tmpImgId, container_backend.RmiOpts{Force: true}).Return(nil)
+				backend.EXPECT().BuildDockerfile(ctx, gomock.Any(), gomock.Any()).Return("final-sbom-img-id", nil)
+				backend.EXPECT().Tag(ctx, "final-sbom-img-id", sbomImage.ImageName(stageDesc.Info.Name), container_backend.TagOpts{}).Return(nil)
+			},
+		),
+		Entry(
+			"[go.mod]: should use tag version when tag matches commit",
+			true,
+			cyclonedxutil.MergeOpts{},
+			func(ctx context.Context, repo *mock.MockGitRepo, commit, imageContext string) []byte {
+				goModPath := filepath.Join(imageContext, "go.mod")
+				goModContent := []byte("module example.com/app\n")
+				repo.EXPECT().IsCommitFileExist(ctx, commit, goModPath).Return(true, nil)
+				repo.EXPECT().ReadCommitFile(ctx, commit, goModPath).Return(goModContent, nil)
+				repo.EXPECT().TagsList(ctx).Return([]string{"v1.2.3"}, nil)
+				repo.EXPECT().TagCommit(ctx, "v1.2.3").Return(commit, nil)
+
+				return goModContent
+			},
+			func(
+				ctx context.Context,
+				backend *mock.MockContainerBackend,
+				stagesStorage *mock.MockStagesStorage,
+				stageDesc *image.StageDesc,
+				scanOpts scanner.ScanOptions,
+				sbomImgLabels label.LabelList,
+				imgFilters []util.Pair[string, string],
+			) {
+				backend.EXPECT().Images(ctx, container_backend.ImagesOptions{Filters: imgFilters}).Return(image.ImagesList{}, nil)
+
+				tmpImgId := "tmp-sbom-img-id"
+				backend.EXPECT().GenerateSBOM(ctx, scanOpts, gomock.Any()).Return(tmpImgId, nil)
+				backend.EXPECT().SaveImageToStream(ctx, tmpImgId).DoAndReturn(func(_ context.Context, _ string) (io.ReadCloser, error) {
+					return createEmptyBOMStream(), nil
+				}).AnyTimes()
+				backend.EXPECT().Rmi(ctx, tmpImgId, container_backend.RmiOpts{Force: true}).Return(nil)
+				backend.EXPECT().BuildDockerfile(ctx, gomock.Any(), gomock.Any()).Return("final-sbom-img-id", nil)
+				backend.EXPECT().Tag(ctx, "final-sbom-img-id", sbomImage.ImageName(stageDesc.Info.Name), container_backend.TagOpts{}).Return(nil)
+			},
+		),
+		Entry(
+			"[go.mod]: should fallback to pseudo version when tag mismatch",
+			true,
+			cyclonedxutil.MergeOpts{},
+			func(ctx context.Context, repo *mock.MockGitRepo, commit, imageContext string) []byte {
+				goModPath := filepath.Join(imageContext, "go.mod")
+				goModContent := []byte("module example.com/app\n")
+				repo.EXPECT().IsCommitFileExist(ctx, commit, goModPath).Return(true, nil)
+				repo.EXPECT().ReadCommitFile(ctx, commit, goModPath).Return(goModContent, nil)
+				repo.EXPECT().TagsList(ctx).Return([]string{"v1.2.3"}, nil)
+				repo.EXPECT().TagCommit(ctx, "v1.2.3").Return("deadbeefdeadbeefdeadbeefdeadbeefdeadbeef", nil)
+
+				return goModContent
+			},
+			func(ctx context.Context, backend *mock.MockContainerBackend, stagesStorage *mock.MockStagesStorage, stageDesc *image.StageDesc, scanOpts scanner.ScanOptions, sbomImgLabels label.LabelList, imgFilters []util.Pair[string, string]) {
+				backend.EXPECT().Images(ctx, container_backend.ImagesOptions{Filters: imgFilters}).Return(image.ImagesList{}, nil)
+
+				tmpImgId := "tmp-sbom-img-id"
+				backend.EXPECT().GenerateSBOM(ctx, scanOpts, gomock.Any()).Return(tmpImgId, nil)
+				backend.EXPECT().SaveImageToStream(ctx, tmpImgId).DoAndReturn(func(_ context.Context, _ string) (io.ReadCloser, error) {
+					return createEmptyBOMStream(), nil
+				}).AnyTimes()
+				backend.EXPECT().Rmi(ctx, tmpImgId, container_backend.RmiOpts{Force: true}).Return(nil)
+				backend.EXPECT().BuildDockerfile(ctx, gomock.Any(), gomock.Any()).Return("final-sbom-img-id", nil)
+				backend.EXPECT().Tag(ctx, "final-sbom-img-id", sbomImage.ImageName(stageDesc.Info.Name), container_backend.TagOpts{}).Return(nil)
+			},
+		),
 	)
 
 	DescribeTable("pullImageSbom()",
-		func(
-			ctx context.Context,
-			baseImageInfo *image.Info,
-			expectError bool,
-			expectedErrorMsg string,
-			setupMocks func(
-				ctx context.Context,
-				backend *mock.MockContainerBackend,
-				baseImageInfo *image.Info,
-			),
+		func(ctx context.Context, baseImageInfo *image.Info, expectError bool, expectedErrorMsg string, setupMocks func(ctx context.Context, backend *mock.MockContainerBackend, baseImageInfo *image.Info),
 		) {
 			backend := mock.NewMockContainerBackend(gomock.NewController(GinkgoT()))
 			stagesStorage := mock.NewMockStagesStorage(gomock.NewController(GinkgoT()))
