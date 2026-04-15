@@ -1,7 +1,6 @@
 package container_backend
 
 import (
-	"archive/tar"
 	"bufio"
 	"bytes"
 	"context"
@@ -351,17 +350,16 @@ func (backend *BuildahBackend) applyDataArchives(ctx context.Context, container 
 			return fmt.Errorf("unknown archive type %q", archive.Type)
 		}
 
+		var err error
 		var uid, gid *uint32
-		if archive.Owner != "" || archive.Group != "" {
-			var err error
-			if uid, gid, err = getUIDAndGID(archive.Owner, archive.Group, container.RootMount); err != nil {
-				return fmt.Errorf("get UID/GID for %s: %w", archive.To, err)
-			}
+		uid, gid, err = getUIDAndGID(archive.Owner, archive.Group, container.RootMount)
+		if err != nil {
+			return fmt.Errorf("error getting UID/GID: %w", err)
 		}
 
 		logboek.Context(ctx).Debug().LogF("Extracting archive into container path %s\n", archive.To)
 
-		if err := extractTarWithChown(archive.Archive, extractDestPath, uid, gid); err != nil {
+		if err := util.ExtractTar(archive.Archive, extractDestPath, util.ExtractTarOptions{UID: uid, GID: gid}); err != nil {
 			return fmt.Errorf("unable to extract data archive into %s: %w", archive.To, err)
 		}
 
@@ -1134,75 +1132,4 @@ func (backend *BuildahBackend) LoadImageFromStream(ctx context.Context, input io
 		return "", fmt.Errorf("unable to load image from stream: %w", err)
 	}
 	return imageID, nil
-}
-
-func extractTarWithChown(tarFileReader io.Reader, dstDir string, uid, gid *uint32) error {
-	if err := os.MkdirAll(dstDir, os.ModePerm); err != nil {
-		return fmt.Errorf("create dir %q: %w", dstDir, err)
-	}
-
-	tarReader := tar.NewReader(tarFileReader)
-	for {
-		hdr, err := tarReader.Next()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return fmt.Errorf("read tar: %w", err)
-		}
-
-		entryPath := filepath.Join(dstDir, hdr.Name)
-		fi := hdr.FileInfo()
-
-		switch hdr.Typeflag {
-		case tar.TypeDir:
-			if err := os.MkdirAll(entryPath, fi.Mode()); err != nil {
-				return fmt.Errorf("create dir %q: %w", entryPath, err)
-			}
-		case tar.TypeBlock, tar.TypeChar, tar.TypeReg, tar.TypeFifo:
-			if err := os.MkdirAll(filepath.Dir(entryPath), os.ModePerm); err != nil {
-				return fmt.Errorf("create dir %q: %w", filepath.Dir(entryPath), err)
-			}
-			f, err := os.OpenFile(entryPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, fi.Mode())
-			if err != nil {
-				return fmt.Errorf("create file %q: %w", entryPath, err)
-			}
-			if _, err := io.Copy(f, tarReader); err != nil {
-				f.Close()
-				return fmt.Errorf("write file %q: %w", entryPath, err)
-			}
-			f.Close()
-		case tar.TypeLink:
-			if err := os.MkdirAll(filepath.Dir(entryPath), os.ModePerm); err != nil {
-				return fmt.Errorf("create dir %q: %w", filepath.Dir(entryPath), err)
-			}
-			if err := os.Link(filepath.Join(dstDir, hdr.Linkname), entryPath); err != nil {
-				return fmt.Errorf("create hard link %q: %w", entryPath, err)
-			}
-		case tar.TypeSymlink:
-			if err := os.MkdirAll(filepath.Dir(entryPath), os.ModePerm); err != nil {
-				return fmt.Errorf("create dir %q: %w", filepath.Dir(entryPath), err)
-			}
-			if err := os.Symlink(hdr.Linkname, entryPath); err != nil {
-				return fmt.Errorf("create symlink %q: %w", entryPath, err)
-			}
-		default:
-			return fmt.Errorf("tar entry %q has unexpected type %d", hdr.Name, hdr.Typeflag)
-		}
-
-		if uid != nil || gid != nil {
-			chownUID, chownGID := -1, -1
-			if uid != nil {
-				chownUID = int(*uid)
-			}
-			if gid != nil {
-				chownGID = int(*gid)
-			}
-			if err := os.Lchown(entryPath, chownUID, chownGID); err != nil {
-				return fmt.Errorf("chown %q: %w", entryPath, err)
-			}
-		}
-	}
-
-	return nil
 }
