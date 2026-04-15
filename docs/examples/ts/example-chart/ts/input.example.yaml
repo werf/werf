@@ -1,0 +1,49 @@
+Capabilities:
+  APIVersions:
+    - v1
+  HelmVersion:
+    go_version: go1.25.0
+    version: v3.20
+  KubeVersion:
+    Major: "1"
+    Minor: "35"
+    Version: v1.35.0
+Chart:
+  APIVersion: v2
+  Annotations:
+    anno: value
+  AppVersion: 1.0.0
+  Condition: .helm.enabled
+  Description: .helm description
+  Home: https://example.org/home
+  Icon: https://example.org/icon
+  Keywords:
+    - .helm
+  Maintainers:
+    - Email: john@example.com
+      Name: john
+      URL: https://example.com/john
+  Name: .helm
+  Sources:
+    - https://example.org/.helm
+  Tags: .helm
+  Type: application
+  Version: 0.1.0
+Files:
+  myfile: "content"
+Release:
+  IsInstall: false
+  IsUpgrade: true
+  Name: .helm
+  Namespace: .helm
+  Revision: 2
+  Service: Helm
+Values:
+  image:
+    repository: nginx
+    tag: latest
+  replicaCount: 1
+  service:
+    enabled: true
+    port: 80
+    type: ClusterIP

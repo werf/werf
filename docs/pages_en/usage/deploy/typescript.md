@@ -3,160 +3,86 @@ title: TypeScript templates
 permalink: usage/deploy/typescript.html
 ---
 
-> Note: TypeScript templates are an experimental feature. To enable it, set the environment variable `NELM_FEAT_TYPESCRIPT=true`.
+> **Note**: TypeScript templates are an experimental feature. To enable it, set the environment variable `NELM_FEAT_TYPESCRIPT=true`.
 
-## Features
+## Overview
 
-In addition to the standard way of describing Kubernetes manifests via [Helm templates]({{ "/usage/deploy/templates.html" | true_relative_url }}), werf supports describing manifests in TypeScript:
+In addition to [Helm templates]({{ "/usage/deploy/templates.html" | true_relative_url }}), werf supports describing Kubernetes manifests in TypeScript. Helm templates and TypeScript templates can coexist in the same chart — the output of both engines is merged into a single YAML document.
 
-- type safety and IDE autocompletion;
-- third-party libraries (e.g. [kubernetes-models](https://github.com/tommy351/kubernetes-models-ts) for strict Kubernetes resource typing);
-- standard syntax — regular functions, loops, and conditionals instead of template engine constructs;
-- testing — ability to cover manifest generation logic with regular tests;
-- security — code runs in an isolated sandbox via [Deno](https://deno.com/) runtime with no access to the network, environment variables, or process execution. Filesystem access is limited to data exchange files between werf and Deno.
+TypeScript templates work out of the box: deploying a chart that contains `ts/` requires no additional tools or configuration — werf downloads the Deno runtime automatically and builds the bundle in memory.
 
-## How it works
+### Why TypeScript
 
-Manifests are generated from the `ts/` directory by the TypeScript engine and from the `templates/` directory by the Helm templating engine, then merged together as one YAML multidoc document.
+Helm's templating language works well for simple cases but becomes hard to maintain as chart complexity grows: deep nesting, lack of type checking, no IDE support, and no way to write tests. TypeScript solves these problems while keeping the same deployment workflow.
+
+### Features
+
+- Type safety and IDE autocompletion via `@nelm/chart-ts-sdk`.
+- Standard syntax — regular functions, loops, and conditionals instead of template engine constructs.
+- Third-party libraries (e.g. [kubernetes-models](https://github.com/tommy351/kubernetes-models-ts) for strict Kubernetes resource typing).
+- Testing — ability to cover manifest generation logic with regular TypeScript tests.
+- Security — code runs in an isolated sandbox via [Deno](https://deno.com/) runtime with no access to the network, environment variables, or process execution. Filesystem access is limited to data exchange files between werf and Deno.
 
 ## Quick start
-
-Initialize TypeScript files in an existing chart:
 
 ```shell
 werf chart ts init
 ```
 
-A `ts/` subdirectory with a ready-made example appears in the chart directory. Edit the generated files in `ts/src/` and run:
+A `ts/` subdirectory with a ready-made example appears in the chart directory. Try modifying `ts/src/deployment.ts` — for example, change the number of replicas — then preview the result:
+
+```shell
+werf render --dev
+```
+
+Deploy:
 
 ```shell
 werf converge --dev
 ```
 
-### Chart structure
+## Chart structure
 
-```
-.helm/
-  templates/              # Helm templates (as usual)
-  ts/                     # TypeScript templates
-    src/
-      index.ts            # Entry point
-      helpers.ts          # Helper functions
-      deployment.ts       # Deployment generator
-      service.ts          # Service generator
-    deno.json             # Deno configuration and dependencies
-  values.yaml
-  Chart.yaml
-```
-
-Example of TypeScript templates:
-
-```typescript
-// .helm/ts/src/deployment.ts:
-import type { WerfRenderContext } from '@nelm/chart-ts-sdk';
-import { getFullname, getLabels, getSelectorLabels } from './helpers.ts';
-
-export function newDeployment($: WerfRenderContext): object {
-  const name = getFullname($);
-
-  return {
-    apiVersion: 'apps/v1',
-    kind: 'Deployment',
-    metadata: {
-      name,
-      labels: getLabels($),
-    },
-    spec: {
-      replicas: $.Values.replicaCount ?? 1,
-      selector: {
-        matchLabels: getSelectorLabels($),
-      },
-      template: {
-        metadata: {
-          labels: getSelectorLabels($),
-        },
-        spec: {
-          containers: [
-            {
-              name: name,
-              image: ($.Values.image?.repository ?? 'nginx') + ':' + ($.Values.image?.tag ?? 'latest'),
-              ports: [
-                {
-                  name: 'http',
-                  containerPort: $.Values.service?.port ?? 80,
-                },
-              ],
-            },
-          ],
-        },
-      },
-    },
-  };
-}
-```
-
-```typescript
-// .helm/ts/src/index.ts:
-import { render, WerfRenderContext, RenderResult } from '@nelm/chart-ts-sdk';
-import { newDeployment } from './deployment.ts';
-import { newService } from './service.ts';
-
-function generate($: WerfRenderContext): RenderResult {
-  const manifests: object[] = [];
-
-  manifests.push(newDeployment($));
-
-  if ($.Values.service?.enabled !== false) {
-    manifests.push(newService($));
-  }
-
-  return { manifests };
-}
-
-await render(generate);
-```
-
-The entry point (`ts/src/index.ts` or `index.js`) must call `render` from [@nelm/chart-ts-sdk](https://github.com/werf/nelm-chart-ts-sdk). `generate` takes `$` (`WerfRenderContext`) and returns `RenderResult` — a list of JavaScript objects serialized to YAML. If no entry point is found, TypeScript rendering is skipped.
-
-## Root context
-
-TypeScript code receives the same [root context]({{ "/usage/deploy/values.html" | true_relative_url }}) as Helm templates via the variable `$` of the `WerfRenderContext` type:
-
-| Field | Type | Description                                                           |
-|-------|------|-----------------------------------------------------------------------|
-| `$.Values` | `WerfServiceValues` | Chart parameters + service values at `$.Values.global.werf` |
-| `$.Release` | `Release` | Release information                                                   |
-| `$.Chart` | `ChartMetadata` | Metadata from Chart.yaml                                              |
-| `$.Capabilities` | `Capabilities` | Cluster capabilities (API versions, Kubernetes version)               |
-| `$.Files` | `Record<string, Uint8Array>` | Raw chart files (except `templates/` and `ts/`)                       |
-
-For details on parameters and how they are constructed, see [Parametrize templates]({{ "/usage/deploy/values.html" | true_relative_url }}).
+{% tree_file_viewer 'examples/ts/example-chart' default_file='ts/src/index.ts' expanded=true %}
 
 ## Development flow
 
-### Environment Setup
+Install [Deno](https://docs.deno.com/runtime/getting_started/installation/) and follow the [setup guide](https://docs.deno.com/runtime/getting_started/setup_your_environment/) for your IDE/editor (VS Code, JetBrains, Neovim, etc.).
 
-Install [Deno](https://docs.deno.com/runtime/getting_started/installation/), then follow the [IDE setup guide](https://docs.deno.com/runtime/getting_started/setup_your_environment/) for your editor (VS Code, JetBrains, Neovim, etc.).
+Initialize TypeScript templates in the chart if not already initialized:
 
-### General flow
+```shell
+werf chart ts init
+```
 
-1. Install third-party libraries if needed.
-2. Edit TypeScript templates in `ts/src/`.
-3. Commit changes.
-4. Run werf commands (`werf converge`, `werf render`, etc.).
+Open the `ts/` directory in your editor as a regular Deno TS project.
 
-According to [giterminism policies]({{ "/usage/project_configuration/giterminism.html" | true_relative_url }}), any change must be committed to Git. Alternatively, you can use the `--dev` flag and skip the commit step.
+### Debugging
 
-### Third-party libraries
-
-Install libraries using `deno install` from the chart's `ts/` directory:
+You can use `input.example.yaml` as input context to debug your templates:
 
 ```shell
 cd .helm/ts
-deno install npm:kubernetes-models
+deno run src/index.ts --input-file input.example.yaml --output-file manifests.yaml
 ```
 
-The dependency is added to `deno.json` automatically. Usage example:
+The resulting YAML manifests will be written to `manifests.yaml`.
+
+### Code organization
+
+The `ts/` directory is a regular Deno/TypeScript project. You can work with it the same way you would with any TypeScript codebase — run scripts, write tests, use a debugger. Deno provides a rich set of tools for testing, linting, formatting, and more. See [Deno documentation](https://docs.deno.com/runtime/) for details.
+
+The codebase can be organized as you wish. The only requirement is that `ts/src/index.ts` exists and calls `render` from `@nelm/chart-ts-sdk`.
+
+### Third-party libraries
+
+Install libraries using `deno add`, for example install [kubernetes-models](https://github.com/tommy351/kubernetes-models-ts):
+
+```shell
+deno add npm:kubernetes-models
+```
+
+The dependency is added to `deno.json` automatically. Now you can use it:
 
 ```typescript
 // .helm/ts/src/deployment.ts:
@@ -166,51 +92,92 @@ export function newDeployment($: WerfRenderContext): object {
   return new Deployment({
     metadata: { name: 'myapp' },
     spec: {
-      replicas: $.Values.replicaCount ?? 1,
-      selector: { matchLabels: { app: 'myapp' } },
-      template: {
-        metadata: { labels: { app: 'myapp' } },
-        spec: {
-          containers: [{ name: 'myapp', image: 'nginx:latest' }],
-        },
-      },
+      // other fields
     },
   }).toJSON();
 }
 ```
 
-> Note: changed `deno.json` and `deno.lock` files must be committed to Git.
-
-## Building and distribution
-
-When running `werf converge`, `werf render`, `werf lint`, and `werf plan`, TypeScript code is built automatically — the bundle is assembled in memory and passed to Deno for execution.
-
-To explicitly build a JavaScript bundle:
-
+To ensure that everything actually works with the werf deno runtime, run:
 ```shell
-werf chart ts build
+werf lint --dev
 ```
 
-The resulting bundle is written to `ts/dist/bundle.js`. This file must be committed to Git.
-
-If `ts/dist/bundle.js` already exists, rendering uses it as-is. To force a rebuild from source:
-
 ```shell
-werf render --ignore-bundle-js
+werf render --dev
 ```
 
-Bundle-based deployment is also supported — `werf bundle publish` automatically includes the TypeScript bundle in the package, and `werf bundle apply` runs TypeScript rendering.
+## Default installation flow
 
-### Dependent charts
+Run `werf converge` — TypeScript is built into a bundle in memory and executed via Deno. The Deno binary is downloaded automatically on first use and cached locally. No extra steps needed.
 
-Dependent charts can also contain TypeScript code — rendering is recursive. For local charts in `charts` directory, TypeScript is rebuilt from source as usual. 
+> **Note**: According to [giterminism policies]({{ "/usage/project_configuration/giterminism.html" | true_relative_url }}), all changed files must be committed.
 
-For charts downloaded from a repository, only the prebuilt `ts/dist/bundle.js` is available (e.g. built during `werf bundle publish`), so rebuilding from source is not possible.
+## Isolated environments installation/distribution flow
 
-## Runtime environment
+For the isolated environments, where Deno cannot be downloaded automatically:
 
-The Deno binary is downloaded automatically on first use and cached locally. If automatic download isn't available (e.g. in an air-gapped environment), specify the path to a pre-installed binary:
+1. Publish the chart:
+   ```shell
+   werf bundle publish --repo example.org/mycompany/myapp
+   ```
+   This includes the prebuilt TypeScript bundle in the package.
 
-```shell
-werf render --deno-binary-path /usr/local/bin/deno
+2. On the target machine with isolated environment, download Deno manually and run:
+   ```shell
+   werf bundle apply --repo example.org/mycompany/myapp --deno-binary-path /usr/local/bin/deno
+   ```
+   Where `/usr/local/bin/deno` is the path to the local Deno binary. The TypeScript engine skips the build step and uses the prebuilt bundle for rendering.
+
+## SDK API overview
+
+TypeScript engine uses the [@nelm/chart-ts-sdk](https://github.com/werf/nelm-chart-ts-sdk) package.
+
+### `render(generate)`
+
+The entry point must call `render()`, passing a handler function that receives the render context and returns a `RenderResult`:
+
+```typescript
+await render(generate);
 ```
+
+Here `generate` could be a regular function or an async function.
+
+### `WerfRenderContext`
+
+The `generate` function receives `$` of type `WerfRenderContext` — the same context as in Helm templates:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `$.Values` | `WerfServiceValues` | Chart parameters + service values at `$.Values.global.werf` |
+| `$.Release` | `Release` | Release information |
+| `$.Chart` | `ChartMetadata` | Metadata from Chart.yaml |
+| `$.Capabilities` | `Capabilities` | Cluster capabilities (API versions, Kubernetes version) |
+| `$.Files` | `Record<string, Uint8Array>` | Raw chart files (except `templates/` and `ts/`) |
+
+For details on parameters and how they are constructed, see [Parametrize templates]({{ "/usage/deploy/values.html" | true_relative_url }}).
+
+### `RenderResult`
+
+The generate function returns `RenderResult` — an object with a `manifests` array. Each element is a plain JavaScript object representing a Kubernetes resource. Example output:
+
+```json
+{
+  "manifests": [
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": { "name": "myapp" },
+      "spec": { "..." }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": { "name": "myapp" },
+      "spec": { "..." }
+    }
+  ]
+}
+```
+
+Each object is serialized to YAML and included in the final rendered output.

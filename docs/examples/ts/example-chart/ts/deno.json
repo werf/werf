@@ -1,0 +1,8 @@
+{
+  "tasks": {
+    "build": "deno bundle --output=dist/bundle.js src/index.ts"
+  },
+  "imports": {
+    "@nelm/chart-ts-sdk": "npm:@nelm/chart-ts-sdk@^0.1.4"
+  }
+}
