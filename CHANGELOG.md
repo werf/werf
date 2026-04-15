@@ -7,6 +7,13 @@
 
 * **release:** force 2.65.4 ([07a5770](https://github.com/werf/werf/commit/07a5770f7dfa26466109334d1b92c330ae2c0216))
 
+## [2.65.4](https://github.com/werf/werf/compare/v2.65.3...v2.65.4) (2026-04-15)
+
+
+### Miscellaneous Chores
+
+* **release:** force 2.65.4 ([07a5770](https://github.com/werf/werf/commit/07a5770f7dfa26466109334d1b92c330ae2c0216))
+
 ## [2.65.3](https://github.com/werf/werf/compare/v2.65.2...v2.65.3) (2026-04-13)
 
 
