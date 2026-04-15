@@ -1166,6 +1166,11 @@ func (backend *BuildahBackend) LoadImageFromStream(ctx context.Context, input io
 	return imageID, nil
 }
 
+// lchownIfSet applies ownership to a path when uid or gid is explicitly requested.
+// Tar archives produced by git don't include an entry for the root destination
+// directory itself (e.g. /srv/app), only for its contents. Because os.MkdirAll
+// creates that directory as root:root, we must chown it separately — otherwise
+// git.add with owner/group applies ownership to files but not to the destination.
 func lchownIfSet(path string, uid, gid *uint32) error {
 	if uid == nil && gid == nil {
 		return nil
