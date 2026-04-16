@@ -21,6 +21,20 @@ func NewWorkdir(i *dockerfile.DockerfileStageInstruction[*instructions.WorkdirCo
 	return &Workdir{Base: NewBase(i, backend_instruction.NewWorkdir(*i.Data), dependencies, hasPrevStage, opts)}
 }
 
+func (stg *Workdir) ExpandDependencies(ctx context.Context, c stage.Conveyor, baseEnv map[string]string) error {
+	return stg.doExpandDependencies(ctx, c, baseEnv, stg)
+}
+
+func (stg *Workdir) ExpandInstruction(c stage.Conveyor, env map[string]string) error {
+	if err := stg.Base.ExpandInstruction(c, env); err != nil {
+		return err
+	}
+
+	stg.backendInstruction.WorkdirCommand = *stg.instruction.Data
+
+	return nil
+}
+
 func (stg *Workdir) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
 	var args []string
 

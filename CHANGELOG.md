@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.67.1](https://github.com/werf/werf/compare/v2.67.0...v2.67.1) (2026-04-16)
+
+
+### Bug Fixes
+
+* **build, buildah:** apply owner group to dst dir ([#7462](https://github.com/werf/werf/issues/7462)) ([fea6b40](https://github.com/werf/werf/commit/fea6b40124316be1d5742d06b81ff338c4d4be30))
+* **build, buildah:** correct expansion of instructions ([#7460](https://github.com/werf/werf/issues/7460)) ([aef6003](https://github.com/werf/werf/commit/aef600313e0642a1e4c070f826b28008050c10e6))
+
 ## [2.67.0](https://github.com/werf/werf/compare/v2.66.2...v2.67.0) (2026-04-14)
 
 
