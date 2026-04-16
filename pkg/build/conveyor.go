@@ -69,6 +69,10 @@ type Conveyor struct {
 	stageDigestMutex map[string]*sync.Mutex
 }
 
+func stageImageCacheKey(name, targetPlatform string) string {
+	return name + "\x00" + targetPlatform
+}
+
 type ConveyorCleanupFunc func(context.Context) error
 
 type ConveyorOptions struct {
@@ -928,21 +932,42 @@ func (c *Conveyor) GetStageImage(name string) *stage.StageImage {
 	c.GetServiceRWMutex("StageImages").RLock()
 	defer c.GetServiceRWMutex("StageImages").RUnlock()
 
-	return c.stageImages[name]
+	if stageImage := c.stageImages[stageImageCacheKey(name, "")]; stageImage != nil {
+		return stageImage
+	}
+
+	for key, stageImage := range c.stageImages {
+		if strings.HasPrefix(key, stageImageCacheKey(name, "")) {
+			return stageImage
+		}
+	}
+
+	return nil
+}
+
+func (c *Conveyor) getStageImageByPlatform(name, targetPlatform string) *stage.StageImage {
+	c.GetServiceRWMutex("StageImages").RLock()
+	defer c.GetServiceRWMutex("StageImages").RUnlock()
+
+	return c.stageImages[stageImageCacheKey(name, targetPlatform)]
 }
 
 func (c *Conveyor) UnsetStageImage(name string) {
 	c.GetServiceRWMutex("StageImages").Lock()
 	defer c.GetServiceRWMutex("StageImages").Unlock()
 
-	delete(c.stageImages, name)
+	for key := range c.stageImages {
+		if strings.HasPrefix(key, stageImageCacheKey(name, "")) {
+			delete(c.stageImages, key)
+		}
+	}
 }
 
 func (c *Conveyor) SetStageImage(stageImage *stage.StageImage) {
 	c.GetServiceRWMutex("StageImages").Lock()
 	defer c.GetServiceRWMutex("StageImages").Unlock()
 
-	c.stageImages[stageImage.Image.Name()] = stageImage
+	c.stageImages[stageImageCacheKey(stageImage.Image.Name(), stageImage.Image.GetTargetPlatform())] = stageImage
 }
 
 func extractLegacyStageImage(stageImage *stage.StageImage) *container_backend.LegacyStageImage {
@@ -953,7 +978,7 @@ func extractLegacyStageImage(stageImage *stage.StageImage) *container_backend.Le
 }
 
 func (c *Conveyor) GetOrCreateStageImage(name string, prevStageImage *stage.StageImage, stg stage.Interface, img *image.Image) *stage.StageImage {
-	if stageImage := c.GetStageImage(name); stageImage != nil {
+	if stageImage := c.getStageImageByPlatform(name, img.TargetPlatform); stageImage != nil {
 		return stageImage
 	}
 
