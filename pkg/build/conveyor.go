@@ -928,7 +928,28 @@ func (c *Conveyor) ProjectName() string {
 	return c.werfConfig.Meta.Project
 }
 
-func (c *Conveyor) getStageImageByPlatform(name, targetPlatform string) *stage.StageImage {
+func (c *Conveyor) GetStageImage(name string) *stage.StageImage {
+	c.GetServiceRWMutex("StageImages").RLock()
+	defer c.GetServiceRWMutex("StageImages").RUnlock()
+
+	prefix := stageImageCacheKey(name, "")
+	var found *stage.StageImage
+	for key, stageImage := range c.stageImages {
+		if !strings.HasPrefix(key, prefix) {
+			continue
+		}
+
+		if found != nil {
+			return nil
+		}
+
+		found = stageImage
+	}
+
+	return found
+}
+
+func (c *Conveyor) GetStageImageByPlatform(name, targetPlatform string) *stage.StageImage {
 	c.GetServiceRWMutex("StageImages").RLock()
 	defer c.GetServiceRWMutex("StageImages").RUnlock()
 
@@ -939,8 +960,9 @@ func (c *Conveyor) UnsetStageImage(name string) {
 	c.GetServiceRWMutex("StageImages").Lock()
 	defer c.GetServiceRWMutex("StageImages").Unlock()
 
+	prefix := stageImageCacheKey(name, "")
 	for key := range c.stageImages {
-		if strings.HasPrefix(key, stageImageCacheKey(name, "")) {
+		if strings.HasPrefix(key, prefix) {
 			delete(c.stageImages, key)
 		}
 	}
@@ -968,7 +990,7 @@ func extractLegacyStageImage(stageImage *stage.StageImage) *container_backend.Le
 }
 
 func (c *Conveyor) GetOrCreateStageImage(name string, prevStageImage *stage.StageImage, stg stage.Interface, img *image.Image) *stage.StageImage {
-	if stageImage := c.getStageImageByPlatform(name, img.TargetPlatform); stageImage != nil {
+	if stageImage := c.GetStageImageByPlatform(name, img.TargetPlatform); stageImage != nil {
 		return stageImage
 	}
 
