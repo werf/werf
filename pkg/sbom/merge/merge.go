@@ -15,7 +15,7 @@ import (
 	"github.com/werf/werf/v2/pkg/docker_registry"
 	"github.com/werf/werf/v2/pkg/sbom/convert"
 	"github.com/werf/werf/v2/pkg/sbom/cyclonedxutil"
-	"github.com/werf/werf/v2/pkg/sbom/image"
+	sbomImage "github.com/werf/werf/v2/pkg/sbom/image"
 )
 
 type Options struct {
@@ -179,7 +179,7 @@ func PullAndParseImages(ctx context.Context, registry docker_registry.Interface,
 	var digestToTag map[string]string
 	err := logboek.Context(ctx).Default().LogProcess("Building digest-to-tag index").DoError(func() error {
 		var err error
-		digestToTag, err = buildDigestToTagIndex(ctx, registry, repo)
+		digestToTag, err = sbomImage.BuildDigestToTagIndex(ctx, registry, repo)
 		if err != nil {
 			return err
 		}
@@ -199,14 +199,14 @@ func PullAndParseImages(ctx context.Context, registry docker_registry.Interface,
 		err := logboek.Context(ctx).Default().
 			LogProcess("[%d/%d] %s", idx, total, imageName).
 			DoError(func() error {
-				sbomRef, err := resolveSBOMReference(repo, imageDigest, digestToTag)
+				sbomRef, err := sbomImage.ResolveSBOMReference(repo, imageDigest, digestToTag)
 				if err != nil {
 					return fmt.Errorf("resolve SBOM reference for %q: %w", imageName, err)
 				}
 
 				logboek.Context(ctx).Default().LogFDetails("sbom reference: %s\n", sbomRef)
 
-				bom, err := image.PullCycloneDX16BOM(ctx, registry, sbomRef)
+				bom, err := sbomImage.PullCycloneDX16BOM(ctx, registry, sbomRef)
 				if err != nil {
 					return fmt.Errorf("unable to pull SBOM for %q (%s): %w", imageName, sbomRef, err)
 				}
@@ -225,50 +225,6 @@ func PullAndParseImages(ctx context.Context, registry docker_registry.Interface,
 	}
 
 	return images, nil
-}
-
-func resolveSBOMReference(repo, imageDigest string, digestToTag map[string]string) (string, error) {
-	tag, ok := digestToTag[imageDigest]
-	if !ok {
-		return "", fmt.Errorf("no tag found for digest %s in repo %s", imageDigest, repo)
-	}
-
-	return image.BaseImageName(repo, tag), nil
-}
-
-func buildDigestToTagIndex(ctx context.Context, registry docker_registry.Interface, repo string) (map[string]string, error) {
-	tags, err := registry.Tags(ctx, repo)
-	if err != nil {
-		return nil, fmt.Errorf("list tags for %s: %w", repo, err)
-	}
-
-	result := make(map[string]string, len(tags))
-	for _, tag := range tags {
-		if strings.HasSuffix(tag, "-sbom") {
-			continue
-		}
-
-		ref := fmt.Sprintf("%s:%s", repo, tag)
-
-		info, err := registry.TryGetRepoImage(ctx, ref)
-		if err != nil {
-			return nil, fmt.Errorf("get image info for %s: %w", ref, err)
-		}
-		if info == nil {
-			continue
-		}
-
-		d := info.GetDigest()
-		if d == "" {
-			continue
-		}
-
-		if _, exists := result[d]; !exists {
-			result[d] = tag
-		}
-	}
-
-	return result, nil
 }
 
 func WriteOutput(data []byte, outputPath string) error {

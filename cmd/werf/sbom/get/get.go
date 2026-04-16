@@ -19,6 +19,7 @@ import (
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
 	"github.com/werf/werf/v2/pkg/sbom/extract"
 	sbomImage "github.com/werf/werf/v2/pkg/sbom/image"
+	"github.com/werf/werf/v2/pkg/storage"
 	"github.com/werf/werf/v2/pkg/tmp_manager"
 	"github.com/werf/werf/v2/pkg/true_git"
 	"github.com/werf/werf/v2/pkg/werf/global_warnings"
@@ -28,6 +29,9 @@ var commonCmdData common.CmdData
 
 func NewCmd(ctx context.Context) *cobra.Command {
 	ctx = common.NewContextWithCmdData(ctx, &commonCmdData)
+
+	var tagFlag string
+	var digestFlag string
 
 	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:                   "get [IMAGE_NAME]",
@@ -47,9 +51,22 @@ func NewCmd(ctx context.Context) *cobra.Command {
 				return err
 			}
 
+			if tagFlag != "" && digestFlag != "" {
+				common.PrintHelp(cmd)
+				return fmt.Errorf("--tag and --digest are mutually exclusive")
+			}
+
 			common.LogVersion()
 
 			return common.LogRunningTime(func() error {
+				if tagFlag != "" {
+					return runGetByTag(ctx, tagFlag)
+				}
+
+				if digestFlag != "" {
+					return runGetByDigest(ctx, digestFlag)
+				}
+
 				return runGet(ctx, args[0])
 			})
 		},
@@ -107,7 +124,125 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	lo.Must0(common.SetupKubeConnectionFlags(&commonCmdData, cmd))
 
+	cmd.Flags().StringVarP(&tagFlag, "tag", "", "", "Content-based tag of the image to get SBOM for (mutually exclusive with --digest)")
+	cmd.Flags().StringVarP(&digestFlag, "digest", "", "", "Digest of the image to get SBOM for (mutually exclusive with --tag)")
+
 	return cmd
+}
+
+func runGetByTag(ctx context.Context, tag string) error {
+	global_warnings.PostponeMultiwerfNotUpToDateWarning(ctx)
+
+	commonManager, ctx, err := common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
+		Cmd:                         &commonCmdData,
+		InitWerf:                    true,
+		InitProcessContainerBackend: true,
+		InitDockerRegistry:          true,
+	})
+	if err != nil {
+		return fmt.Errorf("component init error: %w", err)
+	}
+
+	defer func() {
+		if err := tmp_manager.DelegateCleanup(ctx); err != nil {
+			logboek.Context(ctx).Warn().LogF("Temporary files cleanup preparation failed: %s\n", err)
+		}
+	}()
+
+	repoAddr, err := commonCmdData.Repo.GetAddress()
+	if err != nil || repoAddr == storage.LocalStorageAddress {
+		return fmt.Errorf("--repo is required when using --tag")
+	}
+
+	sbomRef := sbomImage.BaseImageName(repoAddr, tag)
+	containerBackend := commonManager.ContainerBackend()
+
+	sbomJSON, err := getRawSbom(ctx, containerBackend, repoAddr, sbomRef)
+	if err != nil {
+		return err
+	}
+
+	return writeSbomToStdout(sbomJSON)
+}
+
+func runGetByDigest(ctx context.Context, imageDigest string) error {
+	global_warnings.PostponeMultiwerfNotUpToDateWarning(ctx)
+
+	_, ctx, err := common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
+		Cmd:                &commonCmdData,
+		InitWerf:           true,
+		InitDockerRegistry: true,
+	})
+	if err != nil {
+		return fmt.Errorf("component init error: %w", err)
+	}
+
+	defer func() {
+		if err := tmp_manager.DelegateCleanup(ctx); err != nil {
+			logboek.Context(ctx).Warn().LogF("Temporary files cleanup preparation failed: %s\n", err)
+		}
+	}()
+
+	repoAddr, err := commonCmdData.Repo.GetAddress()
+	if err != nil || repoAddr == storage.LocalStorageAddress {
+		return fmt.Errorf("--repo is required when using --digest")
+	}
+
+	registry, err := common.CreateDockerRegistry(ctx, repoAddr, *commonCmdData.InsecureRegistry, *commonCmdData.SkipTlsVerifyRegistry)
+	if err != nil {
+		return fmt.Errorf("create docker registry: %w", err)
+	}
+
+	digestToTag, err := sbomImage.BuildDigestToTagIndex(ctx, registry, repoAddr)
+	if err != nil {
+		return fmt.Errorf("build digest-to-tag index: %w", err)
+	}
+
+	sbomRef, err := sbomImage.ResolveSBOMReference(repoAddr, imageDigest, digestToTag)
+	if err != nil {
+		return err
+	}
+
+	sbomJSON, err := sbomImage.PullRawSbom(ctx, registry, sbomRef)
+	if err != nil {
+		return fmt.Errorf("pull SBOM image: %w", err)
+	}
+
+	return writeSbomToStdout(sbomJSON)
+}
+
+func getRawSbom(ctx context.Context, containerBackend container_backend.ContainerBackend, repoAddr, sbomRef string) ([]byte, error) {
+	opener := func() (io.ReadCloser, error) {
+		return containerBackend.SaveImageToStream(ctx, sbomRef)
+	}
+
+	sbomJSON, err := extract.FromImageBytes(opener)
+	if err == nil {
+		return sbomJSON, nil
+	}
+
+	logboek.Context(ctx).Info().LogF("SBOM image not found in local cache, pulling from registry\n")
+
+	registry, err := common.CreateDockerRegistry(ctx, repoAddr, *commonCmdData.InsecureRegistry, *commonCmdData.SkipTlsVerifyRegistry)
+	if err != nil {
+		return nil, fmt.Errorf("create docker registry: %w", err)
+	}
+
+	sbomJSON, err = sbomImage.PullRawSbom(ctx, registry, sbomRef)
+	if err != nil {
+		return nil, fmt.Errorf("pull SBOM image: %w", err)
+	}
+
+	return sbomJSON, nil
+}
+
+func writeSbomToStdout(data []byte) error {
+	return logboek.Streams().DoErrorWithoutProxyStreamDataFormatting(func() error {
+		if _, err := io.Copy(os.Stdout, bytes.NewReader(data)); err != nil {
+			return fmt.Errorf("write SBOM to stdout: %w", err)
+		}
+		return nil
+	})
 }
 
 func runGet(ctx context.Context, requestedImageName string) error {
@@ -234,12 +369,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		return fmt.Errorf("unable to find artifact file: %w", err)
 	}
 
-	return logboek.Streams().DoErrorWithoutProxyStreamDataFormatting(func() error {
-		if _, err = io.Copy(os.Stdout, bytes.NewReader(artifactContent)); err != nil {
-			return fmt.Errorf("unable to redirect artifact file content into stdout: %w", err)
-		}
-		return nil
-	})
+	return writeSbomToStdout(artifactContent)
 }
 
 func getSbomImageName(exportedImages []*image.Image, requestedImageName string) (string, error) {

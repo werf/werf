@@ -68,6 +68,8 @@ werf sbom get [IMAGE_NAME] [options]
             multiple).
             Also, can be specified with $WERF_DEV_IGNORE_* (e.g. $WERF_DEV_IGNORE_TESTS=*_test.go,  
             $WERF_DEV_IGNORE_DOCS=path/to/docs)
+      --digest=""
+            Digest of the image to get SBOM for (mutually exclusive with --tag)
       --dir=""
             Use specified project directory where project’s werf.yaml and other configuration files 
             should reside (default $WERF_DIR or current working directory)
@@ -285,6 +287,8 @@ werf sbom get [IMAGE_NAME] [options]
             
             The same address should be specified for all werf processes that work with a single     
             repo. :local address allows execution of werf processes from a single host only
+      --tag=""
+            Content-based tag of the image to get SBOM for (mutually exclusive with --digest)
       --tmp-dir=""
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
       --virtual-merge=false

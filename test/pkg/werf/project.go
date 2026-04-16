@@ -256,9 +256,7 @@ func (p *Project) SbomGet(ctx context.Context, opts *SbomGetOptions) (combinedOu
 	}
 	args := append([]string{"sbom", "get"}, opts.ExtraArgs...)
 
-	outb := p.RunCommand(ctx, args, CommonOptions{
-		ShouldFail: opts.ShouldFail,
-	})
+	outb := p.RunCommand(ctx, args, opts.CommonOptions)
 
 	return string(outb)
 }
