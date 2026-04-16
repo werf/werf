@@ -4,7 +4,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/werf/v2/cmd/werf/common/units"
+	"github.com/werf/werf/v2/pkg/host_cleaning/units"
 )
 
 var _ = Describe("HostCleanup", func() {

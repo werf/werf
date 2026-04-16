@@ -8,9 +8,9 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/werf/common-go/pkg/util"
-	"github.com/werf/werf/v2/cmd/werf/common/units"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/host_cleaning"
+	"github.com/werf/werf/v2/pkg/host_cleaning/units"
 	"github.com/werf/werf/v2/pkg/util/option"
 )
 
