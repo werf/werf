@@ -13,20 +13,20 @@ Chart:
   Annotations:
     anno: value
   AppVersion: 1.0.0
-  Condition: .helm.enabled
-  Description: .helm description
+  Condition: ts-chart-example.enabled
+  Description: ts-chart-example description
   Home: https://example.org/home
   Icon: https://example.org/icon
   Keywords:
-    - .helm
+    - ts-chart-example
   Maintainers:
     - Email: john@example.com
       Name: john
       URL: https://example.com/john
-  Name: .helm
+  Name: ts-chart-example
   Sources:
-    - https://example.org/.helm
-  Tags: .helm
+    - https://example.org/ts-chart-example
+  Tags: ts-chart-example
   Type: application
   Version: 0.1.0
 Files:
@@ -34,11 +34,38 @@ Files:
 Release:
   IsInstall: false
   IsUpgrade: true
-  Name: .helm
-  Namespace: .helm
+  Name: ts-chart-example
+  Namespace: ts-chart-example
   Revision: 2
   Service: Helm
 Values:
+  global:
+    werf:
+      name: myapp
+      version: v2.35.0
+      repo: example.org/mycompany/myapp
+      env: production
+      images:
+        app:
+          registry: example.org
+          namespace: mycompany
+          name: myapp
+          tag: a1b2c3d4-1234567890
+          digest: "sha256:abcdef1234567890"
+          tag_digest: "a1b2c3d4-1234567890@sha256:abcdef1234567890"
+          image: example.org/mycompany/myapp
+          repository: mycompany/myapp
+          ref: "example.org/mycompany/myapp:a1b2c3d4-1234567890@sha256:abcdef1234567890"
+          ref_tag: "example.org/mycompany/myapp:a1b2c3d4-1234567890"
+          repository_ref: "mycompany/myapp:a1b2c3d4-1234567890@sha256:abcdef1234567890"
+          repository_tag: "mycompany/myapp:a1b2c3d4-1234567890"
+          name_ref: "myapp:a1b2c3d4-1234567890@sha256:abcdef1234567890"
+          name_tag: "myapp:a1b2c3d4-1234567890"
+      commit:
+        date:
+          human: "2025-01-15 12:00:00 +0000"
+          unix: 1736942400
+        hash: a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2
   image:
     repository: nginx
     tag: latest

@@ -25,6 +25,8 @@ Helm's templating language works well for simple cases but becomes hard to maint
 
 ## Quick start
 
+Run the following command in your chart directory to initialize TypeScript templates files:
+
 ```shell
 werf chart ts init
 ```
@@ -55,34 +57,29 @@ Initialize TypeScript templates in the chart if not already initialized:
 werf chart ts init
 ```
 
-Open the `ts/` directory in your editor as a regular Deno TS project.
+### Working with codebase
 
-### Debugging
-
-You can use `input.example.yaml` as input context to debug your templates:
-
-```shell
-cd .helm/ts
-deno run src/index.ts --input-file input.example.yaml --output-file manifests.yaml
-```
-
-The resulting YAML manifests will be written to `manifests.yaml`.
-
-### Code organization
-
-The `ts/` directory is a regular Deno/TypeScript project. You can work with it the same way you would with any TypeScript codebase — run scripts, write tests, use a debugger. Deno provides a rich set of tools for testing, linting, formatting, and more. See [Deno documentation](https://docs.deno.com/runtime/) for details.
+Open the `ts/` directory in your editor as a regular Deno/TypeScript project. You can work with it the same way you would with any TypeScript codebase — run scripts, write tests, use a debugger. Deno provides a rich set of tools for testing, linting, formatting, and more. See [Deno documentation](https://docs.deno.com/runtime/) for details.
 
 The codebase can be organized as you wish. The only requirement is that `ts/src/index.ts` exists and calls `render` from `@nelm/chart-ts-sdk`.
 
+To debug templates rendering, you can use `dev` task from `ts/deno.json`:
+
+```shell
+cd .helm/ts
+deno task dev
+```
+This will run `render` function from `ts/src/index.ts` with the example context from `ts/input.example.yaml`. The resulting YAML will be printed to the console below the `Rendered manifests:` message.
+
 ### Third-party libraries
 
-Install libraries using `deno add`, for example install [kubernetes-models](https://github.com/tommy351/kubernetes-models-ts):
+Install libraries using `deno add`, for example, try to install [kubernetes-models](https://github.com/tommy351/kubernetes-models-ts):
 
 ```shell
 deno add npm:kubernetes-models
 ```
 
-The dependency is added to `deno.json` automatically. Now you can use it:
+The dependency is added to `deno.json` automatically. Now you can import and use it:
 
 ```typescript
 // .helm/ts/src/deployment.ts:
@@ -123,7 +120,7 @@ For the isolated environments, where Deno cannot be downloaded automatically:
    ```
    This includes the prebuilt TypeScript bundle in the package.
 
-2. On the target machine with isolated environment, download Deno manually and run:
+2. On the target machine with an isolated environment (no network access), download Deno manually and run:
    ```shell
    werf bundle apply --repo example.org/mycompany/myapp --deno-binary-path /usr/local/bin/deno
    ```
@@ -155,7 +152,7 @@ The `generate` function receives `$` of type `WerfRenderContext` — the same co
 | `$.Capabilities` | `Capabilities` | Cluster capabilities (API versions, Kubernetes version) |
 | `$.Files` | `Record<string, Uint8Array>` | Raw chart files (except `templates/` and `ts/`) |
 
-For details on parameters and how they are constructed, see [Parametrize templates]({{ "/usage/deploy/values.html" | true_relative_url }}).
+See the example context in `ts/input.example.yaml`. For details on parameters and how they are constructed, see [Parametrize templates]({{ "/usage/deploy/values.html" | true_relative_url }}).
 
 ### `RenderResult`
 
