@@ -1137,7 +1137,7 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 
 	// use newly built image
 	newStageImageName, stageCreationTs := phase.Conveyor.StorageManager.GenerateStageDescCreationTs(stg.GetDigest(), stageDescSet)
-	phase.Conveyor.UnsetStageImage(stageImage.Image.Name())
+	phase.Conveyor.UnsetStageImageByPlatform(stageImage.Image.Name(), stageImage.Image.GetTargetPlatform())
 	stageImage.Image.SetName(newStageImageName)
 	phase.Conveyor.SetStageImage(stageImage)
 

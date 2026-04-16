@@ -928,7 +928,7 @@ func (c *Conveyor) ProjectName() string {
 	return c.werfConfig.Meta.Project
 }
 
-func (c *Conveyor) GetStageImage(name string) *stage.StageImage {
+func (c *Conveyor) getStageImage(name string) *stage.StageImage {
 	c.GetServiceRWMutex("StageImages").RLock()
 	defer c.GetServiceRWMutex("StageImages").RUnlock()
 
@@ -961,6 +961,13 @@ func (c *Conveyor) UnsetStageImage(name string) {
 			delete(c.stageImages, key)
 		}
 	}
+}
+
+func (c *Conveyor) UnsetStageImageByPlatform(name, targetPlatform string) {
+	c.GetServiceRWMutex("StageImages").Lock()
+	defer c.GetServiceRWMutex("StageImages").Unlock()
+
+	delete(c.stageImages, stageImageCacheKey(name, targetPlatform))
 }
 
 func (c *Conveyor) SetStageImage(stageImage *stage.StageImage) {
