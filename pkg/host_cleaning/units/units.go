@@ -6,12 +6,12 @@ storage thresholds in CLI flags. It supports both percentages and absolute sizes
 
 Final Specification (SDD):
 
-| Category           | Scenario                                | Input Examples                                             | Result / Logic                                                                                             |
-|--------------------|-----------------------------------------|------------------------------------------------------------|------------------------------------------------------------------------------------------------------------|
-| Simple Units       | Using percentages (Legacy)              | usage: "70", margin: "10"                                  | Parsed as percentages. Threshold = (Total * 70) / 100.                                                     |
-| Simple Units       | Using absolute sizes                    | usage: "50GB", margin: "5GB"                               | Parsed as bytes. Threshold = ValueInBytes.                                                                 |
-| Combined Units     | Different units for DIFFERENT groups    | backend-usage: "70", local-cache-usage: "10GB"             | VALID. Each group is independent.                                                                          |
-| Mixed Units        | Different units within SAME group       | backend-usage: "100GB", backend-margin: "5"                | VALIDATION ERROR. Unit consistency is required within a group.                                            |
+| Category        | Scenario                             | Input Examples                                 | Result / Logic                                                 |
+|-----------------|--------------------------------------|------------------------------------------------|----------------------------------------------------------------|
+| Simple Units    | Using percentages (Legacy)           | usage: "70", margin: "10"                      | Parsed as percentages. Threshold = (Total * 70) / 100.         |
+| Simple Units    | Using absolute sizes                 | usage: "50GB", margin: "5GB"                   | Parsed as bytes. Threshold = ValueInBytes.                     |
+| Combined Units  | Different units for DIFFERENT groups | backend-usage: "70", local-cache-usage: "10GB" | VALID. Each group is independent.                              |
+| Mixed Units     | Different units within SAME group    | backend-usage: "100GB", backend-margin: "5"    | VALIDATION ERROR. Unit consistency is required within a group. |
 
 Parsing behavior and validation notes:
 - Parsing Priority: Input is ALWAYS attempted to be parsed as a percentage (pure number) first
