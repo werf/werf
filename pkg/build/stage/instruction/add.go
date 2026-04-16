@@ -23,6 +23,20 @@ func NewAdd(i *dockerfile.DockerfileStageInstruction[*instructions.AddCommand], 
 	return &Add{Base: NewBase(i, backend_instruction.NewAdd(*i.Data), dependencies, hasPrevStage, opts)}
 }
 
+func (stg *Add) ExpandDependencies(ctx context.Context, c stage.Conveyor, baseEnv map[string]string) error {
+	return stg.doExpandDependencies(ctx, c, baseEnv, stg)
+}
+
+func (stg *Add) ExpandInstruction(c stage.Conveyor, env map[string]string) error {
+	if err := stg.Base.ExpandInstruction(c, env); err != nil {
+		return err
+	}
+
+	stg.backendInstruction.AddCommand = *stg.instruction.Data
+
+	return nil
+}
+
 func (stg *Add) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
 	var args []string
 
