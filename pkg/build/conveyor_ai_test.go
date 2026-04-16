@@ -28,6 +28,10 @@ func TestAI_Conveyor_StageImageCacheSeparatesPlatforms(t *testing.T) {
 	require.Same(t, arm64Image, conveyor.getStageImageByPlatform("alpine:3.22.3", "linux/arm64"))
 	assert.NotSame(t, conveyor.getStageImageByPlatform("alpine:3.22.3", "linux/amd64"), conveyor.getStageImageByPlatform("alpine:3.22.3", "linux/arm64"))
 
+	conveyor.UnsetStageImageByPlatform("alpine:3.22.3", "linux/amd64")
+	assert.Nil(t, conveyor.getStageImageByPlatform("alpine:3.22.3", "linux/amd64"))
+	assert.Same(t, arm64Image, conveyor.getStageImageByPlatform("alpine:3.22.3", "linux/arm64"))
+
 	conveyor.UnsetStageImage("alpine:3.22.3")
 	assert.Nil(t, conveyor.getStageImageByPlatform("alpine:3.22.3", "linux/amd64"))
 	assert.Nil(t, conveyor.getStageImageByPlatform("alpine:3.22.3", "linux/arm64"))

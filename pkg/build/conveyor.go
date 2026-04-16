@@ -928,23 +928,6 @@ func (c *Conveyor) ProjectName() string {
 	return c.werfConfig.Meta.Project
 }
 
-func (c *Conveyor) getStageImage(name string) *stage.StageImage {
-	c.GetServiceRWMutex("StageImages").RLock()
-	defer c.GetServiceRWMutex("StageImages").RUnlock()
-
-	if stageImage := c.stageImages[stageImageCacheKey(name, "")]; stageImage != nil {
-		return stageImage
-	}
-
-	for key, stageImage := range c.stageImages {
-		if strings.HasPrefix(key, stageImageCacheKey(name, "")) {
-			return stageImage
-		}
-	}
-
-	return nil
-}
-
 func (c *Conveyor) getStageImageByPlatform(name, targetPlatform string) *stage.StageImage {
 	c.GetServiceRWMutex("StageImages").RLock()
 	defer c.GetServiceRWMutex("StageImages").RUnlock()
