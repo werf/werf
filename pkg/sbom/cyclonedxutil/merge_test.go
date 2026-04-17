@@ -448,6 +448,61 @@ var _ = Describe("MergeBOMs", func() {
 			},
 		),
 	)
+
+	DescribeTable("ensures unique bom-refs after merge",
+		func(target *cdx.BOM, opts MergeOpts, expectedCompCount int) {
+			result, err := MergeBOMs(target, opts)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(result.Components).ToNot(BeNil())
+			Expect(*result.Components).To(HaveLen(expectedCompCount))
+
+			refs := make([]string, 0, expectedCompCount)
+			for _, c := range *result.Components {
+				if c.BOMRef != "" {
+					refs = append(refs, c.BOMRef)
+				}
+			}
+			Expect(uniqueStrings(refs)).To(BeTrue(), "all bom-refs must be unique")
+
+			if result.Dependencies != nil {
+				refSet := map[string]struct{}{}
+				for _, r := range refs {
+					refSet[r] = struct{}{}
+				}
+				for _, dep := range *result.Dependencies {
+					_, ok := refSet[dep.Ref]
+					Expect(ok).To(BeTrue(), "dependency ref %q must point to an existing component", dep.Ref)
+				}
+			}
+		},
+
+		Entry("same bom-ref but different PURL — both survive with unique refs",
+			&cdx.BOM{
+				SpecVersion:  cdx.SpecVersion1_6,
+				Components:   &[]cdx.Component{{BOMRef: "curl", PackageURL: "pkg:deb/curl@8.12", Name: "curl", Version: "8.12"}},
+				Dependencies: &[]cdx.Dependency{{Ref: "curl"}},
+			},
+			MergeOpts{BaseBOM: &cdx.BOM{
+				SpecVersion:  cdx.SpecVersion1_6,
+				Components:   &[]cdx.Component{{BOMRef: "curl", PackageURL: "pkg:deb/curl@7.74", Name: "curl", Version: "7.74"}},
+				Dependencies: &[]cdx.Dependency{{Ref: "curl"}},
+			}},
+			2,
+		),
+		Entry("same PURL from different BOMs — kept (redundancy over dedup)",
+			&cdx.BOM{
+				SpecVersion:  cdx.SpecVersion1_6,
+				Components:   &[]cdx.Component{{BOMRef: "curl-target", PackageURL: "pkg:deb/curl@8.12", Name: "curl", Version: "8.12"}},
+				Dependencies: &[]cdx.Dependency{{Ref: "curl-target", Dependencies: &[]string{"dep-b"}}},
+			},
+			MergeOpts{BaseBOM: &cdx.BOM{
+				SpecVersion:  cdx.SpecVersion1_6,
+				Components:   &[]cdx.Component{{BOMRef: "curl-base", PackageURL: "pkg:deb/curl@8.12", Name: "curl", Version: "8.12"}},
+				Dependencies: &[]cdx.Dependency{{Ref: "curl-base", Dependencies: &[]string{"dep-a"}}},
+			}},
+			2,
+		),
+	)
 })
 
 var _ = Describe("ToJSON", func() {

@@ -414,11 +414,7 @@ var _ = Describe("SBOM merge", Label("e2e", "build", "sbom", "merge", "simple"),
 				By("verifying Dependencies with strict field validation")
 				Expect(bom.Dependencies).NotTo(BeNil(), "SBOM should have dependencies")
 				deps := *bom.Dependencies
-				customDep := findDependencyByRef(deps, "custom-component")
-				assertDependencyEquals(customDep, expectedDependency{
-					Ref:       "custom-component",
-					DependsOn: []string{"dep-a", "dep-b"},
-				})
+				assertDependencyByName(deps, components, "custom-component", []string{"dep-a", "dep-b"})
 				Expect(len(deps)).To(Equal(1), "should have exactly 1 dependency")
 
 				By("verifying Declarations from fragment")
@@ -517,11 +513,7 @@ var _ = Describe("SBOM merge", Label("e2e", "build", "sbom", "merge", "simple"),
 			By("verifying base-level-0 dependencies")
 			Expect(baseBom.Dependencies).NotTo(BeNil(), "base-level-0 SBOM should have dependencies")
 			baseDeps := *baseBom.Dependencies
-			baseCurlDep := findDependencyByRef(baseDeps, "curl")
-			assertDependencyEquals(baseCurlDep, expectedDependency{
-				Ref:       "curl",
-				DependsOn: []string{"libcurl"},
-			})
+			assertDependencyByName(baseDeps, baseComponents, "curl", []string{"libcurl"})
 			Expect(len(baseDeps)).To(Equal(1), "base-level-0 should have exactly 1 dependency")
 
 			By("extracting and verifying SBOM for derived-level-1")
@@ -549,11 +541,7 @@ var _ = Describe("SBOM merge", Label("e2e", "build", "sbom", "merge", "simple"),
 			By("verifying derived-level-1 dependencies inherited from base")
 			Expect(derivedBom.Dependencies).NotTo(BeNil(), "derived-level-1 SBOM should have dependencies inherited from base")
 			derivedDeps := *derivedBom.Dependencies
-			derivedCurlDep := findDependencyByRef(derivedDeps, "curl")
-			assertDependencyEquals(derivedCurlDep, expectedDependency{
-				Ref:       "curl",
-				DependsOn: []string{"libcurl"},
-			})
+			assertDependencyByName(derivedDeps, derivedComponents, "curl", []string{"libcurl"})
 			Expect(len(derivedDeps)).To(Equal(1), "derived-level-1 should have exactly 1 dependency inherited from base")
 		},
 		Entry("with local repo using Vanilla Docker", simpleTestOptions{setupEnvOptions{
@@ -715,17 +703,8 @@ var _ = Describe("SBOM merge", Label("e2e", "build", "sbom", "merge", "simple"),
 				Expect(bom.Dependencies).NotTo(BeNil(), "SBOM should have dependencies")
 				deps := *bom.Dependencies
 
-				builderDep := findDependencyByRef(deps, "builder-custom")
-				assertDependencyEquals(builderDep, expectedDependency{
-					Ref:       "builder-custom",
-					DependsOn: []string{"builder-dep"},
-				})
-
-				appDep := findDependencyByRef(deps, "app-custom")
-				assertDependencyEquals(appDep, expectedDependency{
-					Ref:       "app-custom",
-					DependsOn: []string{"app-dep-a", "app-dep-b"},
-				})
+				assertDependencyByName(deps, components, "builder-custom", []string{"builder-dep"})
+				assertDependencyByName(deps, components, "app-custom", []string{"app-dep-a", "app-dep-b"})
 
 				Expect(len(deps)).To(Equal(2), "should have exactly 2 dependencies (builder + app)")
 
@@ -804,11 +783,7 @@ var _ = Describe("SBOM cross-project merge", Label("e2e", "build", "sbom", "merg
 			By("verifying base image dependencies")
 			Expect(baseBom.Dependencies).NotTo(BeNil(), "base image should have dependencies")
 			baseDeps := *baseBom.Dependencies
-			baseCurlDep := findDependencyByRef(baseDeps, "curl")
-			assertDependencyEquals(baseCurlDep, expectedDependency{
-				Ref:       "curl",
-				DependsOn: []string{"libcurl"},
-			})
+			assertDependencyByName(baseDeps, baseComponents, "curl", []string{"libcurl"})
 
 			By("Step 3: building derived project with BASE_IMAGE_REF env")
 			derivedRepoDirname := "repo_cross_project_derived"
@@ -873,17 +848,8 @@ var _ = Describe("SBOM cross-project merge", Label("e2e", "build", "sbom", "merg
 			Expect(derivedBom.Dependencies).NotTo(BeNil(), "derived SBOM should have dependencies")
 			derivedDeps := *derivedBom.Dependencies
 
-			derivedCurlDep := findDependencyByRef(derivedDeps, "curl")
-			assertDependencyEquals(derivedCurlDep, expectedDependency{
-				Ref:       "curl",
-				DependsOn: []string{"libcurl"},
-			})
-
-			derivedOwnDep := findDependencyByRef(derivedDeps, "derived-component")
-			assertDependencyEquals(derivedOwnDep, expectedDependency{
-				Ref:       "derived-component",
-				DependsOn: []string{"derived-dep"},
-			})
+			assertDependencyByName(derivedDeps, derivedComponents, "curl", []string{"libcurl"})
+			assertDependencyByName(derivedDeps, derivedComponents, "derived-component", []string{"derived-dep"})
 
 			Expect(len(derivedDeps)).To(Equal(2),
 				"derived SBOM should have exactly 2 dependencies (curl from base + derived-component from fragment)")
@@ -1159,11 +1125,6 @@ type expectedExternalReference struct {
 	URL  string
 }
 
-type expectedDependency struct {
-	Ref       string
-	DependsOn []string
-}
-
 func assertComponentEquals(actual *cdx.Component, expected expectedComponent) {
 	Expect(actual).NotTo(BeNil(), "component %q should exist", expected.Name)
 	Expect(actual.Name).To(Equal(expected.Name), "component name mismatch")
@@ -1242,15 +1203,26 @@ func findDependencyByRef(deps []cdx.Dependency, ref string) *cdx.Dependency {
 	return nil
 }
 
-func assertDependencyEquals(actual *cdx.Dependency, expected expectedDependency) {
-	Expect(actual).NotTo(BeNil(), "dependency with ref %q should exist", expected.Ref)
-	Expect(actual.Ref).To(Equal(expected.Ref), "dependency ref mismatch")
+func componentBOMRef(components []cdx.Component, name string) string {
+	comp := findComponentByName(components, name)
+	ExpectWithOffset(1, comp).NotTo(BeNil(), "component %q should exist (for BOMRef lookup)", name)
+	ExpectWithOffset(1, comp.BOMRef).NotTo(BeEmpty(), "component %q should have a non-empty BOMRef", name)
+	return comp.BOMRef
+}
 
-	if len(expected.DependsOn) > 0 {
-		Expect(actual.Dependencies).NotTo(BeNil(), "dependency %q should have dependsOn", expected.Ref)
-		Expect(*actual.Dependencies).To(ConsistOf(expected.DependsOn), "dependency %q dependsOn mismatch", expected.Ref)
-	} else if actual.Dependencies != nil {
-		Expect(*actual.Dependencies).To(BeEmpty(), "dependency %q should have no dependsOn", expected.Ref)
+func assertDependencyByName(deps []cdx.Dependency, components []cdx.Component, componentName string, dependsOnNames []string) {
+	ref := componentBOMRef(components, componentName)
+	dep := findDependencyByRef(deps, ref)
+	ExpectWithOffset(1, dep).NotTo(BeNil(), "dependency for component %q (ref %q) should exist", componentName, ref)
+
+	if len(dependsOnNames) > 0 {
+		ExpectWithOffset(1, dep.Dependencies).NotTo(BeNil(), "dependency for %q should have dependsOn", componentName)
+		expectedRefs := lo.Map(dependsOnNames, func(name string, _ int) string {
+			return componentBOMRef(components, name)
+		})
+		ExpectWithOffset(1, *dep.Dependencies).To(ConsistOf(expectedRefs), "dependency %q dependsOn mismatch", componentName)
+	} else if dep.Dependencies != nil {
+		ExpectWithOffset(1, *dep.Dependencies).To(BeEmpty(), "dependency for %q should have no dependsOn", componentName)
 	}
 }
 

@@ -1,10 +1,12 @@
 package cyclonedxutil
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"sync"
 
+	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/xeipuuv/gojsonschema"
 )
 
@@ -56,4 +58,18 @@ func ValidateCycloneDX16Schema(jsonBytes []byte) error {
 	}
 
 	return nil
+}
+
+// ValidateBOM validates the given CycloneDX BOM against the CycloneDX 1.6 JSON Schema.
+func ValidateBOM(bom *cdx.BOM) error {
+	if bom == nil {
+		return nil
+	}
+
+	jsonBytes, err := json.Marshal(bom)
+	if err != nil {
+		return fmt.Errorf("encode BOM for validation: %w", err)
+	}
+
+	return ValidateCycloneDX16Schema(jsonBytes)
 }

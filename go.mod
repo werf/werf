@@ -128,6 +128,7 @@ require (
 	github.com/moby/term v0.5.0 // indirect
 	github.com/muesli/cancelreader v0.2.2 // indirect
 	github.com/ohler55/ojg v1.26.7 // indirect
+	github.com/package-url/packageurl-go v0.1.5 // indirect
 	github.com/radovskyb/watcher v1.0.7 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
 	github.com/sajari/fuzzy v1.0.0 // indirect
