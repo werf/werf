@@ -1,0 +1,34 @@
+name: docs:cleanup:pr
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  cleanup-preview:
+    if: ${{ !github.event.pull_request.head.repo.fork && github.event.pull_request.head.repo.full_name == github.repository }}
+    permissions:
+      contents: read
+    runs-on: prod-github-runner-0
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.base.ref }}
+
+      - name: Install werf
+        uses: werf/actions/install@v2
+
+      - name: Dismiss preview
+        run: |
+          . $(werf ci-env github --as-file)
+          werf dismiss --virtual-merge=false --with-namespace=false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WERF_DIR: docs
+          WERF_ENV: test
+          WERF_KUBE_CONFIG_BASE64: ${{ secrets.KUBECONFIG_BASE64_DEV }}
+          WERF_NAMESPACE: werfio-test
+          WERF_RELEASE: werfio-pr-${{ github.event.pull_request.number }}-test
+          WERF_SET_GITHUB_REF: global.github_ref=pr-${{ github.event.pull_request.number }}

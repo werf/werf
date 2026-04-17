@@ -3,12 +3,20 @@ name: xxxxx(internal)
 on:
   workflow_call:
     inputs:
+      checkoutRef:
+        required: false
+        default: ""
+        type: string
       env:
         required: true
         type: string
+      githubRefOverride:
+        required: false
+        default: ""
+        type: string
       persistent:
         default: false
-        type: string
+        type: boolean
       runner:
         default: ubuntu-22.04
         type: string
@@ -29,13 +37,37 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ inputs.checkoutRef != '' && inputs.checkoutRef || github.ref }}
 
       - name: Set dynamic WERF_* env vars
         run: |
+          github_ref_override='${{ inputs.githubRefOverride }}'
+
           if ${{ inputs.persistent }}; then
+            pr_number='${{ github.event.pull_request.number }}'
+            if [[ -n "$github_ref_override" ]]; then
+              github_ref_value="$github_ref_override"
+            elif [[ -n "$pr_number" ]]; then
+              github_ref_value="pr-${pr_number}"
+            else
+              github_ref_value='${{ github.ref }}'
+            fi
+
+            if [[ -n "$github_ref_override" ]]; then
+              release_ref_value="$github_ref_override"
+            else
+              release_ref_source='${{ github.ref }}'
+              release_ref_value="$(echo "$release_ref_source" | cut -d/ -f 3)"
+              if [[ -z "$release_ref_value" ]]; then
+                release_ref_value="$release_ref_source"
+              fi
+            fi
+
+            release_ref_value="$(echo "$release_ref_value" | sed 's/\+/-plus-/g' | sed 's/\_/-u-/g' | sed 's/\./-dot-/g' | sed 's#/#-#g')"
+
             cat >> "$GITHUB_ENV" <<EOF
-          WERF_RELEASE=werfio-$(echo $GITHUB_REF | cut -d\/ -f 3 | sed 's/\+/-plus-/' | sed 's/\_/-u-/')-${{ inputs.env }}
-          WERF_SET_GITHUB_REF=global.github_ref=${{ github.ref }}
+          WERF_RELEASE=werfio-${release_ref_value}-${{ inputs.env }}
+          WERF_SET_GITHUB_REF=global.github_ref=$github_ref_value
           EOF
           else
             cat >> "$GITHUB_ENV" <<EOF
@@ -50,7 +82,7 @@ jobs:
       - name: Deploy
         run: |
           . $(werf ci-env github --as-file)
-          werf converge
+          werf converge --virtual-merge=false
         env:
           WERF_NAMESPACE: werfio-${{ inputs.env }}
           WERF_DIR: docs

@@ -1,5 +1,7 @@
 # SHOULD BE IN SYNC WITH github.com/werf/website/.helm/templates/_rewrites.tpl
 {{- define "rewrites" }}
+{{- $docsVersionPattern := "v\\d+(?:\\.\\d+(?:\\.\\d+(?:[^/]+)?)?)?|latest|pr-\\d+" }}
+{{- $docsV2VersionPattern := "v2(?:\\.\\d+(?:\\.\\d+(?:[^/]+)?)?)?|latest|pr-\\d+" }}
 
 ############################################
 # Normalize urls
@@ -10,20 +12,20 @@ rewrite ^/css/(?<tail>.+)                                                       
 rewrite ^/images/(?<tail>.+)                                                           /assets/images/$tail    redirect;
 
 rewrite ^/docs\.html$                                                                  /docs/                  redirect;
-rewrite ^/docs/(?<ver>v\d+(?:\.\d+(?:\.\d+(?:[^/]+)?)?)?|latest)$                      /docs/$ver/             redirect;
-rewrite ^/docs/(?<ver>v\d+(?:\.\d+(?:\.\d+(?:[^/]+)?)?)?|latest)/index\.html$          /docs/$ver/             redirect;
-rewrite ^/(?<ver>v\d+(?:\.\d+(?:\.\d+(?:[^/]+)?)?)?|latest)/docs\.html$                /docs/$ver/             redirect;
-rewrite ^/(?<ver>v\d+(?:\.\d+(?:\.\d+(?:[^/]+)?)?)?|latest)/docs/?$                    /docs/$ver/             redirect;
-rewrite ^/(?<ver>v\d+(?:\.\d+(?:\.\d+(?:[^/]+)?)?)?|latest)/docs/(?<tail>.+)           /docs/$ver/$tail        redirect;
+rewrite ^/docs/(?<ver>{{ $docsVersionPattern }})$                      /docs/$ver/             redirect;
+rewrite ^/docs/(?<ver>{{ $docsVersionPattern }})/index\.html$          /docs/$ver/             redirect;
+rewrite ^/(?<ver>{{ $docsVersionPattern }})/docs\.html$                /docs/$ver/             redirect;
+rewrite ^/(?<ver>{{ $docsVersionPattern }})/docs/?$                    /docs/$ver/             redirect;
+rewrite ^/(?<ver>{{ $docsVersionPattern }})/docs/(?<tail>.+)           /docs/$ver/$tail        redirect;
 
 rewrite ^/documentation\.html$                                                         /docs/                  redirect;
 rewrite ^/documentation/?$                                                             /docs/                  redirect;
-rewrite ^/documentation/(?<ver>v\d+(?:\.\d+(?:\.\d+(?:[^/]+)?)?)?|latest)/?$           /docs/$ver/             redirect;
-rewrite ^/documentation/(?<ver>v\d+(?:\.\d+(?:\.\d+(?:[^/]+)?)?)?|latest)/index\.html$ /docs/$ver/             redirect;
-rewrite ^/documentation/(?<ver>v\d+(?:\.\d+(?:\.\d+(?:[^/]+)?)?)?|latest)/(?<tail>.+)  /docs/$ver/$tail        redirect;
-rewrite ^/(?<ver>v\d+(?:\.\d+(?:\.\d+(?:[^/]+)?)?)?|latest)/documentation\.html$       /docs/$ver/             redirect;
-rewrite ^/(?<ver>v\d+(?:\.\d+(?:\.\d+(?:[^/]+)?)?)?|latest)/documentation/?$           /docs/$ver/             redirect;
-rewrite ^/(?<ver>v\d+(?:\.\d+(?:\.\d+(?:[^/]+)?)?)?|latest)/documentation/(?<tail>.+)  /docs/$ver/$tail        redirect;
+rewrite ^/documentation/(?<ver>{{ $docsVersionPattern }})/?$           /docs/$ver/             redirect;
+rewrite ^/documentation/(?<ver>{{ $docsVersionPattern }})/index\.html$ /docs/$ver/             redirect;
+rewrite ^/documentation/(?<ver>{{ $docsVersionPattern }})/(?<tail>.+)  /docs/$ver/$tail        redirect;
+rewrite ^/(?<ver>{{ $docsVersionPattern }})/documentation\.html$       /docs/$ver/             redirect;
+rewrite ^/(?<ver>{{ $docsVersionPattern }})/documentation/?$           /docs/$ver/             redirect;
+rewrite ^/(?<ver>{{ $docsVersionPattern }})/documentation/(?<tail>.+)  /docs/$ver/$tail        redirect;
 
 rewrite ^/(?<ver>v1\.1(?:\.\d+(?:[^/]+)?)?|latest)/how_to/?$                           /docs/$ver/how_to/      redirect;
 rewrite ^/(?<ver>v1\.1(?:\.\d+(?:[^/]+)?)?|latest)/how_to/(?<tail>.+)                  /docs/$ver/how_to/$tail redirect;
@@ -33,19 +35,19 @@ rewrite ^/(?<ver>v1\.1(?:\.\d+(?:[^/]+)?)?|latest)/how_to/(?<tail>.+)           
 ############################################
 
 rewrite ^/docs/?$                                                                             /docs/v2/                                                       redirect;
-rewrite ^/docs/(?!(v\d+(?:\.\d+(?:\.\d+(?:[^/]+)?)?)?|latest)/)(?:.+)                         /docs/v2/                                                       redirect;
+rewrite ^/docs/(?!(?:{{ $docsVersionPattern }})/)(?:.+)                         /docs/v2/                                                       redirect;
 
-rewrite ^/docs/(?<ver>v2(?:\.\d+(?:\.\d+(?:[^/]+)?)?)?|latest)/?$                             /docs/$ver/usage/project_configuration/overview.html            redirect;
-rewrite ^/docs/(?<ver>v2(?:\.\d+(?:\.\d+(?:[^/]+)?)?)?|latest)/usage/?$                       /docs/$ver/usage/project_configuration/overview.html            redirect;
-rewrite ^/docs/(?<ver>v2(?:\.\d+(?:\.\d+(?:[^/]+)?)?)?|latest)/usage/project_configuration/?$ /docs/$ver/usage/project_configuration/overview.html            redirect;
-rewrite ^/docs/(?<ver>v2(?:\.\d+(?:\.\d+(?:[^/]+)?)?)?|latest)/usage/build/?$                 /docs/$ver/usage/build/overview.html                            redirect;
-rewrite ^/docs/(?<ver>v2(?:\.\d+(?:\.\d+(?:[^/]+)?)?)?|latest)/usage/build/stapel/?$          /docs/$ver/usage/build/stapel/overview.html                     redirect;
-rewrite ^/docs/(?<ver>v2(?:\.\d+(?:\.\d+(?:[^/]+)?)?)?|latest)/usage/deploy/?$                /docs/$ver/usage/deploy/overview.html                           redirect;
-rewrite ^/docs/(?<ver>v2(?:\.\d+(?:\.\d+(?:[^/]+)?)?)?|latest)/usage/distribute/?$            /docs/$ver/usage/distribute/overview.html                       redirect;
-rewrite ^/docs/(?<ver>v2(?:\.\d+(?:\.\d+(?:[^/]+)?)?)?|latest)/usage/cleanup/?$               /docs/$ver/usage/cleanup/cr_cleanup.html                        redirect;
-rewrite ^/docs/(?<ver>v2(?:\.\d+(?:\.\d+(?:[^/]+)?)?)?|latest)/reference/?$                   /docs/$ver/reference/werf_yaml.html                             redirect;
-rewrite ^/docs/(?<ver>v2(?:\.\d+(?:\.\d+(?:[^/]+)?)?)?|latest)/reference/cli/?$               /docs/$ver/reference/cli/overview.html                          redirect;
-rewrite ^/docs/(?<ver>v2(?:\.\d+(?:\.\d+(?:[^/]+)?)?)?|latest)/resources/?$                   /docs/$ver/resources/cheat_sheet.html                           redirect;
+rewrite ^/docs/(?<ver>{{ $docsV2VersionPattern }})/?$                             /docs/$ver/usage/project_configuration/overview.html            redirect;
+rewrite ^/docs/(?<ver>{{ $docsV2VersionPattern }})/usage/?$                       /docs/$ver/usage/project_configuration/overview.html            redirect;
+rewrite ^/docs/(?<ver>{{ $docsV2VersionPattern }})/usage/project_configuration/?$ /docs/$ver/usage/project_configuration/overview.html            redirect;
+rewrite ^/docs/(?<ver>{{ $docsV2VersionPattern }})/usage/build/?$                 /docs/$ver/usage/build/overview.html                            redirect;
+rewrite ^/docs/(?<ver>{{ $docsV2VersionPattern }})/usage/build/stapel/?$          /docs/$ver/usage/build/stapel/overview.html                     redirect;
+rewrite ^/docs/(?<ver>{{ $docsV2VersionPattern }})/usage/deploy/?$                /docs/$ver/usage/deploy/overview.html                           redirect;
+rewrite ^/docs/(?<ver>{{ $docsV2VersionPattern }})/usage/distribute/?$            /docs/$ver/usage/distribute/overview.html                       redirect;
+rewrite ^/docs/(?<ver>{{ $docsV2VersionPattern }})/usage/cleanup/?$               /docs/$ver/usage/cleanup/cr_cleanup.html                        redirect;
+rewrite ^/docs/(?<ver>{{ $docsV2VersionPattern }})/reference/?$                   /docs/$ver/reference/werf_yaml.html                             redirect;
+rewrite ^/docs/(?<ver>{{ $docsV2VersionPattern }})/reference/cli/?$               /docs/$ver/reference/cli/overview.html                          redirect;
+rewrite ^/docs/(?<ver>{{ $docsV2VersionPattern }})/resources/?$                   /docs/$ver/resources/cheat_sheet.html                           redirect;
 
 rewrite ^/docs/(?<ver>v1\.2(?:\.\d+(?:[^/]+)?)?|latest)/?$                                    /docs/$ver/usage/project_configuration/overview.html            redirect;
 rewrite ^/docs/(?<ver>v1\.2(?:\.\d+(?:[^/]+)?)?|latest)/usage/?$                              /docs/$ver/usage/project_configuration/overview.html            redirect;
