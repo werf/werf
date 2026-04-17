@@ -25,13 +25,13 @@ Helm's templating language works well for simple cases but becomes hard to maint
 
 ## Quick start
 
-Run the following command in your chart directory to initialize TypeScript templates files:
+Initialize TypeScript files in an existing chart:
 
 ```shell
 werf chart ts init
 ```
 
-A `ts/` subdirectory with a ready-made example appears in the chart directory. Try modifying `ts/src/deployment.ts` — for example, change the number of replicas — then preview the result:
+A `ts/` subdirectory with a ready example appears in the chart directory. Try modifying `ts/src/deployment.ts` — for example, change the number of replicas — then preview the result:
 
 ```shell
 werf render --dev
@@ -51,7 +51,7 @@ werf converge --dev
 
 Install [Deno](https://docs.deno.com/runtime/getting_started/installation/) and follow the [setup guide](https://docs.deno.com/runtime/getting_started/setup_your_environment/) for your IDE/editor (VS Code, JetBrains, Neovim, etc.).
 
-Initialize TypeScript templates in the chart if not already initialized:
+Initialize TypeScript files in the chart if not already initialized:
 
 ```shell
 werf chart ts init
@@ -61,7 +61,7 @@ werf chart ts init
 
 Open the `ts/` directory in your editor as a regular Deno/TypeScript project. You can work with it the same way you would with any TypeScript codebase — run scripts, write tests, use a debugger. Deno provides a rich set of tools for testing, linting, formatting, and more. See [Deno documentation](https://docs.deno.com/runtime/) for details.
 
-The codebase can be organized as you wish. The only requirement is that `ts/src/index.ts` exists and calls `render` from `@nelm/chart-ts-sdk`.
+The codebase can be organized as you wish. The only requirement is that `ts/src/index.ts` exists, and `render` function from `@nelm/chart-ts-sdk` **must** be called. Otherwise, no TypeScript rendering happens.
 
 To debug templates rendering, you can use `dev` task from `ts/deno.json`:
 
@@ -69,7 +69,7 @@ To debug templates rendering, you can use `dev` task from `ts/deno.json`:
 cd .helm/ts
 deno task dev
 ```
-This will run `render` function from `ts/src/index.ts` with the example context from `ts/input.example.yaml`. The resulting YAML will be printed to the console below the `Rendered manifests:` message.
+TypeScript engine will call `render` function from `ts/src/index.ts` with the example context from `ts/input.example.yaml`. The resulting YAML will be printed to the console below the `Rendered manifests:` message.
 
 ### Third-party libraries
 
@@ -138,11 +138,11 @@ The entry point must call `render()`, passing a handler function that receives t
 await render(generate);
 ```
 
-Here `generate` could be a regular function or an async function.
+The `generate` function can be either synchronous or asynchronous.
 
 ### `WerfRenderContext`
 
-The `generate` function receives `$` of type `WerfRenderContext` — the same context as in Helm templates:
+The `generate` function receives the root context in the `$` variable of type `WerfRenderContext` — the same context as in Helm templates:
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -156,7 +156,7 @@ See the example context in `ts/input.example.yaml`. For details on parameters an
 
 ### `RenderResult`
 
-The generate function returns `RenderResult` — an object with a `manifests` array. Each element is a plain JavaScript object representing a Kubernetes resource. Example output:
+The `generate` function returns `RenderResult` — an object with a `manifests` array. Each element is a plain JavaScript object representing a Kubernetes resource. Example output:
 
 ```json
 {
