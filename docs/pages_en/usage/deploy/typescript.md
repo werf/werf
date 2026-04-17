@@ -132,7 +132,7 @@ TypeScript engine uses the [@nelm/chart-ts-sdk](https://github.com/werf/nelm-cha
 
 ### `render(generate)`
 
-The entry point must call `render()`, passing a handler function that receives the render context and returns a `RenderResult`:
+The entry point must call `render()`, passing a handler function that receives the root context and returns a `RenderResult`:
 
 ```typescript
 await render(generate);
