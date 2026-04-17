@@ -23,7 +23,7 @@ jobs:
       - name: Dismiss preview
         run: |
           . $(werf ci-env github --as-file)
-          werf dismiss --virtual-merge=false --with-namespace=false
+          werf dismiss --with-namespace=false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           WERF_DIR: docs
