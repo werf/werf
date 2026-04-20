@@ -118,7 +118,7 @@ jobs:
       - name: Deploy production docs
         run: |
           . $(werf ci-env github --as-file)
-          werf converge --virtual-merge=false --set "global.targetCluster=${{ inputs.targetCluster }}"
+          werf converge --set "global.targetCluster=${{ inputs.targetCluster }}"
         env:
           WERF_NAMESPACE: werfio-production
           WERF_DIR: docs
