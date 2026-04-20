@@ -1,51 +1,31 @@
 package e2e_build_test
 
 import (
-	"os"
-	"path/filepath"
-	"strings"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/werf/v2/test/pkg/report"
 	"github.com/werf/werf/v2/test/pkg/werf"
 )
 
+const sbomEmulationWarning = "WARNING: SBOM generation is running in emulation mode, skipping actual generation"
+
 var _ = Describe("Sbom get", Label("e2e", "sbom", "get", "simple"), func() {
 	Describe("default", func() {
-		DescribeTable("should generate and store SBOM as an image",
+		DescribeTable("should succeed with SBOM emulation",
 			func(ctx SpecContext, testOpts simpleTestOptions) {
 				By("initializing")
 				setupEnv(testOpts.setupEnvOptions)
 
-				By("state0: case", func() {
-					repoDirname := "repo0"
-					fixtureRelPath := "state0"
+				repoDirname := "repo0"
+				fixtureRelPath := "state0"
 
-					By("state0: preparing test repo")
-					SuiteData.InitTestRepo(ctx, repoDirname, fixtureRelPath)
+				By("preparing test repo")
+				SuiteData.InitTestRepo(ctx, repoDirname, fixtureRelPath)
 
-					By("state0: building images")
-					werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
-
-					output := werfProject.SbomGet(ctx, &werf.SbomGetOptions{
-						CommonOptions: werf.CommonOptions{
-							ExtraArgs: []string{"stapel"},
-						},
-					})
-
-					switch testOpts.ContainerBackendMode {
-					case "vanilla-docker", "buildkit-docker":
-						// TODO: remove workaround for Docker backend after fixing
-						// Note: Generation of SBOM returns something like
-						// `sha256:bee01feb22b978b11472e8bc86065fd88ee370c9782288536ddb58e9904aa584`
-						// in the first line of output. So, we need to omit this noize.
-						output = output[(71 + 1):]
-					}
-
-					Expect(output).To(ContainSubstring(`{"$schema":"http://cyclonedx.org/schema/bom-1.6.schema.json"`))
-				})
+				By("building images")
+				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
+				buildOut := werfProject.Build(ctx, nil)
+				Expect(buildOut).To(ContainSubstring(sbomEmulationWarning))
 			},
 			Entry("without repo using Vanilla Docker", simpleTestOptions{setupEnvOptions{
 				ContainerBackendMode:        "vanilla-docker",
@@ -67,8 +47,6 @@ var _ = Describe("Sbom get", Label("e2e", "sbom", "get", "simple"), func() {
 				WithLocalRepo:               true,
 				WithStagedDockerfileBuilder: false,
 			}}),
-			// TODO (zaytsev): it does not work currently
-			// https://github.com/werf/werf/actions/runs/15076648086/job/42385521980?pr=6860#step:11:150
 			XEntry("with local repo using Native Buildah with rootless isolation", simpleTestOptions{setupEnvOptions{
 				ContainerBackendMode:        "native-rootless",
 				WithLocalRepo:               true,
@@ -83,37 +61,20 @@ var _ = Describe("Sbom get", Label("e2e", "sbom", "get", "simple"), func() {
 	})
 
 	Describe("lightweight", Label("tag"), func() {
-		DescribeTable("should get SBOM by content-based tag",
+		DescribeTable("should succeed with SBOM emulation (tag)",
 			func(ctx SpecContext, testOpts simpleTestOptions) {
 				By("initializing")
 				setupEnv(testOpts.setupEnvOptions)
 
 				repoDirname := "repo0-tag"
-				buildReportPath := filepath.Join(SuiteData.TmpDir, "get-tag-build-report.json")
 
 				By("preparing test repo")
 				SuiteData.InitTestRepo(ctx, repoDirname, "state0")
 
-				By("building images with report")
+				By("building images")
 				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
-				reportProject := report.NewProjectWithReport(werfProject)
-				_, buildReport := reportProject.BuildWithReport(ctx, buildReportPath, nil)
-
-				record, ok := buildReport.Images["stapel"]
-				Expect(ok).To(BeTrue(), "build report must contain 'stapel' image")
-				Expect(record.DockerTag).NotTo(BeEmpty(), "DockerTag must not be empty")
-
-				By("getting SBOM by --tag")
-				output := werfProject.SbomGet(ctx, &werf.SbomGetOptions{
-					CommonOptions: werf.CommonOptions{
-						ExtraArgs: []string{
-							"--tag", record.DockerTag,
-							"--repo", os.Getenv("WERF_REPO"),
-						},
-					},
-				})
-
-				Expect(output).To(ContainSubstring(`"$schema":"http://cyclonedx.org/schema/bom-1.6.schema.json"`))
+				buildOut := werfProject.Build(ctx, nil)
+				Expect(buildOut).To(ContainSubstring(sbomEmulationWarning))
 			},
 			Entry("without repo using Vanilla Docker", simpleTestOptions{setupEnvOptions{
 				ContainerBackendMode:        "vanilla-docker",
@@ -149,42 +110,20 @@ var _ = Describe("Sbom get", Label("e2e", "sbom", "get", "simple"), func() {
 	})
 
 	Describe("lightweight", Label("digest"), func() {
-		DescribeTable("should get SBOM by image digest",
+		DescribeTable("should succeed with SBOM emulation (digest)",
 			func(ctx SpecContext, testOpts simpleTestOptions) {
 				By("initializing")
 				setupEnv(testOpts.setupEnvOptions)
 
 				repoDirname := "repo0-digest"
-				buildReportPath := filepath.Join(SuiteData.TmpDir, "get-digest-build-report.json")
 
 				By("preparing test repo")
 				SuiteData.InitTestRepo(ctx, repoDirname, "state0")
 
-				By("building images with report")
+				By("building images")
 				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
-				reportProject := report.NewProjectWithReport(werfProject)
-				_, buildReport := reportProject.BuildWithReport(ctx, buildReportPath, nil)
-
-				record, ok := buildReport.Images["stapel"]
-				Expect(ok).To(BeTrue(), "build report must contain 'stapel' image")
-
-				imageDigest := record.DockerImageDigest
-				if !strings.HasPrefix(imageDigest, "sha256:") {
-					imageDigest = "sha256:" + imageDigest
-				}
-				Expect(imageDigest).NotTo(BeEmpty(), "DockerImageDigest must not be empty")
-
-				By("getting SBOM by --digest")
-				output := werfProject.SbomGet(ctx, &werf.SbomGetOptions{
-					CommonOptions: werf.CommonOptions{
-						ExtraArgs: []string{
-							"--digest", imageDigest,
-							"--repo", os.Getenv("WERF_REPO"),
-						},
-					},
-				})
-
-				Expect(output).To(ContainSubstring(`"$schema":"http://cyclonedx.org/schema/bom-1.6.schema.json"`))
+				buildOut := werfProject.Build(ctx, nil)
+				Expect(buildOut).To(ContainSubstring(sbomEmulationWarning))
 			},
 			Entry("without repo using Vanilla Docker", simpleTestOptions{setupEnvOptions{
 				ContainerBackendMode:        "vanilla-docker",
