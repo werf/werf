@@ -24,7 +24,13 @@ func (c *container) Create(ctx context.Context) error {
 	if exist, err := docker.ImageExist(ctx, c.ImageName); err != nil {
 		return err
 	} else if !exist {
-		if err := docker.CliPullWithRetries(ctx, c.ImageName); err != nil {
+		pullArgs := []string{}
+		if platform := docker.GetDefaultPlatform(); platform != "" {
+			pullArgs = append(pullArgs, "--platform", platform)
+		}
+		pullArgs = append(pullArgs, c.ImageName)
+
+		if err := docker.CliPullWithRetries(ctx, pullArgs...); err != nil {
 			return err
 		}
 	}

@@ -48,7 +48,7 @@ var _ = Describe("Stapel imports", func() {
 			gotNoSuchFileError := false
 			Expect(werfBuild(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{
 				OutputLineHandler: func(line string) {
-					if strings.Contains(line, "/myartifact/no-such-dir") && strings.Contains(line, "No such file or directory") {
+					if strings.Contains(line, "/myartifact/no-such-dir") && (strings.Contains(line, "No such file or directory") || strings.Contains(line, "link_stat")) {
 						gotNoSuchFileError = true
 					}
 				},
@@ -60,7 +60,7 @@ var _ = Describe("Stapel imports", func() {
 			gotNoSuchFileError = false
 			Expect(werfBuild(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{
 				OutputLineHandler: func(line string) {
-					if strings.Contains(line, "/myartifact/file-no-such-file") && strings.Contains(line, "No such file or directory") {
+					if strings.Contains(line, "/myartifact/file-no-such-file") && (strings.Contains(line, "No such file or directory") || strings.Contains(line, "link_stat")) {
 						gotNoSuchFileError = true
 					}
 				},

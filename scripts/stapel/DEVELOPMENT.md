@@ -1,46 +1,65 @@
-Stapel is an [LFS](http://www.linuxfromscratch.org/lfs/view/stable) based linux distribution, which contains:
+Stapel is a self-contained toolbox image mounted by werf into build containers.
 
- * Glibc
- * Gnu cli tools (install, patch, find, wget, grep, rsync and other)
- * Git cli util
- * Bash
- * Python interpreter
+Current stapel image is built from Alpine userspace and includes the binaries used by werf (`bash`, `git`, `rsync`, `tar`, `install`, `find`, `base64`, etc.) together with required shared libraries.
 
-Stapel tools built in non-standard root location. Binaries, libraries and other related files are located in the following directories:
+Main runtime paths inside the image:
 
- * `/.werf/stapel/(etc|lib|lib64|libexec)`
- * `/.werf/stapel/x86_64-lfs-linux-gnu/bin`
- * `/.werf/stapel/embedded/(bin|etc|lib|libexec|sbin|share|ssl)`
+* `/.werf/stapel/embedded/bin`
+* `/.werf/stapel/embedded/lib`
+* `/.werf/stapel/embedded/libexec`
+* `/.werf/stapel/embedded/share`
+* `/.werf/stapel/lib`
+* `/.werf/stapel/bin`
+* `/.werf/stapel/sbin`
 
-The base of stapel is a Glibc library and linker (`/.werf/stapel/lib/libc-VERSION.so` and `/.werf/stapel/x86_64-lfs-linux-gnu/bin/ld`). All tools from `/.werf/stapel` are compiled and linked only against libraries contained in `/.werf/stapel`. So stapel is a self-contained distribution of tools and libraries without external dependencies with an independent Glibc, which allows running these tools in arbitrary environment (independently of linux distribution and libraries versions in this distribution).
+werf mounts stapel into each stapel-build container to provide deterministic service tooling.
 
-Stapel filesystem `/.werf/stapel` is intent to be mounted into build container based on some base image. Tools from stapel can then be used for some purposes. As stapel tools does not have external dependencies stapel image can be mounted into any base image (alpine linux with musl libc, or ubuntu with glibc — does not matter) and tools will work as expected.
+## Local development flow
 
-werf mounts _stapel image_ into each build container when building docker images with _stapel builder_ to enable git service operations and for other service purposes. More info about _stapel builder_ are available [in the chapter]({{ "usage/build/stapel/overview.html" | true_relative_url }}).
+1. Update build logic in `stapel/Dockerfile`.
+2. Build a development stapel image:
 
-## Change, update and rebuild stapel
+   ```shell
+   scripts/stapel/build.sh
+   ```
 
-Stapel image periodically needs to be updated when new version of [LFS](http://www.linuxfromscratch.org/lfs/view/stable) is available.
+   By default the script builds `registry-write.werf.io/werf/stapel:dev`.
 
-1.  Make necessary changes to build instructions in `stapel` directory.
-2.  Update omnibus bundle:
-    ```shell
-    cd stapel/omnibus
-    bundle update
-    git add -p Gemfile Gemfile.lock
-    ```
-3.  Build new stapel images:
-    ```shell
-    scripts/stapel/build.sh
-    ```
-    This command will create `registry.werf.io/werf/stapel:dev` and secondary `registry.werf.io/werf/stapel-base:dev` docker images.
-4.  To test this newly built stapel image export environment variable `WERF_STAPEL_IMAGE_VERSION=dev` prior running werf commands:
-    ```shell
-    export WERF_STAPEL_IMAGE_VERSION=dev
-    werf build ...
-    ```
-5.  Publish new stapel images:
-    ```shell
-    scripts/stapel/publish.sh NEW_VERSION
-    ```
-6.  As new stapel version has been published change `VERSION` Go constant in the `pkg/stapel/stapel.go` to point to the new version and rebuild werf.
+3. (Optional) Build for a specific target platform:
+
+   ```shell
+   STAPEL_PLATFORM=linux/arm64 scripts/stapel/build.sh
+   STAPEL_PLATFORM=linux/amd64 scripts/stapel/build.sh
+   ```
+
+4. Test werf with the development stapel image:
+
+   ```shell
+   export WERF_STAPEL_IMAGE_NAME=registry.werf.io/werf/stapel
+   export WERF_STAPEL_IMAGE_VERSION=dev
+   werf build ...
+   ```
+
+## Multi-platform publish (single tag)
+
+Use Docker Buildx to publish `linux/amd64` and `linux/arm64` under one tag:
+
+```shell
+docker buildx build \
+  --platform linux/amd64,linux/arm64 \
+  --file stapel/Dockerfile \
+  --target final \
+  --tag registry-write.werf.io/werf/stapel:dev \
+  --push \
+  .
+```
+
+Verify manifest list:
+
+```shell
+docker buildx imagetools inspect registry.werf.io/werf/stapel:dev
+```
+
+## Release notes for stapel version bumps
+
+After publishing a new stapel tag, update `VERSION` in `pkg/stapel/stapel.go` and rebuild werf binaries.
