@@ -34,6 +34,21 @@ type UserStage struct {
 	builder builder.Builder
 }
 
+func (s *UserStage) getBuilderChecksum(ctx context.Context) string {
+	switch s.Name() {
+	case BeforeInstall:
+		return s.builder.BeforeInstallChecksum(ctx)
+	case Install:
+		return s.builder.InstallChecksum(ctx)
+	case BeforeSetup:
+		return s.builder.BeforeSetupChecksum(ctx)
+	case Setup:
+		return s.builder.SetupChecksum(ctx)
+	default:
+		panic("unexpected user stage name: " + string(s.Name()))
+	}
+}
+
 func (s *UserStage) getStageDependenciesChecksum(ctx context.Context, c Conveyor, name StageName) (string, error) {
 	var args []string
 	for _, gitMapping := range s.gitMappings {

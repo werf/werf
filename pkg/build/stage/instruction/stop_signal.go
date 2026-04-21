@@ -21,6 +21,10 @@ func NewStopSignal(i *dockerfile.DockerfileStageInstruction[*instructions.StopSi
 	return &StopSignal{Base: NewBase(i, backend_instruction.NewStopSignal(*i.Data), dependencies, hasPrevStage, opts)}
 }
 
+func (stg *StopSignal) GetContextDependencies(ctx context.Context, c stage.Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+	return stg.GetDependencies(ctx, c, nil, nil, nil, buildContextArchive)
+}
+
 func (stg *StopSignal) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
 	var args []string
 

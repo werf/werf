@@ -21,6 +21,10 @@ func NewUser(i *dockerfile.DockerfileStageInstruction[*instructions.UserCommand]
 	return &User{Base: NewBase(i, backend_instruction.NewUser(*i.Data), dependencies, hasPrevStage, opts)}
 }
 
+func (stg *User) GetContextDependencies(ctx context.Context, c stage.Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+	return stg.GetDependencies(ctx, c, nil, nil, nil, buildContextArchive)
+}
+
 func (stg *User) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
 	var args []string
 
