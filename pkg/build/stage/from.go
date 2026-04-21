@@ -68,8 +68,8 @@ func (s *FromStage) GetDependencies(ctx context.Context, c Conveyor, cb containe
 
 	if s.fromImageName != "" && !s.fromExternal {
 		args = append(args, c.GetImageContentDigest(s.targetPlatform, s.fromImageName))
-	} else if prevImage != nil {
-		args = append(args, prevImage.Image.Name())
+	} else {
+		args = append(args, s.fromImageName)
 	}
 
 	return util.Sha256Hash(args...), nil
