@@ -54,11 +54,11 @@ require (
 	github.com/sirupsen/logrus v1.9.4
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
-	github.com/werf/common-go v0.0.0-20260212174520-adf7d95a1579
+	github.com/werf/common-go v0.0.0-20260421143942-0695d8576092
 	github.com/werf/copy-recurse v0.2.7
 	github.com/werf/lockgate v0.1.1
 	github.com/werf/logboek v0.6.1
-	github.com/werf/nelm v1.23.3-0.20260409124915-f4c1993b40bd
+	github.com/werf/nelm v1.23.3-0.20260421142511-1e1068f13d24
 	go.opentelemetry.io/otel v1.42.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.42.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.42.0
