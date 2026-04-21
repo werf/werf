@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/errdefs"
 	"github.com/docker/docker/runconfig/opts"
 
 	"github.com/werf/common-go/pkg/util"
@@ -360,9 +361,10 @@ func (c *LegacyStageImageContainer) rm(ctx context.Context) error {
 
 	err := docker.ContainerRemove(ctx, c.name, types.ContainerRemoveOptions{RemoveVolumes: true, Force: true})
 	if err != nil {
-		if strings.Contains(err.Error(), fmt.Sprintf("removal of container %s is already in progress", c.name)) {
+		if errdefs.IsNotFound(err) || errdefs.IsConflict(err) {
 			return nil
 		}
+
 		return fmt.Errorf("unable to remove container %s: %w", c.name, err)
 	}
 	return nil

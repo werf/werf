@@ -24,7 +24,7 @@ func (r FileReader) NewFileNotFoundInProjectDirectoryError(relPath string) error
 }
 
 func (r FileReader) NewFileNotFoundInProjectRepositoryError(relPath string) error {
-	return FileNotFoundInProjectRepositoryError{errors.NewError(fmt.Sprintf("the file %q not found in the project git repository", filepath.ToSlash(relPath)))}
+	return FileNotFoundInProjectRepositoryError{errors.NewError(fmt.Sprintf("the file %q not found in the project git repository. If the file exists locally, configure werf-giterminism.yaml to allow uncommitted files", filepath.ToSlash(relPath)))}
 }
 
 func (r FileReader) NewSubmoduleAddedAndNotCommittedError(submodulePath string) error {

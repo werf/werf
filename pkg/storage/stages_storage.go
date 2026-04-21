@@ -17,10 +17,11 @@ const (
 )
 
 var (
-	ErrBrokenImage            = errors.New("broken image")
-	ErrStageNotFound          = errors.New("stage not found")
-	ErrStageRejected          = errors.New("stage rejected")
-	ErrImportMetadataNotFound = errors.New("import metadata not found")
+	ErrBrokenImage               = errors.New("broken image")
+	ErrStageNotFound             = errors.New("stage not found")
+	ErrStageRejected             = errors.New("stage rejected")
+	ErrImportMetadataNotFound    = errors.New("import metadata not found")
+	ErrCustomTagMetadataNotFound = errors.New("custom tag metadata not found")
 )
 
 func IsErrBrokenImage(err error) bool {
@@ -37,6 +38,10 @@ func IsErrStageUnavailable(err error) bool {
 
 func IsErrImportMetadataNotFound(err error) bool {
 	return errors.Is(err, ErrImportMetadataNotFound)
+}
+
+func IsErrCustomTagMetadataNotFound(err error) bool {
+	return errors.Is(err, ErrCustomTagMetadataNotFound)
 }
 
 type FilterStagesAndProcessRelatedDataOptions struct {
@@ -67,6 +72,7 @@ type StagesStorage interface {
 	ShouldFetchImage(ctx context.Context, img container_backend.LegacyImageInterface) (bool, error)
 	CopyFromStorage(ctx context.Context, src StagesStorage, projectName string, stageID image.StageID, opts CopyFromStorageOptions) (*image.StageDesc, error)
 	MutateAndPushImage(ctx context.Context, src, dest string, newConfig image.SpecConfig, stageImage container_backend.LegacyImageInterface) error
+	PostManifest(ctx context.Context, ref string, opts container_backend.PostManifestOpts) error
 
 	CreateRepo(ctx context.Context) error
 	DeleteRepo(ctx context.Context) error

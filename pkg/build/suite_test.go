@@ -1,4 +1,4 @@
-package volumeutils_test
+package build
 
 import (
 	"testing"
@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func TestVolumeUsage(t *testing.T) {
+func TestBuild(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "VolumeUsage Suite")
+	RunSpecs(t, "Build Suite")
 }

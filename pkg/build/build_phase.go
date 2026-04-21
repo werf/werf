@@ -1137,17 +1137,22 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 
 	// use newly built image
 	newStageImageName, stageCreationTs := phase.Conveyor.StorageManager.GenerateStageDescCreationTs(stg.GetDigest(), stageDescSet)
-	phase.Conveyor.UnsetStageImage(stageImage.Image.Name())
+	phase.Conveyor.UnsetStageImageByPlatform(stageImage.Image.Name(), stageImage.Image.GetTargetPlatform())
 	stageImage.Image.SetName(newStageImageName)
 	phase.Conveyor.SetStageImage(stageImage)
 
 	if err := logboek.Context(ctx).Default().LogProcess("Store stage into %s", phase.Conveyor.StorageManager.GetStagesStorage().String()).DoError(func() error {
 		if stg.IsMutable() {
-			if err := stg.MutateImage(ctx, phase.Conveyor.StorageManager.GetStagesStorage(), phase.StagesIterator.PrevBuiltStage.GetStageImage(), stageImage); err != nil {
+			prevBuiltImage := phase.StagesIterator.GetPrevBuiltImage(img, stg)
+			if prevBuiltImage == nil {
+				return fmt.Errorf("expected previous built image for mutable stage %s", stg.Name())
+			}
+
+			if err := stg.MutateImage(ctx, phase.Conveyor.StorageManager.GetStagesStorage(), prevBuiltImage, stageImage); err != nil {
 				if storage.IsErrBrokenImage(err) {
 					// Invalidate manifest cache for the broken previous stage
-					prevStageDesc := phase.StagesIterator.PrevBuiltStage.GetStageImage().Image.GetStageDesc()
-					if prevStageDesc != nil {
+					prevStageDesc := prevBuiltImage.Image.GetStageDesc()
+					if prevStageDesc != nil && prevStageDesc.StageID != nil {
 						prevStageID := prevStageDesc.StageID
 						prevStageImageName := phase.Conveyor.StorageManager.GetStagesStorage().ConstructStageImageName(phase.Conveyor.ProjectName(), prevStageID.Digest, prevStageID.CreationTs)
 						if err := imagePkg.CommonManifestCache.DeleteImageInfo(ctx, phase.Conveyor.StorageManager.GetStagesStorage().String(), prevStageImageName); err != nil {

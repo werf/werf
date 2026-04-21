@@ -1,6 +1,8 @@
 {{- $refs := list $.Values.global.github_ref }}
 {{- if eq $.Values.werf.env "test" }}
+{{- if eq (splitList "/" $.Values.global.github_ref | last) "main" }}
 {{- $refs = concat $refs (list "v2.0.3" "v1.2.294+fix1") }}
+{{- end }}
 {{- end }}
 
 {{- range $_, $ref := $refs }}
@@ -31,6 +33,7 @@ spec:
       imagePullSecrets:
         - name: github-werfio
       priorityClassName: {{ pluck $.Values.werf.env $.Values.priorityClassName | first | default $.Values.priorityClassName._default }}
+{{- include "clusterPlacement" $ | indent 6 }}
       containers:
         - name: web
           command: ["nginx", "-g", "daemon off;"]

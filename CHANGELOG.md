@@ -1,5 +1,36 @@
 # Changelog
 
+## [2.67.2](https://github.com/werf/werf/compare/v2.67.1...v2.67.2) (2026-04-21)
+
+
+### Bug Fixes
+
+* **build, docker, stapel:** fix stage image cache for multi-platform builds ([#7480](https://github.com/werf/werf/issues/7480)) ([23f89b3](https://github.com/werf/werf/commit/23f89b3a7f9ee9d4c2aebeeb26d1e334990ef859))
+* **build, docker:** handle `no such container` error ([#7482](https://github.com/werf/werf/issues/7482)) ([83b3227](https://github.com/werf/werf/commit/83b32279e9f6893cc6f06e7d812944c7231636dc))
+* **ci:** pr docs preview ([#7485](https://github.com/werf/werf/issues/7485)) ([d29c18b](https://github.com/werf/werf/commit/d29c18b1fb868c0eaab8a2eacfd0a1223b1b1eca))
+
+## [2.67.1](https://github.com/werf/werf/compare/v2.67.0...v2.67.1) (2026-04-16)
+
+
+### Bug Fixes
+
+* **build, buildah:** apply owner group to dst dir ([#7462](https://github.com/werf/werf/issues/7462)) ([fea6b40](https://github.com/werf/werf/commit/fea6b40124316be1d5742d06b81ff338c4d4be30))
+* **build, buildah:** correct expansion of instructions ([#7460](https://github.com/werf/werf/issues/7460)) ([aef6003](https://github.com/werf/werf/commit/aef600313e0642a1e4c070f826b28008050c10e6))
+
+## [2.67.0](https://github.com/werf/werf/compare/v2.66.2...v2.67.0) (2026-04-14)
+
+
+### Features
+
+* **build:** scratch stapel docker backend ([#7441](https://github.com/werf/werf/issues/7441)) ([490d6e0](https://github.com/werf/werf/commit/490d6e0df8d0c559afb30736e09b6ef5bfb811c9))
+* **deploy:** ability to init ts files with WerfRenderContext type ([#7464](https://github.com/werf/werf/issues/7464)) ([1609845](https://github.com/werf/werf/commit/160984521d67a403f34ec161afce8381fe9e422f))
+* **stapel:** provide WERF_EXPERIMENTAL_STAPEL_ARM env for arm64 support ([#7454](https://github.com/werf/werf/issues/7454)) ([f911913](https://github.com/werf/werf/commit/f911913c70d523039a9dc808781b2a3a509158b3))
+
+
+### Bug Fixes
+
+* **cleanup:** skip invalid custom tag metadata with warning log ([65ff126](https://github.com/werf/werf/commit/65ff12612bf9487fe1e49f4064f3354a059a3b15))
+
 ## [2.66.2](https://github.com/werf/werf/compare/v2.66.1...v2.66.2) (2026-04-13)
 
 
