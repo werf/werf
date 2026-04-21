@@ -85,29 +85,6 @@ func (i *LegacyStageImage) Build(ctx context.Context, options BuildOptions) erro
 		i.container.runOptions.AddNetwork(options.Network)
 	}
 
-	experimentalStapelArm := util.GetBoolEnvironmentDefaultFalse("WERF_EXPERIMENTAL_STAPEL_ARM")
-	targetPlatform := i.GetTargetPlatform()
-	defaultPlatform := i.ContainerBackend.GetDefaultPlatform()
-
-	if targetPlatform == defaultPlatform && defaultPlatform != "linux/amd64" {
-		if !(experimentalStapelArm && isArm64Platform(defaultPlatform)) {
-			logboek.Context(ctx).Error().LogF("Detected your default build platform as %s.\n", defaultPlatform)
-			logboek.Context(ctx).Error().LogF("Building of stapel-type images using Docker-Server backend for platforms other than linux/amd64 is not supported.\n")
-			logboek.Context(ctx).Error().LogF("Please either:\n * confirm emulation of linux/amd64 by explicitly setting --platform=linux/amd64 param;\n * or use Dockerfile-type image instead.\n")
-			logboek.Context(ctx).Error().LogLn()
-			return fmt.Errorf("building of stapel image using Docker-Server backend is unsupported on your current platform %q", defaultPlatform)
-		}
-	}
-
-	if targetPlatform != "" && targetPlatform != "linux/amd64" {
-		if !(experimentalStapelArm && isArm64Platform(targetPlatform)) {
-			logboek.Context(ctx).Error().LogF("Building of stapel-type images using Docker-Server backend for platforms other than linux/amd64 is not supported.\n")
-			logboek.Context(ctx).Error().LogF("Please either:\n * use Buildah backend to build stapel-type images for arbitrary platforms;\n * or use Dockerfile-type images with any backend.\n")
-			logboek.Context(ctx).Error().LogLn()
-			return fmt.Errorf("building of stapel image using Docker-Server backend is unsupported for specified platform %q", targetPlatform)
-		}
-	}
-
 	containerLockName := ContainerLockName(i.container.Name())
 	if _, lock, err := werf.HostLocker().AcquireLock(ctx, containerLockName, lockgate.AcquireOptions{}); err != nil {
 		return fmt.Errorf("failed to lock %s: %w", containerLockName, err)
