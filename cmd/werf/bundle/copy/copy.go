@@ -12,7 +12,6 @@ import (
 	"github.com/werf/nelm/pkg/export/helm/werf/helmopts"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/deploy/bundles"
-	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/docker_registry"
 	"github.com/werf/werf/v2/pkg/ref"
 	"github.com/werf/werf/v2/pkg/tmp_manager"
@@ -83,10 +82,6 @@ func runCopy(ctx context.Context) error {
 	})
 	if err != nil {
 		return fmt.Errorf("component init error: %w", err)
-	}
-
-	if err := docker.InitDockerConfig(docker.InitOptions{DockerConfigDir: *commonCmdData.DockerConfig}); err != nil {
-		return fmt.Errorf("unable to init docker config: %w", err)
 	}
 
 	defer func() {
