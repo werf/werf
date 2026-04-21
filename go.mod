@@ -113,9 +113,6 @@ require (
 	github.com/dlclark/regexp2 v1.11.4 // indirect
 	github.com/docker/distribution v2.8.3+incompatible // indirect
 	github.com/docker/go-events v0.0.0-20190806004212-e31b211e4f1c // indirect
-	github.com/dop251/goja v0.0.0-20251121114222-56b1242a5f86 // indirect
-	github.com/dop251/goja_nodejs v0.0.0-20251015164255-5e94316bedaf // indirect
-	github.com/evanw/esbuild v0.27.0 // indirect
 	github.com/fxamacker/cbor/v2 v2.9.0 // indirect
 	github.com/go-ini/ini v1.67.0 // indirect
 	github.com/go-jose/go-jose/v4 v4.1.3 // indirect
