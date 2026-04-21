@@ -248,3 +248,7 @@ func (i *legacyImageForFromScratchTests) SetFinalStageDesc(*imagePkg.StageDesc) 
 func (i *legacyImageForFromScratchTests) GetCopy() container_backend.LegacyImageInterface {
 	panic("unexpected call")
 }
+
+func (i *legacyImageForFromScratchTests) Mutate(context.Context, func(string) (string, error)) error {
+	panic("unexpected call")
+}
