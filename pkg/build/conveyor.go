@@ -928,7 +928,11 @@ func (c *Conveyor) ProjectName() string {
 	return c.werfConfig.Meta.Project
 }
 
-func (c *Conveyor) GetStageImage(name string) *stage.StageImage {
+// getStageImage returns the cached stage image for the given name when exactly one
+// platform variant is cached. In a multiplatform build, where the same image name is
+// cached separately for each target platform, this method returns nil —
+// use GetStageImageByPlatform to retrieve a specific platform variant.
+func (c *Conveyor) getStageImage(name string) *stage.StageImage {
 	c.GetServiceRWMutex("StageImages").RLock()
 	defer c.GetServiceRWMutex("StageImages").RUnlock()
 
