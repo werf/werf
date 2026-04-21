@@ -223,10 +223,10 @@ func (m *StorageManager) GetServiceValuesRepo() string {
 func (m *StorageManager) GetImageInfoGetter(imageName string, stageDesc *image.StageDesc, opts image.InfoGetterOptions) *image.InfoGetter {
 	if m.FinalStagesStorage != nil {
 		finalImageName := m.FinalStagesStorage.ConstructStageImageName(m.ProjectName, stageDesc.StageID.Digest, stageDesc.StageID.CreationTs)
-		return image.NewInfoGetter(imageName, finalImageName, opts)
+		return image.NewInfoGetter(imageName, finalImageName, stageDesc.Info.GetDigest(), opts)
 	}
 
-	return image.NewInfoGetter(imageName, stageDesc.Info.Name, opts)
+	return image.NewInfoGetter(imageName, stageDesc.Info.Name, stageDesc.Info.GetDigest(), opts)
 }
 
 func (m *StorageManager) InitCache(ctx context.Context) error {

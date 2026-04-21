@@ -1,0 +1,1 @@
+initialize the files needed to render manifests using TypeScript.

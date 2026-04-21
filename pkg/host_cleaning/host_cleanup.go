@@ -10,6 +10,7 @@ import (
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
 	"github.com/werf/werf/v2/pkg/tmp_manager"
+	"github.com/werf/werf/v2/pkg/volumeutils"
 	"github.com/werf/werf/v2/pkg/werf"
 	"github.com/werf/werf/v2/pkg/werf/exec"
 )
@@ -113,11 +114,19 @@ func RunHostCleanup(ctx context.Context, backend container_backend.ContainerBack
 	allowedLocalCacheVolumeUsagePercentage := getOptionValueOrDefault(options.AllowedLocalCacheVolumeUsagePercentage, DefaultAllowedLocalCacheVolumeUsagePercentage)
 	allowedLocalCacheVolumeUsageMarginPercentage := getOptionValueOrDefault(options.AllowedLocalCacheVolumeUsageMarginPercentage, DefaultAllowedLocalCacheVolumeUsageMarginPercentage)
 
+	vuLocalCache, err := volumeutils.GetVolumeUsageByPath(ctx, werf.GetLocalCacheDir())
+	if err != nil {
+		return fmt.Errorf("error getting local cache volume usage: %w", err)
+	}
+
+	allowedLocalCacheVolumeUsageBytes := vuLocalCache.PercentageToBytes(allowedLocalCacheVolumeUsagePercentage)
+	allowedLocalCacheVolumeUsageMarginBytes := vuLocalCache.PercentageToBytes(allowedLocalCacheVolumeUsageMarginPercentage)
+
 	if err := logboek.Context(ctx).Default().LogProcess("Running GC for git data").DoError(func() error {
 		if err := gitdata.RunGC(ctx, gitdata.RunGCOptions{
-			AllowedLocalCacheVolumeUsagePercentage:       allowedLocalCacheVolumeUsagePercentage,
-			AllowedLocalCacheVolumeUsageMarginPercentage: allowedLocalCacheVolumeUsageMarginPercentage,
-			DryRun: options.DryRun,
+			AllowedLocalCacheVolumeUsageBytes:       allowedLocalCacheVolumeUsageBytes,
+			AllowedLocalCacheVolumeUsageMarginBytes: allowedLocalCacheVolumeUsageMarginBytes,
+			DryRun:                                  options.DryRun,
 		}); err != nil {
 			return fmt.Errorf("git repo GC failed: %w", err)
 		}
@@ -138,12 +147,25 @@ func RunHostCleanup(ctx context.Context, backend container_backend.ContainerBack
 	}
 
 	return logboek.Context(ctx).Default().LogProcess("Running GC for local %s backend", cleaner.BackendName()).DoError(func() error {
-		err := cleaner.RunGC(ctx, RunGCOptions{
-			AllowedStorageVolumeUsagePercentage:       allowedBackendStorageVolumeUsagePercentage,
-			AllowedStorageVolumeUsageMarginPercentage: allowedBackendStorageVolumeUsageMarginPercentage,
-			StoragePath: *options.BackendStoragePath,
-			Force:       options.Force,
-			DryRun:      options.DryRun,
+		backendStoragePath, err := cleaner.backendStoragePath(ctx, *options.BackendStoragePath)
+		if err != nil {
+			return fmt.Errorf("error getting backend storage path: %w", err)
+		}
+
+		vuBackend, err := volumeutils.GetVolumeUsageByPath(ctx, backendStoragePath)
+		if err != nil {
+			return fmt.Errorf("error getting backend volume usage: %w", err)
+		}
+
+		allowedBackendStorageVolumeUsageBytes := vuBackend.PercentageToBytes(allowedBackendStorageVolumeUsagePercentage)
+		allowedBackendStorageVolumeUsageMarginBytes := vuBackend.PercentageToBytes(allowedBackendStorageVolumeUsageMarginPercentage)
+
+		err = cleaner.RunGC(ctx, RunGCOptions{
+			AllowedStorageVolumeUsageBytes:       allowedBackendStorageVolumeUsageBytes,
+			AllowedStorageVolumeUsageMarginBytes: allowedBackendStorageVolumeUsageMarginBytes,
+			StoragePath:                          *options.BackendStoragePath,
+			Force:                                options.Force,
+			DryRun:                               options.DryRun,
 		})
 		if err != nil {
 			return fmt.Errorf("local %s backend GC failed: %w", cleaner.BackendName(), err)
@@ -171,7 +193,13 @@ func shouldRunAutoHostCleanup(ctx context.Context, backend container_backend.Con
 
 	allowedLocalCacheVolumeUsagePercentage := getOptionValueOrDefault(options.AllowedLocalCacheVolumeUsagePercentage, DefaultAllowedLocalCacheVolumeUsagePercentage)
 
-	shouldRun, err = gitdata.ShouldRunAutoGC(ctx, allowedLocalCacheVolumeUsagePercentage)
+	vuLocalCache, err := volumeutils.GetVolumeUsageByPath(ctx, werf.GetLocalCacheDir())
+	if err != nil {
+		return false, fmt.Errorf("error getting local cache volume usage: %w", err)
+	}
+	allowedLocalCacheVolumeUsageBytes := vuLocalCache.PercentageToBytes(allowedLocalCacheVolumeUsagePercentage)
+
+	shouldRun, err = gitdata.ShouldRunAutoGC(ctx, allowedLocalCacheVolumeUsageBytes)
 	if err != nil {
 		return false, fmt.Errorf("failed to check git repo GC: %w", err)
 	}
@@ -189,9 +217,20 @@ func shouldRunAutoHostCleanup(ctx context.Context, backend container_backend.Con
 		return false, err
 	}
 
+	backendStoragePath, err := cleaner.backendStoragePath(ctx, *options.BackendStoragePath)
+	if err != nil {
+		return false, fmt.Errorf("error getting backend storage path: %w", err)
+	}
+
+	vuBackend, err := volumeutils.GetVolumeUsageByPath(ctx, backendStoragePath)
+	if err != nil {
+		return false, fmt.Errorf("error getting backend volume usage: %w", err)
+	}
+	allowedBackendStorageVolumeUsageBytes := vuBackend.PercentageToBytes(allowedBackendStorageVolumeUsagePercentage)
+
 	shouldRun, err = cleaner.ShouldRunAutoGC(ctx, RunAutoGCOptions{
-		AllowedStorageVolumeUsagePercentage: allowedBackendStorageVolumeUsagePercentage,
-		StoragePath:                         *options.BackendStoragePath,
+		AllowedStorageVolumeUsageBytes: allowedBackendStorageVolumeUsageBytes,
+		StoragePath:                    *options.BackendStoragePath,
 	})
 	if err != nil {
 		return false, fmt.Errorf("failed to check local %s backend GC: %w", cleaner.BackendName(), err)

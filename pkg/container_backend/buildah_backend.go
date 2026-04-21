@@ -1,6 +1,7 @@
 package container_backend
 
 import (
+	"archive/tar"
 	"bufio"
 	"bytes"
 	"context"
@@ -351,16 +352,17 @@ func (backend *BuildahBackend) applyDataArchives(ctx context.Context, container 
 			return fmt.Errorf("unknown archive type %q", archive.Type)
 		}
 
-		var err error
 		var uid, gid *uint32
-		uid, gid, err = getUIDAndGID(archive.Owner, archive.Group, container.RootMount)
-		if err != nil {
-			return fmt.Errorf("error getting UID/GID: %w", err)
+		if archive.Owner != "" || archive.Group != "" {
+			var err error
+			if uid, gid, err = getUIDAndGID(archive.Owner, archive.Group, container.RootMount); err != nil {
+				return fmt.Errorf("get UID/GID for %s: %w", archive.To, err)
+			}
 		}
 
 		logboek.Context(ctx).Debug().LogF("Extracting archive into container path %s\n", archive.To)
 
-		if err := util.ExtractTar(archive.Archive, extractDestPath, util.ExtractTarOptions{UID: uid, GID: gid}); err != nil {
+		if err := extractTarWithChown(archive.Archive, extractDestPath, uid, gid); err != nil {
 			return fmt.Errorf("unable to extract data archive into %s: %w", archive.To, err)
 		}
 
@@ -445,6 +447,9 @@ func (backend *BuildahBackend) applyDependenciesImports(ctx context.Context, con
 
 			absFrom := filepath.Join(dep.RootMount, imp.FromPath)
 			absTo := filepath.Join(container.RootMount, imp.ToPath)
+			if absTo, err = normalizeDependencyImportDestination(absFrom, absTo); err != nil {
+				return fmt.Errorf("normalize destination path for dependency import from %q to %q: %w", imp.FromPath, imp.ToPath, err)
+			}
 
 			var uid, gid *uint32
 			if uid, gid, err = getUIDAndGID(imp.Owner, imp.Group, container.RootMount); err != nil {
@@ -487,6 +492,33 @@ func (backend *BuildahBackend) applyDependenciesImports(ctx context.Context, con
 	}
 
 	return nil
+}
+
+func normalizeDependencyImportDestination(absFrom, absTo string) (string, error) {
+	fileInfo, err := os.Lstat(absFrom)
+	if err != nil {
+		return "", fmt.Errorf("lstat source path %q: %w", absFrom, err)
+	}
+
+	if fileInfo.IsDir() {
+		return absTo, nil
+	}
+
+	if !fileInfo.Mode().IsRegular() && fileInfo.Mode()&os.ModeSymlink == 0 {
+		return absTo, nil
+	}
+
+	destInfo, err := os.Stat(absTo)
+	switch {
+	case errors.Is(err, os.ErrNotExist):
+		return absTo, nil
+	case err != nil:
+		return "", fmt.Errorf("stat destination path %q: %w", absTo, err)
+	case destInfo.IsDir():
+		return filepath.Join(absTo, filepath.Base(absFrom)), nil
+	default:
+		return absTo, nil
+	}
 }
 
 func (backend *BuildahBackend) BuildDockerfileStage(ctx context.Context, baseImage string, opts BuildDockerfileStageOptions, instructions ...InstructionInterface) (string, error) {
@@ -646,6 +678,11 @@ func (backend *BuildahBackend) GetImageInfo(ctx context.Context, ref string, opt
 		}
 	}
 
+	imageID := ""
+	if inspect.Docker.ID != "" {
+		imageID = fmt.Sprintf("sha256:%x", inspect.Docker.ID)
+	}
+
 	return &image.Info{
 		Name:              ref,
 		Repository:        repository,
@@ -655,7 +692,7 @@ func (backend *BuildahBackend) GetImageInfo(ctx context.Context, ref string, opt
 		CreatedAtUnixNano: inspect.Docker.Created.UnixNano(),
 		OnBuild:           inspect.Docker.Config.OnBuild,
 		Env:               inspect.Docker.Config.Env,
-		ID:                fmt.Sprintf("sha256:%x", inspect.Docker.ID),
+		ID:                imageID,
 		ParentID:          parentID,
 		Size:              inspect.Docker.Size,
 		Volumes:           inspect.Docker.Config.Volumes,
@@ -1189,4 +1226,95 @@ func mapSbomScanOptionsToBuidahBackendScanOptions(scanOpts scanner.ScanOptions) 
 		PullPolicy: scanOpts.PullPolicy,
 		Commands:   []string{scanCmd.String()},
 	}
+}
+
+// lchownIfSet applies ownership to a path when uid or gid is explicitly requested.
+// Tar archives produced by git don't include an entry for the root destination
+// directory itself (e.g. /srv/app), only for its contents. Because os.MkdirAll
+// creates that directory as root:root, we must chown it separately — otherwise
+// git.add with owner/group applies ownership to files but not to the destination.
+func lchownIfSet(path string, uid, gid *uint32) error {
+	if uid == nil && gid == nil {
+		return nil
+	}
+
+	numUID, numGID := -1, -1
+	if uid != nil {
+		numUID = int(*uid)
+	}
+	if gid != nil {
+		numGID = int(*gid)
+	}
+
+	if err := os.Lchown(path, numUID, numGID); err != nil {
+		return fmt.Errorf("chown %q: %w", path, err)
+	}
+
+	return nil
+}
+
+func extractTarWithChown(tarFileReader io.Reader, dstDir string, uid, gid *uint32) error {
+	if err := os.MkdirAll(dstDir, os.ModePerm); err != nil {
+		return fmt.Errorf("create dir %q: %w", dstDir, err)
+	}
+
+	if err := lchownIfSet(dstDir, uid, gid); err != nil {
+		return err
+	}
+
+	tarReader := tar.NewReader(tarFileReader)
+	for {
+		hdr, err := tarReader.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return fmt.Errorf("read tar: %w", err)
+		}
+
+		entryPath := filepath.Join(dstDir, hdr.Name)
+		fi := hdr.FileInfo()
+
+		switch hdr.Typeflag {
+		case tar.TypeDir:
+			if err := os.MkdirAll(entryPath, fi.Mode()); err != nil {
+				return fmt.Errorf("create dir %q: %w", entryPath, err)
+			}
+		case tar.TypeBlock, tar.TypeChar, tar.TypeReg, tar.TypeFifo:
+			if err := os.MkdirAll(filepath.Dir(entryPath), os.ModePerm); err != nil {
+				return fmt.Errorf("create dir %q: %w", filepath.Dir(entryPath), err)
+			}
+			f, err := os.OpenFile(entryPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, fi.Mode())
+			if err != nil {
+				return fmt.Errorf("create file %q: %w", entryPath, err)
+			}
+			if _, err := io.Copy(f, tarReader); err != nil {
+				f.Close()
+				return fmt.Errorf("write file %q: %w", entryPath, err)
+			}
+			f.Close()
+		case tar.TypeLink:
+			if err := os.MkdirAll(filepath.Dir(entryPath), os.ModePerm); err != nil {
+				return fmt.Errorf("create dir %q: %w", filepath.Dir(entryPath), err)
+			}
+			if err := os.Link(filepath.Join(dstDir, hdr.Linkname), entryPath); err != nil {
+				return fmt.Errorf("create hard link %q: %w", entryPath, err)
+			}
+		case tar.TypeSymlink:
+			if err := os.MkdirAll(filepath.Dir(entryPath), os.ModePerm); err != nil {
+				return fmt.Errorf("create dir %q: %w", filepath.Dir(entryPath), err)
+			}
+			if err := os.Symlink(hdr.Linkname, entryPath); err != nil {
+				return fmt.Errorf("create symlink %q: %w", entryPath, err)
+			}
+		default:
+			return fmt.Errorf("tar entry %q has unexpected type %d", hdr.Name, hdr.Typeflag)
+		}
+
+		if err := lchownIfSet(entryPath, uid, gid); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

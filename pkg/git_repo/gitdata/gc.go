@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/dustin/go-humanize"
+	"github.com/samber/lo"
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/kubedog/pkg/utils"
@@ -26,19 +27,19 @@ const (
 	KeepGitRepoCacheVersionV1_1     = "3"
 )
 
-func ShouldRunAutoGC(ctx context.Context, allowedVolumeUsagePercentage float64) (bool, error) {
+func ShouldRunAutoGC(ctx context.Context, allowedVolumeUsageBytes uint64) (bool, error) {
 	vu, err := volumeutils.GetVolumeUsageByPath(ctx, werf.GetLocalCacheDir())
 	if err != nil {
 		return false, fmt.Errorf("error getting volume usage by path %q: %w", werf.GetLocalCacheDir(), err)
 	}
 
-	return vu.Percentage() > allowedVolumeUsagePercentage, nil
+	return vu.UsedBytes > allowedVolumeUsageBytes, nil
 }
 
 type RunGCOptions struct {
-	AllowedLocalCacheVolumeUsagePercentage       float64
-	AllowedLocalCacheVolumeUsageMarginPercentage float64
-	DryRun                                       bool
+	AllowedLocalCacheVolumeUsageBytes       uint64
+	AllowedLocalCacheVolumeUsageMarginBytes uint64
+	DryRun                                  bool
 }
 
 func RunGC(ctx context.Context, options RunGCOptions) error {
@@ -96,25 +97,24 @@ func RunGC(ctx context.Context, options RunGCOptions) error {
 		return fmt.Errorf("error getting volume usage by path %q: %w", werf.GetLocalCacheDir(), err)
 	}
 
-	targetVolumeUsagePercentage := math.Max(options.AllowedLocalCacheVolumeUsagePercentage-options.AllowedLocalCacheVolumeUsageMarginPercentage, 0)
-
-	bytesToFree := vu.BytesToFree(targetVolumeUsagePercentage)
-
-	if vu.Percentage() <= options.AllowedLocalCacheVolumeUsagePercentage {
+	if vu.UsedBytes <= options.AllowedLocalCacheVolumeUsageBytes {
 		logboek.Context(ctx).Default().LogBlock("Git data storage check").Do(func() {
 			logboek.Context(ctx).Default().LogF("Werf local cache dir: %s\n", werf.GetLocalCacheDir())
 			logboek.Context(ctx).Default().LogF("Volume usage: %s / %s\n", humanize.Bytes(vu.UsedBytes), humanize.Bytes(vu.TotalBytes))
-			logboek.Context(ctx).Default().LogF("Allowed volume usage percentage: %s <= %s — %s\n", utils.GreenF("%0.2f%%", vu.Percentage()), utils.BlueF("%0.2f%%", options.AllowedLocalCacheVolumeUsagePercentage), utils.GreenF("OK"))
+			logboek.Context(ctx).Default().LogF("Allowed volume usage: %s <= %s — %s\n", utils.GreenF("%s (%.2f%%)", humanize.Bytes(vu.UsedBytes), vu.BytesToPercentage(vu.UsedBytes)), utils.BlueF("%s (%.2f%%)", humanize.Bytes(options.AllowedLocalCacheVolumeUsageBytes), vu.BytesToPercentage(options.AllowedLocalCacheVolumeUsageBytes)), utils.GreenF("OK"))
 		})
 
 		return nil
 	}
 
+	targetVolumeUsageBytes := uint64(math.Max(float64(options.AllowedLocalCacheVolumeUsageBytes)-float64(options.AllowedLocalCacheVolumeUsageMarginBytes), 0))
+	bytesToFree := lo.Ternary(vu.UsedBytes > targetVolumeUsageBytes, vu.UsedBytes-targetVolumeUsageBytes, 0)
+
 	logboek.Context(ctx).Default().LogBlock("Git data storage check").Do(func() {
 		logboek.Context(ctx).Default().LogF("Werf local cache dir: %s\n", werf.GetLocalCacheDir())
 		logboek.Context(ctx).Default().LogF("Volume usage: %s / %s\n", humanize.Bytes(vu.UsedBytes), humanize.Bytes(vu.TotalBytes))
-		logboek.Context(ctx).Default().LogF("Allowed percentage level exceeded: %s > %s — %s\n", utils.RedF("%0.2f%%", vu.Percentage()), utils.YellowF("%0.2f%%", options.AllowedLocalCacheVolumeUsagePercentage), utils.RedF("HIGH VOLUME USAGE"))
-		logboek.Context(ctx).Default().LogF("Target percentage level after cleanup: %0.2f%% - %0.2f%% (margin) = %s\n", options.AllowedLocalCacheVolumeUsagePercentage, options.AllowedLocalCacheVolumeUsageMarginPercentage, utils.BlueF("%0.2f%%", targetVolumeUsagePercentage))
+		logboek.Context(ctx).Default().LogF("Allowed level exceeded: %s > %s — %s\n", utils.RedF("%s (%.2f%%)", humanize.Bytes(vu.UsedBytes), vu.BytesToPercentage(vu.UsedBytes)), utils.YellowF("%s (%.2f%%)", humanize.Bytes(options.AllowedLocalCacheVolumeUsageBytes), vu.BytesToPercentage(options.AllowedLocalCacheVolumeUsageBytes)), utils.RedF("HIGH VOLUME USAGE"))
+		logboek.Context(ctx).Default().LogF("Target level after cleanup: %s - %s (margin) = %s\n", humanize.Bytes(options.AllowedLocalCacheVolumeUsageBytes), humanize.Bytes(options.AllowedLocalCacheVolumeUsageMarginBytes), utils.BlueF("%s (%.2f%%)", humanize.Bytes(targetVolumeUsageBytes), vu.BytesToPercentage(targetVolumeUsageBytes)))
 		logboek.Context(ctx).Default().LogF("Needed to free: %s\n", utils.RedF("%s", humanize.Bytes(bytesToFree)))
 	})
 

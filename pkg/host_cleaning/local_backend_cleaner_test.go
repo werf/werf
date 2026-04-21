@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -60,16 +61,16 @@ var _ = Describe("LocalBackendCleaner", func() {
 	Describe("ShouldRunAutoGC", func() {
 		It("should return true if cleanup needed", func(ctx SpecContext) {
 			result, err := cleaner.ShouldRunAutoGC(ctx, RunAutoGCOptions{
-				AllowedStorageVolumeUsagePercentage: 0,
-				StoragePath:                         t.TempDir(),
+				AllowedStorageVolumeUsageBytes: 0,
+				StoragePath:                    t.TempDir(),
 			})
 			Expect(err).To(Succeed())
 			Expect(result).To(BeTrue())
 		})
 		It("should return false if cleanup not needed", func(ctx SpecContext) {
 			result, err := cleaner.ShouldRunAutoGC(ctx, RunAutoGCOptions{
-				AllowedStorageVolumeUsagePercentage: 1000,
-				StoragePath:                         t.TempDir(),
+				AllowedStorageVolumeUsageBytes: math.MaxUint64,
+				StoragePath:                    t.TempDir(),
 			})
 			Expect(err).To(Succeed())
 			Expect(result).To(BeFalse())
@@ -508,10 +509,10 @@ var _ = Describe("LocalBackendCleaner", func() {
 			ctx = logging.WithLogger(ctx)
 
 			options := RunGCOptions{
-				AllowedStorageVolumeUsagePercentage:       0,
-				AllowedStorageVolumeUsageMarginPercentage: 0,
-				StoragePath: t.TempDir(),
-				Force:       true,
+				AllowedStorageVolumeUsageBytes:       0,
+				AllowedStorageVolumeUsageMarginBytes: 0,
+				StoragePath:                          t.TempDir(),
+				Force:                                true,
 			}
 
 			stubs.StubFunc(&cleaner.volumeutilsGetVolumeUsageByPath, volumeutils.VolumeUsage{

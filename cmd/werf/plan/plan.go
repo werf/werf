@@ -196,6 +196,7 @@ werf plan --repo registry.mydomain.com/web --env production`,
 	common.StubSetupStatusProgressPeriod(&commonCmdData, cmd)
 	common.StubSetupTrackTimeout(&commonCmdData, cmd)
 	commonCmdData.SetupSkipDependenciesRepoRefresh(cmd)
+	common.SetupTSOptions(&commonCmdData, cmd)
 
 	var desc string
 	if featgate.FeatGateMoreDetailedExitCodeForPlan.Enabled() || featgate.FeatGatePreviewV2.Enabled() {
@@ -554,6 +555,8 @@ func run(
 			ShowSensitiveDiffs:     cmdData.ShowSensitiveDiffs,
 			ShowInsignificantDiffs: cmdData.ShowInsignificantDiffs,
 		},
+		IgnoreBundleJS: commonCmdData.IgnoreBundleJS,
+		DenoBinaryPath: commonCmdData.DenoBinaryPath,
 	}); err != nil {
 		return fmt.Errorf("release plan install: %w", err)
 	}

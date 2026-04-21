@@ -60,9 +60,11 @@ func getDependencies(imageBaseConfig *config.StapelImageBase, options *getImport
 }
 
 func newDependenciesStage(imports []*config.Import, dependencies []*config.Dependency, name StageName, baseStageOptions *BaseStageOptions) *DependenciesStage {
-	s := &DependenciesStage{}
-	s.imports = imports
-	s.dependencies = dependencies
+	s := &DependenciesStage{
+		imports:                imports,
+		dependencies:           dependencies,
+		resolvedImportMetadata: make(map[string]*storage.ImportMetadata),
+	}
 	s.BaseStage = NewBaseStage(name, baseStageOptions)
 	return s
 }
@@ -72,6 +74,8 @@ type DependenciesStage struct {
 
 	imports      []*config.Import
 	dependencies []*config.Dependency
+
+	resolvedImportMetadata map[string]*storage.ImportMetadata
 }
 
 func (s *DependenciesStage) GetImports() []*config.Import {
@@ -307,12 +311,9 @@ func (s *DependenciesStage) getImportLabels(ctx context.Context, c Conveyor, elm
 	checksumLabelKey := imagePkg.WerfImportChecksumLabelPrefix + getImportID(elm)
 	importSourceID := getImportSourceID(c, s.targetPlatform, elm)
 
-	importMetadata, err := c.GetImportMetadata(ctx, s.projectName, importSourceID)
+	importMetadata, err := s.getResolvedImportMetadata(ctx, c, importSourceID)
 	if err != nil {
-		return nil, fmt.Errorf("get import metadata: %w", err)
-	}
-	if importMetadata == nil {
-		panic(fmt.Sprintf("import metadata %s not found", importSourceID))
+		return nil, fmt.Errorf("get import metadata for %s: %w", importSourceID, err)
 	}
 
 	return map[string]string{
@@ -324,7 +325,12 @@ func (s *DependenciesStage) getImportLabels(ctx context.Context, c Conveyor, elm
 func (s *DependenciesStage) getImportSourceChecksum(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, importElm *config.Import) (string, error) {
 	importSourceID := getImportSourceID(c, s.targetPlatform, importElm)
 	importMetadata, err := c.GetImportMetadata(ctx, s.projectName, importSourceID)
-	if err != nil {
+	if storage.IsErrBrokenImage(err) {
+		logboek.Context(ctx).Warn().LogF("Import metadata %s image is broken in the container registry, will regenerate\n", importSourceID)
+		importMetadata = nil
+	} else if storage.IsErrImportMetadataNotFound(err) {
+		importMetadata = nil
+	} else if err != nil {
 		return "", fmt.Errorf("unable to get import metadata: %w", err)
 	}
 
@@ -346,7 +352,24 @@ func (s *DependenciesStage) getImportSourceChecksum(ctx context.Context, c Conve
 		}
 	}
 
+	s.resolvedImportMetadata[importSourceID] = importMetadata
+
 	return importMetadata.Checksum, nil
+}
+
+func (s *DependenciesStage) getResolvedImportMetadata(ctx context.Context, c Conveyor, importSourceID string) (*storage.ImportMetadata, error) {
+	if importMetadata := s.resolvedImportMetadata[importSourceID]; importMetadata != nil {
+		return importMetadata, nil
+	}
+
+	logboek.Context(ctx).Warn().LogF("Import metadata %s was not resolved during GetDependencies phase, falling back to registry read. The import metadata image in the container registry may be missing or broken.\n", importSourceID)
+
+	importMetadata, err := c.GetImportMetadata(ctx, s.projectName, importSourceID)
+	if err != nil {
+		return nil, fmt.Errorf("get import metadata: %w", err)
+	}
+
+	return importMetadata, nil
 }
 
 func (s *DependenciesStage) generateImportChecksum(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, importElm *config.Import) (string, error) {
@@ -456,13 +479,7 @@ func generateChecksumScript(from string, includePaths, excludePaths []string, re
 		}
 	}
 
-	// Exclude the stapel container mount root, as in the previous implementation.
-	if from == "/" {
-		excludePathsCopy = append(excludePathsCopy, stapel.CONTAINER_MOUNT_ROOT)
-	}
-
-	// Do not follow symlinks when calculating checksums to avoid runner hang-ups (-L)
-	rsyncCommand := stapel.RsyncBinPath() + " -r --dry-run"
+	rsyncCommand := stapel.RsyncBinPath() + " -rx --dry-run"
 	// Run rsync from the container root to avoid problems with relative paths in the output.
 	rsyncCommand += import_server.PrepareRsyncFilters("", includePathsCopy, excludePathsCopy)
 	rsyncCommand += " " + "/"
@@ -494,16 +511,19 @@ func generateChecksumScript(from string, includePaths, excludePaths []string, re
 }
 
 func generateChecksumBashFunction() []string {
-	var calculateChecksum string
+	md5sum := stapel.Md5sumBinPath()
+	cut := stapel.CutBinPath()
+	stat := stapel.StatBinPath()
 
+	var calculateChecksum string
 	// TODO: remove in v3 (WERF_EXPERIMENTAL_STAPEL_IMPORT_PERMISSIONS=1 as default)
 	switch util.GetBoolEnvironmentDefaultFalse("WERF_EXPERIMENTAL_STAPEL_IMPORT_PERMISSIONS") {
 	case true:
-		calculateChecksum = fmt.Sprintf(`printf '%%s\t%%s\t%%s\n' "$(%[1]s "${line}" | %[2]s -c 1-32)" "$(%[3]s --format=%%A "${line}")" "${line}"`,
-			stapel.Md5sumBinPath(), stapel.CutBinPath(), stapel.StatBinPath())
+		calculateChecksum = fmt.Sprintf(`if [ -L "${line}" ]; then printf '%%s\t%%s\t%%s\n' "$(printf 'symlink:%%s' "$(readlink "${line}")" | %[1]s | %[2]s -c 1-32)" "$(%[3]s --format=%%A "${line}")" "${line}"; else printf '%%s\t%%s\t%%s\n' "$(%[1]s "${line}" | %[2]s -c 1-32)" "$(%[3]s --format=%%A "${line}")" "${line}"; fi`,
+			md5sum, cut, stat)
 	default:
-		calculateChecksum = fmt.Sprintf(`%[1]s "${line}"`,
-			stapel.Md5sumBinPath())
+		calculateChecksum = fmt.Sprintf(`if [ -L "${line}" ]; then printf '%%s  %%s\n' "$(printf 'symlink:%%s' "$(readlink "${line}")" | %[1]s | %[2]s -c 1-32)" "${line}"; else %[1]s "${line}"; fi`,
+			md5sum, cut, stat)
 	}
 
 	return []string{

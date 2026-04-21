@@ -1,7 +1,7 @@
 package inspector
 
 func (i Inspector) InspectIncludesAllowUpdate() error {
-	if i.giterminismConfig.IsUpdateIncludesAccepted() {
+	if i.sharedOptions.LooseGiterminism() || i.giterminismConfig.IsUpdateIncludesAccepted() {
 		return nil
 	}
 

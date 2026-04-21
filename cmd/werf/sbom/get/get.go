@@ -188,7 +188,7 @@ func runGetByDigest(ctx context.Context, imageDigest string) error {
 		return fmt.Errorf("--repo is required when using --digest")
 	}
 
-	registry, err := common.CreateDockerRegistry(ctx, repoAddr, *commonCmdData.InsecureRegistry, *commonCmdData.SkipTlsVerifyRegistry)
+	registry, err := common.CreateDockerRegistry(ctx, repoAddr, *commonCmdData.InsecureRegistry, *commonCmdData.SkipTlsVerifyRegistry, nil)
 	if err != nil {
 		return fmt.Errorf("create docker registry: %w", err)
 	}
@@ -223,7 +223,7 @@ func getRawSbom(ctx context.Context, containerBackend container_backend.Containe
 
 	logboek.Context(ctx).Info().LogF("SBOM image not found in local cache, pulling from registry\n")
 
-	registry, err := common.CreateDockerRegistry(ctx, repoAddr, *commonCmdData.InsecureRegistry, *commonCmdData.SkipTlsVerifyRegistry)
+	registry, err := common.CreateDockerRegistry(ctx, repoAddr, *commonCmdData.InsecureRegistry, *commonCmdData.SkipTlsVerifyRegistry, nil)
 	if err != nil {
 		return nil, fmt.Errorf("create docker registry: %w", err)
 	}

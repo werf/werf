@@ -114,6 +114,7 @@ type Image struct {
 
 	sbom              *config.Sbom
 	stages            []stage.Interface
+	stageDurations    map[stage.StageName]time.Duration
 	lastNonEmptyStage stage.Interface
 	contentDigest     string
 	rebuilt           bool
@@ -177,6 +178,23 @@ func (i *Image) SetStages(stages []stage.Interface) {
 
 func (i *Image) GetStages() []stage.Interface {
 	return i.stages
+}
+
+func (i *Image) AddStageDuration(stageName stage.StageName, d time.Duration) {
+	if d <= 0 {
+		return
+	}
+	if i.stageDurations == nil {
+		i.stageDurations = make(map[stage.StageName]time.Duration)
+	}
+	i.stageDurations[stageName] += d
+}
+
+func (i *Image) GetStageDuration(stageName stage.StageName) time.Duration {
+	if i.stageDurations == nil {
+		return 0
+	}
+	return i.stageDurations[stageName]
 }
 
 func (i *Image) SetLastNonEmptyStage(stg stage.Interface) {
@@ -369,6 +387,13 @@ func (i *Image) SetupBaseImage(ctx context.Context, storageManager manager.Stora
 				})
 			}
 		}
+
+		if !i.IsDockerfileImage && i.baseImageReference == "scratch" {
+			i.baseStageImage.Image.SetStageDesc(&image.StageDesc{
+				StageID: nil,
+				Info:    &image.Info{Name: i.baseImageReference, Env: nil},
+			})
+		}
 	case NoBaseImage:
 
 	default:
@@ -418,10 +443,6 @@ func (i *Image) FetchBaseImage(ctx context.Context) (FetchBaseImageInfo, error) 
 	switch i.baseImageType {
 	case ImageFromRegistryAsBaseImage:
 		if i.baseStageImage.Image.Name() == "scratch" {
-			if !i.IsDockerfileImage {
-				return FetchBaseImageInfo{}, fmt.Errorf(`invalid base image: "scratch" is not allowed for stapel images. Please use a Dockerfile image or an alternative scratch image, such as "registry.werf.io/werf/scratch"`)
-			}
-
 			return FetchBaseImageInfo{}, nil
 		}
 

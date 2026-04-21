@@ -63,6 +63,13 @@ Follow [Effective Go](https://go.dev/doc/effective_go) and [Go Code Review Comme
 
 ALWAYS use these `task` commands. NEVER use raw `go build`, `go test`, `go fmt`, `go vet`, or `golangci-lint` directly. Pass extra args after `--` to forward them to the underlying command (e.g., `task test:unit -- -run TestMyFunc`).
 
+**Environment**: `Taskfile.dist.yaml` uses remote taskfile includes. You MUST enable the experimental feature before running any `task` command:
+```bash
+export TASK_X_REMOTE_TASKFILES=1
+```
+Set this once per shell session. Without it, ALL `task` commands will fail with `Remote taskfiles are not enabled`.
+
+
 - NEVER `go build` → ALWAYS `task build`. Builds binary to `./bin/`. Accepts `pkg=...`.
 - NEVER `go test` → ALWAYS `task test:unit`. Accepts `paths="./pkg/..."`.
 - NEVER `go test` (e2e) → ALWAYS `task test:e2e`. Accepts `paths="./pkg/..."` and `labelFilter="..."` (Ginkgo label filter). ALWAYS use `labelFilter` to target specific tests.
@@ -79,8 +86,8 @@ ALWAYS use these `task` commands. NEVER use raw `go build`, `go test`, `go fmt`,
 ## Testing (MANDATORY)
 
 - ALWAYS use `testify` (`assert`, `require`) when writing new tests.
-- When writing tests as an AI agent → ALWAYS name the file `*_ai_test.go`, add `//go:build ai_tests` build tag, prefix test functions with `TestAI_`.
 - ALWAYS place tests alongside source files, not in a separate directory.
+- When writing tests as an AI agent → ALWAYS name the file `*_ai_test.go`, prefix test functions with `TestAI_`.
 - Test helpers go in `helpers_test.go` (or `helpers_ai_test.go` for AI-written helpers).
 - Test fixtures go in `testdata/` subdirectory next to the tests.
 - Shared test helpers are in `test/pkg/`.
@@ -90,15 +97,6 @@ ALWAYS use these `task` commands. NEVER use raw `go build`, `go test`, `go fmt`,
 - NEVER add new external dependencies without flagging to the user first.
 - NEVER introduce breaking user-facing changes (not API changes) unless they are hidden behind a feature flag. Flag to the user first.
 - NEVER introduce changes that may compromise security. Flag to the user first.
-
-## Self-improvement (MANDATORY)
-
-ALWAYS perform this step after completing any user request. NEVER skip it, even if the work "looks fine."
-
-1. Review what went wrong during execution: wasted steps, wrong assumptions, missed dependencies.
-2. If a mistake was caused by a missing rule in AGENTS.md — propose a concrete rule addition to the user.
-3. If a mistake was caused by a missing rule in OPENCODE.md — propose a concrete rule addition to the user.
-4. NEVER silently swallow lessons learned. ALWAYS surface them.
 
 ## Related repositories
 

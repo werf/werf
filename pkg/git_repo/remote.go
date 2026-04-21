@@ -116,7 +116,11 @@ func (repo *Remote) CloneAndFetch(ctx context.Context) error {
 		return err
 	}
 	if isCloned {
-		return nil
+		rawRepo, err := repo.PlainOpen()
+		if err != nil {
+			return fmt.Errorf("open cloned repo: %w", err)
+		}
+		return repo.syncLocalBranches(ctx, rawRepo)
 	}
 
 	return repo.FetchOrigin(ctx, FetchOptions{})
@@ -296,32 +300,39 @@ func (repo *Remote) FetchOrigin(ctx context.Context, opts FetchOptions) error {
 			return fmt.Errorf("cannot fetch remote %q of repo %q: %w", remoteName, repo.String(), err)
 		}
 
-		if err := logboek.Context(ctx).Debug().LogProcess("Updating local branches").DoError(func() error {
-			refs, err := rawRepo.References()
-			if err != nil {
-				return fmt.Errorf("cannot get references of repo %q: %w", repo.String(), err)
-			}
-
-			return refs.ForEach(func(ref *plumbing.Reference) error {
-				name := ref.Name().String()
-				if strings.HasPrefix(name, "refs/remotes/origin/") {
-					branch := strings.TrimPrefix(name, "refs/remotes/origin/")
-					localRefName := plumbing.ReferenceName("refs/heads/" + branch)
-
-					if err := rawRepo.Storer.SetReference(plumbing.NewHashReference(localRefName, ref.Hash())); err != nil {
-						return err
-					}
-
-					logboek.Context(ctx).Debug().LogLnDetails(branch, "->", ref.Hash())
-				}
-				return nil
-			})
-		}); err != nil {
+		if err := repo.syncLocalBranches(ctx, rawRepo); err != nil {
 			return fmt.Errorf("cannot update local branches of repo %q: %w", repo.String(), err)
 		}
 
 		return nil
 	})
+}
+
+func (repo *Remote) syncLocalBranches(ctx context.Context, rawRepo *git.Repository) error {
+	if err := logboek.Context(ctx).Debug().LogProcess("Updating local branches").DoError(func() error {
+		refs, err := rawRepo.References()
+		if err != nil {
+			return fmt.Errorf("cannot get references of repo %q: %w", repo.String(), err)
+		}
+
+		return refs.ForEach(func(ref *plumbing.Reference) error {
+			name := ref.Name().String()
+			if strings.HasPrefix(name, "refs/remotes/origin/") {
+				branch := strings.TrimPrefix(name, "refs/remotes/origin/")
+				localRefName := plumbing.ReferenceName("refs/heads/" + branch)
+
+				if err := rawRepo.Storer.SetReference(plumbing.NewHashReference(localRefName, ref.Hash())); err != nil {
+					return err
+				}
+
+				logboek.Context(ctx).Debug().LogLnDetails(branch, "->", ref.Hash())
+			}
+			return nil
+		})
+	}); err != nil {
+		return fmt.Errorf("sync local branches: %w", err)
+	}
+	return nil
 }
 
 func (repo *Remote) PlainOpen() (*git.Repository, error) {

@@ -279,7 +279,7 @@ func (storage *LocalStagesStorage) GetImportMetadata(ctx context.Context, projec
 		return nil, fmt.Errorf("unable to get image %s info: %w", fullImageName, err)
 	}
 	if info == nil {
-		return nil, nil
+		return nil, ErrImportMetadataNotFound
 	}
 	return newImportMetadataFromLabels(info.Labels), nil
 }
@@ -408,6 +408,14 @@ func (storage *LocalStagesStorage) PostLastCleanupRecord(ctx context.Context, pr
 	panic("not implemented")
 }
 
+func (storage *LocalStagesStorage) PostManifest(ctx context.Context, ref string, opts container_backend.PostManifestOpts) error {
+	if err := storage.ContainerBackend.PostManifest(ctx, ref, opts); err != nil {
+		return fmt.Errorf("unable to post manifest %s: %w", ref, err)
+	}
+
+	return nil
+}
+
 func (storage *LocalStagesStorage) MutateAndPushImage(ctx context.Context, src, _ string, newConfig image.SpecConfig, stageImage container_backend.LegacyImageInterface) error {
 	if err := logboek.Context(ctx).Debug().LogBlock("-- LocalStagesStorage.MutateAndPushImage imageSpecConfig").DoError(func() error {
 		newConfigData, err := yaml.Marshal(newConfig)
@@ -421,7 +429,7 @@ func (storage *LocalStagesStorage) MutateAndPushImage(ctx context.Context, src, 
 		return err
 	}
 
-	newId, err := container_backend.MutateAndPushImage(ctx, src, newConfig, storage.ContainerBackend)
+	newId, err := container_backend.MutateAndPushImage(ctx, src, stageImage.GetTargetPlatform(), newConfig, storage.ContainerBackend)
 	if err != nil {
 		return err
 	}

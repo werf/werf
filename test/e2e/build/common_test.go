@@ -9,6 +9,7 @@ import (
 type setupEnvOptions struct {
 	ContainerBackendMode        string
 	WithLocalRepo               bool
+	WithFinalRepo               bool
 	WithStagedDockerfileBuilder bool
 	State                       string
 }
@@ -33,13 +34,22 @@ func setupEnv(opts setupEnvOptions) {
 		SuiteData.Stubs.UnsetEnv("WERF_REPO")
 	}
 
+	if opts.WithFinalRepo {
+		SuiteData.Stubs.SetEnv(
+			"WERF_FINAL_REPO",
+			suite_init.TestRepo(SuiteData.ProjectName+"-final"),
+		)
+	} else {
+		SuiteData.Stubs.UnsetEnv("WERF_FINAL_REPO")
+	}
+
 	if opts.ContainerBackendMode == "buildkit-docker" {
 		SuiteData.Stubs.SetEnv("DOCKER_BUILDKIT", "1")
 	} else {
 		SuiteData.Stubs.UnsetEnv("DOCKER_BUILDKIT")
 	}
 
-	if opts.WithLocalRepo {
+	if opts.WithLocalRepo || opts.WithFinalRepo {
 		SuiteData.Stubs.SetEnv("WERF_INSECURE_REGISTRY", "1")
 		SuiteData.Stubs.SetEnv("WERF_SKIP_TLS_VERIFY_REGISTRY", "1")
 	} else {

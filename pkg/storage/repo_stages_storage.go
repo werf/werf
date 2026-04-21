@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/containerd/containerd/platforms"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 
 	"github.com/werf/common-go/pkg/util"
@@ -407,6 +408,13 @@ func (storage *RepoStagesStorage) GetStageCustomTagMetadata(ctx context.Context,
 	fullImageName := makeRepoCustomTagMetadataRecord(storage.RepoAddress, tagOrID)
 	img, err := storage.DockerRegistry.GetRepoImage(ctx, fullImageName)
 	if err != nil {
+		if docker_registry.IsImageNotFoundError(err) {
+			return nil, ErrCustomTagMetadataNotFound
+		}
+		if docker_registry.IsBrokenImageError(err) {
+			return nil, ErrBrokenImage
+		}
+
 		return nil, fmt.Errorf("unable to get repo image %s: %w", fullImageName, err)
 	}
 
@@ -717,22 +725,24 @@ func (storage *RepoStagesStorage) GetImportMetadata(ctx context.Context, _, id s
 	fullImageName := makeRepoImportMetadataName(storage.RepoAddress, id)
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetImportMetadata full image name: %s\n", fullImageName)
 
-	img, err := storage.DockerRegistry.TryGetRepoImage(ctx, fullImageName)
+	img, err := storage.DockerRegistry.GetRepoImage(ctx, fullImageName)
+	if docker_registry.IsImageNotFoundError(err) {
+		return nil, ErrImportMetadataNotFound
+	}
+	if docker_registry.IsBrokenImageError(err) {
+		return nil, ErrBrokenImage
+	}
 	if err != nil {
 		return nil, fmt.Errorf("unable to get repo image %s: %w", fullImageName, err)
 	}
 
-	if img != nil {
-		return newImportMetadataFromLabels(img.Labels), nil
-	}
-
-	return nil, nil
+	return newImportMetadataFromLabels(img.Labels), nil
 }
 
 func (storage *RepoStagesStorage) PutImportMetadata(ctx context.Context, projectName string, metadata *ImportMetadata) error {
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PutImportMetadata %v\n", metadata)
 
-	tagName := fmt.Sprintf("%s%s", RepoImportMetadata_ImageTagPrefix, metadata.ImportSourceID)
+	tagName := makeRepoImportMetadataTag(metadata.ImportSourceID)
 	tags, err := storage.Tags(ctx, storage.RepoAddress)
 	if err != nil {
 		return fmt.Errorf("unable to get repo %s tags: %w", storage.RepoAddress, err)
@@ -808,6 +818,10 @@ func (storage *RepoStagesStorage) GetImportMetadataIDs(ctx context.Context, _ st
 
 func getImportMetadataIDFromRepoTag(tag string) string {
 	return strings.TrimPrefix(tag, RepoImportMetadata_ImageTagPrefix)
+}
+
+func makeRepoImportMetadataTag(importSourceID string) string {
+	return fmt.Sprintf("%s%s", RepoImportMetadata_ImageTagPrefix, importSourceID)
 }
 
 func makeRepoImportMetadataName(repoAddress, importSourceID string) string {
@@ -1253,8 +1267,40 @@ func (storage *RepoStagesStorage) PostLastCleanupRecord(ctx context.Context, pro
 	return nil
 }
 
-func (storage *RepoStagesStorage) MutateAndPushImage(ctx context.Context, src, dest string, newConfig image.SpecConfig, _ container_backend.LegacyImageInterface) error {
+func (storage *RepoStagesStorage) PostManifest(ctx context.Context, ref string, opts container_backend.PostManifestOpts) error {
+	if len(opts.Manifests) > 0 {
+		return fmt.Errorf("post manifest %s: unsupported manifests option for repo stages storage", ref)
+	}
+
+	labels := map[string]string{}
+	for _, label := range opts.Labels {
+		parts := strings.SplitN(label, "=", 2)
+		if len(parts) != 2 || parts[0] == "" {
+			return fmt.Errorf("parse manifest label %q: expected KEY=VALUE", label)
+		}
+		labels[parts[0]] = parts[1]
+	}
+
+	if err := storage.DockerRegistry.PushImage(ctx, ref, &docker_registry.PushImageOptions{Labels: labels}); err != nil {
+		return fmt.Errorf("push manifest image %s: %w", ref, err)
+	}
+
+	return nil
+}
+
+func (storage *RepoStagesStorage) MutateAndPushImage(ctx context.Context, src, dest string, newConfig image.SpecConfig, stageImage container_backend.LegacyImageInterface) error {
 	if err := storage.DockerRegistry.MutateAndPushImage(ctx, src, dest, api.WithConfigFileMutation(func(ctx context.Context, config *v1.ConfigFile) (*v1.ConfigFile, error) {
+		if targetPlatform := stageImage.GetTargetPlatform(); targetPlatform != "" {
+			platformSpec, err := platforms.Parse(targetPlatform)
+			if err != nil {
+				return nil, fmt.Errorf("parse target platform %q: %w", targetPlatform, err)
+			}
+
+			config.OS = platformSpec.OS
+			config.Architecture = platformSpec.Architecture
+			config.Variant = platformSpec.Variant
+		}
+
 		image.UpdateConfigFile(newConfig, config)
 
 		return config, nil

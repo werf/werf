@@ -7,6 +7,7 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/buildah"
 	"github.com/werf/werf/v2/pkg/container_backend"
+	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
 	"github.com/werf/werf/v2/pkg/image"
@@ -21,6 +22,7 @@ import (
 type ComponentsManager struct {
 	registryMirrors  *[]string
 	containerBackend container_backend.ContainerBackend
+	buildahMode      buildah.Mode
 }
 
 type InitCommonComponentsOptions struct {
@@ -71,23 +73,34 @@ func InitCommonComponents(ctx context.Context, opts InitCommonComponentsOptions)
 		}
 	}
 
-	// Initialize Docker early to read registry mirrors from daemon.json before GetContainerRegistryMirror call
-	if opts.InitProcessContainerBackend {
+	var resolvedBuildahMode buildah.Mode
+	if opts.InitProcessContainerBackend || opts.InitDockerRegistry {
 		buildahMode, _, err := GetBuildahMode()
 		if err != nil {
 			return nil, ctx, fmt.Errorf("unable to determine buildah mode: %w", err)
 		}
-		if *buildahMode == buildah.ModeDisabled {
-			newCtx, err := InitProcessDocker(ctx, opts.Cmd)
-			if err != nil {
-				return nil, ctx, fmt.Errorf("unable to init docker: %w", err)
-			}
-			ctx = newCtx
+		resolvedBuildahMode = *buildahMode
+		cmanager.buildahMode = resolvedBuildahMode
+	}
+
+	// Set DOCKER_CONFIG early so that authn.DefaultKeychain (used by go-containerregistry)
+	// picks up custom credentials even when the full container backend is not initialized.
+	if opts.InitDockerRegistry || opts.InitProcessContainerBackend {
+		if err := docker.InitDockerConfig(docker.InitOptions{DockerConfigDir: *opts.Cmd.DockerConfig}); err != nil {
+			return nil, ctx, fmt.Errorf("init docker config: %w", err)
 		}
 	}
 
+	if opts.InitProcessContainerBackend && resolvedBuildahMode == buildah.ModeDisabled {
+		newCtx, err := InitProcessDocker(ctx, opts.Cmd)
+		if err != nil {
+			return nil, ctx, fmt.Errorf("unable to init docker: %w", err)
+		}
+		ctx = newCtx
+	}
+
 	if opts.InitDockerRegistry || opts.InitProcessContainerBackend {
-		rm, err := GetContainerRegistryMirror(ctx, opts.Cmd)
+		rm, err := GetContainerRegistryMirror(ctx, opts.Cmd, resolvedBuildahMode)
 		if err != nil {
 			return nil, ctx, fmt.Errorf("error get container registry mirrors: %w", err)
 		}
@@ -95,7 +108,7 @@ func InitCommonComponents(ctx context.Context, opts InitCommonComponentsOptions)
 	}
 
 	if opts.InitDockerRegistry {
-		if err := DockerRegistryInit(ctx, opts.Cmd, *cmanager.registryMirrors); err != nil {
+		if err := DockerRegistryInit(ctx, opts.Cmd, *cmanager.registryMirrors, resolvedBuildahMode); err != nil {
 			return nil, ctx, fmt.Errorf("docker registry initialization error: %w", err)
 		}
 	}
@@ -146,9 +159,6 @@ func InitCommonComponents(ctx context.Context, opts InitCommonComponentsOptions)
 
 	if opts.SetupOndemandKubeInitializer {
 		SetupOndemandKubeInitializer(opts.Cmd.KubeContextCurrent, opts.Cmd.LegacyKubeConfigPath, opts.Cmd.KubeConfigBase64, opts.Cmd.LegacyKubeConfigPathsMergeList, opts.Cmd.KubeBearerTokenData, opts.Cmd.KubeBearerTokenPath)
-		if err := GetOndemandKubeInitializer().Init(ctx); err != nil {
-			return nil, ctx, err
-		}
 	}
 
 	return cmanager, ctx, nil
@@ -166,6 +176,10 @@ func (m *ComponentsManager) ContainerBackend() container_backend.ContainerBacken
 		panic("bug: init required!")
 	}
 	return m.containerBackend
+}
+
+func (m *ComponentsManager) BuildahMode() buildah.Mode {
+	return m.buildahMode
 }
 
 func (m *ComponentsManager) TerminateSSHAgent() {

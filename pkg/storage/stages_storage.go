@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
@@ -15,6 +16,19 @@ const (
 	DefaultKubernetesStorageAddress = "kubernetes://werf-synchronization"
 	NamelessImageRecordTag          = "__nameless__"
 )
+
+var (
+	ErrImportMetadataNotFound    = errors.New("import metadata not found")
+	ErrCustomTagMetadataNotFound = errors.New("custom tag metadata not found")
+)
+
+func IsErrImportMetadataNotFound(err error) bool {
+	return errors.Is(err, ErrImportMetadataNotFound)
+}
+
+func IsErrCustomTagMetadataNotFound(err error) bool {
+	return errors.Is(err, ErrCustomTagMetadataNotFound)
+}
 
 type FilterStagesAndProcessRelatedDataOptions struct {
 	SkipUsedImage            bool
@@ -46,6 +60,7 @@ type StagesStorage interface {
 	ShouldFetchImage(ctx context.Context, img container_backend.LegacyImageInterface) (bool, error)
 	CopyFromStorage(ctx context.Context, src StagesStorage, projectName string, stageID image.StageID, opts CopyFromStorageOptions) (*image.StageDesc, error)
 	MutateAndPushImage(ctx context.Context, src, dest string, newConfig image.SpecConfig, stageImage container_backend.LegacyImageInterface) error
+	PostManifest(ctx context.Context, ref string, opts container_backend.PostManifestOpts) error
 
 	CreateRepo(ctx context.Context) error
 	DeleteRepo(ctx context.Context) error

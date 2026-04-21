@@ -153,6 +153,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.StubSetupHooksStatusProgressPeriod(&commonCmdData, cmd)
 	common.StubSetupStatusProgressPeriod(&commonCmdData, cmd)
 	commonCmdData.SetupSkipDependenciesRepoRefresh(cmd)
+	common.SetupTSOptions(&commonCmdData, cmd)
 
 	cmd.Flags().BoolVarP(&cmdData.Validate, "validate", "", util.GetBoolEnvironmentDefaultFalse("WERF_VALIDATE"), "Validate your manifests against the Kubernetes cluster you are currently pointing at (default $WERF_VALIDATE)")
 	cmd.Flags().BoolVarP(&cmdData.IncludeCRDs, "include-crds", "", util.GetBoolEnvironmentDefaultTrue("WERF_INCLUDE_CRDS"), "Include CRDs in the templated output (default $WERF_INCLUDE_CRDS)")
@@ -239,7 +240,7 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 		isStub = true
 		stubImageNameList = append(stubImageNameList, imagesToProcess.FinalImageNameList...)
 	default:
-		if err := common.DockerRegistryInit(ctx, &commonCmdData, commonManager.RegistryMirrors()); err != nil {
+		if err := common.DockerRegistryInit(ctx, &commonCmdData, commonManager.RegistryMirrors(), commonManager.BuildahMode()); err != nil {
 			return err
 		}
 
@@ -439,6 +440,8 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 		ShowOnlyFiles:               append(util.PredefinedValuesByEnvNamePrefix("WERF_SHOW_ONLY"), cmdData.ShowOnly...),
 		ShowStandaloneCRDs:          cmdData.IncludeCRDs,
 		TemplatesAllowDNS:           commonCmdData.TemplatesAllowDNS,
+		IgnoreBundleJS:              commonCmdData.IgnoreBundleJS,
+		DenoBinaryPath:              commonCmdData.DenoBinaryPath,
 	}); err != nil {
 		return fmt.Errorf("chart render: %w", err)
 	}

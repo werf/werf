@@ -15,7 +15,27 @@ werf provides a ready-made integrations for GitLab CI/CD and GitHub Actions. By 
   - Detecting the current environment (`WERF_ENV`).
   - Annotating the chart resources being deployed, binding to the CI system (`WERF_ADD_ANNOTATION_*`). Annotations are added to all resources being deployed, allowing the user to go to the bound pipeline, job, and commit if necessary.
   - Setting up werf logging (`WERF_LOG_*`).
-  - Enabling automatic cleaning of werf processes for cancelled CI jobs (`WERF_ENABLE_PROCESS_EXTERMINATOR=1`). This procedure is only required in CI systems that cannot send termination signals to spawned processes (e.g., GitLab CI/CD).
+   - Enabling automatic cleaning of werf processes for cancelled CI jobs (`WERF_ENABLE_PROCESS_EXTERMINATOR=1`). This procedure is only required in CI systems that cannot send termination signals to spawned processes (e.g., GitLab CI/CD).
+
+## Docker configuration
+
+By default, `werf ci-env` copies the current Docker config directory (from `~/.docker` or the path specified by `--docker-config`/`WERF_DOCKER_CONFIG`) to a temporary directory and exports the `DOCKER_CONFIG` environment variable pointing to it. This isolates CI job's Docker operations from the host configuration.
+
+The `--use-docker-auth-config` flag (or `WERF_USE_DOCKER_AUTH_CONFIG=1`) changes this behavior: instead of copying an existing Docker config, it creates a fresh one from the `DOCKER_AUTH_CONFIG` environment variable. This is useful when:
+
+- The CI runner doesn't have a persistent Docker config (e.g., ephemeral runners).
+- Registry credentials are injected via `DOCKER_AUTH_CONFIG` (common in GitLab CI/CD).
+- You want a clean Docker config with no inherited credential helpers or settings.
+
+The `DOCKER_AUTH_CONFIG` value must be a valid JSON string in Docker config format, e.g.:
+
+```json
+{"auths": {"registry.example.com": {"auth": "base64-encoded-user:password"}}}
+```
+
+If `--use-docker-auth-config` is enabled but `DOCKER_AUTH_CONFIG` is not set, `werf ci-env` will exit with an error.
+
+> After creating the temporary config, if `--login-to-registry` is enabled (the default), `werf ci-env` additionally logs in to the CI container registry, adding credentials to the temporary config.
 
 ## GitLab CI/CD
 
@@ -34,6 +54,18 @@ Deploy to Production:
   stage: deploy
   script:
     - . $(werf ci-env gitlab --as-file)
+    - werf converge
+  environment:
+    name: production
+```
+
+If your CI runner provides registry credentials via the `DOCKER_AUTH_CONFIG` environment variable, you can use `--use-docker-auth-config` to create the Docker config from it:
+
+```yaml
+Deploy to Production with Docker Auth Config:
+  stage: deploy
+  script:
+    - . $(werf ci-env gitlab --as-file --use-docker-auth-config)
     - werf converge
   environment:
     name: production
