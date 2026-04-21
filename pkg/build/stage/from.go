@@ -69,10 +69,14 @@ func (s *FromStage) GetDependencies(ctx context.Context, c Conveyor, cb containe
 	if s.fromImageName != "" && !s.fromExternal {
 		args = append(args, c.GetImageContentDigest(s.targetPlatform, s.fromImageName))
 	} else {
-		args = append(args, prevImage.Image.Name())
+		args = append(args, s.fromImageName)
 	}
 
 	return util.Sha256Hash(args...), nil
+}
+
+func (s *FromStage) GetContextDependencies(ctx context.Context, c Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+	return s.GetDependencies(ctx, c, nil, nil, nil, buildContextArchive)
 }
 
 func (s *FromStage) PrepareImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) error {

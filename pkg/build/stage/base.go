@@ -203,6 +203,10 @@ func (s *BaseStage) GetDependencies(ctx context.Context, c Conveyor, cb containe
 	panic("method must be implemented!")
 }
 
+func (s *BaseStage) GetContextDependencies(ctx context.Context, c Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+	panic("method must be implemented!")
+}
+
 func (s *BaseStage) GetNextStageDependencies(_ context.Context, _ Conveyor) (string, error) {
 	return "", nil
 }

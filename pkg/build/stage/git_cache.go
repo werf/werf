@@ -74,6 +74,10 @@ func (s *GitCacheStage) gitMappingsPatchSize(ctx context.Context, c Conveyor, pr
 	return size, nil
 }
 
+func (s *GitCacheStage) GetContextDependencies(ctx context.Context, c Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+	return "", nil
+}
+
 func (s *GitCacheStage) GetNextStageDependencies(ctx context.Context, c Conveyor) (string, error) {
 	return s.BaseStage.getNextStageGitDependencies(ctx, c)
 }

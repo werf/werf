@@ -21,6 +21,10 @@ func NewEnv(i *dockerfile.DockerfileStageInstruction[*instructions.EnvCommand], 
 	return &Env{Base: NewBase(i, backend_instruction.NewEnv(*i.Data), dependencies, hasPrevStage, opts)}
 }
 
+func (stg *Env) GetContextDependencies(ctx context.Context, c stage.Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+	return stg.GetDependencies(ctx, c, nil, nil, nil, buildContextArchive)
+}
+
 func (stg *Env) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
 	var args []string
 

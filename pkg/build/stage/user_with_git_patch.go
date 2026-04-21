@@ -30,6 +30,10 @@ func (s *UserWithGitPatchStage) SelectSuitableStageDesc(ctx context.Context, c C
 	return s.BaseStage.SelectSuitableStageDesc(ctx, c, stageDescSet)
 }
 
+func (s *UserWithGitPatchStage) GetContextDependencies(ctx context.Context, c Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+	return s.getBuilderChecksum(ctx), nil
+}
+
 func (s *UserWithGitPatchStage) GetNextStageDependencies(ctx context.Context, c Conveyor) (string, error) {
 	return s.BaseStage.getNextStageGitDependencies(ctx, c)
 }

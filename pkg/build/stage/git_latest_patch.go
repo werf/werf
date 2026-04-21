@@ -64,6 +64,10 @@ func (s *GitLatestPatchStage) GetDependencies(ctx context.Context, c Conveyor, c
 	return util.Sha256Hash(args...), nil
 }
 
+func (s *GitLatestPatchStage) GetContextDependencies(ctx context.Context, c Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+	return "", nil
+}
+
 func (s *GitLatestPatchStage) GetNextStageDependencies(ctx context.Context, c Conveyor) (string, error) {
 	return s.BaseStage.getNextStageGitDependencies(ctx, c)
 }
