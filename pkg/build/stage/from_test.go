@@ -5,22 +5,12 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"go.uber.org/mock/gomock"
-
-	"github.com/werf/werf/v2/test/mock"
 )
 
 var _ = Describe("FromStage", func() {
 	DescribeTable("GetDependencies()",
 		func(ctx SpecContext, data testDataFrom) {
-			ctrl := gomock.NewController(GinkgoT())
-
 			conveyor := NewConveyorStubForDependencies(NewGiterminismManagerStub(NewLocalGitRepoStub("9d8059842b6fde712c58315ca0ab4713d90761c0"), NewGiterminismInspectorStub()), make([]*TestDependency, 0))
-
-			legacyImage := mock.NewMockLegacyImageInterface(ctrl)
-			containerBackend := NewContainerBackendStub()
-
-			prevImage := NewStageImage(containerBackend, "base-image", legacyImage)
 
 			fromStage := &FromStage{
 				fromImageName:         data.FromImageName,
@@ -30,13 +20,7 @@ var _ = Describe("FromStage", func() {
 				BaseStage:             NewBaseStage(From, &BaseStageOptions{}),
 			}
 
-			if fromStage.fromImageName != "" {
-				// do nothing
-			} else {
-				legacyImage.EXPECT().Name().Return(data.PrevImageImageName)
-			}
-
-			digest, err := fromStage.GetDependencies(ctx, conveyor, nil, prevImage, nil, nil)
+			digest, err := fromStage.GetDependencies(ctx, conveyor, nil, nil, nil, nil)
 			Expect(err).To(Succeed())
 
 			Expect(digest).To(Equal(data.ExpectedDigest),
@@ -71,8 +55,7 @@ var _ = Describe("FromStage", func() {
 
 		Entry("should calculate from stage digest with fromImageName param",
 			testDataFrom{
-				FromImageName:      "from-image-or-artifact-image-name",
-				PrevImageImageName: "prev-image-image-name",
+				FromImageName: "from-image-or-artifact-image-name",
 
 				ExpectedDigest: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
 			}),
@@ -84,9 +67,6 @@ type testDataFrom struct {
 	BaseImageRepoIdOrNone string
 	FromCacheVersion      string
 	ImageCacheVersion     string
-
-	ImageContentDigest string
-	PrevImageImageName string
 
 	ExpectedDigest string
 }

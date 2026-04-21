@@ -834,6 +834,12 @@ func (c *Conveyor) doImage(ctx context.Context, img *image.Image, phases []Phase
 				}
 				logProcess.End()
 
+				if img.GetContextTagDesc() != nil {
+					logboek.Context(ctx).Default().LogFHighlight("Use previously built image (context tag %s)\n", img.GetContextTagDesc().StageID.String())
+					logboek.Context(ctx).LogOptionalLn()
+					return nil
+				}
+
 				logProcess = logboek.Context(ctx).Debug().LogProcess("Phase %s -- OnImageStage()", phase.Name())
 				logProcess.Start()
 				for _, stg := range img.GetStages() {
