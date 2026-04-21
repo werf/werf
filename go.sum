@@ -1454,6 +1454,8 @@ github.com/werf/nelm v1.23.3-0.20260410174511-c9b4ee409c39 h1:5dxs3OEskHbdryRV2R
 github.com/werf/nelm v1.23.3-0.20260410174511-c9b4ee409c39/go.mod h1:Gy6XJ42rwJVA+UyB6ka9/DVFPzm+lh7lmcjLAZECdIs=
 github.com/werf/nelm v1.23.3-0.20260413152602-4b9025485408 h1:OH415PBFMNKk1p09p1fanT9P9LLjDUFcfK2NzuliL3M=
 github.com/werf/nelm v1.23.3-0.20260413152602-4b9025485408/go.mod h1:Gy6XJ42rwJVA+UyB6ka9/DVFPzm+lh7lmcjLAZECdIs=
+github.com/werf/nelm v1.23.3-0.20260421131859-144b20397bc1 h1:Lsh9+Px89cfXa5U+WbBz2Z4pI5QYSkxZPmUDLxSPz0M=
+github.com/werf/nelm v1.23.3-0.20260421131859-144b20397bc1/go.mod h1:Gy6XJ42rwJVA+UyB6ka9/DVFPzm+lh7lmcjLAZECdIs=
 github.com/werf/nelm v1.23.3-0.20260421142511-1e1068f13d24 h1:ofLD8sa/e7O+1VEB2Z976S05tf/S6Ay5fIbX0Wi4zYs=
 github.com/werf/nelm v1.23.3-0.20260421142511-1e1068f13d24/go.mod h1:W9QyNA9XlJi+fkgt3MAd2R+VUr+RqaW3S0u5gWRc+p8=
 github.com/x448/float16 v0.8.4 h1:qLwI1I70+NjRFUR3zs1JPUCgaCXSh3SW62uAKT1mSBM=
