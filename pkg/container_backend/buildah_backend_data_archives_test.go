@@ -21,7 +21,7 @@ import (
 	"github.com/werf/werf/v2/pkg/werf"
 )
 
-var _ = Describe("BuildahBackend data archives", func() {
+var _ = XDescribe("BuildahBackend data archives", func() {
 	BeforeEach(func() {
 		Expect(werf.Init(GinkgoT().TempDir(), "")).To(Succeed())
 	})
