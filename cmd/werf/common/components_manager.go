@@ -7,6 +7,7 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/buildah"
 	"github.com/werf/werf/v2/pkg/container_backend"
+	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
 	"github.com/werf/werf/v2/pkg/image"
@@ -80,6 +81,14 @@ func InitCommonComponents(ctx context.Context, opts InitCommonComponentsOptions)
 		}
 		resolvedBuildahMode = *buildahMode
 		cmanager.buildahMode = resolvedBuildahMode
+	}
+
+	// Set DOCKER_CONFIG early so that authn.DefaultKeychain (used by go-containerregistry)
+	// picks up custom credentials even when the full container backend is not initialized.
+	if opts.InitDockerRegistry || opts.InitProcessContainerBackend {
+		if err := docker.InitDockerConfig(docker.InitOptions{DockerConfigDir: *opts.Cmd.DockerConfig}); err != nil {
+			return nil, ctx, fmt.Errorf("init docker config: %w", err)
+		}
 	}
 
 	if opts.InitProcessContainerBackend && resolvedBuildahMode == buildah.ModeDisabled {

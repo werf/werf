@@ -19,6 +19,14 @@ func (vu VolumeUsage) PercentageToBytes(percentage float64) uint64 {
 	return uint64(math.Round(float64(vu.TotalBytes) * (percentage / 100.0)))
 }
 
+func (vu VolumeUsage) BytesToPercentage(bytes uint64) float64 {
+	if vu.TotalBytes == 0 {
+		return 0
+	}
+
+	return float64(bytes) / float64(vu.TotalBytes) * 100
+}
+
 func GetVolumeUsageByPath(ctx context.Context, path string) (VolumeUsage, error) {
 	di, err := disk.GetInfo(path, true)
 	if err != nil {

@@ -263,7 +263,7 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 	if vu.UsedBytes <= options.AllowedStorageVolumeUsageBytes {
 		logboek.Context(ctx).LogBlock("Check storage").Do(func() {
 			logboek.Context(ctx).LogF("Volume usage: %s / %s\n", humanize.Bytes(vu.UsedBytes), humanize.Bytes(vu.TotalBytes))
-			logboek.Context(ctx).LogF("Allowed volume usage: %s <= %s — %s\n", utils.GreenF("%s", humanize.Bytes(vu.UsedBytes)), utils.BlueF("%s", humanize.Bytes(options.AllowedStorageVolumeUsageBytes)), utils.GreenF("OK"))
+			logboek.Context(ctx).LogF("Allowed volume usage: %s <= %s — %s\n", utils.GreenF("%s (%.2f%%)", humanize.Bytes(vu.UsedBytes), vu.BytesToPercentage(vu.UsedBytes)), utils.BlueF("%s (%.2f%%)", humanize.Bytes(options.AllowedStorageVolumeUsageBytes), vu.BytesToPercentage(options.AllowedStorageVolumeUsageBytes)), utils.GreenF("OK"))
 		})
 
 		return nil
@@ -273,8 +273,8 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 
 	logboek.Context(ctx).LogBlock("Check storage").Do(func() {
 		logboek.Context(ctx).LogF("Volume usage: %s / %s\n", humanize.Bytes(vu.UsedBytes), humanize.Bytes(vu.TotalBytes))
-		logboek.Context(ctx).LogF("Allowed level exceeded: %s > %s — %s\n", utils.RedF("%s", humanize.Bytes(vu.UsedBytes)), utils.YellowF("%s", humanize.Bytes(options.AllowedStorageVolumeUsageBytes)), utils.RedF("HIGH VOLUME USAGE"))
-		logboek.Context(ctx).LogF("Target level after cleanup: %s - %s (margin) = %s\n", humanize.Bytes(options.AllowedStorageVolumeUsageBytes), humanize.Bytes(options.AllowedStorageVolumeUsageMarginBytes), utils.BlueF("%s", humanize.Bytes(targetVolumeUsageBytes)))
+		logboek.Context(ctx).LogF("Allowed level exceeded: %s > %s — %s\n", utils.RedF("%s (%.2f%%)", humanize.Bytes(vu.UsedBytes), vu.BytesToPercentage(vu.UsedBytes)), utils.YellowF("%s (%.2f%%)", humanize.Bytes(options.AllowedStorageVolumeUsageBytes), vu.BytesToPercentage(options.AllowedStorageVolumeUsageBytes)), utils.RedF("HIGH VOLUME USAGE"))
+		logboek.Context(ctx).LogF("Target level after cleanup: %s - %s (margin) = %s\n", humanize.Bytes(options.AllowedStorageVolumeUsageBytes), humanize.Bytes(options.AllowedStorageVolumeUsageMarginBytes), utils.BlueF("%s (%.2f%%)", humanize.Bytes(targetVolumeUsageBytes), vu.BytesToPercentage(targetVolumeUsageBytes)))
 		logboek.Context(ctx).LogF("Needed to free: %s\n", utils.RedF("%s", humanize.Bytes(vu.UsedBytes-targetVolumeUsageBytes)))
 	})
 
@@ -320,8 +320,8 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 		logboek.Context(ctx).LogBlock("Check storage").Do(func() {
 			logboek.Context(ctx).LogF("Total freed space: %s\n", utils.RedF("%s", humanize.Bytes(vuBefore.UsedBytes-vu.UsedBytes)))
 			logboek.Context(ctx).LogF("Volume usage: %s / %s\n", humanize.Bytes(vu.UsedBytes), humanize.Bytes(vu.TotalBytes))
-			logboek.Context(ctx).LogF("Allowed level exceeded: %s > %s — %s\n", utils.RedF("%s", humanize.Bytes(vu.UsedBytes)), utils.YellowF("%s", humanize.Bytes(options.AllowedStorageVolumeUsageBytes)), utils.RedF("HIGH VOLUME USAGE"))
-			logboek.Context(ctx).LogF("Target level after cleanup: %s - %s (margin) = %s\n", humanize.Bytes(options.AllowedStorageVolumeUsageBytes), humanize.Bytes(options.AllowedStorageVolumeUsageMarginBytes), utils.BlueF("%s", humanize.Bytes(targetVolumeUsageBytes)))
+			logboek.Context(ctx).LogF("Allowed level exceeded: %s > %s — %s\n", utils.RedF("%s (%.2f%%)", humanize.Bytes(vu.UsedBytes), vu.BytesToPercentage(vu.UsedBytes)), utils.YellowF("%s (%.2f%%)", humanize.Bytes(options.AllowedStorageVolumeUsageBytes), vu.BytesToPercentage(options.AllowedStorageVolumeUsageBytes)), utils.RedF("HIGH VOLUME USAGE"))
+			logboek.Context(ctx).LogF("Target level after cleanup: %s - %s (margin) = %s\n", humanize.Bytes(options.AllowedStorageVolumeUsageBytes), humanize.Bytes(options.AllowedStorageVolumeUsageMarginBytes), utils.BlueF("%s (%.2f%%)", humanize.Bytes(targetVolumeUsageBytes), vu.BytesToPercentage(targetVolumeUsageBytes)))
 		})
 
 		return nil
@@ -366,8 +366,8 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 	logboek.Context(ctx).LogBlock("Check storage").Do(func() {
 		logboek.Context(ctx).LogF("Total freed space: %s\n", utils.RedF("%s", humanize.Bytes(vuBefore.UsedBytes-vu.UsedBytes)))
 		logboek.Context(ctx).LogF("Volume usage: %s / %s\n", humanize.Bytes(vu.UsedBytes), humanize.Bytes(vu.TotalBytes))
-		logboek.Context(ctx).LogF("Allowed level exceeded: %s > %s — %s\n", utils.RedF("%s", humanize.Bytes(vu.UsedBytes)), utils.YellowF("%s", humanize.Bytes(options.AllowedStorageVolumeUsageBytes)), utils.RedF("HIGH VOLUME USAGE"))
-		logboek.Context(ctx).LogF("Target level after cleanup: %s - %s (margin) = %s\n", humanize.Bytes(options.AllowedStorageVolumeUsageBytes), humanize.Bytes(options.AllowedStorageVolumeUsageMarginBytes), utils.BlueF("%s", humanize.Bytes(targetVolumeUsageBytes)))
+		logboek.Context(ctx).LogF("Allowed level exceeded: %s > %s — %s\n", utils.RedF("%s (%.2f%%)", humanize.Bytes(vu.UsedBytes), vu.BytesToPercentage(vu.UsedBytes)), utils.YellowF("%s (%.2f%%)", humanize.Bytes(options.AllowedStorageVolumeUsageBytes), vu.BytesToPercentage(options.AllowedStorageVolumeUsageBytes)), utils.RedF("HIGH VOLUME USAGE"))
+		logboek.Context(ctx).LogF("Target level after cleanup: %s - %s (margin) = %s\n", humanize.Bytes(options.AllowedStorageVolumeUsageBytes), humanize.Bytes(options.AllowedStorageVolumeUsageMarginBytes), utils.BlueF("%s (%.2f%%)", humanize.Bytes(targetVolumeUsageBytes), vu.BytesToPercentage(targetVolumeUsageBytes)))
 	})
 
 	if vu.UsedBytes > targetVolumeUsageBytes {

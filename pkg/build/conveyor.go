@@ -69,6 +69,10 @@ type Conveyor struct {
 	stageDigestMutex map[string]*sync.Mutex
 }
 
+func stageImageCacheKey(name, targetPlatform string) string {
+	return name + "\x00" + targetPlatform
+}
+
 type ConveyorCleanupFunc func(context.Context) error
 
 type ConveyorOptions struct {
@@ -924,25 +928,62 @@ func (c *Conveyor) ProjectName() string {
 	return c.werfConfig.Meta.Project
 }
 
-func (c *Conveyor) GetStageImage(name string) *stage.StageImage {
+// getStageImage returns the cached stage image for the given name when exactly one
+// platform variant is cached. In a multiplatform build, where the same image name is
+// cached separately for each target platform, this method returns nil —
+// use GetStageImageByPlatform to retrieve a specific platform variant.
+func (c *Conveyor) getStageImage(name string) *stage.StageImage {
 	c.GetServiceRWMutex("StageImages").RLock()
 	defer c.GetServiceRWMutex("StageImages").RUnlock()
 
-	return c.stageImages[name]
+	prefix := stageImageCacheKey(name, "")
+	var found *stage.StageImage
+	for key, stageImage := range c.stageImages {
+		if !strings.HasPrefix(key, prefix) {
+			continue
+		}
+
+		if found != nil {
+			return nil
+		}
+
+		found = stageImage
+	}
+
+	return found
+}
+
+func (c *Conveyor) GetStageImageByPlatform(name, targetPlatform string) *stage.StageImage {
+	c.GetServiceRWMutex("StageImages").RLock()
+	defer c.GetServiceRWMutex("StageImages").RUnlock()
+
+	return c.stageImages[stageImageCacheKey(name, targetPlatform)]
 }
 
 func (c *Conveyor) UnsetStageImage(name string) {
 	c.GetServiceRWMutex("StageImages").Lock()
 	defer c.GetServiceRWMutex("StageImages").Unlock()
 
-	delete(c.stageImages, name)
+	prefix := stageImageCacheKey(name, "")
+	for key := range c.stageImages {
+		if strings.HasPrefix(key, prefix) {
+			delete(c.stageImages, key)
+		}
+	}
+}
+
+func (c *Conveyor) UnsetStageImageByPlatform(name, targetPlatform string) {
+	c.GetServiceRWMutex("StageImages").Lock()
+	defer c.GetServiceRWMutex("StageImages").Unlock()
+
+	delete(c.stageImages, stageImageCacheKey(name, targetPlatform))
 }
 
 func (c *Conveyor) SetStageImage(stageImage *stage.StageImage) {
 	c.GetServiceRWMutex("StageImages").Lock()
 	defer c.GetServiceRWMutex("StageImages").Unlock()
 
-	c.stageImages[stageImage.Image.Name()] = stageImage
+	c.stageImages[stageImageCacheKey(stageImage.Image.Name(), stageImage.Image.GetTargetPlatform())] = stageImage
 }
 
 func extractLegacyStageImage(stageImage *stage.StageImage) *container_backend.LegacyStageImage {
@@ -953,7 +994,7 @@ func extractLegacyStageImage(stageImage *stage.StageImage) *container_backend.Le
 }
 
 func (c *Conveyor) GetOrCreateStageImage(name string, prevStageImage *stage.StageImage, stg stage.Interface, img *image.Image) *stage.StageImage {
-	if stageImage := c.GetStageImage(name); stageImage != nil {
+	if stageImage := c.GetStageImageByPlatform(name, img.TargetPlatform); stageImage != nil {
 		return stageImage
 	}
 

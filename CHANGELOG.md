@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.67.2](https://github.com/werf/werf/compare/v2.67.1...v2.67.2) (2026-04-21)
+
+
+### Bug Fixes
+
+* **build, docker, stapel:** fix stage image cache for multi-platform builds ([#7480](https://github.com/werf/werf/issues/7480)) ([23f89b3](https://github.com/werf/werf/commit/23f89b3a7f9ee9d4c2aebeeb26d1e334990ef859))
+* **build, docker:** handle `no such container` error ([#7482](https://github.com/werf/werf/issues/7482)) ([83b3227](https://github.com/werf/werf/commit/83b32279e9f6893cc6f06e7d812944c7231636dc))
+* **ci:** pr docs preview ([#7485](https://github.com/werf/werf/issues/7485)) ([d29c18b](https://github.com/werf/werf/commit/d29c18b1fb868c0eaab8a2eacfd0a1223b1b1eca))
+
 ## [2.67.1](https://github.com/werf/werf/compare/v2.67.0...v2.67.1) (2026-04-16)
 
 
