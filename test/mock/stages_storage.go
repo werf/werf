@@ -530,6 +530,20 @@ func (mr *MockStagesStorageMockRecorder) PostLastCleanupRecord(ctx, projectName 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostLastCleanupRecord", reflect.TypeOf((*MockStagesStorage)(nil).PostLastCleanupRecord), ctx, projectName)
 }
 
+// PostManifest mocks base method.
+func (m *MockStagesStorage) PostManifest(ctx context.Context, ref string, opts container_backend.PostManifestOpts) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PostManifest", ctx, ref, opts)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PostManifest indicates an expected call of PostManifest.
+func (mr *MockStagesStorageMockRecorder) PostManifest(ctx, ref, opts any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostManifest", reflect.TypeOf((*MockStagesStorage)(nil).PostManifest), ctx, ref, opts)
+}
+
 // PostMultiplatformImage mocks base method.
 func (m *MockStagesStorage) PostMultiplatformImage(ctx context.Context, projectName, tag string, allPlatformsImages []*image.Info, platforms []string) error {
 	m.ctrl.T.Helper()

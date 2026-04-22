@@ -189,7 +189,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: {{ $.Values.werf.image.backend }}
+          image: {{ $.Values.global.werf.images.backend.ref_tag }}
           ports:
             - containerPort: 3000
           resources:

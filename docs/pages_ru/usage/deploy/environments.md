@@ -6,7 +6,7 @@ permalink: usage/deploy/environments.html
 
 ## Параметризация шаблонов в зависимости от окружения (только в werf)
 
-*Окружение* werf указывается опцией `--env` (`$WERF_ENV`), либо автоматически выставляется командой `werf ci-env`. Текущее окружение доступно в параметре `$.Values.werf.env` основного чарта.
+*Окружение* werf указывается опцией `--env` (`$WERF_ENV`), либо автоматически выставляется командой `werf ci-env`. Текущее окружение доступно в `$.Values.global.werf.env` во всех чартах (основном и зависимых).
 
 Окружение werf используется при формировании имени релиза и имени Namespace'а, а также может использоваться для параметризации шаблонов:
 
@@ -21,7 +21,7 @@ memory:
 
 ```
 # .helm/templates/example.yaml:
-memory: {{ index $.Values.memory $.Values.werf.env }}
+memory: {{ index $.Values.memory $.Values.global.werf.env }}
 ```
 
 {% endraw %}
@@ -36,31 +36,7 @@ werf render --env production
 memory: 2G
 ```
 
-Для использования `$.Values.werf.env` в зависимых чартах воспользуйтесь директивой `export-values` (только в werf):
-
-```yaml
-# .helm/Chart.yaml:
-dependencies:
-- name: child
-  export-values:
-  - parent: werf
-    child: werf
-```
-
-{% raw %}
-
-```
-# .helm/charts/child/templates/example.yaml:
-{{ $.Values.werf.env }}
-```
-
-{% endraw %}
-
-Результат:
-
-```
-production
-```
+Поскольку `$.Values.global.werf` имеет глобальную область видимости, `env` доступен во всех зависимых чартах.
 
 ## Развертывание в разные Kubernetes Namespace
 

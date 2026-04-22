@@ -79,7 +79,7 @@ spec:
         app: myapp
     spec:
       containers:
-      - image: {{ $.Values.werf.image.myapp }}
+      - image: {{ $.Values.global.werf.images.myapp.ref_tag }}
 ```
 
 {% endraw %}

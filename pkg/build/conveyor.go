@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/opencontainers/go-digest"
 	"github.com/samber/lo"
 
 	"github.com/werf/common-go/pkg/util"
@@ -68,6 +69,10 @@ type Conveyor struct {
 	mutex            sync.Mutex
 	serviceRWMutex   map[string]*sync.RWMutex
 	stageDigestMutex map[string]*sync.Mutex
+}
+
+func stageImageCacheKey(name, targetPlatform string) string {
+	return name + "\x00" + targetPlatform
 }
 
 type ConveyorCleanupFunc func(context.Context) error
@@ -907,10 +912,12 @@ func (c *Conveyor) doImage(ctx context.Context, img *image.Image, phases []Phase
 				logProcess.Start()
 				for _, stg := range img.GetStages() {
 					logboek.Context(ctx).Debug().LogF("Phase %s -- OnImageStage() %s %s\n", phase.Name(), img.GetLogName(), stg.LogDetailedName())
+					stageStart := time.Now()
 					if err := phase.OnImageStage(ctx, img, stg); err != nil {
 						logProcess.Fail()
 						return fmt.Errorf("phase %s on image %s stage %s handler failed: %w", phase.Name(), img.GetLogName(), stg.Name(), err)
 					}
+					img.AddStageDuration(stg.Name(), time.Since(stageStart))
 				}
 				logProcess.End()
 
@@ -935,6 +942,7 @@ func (c *Conveyor) doImage(ctx context.Context, img *image.Image, phases []Phase
 		})
 
 	img.BuildDuration = time.Since(start)
+
 	return err
 }
 
@@ -942,25 +950,62 @@ func (c *Conveyor) ProjectName() string {
 	return c.werfConfig.Meta.Project
 }
 
-func (c *Conveyor) GetStageImage(name string) *stage.StageImage {
+// getStageImage returns the cached stage image for the given name when exactly one
+// platform variant is cached. In a multiplatform build, where the same image name is
+// cached separately for each target platform, this method returns nil —
+// use GetStageImageByPlatform to retrieve a specific platform variant.
+func (c *Conveyor) getStageImage(name string) *stage.StageImage {
 	c.GetServiceRWMutex("StageImages").RLock()
 	defer c.GetServiceRWMutex("StageImages").RUnlock()
 
-	return c.stageImages[name]
+	prefix := stageImageCacheKey(name, "")
+	var found *stage.StageImage
+	for key, stageImage := range c.stageImages {
+		if !strings.HasPrefix(key, prefix) {
+			continue
+		}
+
+		if found != nil {
+			return nil
+		}
+
+		found = stageImage
+	}
+
+	return found
+}
+
+func (c *Conveyor) GetStageImageByPlatform(name, targetPlatform string) *stage.StageImage {
+	c.GetServiceRWMutex("StageImages").RLock()
+	defer c.GetServiceRWMutex("StageImages").RUnlock()
+
+	return c.stageImages[stageImageCacheKey(name, targetPlatform)]
 }
 
 func (c *Conveyor) UnsetStageImage(name string) {
 	c.GetServiceRWMutex("StageImages").Lock()
 	defer c.GetServiceRWMutex("StageImages").Unlock()
 
-	delete(c.stageImages, name)
+	prefix := stageImageCacheKey(name, "")
+	for key := range c.stageImages {
+		if strings.HasPrefix(key, prefix) {
+			delete(c.stageImages, key)
+		}
+	}
+}
+
+func (c *Conveyor) UnsetStageImageByPlatform(name, targetPlatform string) {
+	c.GetServiceRWMutex("StageImages").Lock()
+	defer c.GetServiceRWMutex("StageImages").Unlock()
+
+	delete(c.stageImages, stageImageCacheKey(name, targetPlatform))
 }
 
 func (c *Conveyor) SetStageImage(stageImage *stage.StageImage) {
 	c.GetServiceRWMutex("StageImages").Lock()
 	defer c.GetServiceRWMutex("StageImages").Unlock()
 
-	c.stageImages[stageImage.Image.Name()] = stageImage
+	c.stageImages[stageImageCacheKey(stageImage.Image.Name(), stageImage.Image.GetTargetPlatform())] = stageImage
 }
 
 func extractLegacyStageImage(stageImage *stage.StageImage) *container_backend.LegacyStageImage {
@@ -971,18 +1016,30 @@ func extractLegacyStageImage(stageImage *stage.StageImage) *container_backend.Le
 }
 
 func (c *Conveyor) GetOrCreateStageImage(name string, prevStageImage *stage.StageImage, stg stage.Interface, img *image.Image) *stage.StageImage {
-	if stageImage := c.GetStageImage(name); stageImage != nil {
+	if stageImage := c.GetStageImageByPlatform(name, img.TargetPlatform); stageImage != nil {
 		return stageImage
 	}
 
 	i := container_backend.NewLegacyStageImage(extractLegacyStageImage(prevStageImage), name, c.ContainerBackend, img.TargetPlatform)
 
+	resolvePrevStageBaseImage := func(prevStageImage *stage.StageImage) string {
+		if prevStageImage == nil || prevStageImage.Image == nil {
+			return ""
+		}
+		if stageDesc := prevStageImage.Image.GetStageDesc(); stageDesc != nil && stageDesc.Info != nil {
+			if _, err := digest.Parse(stageDesc.Info.ID); err == nil {
+				return stageDesc.Info.ID
+			}
+		}
+		return prevStageImage.Image.Name()
+	}
+
 	var baseImage string
 	if stg != nil {
 		if stg.HasPrevStage() {
-			baseImage = prevStageImage.Image.Name()
+			baseImage = resolvePrevStageBaseImage(prevStageImage)
 		} else if stg.IsStapelStage() && stg.Name() == "from" {
-			baseImage = prevStageImage.Image.Name()
+			baseImage = resolvePrevStageBaseImage(prevStageImage)
 		} else {
 			baseImage = img.GetBaseImageReference()
 		}

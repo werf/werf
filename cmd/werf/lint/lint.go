@@ -145,6 +145,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupSetDockerConfigJsonValue(&commonCmdData, cmd)
 	common.SetupTemplatesAllowDNS(&commonCmdData, cmd)
 	commonCmdData.SetupSkipDependenciesRepoRefresh(cmd)
+	common.SetupTSOptions(&commonCmdData, cmd)
 
 	cmd.Flags().BoolVarP(&cmdData.Validate, "validate", "", util.GetBoolEnvironmentDefaultFalse("WERF_VALIDATE"), "Validate your manifests against the Kubernetes cluster you are currently pointing at (default $WERF_VALIDATE)")
 
@@ -224,7 +225,7 @@ func runLint(ctx context.Context, imageNameListFromArgs []string) error {
 		isStub = true
 		stubImageNameList = append(stubImageNameList, imagesToProcess.FinalImageNameList...)
 	default:
-		if err := common.DockerRegistryInit(ctx, &commonCmdData, commonManager.RegistryMirrors()); err != nil {
+		if err := common.DockerRegistryInit(ctx, &commonCmdData, commonManager.RegistryMirrors(), commonManager.BuildahMode()); err != nil {
 			return err
 		}
 
@@ -419,6 +420,8 @@ func runLint(ctx context.Context, imageNameListFromArgs []string) error {
 		ResourceValidationOptions:   commonCmdData.ResourceValidationOptions,
 		Remote:                      cmdData.Validate,
 		TemplatesAllowDNS:           commonCmdData.TemplatesAllowDNS,
+		IgnoreBundleJS:              commonCmdData.IgnoreBundleJS,
+		DenoBinaryPath:              commonCmdData.DenoBinaryPath,
 	}); err != nil {
 		return fmt.Errorf("chart lint: %w", err)
 	}

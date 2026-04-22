@@ -1,6 +1,24 @@
 # Changelog
 
 ## [2.63.1-dk](https://github.com/deckhouse/delivery-kit/compare/v2.63.1...v2.63.1-dk) (2026-03-24)
+## [2.67.2](https://github.com/werf/werf/compare/v2.67.1...v2.67.2) (2026-04-21)
+
+
+### Bug Fixes
+
+* **build, docker, stapel:** fix stage image cache for multi-platform builds ([#7480](https://github.com/werf/werf/issues/7480)) ([23f89b3](https://github.com/werf/werf/commit/23f89b3a7f9ee9d4c2aebeeb26d1e334990ef859))
+* **build, docker:** handle `no such container` error ([#7482](https://github.com/werf/werf/issues/7482)) ([83b3227](https://github.com/werf/werf/commit/83b32279e9f6893cc6f06e7d812944c7231636dc))
+* **ci:** pr docs preview ([#7485](https://github.com/werf/werf/issues/7485)) ([d29c18b](https://github.com/werf/werf/commit/d29c18b1fb868c0eaab8a2eacfd0a1223b1b1eca))
+
+## [2.67.1](https://github.com/werf/werf/compare/v2.67.0...v2.67.1) (2026-04-16)
+
+
+### Bug Fixes
+
+* **build, buildah:** apply owner group to dst dir ([#7462](https://github.com/werf/werf/issues/7462)) ([fea6b40](https://github.com/werf/werf/commit/fea6b40124316be1d5742d06b81ff338c4d4be30))
+* **build, buildah:** correct expansion of instructions ([#7460](https://github.com/werf/werf/issues/7460)) ([aef6003](https://github.com/werf/werf/commit/aef600313e0642a1e4c070f826b28008050c10e6))
+
+## [2.67.0](https://github.com/werf/werf/compare/v2.66.2...v2.67.0) (2026-04-14)
 
 
 ### Features
@@ -80,6 +98,9 @@
 * **sbom:** sbom fstec mvp ([#29](https://github.com/deckhouse/delivery-kit/issues/29)) ([850518c](https://github.com/deckhouse/delivery-kit/commit/850518c4b0f82056894af40628e086391499a708))
 * **sign:** add werf verify command ([8f40f5a](https://github.com/deckhouse/delivery-kit/commit/8f40f5a7c7e282d6c85ff75eaaa73d068772d703))
 * **telemetry:** extend build metrics with metadata fields ([#7384](https://github.com/deckhouse/delivery-kit/issues/7384)) ([09a324e](https://github.com/deckhouse/delivery-kit/commit/09a324e383e26367d3b6e2a5190ca181c397b49a))
+* **build:** scratch stapel docker backend ([#7441](https://github.com/werf/werf/issues/7441)) ([490d6e0](https://github.com/werf/werf/commit/490d6e0df8d0c559afb30736e09b6ef5bfb811c9))
+* **deploy:** ability to init ts files with WerfRenderContext type ([#7464](https://github.com/werf/werf/issues/7464)) ([1609845](https://github.com/werf/werf/commit/160984521d67a403f34ec161afce8381fe9e422f))
+* **stapel:** provide WERF_EXPERIMENTAL_STAPEL_ARM env for arm64 support ([#7454](https://github.com/werf/werf/issues/7454)) ([f911913](https://github.com/werf/werf/commit/f911913c70d523039a9dc808781b2a3a509158b3))
 
 
 ### Bug Fixes
@@ -243,6 +264,84 @@
 
 ### Bug Fixes
 
+* **cleanup:** skip invalid custom tag metadata with warning log ([65ff126](https://github.com/werf/werf/commit/65ff12612bf9487fe1e49f4064f3354a059a3b15))
+
+## [2.66.2](https://github.com/werf/werf/compare/v2.66.1...v2.66.2) (2026-04-13)
+
+
+### Bug Fixes
+
+* **deploy:** restore WERF_EXPERIMENT_NO_GLOBAL_SERVICE_VALUES env ([#7468](https://github.com/werf/werf/issues/7468)) ([e2e0999](https://github.com/werf/werf/commit/e2e0999a5e49094c76c81fb35625d145810892cf))
+
+## [2.66.1](https://github.com/werf/werf/compare/v2.66.0...v2.66.1) (2026-04-09)
+
+
+### Bug Fixes
+
+* stop retrying 301 redirects in registry transport ([#7457](https://github.com/werf/werf/issues/7457)) ([f588d4c](https://github.com/werf/werf/commit/f588d4ca3ef8d74009e451e640b7d40f0b3938e6))
+
+## [2.66.0](https://github.com/werf/werf/compare/v2.65.2...v2.66.0) (2026-04-08)
+
+
+### Features
+
+* **deploy:** deno runtime for typescript ([#7365](https://github.com/werf/werf/issues/7365)) ([c27c4d2](https://github.com/werf/werf/commit/c27c4d29d2b4c46cf34b6ab33d37b1eeb81133ce))
+
+
+### Bug Fixes
+
+* **buildah:** normalize dependency import file targets ([69cf22f](https://github.com/werf/werf/commit/69cf22f133de280b2bf6297e359ca69e067efa71))
+* **build:** push custom tags to final repo during multiplatform builds ([a402ac6](https://github.com/werf/werf/commit/a402ac63d42ac92f7d9870ceca559bfce93fa937))
+* **import:** add check to handle symlinks before md5sum launch ([679bc6a](https://github.com/werf/werf/commit/679bc6a104c605c1f8a8284349d58ed8d5f530a2))
+* **import:** add one fs rsync flag ([c64e3e7](https://github.com/werf/werf/commit/c64e3e72eb81a507821e6865f6af5ed0631d7a3a))
+* make kube initialization lazy for commands that don't need eager kube client ([#7440](https://github.com/werf/werf/issues/7440)) ([98028f2](https://github.com/werf/werf/commit/98028f28ce629da894a8bad00a5cbe96ca2bceb7))
+
+## [2.65.2](https://github.com/werf/werf/compare/v2.65.1...v2.65.2) (2026-04-01)
+
+
+### Bug Fixes
+
+* **deploy:** restore `global.env` ([5e5defd](https://github.com/werf/werf/commit/5e5defd1833a969a1a6073f7d4bdf5362d31d5f8))
+
+## [2.65.1](https://github.com/werf/werf/compare/v2.65.0...v2.65.1) (2026-03-31)
+
+
+### Bug Fixes
+
+* **includes:** create local branch refs after fresh clone in CloneAndFetch ([#7425](https://github.com/werf/werf/issues/7425)) ([4c94b0b](https://github.com/werf/werf/commit/4c94b0badd4d1a7daa19542acad79b631e0f0038))
+
+## [2.65.0](https://github.com/werf/werf/compare/v2.64.0...v2.65.0) (2026-03-29)
+
+
+### Features
+
+* **build-report:** support reading .env format build reports ([8e1501c](https://github.com/werf/werf/commit/8e1501ce5ad068e9824dd3f3bc50c9e0bb94d3ad))
+* **ci-env:** add --use-docker-auth-config flag to generate Docker config from DOCKER_AUTH_CONFIG env var ([c2701f7](https://github.com/werf/werf/commit/c2701f7f72ef177ca3edbff14cc64438a5cb025d))
+* **deploy:** add structured image values to $.Values.global.werf.images ([#7413](https://github.com/werf/werf/issues/7413)) ([1b93dcc](https://github.com/werf/werf/commit/1b93dccbc7ae65877d316a16639ccd657ad9558e))
+
+
+### Bug Fixes
+
+* **build:** fix git owner and group with buildah backend ([#7415](https://github.com/werf/werf/issues/7415)) ([7af23b6](https://github.com/werf/werf/commit/7af23b66ec6dd59850abcd80babae4134d34d65e))
+* **build:** use path.Join for container-internal paths in stapel ([#7258](https://github.com/werf/werf/issues/7258)) ([c974594](https://github.com/werf/werf/commit/c974594d3c4d7ade4fe2fe9865bd6dec5c1bd6e4))
+* **deploy:** goroutine leak in watch error channel consumer for ReleaseInstall, ReleaseUninstall and ReleaseRollback ([#7418](https://github.com/werf/werf/issues/7418)) ([f2d817c](https://github.com/werf/werf/commit/f2d817cbef24017ad7073d1e949c16d1873917bd))
+* **deploy:** release had pending status after error instead of failed ([#7416](https://github.com/werf/werf/issues/7416)) ([b523cf2](https://github.com/werf/werf/commit/b523cf2cc1f71b0f78b9cb165e584254ce267682))
+* **host-cleanup:** handle race condition in tmp files GC when entries disappear between readdir and stat ([18ff151](https://github.com/werf/werf/commit/18ff151563b7b22e6062fff5132943102ebb7ee3))
+* **includes:** respect --loose-giterminism for --allow-includes-update ([#7414](https://github.com/werf/werf/issues/7414)) ([db75a5a](https://github.com/werf/werf/commit/db75a5a7fcf2c1abe0eba8033831f1c672bb169f))
+
+## [2.64.0](https://github.com/werf/werf/compare/v2.63.0...v2.64.0) (2026-03-24)
+
+
+### Features
+
+* **build:** respect insecure registries and mirrors from backend-native config ([#7376](https://github.com/werf/werf/issues/7376)) ([fd5a826](https://github.com/werf/werf/commit/fd5a826680ecc2a5c0199462c856df4bec1f7ebd))
+
+
+### Bug Fixes
+
+* **build:** fix stage build time in report ([#7404](https://github.com/werf/werf/issues/7404)) ([74ae247](https://github.com/werf/werf/commit/74ae2474c0610232c9bdacc377bf5b5d76d43f5f))
+* **build:** handle broken import metadata images in container registry ([#7394](https://github.com/werf/werf/issues/7394)) ([0413384](https://github.com/werf/werf/commit/04133847bed3b8842ab1b45609a4f81d468c6af2))
+* **cleanup:** ensure tag is deleted before manifest removal ([#7401](https://github.com/werf/werf/issues/7401)) ([303506e](https://github.com/werf/werf/commit/303506ede573f252d87c2d7b0f14a1b149ffdd59))
 * **deploy:** adopt managed fields after migration from helm to nelm ([#7406](https://github.com/werf/werf/issues/7406)) ([eab87e5](https://github.com/werf/werf/commit/eab87e518f81ea86384f081bb509bae3b00a3104))
 * **deploy:** pass option for yaml validator to allow duplicate map key ([#7408](https://github.com/werf/werf/issues/7408)) ([c9ea743](https://github.com/werf/werf/commit/c9ea743659a900b65c12ebcacc30ddf1b6147a99))
 

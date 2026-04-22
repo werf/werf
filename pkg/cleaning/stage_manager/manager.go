@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/storage"
 	"github.com/werf/werf/v2/pkg/storage/manager"
@@ -152,6 +153,10 @@ func GetCustomTagsMetadata(ctx context.Context, storageManager manager.StorageMa
 	var mutex sync.Mutex
 	stageIDCustomTagList := make(map[string][]string)
 	err = storageManager.ForEachGetStageCustomTagMetadata(ctx, stageCustomTagMetadataIDs, func(ctx context.Context, metadataID string, metadata *storage.CustomTagMetadata, err error) error {
+		if storage.IsErrCustomTagMetadataNotFound(err) || storage.IsErrBrokenImage(err) {
+			logboek.Context(ctx).Warn().LogF("WARNING: Skipping invalid custom tag metadata %s\n", metadataID)
+			return nil
+		}
 		if err != nil {
 			return err
 		}

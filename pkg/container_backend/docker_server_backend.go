@@ -448,7 +448,7 @@ func (backend *DockerServerBackend) Containers(ctx context.Context, opts Contain
 }
 
 func (backend *DockerServerBackend) PostManifest(ctx context.Context, ref string, opts PostManifestOpts) error {
-	return docker.CreateImage(ctx, ref, docker.CreateImageOptions{Labels: opts.Labels})
+	return docker.CreateImage(ctx, ref, docker.CreateImageOptions{Labels: opts.Labels, TargetPlatform: opts.TargetPlatform})
 }
 
 func (backend *DockerServerBackend) PruneImages(ctx context.Context, options prune.Options) (prune.Report, error) {

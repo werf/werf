@@ -116,6 +116,9 @@ werf plan --repo registry.mydomain.com/web --env production
       --delete-propagation=""
             Set default delete propagation strategy (default $WERF_DELETE_PROPAGATION or            
             Foreground).
+      --deno-binary-path=""
+            Path to the Deno binary to use instead of auto-downloading (default                     
+            $WERF_DENO_BINARY_PATH)
       --deploy-graph-path=""
             Save deploy graph path to the specified file (by default $WERF_DEPLOY_GRAPH_PATH).      
             Extension must be .dot or not specified. If extension not specified, then .dot is used
@@ -202,6 +205,9 @@ werf plan --repo registry.mydomain.com/web --env production
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --hooks-status-progress-period=0
             No-op
+      --ignore-bundle-js=false
+            Do not use the existing bundle.js file. Requires TypeScript source files and Deno to    
+            rebuild (default $WERF_IGNORE_BUNDLE_JS)
       --ignore-secret-key=false
             Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)
       --insecure-helm-dependencies=false

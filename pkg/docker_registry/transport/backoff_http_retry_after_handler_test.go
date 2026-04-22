@@ -17,17 +17,17 @@ var _ = Describe("backoff_http_retry_after_handler", func() {
 	BeforeEach(func() {
 		rec = httptest.NewRecorder()
 	})
-	It("should do nothing if http.status not in [301, 429, 503]", func() {
+	It("should do nothing if http.status not in [429, 503]", func() {
 		rec.WriteHeader(http.StatusOK)
 
 		_, err := backoffHttpRetryAfterHandler(rec.Result())
 		Expect(err).To(Succeed())
 	})
-	It("should return wrapped tmp_err if http response has status 301 but Retry-After header is not present", func() {
+	It("should do nothing if http.status is 301", func() {
 		rec.WriteHeader(http.StatusMovedPermanently)
 
 		_, err := backoffHttpRetryAfterHandler(rec.Result())
-		Expect(errors.Is(err, ErrRetryAfterHeaderNotPresent)).To(BeTrue())
+		Expect(err).To(Succeed())
 	})
 	It("should return backoff.PermanentError if http response has status 429 but Retry-After header has value in invalid time format", func() {
 		rec.Header().Set(retryAfterHeaderKey, "some string with five spaces")

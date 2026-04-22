@@ -13,6 +13,7 @@ import (
 type DockerRegistryOptions struct {
 	InsecureRegistry      bool
 	SkipTlsVerifyRegistry bool
+	InsecureRegistryHosts []string
 	DockerHubToken        string
 	DockerHubUsername     string
 	DockerHubPassword     string
@@ -89,6 +90,7 @@ func (o *DockerRegistryOptions) defaultOptions() defaultImplementationOptions {
 	return defaultImplementationOptions{apiOptions{
 		InsecureRegistry:      o.InsecureRegistry,
 		SkipTlsVerifyRegistry: o.SkipTlsVerifyRegistry,
+		InsecureRegistryHosts: o.InsecureRegistryHosts,
 	}}
 }
 

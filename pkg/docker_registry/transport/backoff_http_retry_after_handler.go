@@ -15,12 +15,11 @@ const retryAfterHeaderKey = "Retry-After"
 
 var ErrRetryAfterHeaderNotPresent = errors.New("retry after header not present")
 
-// backoffHttpRetryAfterHandler Handles http "Retry-After" header for 301, 429, 503 statuses
+// backoffHttpRetryAfterHandler Handles http "Retry-After" header for 429, 503 statuses
 //
 // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Retry-After
 func backoffHttpRetryAfterHandler(resp *http.Response) (*http.Response, error) {
 	specHeaders := []int{
-		http.StatusMovedPermanently,
 		http.StatusTooManyRequests,
 		http.StatusServiceUnavailable,
 	}

@@ -30,6 +30,7 @@ func GenerateFromStage(imageBaseConfig *config.StapelImageBase, baseImageRepoId,
 	s.BaseStage = NewBaseStage(From, baseStageOptions)
 	s.imageCacheVersion = imageCacheVersion
 	s.fromExternal = imageBaseConfig.FromExternal
+	s.fromScratch = imageBaseConfig.From == "scratch"
 	return s
 }
 
@@ -40,6 +41,7 @@ type FromStage struct {
 	fromCacheVersion             string
 	fromImageOrArtifactImageName string
 	fromExternal                 bool
+	fromScratch                  bool
 
 	imageCacheVersion string
 }
@@ -48,7 +50,21 @@ func (s *FromStage) HasPrevStage() bool {
 	return false
 }
 
-func (s *FromStage) GetDependencies(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+func (s *FromStage) IsBuildable() bool {
+	// Scratch has no base filesystem to build from here: the first stage image is created later
+	// in MutateImage via storage.PostManifest + config mutation.
+	if s.fromScratch {
+		return false
+	}
+
+	return s.BaseStage.IsBuildable()
+}
+
+func (s *FromStage) IsMutable() bool {
+	return s.fromScratch
+}
+
+func (s *FromStage) GetDependencies(_ context.Context, c Conveyor, _ container_backend.ContainerBackend, prevImage, _ *StageImage, _ container_backend.BuildContextArchiver) (string, error) {
 	var args []string
 
 	if s.imageCacheVersion != "" {
@@ -67,7 +83,9 @@ func (s *FromStage) GetDependencies(ctx context.Context, c Conveyor, cb containe
 		args = append(args, filepath.ToSlash(filepath.Clean(mount.From)), path.Clean(mount.To), mount.Type)
 	}
 
-	if s.fromImageOrArtifactImageName != "" && !s.fromExternal {
+	if s.fromScratch {
+		args = append(args, "scratch")
+	} else if s.fromImageOrArtifactImageName != "" && !s.fromExternal {
 		args = append(args, c.GetImageContentDigest(s.targetPlatform, s.fromImageOrArtifactImageName))
 	} else {
 		args = append(args, prevImage.Image.Name())
@@ -76,12 +94,26 @@ func (s *FromStage) GetDependencies(ctx context.Context, c Conveyor, cb containe
 	return util.Sha256Hash(args...), nil
 }
 
-func (s *FromStage) PrepareImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) error {
+func (s *FromStage) PrepareImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, _ container_backend.BuildContextArchiver) error {
 	addLabels := map[string]string{imagePkg.WerfProjectRepoCommitLabel: c.GiterminismManager().HeadCommit(ctx)}
 	if c.UseLegacyStapelBuilder(cb) {
 		stageImage.Builder.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions().AddLabel(addLabels)
 	} else {
 		stageImage.Builder.StapelStageBuilder().AddLabels(addLabels)
+	}
+
+	// For scratch there is no builder execution, so labels added only to the builder would be lost.
+	// Merge them into the build service labels used later by MutateImage.
+	if s.fromScratch {
+		serviceLabels := stageImage.Image.GetBuildServiceLabels()
+		if serviceLabels == nil {
+			serviceLabels = map[string]string{}
+		}
+		for key, value := range addLabels {
+			serviceLabels[key] = value
+		}
+		stageImage.Image.SetBuildServiceLabels(serviceLabels)
+		return nil
 	}
 
 	serviceMounts := s.getServiceMounts(prevBuiltImage)
@@ -112,4 +144,35 @@ func (s *FromStage) PrepareImage(ctx context.Context, c Conveyor, cb container_b
 	}
 
 	return nil
+}
+
+// ScratchImageStageStorage extends ImageMutatorPusher with PostManifest for creating empty scratch stage images.
+type ScratchImageStageStorage interface {
+	ImageMutatorPusher
+	PostManifest(ctx context.Context, ref string, opts container_backend.PostManifestOpts) error
+}
+
+func (s *FromStage) MutateImage(ctx context.Context, storage ImageMutatorPusher, prevBuiltImage, stageImage *StageImage) error {
+	if !s.fromScratch {
+		return s.BaseStage.MutateImage(ctx, storage, prevBuiltImage, stageImage)
+	}
+
+	scratchStorage, ok := storage.(ScratchImageStageStorage)
+	if !ok {
+		return fmt.Errorf("scratch from stage storage does not support manifest creation")
+	}
+
+	serviceLabels := stageImage.Image.GetBuildServiceLabels()
+	labelSpecs := make([]string, 0, len(serviceLabels))
+	for key, value := range serviceLabels {
+		labelSpecs = append(labelSpecs, fmt.Sprintf("%s=%s", key, value))
+	}
+
+	// Scratch starts from an empty image. First create the manifest with service labels, then mutate
+	// the resulting image config so downstream stages see the same metadata as on regular stage images.
+	if err := scratchStorage.PostManifest(ctx, stageImage.Image.Name(), container_backend.PostManifestOpts{CommonOpts: container_backend.CommonOpts{TargetPlatform: s.targetPlatform}, Labels: labelSpecs}); err != nil {
+		return fmt.Errorf("create scratch stage image: %w", err)
+	}
+
+	return scratchStorage.MutateAndPushImage(ctx, stageImage.Image.Name(), stageImage.Image.Name(), imagePkg.SpecConfig{Labels: serviceLabels}, stageImage.Image)
 }

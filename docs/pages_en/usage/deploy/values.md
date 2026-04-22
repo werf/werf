@@ -462,60 +462,78 @@ werf --secret-values .helm/secret-values-production.yaml
 
 ## Information about the built images (werf only)
 
-werf stores information about the built images in the `$.Values.werf` parameters of the main chart:
+werf stores detailed information about the built images in `$.Values.global.werf.images`, available in all charts (main and dependent):
 
 ```yaml
-werf:
-  image:
-    # The full path to the built Docker image for the "backend" werf image:
-    backend: example.org/apps/myapp:a243949601ddc3d4133c4d5269ba23ed58cb8b18bf2b64047f35abd2-1598024377816
-  # The address of the container registry for the built images:
-  repo: example.org/apps/myapp
-  tag:
-    # The tag of the built Docker image for the "backend" werf image:
-    backend: a243949601ddc3d4133c4d5269ba23ed58cb8b18bf2b64047f35abd2-1598024377816
+global:
+  werf:
+    images:
+      backend:
+        # Container registry address:
+        registry: example.org
+        # Repository namespace:
+        namespace: apps
+        # Image short name:
+        name: myapp
+        # Image tag:
+        tag: a243949601ddc3d4133c4d5269ba23ed58cb8b18bf2b64047f35abd2-1598024377816
+        # Image digest:
+        digest: sha256:ece15c4a8e7e04dd0afa25b85a51e3fba35eb31e0e1489a2f3e916da77e4e865
+        # Tag and digest combined:
+        tag_digest: "a243949...816@sha256:ece15c4a..."
+        # Full image name without tag (registry + repository):
+        image: example.org/apps/myapp
+        # Full repository path (namespace + name):
+        repository: apps/myapp
+        # Full image reference with digest:
+        ref: "example.org/apps/myapp:a243949...816@sha256:ece15c4a..."
+        # Full image reference with tag:
+        ref_tag: "example.org/apps/myapp:a243949...816"
+        # Repository path with tag and digest:
+        repository_ref: "apps/myapp:a243949...816@sha256:ece15c4a..."
+        # Repository path with tag:
+        repository_tag: "apps/myapp:a243949...816"
+        # Short name with tag and digest:
+        name_ref: "myapp:a243949...816@sha256:ece15c4a..."
+        # Short name with tag:
+        name_tag: "myapp:a243949...816"
 ```
 
-Example of use:
+This structured format allows you to use individual image components, which is useful when working with external charts that expect image values in a structured format:
 
 {% raw %}
 
 ```
-image: {{ $.Values.werf.image.backend }}
+image:
+  registry: {{ $.Values.global.werf.images.backend.registry }}
+  repository: {{ $.Values.global.werf.images.backend.repository }}
+  tag: {{ $.Values.global.werf.images.backend.tag }}
 ```
 
 {% endraw %}
 
-Output:
-
-```yaml
-image: example.org/apps/myapp:a243949601ddc3d4133c4d5269ba23ed58cb8b18bf2b64047f35abd2-1598024377816
-```
-
-The `export-values` directive allows you to use `$.Values.werf` in the dependent charts (werf only):
+Since `$.Values.global.werf` has global scope, `images` is available in all dependent charts. You can also use `export-values` to map individual image fields to the format expected by an external chart:
 
 ```yaml
 # .helm/Chart.yaml:
 dependencies:
-- name: backend
+- name: postgres-operator
   export-values:
-  - parent: werf
-    child: werf
+  - parent: global.werf.images.pg.registry
+    child: image.registry
+  - parent: global.werf.images.pg.repository
+    child: image.repository
+  - parent: global.werf.images.pg.tag
+    child: image.tag
 ```
 
-{% raw %}
-
-```
-# .helm/charts/backend/templates/example.yaml:
-image: {{ $.Values.werf.image.backend }}
-```
-
-{% endraw %}
-
-Output:
+The `postgres-operator` chart will receive:
 
 ```yaml
-image: example.org/apps/myapp:a243949601ddc3d4133c4d5269ba23ed58cb8b18bf2b64047f35abd2-1598024377816
+image:
+  registry: example.org
+  repository: apps/pg
+  tag: a243949601ddc3d4133c4d5269ba23ed58cb8b18bf2b64047f35abd2-1598024377816
 ```
 
 ## Release information
@@ -535,15 +553,20 @@ Namespace: myapp-production
 Revision: 1
 ```
 
-... and in the `$.Values.werf` parameters of the main chart (werf only):
+... and in `$.Values.global.werf`, available in all charts (werf only):
 
 ```yaml
-werf:
-  # Name of the werf project:
-  name: myapp
-  # Environment:
-  env: production
+global:
+  werf:
+    # Name of the werf project:
+    name: myapp
+    # Environment:
+    env: production
+    # Kubernetes Namespace:
+    namespace: myapp-production
 ```
+
+For backward compatibility, the same values are also available in `$.Values.werf`.
 
 Example of use:
 
@@ -551,7 +574,7 @@ Example of use:
 
 ```
 {{ $.Release.Namespace }}
-{{ $.Values.werf.env }}
+{{ $.Values.global.werf.env }}
 ```
 
 {% endraw %}
@@ -560,32 +583,6 @@ Output:
 
 ```
 myapp-production
-production
-```
-
-The `export-values` directive allows you to use `$.Values.werf` in the dependent charts (werf only):
-
-```yaml
-# .helm/Chart.yaml:
-dependencies:
-- name: backend
-  export-values:
-  - parent: werf
-    child: werf
-```
-
-{% raw %}
-
-```
-# .helm/charts/backend/templates/example.yaml:
-{{ $.Values.werf.env }}
-```
-
-{% endraw %}
-
-Output:
-
-```yaml
 production
 ```
 
@@ -663,26 +660,29 @@ mychart/templates/example.yaml
 
 ## Git commit information (werf only)
 
-werf stores information about the Git commit that triggered its run in the `$.Values.werf.commit` parameters of the main chart:
+werf stores information about the Git commit that triggered its run in `$.Values.global.werf.commit`, available in all charts:
 
 ```yaml
-werf:
-  commit:
-    date:
-      # The date of the Git commit that triggered werf (the human-readable form):
-      human: 2022-01-21 18:51:39 +0300 +0300
-      # The date of the Git commit that triggered werf (Unix time):
-      unix: 1642780299
-    # The hash of the Git commit that triggered werf:
-    hash: 1b28e6843a963c5bdb3579f6fc93317cc028051c
+global:
+  werf:
+    commit:
+      date:
+        # The date of the Git commit that triggered werf (the human-readable form):
+        human: 2022-01-21 18:51:39 +0300 +0300
+        # The date of the Git commit that triggered werf (Unix time):
+        unix: 1642780299
+      # The hash of the Git commit that triggered werf:
+      hash: 1b28e6843a963c5bdb3579f6fc93317cc028051c
 ```
+
+For backward compatibility, the same values are also available in `$.Values.werf.commit`.
 
 Example of use:
 
 {% raw %}
 
 ```
-{{ $.Values.werf.commit.hash }}
+{{ $.Values.global.werf.commit.hash }}
 ```
 
 {% endraw %}
@@ -690,32 +690,6 @@ Example of use:
 Output:
 
 ```
-1b28e6843a963c5bdb3579f6fc93317cc028051c
-```
-
-The `export-values` directive allows you to use `$.Values.werf.commit` in the dependent charts (werf only):
-
-```yaml
-# .helm/Chart.yaml:
-dependencies:
-- name: backend
-  export-values:
-  - parent: werf
-    child: werf
-```
-
-{% raw %}
-
-```
-# .helm/charts/backend/templates/example.yaml:
-{{ $.Values.werf.commit.hash }}
-```
-
-{% endraw %}
-
-Output:
-
-```yaml
 1b28e6843a963c5bdb3579f6fc93317cc028051c
 ```
 

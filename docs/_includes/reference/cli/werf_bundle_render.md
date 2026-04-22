@@ -43,6 +43,9 @@ werf bundle render [options]
             (Buildah-only) Use specified mirrors for docker.io
       --debug-templates=false
             Enable debug mode for Go templates (default $WERF_DEBUG_TEMPLATES or false)
+      --deno-binary-path=""
+            Path to the Deno binary to use instead of auto-downloading (default                     
+            $WERF_DENO_BINARY_PATH)
       --disable-default-secret-values=false
             Do not use secret values from the default .helm/secret-values.yaml file (default        
             $WERF_DISABLE_DEFAULT_SECRET_VALUES or false)
@@ -64,6 +67,9 @@ werf bundle render [options]
             $WERF_FORCE_ADOPTION or false)
       --home-dir=""
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
+      --ignore-bundle-js=false
+            Do not use the existing bundle.js file. Requires TypeScript source files and Deno to    
+            rebuild (default $WERF_IGNORE_BUNDLE_JS)
       --ignore-secret-key=false
             Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)
       --include-crds=true

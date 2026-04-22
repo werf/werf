@@ -14,6 +14,7 @@ import (
 	"math/rand"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"syscall"
@@ -82,6 +83,7 @@ type NativeBuildah struct {
 	RegistriesConfigPath    string
 	RegistriesConfigDirPath string
 	Insecure                bool
+	InsecureRegistries      []string
 
 	Store storage.Store
 
@@ -100,9 +102,10 @@ func (b *NativeBuildah) Info(ctx context.Context) (info.Info, error) {
 
 func NewNativeBuildah(commonOpts CommonBuildahOpts, opts NativeModeOpts) (*NativeBuildah, error) {
 	b := &NativeBuildah{
-		Isolation: *commonOpts.Isolation,
-		TmpDir:    commonOpts.TmpDir,
-		Insecure:  commonOpts.Insecure,
+		Isolation:          *commonOpts.Isolation,
+		TmpDir:             commonOpts.TmpDir,
+		Insecure:           commonOpts.Insecure,
+		InsecureRegistries: commonOpts.InsecureRegistries,
 	}
 
 	if err := os.MkdirAll(b.TmpDir, os.ModePerm); err != nil {
@@ -134,7 +137,7 @@ func NewNativeBuildah(commonOpts CommonBuildahOpts, opts NativeModeOpts) (*Nativ
 		return nil, fmt.Errorf("unable to set env var CONTAINERS_CONF: %w", err)
 	}
 
-	registriesConfig, err := generateRegistriesConfig(commonOpts.RegistryMirrors)
+	registriesConfig, err := generateRegistriesConfig(commonOpts.RegistryMirrors, commonOpts.InsecureRegistries, commonOpts.StandaloneInsecureRegistries)
 	if err != nil {
 		return nil, fmt.Errorf("unable to generate registries config: %w", err)
 	}
@@ -159,12 +162,17 @@ func NewNativeBuildah(commonOpts CommonBuildahOpts, opts NativeModeOpts) (*Nativ
 		return nil, fmt.Errorf("unable to get storage: %w", err)
 	}
 
+	dockerInsecureSkipTLSVerify := imgtypes.OptionalBoolUndefined
+	if b.Insecure {
+		dockerInsecureSkipTLSVerify = imgtypes.OptionalBoolTrue
+	}
+
 	b.defaultSystemContext = imgtypes.SystemContext{
 		SignaturePolicyPath:               b.SignaturePolicyPath,
 		SystemRegistriesConfPath:          b.RegistriesConfigPath,
 		SystemRegistriesConfDirPath:       b.RegistriesConfigDirPath,
 		OCIInsecureSkipTLSVerify:          b.Insecure,
-		DockerInsecureSkipTLSVerify:       imgtypes.NewOptionalBool(b.Insecure),
+		DockerInsecureSkipTLSVerify:       dockerInsecureSkipTLSVerify,
 		DockerDaemonInsecureSkipTLSVerify: b.Insecure,
 	}
 
@@ -228,23 +236,73 @@ func (b *NativeBuildah) getSystemContext(targetPlatform string) (*imgtypes.Syste
 	return systemContext, nil
 }
 
-func generateRegistriesConfig(mirrors []string) (string, error) {
-	var mrs []string
+func generateRegistriesConfig(mirrors, insecureRegistries, standaloneInsecureRegistries []string) (string, error) {
+	type mirrorEntry struct {
+		Location string
+		Insecure bool
+	}
+
+	insecureHosts := make(map[string]bool, len(insecureRegistries))
+	for _, h := range insecureRegistries {
+		h = strings.TrimPrefix(h, "https://")
+		h = strings.TrimPrefix(h, "http://")
+		if h != "" {
+			insecureHosts[h] = true
+		}
+	}
+
+	mirrorSeen := make(map[string]bool)
+	var mrs []mirrorEntry
 	for _, mirror := range mirrors {
-		mirror, _ = strings.CutPrefix(mirror, "https://")
-		mirror, _ = strings.CutPrefix(mirror, "http://")
-		mrs = append(mrs, mirror)
+		isHTTP := strings.HasPrefix(mirror, "http://")
+		mirror = strings.TrimPrefix(mirror, "https://")
+		mirror = strings.TrimPrefix(mirror, "http://")
+		mirror = strings.TrimSuffix(mirror, "/")
+		if mirror == "" || mirrorSeen[mirror] {
+			continue
+		}
+		mirrorSeen[mirror] = true
+		mrs = append(mrs, mirrorEntry{
+			Location: mirror,
+			Insecure: isHTTP || insecureHosts[mirror],
+		})
+	}
+
+	standaloneSeen := make(map[string]bool)
+	var standaloneInsecure []string
+	for _, host := range standaloneInsecureRegistries {
+		host = strings.TrimPrefix(host, "https://")
+		host = strings.TrimPrefix(host, "http://")
+		host = strings.TrimSuffix(host, "/")
+		if host != "" && !standaloneSeen[host] {
+			standaloneSeen[host] = true
+			standaloneInsecure = append(standaloneInsecure, host)
+		}
+	}
+	sort.Strings(standaloneInsecure)
+
+	type templateData struct {
+		Mirrors            []mirrorEntry
+		InsecureRegistries []string
 	}
 
 	tpl := `
 unqualified-search-registries = ["docker.io"]
 
 [[registry]]
+prefix = "docker.io"
 location = "docker.io"
 
-{{ range . -}}
+{{ range .Mirrors -}}
 [[registry.mirror]]
+location = "{{ .Location }}"
+insecure = {{ .Insecure }}
+
+{{ end -}}
+{{ range .InsecureRegistries -}}
+[[registry]]
 location = "{{ . }}"
+insecure = true
 
 {{ end -}}
 `
@@ -254,8 +312,7 @@ location = "{{ . }}"
 	}
 
 	var result bytes.Buffer
-	err = tmpl.Execute(&result, mrs)
-	if err != nil {
+	if err = tmpl.Execute(&result, templateData{Mirrors: mrs, InsecureRegistries: standaloneInsecure}); err != nil {
 		return "", err
 	}
 

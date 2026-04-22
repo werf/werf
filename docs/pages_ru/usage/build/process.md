@@ -29,7 +29,7 @@ registry.example.org/group/project  e6073b8f03231e122fa3b7d3294ff69a5060c332c439
 - атомарную публикацию образов по этим тегам в репозиторий или локально;
 - передачу тегов в Helm-чарт.
 
-Образы в репозитории именуются согласно следующей схемы: `CONTAINER_REGISTRY_REPO:DIGEST-TIMESTAMP_MILLISEC`. Здесь:
+Образы в репозитории именуются согласно следующей схеме: `CONTAINER_REGISTRY_REPO:DIGEST-TIMESTAMP_MILLISEC`. Здесь:
 
 - `CONTAINER_REGISTRY_REPO` — репозиторий, заданный опцией `--repo`;
 - `DIGEST` — контрольная сумма от:
@@ -418,6 +418,27 @@ export WERF_CONTAINER_REGISTRY_MIRROR_GCR=mirror.gcr.io
 export WERF_CONTAINER_REGISTRY_MIRROR_LOCAL=docker.mirror.local
 ```
 
+Зеркала, заданные таким способом, по умолчанию считаются secure (`https`) зеркалами. При необходимости для обращений к registry можно включить глобальный insecure-режим werf через `--insecure-registry` или `--skip-tls-verify-registry`.
+
+werf также читает зеркала container registry и standalone insecure registries из `registries.conf`.
+
+Поддерживаются следующие пути в порядке приоритета:
+
+1. путь из переменной окружения `CONTAINERS_REGISTRIES_CONF`;
+2. `~/.config/containers/registries.conf`;
+3. `/etc/containers/registries.conf`.
+
+Если задан `CONTAINERS_REGISTRIES_CONF`, werf использует только этот файл и соседнюю директорию `<path>.d`.
+
+Если `CONTAINERS_REGISTRIES_CONF` не задан, werf использует первый найденный файл из стандартных путей и соседнюю директорию `<path>.d` для этого файла.
+
+Из этой конфигурации werf использует:
+
+- зеркала для `docker.io`;
+- standalone insecure registries из `[[registry]] insecure = true`.
+
+Insecure-зеркала должны задаваться через `registries.conf`. Insecure-зеркало для `docker.io` не делает тот же host standalone insecure registry автоматически. Если один и тот же host должен использоваться и как зеркало `docker.io`, и как standalone insecure registry, его нужно описать двумя отдельными записями.
+
 ## Использование container registry
 
 При использовании werf container registry используется не только для хранения конечных образов, но также для сборочного кэша и служебных данных, необходимых для работы werf (например, метаданные для очистки container registry на основе истории Git). Репозиторий container registry задаётся параметром `--repo`:
@@ -533,37 +554,66 @@ werf converge --repo registry.mydomain.org/repo --synchronization :local
 
 ## Отчёт по сборке
 
-Для получения отчёта по сборке можно использовать флаг `--save-build-report` с командами `werf build`, `werf converge` и другими:
+Отчёт по сборке содержит результаты сборки: имена образов, теги, дайджесты и другие метаданные. Его можно сохранить в файл, а затем использовать в других командах werf, чтобы пропустить повторную сборку.
+
+### Сохранение отчёта по сборке
+
+Используйте `--save-build-report` для сохранения отчёта в файл:
 
 ```shell
 werf build --save-build-report --repo REPO
 ```
 
-По умолчанию отчёт формируется в файл `.werf-build-report.json` формата `json`, который содержит расширенную информацию о сборке:
+По умолчанию отчёт сохраняется в файл `.werf-build-report.json` в формате JSON. С помощью `--build-report-path` можно указать произвольный путь — формат определяется автоматически по расширению файла (`.json`, `.env`):
+
+```shell
+werf build --save-build-report --build-report-path .werf-build-report.env --repo REPO
+```
+
+Флаг `--save-build-report` поддерживается всеми командами, в рамках которых выполняется сборка.
+
+> **Важно:** Получить теги до сборки невозможно — они формируются в процессе. Чтобы использовать теги, сохраните их после выполнения сборки с помощью `--save-build-report`.
+
+#### Формат JSON
+
+JSON-отчёт содержит расширенную информацию о сборке:
+
+* **Runtime** — информация об окружении сборки:
+  * Используемый контейнерный бэкенд (`Backend`: `docker` или `buildah`)
+  * Флаг запуска werf внутри контейнера (`InContainer`).
 
 * **Images** — список собранных образов:
-
+  * Имя образа в werf (`WerfImageName`)
+  * Тип конфигурации образа (`ConfigType`: `stapel`, `dockerfile`, `staged`, `unknown`)
   * Теги образа (`DockerImageName`, `DockerRepo`, `DockerTag`)
+  * Целевая платформа (`TargetPlatform`), например `linux/amd64`
   * Был ли образ пересобран (`Rebuilt`)
-  * Является ли образ финальным (`Final`)
-  * Размер и образа в байтах (`Size`) и время сборки (`BuildTime`)
+  * Является ли образ [конечным или промежуточным]({{ "/usage/build/images.html#использование-промежуточных-и-конечных-образов" | true_relative_url }}) (`Final`). Конечные образы доступны в values Helm-чарта, могут быть помечены произвольными тегами, опубликованы в финальный репозиторий и экспортированы. Промежуточные образы (`final: false`) используются только как зависимости сборки
+  * Размер образа в байтах (`Size`) и время сборки в секундах (`BuildTime`)
   * Стадии сборки (`Stages`) с деталями:
+    * Имя стадии (`Name`)
     * Теги (`DockerImageName`, `DockerTag`, `DockerImageID`, `DockerImageDigest`)
+    * Время создания образа стадии в Unix time nanoseconds (`CreatedAt`)
     * Размер (`Size`) в байтах
-    * Время сборки стадии (`BuildTime`) в секундах
     * Источник базового образа (`SourceType`: `local`, `secondary`, `cache-repo`, `registry`)
     * Был ли загружен базовый образ (`BaseImagePulled`)
     * Была ли стадия пересобрана (`Rebuilt`)
+    * Время сборки стадии в секундах (`BuildTime`).
 
-* **ImagesByPlatform** — информация по архитектурам (при multiarch-сборке) анлогично Images
+* **ImagesByPlatform** — разрез по платформам для multiarch-сборок. Поле включается только если установлена переменная окружения `WERF_ENABLE_REPORT_BY_PLATFORM=1`. Структура записей та же, что и у `Images`, но данные сгруппированы по имени образа и платформе.
 
-Пример отчёта в формате `json`:
+Пример отчёта в формате JSON:
 
 ```json
 {
+  "Runtime": {
+    "Backend": "docker",
+    "InContainer": false
+  },
   "Images": {
     "frontend": {
       "WerfImageName": "frontend",
+      "ConfigType": "dockerfile",
       "DockerRepo": "localhost:5000/demo-app",
       "DockerTag": "079dfdd3f51a800c269cdfdd5e4febfcc1676b2c0d533f520255961c-1752501317353",
       "DockerImageID": "sha256:9b3a32dfe5a4aa46d96547e3f8e678626f96741776d78656ea72cab7117612bf",
@@ -607,33 +657,13 @@ werf build --save-build-report --repo REPO
 }
 ```
 
-### Получение тегов
-
-С помощью опции `--build-report-path` вы можете указать произвольный путь до отчета, а так же формат, в котором он будет создан: `json` либо `envfile`. Формат `envfile` не содержит подробной инофрмации о сборке и служит для получения тегов собранных образов.
-
-Пример создания отчета в формате `envfile`:
-
-```shell
-werf converge --save-build-report --build-report-path .werf-build-report.env --repo REPO
-```
-
-Пример вывода:
-
-```shell
-WERF_BACKEND_DOCKER_IMAGE_NAME=localhost:5000/demo-app:b94607bcb6e03a6ee07c8dc912739d6ab8ef2efc985227fa82d3de6f-1752510311968
-WERF_FRONTEND_DOCKER_IMAGE_NAME=localhost:5000/demo-app:079dfdd3f51a800c269cdfdd5e4febfcc1676b2c0d533f520255961c-1752501317353
-```
-
-> **Важно:** Получить теги до сборки невозможно — они формируются в процессе. Чтобы использовать теги, сохраните их после выполнения сборки с помощью `--save-build-report`.
-
-
-Чтобы извлечь список итоговых тегов образов из отчета в формате `json`, можно использовать утилиту `jq`:
+Чтобы извлечь список итоговых тегов образов из JSON-отчёта, можно использовать утилиту `jq`:
 
 ```shell
 jq -r '.Images | to_entries | map({key: .key, value: .value.DockerImageName}) | from_entries' .werf-build-report.json
 ```
 
-Результат будет выглядеть так:
+Результат:
 
 ```json
 {
@@ -730,3 +760,54 @@ build:
 | **Настройки сканирования**                | [ссылка](https://github.com/anchore/syft/wiki/Configuration#list-of-configurable-values) |
 | **Исходящий стандарт**                    | `CycloneDX@1.6`                                                                          |
 | **Исходящий формат**                      | `JSON`                                                                                   |
+
+#### Формат envfile
+
+Отчёт в формате envfile содержит часть полей образов в виде переменных окружения. Для каждого образа генерируются следующие переменные:
+
+* `WERF_<IMAGE>_DOCKER_IMAGE_NAME` — полное имя образа с тегом
+* `WERF_<IMAGE>_DOCKER_IMAGE_ID` — ID образа
+* `WERF_<IMAGE>_DOCKER_IMAGE_DIGEST` — дайджест образа
+* `WERF_<IMAGE>_DOCKER_REPO` — репозиторий образа
+* `WERF_<IMAGE>_DOCKER_TAG` — тег образа
+* `WERF_<IMAGE>_WERF_IMAGE_NAME` — оригинальное имя образа в werf
+* `WERF_<IMAGE>_FINAL` — является ли образ [конечным или промежуточным]({{ "/usage/build/images.html#использование-промежуточных-и-конечных-образов" | true_relative_url }}) (`true`/`false`). Конечные образы доступны в values Helm-чарта, могут быть помечены произвольными тегами, опубликованы в финальный репозиторий и экспортированы. Промежуточные образы (`final: false`) используются только как зависимости сборки
+
+Где `<IMAGE>` — имя образа в верхнем регистре, в котором символы `/`, `-`, `.` заменены на `_`.
+
+Пример отчёта в формате envfile:
+
+```shell
+WERF_BACKEND_DOCKER_IMAGE_NAME=localhost:5000/demo-app:b94607bcb6e03a6ee07c8dc912739d6ab8ef2efc985227fa82d3de6f-1752510311968
+WERF_BACKEND_DOCKER_IMAGE_ID=sha256:a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2
+WERF_BACKEND_DOCKER_IMAGE_DIGEST=sha256:f6e5d4c3b2a1f6e5d4c3b2a1f6e5d4c3b2a1f6e5d4c3b2a1f6e5d4c3b2a1f6e5
+WERF_BACKEND_DOCKER_REPO=localhost:5000/demo-app
+WERF_BACKEND_DOCKER_TAG=b94607bcb6e03a6ee07c8dc912739d6ab8ef2efc985227fa82d3de6f-1752510311968
+WERF_BACKEND_WERF_IMAGE_NAME=backend
+WERF_BACKEND_FINAL=true
+WERF_FRONTEND_DOCKER_IMAGE_NAME=localhost:5000/demo-app:079dfdd3f51a800c269cdfdd5e4febfcc1676b2c0d533f520255961c-1752501317353
+WERF_FRONTEND_DOCKER_IMAGE_ID=sha256:9b3a32dfe5a4aa46d96547e3f8e678626f96741776d78656ea72cab7117612bf
+WERF_FRONTEND_DOCKER_IMAGE_DIGEST=sha256:54f564edebb6e0699dc0e43de4165488f86fbc76b0c89d88311d7cc06ae397f5
+WERF_FRONTEND_DOCKER_REPO=localhost:5000/demo-app
+WERF_FRONTEND_DOCKER_TAG=079dfdd3f51a800c269cdfdd5e4febfcc1676b2c0d533f520255961c-1752501317353
+WERF_FRONTEND_WERF_IMAGE_NAME=frontend
+WERF_FRONTEND_FINAL=true
+```
+
+### Использование отчёта по сборке
+
+Отчёт по сборке выступает контрактом между этапами CI/CD-пайплайна: этап сборки создаёт его, а последующие этапы (деплой, экспорт, рендер) используют. Это позволяет собрать образы один раз и переиспользовать результаты в нескольких заданиях или окружениях без пересборки. Подробный пример CI/CD см. в разделе [Развертывание с использованием отчёта по сборке]({{ "/usage/deploy/deployment_scenarios.html#развертывание-с-использованием-отчёта-по-сборке" | true_relative_url }}).
+
+Флаг `--use-build-report` позволяет пропустить сборку и прочитать данные об образах из ранее сохранённого отчёта. Путь и формат отчёта задаются через `--build-report-path` (формат определяется автоматически по расширению файла). Поддерживаются форматы JSON и envfile.
+
+Флаг `--use-build-report` поддерживается всеми командами, в рамках которых выполняется сборка.
+
+Пример двухшагового CI-пайплайна — сборка в одном задании, деплой в другом:
+
+```shell
+# Шаг 1: Сборка и сохранение отчёта
+werf build --save-build-report --build-report-path .werf-build-report.env --repo REPO
+
+# Шаг 2: Деплой с использованием сохранённого отчёта (без пересборки)
+werf converge --use-build-report --build-report-path .werf-build-report.env --repo REPO
+```
