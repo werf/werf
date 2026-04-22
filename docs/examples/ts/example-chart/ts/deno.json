@@ -1,0 +1,19 @@
+{
+  "tasks": {
+    "build": {
+      "description": "Run deno build",
+      "command": "deno bundle --output=dist/bundle.js src/index.ts"
+    },
+    "dev": {
+      "description": "Run in development mode",
+      "command": "deno run --no-remote --deny-read --deny-write --deny-net --deny-env --deny-run --allow-read=input.example.yaml src/index.ts --input-file ./input.example.yaml"
+    },
+    "start": {
+      "description": "Run the bundled dist/bundle.js",
+      "command": "deno run --no-remote --deny-read --deny-write --deny-net --deny-env --deny-run --allow-read=input.example.yaml dist/bundle.js --input-file ./input.example.yaml"
+    }
+  },
+  "imports": {
+    "@nelm/chart-ts-sdk": "npm:@nelm/chart-ts-sdk@^0.1.5"
+  }
+}
