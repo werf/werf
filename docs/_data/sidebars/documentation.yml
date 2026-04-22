@@ -698,6 +698,9 @@ entries:
               - title: Parametrize templates
                 url: /usage/deploy/values.html
 
+              - title: TypeScript templates
+                url: /usage/deploy/typescript.html
+
               - title: Debug templates
                 url: /usage/deploy/debug_templates.html
 
@@ -852,6 +855,9 @@ entries:
 
               - title: Параметризация шаблонов
                 url: /usage/deploy/values.html
+
+              - title: TypeScript-шаблоны
+                url: /usage/deploy/typescript.html
 
               - title: Отладка шаблонов
                 url: /usage/deploy/debug_templates.html
