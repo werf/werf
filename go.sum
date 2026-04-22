@@ -1458,6 +1458,8 @@ github.com/werf/nelm v1.23.3-0.20260421131859-144b20397bc1 h1:Lsh9+Px89cfXa5U+Wb
 github.com/werf/nelm v1.23.3-0.20260421131859-144b20397bc1/go.mod h1:Gy6XJ42rwJVA+UyB6ka9/DVFPzm+lh7lmcjLAZECdIs=
 github.com/werf/nelm v1.23.3-0.20260421142511-1e1068f13d24 h1:ofLD8sa/e7O+1VEB2Z976S05tf/S6Ay5fIbX0Wi4zYs=
 github.com/werf/nelm v1.23.3-0.20260421142511-1e1068f13d24/go.mod h1:W9QyNA9XlJi+fkgt3MAd2R+VUr+RqaW3S0u5gWRc+p8=
+github.com/werf/nelm v1.23.3-0.20260422200321-7a758a486e9d h1:w8OnOGs2pjyg26PHF2hZsMvu8uF/+RH4Km9QMCac8ss=
+github.com/werf/nelm v1.23.3-0.20260422200321-7a758a486e9d/go.mod h1:W9QyNA9XlJi+fkgt3MAd2R+VUr+RqaW3S0u5gWRc+p8=
 github.com/x448/float16 v0.8.4 h1:qLwI1I70+NjRFUR3zs1JPUCgaCXSh3SW62uAKT1mSBM=
 github.com/x448/float16 v0.8.4/go.mod h1:14CWIYCyZA/cWjXOioeEpHeN/83MdbZDRQHoFcYsOfg=
 github.com/xanzy/go-gitlab v0.31.0/go.mod h1:sPLojNBn68fMUWSxIJtdVVIP8uSBYqesTfDUseX11Ug=
