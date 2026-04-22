@@ -126,14 +126,18 @@ func (c *StapelImageBase) exports() []autoExcludeExport {
 }
 
 func (c *StapelImageBase) validate(giterminismManager giterminism_manager.Interface) error {
+	if c.From == "" {
+		return newDetailedConfigError("`from: IMAGE` required!", nil, c.raw.doc)
+	}
+
+	if c.From == "scratch" && c.FromLatest {
+		return newDetailedConfigError("`fromLatest` is not compatible with `from: scratch`", nil, c.raw.doc)
+	}
+
 	if c.FromLatest {
 		if err := giterminismManager.Inspector().InspectConfigStapelFromLatest(); err != nil {
 			return newDetailedConfigError(err.Error(), nil, c.raw.doc)
 		}
-	}
-
-	if c.From == "" {
-		return newDetailedConfigError("`from: IMAGE` required!", nil, c.raw.doc)
 	}
 
 	if c.Name != "" && c.From == c.Name {

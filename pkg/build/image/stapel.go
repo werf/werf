@@ -38,14 +38,15 @@ func mapStapelConfigToImage(ctx context.Context, metaConfig *config.Meta, stapel
 
 	var baseImageType BaseImageType
 
-	if imageBaseConfig.FromExternal {
+	if imageBaseConfig.From == "scratch" {
+		baseImageType = ScratchBaseImage
+	} else if imageBaseConfig.FromExternal {
 		baseImageType = ImageFromRegistryAsBaseImage
 		imageOpts.BaseImageReference = imageBaseConfig.From
 		imageOpts.FetchLatestBaseImage = imageBaseConfig.FromLatest
 	} else {
-		fromImage := imageBaseConfig.From
 		baseImageType = StageAsBaseImage
-		imageOpts.BaseImageName = fromImage
+		imageOpts.BaseImageName = imageBaseConfig.From
 	}
 
 	image, err := NewImage(ctx, targetPlatform, imageName, baseImageType, imageOpts)

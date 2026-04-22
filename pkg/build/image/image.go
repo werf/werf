@@ -29,6 +29,7 @@ const (
 	ImageFromRegistryAsBaseImage BaseImageType = "ImageFromRegistryAsBaseImage"
 	StageAsBaseImage             BaseImageType = "StageAsBaseImage"
 	NoBaseImage                  BaseImageType = "NoBaseImage"
+	ScratchBaseImage             BaseImageType = "ScratchBaseImage"
 )
 
 type CommonImageOptions struct {
@@ -60,7 +61,7 @@ type ImageOptions struct {
 
 func NewImage(ctx context.Context, targetPlatform, name string, baseImageType BaseImageType, opts ImageOptions) (*Image, error) {
 	switch baseImageType {
-	case NoBaseImage, ImageFromRegistryAsBaseImage, StageAsBaseImage:
+	case NoBaseImage, ImageFromRegistryAsBaseImage, StageAsBaseImage, ScratchBaseImage:
 	default:
 		panic(fmt.Sprintf("unknown opts.BaseImageType %q", baseImageType))
 	}
@@ -331,12 +332,13 @@ func (i *Image) SetupBaseImage(ctx context.Context, storageManager manager.Stora
 			}
 		}
 
-		if !i.IsDockerfileImage && i.baseImageReference == "scratch" {
-			i.baseStageImage.Image.SetStageDesc(&image.StageDesc{
-				StageID: nil,
-				Info:    &image.Info{Name: i.baseImageReference, Env: nil},
-			})
-		}
+	case ScratchBaseImage:
+		i.baseStageImage = i.Conveyor.GetOrCreateStageImage("scratch", nil, nil, i)
+		i.baseStageImage.Image.SetStageDesc(&image.StageDesc{
+			StageID: nil,
+			Info:    &image.Info{Name: "scratch", Env: nil},
+		})
+
 	case NoBaseImage:
 
 	default:
@@ -385,10 +387,6 @@ func (i *Image) FetchBaseImage(ctx context.Context) (FetchBaseImageInfo, error) 
 
 	switch i.baseImageType {
 	case ImageFromRegistryAsBaseImage:
-		if i.baseStageImage.Image.Name() == "scratch" {
-			return FetchBaseImageInfo{}, nil
-		}
-
 		// TODO: Refactor, move manifest fetching into SetupBaseImage, only pull image in FetchBaseImage method
 
 		// Check if image exists locally and is up-to-date.
@@ -455,6 +453,9 @@ func (i *Image) FetchBaseImage(ctx context.Context) (FetchBaseImageInfo, error) 
 	case StageAsBaseImage:
 		info, err := i.StorageManager.FetchStage(ctx, i.ContainerBackend, i.stageAsBaseImage)
 		return FetchBaseImageInfo{BaseImagePulled: info.BaseImagePulled, BaseImageSource: info.BaseImageSource}, err
+
+	case ScratchBaseImage:
+		return FetchBaseImageInfo{}, nil
 
 	case NoBaseImage:
 		return FetchBaseImageInfo{BaseImagePulled: true, BaseImageSource: BaseImageSourceTypeRepo}, nil

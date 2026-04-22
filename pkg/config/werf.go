@@ -76,6 +76,9 @@ func (c *WerfConfig) validateConflictBetweenImagesNames() error {
 	imageByName := map[string]ImageInterface{}
 	for _, image := range c.Images(false) {
 		name := image.GetName()
+		if name == "scratch" {
+			return newDetailedConfigError("image name \"scratch\" is reserved and cannot be used", nil, image.rawDoc())
+		}
 		if d, ok := imageByName[name]; ok {
 			return newConfigError(fmt.Sprintf("conflict between images names!\n\n%s%s\n", dumpConfigDoc(d.rawDoc()), dumpConfigDoc(image.rawDoc())))
 		} else {
@@ -93,7 +96,7 @@ func (c *WerfConfig) validateExternalImageReferences() error {
 		}
 
 		from := image.GetFrom()
-		if from == "" {
+		if from == "" || from == "scratch" {
 			continue
 		}
 
@@ -110,6 +113,12 @@ func (c *WerfConfig) validateExternalImageReferences() error {
 			for _, imp := range stapelImage.ImageBaseConfig().Import {
 				if imp.From == "" {
 					continue
+				}
+				if imp.From == "scratch" {
+					return newDetailedConfigError(
+						"`from: scratch` is not allowed in imports: scratch has no filesystem to copy from",
+						imp.raw, image.rawDoc(),
+					)
 				}
 				if c.GetImage(imp.From) == nil {
 					if !strings.Contains(imp.From, ":") && !strings.Contains(imp.From, "@") {
@@ -297,7 +306,7 @@ func (c *WerfConfig) updateDependencies(image ImageInterface) DependsOn {
 	from := image.GetFrom()
 	if c.GetImage(from) != nil {
 		d.From = from
-	} else {
+	} else if from != "" && from != "scratch" {
 		image.SetFromExternal()
 	}
 

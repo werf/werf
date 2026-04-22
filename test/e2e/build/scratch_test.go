@@ -56,13 +56,13 @@ var _ = Describe("Scratch stapel build", Label("e2e", "build", "scratch", "simpl
 			Expect(labels).To(HaveKey(image.WerfProjectRepoCommitLabel))
 			Expect(labels[image.WerfProjectRepoCommitLabel]).NotTo(BeEmpty())
 		},
-		Entry("using Vanilla Docker", scratchTestOptions{setupEnvOptions{
-			ContainerBackendMode:        "vanilla-docker",
+		Entry("without repo using Docker", scratchTestOptions{setupEnvOptions{
+			ContainerBackendMode:        "docker",
 			WithLocalRepo:               false,
 			WithStagedDockerfileBuilder: false,
 		}}),
-		Entry("using Vanilla Docker with local repo", scratchTestOptions{setupEnvOptions{
-			ContainerBackendMode:        "vanilla-docker",
+		Entry("with local repo using Docker", scratchTestOptions{setupEnvOptions{
+			ContainerBackendMode:        "docker",
 			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: false,
 		}}),
