@@ -1,6 +1,5 @@
 # Changelog
 
-## [2.63.1-dk](https://github.com/deckhouse/delivery-kit/compare/v2.63.1...v2.63.1-dk) (2026-03-24)
 ## [2.67.2](https://github.com/werf/werf/compare/v2.67.1...v2.67.2) (2026-04-21)
 
 
