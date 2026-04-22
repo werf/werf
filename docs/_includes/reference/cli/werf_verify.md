@@ -31,6 +31,11 @@ werf verify --image-ref <image-ref> [--image-ref <image-ref>...] --verify-roots=
 ```shell
       --container-registry-mirror=[]
             (Buildah-only) Use specified mirrors for docker.io
+      --docker-config=""
+            Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
+            ~/.docker (in the order of priority)
+            Command needs granted permissions to read, pull and push images into the specified      
+            repo, to pull base images
       --home-dir=""
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --image-ref=[]
