@@ -19,12 +19,12 @@ Helm's templating language works well for simple cases but becomes hard to maint
 
 - IDE support — full autocompletion, type checking, go-to-definition, and refactoring in any editor with Deno/TypeScript support (VS Code, JetBrains, Neovim, etc.).
 - Standard syntax — proper functions, loops, and conditionals instead of awkward template engine constructs.
-- Vanilla TypeScript — templates can be run directly via [Deno](https://deno.com/) runtime outside werf as a standard TypeScript code.
+- Pure TypeScript — `ts` directory is a regular Deno TypeScript project, and can be render without werf, with just [Deno TypeScript runtime](https://deno.com/).
 - Large ecosystem — TypeScript is one of the most popular languages with extensive documentation, community resources, and tooling.
 - Almost any third-party TypeScript/JavaScript library can be used, for example [kubernetes-models](https://github.com/tommy351/kubernetes-models-ts), [cdk8s](https://cdk8s.io/) or any other library from npm/Deno ecosystems.
 - Testing — test your code using common TypeScript libraries and tooling.
-- No dependencies — nothing to install or configure for deployment.
-- Isolated environments — works in environments with no internet access.
+- No extra host requirements — to deploy a TS chart all you need is werf. No need to install Node, Deno, npm, npm modules or anything else. We handle all of this for you, just do a `werf converge`.
+- Isolated environments — npm modules are bundled into the chart by default, and the Deno runtime can be provided by the host system, so no network calls will be done during the deployment, except to the Kubernetes itself.
 - Security — code runs in an isolated Deno sandbox with no access to the network, environment variables, or process execution. Filesystem access is limited to reading chart files.
 
 ## Quick start
@@ -118,7 +118,7 @@ For the isolated environments, where Deno cannot be downloaded automatically:
    ```shell
    werf bundle publish --repo example.org/mycompany/myapp
    ```
-   The chart package includes pre-compiled TypeScript files, ready to run without network access.
+   All npm modules will be minified and bundled inside, so that the chart can be installed even without Internet access.
 
 2. On the target machine with an isolated environment (no network access), download Deno manually and run:
    ```shell
