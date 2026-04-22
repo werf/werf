@@ -116,6 +116,7 @@ var _ = Describe("build and mutate image spec", Label("integration", "build", "m
 						Expect(imgCfg.ExposedPorts).Should(SatisfyAny(
 							Equal(manifest.Schema2PortSet{"": {}}),
 							Equal(manifest.Schema2PortSet{"/tcp": {}}),
+							Equal(manifest.Schema2PortSet{"invalid port": {}}),
 						))
 
 						Expect(imgCfg.WorkingDir).Should(Equal(""))
