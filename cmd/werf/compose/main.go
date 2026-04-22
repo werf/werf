@@ -374,22 +374,7 @@ func checkDetachDockerComposeOption(cmdData composeCmdData) error {
 	return fmt.Errorf("the containers must be launched in the background (in follow mode): pass -d/--detach with --docker-compose-command-options option")
 }
 
-func checkDockerComposeAvailable(ctx context.Context) error {
-	cmd := exec.CommandContext(ctx, "docker", "compose", "version")
-	if out, err := cmd.CombinedOutput(); err != nil {
-		if errors.Is(err, exec.ErrNotFound) {
-			return fmt.Errorf("docker is not installed or not in PATH")
-		}
-		return fmt.Errorf("docker compose plugin is not available: %w\n%s\nInstall it following https://docs.docker.com/compose/install/", err, strings.TrimSpace(string(out)))
-	}
-	return nil
-}
-
 func runMain(ctx context.Context, dockerComposeCmdName string, cmdData composeCmdData, commonCmdData common.CmdData, followSupport bool) error {
-	if err := checkDockerComposeAvailable(context.Background()); err != nil {
-		return err
-	}
-
 	commonManager, ctx, err := common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
 		Cmd: &commonCmdData,
 		InitTrueGitWithOptions: &common.InitTrueGitOptions{
