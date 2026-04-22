@@ -124,7 +124,7 @@ For the isolated environments, where Deno cannot be downloaded automatically:
    ```shell
    werf bundle apply --repo example.org/mycompany/myapp --deno-binary-path /usr/local/bin/deno
    ```
-   Where `/usr/local/bin/deno` is the path to the local Deno binary. TypeScript templates will be rendered and deployed using pre-compiled files from the chart package.
+   Where `/usr/local/bin/deno` is the path to the local Deno binary. TypeScript templates will be rendered and deployed using pre-compiled files from the chart bundle.
 
 ## SDK API overview
 
