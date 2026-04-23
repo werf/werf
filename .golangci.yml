@@ -1,0 +1,38 @@
+version: "2"
+
+run:
+  timeout: 10m
+
+linters:
+  default: none
+  enable:
+    - ineffassign
+    - unused
+    - asciicheck
+    - bidichk
+    - bodyclose
+    - errname
+    - errorlint
+    - copyloopvar
+    - gocritic
+    - misspell
+    - nolintlint
+  settings:
+    gocritic:
+      disabled-checks:
+        - ifElseChain
+    errorlint:
+      comparison: false
+      asserts: false
+    misspell:
+      locale: US
+  exclusions:
+    paths:
+      - playground
+      - docs
+      - scripts
+      - stapel
+    rules:
+      - linters:
+          - errorlint
+        text: "non-wrapping format verb for fmt.Errorf"
