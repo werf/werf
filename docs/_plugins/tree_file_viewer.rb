@@ -19,7 +19,8 @@ module Jekyll
               {}
             ],
             named: [
-              { name: "default_file" }
+              { name: "default_file" },
+              { name: "expanded" }
             ]
           })
 
@@ -27,6 +28,8 @@ module Jekyll
           if @named_params["default_file"]
             @default_active_file_path = "/" + @named_params["default_file"].delete_prefix("/")
           end
+
+          @expanded = @named_params["expanded"] == "true"
 
           @static_files_root = context.registers[:site].config['source']
           @tree_root = Pathname.new(File.join(@static_files_root, @rel_tree_root))
@@ -90,8 +93,8 @@ module Jekyll
 
         unless is_tree_root_level
           result += %Q(
-<div class="folder__wrap #{root_depth > tree_root_depth + 1 ? "hidden child" : nil}" data-depth="#{root_depth - tree_root_depth}">
-<div class="folder">
+<div class="folder__wrap #{@expanded ? "child" : (root_depth > tree_root_depth + 1 ? "hidden child" : nil)}" data-depth="#{root_depth - tree_root_depth}">
+<div class="folder"#{@expanded ? " style=\"padding-left: #{(root_depth - tree_root_depth) * 15}px;\"" : ""}>
 <span class="folder-icon"></span>
 <span class="folder-name">#{root.basename}</span>
 </div>
@@ -108,7 +111,7 @@ module Jekyll
           end
 
           result += %Q(
-<div class="file__wrap #{is_file_active(file, index) ? "active" : nil} #{is_tree_root_level ? nil : "hidden child"}">
+<div class="file__wrap #{is_file_active(file, index) ? "active" : nil} #{is_tree_root_level ? nil : (@expanded ? "child" : "hidden child")}"#{(@expanded && !is_tree_root_level) ? " style=\"padding-left: #{(root_depth - tree_root_depth + 1) * 15}px;\"" : ""}>
 <span class="file-icon"></span>
 <div class="file-name" data-file-name="#{file.relative_path_from(@static_files_root).to_s}">#{file.basename}</div>
 </div>
