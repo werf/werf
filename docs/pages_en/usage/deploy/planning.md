@@ -44,7 +44,7 @@ The planning feature is quite handy, but on its own, it does not guarantee that 
 werf plan --save-plan=plan.gz
 ```
 2. **Deploy:** Perform `werf converge` using the pre-generated reviewed plan:
-````
+```
 werf converge --use-plan=plan.gz
 ```
 
