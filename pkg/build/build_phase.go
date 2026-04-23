@@ -633,6 +633,16 @@ func (phase *BuildPhase) onImageStage(ctx context.Context, img *image.Image, stg
 		}
 	}
 
+	if img.IsDockerfileImage && img.DockerfileImageConfig.Staged {
+		if werf.GetStagedDockerfileVersion() == werf.StagedDockerfileV2 {
+			if _, isFromStage := stg.(*instruction.From); isFromStage {
+				if err := stg.ExpandDependencies(ctx, phase.Conveyor, nil); err != nil {
+					return err
+				}
+			}
+		}
+	}
+
 	var foundSuitableStage bool
 	var calculateStageCleanupFunc cleanup.Func
 
