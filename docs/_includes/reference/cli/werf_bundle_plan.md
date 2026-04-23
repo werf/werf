@@ -55,7 +55,8 @@ werf bundle plan [options]
       --env=""
             Use specified environment (default $WERF_ENV)
       --exit-code=false
-            Return exit code 0 if no changes, 1 if error, 2 if any changes planned (default         
+            Return exit code 0 if no changes, 1 if error, 2 if resource changes planned, 3 if no    
+            resource changes planned, but release still should be installed (default                
             $WERF_EXIT_CODE or false)
       --force-adoption=false
             Always adopt resources, even if they belong to a different Helm release (default        
@@ -139,6 +140,8 @@ werf bundle plan [options]
       --kube-token-path=""
             Path to file with bearer token for authentication in Kubernetes (default                
             $WERF_KUBE_TOKEN_PATH)
+      --local-resource-validation=false
+            Do not use external json schema sources (default $WERF_LOCAL_RESOURCE_VALIDATION)
       --log-color-mode="auto"
             Set log color mode.
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        
@@ -179,6 +182,8 @@ werf bundle plan [options]
       --no-remove-manual-changes=false
             Don`t remove fields added manually to the resource in the cluster if fields aren`t      
             present in the manifest (default $WERF_NO_REMOVE_MANUAL_CHANGES)
+      --no-resource-validation=false
+            Disable resource validation (default $WERF_NO_RESOURCE_VALIDATION)
       --provenance-keyring=""
             Path to keyring containing public keys to verify chart provenance (default              
             $WERF_PROVENANCE_KEYRING)
@@ -222,6 +227,30 @@ werf bundle plan [options]
             repo Harbor username (default $WERF_REPO_HARBOR_USERNAME)
       --repo-quay-token=""
             repo quay.io token (default $WERF_REPO_QUAY_TOKEN)
+      --resource-validation-cache-lifetime=48h0m0s
+            How long local schema cache will be valid. Also can be defined by                       
+            $WERF_RESOURCE_VALIDATION_CACHE_LIFETIME
+      --resource-validation-extra-schema=[]
+            Extra json schema sources to validate resources (preferred over default sources). Must  
+            be a valid go template defining a http(s) URL, or an absolute path on local file        
+            system. Also, can be defined with $WERF_RESOURCE_VALIDATION_EXTRA_SCHEMA_* (eg. $WERF_RE
+            SOURCE_VALIDATION_EXTRA_SCHEMA_1=`https://raw.githubusercontent.com/datreeio/CRDs-catalo
+            g/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json`)
+      --resource-validation-kube-version="1.35.0"
+            Kubernetes schemas version to use during resource validation. Also can be defined by    
+            $WERF_RESOURCE_VALIDATION_KUBE_VERSION
+      --resource-validation-schema=[https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/{{ .NormalizedKubernetesVersion }}-standalone{{ .StrictSuffix }}/{{ .ResourceKind }}{{ .KindSuffix }}.json,https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json]
+            Default json schema sources to validate resources. Must be a valid go template defining 
+            a http(s) URL, or an absolute path on local file system. Also, can be defined with      
+            $WERF_RESOURCE_VALIDATION_SCHEMA_* (eg. $WERF_RESOURCE_VALIDATION_SCHEMA_1=`https://raw.
+            githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.Resourc
+            eAPIVersion}}.json`)
+      --resource-validation-skip=[]
+            Skip resource validation for resources with specified attributes (can specify           
+            multiple). Format: key1=value1,key2=value2. Supported keys: group, version, kind, name, 
+            namespace. Example: kind=Deployment,name=my-app. Also, can be defined with              
+            $WERF_RESOURCE_VALIDATION_SKIP_* (e.g.                                                  
+            $WERF_RESOURCE_VALIDATION_SKIP_1=kind=Deployment,name=my-app)
       --runtime-annotations=[]
             Add annotations which will not trigger resource updates to all resources (default       
             $WERF_RUNTIME_ANNOTATIONS)
@@ -264,13 +293,6 @@ werf bundle plan [options]
             or separate values with commas: key1=val1,key2=val2.
             Also, can be defined with $WERF_SET_ROOT_JSON_* (e.g. $WERF_SET_ROOT_JSON_1=key1=val1,  
             $WERF_SET_ROOT_JSON_2=key2=val2)
-      --set-runtime-json=[]
-            Set new keys in $.Runtime, where the key is the value path and the value is JSON. This  
-            is meant to be generated inside the program, so use --set-json instead, unless you know 
-            what you are doing. Can specify multiple or separate values with commas:                
-            key1=val1,key2=val2.
-            Also, can be defined with $WERF_SET_RUNTIME_JSON_* (e.g.                                
-            $WERF_SET_RUNTIME_JSON_1=key1=val1, $WERF_SET_RUNTIME_JSON_2=key2=val2)
       --set-string=[]
             Set STRING helm values on the command line (can specify multiple or separate values     
             with commas: key1=val1,key2=val2).
@@ -282,8 +304,6 @@ werf bundle plan [options]
             Show sensitive diff lines ($WERF_SHOW_SENSITIVE_DIFFS by default)
       --show-verbose-crd-diffs=false
             Show verbose CRD diff lines ($WERF_SHOW_VERBOSE_CRD_DIFFS by default)
-      --show-verbose-diffs=true
-            Show verbose diff lines ($WERF_SHOW_VERBOSE_DIFFS by default)
   -L, --skip-dependencies-repo-refresh=false
             Do not refresh helm chart repositories locally cached index
       --skip-tls-verify-helm-dependencies=false

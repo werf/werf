@@ -10,9 +10,7 @@ import (
 
 	"github.com/werf/nelm/pkg/action"
 	secret_common "github.com/werf/nelm/pkg/legacy/secret"
-	"github.com/werf/nelm/pkg/log"
 	"github.com/werf/werf/v2/cmd/werf/common"
-	"github.com/werf/werf/v2/cmd/werf/docs/replacers/helm"
 	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
 	"github.com/werf/werf/v2/pkg/werf"
@@ -30,7 +28,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 		Use:                   "decrypt [FILE_PATH]",
 		DisableFlagsInUseLine: true,
 		Short:                 "Decrypt secret values file data",
-		Long:                  common.GetLongCommandDescription(helm.GetHelmSecretValuesDecryptDocs().Long),
 		Example: `  # Decrypt secret values file
   $ werf helm secret values decrypt .helm/secret-values.yaml
   mysql:
@@ -44,7 +41,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
     password: root`,
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
-			common.DocsLongMD: helm.GetHelmSecretValuesDecryptDocs().LongMD,
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
@@ -101,7 +97,7 @@ func runSecretDecrypt(ctx context.Context, filePath string) error {
 
 	workingDir := common.GetWorkingDir(&commonCmdData)
 
-	ctx = log.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultSecretValuesFileDecryptLogLevel), log.SetupLoggingOptions{
+	ctx = action.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultSecretValuesFileDecryptLogLevel), action.SetupLoggingOptions{
 		ColorMode:      *commonCmdData.LogColorMode,
 		LogIsParseable: true,
 	})

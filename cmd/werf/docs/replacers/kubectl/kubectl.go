@@ -49,11 +49,11 @@ func setNewDocs(cmd *cobra.Command) {
 		}
 	case "kuberc SUBCOMMAND":
 		cmd.Annotations = map[string]string{
-			common.DocsLongMD: GetAlphaDocs().LongMD,
+			common.DocsLongMD: GetAlphaKubercDocs().LongMD,
 		}
 	case "set --section (defaults|aliases) --command COMMAND":
 		cmd.Annotations = map[string]string{
-			common.DocsLongMD: GetAlphaDocs().LongMD,
+			common.DocsLongMD: GetAlphaKubercSetDocs().LongMD,
 		}
 	case "annotate [--overwrite] (-f FILENAME | TYPE NAME) KEY_1=VAL_1 ... KEY_N=VAL_N [--resource-version=version]":
 		cmd.Annotations = map[string]string{
@@ -375,12 +375,9 @@ func setNewDocs(cmd *cobra.Command) {
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetExposeDocs().LongMD,
 		}
-	case "get [(-o|--output=)json|yaml|name|go-template|go-template-file|template|templatefile|jsonpath|" +
+	case "get [(-o|--output=)json|yaml|kyaml|name|go-template|go-template-file|template|templatefile|jsonpath|" +
 		"jsonpath-as-json|jsonpath-file|custom-columns|custom-columns-file|wide] (TYPE[.VERSION][.GROUP] " +
-		"[NAME | -l label] | TYPE[.VERSION][.GROUP]/NAME ...) [flags]",
-		"get [(-o|--output=)json|yaml|kyaml|name|go-template|go-template-file|template|templatefile|jsonpath|" +
-			"jsonpath-as-json|jsonpath-file|custom-columns|custom-columns-file|wide] (TYPE[.VERSION][.GROUP] " +
-			"[NAME | -l label] | TYPE[.VERSION][.GROUP]/NAME ...) [flags]":
+		"[NAME | -l label] | TYPE[.VERSION][.GROUP]/NAME ...) [flags]":
 		cmd.Annotations = map[string]string{
 			common.DocsLongMD: GetGetDocs().LongMD,
 		}

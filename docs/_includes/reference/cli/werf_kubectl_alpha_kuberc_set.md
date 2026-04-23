@@ -3,7 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-These commands correspond to alpha features that are not enabled in Kubernetes clusters by default.
+Set kuberc configuration values.
 
 {{ header }} Syntax
 

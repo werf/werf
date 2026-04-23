@@ -18,12 +18,10 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/nelm/pkg/action"
 	nelmcommon "github.com/werf/nelm/pkg/common"
-	"github.com/werf/nelm/pkg/export/helm/engine"
-	"github.com/werf/nelm/pkg/export/helm/werf/helmopts"
-	"github.com/werf/nelm/pkg/log"
+	"github.com/werf/nelm/pkg/helm/pkg/engine"
 	"github.com/werf/werf/v2/cmd/werf/common"
+	"github.com/werf/werf/v2/pkg/deploy"
 	"github.com/werf/werf/v2/pkg/deploy/bundles"
-	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
 	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/tmp_manager"
 	"github.com/werf/werf/v2/pkg/werf"
@@ -169,7 +167,7 @@ func runApply(ctx context.Context) error {
 
 	registryCredentialsPath := docker.GetDockerConfigCredentialsFile(*commonCmdData.DockerConfig)
 
-	serviceValues, err := helpers.GetBundleServiceValues(ctx, helpers.ServiceValuesOptions{
+	serviceValues, err := deploy.GetBundleServiceValues(ctx, deploy.ServiceValuesOptions{
 		Env:                      commonCmdData.Environment,
 		Namespace:                releaseNamespace,
 		SetDockerConfigJsonValue: *commonCmdData.SetDockerConfigJsonValue,
@@ -184,8 +182,8 @@ func runApply(ctx context.Context) error {
 		return fmt.Errorf("get current working directory: %w", err)
 	}
 
-	if err := bundles.Pull(ctx, fmt.Sprintf("%s:%s", repoAddress, cmdData.Tag), bundlePath, bundlesRegistryClient, helmopts.HelmOptions{
-		ChartLoadOpts: helmopts.ChartLoadOptions{
+	if err := bundles.Pull(ctx, fmt.Sprintf("%s:%s", repoAddress, cmdData.Tag), bundlePath, bundlesRegistryClient, nelmcommon.HelmOptions{
+		ChartLoadOpts: nelmcommon.ChartLoadOptions{
 			DefaultSecretValuesDisable: commonCmdData.DefaultSecretValuesDisable,
 			DefaultValuesDisable:       commonCmdData.DefaultValuesDisable,
 			ExtraValues:                serviceValues,
@@ -210,10 +208,10 @@ func runApply(ctx context.Context) error {
 		return fmt.Errorf("get release labels: %w", err)
 	}
 
-	ctx = log.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultReleaseInstallLogLevel), log.SetupLoggingOptions{
+	ctx = action.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultReleaseInstallLogLevel), action.SetupLoggingOptions{
 		ColorMode: *commonCmdData.LogColorMode,
 	})
-	engine.SetDebug(commonCmdData.DebugTemplates)
+	engine.Debug = commonCmdData.DebugTemplates
 
 	if err := action.ReleaseInstall(ctx, releaseName, releaseNamespace, action.ReleaseInstallOptions{
 		KubeConnectionOptions:      commonCmdData.KubeConnectionOptions,
@@ -222,13 +220,13 @@ func runApply(ctx context.Context) error {
 		SecretValuesOptions:        commonCmdData.SecretValuesOptions,
 		TrackingOptions:            commonCmdData.TrackingOptions,
 		AutoRollback:               cmdData.AutoRollback,
-		ChartDirPath:               bundlePath,
+		Chart:                      bundlePath,
 		ChartProvenanceKeyring:     commonCmdData.ChartProvenanceKeyring,
 		ChartProvenanceStrategy:    commonCmdData.ChartProvenanceStrategy,
 		ChartRepoSkipUpdate:        commonCmdData.ChartRepoSkipUpdate,
 		InstallGraphPath:           commonCmdData.InstallGraphPath,
 		InstallReportPath:          installReportPath,
-		LegacyChartType:            helmopts.ChartTypeBundle,
+		LegacyChartType:            nelmcommon.LegacyChartTypeBundle,
 		LegacyExtraValues:          serviceValues,
 		LegacyLogRegistryStreamOut: os.Stdout,
 		NetworkParallelism:         commonCmdData.NetworkParallelism,

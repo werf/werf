@@ -46,9 +46,6 @@ type InitCommonComponentsOptions struct {
 	InitLRUImagesCache bool
 	// Initialize SSH agent. Should be used with defer call TerminateSSHAgent()
 	InitSSHAgent bool
-
-	// Setup OndemandKubeInitializer
-	SetupOndemandKubeInitializer bool
 }
 
 type InitTrueGitOptions struct {
@@ -155,10 +152,6 @@ func InitCommonComponents(ctx context.Context, opts InitCommonComponentsOptions)
 		if err := ssh_agent.Init(ctx, GetSSHKey(opts.Cmd)); err != nil {
 			return nil, ctx, fmt.Errorf("cannot initialize ssh agent: %w", err)
 		}
-	}
-
-	if opts.SetupOndemandKubeInitializer {
-		SetupOndemandKubeInitializer(opts.Cmd.KubeContextCurrent, opts.Cmd.LegacyKubeConfigPath, opts.Cmd.KubeConfigBase64, opts.Cmd.LegacyKubeConfigPathsMergeList, opts.Cmd.KubeBearerTokenData, opts.Cmd.KubeBearerTokenPath)
 	}
 
 	return cmanager, ctx, nil

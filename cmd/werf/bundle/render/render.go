@@ -17,12 +17,12 @@ import (
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/nelm/pkg/action"
-	"github.com/werf/nelm/pkg/export/helm/engine"
-	"github.com/werf/nelm/pkg/export/helm/werf/helmopts"
+	nelmcommon "github.com/werf/nelm/pkg/common"
+	"github.com/werf/nelm/pkg/helm/pkg/engine"
 	"github.com/werf/nelm/pkg/log"
 	"github.com/werf/werf/v2/cmd/werf/common"
+	"github.com/werf/werf/v2/pkg/deploy"
 	"github.com/werf/werf/v2/pkg/deploy/bundles"
-	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
 	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/storage"
 	"github.com/werf/werf/v2/pkg/tmp_manager"
@@ -93,7 +93,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupChartProvenanceKeyring(&commonCmdData, cmd)
 	common.SetupChartProvenanceStrategy(&commonCmdData, cmd)
 	common.SetupExtraAPIVersions(&commonCmdData, cmd)
-	common.SetupForceAdoption(&commonCmdData, cmd)
 	common.SetupKubeVersion(&commonCmdData, cmd)
 	common.SetupNamespace(&commonCmdData, cmd, false)
 	common.SetupNetworkParallelism(&commonCmdData, cmd)
@@ -159,7 +158,7 @@ func runRender(ctx context.Context) error {
 	releaseName := common.GetOptionalRelease(&commonCmdData)
 	registryCredentialsPath := docker.GetDockerConfigCredentialsFile(*commonCmdData.DockerConfig)
 
-	serviceValues, err := helpers.GetBundleServiceValues(ctx, helpers.ServiceValuesOptions{
+	serviceValues, err := deploy.GetBundleServiceValues(ctx, deploy.ServiceValuesOptions{
 		Env:                      commonCmdData.Environment,
 		Namespace:                releaseNamespace,
 		SetDockerConfigJsonValue: *commonCmdData.SetDockerConfigJsonValue,
@@ -191,8 +190,8 @@ func runRender(ctx context.Context) error {
 		bundlePath = filepath.Join(werf.GetServiceDir(), "tmp", "bundles", uuid.NewString())
 		defer os.RemoveAll(bundlePath)
 
-		if err := bundles.Pull(ctx, fmt.Sprintf("%s:%s", repoAddress, cmdData.Tag), bundlePath, bundlesRegistryClient, helmopts.HelmOptions{
-			ChartLoadOpts: helmopts.ChartLoadOptions{
+		if err := bundles.Pull(ctx, fmt.Sprintf("%s:%s", repoAddress, cmdData.Tag), bundlePath, bundlesRegistryClient, nelmcommon.HelmOptions{
+			ChartLoadOpts: nelmcommon.ChartLoadOptions{
 				DefaultSecretValuesDisable: commonCmdData.DefaultSecretValuesDisable,
 				DefaultValuesDisable:       commonCmdData.DefaultValuesDisable,
 				ExtraValues:                serviceValues,
@@ -212,18 +211,18 @@ func runRender(ctx context.Context) error {
 
 	// TODO(major): get rid of forcing color mode via ci-env and use color mode detection logic from
 	// Nelm instead. Until then, color will be always off here.
-	ctx = log.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultChartRenderLogLevel), log.SetupLoggingOptions{
+	ctx = action.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultChartRenderLogLevel), action.SetupLoggingOptions{
 		ColorMode:      log.LogColorModeOff,
 		LogIsParseable: true,
 	})
-	engine.SetDebug(commonCmdData.DebugTemplates)
+	engine.Debug = commonCmdData.DebugTemplates
 
 	if _, err := action.ChartRender(ctx, action.ChartRenderOptions{
 		KubeConnectionOptions:       commonCmdData.KubeConnectionOptions,
 		ChartRepoConnectionOptions:  commonCmdData.ChartRepoConnectionOptions,
 		ValuesOptions:               commonCmdData.ValuesOptions,
 		SecretValuesOptions:         commonCmdData.SecretValuesOptions,
-		ChartDirPath:                bundlePath,
+		Chart:                       bundlePath,
 		ChartProvenanceKeyring:      commonCmdData.ChartProvenanceKeyring,
 		ChartProvenanceStrategy:     commonCmdData.ChartProvenanceStrategy,
 		ChartRepoSkipUpdate:         commonCmdData.ChartRepoSkipUpdate,
@@ -231,8 +230,7 @@ func runRender(ctx context.Context) error {
 		ExtraAnnotations:            extraAnnotations,
 		ExtraLabels:                 extraLabels,
 		ExtraRuntimeAnnotations:     serviceAnnotations,
-		ForceAdoption:               commonCmdData.ForceAdoption,
-		LegacyChartType:             helmopts.ChartTypeBundle,
+		LegacyChartType:             nelmcommon.LegacyChartTypeBundle,
 		LegacyExtraValues:           serviceValues,
 		LegacyLogRegistryStreamOut:  os.Stdout,
 		LocalKubeVersion:            commonCmdData.KubeVersion,

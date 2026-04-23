@@ -25,8 +25,8 @@ import (
 	"k8s.io/kubectl/pkg/scheme"
 
 	"github.com/werf/common-go/pkg/util"
-	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/logboek"
+	"github.com/werf/nelm/pkg/kube"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/build"
 	"github.com/werf/werf/v2/pkg/config"
@@ -205,7 +205,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	commonCmdData.SetupDebugTemplates(cmd)
 	commonCmdData.SetupAllowIncludesUpdate(cmd)
 
-	lo.Must0(common.SetupMinimalKubeConnectionFlags(&commonCmdData, cmd))
+	lo.Must0(common.SetupKubeConnectionFlags(&commonCmdData, cmd))
 
 	return cmd
 }
@@ -241,21 +241,16 @@ func runMain(ctx context.Context) error {
 		InitTrueGitWithOptions: &common.InitTrueGitOptions{
 			Options: true_git.Options{LiveGitOutput: *commonCmdData.LogDebug},
 		},
-		InitDockerRegistry:           true,
-		InitProcessContainerBackend:  true,
-		InitWerf:                     true,
-		InitGitDataManager:           true,
-		InitManifestCache:            true,
-		InitLRUImagesCache:           true,
-		SetupOndemandKubeInitializer: true,
-		InitSSHAgent:                 true,
+		InitDockerRegistry:          true,
+		InitProcessContainerBackend: true,
+		InitWerf:                    true,
+		InitGitDataManager:          true,
+		InitManifestCache:           true,
+		InitLRUImagesCache:          true,
+		InitSSHAgent:                true,
 	})
 	if err != nil {
 		return fmt.Errorf("component init error: %w", err)
-	}
-
-	if err := common.GetOndemandKubeInitializer().Init(ctx); err != nil {
-		return err
 	}
 
 	defer func() {
@@ -297,22 +292,35 @@ func runMain(ctx context.Context) error {
 		return err
 	}
 
+	kubeConfig, err := kube.NewKubeConfig(ctx, kube.KubeConfigOptions{
+		KubeConnectionOptions: commonCmdData.KubeConnectionOptions,
+		KubeContextNamespace:  namespace, // TODO: unset it everywhere
+	})
+	if err != nil {
+		return fmt.Errorf("construct kube config: %w", err)
+	}
+
+	clientFactory, err := kube.NewClientFactory(ctx, kubeConfig)
+	if err != nil {
+		return fmt.Errorf("construct kube client factory: %w", err)
+	}
+
 	defer func() {
-		cleanupResources(ctx, pod, secret, namespace)
+		cleanupResources(ctx, pod, secret, namespace, clientFactory)
 	}()
 
 	if *commonCmdData.Follow {
 		return common.FollowGitHead(ctx, &commonCmdData, func(ctx context.Context, headCommitGiterminismManager *giterminism_manager.Manager) error {
-			cleanupResources(ctx, pod, secret, namespace)
+			cleanupResources(ctx, pod, secret, namespace, clientFactory)
 
-			if err := run(ctx, pod, secret, namespace, werfConfig, containerBackend, giterminismManager); err != nil {
+			if err := run(ctx, pod, secret, namespace, werfConfig, containerBackend, giterminismManager, clientFactory); err != nil {
 				return err
 			}
 
 			return nil
 		})
 	} else {
-		if err := run(ctx, pod, secret, namespace, werfConfig, containerBackend, giterminismManager); err != nil {
+		if err := run(ctx, pod, secret, namespace, werfConfig, containerBackend, giterminismManager, clientFactory); err != nil {
 			return err
 		}
 	}
@@ -320,7 +328,7 @@ func runMain(ctx context.Context) error {
 	return nil
 }
 
-func run(ctx context.Context, pod, secret, namespace string, werfConfig *config.WerfConfig, containerBackend container_backend.ContainerBackend, giterminismManager giterminism_manager.Interface) error {
+func run(ctx context.Context, pod, secret, namespace string, werfConfig *config.WerfConfig, containerBackend container_backend.ContainerBackend, giterminismManager giterminism_manager.Interface, clientFactory kube.ClientFactorier) error {
 	projectName := werfConfig.Meta.Project
 
 	userExtraAnnotations, err := common.GetUserExtraAnnotations(&commonCmdData)
@@ -436,11 +444,11 @@ func run(ctx context.Context, pod, secret, namespace string, werfConfig *config.
 		return fmt.Errorf("error creating common kubectl args: %w", err)
 	}
 
-	if err := createNamespace(ctx, namespace); err != nil {
+	if err := createNamespace(ctx, namespace, clientFactory); err != nil {
 		return fmt.Errorf("unable to create namespace: %w", err)
 	}
 
-	if err := createDockerRegistrySecret(ctx, secret, namespace, namedRef, dockerAuthConf); err != nil {
+	if err := createDockerRegistrySecret(ctx, secret, namespace, namedRef, dockerAuthConf, clientFactory); err != nil {
 		return fmt.Errorf("unable to create docker registry secret: %w", err)
 	}
 
@@ -829,7 +837,7 @@ func execCommandInPod(ctx context.Context, namespace, pod, container string, com
 	return nil
 }
 
-func cleanupResources(ctx context.Context, pod, secret, namespace string) {
+func cleanupResources(ctx context.Context, pod, secret, namespace string, clientFactory kube.ClientFactorier) {
 	ctx = context.WithoutCancel(ctx)
 
 	if !cmdData.Rm || *commonCmdData.DryRun {
@@ -837,7 +845,7 @@ func cleanupResources(ctx context.Context, pod, secret, namespace string) {
 	}
 
 	logboek.Context(ctx).LogF("Cleaning up pod %q ...\n", pod)
-	if err := kube.Client.CoreV1().Pods(namespace).Delete(ctx, pod, v1.DeleteOptions{}); err != nil {
+	if err := clientFactory.Static().CoreV1().Pods(namespace).Delete(ctx, pod, v1.DeleteOptions{}); err != nil {
 		if errorsK8s.IsNotFound(err) {
 			logboek.Context(ctx).LogF("Pod %q not found\n", pod)
 		} else {
@@ -847,7 +855,7 @@ func cleanupResources(ctx context.Context, pod, secret, namespace string) {
 
 	if cmdData.AutoPullSecret && cmdData.registryCredsFound {
 		logboek.Context(ctx).LogF("Cleaning up secret %q ...\n", secret)
-		if err := kube.Client.CoreV1().Secrets(namespace).Delete(ctx, secret, v1.DeleteOptions{}); err != nil {
+		if err := clientFactory.Static().CoreV1().Secrets(namespace).Delete(ctx, secret, v1.DeleteOptions{}); err != nil {
 			if errorsK8s.IsNotFound(err) {
 				logboek.Context(ctx).LogF("Secret %q not found\n", secret)
 			} else {
@@ -858,20 +866,20 @@ func cleanupResources(ctx context.Context, pod, secret, namespace string) {
 
 	if cmdData.RmWithNamespace {
 		logboek.Context(ctx).LogF("Cleaning up namespace %q ...\n", namespace)
-		if err := kube.Client.CoreV1().Namespaces().Delete(ctx, namespace, v1.DeleteOptions{}); err != nil {
+		if err := clientFactory.Static().CoreV1().Namespaces().Delete(ctx, namespace, v1.DeleteOptions{}); err != nil {
 			logboek.Context(ctx).Warn().LogF("WARNING: namespace cleaning up failed: %s\n", err)
 		}
 	}
 }
 
-func createNamespace(ctx context.Context, namespace string) error {
+func createNamespace(ctx context.Context, namespace string, clientFactory kube.ClientFactorier) error {
 	if *commonCmdData.DryRun {
 		return nil
 	}
 
 	logboek.Context(ctx).LogF("Creating namespace %q ...\n", namespace)
 
-	if _, err := kube.Client.CoreV1().Namespaces().Create(
+	if _, err := clientFactory.Static().CoreV1().Namespaces().Create(
 		ctx,
 		&corev1.Namespace{
 			ObjectMeta: v1.ObjectMeta{
@@ -893,7 +901,7 @@ func createNamespace(ctx context.Context, namespace string) error {
 	return nil
 }
 
-func createDockerRegistrySecret(ctx context.Context, name, namespace string, ref reference.Named, dockerAuthConf imgtypes.DockerAuthConfig) error {
+func createDockerRegistrySecret(ctx context.Context, name, namespace string, ref reference.Named, dockerAuthConf imgtypes.DockerAuthConfig, clientFactory kube.ClientFactorier) error {
 	if *commonCmdData.DryRun || !cmdData.registryCredsFound {
 		return nil
 	}
@@ -931,7 +939,7 @@ func createDockerRegistrySecret(ctx context.Context, name, namespace string, ref
 	secret.Data[corev1.DockerConfigJsonKey] = dockerConf
 
 	logboek.Context(ctx).LogF("Creating secret %q ...\n", name)
-	if _, err := kube.Client.CoreV1().Secrets(namespace).Create(ctx, secret, v1.CreateOptions{}); err != nil {
+	if _, err := clientFactory.Static().CoreV1().Secrets(namespace).Create(ctx, secret, v1.CreateOptions{}); err != nil {
 		return fmt.Errorf("error creating secret %s/%s: %w", namespace, secret, err)
 	}
 
