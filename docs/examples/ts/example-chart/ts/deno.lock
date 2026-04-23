@@ -1,0 +1,23 @@
+{
+  "version": "5",
+  "specifiers": {
+    "npm:@nelm/chart-ts-sdk@~0.1.4": "0.1.4"
+  },
+  "npm": {
+    "@jsr/std__yaml@1.0.12": {
+      "integrity": "sha512-pz/BisWZWH16JvLJBwrNwUwfIsRnf9qniMrmI6Z3vIAcVRVFcA5+i4o6z6QqsMKqFzjlB66WZE+jSyujT/RvRg==",
+      "tarball": "https://npm.jsr.io/~/11/@jsr/std__yaml/1.0.12.tgz"
+    },
+    "@nelm/chart-ts-sdk@0.1.4": {
+      "integrity": "sha512-NCeflvAuZQxzmGZGpm0lP3Uy5d2xYRq8TKW0MWTKyknnZAe2tSv9+2uCZVA46oIxdm9FsBKocmCHEfqyOwe4lQ==",
+      "dependencies": [
+        "@std/yaml@npm:@jsr/std__yaml@1.0.12"
+      ]
+    }
+  },
+  "workspace": {
+    "dependencies": [
+      "npm:@nelm/chart-ts-sdk@~0.1.4"
+    ]
+  }
+}
