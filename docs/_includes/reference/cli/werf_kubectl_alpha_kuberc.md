@@ -3,9 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Manage user preferences (kuberc) file.
-
- The kuberc file allows you to customize your kubectl experience.
+Manage kuberc configuration.
 
 {{ header }} Syntax
 

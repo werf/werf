@@ -390,6 +390,7 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 			ChartDepsDownloader: &downloader.Manager{
 				Out:               logboek.Context(ctx).OutStream(),
 				ChartPath:         bundleTmpDir,
+				ContentCache:      helm.Settings.ContentCache,
 				AllowMissingRepos: true,
 				Getters:           getter.All(helm.Settings),
 				RegistryClient:    helmRegistryClient,

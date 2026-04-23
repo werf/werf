@@ -3,9 +3,10 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Creates an autoscaler that automatically chooses and sets the number of pods that run in a Kubernetes cluster. The command will attempt to use the autoscaling/v2 API first, in case of an error, it will fall back to autoscaling/v1 API.
+Creates an autoscaler that automatically chooses and sets the number of pods that run in a Kubernetes cluster.
 
- Looks up a deployment, replica set, stateful set, or replication controller by name and creates an autoscaler that uses the given resource as a reference. An autoscaler can automatically increase or decrease number of pods deployed within the system as needed.
+Looks up a deployment, replica set, stateful set, or replication controller by name and creates an autoscaler that uses the given resource as a reference.
+An autoscaler can automatically increase or decrease number of Pods deployed within the system as needed.
 
 {{ header }} Syntax
 

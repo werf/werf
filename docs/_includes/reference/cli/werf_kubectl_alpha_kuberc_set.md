@@ -3,13 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Set values in the kuberc configuration file.
-
- Use --section to specify whether to set defaults or aliases.
-
- For defaults: Sets default flag values for kubectl commands. The --command flag should specify only the command (e.g., "get", "create", "set env"), not resources.
-
- For aliases: Creates command aliases with optional default flag values and arguments. Use --prependarg and --appendarg to include resources or other arguments.
+Set kuberc configuration values.
 
 {{ header }} Syntax
 
