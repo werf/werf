@@ -48,4 +48,4 @@ werf plan --save-plan=plan.gz
 werf converge --use-plan=plan.gz
 ```
 
-The plan artifact is a a gzip-compressed JSON file that can be reviewed with `werf plan --show-plan plan.gz` command. If you used `--secret-key` or `WERF_SECRET_KEY` environment variable during planning, the plan artifact be encrypted.
+The plan artifact is a gzip-compressed JSON file that can be reviewed with `werf plan --show-plan plan.gz` command. If you used `--secret-key` or `WERF_SECRET_KEY` environment variable during planning, the plan artifact will be encrypted.
