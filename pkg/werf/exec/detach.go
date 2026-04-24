@@ -37,6 +37,16 @@ func Detach(ctx context.Context, args, envs []string) error {
 
 	name := option.ValueOrDefault(os.Getenv("WERF_ORIGINAL_EXECUTABLE"), execPath)
 
+	// WERF_SELF_INVOCATION_COMMAND allows wrapping the werf executable with another command.
+	// Example:
+	// 	WERF_ORIGINAL_EXECUTABLE=some-exec
+	// 	WERF_SELF_INVOCATION_COMMAND=embeding
+	// 	args = ["host", "cleanup", ...]
+	// 	Resulting command: "some-exec embeding host cleanup ..."
+	if val := os.Getenv("WERF_SELF_INVOCATION_COMMAND"); val != "" {
+		args = append(strings.Fields(val), args...)
+	}
+
 	cmd := CommandContextCancellation(ctx, name, args...)
 	cmd.Env = env
 	cmd.Stdout = outStream
