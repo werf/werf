@@ -651,6 +651,10 @@ func (phase *BuildPhase) onImageStage(ctx context.Context, img *image.Image, stg
 		DoError(func() error {
 			var err error
 			foundSuitableStage, calculateStageCleanupFunc, err = phase.calculateStage(ctx, img, stg)
+			if err != nil && calculateStageCleanupFunc != nil {
+				calculateStageCleanupFunc()
+				calculateStageCleanupFunc = nil
+			}
 			if err != nil {
 				return err
 			}
