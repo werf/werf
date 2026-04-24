@@ -1023,17 +1023,32 @@ func (c *Conveyor) GetOrCreateStageImage(name string, prevStageImage *stage.Stag
 }
 
 func (c *Conveyor) GetImage(targetPlatform, name string) *image.Image {
+	img, err := c.FindImage(targetPlatform, name)
+	if err != nil {
+		panic(err.Error())
+	}
+	return img
+}
+
+func (c *Conveyor) FindImage(targetPlatform, name string) (*image.Image, error) {
 	if targetPlatform == "" {
 		panic("assertion: targetPlatform should not be empty")
 	}
 
+	var availablePlatforms []string
 	for _, img := range c.imagesTree.GetImages() {
-		if img.GetName() == name && img.TargetPlatform == targetPlatform {
-			return img
+		if img.GetName() == name {
+			if img.TargetPlatform == targetPlatform {
+				return img, nil
+			}
+			availablePlatforms = append(availablePlatforms, img.TargetPlatform)
 		}
 	}
 
-	panic(fmt.Sprintf("Image %q with target platform %q not found!", name, targetPlatform))
+	if len(availablePlatforms) > 0 {
+		return nil, fmt.Errorf("image %q does not support platform %q (available: %s)", name, targetPlatform, strings.Join(availablePlatforms, ", "))
+	}
+	return nil, fmt.Errorf("image %q not found", name)
 }
 
 func (c *Conveyor) GetImageStageContentDigest(targetPlatform, imageName, stageName string) string {
