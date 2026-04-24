@@ -3,6 +3,7 @@ package stapel
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/werf/lockgate"
@@ -20,11 +21,36 @@ type container struct {
 func (c *container) Create(ctx context.Context) error {
 	name := fmt.Sprintf("--name=%s", c.Name)
 	volume := fmt.Sprintf("--volume=%s", c.Volume)
+	desiredPlatform := docker.GetDefaultPlatform()
 
 	if exist, err := docker.ImageExist(ctx, c.ImageName); err != nil {
 		return err
-	} else if !exist {
-		if err := docker.CliPullWithRetries(ctx, c.ImageName); err != nil {
+	} else if exist {
+		if desiredPlatform != "" {
+			inspect, err := docker.ImageInspect(ctx, c.ImageName)
+			if err != nil {
+				return err
+			}
+
+			actualPlatform := fmt.Sprintf("%s/%s", inspect.Os, inspect.Architecture)
+			if inspect.Variant != "" {
+				actualPlatform = fmt.Sprintf("%s/%s", actualPlatform, inspect.Variant)
+			}
+
+			platformMatches := desiredPlatform == actualPlatform || strings.HasPrefix(desiredPlatform, actualPlatform+"/") || strings.HasPrefix(actualPlatform, desiredPlatform+"/")
+			if !platformMatches {
+				if err := docker.CliPullWithRetries(ctx, "--platform", desiredPlatform, c.ImageName); err != nil {
+					return err
+				}
+			}
+		}
+	} else {
+		pullArgs := []string{c.ImageName}
+		if desiredPlatform != "" {
+			pullArgs = append([]string{"--platform", desiredPlatform}, pullArgs...)
+		}
+
+		if err := docker.CliPullWithRetries(ctx, pullArgs...); err != nil {
 			return err
 		}
 	}
