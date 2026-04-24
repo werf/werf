@@ -1105,15 +1105,6 @@ func (c *Conveyor) getImageStage(targetPlatform, imageName, stageName string) st
 	return stg
 }
 
-func (c *Conveyor) getLastNonEmptyImageStage(targetPlatform, imageName string) stage.Interface {
-	// FIXME: find first existing stage after specified unexisting
-	stg, err := c.findLastNonEmptyImageStage(targetPlatform, imageName)
-	if err != nil {
-		panic(err.Error())
-	}
-	return stg
-}
-
 func (c *Conveyor) FetchImageStage(ctx context.Context, targetPlatform, imageName, stageName string) error {
 	stg, err := c.findImageStage(targetPlatform, imageName, stageName)
 	if err != nil {
