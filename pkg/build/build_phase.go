@@ -633,6 +633,11 @@ func (phase *BuildPhase) onImageStage(ctx context.Context, img *image.Image, stg
 		}
 	}
 
+	// NOTE: For the FROM stage we must resolve dependency image refs (e.g. ${SSR_IMAGE} -> registry/repo:digest)
+	// before calculateStage, because GetDependencies uses BaseImageReference for the cache digest.
+	// The img.ExpandDependencies call in afterImageStage handles all other stages but runs too late for FROM —
+	// by that point the digest is already computed with the unresolved placeholder, so dependency image changes
+	// would never invalidate the cache. This early call is idempotent with the later one.
 	if img.IsDockerfileImage && img.DockerfileImageConfig.Staged {
 		if werf.GetStagedDockerfileVersion() == werf.StagedDockerfileV2 {
 			if _, isFromStage := stg.(*instruction.From); isFromStage {
