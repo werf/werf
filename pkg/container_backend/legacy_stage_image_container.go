@@ -90,10 +90,15 @@ func (c *LegacyStageImageContainer) prepareRunArgs(ctx context.Context) ([]strin
 	setColumnsEnv := fmt.Sprintf("--env=COLUMNS=%d", logboek.Context(ctx).Streams().ContentWidth())
 	runArgs = append(runArgs, setColumnsEnv)
 
-	fromImageId := c.image.fromImage.GetID()
+	var fromImageRef string
+	if c.image.GetTargetPlatform() != "" {
+		fromImageRef = c.image.fromImage.Name()
+	} else {
+		fromImageRef = c.image.fromImage.GetID()
+	}
 
 	args = append(args, runArgs...)
-	args = append(args, fromImageId)
+	args = append(args, fromImageRef)
 	args = append(args, "-ec")
 	args = append(args, c.prepareRunCommand())
 
