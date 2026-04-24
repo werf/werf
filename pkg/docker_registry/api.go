@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	dockerReference "github.com/docker/distribution/reference"
+	dockerReference "github.com/distribution/reference"
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
@@ -281,10 +281,9 @@ func (api *api) getRepoImageByDesc(ctx context.Context, originalTag string, desc
 		}
 		repoImage.Size = totalSize
 
-		// TODO: remove this legacy logic in v3.
-		parentID := configFile.Config.Image
-		if parentID == "" {
-			if id, ok := configFile.Config.Labels[image.WerfBaseImageIDLabel]; ok { // built with werf
+		var parentID string
+		if configFile.Config.Labels != nil {
+			if id, ok := configFile.Config.Labels[image.WerfBaseImageIDLabel]; ok {
 				parentID = id
 			}
 		}

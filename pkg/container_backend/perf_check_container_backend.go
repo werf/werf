@@ -98,14 +98,6 @@ func (runtime *PerfCheckContainerBackend) BuildStapelStage(ctx context.Context, 
 	return
 }
 
-func (runtime *PerfCheckContainerBackend) CalculateDependencyImportChecksum(ctx context.Context, dependencyImport DependencyImportSpec, opts CalculateDependencyImportChecksum) (resID string, resErr error) {
-	logboek.Context(ctx).Default().LogProcess("ContainerBackend.BuildDockerfile").
-		Do(func() {
-			resID, resErr = runtime.ContainerBackend.CalculateDependencyImportChecksum(ctx, dependencyImport, opts)
-		})
-	return
-}
-
 func (runtime *PerfCheckContainerBackend) RefreshImageObject(ctx context.Context, img LegacyImageInterface) (resErr error) {
 	logboek.Context(ctx).Default().LogProcess("ContainerBackend.RefreshImageObject %q", img.Name()).
 		Do(func() {
@@ -188,11 +180,6 @@ func (runtime *PerfCheckContainerBackend) TagImageByName(ctx context.Context, im
 			resErr = runtime.ContainerBackend.TagImageByName(ctx, img)
 		})
 	return
-}
-
-func (runtime *PerfCheckContainerBackend) ClaimTargetPlatforms(ctx context.Context, targetPlatforms []string) {
-	logboek.Context(ctx).Default().LogProcess("ContainerBackend.ClaimTargetPlatforms %v", targetPlatforms).
-		Do(func() { runtime.ContainerBackend.ClaimTargetPlatforms(ctx, targetPlatforms) })
 }
 
 func (runtime *PerfCheckContainerBackend) PruneImages(ctx context.Context, options prune.Options) (report prune.Report, err error) {

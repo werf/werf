@@ -11,10 +11,6 @@ import (
 )
 
 func GetManagedImageName(userSpecifiedImageName string) string {
-	switch userSpecifiedImageName {
-	case "~", storage.NamelessImageRecordTag:
-		return ""
-	}
 	return userSpecifiedImageName
 }
 

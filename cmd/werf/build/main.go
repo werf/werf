@@ -39,7 +39,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 		Long:                  common.GetLongCommandDescription(GetBuildDocs().Long),
 		DisableFlagsInUseLine: true,
 		Annotations: map[string]string{
-			common.CmdEnvAnno: common.EnvsDescription(common.WerfDebugAnsibleArgs),
 			common.DocsLongMD: GetBuildDocs().LongMD,
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -81,7 +80,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified repo, to pull base images")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
-	common.StubSetupInsecureHelmDependencies(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 	common.SetupContainerRegistryMirror(&commonCmdData, cmd)
 
@@ -98,7 +96,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupBuildReportPath(&commonCmdData, cmd)
 
 	common.SetupAddCustomTag(&commonCmdData, cmd)
-	common.SetupVirtualMerge(&commonCmdData, cmd)
 
 	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultBuildParallelTasksLimit)
 	common.SetupCheckBuiltImages(&commonCmdData, cmd)
@@ -127,7 +124,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 }
 
 func runMain(ctx context.Context, imageNameListFromArgs []string) error {
-	global_warnings.PostponeMultiwerfNotUpToDateWarning(ctx)
 	commonManager, ctx, err := common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
 		Cmd:                &commonCmdData,
 		InitWerf:           true,
@@ -137,10 +133,9 @@ func runMain(ctx context.Context, imageNameListFromArgs []string) error {
 		InitTrueGitWithOptions: &common.InitTrueGitOptions{
 			Options: true_git.Options{LiveGitOutput: *commonCmdData.LogDebug},
 		},
-		InitDockerRegistry:           true,
-		InitProcessContainerBackend:  true,
-		InitSSHAgent:                 true,
-		SetupOndemandKubeInitializer: true,
+		InitDockerRegistry:          true,
+		InitProcessContainerBackend: true,
+		InitSSHAgent:                true,
 	})
 	if err != nil {
 		return fmt.Errorf("component init error: %w", err)

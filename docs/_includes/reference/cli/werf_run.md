@@ -119,8 +119,6 @@ werf run [options] [IMAGE_NAME] [-- COMMAND ARG...]
             (default $WERF_GITERMINISM_CONFIG or werf-giterminism.yaml in working directory)
       --home-dir=""
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
-      --insecure-helm-dependencies=false
-            No-op
       --insecure-registry=false
             Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
       --kube-config=""
@@ -219,8 +217,5 @@ werf run [options] [IMAGE_NAME] [-- COMMAND ARG...]
             Use build report, previously saved with --save-build-report (by default                 
             $WERF_USE_BUILD_REPORT or false). Its path and format configured with                   
             --build-report-path
-      --virtual-merge=false
-            Enable virtual/ephemeral merge commit mode when building current application state      
-            ($WERF_VIRTUAL_MERGE by default)
 ```
 

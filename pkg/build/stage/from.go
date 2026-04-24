@@ -12,7 +12,6 @@ import (
 	"github.com/werf/werf/v2/pkg/container_backend"
 	imagePkg "github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/stapel"
-	"github.com/werf/werf/v2/pkg/util/option"
 )
 
 func GenerateFromStage(imageBaseConfig *config.StapelImageBase, baseImageRepoId, imageCacheVersion string, baseStageOptions *BaseStageOptions) *FromStage {
@@ -21,11 +20,11 @@ func GenerateFromStage(imageBaseConfig *config.StapelImageBase, baseImageRepoId,
 		baseImageRepoIdOrNone = baseImageRepoId
 	}
 
-	fromImageOrArtifactImageName := option.ValueOrDefault(imageBaseConfig.From, imageBaseConfig.FromArtifactName)
+	fromImageName := imageBaseConfig.From
 
 	s := &FromStage{}
 	s.fromCacheVersion = imageBaseConfig.FromCacheVersion
-	s.fromImageOrArtifactImageName = fromImageOrArtifactImageName
+	s.fromImageName = fromImageName
 	s.baseImageRepoIdOrNone = baseImageRepoIdOrNone
 	s.BaseStage = NewBaseStage(From, baseStageOptions)
 	s.imageCacheVersion = imageCacheVersion
@@ -37,11 +36,11 @@ func GenerateFromStage(imageBaseConfig *config.StapelImageBase, baseImageRepoId,
 type FromStage struct {
 	*BaseStage
 
-	baseImageRepoIdOrNone        string
-	fromCacheVersion             string
-	fromImageOrArtifactImageName string
-	fromExternal                 bool
-	fromScratch                  bool
+	baseImageRepoIdOrNone string
+	fromCacheVersion      string
+	fromImageName         string
+	fromExternal          bool
+	fromScratch           bool
 
 	imageCacheVersion string
 }
@@ -85,8 +84,8 @@ func (s *FromStage) GetDependencies(_ context.Context, c Conveyor, _ container_b
 
 	if s.fromScratch {
 		args = append(args, "scratch")
-	} else if s.fromImageOrArtifactImageName != "" && !s.fromExternal {
-		args = append(args, c.GetImageContentDigest(s.targetPlatform, s.fromImageOrArtifactImageName))
+	} else if s.fromImageName != "" && !s.fromExternal {
+		args = append(args, c.GetImageContentDigest(s.targetPlatform, s.fromImageName))
 	} else {
 		args = append(args, prevImage.Image.Name())
 	}

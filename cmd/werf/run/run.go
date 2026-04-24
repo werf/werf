@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/docker/cli/cli"
-	"github.com/docker/docker/api/types"
+	dockercontainer "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
@@ -144,7 +144,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified repo")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
-	common.StubSetupInsecureHelmDependencies(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 	common.SetupContainerRegistryMirror(&commonCmdData, cmd)
 
@@ -154,8 +153,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupSynchronization(&commonCmdData, cmd)
 
 	common.SetupDryRun(&commonCmdData, cmd)
-
-	common.SetupVirtualMerge(&commonCmdData, cmd)
 
 	commonCmdData.SetupPlatform(cmd)
 	commonCmdData.SetupBackendNetwork(cmd)
@@ -229,20 +226,18 @@ func getContainerName() string {
 }
 
 func runMain(ctx context.Context) error {
-	global_warnings.PostponeMultiwerfNotUpToDateWarning(ctx)
 	commonManager, ctx, err := common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
 		Cmd: &commonCmdData,
 		InitTrueGitWithOptions: &common.InitTrueGitOptions{
 			Options: true_git.Options{LiveGitOutput: *commonCmdData.LogDebug},
 		},
-		InitDockerRegistry:           true,
-		InitProcessContainerBackend:  true,
-		InitWerf:                     true,
-		InitGitDataManager:           true,
-		InitManifestCache:            true,
-		InitLRUImagesCache:           true,
-		InitSSHAgent:                 true,
-		SetupOndemandKubeInitializer: true,
+		InitDockerRegistry:          true,
+		InitProcessContainerBackend: true,
+		InitWerf:                    true,
+		InitGitDataManager:          true,
+		InitManifestCache:           true,
+		InitLRUImagesCache:          true,
+		InitSSHAgent:                true,
 	})
 	if err != nil {
 		return fmt.Errorf("component init error: %w", err)
@@ -294,7 +289,7 @@ func runMain(ctx context.Context) error {
 				time.Sleep(500 * time.Millisecond)
 				fmt.Printf("Attaching to container %s ...\n", containerName)
 
-				resp, err := docker.ContainerAttach(ctx, containerName, types.ContainerAttachOptions{
+				resp, err := docker.ContainerAttach(ctx, containerName, dockercontainer.AttachOptions{
 					Stream: true,
 					Stdout: true,
 					Stderr: true,

@@ -1,8 +1,0 @@
-{
-  "name": "app",
-  "version": "0.1.0",
-  "dependencies": {
-    "yaml": ">= 1.7.0"
-  }
-}
-

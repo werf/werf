@@ -6,14 +6,9 @@ import (
 	"github.com/werf/werf/v2/pkg/build/import_server"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
-	"github.com/werf/werf/v2/pkg/storage"
 )
 
 type Conveyor interface {
-	GetImportMetadata(ctx context.Context, projectName, id string) (*storage.ImportMetadata, error)
-	PutImportMetadata(ctx context.Context, projectName string, metadata *storage.ImportMetadata) error
-	RmImportMetadata(ctx context.Context, projectName, id string) error
-
 	GetImageStageContentDigest(targetPlatform, imageName, stageName string) string
 	GetImageContentDigest(targetPlatform, imageName string) string
 
@@ -31,13 +26,8 @@ type Conveyor interface {
 	GetImageIDForImageStage(targetPlatform, imageName, stageName string) string
 
 	GetImportServer(ctx context.Context, targetPlatform, imageName, stageName string, e bool) (import_server.ImportServer, error)
-	GetLocalGitRepoVirtualMergeOptions() VirtualMergeOptions
 
 	GiterminismManager() giterminism_manager.Interface
 
 	UseLegacyStapelBuilder(cb container_backend.ContainerBackend) bool
-}
-
-type VirtualMergeOptions struct {
-	VirtualMerge bool
 }

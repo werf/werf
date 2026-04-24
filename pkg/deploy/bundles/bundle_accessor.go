@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/werf/nelm/pkg/export/helm/chart"
-	"github.com/werf/nelm/pkg/export/helm/werf/helmopts"
+	nelmcommon "github.com/werf/nelm/pkg/common"
+	chart "github.com/werf/nelm/pkg/helm/pkg/chart/v2"
 	"github.com/werf/werf/v2/pkg/docker_registry"
 	"github.com/werf/werf/v2/pkg/ref"
 )
@@ -13,12 +13,12 @@ import (
 type copyToOptions struct {
 	HelmCompatibleChart bool
 	RenameChart         string
-	HelmOptions         helmopts.HelmOptions
+	HelmOptions         nelmcommon.HelmOptions
 }
 
 type BundleAccessor interface {
-	ReadChart(ctx context.Context, opts helmopts.HelmOptions) (*chart.Chart, error)
-	WriteChart(ctx context.Context, ch *chart.Chart, opts helmopts.HelmOptions) error
+	ReadChart(ctx context.Context, opts nelmcommon.HelmOptions) (*chart.Chart, error)
+	WriteChart(ctx context.Context, ch *chart.Chart, opts nelmcommon.HelmOptions) error
 
 	CopyTo(ctx context.Context, to BundleAccessor, opts copyToOptions) error
 	CopyFromArchive(ctx context.Context, fromArchive *BundleArchive, opts copyToOptions) error

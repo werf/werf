@@ -18,7 +18,7 @@ image: base
 dockerfile: Dockerfile
 ---
 image: basic-test
-fromImage: base
+from: base
 imageSpec:
   author: "testauthor"
   config:
@@ -57,7 +57,7 @@ imageSpec:
     keepEssentialWerfLabels: true
 ---
 image: clean-test
-fromImage: base
+from: base
 imageSpec:
   author: ""
   config:
@@ -78,7 +78,7 @@ imageSpec:
     clearWerfLabels: true
 ---
 image: cmd-test
-fromImage: base
+from: base
 imageSpec:
   config:
     entrypoint:

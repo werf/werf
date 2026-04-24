@@ -5,7 +5,6 @@ import (
 	"context"
 
 	"github.com/docker/cli/cli/command"
-	"github.com/docker/cli/cli/command/registry"
 
 	"github.com/werf/logboek"
 )
@@ -15,15 +14,19 @@ func Login(ctx context.Context, username, password, repo string) error {
 
 	return cliWithCustomOptions(
 		ctx,
-		[]command.DockerCliOption{
+		[]command.CLIOption{
 			command.WithInputStream(nil),
 			command.WithOutputStream(&outb),
 			command.WithErrorStream(&errb),
 		},
-		func(cli command.Cli) error {
+		func(c command.Cli) error {
+			loginCmd, err := lookupCliCommand(c, "login")
+			if err != nil {
+				return err
+			}
 			args := []string{"--username", username, "--password", password, repo}
-			cmd := prepareCliCmd(ctx, registry.NewLoginCommand(cli), args...)
-			err := cmd.Execute()
+			cmd := prepareCliCmd(ctx, loginCmd, args...)
+			err = cmd.Execute()
 
 			logboek.Context(ctx).Debug().LogF("Docker login stdout:\n%s\nDocker login stderr:\n%s\n", outb.String(), errb.String())
 

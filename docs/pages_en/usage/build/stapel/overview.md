@@ -13,7 +13,7 @@ werf has a built-in alternative syntax for describing assembly instructions call
 
 <!-- TODO(staged-dockerfile): delete point 5 as no longer relevant -->
 
-To build images using the Stapel builder, you have to define build instructions in the `werf.yaml` configuration file. Stapel is supported for both the Docker server builder backend (assembly via shell instructions or Ansible) and for Buildah (shell instructions only).
+To build images using the Stapel builder, you have to define build instructions in the `werf.yaml` configuration file. Stapel is supported for both the Docker server builder backend and for Buildah (shell instructions only).
 
 This section describes how to build images with the Stapel builder, its advanced features and how to use them.
 
@@ -25,7 +25,6 @@ A _stage conveyor_ is an ordered sequence of conditions and rules for running st
 
 <div class="tabs">
   <a href="javascript:void(0)" class="tabs__btn active" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'stapel-image-tab')">Stapel Image</a>
-  <a href="javascript:void(0)" class="tabs__btn" onclick="openTab(event, 'tabs__btn', 'tabs__content', 'stapel-artifact-tab')">Stapel Artifact</a>
 </div>
 
 <div id="stapel-image-tab" class="tabs__content">
@@ -34,11 +33,6 @@ A _stage conveyor_ is an ordered sequence of conditions and rules for running st
 </a>
 </div>
 
-<div id="stapel-artifact-tab" class="tabs__content">
-<a class="google-drawings" href="{{ "images/reference/stages_and_images3.png" | true_relative_url }}" data-featherlight="image">
-<img src="{{ "images/reference/stages_and_images3_preview.png" | true_relative_url }}">
-</a>
-</div>
 
 For each _stage_ at every build, werf calculates a unique stage identifier called stage digest.
 
@@ -57,13 +51,12 @@ _Stage dependency_ is a piece of data that affects the stage _digest_. Stage dep
 
 Most _stage dependencies_ are specified in the `werf.yaml`, others originate from the runtime.
 
-The tables below illustrate dependencies of a Dockerfile image, a Stapel image, and a [Stapel artifact]({{ "usage/build/stapel/imports.html" | true_relative_url }}) _stage dependencies_.
+The tables below illustrate dependencies of a Dockerfile image and a Stapel image _stage dependencies_.
 Each row covers the dependencies for a certain stage.
 The left column contains a brief description of the dependencies, the right column includes the related `werf.yaml` directives and contains links to sections with more details.
 
 <div class="tabs">
   <a href="javascript:void(0)" id="image-dependencies" class="tabs__btn dependencies-btn active">Stapel Image</a>
-  <a href="javascript:void(0)" id="artifact-dependencies" class="tabs__btn dependencies-btn">Stapel Artifact</a>
 </div>
 
 <div id="dependencies">
@@ -115,18 +108,7 @@ The left column contains a brief description of the dependencies, the right colu
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
 <script>
 function application() {
-  if ($("a[id=image-dependencies]").hasClass('active')) {
-    $(".artifact").addClass('hidden');
-    $(".image").removeClass('hidden')
-  }
-  else if ($("a[id=artifact-dependencies]").hasClass('active')) {
-    $(".image").addClass('hidden');
-    $(".artifact").removeClass('hidden')
-  }
-  else {
-    $(".image").addClass('hidden');
-    $(".artifact").addClass('hidden')
-  }
+  $(".image").removeClass('hidden');
 }
 
 $('.tabs').on('click', '.dependencies-btn', function() {

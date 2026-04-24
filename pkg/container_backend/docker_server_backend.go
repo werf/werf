@@ -8,13 +8,12 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"strings"
 	"time"
 
-	"github.com/docker/docker/api/types"
+	dockercontainer "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
+	dockerImage "github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
-	"github.com/tidwall/gjson"
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/lockgate"
@@ -24,7 +23,6 @@ import (
 	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/ssh_agent"
-	"github.com/werf/werf/v2/pkg/tmp_manager"
 )
 
 type DockerServerBackend struct {
@@ -60,10 +58,6 @@ func (backend *DockerServerBackend) Info(ctx context.Context) (info.Info, error)
 	return res, nil
 }
 
-func (backend *DockerServerBackend) ClaimTargetPlatforms(ctx context.Context, targetPlatforms []string) {
-	docker.ClaimTargetPlatforms(targetPlatforms)
-}
-
 func (backend *DockerServerBackend) GetDefaultPlatform() string {
 	return docker.GetDefaultPlatform()
 }
@@ -80,10 +74,6 @@ func (backend *DockerServerBackend) BuildStapelStage(ctx context.Context, baseIm
 	panic("BuildStapelStage does not implemented for DockerServerBackend. Please report the bug if you've received this message.")
 }
 
-func (backend *DockerServerBackend) CalculateDependencyImportChecksum(ctx context.Context, dependencyImport DependencyImportSpec, opts CalculateDependencyImportChecksum) (string, error) {
-	panic("CalculateDependencyImportChecksum does not implemented for DockerServerBackend. Please report the bug if you've received this message.")
-}
-
 func (backend *DockerServerBackend) BuildDockerfile(ctx context.Context, _ []byte, opts BuildDockerfileOpts) (string, error) {
 	switch {
 	case opts.BuildContextArchive == nil:
@@ -92,55 +82,31 @@ func (backend *DockerServerBackend) BuildDockerfile(ctx context.Context, _ []byt
 		panic(fmt.Sprintf("DockerfileCtxRelPath can't be empty: %+v", opts))
 	}
 
-	var cliArgs []string
+	sshOpt := opts.SSH
+	if sshOpt == "" && ssh_agent.SSHAuthSock != "" {
+		sshOpt = "default"
+	}
 
-	cliArgs = append(cliArgs, "--file", opts.DockerfileCtxRelPath)
-
+	var platforms []string
 	if opts.TargetPlatform != "" {
-		cliArgs = append(cliArgs, "--platform", opts.TargetPlatform)
-	}
-	if opts.Target != "" {
-		cliArgs = append(cliArgs, "--target", opts.Target)
-	}
-	if opts.Network != "" {
-		cliArgs = append(cliArgs, "--network", opts.Network)
-	}
-	if opts.SSH != "" {
-		cliArgs = append(cliArgs, "--ssh", opts.SSH)
-	} else if opts.SSH == "" && ssh_agent.SSHAuthSock != "" {
-		cliArgs = append(cliArgs, "--ssh", "default")
+		platforms = []string{opts.TargetPlatform}
 	}
 
-	for _, addHost := range opts.AddHost {
-		cliArgs = append(cliArgs, "--add-host", addHost)
+	buildOpts := docker.CliBuildOptions{
+		DockerfileName: opts.DockerfileCtxRelPath,
+		Tags:           opts.Tags,
+		BuildArgs:      opts.BuildArgs,
+		Labels:         opts.Labels,
+		Target:         opts.Target,
+		Platforms:      platforms,
+		Network:        opts.Network,
+		ExtraHosts:     opts.AddHost,
+		SSH:            sshOpt,
+		Secrets:        opts.Secrets,
 	}
-	for _, buildArg := range opts.BuildArgs {
-		cliArgs = append(cliArgs, "--build-arg", buildArg)
-	}
-	for _, label := range opts.Labels {
-		cliArgs = append(cliArgs, "--label", label)
-	}
-
-	for _, secret := range opts.Secrets {
-		cliArgs = append(cliArgs, "--secret", secret)
-	}
-
-	for _, tag := range opts.Tags {
-		cliArgs = append(cliArgs, "--tag", tag)
-	}
-
-	newMetadataFile, err := tmp_manager.TempFile("docker-buildx-metadata-file-*.tmp")
-	if err != nil {
-		return "", err
-	}
-	defer os.Remove(newMetadataFile.Name())
-
-	cliArgs = append(cliArgs, "--metadata-file", newMetadataFile.Name())
-
-	cliArgs = append(cliArgs, "-")
 
 	if Debug() {
-		fmt.Printf("[DOCKER BUILD] docker build %s\n", strings.Join(cliArgs, " "))
+		fmt.Printf("[DOCKER BUILD] docker build %+v\n", buildOpts)
 	}
 
 	contextReader, err := os.Open(opts.BuildContextArchive.Path())
@@ -149,52 +115,16 @@ func (backend *DockerServerBackend) BuildDockerfile(ctx context.Context, _ []byt
 	}
 	defer contextReader.Close()
 
-	if err := docker.CliBuild_LiveOutputWithCustomIn(ctx, contextReader, cliArgs...); err != nil {
+	newID, err := docker.CliBuild_LiveOutputWithCustomIn(ctx, contextReader, buildOpts)
+	if err != nil {
 		return "", err
 	}
 
-	newID, err := parseImageIDFromMetadata(newMetadataFile.Name())
-	if err != nil {
-		return "", fmt.Errorf("unable to read build metadata: %w", err)
-	}
-
 	if Debug() {
-		fmt.Printf("[DOCKER BUILD] extracted image ID from metadata: %s\n", newID)
+		fmt.Printf("[DOCKER BUILD] extracted image ID: %s\n", newID)
 	}
 
 	return newID, nil
-}
-
-// parseImageIDFromMetadata extracts the Image ID from the buildx metadata file.
-// https://docs.docker.com/reference/cli/docker/buildx/build/#metadata-file
-//
-// Background:
-// In modern Docker environments (especially with BuildKit and the newer containerd image store),
-// the behavior of the traditional '--iidfile' option has changed significantly based on the
-// storage driver in use.
-//
-//  1. Traditional Graph Drivers (overlay2, devicemapper, etc.):
-//     In the classic Docker architecture, '--iidfile' returns the "Image ID", which is the hash
-//     of the image's configuration JSON.
-//
-//  2. Containerd Image Store (Snapshotters):
-//     With the newer containerd-based storage (often enabled in Docker Desktop or via 'containerd-snapshotter: true'),
-//     the primary identifier became the "Manifest Digest". In this mode, '--iidfile' may return the
-//     digest of the manifest list or the manifest itself.
-//
-// https://docs.docker.com/reference/cli/docker/buildx/build/#metadata-file
-func parseImageIDFromMetadata(path string) (string, error) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return "", fmt.Errorf("read file %q: %w", path, err)
-	}
-
-	res := gjson.GetBytes(data, "containerimage\\.digest")
-	if res.Exists() {
-		return res.String(), nil
-	}
-
-	return "", fmt.Errorf("image ID not found in metadata file %q", path)
 }
 
 func (backend *DockerServerBackend) BuildDockerfileStage(ctx context.Context, baseImage string, opts BuildDockerfileStageOptions, instructions ...InstructionInterface) (string, error) {
@@ -217,7 +147,7 @@ func (backend *DockerServerBackend) GetImageInfo(ctx context.Context, ref string
 }
 
 // GetImageInspect only available for DockerServerBackend
-func (backend *DockerServerBackend) GetImageInspect(ctx context.Context, ref string) (*types.ImageInspect, error) {
+func (backend *DockerServerBackend) GetImageInspect(ctx context.Context, ref string) (*dockerImage.InspectResponse, error) {
 	inspect, err := docker.ImageInspect(ctx, ref)
 	if client.IsErrNotFound(err) {
 		return nil, nil
@@ -327,7 +257,7 @@ func (backend *DockerServerBackend) Rmi(ctx context.Context, ref string, opts Rm
 }
 
 func (backend *DockerServerBackend) Rm(ctx context.Context, ref string, opts RmOpts) error {
-	err := docker.ContainerRemove(ctx, ref, types.ContainerRemoveOptions{Force: opts.Force})
+	err := docker.ContainerRemove(ctx, ref, dockercontainer.RemoveOptions{Force: opts.Force})
 	switch {
 	case docker.IsErrContainerPaused(err):
 		return errors.Join(ErrCannotRemovePausedContainer, err)
@@ -387,7 +317,7 @@ func (backend *DockerServerBackend) Images(ctx context.Context, opts ImagesOptio
 	for _, item := range opts.Filters {
 		filterSet.Add(item.First, item.Second)
 	}
-	images, err := docker.Images(ctx, types.ImageListOptions{Filters: filterSet})
+	images, err := docker.Images(ctx, dockerImage.ListOptions{Filters: filterSet})
 	if err != nil {
 		return nil, fmt.Errorf("unable to get docker images: %w", err)
 	}
@@ -420,7 +350,7 @@ func (backend *DockerServerBackend) Containers(ctx context.Context, opts Contain
 		}
 	}
 
-	containersOptions := types.ContainerListOptions{}
+	containersOptions := dockercontainer.ListOptions{}
 	containersOptions.All = true
 	containersOptions.Filters = filterSet
 

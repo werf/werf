@@ -35,10 +35,10 @@ import (
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/pkg/errors"
 
-	"github.com/werf/nelm/pkg/export/helm/chart"
-	"github.com/werf/nelm/pkg/export/helm/chart/loader"
-	"github.com/werf/nelm/pkg/export/helm/chartutil"
-	"github.com/werf/nelm/pkg/export/helm/werf/helmopts"
+	nelmcommon "github.com/werf/nelm/pkg/common"
+	"github.com/werf/nelm/pkg/helm/pkg/chart/loader"
+	chart "github.com/werf/nelm/pkg/helm/pkg/chart/v2"
+	chartv2util "github.com/werf/nelm/pkg/helm/pkg/chart/v2/util"
 	"github.com/werf/werf/v2/pkg/ref"
 )
 
@@ -90,7 +90,7 @@ func NewCache(opts ...CacheOption) (*Cache, error) {
 }
 
 // FetchReference retrieves a chart ref from cache
-func (cache *Cache) FetchReference(ctx context.Context, ref *ref.Reference, opts helmopts.HelmOptions) (*CacheRefSummary, error) {
+func (cache *Cache) FetchReference(ctx context.Context, ref *ref.Reference, opts nelmcommon.HelmOptions) (*CacheRefSummary, error) {
 	if err := cache.init(); err != nil {
 		return nil, err
 	}
@@ -144,10 +144,16 @@ func (cache *Cache) FetchReference(ctx context.Context, ref *ref.Reference, opts
 			if err != nil {
 				return &r, err
 			}
-			ch, err := loader.LoadArchive(bytes.NewBuffer(contentBytes), opts)
+			chrt, err := loader.LoadArchive(nelmcommon.ContextWithHelmOptions(ctx, opts), bytes.NewBuffer(contentBytes))
 			if err != nil {
 				return &r, err
 			}
+
+			ch, ok := chrt.(*chart.Chart)
+			if !ok {
+				return &r, errors.Errorf("unsupported chart type %T", chrt)
+			}
+
 			r.Chart = ch
 		}
 	}
@@ -155,7 +161,7 @@ func (cache *Cache) FetchReference(ctx context.Context, ref *ref.Reference, opts
 }
 
 // StoreReference stores a chart ref in cache
-func (cache *Cache) StoreReference(ctx context.Context, ref *ref.Reference, ch *chart.Chart, opts helmopts.HelmOptions) (*CacheRefSummary, error) {
+func (cache *Cache) StoreReference(ctx context.Context, ref *ref.Reference, ch *chart.Chart, opts nelmcommon.HelmOptions) (*CacheRefSummary, error) {
 	if err := cache.init(); err != nil {
 		return nil, err
 	}
@@ -194,7 +200,7 @@ func (cache *Cache) StoreReference(ctx context.Context, ref *ref.Reference, ch *
 
 // DeleteReference deletes a chart ref from cache
 // TODO: garbage collection, only manifest removed
-func (cache *Cache) DeleteReference(ctx context.Context, ref *ref.Reference, opts helmopts.HelmOptions) (*CacheRefSummary, error) {
+func (cache *Cache) DeleteReference(ctx context.Context, ref *ref.Reference, opts nelmcommon.HelmOptions) (*CacheRefSummary, error) {
 	if err := cache.init(); err != nil {
 		return nil, err
 	}
@@ -208,7 +214,7 @@ func (cache *Cache) DeleteReference(ctx context.Context, ref *ref.Reference, opt
 }
 
 // ListReferences lists all chart refs in a cache
-func (cache *Cache) ListReferences(ctx context.Context, opts helmopts.HelmOptions) ([]*CacheRefSummary, error) {
+func (cache *Cache) ListReferences(ctx context.Context, opts nelmcommon.HelmOptions) ([]*CacheRefSummary, error) {
 	if err := cache.init(); err != nil {
 		return nil, err
 	}
@@ -262,6 +268,10 @@ func (cache *Cache) ProvideIngester() orascontent.ProvideIngester {
 // init creates files needed necessary for OCI layout store
 func (cache *Cache) init() error {
 	if cache.ociStore == nil {
+		if err := os.MkdirAll(cache.rootDir, 0o755); err != nil {
+			return err
+		}
+
 		ociStore, err := orascontent.NewOCIStore(cache.rootDir)
 		if err != nil {
 			return err
@@ -290,7 +300,7 @@ func (cache *Cache) saveChartConfig(ctx context.Context, ch *chart.Chart) (*ocis
 func (cache *Cache) saveChartContentLayer(ctx context.Context, ch *chart.Chart) (*ocispec.Descriptor, bool, error) {
 	destDir := filepath.Join(cache.rootDir, ".build")
 	os.MkdirAll(destDir, 0o755)
-	tmpFile, err := chartutil.Save(ch, destDir)
+	tmpFile, err := chartv2util.Save(ch, destDir)
 	defer os.Remove(tmpFile)
 	if err != nil {
 		return nil, false, errors.Wrap(err, "failed to save")

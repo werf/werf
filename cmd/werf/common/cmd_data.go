@@ -91,8 +91,6 @@ type CmdData struct {
 	BuildReportPath *string
 	UseBuildReport  *bool
 
-	VirtualMerge *bool
-
 	ScanContextNamespaceOnly *bool
 
 	// Host storage cleanup options
@@ -356,7 +354,6 @@ func (cmdData *CmdData) processFlags() error {
 	cmdData.ValuesSetString = append(util.PredefinedValuesByEnvNamePrefix("WERF_SET_STRING_"), cmdData.ValuesSetString...)
 	cmdData.ValuesSetFile = append(util.PredefinedValuesByEnvNamePrefix("WERF_SET_FILE_"), cmdData.ValuesSetFile...)
 	cmdData.RootSetJSON = append(util.PredefinedValuesByEnvNamePrefix("WERF_SET_ROOT_JSON_"), cmdData.RootSetJSON...)
-	cmdData.RuntimeSetJSON = append(util.PredefinedValuesByEnvNamePrefix("WERF_SET_RUNTIME_JSON_"), cmdData.RuntimeSetJSON...)
 	cmdData.ValuesSetJSON = append(util.PredefinedValuesByEnvNamePrefix("WERF_SET_JSON_"), cmdData.ValuesSetJSON...)
 	cmdData.ValuesSetLiteral = append(util.PredefinedValuesByEnvNamePrefix("WERF_SET_LITERAL_"), cmdData.ValuesSetLiteral...)
 	cmdData.ValuesFiles = append(util.PredefinedValuesByEnvNamePrefix("WERF_VALUES_"), cmdData.ValuesFiles...)

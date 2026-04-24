@@ -522,26 +522,6 @@ werf build --repo registry.mydomain.org/repo --synchronization https://synchroni
 werf converge --repo registry.mydomain.org/repo --synchronization https://synchronization.domain.org
 ```
 
-#### Dedicated Kubernetes resource
-
-You only have to specify a running Kubernetes cluster and choose the namespace where the ConfigMap/werf service will reside. Its annotations will be used for distributed locking.
-
-Then, for all werf commands that use the `--repo` parameter, the `--synchronization=kubernetes://NAMESPACE[:CONTEXT][@(base64:CONFIG_DATA)|CONFIG_PATH]` parameter must be specified as well, for example:
-
-```shell
-# The regular ~/.kube/config or KUBECONFIG is used.
-werf build --repo registry.mydomain.org/repo --synchronization kubernetes://mynamespace
-werf converge --repo registry.mydomain.org/repo --synchronization kubernetes://mynamespace
-
-# Here, the base64-encoded contents of kubeconfig are explicitly specified.
-werf build --repo registry.mydomain.org/repo --synchronization kubernetes://mynamespace@base64:YXBpVmVyc2lvbjogdjEKa2luZDogQ29uZmlnCnByZWZlcmVuY2VzOiB7fQoKY2x1c3RlcnM6Ci0gY2x1c3RlcjoKICBuYW1lOiBkZXZlbG9wbWVudAotIGNsdXN0ZXI6CiAgbmFtZTogc2NyYXRjaAoKdXNlcnM6Ci0gbmFtZTogZGV2ZWxvcGVyCi0gbmFtZTogZXhwZXJpbWVudGVyCgpjb250ZXh0czoKLSBjb250ZXh0OgogIG5hbWU6IGRldi1mcm9udGVuZAotIGNvbnRleHQ6CiAgbmFtZTogZGV2LXN0b3JhZ2UKLSBjb250ZXh0OgogIG5hbWU6IGV4cC1zY3JhdGNoCg==
-
-# The mycontext context is used in the /etc/kubeconfig config.
-werf build --repo registry.mydomain.org/repo --synchronization kubernetes://mynamespace:mycontext@/etc/kubeconfig
-```
-
-> **NOTE:** This method is poorly suited when the project is delivered to different Kubernetes clusters from the same Git repository due to the difficulties of setting it up correctly. In this case, the same cluster address and resource must be specified for all werf commands even if the deployment occurs to different environments to ensure data consistency in the container registry. Therefore, it is recommended to run a dedicated shared synchronization service for this case to avoid the risk of incorrect configuration.
-
 #### Local synchronization
 
 Local synchronization is enabled by the `--synchronization=:local` option. The local _lock manager_ uses file locks provided by the operating system.

@@ -76,15 +76,14 @@ func stageImageCacheKey(name, targetPlatform string) string {
 type ConveyorCleanupFunc func(context.Context) error
 
 type ConveyorOptions struct {
-	Parallel                        bool
-	ParallelTasksLimit              int64
-	LocalGitRepoVirtualMergeOptions stage.VirtualMergeOptions
-	TargetPlatforms                 []string
-	DeferBuildLog                   bool
-	ImagesToProcess                 config.ImagesToProcess
-	SkipImageSpecStage              bool
-	UseBuildReport                  bool
-	BuildReportPath                 string
+	Parallel           bool
+	ParallelTasksLimit int64
+	TargetPlatforms    []string
+	DeferBuildLog      bool
+	ImagesToProcess    config.ImagesToProcess
+	SkipImageSpecStage bool
+	UseBuildReport     bool
+	BuildReportPath    string
 }
 
 func NewConveyor(werfConfig *config.WerfConfig, giterminismManager giterminism_manager.Interface, projectDir, baseTmpDir string, containerBackend container_backend.ContainerBackend, storageManager manager.StorageManagerInterface, storageLockManager lock_manager.Interface, opts ConveyorOptions) *Conveyor {
@@ -263,10 +262,6 @@ func (c *Conveyor) GetStageDigestMutex(stage string) *sync.Mutex {
 	}
 
 	return m
-}
-
-func (c *Conveyor) GetLocalGitRepoVirtualMergeOptions() stage.VirtualMergeOptions {
-	return c.ConveyorOptions.LocalGitRepoVirtualMergeOptions
 }
 
 func (c *Conveyor) GetImportServer(ctx context.Context, targetPlatform, imageName, stageName string, fromExternalImage bool) (import_server.ImportServer, error) {
@@ -613,44 +608,6 @@ func (c *Conveyor) GetImageNameForLastImageStageFromReport(image ReportImageReco
 	return image.Stages[len(image.Stages)-1].DockerImageName
 }
 
-func (c *Conveyor) checkContainerBackendSupported(ctx context.Context) error {
-	targetPlatforms, err := c.GetTargetPlatforms()
-	if err != nil {
-		return fmt.Errorf("error getting target platforms: %w", err)
-	}
-	c.ContainerBackend.ClaimTargetPlatforms(ctx, targetPlatforms)
-
-	if _, isBuildah := c.ContainerBackend.(*container_backend.BuildahBackend); !isBuildah {
-		return nil
-	}
-
-	// Check if ansible builder is used with buildah container backend.
-	{
-		var nameList []string
-		for _, i := range c.werfConfig.Images(false) {
-			switch imageOrArtifact := i.(type) {
-			case config.StapelImageInterface:
-				if imageOrArtifact.ImageBaseConfig().Ansible != nil {
-					nameList = append(nameList, fmt.Sprintf("%q", imageOrArtifact.GetName()))
-				}
-			case *config.ImageFromDockerfile:
-			default:
-				panic(fmt.Errorf("unexpected image type %T", imageOrArtifact))
-			}
-		}
-
-		if len(nameList) > 0 {
-			return fmt.Errorf(`Unable to build stapel images or/and artifacts (%s), which use ansible builder when buildah container backend is enabled.
-
-Please use shell builder instead, or select docker server backend to continue usage of ansible builder (disable buildah runtime by unsetting WERF_BUILDAH_MODE environment variable).
-
-It is recommended to use shell builder, because ansible builder will be deprecated soon.`, strings.Join(nameList, ", "))
-		}
-	}
-
-	return nil
-}
-
 // prepareBuildCtx creates buffer and a new logger context if printing build log should be deferred.
 func (c *Conveyor) prepareBuildCtx(ctx context.Context) (context.Context, *bytes.Buffer) {
 	if !c.DeferBuildLog {
@@ -681,10 +638,6 @@ func (c *Conveyor) Build(ctx context.Context, opts BuildOptions) ([]*ImagesRepor
 				return nil, fmt.Errorf("staged Dockerfile build (staged: true) is not supported with --network option (use staged: false for %q image or remove --network option)", img.Name)
 			}
 		}
-	}
-
-	if err := c.checkContainerBackendSupported(ctx); err != nil {
-		return nil, err
 	}
 
 	if err := c.determineStages(ctx); err != nil {
@@ -1105,16 +1058,4 @@ func (c *Conveyor) GetImageIDForImageStage(targetPlatform, imageName, stageName 
 
 func (c *Conveyor) GetStageIDForImageStage(targetPlatform, imageName, stageName string) string {
 	return c.getImageStage(targetPlatform, imageName, stageName).GetStageImage().Image.GetStageDesc().StageID.String()
-}
-
-func (c *Conveyor) GetImportMetadata(ctx context.Context, projectName, id string) (*storage.ImportMetadata, error) {
-	return c.StorageManager.GetStagesStorage().GetImportMetadata(ctx, projectName, id)
-}
-
-func (c *Conveyor) PutImportMetadata(ctx context.Context, projectName string, metadata *storage.ImportMetadata) error {
-	return c.StorageManager.GetStagesStorage().PutImportMetadata(ctx, projectName, metadata)
-}
-
-func (c *Conveyor) RmImportMetadata(ctx context.Context, projectName, id string) error {
-	return c.StorageManager.GetStagesStorage().RmImportMetadata(ctx, projectName, id)
 }

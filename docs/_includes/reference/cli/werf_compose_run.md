@@ -5,9 +5,8 @@
 {% endif %}
 Run `docker-compose run` command with forwarded image names.
 
-Image environment name format: `$WERF_<FORMATTED_WERF_IMAGE_NAME>_DOCKER_IMAGE_NAME`:
-* `$WERF_DOCKER_IMAGE_NAME` for nameless image;
-* `<FORMATTED_WERF_IMAGE_NAME>` is werf image name from `werf.yaml` modified according to the following
+Image environment name format: `$WERF_<FORMATTED_WERF_IMAGE_NAME>_DOCKER_IMAGE_NAME`.
+`<FORMATTED_WERF_IMAGE_NAME>` is werf image name from `werf.yaml` modified according to the following
 rules:
   * all characters are uppercase (`app` -&gt; `APP`);
   * charset `/` - is replaced with `_` (`DEV/APP-FRONTEND` -&gt; `DEV_APP_FRONTEND`).
@@ -171,8 +170,6 @@ werf compose run [IMAGE_NAME...] [options] [--docker-compose-options="OPTIONS"] 
             (default $WERF_GITERMINISM_CONFIG or werf-giterminism.yaml in working directory)
       --home-dir=""
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
-      --insecure-helm-dependencies=false
-            No-op
       --insecure-registry=false
             Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
       --kube-config=""
@@ -271,9 +268,6 @@ werf compose run [IMAGE_NAME...] [options] [--docker-compose-options="OPTIONS"] 
             Use build report, previously saved with --save-build-report (by default                 
             $WERF_USE_BUILD_REPORT or false). Its path and format configured with                   
             --build-report-path
-      --virtual-merge=false
-            Enable virtual/ephemeral merge commit mode when building current application state      
-            ($WERF_VIRTUAL_MERGE by default)
       --without-images=false
             Disable building of images defined in the werf.yaml (if any) and usage of such images   
             in the .helm/templates ($WERF_WITHOUT_IMAGES or false by default — e.g. enable all      

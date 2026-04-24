@@ -85,7 +85,7 @@ var _ = XDescribe("from and fromLatest", func() {
 						expectedOutputMatchers: []types.GomegaMatcher{
 							Not(ContainSubstring("Trying to get from base image id from registry")),
 							ContainSubstring("Pulling base image"),
-							Not(ContainSubstring("Building stage ~/from")),
+							Not(ContainSubstring("Building stage test/from")),
 							ContainSubstring(fmt.Sprintf("Error: phase build on image ~ stage from handler failed: unable to fetch base image %s", fromImage)),
 						},
 						expectedErr: true,
@@ -98,7 +98,7 @@ var _ = XDescribe("from and fromLatest", func() {
 						expectedOutputMatchers: []types.GomegaMatcher{
 							ContainSubstring("Trying to get from base image id from registry"),
 							Not(ContainSubstring("Pulling base image")),
-							Not(ContainSubstring("Building stage ~/from")),
+							Not(ContainSubstring("Building stage test/from")),
 							ContainSubstring(fmt.Sprintf("Error: can not get base image id from registry (%s)", fromImage)),
 						},
 						expectedErr: true,
@@ -124,7 +124,7 @@ var _ = XDescribe("from and fromLatest", func() {
 							ContainSubstring(fmt.Sprintf("using existing image %s without pull", fromImage)),
 							ContainSubstring("Trying to get from base image id from registry"),
 							Not(ContainSubstring("Pulling base image")),
-							ContainSubstring("Building stage ~/from"),
+							ContainSubstring("Building stage test/from"),
 						},
 						expectedFromStageParent: fromBaseRepoImageState1IDFunc,
 					})
@@ -136,7 +136,7 @@ var _ = XDescribe("from and fromLatest", func() {
 						expectedOutputMatchers: []types.GomegaMatcher{
 							ContainSubstring("Trying to get from base image id from registry"),
 							Not(ContainSubstring("Pulling base image")),
-							Not(ContainSubstring("Building stage ~/from")),
+							Not(ContainSubstring("Building stage test/from")),
 							ContainSubstring(fmt.Sprintf("Error: can not get base image id from registry (%s)", fromImage)),
 						},
 						expectedErr: true,
@@ -166,7 +166,7 @@ var _ = XDescribe("from and fromLatest", func() {
 						expectedOutputMatchers: []types.GomegaMatcher{
 							ContainSubstring("Trying to get from base image id from registry"),
 							Not(ContainSubstring("Pulling base image")),
-							ContainSubstring("Building stage ~/from"),
+							ContainSubstring("Building stage test/from"),
 						},
 						expectedFromStageParent: fromBaseRepoImageState2IDFunc,
 					}),
@@ -175,7 +175,7 @@ var _ = XDescribe("from and fromLatest", func() {
 						expectedOutputMatchers: []types.GomegaMatcher{
 							ContainSubstring("Trying to get from base image id from registry"),
 							Not(ContainSubstring("Pulling base image")),
-							ContainSubstring("Building stage ~/from"),
+							ContainSubstring("Building stage test/from"),
 						},
 						expectedFromStageParent: fromBaseRepoImageState2IDFunc,
 					}),
@@ -191,7 +191,7 @@ var _ = XDescribe("from and fromLatest", func() {
 							expectedOutputMatchers: []types.GomegaMatcher{
 								Not(ContainSubstring("Trying to get from base image id from registry")),
 								ContainSubstring("Pulling base image"),
-								ContainSubstring("Building stage ~/from"),
+								ContainSubstring("Building stage test/from"),
 							},
 							expectedFromStageParent: fromBaseRepoImageState2IDFunc,
 						}),
@@ -200,7 +200,7 @@ var _ = XDescribe("from and fromLatest", func() {
 							expectedOutputMatchers: []types.GomegaMatcher{
 								ContainSubstring("Trying to get from base image id from registry"),
 								ContainSubstring("Pulling base image"),
-								ContainSubstring("Building stage ~/from"),
+								ContainSubstring("Building stage test/from"),
 							},
 							expectedFromStageParent: fromBaseRepoImageState2IDFunc,
 						}),
@@ -219,7 +219,7 @@ var _ = XDescribe("from and fromLatest", func() {
 							expectedOutputMatchers: []types.GomegaMatcher{
 								ContainSubstring("Trying to get from base image id from registry"),
 								ContainSubstring("Pulling base image"),
-								ContainSubstring("Building stage ~/from"),
+								ContainSubstring("Building stage test/from"),
 							},
 							expectedFromStageParent: fromBaseRepoImageState2IDFunc,
 						}),
@@ -228,7 +228,7 @@ var _ = XDescribe("from and fromLatest", func() {
 							expectedOutputMatchers: []types.GomegaMatcher{
 								ContainSubstring("Trying to get from base image id from registry"),
 								ContainSubstring("Pulling base image"),
-								ContainSubstring("Building stage ~/from"),
+								ContainSubstring("Building stage test/from"),
 							},
 							expectedFromStageParent: fromBaseRepoImageState2IDFunc,
 						}),
@@ -276,7 +276,7 @@ var _ = XDescribe("from and fromLatest", func() {
 						expectedOutputMatchers: []types.GomegaMatcher{
 							Not(ContainSubstring("Trying to get from base image id from registry")),
 							Not(ContainSubstring("Pulling base image")),
-							Not(ContainSubstring("Building stage ~/from")),
+							Not(ContainSubstring("Building stage test/from")),
 						},
 						expectedFromStageParent: fromBaseRepoImageState2IDFunc,
 					},
@@ -290,7 +290,7 @@ var _ = XDescribe("from and fromLatest", func() {
 						expectedOutputMatchers: []types.GomegaMatcher{
 							ContainSubstring("Trying to get from base image id from registry"),
 							Not(ContainSubstring("Pulling base image")),
-							Not(ContainSubstring("Building stage ~/from")),
+							Not(ContainSubstring("Building stage test/from")),
 						},
 						expectedFromStageParent: fromBaseRepoImageState2IDFunc,
 					},
@@ -309,7 +309,7 @@ var _ = XDescribe("from and fromLatest", func() {
 					entry: entry{
 						fromLatest: false,
 						expectedOutputMatchers: []types.GomegaMatcher{
-							Not(ContainSubstring("Building stage ~/from")),
+							Not(ContainSubstring("Building stage test/from")),
 							Not(ContainSubstring("Trying to get from base image id from registry")),
 							Not(ContainSubstring("Pulling base image")),
 						},
@@ -324,7 +324,7 @@ var _ = XDescribe("from and fromLatest", func() {
 					entry: entry{
 						fromLatest: true,
 						expectedOutputMatchers: []types.GomegaMatcher{
-							ContainSubstring("Building stage ~/from"),
+							ContainSubstring("Building stage test/from"),
 							ContainSubstring("Trying to get from base image id from registry"),
 							ContainSubstring("Pulling base image"),
 						},
@@ -348,7 +348,7 @@ var _ = XDescribe("fromCacheVersion", func() {
 
 			output := utils.SucceedCommandOutputString(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
 
-			Expect(output).Should(ContainSubstring("Building stage ~/from"))
+			Expect(output).Should(ContainSubstring("Building stage test/from"))
 		}
 
 		specStep("0")
