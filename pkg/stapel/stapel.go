@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/docker/docker/api/types"
+
 	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/image"
 )
@@ -62,9 +64,29 @@ func GetOrCreateContainer(ctx context.Context, targetPlatform string) (string, e
 }
 
 func Purge(ctx context.Context) error {
-	container := getContainer("")
-	if err := container.RmIfExist(ctx); err != nil {
+	baseContainerName := fmt.Sprintf("%s%s", image.AssemblingContainerNamePrefix, getVersion())
+	containers, err := docker.Containers(ctx, types.ContainerListOptions{All: true})
+	if err != nil {
 		return err
+	}
+
+	processed := map[string]struct{}{}
+	for _, ctr := range containers {
+		for _, containerName := range ctr.Names {
+			containerName = strings.TrimPrefix(containerName, "/")
+			if containerName != baseContainerName && !strings.HasPrefix(containerName, baseContainerName+"_") {
+				continue
+			}
+
+			if _, done := processed[containerName]; done {
+				continue
+			}
+
+			if err := (&container{Name: containerName}).RmIfExist(ctx); err != nil {
+				return err
+			}
+			processed[containerName] = struct{}{}
+		}
 	}
 
 	if err := rmiIfExist(ctx); err != nil {
