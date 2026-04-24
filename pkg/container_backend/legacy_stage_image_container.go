@@ -161,9 +161,14 @@ func (c *LegacyStageImageContainer) prepareIntrospectArgs(ctx context.Context) (
 		return nil, err
 	}
 
-	imageId := c.image.GetID()
+	var imageRef string
+	if c.image.GetTargetPlatform() != "" {
+		imageRef = c.image.Name()
+	} else {
+		imageRef = c.image.GetID()
+	}
 
-	args = append(args, imageId)
+	args = append(args, imageRef)
 	args = append(args, "-ec")
 	args = append(args, stapel.BashBinPath())
 
