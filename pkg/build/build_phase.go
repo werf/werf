@@ -1025,7 +1025,7 @@ func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *imag
 func (phase *BuildPhase) buildStage(ctx context.Context, img *image.Image, stg stage.Interface) error {
 	if stg.IsBuildable() {
 		if !img.IsDockerfileImage && phase.Conveyor.UseLegacyStapelBuilder(phase.Conveyor.ContainerBackend) {
-			_, err := stapel.GetOrCreateContainer(ctx)
+			_, err := stapel.GetOrCreateContainer(ctx, img.TargetPlatform)
 			if err != nil {
 				return fmt.Errorf("get or create stapel container failed: %w", err)
 			}

@@ -38,16 +38,21 @@ func ImageName() string {
 	return fmt.Sprintf("%s:%s", getImage(), getVersion())
 }
 
-func getContainer() container {
+func getContainer(targetPlatform string) container {
+	containerNameSuffix := getVersion()
+	if targetPlatform != "" {
+		containerNameSuffix = fmt.Sprintf("%s_%s", containerNameSuffix, strings.ReplaceAll(targetPlatform, "/", "_"))
+	}
+
 	return container{
-		Name:      fmt.Sprintf("%s%s", image.AssemblingContainerNamePrefix, getVersion()),
+		Name:      fmt.Sprintf("%s%s", image.AssemblingContainerNamePrefix, containerNameSuffix),
 		ImageName: ImageName(),
 		Volume:    path.Join(CONTAINER_MOUNT_ROOT, "stapel"),
 	}
 }
 
-func GetOrCreateContainer(ctx context.Context) (string, error) {
-	container := getContainer()
+func GetOrCreateContainer(ctx context.Context, targetPlatform string) (string, error) {
+	container := getContainer(targetPlatform)
 
 	if err := container.CreateIfNotExist(ctx); err != nil {
 		return "", err
@@ -57,7 +62,7 @@ func GetOrCreateContainer(ctx context.Context) (string, error) {
 }
 
 func Purge(ctx context.Context) error {
-	container := getContainer()
+	container := getContainer("")
 	if err := container.RmIfExist(ctx); err != nil {
 		return err
 	}

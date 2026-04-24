@@ -350,7 +350,7 @@ func (c *Conveyor) GetImportServer(ctx context.Context, targetPlatform, imageNam
 			}
 
 			var err error
-			srv, err = import_server.RunRsyncServer(ctx, dockerImageName, tmpDir)
+			srv, err = import_server.RunRsyncServer(ctx, dockerImageName, tmpDir, targetPlatform)
 			if err != nil {
 				return fmt.Errorf("unable to run rsync import server: %w", err)
 			}

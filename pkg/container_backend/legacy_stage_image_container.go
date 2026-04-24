@@ -212,7 +212,7 @@ func (c *LegacyStageImageContainer) prepareServiceRunOptions(ctx context.Context
 	serviceRunOptions.Env["LANG"] = "C.UTF-8"
 	serviceRunOptions.Env["LC_ALL"] = "C.UTF-8"
 
-	stapelContainerName, err := stapel.GetOrCreateContainer(ctx)
+	stapelContainerName, err := stapel.GetOrCreateContainer(ctx, c.image.GetTargetPlatform())
 	if err != nil {
 		return nil, err
 	}

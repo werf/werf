@@ -29,7 +29,7 @@ type RsyncServer struct {
 	AuthUser, AuthPassword string
 }
 
-func RunRsyncServer(ctx context.Context, dockerImageName, tmpDir string) (*RsyncServer, error) {
+func RunRsyncServer(ctx context.Context, dockerImageName, tmpDir, targetPlatform string) (*RsyncServer, error) {
 	logboek.Context(ctx).Debug().LogF("RunRsyncServer for docker image %q\n", dockerImageName)
 
 	srv := &RsyncServer{
@@ -39,7 +39,7 @@ func RunRsyncServer(ctx context.Context, dockerImageName, tmpDir string) (*Rsync
 		AuthPassword:        generateSecureRandomString(16),
 	}
 
-	stapelContainerName, err := stapel.GetOrCreateContainer(ctx)
+	stapelContainerName, err := stapel.GetOrCreateContainer(ctx, targetPlatform)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get or create stapel container: %w", err)
 	}
