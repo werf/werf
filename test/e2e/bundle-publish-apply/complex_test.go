@@ -11,8 +11,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 
-	"github.com/werf/kubedog/pkg/kube"
-	"github.com/werf/nelm/pkg/export/helm/release"
+	helmreleasecommon "github.com/werf/nelm/pkg/helm/pkg/release/common"
+	"github.com/werf/nelm/pkg/kube"
 	"github.com/werf/werf/v2/test/pkg/report"
 	"github.com/werf/werf/v2/test/pkg/utils"
 	"github.com/werf/werf/v2/test/pkg/werf"
@@ -47,6 +47,13 @@ var _ = Describe("Complex bundle publish/apply", Label("e2e", "bundle-publish-ap
 			By("initializing")
 			repoDirname = "repo0"
 			setupEnv()
+
+			// TODO: DRY kube client initialization
+			kubeConfig, err := kube.NewKubeConfig(ctx, kube.KubeConfigOptions{})
+			Expect(err).NotTo(HaveOccurred())
+
+			clientFactory, err := kube.NewClientFactory(ctx, kubeConfig)
+			Expect(err).NotTo(HaveOccurred())
 
 			By("state0: starting")
 			{
@@ -89,10 +96,10 @@ var _ = Describe("Complex bundle publish/apply", Label("e2e", "bundle-publish-ap
 				Expect(deployReport.Release).To(Equal(werfProject.Release(ctx)))
 				Expect(deployReport.Namespace).To(Equal(werfProject.Namespace(ctx)))
 				Expect(deployReport.Revision).To(Equal(1))
-				Expect(deployReport.Status).To(Equal(release.StatusDeployed))
+				Expect(deployReport.Status).To(Equal(helmreleasecommon.StatusDeployed))
 
 				By("state0: check configmap config-rootchart in cluster")
-				cm, err := kube.Client.CoreV1().ConfigMaps(werfProject.Namespace(ctx)).Get(ctx, "config-rootchart", metav1.GetOptions{})
+				cm, err := clientFactory.Static().CoreV1().ConfigMaps(werfProject.Namespace(ctx)).Get(ctx, "config-rootchart", metav1.GetOptions{})
 				Expect(err).NotTo(HaveOccurred())
 				Expect(cm.Data).To(Equal(map[string]string{
 					"werf_namespace": werfProject.Namespace(ctx),
@@ -150,7 +157,7 @@ var _ = Describe("Complex bundle publish/apply", Label("e2e", "bundle-publish-ap
 				checkGlobalLabelsAndAnnos(cm.Labels, cm.Annotations)
 
 				By("state0: check configmap config-subchart in cluster")
-				cm, err = kube.Client.CoreV1().ConfigMaps(werfProject.Namespace(ctx)).Get(ctx, "config-subchart", metav1.GetOptions{})
+				cm, err = clientFactory.Static().CoreV1().ConfigMaps(werfProject.Namespace(ctx)).Get(ctx, "config-subchart", metav1.GetOptions{})
 				Expect(err).NotTo(HaveOccurred())
 				Expect(cm.Data).To(Equal(map[string]string{
 					"werf_namespace": werfProject.Namespace(ctx),
@@ -179,7 +186,7 @@ var _ = Describe("Complex bundle publish/apply", Label("e2e", "bundle-publish-ap
 					"hook-rootchart",
 				} {
 					By("state0: check deployment \"" + deploymentName + "\" in cluster")
-					deployment, err := kube.Client.AppsV1().Deployments(werfProject.Namespace(ctx)).Get(ctx, deploymentName, metav1.GetOptions{})
+					deployment, err := clientFactory.Static().AppsV1().Deployments(werfProject.Namespace(ctx)).Get(ctx, deploymentName, metav1.GetOptions{})
 					Expect(err).NotTo(HaveOccurred())
 					Expect(deploymentAvailable(deployment)).To(BeTrue())
 					checkServiceLabelsAndAnnos(ctx, deployment.Labels, deployment.Annotations, werfProject)
@@ -191,7 +198,7 @@ var _ = Describe("Complex bundle publish/apply", Label("e2e", "bundle-publish-ap
 					"hello",
 				} {
 					By("state0: check configmap \"" + configMapName + "\" in cluster")
-					_, err = kube.Client.CoreV1().ConfigMaps(werfProject.Namespace(ctx)).Get(ctx, configMapName, metav1.GetOptions{})
+					_, err = clientFactory.Static().CoreV1().ConfigMaps(werfProject.Namespace(ctx)).Get(ctx, configMapName, metav1.GetOptions{})
 					Expect(err).NotTo(HaveOccurred())
 					checkServiceLabelsAndAnnos(ctx, cm.Labels, cm.Annotations, werfProject)
 					checkGlobalLabelsAndAnnos(cm.Labels, cm.Annotations)
@@ -202,7 +209,7 @@ var _ = Describe("Complex bundle publish/apply", Label("e2e", "bundle-publish-ap
 					"not-deployed-because-in-helm-ignore",
 				} {
 					By("state0: ensure configmap \"" + configMapName + "\" is absent in cluster")
-					resourceShouldNotExist(kube.Client.CoreV1().ConfigMaps(werfProject.Namespace(ctx)).Get(ctx, configMapName, metav1.GetOptions{}))
+					resourceShouldNotExist(clientFactory.Static().CoreV1().ConfigMaps(werfProject.Namespace(ctx)).Get(ctx, configMapName, metav1.GetOptions{}))
 				}
 
 				for _, serviceName := range []string{
@@ -211,17 +218,17 @@ var _ = Describe("Complex bundle publish/apply", Label("e2e", "bundle-publish-ap
 					"service-hook-rootchart",
 				} {
 					By("state0: check service \"" + serviceName + "\" in cluster")
-					_, err = kube.Client.CoreV1().Services(werfProject.Namespace(ctx)).Get(ctx, serviceName, metav1.GetOptions{})
+					_, err = clientFactory.Static().CoreV1().Services(werfProject.Namespace(ctx)).Get(ctx, serviceName, metav1.GetOptions{})
 					Expect(err).NotTo(HaveOccurred())
 					checkServiceLabelsAndAnnos(ctx, cm.Labels, cm.Annotations, werfProject)
 					checkGlobalLabelsAndAnnos(cm.Labels, cm.Annotations)
 				}
 
 				By("state0: ensure job \"hook-subchart\" is absent in cluster")
-				resourceShouldNotExist(kube.Client.BatchV1().Jobs(werfProject.Namespace(ctx)).Get(ctx, "hook-subchart", metav1.GetOptions{}))
+				resourceShouldNotExist(clientFactory.Static().BatchV1().Jobs(werfProject.Namespace(ctx)).Get(ctx, "hook-subchart", metav1.GetOptions{}))
 
 				By("state0: check crd \"crds-rootchart\" in cluster")
-				_, err = kube.DynamicClient.Resource(schema.GroupVersionResource{
+				_, err = clientFactory.Dynamic().Resource(schema.GroupVersionResource{
 					Group:    "example.org",
 					Version:  "v1",
 					Resource: "crds-rootchart",
@@ -229,7 +236,7 @@ var _ = Describe("Complex bundle publish/apply", Label("e2e", "bundle-publish-ap
 				Expect(err).NotTo(HaveOccurred())
 
 				By("state0: check crd \"crds-subchart\" in cluster")
-				_, err = kube.DynamicClient.Resource(schema.GroupVersionResource{
+				_, err = clientFactory.Dynamic().Resource(schema.GroupVersionResource{
 					Group:    "example.org",
 					Version:  "v1",
 					Resource: "crds-subchart",
@@ -254,7 +261,7 @@ var _ = Describe("Complex bundle publish/apply", Label("e2e", "bundle-publish-ap
 				reportProject := report.NewProjectWithReport(werfProject)
 
 				By("state1: simulate manual user changes to the configmap \"config-rootchart\" by `kubectl edit`-like patching it in the cluster")
-				_, err := kube.Client.CoreV1().ConfigMaps(werfProject.Namespace(ctx)).Patch(
+				_, err := clientFactory.Static().CoreV1().ConfigMaps(werfProject.Namespace(ctx)).Patch(
 					ctx,
 					"config-rootchart",
 					types.StrategicMergePatchType,
@@ -278,10 +285,10 @@ var _ = Describe("Complex bundle publish/apply", Label("e2e", "bundle-publish-ap
 
 				By("state1: check deploy report")
 				Expect(deployReport.Revision).To(Equal(2))
-				Expect(deployReport.Status).To(Equal(release.StatusDeployed))
+				Expect(deployReport.Status).To(Equal(helmreleasecommon.StatusDeployed))
 
 				By("state1: check configmap \"config-rootchart\" in the cluster")
-				cm, err := kube.Client.CoreV1().ConfigMaps(werfProject.Namespace(ctx)).Get(ctx, "config-rootchart", metav1.GetOptions{})
+				cm, err := clientFactory.Static().CoreV1().ConfigMaps(werfProject.Namespace(ctx)).Get(ctx, "config-rootchart", metav1.GetOptions{})
 				Expect(err).NotTo(HaveOccurred())
 				Expect(cm.Data).To(Equal(map[string]string{
 					"release_is_install":                    "false",
@@ -292,12 +299,12 @@ var _ = Describe("Complex bundle publish/apply", Label("e2e", "bundle-publish-ap
 				checkServiceLabelsAndAnnos(ctx, cm.Labels, cm.Annotations, werfProject)
 
 				By("state1: check deployment \"hook-rootchart\" in cluster")
-				_, err = kube.Client.AppsV1().Deployments(werfProject.Namespace(ctx)).Get(ctx, "hook-rootchart", metav1.GetOptions{})
+				_, err = clientFactory.Static().AppsV1().Deployments(werfProject.Namespace(ctx)).Get(ctx, "hook-rootchart", metav1.GetOptions{})
 				Expect(err).NotTo(HaveOccurred())
 
 				for _, crdName := range crdsNames {
 					By("state1: check crd \"" + crdName + "\" in cluster")
-					_, err = kube.DynamicClient.Resource(schema.GroupVersionResource{
+					_, err = clientFactory.Dynamic().Resource(schema.GroupVersionResource{
 						Group:    "apiextensions.k8s.io",
 						Version:  "v1",
 						Resource: "customresourcedefinitions",
@@ -311,7 +318,7 @@ var _ = Describe("Complex bundle publish/apply", Label("e2e", "bundle-publish-ap
 					"deployment-subsubchart",
 				} {
 					By("state1: ensure deployment \"" + deploymentName + "\" is absent in cluster")
-					resourceShouldNotExist(kube.Client.AppsV1().Deployments(werfProject.Namespace(ctx)).Get(ctx, deploymentName, metav1.GetOptions{}))
+					resourceShouldNotExist(clientFactory.Static().AppsV1().Deployments(werfProject.Namespace(ctx)).Get(ctx, deploymentName, metav1.GetOptions{}))
 				}
 
 				for _, configMapName := range []string{
@@ -320,7 +327,7 @@ var _ = Describe("Complex bundle publish/apply", Label("e2e", "bundle-publish-ap
 					"hello",
 				} {
 					By("state1: ensure configmap \"" + configMapName + "\" is absent in cluster")
-					resourceShouldNotExist(kube.Client.CoreV1().ConfigMaps(werfProject.Namespace(ctx)).Get(ctx, configMapName, metav1.GetOptions{}))
+					resourceShouldNotExist(clientFactory.Static().CoreV1().ConfigMaps(werfProject.Namespace(ctx)).Get(ctx, configMapName, metav1.GetOptions{}))
 				}
 
 				for _, serviceName := range []string{
@@ -329,18 +336,18 @@ var _ = Describe("Complex bundle publish/apply", Label("e2e", "bundle-publish-ap
 					"service-hook-rootchart",
 				} {
 					By("state1: ensure service \"" + serviceName + "\" is absent in cluster")
-					resourceShouldNotExist(kube.Client.CoreV1().Services(werfProject.Namespace(ctx)).Get(ctx, serviceName, metav1.GetOptions{}))
+					resourceShouldNotExist(clientFactory.Static().CoreV1().Services(werfProject.Namespace(ctx)).Get(ctx, serviceName, metav1.GetOptions{}))
 				}
 
 				By("state1: ensure crd \"CRDRootchart\" is absent in cluster")
-				resourceShouldNotExist(kube.DynamicClient.Resource(schema.GroupVersionResource{
+				resourceShouldNotExist(clientFactory.Dynamic().Resource(schema.GroupVersionResource{
 					Group:    "example.org",
 					Version:  "v1",
 					Resource: "crds-rootchart",
 				}).Namespace(werfProject.Namespace(ctx)).Get(ctx, "cr-rootchart", metav1.GetOptions{}))
 
 				By("state1: ensure crd \"CRDSubchart\" is absent in cluster")
-				resourceShouldNotExist(kube.DynamicClient.Resource(schema.GroupVersionResource{
+				resourceShouldNotExist(clientFactory.Dynamic().Resource(schema.GroupVersionResource{
 					Group:    "example.org",
 					Version:  "v1",
 					Resource: "crds-subchart",
@@ -372,10 +379,10 @@ var _ = Describe("Complex bundle publish/apply", Label("e2e", "bundle-publish-ap
 
 				By("state2: check deploy report")
 				Expect(deployReport.Revision).To(Equal(3))
-				Expect(deployReport.Status).To(Equal(release.StatusFailed))
+				Expect(deployReport.Status).To(Equal(helmreleasecommon.StatusFailed))
 
 				By("state2: check configmap \"config-rootchart\" in cluster")
-				cm, err := kube.Client.CoreV1().ConfigMaps(werfProject.Namespace(ctx)).Get(ctx, "config-rootchart", metav1.GetOptions{})
+				cm, err := clientFactory.Static().CoreV1().ConfigMaps(werfProject.Namespace(ctx)).Get(ctx, "config-rootchart", metav1.GetOptions{})
 				Expect(err).NotTo(HaveOccurred())
 				Expect(cm.Data).To(Equal(map[string]string{
 					"release_is_install": "false",
@@ -387,7 +394,7 @@ var _ = Describe("Complex bundle publish/apply", Label("e2e", "bundle-publish-ap
 				checkServiceLabelsAndAnnos(ctx, cm.Labels, cm.Annotations, werfProject)
 
 				By("state2: ensure deployment \"deployment-rootchart\" is absent in cluster")
-				resourceShouldNotExist(kube.Client.AppsV1().Deployments(werfProject.Namespace(ctx)).Get(ctx, "deployment-rootchart", metav1.GetOptions{}))
+				resourceShouldNotExist(clientFactory.Static().AppsV1().Deployments(werfProject.Namespace(ctx)).Get(ctx, "deployment-rootchart", metav1.GetOptions{}))
 			}
 
 			By("state3: starting")
@@ -412,15 +419,15 @@ var _ = Describe("Complex bundle publish/apply", Label("e2e", "bundle-publish-ap
 
 				By("state3: check deploy report")
 				Expect(deployReport.Revision).To(Equal(5))
-				Expect(deployReport.Status).To(Equal(release.StatusFailed))
+				Expect(deployReport.Status).To(Equal(helmreleasecommon.StatusFailed))
 
 				By("state3: check job \"hook-rootchart\" in cluster")
-				job, err := kube.Client.BatchV1().Jobs(werfProject.Namespace(ctx)).Get(ctx, "hook-rootchart", metav1.GetOptions{})
+				job, err := clientFactory.Static().BatchV1().Jobs(werfProject.Namespace(ctx)).Get(ctx, "hook-rootchart", metav1.GetOptions{})
 				Expect(err).NotTo(HaveOccurred())
 				checkServiceLabelsAndAnnos(ctx, job.Labels, job.Annotations, werfProject)
 
 				By("state3: ensure configmap \"config-rootchart\" is absent in cluster")
-				resourceShouldNotExist(kube.Client.CoreV1().ConfigMaps(werfProject.Namespace(ctx)).Get(ctx, "config-rootchart", metav1.GetOptions{}))
+				resourceShouldNotExist(clientFactory.Static().CoreV1().ConfigMaps(werfProject.Namespace(ctx)).Get(ctx, "config-rootchart", metav1.GetOptions{}))
 			}
 		},
 	)

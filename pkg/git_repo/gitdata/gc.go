@@ -14,10 +14,10 @@ import (
 	"github.com/samber/lo"
 
 	"github.com/werf/common-go/pkg/util"
-	"github.com/werf/kubedog/pkg/utils"
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/git_repo"
+	"github.com/werf/werf/v2/pkg/logging"
 	"github.com/werf/werf/v2/pkg/volumeutils"
 	"github.com/werf/werf/v2/pkg/werf"
 )
@@ -101,7 +101,7 @@ func RunGC(ctx context.Context, options RunGCOptions) error {
 		logboek.Context(ctx).Default().LogBlock("Git data storage check").Do(func() {
 			logboek.Context(ctx).Default().LogF("Werf local cache dir: %s\n", werf.GetLocalCacheDir())
 			logboek.Context(ctx).Default().LogF("Volume usage: %s / %s\n", humanize.Bytes(vu.UsedBytes), humanize.Bytes(vu.TotalBytes))
-			logboek.Context(ctx).Default().LogF("Allowed volume usage: %s <= %s — %s\n", utils.GreenF("%s (%.2f%%)", humanize.Bytes(vu.UsedBytes), vu.BytesToPercentage(vu.UsedBytes)), utils.BlueF("%s (%.2f%%)", humanize.Bytes(options.AllowedLocalCacheVolumeUsageBytes), vu.BytesToPercentage(options.AllowedLocalCacheVolumeUsageBytes)), utils.GreenF("OK"))
+			logboek.Context(ctx).Default().LogF("Allowed volume usage: %s <= %s — %s\n", logging.GreenF("%s (%.2f%%)", humanize.Bytes(vu.UsedBytes), vu.BytesToPercentage(vu.UsedBytes)), logging.BlueF("%s (%.2f%%)", humanize.Bytes(options.AllowedLocalCacheVolumeUsageBytes), vu.BytesToPercentage(options.AllowedLocalCacheVolumeUsageBytes)), logging.GreenF("OK"))
 		})
 
 		return nil
@@ -113,9 +113,9 @@ func RunGC(ctx context.Context, options RunGCOptions) error {
 	logboek.Context(ctx).Default().LogBlock("Git data storage check").Do(func() {
 		logboek.Context(ctx).Default().LogF("Werf local cache dir: %s\n", werf.GetLocalCacheDir())
 		logboek.Context(ctx).Default().LogF("Volume usage: %s / %s\n", humanize.Bytes(vu.UsedBytes), humanize.Bytes(vu.TotalBytes))
-		logboek.Context(ctx).Default().LogF("Allowed level exceeded: %s > %s — %s\n", utils.RedF("%s (%.2f%%)", humanize.Bytes(vu.UsedBytes), vu.BytesToPercentage(vu.UsedBytes)), utils.YellowF("%s (%.2f%%)", humanize.Bytes(options.AllowedLocalCacheVolumeUsageBytes), vu.BytesToPercentage(options.AllowedLocalCacheVolumeUsageBytes)), utils.RedF("HIGH VOLUME USAGE"))
-		logboek.Context(ctx).Default().LogF("Target level after cleanup: %s - %s (margin) = %s\n", humanize.Bytes(options.AllowedLocalCacheVolumeUsageBytes), humanize.Bytes(options.AllowedLocalCacheVolumeUsageMarginBytes), utils.BlueF("%s (%.2f%%)", humanize.Bytes(targetVolumeUsageBytes), vu.BytesToPercentage(targetVolumeUsageBytes)))
-		logboek.Context(ctx).Default().LogF("Needed to free: %s\n", utils.RedF("%s", humanize.Bytes(bytesToFree)))
+		logboek.Context(ctx).Default().LogF("Allowed level exceeded: %s > %s — %s\n", logging.RedF("%s (%.2f%%)", humanize.Bytes(vu.UsedBytes), vu.BytesToPercentage(vu.UsedBytes)), logging.YellowF("%s (%.2f%%)", humanize.Bytes(options.AllowedLocalCacheVolumeUsageBytes), vu.BytesToPercentage(options.AllowedLocalCacheVolumeUsageBytes)), logging.RedF("HIGH VOLUME USAGE"))
+		logboek.Context(ctx).Default().LogF("Target level after cleanup: %s - %s (margin) = %s\n", humanize.Bytes(options.AllowedLocalCacheVolumeUsageBytes), humanize.Bytes(options.AllowedLocalCacheVolumeUsageMarginBytes), logging.BlueF("%s (%.2f%%)", humanize.Bytes(targetVolumeUsageBytes), vu.BytesToPercentage(targetVolumeUsageBytes)))
+		logboek.Context(ctx).Default().LogF("Needed to free: %s\n", logging.RedF("%s", humanize.Bytes(bytesToFree)))
 	})
 
 	var gitDataEntries []GitDataEntry

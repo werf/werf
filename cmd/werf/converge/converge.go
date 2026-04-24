@@ -16,16 +16,14 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/nelm/pkg/action"
 	nelmcommon "github.com/werf/nelm/pkg/common"
-	"github.com/werf/nelm/pkg/export/helm/chart"
-	"github.com/werf/nelm/pkg/export/helm/engine"
-	"github.com/werf/nelm/pkg/export/helm/werf/file"
-	"github.com/werf/nelm/pkg/log"
+	chart "github.com/werf/nelm/pkg/helm/pkg/chart/v2"
+	"github.com/werf/nelm/pkg/helm/pkg/engine"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/build"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/config/deploy_params"
 	"github.com/werf/werf/v2/pkg/container_backend"
-	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
+	"github.com/werf/werf/v2/pkg/deploy"
 	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
 	"github.com/werf/werf/v2/pkg/image"
@@ -308,10 +306,6 @@ func run(
 
 		if !imagesToProcess.WithoutImages {
 			logboek.LogOptionalLn()
-			common.SetupOndemandKubeInitializer(commonCmdData.KubeContextCurrent, commonCmdData.LegacyKubeConfigPath, commonCmdData.KubeConfigBase64, commonCmdData.LegacyKubeConfigPathsMergeList, commonCmdData.KubeBearerTokenData, commonCmdData.KubeBearerTokenPath)
-			if err := common.GetOndemandKubeInitializer().Init(ctx); err != nil {
-				return err
-			}
 
 			useCustomTagFunc, err := common.GetUseCustomTagFunc(&commonCmdData, giterminismManager, imagesToProcess)
 			if err != nil {
@@ -444,7 +438,7 @@ func run(
 
 		registryCredentialsPath := docker.GetDockerConfigCredentialsFile(*commonCmdData.DockerConfig)
 
-		serviceValues, err = helpers.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepo, imagesInfoGetters, helpers.ServiceValuesOptions{
+		serviceValues, err = deploy.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepo, imagesInfoGetters, deploy.ServiceValuesOptions{
 			Namespace:                releaseNamespace,
 			Env:                      commonCmdData.Environment,
 			SetDockerConfigJsonValue: *commonCmdData.SetDockerConfigJsonValue,
@@ -461,7 +455,7 @@ func run(
 			return fmt.Errorf("get release labels: %w", err)
 		}
 
-		file.SetChartFileReader(giterminismManager.FileManager)
+		nelmcommon.ChartFileReader = giterminismManager.FileManager
 
 	}
 
@@ -470,10 +464,10 @@ func run(
 		installReportPath = commonCmdData.DeployReportPath
 	}
 
-	ctx = log.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultReleaseInstallLogLevel), log.SetupLoggingOptions{
+	ctx = action.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultReleaseInstallLogLevel), action.SetupLoggingOptions{
 		ColorMode: *commonCmdData.LogColorMode,
 	})
-	engine.SetDebug(commonCmdData.DebugTemplates)
+	engine.Debug = commonCmdData.DebugTemplates
 
 	if err := action.ReleaseInstall(ctx, releaseName, releaseNamespace, action.ReleaseInstallOptions{
 		KubeConnectionOptions:      commonCmdData.KubeConnectionOptions,
@@ -483,7 +477,7 @@ func run(
 		TrackingOptions:            commonCmdData.TrackingOptions,
 		AutoRollback:               cmdData.AutoRollback,
 		ChartAppVersion:            common.GetHelmChartConfigAppVersion(werfConfig),
-		ChartDirPath:               relChartPath,
+		Chart:                      relChartPath,
 		ChartProvenanceKeyring:     commonCmdData.ChartProvenanceKeyring,
 		ChartProvenanceStrategy:    commonCmdData.ChartProvenanceStrategy,
 		ChartRepoSkipUpdate:        commonCmdData.ChartRepoSkipUpdate,

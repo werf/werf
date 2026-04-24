@@ -4,27 +4,15 @@ import (
 	"context"
 	"fmt"
 
-	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/kubernetes"
-
-	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/storage"
 	"github.com/werf/werf/v2/pkg/werf"
 )
 
 type SynchronizationParams struct {
-	ProjectName           string
-	ServerAddress         string
-	StagesStorage         storage.StagesStorage
-	CommonKubeInitializer *SynchronizationKubeParams
-}
-
-type SynchronizationKubeParams struct {
-	KubeContext             string
-	KubeConfig              string
-	KubeConfigBase64        string
-	KubeConfigPathMergeList []string
+	ProjectName   string
+	ServerAddress string
+	StagesStorage storage.StagesStorage
 }
 
 type LocalSynchronization struct {
@@ -90,64 +78,6 @@ func NewHttpSynchronization(ctx context.Context, params SynchronizationParams) (
 
 func (s *HttpSynchronization) GetStorageLockManager(ctx context.Context) (Interface, error) {
 	return NewHttp(ctx, s.address, s.clientId)
-}
-
-type KubernetesSynchronization struct {
-	address    string
-	kubeParams *KubernetesParams
-}
-
-// NewKubernetesSynchronization returns kubernetes synchronization parameters
-func NewKubernetesSynchronization(ctx context.Context, params SynchronizationParams) (*KubernetesSynchronization, error) {
-	serverAddress := params.ServerAddress
-	if ForceSyncServerRepo == "true" {
-		repoSyncServer, err := checkRepoSyncServer(ctx, params.ProjectName, serverAddress, params.StagesStorage)
-		if err != nil {
-			return nil, err
-		}
-		serverAddress = repoSyncServer
-	}
-	kubeParams, err := ParseKubernetesParams(serverAddress)
-	if err != nil {
-		return nil, fmt.Errorf("unable to parse synchronization address %s: %w", serverAddress, err)
-	}
-
-	if kubeParams.ConfigPath == "" {
-		kubeParams.ConfigPath = params.CommonKubeInitializer.KubeConfig
-	}
-	if kubeParams.ConfigContext == "" {
-		kubeParams.ConfigContext = params.CommonKubeInitializer.KubeContext
-	}
-	if kubeParams.ConfigDataBase64 == "" {
-		kubeParams.ConfigDataBase64 = params.CommonKubeInitializer.KubeConfigBase64
-	}
-	if kubeParams.ConfigPathMergeList == nil {
-		kubeParams.ConfigPathMergeList = params.CommonKubeInitializer.KubeConfigPathMergeList
-	}
-
-	return &KubernetesSynchronization{
-		address:    serverAddress,
-		kubeParams: kubeParams,
-	}, nil
-}
-
-func (s *KubernetesSynchronization) GetStorageLockManager(_ context.Context) (Interface, error) {
-	if config, err := kube.GetKubeConfig(kube.KubeConfigOptions{
-		ConfigPath:          s.kubeParams.ConfigPath,
-		ConfigDataBase64:    s.kubeParams.ConfigDataBase64,
-		ConfigPathMergeList: s.kubeParams.ConfigPathMergeList,
-		Context:             s.kubeParams.ConfigContext,
-	}); err != nil {
-		return nil, fmt.Errorf("unable to load synchronization kube config %q (context %q): %w", s.kubeParams.ConfigPath, s.kubeParams.ConfigContext, err)
-	} else if dynamicClient, err := dynamic.NewForConfig(config.Config); err != nil {
-		return nil, fmt.Errorf("unable to create synchronization kubernetes dynamic client: %w", err)
-	} else if client, err := kubernetes.NewForConfig(config.Config); err != nil {
-		return nil, fmt.Errorf("unable to create synchronization kubernetes client: %w", err)
-	} else {
-		return NewKubernetes(s.kubeParams.Namespace, client, dynamicClient, func(projectName string) string {
-			return fmt.Sprintf("werf-%s", projectName)
-		}), nil
-	}
 }
 
 func checkRepoSyncServer(ctx context.Context, projectName, serverAddress string, stagesStorage storage.StagesStorage) (string, error) {

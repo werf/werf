@@ -15,17 +15,14 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/nelm/pkg/action"
 	nelmcommon "github.com/werf/nelm/pkg/common"
-	"github.com/werf/nelm/pkg/export/helm/chart"
-	"github.com/werf/nelm/pkg/export/helm/engine"
-	"github.com/werf/nelm/pkg/export/helm/werf/file"
-	"github.com/werf/nelm/pkg/featgate"
-	"github.com/werf/nelm/pkg/log"
+	chart "github.com/werf/nelm/pkg/helm/pkg/chart/v2"
+	"github.com/werf/nelm/pkg/helm/pkg/engine"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/build"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/config/deploy_params"
 	"github.com/werf/werf/v2/pkg/container_backend"
-	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
+	"github.com/werf/werf/v2/pkg/deploy"
 	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
 	"github.com/werf/werf/v2/pkg/image"
@@ -44,7 +41,6 @@ var cmdData struct {
 	ShowInsignificantDiffs bool
 	ShowSensitiveDiffs     bool
 	ShowVerboseCRDDiffs    bool
-	ShowVerboseDiffs       bool
 }
 
 var commonCmdData common.CmdData
@@ -185,28 +181,15 @@ werf plan --repo registry.mydomain.com/web --env production`,
 	common.SetupReleaseLabel(&commonCmdData, cmd)
 	common.SetupReleaseStorageDriver(&commonCmdData, cmd)
 	common.SetupReleaseStorageSQLConnection(&commonCmdData, cmd)
-	common.SetupReleasesHistoryMax(&commonCmdData, cmd) // TODO(3.0): remove this, useless
 	common.SetupSetDockerConfigJsonValue(&commonCmdData, cmd)
 	common.SetupTemplatesAllowDNS(&commonCmdData, cmd)
-	common.StubSetupHooksStatusProgressPeriod(&commonCmdData, cmd)
-	common.StubSetupStatusProgressPeriod(&commonCmdData, cmd)
-	common.StubSetupTrackTimeout(&commonCmdData, cmd)
 	commonCmdData.SetupSkipDependenciesRepoRefresh(cmd)
 	common.SetupTSOptions(&commonCmdData, cmd)
 
-	var desc string
-	if featgate.FeatGateMoreDetailedExitCodeForPlan.Enabled() || featgate.FeatGatePreviewV2.Enabled() {
-		desc = "Return exit code 0 if no changes, 1 if error, 2 if resource changes planned, 3 if no resource changes planned, but release still should be installed (default $WERF_EXIT_CODE or false)"
-	} else {
-		desc = "Return exit code 0 if no changes, 1 if error, 2 if any changes planned (default $WERF_EXIT_CODE or false)"
-	}
-	cmd.Flags().BoolVarP(&cmdData.DetailedExitCode, "exit-code", "", util.GetBoolEnvironmentDefaultFalse("WERF_EXIT_CODE"), desc)
+	cmd.Flags().BoolVarP(&cmdData.DetailedExitCode, "exit-code", "", util.GetBoolEnvironmentDefaultFalse("WERF_EXIT_CODE"), "Return exit code 0 if no changes, 1 if error, 2 if resource changes planned, 3 if no resource changes planned, but release still should be installed (default $WERF_EXIT_CODE or false)")
 	cmd.Flags().BoolVarP(&cmdData.ShowInsignificantDiffs, "show-insignificant-diffs", "", util.GetBoolEnvironmentDefaultFalse("WERF_SHOW_INSIGNIFICANT_DIFFS"), "Show insignificant diff lines ($WERF_SHOW_INSIGNIFICANT_DIFFS by default)")
 	cmd.Flags().BoolVarP(&cmdData.ShowSensitiveDiffs, "show-sensitive-diffs", "", util.GetBoolEnvironmentDefaultFalse("WERF_SHOW_SENSITIVE_DIFFS"), "Show sensitive diff lines ($WERF_SHOW_SENSITIVE_DIFFS by default)")
 	cmd.Flags().BoolVarP(&cmdData.ShowVerboseCRDDiffs, "show-verbose-crd-diffs", "", util.GetBoolEnvironmentDefaultFalse("WERF_SHOW_VERBOSE_CRD_DIFFS"), "Show verbose CRD diff lines ($WERF_SHOW_VERBOSE_CRD_DIFFS by default)")
-	// TODO(major): get rid?
-	cmd.Flags().BoolVarP(&cmdData.ShowVerboseDiffs, "show-verbose-diffs", "", util.GetBoolEnvironmentDefaultTrue("WERF_SHOW_VERBOSE_DIFFS"), "Show verbose diff lines ($WERF_SHOW_VERBOSE_DIFFS by default)")
-
 	cmd.Flags().StringVarP(&cmdData.PlanArtifactPath, "save-plan", "", os.Getenv("WERF_SAVE_PLAN_PATH"), "Save the gzip-compressed JSON install plan to the specified file")
 	cmd.Flags().StringVarP(&cmdData.ShowPlanArtifactPath, "show-plan", "", os.Getenv("WERF_SHOW_PLAN_PATH"), "Show plan artifact planned changes")
 
@@ -289,7 +272,6 @@ func run(
 			ResourceDiffOptions: nelmcommon.ResourceDiffOptions{
 				DiffContextLines:       cmdData.DiffContextLines,
 				ShowVerboseCRDDiffs:    cmdData.ShowVerboseCRDDiffs,
-				ShowVerboseDiffs:       cmdData.ShowVerboseDiffs,
 				ShowSensitiveDiffs:     cmdData.ShowSensitiveDiffs,
 				ShowInsignificantDiffs: cmdData.ShowInsignificantDiffs,
 			},
@@ -343,10 +325,6 @@ func run(
 		stubImageNameList = append(stubImageNameList, imagesToProcess.FinalImageNameList...)
 	default:
 		logboek.LogOptionalLn()
-		common.SetupOndemandKubeInitializer(commonCmdData.KubeContextCurrent, commonCmdData.LegacyKubeConfigPath, commonCmdData.KubeConfigBase64, commonCmdData.LegacyKubeConfigPathsMergeList, commonCmdData.KubeBearerTokenData, commonCmdData.KubeBearerTokenPath)
-		if err := common.GetOndemandKubeInitializer().Init(ctx); err != nil {
-			return err
-		}
 
 		useCustomTagFunc, err := common.GetUseCustomTagFunc(&commonCmdData, giterminismManager, imagesToProcess)
 		if err != nil {
@@ -480,7 +458,7 @@ func run(
 
 	registryCredentialsPath := docker.GetDockerConfigCredentialsFile(*commonCmdData.DockerConfig)
 
-	serviceValues, err := helpers.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, imagesInfoGetters, helpers.ServiceValuesOptions{
+	serviceValues, err := deploy.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, imagesInfoGetters, deploy.ServiceValuesOptions{
 		Namespace:                releaseNamespace,
 		Env:                      commonCmdData.Environment,
 		IsStub:                   isStub,
@@ -500,20 +478,20 @@ func run(
 		return fmt.Errorf("get release labels: %w", err)
 	}
 
-	file.SetChartFileReader(giterminismManager.FileManager)
+	nelmcommon.ChartFileReader = giterminismManager.FileManager
 
-	ctx = log.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultReleasePlanInstallLogLevel), log.SetupLoggingOptions{
+	ctx = action.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultReleasePlanInstallLogLevel), action.SetupLoggingOptions{
 		ColorMode: *commonCmdData.LogColorMode,
 	})
-	engine.SetDebug(commonCmdData.DebugTemplates)
+	engine.Debug = commonCmdData.DebugTemplates
 
-	if err := action.ReleasePlanInstall(ctx, releaseName, releaseNamespace, action.ReleasePlanInstallOptions{
+	if _, err := action.ReleasePlanInstall(ctx, releaseName, releaseNamespace, action.ReleasePlanInstallOptions{
 		KubeConnectionOptions:      commonCmdData.KubeConnectionOptions,
 		ChartRepoConnectionOptions: commonCmdData.ChartRepoConnectionOptions,
 		ValuesOptions:              commonCmdData.ValuesOptions,
 		SecretValuesOptions:        commonCmdData.SecretValuesOptions,
 		ChartAppVersion:            common.GetHelmChartConfigAppVersion(werfConfig),
-		ChartDirPath:               relChartPath,
+		Chart:                      relChartPath,
 		ChartProvenanceKeyring:     commonCmdData.ChartProvenanceKeyring,
 		ChartProvenanceStrategy:    commonCmdData.ChartProvenanceStrategy,
 		ChartRepoSkipUpdate:        commonCmdData.ChartRepoSkipUpdate,
@@ -547,7 +525,6 @@ func run(
 		ResourceDiffOptions: nelmcommon.ResourceDiffOptions{
 			DiffContextLines:       cmdData.DiffContextLines,
 			ShowVerboseCRDDiffs:    cmdData.ShowVerboseCRDDiffs,
-			ShowVerboseDiffs:       cmdData.ShowVerboseDiffs,
 			ShowSensitiveDiffs:     cmdData.ShowSensitiveDiffs,
 			ShowInsignificantDiffs: cmdData.ShowInsignificantDiffs,
 		},

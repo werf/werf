@@ -15,15 +15,15 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/level"
 	"github.com/werf/nelm/pkg/action"
-	"github.com/werf/nelm/pkg/export/helm/chart"
-	"github.com/werf/nelm/pkg/export/helm/engine"
-	"github.com/werf/nelm/pkg/export/helm/werf/file"
+	nelmcommon "github.com/werf/nelm/pkg/common"
+	chart "github.com/werf/nelm/pkg/helm/pkg/chart/v2"
+	"github.com/werf/nelm/pkg/helm/pkg/engine"
 	"github.com/werf/nelm/pkg/log"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/build"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/config/deploy_params"
-	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
+	"github.com/werf/werf/v2/pkg/deploy"
 	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/storage"
@@ -137,18 +137,14 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupChartProvenanceKeyring(&commonCmdData, cmd)
 	common.SetupChartProvenanceStrategy(&commonCmdData, cmd)
 	common.SetupExtraAPIVersions(&commonCmdData, cmd)
-	common.SetupForceAdoption(&commonCmdData, cmd)
 	common.SetupKubeVersion(&commonCmdData, cmd)
 	common.SetupNamespace(&commonCmdData, cmd, true)
 	common.SetupNetworkParallelism(&commonCmdData, cmd)
 	common.SetupRelease(&commonCmdData, cmd, true)
 	common.SetupReleaseStorageDriver(&commonCmdData, cmd)
 	common.SetupReleaseStorageSQLConnection(&commonCmdData, cmd)
-	common.SetupReleasesHistoryMax(&commonCmdData, cmd) // TODO(major): remove, useless for render
 	common.SetupSetDockerConfigJsonValue(&commonCmdData, cmd)
 	common.SetupTemplatesAllowDNS(&commonCmdData, cmd)
-	common.StubSetupHooksStatusProgressPeriod(&commonCmdData, cmd)
-	common.StubSetupStatusProgressPeriod(&commonCmdData, cmd)
 	commonCmdData.SetupSkipDependenciesRepoRefresh(cmd)
 	common.SetupTSOptions(&commonCmdData, cmd)
 
@@ -238,11 +234,6 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 		stubImageNameList = append(stubImageNameList, imagesToProcess.FinalImageNameList...)
 	default:
 		if err := common.DockerRegistryInit(ctx, &commonCmdData, commonManager.RegistryMirrors(), commonManager.BuildahMode()); err != nil {
-			return err
-		}
-
-		common.SetupOndemandKubeInitializer(commonCmdData.KubeContextCurrent, commonCmdData.LegacyKubeConfigPath, commonCmdData.KubeConfigBase64, commonCmdData.LegacyKubeConfigPathsMergeList, commonCmdData.KubeBearerTokenData, commonCmdData.KubeBearerTokenPath)
-		if err := common.GetOndemandKubeInitializer().Init(ctx); err != nil {
 			return err
 		}
 
@@ -380,7 +371,7 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 	}
 	registryCredentialsPath := docker.GetDockerConfigCredentialsFile(*commonCmdData.DockerConfig)
 
-	serviceValues, err := helpers.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, imagesInfoGetters, helpers.ServiceValuesOptions{
+	serviceValues, err := deploy.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, imagesInfoGetters, deploy.ServiceValuesOptions{
 		Namespace:                releaseNamespace,
 		Env:                      commonCmdData.Environment,
 		IsStub:                   isStub,
@@ -395,15 +386,15 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 		return fmt.Errorf("get service values: %w", err)
 	}
 
-	file.SetChartFileReader(giterminismManager.FileManager)
+	nelmcommon.ChartFileReader = giterminismManager.FileManager
 
 	// TODO(major): get rid of forcing color mode via ci-env and use color mode detection logic from
 	// Nelm instead. Until then, color will be always off here.
-	ctx = log.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultChartRenderLogLevel), log.SetupLoggingOptions{
+	ctx = action.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultChartRenderLogLevel), action.SetupLoggingOptions{
 		ColorMode:      log.LogColorModeOff,
 		LogIsParseable: true,
 	})
-	engine.SetDebug(commonCmdData.DebugTemplates)
+	engine.Debug = commonCmdData.DebugTemplates
 
 	if _, err := action.ChartRender(ctx, action.ChartRenderOptions{
 		KubeConnectionOptions:       commonCmdData.KubeConnectionOptions,
@@ -411,7 +402,7 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 		ValuesOptions:               commonCmdData.ValuesOptions,
 		SecretValuesOptions:         commonCmdData.SecretValuesOptions,
 		ChartAppVersion:             common.GetHelmChartConfigAppVersion(werfConfig),
-		ChartDirPath:                relChartPath,
+		Chart:                       relChartPath,
 		ChartProvenanceKeyring:      commonCmdData.ChartProvenanceKeyring,
 		ChartProvenanceStrategy:     commonCmdData.ChartProvenanceStrategy,
 		ChartRepoSkipUpdate:         commonCmdData.ChartRepoSkipUpdate,
@@ -422,7 +413,6 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 		ExtraAnnotations:            extraAnnotations,
 		ExtraLabels:                 extraLabels,
 		ExtraRuntimeAnnotations:     serviceAnnotations,
-		ForceAdoption:               commonCmdData.ForceAdoption,
 		LegacyExtraValues:           serviceValues,
 		LegacyLogRegistryStreamOut:  os.Stdout,
 		LocalKubeVersion:            commonCmdData.KubeVersion,

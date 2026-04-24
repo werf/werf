@@ -197,8 +197,6 @@ werf converge --repo registry.mydomain.com/web --env production
             (default $WERF_GITERMINISM_CONFIG or werf-giterminism.yaml in working directory)
       --home-dir=""
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
-      --hooks-status-progress-period=0
-            No-op
       --ignore-bundle-js=false
             Do not use the existing bundle.js file. Requires TypeScript source files and Deno to    
             rebuild (default $WERF_IGNORE_BUNDLE_JS)
@@ -297,6 +295,8 @@ werf converge --repo registry.mydomain.com/web --env production
       --kube-token-path=""
             Path to file with bearer token for authentication in Kubernetes (default                
             $WERF_KUBE_TOKEN_PATH)
+      --local-resource-validation=false
+            Do not use external json schema sources (default $WERF_LOCAL_RESOURCE_VALIDATION)
       --log-color-mode="auto"
             Set log color mode.
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        
@@ -344,6 +344,8 @@ werf converge --repo registry.mydomain.com/web --env production
       --no-remove-manual-changes=false
             Don`t remove fields added manually to the resource in the cluster if fields aren`t      
             present in the manifest (default $WERF_NO_REMOVE_MANUAL_CHANGES)
+      --no-resource-validation=false
+            Disable resource validation (default $WERF_NO_RESOURCE_VALIDATION)
   -p, --parallel=true
             Run in parallel (default $WERF_PARALLEL or true)
       --parallel-tasks-limit=5
@@ -407,6 +409,30 @@ werf converge --repo registry.mydomain.com/web --env production
             Requires all used images to be previously built and exist in repo. Exits with error if  
             needed images are not cached and so require to run build instructions (default          
             $WERF_REQUIRE_BUILT_IMAGES)
+      --resource-validation-cache-lifetime=48h0m0s
+            How long local schema cache will be valid. Also can be defined by                       
+            $WERF_RESOURCE_VALIDATION_CACHE_LIFETIME
+      --resource-validation-extra-schema=[]
+            Extra json schema sources to validate resources (preferred over default sources). Must  
+            be a valid go template defining a http(s) URL, or an absolute path on local file        
+            system. Also, can be defined with $WERF_RESOURCE_VALIDATION_EXTRA_SCHEMA_* (eg. $WERF_RE
+            SOURCE_VALIDATION_EXTRA_SCHEMA_1=`https://raw.githubusercontent.com/datreeio/CRDs-catalo
+            g/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json`)
+      --resource-validation-kube-version="1.35.0"
+            Kubernetes schemas version to use during resource validation. Also can be defined by    
+            $WERF_RESOURCE_VALIDATION_KUBE_VERSION
+      --resource-validation-schema=[https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/{{ .NormalizedKubernetesVersion }}-standalone{{ .StrictSuffix }}/{{ .ResourceKind }}{{ .KindSuffix }}.json,https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json]
+            Default json schema sources to validate resources. Must be a valid go template defining 
+            a http(s) URL, or an absolute path on local file system. Also, can be defined with      
+            $WERF_RESOURCE_VALIDATION_SCHEMA_* (eg. $WERF_RESOURCE_VALIDATION_SCHEMA_1=`https://raw.
+            githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.Resourc
+            eAPIVersion}}.json`)
+      --resource-validation-skip=[]
+            Skip resource validation for resources with specified attributes (can specify           
+            multiple). Format: key1=value1,key2=value2. Supported keys: group, version, kind, name, 
+            namespace. Example: kind=Deployment,name=my-app. Also, can be defined with              
+            $WERF_RESOURCE_VALIDATION_SKIP_* (e.g.                                                  
+            $WERF_RESOURCE_VALIDATION_SKIP_1=kind=Deployment,name=my-app)
       --rollback-graph-path=""
             Save rollback graph path to the specified file (by default $WERF_ROLLBACK_GRAPH_PATH).  
             Extension must be .dot or not specified. If extension not specified, then .dot is used
@@ -463,13 +489,6 @@ werf converge --repo registry.mydomain.com/web --env production
             or separate values with commas: key1=val1,key2=val2.
             Also, can be defined with $WERF_SET_ROOT_JSON_* (e.g. $WERF_SET_ROOT_JSON_1=key1=val1,  
             $WERF_SET_ROOT_JSON_2=key2=val2)
-      --set-runtime-json=[]
-            Set new keys in $.Runtime, where the key is the value path and the value is JSON. This  
-            is meant to be generated inside the program, so use --set-json instead, unless you know 
-            what you are doing. Can specify multiple or separate values with commas:                
-            key1=val1,key2=val2.
-            Also, can be defined with $WERF_SET_RUNTIME_JSON_* (e.g.                                
-            $WERF_SET_RUNTIME_JSON_1=key1=val1, $WERF_SET_RUNTIME_JSON_2=key2=val2)
       --set-string=[]
             Set STRING helm values on the command line (can specify multiple or separate values     
             with commas: key1=val1,key2=val2).

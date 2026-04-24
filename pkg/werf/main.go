@@ -12,8 +12,7 @@ import (
 	"github.com/werf/common-go/pkg/locker"
 	"github.com/werf/common-go/pkg/secrets_manager"
 	"github.com/werf/lockgate/pkg/file_lock"
-	secrets_manager_legacy "github.com/werf/nelm-for-werf-helm/pkg/secrets_manager"
-	"github.com/werf/nelm/pkg/export/helm/chart/loader"
+	"github.com/werf/nelm/pkg/helm/pkg/chart/loader"
 )
 
 var (
@@ -128,7 +127,6 @@ func Init(tmpDirOption, homeDirOption string) error {
 	loader.SetLocalCacheDir(GetLocalCacheDir())
 	loader.SetServiceDir(GetServiceDir())
 	secrets_manager.SetWerfHomeDir(GetHomeDir())
-	secrets_manager_legacy.WerfHomeDir = GetHomeDir()
 
 	file_lock.LegacyHashFunction = true
 

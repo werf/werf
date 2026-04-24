@@ -17,6 +17,8 @@ werf is a CNCF Sandbox CLI tool to implement full-cycle CI/CD to Kubernetes. wer
 - When removing content, ALWAYS clean up orphaned structural elements (comment separators, section headers, blank-line groups) that no longer serve a purpose.
 - When renaming a type, function, or constant, ALWAYS rename all related local variables, parameters, and error messages that reference the old name. A rename is not complete until grep for the old name returns zero hits in affected packages.
 - When removing a feature that has documentation in multiple languages (e.g. `pages_en/`, `pages_ru/`), ALWAYS apply the same removal to ALL language versions. NEVER assume English-only cleanup is sufficient.
+- NEVER trust LSP/gopls diagnostics from unrelated files as proof of build failure. The ONLY source of truth for compilation is `task build`. LSP often reports false errors due to stale cache or incomplete workspace indexing.
+- If you encounter errors in files OUTSIDE your task scope — STOP and report to the orchestrator. NEVER fix them yourself. Unsolicited fixes to unrelated files cause scope creep and may introduce regressions.
 
 ## Code style
 
@@ -101,6 +103,5 @@ Set this once per shell session. Without it, ALL `task` commands will fail with 
 ## Related repositories
 
 - [werf/nelm](https://github.com/werf/nelm) — Deployment engine used by werf. Go-based Kubernetes deployment tool that manages Helm charts.
-- [werf/3p-helm](https://github.com/werf/3p-helm) — Helm fork. Provides chart loading, rendering, and release primitives. Changes to Helm internals go here, not in werf.
 - [werf/kubedog](https://github.com/werf/kubedog) — Kubernetes resource tracking library.
 - [werf/common-go](https://github.com/werf/common-go) — Shared Go libraries (secrets, CLI utilities, locking).

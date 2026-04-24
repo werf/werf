@@ -121,9 +121,6 @@ werf render [IMAGE_NAME...] [options]
             final-repo Harbor username (default $WERF_FINAL_REPO_HARBOR_USERNAME)
       --final-repo-quay-token=""
             final-repo quay.io token (default $WERF_FINAL_REPO_QUAY_TOKEN)
-      --force-adoption=false
-            Always adopt resources, even if they belong to a different Helm release (default        
-            $WERF_FORCE_ADOPTION or false)
       --git-work-tree=""
             Use specified git work tree dir (default $WERF_WORK_TREE or lookup for directory that   
             contains .git in the current or parent directories)
@@ -132,8 +129,6 @@ werf render [IMAGE_NAME...] [options]
             (default $WERF_GITERMINISM_CONFIG or werf-giterminism.yaml in working directory)
       --home-dir=""
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
-      --hooks-status-progress-period=0
-            No-op
       --ignore-bundle-js=false
             Do not use the existing bundle.js file. Requires TypeScript source files and Deno to    
             rebuild (default $WERF_IGNORE_BUNDLE_JS)
@@ -293,8 +288,6 @@ werf render [IMAGE_NAME...] [options]
       --release-storage-sql-connection=""
             SQL Connection String for Helm SQL Storage (default                                     
             $WERF_RELEASE_STORAGE_SQL_CONNECTION)
-      --releases-history-max=5
-            Max releases to keep in release storage ($WERF_RELEASES_HISTORY_MAX or 5 by default)
       --repo=""
             Container registry storage address (default $WERF_REPO)
       --repo-container-registry=""
@@ -365,13 +358,6 @@ werf render [IMAGE_NAME...] [options]
             or separate values with commas: key1=val1,key2=val2.
             Also, can be defined with $WERF_SET_ROOT_JSON_* (e.g. $WERF_SET_ROOT_JSON_1=key1=val1,  
             $WERF_SET_ROOT_JSON_2=key2=val2)
-      --set-runtime-json=[]
-            Set new keys in $.Runtime, where the key is the value path and the value is JSON. This  
-            is meant to be generated inside the program, so use --set-json instead, unless you know 
-            what you are doing. Can specify multiple or separate values with commas:                
-            key1=val1,key2=val2.
-            Also, can be defined with $WERF_SET_RUNTIME_JSON_* (e.g.                                
-            $WERF_SET_RUNTIME_JSON_1=key1=val1, $WERF_SET_RUNTIME_JSON_2=key2=val2)
       --set-string=[]
             Set STRING helm values on the command line (can specify multiple or separate values     
             with commas: key1=val1,key2=val2).
@@ -395,8 +381,6 @@ werf render [IMAGE_NAME...] [options]
             Can be specified with $WERF_SSH_KEY_* (e.g. $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa,         
             $WERF_SSH_KEY_NODEJS=~/.ssh/nodejs_rsa).
             Defaults to $WERF_SSH_KEY_*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}
-      --status-progress-period=0
-            No-op
       --stub-tags=false
             Use stubs instead of real tags (default $WERF_STUB_TAGS)
   -S, --synchronization=""

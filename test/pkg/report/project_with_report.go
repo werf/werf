@@ -7,7 +7,7 @@ import (
 
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/nelm/pkg/export/helm/release"
+	"github.com/werf/nelm/pkg/action"
 	"github.com/werf/werf/v2/pkg/build"
 	werftest "github.com/werf/werf/v2/test/pkg/werf"
 )
@@ -36,7 +36,7 @@ func (p *Project) BuildWithReport(ctx context.Context, buildReportPath string, o
 	return out, buildReport
 }
 
-func (p *Project) ConvergeWithReport(ctx context.Context, deployReportPath string, opts *werftest.WithReportOptions) (combinedOut string, report release.DeployReport) {
+func (p *Project) ConvergeWithReport(ctx context.Context, deployReportPath string, opts *werftest.WithReportOptions) (combinedOut string, report action.ReleaseReportV3) {
 	if opts == nil {
 		opts = &werftest.WithReportOptions{}
 	}
@@ -47,7 +47,7 @@ func (p *Project) ConvergeWithReport(ctx context.Context, deployReportPath strin
 	deployReportRaw, err := os.ReadFile(deployReportPath)
 	Expect(err).NotTo(HaveOccurred())
 
-	var deployReport release.DeployReport
+	var deployReport action.ReleaseReportV3
 	Expect(json.Unmarshal(deployReportRaw, &deployReport)).To(Succeed())
 
 	return out, deployReport
@@ -70,7 +70,7 @@ func (p *Project) BundlePublishWithReport(ctx context.Context, buildReportPath s
 	return out, buildReport
 }
 
-func (p *Project) BundleApplyWithReport(ctx context.Context, releaseName, namespace, deployReportPath string, opts *werftest.WithReportOptions) (string, release.DeployReport) {
+func (p *Project) BundleApplyWithReport(ctx context.Context, releaseName, namespace, deployReportPath string, opts *werftest.WithReportOptions) (string, action.ReleaseReportV3) {
 	if opts == nil {
 		opts = &werftest.WithReportOptions{}
 	}
@@ -81,7 +81,7 @@ func (p *Project) BundleApplyWithReport(ctx context.Context, releaseName, namesp
 	deployReportRaw, err := os.ReadFile(deployReportPath)
 	Expect(err).NotTo(HaveOccurred())
 
-	var deployReport release.DeployReport
+	var deployReport action.ReleaseReportV3
 	Expect(json.Unmarshal(deployReportRaw, &deployReport)).To(Succeed())
 
 	return out, deployReport

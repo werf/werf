@@ -10,12 +10,12 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/werf/common-go/pkg/util"
-	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/lockgate/pkg/distributed_locker"
 	"github.com/werf/lockgate/pkg/distributed_locker/optimistic_locking_store"
 	"github.com/werf/logboek"
+	"github.com/werf/nelm/pkg/kube"
 	"github.com/werf/werf/v2/cmd/werf/common"
-	"github.com/werf/werf/v2/pkg/kubeutils"
+	"github.com/werf/werf/v2/pkg/deploy"
 	"github.com/werf/werf/v2/pkg/storage/synchronization/server"
 	"github.com/werf/werf/v2/pkg/tmp_manager"
 )
@@ -75,7 +75,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	cmd.Flags().StringVarP(&cmdData.Host, "host", "", os.Getenv("WERF_HOST"), "Bind synchronization server to the specified host (default localhost or $WERF_HOST)")
 	cmd.Flags().StringVarP(&cmdData.Port, "port", "", os.Getenv("WERF_PORT"), "Bind synchronization server to the specified port (default 55581 or $WERF_PORT)")
 
-	lo.Must0(common.SetupMinimalKubeConnectionFlags(&commonCmdData, cmd))
+	lo.Must0(common.SetupKubeConnectionFlags(&commonCmdData, cmd))
 
 	return cmd
 }
@@ -107,29 +107,30 @@ func runSynchronization(ctx context.Context) error {
 	var distributedLockerBackendFactoryFunc func(clientID string) (distributed_locker.DistributedLockerBackend, error)
 
 	if cmdData.Kubernetes {
-		if err := kube.Init(kube.InitOptions{kube.KubeConfigOptions{
-			Context:             commonCmdData.KubeContextCurrent,
-			ConfigPath:          commonCmdData.LegacyKubeConfigPath,
-			ConfigDataBase64:    commonCmdData.KubeConfigBase64,
-			ConfigPathMergeList: commonCmdData.LegacyKubeConfigPathsMergeList,
-		}}); err != nil {
-			return fmt.Errorf("cannot initialize kube: %w", err)
+		namespace := "werf-synchronization"
+
+		kubeConfig, err := kube.NewKubeConfig(ctx, kube.KubeConfigOptions{
+			KubeConnectionOptions: commonCmdData.KubeConnectionOptions,
+			KubeContextNamespace:  namespace, // TODO: unset it everywhere
+		})
+		if err != nil {
+			return fmt.Errorf("construct kube config: %w", err)
 		}
 
-		if err := common.InitKubedog(ctx); err != nil {
-			return fmt.Errorf("cannot init kubedog: %w", err)
+		clientFactory, err := kube.NewClientFactory(ctx, kubeConfig)
+		if err != nil {
+			return fmt.Errorf("construct kube client factory: %w", err)
 		}
 
 		distributedLockerBackendFactoryFunc = func(clientID string) (distributed_locker.DistributedLockerBackend, error) {
-			namespace := "werf-synchronization"
 			configMapName := fmt.Sprintf("werf-%s", clientID)
 
-			if _, err := kubeutils.GetOrCreateConfigMapWithNamespaceIfNotExists(ctx, kube.Client, namespace, configMapName, true); err != nil {
+			if _, err := deploy.GetOrCreateConfigMapWithNamespaceIfNotExists(ctx, clientFactory.Static(), namespace, configMapName, true); err != nil {
 				return nil, fmt.Errorf("unable to create cm/%s in ns/%s: %w", configMapName, namespace, err)
 			}
 
 			store := optimistic_locking_store.NewKubernetesResourceAnnotationsStore(
-				kube.DynamicClient, schema.GroupVersionResource{
+				clientFactory.Dynamic(), schema.GroupVersionResource{
 					Group:    "",
 					Version:  "v1",
 					Resource: "configmaps",

@@ -49,7 +49,9 @@ werf kubectl api-resources [flags] [options]
             When using the default or custom-column output format, don`t print headers (default     
             print headers).
   -o, --output=""
-            Output format. One of: (wide, name).
+            Output format. One of: (json, yaml, kyaml, name, wide).
+      --show-managed-fields=false
+            If true, keep the managedFields when printing objects in JSON or YAML format.
       --sort-by=""
             If non-empty, sort list of resources using specified field. The field can be either     
             `name` or `kind`.
@@ -68,6 +70,9 @@ werf kubectl api-resources [flags] [options]
             groups.
       --as-uid=""
             UID to impersonate for the operation.
+      --as-user-extra=[]
+            User extras to impersonate for the operation, this flag can be repeated to specify      
+            multiple values for the same key.
       --cache-dir="~/.kube/cache"
             Default cache directory
       --certificate-authority=""
@@ -93,6 +98,9 @@ werf kubectl api-resources [flags] [options]
       --kubeconfig=""
             Path to the kubeconfig file to use for CLI requests (default $WERF_KUBE_CONFIG, or      
             $WERF_KUBECONFIG, or $KUBECONFIG). Ignored if kubeconfig passed as base64.
+      --kuberc=""
+            Path to the kuberc file to use for preferences. This can be disabled by exporting       
+            KUBECTL_KUBERC=false feature gate or turning off the feature KUBERC=off.
       --log-flush-frequency=5s
             Maximum number of seconds between log flushes
       --match-server-version=false
@@ -102,7 +110,8 @@ werf kubectl api-resources [flags] [options]
       --password=""
             Password for basic authentication to the API server
       --profile="none"
-            Name of profile to capture. One of (none|cpu|heap|goroutine|threadcreate|block|mutex)
+            Name of profile to capture. One of                                                      
+            (none|cpu|heap|goroutine|threadcreate|block|mutex|trace)
       --profile-output="profile.pprof"
             Name of the file to write the profile to
       --request-timeout="0"

@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	dockerReference "github.com/docker/distribution/reference"
+	dockerReference "github.com/distribution/reference"
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
