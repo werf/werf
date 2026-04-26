@@ -180,7 +180,7 @@ func PrepareRsyncFilters(add string, includePaths, excludePaths []string) string
 //
 // For each excludeGlob in excludeGlobs, it generates rules like:
 //
-//	--filter='-/ base/excludeGlobPrefix...'
+//	--filter='- base/excludeGlobPrefix...'
 func PrepareRsyncExcludeFiltersForGlobs(add string, excludeGlobs []string) string {
 	if len(excludeGlobs) == 0 {
 		return ""
@@ -200,7 +200,7 @@ func PrepareRsyncExcludeFiltersForGlobs(add string, excludeGlobs []string) strin
 	sort.Strings(keys)
 	var b string
 	for _, p := range keys {
-		b += fmt.Sprintf(" --filter='-/ %s'", p)
+		b += fmt.Sprintf(" --filter='- %s'", p)
 	}
 	return b
 }
@@ -213,13 +213,13 @@ func PrepareRsyncExcludeFiltersForGlobs(add string, excludeGlobs []string) strin
 //
 // For each includeGlob in includeGlobs, it generates rules like:
 //
-//	--filter='+/ base/...prefixes.../'
-//	--filter='+/ base/includeGlob'
-//	--filter='+/ base/includeGlob/**'
+//	--filter='+ base/...prefixes.../'
+//	--filter='+ base/includeGlob'
+//	--filter='+ base/includeGlob/**'
 //
 // At the end, it adds a catch-all exclude:
 //
-//	--filter='-/ base/**'
+//	--filter='- base/**'
 func PrepareRsyncIncludeFiltersForGlobs(add string, includeGlobs []string) string {
 	if len(includeGlobs) == 0 {
 		return ""
@@ -245,10 +245,10 @@ func PrepareRsyncIncludeFiltersForGlobs(add string, includeGlobs []string) strin
 	sort.Strings(keys)
 	var b string
 	for _, k := range keys {
-		b += fmt.Sprintf(" --filter='+/ %s'", k)
+		b += fmt.Sprintf(" --filter='+ %s'", k)
 	}
 	// Everything that did not match any include is excluded.
-	b += fmt.Sprintf(" --filter='-/ %s'", path.Join(add, "**"))
+	b += fmt.Sprintf(" --filter='- %s'", path.Join(add, "**"))
 	return b
 }
 
