@@ -20,46 +20,49 @@ type container struct {
 }
 
 func (c *container) Create(ctx context.Context) error {
-	name := fmt.Sprintf("--name=%s", c.Name)
-	volume := fmt.Sprintf("--volume=%s", c.Volume)
-	targetPlatform := c.Platform
-	if targetPlatform == "" {
-		targetPlatform = docker.GetDefaultPlatform()
-	}
+	imageLockName := fmt.Sprintf("stapel.image.%s", strings.NewReplacer("/", "_", ":", "_", "@", "_").Replace(c.ImageName))
+	return werf.HostLocker().WithLock(ctx, imageLockName, lockgate.AcquireOptions{Timeout: time.Second * 600}, func() error {
+		name := fmt.Sprintf("--name=%s", c.Name)
+		volume := fmt.Sprintf("--volume=%s", c.Volume)
+		targetPlatform := c.Platform
+		if targetPlatform == "" {
+			targetPlatform = docker.GetDefaultPlatform()
+		}
 
-	if exist, err := docker.ImageExist(ctx, c.ImageName); err != nil {
-		return err
-	} else if exist {
-		if targetPlatform != "" {
-			inspect, err := docker.ImageInspect(ctx, c.ImageName)
-			if err != nil {
-				return err
-			}
-
-			actualPlatform := fmt.Sprintf("%s/%s", inspect.Os, inspect.Architecture)
-			if inspect.Variant != "" {
-				actualPlatform = fmt.Sprintf("%s/%s", actualPlatform, inspect.Variant)
-			}
-
-			platformMatches := targetPlatform == actualPlatform || strings.HasPrefix(targetPlatform, actualPlatform+"/") || strings.HasPrefix(actualPlatform, targetPlatform+"/")
-			if !platformMatches {
-				if err := docker.CliPullWithRetries(ctx, "--platform", targetPlatform, c.ImageName); err != nil {
+		if exist, err := docker.ImageExist(ctx, c.ImageName); err != nil {
+			return err
+		} else if exist {
+			if targetPlatform != "" {
+				inspect, err := docker.ImageInspect(ctx, c.ImageName)
+				if err != nil {
 					return err
 				}
+
+				actualPlatform := fmt.Sprintf("%s/%s", inspect.Os, inspect.Architecture)
+				if inspect.Variant != "" {
+					actualPlatform = fmt.Sprintf("%s/%s", actualPlatform, inspect.Variant)
+				}
+
+				platformMatches := targetPlatform == actualPlatform || strings.HasPrefix(targetPlatform, actualPlatform+"/") || strings.HasPrefix(actualPlatform, targetPlatform+"/")
+				if !platformMatches {
+					if err := docker.CliPullWithRetries(ctx, "--platform", targetPlatform, c.ImageName); err != nil {
+						return err
+					}
+				}
+			}
+		} else {
+			pullArgs := []string{c.ImageName}
+			if targetPlatform != "" {
+				pullArgs = append([]string{"--platform", targetPlatform}, pullArgs...)
+			}
+
+			if err := docker.CliPullWithRetries(ctx, pullArgs...); err != nil {
+				return err
 			}
 		}
-	} else {
-		pullArgs := []string{c.ImageName}
-		if targetPlatform != "" {
-			pullArgs = append([]string{"--platform", targetPlatform}, pullArgs...)
-		}
 
-		if err := docker.CliPullWithRetries(ctx, pullArgs...); err != nil {
-			return err
-		}
-	}
-
-	return docker.CliCreate(ctx, name, volume, c.ImageName)
+		return docker.CliCreate(ctx, name, volume, c.ImageName)
+	})
 }
 
 func (c *container) CreateIfNotExist(ctx context.Context) error {
