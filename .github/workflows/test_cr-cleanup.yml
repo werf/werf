@@ -19,7 +19,7 @@ jobs:
     if: github.repository == 'werf/werf'
     runs-on: ubuntu-22.04
     steps:
-      - run: true
+      - run: "true"
 
   cr-cleanup:
     needs: gate
@@ -44,7 +44,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup (common)
         run: sudo apt-get install -y jq

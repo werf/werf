@@ -6,7 +6,7 @@ on:
     branches: [main]
   workflow_dispatch:
   repository_dispatch:
-    types: [tests:all]
+    types: ["tests:all"]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
@@ -23,11 +23,11 @@ jobs:
       workflow_proceed: ${{ steps.changes.outputs.workflow_proceed || 'true' }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Detect changes
         if: github.event_name == 'pull_request'
-        uses: dorny/paths-filter@v3
+        uses: dorny/paths-filter@v4
         id: changes
         with:
           filters: |

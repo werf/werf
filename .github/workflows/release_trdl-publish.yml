@@ -54,7 +54,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -64,21 +64,21 @@ jobs:
           channel: alpha
       - if: matrix.dest-registry == 'registry-write.werf.io'
         name: Login to werf registry
-        uses: docker/login-action@v2
+        uses: docker/login-action@v4
         with:
           registry: registry-write.werf.io
           username: ${{ secrets.WERF_REGISTRY_USERNAME }}
           password: ${{ secrets.WERF_REGISTRY_PASSWORD }}
 
       - name: Login to ghcr.io
-        uses: docker/login-action@v2
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ secrets.WERF_IN_IMAGE_REPO_LOGIN }}
           password: ${{ secrets.WERF_IN_IMAGE_REPO_PASSWORD }}
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
         with:
           platforms: linux/amd64, linux/arm64
           image: tonistiigi/binfmt:qemu-v7.0.0-28
@@ -107,7 +107,7 @@ jobs:
       - publish
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           fetch-tags: true
