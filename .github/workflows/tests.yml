@@ -24,11 +24,11 @@ jobs:
       docs_workflow_proceed: ${{ steps.changes.outputs.docs_workflow_proceed || 'true' }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Detect changes
         if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
-        uses: dorny/paths-filter@v3
+        uses: dorny/paths-filter@v4
         id: changes
         with:
           filters: |
@@ -60,7 +60,7 @@ jobs:
       TASK_X_REMOTE_TASKFILES: 1
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up CI base
         uses: ./.github/actions/set-up-ci-base
@@ -86,7 +86,7 @@ jobs:
       TASK_X_REMOTE_TASKFILES: 1
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up CI base
         uses: ./.github/actions/set-up-ci-base
@@ -116,7 +116,7 @@ jobs:
       registry: ${{ steps.export_cluster.outputs.registry }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -174,7 +174,7 @@ jobs:
       KUBECONFIG: ${{ needs.kind_setup.outputs.kubeconfig_path }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -220,7 +220,7 @@ jobs:
       KUBECONFIG: ${{ needs.kind_setup.outputs.kubeconfig_path }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -266,7 +266,7 @@ jobs:
       KUBECONFIG: ${{ needs.kind_setup.outputs.kubeconfig_path }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -312,7 +312,7 @@ jobs:
       KUBECONFIG: ${{ needs.kind_setup.outputs.kubeconfig_path }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -358,7 +358,7 @@ jobs:
       KUBECONFIG: ${{ needs.kind_setup.outputs.kubeconfig_path }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -394,7 +394,7 @@ jobs:
       TASK_X_REMOTE_TASKFILES: 1
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -438,7 +438,7 @@ jobs:
       KUBECONFIG: ${{ needs.kind_setup.outputs.kubeconfig_path }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -476,7 +476,7 @@ jobs:
       TASK_X_REMOTE_TASKFILES: 1
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -484,7 +484,7 @@ jobs:
         uses: ./.github/actions/set-up-ci-base
 
       - name: Login to GitHub container registry
-        uses: docker/login-action@v2
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ secrets.SERVICE_ACCOUNT }}
@@ -513,7 +513,7 @@ jobs:
       JOB_ID: ${{ needs.kind_setup.outputs.job_id }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up CI base
         uses: ./.github/actions/set-up-ci-base

@@ -16,7 +16,7 @@ jobs:
       TASK_X_REMOTE_TASKFILES: 1
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up CI base
         uses: ./.github/actions/set-up-ci-base
@@ -39,7 +39,7 @@ jobs:
       TASK_X_REMOTE_TASKFILES: 1
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up CI base
         uses: ./.github/actions/set-up-ci-base
@@ -64,7 +64,7 @@ jobs:
       registry: ${{ steps.export_cluster.outputs.registry }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -105,7 +105,7 @@ jobs:
       KUBECONFIG: ${{ needs.kind_setup.outputs.kubeconfig_path }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -152,7 +152,7 @@ jobs:
       KUBECONFIG: ${{ needs.kind_setup.outputs.kubeconfig_path }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -199,7 +199,7 @@ jobs:
       KUBECONFIG: ${{ needs.kind_setup.outputs.kubeconfig_path }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -246,7 +246,7 @@ jobs:
       KUBECONFIG: ${{ needs.kind_setup.outputs.kubeconfig_path }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -293,7 +293,7 @@ jobs:
       KUBECONFIG: ${{ needs.kind_setup.outputs.kubeconfig_path }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -340,7 +340,7 @@ jobs:
       KUBECONFIG: ${{ needs.kind_setup.outputs.kubeconfig_path }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -388,7 +388,7 @@ jobs:
       JOB_ID: ${{ needs.kind_setup.outputs.job_id }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up CI base
         uses: ./.github/actions/set-up-ci-base
@@ -408,18 +408,19 @@ jobs:
       - e2e_extra_per_k8s
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Download coverage artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: coverage
 
       - name: Format and upload coverage report
-        uses: qltysh/qlty-action/coverage@v1
+        uses: qltysh/qlty-action/coverage@v2
         with:
           token: ${{ secrets.QLTY_COVERAGE_TOKEN }}
           files: coverage/coverage-*/*.out
+          validate: false
           skip-errors: false
 
   notify:
