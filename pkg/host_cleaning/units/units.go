@@ -27,12 +27,16 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/docker/go-units"
+	"github.com/dustin/go-humanize"
 )
 
 type UnitValue struct {
-	Value   uint64
-	IsBytes bool
+	Value uint64
+	// isAbsolute indicates if the value is a fixed amount of bytes (true) or a percentage (false).
+	isAbsolute bool
+	// isSI indicates if the absolute value was specified using SI units (1000-based, e.g., GB)
+	// or binary units (1024-based, e.g., GiB).
+	isSI bool
 }
 
 func (s *UnitValue) Set(input string) error {
@@ -42,6 +46,10 @@ func (s *UnitValue) Set(input string) error {
 	}
 	*s = *v
 	return nil
+}
+
+func (s *UnitValue) IsAbsolute() bool {
+	return s.isAbsolute
 }
 
 // Type is required to satisfy the pflag.Value interface used by cobra flags.
@@ -65,19 +73,25 @@ func ParseUnitValue(input string) (*UnitValue, error) {
 		if val > 100 {
 			return nil, fmt.Errorf("percentage value %d cannot exceed 100", val)
 		}
-		return &UnitValue{Value: val, IsBytes: false}, nil
+		return &UnitValue{Value: val, isAbsolute: false}, nil
 	}
 
-	bytes, bytesErr := units.RAMInBytes(input)
+	bytes, bytesErr := humanize.ParseBytes(input)
 	if bytesErr == nil {
-		return &UnitValue{Value: uint64(bytes), IsBytes: true}, nil
+		isSI := !strings.Contains(strings.ToLower(input), "i")
+
+		return &UnitValue{
+			Value:      bytes,
+			isAbsolute: true,
+			isSI:       isSI,
+		}, nil
 	}
 
 	return nil, fmt.Errorf("invalid storage value %q: specify percentage (0-100, error: %v) or absolute size (e.g. 10GB, 500MiB, error: %v)", input, pctErr, bytesErr)
 }
 
 func (s *UnitValue) ToBytes(totalBytes uint64) uint64 {
-	if s.IsBytes {
+	if s.isAbsolute {
 		return s.Value
 	}
 
@@ -85,8 +99,11 @@ func (s *UnitValue) ToBytes(totalBytes uint64) uint64 {
 }
 
 func (s *UnitValue) String() string {
-	if s.IsBytes {
-		return units.BytesSize(float64(s.Value))
+	if s.isAbsolute {
+		if s.isSI {
+			return humanize.Bytes(s.Value)
+		}
+		return humanize.IBytes(s.Value)
 	}
 	return fmt.Sprintf("%d", s.Value)
 }
