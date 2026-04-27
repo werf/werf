@@ -3,9 +3,9 @@ title: Planning
 permalink: usage/deploy/planning.html
 ---
 
-## Show expected changes in cluster before deployment
+## Review ongoing changes before deployment
 
-To see how the resources in the cluster will change during the next deployment run `werf plan` command before running `werf converge`:
+To see how the resources in the cluster will change during the next deployment run `werf plan`:
 
 ```shell
 $ werf plan --repo example.org/mycompany/myapp
@@ -35,16 +35,17 @@ Planned changes summary for release "myapp" (namespace: "myapp"):
 - update: 1 resource(s)
 ```
 
-Now run `werf converge` and see that this is exactly what happens:
+## Deploying with a two-stage workflow
 
-```shell
-$ werf converge --repo example.org/mycompany/myapp
-...
+The planning feature is quite handy, but on its own, it does not guarantee that the exact same deployment plan will be used during a subsequent `werf converge`, as the cluster state may change after the `werf plan` run. To ensure that the exact planned changes will be applied, you can utilize a two-stage deployment workflow:
 
-┌ Completed operations
-│ Update resource: Deployment/myapp
-│ Create resource: ConfigMap/mycm
-└ Completed operations
-
-Succeeded release "myapp" (namespace: "myapp")
+1. **Plan:** Generate, review, and save a plan artifact using the --save-plan flag:
 ```
+werf plan --save-plan=plan.gz
+```
+2. **Deploy:** Perform `werf converge` using the pre-generated reviewed plan:
+```
+werf converge --use-plan=plan.gz
+```
+
+The plan artifact is a gzip-compressed JSON file that can be reviewed with `werf plan --show-plan plan.gz` command. If you used `--secret-key` or `WERF_SECRET_KEY` environment variable during planning, the plan artifact will be encrypted.

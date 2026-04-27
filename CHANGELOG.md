@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.68.0](https://github.com/werf/werf/compare/v2.67.2...v2.68.0) (2026-04-22)
+
+
+### Features
+
+* **deploy:** adopt `chart ts init` for werf ([#7489](https://github.com/werf/werf/issues/7489)) ([63542e2](https://github.com/werf/werf/commit/63542e2ef392885b8d706ae8e42061fda71bd086))
+
+
+### Bug Fixes
+
+* **compose:** show docker compose config error instead of bare exit code ([6cc27d8](https://github.com/werf/werf/commit/6cc27d81cad9266b37053ac35c9f73612ec0d904))
+* init docker config in InitCommonComponents when docker registry is requested ([#7488](https://github.com/werf/werf/issues/7488)) ([76ca703](https://github.com/werf/werf/commit/76ca703c53611a0a9612e8f5fff98ced20fb4b67))
+* propagate --docker-config to image pulling in bundle copy ([#7448](https://github.com/werf/werf/issues/7448)) ([c02babe](https://github.com/werf/werf/commit/c02babecf9b7e768edf18ca71b6eaabd7a87c37f))
+
 ## [2.67.2](https://github.com/werf/werf/compare/v2.67.1...v2.67.2) (2026-04-21)
 
 

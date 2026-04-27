@@ -14,7 +14,7 @@ Nelm, the backward-compatible Helm alternative, is built into werf and is used f
 - arbitrary deployment order for any resources, not just hooks;
 - waiting for resources that are not part of the release to be created and ready;
 - using much more robust Server-Side Apply for resource updates instead of 3-Way Merge;
-- `terraform plan`-like capabilities out of the box;
+- `terraform plan`-like capabilities with two-stage deployment support;
 - integrating building and deployment, and much more.
 
 werf strives to make working with Helm deployments easier, more convenient and flexible without breaking backward compatibility with Helm charts, Helm templates, and Helm releases.

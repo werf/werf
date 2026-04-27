@@ -200,7 +200,7 @@ jobs:
       - update_release
     steps:
       - name: Trigger Deploy workflow in werf/website
-        run: gh workflow run Deploy --repo werf/website --ref main
+        run: gh workflow run "Deploy production" --repo werf/website --ref main -f targetCluster=all
         env:
           GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
 
