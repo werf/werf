@@ -25,6 +25,16 @@ import (
 	"github.com/werf/werf/v2/test/mock"
 )
 
+func stubVolumeUsageSequence(values ...volumeutils.VolumeUsage) func(context.Context, string) (volumeutils.VolumeUsage, error) {
+	return func(context.Context, string) (volumeutils.VolumeUsage, error) {
+		v := values[0]
+		if len(values) > 1 {
+			values = values[1:]
+		}
+		return v, nil
+	}
+}
+
 var _ = Describe("LocalBackendCleaner", func() {
 	t := GinkgoT()
 
@@ -335,9 +345,9 @@ var _ = Describe("LocalBackendCleaner", func() {
 				backend.EXPECT().Rmi(ctx, gomock.AnyOf(toAnySlice(rmiRefs)...), container_backend.RmiOpts{}).Return(nil).Times(3)
 			}
 
-			stubs.StubFunc(&cleaner.volumeutilsGetVolumeUsageByPath, vuStub, nil)
+			stubs.Stub(&cleaner.volumeutilsGetVolumeUsageByPath, stubVolumeUsageSequence(vu, vuStub))
 
-			report, err := cleaner.cleanupWerfImages(ctx, RunGCOptions{}, vu, 40.00)
+			report, err := cleaner.cleanupWerfImages(ctx, RunGCOptions{}, 40)
 			Expect(err).To(Succeed())
 			Expect(report).To(Equal(expectedReport))
 		},
