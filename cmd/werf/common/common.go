@@ -1028,15 +1028,6 @@ func getFlags(cmd *cobra.Command, persistent bool) *pflag.FlagSet {
 	return cmd.Flags()
 }
 
-// TODO(major): get rid of this, don't require Kubernetes for non-deployment related tasks
-func SetupMinimalKubeConnectionFlags(cmdData *CmdData, cmd *cobra.Command) error {
-	SetupKubeConfigBase64(cmdData, cmd)
-	SetupLegacyKubeConfigPath(cmdData, cmd)
-	SetupKubeContextCurrent(cmdData, cmd)
-
-	return nil
-}
-
 func SetupKubeConnectionFlags(cmdData *CmdData, cmd *cobra.Command) error {
 	cmd.Flags().StringVarP(&cmdData.KubeAPIServerAddress, "kube-api-server", "", os.Getenv("WERF_KUBE_API_SERVER"), "Kubernetes API server address (default $WERF_KUBE_API_SERVER)")
 	if defVal, err := util.GetStringToStringEnvVar("WERF_KUBE_AUTH_PROVIDER_CONFIG"); err != nil {

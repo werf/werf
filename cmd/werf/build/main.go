@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 
 	"github.com/werf/logboek"
@@ -117,8 +116,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	commonCmdData.SetupFinalImagesOnly(cmd, false)
 	commonCmdData.SetupAllowIncludesUpdate(cmd)
-
-	lo.Must0(common.SetupMinimalKubeConnectionFlags(&commonCmdData, cmd))
 
 	return cmd
 }

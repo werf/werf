@@ -10,7 +10,6 @@ import (
 	"github.com/docker/cli/cli"
 	dockercontainer "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/pkg/stdcopy"
-	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 
 	"github.com/werf/common-go/pkg/graceful"
@@ -164,8 +163,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	commonCmdData.SetupSkipImageSpecStage(cmd)
 	commonCmdData.SetupDebugTemplates(cmd)
 	commonCmdData.SetupAllowIncludesUpdate(cmd)
-
-	lo.Must0(common.SetupMinimalKubeConnectionFlags(&commonCmdData, cmd))
 
 	return cmd
 }
