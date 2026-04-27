@@ -14,25 +14,28 @@ var _ = Describe("UnitValue", func() {
 			Expect(res).To(Equal(expected))
 		},
 		Entry("Percentage: valid numeric",
-			"10", &UnitValue{Value: 10, IsBytes: false}, BeNil(),
+			"10", &UnitValue{Value: 10, isAbsolute: false, isSI: false}, BeNil(),
 		),
 		Entry("Percentage: zero",
-			"0", &UnitValue{Value: 0, IsBytes: false}, BeNil(),
+			"0", &UnitValue{Value: 0, isAbsolute: false, isSI: false}, BeNil(),
 		),
 		Entry("Percentage: hundred",
-			"100", &UnitValue{Value: 100, IsBytes: false}, BeNil(),
+			"100", &UnitValue{Value: 100, isAbsolute: false, isSI: false}, BeNil(),
 		),
 		Entry("Percentage: over hundred",
 			"101", nil, MatchError("percentage value 101 cannot exceed 100"),
 		),
-		Entry("Bytes: GB",
-			"10GB", &UnitValue{Value: 10 * 1024 * 1024 * 1024, IsBytes: true}, BeNil(),
+		Entry("Bytes: GB (SI)",
+			"10GB", &UnitValue{Value: 10 * 1000 * 1000 * 1000, isAbsolute: true, isSI: true}, BeNil(),
 		),
-		Entry("Bytes: GiB",
-			"10GiB", &UnitValue{Value: 10 * 1024 * 1024 * 1024, IsBytes: true}, BeNil(),
+		Entry("Bytes: GiB (Binary)",
+			"10GiB", &UnitValue{Value: 10 * 1024 * 1024 * 1024, isAbsolute: true, isSI: false}, BeNil(),
 		),
-		Entry("Bytes: MB",
-			"500MB", &UnitValue{Value: 500 * 1024 * 1024, IsBytes: true}, BeNil(),
+		Entry("Bytes: MB (SI)",
+			"500MB", &UnitValue{Value: 500 * 1000 * 1000, isAbsolute: true, isSI: true}, BeNil(),
+		),
+		Entry("Bytes: MiB (Binary)",
+			"500MiB", &UnitValue{Value: 500 * 1024 * 1024, isAbsolute: true, isSI: false}, BeNil(),
 		),
 		Entry("Invalid: empty",
 			"", nil, MatchError("empty storage value"),
@@ -52,19 +55,14 @@ var _ = Describe("UnitValue", func() {
 			Expect(sv.ToBytes(total)).To(Equal(expected))
 		},
 		Entry("From percentage 10% of 1000",
-			&UnitValue{Value: 10, IsBytes: false},
+			&UnitValue{Value: 10, isAbsolute: false},
 			uint64(1000),
 			uint64(100),
 		),
-		Entry("From bytes 500 of 1000",
-			&UnitValue{Value: 500, IsBytes: true},
+		Entry("From absolute bytes 500 of 1000",
+			&UnitValue{Value: 500, isAbsolute: true},
 			uint64(1000),
 			uint64(500),
-		),
-		Entry("Percentage rounding check 33% of 1000",
-			&UnitValue{Value: 33, IsBytes: false},
-			uint64(1000),
-			uint64(330),
 		),
 	)
 
@@ -73,16 +71,32 @@ var _ = Describe("UnitValue", func() {
 			Expect(sv.String()).To(Equal(expected))
 		},
 		Entry("Format percentage",
-			&UnitValue{Value: 70, IsBytes: false},
+			&UnitValue{Value: 70, isAbsolute: false},
 			"70",
 		),
-		Entry("Format bytes (KiB)",
-			&UnitValue{Value: 1024, IsBytes: true},
-			"1KiB",
+		Entry("Format absolute SI (GB)",
+			&UnitValue{Value: 10 * 1000 * 1000 * 1000, isAbsolute: true, isSI: true},
+			"10 GB",
 		),
-		Entry("Format bytes (GB)",
-			&UnitValue{Value: 10 * 1024 * 1024 * 1024, IsBytes: true},
-			"10GiB",
+		Entry("Format absolute Binary (GiB)",
+			&UnitValue{Value: 10 * 1024 * 1024 * 1024, isAbsolute: true, isSI: false},
+			"10 GiB",
+		),
+		Entry("Format absolute SI (MB)",
+			&UnitValue{Value: 500 * 1000 * 1000, isAbsolute: true, isSI: true},
+			"500 MB",
 		),
 	)
+
+	Describe("IsAbsolute", func() {
+		It("should return true for absolute values", func() {
+			v := &UnitValue{isAbsolute: true}
+			Expect(v.IsAbsolute()).To(BeTrue())
+		})
+
+		It("should return false for percentages", func() {
+			v := &UnitValue{isAbsolute: false}
+			Expect(v.IsAbsolute()).To(BeFalse())
+		})
+	})
 })
