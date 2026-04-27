@@ -50,6 +50,7 @@ func getContainer(targetPlatform string) container {
 		Name:      fmt.Sprintf("%s%s", image.AssemblingContainerNamePrefix, containerNameSuffix),
 		ImageName: ImageName(),
 		Volume:    path.Join(CONTAINER_MOUNT_ROOT, "stapel"),
+		Platform:  targetPlatform,
 	}
 }
 

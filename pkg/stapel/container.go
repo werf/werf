@@ -16,17 +16,21 @@ type container struct {
 	Name      string
 	ImageName string
 	Volume    string
+	Platform  string
 }
 
 func (c *container) Create(ctx context.Context) error {
 	name := fmt.Sprintf("--name=%s", c.Name)
 	volume := fmt.Sprintf("--volume=%s", c.Volume)
-	desiredPlatform := docker.GetDefaultPlatform()
+	targetPlatform := c.Platform
+	if targetPlatform == "" {
+		targetPlatform = docker.GetDefaultPlatform()
+	}
 
 	if exist, err := docker.ImageExist(ctx, c.ImageName); err != nil {
 		return err
 	} else if exist {
-		if desiredPlatform != "" {
+		if targetPlatform != "" {
 			inspect, err := docker.ImageInspect(ctx, c.ImageName)
 			if err != nil {
 				return err
@@ -37,17 +41,17 @@ func (c *container) Create(ctx context.Context) error {
 				actualPlatform = fmt.Sprintf("%s/%s", actualPlatform, inspect.Variant)
 			}
 
-			platformMatches := desiredPlatform == actualPlatform || strings.HasPrefix(desiredPlatform, actualPlatform+"/") || strings.HasPrefix(actualPlatform, desiredPlatform+"/")
+			platformMatches := targetPlatform == actualPlatform || strings.HasPrefix(targetPlatform, actualPlatform+"/") || strings.HasPrefix(actualPlatform, targetPlatform+"/")
 			if !platformMatches {
-				if err := docker.CliPullWithRetries(ctx, "--platform", desiredPlatform, c.ImageName); err != nil {
+				if err := docker.CliPullWithRetries(ctx, "--platform", targetPlatform, c.ImageName); err != nil {
 					return err
 				}
 			}
 		}
 	} else {
 		pullArgs := []string{c.ImageName}
-		if desiredPlatform != "" {
-			pullArgs = append([]string{"--platform", desiredPlatform}, pullArgs...)
+		if targetPlatform != "" {
+			pullArgs = append([]string{"--platform", targetPlatform}, pullArgs...)
 		}
 
 		if err := docker.CliPullWithRetries(ctx, pullArgs...); err != nil {

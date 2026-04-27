@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -1062,6 +1063,8 @@ func (c *Conveyor) FindImage(targetPlatform, name string) (*image.Image, error) 
 	}
 
 	if len(availablePlatforms) > 0 {
+		availablePlatforms = lo.Uniq(availablePlatforms)
+		sort.Strings(availablePlatforms)
 		return nil, fmt.Errorf("image %q does not support platform %q (available: %s)", name, targetPlatform, strings.Join(availablePlatforms, ", "))
 	}
 	return nil, fmt.Errorf("image %q not found", name)
