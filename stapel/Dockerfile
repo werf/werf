@@ -7,7 +7,6 @@ ARG TARGETARCH=amd64
 RUN apk add --no-cache \
   bash \
   git \
-  rsync \
   coreutils \
   findutils \
   gawk \
@@ -21,7 +20,28 @@ RUN apk add --no-cache \
   patchelf \
   file \
   unzip \
-  util-linux
+  util-linux \
+  wget
+
+RUN apk add --no-cache --virtual .build-deps \
+  gcc \
+  musl-dev \
+  make \
+  python3 \
+  autoconf \
+  automake \
+  libtool
+
+RUN cd /tmp && \
+  wget https://github.com/RsyncProject/rsync/archive/v3.1.2.tar.gz && \
+  tar xzf v3.1.2.tar.gz && \
+  cd rsync-3.1.2 && \
+  ./configure --prefix=/usr && \
+  make && \
+  make install && \
+  cd / && \
+  rm -rf /tmp/rsync-3.1.2 /tmp/v3.1.2.tar.gz && \
+  apk del .build-deps
 
 ENV TOOLS=/.werf/stapel
 
