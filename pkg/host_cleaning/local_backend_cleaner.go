@@ -259,6 +259,9 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 		return fmt.Errorf("error getting volume usage by path %q: %w", backendStoragePath, err)
 	}
 
+	// initialVolumeUsage stores the baseline volume usage to calculate the total factual freed space at the end of the GC process.
+	initialVolumeUsage := vu
+
 	if vu.UsedBytes <= options.AllowedStorageVolumeUsageBytes {
 		logboek.Context(ctx).LogBlock("Check storage").Do(func() {
 			logboek.Context(ctx).LogF("Volume usage: %s / %s\n", humanize.Bytes(vu.UsedBytes), humanize.Bytes(vu.TotalBytes))
@@ -270,16 +273,13 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 
 	targetVolumeUsageBytes := uint64(math.Max(float64(options.AllowedStorageVolumeUsageBytes)-float64(options.AllowedStorageVolumeUsageMarginBytes), 0))
 
-	neededToFreeBytes := uint64(math.Max(float64(vu.UsedBytes)-float64(targetVolumeUsageBytes), 0))
-
 	logboek.Context(ctx).LogBlock("Check storage").Do(func() {
+		neededToFreeBytes := uint64(math.Max(float64(vu.UsedBytes)-float64(targetVolumeUsageBytes), 0))
 		logboek.Context(ctx).LogF("Volume usage: %s / %s\n", humanize.Bytes(vu.UsedBytes), humanize.Bytes(vu.TotalBytes))
 		logboek.Context(ctx).LogF("Allowed level exceeded: %s > %s — %s\n", utils.RedF("%s (%.2f%%)", humanize.Bytes(vu.UsedBytes), vu.BytesToPercentage(vu.UsedBytes)), utils.YellowF("%s (%.2f%%)", humanize.Bytes(options.AllowedStorageVolumeUsageBytes), vu.BytesToPercentage(options.AllowedStorageVolumeUsageBytes)), utils.RedF("HIGH VOLUME USAGE"))
 		logboek.Context(ctx).LogF("Target level after cleanup: %s - %s (margin) = %s\n", humanize.Bytes(options.AllowedStorageVolumeUsageBytes), humanize.Bytes(options.AllowedStorageVolumeUsageMarginBytes), utils.BlueF("%s (%.2f%%)", humanize.Bytes(targetVolumeUsageBytes), vu.BytesToPercentage(targetVolumeUsageBytes)))
 		logboek.Context(ctx).LogF("Needed to free: %s\n", utils.RedF("%s", humanize.Bytes(neededToFreeBytes)))
 	})
-
-	var totalFreedBytes uint64
 
 	// Step 1. Prune unused anonymous volumes
 	err = logboek.Context(ctx).LogBlock("Prune all unused anonymous volumes").DoError(func() error {
@@ -288,9 +288,11 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 			return err
 		}
 
-		totalFreedBytes += reportVolumes.SpaceReclaimed
-
-		logboek.Context(ctx).LogF("Freed space: %s\n", utils.RedF("%s", humanize.Bytes(reportVolumes.SpaceReclaimed)))
+		var spaceReclaimed uint64
+		if spaceReclaimed, vu, err = cleaner.measureReclaimedSpace(ctx, options.StoragePath, vu); err != nil {
+			return err
+		}
+		logboek.Context(ctx).LogF("Freed space: %s\n", utils.RedF("%s", humanize.Bytes(spaceReclaimed)))
 		logDeletedItems(ctx, reportVolumes.ItemsDeleted)
 
 		return nil
@@ -306,9 +308,11 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 			return err
 		}
 
-		totalFreedBytes += reportImages.SpaceReclaimed
-
-		logboek.Context(ctx).LogF("Freed space: %s\n", utils.RedF("%s", humanize.Bytes(reportImages.SpaceReclaimed)))
+		var spaceReclaimed uint64
+		if spaceReclaimed, vu, err = cleaner.measureReclaimedSpace(ctx, options.StoragePath, vu); err != nil {
+			return err
+		}
+		logboek.Context(ctx).LogF("Freed space: %s\n", utils.RedF("%s", humanize.Bytes(spaceReclaimed)))
 		logDeletedItems(ctx, reportImages.ItemsDeleted)
 
 		return nil
@@ -317,15 +321,9 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 		return fmt.Errorf("unable to prune werf dangling images: %w", err)
 	}
 
-	// We need actual disk usage stats from the OS because backend reported reclaimed space
-	// might be inaccurate due to layers sharing or filesystem features (e.g. refcounts).
-	vu, err = cleaner.volumeutilsGetVolumeUsageByPath(ctx, options.StoragePath)
-	if err != nil {
-		return fmt.Errorf("error getting volume usage by path %q: %w", options.StoragePath, err)
-	}
-
 	if vu.UsedBytes <= options.AllowedStorageVolumeUsageBytes {
 		logboek.Context(ctx).LogBlock("Check storage").Do(func() {
+			totalFreedBytes := uint64(math.Max(float64(initialVolumeUsage.UsedBytes)-float64(vu.UsedBytes), 0))
 			logboek.Context(ctx).LogF("Total freed space: %s\n", utils.RedF("%s", humanize.Bytes(totalFreedBytes)))
 			logboek.Context(ctx).LogF("Volume usage: %s / %s\n", humanize.Bytes(vu.UsedBytes), humanize.Bytes(vu.TotalBytes))
 			logboek.Context(ctx).LogF("Allowed level exceeded: %s > %s — %s\n", utils.RedF("%s (%.2f%%)", humanize.Bytes(vu.UsedBytes), vu.BytesToPercentage(vu.UsedBytes)), utils.YellowF("%s (%.2f%%)", humanize.Bytes(options.AllowedStorageVolumeUsageBytes), vu.BytesToPercentage(options.AllowedStorageVolumeUsageBytes)), utils.RedF("HIGH VOLUME USAGE"))
@@ -337,14 +335,16 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 
 	// Step 3. Remove werf containers
 	err = logboek.Context(ctx).LogBlock("Cleanup werf containers").DoError(func() error {
-		reportWerfContainers, err := cleaner.cleanupWerfContainers(ctx, options, vu)
+		reportWerfContainers, err := cleaner.cleanupWerfContainers(ctx, options)
 		if err != nil {
 			return err
 		}
 
-		totalFreedBytes += reportWerfContainers.SpaceReclaimed
-
-		logboek.Context(ctx).LogF("Freed space: %s\n", utils.RedF("%s", humanize.Bytes(reportWerfContainers.SpaceReclaimed)))
+		var spaceReclaimed uint64
+		if spaceReclaimed, vu, err = cleaner.measureReclaimedSpace(ctx, options.StoragePath, vu); err != nil {
+			return err
+		}
+		logboek.Context(ctx).LogF("Freed space: %s\n", utils.RedF("%s", humanize.Bytes(spaceReclaimed)))
 		logDeletedItems(ctx, reportWerfContainers.ItemsDeleted)
 
 		return nil
@@ -360,9 +360,11 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 			return err
 		}
 
-		totalFreedBytes += reportWerfImages.SpaceReclaimed
-
-		logboek.Context(ctx).LogF("Freed space: %s\n", utils.RedF("%s", humanize.Bytes(reportWerfImages.SpaceReclaimed)))
+		var spaceReclaimed uint64
+		if spaceReclaimed, vu, err = cleaner.measureReclaimedSpace(ctx, options.StoragePath, vu); err != nil {
+			return err
+		}
+		logboek.Context(ctx).LogF("Freed space: %s\n", utils.RedF("%s", humanize.Bytes(spaceReclaimed)))
 		logDeletedItems(ctx, reportWerfImages.ItemsDeleted)
 
 		return nil
@@ -371,14 +373,8 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 		return fmt.Errorf("unable to cleanup werf images: %w", err)
 	}
 
-	// We need actual disk usage stats from the OS because backend reported reclaimed space
-	// might be inaccurate due to layers sharing or filesystem features (e.g. refcounts).
-	vu, err = cleaner.volumeutilsGetVolumeUsageByPath(ctx, options.StoragePath)
-	if err != nil {
-		return fmt.Errorf("error getting volume usage by path %q: %w", options.StoragePath, err)
-	}
-
 	logboek.Context(ctx).LogBlock("Check storage").Do(func() {
+		totalFreedBytes := uint64(math.Max(float64(initialVolumeUsage.UsedBytes)-float64(vu.UsedBytes), 0))
 		logboek.Context(ctx).LogF("Total freed space: %s\n", utils.RedF("%s", humanize.Bytes(totalFreedBytes)))
 		logboek.Context(ctx).LogF("Volume usage: %s / %s\n", humanize.Bytes(vu.UsedBytes), humanize.Bytes(vu.TotalBytes))
 		logboek.Context(ctx).LogF("Allowed level exceeded: %s > %s — %s\n", utils.RedF("%s (%.2f%%)", humanize.Bytes(vu.UsedBytes), vu.BytesToPercentage(vu.UsedBytes)), utils.YellowF("%s (%.2f%%)", humanize.Bytes(options.AllowedStorageVolumeUsageBytes), vu.BytesToPercentage(options.AllowedStorageVolumeUsageBytes)), utils.RedF("HIGH VOLUME USAGE"))
@@ -397,6 +393,19 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 	}
 
 	return nil
+}
+
+// measureReclaimedSpace gets the actual disk state, calculates the factual
+// freed space relative to vuBefore and returns this volume along with the new state.
+func (cleaner *LocalBackendCleaner) measureReclaimedSpace(ctx context.Context, storagePath string, vuBefore volumeutils.VolumeUsage) (uint64, volumeutils.VolumeUsage, error) {
+	vuAfter, err := cleaner.volumeutilsGetVolumeUsageByPath(ctx, storagePath)
+	if err != nil {
+		return 0, volumeutils.VolumeUsage{}, fmt.Errorf("error getting volume usage by path %q: %w", storagePath, err)
+	}
+
+	spaceReclaimed := uint64(math.Max(float64(vuBefore.UsedBytes)-float64(vuAfter.UsedBytes), 0))
+
+	return spaceReclaimed, vuAfter, nil
 }
 
 // pruneImages removes werf dangling images
@@ -457,15 +466,14 @@ func (cleaner *LocalBackendCleaner) pruneVolumes(ctx context.Context, options Ru
 	return mapPruneReportToCleanupReport(report), err
 }
 
-func (cleaner *LocalBackendCleaner) cleanupWerfContainers(ctx context.Context, options RunGCOptions, vu volumeutils.VolumeUsage) (cleanupReport, error) {
+func (cleaner *LocalBackendCleaner) cleanupWerfContainers(ctx context.Context, options RunGCOptions) (cleanupReport, error) {
 	containers, err := werfContainersByContainersOptions(ctx, cleaner.backend, buildContainersOptions())
 	if err != nil {
 		return cleanupReport{}, fmt.Errorf("cannot get build containers: %w", err)
 	}
 
 	report := cleanupReport{
-		ItemsDeleted:   make([]string, 0, len(containers)),
-		SpaceReclaimed: 0,
+		ItemsDeleted: make([]string, 0, len(containers)),
 	}
 
 	for _, container := range containers {
@@ -499,16 +507,6 @@ func (cleaner *LocalBackendCleaner) cleanupWerfContainers(ctx context.Context, o
 		report.ItemsDeleted = append(report.ItemsDeleted, container.ID)
 	}
 
-	if len(containers) > 0 {
-		// No explicit way to calculate reclaimed containers' size.
-		// But we can calculate it implicitly via disk usage check.
-		vuAfter, err := cleaner.volumeutilsGetVolumeUsageByPath(ctx, options.StoragePath)
-		if err != nil {
-			return cleanupReport{}, fmt.Errorf("error getting volume usage by path %q: %w", options.StoragePath, err)
-		}
-		report.SpaceReclaimed = vu.UsedBytes - vuAfter.UsedBytes
-	}
-
 	return report.Normalize(), nil
 }
 
@@ -519,8 +517,7 @@ func (cleaner *LocalBackendCleaner) cleanupWerfImages(ctx context.Context, optio
 	}
 
 	report := cleanupReport{
-		ItemsDeleted:   make([]string, 0, len(images)),
-		SpaceReclaimed: 0,
+		ItemsDeleted: make([]string, 0, len(images)),
 	}
 
 	// 1. Start the cleaning loop.
@@ -579,8 +576,6 @@ func (cleaner *LocalBackendCleaner) cleanupWerfImages(ctx context.Context, optio
 		if vuAfter.UsedBytes >= vu.UsedBytes {
 			break
 		}
-
-		report.SpaceReclaimed += vu.UsedBytes - vuAfter.UsedBytes
 
 		// 9. Move to the next set of images.
 		startIndex = n + 1
@@ -684,7 +679,11 @@ func handleError(ctx context.Context, err error) error {
 	return nil
 }
 
-// countImagesToFree returns index ∈ [0, len(images) - 1] or -1 otherwise
+// countImagesToFree returns index ∈ [0, len(images) - 1] or -1 otherwise.
+// NOTE: img.Size contains the size of the image without considering shared layers.
+// Thus, this counting relies on a lower-bound estimate of the space that will actually be freed.
+// This is an intentional approximation used as an optimization to avoid repeatedly checking
+// disk usage after deleting every single image.
 func countImagesToFree(list image.ImagesList, startIndex int, bytesToFree uint64) int {
 	if bytesToFree == 0 || startIndex < 0 || startIndex >= len(list) {
 		return -1
