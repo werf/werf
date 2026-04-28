@@ -3,9 +3,9 @@ title: Планирование
 permalink: usage/deploy/planning.html
 ---
 
-## Показать ожидаемые изменения в кластере перед развертыванием
+## Показать запланированные изменения перед развертыванием
 
-Чтобы увидеть, как изменятся ресурсы в кластере во время следующего развертывания, выполните команду `werf plan` перед выполнением `werf converge`:
+Чтобы увидеть, как изменятся ресурсы в кластере во время следующего развертывания, выполните команду `werf plan`:
 
 ```shell
 $ werf plan --repo example.org/mycompany/myapp
@@ -35,16 +35,17 @@ Planned changes summary for release "myapp" (namespace: "myapp"):
 - update: 1 resource(s)
 ```
 
-Теперь выполните `werf converge` и убедитесь, что это именно то, что произойдет:
+## Выполнение деплоя в две стадии
 
-```shell
-$ werf converge --repo example.org/mycompany/myapp
-...
+Функция планирования Werf весьма удобна, но сама по себе она не гарантирует, что при последующем выполнении `werf converge` будет использован тот же самый план развертывания, так как состояние кластера может измениться после запуска `werf plan`. Чтобы гарантировать применение именно запланированы изменений, вы можете выполнить деплой в две стации:
 
-┌ Completed operations
-│ Update resource: Deployment/myapp
-│ Create resource: ConfigMap/mycm
-└ Completed operations
-
-Succeeded release "myapp" (namespace: "myapp")
+1. **Plan:** Сгенерируйте, проверьте и сохраните артефакт плана с помощью флага --save-plan:
 ```
+werf plan --save-plan=plan.gz
+```
+2. **Deploy:** Выполните `werf converge`, используя ранее созданный и проверенный план:
+```
+werf converge --use-plan=plan.gz
+```
+
+Артефакт плана представляет собой JSON-файл, сжатый с помощью gzip, который можно просмотреть командой `werf plan --show-plan plan.gz`. Если при планировании использовался флаг `--secret-key` или переменная окружения `$WERF_SECRET_KEY`, артефакт плана будет зашифрован.
