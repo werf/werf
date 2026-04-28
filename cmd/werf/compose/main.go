@@ -11,7 +11,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 
 	"github.com/werf/logboek"
@@ -343,8 +342,6 @@ func newCmd(ctx context.Context, composeCmdName string, options *newCmdOptions) 
 
 	commonCmdData.SetupSkipImageSpecStage(cmd)
 	commonCmdData.SetupAllowIncludesUpdate(cmd)
-
-	lo.Must0(common.SetupMinimalKubeConnectionFlags(&commonCmdData, cmd))
 
 	return cmd
 }

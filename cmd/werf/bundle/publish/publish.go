@@ -136,7 +136,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	commonCmdData.SetupDebugTemplates(cmd)
 	commonCmdData.SetupAllowIncludesUpdate(cmd)
 
-	lo.Must0(common.SetupMinimalKubeConnectionFlags(&commonCmdData, cmd))
 	lo.Must0(common.SetupChartRepoConnectionFlags(&commonCmdData, cmd))
 	lo.Must0(common.SetupValuesFlags(&commonCmdData, cmd))
 	lo.Must0(common.SetupSecretValuesFlags(&commonCmdData, cmd))
