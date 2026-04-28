@@ -3,10 +3,10 @@ name: tests:all
 on:
   pull_request:
   push:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
   repository_dispatch:
-    types: [ "tests:all" ]
+    types: ["tests:all"]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number ||
