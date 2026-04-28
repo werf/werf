@@ -598,6 +598,9 @@ func (phase *BuildPhase) getLogImageNetwork(img *image.Image) string {
 			network = img.StapelImageConfig.ImageBaseConfig().Network
 		}
 	}
+	if network == "" {
+		network = "default"
+	}
 	return network
 }
 
