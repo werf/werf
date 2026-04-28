@@ -25,16 +25,6 @@ import (
 	"github.com/werf/werf/v2/test/mock"
 )
 
-func stubVolumeUsageSequence(values ...volumeutils.VolumeUsage) func(context.Context, string) (volumeutils.VolumeUsage, error) {
-	return func(context.Context, string) (volumeutils.VolumeUsage, error) {
-		v := values[0]
-		if len(values) > 1 {
-			values = values[1:]
-		}
-		return v, nil
-	}
-}
-
 var _ = Describe("LocalBackendCleaner", func() {
 	t := GinkgoT()
 
@@ -208,7 +198,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 
 			stubs.StubFunc(&cleaner.volumeutilsGetVolumeUsageByPath, volumeutils.VolumeUsage{}, nil)
 
-			report, err := cleaner.cleanupWerfContainers(ctx, runOpts, volumeutils.VolumeUsage{})
+			report, err := cleaner.cleanupWerfContainers(ctx, runOpts)
 			Expect(err).To(Succeed())
 			Expect(report).To(Equal(expectedReport))
 		},
@@ -257,8 +247,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 			true,
 			nil,
 			cleanupReport{
-				ItemsDeleted:   []string{"some-id"},
-				SpaceReclaimed: 0,
+				ItemsDeleted: []string{"some-id"},
 			},
 		),
 		Entry(
@@ -368,8 +357,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 			},
 			[]string{"one-digest", "two-digest", "three-digest"},
 			cleanupReport{
-				ItemsDeleted:   []string{"one", "two", "three"},
-				SpaceReclaimed: 200,
+				ItemsDeleted: []string{"one", "two", "three"},
 			},
 		),
 		Entry(
@@ -593,4 +581,14 @@ func convBoolToInt(v bool) int {
 		return 1
 	}
 	return 0
+}
+
+func stubVolumeUsageSequence(values ...volumeutils.VolumeUsage) func(context.Context, string) (volumeutils.VolumeUsage, error) {
+	return func(context.Context, string) (volumeutils.VolumeUsage, error) {
+		v := values[0]
+		if len(values) > 1 {
+			values = values[1:]
+		}
+		return v, nil
+	}
 }
