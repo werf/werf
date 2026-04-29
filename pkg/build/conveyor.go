@@ -1039,6 +1039,10 @@ func (c *Conveyor) GetOrCreateStageImage(name string, prevStageImage *stage.Stag
 	return stageImage
 }
 
+// GetImage returns the image for the given target platform and name.
+// TODO: migrate callers to FindImage and remove this method — GetImage is a legacy wrapper
+// that panics on error because its signature is part of the stage.Conveyor interface which
+// does not support error returns yet.
 func (c *Conveyor) GetImage(targetPlatform, name string) *image.Image {
 	img, err := c.FindImage(targetPlatform, name)
 	if err != nil {
@@ -1049,7 +1053,7 @@ func (c *Conveyor) GetImage(targetPlatform, name string) *image.Image {
 
 func (c *Conveyor) FindImage(targetPlatform, name string) (*image.Image, error) {
 	if targetPlatform == "" {
-		panic("assertion: targetPlatform should not be empty")
+		return nil, fmt.Errorf("targetPlatform must not be empty")
 	}
 
 	var availablePlatforms []string

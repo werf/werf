@@ -6,8 +6,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/containerd/containerd/platforms"
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
+	"github.com/werf/werf/v2/pkg/container_backend/thirdparty/platformutil"
 	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/werf"
 )
@@ -38,13 +40,20 @@ func (c *container) Create(ctx context.Context) error {
 					return err
 				}
 
-				actualPlatform := fmt.Sprintf("%s/%s", inspect.Os, inspect.Architecture)
+				actualSpec, err := platformutil.ParsePlatform(fmt.Sprintf("%s/%s", inspect.Os, inspect.Architecture))
+				if err != nil {
+					return fmt.Errorf("parse cached image platform: %w", err)
+				}
 				if inspect.Variant != "" {
-					actualPlatform = fmt.Sprintf("%s/%s", actualPlatform, inspect.Variant)
+					actualSpec.Variant = inspect.Variant
 				}
 
-				platformMatches := targetPlatform == actualPlatform || strings.HasPrefix(targetPlatform, actualPlatform+"/") || strings.HasPrefix(actualPlatform, targetPlatform+"/")
-				if !platformMatches {
+				desiredSpec, err := platformutil.ParsePlatform(targetPlatform)
+				if err != nil {
+					return fmt.Errorf("parse target platform: %w", err)
+				}
+
+				if !platforms.Only(platforms.Normalize(desiredSpec)).Match(actualSpec) {
 					if err := docker.CliPullWithRetries(ctx, "--platform", targetPlatform, c.ImageName); err != nil {
 						return err
 					}
