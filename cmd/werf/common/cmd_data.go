@@ -95,6 +95,7 @@ type CmdData struct {
 	VirtualMerge *bool
 
 	ScanContextNamespaceOnly *bool
+	KubeScanNamespaces       *[]string
 
 	// Host storage cleanup options
 	DisableAutoHostCleanup                 *bool

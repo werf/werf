@@ -81,6 +81,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupContainerRegistryMirror(&commonCmdData, cmd)
 
 	common.SetupScanContextNamespaceOnly(&commonCmdData, cmd)
+	common.SetupKubeScanNamespaces(&commonCmdData, cmd)
 	common.SetupDryRun(&commonCmdData, cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)
@@ -231,6 +232,7 @@ func runCleanup(ctx context.Context, cmd *cobra.Command) error {
 			commonCmdData.KubeAPIServerAddress,
 			commonCmdData.KubeTLSCAData,
 			commonCmdData.KubeSkipTLSVerify,
+			*commonCmdData.KubeScanNamespaces,
 		)
 		if err != nil {
 			return fmt.Errorf("unable to get Kubernetes clusters connections: %w", err)
