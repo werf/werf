@@ -33,7 +33,7 @@ type expectedImageInfo struct {
 	DigestByPlatform map[string]string
 }
 
-var _ = Describe("Multiarch build", Pending, Label("e2e", "build", "multiarch", "simple"), func() {
+var _ = Describe("Multiarch build", Label("e2e", "build", "multiarch", "simple"), func() {
 	DescribeTable("should build images for multiple architectures and publish multiarch manifests",
 		func(ctx SpecContext, testOpts multiarchTestOptions) {
 			setupEnv(testOpts.setupEnvOptions)
