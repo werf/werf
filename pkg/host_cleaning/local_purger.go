@@ -9,6 +9,7 @@ import (
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/container_backend"
+	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/stapel"
 	"github.com/werf/werf/v2/pkg/werf"
@@ -95,6 +96,10 @@ func (purger *localPurger) PurgeWerfHomeFiles(ctx context.Context, options Commo
 
 func (purger *localPurger) PurgeStapelFiles(ctx context.Context, options CommonOptions) error {
 	if options.DryRun {
+		return nil
+	}
+
+	if !docker.IsEnabled() {
 		return nil
 	}
 
