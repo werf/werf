@@ -74,16 +74,10 @@ func (s *GitCacheStage) gitMappingsPatchSize(ctx context.Context, c Conveyor, pr
 	return size, nil
 }
 
-func (s *GitCacheStage) GetContextDependencies(ctx context.Context, c Conveyor) (string, error) {
-	var args []string
-	for _, gitMapping := range s.gitMappings {
-		commitInfo, err := gitMapping.GetLatestCommitInfo(ctx, c)
-		if err != nil {
-			return "", fmt.Errorf("unable to get latest commit of git mapping %s: %w", gitMapping.Name, err)
-		}
-		args = append(args, gitMapping.GetParamshash(), commitInfo.Commit)
-	}
-	return util.Sha256Hash(args...), nil
+// GetContextDependencies returns empty: all git file content is already
+// checksummed by GitArchiveStage.GetContextDependencies.
+func (s *GitCacheStage) GetContextDependencies(ctx context.Context, c Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+	return "", nil
 }
 
 func (s *GitCacheStage) GetNextStageDependencies(ctx context.Context, c Conveyor) (string, error) {

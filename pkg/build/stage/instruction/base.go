@@ -98,17 +98,6 @@ func (stg *Base[T, BT]) GetExpandedEnv(c stage.Conveyor) map[string]string {
 	return env
 }
 
-func (stg *Base[T, BT]) GetExpandedContextEnv(c stage.Conveyor) map[string]string {
-	env := make(map[string]string)
-	for k, v := range stg.expandedEnv {
-		env[k] = v
-	}
-	for k, v := range stage.ResolveContextDependenciesArgs(stg.TargetPlatform(), stg.dependencies, c) {
-		env[k] = v
-	}
-	return env
-}
-
 func (stg *Base[T, BT]) ExpandInstruction(_ stage.Conveyor, env map[string]string) error {
 	// NOTE: this is 2nd stage expansion (without skipping unset envs)
 	return stg.instruction.Expand(env, dockerfile.ExpandOptions{})

@@ -127,7 +127,6 @@ type BaseStage struct {
 	imageName        string
 	digest           string
 	contentDigest    string
-	contextDigest    string
 	stageImage       *StageImage
 	gitMappings      []*GitMapping
 	imageTmpDir      string
@@ -208,7 +207,7 @@ func (s *BaseStage) GetNextStageDependencies(_ context.Context, _ Conveyor) (str
 	return "", nil
 }
 
-func (s *BaseStage) GetContextDependencies(ctx context.Context, c Conveyor) (string, error) {
+func (s *BaseStage) GetContextDependencies(ctx context.Context, c Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
 	panic("method must be implemented!")
 }
 
@@ -578,14 +577,6 @@ func (s *BaseStage) SetContentDigest(contentDigest string) {
 
 func (s *BaseStage) GetContentDigest() string {
 	return s.contentDigest
-}
-
-func (s *BaseStage) SetContextDigest(contextDigest string) {
-	s.contextDigest = contextDigest
-}
-
-func (s *BaseStage) GetContextDigest() string {
-	return s.contextDigest
 }
 
 func (s *BaseStage) SetStageImage(stageImage *StageImage) {

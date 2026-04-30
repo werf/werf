@@ -27,12 +27,12 @@ type BeforeInstallStage struct {
 	*UserStage
 }
 
-func (s *BeforeInstallStage) GetDependencies(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
-	return s.builder.BeforeInstallChecksum(ctx), nil
+func (s *BeforeInstallStage) GetContextDependencies(ctx context.Context, c Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+	return s.getBuilderChecksum(ctx), nil
 }
 
-func (s *BeforeInstallStage) GetContextDependencies(ctx context.Context, c Conveyor) (string, error) {
-	return s.GetDependencies(ctx, c, nil, nil, nil, nil)
+func (s *BeforeInstallStage) GetDependencies(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+	return s.builder.BeforeInstallChecksum(ctx), nil
 }
 
 func (s *BeforeInstallStage) PrepareImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) error {

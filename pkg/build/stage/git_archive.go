@@ -55,8 +55,43 @@ func (s *GitArchiveStage) GetDependencies(ctx context.Context, c Conveyor, cb co
 	return util.Sha256Hash(args...), nil
 }
 
-func (s *GitArchiveStage) GetContextDependencies(ctx context.Context, c Conveyor) (string, error) {
-	return s.GetDependencies(ctx, c, nil, nil, nil, nil)
+// GetContextDependencies checksums all git-tracked files for the context digest.
+// This is the only git stage that contributes file content: GitCache and GitLatestPatch
+// return empty context dependencies because their file changes are already covered here.
+func (s *GitArchiveStage) GetContextDependencies(ctx context.Context, c Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+	var args []string
+	for _, gitMapping := range s.gitMappings {
+		if gitMapping.IsLocal() {
+			if err := c.GiterminismManager().Inspector().InspectBuildContextFiles(ctx, gitMapping.getPathMatcher()); err != nil {
+				return "", err
+			}
+		}
+
+		args = append(args, gitMapping.GetParamshash())
+
+		commitInfo, err := gitMapping.GetLatestCommitInfo(ctx, c)
+		if err != nil {
+			return "", fmt.Errorf("unable to get latest commit info for %s: %w", gitMapping.GetFullName(), err)
+		}
+
+		checksum, err := gitMapping.GitRepo().GetOrCreateChecksum(ctx, git_repo.ChecksumOptions{
+			LsTreeOptions: git_repo.LsTreeOptions{
+				PathScope:   gitMapping.Add,
+				PathMatcher: gitMapping.getPathMatcher(),
+				AllFiles:    true,
+			},
+			Commit: commitInfo.Commit,
+		})
+		if err != nil {
+			return "", fmt.Errorf("unable to get checksum for git mapping %s: %w", gitMapping.GetFullName(), err)
+		}
+
+		args = append(args, checksum)
+	}
+
+	sort.Strings(args)
+
+	return util.Sha256Hash(args...), nil
 }
 
 func (s *GitArchiveStage) GetNextStageDependencies(ctx context.Context, c Conveyor) (string, error) {

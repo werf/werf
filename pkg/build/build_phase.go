@@ -139,10 +139,6 @@ func (phase *BuildPhase) CalculateImageContextDigest(ctx context.Context, img *i
 
 func (phase *BuildPhase) CheckImageContextTagExistence(ctx context.Context, img *image.Image) error {
 	contextDigest := img.GetContextDigest()
-	if contextDigest == "" {
-		return nil
-	}
-
 	storageManager := phase.Conveyor.StorageManager
 
 	desc, err := phase.findContextTagStageDesc(ctx, img, contextDigest)
@@ -362,7 +358,7 @@ func (phase *BuildPhase) publishFinalImage(ctx context.Context, name string, img
 	if err != nil {
 		return fmt.Errorf("unable to copy image into final repo: %w", err)
 	}
-	img.SetFinalContextTagDesc(desc)
+	img.SetContextTagDesc(desc)
 
 	return nil
 }
@@ -407,28 +403,22 @@ func (phase *BuildPhase) publishImageMetadata(ctx context.Context, name string, 
 	}
 
 	var customTagStorage storage.StagesStorage
-	var customTagDesc *imagePkg.StageDesc
 	if phase.Conveyor.StorageManager.GetFinalStagesStorage() != nil {
 		customTagStorage = phase.Conveyor.StorageManager.GetFinalStagesStorage()
-		finalDesc := img.GetFinalContextTagDesc()
-		if finalDesc != nil {
-			customTagDesc = finalDesc
-		}
 	} else {
 		customTagStorage = phase.Conveyor.StorageManager.GetStagesStorage()
-		customTagDesc = contextTagDesc
 	}
 
-	if !img.UseCustomTag() || customTagDesc == nil {
+	if !img.UseCustomTag() || contextTagDesc == nil {
 		return nil
 	}
 
 	if phase.ShouldBeBuiltMode {
-		if err := phase.checkCustomImageTagsExistence(ctx, img.GetName(), customTagDesc, customTagStorage); err != nil {
+		if err := phase.checkCustomImageTagsExistence(ctx, img.GetName(), contextTagDesc, customTagStorage); err != nil {
 			return err
 		}
 	} else {
-		if err := phase.addCustomImageTags(ctx, img.GetName(), customTagDesc, customTagStorage, phase.Conveyor.StorageManager.GetStagesStorage(), phase.CustomTagFuncList); err != nil {
+		if err := phase.addCustomImageTags(ctx, img.GetName(), contextTagDesc, customTagStorage, phase.Conveyor.StorageManager.GetStagesStorage(), phase.CustomTagFuncList); err != nil {
 			return fmt.Errorf("unable to add custom image tags to stages storage: %w", err)
 		}
 	}

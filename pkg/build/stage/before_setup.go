@@ -37,10 +37,6 @@ func (s *BeforeSetupStage) GetDependencies(ctx context.Context, c Conveyor, cb c
 	return util.Sha256Hash(s.builder.BeforeSetupChecksum(ctx), stageDependenciesChecksum), nil
 }
 
-func (s *BeforeSetupStage) GetContextDependencies(ctx context.Context, c Conveyor) (string, error) {
-	return s.GetDependencies(ctx, c, nil, nil, nil, nil)
-}
-
 func (s *BeforeSetupStage) PrepareImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) error {
 	if err := s.UserWithGitPatchStage.PrepareImage(ctx, c, cb, prevBuiltImage, stageImage, nil); err != nil {
 		return err

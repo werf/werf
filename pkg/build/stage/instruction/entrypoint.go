@@ -22,8 +22,8 @@ func NewEntrypoint(i *dockerfile.DockerfileStageInstruction[*instructions.Entryp
 	return &Entrypoint{Base: NewBase(i, backend_instruction.NewEntrypoint(*i.Data, entrypointResetCMD), dependencies, hasPrevStage, opts)}
 }
 
-func (stg *Entrypoint) GetContextDependencies(ctx context.Context, c stage.Conveyor) (string, error) {
-	return stg.GetDependencies(ctx, c, nil, nil, nil, nil)
+func (stg *Entrypoint) GetContextDependencies(ctx context.Context, c stage.Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+	return stg.GetDependencies(ctx, c, nil, nil, nil, buildContextArchive)
 }
 
 func (stg *Entrypoint) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {

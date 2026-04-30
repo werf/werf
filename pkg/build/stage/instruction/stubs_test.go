@@ -32,15 +32,14 @@ type TestData struct {
 }
 
 type TestDataOptions struct {
-	Files                                                                                       []*FileData
-	LastStageImageNameByWerfImage, LastStageImageIDByWerfImage, LastStageImageDigestByWerfImage map[string]string
+	Files                                                          []*FileData
+	LastStageImageNameByWerfImage, LastStageImageDigestByWerfImage map[string]string
 }
 
 func NewTestData(stg stage.Interface, expectedDigest string, opts TestDataOptions) *TestData {
 	conveyor := stage.NewConveyorStub(
 		stage.NewGiterminismManagerStub(stage.NewLocalGitRepoStub("9d8059842b6fde712c58315ca0ab4713d90761c0"), stage.NewGiterminismInspectorStub()),
 		opts.LastStageImageNameByWerfImage,
-		opts.LastStageImageIDByWerfImage,
 		opts.LastStageImageDigestByWerfImage,
 	)
 	containerBackend := stage.NewContainerBackendStub()

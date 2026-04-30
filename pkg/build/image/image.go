@@ -107,15 +107,14 @@ type Image struct {
 	TargetPlatform          string
 	BuildDuration           time.Duration
 
-	stages              []stage.Interface
-	stageDurations      map[stage.StageName]time.Duration
-	lastNonEmptyStage   stage.Interface
-	contentDigest       string
-	contextDigest       string
-	contextTagDesc      *image.StageDesc
-	finalContextTagDesc *image.StageDesc
-	rebuilt             bool
-	useCustomTag        bool
+	stages            []stage.Interface
+	stageDurations    map[stage.StageName]time.Duration
+	lastNonEmptyStage stage.Interface
+	contentDigest     string
+	contextDigest     string
+	contextTagDesc    *image.StageDesc
+	rebuilt           bool
+	useCustomTag      bool
 
 	baseImageType             BaseImageType
 	baseImageReference        string
@@ -224,14 +223,6 @@ func (i *Image) SetContextTagDesc(desc *image.StageDesc) {
 
 func (i *Image) GetContextTagDesc() *image.StageDesc {
 	return i.contextTagDesc
-}
-
-func (i *Image) SetFinalContextTagDesc(desc *image.StageDesc) {
-	i.finalContextTagDesc = desc
-}
-
-func (i *Image) GetFinalContextTagDesc() *image.StageDesc {
-	return i.finalContextTagDesc
 }
 
 func (i *Image) GetStage(name stage.StageName) stage.Interface {

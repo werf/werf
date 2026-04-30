@@ -308,7 +308,7 @@ func (c *Conveyor) GetImportServer(ctx context.Context, targetPlatform, imageNam
 			if fromExternalImage {
 				dockerImageName = imageName
 			} else {
-				dockerImageName = c.GetImageNameForLastImageStage(targetPlatform, imageName)
+				dockerImageName = c.GetImageContextTagStageID(targetPlatform, imageName)
 			}
 
 			var err error
@@ -557,7 +557,7 @@ func (c *Conveyor) GetImagesEnvArray() []string {
 			continue
 		}
 
-		envArray = append(envArray, GenerateImageEnv(img.Name, c.GetImageNameForLastImageStage(img.TargetPlatform, img.Name)))
+		envArray = append(envArray, GenerateImageEnv(img.Name, c.GetImageContextTagStageID(img.TargetPlatform, img.Name)))
 	}
 
 	return envArray
@@ -983,48 +983,10 @@ func (c *Conveyor) GetImage(targetPlatform, name string) *image.Image {
 	panic(fmt.Sprintf("Image %q with target platform %q not found!", name, targetPlatform))
 }
 
-func (c *Conveyor) GetImageContentDigest(targetPlatform, imageName string) string {
-	return c.GetImage(targetPlatform, imageName).GetContentDigest()
+func (c *Conveyor) GetImageContextTagStageID(targetPlatform, imageName string) string {
+	return c.GetImage(targetPlatform, imageName).GetContextTagDesc().StageID.String()
 }
 
-func (c *Conveyor) GetImageContextDigest(targetPlatform, imageName string) string {
-	return c.GetImage(targetPlatform, imageName).GetContextDigest()
-}
-
-func (c *Conveyor) FetchLastNonEmptyImageStage(ctx context.Context, targetPlatform, imageName string) error {
-	_, err := c.StorageManager.FetchStage(ctx, c.ContainerBackend, c.GetImage(targetPlatform, imageName).GetLastNonEmptyStage())
-	return err
-}
-
-func (c *Conveyor) GetImageNameForLastImageStage(targetPlatform, imageName string) string {
-	if desc := c.GetImage(targetPlatform, imageName).GetContextTagDesc(); desc != nil {
-		return desc.Info.Name
-	}
-	return c.GetImage(targetPlatform, imageName).GetLastNonEmptyStage().GetStageImage().Image.Name()
-}
-
-func (c *Conveyor) GetStageID(targetPlatform, imageName string) string {
-	return c.GetImage(targetPlatform, imageName).GetStageID()
-}
-
-// TODO: remove this legacy logic in v3.
-func (c *Conveyor) GetImageIDForLastImageStage(targetPlatform, imageName string) string {
-	if desc := c.GetImage(targetPlatform, imageName).GetContextTagDesc(); desc != nil {
-		return desc.Info.ID
-	}
-	return c.GetImage(targetPlatform, imageName).GetLastNonEmptyStage().GetStageImage().Image.GetStageDesc().Info.ID
-}
-
-func (c *Conveyor) GetStageIDForLastImageStage(targetPlatform, imageName string) string {
-	if desc := c.GetImage(targetPlatform, imageName).GetContextTagDesc(); desc != nil {
-		return desc.StageID.String()
-	}
-	return c.GetImage(targetPlatform, imageName).GetLastNonEmptyStage().GetStageImage().Image.GetStageDesc().StageID.String()
-}
-
-func (c *Conveyor) GetImageDigestForLastImageStage(targetPlatform, imageName string) string {
-	if desc := c.GetImage(targetPlatform, imageName).GetContextTagDesc(); desc != nil {
-		return desc.Info.GetDigest()
-	}
-	return c.GetImage(targetPlatform, imageName).GetLastNonEmptyStage().GetStageImage().Image.GetStageDesc().Info.GetDigest()
+func (c *Conveyor) GetImageContextTagDigest(targetPlatform, imageName string) string {
+	return c.GetImage(targetPlatform, imageName).GetContextTagDesc().Info.GetDigest()
 }

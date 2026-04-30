@@ -211,20 +211,8 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 		targetPlatforms := util.MapFuncToSlice(images, func(img *image.Image) string { return img.TargetPlatform })
 
 		for _, img := range images {
-			imageDesc := img.GetFinalContextTagDesc()
-			if imageDesc == nil {
-				imageDesc = img.GetContextTagDesc()
-			}
-			if imageDesc == nil {
-				stageImage := img.GetLastNonEmptyStage().GetStageImage().Image
-				imageDesc = stageImage.GetFinalStageDesc()
-				if imageDesc == nil {
-					imageDesc = stageImage.GetStageDesc()
-				}
-			}
-
+			imageDesc := img.GetContextTagDesc()
 			stages := getStagesReport(img, false)
-
 			configType := determineConfigType(phase.Conveyor.werfConfig, img.Name)
 
 			record := ReportImageRecord{

@@ -13,7 +13,7 @@ func getContextDigestOrPanic(ctx context.Context, s Interface, c Conveyor) (resu
 			didPanic = true
 		}
 	}()
-	result, _ = s.GetContextDependencies(ctx, c)
+	result, _ = s.GetContextDependencies(ctx, c, nil)
 	return
 }
 
@@ -27,7 +27,6 @@ var _ = Describe("ContextDigest", func() {
 	BeforeEach(func() {
 		conveyor = NewConveyorStub(
 			NewGiterminismManagerStub(NewLocalGitRepoStub(commitH), NewGiterminismInspectorStub()),
-			map[string]string{},
 			map[string]string{},
 			map[string]string{"dep-image": "dep-digest-v1"},
 		)
@@ -79,7 +78,6 @@ var _ = Describe("ContextDigest", func() {
 			conveyor2 := NewConveyorStub(
 				NewGiterminismManagerStub(NewLocalGitRepoStub(commitH), NewGiterminismInspectorStub()),
 				map[string]string{},
-				map[string]string{},
 				map[string]string{"image-a": "digest-a", "image-b": "digest-b"},
 			)
 			opts := &BaseStageOptions{TargetPlatform: "linux/amd64"}
@@ -109,33 +107,15 @@ var _ = Describe("ContextDigest", func() {
 		})
 	})
 
-	Describe("Target Platform Inclusion", func() {
-		It("different target platforms produce different context digests", func() {
-			opts1 := &BaseStageOptions{TargetPlatform: "linux/amd64"}
-			opts2 := &BaseStageOptions{TargetPlatform: "linux/arm64"}
-			s1 := &FromStage{imageCacheVersion: "v1", BaseStage: NewBaseStage(From, opts1)}
-			s2 := &FromStage{imageCacheVersion: "v1", BaseStage: NewBaseStage(From, opts2)}
-			r1, p1 := getContextDigestOrPanic(ctx, s1, conveyor)
-			r2, p2 := getContextDigestOrPanic(ctx, s2, conveyor)
-			if p1 || p2 {
-				Succeed()
-				return
-			}
-			Expect(r1).NotTo(Equal(r2))
-		})
-	})
-
 	Describe("Inter-image Context Digest Propagation", func() {
 		It("FromStage context digest changes when referenced image context digest changes", func() {
 			conveyor1 := NewConveyorStub(
 				NewGiterminismManagerStub(NewLocalGitRepoStub(commitH), NewGiterminismInspectorStub()),
 				map[string]string{},
-				map[string]string{},
 				map[string]string{"base-image": "context-digest-v1"},
 			)
 			conveyor2 := NewConveyorStub(
 				NewGiterminismManagerStub(NewLocalGitRepoStub(commitH), NewGiterminismInspectorStub()),
-				map[string]string{},
 				map[string]string{},
 				map[string]string{"base-image": "context-digest-v2"},
 			)

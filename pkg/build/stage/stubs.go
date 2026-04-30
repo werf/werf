@@ -83,15 +83,13 @@ type ConveyorStub struct {
 
 	giterminismManager              *GiterminismManagerStub
 	lastStageImageNameByImageName   map[string]string
-	lastStageImageIDByImageName     map[string]string
 	lastStageImageDigestByImageName map[string]string
 }
 
-func NewConveyorStub(giterminismManager *GiterminismManagerStub, lastStageImageNameByImageName, lastStageImageIDByImageName, lastStageImageDigestByImageName map[string]string) *ConveyorStub {
+func NewConveyorStub(giterminismManager *GiterminismManagerStub, lastStageImageNameByImageName, lastStageImageDigestByImageName map[string]string) *ConveyorStub {
 	return &ConveyorStub{
 		giterminismManager:              giterminismManager,
 		lastStageImageNameByImageName:   lastStageImageNameByImageName,
-		lastStageImageIDByImageName:     lastStageImageIDByImageName,
 		lastStageImageDigestByImageName: lastStageImageDigestByImageName,
 	}
 }
@@ -100,23 +98,7 @@ func (c *ConveyorStub) UseLegacyStapelBuilder(cr container_backend.ContainerBack
 	return true
 }
 
-func (c *ConveyorStub) GetImageNameForLastImageStage(targetPlatform, imageName string) string {
-	return c.lastStageImageNameByImageName[imageName]
-}
-
-func (c *ConveyorStub) GetImageIDForLastImageStage(targetPlatform, imageName string) string {
-	return c.lastStageImageIDByImageName[imageName]
-}
-
-func (c *ConveyorStub) GetImageDigestForLastImageStage(targetPlatform, imageName string) string {
-	return c.lastStageImageDigestByImageName[imageName]
-}
-
-func (c *ConveyorStub) GetImageContentDigest(targetPlatform, imageName string) string {
-	return c.lastStageImageDigestByImageName[imageName]
-}
-
-func (c *ConveyorStub) GetImageContextDigest(targetPlatform, imageName string) string {
+func (c *ConveyorStub) GetImageContextTagDigest(targetPlatform, imageName string) string {
 	return c.lastStageImageDigestByImageName[imageName]
 }
 
@@ -124,7 +106,7 @@ func (c *ConveyorStub) GiterminismManager() giterminism_manager.Interface {
 	return c.giterminismManager
 }
 
-func (c *ConveyorStub) GetStageIDForLastImageStage(targetPlatform, imageName string) string {
+func (c *ConveyorStub) GetImageContextTagStageID(targetPlatform, imageName string) string {
 	return c.lastStageImageDigestByImageName[imageName]
 }
 
