@@ -95,7 +95,7 @@ type StagesStorage interface {
 	GetAllAndGroupImageMetadataByImageName(ctx context.Context, projectName string, imageNameOrManagedImageList []string, opts ...Option) (map[string]map[string][]string, map[string]map[string][]string, error)
 
 	GetImportMetadata(ctx context.Context, projectName, id string) (*ImportMetadata, error)
-	PutImportMetadata(ctx context.Context, projectName string, metadata *ImportMetadata) error
+	PutImportMetadata(ctx context.Context, projectName string, metadata *ImportMetadata, opts PutImportMetadataOptions) error
 	RmImportMetadata(ctx context.Context, projectName, id string) error
 	GetImportMetadataIDs(ctx context.Context, projectName string, opts ...Option) ([]string, error)
 
