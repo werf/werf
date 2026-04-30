@@ -41,7 +41,6 @@ var _ = Describe("ContextDigest", func() {
 			r1, p1 := getContextDigestOrPanic(ctx, s1, conveyor)
 			r2, p2 := getContextDigestOrPanic(ctx, s2, conveyor)
 			if p1 || p2 {
-				// RED phase: GetContextDependencies panics — expected
 				Succeed()
 				return
 			}
@@ -100,7 +99,6 @@ var _ = Describe("ContextDigest", func() {
 		It("FromStage context digest is same regardless of prevBuiltImage", func() {
 			opts := &BaseStageOptions{TargetPlatform: "linux/amd64"}
 			s := &FromStage{imageCacheVersion: "v1", BaseStage: NewBaseStage(From, opts)}
-			// Call twice with same conveyor — result must be identical (prevBuiltImage not used)
 			r1, p1 := getContextDigestOrPanic(ctx, s, conveyor)
 			r2, p2 := getContextDigestOrPanic(ctx, s, conveyor)
 			if p1 || p2 {

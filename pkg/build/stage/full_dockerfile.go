@@ -395,7 +395,99 @@ func (s *FullDockerfileStage) GetDependencies(ctx context.Context, c Conveyor, _
 }
 
 func (s *FullDockerfileStage) GetContextDependencies(ctx context.Context, c Conveyor) (string, error) {
-	return s.GetDependencies(ctx, c, nil, nil, nil, nil)
+	resolvedDependenciesArgsHash := ResolveContextDependenciesArgs(s.targetPlatform, s.dependencies, c)
+
+	var resolvedDockerMetaArgsHash map[string]string
+	{
+		metaArgs, err := s.resolveDockerMetaArgs(resolvedDependenciesArgsHash)
+		if err != nil {
+			return "", fmt.Errorf("unable to resolve docker meta args: %w", err)
+		}
+
+		platformMetaArgs, err := platformutil.GetPlatformMetaArgsMap(s.targetPlatform)
+		if err != nil {
+			return "", fmt.Errorf("unable to get platform args: %w", err)
+		}
+
+		resolvedDockerMetaArgsHash = util.MergeMaps(platformMetaArgs, metaArgs)
+	}
+
+	var stagesDependencies [][]string
+	var stagesOnBuildDependencies [][]string
+
+	for ind, stage := range s.dockerStages {
+		var dependencies []string
+		var onBuildDependencies []string
+
+		dependencies = append(dependencies, s.addHost...)
+
+		resolvedBaseName, err := s.ShlexProcessWordWithMetaArgs(stage.BaseName, resolvedDockerMetaArgsHash)
+		if err != nil {
+			return "", err
+		}
+
+		if resolvedBaseName == "" {
+			return "", ErrInvalidBaseImage
+		}
+
+		dependencies = append(dependencies, resolvedBaseName)
+		for _, cmd := range stage.Commands {
+			cmdDependencies, cmdOnBuildDependencies, err := s.dockerfileInstructionDependencies(ctx, c.GiterminismManager(), resolvedDockerMetaArgsHash, resolvedDependenciesArgsHash, ind, cmd, false, false)
+			if err != nil {
+				return "", err
+			}
+
+			dependencies = append(dependencies, cmdDependencies...)
+			onBuildDependencies = append(onBuildDependencies, cmdOnBuildDependencies...)
+		}
+
+		stagesDependencies = append(stagesDependencies, dependencies)
+		stagesOnBuildDependencies = append(stagesOnBuildDependencies, onBuildDependencies)
+	}
+
+	for ind, stage := range s.dockerStages {
+		for relatedStageIndex, relatedStage := range s.dockerStages {
+			if ind == relatedStageIndex {
+				continue
+			}
+
+			if stage.BaseName == relatedStage.Name {
+				stagesDependencies[ind] = append(stagesDependencies[ind], stagesDependencies[relatedStageIndex]...)
+				stagesDependencies[ind] = append(stagesDependencies[ind], stagesOnBuildDependencies[relatedStageIndex]...)
+			}
+		}
+
+		for _, cmd := range stage.Commands {
+			switch typedCmd := cmd.(type) {
+			case *instructions.CopyCommand:
+				relatedStageIndex, err := strconv.Atoi(typedCmd.From)
+				if err == nil && relatedStageIndex < len(stagesDependencies) {
+					stagesDependencies[ind] = append(stagesDependencies[ind], stagesDependencies[relatedStageIndex]...)
+				}
+
+			case *instructions.RunCommand:
+				for _, mount := range instructions.GetMounts(typedCmd) {
+					relatedStageIndex, err := strconv.Atoi(mount.From)
+					if err == nil && relatedStageIndex < len(stagesDependencies) {
+						stagesDependencies[ind] = append(stagesDependencies[ind], stagesDependencies[relatedStageIndex]...)
+					}
+				}
+			}
+		}
+	}
+
+	dockerfileStageDependencies := stagesDependencies[s.dockerTargetStageIndex]
+
+	if dockerfileStageDependenciesDebug() {
+		logboek.Context(ctx).LogLn(dockerfileStageDependencies)
+	}
+
+	dependencies := slices.Grow(dockerfileStageDependencies, 1)
+	if s.imageCacheVersion != "" {
+		dependencies = append(dependencies, s.imageCacheVersion)
+	}
+
+	return util.Sha256Hash(dependencies...), nil
 }
 
 func (s *FullDockerfileStage) MutateImage(_ context.Context, _ ImageMutatorPusher, _, _ *StageImage) error {

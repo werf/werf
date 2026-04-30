@@ -45,6 +45,20 @@ func ResolveDependenciesArgs(targetPlatform string, dependencies []*config.Depen
 	return resolved
 }
 
+func ResolveContextDependenciesArgs(targetPlatform string, dependencies []*config.Dependency, c Conveyor) map[string]string {
+	resolved := make(map[string]string)
+
+	for _, dep := range dependencies {
+		depContextDigest := c.GetImageContextDigest(targetPlatform, dep.ImageName)
+
+		for _, imp := range dep.Imports {
+			resolved[imp.TargetBuildArg] = depContextDigest
+		}
+	}
+
+	return resolved
+}
+
 func dependencyLabelKey(depStageID string) string {
 	return fmt.Sprintf("%s%s", image.WerfDependencySourceStageIDLabelPrefix, util.Sha256Hash(depStageID))
 }

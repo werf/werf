@@ -221,13 +221,24 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 
 			configType := determineConfigType(phase.Conveyor.werfConfig, img.Name)
 
+			dockerTag := stageDesc.Info.Tag
+			dockerImageName := stageDesc.Info.Name
+			_, isLocal := phase.Conveyor.StorageManager.GetStagesStorage().(*storage.LocalStagesStorage)
+			if !isLocal {
+				if contextDigest := img.GetContextDigest(); contextDigest != "" && stageDesc.StageID != nil {
+					contextTag := fmt.Sprintf("%s-%d", contextDigest, stageDesc.StageID.CreationTs)
+					dockerTag = contextTag
+					dockerImageName = fmt.Sprintf("%s:%s", stageDesc.Info.Repository, contextTag)
+				}
+			}
+
 			record := ReportImageRecord{
 				WerfImageName:     img.GetName(),
 				DockerRepo:        stageDesc.Info.Repository,
-				DockerTag:         stageDesc.Info.Tag,
+				DockerTag:         dockerTag,
 				DockerImageID:     stageDesc.Info.ID,
 				DockerImageDigest: stageDesc.Info.GetDigest(),
-				DockerImageName:   stageDesc.Info.Name,
+				DockerImageName:   dockerImageName,
 				TargetPlatform:    img.TargetPlatform,
 				Rebuilt:           img.GetRebuilt(),
 				Final:             img.IsFinal,

@@ -41,7 +41,7 @@ func (stg *Run) GetContextDependencies(_ context.Context, c stage.Conveyor) (str
 
 	mounts := instructions.GetMounts(stg.instruction.Data)
 
-	args = append(args, append([]string{"Env"}, EnvToSortedArr(stg.GetExpandedEnv(c))...)...)
+	args = append(args, append([]string{"Env"}, EnvToSortedArr(stg.GetExpandedContextEnv(c))...)...)
 	args = append(args, append([]string{"Command"}, stg.instruction.Data.CmdLine...)...)
 	args = append(args, "PrependShell", fmt.Sprintf("%v", stg.instruction.Data.PrependShell))
 
