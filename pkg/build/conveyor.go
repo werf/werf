@@ -729,6 +729,9 @@ func (c *Conveyor) doImages(ctx context.Context, phases []Phase, logImages bool)
 			return fmt.Errorf("unable to process images in parallel: %w", err)
 		}
 	} else {
+		if logImages {
+			c.logBuildPlanSummary(ctx)
+		}
 		for _, img := range c.imagesTree.GetImages() {
 			if err := c.doImage(ctx, img, phases); err != nil {
 				return fmt.Errorf("unable to process image %q: %w", img.LogName(), err)
@@ -739,8 +742,44 @@ func (c *Conveyor) doImages(ctx context.Context, phases []Phase, logImages bool)
 	return nil
 }
 
+func (c *Conveyor) logBuildPlanSummary(ctx context.Context) {
+	var toBuild, toSkip []*image.Image
+	for _, img := range c.imagesTree.GetImages() {
+		if img.GetContextTagDesc() != nil {
+			toSkip = append(toSkip, img)
+		} else {
+			toBuild = append(toBuild, img)
+		}
+	}
+
+	if len(toSkip) == 0 {
+		return
+	}
+
+	logboek.Context(ctx).LogBlock("Build plan summary").
+		Options(func(options types.LogBlockOptionsInterface) {
+			options.Style(stylePkg.Highlight())
+		}).
+		Do(func() {
+			if len(toBuild) > 0 {
+				logboek.Context(ctx).LogFHighlight("Will be built:\n")
+				for _, img := range toBuild {
+					logboek.Context(ctx).LogLnHighlight("-", img.LogDetailedName())
+				}
+				logboek.Context(ctx).LogOptionalLn()
+			}
+
+			logboek.Context(ctx).LogFHighlight("Skipped (context tag exists):\n")
+			for _, img := range toSkip {
+				logboek.Context(ctx).LogLnHighlight("-", img.LogDetailedName())
+			}
+		})
+}
+
 func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logImages bool) error {
 	if logImages {
+		c.logBuildPlanSummary(ctx)
+
 		blockMsg := "Concurrent build plan"
 		if c.ParallelTasksLimit > 0 {
 			blockMsg = fmt.Sprintf("%s (no more than %d images at the same time)", blockMsg, c.ParallelTasksLimit)
