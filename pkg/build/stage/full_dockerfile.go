@@ -394,6 +394,10 @@ func (s *FullDockerfileStage) GetDependencies(ctx context.Context, c Conveyor, _
 	return util.Sha256Hash(dependencies...), nil
 }
 
+func (s *FullDockerfileStage) GetContextDependencies(ctx context.Context, c Conveyor) (string, error) {
+	return s.GetDependencies(ctx, c, nil, nil, nil, nil)
+}
+
 func (s *FullDockerfileStage) MutateImage(_ context.Context, _ ImageMutatorPusher, _, _ *StageImage) error {
 	panic("not implemented")
 }

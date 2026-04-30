@@ -11,6 +11,7 @@ import (
 type Conveyor interface {
 	GetImageStageContentDigest(targetPlatform, imageName, stageName string) string
 	GetImageContentDigest(targetPlatform, imageName string) string
+	GetImageContextDigest(targetPlatform, imageName string) string
 
 	FetchImageStage(ctx context.Context, targetPlatform, imageName, stageName string) error
 	FetchLastNonEmptyImageStage(ctx context.Context, targetPlatform, imageName string) error

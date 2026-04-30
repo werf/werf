@@ -1003,6 +1003,10 @@ func (c *Conveyor) GetImageContentDigest(targetPlatform, imageName string) strin
 	return c.GetImage(targetPlatform, imageName).GetContentDigest()
 }
 
+func (c *Conveyor) GetImageContextDigest(targetPlatform, imageName string) string {
+	return c.GetImage(targetPlatform, imageName).GetContextDigest()
+}
+
 func (c *Conveyor) getImageStage(targetPlatform, imageName, stageName string) stage.Interface {
 	if stg := c.GetImage(targetPlatform, imageName).GetStage(stage.StageName(stageName)); stg != nil {
 		return stg

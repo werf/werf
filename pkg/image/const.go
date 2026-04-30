@@ -5,6 +5,7 @@ const (
 	WerfLabel                              = "werf"
 	WerfVersionLabel                       = "werf-version"
 	WerfStageContentDigestLabel            = "werf-stage-content-digest"
+	WerfImageContextDigestLabel            = "werf-image-context-digest"
 	WerfProjectRepoCommitLabel             = "werf-project-repo-commit"
 	WerfImportSourceStageIDLabelPrefix     = "werf-import-source-stage-id-"
 	WerfImportSourceExternalImagePrefix    = "external-image"

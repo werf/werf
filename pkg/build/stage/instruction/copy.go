@@ -43,6 +43,19 @@ func (stg *Copy) ExpandInstruction(c stage.Conveyor, env map[string]string) erro
 	return nil
 }
 
+func (stg *Copy) GetContextDependencies(_ context.Context, c stage.Conveyor) (string, error) {
+	var args []string
+
+	args = append(args, "From", stg.instruction.Data.From)
+	args = append(args, append([]string{"Sources"}, stg.instruction.Data.SourcePaths...)...)
+	args = append(args, "Dest", stg.instruction.Data.DestPath)
+	args = append(args, "Chown", stg.instruction.Data.Chown)
+	args = append(args, "Chmod", stg.instruction.Data.Chmod)
+	args = append(args, "ExpandedFrom", stg.backendInstruction.From)
+
+	return util.Sha256Hash(args...), nil
+}
+
 func (stg *Copy) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
 	var args []string
 

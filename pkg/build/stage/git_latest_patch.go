@@ -64,6 +64,18 @@ func (s *GitLatestPatchStage) GetDependencies(ctx context.Context, c Conveyor, c
 	return util.Sha256Hash(args...), nil
 }
 
+func (s *GitLatestPatchStage) GetContextDependencies(ctx context.Context, c Conveyor) (string, error) {
+	var args []string
+	for _, gitMapping := range s.gitMappings {
+		commitInfo, err := gitMapping.GetLatestCommitInfo(ctx, c)
+		if err != nil {
+			return "", fmt.Errorf("unable to get latest commit of git mapping %s: %w", gitMapping.Name, err)
+		}
+		args = append(args, gitMapping.GetParamshash(), commitInfo.Commit)
+	}
+	return util.Sha256Hash(args...), nil
+}
+
 func (s *GitLatestPatchStage) GetNextStageDependencies(ctx context.Context, c Conveyor) (string, error) {
 	return s.BaseStage.getNextStageGitDependencies(ctx, c)
 }

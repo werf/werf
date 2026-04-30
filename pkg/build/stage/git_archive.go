@@ -55,6 +55,10 @@ func (s *GitArchiveStage) GetDependencies(ctx context.Context, c Conveyor, cb co
 	return util.Sha256Hash(args...), nil
 }
 
+func (s *GitArchiveStage) GetContextDependencies(ctx context.Context, c Conveyor) (string, error) {
+	return s.GetDependencies(ctx, c, nil, nil, nil, nil)
+}
+
 func (s *GitArchiveStage) GetNextStageDependencies(ctx context.Context, c Conveyor) (string, error) {
 	return s.BaseStage.getNextStageGitDependencies(ctx, c)
 }

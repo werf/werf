@@ -21,6 +21,10 @@ func NewMaintainer(i *dockerfile.DockerfileStageInstruction[*instructions.Mainta
 	return &Maintainer{Base: NewBase(i, backend_instruction.NewMaintainer(*i.Data), dependencies, hasPrevStage, opts)}
 }
 
+func (stg *Maintainer) GetContextDependencies(ctx context.Context, c stage.Conveyor) (string, error) {
+	return stg.GetDependencies(ctx, c, nil, nil, nil, nil)
+}
+
 func (stg *Maintainer) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
 	var args []string
 

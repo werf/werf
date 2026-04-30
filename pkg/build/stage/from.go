@@ -93,6 +93,34 @@ func (s *FromStage) GetDependencies(_ context.Context, c Conveyor, _ container_b
 	return util.Sha256Hash(args...), nil
 }
 
+func (s *FromStage) GetContextDependencies(ctx context.Context, c Conveyor) (string, error) {
+	var args []string
+
+	args = append(args, s.targetPlatform)
+
+	if s.imageCacheVersion != "" {
+		args = append(args, s.imageCacheVersion)
+	}
+
+	if s.fromCacheVersion != "" {
+		args = append(args, s.fromCacheVersion)
+	}
+
+	if s.baseImageRepoIdOrNone != "" {
+		args = append(args, s.baseImageRepoIdOrNone)
+	}
+
+	for _, mount := range s.configMounts {
+		args = append(args, filepath.ToSlash(filepath.Clean(mount.From)), path.Clean(mount.To), mount.Type)
+	}
+
+	if s.fromImageName != "" && !s.fromExternal {
+		args = append(args, c.GetImageContextDigest(s.targetPlatform, s.fromImageName))
+	}
+
+	return util.Sha256Hash(args...), nil
+}
+
 func (s *FromStage) PrepareImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, _ container_backend.BuildContextArchiver) error {
 	addLabels := map[string]string{imagePkg.WerfProjectRepoCommitLabel: c.GiterminismManager().HeadCommit(ctx)}
 	if c.UseLegacyStapelBuilder(cb) {

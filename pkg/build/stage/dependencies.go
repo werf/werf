@@ -83,6 +83,44 @@ func (s *DependenciesStage) GetDependencies(ctx context.Context, c Conveyor, _ c
 	return util.Sha256Hash(args...), nil
 }
 
+func (s *DependenciesStage) GetContextDependencies(_ context.Context, c Conveyor) (string, error) {
+	var args []string
+
+	for _, elm := range s.imports {
+		sourceContextDigest := getSourceImageContextDigest(c, s.targetPlatform, elm)
+
+		args = append(args, sourceContextDigest)
+		args = append(args, elm.Add)
+		args = append(args, elm.To)
+		args = append(args, elm.Group, elm.Owner)
+		args = append(args, strings.Join(elm.IncludePaths, "///"))
+		args = append(args, strings.Join(elm.ExcludePaths, "///"))
+	}
+
+	for _, dep := range s.dependencies {
+		args = append(args, "Dependency", c.GetImageContextDigest(s.targetPlatform, dep.ImageName))
+		for _, imp := range dep.Imports {
+			args = append(args, "DependencyImport", getDependencyImportID(imp))
+		}
+	}
+
+	return util.Sha256Hash(args...), nil
+}
+
+func getSourceImageContextDigest(c Conveyor, targetPlatform string, importElm *config.Import) string {
+	if importElm.ExternalImage {
+		return fmt.Sprintf("%s:%s", image.WerfImportSourceExternalImagePrefix, importElm.From)
+	}
+
+	sourceImageName := getSourceImageName(importElm)
+
+	if importElm.Stage == "" {
+		return c.GetImageContextDigest(targetPlatform, sourceImageName)
+	}
+
+	return c.GetImageStageContentDigest(targetPlatform, sourceImageName, importElm.Stage)
+}
+
 func (s *DependenciesStage) prepareImageWithLegacyStapelBuilder(ctx context.Context, c Conveyor, cr container_backend.ContainerBackend, _, stageImage *StageImage) error {
 	imageServiceCommitChangeOptions := stageImage.Builder.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions()
 

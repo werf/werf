@@ -31,6 +31,10 @@ func (s *BeforeInstallStage) GetDependencies(ctx context.Context, c Conveyor, cb
 	return s.builder.BeforeInstallChecksum(ctx), nil
 }
 
+func (s *BeforeInstallStage) GetContextDependencies(ctx context.Context, c Conveyor) (string, error) {
+	return s.GetDependencies(ctx, c, nil, nil, nil, nil)
+}
+
 func (s *BeforeInstallStage) PrepareImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) error {
 	if err := s.BaseStage.PrepareImage(ctx, c, cb, prevBuiltImage, stageImage, nil); err != nil {
 		return err

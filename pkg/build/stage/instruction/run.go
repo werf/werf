@@ -36,6 +36,41 @@ func (stg *Run) ExpandInstruction(c stage.Conveyor, env map[string]string) error
 	return nil
 }
 
+func (stg *Run) GetContextDependencies(_ context.Context, c stage.Conveyor) (string, error) {
+	var args []string
+
+	mounts := instructions.GetMounts(stg.instruction.Data)
+
+	args = append(args, append([]string{"Env"}, EnvToSortedArr(stg.GetExpandedEnv(c))...)...)
+	args = append(args, append([]string{"Command"}, stg.instruction.Data.CmdLine...)...)
+	args = append(args, "PrependShell", fmt.Sprintf("%v", stg.instruction.Data.PrependShell))
+
+	if len(mounts) > 0 {
+		args = append(args, "Mounts")
+		for _, mnt := range mounts {
+			args = append(args, "Type", string(mnt.Type))
+			args = append(args, "From", mnt.From)
+			args = append(args, "Source", mnt.Source)
+			args = append(args, "Target", mnt.Target)
+			args = append(args, "ReadOnly", fmt.Sprintf("%v", mnt.ReadOnly))
+			args = append(args, "CacheID", mnt.CacheID)
+			args = append(args, "CacheSharing", string(mnt.CacheSharing))
+			args = append(args, "Required", fmt.Sprintf("%v", mnt.Required))
+			if mnt.Mode != nil {
+				args = append(args, "Mode", fmt.Sprintf("%d", *mnt.Mode))
+			}
+			if mnt.UID != nil {
+				args = append(args, "UID", fmt.Sprintf("%d", *mnt.UID))
+			}
+			if mnt.GID != nil {
+				args = append(args, "GID", fmt.Sprintf("%d", *mnt.GID))
+			}
+		}
+	}
+
+	return util.Sha256Hash(args...), nil
+}
+
 func (stg *Run) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
 	var args []string
 
