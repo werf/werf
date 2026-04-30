@@ -598,6 +598,9 @@ func (phase *BuildPhase) getLogImageNetwork(img *image.Image) string {
 			network = img.StapelImageConfig.ImageBaseConfig().Network
 		}
 	}
+	if network == "" {
+		network = "default"
+	}
 	return network
 }
 
@@ -630,6 +633,14 @@ func (phase *BuildPhase) onImageStage(ctx context.Context, img *image.Image, stg
 		}
 		if phase.StagesIterator.PrevBuiltStage != phase.StagesIterator.PrevNonEmptyStage {
 			panic(fmt.Sprintf("expected PrevBuiltStage (%q) to equal PrevNonEmptyStage (%q) for image %q stage %s", phase.StagesIterator.PrevBuiltStage.LogDetailedName(), phase.StagesIterator.PrevNonEmptyStage.LogDetailedName(), img.GetName(), stg.Name()))
+		}
+	}
+
+	if img.IsDockerfileImage && img.DockerfileImageConfig.Staged {
+		if werf.GetStagedDockerfileVersion() == werf.StagedDockerfileV2 {
+			if err := stg.ExpandDependencies(ctx, phase.Conveyor, img.GetStagedDockerfileBaseEnv()); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -740,9 +751,7 @@ func (phase *BuildPhase) afterImageStage(ctx context.Context, img *image.Image, 
 	if img.IsDockerfileImage && img.DockerfileImageConfig.Staged {
 		if werf.GetStagedDockerfileVersion() == werf.StagedDockerfileV2 {
 			if _, isFromStage := stg.(*instruction.From); isFromStage {
-				if err := img.ExpandDependencies(ctx, image.EnvToMap(stg.GetStageImage().Image.GetStageDesc().Info.Env)); err != nil {
-					return err
-				}
+				img.SetStagedDockerfileBaseEnv(image.EnvToMap(stg.GetStageImage().Image.GetStageDesc().Info.Env))
 			}
 		}
 	}

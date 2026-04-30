@@ -11,7 +11,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/opencontainers/go-digest"
 	"github.com/samber/lo"
 
 	"github.com/werf/common-go/pkg/util"
@@ -1004,11 +1003,6 @@ func (c *Conveyor) GetOrCreateStageImage(name string, prevStageImage *stage.Stag
 		if prevStageImage == nil || prevStageImage.Image == nil {
 			return ""
 		}
-		if stageDesc := prevStageImage.Image.GetStageDesc(); stageDesc != nil && stageDesc.Info != nil {
-			if _, err := digest.Parse(stageDesc.Info.ID); err == nil {
-				return stageDesc.Info.ID
-			}
-		}
 		return prevStageImage.Image.Name()
 	}
 
@@ -1111,8 +1105,8 @@ func (c *Conveyor) GetImportMetadata(ctx context.Context, projectName, id string
 	return c.StorageManager.GetStagesStorage().GetImportMetadata(ctx, projectName, id)
 }
 
-func (c *Conveyor) PutImportMetadata(ctx context.Context, projectName string, metadata *storage.ImportMetadata) error {
-	return c.StorageManager.GetStagesStorage().PutImportMetadata(ctx, projectName, metadata)
+func (c *Conveyor) PutImportMetadata(ctx context.Context, projectName string, metadata *storage.ImportMetadata, opts storage.PutImportMetadataOptions) error {
+	return c.StorageManager.GetStagesStorage().PutImportMetadata(ctx, projectName, metadata, opts)
 }
 
 func (c *Conveyor) RmImportMetadata(ctx context.Context, projectName, id string) error {

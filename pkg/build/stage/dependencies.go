@@ -330,7 +330,12 @@ func (s *DependenciesStage) getImportSourceChecksum(ctx context.Context, c Conve
 		return "", fmt.Errorf("unable to get import metadata: %w", err)
 	}
 
-	if importMetadata == nil {
+	emptyChecksum := importMetadata != nil && importMetadata.Checksum == ""
+	if emptyChecksum {
+		logboek.Context(ctx).Warn().LogF("Import metadata %s has empty checksum, will regenerate\n", importSourceID)
+	}
+
+	if importMetadata == nil || emptyChecksum {
 		checksum, err := s.generateImportChecksum(ctx, c, cb, importElm)
 		if err != nil {
 			return "", fmt.Errorf("unable to generate import source checksum: %w", err)
@@ -343,7 +348,7 @@ func (s *DependenciesStage) getImportSourceChecksum(ctx context.Context, c Conve
 			Checksum:       checksum,
 		}
 
-		if err := c.PutImportMetadata(ctx, s.projectName, importMetadata); err != nil {
+		if err := c.PutImportMetadata(ctx, s.projectName, importMetadata, storage.PutImportMetadataOptions{Force: emptyChecksum}); err != nil {
 			return "", fmt.Errorf("unable to put import metadata: %w", err)
 		}
 	}
