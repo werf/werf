@@ -24,7 +24,7 @@ jobs:
           path: coverage
 
       - name: Format and upload coverage report
-        uses: qltysh/qlty-action/coverage@v2
+        uses: qltysh/qlty-action/coverage@v1
         with:
           token: ${{secrets.QLTY_COVERAGE_TOKEN}}
           files: coverage/coverage-*/*.out

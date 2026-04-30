@@ -268,16 +268,18 @@ func (storage *LocalStagesStorage) GetImportMetadata(ctx context.Context, projec
 	return newImportMetadataFromLabels(info.Labels), nil
 }
 
-func (storage *LocalStagesStorage) PutImportMetadata(ctx context.Context, projectName string, metadata *ImportMetadata) error {
+func (storage *LocalStagesStorage) PutImportMetadata(ctx context.Context, projectName string, metadata *ImportMetadata, opts PutImportMetadataOptions) error {
 	logboek.Context(ctx).Debug().LogF("-- LocalStagesStorage.PutImportMetadata %s %v\n", projectName, metadata)
 
 	fullImageName := makeLocalImportMetadataName(projectName, metadata.ImportSourceID)
 	logboek.Context(ctx).Debug().LogF("-- LocalStagesStorage.PutImportMetadata full image name: %s\n", fullImageName)
 
-	if info, err := storage.ContainerBackend.GetImageInfo(ctx, fullImageName, container_backend.GetImageInfoOpts{}); err != nil {
-		return fmt.Errorf("unable to check existence of image %s: %w", fullImageName, err)
-	} else if info != nil {
-		return nil
+	if !opts.Force {
+		if info, err := storage.ContainerBackend.GetImageInfo(ctx, fullImageName, container_backend.GetImageInfoOpts{}); err != nil {
+			return fmt.Errorf("unable to check existence of image %s: %w", fullImageName, err)
+		} else if info != nil {
+			return nil
+		}
 	}
 
 	labels := metadata.ToLabels()
