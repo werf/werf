@@ -7,7 +7,7 @@ on:
       - "[0-9]+.[0-9]+"
       - "[0-9]+"
   repository_dispatch:
-    types: ["release:release-please"]
+    types: [ "release:release-please" ]
   workflow_dispatch:
 
 defaults:
@@ -16,6 +16,7 @@ defaults:
 
 jobs:
   release-please:
+    if: "${{ github.event_name != 'push' || !contains(github.event.head_commit.message, '): release ') }}"
     runs-on: ubuntu-22.04
     steps:
       - name: Release
