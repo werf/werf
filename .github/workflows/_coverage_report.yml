@@ -28,4 +28,5 @@ jobs:
         with:
           token: ${{secrets.QLTY_COVERAGE_TOKEN}}
           files: coverage/coverage-*/*.out
+          strip-prefix: v2/
           skip-errors: false
