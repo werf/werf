@@ -1,5 +1,21 @@
 # Changelog
 
+## [2.68.1](https://github.com/werf/werf/compare/v2.68.0...v2.68.1) (2026-04-30)
+
+
+### Bug Fixes
+
+* **buiild, stapel, import:** regenerate import checksums if it`s empty ([#7506](https://github.com/werf/werf/issues/7506)) ([eebb1df](https://github.com/werf/werf/commit/eebb1dfdd0ceab4ef7f274a89d122a44942fdffb))
+* **build:** non-local synchronization server requires --repo be set ([f078e04](https://github.com/werf/werf/commit/f078e049261c35e2a4fced88a92a078205021806))
+* **build:** resolve dependency image refs in FROM stage before computing cache digest ([#7492](https://github.com/werf/werf/issues/7492)) ([b42f0b1](https://github.com/werf/werf/commit/b42f0b120a46e7eeaf06f66339561ed486cc04c9))
+* **build:** show "default" in log network field when no explicit network ([c54a78d](https://github.com/werf/werf/commit/c54a78da6c956455578d4c2a67064276498b0f68))
+* **build:** use image tag instead of sha256 for docker run ([725a629](https://github.com/werf/werf/commit/725a62942d4fe57f8d88093d636d5f7be750ab5d))
+* **ci:** trigger website production deploy after trdl channel update ([#7502](https://github.com/werf/werf/issues/7502)) ([310298c](https://github.com/werf/werf/commit/310298c5ba2f7f1e88c49bd8c45c2eedb4986c2d))
+* **deploy:** retry on webhook unavailable errors ([#7505](https://github.com/werf/werf/issues/7505)) ([1718543](https://github.com/werf/werf/commit/171854373681fc3c98b1c381052281b026e71c12))
+* **host-cleanup:** support nested cli command ([ee5f78a](https://github.com/werf/werf/commit/ee5f78a7b05cebc3b1334d0e885c1b1aa8aaffdd))
+* **host-clenaup:** apply WERF_SELF_INVOCATION_COMMAND in Detach ([faf5bf2](https://github.com/werf/werf/commit/faf5bf2c6552b38cfe8881d334a862d636d08612))
+* **parallel:** eliminate race between context timeout and goroutine ([ed67c0f](https://github.com/werf/werf/commit/ed67c0f7f988a3bcf489baad9d428850fa6d3326))
+
 ## [2.68.0](https://github.com/werf/werf/compare/v2.67.2...v2.68.0) (2026-04-22)
 
 
