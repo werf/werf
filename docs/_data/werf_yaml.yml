@@ -807,11 +807,6 @@ sections:
             description:
               en: "The source image for copying files: another image from `werf.yaml` (e.g. `backend`) or an external image with a tag/digest (e.g. `nginx:1.25`, `nginx@sha256:...`)."
               ru: "Исходный образ для копирования файлов: другой образ из `werf.yaml` (например, `backend`) или внешний образ с тегом/дайджестом (например, `nginx:1.25`, `nginx@sha256:...`)."
-          - name: stage
-            value: "string"
-            description:
-              en: "The stage name from which you want to copy files (the latest one by default)"
-              ru: "Имя стадии, из которой выполнять копирование файлов (по умолчанию последняя)"
           - name: before
             value: "string"
             description:

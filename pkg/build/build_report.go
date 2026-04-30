@@ -211,35 +211,33 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 		targetPlatforms := util.MapFuncToSlice(images, func(img *image.Image) string { return img.TargetPlatform })
 
 		for _, img := range images {
-			stageImage := img.GetLastNonEmptyStage().GetStageImage().Image
-			stageDesc := stageImage.GetFinalStageDesc()
-			if stageDesc == nil {
-				stageDesc = stageImage.GetStageDesc()
+			imageDesc := img.GetFinalContextTagDesc()
+			if imageDesc == nil {
+				imageDesc = img.GetContextTagDesc()
+			}
+			if imageDesc == nil {
+				stageImage := img.GetLastNonEmptyStage().GetStageImage().Image
+				imageDesc = stageImage.GetFinalStageDesc()
+				if imageDesc == nil {
+					imageDesc = stageImage.GetStageDesc()
+				}
 			}
 
 			stages := getStagesReport(img, false)
 
 			configType := determineConfigType(phase.Conveyor.werfConfig, img.Name)
 
-			dockerTag := stageDesc.Info.Tag
-			dockerImageName := stageDesc.Info.Name
-			if contextDigest := img.GetContextDigest(); contextDigest != "" && stageDesc.StageID != nil {
-				contextTag := fmt.Sprintf("%s-%d", contextDigest, stageDesc.StageID.CreationTs)
-				dockerTag = contextTag
-				dockerImageName = fmt.Sprintf("%s:%s", stageDesc.Info.Repository, contextTag)
-			}
-
 			record := ReportImageRecord{
 				WerfImageName:     img.GetName(),
-				DockerRepo:        stageDesc.Info.Repository,
-				DockerTag:         dockerTag,
-				DockerImageID:     stageDesc.Info.ID,
-				DockerImageDigest: stageDesc.Info.GetDigest(),
-				DockerImageName:   dockerImageName,
+				DockerRepo:        imageDesc.Info.Repository,
+				DockerTag:         imageDesc.Info.Tag,
+				DockerImageID:     imageDesc.Info.ID,
+				DockerImageDigest: imageDesc.Info.GetDigest(),
+				DockerImageName:   imageDesc.Info.Name,
 				TargetPlatform:    img.TargetPlatform,
 				Rebuilt:           img.GetRebuilt(),
 				Final:             img.IsFinal,
-				Size:              stageDesc.Info.Size,
+				Size:              imageDesc.Info.Size,
 				BuildTime:         fmt.Sprintf("%.2f", img.BuildDuration.Seconds()),
 				Stages:            stages,
 				ConfigType:        configType,

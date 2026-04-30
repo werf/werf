@@ -38,10 +38,7 @@ func NewMultiplatformImage(name string, images []*Image, logImageIndex, logImage
 	}
 
 	contextDeps := util.MapFuncToSlice(images, func(img *Image) string {
-		if cd := img.GetContextDigest(); cd != "" {
-			return cd
-		}
-		return img.GetLastNonEmptyStage().GetStageImage().Image.GetStageDesc().StageID.String()
+		return img.GetContextDigest()
 	})
 	img.calculatedDigest = util.Sha3_224Hash(contextDeps...)
 	img.stageID = *common_image.NewStageID(img.GetDigest(), 0)
@@ -63,8 +60,7 @@ func (img *MultiplatformImage) GetStageID() common_image.StageID {
 
 func (img *MultiplatformImage) GetImagesInfoList() []*common_image.Info {
 	return util.MapFuncToSlice(img.Images, func(img *Image) *common_image.Info {
-		stageDesc := img.GetLastNonEmptyStage().GetStageImage().Image.GetStageDesc()
-		return stageDesc.Info
+		return img.GetContextTagDesc().Info
 	})
 }
 

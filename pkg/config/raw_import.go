@@ -4,7 +4,6 @@ type rawImport struct {
 	From   string `yaml:"from,omitempty"`
 	Before string `yaml:"before,omitempty"`
 	After  string `yaml:"after,omitempty"`
-	Stage  string `yaml:"stage,omitempty"`
 
 	rawExport      `yaml:",inline"`
 	rawStapelImage *rawStapelImage `yaml:"-"` // parent
@@ -61,7 +60,6 @@ func (c *rawImport) toDirective() (imp *Import, err error) {
 
 	imp.Before = c.Before
 	imp.After = c.After
-	imp.Stage = c.Stage
 
 	imp.raw = c
 
