@@ -389,7 +389,7 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 				ChartPath:         bundleTmpDir,
 				ContentCache:      helm.Settings.ContentCache,
 				AllowMissingRepos: true,
-				Getters:           getter.All(helm.Settings),
+				Getters:           getter.Getters(),
 				RegistryClient:    helmRegistryClient,
 				RepositoryConfig:  helm.Settings.RepositoryConfig,
 				RepositoryCache:   helm.Settings.RepositoryCache,
@@ -474,7 +474,7 @@ func createNewBundle(
 
 	var valsData []byte
 	{
-		p := getter.All(helm.Settings)
+		p := getter.Getters()
 		vals, err := vals.MergeValues(nelmcommon.ContextWithHelmOptions(ctx, opts), p)
 		if err != nil {
 			return fmt.Errorf("unable to merge input values: %w", err)

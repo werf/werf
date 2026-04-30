@@ -4,7 +4,6 @@ silent: true
 
 env:
   GO111MODULE: "on"
-  HELM_PLUGINS: ""
   KUBECONFIG:
     sh: echo "$HOME/.kube/config"
   PRETTIER_VERSION: "3.5.3"

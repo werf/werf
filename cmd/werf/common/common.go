@@ -297,7 +297,7 @@ func SetupTemplatesAllowDNS(cmdData *CmdData, cmd *cobra.Command) {
 }
 
 func SetupReleaseStorageDriver(cmdData *CmdData, cmd *cobra.Command) {
-	cmd.Flags().StringVarP(&cmdData.ReleaseStorageDriver, "release-storage", "", util.GetFirstExistingEnvVarAsString("WERF_RELEASE_STORAGE", "HELM_DRIVER"), `How releases should be stored (default $WERF_RELEASE_STORAGE)`)
+	cmd.Flags().StringVarP(&cmdData.ReleaseStorageDriver, "release-storage", "", util.GetFirstExistingEnvVarAsString("WERF_RELEASE_STORAGE"), `How releases should be stored (default $WERF_RELEASE_STORAGE)`)
 }
 
 func SetupReleaseInfoAnnotations(cmdData *CmdData, cmd *cobra.Command) {
