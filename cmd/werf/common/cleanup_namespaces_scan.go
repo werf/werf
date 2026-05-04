@@ -70,8 +70,12 @@ func GetKubernetesNamespacesByContext(cmdData *CmdData, contextClients []*kube.C
 			continue
 		}
 
-		if !*cmdData.ScanContextNamespaceOnly {
-			res[contextClient.ContextName] = nil
+		if *cmdData.ScanContextNamespaceOnly {
+			if contextClient.ContextNamespace != "" {
+				res[contextClient.ContextName] = []string{contextClient.ContextNamespace}
+			} else {
+				res[contextClient.ContextName] = nil
+			}
 			continue
 		}
 
