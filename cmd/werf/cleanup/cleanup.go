@@ -220,7 +220,7 @@ func runCleanup(ctx context.Context, cmd *cobra.Command) error {
 	logboek.Debug().LogF("Managed images names: %v\n", imagesNames)
 
 	var kubernetesContextClients []*kube.ContextClient
-	var kubernetesNamespaceRestrictionByContext map[string]string
+	var kubernetesNamespacesByContext map[string][]string
 	if !(*commonCmdData.WithoutKube || werfConfig.Meta.Cleanup.DisableKubernetesBasedPolicy) {
 		kubernetesContextClients, err = common.GetKubernetesContextClients(
 			commonCmdData.LegacyKubeConfigPath,
@@ -232,14 +232,13 @@ func runCleanup(ctx context.Context, cmd *cobra.Command) error {
 			commonCmdData.KubeAPIServerAddress,
 			commonCmdData.KubeTLSCAData,
 			commonCmdData.KubeSkipTLSVerify,
-			*commonCmdData.KubeScanNamespaces,
 		)
 		if err != nil {
 			return fmt.Errorf("unable to get Kubernetes clusters connections: %w", err)
 		}
 	}
 
-	kubernetesNamespaceRestrictionByContext = common.GetKubernetesNamespaceRestrictionByContext(&commonCmdData, kubernetesContextClients)
+	kubernetesNamespacesByContext = common.GetKubernetesNamespacesByContext(&commonCmdData, kubernetesContextClients)
 
 	keepList := cleaning.NewKeepListWithSize(0)
 
@@ -250,17 +249,17 @@ func runCleanup(ctx context.Context, cmd *cobra.Command) error {
 	}
 
 	cleanupOptions := cleaning.CleanupOptions{
-		ImageNameList:                           imagesNames,
-		LocalGit:                                giterminismManager.LocalGitRepo().(*git_repo.Local),
-		KubernetesContextClients:                kubernetesContextClients,
-		KubernetesNamespaceRestrictionByContext: kubernetesNamespaceRestrictionByContext,
-		WithoutKube:                             *commonCmdData.WithoutKube,
-		ConfigMetaCleanup:                       werfConfig.Meta.Cleanup,
-		KeepStagesBuiltWithinLastNHours:         common.GetKeepStagesBuiltWithinLastNHours(&commonCmdData, cmd),
-		DryRun:                                  *commonCmdData.DryRun,
-		Parallel:                                common.GetParallel(&commonCmdData),
-		ParallelTasksLimit:                      common.GetParallelTasksLimit(&commonCmdData),
-		KeepList:                                keepList,
+		ImageNameList:                   imagesNames,
+		LocalGit:                        giterminismManager.LocalGitRepo().(*git_repo.Local),
+		KubernetesContextClients:        kubernetesContextClients,
+		KubernetesNamespacesByContext:   kubernetesNamespacesByContext,
+		WithoutKube:                     *commonCmdData.WithoutKube,
+		ConfigMetaCleanup:               werfConfig.Meta.Cleanup,
+		KeepStagesBuiltWithinLastNHours: common.GetKeepStagesBuiltWithinLastNHours(&commonCmdData, cmd),
+		DryRun:                          *commonCmdData.DryRun,
+		Parallel:                        common.GetParallel(&commonCmdData),
+		ParallelTasksLimit:              common.GetParallelTasksLimit(&commonCmdData),
+		KeepList:                        keepList,
 	}
 
 	logboek.LogOptionalLn()

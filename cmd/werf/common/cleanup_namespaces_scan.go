@@ -17,10 +17,10 @@ func SetupScanContextNamespaceOnly(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupKubeScanNamespaces(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.KubeScanNamespaces = new([]string)
-	cmd.Flags().StringArrayVarP(cmdData.KubeScanNamespaces, "kube-scan-namespaces", "", []string{}, "Kubernetes namespaces to scan in in-cluster mode when using --scan-context-namespace-only (can specify multiple).")
+	cmd.Flags().StringArrayVarP(cmdData.KubeScanNamespaces, "kube-scan-namespaces", "", []string{}, "Kubernetes namespaces to scan for each selected context (can specify multiple). Overrides --scan-context-namespace-only when set.")
 }
 
-func GetKubernetesContextClients(configPath, configDataBase64 string, configPathMergeList []string, kubeContext, kubeBearerTokenData, kubeBearerTokenPath, apiServerURL, caDataBase64 string, insecure bool, scanNamespaces []string) ([]*kube.ContextClient, error) {
+func GetKubernetesContextClients(configPath, configDataBase64 string, configPathMergeList []string, kubeContext, kubeBearerTokenData, kubeBearerTokenPath, apiServerURL, caDataBase64 string, insecure bool) ([]*kube.ContextClient, error) {
 	var res []*kube.ContextClient
 	if contextClients, err := kube.GetAllContextsClients(kube.GetAllContextsClientsOptions{
 		ConfigPath:          configPath,
@@ -31,7 +31,6 @@ func GetKubernetesContextClients(configPath, configDataBase64 string, configPath
 		APIServerURL:        apiServerURL,
 		CADataBase64:        caDataBase64,
 		Insecure:            insecure,
-		ScanNamespaces:      scanNamespaces,
 	}); err != nil {
 		return nil, err
 	} else {
@@ -58,19 +57,33 @@ func GetKubernetesContextClients(configPath, configDataBase64 string, configPath
 	return res, nil
 }
 
-func GetKubernetesNamespaceRestrictionByContext(cmdData *CmdData, contextClients []*kube.ContextClient) map[string]string {
-	res := map[string]string{}
+func GetKubernetesNamespacesByContext(cmdData *CmdData, contextClients []*kube.ContextClient) map[string][]string {
+	res := map[string][]string{}
+	scanNamespaces := []string{}
+	if cmdData.KubeScanNamespaces != nil {
+		scanNamespaces = *cmdData.KubeScanNamespaces
+	}
+
 	for _, contextClient := range contextClients {
-		if *cmdData.ScanContextNamespaceOnly {
-			res[contextClient.ContextName] = contextClient.ContextNamespace
+		if len(scanNamespaces) > 0 {
+			res[contextClient.ContextName] = append([]string(nil), scanNamespaces...)
+			continue
+		}
+
+		if !*cmdData.ScanContextNamespaceOnly {
+			res[contextClient.ContextName] = nil
+			continue
+		}
+
+		if contextClient.ContextNamespace != "" {
+			res[contextClient.ContextName] = []string{contextClient.ContextNamespace}
 		} else {
-			// "" - cluster scope, therefore all namespaces
-			res[contextClient.ContextName] = ""
+			res[contextClient.ContextName] = nil
 		}
 	}
 
-	for contextName, restrictionNamespace := range res {
-		logboek.Debug().LogF("GetKubernetesNamespaceRestrictionByContext -- context %q restriction namespace %q\n", contextName, restrictionNamespace)
+	for contextName, namespaces := range res {
+		logboek.Debug().LogF("GetKubernetesNamespacesByContext -- context %q namespaces %q\n", contextName, namespaces)
 	}
 
 	return res
