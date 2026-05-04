@@ -362,11 +362,6 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 
 	helm.Settings.Debug = *commonCmdData.LogDebug
 
-	// TODO(major): compatibility mode with older 1.2 versions, which do not require WERF_SECRET_KEY in the 'werf bundle publish' command
-	if err := secrets_manager.Manager.AllowMissedSecretKeyMode(giterminismManager.ProjectDir()); err != nil {
-		return err
-	}
-
 	sv, err := bundles.BundleTagToChartVersion(ctx, cmdData.Tag, time.Now())
 	if err != nil {
 		return fmt.Errorf("unable to set chart version from bundle tag %q: %w", cmdData.Tag, err)
@@ -492,7 +487,7 @@ func createNewBundle(
 	}
 
 	var secretValsData []byte
-	if chrt.SecretsRuntimeData != nil && !secrets_manager.Manager.IsMissedSecretKeyModeEnabled() {
+	if chrt.SecretsRuntimeData != nil {
 		secretsRuntimeData, ok := chrt.SecretsRuntimeData.(legacysecret.RuntimeData)
 		if !ok {
 			return fmt.Errorf("unsupported secrets runtime data type %T", chrt.SecretsRuntimeData)
