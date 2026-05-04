@@ -12,6 +12,7 @@ import (
 	"github.com/werf/werf/v2/pkg/container_backend/thirdparty/platformutil"
 	"github.com/werf/werf/v2/test/pkg/contback"
 	"github.com/werf/werf/v2/test/pkg/report"
+	"github.com/werf/werf/v2/test/pkg/suite_init"
 	"github.com/werf/werf/v2/test/pkg/werf"
 )
 
@@ -37,6 +38,9 @@ var _ = Describe("Multiarch build", Label("e2e", "build", "multiarch", "simple")
 	DescribeTable("should build images for multiple architectures and publish multiarch manifests",
 		func(ctx SpecContext, testOpts multiarchTestOptions) {
 			setupEnv(testOpts.setupEnvOptions)
+			if testOpts.setupEnvOptions.WithLocalRepo {
+				SuiteData.WerfRepo = suite_init.TestRepo(SuiteData.ProjectName)
+			}
 			Expect(SuiteData.WerfRepo).NotTo(BeEmpty())
 
 			contBack, err := contback.NewContainerBackend(testOpts.ContainerBackendMode)
