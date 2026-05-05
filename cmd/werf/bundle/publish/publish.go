@@ -498,9 +498,11 @@ func createNewBundle(
 			return fmt.Errorf("unable to construct bundle secret values: %w", err)
 		}
 
-		secretValsData, err = yaml.Marshal(vals)
-		if err != nil {
-			return fmt.Errorf("unable to marshal bundle secret values: %w", err)
+		if len(vals) > 0 {
+			secretValsData, err = yaml.Marshal(vals)
+			if err != nil {
+				return fmt.Errorf("unable to marshal bundle secret values: %w", err)
+			}
 		}
 	}
 
