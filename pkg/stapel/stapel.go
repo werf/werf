@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/filters"
 
 	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/image"
@@ -66,7 +67,10 @@ func GetOrCreateContainer(ctx context.Context, targetPlatform string) (string, e
 
 func Purge(ctx context.Context) error {
 	baseContainerName := fmt.Sprintf("%s%s", image.AssemblingContainerNamePrefix, getVersion())
-	containers, err := docker.Containers(ctx, types.ContainerListOptions{All: true})
+	containers, err := docker.Containers(ctx, types.ContainerListOptions{
+		All:     true,
+		Filters: filters.NewArgs(filters.Arg("name", baseContainerName)),
+	})
 	if err != nil {
 		return err
 	}

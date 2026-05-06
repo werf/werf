@@ -90,15 +90,8 @@ func (c *LegacyStageImageContainer) prepareRunArgs(ctx context.Context) ([]strin
 	setColumnsEnv := fmt.Sprintf("--env=COLUMNS=%d", logboek.Context(ctx).Streams().ContentWidth())
 	runArgs = append(runArgs, setColumnsEnv)
 
-	var fromImageRef string
-	if c.image.GetTargetPlatform() != "" {
-		fromImageRef = c.image.fromImage.Name()
-	} else {
-		fromImageRef = c.image.fromImage.GetID()
-	}
-
 	args = append(args, runArgs...)
-	args = append(args, fromImageRef)
+	args = append(args, c.imageRef(c.image.fromImage))
 	args = append(args, "-ec")
 	args = append(args, c.prepareRunCommand())
 
@@ -135,20 +128,21 @@ func ShelloutPack(command string) string {
 	return fmt.Sprintf("eval $(echo %s | %s --decode)", base64.StdEncoding.EncodeToString([]byte(command)), stapel.Base64BinPath())
 }
 
+func (c *LegacyStageImageContainer) imageRef(img *LegacyStageImage) string {
+	if c.image.GetTargetPlatform() != "" {
+		return img.Name()
+	}
+
+	return img.GetID()
+}
+
 func (c *LegacyStageImageContainer) prepareIntrospectBeforeArgs(ctx context.Context) ([]string, error) {
 	args, err := c.prepareIntrospectArgsBase(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	var fromImageRef string
-	if c.image.GetTargetPlatform() != "" {
-		fromImageRef = c.image.fromImage.Name()
-	} else {
-		fromImageRef = c.image.fromImage.GetID()
-	}
-
-	args = append(args, fromImageRef)
+	args = append(args, c.imageRef(c.image.fromImage))
 	args = append(args, "-ec")
 	args = append(args, stapel.BashBinPath())
 
@@ -161,14 +155,7 @@ func (c *LegacyStageImageContainer) prepareIntrospectArgs(ctx context.Context) (
 		return nil, err
 	}
 
-	var imageRef string
-	if c.image.GetTargetPlatform() != "" {
-		imageRef = c.image.Name()
-	} else {
-		imageRef = c.image.GetID()
-	}
-
-	args = append(args, imageRef)
+	args = append(args, c.imageRef(c.image))
 	args = append(args, "-ec")
 	args = append(args, stapel.BashBinPath())
 

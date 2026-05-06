@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/containerd/containerd/platforms"
+
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/container_backend/thirdparty/platformutil"
@@ -22,7 +23,7 @@ type container struct {
 }
 
 func (c *container) Create(ctx context.Context) error {
-	imageLockName := fmt.Sprintf("stapel.image.%s", strings.NewReplacer("/", "_", ":", "_", "@", "_").Replace(c.ImageName))
+	imageLockName := stapelImageLockName(c.ImageName)
 	return werf.HostLocker().WithLock(ctx, imageLockName, lockgate.AcquireOptions{Timeout: time.Second * 600}, func() error {
 		name := fmt.Sprintf("--name=%s", c.Name)
 		volume := fmt.Sprintf("--volume=%s", c.Volume)
@@ -72,6 +73,10 @@ func (c *container) Create(ctx context.Context) error {
 
 		return docker.CliCreate(ctx, name, volume, c.ImageName)
 	})
+}
+
+func stapelImageLockName(imageName string) string {
+	return fmt.Sprintf("stapel.image.%s", strings.NewReplacer("/", "_", ":", "_", "@", "_").Replace(imageName))
 }
 
 func (c *container) CreateIfNotExist(ctx context.Context) error {
