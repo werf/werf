@@ -65,18 +65,13 @@ func NewLocalBackendCleaner(backend container_backend.ContainerBackend, locker l
 		lrumetaGetImageLastAccessTime:   lrumeta.CommonLRUImagesCache.GetImageLastAccessTime,
 	}
 
-	switch backend.(type) {
-	case *container_backend.DockerServerBackend:
-		cleaner.backendType = containerBackendDocker
-		return cleaner, nil
-	case *container_backend.BuildahBackend:
-		cleaner.backendType = containerBackendBuildah
-		return cleaner, nil
-	default:
-		// returns cleaner for testing with mock
-		cleaner.backendType = containerBackendTest
-		return cleaner, ErrUnsupportedContainerBackend
+	backendType, err := resolveContainerBackendType(backend)
+	if err != nil {
+		return cleaner, err
 	}
+	cleaner.backendType = backendType
+
+	return cleaner, nil
 }
 
 func (cleaner *LocalBackendCleaner) BackendName() string {
