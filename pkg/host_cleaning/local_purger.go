@@ -9,19 +9,21 @@ import (
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/container_backend"
-	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/stapel"
 	"github.com/werf/werf/v2/pkg/werf"
 )
 
 type localPurger struct {
-	backend container_backend.ContainerBackend
+	backend     container_backend.ContainerBackend
+	backendType containerBackendType
 }
 
 func newLocalPurger(backend container_backend.ContainerBackend) *localPurger {
+	backendType, _ := resolveContainerBackendType(backend)
 	return &localPurger{
-		backend: backend,
+		backend:     backend,
+		backendType: backendType,
 	}
 }
 
@@ -99,7 +101,7 @@ func (purger *localPurger) PurgeStapelFiles(ctx context.Context, options CommonO
 		return nil
 	}
 
-	if !docker.IsEnabled() {
+	if purger.backendType != containerBackendDocker {
 		return nil
 	}
 
