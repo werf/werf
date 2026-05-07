@@ -617,17 +617,17 @@ func (mr *MockStagesStorageMockRecorder) PutImageMetadata(ctx, projectName, imag
 }
 
 // PutImportMetadata mocks base method.
-func (m *MockStagesStorage) PutImportMetadata(ctx context.Context, projectName string, metadata *storage.ImportMetadata) error {
+func (m *MockStagesStorage) PutImportMetadata(ctx context.Context, projectName string, metadata *storage.ImportMetadata, opts storage.PutImportMetadataOptions) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PutImportMetadata", ctx, projectName, metadata)
+	ret := m.ctrl.Call(m, "PutImportMetadata", ctx, projectName, metadata, opts)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // PutImportMetadata indicates an expected call of PutImportMetadata.
-func (mr *MockStagesStorageMockRecorder) PutImportMetadata(ctx, projectName, metadata any) *gomock.Call {
+func (mr *MockStagesStorageMockRecorder) PutImportMetadata(ctx, projectName, metadata, opts any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutImportMetadata", reflect.TypeOf((*MockStagesStorage)(nil).PutImportMetadata), ctx, projectName, metadata)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutImportMetadata", reflect.TypeOf((*MockStagesStorage)(nil).PutImportMetadata), ctx, projectName, metadata, opts)
 }
 
 // RejectStage mocks base method.
