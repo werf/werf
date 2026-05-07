@@ -2,12 +2,15 @@ package instruction
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/build/stage"
+	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/docker_registry"
+	"github.com/werf/werf/v2/pkg/dockerfile"
 )
 
 type From struct {
@@ -16,10 +19,12 @@ type From struct {
 	BaseImageReference  string
 	BaseImageRepoDigest string
 
-	imageCacheVersion string
+	imageCacheVersion         string
+	dependencies              []*config.Dependency
+	dockerfileExpanderFactory dockerfile.ExpanderFactory
 }
 
-func NewFrom(baseImageReference, baseImageRepoDigest, imageCacheVersion string, opts *stage.BaseStageOptions) *From {
+func NewFrom(baseImageReference, baseImageRepoDigest, imageCacheVersion string, dependencies []*config.Dependency, dockerfileExpanderFactory dockerfile.ExpanderFactory, opts *stage.BaseStageOptions) *From {
 	return &From{
 		BaseImageReference:  baseImageReference,
 		BaseImageRepoDigest: baseImageRepoDigest,
@@ -27,7 +32,9 @@ func NewFrom(baseImageReference, baseImageRepoDigest, imageCacheVersion string, 
 			stage.StageName("FROM"),
 			opts,
 		),
-		imageCacheVersion: imageCacheVersion,
+		imageCacheVersion:         imageCacheVersion,
+		dependencies:              dependencies,
+		dockerfileExpanderFactory: dockerfileExpanderFactory,
 	}
 }
 
@@ -44,6 +51,17 @@ func (stg *From) UsesBuildContext() bool {
 }
 
 func (stg *From) ExpandDependencies(ctx context.Context, c stage.Conveyor, baseEnv map[string]string) error {
+	if stg.dockerfileExpanderFactory == nil {
+		return nil
+	}
+
+	dependenciesArgs := stage.ResolveDependenciesArgs(stg.TargetPlatform(), stg.dependencies, c)
+	ref, err := stg.dockerfileExpanderFactory.GetExpander(dockerfile.ExpandOptions{SkipUnsetEnv: false}).ProcessWordWithMap(stg.BaseImageReference, dependenciesArgs)
+	if err != nil {
+		return fmt.Errorf("unable to expand dockerfile base image reference %q: %w", stg.BaseImageReference, err)
+	}
+	stg.BaseImageReference = ref
+
 	return nil
 }
 

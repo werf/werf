@@ -183,7 +183,7 @@ func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, 
 			baseStageOptions.LogName = "FROM1"
 
 			imageCacheVersion := option.ValueOrDefault(dockerfileImageConfig.CacheVersion(), metaConfig.Build.CacheVersion)
-			fromStage := stage_instruction.NewFrom(img.GetBaseImageReference(), img.GetBaseImageRepoDigest(), imageCacheVersion, &baseStageOptions)
+			fromStage := stage_instruction.NewFrom(img.GetBaseImageReference(), img.GetBaseImageRepoDigest(), imageCacheVersion, dockerfileImageConfig.Dependencies, stg.ExpanderFactory, &baseStageOptions)
 
 			img.stages = append(img.stages, fromStage)
 			instrNum = 1

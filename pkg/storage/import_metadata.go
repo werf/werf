@@ -28,6 +28,10 @@ func (m *ImportMetadata) ToLabelsMap() map[string]string {
 	}
 }
 
+type PutImportMetadataOptions struct {
+	Force bool
+}
+
 func newImportMetadataFromLabels(labels map[string]string) *ImportMetadata {
 	return &ImportMetadata{
 		ImportSourceID: labels[image.WerfImportMetadataImportSourceIDLabel],
