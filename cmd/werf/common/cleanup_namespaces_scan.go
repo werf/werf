@@ -2,6 +2,7 @@ package common
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/spf13/cobra"
 
@@ -66,7 +67,7 @@ func GetKubernetesNamespacesByContext(cmdData *CmdData, contextClients []*kube.C
 
 	for _, contextClient := range contextClients {
 		if len(scanNamespaces) > 0 {
-			res[contextClient.ContextName] = append([]string(nil), scanNamespaces...)
+			res[contextClient.ContextName] = slices.Clone(scanNamespaces)
 			continue
 		}
 
