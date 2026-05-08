@@ -6,8 +6,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/opencontainers/go-digest"
-
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
@@ -68,14 +66,8 @@ func (i *LegacyStageImage) GetID() string {
 	if i.buildImage != nil {
 		return i.buildImage.Name()
 	}
-	stageDesc := i.legacyBaseImage.GetStageDesc()
-	if stageDesc != nil && stageDesc.Info != nil {
-		if _, err := digest.Parse(stageDesc.Info.ID); err == nil {
-			return stageDesc.Info.ID
-		}
-		if stageDesc.Info.Name != "" {
-			return stageDesc.Info.Name
-		}
+	if stageDesc := i.legacyBaseImage.GetStageDesc(); stageDesc != nil && stageDesc.Info != nil {
+		return stageDesc.Info.Name
 	}
 	return i.legacyBaseImage.Name()
 }

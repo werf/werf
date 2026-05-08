@@ -132,6 +132,8 @@ type Image struct {
 	baseStageImage   *stage.StageImage
 	stageAsBaseImage stage.Interface
 
+	stagedDockerfileBaseEnv map[string]string
+
 	logImageIndex  int
 	logTotalImages int
 }
@@ -297,6 +299,14 @@ func (i *Image) GetName() string {
 
 func (i *Image) GetLogName() string {
 	return i.LogName()
+}
+
+func (i *Image) SetStagedDockerfileBaseEnv(env map[string]string) {
+	i.stagedDockerfileBaseEnv = env
+}
+
+func (i *Image) GetStagedDockerfileBaseEnv() map[string]string {
+	return i.stagedDockerfileBaseEnv
 }
 
 func (i *Image) SetRebuilt(rebuilt bool) {

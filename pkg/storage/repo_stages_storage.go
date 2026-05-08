@@ -739,30 +739,33 @@ func (storage *RepoStagesStorage) GetImportMetadata(ctx context.Context, _, id s
 	return newImportMetadataFromLabels(img.Labels), nil
 }
 
-func (storage *RepoStagesStorage) PutImportMetadata(ctx context.Context, projectName string, metadata *ImportMetadata) error {
+func (storage *RepoStagesStorage) PutImportMetadata(ctx context.Context, projectName string, metadata *ImportMetadata, opts PutImportMetadataOptions) error {
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PutImportMetadata %v\n", metadata)
 
 	tagName := makeRepoImportMetadataTag(metadata.ImportSourceID)
-	tags, err := storage.Tags(ctx, storage.RepoAddress)
-	if err != nil {
-		return fmt.Errorf("unable to get repo %s tags: %w", storage.RepoAddress, err)
-	}
 
-	for _, tag := range tags {
-		if tag == tagName {
-			logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PutImportMetadata tag %s already exists, skipping push\n", tagName)
+	if !opts.Force {
+		tags, err := storage.Tags(ctx, storage.RepoAddress)
+		if err != nil {
+			return fmt.Errorf("unable to get repo %s tags: %w", storage.RepoAddress, err)
+		}
 
-			return nil
+		for _, tag := range tags {
+			if tag == tagName {
+				logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PutImportMetadata tag %s already exists, skipping push\n", tagName)
+
+				return nil
+			}
 		}
 	}
 
 	fullImageName := makeRepoImportMetadataName(storage.RepoAddress, metadata.ImportSourceID)
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PutImportMetadata full image name: %s\n", fullImageName)
 
-	opts := &docker_registry.PushImageOptions{Labels: metadata.ToLabelsMap()}
-	opts.Labels[image.WerfLabel] = projectName
+	pushOpts := &docker_registry.PushImageOptions{Labels: metadata.ToLabelsMap()}
+	pushOpts.Labels[image.WerfLabel] = projectName
 
-	if err := storage.DockerRegistry.PushImage(ctx, fullImageName, opts); err != nil {
+	if err := storage.DockerRegistry.PushImage(ctx, fullImageName, pushOpts); err != nil {
 		if docker_registry.IsStatusForbiddenErr(err) {
 			logboek.Context(ctx).Warn().LogF("WARNING: Failed to push import meta tag image %s\n", fullImageName)
 
