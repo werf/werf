@@ -232,6 +232,7 @@ func generateGitlabEnvs(ctx context.Context, w io.Writer, dockerConfig string) e
 
 	writeHeader(w, "DOCKER CONFIG", false)
 	writeEnv(w, "DOCKER_CONFIG", dockerConfig, true)
+	writeEnv(w, "WERF_DOCKER_CONFIG", dockerConfig, true)
 
 	writeHeader(w, "REPO", true)
 	writeEnv(w, "WERF_REPO", repo, false)
@@ -336,6 +337,7 @@ func generateGithubEnvs(ctx context.Context, w io.Writer, dockerConfig string) e
 
 	writeHeader(w, "DOCKER CONFIG", false)
 	writeEnv(w, "DOCKER_CONFIG", dockerConfig, true)
+	writeEnv(w, "WERF_DOCKER_CONFIG", dockerConfig, true)
 
 	writeHeader(w, "REPO", true)
 	writeEnv(w, "WERF_REPO", defaultRepo, false)
