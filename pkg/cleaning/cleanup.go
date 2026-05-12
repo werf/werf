@@ -391,12 +391,7 @@ AppendNewImages:
 func (m *cleanupManager) deployedDockerImages(ctx context.Context) ([]*DeployedDockerImage, error) {
 	var deployedDockerImages []*DeployedDockerImage
 	for _, contextClient := range m.KubernetesContextClients {
-		namespaces := m.KubernetesNamespacesByContext[contextClient.ContextName]
-		if len(namespaces) == 0 {
-			namespaces = []string{""}
-		}
-
-		for _, namespace := range namespaces {
+		scanNamespace := func(namespace string) error {
 			var processName string
 			if namespace == "" {
 				processName = fmt.Sprintf("Getting deployed docker images (context %s)", contextClient.ContextName)
@@ -415,6 +410,23 @@ func (m *cleanupManager) deployedDockerImages(ctx context.Context) ([]*DeployedD
 
 					return nil
 				}); err != nil {
+				return err
+			}
+
+			return nil
+		}
+
+		namespaces := m.KubernetesNamespacesByContext[contextClient.ContextName]
+		if len(namespaces) == 0 {
+			if err := scanNamespace(""); err != nil {
+				return nil, err
+			}
+
+			continue
+		}
+
+		for _, namespace := range namespaces {
+			if err := scanNamespace(namespace); err != nil {
 				return nil, err
 			}
 		}
