@@ -47,7 +47,11 @@ export WERF_STAPEL_IMAGE_NAME=registry.werf.io/werf/stapel
 export WERF_STAPEL_IMAGE_VERSION=0.6.2
 ```
 
-При использовании приватного registry задайте в `WERF_STAPEL_IMAGE_NAME` адрес репозитория Stapel-образа в этом registry и заранее выполните аутентификацию werf в этом registry.
+При использовании приватного registry:
+
+1. Задайте переменную окружения `WERF_STAPEL_IMAGE_NAME` со значением адреса репозитория Stapel-образа.
+2. Убедитесь, что в registry существует образ `${WERF_STAPEL_IMAGE_NAME}:${WERF_STAPEL_IMAGE_VERSION}`.
+3. Убедитесь, что werf аутентифицирован в registry до начала сборки.
 
 В _сборочный контейнер_ [пробрасывается сокет SSH-агента с хоста](#использование-ssh-агента), а также могут использоваться [пользовательские маунты]({{ "usage/build/stapel/mounts.html" | true_relative_url }}).
 

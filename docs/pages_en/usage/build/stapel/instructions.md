@@ -44,7 +44,11 @@ export WERF_STAPEL_IMAGE_NAME=registry.werf.io/werf/stapel
 export WERF_STAPEL_IMAGE_VERSION=0.6.2
 ```
 
-When using a private registry, set `WERF_STAPEL_IMAGE_NAME` to the repository address of the Stapel image in that registry and make sure werf is authenticated in that registry before the build starts.
+When using a private registry:
+
+1. Set the `WERF_STAPEL_IMAGE_NAME` environment variable to the repository address of the Stapel image.
+2. Ensure that the `${WERF_STAPEL_IMAGE_NAME}:${WERF_STAPEL_IMAGE_VERSION}` image exists in the registry.
+3. Make sure werf is authenticated in the registry before the build starts.
 
 The _build container_ [gets the socket to communicate with the SSH-agent on the host](#using-the-ssh-agent); [custom mounts]({{"usage/build/stapel/mounts.html" | true_relative_url }}) can also be used.
 
