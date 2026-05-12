@@ -53,7 +53,7 @@ require (
 	github.com/sirupsen/logrus v1.9.4
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
-	github.com/werf/common-go v0.0.0-20260421143942-0695d8576092
+	github.com/werf/common-go v0.0.0-20260504183956-43da716392f7
 	github.com/werf/copy-recurse v0.2.7
 	github.com/werf/lockgate v0.1.1
 	github.com/werf/logboek v0.6.1
