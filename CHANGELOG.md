@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.68.2](https://github.com/werf/werf/compare/v2.68.1...v2.68.2) (2026-05-12)
+
+
+### Bug Fixes
+
+* **deploy:** retry on "webhook unavailable" error ([#7533](https://github.com/werf/werf/issues/7533)) ([8810e23](https://github.com/werf/werf/commit/8810e23e8ed4545a3d532d2df69e3c1b28e56866))
+
 ## [2.68.1](https://github.com/werf/werf/compare/v2.68.0...v2.68.1) (2026-04-30)
 
 
