@@ -31,7 +31,7 @@ jobs:
 
       - name: Build binary (linux/amd64)
         run: |
-          VERSION=${GITHUB_REF_NAME#v}
+          VERSION=${GITHUB_REF_NAME}
           task --yes build:dist:linux:amd64 version="$VERSION"
           file dist/$VERSION/linux-amd64/bin/werf | grep -Eq "x86-64.*statically linked.*Linux"
 
@@ -39,7 +39,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
         run: |
-          VERSION=${GITHUB_REF_NAME#v}
+          VERSION=${GITHUB_REF_NAME}
           echo "Uploading werf to release ${GITHUB_REF_NAME}"
           gh release upload "${GITHUB_REF_NAME}" "dist/$VERSION/linux-amd64/bin/werf#werf"
 
