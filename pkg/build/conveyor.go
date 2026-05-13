@@ -1102,28 +1102,11 @@ func (c *Conveyor) GetStageIDForImageStage(targetPlatform, imageName, stageName 
 }
 
 func (c *Conveyor) GetImportMetadata(ctx context.Context, projectName, id string) (*storage.ImportMetadata, error) {
-	meta, err := c.StorageManager.GetStagesStorage().GetImportMetadata(ctx, projectName, id)
-	if err == nil {
-		return meta, nil
-	}
-	if !storage.IsErrImportMetadataNotFound(err) && !storage.IsErrBrokenImage(err) {
-		return nil, err
-	}
+	return c.StorageManager.GetStagesStorage().GetImportMetadata(ctx, projectName, id)
+}
 
-	for _, secondaryStorage := range c.StorageManager.GetSecondaryStagesStorageList() {
-		meta, err := secondaryStorage.GetImportMetadata(ctx, projectName, id)
-		if err == nil {
-			if putErr := c.StorageManager.GetStagesStorage().PutImportMetadata(ctx, projectName, meta, storage.PutImportMetadataOptions{}); putErr != nil {
-				logboek.Context(ctx).Warn().LogF("Failed to copy import metadata %s to primary storage: %s\n", id, putErr)
-			}
-			return meta, nil
-		}
-		if !storage.IsErrImportMetadataNotFound(err) && !storage.IsErrBrokenImage(err) {
-			logboek.Context(ctx).Warn().LogF("Failed to get import metadata %s from secondary storage: %s\n", id, err)
-		}
-	}
-
-	return nil, storage.ErrImportMetadataNotFound
+func (c *Conveyor) FetchImportMetadata(ctx context.Context, projectName, id string) (*storage.ImportMetadata, error) {
+	return c.StorageManager.FetchImportMetadata(ctx, projectName, id)
 }
 
 func (c *Conveyor) PutImportMetadata(ctx context.Context, projectName string, metadata *storage.ImportMetadata, opts storage.PutImportMetadataOptions) error {
