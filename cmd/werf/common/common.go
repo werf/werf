@@ -17,6 +17,7 @@ import (
 	"github.com/werf/logboek/pkg/level"
 	"github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
+	"github.com/werf/nelm/pkg/action"
 	"github.com/werf/nelm/pkg/common"
 	"github.com/werf/nelm/pkg/helm/pkg/chart/loader"
 	"github.com/werf/nelm/pkg/helm/pkg/engine"
@@ -1499,11 +1500,8 @@ func GetNelmLogLevel(cmdData *CmdData) log.Level {
 
 func ProcessLogColorMode(cmdData *CmdData) error {
 	switch logColorMode := *cmdData.LogColorMode; logColorMode {
-	case "auto":
-	case "on":
-		logboek.Streams().EnableStyle()
-	case "off":
-		logboek.Streams().DisableStyle()
+	case "auto", "on", "off":
+		action.SetupColorLevel(action.SetupLoggingOptions{ColorMode: logColorMode})
 	default:
 		return fmt.Errorf("bad log color mode %q: on, off and auto modes are supported", logColorMode)
 	}
