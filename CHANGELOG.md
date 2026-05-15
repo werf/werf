@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.68.2-dk](https://github.com/deckhouse/delivery-kit/compare/v2.68.1...v2.68.0-dk) (2026-05-15)
+
+
+### Bug Fixes
+
+* **buiild, stapel, import:** regenerate import checksums if it`s empty ([#7506](https://github.com/deckhouse/delivery-kit/issues/7506)) ([eebb1df](https://github.com/deckhouse/delivery-kit/commit/eebb1dfdd0ceab4ef7f274a89d122a44942fdffb))
+* **build:** non-local synchronization server requires --repo be set ([f078e04](https://github.com/deckhouse/delivery-kit/commit/f078e049261c35e2a4fced88a92a078205021806))
+* **build:** resolve dependency image refs in FROM stage before computing cache digest ([#7492](https://github.com/deckhouse/delivery-kit/issues/7492)) ([b42f0b1](https://github.com/deckhouse/delivery-kit/commit/b42f0b120a46e7eeaf06f66339561ed486cc04c9))
+* **build:** show "default" in log network field when no explicit network ([c54a78d](https://github.com/deckhouse/delivery-kit/commit/c54a78da6c956455578d4c2a67064276498b0f68))
+* **build:** use image tag instead of sha256 for docker run ([725a629](https://github.com/deckhouse/delivery-kit/commit/725a62942d4fe57f8d88093d636d5f7be750ab5d))
+* **parallel:** eliminate race between context timeout and goroutine ([ed67c0f](https://github.com/deckhouse/delivery-kit/commit/ed67c0f7f988a3bcf489baad9d428850fa6d3326))
+
 ## [2.68.0-dk](https://github.com/deckhouse/delivery-kit/compare/v2.68.0...v2.68.0-dk) (2026-04-28)
 
 
