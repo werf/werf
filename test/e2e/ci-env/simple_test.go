@@ -6,6 +6,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/joho/godotenv"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
@@ -71,7 +72,7 @@ var _ = Describe("Simple ci-env", Label("e2e", "ci-env", "simple"), func() {
 	)
 
 	DescribeTable("should export WERF_DOCKER_CONFIG alongside DOCKER_CONFIG",
-		func(ctx SpecContext, ciEnvArgs []string, parseEnvLine func(string) (string, string, bool)) {
+		func(ctx SpecContext, ciEnvArgs []string) {
 			tmpDir := GinkgoT().TempDir()
 
 			SuiteData.InitTestRepo(ctx, tmpDir, "some-repo")
@@ -92,32 +93,14 @@ var _ = Describe("Simple ci-env", Label("e2e", "ci-env", "simple"), func() {
 			content, err := os.ReadFile(envFilePath)
 			Expect(err).To(Succeed())
 
-			envs := map[string]string{}
-			for _, line := range strings.Split(string(content), "\n") {
-				if key, val, ok := parseEnvLine(line); ok {
-					envs[key] = val
-				}
-			}
+			envs, err := godotenv.Parse(strings.NewReader(string(content)))
+			Expect(err).To(Succeed())
 
 			Expect(envs).To(HaveKey("DOCKER_CONFIG"))
 			Expect(envs).To(HaveKey("WERF_DOCKER_CONFIG"))
 			Expect(envs["WERF_DOCKER_CONFIG"]).To(Equal(envs["DOCKER_CONFIG"]))
 		},
-		Entry(
-			"gitlab --as-env-file",
-			[]string{"gitlab", "--as-env-file"},
-			func(line string) (string, string, bool) {
-				k, v, ok := strings.Cut(line, "=")
-				return k, v, ok && !strings.HasPrefix(line, "#")
-			},
-		),
-		Entry(
-			"github --as-env-file",
-			[]string{"github", "--as-env-file"},
-			func(line string) (string, string, bool) {
-				k, v, ok := strings.Cut(line, "=")
-				return k, v, ok && !strings.HasPrefix(line, "#")
-			},
-		),
+		Entry("gitlab --as-env-file", []string{"gitlab", "--as-env-file"}),
+		Entry("github --as-env-file", []string{"github", "--as-env-file"}),
 	)
 })
