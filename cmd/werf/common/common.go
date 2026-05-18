@@ -1500,10 +1500,10 @@ func GetNelmLogLevel(cmdData *CmdData) log.Level {
 
 func ProcessLogColorMode(cmdData *CmdData) error {
 	switch logColorMode := *cmdData.LogColorMode; logColorMode {
-	case "auto", "on", "off":
+	case log.LogColorModeAuto, log.LogColorModeOn, log.LogColorModeOff:
 		action.SetupColorLevel(action.SetupLoggingOptions{ColorMode: logColorMode})
 	default:
-		return fmt.Errorf("bad log color mode %q: on, off and auto modes are supported", logColorMode)
+		return fmt.Errorf("bad log color mode %q: %s, %s and %s modes are supported", logColorMode, log.LogColorModeOn, log.LogColorModeOff, log.LogColorModeAuto)
 	}
 
 	return nil
