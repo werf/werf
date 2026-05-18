@@ -96,6 +96,12 @@ func (c *StapelImageBase) exportsAutoExcluding() error {
 				continue
 			}
 
+			_, exp1IsImport := exp1.(*Import)
+			_, exp2IsImport := exp2.(*Import)
+			if exp1IsImport && exp2IsImport {
+				continue
+			}
+
 			if !exp1.AutoExcludeExportAndCheck(exp2) {
 				errMsg := fmt.Sprintf("Conflict between imports!\n\n%s\n%s", dumpConfigSection(exp1.GetRaw()), dumpConfigSection(exp2.GetRaw()))
 				return newDetailedConfigError(errMsg, nil, c.raw.doc)
