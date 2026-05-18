@@ -656,6 +656,9 @@ func (phase *BuildPhase) onImageStage(ctx context.Context, img *image.Image, stg
 			}
 			return nil
 		}); err != nil {
+		if calculateStageCleanupFunc != nil {
+			calculateStageCleanupFunc()
+		}
 		return err
 	}
 	if calculateStageCleanupFunc != nil {
