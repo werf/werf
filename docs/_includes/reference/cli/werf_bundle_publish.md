@@ -156,8 +156,6 @@ werf bundle publish [IMAGE_NAME...] [options]
             OCI registry requirements. Default false or $WERF_HELM_COMPATIBLE_CHART.
       --home-dir=""
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
-      --ignore-secret-key=false
-            Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)
       --insecure-helm-dependencies=false
             Allow insecure oci registries to be used in the Chart.yaml dependencies configuration   
             (default $WERF_INSECURE_HELM_DEPENDENCIES)
@@ -256,8 +254,6 @@ werf bundle publish [IMAGE_NAME...] [options]
             cache.
             Also, can be specified with $WERF_SECONDARY_REPO_* (e.g. $WERF_SECONDARY_REPO_1=...,    
             $WERF_SECONDARY_REPO_2=...)
-      --secret-key=""
-            Secret key (default $WERF_SECRET_KEY)
       --secret-values=[]
             Specify helm secret values in a YAML file (can specify multiple). Also, can be defined  
             with $WERF_SECRET_VALUES_* (e.g. $WERF_SECRET_VALUES_ENV=.helm/secret_values_test.yaml, 
