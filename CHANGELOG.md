@@ -1,5 +1,23 @@
 # Changelog
 
+## [2.69.0](https://github.com/werf/werf/compare/v2.68.2...v2.69.0) (2026-05-19)
+
+
+### Features
+
+* **host-cleanup:** add support for absolute storage units ([c5dbdd0](https://github.com/werf/werf/commit/c5dbdd0cc422765d649a9dc053d78e2610a052cc))
+
+
+### Bug Fixes
+
+* **build, stapel, import:** orphan import-server containers after cancellation ([#7527](https://github.com/werf/werf/issues/7527)) ([5c75bea](https://github.com/werf/werf/commit/5c75bea7aafb664c912e052105bc007a0f522a7e))
+* **build, stapel, import:** unnecessary image rebuilds when using --secondary-repo with imports ([#7526](https://github.com/werf/werf/issues/7526)) ([915a403](https://github.com/werf/werf/commit/915a403a4ec8cf4e5835bf3caa277d7ddafdcb06))
+* **host-puge, buildah:** fix panic in "host purge" when running in buildah mode ([a3ae3df](https://github.com/werf/werf/commit/a3ae3df9f46eee32dbfe16cc947a9a9f733e92ae))
+* **build:** freezing on random image ([#7539](https://github.com/werf/werf/issues/7539)) ([6cf58b7](https://github.com/werf/werf/commit/6cf58b7b35dcf30d3e8bc84a13118700faa37b58))
+* **ci-env:** ci-env ignores session docker config when WERF_DOCKER_CONFIG is set ([#7530](https://github.com/werf/werf/issues/7530)) ([5161412](https://github.com/werf/werf/commit/5161412b021bce794dd8a87bb51113854152acb7))
+* **host-cleanup:** fix absolute volume usage unit parsing logic ([0e3f5d6](https://github.com/werf/werf/commit/0e3f5d6b513e0091f3f4c68bd7bbbf4802554627))
+* **host-clenaup:** prevent overflow while subtraction (math) ([544c423](https://github.com/werf/werf/commit/544c423573985acba5150476774f1d4a64e311af))
+
 ## [2.68.2](https://github.com/werf/werf/compare/v2.68.1...v2.68.2) (2026-05-12)
 
 
