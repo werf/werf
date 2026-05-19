@@ -1105,6 +1105,10 @@ func (c *Conveyor) GetImportMetadata(ctx context.Context, projectName, id string
 	return c.StorageManager.GetStagesStorage().GetImportMetadata(ctx, projectName, id)
 }
 
+func (c *Conveyor) FetchImportMetadata(ctx context.Context, projectName, id string) (*storage.ImportMetadata, error) {
+	return c.StorageManager.FetchImportMetadata(ctx, projectName, id)
+}
+
 func (c *Conveyor) PutImportMetadata(ctx context.Context, projectName string, metadata *storage.ImportMetadata, opts storage.PutImportMetadataOptions) error {
 	return c.StorageManager.GetStagesStorage().PutImportMetadata(ctx, projectName, metadata, opts)
 }
