@@ -9,8 +9,7 @@ This article contains description of annotations which control werf resource ope
 
  - [`werf.io/weight`](#resource-weight) — defines the weight of the resource, which will affect the order in which the resources are deployed.
  - [`werf.io/deploy-dependency-ANY_NAME`](#resource-dependencies) — define a dependency for the resource, which will affect the order in which the resources are deployed.
- - [`<any-name>.external-dependency.werf.io/resource`](#external-dependency-resource) — wait for specified external dependency to be up and running, and only then proceed to deploy the annotated resource.
- - [`<any-name>.external-dependency.werf.io/namespace`](#external-dependency-namespace) — specify the namespace for the external dependency.
+
  - [`werf.io/ownership`](#resource-ownership) — defines how resource deletions are handled and how release annotations are managed.
  - [`werf.io/deploy-on`](#conditional-resource-deployment) — defines when to render the resource for the deployment and on which stages should it be deployed.
  - [`werf.io/delete-policy`](#resource-delete-policy) — defines how resource deletions should be handled during resource deployment.
@@ -69,26 +68,6 @@ At least one of these parameters must be specified:
 - `kind`: kind of a resource to depend on.
 - `group`: api group of a resource to depend on.
 - `version`: api version of a resource to depend on.
-
-More info: [deployment order]({{ "/usage/deploy/deployment_order.html" | true_relative_url }})
-
-## External dependency resource
-
-`<any-name>.external-dependency.werf.io/resource: type[.version.group]/name`
-
-Example: \
-`secret.external-dependency.werf.io/resource: secret/config` \
-`someapp.external-dependency.werf.io/resource: deployments.v1.apps/app`
-
-Sets the external dependency for the resource. The annotated resource won't be deployed until the external dependency has been created and ready.
-
-More info: [deployment order]({{ "/usage/deploy/deployment_order.html" | true_relative_url }})
-
-## External dependency namespace
-
-`<any-name>.external-dependency.werf.io/namespace: name`
-
-Sets the namespace for the external dependency specified by the [external dependency resource](#external-dependency-resource) annotation. The `<any-name>` prefix must be the same as in the annotation of the external dependency resource.
 
 More info: [deployment order]({{ "/usage/deploy/deployment_order.html" | true_relative_url }})
 

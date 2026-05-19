@@ -162,46 +162,4 @@ In this case, the `Ingress` will be deleted first, then the `Service`, and only 
 
 Check out all capabilities of this annotation [here]({{ "/reference/deploy_annotations.html#delete-dependencies" | true_relative_url }}).
 
-## Waiting for non-release resources to be ready (werf only)
 
-The resources deployed as part of the current release may depend on resources that do not belong to this release. werf can wait for these external resources to be ready — you just need to add the `<name>.external-dependency.werf.io/resource` annotation as follows:
-
-```yaml
-# .helm/templates/example.yaml:
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: myapp
-  annotations:
-    secret.external-dependency.werf.io/resource: secret/my-dynamic-vault-secret
-# ...
-```
-
-The `myapp` deployment will start deploying only after the `my-dynamic-vault-secret` (which is created automatically by the operator in the cluster) has been created and is ready.
-
-Here is how you can configure werf to wait for multiple external resources to be ready:
-
-```yaml
-# .helm/templates/example.yaml:
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: myapp
-  annotations:
-    secret.external-dependency.werf.io/resource: secret/my-dynamic-vault-secret
-    database.external-dependency.werf.io/resource: statefulset/my-database
-# ...
-```
-
-By default, werf looks for the external resource in the release Namespace (unless, of course, the resource is cluster-wide). You can change the Namespace of the external resource by attaching the `<name>.external-dependency.werf.io/namespace` annotation to it:
-
-```yaml
-# .helm/templates/example.yaml:
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: myapp
-  annotations:
-    secret.external-dependency.werf.io/resource: secret/my-dynamic-vault-secret
-    secret.external-dependency.werf.io/namespace: my-namespace
-```
