@@ -160,18 +160,6 @@ var _ = Describe("git stages", func() {
 			},
 		}
 
-		toBuildNothingStep := stagesSpecStep{
-			byText: "Any changes: nothing should be built",
-			beforeBuildHookFunc: func(ctx context.Context) {
-				createAndCommitFile(ctx, SuiteData.TestDirPath, "file", gitCacheSizeStep)
-			},
-			checkResultedFilesChecksum: false,
-			expectedOutputMatchers: []types.GomegaMatcher{
-				Not(ContainSubstring("Building stage")),
-				ContainSubstring("Use previously built image for artifact/gitArchive"),
-			},
-		}
-
 		BeforeEach(func(ctx SpecContext) {
 			fixturesPathParts = append(fixturesPathParts, "artifact")
 			commonBeforeEach(ctx, utils.FixturePath(fixturesPathParts...))
@@ -188,7 +176,17 @@ var _ = Describe("git stages", func() {
 			})
 
 			It("nothing should be built", func(ctx SpecContext) {
-				specSteps = append(specSteps, toBuildNothingStep)
+				specSteps = append(specSteps, stagesSpecStep{
+					byText: "Any changes: nothing should be built",
+					beforeBuildHookFunc: func(ctx context.Context) {
+						createAndCommitFile(ctx, SuiteData.TestDirPath, "file", gitCacheSizeStep)
+					},
+					checkResultedFilesChecksum: false,
+					expectedOutputMatchers: []types.GomegaMatcher{
+						Not(ContainSubstring("Building stage")),
+						ContainSubstring("Use previously built image for artifact/gitArchive"),
+					},
+				})
 				runStagesSpecSteps(ctx, specSteps)
 			})
 		})
@@ -302,22 +300,6 @@ var _ = Describe("user stages", func() {
 				})
 
 				userStagesSpecSetFunc()
-
-				When("gitCache stage is built", func() {
-					BeforeEach(func() {
-						specSteps = append(specSteps, toBuildGitCacheStageStep)
-					})
-
-					userStagesSpecSetFunc()
-				})
-
-				When("gitLatestPatch stage is built", func() {
-					BeforeEach(func() {
-						specSteps = append(specSteps, toBuildGitLatestPatchStageStep)
-					})
-
-					userStagesSpecSetFunc()
-				})
 			})
 		})
 
@@ -448,8 +430,20 @@ var _ = Describe("user stages", func() {
 					})
 				}
 
-				It("nothing should be built", func(ctx SpecContext) {
-					specSteps = append(specSteps, toBuildNothingStep)
+				It("user stages should be rebuilt on file changes", func(ctx SpecContext) {
+					specSteps = append(specSteps, stagesSpecStep{
+						byText: "Any changes: user stages should be rebuilt with default stageDependencies",
+						beforeBuildHookFunc: func(ctx context.Context) {
+							createAndCommitFile(ctx, SuiteData.TestDirPath, "file", gitCacheSizeStep)
+						},
+						checkResultedFilesChecksum: false,
+						expectedOutputMatchers: []types.GomegaMatcher{
+							ContainSubstring("Use previously built image for artifact/gitArchive"),
+							ContainSubstring("Building stage artifact/install"),
+							ContainSubstring("Building stage artifact/beforeSetup"),
+							ContainSubstring("Building stage artifact/setup"),
+						},
+					})
 					runStagesSpecSteps(ctx, specSteps)
 				})
 			})

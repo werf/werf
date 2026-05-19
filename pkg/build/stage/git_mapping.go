@@ -715,7 +715,7 @@ func (gm *GitMapping) baseApplyArchiveCommand(ctx context.Context, commit string
 func (gm *GitMapping) StageDependenciesChecksum(ctx context.Context, c Conveyor, stageName StageName) (string, error) {
 	depsPaths := gm.StagesDependencies[stageName]
 	if len(depsPaths) == 0 {
-		return "", nil
+		depsPaths = []string{"**/*"}
 	}
 
 	commitInfo, err := gm.GetLatestCommitInfo(ctx, c)
