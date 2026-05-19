@@ -6,17 +6,13 @@
 ### Features
 
 * **host-cleanup:** add support for absolute storage units ([c5dbdd0](https://github.com/werf/werf/commit/c5dbdd0cc422765d649a9dc053d78e2610a052cc))
-* **host-cleanup:** make validation error more informative ([0f9f460](https://github.com/werf/werf/commit/0f9f4605725b525dd9043c31406c95ee56680318))
-* **host-cleanup:** move units package to pkg/host_cleaning ([6f3d931](https://github.com/werf/werf/commit/6f3d93135de8a7900d3f2b6890e5c5ecdb58c820))
-* **host-clenaup:** cli docs generated ([248fdb6](https://github.com/werf/werf/commit/248fdb66dc554b2f809bcad5e0d963ac7c8a8807))
 
 
 ### Bug Fixes
 
 * **build, stapel, import:** orphan import-server containers after cancellation ([#7527](https://github.com/werf/werf/issues/7527)) ([5c75bea](https://github.com/werf/werf/commit/5c75bea7aafb664c912e052105bc007a0f522a7e))
 * **build, stapel, import:** unnecessary image rebuilds when using --secondary-repo with imports ([#7526](https://github.com/werf/werf/issues/7526)) ([915a403](https://github.com/werf/werf/commit/915a403a4ec8cf4e5835bf3caa277d7ddafdcb06))
-* **buildah:** extract resolveContainerBackendType and reuse it in localPurger to skip stapel purge for non-Docker backends ([e10de67](https://github.com/werf/werf/commit/e10de6729deb5f25568f58b1918e1cc19e106774))
-* **buildah:** fix panic in "host purge" when running in buildah mode ([a3ae3df](https://github.com/werf/werf/commit/a3ae3df9f46eee32dbfe16cc947a9a9f733e92ae))
+* **host-puge, buildah:** fix panic in "host purge" when running in buildah mode ([a3ae3df](https://github.com/werf/werf/commit/a3ae3df9f46eee32dbfe16cc947a9a9f733e92ae))
 * **build:** freezing on random image ([#7539](https://github.com/werf/werf/issues/7539)) ([6cf58b7](https://github.com/werf/werf/commit/6cf58b7b35dcf30d3e8bc84a13118700faa37b58))
 * **ci-env:** ci-env ignores session docker config when WERF_DOCKER_CONFIG is set ([#7530](https://github.com/werf/werf/issues/7530)) ([5161412](https://github.com/werf/werf/commit/5161412b021bce794dd8a87bb51113854152acb7))
 * **host-cleanup:** fix absolute volume usage unit parsing logic ([0e3f5d6](https://github.com/werf/werf/commit/0e3f5d6b513e0091f3f4c68bd7bbbf4802554627))
