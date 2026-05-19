@@ -192,6 +192,8 @@ werf bundle apply [options]
             present in the manifest (default $WERF_NO_REMOVE_MANUAL_CHANGES)
       --no-resource-validation=false
             Disable resource validation (default $WERF_NO_RESOURCE_VALIDATION)
+      --plan-lifetime=2h0m0s
+            How long plan artifact is valid
       --provenance-keyring=""
             Path to keyring containing public keys to verify chart provenance (default              
             $WERF_PROVENANCE_KEYRING)
@@ -340,6 +342,8 @@ werf bundle apply [options]
             Resources tracking timeout in seconds ($WERF_TIMEOUT by default)
       --tmp-dir=""
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
+      --use-plan=""
+            Use the gzip-compressed JSON plan file from the specified path during release install
       --values=[]
             Specify helm values in a YAML file or a URL (can specify multiple). Also, can be        
             defined with $WERF_VALUES_* (e.g. $WERF_VALUES_1=.helm/values_1.yaml,                   
