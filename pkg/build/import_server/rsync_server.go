@@ -107,6 +107,7 @@ strict modes = false
 }
 
 func (srv *RsyncServer) Shutdown(ctx context.Context) error {
+	ctx = context.WithoutCancel(ctx)
 	if output, err := docker.CliRm_RecordedOutput(ctx, "--force", srv.DockerContainerName); err != nil {
 		logboek.Context(ctx).Error().LogF("%s", output)
 		return fmt.Errorf("unable to remove container %s: %w", srv.DockerContainerName, err)
