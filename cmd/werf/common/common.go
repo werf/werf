@@ -1105,12 +1105,20 @@ Also, can be defined with $WERF_SET_STRING_* (e.g. $WERF_SET_STRING_1=key1=val1,
 }
 
 func SetupSecretValuesFlags(cmdData *CmdData, cmd *cobra.Command) error {
-	cmd.Flags().BoolVarP(&cmdData.DefaultSecretValuesDisable, "disable-default-secret-values", "", util.GetBoolEnvironmentDefaultFalse("WERF_DISABLE_DEFAULT_SECRET_VALUES"), `Do not use secret values from the default .helm/secret-values.yaml file (default $WERF_DISABLE_DEFAULT_SECRET_VALUES or false)`)
-	cmd.Flags().StringVarP(&cmdData.SecretKey, "secret-key", "", os.Getenv("WERF_SECRET_KEY"), "Secret key (default $WERF_SECRET_KEY)")
-	cmd.Flags().BoolVarP(&cmdData.SecretKeyIgnore, "ignore-secret-key", "", util.GetBoolEnvironmentDefaultFalse("WERF_IGNORE_SECRET_KEY"), "Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)")
-	cmd.Flags().StringArrayVarP(&cmdData.SecretValuesFiles, "secret-values", "", []string{}, `Specify helm secret values in a YAML file (can specify multiple). Also, can be defined with $WERF_SECRET_VALUES_* (e.g. $WERF_SECRET_VALUES_ENV=.helm/secret_values_test.yaml, $WERF_SECRET_VALUES_DB=.helm/secret_values_db.yaml)`)
+	SetupSecretValuesFileFlags(cmdData, cmd)
+	SetupSecretKeyFlags(cmdData, cmd)
 
 	return nil
+}
+
+func SetupSecretValuesFileFlags(cmdData *CmdData, cmd *cobra.Command) {
+	cmd.Flags().BoolVarP(&cmdData.DefaultSecretValuesDisable, "disable-default-secret-values", "", util.GetBoolEnvironmentDefaultFalse("WERF_DISABLE_DEFAULT_SECRET_VALUES"), `Do not use secret values from the default .helm/secret-values.yaml file (default $WERF_DISABLE_DEFAULT_SECRET_VALUES or false)`)
+	cmd.Flags().StringArrayVarP(&cmdData.SecretValuesFiles, "secret-values", "", []string{}, `Specify helm secret values in a YAML file (can specify multiple). Also, can be defined with $WERF_SECRET_VALUES_* (e.g. $WERF_SECRET_VALUES_ENV=.helm/secret_values_test.yaml, $WERF_SECRET_VALUES_DB=.helm/secret_values_db.yaml)`)
+}
+
+func SetupSecretKeyFlags(cmdData *CmdData, cmd *cobra.Command) {
+	cmd.Flags().StringVarP(&cmdData.SecretKey, "secret-key", "", os.Getenv("WERF_SECRET_KEY"), "Secret key (default $WERF_SECRET_KEY)")
+	cmd.Flags().BoolVarP(&cmdData.SecretKeyIgnore, "ignore-secret-key", "", util.GetBoolEnvironmentDefaultFalse("WERF_IGNORE_SECRET_KEY"), "Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)")
 }
 
 func SetupTrackingFlags(cmdData *CmdData, cmd *cobra.Command) error {

@@ -16,7 +16,6 @@ import (
 	"github.com/spf13/cobra"
 	"sigs.k8s.io/yaml"
 
-	"github.com/werf/common-go/pkg/secrets_manager"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	nelmcommon "github.com/werf/nelm/pkg/common"
@@ -138,7 +137,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	lo.Must0(common.SetupChartRepoConnectionFlags(&commonCmdData, cmd))
 	lo.Must0(common.SetupValuesFlags(&commonCmdData, cmd))
-	lo.Must0(common.SetupSecretValuesFlags(&commonCmdData, cmd))
+	common.SetupSecretValuesFileFlags(&commonCmdData, cmd)
 
 	common.SetupAddAnnotations(&commonCmdData, cmd)
 	common.SetupAddLabels(&commonCmdData, cmd)
@@ -379,6 +378,7 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 			DefaultChartVersion:        "1.0.0",
 			DefaultSecretValuesDisable: commonCmdData.DefaultSecretValuesDisable,
 			DefaultValuesDisable:       commonCmdData.DefaultValuesDisable,
+			NoSecrets:                  true,
 			ChartDepsDownloader: &downloader.Manager{
 				Out:               logboek.Context(ctx).OutStream(),
 				ChartPath:         bundleTmpDir,
@@ -391,9 +391,7 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 				Debug:             helm.Settings.Debug,
 			},
 			ExtraValues:       serviceValues,
-			SecretKeyIgnore:   commonCmdData.SecretKeyIgnore,
 			SecretValuesFiles: commonCmdData.SecretValuesFiles,
-			SecretWorkDir:     giterminismManager.ProjectDir(),
 		},
 	}
 
@@ -486,23 +484,16 @@ func createNewBundle(
 		}
 	}
 
+	mergedSecretVals, err := mergeRawSecretValues(chrt, commonCmdData.SecretValuesFiles, commonCmdData.DefaultSecretValuesDisable)
+	if err != nil {
+		return fmt.Errorf("unable to merge secret values: %w", err)
+	}
+
 	var secretValsData []byte
-	if chrt.SecretsRuntimeData != nil {
-		secretsRuntimeData, ok := chrt.SecretsRuntimeData.(legacysecret.RuntimeData)
-		if !ok {
-			return fmt.Errorf("unsupported secrets runtime data type %T", chrt.SecretsRuntimeData)
-		}
-
-		vals, err := makeBundleSecretValues(ctx, secretsRuntimeData, opts)
+	if len(mergedSecretVals) > 0 {
+		secretValsData, err = yaml.Marshal(mergedSecretVals)
 		if err != nil {
-			return fmt.Errorf("unable to construct bundle secret values: %w", err)
-		}
-
-		if len(vals) > 0 {
-			secretValsData, err = yaml.Marshal(vals)
-			if err != nil {
-				return fmt.Errorf("unable to marshal bundle secret values: %w", err)
-			}
+			return fmt.Errorf("unable to marshal bundle secret values: %w", err)
 		}
 	}
 
@@ -699,10 +690,35 @@ func makeBundleValues(ctx context.Context, chrt *chart.Chart, inputVals, service
 	return valsCopy, nil
 }
 
-func makeBundleSecretValues(
-	ctx context.Context,
-	secretsRuntimeData legacysecret.RuntimeData,
-	opts nelmcommon.HelmOptions,
-) (map[string]interface{}, error) {
-	return secretsRuntimeData.GetEncodedSecretValues(ctx, secrets_manager.Manager, opts.ChartLoadOpts.SecretWorkDir, opts.ChartLoadOpts.SecretKeyIgnore)
+func mergeRawSecretValues(chrt *chart.Chart, customSecretValuesFiles []string, defaultSecretValuesDisable bool) (map[string]interface{}, error) {
+	var result map[string]interface{}
+
+	if !defaultSecretValuesDisable {
+		for _, f := range chrt.Files {
+			if f.Name == legacysecret.DefaultSecretValuesFileName {
+				vals := map[string]interface{}{}
+				if err := yaml.Unmarshal(f.Data, &vals); err != nil {
+					return nil, fmt.Errorf("unmarshal %s: %w", f.Name, err)
+				}
+				result = nelmcommon.LegacyCoalesceTablesFunc(vals, result)
+				break
+			}
+		}
+	}
+
+	for _, filePath := range customSecretValuesFiles {
+		data, err := os.ReadFile(filePath)
+		if err != nil {
+			return nil, fmt.Errorf("read secret values file %q: %w", filePath, err)
+		}
+
+		vals := map[string]interface{}{}
+		if err := yaml.Unmarshal(data, &vals); err != nil {
+			return nil, fmt.Errorf("unmarshal secret values file %q: %w", filePath, err)
+		}
+
+		result = nelmcommon.LegacyCoalesceTablesFunc(vals, result)
+	}
+
+	return result, nil
 }
