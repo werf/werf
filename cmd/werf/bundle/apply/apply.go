@@ -190,9 +190,9 @@ func runApply(ctx context.Context) error {
 			return fmt.Errorf("construct bundles registry client: %w", err)
 		}
 
-		registryCredentialsPath := docker.GetDockerConfigCredentialsFile(*commonCmdData.DockerConfig)
+		registryCredentialsPath = docker.GetDockerConfigCredentialsFile(*commonCmdData.DockerConfig)
 
-		serviceValues, err := deploy.GetBundleServiceValues(ctx, deploy.ServiceValuesOptions{
+		serviceValues, err = deploy.GetBundleServiceValues(ctx, deploy.ServiceValuesOptions{
 			Env:                      commonCmdData.Environment,
 			Namespace:                releaseNamespace,
 			SetDockerConfigJsonValue: *commonCmdData.SetDockerConfigJsonValue,
