@@ -42,7 +42,8 @@ var _ = Describe("Complex bundle publish/apply", Label("e2e", "bundle-publish-ap
 	// 	})
 	// })
 
-	It("should complete and deploy expected resources",
+	It(
+		"should complete and deploy expected resources",
 		func(ctx SpecContext) {
 			By("initializing")
 			repoDirname = "repo0"
