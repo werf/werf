@@ -484,7 +484,7 @@ func createNewBundle(
 		}
 	}
 
-	mergedSecretVals, err := mergeRawSecretValues(chrt, commonCmdData.SecretValuesFiles, commonCmdData.DefaultSecretValuesDisable)
+	mergedSecretVals, err := mergeRawSecretValues(ctx, chrt, commonCmdData.SecretValuesFiles, commonCmdData.DefaultSecretValuesDisable)
 	if err != nil {
 		return fmt.Errorf("unable to merge secret values: %w", err)
 	}
@@ -690,7 +690,7 @@ func makeBundleValues(ctx context.Context, chrt *chart.Chart, inputVals, service
 	return valsCopy, nil
 }
 
-func mergeRawSecretValues(chrt *chart.Chart, customSecretValuesFiles []string, defaultSecretValuesDisable bool) (map[string]interface{}, error) {
+func mergeRawSecretValues(ctx context.Context, chrt *chart.Chart, customSecretValuesFiles []string, defaultSecretValuesDisable bool) (map[string]interface{}, error) {
 	var result map[string]interface{}
 
 	if !defaultSecretValuesDisable {
@@ -707,7 +707,7 @@ func mergeRawSecretValues(chrt *chart.Chart, customSecretValuesFiles []string, d
 	}
 
 	for _, filePath := range customSecretValuesFiles {
-		data, err := os.ReadFile(filePath)
+		data, err := nelmcommon.ChartFileReader.ReadChartFile(ctx, filePath)
 		if err != nil {
 			return nil, fmt.Errorf("read secret values file %q: %w", filePath, err)
 		}
