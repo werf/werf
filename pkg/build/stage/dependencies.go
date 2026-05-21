@@ -383,7 +383,7 @@ func (s *DependenciesStage) generateImportChecksum(ctx context.Context, c Convey
 	if c.UseLegacyStapelBuilder(cb) {
 		importSourceID := getImportSourceID(c, s.targetPlatform, importElm)
 
-		stapelContainerName, err := stapel.GetOrCreateContainer(ctx)
+		stapelContainerName, err := stapel.GetOrCreateContainer(ctx, s.targetPlatform)
 		if err != nil {
 			return "", err
 		}

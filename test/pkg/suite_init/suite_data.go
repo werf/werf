@@ -17,6 +17,7 @@ type SuiteData struct {
 	*ProjectNameData
 	*K8sDockerRegistryData
 	*TmpDirData
+	*WerfInitData
 	*ContainerRegistryPerImplementationData
 }
 
@@ -47,6 +48,11 @@ func (data *SuiteData) SetupK8sDockerRegistry(setupData *K8sDockerRegistryData) 
 
 func (data *SuiteData) SetupTmp(setupData *TmpDirData) bool {
 	data.TmpDirData = setupData
+	return true
+}
+
+func (data *SuiteData) SetupWerfInit(setupData *WerfInitData) bool {
+	data.WerfInitData = setupData
 	return true
 }
 

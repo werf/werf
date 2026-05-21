@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -292,9 +293,17 @@ func (c *Conveyor) GetImportServer(ctx context.Context, targetPlatform, imageNam
 
 	if !fromExternalImage {
 		if stageName != "" {
-			stg = c.getImageStage(targetPlatform, imageName, stageName)
+			var err error
+			stg, err = c.findImageStage(targetPlatform, imageName, stageName)
+			if err != nil {
+				return nil, err
+			}
 		} else {
-			stg = c.GetImage(targetPlatform, imageName).GetLastNonEmptyStage()
+			var err error
+			stg, err = c.findLastNonEmptyImageStage(targetPlatform, imageName)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		if _, err := c.StorageManager.FetchStage(ctx, c.ContainerBackend, stg); err != nil {
@@ -327,14 +336,22 @@ func (c *Conveyor) GetImportServer(ctx context.Context, targetPlatform, imageNam
 				dockerImageName = imageName
 			} else {
 				if stageName == "" {
-					dockerImageName = c.GetImageNameForLastImageStage(targetPlatform, imageName)
+					lastStage, err := c.findLastNonEmptyImageStage(targetPlatform, imageName)
+					if err != nil {
+						return err
+					}
+					dockerImageName = lastStage.GetStageImage().Image.Name()
 				} else {
-					dockerImageName = c.GetImageNameForImageStage(targetPlatform, imageName, stageName)
+					resolvedStage, err := c.findImageStage(targetPlatform, imageName, stageName)
+					if err != nil {
+						return err
+					}
+					dockerImageName = resolvedStage.GetStageImage().Image.Name()
 				}
 			}
 
 			var err error
-			srv, err = import_server.RunRsyncServer(ctx, dockerImageName, tmpDir)
+			srv, err = import_server.RunRsyncServer(ctx, dockerImageName, tmpDir, targetPlatform)
 			if err != nil {
 				return fmt.Errorf("unable to run rsync import server: %w", err)
 			}
@@ -1022,18 +1039,39 @@ func (c *Conveyor) GetOrCreateStageImage(name string, prevStageImage *stage.Stag
 	return stageImage
 }
 
+// GetImage returns the image for the given target platform and name.
+// TODO: migrate callers to FindImage and remove this method — GetImage is a legacy wrapper
+// that panics on error because its signature is part of the stage.Conveyor interface which
+// does not support error returns yet.
 func (c *Conveyor) GetImage(targetPlatform, name string) *image.Image {
+	img, err := c.FindImage(targetPlatform, name)
+	if err != nil {
+		panic(err.Error())
+	}
+	return img
+}
+
+func (c *Conveyor) FindImage(targetPlatform, name string) (*image.Image, error) {
 	if targetPlatform == "" {
-		panic("assertion: targetPlatform should not be empty")
+		return nil, fmt.Errorf("targetPlatform must not be empty")
 	}
 
+	var availablePlatforms []string
 	for _, img := range c.imagesTree.GetImages() {
-		if img.GetName() == name && img.TargetPlatform == targetPlatform {
-			return img
+		if img.GetName() == name {
+			if img.TargetPlatform == targetPlatform {
+				return img, nil
+			}
+			availablePlatforms = append(availablePlatforms, img.TargetPlatform)
 		}
 	}
 
-	panic(fmt.Sprintf("Image %q with target platform %q not found!", name, targetPlatform))
+	if len(availablePlatforms) > 0 {
+		availablePlatforms = lo.Uniq(availablePlatforms)
+		sort.Strings(availablePlatforms)
+		return nil, fmt.Errorf("image %q does not support platform %q (available: %s)", name, targetPlatform, strings.Join(availablePlatforms, ", "))
+	}
+	return nil, fmt.Errorf("image %q not found", name)
 }
 
 func (c *Conveyor) GetImageStageContentDigest(targetPlatform, imageName, stageName string) string {
@@ -1044,26 +1082,53 @@ func (c *Conveyor) GetImageContentDigest(targetPlatform, imageName string) strin
 	return c.GetImage(targetPlatform, imageName).GetContentDigest()
 }
 
-func (c *Conveyor) getImageStage(targetPlatform, imageName, stageName string) stage.Interface {
-	if stg := c.GetImage(targetPlatform, imageName).GetStage(stage.StageName(stageName)); stg != nil {
-		return stg
-	} else {
-		return c.getLastNonEmptyImageStage(targetPlatform, imageName)
+func (c *Conveyor) findImageStage(targetPlatform, imageName, stageName string) (stage.Interface, error) {
+	img, err := c.FindImage(targetPlatform, imageName)
+	if err != nil {
+		return nil, err
 	}
+
+	if stg := img.GetStage(stage.StageName(stageName)); stg != nil {
+		return stg, nil
+	}
+
+	return c.findLastNonEmptyImageStage(targetPlatform, imageName)
 }
 
-func (c *Conveyor) getLastNonEmptyImageStage(targetPlatform, imageName string) stage.Interface {
-	// FIXME: find first existing stage after specified unexisting
-	return c.GetImage(targetPlatform, imageName).GetLastNonEmptyStage()
+func (c *Conveyor) findLastNonEmptyImageStage(targetPlatform, imageName string) (stage.Interface, error) {
+	img, err := c.FindImage(targetPlatform, imageName)
+	if err != nil {
+		return nil, err
+	}
+
+	return img.GetLastNonEmptyStage(), nil
+}
+
+func (c *Conveyor) getImageStage(targetPlatform, imageName, stageName string) stage.Interface {
+	stg, err := c.findImageStage(targetPlatform, imageName, stageName)
+	if err != nil {
+		panic(err.Error())
+	}
+	return stg
 }
 
 func (c *Conveyor) FetchImageStage(ctx context.Context, targetPlatform, imageName, stageName string) error {
-	_, err := c.StorageManager.FetchStage(ctx, c.ContainerBackend, c.getImageStage(targetPlatform, imageName, stageName))
+	stg, err := c.findImageStage(targetPlatform, imageName, stageName)
+	if err != nil {
+		return err
+	}
+
+	_, err = c.StorageManager.FetchStage(ctx, c.ContainerBackend, stg)
 	return err
 }
 
 func (c *Conveyor) FetchLastNonEmptyImageStage(ctx context.Context, targetPlatform, imageName string) error {
-	_, err := c.StorageManager.FetchStage(ctx, c.ContainerBackend, c.getLastNonEmptyImageStage(targetPlatform, imageName))
+	stg, err := c.findLastNonEmptyImageStage(targetPlatform, imageName)
+	if err != nil {
+		return err
+	}
+
+	_, err = c.StorageManager.FetchStage(ctx, c.ContainerBackend, stg)
 	return err
 }
 
