@@ -302,7 +302,23 @@ func (backend *DockerServerBackend) Tag(ctx context.Context, ref, newRef string,
 }
 
 func (backend *DockerServerBackend) Push(ctx context.Context, ref string, opts PushOpts) error {
-	return docker.CliPushWithRetries(ctx, ref)
+	return backend.pushWithRecovery(ctx, ref)
+}
+
+func (backend *DockerServerBackend) pushWithRecovery(ctx context.Context, ref string) error {
+	if err := docker.CliPushWithRetries(ctx, ref); err != nil {
+		if docker.IsErrContentNotFound(err) {
+			logboek.Context(ctx).Warn().LogF("WARNING: push failed due to missing content blob %s, pulling %s to materialize layers\n", docker.ContentNotFoundDigest(err), ref)
+
+			if pullErr := docker.CliPullWithRetries(ctx, ref); pullErr != nil {
+				return fmt.Errorf("push failed (content not found), pull to recover also failed: %w (original push error: %s)", pullErr, err)
+			}
+
+			return docker.CliPushWithRetries(ctx, ref)
+		}
+		return err
+	}
+	return nil
 }
 
 func (backend *DockerServerBackend) Pull(ctx context.Context, ref string, opts PullOpts) error {
@@ -339,12 +355,9 @@ func (backend *DockerServerBackend) Rm(ctx context.Context, ref string, opts RmO
 }
 
 func (backend *DockerServerBackend) PushImage(ctx context.Context, img LegacyImageInterface) error {
-	if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Pushing %s", img.Name())).DoError(func() error {
-		return docker.CliPushWithRetries(ctx, img.Name())
-	}); err != nil {
-		return err
-	}
-	return nil
+	return logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Pushing %s", img.Name())).DoError(func() error {
+		return backend.pushWithRecovery(ctx, img.Name())
+	})
 }
 
 func (backend *DockerServerBackend) TagImageByName(ctx context.Context, img LegacyImageInterface) error {
