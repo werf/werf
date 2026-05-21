@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.69.1](https://github.com/werf/werf/compare/v2.69.0...v2.69.1) (2026-05-21)
+
+
+### Bug Fixes
+
+* **build, stapel:** handle platform mismatch in stage base image resolution and avoid panic ([#7493](https://github.com/werf/werf/issues/7493)) ([cdf0e83](https://github.com/werf/werf/commit/cdf0e831b127cd041141aa9ecf951e12056e2135))
+* **cleanup:** failing for cross-account ECR repositories ([37c636c](https://github.com/werf/werf/commit/37c636cb252d765a4c83d901f05b7abd9bf56175))
+
 ## [2.69.0](https://github.com/werf/werf/compare/v2.68.2...v2.69.0) (2026-05-19)
 
 
