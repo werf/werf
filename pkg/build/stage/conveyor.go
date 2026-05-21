@@ -11,6 +11,7 @@ import (
 
 type Conveyor interface {
 	GetImportMetadata(ctx context.Context, projectName, id string) (*storage.ImportMetadata, error)
+	FetchImportMetadata(ctx context.Context, projectName, id string) (*storage.ImportMetadata, error)
 	PutImportMetadata(ctx context.Context, projectName string, metadata *storage.ImportMetadata, opts storage.PutImportMetadataOptions) error
 	RmImportMetadata(ctx context.Context, projectName, id string) error
 

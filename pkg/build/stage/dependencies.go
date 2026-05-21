@@ -324,7 +324,7 @@ func (s *DependenciesStage) getImportLabels(ctx context.Context, c Conveyor, elm
 
 func (s *DependenciesStage) getImportSourceChecksum(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, importElm *config.Import) (string, error) {
 	importSourceID := getImportSourceID(c, s.targetPlatform, importElm)
-	importMetadata, err := c.GetImportMetadata(ctx, s.projectName, importSourceID)
+	importMetadata, err := c.FetchImportMetadata(ctx, s.projectName, importSourceID)
 	if storage.IsErrBrokenImage(err) {
 		logboek.Context(ctx).Warn().LogF("Import metadata %s image is broken in the container registry, will regenerate\n", importSourceID)
 		importMetadata = nil
@@ -369,7 +369,7 @@ func (s *DependenciesStage) getResolvedImportMetadata(ctx context.Context, c Con
 
 	logboek.Context(ctx).Warn().LogF("Import metadata %s was not resolved during GetDependencies phase, falling back to registry read. The import metadata image in the container registry may be missing or broken.\n", importSourceID)
 
-	importMetadata, err := c.GetImportMetadata(ctx, s.projectName, importSourceID)
+	importMetadata, err := c.FetchImportMetadata(ctx, s.projectName, importSourceID)
 	if err != nil {
 		return nil, fmt.Errorf("get import metadata: %w", err)
 	}
