@@ -80,8 +80,9 @@ func OpenLocalRepo(ctx context.Context, name, workTreeDir string, opts OpenLocal
 			l.getRepoWorkTreeCacheDir(l.getRepoID()),
 			l.headCommitHash,
 			true_git.SyncSourceWorktreeWithServiceBranchOptions{
-				ServiceBranch:   opts.ServiceBranchOptions.Name,
-				GlobExcludeList: opts.ServiceBranchOptions.GlobExcludeList,
+				ServiceBranch:     opts.ServiceBranchOptions.Name,
+				GlobExcludeList:   opts.ServiceBranchOptions.GlobExcludeList,
+				NoFetchSubmodules: true,
 			},
 		)
 		if err != nil {
@@ -232,7 +233,7 @@ func (repo *Local) IsShallowClone(ctx context.Context) (bool, error) {
 }
 
 func (repo *Local) CreateDetachedMergeCommit(ctx context.Context, fromCommit, toCommit string) (string, error) {
-	return repo.createDetachedMergeCommit(ctx, repo.GitDir, repo.WorkTreeDir, repo.getRepoWorkTreeCacheDir(repo.getRepoID()), fromCommit, toCommit)
+	return repo.createDetachedMergeCommit(ctx, repo.GitDir, repo.WorkTreeDir, repo.getRepoWorkTreeCacheDir(repo.getRepoID()), fromCommit, toCommit, true)
 }
 
 func (repo *Local) GetMergeCommitParents(_ context.Context, commit string) ([]string, error) {
@@ -277,11 +278,11 @@ func (repo *Local) HeadCommitTime(ctx context.Context) (*time.Time, error) {
 }
 
 func (repo *Local) GetOrCreatePatch(ctx context.Context, opts PatchOptions) (Patch, error) {
-	return repo.getOrCreatePatch(ctx, repo.WorkTreeDir, repo.GitDir, repo.getRepoID(), repo.getRepoWorkTreeCacheDir(repo.getRepoID()), opts)
+	return repo.getOrCreatePatch(ctx, repo.WorkTreeDir, repo.GitDir, repo.getRepoID(), repo.getRepoWorkTreeCacheDir(repo.getRepoID()), true, opts)
 }
 
 func (repo *Local) GetOrCreateArchive(ctx context.Context, opts ArchiveOptions) (Archive, error) {
-	return repo.getOrCreateArchive(ctx, repo.WorkTreeDir, repo.GitDir, repo.getRepoID(), repo.getRepoWorkTreeCacheDir(repo.getRepoID()), opts)
+	return repo.getOrCreateArchive(ctx, repo.WorkTreeDir, repo.GitDir, repo.getRepoID(), repo.getRepoWorkTreeCacheDir(repo.getRepoID()), true, opts)
 }
 
 func (repo *Local) GetOrCreateChecksum(ctx context.Context, opts ChecksumOptions) (checksum string, err error) {
@@ -525,7 +526,7 @@ func (repo *Local) initRepoHandleBackedByWorkTree(ctx context.Context, commit st
 		}
 
 		var repoHandle repo_handle.Handle
-		if err := true_git.WithWorkTree(ctx, repo.GitDir, repo.getRepoWorkTreeCacheDir(repo.getRepoID()), commit, true_git.WithWorkTreeOptions{HasSubmodules: hasSubmodules}, func(preparedWorkTreeDir string) error {
+		if err := true_git.WithWorkTree(ctx, repo.GitDir, repo.getRepoWorkTreeCacheDir(repo.getRepoID()), commit, true_git.WithWorkTreeOptions{HasSubmodules: hasSubmodules, NoFetchSubmodules: true}, func(preparedWorkTreeDir string) error {
 			repositoryWithPreparedWorktree, err := true_git.GitOpenWithCustomWorktreeDir(repo.GitDir, preparedWorkTreeDir)
 			if err != nil {
 				return err

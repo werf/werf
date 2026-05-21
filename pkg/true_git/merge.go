@@ -10,7 +10,8 @@ import (
 )
 
 type CreateDetachedMergeCommitOptions struct {
-	HasSubmodules bool
+	HasSubmodules     bool
+	NoFetchSubmodules bool
 }
 
 func CreateDetachedMergeCommit(ctx context.Context, gitDir, workTreeCacheDir, commitToMerge, mergeIntoCommit string, opts CreateDetachedMergeCommitOptions) (string, error) {
@@ -29,7 +30,7 @@ func CreateDetachedMergeCommit(ctx context.Context, gitDir, workTreeCacheDir, co
 			return fmt.Errorf("bad work tree cache dir %s: %w", workTreeCacheDir, err)
 		}
 
-		if workTreeDir, err := prepareWorkTree(ctx, gitDir, workTreeCacheDir, mergeIntoCommit, opts.HasSubmodules); err != nil {
+		if workTreeDir, err := prepareWorkTree(ctx, gitDir, workTreeCacheDir, mergeIntoCommit, opts.HasSubmodules, opts.NoFetchSubmodules); err != nil {
 			return fmt.Errorf("unable to prepare worktree for commit %v: %w", mergeIntoCommit, err)
 		} else {
 			currentCommitPath := filepath.Join(workTreeCacheDir, "current_commit")

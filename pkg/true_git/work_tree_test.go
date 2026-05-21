@@ -64,7 +64,7 @@ var _ = Describe("Work tree helpers", func() {
 			It("should replace worktree without errors", func(ctx SpecContext) {
 				commit := getHeadCommit(ctx, mainWtDir)
 
-				Expect(switchWorkTree(ctx, mainWtDir, sideWtDir, commit, false)).To(Succeed())
+				Expect(switchWorkTree(ctx, mainWtDir, sideWtDir, commit, false, false)).To(Succeed())
 			})
 		})
 	})

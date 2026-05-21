@@ -19,10 +19,14 @@ func syncSubmodules(ctx context.Context, repoDir, workTreeDir string) error {
 	})
 }
 
-func updateSubmodules(ctx context.Context, repoDir, workTreeDir string) error {
+func updateSubmodules(ctx context.Context, repoDir, workTreeDir string, noFetch bool) error {
 	logProcessMsg := fmt.Sprintf("Update submodules in work tree %q", workTreeDir)
 	return logboek.Context(ctx).Info().LogProcess(logProcessMsg).DoError(func() error {
-		submUpdateCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: workTreeDir}, "submodule", "update", "--checkout", "--force", "--init", "--recursive")
+		args := []string{"submodule", "update", "--checkout", "--force", "--init", "--recursive"}
+		if noFetch {
+			args = append(args, "--no-fetch")
+		}
+		submUpdateCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: workTreeDir}, args...)
 		if err := submUpdateCmd.Run(ctx); err != nil {
 			return fmt.Errorf("submodule update command failed: %w", err)
 		}

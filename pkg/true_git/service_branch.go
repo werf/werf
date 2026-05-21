@@ -15,8 +15,9 @@ import (
 )
 
 type SyncSourceWorktreeWithServiceBranchOptions struct {
-	ServiceBranch   string
-	GlobExcludeList []string
+	ServiceBranch     string
+	GlobExcludeList   []string
+	NoFetchSubmodules bool
 }
 
 func SyncSourceWorktreeWithServiceBranch(ctx context.Context, gitDir, sourceWorktreeDir, worktreeCacheDir, commit string, opts SyncSourceWorktreeWithServiceBranchOptions) (string, error) {
@@ -31,7 +32,7 @@ func SyncSourceWorktreeWithServiceBranch(ctx context.Context, gitDir, sourceWork
 			return fmt.Errorf("bad work tree cache dir %s: %w", worktreeCacheDir, err)
 		}
 
-		serviceWorktreeDir, err := prepareWorkTree(ctx, gitDir, worktreeCacheDir, commit, true)
+		serviceWorktreeDir, err := prepareWorkTree(ctx, gitDir, worktreeCacheDir, commit, true, opts.NoFetchSubmodules)
 		if err != nil {
 			return fmt.Errorf("unable to prepare worktree for commit %v: %w", commit, err)
 		}

@@ -47,15 +47,9 @@ func (opts ArchiveOptions) ID() string {
 	)
 }
 
-func ArchiveWithSubmodules(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir string, opts ArchiveOptions) error {
+func Archive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir string, hasSubmodules, noFetchSubmodules bool, opts ArchiveOptions) error {
 	return withWorkTreeCacheLock(ctx, workTreeCacheDir, func() error {
-		return writeArchive(ctx, out, gitDir, workTreeCacheDir, true, opts)
-	})
-}
-
-func Archive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir string, opts ArchiveOptions) error {
-	return withWorkTreeCacheLock(ctx, workTreeCacheDir, func() error {
-		return writeArchive(ctx, out, gitDir, workTreeCacheDir, false, opts)
+		return writeArchive(ctx, out, gitDir, workTreeCacheDir, hasSubmodules, noFetchSubmodules, opts)
 	})
 }
 
@@ -63,7 +57,7 @@ func debugArchive() bool {
 	return os.Getenv("WERF_TRUE_GIT_DEBUG_ARCHIVE") == "1"
 }
 
-func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir string, withSubmodules bool, opts ArchiveOptions) error {
+func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir string, withSubmodules, noFetchSubmodules bool, opts ArchiveOptions) error {
 	var err error
 
 	gitDir, err = filepath.Abs(gitDir)
@@ -76,7 +70,7 @@ func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir s
 		return fmt.Errorf("bad work tree cache dir %s: %w", workTreeCacheDir, err)
 	}
 
-	workTreeDir, err := prepareWorkTree(ctx, gitDir, workTreeCacheDir, opts.Commit, withSubmodules)
+	workTreeDir, err := prepareWorkTree(ctx, gitDir, workTreeCacheDir, opts.Commit, withSubmodules, noFetchSubmodules)
 	if err != nil {
 		return fmt.Errorf("cannot prepare work tree in cache %s for commit %s: %w", workTreeCacheDir, opts.Commit, err)
 	}

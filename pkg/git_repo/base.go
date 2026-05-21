@@ -156,7 +156,7 @@ func (repo *Base) GetName() string {
 	return repo.Name
 }
 
-func (repo *Base) getOrCreatePatch(ctx context.Context, repoPath, gitDir, repoID, workTreeCacheDir string, opts PatchOptions) (Patch, error) {
+func (repo *Base) getOrCreatePatch(ctx context.Context, repoPath, gitDir, repoID, workTreeCacheDir string, noFetchSubmodules bool, opts PatchOptions) (Patch, error) {
 	patchID := true_git.PatchOptions(opts).ID()
 
 	checksumMutex := util.MapLoadOrCreateMutex(&repo.Cache.patchesMutex, patchID)
@@ -167,7 +167,7 @@ func (repo *Base) getOrCreatePatch(ctx context.Context, repoPath, gitDir, repoID
 		return val.(Patch), nil
 	}
 
-	patch, err := repo.CreatePatch(ctx, repoPath, gitDir, repoID, workTreeCacheDir, opts)
+	patch, err := repo.CreatePatch(ctx, repoPath, gitDir, repoID, workTreeCacheDir, noFetchSubmodules, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -176,17 +176,17 @@ func (repo *Base) getOrCreatePatch(ctx context.Context, repoPath, gitDir, repoID
 	return patch, nil
 }
 
-func (repo *Base) CreatePatch(ctx context.Context, repoPath, gitDir, repoID, workTreeCacheDir string, opts PatchOptions) (patch Patch, err error) {
+func (repo *Base) CreatePatch(ctx context.Context, repoPath, gitDir, repoID, workTreeCacheDir string, noFetchSubmodules bool, opts PatchOptions) (patch Patch, err error) {
 	logboek.Context(ctx).Debug().LogProcess("Creating patch").Do(func() {
 		logboek.Context(ctx).Debug().LogFDetails("repository: %s\noptions: %+v\n", repo.Name, opts)
 		logboek.Context(ctx).Debug().LogOptionalLn()
-		patch, err = repo.createPatch(ctx, repoPath, gitDir, repoID, workTreeCacheDir, opts)
+		patch, err = repo.createPatch(ctx, repoPath, gitDir, repoID, workTreeCacheDir, noFetchSubmodules, opts)
 	})
 
 	return
 }
 
-func (repo *Base) createPatch(ctx context.Context, repoPath, gitDir, repoID, workTreeCacheDir string, opts PatchOptions) (Patch, error) {
+func (repo *Base) createPatch(ctx context.Context, repoPath, gitDir, repoID, workTreeCacheDir string, noFetchSubmodules bool, opts PatchOptions) (Patch, error) {
 	if lock, err := CommonGitDataManager.LockGC(ctx, true); err != nil {
 		return nil, err
 	} else {
@@ -244,7 +244,7 @@ func (repo *Base) createPatch(ctx context.Context, repoPath, gitDir, repoID, wor
 		var retryCount int
 
 	TryCreatePatch:
-		desc, err = true_git.Patch(ctx, fileHandler, gitDir, workTreeCacheDir, true, true_git.PatchOptions(opts))
+		desc, err = true_git.Patch(ctx, fileHandler, gitDir, workTreeCacheDir, true, noFetchSubmodules, true_git.PatchOptions(opts))
 
 		if true_git.IsCommitsNotPresentError(err) && retryCount == 0 {
 			logboek.Context(ctx).Default().LogF("Detected not present commits when creating patch: %s\n", err)
@@ -256,8 +256,7 @@ func (repo *Base) createPatch(ctx context.Context, repoPath, gitDir, repoID, wor
 			if _, err := fileHandler.Seek(0, 0); err != nil {
 				return nil, fmt.Errorf("unable to reset file %s: %w", tmpFile, err)
 			}
-
-			if err := true_git.WithWorkTree(ctx, gitDir, workTreeCacheDir, opts.FromCommit, true_git.WithWorkTreeOptions{HasSubmodules: true}, func(workTreeDir string) error {
+			if err := true_git.WithWorkTree(ctx, gitDir, workTreeCacheDir, opts.FromCommit, true_git.WithWorkTreeOptions{HasSubmodules: hasSubmodules, NoFetchSubmodules: noFetchSubmodules}, func(workTreeDir string) error {
 				return nil
 			}); err != nil {
 				return nil, fmt.Errorf("unable to switch worktree to commit %q: %w", opts.FromCommit, err)
@@ -267,7 +266,7 @@ func (repo *Base) createPatch(ctx context.Context, repoPath, gitDir, repoID, wor
 			goto TryCreatePatch
 		}
 	} else {
-		desc, err = true_git.Patch(ctx, fileHandler, gitDir, workTreeCacheDir, false, true_git.PatchOptions(opts))
+		desc, err = true_git.Patch(ctx, fileHandler, gitDir, workTreeCacheDir, false, noFetchSubmodules, true_git.PatchOptions(opts))
 	}
 
 	if err != nil {
@@ -297,7 +296,7 @@ func HasSubmodulesInCommit(commit *object.Commit) (bool, error) {
 	return true, nil
 }
 
-func (repo *Base) createDetachedMergeCommit(ctx context.Context, gitDir, path, workTreeCacheDir, fromCommit, toCommit string) (string, error) {
+func (repo *Base) createDetachedMergeCommit(ctx context.Context, gitDir, path, workTreeCacheDir, fromCommit, toCommit string, noFetchSubmodules bool) (string, error) {
 	if lock, err := CommonGitDataManager.LockGC(ctx, true); err != nil {
 		return "", err
 	} else {
@@ -321,7 +320,7 @@ func (repo *Base) createDetachedMergeCommit(ctx context.Context, gitDir, path, w
 		return "", err
 	}
 
-	return true_git.CreateDetachedMergeCommit(ctx, gitDir, workTreeCacheDir, fromCommit, toCommit, true_git.CreateDetachedMergeCommitOptions{HasSubmodules: hasSubmodules})
+	return true_git.CreateDetachedMergeCommit(ctx, gitDir, workTreeCacheDir, fromCommit, toCommit, true_git.CreateDetachedMergeCommitOptions{HasSubmodules: hasSubmodules, NoFetchSubmodules: noFetchSubmodules})
 }
 
 func (repo *Base) getMergeCommitParents(gitDir, commit string) ([]string, error) {
@@ -347,13 +346,13 @@ func (repo *Base) getMergeCommitParents(gitDir, commit string) ([]string, error)
 	return res, nil
 }
 
-func (repo *Base) getOrCreateArchive(ctx context.Context, repoPath, gitDir, repoID, workTreeCacheDir string, opts ArchiveOptions) (Archive, error) {
+func (repo *Base) getOrCreateArchive(ctx context.Context, repoPath, gitDir, repoID, workTreeCacheDir string, noFetchSubmodules bool, opts ArchiveOptions) (Archive, error) {
 	repo.Cache.archivesMutex.Lock()
 	defer repo.Cache.archivesMutex.Unlock()
 
 	archiveID := true_git.ArchiveOptions(opts).ID()
 	if _, hasKey := repo.Cache.Archives[archiveID]; !hasKey {
-		archive, err := repo.CreateArchive(ctx, repoPath, gitDir, repoID, workTreeCacheDir, opts)
+		archive, err := repo.CreateArchive(ctx, repoPath, gitDir, repoID, workTreeCacheDir, noFetchSubmodules, opts)
 		if err != nil {
 			return nil, err
 		}
@@ -362,17 +361,17 @@ func (repo *Base) getOrCreateArchive(ctx context.Context, repoPath, gitDir, repo
 	return repo.Cache.Archives[archiveID], nil
 }
 
-func (repo *Base) CreateArchive(ctx context.Context, repoPath, gitDir, repoID, workTreeCacheDir string, opts ArchiveOptions) (archive Archive, err error) {
+func (repo *Base) CreateArchive(ctx context.Context, repoPath, gitDir, repoID, workTreeCacheDir string, noFetchSubmodules bool, opts ArchiveOptions) (archive Archive, err error) {
 	logboek.Context(ctx).Debug().LogProcess("Creating archive").Do(func() {
 		logboek.Context(ctx).Debug().LogFDetails("repository: %s\noptions: %+v\n", repo.Name, opts)
 		logboek.Context(ctx).Debug().LogOptionalLn()
-		archive, err = repo.createArchive(ctx, repoPath, gitDir, repoID, workTreeCacheDir, opts)
+		archive, err = repo.createArchive(ctx, repoPath, gitDir, repoID, workTreeCacheDir, noFetchSubmodules, opts)
 	})
 
 	return
 }
 
-func (repo *Base) createArchive(ctx context.Context, repoPath, gitDir, repoID, workTreeCacheDir string, opts ArchiveOptions) (Archive, error) {
+func (repo *Base) createArchive(ctx context.Context, repoPath, gitDir, repoID, workTreeCacheDir string, noFetchSubmodules bool, opts ArchiveOptions) (Archive, error) {
 	if lock, err := CommonGitDataManager.LockGC(ctx, true); err != nil {
 		return nil, err
 	} else {
@@ -416,13 +415,7 @@ func (repo *Base) createArchive(ctx context.Context, repoPath, gitDir, repoID, w
 	}
 	defer fileHandler.Close()
 
-	if hasSubmodules {
-		err = true_git.ArchiveWithSubmodules(ctx, fileHandler, gitDir, workTreeCacheDir, true_git.ArchiveOptions(opts))
-	} else {
-		err = true_git.Archive(ctx, fileHandler, gitDir, workTreeCacheDir, true_git.ArchiveOptions(opts))
-	}
-
-	if err != nil {
+	if err = true_git.Archive(ctx, fileHandler, gitDir, workTreeCacheDir, hasSubmodules, noFetchSubmodules, true_git.ArchiveOptions(opts)); err != nil {
 		return nil, fmt.Errorf("error creating archive for commit %q: %w", opts.Commit, err)
 	}
 

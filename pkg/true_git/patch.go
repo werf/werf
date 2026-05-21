@@ -56,7 +56,7 @@ type PatchDescriptor struct {
 	PathsToRemove []string
 }
 
-func Patch(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir string, withSubmodules bool, opts PatchOptions) (*PatchDescriptor, error) {
+func Patch(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir string, withSubmodules, noFetchSubmodules bool, opts PatchOptions) (*PatchDescriptor, error) {
 	var res *PatchDescriptor
 
 	workTreeDir := workTreeCacheDir
@@ -82,7 +82,7 @@ func Patch(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir string, 
 
 	}
 	err := withWorkTreeCacheLock(ctx, workTreeDir, func() error {
-		writePatchRes, err := writePatch(ctx, out, gitDir, workTreeDir, withSubmodules, opts)
+		writePatchRes, err := writePatch(ctx, out, gitDir, workTreeDir, withSubmodules, noFetchSubmodules, opts)
 		res = writePatchRes
 		return err
 	})
@@ -94,7 +94,7 @@ func debugPatch() bool {
 	return os.Getenv("WERF_TRUE_GIT_DEBUG_PATCH") == "1"
 }
 
-func writePatch(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir string, withSubmodules bool, opts PatchOptions) (*PatchDescriptor, error) {
+func writePatch(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir string, withSubmodules, noFetchSubmodules bool, opts PatchOptions) (*PatchDescriptor, error) {
 	var err error
 
 	gitDir, err = filepath.Abs(gitDir)
@@ -111,7 +111,8 @@ func writePatch(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir str
 		return nil, fmt.Errorf("provide work tree cache directory to enable submodules!")
 	}
 
-	commonGitOpts := append(getCommonGitOptions(),
+	commonGitOpts := append(
+		getCommonGitOptions(),
 		"-c", "diff.renames=false",
 		"-c", "core.quotePath=false",
 	)
@@ -132,7 +133,7 @@ func writePatch(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir str
 	var cmd *exec.Cmd
 
 	if withSubmodules {
-		workTreeDir, err := prepareWorkTree(ctx, gitDir, workTreeCacheDir, opts.ToCommit, withSubmodules)
+		workTreeDir, err := prepareWorkTree(ctx, gitDir, workTreeCacheDir, opts.ToCommit, withSubmodules, noFetchSubmodules)
 		if err != nil {
 			return nil, fmt.Errorf("cannot prepare work tree in cache %s for commit %s: %w", workTreeCacheDir, opts.ToCommit, err)
 		}

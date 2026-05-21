@@ -27,7 +27,8 @@ const (
 )
 
 type WithWorkTreeOptions struct {
-	HasSubmodules bool
+	HasSubmodules     bool
+	NoFetchSubmodules bool
 }
 
 func WithWorkTree(ctx context.Context, gitDir, workTreeCacheDir, commit string, opts WithWorkTreeOptions, f func(workTreeDir string) error) error {
@@ -44,7 +45,7 @@ func WithWorkTree(ctx context.Context, gitDir, workTreeCacheDir, commit string, 
 			return fmt.Errorf("bad work tree cache dir %s: %w", workTreeCacheDir, err)
 		}
 
-		workTreeDir, err := prepareWorkTree(ctx, gitDir, workTreeCacheDir, commit, opts.HasSubmodules)
+		workTreeDir, err := prepareWorkTree(ctx, gitDir, workTreeCacheDir, commit, opts.HasSubmodules, opts.NoFetchSubmodules)
 		if err != nil {
 			return fmt.Errorf("cannot prepare worktree: %w", err)
 		}
@@ -74,7 +75,7 @@ func getWorkTreeCacheLockTimeout() time.Duration {
 	return workTreeCacheLockDefaultTimeout
 }
 
-func prepareWorkTree(ctx context.Context, repoDir, workTreeCacheDir, commit string, withSubmodules bool) (string, error) {
+func prepareWorkTree(ctx context.Context, repoDir, workTreeCacheDir, commit string, withSubmodules, noFetchSubmodules bool) (string, error) {
 	if err := os.MkdirAll(workTreeCacheDir, os.ModePerm); err != nil {
 		return "", fmt.Errorf("unable to create dir %s: %w", workTreeCacheDir, err)
 	}
@@ -196,7 +197,7 @@ func prepareWorkTree(ctx context.Context, repoDir, workTreeCacheDir, commit stri
 			logboek.Context(ctx).Info().LogFDetails("Current commit: %s\n", currentCommit)
 		}
 
-		return switchWorkTree(ctx, repoDir, workTreeDir, commit, withSubmodules)
+		return switchWorkTree(ctx, repoDir, workTreeDir, commit, withSubmodules, noFetchSubmodules)
 	}); err != nil {
 		return "", fmt.Errorf("unable to switch work tree %s to commit %s: %w", workTreeDir, commit, err)
 	}
@@ -260,7 +261,7 @@ InvalidDotGit:
 	return "", ErrInvalidDotGit
 }
 
-func switchWorkTree(ctx context.Context, repoDir, workTreeDir, commit string, withSubmodules bool) error {
+func switchWorkTree(ctx context.Context, repoDir, workTreeDir, commit string, withSubmodules, noFetchSubmodules bool) error {
 	_, err := os.Stat(workTreeDir)
 	switch {
 	case os.IsNotExist(err):
@@ -292,7 +293,7 @@ func switchWorkTree(ctx context.Context, repoDir, workTreeDir, commit string, wi
 			if err := syncSubmodules(ctx, repoDir, workTreeDir); err != nil {
 				return fmt.Errorf("cannot sync submodules: %w", err)
 			}
-			if err = updateSubmodules(ctx, repoDir, workTreeDir); err != nil {
+			if err = updateSubmodules(ctx, repoDir, workTreeDir, noFetchSubmodules); err != nil {
 				return fmt.Errorf("cannot update submodules: %w", err)
 			}
 			return nil
