@@ -7,7 +7,9 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/werf/werf/v2/pkg/config"
+	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/container_backend/stage_builder"
+	"github.com/werf/werf/v2/pkg/image"
 )
 
 var _ = Describe("DependenciesStage", func() {
@@ -230,6 +232,49 @@ var _ = Describe("DependenciesStage", func() {
 				},
 			}),
 	)
+
+	Describe("setting project repo commit label", func() {
+		const commit = "9d8059842b6fde712c58315ca0ab4713d90761c0"
+
+		newStageImage := func(containerBackend *ContainerBackendStub) (*LegacyImageStub, *stage_builder.StageBuilder, *StageImage) {
+			img := NewLegacyImageStub()
+			stageBuilder := stage_builder.NewStageBuilder(containerBackend, "", img)
+
+			return img, stageBuilder, &StageImage{
+				Image:   img,
+				Builder: stageBuilder,
+			}
+		}
+
+		It("should set current commit label for legacy stapel builder", func(ctx SpecContext) {
+			conveyor := NewConveyorStubForDependencies(NewGiterminismManagerStub(NewLocalGitRepoStub(commit), NewGiterminismInspectorStub()), nil)
+			containerBackend := NewContainerBackendStub()
+			stage := newDependenciesStage(nil, nil, DependenciesAfterSetup, &BaseStageOptions{
+				ImageName:   "example-image",
+				ProjectName: "example-project",
+			})
+
+			img, _, stageImage := newStageImage(containerBackend)
+
+			Expect(stage.PrepareImage(ctx, conveyor, containerBackend, nil, stageImage, nil)).To(Succeed())
+			Expect(img._Container._ServiceCommitChangeOptions.Labels[image.WerfProjectRepoCommitLabel]).To(Equal(commit))
+		})
+
+		It("should set current commit label for stapel builder", func(ctx SpecContext) {
+			conveyor := &nonLegacyDependenciesConveyorStub{ConveyorStub: NewConveyorStubForDependencies(NewGiterminismManagerStub(NewLocalGitRepoStub(commit), NewGiterminismInspectorStub()), nil)}
+			containerBackend := NewContainerBackendStub()
+			stage := newDependenciesStage(nil, nil, DependenciesAfterSetup, &BaseStageOptions{
+				ImageName:   "example-image",
+				ProjectName: "example-project",
+			})
+
+			_, stageBuilder, stageImage := newStageImage(containerBackend)
+
+			Expect(stage.PrepareImage(ctx, conveyor, containerBackend, nil, stageImage, nil)).To(Succeed())
+			Expect(stageBuilder.GetStapelStageBuilderImplementation()).NotTo(BeNil())
+			Expect(stageBuilder.GetStapelStageBuilderImplementation().Labels).To(ContainElement(fmt.Sprintf("%s=%s", image.WerfProjectRepoCommitLabel, commit)))
+		})
+	})
 })
 
 var _ = Describe("getDependencies helper", func() {
@@ -305,4 +350,12 @@ func NewConveyorStubForDependencies(giterminismManager *GiterminismManagerStub, 
 	}
 
 	return NewConveyorStub(giterminismManager, lastStageImageNameByImageName, lastStageImageIDByImageName, lastStageImageDigestByImageName)
+}
+
+type nonLegacyDependenciesConveyorStub struct {
+	*ConveyorStub
+}
+
+func (c *nonLegacyDependenciesConveyorStub) UseLegacyStapelBuilder(container_backend.ContainerBackend) bool {
+	return false
 }
