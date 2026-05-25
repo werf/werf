@@ -365,15 +365,13 @@ func (s *BaseStage) PrepareImage(ctx context.Context, c Conveyor, cb container_b
 	return nil
 }
 
-func (s *BaseStage) addProjectRepoCommitLabel(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, stageImage *StageImage) map[string]string {
+func (s *BaseStage) addProjectRepoCommitLabel(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, stageImage *StageImage) {
 	addLabels := map[string]string{image.WerfProjectRepoCommitLabel: c.GiterminismManager().HeadCommit(ctx)}
 	if c.UseLegacyStapelBuilder(cb) {
 		stageImage.Builder.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions().AddLabel(addLabels)
 	} else {
 		stageImage.Builder.StapelStageBuilder().AddLabels(addLabels)
 	}
-
-	return addLabels
 }
 
 func (s *BaseStage) MutateImage(_ context.Context, _ ImageMutatorPusher, _, _ *StageImage) error {
