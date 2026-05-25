@@ -13,7 +13,7 @@ import (
 
 func SetupScanContextNamespaceOnly(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.ScanContextNamespaceOnly = new(bool)
-	cmd.Flags().BoolVarP(cmdData.ScanContextNamespaceOnly, "scan-context-namespace-only", "", util.GetBoolEnvironmentDefaultFalse("WERF_SCAN_CONTEXT_NAMESPACE_ONLY"), "Scan for used images only in namespace linked with context for each available context in kube-config (or only for the context specified with option --kube-context). When disabled will scan all namespaces in all selected contexts. (Default $WERF_SCAN_CONTEXT_NAMESPACE_ONLY)")
+	cmd.Flags().BoolVarP(cmdData.ScanContextNamespaceOnly, "scan-context-namespace-only", "", util.GetBoolEnvironmentDefaultFalse("WERF_SCAN_CONTEXT_NAMESPACE_ONLY"), "Scan for used images only in namespace linked with context for each available context in kube-config (or only for the context specified with option --kube-context). When disabled will scan all namespaces in all contexts (or only for the context specified with option --kube-context). (Default $WERF_SCAN_CONTEXT_NAMESPACE_ONLY)")
 }
 
 func SetupKubeScanNamespaces(cmdData *CmdData, cmd *cobra.Command) {
