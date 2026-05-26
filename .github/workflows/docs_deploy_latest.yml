@@ -27,6 +27,10 @@ jobs:
       packages: write
     uses: ./.github/workflows/_docs_deploy_production.yml
     with:
+      checkoutRef: main
+      docsDeployTarget: v2
+      docsDeployLatestAliasEnabled: true
+      githubRefOverride: refs/heads/main
       persistent: true
       targetCluster: ru
       runner: prod-github-runner-0
@@ -40,6 +44,10 @@ jobs:
       packages: write
     uses: ./.github/workflows/_docs_deploy_production.yml
     with:
+      checkoutRef: main
+      docsDeployTarget: v2
+      docsDeployLatestAliasEnabled: true
+      githubRefOverride: refs/heads/main
       persistent: true
       targetCluster: eu
       runner: prod-github-runner-0

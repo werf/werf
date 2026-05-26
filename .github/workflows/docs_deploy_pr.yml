@@ -6,15 +6,42 @@ on:
   repository_dispatch:
     types: ["docs:deploy:pr"]
   workflow_dispatch:
+    inputs:
+      gitRef:
+        description: "Branch, tag or ref to checkout"
+        required: false
+        default: ""
+        type: string
+      releaseRef:
+        description: "Unique release slug for test deploy; empty means selected branch/tag"
+        required: false
+        default: ""
+        type: string
+      docsDeployTarget:
+        description: "Stable docs root to expose, for example v2"
+        required: false
+        default: ""
+        type: string
+      docsDeployLatestAliasEnabled:
+        description: "Also expose /docs/latest/ as alias to docsDeployTarget"
+        required: true
+        default: false
+        type: boolean
 
 jobs:
   deploy-test:
     if: |
-      github.event.label.name == 'trigger: docs:deploy:pr' || contains(github.event.pull_request.labels.*.name, 'trigger: docs:deploy:pr')
+      github.event_name == 'workflow_dispatch' ||
+      github.event.label.name == 'trigger: docs:deploy:pr' ||
+      contains(github.event.pull_request.labels.*.name, 'trigger: docs:deploy:pr')
     uses: ./.github/workflows/_docs_deploy.yml
     with:
+      checkoutRef: ${{ github.event_name == 'workflow_dispatch' && inputs.gitRef || '' }}
       env: test
-      githubRefOverride: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || '' }}
+      githubRefOverride: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || github.event_name == 'workflow_dispatch' && inputs.gitRef || '' }}
+      releaseRefOverride: ${{ github.event_name == 'workflow_dispatch' && inputs.releaseRef || '' }}
+      docsDeployTarget: ${{ github.event_name == 'workflow_dispatch' && inputs.docsDeployTarget || '' }}
+      docsDeployLatestAliasEnabled: ${{ github.event_name == 'workflow_dispatch' && inputs.docsDeployLatestAliasEnabled || false }}
       persistent: true
       runner: prod-github-runner-0
     secrets:

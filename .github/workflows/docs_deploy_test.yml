@@ -1,0 +1,52 @@
+name: docs:deploy:test
+
+on:
+  workflow_dispatch:
+    inputs:
+      gitRef:
+        description: "Branch, tag or ref to checkout"
+        required: false
+        default: ""
+        type: string
+      releaseRef:
+        description: "Unique release slug for test deploy; empty means selected branch/tag"
+        required: false
+        default: ""
+        type: string
+      docsDeployTarget:
+        description: "Stable docs root to expose, for example v2"
+        required: false
+        default: ""
+        type: string
+      docsDeployLatestAliasEnabled:
+        description: "Also expose /docs/latest/ as alias to docsDeployTarget"
+        required: true
+        default: false
+        type: boolean
+
+jobs:
+  deploy-test:
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/_docs_deploy.yml
+    with:
+      checkoutRef: ${{ inputs.gitRef }}
+      env: test
+      githubRefOverride: ${{ inputs.gitRef }}
+      releaseRefOverride: ${{ inputs.releaseRef }}
+      docsDeployTarget: ${{ inputs.docsDeployTarget }}
+      docsDeployLatestAliasEnabled: ${{ inputs.docsDeployLatestAliasEnabled }}
+      persistent: true
+      runner: prod-github-runner-0
+    secrets:
+      kubeConfig: ${{ secrets.KUBECONFIG_BASE64_DEV }}
+
+  notify:
+    if: failure()
+    needs: deploy-test
+    uses: werf/common-ci/.github/workflows/notification.yml@main
+    secrets:
+      loopNotificationGroup: ${{ secrets.LOOP_NOTIFICATION_GROUP }}
+      webhook: ${{ secrets.LOOP_NOTIFICATION_WEBHOOK }}
+      notificationChannel: ${{ secrets.LOOP_NOTIFICATION_CHANNEL }}
