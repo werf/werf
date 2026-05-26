@@ -274,6 +274,20 @@ var _ = Describe("DependenciesStage", func() {
 			Expect(stageBuilder.GetStapelStageBuilderImplementation()).NotTo(BeNil())
 			Expect(stageBuilder.GetStapelStageBuilderImplementation().Labels).To(ContainElement(fmt.Sprintf("%s=%s", image.WerfProjectRepoCommitLabel, commit)))
 		})
+
+		It("should not set empty commit label for legacy stapel builder", func(ctx SpecContext) {
+			conveyor := NewConveyorStubForDependencies(NewGiterminismManagerStub(NewLocalGitRepoStub(""), NewGiterminismInspectorStub()), nil)
+			containerBackend := NewContainerBackendStub()
+			stage := newDependenciesStage(nil, nil, DependenciesAfterSetup, &BaseStageOptions{
+				ImageName:   "example-image",
+				ProjectName: "example-project",
+			})
+
+			img, _, stageImage := newStageImage(containerBackend)
+
+			Expect(stage.PrepareImage(ctx, conveyor, containerBackend, nil, stageImage, nil)).To(Succeed())
+			Expect(img._Container._ServiceCommitChangeOptions.Labels).NotTo(HaveKey(image.WerfProjectRepoCommitLabel))
+		})
 	})
 })
 

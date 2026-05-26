@@ -366,7 +366,12 @@ func (s *BaseStage) PrepareImage(ctx context.Context, c Conveyor, cb container_b
 }
 
 func (s *BaseStage) addProjectRepoCommitLabel(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, stageImage *StageImage) {
-	addLabels := map[string]string{image.WerfProjectRepoCommitLabel: c.GiterminismManager().HeadCommit(ctx)}
+	headCommit := c.GiterminismManager().HeadCommit(ctx)
+	if headCommit == "" {
+		return
+	}
+
+	addLabels := map[string]string{image.WerfProjectRepoCommitLabel: headCommit}
 	if c.UseLegacyStapelBuilder(cb) {
 		stageImage.Builder.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions().AddLabel(addLabels)
 	} else {

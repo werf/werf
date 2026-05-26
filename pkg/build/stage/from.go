@@ -95,19 +95,21 @@ func (s *FromStage) GetDependencies(_ context.Context, c Conveyor, _ container_b
 }
 
 func (s *FromStage) PrepareImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, _ container_backend.BuildContextArchiver) error {
-	addLabels := map[string]string{imagePkg.WerfProjectRepoCommitLabel: c.GiterminismManager().HeadCommit(ctx)}
 	s.addProjectRepoCommitLabel(ctx, c, cb, stageImage)
 
 	// For scratch there is no builder execution, so labels added only to the builder would be lost.
 	// Merge them into the build service labels used later by MutateImage.
 	if s.fromScratch {
+		headCommit := c.GiterminismManager().HeadCommit(ctx)
+		if headCommit == "" {
+			return nil
+		}
+
 		serviceLabels := stageImage.Image.GetBuildServiceLabels()
 		if serviceLabels == nil {
 			serviceLabels = map[string]string{}
 		}
-		for key, value := range addLabels {
-			serviceLabels[key] = value
-		}
+		serviceLabels[imagePkg.WerfProjectRepoCommitLabel] = headCommit
 		stageImage.Image.SetBuildServiceLabels(serviceLabels)
 		return nil
 	}
