@@ -63,7 +63,8 @@ var _ = Describe("Build phase", func() {
 		It("should build install stage twice (because of ancestry check) and use the oldest stage by time of saving into stages storage", func(ctx SpecContext) {
 			Expect(utils.SetGitRepoState(ctx, "build_phase-001", "build_phase_repo1", "one")).To(Succeed())
 			Expect(copy.Copy("build_phase_repo1", "build_phase_repo2")).To(Succeed())
-			Expect(utils.SetGitRepoState(ctx, "build_phase-002", "build_phase_repo2", "two")).To(Succeed())
+			Expect(liveexec.ExecCommand(ctx, ".", "git", liveexec.ExecCommandOptions{}, []string{"init", "build_phase-002", "--separate-git-dir", "build_phase_repo2"}...)).To(Succeed())
+			Expect(liveexec.ExecCommand(ctx, ".", "git", liveexec.ExecCommandOptions{}, []string{"-C", "build_phase-002", "commit", "--allow-empty", "-m", "two"}...)).To(Succeed())
 
 			SuiteData.Stubs.SetEnv("WERF_CONFIG", "werf_1.yaml")
 			Expect(werfBuild(ctx, "build_phase-001", liveexec.ExecCommandOptions{})).To(Succeed())
