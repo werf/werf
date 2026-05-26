@@ -357,7 +357,7 @@ The _install_, _beforeSetup_, and _setup_ user stages also depend on changes in 
 This stage is depicted as of the _Calculation digest phase_
 ![git files actualized on specific stage]({{ "images/build/git_mapping_updated_on_stage.png" | true_relative_url }})
 
-You can specify the dependency of the _user stage_ on Git repository changes using the `git.stageDependencies` parameter. It has the following syntax:
+By default, werf monitors all files (`**/*`), so any source change triggers a rebuild of user stages that have shell commands. You can narrow this down using the `git.stageDependencies` parameter to specify exactly which files trigger rebuilds. It has the following syntax:
 
 ```yaml
 git:
@@ -436,8 +436,8 @@ The `disableGitAfterPatch` directive allows you to lock the source code in the i
 This approach is useful in scenarios where you need to use the actual set of source files during the build stage, but only changes to specific files should restart the build process.
 
 Therefore:
-- If `git.stageDependencies` is used, the rebuild, and execution of commands with the current source files, will occur when relevant changes are detected.
-- If `git.stageDependencies` is not used, there will be no rebuilds.
+- By default, any source file change triggers a rebuild and execution of commands with the current source files.
+- If `git.stageDependencies` is specified, only changes matching the defined masks trigger a rebuild.
 
 ## Dependency on the CacheVersion
 

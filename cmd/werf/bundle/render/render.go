@@ -19,7 +19,6 @@ import (
 	"github.com/werf/nelm/pkg/action"
 	nelmcommon "github.com/werf/nelm/pkg/common"
 	"github.com/werf/nelm/pkg/helm/pkg/engine"
-	"github.com/werf/nelm/pkg/log"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/deploy"
 	"github.com/werf/werf/v2/pkg/deploy/bundles"
@@ -209,10 +208,8 @@ func runRender(ctx context.Context) error {
 		return fmt.Errorf("get annotations and labels: %w", err)
 	}
 
-	// TODO(major): get rid of forcing color mode via ci-env and use color mode detection logic from
-	// Nelm instead. Until then, color will be always off here.
 	ctx = action.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultChartRenderLogLevel), action.SetupLoggingOptions{
-		ColorMode:      log.LogColorModeOff,
+		ColorMode:      *commonCmdData.LogColorMode,
 		LogIsParseable: true,
 	})
 	engine.Debug = commonCmdData.DebugTemplates

@@ -162,46 +162,4 @@ metadata:
 
 Посмотрите все возможности этой аннотации [здесь]({{ "/reference/deploy_annotations.html#зависимости-при-удалении" | true_relative_url }}).
 
-## Ожидание готовности ресурсов вне релиза (только werf)
 
-Ресурсы, развертывающиеся в рамках текущего релиза, могут зависеть от ресурсов, которые не принадлежат этому релизу. werf может ждать, пока эти внешние ресурсы не станут готовыми — вам просто нужно добавить аннотацию `<name>.external-dependency.werf.io/resource` следующим образом:
-
-```yaml
-# .helm/templates/example.yaml:
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: myapp
-  annotations:
-    secret.external-dependency.werf.io/resource: secret/my-dynamic-vault-secret
-# ...
-```
-
-Развертывание `myapp` начнётся только после того, как секрет `my-dynamic-vault-secret` (который автоматически создаётся оператором в кластере) будет создан и готов.
-
-Вот как вы можете настроить werf на ожидание готовности нескольких внешних ресурсов:
-
-```yaml
-# .helm/templates/example.yaml:
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: myapp
-  annotations:
-    secret.external-dependency.werf.io/resource: secret/my-dynamic-vault-secret
-    database.external-dependency.werf.io/resource: statefulset/my-database
-# ...
-```
-
-По умолчанию, werf ищет внешний ресурс в namespace релиза (если, конечно, ресурс является namespaced). Вы можете изменить namespace внешнего ресурса, прикрепив к нему аннотацию `<name>.external-dependency.werf.io/namespace`:
-
-```yaml
-# .helm/templates/example.yaml:
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: myapp
-  annotations:
-    secret.external-dependency.werf.io/resource: secret/my-dynamic-vault-secret
-    secret.external-dependency.werf.io/namespace: my-namespace
-```
