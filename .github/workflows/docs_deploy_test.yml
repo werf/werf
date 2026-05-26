@@ -1,6 +1,9 @@
 name: docs:deploy:test
 
 on:
+  push:
+    branches:
+      - chore/docs/update-major-routing
   workflow_dispatch:
     inputs:
       gitRef:
@@ -11,17 +14,17 @@ on:
       releaseRef:
         description: "Unique release slug for test deploy; empty means selected branch/tag"
         required: false
-        default: ""
+        default: "docs-major-routing-v2"
         type: string
       docsDeployTarget:
         description: "Stable docs root to expose, for example v2"
         required: false
-        default: ""
+        default: "v2"
         type: string
       docsDeployLatestAliasEnabled:
         description: "Also expose /docs/latest/ as alias to docsDeployTarget"
         required: true
-        default: false
+        default: true
         type: boolean
 
 jobs:
@@ -31,12 +34,12 @@ jobs:
       packages: write
     uses: ./.github/workflows/_docs_deploy.yml
     with:
-      checkoutRef: ${{ inputs.gitRef }}
+      checkoutRef: ${{ github.event_name == 'workflow_dispatch' && inputs.gitRef || github.ref_name }}
       env: test
-      githubRefOverride: ${{ inputs.gitRef }}
-      releaseRefOverride: ${{ inputs.releaseRef }}
-      docsDeployTarget: ${{ inputs.docsDeployTarget }}
-      docsDeployLatestAliasEnabled: ${{ inputs.docsDeployLatestAliasEnabled }}
+      githubRefOverride: ${{ github.event_name == 'workflow_dispatch' && inputs.gitRef || github.ref_name }}
+      releaseRefOverride: ${{ github.event_name == 'workflow_dispatch' && inputs.releaseRef || 'docs-major-routing-v2' }}
+      docsDeployTarget: ${{ github.event_name == 'workflow_dispatch' && inputs.docsDeployTarget || 'v2' }}
+      docsDeployLatestAliasEnabled: ${{ github.event_name != 'workflow_dispatch' || inputs.docsDeployLatestAliasEnabled }}
       persistent: true
       runner: prod-github-runner-0
     secrets:
