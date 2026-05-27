@@ -89,7 +89,7 @@ type StagesStorage interface {
 	// GetManagedImages returns the list of managedImageName.
 	GetManagedImages(ctx context.Context, projectName string, opts ...Option) ([]string, error)
 
-	PutImageMetadata(ctx context.Context, projectName, imageNameOrManagedImageName, commit, stageID string) error
+	PutImageMetadata(ctx context.Context, projectName, imageNameOrManagedImageName, commit, stageID string, opts ...Option) error
 	RmImageMetadata(ctx context.Context, projectName, imageNameOrManagedImageNameOrImageMetadataID, commit, stageID string) error
 	IsImageMetadataExist(ctx context.Context, projectName, imageNameOrManagedImageName, commit, stageID string, opts ...Option) (bool, error)
 	GetAllAndGroupImageMetadataByImageName(ctx context.Context, projectName string, imageNameOrManagedImageList []string, opts ...Option) (map[string]map[string][]string, map[string]map[string][]string, error)

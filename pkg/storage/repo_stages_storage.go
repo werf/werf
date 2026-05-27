@@ -557,29 +557,25 @@ func (storage *RepoStagesStorage) ShouldFetchImage(ctx context.Context, img cont
 	return true, nil
 }
 
-func (storage *RepoStagesStorage) PutImageMetadata(ctx context.Context, projectName, imageNameOrManagedImageName, commit, stageID string) error {
+func (storage *RepoStagesStorage) PutImageMetadata(ctx context.Context, projectName, imageNameOrManagedImageName, commit, stageID string, opts ...Option) error {
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PutImageMetadata %s %s %s %s\n", projectName, imageNameOrManagedImageName, commit, stageID)
 
-	tagName := makeRepoImageMetadataTagName(imageNameOrManagedImageName, commit, stageID)
-	tags, err := storage.Tags(ctx, storage.RepoAddress)
-	if err != nil {
-		return fmt.Errorf("unable to get repo %s tags: %w", storage.RepoAddress, err)
-	}
-
-	for _, tag := range tags {
-		if tag == tagName {
-			logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PutImageMetadata tag %s already exists, skipping push\n", tagName)
-
-			return nil
-		}
-	}
-
 	fullImageName := makeRepoImageMetadataName(storage.RepoAddress, imageNameOrManagedImageName, commit, stageID)
+
+	o := makeOptions(opts...)
+	exist, err := storage.DockerRegistry.IsTagExist(ctx, fullImageName, o.dockerRegistryOptions...)
+	if err != nil {
+		return fmt.Errorf("unable to check existence of image metadata %s: %w", fullImageName, err)
+	}
+	if exist {
+		logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PutImageMetadata tag already exists, skipping push\n")
+		return nil
+	}
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PutImageMetadata full image name: %s\n", fullImageName)
 
-	opts := &docker_registry.PushImageOptions{Labels: map[string]string{image.WerfLabel: projectName}}
+	pushOpts := &docker_registry.PushImageOptions{Labels: map[string]string{image.WerfLabel: projectName}}
 
-	if err := storage.DockerRegistry.PushImage(ctx, fullImageName, opts); err != nil {
+	if err := storage.DockerRegistry.PushImage(ctx, fullImageName, pushOpts); err != nil {
 		if docker_registry.IsStatusForbiddenErr(err) {
 			logboek.Context(ctx).Warn().LogF("WARNING: Failed to push meta tag image %s\n", fullImageName)
 

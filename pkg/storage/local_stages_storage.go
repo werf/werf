@@ -236,7 +236,7 @@ func (storage *LocalStagesStorage) GetManagedImages(ctx context.Context, project
 	return []string{}, nil
 }
 
-func (storage *LocalStagesStorage) PutImageMetadata(ctx context.Context, projectName, imageNameOrManagedImageName, commit, stageID string) error {
+func (storage *LocalStagesStorage) PutImageMetadata(ctx context.Context, projectName, imageNameOrManagedImageName, commit, stageID string, opts ...Option) error {
 	return nil
 }
 
