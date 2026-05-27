@@ -14,10 +14,10 @@ import (
 	"github.com/werf/werf/v2/pkg/storage/synchronization/server"
 )
 
-func GetHttpClientID(ctx context.Context, projectName, serverAddress string, stagesStorage storage.StagesStorage) (string, error) {
+func GetHttpClientID(ctx context.Context, projectName, serverAddress string, metaStorage storage.StagesStorage) (string, error) {
 	// Try to get clientID from storage.
 	{
-		clientID, err := getClientIDFromStorage(ctx, projectName, stagesStorage)
+		clientID, err := getClientIDFromStorage(ctx, projectName, metaStorage)
 		if err != nil {
 			return "", err
 		}
@@ -39,7 +39,7 @@ func GetHttpClientID(ctx context.Context, projectName, serverAddress string, sta
 		timestampMillisec := now.Unix()*1000 + now.UnixNano()/1000_000
 		rec := &storage.ClientIDRecord{ClientID: clientID, TimestampMillisec: timestampMillisec}
 
-		if err := stagesStorage.PostClientIDRecord(ctx, projectName, rec); err != nil {
+		if err := metaStorage.PostClientIDRecord(ctx, projectName, rec); err != nil {
 			return "", err
 		}
 	}
@@ -48,7 +48,7 @@ func GetHttpClientID(ctx context.Context, projectName, serverAddress string, sta
 	{
 		time.Sleep(2 * time.Second)
 
-		clientID, err := getClientIDFromStorage(ctx, projectName, stagesStorage)
+		clientID, err := getClientIDFromStorage(ctx, projectName, metaStorage)
 		if err != nil {
 			return "", err
 		}
@@ -59,11 +59,11 @@ func GetHttpClientID(ctx context.Context, projectName, serverAddress string, sta
 		}
 	}
 
-	return "", fmt.Errorf("could not find clientID in storage %s after successful creation", stagesStorage.String())
+	return "", fmt.Errorf("could not find clientID in storage %s after successful creation", metaStorage.String())
 }
 
-func getClientIDFromStorage(ctx context.Context, projectName string, stagesStorage storage.StagesStorage) (string, error) {
-	clientIDRecords, err := stagesStorage.GetClientIDRecords(ctx, projectName)
+func getClientIDFromStorage(ctx context.Context, projectName string, metaStorage storage.StagesStorage) (string, error) {
+	clientIDRecords, err := metaStorage.GetClientIDRecords(ctx, projectName)
 	if err != nil {
 		return "", err
 	}

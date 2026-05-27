@@ -21,11 +21,11 @@ var ErrNoSyncServerFound = errors.New("no synchronization server found")
 var ForceSyncServerRepo string
 
 // GetOrCreateSyncServer gets sync server record from container registry or try to create one if not exist
-func GetOrCreateSyncServer(ctx context.Context, projectName, serverAddress string, stagesStorage storage.StagesStorage) (string, error) {
-	server, err := getSyncServer(ctx, projectName, stagesStorage)
+func GetOrCreateSyncServer(ctx context.Context, projectName, serverAddress string, metaStorage storage.StagesStorage) (string, error) {
+	server, err := getSyncServer(ctx, projectName, metaStorage)
 	if err != nil {
 		if errors.Is(err, ErrNoSyncServerFound) {
-			createErr := CreateSyncServerRecord(ctx, projectName, serverAddress, stagesStorage)
+			createErr := CreateSyncServerRecord(ctx, projectName, serverAddress, metaStorage)
 			if createErr != nil {
 				return "", fmt.Errorf("can't create synchronization server record: %w", err)
 			}
@@ -37,8 +37,8 @@ func GetOrCreateSyncServer(ctx context.Context, projectName, serverAddress strin
 	return server, nil
 }
 
-func getSyncServer(ctx context.Context, projectName string, stagesStorage storage.StagesStorage) (string, error) {
-	server, err := getSyncServerFromStorage(ctx, projectName, stagesStorage)
+func getSyncServer(ctx context.Context, projectName string, metaStorage storage.StagesStorage) (string, error) {
+	server, err := getSyncServerFromStorage(ctx, projectName, metaStorage)
 	if err != nil {
 		return "", err
 	}
@@ -52,16 +52,16 @@ func getSyncServer(ctx context.Context, projectName string, stagesStorage storag
 }
 
 // CreateSyncServerRecord creates sync server record or try to create one if not exist
-func CreateSyncServerRecord(ctx context.Context, projectName, serverAddress string, stagesStorage storage.StagesStorage) error {
+func CreateSyncServerRecord(ctx context.Context, projectName, serverAddress string, metaStorage storage.StagesStorage) error {
 	now := time.Now()
 	timestampMillisec := now.Unix()*1000 + now.UnixNano()/1000_000
 	rec := &storage.SyncServerRecord{Server: serverAddress, TimestampMillisec: timestampMillisec}
 
-	_, err := getSyncServer(ctx, projectName, stagesStorage)
+	_, err := getSyncServer(ctx, projectName, metaStorage)
 	if err != nil {
 		if errors.Is(err, ErrNoSyncServerFound) {
 			logboek.Context(ctx).Debug().LogF("CreateSyncServerRecord no sync server found. Creating: %s\n", serverAddress)
-			if err := stagesStorage.PostSyncServerRecord(ctx, projectName, rec); err != nil {
+			if err := metaStorage.PostSyncServerRecord(ctx, projectName, rec); err != nil {
 				return err
 			}
 			return nil
@@ -75,21 +75,21 @@ func CreateSyncServerRecord(ctx context.Context, projectName, serverAddress stri
 }
 
 // OverwriteSyncServerRepo overwrites sync server record
-func OverwriteSyncServerRepo(ctx context.Context, projectName, serverAddress string, stagesStorage storage.StagesStorage) error {
+func OverwriteSyncServerRepo(ctx context.Context, projectName, serverAddress string, metaStorage storage.StagesStorage) error {
 	now := time.Now()
 	timestampMillisec := now.Unix()*1000 + now.UnixNano()/1000_000
 	rec := &storage.SyncServerRecord{Server: serverAddress, TimestampMillisec: timestampMillisec}
 
 	logboek.Context(ctx).Debug().LogF("CreateSyncServerRecord no synchronization server found. Creating: %s\n", serverAddress)
-	if err := stagesStorage.PostSyncServerRecord(ctx, projectName, rec); err != nil {
+	if err := metaStorage.PostSyncServerRecord(ctx, projectName, rec); err != nil {
 		return fmt.Errorf("unable to overwrite sync server: %w", err)
 	}
 
 	return nil
 }
 
-func getSyncServerFromStorage(ctx context.Context, projectName string, stagesStorage storage.StagesStorage) (string, error) {
-	syncServerRecords, err := stagesStorage.GetSyncServerRecords(ctx, projectName)
+func getSyncServerFromStorage(ctx context.Context, projectName string, metaStorage storage.StagesStorage) (string, error) {
+	syncServerRecords, err := metaStorage.GetSyncServerRecords(ctx, projectName)
 	if err != nil {
 		return "", fmt.Errorf("can't get synchronization server records: %w", err)
 	}

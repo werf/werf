@@ -47,13 +47,13 @@ func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfi
 				return nil, fmt.Errorf("--meta-repo is required when using granular registry flags (--images-repo, --cache-from, --cache-to)")
 			}
 
-			stagesStorage, stgErr = GetMetaRepoStagesStorage(ctx, c.ContainerBackend, c.CmdData, GetStagesStorageOpts{
+			stagesStorage, stgErr = GetMetaRepoStagesStorage(ctx, c.ContainerBackend, c.CmdData, GetMetaStorageOpts{
 				CleanupDisabled:                c.CleanupDisabled,
 				GitHistoryBasedCleanupDisabled: c.GitHistoryBasedCleanupDisabled,
 				SkipMetaCheck:                  c.SkipMetaCheck,
 			})
 		} else {
-			stagesStorage, stgErr = GetStagesStorage(ctx, c.ContainerBackend, c.CmdData, GetStagesStorageOpts{
+			stagesStorage, stgErr = GetMetaStorage(ctx, c.ContainerBackend, c.CmdData, GetMetaStorageOpts{
 				CleanupDisabled:                c.CleanupDisabled,
 				GitHistoryBasedCleanupDisabled: c.GitHistoryBasedCleanupDisabled,
 				SkipMetaCheck:                  c.SkipMetaCheck,
@@ -114,9 +114,12 @@ func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfi
 			return nil, fmt.Errorf("error get images repo storage: %w", err)
 		}
 
-		secondaryStagesStorageList, err = GetSecondaryStagesStorageList(ctx, stagesStorage, c.ContainerBackend, c.CmdData)
+		secondaryStagesStorageList, err = getCacheFromStorageList(ctx, c.ContainerBackend, c.CmdData)
 		if err != nil {
 			return nil, fmt.Errorf("error get cache from storage list: %w", err)
+		}
+		if stagesStorage.Address() != storage.LocalStorageAddress {
+			secondaryStagesStorageList = append([]storage.StagesStorage{storage.NewLocalStagesStorage(c.ContainerBackend)}, secondaryStagesStorageList...)
 		}
 		cacheToStorageList, err = GetCacheToStorageList(ctx, c.ContainerBackend, c.CmdData)
 		if err != nil {

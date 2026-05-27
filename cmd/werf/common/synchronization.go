@@ -44,7 +44,7 @@ func GetSynchronization(ctx context.Context, cmdData *CmdData, projectName strin
 	params := lock_manager.SynchronizationParams{
 		ProjectName:   projectName,
 		ServerAddress: *cmdData.Synchronization,
-		StagesStorage: stagesStorage,
+		MetaStorage:   stagesStorage,
 	}
 
 	if params.ServerAddress == "" {
@@ -73,7 +73,7 @@ func protocolIsLocal(address string) bool {
 }
 
 func initDefault(ctx context.Context, params lock_manager.SynchronizationParams) (Synchronization, error) {
-	if params.StagesStorage.Address() == storage.LocalStorageAddress {
+	if params.MetaStorage.Address() == storage.LocalStorageAddress {
 		return lock_manager.NewLocalSynchronization(ctx, params)
 	}
 	params.ServerAddress = server.DefaultAddress

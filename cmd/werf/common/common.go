@@ -837,13 +837,13 @@ func GetLocalStagesStorage(containerBackend container_backend.ContainerBackend) 
 	return storage.NewLocalStagesStorage(containerBackend)
 }
 
-type GetStagesStorageOpts struct {
+type GetMetaStorageOpts struct {
 	CleanupDisabled                bool
 	GitHistoryBasedCleanupDisabled bool
 	SkipMetaCheck                  bool
 }
 
-func GetStagesStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData, opts GetStagesStorageOpts) (storage.PrimaryStagesStorage, error) {
+func GetMetaStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData, opts GetMetaStorageOpts) (storage.PrimaryStagesStorage, error) {
 	buildahMode, _, err := GetBuildahMode()
 	if err != nil {
 		return nil, fmt.Errorf("unable to determine buildah mode: %w", err)
@@ -913,7 +913,7 @@ func GetImagesRepoStagesStorage(ctx context.Context, containerBackend container_
 	})
 }
 
-func GetMetaRepoStagesStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData, opts GetStagesStorageOpts) (storage.PrimaryStagesStorage, error) {
+func GetMetaRepoStagesStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData, opts GetMetaStorageOpts) (storage.PrimaryStagesStorage, error) {
 	if cmdData.MetaRepo == nil || cmdData.MetaRepo.Address == nil || *cmdData.MetaRepo.Address == "" {
 		return nil, fmt.Errorf("--meta-repo is required when using granular registry flags (--images-repo, --cache-from, --cache-to)")
 	}
@@ -971,43 +971,6 @@ func getCacheToStorageList(ctx context.Context, containerBackend container_backe
 			return nil, fmt.Errorf("unable to create cache to storage in %s: %w", address, err)
 		}
 		res = append(res, cacheStorage)
-	}
-
-	return res, nil
-}
-
-func GetSecondaryStagesStorageList(ctx context.Context, stagesStorage storage.StagesStorage, containerBackend container_backend.ContainerBackend, cmdData *CmdData) ([]storage.StagesStorage, error) {
-	var res []storage.StagesStorage
-
-	if stagesStorage.Address() != storage.LocalStorageAddress {
-		res = append(res, storage.NewLocalStagesStorage(containerBackend))
-	}
-
-	buildahMode, _, err := GetBuildahMode()
-	if err != nil {
-		return nil, fmt.Errorf("unable to determine buildah mode: %w", err)
-	}
-
-	insecureRegistryHosts, err := GetInsecureRegistryHosts(ctx, cmdData, *buildahMode)
-	if err != nil {
-		return nil, fmt.Errorf("get insecure registry hosts: %w", err)
-	}
-
-	for _, address := range GetCacheFrom(cmdData) {
-		repoData := NewRepoData("secondary-repo", RepoDataOptions{OnlyAddress: true})
-		repoData.Address = &address
-
-		secondaryStorage, err := repoData.CreateStagesStorage(ctx, &CreateStagesStorageOptions{
-			ContainerBackend:      containerBackend,
-			InsecureRegistry:      *cmdData.InsecureRegistry,
-			SkipTlsVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
-			InsecureRegistryHosts: insecureRegistryHosts,
-			SkipMetaCheck:         true,
-		})
-		if err != nil {
-			return nil, fmt.Errorf("unable to create cache from storage in %s: %w", address, err)
-		}
-		res = append(res, secondaryStorage)
 	}
 
 	return res, nil

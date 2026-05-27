@@ -12,7 +12,7 @@ import (
 type SynchronizationParams struct {
 	ProjectName   string
 	ServerAddress string
-	StagesStorage storage.StagesStorage
+	MetaStorage   storage.StagesStorage
 }
 
 type LocalSynchronization struct {
@@ -23,7 +23,7 @@ type LocalSynchronization struct {
 func NewLocalSynchronization(ctx context.Context, params SynchronizationParams) (*LocalSynchronization, error) {
 	serverAddress := storage.LocalStorageAddress
 	if ForceSyncServerRepo == "true" {
-		repoSyncServer, err := checkRepoSyncServer(ctx, params.ProjectName, serverAddress, params.StagesStorage)
+		repoSyncServer, err := checkRepoSyncServer(ctx, params.ProjectName, serverAddress, params.MetaStorage)
 		if err != nil {
 			return nil, err
 		}
@@ -51,14 +51,14 @@ func NewHttpSynchronization(ctx context.Context, params SynchronizationParams) (
 	if err := logboek.Info().LogProcess("Getting client id for the http synchronization server").
 		DoError(func() error {
 			if ForceSyncServerRepo == "true" {
-				repoSyncServer, err := checkRepoSyncServer(ctx, params.ProjectName, serverAddress, params.StagesStorage)
+				repoSyncServer, err := checkRepoSyncServer(ctx, params.ProjectName, serverAddress, params.MetaStorage)
 				if err != nil {
 					return err
 				}
 				serverAddress = repoSyncServer
 			}
 
-			clientID, err = GetHttpClientID(ctx, params.ProjectName, serverAddress, params.StagesStorage)
+			clientID, err = GetHttpClientID(ctx, params.ProjectName, serverAddress, params.MetaStorage)
 			if err != nil {
 				return fmt.Errorf("unable to get client id for the http synchronization server: %w", err)
 			}
