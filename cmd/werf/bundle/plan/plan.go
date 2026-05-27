@@ -29,6 +29,8 @@ import (
 var cmdData struct {
 	DetailedExitCode       bool
 	DiffContextLines       int
+	PlanArtifactPath       string
+	ShowPlanArtifactPath   string
 	ShowInsignificantDiffs bool
 	ShowSensitiveDiffs     bool
 	ShowVerboseCRDDiffs    bool
@@ -118,6 +120,8 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	cmd.Flags().BoolVarP(&cmdData.ShowInsignificantDiffs, "show-insignificant-diffs", "", util.GetBoolEnvironmentDefaultFalse("WERF_SHOW_INSIGNIFICANT_DIFFS"), "Show insignificant diff lines ($WERF_SHOW_INSIGNIFICANT_DIFFS by default)")
 	cmd.Flags().BoolVarP(&cmdData.ShowSensitiveDiffs, "show-sensitive-diffs", "", util.GetBoolEnvironmentDefaultFalse("WERF_SHOW_SENSITIVE_DIFFS"), "Show sensitive diff lines ($WERF_SHOW_SENSITIVE_DIFFS by default)")
 	cmd.Flags().BoolVarP(&cmdData.ShowVerboseCRDDiffs, "show-verbose-crd-diffs", "", util.GetBoolEnvironmentDefaultFalse("WERF_SHOW_VERBOSE_CRD_DIFFS"), "Show verbose CRD diff lines ($WERF_SHOW_VERBOSE_CRD_DIFFS by default)")
+	cmd.Flags().StringVarP(&cmdData.PlanArtifactPath, "save-plan", "", os.Getenv("WERF_SAVE_PLAN_PATH"), "Save the gzip-compressed JSON install plan to the specified file")
+	cmd.Flags().StringVarP(&cmdData.ShowPlanArtifactPath, "show-plan", "", os.Getenv("WERF_SHOW_PLAN_PATH"), "Show plan artifact planned changes")
 	var defaultDiffLines int
 	if lines := lo.Must(util.GetIntEnvVar("WERF_DIFF_CONTEXT_LINES")); lines != nil {
 		defaultDiffLines = int(*lines)
@@ -130,6 +134,28 @@ func NewCmd(ctx context.Context) *cobra.Command {
 }
 
 func runPlan(ctx context.Context) error {
+	ctx = action.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultReleasePlanInstallLogLevel), action.SetupLoggingOptions{
+		ColorMode: *commonCmdData.LogColorMode,
+	})
+
+	if cmdData.ShowPlanArtifactPath != "" {
+		if err := action.ReleasePlanShow(ctx, action.ReleasePlanShowOptions{
+			ResourceDiffOptions: nelmcommon.ResourceDiffOptions{
+				DiffContextLines:       cmdData.DiffContextLines,
+				ShowVerboseCRDDiffs:    cmdData.ShowVerboseCRDDiffs,
+				ShowSensitiveDiffs:     cmdData.ShowSensitiveDiffs,
+				ShowInsignificantDiffs: cmdData.ShowInsignificantDiffs,
+			},
+			PlanArtifactPath: cmdData.ShowPlanArtifactPath,
+			SecretKey:        commonCmdData.SecretKey,
+			SecretWorkDir:    commonCmdData.SecretWorkDir,
+		}); err != nil {
+			return fmt.Errorf("release plan show: %w", err)
+		}
+
+		return nil
+	}
+
 	_, ctx, err := common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
 		Cmd:                &commonCmdData,
 		InitDockerRegistry: true,
@@ -202,9 +228,6 @@ func runPlan(ctx context.Context) error {
 		return fmt.Errorf("get release labels: %w", err)
 	}
 
-	ctx = action.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultReleasePlanInstallLogLevel), action.SetupLoggingOptions{
-		ColorMode: *commonCmdData.LogColorMode,
-	})
 	engine.Debug = commonCmdData.DebugTemplates
 
 	if _, err := action.ReleasePlanInstall(ctx, releaseName, releaseNamespace, action.ReleasePlanInstallOptions{
@@ -223,6 +246,7 @@ func runPlan(ctx context.Context) error {
 		LegacyLogRegistryStreamOut: os.Stdout,
 		NetworkParallelism:         commonCmdData.NetworkParallelism,
 		NoFinalTracking:            commonCmdData.NoFinalTracking,
+		PlanArtifactPath:           cmdData.PlanArtifactPath,
 		RegistryCredentialsPath:    registryCredentialsPath,
 		TemplatesAllowDNS:          commonCmdData.TemplatesAllowDNS,
 		ReleaseInstallRuntimeOptions: nelmcommon.ReleaseInstallRuntimeOptions{

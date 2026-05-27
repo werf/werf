@@ -257,6 +257,8 @@ werf bundle plan [options]
       --runtime-labels=[]
             Add labels which will not trigger resource updates to all resources (default            
             $WERF_RUNTIME_LABELS)
+      --save-plan=""
+            Save the gzip-compressed JSON install plan to the specified file
       --secret-key=""
             Secret key (default $WERF_SECRET_KEY)
       --secret-values=[]
@@ -300,6 +302,8 @@ werf bundle plan [options]
             $WERF_SET_STRING_2=key2=val2)
       --show-insignificant-diffs=false
             Show insignificant diff lines ($WERF_SHOW_INSIGNIFICANT_DIFFS by default)
+      --show-plan=""
+            Show plan artifact planned changes
       --show-sensitive-diffs=false
             Show sensitive diff lines ($WERF_SHOW_SENSITIVE_DIFFS by default)
       --show-verbose-crd-diffs=false
