@@ -560,20 +560,6 @@ func (storage *RepoStagesStorage) ShouldFetchImage(ctx context.Context, img cont
 func (storage *RepoStagesStorage) PutImageMetadata(ctx context.Context, projectName, imageNameOrManagedImageName, commit, stageID string) error {
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PutImageMetadata %s %s %s %s\n", projectName, imageNameOrManagedImageName, commit, stageID)
 
-	tagName := makeRepoImageMetadataTagName(imageNameOrManagedImageName, commit, stageID)
-	tags, err := storage.Tags(ctx, storage.RepoAddress)
-	if err != nil {
-		return fmt.Errorf("unable to get repo %s tags: %w", storage.RepoAddress, err)
-	}
-
-	for _, tag := range tags {
-		if tag == tagName {
-			logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PutImageMetadata tag %s already exists, skipping push\n", tagName)
-
-			return nil
-		}
-	}
-
 	fullImageName := makeRepoImageMetadataName(storage.RepoAddress, imageNameOrManagedImageName, commit, stageID)
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PutImageMetadata full image name: %s\n", fullImageName)
 
