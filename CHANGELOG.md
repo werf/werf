@@ -1,5 +1,43 @@
 # Changelog
 
+## [3.0.0](https://github.com/werf/werf/compare/v2.67.2...v3.0.0) (2026-05-27)
+
+
+### ⚠ BREAKING CHANGES
+
+* The artifact directive is no longer supported. Use image with final: false instead.
+
+### Features
+
+* **build, docker, stapel:** support multiplatform build ([#7403](https://github.com/werf/werf/issues/7403)) ([cb7529e](https://github.com/werf/werf/commit/cb7529eb31b3c0267eed3b277addf76437a77d70))
+* **build, stapel, git:** default stageDependencies to **/* when not specified ([#7531](https://github.com/werf/werf/issues/7531)) ([1f1ce4d](https://github.com/werf/werf/commit/1f1ce4d2e5c5e2597679a192dd13980a1c65a740))
+* **config:** unify from directive for stapel images ([b11ca78](https://github.com/werf/werf/commit/b11ca78b4cb1e830b5f7d5faf7b8d29f2a75043a))
+* **deploy:** add plan artifact support for bundle command ([#7543](https://github.com/werf/werf/issues/7543)) ([258c428](https://github.com/werf/werf/commit/258c428ee185fc0cdf949b90dda7c4f545172644))
+* **deploy:** adopt `chart ts init` for werf ([#7489](https://github.com/werf/werf/issues/7489)) ([63542e2](https://github.com/werf/werf/commit/63542e2ef392885b8d706ae8e42061fda71bd086))
+* **deploy:** bundle publish doesn't require secret key ([#7542](https://github.com/werf/werf/issues/7542)) ([2c7379f](https://github.com/werf/werf/commit/2c7379fac909515f729a43c607a8ff8074b6ae8f))
+* **deploy:** require secret key for bundle publish when secret values exist ([#7525](https://github.com/werf/werf/issues/7525)) ([31c36b7](https://github.com/werf/werf/commit/31c36b71ef3aaeb7f8cb17e7184f7f0fdd6474e9))
+* **stapel, import:** allow multiple imports into the same target directory ([#7537](https://github.com/werf/werf/issues/7537)) ([0e56d00](https://github.com/werf/werf/commit/0e56d005362c305c1264ce431bcf8d1af1c8d7ea))
+
+
+### Bug Fixes
+
+* **build, stapel, git:** silent misconfiguration when stageDependencies references unused stages ([#7529](https://github.com/werf/werf/issues/7529)) ([962994c](https://github.com/werf/werf/commit/962994cd8db89640613eb864e1b2e9dbf550d9de))
+* **build:** disable buildx default provenance to avoid index manifests ([eb2d986](https://github.com/werf/werf/commit/eb2d98670286dc86584ccaf63f63782e31701820))
+* **bundle:** ensure OCI cache directory exists before init ([827da82](https://github.com/werf/werf/commit/827da82489b2f1eea8a2b0cf11fa3c3891e2ddc2))
+* **compose:** show docker compose config error instead of bare exit code ([6cc27d8](https://github.com/werf/werf/commit/6cc27d81cad9266b37053ac35c9f73612ec0d904))
+* **deploy:** prioritise base64 kubeconfig on kubectl command ([#7552](https://github.com/werf/werf/issues/7552)) ([a4e7cd9](https://github.com/werf/werf/commit/a4e7cd9793d3129085ada0fc17899107f6d84dc1))
+* **deploy:** remove support for all HELM_* env vars ([#7518](https://github.com/werf/werf/issues/7518)) ([3c5faf0](https://github.com/werf/werf/commit/3c5faf0f1f2e9f64287a8508f9c6545e648cba5a))
+* **deploy:** use action.SetupColorLevel instead of force `ColorMode=on` from ci-env ([#7536](https://github.com/werf/werf/issues/7536)) ([2ad2108](https://github.com/werf/werf/commit/2ad21081dcc714d7bc37945ef98f1e7066a84031))
+* init docker config in InitCommonComponents when docker registry is requested ([#7488](https://github.com/werf/werf/issues/7488)) ([76ca703](https://github.com/werf/werf/commit/76ca703c53611a0a9612e8f5fff98ced20fb4b67))
+* propagate --docker-config to image pulling in bundle copy ([#7448](https://github.com/werf/werf/issues/7448)) ([c02babe](https://github.com/werf/werf/commit/c02babecf9b7e768edf18ca71b6eaabd7a87c37f))
+* restore tests and linter ([#7499](https://github.com/werf/werf/issues/7499)) ([4e8f474](https://github.com/werf/werf/commit/4e8f4744afeee7b2265061161d5113c4c2c41f60))
+* **test:** remove unnamed image test left over after nameless image support removal ([be9e835](https://github.com/werf/werf/commit/be9e8355ee961030025e440a048e104184464703))
+
+
+### Code Refactoring
+
+* remove artifact image type ([8003cba](https://github.com/werf/werf/commit/8003cbaf393662c860b24e9850fa45c991bc6716))
+
 ## [2.67.2](https://github.com/werf/werf/compare/v2.67.1...v2.67.2) (2026-04-21)
 
 
