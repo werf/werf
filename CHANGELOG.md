@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.70.0](https://github.com/werf/werf/compare/v2.69.1...v2.70.0) (2026-05-27)
+
+
+### Features
+
+* **cleanup:** add --kube-scan-namespaces support for in-cluster scan ([#7517](https://github.com/werf/werf/issues/7517)) ([8941a1e](https://github.com/werf/werf/commit/8941a1ed470be4265df080e3b87afb61288789b3))
+
+
+### Bug Fixes
+
+* **build:** eliminate redundant registry tag listing in post-build metadata publication ([#7559](https://github.com/werf/werf/issues/7559)) ([27404cb](https://github.com/werf/werf/commit/27404cbddca0e4d8f20680fc8bba4cc5cee8d436))
+
 ## [2.69.1](https://github.com/werf/werf/compare/v2.69.0...v2.69.1) (2026-05-21)
 
 
