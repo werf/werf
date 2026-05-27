@@ -44,12 +44,3 @@ jobs:
       runner: prod-github-runner-0
     secrets:
       kubeConfig: ${{ secrets.KUBECONFIG_BASE64_DEV }}
-
-  notify:
-    if: failure()
-    needs: deploy-test
-    uses: werf/common-ci/.github/workflows/notification.yml@main
-    secrets:
-      loopNotificationGroup: ${{ secrets.LOOP_NOTIFICATION_GROUP }}
-      webhook: ${{ secrets.LOOP_NOTIFICATION_WEBHOOK }}
-      notificationChannel: ${{ secrets.LOOP_NOTIFICATION_CHANNEL }}
