@@ -39,14 +39,15 @@ type CmdData struct {
 	FinalImagesOnly *bool
 	WithoutImages   *bool
 	Repo            *RepoData
-	FinalRepo       *RepoData
 	ImagesRepo      *RepoData
 	MetaRepo        *RepoData
 
-	SecondaryStagesStorage *[]string
-	CacheStagesStorage     *[]string
-	CacheFrom              *[]string
-	CacheTo                *[]string
+	CacheFrom *[]string
+	CacheTo   *[]string
+
+	deprecatedFinalRepoAddr      *string
+	deprecatedSecondaryRepoAddrs *[]string
+	deprecatedCacheRepoAddrs     *[]string
 
 	CheckBuiltImages       *bool
 	LegacyCheckBuiltImages *bool // TODO(major): remove

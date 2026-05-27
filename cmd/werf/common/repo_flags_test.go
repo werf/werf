@@ -25,9 +25,8 @@ var _ = Describe("RepoFlags", func() {
 		It("should map --final-repo to --images-repo when images-repo is empty", func() {
 			cmdData := &CmdData{}
 
-			cmdData.FinalRepo = NewRepoData("final-repo", RepoDataOptions{})
 			finalAddr := "registry.example.com/final"
-			cmdData.FinalRepo.Address = &finalAddr
+			cmdData.deprecatedFinalRepoAddr = &finalAddr
 
 			cmdData.ImagesRepo = NewRepoData("images-repo", RepoDataOptions{OnlyAddress: true})
 			imagesAddr := ""
@@ -41,9 +40,8 @@ var _ = Describe("RepoFlags", func() {
 		It("should error when --final-repo and --images-repo both set", func() {
 			cmdData := &CmdData{}
 
-			cmdData.FinalRepo = NewRepoData("final-repo", RepoDataOptions{})
 			finalAddr := "registry.example.com/final"
-			cmdData.FinalRepo.Address = &finalAddr
+			cmdData.deprecatedFinalRepoAddr = &finalAddr
 
 			cmdData.ImagesRepo = NewRepoData("images-repo", RepoDataOptions{OnlyAddress: true})
 			imagesAddr := "registry.example.com/images"

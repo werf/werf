@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
@@ -421,8 +422,8 @@ func GetFirstExistingKubeConfigBase64EnvVar() string {
 }
 
 func SetupSecondaryStagesStorageOptions(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.SecondaryStagesStorage = new([]string)
-	cmd.Flags().StringArrayVarP(cmdData.SecondaryStagesStorage, "secondary-repo", "", []string{}, `Specify one or multiple secondary read-only repos with images that will be used as a cache.
+	cmdData.deprecatedSecondaryRepoAddrs = new([]string)
+	cmd.Flags().StringArrayVarP(cmdData.deprecatedSecondaryRepoAddrs, "secondary-repo", "", []string{}, `[DEPRECATED: use --cache-from instead] Specify one or multiple secondary read-only repos with images that will be used as a cache.
 Also, can be specified with $WERF_SECONDARY_REPO_* (e.g. $WERF_SECONDARY_REPO_1=..., $WERF_SECONDARY_REPO_2=...)`)
 }
 
@@ -447,8 +448,8 @@ Also, can be defined with $WERF_USE_CUSTOM_TAG (e.g. $WERF_USE_CUSTOM_TAG="%imag
 }
 
 func SetupCacheStagesStorageOptions(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.CacheStagesStorage = new([]string)
-	cmd.Flags().StringArrayVarP(cmdData.CacheStagesStorage, "cache-repo", "", []string{}, `Specify one or multiple cache repos with images that will be used as a cache. Cache will be populated when pushing newly built images into the primary repo and when pulling existing images from the primary repo. Cache repo will be used to pull images and to get manifests before making requests to the primary repo.
+	cmdData.deprecatedCacheRepoAddrs = new([]string)
+	cmd.Flags().StringArrayVarP(cmdData.deprecatedCacheRepoAddrs, "cache-repo", "", []string{}, `[DEPRECATED: use --cache-from and --cache-to instead] Specify one or multiple cache repos with images that will be used as a cache. Cache will be populated when pushing newly built images into the primary repo and when pulling existing images from the primary repo. Cache repo will be used to pull images and to get manifests before making requests to the primary repo.
 Also, can be specified with $WERF_CACHE_REPO_* (e.g. $WERF_CACHE_REPO_1=..., $WERF_CACHE_REPO_2=...)`)
 }
 
@@ -493,8 +494,8 @@ func SetupRepo(cmdData *CmdData, cmd *cobra.Command, opts RepoDataOptions) {
 }
 
 func SetupFinalRepo(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.FinalRepo = NewRepoData("final-repo", RepoDataOptions{})
-	cmdData.FinalRepo.SetupCmd(cmd)
+	cmdData.deprecatedFinalRepoAddr = new(string)
+	cmd.Flags().StringVarP(cmdData.deprecatedFinalRepoAddr, "final-repo", "", os.Getenv("WERF_FINAL_REPO"), `[DEPRECATED: use --images-repo instead] Final repo to store images ($WERF_FINAL_REPO)`)
 }
 
 func SetupReleasesHistoryMax(cmdData *CmdData, cmd *cobra.Command) {
@@ -865,7 +866,7 @@ func GetStagesStorage(ctx context.Context, containerBackend container_backend.Co
 }
 
 func GetOptionalImagesRepoStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData) (storage.StagesStorage, error) {
-	if *cmdData.FinalRepo.Address == "" {
+	if cmdData.ImagesRepo == nil || cmdData.ImagesRepo.Address == nil || *cmdData.ImagesRepo.Address == "" {
 		return nil, nil
 	}
 
@@ -879,7 +880,7 @@ func GetOptionalImagesRepoStorage(ctx context.Context, containerBackend containe
 		return nil, fmt.Errorf("get insecure registry hosts: %w", err)
 	}
 
-	return cmdData.FinalRepo.CreateStagesStorage(ctx, &CreateStagesStorageOptions{
+	return cmdData.ImagesRepo.CreateStagesStorage(ctx, &CreateStagesStorageOptions{
 		ContainerBackend:      containerBackend,
 		InsecureRegistry:      *cmdData.InsecureRegistry,
 		SkipTlsVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
@@ -938,41 +939,8 @@ func GetMetaRepoStagesStorage(ctx context.Context, containerBackend container_ba
 	})
 }
 
-func GetCacheStagesStorageList(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData) ([]storage.StagesStorage, error) {
-	var res []storage.StagesStorage
-
-	buildahMode, _, err := GetBuildahMode()
-	if err != nil {
-		return nil, fmt.Errorf("unable to determine buildah mode: %w", err)
-	}
-
-	insecureRegistryHosts, err := GetInsecureRegistryHosts(ctx, cmdData, *buildahMode)
-	if err != nil {
-		return nil, fmt.Errorf("get insecure registry hosts: %w", err)
-	}
-
-	for _, address := range GetCacheStagesStorage(cmdData) {
-		repoData := NewRepoData("cache-repo", RepoDataOptions{OnlyAddress: true})
-		repoData.Address = &address
-
-		cacheStorage, err := repoData.CreateStagesStorage(ctx, &CreateStagesStorageOptions{
-			ContainerBackend:      containerBackend,
-			InsecureRegistry:      *cmdData.InsecureRegistry,
-			SkipTlsVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
-			InsecureRegistryHosts: insecureRegistryHosts,
-			SkipMetaCheck:         true,
-		})
-		if err != nil {
-			return nil, fmt.Errorf("unable to create cache to storage in %s: %w", address, err)
-		}
-		res = append(res, cacheStorage)
-	}
-
-	return res, nil
-}
-
 func GetCacheToStorageList(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData) ([]storage.StagesStorage, error) {
-	return GetCacheStagesStorageList(ctx, containerBackend, cmdData)
+	return getCacheToStorageList(ctx, containerBackend, cmdData)
 }
 
 func getCacheToStorageList(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData) ([]storage.StagesStorage, error) {
@@ -1025,7 +993,7 @@ func GetSecondaryStagesStorageList(ctx context.Context, stagesStorage storage.St
 		return nil, fmt.Errorf("get insecure registry hosts: %w", err)
 	}
 
-	for _, address := range GetSecondaryStagesStorage(cmdData) {
+	for _, address := range GetCacheFrom(cmdData) {
 		repoData := NewRepoData("secondary-repo", RepoDataOptions{OnlyAddress: true})
 		repoData.Address = &address
 
@@ -1355,20 +1323,17 @@ func SetupScanContextNamespaceOnly(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(cmdData.ScanContextNamespaceOnly, "scan-context-namespace-only", "", util.GetBoolEnvironmentDefaultFalse("WERF_SCAN_CONTEXT_NAMESPACE_ONLY"), "Scan for used images only in namespace linked with context for each available context in kube-config (or only for the context specified with option --kube-context). When disabled will scan all namespaces in all contexts (or only for the context specified with option --kube-context). (Default $WERF_SCAN_CONTEXT_NAMESPACE_ONLY)")
 }
 
-func GetCacheStagesStorage(cmdData *CmdData) []string {
-	return append(util.PredefinedValuesByEnvNamePrefix("WERF_CACHE_REPO_"), *cmdData.CacheStagesStorage...)
-}
-
 func GetCacheFrom(cmdData *CmdData) []string {
-	return append(util.PredefinedValuesByEnvNamePrefix("WERF_CACHE_FROM_"), *cmdData.CacheFrom...)
+	res := append([]string{}, util.PredefinedValuesByEnvNamePrefix("WERF_CACHE_FROM_")...)
+	res = append(res, util.PredefinedValuesByEnvNamePrefix("WERF_SECONDARY_REPO_")...)
+	res = append(res, util.PredefinedValuesByEnvNamePrefix("WERF_CACHE_REPO_")...)
+	return append(res, *cmdData.CacheFrom...)
 }
 
 func GetCacheTo(cmdData *CmdData) []string {
-	return append(util.PredefinedValuesByEnvNamePrefix("WERF_CACHE_TO_"), *cmdData.CacheTo...)
-}
-
-func GetSecondaryStagesStorage(cmdData *CmdData) []string {
-	return append(util.PredefinedValuesByEnvNamePrefix("WERF_SECONDARY_REPO_"), *cmdData.SecondaryStagesStorage...)
+	res := append([]string{}, util.PredefinedValuesByEnvNamePrefix("WERF_CACHE_TO_")...)
+	res = append(res, util.PredefinedValuesByEnvNamePrefix("WERF_CACHE_REPO_")...)
+	return append(res, *cmdData.CacheTo...)
 }
 
 func getGranularMode(cmdData *CmdData) bool {
@@ -1389,23 +1354,34 @@ func getGranularMode(cmdData *CmdData) bool {
 }
 
 func resolveDeprecatedFlags(ctx context.Context, cmdData *CmdData) error {
-	if cmdData.FinalRepo != nil && cmdData.FinalRepo.Address != nil && *cmdData.FinalRepo.Address != "" {
+	if cmdData.deprecatedFinalRepoAddr != nil && *cmdData.deprecatedFinalRepoAddr != "" {
 		if cmdData.ImagesRepo != nil && cmdData.ImagesRepo.Address != nil && *cmdData.ImagesRepo.Address != "" {
 			return fmt.Errorf("--final-repo and --images-repo cannot be used together")
 		}
 		if cmdData.ImagesRepo != nil && cmdData.ImagesRepo.Address != nil {
 			logboek.Context(ctx).Warn().LogF("WARNING: --final-repo is deprecated, use --images-repo instead\n")
-			*cmdData.ImagesRepo.Address = *cmdData.FinalRepo.Address
+			*cmdData.ImagesRepo.Address = *cmdData.deprecatedFinalRepoAddr
 		}
 	}
 
-	if cmdData.SecondaryStagesStorage != nil && len(*cmdData.SecondaryStagesStorage) > 0 {
+	if cmdData.deprecatedSecondaryRepoAddrs != nil && len(*cmdData.deprecatedSecondaryRepoAddrs) > 0 {
 		if cmdData.CacheFrom != nil && len(*cmdData.CacheFrom) > 0 {
 			return fmt.Errorf("--secondary-repo and --cache-from cannot be used together")
 		}
 		if cmdData.CacheFrom != nil {
 			logboek.Context(ctx).Warn().LogF("WARNING: --secondary-repo is deprecated, use --cache-from instead\n")
-			*cmdData.CacheFrom = append(*cmdData.CacheFrom, *cmdData.SecondaryStagesStorage...)
+			*cmdData.CacheFrom = append(*cmdData.CacheFrom, *cmdData.deprecatedSecondaryRepoAddrs...)
+		}
+	}
+
+	if cmdData.deprecatedCacheRepoAddrs != nil && len(*cmdData.deprecatedCacheRepoAddrs) > 0 {
+		if (cmdData.CacheFrom != nil && len(*cmdData.CacheFrom) > 0) || (cmdData.CacheTo != nil && len(*cmdData.CacheTo) > 0) {
+			return fmt.Errorf("--cache-repo cannot be used together with --cache-from or --cache-to")
+		}
+		if cmdData.CacheFrom != nil && cmdData.CacheTo != nil {
+			logboek.Context(ctx).Warn().LogF("WARNING: --cache-repo is deprecated, use --cache-from and --cache-to instead\n")
+			*cmdData.CacheFrom = append(*cmdData.CacheFrom, *cmdData.deprecatedCacheRepoAddrs...)
+			*cmdData.CacheTo = append(*cmdData.CacheTo, *cmdData.deprecatedCacheRepoAddrs...)
 		}
 	}
 
@@ -1512,13 +1488,7 @@ func GetSSHKey(cmdData *CmdData) []string {
 
 func GetIntrospectOptions(cmdData *CmdData, werfConfig *config.WerfConfig) (build.IntrospectOptions, error) {
 	isStageExist := func(sName string) bool {
-		for _, stageName := range allStagesNames() {
-			if sName == stageName {
-				return true
-			}
-		}
-
-		return false
+		return slices.Contains(allStagesNames(), sName)
 	}
 
 	introspectOptions := build.IntrospectOptions{}
