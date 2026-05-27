@@ -150,7 +150,7 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 			img := images[0]
 
 			if img.IsFinal && phase.Conveyor.StorageManager.GetImagesRepoStorage() != nil {
-				if err := phase.publishFinalImage(
+				if err := phase.publishImagesRepoImage(
 					ctx, name, img,
 					phase.Conveyor.StorageManager.GetImagesRepoStorage(),
 				); err != nil {
@@ -187,7 +187,7 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 
 			if img.IsFinal && phase.Conveyor.StorageManager.GetImagesRepoStorage() != nil {
 				if _, isLocal := phase.Conveyor.StorageManager.GetMetaStorage().(*storage.LocalStagesStorage); !isLocal {
-					if err := phase.publishMultiplatformFinalImage(ctx, name, img, phase.Conveyor.StorageManager.GetImagesRepoStorage()); err != nil {
+					if err := phase.publishMultiplatformImagesRepoImage(ctx, name, img, phase.Conveyor.StorageManager.GetImagesRepoStorage()); err != nil {
 						return err
 					}
 				}
@@ -253,7 +253,7 @@ AssertAllTargetPlatformsPresent:
 	return targetPlatforms, nil
 }
 
-func (phase *BuildPhase) publishFinalImage(ctx context.Context, name string, img *image.Image, imagesRepoStorage storage.StagesStorage) error {
+func (phase *BuildPhase) publishImagesRepoImage(ctx context.Context, name string, img *image.Image, imagesRepoStorage storage.StagesStorage) error {
 	stg := img.GetLastNonEmptyStage()
 
 	desc, err := phase.Conveyor.StorageManager.CopyStageIntoImagesRepoStorage(
@@ -274,7 +274,7 @@ func (phase *BuildPhase) publishFinalImage(ctx context.Context, name string, img
 	return nil
 }
 
-func (phase *BuildPhase) publishMultiplatformFinalImage(ctx context.Context, name string, img *image.MultiplatformImage, imagesRepoStorage storage.StagesStorage) error {
+func (phase *BuildPhase) publishMultiplatformImagesRepoImage(ctx context.Context, name string, img *image.MultiplatformImage, imagesRepoStorage storage.StagesStorage) error {
 	desc, err := phase.Conveyor.StorageManager.CopyStageIntoImagesRepoStorage(
 		ctx, img.GetStageID(), imagesRepoStorage,
 		manager.CopyStageIntoStorageOptions{
@@ -653,7 +653,7 @@ func (phase *BuildPhase) onImageStage(ctx context.Context, img *image.Image, stg
 		return nil
 	}
 
-	foundSuitableSecondaryStage, err := phase.findAndFetchStageFromSecondaryStagesStorage(ctx, img, stg)
+	foundSuitableSecondaryStage, err := phase.findAndFetchStageFromCacheFrom(ctx, img, stg)
 	if err != nil {
 		return err
 	}
@@ -733,11 +733,11 @@ func (phase *BuildPhase) afterImageStage(ctx context.Context, img *image.Image, 
 	return nil
 }
 
-func (phase *BuildPhase) findAndFetchStageFromSecondaryStagesStorage(ctx context.Context, img *image.Image, stg stage.Interface) (bool, error) {
+func (phase *BuildPhase) findAndFetchStageFromCacheFrom(ctx context.Context, img *image.Image, stg stage.Interface) (bool, error) {
 	foundSuitableStage := false
 
 	storageManager := phase.Conveyor.StorageManager
-	atomicCopySuitableStageFromSecondaryStagesStorage := func(secondaryStageDesc *imagePkg.StageDesc, secondaryStagesStorage storage.StagesStorage) error {
+	atomicCopySuitableStageFromCacheFrom := func(secondaryStageDesc *imagePkg.StageDesc, secondaryStagesStorage storage.StagesStorage) error {
 		// Lock the primary stages storage
 		var stageUnlocked bool
 		var unlockStage func()
@@ -754,11 +754,11 @@ func (phase *BuildPhase) findAndFetchStageFromSecondaryStagesStorage(ctx context
 			defer unlockStage()
 		}
 
-		err := logboek.Context(ctx).Default().LogProcess("Copy suitable stage from secondary %s", secondaryStagesStorage.String()).DoError(func() error {
+		err := logboek.Context(ctx).Default().LogProcess("Copy suitable stage from cache from %s", secondaryStagesStorage.String()).DoError(func() error {
 			// Copy suitable stage from a cache-from storage to the primary stages storage
 			// while primary stages storage lock for this digest is held
 			if stageDescCopy, err := storageManager.CopySuitableStageDescByDigest(ctx, secondaryStageDesc, secondaryStagesStorage, storageManager.GetMetaStorage(), phase.Conveyor.ContainerBackend, img.TargetPlatform); err != nil {
-				return fmt.Errorf("unable to copy suitable stage %s from %s to %s: %w", secondaryStageDesc.StageID.String(), secondaryStagesStorage.String(), storageManager.GetMetaStorage().String(), err)
+				return fmt.Errorf("unable to copy suitable stage %s from cache from storage %s to %s: %w", secondaryStageDesc.StageID.String(), secondaryStagesStorage.String(), storageManager.GetMetaStorage().String(), err)
 			} else {
 				i := phase.Conveyor.GetOrCreateStageImage(stageDescCopy.Info.Name, phase.StagesIterator.GetPrevImage(img, stg), stg, img)
 				i.Image.SetStageDesc(stageDescCopy)
@@ -808,7 +808,7 @@ ScanCacheFromStorageList:
 			if secondaryStageDesc, err := storageManager.SelectSuitableStageDesc(ctx, phase.Conveyor, stg, secondaryStages); err != nil {
 				return false, err
 			} else if secondaryStageDesc != nil {
-				if err := atomicCopySuitableStageFromSecondaryStagesStorage(secondaryStageDesc, secondaryStagesStorage); err != nil {
+				if err := atomicCopySuitableStageFromCacheFrom(secondaryStageDesc, secondaryStagesStorage); err != nil {
 					return false, fmt.Errorf("unable to copy suitable stage %s from cache from storage %s: %w", secondaryStageDesc.StageID.String(), secondaryStagesStorage.String(), err)
 				}
 				foundSuitableStage = true
