@@ -47,10 +47,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupHomeDir(&commonCmdData, cmd, common.SetupHomeDirOptions{})
 	common.SetupSSHKey(&commonCmdData, cmd)
 
-	common.SetupSecondaryStagesStorageOptions(&commonCmdData, cmd)
-	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{})
-	common.SetupFinalRepo(&commonCmdData, cmd)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read images from the specified repo")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)

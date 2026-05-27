@@ -82,10 +82,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupDir(&commonCmdData, cmd)
 	common.SetupGitWorkTree(&commonCmdData, cmd)
 
-	common.SetupSecondaryStagesStorageOptions(&commonCmdData, cmd)
-	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{})
-	common.SetupFinalRepo(&commonCmdData, cmd)
 	common.SetupSynchronization(&commonCmdData, cmd)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "")
