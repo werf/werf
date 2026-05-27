@@ -106,6 +106,21 @@ var _ = Describe("FromStage", func() {
 			Expect(stage.IsMutable()).To(BeFalse())
 			Expect(stage.HasPrevStage()).To(BeFalse())
 		})
+
+		It("preserves existing commit label when head commit is empty", func(ctx SpecContext) {
+			stage := GenerateFromStage(&config.StapelImageBase{From: "scratch"}, "", "", &BaseStageOptions{})
+			stageImage := NewStageImage(NewContainerBackendStub(), "", newLegacyImageForFromScratchTests("scratch-stage"))
+			stageImage.Image.SetBuildServiceLabels(map[string]string{
+				imagePkg.WerfProjectRepoCommitLabel: "valid-commit",
+			})
+
+			conveyor := NewConveyorStubForDependencies(NewGiterminismManagerStub(NewLocalGitRepoStub(""), NewGiterminismInspectorStub()), nil)
+
+			Expect(stage.PrepareImage(ctx, conveyor, NewContainerBackendStub(), nil, stageImage, nil)).To(Succeed())
+			Expect(stageImage.Image.GetBuildServiceLabels()).To(Equal(map[string]string{
+				imagePkg.WerfProjectRepoCommitLabel: "valid-commit",
+			}))
+		})
 	})
 
 	Describe("MutateImage()", func() {
