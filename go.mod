@@ -57,7 +57,7 @@ require (
 	github.com/werf/copy-recurse v0.2.7
 	github.com/werf/lockgate v0.1.1
 	github.com/werf/logboek v0.6.1
-	github.com/werf/nelm v1.23.3-0.20260514121649-29d4e8bfbc01
+	github.com/werf/nelm v1.23.3-0.20260527162439-e934013c97fe
 	go.opentelemetry.io/otel v1.42.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.42.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.42.0
@@ -192,7 +192,7 @@ require (
 	github.com/transparency-dev/merkle v0.0.2 // indirect
 	github.com/valyala/fastjson v1.6.4 // indirect
 	github.com/vektah/gqlparser/v2 v2.5.30 // indirect
-	github.com/werf/kubedog v0.13.1-0.20260320165832-7d97aaf7aab9 // indirect
+	github.com/werf/kubedog v0.13.1-0.20260521123751-aabed6e8f8ac // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/xhit/go-str2duration/v2 v2.1.0 // indirect
 	github.com/yannh/kubeconform v0.7.0 // indirect
