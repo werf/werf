@@ -1,6 +1,6 @@
 {{- $refs := list $.Values.global.github_ref }}
 {{- if eq $.Values.werf.env "test" }}
-{{- if and (not $.Values.global.docs_deploy_target) (eq (splitList "/" $.Values.global.github_ref | last) "main") }}
+{{- if or $.Values.global.docs_deploy_target (eq (splitList "/" $.Values.global.github_ref | last) "main") }}
 {{- $refs = concat $refs (list "v2.0.3" "v1.2.294+fix1") }}
 {{- end }}
 {{- end }}
@@ -8,8 +8,9 @@
 {{- range $_, $ref := $refs }}
 
 {{- $sourceRef := splitList "/" $ref | last }}
+{{- $isPrimaryDeployRef := eq $ref $.Values.global.github_ref }}
 {{- $deployTarget := $sourceRef }}
-{{- if $.Values.global.docs_deploy_target }}
+{{- if and $isPrimaryDeployRef $.Values.global.docs_deploy_target }}
 {{- $deployTarget = $.Values.global.docs_deploy_target }}
 {{- end }}
 {{- $deployTargetDNSNormalized := printf "%s" $deployTarget | lower | replace "+" "-plus-" | replace "_" "-u-" | replace "." "-dot-" }}
