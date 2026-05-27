@@ -212,7 +212,7 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 
 		for _, img := range images {
 			stageImage := img.GetLastNonEmptyStage().GetStageImage().Image
-			stageDesc := stageImage.GetFinalStageDesc()
+			stageDesc := stageImage.GetImagesRepoStageDesc()
 			if stageDesc == nil {
 				stageDesc = stageImage.GetStageDesc()
 			}
@@ -245,7 +245,7 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 			}
 		}
 
-		if _, isLocal := phase.Conveyor.StorageManager.GetStagesStorage().(*storage.LocalStagesStorage); !isLocal {
+		if _, isLocal := phase.Conveyor.StorageManager.GetMetaStorage().(*storage.LocalStagesStorage); !isLocal {
 			if len(targetPlatforms) > 1 {
 				img := phase.Conveyor.imagesTree.GetMultiplatformImage(name)
 				if img == nil {
@@ -257,7 +257,7 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 					isRebuilt = (isRebuilt || pImg.GetRebuilt())
 				}
 
-				stageDesc := img.GetFinalStageDesc()
+				stageDesc := img.GetImagesRepoStageDesc()
 				if stageDesc == nil {
 					stageDesc = img.GetStageDesc()
 				}

@@ -9,10 +9,10 @@ import (
 )
 
 type legacyBaseImage struct {
-	name           string
-	info           *image.Info
-	stageDesc      *image.StageDesc
-	finalStageDesc *image.StageDesc
+	name                string
+	info                *image.Info
+	stageDesc           *image.StageDesc
+	imagesRepoStageDesc *image.StageDesc
 
 	mu sync.RWMutex
 
@@ -72,12 +72,12 @@ func (i *legacyBaseImage) GetStageDesc() *image.StageDesc {
 	return i.stageDesc
 }
 
-func (i *legacyBaseImage) SetFinalStageDesc(stageDesc *image.StageDesc) {
-	i.finalStageDesc = stageDesc
+func (i *legacyBaseImage) SetImagesRepoStageDesc(stageDesc *image.StageDesc) {
+	i.imagesRepoStageDesc = stageDesc
 }
 
-func (i *legacyBaseImage) GetFinalStageDesc() *image.StageDesc {
-	return i.finalStageDesc
+func (i *legacyBaseImage) GetImagesRepoStageDesc() *image.StageDesc {
+	return i.imagesRepoStageDesc
 }
 
 func (i *legacyBaseImage) IsExistsLocally() bool {

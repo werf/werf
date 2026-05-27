@@ -237,11 +237,11 @@ func (i *legacyImageForFromScratchTests) SetInfo(*imagePkg.Info)            { pa
 func (i *legacyImageForFromScratchTests) IsExistsLocally() bool             { panic("unexpected call") }
 func (i *legacyImageForFromScratchTests) SetStageDesc(*imagePkg.StageDesc)  { panic("unexpected call") }
 func (i *legacyImageForFromScratchTests) GetStageDesc() *imagePkg.StageDesc { panic("unexpected call") }
-func (i *legacyImageForFromScratchTests) GetFinalStageDesc() *imagePkg.StageDesc {
+func (i *legacyImageForFromScratchTests) GetImagesRepoStageDesc() *imagePkg.StageDesc {
 	panic("unexpected call")
 }
 
-func (i *legacyImageForFromScratchTests) SetFinalStageDesc(*imagePkg.StageDesc) {
+func (i *legacyImageForFromScratchTests) SetImagesRepoStageDesc(*imagePkg.StageDesc) {
 	panic("unexpected call")
 }
 

@@ -39,8 +39,8 @@ type LegacyImageInterface interface {
 	SetStageDesc(*image.StageDesc)
 	GetStageDesc() *image.StageDesc
 
-	GetFinalStageDesc() *image.StageDesc
-	SetFinalStageDesc(*image.StageDesc)
+	GetImagesRepoStageDesc() *image.StageDesc
+	SetImagesRepoStageDesc(*image.StageDesc)
 
 	GetCopy() LegacyImageInterface
 }

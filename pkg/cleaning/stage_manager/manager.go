@@ -65,7 +65,7 @@ func (m *Manager) InitStageDescSet(ctx context.Context, storageManager manager.S
 }
 
 func (m *Manager) InitFinalStageDescSet(ctx context.Context, storageManager manager.StorageManagerInterface) error {
-	finalStageDescSet, err := storageManager.GetFinalStageDescSet(ctx)
+	finalStageDescSet, err := storageManager.GetImagesRepoStageDescSet(ctx)
 	if err != nil {
 		return err
 	}
@@ -80,7 +80,7 @@ type GitRepo interface {
 }
 
 func (m *Manager) InitImagesMetadata(ctx context.Context, storageManager manager.StorageManagerInterface, localGit GitRepo, projectName string, imageNameList []string) error {
-	imageMetadataByImageName, imageMetadataByNotManagedImageName, err := storageManager.GetStagesStorage().GetAllAndGroupImageMetadataByImageName(ctx, projectName, imageNameList, storage.WithCache())
+	imageMetadataByImageName, imageMetadataByNotManagedImageName, err := storageManager.GetMetaStorage().GetAllAndGroupImageMetadataByImageName(ctx, projectName, imageNameList, storage.WithCache())
 	if err != nil {
 		return err
 	}
@@ -145,7 +145,7 @@ func (m *Manager) InitCustomTagsMetadata(ctx context.Context, storageManager man
 }
 
 func GetCustomTagsMetadata(ctx context.Context, storageManager manager.StorageManagerInterface) (map[string][]string, error) {
-	stageCustomTagMetadataIDs, err := storageManager.GetStagesStorage().GetStageCustomTagMetadataIDs(ctx, storage.WithCache())
+	stageCustomTagMetadataIDs, err := storageManager.GetMetaStorage().GetStageCustomTagMetadataIDs(ctx, storage.WithCache())
 	if err != nil {
 		return nil, fmt.Errorf("unable to get stage custom tag metadata IDs: %w", err)
 	}
@@ -297,7 +297,7 @@ func (m *Manager) GetStageDescSet() image.StageDescSet {
 	return m.managedStageDescSet.StageDescSet()
 }
 
-func (m *Manager) GetFinalStageDescSet() image.StageDescSet {
+func (m *Manager) GetImagesRepoStageDescSet() image.StageDescSet {
 	return m.finalManagedStageDescSet.StageDescSet()
 }
 

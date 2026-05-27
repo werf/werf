@@ -127,18 +127,18 @@ func (mr *MockLegacyImageInterfaceMockRecorder) GetCopy() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCopy", reflect.TypeOf((*MockLegacyImageInterface)(nil).GetCopy))
 }
 
-// GetFinalStageDesc mocks base method.
-func (m *MockLegacyImageInterface) GetFinalStageDesc() *image.StageDesc {
+// GetImagesRepoStageDesc mocks base method.
+func (m *MockLegacyImageInterface) GetImagesRepoStageDesc() *image.StageDesc {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetFinalStageDesc")
+	ret := m.ctrl.Call(m, "GetImagesRepoStageDesc")
 	ret0, _ := ret[0].(*image.StageDesc)
 	return ret0
 }
 
-// GetFinalStageDesc indicates an expected call of GetFinalStageDesc.
-func (mr *MockLegacyImageInterfaceMockRecorder) GetFinalStageDesc() *gomock.Call {
+// GetImagesRepoStageDesc indicates an expected call of GetImagesRepoStageDesc.
+func (mr *MockLegacyImageInterfaceMockRecorder) GetImagesRepoStageDesc() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFinalStageDesc", reflect.TypeOf((*MockLegacyImageInterface)(nil).GetFinalStageDesc))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetImagesRepoStageDesc", reflect.TypeOf((*MockLegacyImageInterface)(nil).GetImagesRepoStageDesc))
 }
 
 // GetStageDesc mocks base method.
@@ -275,16 +275,16 @@ func (mr *MockLegacyImageInterfaceMockRecorder) SetCommitChangeOptions(opts any)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetCommitChangeOptions", reflect.TypeOf((*MockLegacyImageInterface)(nil).SetCommitChangeOptions), opts)
 }
 
-// SetFinalStageDesc mocks base method.
-func (m *MockLegacyImageInterface) SetFinalStageDesc(arg0 *image.StageDesc) {
+// SetImagesRepoStageDesc mocks base method.
+func (m *MockLegacyImageInterface) SetImagesRepoStageDesc(arg0 *image.StageDesc) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "SetFinalStageDesc", arg0)
+	m.ctrl.Call(m, "SetImagesRepoStageDesc", arg0)
 }
 
-// SetFinalStageDesc indicates an expected call of SetFinalStageDesc.
-func (mr *MockLegacyImageInterfaceMockRecorder) SetFinalStageDesc(arg0 any) *gomock.Call {
+// SetImagesRepoStageDesc indicates an expected call of SetImagesRepoStageDesc.
+func (mr *MockLegacyImageInterfaceMockRecorder) SetImagesRepoStageDesc(arg0 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetFinalStageDesc", reflect.TypeOf((*MockLegacyImageInterface)(nil).SetFinalStageDesc), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetImagesRepoStageDesc", reflect.TypeOf((*MockLegacyImageInterface)(nil).SetImagesRepoStageDesc), arg0)
 }
 
 // SetInfo mocks base method.

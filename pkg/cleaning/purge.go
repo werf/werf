@@ -59,9 +59,9 @@ func (m *purgeManager) run(ctx context.Context) error {
 		return err
 	}
 
-	if m.StorageManager.GetFinalStagesStorage() != nil {
+	if m.StorageManager.GetImagesRepoStorage() != nil {
 		if err := logboek.Context(ctx).Default().LogProcess("Deleting final stages").DoError(func() error {
-			finalDescSet, err := m.StorageManager.GetFinalStageDescSet(ctx)
+			finalDescSet, err := m.StorageManager.GetImagesRepoStageDescSet(ctx)
 			if err != nil {
 				return err
 			}

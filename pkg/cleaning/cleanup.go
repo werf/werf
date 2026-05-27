@@ -93,8 +93,8 @@ func (m *cleanupManager) init(ctx context.Context) error {
 		return err
 	}
 
-	if m.StorageManager.GetFinalStagesStorage() != nil {
-		if err := logboek.Context(ctx).Info().LogProcess("Fetching final repo manifests").DoError(func() error {
+	if m.StorageManager.GetImagesRepoStorage() != nil {
+		if err := logboek.Context(ctx).Info().LogProcess("Fetching images repo manifests").DoError(func() error {
 			return m.stageManager.InitFinalStageDescSet(ctx, m.StorageManager)
 		}); err != nil {
 			return err
@@ -155,7 +155,7 @@ func (m *cleanupManager) run(ctx context.Context) error {
 			return err
 		}
 
-		if err := logboek.Context(ctx).LogProcess("Skipping final repo tags that are being used in Kubernetes").DoError(func() error {
+		if err := logboek.Context(ctx).LogProcess("Skipping images repo tags that are being used in Kubernetes").DoError(func() error {
 			return m.skipFinalStageIDsThatAreUsedInKubernetes(ctx, deployedDockerImages)
 		}); err != nil {
 			return err
@@ -212,16 +212,16 @@ func (m *cleanupManager) run(ctx context.Context) error {
 		return err
 	}
 
-	if m.StorageManager.GetFinalStagesStorage() != nil {
-		if err := logboek.Context(ctx).LogProcess("Cleanup final stages").DoError(func() error {
-			return m.cleanupFinalStages(ctx)
+	if m.StorageManager.GetImagesRepoStorage() != nil {
+		if err := logboek.Context(ctx).LogProcess("Cleanup images repo stages").DoError(func() error {
+			return m.cleanupImagesRepoStages(ctx)
 		}); err != nil {
 			return err
 		}
 	}
 
 	if err := logboek.Context(ctx).LogProcess("Push last cleanup info to meta image").DoError(func() error {
-		err := m.StorageManager.GetStagesStorage().PostLastCleanupRecord(ctx, m.ProjectName)
+		err := m.StorageManager.GetMetaStorage().PostLastCleanupRecord(ctx, m.ProjectName)
 		if err != nil {
 			logboek.Context(ctx).Warn().LogF("WARNING: cleanup metadata update failed: %s\n", err)
 		}
@@ -256,7 +256,7 @@ func (m *cleanupManager) purgeImageMetadata(ctx context.Context) error {
 func (m *cleanupManager) skipStageIDsThatAreUsedInKubernetes(ctx context.Context, deployedDockerImages []*DeployedDockerImage) error {
 	handledDeployedStages := map[string]bool{}
 	handleTagFunc := func(tag, stageID string, f func()) {
-		dockerImageName := fmt.Sprintf("%s:%s", m.StorageManager.GetStagesStorage().Address(), tag)
+		dockerImageName := fmt.Sprintf("%s:%s", m.StorageManager.GetMetaStorage().Address(), tag)
 		for _, deployedDockerImage := range deployedDockerImages {
 			if deployedDockerImage.Name == dockerImageName {
 				if !handledDeployedStages[stageID] {
@@ -308,20 +308,20 @@ func (m *cleanupManager) skipStageIDsThatAreUsedInKubernetes(ctx context.Context
 }
 
 func (m *cleanupManager) skipFinalStageIDsThatAreUsedInKubernetes(ctx context.Context, deployedDockerImages []*DeployedDockerImage) error {
-	handledDeployedFinalStages := map[string]bool{}
+	handledDeployedImagesRepoStages := map[string]bool{}
 Loop:
-	for stageDesc := range m.stageManager.GetFinalStageDescSet().Iter() {
+	for stageDesc := range m.stageManager.GetImagesRepoStageDescSet().Iter() {
 		stageID := stageDesc.StageID.String()
-		dockerImageName := fmt.Sprintf("%s:%s", m.StorageManager.GetFinalStagesStorage().Address(), stageID)
+		dockerImageName := fmt.Sprintf("%s:%s", m.StorageManager.GetImagesRepoStorage().Address(), stageID)
 
 		for _, deployedDockerImage := range deployedDockerImages {
 			if deployedDockerImage.Name == dockerImageName {
-				if !handledDeployedFinalStages[stageID] {
+				if !handledDeployedImagesRepoStages[stageID] {
 					m.stageManager.MarkFinalStageDescAsProtected(stageDesc, stage_manager.ProtectionReasonKubernetesBasedPolicy, false)
 
 					logboek.Context(ctx).Default().LogFDetails("  tag: %s\n", stageID)
 					logboek.Context(ctx).LogOptionalLn()
-					handledDeployedFinalStages[stageID] = true
+					handledDeployedImagesRepoStages[stageID] = true
 				}
 
 				continue Loop
@@ -617,7 +617,7 @@ func deleteStageDescSet(ctx context.Context, storageManager manager.StorageManag
 	}
 
 	if isFinal {
-		return storageManager.ForEachDeleteFinalStage(ctx, deleteStageOptions, stageDescSet, onDeleteFunc)
+		return storageManager.ForEachDeleteImagesRepoStage(ctx, deleteStageOptions, stageDescSet, onDeleteFunc)
 	}
 
 	return storageManager.ForEachDeleteStage(ctx, deleteStageOptions, stageDescSet, onDeleteFunc)
@@ -741,7 +741,7 @@ func purgeImageMetadata(ctx context.Context, projectName string, storageManager 
 	var imageMetadataByImageName map[string]map[string][]string
 	if err := logboek.Context(ctx).Default().LogProcess("Fetching images metadata").DoError(func() error {
 		var err error
-		_, imageMetadataByImageName, err = storageManager.GetStagesStorage().GetAllAndGroupImageMetadataByImageName(ctx, projectName, []string{}, storage.WithCache())
+		_, imageMetadataByImageName, err = storageManager.GetMetaStorage().GetAllAndGroupImageMetadataByImageName(ctx, projectName, []string{}, storage.WithCache())
 		return err
 	}); err != nil {
 		return err
@@ -795,7 +795,7 @@ func purgeManagedImages(ctx context.Context, projectName string, storageManager 
 	var managedImages []string
 	if err := logboek.Context(ctx).Default().LogProcess("Fetching managed images").DoError(func() error {
 		var err error
-		managedImages, err = storageManager.GetStagesStorage().GetManagedImages(ctx, projectName, storage.WithCache())
+		managedImages, err = storageManager.GetMetaStorage().GetManagedImages(ctx, projectName, storage.WithCache())
 		return err
 	}); err != nil {
 		return err
@@ -887,23 +887,23 @@ func (m *cleanupManager) cleanupUnusedStages(ctx context.Context) error {
 	return nil
 }
 
-func (m *cleanupManager) cleanupFinalStages(ctx context.Context) error {
-	// Skip stages from the final repo that are not exist in the repo.
-	// Note: we cannot make difference between repo and final because they have different stage descriptions.
-FilterOutFinalStages:
-	for finalStageDesc := range m.stageManager.GetFinalStageDescSet().Iter() {
+func (m *cleanupManager) cleanupImagesRepoStages(ctx context.Context) error {
+	// Skip stages from the images repo that are not exist in the repo.
+	// Note: we cannot make difference between repo and images repo because they have different stage descriptions.
+FilterOutImagesRepoStages:
+	for imagesRepoStageDesc := range m.stageManager.GetImagesRepoStageDescSet().Iter() {
 		for stageDesc := range m.stageManager.GetStageDescSet().Iter() {
-			if stageDesc.StageID.IsEqual(*finalStageDesc.StageID) {
-				continue FilterOutFinalStages
+			if stageDesc.StageID.IsEqual(*imagesRepoStageDesc.StageID) {
+				continue FilterOutImagesRepoStages
 			}
 		}
 
-		m.stageManager.MarkFinalStageDescAsProtected(finalStageDesc, stage_manager.ProtectionReasonNotFoundInRepo, false)
+		m.stageManager.MarkFinalStageDescAsProtected(imagesRepoStageDesc, stage_manager.ProtectionReasonNotFoundInRepo, false)
 	}
 
-	finalStageDescSetToDelete := m.stageManager.GetFinalStageDescSet().Difference(m.stageManager.GetFinalProtectedStageDescSet())
+	finalStageDescSetToDelete := m.stageManager.GetImagesRepoStageDescSet().Difference(m.stageManager.GetFinalProtectedStageDescSet())
 	if !finalStageDescSetToDelete.IsEmpty() {
-		if err := logboek.Context(ctx).Default().LogProcess("Deleting final stages tags (%d/%d)", finalStageDescSetToDelete.Cardinality(), m.stageManager.GetFinalStageDescSet().Cardinality()).DoError(func() error {
+		if err := logboek.Context(ctx).Default().LogProcess("Deleting final stages tags (%d/%d)", finalStageDescSetToDelete.Cardinality(), m.stageManager.GetImagesRepoStageDescSet().Cardinality()).DoError(func() error {
 			return m.deleteStages(ctx, finalStageDescSetToDelete, true)
 		}); err != nil {
 			return err

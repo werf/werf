@@ -108,8 +108,8 @@ var _ = Describe("Custom tag build", Label("e2e", "build", "simple"), func() {
 			},
 		),
 		Entry(
-			"with repo and final repo, docker, select multiplatform image, "+
-				"and add the custom tag pushed to the final repo",
+			"with repo and images repo, docker, select multiplatform image, "+
+				"and add the custom tag pushed to the images repo",
 			customTagTestOptions{
 				setupEnvOptions: setupEnvOptions{
 					ContainerBackendMode:        "docker",

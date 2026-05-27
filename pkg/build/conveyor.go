@@ -504,7 +504,7 @@ func (c *Conveyor) GetImageInfoGettersWithOpts(opts imagePkg.InfoGetterOptions) 
 			}
 		}
 
-		if _, isLocal := c.StorageManager.GetStagesStorage().(*storage.LocalStagesStorage); !isLocal {
+		if _, isLocal := c.StorageManager.GetMetaStorage().(*storage.LocalStagesStorage); !isLocal {
 			if len(targetPlatforms) > 1 {
 				img := c.imagesTree.GetMultiplatformImage(name)
 
@@ -537,7 +537,7 @@ func (c *Conveyor) GetImageInfoGetters(opts imagePkg.InfoGetterOptions) ([]*imag
 			imagesGetters = append(imagesGetters, getter)
 		} else {
 			img := c.imagesTree.GetMultiplatformImage(name)
-			stageDesc := img.GetFinalStageDesc()
+			stageDesc := img.GetImagesRepoStageDesc()
 			if stageDesc == nil {
 				stageDesc = img.GetStageDesc()
 			}

@@ -226,7 +226,7 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 	if err != nil {
 		return err
 	}
-	finalStagesStorage, err := common.GetOptionalFinalStagesStorage(ctx, containerBackend, &commonCmdData)
+	imagesRepoStorage, err := common.GetOptionalImagesRepoStorage(ctx, containerBackend, &commonCmdData)
 	if err != nil {
 		return err
 	}
@@ -422,8 +422,8 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 	}
 
 	var bundleRepo string
-	if finalStagesStorage != nil {
-		bundleRepo = finalStagesStorage.Address()
+	if imagesRepoStorage != nil {
+		bundleRepo = imagesRepoStorage.Address()
 	} else {
 		bundleRepo = stagesStorage.Address()
 	}

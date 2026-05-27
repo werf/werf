@@ -65,7 +65,7 @@ func (e *Exporter) Run(ctx context.Context) error {
 		} else {
 			// FIXME(multiarch): Support multiplatform manifest by pushing local images to repo first, then create manifest list.
 			// FIXME(multiarch): Also support multiplatform manifest in werf build command in local mode with enabled final-repo.
-			if _, isLocal := e.Conveyor.StorageManager.GetStagesStorage().(*storage.LocalStagesStorage); isLocal {
+			if _, isLocal := e.Conveyor.StorageManager.GetMetaStorage().(*storage.LocalStagesStorage); isLocal {
 				return fmt.Errorf("export command in multiplatform mode should be used with remote stages storage")
 			}
 
@@ -163,7 +163,7 @@ func (e *Exporter) exportImageFromReportRecord(ctx context.Context, record Repor
 				tag := tagFunc(record.WerfImageName, stageID)
 				if err := logboek.Context(ctx).Default().LogProcess("tag %s", tag).
 					DoError(func() error {
-						if err := e.Conveyor.StorageManager.GetStagesStorage().ExportStage(ctx, stageDesc, tag, e.MutateConfigFunc); err != nil {
+						if err := e.Conveyor.StorageManager.GetMetaStorage().ExportStage(ctx, stageDesc, tag, e.MutateConfigFunc); err != nil {
 							return fmt.Errorf("unable to export stage %s: %w", stageDesc.StageID.String(), err)
 						}
 
@@ -188,7 +188,7 @@ func (e *Exporter) exportMultiplatformImage(ctx context.Context, img *build_imag
 				if err := logboek.Context(ctx).Default().LogProcess("tag %s", tag).
 					DoError(func() error {
 						stageDesc := img.GetStageDesc()
-						if err := e.Conveyor.StorageManager.GetStagesStorage().ExportStage(ctx, stageDesc, tag, e.MutateConfigFunc); err != nil {
+						if err := e.Conveyor.StorageManager.GetMetaStorage().ExportStage(ctx, stageDesc, tag, e.MutateConfigFunc); err != nil {
 							return fmt.Errorf("unable to export stage %s: %w", stageDesc.StageID.String(), err)
 						}
 
@@ -220,7 +220,7 @@ func (e *Exporter) exportImage(ctx context.Context, img *build_image.Image) erro
 				if err := logboek.Context(ctx).Default().LogProcess("tag %s", tag).
 					DoError(func() error {
 						stageDesc := img.GetLastNonEmptyStage().GetStageImage().Image.GetStageDesc()
-						if err := e.Conveyor.StorageManager.GetStagesStorage().ExportStage(ctx, stageDesc, tag, e.MutateConfigFunc); err != nil {
+						if err := e.Conveyor.StorageManager.GetMetaStorage().ExportStage(ctx, stageDesc, tag, e.MutateConfigFunc); err != nil {
 							return err
 						}
 

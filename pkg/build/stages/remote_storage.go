@@ -90,7 +90,7 @@ func (s *RemoteStorage) copyCurrentBuildStagesFromRemote(ctx context.Context, fr
 }
 
 func (s *RemoteStorage) copyAllFromRemote(ctx context.Context, fromRemote *RemoteStorage, opts copyToOptions) error {
-	stageIds, err := fromRemote.StorageManager.StagesStorage.GetStagesIDs(ctx, opts.ProjectName)
+	stageIds, err := fromRemote.StorageManager.MetaStorage.GetStagesIDs(ctx, opts.ProjectName)
 	if err != nil {
 		return fmt.Errorf("unable to get stages: %w", err)
 	}
@@ -98,7 +98,7 @@ func (s *RemoteStorage) copyAllFromRemote(ctx context.Context, fromRemote *Remot
 	for _, stageId := range stageIds {
 		logboek.Context(ctx).Default().LogFDetails("Copying stage: %s\n", stageId)
 
-		stageDesc, err := fromRemote.StorageManager.StagesStorage.GetStageDesc(ctx, opts.ProjectName, stageId)
+		stageDesc, err := fromRemote.StorageManager.MetaStorage.GetStageDesc(ctx, opts.ProjectName, stageId)
 		if err != nil {
 			return fmt.Errorf("unable to get description of stage %s: %w", stageId, err)
 		}

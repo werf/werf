@@ -100,7 +100,8 @@ func runReset(ctx context.Context) error {
 			ProjectName:      projectName,
 			ContainerBackend: containerBackend,
 			CmdData:          &commonCmdData,
-		}, common.WithHostPurge())
+			HostPurge:        true,
+		})
 		if err != nil {
 			return fmt.Errorf("unable to init storage manager: %w", err)
 		}

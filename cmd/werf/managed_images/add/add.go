@@ -135,7 +135,7 @@ func run(ctx context.Context, imageName string) error {
 		return fmt.Errorf("unable to init storage manager: %w", err)
 	}
 
-	if err := storageManager.StagesStorage.AddManagedImage(ctx, projectName, common.GetManagedImageName(imageName)); err != nil {
+	if err := storageManager.MetaStorage.AddManagedImage(ctx, projectName, common.GetManagedImageName(imageName)); err != nil {
 		return fmt.Errorf("unable to add managed image %q for project %q: %w", imageName, projectName, err)
 	}
 

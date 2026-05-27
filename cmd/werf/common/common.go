@@ -452,10 +452,36 @@ func SetupCacheStagesStorageOptions(cmdData *CmdData, cmd *cobra.Command) {
 Also, can be specified with $WERF_CACHE_REPO_* (e.g. $WERF_CACHE_REPO_1=..., $WERF_CACHE_REPO_2=...)`)
 }
 
+func SetupImagesRepo(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.ImagesRepo = NewRepoData("images-repo", RepoDataOptions{OnlyAddress: true})
+	cmdData.ImagesRepo.SetupCmd(cmd)
+}
+
+func SetupMetaRepo(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.MetaRepo = NewRepoData("meta-repo", RepoDataOptions{OnlyAddress: true})
+	cmdData.MetaRepo.SetupCmd(cmd)
+}
+
+func SetupCacheFrom(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.CacheFrom = new([]string)
+	cmd.Flags().StringArrayVarP(cmdData.CacheFrom, "cache-from", "", []string{}, `Specify one or multiple cache sources to pull images from.
+Also, can be specified with $WERF_CACHE_FROM_* (e.g. $WERF_CACHE_FROM_1=..., $WERF_CACHE_FROM_2=...)`)
+}
+
+func SetupCacheTo(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.CacheTo = new([]string)
+	cmd.Flags().StringArrayVarP(cmdData.CacheTo, "cache-to", "", []string{}, `Specify one or multiple cache destinations to push images to.
+Also, can be specified with $WERF_CACHE_TO_* (e.g. $WERF_CACHE_TO_1=..., $WERF_CACHE_TO_2=...)`)
+}
+
 func SetupRepoOptions(cmdData *CmdData, cmd *cobra.Command, opts RepoDataOptions) {
 	SetupInsecureRegistry(cmdData, cmd)
 	SetupSkipTlsVerifyRegistry(cmdData, cmd)
 	SetupRepo(cmdData, cmd, opts)
+	SetupImagesRepo(cmdData, cmd)
+	SetupMetaRepo(cmdData, cmd)
+	SetupCacheFrom(cmdData, cmd)
+	SetupCacheTo(cmdData, cmd)
 }
 
 func SetupRepo(cmdData *CmdData, cmd *cobra.Command, opts RepoDataOptions) {
@@ -835,7 +861,7 @@ func GetStagesStorage(ctx context.Context, containerBackend container_backend.Co
 	})
 }
 
-func GetOptionalFinalStagesStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData) (storage.StagesStorage, error) {
+func GetOptionalImagesRepoStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData) (storage.StagesStorage, error) {
 	if *cmdData.FinalRepo.Address == "" {
 		return nil, nil
 	}
@@ -856,6 +882,56 @@ func GetOptionalFinalStagesStorage(ctx context.Context, containerBackend contain
 		SkipTlsVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
 		InsecureRegistryHosts: insecureRegistryHosts,
 		SkipMetaCheck:         true,
+	})
+}
+
+func GetImagesRepoStagesStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData) (storage.StagesStorage, error) {
+	if cmdData.ImagesRepo == nil || cmdData.ImagesRepo.Address == nil || *cmdData.ImagesRepo.Address == "" {
+		return nil, nil
+	}
+
+	buildahMode, _, err := GetBuildahMode()
+	if err != nil {
+		return nil, fmt.Errorf("unable to determine buildah mode: %w", err)
+	}
+
+	insecureRegistryHosts, err := GetInsecureRegistryHosts(ctx, cmdData, *buildahMode)
+	if err != nil {
+		return nil, fmt.Errorf("get insecure registry hosts: %w", err)
+	}
+
+	return cmdData.ImagesRepo.CreateStagesStorage(ctx, &CreateStagesStorageOptions{
+		ContainerBackend:      containerBackend,
+		InsecureRegistry:      *cmdData.InsecureRegistry,
+		SkipTlsVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
+		InsecureRegistryHosts: insecureRegistryHosts,
+		SkipMetaCheck:         true,
+	})
+}
+
+func GetMetaRepoStagesStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData, opts GetStagesStorageOpts) (storage.PrimaryStagesStorage, error) {
+	if cmdData.MetaRepo == nil || cmdData.MetaRepo.Address == nil || *cmdData.MetaRepo.Address == "" {
+		return nil, fmt.Errorf("--meta-repo is required when using granular registry flags (--images-repo, --cache-from, --cache-to)")
+	}
+
+	buildahMode, _, err := GetBuildahMode()
+	if err != nil {
+		return nil, fmt.Errorf("unable to determine buildah mode: %w", err)
+	}
+
+	insecureRegistryHosts, err := GetInsecureRegistryHosts(ctx, cmdData, *buildahMode)
+	if err != nil {
+		return nil, fmt.Errorf("get insecure registry hosts: %w", err)
+	}
+
+	return cmdData.MetaRepo.CreateStagesStorage(ctx, &CreateStagesStorageOptions{
+		ContainerBackend:               containerBackend,
+		InsecureRegistry:               *cmdData.InsecureRegistry,
+		SkipTlsVerifyRegistry:          *cmdData.SkipTlsVerifyRegistry,
+		InsecureRegistryHosts:          insecureRegistryHosts,
+		CleanupDisabled:                opts.CleanupDisabled,
+		GitHistoryBasedCleanupDisabled: opts.GitHistoryBasedCleanupDisabled,
+		SkipMetaCheck:                  opts.SkipMetaCheck,
 	})
 }
 
@@ -884,7 +960,44 @@ func GetCacheStagesStorageList(ctx context.Context, containerBackend container_b
 			SkipMetaCheck:         true,
 		})
 		if err != nil {
-			return nil, fmt.Errorf("unable to create cache stages storage in %s: %w", address, err)
+			return nil, fmt.Errorf("unable to create cache to storage in %s: %w", address, err)
+		}
+		res = append(res, cacheStorage)
+	}
+
+	return res, nil
+}
+
+func GetCacheToStorageList(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData) ([]storage.StagesStorage, error) {
+	return GetCacheStagesStorageList(ctx, containerBackend, cmdData)
+}
+
+func getCacheToStorageList(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData) ([]storage.StagesStorage, error) {
+	var res []storage.StagesStorage
+
+	buildahMode, _, err := GetBuildahMode()
+	if err != nil {
+		return nil, fmt.Errorf("unable to determine buildah mode: %w", err)
+	}
+
+	insecureRegistryHosts, err := GetInsecureRegistryHosts(ctx, cmdData, *buildahMode)
+	if err != nil {
+		return nil, fmt.Errorf("get insecure registry hosts: %w", err)
+	}
+
+	for _, address := range GetCacheTo(cmdData) {
+		repoData := NewRepoData("cache-to", RepoDataOptions{OnlyAddress: true})
+		repoData.Address = &address
+
+		cacheStorage, err := repoData.CreateStagesStorage(ctx, &CreateStagesStorageOptions{
+			ContainerBackend:      containerBackend,
+			InsecureRegistry:      *cmdData.InsecureRegistry,
+			SkipTlsVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
+			InsecureRegistryHosts: insecureRegistryHosts,
+			SkipMetaCheck:         true,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("unable to create cache to storage in %s: %w", address, err)
 		}
 		res = append(res, cacheStorage)
 	}
@@ -921,9 +1034,42 @@ func GetSecondaryStagesStorageList(ctx context.Context, stagesStorage storage.St
 			SkipMetaCheck:         true,
 		})
 		if err != nil {
-			return nil, fmt.Errorf("unable to create secondary stages storage in %s: %w", address, err)
+			return nil, fmt.Errorf("unable to create cache from storage in %s: %w", address, err)
 		}
 		res = append(res, secondaryStorage)
+	}
+
+	return res, nil
+}
+
+func getCacheFromStorageList(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData) ([]storage.StagesStorage, error) {
+	var res []storage.StagesStorage
+
+	buildahMode, _, err := GetBuildahMode()
+	if err != nil {
+		return nil, fmt.Errorf("unable to determine buildah mode: %w", err)
+	}
+
+	insecureRegistryHosts, err := GetInsecureRegistryHosts(ctx, cmdData, *buildahMode)
+	if err != nil {
+		return nil, fmt.Errorf("get insecure registry hosts: %w", err)
+	}
+
+	for _, address := range GetCacheFrom(cmdData) {
+		repoData := NewRepoData("cache-from", RepoDataOptions{OnlyAddress: true})
+		repoData.Address = &address
+
+		cacheStorage, err := repoData.CreateStagesStorage(ctx, &CreateStagesStorageOptions{
+			ContainerBackend:      containerBackend,
+			InsecureRegistry:      *cmdData.InsecureRegistry,
+			SkipTlsVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
+			InsecureRegistryHosts: insecureRegistryHosts,
+			SkipMetaCheck:         true,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("unable to create cache to storage in %s: %w", address, err)
+		}
+		res = append(res, cacheStorage)
 	}
 
 	return res, nil
@@ -1210,8 +1356,85 @@ func GetCacheStagesStorage(cmdData *CmdData) []string {
 	return append(util.PredefinedValuesByEnvNamePrefix("WERF_CACHE_REPO_"), *cmdData.CacheStagesStorage...)
 }
 
+func GetCacheFrom(cmdData *CmdData) []string {
+	return append(util.PredefinedValuesByEnvNamePrefix("WERF_CACHE_FROM_"), *cmdData.CacheFrom...)
+}
+
+func GetCacheTo(cmdData *CmdData) []string {
+	return append(util.PredefinedValuesByEnvNamePrefix("WERF_CACHE_TO_"), *cmdData.CacheTo...)
+}
+
 func GetSecondaryStagesStorage(cmdData *CmdData) []string {
 	return append(util.PredefinedValuesByEnvNamePrefix("WERF_SECONDARY_REPO_"), *cmdData.SecondaryStagesStorage...)
+}
+
+func getGranularMode(cmdData *CmdData) bool {
+	if cmdData.ImagesRepo != nil && cmdData.ImagesRepo.Address != nil && *cmdData.ImagesRepo.Address != "" {
+		return true
+	}
+	if cmdData.MetaRepo != nil && cmdData.MetaRepo.Address != nil && *cmdData.MetaRepo.Address != "" {
+		return true
+	}
+	if len(GetCacheFrom(cmdData)) > 0 {
+		return true
+	}
+	if len(GetCacheTo(cmdData)) > 0 {
+		return true
+	}
+
+	return false
+}
+
+func resolveDeprecatedFlags(ctx context.Context, cmdData *CmdData) error {
+	if cmdData.FinalRepo != nil && cmdData.FinalRepo.Address != nil && *cmdData.FinalRepo.Address != "" {
+		if cmdData.ImagesRepo != nil && cmdData.ImagesRepo.Address != nil && *cmdData.ImagesRepo.Address != "" {
+			return fmt.Errorf("--final-repo and --images-repo cannot be used together")
+		}
+		if cmdData.ImagesRepo != nil && cmdData.ImagesRepo.Address != nil {
+			logboek.Context(ctx).Warn().LogF("WARNING: --final-repo is deprecated, use --images-repo instead\n")
+			*cmdData.ImagesRepo.Address = *cmdData.FinalRepo.Address
+		}
+	}
+
+	if cmdData.SecondaryStagesStorage != nil && len(*cmdData.SecondaryStagesStorage) > 0 {
+		if cmdData.CacheFrom != nil && len(*cmdData.CacheFrom) > 0 {
+			return fmt.Errorf("--secondary-repo and --cache-from cannot be used together")
+		}
+		if cmdData.CacheFrom != nil {
+			logboek.Context(ctx).Warn().LogF("WARNING: --secondary-repo is deprecated, use --cache-from instead\n")
+			*cmdData.CacheFrom = append(*cmdData.CacheFrom, *cmdData.SecondaryStagesStorage...)
+		}
+	}
+
+	return nil
+}
+
+func validateRepoFlags(cmdData *CmdData) error {
+	repoSet := cmdData.Repo != nil && cmdData.Repo.Address != nil && *cmdData.Repo.Address != ""
+	repoEnvSet := os.Getenv("WERF_REPO") != ""
+	repoIsSet := repoSet || repoEnvSet
+
+	if !repoIsSet {
+		return nil
+	}
+
+	conflictFlags := []struct {
+		name string
+		set  bool
+	}{
+		{"--images-repo", cmdData.ImagesRepo != nil && cmdData.ImagesRepo.Address != nil && *cmdData.ImagesRepo.Address != ""},
+		{"--meta-repo", cmdData.MetaRepo != nil && cmdData.MetaRepo.Address != nil && *cmdData.MetaRepo.Address != ""},
+		{"--cache-from", cmdData.CacheFrom != nil && len(*cmdData.CacheFrom) > 0},
+		{"--cache-to", cmdData.CacheTo != nil && len(*cmdData.CacheTo) > 0},
+	}
+
+	for _, flag := range conflictFlags {
+		if flag.set {
+			return fmt.Errorf("--repo cannot be combined with --images-repo, --meta-repo, --cache-from, or --cache-to. Use either --repo as a preset, or specify granular flags individually.")
+		}
+	}
+
+	return nil
 }
 
 func GetContainerRegistryMirror(ctx context.Context, cmdData *CmdData, buildahMode buildah.Mode) ([]string, error) {

@@ -12,10 +12,10 @@ type MultiplatformImage struct {
 	IsFinal bool
 	Images  []*Image
 
-	calculatedDigest string
-	stageID          common_image.StageID
-	stageDesc        *common_image.StageDesc
-	finalStageDesc   *common_image.StageDesc
+	calculatedDigest    string
+	stageID             common_image.StageID
+	stageDesc           *common_image.StageDesc
+	imagesRepoStageDesc *common_image.StageDesc
 
 	logImageIndex int
 	logImageTotal int
@@ -66,12 +66,12 @@ func (img *MultiplatformImage) GetImagesInfoList() []*common_image.Info {
 	})
 }
 
-func (img *MultiplatformImage) GetFinalStageDesc() *image.StageDesc {
-	return img.finalStageDesc
+func (img *MultiplatformImage) GetImagesRepoStageDesc() *image.StageDesc {
+	return img.imagesRepoStageDesc
 }
 
-func (img *MultiplatformImage) SetFinalStageDesc(stageDesc *common_image.StageDesc) {
-	img.finalStageDesc = stageDesc
+func (img *MultiplatformImage) SetImagesRepoStageDesc(stageDesc *common_image.StageDesc) {
+	img.imagesRepoStageDesc = stageDesc
 }
 
 func (img *MultiplatformImage) GetStageDesc() *image.StageDesc {
