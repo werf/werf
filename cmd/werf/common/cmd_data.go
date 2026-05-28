@@ -39,7 +39,7 @@ type CmdData struct {
 	FinalImagesOnly *bool
 	WithoutImages   *bool
 	Repo            *RepoData
-	ImagesRepo      *RepoData
+	ImagesRepo      *[]string
 	MetaRepo        *RepoData
 
 	CacheFrom *[]string

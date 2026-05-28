@@ -40,7 +40,7 @@ The same address should be specified for all werf processes that work with a sin
 }
 
 // GetSynchronization determines the type of synchronization server
-func GetSynchronization(ctx context.Context, cmdData *CmdData, projectName string, stagesStorage storage.StagesStorage) (Synchronization, error) {
+func GetSynchronization(ctx context.Context, cmdData *CmdData, projectName string, stagesStorage storage.MetaStorage) (Synchronization, error) {
 	params := lock_manager.SynchronizationParams{
 		ProjectName:   projectName,
 		ServerAddress: *cmdData.Synchronization,
@@ -73,7 +73,7 @@ func protocolIsLocal(address string) bool {
 }
 
 func initDefault(ctx context.Context, params lock_manager.SynchronizationParams) (Synchronization, error) {
-	if params.MetaStorage.Address() == storage.LocalStorageAddress {
+	if params.MetaStorage == nil || params.MetaStorage.Address() == storage.LocalStorageAddress {
 		return lock_manager.NewLocalSynchronization(ctx, params)
 	}
 	params.ServerAddress = server.DefaultAddress

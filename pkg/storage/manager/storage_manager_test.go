@@ -11,13 +11,13 @@ import (
 	"github.com/werf/werf/v2/pkg/logging"
 )
 
-var _ = Describe("RetryOnUnexpectedStagesStorageState", func() {
+var _ = Describe("RetryOnUnexpectedStorageState", func() {
 	DescribeTable("retry behavior",
 		func(ctx context.Context, fn func() error, expectedErrMatcher types.GomegaMatcher, expectedCallCount int) {
 			ctx = logging.WithLogger(ctx)
 
 			callCount := 0
-			err := RetryOnUnexpectedStagesStorageState(ctx, nil, func() error {
+			err := RetryOnUnexpectedStorageState(ctx, nil, func() error {
 				callCount++
 				return fn()
 			})
@@ -26,8 +26,8 @@ var _ = Describe("RetryOnUnexpectedStagesStorageState", func() {
 			Expect(callCount).To(Equal(expectedCallCount))
 		},
 		Entry("should terminate after exhausting max retries",
-			func() error { return ErrUnexpectedStagesStorageState },
-			And(MatchError(ErrUnexpectedStagesStorageState), MatchError(ContainSubstring("exhausted"))),
+			func() error { return ErrUnexpectedStorageState },
+			And(MatchError(ErrUnexpectedStorageState), MatchError(ContainSubstring("exhausted"))),
 			4,
 		),
 		Entry("should succeed on first attempt",
@@ -46,10 +46,10 @@ var _ = Describe("RetryOnUnexpectedStagesStorageState", func() {
 		ctx = logging.WithLogger(ctx)
 
 		callCount := 0
-		err := RetryOnUnexpectedStagesStorageState(ctx, nil, func() error {
+		err := RetryOnUnexpectedStorageState(ctx, nil, func() error {
 			callCount++
 			if callCount < 3 {
-				return ErrUnexpectedStagesStorageState
+				return ErrUnexpectedStorageState
 			}
 			return nil
 		})
@@ -64,9 +64,9 @@ var _ = Describe("RetryOnUnexpectedStagesStorageState", func() {
 		cancel()
 
 		callCount := 0
-		err := RetryOnUnexpectedStagesStorageState(cancelCtx, nil, func() error {
+		err := RetryOnUnexpectedStorageState(cancelCtx, nil, func() error {
 			callCount++
-			return ErrUnexpectedStagesStorageState
+			return ErrUnexpectedStorageState
 		})
 
 		Expect(err).To(MatchError(context.Canceled))

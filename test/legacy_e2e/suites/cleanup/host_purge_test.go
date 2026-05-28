@@ -4,7 +4,8 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/werf/v2/pkg/docker_registry"
+	"github.com/werf/werf/v2/pkg/container_backend"
+	"github.com/werf/werf/v2/pkg/storage"
 	"github.com/werf/werf/v2/pkg/werf"
 	"github.com/werf/werf/v2/test/pkg/utils"
 )
@@ -13,7 +14,7 @@ var _ = Describe("host purge command", func() {
 	BeforeEach(func(ctx SpecContext) {
 		Expect(werf.Init(SuiteData.TmpDir, "")).To(Succeed())
 
-		SuiteData.StagesStorage = utils.NewStagesStorage(ctx, ":local", "default", docker_registry.DockerRegistryOptions{})
+		SuiteData.StagesStorage = nil
 
 		utils.CopyIn(utils.FixturePath("host_purge"), SuiteData.TestDirPath)
 
@@ -52,7 +53,8 @@ var _ = Describe("host purge command", func() {
 			It("should remove project images and related container", func(ctx SpecContext) {
 				utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "host", "purge", "--force")
 
-				Expect(StagesCount(ctx)).Should(Equal(0))
+				localStg := storage.NewLocalStagesStorage(container_backend.NewDockerServerBackend(werf.HostLocker().Locker()))
+				Expect(utils.StagesCount(ctx, localStg)).Should(Equal(0))
 			})
 		})
 	})

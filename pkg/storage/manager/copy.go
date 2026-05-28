@@ -18,10 +18,10 @@ type CopyStageOptions struct {
 	IsMultiplatformImage bool
 }
 
-func (m *StorageManager) CopyStage(ctx context.Context, src, dest storage.StagesStorage, stageID image.StageID, opts CopyStageOptions) (*image.StageDesc, error) {
+func (m *StorageManager) CopyStage(ctx context.Context, src storage.StageReader, dest storage.StageWriter, stageID image.StageID, opts CopyStageOptions) (*image.StageDesc, error) {
 	switch typedSrc := src.(type) {
 	case *storage.LocalStagesStorage:
-		return m.copyStageFromLocalStorage(ctx, typedSrc, dest, stageID, opts)
+		return m.copyStageFromLocalStorage(ctx, dest, stageID, opts)
 	case *storage.RepoStagesStorage:
 		return dest.CopyFromStorage(ctx, src, m.ProjectName, stageID, storage.CopyFromStorageOptions{IsMultiplatformImage: opts.IsMultiplatformImage})
 	default:
@@ -29,7 +29,7 @@ func (m *StorageManager) CopyStage(ctx context.Context, src, dest storage.Stages
 	}
 }
 
-func (m *StorageManager) copyStageFromLocalStorage(ctx context.Context, src *storage.LocalStagesStorage, dest storage.StagesStorage, stageID image.StageID, opts CopyStageOptions) (*image.StageDesc, error) {
+func (m *StorageManager) copyStageFromLocalStorage(ctx context.Context, dest storage.StageWriter, stageID image.StageID, opts CopyStageOptions) (*image.StageDesc, error) {
 	if opts.LegacyImage == nil {
 		panic("expected non empty LegacyImage parameter")
 	}
@@ -53,7 +53,7 @@ func (m *StorageManager) copyStageFromLocalStorage(ctx context.Context, src *sto
 		return nil, fmt.Errorf("unable to store stage %s into the stages storage %s: %w", stageID.String(), dest.String(), err)
 	}
 
-	if err := storeStageDescIntoLocalManifestCache(ctx, m.ProjectName, stageID, dest, ConvertStageDescForStagesStorage(newImg.GetStageDesc(), dest)); err != nil {
+	if err := storeStageDescIntoLocalManifestCache(ctx, m.ProjectName, stageID, dest, ConvertStageDescForStorage(newImg.GetStageDesc(), dest)); err != nil {
 		return nil, fmt.Errorf("error storing stage %s description into local manifest cache: %w", destImageName, err)
 	}
 	if err := lrumeta.CommonLRUImagesCache.AccessImage(ctx, destImageName); err != nil {

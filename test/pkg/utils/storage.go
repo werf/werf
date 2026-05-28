@@ -11,33 +11,29 @@ import (
 	"github.com/werf/werf/v2/pkg/werf"
 )
 
-func NewStagesStorage(ctx context.Context, stagesStorageAddress, implementationName string, dockerRegistryOptions docker_registry.DockerRegistryOptions) storage.PrimaryStagesStorage {
-	if stagesStorageAddress == storage.LocalStorageAddress {
-		return storage.NewLocalStagesStorage(container_backend.NewDockerServerBackend(werf.HostLocker().Locker()))
-	} else {
-		dockerRegistry, err := docker_registry.NewDockerRegistry(ctx, stagesStorageAddress, implementationName, dockerRegistryOptions)
-		Expect(err).ShouldNot(HaveOccurred())
-		return storage.NewRepoStagesStorage(&storage.NewRepoStagesStorageOptions{
-			RepoAddress:      stagesStorageAddress,
-			ContainerBackend: container_backend.NewDockerServerBackend(werf.HostLocker().Locker()),
-			DockerRegistry:   dockerRegistry,
-		})
-	}
+func NewStagesStorage(ctx context.Context, stagesStorageAddress, implementationName string, dockerRegistryOptions docker_registry.DockerRegistryOptions) storage.CacheAndMetaStorage {
+	dockerRegistry, err := docker_registry.NewDockerRegistry(ctx, stagesStorageAddress, implementationName, dockerRegistryOptions)
+	Expect(err).ShouldNot(HaveOccurred())
+	return storage.NewRepoStagesStorage(&storage.NewRepoStagesStorageOptions{
+		RepoAddress:      stagesStorageAddress,
+		ContainerBackend: container_backend.NewDockerServerBackend(werf.HostLocker().Locker()),
+		DockerRegistry:   dockerRegistry,
+	})
 }
 
-func StagesCount(ctx context.Context, stagesStorage storage.StagesStorage) int {
+func StagesCount(ctx context.Context, stagesStorage storage.StageReader) int {
 	repoImages, err := stagesStorage.GetStagesIDs(WithDependencies(ctx), ProjectName())
 	Expect(err).ShouldNot(HaveOccurred())
 	return len(repoImages)
 }
 
-func ManagedImagesCount(ctx context.Context, stagesStorage storage.StagesStorage) int {
+func ManagedImagesCount(ctx context.Context, stagesStorage storage.MetaStorage) int {
 	managedImages, err := stagesStorage.GetManagedImages(WithDependencies(ctx), ProjectName())
 	Expect(err).ShouldNot(HaveOccurred())
 	return len(managedImages)
 }
 
-func CustomTagsMetadataList(ctx context.Context, stagesStorage storage.PrimaryStagesStorage) []*storage.CustomTagMetadata {
+func CustomTagsMetadataList(ctx context.Context, stagesStorage storage.ImagesRepoStorage) []*storage.CustomTagMetadata {
 	ctx = WithDependencies(ctx)
 
 	customTagMetadataIDs, err := stagesStorage.GetStageCustomTagMetadataIDs(ctx)
@@ -53,7 +49,7 @@ func CustomTagsMetadataList(ctx context.Context, stagesStorage storage.PrimarySt
 	return result
 }
 
-func ImageMetadata(ctx context.Context, stagesStorage storage.StagesStorage, imageName string) map[string][]string {
+func ImageMetadata(ctx context.Context, stagesStorage storage.MetaStorage, imageName string) map[string][]string {
 	imageMetadataByImageName, _, err := stagesStorage.GetAllAndGroupImageMetadataByImageName(WithDependencies(ctx), ProjectName(), []string{imageName})
 	Expect(err).ShouldNot(HaveOccurred())
 	return imageMetadataByImageName[imageName]

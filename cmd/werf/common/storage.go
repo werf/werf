@@ -36,32 +36,58 @@ func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfi
 		return nil, err
 	}
 
-	var stagesStorage storage.PrimaryStagesStorage
+	isLocalMode := c.HostPurge
+	if !c.HostPurge && !getGranularMode(c.CmdData) && c.CmdData.Repo != nil && c.CmdData.Repo.Address != nil && *c.CmdData.Repo.Address == storage.LocalStorageAddress {
+		isLocalMode = true
+	}
 
-	if c.HostPurge {
-		stagesStorage = GetLocalStagesStorage(c.ContainerBackend)
+	if isLocalMode {
+		localStg := GetLocalStagesStorage(c.ContainerBackend)
+
+		synchronization, err := GetSynchronization(ctx, c.CmdData, c.ProjectName, nil)
+		if err != nil {
+			return nil, fmt.Errorf("error get synchronization: %w", err)
+		}
+
+		storageLockManager, err := synchronization.GetStorageLockManager(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("error get storage lock manager: %w", err)
+		}
+
+		sm := &manager.StorageManager{
+			ProjectName:        c.ProjectName,
+			MetaStorage:        nil,
+			StorageLockManager: storageLockManager,
+			ImagesRepoStorages: nil,
+			CacheWriters:       []storage.StageWriter{localStg},
+			CacheReaders:       []storage.StageReader{localStg},
+		}
+		warnIfCacheListsEmpty(ctx, sm)
+		printRepositoriesDiagnostic(ctx, sm, c.CmdData)
+		return sm, nil
+	}
+
+	var stagesStorage storage.CacheAndMetaStorage
+	var stgErr error
+	if getGranularMode(c.CmdData) {
+		if c.CmdData.MetaRepo == nil || c.CmdData.MetaRepo.Address == nil || *c.CmdData.MetaRepo.Address == "" {
+			return nil, fmt.Errorf("--meta-repo is required when using granular registry flags (--images-repo, --cache-from, --cache-to)")
+		}
+
+		stagesStorage, stgErr = GetMetaRepoStagesStorage(ctx, c.ContainerBackend, c.CmdData, GetMetaStorageOpts{
+			CleanupDisabled:                c.CleanupDisabled,
+			GitHistoryBasedCleanupDisabled: c.GitHistoryBasedCleanupDisabled,
+			SkipMetaCheck:                  c.SkipMetaCheck,
+		})
 	} else {
-		var stgErr error
-		if getGranularMode(c.CmdData) {
-			if c.CmdData.MetaRepo == nil || c.CmdData.MetaRepo.Address == nil || *c.CmdData.MetaRepo.Address == "" {
-				return nil, fmt.Errorf("--meta-repo is required when using granular registry flags (--images-repo, --cache-from, --cache-to)")
-			}
-
-			stagesStorage, stgErr = GetMetaRepoStagesStorage(ctx, c.ContainerBackend, c.CmdData, GetMetaStorageOpts{
-				CleanupDisabled:                c.CleanupDisabled,
-				GitHistoryBasedCleanupDisabled: c.GitHistoryBasedCleanupDisabled,
-				SkipMetaCheck:                  c.SkipMetaCheck,
-			})
-		} else {
-			stagesStorage, stgErr = GetMetaStorage(ctx, c.ContainerBackend, c.CmdData, GetMetaStorageOpts{
-				CleanupDisabled:                c.CleanupDisabled,
-				GitHistoryBasedCleanupDisabled: c.GitHistoryBasedCleanupDisabled,
-				SkipMetaCheck:                  c.SkipMetaCheck,
-			})
-		}
-		if stgErr != nil {
-			return nil, stgErr
-		}
+		stagesStorage, stgErr = GetMetaStorage(ctx, c.ContainerBackend, c.CmdData, GetMetaStorageOpts{
+			CleanupDisabled:                c.CleanupDisabled,
+			GitHistoryBasedCleanupDisabled: c.GitHistoryBasedCleanupDisabled,
+			SkipMetaCheck:                  c.SkipMetaCheck,
+		})
+	}
+	if stgErr != nil {
+		return nil, stgErr
 	}
 
 	synchronization, err := GetSynchronization(ctx, c.CmdData, c.ProjectName, stagesStorage)
@@ -74,54 +100,38 @@ func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfi
 		return nil, fmt.Errorf("error get storage lock manager: %w", err)
 	}
 
-	if c.HostPurge {
-		sm := &manager.StorageManager{
-			ProjectName:          c.ProjectName,
-			MetaStorage:          stagesStorage,
-			StorageLockManager:   storageLockManager,
-			ImagesRepoStorage:    nil,
-			CacheToStorageList:   nil,
-			CacheFromStorageList: nil,
-		}
-		printRepositoriesDiagnostic(ctx, sm, c.CmdData)
-		return sm, nil
-	}
-
-	var imagesRepoStorage storage.StagesStorage
-	var secondaryStagesStorageList []storage.StagesStorage
-	var cacheToStorageList []storage.StagesStorage
+	var imagesRepoStorages []storage.ImagesRepoStorage
+	var cacheFromList []storage.StageReader
+	var cacheToList []storage.StageWriter
 	if getGranularMode(c.CmdData) {
-		imagesRepoStorage, err = GetImagesRepoStagesStorage(ctx, c.ContainerBackend, c.CmdData)
+		imagesRepoStorages, err = GetImagesRepoStorages(ctx, c.ContainerBackend, c.CmdData)
 		if err != nil {
 			return nil, fmt.Errorf("error get images repo storage: %w", err)
 		}
 
-		secondaryStagesStorageList, err = getCacheFromStorageList(ctx, c.ContainerBackend, c.CmdData)
+		cacheFromList, err = getCacheFromStorageList(ctx, c.ContainerBackend, c.CmdData)
 		if err != nil {
 			return nil, fmt.Errorf("error get cache from storage list: %w", err)
 		}
-		if stagesStorage.Address() != storage.LocalStorageAddress {
-			secondaryStagesStorageList = append([]storage.StagesStorage{storage.NewLocalStagesStorage(c.ContainerBackend)}, secondaryStagesStorageList...)
-		}
+		cacheFromList = append([]storage.StageReader{storage.NewLocalStagesStorage(c.ContainerBackend)}, cacheFromList...)
 
-		cacheToStorageList, err = getCacheToStorageList(ctx, c.ContainerBackend, c.CmdData)
+		cacheToList, err = getCacheToStorageList(ctx, c.ContainerBackend, c.CmdData)
 		if err != nil {
 			return nil, fmt.Errorf("error get cache storage list: %w", err)
 		}
 	} else {
-		imagesRepoStorage, err = GetOptionalImagesRepoStorage(ctx, c.ContainerBackend, c.CmdData)
+		imagesRepoStorages, err = GetOptionalImagesRepoStorages(ctx, c.ContainerBackend, c.CmdData)
 		if err != nil {
 			return nil, fmt.Errorf("error get images repo storage: %w", err)
 		}
 
-		secondaryStagesStorageList, err = getCacheFromStorageList(ctx, c.ContainerBackend, c.CmdData)
+		cacheFromList, err = getCacheFromStorageList(ctx, c.ContainerBackend, c.CmdData)
 		if err != nil {
 			return nil, fmt.Errorf("error get cache from storage list: %w", err)
 		}
-		if stagesStorage.Address() != storage.LocalStorageAddress {
-			secondaryStagesStorageList = append([]storage.StagesStorage{storage.NewLocalStagesStorage(c.ContainerBackend)}, secondaryStagesStorageList...)
-		}
-		cacheToStorageList, err = GetCacheToStorageList(ctx, c.ContainerBackend, c.CmdData)
+		cacheFromList = append([]storage.StageReader{storage.NewLocalStagesStorage(c.ContainerBackend)}, cacheFromList...)
+
+		cacheToList, err = GetCacheToStorageList(ctx, c.ContainerBackend, c.CmdData)
 		if err != nil {
 			return nil, fmt.Errorf("error get cache storage list: %w", err)
 		}
@@ -131,13 +141,23 @@ func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfi
 		ProjectName:        c.ProjectName,
 		StorageLockManager: storageLockManager,
 
-		MetaStorage:          stagesStorage,
-		ImagesRepoStorage:    imagesRepoStorage,
-		CacheToStorageList:   cacheToStorageList,
-		CacheFromStorageList: secondaryStagesStorageList,
+		MetaStorage:        stagesStorage,
+		ImagesRepoStorages: imagesRepoStorages,
+		CacheWriters:       append([]storage.StageWriter{stagesStorage}, cacheToList...),
+		CacheReaders:       append([]storage.StageReader{stagesStorage}, cacheFromList...),
 	}
+	warnIfCacheListsEmpty(ctx, sm)
 	printRepositoriesDiagnostic(ctx, sm, c.CmdData)
 	return sm, nil
+}
+
+func warnIfCacheListsEmpty(ctx context.Context, sm *manager.StorageManager) {
+	if len(sm.CacheReaders) == 0 {
+		logboek.Context(ctx).Warn().LogF("WARNING: cache readers are empty: building without cache, all stages will be built from scratch\n")
+	}
+	if len(sm.CacheWriters) == 0 {
+		logboek.Context(ctx).Warn().LogF("WARNING: cache writers are empty: built stages will not be pushed to any remote cache, subsequent builds will start from scratch\n")
+	}
 }
 
 func printRepositoriesDiagnostic(ctx context.Context, sm *manager.StorageManager, cmdData *CmdData) {
@@ -150,32 +170,40 @@ func printRepositoriesDiagnostic(ctx context.Context, sm *manager.StorageManager
 	logboek.Context(ctx).Default().LogBlock("Using repositories").Do(func() {
 		printAddress(ctx, "cache-from", getCacheFromAddresses(sm), suffix)
 		printAddress(ctx, "cache-to", getCacheToAddresses(sm), suffix)
-		printAddress(ctx, "images-repo", []string{getFinalRepoAddress(sm)}, suffix)
-		printAddress(ctx, "meta-repo", []string{sm.MetaStorage.Address()}, suffix)
+		printAddress(ctx, "images-repo", getImagesRepoAddresses(sm), suffix)
+		metaAddrs := []string{}
+		if sm.MetaStorage != nil {
+			metaAddrs = []string{sm.MetaStorage.Address()}
+		}
+		printAddress(ctx, "meta-repo", metaAddrs, suffix)
 	})
 }
 
 func getCacheFromAddresses(sm *manager.StorageManager) []string {
 	addrs := []string{}
-	for _, storage := range sm.CacheFromStorageList {
-		addrs = append(addrs, storage.Address())
+	for _, s := range sm.CacheReaders {
+		addrs = append(addrs, s.Address())
 	}
 	return addrs
 }
 
 func getCacheToAddresses(sm *manager.StorageManager) []string {
 	addrs := []string{}
-	for _, storage := range sm.CacheToStorageList {
-		addrs = append(addrs, storage.Address())
+	for _, s := range sm.CacheWriters {
+		addrs = append(addrs, s.Address())
 	}
 	return addrs
 }
 
-func getFinalRepoAddress(sm *manager.StorageManager) string {
-	if sm.ImagesRepoStorage != nil {
-		return sm.ImagesRepoStorage.Address()
+func getImagesRepoAddresses(sm *manager.StorageManager) []string {
+	addrs := []string{}
+	for _, s := range sm.ImagesRepoStorages {
+		addrs = append(addrs, s.Address())
 	}
-	return "(not set)"
+	if len(addrs) == 0 {
+		addrs = []string{"(not set)"}
+	}
+	return addrs
 }
 
 func printAddress(ctx context.Context, label string, addrs []string, suffix string) {

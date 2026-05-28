@@ -27,7 +27,7 @@ func TestSuite(t *testing.T) {
 
 var SuiteData = struct {
 	suite_init.SuiteData
-	StagesStorage     storage.PrimaryStagesStorage
+	StagesStorage     storage.CacheAndMetaStorage
 	ContainerRegistry docker_registry.Interface
 }{}
 

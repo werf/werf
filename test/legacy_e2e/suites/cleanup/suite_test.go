@@ -34,7 +34,7 @@ func TestSuite(t *testing.T) {
 var SuiteData struct {
 	suite_init.SuiteData
 	TestImplementation string
-	StagesStorage      storage.PrimaryStagesStorage
+	StagesStorage      storage.CacheAndMetaStorage
 	ContainerRegistry  docker_registry.Interface
 }
 
@@ -96,5 +96,5 @@ func CustomTags(ctx context.Context) []string {
 }
 
 func CustomTagsMetadataList(ctx context.Context) []*storage.CustomTagMetadata {
-	return utils.CustomTagsMetadataList(ctx, SuiteData.StagesStorage)
+	return utils.CustomTagsMetadataList(ctx, SuiteData.StagesStorage.(storage.ImagesRepoStorage))
 }

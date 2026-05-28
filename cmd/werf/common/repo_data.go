@@ -58,14 +58,14 @@ type CreateStagesStorageOptions struct {
 	SkipMetaCheck                  bool
 }
 
-func (repoData *RepoData) CreateStagesStorage(ctx context.Context, opts *CreateStagesStorageOptions) (storage.PrimaryStagesStorage, error) {
+func (repoData *RepoData) CreateStagesStorage(ctx context.Context, opts *CreateStagesStorageOptions) (storage.CacheAndMetaStorage, error) {
 	addr, err := repoData.GetAddress()
 	if err != nil {
 		return nil, err
 	}
 
 	if addr == storage.LocalStorageAddress {
-		return storage.NewLocalStagesStorage(opts.ContainerBackend), nil
+		return nil, fmt.Errorf("cannot create stages storage for local address")
 	} else {
 		dockerRegistry, err := repoData.CreateDockerRegistry(ctx, opts.InsecureRegistry, opts.SkipTlsVerifyRegistry, opts.InsecureRegistryHosts)
 		if err != nil {

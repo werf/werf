@@ -6,8 +6,6 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/spf13/cobra"
-
-	"github.com/werf/werf/v2/pkg/util/option"
 )
 
 var _ = Describe("RepoFlags", func() {
@@ -28,13 +26,11 @@ var _ = Describe("RepoFlags", func() {
 			finalAddr := "registry.example.com/final"
 			cmdData.deprecatedFinalRepoAddr = &finalAddr
 
-			cmdData.ImagesRepo = NewRepoData("images-repo", RepoDataOptions{OnlyAddress: true})
-			imagesAddr := ""
-			cmdData.ImagesRepo.Address = &imagesAddr
+			cmdData.ImagesRepo = &[]string{}
 
 			err := resolveDeprecatedFlags(context.Background(), cmdData)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(option.PtrValueOrDefault(cmdData.ImagesRepo.Address, "")).To(Equal("registry.example.com/final"))
+			Expect(*cmdData.ImagesRepo).To(Equal([]string{"registry.example.com/final"}))
 		})
 
 		It("should error when --final-repo and --images-repo both set", func() {
@@ -43,9 +39,7 @@ var _ = Describe("RepoFlags", func() {
 			finalAddr := "registry.example.com/final"
 			cmdData.deprecatedFinalRepoAddr = &finalAddr
 
-			cmdData.ImagesRepo = NewRepoData("images-repo", RepoDataOptions{OnlyAddress: true})
-			imagesAddr := "registry.example.com/images"
-			cmdData.ImagesRepo.Address = &imagesAddr
+			cmdData.ImagesRepo = &[]string{"registry.example.com/images"}
 
 			err := resolveDeprecatedFlags(context.Background(), cmdData)
 			Expect(err).To(HaveOccurred())
@@ -57,13 +51,15 @@ var _ = Describe("RepoFlags", func() {
 		func(repo, imagesRepo, metaRepo string, cacheFrom, cacheTo []string, expectErr bool) {
 			cmdData := &CmdData{
 				Repo:       NewRepoData("repo", RepoDataOptions{}),
-				ImagesRepo: NewRepoData("images-repo", RepoDataOptions{OnlyAddress: true}),
+				ImagesRepo: &[]string{},
 				MetaRepo:   NewRepoData("meta-repo", RepoDataOptions{OnlyAddress: true}),
 				CacheFrom:  &[]string{},
 				CacheTo:    &[]string{},
 			}
 			cmdData.Repo.Address = &repo
-			cmdData.ImagesRepo.Address = &imagesRepo
+			if imagesRepo != "" {
+				cmdData.ImagesRepo = &[]string{imagesRepo}
+			}
 			cmdData.MetaRepo.Address = &metaRepo
 			if cacheFrom != nil {
 				cmdData.CacheFrom = &cacheFrom
@@ -91,12 +87,10 @@ var _ = Describe("RepoFlags", func() {
 	It("should detect conflict when WERF_REPO env var is set alongside --images-repo", func() {
 		cmdData := &CmdData{
 			Repo:       NewRepoData("repo", RepoDataOptions{}),
-			ImagesRepo: NewRepoData("images-repo", RepoDataOptions{OnlyAddress: true}),
+			ImagesRepo: &[]string{"registry.example.com/images"},
 		}
 		repoAddr := ""
 		cmdData.Repo.Address = &repoAddr
-		imagesAddr := "registry.example.com/images"
-		cmdData.ImagesRepo.Address = &imagesAddr
 
 		GinkgoT().Setenv("WERF_REPO", "registry.example.com/repo")
 
@@ -115,12 +109,14 @@ var _ = Describe("StorageAssembly", func() {
 	DescribeTable("granular mode detection",
 		func(imagesRepo, metaRepo string, cacheFrom, cacheTo []string, expected bool) {
 			cmdData := &CmdData{
-				ImagesRepo: NewRepoData("images-repo", RepoDataOptions{OnlyAddress: true}),
+				ImagesRepo: &[]string{},
 				MetaRepo:   NewRepoData("meta-repo", RepoDataOptions{OnlyAddress: true}),
 				CacheFrom:  &[]string{},
 				CacheTo:    &[]string{},
 			}
-			cmdData.ImagesRepo.Address = &imagesRepo
+			if imagesRepo != "" {
+				cmdData.ImagesRepo = &[]string{imagesRepo}
+			}
 			cmdData.MetaRepo.Address = &metaRepo
 			if cacheFrom != nil {
 				cmdData.CacheFrom = &cacheFrom
@@ -142,7 +138,7 @@ var _ = Describe("StorageAssembly", func() {
 	It("should be in legacy mode when only --repo is set", func() {
 		cmdData := &CmdData{
 			Repo:       NewRepoData("repo", RepoDataOptions{}),
-			ImagesRepo: NewRepoData("images-repo", RepoDataOptions{OnlyAddress: true}),
+			ImagesRepo: &[]string{},
 			MetaRepo:   NewRepoData("meta-repo", RepoDataOptions{OnlyAddress: true}),
 			CacheFrom:  &[]string{},
 			CacheTo:    &[]string{},
@@ -150,9 +146,7 @@ var _ = Describe("StorageAssembly", func() {
 		repoAddr := "registry.example.com/repo"
 		cmdData.Repo.Address = &repoAddr
 		emptyAddr := ""
-		cmdData.ImagesRepo.Address = &emptyAddr
-		emptyAddr2 := ""
-		cmdData.MetaRepo.Address = &emptyAddr2
+		cmdData.MetaRepo.Address = &emptyAddr
 
 		Expect(getGranularMode(cmdData)).To(BeFalse())
 	})

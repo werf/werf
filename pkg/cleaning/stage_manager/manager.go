@@ -145,14 +145,19 @@ func (m *Manager) InitCustomTagsMetadata(ctx context.Context, storageManager man
 }
 
 func GetCustomTagsMetadata(ctx context.Context, storageManager manager.StorageManagerInterface) (map[string][]string, error) {
-	stageCustomTagMetadataIDs, err := storageManager.GetMetaStorage().GetStageCustomTagMetadataIDs(ctx, storage.WithCache())
-	if err != nil {
-		return nil, fmt.Errorf("unable to get stage custom tag metadata IDs: %w", err)
+	var stageCustomTagMetadataIDs []string
+	for _, imgRepo := range storageManager.GetImagesRepoStorages() {
+		ids, err := imgRepo.GetStageCustomTagMetadataIDs(ctx, storage.WithCache())
+		if err != nil {
+			return nil, fmt.Errorf("unable to get stage custom tag metadata IDs: %w", err)
+		}
+		stageCustomTagMetadataIDs = append(stageCustomTagMetadataIDs, ids...)
 	}
 
 	var mutex sync.Mutex
 	stageIDCustomTagList := make(map[string][]string)
-	err = storageManager.ForEachGetStageCustomTagMetadata(ctx, stageCustomTagMetadataIDs, func(ctx context.Context, metadataID string, metadata *storage.CustomTagMetadata, err error) error {
+	var forEachErr error
+	forEachErr = storageManager.ForEachGetStageCustomTagMetadata(ctx, stageCustomTagMetadataIDs, func(ctx context.Context, metadataID string, metadata *storage.CustomTagMetadata, err error) error {
 		if storage.IsErrCustomTagMetadataNotFound(err) || storage.IsErrBrokenImage(err) {
 			logboek.Context(ctx).Warn().LogF("WARNING: Skipping invalid custom tag metadata %s\n", metadataID)
 			return nil
@@ -168,8 +173,8 @@ func GetCustomTagsMetadata(ctx context.Context, storageManager manager.StorageMa
 
 		return nil
 	})
-	if err != nil {
-		return nil, err
+	if forEachErr != nil {
+		return nil, forEachErr
 	}
 
 	return stageIDCustomTagList, nil

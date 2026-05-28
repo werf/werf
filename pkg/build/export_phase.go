@@ -3,10 +3,10 @@ package build
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
-	"k8s.io/utils/strings/slices"
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
@@ -14,7 +14,6 @@ import (
 	"github.com/werf/logboek/pkg/types"
 	build_image "github.com/werf/werf/v2/pkg/build/image"
 	"github.com/werf/werf/v2/pkg/image"
-	"github.com/werf/werf/v2/pkg/storage"
 	"github.com/werf/werf/v2/pkg/util/parallel"
 )
 
@@ -65,7 +64,7 @@ func (e *Exporter) Run(ctx context.Context) error {
 		} else {
 			// FIXME(multiarch): Support multiplatform manifest by pushing local images to repo first, then create manifest list.
 			// FIXME(multiarch): Also support multiplatform manifest in werf build command in local mode with enabled final-repo.
-			if _, isLocal := e.Conveyor.StorageManager.GetMetaStorage().(*storage.LocalStagesStorage); isLocal {
+			if e.Conveyor.StorageManager.GetMetaStorage() == nil {
 				return fmt.Errorf("export command in multiplatform mode should be used with remote stages storage")
 			}
 
@@ -145,6 +144,10 @@ func (e *Exporter) exportImageFromReportRecord(ctx context.Context, record Repor
 			options.Style(style.Highlight())
 		}).
 		DoError(func() error {
+			if len(e.Conveyor.StorageManager.GetImagesRepoStorages()) == 0 {
+				return fmt.Errorf("images repo storage is not configured")
+			}
+
 			stageDesc, err := stageDescFromReportRecord(record)
 			if err != nil {
 				return fmt.Errorf("unable to get stage desc from report record: %w", err)
@@ -154,22 +157,24 @@ func (e *Exporter) exportImageFromReportRecord(ctx context.Context, record Repor
 				stageDesc.Info.IsIndex = true
 			}
 
-			for _, tagFunc := range e.ExportTagFuncList {
-				stageID, err := extractStageIDFromReport(record)
-				if err != nil {
-					return fmt.Errorf("unable to extract stage id from report record: %w", err)
-				}
+			for _, imagesRepoStorage := range e.Conveyor.StorageManager.GetImagesRepoStorages() {
+				for _, tagFunc := range e.ExportTagFuncList {
+					stageID, err := extractStageIDFromReport(record)
+					if err != nil {
+						return fmt.Errorf("unable to extract stage id from report record: %w", err)
+					}
 
-				tag := tagFunc(record.WerfImageName, stageID)
-				if err := logboek.Context(ctx).Default().LogProcess("tag %s", tag).
-					DoError(func() error {
-						if err := e.Conveyor.StorageManager.GetMetaStorage().ExportStage(ctx, stageDesc, tag, e.MutateConfigFunc); err != nil {
-							return fmt.Errorf("unable to export stage %s: %w", stageDesc.StageID.String(), err)
-						}
+					tag := tagFunc(record.WerfImageName, stageID)
+					if err := logboek.Context(ctx).Default().LogProcess("tag %s", tag).
+						DoError(func() error {
+							if err := imagesRepoStorage.ExportStage(ctx, stageDesc, tag, e.MutateConfigFunc); err != nil {
+								return fmt.Errorf("unable to export stage %s: %w", stageDesc.StageID.String(), err)
+							}
 
-						return nil
-					}); err != nil {
-					return err
+							return nil
+						}); err != nil {
+						return err
+					}
 				}
 			}
 
@@ -183,18 +188,24 @@ func (e *Exporter) exportMultiplatformImage(ctx context.Context, img *build_imag
 			options.Style(style.Highlight())
 		}).
 		DoError(func() error {
-			for _, tagFunc := range e.ExportTagFuncList {
-				tag := tagFunc(img.Name, img.GetStageID().String())
-				if err := logboek.Context(ctx).Default().LogProcess("tag %s", tag).
-					DoError(func() error {
-						stageDesc := img.GetStageDesc()
-						if err := e.Conveyor.StorageManager.GetMetaStorage().ExportStage(ctx, stageDesc, tag, e.MutateConfigFunc); err != nil {
-							return fmt.Errorf("unable to export stage %s: %w", stageDesc.StageID.String(), err)
-						}
+			if len(e.Conveyor.StorageManager.GetImagesRepoStorages()) == 0 {
+				return fmt.Errorf("images repo storage is not configured")
+			}
 
-						return nil
-					}); err != nil {
-					return err
+			for _, imagesRepoStorage := range e.Conveyor.StorageManager.GetImagesRepoStorages() {
+				for _, tagFunc := range e.ExportTagFuncList {
+					tag := tagFunc(img.Name, img.GetStageID().String())
+					if err := logboek.Context(ctx).Default().LogProcess("tag %s", tag).
+						DoError(func() error {
+							stageDesc := img.GetStageDesc()
+							if err := imagesRepoStorage.ExportStage(ctx, stageDesc, tag, e.MutateConfigFunc); err != nil {
+								return fmt.Errorf("unable to export stage %s: %w", stageDesc.StageID.String(), err)
+							}
+
+							return nil
+						}); err != nil {
+						return err
+					}
 				}
 			}
 
@@ -215,18 +226,24 @@ func (e *Exporter) exportImage(ctx context.Context, img *build_image.Image) erro
 			options.Style(style.Highlight())
 		}).
 		DoError(func() error {
-			for _, tagFunc := range e.ExportTagFuncList {
-				tag := tagFunc(img.GetName(), img.GetStageID())
-				if err := logboek.Context(ctx).Default().LogProcess("tag %s", tag).
-					DoError(func() error {
-						stageDesc := img.GetLastNonEmptyStage().GetStageImage().Image.GetStageDesc()
-						if err := e.Conveyor.StorageManager.GetMetaStorage().ExportStage(ctx, stageDesc, tag, e.MutateConfigFunc); err != nil {
-							return err
-						}
+			if len(e.Conveyor.StorageManager.GetImagesRepoStorages()) == 0 {
+				return fmt.Errorf("images repo storage is not configured")
+			}
 
-						return nil
-					}); err != nil {
-					return err
+			for _, imagesRepoStorage := range e.Conveyor.StorageManager.GetImagesRepoStorages() {
+				for _, tagFunc := range e.ExportTagFuncList {
+					tag := tagFunc(img.GetName(), img.GetStageID())
+					if err := logboek.Context(ctx).Default().LogProcess("tag %s", tag).
+						DoError(func() error {
+							stageDesc := img.GetLastNonEmptyStage().GetStageImage().Image.GetStageDesc()
+							if err := imagesRepoStorage.ExportStage(ctx, stageDesc, tag, e.MutateConfigFunc); err != nil {
+								return err
+							}
+
+							return nil
+						}); err != nil {
+						return err
+					}
 				}
 			}
 

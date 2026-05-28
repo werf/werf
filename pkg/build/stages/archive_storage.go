@@ -57,7 +57,8 @@ func (s *ArchiveStorage) GetStageArchiveOpener(stageTag string) *StageArchiveOpe
 }
 
 func (s *ArchiveStorage) copyAllFromRemote(ctx context.Context, fromRemote *RemoteStorage, opts copyToOptions) error {
-	stageIds, err := fromRemote.StorageManager.MetaStorage.GetStagesIDs(ctx, opts.ProjectName)
+	stageReader := fromRemote.StorageManager.GetCacheReaders()[0]
+	stageIds, err := stageReader.GetStagesIDs(ctx, opts.ProjectName)
 	if err != nil {
 		return fmt.Errorf("unable to get stages: %w", err)
 	}
@@ -66,7 +67,7 @@ func (s *ArchiveStorage) copyAllFromRemote(ctx context.Context, fromRemote *Remo
 		for _, stageId := range stageIds {
 			logboek.Context(ctx).Default().LogFDetails("Copying stage: %s\n", stageId)
 
-			stageDesc, err := fromRemote.StorageManager.MetaStorage.GetStageDesc(ctx, opts.ProjectName, stageId)
+			stageDesc, err := stageReader.GetStageDesc(ctx, opts.ProjectName, stageId)
 			if err != nil {
 				return fmt.Errorf("unable to get description of stage %s: %w", stageId, err)
 			}

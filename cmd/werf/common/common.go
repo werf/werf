@@ -421,7 +421,7 @@ func GetFirstExistingKubeConfigBase64EnvVar() string {
 	return util.GetFirstExistingEnvVarAsString("WERF_KUBE_CONFIG_BASE64", "WERF_KUBECONFIG_BASE64", "KUBECONFIG_BASE64")
 }
 
-func SetupSecondaryStagesStorageOptions(cmdData *CmdData, cmd *cobra.Command) {
+func SetupDeprecatedSecondaryRepo(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.deprecatedSecondaryRepoAddrs = new([]string)
 	cmd.Flags().StringArrayVarP(cmdData.deprecatedSecondaryRepoAddrs, "secondary-repo", "", []string{}, `[DEPRECATED: use --cache-from instead] Specify one or multiple secondary read-only repos with images that will be used as a cache.
 Also, can be specified with $WERF_SECONDARY_REPO_* (e.g. $WERF_SECONDARY_REPO_1=..., $WERF_SECONDARY_REPO_2=...)`)
@@ -447,15 +447,16 @@ For cleaning custom tags and associated content-based tag are treated as one.
 Also, can be defined with $WERF_USE_CUSTOM_TAG (e.g. $WERF_USE_CUSTOM_TAG="%image%-tag")`)
 }
 
-func SetupCacheStagesStorageOptions(cmdData *CmdData, cmd *cobra.Command) {
+func SetupDeprecatedCacheRepo(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.deprecatedCacheRepoAddrs = new([]string)
 	cmd.Flags().StringArrayVarP(cmdData.deprecatedCacheRepoAddrs, "cache-repo", "", []string{}, `[DEPRECATED: use --cache-from and --cache-to instead] Specify one or multiple cache repos with images that will be used as a cache. Cache will be populated when pushing newly built images into the primary repo and when pulling existing images from the primary repo. Cache repo will be used to pull images and to get manifests before making requests to the primary repo.
 Also, can be specified with $WERF_CACHE_REPO_* (e.g. $WERF_CACHE_REPO_1=..., $WERF_CACHE_REPO_2=...)`)
 }
 
 func SetupImagesRepo(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.ImagesRepo = NewRepoData("images-repo", RepoDataOptions{OnlyAddress: true})
-	cmdData.ImagesRepo.SetupCmd(cmd)
+	cmdData.ImagesRepo = new([]string)
+	cmd.Flags().StringArrayVarP(cmdData.ImagesRepo, "images-repo", "", []string{}, `Specify one or multiple images repositories to store final images and custom tags.
+Also, can be specified with $WERF_IMAGES_REPO_* (e.g. $WERF_IMAGES_REPO_1=..., $WERF_IMAGES_REPO_2=...)`)
 }
 
 func SetupMetaRepo(cmdData *CmdData, cmd *cobra.Command) {
@@ -480,8 +481,8 @@ func SetupRepoOptions(cmdData *CmdData, cmd *cobra.Command, opts RepoDataOptions
 	SetupSkipTlsVerifyRegistry(cmdData, cmd)
 	SetupRepo(cmdData, cmd, opts)
 	SetupFinalRepo(cmdData, cmd)
-	SetupSecondaryStagesStorageOptions(cmdData, cmd)
-	SetupCacheStagesStorageOptions(cmdData, cmd)
+	SetupDeprecatedSecondaryRepo(cmdData, cmd)
+	SetupDeprecatedCacheRepo(cmdData, cmd)
 	SetupImagesRepo(cmdData, cmd)
 	SetupMetaRepo(cmdData, cmd)
 	SetupCacheFrom(cmdData, cmd)
@@ -843,7 +844,7 @@ type GetMetaStorageOpts struct {
 	SkipMetaCheck                  bool
 }
 
-func GetMetaStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData, opts GetMetaStorageOpts) (storage.PrimaryStagesStorage, error) {
+func GetMetaStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData, opts GetMetaStorageOpts) (storage.CacheAndMetaStorage, error) {
 	buildahMode, _, err := GetBuildahMode()
 	if err != nil {
 		return nil, fmt.Errorf("unable to determine buildah mode: %w", err)
@@ -865,10 +866,16 @@ func GetMetaStorage(ctx context.Context, containerBackend container_backend.Cont
 	})
 }
 
-func GetOptionalImagesRepoStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData) (storage.StagesStorage, error) {
-	if cmdData.ImagesRepo == nil || cmdData.ImagesRepo.Address == nil || *cmdData.ImagesRepo.Address == "" {
-		return nil, nil
+func GetImagesRepoAddrs(cmdData *CmdData) []string {
+	res := append([]string{}, util.PredefinedValuesByEnvNamePrefix("WERF_IMAGES_REPO_")...)
+	if cmdData.deprecatedFinalRepoAddr != nil && *cmdData.deprecatedFinalRepoAddr != "" {
+		res = append(res, *cmdData.deprecatedFinalRepoAddr)
 	}
+	return append(res, *cmdData.ImagesRepo...)
+}
+
+func GetImagesRepoStorages(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData) ([]storage.ImagesRepoStorage, error) {
+	var res []storage.ImagesRepoStorage
 
 	buildahMode, _, err := GetBuildahMode()
 	if err != nil {
@@ -880,40 +887,34 @@ func GetOptionalImagesRepoStorage(ctx context.Context, containerBackend containe
 		return nil, fmt.Errorf("get insecure registry hosts: %w", err)
 	}
 
-	return cmdData.ImagesRepo.CreateStagesStorage(ctx, &CreateStagesStorageOptions{
-		ContainerBackend:      containerBackend,
-		InsecureRegistry:      *cmdData.InsecureRegistry,
-		SkipTlsVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
-		InsecureRegistryHosts: insecureRegistryHosts,
-		SkipMetaCheck:         true,
-	})
+	for _, address := range GetImagesRepoAddrs(cmdData) {
+		repoData := NewRepoData("images-repo", RepoDataOptions{OnlyAddress: true})
+		repoData.Address = &address
+
+		stg, err := repoData.CreateStagesStorage(ctx, &CreateStagesStorageOptions{
+			ContainerBackend:      containerBackend,
+			InsecureRegistry:      *cmdData.InsecureRegistry,
+			SkipTlsVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
+			InsecureRegistryHosts: insecureRegistryHosts,
+			SkipMetaCheck:         true,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("unable to create images repo storage in %s: %w", address, err)
+		}
+		res = append(res, stg.(storage.ImagesRepoStorage))
+	}
+
+	return res, nil
 }
 
-func GetImagesRepoStagesStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData) (storage.StagesStorage, error) {
-	if cmdData.ImagesRepo == nil || cmdData.ImagesRepo.Address == nil || *cmdData.ImagesRepo.Address == "" {
+func GetOptionalImagesRepoStorages(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData) ([]storage.ImagesRepoStorage, error) {
+	if len(GetImagesRepoAddrs(cmdData)) == 0 {
 		return nil, nil
 	}
-
-	buildahMode, _, err := GetBuildahMode()
-	if err != nil {
-		return nil, fmt.Errorf("unable to determine buildah mode: %w", err)
-	}
-
-	insecureRegistryHosts, err := GetInsecureRegistryHosts(ctx, cmdData, *buildahMode)
-	if err != nil {
-		return nil, fmt.Errorf("get insecure registry hosts: %w", err)
-	}
-
-	return cmdData.ImagesRepo.CreateStagesStorage(ctx, &CreateStagesStorageOptions{
-		ContainerBackend:      containerBackend,
-		InsecureRegistry:      *cmdData.InsecureRegistry,
-		SkipTlsVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
-		InsecureRegistryHosts: insecureRegistryHosts,
-		SkipMetaCheck:         true,
-	})
+	return GetImagesRepoStorages(ctx, containerBackend, cmdData)
 }
 
-func GetMetaRepoStagesStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData, opts GetMetaStorageOpts) (storage.PrimaryStagesStorage, error) {
+func GetMetaRepoStagesStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData, opts GetMetaStorageOpts) (storage.CacheAndMetaStorage, error) {
 	if cmdData.MetaRepo == nil || cmdData.MetaRepo.Address == nil || *cmdData.MetaRepo.Address == "" {
 		return nil, fmt.Errorf("--meta-repo is required when using granular registry flags (--images-repo, --cache-from, --cache-to)")
 	}
@@ -939,12 +940,12 @@ func GetMetaRepoStagesStorage(ctx context.Context, containerBackend container_ba
 	})
 }
 
-func GetCacheToStorageList(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData) ([]storage.StagesStorage, error) {
+func GetCacheToStorageList(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData) ([]storage.StageWriter, error) {
 	return getCacheToStorageList(ctx, containerBackend, cmdData)
 }
 
-func getCacheToStorageList(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData) ([]storage.StagesStorage, error) {
-	var res []storage.StagesStorage
+func getCacheToStorageList(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData) ([]storage.StageWriter, error) {
+	var res []storage.StageWriter
 
 	buildahMode, _, err := GetBuildahMode()
 	if err != nil {
@@ -976,8 +977,8 @@ func getCacheToStorageList(ctx context.Context, containerBackend container_backe
 	return res, nil
 }
 
-func getCacheFromStorageList(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData) ([]storage.StagesStorage, error) {
-	var res []storage.StagesStorage
+func getCacheFromStorageList(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData) ([]storage.StageReader, error) {
+	var res []storage.StageReader
 
 	buildahMode, _, err := GetBuildahMode()
 	if err != nil {
@@ -1300,7 +1301,7 @@ func GetCacheTo(cmdData *CmdData) []string {
 }
 
 func getGranularMode(cmdData *CmdData) bool {
-	if cmdData.ImagesRepo != nil && cmdData.ImagesRepo.Address != nil && *cmdData.ImagesRepo.Address != "" {
+	if len(GetImagesRepoAddrs(cmdData)) > 0 {
 		return true
 	}
 	if cmdData.MetaRepo != nil && cmdData.MetaRepo.Address != nil && *cmdData.MetaRepo.Address != "" {
@@ -1318,34 +1319,31 @@ func getGranularMode(cmdData *CmdData) bool {
 
 func resolveDeprecatedFlags(ctx context.Context, cmdData *CmdData) error {
 	if cmdData.deprecatedFinalRepoAddr != nil && *cmdData.deprecatedFinalRepoAddr != "" {
-		if cmdData.ImagesRepo != nil && cmdData.ImagesRepo.Address != nil && *cmdData.ImagesRepo.Address != "" {
+		if len(*cmdData.ImagesRepo) > 0 {
 			return fmt.Errorf("--final-repo and --images-repo cannot be used together")
 		}
-		if cmdData.ImagesRepo != nil && cmdData.ImagesRepo.Address != nil {
-			logboek.Context(ctx).Warn().LogF("WARNING: --final-repo is deprecated, use --images-repo instead\n")
-			*cmdData.ImagesRepo.Address = *cmdData.deprecatedFinalRepoAddr
-		}
+
+		logboek.Context(ctx).Warn().LogF("WARNING: --final-repo is deprecated, use --images-repo instead\n")
+		*cmdData.ImagesRepo = append([]string{*cmdData.deprecatedFinalRepoAddr}, *cmdData.ImagesRepo...)
 	}
 
 	if cmdData.deprecatedSecondaryRepoAddrs != nil && len(*cmdData.deprecatedSecondaryRepoAddrs) > 0 {
 		if cmdData.CacheFrom != nil && len(*cmdData.CacheFrom) > 0 {
 			return fmt.Errorf("--secondary-repo and --cache-from cannot be used together")
 		}
-		if cmdData.CacheFrom != nil {
-			logboek.Context(ctx).Warn().LogF("WARNING: --secondary-repo is deprecated, use --cache-from instead\n")
-			*cmdData.CacheFrom = append(*cmdData.CacheFrom, *cmdData.deprecatedSecondaryRepoAddrs...)
-		}
+
+		logboek.Context(ctx).Warn().LogF("WARNING: --secondary-repo is deprecated, use --cache-from instead\n")
+		*cmdData.CacheFrom = append(*cmdData.CacheFrom, *cmdData.deprecatedSecondaryRepoAddrs...)
 	}
 
 	if cmdData.deprecatedCacheRepoAddrs != nil && len(*cmdData.deprecatedCacheRepoAddrs) > 0 {
 		if (cmdData.CacheFrom != nil && len(*cmdData.CacheFrom) > 0) || (cmdData.CacheTo != nil && len(*cmdData.CacheTo) > 0) {
 			return fmt.Errorf("--cache-repo cannot be used together with --cache-from or --cache-to")
 		}
-		if cmdData.CacheFrom != nil && cmdData.CacheTo != nil {
-			logboek.Context(ctx).Warn().LogF("WARNING: --cache-repo is deprecated, use --cache-from and --cache-to instead\n")
-			*cmdData.CacheFrom = append(*cmdData.CacheFrom, *cmdData.deprecatedCacheRepoAddrs...)
-			*cmdData.CacheTo = append(*cmdData.CacheTo, *cmdData.deprecatedCacheRepoAddrs...)
-		}
+
+		logboek.Context(ctx).Warn().LogF("WARNING: --cache-repo is deprecated, use --cache-from and --cache-to instead\n")
+		*cmdData.CacheFrom = append(*cmdData.CacheFrom, *cmdData.deprecatedCacheRepoAddrs...)
+		*cmdData.CacheTo = append(*cmdData.CacheTo, *cmdData.deprecatedCacheRepoAddrs...)
 	}
 
 	return nil
@@ -1364,7 +1362,7 @@ func validateRepoFlags(cmdData *CmdData) error {
 		name string
 		set  bool
 	}{
-		{"--images-repo", cmdData.ImagesRepo != nil && cmdData.ImagesRepo.Address != nil && *cmdData.ImagesRepo.Address != ""},
+		{"--images-repo", len(GetImagesRepoAddrs(cmdData)) > 0},
 		{"--meta-repo", cmdData.MetaRepo != nil && cmdData.MetaRepo.Address != nil && *cmdData.MetaRepo.Address != ""},
 		{"--cache-from", cmdData.CacheFrom != nil && len(*cmdData.CacheFrom) > 0},
 		{"--cache-to", cmdData.CacheTo != nil && len(*cmdData.CacheTo) > 0},

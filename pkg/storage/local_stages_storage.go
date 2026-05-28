@@ -189,10 +189,6 @@ func (storage *LocalStagesStorage) DeleteStageCustomTag(_ context.Context, _ str
 	return fmt.Errorf("not implemented")
 }
 
-func (storage *LocalStagesStorage) RejectStage(_ context.Context, _, _ string, _ int64) error {
-	return nil
-}
-
 func (storage *LocalStagesStorage) ConstructStageImageName(projectName, digest string, creationTs int64) string {
 	if creationTs == 0 {
 		return fmt.Sprintf(LocalStage_ImageFormat, projectName, digest)
@@ -215,46 +211,6 @@ func (storage *LocalStagesStorage) ShouldFetchImage(ctx context.Context, img con
 func (storage *LocalStagesStorage) CreateRepo(ctx context.Context) error { return nil }
 
 func (storage *LocalStagesStorage) DeleteRepo(ctx context.Context) error { return nil }
-
-func (storage *LocalStagesStorage) AddManagedImage(ctx context.Context, projectName, imageNameOrManagedImageName string) error {
-	return nil
-}
-
-func (storage *LocalStagesStorage) RmManagedImage(ctx context.Context, projectName, imageNameOrManagedImageName string) error {
-	return nil
-}
-
-func (storage *LocalStagesStorage) IsManagedImageExist(ctx context.Context, projectName, imageNameOrManagedImageName string, opts ...Option) (bool, error) {
-	return false, nil
-}
-
-func (storage *LocalStagesStorage) GetManagedImages(ctx context.Context, projectName string, opts ...Option) ([]string, error) {
-	return []string{}, nil
-}
-
-func (storage *LocalStagesStorage) PutImageMetadata(ctx context.Context, projectName, imageNameOrManagedImageName, commit, stageID string) error {
-	return nil
-}
-
-func (storage *LocalStagesStorage) RmImageMetadata(ctx context.Context, projectName, imageNameOrManagedImageNameOrImageMetadataID, commit, stageID string) error {
-	return nil
-}
-
-func (storage *LocalStagesStorage) IsImageMetadataExist(ctx context.Context, projectName, imageNameOrManagedImageName, commit, stageID string, opts ...Option) (bool, error) {
-	return false, nil
-}
-
-func (storage *LocalStagesStorage) GetAllAndGroupImageMetadataByImageName(ctx context.Context, projectName string, imageNameOrManagedImageList []string, opts ...Option) (map[string]map[string][]string, map[string]map[string][]string, error) {
-	return map[string]map[string][]string{}, map[string]map[string][]string{}, nil
-}
-
-func (storage *LocalStagesStorage) GetClientIDRecords(_ context.Context, _ string, _ ...Option) ([]*ClientIDRecord, error) {
-	panic("not implemented")
-}
-
-func (storage *LocalStagesStorage) PostClientIDRecord(_ context.Context, _ string, _ *ClientIDRecord) error {
-	panic("not implemented")
-}
 
 func (storage *LocalStagesStorage) PostMultiplatformImage(_ context.Context, _, _ string, _ []*image.Info, _ []string) error {
 	return nil
@@ -284,23 +240,7 @@ func (storage *LocalStagesStorage) UnregisterStageCustomTag(_ context.Context, _
 	return nil
 }
 
-func (storage *LocalStagesStorage) CopyFromStorage(_ context.Context, _ StagesStorage, _ string, _ image.StageID, _ CopyFromStorageOptions) (*image.StageDesc, error) {
-	panic("not implemented")
-}
-
-func (storage *LocalStagesStorage) GetSyncServerRecords(ctx context.Context, projectName string, opts ...Option) ([]*SyncServerRecord, error) {
-	panic("not implemented")
-}
-
-func (storage *LocalStagesStorage) PostSyncServerRecord(ctx context.Context, projectName string, rec *SyncServerRecord) error {
-	panic("not implemented")
-}
-
-func (storage *LocalStagesStorage) GetLastCleanupRecord(ctx context.Context, projectName string, opts ...Option) (*CleanupRecord, error) {
-	panic("not implemented")
-}
-
-func (storage *LocalStagesStorage) PostLastCleanupRecord(ctx context.Context, projectName string) error {
+func (storage *LocalStagesStorage) CopyFromStorage(_ context.Context, _ StageReader, _ string, _ image.StageID, _ CopyFromStorageOptions) (*image.StageDesc, error) {
 	panic("not implemented")
 }
 

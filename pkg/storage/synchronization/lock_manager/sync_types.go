@@ -12,7 +12,7 @@ import (
 type SynchronizationParams struct {
 	ProjectName   string
 	ServerAddress string
-	MetaStorage   storage.StagesStorage
+	MetaStorage   storage.MetaStorage
 }
 
 type LocalSynchronization struct {
@@ -80,9 +80,9 @@ func (s *HttpSynchronization) GetStorageLockManager(ctx context.Context) (Interf
 	return NewHttp(ctx, s.address, s.clientId)
 }
 
-func checkRepoSyncServer(ctx context.Context, projectName, serverAddress string, stagesStorage storage.StagesStorage) (string, error) {
+func checkRepoSyncServer(ctx context.Context, projectName, serverAddress string, metaStorage storage.MetaStorage) (string, error) {
 	logboek.Info().LogProcess("Checking synchronization server")
-	repoSyncServer, err := GetOrCreateSyncServer(ctx, projectName, serverAddress, stagesStorage)
+	repoSyncServer, err := GetOrCreateSyncServer(ctx, projectName, serverAddress, metaStorage)
 	if err != nil {
 		return "", fmt.Errorf("unable to get synchronization server address: %w", err)
 	}
@@ -92,7 +92,7 @@ func checkRepoSyncServer(ctx context.Context, projectName, serverAddress string,
 		if err != nil {
 			return "", err
 		}
-		err = OverwriteSyncServerRepo(ctx, projectName, serverAddress, stagesStorage)
+		err = OverwriteSyncServerRepo(ctx, projectName, serverAddress, metaStorage)
 		if err != nil {
 			return "", fmt.Errorf("unable to overwrite synchronization server: %w", err)
 		}

@@ -21,7 +21,7 @@ var ErrNoSyncServerFound = errors.New("no synchronization server found")
 var ForceSyncServerRepo string
 
 // GetOrCreateSyncServer gets sync server record from container registry or try to create one if not exist
-func GetOrCreateSyncServer(ctx context.Context, projectName, serverAddress string, metaStorage storage.StagesStorage) (string, error) {
+func GetOrCreateSyncServer(ctx context.Context, projectName, serverAddress string, metaStorage storage.MetaStorage) (string, error) {
 	server, err := getSyncServer(ctx, projectName, metaStorage)
 	if err != nil {
 		if errors.Is(err, ErrNoSyncServerFound) {
@@ -37,7 +37,7 @@ func GetOrCreateSyncServer(ctx context.Context, projectName, serverAddress strin
 	return server, nil
 }
 
-func getSyncServer(ctx context.Context, projectName string, metaStorage storage.StagesStorage) (string, error) {
+func getSyncServer(ctx context.Context, projectName string, metaStorage storage.MetaStorage) (string, error) {
 	server, err := getSyncServerFromStorage(ctx, projectName, metaStorage)
 	if err != nil {
 		return "", err
@@ -52,7 +52,7 @@ func getSyncServer(ctx context.Context, projectName string, metaStorage storage.
 }
 
 // CreateSyncServerRecord creates sync server record or try to create one if not exist
-func CreateSyncServerRecord(ctx context.Context, projectName, serverAddress string, metaStorage storage.StagesStorage) error {
+func CreateSyncServerRecord(ctx context.Context, projectName, serverAddress string, metaStorage storage.MetaStorage) error {
 	now := time.Now()
 	timestampMillisec := now.Unix()*1000 + now.UnixNano()/1000_000
 	rec := &storage.SyncServerRecord{Server: serverAddress, TimestampMillisec: timestampMillisec}
@@ -75,7 +75,7 @@ func CreateSyncServerRecord(ctx context.Context, projectName, serverAddress stri
 }
 
 // OverwriteSyncServerRepo overwrites sync server record
-func OverwriteSyncServerRepo(ctx context.Context, projectName, serverAddress string, metaStorage storage.StagesStorage) error {
+func OverwriteSyncServerRepo(ctx context.Context, projectName, serverAddress string, metaStorage storage.MetaStorage) error {
 	now := time.Now()
 	timestampMillisec := now.Unix()*1000 + now.UnixNano()/1000_000
 	rec := &storage.SyncServerRecord{Server: serverAddress, TimestampMillisec: timestampMillisec}
@@ -88,7 +88,7 @@ func OverwriteSyncServerRepo(ctx context.Context, projectName, serverAddress str
 	return nil
 }
 
-func getSyncServerFromStorage(ctx context.Context, projectName string, metaStorage storage.StagesStorage) (string, error) {
+func getSyncServerFromStorage(ctx context.Context, projectName string, metaStorage storage.MetaStorage) (string, error) {
 	syncServerRecords, err := metaStorage.GetSyncServerRecords(ctx, projectName)
 	if err != nil {
 		return "", fmt.Errorf("can't get synchronization server records: %w", err)

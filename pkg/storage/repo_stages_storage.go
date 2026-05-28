@@ -860,7 +860,7 @@ func (storage *RepoStagesStorage) PostMultiplatformImage(ctx context.Context, pr
 	return nil
 }
 
-func (storage *RepoStagesStorage) CopyFromStorage(ctx context.Context, src StagesStorage, projectName string, stageID image.StageID, opts CopyFromStorageOptions) (*image.StageDesc, error) {
+func (storage *RepoStagesStorage) CopyFromStorage(ctx context.Context, src StageReader, projectName string, stageID image.StageID, opts CopyFromStorageOptions) (*image.StageDesc, error) {
 	desc, err := storage.GetStageDesc(ctx, projectName, stageID)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get stage %s description: %w", stageID, err)

@@ -198,6 +198,10 @@ func runCleanup(ctx context.Context, cmd *cobra.Command) error {
 		return fmt.Errorf("unable to init storage manager: %w", err)
 	}
 
+	if storageManager.MetaStorage == nil {
+		return fmt.Errorf("meta storage is not configured: cleanup requires --meta-repo (or --repo)")
+	}
+
 	if *commonCmdData.Parallel {
 		storageManager.EnableParallel(int(common.GetParallelTasksLimit(&commonCmdData)))
 	}

@@ -14,7 +14,7 @@ import (
 	"github.com/werf/werf/v2/pkg/storage/synchronization/server"
 )
 
-func GetHttpClientID(ctx context.Context, projectName, serverAddress string, metaStorage storage.StagesStorage) (string, error) {
+func GetHttpClientID(ctx context.Context, projectName, serverAddress string, metaStorage storage.MetaStorage) (string, error) {
 	// Try to get clientID from storage.
 	{
 		clientID, err := getClientIDFromStorage(ctx, projectName, metaStorage)
@@ -62,7 +62,7 @@ func GetHttpClientID(ctx context.Context, projectName, serverAddress string, met
 	return "", fmt.Errorf("could not find clientID in storage %s after successful creation", metaStorage.String())
 }
 
-func getClientIDFromStorage(ctx context.Context, projectName string, metaStorage storage.StagesStorage) (string, error) {
+func getClientIDFromStorage(ctx context.Context, projectName string, metaStorage storage.MetaStorage) (string, error) {
 	clientIDRecords, err := metaStorage.GetClientIDRecords(ctx, projectName)
 	if err != nil {
 		return "", err
