@@ -21,6 +21,10 @@ func NewLabel(i *dockerfile.DockerfileStageInstruction[*instructions.LabelComman
 	return &Label{Base: NewBase(i, backend_instruction.NewLabel(*i.Data), dependencies, hasPrevStage, opts)}
 }
 
+func (stg *Label) GetContextDependencies(ctx context.Context, c stage.Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+	return stg.GetDependencies(ctx, c, nil, nil, nil, buildContextArchive)
+}
+
 func (stg *Label) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
 	var args []string
 

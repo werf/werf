@@ -21,9 +21,8 @@ func ResolveDependenciesArgs(targetPlatform string, dependencies []*config.Depen
 	resolved := make(map[string]string)
 
 	for _, dep := range dependencies {
-		depImageName := c.GetImageNameForLastImageStage(targetPlatform, dep.ImageName)
-		depImageID := c.GetImageIDForLastImageStage(targetPlatform, dep.ImageName)
-		depImageDigest := c.GetImageDigestForLastImageStage(targetPlatform, dep.ImageName)
+		depImageName := c.GetImageContextTagStageID(targetPlatform, dep.ImageName)
+		depImageDigest := c.GetImageContextTagDigest(targetPlatform, dep.ImageName)
 		depImageRepo, depImageTag := image.ParseRepositoryAndTag(depImageName)
 
 		for _, imp := range dep.Imports {
@@ -34,8 +33,6 @@ func ResolveDependenciesArgs(targetPlatform string, dependencies []*config.Depen
 				resolved[imp.TargetBuildArg] = depImageTag
 			case config.ImageNameImport:
 				resolved[imp.TargetBuildArg] = depImageName
-			case config.ImageIDImport:
-				resolved[imp.TargetBuildArg] = depImageID
 			case config.ImageDigestImport:
 				resolved[imp.TargetBuildArg] = depImageDigest
 			}

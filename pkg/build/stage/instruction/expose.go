@@ -21,6 +21,10 @@ func NewExpose(i *dockerfile.DockerfileStageInstruction[*instructions.ExposeComm
 	return &Expose{Base: NewBase(i, backend_instruction.NewExpose(*i.Data), dependencies, hasPrevStage, opts)}
 }
 
+func (stg *Expose) GetContextDependencies(ctx context.Context, c stage.Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+	return stg.GetDependencies(ctx, c, nil, nil, nil, buildContextArchive)
+}
+
 func (stg *Expose) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
 	var args []string
 

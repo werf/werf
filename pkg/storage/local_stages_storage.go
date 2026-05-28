@@ -177,12 +177,23 @@ func (storage *LocalStagesStorage) DeleteStage(ctx context.Context, stageDesc *i
 	return nil
 }
 
-func (storage *LocalStagesStorage) AddStageCustomTag(_ context.Context, _ *image.StageDesc, _ string) error {
-	return fmt.Errorf("not implemented")
+func (storage *LocalStagesStorage) AddStageCustomTag(ctx context.Context, stageDesc *image.StageDesc, tag string) error {
+	return storage.ContainerBackend.Tag(ctx, stageDesc.Info.Name, fmt.Sprintf("%s:%s", stageDesc.Info.Repository, tag), container_backend.TagOpts{})
 }
 
-func (storage *LocalStagesStorage) CheckStageCustomTag(_ context.Context, _ *image.StageDesc, _ string) error {
-	return fmt.Errorf("not implemented")
+func (storage *LocalStagesStorage) CheckStageCustomTag(ctx context.Context, stageDesc *image.StageDesc, tag string) error {
+	fullImageName := fmt.Sprintf("%s:%s", stageDesc.Info.Repository, tag)
+	info, err := storage.ContainerBackend.GetImageInfo(ctx, fullImageName, container_backend.GetImageInfoOpts{})
+	if err != nil {
+		return fmt.Errorf("unable to get image %s info: %w", fullImageName, err)
+	}
+	if info == nil {
+		return fmt.Errorf("custom tag %q not found", tag)
+	}
+	if info.ID != stageDesc.Info.ID {
+		return fmt.Errorf("custom tag %q image must be the same as associated content-based tag %q image", tag, stageDesc.StageID.String())
+	}
+	return nil
 }
 
 func (storage *LocalStagesStorage) DeleteStageCustomTag(_ context.Context, _ string) error {

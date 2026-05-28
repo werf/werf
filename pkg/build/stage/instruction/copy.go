@@ -35,12 +35,16 @@ func (stg *Copy) ExpandInstruction(c stage.Conveyor, env map[string]string) erro
 
 	if stg.instruction.Data.From != "" {
 		if ds := stg.instruction.GetDependencyByStageRef(stg.instruction.Data.From); ds != nil {
-			depStageImageName := c.GetImageNameForLastImageStage(stg.TargetPlatform(), ds.GetWerfImageName())
+			depStageImageName := c.GetImageContextTagStageID(stg.TargetPlatform(), ds.GetWerfImageName())
 			stg.backendInstruction.From = depStageImageName
 		}
 	}
 
 	return nil
+}
+
+func (stg *Copy) GetContextDependencies(ctx context.Context, c stage.Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+	return stg.GetDependencies(ctx, c, nil, nil, nil, buildContextArchive)
 }
 
 func (stg *Copy) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {

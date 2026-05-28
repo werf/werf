@@ -22,18 +22,15 @@ type TestDependency struct {
 	TargetEnvImageName   string
 	TargetEnvImageRepo   string
 	TargetEnvImageTag    string
-	TargetEnvImageID     string
 	TargetEnvImageDigest string
 
 	TargetBuildArgImageName   string
 	TargetBuildArgImageRepo   string
 	TargetBuildArgImageTag    string
-	TargetBuildArgImageID     string
 	TargetBuildArgImageDigest string
 
 	DockerImageRepo   string
 	DockerImageTag    string
-	DockerImageID     string
 	DockerImageDigest string
 }
 
@@ -62,12 +59,6 @@ func (dep *TestDependency) ToConfigDependency() *config.Dependency {
 			TargetEnv: dep.TargetEnvImageTag,
 		})
 	}
-	if dep.TargetEnvImageID != "" {
-		depCfg.Imports = append(depCfg.Imports, &config.DependencyImport{
-			Type:      config.ImageIDImport,
-			TargetEnv: dep.TargetEnvImageID,
-		})
-	}
 	if dep.TargetEnvImageDigest != "" {
 		depCfg.Imports = append(depCfg.Imports, &config.DependencyImport{
 			Type:      config.ImageDigestImport,
@@ -91,12 +82,6 @@ func (dep *TestDependency) ToConfigDependency() *config.Dependency {
 		depCfg.Imports = append(depCfg.Imports, &config.DependencyImport{
 			Type:           config.ImageTagImport,
 			TargetBuildArg: dep.TargetBuildArgImageTag,
-		})
-	}
-	if dep.TargetBuildArgImageID != "" {
-		depCfg.Imports = append(depCfg.Imports, &config.DependencyImport{
-			Type:           config.ImageIDImport,
-			TargetBuildArg: dep.TargetBuildArgImageID,
 		})
 	}
 	if dep.TargetBuildArgImageDigest != "" {
@@ -128,9 +113,6 @@ func CheckImageDependenciesAfterPrepare(img *LegacyImageStub, stageBuilder *stag
 		if dep.TargetEnvImageTag != "" {
 			Expect(img._Container._ServiceCommitChangeOptions.Env[dep.TargetEnvImageTag]).To(Equal(dep.DockerImageTag))
 		}
-		if dep.TargetEnvImageID != "" {
-			Expect(img._Container._ServiceCommitChangeOptions.Env[dep.TargetEnvImageID]).To(Equal(dep.DockerImageID))
-		}
 		if dep.TargetEnvImageDigest != "" {
 			Expect(img._Container._ServiceCommitChangeOptions.Env[dep.TargetEnvImageDigest]).To(Equal(dep.DockerImageDigest))
 		}
@@ -143,9 +125,6 @@ func CheckImageDependenciesAfterPrepare(img *LegacyImageStub, stageBuilder *stag
 		}
 		if dep.TargetBuildArgImageTag != "" {
 			Expect(util.IsStringsContainValue(stageBuilder.GetDockerfileBuilderImplementation().BuildDockerfileOptions.BuildArgs, fmt.Sprintf("%s=%s", dep.TargetBuildArgImageTag, dep.DockerImageTag))).To(BeTrue())
-		}
-		if dep.TargetBuildArgImageID != "" {
-			Expect(util.IsStringsContainValue(stageBuilder.GetDockerfileBuilderImplementation().BuildDockerfileOptions.BuildArgs, fmt.Sprintf("%s=%s", dep.TargetBuildArgImageID, dep.DockerImageID))).To(BeTrue())
 		}
 	}
 }

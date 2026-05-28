@@ -9,23 +9,10 @@ import (
 )
 
 type Conveyor interface {
-	GetImageStageContentDigest(targetPlatform, imageName, stageName string) string
-	GetImageContentDigest(targetPlatform, imageName string) string
+	GetImageContextTagStageID(targetPlatform, imageName string) string
+	GetImageContextTagDigest(targetPlatform, imageName string) string
 
-	FetchImageStage(ctx context.Context, targetPlatform, imageName, stageName string) error
-	FetchLastNonEmptyImageStage(ctx context.Context, targetPlatform, imageName string) error
-	GetImageNameForLastImageStage(targetPlatform, imageName string) string
-	GetStageIDForLastImageStage(targetPlatform, imageName string) string
-	// TODO: remove this legacy logic in v3.
-	GetImageIDForLastImageStage(targetPlatform, imageName string) string
-	GetImageDigestForLastImageStage(targetPlatform, imageName string) string
-
-	GetImageNameForImageStage(targetPlatform, imageName, stageName string) string
-	GetStageIDForImageStage(targetPlatform, imageName, stageName string) string
-	// TODO: remove this legacy logic in v3.
-	GetImageIDForImageStage(targetPlatform, imageName, stageName string) string
-
-	GetImportServer(ctx context.Context, targetPlatform, imageName, stageName string, e bool) (import_server.ImportServer, error)
+	GetImportServer(ctx context.Context, targetPlatform, imageName string, fromExternalImage bool) (import_server.ImportServer, error)
 
 	GiterminismManager() giterminism_manager.Interface
 

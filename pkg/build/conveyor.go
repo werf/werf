@@ -264,14 +264,11 @@ func (c *Conveyor) GetStageDigestMutex(stage string) *sync.Mutex {
 	return m
 }
 
-func (c *Conveyor) GetImportServer(ctx context.Context, targetPlatform, imageName, stageName string, fromExternalImage bool) (import_server.ImportServer, error) {
+func (c *Conveyor) GetImportServer(ctx context.Context, targetPlatform, imageName string, fromExternalImage bool) (import_server.ImportServer, error) {
 	c.GetServiceRWMutex("ImportServer").Lock()
 	defer c.GetServiceRWMutex("ImportServer").Unlock()
 
 	importServerName := imageName
-	if stageName != "" {
-		importServerName += "/" + stageName
-	}
 
 	if targetPlatform == "" {
 		panic("assertion: targetPlatform cannot be empty")
@@ -284,15 +281,8 @@ func (c *Conveyor) GetImportServer(ctx context.Context, targetPlatform, imageNam
 
 	var srv *import_server.RsyncServer
 
-	var stg stage.Interface
-
 	if !fromExternalImage {
-		if stageName != "" {
-			stg = c.getImageStage(targetPlatform, imageName, stageName)
-		} else {
-			stg = c.GetImage(targetPlatform, imageName).GetLastNonEmptyStage()
-		}
-
+		stg := c.GetImage(targetPlatform, imageName).GetLastNonEmptyStage()
 		if _, err := c.StorageManager.FetchStage(ctx, c.ContainerBackend, stg); err != nil {
 			return nil, fmt.Errorf("unable to fetch stage %s: %w", stg.GetStageImage().Image.Name(), err)
 		}
@@ -308,11 +298,7 @@ func (c *Conveyor) GetImportServer(ctx context.Context, targetPlatform, imageNam
 				imageSubDir = imageName
 			}
 
-			if stageName == "" {
-				tmpDir = filepath.Join(c.tmpDir, "import-server", imageSubDir, targetPlatform)
-			} else {
-				tmpDir = filepath.Join(c.tmpDir, "import-server", fmt.Sprintf("%s-%s", imageSubDir, stageName), targetPlatform)
-			}
+			tmpDir = filepath.Join(c.tmpDir, "import-server", imageSubDir, targetPlatform)
 
 			if err := os.MkdirAll(tmpDir, os.ModePerm); err != nil {
 				return fmt.Errorf("unable to create dir %s: %w", tmpDir, err)
@@ -322,11 +308,7 @@ func (c *Conveyor) GetImportServer(ctx context.Context, targetPlatform, imageNam
 			if fromExternalImage {
 				dockerImageName = imageName
 			} else {
-				if stageName == "" {
-					dockerImageName = c.GetImageNameForLastImageStage(targetPlatform, imageName)
-				} else {
-					dockerImageName = c.GetImageNameForImageStage(targetPlatform, imageName, stageName)
-				}
+				dockerImageName = c.GetImageContextTagStageID(targetPlatform, imageName)
 			}
 
 			var err error
@@ -575,7 +557,7 @@ func (c *Conveyor) GetImagesEnvArray() []string {
 			continue
 		}
 
-		envArray = append(envArray, GenerateImageEnv(img.Name, c.GetImageNameForLastImageStage(img.TargetPlatform, img.Name)))
+		envArray = append(envArray, GenerateImageEnv(img.Name, c.GetImageContextTagStageID(img.TargetPlatform, img.Name)))
 	}
 
 	return envArray
@@ -839,6 +821,12 @@ func (c *Conveyor) doImage(ctx context.Context, img *image.Image, phases []Phase
 				}
 				logProcess.End()
 
+				if img.GetContextTagDesc() != nil {
+					logboek.Context(ctx).Default().LogFHighlight("Use previously built image (context tag %s)\n", img.GetContextTagDesc().StageID.String())
+					logboek.Context(ctx).LogOptionalLn()
+					return nil
+				}
+
 				logProcess = logboek.Context(ctx).Debug().LogProcess("Phase %s -- OnImageStage()", phase.Name())
 				logProcess.Start()
 				for _, stg := range img.GetStages() {
@@ -995,67 +983,10 @@ func (c *Conveyor) GetImage(targetPlatform, name string) *image.Image {
 	panic(fmt.Sprintf("Image %q with target platform %q not found!", name, targetPlatform))
 }
 
-func (c *Conveyor) GetImageStageContentDigest(targetPlatform, imageName, stageName string) string {
-	return c.getImageStage(targetPlatform, imageName, stageName).GetContentDigest()
+func (c *Conveyor) GetImageContextTagStageID(targetPlatform, imageName string) string {
+	return c.GetImage(targetPlatform, imageName).GetContextTagDesc().StageID.String()
 }
 
-func (c *Conveyor) GetImageContentDigest(targetPlatform, imageName string) string {
-	return c.GetImage(targetPlatform, imageName).GetContentDigest()
-}
-
-func (c *Conveyor) getImageStage(targetPlatform, imageName, stageName string) stage.Interface {
-	if stg := c.GetImage(targetPlatform, imageName).GetStage(stage.StageName(stageName)); stg != nil {
-		return stg
-	} else {
-		return c.getLastNonEmptyImageStage(targetPlatform, imageName)
-	}
-}
-
-func (c *Conveyor) getLastNonEmptyImageStage(targetPlatform, imageName string) stage.Interface {
-	// FIXME: find first existing stage after specified unexisting
-	return c.GetImage(targetPlatform, imageName).GetLastNonEmptyStage()
-}
-
-func (c *Conveyor) FetchImageStage(ctx context.Context, targetPlatform, imageName, stageName string) error {
-	_, err := c.StorageManager.FetchStage(ctx, c.ContainerBackend, c.getImageStage(targetPlatform, imageName, stageName))
-	return err
-}
-
-func (c *Conveyor) FetchLastNonEmptyImageStage(ctx context.Context, targetPlatform, imageName string) error {
-	_, err := c.StorageManager.FetchStage(ctx, c.ContainerBackend, c.getLastNonEmptyImageStage(targetPlatform, imageName))
-	return err
-}
-
-func (c *Conveyor) GetImageNameForLastImageStage(targetPlatform, imageName string) string {
-	return c.GetImage(targetPlatform, imageName).GetLastNonEmptyStage().GetStageImage().Image.Name()
-}
-
-func (c *Conveyor) GetImageNameForImageStage(targetPlatform, imageName, stageName string) string {
-	return c.getImageStage(targetPlatform, imageName, stageName).GetStageImage().Image.Name()
-}
-
-func (c *Conveyor) GetStageID(targetPlatform, imageName string) string {
-	return c.GetImage(targetPlatform, imageName).GetStageID()
-}
-
-// TODO: remove this legacy logic in v3.
-func (c *Conveyor) GetImageIDForLastImageStage(targetPlatform, imageName string) string {
-	return c.GetImage(targetPlatform, imageName).GetLastNonEmptyStage().GetStageImage().Image.GetStageDesc().Info.ID
-}
-
-func (c *Conveyor) GetStageIDForLastImageStage(targetPlatform, imageName string) string {
-	return c.GetImage(targetPlatform, imageName).GetLastNonEmptyStage().GetStageImage().Image.GetStageDesc().StageID.String()
-}
-
-func (c *Conveyor) GetImageDigestForLastImageStage(targetPlatform, imageName string) string {
-	return c.GetImage(targetPlatform, imageName).GetLastNonEmptyStage().GetStageImage().Image.GetStageDesc().Info.GetDigest()
-}
-
-// TODO: remove this legacy logic in v3.
-func (c *Conveyor) GetImageIDForImageStage(targetPlatform, imageName, stageName string) string {
-	return c.getImageStage(targetPlatform, imageName, stageName).GetStageImage().Image.GetStageDesc().Info.ID
-}
-
-func (c *Conveyor) GetStageIDForImageStage(targetPlatform, imageName, stageName string) string {
-	return c.getImageStage(targetPlatform, imageName, stageName).GetStageImage().Image.GetStageDesc().StageID.String()
+func (c *Conveyor) GetImageContextTagDigest(targetPlatform, imageName string) string {
+	return c.GetImage(targetPlatform, imageName).GetContextTagDesc().Info.GetDigest()
 }

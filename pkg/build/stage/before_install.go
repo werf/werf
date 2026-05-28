@@ -27,6 +27,10 @@ type BeforeInstallStage struct {
 	*UserStage
 }
 
+func (s *BeforeInstallStage) GetContextDependencies(ctx context.Context, c Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+	return s.getBuilderChecksum(ctx), nil
+}
+
 func (s *BeforeInstallStage) GetDependencies(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
 	return s.builder.BeforeInstallChecksum(ctx), nil
 }

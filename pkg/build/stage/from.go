@@ -85,12 +85,16 @@ func (s *FromStage) GetDependencies(_ context.Context, c Conveyor, _ container_b
 	if s.fromScratch {
 		args = append(args, "scratch")
 	} else if s.fromImageName != "" && !s.fromExternal {
-		args = append(args, c.GetImageContentDigest(s.targetPlatform, s.fromImageName))
-	} else {
+		args = append(args, c.GetImageContextTagStageID(s.targetPlatform, s.fromImageName))
+	} else if prevImage != nil {
 		args = append(args, prevImage.Image.Name())
 	}
 
 	return util.Sha256Hash(args...), nil
+}
+
+func (s *FromStage) GetContextDependencies(ctx context.Context, c Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+	return s.GetDependencies(ctx, c, nil, nil, nil, buildContextArchive)
 }
 
 func (s *FromStage) PrepareImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, _ container_backend.BuildContextArchiver) error {
