@@ -44,3 +44,21 @@ jobs:
       runner: prod-github-runner-0
     secrets:
       kubeConfig: ${{ secrets.KUBECONFIG_BASE64_DEV }}
+
+  deploy-test-v1-2:
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/_docs_deploy.yml
+    with:
+      checkoutRef: 1.2
+      env: test
+      githubRefOverride: 1.2
+      releaseRefOverride: docs-major-routing-v1-2
+      docsDeployTarget: v1.2
+      docsDeployLatestAliasEnabled: false
+      overlayCallerRefFiles: true
+      persistent: true
+      runner: prod-github-runner-0
+    secrets:
+      kubeConfig: ${{ secrets.KUBECONFIG_BASE64_DEV }}

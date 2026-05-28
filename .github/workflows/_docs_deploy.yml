@@ -26,6 +26,10 @@ on:
         required: false
         default: false
         type: boolean
+      overlayCallerRefFiles:
+        required: false
+        default: false
+        type: boolean
       persistent:
         default: false
         type: boolean
@@ -50,6 +54,23 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ inputs.checkoutRef != '' && inputs.checkoutRef || github.ref }}
+
+      - name: Overlay docs routing files from caller ref
+        if: ${{ inputs.overlayCallerRefFiles }}
+        run: |
+          set -euo pipefail
+
+          overlay_ref='${{ github.sha }}'
+
+          while IFS= read -r path; do
+            mkdir -p "$(dirname "$path")"
+            git show "${overlay_ref}:${path}" > "$path"
+          done <<'EOF'
+          docs/.helm/templates/10-app.yaml
+          docs/.helm/templates/20-ingress.yaml
+          docs/.helm/templates/_rewrites.tpl
+          docs/.werf/nginx.conf
+          EOF
 
       - name: Set dynamic WERF_* env vars
         run: |
