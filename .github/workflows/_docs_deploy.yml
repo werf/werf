@@ -77,7 +77,7 @@ jobs:
           fi
 
       - name: Install werf
-        uses: werf/actions/install@v2
+        uses: javiercm1410/actions/install@chore/update-node24
 
       - name: Deploy
         run: |
