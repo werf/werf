@@ -9,6 +9,9 @@ on:
       - "[0-9]+"
     paths:
       - CHANGELOG.md
+  repository_dispatch:
+    types: ["tag:auto-create"]
+  workflow_dispatch:
 
 jobs:
   release:
