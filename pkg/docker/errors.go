@@ -1,10 +1,32 @@
 package docker
 
 import (
+	"regexp"
 	"strings"
 
 	"github.com/pkg/errors"
 )
+
+var contentNotFoundRe = regexp.MustCompile(`content digest (sha256:[a-f0-9]+): not found`)
+
+func IsErrContentNotFound(err error) bool {
+	if err == nil {
+		return false
+	}
+	cause := errors.Cause(err)
+	return strings.Contains(cause.Error(), "content digest") && strings.Contains(cause.Error(), "not found")
+}
+
+func ContentNotFoundDigest(err error) string {
+	if err == nil {
+		return ""
+	}
+	matches := contentNotFoundRe.FindStringSubmatch(errors.Cause(err).Error())
+	if len(matches) > 1 {
+		return matches[1]
+	}
+	return ""
+}
 
 // IsErrContainerPaused returns true if err is "container is paused" error
 // https://github.com/moby/moby/blob/25.0/daemon/delete.go#L94

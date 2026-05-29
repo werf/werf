@@ -42,4 +42,55 @@ var _ = Describe("docker errors", func() {
 			Expect(IsErrPruneRunning(err0)).To(BeFalse())
 		})
 	})
+
+	Describe("IsErrContentNotFound", func() {
+		DescribeTable("detection",
+			func(msg string, expected bool) {
+				err := errors.New(msg)
+				Expect(IsErrContentNotFound(err)).To(Equal(expected))
+			},
+			Entry("matches full Docker daemon error",
+				"failed to push image: content digest sha256:abc123def456: not found", true),
+			Entry("matches minimal form",
+				"content digest sha256:0000: not found", true),
+			Entry("does not match missing 'content digest'",
+				"sha256:abc123 not found", false),
+			Entry("does not match missing 'not found'",
+				"content digest sha256:abc123 exists", false),
+			Entry("does not match unrelated error",
+				"connection timeout", false),
+			Entry("returns false for nil", "", false),
+		)
+
+		It("works through pkg/errors wrapping", func() {
+			cause := errors.New("content digest sha256:deadbeef: not found")
+			wrapped := errorsPkg.WithMessage(cause, "push failed")
+			Expect(IsErrContentNotFound(wrapped)).To(BeTrue())
+		})
+	})
+
+	Describe("ContentNotFoundDigest", func() {
+		DescribeTable("extraction",
+			func(msg, expectedDigest string) {
+				err := errors.New(msg)
+				Expect(ContentNotFoundDigest(err)).To(Equal(expectedDigest))
+			},
+			Entry("extracts full sha256 digest",
+				"content digest sha256:a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2: not found",
+				"sha256:a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2"),
+			Entry("extracts short digest",
+				"content digest sha256:abcdef0123456789: not found",
+				"sha256:abcdef0123456789"),
+			Entry("returns empty when regex doesn't match",
+				"content digest unknown: not found",
+				""),
+			Entry("returns empty for nil", "", ""),
+		)
+
+		It("works through pkg/errors wrapping", func() {
+			cause := errors.New("content digest sha256:deadbeef: not found")
+			wrapped := errorsPkg.WithMessage(cause, "push failed")
+			Expect(ContentNotFoundDigest(wrapped)).To(Equal("sha256:deadbeef"))
+		})
+	})
 })

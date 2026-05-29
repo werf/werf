@@ -261,9 +261,8 @@ func (i *LegacyStageImage) Pull(ctx context.Context) error {
 }
 
 func (i *LegacyStageImage) Push(ctx context.Context) error {
-	_ = i.ContainerBackend.(*DockerServerBackend)
-
-	return docker.CliPushWithRetries(ctx, i.name)
+	backend := i.ContainerBackend.(*DockerServerBackend)
+	return backend.Push(ctx, i.name, PushOpts{})
 }
 
 func debugDockerRunCommand() bool {
