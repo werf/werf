@@ -1,0 +1,92 @@
+name: docs:deploy:test
+
+on:
+  push:
+    branches:
+      - chore/docs/update-major-routing
+  workflow_dispatch:
+    inputs:
+      gitRef:
+        description: "Branch, tag or ref to checkout"
+        required: false
+        default: ""
+        type: string
+      releaseRef:
+        description: "Unique release slug for test deploy; empty means selected branch/tag"
+        required: false
+        default: ""
+        type: string
+      docsDeployTarget:
+        description: "Stable docs root to expose, for example v2"
+        required: false
+        default: ""
+        type: string
+      docsDeployLatestAliasEnabled:
+        description: "Also expose /docs/latest/ as alias to docsDeployTarget"
+        required: true
+        default: true
+        type: boolean
+
+jobs:
+  resolve-current-major:
+    runs-on: ubuntu-22.04
+    outputs:
+      docsDeployTarget: ${{ steps.read.outputs.docs_deploy_target }}
+      releaseRef: ${{ steps.read.outputs.release_ref }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Read current docs major target
+        id: read
+        run: |
+          set -euo pipefail
+
+          ruby <<'RUBY'
+          require 'yaml'
+
+          values = YAML.load_file('docs/.helm/values.yaml')
+          target = values.fetch('global').fetch('currentDocsMajorTarget')
+          slug = target.gsub('+', '-plus-').gsub('_', '-u-').gsub('.', '-dot-').gsub('/', '-')
+
+          File.open(ENV.fetch('GITHUB_OUTPUT'), 'a') do |f|
+            f.puts "docs_deploy_target=#{target}"
+            f.puts "release_ref=docs-major-routing-#{slug}"
+          end
+          RUBY
+
+  deploy-test:
+    needs: resolve-current-major
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/_docs_deploy.yml
+    with:
+      checkoutRef: ${{ github.event_name == 'workflow_dispatch' && inputs.gitRef || github.ref_name }}
+      env: test
+      githubRefOverride: ${{ github.event_name == 'workflow_dispatch' && inputs.gitRef || github.ref_name }}
+      releaseRefOverride: ${{ github.event_name == 'workflow_dispatch' && inputs.releaseRef || needs.resolve-current-major.outputs.releaseRef }}
+      docsDeployTarget: ${{ github.event_name == 'workflow_dispatch' && inputs.docsDeployTarget || needs.resolve-current-major.outputs.docsDeployTarget }}
+      docsDeployLatestAliasEnabled: ${{ github.event_name != 'workflow_dispatch' || inputs.docsDeployLatestAliasEnabled }}
+      persistent: true
+      runner: prod-github-runner-0
+    secrets:
+      kubeConfig: ${{ secrets.KUBECONFIG_BASE64_DEV }}
+
+  deploy-test-v1-2:
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/_docs_deploy.yml
+    with:
+      checkoutRef: 1.2
+      env: test
+      githubRefOverride: 1.2
+      releaseRefOverride: docs-major-routing-v1-2
+      docsDeployTarget: v1.2
+      docsDeployLatestAliasEnabled: false
+      overlayCallerRefFiles: true
+      persistent: true
+      runner: prod-github-runner-0
+    secrets:
+      kubeConfig: ${{ secrets.KUBECONFIG_BASE64_DEV }}

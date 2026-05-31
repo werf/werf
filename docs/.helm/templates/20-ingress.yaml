@@ -1,21 +1,22 @@
 {{- $refs := list $.Values.global.github_ref }}
-{{- if eq $.Values.werf.env "test" }}
-{{- if eq (splitList "/" $.Values.global.github_ref | last) "main" }}
-{{- $refs = concat $refs (list "v2.0.3" "v1.2.294+fix1") }}
-{{- end }}
-{{- end }}
 
 {{- range $_, $ref := $refs }}
 
-{{- $version := splitList "/" $ref | last }}
-{{- $versionDNSNormalized := printf "%s" $version | lower | replace "+" "-plus-" | replace "_" "-u-" | replace "." "-dot-" }}
-
-{{- $versionURLNormalized := "" }}
-{{- if eq $version "main" }}
-{{- $versionURLNormalized = "latest" }}
-{{- else }}
-{{- $versionURLNormalized = printf "%s" $version | lower | replace "+" "-plus-" | replace "_" "-u-" }}
+{{- $sourceRef := splitList "/" $ref | last }}
+{{- $isPrimaryDeployRef := eq $ref $.Values.global.github_ref }}
+{{- $deployTarget := $sourceRef }}
+{{- if and $isPrimaryDeployRef $.Values.global.docs_deploy_target }}
+{{- $deployTarget = $.Values.global.docs_deploy_target }}
 {{- end }}
+{{- $deployTargetDNSNormalized := printf "%s" $deployTarget | lower | replace "+" "-plus-" | replace "_" "-u-" | replace "." "-dot-" }}
+
+{{- $deployTargetURLNormalized := "" }}
+{{- if eq $deployTarget "main" }}
+{{- $deployTargetURLNormalized = "latest" }}
+{{- else }}
+{{- $deployTargetURLNormalized = printf "%s" $deployTarget | lower | replace "+" "-plus-" | replace "_" "-u-" }}
+{{- end }}
+{{- $publishLatestAlias := and $.Values.global.docs_deploy_latest_alias_enabled $isPrimaryDeployRef }}
 
 {{- $host := pluck $.Values.werf.env $.Values.host | first | default $.Values.host._default  }}
 {{- if hasPrefix "review" $.Values.werf.env }}
@@ -28,7 +29,7 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ $.Chart.Name }}-{{ $versionDNSNormalized }}
+  name: {{ $.Chart.Name }}-{{ $deployTargetDNSNormalized }}
   annotations:
     nginx.ingress.kubernetes.io/configuration-snippet: |
       proxy_set_header X-Original-URI $request_uri;
@@ -52,38 +53,70 @@ spec:
   - host: {{ $host }}
     http:
       paths:
-      - path: /docs/{{ $versionURLNormalized }}/
+      - path: /docs/{{ $deployTargetURLNormalized }}/
         pathType: ImplementationSpecific
         backend:
           service:
-            name: {{ $.Chart.Name }}-{{ $versionDNSNormalized }}
+            name: {{ $.Chart.Name }}-{{ $deployTargetDNSNormalized }}
             port:
               name: http
-      - path: /documentation/{{ $versionURLNormalized }}/
+      - path: /documentation/{{ $deployTargetURLNormalized }}/
         pathType: ImplementationSpecific
         backend:
           service:
-            name: {{ $.Chart.Name }}-{{ $versionDNSNormalized }}
+            name: {{ $.Chart.Name }}-{{ $deployTargetDNSNormalized }}
             port:
               name: http
+{{- if $publishLatestAlias }}
+      - path: /docs/latest/
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: {{ $.Chart.Name }}-{{ $deployTargetDNSNormalized }}
+            port:
+              name: http
+      - path: /documentation/latest/
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: {{ $.Chart.Name }}-{{ $deployTargetDNSNormalized }}
+            port:
+              name: http
+{{- end }}
 {{- else }}
   - host: {{ $ruHost }}
     http:
       paths:
-      - path: /docs/{{ $versionURLNormalized }}/
+      - path: /docs/{{ $deployTargetURLNormalized }}/
         pathType: ImplementationSpecific
         backend:
           service:
-            name: {{ $.Chart.Name }}-{{ $versionDNSNormalized }}
+            name: {{ $.Chart.Name }}-{{ $deployTargetDNSNormalized }}
             port:
               name: http
-      - path: /documentation/{{ $versionURLNormalized }}/
+      - path: /documentation/{{ $deployTargetURLNormalized }}/
         pathType: ImplementationSpecific
         backend:
           service:
-            name: {{ $.Chart.Name }}-{{ $versionDNSNormalized }}
+            name: {{ $.Chart.Name }}-{{ $deployTargetDNSNormalized }}
             port:
               name: http
+{{- if $publishLatestAlias }}
+      - path: /docs/latest/
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: {{ $.Chart.Name }}-{{ $deployTargetDNSNormalized }}
+            port:
+              name: http
+      - path: /documentation/latest/
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: {{ $.Chart.Name }}-{{ $deployTargetDNSNormalized }}
+            port:
+              name: http
+{{- end }}
 {{- end }}
 {{- else }}
 
@@ -91,7 +124,7 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ $.Chart.Name }}-{{ $versionDNSNormalized }}
+  name: {{ $.Chart.Name }}-{{ $deployTargetDNSNormalized }}
   annotations:
     nginx.ingress.kubernetes.io/configuration-snippet: |
       proxy_set_header X-Original-URI $request_uri;
@@ -115,27 +148,43 @@ spec:
   - host: {{ $host }}
     http:
       paths:
-      - path: /docs/{{ $versionURLNormalized }}/
+      - path: /docs/{{ $deployTargetURLNormalized }}/
         pathType: ImplementationSpecific
         backend:
           service:
-            name: {{ $.Chart.Name }}-{{ $versionDNSNormalized }}
+            name: {{ $.Chart.Name }}-{{ $deployTargetDNSNormalized }}
             port:
               name: http
-      - path: /documentation/{{ $versionURLNormalized }}/
+      - path: /documentation/{{ $deployTargetURLNormalized }}/
         pathType: ImplementationSpecific
         backend:
           service:
-            name: {{ $.Chart.Name }}-{{ $versionDNSNormalized }}
+            name: {{ $.Chart.Name }}-{{ $deployTargetDNSNormalized }}
             port:
               name: http
+{{- if $publishLatestAlias }}
+      - path: /docs/latest/
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: {{ $.Chart.Name }}-{{ $deployTargetDNSNormalized }}
+            port:
+              name: http
+      - path: /documentation/latest/
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: {{ $.Chart.Name }}-{{ $deployTargetDNSNormalized }}
+            port:
+              name: http
+{{- end }}
 
 
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ $.Chart.Name }}-ru-{{ $versionDNSNormalized }}
+  name: {{ $.Chart.Name }}-ru-{{ $deployTargetDNSNormalized }}
   annotations:
     nginx.ingress.kubernetes.io/configuration-snippet: |
       proxy_set_header X-Original-URI $request_uri;
@@ -167,20 +216,36 @@ spec:
 {{- end }}
     http:
       paths:
-      - path: /docs/{{ $versionURLNormalized }}/
+      - path: /docs/{{ $deployTargetURLNormalized }}/
         pathType: ImplementationSpecific
         backend:
           service:
-            name: {{ $.Chart.Name }}-{{ $versionDNSNormalized }}
+            name: {{ $.Chart.Name }}-{{ $deployTargetDNSNormalized }}
             port:
               name: http
-      - path: /documentation/{{ $versionURLNormalized }}/
+      - path: /documentation/{{ $deployTargetURLNormalized }}/
         pathType: ImplementationSpecific
         backend:
           service:
-            name: {{ $.Chart.Name }}-{{ $versionDNSNormalized }}
+            name: {{ $.Chart.Name }}-{{ $deployTargetDNSNormalized }}
             port:
               name: http
+{{- if $publishLatestAlias }}
+      - path: /docs/latest/
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: {{ $.Chart.Name }}-{{ $deployTargetDNSNormalized }}
+            port:
+              name: http
+      - path: /documentation/latest/
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: {{ $.Chart.Name }}-{{ $deployTargetDNSNormalized }}
+            port:
+              name: http
+{{- end }}
 {{- end }}
 
 {{- end }}

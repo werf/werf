@@ -1,5 +1,6 @@
 global:
   targetCluster: ""
+  currentDocsMajorTarget: v2
 
 clusters:
   eu:
