@@ -79,7 +79,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          cat > .werf-giterminism-overlay.yaml <<'EOF'
+          cat > docs/.werf-giterminism-overlay.yaml <<'EOF'
           giterminismConfigVersion: "1"
           config:
             goTemplateRendering:
@@ -165,7 +165,10 @@ jobs:
 
       - name: Deploy
         run: |
-          . $(werf ci-env github --as-file)
+          set -euo pipefail
+
+          ci_env_file="$(werf ci-env github --as-file)"
+          . "$ci_env_file"
           werf converge --virtual-merge=false
         env:
           WERF_NAMESPACE: werfio-${{ inputs.env }}
