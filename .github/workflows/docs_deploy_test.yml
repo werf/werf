@@ -13,9 +13,10 @@ jobs:
     uses: ./.github/workflows/_docs_deploy.yml
     with:
       env: test
-      docsDeployTarget: v1.2
+      docsDeployTarget: v1
       docsDeployLatestAliasEnabled: false
       persistent: true
       runner: prod-github-runner-0
     secrets:
       kubeConfig: ${{ secrets.KUBECONFIG_BASE64_DEV }}
+

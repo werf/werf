@@ -22,7 +22,7 @@ jobs:
       packages: write
     uses: ./.github/workflows/_docs_deploy_production.yml
     with:
-      docsDeployTarget: v1.2
+      docsDeployTarget: v1
       docsDeployLatestAliasEnabled: false
       githubRefOverride: ${{ github.ref }}
       persistent: true
@@ -39,7 +39,7 @@ jobs:
       packages: write
     uses: ./.github/workflows/_docs_deploy_production.yml
     with:
-      docsDeployTarget: v1.2
+      docsDeployTarget: v1
       docsDeployLatestAliasEnabled: false
       githubRefOverride: ${{ github.ref }}
       persistent: true
@@ -58,5 +58,6 @@ jobs:
       loopNotificationGroup: ${{ secrets.LOOP_NOTIFICATION_GROUP }}
       webhook: ${{ secrets.LOOP_NOTIFICATION_WEBHOOK }}
       notificationChannel: ${{ secrets.LOOP_NOTIFICATION_CHANNEL }}
+
 
 
