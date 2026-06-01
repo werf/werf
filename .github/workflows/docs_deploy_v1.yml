@@ -1,0 +1,62 @@
+name: docs:deploy:v1.2
+
+on:
+  workflow_dispatch:
+    inputs:
+      targetCluster:
+        description: "Target cluster"
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - ru
+          - eu
+
+jobs:
+  deploy-prod-ru:
+    if: ${{ github.event.inputs.targetCluster == 'all' || github.event.inputs.targetCluster == 'ru' }}
+    permissions:
+      contents: read
+      id-token: write
+      packages: write
+    uses: ./.github/workflows/_docs_deploy_production.yml
+    with:
+      docsDeployTarget: v1.2
+      docsDeployLatestAliasEnabled: false
+      githubRefOverride: ${{ github.ref }}
+      persistent: true
+      targetCluster: ru
+      runner: prod-github-runner-0
+      kubeConfigSecretPath: projects/data/b454e6aa-39f0-45f4-aa7c-a9465ab154cb/KUBE_CONFIG_RU
+    secrets: inherit
+
+  deploy-prod-eu:
+    if: ${{ github.event.inputs.targetCluster == 'all' || github.event.inputs.targetCluster == 'eu' }}
+    permissions:
+      contents: read
+      id-token: write
+      packages: write
+    uses: ./.github/workflows/_docs_deploy_production.yml
+    with:
+      docsDeployTarget: v1.2
+      docsDeployLatestAliasEnabled: false
+      githubRefOverride: ${{ github.ref }}
+      persistent: true
+      targetCluster: eu
+      runner: prod-github-runner-0
+      kubeConfigSecretPath: projects/data/b454e6aa-39f0-45f4-aa7c-a9465ab154cb/KUBE_CONFIG
+    secrets: inherit
+
+  notify:
+    if: always()
+    needs:
+      - deploy-prod-ru
+      - deploy-prod-eu
+    uses: werf/common-ci/.github/workflows/notification.yml@main
+    secrets:
+      loopNotificationGroup: ${{ secrets.LOOP_NOTIFICATION_GROUP }}
+      webhook: ${{ secrets.LOOP_NOTIFICATION_WEBHOOK }}
+      notificationChannel: ${{ secrets.LOOP_NOTIFICATION_CHANNEL }}
+
+

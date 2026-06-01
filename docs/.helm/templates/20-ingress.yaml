@@ -1,84 +1,251 @@
 {{- $refs := list $.Values.global.github_ref }}
-{{- if eq $.Values.werf.env "test" }}
-{{- $refs = concat $refs (list "v2.0.3" "v1.2.294+fix1") }}
-{{- end }}
 
 {{- range $_, $ref := $refs }}
 
-{{- $version := splitList "/" $ref | last }}
-{{- $versionDNSNormalized := printf "%s" $version | lower | replace "+" "-plus-" | replace "_" "-u-" | replace "." "-dot-" }}
-
-{{- $versionURLNormalized := "" }}
-{{- if eq $version "main" }}
-{{- $versionURLNormalized = "latest" }}
-{{- else }}
-{{- $versionURLNormalized = printf "%s" $version | lower | replace "+" "-plus-" | replace "_" "-u-" }}
+{{- $sourceRef := splitList "/" $ref | last }}
+{{- $isPrimaryDeployRef := eq $ref $.Values.global.github_ref }}
+{{- $deployTarget := $sourceRef }}
+{{- if and $isPrimaryDeployRef $.Values.global.docs_deploy_target }}
+{{- $deployTarget = $.Values.global.docs_deploy_target }}
 {{- end }}
+{{- $deployTargetDNSNormalized := printf "%s" $deployTarget | lower | replace "+" "-plus-" | replace "_" "-u-" | replace "." "-dot-" }}
+
+{{- $deployTargetURLNormalized := "" }}
+{{- if eq $deployTarget "main" }}
+{{- $deployTargetURLNormalized = "latest" }}
+{{- else }}
+{{- $deployTargetURLNormalized = printf "%s" $deployTarget | lower | replace "+" "-plus-" | replace "_" "-u-" }}
+{{- end }}
+{{- $publishLatestAlias := and $.Values.global.docs_deploy_latest_alias_enabled $isPrimaryDeployRef }}
 
 {{- $host := pluck $.Values.werf.env $.Values.host | first | default $.Values.host._default  }}
 {{- if hasPrefix "review" $.Values.werf.env }}
 {{- $host = printf "%s.%s" $.Values.werf.env (pluck "dev" $.Values.host | first | default $.Values.host._default ) | lower }}
 {{- end }}
-
+{{- $targetCluster := include "targetCluster" $ }}
+{{- $ruHost := printf "ru.%s" $host }}
+{{- if eq $.Values.werf.env "production" }}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ $.Chart.Name }}-{{ $versionDNSNormalized }}
+  name: {{ $.Chart.Name }}-{{ $deployTargetDNSNormalized }}
   annotations:
     nginx.ingress.kubernetes.io/configuration-snippet: |
       proxy_set_header X-Original-URI $request_uri;
       ssi on;
       ssi_silent_errors on;
 {{ include "rewrites" $ | indent 6 }}
-{{- if eq $.Values.werf.env "production" }}
     nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
-{{- else }}
-    nginx.ingress.kubernetes.io/auth-url: http://basic-auth.kube-basic-auth.svc.cluster.local/werfio
-{{- end }}
 spec:
-  ingressClassName: {{ pluck $.Values.werf.env $.Values.ingressClassName | first | default $.Values.ingressClassName._default }}
+  ingressClassName: {{ include "ingressClassName" $ }}
+  tls:
+  - hosts:
+{{- if eq $targetCluster "eu" }}
+      - {{ $host }}
+      - www.{{ $host }}
+{{- else }}
+      - {{ $ruHost }}
+{{- end }}
+    secretName: tls-{{ $host }}
+  rules:
+{{- if eq $targetCluster "eu" }}
+  - host: {{ $host }}
+    http:
+      paths:
+      - path: /docs/{{ $deployTargetURLNormalized }}/
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: {{ $.Chart.Name }}-{{ $deployTargetDNSNormalized }}
+            port:
+              name: http
+      - path: /documentation/{{ $deployTargetURLNormalized }}/
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: {{ $.Chart.Name }}-{{ $deployTargetDNSNormalized }}
+            port:
+              name: http
+{{- if $publishLatestAlias }}
+      - path: /docs/latest/
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: {{ $.Chart.Name }}-{{ $deployTargetDNSNormalized }}
+            port:
+              name: http
+      - path: /documentation/latest/
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: {{ $.Chart.Name }}-{{ $deployTargetDNSNormalized }}
+            port:
+              name: http
+{{- end }}
+{{- else }}
+  - host: {{ $ruHost }}
+    http:
+      paths:
+      - path: /docs/{{ $deployTargetURLNormalized }}/
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: {{ $.Chart.Name }}-{{ $deployTargetDNSNormalized }}
+            port:
+              name: http
+      - path: /documentation/{{ $deployTargetURLNormalized }}/
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: {{ $.Chart.Name }}-{{ $deployTargetDNSNormalized }}
+            port:
+              name: http
+{{- if $publishLatestAlias }}
+      - path: /docs/latest/
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: {{ $.Chart.Name }}-{{ $deployTargetDNSNormalized }}
+            port:
+              name: http
+      - path: /documentation/latest/
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: {{ $.Chart.Name }}-{{ $deployTargetDNSNormalized }}
+            port:
+              name: http
+{{- end }}
+{{- end }}
+{{- else }}
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ $.Chart.Name }}-{{ $deployTargetDNSNormalized }}
+  annotations:
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      proxy_set_header X-Original-URI $request_uri;
+      ssi on;
+      ssi_silent_errors on;
+{{ include "rewrites" $ | indent 6 }}
+    nginx.ingress.kubernetes.io/auth-response-headers: X-Auth-Request-User,X-Auth-Request-Email
+    nginx.ingress.kubernetes.io/auth-signin: https://$host/dex-authenticator/sign_in
+    nginx.ingress.kubernetes.io/auth-url: https://werfio-dex-authenticator.{{ $.Values.werf.namespace }}.svc.cluster.local/dex-authenticator/auth
+spec:
+  ingressClassName: {{ include "ingressClassName" $ }}
   tls:
   - hosts:
       - {{ $host }}
-      - ru.{{ $host }}
 {{- if eq $.Values.werf.env "production" }}
-      - www.{{ $host }}
-{{- end }}
     secretName: tls-{{ $host }}
+{{- else }}
+    secretName: {{ pluck $.Values.werf.env $.Values.ingressSecretName | first | default $.Values.ingressSecretName._default }}
+{{- end }}
   rules:
   - host: {{ $host }}
     http:
       paths:
-      - path: /docs/{{ $versionURLNormalized }}/
+      - path: /docs/{{ $deployTargetURLNormalized }}/
         pathType: ImplementationSpecific
         backend:
           service:
-            name: {{ $.Chart.Name }}-{{ $versionDNSNormalized }}
+            name: {{ $.Chart.Name }}-{{ $deployTargetDNSNormalized }}
             port:
               name: http
-      - path: /documentation/{{ $versionURLNormalized }}/
+      - path: /documentation/{{ $deployTargetURLNormalized }}/
         pathType: ImplementationSpecific
         backend:
           service:
-            name: {{ $.Chart.Name }}-{{ $versionDNSNormalized }}
+            name: {{ $.Chart.Name }}-{{ $deployTargetDNSNormalized }}
             port:
               name: http
+{{- if $publishLatestAlias }}
+      - path: /docs/latest/
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: {{ $.Chart.Name }}-{{ $deployTargetDNSNormalized }}
+            port:
+              name: http
+      - path: /documentation/latest/
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: {{ $.Chart.Name }}-{{ $deployTargetDNSNormalized }}
+            port:
+              name: http
+{{- end }}
+
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ $.Chart.Name }}-ru-{{ $deployTargetDNSNormalized }}
+  annotations:
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      proxy_set_header X-Original-URI $request_uri;
+      ssi on;
+      ssi_silent_errors on;
+{{ include "rewrites" $ | indent 6 }}
+    nginx.ingress.kubernetes.io/auth-response-headers: X-Auth-Request-User,X-Auth-Request-Email
+    nginx.ingress.kubernetes.io/auth-signin: https://$host/dex-authenticator/sign_in
+    nginx.ingress.kubernetes.io/auth-url: https://werfio-ru-dex-authenticator.{{ $.Values.werf.namespace }}.svc.cluster.local/dex-authenticator/auth
+spec:
+  ingressClassName: {{ include "ingressClassName" $ }}
+  tls:
+  - hosts:
+{{- if eq $.Values.werf.env "production" }}
+      - ru.{{ $host }}
+{{- else }}
+      - ru-{{ $host }}
+{{- end }}
+{{- if eq $.Values.werf.env "production" }}
+    secretName: tls-{{ $host }}
+{{- else }}
+    secretName: {{ pluck $.Values.werf.env $.Values.ingressSecretName | first | default $.Values.ingressSecretName._default }}
+{{- end }}
+  rules:
+{{- if eq $.Values.werf.env "production" }}
   - host: ru.{{ $host }}
+{{- else }}
+  - host: ru-{{ $host }}
+{{- end }}
     http:
       paths:
-      - path: /docs/{{ $versionURLNormalized }}/
+      - path: /docs/{{ $deployTargetURLNormalized }}/
         pathType: ImplementationSpecific
         backend:
           service:
-            name: {{ $.Chart.Name }}-{{ $versionDNSNormalized }}
+            name: {{ $.Chart.Name }}-{{ $deployTargetDNSNormalized }}
             port:
               name: http
-      - path: /documentation/{{ $versionURLNormalized }}/
+      - path: /documentation/{{ $deployTargetURLNormalized }}/
         pathType: ImplementationSpecific
         backend:
           service:
-            name: {{ $.Chart.Name }}-{{ $versionDNSNormalized }}
+            name: {{ $.Chart.Name }}-{{ $deployTargetDNSNormalized }}
             port:
               name: http
+{{- if $publishLatestAlias }}
+      - path: /docs/latest/
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: {{ $.Chart.Name }}-{{ $deployTargetDNSNormalized }}
+            port:
+              name: http
+      - path: /documentation/latest/
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: {{ $.Chart.Name }}-{{ $deployTargetDNSNormalized }}
+            port:
+              name: http
+{{- end }}
+{{- end }}
+
 {{- end }}

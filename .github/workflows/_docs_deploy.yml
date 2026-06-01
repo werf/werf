@@ -3,12 +3,32 @@ name: xxxxx(internal)
 on:
   workflow_call:
     inputs:
+      checkoutRef:
+        required: false
+        default: ""
+        type: string
       env:
         required: true
         type: string
+      githubRefOverride:
+        required: false
+        default: ""
+        type: string
+      releaseRefOverride:
+        required: false
+        default: ""
+        type: string
+      docsDeployTarget:
+        required: false
+        default: ""
+        type: string
+      docsDeployLatestAliasEnabled:
+        required: false
+        default: false
+        type: boolean
       persistent:
         default: false
-        type: string
+        type: boolean
       runner:
         default: ubuntu-22.04
         type: string
@@ -26,16 +46,67 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          ref: ${{ inputs.checkoutRef != '' && inputs.checkoutRef || github.ref }}
 
       - name: Set dynamic WERF_* env vars
         run: |
+          checkout_ref='${{ inputs.checkoutRef }}'
+          docs_deploy_target='${{ inputs.docsDeployTarget }}'
+          github_ref_override='${{ inputs.githubRefOverride }}'
+          release_ref_override='${{ inputs.releaseRefOverride }}'
+
+          normalize_release_ref() {
+            local release_ref="$1"
+
+            release_ref="${release_ref#refs/heads/}"
+            release_ref="${release_ref#refs/tags/}"
+            release_ref="${release_ref#refs/pull/}"
+
+            printf '%s' "$release_ref"
+          }
+
+          normalize_github_ref() {
+            local github_ref
+
+            github_ref="$(normalize_release_ref "$1")"
+            github_ref="${github_ref//\//-}"
+
+            printf '%s' "$github_ref"
+          }
+
           if ${{ inputs.persistent }}; then
+            pr_number='${{ github.event.pull_request.number }}'
+            if [[ -n "$github_ref_override" ]]; then
+              github_ref_value="$(normalize_github_ref "$github_ref_override")"
+            elif [[ -n "$checkout_ref" ]]; then
+              github_ref_value="$(normalize_github_ref "$checkout_ref")"
+            elif [[ -n "$pr_number" ]]; then
+              github_ref_value="pr-${pr_number}"
+            else
+              github_ref_value="$(normalize_github_ref '${{ github.ref }}')"
+            fi
+
+            if [[ -n "$release_ref_override" ]]; then
+              release_ref_value="$(normalize_release_ref "$release_ref_override")"
+            elif [[ -n "$github_ref_override" ]]; then
+              release_ref_value="$(normalize_release_ref "$github_ref_override")"
+            elif [[ -n "$checkout_ref" ]]; then
+              release_ref_value="$(normalize_release_ref "$checkout_ref")"
+            else
+              release_ref_source='${{ github.ref }}'
+              release_ref_value="$(normalize_release_ref "$release_ref_source")"
+            fi
+
+            release_ref_value="$(echo "$release_ref_value" | sed 's/\+/-plus-/g' | sed 's/\_/-u-/g' | sed 's/\./-dot-/g' | sed 's#/#-#g')"
+
             cat >> "$GITHUB_ENV" <<EOF
-          WERF_RELEASE=werfio-$(echo $GITHUB_REF | cut -d\/ -f 3 | sed 's/\+/-plus-/' | sed 's/\_/-u-/')-${{ inputs.env }}
-          WERF_SET_GITHUB_REF=global.github_ref=${{ github.ref }}
+          WERF_RELEASE=werfio-${release_ref_value}-${{ inputs.env }}
+          WERF_SET_GITHUB_REF=global.github_ref=$github_ref_value
+          WERF_SET_DOCS_DEPLOY_TARGET=global.docs_deploy_target=${docs_deploy_target}
+          WERF_SET_DOCS_DEPLOY_LATEST_ALIAS_ENABLED=global.docs_deploy_latest_alias_enabled=${{ inputs.docsDeployLatestAliasEnabled }}
           EOF
           else
             cat >> "$GITHUB_ENV" <<EOF
@@ -44,13 +115,21 @@ jobs:
           EOF
           fi
 
+      - name: Install werf
+        uses: werf/actions/install@v2
+
       - name: Deploy
-        uses: werf/actions/converge@v2
-        with:
-          env: ${{ inputs.env }}
-          kube-config-base64-data: ${{ secrets.kubeConfig }}
+        run: |
+          set -euo pipefail
+
+          ci_env_file="$(werf ci-env github --as-file)"
+          . "$ci_env_file"
+          werf converge --virtual-merge=false
         env:
           WERF_NAMESPACE: werfio-${{ inputs.env }}
           WERF_DIR: docs
           WERF_LOG_VERBOSE: on
           WERF_REPO: ghcr.io/${{ github.repository_owner }}/werfio
+          WERF_ENV: ${{ inputs.env }}
+          WERF_KUBE_CONFIG_BASE64: ${{ secrets.kubeConfig }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

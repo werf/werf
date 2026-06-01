@@ -6,16 +6,128 @@ on:
   repository_dispatch:
     types: ["docs:deploy:pr"]
   workflow_dispatch:
+    inputs:
+      gitRef:
+        description: "Branch, tag or ref to checkout"
+        required: false
+        default: ""
+        type: string
+      releaseRef:
+        description: "Unique release slug for test deploy; empty means selected branch/tag"
+        required: false
+        default: ""
+        type: string
+      docsDeployTarget:
+        description: "Stable docs root to expose, for example v2"
+        required: false
+        default: ""
+        type: string
+      docsDeployLatestAliasEnabled:
+        description: "Also expose /docs/latest/ as alias to docsDeployTarget"
+        required: true
+        default: false
+        type: boolean
 
 jobs:
   deploy-test:
     if: |
-      github.event.label.name == 'trigger: docs:deploy:pr' || contains(github.event.pull_request.labels.*.name, 'trigger: docs:deploy:pr')
+      github.event_name == 'workflow_dispatch' ||
+      github.event.label.name == 'trigger: docs:deploy:pr' ||
+      contains(github.event.pull_request.labels.*.name, 'trigger: docs:deploy:pr')
     uses: ./.github/workflows/_docs_deploy.yml
     with:
+      checkoutRef: ${{ github.event_name == 'workflow_dispatch' && inputs.gitRef || '' }}
       env: test
+      githubRefOverride: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || github.event_name == 'workflow_dispatch' && inputs.gitRef || '' }}
+      releaseRefOverride: ${{ github.event_name == 'workflow_dispatch' && inputs.releaseRef || '' }}
+      docsDeployTarget: ${{ github.event_name == 'workflow_dispatch' && inputs.docsDeployTarget || '' }}
+      docsDeployLatestAliasEnabled: ${{ github.event_name == 'workflow_dispatch' && inputs.docsDeployLatestAliasEnabled || false }}
+      persistent: true
+      runner: prod-github-runner-0
     secrets:
       kubeConfig: ${{ secrets.KUBECONFIG_BASE64_DEV }}
+
+  comment-pr:
+    if: ${{ github.event_name == 'pull_request' && !github.event.pull_request.head.repo.fork && github.event.pull_request.head.repo.full_name == github.repository && needs.deploy-test.result == 'success' }}
+    needs: deploy-test
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Compute docs URLs
+        id: docs-urls
+        run: |
+          set -euo pipefail
+
+          ruby <<'RUBY'
+          require 'yaml'
+
+          values = YAML.load_file('docs/.helm/values.yaml')
+          host_values = values.fetch('host')
+          host = host_values['test'] || host_values.fetch('_default')
+
+          pr_slug = "pr-${{ github.event.pull_request.number }}"
+
+          File.open(ENV.fetch('GITHUB_OUTPUT'), 'a') do |f|
+            f.puts "docs_en_url=https://#{host}/docs/#{pr_slug}/"
+            f.puts "docs_ru_url=https://ru-#{host}/docs/#{pr_slug}/"
+          end
+          RUBY
+
+      - name: Comment docs links
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const marker = '<!-- docs-deploy-pr-links -->';
+            const body = [
+              marker,
+              'Docs preview is deployed for this PR:',
+              '',
+              '- EN: ${{ steps.docs-urls.outputs.docs_en_url }}',
+              '- RU: ${{ steps.docs-urls.outputs.docs_ru_url }}',
+            ].join('\n');
+
+            const { owner, repo } = context.repo;
+            const issue_number = context.payload.pull_request.number;
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner,
+              repo,
+              issue_number,
+            });
+
+            const comment = comments.find((comment) =>
+              comment.user?.type === 'Bot' && comment.body?.includes(marker),
+            );
+
+            try {
+              if (comment) {
+                await github.rest.issues.updateComment({
+                  owner,
+                  repo,
+                  comment_id: comment.id,
+                  body,
+                });
+                return;
+              }
+
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number,
+                body,
+              });
+            } catch (e) {
+              if (e?.status === 403) {
+                core.warning(`Skipping PR comment: ${e.message}`);
+                return;
+              }
+              throw e;
+            }
 
   notify:
     if: |
