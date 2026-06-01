@@ -26,10 +26,6 @@ on:
         required: false
         default: false
         type: boolean
-      overlayCallerRefFiles:
-        required: false
-        default: false
-        type: boolean
       persistent:
         default: false
         type: boolean
@@ -54,47 +50,6 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ inputs.checkoutRef != '' && inputs.checkoutRef || github.ref }}
-
-      - name: Overlay docs routing files from caller ref
-        if: ${{ inputs.overlayCallerRefFiles }}
-        run: |
-          set -euo pipefail
-
-          overlay_ref='${{ github.sha }}'
-
-          while IFS= read -r path; do
-            mkdir -p "$(dirname "$path")"
-            git show "${overlay_ref}:${path}" > "$path"
-          done <<'EOF'
-          docs/.helm/values.yaml
-          docs/.helm/templates/10-app.yaml
-          docs/.helm/templates/20-ingress.yaml
-          docs/.helm/templates/_helpers.tpl
-          docs/.helm/templates/_rewrites.tpl
-          docs/.werf/nginx.conf
-          EOF
-
-      - name: Allow overlaid docs routing files for werf
-        if: ${{ inputs.overlayCallerRefFiles }}
-        run: |
-          set -euo pipefail
-
-          cat > docs/.werf-giterminism-overlay.yaml <<'EOF'
-          giterminismConfigVersion: "1"
-          config:
-            goTemplateRendering:
-              allowUncommittedFiles:
-                - .werf/nginx.conf
-          helm:
-            allowUncommittedFiles:
-              - .helm/values.yaml
-              - .helm/templates/10-app.yaml
-              - .helm/templates/20-ingress.yaml
-              - .helm/templates/_helpers.tpl
-              - .helm/templates/_rewrites.tpl
-          EOF
-
-          echo 'WERF_GITERMINISM_CONFIG=.werf-giterminism-overlay.yaml' >> "$GITHUB_ENV"
 
       - name: Set dynamic WERF_* env vars
         run: |
