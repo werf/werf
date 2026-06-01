@@ -45,8 +45,10 @@ spec:
       - www.{{ $host }}
 {{- else }}
       - {{ $ruHost }}
+      - {{ $host }}
+      - www.{{ $host }}
 {{- end }}
-    secretName: tls-{{ $host }}
+    secretName: tls-werf-io
   rules:
 {{- if eq $targetCluster "eu" }}
   - host: {{ $host }}
@@ -68,6 +70,23 @@ spec:
               name: http
 {{- else }}
   - host: {{ $ruHost }}
+    http:
+      paths:
+      - path: /docs/{{ $versionURLNormalized }}/
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: {{ $.Chart.Name }}-{{ $versionDNSNormalized }}
+            port:
+              name: http
+      - path: /documentation/{{ $versionURLNormalized }}/
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: {{ $.Chart.Name }}-{{ $versionDNSNormalized }}
+            port:
+              name: http
+  - host: {{ $host }}
     http:
       paths:
       - path: /docs/{{ $versionURLNormalized }}/
@@ -107,7 +126,7 @@ spec:
   - hosts:
       - {{ $host }}
 {{- if eq $.Values.werf.env "production" }}
-    secretName: tls-{{ $host }}
+    secretName: tls-werf-io
 {{- else }}
     secretName: {{ pluck $.Values.werf.env $.Values.ingressSecretName | first | default $.Values.ingressSecretName._default }}
 {{- end }}
@@ -155,7 +174,7 @@ spec:
       - ru-{{ $host }}
 {{- end }}
 {{- if eq $.Values.werf.env "production" }}
-    secretName: tls-{{ $host }}
+    secretName: tls-werf-io
 {{- else }}
     secretName: {{ pluck $.Values.werf.env $.Values.ingressSecretName | first | default $.Values.ingressSecretName._default }}
 {{- end }}
