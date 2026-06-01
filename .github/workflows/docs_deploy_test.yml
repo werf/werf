@@ -1,0 +1,21 @@
+name: docs:deploy:test
+
+on:
+  push:
+    branches:
+      - chore/deploy/v1-docs-routing
+
+jobs:
+  deploy-test:
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/_docs_deploy.yml
+    with:
+      env: test
+      docsDeployTarget: v1.2
+      docsDeployLatestAliasEnabled: false
+      persistent: true
+      runner: prod-github-runner-0
+    secrets:
+      kubeConfig: ${{ secrets.KUBECONFIG_BASE64_DEV }}
