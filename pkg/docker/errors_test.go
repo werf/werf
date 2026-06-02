@@ -60,6 +60,10 @@ var _ = Describe("docker errors", func() {
 			Entry("does not match unrelated error",
 				"connection timeout", false),
 			Entry("returns false for nil", "", false),
+			Entry("matches Docker API NotFound style",
+				"NotFound: content digest sha256:abc123def456: not found", true),
+			Entry("matches generic Docker API 404",
+				"NotFound: image not found", true),
 		)
 
 		It("works through pkg/errors wrapping", func() {

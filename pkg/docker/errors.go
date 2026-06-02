@@ -14,7 +14,11 @@ func IsErrContentNotFound(err error) bool {
 		return false
 	}
 	cause := errors.Cause(err)
-	return strings.Contains(cause.Error(), "content digest") && strings.Contains(cause.Error(), "not found")
+	msg := cause.Error()
+	// Match Docker/containerd "content digest ... not found" (containerd-snapshotter missing blob)
+	// and generic Docker API "NotFound" (HTTP 404) responses.
+	return (strings.Contains(msg, "content digest") || strings.Contains(msg, "NotFound")) &&
+		strings.Contains(msg, "not found")
 }
 
 func ContentNotFoundDigest(err error) string {
