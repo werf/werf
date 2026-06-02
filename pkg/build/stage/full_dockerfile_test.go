@@ -13,6 +13,7 @@ import (
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v2/pkg/container_backend/stage_builder"
 	"github.com/werf/werf/v2/pkg/dockerfile/frontend"
+	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/logging"
 )
 
@@ -309,6 +310,26 @@ RUN echo hello
 
 			_, err := stage.GetDependencies(ctx, conveyor, containerBackend, nil, nil, nil)
 			Expect(IsErrInvalidBaseImage(err)).To(BeTrue())
+		})
+	})
+
+	When("head commit is empty", func() {
+		It("should not append project repo commit label", func(ctx SpecContext) {
+			dockerfile := []byte(`
+FROM alpine:latest
+RUN echo hello
+`)
+
+			conveyor := NewConveyorStubForDependencies(NewGiterminismManagerStub(NewLocalGitRepoStub(""), NewGiterminismInspectorStub()), nil)
+			containerBackend := NewContainerBackendStub()
+			dockerStages, dockerMetaArgs := testDockerfileToDockerStages(dockerfile)
+			stage := newTestFullDockerfileStage(dockerfile, "", nil, dockerStages, dockerMetaArgs, nil, "")
+			img := NewLegacyImageStub()
+			stageBuilder := stage_builder.NewStageBuilder(containerBackend, "", img)
+			stageImage := &StageImage{Image: img, Builder: stageBuilder}
+
+			Expect(stage.PrepareImage(ctx, conveyor, containerBackend, nil, stageImage, nil)).To(Succeed())
+			Expect(stageBuilder.GetDockerfileBuilderImplementation().BuildDockerfileOptions.Labels).NotTo(ContainElement(HavePrefix(fmt.Sprintf("%s=", image.WerfProjectRepoCommitLabel))))
 		})
 	})
 

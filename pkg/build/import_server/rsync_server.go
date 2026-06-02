@@ -29,7 +29,7 @@ type RsyncServer struct {
 	AuthUser, AuthPassword string
 }
 
-func RunRsyncServer(ctx context.Context, dockerImageName, tmpDir string) (*RsyncServer, error) {
+func RunRsyncServer(ctx context.Context, dockerImageName, tmpDir, targetPlatform string) (*RsyncServer, error) {
 	logboek.Context(ctx).Debug().LogF("RunRsyncServer for docker image %q\n", dockerImageName)
 
 	srv := &RsyncServer{
@@ -39,7 +39,7 @@ func RunRsyncServer(ctx context.Context, dockerImageName, tmpDir string) (*Rsync
 		AuthPassword:        generateSecureRandomString(16),
 	}
 
-	stapelContainerName, err := stapel.GetOrCreateContainer(ctx)
+	stapelContainerName, err := stapel.GetOrCreateContainer(ctx, targetPlatform)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get or create stapel container: %w", err)
 	}
@@ -80,11 +80,16 @@ strict modes = false
 		fmt.Sprintf("--volume=%s:/.werf/rsyncd.secrets", secretsFilePath),
 		fmt.Sprintf("--expose=%s", rsyncServerPort),
 		fmt.Sprintf("--entrypoint=%s", stapel.RsyncBinPath()),
+	}
+	if targetPlatform != "" {
+		runArgs = append(runArgs, fmt.Sprintf("--platform=%s", targetPlatform))
+	}
+	runArgs = append(runArgs,
 		dockerImageName,
 		"--daemon",
 		"--no-detach",
 		"--config=/.werf/rsyncd.conf",
-	}
+	)
 	logboek.Context(ctx).Debug().LogF("Run rsync server command: %q\n", fmt.Sprintf("docker run %s", strings.Join(runArgs, " ")))
 	if output, err := docker.CliRun_RecordedOutput(ctx, runArgs...); err != nil {
 		logboek.Context(ctx).Error().LogF("Unable to run rsync server command: %q\n", fmt.Sprintf("docker run %s", strings.Join(runArgs, " ")))

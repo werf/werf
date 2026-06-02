@@ -765,6 +765,10 @@ func (phase *BuildPhase) onImageStage(ctx context.Context, img *image.Image, stg
 		DoError(func() error {
 			var err error
 			foundSuitableStage, calculateStageCleanupFunc, err = phase.calculateStage(ctx, img, stg)
+			if err != nil && calculateStageCleanupFunc != nil {
+				calculateStageCleanupFunc()
+				calculateStageCleanupFunc = nil
+			}
 			if err != nil {
 				return err
 			}
@@ -1144,7 +1148,7 @@ func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *imag
 func (phase *BuildPhase) buildStage(ctx context.Context, img *image.Image, stg stage.Interface) error {
 	if stg.IsBuildable() {
 		if !img.IsDockerfileImage && phase.Conveyor.UseLegacyStapelBuilder(phase.Conveyor.ContainerBackend) {
-			_, err := stapel.GetOrCreateContainer(ctx)
+			_, err := stapel.GetOrCreateContainer(ctx, img.TargetPlatform)
 			if err != nil {
 				return fmt.Errorf("get or create stapel container failed: %w", err)
 			}
