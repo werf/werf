@@ -21,7 +21,6 @@
 {{- if hasPrefix "review" $.Values.werf.env }}
 {{- $host = printf "%s.%s" $.Values.werf.env (pluck "dev" $.Values.host | first | default $.Values.host._default ) | lower }}
 {{- end }}
-{{- $targetCluster := include "targetCluster" $ }}
 {{- $ruHost := printf "ru.%s" $host }}
 {{- if eq $.Values.werf.env "production" }}
 ---
@@ -40,35 +39,11 @@ spec:
   ingressClassName: {{ include "ingressClassName" $ }}
   tls:
   - hosts:
-{{- if eq $targetCluster "eu" }}
-      - {{ $host }}
-      - www.{{ $host }}
-{{- else }}
       - {{ $ruHost }}
       - {{ $host }}
       - www.{{ $host }}
-{{- end }}
     secretName: tls-werf-io
   rules:
-{{- if eq $targetCluster "eu" }}
-  - host: {{ $host }}
-    http:
-      paths:
-      - path: /docs/{{ $versionURLNormalized }}/
-        pathType: ImplementationSpecific
-        backend:
-          service:
-            name: {{ $.Chart.Name }}-{{ $versionDNSNormalized }}
-            port:
-              name: http
-      - path: /documentation/{{ $versionURLNormalized }}/
-        pathType: ImplementationSpecific
-        backend:
-          service:
-            name: {{ $.Chart.Name }}-{{ $versionDNSNormalized }}
-            port:
-              name: http
-{{- else }}
   - host: {{ $ruHost }}
     http:
       paths:
@@ -103,7 +78,6 @@ spec:
             name: {{ $.Chart.Name }}-{{ $versionDNSNormalized }}
             port:
               name: http
-{{- end }}
 {{- else }}
 
 ---
