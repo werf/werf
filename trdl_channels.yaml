@@ -42,8 +42,8 @@ groups:
       - name: beta
         version: 2.70.0
       - name: ea
-        version: 2.69.1
+        version: 2.70.0
       - name: stable
-        version: 2.68.2
+        version: 2.69.1
       - name: rock-solid
         version: 2.68.2
