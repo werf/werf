@@ -340,12 +340,7 @@ func (s *BaseStage) PrepareImage(ctx context.Context, c Conveyor, cb container_b
 	 * NOTE: Take into account when adding new base PrepareImage steps.
 	 */
 
-	addLabels := map[string]string{image.WerfProjectRepoCommitLabel: c.GiterminismManager().HeadCommit(ctx)}
-	if c.UseLegacyStapelBuilder(cb) {
-		stageImage.Builder.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions().AddLabel(addLabels)
-	} else {
-		stageImage.Builder.StapelStageBuilder().AddLabels(addLabels)
-	}
+	s.addProjectRepoCommitLabel(ctx, c, cb, stageImage)
 
 	if s.network != "" {
 		if c.UseLegacyStapelBuilder(cb) {
@@ -368,6 +363,20 @@ func (s *BaseStage) PrepareImage(ctx context.Context, c Conveyor, cb container_b
 	}
 
 	return nil
+}
+
+func (s *BaseStage) addProjectRepoCommitLabel(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, stageImage *StageImage) {
+	headCommit := c.GiterminismManager().HeadCommit(ctx)
+	if headCommit == "" {
+		return
+	}
+
+	addLabels := map[string]string{image.WerfProjectRepoCommitLabel: headCommit}
+	if c.UseLegacyStapelBuilder(cb) {
+		stageImage.Builder.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions().AddLabel(addLabels)
+	} else {
+		stageImage.Builder.StapelStageBuilder().AddLabels(addLabels)
+	}
 }
 
 func (s *BaseStage) MutateImage(_ context.Context, _ ImageMutatorPusher, _, _ *StageImage) error {
