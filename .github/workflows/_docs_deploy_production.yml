@@ -58,34 +58,48 @@ jobs:
       - name: Set dynamic WERF_* env vars
         run: |
           checkout_ref='${{ inputs.checkoutRef }}'
+          default_ref='${{ github.ref }}'
           docs_deploy_target='${{ inputs.docsDeployTarget }}'
           github_ref_override='${{ inputs.githubRefOverride }}'
           release_ref_override='${{ inputs.releaseRefOverride }}'
 
+          strip_ref_prefix() {
+            local ref="$1"
+
+            ref="${ref#refs/heads/}"
+            ref="${ref#refs/tags/}"
+            ref="${ref#refs/pull/}"
+
+            printf '%s' "$ref"
+          }
+
+          slugify_release_ref() {
+            local ref
+
+            ref="$(strip_ref_prefix "$1")"
+            ref="${ref//\//-}"
+            ref="${ref//+/-plus-}"
+            ref="${ref//_/-u-}"
+            ref="${ref//./-dot-}"
+
+            printf '%s' "$ref"
+          }
+
           if ${{ inputs.persistent }}; then
+            github_ref_value="$default_ref"
             if [[ -n "$github_ref_override" ]]; then
               github_ref_value="$github_ref_override"
             elif [[ -n "$checkout_ref" ]]; then
               github_ref_value="$checkout_ref"
-            else
-              github_ref_value='${{ github.ref }}'
             fi
 
             if [[ -n "$docs_deploy_target" ]]; then
-              release_ref_value="$docs_deploy_target"
+              release_ref_value="$(slugify_release_ref "$docs_deploy_target")"
             elif [[ -n "$release_ref_override" ]]; then
-              release_ref_source="$release_ref_override"
-              release_ref_value="$(echo "$release_ref_source" | cut -d/ -f 3)"
+              release_ref_value="$(slugify_release_ref "$release_ref_override")"
             else
-              release_ref_source='${{ github.ref }}'
-              release_ref_value="$(echo "$release_ref_source" | cut -d/ -f 3)"
+              release_ref_value="$(slugify_release_ref "$github_ref_value")"
             fi
-
-            if [[ -z "$release_ref_value" ]]; then
-              release_ref_value="$release_ref_source"
-            fi
-
-            release_ref_value="$(echo "$release_ref_value" | sed 's/\+/-plus-/g' | sed 's/\_/-u-/g' | sed 's/\./-dot-/g' | sed 's#/#-#g')"
 
             cat >> "$GITHUB_ENV" <<EOF
           WERF_RELEASE=werfio-${release_ref_value}-production
@@ -138,7 +152,10 @@ jobs:
 
       - name: Deploy production docs
         run: |
-          . $(werf ci-env github --as-file)
+          set -euo pipefail
+
+          ci_env_file="$(werf ci-env github --as-file)"
+          . "$ci_env_file"
           werf converge --set "global.targetCluster=${{ inputs.targetCluster }}"
         env:
           WERF_NAMESPACE: werfio-production
