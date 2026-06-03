@@ -23,14 +23,6 @@ eu
 {{- pluck .Values.werf.env .Values.ingressClassName | first | default .Values.ingressClassName._default -}}
 {{- end }}
 
-{{- define "currentDocsMajorTarget" }}
-{{- $target := .Values.global.currentDocsMajorTarget | default "" -}}
-{{- if $target -}}
-{{- $target -}}
-{{- else -}}
-{{- fail "Set global.currentDocsMajorTarget." -}}
-{{- end }}
-{{- end }}
 
 {{- define "clusterPlacement" }}
 {{- $targetCluster := include "targetCluster" . -}}

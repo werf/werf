@@ -19,32 +19,7 @@ on:
           - eu
 
 jobs:
-  resolve-current-major:
-    runs-on: ubuntu-22.04
-    outputs:
-      docsDeployTarget: ${{ steps.read.outputs.docs_deploy_target }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Read current docs major target
-        id: read
-        run: |
-          set -euo pipefail
-
-          ruby <<'RUBY'
-          require 'yaml'
-
-          values = YAML.load_file('docs/.helm/values.yaml')
-          target = values.fetch('global').fetch('currentDocsMajorTarget')
-
-          File.open(ENV.fetch('GITHUB_OUTPUT'), 'a') do |f|
-            f.puts "docs_deploy_target=#{target}"
-          end
-          RUBY
-
   deploy-prod-ru:
-    needs: resolve-current-major
     if: ${{ (github.event_name == 'push') || github.event_name == 'repository_dispatch' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.targetCluster == 'all' || github.event.inputs.targetCluster == 'ru')) }}
     permissions:
       contents: read
@@ -52,7 +27,7 @@ jobs:
       packages: write
     uses: ./.github/workflows/_docs_deploy_production.yml
     with:
-      docsDeployTarget: ${{ needs.resolve-current-major.outputs.docsDeployTarget }}
+      docsDeployTarget: v2
       docsDeployLatestAliasEnabled: true
       persistent: true
       targetCluster: ru
@@ -60,7 +35,6 @@ jobs:
       kubeConfigSecretPath: projects/data/b454e6aa-39f0-45f4-aa7c-a9465ab154cb/KUBE_CONFIG_RU
 
   deploy-prod-eu:
-    needs: resolve-current-major
     if: ${{ (github.event_name == 'push') || github.event_name == 'repository_dispatch' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.targetCluster == 'all' || github.event.inputs.targetCluster == 'eu')) }}
     permissions:
       contents: read
@@ -68,7 +42,7 @@ jobs:
       packages: write
     uses: ./.github/workflows/_docs_deploy_production.yml
     with:
-      docsDeployTarget: ${{ needs.resolve-current-major.outputs.docsDeployTarget }}
+      docsDeployTarget: v2
       docsDeployLatestAliasEnabled: true
       persistent: true
       targetCluster: eu

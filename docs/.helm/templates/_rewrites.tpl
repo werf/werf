@@ -1,6 +1,5 @@
 # SHOULD BE IN SYNC WITH github.com/werf/website/.helm/templates/_rewrites.tpl
 {{- define "rewrites" }}
-{{- $currentDocsMajorTarget := include "currentDocsMajorTarget" . }}
 {{- $docsVersionPattern := "v\\d+(?:\\.\\d+(?:\\.\\d+(?:[^/]+)?)?)?|latest|pr-\\d+" }}
 {{- $docsV2VersionPattern := "v2(?:\\.\\d+(?:\\.\\d+(?:[^/]+)?)?)?|latest|pr-\\d+" }}
 {{- $docsV12VersionPattern := "v1\\.2(?:\\.\\d+(?:[^/]+)?)?" }}
@@ -38,8 +37,8 @@ rewrite ^/(?<ver>{{ $docsV11VersionPattern }})/how_to/(?<tail>.+)               
 # Temporary versioned redirects
 ############################################
 
-rewrite ^/docs/?$                                                                             /docs/{{ $currentDocsMajorTarget }}/                            redirect;
-rewrite ^/docs/(?!(?:{{ $docsVersionPattern }})/)(?:.+)                         /docs/{{ $currentDocsMajorTarget }}/                            redirect;
+rewrite ^/docs/?$                                                                             /docs/v2/                                                        redirect;
+rewrite ^/docs/(?!(?:{{ $docsVersionPattern }})/)(?:.+)                         /docs/v2/                                                        redirect;
 
 rewrite ^/docs/(?<ver>{{ $docsV2VersionPattern }})/?$                             /docs/$ver/usage/project_configuration/overview.html            redirect;
 rewrite ^/docs/(?<ver>{{ $docsV2VersionPattern }})/usage/?$                       /docs/$ver/usage/project_configuration/overview.html            redirect;

@@ -54,7 +54,7 @@ jobs:
       - name: Set dynamic WERF_* env vars
         run: |
           checkout_ref='${{ inputs.checkoutRef }}'
-          default_ref='${{ github.ref }}'
+          github_ref_source='${{ github.ref }}'
           docs_deploy_target='${{ inputs.docsDeployTarget }}'
           github_ref_override='${{ inputs.githubRefOverride }}'
           release_ref_override='${{ inputs.releaseRefOverride }}'
@@ -92,7 +92,6 @@ jobs:
           }
 
           if ${{ inputs.persistent }}; then
-            github_ref_source="$default_ref"
             if [[ -n "$checkout_ref" ]]; then
               github_ref_source="$checkout_ref"
             fi
@@ -100,19 +99,12 @@ jobs:
               github_ref_source="$github_ref_override"
             fi
 
-            if [[ -n "$github_ref_override" || -n "$checkout_ref" || -z "$pr_number" ]]; then
-              github_ref_value="$(normalize_github_ref "$github_ref_source")"
-            else
+            github_ref_value="$(normalize_github_ref "$github_ref_source")"
+            if [[ -z "$github_ref_override" && -z "$checkout_ref" && -n "$pr_number" ]]; then
               github_ref_value="pr-${pr_number}"
             fi
 
-            release_ref_source="$default_ref"
-            if [[ -n "$checkout_ref" ]]; then
-              release_ref_source="$checkout_ref"
-            fi
-            if [[ -n "$github_ref_override" ]]; then
-              release_ref_source="$github_ref_override"
-            fi
+            release_ref_source="$github_ref_source"
             if [[ -n "$release_ref_override" ]]; then
               release_ref_source="$release_ref_override"
             fi

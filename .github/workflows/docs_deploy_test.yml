@@ -28,35 +28,7 @@ on:
         type: boolean
 
 jobs:
-  resolve-current-major:
-    runs-on: ubuntu-22.04
-    outputs:
-      docsDeployTarget: ${{ steps.read.outputs.docs_deploy_target }}
-      releaseRef: ${{ steps.read.outputs.release_ref }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Read current docs major target
-        id: read
-        run: |
-          set -euo pipefail
-
-          ruby <<'RUBY'
-          require 'yaml'
-
-          values = YAML.load_file('docs/.helm/values.yaml')
-          target = values.fetch('global').fetch('currentDocsMajorTarget')
-          slug = target.gsub('+', '-plus-').gsub('_', '-u-').gsub('.', '-dot-').gsub('/', '-')
-
-          File.open(ENV.fetch('GITHUB_OUTPUT'), 'a') do |f|
-            f.puts "docs_deploy_target=#{target}"
-            f.puts "release_ref=docs-major-routing-#{slug}"
-          end
-          RUBY
-
   deploy-test:
-    needs: resolve-current-major
     permissions:
       contents: read
       packages: write
@@ -65,8 +37,8 @@ jobs:
       checkoutRef: ${{ github.event_name == 'workflow_dispatch' && inputs.gitRef || github.ref_name }}
       env: test
       githubRefOverride: ${{ github.event_name == 'workflow_dispatch' && inputs.gitRef || github.ref_name }}
-      releaseRefOverride: ${{ github.event_name == 'workflow_dispatch' && inputs.releaseRef || needs.resolve-current-major.outputs.releaseRef }}
-      docsDeployTarget: ${{ github.event_name == 'workflow_dispatch' && inputs.docsDeployTarget || needs.resolve-current-major.outputs.docsDeployTarget }}
+      releaseRefOverride: ${{ github.event_name == 'workflow_dispatch' && inputs.releaseRef || 'docs-major-routing-v2' }}
+      docsDeployTarget: ${{ github.event_name == 'workflow_dispatch' && inputs.docsDeployTarget || 'v2' }}
       docsDeployLatestAliasEnabled: ${{ github.event_name != 'workflow_dispatch' || inputs.docsDeployLatestAliasEnabled }}
       persistent: true
       runner: prod-github-runner-0
