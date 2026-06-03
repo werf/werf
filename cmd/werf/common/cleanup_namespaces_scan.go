@@ -2,6 +2,7 @@ package common
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/spf13/cobra"
 
@@ -12,7 +13,12 @@ import (
 
 func SetupScanContextNamespaceOnly(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.ScanContextNamespaceOnly = new(bool)
-	cmd.Flags().BoolVarP(cmdData.ScanContextNamespaceOnly, "scan-context-namespace-only", "", util.GetBoolEnvironmentDefaultFalse("WERF_SCAN_CONTEXT_NAMESPACE_ONLY"), "Scan for used images only in namespace linked with context for each available context in kube-config (or only for the context specified with option --kube-context). When disabled will scan all namespaces in all contexts (or only for the context specified with option --kube-context). (Default $WERF_SCAN_CONTEXT_NAMESPACE_ONLY)")
+	cmd.Flags().BoolVarP(cmdData.ScanContextNamespaceOnly, "scan-context-namespace-only", "", util.GetBoolEnvironmentDefaultFalse("WERF_SCAN_CONTEXT_NAMESPACE_ONLY"), "Scan for used images only in namespace linked with context for each available context in kube-config (or only for the context specified with option --kube-context). When disabled will scan all namespaces in all contexts (or only for the context specified with option --kube-context), unless --kube-scan-namespaces is set. (Default $WERF_SCAN_CONTEXT_NAMESPACE_ONLY)")
+}
+
+func SetupKubeScanNamespaces(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.KubeScanNamespaces = new([]string)
+	cmd.Flags().StringArrayVarP(cmdData.KubeScanNamespaces, "kube-scan-namespaces", "", []string{}, "Kubernetes namespaces to scan for each selected context (can specify multiple). Takes precedence over --scan-context-namespace-only when set.")
 }
 
 func GetKubernetesContextClients(configPath, configDataBase64 string, configPathMergeList []string, kubeContext, kubeBearerTokenData, kubeBearerTokenPath, apiServerURL, caDataBase64 string, insecure bool) ([]*kube.ContextClient, error) {
@@ -52,19 +58,33 @@ func GetKubernetesContextClients(configPath, configDataBase64 string, configPath
 	return res, nil
 }
 
-func GetKubernetesNamespaceRestrictionByContext(cmdData *CmdData, contextClients []*kube.ContextClient) map[string]string {
-	res := map[string]string{}
-	for _, contextClient := range contextClients {
-		if *cmdData.ScanContextNamespaceOnly {
-			res[contextClient.ContextName] = contextClient.ContextNamespace
-		} else {
-			// "" - cluster scope, therefore all namespaces
-			res[contextClient.ContextName] = ""
-		}
+func GetKubernetesNamespacesByContext(cmdData *CmdData, contextClients []*kube.ContextClient) map[string][]string {
+	res := map[string][]string{}
+	scanNamespaces := []string{}
+	if cmdData.KubeScanNamespaces != nil {
+		scanNamespaces = *cmdData.KubeScanNamespaces
 	}
 
-	for contextName, restrictionNamespace := range res {
-		logboek.Debug().LogF("GetKubernetesNamespaceRestrictionByContext -- context %q restriction namespace %q\n", contextName, restrictionNamespace)
+	for _, contextClient := range contextClients {
+		if len(scanNamespaces) > 0 {
+			res[contextClient.ContextName] = slices.Clone(scanNamespaces)
+			continue
+		}
+
+		if *cmdData.ScanContextNamespaceOnly {
+			if contextClient.ContextNamespace != "" {
+				res[contextClient.ContextName] = []string{contextClient.ContextNamespace}
+			} else {
+				res[contextClient.ContextName] = nil
+			}
+			continue
+		}
+
+		res[contextClient.ContextName] = nil
+	}
+
+	for contextName, namespaces := range res {
+		logboek.Debug().LogF("GetKubernetesNamespacesByContext -- context %q namespaces %q\n", contextName, namespaces)
 	}
 
 	return res

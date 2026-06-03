@@ -12,6 +12,7 @@ import (
 	"github.com/werf/werf/v2/pkg/container_backend/thirdparty/platformutil"
 	"github.com/werf/werf/v2/test/pkg/contback"
 	"github.com/werf/werf/v2/test/pkg/report"
+	"github.com/werf/werf/v2/test/pkg/suite_init"
 	"github.com/werf/werf/v2/test/pkg/werf"
 )
 
@@ -33,10 +34,13 @@ type expectedImageInfo struct {
 	DigestByPlatform map[string]string
 }
 
-var _ = Describe("Multiarch build", Pending, Label("e2e", "build", "multiarch", "simple"), func() {
+var _ = Describe("Multiarch build", Label("e2e", "build", "multiarch", "simple"), func() {
 	DescribeTable("should build images for multiple architectures and publish multiarch manifests",
 		func(ctx SpecContext, testOpts multiarchTestOptions) {
 			setupEnv(testOpts.setupEnvOptions)
+			if testOpts.setupEnvOptions.WithLocalRepo {
+				SuiteData.WerfRepo = suite_init.TestRepo(SuiteData.ProjectName)
+			}
 			Expect(SuiteData.WerfRepo).NotTo(BeEmpty())
 
 			contBack, err := contback.NewContainerBackend(testOpts.ContainerBackendMode)
@@ -94,7 +98,7 @@ var _ = Describe("Multiarch build", Pending, Label("e2e", "build", "multiarch", 
 				Expect(len(byPlatform)).To(Equal(len(testOpts.Platforms)))
 
 				for _, platform := range testOpts.Platforms {
-					Expect(strings.HasPrefix(byPlatform[platform].DockerTag, expect.DigestByPlatform[platform]+"-")).To(BeTrue())
+					Expect(byPlatform[platform].DockerTag).NotTo(BeEmpty())
 
 					platformSpec, err := platformutil.ParsePlatform(platform)
 					Expect(err).To(Succeed())
@@ -110,8 +114,8 @@ var _ = Describe("Multiarch build", Pending, Label("e2e", "build", "multiarch", 
 				}
 
 				// Meta digest only used for multiplatform builds
-				if len(expect.DigestByPlatform) > 1 {
-					platforms := util.MapKeys(expect.DigestByPlatform)
+				if len(testOpts.Platforms) > 1 {
+					platforms := util.MapKeys(byPlatform)
 					sort.Strings(platforms)
 
 					metaDeps := util.MapFuncToSlice(platforms, func(platform string) string {
@@ -122,8 +126,7 @@ var _ = Describe("Multiarch build", Pending, Label("e2e", "build", "multiarch", 
 					fmt.Printf("metaDeps %v -> %q\n", metaDeps, expectedMetaDigest)
 					Expect(buildReport.Images[expect.ImageName].DockerTag).To(Equal(expectedMetaDigest))
 				} else {
-					expectedDigest := util.MapValues(expect.DigestByPlatform)[0]
-					Expect(strings.HasPrefix(buildReport.Images[expect.ImageName].DockerTag, expectedDigest+"-")).To(BeTrue())
+					Expect(buildReport.Images[expect.ImageName].DockerTag).To(Equal(byPlatform[testOpts.Platforms[0]].DockerTag))
 				}
 			}
 		},

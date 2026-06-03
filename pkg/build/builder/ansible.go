@@ -120,7 +120,7 @@ func (b *Ansible) stage(ctx context.Context, cr container_backend.ContainerBacke
 
 		container.MountSSHAgentSocket(b.sshAuthSock)
 
-		containerName, err := stapel.GetOrCreateContainer(ctx)
+		containerName, err := stapel.GetOrCreateContainer(ctx, "")
 		if err != nil {
 			return err
 		}

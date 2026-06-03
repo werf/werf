@@ -291,6 +291,8 @@ func (s *DependenciesStage) prepareImage(ctx context.Context, c Conveyor, cr con
 }
 
 func (s *DependenciesStage) PrepareImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) error {
+	s.addProjectRepoCommitLabel(ctx, c, cb, stageImage)
+
 	if c.UseLegacyStapelBuilder(cb) {
 		return s.prepareImageWithLegacyStapelBuilder(ctx, c, cb, prevBuiltImage, stageImage)
 	} else {
@@ -387,7 +389,7 @@ func (s *DependenciesStage) generateImportChecksum(ctx context.Context, c Convey
 	if c.UseLegacyStapelBuilder(cb) {
 		importSourceID := getImportSourceID(c, s.targetPlatform, importElm)
 
-		stapelContainerName, err := stapel.GetOrCreateContainer(ctx)
+		stapelContainerName, err := stapel.GetOrCreateContainer(ctx, s.targetPlatform)
 		if err != nil {
 			return "", err
 		}
