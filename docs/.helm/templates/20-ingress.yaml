@@ -47,7 +47,7 @@ spec:
 {{- else }}
       - {{ $ruHost }}
 {{- end }}
-    secretName: tls-{{ $host }}
+    secretName: tls-werf-io
   rules:
 {{- if eq $targetCluster "eu" }}
   - host: {{ $host }}
@@ -140,7 +140,7 @@ spec:
   - hosts:
       - {{ $host }}
 {{- if eq $.Values.werf.env "production" }}
-    secretName: tls-{{ $host }}
+    secretName: tls-werf-io
 {{- else }}
     secretName: {{ pluck $.Values.werf.env $.Values.ingressSecretName | first | default $.Values.ingressSecretName._default }}
 {{- end }}
@@ -204,7 +204,7 @@ spec:
       - ru-{{ $host }}
 {{- end }}
 {{- if eq $.Values.werf.env "production" }}
-    secretName: tls-{{ $host }}
+    secretName: tls-werf-io
 {{- else }}
     secretName: {{ pluck $.Values.werf.env $.Values.ingressSecretName | first | default $.Values.ingressSecretName._default }}
 {{- end }}
