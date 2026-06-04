@@ -371,6 +371,8 @@ github.com/deckhouse/delivery-kit-sdk v1.1.0 h1:Uu1PoTrpe1pTYLxIEcpau2ONFXgckvET
 github.com/deckhouse/delivery-kit-sdk v1.1.0/go.mod h1:HgPk8RNOxcy1FZ37pB9RMQRdYHa13pGYAmKnLJh0I9A=
 github.com/deckhouse/delivery-kit-sdk v1.2.0 h1:EuaaWVVe5GEe1xkKMPHo1rT1dz+wkiQ78R6sBd6oXPs=
 github.com/deckhouse/delivery-kit-sdk v1.2.0/go.mod h1:HgPk8RNOxcy1FZ37pB9RMQRdYHa13pGYAmKnLJh0I9A=
+github.com/deckhouse/delivery-kit-sdk v1.2.1 h1:8/uzaPzkhjXG3u7dHHQdzgu6kbGhr61AuMDGw0RNlxQ=
+github.com/deckhouse/delivery-kit-sdk v1.2.1/go.mod h1:HgPk8RNOxcy1FZ37pB9RMQRdYHa13pGYAmKnLJh0I9A=
 github.com/denisenkom/go-mssqldb v0.0.0-20191124224453-732737034ffd/go.mod h1:xbL0rPBG9cCiLr28tMa8zpbdarY27NDyej4t/EjAShU=
 github.com/denisenkom/go-mssqldb v0.0.0-20191128021309-1d7a30a10f73/go.mod h1:xbL0rPBG9cCiLr28tMa8zpbdarY27NDyej4t/EjAShU=
 github.com/devigned/tab v0.1.1/go.mod h1:XG9mPq0dFghrYvoBF3xdRrJzSTX1b7IQrvaL9mzjeJY=
