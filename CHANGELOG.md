@@ -2,10 +2,10 @@
 
 ## [2.70.1-dk](https://github.com/deckhouse/delivery-kit/compare/v2.70.0-dk...v2.70.1-dk) (2026-06-05)
 
-
 ### Miscellaneous Chores
 
-* release 2.70.1 ([5232348](https://github.com/deckhouse/delivery-kit/commit/5232348fb5177dd53d5ddef18c5b8c8d7b9a93b1))
+* **deps:** bump deckhouse/delivery-kit-sdk to v1.2.1 ([2a35aae](https://github.com/deckhouse/delivery-kit/commit/2a35aae42861babe0829dc04c1060e3b39c64d2c))
+* release 2.70.1 ([5232348](https://github.com/deckhouse/delivery-kit/commit/5232348f230ae913bbe9621537e562b7172fdabf))
 
 ## [2.70.0-dk](https://github.com/deckhouse/delivery-kit/compare/v2.69.0-dk...v2.70.0-dk) (2026-06-03)
 
