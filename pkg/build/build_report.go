@@ -208,6 +208,8 @@ func parseBuildTimeMs(buildTime string) int64 {
 }
 
 func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util.Pair[string, []*image.Image]) error {
+	headCommit := phase.Conveyor.giterminismManager.HeadCommit(ctx)
+
 	for _, desc := range imagePairs {
 		name, images := desc.Unpair()
 		targetPlatforms := util.MapFuncToSlice(images, func(img *image.Image) string { return img.TargetPlatform })
@@ -219,13 +221,13 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 				stageDesc = stageImage.GetStageDesc()
 			}
 
-			stages := getStagesReport(img, false)
+			stages := getStagesReport(img, false, headCommit)
 
 			configType := determineConfigType(phase.Conveyor.werfConfig, img.Name)
 
 			commit := stageDesc.Info.Labels[imagePkg.WerfProjectRepoCommitLabel]
 			if commit == "" {
-				commit = commitFromStages(stages)
+				commit = headCommit
 			}
 
 			record := ReportImageRecord{
@@ -273,7 +275,7 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 				buildDuration := 0.0
 				stages := []ReportStageRecord{}
 				for _, pImg := range img.Images {
-					for _, stage := range getStagesReport(pImg, true) {
+					for _, stage := range getStagesReport(pImg, true, headCommit) {
 						stages = append(stages, stage)
 					}
 					buildDuration += pImg.BuildDuration.Seconds()
@@ -281,7 +283,7 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 
 				commit := stageDesc.Info.Labels[imagePkg.WerfProjectRepoCommitLabel]
 				if commit == "" {
-					commit = commitFromStages(stages)
+					commit = headCommit
 				}
 
 				record := ReportImageRecord{
@@ -344,21 +346,7 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 	return nil
 }
 
-// commitFromStages returns the first non-empty commit found in stage records.
-// This is a fallback for ReportImageRecord.Commit when the final stage image
-// (produced by imageSpec) has had the werf-project-repo-commit label removed
-// via imageSpec.removeLabels. Individual stage records read the label directly
-// from their own stage images, which are not affected by imageSpec mutations.
-func commitFromStages(stages []ReportStageRecord) string {
-	for _, s := range stages {
-		if s.Commit != "" {
-			return s.Commit
-		}
-	}
-	return ""
-}
-
-func getStagesReport(img *image.Image, multiplatform bool) []ReportStageRecord {
+func getStagesReport(img *image.Image, multiplatform bool, headCommit string) []ReportStageRecord {
 	var stagesRecords []ReportStageRecord
 	for _, stg := range img.GetStages() {
 		stgImg := stg.GetStageImage()
@@ -370,6 +358,13 @@ func getStagesReport(img *image.Image, multiplatform bool) []ReportStageRecord {
 		name := string(stg.Name())
 		if multiplatform {
 			name = fmt.Sprintf("%s (%s)", name, img.TargetPlatform)
+		}
+		commit := stgDesc.Info.Labels[imagePkg.WerfProjectRepoCommitLabel]
+		// imageSpec stage may remove werf-project-repo-commit via removeLabels.
+		// If the stage was rebuilt in this run, the label is missing because the
+		// user explicitly stripped it; use headCommit as the authoritative value.
+		if commit == "" && stgMeta.Rebuilt {
+			commit = headCommit
 		}
 		record := ReportStageRecord{
 			Name:              name,
@@ -383,7 +378,7 @@ func getStagesReport(img *image.Image, multiplatform bool) []ReportStageRecord {
 			BaseImagePulled:   stgMeta.BaseImagePulled,
 			Rebuilt:           stgMeta.Rebuilt,
 			BuildTime:         fmt.Sprintf("%.2f", img.GetStageDuration(stg.Name()).Seconds()),
-			Commit:            stgDesc.Info.Labels[imagePkg.WerfProjectRepoCommitLabel],
+			Commit:            commit,
 		}
 		stagesRecords = append(stagesRecords, record)
 	}
