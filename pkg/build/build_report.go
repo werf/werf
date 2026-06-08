@@ -225,11 +225,6 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 
 			configType := determineConfigType(phase.Conveyor.werfConfig, img.Name)
 
-			commit := stageDesc.Info.Labels[imagePkg.WerfProjectRepoCommitLabel]
-			if commit == "" {
-				commit = headCommit
-			}
-
 			record := ReportImageRecord{
 				WerfImageName:     img.GetName(),
 				DockerRepo:        stageDesc.Info.Repository,
@@ -242,7 +237,7 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 				Final:             img.IsFinal,
 				Size:              stageDesc.Info.Size,
 				BuildTime:         fmt.Sprintf("%.2f", img.BuildDuration.Seconds()),
-				Commit:            commit,
+				Commit:            lastCommitFromStages(stages),
 				Stages:            stages,
 				ConfigType:        configType,
 			}
@@ -281,11 +276,6 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 					buildDuration += pImg.BuildDuration.Seconds()
 				}
 
-				commit := stageDesc.Info.Labels[imagePkg.WerfProjectRepoCommitLabel]
-				if commit == "" {
-					commit = headCommit
-				}
-
 				record := ReportImageRecord{
 					WerfImageName:     img.Name,
 					DockerRepo:        stageDesc.Info.Repository,
@@ -298,7 +288,7 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 					Final:             img.IsFinal,
 					Size:              stageDesc.Info.Size,
 					BuildTime:         fmt.Sprintf("%.2f", buildDuration),
-					Commit:            commit,
+					Commit:            lastCommitFromStages(stages),
 					Stages:            stages,
 				}
 				phase.ImagesReport.SetImageRecord(img.Name, record)
@@ -344,6 +334,15 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 	}
 
 	return nil
+}
+
+func lastCommitFromStages(stages []ReportStageRecord) string {
+	for i := len(stages) - 1; i >= 0; i-- {
+		if stages[i].Commit != "" {
+			return stages[i].Commit
+		}
+	}
+	return ""
 }
 
 func getStagesReport(img *image.Image, multiplatform bool, headCommit string) []ReportStageRecord {
