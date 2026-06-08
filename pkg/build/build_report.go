@@ -344,6 +344,11 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 	return nil
 }
 
+// commitFromStages returns the first non-empty commit found in stage records.
+// This is a fallback for ReportImageRecord.Commit when the final stage image
+// (produced by imageSpec) has had the werf-project-repo-commit label removed
+// via imageSpec.removeLabels. Individual stage records read the label directly
+// from their own stage images, which are not affected by imageSpec mutations.
 func commitFromStages(stages []ReportStageRecord) string {
 	for _, s := range stages {
 		if s.Commit != "" {
