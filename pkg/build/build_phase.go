@@ -31,6 +31,7 @@ import (
 	"github.com/werf/werf/v2/pkg/logging"
 	"github.com/werf/werf/v2/pkg/sbom/cyclonedxutil"
 	"github.com/werf/werf/v2/pkg/sbom/cyclonedxutil/gost"
+	"github.com/werf/werf/v2/pkg/sbom/externalref"
 	"github.com/werf/werf/v2/pkg/sbom/gomod"
 	sbomImage "github.com/werf/werf/v2/pkg/sbom/image"
 	"github.com/werf/werf/v2/pkg/sbom/scanner"
@@ -323,9 +324,19 @@ func (phase *BuildPhase) convergeImageSbom(ctx context.Context, name string, ima
 		imageContext = primaryImg.DockerfileImageConfig.Context
 	}
 
-	patcher := gomod.NewBOMPatcher(gitRepo, commit, imageContext)
+	externalRefPatcher, err := externalref.NewExternalRefPatcher()
+	if err != nil {
+		return err
+	}
 
-	if err := phase.sbomStep.ConvergeWithMerge(ctx, name, stageDesc, scanner.DefaultSyftScanOptions(), mergeOpts, patcher); err != nil {
+	goModPatcher := gomod.NewBOMPatcher(gitRepo, commit, imageContext)
+
+	patchers := []BOMPatcherInterface{
+		externalRefPatcher,
+		goModPatcher,
+	}
+
+	if err := phase.sbomStep.ConvergeWithMerge(ctx, name, stageDesc, scanner.DefaultSyftScanOptions(), mergeOpts, patchers); err != nil {
 		return fmt.Errorf("unable to converge sbom for image %q: %w", name, err)
 	}
 

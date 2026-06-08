@@ -55,7 +55,7 @@ func newSbomStep(
 	}
 }
 
-func (step *sbomStep) ConvergeWithMerge(ctx context.Context, werfImgName string, stageDesc *image.StageDesc, scanOpts scanner.ScanOptions, mergeOpts cyclonedxutil.MergeOpts, patcher BOMPatcherInterface) error {
+func (step *sbomStep) ConvergeWithMerge(ctx context.Context, werfImgName string, stageDesc *image.StageDesc, scanOpts scanner.ScanOptions, mergeOpts cyclonedxutil.MergeOpts, patchers []BOMPatcherInterface) error {
 	sourceImageName := stageDesc.Info.Name
 	sbomImageName := sbomImage.ImageName(sourceImageName)
 
@@ -130,7 +130,10 @@ func (step *sbomStep) ConvergeWithMerge(ctx context.Context, werfImgName string,
 			}
 		}
 
-		if patcher != nil {
+		for _, patcher := range patchers {
+			if patcher == nil {
+				continue
+			}
 			resultBOM, err = patcher.Apply(ctx, resultBOM)
 			if err != nil {
 				return err

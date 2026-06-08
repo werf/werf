@@ -122,13 +122,13 @@ var _ = Describe("SbomStep", func() {
 			step.isLocalStorage = isLocalStorage
 
 			ctx = logging.WithLogger(ctx)
-			var patcher BOMPatcherInterface
+			var patchers []BOMPatcherInterface
 			if setupGitRepo != nil {
 				repo := mock.NewMockGitRepo(gomock.NewController(GinkgoT()))
 				commit := "0123456789abcdef0123456789abcdef01234567"
 				imageContext := "app"
 				setupGitRepo(ctx, repo, commit, imageContext)
-				patcher = gomod.NewBOMPatcher(repo, commit, imageContext)
+				patchers = []BOMPatcherInterface{gomod.NewBOMPatcher(repo, commit, imageContext)}
 			}
 			stageDesc := &image.StageDesc{
 				Info: &image.Info{
@@ -149,7 +149,7 @@ var _ = Describe("SbomStep", func() {
 			sbomImgLabels := step.prepareSbomLabelsWithMerge(ctx, stageDesc.Info.Labels, scanOpts, mergeOpts)
 			setupMocks(ctx, backend, stagesStorage, stageDesc, scanOpts, sbomImgLabels, imgFilters)
 
-			Expect(step.ConvergeWithMerge(ctx, "some-name", stageDesc, scanOpts, mergeOpts, patcher)).To(Succeed())
+			Expect(step.ConvergeWithMerge(ctx, "some-name", stageDesc, scanOpts, mergeOpts, patchers)).To(Succeed())
 		},
 		Entry(
 			"[local storage]: should not scan source image if sbom image already exists",
