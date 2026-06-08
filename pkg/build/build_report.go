@@ -235,7 +235,7 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 				Final:             img.IsFinal,
 				Size:              stageDesc.Info.Size,
 				BuildTime:         fmt.Sprintf("%.2f", img.BuildDuration.Seconds()),
-				Commit:            lastCommitFromStages(stages),
+				Commit:            stageDesc.Info.Labels[imagePkg.WerfProjectRepoCommitLabel],
 				Stages:            stages,
 				ConfigType:        configType,
 			}
@@ -286,7 +286,7 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 					Final:             img.IsFinal,
 					Size:              stageDesc.Info.Size,
 					BuildTime:         fmt.Sprintf("%.2f", buildDuration),
-					Commit:            lastCommitFromStages(stages),
+					Commit:            stageDesc.Info.Labels[imagePkg.WerfProjectRepoCommitLabel],
 					Stages:            stages,
 				}
 				phase.ImagesReport.SetImageRecord(img.Name, record)
@@ -332,15 +332,6 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 	}
 
 	return nil
-}
-
-func lastCommitFromStages(stages []ReportStageRecord) string {
-	for i := len(stages) - 1; i >= 0; i-- {
-		if stages[i].Commit != "" {
-			return stages[i].Commit
-		}
-	}
-	return ""
 }
 
 func getStagesReport(img *image.Image, multiplatform bool) []ReportStageRecord {
