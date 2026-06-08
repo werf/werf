@@ -208,8 +208,6 @@ func parseBuildTimeMs(buildTime string) int64 {
 }
 
 func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util.Pair[string, []*image.Image]) error {
-	headCommit := phase.Conveyor.giterminismManager.HeadCommit(ctx)
-
 	for _, desc := range imagePairs {
 		name, images := desc.Unpair()
 		targetPlatforms := util.MapFuncToSlice(images, func(img *image.Image) string { return img.TargetPlatform })
@@ -221,7 +219,7 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 				stageDesc = stageImage.GetStageDesc()
 			}
 
-			stages := getStagesReport(img, false, headCommit)
+			stages := getStagesReport(img, false)
 
 			configType := determineConfigType(phase.Conveyor.werfConfig, img.Name)
 
@@ -270,7 +268,7 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 				buildDuration := 0.0
 				stages := []ReportStageRecord{}
 				for _, pImg := range img.Images {
-					for _, stage := range getStagesReport(pImg, true, headCommit) {
+					for _, stage := range getStagesReport(pImg, true) {
 						stages = append(stages, stage)
 					}
 					buildDuration += pImg.BuildDuration.Seconds()
@@ -345,7 +343,7 @@ func lastCommitFromStages(stages []ReportStageRecord) string {
 	return ""
 }
 
-func getStagesReport(img *image.Image, multiplatform bool, headCommit string) []ReportStageRecord {
+func getStagesReport(img *image.Image, multiplatform bool) []ReportStageRecord {
 	var stagesRecords []ReportStageRecord
 	for _, stg := range img.GetStages() {
 		stgImg := stg.GetStageImage()
@@ -357,13 +355,6 @@ func getStagesReport(img *image.Image, multiplatform bool, headCommit string) []
 		name := string(stg.Name())
 		if multiplatform {
 			name = fmt.Sprintf("%s (%s)", name, img.TargetPlatform)
-		}
-		commit := stgDesc.Info.Labels[imagePkg.WerfProjectRepoCommitLabel]
-		// imageSpec stage may remove werf-project-repo-commit via removeLabels.
-		// If the stage was rebuilt in this run, the label is missing because the
-		// user explicitly stripped it; use headCommit as the authoritative value.
-		if commit == "" && stgMeta.Rebuilt {
-			commit = headCommit
 		}
 		record := ReportStageRecord{
 			Name:              name,
@@ -377,7 +368,7 @@ func getStagesReport(img *image.Image, multiplatform bool, headCommit string) []
 			BaseImagePulled:   stgMeta.BaseImagePulled,
 			Rebuilt:           stgMeta.Rebuilt,
 			BuildTime:         fmt.Sprintf("%.2f", img.GetStageDuration(stg.Name()).Seconds()),
-			Commit:            commit,
+			Commit:            stgDesc.Info.Labels[imagePkg.WerfProjectRepoCommitLabel],
 		}
 		stagesRecords = append(stagesRecords, record)
 	}
