@@ -223,6 +223,11 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 
 			configType := determineConfigType(phase.Conveyor.werfConfig, img.Name)
 
+			commit := stageDesc.Info.Labels[imagePkg.WerfProjectRepoCommitLabel]
+			if commit == "" {
+				commit = commitFromStages(stages)
+			}
+
 			record := ReportImageRecord{
 				WerfImageName:     img.GetName(),
 				DockerRepo:        stageDesc.Info.Repository,
@@ -235,7 +240,7 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 				Final:             img.IsFinal,
 				Size:              stageDesc.Info.Size,
 				BuildTime:         fmt.Sprintf("%.2f", img.BuildDuration.Seconds()),
-				Commit:            stageDesc.Info.Labels[imagePkg.WerfProjectRepoCommitLabel],
+				Commit:            commit,
 				Stages:            stages,
 				ConfigType:        configType,
 			}
@@ -274,6 +279,11 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 					buildDuration += pImg.BuildDuration.Seconds()
 				}
 
+				commit := stageDesc.Info.Labels[imagePkg.WerfProjectRepoCommitLabel]
+				if commit == "" {
+					commit = commitFromStages(stages)
+				}
+
 				record := ReportImageRecord{
 					WerfImageName:     img.Name,
 					DockerRepo:        stageDesc.Info.Repository,
@@ -286,7 +296,7 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 					Final:             img.IsFinal,
 					Size:              stageDesc.Info.Size,
 					BuildTime:         fmt.Sprintf("%.2f", buildDuration),
-					Commit:            stageDesc.Info.Labels[imagePkg.WerfProjectRepoCommitLabel],
+					Commit:            commit,
 					Stages:            stages,
 				}
 				phase.ImagesReport.SetImageRecord(img.Name, record)
@@ -332,6 +342,15 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 	}
 
 	return nil
+}
+
+func commitFromStages(stages []ReportStageRecord) string {
+	for _, s := range stages {
+		if s.Commit != "" {
+			return s.Commit
+		}
+	}
+	return ""
 }
 
 func getStagesReport(img *image.Image, multiplatform bool) []ReportStageRecord {
