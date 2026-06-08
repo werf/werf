@@ -40,6 +40,7 @@ require (
 	github.com/gosuri/uitable v0.0.4
 	github.com/goware/urlx v0.3.2
 	github.com/hofstadter-io/cinful v1.0.0
+	github.com/joho/godotenv v1.5.1
 	github.com/mitchellh/copystructure v1.2.0
 	github.com/moby/buildkit v0.13.1
 	github.com/moby/patternmatcher v0.6.0
@@ -64,7 +65,7 @@ require (
 	github.com/werf/kubedog-for-werf-helm v0.0.0-20241217155728-9d45c48b82b6
 	github.com/werf/lockgate v0.1.1
 	github.com/werf/logboek v0.6.1
-	github.com/werf/nelm v1.24.1
+	github.com/werf/nelm v1.24.3
 	github.com/werf/nelm-for-werf-helm v0.0.0-20241217155925-b0e6734d1dbf
 	go.opentelemetry.io/otel v1.24.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.24.0
@@ -108,7 +109,6 @@ require (
 	github.com/gosimple/unidecode v1.0.1 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.7 // indirect
-	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.7 // indirect
 	github.com/mattn/go-zglob v0.0.6 // indirect
 	github.com/mitchellh/hashstructure/v2 v2.0.2 // indirect
