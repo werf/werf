@@ -577,10 +577,10 @@ func (b *NativeBuildah) FromCommand(ctx context.Context, container, image string
 	return builder.Container, builder.Save()
 }
 
-func (b *NativeBuildah) Pull(ctx context.Context, ref string, opts PullOpts) error {
+func (b *NativeBuildah) Pull(ctx context.Context, ref string, opts PullOpts) (string, error) {
 	sysCtx, err := b.getSystemContext(opts.TargetPlatform)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	pullOpts := buildah.PullOptions{
@@ -595,12 +595,12 @@ func (b *NativeBuildah) Pull(ctx context.Context, ref string, opts PullOpts) err
 
 	imageID, err := buildah.Pull(ctx, ref, pullOpts)
 	if err != nil {
-		return fmt.Errorf("error pulling image %q: %w", ref, err)
+		return "", fmt.Errorf("error pulling image %q: %w", ref, err)
 	}
 
 	imageInspect, err := b.Inspect(ctx, imageID)
 	if err != nil {
-		return fmt.Errorf("unable to inspect pulled image %q: %w", imageID, err)
+		return "", fmt.Errorf("unable to inspect pulled image %q: %w", imageID, err)
 	}
 
 	platformMismatch := false
@@ -620,10 +620,10 @@ func (b *NativeBuildah) Pull(ctx context.Context, ref string, opts PullOpts) err
 		if sysCtx.VariantChoice != "" {
 			expectedPlatform = fmt.Sprintf("%s/%s", expectedPlatform, sysCtx.VariantChoice)
 		}
-		return fmt.Errorf("image platform mismatch: image uses %s, expecting %s platform", imagePlatform, expectedPlatform)
+		return "", fmt.Errorf("image platform mismatch: image uses %s, expecting %s platform", imagePlatform, expectedPlatform)
 	}
 
-	return nil
+	return imageID, nil
 }
 
 func (b *NativeBuildah) Rm(ctx context.Context, ref string, opts RmOpts) error {

@@ -1,0 +1,61 @@
+package container_backend
+
+import (
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+	v1 "github.com/opencontainers/image-spec/specs-go/v1"
+
+	"github.com/werf/werf/v2/pkg/buildah/thirdparty"
+)
+
+var _ = Describe("BuildahBackend pulledImageIDs", func() {
+	var backend *BuildahBackend
+
+	BeforeEach(func() {
+		backend = &BuildahBackend{}
+	})
+
+	DescribeTable("getPulledImageID",
+		func(storeRef, storePlatform, storeID, queryRef, queryPlatform string, expectOK bool, expectedID string) {
+			backend.storePulledImageID(storeRef, storePlatform, storeID)
+			id, ok := backend.getPulledImageID(queryRef, queryPlatform)
+			Expect(ok).To(Equal(expectOK))
+			if expectOK {
+				Expect(id).To(Equal(expectedID))
+			}
+		},
+		Entry("same ref and platform", "alpine:latest", "linux/amd64", "sha256:aaa", "alpine:latest", "linux/amd64", true, "sha256:aaa"),
+		Entry("different platform", "alpine:latest", "linux/arm64", "sha256:bbb", "alpine:latest", "linux/arm64", true, "sha256:bbb"),
+		Entry("digest ref", "alpine@sha256:abc123", "linux/arm64", "sha256:ccc", "alpine@sha256:abc123", "linux/arm64", true, "sha256:ccc"),
+		Entry("wrong ref", "alpine:latest", "linux/amd64", "sha256:aaa", "ubuntu:latest", "linux/amd64", false, ""),
+		Entry("wrong platform", "alpine:latest", "linux/amd64", "sha256:aaa", "alpine:latest", "linux/arm64", false, ""),
+	)
+
+	It("overwrites imageID on repeated pull for same ref+platform", func() {
+		backend.storePulledImageID("alpine:latest", "linux/amd64", "sha256:old")
+		backend.storePulledImageID("alpine:latest", "linux/amd64", "sha256:new")
+
+		id, ok := backend.getPulledImageID("alpine:latest", "linux/amd64")
+		Expect(ok).To(BeTrue())
+		Expect(id).To(Equal("sha256:new"))
+	})
+})
+
+var _ = Describe("platformMatches", func() {
+	DescribeTable("validates platform",
+		func(os, arch, variant, targetPlatform string, expected bool) {
+			inspect := &thirdparty.BuilderInfo{
+				OCIv1: v1.Image{Platform: v1.Platform{OS: os, Architecture: arch, Variant: variant}},
+			}
+			Expect(platformMatches(inspect, targetPlatform)).To(Equal(expected))
+		},
+		Entry("exact match linux/amd64", "linux", "amd64", "", "linux/amd64", true),
+		Entry("exact match linux/arm64", "linux", "arm64", "", "linux/arm64", true),
+		Entry("match with variant", "linux", "arm64", "v8", "linux/arm64/v8", true),
+		Entry("os mismatch", "linux", "amd64", "", "windows/amd64", false),
+		Entry("arch mismatch", "linux", "amd64", "", "linux/arm64", false),
+		Entry("variant mismatch", "linux", "arm64", "v7", "linux/arm64/v8", false),
+		Entry("no variant in target", "linux", "arm64", "v8", "linux/arm64", true),
+		Entry("single-part platform passes", "linux", "amd64", "", "linux", true),
+	)
+})
