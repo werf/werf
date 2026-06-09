@@ -43,6 +43,12 @@ type GenericApiInterface interface {
 
 	GetRepoImageConfigFile(ctx context.Context, reference string) (*v1.ConfigFile, error)
 	GetRepoImageDesc(ctx context.Context, reference string) (*remote.Descriptor, error)
+
+	// RemoteOptionsForHost returns go-containerregistry remote options configured with
+	// werf's registry authentication and transport settings (insecure/TLS) for the given
+	// image reference. Callers using go-containerregistry directly should use these options
+	// instead of constructing their own remote options.
+	RemoteOptionsForHost(ctx context.Context, reference string) []remote.Option
 }
 
 type ArchiveOpener interface {

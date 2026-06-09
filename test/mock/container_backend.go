@@ -139,18 +139,18 @@ func (mr *MockContainerBackendMockRecorder) Containers(ctx, opts any) *gomock.Ca
 }
 
 // GenerateSBOM mocks base method.
-func (m *MockContainerBackend) GenerateSBOM(ctx context.Context, scanOpts scanner.ScanOptions, dstImgLabels []string) (string, error) {
+func (m *MockContainerBackend) GenerateSBOM(ctx context.Context, scanOpts scanner.ScanOptions) ([]byte, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GenerateSBOM", ctx, scanOpts, dstImgLabels)
-	ret0, _ := ret[0].(string)
+	ret := m.ctrl.Call(m, "GenerateSBOM", ctx, scanOpts)
+	ret0, _ := ret[0].([]byte)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GenerateSBOM indicates an expected call of GenerateSBOM.
-func (mr *MockContainerBackendMockRecorder) GenerateSBOM(ctx, scanOpts, dstImgLabels any) *gomock.Call {
+func (mr *MockContainerBackendMockRecorder) GenerateSBOM(ctx, scanOpts any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateSBOM", reflect.TypeOf((*MockContainerBackend)(nil).GenerateSBOM), ctx, scanOpts, dstImgLabels)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateSBOM", reflect.TypeOf((*MockContainerBackend)(nil).GenerateSBOM), ctx, scanOpts)
 }
 
 // GetDefaultPlatform mocks base method.

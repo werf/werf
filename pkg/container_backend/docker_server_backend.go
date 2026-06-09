@@ -485,30 +485,37 @@ func (backend *DockerServerBackend) LoadImageFromStream(ctx context.Context, inp
 	return docker.CliLoadFromStream(ctx, input)
 }
 
-func (backend *DockerServerBackend) GenerateSBOM(ctx context.Context, scanOpts scanner.ScanOptions, dstImgLabels []string) (string, error) {
-	runner := func(ctx context.Context, wt *scanner.WorkingTree) error {
-		billNames := scanner.BillNamesFromCommands(scanOpts.Commands)
-
-		scanLogger := logboek.Context(ctx).Default().LogProcess("Scan image %q", scanOpts.Commands[0].SourcePath)
-		scanLogger.Start()
-		defer scanLogger.End()
-
-		runArgs := mapSbomScanOptionsToDockerRunCommand(wt.RootDir(), wt.BillsDir(), billNames, scanOpts)
-		// TODO: why output is empty?
-		if _, err := docker.CliRun_RecordedOutput(ctx, runArgs...); err != nil {
-			return fmt.Errorf("unable to run scanner inside of container: %w", err)
-		}
-		return nil
+func (backend *DockerServerBackend) GenerateSBOM(ctx context.Context, scanOpts scanner.ScanOptions) ([]byte, error) {
+	billNames := scanner.BillNamesFromCommands(scanOpts.Commands)
+	wt := scanner.NewWorkingTree()
+	if err := wt.Create(ctx, os.TempDir(), billNames); err != nil {
+		return nil, fmt.Errorf("create working tree: %w", err)
 	}
+	defer wt.Cleanup(ctx)
 
-	source := NewScannerSource(runner)
-	builder := NewSBOMImageBuilder(backend)
+	var bomJSON []byte
+	err := logboek.Context(ctx).Default().LogProcess("Scan image %q", scanOpts.Commands[0].SourcePath).DoError(func() error {
+		runArgs := mapSbomScanOptionsToDockerRunCommand(wt.RootDir(), wt.BillsDir(), billNames, scanOpts)
+		if _, err := docker.CliRun_RecordedOutput(ctx, runArgs...); err != nil {
+			return fmt.Errorf("run scanner: %w", err)
+		}
 
-	buildLogger := logboek.Context(ctx).Default().LogProcess("Build destination image")
-	buildLogger.Start()
-	defer buildLogger.End()
+		paths := wt.BillPaths()
+		if len(paths) == 0 {
+			return fmt.Errorf("scanner produced no output files")
+		}
 
-	return builder.BuildImage(ctx, source, scanOpts, dstImgLabels)
+		bomPath := filepath.Join(wt.RootDir(), wt.BillsDir(), paths[0])
+		var err error
+		bomJSON, err = os.ReadFile(bomPath)
+		if err != nil {
+			return fmt.Errorf("read BOM file: %w", err)
+		}
+
+		return nil
+	})
+
+	return bomJSON, err
 }
 
 func mapSbomScanOptionsToDockerRunCommand(workingTreeDir, billsDir string, billNames []string, scanOpts scanner.ScanOptions) []string {

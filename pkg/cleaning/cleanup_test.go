@@ -11,13 +11,13 @@ import (
 	"github.com/werf/werf/v2/test/mock"
 )
 
-var _ = Describe("deleteOrphanedSbomImages", func() {
+var _ = Describe("deleteOrphanedArtifacts", func() {
 	DescribeTable("scenarios",
 		func(setupMocks func(s *mock.MockStagesStorage), dryRun, expectError bool, expectedErrorSubstr string) {
 			s := mock.NewMockStagesStorage(gomock.NewController(GinkgoT()))
 			setupMocks(s)
 
-			err := deleteOrphanedSbomImages(context.Background(), s, dryRun)
+			err := deleteOrphanedArtifacts(context.Background(), s, dryRun)
 			if expectError {
 				Expect(err).To(HaveOccurred())
 				Expect(err.Error()).To(ContainSubstring(expectedErrorSubstr))
@@ -27,42 +27,42 @@ var _ = Describe("deleteOrphanedSbomImages", func() {
 		},
 		Entry("no orphans — returns nil",
 			func(s *mock.MockStagesStorage) {
-				s.EXPECT().GetOrphanedSbomImageNames(gomock.Any()).Return(nil, nil)
+				s.EXPECT().GetOrphanedArtifactNames(gomock.Any()).Return(nil, nil)
 			},
 			false, false, "",
 		),
 		Entry("orphans deleted successfully",
 			func(s *mock.MockStagesStorage) {
-				s.EXPECT().GetOrphanedSbomImageNames(gomock.Any()).Return([]string{"repo:abc123-sbom", "repo:def456-sbom"}, nil)
-				s.EXPECT().DeleteSbomImage(gomock.Any(), "repo:abc123-sbom").Return(nil)
-				s.EXPECT().DeleteSbomImage(gomock.Any(), "repo:def456-sbom").Return(nil)
+				s.EXPECT().GetOrphanedArtifactNames(gomock.Any()).Return([]string{"repo:sha256-abc123", "repo:sha256-def456"}, nil)
+				s.EXPECT().DeleteArtifact(gomock.Any(), "repo:sha256-abc123").Return(nil)
+				s.EXPECT().DeleteArtifact(gomock.Any(), "repo:sha256-def456").Return(nil)
 			},
 			false, false, "",
 		),
 		Entry("dry run — skips deletion",
 			func(s *mock.MockStagesStorage) {
-				s.EXPECT().GetOrphanedSbomImageNames(gomock.Any()).Return([]string{"repo:abc123-sbom", "repo:def456-sbom"}, nil)
+				s.EXPECT().GetOrphanedArtifactNames(gomock.Any()).Return([]string{"repo:sha256-abc123", "repo:sha256-def456"}, nil)
 			},
 			true, false, "",
 		),
-		Entry("GetOrphanedSbomImageNames error — propagated",
+		Entry("GetOrphanedArtifactNames error — propagated",
 			func(s *mock.MockStagesStorage) {
-				s.EXPECT().GetOrphanedSbomImageNames(gomock.Any()).Return(nil, errors.New("registry unavailable"))
+				s.EXPECT().GetOrphanedArtifactNames(gomock.Any()).Return(nil, errors.New("registry unavailable"))
 			},
-			false, true, "get orphaned sbom images",
+			false, true, "get orphaned artifacts",
 		),
 		Entry("non-fatal deletion error — continues to next",
 			func(s *mock.MockStagesStorage) {
-				s.EXPECT().GetOrphanedSbomImageNames(gomock.Any()).Return([]string{"repo:abc123-sbom", "repo:def456-sbom"}, nil)
-				s.EXPECT().DeleteSbomImage(gomock.Any(), "repo:abc123-sbom").Return(errors.New("temporary network error"))
-				s.EXPECT().DeleteSbomImage(gomock.Any(), "repo:def456-sbom").Return(nil)
+				s.EXPECT().GetOrphanedArtifactNames(gomock.Any()).Return([]string{"repo:sha256-abc123", "repo:sha256-def456"}, nil)
+				s.EXPECT().DeleteArtifact(gomock.Any(), "repo:sha256-abc123").Return(errors.New("temporary network error"))
+				s.EXPECT().DeleteArtifact(gomock.Any(), "repo:sha256-def456").Return(nil)
 			},
 			false, false, "",
 		),
 		Entry("fatal deletion error (UNAUTHORIZED) — stops and returns error",
 			func(s *mock.MockStagesStorage) {
-				s.EXPECT().GetOrphanedSbomImageNames(gomock.Any()).Return([]string{"repo:abc123-sbom"}, nil)
-				s.EXPECT().DeleteSbomImage(gomock.Any(), "repo:abc123-sbom").Return(errors.New("UNAUTHORIZED"))
+				s.EXPECT().GetOrphanedArtifactNames(gomock.Any()).Return([]string{"repo:sha256-abc123"}, nil)
+				s.EXPECT().DeleteArtifact(gomock.Any(), "repo:sha256-abc123").Return(errors.New("UNAUTHORIZED"))
 			},
 			false, true, "UNAUTHORIZED",
 		),

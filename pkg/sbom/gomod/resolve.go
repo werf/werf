@@ -38,7 +38,8 @@ func (p *BOMPatcher) Apply(ctx context.Context, bom *cdx.BOM) (*cdx.BOM, error) 
 		return nil, fmt.Errorf("check go.mod existence: %w", err)
 	}
 	if !exists {
-		logboek.Context(ctx).Warn().LogF("No go.mod found at %s, skipping version resolution\n", goModPath)
+		// Do not clutter stdout with warnings for non-Go projects
+		logboek.Context(ctx).Debug().LogF("No go.mod found at %s, skipping version resolution\n", goModPath)
 		return bom, nil
 	}
 

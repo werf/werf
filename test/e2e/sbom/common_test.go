@@ -3,6 +3,7 @@ package e2e_build_test
 import (
 	"strings"
 
+	"github.com/werf/werf/v2/test/pkg/externalrefmock"
 	"github.com/werf/werf/v2/test/pkg/suite_init"
 )
 
@@ -25,6 +26,7 @@ func setupEnv(opts setupEnvOptions) {
 	}
 
 	SuiteData.Stubs.SetEnv("WERF_REPO", suite_init.TestRepo(SuiteData.ProjectName))
+	SuiteData.Stubs.SetEnv("WERF_EXTERNAL_REFS_SERVER_URL", externalrefmock.Start().URL)
 
 	if opts.ContainerBackendMode == "buildkit-docker" {
 		SuiteData.Stubs.SetEnv("DOCKER_BUILDKIT", "1")

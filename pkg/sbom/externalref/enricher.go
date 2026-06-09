@@ -32,6 +32,23 @@ func validateRefKind(kind string) error {
 	}
 }
 
+func purlNotExpected(ct cdx.ComponentType) bool {
+	switch ct {
+	case cdx.ComponentTypeOS,
+		cdx.ComponentTypeDevice,
+		cdx.ComponentTypeDeviceDriver,
+		cdx.ComponentTypeFile,
+		cdx.ComponentTypeFirmware,
+		cdx.ComponentTypePlatform,
+		cdx.ComponentTypeData,
+		cdx.ComponentTypeMachineLearningModel,
+		cdx.ComponentTypeCryptographicAsset:
+		return true
+	default:
+		return false
+	}
+}
+
 type Enricher struct {
 	resolve func(ctx context.Context, purl string) (*ResolveResult, error)
 }
@@ -55,7 +72,10 @@ func (e *Enricher) Enrich(ctx context.Context, bom *cdx.BOM) error {
 		comp := &components[i]
 		g.Go(func() error {
 			if comp.PackageURL == "" {
-				return fmt.Errorf("enrich: component %q has no purl", comp.Name)
+				if purlNotExpected(comp.Type) {
+					return nil
+				}
+				return fmt.Errorf("enrich: component %q (type %q) has no purl", comp.Name, comp.Type)
 			}
 
 			res, err := e.resolve(ctx, comp.PackageURL)

@@ -1,83 +1,119 @@
 package image
 
 import (
-	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"strings"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/distribution/reference"
 
-	"github.com/werf/werf/v2/pkg/docker_registry"
+	"github.com/werf/werf/v2/pkg/oci/artifact"
 	"github.com/werf/werf/v2/pkg/sbom/cyclonedxutil"
-	"github.com/werf/werf/v2/pkg/sbom/extract"
 )
 
 const (
-	scratchImageName = "scratch"
-	TagSuffix        = "-sbom"
+	scratchImageName     = "scratch"
+	DSSEMediaType        = "application/vnd.dsse.envelope.v1+json"
+	InTotoMediaType      = "application/vnd.in-toto+json"
+	CycloneDX16Predicate = "https://cyclonedx.org/bom/v1.6"
 )
 
 func IsScratchRef(imageRef string) bool {
 	if imageRef == "" {
 		return false
 	}
-
 	if imageRef == scratchImageName {
 		return true
 	}
-
 	ref, err := reference.ParseAnyReference(imageRef)
 	if err != nil {
 		return false
 	}
-
 	named, ok := ref.(reference.Named)
 	if !ok {
 		return false
 	}
-
 	path := reference.Path(named)
-
 	return path == scratchImageName || strings.HasSuffix(path, "/"+scratchImageName)
 }
 
-func ImageName(name string) string {
-	return fmt.Sprintf("%s%s", name, TagSuffix)
+func FallbackTag(parentDigest string) string {
+	return artifact.FallbackTag(parentDigest)
 }
 
-func BaseImageName(repo, tag string) string {
-	return ImageName(fmt.Sprintf("%s:%s", repo, tag))
-}
-
-func PullRawSbom(ctx context.Context, registry docker_registry.Interface, reference string) ([]byte, error) {
-	var buf bytes.Buffer
-	if err := registry.PullImageArchive(ctx, &buf, reference); err != nil {
-		return nil, fmt.Errorf("pull image archive: %w", err)
-	}
-
-	archiveBytes := buf.Bytes()
-	opener := func() (io.ReadCloser, error) {
-		return io.NopCloser(bytes.NewReader(archiveBytes)), nil
-	}
-
-	sbomJSON, err := extract.FromImageBytes(opener)
+func PushSBOM(ctx context.Context, bomJSON []byte, repo, parentDigest, imageName, checksum, targetPlatform string) error {
+	digestHex, err := artifact.DigestHex(parentDigest)
 	if err != nil {
-		return nil, fmt.Errorf("extract SBOM from image: %w", err)
+		return fmt.Errorf("extract digest hex: %w", err)
 	}
 
-	return sbomJSON, nil
+	stmtBytes, err := WrapInInTotoStatement(bomJSON, CycloneDX16Predicate, repo, digestHex)
+	if err != nil {
+		return fmt.Errorf("wrap BOM in in-toto statement: %w", err)
+	}
+
+	envelopeBytes, err := WrapInDSSE(stmtBytes, InTotoMediaType)
+	if err != nil {
+		return fmt.Errorf("wrap in-toto statement in DSSE: %w", err)
+	}
+
+	store := artifact.NewOCIStore(repo, imageName)
+	return store.Attach(ctx, parentDigest, DSSEMediaType, envelopeBytes, checksum, targetPlatform)
 }
 
-func PullCycloneDX16BOM(ctx context.Context, registry docker_registry.Interface, reference string) (*cdx.BOM, error) {
-	sbomJSON, err := PullRawSbom(ctx, registry, reference)
+func PullSBOM(ctx context.Context, repo, parentDigest, imageName string) ([]byte, error) {
+	store := artifact.NewOCIStore(repo, imageName)
+
+	var envelopeJSON []byte
+	if imageName != "" {
+		var err error
+		envelopeJSON, err = store.GetAttachedContent(ctx, parentDigest, DSSEMediaType)
+		if err != nil {
+			return nil, fmt.Errorf("get attached SBOM: %w", err)
+		}
+	} else {
+		var err error
+		envelopeJSON, err = store.GetAttachedContentAny(ctx, parentDigest, DSSEMediaType)
+		if err != nil {
+			return nil, fmt.Errorf("get attached SBOM: %w", err)
+		}
+	}
+
+	stmtBytes, err := UnwrapDSSE(envelopeJSON, InTotoMediaType)
+	if err != nil {
+		return nil, fmt.Errorf("unwrap DSSE envelope: %w", err)
+	}
+
+	predicate, predicateType, err := UnwrapInTotoStatement(stmtBytes)
+	if err != nil {
+		return nil, fmt.Errorf("unwrap in-toto statement: %w", err)
+	}
+
+	if predicateType != CycloneDX16Predicate {
+		return nil, fmt.Errorf("unexpected in-toto predicate type %q, expected %q", predicateType, CycloneDX16Predicate)
+	}
+
+	return []byte(predicate), nil
+}
+
+// PullSBOMByTag resolves the image tag to a digest and returns the attached SBOM.
+func PullSBOMByTag(ctx context.Context, repo, tag, imageName string) ([]byte, error) {
+	parentDigest, err := artifact.ResolveTag(ctx, repo, tag)
+	if err != nil {
+		return nil, fmt.Errorf("resolve image tag: %w", err)
+	}
+
+	return PullSBOM(ctx, repo, parentDigest, imageName)
+}
+
+func PullCycloneDX16BOM(ctx context.Context, repo, parentDigest, imageName string) (*cdx.BOM, error) {
+	bomJSON, err := PullSBOM(ctx, repo, parentDigest, imageName)
 	if err != nil {
 		return nil, err
 	}
 
-	bom, err := cyclonedxutil.BuildCycloneDX16BOMFromJSON(sbomJSON)
+	bom, err := cyclonedxutil.BuildCycloneDX16BOMFromJSON(bomJSON)
 	if err != nil {
 		return nil, fmt.Errorf("parse CycloneDX BOM: %w", err)
 	}
@@ -85,46 +121,20 @@ func PullCycloneDX16BOM(ctx context.Context, registry docker_registry.Interface,
 	return bom, nil
 }
 
-func BuildDigestToTagIndex(ctx context.Context, registry docker_registry.Interface, repo string) (map[string]string, error) {
-	tags, err := registry.Tags(ctx, repo)
+func PullCycloneDX16BOMContent(ctx context.Context, envelopeJSON []byte) ([]byte, error) {
+	stmtBytes, err := UnwrapDSSE(envelopeJSON, InTotoMediaType)
 	if err != nil {
-		return nil, fmt.Errorf("list tags for %s: %w", repo, err)
+		return nil, err
 	}
 
-	result := make(map[string]string, len(tags))
-	for _, tag := range tags {
-		if strings.HasSuffix(tag, TagSuffix) {
-			continue
-		}
-
-		ref := fmt.Sprintf("%s:%s", repo, tag)
-
-		info, err := registry.TryGetRepoImage(ctx, ref)
-		if err != nil {
-			return nil, fmt.Errorf("get image info for %s: %w", ref, err)
-		}
-		if info == nil {
-			continue
-		}
-
-		d := info.GetDigest()
-		if d == "" {
-			continue
-		}
-
-		if _, exists := result[d]; !exists {
-			result[d] = tag
-		}
+	predicate, predicateType, err := UnwrapInTotoStatement(stmtBytes)
+	if err != nil {
+		return nil, err
 	}
 
-	return result, nil
-}
-
-func ResolveSBOMReference(repo, imageDigest string, digestToTag map[string]string) (string, error) {
-	tag, ok := digestToTag[imageDigest]
-	if !ok {
-		return "", fmt.Errorf("no tag found for digest %s in repo %s", imageDigest, repo)
+	if predicateType != CycloneDX16Predicate {
+		return nil, fmt.Errorf("unexpected in-toto predicate type %q, expected %q", predicateType, CycloneDX16Predicate)
 	}
 
-	return BaseImageName(repo, tag), nil
+	return []byte(predicate), nil
 }

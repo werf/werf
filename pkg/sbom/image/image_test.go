@@ -29,19 +29,11 @@ var _ = Describe("Image", func() {
 		Entry("empty string", "", false),
 	)
 
-	DescribeTable("ImageName",
-		func(name, expected string) {
-			Expect(ImageName(name)).To(Equal(expected))
+	DescribeTable("FallbackTag",
+		func(digest, expected string) {
+			Expect(FallbackTag(digest)).To(Equal(expected))
 		},
-		Entry("simple image", "myapp:v1", "myapp:v1-sbom"),
-		Entry("registry image", "registry.io/image:tag", "registry.io/image:tag-sbom"),
-	)
-
-	DescribeTable("BaseImageSbomName",
-		func(repo, tag, expected string) {
-			Expect(BaseImageName(repo, tag)).To(Equal(expected))
-		},
-		Entry("registry image", "registry.io/image", "v1", "registry.io/image:v1-sbom"),
-		Entry("localhost image", "localhost:5000/app", "latest", "localhost:5000/app:latest-sbom"),
+		Entry("standard digest", "sha256:5d68d4300015200b8797ddf93a5dee3491fd2f6c0211d70a6ab8127ea053375a", "sha256-5d68d4300015200b8797ddf93a5dee3491fd2f6c0211d70a6ab8127ea053375a"),
+		Entry("alternate digest", "sha256:abc123def456abc123def456abc123def456abc123def456abc123def456abc1", "sha256-abc123def456abc123def456abc123def456abc123def456abc123def456abc1"),
 	)
 })

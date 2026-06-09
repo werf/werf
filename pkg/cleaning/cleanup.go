@@ -225,8 +225,8 @@ func (m *cleanupManager) run(ctx context.Context) error {
 		}
 	}
 
-	if err := logboek.Context(ctx).LogProcess("Cleanup orphaned SBOM images").DoError(func() error {
-		return m.cleanupOrphanedSbomImages(ctx)
+	if err := logboek.Context(ctx).LogProcess("Cleanup orphaned artifacts").DoError(func() error {
+		return m.cleanupOrphanedArtifacts(ctx)
 	}); err != nil {
 		return err
 	}
@@ -992,14 +992,14 @@ FilterOutFinalStages:
 	return nil
 }
 
-func (m *cleanupManager) cleanupOrphanedSbomImages(ctx context.Context) error {
-	return deleteOrphanedSbomImages(ctx, m.StorageManager.GetStagesStorage(), m.DryRun)
+func (m *cleanupManager) cleanupOrphanedArtifacts(ctx context.Context) error {
+	return deleteOrphanedArtifacts(ctx, m.StorageManager.GetStagesStorage(), m.DryRun)
 }
 
-func deleteOrphanedSbomImages(ctx context.Context, stagesStorage storage.StagesStorage, dryRun bool) error {
-	orphanedNames, err := stagesStorage.GetOrphanedSbomImageNames(ctx)
+func deleteOrphanedArtifacts(ctx context.Context, stagesStorage storage.StagesStorage, dryRun bool) error {
+	orphanedNames, err := stagesStorage.GetOrphanedArtifactNames(ctx)
 	if err != nil {
-		return fmt.Errorf("get orphaned sbom images: %w", err)
+		return fmt.Errorf("get orphaned artifacts: %w", err)
 	}
 
 	if len(orphanedNames) == 0 {
@@ -1012,11 +1012,11 @@ func deleteOrphanedSbomImages(ctx context.Context, stagesStorage storage.StagesS
 			continue
 		}
 
-		if err := stagesStorage.DeleteSbomImage(ctx, name); err != nil {
+		if err := stagesStorage.DeleteArtifact(ctx, name); err != nil {
 			if err := handleDeletionError(err); err != nil {
 				return err
 			}
-			logboek.Context(ctx).Warn().LogF("WARNING: SBOM image %s deletion failed: %s\n", name, err)
+			logboek.Context(ctx).Warn().LogF("WARNING: artifact %s deletion failed: %s\n", name, err)
 			continue
 		}
 

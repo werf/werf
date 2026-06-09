@@ -76,10 +76,8 @@ type StagesStorage interface {
 	// GetManagedImages returns the list of managedImageName.
 	GetManagedImages(ctx context.Context, projectName string, opts ...Option) ([]string, error)
 
-	PushIfNotExistSbomImage(ctx context.Context, imageName string) (bool, error)
-	PullIfExistSbomImage(ctx context.Context, imageName string) (bool, error)
-	GetOrphanedSbomImageNames(ctx context.Context) ([]string, error)
-	DeleteSbomImage(ctx context.Context, imageName string) error
+	GetOrphanedArtifactNames(ctx context.Context) ([]string, error)
+	DeleteArtifact(ctx context.Context, imageName string) error
 
 	PutImageMetadata(ctx context.Context, projectName, imageNameOrManagedImageName, commit, stageID string) error
 	RmImageMetadata(ctx context.Context, projectName, imageNameOrManagedImageNameOrImageMetadataID, commit, stageID string) error

@@ -17,7 +17,7 @@ import (
 	"github.com/werf/werf/v2/pkg/docker_registry"
 	"github.com/werf/werf/v2/pkg/docker_registry/api"
 	"github.com/werf/werf/v2/pkg/image"
-	sbomImage "github.com/werf/werf/v2/pkg/sbom/image"
+	"github.com/werf/werf/v2/pkg/oci/artifact"
 	"github.com/werf/werf/v2/pkg/slug"
 )
 
@@ -27,8 +27,6 @@ const (
 
 	RepoManagedImageRecord_ImageTagPrefix  = "managed-image-"
 	RepoManagedImageRecord_ImageNameFormat = "%s:managed-image-%s"
-
-	RepoSbomImageRecord_ImageNameFormat = "%s:%s"
 
 	RepoRejectedStageImageRecord_ImageTagSuffix  = "-rejected"
 	RepoRejectedStageImageRecord_ImageNameFormat = "%s:%s-%d-rejected"
@@ -523,50 +521,6 @@ func (storage *RepoStagesStorage) GetManagedImages(ctx context.Context, projectN
 	return res, nil
 }
 
-// PushIfNotExistSbomImage returns "true" if image is pushed, so it does not exist in the registry
-func (storage *RepoStagesStorage) PushIfNotExistSbomImage(ctx context.Context, imageName string) (bool, error) {
-	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PushIfNotExistSbomImage %s\n", imageName)
-
-	fullImageName := makeRepoSbomImageRecord(storage.RepoAddress, imageName)
-	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PushIfNotExistSbomImage full image name: %s\n", fullImageName)
-
-	o := makeOptions(WithCache())
-
-	if ok, err := storage.DockerRegistry.IsTagExist(ctx, fullImageName, o.dockerRegistryOptions...); err != nil {
-		return false, fmt.Errorf("unable check tag existence: %q :%w", fullImageName, err)
-	} else if ok {
-		return false, nil
-	}
-
-	// if ok == false
-	if err := storage.ContainerBackend.Push(ctx, fullImageName, container_backend.PushOpts{}); err != nil {
-		return false, fmt.Errorf("unable to push image %s: %w", fullImageName, err)
-	}
-
-	return true, nil
-}
-
-// PullIfExistSbomImage returns "true" if image is pulled, so it exists in the registry
-func (storage *RepoStagesStorage) PullIfExistSbomImage(ctx context.Context, imageName string) (bool, error) {
-	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PullIfExistSbomImage %s\n", imageName)
-
-	fullImageName := makeRepoSbomImageRecord(storage.RepoAddress, imageName)
-	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PullIfExistSbomImage full image name: %s\n", fullImageName)
-
-	o := makeOptions(WithCache())
-	if ok, err := storage.DockerRegistry.IsTagExist(ctx, fullImageName, o.dockerRegistryOptions...); err != nil {
-		return false, fmt.Errorf("unable check tag existence: %q :%w", fullImageName, err)
-	} else if !ok {
-		return false, nil
-	}
-
-	// if ok == true
-	if err := storage.ContainerBackend.Pull(ctx, fullImageName, container_backend.PullOpts{}); err != nil {
-		return false, fmt.Errorf("unable to pull image %s: %w", fullImageName, err)
-	}
-	return true, nil
-}
-
 func (storage *RepoStagesStorage) FetchImage(ctx context.Context, img container_backend.LegacyImageInterface) error {
 	if err := container_backend.PullImageFromRegistry(ctx, storage.ContainerBackend, img); err != nil {
 		if strings.HasSuffix(err.Error(), "unknown blob") {
@@ -889,30 +843,26 @@ func (storage *RepoStagesStorage) Address() string {
 	return storage.RepoAddress
 }
 
-func makeRepoSbomImageRecord(repoAddress, imageName string) string {
-	_, imgTag := image.ParseRepositoryAndTag(imageName)
-	return fmt.Sprintf(RepoSbomImageRecord_ImageNameFormat, repoAddress, imgTag)
-}
-
-func (storage *RepoStagesStorage) GetOrphanedSbomImageNames(ctx context.Context) ([]string, error) {
+func (storage *RepoStagesStorage) GetOrphanedArtifactNames(ctx context.Context) ([]string, error) {
 	tags, err := storage.Tags(ctx, storage.RepoAddress)
 	if err != nil {
 		return nil, fmt.Errorf("get repo tags: %w", err)
 	}
 
-	tagSet := make(map[string]struct{}, len(tags))
-	for _, tag := range tags {
-		tagSet[tag] = struct{}{}
-	}
-
 	var orphanedNames []string
+
 	for _, tag := range tags {
-		if !strings.HasSuffix(tag, sbomImage.TagSuffix) {
+		if !strings.HasPrefix(tag, artifact.FallbackTagPrefix) {
 			continue
 		}
 
-		parentTag := strings.TrimSuffix(tag, sbomImage.TagSuffix)
-		if _, exists := tagSet[parentTag]; exists {
+		parentDigest := "sha256:" + strings.TrimPrefix(tag, artifact.FallbackTagPrefix)
+		ref := fmt.Sprintf("%s@%s", storage.RepoAddress, parentDigest)
+		imgInfo, err := storage.DockerRegistry.TryGetRepoImage(ctx, ref)
+		if err != nil {
+			continue
+		}
+		if imgInfo != nil {
 			continue
 		}
 
@@ -922,10 +872,10 @@ func (storage *RepoStagesStorage) GetOrphanedSbomImageNames(ctx context.Context)
 	return orphanedNames, nil
 }
 
-func (storage *RepoStagesStorage) DeleteSbomImage(ctx context.Context, imageName string) error {
+func (storage *RepoStagesStorage) DeleteArtifact(ctx context.Context, imageName string) error {
 	imgInfo, err := storage.DockerRegistry.TryGetRepoImage(ctx, imageName)
 	if err != nil {
-		return fmt.Errorf("get sbom image %q: %w", imageName, err)
+		return fmt.Errorf("get artifact %q: %w", imageName, err)
 	}
 	if imgInfo == nil {
 		return nil

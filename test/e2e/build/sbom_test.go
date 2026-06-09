@@ -11,10 +11,10 @@ import (
 	"github.com/werf/werf/v2/test/pkg/werf"
 )
 
-const sbomEmulationWarning = "WARNING: SBOM generation is running in emulation mode, skipping actual generation"
+const sbomProcessingPrefix = "SBOM processing"
 
 var _ = Describe("Simple build", Label("e2e", "build", "sbom", "simple"), func() {
-	DescribeTable("should succeed with SBOM emulation",
+	DescribeTable("should succeed with registry-only SBOM",
 		func(ctx SpecContext, testOpts simpleTestOptions) {
 			By("initializing")
 			setupEnv(testOpts.setupEnvOptions)
@@ -30,21 +30,11 @@ var _ = Describe("Simple build", Label("e2e", "build", "sbom", "simple"), func()
 			reportProject := report.NewProjectWithReport(werfProject)
 			buildOut, _ := reportProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), nil)
 			Expect(buildOut).To(ContainSubstring("Building stage"))
-			Expect(buildOut).To(ContainSubstring(sbomEmulationWarning))
+			Expect(buildOut).To(ContainSubstring(sbomProcessingPrefix))
 		},
-		Entry("without repo using Vanilla Docker", simpleTestOptions{setupEnvOptions{
-			ContainerBackendMode:        "vanilla-docker",
-			WithLocalRepo:               false,
-			WithStagedDockerfileBuilder: false,
-		}}),
 		Entry("with local repo using Vanilla Docker", simpleTestOptions{setupEnvOptions{
 			ContainerBackendMode:        "vanilla-docker",
 			WithLocalRepo:               true,
-			WithStagedDockerfileBuilder: false,
-		}}),
-		Entry("without repo using BuildKit Docker", simpleTestOptions{setupEnvOptions{
-			ContainerBackendMode:        "buildkit-docker",
-			WithLocalRepo:               false,
 			WithStagedDockerfileBuilder: false,
 		}}),
 		Entry("with local repo using BuildKit Docker", simpleTestOptions{setupEnvOptions{
@@ -64,7 +54,7 @@ var _ = Describe("Simple build", Label("e2e", "build", "sbom", "simple"), func()
 		}}, FlakeAttempts(5)),
 	)
 
-	DescribeTable("should succeed with SBOM emulation when base image SBOM is scratch",
+	DescribeTable("should succeed with registry-only SBOM when base image SBOM is scratch",
 		func(ctx SpecContext, testOpts simpleTestOptions) {
 			By("initializing")
 			setupEnv(testOpts.setupEnvOptions)
@@ -78,7 +68,7 @@ var _ = Describe("Simple build", Label("e2e", "build", "sbom", "simple"), func()
 			werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
 			reportProject := report.NewProjectWithReport(werfProject)
 			buildOut, _ := reportProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath("report_base_sbom.json"), nil)
-			Expect(buildOut).To(ContainSubstring(sbomEmulationWarning))
+			Expect(buildOut).To(ContainSubstring(sbomProcessingPrefix))
 		},
 		Entry("with local repo using Vanilla Docker", simpleTestOptions{setupEnvOptions{
 			ContainerBackendMode:        "vanilla-docker",
@@ -102,7 +92,7 @@ var _ = Describe("Simple build", Label("e2e", "build", "sbom", "simple"), func()
 		}}),
 	)
 
-	DescribeTable("should succeed with SBOM emulation when base image SBOM is not found in registry",
+	DescribeTable("should succeed with registry-only SBOM when base image SBOM is not found in registry",
 		func(ctx SpecContext, testOpts simpleTestOptions) {
 			By("initializing")
 			setupEnv(testOpts.setupEnvOptions)
@@ -115,7 +105,7 @@ var _ = Describe("Simple build", Label("e2e", "build", "sbom", "simple"), func()
 			By("building images")
 			werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
 			buildOut := werfProject.Build(ctx, nil)
-			Expect(buildOut).To(ContainSubstring(sbomEmulationWarning))
+			Expect(buildOut).To(ContainSubstring(sbomProcessingPrefix))
 		},
 		XEntry("with local repo using Vanilla Docker", simpleTestOptions{setupEnvOptions{
 			ContainerBackendMode:        "vanilla-docker",
@@ -139,7 +129,7 @@ var _ = Describe("Simple build", Label("e2e", "build", "sbom", "simple"), func()
 		}}),
 	)
 
-	DescribeTable("should succeed with SBOM emulation for import stapel",
+	DescribeTable("should succeed with registry-only SBOM for import stapel",
 		func(ctx SpecContext, testOpts simpleTestOptions) {
 			By("initializing")
 			setupEnv(testOpts.setupEnvOptions)
@@ -153,7 +143,7 @@ var _ = Describe("Simple build", Label("e2e", "build", "sbom", "simple"), func()
 			werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirName))
 			reportProject := report.NewProjectWithReport(werfProject)
 			buildOut, _ := reportProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath("report_import_sbom.json"), nil)
-			Expect(buildOut).To(ContainSubstring(sbomEmulationWarning))
+			Expect(buildOut).To(ContainSubstring(sbomProcessingPrefix))
 		},
 		Entry("with local repo using Vanilla Docker", simpleTestOptions{setupEnvOptions{
 			ContainerBackendMode:        "vanilla-docker",
@@ -177,7 +167,7 @@ var _ = Describe("Simple build", Label("e2e", "build", "sbom", "simple"), func()
 		}}),
 	)
 
-	DescribeTable("should succeed with SBOM emulation when import image not found",
+	DescribeTable("should succeed with registry-only SBOM when import image not found",
 		func(ctx SpecContext, testOpts simpleTestOptions) {
 			By("initializing")
 			setupEnv(testOpts.setupEnvOptions)
@@ -190,7 +180,7 @@ var _ = Describe("Simple build", Label("e2e", "build", "sbom", "simple"), func()
 			By("building images")
 			werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirName))
 			buildOut := werfProject.Build(ctx, nil)
-			Expect(buildOut).To(ContainSubstring(sbomEmulationWarning))
+			Expect(buildOut).To(ContainSubstring(sbomProcessingPrefix))
 		},
 		XEntry("with local repo using Vanilla Docker", simpleTestOptions{setupEnvOptions{
 			ContainerBackendMode:        "vanilla-docker",
@@ -216,7 +206,7 @@ var _ = Describe("Simple build", Label("e2e", "build", "sbom", "simple"), func()
 })
 
 var _ = Describe("SBOM merge", Label("e2e", "build", "sbom", "merge", "simple"), func() {
-	DescribeTable("should succeed with SBOM emulation for base+fragment merge",
+	DescribeTable("should succeed with registry-only SBOM for base+fragment merge",
 		func(ctx SpecContext, testOpts simpleTestOptions) {
 			By("initializing")
 			setupEnv(testOpts.setupEnvOptions)
@@ -230,7 +220,7 @@ var _ = Describe("SBOM merge", Label("e2e", "build", "sbom", "merge", "simple"),
 			werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
 			reportProject := report.NewProjectWithReport(werfProject)
 			buildOut, _ := reportProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath("report_merge_base_fragment.json"), nil)
-			Expect(buildOut).To(ContainSubstring(sbomEmulationWarning))
+			Expect(buildOut).To(ContainSubstring(sbomProcessingPrefix))
 		},
 		Entry("with local repo using Vanilla Docker", simpleTestOptions{setupEnvOptions{
 			ContainerBackendMode:        "vanilla-docker",
@@ -254,7 +244,7 @@ var _ = Describe("SBOM merge", Label("e2e", "build", "sbom", "merge", "simple"),
 		}}),
 	)
 
-	DescribeTable("should succeed with SBOM emulation for derived+base merge",
+	DescribeTable("should succeed with registry-only SBOM for derived+base merge",
 		func(ctx SpecContext, testOpts simpleTestOptions) {
 			By("initializing")
 			setupEnv(testOpts.setupEnvOptions)
@@ -268,7 +258,7 @@ var _ = Describe("SBOM merge", Label("e2e", "build", "sbom", "merge", "simple"),
 			werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
 			reportProject := report.NewProjectWithReport(werfProject)
 			buildOut, _ := reportProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath("report_merge_derived_with_base.json"), nil)
-			Expect(buildOut).To(ContainSubstring(sbomEmulationWarning))
+			Expect(buildOut).To(ContainSubstring(sbomProcessingPrefix))
 		},
 		Entry("with local repo using Vanilla Docker", simpleTestOptions{setupEnvOptions{
 			ContainerBackendMode:        "vanilla-docker",
@@ -292,7 +282,7 @@ var _ = Describe("SBOM merge", Label("e2e", "build", "sbom", "merge", "simple"),
 		}}),
 	)
 
-	DescribeTable("should succeed with SBOM emulation for full merge (base+import+fragment)",
+	DescribeTable("should succeed with registry-only SBOM for full merge (base+import+fragment)",
 		func(ctx SpecContext, testOpts simpleTestOptions) {
 			By("initializing")
 			setupEnv(testOpts.setupEnvOptions)
@@ -306,7 +296,7 @@ var _ = Describe("SBOM merge", Label("e2e", "build", "sbom", "merge", "simple"),
 			werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
 			reportProject := report.NewProjectWithReport(werfProject)
 			buildOut, _ := reportProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath("report_merge_full.json"), nil)
-			Expect(buildOut).To(ContainSubstring(sbomEmulationWarning))
+			Expect(buildOut).To(ContainSubstring(sbomProcessingPrefix))
 		},
 		Entry("with local repo using Vanilla Docker", simpleTestOptions{setupEnvOptions{
 			ContainerBackendMode:        "vanilla-docker",
@@ -332,7 +322,7 @@ var _ = Describe("SBOM merge", Label("e2e", "build", "sbom", "merge", "simple"),
 })
 
 var _ = Describe("SBOM cross-project merge", Label("e2e", "build", "sbom", "merge", "simple"), func() {
-	DescribeTable("should succeed with SBOM emulation for cross-project merge",
+	DescribeTable("should succeed with registry-only SBOM for cross-project merge",
 		func(ctx SpecContext, testOpts simpleTestOptions) {
 			By("initializing")
 			setupEnv(testOpts.setupEnvOptions)
@@ -345,7 +335,7 @@ var _ = Describe("SBOM cross-project merge", Label("e2e", "build", "sbom", "merg
 			baseWerfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(baseRepoDirname))
 			baseReportProject := report.NewProjectWithReport(baseWerfProject)
 			baseBuildOut, baseBuildReport := baseReportProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath("report_cross_project_base.json"), nil)
-			Expect(baseBuildOut).To(ContainSubstring(sbomEmulationWarning))
+			Expect(baseBuildOut).To(ContainSubstring(sbomProcessingPrefix))
 
 			baseReportRecord, ok := baseBuildReport.Images["base-level-0"]
 			Expect(ok).To(BeTrue(), "base-level-0 should be in build report")
@@ -366,7 +356,7 @@ var _ = Describe("SBOM cross-project merge", Label("e2e", "build", "sbom", "merg
 				},
 			}
 			derivedBuildOut, _ := derivedReportProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath("report_cross_project_derived.json"), derivedBuildOpts)
-			Expect(derivedBuildOut).To(ContainSubstring(sbomEmulationWarning))
+			Expect(derivedBuildOut).To(ContainSubstring(sbomProcessingPrefix))
 		},
 		Entry("with local repo using Vanilla Docker", simpleTestOptions{setupEnvOptions{
 			ContainerBackendMode:        "vanilla-docker",
@@ -392,7 +382,7 @@ var _ = Describe("SBOM cross-project merge", Label("e2e", "build", "sbom", "merg
 })
 
 var _ = Describe("GOST SBOM fields", Label("e2e", "build", "sbom", "gost", "simple"), func() {
-	DescribeTable("should succeed with SBOM emulation for GOST fields",
+	DescribeTable("should succeed with registry-only SBOM for GOST fields",
 		func(ctx SpecContext, testOpts simpleTestOptions, fixtureRelPath, repoDirname string) {
 			By("initializing")
 			setupEnv(testOpts.setupEnvOptions)
@@ -405,12 +395,12 @@ var _ = Describe("GOST SBOM fields", Label("e2e", "build", "sbom", "gost", "simp
 			reportProject := report.NewProjectWithReport(werfProject)
 			buildOut, _ := reportProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(repoDirname+".json"), nil)
 			Expect(buildOut).To(ContainSubstring("Building stage"))
-			Expect(buildOut).To(ContainSubstring(sbomEmulationWarning))
+			Expect(buildOut).To(ContainSubstring(sbomProcessingPrefix))
 		},
 		Entry("default values using Vanilla Docker",
 			simpleTestOptions{setupEnvOptions{
 				ContainerBackendMode: "vanilla-docker",
-				WithLocalRepo:        false,
+				WithLocalRepo:        true,
 			}},
 			"sbom/gost_defaults",
 			"gost-defaults",
@@ -418,7 +408,7 @@ var _ = Describe("GOST SBOM fields", Label("e2e", "build", "sbom", "gost", "simp
 		Entry("default values using BuildKit Docker",
 			simpleTestOptions{setupEnvOptions{
 				ContainerBackendMode: "buildkit-docker",
-				WithLocalRepo:        false,
+				WithLocalRepo:        true,
 			}},
 			"sbom/gost_defaults",
 			"gost-defaults",
@@ -426,7 +416,7 @@ var _ = Describe("GOST SBOM fields", Label("e2e", "build", "sbom", "gost", "simp
 		Entry("image override meta using Vanilla Docker",
 			simpleTestOptions{setupEnvOptions{
 				ContainerBackendMode: "vanilla-docker",
-				WithLocalRepo:        false,
+				WithLocalRepo:        true,
 			}},
 			"sbom/gost_meta_image",
 			"gost-meta-image",
@@ -434,7 +424,7 @@ var _ = Describe("GOST SBOM fields", Label("e2e", "build", "sbom", "gost", "simp
 		Entry("image override meta using BuildKit Docker",
 			simpleTestOptions{setupEnvOptions{
 				ContainerBackendMode: "buildkit-docker",
-				WithLocalRepo:        false,
+				WithLocalRepo:        true,
 			}},
 			"sbom/gost_meta_image",
 			"gost-meta-image",
@@ -443,7 +433,7 @@ var _ = Describe("GOST SBOM fields", Label("e2e", "build", "sbom", "gost", "simp
 })
 
 var _ = Describe("SBOM go-replace", Label("e2e", "build", "sbom", "go-replace", "simple"), func() {
-	DescribeTable("should succeed with SBOM emulation for go-replace",
+	DescribeTable("should succeed with registry-only SBOM for go-replace",
 		func(ctx SpecContext, testOpts simpleTestOptions) {
 			By("initializing")
 			setupEnv(testOpts.setupEnvOptions)
@@ -461,7 +451,7 @@ var _ = Describe("SBOM go-replace", Label("e2e", "build", "sbom", "go-replace", 
 			reportProject := report.NewProjectWithReport(werfProject)
 			buildOut, _ := reportProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath("report_sbom_go_replace.json"), nil)
 			Expect(buildOut).To(ContainSubstring("Building stage"))
-			Expect(buildOut).To(ContainSubstring(sbomEmulationWarning))
+			Expect(buildOut).To(ContainSubstring(sbomProcessingPrefix))
 		},
 		Entry("with local repo using Vanilla Docker", simpleTestOptions{setupEnvOptions{
 			ContainerBackendMode:        "vanilla-docker",

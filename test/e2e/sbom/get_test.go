@@ -7,11 +7,11 @@ import (
 	"github.com/werf/werf/v2/test/pkg/werf"
 )
 
-const sbomEmulationWarning = "WARNING: SBOM generation is running in emulation mode, skipping actual generation"
+const sbomProcessingPrefix = "SBOM processing"
 
 var _ = Describe("Sbom get", Label("e2e", "sbom", "get", "simple"), func() {
 	Describe("default", func() {
-		DescribeTable("should succeed with SBOM emulation",
+		DescribeTable("should succeed with registry-only SBOM generation",
 			func(ctx SpecContext, testOpts simpleTestOptions) {
 				By("initializing")
 				setupEnv(testOpts.setupEnvOptions)
@@ -22,24 +22,14 @@ var _ = Describe("Sbom get", Label("e2e", "sbom", "get", "simple"), func() {
 				By("preparing test repo")
 				SuiteData.InitTestRepo(ctx, repoDirname, fixtureRelPath)
 
-				By("building images")
+				By("building images with SBOM")
 				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
 				buildOut := werfProject.Build(ctx, nil)
-				Expect(buildOut).To(ContainSubstring(sbomEmulationWarning))
+				Expect(buildOut).To(ContainSubstring(sbomProcessingPrefix))
 			},
-			Entry("without repo using Vanilla Docker", simpleTestOptions{setupEnvOptions{
-				ContainerBackendMode:        "vanilla-docker",
-				WithLocalRepo:               false,
-				WithStagedDockerfileBuilder: false,
-			}}),
 			Entry("with local repo using Vanilla Docker", simpleTestOptions{setupEnvOptions{
 				ContainerBackendMode:        "vanilla-docker",
 				WithLocalRepo:               true,
-				WithStagedDockerfileBuilder: false,
-			}}),
-			Entry("without repo using BuildKit Docker", simpleTestOptions{setupEnvOptions{
-				ContainerBackendMode:        "buildkit-docker",
-				WithLocalRepo:               false,
 				WithStagedDockerfileBuilder: false,
 			}}),
 			Entry("with local repo using BuildKit Docker", simpleTestOptions{setupEnvOptions{
@@ -61,7 +51,7 @@ var _ = Describe("Sbom get", Label("e2e", "sbom", "get", "simple"), func() {
 	})
 
 	Describe("lightweight", Label("tag"), func() {
-		DescribeTable("should succeed with SBOM emulation (tag)",
+		DescribeTable("should succeed with registry-only SBOM generation (tag)",
 			func(ctx SpecContext, testOpts simpleTestOptions) {
 				By("initializing")
 				setupEnv(testOpts.setupEnvOptions)
@@ -71,24 +61,14 @@ var _ = Describe("Sbom get", Label("e2e", "sbom", "get", "simple"), func() {
 				By("preparing test repo")
 				SuiteData.InitTestRepo(ctx, repoDirname, "state0")
 
-				By("building images")
+				By("building images with SBOM")
 				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
 				buildOut := werfProject.Build(ctx, nil)
-				Expect(buildOut).To(ContainSubstring(sbomEmulationWarning))
+				Expect(buildOut).To(ContainSubstring(sbomProcessingPrefix))
 			},
-			Entry("without repo using Vanilla Docker", simpleTestOptions{setupEnvOptions{
-				ContainerBackendMode:        "vanilla-docker",
-				WithLocalRepo:               false,
-				WithStagedDockerfileBuilder: false,
-			}}),
 			Entry("with local repo using Vanilla Docker", simpleTestOptions{setupEnvOptions{
 				ContainerBackendMode:        "vanilla-docker",
 				WithLocalRepo:               true,
-				WithStagedDockerfileBuilder: false,
-			}}),
-			Entry("without repo using BuildKit Docker", simpleTestOptions{setupEnvOptions{
-				ContainerBackendMode:        "buildkit-docker",
-				WithLocalRepo:               false,
 				WithStagedDockerfileBuilder: false,
 			}}),
 			Entry("with local repo using BuildKit Docker", simpleTestOptions{setupEnvOptions{
@@ -110,7 +90,7 @@ var _ = Describe("Sbom get", Label("e2e", "sbom", "get", "simple"), func() {
 	})
 
 	Describe("lightweight", Label("digest"), func() {
-		DescribeTable("should succeed with SBOM emulation (digest)",
+		DescribeTable("should succeed with registry-only SBOM generation (digest)",
 			func(ctx SpecContext, testOpts simpleTestOptions) {
 				By("initializing")
 				setupEnv(testOpts.setupEnvOptions)
@@ -120,24 +100,14 @@ var _ = Describe("Sbom get", Label("e2e", "sbom", "get", "simple"), func() {
 				By("preparing test repo")
 				SuiteData.InitTestRepo(ctx, repoDirname, "state0")
 
-				By("building images")
+				By("building images with SBOM")
 				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
 				buildOut := werfProject.Build(ctx, nil)
-				Expect(buildOut).To(ContainSubstring(sbomEmulationWarning))
+				Expect(buildOut).To(ContainSubstring(sbomProcessingPrefix))
 			},
-			Entry("without repo using Vanilla Docker", simpleTestOptions{setupEnvOptions{
-				ContainerBackendMode:        "vanilla-docker",
-				WithLocalRepo:               false,
-				WithStagedDockerfileBuilder: false,
-			}}),
 			Entry("with local repo using Vanilla Docker", simpleTestOptions{setupEnvOptions{
 				ContainerBackendMode:        "vanilla-docker",
 				WithLocalRepo:               true,
-				WithStagedDockerfileBuilder: false,
-			}}),
-			Entry("without repo using BuildKit Docker", simpleTestOptions{setupEnvOptions{
-				ContainerBackendMode:        "buildkit-docker",
-				WithLocalRepo:               false,
 				WithStagedDockerfileBuilder: false,
 			}}),
 			Entry("with local repo using BuildKit Docker", simpleTestOptions{setupEnvOptions{

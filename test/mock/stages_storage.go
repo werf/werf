@@ -143,6 +143,20 @@ func (mr *MockStagesStorageMockRecorder) CreateRepo(ctx any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateRepo", reflect.TypeOf((*MockStagesStorage)(nil).CreateRepo), ctx)
 }
 
+// DeleteArtifact mocks base method.
+func (m *MockStagesStorage) DeleteArtifact(ctx context.Context, imageName string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteArtifact", ctx, imageName)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteArtifact indicates an expected call of DeleteArtifact.
+func (mr *MockStagesStorageMockRecorder) DeleteArtifact(ctx, imageName any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteArtifact", reflect.TypeOf((*MockStagesStorage)(nil).DeleteArtifact), ctx, imageName)
+}
+
 // DeleteRepo mocks base method.
 func (m *MockStagesStorage) DeleteRepo(ctx context.Context) error {
 	m.ctrl.T.Helper()
@@ -155,20 +169,6 @@ func (m *MockStagesStorage) DeleteRepo(ctx context.Context) error {
 func (mr *MockStagesStorageMockRecorder) DeleteRepo(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteRepo", reflect.TypeOf((*MockStagesStorage)(nil).DeleteRepo), ctx)
-}
-
-// DeleteSbomImage mocks base method.
-func (m *MockStagesStorage) DeleteSbomImage(ctx context.Context, imageName string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteSbomImage", ctx, imageName)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// DeleteSbomImage indicates an expected call of DeleteSbomImage.
-func (mr *MockStagesStorageMockRecorder) DeleteSbomImage(ctx, imageName any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSbomImage", reflect.TypeOf((*MockStagesStorage)(nil).DeleteSbomImage), ctx, imageName)
 }
 
 // DeleteStage mocks base method.
@@ -358,19 +358,19 @@ func (mr *MockStagesStorageMockRecorder) GetManagedImages(ctx, projectName any, 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetManagedImages", reflect.TypeOf((*MockStagesStorage)(nil).GetManagedImages), varargs...)
 }
 
-// GetOrphanedSbomImageNames mocks base method.
-func (m *MockStagesStorage) GetOrphanedSbomImageNames(ctx context.Context) ([]string, error) {
+// GetOrphanedArtifactNames mocks base method.
+func (m *MockStagesStorage) GetOrphanedArtifactNames(ctx context.Context) ([]string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetOrphanedSbomImageNames", ctx)
+	ret := m.ctrl.Call(m, "GetOrphanedArtifactNames", ctx)
 	ret0, _ := ret[0].([]string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetOrphanedSbomImageNames indicates an expected call of GetOrphanedSbomImageNames.
-func (mr *MockStagesStorageMockRecorder) GetOrphanedSbomImageNames(ctx any) *gomock.Call {
+// GetOrphanedArtifactNames indicates an expected call of GetOrphanedArtifactNames.
+func (mr *MockStagesStorageMockRecorder) GetOrphanedArtifactNames(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrphanedSbomImageNames", reflect.TypeOf((*MockStagesStorage)(nil).GetOrphanedSbomImageNames), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrphanedArtifactNames", reflect.TypeOf((*MockStagesStorage)(nil).GetOrphanedArtifactNames), ctx)
 }
 
 // GetStageDesc mocks base method.
@@ -570,36 +570,6 @@ func (m *MockStagesStorage) PostSyncServerRecord(ctx context.Context, projectNam
 func (mr *MockStagesStorageMockRecorder) PostSyncServerRecord(ctx, projectName, rec any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostSyncServerRecord", reflect.TypeOf((*MockStagesStorage)(nil).PostSyncServerRecord), ctx, projectName, rec)
-}
-
-// PullIfExistSbomImage mocks base method.
-func (m *MockStagesStorage) PullIfExistSbomImage(ctx context.Context, imageName string) (bool, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PullIfExistSbomImage", ctx, imageName)
-	ret0, _ := ret[0].(bool)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// PullIfExistSbomImage indicates an expected call of PullIfExistSbomImage.
-func (mr *MockStagesStorageMockRecorder) PullIfExistSbomImage(ctx, imageName any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PullIfExistSbomImage", reflect.TypeOf((*MockStagesStorage)(nil).PullIfExistSbomImage), ctx, imageName)
-}
-
-// PushIfNotExistSbomImage mocks base method.
-func (m *MockStagesStorage) PushIfNotExistSbomImage(ctx context.Context, imageName string) (bool, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PushIfNotExistSbomImage", ctx, imageName)
-	ret0, _ := ret[0].(bool)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// PushIfNotExistSbomImage indicates an expected call of PushIfNotExistSbomImage.
-func (mr *MockStagesStorageMockRecorder) PushIfNotExistSbomImage(ctx, imageName any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushIfNotExistSbomImage", reflect.TypeOf((*MockStagesStorage)(nil).PushIfNotExistSbomImage), ctx, imageName)
 }
 
 // PutImageMetadata mocks base method.

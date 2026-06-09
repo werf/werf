@@ -104,10 +104,5 @@ func runMerge(ctx context.Context, opts merge.Options) error {
 		return err
 	}
 
-	registry, err := common.CreateDockerRegistry(ctx, repoAddr, *commonCmdData.InsecureRegistry, *commonCmdData.SkipTlsVerifyRegistry, nil)
-	if err != nil {
-		return fmt.Errorf("create docker registry: %w", err)
-	}
-
-	return merge.Run(ctx, registry, repoAddr, opts)
+	return merge.Run(ctx, repoAddr, opts)
 }

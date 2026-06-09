@@ -66,7 +66,18 @@ var _ = Describe("Enricher", func() {
 					Expect(err).NotTo(HaveOccurred())
 				},
 			}),
-			Entry("returns error on component without purl", enrichCase{
+			Entry("skips OS component without purl", enrichCase{
+				bom: &cdx.BOM{
+					Components: &[]cdx.Component{
+						{Name: "alpine", Version: "3.21", Type: cdx.ComponentTypeOS},
+						{Name: "lodash", Version: "4.17.21", PackageURL: "pkg:npm/lodash@4.17.21", Type: cdx.ComponentTypeLibrary},
+					},
+				},
+				check: func(err error) {
+					Expect(err).NotTo(HaveOccurred())
+				},
+			}),
+			Entry("returns error on library without purl", enrichCase{
 				bom: &cdx.BOM{
 					Components: &[]cdx.Component{
 						{Name: "no-purl-lib", Version: "1.0.0", Type: cdx.ComponentTypeLibrary},
@@ -74,7 +85,7 @@ var _ = Describe("Enricher", func() {
 				},
 				check: func(err error) {
 					Expect(err).To(HaveOccurred())
-					Expect(err.Error()).To(ContainSubstring("no purl"))
+					Expect(err.Error()).To(ContainSubstring("has no purl"))
 				},
 			}),
 			Entry("returns error on first failed resolve", enrichCase{

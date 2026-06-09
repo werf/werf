@@ -3,9 +3,10 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Get SBOM of an image is described in `werf.yaml and prints the result to stdout`.
+Get SBOM of an image that is described in `werf.yaml` and prints the result to stdout.
 
-If SBOM is not found (locally or remotely) it triggers werf build command to generate SBOM.
+SBOM is stored as an OCI artifact attached to the container image in the container registry.
+If SBOM is not found, the command triggers werf build to generate one.
 
 {{ header }} Syntax
 

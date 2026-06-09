@@ -220,10 +220,10 @@ func (runtime *PerfCheckContainerBackend) LoadImageFromStream(ctx context.Contex
 	return runtime.ContainerBackend.LoadImageFromStream(ctx, input)
 }
 
-func (runtime *PerfCheckContainerBackend) GenerateSBOM(ctx context.Context, scanOpts scanner.ScanOptions, dstImgLabels []string) (imgId string, err error) {
-	logboek.Context(ctx).Default().LogProcess("ContainerBackend.GenerateSBOM scanOpts=%+v, dstImgLabels=%v", scanOpts, dstImgLabels).
+func (runtime *PerfCheckContainerBackend) GenerateSBOM(ctx context.Context, scanOpts scanner.ScanOptions) (bomJSON []byte, err error) {
+	logboek.Context(ctx).Default().LogProcess("ContainerBackend.GenerateSBOM scanOpts=%+v", scanOpts).
 		Do(func() {
-			imgId, err = runtime.ContainerBackend.GenerateSBOM(ctx, scanOpts, dstImgLabels)
+			bomJSON, err = runtime.ContainerBackend.GenerateSBOM(ctx, scanOpts)
 		})
 	return
 }

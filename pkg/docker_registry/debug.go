@@ -151,3 +151,7 @@ func (r *DockerRegistryTracer) GetRepoImageDesc(ctx context.Context, reference s
 	})
 	return
 }
+
+func (r *DockerRegistryTracer) RemoteOptionsForHost(ctx context.Context, reference string) []remote.Option {
+	return r.DockerRegistryApi.RemoteOptionsForHost(ctx, reference)
+}

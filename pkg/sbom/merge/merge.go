@@ -9,10 +9,8 @@ import (
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/opencontainers/go-digest"
-	"github.com/samber/lo"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/docker_registry"
 	"github.com/werf/werf/v2/pkg/sbom/convert"
 	"github.com/werf/werf/v2/pkg/sbom/cyclonedxutil"
 	sbomImage "github.com/werf/werf/v2/pkg/sbom/image"
@@ -27,7 +25,7 @@ type Options struct {
 	Output       string
 }
 
-func Run(ctx context.Context, registry docker_registry.Interface, repo string, opts Options) error {
+func Run(ctx context.Context, repo string, opts Options) error {
 	if err := ValidateOptions(opts); err != nil {
 		return err
 	}
@@ -53,7 +51,7 @@ func Run(ctx context.Context, registry docker_registry.Interface, repo string, o
 
 	err = logboek.Context(ctx).Default().LogProcess("Pulling and parsing SBOMs").DoError(func() error {
 		var err error
-		images, err = PullAndParseImages(ctx, registry, repo, mapping)
+		images, err = PullAndParseImages(ctx, repo, mapping)
 		return err
 	})
 	if err != nil {
@@ -80,10 +78,23 @@ func Run(ctx context.Context, registry docker_registry.Interface, repo string, o
 			return fmt.Errorf("unable to convert: %w", err)
 		}
 
+		if result == nil {
+			return fmt.Errorf("converter returned nil result")
+		}
+
+		compCount := 0
+		if result.Components != nil {
+			compCount = len(*result.Components)
+		}
+		depCount := 0
+		if result.Dependencies != nil {
+			depCount = len(*result.Dependencies)
+		}
+
 		logboek.Context(ctx).Default().LogFDetails(
 			"result: %d component(s), %d dependenc(ies)\n",
-			lo.Ternary(result.Components != nil, len(*result.Components), 0),
-			lo.Ternary(result.Dependencies != nil, len(*result.Dependencies), 0),
+			compCount,
+			depCount,
 		)
 		return nil
 	})
@@ -172,23 +183,9 @@ func ValidateInputMapping(mapping map[string]string) error {
 	return nil
 }
 
-func PullAndParseImages(ctx context.Context, registry docker_registry.Interface, repo string, mapping map[string]string) ([]*convert.ImageSBOM, error) {
+func PullAndParseImages(ctx context.Context, repo string, mapping map[string]string) ([]*convert.ImageSBOM, error) {
 	total := len(mapping)
 	images := make([]*convert.ImageSBOM, 0, total)
-
-	var digestToTag map[string]string
-	err := logboek.Context(ctx).Default().LogProcess("Building digest-to-tag index").DoError(func() error {
-		var err error
-		digestToTag, err = sbomImage.BuildDigestToTagIndex(ctx, registry, repo)
-		if err != nil {
-			return err
-		}
-		logboek.Context(ctx).Default().LogFDetails("%d tag(s) indexed\n", len(digestToTag))
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
 
 	logboek.Context(ctx).Default().LogF("Pulling SBOMs: %d image(s)\n", total)
 
@@ -199,21 +196,14 @@ func PullAndParseImages(ctx context.Context, registry docker_registry.Interface,
 		err := logboek.Context(ctx).Default().
 			LogProcess("[%d/%d] %s", idx, total, imageName).
 			DoError(func() error {
-				sbomRef, err := sbomImage.ResolveSBOMReference(repo, imageDigest, digestToTag)
+				bom, err := sbomImage.PullCycloneDX16BOM(ctx, repo, imageDigest, imageName)
 				if err != nil {
-					return fmt.Errorf("resolve SBOM reference for %q: %w", imageName, err)
-				}
-
-				logboek.Context(ctx).Default().LogFDetails("sbom reference: %s\n", sbomRef)
-
-				bom, err := sbomImage.PullCycloneDX16BOM(ctx, registry, sbomRef)
-				if err != nil {
-					return fmt.Errorf("unable to pull SBOM for %q (%s): %w", imageName, sbomRef, err)
+					return fmt.Errorf("pull SBOM for %q: %w", imageName, err)
 				}
 
 				img, err := convert.NewImageSBOMFromCycloneDX16(ctx, imageName, bom)
 				if err != nil {
-					return fmt.Errorf("unable to parse SBOM for %q: %w", imageName, err)
+					return fmt.Errorf("parse SBOM for %q: %w", imageName, err)
 				}
 
 				images = append(images, img)

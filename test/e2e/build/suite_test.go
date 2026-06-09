@@ -7,6 +7,7 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 
+	"github.com/werf/werf/v2/test/pkg/externalrefmock"
 	"github.com/werf/werf/v2/test/pkg/suite_init"
 	"github.com/werf/werf/v2/test/pkg/utils"
 )
@@ -41,6 +42,10 @@ var (
 
 	_ = SuiteData.AppendSynchronizedBeforeSuiteAllNodesFunc(func(ctx context.Context, _ []byte) {
 		SuiteData.TempFiles = append([]string{}, utils.CreateTmpFileInHome("secret_file_in_home", "secret"))
+	})
+
+	_ = SuiteData.AppendSynchronizedAfterSuiteAllNodesFunc(func(_ context.Context) {
+		externalrefmock.Stop()
 	})
 
 	_ = AfterEach(func(ctx SpecContext) {

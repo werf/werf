@@ -244,19 +244,11 @@ func (storage *LocalStagesStorage) RmImageMetadata(ctx context.Context, projectN
 	return nil
 }
 
-func (storage *LocalStagesStorage) PushIfNotExistSbomImage(ctx context.Context, imageName string) (bool, error) {
-	return false, ErrNotSupported
-}
-
-func (storage *LocalStagesStorage) PullIfExistSbomImage(ctx context.Context, imageName string) (bool, error) {
-	return false, ErrNotSupported
-}
-
-func (storage *LocalStagesStorage) GetOrphanedSbomImageNames(_ context.Context) ([]string, error) {
+func (storage *LocalStagesStorage) GetOrphanedArtifactNames(_ context.Context) ([]string, error) {
 	return nil, nil
 }
 
-func (storage *LocalStagesStorage) DeleteSbomImage(_ context.Context, _ string) error {
+func (storage *LocalStagesStorage) DeleteArtifact(_ context.Context, _ string) error {
 	return nil
 }
 

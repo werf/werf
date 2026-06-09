@@ -83,8 +83,8 @@ func (m *purgeManager) run(ctx context.Context) error {
 		}
 	}
 
-	if err := logboek.Context(ctx).Default().LogProcess("Deleting orphaned SBOM images").DoError(func() error {
-		return m.deleteOrphanedSbomImages(ctx)
+	if err := logboek.Context(ctx).Default().LogProcess("Deleting orphaned artifacts").DoError(func() error {
+		return m.deleteOrphanedArtifacts(ctx)
 	}); err != nil {
 		return err
 	}
@@ -170,6 +170,6 @@ func deleteCustomTags(ctx context.Context, storageManager manager.StorageManager
 	return nil
 }
 
-func (m *purgeManager) deleteOrphanedSbomImages(ctx context.Context) error {
-	return deleteOrphanedSbomImages(ctx, m.StorageManager.GetStagesStorage(), m.DryRun)
+func (m *purgeManager) deleteOrphanedArtifacts(ctx context.Context) error {
+	return deleteOrphanedArtifacts(ctx, m.StorageManager.GetStagesStorage(), m.DryRun)
 }

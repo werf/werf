@@ -107,6 +107,10 @@ func (api *genericApi) GetRepoImageDesc(ctx context.Context, reference string) (
 	return desc, nil
 }
 
+func (api *genericApi) RemoteOptionsForHost(ctx context.Context, reference string) []remote.Option {
+	return api.commonApi.defaultRemoteOptionsForHost(ctx, reference)
+}
+
 func (api *genericApi) GetRepoImage(ctx context.Context, reference string) (*image.Info, error) {
 	mirrorReferenceList, err := api.mirrorReferenceList(ctx, reference)
 	if err != nil {

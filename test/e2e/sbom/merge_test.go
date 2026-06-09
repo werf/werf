@@ -14,7 +14,7 @@ import (
 
 var _ = Describe("Sbom merge", Label("e2e", "sbom", "merge", "simple"), func() {
 	Describe("happy path", Label("simple"), func() {
-		DescribeTable("should succeed with SBOM emulation",
+		DescribeTable("should succeed with registry-only SBOM generation",
 			func(ctx SpecContext, testOpts simpleTestOptions) {
 				By("initializing")
 				setupEnv(testOpts.setupEnvOptions)
@@ -25,12 +25,12 @@ var _ = Describe("Sbom merge", Label("e2e", "sbom", "merge", "simple"), func() {
 				By("preparing test repo")
 				SuiteData.InitTestRepo(ctx, repoDirname, "state1")
 
-				By("building images")
+				By("building images with SBOM")
 				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
 				reportProject := report.NewProjectWithReport(werfProject)
 				buildOut, _ := reportProject.BuildWithReport(ctx, buildReportPath, nil)
 
-				Expect(buildOut).To(ContainSubstring(sbomEmulationWarning))
+				Expect(buildOut).To(ContainSubstring(sbomProcessingPrefix))
 			},
 			Entry("with Vanilla Docker", simpleTestOptions{setupEnvOptions{
 				ContainerBackendMode:        "vanilla-docker",
