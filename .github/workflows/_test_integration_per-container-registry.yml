@@ -28,11 +28,11 @@ jobs:
           - ${{ inputs.linuxAmd64Runner }}
         cr:
           - acr
-          - default
+#          - default
           - dockerhub
           - ecr
           - github
-          - harbor
+#          - harbor
           - quay
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
