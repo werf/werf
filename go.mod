@@ -37,6 +37,7 @@ require (
 	github.com/gosuri/uitable v0.0.4
 	github.com/goware/urlx v0.3.2
 	github.com/hofstadter-io/cinful v1.0.0
+	github.com/joho/godotenv v1.5.1
 	github.com/mitchellh/copystructure v1.2.0
 	github.com/moby/buildkit v0.29.0
 	github.com/moby/moby/client v0.3.0
@@ -57,12 +58,12 @@ require (
 	github.com/spf13/pflag v1.0.10
 	github.com/werf/3p-helm-for-werf-helm v0.0.0-20241217155820-089f92cd5c9d
 	github.com/werf/common-go v0.0.0-20260414103517-0558f83edc6d
-	github.com/werf/copy-recurse v0.2.7
+	github.com/werf/copy-recurse v0.2.8
 	github.com/werf/kubedog v0.13.1-0.20260212122756-5d3f8c0f1827
 	github.com/werf/kubedog-for-werf-helm v0.0.0-20241217155728-9d45c48b82b6
 	github.com/werf/lockgate v0.1.1
 	github.com/werf/logboek v0.6.1
-	github.com/werf/nelm v1.23.3-0.20260421131859-144b20397bc1
+	github.com/werf/nelm v1.24.3
 	github.com/werf/nelm-for-werf-helm v0.0.0-20241217155925-b0e6734d1dbf
 	go.opentelemetry.io/otel v1.40.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.40.0
@@ -143,7 +144,6 @@ require (
 	github.com/hashicorp/go-retryablehttp v0.7.8 // indirect
 	github.com/hiddeco/sshsig v0.2.0 // indirect
 	github.com/in-toto/attestation v1.1.2 // indirect
-	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.7 // indirect
 	github.com/lestrrat-go/blackmagic v1.0.4 // indirect
 	github.com/lestrrat-go/dsig v1.0.0 // indirect

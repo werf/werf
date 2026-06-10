@@ -11,6 +11,66 @@ import (
 	"github.com/werf/werf/v2/pkg/container_backend"
 )
 
+var _ = Describe("FindImage", func() {
+	var conveyor *Conveyor
+
+	BeforeEach(func() {
+		conveyor = &Conveyor{
+			imagesTree:       &image.ImagesTree{},
+			stageImages:      make(map[string]*stage.StageImage),
+			serviceRWMutex:   map[string]*sync.RWMutex{},
+			stageDigestMutex: map[string]*sync.Mutex{},
+		}
+	})
+
+	It("returns error when targetPlatform is empty", func() {
+		img, err := conveyor.FindImage("", "myimage")
+		Expect(err).To(MatchError(ContainSubstring("targetPlatform must not be empty")))
+		Expect(img).To(BeNil())
+	})
+
+	It("returns error when image is not found", func() {
+		img, err := conveyor.FindImage("linux/amd64", "nonexistent")
+		Expect(err).To(MatchError(ContainSubstring(`image "nonexistent" not found`)))
+		Expect(img).To(BeNil())
+	})
+
+	It("returns error with available platforms when platform is not supported", func() {
+		conveyor.imagesTree.AppendImageForTests(&image.Image{Name: "myimage", TargetPlatform: "linux/amd64"})
+
+		img, err := conveyor.FindImage("linux/arm64", "myimage")
+		Expect(err).To(MatchError(And(
+			ContainSubstring(`image "myimage" does not support platform "linux/arm64"`),
+			ContainSubstring("linux/amd64"),
+		)))
+		Expect(img).To(BeNil())
+	})
+
+	It("returns the image when platform matches", func() {
+		expected := &image.Image{Name: "myimage", TargetPlatform: "linux/amd64"}
+		conveyor.imagesTree.AppendImageForTests(expected)
+
+		got, err := conveyor.FindImage("linux/amd64", "myimage")
+		Expect(err).To(Succeed())
+		Expect(got).To(BeIdenticalTo(expected))
+	})
+
+	It("returns the correct image when multiple platforms are registered", func() {
+		amd64 := &image.Image{Name: "myimage", TargetPlatform: "linux/amd64"}
+		arm64 := &image.Image{Name: "myimage", TargetPlatform: "linux/arm64"}
+		conveyor.imagesTree.AppendImageForTests(amd64)
+		conveyor.imagesTree.AppendImageForTests(arm64)
+
+		got, err := conveyor.FindImage("linux/arm64", "myimage")
+		Expect(err).To(Succeed())
+		Expect(got).To(BeIdenticalTo(arm64))
+
+		got, err = conveyor.FindImage("linux/amd64", "myimage")
+		Expect(err).To(Succeed())
+		Expect(got).To(BeIdenticalTo(amd64))
+	})
+})
+
 var _ = Describe("Conveyor stage image cache", func() {
 	var conveyor *Conveyor
 

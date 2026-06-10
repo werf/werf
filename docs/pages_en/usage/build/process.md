@@ -591,6 +591,7 @@ The JSON report contains detailed information about the build:
   * Whether the image was rebuilt (`Rebuilt`)
   * Whether the image is [final or intermediate]({{ "/usage/build/images.html#using-intermediate-and-final-images" | true_relative_url }}) (`Final`). Final images are available in Helm chart values, can be tagged with custom tags, published to the final repository, and exported. Intermediate images (`final: false`) are used only as build dependencies
   * Image size in bytes (`Size`) and build time in seconds (`BuildTime`)
+  * Git commit the image was built on (`Commit`)
   * Build stages (`Stages`) with details:
     * Stage name (`Name`)
     * Tags (`DockerImageName`, `DockerTag`, `DockerImageID`, `DockerImageDigest`)
@@ -599,7 +600,8 @@ The JSON report contains detailed information about the build:
     * Source of the base image (`SourceType`: `local`, `secondary`, `cache-repo`, `registry`)
     * Whether the base image was pulled (`BaseImagePulled`)
     * Whether the stage was rebuilt (`Rebuilt`)
-    * Stage build time in seconds (`BuildTime`).
+    * Stage build time in seconds (`BuildTime`)
+    * Git commit the stage was built on (`Commit`).
 
 * **ImagesByPlatform** — per-platform breakdown for multiarch builds. This field is populated only when the `WERF_ENABLE_REPORT_BY_PLATFORM=1` environment variable is set. The record structure is the same as in `Images`, but the data is grouped by image name and platform.
 
@@ -624,6 +626,7 @@ Example report in JSON format:
       "Final": true,
       "Size": 20960980,
       "BuildTime": "0.00",
+      "Commit": "9d1bb68ca2f4e8b0e2b6e5f5a3c7d1e4f2a0b3c9",
       "Stages": [
         {
           "Name": "from",
@@ -636,7 +639,8 @@ Example report in JSON format:
           "SourceType": "",
           "BaseImagePulled": false,
           "Rebuilt": false,
-          "BuildTime": "0.00"
+          "BuildTime": "0.00",
+          "Commit": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2"
         },
         {
           "Name": "install",
@@ -649,7 +653,8 @@ Example report in JSON format:
           "SourceType": "",
           "BaseImagePulled": false,
           "Rebuilt": false,
-          "BuildTime": "0.00"
+          "BuildTime": "0.00",
+          "Commit": "9d1bb68ca2f4e8b0e2b6e5f5a3c7d1e4f2a0b3c9"
         }
       ]
     }

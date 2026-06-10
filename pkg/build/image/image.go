@@ -126,6 +126,8 @@ type Image struct {
 	baseStageImage   *stage.StageImage
 	stageAsBaseImage stage.Interface
 
+	stagedDockerfileBaseEnv map[string]string
+
 	logImageIndex  int
 	logTotalImages int
 }
@@ -243,6 +245,14 @@ func (i *Image) GetLogName() string {
 	return i.LogName()
 }
 
+func (i *Image) SetStagedDockerfileBaseEnv(env map[string]string) {
+	i.stagedDockerfileBaseEnv = env
+}
+
+func (i *Image) GetStagedDockerfileBaseEnv() map[string]string {
+	return i.stagedDockerfileBaseEnv
+}
+
 func (i *Image) SetRebuilt(rebuilt bool) {
 	i.rebuilt = rebuilt
 }
@@ -269,7 +279,11 @@ func (i *Image) SetupBaseImage(ctx context.Context, storageManager manager.Stora
 
 	switch i.baseImageType {
 	case StageAsBaseImage:
-		i.stageAsBaseImage = i.Conveyor.GetImage(i.TargetPlatform, i.baseImageName).GetLastNonEmptyStage()
+		baseImg, err := i.Conveyor.FindImage(i.TargetPlatform, i.baseImageName)
+		if err != nil {
+			return fmt.Errorf("base image for %q: %w", i.Name, err)
+		}
+		i.stageAsBaseImage = baseImg.GetLastNonEmptyStage()
 		i.baseImageReference = i.stageAsBaseImage.GetStageImage().Image.Name()
 		i.baseStageImage = i.stageAsBaseImage.GetStageImage()
 

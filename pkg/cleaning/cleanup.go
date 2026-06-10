@@ -26,17 +26,17 @@ import (
 )
 
 type CleanupOptions struct {
-	ImageNameList                           []string
-	LocalGit                                GitRepo
-	KubernetesContextClients                []*kube.ContextClient
-	KubernetesNamespaceRestrictionByContext map[string]string
-	WithoutKube                             bool // TODO: remove this legacy logic in v3.
-	ConfigMetaCleanup                       config.MetaCleanup
-	KeepStagesBuiltWithinLastNHours         *uint64
-	DryRun                                  bool
-	Parallel                                bool
-	ParallelTasksLimit                      int64
-	KeepList                                KeepList
+	ImageNameList                   []string
+	LocalGit                        GitRepo
+	KubernetesContextClients        []*kube.ContextClient
+	KubernetesNamespacesByContext   map[string][]string
+	WithoutKube                     bool // TODO: remove this legacy logic in v3.
+	ConfigMetaCleanup               config.MetaCleanup
+	KeepStagesBuiltWithinLastNHours *uint64
+	DryRun                          bool
+	Parallel                        bool
+	ParallelTasksLimit              int64
+	KeepList                        KeepList
 }
 
 func Cleanup(ctx context.Context, projectName string, storageManager *manager.StorageManager, options CleanupOptions) error {
@@ -45,36 +45,36 @@ func Cleanup(ctx context.Context, projectName string, storageManager *manager.St
 
 func newCleanupManager(projectName string, storageManager *manager.StorageManager, options CleanupOptions) *cleanupManager {
 	return &cleanupManager{
-		stageManager:                            stage_manager.NewManager(),
-		parallel:                                options.Parallel,
-		parallelTasksLimit:                      options.ParallelTasksLimit,
-		keepList:                                options.KeepList,
-		ProjectName:                             projectName,
-		StorageManager:                          storageManager,
-		ImageNameList:                           options.ImageNameList,
-		DryRun:                                  options.DryRun,
-		LocalGit:                                options.LocalGit,
-		KubernetesContextClients:                options.KubernetesContextClients,
-		KubernetesNamespaceRestrictionByContext: options.KubernetesNamespaceRestrictionByContext,
-		WithoutKube:                             options.WithoutKube,
-		ConfigMetaCleanup:                       options.ConfigMetaCleanup,
-		KeepStagesBuiltWithinLastNHours:         options.KeepStagesBuiltWithinLastNHours,
+		stageManager:                    stage_manager.NewManager(),
+		parallel:                        options.Parallel,
+		parallelTasksLimit:              options.ParallelTasksLimit,
+		keepList:                        options.KeepList,
+		ProjectName:                     projectName,
+		StorageManager:                  storageManager,
+		ImageNameList:                   options.ImageNameList,
+		DryRun:                          options.DryRun,
+		LocalGit:                        options.LocalGit,
+		KubernetesContextClients:        options.KubernetesContextClients,
+		KubernetesNamespacesByContext:   options.KubernetesNamespacesByContext,
+		WithoutKube:                     options.WithoutKube,
+		ConfigMetaCleanup:               options.ConfigMetaCleanup,
+		KeepStagesBuiltWithinLastNHours: options.KeepStagesBuiltWithinLastNHours,
 	}
 }
 
 type cleanupManager struct {
 	stageManager stage_manager.Manager
 
-	ProjectName                             string
-	StorageManager                          manager.StorageManagerInterface
-	ImageNameList                           []string
-	LocalGit                                GitRepo
-	KubernetesContextClients                []*kube.ContextClient
-	KubernetesNamespaceRestrictionByContext map[string]string
-	WithoutKube                             bool
-	ConfigMetaCleanup                       config.MetaCleanup
-	KeepStagesBuiltWithinLastNHours         *uint64
-	DryRun                                  bool
+	ProjectName                     string
+	StorageManager                  manager.StorageManagerInterface
+	ImageNameList                   []string
+	LocalGit                        GitRepo
+	KubernetesContextClients        []*kube.ContextClient
+	KubernetesNamespacesByContext   map[string][]string
+	WithoutKube                     bool
+	ConfigMetaCleanup               config.MetaCleanup
+	KeepStagesBuiltWithinLastNHours *uint64
+	DryRun                          bool
 
 	parallel           bool
 	parallelTasksLimit int64
@@ -386,10 +386,18 @@ AppendNewImages:
 
 func (m *cleanupManager) deployedDockerImages(ctx context.Context) ([]*DeployedDockerImage, error) {
 	var deployedDockerImages []*DeployedDockerImage
-	for _, contextClient := range m.KubernetesContextClients {
-		if err := logboek.Context(ctx).LogProcessInline("Getting deployed docker images (context %s)", contextClient.ContextName).
+
+	scanNamespace := func(contextClient *kube.ContextClient, namespace string) error {
+		var processName string
+		if namespace == "" {
+			processName = fmt.Sprintf("Getting deployed docker images (context %s)", contextClient.ContextName)
+		} else {
+			processName = fmt.Sprintf("Getting deployed docker images (context %s, namespace %s)", contextClient.ContextName, namespace)
+		}
+
+		if err := logboek.Context(ctx).LogProcessInline(processName).
 			DoError(func() error {
-				contextDeployedImages, err := allow_list.DeployedDockerImages(ctx, contextClient.Client, m.KubernetesNamespaceRestrictionByContext[contextClient.ContextName])
+				contextDeployedImages, err := allow_list.DeployedDockerImages(ctx, contextClient.Client, namespace)
 				if err != nil {
 					return fmt.Errorf("cannot get deployed imagesStageList: %w", err)
 				}
@@ -398,7 +406,26 @@ func (m *cleanupManager) deployedDockerImages(ctx context.Context) ([]*DeployedD
 
 				return nil
 			}); err != nil {
-			return nil, err
+			return err
+		}
+
+		return nil
+	}
+
+	for _, contextClient := range m.KubernetesContextClients {
+		namespaces := m.KubernetesNamespacesByContext[contextClient.ContextName]
+		if len(namespaces) == 0 {
+			if err := scanNamespace(contextClient, ""); err != nil {
+				return nil, err
+			}
+
+			continue
+		}
+
+		for _, namespace := range namespaces {
+			if err := scanNamespace(contextClient, namespace); err != nil {
+				return nil, err
+			}
 		}
 	}
 

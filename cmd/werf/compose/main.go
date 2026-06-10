@@ -14,7 +14,6 @@ import (
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 
-	"github.com/werf/common-go/pkg/graceful"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/build"
@@ -112,7 +111,7 @@ func extractImageNamesFromComposeConfig(ctx context.Context, customConfigPathLis
 
 	err := cmd.Run()
 	if err != nil {
-		graceful.Terminate(ctx, err, werfExec.ExitCode(err))
+		werfExec.TerminateIfCanceled(ctx)
 		var ee *exec.ExitError
 		if errors.As(err, &ee) {
 			return nil, fmt.Errorf("error running command %q: %w\n\nStdout:\n%s\nStderr:\n%s", cmd, err, stdout.String(), stderr.String())

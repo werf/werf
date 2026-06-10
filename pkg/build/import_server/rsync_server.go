@@ -29,7 +29,7 @@ type RsyncServer struct {
 	AuthUser, AuthPassword string
 }
 
-func RunRsyncServer(ctx context.Context, dockerImageName, tmpDir string) (*RsyncServer, error) {
+func RunRsyncServer(ctx context.Context, dockerImageName, tmpDir, targetPlatform string) (*RsyncServer, error) {
 	logboek.Context(ctx).Debug().LogF("RunRsyncServer for docker image %q\n", dockerImageName)
 
 	srv := &RsyncServer{
@@ -39,7 +39,7 @@ func RunRsyncServer(ctx context.Context, dockerImageName, tmpDir string) (*Rsync
 		AuthPassword:        generateSecureRandomString(16),
 	}
 
-	stapelContainerName, err := stapel.GetOrCreateContainer(ctx)
+	stapelContainerName, err := stapel.GetOrCreateContainer(ctx, targetPlatform)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get or create stapel container: %w", err)
 	}
@@ -80,11 +80,16 @@ strict modes = false
 		fmt.Sprintf("--volume=%s:/.werf/rsyncd.secrets", secretsFilePath),
 		fmt.Sprintf("--expose=%s", rsyncServerPort),
 		fmt.Sprintf("--entrypoint=%s", stapel.RsyncBinPath()),
+	}
+	if targetPlatform != "" {
+		runArgs = append(runArgs, fmt.Sprintf("--platform=%s", targetPlatform))
+	}
+	runArgs = append(runArgs,
 		dockerImageName,
 		"--daemon",
 		"--no-detach",
 		"--config=/.werf/rsyncd.conf",
-	}
+	)
 	logboek.Context(ctx).Debug().LogF("Run rsync server command: %q\n", fmt.Sprintf("docker run %s", strings.Join(runArgs, " ")))
 	if output, err := docker.CliRun_RecordedOutput(ctx, runArgs...); err != nil {
 		logboek.Context(ctx).Error().LogF("Unable to run rsync server command: %q\n", fmt.Sprintf("docker run %s", strings.Join(runArgs, " ")))
@@ -107,6 +112,7 @@ strict modes = false
 }
 
 func (srv *RsyncServer) Shutdown(ctx context.Context) error {
+	ctx = context.WithoutCancel(ctx)
 	if output, err := docker.CliRm_RecordedOutput(ctx, "--force", srv.DockerContainerName); err != nil {
 		logboek.Context(ctx).Error().LogF("%s", output)
 		return fmt.Errorf("unable to remove container %s: %w", srv.DockerContainerName, err)
@@ -144,7 +150,7 @@ func (srv *RsyncServer) GetCopyCommand(ctx context.Context, importConfig *config
 	if importConfig.Owner != "" || importConfig.Group != "" {
 		rsyncChownOption = fmt.Sprintf("--chown=%s:%s", importConfig.Owner, importConfig.Group)
 	}
-	rsyncCommand := fmt.Sprintf("RSYNC_PASSWORD='%s' %s --archive --links --inplace --xattrs --one-file-system %s", srv.AuthPassword, stapel.RsyncBinPath(), rsyncChownOption)
+	rsyncCommand := fmt.Sprintf("RSYNC_PASSWORD='%s' %s --archive --links --inplace --xattrs --one-file-system --keep-dirlinks %s", srv.AuthPassword, stapel.RsyncBinPath(), rsyncChownOption)
 	rsyncCommand += PrepareRsyncFilters(importConfig.Add, importConfig.IncludePaths, importConfig.ExcludePaths)
 
 	rsyncCommand += fmt.Sprintf(" %s$IMPORT_PATH_TRAILING_SLASH_OPTIONAL %s", rsyncImportPathSpec, importConfig.To)

@@ -21,7 +21,6 @@
 {{- if hasPrefix "review" $.Values.werf.env }}
 {{- $host = printf "%s.%s" $.Values.werf.env (pluck "dev" $.Values.host | first | default $.Values.host._default ) | lower }}
 {{- end }}
-{{- $targetCluster := include "targetCluster" $ }}
 {{- $ruHost := printf "ru.%s" $host }}
 {{- if eq $.Values.werf.env "production" }}
 ---
@@ -40,33 +39,11 @@ spec:
   ingressClassName: {{ include "ingressClassName" $ }}
   tls:
   - hosts:
-{{- if eq $targetCluster "eu" }}
+      - {{ $ruHost }}
       - {{ $host }}
       - www.{{ $host }}
-{{- else }}
-      - {{ $ruHost }}
-{{- end }}
-    secretName: tls-{{ $host }}
+    secretName: tls-werf-io
   rules:
-{{- if eq $targetCluster "eu" }}
-  - host: {{ $host }}
-    http:
-      paths:
-      - path: /docs/{{ $versionURLNormalized }}/
-        pathType: ImplementationSpecific
-        backend:
-          service:
-            name: {{ $.Chart.Name }}-{{ $versionDNSNormalized }}
-            port:
-              name: http
-      - path: /documentation/{{ $versionURLNormalized }}/
-        pathType: ImplementationSpecific
-        backend:
-          service:
-            name: {{ $.Chart.Name }}-{{ $versionDNSNormalized }}
-            port:
-              name: http
-{{- else }}
   - host: {{ $ruHost }}
     http:
       paths:
@@ -84,7 +61,23 @@ spec:
             name: {{ $.Chart.Name }}-{{ $versionDNSNormalized }}
             port:
               name: http
-{{- end }}
+  - host: {{ $host }}
+    http:
+      paths:
+      - path: /docs/{{ $versionURLNormalized }}/
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: {{ $.Chart.Name }}-{{ $versionDNSNormalized }}
+            port:
+              name: http
+      - path: /documentation/{{ $versionURLNormalized }}/
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: {{ $.Chart.Name }}-{{ $versionDNSNormalized }}
+            port:
+              name: http
 {{- else }}
 
 ---
@@ -107,7 +100,7 @@ spec:
   - hosts:
       - {{ $host }}
 {{- if eq $.Values.werf.env "production" }}
-    secretName: tls-{{ $host }}
+    secretName: tls-werf-io
 {{- else }}
     secretName: {{ pluck $.Values.werf.env $.Values.ingressSecretName | first | default $.Values.ingressSecretName._default }}
 {{- end }}
@@ -155,7 +148,7 @@ spec:
       - ru-{{ $host }}
 {{- end }}
 {{- if eq $.Values.werf.env "production" }}
-    secretName: tls-{{ $host }}
+    secretName: tls-werf-io
 {{- else }}
     secretName: {{ pluck $.Values.werf.env $.Values.ingressSecretName | first | default $.Values.ingressSecretName._default }}
 {{- end }}

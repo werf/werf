@@ -27,18 +27,19 @@ werf cleanup [options]
       --allow-includes-update=false
             Allow use includes latest versions (default $WERF_ALLOW_INCLUDES_UPDATE or false)
       --allowed-backend-storage-volume-usage=70
-            Set allowed percentage of backend (Docker or Buildah) storage volume usage which will   
-            cause cleanup of least recently used local backend images (default 70% or               
-            $WERF_ALLOWED_BACKEND_STORAGE_VOLUME_USAGE)
+            Set allowed percentage or absolute value (e.g. 10GB) of backend (Docker or Buildah)     
+            storage volume usage which will cause cleanup of least recently used local backend      
+            images (default 70% or $WERF_ALLOWED_BACKEND_STORAGE_VOLUME_USAGE)
       --allowed-backend-storage-volume-usage-margin=5
             During cleanup of least recently used local backend (Docker or Buildah) images werf     
             would delete images until volume usage becomes below                                    
             "allowed-backend-storage-volume-usage - allowed-backend-storage-volume-usage-margin"    
             level (default 5% or $WERF_ALLOWED_BACKEND_STORAGE_VOLUME_USAGE_MARGIN)
       --allowed-local-cache-volume-usage=70
-            Set allowed percentage of local cache (~/.werf/local_cache by default) volume usage     
-            which will cause cleanup of least recently used data from the local cache (default 70%  
-            or $WERF_ALLOWED_LOCAL_CACHE_VOLUME_USAGE)
+            Set allowed percentage or absolute value (e.g. 10GB) of local cache                     
+            (~/.werf/local_cache by default) volume usage which will cause cleanup of least         
+            recently used data from the local cache (default 70% or                                 
+            $WERF_ALLOWED_LOCAL_CACHE_VOLUME_USAGE)
       --allowed-local-cache-volume-usage-margin=5
             During cleanup of local cache werf would delete local cache data until volume usage     
             becomes below "allowed-local-cache-volume-usage -                                       
@@ -145,6 +146,9 @@ werf cleanup [options]
       --kube-context=""
             Scan for used images only in the specified kube context, scan all contexts from kube    
             config otherwise (default false or $WERF_SCAN_CONTEXT_ONLY)
+      --kube-scan-namespaces=[]
+            Kubernetes namespaces to scan for each selected context (can specify multiple). Takes   
+            precedence over --scan-context-namespace-only when set.
       --kube-token=""
             Kubernetes bearer token used for authentication (default $WERF_KUBE_TOKEN)
       --kube-token-path=""
@@ -212,7 +216,8 @@ werf cleanup [options]
             Scan for used images only in namespace linked with context for each available context   
             in kube-config (or only for the context specified with option --kube-context). When     
             disabled will scan all namespaces in all contexts (or only for the context specified    
-            with option --kube-context). (Default $WERF_SCAN_CONTEXT_NAMESPACE_ONLY)
+            with option --kube-context), unless --kube-scan-namespaces is set. (Default             
+            $WERF_SCAN_CONTEXT_NAMESPACE_ONLY)
       --scan-context-only=""
             Scan for used images only in the specified kube context, scan all contexts from kube    
             config otherwise (default false or $WERF_SCAN_CONTEXT_ONLY)

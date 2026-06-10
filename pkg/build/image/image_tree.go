@@ -220,6 +220,10 @@ func (tree *ImagesTree) GetImages() []*Image {
 	return tree.images
 }
 
+func (tree *ImagesTree) AppendImageForTests(img *Image) {
+	tree.images = append(tree.images, img)
+}
+
 func (tree *ImagesTree) GetImagesSets() ImagesSets {
 	return tree.imagesSets
 }

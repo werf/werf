@@ -10,6 +10,7 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/nelm/pkg/common"
+	"github.com/werf/werf/v2/pkg/host_cleaning/units"
 	"github.com/werf/werf/v2/pkg/util/option"
 )
 
@@ -92,14 +93,15 @@ type CmdData struct {
 	UseBuildReport  *bool
 
 	ScanContextNamespaceOnly *bool
+	KubeScanNamespaces       *[]string
 
 	// Host storage cleanup options
 	DisableAutoHostCleanup                 *bool
 	BackendStoragePath                     *string
-	AllowedBackendStorageVolumeUsage       *uint
-	AllowedBackendStorageVolumeUsageMargin *uint
-	AllowedLocalCacheVolumeUsage           *uint
-	AllowedLocalCacheVolumeUsageMargin     *uint
+	AllowedBackendStorageVolumeUsage       *units.UnitValue
+	AllowedBackendStorageVolumeUsageMargin *units.UnitValue
+	AllowedLocalCacheVolumeUsage           *units.UnitValue
+	AllowedLocalCacheVolumeUsageMargin     *units.UnitValue
 
 	Platform *[]string
 
@@ -268,6 +270,39 @@ func (cmdData *CmdData) ProcessFlags() error {
 }
 
 func (cmdData *CmdData) validateFlags() error {
+	if err := cmdData.validateHostCleanupFlags(); err != nil {
+		return fmt.Errorf("host cleanup: %w", err)
+	}
+
+	return nil
+}
+
+func (cmdData *CmdData) validateHostCleanupFlags() error {
+	groups := []struct {
+		name   string
+		usage  *units.UnitValue
+		margin *units.UnitValue
+	}{
+		{
+			name:   "backend storage",
+			usage:  cmdData.AllowedBackendStorageVolumeUsage,
+			margin: cmdData.AllowedBackendStorageVolumeUsageMargin,
+		},
+		{
+			name:   "local cache",
+			usage:  cmdData.AllowedLocalCacheVolumeUsage,
+			margin: cmdData.AllowedLocalCacheVolumeUsageMargin,
+		},
+	}
+
+	for _, g := range groups {
+		if g.usage != nil && g.margin != nil {
+			if g.usage.IsAbsolute() != g.margin.IsAbsolute() {
+				return fmt.Errorf("mixing percentages and absolute units in %s group is not allowed (usage: %q, margin: %q)", g.name, g.usage.String(), g.margin.String())
+			}
+		}
+	}
+
 	return nil
 }
 

@@ -8,6 +8,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/filters"
+
 	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/image"
 )
@@ -38,16 +41,22 @@ func ImageName() string {
 	return fmt.Sprintf("%s:%s", getImage(), getVersion())
 }
 
-func getContainer() container {
+func getContainer(targetPlatform string) container {
+	containerNameSuffix := getVersion()
+	if targetPlatform != "" {
+		containerNameSuffix = fmt.Sprintf("%s_%s", containerNameSuffix, strings.ReplaceAll(targetPlatform, "/", "_"))
+	}
+
 	return container{
-		Name:      fmt.Sprintf("%s%s", image.AssemblingContainerNamePrefix, getVersion()),
+		Name:      fmt.Sprintf("%s%s", image.AssemblingContainerNamePrefix, containerNameSuffix),
 		ImageName: ImageName(),
 		Volume:    path.Join(CONTAINER_MOUNT_ROOT, "stapel"),
+		Platform:  targetPlatform,
 	}
 }
 
-func GetOrCreateContainer(ctx context.Context) (string, error) {
-	container := getContainer()
+func GetOrCreateContainer(ctx context.Context, targetPlatform string) (string, error) {
+	container := getContainer(targetPlatform)
 
 	if err := container.CreateIfNotExist(ctx); err != nil {
 		return "", err
@@ -57,9 +66,32 @@ func GetOrCreateContainer(ctx context.Context) (string, error) {
 }
 
 func Purge(ctx context.Context) error {
-	container := getContainer()
-	if err := container.RmIfExist(ctx); err != nil {
+	baseContainerName := fmt.Sprintf("%s%s", image.AssemblingContainerNamePrefix, getVersion())
+	containers, err := docker.Containers(ctx, types.ContainerListOptions{
+		All:     true,
+		Filters: filters.NewArgs(filters.Arg("name", baseContainerName)),
+	})
+	if err != nil {
 		return err
+	}
+
+	processed := map[string]struct{}{}
+	for _, ctr := range containers {
+		for _, containerName := range ctr.Names {
+			containerName = strings.TrimPrefix(containerName, "/")
+			if containerName != baseContainerName && !strings.HasPrefix(containerName, baseContainerName+"_") {
+				continue
+			}
+
+			if _, done := processed[containerName]; done {
+				continue
+			}
+
+			if err := (&container{Name: containerName}).RmIfExist(ctx); err != nil {
+				return err
+			}
+			processed[containerName] = struct{}{}
+		}
 	}
 
 	if err := rmiIfExist(ctx); err != nil {

@@ -7,13 +7,14 @@ import (
 	"github.com/werf/werf/v2/pkg/image"
 )
 
-type cleanupReport prune.Report
+type cleanupReport struct {
+	ItemsDeleted []string
+}
 
 func (cr cleanupReport) Normalize() cleanupReport {
 	if len(cr.ItemsDeleted) > 0 {
 		return cleanupReport{
-			ItemsDeleted:   slices.Clip(cr.ItemsDeleted),
-			SpaceReclaimed: cr.SpaceReclaimed,
+			ItemsDeleted: slices.Clip(cr.ItemsDeleted),
 		}
 	}
 	return cleanupReport{}
@@ -21,23 +22,19 @@ func (cr cleanupReport) Normalize() cleanupReport {
 
 func mapPruneReportToCleanupReport(report prune.Report) cleanupReport {
 	return cleanupReport{
-		ItemsDeleted:   report.ItemsDeleted,
-		SpaceReclaimed: report.SpaceReclaimed,
+		ItemsDeleted: report.ItemsDeleted,
 	}
 }
 
 func mapImageListToCleanupReport(list image.ImagesList) cleanupReport {
 	itemsDeleted := make([]string, 0, len(list))
-	var spaceReclaimed uint64
 
 	for _, img := range list {
 		itemsDeleted = append(itemsDeleted, img.ID)
-		spaceReclaimed += uint64(img.Size)
 	}
 
 	report := cleanupReport{
-		ItemsDeleted:   itemsDeleted,
-		SpaceReclaimed: spaceReclaimed,
+		ItemsDeleted: itemsDeleted,
 	}
 
 	return report.Normalize()
