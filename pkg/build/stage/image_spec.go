@@ -27,7 +27,7 @@ const (
 	labelTemplateImage      = "image"
 	labelTemplateProject    = "project"
 	labelTemplateDelimiter  = "%"
-	werfLabelsGlobalWarning = `The "werf", "werf-stage-content-digest" and "werf.io/parent-stage-id" labels cannot be removed within the imageSpec stage, as they are essential for the proper operation of host and container registry cleanup.
+	werfLabelsGlobalWarning = `The "werf", "werf-stage-content-digest", "werf.io/parent-stage-id" and "werf-project-repo-commit" labels cannot be removed within the imageSpec stage, as they are essential for the proper operation of host and container registry cleanup.
 
 If you need to remove all werf labels, use the werf export command. By default, this command removes all werf labels and fully detaches images from werf control, transferring host and container registry cleanup entirely to the user.
 
@@ -241,7 +241,7 @@ func (s *ImageSpecStage) modifyLabels(ctx context.Context, labels, addLabels map
 			continue
 		}
 
-		if key == image.WerfLabel || key == image.WerfParentStageID || key == image.WerfStageContentDigestLabel {
+		if key == image.WerfLabel || key == image.WerfParentStageID || key == image.WerfStageContentDigestLabel || key == image.WerfProjectRepoCommitLabel {
 			if !keepEssentialWerfLabels {
 				shouldPrintGlobalWarn = true
 			}

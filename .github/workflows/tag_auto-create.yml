@@ -9,6 +9,9 @@ on:
       - "[0-9]+"
     paths:
       - CHANGELOG.md
+  repository_dispatch:
+    types: ["tag:auto-create"]
+  workflow_dispatch:
 
 jobs:
   release:
@@ -16,7 +19,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           fetch-tags: true

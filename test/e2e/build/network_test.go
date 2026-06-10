@@ -54,7 +54,7 @@ var _ = Describe("Network isolation build", Label("e2e", "build", "network"), fu
 				if testOpts.ExpectNetworkValue != "" {
 					Expect(buildOut).To(ContainSubstring("network: " + testOpts.ExpectNetworkValue))
 				} else {
-					Expect(buildOut).To(ContainSubstring("network:"))
+					Expect(buildOut).To(ContainSubstring("network: default"))
 				}
 			}
 		},
