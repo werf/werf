@@ -40,7 +40,7 @@ func newAwsEcr(options awsEcrOptions) (*awsEcr, error) {
 }
 
 func (r *awsEcr) DeleteRepoImage(ctx context.Context, repoImage *image.Info) error {
-	_, region, repository, err := r.parseReference(repoImage.Repository)
+	registryId, region, repository, err := r.parseReference(repoImage.Repository)
 	if err != nil {
 		return err
 	}
@@ -57,6 +57,7 @@ func (r *awsEcr) DeleteRepoImage(ctx context.Context, repoImage *image.Info) err
 				ImageDigest: &digest,
 			},
 		},
+		RegistryId:     &registryId,
 		RepositoryName: &repository,
 	})
 
@@ -64,7 +65,7 @@ func (r *awsEcr) DeleteRepoImage(ctx context.Context, repoImage *image.Info) err
 }
 
 func (r *awsEcr) CreateRepo(ctx context.Context, reference string) error {
-	_, region, repository, err := r.parseReference(reference)
+	registryId, region, repository, err := r.parseReference(reference)
 	if err != nil {
 		return err
 	}
@@ -75,9 +76,8 @@ func (r *awsEcr) CreateRepo(ctx context.Context, reference string) error {
 	}
 
 	if _, err := client.CreateRepository(ctx, &ecr.CreateRepositoryInput{
-		ImageScanningConfiguration: nil,
-		RepositoryName:             &repository,
-		Tags:                       nil,
+		RegistryId:     &registryId,
+		RepositoryName: &repository,
 	}); err != nil {
 		return err
 	}
@@ -86,7 +86,7 @@ func (r *awsEcr) CreateRepo(ctx context.Context, reference string) error {
 }
 
 func (r *awsEcr) DeleteRepo(ctx context.Context, reference string) error {
-	_, region, repository, err := r.parseReference(reference)
+	registryId, region, repository, err := r.parseReference(reference)
 	if err != nil {
 		return err
 	}
@@ -98,7 +98,7 @@ func (r *awsEcr) DeleteRepo(ctx context.Context, reference string) error {
 
 	if _, err := client.DeleteRepository(ctx, &ecr.DeleteRepositoryInput{
 		Force:          true,
-		RegistryId:     nil,
+		RegistryId:     &registryId,
 		RepositoryName: &repository,
 	}); err != nil {
 		return err

@@ -1022,8 +1022,6 @@ github.com/werf/3p-cobra v0.0.0-20260403075225-552c82797324 h1:aqEM5aboMpBfsILja
 github.com/werf/3p-cobra v0.0.0-20260403075225-552c82797324/go.mod h1:7C1pvHqHw5A4vrJfjNwvOdzYu0Gml16OCs2GRiTUUS4=
 github.com/werf/3p-oras v0.9.1-0.20260408144000-3b8c77eb09e8 h1:QwXLtEoLw/d1Vj2Lk0KXUZA0dOE3h1n6OgONl4S6TKU=
 github.com/werf/3p-oras v0.9.1-0.20260408144000-3b8c77eb09e8/go.mod h1:XTePf8biMMCkqbuuWBZ24xOwo3hZej+BBM0uvd8aGqk=
-github.com/werf/common-go v0.0.0-20260421143942-0695d8576092 h1:Bycj8fhPW2YMsTtuHSglG68dVXwnzxL7yiRAE7ocT40=
-github.com/werf/common-go v0.0.0-20260421143942-0695d8576092/go.mod h1:DlN/hD9tXLxYgdAMkulQdzHkiaPrvs3MzgPZvjluea4=
 github.com/werf/common-go v0.0.0-20260504183956-43da716392f7 h1:FtXsQ6cJFtF1BfU7esrHd4PYasJw4DnNRImA02KwW3I=
 github.com/werf/common-go v0.0.0-20260504183956-43da716392f7/go.mod h1:DlN/hD9tXLxYgdAMkulQdzHkiaPrvs3MzgPZvjluea4=
 github.com/werf/copy-recurse v0.2.7 h1:3FTOarbJ9uhFLi75oeUCioK9zxZwuV7o28kuUBPDZPM=
@@ -1034,8 +1032,6 @@ github.com/werf/lockgate v0.1.1 h1:S400JFYjtWfE4i4LY9FA8zx0fMdfui9DPrBiTciCrx4=
 github.com/werf/lockgate v0.1.1/go.mod h1:0yIFSLq9ausy6ejNxF5uUBf/Ib6daMAfXuCaTMZJzIE=
 github.com/werf/logboek v0.6.1 h1:oEe6FkmlKg0z0n80oZjLplj6sXcBeLleCkjfOOZEL2g=
 github.com/werf/logboek v0.6.1/go.mod h1:Gez5J4bxekyr6MxTmIJyId1F61rpO+0/V4vjCIEIZmk=
-github.com/werf/nelm v1.23.3-0.20260429183632-3a2264e5ca5b h1:y98+qQxUFi3k/PaWcEB2t2jgRIw5vm8znQVsA68vb2o=
-github.com/werf/nelm v1.23.3-0.20260429183632-3a2264e5ca5b/go.mod h1:W9QyNA9XlJi+fkgt3MAd2R+VUr+RqaW3S0u5gWRc+p8=
 github.com/werf/nelm v1.23.3-0.20260514121649-29d4e8bfbc01 h1:YwMg7JGcNOCfBkWztuOxWmWUdwHAsA+TftJIUUO8e7M=
 github.com/werf/nelm v1.23.3-0.20260514121649-29d4e8bfbc01/go.mod h1:J5jhcjodcSV5ATzT6yzOku6niDSj1n6X1gkIs+c39rc=
 github.com/x448/float16 v0.8.4 h1:qLwI1I70+NjRFUR3zs1JPUCgaCXSh3SW62uAKT1mSBM=

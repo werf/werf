@@ -1,10 +1,12 @@
 package ci_env_test
 
 import (
+	"os"
 	"path/filepath"
 	"slices"
 	"strings"
 
+	"github.com/joho/godotenv"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
@@ -67,5 +69,38 @@ var _ = Describe("Simple ci-env", Label("e2e", "ci-env", "simple"), func() {
 			true,
 			true,
 		),
+	)
+
+	DescribeTable("should export WERF_DOCKER_CONFIG alongside DOCKER_CONFIG",
+		func(ctx SpecContext, ciEnvArgs []string) {
+			tmpDir := GinkgoT().TempDir()
+
+			SuiteData.InitTestRepo(ctx, tmpDir, "some-repo")
+
+			werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(tmpDir))
+
+			outputCiEnv := werfProject.CiEnv(ctx, &werf.CiEnvOptions{
+				CommonOptions: werf.CommonOptions{
+					ExtraArgs: slices.Concat(ciEnvArgs, []string{
+						"--tmp-dir", tmpDir,
+					}),
+				},
+			})
+
+			envFilePath := strings.TrimSpace(outputCiEnv)
+			Expect(envFilePath).To(BeARegularFile())
+
+			content, err := os.ReadFile(envFilePath)
+			Expect(err).To(Succeed())
+
+			envs, err := godotenv.Parse(strings.NewReader(string(content)))
+			Expect(err).To(Succeed())
+
+			Expect(envs).To(HaveKey("DOCKER_CONFIG"))
+			Expect(envs).To(HaveKey("WERF_DOCKER_CONFIG"))
+			Expect(envs["WERF_DOCKER_CONFIG"]).To(Equal(envs["DOCKER_CONFIG"]))
+		},
+		Entry("gitlab --as-env-file", []string{"gitlab", "--as-env-file"}),
+		Entry("github --as-env-file", []string{"github", "--as-env-file"}),
 	)
 })

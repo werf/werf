@@ -211,6 +211,8 @@ func (s *DependenciesStage) prepareImage(ctx context.Context, c Conveyor, cr con
 }
 
 func (s *DependenciesStage) PrepareImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) error {
+	s.addProjectRepoCommitLabel(ctx, c, cb, stageImage)
+
 	if c.UseLegacyStapelBuilder(cb) {
 		return s.prepareImageWithLegacyStapelBuilder(ctx, c, cb, prevBuiltImage, stageImage)
 	} else {

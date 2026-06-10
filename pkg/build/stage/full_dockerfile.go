@@ -606,7 +606,9 @@ func (s *FullDockerfileStage) PrepareImage(ctx context.Context, c Conveyor, cb c
 
 	stageImage.Builder.DockerfileBuilder().SetBuildContextArchive(buildContextArchive)
 
-	stageImage.Builder.DockerfileBuilder().AppendLabels(fmt.Sprintf("%s=%s", image.WerfProjectRepoCommitLabel, c.GiterminismManager().HeadCommit(ctx)))
+	if headCommit := c.GiterminismManager().HeadCommit(ctx); headCommit != "" {
+		stageImage.Builder.DockerfileBuilder().AppendLabels(fmt.Sprintf("%s=%s", image.WerfProjectRepoCommitLabel, headCommit))
+	}
 
 	for _, dep := range s.dependencies {
 		depStageID := c.GetStageIDForLastImageStage(s.targetPlatform, dep.ImageName)

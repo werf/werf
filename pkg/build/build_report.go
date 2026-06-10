@@ -52,6 +52,7 @@ type ReportImageRecord struct {
 	Final             bool
 	Size              int64
 	BuildTime         string
+	Commit            string
 	Stages            []ReportStageRecord
 }
 
@@ -67,6 +68,7 @@ type ReportStageRecord struct {
 	BaseImagePulled   bool
 	Rebuilt           bool
 	BuildTime         string
+	Commit            string
 }
 
 type ImagesReport struct {
@@ -233,6 +235,7 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 				Final:             img.IsFinal,
 				Size:              stageDesc.Info.Size,
 				BuildTime:         fmt.Sprintf("%.2f", img.BuildDuration.Seconds()),
+				Commit:            stageDesc.Info.Labels[imagePkg.WerfProjectRepoCommitLabel],
 				Stages:            stages,
 				ConfigType:        configType,
 			}
@@ -283,6 +286,7 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 					Final:             img.IsFinal,
 					Size:              stageDesc.Info.Size,
 					BuildTime:         fmt.Sprintf("%.2f", buildDuration),
+					Commit:            stageDesc.Info.Labels[imagePkg.WerfProjectRepoCommitLabel],
 					Stages:            stages,
 				}
 				phase.ImagesReport.SetImageRecord(img.Name, record)
@@ -355,6 +359,7 @@ func getStagesReport(img *image.Image, multiplatform bool) []ReportStageRecord {
 			BaseImagePulled:   stgMeta.BaseImagePulled,
 			Rebuilt:           stgMeta.Rebuilt,
 			BuildTime:         fmt.Sprintf("%.2f", img.GetStageDuration(stg.Name()).Seconds()),
+			Commit:            stgDesc.Info.Labels[imagePkg.WerfProjectRepoCommitLabel],
 		}
 		stagesRecords = append(stagesRecords, record)
 	}

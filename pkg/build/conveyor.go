@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -330,7 +331,7 @@ func (c *Conveyor) GetImportServer(ctx context.Context, targetPlatform, imageNam
 			}
 
 			var err error
-			srv, err = import_server.RunRsyncServer(ctx, dockerImageName, tmpDir)
+			srv, err = import_server.RunRsyncServer(ctx, dockerImageName, tmpDir, targetPlatform)
 			if err != nil {
 				return fmt.Errorf("unable to run rsync import server: %w", err)
 			}
@@ -993,6 +994,29 @@ func (c *Conveyor) GetImage(targetPlatform, name string) *image.Image {
 	}
 
 	panic(fmt.Sprintf("Image %q with target platform %q not found!", name, targetPlatform))
+}
+
+func (c *Conveyor) FindImage(targetPlatform, name string) (*image.Image, error) {
+	if targetPlatform == "" {
+		return nil, fmt.Errorf("targetPlatform must not be empty")
+	}
+
+	var availablePlatforms []string
+	for _, img := range c.imagesTree.GetImages() {
+		if img.GetName() == name {
+			if img.TargetPlatform == targetPlatform {
+				return img, nil
+			}
+			availablePlatforms = append(availablePlatforms, img.TargetPlatform)
+		}
+	}
+
+	if len(availablePlatforms) > 0 {
+		availablePlatforms = lo.Uniq(availablePlatforms)
+		sort.Strings(availablePlatforms)
+		return nil, fmt.Errorf("image %q does not support platform %q (available: %s)", name, targetPlatform, strings.Join(availablePlatforms, ", "))
+	}
+	return nil, fmt.Errorf("image %q not found", name)
 }
 
 func (c *Conveyor) GetImageStageContentDigest(targetPlatform, imageName, stageName string) string {

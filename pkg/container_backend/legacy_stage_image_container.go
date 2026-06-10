@@ -89,10 +89,8 @@ func (c *LegacyStageImageContainer) prepareRunArgs(ctx context.Context) ([]strin
 	setColumnsEnv := fmt.Sprintf("--env=COLUMNS=%d", logboek.Context(ctx).Streams().ContentWidth())
 	runArgs = append(runArgs, setColumnsEnv)
 
-	fromImageId := c.image.fromImage.GetID()
-
 	args = append(args, runArgs...)
-	args = append(args, fromImageId)
+	args = append(args, c.imageRef(c.image.fromImage))
 	args = append(args, "-ec")
 	args = append(args, c.prepareRunCommand())
 
@@ -129,15 +127,21 @@ func ShelloutPack(command string) string {
 	return fmt.Sprintf("eval $(echo %s | %s --decode)", base64.StdEncoding.EncodeToString([]byte(command)), stapel.Base64BinPath())
 }
 
+func (c *LegacyStageImageContainer) imageRef(img *LegacyStageImage) string {
+	if c.image.GetTargetPlatform() != "" {
+		return img.Name()
+	}
+
+	return img.GetID()
+}
+
 func (c *LegacyStageImageContainer) prepareIntrospectBeforeArgs(ctx context.Context) ([]string, error) {
 	args, err := c.prepareIntrospectArgsBase(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	fromImageId := c.image.fromImage.GetID()
-
-	args = append(args, fromImageId)
+	args = append(args, c.imageRef(c.image.fromImage))
 	args = append(args, "-ec")
 	args = append(args, stapel.BashBinPath())
 
@@ -150,9 +154,7 @@ func (c *LegacyStageImageContainer) prepareIntrospectArgs(ctx context.Context) (
 		return nil, err
 	}
 
-	imageId := c.image.GetID()
-
-	args = append(args, imageId)
+	args = append(args, c.imageRef(c.image))
 	args = append(args, "-ec")
 	args = append(args, stapel.BashBinPath())
 
@@ -196,7 +198,7 @@ func (c *LegacyStageImageContainer) prepareServiceRunOptions(ctx context.Context
 	serviceRunOptions.Env["LANG"] = "C.UTF-8"
 	serviceRunOptions.Env["LC_ALL"] = "C.UTF-8"
 
-	stapelContainerName, err := stapel.GetOrCreateContainer(ctx)
+	stapelContainerName, err := stapel.GetOrCreateContainer(ctx, c.image.GetTargetPlatform())
 	if err != nil {
 		return nil, err
 	}

@@ -46,6 +46,9 @@ func GetSynchronization(ctx context.Context, cmdData *CmdData, projectName strin
 		ServerAddress: *cmdData.Synchronization,
 		StagesStorage: stagesStorage,
 	}
+	if params.ServerAddress != "" && !protocolIsLocal(params.ServerAddress) && protocolIsLocal(params.StagesStorage.Address()) {
+		return nil, fmt.Errorf("--synchronization (or WERF_SYNCHRONIZATION) is set to %q but --repo (or WERF_REPO) is not specified: --repo is required when using a non-local synchronization server", params.ServerAddress)
+	}
 
 	if params.ServerAddress == "" {
 		return initDefault(ctx, params)

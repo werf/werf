@@ -32,6 +32,9 @@ var _ = DescribeTable("parallel task",
 		output := newSpyOutput(numberOfTasks)
 		ctx = logboek.NewContext(ctx, logboek.NewLogger(output, output))
 
+		// tmp_manager requires werf init
+		Expect(werf.Init(GinkgoT().TempDir(), "")).To(Succeed())
+
 		// Force GC to get timers more predictable for being able to rely on them
 		runtime.GC()
 
@@ -40,9 +43,6 @@ var _ = DescribeTable("parallel task",
 			ctx, cancel = context.WithTimeout(ctx, parallelExecutionLimit)
 			defer cancel()
 		}
-
-		// tmp_manager requires werf init
-		Expect(werf.Init(GinkgoT().TempDir(), "")).To(Succeed())
 
 		err := parallel.DoTasks(ctx, numberOfTasks, options, spyTask.Callback)
 
@@ -198,7 +198,7 @@ var _ = DescribeTable("parallel task",
 	),
 	Entry(
 		"should cancel execution via context for all workers",
-		time.Second,
+		3*time.Second,
 		4,
 		parallel.DoTasksOptions{
 			MaxNumberOfWorkers: 2,
@@ -261,7 +261,7 @@ var _ = DescribeTable("parallel task",
 	),
 	Entry(
 		"should cancel execution of second task per single worker if 1-st task is canceled",
-		time.Second,
+		3*time.Second,
 		2,
 		parallel.DoTasksOptions{
 			MaxNumberOfWorkers: 1,

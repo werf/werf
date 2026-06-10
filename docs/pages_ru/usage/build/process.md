@@ -571,6 +571,7 @@ JSON-отчёт содержит расширенную информацию о 
   * Был ли образ пересобран (`Rebuilt`)
   * Является ли образ [конечным или промежуточным]({{ "/usage/build/images.html#использование-промежуточных-и-конечных-образов" | true_relative_url }}) (`Final`). Конечные образы доступны в values Helm-чарта, могут быть помечены произвольными тегами, опубликованы в финальный репозиторий и экспортированы. Промежуточные образы (`final: false`) используются только как зависимости сборки
   * Размер образа в байтах (`Size`) и время сборки в секундах (`BuildTime`)
+  * Git-коммит, на котором был собран образ (`Commit`)
   * Стадии сборки (`Stages`) с деталями:
     * Имя стадии (`Name`)
     * Теги (`DockerImageName`, `DockerTag`, `DockerImageID`, `DockerImageDigest`)
@@ -579,7 +580,8 @@ JSON-отчёт содержит расширенную информацию о 
     * Источник базового образа (`SourceType`: `local`, `secondary`, `cache-repo`, `registry`)
     * Был ли загружен базовый образ (`BaseImagePulled`)
     * Была ли стадия пересобрана (`Rebuilt`)
-    * Время сборки стадии в секундах (`BuildTime`).
+    * Время сборки стадии в секундах (`BuildTime`)
+    * Git-коммит, на котором была собрана стадия (`Commit`).
 
 * **ImagesByPlatform** — разрез по платформам для multiarch-сборок. Поле включается только если установлена переменная окружения `WERF_ENABLE_REPORT_BY_PLATFORM=1`. Структура записей та же, что и у `Images`, но данные сгруппированы по имени образа и платформе.
 
@@ -604,6 +606,7 @@ JSON-отчёт содержит расширенную информацию о 
       "Final": true,
       "Size": 20960980,
       "BuildTime": "0.00",
+      "Commit": "9d1bb68ca2f4e8b0e2b6e5f5a3c7d1e4f2a0b3c9",
       "Stages": [
         {
           "Name": "from",
@@ -616,7 +619,8 @@ JSON-отчёт содержит расширенную информацию о 
           "SourceType": "",
           "BaseImagePulled": false,
           "Rebuilt": false,
-          "BuildTime": "0.00"
+          "BuildTime": "0.00",
+          "Commit": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2"
         },
         {
           "Name": "install",
@@ -629,7 +633,8 @@ JSON-отчёт содержит расширенную информацию о 
           "SourceType": "",
           "BaseImagePulled": false,
           "Rebuilt": false,
-          "BuildTime": "0.00"
+          "BuildTime": "0.00",
+          "Commit": "9d1bb68ca2f4e8b0e2b6e5f5a3c7d1e4f2a0b3c9"
         }
       ]
     }

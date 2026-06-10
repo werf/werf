@@ -11,6 +11,7 @@ type Conveyor interface {
 	stage.Conveyor
 
 	GetImage(targetPlatform, name string) *Image
+	FindImage(targetPlatform, name string) (*Image, error)
 	GetOrCreateStageImage(name string, prevStageImage *stage.StageImage, stg stage.Interface, img *Image) *stage.StageImage
 
 	GetForcedTargetPlatforms() []string

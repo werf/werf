@@ -1,5 +1,93 @@
 # Changelog
 
+## [2.71.0](https://github.com/werf/werf/compare/v2.70.0...v2.71.0) (2026-06-09)
+
+
+### Features
+
+* **build:** add commit to build report for images and stages ([#7566](https://github.com/werf/werf/issues/7566)) ([38be712](https://github.com/werf/werf/commit/38be712c95347a247e0ed022f4b624df0bfd3857))
+
+
+### Bug Fixes
+
+* **build, stapel, import:** importing into symlinked directories no longer silently loses files ([#7545](https://github.com/werf/werf/issues/7545)) ([9d1bb68](https://github.com/werf/werf/commit/9d1bb68caae3f55f4b4d3de419eb44653661b47a))
+* **deploy:** autodependencies between pods/controllers, rolebindings and serviceaccounts ([#7567](https://github.com/werf/werf/issues/7567)) ([f152352](https://github.com/werf/werf/commit/f1523529a7ff3e7e40515dcd1c3e06c10dac13bd))
+
+## [2.70.0](https://github.com/werf/werf/compare/v2.69.1...v2.70.0) (2026-05-27)
+
+
+### Features
+
+* **cleanup:** add --kube-scan-namespaces support for in-cluster scan ([#7517](https://github.com/werf/werf/issues/7517)) ([8941a1e](https://github.com/werf/werf/commit/8941a1ed470be4265df080e3b87afb61288789b3))
+
+
+### Bug Fixes
+
+* **build:** eliminate redundant registry tag listing in post-build metadata publication ([#7559](https://github.com/werf/werf/issues/7559)) ([27404cb](https://github.com/werf/werf/commit/27404cbddca0e4d8f20680fc8bba4cc5cee8d436))
+
+## [2.69.1](https://github.com/werf/werf/compare/v2.69.0...v2.69.1) (2026-05-21)
+
+
+### Bug Fixes
+
+* **build, stapel:** handle platform mismatch in stage base image resolution and avoid panic ([#7493](https://github.com/werf/werf/issues/7493)) ([cdf0e83](https://github.com/werf/werf/commit/cdf0e831b127cd041141aa9ecf951e12056e2135))
+* **cleanup:** failing for cross-account ECR repositories ([37c636c](https://github.com/werf/werf/commit/37c636cb252d765a4c83d901f05b7abd9bf56175))
+
+## [2.69.0](https://github.com/werf/werf/compare/v2.68.2...v2.69.0) (2026-05-19)
+
+
+### Features
+
+* **host-cleanup:** add support for absolute storage units ([c5dbdd0](https://github.com/werf/werf/commit/c5dbdd0cc422765d649a9dc053d78e2610a052cc))
+
+
+### Bug Fixes
+
+* **build, stapel, import:** orphan import-server containers after cancellation ([#7527](https://github.com/werf/werf/issues/7527)) ([5c75bea](https://github.com/werf/werf/commit/5c75bea7aafb664c912e052105bc007a0f522a7e))
+* **build, stapel, import:** unnecessary image rebuilds when using --secondary-repo with imports ([#7526](https://github.com/werf/werf/issues/7526)) ([915a403](https://github.com/werf/werf/commit/915a403a4ec8cf4e5835bf3caa277d7ddafdcb06))
+* **host-puge, buildah:** fix panic in "host purge" when running in buildah mode ([a3ae3df](https://github.com/werf/werf/commit/a3ae3df9f46eee32dbfe16cc947a9a9f733e92ae))
+* **build:** freezing on random image ([#7539](https://github.com/werf/werf/issues/7539)) ([6cf58b7](https://github.com/werf/werf/commit/6cf58b7b35dcf30d3e8bc84a13118700faa37b58))
+* **ci-env:** ci-env ignores session docker config when WERF_DOCKER_CONFIG is set ([#7530](https://github.com/werf/werf/issues/7530)) ([5161412](https://github.com/werf/werf/commit/5161412b021bce794dd8a87bb51113854152acb7))
+* **host-cleanup:** fix absolute volume usage unit parsing logic ([0e3f5d6](https://github.com/werf/werf/commit/0e3f5d6b513e0091f3f4c68bd7bbbf4802554627))
+* **host-clenaup:** prevent overflow while subtraction (math) ([544c423](https://github.com/werf/werf/commit/544c423573985acba5150476774f1d4a64e311af))
+
+## [2.68.2](https://github.com/werf/werf/compare/v2.68.1...v2.68.2) (2026-05-12)
+
+
+### Bug Fixes
+
+* **deploy:** retry on "webhook unavailable" error ([#7533](https://github.com/werf/werf/issues/7533)) ([8810e23](https://github.com/werf/werf/commit/8810e23e8ed4545a3d532d2df69e3c1b28e56866))
+
+## [2.68.1](https://github.com/werf/werf/compare/v2.68.0...v2.68.1) (2026-04-30)
+
+
+### Bug Fixes
+
+* **buiild, stapel, import:** regenerate import checksums if it`s empty ([#7506](https://github.com/werf/werf/issues/7506)) ([eebb1df](https://github.com/werf/werf/commit/eebb1dfdd0ceab4ef7f274a89d122a44942fdffb))
+* **build:** non-local synchronization server requires --repo be set ([f078e04](https://github.com/werf/werf/commit/f078e049261c35e2a4fced88a92a078205021806))
+* **build:** resolve dependency image refs in FROM stage before computing cache digest ([#7492](https://github.com/werf/werf/issues/7492)) ([b42f0b1](https://github.com/werf/werf/commit/b42f0b120a46e7eeaf06f66339561ed486cc04c9))
+* **build:** show "default" in log network field when no explicit network ([c54a78d](https://github.com/werf/werf/commit/c54a78da6c956455578d4c2a67064276498b0f68))
+* **build:** use image tag instead of sha256 for docker run ([725a629](https://github.com/werf/werf/commit/725a62942d4fe57f8d88093d636d5f7be750ab5d))
+* **ci:** trigger website production deploy after trdl channel update ([#7502](https://github.com/werf/werf/issues/7502)) ([310298c](https://github.com/werf/werf/commit/310298c5ba2f7f1e88c49bd8c45c2eedb4986c2d))
+* **deploy:** retry on webhook unavailable errors ([#7505](https://github.com/werf/werf/issues/7505)) ([1718543](https://github.com/werf/werf/commit/171854373681fc3c98b1c381052281b026e71c12))
+* **host-cleanup:** support nested cli command ([ee5f78a](https://github.com/werf/werf/commit/ee5f78a7b05cebc3b1334d0e885c1b1aa8aaffdd))
+* **host-clenaup:** apply WERF_SELF_INVOCATION_COMMAND in Detach ([faf5bf2](https://github.com/werf/werf/commit/faf5bf2c6552b38cfe8881d334a862d636d08612))
+* **parallel:** eliminate race between context timeout and goroutine ([ed67c0f](https://github.com/werf/werf/commit/ed67c0f7f988a3bcf489baad9d428850fa6d3326))
+
+## [2.68.0](https://github.com/werf/werf/compare/v2.67.2...v2.68.0) (2026-04-22)
+
+
+### Features
+
+* **deploy:** adopt `chart ts init` for werf ([#7489](https://github.com/werf/werf/issues/7489)) ([63542e2](https://github.com/werf/werf/commit/63542e2ef392885b8d706ae8e42061fda71bd086))
+
+
+### Bug Fixes
+
+* **compose:** show docker compose config error instead of bare exit code ([6cc27d8](https://github.com/werf/werf/commit/6cc27d81cad9266b37053ac35c9f73612ec0d904))
+* init docker config in InitCommonComponents when docker registry is requested ([#7488](https://github.com/werf/werf/issues/7488)) ([76ca703](https://github.com/werf/werf/commit/76ca703c53611a0a9612e8f5fff98ced20fb4b67))
+* propagate --docker-config to image pulling in bundle copy ([#7448](https://github.com/werf/werf/issues/7448)) ([c02babe](https://github.com/werf/werf/commit/c02babecf9b7e768edf18ca71b6eaabd7a87c37f))
+
 ## [2.67.2](https://github.com/werf/werf/compare/v2.67.1...v2.67.2) (2026-04-21)
 
 
