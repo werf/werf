@@ -29,16 +29,18 @@ Orchestrate a multi-role review. Two roles run in parallel, then the third consu
 
 1. **DoD first.** Ask user for numbered acceptance criteria. Block until received. Nothing proceeds without DoD. Record the criteria — they will be passed inline to every sub-skill.
 2. **Get branch name:** `git rev-parse --abbrev-ref HEAD` → `$BRANCH`. Create safe directory name: `$SAFE_BRANCH=$(echo "$BRANCH" | sed 's|/|-|g')`. Create directory `reviews/$SAFE_BRANCH/`.
-3. **Save diff to file:** `git --no-pager diff main...HEAD > reviews/$SAFE_BRANCH/pr_diff.txt` — read via `read_file` with `start_line`/`end_line`. Avoids terminal truncation.
+3. **Save diff to file:** `git --no-pager diff origin/main...HEAD > reviews/$SAFE_BRANCH/pr_diff.txt`. Avoids terminal truncation.
 4. **Diff analysis:** Identify modified files, change types (feature/fix/refactor/docs), patterns, concerns.
 5. **Deep analysis:** Read changed files and their consumers. Examine key functions and their callers in the codebase.
-6. **Read diff for sub-skills:** Use `read_file(path="reviews/$SAFE_BRANCH/pr_diff.txt")` to get the full diff content. It will be passed inline to every sub-skill.
-7. **Phase 1a — Technical Reviewer (parallel).** Activate **review-tech**. Provide: the full diff content inline, the DoD criteria inline, analysis.
+6. **Read diff for sub-skills (MANDATORY):** Use `read_file(path="reviews/$SAFE_BRANCH/pr_diff.txt")` to get the full diff content.
+   - If read_file returns the full text → include the COMPLETE diff inline in every spawn_agent message.
+   - If read_file returns an outline/truncation (file too large) → output `ERROR: Diff too large for review-multi workflow.` and STOP. Do NOT split, summarize, or pass a file path.
+7. **Phase 1a — Technical Reviewer (parallel).** Activate **review-tech**. Provide: the COMPLETE diff content inline (NOT a file path or summary), the DoD criteria inline, analysis.
    → **Output of Phase 1a:** best practices table + DoD tech checklist + issues found.
-8. **Phase 1b — Product Reviewer (parallel with 1a).** Activate **review-product**. Provide: the full diff content inline, the DoD criteria inline, analysis.
+8. **Phase 1b — Product Reviewer (parallel with 1a).** Activate **review-product**. Provide: the COMPLETE diff content inline (NOT a file path or summary), the DoD criteria inline, analysis.
    → **Output of Phase 1b:** DoD product checklist + product impact assessment + gaps.
    → **Wait for BOTH Phase 1a and Phase 1b to complete before proceeding.**
-9. **Phase 2 — Risk Analyst.** Activate **review-risk**. Provide: the full diff content inline, the DoD criteria inline, analysis, AND full outputs from Phase 1a + Phase 1b.
+9. **Phase 2 — Risk Analyst.** Activate **review-risk**. Provide: the COMPLETE diff content inline (NOT a file path or summary), the DoD criteria inline, analysis, AND full outputs from Phase 1a + Phase 1b.
    → **Output of Phase 2:** risk analysis table with numbered rows.
 10. **Phase 3 — Final report.** Assemble combined report (format below). Save to `reviews/$SAFE_BRANCH/REPORT.md`.
 
