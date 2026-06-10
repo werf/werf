@@ -43,6 +43,7 @@ require (
 	github.com/gosuri/uitable v0.0.4
 	github.com/goware/urlx v0.3.2
 	github.com/hofstadter-io/cinful v1.0.0
+	github.com/joho/godotenv v1.5.1
 	github.com/mitchellh/copystructure v1.2.0
 	github.com/moby/buildkit v0.13.1
 	github.com/moby/patternmatcher v0.6.0
@@ -63,12 +64,12 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/werf/3p-helm-for-werf-helm v0.0.0-20241217155820-089f92cd5c9d
 	github.com/werf/common-go v0.0.0-20260414103517-0558f83edc6d
-	github.com/werf/copy-recurse v0.2.7
+	github.com/werf/copy-recurse v0.2.8
 	github.com/werf/kubedog v0.13.1-0.20260212122756-5d3f8c0f1827
 	github.com/werf/kubedog-for-werf-helm v0.0.0-20241217155728-9d45c48b82b6
 	github.com/werf/lockgate v0.1.1
 	github.com/werf/logboek v0.6.1
-	github.com/werf/nelm v1.24.1
+	github.com/werf/nelm v1.24.3
 	github.com/werf/nelm-for-werf-helm v0.0.0-20241217155925-b0e6734d1dbf
 	go.opentelemetry.io/otel v1.39.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.33.0
@@ -120,7 +121,6 @@ require (
 	github.com/hashicorp/go-secure-stdlib/strutil v0.1.2 // indirect
 	github.com/hashicorp/go-sockaddr v1.0.2 // indirect
 	github.com/hashicorp/vault/api v1.20.0 // indirect
-	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.7 // indirect
 	github.com/mattn/go-zglob v0.0.6 // indirect
 	github.com/mitchellh/hashstructure/v2 v2.0.2 // indirect
@@ -262,7 +262,7 @@ require (
 	github.com/hashicorp/hcl/v2 v2.19.1 // indirect
 	github.com/huandu/xstrings v1.4.0 // indirect
 	github.com/imdario/mergo v0.3.16 // indirect
-	github.com/in-toto/in-toto-golang v0.9.0 // indirect
+	github.com/in-toto/in-toto-golang v0.9.0
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/jedib0t/go-pretty/v6 v6.5.5 // indirect
@@ -333,7 +333,7 @@ require (
 	github.com/rubenv/sql-migrate v1.6.1 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/seccomp/libseccomp-golang v0.10.0 // indirect
-	github.com/secure-systems-lab/go-securesystemslib v0.9.0 // indirect
+	github.com/secure-systems-lab/go-securesystemslib v0.9.0
 	github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3 // indirect
 	github.com/shibumi/go-pathspec v1.3.0 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
