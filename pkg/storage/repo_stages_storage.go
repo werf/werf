@@ -177,7 +177,7 @@ func mutateExportStageConfig(mutateConfigFunc func(config v1.Config) (v1.Config,
 }
 
 func (storage *RepoStagesStorage) DeleteStage(ctx context.Context, stageDesc *image.StageDesc, _ DeleteImageOptions) error {
-	if err := storage.deleteRepoImageWithBrokenFallback(ctx, stageDesc.Info, stageDesc.Info.Name); err != nil {
+	if err := storage.DockerRegistry.DeleteRepoImage(ctx, stageDesc.Info); err != nil {
 		return fmt.Errorf("unable to remove repo image %s: %w", stageDesc.Info.Name, err)
 	}
 
@@ -489,7 +489,7 @@ func (storage *RepoStagesStorage) deleteStageCustomTagMetadata(ctx context.Conte
 		panic("unexpected condition")
 	}
 
-	if err := storage.deleteRepoImageWithBrokenFallback(ctx, imgInfo, fullImageName); err != nil {
+	if err := storage.DockerRegistry.DeleteRepoImage(ctx, imgInfo); err != nil {
 		return fmt.Errorf("unable to delete image %q from repo: %w", fullImageName, err)
 	}
 
@@ -580,7 +580,7 @@ func (storage *RepoStagesStorage) RmManagedImage(ctx context.Context, projectNam
 		return nil
 	}
 
-	if err := storage.deleteRepoImageWithBrokenFallback(ctx, imgInfo, fullImageName); err != nil {
+	if err := storage.DockerRegistry.DeleteRepoImage(ctx, imgInfo); err != nil {
 		return fmt.Errorf("unable to delete image %q from repo: %w", fullImageName, err)
 	}
 
@@ -687,7 +687,7 @@ func (storage *RepoStagesStorage) RmImageMetadata(ctx context.Context, projectNa
 	}
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.RmImageMetadata full image name: %s\n", img.Tag)
 
-	if err := storage.deleteRepoImageWithBrokenFallback(ctx, img, img.Name); err != nil {
+	if err := storage.DockerRegistry.DeleteRepoImage(ctx, img); err != nil {
 		return fmt.Errorf("unable to remove repo image %s: %w", img.Tag, err)
 	}
 
@@ -825,7 +825,7 @@ func (storage *RepoStagesStorage) RmImportMetadata(ctx context.Context, _, id st
 		return nil
 	}
 
-	if err := storage.deleteRepoImageWithBrokenFallback(ctx, img, fullImageName); err != nil {
+	if err := storage.DockerRegistry.DeleteRepoImage(ctx, img); err != nil {
 		return fmt.Errorf("unable to remove repo image %s: %w", img.Tag, err)
 	}
 
