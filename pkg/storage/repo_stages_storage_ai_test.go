@@ -128,73 +128,92 @@ func TestAI_GetRejectedStageIDs(t *testing.T) {
 func TestAI_DeleteRejectedStage_HappyPath(t *testing.T) {
 	digest := "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
 	const ts int64 = 1700000000
-	rejectedRef := "registry.example/project:" + digest + "-1700000000-rejected"
+	stageRef := "registry.example/project:" + digest + "-1700000000"
+	rejectedRef := stageRef + "-rejected"
 
 	r := newFakeRegistry()
+	r.tryGetInfo[stageRef] = &image.Info{Name: stageRef}
 	r.tryGetInfo[rejectedRef] = &image.Info{Name: rejectedRef}
 	s := &RepoStagesStorage{RepoAddress: "registry.example/project", DockerRegistry: r}
 
 	err := s.DeleteRejectedStage(context.Background(), *image.NewStageID(digest, ts), DeleteImageOptions{})
 	require.NoError(t, err)
-	assert.Equal(t, 1, r.deleteCall[rejectedRef])
-	assert.Equal(t, 0, r.pushCall[rejectedRef], "must not push when delete works")
+	assert.Equal(t, 1, r.deleteCall[stageRef], "must delete stage image")
+	assert.Equal(t, 1, r.deleteCall[rejectedRef], "must delete rejected marker")
 }
 
-func TestAI_DeleteRejectedStage_MissingMarker(t *testing.T) {
+func TestAI_DeleteRejectedStage_MissingBoth(t *testing.T) {
 	digest := "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
 	r := newFakeRegistry()
 	s := &RepoStagesStorage{RepoAddress: "registry.example/project", DockerRegistry: r}
 
 	err := s.DeleteRejectedStage(context.Background(), *image.NewStageID(digest, 1700000000), DeleteImageOptions{})
 	require.NoError(t, err)
-	assert.Empty(t, r.deleteCall, "no delete attempt when marker absent")
+	assert.Empty(t, r.deleteCall, "no delete attempt when both tags absent")
 }
 
-func TestAI_DeleteRejectedStage_BrokenFallback(t *testing.T) {
+func TestAI_DeleteRejectedStage_StageAlreadyGone(t *testing.T) {
 	digest := "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
 	const ts int64 = 1700000000
 	rejectedRef := "registry.example/project:" + digest + "-1700000000-rejected"
 
 	r := newFakeRegistry()
-	// first TryGet returns broken info, second (after push) returns fresh info
+	// stage image already gone, only marker present
 	r.tryGetInfo[rejectedRef] = &image.Info{Name: rejectedRef}
-	// first delete fails with broken image error, second succeeds
-	r.deleteErrs[rejectedRef] = []error{errors.New("BLOB_UNKNOWN: corrupted blob"), nil}
+	s := &RepoStagesStorage{RepoAddress: "registry.example/project", DockerRegistry: r}
+
+	err := s.DeleteRejectedStage(context.Background(), *image.NewStageID(digest, ts), DeleteImageOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, 1, r.deleteCall[rejectedRef], "must still delete marker")
+}
+
+func TestAI_DeleteRejectedStage_BrokenStageFallback(t *testing.T) {
+	digest := "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
+	const ts int64 = 1700000000
+	stageRef := "registry.example/project:" + digest + "-1700000000"
+	rejectedRef := stageRef + "-rejected"
+
+	r := newFakeRegistry()
+	r.tryGetInfo[stageRef] = &image.Info{Name: stageRef}
+	r.tryGetInfo[rejectedRef] = &image.Info{Name: rejectedRef}
+	// stage delete fails with broken image error first, then succeeds
+	r.deleteErrs[stageRef] = []error{errors.New("BLOB_UNKNOWN: corrupted blob"), nil}
 
 	s := &RepoStagesStorage{RepoAddress: "registry.example/project", DockerRegistry: r}
 
 	err := s.DeleteRejectedStage(context.Background(), *image.NewStageID(digest, ts), DeleteImageOptions{})
 	require.NoError(t, err)
-	assert.Equal(t, 2, r.deleteCall[rejectedRef], "expected delete retried after dummy push")
-	assert.Equal(t, 1, r.pushCall[rejectedRef], "expected dummy push exactly once")
+	assert.Equal(t, 2, r.deleteCall[stageRef], "stage delete retried after dummy push")
+	assert.Equal(t, 1, r.pushCall[stageRef], "dummy push exactly once for stage")
+	assert.Equal(t, 1, r.deleteCall[rejectedRef], "marker also deleted")
 }
 
 func TestAI_DeleteRejectedStage_NonBrokenErrorPropagates(t *testing.T) {
 	digest := "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
 	const ts int64 = 1700000000
-	rejectedRef := "registry.example/project:" + digest + "-1700000000-rejected"
+	stageRef := "registry.example/project:" + digest + "-1700000000"
 
 	r := newFakeRegistry()
-	r.tryGetInfo[rejectedRef] = &image.Info{Name: rejectedRef}
-	r.deleteErrs[rejectedRef] = []error{errors.New("UNAUTHORIZED")}
+	r.tryGetInfo[stageRef] = &image.Info{Name: stageRef}
+	r.deleteErrs[stageRef] = []error{errors.New("UNAUTHORIZED")}
 
 	s := &RepoStagesStorage{RepoAddress: "registry.example/project", DockerRegistry: r}
 
 	err := s.DeleteRejectedStage(context.Background(), *image.NewStageID(digest, ts), DeleteImageOptions{})
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "UNAUTHORIZED")
-	assert.Equal(t, 0, r.pushCall[rejectedRef], "must not push on non-broken errors")
+	assert.Equal(t, 0, r.pushCall[stageRef], "must not push on non-broken errors")
 }
 
 func TestAI_DeleteRejectedStage_PushFallbackFails(t *testing.T) {
 	digest := "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
 	const ts int64 = 1700000000
-	rejectedRef := "registry.example/project:" + digest + "-1700000000-rejected"
+	stageRef := "registry.example/project:" + digest + "-1700000000"
 
 	r := newFakeRegistry()
-	r.tryGetInfo[rejectedRef] = &image.Info{Name: rejectedRef}
-	r.deleteErrs[rejectedRef] = []error{errors.New("MANIFEST_INVALID")}
-	r.pushErrs[rejectedRef] = errors.New("registry write denied")
+	r.tryGetInfo[stageRef] = &image.Info{Name: stageRef}
+	r.deleteErrs[stageRef] = []error{errors.New("MANIFEST_INVALID")}
+	r.pushErrs[stageRef] = errors.New("registry write denied")
 
 	s := &RepoStagesStorage{RepoAddress: "registry.example/project", DockerRegistry: r}
 
@@ -207,23 +226,23 @@ func TestAI_DeleteRejectedStage_PushFallbackFails(t *testing.T) {
 func TestAI_DeleteRejectedStage_FallbackVanishedTreatedAsDeleted(t *testing.T) {
 	digest := "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
 	const ts int64 = 1700000000
-	rejectedRef := "registry.example/project:" + digest + "-1700000000-rejected"
+	stageRef := "registry.example/project:" + digest + "-1700000000"
+	rejectedRef := stageRef + "-rejected"
 
 	r := newFakeRegistry()
-	// first call returns broken image; after push registry still returns nil meaning the tag
-	// is gone (some registries garbage-collect during overwrite).
+	origInfo := &image.Info{Name: stageRef}
+	r.deleteErrs[stageRef] = []error{errors.New("DIGEST_INVALID")}
+	r.tryGetInfo[rejectedRef] = &image.Info{Name: rejectedRef}
+	// stage vanishes after dummy push
 	calls := 0
-	r.tryGetErr = nil
-	origInfo := &image.Info{Name: rejectedRef}
-	r.deleteErrs[rejectedRef] = []error{errors.New("DIGEST_INVALID")}
-	// custom TryGet: first call returns info, second returns nil
-	wrap := &vanishingRegistry{fakeRegistry: r, origInfo: origInfo, ref: rejectedRef, calls: &calls}
+	wrap := &vanishingRegistry{fakeRegistry: r, origInfo: origInfo, ref: stageRef, calls: &calls}
 	s := &RepoStagesStorage{RepoAddress: "registry.example/project", DockerRegistry: wrap}
 
 	err := s.DeleteRejectedStage(context.Background(), *image.NewStageID(digest, ts), DeleteImageOptions{})
 	require.NoError(t, err)
-	assert.Equal(t, 1, r.deleteCall[rejectedRef], "no retry needed when fallback finds tag gone")
-	assert.Equal(t, 1, r.pushCall[rejectedRef])
+	assert.Equal(t, 1, r.deleteCall[stageRef], "no retry needed when stage vanished after dummy push")
+	assert.Equal(t, 1, r.pushCall[stageRef])
+	assert.Equal(t, 1, r.deleteCall[rejectedRef], "marker still deleted")
 }
 
 type vanishingRegistry struct {

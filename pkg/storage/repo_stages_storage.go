@@ -268,6 +268,17 @@ func (storage *RepoStagesStorage) GetRejectedStageIDs(ctx context.Context, opts 
 }
 
 func (storage *RepoStagesStorage) DeleteRejectedStage(ctx context.Context, stageID image.StageID, _ DeleteImageOptions) error {
+	stageName := storage.ConstructStageImageName("", stageID.Digest, stageID.CreationTs)
+	stageImgInfo, err := storage.DockerRegistry.TryGetRepoImage(ctx, stageName)
+	if err != nil {
+		return fmt.Errorf("unable to get stage image info %q: %w", stageName, err)
+	}
+	if stageImgInfo != nil {
+		if err := storage.deleteRepoImageWithBrokenFallback(ctx, stageImgInfo, stageName); err != nil {
+			return fmt.Errorf("unable to remove rejected stage image %q: %w", stageName, err)
+		}
+	}
+
 	return storage.deleteRejectedImageRecord(ctx, stageID.Digest, stageID.CreationTs)
 }
 
