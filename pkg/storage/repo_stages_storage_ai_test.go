@@ -245,6 +245,45 @@ func TestAI_DeleteRejectedStage_FallbackVanishedTreatedAsDeleted(t *testing.T) {
 	assert.Equal(t, 1, r.deleteCall[rejectedRef], "marker still deleted")
 }
 
+func TestAI_DeleteStageCustomTag_BrokenFallback(t *testing.T) {
+	tag := "v1.0.0"
+	customRef := "registry.example/project:v1.0.0"
+
+	r := newFakeRegistry()
+	r.tryGetInfo[customRef] = &image.Info{Name: customRef}
+	r.deleteErrs[customRef] = []error{errors.New("BLOB_UNKNOWN: corrupted custom tag"), nil}
+
+	s := &RepoStagesStorage{RepoAddress: "registry.example/project", DockerRegistry: r}
+
+	err := s.DeleteStageCustomTag(context.Background(), tag)
+	require.NoError(t, err)
+	assert.Equal(t, 2, r.deleteCall[customRef], "custom tag delete retried after dummy push")
+	assert.Equal(t, 1, r.pushCall[customRef], "dummy push exactly once")
+}
+
+func TestAI_DeleteStageCustomTag_HappyPath(t *testing.T) {
+	tag := "latest"
+	customRef := "registry.example/project:latest"
+
+	r := newFakeRegistry()
+	r.tryGetInfo[customRef] = &image.Info{Name: customRef}
+	s := &RepoStagesStorage{RepoAddress: "registry.example/project", DockerRegistry: r}
+
+	err := s.DeleteStageCustomTag(context.Background(), tag)
+	require.NoError(t, err)
+	assert.Equal(t, 1, r.deleteCall[customRef])
+	assert.Equal(t, 0, r.pushCall[customRef], "must not push when delete works")
+}
+
+func TestAI_DeleteStageCustomTag_Missing(t *testing.T) {
+	r := newFakeRegistry()
+	s := &RepoStagesStorage{RepoAddress: "registry.example/project", DockerRegistry: r}
+
+	err := s.DeleteStageCustomTag(context.Background(), "missing")
+	require.NoError(t, err)
+	assert.Empty(t, r.deleteCall, "no delete when tag absent")
+}
+
 type vanishingRegistry struct {
 	*fakeRegistry
 	origInfo *image.Info

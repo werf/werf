@@ -449,7 +449,7 @@ func (storage *RepoStagesStorage) DeleteStageCustomTag(ctx context.Context, tag 
 		return nil
 	}
 
-	if err := storage.DockerRegistry.DeleteRepoImage(ctx, imgInfo); err != nil {
+	if err := storage.deleteRepoImageWithBrokenFallback(ctx, imgInfo, fullImageName); err != nil {
 		return fmt.Errorf("unable to delete image %q from repo: %w", fullImageName, err)
 	}
 
@@ -482,7 +482,7 @@ func (storage *RepoStagesStorage) deleteStageCustomTagMetadata(ctx context.Conte
 		panic("unexpected condition")
 	}
 
-	if err := storage.DockerRegistry.DeleteRepoImage(ctx, imgInfo); err != nil {
+	if err := storage.deleteRepoImageWithBrokenFallback(ctx, imgInfo, fullImageName); err != nil {
 		return fmt.Errorf("unable to delete image %q from repo: %w", fullImageName, err)
 	}
 
@@ -573,7 +573,7 @@ func (storage *RepoStagesStorage) RmManagedImage(ctx context.Context, projectNam
 		return nil
 	}
 
-	if err := storage.DockerRegistry.DeleteRepoImage(ctx, imgInfo); err != nil {
+	if err := storage.deleteRepoImageWithBrokenFallback(ctx, imgInfo, fullImageName); err != nil {
 		return fmt.Errorf("unable to delete image %q from repo: %w", fullImageName, err)
 	}
 
@@ -680,7 +680,7 @@ func (storage *RepoStagesStorage) RmImageMetadata(ctx context.Context, projectNa
 	}
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.RmImageMetadata full image name: %s\n", img.Tag)
 
-	if err := storage.DockerRegistry.DeleteRepoImage(ctx, img); err != nil {
+	if err := storage.deleteRepoImageWithBrokenFallback(ctx, img, img.Name); err != nil {
 		return fmt.Errorf("unable to remove repo image %s: %w", img.Tag, err)
 	}
 
@@ -818,7 +818,7 @@ func (storage *RepoStagesStorage) RmImportMetadata(ctx context.Context, _, id st
 		return nil
 	}
 
-	if err := storage.DockerRegistry.DeleteRepoImage(ctx, img); err != nil {
+	if err := storage.deleteRepoImageWithBrokenFallback(ctx, img, fullImageName); err != nil {
 		return fmt.Errorf("unable to remove repo image %s: %w", img.Tag, err)
 	}
 
