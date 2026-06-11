@@ -201,7 +201,11 @@ func (storage *LocalStagesStorage) GetRejectedStageIDs(_ context.Context, _ ...O
 	return nil, nil
 }
 
-func (storage *LocalStagesStorage) DeleteRejectedStage(_ context.Context, _ image.StageID, _ DeleteImageOptions) error {
+func (storage *LocalStagesStorage) DeleteRejectedStageImage(_ context.Context, _ image.StageID, _ DeleteImageOptions) error {
+	return nil
+}
+
+func (storage *LocalStagesStorage) DeleteRejectedStageRecord(_ context.Context, _ image.StageID, _ DeleteImageOptions) error {
 	return nil
 }
 

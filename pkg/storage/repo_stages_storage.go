@@ -201,9 +201,6 @@ func (storage *RepoStagesStorage) deleteRejectedImageRecord(ctx context.Context,
 	return nil
 }
 
-// deleteRepoImageWithBrokenFallback deletes a repo image. If the registry rejects the call with a
-// broken-image error (corrupt manifest/blob), the tag is overwritten with a manifest-only dummy
-// image via PushImage and the deletion is retried so cleanup can finish.
 func (storage *RepoStagesStorage) deleteRepoImageWithBrokenFallback(ctx context.Context, imgInfo *image.Info, fullImageName string) error {
 	origErr := storage.DockerRegistry.DeleteRepoImage(ctx, imgInfo)
 	if origErr == nil {
@@ -234,10 +231,6 @@ func (storage *RepoStagesStorage) deleteRepoImageWithBrokenFallback(ctx context.
 	return nil
 }
 
-// rejectedStageTagRegexp matches exactly the format produced by RejectStage:
-// <56-char lowercase-hex sha3-224 digest>-<positive int creation ts>-rejected. Tightening the
-// parse to this exact shape avoids accidentally deleting user-created tags that happen to end
-// with "-rejected".
 var rejectedStageTagRegexp = regexp.MustCompile(`^([0-9a-f]{56})-([0-9]+)-rejected$`)
 
 func (storage *RepoStagesStorage) GetRejectedStageIDs(ctx context.Context, opts ...Option) ([]image.StageID, error) {
@@ -252,14 +245,14 @@ func (storage *RepoStagesStorage) GetRejectedStageIDs(ctx context.Context, opts 
 		match := rejectedStageTagRegexp.FindStringSubmatch(tag)
 		if match == nil {
 			if strings.HasSuffix(tag, RepoRejectedStageImageRecord_ImageTagSuffix) {
-				logboek.Context(ctx).Info().LogF("Skipping tag %q: does not match werf rejected-stage format\n", tag)
+				logboek.Context(ctx).Debug().LogF("Skipping tag %q: does not match werf rejected-stage format\n", tag)
 			}
 			continue
 		}
 
 		creationTs, err := image.ParseCreationTs(match[2])
 		if err != nil {
-			logboek.Context(ctx).Info().LogF("Skipping rejected tag %q: cannot parse creation timestamp %q: %s\n", tag, match[2], err)
+			logboek.Context(ctx).Debug().LogF("Skipping rejected tag %q: cannot parse creation timestamp %q: %s\n", tag, match[2], err)
 			continue
 		}
 
@@ -269,18 +262,22 @@ func (storage *RepoStagesStorage) GetRejectedStageIDs(ctx context.Context, opts 
 	return res, nil
 }
 
-func (storage *RepoStagesStorage) DeleteRejectedStage(ctx context.Context, stageID image.StageID, _ DeleteImageOptions) error {
+func (storage *RepoStagesStorage) DeleteRejectedStageImage(ctx context.Context, stageID image.StageID, _ DeleteImageOptions) error {
 	stageName := storage.ConstructStageImageName("", stageID.Digest, stageID.CreationTs)
 	stageImgInfo, err := storage.DockerRegistry.TryGetRepoImage(ctx, stageName)
 	if err != nil {
 		return fmt.Errorf("unable to get stage image info %q: %w", stageName, err)
 	}
-	if stageImgInfo != nil {
-		if err := storage.deleteRepoImageWithBrokenFallback(ctx, stageImgInfo, stageName); err != nil {
-			return fmt.Errorf("unable to remove rejected stage image %q: %w", stageName, err)
-		}
+	if stageImgInfo == nil {
+		return nil
 	}
+	if err := storage.deleteRepoImageWithBrokenFallback(ctx, stageImgInfo, stageName); err != nil {
+		return fmt.Errorf("unable to remove rejected stage image %q: %w", stageName, err)
+	}
+	return nil
+}
 
+func (storage *RepoStagesStorage) DeleteRejectedStageRecord(ctx context.Context, stageID image.StageID, _ DeleteImageOptions) error {
 	return storage.deleteRejectedImageRecord(ctx, stageID.Digest, stageID.CreationTs)
 }
 
