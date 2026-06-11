@@ -916,38 +916,15 @@ func deleteRejectedStagesWithLinkedTags(ctx context.Context, storageManager mana
 		return nil, nil
 	}
 
-	var customTagsToDelete []string
-	for _, stageID := range rejectedStageIDs {
-		if tags, ok := customTagsByStageID[stageID.String()]; ok {
-			customTagsToDelete = append(customTagsToDelete, tags...)
-		}
-	}
-
-	if len(customTagsToDelete) != 0 {
-		if err := logboek.Context(ctx).Default().LogProcess("Deleting custom tags linked to rejected stages (%d)", len(customTagsToDelete)).DoError(func() error {
-			return deleteCustomTags(ctx, storageManager, customTagsToDelete, dryRun)
-		}); err != nil {
-			return nil, fmt.Errorf("unable to delete custom tags linked to rejected stages: %w", err)
-		}
-	}
-
-	var deletedStageIDs []string
-	if err := logboek.Context(ctx).Default().LogProcess("Deleting rejected stages tags (%d)", len(rejectedStageIDs)).DoError(func() error {
-		deleted, err := deleteRejectedStages(ctx, storageManager, rejectedStageIDs, dryRun)
-		deletedStageIDs = deleted
-		return err
-	}); err != nil {
-		return nil, err
-	}
-
-	return deletedStageIDs, nil
-}
-
-func deleteRejectedStages(ctx context.Context, storageManager manager.StorageManagerInterface, stageIDs []image.StageID, dryRun bool) ([]string, error) {
 	if dryRun {
-		deleted := make([]string, 0, len(stageIDs))
-		for _, stageID := range stageIDs {
+		deleted := make([]string, 0, len(rejectedStageIDs))
+		for _, stageID := range rejectedStageIDs {
 			stageIDStr := stageID.String()
+			if customTags, ok := customTagsByStageID[stageIDStr]; ok {
+				if err := deleteCustomTags(ctx, storageManager, customTags, dryRun); err != nil {
+					return nil, err
+				}
+			}
 			logboek.Context(ctx).Default().LogFWithCustomStyle(deletedStyle, "  tag: %s\n", stageIDStr)
 			logboek.Context(ctx).Default().LogFWithCustomStyle(deletedStyle, "  tag: %s-rejected\n", stageIDStr)
 			deleted = append(deleted, stageIDStr)
@@ -966,7 +943,7 @@ func deleteRejectedStages(ctx context.Context, storageManager manager.StorageMan
 		mu      sync.Mutex
 		deleted []string
 	)
-	if err := storageManager.ForEachDeleteRejectedStage(ctx, deleteStageOptions, stageIDs, func(ctx context.Context, stageID image.StageID, err error) error {
+	if err := storageManager.ForEachDeleteRejectedStage(ctx, deleteStageOptions, rejectedStageIDs, func(ctx context.Context, stageID image.StageID, err error) error {
 		stageIDStr := stageID.String()
 		if err != nil {
 			if err := handleDeletionError(err); err != nil {
@@ -975,6 +952,13 @@ func deleteRejectedStages(ctx context.Context, storageManager manager.StorageMan
 			logboek.Context(ctx).Warn().LogF("WARNING: Rejected stage %s deletion failed: %s\n", stageIDStr, err)
 			return nil
 		}
+
+		if customTags, ok := customTagsByStageID[stageIDStr]; ok && len(customTags) != 0 {
+			if err := deleteCustomTags(ctx, storageManager, customTags, false); err != nil {
+				return fmt.Errorf("unable to delete custom tags for rejected stage %s: %w", stageIDStr, err)
+			}
+		}
+
 		logboek.Context(ctx).Default().LogFWithCustomStyle(deletedStyle, "  tag: %s\n", stageIDStr)
 		logboek.Context(ctx).Default().LogFWithCustomStyle(deletedStyle, "  tag: %s-rejected\n", stageIDStr)
 		mu.Lock()

@@ -290,20 +290,21 @@ func TestAI_DeleteRejectedStage_FallbackPushImmutableTag(t *testing.T) {
 	assert.Contains(t, err.Error(), "MANIFEST_INVALID")
 }
 
-func TestAI_DeleteStageCustomTag_BrokenFallback(t *testing.T) {
+func TestAI_DeleteStageCustomTag_BrokenErrorPropagates(t *testing.T) {
 	tag := "v1.0.0"
 	customRef := "registry.example/project:v1.0.0"
 
 	r := newFakeRegistry()
 	r.tryGetInfo[customRef] = &image.Info{Name: customRef}
-	r.deleteErrs[customRef] = []error{errors.New("BLOB_UNKNOWN: corrupted custom tag"), nil}
+	r.deleteErrs[customRef] = []error{errors.New("BLOB_UNKNOWN: corrupted custom tag")}
 
 	s := &RepoStagesStorage{RepoAddress: "registry.example/project", DockerRegistry: r}
 
 	err := s.DeleteStageCustomTag(context.Background(), tag)
-	require.NoError(t, err)
-	assert.Equal(t, 2, r.deleteCall[customRef], "custom tag delete retried after dummy push")
-	assert.Equal(t, 1, r.pushCall[customRef], "dummy push exactly once")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "BLOB_UNKNOWN")
+	assert.Equal(t, 1, r.deleteCall[customRef])
+	assert.Equal(t, 0, r.pushCall[customRef], "must not use broken-image fallback for custom tags")
 }
 
 func TestAI_DeleteStageCustomTag_HappyPath(t *testing.T) {

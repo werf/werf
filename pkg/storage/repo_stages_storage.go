@@ -195,7 +195,7 @@ func (storage *RepoStagesStorage) deleteRejectedImageRecord(ctx context.Context,
 		return nil
 	}
 
-	if err := storage.deleteRepoImageWithBrokenFallback(ctx, rejectedImgInfo, rejectedImageName); err != nil {
+	if err := storage.DockerRegistry.DeleteRepoImage(ctx, rejectedImgInfo); err != nil {
 		return fmt.Errorf("unable to remove rejected image record %q: %w", rejectedImageName, err)
 	}
 	return nil
@@ -451,7 +451,7 @@ func (storage *RepoStagesStorage) DeleteStageCustomTag(ctx context.Context, tag 
 		return nil
 	}
 
-	if err := storage.deleteRepoImageWithBrokenFallback(ctx, imgInfo, fullImageName); err != nil {
+	if err := storage.DockerRegistry.DeleteRepoImage(ctx, imgInfo); err != nil {
 		return fmt.Errorf("unable to delete image %q from repo: %w", fullImageName, err)
 	}
 
