@@ -75,8 +75,12 @@ func platformMatches(inspect *thirdparty.BuilderInfo, targetPlatform string) boo
 		return false
 	}
 
-	if len(parts) == 3 && parts[2] != inspect.OCIv1.Variant {
-		return false
+	if len(parts) == 3 {
+		targetVariant := parts[2]
+		imageVariant := inspect.OCIv1.Variant
+		if targetVariant != imageVariant && imageVariant != "" {
+			return false
+		}
 	}
 
 	return true
@@ -776,10 +780,18 @@ func (backend *BuildahBackend) Rmi(ctx context.Context, ref string, opts RmiOpts
 		logWriter = logboek.Context(ctx).OutStream()
 	}
 
-	return backend.buildah.Rmi(ctx, ref, buildah.RmiOpts{
+	if err := backend.buildah.Rmi(ctx, ref, buildah.RmiOpts{
 		Force:      true,
 		CommonOpts: backend.getBuildahCommonOpts(ctx, false, logWriter, opts.TargetPlatform),
-	})
+	}); err != nil {
+		return err
+	}
+
+	if opts.TargetPlatform != "" {
+		backend.pulledImageIDs.Delete(pulledImageKey{ref, opts.TargetPlatform})
+	}
+
+	return nil
 }
 
 func (backend *BuildahBackend) Pull(ctx context.Context, ref string, opts PullOpts) error {
