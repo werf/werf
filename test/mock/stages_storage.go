@@ -157,6 +157,20 @@ func (mr *MockStagesStorageMockRecorder) DeleteArtifact(ctx, imageName any) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteArtifact", reflect.TypeOf((*MockStagesStorage)(nil).DeleteArtifact), ctx, imageName)
 }
 
+// DeleteRejectedStage mocks base method.
+func (m *MockStagesStorage) DeleteRejectedStage(ctx context.Context, stageID image.StageID, options storage.DeleteImageOptions) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteRejectedStage", ctx, stageID, options)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteRejectedStage indicates an expected call of DeleteRejectedStage.
+func (mr *MockStagesStorageMockRecorder) DeleteRejectedStage(ctx, stageID, options any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteRejectedStage", reflect.TypeOf((*MockStagesStorage)(nil).DeleteRejectedStage), ctx, stageID, options)
+}
+
 // DeleteRepo mocks base method.
 func (m *MockStagesStorage) DeleteRepo(ctx context.Context) error {
 	m.ctrl.T.Helper()
@@ -371,6 +385,26 @@ func (m *MockStagesStorage) GetOrphanedArtifactNames(ctx context.Context) ([]str
 func (mr *MockStagesStorageMockRecorder) GetOrphanedArtifactNames(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrphanedArtifactNames", reflect.TypeOf((*MockStagesStorage)(nil).GetOrphanedArtifactNames), ctx)
+}
+
+// GetRejectedStageIDs mocks base method.
+func (m *MockStagesStorage) GetRejectedStageIDs(ctx context.Context, opts ...storage.Option) ([]image.StageID, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetRejectedStageIDs", varargs...)
+	ret0, _ := ret[0].([]image.StageID)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetRejectedStageIDs indicates an expected call of GetRejectedStageIDs.
+func (mr *MockStagesStorageMockRecorder) GetRejectedStageIDs(ctx any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRejectedStageIDs", reflect.TypeOf((*MockStagesStorage)(nil).GetRejectedStageIDs), varargs...)
 }
 
 // GetStageDesc mocks base method.

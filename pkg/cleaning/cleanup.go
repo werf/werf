@@ -211,6 +211,12 @@ func (m *cleanupManager) run(ctx context.Context) error {
 
 	m.markWhitelistStagesAsProtected()
 
+	if err := logboek.Context(ctx).LogProcess("Cleanup rejected stages").DoError(func() error {
+		return m.cleanupRejectedStages(ctx)
+	}); err != nil {
+		return err
+	}
+
 	if err := logboek.Context(ctx).LogProcess("Cleanup unused stages").DoError(func() error {
 		return m.cleanupUnusedStages(ctx)
 	}); err != nil {
@@ -878,6 +884,90 @@ func deleteImageMetadata(ctx context.Context, projectName string, storageManager
 		logboek.Context(ctx).Info().LogFDetails("  stageID: %s\n", stageID)
 		logboek.Context(ctx).Info().LogFDetails("  commit: %s\n", commit)
 
+		return nil
+	})
+}
+
+func (m *cleanupManager) cleanupRejectedStages(ctx context.Context) error {
+	customTagsByStageID := m.stageManager.GetCustomTagsMetadata()
+
+	handledStageIDs, err := cleanupRejectedStages(ctx, m.StorageManager, customTagsByStageID, m.DryRun)
+	if err != nil {
+		return err
+	}
+
+	for _, stageIDStr := range handledStageIDs {
+		m.stageManager.ForgetCustomTagsByStageID(stageIDStr)
+	}
+
+	return nil
+}
+
+// cleanupRejectedStages deletes every rejected stage tag in the registry together with the custom
+// tags that point to it. Broken/corrupted rejected tags are handled inside DeleteRejectedStage via
+// the dummy-image overwrite fallback. Returns the string forms of stage IDs whose linked custom
+// tags were processed so callers can forget them from their stage manager state.
+func cleanupRejectedStages(ctx context.Context, storageManager manager.StorageManagerInterface, customTagsByStageID map[string][]string, dryRun bool) ([]string, error) {
+	rejectedStageIDs, err := storageManager.GetStagesStorage().GetRejectedStageIDs(ctx, storage.WithCache())
+	if err != nil {
+		return nil, fmt.Errorf("unable to get rejected stage ids: %w", err)
+	}
+
+	if len(rejectedStageIDs) == 0 {
+		return nil, nil
+	}
+
+	var customTagsToDelete []string
+	handledStageIDs := make([]string, 0, len(rejectedStageIDs))
+	for _, stageID := range rejectedStageIDs {
+		stageIDStr := stageID.String()
+		handledStageIDs = append(handledStageIDs, stageIDStr)
+		if tags, ok := customTagsByStageID[stageIDStr]; ok {
+			customTagsToDelete = append(customTagsToDelete, tags...)
+		}
+	}
+
+	if len(customTagsToDelete) != 0 {
+		if err := logboek.Context(ctx).Default().LogProcess("Deleting custom tags linked to rejected stages (%d)", len(customTagsToDelete)).DoError(func() error {
+			return deleteCustomTags(ctx, storageManager, customTagsToDelete, dryRun)
+		}); err != nil {
+			return nil, fmt.Errorf("unable to delete custom tags linked to rejected stages: %w", err)
+		}
+	}
+
+	if err := logboek.Context(ctx).Default().LogProcess("Deleting rejected stages tags (%d)", len(rejectedStageIDs)).DoError(func() error {
+		return deleteRejectedStages(ctx, storageManager, rejectedStageIDs, dryRun)
+	}); err != nil {
+		return nil, err
+	}
+
+	return handledStageIDs, nil
+}
+
+func deleteRejectedStages(ctx context.Context, storageManager manager.StorageManagerInterface, stageIDs []image.StageID, dryRun bool) error {
+	if dryRun {
+		for _, stageID := range stageIDs {
+			logboek.Context(ctx).Default().LogFWithCustomStyle(deletedStyle, "  tag: %s-rejected\n", stageID.String())
+		}
+		logboek.Context(ctx).LogOptionalLn()
+		return nil
+	}
+
+	deleteStageOptions := manager.ForEachDeleteStageOptions{
+		DeleteImageOptions: storage.DeleteImageOptions{
+			RmiForce: false,
+		},
+	}
+
+	return storageManager.ForEachDeleteRejectedStage(ctx, deleteStageOptions, stageIDs, func(ctx context.Context, stageID image.StageID, err error) error {
+		if err != nil {
+			if err := handleDeletionError(err); err != nil {
+				return err
+			}
+			logboek.Context(ctx).Warn().LogF("WARNING: Rejected stage %s deletion failed: %s\n", stageID.String(), err)
+			return nil
+		}
+		logboek.Context(ctx).Default().LogFWithCustomStyle(deletedStyle, "  tag: %s-rejected\n", stageID.String())
 		return nil
 	})
 }
