@@ -933,7 +933,7 @@ func deleteRejectedStagesWithLinkedTags(ctx context.Context, storageManager mana
 
 	var deletedStageIDs []string
 	if err := logboek.Context(ctx).Default().LogProcess("Deleting rejected stages tags (%d)", len(rejectedStageIDs)).DoError(func() error {
-		deleted, err := deleteRejectedStageList(ctx, storageManager, rejectedStageIDs, dryRun)
+		deleted, err := deleteRejectedStages(ctx, storageManager, rejectedStageIDs, dryRun)
 		deletedStageIDs = deleted
 		return err
 	}); err != nil {
@@ -943,7 +943,7 @@ func deleteRejectedStagesWithLinkedTags(ctx context.Context, storageManager mana
 	return deletedStageIDs, nil
 }
 
-func deleteRejectedStageList(ctx context.Context, storageManager manager.StorageManagerInterface, stageIDs []image.StageID, dryRun bool) ([]string, error) {
+func deleteRejectedStages(ctx context.Context, storageManager manager.StorageManagerInterface, stageIDs []image.StageID, dryRun bool) ([]string, error) {
 	if dryRun {
 		deleted := make([]string, 0, len(stageIDs))
 		for _, stageID := range stageIDs {

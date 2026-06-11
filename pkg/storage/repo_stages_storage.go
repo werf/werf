@@ -180,11 +180,6 @@ func (storage *RepoStagesStorage) DeleteStage(ctx context.Context, stageDesc *im
 	if err := storage.DockerRegistry.DeleteRepoImage(ctx, stageDesc.Info); err != nil {
 		return fmt.Errorf("unable to remove repo image %s: %w", stageDesc.Info.Name, err)
 	}
-
-	if err := storage.deleteRejectedImageRecord(ctx, stageDesc.StageID.Digest, stageDesc.StageID.CreationTs); err != nil {
-		return err
-	}
-
 	return nil
 }
 
