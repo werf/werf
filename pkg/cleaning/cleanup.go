@@ -883,12 +883,7 @@ func deleteImageMetadata(ctx context.Context, projectName string, storageManager
 }
 
 func (m *cleanupManager) cleanupRejectedStages(ctx context.Context) error {
-	protectedStageIDs := map[string]bool{}
-	for stageDesc := range m.stageManager.GetProtectedStageDescSet().Iter() {
-		protectedStageIDs[stageDesc.StageID.String()] = true
-	}
-
-	deletedStageIDs, err := cleanupRejectedStages(ctx, m.StorageManager, m.stageManager.GetCustomTagsMetadata(), protectedStageIDs, m.DryRun)
+	deletedStageIDs, err := cleanupRejectedStages(ctx, m.StorageManager, m.stageManager.GetCustomTagsMetadata(), m.DryRun)
 	if err != nil {
 		return err
 	}
@@ -911,7 +906,13 @@ func (m *cleanupManager) cleanupRejectedStages(ctx context.Context) error {
 	return nil
 }
 
-func cleanupRejectedStages(ctx context.Context, storageManager manager.StorageManagerInterface, customTagsByStageID map[string][]string, protectedStageIDs map[string]bool, dryRun bool) ([]string, error) {
+// cleanupRejectedStages unconditionally deletes every rejected stage tag found in the registry
+// together with the custom tags pointing to it. A rejected marker means the underlying stage is
+// broken/invalid by construction (RejectStage is called only after build-time detection of a
+// corrupted stage), so the cleanup must purge it regardless of any protection policy. Returns the
+// stage IDs whose deletion was confirmed by the registry so callers can drop them from in-memory
+// state.
+func cleanupRejectedStages(ctx context.Context, storageManager manager.StorageManagerInterface, customTagsByStageID map[string][]string, dryRun bool) ([]string, error) {
 	rejectedStageIDs, err := storageManager.GetStagesStorage().GetRejectedStageIDs(ctx, storage.WithCache())
 	if err != nil {
 		return nil, fmt.Errorf("unable to get rejected stage ids: %w", err)
@@ -921,26 +922,8 @@ func cleanupRejectedStages(ctx context.Context, storageManager manager.StorageMa
 		return nil, nil
 	}
 
-	stageIDsToDelete := make([]image.StageID, 0, len(rejectedStageIDs))
-	var skippedProtected []image.StageID
-	for _, stageID := range rejectedStageIDs {
-		if protectedStageIDs[stageID.String()] {
-			skippedProtected = append(skippedProtected, stageID)
-			continue
-		}
-		stageIDsToDelete = append(stageIDsToDelete, stageID)
-	}
-
-	for _, stageID := range skippedProtected {
-		logboek.Context(ctx).Warn().LogF("WARNING: Rejected marker found for protected stage %s (in use by Kubernetes or kept by a policy); leaving the marker and its parent stage untouched\n", stageID.String())
-	}
-
-	if len(stageIDsToDelete) == 0 {
-		return nil, nil
-	}
-
 	var customTagsToDelete []string
-	for _, stageID := range stageIDsToDelete {
+	for _, stageID := range rejectedStageIDs {
 		if tags, ok := customTagsByStageID[stageID.String()]; ok {
 			customTagsToDelete = append(customTagsToDelete, tags...)
 		}
@@ -955,8 +938,8 @@ func cleanupRejectedStages(ctx context.Context, storageManager manager.StorageMa
 	}
 
 	var deletedStageIDs []string
-	if err := logboek.Context(ctx).Default().LogProcess("Deleting rejected stages tags (%d)", len(stageIDsToDelete)).DoError(func() error {
-		deleted, err := deleteRejectedStages(ctx, storageManager, stageIDsToDelete, dryRun)
+	if err := logboek.Context(ctx).Default().LogProcess("Deleting rejected stages tags (%d)", len(rejectedStageIDs)).DoError(func() error {
+		deleted, err := deleteRejectedStages(ctx, storageManager, rejectedStageIDs, dryRun)
 		deletedStageIDs = deleted
 		return err
 	}); err != nil {
