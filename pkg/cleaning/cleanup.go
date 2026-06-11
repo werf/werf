@@ -890,8 +890,15 @@ func (m *cleanupManager) cleanupRejectedStages(ctx context.Context) error {
 		return err
 	}
 
+	forgottenStageDescSet := image.NewStageDescSet()
 	for _, stageIDStr := range handledStageIDs {
 		m.stageManager.ForgetCustomTagsByStageID(stageIDStr)
+		if stageDesc := m.stageManager.GetStageDescByStageID(stageIDStr); stageDesc != nil {
+			forgottenStageDescSet.Add(stageDesc)
+		}
+	}
+	if !forgottenStageDescSet.IsEmpty() {
+		m.stageManager.ForgetDeletedStageDescSet(forgottenStageDescSet)
 	}
 
 	return nil
