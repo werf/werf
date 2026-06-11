@@ -176,22 +176,99 @@ func mutateExportStageConfig(mutateConfigFunc func(config v1.Config) (v1.Config,
 }
 
 func (storage *RepoStagesStorage) DeleteStage(ctx context.Context, stageDesc *image.StageDesc, _ DeleteImageOptions) error {
-	if err := storage.DockerRegistry.DeleteRepoImage(ctx, stageDesc.Info); err != nil {
+	if err := storage.deleteRepoImageWithBrokenFallback(ctx, stageDesc.Info, stageDesc.Info.Name); err != nil {
 		return fmt.Errorf("unable to remove repo image %s: %w", stageDesc.Info.Name, err)
 	}
 
-	rejectedImageName := makeRepoRejectedStageImageRecord(storage.RepoAddress, stageDesc.StageID.Digest, stageDesc.StageID.CreationTs)
-	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.DeleteStage full image name: %s\n", rejectedImageName)
-
-	if rejectedImgInfo, err := storage.DockerRegistry.TryGetRepoImage(ctx, rejectedImageName); err != nil {
-		return fmt.Errorf("unable to get rejected image record %q: %w", rejectedImageName, err)
-	} else if rejectedImgInfo != nil {
-		if err := storage.DockerRegistry.DeleteRepoImage(ctx, rejectedImgInfo); err != nil {
-			return fmt.Errorf("unable to remove rejected image record %q: %w", rejectedImageName, err)
-		}
+	if err := storage.deleteRejectedImageRecord(ctx, stageDesc.StageID.Digest, stageDesc.StageID.CreationTs); err != nil {
+		return err
 	}
 
 	return nil
+}
+
+func (storage *RepoStagesStorage) deleteRejectedImageRecord(ctx context.Context, digest string, creationTs int64) error {
+	rejectedImageName := makeRepoRejectedStageImageRecord(storage.RepoAddress, digest, creationTs)
+	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.deleteRejectedImageRecord full image name: %s\n", rejectedImageName)
+
+	rejectedImgInfo, err := storage.DockerRegistry.TryGetRepoImage(ctx, rejectedImageName)
+	if err != nil {
+		return fmt.Errorf("unable to get rejected image record %q: %w", rejectedImageName, err)
+	}
+	if rejectedImgInfo == nil {
+		return nil
+	}
+
+	if err := storage.deleteRepoImageWithBrokenFallback(ctx, rejectedImgInfo, rejectedImageName); err != nil {
+		return fmt.Errorf("unable to remove rejected image record %q: %w", rejectedImageName, err)
+	}
+	return nil
+}
+
+// deleteRepoImageWithBrokenFallback deletes a repo image. If the registry rejects the call with a
+// broken-image error (corrupt manifest/blob), the tag is overwritten with a manifest-only dummy
+// image via PushImage and the deletion is retried so cleanup can finish.
+func (storage *RepoStagesStorage) deleteRepoImageWithBrokenFallback(ctx context.Context, imgInfo *image.Info, fullImageName string) error {
+	err := storage.DockerRegistry.DeleteRepoImage(ctx, imgInfo)
+	if err == nil {
+		return nil
+	}
+	if !docker_registry.IsBrokenImageError(err) {
+		return err
+	}
+
+	logboek.Context(ctx).Warn().LogF("WARNING: Image %q is broken (%s); overwriting with dummy image before retrying delete\n", fullImageName, err)
+
+	if pushErr := storage.DockerRegistry.PushImage(ctx, fullImageName, &docker_registry.PushImageOptions{}); pushErr != nil {
+		return fmt.Errorf("unable to overwrite broken image %q with dummy: %w (original delete error: %s)", fullImageName, pushErr, err)
+	}
+
+	freshInfo, getErr := storage.DockerRegistry.TryGetRepoImage(ctx, fullImageName)
+	if getErr != nil {
+		return fmt.Errorf("unable to refresh image info %q after dummy overwrite: %w (original delete error: %s)", fullImageName, getErr, err)
+	}
+	if freshInfo == nil {
+		logboek.Context(ctx).Debug().LogF("-- deleteRepoImageWithBrokenFallback: image %q vanished after dummy push, treating as deleted\n", fullImageName)
+		return nil
+	}
+
+	if retryErr := storage.DockerRegistry.DeleteRepoImage(ctx, freshInfo); retryErr != nil {
+		return fmt.Errorf("unable to delete image %q after dummy overwrite: %w (original delete error: %s)", fullImageName, retryErr, err)
+	}
+	return nil
+}
+
+func (storage *RepoStagesStorage) GetRejectedStageIDs(ctx context.Context, opts ...Option) ([]image.StageID, error) {
+	o := makeOptions(opts...)
+	tags, err := storage.Tags(ctx, storage.RepoAddress, o.dockerRegistryOptions...)
+	if err != nil {
+		return nil, fmt.Errorf("unable to fetch tags for repo %q: %w", storage.RepoAddress, err)
+	}
+
+	var res []image.StageID
+	for _, tag := range tags {
+		if !strings.HasSuffix(tag, RepoRejectedStageImageRecord_ImageTagSuffix) {
+			continue
+		}
+
+		realTag := strings.TrimSuffix(tag, RepoRejectedStageImageRecord_ImageTagSuffix)
+		digest, creationTs, err := getDigestAndCreationTsFromRepoStageImageTag(realTag)
+		if err != nil {
+			if isUnexpectedTagFormatError(err) {
+				logboek.Context(ctx).Info().LogF("Unexpected rejected tag %q format: %s\n", tag, err)
+				continue
+			}
+			return nil, fmt.Errorf("unable to parse rejected stage tag %q: %w", tag, err)
+		}
+
+		res = append(res, *image.NewStageID(digest, creationTs))
+	}
+
+	return res, nil
+}
+
+func (storage *RepoStagesStorage) DeleteRejectedStage(ctx context.Context, stageID image.StageID, _ DeleteImageOptions) error {
+	return storage.deleteRejectedImageRecord(ctx, stageID.Digest, stageID.CreationTs)
 }
 
 func makeRepoRejectedStageImageRecord(repoAddress, digest string, creationTs int64) string {

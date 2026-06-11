@@ -197,6 +197,14 @@ func (storage *LocalStagesStorage) RejectStage(_ context.Context, _, _ string, _
 	return nil
 }
 
+func (storage *LocalStagesStorage) GetRejectedStageIDs(_ context.Context, _ ...Option) ([]image.StageID, error) {
+	return nil, nil
+}
+
+func (storage *LocalStagesStorage) DeleteRejectedStage(_ context.Context, _ image.StageID, _ DeleteImageOptions) error {
+	return nil
+}
+
 func (storage *LocalStagesStorage) ConstructStageImageName(projectName, digest string, creationTs int64) string {
 	if creationTs == 0 {
 		return fmt.Sprintf(LocalStage_ImageFormat, projectName, digest)
