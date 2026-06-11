@@ -78,9 +78,9 @@ func (f *fakeStorageManager) ForEachDeleteStageCustomTag(ctx context.Context, id
 func TestAI_cleanupRejectedStages_NoRejected(t *testing.T) {
 	sm := newFakeStorageManager()
 
-	handled, err := cleanupRejectedStages(context.Background(), sm, nil, false)
+	deleted, err := cleanupRejectedStages(context.Background(), sm, nil, nil, false)
 	require.NoError(t, err)
-	assert.Empty(t, handled)
+	assert.Empty(t, deleted)
 	assert.Empty(t, sm.deletedRejected)
 	assert.Empty(t, sm.deletedCustomTags)
 }
@@ -98,10 +98,10 @@ func TestAI_cleanupRejectedStages_DeletesLinkedCustomTags(t *testing.T) {
 		otherStageID.String(): {"unrelated"},
 	}
 
-	handled, err := cleanupRejectedStages(context.Background(), sm, customTagsByStageID, false)
+	deleted, err := cleanupRejectedStages(context.Background(), sm, customTagsByStageID, nil, false)
 	require.NoError(t, err)
 
-	assert.Equal(t, []string{stageID.String()}, handled)
+	assert.Equal(t, []string{stageID.String()}, deleted)
 	assert.Equal(t, []image.StageID{*stageID}, sm.deletedRejected)
 	assert.ElementsMatch(t, []string{"v1.0.0", "latest"}, sm.deletedCustomTags, "must delete linked custom tags, untouched 'unrelated'")
 }
@@ -113,9 +113,9 @@ func TestAI_cleanupRejectedStages_DryRun(t *testing.T) {
 	sm := newFakeStorageManager()
 	sm.stages.rejectedStageIDs = []image.StageID{*stageID}
 
-	handled, err := cleanupRejectedStages(context.Background(), sm, map[string][]string{stageID.String(): {"v1.0.0"}}, true)
+	deleted, err := cleanupRejectedStages(context.Background(), sm, map[string][]string{stageID.String(): {"v1.0.0"}}, nil, true)
 	require.NoError(t, err)
-	assert.Equal(t, []string{stageID.String()}, handled)
+	assert.Equal(t, []string{stageID.String()}, deleted)
 	assert.Empty(t, sm.deletedRejected, "dry run must not touch registry")
 	assert.Empty(t, sm.deletedCustomTags, "dry run must not delete custom tags")
 }
@@ -124,7 +124,7 @@ func TestAI_cleanupRejectedStages_PropagatesGetError(t *testing.T) {
 	sm := newFakeStorageManager()
 	sm.stages.rejectedErr = errors.New("registry down")
 
-	_, err := cleanupRejectedStages(context.Background(), sm, nil, false)
+	_, err := cleanupRejectedStages(context.Background(), sm, nil, nil, false)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "unable to get rejected stage ids")
 }
@@ -137,9 +137,9 @@ func TestAI_cleanupRejectedStages_DeletionErrorSwallowed(t *testing.T) {
 	sm.stages.rejectedStageIDs = []image.StageID{*stageID}
 	sm.deleteRejectedErrs[stageID.String()] = errors.New("temporary network glitch")
 
-	handled, err := cleanupRejectedStages(context.Background(), sm, nil, false)
+	deleted, err := cleanupRejectedStages(context.Background(), sm, nil, nil, false)
 	require.NoError(t, err, "non-fatal deletion errors must be logged but not fail cleanup")
-	assert.Equal(t, []string{stageID.String()}, handled)
+	assert.Empty(t, deleted, "failed deletions must not appear in the returned 'successfully deleted' list")
 }
 
 func TestAI_cleanupRejectedStages_FatalDeletionErrorPropagates(t *testing.T) {
@@ -150,7 +150,44 @@ func TestAI_cleanupRejectedStages_FatalDeletionErrorPropagates(t *testing.T) {
 	sm.stages.rejectedStageIDs = []image.StageID{*stageID}
 	sm.deleteRejectedErrs[stageID.String()] = errors.New("UNAUTHORIZED")
 
-	_, err := cleanupRejectedStages(context.Background(), sm, nil, false)
+	_, err := cleanupRejectedStages(context.Background(), sm, nil, nil, false)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "UNAUTHORIZED")
+}
+
+func TestAI_cleanupRejectedStages_SkipsProtectedStages(t *testing.T) {
+	digest := "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
+	protectedID := image.NewStageID(digest, 1700000000)
+	freeID := image.NewStageID(digest, 1700000001)
+
+	sm := newFakeStorageManager()
+	sm.stages.rejectedStageIDs = []image.StageID{*protectedID, *freeID}
+
+	customTagsByStageID := map[string][]string{
+		protectedID.String(): {"deployed-tag"},
+		freeID.String():      {"orphan-tag"},
+	}
+	protected := map[string]bool{protectedID.String(): true}
+
+	deleted, err := cleanupRejectedStages(context.Background(), sm, customTagsByStageID, protected, false)
+	require.NoError(t, err)
+
+	assert.Equal(t, []string{freeID.String()}, deleted, "protected stage must not be reported as deleted")
+	assert.Equal(t, []image.StageID{*freeID}, sm.deletedRejected, "protected stage must not be deleted from registry")
+	assert.Equal(t, []string{"orphan-tag"}, sm.deletedCustomTags, "custom tag of protected stage must NOT be deleted")
+}
+
+func TestAI_cleanupRejectedStages_AllProtectedNoop(t *testing.T) {
+	digest := "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
+	stageID := image.NewStageID(digest, 1700000000)
+
+	sm := newFakeStorageManager()
+	sm.stages.rejectedStageIDs = []image.StageID{*stageID}
+	protected := map[string]bool{stageID.String(): true}
+
+	deleted, err := cleanupRejectedStages(context.Background(), sm, map[string][]string{stageID.String(): {"v1.0.0"}}, protected, false)
+	require.NoError(t, err)
+	assert.Empty(t, deleted)
+	assert.Empty(t, sm.deletedRejected, "registry must not be touched when every rejected stage is protected")
+	assert.Empty(t, sm.deletedCustomTags, "linked custom tags must NOT be deleted when their parent is protected")
 }
