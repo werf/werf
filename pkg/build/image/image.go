@@ -437,6 +437,10 @@ func (i *Image) GetBaseImageReference() string {
 	return i.baseImageReference
 }
 
+func (i *Image) GetBaseImageName() string {
+	return i.baseImageName
+}
+
 func (i *Image) GetBaseImageRepoDigest() string {
 	return i.baseImageRepoDigest
 }

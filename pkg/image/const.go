@@ -24,6 +24,8 @@ const (
 	WerfMountBuildDirLabel        = "werf-mount-type-build-dir"
 	WerfMountCustomDirLabelPrefix = "werf-mount-type-custom-dir-"
 
+	DeckhouseInternalBuilderLabel = "io.deckhouse.internal.builder"
+
 	BuildCacheVersion = "1.2"
 
 	StageContainerNamePrefix        = "werf.build."

@@ -1,0 +1,2 @@
+FROM registry.werf.io/base/golang:1.12-alpine3.9
+LABEL io.deckhouse.internal.builder=true

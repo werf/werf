@@ -6,7 +6,7 @@ build:
     standard: cyclonedx@1.6
 ---
 image: app
-from: golang:1.23-alpine
+from: {{ env "BUILDER_BASE_IMAGE" }}
 git:
   - add: /
     to: /app

@@ -2,6 +2,7 @@ package build
 
 import (
 	"context"
+	"errors"
 	"path/filepath"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
@@ -17,17 +18,19 @@ import (
 
 var _ = Describe("SbomStep", func() {
 	Describe("GetImageBOM()", func() {
-		It("should return ErrSbomNotAvailable if image info is nil", func() {
+		It("should return error if image info is nil", func(ctx SpecContext) {
 			step := &sbomStep{}
-			_, err := step.GetImageBOM(context.Background(), "app", "tag", nil)
-			Expect(err).To(MatchError(ErrSbomNotAvailable))
+			_, err := step.GetImageBOM(ctx, "app", nil)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("image info is nil"))
 		})
 
-		It("should return ErrSbomNotAvailable if image digest is empty", func() {
+		It("should return fatal error if image digest is empty", func(ctx SpecContext) {
 			step := &sbomStep{}
 			imgInfo := &werfImage.Info{Name: "app:latest"}
-			_, err := step.GetImageBOM(context.Background(), "app", "tag", imgInfo)
-			Expect(err).To(MatchError(ErrSbomNotAvailable))
+			_, err := step.GetImageBOM(ctx, "app", imgInfo)
+			Expect(err).To(HaveOccurred())
+			Expect(errors.Is(err, ErrSbomNotRequired)).To(BeFalse())
 		})
 	})
 
@@ -85,5 +88,52 @@ var _ = Describe("SbomStep", func() {
 				},
 			),
 		)
+	})
+
+	Describe("isTrustedBuilderImage()", func() {
+		DescribeTable("should detect trusted builder images",
+			func(labels map[string]string, expected bool) {
+				Expect(isTrustedBuilderImage(labels)).To(Equal(expected))
+			},
+			Entry("nil labels", nil, false),
+			Entry("empty labels", map[string]string{}, false),
+			Entry("label set to false", map[string]string{werfImage.DeckhouseInternalBuilderLabel: "false"}, false),
+			Entry("label set to true", map[string]string{werfImage.DeckhouseInternalBuilderLabel: "true"}, true),
+			Entry("other labels without builder", map[string]string{"foo": "bar", "baz": "qux"}, false),
+			Entry("other labels with builder true", map[string]string{"foo": "bar", werfImage.DeckhouseInternalBuilderLabel: "true", "baz": "qux"}, true),
+		)
+	})
+
+	Describe("GetImageBOM() with trusted builder image", func() {
+		It("should return fatal error even for builder image when error is not 'not found'", func(ctx SpecContext) {
+			step := &sbomStep{}
+
+			imageInfo := &werfImage.Info{
+				Name:       "docker.io/namespace/repo:builder-tag",
+				Repository: "docker.io/namespace/repo",
+				Labels: map[string]string{
+					werfImage.DeckhouseInternalBuilderLabel: "true",
+				},
+			}
+
+			_, err := step.GetImageBOM(ctx, "builder-image", imageInfo)
+			Expect(err).To(HaveOccurred())
+			Expect(errors.Is(err, ErrSbomNotRequired)).To(BeFalse(),
+				"non-'not found' errors must NOT be treated as 'not required', got: %v", err)
+		})
+
+		It("should return fatal error for non-builder image when SBOM pull fails", func(ctx SpecContext) {
+			step := &sbomStep{}
+
+			imageInfo := &werfImage.Info{
+				Name:       "docker.io/namespace/repo:some-tag",
+				Repository: "docker.io/namespace/repo",
+				Labels:     map[string]string{},
+			}
+
+			_, err := step.GetImageBOM(ctx, "app", imageInfo)
+			Expect(err).To(HaveOccurred())
+			Expect(errors.Is(err, ErrSbomNotRequired)).To(BeFalse())
+		})
 	})
 })

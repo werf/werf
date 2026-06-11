@@ -293,12 +293,12 @@ func (phase *BuildPhase) convergeImageSbom(ctx context.Context, name string, ima
 		}
 	}
 
-	baseImageSbom, err := phase.collectBaseImageSbom(ctx, primaryImg, name)
+	baseImageSbom, err := phase.collectBaseImageSbom(ctx, primaryImg)
 	if err != nil {
 		return err
 	}
 
-	importImageSboms, err := phase.collectImportImageSboms(ctx, primaryImg, name)
+	importImageSboms, err := phase.collectImportImageSboms(ctx, primaryImg)
 	if err != nil {
 		return err
 	}
@@ -1491,7 +1491,7 @@ E.g.:
 		})
 }
 
-func (phase *BuildPhase) collectBaseImageSbom(ctx context.Context, img *image.Image, name string) (*cdx.BOM, error) {
+func (phase *BuildPhase) collectBaseImageSbom(ctx context.Context, img *image.Image) (*cdx.BOM, error) {
 	if sbomImage.IsScratchRef(img.GetBaseImageReference()) {
 		return cyclonedxutil.NewBOM(), nil
 	}
@@ -1520,9 +1520,9 @@ func (phase *BuildPhase) collectBaseImageSbom(ctx context.Context, img *image.Im
 		return nil, nil
 	}
 
-	baseImageSbom, err := phase.sbomStep.GetImageBOM(ctx, name, img.GetBaseImageReference(), baseImageInfo)
+	baseImageSbom, err := phase.sbomStep.GetImageBOM(ctx, img.GetBaseImageName(), baseImageInfo)
 	if err != nil {
-		if errors.Is(err, ErrSbomNotAvailable) {
+		if errors.Is(err, ErrSbomNotRequired) {
 			return nil, nil
 		}
 		return nil, fmt.Errorf("unable to get base image sbom with ref %s: %w", img.GetBaseImageReference(), err)
@@ -1531,7 +1531,7 @@ func (phase *BuildPhase) collectBaseImageSbom(ctx context.Context, img *image.Im
 	return baseImageSbom, nil
 }
 
-func (phase *BuildPhase) collectImportImageSboms(ctx context.Context, img *image.Image, name string) ([]*cdx.BOM, error) {
+func (phase *BuildPhase) collectImportImageSboms(ctx context.Context, img *image.Image) ([]*cdx.BOM, error) {
 	var importImageSboms []*cdx.BOM
 
 	for _, importInfo := range img.GetImportImagesInfo() {
@@ -1561,9 +1561,14 @@ func (phase *BuildPhase) collectImportImageSboms(ctx context.Context, img *image
 			continue
 		}
 
-		importImageSbom, err := phase.sbomStep.GetImageBOM(ctx, name, importInfo.ImageName, importImageInfo)
+		var importLookupName string
+		if !importInfo.ExternalImage {
+			importLookupName = importInfo.ImageName
+		}
+
+		importImageSbom, err := phase.sbomStep.GetImageBOM(ctx, importLookupName, importImageInfo)
 		if err != nil {
-			if errors.Is(err, ErrSbomNotAvailable) {
+			if errors.Is(err, ErrSbomNotRequired) {
 				continue
 			}
 			return nil, fmt.Errorf("unable to get import image sbom for %q: %w", importInfo.ImageName, err)
