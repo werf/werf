@@ -211,6 +211,12 @@ func (m *cleanupManager) run(ctx context.Context) error {
 
 	m.markWhitelistStagesAsProtected()
 
+	if err := logboek.Context(ctx).LogProcess("Cleanup rejected stages").DoError(func() error {
+		return m.deleteRejectedStagesWithLinkedTags(ctx)
+	}); err != nil {
+		return err
+	}
+
 	if err := logboek.Context(ctx).LogProcess("Cleanup unused stages").DoError(func() error {
 		return m.cleanupUnusedStages(ctx)
 	}); err != nil {
@@ -874,6 +880,108 @@ func deleteImageMetadata(ctx context.Context, projectName string, storageManager
 
 		return nil
 	})
+}
+
+func (m *cleanupManager) deleteRejectedStagesWithLinkedTags(ctx context.Context) error {
+	deletedStageIDs, err := deleteRejectedStagesWithLinkedTags(ctx, m.StorageManager, m.stageManager.GetCustomTagsMetadata(), m.DryRun)
+	if err != nil {
+		return err
+	}
+
+	if m.DryRun {
+		return nil
+	}
+
+	forgottenStageDescSet := image.NewStageDescSet()
+	for _, stageIDStr := range deletedStageIDs {
+		m.stageManager.ForgetCustomTagsByStageID(stageIDStr)
+		if stageDesc := m.stageManager.GetStageDescByStageID(stageIDStr); stageDesc != nil {
+			forgottenStageDescSet.Add(stageDesc)
+		}
+	}
+	if !forgottenStageDescSet.IsEmpty() {
+		m.stageManager.ForgetDeletedStageDescSet(forgottenStageDescSet)
+	}
+
+	return nil
+}
+
+func deleteRejectedStagesWithLinkedTags(ctx context.Context, storageManager manager.StorageManagerInterface, customTagsByStageID map[string][]string, dryRun bool) ([]string, error) {
+	stagesStorage := storageManager.GetStagesStorage()
+	rejectedStageIDs, err := stagesStorage.GetRejectedStageIDs(ctx, storage.WithCache())
+	if err != nil {
+		return nil, fmt.Errorf("unable to get rejected stage ids: %w", err)
+	}
+
+	if len(rejectedStageIDs) == 0 {
+		return nil, nil
+	}
+
+	if dryRun {
+		deleted := make([]string, 0, len(rejectedStageIDs))
+		for _, stageID := range rejectedStageIDs {
+			stageIDStr := stageID.String()
+			logboek.Context(ctx).Default().LogFWithCustomStyle(deletedStyle, "  tag: %s\n", stageIDStr)
+			for _, customTag := range customTagsByStageID[stageIDStr] {
+				logboek.Context(ctx).Default().LogFWithCustomStyle(deletedStyle, "  tag: %s\n", customTag)
+			}
+			logboek.Context(ctx).Default().LogFWithCustomStyle(deletedStyle, "  tag: %s-rejected\n", stageIDStr)
+			deleted = append(deleted, stageIDStr)
+		}
+		logboek.Context(ctx).LogOptionalLn()
+		return deleted, nil
+	}
+
+	deleteImageOptions := storage.DeleteImageOptions{RmiForce: false}
+
+	var (
+		mu      sync.Mutex
+		deleted []string
+	)
+	if err := storageManager.ForEachRejectedStage(ctx, rejectedStageIDs, func(ctx context.Context, stageID image.StageID) error {
+		stageIDStr := stageID.String()
+
+		// 1. Stage image — broken-image fallback applies here (corrupt manifest may block delete).
+		if err := stagesStorage.DeleteRejectedStageImage(ctx, stageID, deleteImageOptions); err != nil {
+			if err := handleDeletionError(err); err != nil {
+				return err
+			}
+			logboek.Context(ctx).Warn().LogF("WARNING: Rejected stage image %s deletion failed: %s; marker kept for retry\n", stageIDStr, err)
+			return nil
+		}
+		logboek.Context(ctx).Default().LogFWithCustomStyle(deletedStyle, "  tag: %s\n", stageIDStr)
+
+		// 2. Linked custom tags — sequential (avoids parallel-of-parallel registry pressure).
+		// Fail-fast: leave marker untouched on any failure so the next cleanup retries.
+		for _, customTag := range customTagsByStageID[stageIDStr] {
+			if err := stagesStorage.DeleteStageCustomTag(ctx, customTag); err != nil {
+				if err := handleDeletionError(err); err != nil {
+					return err
+				}
+				logboek.Context(ctx).Warn().LogF("WARNING: Custom tag %s linked to rejected stage %s deletion failed: %s; marker kept for retry\n", customTag, stageIDStr, err)
+				return nil
+			}
+			logboek.Context(ctx).Default().LogFWithCustomStyle(deletedStyle, "  tag: %s\n", customTag)
+		}
+
+		// 3. Rejected marker — only after stage image and all linked custom tags are gone.
+		if err := stagesStorage.DeleteRejectedStageRecord(ctx, stageID, deleteImageOptions); err != nil {
+			if err := handleDeletionError(err); err != nil {
+				return err
+			}
+			logboek.Context(ctx).Warn().LogF("WARNING: Rejected stage marker %s-rejected deletion failed: %s\n", stageIDStr, err)
+			return nil
+		}
+		logboek.Context(ctx).Default().LogFWithCustomStyle(deletedStyle, "  tag: %s-rejected\n", stageIDStr)
+
+		mu.Lock()
+		deleted = append(deleted, stageIDStr)
+		mu.Unlock()
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	return deleted, nil
 }
 
 func (m *cleanupManager) cleanupUnusedStages(ctx context.Context) error {

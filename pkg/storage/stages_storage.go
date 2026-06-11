@@ -63,6 +63,9 @@ type StagesStorage interface {
 	DeleteStageCustomTag(ctx context.Context, tag string) error
 
 	RejectStage(ctx context.Context, projectName, digest string, creationTs int64) error
+	GetRejectedStageIDs(ctx context.Context, opts ...Option) ([]image.StageID, error)
+	DeleteRejectedStageImage(ctx context.Context, stageID image.StageID, options DeleteImageOptions) error
+	DeleteRejectedStageRecord(ctx context.Context, stageID image.StageID, options DeleteImageOptions) error
 
 	ConstructStageImageName(projectName, digest string, creationTs int64) string
 
