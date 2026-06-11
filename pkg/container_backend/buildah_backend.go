@@ -14,6 +14,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/google/uuid"
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
@@ -34,7 +35,8 @@ import (
 )
 
 type BuildahBackend struct {
-	buildah buildah.Buildah
+	buildah        buildah.Buildah
+	pulledImageIDs sync.Map
 	BuildahBackendOptions
 }
 
@@ -44,6 +46,44 @@ type BuildahBackendOptions struct {
 
 func NewBuildahBackend(buildah buildah.Buildah, opts BuildahBackendOptions) *BuildahBackend {
 	return &BuildahBackend{buildah: buildah, BuildahBackendOptions: opts}
+}
+
+type pulledImageKey struct {
+	ref      string
+	platform string
+}
+
+func (backend *BuildahBackend) storePulledImageID(ref, platform, imageID string) {
+	backend.pulledImageIDs.Store(pulledImageKey{ref, platform}, imageID)
+}
+
+func (backend *BuildahBackend) getPulledImageID(ref, platform string) (string, bool) {
+	v, ok := backend.pulledImageIDs.Load(pulledImageKey{ref, platform})
+	if !ok {
+		return "", false
+	}
+	return v.(string), true
+}
+
+func platformMatches(inspect *thirdparty.BuilderInfo, targetPlatform string) bool {
+	parts := strings.SplitN(targetPlatform, "/", 3)
+	if len(parts) < 2 {
+		return true
+	}
+
+	if parts[0] != inspect.OCIv1.OS || parts[1] != inspect.OCIv1.Architecture {
+		return false
+	}
+
+	if len(parts) == 3 {
+		targetVariant := parts[2]
+		imageVariant := inspect.OCIv1.Variant
+		if targetVariant != imageVariant && imageVariant != "" {
+			return false
+		}
+	}
+
+	return true
 }
 
 func (backend *BuildahBackend) Info(ctx context.Context) (info.Info, error) {
@@ -91,12 +131,23 @@ func (backend *BuildahBackend) createContainers(ctx context.Context, images []st
 			panic("cannot start container for an empty image param")
 		}
 
-		_, err := backend.buildah.FromCommand(ctx, containerID, img, buildah.FromCommandOpts(backend.getBuildahCommonOpts(ctx, true, nil, opts.TargetPlatform)))
+		resolvedImg := img
+		if opts.TargetPlatform != "" {
+			if id, ok := backend.getPulledImageID(img, opts.TargetPlatform); ok {
+				resolvedImg = id
+			} else if inspect, err := backend.buildah.Inspect(ctx, img); err == nil && inspect != nil {
+				if !platformMatches(inspect, opts.TargetPlatform) {
+					return nil, fmt.Errorf("local image %q has platform %s/%s, but target platform is %q; pull the correct image first", img, inspect.OCIv1.OS, inspect.OCIv1.Architecture, opts.TargetPlatform)
+				}
+			}
+		}
+
+		_, err := backend.buildah.FromCommand(ctx, containerID, resolvedImg, buildah.FromCommandOpts(backend.getBuildahCommonOpts(ctx, true, nil, opts.TargetPlatform)))
 		if err != nil {
 			return nil, fmt.Errorf("unable to create container using base image %q: %w", img, err)
 		}
 
-		logboek.Context(ctx).Debug().LogF("Started container %q for image %q\n", containerID, img)
+		logboek.Context(ctx).Debug().LogF("Started container %q for image %q (resolved %q)\n", containerID, img, resolvedImg)
 		res = append(res, &containerDesc{ImageName: img, Name: containerID})
 	}
 
@@ -649,12 +700,37 @@ func (backend *BuildahBackend) BuildStapelStage(ctx context.Context, baseImage s
 
 // GetImageInfo returns nil, nil if image not found.
 func (backend *BuildahBackend) GetImageInfo(ctx context.Context, ref string, opts GetImageInfoOpts) (*image.Info, error) {
-	inspect, err := backend.buildah.Inspect(ctx, ref)
+	inspectRef := ref
+	inspectedByCachedID := false
+	if opts.TargetPlatform != "" {
+		if id, ok := backend.getPulledImageID(ref, opts.TargetPlatform); ok {
+			inspectRef = id
+			inspectedByCachedID = true
+		}
+	}
+
+	inspect, err := backend.buildah.Inspect(ctx, inspectRef)
 	if err != nil {
-		return nil, fmt.Errorf("error getting buildah inspect of %q: %w", ref, err)
+		if inspectRef != ref {
+			logboek.Context(ctx).Debug().LogF("Cached imageID %q not found, falling back to %q\n", inspectRef, ref)
+			inspect, err = backend.buildah.Inspect(ctx, ref)
+			if err != nil {
+				return nil, fmt.Errorf("inspect image %q: %w", ref, err)
+			}
+			inspectedByCachedID = false
+		} else {
+			return nil, fmt.Errorf("inspect image %q: %w", ref, err)
+		}
 	}
 	if inspect == nil {
 		return nil, nil
+	}
+
+	if opts.TargetPlatform != "" && !inspectedByCachedID {
+		if !platformMatches(inspect, opts.TargetPlatform) {
+			logboek.Context(ctx).Debug().LogF("Local image %q platform %s/%s does not match target %q, treating as not found\n", ref, inspect.OCIv1.OS, inspect.OCIv1.Architecture, opts.TargetPlatform)
+			return nil, nil
+		}
 	}
 
 	// TODO: remove this legacy logic in v3.
@@ -704,10 +780,18 @@ func (backend *BuildahBackend) Rmi(ctx context.Context, ref string, opts RmiOpts
 		logWriter = logboek.Context(ctx).OutStream()
 	}
 
-	return backend.buildah.Rmi(ctx, ref, buildah.RmiOpts{
+	if err := backend.buildah.Rmi(ctx, ref, buildah.RmiOpts{
 		Force:      true,
 		CommonOpts: backend.getBuildahCommonOpts(ctx, false, logWriter, opts.TargetPlatform),
-	})
+	}); err != nil {
+		return err
+	}
+
+	if opts.TargetPlatform != "" {
+		backend.pulledImageIDs.Delete(pulledImageKey{ref, opts.TargetPlatform})
+	}
+
+	return nil
 }
 
 func (backend *BuildahBackend) Pull(ctx context.Context, ref string, opts PullOpts) error {
@@ -716,10 +800,19 @@ func (backend *BuildahBackend) Pull(ctx context.Context, ref string, opts PullOp
 		logWriter = logboek.Context(ctx).OutStream()
 	}
 
-	return backend.buildah.Pull(
+	imageID, err := backend.buildah.Pull(
 		ctx, ref,
 		buildah.PullOpts(backend.getBuildahCommonOpts(ctx, false, logWriter, opts.TargetPlatform)),
 	)
+	if err != nil {
+		return err
+	}
+
+	if opts.TargetPlatform != "" && imageID != "" {
+		backend.storePulledImageID(ref, opts.TargetPlatform, imageID)
+	}
+
+	return nil
 }
 
 func (backend *BuildahBackend) Tag(ctx context.Context, ref, newRef string, opts TagOpts) error {
