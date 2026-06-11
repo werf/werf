@@ -212,7 +212,7 @@ func (m *cleanupManager) run(ctx context.Context) error {
 	m.markWhitelistStagesAsProtected()
 
 	if err := logboek.Context(ctx).LogProcess("Cleanup rejected stages").DoError(func() error {
-		return m.cleanupRejectedStages(ctx)
+		return m.deleteRejectedStagesWithLinkedTags(ctx)
 	}); err != nil {
 		return err
 	}
@@ -882,8 +882,8 @@ func deleteImageMetadata(ctx context.Context, projectName string, storageManager
 	})
 }
 
-func (m *cleanupManager) cleanupRejectedStages(ctx context.Context) error {
-	deletedStageIDs, err := cleanupRejectedStages(ctx, m.StorageManager, m.stageManager.GetCustomTagsMetadata(), m.DryRun)
+func (m *cleanupManager) deleteRejectedStagesWithLinkedTags(ctx context.Context) error {
+	deletedStageIDs, err := deleteRejectedStagesWithLinkedTags(ctx, m.StorageManager, m.stageManager.GetCustomTagsMetadata(), m.DryRun)
 	if err != nil {
 		return err
 	}
@@ -906,13 +906,7 @@ func (m *cleanupManager) cleanupRejectedStages(ctx context.Context) error {
 	return nil
 }
 
-// cleanupRejectedStages unconditionally deletes every rejected stage tag found in the registry
-// together with the custom tags pointing to it. A rejected marker means the underlying stage is
-// broken/invalid by construction (RejectStage is called only after build-time detection of a
-// corrupted stage), so the cleanup must purge it regardless of any protection policy. Returns the
-// stage IDs whose deletion was confirmed by the registry so callers can drop them from in-memory
-// state.
-func cleanupRejectedStages(ctx context.Context, storageManager manager.StorageManagerInterface, customTagsByStageID map[string][]string, dryRun bool) ([]string, error) {
+func deleteRejectedStagesWithLinkedTags(ctx context.Context, storageManager manager.StorageManagerInterface, customTagsByStageID map[string][]string, dryRun bool) ([]string, error) {
 	rejectedStageIDs, err := storageManager.GetStagesStorage().GetRejectedStageIDs(ctx, storage.WithCache())
 	if err != nil {
 		return nil, fmt.Errorf("unable to get rejected stage ids: %w", err)
@@ -939,7 +933,7 @@ func cleanupRejectedStages(ctx context.Context, storageManager manager.StorageMa
 
 	var deletedStageIDs []string
 	if err := logboek.Context(ctx).Default().LogProcess("Deleting rejected stages tags (%d)", len(rejectedStageIDs)).DoError(func() error {
-		deleted, err := deleteRejectedStages(ctx, storageManager, rejectedStageIDs, dryRun)
+		deleted, err := deleteRejectedStageList(ctx, storageManager, rejectedStageIDs, dryRun)
 		deletedStageIDs = deleted
 		return err
 	}); err != nil {
@@ -949,7 +943,7 @@ func cleanupRejectedStages(ctx context.Context, storageManager manager.StorageMa
 	return deletedStageIDs, nil
 }
 
-func deleteRejectedStages(ctx context.Context, storageManager manager.StorageManagerInterface, stageIDs []image.StageID, dryRun bool) ([]string, error) {
+func deleteRejectedStageList(ctx context.Context, storageManager manager.StorageManagerInterface, stageIDs []image.StageID, dryRun bool) ([]string, error) {
 	if dryRun {
 		deleted := make([]string, 0, len(stageIDs))
 		for _, stageID := range stageIDs {

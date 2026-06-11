@@ -78,7 +78,7 @@ func (f *fakeStorageManager) ForEachDeleteStageCustomTag(ctx context.Context, id
 func TestAI_cleanupRejectedStages_NoRejected(t *testing.T) {
 	sm := newFakeStorageManager()
 
-	deleted, err := cleanupRejectedStages(context.Background(), sm, nil, false)
+	deleted, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, nil, false)
 	require.NoError(t, err)
 	assert.Empty(t, deleted)
 	assert.Empty(t, sm.deletedRejected)
@@ -98,7 +98,7 @@ func TestAI_cleanupRejectedStages_DeletesLinkedCustomTags(t *testing.T) {
 		otherStageID.String(): {"unrelated"},
 	}
 
-	deleted, err := cleanupRejectedStages(context.Background(), sm, customTagsByStageID, false)
+	deleted, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, customTagsByStageID, false)
 	require.NoError(t, err)
 
 	assert.Equal(t, []string{stageID.String()}, deleted)
@@ -113,7 +113,7 @@ func TestAI_cleanupRejectedStages_DryRun(t *testing.T) {
 	sm := newFakeStorageManager()
 	sm.stages.rejectedStageIDs = []image.StageID{*stageID}
 
-	deleted, err := cleanupRejectedStages(context.Background(), sm, map[string][]string{stageID.String(): {"v1.0.0"}}, true)
+	deleted, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, map[string][]string{stageID.String(): {"v1.0.0"}}, true)
 	require.NoError(t, err)
 	assert.Equal(t, []string{stageID.String()}, deleted)
 	assert.Empty(t, sm.deletedRejected, "dry run must not touch registry")
@@ -124,7 +124,7 @@ func TestAI_cleanupRejectedStages_PropagatesGetError(t *testing.T) {
 	sm := newFakeStorageManager()
 	sm.stages.rejectedErr = errors.New("registry down")
 
-	_, err := cleanupRejectedStages(context.Background(), sm, nil, false)
+	_, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, nil, false)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "unable to get rejected stage ids")
 }
@@ -137,7 +137,7 @@ func TestAI_cleanupRejectedStages_DeletionErrorSwallowed(t *testing.T) {
 	sm.stages.rejectedStageIDs = []image.StageID{*stageID}
 	sm.deleteRejectedErrs[stageID.String()] = errors.New("temporary network glitch")
 
-	deleted, err := cleanupRejectedStages(context.Background(), sm, nil, false)
+	deleted, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, nil, false)
 	require.NoError(t, err, "non-fatal deletion errors must be logged but not fail cleanup")
 	assert.Empty(t, deleted, "failed deletions must not appear in the returned 'successfully deleted' list")
 }
@@ -150,7 +150,7 @@ func TestAI_cleanupRejectedStages_FatalDeletionErrorPropagates(t *testing.T) {
 	sm.stages.rejectedStageIDs = []image.StageID{*stageID}
 	sm.deleteRejectedErrs[stageID.String()] = errors.New("UNAUTHORIZED")
 
-	_, err := cleanupRejectedStages(context.Background(), sm, nil, false)
+	_, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, nil, false)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "UNAUTHORIZED")
 }

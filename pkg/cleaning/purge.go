@@ -177,7 +177,7 @@ func (m *purgeManager) purgeRejectedStages(ctx context.Context) error {
 		return fmt.Errorf("unable to get custom tags metadata: %w", err)
 	}
 
-	if _, err := cleanupRejectedStages(ctx, m.StorageManager, customTagsByStageID, m.DryRun); err != nil {
+	if _, err := deleteRejectedStagesWithLinkedTags(ctx, m.StorageManager, customTagsByStageID, m.DryRun); err != nil {
 		return err
 	}
 	return nil
