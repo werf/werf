@@ -938,7 +938,7 @@ func deleteRejectedStagesWithLinkedTags(ctx context.Context, storageManager mana
 		mu      sync.Mutex
 		deleted []string
 	)
-	if err := storageManager.ForEachDeleteRejectedStage(ctx, rejectedStageIDs, func(ctx context.Context, stageID image.StageID) error {
+	if err := storageManager.ForEachRejectedStage(ctx, rejectedStageIDs, func(ctx context.Context, stageID image.StageID) error {
 		stageIDStr := stageID.String()
 
 		// 1. Stage image — broken-image fallback applies here (corrupt manifest may block delete).
