@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -176,7 +177,7 @@ func mutateExportStageConfig(mutateConfigFunc func(config v1.Config) (v1.Config,
 }
 
 func (storage *RepoStagesStorage) DeleteStage(ctx context.Context, stageDesc *image.StageDesc, _ DeleteImageOptions) error {
-	if err := storage.deleteRepoImageWithBrokenFallback(ctx, stageDesc.Info, stageDesc.Info.Name); err != nil {
+	if err := storage.DockerRegistry.DeleteRepoImage(ctx, stageDesc.Info); err != nil {
 		return fmt.Errorf("unable to remove repo image %s: %w", stageDesc.Info.Name, err)
 	}
 
@@ -205,38 +206,84 @@ func (storage *RepoStagesStorage) deleteRejectedImageRecord(ctx context.Context,
 	return nil
 }
 
+// Tunable knobs for the broken-image fallback. Exposed as package vars (not consts) so tests can
+// reduce wait time without faking the clock.
+var (
+	brokenFallbackRefreshAttempts = 5
+	brokenFallbackRefreshDelay    = 500 * time.Millisecond
+)
+
 // deleteRepoImageWithBrokenFallback deletes a repo image. If the registry rejects the call with a
 // broken-image error (corrupt manifest/blob), the tag is overwritten with a manifest-only dummy
 // image via PushImage and the deletion is retried so cleanup can finish.
+//
+// This fallback is intentionally restricted to the rejected-stage cleanup path: rejected markers
+// (and the underlying rejected stage tag) are being permanently removed, so overwriting a corrupt
+// manifest with a dummy is safe. Other werf-managed records (custom-tag metadata, managed-image
+// records, image metadata, import metadata) must NOT use this helper, as a dummy-but-undeleted tag
+// would leave parseable-but-empty metadata that confuses downstream readers.
 func (storage *RepoStagesStorage) deleteRepoImageWithBrokenFallback(ctx context.Context, imgInfo *image.Info, fullImageName string) error {
-	err := storage.DockerRegistry.DeleteRepoImage(ctx, imgInfo)
-	if err == nil {
+	origErr := storage.DockerRegistry.DeleteRepoImage(ctx, imgInfo)
+	if origErr == nil {
 		return nil
 	}
-	if !docker_registry.IsBrokenImageError(err) {
-		return err
+	if !docker_registry.IsBrokenImageError(origErr) {
+		return origErr
 	}
 
-	logboek.Context(ctx).Warn().LogF("WARNING: Image %q is broken (%s); overwriting with dummy image before retrying delete\n", fullImageName, err)
+	logboek.Context(ctx).Warn().LogF("WARNING: Image %q is broken (%s); overwriting with dummy image before retrying delete\n", fullImageName, origErr)
 
 	if pushErr := storage.DockerRegistry.PushImage(ctx, fullImageName, &docker_registry.PushImageOptions{}); pushErr != nil {
-		return fmt.Errorf("unable to overwrite broken image %q with dummy: %w (original delete error: %s)", fullImageName, pushErr, err)
+		return fmt.Errorf("unable to overwrite broken image %q with dummy: %w (original delete error: %s)", fullImageName, pushErr, origErr)
 	}
 
-	freshInfo, getErr := storage.DockerRegistry.TryGetRepoImage(ctx, fullImageName)
-	if getErr != nil {
-		return fmt.Errorf("unable to refresh image info %q after dummy overwrite: %w (original delete error: %s)", fullImageName, getErr, err)
+	freshInfo, err := storage.refreshImageInfoAfterDummyPush(ctx, fullImageName)
+	if err != nil {
+		return fmt.Errorf("unable to refresh image info %q after dummy overwrite: %w (original delete error: %s)", fullImageName, err, origErr)
 	}
 	if freshInfo == nil {
-		logboek.Context(ctx).Debug().LogF("-- deleteRepoImageWithBrokenFallback: image %q vanished after dummy push, treating as deleted\n", fullImageName)
-		return nil
+		return fmt.Errorf("image %q not found in registry after dummy overwrite within %d attempts; refusing to treat as deleted (original delete error: %s)", fullImageName, brokenFallbackRefreshAttempts, origErr)
 	}
 
 	if retryErr := storage.DockerRegistry.DeleteRepoImage(ctx, freshInfo); retryErr != nil {
-		return fmt.Errorf("unable to delete image %q after dummy overwrite: %w (original delete error: %s)", fullImageName, retryErr, err)
+		return fmt.Errorf("unable to delete image %q after dummy overwrite: %w (original delete error: %s)", fullImageName, retryErr, origErr)
 	}
 	return nil
 }
+
+// refreshImageInfoAfterDummyPush polls the registry for the freshly pushed dummy image. Some
+// registries (GCR/ACR/ECR) exhibit read-after-write lag where the just-pushed tag is briefly
+// invisible. Returning a nil-but-no-error result without retry would let callers treat a delayed
+// push as a successful delete, leaving a real dummy tag behind.
+func (storage *RepoStagesStorage) refreshImageInfoAfterDummyPush(ctx context.Context, fullImageName string) (*image.Info, error) {
+	var lastInfo *image.Info
+	for attempt := 1; attempt <= brokenFallbackRefreshAttempts; attempt++ {
+		info, err := storage.DockerRegistry.TryGetRepoImage(ctx, fullImageName)
+		if err != nil {
+			return nil, err
+		}
+		if info != nil {
+			return info, nil
+		}
+		lastInfo = info
+		if attempt == brokenFallbackRefreshAttempts {
+			break
+		}
+		logboek.Context(ctx).Debug().LogF("-- refreshImageInfoAfterDummyPush: %q not visible yet (attempt %d/%d), retrying after %s\n", fullImageName, attempt, brokenFallbackRefreshAttempts, brokenFallbackRefreshDelay)
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		case <-time.After(brokenFallbackRefreshDelay):
+		}
+	}
+	return lastInfo, nil
+}
+
+// rejectedStageTagRegexp matches exactly the format produced by RejectStage:
+// <56-char lowercase-hex sha3-224 digest>-<positive int creation ts>-rejected. Tightening the
+// parse to this exact shape avoids accidentally deleting user-created tags that happen to end
+// with "-rejected".
+var rejectedStageTagRegexp = regexp.MustCompile(`^([0-9a-f]{56})-([0-9]+)-rejected$`)
 
 func (storage *RepoStagesStorage) GetRejectedStageIDs(ctx context.Context, opts ...Option) ([]image.StageID, error) {
 	o := makeOptions(opts...)
@@ -247,21 +294,21 @@ func (storage *RepoStagesStorage) GetRejectedStageIDs(ctx context.Context, opts 
 
 	var res []image.StageID
 	for _, tag := range tags {
-		if !strings.HasSuffix(tag, RepoRejectedStageImageRecord_ImageTagSuffix) {
+		match := rejectedStageTagRegexp.FindStringSubmatch(tag)
+		if match == nil {
+			if strings.HasSuffix(tag, RepoRejectedStageImageRecord_ImageTagSuffix) {
+				logboek.Context(ctx).Info().LogF("Skipping tag %q: does not match werf rejected-stage format\n", tag)
+			}
 			continue
 		}
 
-		realTag := strings.TrimSuffix(tag, RepoRejectedStageImageRecord_ImageTagSuffix)
-		digest, creationTs, err := getDigestAndCreationTsFromRepoStageImageTag(realTag)
+		creationTs, err := image.ParseCreationTs(match[2])
 		if err != nil {
-			if isUnexpectedTagFormatError(err) {
-				logboek.Context(ctx).Info().LogF("Unexpected rejected tag %q format: %s\n", tag, err)
-				continue
-			}
-			return nil, fmt.Errorf("unable to parse rejected stage tag %q: %w", tag, err)
+			logboek.Context(ctx).Info().LogF("Skipping rejected tag %q: cannot parse creation timestamp %q: %s\n", tag, match[2], err)
+			continue
 		}
 
-		res = append(res, *image.NewStageID(digest, creationTs))
+		res = append(res, *image.NewStageID(match[1], creationTs))
 	}
 
 	return res, nil
@@ -449,7 +496,7 @@ func (storage *RepoStagesStorage) DeleteStageCustomTag(ctx context.Context, tag 
 		return nil
 	}
 
-	if err := storage.deleteRepoImageWithBrokenFallback(ctx, imgInfo, fullImageName); err != nil {
+	if err := storage.DockerRegistry.DeleteRepoImage(ctx, imgInfo); err != nil {
 		return fmt.Errorf("unable to delete image %q from repo: %w", fullImageName, err)
 	}
 
@@ -482,7 +529,7 @@ func (storage *RepoStagesStorage) deleteStageCustomTagMetadata(ctx context.Conte
 		panic("unexpected condition")
 	}
 
-	if err := storage.deleteRepoImageWithBrokenFallback(ctx, imgInfo, fullImageName); err != nil {
+	if err := storage.DockerRegistry.DeleteRepoImage(ctx, imgInfo); err != nil {
 		return fmt.Errorf("unable to delete image %q from repo: %w", fullImageName, err)
 	}
 
@@ -573,7 +620,7 @@ func (storage *RepoStagesStorage) RmManagedImage(ctx context.Context, projectNam
 		return nil
 	}
 
-	if err := storage.deleteRepoImageWithBrokenFallback(ctx, imgInfo, fullImageName); err != nil {
+	if err := storage.DockerRegistry.DeleteRepoImage(ctx, imgInfo); err != nil {
 		return fmt.Errorf("unable to delete image %q from repo: %w", fullImageName, err)
 	}
 
@@ -680,7 +727,7 @@ func (storage *RepoStagesStorage) RmImageMetadata(ctx context.Context, projectNa
 	}
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.RmImageMetadata full image name: %s\n", img.Tag)
 
-	if err := storage.deleteRepoImageWithBrokenFallback(ctx, img, img.Name); err != nil {
+	if err := storage.DockerRegistry.DeleteRepoImage(ctx, img); err != nil {
 		return fmt.Errorf("unable to remove repo image %s: %w", img.Tag, err)
 	}
 
@@ -818,7 +865,7 @@ func (storage *RepoStagesStorage) RmImportMetadata(ctx context.Context, _, id st
 		return nil
 	}
 
-	if err := storage.deleteRepoImageWithBrokenFallback(ctx, img, fullImageName); err != nil {
+	if err := storage.DockerRegistry.DeleteRepoImage(ctx, img); err != nil {
 		return fmt.Errorf("unable to remove repo image %s: %w", img.Tag, err)
 	}
 

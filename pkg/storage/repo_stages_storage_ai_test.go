@@ -5,6 +5,7 @@ import (
 	"errors"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -12,6 +13,11 @@ import (
 	"github.com/werf/werf/v2/pkg/docker_registry"
 	"github.com/werf/werf/v2/pkg/image"
 )
+
+// Tests run with a near-zero refresh delay so the bounded retry loop completes quickly.
+func init() {
+	brokenFallbackRefreshDelay = time.Millisecond
+}
 
 type fakeRegistry struct {
 	docker_registry.Interface
@@ -223,7 +229,11 @@ func TestAI_DeleteRejectedStage_PushFallbackFails(t *testing.T) {
 	assert.Contains(t, err.Error(), "MANIFEST_INVALID")
 }
 
-func TestAI_DeleteRejectedStage_FallbackVanishedTreatedAsDeleted(t *testing.T) {
+func TestAI_DeleteRejectedStage_FallbackVanishedAfterPushIsHardFailure(t *testing.T) {
+	// Reverts the previous "vanished after push == success" behavior, which masked
+	// read-after-write lag: a delayed push could look like a successful delete and
+	// leave a dummy tag behind. The new behavior MUST refuse to claim success when
+	// the freshly-pushed dummy is not observable.
 	digest := "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
 	const ts int64 = 1700000000
 	stageRef := "registry.example/project:" + digest + "-1700000000"
@@ -233,32 +243,102 @@ func TestAI_DeleteRejectedStage_FallbackVanishedTreatedAsDeleted(t *testing.T) {
 	origInfo := &image.Info{Name: stageRef}
 	r.deleteErrs[stageRef] = []error{errors.New("DIGEST_INVALID")}
 	r.tryGetInfo[rejectedRef] = &image.Info{Name: rejectedRef}
-	// stage vanishes after dummy push
 	calls := 0
 	wrap := &vanishingRegistry{fakeRegistry: r, origInfo: origInfo, ref: stageRef, calls: &calls}
 	s := &RepoStagesStorage{RepoAddress: "registry.example/project", DockerRegistry: wrap}
 
 	err := s.DeleteRejectedStage(context.Background(), *image.NewStageID(digest, ts), DeleteImageOptions{})
-	require.NoError(t, err)
-	assert.Equal(t, 1, r.deleteCall[stageRef], "no retry needed when stage vanished after dummy push")
-	assert.Equal(t, 1, r.pushCall[stageRef])
-	assert.Equal(t, 1, r.deleteCall[rejectedRef], "marker still deleted")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "refusing to treat as deleted")
+	assert.Contains(t, err.Error(), "DIGEST_INVALID", "original delete error must be preserved")
+	assert.Equal(t, 1, r.pushCall[stageRef], "dummy push happened exactly once")
 }
 
-func TestAI_DeleteStageCustomTag_BrokenFallback(t *testing.T) {
+func TestAI_DeleteRejectedStage_FallbackRefreshesAfterRetry(t *testing.T) {
+	// Simulates GCR/ACR/ECR read-after-write lag: TryGetRepoImage returns nil for
+	// the first 2 attempts, then yields the dummy. The retry-delete must use the
+	// fresh dummy info and succeed.
+	digest := "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
+	const ts int64 = 1700000000
+	stageRef := "registry.example/project:" + digest + "-1700000000"
+	rejectedRef := stageRef + "-rejected"
+	dummyInfo := &image.Info{Name: stageRef, Tag: "dummy-after-push"}
+
+	r := newFakeRegistry()
+	origInfo := &image.Info{Name: stageRef, Tag: "original-broken"}
+	r.deleteErrs[stageRef] = []error{errors.New("MANIFEST_INVALID"), nil}
+	r.tryGetInfo[rejectedRef] = &image.Info{Name: rejectedRef}
+	wrap := &lateAppearingRegistry{fakeRegistry: r, ref: stageRef, origInfo: origInfo, info: dummyInfo, appearOnRefreshCall: 3}
+	s := &RepoStagesStorage{RepoAddress: "registry.example/project", DockerRegistry: wrap}
+
+	err := s.DeleteRejectedStage(context.Background(), *image.NewStageID(digest, ts), DeleteImageOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, 2, r.deleteCall[stageRef], "stage delete retried after push and refresh")
+	assert.Equal(t, 1, r.pushCall[stageRef])
+	assert.Equal(t, 1, r.deleteCall[rejectedRef])
+}
+
+func TestAI_DeleteRejectedStage_FallbackPushSucceedsRetryFails(t *testing.T) {
+	// Push succeeds, retry-delete fails. The function must surface the retry error
+	// and preserve the original error; it must NOT pretend success.
+	digest := "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
+	const ts int64 = 1700000000
+	stageRef := "registry.example/project:" + digest + "-1700000000"
+
+	r := newFakeRegistry()
+	r.tryGetInfo[stageRef] = &image.Info{Name: stageRef}
+	r.deleteErrs[stageRef] = []error{errors.New("MANIFEST_INVALID"), errors.New("BLOB_UNKNOWN: still corrupt")}
+
+	s := &RepoStagesStorage{RepoAddress: "registry.example/project", DockerRegistry: r}
+
+	err := s.DeleteRejectedStage(context.Background(), *image.NewStageID(digest, ts), DeleteImageOptions{})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "after dummy overwrite")
+	assert.Contains(t, err.Error(), "BLOB_UNKNOWN")
+	assert.Contains(t, err.Error(), "MANIFEST_INVALID", "original delete error must be preserved")
+	assert.Equal(t, 2, r.deleteCall[stageRef])
+	assert.Equal(t, 1, r.pushCall[stageRef])
+}
+
+func TestAI_DeleteRejectedStage_FallbackPushImmutableTag(t *testing.T) {
+	// ECR with immutable tags: PushImage rejects the overwrite. The fallback must
+	// surface push error with the original delete error preserved.
+	digest := "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
+	const ts int64 = 1700000000
+	stageRef := "registry.example/project:" + digest + "-1700000000"
+
+	r := newFakeRegistry()
+	r.tryGetInfo[stageRef] = &image.Info{Name: stageRef}
+	r.deleteErrs[stageRef] = []error{errors.New("MANIFEST_INVALID")}
+	r.pushErrs[stageRef] = errors.New("ImageTagAlreadyExistsException: tag is immutable")
+
+	s := &RepoStagesStorage{RepoAddress: "registry.example/project", DockerRegistry: r}
+
+	err := s.DeleteRejectedStage(context.Background(), *image.NewStageID(digest, ts), DeleteImageOptions{})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "overwrite broken image")
+	assert.Contains(t, err.Error(), "immutable")
+	assert.Contains(t, err.Error(), "MANIFEST_INVALID")
+}
+
+func TestAI_DeleteStageCustomTag_BrokenErrorPropagatesNoFallback(t *testing.T) {
+	// Custom-tag deletion must NOT use the broken-image fallback: a dummy-but-
+	// undeleted custom tag would leave a parseable-but-empty tag behind. The
+	// broken error must propagate to the caller verbatim.
 	tag := "v1.0.0"
 	customRef := "registry.example/project:v1.0.0"
 
 	r := newFakeRegistry()
 	r.tryGetInfo[customRef] = &image.Info{Name: customRef}
-	r.deleteErrs[customRef] = []error{errors.New("BLOB_UNKNOWN: corrupted custom tag"), nil}
+	r.deleteErrs[customRef] = []error{errors.New("BLOB_UNKNOWN: corrupted custom tag")}
 
 	s := &RepoStagesStorage{RepoAddress: "registry.example/project", DockerRegistry: r}
 
 	err := s.DeleteStageCustomTag(context.Background(), tag)
-	require.NoError(t, err)
-	assert.Equal(t, 2, r.deleteCall[customRef], "custom tag delete retried after dummy push")
-	assert.Equal(t, 1, r.pushCall[customRef], "dummy push exactly once")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "BLOB_UNKNOWN")
+	assert.Equal(t, 1, r.deleteCall[customRef], "custom tag delete must NOT retry after dummy push")
+	assert.Equal(t, 0, r.pushCall[customRef], "custom tag delete must NOT use broken-image fallback")
 }
 
 func TestAI_DeleteStageCustomTag_HappyPath(t *testing.T) {
@@ -300,4 +380,47 @@ func (r *vanishingRegistry) TryGetRepoImage(_ context.Context, reference string)
 		return r.origInfo, nil
 	}
 	return nil, nil
+}
+
+// lateAppearingRegistry models read-after-write lag: TryGetRepoImage(ref) returns origInfo on the
+// initial fetch (before the broken-image fallback), then nil for the first few refresh attempts
+// inside the fallback, and finally returns info starting at appearOnRefreshCall (1-based among
+// refresh calls only).
+type lateAppearingRegistry struct {
+	*fakeRegistry
+	ref                 string
+	origInfo            *image.Info
+	info                *image.Info
+	appearOnRefreshCall int
+
+	mu              sync.Mutex
+	calls           int
+	postPushCalls   int
+	pushHasHappened bool
+}
+
+func (r *lateAppearingRegistry) TryGetRepoImage(ctx context.Context, reference string) (*image.Info, error) {
+	if reference != r.ref {
+		return r.fakeRegistry.TryGetRepoImage(ctx, reference)
+	}
+	r.mu.Lock()
+	r.calls++
+	if !r.pushHasHappened {
+		r.mu.Unlock()
+		return r.origInfo, nil
+	}
+	r.postPushCalls++
+	current := r.postPushCalls
+	r.mu.Unlock()
+	if current < r.appearOnRefreshCall {
+		return nil, nil
+	}
+	return r.info, nil
+}
+
+func (r *lateAppearingRegistry) PushImage(ctx context.Context, reference string, opts *docker_registry.PushImageOptions) error {
+	r.mu.Lock()
+	r.pushHasHappened = true
+	r.mu.Unlock()
+	return r.fakeRegistry.PushImage(ctx, reference, opts)
 }
