@@ -84,7 +84,7 @@ jobs:
 
       - name: Authenticate in Seguro
         id: vault
-        uses: hashicorp/vault-action@v2
+        uses: hashicorp/vault-action@v4
         with:
           url: https://seguro.flant.com
           path: github
