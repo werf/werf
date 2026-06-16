@@ -1,0 +1,73 @@
+name: docs:cleanup:test-versions
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Which test version releases to remove"
+        required: true
+        default: both
+        type: choice
+        options:
+          - both
+          - v2
+          - v1.2
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  cleanup-v2:
+    if: ${{ github.event.inputs.version == 'both' || github.event.inputs.version == 'v2' }}
+    runs-on: prod-github-runner-0
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Install werf
+        uses: werf/actions/install@v2
+
+      - name: Dismiss v2 test docs release
+        run: |
+          . $(werf ci-env github --as-file)
+          werf dismiss --with-namespace=false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WERF_DIR: docs
+          WERF_ENV: test
+          WERF_NAMESPACE: werfio-test
+          WERF_RELEASE: werfio-v2-test
+          WERF_SET_GITHUB_REF: global.github_ref=v2
+          WERF_KUBE_CONFIG_BASE64: ${{ secrets.KUBECONFIG_BASE64_DEV }}
+
+  cleanup-v1-2:
+    if: ${{ github.event.inputs.version == 'both' || github.event.inputs.version == 'v1.2' }}
+    runs-on: prod-github-runner-0
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Install werf
+        uses: werf/actions/install@v2
+
+      - name: Dismiss v1.2 test docs release
+        run: |
+          . $(werf ci-env github --as-file)
+          werf dismiss --with-namespace=false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WERF_DIR: docs
+          WERF_ENV: test
+          WERF_NAMESPACE: werfio-test
+          WERF_RELEASE: werfio-v1-dot-2-test
+          WERF_SET_GITHUB_REF: global.github_ref=v1.2
+          WERF_KUBE_CONFIG_BASE64: ${{ secrets.KUBECONFIG_BASE64_DEV }}
