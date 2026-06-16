@@ -33,6 +33,7 @@ rewrite ^/docs/?$                                                               
 rewrite ^/docs/(?!(latest|pr-[^/]+|v2(?:\.[^/]+)?|v1\.2(?:\.[^/]+)?)/)(?:.+)                    /docs/v2/                                                       redirect;
 
 rewrite ^/docs/(?<ver>v2(?:\.\d+(?:\.\d+(?:[^/]+)?)?)?|latest)/?$                             /docs/$ver/usage/project_configuration/overview.html            redirect;
+rewrite ^/docs/(?<ver>pr-[^/]+)/?$                                                               /docs/$ver/usage/project_configuration/overview.html            redirect;
 rewrite ^/docs/(?<ver>v2(?:\.\d+(?:\.\d+(?:[^/]+)?)?)?|latest)/usage/?$                       /docs/$ver/usage/project_configuration/overview.html            redirect;
 rewrite ^/docs/(?<ver>v2(?:\.\d+(?:\.\d+(?:[^/]+)?)?)?|latest)/usage/project_configuration/?$ /docs/$ver/usage/project_configuration/overview.html            redirect;
 rewrite ^/docs/(?<ver>v2(?:\.\d+(?:\.\d+(?:[^/]+)?)?)?|latest)/usage/build/?$                 /docs/$ver/usage/build/overview.html                            redirect;
