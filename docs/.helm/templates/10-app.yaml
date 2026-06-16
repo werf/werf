@@ -1,6 +1,7 @@
 {{- $refs := list $.Values.global.github_ref }}
 {{- if eq $.Values.werf.env "test" }}
-{{- if eq (splitList "/" $.Values.global.github_ref | last) "main" }}
+{{- $currentRef := splitList "/" $.Values.global.github_ref | last }}
+{{- if or (eq $currentRef "main") (hasPrefix "pr-" $currentRef) }}
 {{- $refs = concat $refs (list "v2" "v1.2") }}
 {{- end }}
 {{- end }}

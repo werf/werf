@@ -1,6 +1,7 @@
 {{- $refs := list $.Values.global.github_ref }}
 {{- if eq $.Values.werf.env "test" }}
-{{- if eq (splitList "/" $.Values.global.github_ref | last) "main" }}
+{{- $currentRef := splitList "/" $.Values.global.github_ref | last }}
+{{- if or (eq $currentRef "main") (hasPrefix "pr-" $currentRef) }}
 {{- $refs = concat $refs (list "v2" "v1.2") }}
 {{- end }}
 {{- end }}
@@ -8,13 +9,18 @@
 {{- range $_, $ref := $refs }}
 
 {{- $version := splitList "/" $ref | last }}
-{{- $versionDNSNormalized := printf "%s" $version | lower | replace "+" "-plus-" | replace "_" "-u-" | replace "." "-dot-" }}
+{{- if hasPrefix "v2" $version }}
+{{- $version = "v2" }}
+{{- else if hasPrefix "v1.2" $version }}
+{{- $version = "v1.2" }}
+{{- end }}
+{{- $versionDNSNormalized := replace "." "-dot-" $version }}
 
 {{- $versionURLNormalized := "" }}
 {{- if eq $version "main" }}
 {{- $versionURLNormalized = "latest" }}
 {{- else }}
-{{- $versionURLNormalized = printf "%s" $version | lower | replace "+" "-plus-" | replace "_" "-u-" }}
+{{- $versionURLNormalized = $version }}
 {{- end }}
 
 {{- $host := pluck $.Values.werf.env $.Values.host | first | default $.Values.host._default  }}
