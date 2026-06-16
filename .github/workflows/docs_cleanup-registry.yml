@@ -6,6 +6,22 @@ on:
   repository_dispatch:
     types: ["docs:registry-cleanup"]
   workflow_dispatch:
+    inputs:
+      dryRun:
+        description: "Do not delete releases, only print planned actions"
+        required: false
+        default: true
+        type: boolean
+      keepV2:
+        description: "How many latest v2.* docs releases to keep"
+        required: false
+        default: "5"
+        type: string
+      keepV12:
+        description: "How many latest v1.2.* docs releases to keep"
+        required: false
+        default: "3"
+        type: string
 
 defaults:
   run:
@@ -15,6 +31,9 @@ jobs:
   cleanup:
     if: github.repository == 'werf/werf'
     runs-on: prod-github-runner-0
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -26,12 +45,181 @@ jobs:
         with:
           channel: alpha
 
-      - name: Cleanup
+      - name: Authenticate in Seguro
+        id: vault
+        uses: hashicorp/vault-action@v4
+        with:
+          url: https://seguro.flant.com
+          path: github
+          role: werf-web
+          method: jwt
+          jwtGithubAudience: github-access-aud
+          exportToken: true
+
+      - name: Read and normalize production kubeconfigs
+        id: kubeconfigs
+        run: |
+          set -euo pipefail
+
+          read_secret() {
+            local path="$1"
+            response="$(curl -fsSL -H "X-Vault-Token: $VAULT_TOKEN" "https://seguro.flant.com/v1/${path}")"
+            secret_value="$(printf '%s' "$response" | jq -r '.data.data["kube.config"]')"
+
+            if [[ -z "$secret_value" || "$secret_value" == "null" ]]; then
+              echo "Bob kubeconfig secret is empty for ${path}" >&2
+              exit 1
+            fi
+
+            if printf '%s' "$secret_value" | base64 -d >/tmp/docs-kubeconfig-decoded 2>/dev/null && grep -q '^apiVersion:' /tmp/docs-kubeconfig-decoded; then
+              printf '%s' "$secret_value"
+            else
+              printf '%s' "$secret_value" | base64 | tr -d '\n'
+            fi
+          }
+
+          eu_kubeconfig_base64="$(read_secret 'projects/data/b454e6aa-39f0-45f4-aa7c-a9465ab154cb/KUBE_CONFIG')"
+          ru_kubeconfig_base64="$(read_secret 'projects/data/b454e6aa-39f0-45f4-aa7c-a9465ab154cb/KUBE_CONFIG_RU')"
+
+          echo "::add-mask::$eu_kubeconfig_base64"
+          echo "::add-mask::$ru_kubeconfig_base64"
+          echo "eu_kubeconfig_base64=$eu_kubeconfig_base64" >> "$GITHUB_OUTPUT"
+          echo "ru_kubeconfig_base64=$ru_kubeconfig_base64" >> "$GITHUB_OUTPUT"
+
+      - name: Cleanup registry (eu production usage-aware)
         run: |
           . $(werf ci-env github --as-file)
           werf cleanup
         env:
           WERF_DIR: docs
+          WERF_REPO: ghcr.io/${{ github.repository_owner }}/werfio
+          WERF_KUBE_CONFIG_BASE64: ${{ steps.kubeconfigs.outputs.eu_kubeconfig_base64 }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           WERF_REPO_GITHUB_TOKEN: ${{ secrets.WERF_IN_IMAGE_CLEANUP_GHCR }}
-          WERF_KUBE_CONFIG_BASE64: ${{ secrets.KUBECONFIG_BASE64_DEV }}
+
+      - name: Cleanup registry (ru production usage-aware)
+        run: |
+          . $(werf ci-env github --as-file)
+          werf cleanup
+        env:
+          WERF_DIR: docs
+          WERF_REPO: ghcr.io/${{ github.repository_owner }}/werfio
+          WERF_KUBE_CONFIG_BASE64: ${{ steps.kubeconfigs.outputs.ru_kubeconfig_base64 }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WERF_REPO_GITHUB_TOKEN: ${{ secrets.WERF_IN_IMAGE_CLEANUP_GHCR }}
+
+      - name: Cleanup old docs production tag releases
+        run: |
+          set -euo pipefail
+
+          DRY_RUN='${{ github.event_name == 'workflow_dispatch' && github.event.inputs.dryRun || 'true' }}'
+          KEEP_V2='${{ github.event_name == 'workflow_dispatch' && github.event.inputs.keepV2 || '5' }}'
+          KEEP_V12='${{ github.event_name == 'workflow_dispatch' && github.event.inputs.keepV12 || '3' }}'
+
+          case "$KEEP_V2" in
+            ''|*[!0-9]*) echo "keepV2 must be a positive integer" >&2; exit 1 ;;
+          esac
+          case "$KEEP_V12" in
+            ''|*[!0-9]*) echo "keepV12 must be a positive integer" >&2; exit 1 ;;
+          esac
+
+          to_release_suffix() {
+            printf "%s" "$1" | sed 's/+/-plus-/g; s/_/-u-/g; s/\./-dot-/g; s#/#-#g'
+          }
+
+          mapfile -t keep_v2_tags < <(git tag -l 'v2.*' | sort -V | tail -n "$KEEP_V2")
+          mapfile -t keep_v12_tags < <(git tag -l 'v1.2.*' | sort -V | tail -n "$KEEP_V12")
+
+          declare -A KEEP_RELEASES
+          KEEP_RELEASES["werfio-main-production"]=1
+
+          for tag in "${keep_v2_tags[@]}"; do
+            [[ -z "$tag" ]] && continue
+            KEEP_RELEASES["werfio-$(to_release_suffix "$tag")-production"]=1
+          done
+          for tag in "${keep_v12_tags[@]}"; do
+            [[ -z "$tag" ]] && continue
+            KEEP_RELEASES["werfio-$(to_release_suffix "$tag")-production"]=1
+          done
+
+          list_releases_for_cluster() {
+            local kubeconfig="$1"
+            WERF_KUBE_CONFIG_BASE64="$kubeconfig" \
+              werf helm list -n werfio-production -q | \
+              grep -E '^werfio-v(2|1-dot-2)-.*-production$|^werfio-main-production$' || true
+          }
+
+          declare -A RELEASES_UNION
+
+          while IFS= read -r rel; do
+            [[ -n "$rel" ]] && RELEASES_UNION["$rel"]=1
+          done < <(list_releases_for_cluster "$EU_KUBECONFIG_BASE64")
+
+          while IFS= read -r rel; do
+            [[ -n "$rel" ]] && RELEASES_UNION["$rel"]=1
+          done < <(list_releases_for_cluster "$RU_KUBECONFIG_BASE64")
+
+          existing_releases=()
+          for rel in "${!RELEASES_UNION[@]}"; do
+            existing_releases+=("$rel")
+          done
+
+          if [[ ${#existing_releases[@]} -eq 0 ]]; then
+            echo "No docs tag releases found in werfio-production"
+            exit 0
+          fi
+
+          echo "Dry run: $DRY_RUN"
+          echo "Keep v2 tags: $KEEP_V2"
+          echo "Keep v1.2 tags: $KEEP_V12"
+
+          to_delete=()
+          for rel in "${existing_releases[@]}"; do
+            if [[ -z "${KEEP_RELEASES[$rel]:-}" ]]; then
+              to_delete+=("$rel")
+            fi
+          done
+
+          if [[ ${#to_delete[@]} -eq 0 ]]; then
+            echo "No old docs releases to dismiss"
+            exit 0
+          fi
+
+          echo "Releases selected for cleanup:"
+          printf ' - %s\n' "${to_delete[@]}"
+
+          if [[ "$DRY_RUN" == "true" ]]; then
+            echo "Dry run enabled, nothing was deleted"
+            exit 0
+          fi
+
+          . $(werf ci-env github --as-file)
+
+          dismiss_if_exists() {
+            local rel="$1"
+            local kubeconfig="$2"
+            local cluster_name="$3"
+
+            if ! WERF_KUBE_CONFIG_BASE64="$kubeconfig" werf helm list -n werfio-production -q | grep -Fxq "$rel"; then
+              echo "Release $rel not found in $cluster_name cluster, skip"
+              return 0
+            fi
+
+            echo "Dismissing $rel in $cluster_name cluster"
+            WERF_RELEASE="$rel" \
+              WERF_DIR=docs \
+              WERF_ENV=production \
+              WERF_NAMESPACE=werfio-production \
+              WERF_KUBE_CONFIG_BASE64="$kubeconfig" \
+              GITHUB_TOKEN='${{ secrets.GITHUB_TOKEN }}' \
+              werf dismiss --with-namespace=false
+          }
+
+          for rel in "${to_delete[@]}"; do
+            dismiss_if_exists "$rel" "$EU_KUBECONFIG_BASE64" "eu"
+            dismiss_if_exists "$rel" "$RU_KUBECONFIG_BASE64" "ru"
+          done
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EU_KUBECONFIG_BASE64: ${{ steps.kubeconfigs.outputs.eu_kubeconfig_base64 }}
+          RU_KUBECONFIG_BASE64: ${{ steps.kubeconfigs.outputs.ru_kubeconfig_base64 }}
