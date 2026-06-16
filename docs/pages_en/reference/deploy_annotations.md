@@ -53,11 +53,12 @@ More info: [deployment order]({{ "/usage/deploy/deployment_order.html" | true_re
 
 ## Resource dependencies
 
-`werf.io/deploy-dependency-ANY_NAME: state=STATE[,name=NAME][,namespace=NAMESPACE][,kind=KIND][,group=GROUP][,version=VERSION]`
+`werf.io/deploy-dependency-ANY_NAME: state=STATE[,name=NAME][,namespace=NAMESPACE][,kind=KIND][,group=GROUP][,version=VERSION][,external=auto|true|false]`
 
 Example: \
 `werf.io/deploy-dependency-db: state=ready,kind=StatefulSet,name=postgres` \
-`werf.io/deploy-dependency-app: state=present,kind=Deployment,group=apps,version=v1,name=app,namespace=app`
+`werf.io/deploy-dependency-app: state=present,kind=Deployment,group=apps,version=v1,name=app,namespace=app` \
+`werf.io/deploy-dependency-secret: state=ready,kind=Secret,version=v1,name=my-vault-secret,external=true`
 
 Required parameters:
 - `state`: `ready` or `present`. If `present`, then wait until resource is created/updated, if `ready`, then wait until resource is created/updated and ready.
@@ -68,6 +69,9 @@ At least one of these parameters must be specified:
 - `kind`: kind of a resource to depend on.
 - `group`: api group of a resource to depend on.
 - `version`: api version of a resource to depend on.
+
+Optional parameters:
+- `external`: `auto` (default), `true`, or `false`. Controls whether the dependency targets a release resource or an external cluster resource. With `auto`, if no matching resource is found in the release, the dependency is automatically treated as external and werf waits for it in the cluster. With `true`, always treated as external. With `false`, always treated as internal. When external, `name`, `kind`, and `version` must all be specified.
 
 More info: [deployment order]({{ "/usage/deploy/deployment_order.html" | true_relative_url }})
 
@@ -115,11 +119,12 @@ The default value is `Foreground`.
 
 ## Delete dependencies
 
-`werf.io/delete-dependency-ANY_NAME: state=STATE[,name=NAME][,namespace=NAMESPACE][,kind=KIND][,group=GROUP][,version=VERSION]`
+`werf.io/delete-dependency-ANY_NAME: state=STATE[,name=NAME][,namespace=NAMESPACE][,kind=KIND][,group=GROUP][,version=VERSION][,external=auto|true|false]`
 
 Example: \
 `werf.io/delete-dependency-db: state=absent,kind=StatefulSet,name=postgres` \
-`werf.io/delete-dependency-app: state=absent,kind=Deployment,group=apps,version=v1,name=app,namespace=app`
+`werf.io/delete-dependency-app: state=absent,kind=Deployment,group=apps,version=v1,name=app,namespace=app` \
+`werf.io/delete-dependency-secret: state=absent,kind=Secret,version=v1,name=my-vault-secret,external=true`
 
 Required parameters:
 - `state`: `absent`. Wait until resource is deleted.
@@ -130,6 +135,9 @@ At least one of these parameters must be specified:
 - `kind`: kind of a resource to depend on.
 - `group`: api group of a resource to depend on.
 - `version`: api version of a resource to depend on.
+
+Optional parameters:
+- `external`: `auto` (default), `true`, or `false`. Controls whether the dependency targets a release resource or an external cluster resource. With `auto`, if no matching resource is found in the release, the dependency is automatically treated as external and werf waits for it to be deleted from the cluster. With `true`, always treated as external. With `false`, always treated as internal. When external, `name`, `kind`, and `version` must all be specified.
 
 More info: [deployment order]({{ "/usage/deploy/deployment_order.html" | true_relative_url }})
 
