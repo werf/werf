@@ -35,3 +35,8 @@ resources:
     memory:
       _default: 20M
       production: 50M
+
+docs:
+  currentRoot: v2
+  supportedRoots: [v2, v1.2]
+  latestAliasEnabled: true
