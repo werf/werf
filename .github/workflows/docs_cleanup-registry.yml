@@ -6,6 +6,22 @@ on:
   repository_dispatch:
     types: ["docs:registry-cleanup"]
   workflow_dispatch:
+    inputs:
+      dryRun:
+        description: "Do not delete releases, only print planned actions"
+        required: false
+        default: true
+        type: boolean
+      keepV2:
+        description: "How many latest v2.* docs releases to keep"
+        required: false
+        default: "5"
+        type: string
+      keepV12:
+        description: "How many latest v1.2.* docs releases to keep"
+        required: false
+        default: "3"
+        type: string
 
 defaults:
   run:
@@ -63,7 +79,48 @@ jobs:
         with:
           channel: alpha
 
-      - name: Cleanup
+      - name: Authenticate in Seguro
+        id: vault
+        uses: hashicorp/vault-action@v4
+        with:
+          url: https://seguro.flant.com
+          path: github
+          role: werf-web
+          method: jwt
+          jwtGithubAudience: github-access-aud
+          exportToken: true
+
+      - name: Read and normalize production kubeconfigs
+        id: kubeconfigs
+        run: |
+          set -euo pipefail
+
+          read_secret() {
+            local path="$1"
+            response="$(curl -fsSL -H "X-Vault-Token: $VAULT_TOKEN" "https://seguro.flant.com/v1/${path}")"
+            secret_value="$(printf '%s' "$response" | jq -r '.data.data["kube.config"]')"
+
+            if [[ -z "$secret_value" || "$secret_value" == "null" ]]; then
+              echo "Bob kubeconfig secret is empty for ${path}" >&2
+              exit 1
+            fi
+
+            if printf '%s' "$secret_value" | base64 -d >/tmp/docs-kubeconfig-decoded 2>/dev/null && grep -q '^apiVersion:' /tmp/docs-kubeconfig-decoded; then
+              printf '%s' "$secret_value"
+            else
+              printf '%s' "$secret_value" | base64 | tr -d '\n'
+            fi
+          }
+
+          eu_kubeconfig_base64="$(read_secret 'projects/data/b454e6aa-39f0-45f4-aa7c-a9465ab154cb/KUBE_CONFIG')"
+          ru_kubeconfig_base64="$(read_secret 'projects/data/b454e6aa-39f0-45f4-aa7c-a9465ab154cb/KUBE_CONFIG_RU')"
+
+          echo "::add-mask::$eu_kubeconfig_base64"
+          echo "::add-mask::$ru_kubeconfig_base64"
+          echo "eu_kubeconfig_base64=$eu_kubeconfig_base64" >> "$GITHUB_OUTPUT"
+          echo "ru_kubeconfig_base64=$ru_kubeconfig_base64" >> "$GITHUB_OUTPUT"
+
+      - name: Cleanup registry (eu production usage-aware)
         run: |
           . $(werf ci-env github --as-file)
           werf cleanup
