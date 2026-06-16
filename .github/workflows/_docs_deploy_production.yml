@@ -66,11 +66,27 @@ jobs:
               release_ref_value="$release_ref_source"
             fi
 
-            release_ref_value="$(echo "$release_ref_value" | sed 's/\+/-plus-/g' | sed 's/\_/-u-/g' | sed 's/\./-dot-/g' | sed 's#/#-#g')"
+            case "$release_ref_value" in
+              v2|v2.*)
+                docs_ref_value="v2"
+                ;;
+              v1.2|v1.2.*)
+                docs_ref_value="v1.2"
+                ;;
+              main|latest)
+                docs_ref_value="v2"
+                ;;
+              *)
+                echo "Unsupported docs production ref: $release_ref_value" >&2
+                exit 1
+                ;;
+            esac
+
+            release_ref_value="$(echo "$docs_ref_value" | sed 's/\+/-plus-/g' | sed 's/\_/-u-/g' | sed 's/\./-dot-/g' | sed 's#/#-#g')"
 
             cat >> "$GITHUB_ENV" <<EOF
           WERF_RELEASE=werfio-${release_ref_value}-production
-          WERF_SET_GITHUB_REF=global.github_ref=$github_ref_value
+          WERF_SET_GITHUB_REF=global.github_ref=$docs_ref_value
           EOF
           else
             cat >> "$GITHUB_ENV" <<EOF

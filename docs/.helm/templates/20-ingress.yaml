@@ -1,7 +1,7 @@
 {{- $refs := list $.Values.global.github_ref }}
 {{- if eq $.Values.werf.env "test" }}
 {{- if eq (splitList "/" $.Values.global.github_ref | last) "main" }}
-{{- $refs = concat $refs (list "v2.0.3" "v1.2.294+fix1") }}
+{{- $refs = concat $refs (list "v2" "v1.2") }}
 {{- end }}
 {{- end }}
 
