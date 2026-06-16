@@ -3,9 +3,8 @@ name: docs:deploy:tag
 on:
   push:
     tags:
-      - "v*"
-      - "!v1.1.*"
-      - "!v1.0.*"
+      - "v2.*"
+      - "v1.2.*"
   repository_dispatch:
     types: ["docs:deploy:tag"]
   workflow_dispatch:
