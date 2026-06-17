@@ -50,11 +50,12 @@ toc: false
 
 ## Зависимости ресурса
 
-`werf.io/deploy-dependency-ANY_NAME: state=STATE[,name=NAME][,namespace=NAMESPACE][,kind=KIND][,group=GROUP][,version=VERSION]`
+`werf.io/deploy-dependency-ANY_NAME: state=STATE[,name=NAME][,namespace=NAMESPACE][,kind=KIND][,group=GROUP][,version=VERSION][,external=auto|true|false]`
 
 Пример: \
 `werf.io/deploy-dependency-db: state=ready,kind=StatefulSet,name=postgres` \
-`werf.io/deploy-dependency-app: state=present,kind=Deployment,group=apps,version=v1,name=app,namespace=app`
+`werf.io/deploy-dependency-app: state=present,kind=Deployment,group=apps,version=v1,name=app,namespace=app` \
+`werf.io/deploy-dependency-secret: state=ready,kind=Secret,version=v1,name=my-vault-secret,external=true`
 
 Обязательные параметры:
 - `state`: `ready` или `present`. Если `present`, то дождаться, пока ресурс не будет создан/обновлен, если `ready`, то дождаться, пока ресурс не будет создан/обновлен и приведен в готовность.
@@ -65,6 +66,9 @@ toc: false
 - `kind`: kind ресурса, от которого будет зависеть текущий ресурс.
 - `group`: api group ресурса, от которого будет зависеть текущий ресурс.
 - `version`: api version ресурса, от которого будет зависеть текущий ресурс.
+
+Необязательные параметры:
+- `external`: `auto` (по умолчанию), `true` или `false`. Определяет, является ли зависимость ресурсом релиза или внешним ресурсом кластера. При `auto`, если среди ресурсов релиза не найден подходящий ресурс, зависимость автоматически считается внешней и werf ожидает её в кластере. При `true` — всегда внешняя. При `false` — всегда внутренняя (ресурс релиза). Для внешней зависимости необходимо указать `name`, `kind` и `version`.
 
 Больше информации: [порядок развертывания]({{ "/usage/deploy/deployment_order.html" | true_relative_url }})
 
@@ -112,11 +116,12 @@ toc: false
 
 ## Зависимости при удалении
 
-`werf.io/delete-dependency-ANY_NAME: state=STATE[,name=NAME][,namespace=NAMESPACE][,kind=KIND][,group=GROUP][,version=VERSION]`
+`werf.io/delete-dependency-ANY_NAME: state=STATE[,name=NAME][,namespace=NAMESPACE][,kind=KIND][,group=GROUP][,version=VERSION][,external=auto|true|false]`
 
 Пример: \
 `werf.io/delete-dependency-db: state=absent,kind=StatefulSet,name=postgres` \
-`werf.io/delete-dependency-app: state=absent,kind=Deployment,group=apps,version=v1,name=app,namespace=app`
+`werf.io/delete-dependency-app: state=absent,kind=Deployment,group=apps,version=v1,name=app,namespace=app` \
+`werf.io/delete-dependency-secret: state=absent,kind=Secret,version=v1,name=my-vault-secret,external=true`
 
 Обязательные параметры:
 - `state`: `absent`. Дождаться, пока ресурс будет удален.
@@ -127,6 +132,9 @@ toc: false
 - `kind`: kind ресурса, от которого будет зависеть текущий ресурс.
 - `group`: api group ресурса, от которого будет зависеть текущий ресурс.
 - `version`: api version ресурса, от которого будет зависеть текущий ресурс.
+
+Необязательные параметры:
+- `external`: `auto` (по умолчанию), `true` или `false`. Определяет, является ли зависимость ресурсом релиза или внешним ресурсом кластера. При `auto`, если среди ресурсов релиза не найден подходящий ресурс, зависимость автоматически считается внешней и werf ожидает её удаления из кластера. При `true` — всегда внешняя. При `false` — всегда внутренняя (ресурс релиза). Для внешней зависимости необходимо указать `name`, `kind` и `version`.
 
 Больше информации: [порядок развертывания]({{ "/usage/deploy/deployment_order.html" | true_relative_url }})
 

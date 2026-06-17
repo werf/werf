@@ -162,4 +162,56 @@ In this case, the `Ingress` will be deleted first, then the `Service`, and only 
 
 Check out all capabilities of this annotation [here]({{ "/reference/deploy_annotations.html#delete-dependencies" | true_relative_url }}).
 
+### Waiting for non-release (external) resources (werf only)
+
+The `werf.io/deploy-dependency-<name>` and `werf.io/delete-dependency-<name>` annotations also support dependencies on resources that are not part of the current release — for example, resources created by a third-party operator.
+
+By default (`external=auto`), if no resource matching the dependency selector is found among the current release resources, werf treats it as external and waits for it in the cluster. You can also explicitly set `external=true` to always treat a dependency as external regardless of what is in the release.
+
+For example, to wait for a Secret created by a Vault operator before deploying your application:
+
+```yaml
+# .helm/templates/example.yaml:
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+  annotations:
+    werf.io/deploy-dependency-secret: state=ready,kind=Secret,version=v1,name=my-dynamic-vault-secret,external=true
+# ...
+```
+
+The `myapp` deployment will start only after `my-dynamic-vault-secret` exists and is ready in the cluster.
+
+To wait for multiple external resources:
+
+```yaml
+# .helm/templates/example.yaml:
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+  annotations:
+    werf.io/deploy-dependency-secret: state=ready,kind=Secret,version=v1,name=my-dynamic-vault-secret,external=true
+    werf.io/deploy-dependency-db: state=ready,kind=StatefulSet,group=apps,version=v1,name=my-database,external=true
+# ...
+```
+
+The same works for deletion ordering. To delay deletion of a release resource until an external resource is gone:
+
+```yaml
+# .helm/templates/example.yaml:
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: myapp-config
+  annotations:
+    werf.io/delete-dependency-lease: state=absent,kind=Lease,group=coordination.k8s.io,version=v1,name=myapp-leader-election,external=true
+# ...
+```
+
+The `myapp-config` ConfigMap will be deleted only after `myapp-leader-election` is gone from the cluster.
+
+When a dependency is external, `name`, `kind`, and `version` must all be specified. By default, werf looks for the resource in the release namespace; specify `namespace` to use a different one.
+
 

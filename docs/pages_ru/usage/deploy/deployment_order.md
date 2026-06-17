@@ -162,4 +162,56 @@ metadata:
 
 Посмотрите все возможности этой аннотации [здесь]({{ "/reference/deploy_annotations.html#зависимости-при-удалении" | true_relative_url }}).
 
+### Ожидание внешних (не входящих в релиз) ресурсов (только werf)
+
+Аннотации `werf.io/deploy-dependency-<name>` и `werf.io/delete-dependency-<name>` также поддерживают зависимости от ресурсов, которые не входят в текущий релиз — например, от ресурсов, созданных сторонним оператором.
+
+По умолчанию (`external=auto`), если среди ресурсов текущего релиза не найден ресурс, соответствующий указанному селектору, werf автоматически считает зависимость внешней и ожидает её в кластере. Также можно явно указать `external=true`, чтобы зависимость всегда считалась внешней вне зависимости от состава релиза.
+
+Например, чтобы дождаться Secret, созданного Vault-оператором, перед деплоем приложения:
+
+```yaml
+# .helm/templates/example.yaml:
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+  annotations:
+    werf.io/deploy-dependency-secret: state=ready,kind=Secret,version=v1,name=my-dynamic-vault-secret,external=true
+# ...
+```
+
+Деплой `myapp` начнётся только после того, как `my-dynamic-vault-secret` появится в кластере и будет готов.
+
+Чтобы ожидать несколько внешних ресурсов:
+
+```yaml
+# .helm/templates/example.yaml:
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+  annotations:
+    werf.io/deploy-dependency-secret: state=ready,kind=Secret,version=v1,name=my-dynamic-vault-secret,external=true
+    werf.io/deploy-dependency-db: state=ready,kind=StatefulSet,group=apps,version=v1,name=my-database,external=true
+# ...
+```
+
+То же самое работает для порядка удаления. Чтобы задержать удаление ресурса релиза до исчезновения внешнего ресурса:
+
+```yaml
+# .helm/templates/example.yaml:
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: myapp-config
+  annotations:
+    werf.io/delete-dependency-lease: state=absent,kind=Lease,group=coordination.k8s.io,version=v1,name=myapp-leader-election,external=true
+# ...
+```
+
+`myapp-config` будет удалён только после того, как `myapp-leader-election` исчезнет из кластера.
+
+Для внешней зависимости необходимо указать `name`, `kind` и `version`. По умолчанию werf ищет ресурс в namespace релиза; укажите `namespace`, чтобы использовать другой.
+
 
