@@ -40,10 +40,10 @@ groups:
       - name: alpha
         version: 2.72.0
       - name: beta
-        version: 2.71.0
+        version: 2.72.0
       - name: ea
-        version: 2.70.0
+        version: 2.71.0
       - name: stable
         version: 2.70.0
       - name: rock-solid
-        version: 2.69.1
+        version: 2.70.0
