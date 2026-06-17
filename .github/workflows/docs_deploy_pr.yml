@@ -14,8 +14,7 @@ jobs:
     uses: ./.github/workflows/_docs_deploy.yml
     with:
       env: test
-      githubRefOverride: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || '' }}
-      persistent: true
+      githubRefOverride: ${{ format('pr-{0}', github.event.pull_request.number) }}
       runner: prod-github-runner-0
     secrets:
       kubeConfig: ${{ secrets.KUBECONFIG_BASE64_DEV }}
