@@ -402,9 +402,9 @@ func (storage *RepoStagesStorage) GetStageDesc(ctx context.Context, projectName 
 	rejectedImageName := makeRepoRejectedStageImageRecord(storage.RepoAddress, stageID.Digest, stageID.CreationTs)
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetStageDesc check rejected image name: %s\n", rejectedImageName)
 
-	if rejectedImgInfo, err := storage.DockerRegistry.TryGetRepoImage(ctx, rejectedImageName); err != nil {
-		return nil, fmt.Errorf("unable to get repo image %q: %w", rejectedImageName, err)
-	} else if rejectedImgInfo != nil {
+	if rejected, err := storage.DockerRegistry.IsTagExist(ctx, rejectedImageName, docker_registry.WithCachedTags()); err != nil {
+		return nil, fmt.Errorf("unable to check rejected image record %q: %w", rejectedImageName, err)
+	} else if rejected {
 		logboek.Context(ctx).Info().LogF("Stage digest %s creation timestamp %d image is rejected: ignore stage image\n", stageID.Digest, stageID.CreationTs)
 		return nil, ErrStageRejected
 	}
