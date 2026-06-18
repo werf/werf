@@ -157,8 +157,7 @@ func (srv *RsyncServer) GetCopyCommand(ctx context.Context, importConfig *config
 	if importConfig.Owner != "" || importConfig.Group != "" {
 		rsyncChownOption = fmt.Sprintf("--chown=%s:%s", importConfig.Owner, importConfig.Group)
 	}
-
-	rsyncCommand := fmt.Sprintf("RSYNC_PASSWORD='%s' %s --archive --links --inplace --xattrs --one-file-system --keep-dirlinks %s", srv.AuthPassword, stapel.RsyncBinPath(), rsyncChownOption)
+	rsyncCommand := fmt.Sprintf("RSYNC_PASSWORD='%s' %s --archive --links --inplace --xattrs --keep-dirlinks %s", srv.AuthPassword, stapel.RsyncBinPath(), rsyncChownOption)
 	rsyncCommand += PrepareRsyncFilters(importConfig.Add, importConfig.IncludePaths, importConfig.ExcludePaths)
 
 	rsyncCommand += fmt.Sprintf(" %s$IMPORT_PATH_TRAILING_SLASH_OPTIONAL %s", rsyncImportPathSpec, importConfig.To)
@@ -175,9 +174,12 @@ func (srv *RsyncServer) GetCopyCommand(ctx context.Context, importConfig *config
 func PrepareRsyncFilters(add string, includePaths, excludePaths []string) string {
 	rsyncCommand := ""
 	if len(includePaths) != 0 {
+		// First, apply exclude filters to the specified paths.
 		rsyncCommand += PrepareRsyncExcludeFiltersForGlobs(add, excludePaths)
+		// Then include only the paths that are listed in include_paths.
 		rsyncCommand += PrepareRsyncIncludeFiltersForGlobs(add, includePaths)
 	} else if len(excludePaths) != 0 {
+		// When include_paths is empty, simply apply exclude filters.
 		rsyncCommand += PrepareRsyncExcludeFiltersForGlobs(add, excludePaths)
 	}
 	return rsyncCommand

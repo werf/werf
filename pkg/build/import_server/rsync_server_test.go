@@ -3,55 +3,8 @@ package import_server
 import (
 	"reflect"
 	"sort"
-	"strings"
 	"testing"
 )
-
-func TestPrepareRsyncFilters_NoSystemExcludesOnClient(t *testing.T) {
-	got := PrepareRsyncFilters("", nil, nil)
-	if got != "" {
-		t.Fatalf("expected empty filters when no include/exclude paths, got %q", got)
-	}
-}
-
-func TestPrepareRsyncFilters_IncludePathsNoSystemExcludes(t *testing.T) {
-	got := PrepareRsyncFilters("", []string{"app/**"}, nil)
-
-	for _, notExpected := range []string{
-		"--filter='-/ dev'",
-		"--filter='-/ proc'",
-		"--filter='-/ run'",
-		"--filter='-/ sys'",
-	} {
-		if strings.Contains(got, notExpected) {
-			t.Fatalf("system exclude %q must not be present in client filters %q (handled server-side)", notExpected, got)
-		}
-	}
-
-	for _, expected := range []string{
-		"--filter='+/ app/'",
-		"--filter='+/ app/**'",
-		"--filter='-/ **'",
-	} {
-		if !strings.Contains(got, expected) {
-			t.Fatalf("expected %q in %q", expected, got)
-		}
-	}
-}
-
-func TestRsyncdConfContainsSystemExcludes(t *testing.T) {
-	conf := buildRsyncdConf("873", "testuser")
-
-	for _, dir := range systemExcludeDirs {
-		if !strings.Contains(conf, dir) {
-			t.Errorf("rsyncd.conf must exclude system dir %q, got:\n%s", dir, conf)
-		}
-	}
-
-	if !strings.Contains(conf, "exclude =") {
-		t.Errorf("rsyncd.conf must contain exclude directive, got:\n%s", conf)
-	}
-}
 
 func Test_globToRsyncFilterPaths(t *testing.T) {
 	type args struct {

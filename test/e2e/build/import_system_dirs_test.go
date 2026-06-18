@@ -2,16 +2,15 @@ package e2e_build_test
 
 import (
 	"archive/tar"
-	"bytes"
-	"context"
 	"io"
-	"strings"
 
+	"github.com/google/go-containerregistry/pkg/name"
+	"github.com/google/go-containerregistry/pkg/v1/daemon"
+	"github.com/google/go-containerregistry/pkg/v1/mutate"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	"github.com/werf/werf/v2/test/pkg/report"
-	"github.com/werf/werf/v2/test/pkg/utils"
 	"github.com/werf/werf/v2/test/pkg/werf"
 )
 
@@ -32,9 +31,9 @@ var _ = Describe("Import system dirs", Label("e2e", "build", "import", "system-d
 			reportProject := report.NewProjectWithReport(werfProject)
 			_, buildReport := reportProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), nil)
 
-			By("checking system directories are not present in destination image layers")
+			By("checking image filesystem contents via gocontainerregistry")
 			imageName := buildReport.Images["destination"].DockerImageName
-			checkNoSystemDirsInImageLayers(ctx, imageName)
+			checkImageFilesystem(imageName)
 		},
 		Entry("Vanilla Docker", setupEnvOptions{
 			ContainerBackendMode:        "vanilla-docker",
@@ -44,48 +43,41 @@ var _ = Describe("Import system dirs", Label("e2e", "build", "import", "system-d
 	)
 })
 
-// checkNoSystemDirsInImageLayers inspects the raw image layers via docker save.
-// Unlike docker run, this avoids the Docker runtime mounting /proc, /sys, /dev
-// into the container — we check only what is actually stored in the image layers.
-func checkNoSystemDirsInImageLayers(ctx context.Context, imageName string) {
-	saveOut, err := utils.RunCommand(ctx, "/", "docker", "save", imageName)
-	Expect(err).NotTo(HaveOccurred(), "docker save failed")
+func checkImageFilesystem(imageName string) {
+	ref, err := name.ParseReference(imageName)
+	Expect(err).NotTo(HaveOccurred())
 
-	systemDirs := []string{"proc/", "sys/", "dev/", "run/"}
-	foundDirs := map[string]bool{}
+	img, err := daemon.Image(ref)
+	Expect(err).NotTo(HaveOccurred())
 
-	outerTar := tar.NewReader(bytes.NewReader(saveOut))
+	rc := mutate.Extract(img)
+	defer rc.Close()
+
+	var (
+		foundMarker bool
+		foundDirs   []string
+		systemDirs  = map[string]bool{"proc/": true, "sys/": true, "dev/": true, "run/": true}
+	)
+
+	tr := tar.NewReader(rc)
 	for {
-		hdr, err := outerTar.Next()
+		hdr, err := tr.Next()
 		if err == io.EOF {
 			break
 		}
 		Expect(err).NotTo(HaveOccurred())
 
-		// Each layer is a tar inside the outer tar named like "<hash>/layer.tar"
-		if !strings.HasSuffix(hdr.Name, "/layer.tar") {
-			continue
+		n := hdr.Name
+		if n == "etc/werf-test-marker" || n == "./etc/werf-test-marker" {
+			foundMarker = true
 		}
-
-		layerData, err := io.ReadAll(outerTar)
-		Expect(err).NotTo(HaveOccurred())
-
-		innerTar := tar.NewReader(bytes.NewReader(layerData))
-		for {
-			innerHdr, err := innerTar.Next()
-			if err == io.EOF {
-				break
-			}
-			Expect(err).NotTo(HaveOccurred())
-
-			for _, dir := range systemDirs {
-				if innerHdr.Name == dir || innerHdr.Name == "./"+dir {
-					foundDirs[strings.TrimSuffix(dir, "/")] = true
-				}
+		for dir := range systemDirs {
+			if n == dir || n == "./"+dir {
+				foundDirs = append(foundDirs, dir)
 			}
 		}
 	}
 
-	Expect(foundDirs).To(BeEmpty(),
-		"system directories must not exist in image layers: found %v", foundDirs)
+	Expect(foundMarker).To(BeTrue(), "expected /etc/werf-test-marker to exist in image")
+	Expect(foundDirs).To(BeEmpty(), "system dirs must not exist in image layers: %v", foundDirs)
 }
