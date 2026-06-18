@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.72.2](https://github.com/werf/werf/compare/v2.72.1...v2.72.2) (2026-06-18)
+
+
+### Bug Fixes
+
+* **build, stapel, import:** rsync chown "/sys" Read-only file system on to: / ([#7590](https://github.com/werf/werf/issues/7590)) ([b6dac9c](https://github.com/werf/werf/commit/b6dac9c9835e5a9d3745f865ee5ab3944828f6c4))
+
 ## [2.72.1](https://github.com/werf/werf/compare/v2.72.0...v2.72.1) (2026-06-18)
 
 
