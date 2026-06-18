@@ -21,7 +21,7 @@ import (
 
 const rsyncServerPort = "873"
 
-var systemExcludeDirs = []string{"/proc", "/sys", "/dev", "/run", "/.werf"}
+var systemExcludeDirs = []string{"/proc", "/sys", "/dev", "/run"}
 
 func buildRsyncdConf(port, authUser string) string {
 	return fmt.Sprintf(`pid file = /.werf/rsyncd.pid
