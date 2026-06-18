@@ -1,7 +1,11 @@
 package e2e_build_test
 
 import (
+	"archive/tar"
+	"bytes"
 	"context"
+	"io"
+	"strings"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -28,9 +32,9 @@ var _ = Describe("Import system dirs", Label("e2e", "build", "import", "system-d
 			reportProject := report.NewProjectWithReport(werfProject)
 			_, buildReport := reportProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), nil)
 
-			By("checking system directories are not present in destination image")
+			By("checking system directories are not present in destination image layers")
 			imageName := buildReport.Images["destination"].DockerImageName
-			checkNoSystemDirsInImage(ctx, imageName)
+			checkNoSystemDirsInImageLayers(ctx, imageName)
 		},
 		Entry("Vanilla Docker", setupEnvOptions{
 			ContainerBackendMode:        "vanilla-docker",
@@ -40,10 +44,48 @@ var _ = Describe("Import system dirs", Label("e2e", "build", "import", "system-d
 	)
 })
 
-func checkNoSystemDirsInImage(ctx context.Context, imageName string) {
-	for _, dir := range []string{"proc", "sys", "dev", "run"} {
-		out, err := utils.RunCommand(ctx, "/", "docker", "run", "--rm", "--entrypoint", "sh", imageName, "-c",
-			"test ! -e /"+dir)
-		Expect(err).NotTo(HaveOccurred(), "system dir /%s must not exist in image, output: %s", dir, string(out))
+// checkNoSystemDirsInImageLayers inspects the raw image layers via docker save.
+// Unlike docker run, this avoids the Docker runtime mounting /proc, /sys, /dev
+// into the container — we check only what is actually stored in the image layers.
+func checkNoSystemDirsInImageLayers(ctx context.Context, imageName string) {
+	saveOut, err := utils.RunCommand(ctx, "/", "docker", "save", imageName)
+	Expect(err).NotTo(HaveOccurred(), "docker save failed")
+
+	systemDirs := []string{"proc/", "sys/", "dev/", "run/"}
+	foundDirs := map[string]bool{}
+
+	outerTar := tar.NewReader(bytes.NewReader(saveOut))
+	for {
+		hdr, err := outerTar.Next()
+		if err == io.EOF {
+			break
+		}
+		Expect(err).NotTo(HaveOccurred())
+
+		// Each layer is a tar inside the outer tar named like "<hash>/layer.tar"
+		if !strings.HasSuffix(hdr.Name, "/layer.tar") {
+			continue
+		}
+
+		layerData, err := io.ReadAll(outerTar)
+		Expect(err).NotTo(HaveOccurred())
+
+		innerTar := tar.NewReader(bytes.NewReader(layerData))
+		for {
+			innerHdr, err := innerTar.Next()
+			if err == io.EOF {
+				break
+			}
+			Expect(err).NotTo(HaveOccurred())
+
+			for _, dir := range systemDirs {
+				if innerHdr.Name == dir || innerHdr.Name == "./"+dir {
+					foundDirs[strings.TrimSuffix(dir, "/")] = true
+				}
+			}
+		}
 	}
+
+	Expect(foundDirs).To(BeEmpty(),
+		"system directories must not exist in image layers: found %v", foundDirs)
 }
