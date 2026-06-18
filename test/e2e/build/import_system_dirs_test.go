@@ -3,6 +3,7 @@ package e2e_build_test
 import (
 	"archive/tar"
 	"io"
+	"strings"
 
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/google/go-containerregistry/pkg/v1/mutate"
@@ -79,6 +80,7 @@ func checkImageFilesystem(imageName string) {
 		foundMarker       bool
 		foundNestedMarker bool
 		foundDirs         []string
+		foundWerfPaths    []string
 		systemDirs        = map[string]bool{"proc/": true, "sys/": true, "dev/": true, "run/": true}
 	)
 
@@ -102,9 +104,13 @@ func checkImageFilesystem(imageName string) {
 				foundDirs = append(foundDirs, dir)
 			}
 		}
+		if n == ".werf/" || n == "./.werf/" || strings.HasPrefix(n, ".werf/") || strings.HasPrefix(n, "./.werf/") {
+			foundWerfPaths = append(foundWerfPaths, n)
+		}
 	}
 
 	Expect(foundMarker).To(BeTrue(), "expected /etc/werf-test-marker to exist in image")
 	Expect(foundNestedMarker).To(BeTrue(), "expected nested /var/run/werf-test-nested-marker to survive import (anchored excludes must not drop nested same-name dirs)")
 	Expect(foundDirs).To(BeEmpty(), "system dirs must not exist in image layers: %v", foundDirs)
+	Expect(foundWerfPaths).To(BeEmpty(), "werf import-server service dir /.werf (incl. rsyncd.secrets) must not leak into image layers: %v", foundWerfPaths)
 }

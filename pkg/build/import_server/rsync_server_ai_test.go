@@ -11,7 +11,7 @@ import (
 func TestAI_buildRsyncdConf(t *testing.T) {
 	conf := buildRsyncdConf("873", "werf-deadbeef")
 
-	require.Contains(t, conf, "exclude = /proc /sys /dev /run")
+	require.Contains(t, conf, "exclude = /proc /sys /dev /run /.werf")
 	assert.Contains(t, conf, "port = 873")
 	assert.Contains(t, conf, "auth users = werf-deadbeef")
 
