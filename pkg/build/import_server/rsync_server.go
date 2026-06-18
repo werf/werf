@@ -21,6 +21,8 @@ import (
 
 const rsyncServerPort = "873"
 
+var defaultRsyncExcludePaths = []string{"/proc", "/sys", "/dev", "/run"}
+
 type RsyncServer struct {
 	IPAddress              string
 	Port                   string
@@ -150,6 +152,7 @@ func (srv *RsyncServer) GetCopyCommand(ctx context.Context, importConfig *config
 	if importConfig.Owner != "" || importConfig.Group != "" {
 		rsyncChownOption = fmt.Sprintf("--chown=%s:%s", importConfig.Owner, importConfig.Group)
 	}
+
 	rsyncCommand := fmt.Sprintf("RSYNC_PASSWORD='%s' %s --archive --links --inplace --xattrs --one-file-system --keep-dirlinks %s", srv.AuthPassword, stapel.RsyncBinPath(), rsyncChownOption)
 	rsyncCommand += PrepareRsyncFilters(importConfig.Add, importConfig.IncludePaths, importConfig.ExcludePaths)
 
@@ -165,15 +168,18 @@ func (srv *RsyncServer) GetCopyCommand(ctx context.Context, importConfig *config
 }
 
 func PrepareRsyncFilters(add string, includePaths, excludePaths []string) string {
+	effectiveExcludePaths := append([]string{}, excludePaths...)
+	effectiveExcludePaths = append(effectiveExcludePaths, defaultRsyncExcludePaths...)
+
 	rsyncCommand := ""
 	if len(includePaths) != 0 {
 		// First, apply exclude filters to the specified paths.
-		rsyncCommand += PrepareRsyncExcludeFiltersForGlobs(add, excludePaths)
+		rsyncCommand += PrepareRsyncExcludeFiltersForGlobs(add, effectiveExcludePaths)
 		// Then include only the paths that are listed in include_paths.
 		rsyncCommand += PrepareRsyncIncludeFiltersForGlobs(add, includePaths)
-	} else if len(excludePaths) != 0 {
+	} else if len(effectiveExcludePaths) != 0 {
 		// When include_paths is empty, simply apply exclude filters.
-		rsyncCommand += PrepareRsyncExcludeFiltersForGlobs(add, excludePaths)
+		rsyncCommand += PrepareRsyncExcludeFiltersForGlobs(add, effectiveExcludePaths)
 	}
 	return rsyncCommand
 }

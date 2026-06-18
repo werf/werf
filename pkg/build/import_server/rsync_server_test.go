@@ -3,8 +3,62 @@ package import_server
 import (
 	"reflect"
 	"sort"
+	"strings"
 	"testing"
 )
+
+func TestPrepareRsyncFilters_DefaultSystemExcludes(t *testing.T) {
+	got := PrepareRsyncFilters("", nil, nil)
+
+	want := " --filter='-/ dev' --filter='-/ proc' --filter='-/ run' --filter='-/ sys'"
+	if got != want {
+		t.Fatalf("unexpected filters: got %q, want %q", got, want)
+	}
+}
+
+func TestPrepareRsyncFilters_IncludePathsKeepsSystemExcludes(t *testing.T) {
+	got := PrepareRsyncFilters("", []string{"app/**"}, nil)
+
+	for _, expected := range []string{
+		"--filter='-/ dev'",
+		"--filter='-/ proc'",
+		"--filter='-/ run'",
+		"--filter='-/ sys'",
+		"--filter='+/ app/'",
+		"--filter='+/ app/**'",
+		"--filter='+/ app/**/**'",
+		"--filter='-/ **'",
+	} {
+		if !strings.Contains(got, expected) {
+			t.Fatalf("expected %q in %q", expected, got)
+		}
+	}
+}
+
+func TestPrepareRsyncFilters_RootIncludeAllKeepsSystemExcludesFirst(t *testing.T) {
+	got := PrepareRsyncFilters("/", []string{"**/*"}, nil)
+
+	for _, expected := range []string{
+		"--filter='-/ dev'",
+		"--filter='-/ proc'",
+		"--filter='-/ run'",
+		"--filter='-/ sys'",
+		"--filter='+/ **/'",
+		"--filter='+/ **/*'",
+	} {
+		if !strings.Contains(got, expected) {
+			t.Fatalf("expected %q in %q", expected, got)
+		}
+	}
+
+	if !strings.Contains(got, "--filter='-/ **'") && !strings.Contains(got, "--filter='-/ /**'") {
+		t.Fatalf("expected root catch-all exclude in %q", got)
+	}
+
+	if strings.Index(got, "--filter='-/ proc'") > strings.Index(got, "--filter='+/ **/*'") {
+		t.Fatalf("exclude rules must be placed before include rules: %q", got)
+	}
+}
 
 func Test_globToRsyncFilterPaths(t *testing.T) {
 	type args struct {
