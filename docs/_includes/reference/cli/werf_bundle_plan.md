@@ -240,7 +240,7 @@ werf bundle plan [options]
             Also, can be defined with $WERF_SET_* (e.g. $WERF_SET_1=key1=val1,                      
             $WERF_SET_2=key2=val2)
       --set-docker-config-json-value=false
-            Shortcut to set current docker config into the .Values.dockerconfigjson
+            Shortcut to set current docker config into the .Values.global.werf.dockerconfigjson
       --set-file=[]
             Set values from respective files specified via the command line (can specify multiple   
             or separate values with commas: key1=path1,key2=path2).

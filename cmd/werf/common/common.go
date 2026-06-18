@@ -75,7 +75,7 @@ func GetLongCommandDescription(text string) string {
 
 func SetupSetDockerConfigJsonValue(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.SetDockerConfigJsonValue = new(bool)
-	cmd.Flags().BoolVarP(cmdData.SetDockerConfigJsonValue, "set-docker-config-json-value", "", util.GetBoolEnvironmentDefaultFalse("WERF_SET_DOCKER_CONFIG_JSON_VALUE"), "Shortcut to set current docker config into the .Values.dockerconfigjson")
+	cmd.Flags().BoolVarP(cmdData.SetDockerConfigJsonValue, "set-docker-config-json-value", "", util.GetBoolEnvironmentDefaultFalse("WERF_SET_DOCKER_CONFIG_JSON_VALUE"), "Shortcut to set current docker config into the .Values.global.werf.dockerconfigjson")
 }
 
 func SetupGitWorkTree(cmdData *CmdData, cmd *cobra.Command) {
