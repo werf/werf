@@ -7,6 +7,7 @@ from: alpine
 shell:
   install:
   - echo "werf-test-no-system-dirs" > /etc/werf-test-marker
+  - mkdir -p /var/run && echo "werf-test-nested-run" > /var/run/werf-test-nested-marker
 ---
 image: destination
 from: scratch
