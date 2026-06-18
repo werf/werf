@@ -1,10 +1,7 @@
 package e2e_build_test
 
 import (
-	"archive/tar"
-	"bytes"
 	"context"
-	"io"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -44,35 +41,9 @@ var _ = Describe("Import system dirs", Label("e2e", "build", "import", "system-d
 })
 
 func checkNoSystemDirsInImage(ctx context.Context, imageName string) {
-	containerName := "werf-test-system-dirs-check-" + utils.GetRandomString(8)
-
-	createOut, err := utils.RunCommand(ctx, "/", "docker", "create", "--name", containerName, imageName, "sh")
-	Expect(err).NotTo(HaveOccurred(), "docker create failed: %s", string(createOut))
-
-	defer func() {
-		utils.RunCommand(ctx, "/", "docker", "rm", "-f", containerName) //nolint:errcheck
-	}()
-
-	exportOut, err := utils.RunCommand(ctx, "/", "docker", "export", containerName)
-	Expect(err).NotTo(HaveOccurred(), "docker export failed")
-
-	systemDirs := []string{"proc", "sys", "dev", "run"}
-	foundDirs := map[string]bool{}
-
-	tr := tar.NewReader(bytes.NewReader(exportOut))
-	for {
-		hdr, err := tr.Next()
-		if err == io.EOF {
-			break
-		}
-		Expect(err).NotTo(HaveOccurred())
-
-		for _, dir := range systemDirs {
-			if hdr.Name == dir+"/" || hdr.Name == dir {
-				foundDirs[dir] = true
-			}
-		}
+	for _, dir := range []string{"proc", "sys", "dev", "run"} {
+		out, err := utils.RunCommand(ctx, "/", "docker", "run", "--rm", "--entrypoint", "sh", imageName, "-c",
+			"test ! -e /"+dir)
+		Expect(err).NotTo(HaveOccurred(), "system dir /%s must not exist in image, output: %s", dir, string(out))
 	}
-
-	Expect(foundDirs).To(BeEmpty(), "system directories must not be imported: found %v", foundDirs)
 }
