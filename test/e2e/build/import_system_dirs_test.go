@@ -46,7 +46,7 @@ var _ = Describe("Import system dirs", Label("e2e", "build", "import", "system-d
 func checkNoSystemDirsInImage(ctx context.Context, imageName string) {
 	containerName := "werf-test-system-dirs-check-" + utils.GetRandomString(8)
 
-	createOut, err := utils.RunCommand(ctx, "/", "docker", "create", "--name", containerName, "--entrypoint", "", imageName)
+	createOut, err := utils.RunCommand(ctx, "/", "docker", "create", "--name", containerName, imageName, "sh")
 	Expect(err).NotTo(HaveOccurred(), "docker create failed: %s", string(createOut))
 
 	defer func() {
