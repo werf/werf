@@ -1,0 +1,17 @@
+project: werf-test-e2e-build-import-no-system-dirs
+configVersion: 1
+
+---
+image: source
+from: alpine
+
+---
+image: destination
+from: scratch
+import:
+- image: source
+  add: /
+  to: /
+  includePaths:
+  - "**/*"
+  before: install

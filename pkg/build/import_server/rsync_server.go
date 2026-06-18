@@ -21,7 +21,27 @@ import (
 
 const rsyncServerPort = "873"
 
-var defaultRsyncExcludePaths = []string{"/proc", "/sys", "/dev", "/run"}
+var systemExcludeDirs = []string{"proc", "sys", "dev", "run"}
+
+func buildRsyncdConf(port, authUser string) string {
+	return fmt.Sprintf(`pid file = /.werf/rsyncd.pid
+lock file = /.werf/rsyncd.lock
+log file = /.werf/rsyncd.log
+uid = 0
+gid = 0
+port = %s
+
+[import]
+path = /
+comment = Image files to import
+read only = true
+timeout = 300
+auth users = %s
+secrets file = /.werf/rsyncd.secrets
+strict modes = false
+exclude = %s
+`, port, authUser, strings.Join(systemExcludeDirs, " "))
+}
 
 type RsyncServer struct {
 	IPAddress              string
@@ -52,22 +72,7 @@ func RunRsyncServer(ctx context.Context, dockerImageName, tmpDir, targetPlatform
 	}
 
 	rsyncConfPath := path.Join(tmpDir, "rsyncd.conf")
-	if err := ioutil.WriteFile(rsyncConfPath, []byte(fmt.Sprintf(`pid file = /.werf/rsyncd.pid
-lock file = /.werf/rsyncd.lock
-log file = /.werf/rsyncd.log
-uid = 0
-gid = 0
-port = %s
-
-[import]
-path = /
-comment = Image files to import
-read only = true
-timeout = 300
-auth users = %s
-secrets file = /.werf/rsyncd.secrets
-strict modes = false
-`, rsyncServerPort, srv.AuthUser)), 0o644); err != nil {
+	if err := ioutil.WriteFile(rsyncConfPath, []byte(buildRsyncdConf(rsyncServerPort, srv.AuthUser)), 0o644); err != nil {
 		return nil, fmt.Errorf("unable to write %s: %w", rsyncConfPath, err)
 	}
 
@@ -168,18 +173,12 @@ func (srv *RsyncServer) GetCopyCommand(ctx context.Context, importConfig *config
 }
 
 func PrepareRsyncFilters(add string, includePaths, excludePaths []string) string {
-	effectiveExcludePaths := append([]string{}, excludePaths...)
-	effectiveExcludePaths = append(effectiveExcludePaths, defaultRsyncExcludePaths...)
-
 	rsyncCommand := ""
 	if len(includePaths) != 0 {
-		// First, apply exclude filters to the specified paths.
-		rsyncCommand += PrepareRsyncExcludeFiltersForGlobs(add, effectiveExcludePaths)
-		// Then include only the paths that are listed in include_paths.
+		rsyncCommand += PrepareRsyncExcludeFiltersForGlobs(add, excludePaths)
 		rsyncCommand += PrepareRsyncIncludeFiltersForGlobs(add, includePaths)
-	} else if len(effectiveExcludePaths) != 0 {
-		// When include_paths is empty, simply apply exclude filters.
-		rsyncCommand += PrepareRsyncExcludeFiltersForGlobs(add, effectiveExcludePaths)
+	} else if len(excludePaths) != 0 {
+		rsyncCommand += PrepareRsyncExcludeFiltersForGlobs(add, excludePaths)
 	}
 	return rsyncCommand
 }

@@ -7,26 +7,30 @@ import (
 	"testing"
 )
 
-func TestPrepareRsyncFilters_DefaultSystemExcludes(t *testing.T) {
+func TestPrepareRsyncFilters_NoSystemExcludesOnClient(t *testing.T) {
 	got := PrepareRsyncFilters("", nil, nil)
-
-	want := " --filter='-/ dev' --filter='-/ proc' --filter='-/ run' --filter='-/ sys'"
-	if got != want {
-		t.Fatalf("unexpected filters: got %q, want %q", got, want)
+	if got != "" {
+		t.Fatalf("expected empty filters when no include/exclude paths, got %q", got)
 	}
 }
 
-func TestPrepareRsyncFilters_IncludePathsKeepsSystemExcludes(t *testing.T) {
+func TestPrepareRsyncFilters_IncludePathsNoSystemExcludes(t *testing.T) {
 	got := PrepareRsyncFilters("", []string{"app/**"}, nil)
 
-	for _, expected := range []string{
+	for _, notExpected := range []string{
 		"--filter='-/ dev'",
 		"--filter='-/ proc'",
 		"--filter='-/ run'",
 		"--filter='-/ sys'",
+	} {
+		if strings.Contains(got, notExpected) {
+			t.Fatalf("system exclude %q must not be present in client filters %q (handled server-side)", notExpected, got)
+		}
+	}
+
+	for _, expected := range []string{
 		"--filter='+/ app/'",
 		"--filter='+/ app/**'",
-		"--filter='+/ app/**/**'",
 		"--filter='-/ **'",
 	} {
 		if !strings.Contains(got, expected) {
@@ -35,28 +39,17 @@ func TestPrepareRsyncFilters_IncludePathsKeepsSystemExcludes(t *testing.T) {
 	}
 }
 
-func TestPrepareRsyncFilters_RootIncludeAllKeepsSystemExcludesFirst(t *testing.T) {
-	got := PrepareRsyncFilters("/", []string{"**/*"}, nil)
+func TestRsyncdConfContainsSystemExcludes(t *testing.T) {
+	conf := buildRsyncdConf("873", "testuser")
 
-	for _, expected := range []string{
-		"--filter='-/ dev'",
-		"--filter='-/ proc'",
-		"--filter='-/ run'",
-		"--filter='-/ sys'",
-		"--filter='+/ **/'",
-		"--filter='+/ **/*'",
-	} {
-		if !strings.Contains(got, expected) {
-			t.Fatalf("expected %q in %q", expected, got)
+	for _, dir := range systemExcludeDirs {
+		if !strings.Contains(conf, dir) {
+			t.Errorf("rsyncd.conf must exclude system dir %q, got:\n%s", dir, conf)
 		}
 	}
 
-	if !strings.Contains(got, "--filter='-/ **'") && !strings.Contains(got, "--filter='-/ /**'") {
-		t.Fatalf("expected root catch-all exclude in %q", got)
-	}
-
-	if strings.Index(got, "--filter='-/ proc'") > strings.Index(got, "--filter='+/ **/*'") {
-		t.Fatalf("exclude rules must be placed before include rules: %q", got)
+	if !strings.Contains(conf, "exclude =") {
+		t.Errorf("rsyncd.conf must contain exclude directive, got:\n%s", conf)
 	}
 }
 
