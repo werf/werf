@@ -174,7 +174,7 @@ The documentation section about ["Saving the result of work"](#generate-keep-lis
 By default, werf uses the [_Docker Registry API_](https://docs.docker.com/registry/spec/api/) for deleting tags. The user must be authenticated and have a sufficient set of permissions. If the _Docker Registry API_ isn't supported and tags are deleted using the native API, then some additional container registry-specific actions are required on the user's part.
 
 |                             |                             |
-|-----------------------------|:---------------------------:|
+| --------------------------- | :-------------------------: |
 | _AWS ECR_                   |     [***ok**](#aws-ecr)     |
 | _Azure CR_                  |    [***ok**](#azure-cr)     |
 | _Default_                   |           **ok**            |
@@ -238,7 +238,9 @@ You can use the `--repo-github-token` option or the corresponding environment va
 
 werf uses the _GitLab container registry API_ or _Docker Registry API_ (depending on the GitLab version) to delete tags.
 
-> The privileges of the temporary CI job token ($CI_JOB_TOKEN) are not sufficient to delete tags. Therefore, the user must create a dedicated token in the Access Token section, select api in the Scope section, and ensure the role of Maintainer or Owner is assigned before using it for authorization
+> You can use the temporary CI job token (`$CI_JOB_TOKEN`) to delete tags if the user who started the job has sufficient permissions in the project and the project Job token permissions allow the required access.
+>
+> If these conditions are not met (for example, because of cross-project restrictions or an insufficient role), use a dedicated Project/Personal Access Token with the `api` scope.
 
 ## Saving the result of work
 
