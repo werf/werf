@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - "2"
+      - "1.2"
     paths:
       - docs/**
   repository_dispatch:
@@ -23,7 +24,7 @@ on:
 
 jobs:
   deploy-prod-ru:
-    if: ${{ (github.event_name == 'push') || github.event_name == 'repository_dispatch' || (github.event_name == 'workflow_dispatch' && (github.ref_name == 'main' || github.ref_name == '2') && (github.event.inputs.targetCluster == 'all' || github.event.inputs.targetCluster == 'ru')) }}
+    if: ${{ (github.event_name == 'push') || github.event_name == 'repository_dispatch' || (github.event_name == 'workflow_dispatch' && (github.ref_name == 'main' || github.ref_name == '2' || github.ref_name == '1.2') && (github.event.inputs.targetCluster == 'all' || github.event.inputs.targetCluster == 'ru')) }}
     permissions:
       contents: read
       id-token: write
@@ -35,7 +36,7 @@ jobs:
       kubeConfigSecretPath: projects/data/b454e6aa-39f0-45f4-aa7c-a9465ab154cb/KUBE_CONFIG_RU
 
   deploy-prod-eu:
-    if: ${{ (github.event_name == 'push') || github.event_name == 'repository_dispatch' || (github.event_name == 'workflow_dispatch' && (github.ref_name == 'main' || github.ref_name == '2') && (github.event.inputs.targetCluster == 'all' || github.event.inputs.targetCluster == 'eu')) }}
+    if: ${{ (github.event_name == 'push') || github.event_name == 'repository_dispatch' || (github.event_name == 'workflow_dispatch' && (github.ref_name == 'main' || github.ref_name == '2' || github.ref_name == '1.2') && (github.event.inputs.targetCluster == 'all' || github.event.inputs.targetCluster == 'eu')) }}
     permissions:
       contents: read
       id-token: write

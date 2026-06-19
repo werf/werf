@@ -2,9 +2,11 @@
 {{- if eq $.Values.werf.env "test" }}
 {{- $currentRef := splitList "/" $.Values.global.github_ref | last }}
 {{- if eq $currentRef "main" }}
-{{- $refs = concat $refs (list "v2" "v1.2") }}
-{{- else if hasPrefix "pr-" $currentRef }}
-{{- $refs = concat $refs (list "main" "v2" "v1.2") }}
+{{- $refs = concat $refs (list "v2") }}
+{{- else if eq $currentRef "2" }}
+{{- $refs = concat $refs (list "v2") }}
+{{- else if eq $currentRef "1.2" }}
+{{- $refs = concat $refs (list "v1.2") }}
 {{- end }}
 {{- end }}
 
