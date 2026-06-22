@@ -25,7 +25,7 @@ jobs:
       matrix:
         os:
           - ${{ inputs.linuxAmd64Runner }}
-        kubeVersion: [1.29.14, 1.31.6]
+        kubeVersion: [1.34.8, 1.36.1]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     env:
