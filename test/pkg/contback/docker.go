@@ -48,6 +48,10 @@ func (r *DockerBackend) Pull(ctx context.Context, image string) {
 }
 
 func (r *DockerBackend) GetImageInspect(ctx context.Context, image string) DockerImageInspect {
+	if !r.imageExistsLocally(ctx, image) {
+		r.Pull(ctx, image)
+	}
+
 	args := r.CommonCliArgs
 	args = append(args, "image", "inspect", image)
 	inspectRaw, err := utils.RunCommand(ctx, "/", "docker", args...)
@@ -59,6 +63,13 @@ func (r *DockerBackend) GetImageInspect(ctx context.Context, image string) Docke
 	Expect(len(dockerInspect)).To(Equal(1))
 
 	return dockerInspect[0]
+}
+
+func (r *DockerBackend) imageExistsLocally(ctx context.Context, image string) bool {
+	args := r.CommonCliArgs
+	args = append(args, "image", "inspect", image)
+	_, err := utils.RunCommand(ctx, "/", "docker", args...)
+	return err == nil
 }
 
 type DockerInspect []DockerImageInspect
