@@ -15,11 +15,48 @@ jobs:
   cleanup:
     if: github.repository == 'werf/werf'
     runs-on: prod-github-runner-0
+    permissions:
+      id-token: write
+      contents: read
+      packages: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
+
+      - name: Authenticate in Seguro
+        id: vault
+        uses: hashicorp/vault-action@v4
+        with:
+          url: https://seguro.flant.com
+          path: github
+          role: werf-web
+          method: jwt
+          jwtGithubAudience: github-access-aud
+          exportToken: true
+
+      - name: Read and normalize kubeconfig from Bob
+        id: kubeconfig
+        run: |
+          set -euo pipefail
+
+          response="$(curl -fsSL -H "X-Vault-Token: $VAULT_TOKEN" "https://seguro.flant.com/v1/projects/data/b454e6aa-39f0-45f4-aa7c-a9465ab154cb/KUBE_CONFIG_RU")"
+          secret_value="$(printf '%s' "$response" | jq -r '.data.data["kube.config"]')"
+
+          if [[ -z "$secret_value" || "$secret_value" == "null" ]]; then
+            echo "Bob kubeconfig secret is empty" >&2
+            exit 1
+          fi
+
+          if printf '%s' "$secret_value" | base64 -d >/tmp/docs-kubeconfig-decoded 2>/dev/null && grep -q '^apiVersion:' /tmp/docs-kubeconfig-decoded; then
+            kubeconfig_base64="$secret_value"
+          else
+            kubeconfig_base64="$(printf '%s' "$secret_value" | base64 | tr -d '\n')"
+          fi
+
+          echo "::add-mask::$kubeconfig_base64"
+          echo "kubeconfig_base64=$kubeconfig_base64" >> "$GITHUB_OUTPUT"
 
       - name: Install werf
         uses: werf/actions/install@v2
@@ -31,7 +68,9 @@ jobs:
           . $(werf ci-env github --as-file)
           werf cleanup
         env:
+          WERF_NAMESPACE: werfio-production
           WERF_DIR: docs
+          WERF_REPO: ghcr.io/${{ github.repository_owner }}/werfio
+          WERF_ENV: production
+          WERF_KUBE_CONFIG_BASE64: ${{ steps.kubeconfig.outputs.kubeconfig_base64 }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          WERF_REPO_GITHUB_TOKEN: ${{ secrets.WERF_IN_IMAGE_CLEANUP_GHCR }}
-          WERF_KUBE_CONFIG_BASE64: ${{ secrets.KUBECONFIG_BASE64_DEV }}
