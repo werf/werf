@@ -12,7 +12,6 @@ FROM registry.werf.io/base/ubuntu:22.04 AS result
 
 ARG CHANGED_ARG="should_be_changed"
 ARG BASE_STAPEL_SHELL_IMAGE_NAME="no_such_image"
-ARG BASE_STAPEL_SHELL_IMAGE_ID="no_such_image"
 ARG BASE_STAPEL_SHELL_IMAGE_REPO="no_such_image"
 ARG BASE_STAPEL_SHELL_IMAGE_TAG="no_such_image"
 
@@ -31,7 +30,6 @@ RUN touch /created-by-run-state0
 RUN mkdir -p /volume10/should-exist-in-volume
 
 RUN echo ${BASE_STAPEL_SHELL_IMAGE_NAME} >> base_image_data.txt
-RUN echo ${BASE_STAPEL_SHELL_IMAGE_ID} >> base_image_data.txt
 RUN echo ${BASE_STAPEL_SHELL_IMAGE_REPO} >> base_image_data.txt
 RUN echo ${BASE_STAPEL_SHELL_IMAGE_TAG} >> base_image_data.txt
 

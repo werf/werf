@@ -20,8 +20,6 @@ dependencies:
   imports:
   - type: ImageName
     targetBuildArg: BASE_STAPEL_SHELL_IMAGE_NAME
-  - type: ImageID
-    targetBuildArg: BASE_STAPEL_SHELL_IMAGE_ID
   - type: ImageRepo
     targetBuildArg: BASE_STAPEL_SHELL_IMAGE_REPO
   - type: ImageTag
