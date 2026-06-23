@@ -94,7 +94,7 @@ tasks:
     desc: "Generate embedded stapel image tarballs for linux/amd64 and linux/arm64."
     run: once
     cmds:
-      - STAPEL_VERSION="$(sed -n 's/.*VERSION *= *"\(.*\)"/\1/p' pkg/stapel/stapel.go | head -1)" bash scripts/stapel/build-embed.sh
+      - env -u GOOS -u GOARCH STAPEL_VERSION="$(sed -n 's/.*VERSION *= *"\(.*\)"/\1/p' pkg/stapel/stapel.go | head -1)" go run ./cmd/embed-stapel
 
   _build:cgo:dev: &build_cgo_dev
     deps:
