@@ -69,21 +69,9 @@ func loadEmbeddedImage(ctx context.Context, targetPlatform string) error {
 		return fmt.Errorf("no embedded stapel image for platform %q", targetPlatform)
 	}
 
-	gzReader, err := gzip.NewReader(bytes.NewReader(img.gzipData))
+	tarData, err := decompressAndVerify(img.gzipData, img.expectedSha256)
 	if err != nil {
-		return fmt.Errorf("init gzip reader for embedded stapel image: %w", err)
-	}
-	defer gzReader.Close()
-
-	tarData, err := io.ReadAll(gzReader)
-	if err != nil {
-		return fmt.Errorf("decompress embedded stapel image: %w", err)
-	}
-
-	sum := sha256.Sum256(tarData)
-	actualSha256 := hex.EncodeToString(sum[:])
-	if actualSha256 != img.expectedSha256 {
-		return fmt.Errorf("embedded stapel image integrity check failed: expected sha256 %s, got %s", img.expectedSha256, actualSha256)
+		return err
 	}
 
 	if _, err := docker.CliLoadFromStream(ctx, bytes.NewReader(tarData)); err != nil {
@@ -91,4 +79,25 @@ func loadEmbeddedImage(ctx context.Context, targetPlatform string) error {
 	}
 
 	return nil
+}
+
+func decompressAndVerify(gzipData []byte, expectedSha256 string) ([]byte, error) {
+	gzReader, err := gzip.NewReader(bytes.NewReader(gzipData))
+	if err != nil {
+		return nil, fmt.Errorf("init gzip reader for embedded stapel image: %w", err)
+	}
+	defer gzReader.Close()
+
+	tarData, err := io.ReadAll(gzReader)
+	if err != nil {
+		return nil, fmt.Errorf("decompress embedded stapel image: %w", err)
+	}
+
+	sum := sha256.Sum256(tarData)
+	actualSha256 := hex.EncodeToString(sum[:])
+	if actualSha256 != expectedSha256 {
+		return nil, fmt.Errorf("embedded stapel image integrity check failed: expected sha256 %s, got %s", expectedSha256, actualSha256)
+	}
+
+	return tarData, nil
 }
