@@ -1276,6 +1276,10 @@ func GetRequireBuiltImages(cmdData *CmdData) bool {
 	return option.PtrValueOrDefault(cmdData.RequireBuiltImages, false)
 }
 
+func GetCheckBuiltImages(cmdData *CmdData) bool {
+	return option.PtrValueOrDefault(cmdData.CheckBuiltImages, false) || option.PtrValueOrDefault(cmdData.LegacyCheckBuiltImages, false)
+}
+
 func GetAddLabels(cmdData *CmdData) []string {
 	return append(util.PredefinedValuesByEnvNamePrefix("WERF_ADD_LABEL_"), cmdData.ExtraLabels...)
 }
