@@ -337,7 +337,7 @@ func (backend *BuildahBackend) applyDependenciesImports(ctx context.Context, con
 
 			absFrom := filepath.Join(dep.RootMount, imp.FromPath)
 			absTo := filepath.Join(container.RootMount, imp.ToPath)
-			if absTo, err = normalizeDependencyImportDestination(absFrom, absTo); err != nil {
+			if absTo, err = normalizeDependencyImportDestination(container.RootMount, absFrom, absTo); err != nil {
 				return fmt.Errorf("normalize destination path for dependency import from %q to %q: %w", imp.FromPath, imp.ToPath, err)
 			}
 
@@ -384,7 +384,12 @@ func (backend *BuildahBackend) applyDependenciesImports(ctx context.Context, con
 	return nil
 }
 
-func normalizeDependencyImportDestination(absFrom, absTo string) (string, error) {
+func normalizeDependencyImportDestination(rootMount, absFrom, absTo string) (string, error) {
+	absTo, err := resolveDestSymlinkUnderRoot(rootMount, absTo)
+	if err != nil {
+		return "", err
+	}
+
 	fileInfo, err := os.Lstat(absFrom)
 	if err != nil {
 		return "", fmt.Errorf("lstat source path %q: %w", absFrom, err)
@@ -409,6 +414,54 @@ func normalizeDependencyImportDestination(absFrom, absTo string) (string, error)
 	default:
 		return absTo, nil
 	}
+}
+
+// resolveDestSymlinkUnderRoot resolves absTo when it is a symlink to a
+// directory, re-anchoring a relative symlink target under rootMount instead of
+// the host filesystem root. This keeps directory imports into a symlinked
+// destination (e.g. /bin -> usr/bin) writing into the real target directory
+// inside the container mount rather than escaping to the host working
+// directory.
+func resolveDestSymlinkUnderRoot(rootMount, absTo string) (string, error) {
+	linkInfo, err := os.Lstat(absTo)
+	if errors.Is(err, os.ErrNotExist) {
+		return absTo, nil
+	} else if err != nil {
+		return "", fmt.Errorf("lstat destination path %q: %w", absTo, err)
+	}
+
+	if linkInfo.Mode()&os.ModeSymlink == 0 {
+		return absTo, nil
+	}
+
+	derefInfo, err := os.Stat(absTo)
+	if errors.Is(err, os.ErrNotExist) {
+		return absTo, nil
+	} else if err != nil {
+		return "", fmt.Errorf("stat destination path %q: %w", absTo, err)
+	}
+	if !derefInfo.IsDir() {
+		return absTo, nil
+	}
+
+	target, err := os.Readlink(absTo)
+	if err != nil {
+		return "", fmt.Errorf("readlink destination path %q: %w", absTo, err)
+	}
+
+	var resolved string
+	if filepath.IsAbs(target) {
+		resolved = filepath.Join(rootMount, target)
+	} else {
+		resolved = filepath.Join(filepath.Dir(absTo), target)
+	}
+
+	rel, err := filepath.Rel(rootMount, resolved)
+	if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+		return "", fmt.Errorf("resolved destination %q escapes root mount %q", resolved, rootMount)
+	}
+
+	return resolved, nil
 }
 
 func (backend *BuildahBackend) BuildDockerfileStage(ctx context.Context, baseImage string, opts BuildDockerfileStageOptions, instructions ...InstructionInterface) (string, error) {
