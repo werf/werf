@@ -2,10 +2,12 @@ package image
 
 import (
 	"context"
+	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/werf/common-go/pkg/util"
 	common_image "github.com/werf/werf/v2/pkg/image"
 )
 
@@ -44,4 +46,30 @@ func TestAI_NewMultiplatformImage_DeterministicDigestRegardlessOfPlatformOrder(t
 	second := NewMultiplatformImage("app", []*Image{arm, amd}, 0, 1)
 
 	require.Equal(t, first.GetDigest(), second.GetDigest())
+}
+
+func TestAI_NewMultiplatformImage_DigestOrdersByPlatformName(t *testing.T) {
+	amd := newTestImage(t, "linux/amd64", "app")
+	amd.SetContentTagDesc(&common_image.StageDesc{
+		StageID: common_image.NewStageID("615fdigest", 1),
+		Info:    &common_image.Info{},
+	})
+
+	arm := newTestImage(t, "linux/arm64", "app")
+	arm.SetContentTagDesc(&common_image.StageDesc{
+		StageID: common_image.NewStageID("abcbdigest", 1),
+		Info:    &common_image.Info{},
+	})
+
+	img := NewMultiplatformImage("app", []*Image{amd, arm}, 0, 1)
+
+	platformTags := map[string]string{
+		amd.TargetPlatform: amd.GetContentTagDesc().StageID.String(),
+		arm.TargetPlatform: arm.GetContentTagDesc().StageID.String(),
+	}
+	platforms := util.MapKeys(platformTags)
+	sort.Strings(platforms)
+	ordered := util.MapFuncToSlice(platforms, func(p string) string { return platformTags[p] })
+
+	require.Equal(t, util.Sha3_224Hash(ordered...), img.GetDigest())
 }

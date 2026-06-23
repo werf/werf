@@ -40,14 +40,19 @@ func NewMultiplatformImage(name string, images []*Image, logImageIndex, logImage
 		logImageTotal: logImageTotal,
 	}
 
-	contentDeps := util.MapFuncToSlice(images, func(img *Image) string {
+	sortedImages := make([]*Image, len(images))
+	copy(sortedImages, images)
+	sort.Slice(sortedImages, func(i, j int) bool {
+		return sortedImages[i].TargetPlatform < sortedImages[j].TargetPlatform
+	})
+
+	contentDeps := util.MapFuncToSlice(sortedImages, func(img *Image) string {
 		desc := img.GetContentTagDesc()
 		if desc == nil {
 			panic(fmt.Sprintf("content tag descriptor is not set for image %q platform %q", img.Name, img.TargetPlatform))
 		}
 		return desc.StageID.String()
 	})
-	sort.Strings(contentDeps)
 	img.calculatedDigest = util.Sha3_224Hash(contentDeps...)
 	img.stageID = *common_image.NewStageID(img.GetDigest(), 0)
 
