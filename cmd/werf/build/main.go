@@ -218,7 +218,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 	defer conveyorWithRetry.Terminate()
 
 	if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
-		if common.GetRequireBuiltImages(&commonCmdData) {
+		if common.GetCheckBuiltImages(&commonCmdData) {
 			shouldBeBuiltOptions, err := common.GetShouldBeBuiltOptions(&commonCmdData, werfConfig, imagesToProcess)
 			if err != nil {
 				return err
