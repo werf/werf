@@ -90,7 +90,15 @@ tasks:
       - task: format
       - task: _build-and-lint
 
+  stapel:embed:
+    desc: "Generate embedded stapel image tarballs for linux/amd64 and linux/arm64."
+    run: once
+    cmds:
+      - STAPEL_VERSION="$(sed -n 's/.*VERSION *= *"\(.*\)"/\1/p' pkg/stapel/stapel.go | head -1)" bash scripts/stapel/build-embed.sh
+
   _build:cgo:dev: &build_cgo_dev
+    deps:
+      - stapel:embed
     cmds:
       - go build {{if eq .raceDetectorEnabled "true" }}-race{{end}} -o "{{.outputDir | default (printf "./build/%s-%s" .targetOS .targetArch)}}/werf{{if (eq .targetOS "windows")}}.exe{{end}}"
         -compiler gc -ldflags="{{.cgoLDFlags}}" -tags="{{.cgoTags}}" {{.extraGoBuildArgs}} {{.CLI_ARGS}} {{.pkg | default .package}}
@@ -109,6 +117,8 @@ tasks:
         -compiler gc -ldflags="{{.cgoLDFlags}}" -tags="{{.cgoTags}}" {{.extraGoBuildArgs}} {{.CLI_ARGS}} {{.pkg | default .package}}
 
   _build:go:dev: &build_go_dev
+    deps:
+      - stapel:embed
     cmds:
       - go build {{if eq .raceDetectorEnabled "true" }}-race{{end}} -o "{{.outputDir | default (printf "./build/%s-%s" .targetOS .targetArch)}}/werf{{if (eq .targetOS "windows")}}.exe{{end}}"
         -ldflags="{{.goLDFlags}}" -tags="{{.goTags}}" {{.extraGoBuildArgs}} {{.CLI_ARGS}} {{.pkg | default .package}}
