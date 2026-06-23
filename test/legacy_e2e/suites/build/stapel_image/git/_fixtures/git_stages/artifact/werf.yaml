@@ -12,6 +12,5 @@ import:
 image: artifact
 final: false
 from: registry.werf.io/base/ubuntu:22.04
-disableGitAfterPatch: true
 git:
 - to: /app

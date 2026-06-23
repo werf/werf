@@ -40,7 +40,7 @@ var _ = Describe("cleanup command", func() {
 					utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "push", "--set-upstream", "origin", branchName)
 
 					countAfterFirstBuild := StagesCount(ctx)
-					Expect(countAfterFirstBuild).Should(Equal(4))
+					Expect(countAfterFirstBuild).Should(Equal(6))
 
 					utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "commit", "--allow-empty", "-m", "test")
 
@@ -50,7 +50,7 @@ var _ = Describe("cleanup command", func() {
 
 					countAfterSecondBuild := StagesCount(ctx)
 					if SuiteData.TestImplementation != docker_registry.QuayImplementationName {
-						Expect(countAfterSecondBuild).Should(Equal(8))
+						Expect(countAfterSecondBuild).Should(Equal(12))
 					}
 
 					utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "cleanup")
@@ -74,7 +74,7 @@ var _ = Describe("cleanup command", func() {
 					utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "push", "--set-upstream", "origin", branchName)
 
 					countAfterFirstBuild := StagesCount(ctx)
-					Expect(countAfterFirstBuild).Should(Equal(4))
+					Expect(countAfterFirstBuild).Should(Equal(6))
 
 					utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "commit", "--allow-empty", "-m", "test")
 
@@ -97,7 +97,7 @@ var _ = Describe("cleanup command", func() {
 					utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "push", "--set-upstream", "origin", branchName)
 
 					count := StagesCount(ctx)
-					Expect(count).Should(Equal(4))
+					Expect(count).Should(Equal(6))
 
 					utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "cleanup")
 
