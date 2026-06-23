@@ -2,6 +2,7 @@ package cleaning
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/cleaning/stage_manager"
@@ -56,6 +57,12 @@ func (m *purgeManager) run(ctx context.Context) error {
 	}
 
 	if err := m.deleteCustomTags(ctx); err != nil {
+		return err
+	}
+
+	if err := logboek.Context(ctx).Default().LogProcess("Deleting rejected stages").DoError(func() error {
+		return m.purgeRejectedStages(ctx)
+	}); err != nil {
 		return err
 	}
 
@@ -146,5 +153,17 @@ func deleteCustomTags(ctx context.Context, storageManager manager.StorageManager
 		return err
 	}
 
+	return nil
+}
+
+func (m *purgeManager) purgeRejectedStages(ctx context.Context) error {
+	customTagsByStageID, err := stage_manager.GetCustomTagsMetadata(ctx, m.StorageManager)
+	if err != nil {
+		return fmt.Errorf("unable to get custom tags metadata: %w", err)
+	}
+
+	if _, err := deleteRejectedStagesWithLinkedTags(ctx, m.StorageManager, customTagsByStageID, m.DryRun); err != nil {
+		return err
+	}
 	return nil
 }

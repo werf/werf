@@ -79,6 +79,7 @@ type StorageManagerInterface interface {
 
 	ForEachDeleteStage(ctx context.Context, options ForEachDeleteStageOptions, stageDescSet image.StageDescSet, f func(ctx context.Context, stageDesc *image.StageDesc, err error) error) error
 	ForEachDeleteFinalStage(ctx context.Context, options ForEachDeleteStageOptions, stageDescSet image.StageDescSet, f func(ctx context.Context, stageDesc *image.StageDesc, err error) error) error
+	ForEachRejectedStage(ctx context.Context, stageIDs []image.StageID, f func(ctx context.Context, stageID image.StageID) error) error
 	ForEachRmImageMetadata(ctx context.Context, projectName, imageNameOrID string, stageIDCommitList map[string][]string, f func(ctx context.Context, commit, stageID string, err error) error) error
 	ForEachRmManagedImage(ctx context.Context, projectName string, managedImages []string, f func(ctx context.Context, managedImage string, err error) error) error
 	ForEachGetStageCustomTagMetadata(ctx context.Context, ids []string, f func(ctx context.Context, metadataID string, metadata *storage.CustomTagMetadata, err error) error) error
@@ -1018,6 +1019,16 @@ func (m *StorageManager) ForEachRmManagedImage(ctx context.Context, projectName 
 		managedImage := managedImages[taskId]
 		err := m.StagesStorage.RmManagedImage(ctx, projectName, managedImage)
 		return f(ctx, managedImage, err)
+	})
+}
+
+func (m *StorageManager) ForEachRejectedStage(ctx context.Context, stageIDs []image.StageID, f func(ctx context.Context, stageID image.StageID) error) error {
+	ids := append([]image.StageID(nil), stageIDs...)
+	return parallel.DoTasks(ctx, len(ids), parallel.DoTasksOptions{
+		MaxNumberOfWorkers:         m.MaxNumberOfWorkers(),
+		InitDockerCLIForEachWorker: true,
+	}, func(ctx context.Context, taskId int) error {
+		return f(ctx, ids[taskId])
 	})
 }
 

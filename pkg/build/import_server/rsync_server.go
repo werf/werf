@@ -21,6 +21,28 @@ import (
 
 const rsyncServerPort = "873"
 
+var systemExcludeDirs = []string{"/proc", "/sys", "/dev", "/run", "/.werf"}
+
+func buildRsyncdConf(port, authUser string) string {
+	return fmt.Sprintf(`pid file = /.werf/rsyncd.pid
+lock file = /.werf/rsyncd.lock
+log file = /.werf/rsyncd.log
+uid = 0
+gid = 0
+port = %s
+
+[import]
+path = /
+comment = Image files to import
+read only = true
+timeout = 300
+auth users = %s
+secrets file = /.werf/rsyncd.secrets
+strict modes = false
+exclude = %s
+`, port, authUser, strings.Join(systemExcludeDirs, " "))
+}
+
 type RsyncServer struct {
 	IPAddress              string
 	Port                   string
@@ -50,22 +72,7 @@ func RunRsyncServer(ctx context.Context, dockerImageName, tmpDir, targetPlatform
 	}
 
 	rsyncConfPath := path.Join(tmpDir, "rsyncd.conf")
-	if err := ioutil.WriteFile(rsyncConfPath, []byte(fmt.Sprintf(`pid file = /.werf/rsyncd.pid
-lock file = /.werf/rsyncd.lock
-log file = /.werf/rsyncd.log
-uid = 0
-gid = 0
-port = %s
-
-[import]
-path = /
-comment = Image files to import
-read only = true
-timeout = 300
-auth users = %s
-secrets file = /.werf/rsyncd.secrets
-strict modes = false
-`, rsyncServerPort, srv.AuthUser)), 0o644); err != nil {
+	if err := ioutil.WriteFile(rsyncConfPath, []byte(buildRsyncdConf(rsyncServerPort, srv.AuthUser)), 0o644); err != nil {
 		return nil, fmt.Errorf("unable to write %s: %w", rsyncConfPath, err)
 	}
 
@@ -150,7 +157,7 @@ func (srv *RsyncServer) GetCopyCommand(ctx context.Context, importConfig *config
 	if importConfig.Owner != "" || importConfig.Group != "" {
 		rsyncChownOption = fmt.Sprintf("--chown=%s:%s", importConfig.Owner, importConfig.Group)
 	}
-	rsyncCommand := fmt.Sprintf("RSYNC_PASSWORD='%s' %s --archive --links --inplace --xattrs --one-file-system --keep-dirlinks %s", srv.AuthPassword, stapel.RsyncBinPath(), rsyncChownOption)
+	rsyncCommand := fmt.Sprintf("RSYNC_PASSWORD='%s' %s --archive --links --inplace --xattrs --keep-dirlinks %s", srv.AuthPassword, stapel.RsyncBinPath(), rsyncChownOption)
 	rsyncCommand += PrepareRsyncFilters(importConfig.Add, importConfig.IncludePaths, importConfig.ExcludePaths)
 
 	rsyncCommand += fmt.Sprintf(" %s$IMPORT_PATH_TRAILING_SLASH_OPTIONAL %s", rsyncImportPathSpec, importConfig.To)

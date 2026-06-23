@@ -29,7 +29,7 @@ vars:
   devBinary: './bin/werf{{if (eq .targetOS "windows")}}.exe{{end}}'
   withCoverageBinary: './bin/werf-with-coverage{{if (eq .targetOS "windows")}}.exe{{end}}'
   package: "github.com/werf/werf/v2/cmd/werf"
-  kubeVersion: '{{.kubeVersion | default "1.33.1"}}'
+  kubeVersion: '{{.kubeVersion | default "1.36.1"}}'
 
   goTags: "dfrunsecurity dfrunnetwork dfrunmount dfssh containers_image_openpgp"
   goLDFlags: "-s -w -X github.com/werf/werf/v2/pkg/werf.Version={{.version}}"

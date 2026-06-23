@@ -427,7 +427,7 @@ func (i *Image) FetchBaseImage(ctx context.Context) (FetchBaseImageInfo, error) 
 		// TODO: Refactor, move manifest fetching into SetupBaseImage, only pull image in FetchBaseImage method
 
 		// Check if image exists locally and is up-to-date.
-		if info, err := i.ContainerBackend.GetImageInfo(ctx, i.baseStageImage.Image.Name(), container_backend.GetImageInfoOpts{}); err != nil {
+		if info, err := i.ContainerBackend.GetImageInfo(ctx, i.baseStageImage.Image.Name(), container_backend.GetImageInfoOpts{TargetPlatform: i.TargetPlatform}); err != nil {
 			return FetchBaseImageInfo{}, fmt.Errorf("unable to inspect local image %s: %w", i.baseStageImage.Image.Name(), err)
 		} else if info != nil {
 			logboek.Context(ctx).Debug().LogF("GetImageInfo of %q -> %#v\n", i.baseStageImage.Image.Name(), info)
@@ -467,7 +467,7 @@ func (i *Image) FetchBaseImage(ctx context.Context) (FetchBaseImageInfo, error) 
 			return FetchBaseImageInfo{}, err
 		}
 
-		info, err := i.ContainerBackend.GetImageInfo(ctx, i.baseStageImage.Image.Name(), container_backend.GetImageInfoOpts{})
+		info, err := i.ContainerBackend.GetImageInfo(ctx, i.baseStageImage.Image.Name(), container_backend.GetImageInfoOpts{TargetPlatform: i.TargetPlatform})
 		if err != nil {
 			return FetchBaseImageInfo{}, fmt.Errorf("unable to inspect local image %s: %w", i.baseStageImage.Image.Name(), err)
 		}

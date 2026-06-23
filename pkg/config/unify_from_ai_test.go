@@ -81,7 +81,7 @@ func TestAI_ImportImageFieldIsRejected(t *testing.T) {
 image: testimage
 from: ubuntu:22.04
 import:
-- image: baseimg
+- from: baseimg
   after: install
   add: /src
   to: /app

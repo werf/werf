@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/containerd/containerd/platforms"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
@@ -102,6 +103,7 @@ var _ = Describe("Multiarch build", Label("e2e", "build", "multiarch", "simple")
 
 					platformSpec, err := platformutil.ParsePlatform(platform)
 					Expect(err).To(Succeed())
+					platformSpec = platforms.Normalize(platformSpec)
 
 					ref := fmt.Sprintf("%s:%s", SuiteData.WerfRepo, byPlatform[platform].DockerTag)
 					inspect := contBack.GetImageInspect(ctx, ref)

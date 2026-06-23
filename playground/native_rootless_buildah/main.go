@@ -49,7 +49,7 @@ func main() {
 	}
 	fmt.Fprintf(os.Stdout, "INFO: imageId is %s\n", imageId)
 
-	if err := b.Pull(ctx, "ubuntu:20.04", buildah.PullOpts{LogWriter: os.Stdout}); err != nil {
+	if _, err := b.Pull(ctx, "ubuntu:20.04", buildah.PullOpts{LogWriter: os.Stdout}); err != nil {
 		log.Fatal(err)
 	}
 

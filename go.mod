@@ -56,7 +56,6 @@ require (
 	github.com/spf13/pflag v1.0.10
 	github.com/werf/common-go v0.0.0-20260504183956-43da716392f7
 	github.com/werf/copy-recurse v0.2.7
-	github.com/werf/kubedog v0.13.1-0.20260320165832-7d97aaf7aab9
 	github.com/werf/lockgate v0.1.1
 	github.com/werf/logboek v0.6.1
 	github.com/werf/nelm v1.23.3-0.20260514121649-29d4e8bfbc01
@@ -193,6 +192,7 @@ require (
 	github.com/transparency-dev/merkle v0.0.2 // indirect
 	github.com/valyala/fastjson v1.6.4 // indirect
 	github.com/vektah/gqlparser/v2 v2.5.30 // indirect
+	github.com/werf/kubedog v0.13.1-0.20260320165832-7d97aaf7aab9 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/xhit/go-str2duration/v2 v2.1.0 // indirect
 	github.com/yannh/kubeconform v0.7.0 // indirect

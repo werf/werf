@@ -165,7 +165,16 @@ func writeDockerConfigJsonValue(ctx context.Context, values map[string]interface
 	if data, err := ioutil.ReadFile(configJsonPath); err != nil {
 		return fmt.Errorf("error reading %q: %w", configJsonPath, err)
 	} else {
-		values["dockerconfigjson"] = base64.StdEncoding.EncodeToString(data)
+		dockerConfigBase64 := base64.StdEncoding.EncodeToString(data)
+		values["dockerconfigjson"] = dockerConfigBase64
+
+		if globalValues, ok := values["global"].(map[string]interface{}); !ok {
+			return fmt.Errorf("set .Values.global.werf.dockerconfigjson: expected map at .Values.global, got %T", values["global"])
+		} else if werfValues, ok := globalValues["werf"].(map[string]interface{}); !ok {
+			return fmt.Errorf("set .Values.global.werf.dockerconfigjson: expected map at .Values.global.werf, got %T", globalValues["werf"])
+		} else {
+			werfValues["dockerconfigjson"] = dockerConfigBase64
+		}
 	}
 
 	logboek.Context(ctx).Default().LogF("NOTE: ### --set-docker-config-json-value option has been specified ###\n")

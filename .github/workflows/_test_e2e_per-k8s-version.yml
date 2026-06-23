@@ -37,7 +37,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        kubeVersion: [1.29.14, 1.31.6]
+        kubeVersion: [1.34.8, 1.36.1]
 
     runs-on: ubuntu-22.04
     timeout-minutes: ${{ inputs.timeout }}
@@ -60,7 +60,7 @@ jobs:
           go-version-file: go.mod
 
       - name: Install Task
-        uses: arduino/setup-task@v2
+        uses: go-task/setup-task@v2
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 

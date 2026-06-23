@@ -149,7 +149,6 @@ var _ = Describe("git stages", func() {
 			})
 		})
 	})
-
 })
 
 var _ = Describe("user stages", func() {
@@ -315,7 +314,6 @@ var _ = Describe("user stages", func() {
 			})
 		})
 	})
-
 })
 
 type stagesSpecStep struct {

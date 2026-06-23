@@ -8,21 +8,21 @@ import (
 )
 
 type rawStapelImage struct {
-	Images               []string         `yaml:"-"`
-	Final                *bool            `yaml:"final,omitempty"`
-	CacheVersion         string           `yaml:"cacheVersion,omitempty"`
-	From                 string           `yaml:"from,omitempty"`
-	FromLatest           bool             `yaml:"fromLatest,omitempty"`
-	FromCacheVersion     string           `yaml:"fromCacheVersion,omitempty"`
-	RawGit               []*rawGit        `yaml:"git,omitempty"`
-	RawShell             *rawShell        `yaml:"shell,omitempty"`
-	RawMount             []*rawMount      `yaml:"mount,omitempty"`
-	RawImport            []*rawImport     `yaml:"import,omitempty"`
-	RawDependencies      []*rawDependency `yaml:"dependencies,omitempty"`
-	Platform             []string         `yaml:"platform,omitempty"`
-	Network              string           `yaml:"network,omitempty"`
-	RawSecrets           []*rawSecret     `yaml:"secrets,omitempty"`
-	RawImageSpec         *rawImageSpec    `yaml:"imageSpec,omitempty"`
+	Images           []string         `yaml:"-"`
+	Final            *bool            `yaml:"final,omitempty"`
+	CacheVersion     string           `yaml:"cacheVersion,omitempty"`
+	From             string           `yaml:"from,omitempty"`
+	FromLatest       bool             `yaml:"fromLatest,omitempty"`
+	FromCacheVersion string           `yaml:"fromCacheVersion,omitempty"`
+	RawGit           []*rawGit        `yaml:"git,omitempty"`
+	RawShell         *rawShell        `yaml:"shell,omitempty"`
+	RawMount         []*rawMount      `yaml:"mount,omitempty"`
+	RawImport        []*rawImport     `yaml:"import,omitempty"`
+	RawDependencies  []*rawDependency `yaml:"dependencies,omitempty"`
+	Platform         []string         `yaml:"platform,omitempty"`
+	Network          string           `yaml:"network,omitempty"`
+	RawSecrets       []*rawSecret     `yaml:"secrets,omitempty"`
+	RawImageSpec     *rawImageSpec    `yaml:"imageSpec,omitempty"`
 
 	doc *doc `yaml:"-"` // parent
 

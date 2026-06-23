@@ -1,0 +1,20 @@
+project: werf-test-e2e-build-import-no-system-dirs
+configVersion: 1
+
+---
+image: source
+from: registry.werf.io/base/alpine:3.21
+shell:
+  install:
+  - echo "werf-test-no-system-dirs" > /etc/werf-test-marker
+  - mkdir -p /opt/myapp/run && echo "werf-test-nested-run" > /opt/myapp/run/werf-test-nested-marker
+---
+image: destination
+from: scratch
+import:
+- from: source
+  add: /
+  to: /
+  includePaths:
+  - "**/*"
+  before: install
