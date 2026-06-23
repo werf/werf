@@ -46,6 +46,11 @@ func MutateAndPushImage(ctx context.Context, storage Storage, sourceReference, d
 }
 
 func UpdateConfigFile(updates SpecConfig, target *v1.ConfigFile) {
+	if updates.Created != "" {
+		if created, err := time.Parse(time.RFC3339, updates.Created); err == nil {
+			target.Created = v1.Time{Time: created}
+		}
+	}
 	if updates.Author != "" {
 		target.Author = updates.Author
 	}
