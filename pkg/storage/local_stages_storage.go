@@ -270,14 +270,6 @@ func (storage *LocalStagesStorage) GetAllAndGroupImageMetadataByImageName(ctx co
 	return map[string]map[string][]string{}, map[string]map[string][]string{}, nil
 }
 
-func (storage *LocalStagesStorage) GetClientIDRecords(_ context.Context, _ string, _ ...Option) ([]*ClientIDRecord, error) {
-	panic("not implemented")
-}
-
-func (storage *LocalStagesStorage) PostClientIDRecord(_ context.Context, _ string, _ *ClientIDRecord) error {
-	panic("not implemented")
-}
-
 func (storage *LocalStagesStorage) PostMultiplatformImage(_ context.Context, _, _ string, _ []*image.Info, _ []string) error {
 	return nil
 }
@@ -307,14 +299,6 @@ func (storage *LocalStagesStorage) UnregisterStageCustomTag(_ context.Context, _
 }
 
 func (storage *LocalStagesStorage) CopyFromStorage(_ context.Context, _ StagesStorage, _ string, _ image.StageID, _ CopyFromStorageOptions) (*image.StageDesc, error) {
-	panic("not implemented")
-}
-
-func (storage *LocalStagesStorage) GetSyncServerRecords(ctx context.Context, projectName string, opts ...Option) ([]*SyncServerRecord, error) {
-	panic("not implemented")
-}
-
-func (storage *LocalStagesStorage) PostSyncServerRecord(ctx context.Context, projectName string, rec *SyncServerRecord) error {
 	panic("not implemented")
 }
 
