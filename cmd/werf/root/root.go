@@ -57,7 +57,6 @@ import (
 	"github.com/werf/werf/v2/cmd/werf/slugify"
 	stage_image "github.com/werf/werf/v2/cmd/werf/stage/image"
 	stages_copy "github.com/werf/werf/v2/cmd/werf/stages/copy"
-	"github.com/werf/werf/v2/cmd/werf/synchronization"
 	"github.com/werf/werf/v2/cmd/werf/version"
 	"github.com/werf/werf/v2/pkg/telemetry"
 )
@@ -127,7 +126,6 @@ func ConstructRootCmd(ctx context.Context) (*cobra.Command, error) {
 		{
 			Message: "Other commands",
 			Commands: []*cobra.Command{
-				synchronization.NewCmd(ctx),
 				completion.NewCmd(ctx, rootCmd),
 				version.NewCmd(ctx),
 				docs.NewCmd(ctx, groups),

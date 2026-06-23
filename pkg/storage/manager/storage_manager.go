@@ -21,7 +21,6 @@ import (
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/storage"
 	"github.com/werf/werf/v2/pkg/storage/lrumeta"
-	"github.com/werf/werf/v2/pkg/storage/synchronization/lock_manager"
 	"github.com/werf/werf/v2/pkg/util/parallel"
 	"github.com/werf/werf/v2/pkg/werf"
 )
@@ -128,10 +127,9 @@ func RetryOnUnexpectedStagesStorageState(ctx context.Context, _ StorageManagerIn
 	return err
 }
 
-func NewStorageManager(projectName string, stagesStorage storage.PrimaryStagesStorage, finalStagesStorage storage.StagesStorage, secondaryStagesStorageList, cacheStagesStorageList []storage.StagesStorage, storageLockManager lock_manager.Interface) *StorageManager {
+func NewStorageManager(projectName string, stagesStorage storage.PrimaryStagesStorage, finalStagesStorage storage.StagesStorage, secondaryStagesStorageList, cacheStagesStorageList []storage.StagesStorage) *StorageManager {
 	return &StorageManager{
-		ProjectName:        projectName,
-		StorageLockManager: storageLockManager,
+		ProjectName: projectName,
 
 		StagesStorage:              stagesStorage,
 		FinalStagesStorage:         finalStagesStorage,
@@ -182,8 +180,6 @@ type StorageManager struct {
 	parallelTasksLimit int
 
 	ProjectName string
-
-	StorageLockManager lock_manager.Interface
 
 	StagesStorage              storage.PrimaryStagesStorage
 	FinalStagesStorage         storage.StagesStorage
