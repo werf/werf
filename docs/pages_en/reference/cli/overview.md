@@ -39,6 +39,5 @@ Low-level management commands:
  - [werf kubectl]({{ "/reference/cli/werf_kubectl_alpha.html" | true_relative_url }}) — {% include /reference/cli/werf_kubectl_alpha.short.md %}.
 
 Other commands:
- - [werf synchronization]({{ "/reference/cli/werf_synchronization.html" | true_relative_url }}) — {% include /reference/cli/werf_synchronization.short.md %}.
  - [werf completion]({{ "/reference/cli/werf_completion.html" | true_relative_url }}) — {% include /reference/cli/werf_completion.short.md %}.
  - [werf version]({{ "/reference/cli/werf_version.html" | true_relative_url }}) — {% include /reference/cli/werf_version.short.md %}.
