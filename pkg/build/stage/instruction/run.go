@@ -33,6 +33,16 @@ func (stg *Run) ExpandInstruction(c stage.Conveyor, env map[string]string) error
 	}
 	// Setup RUN envs after 2nd stage expansion
 	stg.backendInstruction.Envs = EnvToSortedArr(stg.GetExpandedEnv(c))
+
+	for _, mnt := range instructions.GetMounts(stg.instruction.Data) {
+		if mnt.From == "" {
+			continue
+		}
+		if ds := stg.instruction.GetDependencyByStageRef(mnt.From); ds != nil {
+			mnt.From = c.GetImageNameForLastImageStage(stg.TargetPlatform(), ds.GetWerfImageName())
+		}
+	}
+
 	return nil
 }
 

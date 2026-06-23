@@ -23,3 +23,7 @@ func ExportUserCommands(stg *User) (backend, source instructions.UserCommand) {
 func ExportStopSignalCommands(stg *StopSignal) (backend, source instructions.StopSignalCommand) {
 	return stg.backendInstruction.StopSignalCommand, *stg.instruction.Data
 }
+
+func ExportRunMounts(stg *Run) []*instructions.Mount {
+	return stg.backendInstruction.GetMounts()
+}
