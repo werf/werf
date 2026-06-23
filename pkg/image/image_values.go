@@ -24,6 +24,23 @@ func BuildImageValuesMap(infoGetter *InfoGetter) (map[string]interface{}, error)
 	), nil
 }
 
+func RebuildImageValuesMap(newRef, digest string) (map[string]interface{}, error) {
+	tag, err := name.NewTag(newRef)
+	if err != nil {
+		return nil, fmt.Errorf("rebuild image values map: %w", err)
+	}
+
+	return buildValuesMap(
+		tag.RegistryStr(),
+		tag.RepositoryStr(),
+		path.Base(tag.RepositoryStr()),
+		tag.TagStr(),
+		digest,
+		tag.Context().Name(),
+		newRef,
+	), nil
+}
+
 func BuildStubImageValuesMap(repo, tag string) map[string]interface{} {
 	return buildValuesMap(
 		"REGISTRY",
