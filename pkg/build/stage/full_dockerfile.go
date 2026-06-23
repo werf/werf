@@ -394,6 +394,10 @@ func (s *FullDockerfileStage) GetDependencies(ctx context.Context, c Conveyor, _
 	return util.Sha256Hash(dependencies...), nil
 }
 
+func (s *FullDockerfileStage) GetContentDependencies(ctx context.Context, c Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+	return s.GetDependencies(ctx, c, nil, nil, nil, buildContextArchive)
+}
+
 func (s *FullDockerfileStage) MutateImage(_ context.Context, _ ImageMutatorPusher, _, _ *StageImage) error {
 	panic("not implemented")
 }
@@ -611,7 +615,7 @@ func (s *FullDockerfileStage) PrepareImage(ctx context.Context, c Conveyor, cb c
 	}
 
 	for _, dep := range s.dependencies {
-		depStageID := c.GetStageIDForLastImageStage(s.targetPlatform, dep.ImageName)
+		depStageID := c.GetImageContentTagStageID(s.targetPlatform, dep.ImageName)
 		stageImage.Builder.DockerfileBuilder().AppendLabels(fmt.Sprintf("%s=%s", dependencyLabelKey(depStageID), depStageID))
 	}
 

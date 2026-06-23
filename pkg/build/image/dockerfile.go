@@ -136,7 +136,7 @@ func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, 
 		var img *Image
 		var err error
 		if baseStg := cfg.FindStage(stg.BaseName); baseStg != nil {
-			img, err = NewImage(ctx, targetPlatform, item.WerfImageName, StageAsBaseImage, ImageOptions{
+			img, err = NewImage(ctx, targetPlatform, item.WerfImageName, FromImage, ImageOptions{
 				IsFinal:                   dockerfileImageConfig.IsFinal() && item.IsTargetStage,
 				IsDockerfileImage:         true,
 				UseCustomTag:              useCustomTag,

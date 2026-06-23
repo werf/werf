@@ -53,17 +53,21 @@ func (storage *LocalStagesStorage) FilterStageDescSetAndProcessRelatedData(ctx c
 		for stageDesc := range stageDescSet.Iter() {
 			imageInfo := stageDesc.Info
 
-			if imageInfo.ID == container.ImageID {
-				switch {
-				case opts.SkipUsedImage:
-					logboek.Context(ctx).Default().LogFDetails("Skip image %s (used by container %s)\n", imageInfo.LogName(), container.LogName())
-					stageDescSetToExclude.Add(stageDesc)
-				case opts.RmContainersThatUseImage:
-					containerListToRemove = append(containerListToRemove, container)
-				default:
-					return nil, fmt.Errorf("cannot remove image %s used by container %s\n%s", imageInfo.LogName(), container.LogName(), ImageDeletionFailedDueToUsedByContainerErrorTip)
-				}
+			if imageInfo.ID != container.ImageID {
+				continue
 			}
+
+			switch {
+			case opts.SkipUsedImage:
+				logboek.Context(ctx).Default().LogFDetails("Skip image %s (used by container %s)\n", imageInfo.LogName(), container.LogName())
+				stageDescSetToExclude.Add(stageDesc)
+			case opts.RmContainersThatUseImage:
+				containerListToRemove = append(containerListToRemove, container)
+			default:
+				return nil, fmt.Errorf("cannot remove image %s used by container %s\n%s", imageInfo.LogName(), container.LogName(), ImageDeletionFailedDueToUsedByContainerErrorTip)
+			}
+
+			break
 		}
 	}
 
@@ -75,7 +79,13 @@ func (storage *LocalStagesStorage) FilterStageDescSetAndProcessRelatedData(ctx c
 }
 
 func (storage *LocalStagesStorage) deleteContainers(ctx context.Context, containers []image.Container, rmForce bool) error {
+	removed := make(map[string]struct{}, len(containers))
 	for _, container := range containers {
+		if _, ok := removed[container.ID]; ok {
+			continue
+		}
+		removed[container.ID] = struct{}{}
+
 		if err := storage.ContainerBackend.Rm(ctx, container.ID, container_backend.RmOpts{Force: rmForce}); err != nil {
 			return fmt.Errorf("unable to remove container %q: %w", container.ID, err)
 		}
@@ -312,7 +322,7 @@ func (storage *LocalStagesStorage) PostManifest(ctx context.Context, ref string,
 	return nil
 }
 
-func (storage *LocalStagesStorage) MutateAndPushImage(ctx context.Context, src, _ string, newConfig image.SpecConfig, stageImage container_backend.LegacyImageInterface) error {
+func (storage *LocalStagesStorage) MutateAndPushImage(ctx context.Context, src, dest string, newConfig image.SpecConfig, stageImage container_backend.LegacyImageInterface) error {
 	if err := logboek.Context(ctx).Debug().LogBlock("-- LocalStagesStorage.MutateAndPushImage imageSpecConfig").DoError(func() error {
 		newConfigData, err := yaml.Marshal(newConfig)
 		if err != nil {
@@ -330,10 +340,8 @@ func (storage *LocalStagesStorage) MutateAndPushImage(ctx context.Context, src, 
 		return err
 	}
 
-	stageImage.SetBuiltID(newId)
-
-	if err := storage.ContainerBackend.TagImageByName(ctx, stageImage); err != nil {
-		return fmt.Errorf("unable to tag image %q: %w", stageImage.Name(), err)
+	if err := storage.ContainerBackend.Tag(ctx, newId, dest, container_backend.TagOpts{}); err != nil {
+		return fmt.Errorf("unable to tag image %q as %q: %w", newId, dest, err)
 	}
 
 	return nil

@@ -14,7 +14,6 @@ type rawStapelImage struct {
 	From                 string           `yaml:"from,omitempty"`
 	FromLatest           bool             `yaml:"fromLatest,omitempty"`
 	FromCacheVersion     string           `yaml:"fromCacheVersion,omitempty"`
-	DisableGitAfterPatch bool             `yaml:"disableGitAfterPatch,omitempty"`
 	RawGit               []*rawGit        `yaml:"git,omitempty"`
 	RawShell             *rawShell        `yaml:"shell,omitempty"`
 	RawMount             []*rawMount      `yaml:"mount,omitempty"`
@@ -250,7 +249,6 @@ func (c *rawStapelImage) toBaseStapelImageBaseDirective(giterminismManager giter
 	}
 
 	imageBase.Git = &GitManager{}
-	imageBase.Git.isGitAfterPatchDisabled = c.DisableGitAfterPatch
 
 	imageBase.raw = c
 

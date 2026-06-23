@@ -207,6 +207,10 @@ func (s *BaseStage) GetNextStageDependencies(_ context.Context, _ Conveyor) (str
 	return "", nil
 }
 
+func (s *BaseStage) GetContentDependencies(ctx context.Context, c Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+	panic("method must be implemented!")
+}
+
 func (s *BaseStage) getNextStageGitDependencies(ctx context.Context, c Conveyor) (string, error) {
 	var args []string
 	for _, gitMapping := range s.gitMappings {
