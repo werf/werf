@@ -596,12 +596,6 @@ func (phase *BuildPhase) publishContentTagToStorage(ctx context.Context, img *im
 
 	storageManager := phase.Conveyor.StorageManager
 
-	lock, err := phase.Conveyor.StorageLockManager.LockStage(ctx, phase.Conveyor.ProjectName(), contentDigest)
-	if err != nil {
-		return nil, fmt.Errorf("unable to lock project %s content digest %s: %w", phase.Conveyor.ProjectName(), contentDigest, err)
-	}
-	defer phase.Conveyor.StorageLockManager.Unlock(ctx, lock)
-
 	if desc, err := phase.resolveExistingContentTag(ctx, img); err != nil {
 		return nil, err
 	} else if desc != nil {
@@ -1024,25 +1018,7 @@ func (phase *BuildPhase) findAndFetchStageFromSecondaryStagesStorage(ctx context
 
 	storageManager := phase.Conveyor.StorageManager
 	atomicCopySuitableStageFromSecondaryStagesStorage := func(secondaryStageDesc *imagePkg.StageDesc, secondaryStagesStorage storage.StagesStorage) error {
-		// Lock the primary stages storage
-		var stageUnlocked bool
-		var unlockStage func()
-		if lock, err := phase.Conveyor.StorageLockManager.LockStage(ctx, phase.Conveyor.ProjectName(), stg.GetDigest()); err != nil {
-			return fmt.Errorf("unable to lock project %s digest %s: %w", phase.Conveyor.ProjectName(), stg.GetDigest(), err)
-		} else {
-			unlockStage = func() {
-				if stageUnlocked {
-					return
-				}
-				phase.Conveyor.StorageLockManager.Unlock(ctx, lock)
-				stageUnlocked = true
-			}
-			defer unlockStage()
-		}
-
 		err := logboek.Context(ctx).Default().LogProcess("Copy suitable stage from secondary %s", secondaryStagesStorage.String()).DoError(func() error {
-			// Copy suitable stage from a secondary stages storage to the primary stages storage
-			// while primary stages storage lock for this digest is held
 			if stageDescCopy, err := storageManager.CopySuitableStageDescByDigest(ctx, secondaryStageDesc, secondaryStagesStorage, storageManager.GetStagesStorage(), phase.Conveyor.ContainerBackend, img.TargetPlatform); err != nil {
 				return fmt.Errorf("unable to copy suitable stage %s from %s to %s: %w", secondaryStageDesc.StageID.String(), secondaryStagesStorage.String(), storageManager.GetStagesStorage().String(), err)
 			} else {
@@ -1067,8 +1043,6 @@ func (phase *BuildPhase) findAndFetchStageFromSecondaryStagesStorage(ctx context
 		if err != nil {
 			return err
 		}
-
-		unlockStage()
 
 		if err := storageManager.CopyStageIntoCacheStorages(
 			ctx, *stg.GetStageImage().Image.GetStageDesc().StageID,
@@ -1340,21 +1314,6 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 		}
 	}
 
-	var stageUnlocked bool
-	var unlockStage func()
-	if lock, err := phase.Conveyor.StorageLockManager.LockStage(ctx, phase.Conveyor.ProjectName(), stg.GetDigest()); err != nil {
-		return fmt.Errorf("unable to lock project %s digest %s: %w", phase.Conveyor.ProjectName(), stg.GetDigest(), err)
-	} else {
-		unlockStage = func() {
-			if stageUnlocked {
-				return
-			}
-			phase.Conveyor.StorageLockManager.Unlock(ctx, lock)
-			stageUnlocked = true
-		}
-		defer unlockStage()
-	}
-
 	var stageDescSet imagePkg.StageDescSet
 	if os.Getenv("WERF_DISABLE_PUBLISH_TAG_CACHE_SYNC") == "1" {
 		stageDescSet = imagePkg.NewStageDescSet()
@@ -1436,8 +1395,6 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 	}); err != nil {
 		return err
 	}
-
-	unlockStage()
 
 	if err := phase.Conveyor.StorageManager.CopyStageIntoCacheStorages(
 		ctx, *stg.GetStageImage().Image.GetStageDesc().StageID,

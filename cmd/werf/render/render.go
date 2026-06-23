@@ -99,7 +99,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupFinalRepo(&commonCmdData, cmd)
 	common.SetupStubTags(&commonCmdData, cmd)
 
-	common.SetupSynchronization(&commonCmdData, cmd)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified repo and to pull base images")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
@@ -264,7 +263,7 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 		isVerbose := logboek.Context(ctx).IsAcceptedLevel(level.Default)
 		conveyorOptions.DeferBuildLog = !isVerbose
 
-		conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, giterminismManager.ProjectDir(), projectTmpDir, containerBackend, storageManager, storageManager.StorageLockManager, conveyorOptions)
+		conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, giterminismManager.ProjectDir(), projectTmpDir, containerBackend, storageManager, conveyorOptions)
 		defer conveyorWithRetry.Terminate()
 
 		if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {

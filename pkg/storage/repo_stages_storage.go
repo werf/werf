@@ -37,15 +37,6 @@ const (
 	RepoCustomTagMetadata_ImageTagPrefix  = "custom-tag-meta-"
 	RepoCustomTagMetadata_ImageNameFormat = "%s:custom-tag-meta-%s"
 
-	RepoClientIDRecord_ImageTagPrefix  = "client-id-"
-	RepoClientIDRecord_ImageNameFormat = "%s:client-id-%s-%d"
-
-	RepoSyncServerRecord_ImageTagPrefix  = "sync-server"
-	RepoSyncServerRecord_ImageNameFormat = "%s:sync-server"
-
-	RepoSyncServerRecord_LabelAddress   = "syncserver"
-	RepoSyncServerRecord_LabelTimestamp = "syncservertimestamp"
-
 	UnexpectedTagFormatErrorPrefix = "unexpected tag format"
 
 	RepoCleanUpRecord_ImageTagPrefix  = "cleanup"
@@ -875,61 +866,6 @@ func unslugImageName(tag string) string {
 	return res
 }
 
-func (storage *RepoStagesStorage) GetClientIDRecords(ctx context.Context, projectName string, opts ...Option) ([]*ClientIDRecord, error) {
-	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetClientIDRecords for project %s\n", projectName)
-
-	o := makeOptions(opts...)
-	tags, err := storage.Tags(ctx, storage.RepoAddress, o.dockerRegistryOptions...)
-	if err != nil {
-		return nil, fmt.Errorf("unable to get repo %s tags: %w", storage.RepoAddress, err)
-	}
-
-	var res []*ClientIDRecord
-	for _, tag := range tags {
-		if !strings.HasPrefix(tag, RepoClientIDRecord_ImageTagPrefix) {
-			continue
-		}
-
-		tagWithoutPrefix := strings.TrimPrefix(tag, RepoClientIDRecord_ImageTagPrefix)
-		dataParts := strings.SplitN(util.Reverse(tagWithoutPrefix), "-", 2)
-		if len(dataParts) != 2 {
-			continue
-		}
-
-		clientID, timestampMillisecStr := util.Reverse(dataParts[1]), util.Reverse(dataParts[0])
-
-		timestampMillisec, err := strconv.ParseInt(timestampMillisecStr, 10, 64)
-		if err != nil {
-			continue
-		}
-
-		rec := &ClientIDRecord{ClientID: clientID, TimestampMillisec: timestampMillisec}
-		res = append(res, rec)
-
-		logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetClientIDRecords got clientID record: %s\n", rec)
-	}
-
-	return res, nil
-}
-
-func (storage *RepoStagesStorage) PostClientIDRecord(ctx context.Context, projectName string, rec *ClientIDRecord) error {
-	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PostClientID %s for project %s\n", rec.ClientID, projectName)
-
-	fullImageName := fmt.Sprintf(RepoClientIDRecord_ImageNameFormat, storage.RepoAddress, rec.ClientID, rec.TimestampMillisec)
-
-	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PostClientID full image name: %s\n", fullImageName)
-
-	opts := &docker_registry.PushImageOptions{Labels: map[string]string{image.WerfLabel: projectName}}
-
-	if err := storage.DockerRegistry.PushImage(ctx, fullImageName, opts); err != nil {
-		return fmt.Errorf("unable to push image %s: %w", fullImageName, err)
-	}
-
-	logboek.Context(ctx).Info().LogF("Posted new clientID %q for project %s\n", rec.ClientID, projectName)
-
-	return nil
-}
-
 func (storage *RepoStagesStorage) PostMultiplatformImage(ctx context.Context, projectName, tag string, allPlatformsImages []*image.Info, platforms []string) error {
 	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PostMultiplatformImage by tag %s for project %s\n", tag, projectName)
 
@@ -971,70 +907,6 @@ func (storage *RepoStagesStorage) CopyFromStorage(ctx context.Context, src Stage
 
 func (storage *RepoStagesStorage) FilterStageDescSetAndProcessRelatedData(_ context.Context, stageDescSet image.StageDescSet, _ FilterStagesAndProcessRelatedDataOptions) (image.StageDescSet, error) {
 	return stageDescSet, nil
-}
-
-// GetSyncServerRecords gets sync server address from repo
-func (storage *RepoStagesStorage) GetSyncServerRecords(ctx context.Context, projectName string, opts ...Option) ([]*SyncServerRecord, error) {
-	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetSyncServerRecords for project %s\n", projectName)
-
-	o := makeOptions(opts...)
-	tags, err := storage.Tags(ctx, storage.RepoAddress, o.dockerRegistryOptions...)
-	if err != nil {
-		return nil, fmt.Errorf("unable to get repo %s tags: %w", storage.RepoAddress, err)
-	}
-
-	var res []*SyncServerRecord
-	for _, tag := range tags {
-		if !strings.HasPrefix(tag, RepoSyncServerRecord_ImageTagPrefix) {
-			continue
-		}
-
-		img, err := storage.DockerRegistry.GetRepoImage(ctx, fmt.Sprintf("%s:%s", storage.RepoAddress, tag))
-		if err != nil {
-			return nil, err
-		}
-
-		if _, ok := img.Labels[RepoSyncServerRecord_LabelAddress]; !ok {
-			continue
-		}
-
-		timestampMillisec, err := strconv.ParseInt(img.Labels[RepoSyncServerRecord_LabelTimestamp], 10, 64)
-		if err != nil {
-			continue
-		}
-
-		rec := &SyncServerRecord{Server: img.Labels[RepoSyncServerRecord_LabelAddress], TimestampMillisec: timestampMillisec}
-		res = append(res, rec)
-
-		logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetSyncServerRecords got clientID record: %s\n", rec)
-	}
-
-	return res, nil
-}
-
-// PostSyncServerRecord posts sync server address to repo
-func (storage *RepoStagesStorage) PostSyncServerRecord(ctx context.Context, projectName string, rec *SyncServerRecord) error {
-	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PostSyncServer %s for project %s\n", rec.Server, projectName)
-
-	fullImageName := fmt.Sprintf(RepoSyncServerRecord_ImageNameFormat, storage.RepoAddress)
-
-	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PostSyncServer full image name: %s\n", fullImageName)
-
-	opts := &docker_registry.PushImageOptions{
-		Labels: map[string]string{
-			image.WerfLabel:                     projectName,
-			RepoSyncServerRecord_LabelAddress:   rec.Server,
-			RepoSyncServerRecord_LabelTimestamp: fmt.Sprint(rec.TimestampMillisec),
-		},
-	}
-
-	if err := storage.DockerRegistry.PushImage(ctx, fullImageName, opts); err != nil {
-		return fmt.Errorf("unable to push image %s: %w", fullImageName, err)
-	}
-
-	logboek.Context(ctx).Info().LogF("Posted new synchronization server %q for project %s\n", rec.Server, projectName)
-
-	return nil
 }
 
 func (storage *RepoStagesStorage) Tags(ctx context.Context, reference string, opts ...docker_registry.Option) ([]string, error) {
