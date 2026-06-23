@@ -16,8 +16,8 @@ cmd/werf/werf
 /stapel/*/omnibus/vendor
 /stapel/*/omnibus/.bundle
 /stapel/*/werf-stapel-toolchain.tar
-/stapel/*/*/werf-stapel-toolchain.tar.gz
-/stapel/*/*/werf-stapel-toolchain.tar.sha256
+/pkg/stapel/embed/*/*/werf-stapel-toolchain.tar.gz
+/pkg/stapel/embed/*/*/werf-stapel-toolchain.tar.sha256
 
 /pkg/build/builder/ansible/pylogger.h
 /pkg/build/builder/ansible/pylogger.so
