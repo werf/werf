@@ -56,6 +56,22 @@ func LogImageInfo(ctx context.Context, img LegacyImageInterface, prevStageImageS
 	logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "network", network)
 }
 
+func LogImageInfoByStageDesc(ctx context.Context, stageDesc *image.StageDesc, platform string) {
+	LogImageName(ctx, stageDesc.Info.Name)
+
+	logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "id", stringid.TruncateID(stageDesc.Info.ID))
+	logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "created", stageDesc.Info.GetCreatedAt())
+	logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "size", byteCountBinary(stageDesc.Info.Size))
+
+	if commit, ok := stageDesc.Info.Labels[image.WerfProjectRepoCommitLabel]; ok && commit != "" {
+		logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "commit", commit)
+	}
+
+	if platform != "" {
+		logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "platform", platform)
+	}
+}
+
 func LogMultiplatformImageInfo(ctx context.Context, platforms []string) {
 	logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "platform", strings.Join(platforms, ","))
 }

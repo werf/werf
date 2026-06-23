@@ -14,6 +14,7 @@ import (
 	"github.com/docker/docker/api/types/filters"
 	dockerImage "github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
+	v1 "github.com/google/go-containerregistry/pkg/v1"
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/lockgate"
@@ -24,6 +25,8 @@ import (
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/ssh_agent"
 )
+
+var _ ImageConfigFileGetter = (*DockerServerBackend)(nil)
 
 type DockerServerBackend struct {
 	locker lockgate.Locker
@@ -403,6 +406,64 @@ func (backend *DockerServerBackend) PruneVolumes(ctx context.Context, options pr
 
 func (backend *DockerServerBackend) SaveImageToStream(ctx context.Context, imageName string) (io.ReadCloser, error) {
 	return docker.CliImageSaveToStream(ctx, imageName)
+}
+
+func (backend *DockerServerBackend) GetImageConfigFile(ctx context.Context, imageName string) (*v1.ConfigFile, error) {
+	inspect, err := docker.ImageInspect(ctx, imageName)
+	if err != nil {
+		return nil, fmt.Errorf("unable to inspect docker image %q: %w", imageName, err)
+	}
+
+	cfg := &v1.ConfigFile{
+		Architecture: inspect.Architecture,
+		OS:           inspect.Os,
+		OSVersion:    inspect.OsVersion,
+		Author:       inspect.Author,
+		RootFS: v1.RootFS{
+			Type:    "layers",
+			DiffIDs: []v1.Hash{},
+		},
+	}
+
+	for _, diffID := range inspect.RootFS.Layers {
+		h, err := v1.NewHash(diffID)
+		if err != nil {
+			return nil, fmt.Errorf("parse diff id %q of image %q: %w", diffID, imageName, err)
+		}
+		cfg.RootFS.DiffIDs = append(cfg.RootFS.DiffIDs, h)
+	}
+
+	if inspect.Config != nil {
+		ic := inspect.Config
+		cfg.Config = v1.Config{
+			User:        ic.User,
+			Env:         ic.Env,
+			Entrypoint:  ic.Entrypoint,
+			Cmd:         ic.Cmd,
+			Labels:      ic.Labels,
+			WorkingDir:  ic.WorkingDir,
+			StopSignal:  ic.StopSignal,
+			ArgsEscaped: ic.ArgsEscaped,
+			Shell:       ic.Shell,
+			OnBuild:     ic.OnBuild,
+		}
+
+		if len(ic.Volumes) > 0 {
+			cfg.Config.Volumes = make(map[string]struct{}, len(ic.Volumes))
+			for k := range ic.Volumes {
+				cfg.Config.Volumes[k] = struct{}{}
+			}
+		}
+
+		if len(ic.ExposedPorts) > 0 {
+			cfg.Config.ExposedPorts = make(map[string]struct{}, len(ic.ExposedPorts))
+			for k := range ic.ExposedPorts {
+				cfg.Config.ExposedPorts[string(k)] = struct{}{}
+			}
+		}
+	}
+
+	return cfg, nil
 }
 
 func (backend *DockerServerBackend) LoadImageFromStream(ctx context.Context, input io.Reader) (string, error) {
