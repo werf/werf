@@ -442,16 +442,6 @@ shell:
 
 The _git mapping configuration_ in the above `werf.yaml` instructs werf to transfer the contents of the `/src` directory of the local Git repository to the `/app` directory of the image. During the first build, files will be cached at the _gitArchive_ stage, and assembly instructions for _install_ and _beforeSetup_ will be executed. During the builds triggered by the subsequent commits which leave the contents of the `/src` directory unchanged, werf will not run the assembly instructions. Changes in the `/src` directory due to some commit will also result in changes in the checksums of the files matching the mask. This will cause werf to apply the git patch and rebuild any existing stages starting with _beforeSetup_, namely _beforeSetup_ and _setup_. The git patch will be applied once during the _beforeSetup_ stage.
 
-### Disabling source updates (skipping gitCache and gitLatestPatch stages)
-
-The `disableGitAfterPatch` directive allows you to lock the source code in the image during the build and prevent it from being updated in subsequent builds.
-
-This approach is useful in scenarios where you need to use the actual set of source files during the build stage, but only changes to specific files should restart the build process.
-
-Therefore:
-- By default, any source file change triggers a rebuild and execution of commands with the current source files.
-- If `git.stageDependencies` is specified, only changes matching the defined masks trigger a rebuild.
-
 ## Dependency on the CacheVersion
 
 There are situations when a user wants to rebuild all _user stages_ or just one of them. They can do so by changing `cacheVersion` or `<user stage name>CacheVersion` parameters.

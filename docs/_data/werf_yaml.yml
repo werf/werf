@@ -541,14 +541,6 @@ sections:
           ru: "Версия кеша"
         detailsArticle:
           all: "/usage/build/stapel/base.html#fromcacheversion"
-      - name: disableGitAfterPatch
-        value: "bool"
-        description:
-          en: "Disable updating git sources (gitCache, gitLatestPatch stages)"
-          ru: "Отключение актуализации исходников Git (стадии gitCache, gitLatestPatch)"
-        detailsArticle:
-          en: "/usage/build/stapel/instructions.html#disabling-source-updates-skipping-gitcache-and-gitlatestpatch-stages"
-          ru: "/usage/build/stapel/instructions.html#отключение-обновления-исходников-стадии-gitcache-и-gitlatestpatch"
       - name: git
         description:
           en: "Set of directives to add source files from git repositories (both the project repository and any other)"
@@ -807,11 +799,6 @@ sections:
             description:
               en: "The source image for copying files: another image from `werf.yaml` (e.g. `backend`) or an external image with a tag/digest (e.g. `nginx:1.25`, `nginx@sha256:...`)."
               ru: "Исходный образ для копирования файлов: другой образ из `werf.yaml` (например, `backend`) или внешний образ с тегом/дайджестом (например, `nginx:1.25`, `nginx@sha256:...`)."
-          - name: stage
-            value: "string"
-            description:
-              en: "The stage name from which you want to copy files (the latest one by default)"
-              ru: "Имя стадии, из которой выполнять копирование файлов (по умолчанию последняя)"
           - name: before
             value: "string"
             description:
