@@ -171,10 +171,6 @@ var _ = Describe("rawStapelImage", func() {
 								"targetEnv": "IMAGE_NAME_2",
 							},
 							{
-								"type":      string(ImageIDImport),
-								"targetEnv": "IMAGE_ID_2",
-							},
-							{
 								"type":      string(ImageDigestImport),
 								"targetEnv": "IMAGE_DIGEST_2",
 							},
@@ -216,10 +212,6 @@ var _ = Describe("rawStapelImage", func() {
 						{
 							Type:      ImageNameImport,
 							TargetEnv: "IMAGE_NAME_2",
-						},
-						{
-							Type:      ImageIDImport,
-							TargetEnv: "IMAGE_ID_2",
 						},
 						{
 							Type:      ImageDigestImport,

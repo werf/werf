@@ -41,28 +41,19 @@ func (b *localMutationBackendStub) Tag(ctx context.Context, ref, newRef string, 
 	return nil
 }
 
-func (b *localMutationBackendStub) TagImageByName(ctx context.Context, img container_backend.LegacyImageInterface) error {
-	if img.BuiltID() != "" {
-		return b.Tag(ctx, img.BuiltID(), img.Name(), container_backend.TagOpts{})
-	}
-	return nil
-}
-
 var _ = Describe("LocalStagesStorage", func() {
-	It("retags mutated local image by its new built id", func(ctx SpecContext) {
+	It("tags the mutated local image under the destination reference", func(ctx SpecContext) {
 		logCtx := logboek.NewContext(ctx, logboek.NewLogger(io.Discard, io.Discard))
 
 		backend := &localMutationBackendStub{}
 		storage := NewLocalStagesStorage(backend)
 		stageImage := container_backend.NewLegacyStageImage(nil, "tmp-scratch-compare:stage", backend, "")
-		stageImage.SetBuiltID("sha256:before")
 
-		err := storage.MutateAndPushImage(logCtx, "tmp-scratch-compare:stage", "tmp-scratch-compare:stage", image.SpecConfig{Labels: map[string]string{"werf-stage-content-digest": "digest"}}, stageImage)
+		err := storage.MutateAndPushImage(logCtx, "tmp-scratch-compare:stage", "tmp-scratch-compare:content-tag", image.SpecConfig{Labels: map[string]string{"werf-stage-content-digest": "digest"}}, stageImage)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(backend.savedImageName).To(Equal("tmp-scratch-compare:stage"))
 		Expect(backend.loaded).To(BeTrue())
-		Expect(stageImage.BuiltID()).To(Equal("sha256:mutated"))
-		Expect(backend.tagCalls).To(Equal([][2]string{{"sha256:mutated", "tmp-scratch-compare:stage"}}))
+		Expect(backend.tagCalls).To(Equal([][2]string{{"sha256:mutated", "tmp-scratch-compare:content-tag"}}))
 	})
 })
 

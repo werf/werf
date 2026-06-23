@@ -175,6 +175,10 @@ func (s *ImageSpecStage) GetDependencies(_ context.Context, _ Conveyor, _ contai
 	return util.Sha256Hash(args...), nil
 }
 
+func (s *ImageSpecStage) GetContentDependencies(ctx context.Context, c Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+	return s.GetDependencies(ctx, c, nil, nil, nil, buildContextArchive)
+}
+
 type ImageMutatorPusher interface {
 	MutateAndPushImage(ctx context.Context, src, dest string, newConfig image.SpecConfig, stageImage container_backend.LegacyImageInterface) error
 }

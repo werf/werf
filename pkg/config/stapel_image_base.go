@@ -44,14 +44,6 @@ func (c *StapelImageBase) ImageBaseConfig() *StapelImageBase {
 	return c
 }
 
-func (c *StapelImageBase) IsGitAfterPatchDisabled() bool {
-	if c.Git == nil {
-		return false
-	}
-
-	return c.Git.isGitAfterPatchDisabled
-}
-
 func (c *StapelImageBase) IsFinal() bool {
 	return c.final
 }

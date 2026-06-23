@@ -49,7 +49,7 @@ var _ = Describe("DependenciesStage", func() {
 
 		Entry("should change stage digest and set configured environment variables when dependencies are set",
 			TestDependencies{
-				ExpectedDigest: "62b956afc89d0918164545c6336ecbcf3d29415cb42724368c6d331439bee956",
+				ExpectedDigest: "17136cd6b67a73a8e34bc0159bfeb0d1e09d6a72938bc88237bc142065d2442f",
 				Dependencies: []*TestDependency{
 					{
 						ImageName:          "one",
@@ -59,7 +59,6 @@ var _ = Describe("DependenciesStage", func() {
 
 						DockerImageRepo:   "ONE_REPO",
 						DockerImageTag:    "796e905d0cc975e718b3f8b3ea0199ea4d52668ecc12c4dbf85a136d-1638863657513",
-						DockerImageID:     "sha256:d19deb06171086017db6aade408ce29592e7490f3b98d4da228ef6c771ddc6d5",
 						DockerImageDigest: "sha256:6a86a39f70f4dac3df671119ffe66a1d76958e7504e72b1ee9f893a152ef772b",
 					},
 					{
@@ -67,12 +66,10 @@ var _ = Describe("DependenciesStage", func() {
 						TargetEnvImageName:   "TWO_NAME",
 						TargetEnvImageRepo:   "TWO_REPO",
 						TargetEnvImageTag:    "TWO_TAG",
-						TargetEnvImageID:     "TWO_ID",
 						TargetEnvImageDigest: "TWO_DIGEST",
 
 						DockerImageRepo:   "TWO_REPO",
 						DockerImageTag:    "bc6db8dde5c051349b85dbb8f858f4c80a519a17723d2c67dc9f890c-1643039584147",
-						DockerImageID:     "sha256:5a46fe1fe7f2867aeb0a74cfc5aea79b1003b8d6095e2350332d3c99d7e1df6b",
 						DockerImageDigest: "sha256:0476c17a17b746284ea1622b4c97f8a9c986a1f1919ea3a9763cf06d8609b425",
 					},
 					{
@@ -80,12 +77,32 @@ var _ = Describe("DependenciesStage", func() {
 						TargetEnvImageName:   "ONE_NAME",
 						TargetEnvImageRepo:   "ONE_REPO",
 						TargetEnvImageTag:    "ONE_TAG",
-						TargetEnvImageID:     "ONE_ID",
 						TargetEnvImageDigest: "ONE_DIGEST",
 
 						DockerImageRepo:   "ONE_REPO",
 						DockerImageTag:    "796e905d0cc975e718b3f8b3ea0199ea4d52668ecc12c4dbf85a136d-1638863657513",
-						DockerImageID:     "sha256:d19deb06171086017db6aade408ce29592e7490f3b98d4da228ef6c771ddc6d5",
+						DockerImageDigest: "sha256:87f5ff85f0ff92c6185e6267a2039eff406337a5726c6b668831cdf1262b76e8",
+					},
+					{
+						ImageName:            "two",
+						TargetEnvImageName:   "TWO_NAME",
+						TargetEnvImageRepo:   "TWO_REPO",
+						TargetEnvImageTag:    "TWO_TAG",
+						TargetEnvImageDigest: "TWO_DIGEST",
+
+						DockerImageRepo:   "TWO_REPO",
+						DockerImageTag:    "bc6db8dde5c051349b85dbb8f858f4c80a519a17723d2c67dc9f890c-1643039584147",
+						DockerImageDigest: "sha256:0476c17a17b746284ea1622b4c97f8a9c986a1f1919ea3a9763cf06d8609b425",
+					},
+					{
+						ImageName:            "one",
+						TargetEnvImageName:   "ONE_NAME",
+						TargetEnvImageRepo:   "ONE_REPO",
+						TargetEnvImageTag:    "ONE_TAG",
+						TargetEnvImageDigest: "ONE_DIGEST",
+
+						DockerImageRepo:   "ONE_REPO",
+						DockerImageTag:    "796e905d0cc975e718b3f8b3ea0199ea4d52668ecc12c4dbf85a136d-1638863657513",
 						DockerImageDigest: "sha256:87f5ff85f0ff92c6185e6267a2039eff406337a5726c6b668831cdf1262b76e8",
 					},
 				},
@@ -93,7 +110,7 @@ var _ = Describe("DependenciesStage", func() {
 
 		Entry("new image added into dependencies should change stage digest and environment variables",
 			TestDependencies{
-				ExpectedDigest: "69812782590820b507d9c8a2f74ed54d6544070ea28028e6fced4bf70f40112e",
+				ExpectedDigest: "af77bedbeed9d219d07e025dd8a8646060b5b070e8382450c53e38cdd8763066",
 				Dependencies: []*TestDependency{
 					{
 						ImageName:          "one",
@@ -103,7 +120,6 @@ var _ = Describe("DependenciesStage", func() {
 
 						DockerImageRepo:   "ONE_REPO",
 						DockerImageTag:    "796e905d0cc975e718b3f8b3ea0199ea4d52668ecc12c4dbf85a136d-1638863657513",
-						DockerImageID:     "sha256:d19deb06171086017db6aade408ce29592e7490f3b98d4da228ef6c771ddc6d5",
 						DockerImageDigest: "sha256:6a86a39f70f4dac3df671119ffe66a1d76958e7504e72b1ee9f893a152ef772b",
 					},
 					{
@@ -111,12 +127,10 @@ var _ = Describe("DependenciesStage", func() {
 						TargetEnvImageName:   "TWO_NAME",
 						TargetEnvImageRepo:   "TWO_REPO",
 						TargetEnvImageTag:    "TWO_TAG",
-						TargetEnvImageID:     "TWO_ID",
 						TargetEnvImageDigest: "TWO_DIGEST",
 
 						DockerImageRepo:   "TWO_REPO",
 						DockerImageTag:    "bc6db8dde5c051349b85dbb8f858f4c80a519a17723d2c67dc9f890c-1643039584147",
-						DockerImageID:     "sha256:5a46fe1fe7f2867aeb0a74cfc5aea79b1003b8d6095e2350332d3c99d7e1df6b",
 						DockerImageDigest: "sha256:0476c17a17b746284ea1622b4c97f8a9c986a1f1919ea3a9763cf06d8609b425",
 					},
 					{
@@ -124,12 +138,10 @@ var _ = Describe("DependenciesStage", func() {
 						TargetEnvImageName:   "ONE_NAME",
 						TargetEnvImageRepo:   "ONE_REPO",
 						TargetEnvImageTag:    "ONE_TAG",
-						TargetEnvImageID:     "ONE_ID",
 						TargetEnvImageDigest: "ONE_DIGEST",
 
 						DockerImageRepo:   "ONE_REPO",
 						DockerImageTag:    "796e905d0cc975e718b3f8b3ea0199ea4d52668ecc12c4dbf85a136d-1638863657513",
-						DockerImageID:     "sha256:d19deb06171086017db6aade408ce29592e7490f3b98d4da228ef6c771ddc6d5",
 						DockerImageDigest: "sha256:6a86a39f70f4dac3df671119ffe66a1d76958e7504e72b1ee9f893a152ef772b",
 					},
 					{
@@ -138,7 +150,6 @@ var _ = Describe("DependenciesStage", func() {
 
 						DockerImageRepo:   "THREE_REPO",
 						DockerImageTag:    "custom-tag",
-						DockerImageID:     "sha256:6f510109a5ca7657babd6f3f48fd16c1b887d63857ac411f636967de5aa48d31",
 						DockerImageDigest: "sha256:bc18c2bf466481a9773822f3d29f681d866f7291895552609e75f2e7d76b9bcb",
 					},
 				},
@@ -146,7 +157,7 @@ var _ = Describe("DependenciesStage", func() {
 
 		Entry("should change stage digest and environment variables when previously added image dependency params has been changed",
 			TestDependencies{
-				ExpectedDigest: "686672be02deb993edb8d41cd97eafdf26ebcfa5b878063ddd887ec623d84a1c",
+				ExpectedDigest: "f74b3c850624e929061bec0dc589e48f98b75976fa4644441991f0c1db47f7ca",
 				Dependencies: []*TestDependency{
 					{
 						ImageName:          "one",
@@ -156,7 +167,6 @@ var _ = Describe("DependenciesStage", func() {
 
 						DockerImageRepo:   "ONE_REPO",
 						DockerImageTag:    "b7aebf280be3fbb7d207d3b659bfc1a49338441ea933c1eac5766a5f-1638863693022",
-						DockerImageID:     "sha256:c62467775792f47c1bb39ceb5dccdafa02db1734f12c8aa07dbb6d618c501166",
 						DockerImageDigest: "sha256:4d0e8f47643342b529b426aebcaac5c67d4744ee2ba54f967433e6b6fc075312",
 					},
 					{
@@ -164,12 +174,10 @@ var _ = Describe("DependenciesStage", func() {
 						TargetEnvImageName:   "TWO_NAME",
 						TargetEnvImageRepo:   "TWO_REPO",
 						TargetEnvImageTag:    "TWO_TAG",
-						TargetEnvImageID:     "TWO_ID",
 						TargetEnvImageDigest: "TWO_DIGEST",
 
 						DockerImageRepo:   "TWO_REPO",
 						DockerImageTag:    "bc6db8dde5c051349b85dbb8f858f4c80a519a17723d2c67dc9f890c-1643039584147",
-						DockerImageID:     "sha256:5a46fe1fe7f2867aeb0a74cfc5aea79b1003b8d6095e2350332d3c99d7e1df6b",
 						DockerImageDigest: "sha256:0476c17a17b746284ea1622b4c97f8a9c986a1f1919ea3a9763cf06d8609b425",
 					},
 					{
@@ -177,12 +185,10 @@ var _ = Describe("DependenciesStage", func() {
 						TargetEnvImageName:   "ONE_NAME",
 						TargetEnvImageRepo:   "ONE_REPO",
 						TargetEnvImageTag:    "ONE_TAG",
-						TargetEnvImageID:     "ONE_ID",
 						TargetEnvImageDigest: "ONE_DIGEST",
 
 						DockerImageRepo:   "ONE_REPO",
 						DockerImageTag:    "b7aebf280be3fbb7d207d3b659bfc1a49338441ea933c1eac5766a5f-1638863693022",
-						DockerImageID:     "sha256:c62467775792f47c1bb39ceb5dccdafa02db1734f12c8aa07dbb6d618c501166",
 						DockerImageDigest: "sha256:4d0e8f47643342b529b426aebcaac5c67d4744ee2ba54f967433e6b6fc075312",
 					},
 				},
@@ -190,7 +196,7 @@ var _ = Describe("DependenciesStage", func() {
 
 		Entry("should change stage digest and set configured environment variables when dependant image environment variable has been changed",
 			TestDependencies{
-				ExpectedDigest: "1aa753aa608f9f19c85732d338e2f96236c2d2463de776b84936bedade37e9ce",
+				ExpectedDigest: "0fed004923c98a459c7122d2f20f2e647a3098cb05c7d783317458e7fd5992d5",
 				Dependencies: []*TestDependency{
 					{
 						ImageName:          "one",
@@ -200,7 +206,6 @@ var _ = Describe("DependenciesStage", func() {
 
 						DockerImageRepo:   "ONE_REPO",
 						DockerImageTag:    "796e905d0cc975e718b3f8b3ea0199ea4d52668ecc12c4dbf85a136d-1638863657513",
-						DockerImageID:     "sha256:d19deb06171086017db6aade408ce29592e7490f3b98d4da228ef6c771ddc6d5",
 						DockerImageDigest: "sha256:6a86a39f70f4dac3df671119ffe66a1d76958e7504e72b1ee9f893a152ef772b",
 					},
 					{
@@ -208,12 +213,10 @@ var _ = Describe("DependenciesStage", func() {
 						TargetEnvImageName:   "TWO_NAME",
 						TargetEnvImageRepo:   "TWO_REPO",
 						TargetEnvImageTag:    "TWO_TAG",
-						TargetEnvImageID:     "TWO_ID",
 						TargetEnvImageDigest: "TWO_DIGEST",
 
 						DockerImageRepo:   "TWO_REPO",
 						DockerImageTag:    "bc6db8dde5c051349b85dbb8f858f4c80a519a17723d2c67dc9f890c-1643039584147",
-						DockerImageID:     "sha256:5a46fe1fe7f2867aeb0a74cfc5aea79b1003b8d6095e2350332d3c99d7e1df6b",
 						DockerImageDigest: "sha256:0476c17a17b746284ea1622b4c97f8a9c986a1f1919ea3a9763cf06d8609b425",
 					},
 					{
@@ -221,12 +224,10 @@ var _ = Describe("DependenciesStage", func() {
 						TargetEnvImageName:   "ONE_NAME",
 						TargetEnvImageRepo:   "ONE_REPO",
 						TargetEnvImageTag:    "ONE_TAG",
-						TargetEnvImageID:     "ONE_ID",
 						TargetEnvImageDigest: "ONE_DIGEST",
 
 						DockerImageRepo:   "ONE_REPO",
 						DockerImageTag:    "796e905d0cc975e718b3f8b3ea0199ea4d52668ecc12c4dbf85a136d-1638863657513",
-						DockerImageID:     "sha256:d19deb06171086017db6aade408ce29592e7490f3b98d4da228ef6c771ddc6d5",
 						DockerImageDigest: "sha256:6a86a39f70f4dac3df671119ffe66a1d76958e7504e72b1ee9f893a152ef772b",
 					},
 				},
@@ -354,16 +355,14 @@ var _ = Describe("getDependencies helper", func() {
 
 func NewConveyorStubForDependencies(giterminismManager *GiterminismManagerStub, dependencies []*TestDependency) *ConveyorStub {
 	lastStageImageNameByImageName := make(map[string]string)
-	lastStageImageIDByImageName := make(map[string]string)
 	lastStageImageDigestByImageName := make(map[string]string)
 
 	for _, dep := range dependencies {
 		lastStageImageNameByImageName[dep.ImageName] = dep.GetDockerImageName()
-		lastStageImageIDByImageName[dep.ImageName] = dep.DockerImageID
 		lastStageImageDigestByImageName[dep.ImageName] = dep.DockerImageDigest
 	}
 
-	return NewConveyorStub(giterminismManager, lastStageImageNameByImageName, lastStageImageIDByImageName, lastStageImageDigestByImageName)
+	return NewConveyorStub(giterminismManager, lastStageImageNameByImageName, lastStageImageDigestByImageName)
 }
 
 type nonLegacyDependenciesConveyorStub struct {
