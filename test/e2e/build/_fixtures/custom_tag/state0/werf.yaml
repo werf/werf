@@ -18,8 +18,6 @@ dependencies:
     imports:
       - type: ImageName
         targetBuildArg: BASE_DOCKERFILE_IMAGE_NAME
-      - type: ImageID
-        targetBuildArg: BASE_DOCKERFILE_IMAGE_ID
       - type: ImageRepo
         targetBuildArg: BASE_DOCKERFILE_IMAGE_REPO
       - type: ImageTag
