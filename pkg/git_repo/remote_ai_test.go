@@ -10,6 +10,36 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestAI_BuildCloneOptions(t *testing.T) {
+	t.Run("branch mapping clones single branch without tags", func(t *testing.T) {
+		opts := buildCloneOptions("https://example.com/repo.git", "main")
+		assert.True(t, opts.SingleBranch)
+		assert.Equal(t, plumbing.NewBranchReferenceName("main"), opts.ReferenceName)
+		assert.Equal(t, git.NoTags, opts.Tags)
+	})
+
+	t.Run("no branch clones everything", func(t *testing.T) {
+		opts := buildCloneOptions("https://example.com/repo.git", "")
+		assert.False(t, opts.SingleBranch)
+		assert.Empty(t, opts.ReferenceName)
+		assert.NotEqual(t, git.NoTags, opts.Tags)
+	})
+}
+
+func TestAI_BuildFetchOptions(t *testing.T) {
+	t.Run("branch mapping fetches without tags", func(t *testing.T) {
+		opts := buildFetchOptions("origin", "main")
+		assert.Equal(t, git.NoTags, opts.Tags)
+		assert.True(t, opts.Force)
+	})
+
+	t.Run("no branch fetches all tags", func(t *testing.T) {
+		opts := buildFetchOptions("origin", "")
+		assert.Equal(t, git.AllTags, opts.Tags)
+		assert.True(t, opts.Force)
+	})
+}
+
 func TestAI_SyncLocalBranches(t *testing.T) {
 	tmpDir := t.TempDir()
 	rawRepo, err := git.PlainInit(tmpDir, true)
