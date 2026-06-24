@@ -14,3 +14,4 @@ import:
 - image: source
   add: /etc/werf-test-scratch-import
   to: /etc/werf-test-scratch-import
+  before: install
