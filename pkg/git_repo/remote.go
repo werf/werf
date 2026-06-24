@@ -34,6 +34,10 @@ type Remote struct {
 	Endpoint *transport.Endpoint
 
 	BasicAuth *BasicAuth
+
+	Branch string
+	Tag    string
+	Commit string
 }
 
 func OpenRemoteRepo(name, url string, auth *BasicAuthCredentials) (*Remote, error) {
@@ -151,6 +155,34 @@ func (repo *Remote) updateLastAccessAt(ctx context.Context, repoPath string) err
 	return timestamps.WriteTimestampFile(path, time.Now())
 }
 
+func buildCloneOptions(url, branch string) *git.CloneOptions {
+	opts := &git.CloneOptions{
+		URL:               url,
+		RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
+	}
+
+	if branch != "" {
+		opts.SingleBranch = true
+		opts.ReferenceName = plumbing.NewBranchReferenceName(branch)
+		opts.Tags = git.NoTags
+	}
+
+	return opts
+}
+
+func buildFetchOptions(remoteName, branch string) *git.FetchOptions {
+	tags := git.AllTags
+	if branch != "" {
+		tags = git.NoTags
+	}
+
+	return &git.FetchOptions{
+		RemoteName: remoteName,
+		Force:      true,
+		Tags:       tags,
+	}
+}
+
 func (repo *Remote) Clone(ctx context.Context) (bool, error) {
 	if repo.IsDryRun {
 		return false, nil
@@ -202,10 +234,7 @@ func (repo *Remote) Clone(ctx context.Context) (bool, error) {
 		// Ensure cleanup on failure
 		defer os.RemoveAll(tmpPath)
 
-		cloneOpts := &git.CloneOptions{
-			URL:               repo.Url,
-			RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
-		}
+		cloneOpts := buildCloneOptions(repo.Url, repo.Branch)
 
 		if repo.BasicAuth != nil {
 			cloneOpts.Auth = newBasicAuth(repo.BasicAuth.Username, repo.BasicAuth.Password).AuthMethod
@@ -285,11 +314,7 @@ func (repo *Remote) FetchOrigin(ctx context.Context, opts FetchOptions) error {
 
 		logboek.Context(ctx).Default().LogFDetails("Fetch remote %s of %s\n", remoteName, repo.Url)
 
-		fetchOpts := &git.FetchOptions{
-			RemoteName: remoteName,
-			Force:      true,
-			Tags:       git.AllTags,
-		}
+		fetchOpts := buildFetchOptions(remoteName, repo.Branch)
 
 		if repo.BasicAuth != nil {
 			fetchOpts.Auth = newBasicAuth(repo.BasicAuth.Username, repo.BasicAuth.Password).AuthMethod
