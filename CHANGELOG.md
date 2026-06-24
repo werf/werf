@@ -1,5 +1,24 @@
 # Changelog
 
+## [2.73.0](https://github.com/werf/werf/compare/v2.72.2...v2.73.0) (2026-06-24)
+
+
+### Features
+
+* **build, tagging:** add content-based tag independent of build ([55dc5ea](https://github.com/werf/werf/commit/55dc5ea4b0135879d1ed46c8752d9029886bcb82))
+* **build, tagging:** include git file mode in ls-tree checksum ([15e7ca2](https://github.com/werf/werf/commit/15e7ca21d13f37a36aac99ed8327570a7ab84380))
+* **deploy:** move `dockerconfigjson` to .global.werf ([#7583](https://github.com/werf/werf/issues/7583)) ([79d90cb](https://github.com/werf/werf/commit/79d90cb69f563a2ec7b109de5481c4eba45f9722))
+* **giterminism:** strict schema validation for werf-giterminism.yaml ([#7604](https://github.com/werf/werf/issues/7604)) ([5af5f24](https://github.com/werf/werf/commit/5af5f24ac728f78de86d8f8529e8df901e3f2d1d))
+
+
+### Bug Fixes
+
+* **build, buildah, dockerfile, staged:** resolve staged Dockerfile RUN --mount from=&lt;stage&gt; to built image ([#7594](https://github.com/werf/werf/issues/7594)) ([b1933b3](https://github.com/werf/werf/commit/b1933b36118fb36a5bab847a93c56bc9196c13b1))
+* **build, tagging:** order multiarch content deps by platform name ([c27d5c8](https://github.com/werf/werf/commit/c27d5c81d45bee826f67b60de0737d05f0de1f26))
+* **build, tagging:** set valid created timestamp on content-tag image ([7f71de9](https://github.com/werf/werf/commit/7f71de96b3736685eaf57ce5fbb0e7940b944958))
+* **build:** honor --check-built-images and --require-built-images flags ([af5bb53](https://github.com/werf/werf/commit/af5bb537bc89dff6ef29420b44ff70022ae69229))
+* **build:** resolve symlink import destinations under root mount ([dfb5c42](https://github.com/werf/werf/commit/dfb5c4292c69967e36e74df27fa2a8d829122ae7))
+
 ## [2.72.2](https://github.com/werf/werf/compare/v2.72.1...v2.72.2) (2026-06-18)
 
 
