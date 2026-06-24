@@ -2,5 +2,15 @@ project: werf-test-e2e-build-scratch
 configVersion: 1
 
 ---
+image: source
+from: alpine
+shell:
+  install:
+  - echo "werf-test-scratch-import" > /etc/werf-test-scratch-import
+---
 image: stapel-scratch
 from: scratch
+import:
+- image: source
+  add: /etc/werf-test-scratch-import
+  to: /etc/werf-test-scratch-import
