@@ -14,7 +14,8 @@ import (
 )
 
 func ExpectFileContentInImage(ctx context.Context, backendMode, imageName, filePath, expectedContent string) {
-	img := loadLocalImage(ctx, backendMode, imageName)
+	img, cleanup := loadLocalImage(ctx, backendMode, imageName)
+	defer cleanup()
 	rc := mutate.Extract(img)
 	defer rc.Close()
 
@@ -41,7 +42,8 @@ func ExpectFileContentInImage(ctx context.Context, backendMode, imageName, fileP
 }
 
 func ExpectImageHasNonEmptyLabels(ctx context.Context, backendMode, imageName string, labelKeys ...string) {
-	img := loadLocalImage(ctx, backendMode, imageName)
+	img, cleanup := loadLocalImage(ctx, backendMode, imageName)
+	defer cleanup()
 	config, err := img.ConfigFile()
 	Expect(err).NotTo(HaveOccurred())
 
@@ -54,13 +56,12 @@ func ExpectImageHasNonEmptyLabels(ctx context.Context, backendMode, imageName st
 	}
 }
 
-func loadLocalImage(ctx context.Context, backendMode, imageName string) v1.Image {
+func loadLocalImage(ctx context.Context, backendMode, imageName string) (v1.Image, func()) {
 	tempFile, err := os.CreateTemp("", "werf-e2e-image-*.tar")
 	Expect(err).NotTo(HaveOccurred())
 
 	tempTarPath := tempFile.Name()
 	Expect(tempFile.Close()).To(Succeed())
-	defer os.Remove(tempTarPath)
 
 	switch backendMode {
 	case "docker", "vanilla-docker", "buildkit-docker":
@@ -74,7 +75,7 @@ func loadLocalImage(ctx context.Context, backendMode, imageName string) v1.Image
 	img, err := tarball.ImageFromPath(tempTarPath, nil)
 	Expect(err).NotTo(HaveOccurred())
 
-	return img
+	return img, func() { os.Remove(tempTarPath) }
 }
 
 func GetBuiltImageLastStageImageName(ctx context.Context, testDirPath, werfBinPath, imageName string) string {
