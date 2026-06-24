@@ -7,6 +7,7 @@ import (
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/test/pkg/contback"
 	"github.com/werf/werf/v2/test/pkg/report"
+	"github.com/werf/werf/v2/test/pkg/utils"
 	"github.com/werf/werf/v2/test/pkg/werf"
 )
 
@@ -44,12 +45,7 @@ var _ = Describe("Scratch stapel build", Label("e2e", "build", "scratch", "simpl
 			if testOpts.WithLocalRepo {
 				contRuntime.Pull(ctx, imageName)
 			}
-			contRuntime.ExpectCmdsToSucceed(
-				ctx,
-				imageName,
-				"test -f /etc/werf-test-scratch-import",
-				"echo 'werf-test-scratch-import' | diff /etc/werf-test-scratch-import -",
-			)
+			utils.ExpectFileContentInImage(imageName, "etc/werf-test-scratch-import", "werf-test-scratch-import\n")
 			inspect := contRuntime.GetImageInspect(ctx, imageName)
 			labels := inspect.Config.Labels
 			Expect(labels).NotTo(BeNil())
