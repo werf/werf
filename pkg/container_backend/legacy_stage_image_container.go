@@ -129,6 +129,10 @@ func ShelloutPack(command string) string {
 }
 
 func (c *LegacyStageImageContainer) imageRef(img *LegacyStageImage) string {
+	if img.BuiltID() != "" {
+		return img.GetID()
+	}
+
 	if c.image.GetTargetPlatform() != "" {
 		return img.Name()
 	}
