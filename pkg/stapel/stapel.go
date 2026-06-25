@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	VERSION              = "0.7.0"
+	VERSION              = "0.7.1"
 	IMAGE                = "registry.werf.io/werf/stapel"
 	CONTAINER_MOUNT_ROOT = "/.werf"
 )
@@ -32,6 +32,10 @@ func getImage() string {
 		image = i
 	}
 	return image
+}
+
+func isDefaultImageRef() bool {
+	return os.Getenv("WERF_STAPEL_IMAGE_NAME") == "" && os.Getenv("WERF_STAPEL_IMAGE_VERSION") == ""
 }
 
 func ImageName() string {
