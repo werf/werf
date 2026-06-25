@@ -40,9 +40,10 @@ vars:
 tasks:
   format:
     desc: "Run all code formatters."
-    deps:
-      - _remote-lint:format:gci
-      - _remote-lint:format:gofumpt
+    cmds:
+      - task: stapel:embed
+      - task: _remote-lint:format:gci
+      - task: _remote-lint:format:gofumpt
 
   lint:golangci-lint:go:
     desc: 'Lint with golangci-lint without cgo. Important vars: "golangciPaths", "golangciLintVersion".'
@@ -77,8 +78,9 @@ tasks:
 
   lint:
     desc: "Run all linters."
-    deps:
-      - lint:golangci-lint
+    cmds:
+      - task: stapel:embed
+      - task: lint:golangci-lint
 
   _build-and-lint:
     deps:
