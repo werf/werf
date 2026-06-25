@@ -12,7 +12,7 @@ var _ = Describe("LegacyStageImageContainer imageRef", func() {
 		targetPlatform = "linux/amd64"
 	)
 
-	DescribeTable("returns the expected image reference", func(name string, platform string, committed bool, expected string) {
+	DescribeTable("returns the expected image reference", func(name, platform string, committed bool, expected string) {
 		img := NewLegacyStageImage(nil, name, nil, platform)
 		if committed {
 			img.buildImage = newLegacyBaseImage(committedID, nil)
