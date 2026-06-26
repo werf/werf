@@ -11,7 +11,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 
 	"github.com/werf/logboek"
@@ -313,18 +312,14 @@ func newCmd(ctx context.Context, composeCmdName string, options *newCmdOptions) 
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified repo")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
-	common.StubSetupInsecureHelmDependencies(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 	common.SetupContainerRegistryMirror(&commonCmdData, cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 
-	common.SetupSynchronization(&commonCmdData, cmd)
 
 	common.SetupDryRun(&commonCmdData, cmd)
-
-	common.SetupVirtualMerge(&commonCmdData, cmd)
 
 	common.SetupDisableAutoHostCleanup(&commonCmdData, cmd)
 	common.SetupAllowedBackendStorageVolumeUsage(&commonCmdData, cmd)
@@ -346,8 +341,6 @@ func newCmd(ctx context.Context, composeCmdName string, options *newCmdOptions) 
 
 	commonCmdData.SetupSkipImageSpecStage(cmd)
 	commonCmdData.SetupAllowIncludesUpdate(cmd)
-
-	lo.Must0(common.SetupMinimalKubeConnectionFlags(&commonCmdData, cmd))
 
 	return cmd
 }
@@ -453,11 +446,6 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 
 	var envArray []string
 	if !imagesToProcess.WithoutImages && shouldBeBuilt {
-		common.SetupOndemandKubeInitializer(commonCmdData.KubeContextCurrent, commonCmdData.LegacyKubeConfigPath, commonCmdData.KubeConfigBase64, commonCmdData.LegacyKubeConfigPathsMergeList, commonCmdData.KubeBearerTokenData, commonCmdData.KubeBearerTokenPath)
-		if err := common.GetOndemandKubeInitializer().Init(ctx); err != nil {
-			return err
-		}
-
 		projectName := werfConfig.Meta.Project
 
 		projectTmpDir, err := tmp_manager.CreateProjectDir(ctx)
@@ -483,7 +471,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 			return err
 		}
 
-		conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, giterminismManager.ProjectDir(), projectTmpDir, containerBackend, storageManager, storageManager.StorageLockManager, conveyorOptions)
+		conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, giterminismManager.ProjectDir(), projectTmpDir, containerBackend, storageManager, conveyorOptions)
 		defer conveyorWithRetry.Terminate()
 
 		if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {

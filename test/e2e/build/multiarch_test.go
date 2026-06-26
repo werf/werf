@@ -169,7 +169,7 @@ var _ = Describe("Multiarch build", Label("e2e", "build", "multiarch", "simple")
 		Entry("Docker backend, docker can build stapel image only for linux/amd64 platform", multiarchTestOptions{
 			setupEnvOptions: setupEnvOptions{
 				WithLocalRepo:        true,
-				ContainerBackendMode: "vanilla-docker",
+				ContainerBackendMode: "docker",
 			},
 			Platforms:         []string{"linux/amd64"},
 			EnableStapelImage: true,
@@ -185,7 +185,7 @@ var _ = Describe("Multiarch build", Label("e2e", "build", "multiarch", "simple")
 		Entry("Docker backend, build arbitrary platforms, only non-staged dockerfile builder available", multiarchTestOptions{
 			setupEnvOptions: setupEnvOptions{
 				WithLocalRepo:        true,
-				ContainerBackendMode: "vanilla-docker",
+				ContainerBackendMode: "docker",
 			},
 			Platforms:             []string{"linux/arm64", "linux/amd64"},
 			EnableDockerfileImage: true,

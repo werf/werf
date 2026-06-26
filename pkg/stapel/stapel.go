@@ -8,15 +8,12 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/filters"
-
 	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/image"
 )
 
 const (
-	VERSION              = "0.6.2"
+	VERSION              = "0.7.0"
 	IMAGE                = "registry.werf.io/werf/stapel"
 	CONTAINER_MOUNT_ROOT = "/.werf"
 )
@@ -66,32 +63,9 @@ func GetOrCreateContainer(ctx context.Context, targetPlatform string) (string, e
 }
 
 func Purge(ctx context.Context) error {
-	baseContainerName := fmt.Sprintf("%s%s", image.AssemblingContainerNamePrefix, getVersion())
-	containers, err := docker.Containers(ctx, types.ContainerListOptions{
-		All:     true,
-		Filters: filters.NewArgs(filters.Arg("name", baseContainerName)),
-	})
-	if err != nil {
+	container := getContainer("")
+	if err := container.RmIfExist(ctx); err != nil {
 		return err
-	}
-
-	processed := map[string]struct{}{}
-	for _, ctr := range containers {
-		for _, containerName := range ctr.Names {
-			containerName = strings.TrimPrefix(containerName, "/")
-			if containerName != baseContainerName && !strings.HasPrefix(containerName, baseContainerName+"_") {
-				continue
-			}
-
-			if _, done := processed[containerName]; done {
-				continue
-			}
-
-			if err := (&container{Name: containerName}).RmIfExist(ctx); err != nil {
-				return err
-			}
-			processed[containerName] = struct{}{}
-		}
 	}
 
 	if err := rmiIfExist(ctx); err != nil {
@@ -186,28 +160,8 @@ func Md5sumBinPath() string {
 	return embeddedBinPath("md5sum")
 }
 
-func AnsiblePlaybookBinPath() string {
-	return embeddedBinPath("ansible-playbook")
-}
-
 func ChownBinPath() string {
 	return embeddedBinPath("chown")
-}
-
-/*
- * Ansible tools and libs overlay path is like /usr/local which has more priority than /usr.
- * Ansible tools and libs overlay path used to force ansible to use tools directly from stapel rather than find it in the base system.
- *
- * Use case is "unarchive" module which does not work with alpine busybox "tar" util (which is installed by default
- * and takes precedence over other utils). For this case we put tar into ansible tools overlay path.
- */
-
-func AnsibleToolsOverlayPATH() string {
-	return path.Join(CONTAINER_MOUNT_ROOT, "stapel/ansible_tools_overlay/bin")
-}
-
-func AnsibleLibsOverlayLDPATH() string {
-	return path.Join(CONTAINER_MOUNT_ROOT, "stapel/ansible_tools_overlay/lib")
 }
 
 func SystemPATH() string {

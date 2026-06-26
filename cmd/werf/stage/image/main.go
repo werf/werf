@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 
 	"github.com/werf/logboek"
@@ -73,7 +72,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified stages storage")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
-	common.StubSetupInsecureHelmDependencies(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 	common.SetupContainerRegistryMirror(&commonCmdData, cmd)
 
@@ -82,15 +80,10 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupDryRun(&commonCmdData, cmd)
 
-	common.SetupSynchronization(&commonCmdData, cmd)
-
-	common.SetupVirtualMerge(&commonCmdData, cmd)
 
 	commonCmdData.SetupPlatform(cmd)
 	commonCmdData.SetupDebugTemplates(cmd)
 	commonCmdData.SetupAllowIncludesUpdate(cmd)
-
-	lo.Must0(common.SetupMinimalKubeConnectionFlags(&commonCmdData, cmd))
 
 	return cmd
 }
@@ -101,14 +94,13 @@ func run(ctx context.Context, imageName string) error {
 		InitTrueGitWithOptions: &common.InitTrueGitOptions{
 			Options: true_git.Options{LiveGitOutput: *commonCmdData.LogDebug},
 		},
-		InitDockerRegistry:           true,
-		InitProcessContainerBackend:  true,
-		InitWerf:                     true,
-		InitGitDataManager:           true,
-		InitManifestCache:            true,
-		InitLRUImagesCache:           true,
-		InitSSHAgent:                 true,
-		SetupOndemandKubeInitializer: true,
+		InitDockerRegistry:          true,
+		InitProcessContainerBackend: true,
+		InitWerf:                    true,
+		InitGitDataManager:          true,
+		InitManifestCache:           true,
+		InitLRUImagesCache:          true,
+		InitSSHAgent:                true,
 	})
 	if err != nil {
 		return fmt.Errorf("component init error: %w", err)
@@ -170,7 +162,7 @@ func run(ctx context.Context, imageName string) error {
 		return err
 	}
 
-	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, giterminismManager.ProjectDir(), projectTmpDir, containerBackend, storageManager, storageManager.StorageLockManager, conveyorOptions)
+	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, giterminismManager.ProjectDir(), projectTmpDir, containerBackend, storageManager, conveyorOptions)
 	defer conveyorWithRetry.Terminate()
 
 	if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
@@ -183,7 +175,7 @@ func run(ctx context.Context, imageName string) error {
 			return fmt.Errorf("resolve target platforms for image %q: %w", imageName, err)
 		}
 
-		fmt.Println(c.GetImageNameForLastImageStage(targetPlatforms[0], imageName))
+		fmt.Println(c.GetImageContentTagName(targetPlatforms[0], imageName))
 
 		return nil
 	}); err != nil {

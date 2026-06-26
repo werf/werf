@@ -155,7 +155,6 @@ type AddOpts struct {
 
 type ImagesOptions struct {
 	CommitOpts
-	Names   []string
 	Filters []util.Pair[string, string]
 }
 

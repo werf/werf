@@ -5,13 +5,11 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"crypto/md5"
 	"errors"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
-	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -269,113 +267,6 @@ func (backend *BuildahBackend) applyCommands(ctx context.Context, container *con
 	return nil
 }
 
-func (backend *BuildahBackend) CalculateDependencyImportChecksum(ctx context.Context, dependencyImport DependencyImportSpec, opts CalculateDependencyImportChecksum) (string, error) {
-	// TODO(2.0): Take into account empty dirs
-
-	var container *containerDesc
-	if c, err := backend.createContainers(ctx, []string{dependencyImport.ImageName}, CommonOpts(opts)); err != nil {
-		return "", err
-	} else {
-		container = c[0]
-	}
-	defer func() {
-		if err := backend.removeContainers(ctx, []*containerDesc{container}, CommonOpts(opts)); err != nil {
-			logboek.Context(ctx).Error().LogF("ERROR: unable to remove temporal dependency container %q: %s\n", container.Name, err)
-		}
-	}()
-
-	logboek.Context(ctx).Debug().LogF("Mounting dependency container %s\n", container.Name)
-	if err := backend.mountContainers(ctx, []*containerDesc{container}, CommonOpts(opts)); err != nil {
-		return "", fmt.Errorf("unable to mount build container %s: %w", container.Name, err)
-	}
-	defer func() {
-		logboek.Context(ctx).Debug().LogF("Unmounting build container %s\n", container.Name)
-		if err := backend.unmountContainers(ctx, []*containerDesc{container}, CommonOpts(opts)); err != nil {
-			logboek.Context(ctx).Error().LogF("ERROR: unable to unmount containers: %s\n", err)
-		}
-	}()
-
-	fromPath := filepath.Join(container.RootMount, dependencyImport.FromPath)
-
-	pathMatcher := path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{
-		BasePath:     fromPath,
-		IncludeGlobs: dependencyImport.IncludePaths,
-		ExcludeGlobs: dependencyImport.ExcludePaths,
-	})
-
-	var files []string
-
-	err := filepath.Walk(fromPath, func(path string, f os.FileInfo, err error) error {
-		if err != nil {
-			return fmt.Errorf("error accessing %s: %w", path, err)
-		}
-
-		if !pathMatcher.IsDirOrSubmodulePathMatched(path) {
-			if f.IsDir() {
-				return filepath.SkipDir
-			} else {
-				return nil
-			}
-		}
-
-		if f.IsDir() {
-			return nil
-		}
-
-		if pathMatcher.IsPathMatched(path) {
-			files = append(files, path)
-		}
-		return nil
-	})
-	if err != nil {
-		return "", err
-	}
-
-	hash := md5.New()
-	sort.Strings(files)
-
-	for _, path := range files {
-		logboek.Context(ctx).Debug().LogF("Calculating checksum of container file %s\n", path)
-
-		fileInfo, err := os.Lstat(path)
-		if err != nil {
-			return "", fmt.Errorf("unable to get file info %q: %w", path, err)
-		}
-
-		fileHash := md5.New()
-		if fileInfo.Mode()&os.ModeSymlink != 0 {
-			link, err := os.Readlink(path)
-			if err != nil {
-				return "", fmt.Errorf("unable to read symlink %q: %w", path, err)
-			}
-			if _, err := io.Copy(fileHash, strings.NewReader(link)); err != nil {
-				return "", fmt.Errorf("error calculating hash for symlink %q: %w", path, err)
-			}
-		} else {
-			if err := func() error {
-				f, err := os.Open(path)
-				if err != nil {
-					return fmt.Errorf("unable to open file %q: %w", path, err)
-				}
-				defer f.Close()
-
-				if _, err := io.Copy(fileHash, f); err != nil {
-					return fmt.Errorf("error calculating hash for file %q: %w", path, err)
-				}
-				return nil
-			}(); err != nil {
-				return "", err
-			}
-		}
-
-		if _, err := fmt.Fprintf(hash, "%x  %s\n", fileHash.Sum(nil), filepath.Join("/", util.GetRelativeToBaseFilepath(container.RootMount, path))); err != nil {
-			return "", fmt.Errorf("error calculating file %q checksum: %w", path, err)
-		}
-	}
-
-	return fmt.Sprintf("%x", hash.Sum(nil)), nil
-}
-
 func (backend *BuildahBackend) applyDataArchives(ctx context.Context, container *containerDesc, dataArchives []DataArchiveSpec) error {
 	for _, archive := range dataArchives {
 		destPath := filepath.Join(container.RootMount, archive.To)
@@ -497,7 +388,7 @@ func (backend *BuildahBackend) applyDependenciesImports(ctx context.Context, con
 
 			absFrom := filepath.Join(dep.RootMount, imp.FromPath)
 			absTo := filepath.Join(container.RootMount, imp.ToPath)
-			if absTo, err = normalizeDependencyImportDestination(absFrom, absTo); err != nil {
+			if absTo, err = normalizeDependencyImportDestination(container.RootMount, absFrom, absTo); err != nil {
 				return fmt.Errorf("normalize destination path for dependency import from %q to %q: %w", imp.FromPath, imp.ToPath, err)
 			}
 
@@ -544,7 +435,12 @@ func (backend *BuildahBackend) applyDependenciesImports(ctx context.Context, con
 	return nil
 }
 
-func normalizeDependencyImportDestination(absFrom, absTo string) (string, error) {
+func normalizeDependencyImportDestination(rootMount, absFrom, absTo string) (string, error) {
+	absTo, err := resolveDestSymlinkUnderRoot(rootMount, absTo)
+	if err != nil {
+		return "", err
+	}
+
 	fileInfo, err := os.Lstat(absFrom)
 	if err != nil {
 		return "", fmt.Errorf("lstat source path %q: %w", absFrom, err)
@@ -569,6 +465,54 @@ func normalizeDependencyImportDestination(absFrom, absTo string) (string, error)
 	default:
 		return absTo, nil
 	}
+}
+
+// resolveDestSymlinkUnderRoot resolves absTo when it is a symlink to a
+// directory, re-anchoring a relative symlink target under rootMount instead of
+// the host filesystem root. This keeps directory imports into a symlinked
+// destination (e.g. /bin -> usr/bin) writing into the real target directory
+// inside the container mount rather than escaping to the host working
+// directory.
+func resolveDestSymlinkUnderRoot(rootMount, absTo string) (string, error) {
+	linkInfo, err := os.Lstat(absTo)
+	if errors.Is(err, os.ErrNotExist) {
+		return absTo, nil
+	} else if err != nil {
+		return "", fmt.Errorf("lstat destination path %q: %w", absTo, err)
+	}
+
+	if linkInfo.Mode()&os.ModeSymlink == 0 {
+		return absTo, nil
+	}
+
+	derefInfo, err := os.Stat(absTo)
+	if errors.Is(err, os.ErrNotExist) {
+		return absTo, nil
+	} else if err != nil {
+		return "", fmt.Errorf("stat destination path %q: %w", absTo, err)
+	}
+	if !derefInfo.IsDir() {
+		return absTo, nil
+	}
+
+	target, err := os.Readlink(absTo)
+	if err != nil {
+		return "", fmt.Errorf("readlink destination path %q: %w", absTo, err)
+	}
+
+	var resolved string
+	if filepath.IsAbs(target) {
+		resolved = filepath.Join(rootMount, target)
+	} else {
+		resolved = filepath.Join(filepath.Dir(absTo), target)
+	}
+
+	rel, err := filepath.Rel(rootMount, resolved)
+	if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+		return "", fmt.Errorf("resolved destination %q escapes root mount %q", resolved, rootMount)
+	}
+
+	return resolved, nil
 }
 
 func (backend *BuildahBackend) BuildDockerfileStage(ctx context.Context, baseImage string, opts BuildDockerfileStageOptions, instructions ...InstructionInterface) (string, error) {
@@ -733,10 +677,9 @@ func (backend *BuildahBackend) GetImageInfo(ctx context.Context, ref string, opt
 		}
 	}
 
-	// TODO: remove this legacy logic in v3.
-	parentID := string(inspect.Docker.Parent)
-	if parentID == "" {
-		if id, ok := inspect.Docker.Config.Labels[image.WerfBaseImageIDLabel]; ok { // built with werf
+	var parentID string
+	if inspect.Docker.Config.Labels != nil {
+		if id, ok := inspect.Docker.Config.Labels[image.WerfBaseImageIDLabel]; ok {
 			parentID = id
 		}
 	}
@@ -744,7 +687,9 @@ func (backend *BuildahBackend) GetImageInfo(ctx context.Context, ref string, opt
 	var repository, tag, repoDigest string
 	if !strings.HasPrefix(ref, "sha256:") {
 		repository, tag = image.ParseRepositoryAndTag(ref)
-		list, err := backend.buildah.Images(ctx, buildah.ImagesOptions{Names: []string{ref}})
+		list, err := backend.buildah.Images(ctx, buildah.ImagesOptions{
+			Filters: []util.Pair[string, string]{util.NewPair("reference", ref)},
+		})
 		if err != nil {
 			return nil, fmt.Errorf("error getting buildah info for image %q: %w", ref, err)
 		}
@@ -1231,8 +1176,6 @@ func (backend *BuildahBackend) PostManifest(ctx context.Context, ref string, opt
 	}
 	return nil
 }
-
-func (backend *BuildahBackend) ClaimTargetPlatforms(ctx context.Context, targetPlatforms []string) {}
 
 func (backend *BuildahBackend) PruneImages(ctx context.Context, options prune.Options) (prune.Report, error) {
 	report, err := backend.buildah.PruneImages(ctx, buildah.PruneImagesOptions{

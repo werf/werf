@@ -14,15 +14,14 @@ import (
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/nelm/pkg/action"
-	"github.com/werf/nelm/pkg/export/helm/chart"
-	"github.com/werf/nelm/pkg/export/helm/engine"
-	"github.com/werf/nelm/pkg/export/helm/werf/file"
-	"github.com/werf/nelm/pkg/log"
+	nelmcommon "github.com/werf/nelm/pkg/common"
+	chart "github.com/werf/nelm/pkg/helm/pkg/chart/v2"
+	"github.com/werf/nelm/pkg/helm/pkg/engine"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/build"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/config/deploy_params"
-	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
+	"github.com/werf/werf/v2/pkg/deploy"
 	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/storage"
@@ -46,7 +45,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 		Long:                  common.GetLongCommandDescription(GetLintDocs().Long),
 		DisableFlagsInUseLine: true,
 		Annotations: map[string]string{
-			common.CmdEnvAnno: common.EnvsDescription(common.WerfDebugAnsibleArgs, common.WerfSecretKey),
+			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
 			common.DocsLongMD: GetLintDocs().LongMD,
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -92,7 +91,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupFinalRepo(&commonCmdData, cmd)
 	common.SetupStubTags(&commonCmdData, cmd)
 
-	common.SetupSynchronization(&commonCmdData, cmd)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified repo and to pull base images")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
@@ -107,7 +105,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupUseBuildReport(&commonCmdData, cmd)
 
 	common.SetupUseCustomTag(&commonCmdData, cmd)
-	common.SetupVirtualMerge(&commonCmdData, cmd)
 
 	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultBuildParallelTasksLimit)
 
@@ -153,8 +150,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 }
 
 func runLint(ctx context.Context, imageNameListFromArgs []string) error {
-	global_warnings.PostponeMultiwerfNotUpToDateWarning(ctx)
-
 	commonManager, ctx, err := common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
 		Cmd: &commonCmdData,
 		InitTrueGitWithOptions: &common.InitTrueGitOptions{
@@ -229,11 +224,6 @@ func runLint(ctx context.Context, imageNameListFromArgs []string) error {
 			return err
 		}
 
-		common.SetupOndemandKubeInitializer(commonCmdData.KubeContextCurrent, commonCmdData.LegacyKubeConfigPath, commonCmdData.KubeConfigBase64, commonCmdData.LegacyKubeConfigPathsMergeList, commonCmdData.KubeBearerTokenData, commonCmdData.KubeBearerTokenPath)
-		if err := common.GetOndemandKubeInitializer().Init(ctx); err != nil {
-			return err
-		}
-
 		useCustomTagFunc, err := common.GetUseCustomTagFunc(&commonCmdData, giterminismManager, imagesToProcess)
 		if err != nil {
 			return err
@@ -257,7 +247,7 @@ func runLint(ctx context.Context, imageNameListFromArgs []string) error {
 			return err
 		}
 
-		conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, giterminismManager.ProjectDir(), projectTmpDir, containerBackend, storageManager, storageManager.StorageLockManager, conveyorOptions)
+		conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, giterminismManager.ProjectDir(), projectTmpDir, containerBackend, storageManager, conveyorOptions)
 		defer conveyorWithRetry.Terminate()
 
 		if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
@@ -364,7 +354,7 @@ func runLint(ctx context.Context, imageNameListFromArgs []string) error {
 	}
 	registryCredentialsPath := docker.GetDockerConfigCredentialsFile(*commonCmdData.DockerConfig)
 
-	serviceValues, err := helpers.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, imagesInfoGetters, helpers.ServiceValuesOptions{
+	serviceValues, err := deploy.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, imagesInfoGetters, deploy.ServiceValuesOptions{
 		Namespace:                releaseNamespace,
 		Env:                      commonCmdData.Environment,
 		IsStub:                   isStub,
@@ -379,12 +369,12 @@ func runLint(ctx context.Context, imageNameListFromArgs []string) error {
 		return fmt.Errorf("get service values: %w", err)
 	}
 
-	file.SetChartFileReader(giterminismManager.FileManager)
+	nelmcommon.ChartFileReader = giterminismManager.FileManager
 
-	ctx = log.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultChartLintLogLevel), log.SetupLoggingOptions{
+	ctx = action.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultChartLintLogLevel), action.SetupLoggingOptions{
 		ColorMode: *commonCmdData.LogColorMode,
 	})
-	engine.SetDebug(commonCmdData.DebugTemplates)
+	engine.Debug = commonCmdData.DebugTemplates
 
 	if err := action.ChartLint(ctx, action.ChartLintOptions{
 		KubeConnectionOptions:       commonCmdData.KubeConnectionOptions,
@@ -392,7 +382,7 @@ func runLint(ctx context.Context, imageNameListFromArgs []string) error {
 		ValuesOptions:               commonCmdData.ValuesOptions,
 		SecretValuesOptions:         commonCmdData.SecretValuesOptions,
 		ChartAppVersion:             common.GetHelmChartConfigAppVersion(werfConfig),
-		ChartDirPath:                relChartPath,
+		Chart:                       relChartPath,
 		ChartProvenanceKeyring:      commonCmdData.ChartProvenanceKeyring,
 		ChartProvenanceStrategy:     commonCmdData.ChartProvenanceStrategy,
 		ChartRepoSkipUpdate:         commonCmdData.ChartRepoSkipUpdate,

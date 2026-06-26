@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 
 	"github.com/werf/logboek"
@@ -59,20 +58,16 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read and write images to the specified repo")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
-	common.StubSetupInsecureHelmDependencies(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 	common.SetupContainerRegistryMirror(&commonCmdData, cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 
-	common.SetupSynchronization(&commonCmdData, cmd)
 
 	commonCmdData.SetupPlatform(cmd)
 	commonCmdData.SetupDebugTemplates(cmd)
 	commonCmdData.SetupAllowIncludesUpdate(cmd)
-
-	lo.Must0(common.SetupMinimalKubeConnectionFlags(&commonCmdData, cmd))
 
 	return cmd
 }
@@ -83,13 +78,12 @@ func run(ctx context.Context, imageName string) error {
 		InitTrueGitWithOptions: &common.InitTrueGitOptions{
 			Options: true_git.Options{LiveGitOutput: *commonCmdData.LogDebug},
 		},
-		InitDockerRegistry:           true,
-		InitProcessContainerBackend:  true,
-		InitWerf:                     true,
-		InitGitDataManager:           true,
-		InitManifestCache:            true,
-		InitLRUImagesCache:           true,
-		SetupOndemandKubeInitializer: true,
+		InitDockerRegistry:          true,
+		InitProcessContainerBackend: true,
+		InitWerf:                    true,
+		InitGitDataManager:          true,
+		InitManifestCache:           true,
+		InitLRUImagesCache:          true,
 	})
 	if err != nil {
 		return fmt.Errorf("component init error: %w", err)

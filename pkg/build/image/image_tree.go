@@ -323,11 +323,7 @@ func filterAndLogGitMappings(ctx context.Context, gitMappings []*stage.GitMappin
 				return fmt.Errorf("unable to get commit of repo %q: %w", gitMapping.GitRepo().GetName(), err)
 			}
 
-			if commitInfo.VirtualMerge {
-				logboek.Context(ctx).Info().LogFDetails("Commit %s will be used (virtual merge of %s into %s)\n", commitInfo.Commit, commitInfo.VirtualMergeFromCommit, commitInfo.VirtualMergeIntoCommit)
-			} else {
-				logboek.Context(ctx).Info().LogFDetails("Commit %s will be used\n", commitInfo.Commit)
-			}
+			logboek.Context(ctx).Info().LogFDetails("Commit %s will be used\n", commitInfo.Commit)
 
 			res = append(res, gitMapping)
 

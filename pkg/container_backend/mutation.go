@@ -7,6 +7,8 @@ import (
 	"os"
 
 	"github.com/containerd/containerd/platforms"
+	v1 "github.com/google/go-containerregistry/pkg/v1"
+	"github.com/google/go-containerregistry/pkg/v1/empty"
 	"github.com/google/go-containerregistry/pkg/v1/mutate"
 	"github.com/google/go-containerregistry/pkg/v1/tarball"
 
@@ -19,7 +21,21 @@ type BackendLoaderStorer interface {
 	LoadImageFromStream(ctx context.Context, input io.Reader) (string, error)
 }
 
+type ImageConfigFileGetter interface {
+	GetImageConfigFile(ctx context.Context, imageName string) (*v1.ConfigFile, error)
+}
+
 func MutateAndPushImage(ctx context.Context, imageName, targetPlatform string, newConfig image.SpecConfig, backend BackendLoaderStorer) (string, error) {
+	if getter, ok := backend.(ImageConfigFileGetter); ok {
+		config, err := getter.GetImageConfigFile(ctx, imageName)
+		if err != nil {
+			return "", fmt.Errorf("failed to get image config: %w", err)
+		}
+		if len(config.RootFS.DiffIDs) == 0 {
+			return mutateAndLoadLayerlessImage(ctx, targetPlatform, newConfig, config, backend)
+		}
+	}
+
 	imageStream, err := backend.SaveImageToStream(ctx, imageName)
 	if err != nil {
 		return "", fmt.Errorf("failed to save image: %w", err)
@@ -60,10 +76,36 @@ func MutateAndPushImage(ctx context.Context, imageName, targetPlatform string, n
 		return "", fmt.Errorf("error set config: %w", err)
 	}
 
+	if err := applyConfigMutations(targetPlatform, newConfig, config); err != nil {
+		return "", err
+	}
+
+	img, err = mutate.ConfigFile(img, config)
+	if err != nil {
+		return "", fmt.Errorf("error mutate config: %w", err)
+	}
+
+	return writeAndLoadImage(ctx, img, backend)
+}
+
+func mutateAndLoadLayerlessImage(ctx context.Context, targetPlatform string, newConfig image.SpecConfig, config *v1.ConfigFile, backend BackendLoaderStorer) (string, error) {
+	if err := applyConfigMutations(targetPlatform, newConfig, config); err != nil {
+		return "", err
+	}
+
+	img, err := mutate.ConfigFile(empty.Image, config)
+	if err != nil {
+		return "", fmt.Errorf("error mutate config: %w", err)
+	}
+
+	return writeAndLoadImage(ctx, img, backend)
+}
+
+func applyConfigMutations(targetPlatform string, newConfig image.SpecConfig, config *v1.ConfigFile) error {
 	if targetPlatform != "" {
 		platformSpec, err := platforms.Parse(targetPlatform)
 		if err != nil {
-			return "", fmt.Errorf("parse target platform %q: %w", targetPlatform, err)
+			return fmt.Errorf("parse target platform %q: %w", targetPlatform, err)
 		}
 
 		config.OS = platformSpec.OS
@@ -72,12 +114,10 @@ func MutateAndPushImage(ctx context.Context, imageName, targetPlatform string, n
 	}
 
 	image.UpdateConfigFile(newConfig, config)
+	return nil
+}
 
-	img, err = mutate.ConfigFile(img, config)
-	if err != nil {
-		return "", fmt.Errorf("error mutate config: %w", err)
-	}
-
+func writeAndLoadImage(ctx context.Context, img v1.Image, backend BackendLoaderStorer) (string, error) {
 	pr, pw := io.Pipe()
 	go func() {
 		defer func() {

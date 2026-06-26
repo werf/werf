@@ -21,7 +21,7 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
-	"github.com/werf/nelm/pkg/export/helm/engine"
+	"github.com/werf/nelm/pkg/helm/pkg/engine"
 	"github.com/werf/werf/v2/pkg/file_manager"
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
 	"github.com/werf/werf/v2/pkg/slug"
@@ -555,11 +555,11 @@ func detailedTemplateError(tmpl *template.Template, d detailedTemplateErrorData,
 			strings.TrimRightFunc(util.NumerateLines(d.templateContent, 1), unicode.IsSpace),
 		)
 	}
-	if strings.Contains(err.Error(), engine.GetTemplateErrHint()) {
+	if strings.Contains(err.Error(), engine.TemplateErrHint) {
 		return err
 	}
 
-	return fmt.Errorf("%w\n%s", err, engine.GetTemplateErrHint())
+	return fmt.Errorf("%w\n%s", err, engine.TemplateErrHint)
 }
 
 type files struct {
@@ -768,22 +768,16 @@ func prepareWerfConfig(giterminismManager giterminism_manager.Interface, rawImag
 				}
 				images = append(images, image)
 			}
-		} else {
-			if image, err := rawImage.toStapelImageArtifactDirectives(giterminismManager); err != nil {
-				return nil, err
-			} else {
-				if meta.Build.ImageSpec != nil && image.final {
-					merged := mergeImageSpec(meta.Build.ImageSpec, image.ImageSpec)
-					image.ImageSpec = &merged
-				}
-				images = append(images, image)
-			}
 		}
 	}
 
 	werfConfig := NewWerfConfig(meta, images)
 
 	if err := werfConfig.validateConflictBetweenImagesNames(); err != nil {
+		return nil, err
+	}
+
+	if err := werfConfig.validateExternalImageReferences(); err != nil {
 		return nil, err
 	}
 
@@ -840,7 +834,7 @@ func splitByMetaAndRawImages(docs []*doc) (*Meta, []*rawStapelImage, []*rawImage
 			}
 			rawStapelImages = append(rawStapelImages, image)
 		default:
-			return nil, nil, nil, newYamlUnmarshalError(errors.New("cannot recognize type of config section (part of YAML stream separated by three hyphens, https://yaml.org/spec/1.2/spec.html#id2800132):\n * 'configVersion' required for meta config section;\n * 'image' required for the image config sections;\n * 'artifact' required for the artifact config sections;"), doc)
+			return nil, nil, nil, newYamlUnmarshalError(errors.New("cannot recognize type of config section (not an image, not a meta config section). Expected 'image' required for the image config sections"), doc)
 		}
 	}
 
@@ -857,8 +851,6 @@ func isMetaDoc(h map[string]interface{}) bool {
 
 func isImageDoc(h map[string]interface{}) bool {
 	if _, ok := h["image"]; ok {
-		return true
-	} else if _, ok := h["artifact"]; ok {
 		return true
 	}
 

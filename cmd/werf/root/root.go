@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"path/filepath"
 	"runtime"
 	"strconv"
 	"time"
@@ -49,13 +48,15 @@ import (
 	managed_images_rm "github.com/werf/werf/v2/cmd/werf/managed_images/rm"
 	"github.com/werf/werf/v2/cmd/werf/plan"
 	"github.com/werf/werf/v2/cmd/werf/purge"
+	release_get "github.com/werf/werf/v2/cmd/werf/release/get"
+	release_history "github.com/werf/werf/v2/cmd/werf/release/history"
+	release_list "github.com/werf/werf/v2/cmd/werf/release/list"
 	"github.com/werf/werf/v2/cmd/werf/render"
 	"github.com/werf/werf/v2/cmd/werf/rollback"
 	"github.com/werf/werf/v2/cmd/werf/run"
 	"github.com/werf/werf/v2/cmd/werf/slugify"
 	stage_image "github.com/werf/werf/v2/cmd/werf/stage/image"
 	stages_copy "github.com/werf/werf/v2/cmd/werf/stages/copy"
-	"github.com/werf/werf/v2/cmd/werf/synchronization"
 	"github.com/werf/werf/v2/cmd/werf/version"
 	"github.com/werf/werf/v2/pkg/telemetry"
 )
@@ -64,10 +65,6 @@ func ConstructRootCmd(ctx context.Context) (*cobra.Command, error) {
 	helmCmd, err := helm.NewCmd(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("unable to init helm commands: %w", err)
-	}
-
-	if filepath.Base(os.Args[0]) == "helm" || helm.IsHelm3Mode() {
-		return helmCmd, nil
 	}
 
 	rootCmd := common.SetCommandContext(ctx, &cobra.Command{
@@ -121,6 +118,7 @@ func ConstructRootCmd(ctx context.Context) (*cobra.Command, error) {
 				managedImagesCmd(ctx),
 				hostCmd(ctx),
 				helmCmd,
+				releaseCmd(ctx),
 				crCmd(ctx),
 				kubectl2.ReplaceKubectlDocs(kubectl.NewCmd(ctx)),
 			},
@@ -128,7 +126,6 @@ func ConstructRootCmd(ctx context.Context) (*cobra.Command, error) {
 		{
 			Message: "Other commands",
 			Commands: []*cobra.Command{
-				synchronization.NewCmd(ctx),
 				completion.NewCmd(ctx, rootCmd),
 				version.NewCmd(ctx),
 				docs.NewCmd(ctx, groups),
@@ -182,6 +179,20 @@ func bundleCmd(ctx context.Context) *cobra.Command {
 		bundle_plan.NewCmd(ctx),
 		bundle_render.NewCmd(ctx),
 		bundle_copy.NewCmd(ctx),
+	)
+
+	return cmd
+}
+
+func releaseCmd(ctx context.Context) *cobra.Command {
+	cmd := common.SetCommandContext(ctx, &cobra.Command{
+		Use:   "release",
+		Short: "Work with releases",
+	})
+	cmd.AddCommand(
+		release_get.NewCmd(ctx),
+		release_history.NewCmd(ctx),
+		release_list.NewCmd(ctx),
 	)
 
 	return cmd

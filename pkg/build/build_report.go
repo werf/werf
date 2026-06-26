@@ -213,29 +213,23 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 		targetPlatforms := util.MapFuncToSlice(images, func(img *image.Image) string { return img.TargetPlatform })
 
 		for _, img := range images {
-			stageImage := img.GetLastNonEmptyStage().GetStageImage().Image
-			stageDesc := stageImage.GetFinalStageDesc()
-			if stageDesc == nil {
-				stageDesc = stageImage.GetStageDesc()
-			}
-
+			imageDesc := img.GetContentTagDesc()
 			stages := getStagesReport(img, false)
-
 			configType := determineConfigType(phase.Conveyor.werfConfig, img.Name)
 
 			record := ReportImageRecord{
 				WerfImageName:     img.GetName(),
-				DockerRepo:        stageDesc.Info.Repository,
-				DockerTag:         stageDesc.Info.Tag,
-				DockerImageID:     stageDesc.Info.ID,
-				DockerImageDigest: stageDesc.Info.GetDigest(),
-				DockerImageName:   stageDesc.Info.Name,
+				DockerRepo:        imageDesc.Info.Repository,
+				DockerTag:         imageDesc.Info.Tag,
+				DockerImageID:     imageDesc.Info.ID,
+				DockerImageDigest: imageDesc.Info.GetDigest(),
+				DockerImageName:   imageDesc.Info.Name,
 				TargetPlatform:    img.TargetPlatform,
 				Rebuilt:           img.GetRebuilt(),
 				Final:             img.IsFinal,
-				Size:              stageDesc.Info.Size,
+				Size:              imageDesc.Info.Size,
 				BuildTime:         fmt.Sprintf("%.2f", img.BuildDuration.Seconds()),
-				Commit:            stageDesc.Info.Labels[imagePkg.WerfProjectRepoCommitLabel],
+				Commit:            imageDesc.Info.Labels[imagePkg.WerfProjectRepoCommitLabel],
 				Stages:            stages,
 				ConfigType:        configType,
 			}

@@ -152,17 +152,15 @@ werf stages copy [options]
             several stages.
             
             There are the following formats to use:
-            * specify IMAGE_NAME/STAGE_NAME to introspect stage STAGE_NAME of either image or       
-            artifact IMAGE_NAME
+            * specify IMAGE_NAME/STAGE_NAME to introspect stage STAGE_NAME of image IMAGE_NAME
             * specify STAGE_NAME or */STAGE_NAME for the introspection of all existing stages with  
             name STAGE_NAME
             
-            IMAGE_NAME is the name of an image or artifact described in werf.yaml, the nameless     
-            image specified with ~.
+            IMAGE_NAME is the name of an image described in werf.yaml.
             STAGE_NAME should be one of the following: from, beforeInstall,                         
             dependenciesBeforeInstall, gitArchive, install, dependenciesAfterInstall, beforeSetup,  
             dependenciesBeforeSetup, setup, dependenciesAfterSetup, gitCache, gitLatestPatch,       
-            dockerInstructions, dockerfile, imageSpec
+            dockerfile, imageSpec
       --log-color-mode="auto"
             Set log color mode.
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        
@@ -232,16 +230,6 @@ werf stages copy [options]
       --skip-tls-verify-registry=false
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)
-  -S, --synchronization=""
-            Address of synchronizer for multiple werf processes to work with a single repo.
-            
-            Default:
-             - $WERF_SYNCHRONIZATION, or
-             - :local if --repo is not specified, or
-             - https://synchronization.werf.io if --repo has been specified.
-            
-            The same address should be specified for all werf processes that work with a single     
-            repo. :local address allows execution of werf processes from a single host only
       --tmp-dir=""
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
       --to=""

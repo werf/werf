@@ -28,7 +28,7 @@ werf kubectl create secret docker-registry NAME --docker-username=user --docker-
   kubectl create secret docker-registry my-secret --docker-server=DOCKER_REGISTRY_SERVER --docker-username=DOCKER_USER --docker-password=DOCKER_PASSWORD --docker-email=DOCKER_EMAIL
   
   # Create a new secret named my-secret from ~/.docker/config.json
-  kubectl create secret docker-registry my-secret --from-file=.dockerconfigjson=path/to/.docker/config.json
+  kubectl create secret docker-registry my-secret --from-file=path/to/.docker/config.json
 ```
 
 {{ header }} Options
@@ -54,13 +54,14 @@ werf kubectl create secret docker-registry NAME --docker-username=user --docker-
       --field-manager="kubectl-create"
             Name of the manager used to track field ownership.
       --from-file=[]
-            Key files can be specified using their file path, in which case a default name will be  
-            given to them, or optionally with a name and file path, in which case the given name    
-            will be used.  Specifying a directory will iterate each named file in the directory     
-            that is a valid secret key.
+            Key files can be specified using their file path, in which case a default name of       
+            .dockerconfigjson will be given to them, or optionally with a name and file path, in    
+            which case the given name will be used. Specifying a directory will iterate each named  
+            file in the directory that is a valid secret key. For this command, the key should      
+            always be .dockerconfigjson.
   -o, --output=""
-            Output format. One of: (json, yaml, name, go-template, go-template-file, template,      
-            templatefile, jsonpath, jsonpath-as-json, jsonpath-file).
+            Output format. One of: (json, yaml, kyaml, name, go-template, go-template-file,         
+            template, templatefile, jsonpath, jsonpath-as-json, jsonpath-file).
       --save-config=false
             If true, the configuration of current object will be saved in its annotation.           
             Otherwise, the annotation will be unchanged. This flag is useful when you want to       
@@ -72,15 +73,14 @@ werf kubectl create secret docker-registry NAME --docker-username=user --docker-
             -o=go-template-file. The template format is golang templates                            
             [http://golang.org/pkg/text/template/#pkg-overview].
       --validate="strict"
-            Must be one of: strict (or true), warn, ignore (or false).
-            		"true" or "strict" will use a schema to validate the input and fail the request if    
-            invalid. It will perform server side validation if ServerSideFieldValidation is enabled 
-            on the api-server, but will fall back to less reliable client-side validation if not.
-            		"warn" will warn about unknown or duplicate fields without blocking the request if    
-            server-side field validation is enabled on the API server, and behave as "ignore"       
-            otherwise.
-            		"false" or "ignore" will not perform any schema validation, silently dropping any     
-            unknown or duplicate fields.
+            Must be one of: strict (or true), warn, ignore (or false). "true" or "strict" will use  
+            a schema to validate the input and fail the request if invalid. It will perform server  
+            side validation if ServerSideFieldValidation is enabled on the api-server, but will     
+            fall back to less reliable client-side validation if not. "warn" will warn about        
+            unknown or duplicate fields without blocking the request if server-side field           
+            validation is enabled on the API server, and behave as "ignore" otherwise. "false" or   
+            "ignore" will not perform any schema validation, silently dropping any unknown or       
+            duplicate fields.
 ```
 
 {{ header }} Options inherited from parent commands
@@ -94,6 +94,9 @@ werf kubectl create secret docker-registry NAME --docker-username=user --docker-
             groups.
       --as-uid=""
             UID to impersonate for the operation.
+      --as-user-extra=[]
+            User extras to impersonate for the operation, this flag can be repeated to specify      
+            multiple values for the same key.
       --cache-dir="~/.kube/cache"
             Default cache directory
       --certificate-authority=""
@@ -119,6 +122,9 @@ werf kubectl create secret docker-registry NAME --docker-username=user --docker-
       --kubeconfig=""
             Path to the kubeconfig file to use for CLI requests (default $WERF_KUBE_CONFIG, or      
             $WERF_KUBECONFIG, or $KUBECONFIG). Ignored if kubeconfig passed as base64.
+      --kuberc=""
+            Path to the kuberc file to use for preferences. This can be disabled by exporting       
+            KUBECTL_KUBERC=false feature gate or turning off the feature KUBERC=off.
       --log-flush-frequency=5s
             Maximum number of seconds between log flushes
       --match-server-version=false
@@ -128,7 +134,8 @@ werf kubectl create secret docker-registry NAME --docker-username=user --docker-
       --password=""
             Password for basic authentication to the API server
       --profile="none"
-            Name of profile to capture. One of (none|cpu|heap|goroutine|threadcreate|block|mutex)
+            Name of profile to capture. One of                                                      
+            (none|cpu|heap|goroutine|threadcreate|block|mutex|trace)
       --profile-output="profile.pprof"
             Name of the file to write the profile to
       --request-timeout="0"

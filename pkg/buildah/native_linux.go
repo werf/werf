@@ -28,22 +28,22 @@ import (
 	"github.com/containers/buildah/imagebuildah"
 	"github.com/containers/buildah/pkg/parse"
 	"github.com/containers/buildah/pkg/sshagent"
-	"github.com/containers/common/libimage"
-	"github.com/containers/image/v5/manifest"
-	imgstor "github.com/containers/image/v5/storage"
-	storageTransport "github.com/containers/image/v5/storage"
-	"github.com/containers/image/v5/transports/alltransports"
-	"github.com/containers/image/v5/types"
-	imgtypes "github.com/containers/image/v5/types"
-	"github.com/containers/storage"
-	"github.com/containers/storage/drivers/overlay"
-	"github.com/containers/storage/pkg/homedir"
-	"github.com/containers/storage/pkg/reexec"
-	"github.com/containers/storage/pkg/unshare"
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/samber/lo"
 	"github.com/sirupsen/logrus"
+	"go.podman.io/common/libimage"
+	"go.podman.io/image/v5/manifest"
+	imgstor "go.podman.io/image/v5/storage"
+	storageTransport "go.podman.io/image/v5/storage"
+	"go.podman.io/image/v5/transports/alltransports"
+	"go.podman.io/image/v5/types"
+	imgtypes "go.podman.io/image/v5/types"
+	"go.podman.io/storage"
+	"go.podman.io/storage/drivers/overlay"
+	"go.podman.io/storage/pkg/homedir"
+	"go.podman.io/storage/pkg/reexec"
+	"go.podman.io/storage/pkg/unshare"
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v2/pkg/buildah/thirdparty"
@@ -971,8 +971,7 @@ func (b *NativeBuildah) Images(ctx context.Context, opts ImagesOptions) (image.I
 	listOpts := &libimage.ListImagesOptions{
 		Filters: mapBackendOldFiltersToBuildahImageFilters(opts.Filters),
 	}
-
-	images, err := runtime.ListImages(ctx, opts.Names, listOpts)
+	images, err := runtime.ListImages(ctx, listOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -1189,11 +1188,10 @@ func NewNativeStoreOptions(rootlessUID int, driver StorageDriver) (*thirdparty.S
 	}
 
 	return &thirdparty.StoreOptions{
-		RunRoot:             runRoot,
-		GraphRoot:           graphRoot,
-		RootlessStoragePath: rootlessStoragePath,
-		GraphDriverName:     string(driver),
-		GraphDriverOptions:  graphDriverOptions,
+		RunRoot:            runRoot,
+		GraphRoot:          graphRoot,
+		GraphDriverName:    string(driver),
+		GraphDriverOptions: graphDriverOptions,
 	}, nil
 }
 

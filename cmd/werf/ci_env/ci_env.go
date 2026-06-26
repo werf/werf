@@ -12,7 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Masterminds/semver"
 	"github.com/spf13/cobra"
 
 	"github.com/werf/common-go/pkg/util"
@@ -287,21 +286,6 @@ func generateGitlabEnvs(ctx context.Context, w io.Writer, dockerConfig string) e
 
 	writeHeader(w, "OTHER", true)
 
-	werfLogColorMode := "on"
-	ciServerVersion := os.Getenv("CI_SERVER_VERSION")
-	if ciServerVersion != "" {
-		currentVersion, err := semver.NewVersion(ciServerVersion)
-		if err == nil {
-			colorWorkTillVersion, _ := semver.NewVersion("12.1.3")
-			colorWorkSinceVersion, _ := semver.NewVersion("12.2.0")
-
-			if currentVersion.GreaterThan(colorWorkTillVersion) && currentVersion.LessThan(colorWorkSinceVersion) {
-				werfLogColorMode = "off"
-			}
-		}
-	}
-
-	writeEnv(w, "WERF_LOG_COLOR_MODE", werfLogColorMode, false)
 	writeEnv(w, "WERF_LOG_PROJECT_DIR", "1", false)
 	writeEnv(w, "WERF_ENABLE_PROCESS_EXTERMINATOR", "1", false)
 	writeEnv(w, "WERF_LOG_TERMINAL_WIDTH", "130", false)
@@ -441,7 +425,6 @@ func generateSessionDockerConfigDir(ctx context.Context) (string, error) {
 
 func generateOther(w io.Writer) error {
 	writeHeader(w, "OTHER", true)
-	writeEnv(w, "WERF_LOG_COLOR_MODE", "on", false)
 	writeEnv(w, "WERF_LOG_PROJECT_DIR", "1", false)
 	writeEnv(w, "WERF_ENABLE_PROCESS_EXTERMINATOR", "1", false)
 	writeEnv(w, "WERF_LOG_TERMINAL_WIDTH", "130", false)

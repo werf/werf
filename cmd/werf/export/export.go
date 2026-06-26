@@ -11,7 +11,6 @@ import (
 
 	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
-	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 
 	"github.com/werf/common-go/pkg/util"
@@ -115,16 +114,12 @@ func NewExportCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified repo")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
-	common.StubSetupInsecureHelmDependencies(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 	common.SetupContainerRegistryMirror(&commonCmdData, cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 
-	common.SetupSynchronization(&commonCmdData, cmd)
-
-	common.SetupVirtualMerge(&commonCmdData, cmd)
 
 	commonCmdData.SetupPlatform(cmd)
 	commonCmdData.SetupBackendNetwork(cmd)
@@ -150,8 +145,6 @@ Also, can be specified with $WERF_EXPORT_ADD_LABEL_* (e.g. $WERF_EXPORT_ADD_LABE
 
 	commonCmdData.SetupSkipImageSpecStage(cmd)
 
-	lo.Must0(common.SetupMinimalKubeConnectionFlags(&commonCmdData, cmd))
-
 	return cmd
 }
 
@@ -161,14 +154,13 @@ func run(ctx context.Context, imageNameListFromArgs, tagTemplateList []string, e
 		InitTrueGitWithOptions: &common.InitTrueGitOptions{
 			Options: true_git.Options{LiveGitOutput: *commonCmdData.LogDebug},
 		},
-		InitDockerRegistry:           true,
-		InitProcessContainerBackend:  true,
-		InitWerf:                     true,
-		InitGitDataManager:           true,
-		InitManifestCache:            true,
-		InitLRUImagesCache:           true,
-		InitSSHAgent:                 true,
-		SetupOndemandKubeInitializer: true,
+		InitDockerRegistry:          true,
+		InitProcessContainerBackend: true,
+		InitWerf:                    true,
+		InitGitDataManager:          true,
+		InitManifestCache:           true,
+		InitLRUImagesCache:          true,
+		InitSSHAgent:                true,
 	})
 	if err != nil {
 		return fmt.Errorf("component init error: %w", err)
@@ -233,7 +225,7 @@ func run(ctx context.Context, imageNameListFromArgs, tagTemplateList []string, e
 		return err
 	}
 
-	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, giterminismManager.ProjectDir(), projectTmpDir, containerBackend, storageManager, storageManager.StorageLockManager, conveyorOptions)
+	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, giterminismManager.ProjectDir(), projectTmpDir, containerBackend, storageManager, conveyorOptions)
 	defer conveyorWithRetry.Terminate()
 
 	return conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {

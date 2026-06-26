@@ -20,8 +20,6 @@ dependencies:
   imports:
   - type: ImageName
     targetBuildArg: BASE_STAPEL_SHELL_IMAGE_NAME
-  - type: ImageID
-    targetBuildArg: BASE_STAPEL_SHELL_IMAGE_ID
   - type: ImageRepo
     targetBuildArg: BASE_STAPEL_SHELL_IMAGE_REPO
   - type: ImageTag
@@ -37,7 +35,7 @@ shell:
 
 ---
 image: stapel-shell
-fromImage: base-stapel-shell
+from: base-stapel-shell
 fromCacheVersion: 1
 mount:
 - from: tmp_dir
@@ -76,24 +74,29 @@ shell:
   setup:
   - "echo setup >> /triggered-stages"
   - "echo content > /tmp_dir/file"
-docker:
-  USER: 0:0
-  WORKDIR: /app
-  VOLUME:
-    - /volume20
-  ENV:
-    ENV_NAME: env-value
-  LABEL:
-    LABEL_NAME: label-value
-  EXPOSE:
-  - "8010/tcp"
-  ENTRYPOINT:
-  - sh
-  - -ec
-  CMD: "sleep infinity"
-  HEALTHCHECK: "CMD echo healthcheck20"
+imageSpec:
+  config:
+    user: "0:0"
+    workingDir: /app
+    volumes:
+      - /volume20
+    env:
+      ENV_NAME: env-value
+    labels:
+      LABEL_NAME: label-value
+    expose:
+      - "8010/tcp"
+    entrypoint:
+      - sh
+      - -ec
+    cmd:
+      - "/bin/sh"
+      - "-c"
+      - "sleep infinity"
+    healthcheck:
+      test: ["CMD-SHELL", "echo healthcheck20"]
 import:
-- image: base-stapel-shell
+- from: base-stapel-shell
   before: install
   add: /basedir
   to: /basedir-imported

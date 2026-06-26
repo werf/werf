@@ -11,7 +11,6 @@ import (
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/util/option"
-	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
 
 func MapStapelConfigToImagesSets(ctx context.Context, metaConfig *config.Meta, stapelImageConfig config.StapelImageInterface, targetPlatform string, useCustomTag bool, opts CommonImageOptions) (ImagesSets, error) {
@@ -38,17 +37,15 @@ func mapStapelConfigToImage(ctx context.Context, metaConfig *config.Meta, stapel
 
 	var baseImageType BaseImageType
 
-	if imageBaseConfig.FromExternal {
+	if imageBaseConfig.From == "scratch" {
+		baseImageType = ScratchBaseImage
+	} else if imageBaseConfig.FromExternal {
 		baseImageType = ImageFromRegistryAsBaseImage
 		imageOpts.BaseImageReference = imageBaseConfig.From
 		imageOpts.FetchLatestBaseImage = imageBaseConfig.FromLatest
 	} else {
-		fromImage := imageBaseConfig.From
-		baseImageType = StageAsBaseImage
-		if imageBaseConfig.FromArtifactName != "" {
-			fromImage = imageBaseConfig.FromArtifactName
-		}
-		imageOpts.BaseImageName = fromImage
+		baseImageType = FromImage
+		imageOpts.BaseImageName = imageBaseConfig.From
 	}
 
 	image, err := NewImage(ctx, targetPlatform, imageName, baseImageType, imageOpts)
@@ -99,8 +96,9 @@ func initStages(ctx context.Context, image *Image, metaConfig *config.Meta, stap
 
 	gitMappingsExist := len(gitMappings) != 0
 
-	// TODO(v3): make this a hard error instead of a warning.
-	warnStageDependenciesWithoutInstructions(ctx, imageBaseConfig, gitMappings)
+	if err := validateStageDependenciesHaveInstructions(imageBaseConfig, gitMappings); err != nil {
+		return err
+	}
 
 	imageCacheVersion := option.ValueOrDefault(stapelImageConfig.CacheVersion(), metaConfig.Build.CacheVersion)
 
@@ -119,13 +117,9 @@ func initStages(ctx context.Context, image *Image, metaConfig *config.Meta, stap
 	stages = appendIfExist(ctx, stages, stage.GenerateSetupStage(ctx, imageBaseConfig, gitPatchStageOptions, baseStageOptions))
 	stages = appendIfExist(ctx, stages, stage.GenerateDependenciesAfterSetupStage(imageBaseConfig, baseStageOptions))
 
-	if !stapelImageConfig.IsGitAfterPatchDisabled() {
-		if gitMappingsExist {
-			stages = append(stages, stage.NewGitCacheStage(gitPatchStageOptions, baseStageOptions))
-			stages = append(stages, stage.NewGitLatestPatchStage(gitPatchStageOptions, baseStageOptions))
-		}
-
-		stages = appendIfExist(ctx, stages, stage.GenerateStapelDockerInstructionsStage(stapelImageConfig.(*config.StapelImage), baseStageOptions))
+	if gitMappingsExist {
+		stages = append(stages, stage.NewGitCacheStage(gitPatchStageOptions, baseStageOptions))
+		stages = append(stages, stage.NewGitLatestPatchStage(gitPatchStageOptions, baseStageOptions))
 	}
 
 	if imageBaseConfig.ImageSpec != nil && !opts.Conveyor.SkipImageSpecStage() {
@@ -145,8 +139,7 @@ func initStages(ctx context.Context, image *Image, metaConfig *config.Meta, stap
 	return nil
 }
 
-// TODO(v3): make this a hard error instead of a warning.
-func warnStageDependenciesWithoutInstructions(ctx context.Context, imageBaseConfig *config.StapelImageBase, gitMappings []*stage.GitMapping) {
+func validateStageDependenciesHaveInstructions(imageBaseConfig *config.StapelImageBase, gitMappings []*stage.GitMapping) error {
 	for _, gitMapping := range gitMappings {
 		for stageName, depsPaths := range gitMapping.StagesDependencies {
 			if len(depsPaths) == 0 {
@@ -157,13 +150,15 @@ func warnStageDependenciesWithoutInstructions(ctx context.Context, imageBaseConf
 				continue
 			}
 
-			global_warnings.GlobalWarningLn(ctx, fmt.Sprintf(
-				"git.stageDependencies.%s is defined, but no %s instructions are provided for image %q. "+
-					"Changes to the specified paths will have no effect until corresponding instructions are added.",
-				stageName, stageName, imageBaseConfig.Name,
-			))
+			return fmt.Errorf(
+				"git.stageDependencies.%s is defined, but no %s instructions are provided for image %q: "+
+					"either add %s instructions or remove the stageDependencies.%s directive",
+				stageName, stageName, imageBaseConfig.Name, stageName, stageName,
+			)
 		}
 	}
+
+	return nil
 }
 
 func hasStageInstructions(imageBaseConfig *config.StapelImageBase, stageName stage.StageName) bool {
@@ -175,17 +170,6 @@ func hasStageInstructions(imageBaseConfig *config.StapelImageBase, stageName sta
 			return len(imageBaseConfig.Shell.BeforeSetup) > 0
 		case stage.Setup:
 			return len(imageBaseConfig.Shell.Setup) > 0
-		}
-	}
-
-	if imageBaseConfig.Ansible != nil {
-		switch stageName {
-		case stage.Install:
-			return len(imageBaseConfig.Ansible.Install) > 0
-		case stage.BeforeSetup:
-			return len(imageBaseConfig.Ansible.BeforeSetup) > 0
-		case stage.Setup:
-			return len(imageBaseConfig.Ansible.Setup) > 0
 		}
 	}
 

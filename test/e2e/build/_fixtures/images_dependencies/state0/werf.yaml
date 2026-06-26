@@ -18,8 +18,6 @@ dependencies:
     imports:
       - type: ImageName
         targetEnv: BASE_STAPEL_IMAGE_NAME
-      - type: ImageID
-        targetEnv: BASE_STAPEL_IMAGE_ID
       - type: ImageRepo
         targetEnv: BASE_STAPEL_IMAGE_REPO
       - type: ImageTag
@@ -29,8 +27,6 @@ dependencies:
     imports:
       - type: ImageName
         targetEnv: BASE_DOCKERFILE_IMAGE_NAME
-      - type: ImageID
-        targetEnv: BASE_DOCKERFILE_IMAGE_ID
       - type: ImageRepo
         targetEnv: BASE_DOCKERFILE_IMAGE_REPO
       - type: ImageTag
@@ -40,24 +36,20 @@ shell:
     - mkdir /install
 
     - echo $BASE_STAPEL_IMAGE_NAME > /install/BASE_STAPEL_IMAGE_NAME
-    - echo $BASE_STAPEL_IMAGE_ID > /install/BASE_STAPEL_IMAGE_ID
     - echo $BASE_STAPEL_IMAGE_REPO > /install/BASE_STAPEL_IMAGE_REPO
     - echo $BASE_STAPEL_IMAGE_TAG > /install/BASE_STAPEL_IMAGE_TAG
 
     - echo $BASE_DOCKERFILE_IMAGE_NAME > /install/BASE_DOCKERFILE_IMAGE_NAME
-    - echo $BASE_DOCKERFILE_IMAGE_ID > /install/BASE_DOCKERFILE_IMAGE_ID
     - echo $BASE_DOCKERFILE_IMAGE_REPO > /install/BASE_DOCKERFILE_IMAGE_REPO
     - echo $BASE_DOCKERFILE_IMAGE_TAG > /install/BASE_DOCKERFILE_IMAGE_TAG
   setup:
     - mkdir /setup
 
     - echo $BASE_STAPEL_IMAGE_NAME > /setup/BASE_STAPEL_IMAGE_NAME
-    - echo $BASE_STAPEL_IMAGE_ID > /setup/BASE_STAPEL_IMAGE_ID
     - echo $BASE_STAPEL_IMAGE_REPO > /setup/BASE_STAPEL_IMAGE_REPO
     - echo $BASE_STAPEL_IMAGE_TAG > /setup/BASE_STAPEL_IMAGE_TAG
 
     - echo $BASE_DOCKERFILE_IMAGE_NAME > /setup/BASE_DOCKERFILE_IMAGE_NAME
-    - echo $BASE_DOCKERFILE_IMAGE_ID > /setup/BASE_DOCKERFILE_IMAGE_ID
     - echo $BASE_DOCKERFILE_IMAGE_REPO > /setup/BASE_DOCKERFILE_IMAGE_REPO
     - echo $BASE_DOCKERFILE_IMAGE_TAG > /setup/BASE_DOCKERFILE_IMAGE_TAG
 ---
@@ -68,8 +60,6 @@ dependencies:
     imports:
       - type: ImageName
         targetBuildArg: BASE_STAPEL_IMAGE_NAME
-      - type: ImageID
-        targetBuildArg: BASE_STAPEL_IMAGE_ID
       - type: ImageRepo
         targetBuildArg: BASE_STAPEL_IMAGE_REPO
       - type: ImageTag
@@ -80,8 +70,6 @@ dependencies:
     imports:
       - type: ImageName
         targetBuildArg: BASE_DOCKERFILE_IMAGE_NAME
-      - type: ImageID
-        targetBuildArg: BASE_DOCKERFILE_IMAGE_ID
       - type: ImageRepo
         targetBuildArg: BASE_DOCKERFILE_IMAGE_REPO
       - type: ImageTag

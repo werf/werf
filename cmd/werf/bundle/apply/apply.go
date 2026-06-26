@@ -5,10 +5,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/samber/lo"
@@ -18,12 +18,10 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/nelm/pkg/action"
 	nelmcommon "github.com/werf/nelm/pkg/common"
-	"github.com/werf/nelm/pkg/export/helm/engine"
-	"github.com/werf/nelm/pkg/export/helm/werf/helmopts"
-	"github.com/werf/nelm/pkg/log"
+	"github.com/werf/nelm/pkg/helm/pkg/engine"
 	"github.com/werf/werf/v2/cmd/werf/common"
+	"github.com/werf/werf/v2/pkg/deploy"
 	"github.com/werf/werf/v2/pkg/deploy/bundles"
-	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
 	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/tmp_manager"
 	"github.com/werf/werf/v2/pkg/werf"
@@ -31,8 +29,10 @@ import (
 )
 
 var cmdData struct {
-	Tag          string
-	AutoRollback bool
+	Tag                  string
+	AutoRollback         bool
+	PlanArtifactLifetime time.Duration
+	PlanArtifactPath     string
 }
 
 var commonCmdData common.CmdData
@@ -122,14 +122,26 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	cmd.Flags().StringVarP(&cmdData.Tag, "tag", "", defaultTag, "Provide exact tag version or semver-based pattern, werf will install or upgrade to the latest version of the specified bundle ($WERF_TAG or latest by default)")
 	cmd.Flags().BoolVarP(&cmdData.AutoRollback, "auto-rollback", "R", util.GetBoolEnvironmentDefaultFalse("WERF_AUTO_ROLLBACK"), "Enable auto rollback of the failed release to the previous deployed release version when current deploy process have failed ($WERF_AUTO_ROLLBACK by default)")
 	cmd.Flags().BoolVarP(&cmdData.AutoRollback, "atomic", "", util.GetBoolEnvironmentDefaultFalse("WERF_ATOMIC"), "Enable auto rollback of the failed release to the previous deployed release version when current deploy process have failed ($WERF_ATOMIC by default)")
+	cmd.Flags().StringVarP(&cmdData.PlanArtifactPath, "use-plan", "", os.Getenv("WERF_USE_PLAN_PATH"), "Use the gzip-compressed JSON plan file from the specified path during release install")
+
+	planArtifactLifetime := nelmcommon.DefaultPlanArtifactLifetime
+
+	if os.Getenv("WERF_PLAN_LIFETIME") != "" {
+		if lifetime, err := util.GetDurationEnvVar("WERF_PLAN_LIFETIME"); err == nil {
+			planArtifactLifetime = lifetime
+		}
+	}
+
+	cmd.Flags().DurationVarP(&cmdData.PlanArtifactLifetime, "plan-lifetime", "", planArtifactLifetime, "How long plan artifact is valid")
 
 	return cmd
 }
 
 func runApply(ctx context.Context) error {
-	global_warnings.PostponeMultiwerfNotUpToDateWarning(ctx)
+	var err error
+	var releaseName, releaseNamespace, registryCredentialsPath, installReportPath, bundlePath string
 
-	_, ctx, err := common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
+	_, ctx, err = common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
 		Cmd:                &commonCmdData,
 		InitDockerRegistry: true,
 		InitWerf:           true,
@@ -145,77 +157,89 @@ func runApply(ctx context.Context) error {
 		}
 	}()
 
-	repoAddress, err := commonCmdData.Repo.GetAddress()
-	if err != nil {
-		return fmt.Errorf("get repo address: %w", err)
-	}
+	extraRuntimeAnnotations := make(map[string]string)
+	releaseInfoAnnotations := make(map[string]string)
+	extraAnnotations := make(map[string]string)
+	extraLabels := make(map[string]string)
+	releaseLabels := make(map[string]string)
+	serviceValues := make(map[string]interface{})
 
-	releaseNamespace := common.GetNamespace(&commonCmdData)
-	releaseName, err := common.GetRequiredRelease(&commonCmdData)
-	if err != nil {
-		return fmt.Errorf("get release name: %w", err)
-	}
-
-	var installReportPath string
 	if commonCmdData.SaveDeployReport {
 		installReportPath = commonCmdData.DeployReportPath
 	}
 
-	bundlePath := filepath.Join(werf.GetServiceDir(), "tmp", "bundles", uuid.NewString())
-	defer os.RemoveAll(bundlePath)
+	usePlanArtifact := cmdData.PlanArtifactPath != ""
 
-	bundlesRegistryClient, err := common.NewBundlesRegistryClient(ctx, &commonCmdData)
-	if err != nil {
-		return fmt.Errorf("construct bundles registry client: %w", err)
+	if !usePlanArtifact {
+		repoAddress, err := commonCmdData.Repo.GetAddress()
+		if err != nil {
+			return fmt.Errorf("get repo address: %w", err)
+		}
+
+		releaseNamespace = common.GetNamespace(&commonCmdData)
+		releaseName, err = common.GetRequiredRelease(&commonCmdData)
+		if err != nil {
+			return fmt.Errorf("get release name: %w", err)
+		}
+
+		bundlePath = filepath.Join(werf.GetServiceDir(), "tmp", "bundles", uuid.NewString())
+		defer os.RemoveAll(bundlePath)
+
+		bundlesRegistryClient, err := common.NewBundlesRegistryClient(ctx, &commonCmdData)
+		if err != nil {
+			return fmt.Errorf("construct bundles registry client: %w", err)
+		}
+
+		registryCredentialsPath = docker.GetDockerConfigCredentialsFile(*commonCmdData.DockerConfig)
+
+		serviceValues, err = deploy.GetBundleServiceValues(ctx, deploy.ServiceValuesOptions{
+			Env:                      commonCmdData.Environment,
+			Namespace:                releaseNamespace,
+			SetDockerConfigJsonValue: *commonCmdData.SetDockerConfigJsonValue,
+			DockerConfigPath:         filepath.Dir(registryCredentialsPath),
+		})
+		if err != nil {
+			return fmt.Errorf("get service values: %w", err)
+		}
+
+		secretWorkDir, err := os.Getwd()
+		if err != nil {
+			return fmt.Errorf("get current working directory: %w", err)
+		}
+
+		if err := bundles.Pull(ctx, fmt.Sprintf("%s:%s", repoAddress, cmdData.Tag), bundlePath, bundlesRegistryClient, nelmcommon.HelmOptions{
+			ChartLoadOpts: nelmcommon.ChartLoadOptions{
+				DefaultSecretValuesDisable: commonCmdData.DefaultSecretValuesDisable,
+				DefaultValuesDisable:       commonCmdData.DefaultValuesDisable,
+				ExtraValues:                serviceValues,
+				SecretKeyIgnore:            commonCmdData.SecretKeyIgnore,
+				SecretValuesFiles:          commonCmdData.SecretValuesFiles,
+				SecretWorkDir:              secretWorkDir,
+			},
+		}); err != nil {
+			return fmt.Errorf("pull bundle: %w", err)
+		}
+
+		var serviceAnnotations map[string]string
+
+		serviceAnnotations, extraAnnotations, extraLabels, err = getAnnotationsAndLabels(bundlePath)
+		if err != nil {
+			return fmt.Errorf("get annotations and labels: %w", err)
+		}
+
+		extraRuntimeAnnotations = lo.Assign(commonCmdData.ExtraRuntimeAnnotations, serviceAnnotations)
+		releaseInfoAnnotations = lo.Assign(commonCmdData.ReleaseInfoAnnotations, serviceAnnotations)
+
+		releaseLabels, err = common.GetReleaseLabels(&commonCmdData)
+		if err != nil {
+			return fmt.Errorf("get release labels: %w", err)
+		}
 	}
 
-	registryCredentialsPath := docker.GetDockerConfigCredentialsFile(*commonCmdData.DockerConfig)
-
-	serviceValues, err := helpers.GetBundleServiceValues(ctx, helpers.ServiceValuesOptions{
-		Env:                      commonCmdData.Environment,
-		Namespace:                releaseNamespace,
-		SetDockerConfigJsonValue: *commonCmdData.SetDockerConfigJsonValue,
-		DockerConfigPath:         filepath.Dir(registryCredentialsPath),
-	})
-	if err != nil {
-		return fmt.Errorf("get service values: %w", err)
-	}
-
-	secretWorkDir, err := os.Getwd()
-	if err != nil {
-		return fmt.Errorf("get current working directory: %w", err)
-	}
-
-	if err := bundles.Pull(ctx, fmt.Sprintf("%s:%s", repoAddress, cmdData.Tag), bundlePath, bundlesRegistryClient, helmopts.HelmOptions{
-		ChartLoadOpts: helmopts.ChartLoadOptions{
-			DefaultSecretValuesDisable: commonCmdData.DefaultSecretValuesDisable,
-			DefaultValuesDisable:       commonCmdData.DefaultValuesDisable,
-			ExtraValues:                serviceValues,
-			SecretKeyIgnore:            commonCmdData.SecretKeyIgnore,
-			SecretValuesFiles:          commonCmdData.SecretValuesFiles,
-			SecretWorkDir:              secretWorkDir,
-		},
-	}); err != nil {
-		return fmt.Errorf("pull bundle: %w", err)
-	}
-
-	serviceAnnotations, extraAnnotations, extraLabels, err := getAnnotationsAndLabels(bundlePath)
-	if err != nil {
-		return fmt.Errorf("get annotations and labels: %w", err)
-	}
-
-	extraRuntimeAnnotations := lo.Assign(commonCmdData.ExtraRuntimeAnnotations, serviceAnnotations)
-	releaseInfoAnnotations := lo.Assign(commonCmdData.ReleaseInfoAnnotations, serviceAnnotations)
-
-	releaseLabels, err := common.GetReleaseLabels(&commonCmdData)
-	if err != nil {
-		return fmt.Errorf("get release labels: %w", err)
-	}
-
-	ctx = log.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultReleaseInstallLogLevel), log.SetupLoggingOptions{
+	ctx = action.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultReleaseInstallLogLevel), action.SetupLoggingOptions{
 		ColorMode: *commonCmdData.LogColorMode,
 	})
-	engine.SetDebug(commonCmdData.DebugTemplates)
+	engine.Debug = commonCmdData.DebugTemplates
 
 	if err := action.ReleaseInstall(ctx, releaseName, releaseNamespace, action.ReleaseInstallOptions{
 		KubeConnectionOptions:      commonCmdData.KubeConnectionOptions,
@@ -224,17 +248,19 @@ func runApply(ctx context.Context) error {
 		SecretValuesOptions:        commonCmdData.SecretValuesOptions,
 		TrackingOptions:            commonCmdData.TrackingOptions,
 		AutoRollback:               cmdData.AutoRollback,
-		ChartDirPath:               bundlePath,
+		Chart:                      bundlePath,
 		ChartProvenanceKeyring:     commonCmdData.ChartProvenanceKeyring,
 		ChartProvenanceStrategy:    commonCmdData.ChartProvenanceStrategy,
 		ChartRepoSkipUpdate:        commonCmdData.ChartRepoSkipUpdate,
 		InstallGraphPath:           commonCmdData.InstallGraphPath,
 		InstallReportPath:          installReportPath,
-		LegacyChartType:            helmopts.ChartTypeBundle,
+		LegacyChartType:            nelmcommon.LegacyChartTypeBundle,
 		LegacyExtraValues:          serviceValues,
 		LegacyLogRegistryStreamOut: os.Stdout,
 		NetworkParallelism:         commonCmdData.NetworkParallelism,
 		NoShowNotes:                commonCmdData.NoShowNotes,
+		PlanArtifactPath:           cmdData.PlanArtifactPath,
+		PlanArtifactLifetime:       cmdData.PlanArtifactLifetime,
 		RegistryCredentialsPath:    registryCredentialsPath,
 		RollbackGraphPath:          commonCmdData.RollbackGraphPath,
 		ShowSubchartNotes:          commonCmdData.ShowSubchartNotes,
@@ -313,7 +339,7 @@ func readBundleJsonMap(path string) (map[string]string, error) {
 		return nil, nil
 	} else if err != nil {
 		return nil, fmt.Errorf("error accessing %q: %w", path, err)
-	} else if data, err := ioutil.ReadFile(path); err != nil {
+	} else if data, err := os.ReadFile(path); err != nil {
 		return nil, fmt.Errorf("error reading %q: %w", path, err)
 	} else if err := json.Unmarshal(data, &res); err != nil {
 		return nil, fmt.Errorf("error unmarshalling json from %q: %w", path, err)

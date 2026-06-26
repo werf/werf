@@ -198,7 +198,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 
 			stubs.StubFunc(&cleaner.volumeutilsGetVolumeUsageByPath, volumeutils.VolumeUsage{}, nil)
 
-			report, err := cleaner.cleanupWerfContainers(ctx, runOpts)
+			report, err := cleaner.cleanupWerfContainers(ctx, runOpts, volumeutils.VolumeUsage{})
 			Expect(err).To(Succeed())
 			Expect(report).To(Equal(expectedReport))
 		},
@@ -247,7 +247,8 @@ var _ = Describe("LocalBackendCleaner", func() {
 			true,
 			nil,
 			cleanupReport{
-				ItemsDeleted: []string{"some-id"},
+				ItemsDeleted:   []string{"some-id"},
+				SpaceReclaimed: 0,
 			},
 		),
 		Entry(
@@ -292,13 +293,11 @@ var _ = Describe("LocalBackendCleaner", func() {
 				util.NewPair("reference", "*client-id-*"),
 				util.NewPair("reference", "*managed-image-*"),
 				util.NewPair("reference", "*meta-*"),
-				util.NewPair("reference", "*import-metadata-*"),
 				util.NewPair("reference", "*-rejected"),
 
 				util.NewPair("reference", "werf-client-id/*"),
 				util.NewPair("reference", "werf-managed-images/*"),
 				util.NewPair("reference", "werf-images-metadata-by-commit/*"),
-				util.NewPair("reference", "werf-import-metadata/*"),
 			)).Return(image.ImagesList{expectedImages[2]}, nil)
 
 			stubs.StubFunc(&cleaner.werfGetWerfLastRunAtV1_1, time.Time{}, nil)
@@ -334,9 +333,9 @@ var _ = Describe("LocalBackendCleaner", func() {
 				backend.EXPECT().Rmi(ctx, gomock.AnyOf(toAnySlice(rmiRefs)...), container_backend.RmiOpts{}).Return(nil).Times(3)
 			}
 
-			stubs.Stub(&cleaner.volumeutilsGetVolumeUsageByPath, stubVolumeUsageSequence(vu, vuStub))
+			stubs.StubFunc(&cleaner.volumeutilsGetVolumeUsageByPath, vuStub, nil)
 
-			report, err := cleaner.cleanupWerfImages(ctx, RunGCOptions{}, 40)
+			report, err := cleaner.cleanupWerfImages(ctx, RunGCOptions{}, vu, 40.00)
 			Expect(err).To(Succeed())
 			Expect(report).To(Equal(expectedReport))
 		},
@@ -357,7 +356,8 @@ var _ = Describe("LocalBackendCleaner", func() {
 			},
 			[]string{"one-digest", "two-digest", "three-digest"},
 			cleanupReport{
-				ItemsDeleted: []string{"one", "two", "three"},
+				ItemsDeleted:   []string{"one", "two", "three"},
+				SpaceReclaimed: 200,
 			},
 		),
 		Entry(
@@ -581,14 +581,4 @@ func convBoolToInt(v bool) int {
 		return 1
 	}
 	return 0
-}
-
-func stubVolumeUsageSequence(values ...volumeutils.VolumeUsage) func(context.Context, string) (volumeutils.VolumeUsage, error) {
-	return func(context.Context, string) (volumeutils.VolumeUsage, error) {
-		v := values[0]
-		if len(values) > 1 {
-			values = values[1:]
-		}
-		return v, nil
-	}
 }

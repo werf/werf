@@ -1,8 +1,9 @@
 project: none
 configVersion: 1
 ---
-image: ~
-from: registry.werf.io/base/alpine
-docker:
-  VOLUME:
-  - "/test"
+image: test
+from: registry.werf.io/base/alpine:3.21
+imageSpec:
+  config:
+    volumes:
+      - "/test"

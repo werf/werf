@@ -27,13 +27,12 @@ werf converge --repo registry.mydomain.com/web --env production
 {{ header }} Environments
 
 ```shell
-  $WERF_DEBUG_ANSIBLE_ARGS  Pass specified cli args to ansible ($ANSIBLE_ARGS)
-  $WERF_SECRET_KEY          Use specified secret key to extract secrets for the deploy. Recommended 
-                            way to set secret key in CI-system.
-                            
-                            Secret key also can be defined in files:
-                            * ~/.werf/global_secret_key (globally),
-                            * .werf_secret_key (per project)
+  $WERF_SECRET_KEY  Use specified secret key to extract secrets for the deploy. Recommended way to  
+                    set secret key in CI-system.
+                    
+                    Secret key also can be defined in files:
+                    * ~/.werf/global_secret_key (globally),
+                    * .werf_secret_key (per project)
 ```
 
 {{ header }} Options
@@ -62,19 +61,18 @@ werf converge --repo registry.mydomain.com/web --env production
       --allow-includes-update=false
             Allow use includes latest versions (default $WERF_ALLOW_INCLUDES_UPDATE or false)
       --allowed-backend-storage-volume-usage=70
-            Set allowed percentage or absolute value (e.g. 10GB) of backend (Docker or Buildah)     
-            storage volume usage which will cause cleanup of least recently used local backend      
-            images (default 70% or $WERF_ALLOWED_BACKEND_STORAGE_VOLUME_USAGE)
+            Set allowed percentage of backend (Docker or Buildah) storage volume usage which will   
+            cause cleanup of least recently used local backend images (default 70% or               
+            $WERF_ALLOWED_BACKEND_STORAGE_VOLUME_USAGE)
       --allowed-backend-storage-volume-usage-margin=5
             During cleanup of least recently used local backend (Docker or Buildah) images werf     
             would delete images until volume usage becomes below                                    
             "allowed-backend-storage-volume-usage - allowed-backend-storage-volume-usage-margin"    
             level (default 5% or $WERF_ALLOWED_BACKEND_STORAGE_VOLUME_USAGE_MARGIN)
       --allowed-local-cache-volume-usage=70
-            Set allowed percentage or absolute value (e.g. 10GB) of local cache                     
-            (~/.werf/local_cache by default) volume usage which will cause cleanup of least         
-            recently used data from the local cache (default 70% or                                 
-            $WERF_ALLOWED_LOCAL_CACHE_VOLUME_USAGE)
+            Set allowed percentage of local cache (~/.werf/local_cache by default) volume usage     
+            which will cause cleanup of least recently used data from the local cache (default 70%  
+            or $WERF_ALLOWED_LOCAL_CACHE_VOLUME_USAGE)
       --allowed-local-cache-volume-usage-margin=5
             During cleanup of local cache werf would delete local cache data until volume usage     
             becomes below "allowed-local-cache-volume-usage -                                       
@@ -198,8 +196,6 @@ werf converge --repo registry.mydomain.com/web --env production
             (default $WERF_GITERMINISM_CONFIG or werf-giterminism.yaml in working directory)
       --home-dir=""
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
-      --hooks-status-progress-period=0
-            No-op
       --ignore-bundle-js=false
             Do not use the existing bundle.js file. Requires TypeScript source files and Deno to    
             rebuild (default $WERF_IGNORE_BUNDLE_JS)
@@ -220,17 +216,15 @@ werf converge --repo registry.mydomain.com/web --env production
             several stages.
             
             There are the following formats to use:
-            * specify IMAGE_NAME/STAGE_NAME to introspect stage STAGE_NAME of either image or       
-            artifact IMAGE_NAME
+            * specify IMAGE_NAME/STAGE_NAME to introspect stage STAGE_NAME of image IMAGE_NAME
             * specify STAGE_NAME or */STAGE_NAME for the introspection of all existing stages with  
             name STAGE_NAME
             
-            IMAGE_NAME is the name of an image or artifact described in werf.yaml, the nameless     
-            image specified with ~.
+            IMAGE_NAME is the name of an image described in werf.yaml.
             STAGE_NAME should be one of the following: from, beforeInstall,                         
             dependenciesBeforeInstall, gitArchive, install, dependenciesAfterInstall, beforeSetup,  
             dependenciesBeforeSetup, setup, dependenciesAfterSetup, gitCache, gitLatestPatch,       
-            dockerInstructions, dockerfile, imageSpec
+            dockerfile, imageSpec
       --kube-api-server=""
             Kubernetes API server address (default $WERF_KUBE_API_SERVER)
       --kube-auth-password=""
@@ -298,6 +292,8 @@ werf converge --repo registry.mydomain.com/web --env production
       --kube-token-path=""
             Path to file with bearer token for authentication in Kubernetes (default                
             $WERF_KUBE_TOKEN_PATH)
+      --local-resource-validation=false
+            Do not use external json schema sources (default $WERF_LOCAL_RESOURCE_VALIDATION)
       --log-color-mode="auto"
             Set log color mode.
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        
@@ -345,6 +341,8 @@ werf converge --repo registry.mydomain.com/web --env production
       --no-remove-manual-changes=false
             Don`t remove fields added manually to the resource in the cluster if fields aren`t      
             present in the manifest (default $WERF_NO_REMOVE_MANUAL_CHANGES)
+      --no-resource-validation=false
+            Disable resource validation (default $WERF_NO_RESOURCE_VALIDATION)
   -p, --parallel=true
             Run in parallel (default $WERF_PARALLEL or true)
       --parallel-tasks-limit=5
@@ -408,6 +406,30 @@ werf converge --repo registry.mydomain.com/web --env production
             Requires all used images to be previously built and exist in repo. Exits with error if  
             needed images are not cached and so require to run build instructions (default          
             $WERF_REQUIRE_BUILT_IMAGES)
+      --resource-validation-cache-lifetime=48h0m0s
+            How long local schema cache will be valid. Also can be defined by                       
+            $WERF_RESOURCE_VALIDATION_CACHE_LIFETIME
+      --resource-validation-extra-schema=[]
+            Extra json schema sources to validate resources (preferred over default sources). Must  
+            be a valid go template defining a http(s) URL, or an absolute path on local file        
+            system. Also, can be defined with $WERF_RESOURCE_VALIDATION_EXTRA_SCHEMA_* (eg. $WERF_RE
+            SOURCE_VALIDATION_EXTRA_SCHEMA_1=`https://raw.githubusercontent.com/datreeio/CRDs-catalo
+            g/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json`)
+      --resource-validation-kube-version="1.35.0"
+            Kubernetes schemas version to use during resource validation. Also can be defined by    
+            $WERF_RESOURCE_VALIDATION_KUBE_VERSION
+      --resource-validation-schema=[https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/{{ .NormalizedKubernetesVersion }}-standalone{{ .StrictSuffix }}/{{ .ResourceKind }}{{ .KindSuffix }}.json,https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json]
+            Default json schema sources to validate resources. Must be a valid go template defining 
+            a http(s) URL, or an absolute path on local file system. Also, can be defined with      
+            $WERF_RESOURCE_VALIDATION_SCHEMA_* (eg. $WERF_RESOURCE_VALIDATION_SCHEMA_1=`https://raw.
+            githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.Resourc
+            eAPIVersion}}.json`)
+      --resource-validation-skip=[]
+            Skip resource validation for resources with specified attributes (can specify           
+            multiple). Format: key1=value1,key2=value2. Supported keys: group, version, kind, name, 
+            namespace. Example: kind=Deployment,name=my-app. Also, can be defined with              
+            $WERF_RESOURCE_VALIDATION_SKIP_* (e.g.                                                  
+            $WERF_RESOURCE_VALIDATION_SKIP_1=kind=Deployment,name=my-app)
       --rollback-graph-path=""
             Save rollback graph path to the specified file (by default $WERF_ROLLBACK_GRAPH_PATH).  
             Extension must be .dot or not specified. If extension not specified, then .dot is used
@@ -464,13 +486,6 @@ werf converge --repo registry.mydomain.com/web --env production
             or separate values with commas: key1=val1,key2=val2.
             Also, can be defined with $WERF_SET_ROOT_JSON_* (e.g. $WERF_SET_ROOT_JSON_1=key1=val1,  
             $WERF_SET_ROOT_JSON_2=key2=val2)
-      --set-runtime-json=[]
-            Set new keys in $.Runtime, where the key is the value path and the value is JSON. This  
-            is meant to be generated inside the program, so use --set-json instead, unless you know 
-            what you are doing. Can specify multiple or separate values with commas:                
-            key1=val1,key2=val2.
-            Also, can be defined with $WERF_SET_RUNTIME_JSON_* (e.g.                                
-            $WERF_SET_RUNTIME_JSON_1=key1=val1, $WERF_SET_RUNTIME_JSON_2=key2=val2)
       --set-string=[]
             Set STRING helm values on the command line (can specify multiple or separate values     
             with commas: key1=val1,key2=val2).
@@ -495,16 +510,6 @@ werf converge --repo registry.mydomain.com/web --env production
       --status-progress-period=5
             Status progress period in seconds. Set -1 to stop showing status progress. Defaults to  
             $WERF_STATUS_PROGRESS_PERIOD_SECONDS or 5 seconds
-  -S, --synchronization=""
-            Address of synchronizer for multiple werf processes to work with a single repo.
-            
-            Default:
-             - $WERF_SYNCHRONIZATION, or
-             - :local if --repo is not specified, or
-             - https://synchronization.werf.io if --repo has been specified.
-            
-            The same address should be specified for all werf processes that work with a single     
-            repo. :local address allows execution of werf processes from a single host only
       --templates-allow-dns=false
             Allow performing DNS requests in templating (default $WERF_TEMPLATES_ALLOW_DNS)
   -t, --timeout=0
@@ -530,9 +535,6 @@ werf converge --repo registry.mydomain.com/web --env production
             Specify helm values in a YAML file or a URL (can specify multiple). Also, can be        
             defined with $WERF_VALUES_* (e.g. $WERF_VALUES_1=.helm/values_1.yaml,                   
             $WERF_VALUES_2=.helm/values_2.yaml)
-      --virtual-merge=false
-            Enable virtual/ephemeral merge commit mode when building current application state      
-            ($WERF_VIRTUAL_MERGE by default)
       --without-images=false
             Disable building of images defined in the werf.yaml (if any) and usage of such images   
             in the .helm/templates ($WERF_WITHOUT_IMAGES or false by default — e.g. enable all      

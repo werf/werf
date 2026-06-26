@@ -136,7 +136,7 @@ func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, 
 		var img *Image
 		var err error
 		if baseStg := cfg.FindStage(stg.BaseName); baseStg != nil {
-			img, err = NewImage(ctx, targetPlatform, item.WerfImageName, StageAsBaseImage, ImageOptions{
+			img, err = NewImage(ctx, targetPlatform, item.WerfImageName, FromImage, ImageOptions{
 				IsFinal:                   dockerfileImageConfig.IsFinal() && item.IsTargetStage,
 				IsDockerfileImage:         true,
 				UseCustomTag:              useCustomTag,
@@ -309,7 +309,7 @@ func mapLegacyDockerfileToImage(ctx context.Context, metaConfig *config.Meta, do
 		return nil, fmt.Errorf("unable to parse dockerfile %s: %w", relDockerfilePath, err)
 	}
 
-	dockerStages, dockerMetaArgs, err := instructions.Parse(p.AST)
+	dockerStages, dockerMetaArgs, err := instructions.Parse(p.AST, nil)
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse dockerfile %s: %w", relDockerfilePath, err)
 	}

@@ -17,13 +17,10 @@ import (
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/nelm/pkg/action"
 	nelmcommon "github.com/werf/nelm/pkg/common"
-	"github.com/werf/nelm/pkg/export/helm/engine"
-	"github.com/werf/nelm/pkg/export/helm/werf/helmopts"
-	"github.com/werf/nelm/pkg/featgate"
-	"github.com/werf/nelm/pkg/log"
+	"github.com/werf/nelm/pkg/helm/pkg/engine"
 	"github.com/werf/werf/v2/cmd/werf/common"
+	"github.com/werf/werf/v2/pkg/deploy"
 	"github.com/werf/werf/v2/pkg/deploy/bundles"
-	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
 	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/werf"
 	"github.com/werf/werf/v2/pkg/werf/global_warnings"
@@ -32,10 +29,11 @@ import (
 var cmdData struct {
 	DetailedExitCode       bool
 	DiffContextLines       int
+	PlanArtifactPath       string
+	ShowPlanArtifactPath   string
 	ShowInsignificantDiffs bool
 	ShowSensitiveDiffs     bool
 	ShowVerboseCRDDiffs    bool
-	ShowVerboseDiffs       bool
 	Tag                    string
 }
 
@@ -118,18 +116,12 @@ func NewCmd(ctx context.Context) *cobra.Command {
 		defaultTag = "latest"
 	}
 	cmd.Flags().StringVarP(&cmdData.Tag, "tag", "", defaultTag, "Provide exact tag version or semver-based pattern, werf will install or upgrade to the latest version of the specified bundle ($WERF_TAG or latest by default)")
-	var desc string
-	if featgate.FeatGateMoreDetailedExitCodeForPlan.Enabled() || featgate.FeatGatePreviewV2.Enabled() {
-		desc = "Return exit code 0 if no changes, 1 if error, 2 if resource changes planned, 3 if no resource changes planned, but release still should be installed (default $WERF_EXIT_CODE or false)"
-	} else {
-		desc = "Return exit code 0 if no changes, 1 if error, 2 if any changes planned (default $WERF_EXIT_CODE or false)"
-	}
-	cmd.Flags().BoolVarP(&cmdData.DetailedExitCode, "exit-code", "", util.GetBoolEnvironmentDefaultFalse("WERF_EXIT_CODE"), desc)
+	cmd.Flags().BoolVarP(&cmdData.DetailedExitCode, "exit-code", "", util.GetBoolEnvironmentDefaultFalse("WERF_EXIT_CODE"), "Return exit code 0 if no changes, 1 if error, 2 if resource changes planned, 3 if no resource changes planned, but release still should be installed (default $WERF_EXIT_CODE or false)")
 	cmd.Flags().BoolVarP(&cmdData.ShowInsignificantDiffs, "show-insignificant-diffs", "", util.GetBoolEnvironmentDefaultFalse("WERF_SHOW_INSIGNIFICANT_DIFFS"), "Show insignificant diff lines ($WERF_SHOW_INSIGNIFICANT_DIFFS by default)")
 	cmd.Flags().BoolVarP(&cmdData.ShowSensitiveDiffs, "show-sensitive-diffs", "", util.GetBoolEnvironmentDefaultFalse("WERF_SHOW_SENSITIVE_DIFFS"), "Show sensitive diff lines ($WERF_SHOW_SENSITIVE_DIFFS by default)")
 	cmd.Flags().BoolVarP(&cmdData.ShowVerboseCRDDiffs, "show-verbose-crd-diffs", "", util.GetBoolEnvironmentDefaultFalse("WERF_SHOW_VERBOSE_CRD_DIFFS"), "Show verbose CRD diff lines ($WERF_SHOW_VERBOSE_CRD_DIFFS by default)")
-	// TODO(major): get rid?
-	cmd.Flags().BoolVarP(&cmdData.ShowVerboseDiffs, "show-verbose-diffs", "", util.GetBoolEnvironmentDefaultTrue("WERF_SHOW_VERBOSE_DIFFS"), "Show verbose diff lines ($WERF_SHOW_VERBOSE_DIFFS by default)")
+	cmd.Flags().StringVarP(&cmdData.PlanArtifactPath, "save-plan", "", os.Getenv("WERF_SAVE_PLAN_PATH"), "Save the gzip-compressed JSON install plan to the specified file")
+	cmd.Flags().StringVarP(&cmdData.ShowPlanArtifactPath, "show-plan", "", os.Getenv("WERF_SHOW_PLAN_PATH"), "Show plan artifact planned changes")
 	var defaultDiffLines int
 	if lines := lo.Must(util.GetIntEnvVar("WERF_DIFF_CONTEXT_LINES")); lines != nil {
 		defaultDiffLines = int(*lines)
@@ -142,7 +134,27 @@ func NewCmd(ctx context.Context) *cobra.Command {
 }
 
 func runPlan(ctx context.Context) error {
-	global_warnings.PostponeMultiwerfNotUpToDateWarning(ctx)
+	ctx = action.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultReleasePlanInstallLogLevel), action.SetupLoggingOptions{
+		ColorMode: *commonCmdData.LogColorMode,
+	})
+
+	if cmdData.ShowPlanArtifactPath != "" {
+		if err := action.ReleasePlanShow(ctx, action.ReleasePlanShowOptions{
+			ResourceDiffOptions: nelmcommon.ResourceDiffOptions{
+				DiffContextLines:       cmdData.DiffContextLines,
+				ShowVerboseCRDDiffs:    cmdData.ShowVerboseCRDDiffs,
+				ShowSensitiveDiffs:     cmdData.ShowSensitiveDiffs,
+				ShowInsignificantDiffs: cmdData.ShowInsignificantDiffs,
+			},
+			PlanArtifactPath: cmdData.ShowPlanArtifactPath,
+			SecretKey:        commonCmdData.SecretKey,
+			SecretWorkDir:    commonCmdData.SecretWorkDir,
+		}); err != nil {
+			return fmt.Errorf("release plan show: %w", err)
+		}
+
+		return nil
+	}
 
 	_, ctx, err := common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
 		Cmd:                &commonCmdData,
@@ -175,7 +187,7 @@ func runPlan(ctx context.Context) error {
 
 	registryCredentialsPath := docker.GetDockerConfigCredentialsFile(*commonCmdData.DockerConfig)
 
-	serviceValues, err := helpers.GetBundleServiceValues(ctx, helpers.ServiceValuesOptions{
+	serviceValues, err := deploy.GetBundleServiceValues(ctx, deploy.ServiceValuesOptions{
 		Env:                      commonCmdData.Environment,
 		Namespace:                releaseNamespace,
 		SetDockerConfigJsonValue: *commonCmdData.SetDockerConfigJsonValue,
@@ -190,8 +202,8 @@ func runPlan(ctx context.Context) error {
 		return fmt.Errorf("get current working directory: %w", err)
 	}
 
-	if err := bundles.Pull(ctx, fmt.Sprintf("%s:%s", repoAddress, cmdData.Tag), bundlePath, bundlesRegistryClient, helmopts.HelmOptions{
-		ChartLoadOpts: helmopts.ChartLoadOptions{
+	if err := bundles.Pull(ctx, fmt.Sprintf("%s:%s", repoAddress, cmdData.Tag), bundlePath, bundlesRegistryClient, nelmcommon.HelmOptions{
+		ChartLoadOpts: nelmcommon.ChartLoadOptions{
 			DefaultSecretValuesDisable: commonCmdData.DefaultSecretValuesDisable,
 			DefaultValuesDisable:       commonCmdData.DefaultValuesDisable,
 			ExtraValues:                serviceValues,
@@ -216,27 +228,25 @@ func runPlan(ctx context.Context) error {
 		return fmt.Errorf("get release labels: %w", err)
 	}
 
-	ctx = log.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultReleasePlanInstallLogLevel), log.SetupLoggingOptions{
-		ColorMode: *commonCmdData.LogColorMode,
-	})
-	engine.SetDebug(commonCmdData.DebugTemplates)
+	engine.Debug = commonCmdData.DebugTemplates
 
-	if err := action.ReleasePlanInstall(ctx, releaseName, releaseNamespace, action.ReleasePlanInstallOptions{
+	if _, err := action.ReleasePlanInstall(ctx, releaseName, releaseNamespace, action.ReleasePlanInstallOptions{
 		KubeConnectionOptions:      commonCmdData.KubeConnectionOptions,
 		ChartRepoConnectionOptions: commonCmdData.ChartRepoConnectionOptions,
 		ValuesOptions:              commonCmdData.ValuesOptions,
 		SecretValuesOptions:        commonCmdData.SecretValuesOptions,
-		ChartDirPath:               bundlePath,
+		Chart:                      bundlePath,
 		ChartProvenanceKeyring:     commonCmdData.ChartProvenanceKeyring,
 		ChartProvenanceStrategy:    commonCmdData.ChartProvenanceStrategy,
 		ChartRepoSkipUpdate:        commonCmdData.ChartRepoSkipUpdate,
 		ErrorIfChangesPlanned:      cmdData.DetailedExitCode,
 		InstallGraphPath:           commonCmdData.InstallGraphPath,
-		LegacyChartType:            helmopts.ChartTypeBundle,
+		LegacyChartType:            nelmcommon.LegacyChartTypeBundle,
 		LegacyExtraValues:          serviceValues,
 		LegacyLogRegistryStreamOut: os.Stdout,
 		NetworkParallelism:         commonCmdData.NetworkParallelism,
 		NoFinalTracking:            commonCmdData.NoFinalTracking,
+		PlanArtifactPath:           cmdData.PlanArtifactPath,
 		RegistryCredentialsPath:    registryCredentialsPath,
 		TemplatesAllowDNS:          commonCmdData.TemplatesAllowDNS,
 		ReleaseInstallRuntimeOptions: nelmcommon.ReleaseInstallRuntimeOptions{
@@ -257,7 +267,6 @@ func runPlan(ctx context.Context) error {
 		ResourceDiffOptions: nelmcommon.ResourceDiffOptions{
 			DiffContextLines:       cmdData.DiffContextLines,
 			ShowVerboseCRDDiffs:    cmdData.ShowVerboseCRDDiffs,
-			ShowVerboseDiffs:       cmdData.ShowVerboseDiffs,
 			ShowSensitiveDiffs:     cmdData.ShowSensitiveDiffs,
 			ShowInsignificantDiffs: cmdData.ShowInsignificantDiffs,
 		},

@@ -1,7 +1,7 @@
 project: none
 configVersion: 1
 ---
-image: ~
-from: registry.werf.io/base/ubuntu
+image: test
+from: registry.werf.io/base/ubuntu:22.04
 git:
 - to: /app

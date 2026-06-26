@@ -45,25 +45,10 @@ var _ = Describe("Import", Label("e2e", "build", "import", "simple"), func() {
 				"test -f /bin/myapp",
 			)
 		},
-		Entry("Vanilla Docker", importTestOptions{setupEnvOptions{
-			ContainerBackendMode:        "vanilla-docker",
+		Entry("Docker", importTestOptions{setupEnvOptions{
+			ContainerBackendMode:        "docker",
 			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: false,
-		}}),
-		Entry("BuildKit Docker", importTestOptions{setupEnvOptions{
-			ContainerBackendMode:        "buildkit-docker",
-			WithLocalRepo:               true,
-			WithStagedDockerfileBuilder: false,
-		}}),
-		Entry("Native Buildah rootless", importTestOptions{setupEnvOptions{
-			ContainerBackendMode:        "native-rootless",
-			WithLocalRepo:               true,
-			WithStagedDockerfileBuilder: false,
-		}}),
-		Entry("Native Buildah chroot", importTestOptions{setupEnvOptions{
-			ContainerBackendMode:        "native-chroot",
-			WithLocalRepo:               true,
-			WithStagedDockerfileBuilder: true,
 		}}),
 		Entry("Native Buildah rootless", importTestOptions{setupEnvOptions{
 			ContainerBackendMode:        "native-rootless",

@@ -20,6 +20,7 @@ type Interface interface {
 	FetchDependencies(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, dockerRegistry docker_registry.GenericApiInterface) error
 	GetDependencies(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error)
 	GetNextStageDependencies(ctx context.Context, c Conveyor) (string, error)
+	GetContentDependencies(ctx context.Context, c Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error)
 
 	PrepareImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) error
 

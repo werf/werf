@@ -43,6 +43,9 @@ werf kubectl config set-credentials NAME [--client-certificate=path/to/certfile]
   # Enable new exec auth plugin for the "cluster-admin" entry
   kubectl config set-credentials cluster-admin --exec-command=/path/to/the/executable --exec-api-version=client.authentication.k8s.io/v1beta1
   
+  # Enable new exec auth plugin for the "cluster-admin" entry with interactive mode
+  kubectl config set-credentials cluster-admin --exec-command=/path/to/the/executable --exec-api-version=client.authentication.k8s.io/v1beta1 --exec-interactive-mode=Never
+  
   # Define new exec auth plugin arguments for the "cluster-admin" entry
   kubectl config set-credentials cluster-admin --exec-arg=arg1 --exec-arg=arg2
   
@@ -74,6 +77,10 @@ werf kubectl config set-credentials NAME [--client-certificate=path/to/certfile]
             Command for the exec credential plugin for the user entry in kubeconfig
       --exec-env=[]
             `key=value` environment values for the exec credential plugin
+      --exec-interactive-mode=""
+            InteractiveMode of the exec credentials plugin for the user entry in kubeconfig
+      --exec-provide-cluster-info=false
+            ProvideClusterInfo of the exec credentials plugin for the user entry in kubeconfig
       --password=""
             password for the user entry in kubeconfig
       --token=""
@@ -93,6 +100,9 @@ werf kubectl config set-credentials NAME [--client-certificate=path/to/certfile]
             groups.
       --as-uid=""
             UID to impersonate for the operation.
+      --as-user-extra=[]
+            User extras to impersonate for the operation, this flag can be repeated to specify      
+            multiple values for the same key.
       --cache-dir="~/.kube/cache"
             Default cache directory
       --certificate-authority=""
@@ -113,6 +123,9 @@ werf kubectl config set-credentials NAME [--client-certificate=path/to/certfile]
             $WERF_KUBECONFIG_BASE64 or $KUBECONFIG_BASE64)
       --kubeconfig=""
             use a particular kubeconfig file
+      --kuberc=""
+            Path to the kuberc file to use for preferences. This can be disabled by exporting       
+            KUBECTL_KUBERC=false feature gate or turning off the feature KUBERC=off.
       --log-flush-frequency=5s
             Maximum number of seconds between log flushes
       --match-server-version=false
@@ -120,7 +133,8 @@ werf kubectl config set-credentials NAME [--client-certificate=path/to/certfile]
   -n, --namespace=""
             If present, the namespace scope for this CLI request
       --profile="none"
-            Name of profile to capture. One of (none|cpu|heap|goroutine|threadcreate|block|mutex)
+            Name of profile to capture. One of                                                      
+            (none|cpu|heap|goroutine|threadcreate|block|mutex|trace)
       --profile-output="profile.pprof"
             Name of the file to write the profile to
       --request-timeout="0"

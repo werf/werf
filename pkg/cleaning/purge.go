@@ -48,17 +48,6 @@ func (m *purgeManager) run(ctx context.Context) error {
 		return err
 	}
 
-	if err := logboek.Context(ctx).Default().LogProcess("Deleting imports metadata").DoError(func() error {
-		importMetadataIDs, err := m.StorageManager.GetStagesStorage().GetImportMetadataIDs(ctx, m.ProjectName, storage.WithCache())
-		if err != nil {
-			return err
-		}
-
-		return m.deleteImportsMetadata(ctx, importMetadataIDs)
-	}); err != nil {
-		return err
-	}
-
 	if err := m.purgeManagedImages(ctx); err != nil {
 		return err
 	}
@@ -106,10 +95,6 @@ func (m *purgeManager) deleteStageDescSet(ctx context.Context, stageDescSet imag
 	}
 
 	return deleteStageDescSet(ctx, m.StorageManager, m.DryRun, deleteStageOptions, stageDescSet, isFinal)
-}
-
-func (m *purgeManager) deleteImportsMetadata(ctx context.Context, importsMetadataIDs []string) error {
-	return deleteImportsMetadata(ctx, m.ProjectName, m.StorageManager, importsMetadataIDs, m.DryRun)
 }
 
 func (m *purgeManager) purgeImageMetadata(ctx context.Context) error {

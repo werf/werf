@@ -12,7 +12,7 @@ To avoid this, the Docker community suggests installing tools, building, and rem
 RUN “download-source && cmd && cmd2 && remove-source”
 ```
 
-> You can do the same in werf — just specify the relevant instructions for some _user stage_. Below is an example of specifying the _shell assembly instructions_ for the _install stage_ (you can do so for the _ansible_ builder as well):
+> You can do the same in werf — just specify the relevant instructions for some _user stage_. Below is an example of specifying the _shell assembly instructions_ for the _install stage_:
 ```yaml
 shell:
   install:
@@ -56,7 +56,6 @@ werf offers the same approach.
 Importing _resources_ from the _images_ must be described in the `import` directive in the _destination image_ in the _image_ config section. `import` is an array of records, where each record must contain the following:
 
 - `from: <image name>`: _source image_; the name of the image copy files from. Both imports from images of the current project and from external images in the format `image_name:tag` or `image_name@digest` are supported.
-- `stage: <stage name>`: _source image stage_; the stage of the _source_image_ to copy files from.
 - `add: <absolute path>`: _source path_; the absolute path to the file or directory in the _source image_ to copy from.
 - `to: <absolute path>`: _destination path_; the absolute path in the _destination image_. If absent, the _destination path_ defaults to the  _source path_ (as specified by the `add` directive).
 - `before: <install || setup>` or `after: <install || setup>`: _destination image stage_; the stage to import files. Currently, only _install_ and _setup_ stages are supported.
