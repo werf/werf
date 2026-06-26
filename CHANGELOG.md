@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.73.1](https://github.com/werf/werf/compare/v2.73.0...v2.73.1) (2026-06-26)
+
+
+### Bug Fixes
+
+* **build:** use UUID-based naming for scratch base images to prevent buildah misinterpretation ([#7602](https://github.com/werf/werf/issues/7602)) ([9ce7545](https://github.com/werf/werf/commit/9ce7545582c59de01789d72c6f56bdf13b1e6a22))
+
 ## [2.73.0](https://github.com/werf/werf/compare/v2.72.2...v2.73.0) (2026-06-23)
 
 
