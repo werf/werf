@@ -1,15 +1,22 @@
 {{- $refs := list $.Values.global.github_ref }}
 {{- if eq $.Values.werf.env "test" }}
-{{- if eq (splitList "/" $.Values.global.github_ref | last) "main" }}
-{{- $refs = concat $refs (list "v2.0.3" "v1.2.294+fix1") }}
+{{- $currentRef := splitList "/" $.Values.global.github_ref | last }}
+{{- if eq $currentRef "main" }}
+{{- $refs = concat $refs (list "v2" "v1.2") }}
+{{- else if hasPrefix "pr-" $currentRef }}
+{{- $refs = concat $refs (list "main" "v2" "v1.2") }}
 {{- end }}
 {{- end }}
 
 {{- range $_, $ref := $refs }}
 
 {{- $version := splitList "/" $ref | last }}
-{{- $versionDNSNormalized := printf "%s" $version | lower | replace "+" "-plus-" | replace "_" "-u-" | replace "." "-dot-" }}
-
+{{- if hasPrefix "v2" $version }}
+{{- $version = "v2" }}
+{{- else if hasPrefix "v1.2" $version }}
+{{- $version = "v1.2" }}
+{{- end }}
+{{- $versionDNSNormalized := replace "." "-dot-" $version }}
 ---
 apiVersion: apps/v1
 kind: Deployment

@@ -1,27 +1,31 @@
 {{- $refs := list $.Values.global.github_ref }}
 {{- if eq $.Values.werf.env "test" }}
-{{- if eq (splitList "/" $.Values.global.github_ref | last) "main" }}
-{{- $refs = concat $refs (list "v2.0.3" "v1.2.294+fix1") }}
+{{- $currentRef := splitList "/" $.Values.global.github_ref | last }}
+{{- if eq $currentRef "main" }}
+{{- $refs = concat $refs (list "v2" "v1.2") }}
+{{- else if hasPrefix "pr-" $currentRef }}
+{{- $refs = concat $refs (list "main" "v2" "v1.2") }}
 {{- end }}
 {{- end }}
 
 {{- range $_, $ref := $refs }}
 
 {{- $version := splitList "/" $ref | last }}
-{{- $versionDNSNormalized := printf "%s" $version | lower | replace "+" "-plus-" | replace "_" "-u-" | replace "." "-dot-" }}
+{{- if hasPrefix "v2" $version }}
+{{- $version = "v2" }}
+{{- else if hasPrefix "v1.2" $version }}
+{{- $version = "v1.2" }}
+{{- end }}
+{{- $versionDNSNormalized := replace "." "-dot-" $version }}
 
 {{- $versionURLNormalized := "" }}
 {{- if eq $version "main" }}
 {{- $versionURLNormalized = "latest" }}
 {{- else }}
-{{- $versionURLNormalized = printf "%s" $version | lower | replace "+" "-plus-" | replace "_" "-u-" }}
+{{- $versionURLNormalized = $version }}
 {{- end }}
 
 {{- $host := pluck $.Values.werf.env $.Values.host | first | default $.Values.host._default  }}
-{{- if hasPrefix "review" $.Values.werf.env }}
-{{- $host = printf "%s.%s" $.Values.werf.env (pluck "dev" $.Values.host | first | default $.Values.host._default ) | lower }}
-{{- end }}
-{{- $ruHost := printf "ru.%s" $host }}
 {{- if eq $.Values.werf.env "production" }}
 ---
 apiVersion: networking.k8s.io/v1
@@ -39,12 +43,12 @@ spec:
   ingressClassName: {{ include "ingressClassName" $ }}
   tls:
   - hosts:
-      - {{ $ruHost }}
+      - ru.{{ $host }}
       - {{ $host }}
       - www.{{ $host }}
     secretName: tls-werf-io
   rules:
-  - host: {{ $ruHost }}
+  - host: ru.{{ $host }}
     http:
       paths:
       - path: /docs/{{ $versionURLNormalized }}/
@@ -99,11 +103,7 @@ spec:
   tls:
   - hosts:
       - {{ $host }}
-{{- if eq $.Values.werf.env "production" }}
-    secretName: tls-werf-io
-{{- else }}
     secretName: {{ pluck $.Values.werf.env $.Values.ingressSecretName | first | default $.Values.ingressSecretName._default }}
-{{- end }}
   rules:
   - host: {{ $host }}
     http:
@@ -136,28 +136,16 @@ metadata:
       ssi_silent_errors on;
 {{ include "rewrites" $ | indent 6 }}
     nginx.ingress.kubernetes.io/auth-response-headers: X-Auth-Request-User,X-Auth-Request-Email
-    nginx.ingress.kubernetes.io/auth-signin: https://$host/dex-authenticator/sign_in
+    nginx.ingress.kubernetes.io/auth-signin: https://ru-{{ $host }}/dex-authenticator/sign_in
     nginx.ingress.kubernetes.io/auth-url: https://werfio-ru-dex-authenticator.{{ $.Values.werf.namespace }}.svc.cluster.local/dex-authenticator/auth
 spec:
   ingressClassName: {{ include "ingressClassName" $ }}
   tls:
   - hosts:
-{{- if eq $.Values.werf.env "production" }}
-      - ru.{{ $host }}
-{{- else }}
       - ru-{{ $host }}
-{{- end }}
-{{- if eq $.Values.werf.env "production" }}
-    secretName: tls-werf-io
-{{- else }}
     secretName: {{ pluck $.Values.werf.env $.Values.ingressSecretName | first | default $.Values.ingressSecretName._default }}
-{{- end }}
   rules:
-{{- if eq $.Values.werf.env "production" }}
-  - host: ru.{{ $host }}
-{{- else }}
   - host: ru-{{ $host }}
-{{- end }}
     http:
       paths:
       - path: /docs/{{ $versionURLNormalized }}/

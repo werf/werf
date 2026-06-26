@@ -1,6 +1,5 @@
 <div class="breadcrumbs-container">
    <ol class="breadcrumbs">
-      <!--#include virtual="/includes/group-menu-v2.html" -->
       {%- assign page_url_parts = page.url | split: '/' -%}
       {%- assign max_ind = page_url_parts.size | minus: 1 -%}
 
@@ -23,6 +22,6 @@
       {%- endfor %}
    </ol>
    <div id="doc-versions-menu" class="channel-menu submenu-parent">
-      <!--#include virtual="/includes/channel-menu-v2.html" -->
+      <!--#include virtual="/includes/version-menu.html" -->
    </div>
 </div>
