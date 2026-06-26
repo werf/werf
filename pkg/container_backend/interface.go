@@ -21,6 +21,7 @@ type (
 	PullOpts                          CommonOpts
 	GetImageInfoOpts                  CommonOpts
 	CalculateDependencyImportChecksum CommonOpts
+	EnsureImageContentOpts            CommonOpts
 )
 
 type RmOpts struct {
@@ -87,6 +88,10 @@ type ContainerBackend interface {
 	Rmi(ctx context.Context, ref string, opts RmiOpts) error
 	Rm(ctx context.Context, name string, opts RmOpts) error
 	PostManifest(ctx context.Context, ref string, opts PostManifestOpts) error
+
+	// EnsureImageContent ensures that image content (compressed blobs) is physically present locally.
+	// This is critical for Docker with containerd-snapshotter where inspect might succeed but blobs are missing.
+	EnsureImageContent(ctx context.Context, ref string, opts EnsureImageContentOpts) error
 
 	GetImageInfo(ctx context.Context, ref string, opts GetImageInfoOpts) (*image.Info, error)
 	BuildDockerfile(ctx context.Context, dockerfile []byte, opts BuildDockerfileOpts) (string, error)

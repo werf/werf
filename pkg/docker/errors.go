@@ -1,10 +1,36 @@
 package docker
 
 import (
+	"regexp"
 	"strings"
 
 	"github.com/pkg/errors"
 )
+
+var contentNotFoundRe = regexp.MustCompile(`content digest (sha256:[a-f0-9]+): not found`)
+
+func IsErrContentNotFound(err error) bool {
+	if err == nil {
+		return false
+	}
+	cause := errors.Cause(err)
+	msg := cause.Error()
+	// Match Docker/containerd "content digest ... not found" (containerd-snapshotter missing blob)
+	// and generic Docker API "NotFound" (HTTP 404) responses.
+	return (strings.Contains(msg, "content digest") || strings.Contains(msg, "NotFound")) &&
+		strings.Contains(msg, "not found")
+}
+
+func ContentNotFoundDigest(err error) string {
+	if err == nil {
+		return ""
+	}
+	matches := contentNotFoundRe.FindStringSubmatch(errors.Cause(err).Error())
+	if len(matches) > 1 {
+		return matches[1]
+	}
+	return ""
+}
 
 // IsErrContainerPaused returns true if err is "container is paused" error
 // https://github.com/moby/moby/blob/25.0/daemon/delete.go#L94

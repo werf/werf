@@ -206,6 +206,20 @@ func (backend *DockerServerBackend) BuildDockerfileStage(ctx context.Context, ba
 	return "", fmt.Errorf("staged Dockerfile is not available for Docker Server backend")
 }
 
+func (backend *DockerServerBackend) EnsureImageContent(ctx context.Context, ref string, opts EnsureImageContentOpts) error {
+	if stream, err := backend.SaveImageToStream(ctx, ref); err != nil {
+		if docker.IsErrContentNotFound(err) {
+			logboek.Context(ctx).Warn().LogF("WARNING: image %s has missing content blobs, pulling to materialize layers\n", ref)
+			return backend.Pull(ctx, ref, PullOpts{TargetPlatform: opts.TargetPlatform})
+		}
+		return err
+	} else {
+		_ = stream.Close()
+	}
+
+	return nil
+}
+
 func (backend *DockerServerBackend) GetImageInfo(ctx context.Context, ref string, opts GetImageInfoOpts) (*image.Info, error) {
 	inspect, err := docker.ImageInspect(ctx, ref)
 	if client.IsErrNotFound(err) {
@@ -302,7 +316,21 @@ func (backend *DockerServerBackend) Tag(ctx context.Context, ref, newRef string,
 }
 
 func (backend *DockerServerBackend) Push(ctx context.Context, ref string, opts PushOpts) error {
+	if err := backend.EnsureImageContent(ctx, ref, EnsureImageContentOpts(opts)); err != nil {
+		return fmt.Errorf("ensure image content: %w", err)
+	}
+
 	return docker.CliPushWithRetries(ctx, ref)
+}
+
+func (backend *DockerServerBackend) PushImage(ctx context.Context, img LegacyImageInterface) error {
+	return logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Pushing %s", img.Name())).DoError(func() error {
+		if err := backend.EnsureImageContent(ctx, img.Name(), EnsureImageContentOpts{TargetPlatform: img.GetTargetPlatform()}); err != nil {
+			return fmt.Errorf("ensure image content: %w", err)
+		}
+
+		return docker.CliPushWithRetries(ctx, img.Name())
+	})
 }
 
 func (backend *DockerServerBackend) Pull(ctx context.Context, ref string, opts PullOpts) error {
@@ -336,15 +364,6 @@ func (backend *DockerServerBackend) Rm(ctx context.Context, ref string, opts RmO
 	default:
 		return err // err or nil
 	}
-}
-
-func (backend *DockerServerBackend) PushImage(ctx context.Context, img LegacyImageInterface) error {
-	if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Pushing %s", img.Name())).DoError(func() error {
-		return docker.CliPushWithRetries(ctx, img.Name())
-	}); err != nil {
-		return err
-	}
-	return nil
 }
 
 func (backend *DockerServerBackend) TagImageByName(ctx context.Context, img LegacyImageInterface) error {
