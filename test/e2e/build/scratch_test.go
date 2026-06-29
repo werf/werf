@@ -7,6 +7,7 @@ import (
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/test/pkg/contback"
 	"github.com/werf/werf/v2/test/pkg/report"
+	"github.com/werf/werf/v2/test/pkg/utils"
 	"github.com/werf/werf/v2/test/pkg/werf"
 )
 
@@ -19,7 +20,7 @@ var _ = Describe("Scratch stapel build", Label("e2e", "build", "scratch", "simpl
 		func(ctx SpecContext, testOpts scratchTestOptions) {
 			By("initializing")
 			setupEnv(testOpts.setupEnvOptions)
-			contRuntime, err := contback.NewContainerBackend(testOpts.ContainerBackendMode)
+			_, err := contback.NewContainerBackend(testOpts.ContainerBackendMode)
 			if err == contback.ErrRuntimeUnavailable {
 				Skip(err.Error())
 			} else if err != nil {
@@ -39,22 +40,15 @@ var _ = Describe("Scratch stapel build", Label("e2e", "build", "scratch", "simpl
 			buildOut, buildReport := reportProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), nil)
 			Expect(buildOut).To(ContainSubstring("Building stage"))
 
-			By("checking scratch image labels")
+			By("checking scratch image contents and labels")
 			imageName := buildReport.Images["stapel-scratch"].DockerImageName
-			if testOpts.WithLocalRepo {
-				contRuntime.Pull(ctx, imageName)
-			}
-			inspect := contRuntime.GetImageInspect(ctx, imageName)
-			labels := inspect.Config.Labels
-			Expect(labels).NotTo(BeNil())
-			Expect(labels).To(HaveKey(image.WerfLabel))
-			Expect(labels[image.WerfLabel]).NotTo(BeEmpty())
-			Expect(labels).To(HaveKey(image.WerfVersionLabel))
-			Expect(labels[image.WerfVersionLabel]).NotTo(BeEmpty())
-			Expect(labels).To(HaveKey(image.WerfStageContentDigestLabel))
-			Expect(labels[image.WerfStageContentDigestLabel]).NotTo(BeEmpty())
-			Expect(labels).To(HaveKey(image.WerfProjectRepoCommitLabel))
-			Expect(labels[image.WerfProjectRepoCommitLabel]).NotTo(BeEmpty())
+			utils.ExpectFileContentInImage(ctx, testOpts.ContainerBackendMode, imageName, "etc/werf-test-scratch-import", "werf-test-scratch-import\n")
+			utils.ExpectImageHasNonEmptyLabels(ctx, testOpts.ContainerBackendMode, imageName,
+				image.WerfLabel,
+				image.WerfVersionLabel,
+				image.WerfStageContentDigestLabel,
+				image.WerfProjectRepoCommitLabel,
+			)
 		},
 		Entry("using Vanilla Docker", scratchTestOptions{setupEnvOptions{
 			ContainerBackendMode:        "vanilla-docker",
