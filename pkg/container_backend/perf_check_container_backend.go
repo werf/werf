@@ -182,6 +182,14 @@ func (runtime *PerfCheckContainerBackend) PostManifest(ctx context.Context, ref 
 	return
 }
 
+func (runtime *PerfCheckContainerBackend) EnsureImageContent(ctx context.Context, ref string, opts EnsureImageContentOpts) (resErr error) {
+	logboek.Context(ctx).Default().LogProcess("ContainerBackend.EnsureImageContent %q", ref).
+		Do(func() {
+			resErr = runtime.ContainerBackend.EnsureImageContent(ctx, ref, opts)
+		})
+	return
+}
+
 func (runtime *PerfCheckContainerBackend) TagImageByName(ctx context.Context, img LegacyImageInterface) (resErr error) {
 	logboek.Context(ctx).Default().LogProcess("ContainerBackend.TagImageByName %q", img.Name()).
 		Do(func() {
