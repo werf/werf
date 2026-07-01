@@ -41,8 +41,14 @@ type CmdData struct {
 	Repo            *RepoData
 	FinalRepo       *RepoData
 
-	SecondaryStagesStorage *[]string
-	CacheStagesStorage     *[]string
+	// New granular registry model (v3). --repo is a preset that fans out to all
+	// of these; --repo combined with any granular flag is an error.
+	ImagesRepo *[]string // --images-repo: final images + custom tags (repeatable)
+	MetaRepo   *string   // --meta-repo: build/cleanup metadata (exactly one)
+	CacheFrom  *[]string // --cache-from: stage cache read list (repeatable, :local default)
+	CacheTo    *[]string // --cache-to: stage cache write list (repeatable)
+
+	SecondaryStagesStorage *[]string // deprecated alias for --cache-from
 
 	CheckBuiltImages *bool
 	// LegacyCheckBuiltImages backs the hidden `-Z`/`--require-built-images` alias kept for

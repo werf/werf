@@ -447,15 +447,33 @@ Also, can be defined with $WERF_USE_CUSTOM_TAG (e.g. $WERF_USE_CUSTOM_TAG="%imag
 }
 
 func SetupCacheStagesStorageOptions(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.CacheStagesStorage = new([]string)
-	cmd.Flags().StringArrayVarP(cmdData.CacheStagesStorage, "cache-repo", "", []string{}, `Specify one or multiple cache repos with images that will be used as a cache. Cache will be populated when pushing newly built images into the primary repo and when pulling existing images from the primary repo. Cache repo will be used to pull images and to get manifests before making requests to the primary repo.
-Also, can be specified with $WERF_CACHE_REPO_* (e.g. $WERF_CACHE_REPO_1=..., $WERF_CACHE_REPO_2=...)`)
+	cmdData.CacheFrom = new([]string)
+	cmd.Flags().StringArrayVarP(cmdData.CacheFrom, "cache-from", "", []string{}, `Specify one or multiple read-only stage cache repos. Searched in order before the primary repo when resolving stages; defaults to :local. Mutually exclusive with --repo.
+Also, can be specified with $WERF_CACHE_FROM_* (e.g. $WERF_CACHE_FROM_1=..., $WERF_CACHE_FROM_2=...)`)
+
+	cmdData.CacheTo = new([]string)
+	cmd.Flags().StringArrayVarP(cmdData.CacheTo, "cache-to", "", []string{}, `Specify one or multiple stage cache repos to push newly built/fetched stages into (fan-out write). Mutually exclusive with --repo.
+Also, can be specified with $WERF_CACHE_TO_* (e.g. $WERF_CACHE_TO_1=..., $WERF_CACHE_TO_2=...)`)
 }
 
 func SetupRepoOptions(cmdData *CmdData, cmd *cobra.Command, opts RepoDataOptions) {
 	SetupInsecureRegistry(cmdData, cmd)
 	SetupSkipTlsVerifyRegistry(cmdData, cmd)
 	SetupRepo(cmdData, cmd, opts)
+	SetupImagesRepo(cmdData, cmd)
+	SetupMetaRepo(cmdData, cmd)
+}
+
+func SetupImagesRepo(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.ImagesRepo = new([]string)
+	cmd.Flags().StringArrayVarP(cmdData.ImagesRepo, "images-repo", "", []string{}, `Specify one or multiple repos for final images and custom tags (fan-out write, repeatable). Required for build --push and converge unless --repo is used. Mutually exclusive with --repo.
+Also, can be specified with $WERF_IMAGES_REPO_* (e.g. $WERF_IMAGES_REPO_1=..., $WERF_IMAGES_REPO_2=...)`)
+}
+
+func SetupMetaRepo(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.MetaRepo = new(string)
+	cmd.Flags().StringVarP(cmdData.MetaRepo, "meta-repo", "", os.Getenv("WERF_META_REPO"), `Specify the repo for build/cleanup metadata (exactly one). Required for cleanup unless --repo is used. Mutually exclusive with --repo.
+Also, can be specified with $WERF_META_REPO`)
 }
 
 func SetupRepo(cmdData *CmdData, cmd *cobra.Command, opts RepoDataOptions) {
@@ -872,8 +890,8 @@ func GetCacheStagesStorageList(ctx context.Context, containerBackend container_b
 		return nil, fmt.Errorf("get insecure registry hosts: %w", err)
 	}
 
-	for _, address := range GetCacheStagesStorage(cmdData) {
-		repoData := NewRepoData("cache-repo", RepoDataOptions{OnlyAddress: true})
+	for _, address := range GetCacheFrom(cmdData) {
+		repoData := NewRepoData("cache-from", RepoDataOptions{OnlyAddress: true})
 		repoData.Address = &address
 
 		cacheStorage, err := repoData.CreateStagesStorage(ctx, &CreateStagesStorageOptions{
@@ -1214,8 +1232,16 @@ func SetupScanContextNamespaceOnly(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(cmdData.ScanContextNamespaceOnly, "scan-context-namespace-only", "", util.GetBoolEnvironmentDefaultFalse("WERF_SCAN_CONTEXT_NAMESPACE_ONLY"), "Scan for used images only in namespace linked with context for each available context in kube-config (or only for the context specified with option --kube-context). When disabled will scan all namespaces in all contexts (or only for the context specified with option --kube-context). (Default $WERF_SCAN_CONTEXT_NAMESPACE_ONLY)")
 }
 
-func GetCacheStagesStorage(cmdData *CmdData) []string {
-	return append(util.PredefinedValuesByEnvNamePrefix("WERF_CACHE_REPO_"), *cmdData.CacheStagesStorage...)
+func GetCacheFrom(cmdData *CmdData) []string {
+	return append(util.PredefinedValuesByEnvNamePrefix("WERF_CACHE_FROM_"), *cmdData.CacheFrom...)
+}
+
+func GetCacheTo(cmdData *CmdData) []string {
+	return append(util.PredefinedValuesByEnvNamePrefix("WERF_CACHE_TO_"), *cmdData.CacheTo...)
+}
+
+func GetImagesRepo(cmdData *CmdData) []string {
+	return append(util.PredefinedValuesByEnvNamePrefix("WERF_IMAGES_REPO_"), *cmdData.ImagesRepo...)
 }
 
 func GetSecondaryStagesStorage(cmdData *CmdData) []string {
