@@ -22,6 +22,10 @@ type NewStorageManagerConfig struct {
 	CleanupDisabled                bool
 	GitHistoryBasedCleanupDisabled bool
 	SkipMetaCheck                  bool
+
+	// Registry-model requiredness hints (v3). --repo preset satisfies both.
+	ImagesRepoRequired bool
+	MetaRepoRequired   bool
 }
 
 func WithHostPurge() NewStorageManagerOption {
@@ -38,6 +42,16 @@ func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfi
 	for _, opt := range opts {
 		opt(c)
 	}
+
+	if !c.hostPurge {
+		if err := ResolveRepos(ctx, c.CmdData, ResolveReposOptions{
+			ImagesRepoRequired: c.ImagesRepoRequired,
+			MetaRepoRequired:   c.MetaRepoRequired,
+		}); err != nil {
+			return nil, err
+		}
+	}
+
 	var stagesStorage storage.PrimaryStagesStorage
 
 	if c.hostPurge {

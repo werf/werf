@@ -305,6 +305,7 @@ func run(
 				CmdData:                        &commonCmdData,
 				CleanupDisabled:                werfConfig.Meta.Cleanup.DisableCleanup,
 				GitHistoryBasedCleanupDisabled: werfConfig.Meta.Cleanup.DisableGitHistoryBasedPolicy,
+				ImagesRepoRequired:             true,
 			})
 			if err != nil {
 				return ctx, fmt.Errorf("unable to init storage manager: %w", err)
