@@ -91,12 +91,22 @@ func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfi
 	if err != nil {
 		return nil, fmt.Errorf("error get chache storage list: %w", err)
 	}
+	cacheStagesWriteList, err := GetCacheToStagesStorageList(ctx, c.ContainerBackend, c.CmdData)
+	if err != nil {
+		return nil, fmt.Errorf("error get cache-to storage list: %w", err)
+	}
+	metaStagesStorage, err := GetMetaStagesStorage(ctx, c.ContainerBackend, c.CmdData, stagesStorage)
+	if err != nil {
+		return nil, fmt.Errorf("error get meta stages storage: %w", err)
+	}
 	return &manager.StorageManager{
 		ProjectName: c.ProjectName,
 
 		StagesStorage:              stagesStorage,
+		MetaStagesStorage:          metaStagesStorage,
 		FinalStagesStorage:         finalStagesStorage,
 		CacheStagesStorageList:     cacheStagesStorageList,
+		CacheStagesWriteList:       cacheStagesWriteList,
 		SecondaryStagesStorageList: secondaryStagesStorageList,
 	}, nil
 }

@@ -50,6 +50,7 @@ type StorageManagerInterface interface {
 	InitCache(ctx context.Context) error
 
 	GetStagesStorage() storage.PrimaryStagesStorage
+	GetMetaStagesStorage() storage.PrimaryStagesStorage
 	GetFinalStagesStorage() storage.StagesStorage
 	GetSecondaryStagesStorageList() []storage.StagesStorage
 	GetCacheStagesStorageList() []storage.StagesStorage
@@ -134,6 +135,7 @@ func NewStorageManager(projectName string, stagesStorage storage.PrimaryStagesSt
 		StagesStorage:              stagesStorage,
 		FinalStagesStorage:         finalStagesStorage,
 		CacheStagesStorageList:     cacheStagesStorageList,
+		CacheStagesWriteList:       cacheStagesStorageList,
 		SecondaryStagesStorageList: secondaryStagesStorageList,
 	}
 }
@@ -181,9 +183,19 @@ type StorageManager struct {
 
 	ProjectName string
 
-	StagesStorage              storage.PrimaryStagesStorage
-	FinalStagesStorage         storage.StagesStorage
-	CacheStagesStorageList     []storage.StagesStorage
+	StagesStorage      storage.PrimaryStagesStorage
+	FinalStagesStorage storage.StagesStorage
+	// MetaStagesStorage holds build/cleanup metadata (managed-image-*, meta-*,
+	// custom-tag-meta-*, import-metadata-*, cleanup). Under the --repo preset it
+	// is the same object as StagesStorage (co-located, bit-for-bit); with
+	// --meta-repo it points at a dedicated repo.
+	MetaStagesStorage storage.PrimaryStagesStorage
+	// CacheStagesStorageList is the read list (--cache-from): searched in order
+	// when resolving stages.
+	CacheStagesStorageList []storage.StagesStorage
+	// CacheStagesWriteList is the write fan-out list (--cache-to): newly
+	// built/fetched stages are copied into all of these.
+	CacheStagesWriteList       []storage.StagesStorage
 	SecondaryStagesStorageList []storage.StagesStorage
 
 	// These will be released automatically when current process exits
@@ -206,7 +218,17 @@ func (m *StorageManager) GetSecondaryStagesStorageList() []storage.StagesStorage
 }
 
 func (m *StorageManager) GetCacheStagesStorageList() []storage.StagesStorage {
-	return m.CacheStagesStorageList
+	return m.CacheStagesWriteList
+}
+
+// GetMetaStagesStorage returns the storage that holds build/cleanup metadata.
+// Falls back to the primary stages storage when no dedicated meta repo is set
+// (i.e. the --repo preset), preserving co-located behavior bit-for-bit.
+func (m *StorageManager) GetMetaStagesStorage() storage.PrimaryStagesStorage {
+	if m.MetaStagesStorage != nil {
+		return m.MetaStagesStorage
+	}
+	return m.StagesStorage
 }
 
 func (m *StorageManager) GetServiceValuesRepo() string {

@@ -854,6 +854,31 @@ func GetStagesStorage(ctx context.Context, containerBackend container_backend.Co
 }
 
 func GetOptionalFinalStagesStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData) (storage.StagesStorage, error) {
+	// Granular model: --images-repo (repeatable) folds the deprecated --final-repo
+	// too (see ResolveRepos). The first entry is the canonical final storage used
+	// for service values and tagging; extra entries are handled as push fan-out
+	// targets by the build phase.
+	if imagesRepo := GetImagesRepo(cmdData); len(imagesRepo) > 0 {
+		buildahMode, _, err := GetBuildahMode()
+		if err != nil {
+			return nil, fmt.Errorf("unable to determine buildah mode: %w", err)
+		}
+		insecureRegistryHosts, err := GetInsecureRegistryHosts(ctx, cmdData, *buildahMode)
+		if err != nil {
+			return nil, fmt.Errorf("get insecure registry hosts: %w", err)
+		}
+		canonical := imagesRepo[0]
+		repoData := NewRepoData("images-repo", RepoDataOptions{OnlyAddress: true})
+		repoData.Address = &canonical
+		return repoData.CreateStagesStorage(ctx, &CreateStagesStorageOptions{
+			ContainerBackend:      containerBackend,
+			InsecureRegistry:      *cmdData.InsecureRegistry,
+			SkipTlsVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
+			InsecureRegistryHosts: insecureRegistryHosts,
+			SkipMetaCheck:         true,
+		})
+	}
+
 	if *cmdData.FinalRepo.Address == "" {
 		return nil, nil
 	}
@@ -908,6 +933,76 @@ func GetCacheStagesStorageList(ctx context.Context, containerBackend container_b
 	}
 
 	return res, nil
+}
+
+// GetCacheToStagesStorageList builds the write fan-out list (--cache-to). Under
+// the --repo preset no explicit cache-to is given and stages are written to the
+// primary repo directly, so the write list is empty.
+func GetCacheToStagesStorageList(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData) ([]storage.StagesStorage, error) {
+	var res []storage.StagesStorage
+
+	buildahMode, _, err := GetBuildahMode()
+	if err != nil {
+		return nil, fmt.Errorf("unable to determine buildah mode: %w", err)
+	}
+
+	insecureRegistryHosts, err := GetInsecureRegistryHosts(ctx, cmdData, *buildahMode)
+	if err != nil {
+		return nil, fmt.Errorf("get insecure registry hosts: %w", err)
+	}
+
+	for _, address := range GetCacheTo(cmdData) {
+		repoData := NewRepoData("cache-to", RepoDataOptions{OnlyAddress: true})
+		repoData.Address = &address
+
+		cacheStorage, err := repoData.CreateStagesStorage(ctx, &CreateStagesStorageOptions{
+			ContainerBackend:      containerBackend,
+			InsecureRegistry:      *cmdData.InsecureRegistry,
+			SkipTlsVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
+			InsecureRegistryHosts: insecureRegistryHosts,
+			SkipMetaCheck:         true,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("unable to create cache-to stages storage in %s: %w", address, err)
+		}
+		res = append(res, cacheStorage)
+	}
+
+	return res, nil
+}
+
+// GetMetaStagesStorage builds the storage holding build/cleanup metadata. Under
+// the --repo preset (no --meta-repo) it returns the primary stages storage so
+// metadata stays co-located, bit-for-bit as before.
+func GetMetaStagesStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData, primary storage.PrimaryStagesStorage) (storage.PrimaryStagesStorage, error) {
+	metaAddr := ""
+	if cmdData.MetaRepo != nil {
+		metaAddr = *cmdData.MetaRepo
+	}
+	if metaAddr == "" {
+		return primary, nil
+	}
+
+	buildahMode, _, err := GetBuildahMode()
+	if err != nil {
+		return nil, fmt.Errorf("unable to determine buildah mode: %w", err)
+	}
+
+	insecureRegistryHosts, err := GetInsecureRegistryHosts(ctx, cmdData, *buildahMode)
+	if err != nil {
+		return nil, fmt.Errorf("get insecure registry hosts: %w", err)
+	}
+
+	repoData := NewRepoData("meta-repo", RepoDataOptions{OnlyAddress: true})
+	repoData.Address = &metaAddr
+
+	return repoData.CreateStagesStorage(ctx, &CreateStagesStorageOptions{
+		ContainerBackend:      containerBackend,
+		InsecureRegistry:      *cmdData.InsecureRegistry,
+		SkipTlsVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
+		InsecureRegistryHosts: insecureRegistryHosts,
+		SkipMetaCheck:         true,
+	})
 }
 
 func GetSecondaryStagesStorageList(ctx context.Context, stagesStorage storage.StagesStorage, containerBackend container_backend.ContainerBackend, cmdData *CmdData) ([]storage.StagesStorage, error) {
