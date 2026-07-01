@@ -85,6 +85,21 @@ func (m *Manager) InitImagesMetadata(ctx context.Context, storageManager manager
 		return err
 	}
 
+	// Degraded cleanup: the meta repo is reachable but holds no image metadata
+	// while stages exist. This happens when the meta repo was lost/recreated.
+	// Reconstruct a best-effort commit->stage mapping from the
+	// werf-project-repo-commit label carried by every stage (already loaded, no
+	// extra registry calls), warn, backfill the recovered records if the meta
+	// store is writable, and — until the fallback deletion mode is decided
+	// (see B2) — protect all stages from git-history-based deletion so nothing
+	// is falsely removed. Kubernetes and time-based policies still apply.
+	if len(imageMetadataByImageName) == 0 && len(imageMetadataByNotManagedImageName) == 0 && m.managedStageDescSet.StageDescSet().Cardinality() > 0 {
+		if err := m.handleDegradedMeta(ctx, storageManager, projectName, imageNameList); err != nil {
+			return err
+		}
+		return nil
+	}
+
 	for imageName, stageIDCommitList := range imageMetadataByNotManagedImageName {
 		for stageID, commitList := range stageIDCommitList {
 			im := m.getOrCreateImageMetadata(imageName, stageID)
@@ -95,6 +110,49 @@ func (m *Manager) InitImagesMetadata(ctx context.Context, storageManager manager
 
 	if err := processImageMetadata(ctx, imageMetadataByImageName, localGit, m); err != nil {
 		return fmt.Errorf("unable init images metadata: %w", err)
+	}
+
+	return nil
+}
+
+// handleDegradedMeta reconstructs commit->stage mapping from stage labels,
+// backfills recovered meta records when possible, and applies the safe
+// conservative fallback (protect all stages from git-history deletion).
+//
+// ponytail: conservative is the safe interim default until B2 is resolved;
+// best-effort (drive git-history deletion from the reconstructed mapping) can
+// be added behind an opt-in once the default is confirmed.
+func (m *Manager) handleDegradedMeta(ctx context.Context, storageManager manager.StorageManagerInterface, projectName string, imageNameList []string) error {
+	logboek.Context(ctx).Warn().LogF("WARNING: meta repo holds no image metadata but stages exist — running degraded cleanup.\n")
+	logboek.Context(ctx).Warn().LogF("WARNING: reconstructing commit->stage mapping from stage labels; git-history-based deletion is skipped to avoid removing stages that may still be needed.\n")
+
+	// Reconstruct commit->stage from the werf-project-repo-commit label and
+	// backfill recovered records into the meta store (best-effort).
+	var recovered int
+	for stageDesc := range m.managedStageDescSet.StageDescSet().Iter() {
+		commit := stageDesc.Info.Labels[image.WerfProjectRepoCommitLabel]
+		if commit == "" {
+			continue
+		}
+		stageID := stageDesc.StageID.String()
+		// The label carries only the build commit, not the image name it was
+		// built for; associate it with each managed image so the record can be
+		// re-created for the git-history policy on the next (healthy) run.
+		for _, imageName := range imageNameList {
+			if err := storageManager.GetMetaStagesStorage().PutImageMetadata(ctx, projectName, imageName, commit, stageID); err != nil {
+				logboek.Context(ctx).Warn().LogF("WARNING: unable to backfill meta record %s/%s (commit %s): %s\n", imageName, stageID, commit, err)
+				continue
+			}
+			recovered++
+		}
+	}
+	if recovered > 0 {
+		logboek.Context(ctx).Default().LogF("Backfilled %d recovered meta record(s); the next cleanup will run in normal mode.\n", recovered)
+	}
+
+	// Conservative fallback: protect every stage from git-history-based deletion.
+	for stageDesc := range m.managedStageDescSet.StageDescSet().Iter() {
+		m.managedStageDescSet.MarkStageDescAsProtected(stageDesc, ProtectionReasonDegradedMeta, false)
 	}
 
 	return nil
