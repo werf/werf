@@ -41,6 +41,38 @@ func ExpectFileContentInImage(ctx context.Context, backendMode, imageName, fileP
 	Expect(fileContent).To(Equal(expectedContent), "expected image file content to match for %s", filePath)
 }
 
+// ExpectImageIsReadable asserts that the image can be saved and fully parsed by
+// go-containerregistry: its manifest, config and every layer must be readable
+// and the whole rootfs must extract without EOF/malformed-tar errors. This
+// guards against malformed images (e.g. a broken `from: scratch` base layer)
+// that Docker can still list/tag but that tools like `dive` fail to read.
+func ExpectImageIsReadable(ctx context.Context, backendMode, imageName string) {
+	img, cleanup := loadLocalImage(ctx, backendMode, imageName)
+	defer cleanup()
+
+	_, err := img.ConfigFile()
+	Expect(err).NotTo(HaveOccurred(), "expected image config to be readable for %s", imageName)
+
+	_, err = img.Manifest()
+	Expect(err).NotTo(HaveOccurred(), "expected image manifest to be readable for %s", imageName)
+
+	layers, err := img.Layers()
+	Expect(err).NotTo(HaveOccurred(), "expected image layers to be readable for %s", imageName)
+
+	for i, layer := range layers {
+		rc, err := layer.Uncompressed()
+		Expect(err).NotTo(HaveOccurred(), "expected layer %d to be readable for %s", i, imageName)
+		_, err = io.Copy(io.Discard, rc)
+		Expect(err).NotTo(HaveOccurred(), "expected layer %d to be fully readable for %s", i, imageName)
+		Expect(rc.Close()).To(Succeed())
+	}
+
+	rc := mutate.Extract(img)
+	defer rc.Close()
+	_, err = io.Copy(io.Discard, rc)
+	Expect(err).NotTo(HaveOccurred(), "expected image rootfs to fully extract for %s", imageName)
+}
+
 func ExpectImageHasNonEmptyLabels(ctx context.Context, backendMode, imageName string, labelKeys ...string) {
 	img, cleanup := loadLocalImage(ctx, backendMode, imageName)
 	defer cleanup()
