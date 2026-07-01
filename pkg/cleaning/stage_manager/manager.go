@@ -80,7 +80,7 @@ type GitRepo interface {
 }
 
 func (m *Manager) InitImagesMetadata(ctx context.Context, storageManager manager.StorageManagerInterface, localGit GitRepo, projectName string, imageNameList []string) error {
-	imageMetadataByImageName, imageMetadataByNotManagedImageName, err := storageManager.GetStagesStorage().GetAllAndGroupImageMetadataByImageName(ctx, projectName, imageNameList, storage.WithCache())
+	imageMetadataByImageName, imageMetadataByNotManagedImageName, err := storageManager.GetMetaStagesStorage().GetAllAndGroupImageMetadataByImageName(ctx, projectName, imageNameList, storage.WithCache())
 	if err != nil {
 		return err
 	}
@@ -145,7 +145,7 @@ func (m *Manager) InitCustomTagsMetadata(ctx context.Context, storageManager man
 }
 
 func GetCustomTagsMetadata(ctx context.Context, storageManager manager.StorageManagerInterface) (map[string][]string, error) {
-	stageCustomTagMetadataIDs, err := storageManager.GetStagesStorage().GetStageCustomTagMetadataIDs(ctx, storage.WithCache())
+	stageCustomTagMetadataIDs, err := storageManager.GetMetaStagesStorage().GetStageCustomTagMetadataIDs(ctx, storage.WithCache())
 	if err != nil {
 		return nil, fmt.Errorf("unable to get stage custom tag metadata IDs: %w", err)
 	}

@@ -136,7 +136,7 @@ func run(ctx context.Context, imageNames []string) error {
 
 	errs := []error{}
 	for _, imageName := range imageNames {
-		if err := storageManager.StagesStorage.RmManagedImage(ctx, projectName, common.GetManagedImageName(imageName)); err != nil {
+		if err := storageManager.GetMetaStagesStorage().RmManagedImage(ctx, projectName, common.GetManagedImageName(imageName)); err != nil {
 			errs = append(errs, fmt.Errorf("unable to remove known config image name %q of project %q: %w", imageName, projectName, err))
 		}
 	}
