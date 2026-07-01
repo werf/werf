@@ -209,6 +209,35 @@ func (m *StorageManager) GetStagesStorage() storage.PrimaryStagesStorage {
 	return m.StagesStorage
 }
 
+// LogRepositoriesUsed prints the effective repositories in use at the start of
+// a run, so the resolved registry model (from --repo preset, aliases or the
+// granular flags) is visible for debugging.
+func (m *StorageManager) LogRepositoriesUsed(ctx context.Context) {
+	addrs := func(list []storage.StagesStorage) string {
+		if len(list) == 0 {
+			return "-"
+		}
+		res := make([]string, 0, len(list))
+		for _, s := range list {
+			res = append(res, s.Address())
+		}
+		return strings.Join(res, ", ")
+	}
+
+	imagesRepo := "-"
+	if m.FinalStagesStorage != nil {
+		imagesRepo = m.FinalStagesStorage.Address()
+	}
+
+	logboek.Context(ctx).Default().LogBlock("Repositories").Do(func() {
+		logboek.Context(ctx).Default().LogF("stages:      %s\n", m.StagesStorage.Address())
+		logboek.Context(ctx).Default().LogF("meta-repo:   %s\n", m.GetMetaStagesStorage().Address())
+		logboek.Context(ctx).Default().LogF("images-repo: %s\n", imagesRepo)
+		logboek.Context(ctx).Default().LogF("cache-from:  %s\n", addrs(m.CacheStagesStorageList))
+		logboek.Context(ctx).Default().LogF("cache-to:    %s\n", addrs(m.CacheStagesWriteList))
+	})
+}
+
 func (m *StorageManager) GetFinalStagesStorage() storage.StagesStorage {
 	return m.FinalStagesStorage
 }

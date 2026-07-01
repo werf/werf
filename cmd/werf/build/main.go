@@ -196,6 +196,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 	if err != nil {
 		return fmt.Errorf("unable to init storage manager: %w", err)
 	}
+	storageManager.LogRepositoriesUsed(ctx)
 
 	buildOptions, err := common.GetBuildOptions(ctx, &commonCmdData, werfConfig, imagesToProcess)
 	if err != nil {
