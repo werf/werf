@@ -195,6 +195,7 @@ func runCleanup(ctx context.Context, cmd *cobra.Command) error {
 		CleanupDisabled:                werfConfig.Meta.Cleanup.DisableCleanup,
 		GitHistoryBasedCleanupDisabled: werfConfig.Meta.Cleanup.DisableGitHistoryBasedPolicy,
 		SkipMetaCheck:                  true,
+		MetaRepoRequired:               true,
 	})
 	if err != nil {
 		return fmt.Errorf("unable to init storage manager: %w", err)
