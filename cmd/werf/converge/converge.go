@@ -310,6 +310,7 @@ func run(
 			if err != nil {
 				return ctx, fmt.Errorf("unable to init storage manager: %w", err)
 			}
+			storageManager.LogRepositoriesUsed(ctx)
 
 			imagesRepo = storageManager.GetServiceValuesRepo()
 
