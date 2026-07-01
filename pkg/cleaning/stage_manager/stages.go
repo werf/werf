@@ -44,6 +44,7 @@ var (
 	ProtectionReasonImageIndexPlatform          = newProtectionReason("image index platform")
 	ProtectionReasonNotFoundInRepo              = newProtectionReason("not found in repo")
 	ProtectionReasonKeepList                    = newProtectionReason("keep list")
+	ProtectionReasonDegradedMeta                = newProtectionReason("degraded cleanup: metadata unavailable")
 )
 
 func newManagedStageDescSet(set image.StageDescSet) *managedStageDescSet {
