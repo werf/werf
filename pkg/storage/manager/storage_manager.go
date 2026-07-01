@@ -1024,7 +1024,7 @@ func (m *StorageManager) ForEachRmImageMetadata(ctx context.Context, projectName
 		MaxNumberOfWorkers: m.MaxNumberOfWorkers(),
 	}, func(ctx context.Context, taskId int) error {
 		task := tasks[taskId]
-		err := m.StagesStorage.RmImageMetadata(ctx, projectName, imageNameOrID, task.commit, task.stageID)
+		err := m.GetMetaStagesStorage().RmImageMetadata(ctx, projectName, imageNameOrID, task.commit, task.stageID)
 		return f(ctx, task.commit, task.stageID, err)
 	})
 }
@@ -1034,7 +1034,7 @@ func (m *StorageManager) ForEachRmManagedImage(ctx context.Context, projectName 
 		MaxNumberOfWorkers: m.MaxNumberOfWorkers(),
 	}, func(ctx context.Context, taskId int) error {
 		managedImage := managedImages[taskId]
-		err := m.StagesStorage.RmManagedImage(ctx, projectName, managedImage)
+		err := m.GetMetaStagesStorage().RmManagedImage(ctx, projectName, managedImage)
 		return f(ctx, managedImage, err)
 	})
 }
@@ -1055,10 +1055,12 @@ func (m *StorageManager) ForEachDeleteStageCustomTag(ctx context.Context, ids []
 	}, func(ctx context.Context, taskId int) error {
 		id := ids[taskId]
 
+		// The custom-tag alias image lives with the final images (primary/images
+		// repo); its metadata record lives in the meta repo.
 		if err := m.StagesStorage.DeleteStageCustomTag(ctx, id); err != nil {
 			return f(ctx, id, fmt.Errorf("unable to delete stage custom tag: %w", err))
 		}
-		if err := m.StagesStorage.UnregisterStageCustomTag(ctx, id); err != nil {
+		if err := m.GetMetaStagesStorage().UnregisterStageCustomTag(ctx, id); err != nil {
 			return f(ctx, id, fmt.Errorf("unable to unregister stage custom tag: %w", err))
 		}
 
@@ -1071,7 +1073,7 @@ func (m *StorageManager) ForEachGetStageCustomTagMetadata(ctx context.Context, i
 		MaxNumberOfWorkers: m.MaxNumberOfWorkers(),
 	}, func(ctx context.Context, taskId int) error {
 		id := ids[taskId]
-		metadata, err := m.StagesStorage.GetStageCustomTagMetadata(ctx, id)
+		metadata, err := m.GetMetaStagesStorage().GetStageCustomTagMetadata(ctx, id)
 		return f(ctx, id, metadata, err)
 	})
 }

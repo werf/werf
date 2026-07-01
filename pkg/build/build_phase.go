@@ -391,7 +391,7 @@ func (phase *BuildPhase) publishImageMetadata(ctx context.Context, name string, 
 			return err
 		}
 	} else {
-		if err := phase.addCustomImageTags(ctx, img.GetName(), customContentTagDesc, customTagStorage, phase.Conveyor.StorageManager.GetStagesStorage(), phase.CustomTagFuncList); err != nil {
+		if err := phase.addCustomImageTags(ctx, img.GetName(), customContentTagDesc, customTagStorage, phase.Conveyor.StorageManager.GetMetaStagesStorage(), phase.CustomTagFuncList); err != nil {
 			return fmt.Errorf("unable to add custom image tags to stages storage: %w", err)
 		}
 	}
@@ -460,7 +460,7 @@ func (phase *BuildPhase) publishMultiplatformImageCustomTags(ctx context.Context
 		DoError(func() error {
 			for _, tagFunc := range phase.CustomTagFuncList {
 				tag := tagFunc(name, img.GetStageID().String())
-				if err := addCustomImageTag(ctx, phase.Conveyor.ProjectName(), customTagStorage, primaryStagesStorage, customTagStageDesc, tag); err != nil {
+				if err := addCustomImageTag(ctx, phase.Conveyor.ProjectName(), customTagStorage, phase.Conveyor.StorageManager.GetMetaStagesStorage(), customTagStageDesc, tag); err != nil {
 					return err
 				}
 			}
@@ -718,7 +718,7 @@ func (phase *BuildPhase) copyContentTagFromSecondaryStagesStorage(ctx context.Co
 
 func (phase *BuildPhase) addManagedImage(ctx context.Context, name string) error {
 	if phase.Conveyor.ShouldAddManagedImagesRecords() {
-		stagesStorage := phase.Conveyor.StorageManager.GetStagesStorage()
+		stagesStorage := phase.Conveyor.StorageManager.GetMetaStagesStorage()
 		exist, err := stagesStorage.IsManagedImageExist(ctx, phase.Conveyor.ProjectName(), name, storage.WithCache())
 		if err != nil {
 			return fmt.Errorf("unable to check existence of managed image: %w", err)
@@ -743,6 +743,7 @@ func (phase *BuildPhase) publishImageGitMetadata(ctx context.Context, imageName 
 	commits = append(commits, headCommit)
 
 	stagesStorage := phase.Conveyor.StorageManager.GetStagesStorage()
+	metaStagesStorage := phase.Conveyor.StorageManager.GetMetaStagesStorage()
 
 	fullImageName := stagesStorage.ConstructStageImageName(phase.Conveyor.ProjectName(), stageID.Digest, stageID.CreationTs)
 	logboek.Context(ctx).Info().LogF("name: %s\n", fullImageName)
@@ -751,13 +752,13 @@ func (phase *BuildPhase) publishImageGitMetadata(ctx context.Context, imageName 
 	for _, commit := range commits {
 		logboek.Context(ctx).Info().LogF("  %s\n", commit)
 
-		exist, err := stagesStorage.IsImageMetadataExist(ctx, phase.Conveyor.ProjectName(), imageName, commit, stageID.String(), storage.WithCache())
+		exist, err := metaStagesStorage.IsImageMetadataExist(ctx, phase.Conveyor.ProjectName(), imageName, commit, stageID.String(), storage.WithCache())
 		if err != nil {
 			return fmt.Errorf("unable to get image %s metadata by commit %s and stage ID %s: %w", imageName, commit, stageID.String(), err)
 		}
 
 		if !exist {
-			if err := stagesStorage.PutImageMetadata(ctx, phase.Conveyor.ProjectName(), imageName, commit, stageID.String()); err != nil {
+			if err := metaStagesStorage.PutImageMetadata(ctx, phase.Conveyor.ProjectName(), imageName, commit, stageID.String()); err != nil {
 				return fmt.Errorf("unable to put image %s metadata by commit %s and stage ID %s: %w", imageName, commit, stageID.String(), err)
 			}
 		}
@@ -766,7 +767,7 @@ func (phase *BuildPhase) publishImageGitMetadata(ctx context.Context, imageName 
 	return nil
 }
 
-func (phase *BuildPhase) addCustomImageTags(ctx context.Context, imageName string, stageDesc *imagePkg.StageDesc, stagesStorage storage.StagesStorage, primaryStagesStorage storage.PrimaryStagesStorage, customTagFuncList []imagePkg.CustomTagFunc) error {
+func (phase *BuildPhase) addCustomImageTags(ctx context.Context, imageName string, stageDesc *imagePkg.StageDesc, stagesStorage storage.StagesStorage, metaStagesStorage storage.PrimaryStagesStorage, customTagFuncList []imagePkg.CustomTagFunc) error {
 	if len(customTagFuncList) == 0 {
 		return nil
 	}
@@ -778,7 +779,7 @@ func (phase *BuildPhase) addCustomImageTags(ctx context.Context, imageName strin
 		DoError(func() error {
 			for _, tagFunc := range customTagFuncList {
 				tag := tagFunc(imageName, stageDesc.Info.Tag)
-				if err := addCustomImageTag(ctx, phase.Conveyor.ProjectName(), stagesStorage, primaryStagesStorage, stageDesc, tag); err != nil {
+				if err := addCustomImageTag(ctx, phase.Conveyor.ProjectName(), stagesStorage, metaStagesStorage, stageDesc, tag); err != nil {
 					return err
 				}
 			}
@@ -787,14 +788,14 @@ func (phase *BuildPhase) addCustomImageTags(ctx context.Context, imageName strin
 		})
 }
 
-func addCustomImageTag(ctx context.Context, projectName string, stagesStorage storage.StagesStorage, primaryStagesStorage storage.PrimaryStagesStorage, stageDesc *imagePkg.StageDesc, tag string) error {
+func addCustomImageTag(ctx context.Context, projectName string, stagesStorage storage.StagesStorage, metaStagesStorage storage.PrimaryStagesStorage, stageDesc *imagePkg.StageDesc, tag string) error {
 	return logboek.Context(ctx).Default().LogProcess("tag %s", tag).
 		DoError(func() error {
 			if err := stagesStorage.AddStageCustomTag(ctx, stageDesc, tag); err != nil {
 				return fmt.Errorf("unable to add stage %s custom tag %s in the storage %s: %w", stageDesc.StageID.String(), tag, stagesStorage.String(), err)
 			}
-			if err := primaryStagesStorage.RegisterStageCustomTag(ctx, projectName, stageDesc, tag); err != nil {
-				return fmt.Errorf("unable to register stage %s custom tag %s in the primary storage %s: %w", stageDesc.StageID.String(), tag, primaryStagesStorage.String(), err)
+			if err := metaStagesStorage.RegisterStageCustomTag(ctx, projectName, stageDesc, tag); err != nil {
+				return fmt.Errorf("unable to register stage %s custom tag %s in the meta storage %s: %w", stageDesc.StageID.String(), tag, metaStagesStorage.String(), err)
 			}
 
 			logboek.Context(ctx).LogFDetails("  name: %s:%s\n", stageDesc.Info.Repository, tag)

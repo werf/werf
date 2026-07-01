@@ -130,7 +130,7 @@ func run(ctx context.Context) error {
 		return fmt.Errorf("unable to init storage manager: %w", err)
 	}
 
-	if images, err := storageManager.StagesStorage.GetManagedImages(ctx, projectName); err != nil {
+	if images, err := storageManager.GetMetaStagesStorage().GetManagedImages(ctx, projectName); err != nil {
 		return fmt.Errorf("unable to list known config image names for project %q: %w", projectName, err)
 	} else {
 		for _, imgName := range images {
