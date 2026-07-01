@@ -42,6 +42,7 @@ var _ = Describe("Scratch stapel build", Label("e2e", "build", "scratch", "simpl
 
 			By("checking scratch image contents and labels")
 			imageName := buildReport.Images["stapel-scratch"].DockerImageName
+			utils.ExpectImageIsReadable(ctx, testOpts.ContainerBackendMode, imageName)
 			utils.ExpectFileContentInImage(ctx, testOpts.ContainerBackendMode, imageName, "etc/werf-test-scratch-import", "werf-test-scratch-import\n")
 			utils.ExpectImageHasNonEmptyLabels(ctx, testOpts.ContainerBackendMode, imageName,
 				image.WerfLabel,

@@ -1,6 +1,7 @@
 package docker
 
 import (
+	"archive/tar"
 	"bytes"
 	"fmt"
 	"io"
@@ -43,8 +44,42 @@ func CreateImage(ctx context.Context, ref string, opts CreateImageOptions) error
 	if opts.TargetPlatform != "" {
 		importOpts.Platform = opts.TargetPlatform
 	}
-	_, err := apiCli(ctx).ImageImport(ctx, types.ImageImportSource{SourceName: "-"}, ref, importOpts)
-	return err
+
+	// The Docker daemon reads the request body as the rootfs tar when fromSrc is "-".
+	// A nil/empty body makes the daemon register a malformed empty layer that some
+	// consumers (e.g. `dive`, `docker save` readers) fail to parse on Linux, so we
+	// send a valid empty tar archive instead. This yields a single empty rootfs
+	// layer, which is fine for `from: scratch`: later stapel stages copy imports on
+	// top of it, and the empty layer is deterministic so it does not shift caching.
+	emptyTar, err := emptyTarArchive()
+	if err != nil {
+		return fmt.Errorf("unable to build empty rootfs tar for image %q: %w", ref, err)
+	}
+
+	resp, err := apiCli(ctx).ImageImport(ctx, types.ImageImportSource{Source: emptyTar, SourceName: "-"}, ref, importOpts)
+	if err != nil {
+		return fmt.Errorf("unable to import image %q: %w", ref, err)
+	}
+	defer resp.Close()
+
+	// Drain the response body so the daemon fully finalizes image creation before we return.
+	if _, err := io.Copy(io.Discard, resp); err != nil {
+		return fmt.Errorf("unable to read import response for image %q: %w", ref, err)
+	}
+
+	return nil
+}
+
+// emptyTarArchive returns a reader over a valid, empty tar archive (containing
+// only the end-of-archive marker). It is used as the rootfs body for scratch
+// images created via the Docker Engine import API.
+func emptyTarArchive() (io.Reader, error) {
+	var buf bytes.Buffer
+	tw := tar.NewWriter(&buf)
+	if err := tw.Close(); err != nil {
+		return nil, fmt.Errorf("unable to close tar writer: %w", err)
+	}
+	return &buf, nil
 }
 
 func Images(ctx context.Context, options types.ImageListOptions) ([]types.ImageSummary, error) {
