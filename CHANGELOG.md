@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.73.2](https://github.com/werf/werf/compare/v2.73.1...v2.73.2) (2026-07-01)
+
+
+### Bug Fixes
+
+* **build, stapel:** introspect failed stage from committed image, not temp UUID ([#7607](https://github.com/werf/werf/issues/7607)) ([a0bc374](https://github.com/werf/werf/commit/a0bc374892442d3de2ca9e803eeb437996bc7dfd))
+
 ## [2.73.1](https://github.com/werf/werf/compare/v2.73.0...v2.73.1) (2026-06-26)
 
 
