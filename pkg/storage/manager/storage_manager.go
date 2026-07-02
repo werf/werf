@@ -984,6 +984,10 @@ func getStageDesc(ctx context.Context, projectName string, stageID image.StageID
 			continue
 		}
 
+		if stageDesc == nil {
+			continue
+		}
+
 		if opts.WithLocalManifestCache {
 			if err := storeStageDescIntoLocalManifestCache(ctx, projectName, stageID, cacheStagesStorage, stageDesc); err != nil {
 				return nil, fmt.Errorf("error storing stage %s description into local manifest cache: %w", stageID.String(), err)
