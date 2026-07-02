@@ -22,12 +22,12 @@ type ResolveReposOptions struct {
 //
 // Rules (v3 registry rework):
 //   - --repo and any granular flag (--cache-from/--cache-to/--images-repo/
-//     --meta-repo) or deprecated alias (--secondary-repo/--final-repo) are
-//     mutually exclusive: combining them is an error.
+//     --meta-repo) are mutually exclusive: combining them is an error.
 //   - --repo preset fans out to cache-from = cache-to = images-repo = meta-repo
 //     = repo, preserving current behavior bit-for-bit (getters keep reading Repo).
 //   - --secondary-repo is a deprecated alias for --cache-from; --final-repo for
-//     --images-repo. Both emit a deprecation warning and feed the new lists.
+//     --images-repo. Both emit a deprecation warning and feed the new lists, and
+//     stay compatible with --repo (the historical --repo + --final-repo combo).
 //   - --cache-from defaults to [:local] when nothing is configured.
 func ResolveRepos(ctx context.Context, cmdData *CmdData, opts ResolveReposOptions) error {
 	repoSet := cmdData.Repo != nil && *cmdData.Repo.Address != ""
@@ -46,10 +46,9 @@ func ResolveRepos(ctx context.Context, cmdData *CmdData, opts ResolveReposOption
 	}
 
 	granularSet := len(cacheFrom) > 0 || len(cacheTo) > 0 || len(imagesRepo) > 0 || metaRepo != ""
-	aliasSet := len(secondary) > 0 || finalRepo != ""
 
-	if repoSet && (granularSet || aliasSet) {
-		return fmt.Errorf("--repo is mutually exclusive with the granular registry flags (--cache-from, --cache-to, --images-repo, --meta-repo) and the deprecated aliases (--secondary-repo, --final-repo); use either --repo as a preset or the granular flags, not both")
+	if repoSet && granularSet {
+		return fmt.Errorf("--repo is mutually exclusive with the granular registry flags (--cache-from, --cache-to, --images-repo, --meta-repo); use either --repo as a preset or the granular flags, not both")
 	}
 
 	// Deprecation aliases -> new flags.
