@@ -916,7 +916,7 @@ func GetCacheStagesStorageList(ctx context.Context, containerBackend container_b
 	}
 
 	for _, address := range GetCacheFrom(cmdData) {
-		repoData := NewRepoData("cache-from", RepoDataOptions{OnlyAddress: true})
+		repoData := NewRepoData("cache-from", RepoDataOptions{OnlyAddress: true, OptionalRepo: true})
 		repoData.Address = &address
 
 		cacheStorage, err := repoData.CreateStagesStorage(ctx, &CreateStagesStorageOptions{

@@ -30,9 +30,6 @@ func (m *StorageManager) CopyStage(ctx context.Context, src, dest storage.Stages
 }
 
 func (m *StorageManager) copyStageFromLocalStorage(ctx context.Context, src *storage.LocalStagesStorage, dest storage.StagesStorage, stageID image.StageID, opts CopyStageOptions) (*image.StageDesc, error) {
-	if opts.LegacyImage == nil {
-		panic("expected non empty LegacyImage parameter")
-	}
 	if opts.ContainerBackend == nil {
 		panic("expected non empty ContainerBackend parameter")
 	}
@@ -43,8 +40,17 @@ func (m *StorageManager) copyStageFromLocalStorage(ctx context.Context, src *sto
 		}
 	}
 
-	newImg := opts.LegacyImage.GetCopy()
 	destImageName := dest.ConstructStageImageName(m.ProjectName, stageID.Digest, stageID.CreationTs)
+
+	if _, isLocalDest := dest.(*storage.LocalStagesStorage); !isLocalDest {
+		return m.copyLocalStageToRemoteStorage(ctx, src, dest, stageID, destImageName)
+	}
+
+	if opts.LegacyImage == nil {
+		panic("expected non empty LegacyImage parameter")
+	}
+
+	newImg := opts.LegacyImage.GetCopy()
 
 	if err := opts.ContainerBackend.RenameImage(ctx, newImg, destImageName, false); err != nil {
 		return nil, fmt.Errorf("unable to rename image %s to %s: %w", opts.LegacyImage.Name(), destImageName, err)
@@ -60,4 +66,27 @@ func (m *StorageManager) copyStageFromLocalStorage(ctx context.Context, src *sto
 		return nil, fmt.Errorf("error accessing last recently used images cache for %s: %w", destImageName, err)
 	}
 	return newImg.GetStageDesc(), nil
+}
+
+func (m *StorageManager) copyLocalStageToRemoteStorage(ctx context.Context, src *storage.LocalStagesStorage, dest storage.StagesStorage, stageID image.StageID, destImageName string) (*image.StageDesc, error) {
+	srcDesc, err := src.GetStageDesc(ctx, m.ProjectName, stageID)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get local stage %s description: %w", stageID.String(), err)
+	}
+	if srcDesc == nil {
+		return nil, fmt.Errorf("local stage %s not found", stageID.String())
+	}
+
+	if err := src.ExportStage(ctx, srcDesc, destImageName, nil); err != nil {
+		return nil, fmt.Errorf("unable to export local stage %s to %s: %w", stageID.String(), destImageName, err)
+	}
+
+	destDesc, err := dest.GetStageDesc(ctx, m.ProjectName, stageID)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get stage %s description from %s: %w", stageID.String(), dest.String(), err)
+	}
+	if destDesc == nil {
+		return nil, fmt.Errorf("stage %s not found in %s after export", stageID.String(), dest.String())
+	}
+	return destDesc, nil
 }
