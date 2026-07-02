@@ -44,13 +44,16 @@ werf lint [IMAGE_NAME...] [options]
             Change build report path and format (by default $WERF_BUILD_REPORT_PATH or              
             ".werf-build-report.json" if not set). Extension must be either .json for JSON format   
             or .env for env-file format. If extension not specified, then .json is used
-      --cache-repo=[]
-            Specify one or multiple cache repos with images that will be used as a cache. Cache     
-            will be populated when pushing newly built images into the primary repo and when        
-            pulling existing images from the primary repo. Cache repo will be used to pull images   
-            and to get manifests before making requests to the primary repo.
-            Also, can be specified with $WERF_CACHE_REPO_* (e.g. $WERF_CACHE_REPO_1=...,            
-            $WERF_CACHE_REPO_2=...)
+      --cache-from=[]
+            Specify one or multiple read-only stage cache repos. Searched in order before the       
+            primary repo when resolving stages; defaults to :local. Mutually exclusive with --repo.
+            Also, can be specified with $WERF_CACHE_FROM_* (e.g. $WERF_CACHE_FROM_1=...,            
+            $WERF_CACHE_FROM_2=...)
+      --cache-to=[]
+            Specify one or multiple stage cache repos to push newly built/fetched stages into       
+            (fan-out write). Mutually exclusive with --repo.
+            Also, can be specified with $WERF_CACHE_TO_* (e.g. $WERF_CACHE_TO_1=...,                
+            $WERF_CACHE_TO_2=...)
       --config=""
             Use custom configuration file (default $WERF_CONFIG or werf.yaml in the project         
             directory)
@@ -139,6 +142,12 @@ werf lint [IMAGE_NAME...] [options]
             rebuild (default $WERF_IGNORE_BUNDLE_JS)
       --ignore-secret-key=false
             Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)
+      --images-repo=[]
+            Specify one or multiple repos for final images and custom tags (fan-out write,          
+            repeatable). Required for build --push and converge unless --repo is used. Mutually     
+            exclusive with --repo.
+            Also, can be specified with $WERF_IMAGES_REPO_* (e.g. $WERF_IMAGES_REPO_1=...,          
+            $WERF_IMAGES_REPO_2=...)
       --insecure-helm-dependencies=false
             Allow insecure oci registries to be used in the Chart.yaml dependencies configuration   
             (default $WERF_INSECURE_HELM_DEPENDENCIES)
@@ -262,6 +271,10 @@ werf lint [IMAGE_NAME...] [options]
             Enable verbose output (default $WERF_LOG_VERBOSE).
       --loose-giterminism=false
             Loose werf giterminism mode restrictions
+      --meta-repo=""
+            Specify the repo for build/cleanup metadata (exactly one). Required for cleanup unless  
+            --repo is used. Mutually exclusive with --repo.
+            Also, can be specified with $WERF_META_REPO
       --namespace=""
             Use specified Kubernetes namespace (default [[ project ]]-[[ env ]] template or         
             deploy.namespace custom template from werf.yaml or $WERF_NAMESPACE)

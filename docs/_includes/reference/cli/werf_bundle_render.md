@@ -69,6 +69,12 @@ werf bundle render [options]
             rebuild (default $WERF_IGNORE_BUNDLE_JS)
       --ignore-secret-key=false
             Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)
+      --images-repo=[]
+            Specify one or multiple repos for final images and custom tags (fan-out write,          
+            repeatable). Required for build --push and converge unless --repo is used. Mutually     
+            exclusive with --repo.
+            Also, can be specified with $WERF_IMAGES_REPO_* (e.g. $WERF_IMAGES_REPO_1=...,          
+            $WERF_IMAGES_REPO_2=...)
       --include-crds=true
             Include CRDs in the templated output (default $WERF_INCLUDE_CRDS)
       --insecure-helm-dependencies=false
@@ -171,6 +177,10 @@ werf bundle render [options]
             Specify custom log time format (default $WERF_LOG_TIME_FORMAT or RFC3339 format).
       --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
+      --meta-repo=""
+            Specify the repo for build/cleanup metadata (exactly one). Required for cleanup unless  
+            --repo is used. Mutually exclusive with --repo.
+            Also, can be specified with $WERF_META_REPO
       --namespace=""
             Use specified Kubernetes namespace (default $WERF_NAMESPACE)
       --network-parallelism=30
