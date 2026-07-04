@@ -41,23 +41,11 @@ var cmdData struct {
 
 var commonCmdData common.CmdData
 
-// TODO: support specific images in v3 by default.
-func isSpecificImagesEnabled() bool {
-	return util.GetBoolEnvironmentDefaultFalse("WERF_CONVERGE_ENABLE_IMAGES_PARAMS")
-}
-
 func NewCmd(ctx context.Context) *cobra.Command {
 	ctx = common.NewContextWithCmdData(ctx, &commonCmdData)
 
-	var useMsg string
-	if isSpecificImagesEnabled() {
-		useMsg = "converge [IMAGE_NAME ...]"
-	} else {
-		useMsg = "converge"
-	}
-
 	cmd := common.SetCommandContext(ctx, &cobra.Command{
-		Use:   useMsg,
+		Use:   "converge [IMAGE_NAME ...]",
 		Short: "Build and push images, then deploy application into Kubernetes",
 		Long:  common.GetLongCommandDescription(GetConvergeDocs().Long),
 		Example: `# Build and deploy current application state into production environment
@@ -80,12 +68,7 @@ werf converge --repo registry.mydomain.com/web --env production`,
 			common.LogVersion()
 
 			return common.LogRunningTime(func() error {
-				var imageNameListFromArgs []string
-				if isSpecificImagesEnabled() {
-					imageNameListFromArgs = args
-				}
-
-				return runMain(ctx, imageNameListFromArgs)
+				return runMain(ctx, args)
 			})
 		},
 	})
@@ -120,7 +103,6 @@ werf converge --repo registry.mydomain.com/web --env production`,
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
-
 
 	commonCmdData.SetupWithoutImages(cmd)
 	commonCmdData.SetupFinalImagesOnly(cmd, true)

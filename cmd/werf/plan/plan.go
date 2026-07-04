@@ -45,22 +45,11 @@ var cmdData struct {
 
 var commonCmdData common.CmdData
 
-func isSpecificImagesEnabled() bool {
-	return util.GetBoolEnvironmentDefaultFalse("WERF_CONVERGE_ENABLE_IMAGES_PARAMS")
-}
-
 func NewCmd(ctx context.Context) *cobra.Command {
 	ctx = common.NewContextWithCmdData(ctx, &commonCmdData)
 
-	var useMsg string
-	if isSpecificImagesEnabled() {
-		useMsg = "plan [IMAGE_NAME ...]"
-	} else {
-		useMsg = "plan"
-	}
-
 	cmd := common.SetCommandContext(ctx, &cobra.Command{
-		Use:   useMsg,
+		Use:   "plan [IMAGE_NAME ...]",
 		Short: "Prepare deploy plan and show how resources in a Kubernetes cluster would change on next deploy",
 		Long:  common.GetLongCommandDescription(GetPlanDocs().Long),
 		Example: `# Prepare and show deploy plan
@@ -83,12 +72,7 @@ werf plan --repo registry.mydomain.com/web --env production`,
 			common.LogVersion()
 
 			return common.LogRunningTime(func() error {
-				var imageNameListFromArgs []string
-				if isSpecificImagesEnabled() {
-					imageNameListFromArgs = args
-				}
-
-				return runMain(ctx, imageNameListFromArgs)
+				return runMain(ctx, args)
 			})
 		},
 	})
@@ -123,7 +107,6 @@ werf plan --repo registry.mydomain.com/web --env production`,
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
-
 
 	commonCmdData.SetupWithoutImages(cmd)
 	commonCmdData.SetupFinalImagesOnly(cmd, true)
