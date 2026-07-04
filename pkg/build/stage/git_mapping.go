@@ -219,58 +219,6 @@ func (gm *GitMapping) getCommit(ctx context.Context) (string, error) {
 	return commit, nil
 }
 
-func (gm *GitMapping) applyPatchCommand(patchFile *ContainerFileDescriptor, patch git_repo.Patch, archiveType git_repo.ArchiveType) ([]string, error) {
-	commands := make([]string, 0)
-
-	var applyPatchDirectory string
-
-	switch archiveType {
-	case git_repo.FileArchive:
-		applyPatchDirectory = path.Dir(gm.To)
-	case git_repo.DirectoryArchive:
-		applyPatchDirectory = gm.To
-	default:
-		return nil, fmt.Errorf("unknown archive type `%s`", archiveType)
-	}
-
-	commands = append(commands, fmt.Sprintf(
-		"%s %s -d \"%s\"",
-		stapel.InstallBinPath(),
-		gm.makeCredentialsOpts(),
-		applyPatchDirectory,
-	))
-
-	gitCommand := fmt.Sprintf(
-		"%s apply --ignore-whitespace --whitespace=nowarn --directory=\"%s\" --unsafe-paths %s %s",
-		stapel.GitBinPath(),
-		applyPatchDirectory,
-		patchFile.ContainerFilePath,
-		fmt.Sprintf("|| exit %d", container_backend.ErrPatchApplyCode),
-	)
-
-	commands = append(commands, strings.TrimLeft(gitCommand, " "))
-
-	if gm.Owner != "" || gm.Group != "" {
-		pathsListFile, err := gm.preparePatchPathsListFile(patch)
-		if err != nil {
-			return nil, fmt.Errorf("cannot create patch paths list file: %w", err)
-		}
-		chownCommand := fmt.Sprintf(
-			`%s --arg-file=%s --null -I {} %s -c 'if [ -e "$1" ] || [ -h "$1" ]; then %s -h %s:%s "$1"; fi' _ {}`,
-			stapel.XargsBinPath(),
-			pathsListFile.ContainerFilePath,
-			stapel.BashBinPath(),
-			stapel.ChownBinPath(),
-			gm.Owner,
-			gm.Group,
-		)
-
-		commands = append(commands, strings.TrimLeft(chownCommand, " "))
-	}
-
-	return commands, nil
-}
-
 func (gm *GitMapping) GetLatestCommitInfo(ctx context.Context, c Conveyor) (ImageCommitInfo, error) {
 	res := ImageCommitInfo{}
 
@@ -337,9 +285,11 @@ func (gm *GitMapping) ImageGitCommitLabel() string {
 	return fmt.Sprintf("werf-git-%s-commit", gm.GetParamshash())
 }
 
-func (gm *GitMapping) baseApplyPatchCommand(ctx context.Context, fromCommit, toCommit string, prevBuiltImage *StageImage) ([]string, error) {
-	archiveType := git_repo.ArchiveType(prevBuiltImage.Image.GetStageDesc().Info.Labels[gm.getArchiveTypeLabelName()])
-
+// baseApplyPatchCommand applies changes between fromCommit and toCommit as a filtered git
+// archive containing only the changed paths, instead of running `git apply` against a
+// text patch. This avoids `git apply` parsing/matching edge cases (renames, mode-only
+// changes, whitespace, quoted paths) uniformly for both text and binary changes.
+func (gm *GitMapping) baseApplyPatchCommand(ctx context.Context, fromCommit, toCommit string) ([]string, error) {
 	patchOpts, err := gm.makePatchOptions(ctx, fromCommit, toCommit, false, false)
 	if err != nil {
 		return nil, err
@@ -354,105 +304,96 @@ func (gm *GitMapping) baseApplyPatchCommand(ctx context.Context, fromCommit, toC
 		return nil, nil
 	}
 
-	if patch.HasBinary() {
-		pathsListFile, err := gm.preparePatchPathsListFile(patch)
-		if err != nil {
-			return nil, fmt.Errorf("cannot create patch paths list file: %w", err)
-		}
+	pathsListFile, err := gm.preparePatchPathsListFile(patch)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create patch paths list file: %w", err)
+	}
 
-		commands := make([]string, 0)
+	commands := make([]string, 0)
 
-		commands = append(commands, fmt.Sprintf(
-			"%s --arg-file=%s --null %s --force",
-			stapel.XargsBinPath(),
-			pathsListFile.ContainerFilePath,
-			stapel.RmBinPath(),
-		))
+	commands = append(commands, fmt.Sprintf(
+		"%s --arg-file=%s --null %s --force",
+		stapel.XargsBinPath(),
+		pathsListFile.ContainerFilePath,
+		stapel.RmBinPath(),
+	))
 
-		var rmEmptyChangedDirsCommands []string
-		changedRelDirsByLevel := make(map[int]map[string]bool)
+	var rmEmptyChangedDirsCommands []string
+	changedRelDirsByLevel := make(map[int]map[string]bool)
 
-	getPathsLoop:
-		for _, p := range patch.GetPaths() {
-			targetDir := p
+getPathsLoop:
+	for _, p := range patch.GetPaths() {
+		targetDir := p
 
-			for {
-				targetDir = path.Dir(targetDir)
-				if targetDir == "." {
+		for {
+			targetDir = path.Dir(targetDir)
+			if targetDir == "." {
+				continue getPathsLoop
+			}
+
+			partsCount := len(strings.Split(targetDir, "/"))
+
+			paths, exist := changedRelDirsByLevel[partsCount]
+			if !exist {
+				paths = map[string]bool{}
+			} else {
+				_, exist = paths[targetDir]
+				if exist {
 					continue getPathsLoop
 				}
-
-				partsCount := len(strings.Split(targetDir, "/"))
-
-				paths, exist := changedRelDirsByLevel[partsCount]
-				if !exist {
-					paths = map[string]bool{}
-				} else {
-					_, exist = paths[targetDir]
-					if exist {
-						continue getPathsLoop
-					}
-				}
-
-				paths[targetDir] = true
-				changedRelDirsByLevel[partsCount] = paths
 			}
+
+			paths[targetDir] = true
+			changedRelDirsByLevel[partsCount] = paths
 		}
-
-		var levelList []int
-		for level := range changedRelDirsByLevel {
-			levelList = append(levelList, level)
-		}
-
-		sort.Sort(sort.Reverse(sort.IntSlice(levelList)))
-		for _, level := range levelList {
-			paths := changedRelDirsByLevel[level]
-			for targetRelDir := range paths {
-				rmEmptyChangedDirsCommands = append(rmEmptyChangedDirsCommands, fmt.Sprintf("if [ -d %[3]s ] && [ ! \"$(%[1]s -A %[3]s)\" ]; then %[2]s -d %[3]s; fi",
-					stapel.LsBinPath(),
-					stapel.RmBinPath(),
-					quoteShellArg(filepath.Join(gm.To, targetRelDir)),
-				))
-			}
-		}
-
-		archiveOpts, err := gm.makeArchiveOptions(ctx, toCommit)
-		if err != nil {
-			return nil, err
-		}
-
-		archive, err := gm.GitRepo().GetOrCreateArchive(ctx, *archiveOpts)
-		if err != nil {
-			return nil, err
-		}
-
-		archiveFile, err := gm.prepareArchiveFile(archive)
-		if err != nil {
-			return nil, fmt.Errorf("cannot prepare archive file: %w", err)
-		}
-
-		archiveType, err := gm.getArchiveType(ctx, toCommit)
-		if err != nil {
-			return nil, err
-		}
-
-		applyArchiveCommands, err := gm.applyArchiveCommand(archiveFile, archiveType)
-		if err != nil {
-			return nil, err
-		}
-		commands = append(commands, applyArchiveCommands...)
-
-		commands = append(commands, rmEmptyChangedDirsCommands...)
-
-		return commands, nil
 	}
 
-	patchFile, err := gm.preparePatchFile(patch)
+	var levelList []int
+	for level := range changedRelDirsByLevel {
+		levelList = append(levelList, level)
+	}
+
+	sort.Sort(sort.Reverse(sort.IntSlice(levelList)))
+	for _, level := range levelList {
+		paths := changedRelDirsByLevel[level]
+		for targetRelDir := range paths {
+			rmEmptyChangedDirsCommands = append(rmEmptyChangedDirsCommands, fmt.Sprintf("if [ -d %[3]s ] && [ ! \"$(%[1]s -A %[3]s)\" ]; then %[2]s -d %[3]s; fi",
+				stapel.LsBinPath(),
+				stapel.RmBinPath(),
+				quoteShellArg(filepath.Join(gm.To, targetRelDir)),
+			))
+		}
+	}
+
+	archiveOpts, err := gm.makeArchiveOptions(ctx, toCommit)
 	if err != nil {
-		return nil, fmt.Errorf("cannot prepare patch file: %w", err)
+		return nil, err
 	}
 
-	return gm.applyPatchCommand(patchFile, patch, archiveType)
+	archive, err := gm.GitRepo().GetOrCreateArchive(ctx, *archiveOpts)
+	if err != nil {
+		return nil, err
+	}
+
+	archiveFile, err := gm.prepareFilteredArchiveFile(ctx, patch, archive)
+	if err != nil {
+		return nil, fmt.Errorf("cannot prepare filtered archive file: %w", err)
+	}
+
+	archiveType, err := gm.getArchiveType(ctx, toCommit)
+	if err != nil {
+		return nil, err
+	}
+
+	applyArchiveCommands, err := gm.applyArchiveCommand(archiveFile, archiveType)
+	if err != nil {
+		return nil, err
+	}
+	commands = append(commands, applyArchiveCommands...)
+
+	commands = append(commands, rmEmptyChangedDirsCommands...)
+
+	return commands, nil
 }
 
 func quoteShellArg(arg string) string {
@@ -511,7 +452,7 @@ func (gm *GitMapping) PreparePatchForImage(ctx context.Context, c Conveyor, cb c
 	}
 
 	if c.UseLegacyStapelBuilder(cb) {
-		commands, err := gm.baseApplyPatchCommand(ctx, fromCommit, toCommitInfo.Commit, prevBuiltImage)
+		commands, err := gm.baseApplyPatchCommand(ctx, fromCommit, toCommitInfo.Commit)
 		if err != nil {
 			return err
 		}
@@ -907,6 +848,60 @@ func (gm *GitMapping) prepareArchiveFile(archive git_repo.Archive) (*ContainerFi
 	}, nil
 }
 
+// prepareFilteredArchiveFile creates an archive file containing only the paths touched by patch.
+// It is used as a binary-safe fallback for text patches: instead of re-applying the entire git
+// mapping path scope, only the changed paths get overwritten in the target image.
+func (gm *GitMapping) prepareFilteredArchiveFile(ctx context.Context, patch git_repo.Patch, archive git_repo.Archive) (*ContainerFileDescriptor, error) {
+	filteredArchiveFilePath := filepath.Join(filepath.Dir(patch.GetFilePath()), fmt.Sprintf("%s.%s.archive", filepath.Base(patch.GetFilePath()), gm.GetParamshash()))
+	containerFilePath := path.Join(gm.ContainerPatchesDir, filepath.ToSlash(util.GetRelativeToBaseFilepath(git_repo.CommonGitDataManager.GetPatchesCacheDir(), filteredArchiveFilePath)))
+
+	fileDesc := &ContainerFileDescriptor{
+		FilePath:          filteredArchiveFilePath,
+		ContainerFilePath: containerFilePath,
+	}
+
+	fileExists := true
+	if _, err := os.Stat(fileDesc.FilePath); os.IsNotExist(err) {
+		fileExists = false
+	} else if err != nil {
+		return nil, fmt.Errorf("unable to get stat of path %s: %w", fileDesc.FilePath, err)
+	}
+
+	if fileExists {
+		return fileDesc, nil
+	}
+
+	var includePaths []string
+	for _, p := range patch.GetPaths() {
+		if util.IsStringsContainValue(patch.GetPathsToRemove(), p) {
+			continue
+		}
+		includePaths = append(includePaths, p)
+	}
+
+	src, err := os.Open(archive.GetFilePath())
+	if err != nil {
+		return nil, fmt.Errorf("unable to open archive file %q: %w", archive.GetFilePath(), err)
+	}
+	defer src.Close()
+
+	f, err := fileDesc.Open(os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0o666)
+	if err != nil {
+		return nil, fmt.Errorf("unable to open file `%s`: %w", fileDesc.FilePath, err)
+	}
+	defer f.Close()
+
+	tw := tar.NewWriter(f)
+	if err := util.CopyTar(ctx, src, tw, util.CopyTarOptions{IncludePaths: includePaths}); err != nil {
+		return nil, fmt.Errorf("unable to filter archive %q: %w", archive.GetFilePath(), err)
+	}
+	if err := tw.Close(); err != nil {
+		return nil, fmt.Errorf("unable to close filtered archive tar writer: %w", err)
+	}
+
+	return fileDesc, nil
+}
+
 func (gm *GitMapping) preparePatchPathsListFile(patch git_repo.Patch) (*ContainerFileDescriptor, error) {
 	pathsListFilePath := filepath.Join(filepath.Dir(patch.GetFilePath()), fmt.Sprintf("%s.%s.paths_list", filepath.Base(patch.GetFilePath()), gm.GetParamshash()))
 	containerFilePath := path.Join(gm.ContainerPatchesDir, filepath.ToSlash(util.GetRelativeToBaseFilepath(git_repo.CommonGitDataManager.GetPatchesCacheDir(), pathsListFilePath)))
@@ -960,13 +955,6 @@ func (gm *GitMapping) preparePatchPathsListFile(patch git_repo.Patch) (*Containe
 	}
 
 	return fileDesc, nil
-}
-
-func (gm *GitMapping) preparePatchFile(patch git_repo.Patch) (*ContainerFileDescriptor, error) {
-	return &ContainerFileDescriptor{
-		FilePath:          patch.GetFilePath(),
-		ContainerFilePath: path.Join(gm.ContainerPatchesDir, filepath.ToSlash(util.GetRelativeToBaseFilepath(git_repo.CommonGitDataManager.GetPatchesCacheDir(), patch.GetFilePath()))),
-	}, nil
 }
 
 func (gm *GitMapping) makeCredentialsOpts() string {
