@@ -89,7 +89,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupLogOptions(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 
-
 	common.SetupSaveBuildReport(&commonCmdData, cmd)
 	common.SetupBuildReportPath(&commonCmdData, cmd)
 
@@ -113,7 +112,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	commonCmdData.SetupSkipImageSpecStage(cmd)
 	commonCmdData.SetupDebugTemplates(cmd)
 
-	commonCmdData.SetupFinalImagesOnly(cmd, false)
+	commonCmdData.SetupFinalImagesOnly(cmd, true)
 	commonCmdData.SetupAllowIncludesUpdate(cmd)
 
 	return cmd
