@@ -426,9 +426,9 @@ func (gm *GitMapping) baseApplyPatchCommand(ctx context.Context, fromCommit, toC
 			return nil, err
 		}
 
-		archiveFile, err := gm.prepareArchiveFile(archive)
+		archiveFile, err := gm.prepareFilteredArchiveFile(ctx, patch, archive)
 		if err != nil {
-			return nil, fmt.Errorf("cannot prepare archive file: %w", err)
+			return nil, fmt.Errorf("cannot prepare filtered archive file: %w", err)
 		}
 
 		archiveType, err := gm.getArchiveType(ctx, toCommit)
@@ -905,6 +905,60 @@ func (gm *GitMapping) prepareArchiveFile(archive git_repo.Archive) (*ContainerFi
 		FilePath:          archive.GetFilePath(),
 		ContainerFilePath: path.Join(gm.ContainerArchivesDir, filepath.ToSlash(util.GetRelativeToBaseFilepath(git_repo.CommonGitDataManager.GetArchivesCacheDir(), archive.GetFilePath()))),
 	}, nil
+}
+
+// prepareFilteredArchiveFile creates an archive file containing only the paths touched by patch.
+// It is used as a binary-safe fallback for text patches: instead of re-applying the entire git
+// mapping path scope, only the changed paths get overwritten in the target image.
+func (gm *GitMapping) prepareFilteredArchiveFile(ctx context.Context, patch git_repo.Patch, archive git_repo.Archive) (*ContainerFileDescriptor, error) {
+	filteredArchiveFilePath := filepath.Join(filepath.Dir(patch.GetFilePath()), fmt.Sprintf("%s.%s.archive", filepath.Base(patch.GetFilePath()), gm.GetParamshash()))
+	containerFilePath := path.Join(gm.ContainerPatchesDir, filepath.ToSlash(util.GetRelativeToBaseFilepath(git_repo.CommonGitDataManager.GetPatchesCacheDir(), filteredArchiveFilePath)))
+
+	fileDesc := &ContainerFileDescriptor{
+		FilePath:          filteredArchiveFilePath,
+		ContainerFilePath: containerFilePath,
+	}
+
+	fileExists := true
+	if _, err := os.Stat(fileDesc.FilePath); os.IsNotExist(err) {
+		fileExists = false
+	} else if err != nil {
+		return nil, fmt.Errorf("unable to get stat of path %s: %w", fileDesc.FilePath, err)
+	}
+
+	if fileExists {
+		return fileDesc, nil
+	}
+
+	var includePaths []string
+	for _, p := range patch.GetPaths() {
+		if util.IsStringsContainValue(patch.GetPathsToRemove(), p) {
+			continue
+		}
+		includePaths = append(includePaths, p)
+	}
+
+	src, err := os.Open(archive.GetFilePath())
+	if err != nil {
+		return nil, fmt.Errorf("unable to open archive file %q: %w", archive.GetFilePath(), err)
+	}
+	defer src.Close()
+
+	f, err := fileDesc.Open(os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0o666)
+	if err != nil {
+		return nil, fmt.Errorf("unable to open file `%s`: %w", fileDesc.FilePath, err)
+	}
+	defer f.Close()
+
+	tw := tar.NewWriter(f)
+	if err := util.CopyTar(ctx, src, tw, util.CopyTarOptions{IncludePaths: includePaths}); err != nil {
+		return nil, fmt.Errorf("unable to filter archive %q: %w", archive.GetFilePath(), err)
+	}
+	if err := tw.Close(); err != nil {
+		return nil, fmt.Errorf("unable to close filtered archive tar writer: %w", err)
+	}
+
+	return fileDesc, nil
 }
 
 func (gm *GitMapping) preparePatchPathsListFile(patch git_repo.Patch) (*ContainerFileDescriptor, error) {
