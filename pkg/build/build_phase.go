@@ -1229,9 +1229,9 @@ func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *imag
 		}
 
 		if phase.Conveyor.UseLegacyStapelBuilder(phase.Conveyor.ContainerBackend) {
-			stageImage.Builder.LegacyStapelStageBuilder().Container().RunOptions().AddEnv(commitEnvs)
+			stageImage.Builder.LegacyStapelStageBuilder().Container().AddBuildTimeEnv(commitEnvs)
 		} else {
-			stageImage.Builder.StapelStageBuilder().AddEnvs(commitEnvs)
+			stageImage.Builder.StapelStageBuilder().AddBuildTimeEnvs(commitEnvs)
 		}
 	} else if _, ok := stg.(*stage.FullDockerfileStage); ok {
 		var labels []string

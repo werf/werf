@@ -254,12 +254,20 @@ func (backend *BuildahBackend) applyCommands(ctx context.Context, container *con
 		mounts = append(mounts, m...)
 	}
 
+	mergedEnvs := make(map[string]string, len(opts.Envs)+len(opts.BuildTimeEnvs))
+	for k, v := range opts.Envs {
+		mergedEnvs[k] = v
+	}
+	for k, v := range opts.BuildTimeEnvs {
+		mergedEnvs[k] = v
+	}
+
 	if err := backend.buildah.RunCommand(ctx, container.Name, []string{"sh", destScriptPath}, buildah.RunCommandOpts{
 		CommonOpts:   backend.getBuildahCommonOpts(ctx, false, nil, opts.TargetPlatform),
 		User:         "0:0",
 		WorkingDir:   "/",
 		GlobalMounts: mounts,
-		Envs:         makeBuildahEnvs(opts.Envs),
+		Envs:         makeBuildahEnvs(mergedEnvs),
 	}); err != nil {
 		return fmt.Errorf("unable to run commands script: %w", err)
 	}

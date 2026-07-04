@@ -13,10 +13,9 @@ import (
 	context "context"
 	reflect "reflect"
 
-	gomock "go.uber.org/mock/gomock"
-
 	container_backend "github.com/werf/werf/v2/pkg/container_backend"
 	image "github.com/werf/werf/v2/pkg/image"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockLegacyImageInterface is a mock of LegacyImageInterface interface.
@@ -345,6 +344,18 @@ func NewMockLegacyContainer(ctrl *gomock.Controller) *MockLegacyContainer {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockLegacyContainer) EXPECT() *MockLegacyContainerMockRecorder {
 	return m.recorder
+}
+
+// AddBuildTimeEnv mocks base method.
+func (m *MockLegacyContainer) AddBuildTimeEnv(envs map[string]string) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "AddBuildTimeEnv", envs)
+}
+
+// AddBuildTimeEnv indicates an expected call of AddBuildTimeEnv.
+func (mr *MockLegacyContainerMockRecorder) AddBuildTimeEnv(envs any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddBuildTimeEnv", reflect.TypeOf((*MockLegacyContainer)(nil).AddBuildTimeEnv), envs)
 }
 
 // AddRunCommands mocks base method.
