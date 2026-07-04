@@ -131,7 +131,7 @@ func Init(tmpDirOption, homeDirOption string) error {
 	file_lock.LegacyHashFunction = true
 
 	var err error
-	if hostLocker, err = locker.NewHostLocker(filepath.Join(GetServiceDir(), "locks")); err != nil {
+	if hostLocker, err = locker.NewHostLocker(getHostLockerDir()); err != nil {
 		return fmt.Errorf("error creating werf host file locker: %w", err)
 	}
 

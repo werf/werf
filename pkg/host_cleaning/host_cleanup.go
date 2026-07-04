@@ -111,6 +111,19 @@ func RunHostCleanup(ctx context.Context, backend container_backend.ContainerBack
 		return err
 	}
 
+	if err := logboek.Context(ctx).LogProcess("Running GC for locks").DoError(func() error {
+		if options.DryRun {
+			return nil
+		}
+		if err := werf.GCHostLockerDir(); err != nil {
+			// non-fatal: lock GC failures must not block the rest of host cleanup
+			logboek.Context(ctx).Warn().LogF("WARNING: host locks GC failed: %s\n", err)
+		}
+		return nil
+	}); err != nil {
+		return err
+	}
+
 	allowedLocalCacheVolumeUsagePercentage := getOptionValueOrDefault(options.AllowedLocalCacheVolumeUsagePercentage, DefaultAllowedLocalCacheVolumeUsagePercentage)
 	allowedLocalCacheVolumeUsageMarginPercentage := getOptionValueOrDefault(options.AllowedLocalCacheVolumeUsageMarginPercentage, DefaultAllowedLocalCacheVolumeUsageMarginPercentage)
 
@@ -186,6 +199,14 @@ func shouldRunAutoHostCleanup(ctx context.Context, backend container_backend.Con
 	shouldRun, err := tmp_manager.ShouldRunAutoGC()
 	if err != nil {
 		return false, fmt.Errorf("failed to check tmp manager GC: %w", err)
+	}
+	if shouldRun {
+		return true, nil
+	}
+
+	shouldRun, err = werf.ShouldRunHostLocksGC()
+	if err != nil {
+		return false, fmt.Errorf("failed to check host locks GC: %w", err)
 	}
 	if shouldRun {
 		return true, nil

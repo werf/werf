@@ -10,6 +10,7 @@ func GetCleanupDocs() structs.DocsStruct {
 The data include:
 * Lost Docker containers and images from interrupted builds.
 * Old service tmp dirs, which werf creates during every build, converge and other commands.
+* Stale host lock files, no longer held by any werf process.
 * Local cache:
   * remote Git clones cache;
   * Git worktree cache.
@@ -20,6 +21,7 @@ It is safe to run this command periodically by automated cleanup job in parallel
 		"The data include:\n" +
 		"* Lost Docker containers and images from interrupted builds.\n" +
 		"* Old service tmp dirs, which werf creates during every `build`, `converge` and other commands.\n" +
+		"* Stale host lock files, no longer held by any werf process.\n" +
 		"* Local cache:\n" +
 		"  * remote Git clones cache;\n" +
 		"  * Git worktree cache.\n\n" +
