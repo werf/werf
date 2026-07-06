@@ -55,7 +55,7 @@ jobs:
       WERF_TEST_GITHUB_TOKEN: ${{ secrets.WERF_TEST_GITHUB_TOKEN }}
       WERF_TEST_GITHUB_USERNAME: ${{ secrets.WERF_TEST_GITHUB_USERNAME }}
 
-      WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_HARBOR: 0
+      WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_HARBOR: 1
       WERF_TEST_HARBOR_PASSWORD: ${{ secrets.WERF_TEST_HARBOR_PASSWORD }}
       WERF_TEST_HARBOR_REGISTRY: ${{ secrets.WERF_TEST_HARBOR_REGISTRY }}
       WERF_TEST_HARBOR_USERNAME: ${{ secrets.WERF_TEST_HARBOR_USERNAME }}
@@ -111,7 +111,7 @@ jobs:
 
       - name: Check containers registry creds
         run: |
-          for cr in acr dockerhub ecr quay github; do
+          for cr in acr dockerhub ecr quay github harbor; do
             ./scripts/ci/integration_tests_registries_login.sh $cr
           done
 
