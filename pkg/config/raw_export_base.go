@@ -1,11 +1,9 @@
 package config
 
 import (
-	"context"
+	"fmt"
 	"path/filepath"
 	"strings"
-
-	"github.com/werf/logboek"
 )
 
 type rawExportBase struct {
@@ -29,10 +27,10 @@ func (c *rawExportBase) toDirective() (exportBase *ExportBase, err error) {
 
 	if strings.HasSuffix(c.To, "/") && c.To != "/" {
 		toWithoutTrailingSlash := strings.TrimSuffix(c.To, "/")
-		logboek.Context(context.Background()).Warn().LogF(
-			"WARNING: `to: %s` will be treated like `to: %s`, i.e. file/directory from `add: %s` will NOT be copied inside of the %q, instead it will be copied as %q! To hide this warning, change `to: %s` to `to: %s`.\n",
-			c.To, toWithoutTrailingSlash, c.Add, c.To, toWithoutTrailingSlash, c.To, toWithoutTrailingSlash,
-		)
+		return nil, newDetailedConfigError(fmt.Sprintf(
+			"`to: %s` is ambiguous: file/directory from `add: %s` would NOT be copied inside of %q, but copied as %q instead! Change `to: %s` to `to: %s`.",
+			c.To, c.Add, c.To, toWithoutTrailingSlash, c.To, toWithoutTrailingSlash,
+		), c.rawOrigin.configSection(), c.rawOrigin.doc())
 	}
 	exportBase.To = filepath.ToSlash(filepath.Clean(c.To))
 
