@@ -39,22 +39,6 @@ const (
 	ImageSpec  StageName = "imageSpec"
 )
 
-// TODO(compatibility): remove in v3
-func GetLegacyCompatibleStageName(name StageName) string {
-	switch name {
-	case DependenciesBeforeInstall:
-		return "importsBeforeInstall"
-	case DependenciesAfterInstall:
-		return "importsAfterInstall"
-	case DependenciesBeforeSetup:
-		return "importsBeforeSetup"
-	case DependenciesAfterSetup:
-		return "importsAfterSetup"
-	default:
-		return string(name)
-	}
-}
-
 var AllStages = []StageName{
 	From,
 	BeforeInstall,
