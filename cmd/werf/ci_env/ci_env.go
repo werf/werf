@@ -80,7 +80,7 @@ Currently supported only GitLab (gitlab) and GitHub (github) CI systems`,
 	commonCmdData.SetupAllowIncludesUpdate(cmd)
 
 	cmd.Flags().BoolVarP(&cmdData.AllowRegistryLogin, "login-to-registry", "", util.GetBoolEnvironmentDefaultTrue("WERF_LOGIN_TO_REGISTRY"), "Log in to CI-specific registry automatically if possible (default $WERF_LOGIN_TO_REGISTRY).")
-	cmd.Flags().BoolVarP(&cmdData.UseDockerAuthConfig, "use-docker-auth-config", "", util.GetBoolEnvironmentDefaultFalse("WERF_USE_DOCKER_AUTH_CONFIG"), "Generate Docker config from DOCKER_AUTH_CONFIG environment variable instead of copying current Docker config (default $WERF_USE_DOCKER_AUTH_CONFIG).")
+	cmd.Flags().BoolVarP(&cmdData.UseDockerAuthConfig, "use-docker-auth-config", "", util.GetBoolEnvironmentDefaultFalse("WERF_USE_DOCKER_AUTH_CONFIG"), "Generate Docker config from DOCKER_AUTH_CONFIG environment variable instead of copying current Docker config. Enabled automatically when DOCKER_AUTH_CONFIG is set, unless explicitly disabled (default $WERF_USE_DOCKER_AUTH_CONFIG).")
 	cmd.Flags().BoolVarP(&cmdData.AsFile, "as-file", "", util.GetBoolEnvironmentDefaultFalse("WERF_AS_FILE"), "Create the script and print the path for sourcing (default $WERF_AS_FILE).")
 	cmd.Flags().BoolVarP(&cmdData.AsEnvFile, "as-env-file", "", util.GetBoolEnvironmentDefaultFalse("WERF_AS_ENV_FILE"), "Create the .env file and print the path for sourcing (default $WERF_AS_ENV_FILE).")
 	cmd.Flags().StringVarP(&cmdData.OutputFilePath, "output-file-path", "o", os.Getenv("WERF_OUTPUT_FILE_PATH"), "Write to custom file (default $WERF_OUTPUT_FILE_PATH).")
@@ -118,7 +118,7 @@ func runCIEnv(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	dockerConfig, err := generateSessionDockerConfigDir(ctx)
+	dockerConfig, err := generateSessionDockerConfigDir(ctx, cmd)
 	if err != nil {
 		return err
 	}
@@ -395,9 +395,14 @@ func generateGithubDefaultRepo(ctx context.Context, defaultRegistry, ciGithubDoc
 	return defaultRepo, nil
 }
 
-func generateSessionDockerConfigDir(ctx context.Context) (string, error) {
-	if cmdData.UseDockerAuthConfig {
-		authConfig := os.Getenv("DOCKER_AUTH_CONFIG")
+func generateSessionDockerConfigDir(ctx context.Context, cmd *cobra.Command) (string, error) {
+	authConfig := os.Getenv("DOCKER_AUTH_CONFIG")
+	useDockerAuthConfig := cmdData.UseDockerAuthConfig
+	if !cmd.Flags().Changed("use-docker-auth-config") && authConfig != "" {
+		useDockerAuthConfig = true
+	}
+
+	if useDockerAuthConfig {
 		if authConfig == "" {
 			return "", fmt.Errorf("DOCKER_AUTH_CONFIG environment variable is not set, but --use-docker-auth-config flag is enabled")
 		}
