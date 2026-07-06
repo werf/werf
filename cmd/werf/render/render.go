@@ -99,7 +99,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupFinalRepo(&commonCmdData, cmd)
 	common.SetupStubTags(&commonCmdData, cmd)
 
-
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified repo and to pull base images")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
@@ -159,12 +158,11 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 		InitTrueGitWithOptions: &common.InitTrueGitOptions{
 			Options: true_git.Options{LiveGitOutput: *commonCmdData.LogDebug},
 		},
-		InitProcessContainerBackend: true,
-		InitWerf:                    true,
-		InitGitDataManager:          true,
-		InitManifestCache:           true,
-		InitLRUImagesCache:          true,
-		InitSSHAgent:                true,
+		InitWerf:           true,
+		InitGitDataManager: true,
+		InitManifestCache:  true,
+		InitLRUImagesCache: true,
+		InitSSHAgent:       true,
 	})
 	if err != nil {
 		return fmt.Errorf("component init error: %w", err)
@@ -175,8 +173,6 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 			logboek.Context(ctx).Warn().LogF("Temporary files cleanup preparation failed: %s\n", err)
 		}
 	}()
-
-	containerBackend := commonManager.ContainerBackend()
 
 	defer func() {
 		commonManager.TerminateSSHAgent()
@@ -230,6 +226,12 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 		isStub = true
 		stubImageNameList = append(stubImageNameList, imagesToProcess.FinalImageNameList...)
 	default:
+		containerBackend, newCtx, err := commonManager.EnsureContainerBackend(ctx, &commonCmdData, false)
+		if err != nil {
+			return fmt.Errorf("container backend initialization error: %w", err)
+		}
+		ctx = newCtx
+
 		if err := common.DockerRegistryInit(ctx, &commonCmdData, commonManager.RegistryMirrors(), commonManager.BuildahMode()); err != nil {
 			return err
 		}
