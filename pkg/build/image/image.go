@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/gookit/color"
 
 	"github.com/werf/logboek"
@@ -321,7 +322,11 @@ func (i *Image) SetupBaseImage(ctx context.Context, storageManager manager.Stora
 		}
 
 		// TODO: do not use container_backend.LegacyStageImage for base image.
-		i.baseStageImage = i.Conveyor.GetOrCreateStageImage(i.baseImageReference, nil, nil, i)
+		stageImageName := i.baseImageReference
+		if i.baseImageReference == "scratch" {
+			stageImageName = fmt.Sprintf("werf-scratch-%s", uuid.New().String())
+		}
+		i.baseStageImage = i.Conveyor.GetOrCreateStageImage(stageImageName, nil, nil, i)
 
 		// Do not override the base image description if it is already set.
 		// TODO: It might be a stage as base image (passed as dependency), and the absence of StageID in the description will lead to breaking the logic.

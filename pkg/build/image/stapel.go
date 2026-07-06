@@ -220,6 +220,9 @@ func generateGitMappings(ctx context.Context, metaConfig *config.Meta, imageBase
 			if err != nil {
 				return nil, fmt.Errorf("unable to open remote git repo %s by url %s: %w", remoteGitMappingConfig.Name, remoteGitMappingConfig.Url, err)
 			}
+			remoteGitRepo.Branch = remoteGitMappingConfig.Branch
+			remoteGitRepo.Tag = remoteGitMappingConfig.Tag
+			remoteGitRepo.Commit = remoteGitMappingConfig.Commit
 
 			if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Refreshing %s repository", remoteGitMappingConfig.Name)).
 				DoError(func() error {

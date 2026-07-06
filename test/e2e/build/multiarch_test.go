@@ -8,6 +8,7 @@ import (
 	"github.com/containerd/containerd/platforms"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v2/pkg/container_backend/thirdparty/platformutil"
@@ -103,16 +104,19 @@ var _ = Describe("Multiarch build", Label("e2e", "build", "multiarch", "simple")
 
 					platformSpec, err := platformutil.ParsePlatform(platform)
 					Expect(err).To(Succeed())
-					platformSpec = platforms.Normalize(platformSpec)
 
 					ref := fmt.Sprintf("%s:%s", SuiteData.WerfRepo, byPlatform[platform].DockerTag)
 					inspect := contBack.GetImageInspect(ctx, ref)
 
 					fmt.Printf("Check image %q inspect:\n%#v\n---\n", ref, inspect)
 
-					Expect(inspect.Os).To(Equal(platformSpec.OS))
-					Expect(inspect.Architecture).To(Equal(platformSpec.Architecture))
-					Expect(inspect.Variant).To(Equal(platformSpec.Variant))
+					expectedPlatform := platforms.Format(platforms.Normalize(platformSpec))
+					actualPlatform := platforms.Format(platforms.Normalize(v1.Platform{
+						OS:           inspect.Os,
+						Architecture: inspect.Architecture,
+						Variant:      inspect.Variant,
+					}))
+					Expect(actualPlatform).To(Equal(expectedPlatform))
 				}
 
 				// Meta digest only used for multiplatform builds
