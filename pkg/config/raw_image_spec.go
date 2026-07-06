@@ -1,5 +1,11 @@
 package config
 
+import (
+	"context"
+
+	"github.com/werf/werf/v2/pkg/werf/global_warnings"
+)
+
 type rawImageSpec struct {
 	Author       string              `yaml:"author,omitempty"`
 	ClearHistory bool                `yaml:"clearHistory,omitempty"`
@@ -14,7 +20,7 @@ type rawImageSpec struct {
 type rawImageSpecConfig struct {
 	KeepEssentialWerfLabels bool `yaml:"keepEssentialWerfLabels,omitempty"`
 
-	ClearWerfLabels bool `yaml:"clearWerfLabels,omitempty"`
+	ClearWerfLabels bool `yaml:"clearWerfLabels,omitempty"` // Deprecated: no longer has any effect.
 	ClearCmd        bool `yaml:"clearCmd,omitempty"`
 	ClearEntrypoint bool `yaml:"clearEntrypoint,omitempty"`
 	ClearUser       bool `yaml:"clearUser,omitempty"`
@@ -110,6 +116,9 @@ func (s *rawImageSpec) toDirective() *ImageSpec {
 	if s.Config != nil {
 		imageSpec.KeepEssentialWerfLabels = s.Config.KeepEssentialWerfLabels
 
+		if s.Config.ClearWerfLabels {
+			global_warnings.GlobalDeprecationWarningLn(context.Background(), "`imageSpec.config.clearWerfLabels` directive is deprecated and no longer has any effect, it will be removed in a future version.")
+		}
 		imageSpec.ClearWerfLabels = s.Config.ClearWerfLabels
 		imageSpec.ClearCmd = s.Config.ClearCmd
 		imageSpec.ClearEntrypoint = s.Config.ClearEntrypoint
@@ -148,7 +157,7 @@ type rawImageSpecGlobal struct {
 
 type rawImageSpecGlobalConfig struct {
 	KeepEssentialWerfLabels bool              `yaml:"keepEssentialWerfLabels,omitempty"`
-	ClearWerfLabels         bool              `yaml:"clearWerfLabels,omitempty"`
+	ClearWerfLabels         bool              `yaml:"clearWerfLabels,omitempty"` // Deprecated: no longer has any effect.
 	RemoveLabels            []string          `yaml:"removeLabels,omitempty"`
 	Labels                  map[string]string `yaml:"labels,omitempty"`
 
@@ -204,6 +213,9 @@ func (s *rawImageSpecGlobal) toDirective() *ImageSpec {
 
 	if s.Config != nil {
 		imageSpec.KeepEssentialWerfLabels = s.Config.KeepEssentialWerfLabels
+		if s.Config.ClearWerfLabels {
+			global_warnings.GlobalDeprecationWarningLn(context.Background(), "`meta.build.imageSpec.config.clearWerfLabels` directive is deprecated and no longer has any effect, it will be removed in a future version.")
+		}
 		imageSpec.ClearWerfLabels = s.Config.ClearWerfLabels
 		imageSpec.RemoveLabels = s.Config.RemoveLabels
 		imageSpec.Labels = s.Config.Labels
