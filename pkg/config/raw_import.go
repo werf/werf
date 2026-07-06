@@ -1,7 +1,14 @@
 package config
 
+import (
+	"context"
+
+	"github.com/werf/werf/v2/pkg/werf/global_warnings"
+)
+
 type rawImport struct {
 	From   string `yaml:"from,omitempty"`
+	Image  string `yaml:"image,omitempty"` // Deprecated: use `from` instead.
 	Before string `yaml:"before,omitempty"`
 	After  string `yaml:"after,omitempty"`
 
@@ -30,6 +37,14 @@ func (c *rawImport) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	parentStack.Pop()
 	if err != nil {
 		return err
+	}
+
+	if c.Image != "" {
+		if c.From != "" {
+			return newDetailedConfigError("specify only `from: NAME` or deprecated `image: NAME` for import, not both!", c, c.rawStapelImage.doc)
+		}
+		global_warnings.GlobalDeprecationWarningLn(context.Background(), "`image: NAME` for import is deprecated and will be removed in a future version, use `from: NAME` instead.")
+		c.From = c.Image
 	}
 
 	c.rawExport.inlinedIntoRaw(c)

@@ -1,10 +1,12 @@
 package config
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
 	"github.com/werf/werf/v2/pkg/util/option"
+	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
 
 type rawStapelImage struct {
@@ -12,6 +14,7 @@ type rawStapelImage struct {
 	Final            *bool            `yaml:"final,omitempty"`
 	CacheVersion     string           `yaml:"cacheVersion,omitempty"`
 	From             string           `yaml:"from,omitempty"`
+	FromImage        string           `yaml:"fromImage,omitempty"` // Deprecated: use `from` instead.
 	FromLatest       bool             `yaml:"fromLatest,omitempty"`
 	FromCacheVersion string           `yaml:"fromCacheVersion,omitempty"`
 	RawGit           []*rawGit        `yaml:"git,omitempty"`
@@ -158,6 +161,13 @@ func (c *rawStapelImage) toStapelImageBaseDirective(giterminismManager gitermini
 	}
 
 	imageBase.From = c.From
+	if c.FromImage != "" {
+		if c.From != "" {
+			return nil, newDetailedConfigError("specify only `from: NAME` or deprecated `fromImage: NAME`, not both!", c, c.doc)
+		}
+		global_warnings.GlobalDeprecationWarningLn(context.Background(), "`fromImage` directive is deprecated and will be removed in a future version, use `from` instead.")
+		imageBase.From = c.FromImage
+	}
 	imageBase.FromLatest = c.FromLatest
 	imageBase.FromCacheVersion = c.FromCacheVersion
 

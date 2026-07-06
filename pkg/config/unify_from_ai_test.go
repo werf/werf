@@ -65,10 +65,22 @@ from: ubuntu:22.04
 	assert.Equal(t, "ubuntu:22.04", stapelImage.From)
 }
 
-func TestAI_FromImageFieldIsRejected(t *testing.T) {
+func TestAI_FromImageFieldIsDeprecatedAlias(t *testing.T) {
 	yamlContent := `
 image: testimage
-fromImage: baseimg
+fromImage: ubuntu:22.04
+`
+	stapelImage, err := parseStapelImage(t, yamlContent, "testimage")
+
+	require.NoError(t, err)
+	assert.Equal(t, "ubuntu:22.04", stapelImage.From)
+}
+
+func TestAI_FromAndFromImageBothSpecifiedIsRejected(t *testing.T) {
+	yamlContent := `
+image: testimage
+from: ubuntu:22.04
+fromImage: alpine:3.18
 `
 	_, err := parseStapelImage(t, yamlContent, "testimage")
 
@@ -76,12 +88,30 @@ fromImage: baseimg
 	assert.Contains(t, err.Error(), "fromImage")
 }
 
-func TestAI_ImportImageFieldIsRejected(t *testing.T) {
+func TestAI_ImportImageFieldIsDeprecatedAlias(t *testing.T) {
+	yamlContent := `
+image: testimage
+from: ubuntu:22.04
+import:
+- image: baseimg
+  after: install
+  add: /src
+  to: /app
+`
+	stapelImage, err := parseStapelImage(t, yamlContent, "testimage")
+
+	require.NoError(t, err)
+	require.Len(t, stapelImage.Import, 1)
+	assert.Equal(t, "baseimg", stapelImage.Import[0].From)
+}
+
+func TestAI_ImportFromAndImageBothSpecifiedIsRejected(t *testing.T) {
 	yamlContent := `
 image: testimage
 from: ubuntu:22.04
 import:
 - from: baseimg
+  image: otherimg
   after: install
   add: /src
   to: /app
