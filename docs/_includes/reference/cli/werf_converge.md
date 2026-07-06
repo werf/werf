@@ -14,7 +14,7 @@ Environment is a required param for the deploy by default, because it is needed 
 {{ header }} Syntax
 
 ```shell
-werf converge [options]
+werf converge [IMAGE_NAME ...] [options]
 ```
 
 {{ header }} Examples
