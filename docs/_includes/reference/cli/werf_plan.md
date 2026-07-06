@@ -12,7 +12,7 @@ Environment is a required param by default, because it is needed to construct He
 {{ header }} Syntax
 
 ```shell
-werf plan [options]
+werf plan [IMAGE_NAME ...] [options]
 ```
 
 {{ header }} Examples
