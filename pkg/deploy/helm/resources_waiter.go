@@ -424,9 +424,9 @@ func makeMultitrackSpecsFromResList(ctx context.Context, resources helm_kube.Res
 			if spec != nil {
 				specs.Deployments = append(specs.Deployments, *spec)
 			}
+		// TODO: multiplier equals 3 because typically there are only 3 nodes in the cluster.
+		// TODO: It is better to fetch number of nodes dynamically, but in the most cases multiplier=3 will work ok.
 		case *extensions.DaemonSet:
-			// TODO: multiplier equals 3 because typically there are only 3 nodes in the cluster.
-			// TODO: It is better to fetch number of nodes dynamically, but in the most cases multiplier=3 will work ok.
 			spec, err := makeMultitrackSpec(ctx, &value.ObjectMeta, allowedFailuresCountOptions{multiplier: 3, defaultPerReplica: 1}, "ds")
 			if err != nil {
 				return nil, fmt.Errorf("cannot track %s %s: %w", value.Kind, value.Name, err)
@@ -435,8 +435,6 @@ func makeMultitrackSpecsFromResList(ctx context.Context, resources helm_kube.Res
 				specs.DaemonSets = append(specs.DaemonSets, *spec)
 			}
 		case *appsv1.DaemonSet:
-			// TODO: multiplier equals 3 because typically there are only 3 nodes in the cluster.
-			// TODO: It is better to fetch number of nodes dynamically, but in the most cases multiplier=3 will work ok.
 			spec, err := makeMultitrackSpec(ctx, &value.ObjectMeta, allowedFailuresCountOptions{multiplier: 3, defaultPerReplica: 1}, "ds")
 			if err != nil {
 				return nil, fmt.Errorf("cannot track %s %s: %w", value.Kind, value.Name, err)
@@ -445,8 +443,6 @@ func makeMultitrackSpecsFromResList(ctx context.Context, resources helm_kube.Res
 				specs.DaemonSets = append(specs.DaemonSets, *spec)
 			}
 		case *appsv1beta2.DaemonSet:
-			// TODO: multiplier equals 3 because typically there are only 3 nodes in the cluster.
-			// TODO: It is better to fetch number of nodes dynamically, but in the most cases multiplier=3 will work ok.
 			spec, err := makeMultitrackSpec(ctx, &value.ObjectMeta, allowedFailuresCountOptions{multiplier: 3, defaultPerReplica: 1}, "ds")
 			if err != nil {
 				return nil, fmt.Errorf("cannot track %s %s: %w", value.Kind, value.Name, err)

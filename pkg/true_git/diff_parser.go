@@ -339,7 +339,7 @@ func (p *diffParser) handleModifyFileDiff(line string) error {
 	return p.writeOutLine(line)
 }
 
-// TODO: remove index line from resulting patch completely in v1.2
+// TODO(major): remove index line from resulting patch completely
 func (p *diffParser) handleIndexDiffLine(line string) error {
 	var prefix, hashes, suffix string
 
@@ -360,7 +360,6 @@ func (p *diffParser) handleIndexDiffLine(line string) error {
 	}
 
 	stripHashFunc := func(h string) string {
-		// TODO: remove index line from resulting patch completely in v1.2
 		if len(h) < 8 {
 			return h
 		}
