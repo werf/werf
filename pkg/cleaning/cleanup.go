@@ -30,7 +30,7 @@ type CleanupOptions struct {
 	LocalGit                                GitRepo
 	KubernetesContextClients                []*ContextClient
 	KubernetesNamespaceRestrictionByContext map[string]string
-	WithoutKube                             bool // TODO: remove this legacy logic in v3.
+	WithoutKube                             bool
 	ConfigMetaCleanup                       config.MetaCleanup
 	KeepStagesBuiltWithinLastNHours         *uint64
 	DryRun                                  bool
