@@ -24,6 +24,7 @@ type LegacyStageImageContainer struct {
 	runOptions                 *LegacyStageImageContainerOptions
 	commitChangeOptions        *LegacyStageImageContainerOptions
 	serviceCommitChangeOptions *LegacyStageImageContainerOptions
+	buildTimeEnv               map[string]string
 }
 
 func newLegacyStageImageContainer(img *LegacyStageImage) *LegacyStageImageContainer {
@@ -33,6 +34,7 @@ func newLegacyStageImageContainer(img *LegacyStageImage) *LegacyStageImageContai
 	c.runOptions = newLegacyStageContainerOptions()
 	c.commitChangeOptions = newLegacyStageContainerOptions()
 	c.serviceCommitChangeOptions = newLegacyStageContainerOptions()
+	c.buildTimeEnv = make(map[string]string)
 	return c
 }
 
@@ -68,6 +70,12 @@ func (c *LegacyStageImageContainer) ServiceCommitChangeOptions() LegacyContainer
 	return c.serviceCommitChangeOptions
 }
 
+func (c *LegacyStageImageContainer) AddBuildTimeEnv(envs map[string]string) {
+	for k, v := range envs {
+		c.buildTimeEnv[k] = v
+	}
+}
+
 func (c *LegacyStageImageContainer) prepareRunArgs(ctx context.Context) ([]string, error) {
 	var args []string
 	args = append(args, fmt.Sprintf("--name=%s", c.name))
@@ -86,19 +94,35 @@ func (c *LegacyStageImageContainer) prepareRunArgs(ctx context.Context) ([]strin
 		return nil, err
 	}
 
-	setColumnsEnv := fmt.Sprintf("--env=COLUMNS=%d", logboek.Context(ctx).Streams().ContentWidth())
-	runArgs = append(runArgs, setColumnsEnv)
-
 	args = append(args, runArgs...)
 	args = append(args, c.imageRef(c.image.fromImage))
 	args = append(args, "-ec")
-	args = append(args, c.prepareRunCommand())
+	args = append(args, c.prepareRunCommand(ctx))
 
 	return args, nil
 }
 
-func (c *LegacyStageImageContainer) prepareRunCommand() string {
-	return ShelloutPack(strings.Join(c.prepareRunCommands(), " && "))
+func shellSingleQuote(v string) string {
+	return "'" + strings.ReplaceAll(v, "'", `'\''`) + "'"
+}
+
+func (c *LegacyStageImageContainer) prepareBuildTimeEnvExports(ctx context.Context) []string {
+	envs := make(map[string]string, len(c.buildTimeEnv)+1)
+	for k, v := range c.buildTimeEnv {
+		envs[k] = v
+	}
+	envs["COLUMNS"] = fmt.Sprintf("%d", logboek.Context(ctx).Streams().ContentWidth())
+
+	var exports []string
+	for _, k := range sortStrings(getKeys(envs)) {
+		exports = append(exports, fmt.Sprintf("export %s=%s", k, shellSingleQuote(envs[k])))
+	}
+	return exports
+}
+
+func (c *LegacyStageImageContainer) prepareRunCommand(ctx context.Context) string {
+	commands := append(c.prepareBuildTimeEnvExports(ctx), c.prepareRunCommands()...)
+	return ShelloutPack(strings.Join(commands, " && "))
 }
 
 func (c *LegacyStageImageContainer) prepareRunCommands() []string {
