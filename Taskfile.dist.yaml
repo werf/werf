@@ -37,12 +37,15 @@ vars:
   cgoTags: "{{.goTags}} osusergo exclude_graphdriver_devicemapper netgo no_devmapper static_build cni"
   cgoLDFlags: "{{.goLDFlags}} -linkmode external -extldflags=-static"
 
+  buildGoTags: "{{.goTags}} embedstapel"
+  buildCgoTags: "{{.cgoTags}} embedstapel"
+
 tasks:
   format:
     desc: "Run all code formatters."
-    deps:
-      - _remote-lint:format:gci
-      - _remote-lint:format:gofumpt
+    cmds:
+      - task: _remote-lint:format:gci
+      - task: _remote-lint:format:gofumpt
 
   lint:golangci-lint:go:
     desc: 'Lint with golangci-lint without cgo. Important vars: "golangciPaths", "golangciLintVersion".'
@@ -52,7 +55,7 @@ tasks:
           echo "golangci-lint not installed, run: task deps:install:golangci-lint"
           exit 1
         fi
-        ./bin/golangci-lint-v2.11.4 run --build-tags="{{.goTags}}" -c .golangci.yml {{.CLI_ARGS}} {{.golangciPaths | default "./cmd/... ./pkg/... ./test/..."}}
+        ./bin/golangci-lint-v2.11.4 run --build-tags="{{.buildGoTags}}" -c .golangci.yml {{.CLI_ARGS}} {{.golangciPaths | default "./cmd/... ./pkg/... ./test/..."}}
     env:
       CGO_ENABLED: "0"
 
@@ -77,8 +80,9 @@ tasks:
 
   lint:
     desc: "Run all linters."
-    deps:
-      - lint:golangci-lint
+    cmds:
+      - task: stapel:embed
+      - task: lint:golangci-lint
 
   _build-and-lint:
     deps:
@@ -90,10 +94,25 @@ tasks:
       - task: format
       - task: _build-and-lint
 
+  stapel:embed:
+    desc: "Generate embedded stapel image tarballs for linux/amd64 and linux/arm64."
+    run: once
+    sources:
+      - pkg/stapel/stapel.go
+    generates:
+      - pkg/stapel/embed/linux/amd64/werf-stapel-toolchain.tar.gz
+      - pkg/stapel/embed/linux/amd64/werf-stapel-toolchain.tar.sha256
+      - pkg/stapel/embed/linux/arm64/werf-stapel-toolchain.tar.gz
+      - pkg/stapel/embed/linux/arm64/werf-stapel-toolchain.tar.sha256
+    cmds:
+      - env -u GOOS -u GOARCH WERF_STAPEL_IMAGE_VERSION="$(sed -n 's/.*VERSION *= *"\(.*\)"/\1/p' pkg/stapel/stapel.go | head -1)" go run ./cmd/embed-stapel
+
   _build:cgo:dev: &build_cgo_dev
+    deps:
+      - stapel:embed
     cmds:
       - go build {{if eq .raceDetectorEnabled "true" }}-race{{end}} -o "{{.outputDir | default (printf "./build/%s-%s" .targetOS .targetArch)}}/werf{{if (eq .targetOS "windows")}}.exe{{end}}"
-        -compiler gc -ldflags="{{.cgoLDFlags}}" -tags="{{.cgoTags}}" {{.extraGoBuildArgs}} {{.CLI_ARGS}} {{.pkg | default .package}}
+        -compiler gc -ldflags="{{.cgoLDFlags}}" -tags="{{.buildCgoTags}}" {{.extraGoBuildArgs}} {{.CLI_ARGS}} {{.pkg | default .package}}
     env:
       CGO_ENABLED: "1"
       GOOS: "{{.targetOS}}"
@@ -106,12 +125,14 @@ tasks:
     <<: *build_cgo_dev
     cmds:
       - go build -o "{{.outputDir | default (printf "./dist/%s/%s-%s/bin" .version .targetOS .targetArch)}}/werf{{if (eq .targetOS "windows")}}.exe{{end}}"
-        -compiler gc -ldflags="{{.cgoLDFlags}}" -tags="{{.cgoTags}}" {{.extraGoBuildArgs}} {{.CLI_ARGS}} {{.pkg | default .package}}
+        -compiler gc -ldflags="{{.cgoLDFlags}}" -tags="{{.buildCgoTags}}" {{.extraGoBuildArgs}} {{.CLI_ARGS}} {{.pkg | default .package}}
 
   _build:go:dev: &build_go_dev
+    deps:
+      - stapel:embed
     cmds:
       - go build {{if eq .raceDetectorEnabled "true" }}-race{{end}} -o "{{.outputDir | default (printf "./build/%s-%s" .targetOS .targetArch)}}/werf{{if (eq .targetOS "windows")}}.exe{{end}}"
-        -ldflags="{{.goLDFlags}}" -tags="{{.goTags}}" {{.extraGoBuildArgs}} {{.CLI_ARGS}} {{.pkg | default .package}}
+        -ldflags="{{.goLDFlags}}" -tags="{{.buildGoTags}}" {{.extraGoBuildArgs}} {{.CLI_ARGS}} {{.pkg | default .package}}
     env:
       CGO_ENABLED: "0"
       GOOS: "{{.targetOS}}"
@@ -123,7 +144,7 @@ tasks:
     <<: *build_go_dev
     cmds:
       - go build -o "{{.outputDir | default (printf "./dist/%s/%s-%s/bin" .version .targetOS .targetArch)}}/werf{{if (eq .targetOS "windows")}}.exe{{end}}"
-        -ldflags="{{.goLDFlags}}" -tags="{{.goTags}}" {{.extraGoBuildArgs}} {{.CLI_ARGS}} {{.pkg | default .package}}
+        -ldflags="{{.goLDFlags}}" -tags="{{.buildGoTags}}" {{.extraGoBuildArgs}} {{.CLI_ARGS}} {{.pkg | default .package}}
 
   build:
     desc: "Build werf dev binary."

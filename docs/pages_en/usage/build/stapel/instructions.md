@@ -37,6 +37,8 @@ Before running the _build container_, werf prepares a set of instructions. This 
 
 The Stapel builder uses its own set of tools and libraries and does not depend on the base image in any way. When the _build container_ is started, werf mounts everything it needs from the special service image named `registry.werf.io/werf/stapel`.
 
+For `linux/amd64` and `linux/arm64` targets, the werf binary already contains this Stapel image embedded inside it, so werf loads it directly instead of pulling it from the registry — no network access to `registry.werf.io` is required in this case, which makes it work out of the box in isolated/air-gapped environments. If you target a different platform, or override the Stapel image reference (see below), werf falls back to pulling the image from the registry as before.
+
 If your environment cannot access this image directly, for example when working in an isolated environment or using a private registry, you can override the Stapel service image reference before running werf:
 
 ```shell
