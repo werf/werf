@@ -1030,8 +1030,8 @@ github.com/werf/kubedog v0.13.1-0.20260320165832-7d97aaf7aab9 h1:N+XKTPiXT5pf5lx
 github.com/werf/kubedog v0.13.1-0.20260320165832-7d97aaf7aab9/go.mod h1:93L6aIdpj7iIhL30Obkv7bWgUyTeuxas1ijtzjmyb4Q=
 github.com/werf/lockgate v0.2.0 h1:wntfccZmtHQuntPjrPUFA2FcKejhmteKEekQx3VsHC4=
 github.com/werf/lockgate v0.2.0/go.mod h1:h8P6tpGRZymd0bS5FlnS+AdIwO2jDlpOLy9St2tbs30=
-github.com/werf/logboek v0.6.1 h1:oEe6FkmlKg0z0n80oZjLplj6sXcBeLleCkjfOOZEL2g=
-github.com/werf/logboek v0.6.1/go.mod h1:Gez5J4bxekyr6MxTmIJyId1F61rpO+0/V4vjCIEIZmk=
+github.com/werf/logboek v0.7.1 h1:Ck8L7LVmj/wyrW/jk+EkkpGwdmpkOrsWAwoIgLHupc8=
+github.com/werf/logboek v0.7.1/go.mod h1:Gez5J4bxekyr6MxTmIJyId1F61rpO+0/V4vjCIEIZmk=
 github.com/werf/nelm v1.23.3-0.20260514121649-29d4e8bfbc01 h1:YwMg7JGcNOCfBkWztuOxWmWUdwHAsA+TftJIUUO8e7M=
 github.com/werf/nelm v1.23.3-0.20260514121649-29d4e8bfbc01/go.mod h1:J5jhcjodcSV5ATzT6yzOku6niDSj1n6X1gkIs+c39rc=
 github.com/x448/float16 v0.8.4 h1:qLwI1I70+NjRFUR3zs1JPUCgaCXSh3SW62uAKT1mSBM=
