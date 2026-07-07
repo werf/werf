@@ -92,7 +92,7 @@ func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfi
 // must have already run against cmdData (NewStorageManagerWithOptions calls
 // it before this).
 func BuildStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData, stagesStorage storage.PrimaryStagesStorage) (manager.Storages, error) {
-	finalImageStorage, err := GetOptionalFinalImageStorage(ctx, containerBackend, cmdData)
+	finalImagesStorage, err := GetOptionalFinalImagesStorage(ctx, containerBackend, cmdData)
 	if err != nil {
 		return manager.Storages{}, fmt.Errorf("error get final stages storage: %w", err)
 	}
@@ -119,7 +119,7 @@ func BuildStorage(ctx context.Context, containerBackend container_backend.Contai
 
 	return manager.NewStorages(manager.NewStoragesConfig{
 		Stages:    stagesStorage,
-		Final:     finalImageStorage,
+		Final:     finalImagesStorage,
 		Images:    imagesStorage,
 		Meta:      metaStorage,
 		CacheFrom: cacheStagesStorageList,

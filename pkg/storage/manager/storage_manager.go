@@ -78,7 +78,7 @@ type StorageManagerInterface interface {
 	SelectSuitableStageDesc(ctx context.Context, c stage.Conveyor, stg stage.Interface, stageDescSet image.StageDescSet) (*image.StageDesc, error)
 	CopySuitableStageDescByDigest(ctx context.Context, stageDesc *image.StageDesc, sourceStagesStorage, destinationStagesStorage storage.StagesStorage, containerBackend container_backend.ContainerBackend, targetPlatform string) (*image.StageDesc, error)
 	CopyStageIntoCacheStorages(ctx context.Context, stageID image.StageID, cacheStagesStorages []storage.StagesStorage, opts CopyStageIntoStorageOptions) error
-	CopyStageIntoFinalStorage(ctx context.Context, stageID image.StageID, finalImageStorage storage.StagesStorage, opts CopyStageIntoStorageOptions) (*image.StageDesc, error)
+	CopyStageIntoFinalStorage(ctx context.Context, stageID image.StageID, finalImagesStorage storage.StagesStorage, opts CopyStageIntoStorageOptions) (*image.StageDesc, error)
 
 	ForEachDeleteStage(ctx context.Context, options ForEachDeleteStageOptions, stageDescSet image.StageDescSet, f func(ctx context.Context, stageDesc *image.StageDesc, err error) error) error
 	ForEachDeleteFinalStage(ctx context.Context, options ForEachDeleteStageOptions, stageDescSet image.StageDescSet, f func(ctx context.Context, stageDesc *image.StageDesc, err error) error) error
@@ -131,13 +131,13 @@ func RetryOnUnexpectedStagesStorageState(ctx context.Context, _ StorageManagerIn
 	return err
 }
 
-func NewStorageManager(projectName string, stagesStorage storage.PrimaryStagesStorage, finalImageStorage storage.StagesStorage, secondaryStagesStorageList, cacheStagesStorageList []storage.StagesStorage) *StorageManager {
+func NewStorageManager(projectName string, stagesStorage storage.PrimaryStagesStorage, finalImagesStorage storage.StagesStorage, secondaryStagesStorageList, cacheStagesStorageList []storage.StagesStorage) *StorageManager {
 	return &StorageManager{
 		ProjectName: projectName,
 
 		Storages: Storages{
 			Stages:    stagesStorage,
-			Final:     finalImageStorage,
+			Final:     finalImagesStorage,
 			CacheFrom: cacheStagesStorageList,
 			CacheTo:   cacheStagesStorageList,
 			Secondary: secondaryStagesStorageList,
@@ -724,15 +724,15 @@ func (m *StorageManager) getOrCreateFinalImageListCache(ctx context.Context) (*S
 	return m.FinalImageListCache, nil
 }
 
-func (m *StorageManager) CopyStageIntoFinalStorage(ctx context.Context, stageID image.StageID, finalImageStorage storage.StagesStorage, opts CopyStageIntoStorageOptions) (*image.StageDesc, error) {
+func (m *StorageManager) CopyStageIntoFinalStorage(ctx context.Context, stageID image.StageID, finalImagesStorage storage.StagesStorage, opts CopyStageIntoStorageOptions) (*image.StageDesc, error) {
 	existingStagesListCache, err := m.getOrCreateFinalImageListCache(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("error getting existing stages list of final repo %s: %w", finalImageStorage.String(), err)
+		return nil, fmt.Errorf("error getting existing stages list of final repo %s: %w", finalImagesStorage.String(), err)
 	}
 
 	logboek.Context(ctx).Debug().LogF("[%p] Got existing final stages list cache: %#v\n", m, existingStagesListCache.StageIDs)
 
-	finalImageName := finalImageStorage.ConstructStageImageName(m.ProjectName, stageID.Digest, stageID.CreationTs)
+	finalImageName := finalImagesStorage.ConstructStageImageName(m.ProjectName, stageID.Digest, stageID.CreationTs)
 
 	for _, existingStg := range existingStagesListCache.GetStageIDs() {
 		if existingStg.IsEqual(stageID) {
@@ -769,9 +769,9 @@ func (m *StorageManager) CopyStageIntoFinalStorage(ctx context.Context, stageID 
 				copyOpts.FetchStage = opts.FetchStage
 				copyOpts.LegacyImage = opts.FetchStage.GetStageImage().Image
 			}
-			stageDescCopy, err = m.CopyStage(ctx, m.Storages.Images, finalImageStorage, stageID, copyOpts)
+			stageDescCopy, err = m.CopyStage(ctx, m.Storages.Images, finalImagesStorage, stageID, copyOpts)
 			if err != nil {
-				return fmt.Errorf("unable to copy stage %s into the final repo %s: %w", stageID.String(), finalImageStorage.String(), err)
+				return fmt.Errorf("unable to copy stage %s into the final repo %s: %w", stageID.String(), finalImagesStorage.String(), err)
 			}
 
 			logboek.Context(ctx).Default().LogFDetails("  name: %s\n", finalImageName)

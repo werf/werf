@@ -233,9 +233,9 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 		if len(targetPlatforms) == 1 {
 			img := images[0]
 
-			finalImageStorage := phase.Conveyor.StorageManager.GetFinalImagesStorage()
-			if img.IsFinal && finalImageStorage != nil {
-				if err := phase.publishFinalImage(ctx, name, img, finalImageStorage); err != nil {
+			finalImagesStorage := phase.Conveyor.StorageManager.GetFinalImagesStorage()
+			if img.IsFinal && finalImagesStorage != nil {
+				if err := phase.publishFinalImage(ctx, name, img, finalImagesStorage); err != nil {
 					return err
 				}
 				logboek.Context(ctx).LogOptionalLn()
@@ -268,9 +268,9 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 				}
 			}
 
-			finalImageStorage := phase.Conveyor.StorageManager.GetFinalImagesStorage()
-			if img.IsFinal && finalImageStorage != nil && phase.Conveyor.StorageManager.IsRemoteImagesStorage() {
-				if err := phase.publishMultiplatformFinalImage(ctx, name, img, finalImageStorage); err != nil {
+			finalImagesStorage := phase.Conveyor.StorageManager.GetFinalImagesStorage()
+			if img.IsFinal && finalImagesStorage != nil && phase.Conveyor.StorageManager.IsRemoteImagesStorage() {
+				if err := phase.publishMultiplatformFinalImage(ctx, name, img, finalImagesStorage); err != nil {
 					return err
 				}
 			}
@@ -335,7 +335,7 @@ AssertAllTargetPlatformsPresent:
 	return targetPlatforms, nil
 }
 
-func (phase *BuildPhase) publishFinalImage(ctx context.Context, name string, img *image.Image, finalImageStorage storage.StagesStorage) error {
+func (phase *BuildPhase) publishFinalImage(ctx context.Context, name string, img *image.Image, finalImagesStorage storage.StagesStorage) error {
 	contentTagDesc := img.GetContentTagDesc()
 	if contentTagDesc == nil {
 		return fmt.Errorf("content tag desc not set for image %q", name)
@@ -358,9 +358,9 @@ func (phase *BuildPhase) publishFinalImage(ctx context.Context, name string, img
 	return nil
 }
 
-func (phase *BuildPhase) publishMultiplatformFinalImage(ctx context.Context, name string, img *image.MultiplatformImage, finalImageStorage storage.StagesStorage) error {
+func (phase *BuildPhase) publishMultiplatformFinalImage(ctx context.Context, name string, img *image.MultiplatformImage, finalImagesStorage storage.StagesStorage) error {
 	desc, err := phase.Conveyor.StorageManager.CopyStageIntoFinalStorage(
-		ctx, img.GetStageID(), finalImageStorage,
+		ctx, img.GetStageID(), finalImagesStorage,
 		manager.CopyStageIntoStorageOptions{
 			ShouldBeBuiltMode:    phase.ShouldBeBuiltMode,
 			ContainerBackend:     phase.Conveyor.ContainerBackend,
@@ -464,13 +464,13 @@ func (phase *BuildPhase) publishMultiplatformImageCustomTags(ctx context.Context
 	}
 
 	imagesStorage := phase.Conveyor.StorageManager.GetImagesStorage()
-	finalImageStorage := phase.Conveyor.StorageManager.GetFinalImagesStorage()
+	finalImagesStorage := phase.Conveyor.StorageManager.GetFinalImagesStorage()
 
 	var customTagStorage storage.StagesStorage
 	var customTagStageDesc *imagePkg.StageDesc
-	if finalImageStorage != nil {
-		customTagStorage = finalImageStorage
-		customTagStageDesc = manager.ConvertStageDescForStagesStorage(phase.Conveyor.ProjectName(), img.GetStageDesc(), finalImageStorage)
+	if finalImagesStorage != nil {
+		customTagStorage = finalImagesStorage
+		customTagStageDesc = manager.ConvertStageDescForStagesStorage(phase.Conveyor.ProjectName(), img.GetStageDesc(), finalImagesStorage)
 	} else {
 		customTagStorage = imagesStorage
 		customTagStageDesc = img.GetStageDesc()

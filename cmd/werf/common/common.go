@@ -853,7 +853,7 @@ func GetStagesStorage(ctx context.Context, containerBackend container_backend.Co
 	})
 }
 
-func GetOptionalFinalImageStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData) (storage.StagesStorage, error) {
+func GetOptionalFinalImagesStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData) (storage.StagesStorage, error) {
 	if *cmdData.FinalRepo.Address == "" {
 		return nil, nil
 	}
