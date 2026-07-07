@@ -37,7 +37,7 @@ var _ = Describe("Content tag reuse", Label("e2e", "build", "content-tag"), func
 		Expect(buildOut).To(ContainSubstring("Use previously built image for stapel-scratch/content-tag"))
 		Expect(buildOut).NotTo(ContainSubstring("Building stapel-scratch/content-tag"))
 
-		By("[3, repo] building with --repo copies only the content tag from the :local secondary")
+		By("[3, repo] building with --repo publishes the content tag to the repo (no cross-storage fallback)")
 		buildOut = werfProject.Build(ctx, &werf.BuildOptions{
 			CommonOptions: werf.CommonOptions{
 				ExtraArgs: []string{
@@ -46,8 +46,7 @@ var _ = Describe("Content tag reuse", Label("e2e", "build", "content-tag"), func
 				},
 			},
 		})
-		Expect(buildOut).To(ContainSubstring("Copy suitable stapel-scratch/content-tag from secondary :local"))
-		Expect(buildOut).NotTo(ContainSubstring("Building stapel-scratch/content-tag"))
+		Expect(buildOut).To(ContainSubstring("Building stapel-scratch/content-tag"))
 
 		By("[3, repo] rebuilding with --repo reuses the content tag already present in the repo")
 		buildOut = werfProject.Build(ctx, &werf.BuildOptions{
@@ -102,7 +101,7 @@ var _ = Describe("Content tag reuse", Label("e2e", "build", "content-tag"), func
 		Expect(buildOut).NotTo(ContainSubstring("Use previously built image for app/install"))
 		Expect(buildOut).NotTo(ContainSubstring("Use previously built image for app/setup"))
 
-		By("[3, repo] building with --repo copies only the content tag from the :local secondary")
+		By("[3, repo] building with --repo copies stages from the :local secondary and publishes only the content tag")
 		buildOut = werfProject.Build(ctx, &werf.BuildOptions{
 			CommonOptions: werf.CommonOptions{
 				ExtraArgs: []string{
@@ -111,8 +110,7 @@ var _ = Describe("Content tag reuse", Label("e2e", "build", "content-tag"), func
 				},
 			},
 		})
-		Expect(buildOut).To(ContainSubstring("Copy suitable app/content-tag from secondary :local"))
-		Expect(buildOut).NotTo(ContainSubstring("Copy suitable stage from secondary"))
+		Expect(buildOut).To(ContainSubstring("Building app/content-tag"))
 		Expect(buildOut).NotTo(ContainSubstring("Building stage app/"))
 	})
 })
