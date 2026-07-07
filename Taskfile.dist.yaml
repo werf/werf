@@ -97,6 +97,13 @@ tasks:
   stapel:embed:
     desc: "Generate embedded stapel image tarballs for linux/amd64 and linux/arm64."
     run: once
+    sources:
+      - pkg/stapel/stapel.go
+    generates:
+      - pkg/stapel/embed/linux/amd64/werf-stapel-toolchain.tar.gz
+      - pkg/stapel/embed/linux/amd64/werf-stapel-toolchain.tar.sha256
+      - pkg/stapel/embed/linux/arm64/werf-stapel-toolchain.tar.gz
+      - pkg/stapel/embed/linux/arm64/werf-stapel-toolchain.tar.sha256
     cmds:
       - env -u GOOS -u GOARCH WERF_STAPEL_IMAGE_VERSION="$(sed -n 's/.*VERSION *= *"\(.*\)"/\1/p' pkg/stapel/stapel.go | head -1)" go run ./cmd/embed-stapel
 
