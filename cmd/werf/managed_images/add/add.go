@@ -64,7 +64,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupLogOptions(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 
-
 	commonCmdData.SetupPlatform(cmd)
 	commonCmdData.SetupDebugTemplates(cmd)
 	commonCmdData.SetupAllowIncludesUpdate(cmd)
@@ -134,7 +133,7 @@ func run(ctx context.Context, imageName string) error {
 		return fmt.Errorf("unable to init storage manager: %w", err)
 	}
 
-	if err := storageManager.GetMetaStagesStorage().AddManagedImage(ctx, projectName, common.GetManagedImageName(imageName)); err != nil {
+	if err := storageManager.GetMetaStorage().AddManagedImage(ctx, projectName, common.GetManagedImageName(imageName)); err != nil {
 		return fmt.Errorf("unable to add managed image %q for project %q: %w", imageName, projectName, err)
 	}
 

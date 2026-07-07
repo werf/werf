@@ -94,7 +94,7 @@ func (m *cleanupManager) init(ctx context.Context) error {
 		return err
 	}
 
-	if m.StorageManager.GetFinalStagesStorage() != nil {
+	if m.StorageManager.GetFinalImageStorage() != nil {
 		if err := logboek.Context(ctx).Info().LogProcess("Fetching final repo manifests").DoError(func() error {
 			return m.stageManager.InitFinalStageDescSet(ctx, m.StorageManager)
 		}); err != nil {
@@ -219,7 +219,7 @@ func (m *cleanupManager) run(ctx context.Context) error {
 		return err
 	}
 
-	if m.StorageManager.GetFinalStagesStorage() != nil {
+	if m.StorageManager.GetFinalImageStorage() != nil {
 		if err := logboek.Context(ctx).LogProcess("Cleanup final stages").DoError(func() error {
 			return m.cleanupFinalStages(ctx)
 		}); err != nil {
@@ -228,7 +228,7 @@ func (m *cleanupManager) run(ctx context.Context) error {
 	}
 
 	if err := logboek.Context(ctx).LogProcess("Push last cleanup info to meta image").DoError(func() error {
-		err := m.StorageManager.GetMetaStagesStorage().PostLastCleanupRecord(ctx, m.ProjectName)
+		err := m.StorageManager.GetMetaStorage().PostLastCleanupRecord(ctx, m.ProjectName)
 		if err != nil {
 			logboek.Context(ctx).Warn().LogF("WARNING: cleanup metadata update failed: %s\n", err)
 		}
@@ -263,7 +263,7 @@ func (m *cleanupManager) purgeImageMetadata(ctx context.Context) error {
 func (m *cleanupManager) skipStageIDsThatAreUsedInKubernetes(ctx context.Context, deployedDockerImages []*DeployedDockerImage) error {
 	handledDeployedStages := map[string]bool{}
 	handleTagFunc := func(tag, stageID string, f func()) {
-		dockerImageName := fmt.Sprintf("%s:%s", m.StorageManager.GetStagesStorage().Address(), tag)
+		dockerImageName := fmt.Sprintf("%s:%s", m.StorageManager.GetImagesStorage().Address(), tag)
 		for _, deployedDockerImage := range deployedDockerImages {
 			if deployedDockerImage.Name == dockerImageName {
 				if !handledDeployedStages[stageID] {
@@ -319,7 +319,7 @@ func (m *cleanupManager) skipFinalStageIDsThatAreUsedInKubernetes(ctx context.Co
 Loop:
 	for stageDesc := range m.stageManager.GetFinalStageDescSet().Iter() {
 		stageID := stageDesc.StageID.String()
-		dockerImageName := fmt.Sprintf("%s:%s", m.StorageManager.GetFinalStagesStorage().Address(), stageID)
+		dockerImageName := fmt.Sprintf("%s:%s", m.StorageManager.GetFinalImageStorage().Address(), stageID)
 
 		for _, deployedDockerImage := range deployedDockerImages {
 			if deployedDockerImage.Name == dockerImageName {
@@ -748,7 +748,7 @@ func purgeImageMetadata(ctx context.Context, projectName string, storageManager 
 	var imageMetadataByImageName map[string]map[string][]string
 	if err := logboek.Context(ctx).Default().LogProcess("Fetching images metadata").DoError(func() error {
 		var err error
-		_, imageMetadataByImageName, err = storageManager.GetMetaStagesStorage().GetAllAndGroupImageMetadataByImageName(ctx, projectName, []string{}, storage.WithCache())
+		_, imageMetadataByImageName, err = storageManager.GetMetaStorage().GetAllAndGroupImageMetadataByImageName(ctx, projectName, []string{}, storage.WithCache())
 		return err
 	}); err != nil {
 		return err
@@ -802,7 +802,7 @@ func purgeManagedImages(ctx context.Context, projectName string, storageManager 
 	var managedImages []string
 	if err := logboek.Context(ctx).Default().LogProcess("Fetching managed images").DoError(func() error {
 		var err error
-		managedImages, err = storageManager.GetMetaStagesStorage().GetManagedImages(ctx, projectName, storage.WithCache())
+		managedImages, err = storageManager.GetMetaStorage().GetManagedImages(ctx, projectName, storage.WithCache())
 		return err
 	}); err != nil {
 		return err

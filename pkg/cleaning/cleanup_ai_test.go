@@ -76,6 +76,10 @@ func (f *fakeStorageManager) GetStagesStorage() storage.PrimaryStagesStorage {
 	return f.stages
 }
 
+func (f *fakeStorageManager) GetImagesStorage() storage.StagesStorage {
+	return nil
+}
+
 func (f *fakeStorageManager) ForEachRejectedStage(ctx context.Context, stageIDs []image.StageID, cb func(ctx context.Context, stageID image.StageID) error) error {
 	for _, id := range stageIDs {
 		if err := cb(ctx, id); err != nil {

@@ -80,7 +80,7 @@ type GitRepo interface {
 }
 
 func (m *Manager) InitImagesMetadata(ctx context.Context, storageManager manager.StorageManagerInterface, localGit GitRepo, projectName string, imageNameList []string) error {
-	imageMetadataByImageName, imageMetadataByNotManagedImageName, err := storageManager.GetMetaStagesStorage().GetAllAndGroupImageMetadataByImageName(ctx, projectName, imageNameList, storage.WithCache())
+	imageMetadataByImageName, imageMetadataByNotManagedImageName, err := storageManager.GetMetaStorage().GetAllAndGroupImageMetadataByImageName(ctx, projectName, imageNameList, storage.WithCache())
 	if err != nil {
 		return err
 	}
@@ -139,7 +139,7 @@ func (m *Manager) handleDegradedMeta(ctx context.Context, storageManager manager
 		// built for; associate it with each managed image so the record can be
 		// re-created for the git-history policy on the next (healthy) run.
 		for _, imageName := range imageNameList {
-			if err := storageManager.GetMetaStagesStorage().PutImageMetadata(ctx, projectName, imageName, commit, stageID); err != nil {
+			if err := storageManager.GetMetaStorage().PutImageMetadata(ctx, projectName, imageName, commit, stageID); err != nil {
 				logboek.Context(ctx).Warn().LogF("WARNING: unable to backfill meta record %s/%s (commit %s): %s\n", imageName, stageID, commit, err)
 				continue
 			}
@@ -203,7 +203,7 @@ func (m *Manager) InitCustomTagsMetadata(ctx context.Context, storageManager man
 }
 
 func GetCustomTagsMetadata(ctx context.Context, storageManager manager.StorageManagerInterface) (map[string][]string, error) {
-	stageCustomTagMetadataIDs, err := storageManager.GetMetaStagesStorage().GetStageCustomTagMetadataIDs(ctx, storage.WithCache())
+	stageCustomTagMetadataIDs, err := storageManager.GetMetaStorage().GetStageCustomTagMetadataIDs(ctx, storage.WithCache())
 	if err != nil {
 		return nil, fmt.Errorf("unable to get stage custom tag metadata IDs: %w", err)
 	}

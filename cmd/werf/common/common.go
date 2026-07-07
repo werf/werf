@@ -465,9 +465,9 @@ func SetupRepoOptions(cmdData *CmdData, cmd *cobra.Command, opts RepoDataOptions
 }
 
 func SetupImagesRepo(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.ImagesRepo = new([]string)
-	cmd.Flags().StringArrayVarP(cmdData.ImagesRepo, "images-repo", "", []string{}, `Specify one or multiple repos for final images and custom tags (fan-out write, repeatable). Required for build --push and converge unless --repo is used. Mutually exclusive with --repo.
-Also, can be specified with $WERF_IMAGES_REPO_* (e.g. $WERF_IMAGES_REPO_1=..., $WERF_IMAGES_REPO_2=...)`)
+	cmdData.ImagesRepo = new(string)
+	cmd.Flags().StringVarP(cmdData.ImagesRepo, "images-repo", "", os.Getenv("WERF_IMAGES_REPO"), `Specify the repo for final images and custom tags. Required for build --push and converge unless --repo is used.
+Also, can be specified with $WERF_IMAGES_REPO`)
 }
 
 func SetupMetaRepo(cmdData *CmdData, cmd *cobra.Command) {
@@ -853,32 +853,7 @@ func GetStagesStorage(ctx context.Context, containerBackend container_backend.Co
 	})
 }
 
-func GetOptionalFinalStagesStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData) (storage.StagesStorage, error) {
-	// Granular model: --images-repo (repeatable) folds the deprecated --final-repo
-	// too (see ResolveRepos). The first entry is the canonical final storage used
-	// for service values and tagging; extra entries are handled as push fan-out
-	// targets by the build phase.
-	if imagesRepo := GetImagesRepo(cmdData); len(imagesRepo) > 0 {
-		buildahMode, _, err := GetBuildahMode()
-		if err != nil {
-			return nil, fmt.Errorf("unable to determine buildah mode: %w", err)
-		}
-		insecureRegistryHosts, err := GetInsecureRegistryHosts(ctx, cmdData, *buildahMode)
-		if err != nil {
-			return nil, fmt.Errorf("get insecure registry hosts: %w", err)
-		}
-		canonical := imagesRepo[0]
-		repoData := NewRepoData("images-repo", RepoDataOptions{OnlyAddress: true})
-		repoData.Address = &canonical
-		return repoData.CreateStagesStorage(ctx, &CreateStagesStorageOptions{
-			ContainerBackend:      containerBackend,
-			InsecureRegistry:      *cmdData.InsecureRegistry,
-			SkipTlsVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
-			InsecureRegistryHosts: insecureRegistryHosts,
-			SkipMetaCheck:         true,
-		})
-	}
-
+func GetOptionalFinalImageStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData) (storage.StagesStorage, error) {
 	if *cmdData.FinalRepo.Address == "" {
 		return nil, nil
 	}
@@ -894,6 +869,34 @@ func GetOptionalFinalStagesStorage(ctx context.Context, containerBackend contain
 	}
 
 	return cmdData.FinalRepo.CreateStagesStorage(ctx, &CreateStagesStorageOptions{
+		ContainerBackend:      containerBackend,
+		InsecureRegistry:      *cmdData.InsecureRegistry,
+		SkipTlsVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
+		InsecureRegistryHosts: insecureRegistryHosts,
+		SkipMetaCheck:         true,
+	})
+}
+
+func GetOptionalImagesStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData) (storage.StagesStorage, error) {
+	address := GetImagesRepo(cmdData)
+	if address == "" {
+		return GetLocalStagesStorage(containerBackend), nil
+	}
+
+	buildahMode, _, err := GetBuildahMode()
+	if err != nil {
+		return nil, fmt.Errorf("unable to determine buildah mode: %w", err)
+	}
+
+	insecureRegistryHosts, err := GetInsecureRegistryHosts(ctx, cmdData, *buildahMode)
+	if err != nil {
+		return nil, fmt.Errorf("get insecure registry hosts: %w", err)
+	}
+
+	repoData := NewRepoData("images-repo", RepoDataOptions{OnlyAddress: true, OptionalRepo: true})
+	repoData.Address = &address
+
+	return repoData.CreateStagesStorage(ctx, &CreateStagesStorageOptions{
 		ContainerBackend:      containerBackend,
 		InsecureRegistry:      *cmdData.InsecureRegistry,
 		SkipTlsVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
@@ -971,10 +974,10 @@ func GetCacheToStagesStorageList(ctx context.Context, containerBackend container
 	return res, nil
 }
 
-// GetMetaStagesStorage builds the storage holding build/cleanup metadata. Under
+// GetMetaStorage builds the storage holding build/cleanup metadata. Under
 // the --repo preset (no --meta-repo) it returns the primary stages storage so
 // metadata stays co-located, bit-for-bit as before.
-func GetMetaStagesStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData, primary storage.PrimaryStagesStorage) (storage.PrimaryStagesStorage, error) {
+func GetMetaStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData, primary storage.PrimaryStagesStorage) (storage.PrimaryStagesStorage, error) {
 	metaAddr := ""
 	if cmdData.MetaRepo != nil {
 		metaAddr = *cmdData.MetaRepo
@@ -1335,8 +1338,8 @@ func GetCacheTo(cmdData *CmdData) []string {
 	return append(util.PredefinedValuesByEnvNamePrefix("WERF_CACHE_TO_"), *cmdData.CacheTo...)
 }
 
-func GetImagesRepo(cmdData *CmdData) []string {
-	return append(util.PredefinedValuesByEnvNamePrefix("WERF_IMAGES_REPO_"), *cmdData.ImagesRepo...)
+func GetImagesRepo(cmdData *CmdData) string {
+	return *cmdData.ImagesRepo
 }
 
 func GetSecondaryStagesStorage(cmdData *CmdData) []string {

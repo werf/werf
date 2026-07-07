@@ -136,12 +136,10 @@ werf render [IMAGE_NAME...] [options]
             rebuild (default $WERF_IGNORE_BUNDLE_JS)
       --ignore-secret-key=false
             Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)
-      --images-repo=[]
-            Specify one or multiple repos for final images and custom tags (fan-out write,          
-            repeatable). Required for build --push and converge unless --repo is used. Mutually     
-            exclusive with --repo.
-            Also, can be specified with $WERF_IMAGES_REPO_* (e.g. $WERF_IMAGES_REPO_1=...,          
-            $WERF_IMAGES_REPO_2=...)
+      --images-repo=""
+            Specify the repo for final images and custom tags. Required for build --push and        
+            converge unless --repo is used.
+            Also, can be specified with $WERF_IMAGES_REPO
       --include-crds=true
             Include CRDs in the templated output (default $WERF_INCLUDE_CRDS)
       --insecure-helm-dependencies=false
