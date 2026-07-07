@@ -135,8 +135,17 @@ func getCustomTagFuncList(tagOptionValues []string, commonCmdData *CmdData, imag
 		return nil, nil
 	}
 
-	if *commonCmdData.Repo.Address == "" || *commonCmdData.Repo.Address == storage.LocalStorageAddress {
-		return nil, fmt.Errorf("custom tags can only be used with remote storage: --repo=ADDRESS param required")
+	// Custom tags are published into the content-tag storage (--images-repo,
+	// or --repo as its fallback under the preset). Mirrors the images-repo
+	// resolution in ResolveRepos without depending on it having run yet, since
+	// some commands (e.g. render) compute the custom tag list before the
+	// storage manager resolves repos.
+	imagesRepo := GetImagesRepo(commonCmdData)
+	if imagesRepo == "" {
+		imagesRepo = *commonCmdData.Repo.Address
+	}
+	if imagesRepo == "" || imagesRepo == storage.LocalStorageAddress {
+		return nil, fmt.Errorf("custom tags can only be used with remote storage: --images-repo=ADDRESS (or --repo=ADDRESS) param required")
 	}
 
 	templateName := "--add/use-custom-tag"
