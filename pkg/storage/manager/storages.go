@@ -8,7 +8,7 @@ import "github.com/werf/werf/v2/pkg/storage"
 // no mutation — construction and behavior live on StorageManager.
 type Storages struct {
 	// Stages is the primary raw-stage storage (--repo, or :local by default).
-	Stages storage.PrimaryStagesStorage
+	Stages storage.StagesStorage
 	// Final holds published final images (--final-repo). Nil unless set.
 	Final storage.StagesStorage
 	// Images holds content-tag storage — the exclusive home for content-tag
@@ -16,7 +16,7 @@ type Storages struct {
 	Images storage.StagesStorage
 	// meta holds build/cleanup metadata (--meta-repo). Nil under the --repo
 	// preset; use Meta() to get the effective storage with fallback applied.
-	meta storage.PrimaryStagesStorage
+	meta storage.StagesStorage
 	// CacheFrom is the read list (--cache-from): searched in order when
 	// resolving stages.
 	CacheFrom []storage.StagesStorage
@@ -31,10 +31,10 @@ type Storages struct {
 // go through this constructor rather than setting the field directly and
 // risking a call site that forgets the --repo-preset fallback.
 type NewStoragesConfig struct {
-	Stages    storage.PrimaryStagesStorage
+	Stages    storage.StagesStorage
 	Final     storage.StagesStorage
 	Images    storage.StagesStorage
-	Meta      storage.PrimaryStagesStorage
+	Meta      storage.StagesStorage
 	CacheFrom []storage.StagesStorage
 	CacheTo   []storage.StagesStorage
 	Secondary []storage.StagesStorage
@@ -55,7 +55,7 @@ func NewStorages(c NewStoragesConfig) Storages {
 // Meta returns the effective storage holding build/cleanup metadata. Falls
 // back to Stages when no dedicated --meta-repo is set (i.e. the --repo
 // preset), preserving co-located behavior bit-for-bit.
-func (s *Storages) Meta() storage.PrimaryStagesStorage {
+func (s *Storages) Meta() storage.StagesStorage {
 	if s.meta != nil {
 		return s.meta
 	}

@@ -14,8 +14,8 @@ import (
 	"github.com/werf/werf/v2/pkg/storage/manager"
 )
 
-type fakePrimaryStagesStorage struct {
-	storage.PrimaryStagesStorage
+type fakeStagesStorage struct {
+	storage.StagesStorage
 
 	mu sync.Mutex
 
@@ -31,25 +31,25 @@ type fakePrimaryStagesStorage struct {
 	deletedTags    []string
 }
 
-func (f *fakePrimaryStagesStorage) GetRejectedStageIDs(_ context.Context, _ ...storage.Option) ([]image.StageID, error) {
+func (f *fakeStagesStorage) GetRejectedStageIDs(_ context.Context, _ ...storage.Option) ([]image.StageID, error) {
 	return f.rejectedStageIDs, f.rejectedErr
 }
 
-func (f *fakePrimaryStagesStorage) DeleteRejectedStageImage(_ context.Context, stageID image.StageID, _ storage.DeleteImageOptions) error {
+func (f *fakeStagesStorage) DeleteRejectedStageImage(_ context.Context, stageID image.StageID, _ storage.DeleteImageOptions) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.deletedImages = append(f.deletedImages, stageID)
 	return f.deleteImageErrs[stageID.String()]
 }
 
-func (f *fakePrimaryStagesStorage) DeleteRejectedStageRecord(_ context.Context, stageID image.StageID, _ storage.DeleteImageOptions) error {
+func (f *fakeStagesStorage) DeleteRejectedStageRecord(_ context.Context, stageID image.StageID, _ storage.DeleteImageOptions) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.deletedRecords = append(f.deletedRecords, stageID)
 	return f.deleteRecordErrs[stageID.String()]
 }
 
-func (f *fakePrimaryStagesStorage) DeleteStageCustomTag(_ context.Context, tag string) error {
+func (f *fakeStagesStorage) DeleteStageCustomTag(_ context.Context, tag string) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.deletedTags = append(f.deletedTags, tag)
@@ -59,12 +59,12 @@ func (f *fakePrimaryStagesStorage) DeleteStageCustomTag(_ context.Context, tag s
 type fakeStorageManager struct {
 	manager.StorageManagerInterface
 
-	stages *fakePrimaryStagesStorage
+	stages *fakeStagesStorage
 }
 
 func newFakeStorageManager() *fakeStorageManager {
 	return &fakeStorageManager{
-		stages: &fakePrimaryStagesStorage{
+		stages: &fakeStagesStorage{
 			deleteImageErrs:  map[string]error{},
 			deleteRecordErrs: map[string]error{},
 			deleteTagErrs:    map[string]error{},
@@ -72,7 +72,7 @@ func newFakeStorageManager() *fakeStorageManager {
 	}
 }
 
-func (f *fakeStorageManager) GetStagesStorage() storage.PrimaryStagesStorage {
+func (f *fakeStorageManager) GetStagesStorage() storage.StagesStorage {
 	return f.stages
 }
 

@@ -769,7 +769,7 @@ func (phase *BuildPhase) publishImageGitMetadata(ctx context.Context, imageName 
 	return nil
 }
 
-func (phase *BuildPhase) addCustomImageTags(ctx context.Context, imageName string, stageDesc *imagePkg.StageDesc, stagesStorage storage.StagesStorage, metaStorage storage.PrimaryStagesStorage, customTagFuncList []imagePkg.CustomTagFunc) error {
+func (phase *BuildPhase) addCustomImageTags(ctx context.Context, imageName string, stageDesc *imagePkg.StageDesc, stagesStorage storage.StagesStorage, metaStorage storage.StagesStorage, customTagFuncList []imagePkg.CustomTagFunc) error {
 	if len(customTagFuncList) == 0 {
 		return nil
 	}
@@ -790,7 +790,7 @@ func (phase *BuildPhase) addCustomImageTags(ctx context.Context, imageName strin
 		})
 }
 
-func addCustomImageTag(ctx context.Context, projectName string, stagesStorage storage.StagesStorage, metaStorage storage.PrimaryStagesStorage, stageDesc *imagePkg.StageDesc, tag string) error {
+func addCustomImageTag(ctx context.Context, projectName string, stagesStorage storage.StagesStorage, metaStorage storage.StagesStorage, stageDesc *imagePkg.StageDesc, tag string) error {
 	return logboek.Context(ctx).Default().LogProcess("tag %s", tag).
 		DoError(func() error {
 			if err := stagesStorage.AddStageCustomTag(ctx, stageDesc, tag); err != nil {

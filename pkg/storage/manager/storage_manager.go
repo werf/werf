@@ -49,8 +49,8 @@ type StorageOptions struct {
 type StorageManagerInterface interface {
 	InitCache(ctx context.Context) error
 
-	GetStagesStorage() storage.PrimaryStagesStorage
-	GetMetaStorage() storage.PrimaryStagesStorage
+	GetStagesStorage() storage.StagesStorage
+	GetMetaStorage() storage.StagesStorage
 	GetFinalImagesStorage() storage.StagesStorage
 	GetImagesStorage() storage.StagesStorage
 	IsRemoteImagesStorage() bool
@@ -131,7 +131,7 @@ func RetryOnUnexpectedStagesStorageState(ctx context.Context, _ StorageManagerIn
 	return err
 }
 
-func NewStorageManager(projectName string, stagesStorage storage.PrimaryStagesStorage, finalImagesStorage storage.StagesStorage, secondaryStagesStorageList, cacheStagesStorageList []storage.StagesStorage) *StorageManager {
+func NewStorageManager(projectName string, stagesStorage storage.StagesStorage, finalImagesStorage storage.StagesStorage, secondaryStagesStorageList, cacheStagesStorageList []storage.StagesStorage) *StorageManager {
 	return &StorageManager{
 		ProjectName: projectName,
 
@@ -200,7 +200,7 @@ type StorageManager struct {
 	FinalImageListCache    *StagesList
 }
 
-func (m *StorageManager) GetStagesStorage() storage.PrimaryStagesStorage {
+func (m *StorageManager) GetStagesStorage() storage.StagesStorage {
 	return m.Storages.Stages
 }
 
@@ -289,7 +289,7 @@ func (m *StorageManager) GetCacheStagesWriteList() []storage.StagesStorage {
 // GetMetaStorage returns the storage that holds build/cleanup metadata.
 // Falls back to the primary stages storage when no dedicated meta repo is set
 // (i.e. the --repo preset), preserving co-located behavior bit-for-bit.
-func (m *StorageManager) GetMetaStorage() storage.PrimaryStagesStorage {
+func (m *StorageManager) GetMetaStorage() storage.StagesStorage {
 	return m.Storages.Meta()
 }
 

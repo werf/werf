@@ -831,7 +831,7 @@ type GetStagesStorageOpts struct {
 	SkipMetaCheck                  bool
 }
 
-func GetStagesStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData, opts GetStagesStorageOpts) (storage.PrimaryStagesStorage, error) {
+func GetStagesStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData, opts GetStagesStorageOpts) (storage.StagesStorage, error) {
 	buildahMode, _, err := GetBuildahMode()
 	if err != nil {
 		return nil, fmt.Errorf("unable to determine buildah mode: %w", err)
@@ -977,7 +977,7 @@ func GetCacheToStagesStorageList(ctx context.Context, containerBackend container
 // GetMetaStorage builds the storage holding build/cleanup metadata. Under
 // the --repo preset (no --meta-repo) it returns the primary stages storage so
 // metadata stays co-located, bit-for-bit as before.
-func GetMetaStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData, primary storage.PrimaryStagesStorage) (storage.PrimaryStagesStorage, error) {
+func GetMetaStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData, primary storage.StagesStorage) (storage.StagesStorage, error) {
 	metaAddr := ""
 	if cmdData.MetaRepo != nil {
 		metaAddr = *cmdData.MetaRepo

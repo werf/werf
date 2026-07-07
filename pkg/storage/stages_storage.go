@@ -100,6 +100,11 @@ type StagesStorage interface {
 	GetLastCleanupRecord(ctx context.Context, projectName string, opts ...Option) (*CleanupRecord, error)
 	PostLastCleanupRecord(ctx context.Context, projectName string) error
 
+	GetStageCustomTagMetadataIDs(ctx context.Context, opts ...Option) ([]string, error)
+	GetStageCustomTagMetadata(ctx context.Context, tagOrID string) (*CustomTagMetadata, error)
+	RegisterStageCustomTag(ctx context.Context, projectName string, stageDesc *image.StageDesc, tag string) error
+	UnregisterStageCustomTag(ctx context.Context, tag string) error
+
 	String() string
 	Address() string
 }

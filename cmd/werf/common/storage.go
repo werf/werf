@@ -52,7 +52,7 @@ func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfi
 		}
 	}
 
-	var stagesStorage storage.PrimaryStagesStorage
+	var stagesStorage storage.StagesStorage
 
 	if c.hostPurge {
 		stagesStorage = GetLocalStagesStorage(c.ContainerBackend)
@@ -91,7 +91,7 @@ func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfi
 // --cache-to, secondary) into a single manager.Storages value. ResolveRepos
 // must have already run against cmdData (NewStorageManagerWithOptions calls
 // it before this).
-func BuildStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData, stagesStorage storage.PrimaryStagesStorage) (manager.Storages, error) {
+func BuildStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData, stagesStorage storage.StagesStorage) (manager.Storages, error) {
 	finalImagesStorage, err := GetOptionalFinalImagesStorage(ctx, containerBackend, cmdData)
 	if err != nil {
 		return manager.Storages{}, fmt.Errorf("error get final stages storage: %w", err)

@@ -58,7 +58,7 @@ type CreateStagesStorageOptions struct {
 	SkipMetaCheck                  bool
 }
 
-func (repoData *RepoData) CreateStagesStorage(ctx context.Context, opts *CreateStagesStorageOptions) (storage.PrimaryStagesStorage, error) {
+func (repoData *RepoData) CreateStagesStorage(ctx context.Context, opts *CreateStagesStorageOptions) (storage.StagesStorage, error) {
 	addr, err := repoData.GetAddress()
 	if err != nil {
 		return nil, err
