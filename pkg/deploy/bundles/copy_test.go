@@ -442,6 +442,118 @@ werf:
 			Expect(registryClient.ImagesByReference["registry2.example.com/group2/testproject2:tag-3"]).To(Equal([]byte(`image-3-bytes`)))
 		}
 	})
+
+	It("should copy remote to remote updating global werf values", func() {
+		ch := &chart.Chart{
+			Metadata: &chart.Metadata{
+				APIVersion: "v2",
+				Name:       "testproject",
+				Version:    "1.2.3",
+				Type:       "application",
+			},
+			Values: map[string]interface{}{
+				"werf": map[string]interface{}{
+					"image": map[string]interface{}{
+						"myapp": "registry.example.com/group/testproject:tag-1",
+					},
+					"repo": "registry.example.com/group/testproject",
+				},
+				"global": map[string]interface{}{
+					"werf": map[string]interface{}{
+						"repo": "registry.example.com/group/testproject",
+						"images": map[string]interface{}{
+							"myapp": map[string]interface{}{
+								"registry":       "registry.example.com",
+								"namespace":      "group",
+								"name":           "testproject",
+								"tag":            "tag-1",
+								"digest":         "sha256:abcdef1234567890",
+								"tag_digest":     "tag-1@sha256:abcdef1234567890",
+								"image":          "registry.example.com/group/testproject",
+								"repository":     "group/testproject",
+								"ref":            "registry.example.com/group/testproject:tag-1@sha256:abcdef1234567890",
+								"ref_tag":        "registry.example.com/group/testproject:tag-1",
+								"repository_ref": "group/testproject:tag-1@sha256:abcdef1234567890",
+								"repository_tag": "group/testproject:tag-1",
+								"name_ref":       "testproject:tag-1@sha256:abcdef1234567890",
+								"name_tag":       "testproject:tag-1",
+							},
+						},
+					},
+				},
+			},
+			Raw: []*chart.File{
+				{
+					Name: "values.yaml",
+					Data: []byte(`
+werf:
+  image:
+    myapp: registry.example.com/group/testproject:tag-1
+  repo: registry.example.com/group/testproject
+global:
+  werf:
+    repo: registry.example.com/group/testproject
+    images:
+      myapp:
+        registry: registry.example.com
+        namespace: group
+        name: testproject
+        tag: tag-1
+        digest: "sha256:abcdef1234567890"
+        tag_digest: "tag-1@sha256:abcdef1234567890"
+        image: registry.example.com/group/testproject
+        repository: group/testproject
+        ref: "registry.example.com/group/testproject:tag-1@sha256:abcdef1234567890"
+        ref_tag: "registry.example.com/group/testproject:tag-1"
+        repository_ref: "group/testproject:tag-1@sha256:abcdef1234567890"
+        repository_tag: "group/testproject:tag-1"
+        name_ref: "testproject:tag-1@sha256:abcdef1234567890"
+        name_tag: "testproject:tag-1"
+`),
+				},
+			},
+		}
+
+		bundlesRegistryClient := NewBundlesRegistryClientStub()
+		registryClient := NewDockerRegistryStub()
+
+		fromAddr, err := bundles_registry.ParseAddr("registry.example.com/group/testproject:1.2.3")
+		Expect(err).NotTo(HaveOccurred())
+		from := NewRemoteBundle(fromAddr.RegistryAddress, bundlesRegistryClient, registryClient)
+		bundlesRegistryClient.StubCharts[fromAddr.RegistryAddress.FullName()] = ch
+		registryClient.ImagesByReference["registry.example.com/group/testproject:tag-1"] = []byte(`image-1-bytes`)
+
+		toAddr, err := bundles_registry.ParseAddr("registry2.example.com/org/newproject:4.5.6")
+		Expect(err).NotTo(HaveOccurred())
+		to := NewRemoteBundle(toAddr.RegistryAddress, bundlesRegistryClient, registryClient)
+
+		Expect(from.CopyTo(ctx, to, copyToOptions{})).To(Succeed())
+
+		newCh := bundlesRegistryClient.StubCharts[toAddr.RegistryAddress.FullName()]
+		Expect(newCh).NotTo(BeNil())
+
+		globalVals := newCh.Values["global"].(map[string]interface{})
+		globalWerfVals := globalVals["werf"].(map[string]interface{})
+		Expect(globalWerfVals["repo"]).To(Equal("registry2.example.com/org/newproject"))
+
+		imagesVals := globalWerfVals["images"].(map[string]interface{})
+		myappVals := imagesVals["myapp"].(map[string]interface{})
+
+		Expect(myappVals["registry"]).To(Equal("registry2.example.com"))
+		Expect(myappVals["namespace"]).To(Equal("org"))
+		Expect(myappVals["name"]).To(Equal("newproject"))
+		Expect(myappVals["tag"]).To(Equal("tag-1"))
+		Expect(myappVals["digest"]).To(Equal("sha256:abcdef1234567890"))
+		Expect(myappVals["tag_digest"]).To(Equal("tag-1@sha256:abcdef1234567890"))
+		Expect(myappVals["image"]).To(Equal("registry2.example.com/org/newproject"))
+		Expect(myappVals["repository"]).To(Equal("org/newproject"))
+		Expect(myappVals["ref"]).To(Equal("registry2.example.com/org/newproject:tag-1@sha256:abcdef1234567890"))
+		Expect(myappVals["ref_tag"]).To(Equal("registry2.example.com/org/newproject:tag-1"))
+		Expect(myappVals["repository_ref"]).To(Equal("org/newproject:tag-1@sha256:abcdef1234567890"))
+		Expect(myappVals["repository_tag"]).To(Equal("org/newproject:tag-1"))
+		Expect(myappVals["name_ref"]).To(Equal("newproject:tag-1@sha256:abcdef1234567890"))
+		Expect(myappVals["name_tag"]).To(Equal("newproject:tag-1"))
+	})
 })
 
 type BundleArchiveStubReader struct {

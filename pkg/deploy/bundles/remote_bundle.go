@@ -89,6 +89,8 @@ func (bundle *RemoteBundle) CopyFromArchive(ctx context.Context, fromArchive *Bu
 		return fmt.Errorf("unable to read chart from the bundle archive %q: %w", fromArchive.Reader.String(), err)
 	}
 
+	newImageRefs := make(map[string]string)
+
 	if err := logboek.Context(ctx).LogProcess("Copy images from bundle archive").DoError(func() error {
 		if werfVals, ok := ch.Values["werf"].(map[string]interface{}); ok {
 			if imageVals, ok := werfVals["image"].(map[string]interface{}); ok {
@@ -113,6 +115,7 @@ func (bundle *RemoteBundle) CopyFromArchive(ctx context.Context, fromArchive *Bu
 						}
 
 						newImageVals[imageName] = ref.FullName()
+						newImageRefs[imageName] = ref.FullName()
 					} else {
 						return fmt.Errorf("unexpected value .Values.werf.image.%s=%v", imageName, v)
 					}
@@ -126,6 +129,10 @@ func (bundle *RemoteBundle) CopyFromArchive(ctx context.Context, fromArchive *Bu
 
 		return nil
 	}); err != nil {
+		return err
+	}
+
+	if err := updateGlobalWerfValues(ch.Values, bundle.RegistryAddress.Repo, newImageRefs); err != nil {
 		return err
 	}
 
@@ -161,6 +168,8 @@ func (bundle *RemoteBundle) CopyFromRemote(ctx context.Context, fromRemote *Remo
 		logboek.Context(ctx).Debug().LogF("Values before change (%v):\n%s\n---\n", err, d)
 	}
 
+	newImageRefs := make(map[string]string)
+
 	if err := logboek.Context(ctx).LogProcess("Copy images from remote bundle").DoError(func() error {
 		if werfVals, ok := ch.Values["werf"].(map[string]interface{}); ok {
 			if imageVals, ok := werfVals["image"].(map[string]interface{}); ok {
@@ -186,6 +195,7 @@ func (bundle *RemoteBundle) CopyFromRemote(ctx context.Context, fromRemote *Remo
 						}
 
 						newImageVals[imageName] = ref.FullName()
+						newImageRefs[imageName] = ref.FullName()
 					} else {
 						return fmt.Errorf("unexpected value .Values.werf.image.%s=%v", imageName, v)
 					}
@@ -198,6 +208,10 @@ func (bundle *RemoteBundle) CopyFromRemote(ctx context.Context, fromRemote *Remo
 		}
 		return nil
 	}); err != nil {
+		return err
+	}
+
+	if err := updateGlobalWerfValues(ch.Values, bundle.RegistryAddress.Repo, newImageRefs); err != nil {
 		return err
 	}
 
