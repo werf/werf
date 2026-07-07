@@ -73,29 +73,42 @@ func buildPlatform(tag name.Tag, platform v1.Platform, embedRoot string) error {
 	tarPath := filepath.Join(platformDir, "werf-stapel-toolchain.tar.gz")
 	sha256Path := filepath.Join(platformDir, "werf-stapel-toolchain.tar.sha256")
 
-	tarFile, err := os.Create(tarPath)
+	tarTmpFile, err := os.CreateTemp(platformDir, "werf-stapel-toolchain.tar.gz.*.tmp")
 	if err != nil {
-		return fmt.Errorf("create %s: %w", tarPath, err)
+		return fmt.Errorf("create temp file in %s: %w", platformDir, err)
 	}
-	defer tarFile.Close()
+	tarTmpPath := tarTmpFile.Name()
+	defer os.Remove(tarTmpPath)
 
 	hasher := sha256.New()
-	gzWriter := gzip.NewWriter(tarFile)
+	gzWriter := gzip.NewWriter(tarTmpFile)
 
 	if err := tarball.Write(tag, img, io.MultiWriter(gzWriter, hasher)); err != nil {
+		tarTmpFile.Close()
 		return fmt.Errorf("write tarball: %w", err)
 	}
 
 	if err := gzWriter.Close(); err != nil {
+		tarTmpFile.Close()
 		return fmt.Errorf("close gzip writer: %w", err)
 	}
-	if err := tarFile.Close(); err != nil {
-		return fmt.Errorf("close %s: %w", tarPath, err)
+	if err := tarTmpFile.Close(); err != nil {
+		return fmt.Errorf("close %s: %w", tarTmpPath, err)
 	}
 
 	decompressedSha256 := hex.EncodeToString(hasher.Sum(nil))
-	if err := os.WriteFile(sha256Path, []byte(decompressedSha256+"\n"), 0o644); err != nil {
-		return fmt.Errorf("write %s: %w", sha256Path, err)
+
+	sha256TmpPath := sha256Path + ".tmp"
+	if err := os.WriteFile(sha256TmpPath, []byte(decompressedSha256+"\n"), 0o644); err != nil {
+		return fmt.Errorf("write %s: %w", sha256TmpPath, err)
+	}
+	defer os.Remove(sha256TmpPath)
+
+	if err := os.Rename(tarTmpPath, tarPath); err != nil {
+		return fmt.Errorf("rename %s to %s: %w", tarTmpPath, tarPath, err)
+	}
+	if err := os.Rename(sha256TmpPath, sha256Path); err != nil {
+		return fmt.Errorf("rename %s to %s: %w", sha256TmpPath, sha256Path, err)
 	}
 
 	fmt.Printf("Embedded stapel for %s/%s (sha256 %s)\n", platform.OS, platform.Architecture, decompressedSha256)
