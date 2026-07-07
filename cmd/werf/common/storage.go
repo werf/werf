@@ -72,15 +72,20 @@ func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfi
 		return &manager.StorageManager{
 			ProjectName:                c.ProjectName,
 			StagesStorage:              stagesStorage,
-			FinalStagesStorage:         nil,
+			FinalImageStorage:          nil,
+			ImagesStorage:              nil,
 			CacheStagesStorageList:     nil,
 			SecondaryStagesStorageList: nil,
 		}, nil
 	}
 
-	finalStagesStorage, err := GetOptionalFinalStagesStorage(ctx, c.ContainerBackend, c.CmdData)
+	finalImageStorage, err := GetOptionalFinalImageStorage(ctx, c.ContainerBackend, c.CmdData)
 	if err != nil {
 		return nil, fmt.Errorf("error get final stages storage: %w", err)
+	}
+	imagesStorage, err := GetOptionalImagesStorage(ctx, c.ContainerBackend, c.CmdData)
+	if err != nil {
+		return nil, fmt.Errorf("error get images storage: %w", err)
 	}
 
 	secondaryStagesStorageList, err := GetSecondaryStagesStorageList(ctx, stagesStorage, c.ContainerBackend, c.CmdData)
@@ -95,7 +100,7 @@ func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfi
 	if err != nil {
 		return nil, fmt.Errorf("error get cache-to storage list: %w", err)
 	}
-	metaStagesStorage, err := GetMetaStagesStorage(ctx, c.ContainerBackend, c.CmdData, stagesStorage)
+	metaStorage, err := GetMetaStorage(ctx, c.ContainerBackend, c.CmdData, stagesStorage)
 	if err != nil {
 		return nil, fmt.Errorf("error get meta stages storage: %w", err)
 	}
@@ -103,8 +108,9 @@ func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfi
 		ProjectName: c.ProjectName,
 
 		StagesStorage:              stagesStorage,
-		MetaStagesStorage:          metaStagesStorage,
-		FinalStagesStorage:         finalStagesStorage,
+		MetaStorage:                metaStorage,
+		FinalImageStorage:          finalImageStorage,
+		ImagesStorage:              imagesStorage,
 		CacheStagesStorageList:     cacheStagesStorageList,
 		CacheStagesWriteList:       cacheStagesWriteList,
 		SecondaryStagesStorageList: secondaryStagesStorageList,

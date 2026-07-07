@@ -59,7 +59,7 @@ func (m *StorageManager) copyStageFromLocalStorage(ctx context.Context, src *sto
 		return nil, fmt.Errorf("unable to store stage %s into the stages storage %s: %w", stageID.String(), dest.String(), err)
 	}
 
-	if err := storeStageDescIntoLocalManifestCache(ctx, m.ProjectName, stageID, dest, ConvertStageDescForStagesStorage(newImg.GetStageDesc(), dest)); err != nil {
+	if err := storeStageDescIntoLocalManifestCache(ctx, m.ProjectName, stageID, dest, ConvertStageDescForStagesStorage(m.ProjectName, newImg.GetStageDesc(), dest)); err != nil {
 		return nil, fmt.Errorf("error storing stage %s description into local manifest cache: %w", destImageName, err)
 	}
 	if err := lrumeta.CommonLRUImagesCache.AccessImage(ctx, destImageName); err != nil {

@@ -32,7 +32,9 @@ type fakeSM struct {
 	meta *fakeMetaStorage
 }
 
-func (f *fakeSM) GetMetaStagesStorage() storage.PrimaryStagesStorage { return f.meta }
+func (f *fakeSM) GetMetaStorage() storage.PrimaryStagesStorage { return f.meta }
+
+func (f *fakeSM) GetImagesStorage() storage.StagesStorage { return nil }
 
 type fakeGit struct{}
 

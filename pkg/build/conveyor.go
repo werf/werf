@@ -492,7 +492,7 @@ func (c *Conveyor) GetImageInfoGettersWithOpts(opts imagePkg.InfoGetterOptions) 
 			}
 		}
 
-		if _, isLocal := c.StorageManager.GetStagesStorage().(*storage.LocalStagesStorage); !isLocal {
+		if _, isLocal := c.StorageManager.GetImagesStorage().(*storage.LocalStagesStorage); !isLocal {
 			if len(targetPlatforms) > 1 {
 				img := c.imagesTree.GetMultiplatformImage(name)
 

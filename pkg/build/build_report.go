@@ -242,7 +242,7 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 			}
 		}
 
-		if _, isLocal := phase.Conveyor.StorageManager.GetStagesStorage().(*storage.LocalStagesStorage); !isLocal {
+		if _, isLocal := phase.Conveyor.StorageManager.GetImagesStorage().(*storage.LocalStagesStorage); !isLocal {
 			if len(targetPlatforms) > 1 {
 				img := phase.Conveyor.imagesTree.GetMultiplatformImage(name)
 				if img == nil {

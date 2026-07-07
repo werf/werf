@@ -3,6 +3,7 @@ package manager
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/werf/werf/v2/pkg/image"
@@ -33,4 +34,34 @@ func TestAI_GenerateStageDescCreationTs_AvoidsNameCollision(t *testing.T) {
 
 	require.NotContains(t, occupiedNames, gotName, "must not collide with an occupied image name")
 	require.Greater(t, gotTs, baseTs+10, "must increment past all occupied timestamps")
+}
+
+func TestAI_GetCacheStagesStorageList_ReturnsReadList(t *testing.T) {
+	readStorage := storage.NewLocalStagesStorage(nil)
+	writeStorage := storage.NewLocalStagesStorage(nil)
+	m := &StorageManager{
+		CacheStagesStorageList: []storage.StagesStorage{readStorage},
+		CacheStagesWriteList:   []storage.StagesStorage{writeStorage},
+	}
+
+	got := m.GetCacheStagesStorageList()
+
+	require.Len(t, got, 1)
+	assert.Same(t, readStorage, got[0])
+	assert.NotSame(t, writeStorage, got[0])
+}
+
+func TestAI_GetCacheStagesWriteList_ReturnsWriteList(t *testing.T) {
+	readStorage := storage.NewLocalStagesStorage(nil)
+	writeStorage := storage.NewLocalStagesStorage(nil)
+	m := &StorageManager{
+		CacheStagesStorageList: []storage.StagesStorage{readStorage},
+		CacheStagesWriteList:   []storage.StagesStorage{writeStorage},
+	}
+
+	got := m.GetCacheStagesWriteList()
+
+	require.Len(t, got, 1)
+	assert.Same(t, writeStorage, got[0])
+	assert.NotSame(t, readStorage, got[0])
 }
