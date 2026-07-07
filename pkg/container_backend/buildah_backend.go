@@ -35,8 +35,10 @@ import (
 )
 
 type BuildahBackend struct {
-	buildah        buildah.Buildah
-	pulledImageIDs sync.Map
+	buildah          buildah.Buildah
+	pulledImageIDs   sync.Map
+	pullMutexes      map[string]*sync.Mutex
+	pullMutexesGuard sync.Mutex
 	BuildahBackendOptions
 }
 
@@ -45,7 +47,24 @@ type BuildahBackendOptions struct {
 }
 
 func NewBuildahBackend(buildah buildah.Buildah, opts BuildahBackendOptions) *BuildahBackend {
-	return &BuildahBackend{buildah: buildah, BuildahBackendOptions: opts}
+	return &BuildahBackend{
+		buildah:               buildah,
+		pullMutexes:           map[string]*sync.Mutex{},
+		BuildahBackendOptions: opts,
+	}
+}
+
+func (backend *BuildahBackend) getPullMutex(ref string) *sync.Mutex {
+	backend.pullMutexesGuard.Lock()
+	defer backend.pullMutexesGuard.Unlock()
+
+	m, ok := backend.pullMutexes[ref]
+	if !ok {
+		m = &sync.Mutex{}
+		backend.pullMutexes[ref] = m
+	}
+
+	return m
 }
 
 type pulledImageKey struct {
@@ -795,6 +814,14 @@ func (backend *BuildahBackend) Rmi(ctx context.Context, ref string, opts RmiOpts
 }
 
 func (backend *BuildahBackend) Pull(ctx context.Context, ref string, opts PullOpts) error {
+	// libimage pulls into shared containers storage and then looks the image up by
+	// name right after copying it (libimage/pull.go). Concurrent pulls of the same
+	// ref race on that storage name and intermittently fail with "image not known".
+	// Serialize pulls per ref so that different base images still pull in parallel.
+	mu := backend.getPullMutex(ref)
+	mu.Lock()
+	defer mu.Unlock()
+
 	var logWriter io.Writer
 	if logboek.Context(ctx).Info().IsAccepted() {
 		logWriter = logboek.Context(ctx).OutStream()
