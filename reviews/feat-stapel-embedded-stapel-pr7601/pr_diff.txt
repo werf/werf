@@ -1,0 +1,523 @@
+diff --git a/.gitignore b/.gitignore
+index 996f407261..51fe65c3f5 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -16,6 +16,8 @@ cmd/werf/werf
+ /stapel/*/omnibus/vendor
+ /stapel/*/omnibus/.bundle
+ /stapel/*/werf-stapel-toolchain.tar
++/pkg/stapel/embed/*/*/werf-stapel-toolchain.tar.gz
++/pkg/stapel/embed/*/*/werf-stapel-toolchain.tar.sha256
+ 
+ /pkg/build/builder/ansible/pylogger.h
+ /pkg/build/builder/ansible/pylogger.so
+diff --git a/Taskfile.dist.yaml b/Taskfile.dist.yaml
+index d71784a562..3f8ef42703 100644
+--- a/Taskfile.dist.yaml
++++ b/Taskfile.dist.yaml
+@@ -40,9 +40,10 @@ vars:
+ tasks:
+   format:
+     desc: "Run all code formatters."
+-    deps:
+-      - _remote-lint:format:gci
+-      - _remote-lint:format:gofumpt
++    cmds:
++      - task: stapel:embed
++      - task: _remote-lint:format:gci
++      - task: _remote-lint:format:gofumpt
+ 
+   lint:golangci-lint:go:
+     desc: 'Lint with golangci-lint without cgo. Important vars: "golangciPaths", "golangciLintVersion".'
+@@ -77,8 +78,9 @@ tasks:
+ 
+   lint:
+     desc: "Run all linters."
+-    deps:
+-      - lint:golangci-lint
++    cmds:
++      - task: stapel:embed
++      - task: lint:golangci-lint
+ 
+   _build-and-lint:
+     deps:
+@@ -90,7 +92,15 @@ tasks:
+       - task: format
+       - task: _build-and-lint
+ 
++  stapel:embed:
++    desc: "Generate embedded stapel image tarballs for linux/amd64 and linux/arm64."
++    run: once
++    cmds:
++      - env -u GOOS -u GOARCH STAPEL_VERSION="$(sed -n 's/.*VERSION *= *"\(.*\)"/\1/p' pkg/stapel/stapel.go | head -1)" go run ./cmd/embed-stapel
++
+   _build:cgo:dev: &build_cgo_dev
++    deps:
++      - stapel:embed
+     cmds:
+       - go build {{if eq .raceDetectorEnabled "true" }}-race{{end}} -o "{{.outputDir | default (printf "./build/%s-%s" .targetOS .targetArch)}}/werf{{if (eq .targetOS "windows")}}.exe{{end}}"
+         -compiler gc -ldflags="{{.cgoLDFlags}}" -tags="{{.cgoTags}}" {{.extraGoBuildArgs}} {{.CLI_ARGS}} {{.pkg | default .package}}
+@@ -109,6 +119,8 @@ tasks:
+         -compiler gc -ldflags="{{.cgoLDFlags}}" -tags="{{.cgoTags}}" {{.extraGoBuildArgs}} {{.CLI_ARGS}} {{.pkg | default .package}}
+ 
+   _build:go:dev: &build_go_dev
++    deps:
++      - stapel:embed
+     cmds:
+       - go build {{if eq .raceDetectorEnabled "true" }}-race{{end}} -o "{{.outputDir | default (printf "./build/%s-%s" .targetOS .targetArch)}}/werf{{if (eq .targetOS "windows")}}.exe{{end}}"
+         -ldflags="{{.goLDFlags}}" -tags="{{.goTags}}" {{.extraGoBuildArgs}} {{.CLI_ARGS}} {{.pkg | default .package}}
+diff --git a/cmd/embed-stapel/main.go b/cmd/embed-stapel/main.go
+new file mode 100644
+index 0000000000..c0395352da
+--- /dev/null
++++ b/cmd/embed-stapel/main.go
+@@ -0,0 +1,103 @@
++package main
++
++import (
++	"compress/gzip"
++	"crypto/sha256"
++	"encoding/hex"
++	"fmt"
++	"io"
++	"os"
++	"path/filepath"
++
++	"github.com/google/go-containerregistry/pkg/crane"
++	"github.com/google/go-containerregistry/pkg/name"
++	v1 "github.com/google/go-containerregistry/pkg/v1"
++	"github.com/google/go-containerregistry/pkg/v1/tarball"
++)
++
++var platforms = []v1.Platform{
++	{OS: "linux", Architecture: "amd64"},
++	{OS: "linux", Architecture: "arm64"},
++}
++
++func main() {
++	if err := run(); err != nil {
++		fmt.Fprintf(os.Stderr, "embed-stapel: %v\n", err)
++		os.Exit(1)
++	}
++}
++
++func run() error {
++	imageRef := os.Getenv("STAPEL_IMAGE")
++	if imageRef == "" {
++		imageRef = "registry.werf.io/werf/stapel"
++	}
++
++	version := os.Getenv("STAPEL_VERSION")
++	if version == "" {
++		return fmt.Errorf("STAPEL_VERSION is required")
++	}
++
++	embedRoot := os.Getenv("STAPEL_EMBED_ROOT")
++	if embedRoot == "" {
++		embedRoot = filepath.Join("pkg", "stapel", "embed")
++	}
++
++	taggedRef := fmt.Sprintf("%s:%s", imageRef, version)
++
++	tag, err := name.NewTag(taggedRef)
++	if err != nil {
++		return fmt.Errorf("parse image tag %q: %w", taggedRef, err)
++	}
++
++	for _, platform := range platforms {
++		if err := buildPlatform(tag, platform, embedRoot); err != nil {
++			return fmt.Errorf("build %s/%s: %w", platform.OS, platform.Architecture, err)
++		}
++	}
++
++	return nil
++}
++
++func buildPlatform(tag name.Tag, platform v1.Platform, embedRoot string) error {
++	platformDir := filepath.Join(embedRoot, platform.OS, platform.Architecture)
++	if err := os.MkdirAll(platformDir, 0o755); err != nil {
++		return fmt.Errorf("create dir %s: %w", platformDir, err)
++	}
++
++	img, err := crane.Pull(tag.String(), crane.WithPlatform(&platform))
++	if err != nil {
++		return fmt.Errorf("pull image: %w", err)
++	}
++
++	tarPath := filepath.Join(platformDir, "werf-stapel-toolchain.tar.gz")
++	sha256Path := filepath.Join(platformDir, "werf-stapel-toolchain.tar.sha256")
++
++	tarFile, err := os.Create(tarPath)
++	if err != nil {
++		return fmt.Errorf("create %s: %w", tarPath, err)
++	}
++	defer tarFile.Close()
++
++	hasher := sha256.New()
++	gzWriter := gzip.NewWriter(tarFile)
++
++	if err := tarball.Write(tag, img, io.MultiWriter(gzWriter, hasher)); err != nil {
++		return fmt.Errorf("write tarball: %w", err)
++	}
++
++	if err := gzWriter.Close(); err != nil {
++		return fmt.Errorf("close gzip writer: %w", err)
++	}
++	if err := tarFile.Close(); err != nil {
++		return fmt.Errorf("close %s: %w", tarPath, err)
++	}
++
++	decompressedSha256 := hex.EncodeToString(hasher.Sum(nil))
++	if err := os.WriteFile(sha256Path, []byte(decompressedSha256+"\n"), 0o644); err != nil {
++		return fmt.Errorf("write %s: %w", sha256Path, err)
++	}
++
++	fmt.Printf("Embedded stapel for %s/%s (sha256 %s)\n", platform.OS, platform.Architecture, decompressedSha256)
++	return nil
++}
+diff --git a/pkg/stapel/container.go b/pkg/stapel/container.go
+index 7417f9ab96..68c7e18267 100644
+--- a/pkg/stapel/container.go
++++ b/pkg/stapel/container.go
+@@ -55,18 +55,13 @@ func (c *container) Create(ctx context.Context) error {
+ 				}
+ 
+ 				if !platforms.Only(platforms.Normalize(desiredSpec)).Match(actualSpec) {
+-					if err := docker.CliPullWithRetries(ctx, "--platform", targetPlatform, c.ImageName); err != nil {
++					if err := acquireImage(ctx, c.ImageName, targetPlatform); err != nil {
+ 						return err
+ 					}
+ 				}
+ 			}
+ 		} else {
+-			pullArgs := []string{c.ImageName}
+-			if targetPlatform != "" {
+-				pullArgs = append([]string{"--platform", targetPlatform}, pullArgs...)
+-			}
+-
+-			if err := docker.CliPullWithRetries(ctx, pullArgs...); err != nil {
++			if err := acquireImage(ctx, c.ImageName, targetPlatform); err != nil {
+ 				return err
+ 			}
+ 		}
+@@ -75,6 +70,21 @@ func (c *container) Create(ctx context.Context) error {
+ 	})
+ }
+ 
++func acquireImage(ctx context.Context, imageName, targetPlatform string) error {
++	if isDefaultImageRef() {
++		if _, ok := embeddedImageForPlatform(targetPlatform); ok {
++			return loadEmbeddedImage(ctx, targetPlatform)
++		}
++	}
++
++	pullArgs := []string{imageName}
++	if targetPlatform != "" {
++		pullArgs = append([]string{"--platform", targetPlatform}, pullArgs...)
++	}
++
++	return docker.CliPullWithRetries(ctx, pullArgs...)
++}
++
+ func stapelImageLockName(imageName string) string {
+ 	return fmt.Sprintf("stapel.image.%s", strings.NewReplacer("/", "_", ":", "_", "@", "_").Replace(imageName))
+ }
+diff --git a/pkg/stapel/embedded.go b/pkg/stapel/embedded.go
+new file mode 100644
+index 0000000000..82625b4020
+--- /dev/null
++++ b/pkg/stapel/embedded.go
+@@ -0,0 +1,103 @@
++package stapel
++
++import (
++	"bytes"
++	"compress/gzip"
++	"context"
++	"crypto/sha256"
++	_ "embed"
++	"encoding/hex"
++	"fmt"
++	"io"
++	"strings"
++
++	"github.com/containerd/containerd/platforms"
++
++	"github.com/werf/werf/v2/pkg/container_backend/thirdparty/platformutil"
++	"github.com/werf/werf/v2/pkg/docker"
++)
++
++//go:embed embed/linux/amd64/werf-stapel-toolchain.tar.gz
++var embeddedLinuxAmd64 []byte
++
++//go:embed embed/linux/amd64/werf-stapel-toolchain.tar.sha256
++var embeddedLinuxAmd64Sha256 string
++
++//go:embed embed/linux/arm64/werf-stapel-toolchain.tar.gz
++var embeddedLinuxArm64 []byte
++
++//go:embed embed/linux/arm64/werf-stapel-toolchain.tar.sha256
++var embeddedLinuxArm64Sha256 string
++
++type embeddedImage struct {
++	gzipData       []byte
++	expectedSha256 string
++}
++
++func embeddedImageForPlatform(targetPlatform string) (embeddedImage, bool) {
++	normalized, err := normalizeEmbeddedPlatform(targetPlatform)
++	if err != nil {
++		return embeddedImage{}, false
++	}
++
++	switch normalized {
++	case "linux/amd64":
++		return embeddedImage{gzipData: embeddedLinuxAmd64, expectedSha256: strings.TrimSpace(embeddedLinuxAmd64Sha256)}, true
++	case "linux/arm64":
++		return embeddedImage{gzipData: embeddedLinuxArm64, expectedSha256: strings.TrimSpace(embeddedLinuxArm64Sha256)}, true
++	default:
++		return embeddedImage{}, false
++	}
++}
++
++func normalizeEmbeddedPlatform(targetPlatform string) (string, error) {
++	if targetPlatform == "" {
++		targetPlatform = docker.GetDefaultPlatform()
++	}
++
++	spec, err := platformutil.ParsePlatform(targetPlatform)
++	if err != nil {
++		return "", fmt.Errorf("parse target platform %q: %w", targetPlatform, err)
++	}
++
++	return platforms.Format(platforms.Normalize(spec)), nil
++}
++
++func loadEmbeddedImage(ctx context.Context, targetPlatform string) error {
++	img, ok := embeddedImageForPlatform(targetPlatform)
++	if !ok {
++		return fmt.Errorf("no embedded stapel image for platform %q", targetPlatform)
++	}
++
++	tarData, err := decompressAndVerify(img.gzipData, img.expectedSha256)
++	if err != nil {
++		return err
++	}
++
++	if _, err := docker.CliLoadFromStream(ctx, bytes.NewReader(tarData)); err != nil {
++		return fmt.Errorf("load embedded stapel image: %w", err)
++	}
++
++	return nil
++}
++
++func decompressAndVerify(gzipData []byte, expectedSha256 string) ([]byte, error) {
++	gzReader, err := gzip.NewReader(bytes.NewReader(gzipData))
++	if err != nil {
++		return nil, fmt.Errorf("init gzip reader for embedded stapel image: %w", err)
++	}
++	defer gzReader.Close()
++
++	tarData, err := io.ReadAll(gzReader)
++	if err != nil {
++		return nil, fmt.Errorf("decompress embedded stapel image: %w", err)
++	}
++
++	sum := sha256.Sum256(tarData)
++	actualSha256 := hex.EncodeToString(sum[:])
++	if actualSha256 != expectedSha256 {
++		return nil, fmt.Errorf("embedded stapel image integrity check failed: expected sha256 %s, got %s", expectedSha256, actualSha256)
++	}
++
++	return tarData, nil
++}
+diff --git a/pkg/stapel/embedded_ai_test.go b/pkg/stapel/embedded_ai_test.go
+new file mode 100644
+index 0000000000..147022d0ff
+--- /dev/null
++++ b/pkg/stapel/embedded_ai_test.go
+@@ -0,0 +1,125 @@
++package stapel
++
++import (
++	"bytes"
++	"compress/gzip"
++	"crypto/sha256"
++	"encoding/hex"
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++	"github.com/stretchr/testify/require"
++)
++
++func TestAI_embeddedImageForPlatform(t *testing.T) {
++	tests := []struct {
++		name           string
++		targetPlatform string
++		wantOK         bool
++	}{
++		{name: "linux/amd64", targetPlatform: "linux/amd64", wantOK: true},
++		{name: "linux/arm64", targetPlatform: "linux/arm64", wantOK: true},
++		{name: "windows/amd64", targetPlatform: "windows/amd64", wantOK: false},
++		{name: "linux/arm/v7", targetPlatform: "linux/arm/v7", wantOK: false},
++		{name: "garbage", targetPlatform: "not-a-platform/x/y/z", wantOK: false},
++	}
++
++	for _, tt := range tests {
++		t.Run(tt.name, func(t *testing.T) {
++			img, ok := embeddedImageForPlatform(tt.targetPlatform)
++			assert.Equal(t, tt.wantOK, ok)
++			if tt.wantOK {
++				assert.NotEmpty(t, img.gzipData)
++				assert.NotEmpty(t, img.expectedSha256)
++			}
++		})
++	}
++}
++
++func TestAI_normalizeEmbeddedPlatform(t *testing.T) {
++	tests := []struct {
++		name           string
++		targetPlatform string
++		want           string
++		wantErr        bool
++	}{
++		{name: "amd64", targetPlatform: "linux/amd64", want: "linux/amd64"},
++		{name: "x86_64 alias", targetPlatform: "linux/x86_64", want: "linux/amd64"},
++		{name: "aarch64 alias", targetPlatform: "linux/aarch64", want: "linux/arm64"},
++		{name: "invalid", targetPlatform: "///", wantErr: true},
++	}
++
++	for _, tt := range tests {
++		t.Run(tt.name, func(t *testing.T) {
++			got, err := normalizeEmbeddedPlatform(tt.targetPlatform)
++			if tt.wantErr {
++				require.Error(t, err)
++				return
++			}
++			require.NoError(t, err)
++			assert.Equal(t, tt.want, got)
++		})
++	}
++}
++
++func TestAI_decompressAndVerify_valid(t *testing.T) {
++	payload := []byte("stapel tar payload")
++
++	var buf bytes.Buffer
++	gw := gzip.NewWriter(&buf)
++	_, err := gw.Write(payload)
++	require.NoError(t, err)
++	require.NoError(t, gw.Close())
++
++	sum := sha256.Sum256(payload)
++	expected := hex.EncodeToString(sum[:])
++
++	got, err := decompressAndVerify(buf.Bytes(), expected)
++	require.NoError(t, err)
++	assert.Equal(t, payload, got)
++}
++
++func TestAI_decompressAndVerify_mismatch(t *testing.T) {
++	payload := []byte("stapel tar payload")
++
++	var buf bytes.Buffer
++	gw := gzip.NewWriter(&buf)
++	_, err := gw.Write(payload)
++	require.NoError(t, err)
++	require.NoError(t, gw.Close())
++
++	_, err = decompressAndVerify(buf.Bytes(), "0000000000000000000000000000000000000000000000000000000000000000")
++	require.Error(t, err)
++	assert.Contains(t, err.Error(), "integrity check failed")
++}
++
++func TestAI_decompressAndVerify_invalidGzip(t *testing.T) {
++	_, err := decompressAndVerify([]byte("not gzip data"), "deadbeef")
++	require.Error(t, err)
++	assert.Contains(t, err.Error(), "gzip")
++}
++
++func TestAI_isDefaultImageRef(t *testing.T) {
++	t.Setenv("WERF_STAPEL_IMAGE_NAME", "")
++	t.Setenv("WERF_STAPEL_IMAGE_VERSION", "")
++	assert.True(t, isDefaultImageRef())
++
++	t.Setenv("WERF_STAPEL_IMAGE_NAME", "custom.registry/stapel")
++	assert.False(t, isDefaultImageRef())
++
++	t.Setenv("WERF_STAPEL_IMAGE_NAME", "")
++	t.Setenv("WERF_STAPEL_IMAGE_VERSION", "9.9.9")
++	assert.False(t, isDefaultImageRef())
++}
++
++func TestAI_embeddedArtifactsMatchSha256(t *testing.T) {
++	for _, platform := range []string{"linux/amd64", "linux/arm64"} {
++		t.Run(platform, func(t *testing.T) {
++			img, ok := embeddedImageForPlatform(platform)
++			require.True(t, ok)
++
++			_, err := decompressAndVerify(img.gzipData, img.expectedSha256)
++			require.NoError(t, err)
++		})
++	}
++}
+diff --git a/pkg/stapel/stapel.go b/pkg/stapel/stapel.go
+index 5eef8ff573..7a2046c438 100644
+--- a/pkg/stapel/stapel.go
++++ b/pkg/stapel/stapel.go
+@@ -13,7 +13,7 @@ import (
+ )
+ 
+ const (
+-	VERSION              = "0.7.0"
++	VERSION              = "0.7.1"
+ 	IMAGE                = "registry.werf.io/werf/stapel"
+ 	CONTAINER_MOUNT_ROOT = "/.werf"
+ )
+@@ -34,6 +34,10 @@ func getImage() string {
+ 	return image
+ }
+ 
++func isDefaultImageRef() bool {
++	return os.Getenv("WERF_STAPEL_IMAGE_NAME") == "" && os.Getenv("WERF_STAPEL_IMAGE_VERSION") == ""
++}
++
+ func ImageName() string {
+ 	return fmt.Sprintf("%s:%s", getImage(), getVersion())
+ }
+diff --git a/scripts/stapel/DEVELOPMENT.md b/scripts/stapel/DEVELOPMENT.md
+index fc063959c7..5eb59548c1 100644
+--- a/scripts/stapel/DEVELOPMENT.md
++++ b/scripts/stapel/DEVELOPMENT.md
+@@ -60,6 +60,29 @@ Verify manifest list:
+ docker buildx imagetools inspect registry.werf.io/werf/stapel:dev
+ ```
+ 
++## Embedded stapel image
++
++The stapel image is embedded into every werf binary so the docker backend loads it from the binary instead of pulling it from the registry at runtime. Both `linux/amd64` and `linux/arm64` variants are embedded into every werf binary (including darwin/windows builds), because the docker daemon always runs linux containers and werf may target a platform other than the host.
++
++Embed artifacts are generated by `cmd/embed-stapel`, which pulls the published `registry.werf.io/werf/stapel:<VERSION>` image per platform using `go-containerregistry` (no docker daemon required) and writes a docker-load-compatible gzip tar plus its decompressed-tar sha256 into `pkg/stapel/embed/<os>/<arch>/`. These files are gitignored and regenerated on every build.
++
++The `stapel:embed` task runs automatically before any `task build*` target (it is a dependency of the build tasks), so a normal build always regenerates the artifacts:
++
++```shell
++task build
++```
++
++To regenerate the artifacts manually:
++
++```shell
++task stapel:embed
++```
++
+ ## Release notes for stapel version bumps
+ 
+-After publishing a new stapel tag, update `VERSION` in `pkg/stapel/stapel.go` and rebuild werf binaries.
++1. Update `stapel/Dockerfile` as needed.
++2. Build and publish the new stapel image: `STAPEL_TAG=<new-version> scripts/stapel/build.sh`.
++3. Update `VERSION` in `pkg/stapel/stapel.go` to `<new-version>`.
++4. Rebuild werf binaries — `task build` regenerates the embedded artifacts from the newly published tag.
++
++The embedded artifacts are always tagged with the `VERSION` value from `pkg/stapel/stapel.go`, so the loaded image satisfies the runtime `ImageExist` check. If a custom image is requested via `WERF_STAPEL_IMAGE_NAME` / `WERF_STAPEL_IMAGE_VERSION`, or the target platform is not one of `linux/amd64` / `linux/arm64`, werf falls back to pulling the image from the registry.

@@ -56,6 +56,12 @@ func nativeMutationEligible(newConfig image.SpecConfig, baseConfig *v1.ConfigFil
 
 	base := baseConfig.Config
 
+	// docker create refuses images with no command ("no command specified"), so the native
+	// create+commit path can't handle a config whose effective Cmd and Entrypoint are both empty.
+	if len(newConfig.Cmd) == 0 && len(base.Cmd) == 0 && len(newConfig.Entrypoint) == 0 && len(base.Entrypoint) == 0 {
+		return false
+	}
+
 	if newConfig.Labels != nil && !isMapSuperset(newConfig.Labels, base.Labels) {
 		return false
 	}

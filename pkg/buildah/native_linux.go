@@ -850,9 +850,13 @@ func (b *NativeBuildah) MutateConfig(ctx context.Context, container string, newC
 		builder.SetMaintainer(newConfig.Author)
 	}
 
-	builder.ClearLabels()
-	for key, value := range newConfig.Labels {
-		builder.SetLabel(key, value)
+	// Labels/Volumes/ExposedPorts are replaced only when non-nil, matching UpdateConfigFile:
+	// a nil value keeps the base image's values (an additive content-tag mutation passes nil).
+	if newConfig.Labels != nil {
+		builder.ClearLabels()
+		for key, value := range newConfig.Labels {
+			builder.SetLabel(key, value)
+		}
 	}
 
 	builder.ClearEnv()
@@ -864,14 +868,18 @@ func (b *NativeBuildah) MutateConfig(ctx context.Context, container string, newC
 		builder.SetEnv(key, value)
 	}
 
-	builder.ClearVolumes()
-	for volume := range newConfig.Volumes {
-		builder.AddVolume(volume)
+	if newConfig.Volumes != nil {
+		builder.ClearVolumes()
+		for volume := range newConfig.Volumes {
+			builder.AddVolume(volume)
+		}
 	}
 
-	builder.ClearPorts()
-	for expose := range newConfig.ExposedPorts {
-		builder.SetPort(expose)
+	if newConfig.ExposedPorts != nil {
+		builder.ClearPorts()
+		for expose := range newConfig.ExposedPorts {
+			builder.SetPort(expose)
+		}
 	}
 
 	if newConfig.ClearUser {

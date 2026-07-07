@@ -11,6 +11,7 @@ import (
 var _ = Describe("nativeMutationEligible", func() {
 	base := func() *v1.ConfigFile {
 		return &v1.ConfigFile{Config: v1.Config{
+			Cmd:          []string{"/bin/sh"},
 			Labels:       map[string]string{"a": "1"},
 			Env:          []string{"FOO=bar"},
 			Volumes:      map[string]struct{}{"/data": {}},
@@ -70,5 +71,20 @@ var _ = Describe("nativeMutationEligible", func() {
 			Env:             []string{"FOO=bar"},
 			ClearWorkingDir: true,
 		}, false),
+	)
+
+	DescribeTable("declines when the resulting image has no command",
+		func(cfg image.SpecConfig, baseCfg *v1.ConfigFile, expected bool) {
+			Expect(nativeMutationEligible(cfg, baseCfg)).To(Equal(expected))
+		},
+		Entry("base commandless, config adds Cmd", image.SpecConfig{
+			Env: []string{"FOO=bar"}, Cmd: []string{"/bin/sh"},
+		}, &v1.ConfigFile{Config: v1.Config{Env: []string{"FOO=bar"}}}, true),
+		Entry("base has Entrypoint only", image.SpecConfig{
+			Env: []string{"FOO=bar"},
+		}, &v1.ConfigFile{Config: v1.Config{Env: []string{"FOO=bar"}, Entrypoint: []string{"/bin/app"}}}, true),
+		Entry("both commandless", image.SpecConfig{
+			Env: []string{"FOO=bar"},
+		}, &v1.ConfigFile{Config: v1.Config{Env: []string{"FOO=bar"}}}, false),
 	)
 })
