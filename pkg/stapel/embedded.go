@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/docker"
 )
 
@@ -46,14 +47,16 @@ func loadEmbeddedImage(ctx context.Context, targetPlatform string) error {
 		return fmt.Errorf("no embedded stapel image for platform %q", targetPlatform)
 	}
 
-	tarData, err := decompressAndVerify(img.gzipData, img.expectedSha256)
-	if err != nil {
-		return err
-	}
+	return logboek.Context(ctx).LogProcess("Loading embedded stapel image for %s", targetPlatform).DoError(func() error {
+		tarData, err := decompressAndVerify(img.gzipData, img.expectedSha256)
+		if err != nil {
+			return err
+		}
 
-	if _, err := docker.CliLoadFromStream(ctx, bytes.NewReader(tarData)); err != nil {
-		return fmt.Errorf("load embedded stapel image: %w", err)
-	}
+		if _, err := docker.CliLoadFromStream(ctx, bytes.NewReader(tarData)); err != nil {
+			return fmt.Errorf("load embedded stapel image: %w", err)
+		}
 
-	return nil
+		return nil
+	})
 }
