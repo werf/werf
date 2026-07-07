@@ -34,7 +34,7 @@ func TestSuite(t *testing.T) {
 var SuiteData struct {
 	suite_init.SuiteData
 	TestImplementation string
-	RegistryStorage      storage.RegistryStorage
+	RegistryStorage    storage.RegistryStorage
 	ContainerRegistry  docker_registry.Interface
 }
 

@@ -53,6 +53,7 @@ type StorageManagerInterface interface {
 	GetMetaStorage() storage.RegistryStorage
 	GetFinalImagesStorage() storage.RegistryStorage
 	GetImagesStorage() storage.RegistryStorage
+	GetCustomTagsStorage() storage.RegistryStorage
 	IsRemoteImagesStorage() bool
 	GetSecondaryStagesStorageList() []storage.RegistryStorage
 	GetCacheStagesStorageList() []storage.RegistryStorage
@@ -129,20 +130,6 @@ func RetryOnUnexpectedStagesStorageState(ctx context.Context, _ StorageManagerIn
 		backoff.WithNotify(notify),
 	)
 	return err
-}
-
-func NewStorageManager(projectName string, registryStorage storage.RegistryStorage, finalImagesStorage storage.RegistryStorage, secondaryStagesStorageList, cacheStagesStorageList []storage.RegistryStorage) *StorageManager {
-	return &StorageManager{
-		ProjectName: projectName,
-
-		Storages: Storages{
-			Stages:    registryStorage,
-			Final:     finalImagesStorage,
-			CacheFrom: cacheStagesStorageList,
-			CacheTo:   cacheStagesStorageList,
-			Secondary: secondaryStagesStorageList,
-		},
-	}
 }
 
 type StagesList struct {
@@ -224,15 +211,6 @@ func (m *StorageManager) LogRepositoriesUsed(ctx context.Context) {
 		imagesRepo = m.Storages.Images.Address()
 	}
 
-	// meta-repo has no dedicated :local mode: it either points at an explicit
-	// --meta-repo, or effectively co-locates with a remote --repo/primary. A
-	// bare :local fallback (no --repo, no --meta-repo) carries no information
-	// worth displaying.
-	metaRepo := "-"
-	if addr := m.GetMetaStorage().Address(); addr != storage.LocalStorageAddress {
-		metaRepo = addr
-	}
-
 	// cache-from and cache-to have no explicit read/write list under the
 	// --repo preset — stages are read from and written to the primary storage
 	// directly — so display the effective primary address rather than "-"
@@ -247,13 +225,14 @@ func (m *StorageManager) LogRepositoriesUsed(ctx context.Context) {
 	}
 
 	logboek.Context(ctx).Default().LogBlock("Repositories").Do(func() {
+		logboek.Context(ctx).Default().LogF("stages:      %s\n", m.Storages.Stages.Address())
 		logboek.Context(ctx).Default().LogF("images-repo: %s\n", imagesRepo)
 		if m.Storages.Final != nil {
 			logboek.Context(ctx).Default().LogF("final-repo:  %s\n", m.Storages.Final.Address())
 		}
 		logboek.Context(ctx).Default().LogF("cache-from:  %s\n", cacheFrom)
 		logboek.Context(ctx).Default().LogF("cache-to:    %s\n", cacheTo)
-		logboek.Context(ctx).Default().LogF("meta-repo:   %s\n", metaRepo)
+		logboek.Context(ctx).Default().LogF("meta-repo:   %s\n", m.GetMetaStorage().Address())
 	})
 }
 
@@ -263,6 +242,13 @@ func (m *StorageManager) GetFinalImagesStorage() storage.RegistryStorage {
 
 func (m *StorageManager) GetImagesStorage() storage.RegistryStorage {
 	return m.Storages.Images
+}
+
+// GetCustomTagsStorage returns the storage holding custom-tag alias images:
+// the final images storage when set, otherwise the content-tag images
+// storage. Matches the publish path so deletion targets the same repo.
+func (m *StorageManager) GetCustomTagsStorage() storage.RegistryStorage {
+	return m.Storages.CustomTags()
 }
 
 // IsRemoteImagesStorage reports whether the content-tag storage
@@ -1048,11 +1034,17 @@ func getStageDesc(ctx context.Context, projectName string, stageID image.StageID
 }
 
 func (m *StorageManager) GenerateStageDescCreationTs(digest string, stageDescSet image.StageDescSet) (string, int64) {
+	return GenerateStageDescCreationTsForStorage(m.Storages.Stages, m.ProjectName, digest, stageDescSet)
+}
+
+// GenerateStageDescCreationTsForStorage picks a creation timestamp whose
+// resulting image name does not collide with any stage already in the set.
+func GenerateStageDescCreationTsForStorage(registryStorage storage.RegistryStorage, projectName, digest string, stageDescSet image.StageDescSet) (string, int64) {
 	timeNow := time.Now().UTC()
 	creationTs := timeNow.Unix()*1000 + int64(timeNow.Nanosecond()/1000000)
 
 	for {
-		imageName := m.Storages.Stages.ConstructStageImageName(m.ProjectName, digest, creationTs)
+		imageName := registryStorage.ConstructStageImageName(projectName, digest, creationTs)
 
 		collision := false
 		for stageDesc := range stageDescSet.Iter() {
@@ -1121,9 +1113,10 @@ func (m *StorageManager) ForEachDeleteStageCustomTag(ctx context.Context, ids []
 	}, func(ctx context.Context, taskId int) error {
 		id := ids[taskId]
 
-		// The custom-tag alias image lives with the final images (primary/images
-		// repo); its metadata record lives in the meta repo.
-		if err := m.Storages.Stages.DeleteStageCustomTag(ctx, id); err != nil {
+		// The custom-tag alias image lives where custom tags are published
+		// (final repo if set, images repo otherwise); its metadata record
+		// lives in the meta repo.
+		if err := m.Storages.CustomTags().DeleteStageCustomTag(ctx, id); err != nil {
 			return f(ctx, id, fmt.Errorf("unable to delete stage custom tag: %w", err))
 		}
 		if err := m.GetMetaStorage().UnregisterStageCustomTag(ctx, id); err != nil {

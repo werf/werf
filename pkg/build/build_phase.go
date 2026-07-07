@@ -184,29 +184,6 @@ func selectLatestStageDesc(stageDescSet imagePkg.StageDescSet) *imagePkg.StageDe
 	return latestDesc
 }
 
-func generateStageDescCreationTsForStorage(registryStorage storage.RegistryStorage, projectName, digest string, stageDescSet imagePkg.StageDescSet) (string, int64) {
-	timeNow := time.Now().UTC()
-	creationTs := timeNow.Unix()*1000 + int64(timeNow.Nanosecond()/1000000)
-
-	for {
-		imageName := registryStorage.ConstructStageImageName(projectName, digest, creationTs)
-
-		collision := false
-		for stageDesc := range stageDescSet.Iter() {
-			if stageDesc.Info.Name == imageName {
-				collision = true
-				break
-			}
-		}
-
-		if !collision {
-			return imageName, creationTs
-		}
-
-		creationTs++
-	}
-}
-
 func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 	forcedTargetPlatforms := phase.Conveyor.GetForcedTargetPlatforms()
 	commonTargetPlatforms, err := phase.Conveyor.GetTargetPlatforms()
@@ -629,7 +606,7 @@ func (phase *BuildPhase) publishContentTagToStorage(ctx context.Context, img *im
 		return nil, fmt.Errorf("get content tag set by digest %s: %w", contentDigest, err)
 	}
 
-	destReference, creationTs := generateStageDescCreationTsForStorage(registryStorage, phase.Conveyor.ProjectName(), contentDigest, contentTagStageDescSet)
+	destReference, creationTs := manager.GenerateStageDescCreationTsForStorage(registryStorage, phase.Conveyor.ProjectName(), contentDigest, contentTagStageDescSet)
 	contentTagStageID := imagePkg.NewStageID(contentDigest, creationTs)
 
 	labels := make(map[string]string, len(stageDesc.Info.Labels)+1)
@@ -769,7 +746,7 @@ func (phase *BuildPhase) publishImageGitMetadata(ctx context.Context, imageName 
 	return nil
 }
 
-func (phase *BuildPhase) addCustomImageTags(ctx context.Context, imageName string, stageDesc *imagePkg.StageDesc, registryStorage storage.RegistryStorage, metaStorage storage.RegistryStorage, customTagFuncList []imagePkg.CustomTagFunc) error {
+func (phase *BuildPhase) addCustomImageTags(ctx context.Context, imageName string, stageDesc *imagePkg.StageDesc, registryStorage, metaStorage storage.RegistryStorage, customTagFuncList []imagePkg.CustomTagFunc) error {
 	if len(customTagFuncList) == 0 {
 		return nil
 	}
@@ -790,7 +767,7 @@ func (phase *BuildPhase) addCustomImageTags(ctx context.Context, imageName strin
 		})
 }
 
-func addCustomImageTag(ctx context.Context, projectName string, registryStorage storage.RegistryStorage, metaStorage storage.RegistryStorage, stageDesc *imagePkg.StageDesc, tag string) error {
+func addCustomImageTag(ctx context.Context, projectName string, registryStorage, metaStorage storage.RegistryStorage, stageDesc *imagePkg.StageDesc, tag string) error {
 	return logboek.Context(ctx).Default().LogProcess("tag %s", tag).
 		DoError(func() error {
 			if err := registryStorage.AddStageCustomTag(ctx, stageDesc, tag); err != nil {

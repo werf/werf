@@ -454,6 +454,13 @@ Also, can be specified with $WERF_CACHE_FROM_* (e.g. $WERF_CACHE_FROM_1=..., $WE
 	cmdData.CacheTo = new([]string)
 	cmd.Flags().StringArrayVarP(cmdData.CacheTo, "cache-to", "", []string{}, `Specify one or multiple stage cache repos to push newly built/fetched stages into (fan-out write). Mutually exclusive with --repo.
 Also, can be specified with $WERF_CACHE_TO_* (e.g. $WERF_CACHE_TO_1=..., $WERF_CACHE_TO_2=...)`)
+
+	cmdData.CacheStagesStorage = new([]string)
+	cmd.Flags().StringArrayVarP(cmdData.CacheStagesStorage, "cache-repo", "", []string{}, `DEPRECATED: use --cache-from instead.
+Also, can be specified with $WERF_CACHE_REPO_* (e.g. $WERF_CACHE_REPO_1=..., $WERF_CACHE_REPO_2=...)`)
+	if err := cmd.Flags().MarkHidden("cache-repo"); err != nil {
+		panic(err)
+	}
 }
 
 func SetupRepoOptions(cmdData *CmdData, cmd *cobra.Command, opts RepoDataOptions) {
@@ -466,7 +473,7 @@ func SetupRepoOptions(cmdData *CmdData, cmd *cobra.Command, opts RepoDataOptions
 
 func SetupImagesRepo(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.ImagesRepo = new(string)
-	cmd.Flags().StringVarP(cmdData.ImagesRepo, "images-repo", "", os.Getenv("WERF_IMAGES_REPO"), `Specify the repo for final images and custom tags. Required for build --push and converge unless --repo is used.
+	cmd.Flags().StringVarP(cmdData.ImagesRepo, "images-repo", "", os.Getenv("WERF_IMAGES_REPO"), `Specify the repo for final images and custom tags. Required for converge unless --repo is used; may be combined with --repo to override the images destination. Defaults to :local.
 Also, can be specified with $WERF_IMAGES_REPO`)
 }
 
@@ -1344,6 +1351,14 @@ func GetImagesRepo(cmdData *CmdData) string {
 
 func GetSecondaryStagesStorage(cmdData *CmdData) []string {
 	return append(util.PredefinedValuesByEnvNamePrefix("WERF_SECONDARY_REPO_"), *cmdData.SecondaryStagesStorage...)
+}
+
+func GetCacheStagesStorage(cmdData *CmdData) []string {
+	res := util.PredefinedValuesByEnvNamePrefix("WERF_CACHE_REPO_")
+	if cmdData.CacheStagesStorage != nil {
+		res = append(res, *cmdData.CacheStagesStorage...)
+	}
+	return res
 }
 
 func GetContainerRegistryMirror(ctx context.Context, cmdData *CmdData, buildahMode buildah.Mode) ([]string, error) {

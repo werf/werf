@@ -41,8 +41,10 @@ type fakeGit struct{}
 func (fakeGit) IsCommitExists(_ context.Context, _ string) (bool, error) { return true, nil }
 
 // A degraded meta store (empty metadata, existing stages) must not delete
-// anything: all stages get protected and the label commit is backfilled.
-func TestInitImagesMetadata_DegradedProtectsAndBackfills(t *testing.T) {
+// anything: all stages get protected and nothing is written to the meta
+// store (the commit label lacks the image name, so any backfill would
+// fabricate wrong records).
+func TestInitImagesMetadata_DegradedProtectsWithoutWrites(t *testing.T) {
 	stageDesc := &image.StageDesc{
 		StageID: image.NewStageID("digest-x", 1),
 		Info: &image.Info{
@@ -63,7 +65,7 @@ func TestInitImagesMetadata_DegradedProtectsAndBackfills(t *testing.T) {
 		t.Fatalf("expected the stage to be protected in degraded mode, got %d protected", protected.Cardinality())
 	}
 
-	if len(sm.meta.put) != 1 || sm.meta.put[0] != "app|commit-a|"+stageDesc.StageID.String() {
-		t.Fatalf("expected one backfilled record app|commit-a|<stageID>, got %v", sm.meta.put)
+	if len(sm.meta.put) != 0 {
+		t.Fatalf("degraded mode must not write meta records, got %v", sm.meta.put)
 	}
 }

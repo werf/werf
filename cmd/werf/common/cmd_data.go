@@ -47,6 +47,7 @@ type CmdData struct {
 	CacheTo    *[]string // --cache-to: stage cache write list (repeatable)
 
 	SecondaryStagesStorage *[]string // deprecated alias for --cache-from
+	CacheStagesStorage     *[]string // deprecated alias for --cache-from (werf 2.x --cache-repo)
 
 	CheckBuiltImages *bool
 	// LegacyCheckBuiltImages backs the hidden `-Z`/`--require-built-images` alias kept for

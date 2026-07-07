@@ -9,15 +9,14 @@ import (
 	"github.com/werf/werf/v2/pkg/storage/manager"
 )
 
-type NewStorageManagerOption func(*NewStorageManagerConfig)
-
 type NewStorageManagerConfig struct {
 	ProjectName string
 
 	ContainerBackend container_backend.ContainerBackend
 	CmdData          *CmdData
 
-	hostPurge bool
+	// HostPurge builds a local-only manager without resolving any repos.
+	HostPurge bool
 
 	CleanupDisabled                bool
 	GitHistoryBasedCleanupDisabled bool
@@ -28,22 +27,8 @@ type NewStorageManagerConfig struct {
 	MetaRepoRequired   bool
 }
 
-func WithHostPurge() NewStorageManagerOption {
-	return func(config *NewStorageManagerConfig) {
-		config.hostPurge = true
-	}
-}
-
 func NewStorageManager(ctx context.Context, c *NewStorageManagerConfig) (*manager.StorageManager, error) {
-	return NewStorageManagerWithOptions(ctx, c)
-}
-
-func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfig, opts ...NewStorageManagerOption) (*manager.StorageManager, error) {
-	for _, opt := range opts {
-		opt(c)
-	}
-
-	if !c.hostPurge {
+	if !c.HostPurge {
 		if err := ResolveRepos(ctx, c.CmdData, ResolveReposOptions{
 			ImagesRepoRequired: c.ImagesRepoRequired,
 			MetaRepoRequired:   c.MetaRepoRequired,
@@ -52,27 +37,20 @@ func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfi
 		}
 	}
 
-	var registryStorage storage.RegistryStorage
-
-	if c.hostPurge {
-		registryStorage = GetLocalRegistryStorage(c.ContainerBackend)
-	} else {
-		var stgErr error
-		registryStorage, stgErr = GetStagesStorage(ctx, c.ContainerBackend, c.CmdData, GetStagesStorageOpts{
-			CleanupDisabled:                c.CleanupDisabled,
-			GitHistoryBasedCleanupDisabled: c.GitHistoryBasedCleanupDisabled,
-			SkipMetaCheck:                  c.SkipMetaCheck,
-		})
-		if stgErr != nil {
-			return nil, stgErr
-		}
-	}
-
-	if c.hostPurge {
+	if c.HostPurge {
 		return &manager.StorageManager{
 			ProjectName: c.ProjectName,
-			Storages:    manager.NewStorages(manager.NewStoragesConfig{Stages: registryStorage}),
+			Storages:    manager.NewStorages(manager.NewStoragesConfig{Stages: GetLocalRegistryStorage(c.ContainerBackend)}),
 		}, nil
+	}
+
+	registryStorage, err := GetStagesStorage(ctx, c.ContainerBackend, c.CmdData, GetStagesStorageOpts{
+		CleanupDisabled:                c.CleanupDisabled,
+		GitHistoryBasedCleanupDisabled: c.GitHistoryBasedCleanupDisabled,
+		SkipMetaCheck:                  c.SkipMetaCheck,
+	})
+	if err != nil {
+		return nil, err
 	}
 
 	storages, err := BuildStorage(ctx, c.ContainerBackend, c.CmdData, registryStorage)
@@ -89,8 +67,8 @@ func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfi
 // BuildStorage resolves every repo/registry in use under the granular
 // registry model (--images-repo, --final-repo, --meta-repo, --cache-from,
 // --cache-to, secondary) into a single manager.Storages value. ResolveRepos
-// must have already run against cmdData (NewStorageManagerWithOptions calls
-// it before this).
+// must have already run against cmdData (NewStorageManager calls it before
+// this).
 func BuildStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData, registryStorage storage.RegistryStorage) (manager.Storages, error) {
 	finalImagesStorage, err := GetOptionalFinalImagesStorage(ctx, containerBackend, cmdData)
 	if err != nil {

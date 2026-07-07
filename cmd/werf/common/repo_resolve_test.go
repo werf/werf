@@ -114,6 +114,25 @@ func TestAI_ResolveRepos_RepoPresetSetsImagesRepo(t *testing.T) {
 	assert.Equal(t, "registry.io/repo", GetImagesRepo(c))
 }
 
+func TestAI_ResolveRepos_CacheRepoAliasFoldsIntoCacheFromAndCacheTo(t *testing.T) {
+	c := cmdDataFor("", nil, nil, "", "", "", "")
+	c.CacheStagesStorage = &[]string{"registry.io/cache"}
+
+	require.NoError(t, ResolveRepos(context.Background(), c, ResolveReposOptions{}))
+	assert.Equal(t, []string{"registry.io/cache"}, *c.CacheFrom)
+	assert.Equal(t, []string{"registry.io/cache"}, *c.CacheTo)
+	assert.Empty(t, *c.CacheStagesStorage)
+}
+
+func TestAI_ResolveRepos_RepoWithCacheRepoAliasOK(t *testing.T) {
+	c := cmdDataFor("registry.io/repo", nil, nil, "", "", "", "")
+	c.CacheStagesStorage = &[]string{"registry.io/cache"}
+
+	require.NoError(t, ResolveRepos(context.Background(), c, ResolveReposOptions{}))
+	assert.Equal(t, []string{"registry.io/cache"}, *c.CacheFrom)
+	assert.Equal(t, []string{"registry.io/cache"}, *c.CacheTo)
+}
+
 func TestAI_ResolveRepos_ImagesRepoRequiredForPush(t *testing.T) {
 	c := cmdDataFor("", nil, nil, "", "", "", "")
 	err := ResolveRepos(context.Background(), c, ResolveReposOptions{ImagesRepoRequired: true})

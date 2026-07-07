@@ -95,11 +95,12 @@ func runReset(ctx context.Context) error {
 			logboek.Context(ctx).Warn().LogF("Skip cleaning local storage with buildah backend (not implemented)\n")
 			return nil
 		}
-		storageManager, err := common.NewStorageManagerWithOptions(ctx, &common.NewStorageManagerConfig{
+		storageManager, err := common.NewStorageManager(ctx, &common.NewStorageManagerConfig{
 			ProjectName:      projectName,
 			ContainerBackend: containerBackend,
 			CmdData:          &commonCmdData,
-		}, common.WithHostPurge())
+			HostPurge:        true,
+		})
 		if err != nil {
 			return fmt.Errorf("unable to init storage manager: %w", err)
 		}

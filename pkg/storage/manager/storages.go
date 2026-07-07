@@ -68,6 +68,20 @@ func (s *Storages) Meta() storage.RegistryStorage {
 // local Docker image has no such concept — so this is the single guard that
 // decides whether metadata publishing runs at all.
 func (s *Storages) IsRemoteImagesStorage() bool {
+	if s.Images == nil {
+		return false
+	}
 	_, isLocal := s.Images.(*storage.LocalRegistryStorage)
 	return !isLocal
+}
+
+// CustomTags returns the storage holding custom-tag alias images: the final
+// images storage when set, otherwise the content-tag images storage. Must
+// match the publish path (BuildPhase custom tag publication) so cleanup
+// deletes aliases from the same repo they were pushed to.
+func (s *Storages) CustomTags() storage.RegistryStorage {
+	if s.Final != nil {
+		return s.Final
+	}
+	return s.Images
 }

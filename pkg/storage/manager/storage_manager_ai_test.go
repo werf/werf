@@ -69,3 +69,25 @@ func TestAI_GetCacheStagesWriteList_ReturnsWriteList(t *testing.T) {
 	assert.Same(t, writeStorage, got[0])
 	assert.NotSame(t, readStorage, got[0])
 }
+
+func TestAI_IsRemoteImagesStorage_NilImagesIsNotRemote(t *testing.T) {
+	s := Storages{}
+	assert.False(t, s.IsRemoteImagesStorage())
+
+	s.Images = storage.NewLocalRegistryStorage(nil)
+	assert.False(t, s.IsRemoteImagesStorage())
+
+	s.Images = &storage.RepoRegistryStorage{RepoAddress: "registry.example/project"}
+	assert.True(t, s.IsRemoteImagesStorage())
+}
+
+func TestAI_CustomTagsStorage_PrefersFinalOverImages(t *testing.T) {
+	images := storage.NewLocalRegistryStorage(nil)
+	final := &storage.RepoRegistryStorage{RepoAddress: "registry.example/final"}
+
+	s := Storages{Images: images}
+	assert.Same(t, images, s.CustomTags())
+
+	s.Final = final
+	assert.Same(t, final, s.CustomTags())
+}

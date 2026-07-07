@@ -24,11 +24,12 @@ func ResolveRepos(ctx context.Context, cmdData *CmdData, opts ResolveReposOption
 		metaRepo = *cmdData.MetaRepo
 	}
 	secondary := GetSecondaryStagesStorage(cmdData)
+	cacheRepo := GetCacheStagesStorage(cmdData)
 
 	granularSet := len(cacheFrom) > 0 || len(cacheTo) > 0 || metaRepo != ""
 
 	if repoSet && granularSet {
-		return fmt.Errorf("--repo is mutually exclusive with the granular registry flags (--cache-from, --cache-to, --images-repo, --meta-repo); use either --repo as a preset or the granular flags, not both")
+		return fmt.Errorf("--repo is mutually exclusive with --cache-from, --cache-to and --meta-repo; use either --repo as a preset or the granular flags, not both (--images-repo may be combined with --repo to override the images destination)")
 	}
 
 	if repoSet && imagesRepo == "" {
@@ -41,6 +42,19 @@ func ResolveRepos(ctx context.Context, cmdData *CmdData, opts ResolveReposOption
 		cacheFrom = append(append([]string{}, cacheFrom...), secondary...)
 		*cmdData.CacheFrom = cacheFrom
 		*cmdData.SecondaryStagesStorage = nil
+	}
+
+	// werf 2.x --cache-repo was both a read and a write cache, so fold it into
+	// both lists. The fold runs after the mutual-exclusion check on purpose:
+	// --repo + --cache-repo was the canonical 2.x usage and must keep working.
+	if len(cacheRepo) > 0 {
+		logboek.Context(ctx).Warn().LogF("DEPRECATED: --cache-repo ($WERF_CACHE_REPO_*) is deprecated, use --cache-from and --cache-to instead\n")
+		cacheFrom = append(append([]string{}, cacheFrom...), cacheRepo...)
+		*cmdData.CacheFrom = cacheFrom
+		*cmdData.CacheTo = append(append([]string{}, cacheTo...), cacheRepo...)
+		if cmdData.CacheStagesStorage != nil {
+			*cmdData.CacheStagesStorage = nil
+		}
 	}
 
 	if opts.ImagesRepoRequired && !repoSet && imagesRepo == "" {

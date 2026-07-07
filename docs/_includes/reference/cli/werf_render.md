@@ -137,8 +137,9 @@ werf render [IMAGE_NAME...] [options]
       --ignore-secret-key=false
             Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)
       --images-repo=""
-            Specify the repo for final images and custom tags. Required for build --push and        
-            converge unless --repo is used.
+            Specify the repo for final images and custom tags. Required for converge unless --repo  
+            is used; may be combined with --repo to override the images destination. Defaults to    
+            :local.
             Also, can be specified with $WERF_IMAGES_REPO
       --include-crds=true
             Include CRDs in the templated output (default $WERF_INCLUDE_CRDS)

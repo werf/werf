@@ -126,9 +126,6 @@ werf compose run [IMAGE_NAME...] [options] [--docker-compose-options="OPTIONS"] 
       --disable-auto-host-cleanup=false
             Disable auto host cleanup procedure in main werf commands like werf-build,              
             werf-converge and other (default disabled or WERF_DISABLE_AUTO_HOST_CLEANUP)
-      --docker-compose-bin-path=""
-            DEPRECATED: "docker compose" command always used now, this option is ignored. Define    
-            docker-compose bin path (default $WERF_DOCKER_COMPOSE_BIN_PATH)
       --docker-compose-command-options=""
             Define docker-compose command options (default $WERF_DOCKER_COMPOSE_COMMAND_OPTIONS)
       --docker-compose-options=""
@@ -174,8 +171,9 @@ werf compose run [IMAGE_NAME...] [options] [--docker-compose-options="OPTIONS"] 
       --home-dir=""
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --images-repo=""
-            Specify the repo for final images and custom tags. Required for build --push and        
-            converge unless --repo is used.
+            Specify the repo for final images and custom tags. Required for converge unless --repo  
+            is used; may be combined with --repo to override the images destination. Defaults to    
+            :local.
             Also, can be specified with $WERF_IMAGES_REPO
       --insecure-registry=false
             Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)

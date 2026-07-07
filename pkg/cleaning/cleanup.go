@@ -922,8 +922,9 @@ func deleteRejectedStagesWithLinkedTags(ctx context.Context, storageManager mana
 
 		// 2. Linked custom tags — sequential (avoids parallel-of-parallel registry pressure).
 		// Fail-fast: leave marker untouched on any failure so the next cleanup retries.
+		// Custom-tag aliases live in the custom-tags storage (final/images repo).
 		for _, customTag := range customTagsByStageID[stageIDStr] {
-			if err := registryStorage.DeleteStageCustomTag(ctx, customTag); err != nil {
+			if err := storageManager.GetCustomTagsStorage().DeleteStageCustomTag(ctx, customTag); err != nil {
 				if err := handleDeletionError(err); err != nil {
 					return err
 				}
