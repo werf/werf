@@ -1,7 +1,8 @@
 package docker
 
 import (
-	"bytes"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -20,6 +21,7 @@ import (
 	"github.com/docker/docker/api/types/filters"
 	dockerImage "github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
+	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/moby/buildkit/exporter/containerimage/exptypes"
 	"github.com/moby/buildkit/util/progress/progressui"
 	"github.com/samber/lo"
@@ -355,27 +357,31 @@ func CliLoadFromStream(ctx context.Context, input io.Reader) (string, error) {
 	}
 	defer loadResponse.Body.Close()
 
-	body, err := io.ReadAll(loadResponse.Body)
-	if err != nil {
-		return "", fmt.Errorf("error reading response body: %w", err)
+	decoder := json.NewDecoder(loadResponse.Body)
+	for {
+		var msg jsonmessage.JSONMessage
+		if err := decoder.Decode(&msg); err != nil {
+			if errors.Is(err, io.EOF) {
+				break
+			}
+			return "", fmt.Errorf("decode load response: %w", err)
+		}
+
+		msg.Stream = strings.TrimSpace(msg.Stream)
+
+		if _, imageID, hasID := strings.Cut(msg.Stream, "Loaded image ID: "); hasID {
+			imageID = strings.TrimPrefix(imageID, "sha256:")
+			return imageID, nil
+		}
+
+		if _, imageRef, hasRef := strings.Cut(msg.Stream, "Loaded image: "); hasRef {
+			inspect, err := ImageInspect(ctx, imageRef)
+			if err != nil {
+				return "", fmt.Errorf("inspect loaded image %q: %w", imageRef, err)
+			}
+			return strings.TrimPrefix(inspect.ID, "sha256:"), nil
+		}
 	}
 
-	return parseIDDigestFromImageLoadResponseBody(body), nil
-}
-
-func parseIDDigestFromImageLoadResponseBody(body []byte) string {
-	// We always have a string of fixed length like bellow when use cli directly:
-	// `Loaded image ID: sha256:26b2eb03618e749084668eaff68cff8f81dda12d06ac641be7a6398b82a6f25b`
-	// Here we have json-wrapped representation of this string:
-	// `{"stream":"Loaded image ID: sha256:26b2eb03618e749084668eaff68cff8f81dda12d06ac641be7a6398b82a6f25b\n"}\n`
-	// So we can just slice it using these knowledges.
-
-	// trim trailing \n
-	bodySanitized := bytes.TrimSpace(body)
-
-	n := len(bodySanitized) - len(`\n"}`) // json ending offset
-	digestSize := 64
-	digest := bodySanitized[n-digestSize : n]
-
-	return string(digest)
+	return "", fmt.Errorf("no image ID or reference found in load response")
 }
