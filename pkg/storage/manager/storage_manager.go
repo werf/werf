@@ -224,12 +224,36 @@ func (m *StorageManager) LogRepositoriesUsed(ctx context.Context) {
 		imagesRepo = m.Storages.Images.Address()
 	}
 
+	// meta-repo has no dedicated :local mode: it either points at an explicit
+	// --meta-repo, or effectively co-locates with a remote --repo/primary. A
+	// bare :local fallback (no --repo, no --meta-repo) carries no information
+	// worth displaying.
+	metaRepo := "-"
+	if addr := m.GetMetaStorage().Address(); addr != storage.LocalStorageAddress {
+		metaRepo = addr
+	}
+
+	// cache-from and cache-to have no explicit read/write list under the
+	// --repo preset — stages are read from and written to the primary storage
+	// directly — so display the effective primary address rather than "-"
+	// when the corresponding list is empty.
+	cacheFrom := addrs(m.Storages.CacheFrom)
+	if len(m.Storages.CacheFrom) == 0 {
+		cacheFrom = m.Storages.Stages.Address()
+	}
+	cacheTo := addrs(m.Storages.CacheTo)
+	if len(m.Storages.CacheTo) == 0 {
+		cacheTo = m.Storages.Stages.Address()
+	}
+
 	logboek.Context(ctx).Default().LogBlock("Repositories").Do(func() {
-		logboek.Context(ctx).Default().LogF("stages:      %s\n", m.Storages.Stages.Address())
-		logboek.Context(ctx).Default().LogF("meta-repo:   %s\n", m.GetMetaStorage().Address())
 		logboek.Context(ctx).Default().LogF("images-repo: %s\n", imagesRepo)
-		logboek.Context(ctx).Default().LogF("cache-from:  %s\n", addrs(m.Storages.CacheFrom))
-		logboek.Context(ctx).Default().LogF("cache-to:    %s\n", addrs(m.Storages.CacheTo))
+		if m.Storages.Final != nil {
+			logboek.Context(ctx).Default().LogF("final-repo:  %s\n", m.Storages.Final.Address())
+		}
+		logboek.Context(ctx).Default().LogF("cache-from:  %s\n", cacheFrom)
+		logboek.Context(ctx).Default().LogF("cache-to:    %s\n", cacheTo)
+		logboek.Context(ctx).Default().LogF("meta-repo:   %s\n", metaRepo)
 	})
 }
 
