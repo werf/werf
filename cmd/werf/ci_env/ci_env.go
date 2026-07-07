@@ -302,18 +302,10 @@ func generateGithubEnvs(ctx context.Context, w io.Writer, dockerConfig string) e
 		return fmt.Errorf("unable to generate default repo: %w", err)
 	}
 
-	// TODO: legacy, delete when upgrading to v3
-	registryToLogin := defaultRegistry
-	customRepo := os.Getenv("WERF_REPO")
-	gitHubPackagesRegistryAddressOld := "docker.pkg.github.com"
-	if strings.HasPrefix(customRepo, gitHubPackagesRegistryAddressOld) {
-		registryToLogin = gitHubPackagesRegistryAddressOld
-	}
-
 	ciGithubActor := os.Getenv("GITHUB_ACTOR")
 	ciGithubToken := os.Getenv("GITHUB_TOKEN")
 	if ciGithubActor != "" && ciGithubToken != "" && cmdData.AllowRegistryLogin {
-		err := docker.Login(ctx, ciGithubActor, ciGithubToken, registryToLogin)
+		err := docker.Login(ctx, ciGithubActor, ciGithubToken, defaultRegistry)
 		if err != nil {
 			return fmt.Errorf("unable to login into docker registry %s: %w", defaultRegistry, err)
 		}

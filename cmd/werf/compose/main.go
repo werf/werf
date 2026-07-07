@@ -37,7 +37,6 @@ type composeCmdData struct {
 	RawComposeOptions        string
 	RawComposeCommandOptions string
 
-	ComposeBinPath        string
 	ComposeOptions        []string
 	ComposeCommandOptions []string
 	ComposeCommandArgs    []string
@@ -318,7 +317,6 @@ func newCmd(ctx context.Context, composeCmdName string, options *newCmdOptions) 
 	common.SetupLogOptions(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 
-
 	common.SetupDryRun(&commonCmdData, cmd)
 
 	common.SetupDisableAutoHostCleanup(&commonCmdData, cmd)
@@ -335,9 +333,6 @@ func newCmd(ctx context.Context, composeCmdName string, options *newCmdOptions) 
 
 	cmd.Flags().StringVarP(&cmdData.RawComposeOptions, "docker-compose-options", "", os.Getenv("WERF_DOCKER_COMPOSE_OPTIONS"), "Define docker-compose options (default $WERF_DOCKER_COMPOSE_OPTIONS)")
 	cmd.Flags().StringVarP(&cmdData.RawComposeCommandOptions, "docker-compose-command-options", "", os.Getenv("WERF_DOCKER_COMPOSE_COMMAND_OPTIONS"), "Define docker-compose command options (default $WERF_DOCKER_COMPOSE_COMMAND_OPTIONS)")
-
-	// TODO: delete this flag in v3
-	cmd.Flags().StringVarP(&cmdData.ComposeBinPath, "docker-compose-bin-path", "", os.Getenv("WERF_DOCKER_COMPOSE_BIN_PATH"), "DEPRECATED: \"docker compose\" command always used now, this option is ignored. Define docker-compose bin path (default $WERF_DOCKER_COMPOSE_BIN_PATH)")
 
 	commonCmdData.SetupSkipImageSpecStage(cmd)
 	commonCmdData.SetupAllowIncludesUpdate(cmd)
