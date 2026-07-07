@@ -686,6 +686,17 @@ func (b *NativeBuildah) PruneImages(ctx context.Context, opts PruneImagesOptions
 }
 
 func (b *NativeBuildah) Commit(ctx context.Context, container string, opts CommitOpts) (string, error) {
+	// Switching "build with registry" from Docker to Buildah causes Buildah's history error:
+	// "internal error: history lists 1 non-empty layers, but we have 7 layers on disk".
+	// To prevent the error we disable the history for regular build commits.
+	return b.commit(ctx, container, opts, true)
+}
+
+func (b *NativeBuildah) CommitMutation(ctx context.Context, container string, opts CommitOpts) (string, error) {
+	return b.commit(ctx, container, opts, !opts.ClearHistory)
+}
+
+func (b *NativeBuildah) commit(ctx context.Context, container string, opts CommitOpts, omitHistory bool) (string, error) {
 	builder, err := b.openContainerBuilder(ctx, container)
 	if err != nil {
 		return "", fmt.Errorf("unable to open container %q builder: %w", container, err)
@@ -709,10 +720,8 @@ func (b *NativeBuildah) Commit(ctx context.Context, container string, opts Commi
 	}
 
 	imgID, _, _, err := builder.Commit(ctx, imageRef, buildah.CommitOptions{
-		// Switching "build with registry" from Docker to Buildah causes Buildah's history error:
-		// "internal error: history lists 1 non-empty layers, but we have 7 layers on disk".
-		// To prevent the error we disable the history.
-		OmitHistory:           true,
+		OmitHistory:           omitHistory,
+		HistoryTimestamp:      opts.Created,
 		PreferredManifestType: buildah.Dockerv2ImageManifest,
 		SignaturePolicyPath:   b.SignaturePolicyPath,
 		ReportWriter:          opts.LogWriter,
@@ -823,6 +832,98 @@ func (b *NativeBuildah) Config(ctx context.Context, container string, opts Confi
 
 	if opts.OnBuild != "" {
 		builder.SetOnBuild(opts.OnBuild)
+	}
+
+	return builder.Save()
+}
+
+// MutateConfig applies newConfig to container using full-replace semantics matching
+// image.UpdateConfigFile: Labels/Env/Volumes are always fully replaced with the resolved final
+// values (not merged additively), and Clear* flags reset fields to their zero value.
+func (b *NativeBuildah) MutateConfig(ctx context.Context, container string, newConfig image.SpecConfig, opts CommonOpts) error {
+	builder, err := b.openContainerBuilder(ctx, container)
+	if err != nil {
+		return fmt.Errorf("unable to open container %q builder: %w", container, err)
+	}
+
+	if newConfig.Author != "" {
+		builder.SetMaintainer(newConfig.Author)
+	}
+
+	builder.ClearLabels()
+	for key, value := range newConfig.Labels {
+		builder.SetLabel(key, value)
+	}
+
+	builder.ClearEnv()
+	for _, entry := range newConfig.Env {
+		key, value, ok := strings.Cut(entry, "=")
+		if !ok {
+			continue
+		}
+		builder.SetEnv(key, value)
+	}
+
+	builder.ClearVolumes()
+	for volume := range newConfig.Volumes {
+		builder.AddVolume(volume)
+	}
+
+	builder.ClearPorts()
+	for expose := range newConfig.ExposedPorts {
+		builder.SetPort(expose)
+	}
+
+	if newConfig.ClearUser {
+		builder.SetUser("")
+	}
+	if newConfig.User != "" {
+		builder.SetUser(newConfig.User)
+	}
+
+	if newConfig.ClearCmd {
+		builder.SetCmd(nil)
+	}
+	if len(newConfig.Cmd) > 0 {
+		builder.SetCmd(newConfig.Cmd)
+	}
+
+	if newConfig.ClearEntrypoint {
+		builder.SetEntrypoint(nil)
+	}
+	if len(newConfig.Entrypoint) > 0 {
+		builder.SetEntrypoint(newConfig.Entrypoint)
+	}
+
+	if newConfig.ClearWorkingDir {
+		builder.SetWorkDir("")
+	}
+	if newConfig.WorkingDir != "" {
+		builder.SetWorkDir(newConfig.WorkingDir)
+	}
+
+	if newConfig.StopSignal != "" {
+		builder.SetStopSignal(newConfig.StopSignal)
+	}
+
+	if newConfig.HealthConfig != nil {
+		builder.SetHealthcheck(&docker.HealthConfig{
+			Test:        newConfig.HealthConfig.Test,
+			Interval:    newConfig.HealthConfig.Interval,
+			Timeout:     newConfig.HealthConfig.Timeout,
+			StartPeriod: newConfig.HealthConfig.StartPeriod,
+			Retries:     newConfig.HealthConfig.Retries,
+		})
+	}
+
+	if opts.TargetPlatform != "" {
+		os, arch, variant, err := parse.Platform(opts.TargetPlatform)
+		if err != nil {
+			return fmt.Errorf("unable to parse platform %q: %w", opts.TargetPlatform, err)
+		}
+		builder.SetOS(os)
+		builder.SetArchitecture(arch)
+		builder.SetVariant(variant)
 	}
 
 	return builder.Save()

@@ -6,7 +6,9 @@ import (
 	"github.com/docker/cli/cli/command"
 	"github.com/docker/docker/api/types"
 	dockercontainer "github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
+	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"golang.org/x/net/context"
 )
 
@@ -30,6 +32,15 @@ func ContainerAttach(ctx context.Context, ref string, options dockercontainer.At
 
 func ContainerInspect(ctx context.Context, ref string) (types.ContainerJSON, error) {
 	return apiCli(ctx).ContainerInspect(ctx, ref)
+}
+
+func ContainerCreate(ctx context.Context, config *dockercontainer.Config, platform *ocispec.Platform, name string) (string, error) {
+	response, err := apiCli(ctx).ContainerCreate(ctx, config, nil, &network.NetworkingConfig{}, platform, name)
+	if err != nil {
+		return "", err
+	}
+
+	return response.ID, nil
 }
 
 func ContainerCommit(ctx context.Context, ref string, commitOptions dockercontainer.CommitOptions) (string, error) {

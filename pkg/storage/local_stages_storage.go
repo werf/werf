@@ -331,6 +331,17 @@ func (storage *LocalStagesStorage) MutateAndPushImage(ctx context.Context, src, 
 		return err
 	}
 
+	if mutator, ok := storage.ContainerBackend.(container_backend.NativeConfigMutator); ok {
+		err := mutator.MutateAndPushImageNative(ctx, src, dest, newConfig, stageImage.GetTargetPlatform())
+		if err == nil {
+			return nil
+		}
+		if !container_backend.IsNativeMutationUnsupported(err) {
+			return fmt.Errorf("unable to mutate image %q into %q: %w", src, dest, err)
+		}
+		// Fall through to the save/load path when the native mutation declined this config.
+	}
+
 	newId, err := container_backend.MutateAndPushImage(ctx, src, stageImage.GetTargetPlatform(), newConfig, storage.ContainerBackend)
 	if err != nil {
 		return err
