@@ -184,12 +184,12 @@ func selectLatestStageDesc(stageDescSet imagePkg.StageDescSet) *imagePkg.StageDe
 	return latestDesc
 }
 
-func generateStageDescCreationTsForStorage(stagesStorage storage.StagesStorage, projectName, digest string, stageDescSet imagePkg.StageDescSet) (string, int64) {
+func generateStageDescCreationTsForStorage(registryStorage storage.RegistryStorage, projectName, digest string, stageDescSet imagePkg.StageDescSet) (string, int64) {
 	timeNow := time.Now().UTC()
 	creationTs := timeNow.Unix()*1000 + int64(timeNow.Nanosecond()/1000000)
 
 	for {
-		imageName := stagesStorage.ConstructStageImageName(projectName, digest, creationTs)
+		imageName := registryStorage.ConstructStageImageName(projectName, digest, creationTs)
 
 		collision := false
 		for stageDesc := range stageDescSet.Iter() {
@@ -335,7 +335,7 @@ AssertAllTargetPlatformsPresent:
 	return targetPlatforms, nil
 }
 
-func (phase *BuildPhase) publishFinalImage(ctx context.Context, name string, img *image.Image, finalImagesStorage storage.StagesStorage) error {
+func (phase *BuildPhase) publishFinalImage(ctx context.Context, name string, img *image.Image, finalImagesStorage storage.RegistryStorage) error {
 	contentTagDesc := img.GetContentTagDesc()
 	if contentTagDesc == nil {
 		return fmt.Errorf("content tag desc not set for image %q", name)
@@ -358,7 +358,7 @@ func (phase *BuildPhase) publishFinalImage(ctx context.Context, name string, img
 	return nil
 }
 
-func (phase *BuildPhase) publishMultiplatformFinalImage(ctx context.Context, name string, img *image.MultiplatformImage, finalImagesStorage storage.StagesStorage) error {
+func (phase *BuildPhase) publishMultiplatformFinalImage(ctx context.Context, name string, img *image.MultiplatformImage, finalImagesStorage storage.RegistryStorage) error {
 	desc, err := phase.Conveyor.StorageManager.CopyStageIntoFinalStorage(
 		ctx, img.GetStageID(), finalImagesStorage,
 		manager.CopyStageIntoStorageOptions{
@@ -399,7 +399,7 @@ func (phase *BuildPhase) publishImageMetadata(ctx context.Context, name string, 
 		return nil
 	}
 
-	var customTagStorage storage.StagesStorage
+	var customTagStorage storage.RegistryStorage
 	var customContentTagDesc *imagePkg.StageDesc
 	if phase.Conveyor.StorageManager.GetFinalImagesStorage() != nil {
 		customTagStorage = phase.Conveyor.StorageManager.GetFinalImagesStorage()
@@ -466,7 +466,7 @@ func (phase *BuildPhase) publishMultiplatformImageCustomTags(ctx context.Context
 	imagesStorage := phase.Conveyor.StorageManager.GetImagesStorage()
 	finalImagesStorage := phase.Conveyor.StorageManager.GetFinalImagesStorage()
 
-	var customTagStorage storage.StagesStorage
+	var customTagStorage storage.RegistryStorage
 	var customTagStageDesc *imagePkg.StageDesc
 	if finalImagesStorage != nil {
 		customTagStorage = finalImagesStorage
@@ -591,7 +591,7 @@ func (phase *BuildPhase) resolveExistingContentTag(ctx context.Context, img *ima
 	return nil, nil
 }
 
-func (phase *BuildPhase) publishContentTagToStorage(ctx context.Context, img *image.Image, stagesStorage storage.StagesStorage) (*imagePkg.StageDesc, error) {
+func (phase *BuildPhase) publishContentTagToStorage(ctx context.Context, img *image.Image, registryStorage storage.RegistryStorage) (*imagePkg.StageDesc, error) {
 	contentDigest := img.GetContentDigest()
 	if contentDigest == "" {
 		return nil, nil
@@ -629,7 +629,7 @@ func (phase *BuildPhase) publishContentTagToStorage(ctx context.Context, img *im
 		return nil, fmt.Errorf("get content tag set by digest %s: %w", contentDigest, err)
 	}
 
-	destReference, creationTs := generateStageDescCreationTsForStorage(stagesStorage, phase.Conveyor.ProjectName(), contentDigest, contentTagStageDescSet)
+	destReference, creationTs := generateStageDescCreationTsForStorage(registryStorage, phase.Conveyor.ProjectName(), contentDigest, contentTagStageDescSet)
 	contentTagStageID := imagePkg.NewStageID(contentDigest, creationTs)
 
 	labels := make(map[string]string, len(stageDesc.Info.Labels)+1)
@@ -650,11 +650,11 @@ func (phase *BuildPhase) publishContentTagToStorage(ctx context.Context, img *im
 				Env:     stageDesc.Info.Env,
 			}
 
-			if err := phase.mutateAndPushContentTagImage(ctx, storageManager.GetStagesStorage(), stagesStorage, stageDesc, destReference, specConfig, stageImage); err != nil {
+			if err := phase.mutateAndPushContentTagImage(ctx, storageManager.GetStagesStorage(), registryStorage, stageDesc, destReference, specConfig, stageImage); err != nil {
 				return fmt.Errorf("push content tag image %s: %w", destReference, err)
 			}
 
-			desc, err := stagesStorage.GetStageDesc(ctx, phase.Conveyor.ProjectName(), *contentTagStageID)
+			desc, err := registryStorage.GetStageDesc(ctx, phase.Conveyor.ProjectName(), *contentTagStageID)
 			if err != nil {
 				return fmt.Errorf("get content tag %s: %w", destReference, err)
 			}
@@ -689,10 +689,10 @@ func (phase *BuildPhase) publishContentTagToStorage(ctx context.Context, img *im
 	return contentTagDesc, nil
 }
 
-func (phase *BuildPhase) mutateAndPushContentTagImage(ctx context.Context, sourceStorage, destStorage storage.StagesStorage, stageDesc *imagePkg.StageDesc, destReference string, specConfig imagePkg.SpecConfig, stageImage container_backend.LegacyImageInterface) error {
+func (phase *BuildPhase) mutateAndPushContentTagImage(ctx context.Context, sourceStorage, destStorage storage.RegistryStorage, stageDesc *imagePkg.StageDesc, destReference string, specConfig imagePkg.SpecConfig, stageImage container_backend.LegacyImageInterface) error {
 	switch typedSourceStorage := sourceStorage.(type) {
-	case *storage.LocalStagesStorage:
-		if _, isRemoteDest := destStorage.(*storage.RepoStagesStorage); isRemoteDest {
+	case *storage.LocalRegistryStorage:
+		if _, isRemoteDest := destStorage.(*storage.RepoRegistryStorage); isRemoteDest {
 			if err := typedSourceStorage.ExportStage(ctx, stageDesc, destReference, nil); err != nil {
 				return fmt.Errorf("export source stage image %s to %s: %w", stageDesc.Info.Name, destReference, err)
 			}
@@ -701,8 +701,8 @@ func (phase *BuildPhase) mutateAndPushContentTagImage(ctx context.Context, sourc
 			}
 			return nil
 		}
-	case *storage.RepoStagesStorage:
-		if _, isLocalDest := destStorage.(*storage.LocalStagesStorage); isLocalDest {
+	case *storage.RepoRegistryStorage:
+		if _, isLocalDest := destStorage.(*storage.LocalRegistryStorage); isLocalDest {
 			if err := typedSourceStorage.FetchImage(ctx, stageImage); err != nil {
 				return fmt.Errorf("fetch source stage image %s from %s: %w", stageDesc.Info.Name, typedSourceStorage.String(), err)
 			}
@@ -720,8 +720,8 @@ func (phase *BuildPhase) mutateAndPushContentTagImage(ctx context.Context, sourc
 
 func (phase *BuildPhase) addManagedImage(ctx context.Context, name string) error {
 	if phase.Conveyor.ShouldAddManagedImagesRecords() {
-		stagesStorage := phase.Conveyor.StorageManager.GetMetaStorage()
-		exist, err := stagesStorage.IsManagedImageExist(ctx, phase.Conveyor.ProjectName(), name, storage.WithCache())
+		registryStorage := phase.Conveyor.StorageManager.GetMetaStorage()
+		exist, err := registryStorage.IsManagedImageExist(ctx, phase.Conveyor.ProjectName(), name, storage.WithCache())
 		if err != nil {
 			return fmt.Errorf("unable to check existence of managed image: %w", err)
 		}
@@ -730,7 +730,7 @@ func (phase *BuildPhase) addManagedImage(ctx context.Context, name string) error
 			return nil
 		}
 
-		if err := stagesStorage.AddManagedImage(ctx, phase.Conveyor.ProjectName(), name); err != nil {
+		if err := registryStorage.AddManagedImage(ctx, phase.Conveyor.ProjectName(), name); err != nil {
 			return fmt.Errorf("unable to add image %q to the managed images of project %q: %w", name, phase.Conveyor.ProjectName(), err)
 		}
 	}
@@ -769,7 +769,7 @@ func (phase *BuildPhase) publishImageGitMetadata(ctx context.Context, imageName 
 	return nil
 }
 
-func (phase *BuildPhase) addCustomImageTags(ctx context.Context, imageName string, stageDesc *imagePkg.StageDesc, stagesStorage storage.StagesStorage, metaStorage storage.StagesStorage, customTagFuncList []imagePkg.CustomTagFunc) error {
+func (phase *BuildPhase) addCustomImageTags(ctx context.Context, imageName string, stageDesc *imagePkg.StageDesc, registryStorage storage.RegistryStorage, metaStorage storage.RegistryStorage, customTagFuncList []imagePkg.CustomTagFunc) error {
 	if len(customTagFuncList) == 0 {
 		return nil
 	}
@@ -781,7 +781,7 @@ func (phase *BuildPhase) addCustomImageTags(ctx context.Context, imageName strin
 		DoError(func() error {
 			for _, tagFunc := range customTagFuncList {
 				tag := tagFunc(imageName, stageDesc.Info.Tag)
-				if err := addCustomImageTag(ctx, phase.Conveyor.ProjectName(), stagesStorage, metaStorage, stageDesc, tag); err != nil {
+				if err := addCustomImageTag(ctx, phase.Conveyor.ProjectName(), registryStorage, metaStorage, stageDesc, tag); err != nil {
 					return err
 				}
 			}
@@ -790,11 +790,11 @@ func (phase *BuildPhase) addCustomImageTags(ctx context.Context, imageName strin
 		})
 }
 
-func addCustomImageTag(ctx context.Context, projectName string, stagesStorage storage.StagesStorage, metaStorage storage.StagesStorage, stageDesc *imagePkg.StageDesc, tag string) error {
+func addCustomImageTag(ctx context.Context, projectName string, registryStorage storage.RegistryStorage, metaStorage storage.RegistryStorage, stageDesc *imagePkg.StageDesc, tag string) error {
 	return logboek.Context(ctx).Default().LogProcess("tag %s", tag).
 		DoError(func() error {
-			if err := stagesStorage.AddStageCustomTag(ctx, stageDesc, tag); err != nil {
-				return fmt.Errorf("unable to add stage %s custom tag %s in the storage %s: %w", stageDesc.StageID.String(), tag, stagesStorage.String(), err)
+			if err := registryStorage.AddStageCustomTag(ctx, stageDesc, tag); err != nil {
+				return fmt.Errorf("unable to add stage %s custom tag %s in the storage %s: %w", stageDesc.StageID.String(), tag, registryStorage.String(), err)
 			}
 			if err := metaStorage.RegisterStageCustomTag(ctx, projectName, stageDesc, tag); err != nil {
 				return fmt.Errorf("unable to register stage %s custom tag %s in the meta storage %s: %w", stageDesc.StageID.String(), tag, metaStorage.String(), err)
@@ -806,14 +806,14 @@ func addCustomImageTag(ctx context.Context, projectName string, stagesStorage st
 		})
 }
 
-func (phase *BuildPhase) checkCustomImageTagsExistence(ctx context.Context, imageName string, stageDesc *imagePkg.StageDesc, stagesStorage storage.StagesStorage) error {
+func (phase *BuildPhase) checkCustomImageTagsExistence(ctx context.Context, imageName string, stageDesc *imagePkg.StageDesc, registryStorage storage.RegistryStorage) error {
 	if len(phase.CustomTagFuncList) == 0 {
 		return nil
 	}
 
 	for _, tagFunc := range phase.CustomTagFuncList {
 		tag := tagFunc(imageName, stageDesc.Info.Tag)
-		if err := stagesStorage.CheckStageCustomTag(ctx, stageDesc, tag); err != nil {
+		if err := registryStorage.CheckStageCustomTag(ctx, stageDesc, tag); err != nil {
 			return fmt.Errorf("check custom tag %q existence failed: %w", tag, err)
 		}
 	}
@@ -1020,10 +1020,10 @@ func (phase *BuildPhase) findAndFetchStageFromSecondaryStagesStorage(ctx context
 	foundSuitableStage := false
 
 	storageManager := phase.Conveyor.StorageManager
-	atomicCopySuitableStageFromSecondaryStagesStorage := func(secondaryStageDesc *imagePkg.StageDesc, secondaryStagesStorage storage.StagesStorage) error {
-		err := logboek.Context(ctx).Default().LogProcess("Copy suitable stage from secondary %s", secondaryStagesStorage.String()).DoError(func() error {
-			if stageDescCopy, err := storageManager.CopySuitableStageDescByDigest(ctx, secondaryStageDesc, secondaryStagesStorage, storageManager.GetStagesStorage(), phase.Conveyor.ContainerBackend, img.TargetPlatform); err != nil {
-				return fmt.Errorf("unable to copy suitable stage %s from %s to %s: %w", secondaryStageDesc.StageID.String(), secondaryStagesStorage.String(), storageManager.GetStagesStorage().String(), err)
+	atomicCopySuitableStageFromSecondaryStagesStorage := func(secondaryStageDesc *imagePkg.StageDesc, secondaryRegistryStorage storage.RegistryStorage) error {
+		err := logboek.Context(ctx).Default().LogProcess("Copy suitable stage from secondary %s", secondaryRegistryStorage.String()).DoError(func() error {
+			if stageDescCopy, err := storageManager.CopySuitableStageDescByDigest(ctx, secondaryStageDesc, secondaryRegistryStorage, storageManager.GetStagesStorage(), phase.Conveyor.ContainerBackend, img.TargetPlatform); err != nil {
+				return fmt.Errorf("unable to copy suitable stage %s from %s to %s: %w", secondaryStageDesc.StageID.String(), secondaryRegistryStorage.String(), storageManager.GetStagesStorage().String(), err)
 			} else {
 				i := phase.Conveyor.GetOrCreateStageImage(stageDescCopy.Info.Name, phase.StagesIterator.GetPrevImage(img, stg), stg, img)
 				i.Image.SetStageDesc(stageDescCopy)
@@ -1063,16 +1063,16 @@ func (phase *BuildPhase) findAndFetchStageFromSecondaryStagesStorage(ctx context
 	}
 
 ScanSecondaryStagesStorageList:
-	for _, secondaryStagesStorage := range storageManager.GetSecondaryStagesStorageList() {
-		secondaryStages, err := storageManager.GetStageDescSetByDigestFromStagesStorageWithCache(ctx, stg.LogDetailedName(), stg.GetDigest(), phase.getPrevNonEmptyStageCreationTs(), secondaryStagesStorage)
+	for _, secondaryRegistryStorage := range storageManager.GetSecondaryStagesStorageList() {
+		secondaryStages, err := storageManager.GetStageDescSetByDigestFromStagesStorageWithCache(ctx, stg.LogDetailedName(), stg.GetDigest(), phase.getPrevNonEmptyStageCreationTs(), secondaryRegistryStorage)
 		if err != nil {
 			return false, err
 		} else {
 			if secondaryStageDesc, err := storageManager.SelectSuitableStageDesc(ctx, phase.Conveyor, stg, secondaryStages); err != nil {
 				return false, err
 			} else if secondaryStageDesc != nil {
-				if err := atomicCopySuitableStageFromSecondaryStagesStorage(secondaryStageDesc, secondaryStagesStorage); err != nil {
-					return false, fmt.Errorf("unable to copy suitable stage %s from secondary stages storage %s: %w", secondaryStageDesc.StageID.String(), secondaryStagesStorage.String(), err)
+				if err := atomicCopySuitableStageFromSecondaryStagesStorage(secondaryStageDesc, secondaryRegistryStorage); err != nil {
+					return false, fmt.Errorf("unable to copy suitable stage %s from secondary stages storage %s: %w", secondaryStageDesc.StageID.String(), secondaryRegistryStorage.String(), err)
 				}
 				foundSuitableStage = true
 				break ScanSecondaryStagesStorageList

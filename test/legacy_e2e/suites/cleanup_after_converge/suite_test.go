@@ -27,7 +27,7 @@ func TestSuite(t *testing.T) {
 
 var SuiteData = struct {
 	suite_init.SuiteData
-	StagesStorage     storage.StagesStorage
+	RegistryStorage     storage.RegistryStorage
 	ContainerRegistry docker_registry.Interface
 }{}
 
@@ -43,7 +43,7 @@ var (
 var _ = BeforeEach(func(ctx SpecContext) {
 	Expect(werf.Init(SuiteData.TmpDir, "")).To(Succeed())
 
-	SuiteData.StagesStorage = utils.NewStagesStorage(ctx, SuiteData.K8sDockerRegistryRepo, "default", docker_registry.DockerRegistryOptions{})
+	SuiteData.RegistryStorage = utils.NewRegistryStorage(ctx, SuiteData.K8sDockerRegistryRepo, "default", docker_registry.DockerRegistryOptions{})
 
 	containerRegistry, err := docker_registry.NewDockerRegistry(ctx, SuiteData.K8sDockerRegistryRepo, "", docker_registry.DockerRegistryOptions{})
 	Expect(err).ShouldNot(HaveOccurred())
@@ -52,5 +52,5 @@ var _ = BeforeEach(func(ctx SpecContext) {
 })
 
 func StagesCount(ctx context.Context) int {
-	return utils.StagesCount(ctx, SuiteData.StagesStorage)
+	return utils.StagesCount(ctx, SuiteData.RegistryStorage)
 }

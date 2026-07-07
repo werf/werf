@@ -29,15 +29,15 @@ func IsImageDeletionFailedDueToUsingByContainerErr(err error) bool {
 	return strings.HasSuffix(err.Error(), ImageDeletionFailedDueToUsedByContainerErrorTip)
 }
 
-type LocalStagesStorage struct {
+type LocalRegistryStorage struct {
 	ContainerBackend container_backend.ContainerBackend
 }
 
-func NewLocalStagesStorage(containerBackend container_backend.ContainerBackend) *LocalStagesStorage {
-	return &LocalStagesStorage{ContainerBackend: containerBackend}
+func NewLocalRegistryStorage(containerBackend container_backend.ContainerBackend) *LocalRegistryStorage {
+	return &LocalRegistryStorage{ContainerBackend: containerBackend}
 }
 
-func (storage *LocalStagesStorage) FilterStageDescSetAndProcessRelatedData(ctx context.Context, stageDescSet image.StageDescSet, opts FilterStagesAndProcessRelatedDataOptions) (image.StageDescSet, error) {
+func (storage *LocalRegistryStorage) FilterStageDescSetAndProcessRelatedData(ctx context.Context, stageDescSet image.StageDescSet, opts FilterStagesAndProcessRelatedDataOptions) (image.StageDescSet, error) {
 	containersOpts := container_backend.ContainersOptions{}
 	for stageDesc := range stageDescSet.Iter() {
 		containersOpts.Filters = append(containersOpts.Filters, image.ContainerFilter{Ancestor: stageDesc.Info.ID})
@@ -78,7 +78,7 @@ func (storage *LocalStagesStorage) FilterStageDescSetAndProcessRelatedData(ctx c
 	return stageDescSet.Difference(stageDescSetToExclude), nil
 }
 
-func (storage *LocalStagesStorage) deleteContainers(ctx context.Context, containers []image.Container, rmForce bool) error {
+func (storage *LocalRegistryStorage) deleteContainers(ctx context.Context, containers []image.Container, rmForce bool) error {
 	removed := make(map[string]struct{}, len(containers))
 	for _, container := range containers {
 		if _, ok := removed[container.ID]; ok {
@@ -93,7 +93,7 @@ func (storage *LocalStagesStorage) deleteContainers(ctx context.Context, contain
 	return nil
 }
 
-func (storage *LocalStagesStorage) GetStagesIDs(ctx context.Context, projectName string, opts ...Option) ([]image.StageID, error) {
+func (storage *LocalRegistryStorage) GetStagesIDs(ctx context.Context, projectName string, opts ...Option) ([]image.StageID, error) {
 	imagesOpts := container_backend.ImagesOptions{}
 	imagesOpts.Filters = append(imagesOpts.Filters, util.NewPair("reference", fmt.Sprintf(LocalStage_ImageRepoFormat, projectName)))
 	imagesOpts.Filters = append(imagesOpts.Filters, util.NewPair("label", fmt.Sprintf("%s=%s", image.WerfLabel, projectName)))
@@ -105,7 +105,7 @@ func (storage *LocalStagesStorage) GetStagesIDs(ctx context.Context, projectName
 	return images.ConvertToStages()
 }
 
-func (storage *LocalStagesStorage) GetStagesIDsByDigest(ctx context.Context, projectName, digest string, parentStageCreationTs int64, _ ...Option) ([]image.StageID, error) {
+func (storage *LocalRegistryStorage) GetStagesIDsByDigest(ctx context.Context, projectName, digest string, parentStageCreationTs int64, _ ...Option) ([]image.StageID, error) {
 	imagesOpts := container_backend.ImagesOptions{}
 	imagesOpts.Filters = append(imagesOpts.Filters, util.NewPair("reference", fmt.Sprintf(FilterReferenceLocalStageByDigestFormat, projectName, digest)))
 
@@ -132,7 +132,7 @@ func (storage *LocalStagesStorage) GetStagesIDsByDigest(ctx context.Context, pro
 	return resultStageIDs, nil
 }
 
-func (storage *LocalStagesStorage) GetStageDesc(ctx context.Context, projectName string, stageID image.StageID) (*image.StageDesc, error) {
+func (storage *LocalRegistryStorage) GetStageDesc(ctx context.Context, projectName string, stageID image.StageID) (*image.StageDesc, error) {
 	stageImageName := storage.ConstructStageImageName(projectName, stageID.Digest, stageID.CreationTs)
 	info, err := storage.ContainerBackend.GetImageInfo(ctx, stageImageName, container_backend.GetImageInfoOpts{})
 	if err != nil {
@@ -148,7 +148,7 @@ func (storage *LocalStagesStorage) GetStageDesc(ctx context.Context, projectName
 	return nil, nil
 }
 
-func (storage *LocalStagesStorage) ExportStage(ctx context.Context, stageDesc *image.StageDesc, destinationReference string, mutateConfigFunc func(config v1.Config) (v1.Config, error)) error {
+func (storage *LocalRegistryStorage) ExportStage(ctx context.Context, stageDesc *image.StageDesc, destinationReference string, mutateConfigFunc func(config v1.Config) (v1.Config, error)) error {
 	if err := storage.ContainerBackend.Tag(ctx, stageDesc.Info.Name, destinationReference, container_backend.TagOpts{}); err != nil {
 		return fmt.Errorf("unable to tag %q as %q: %w", stageDesc.Info.Name, destinationReference, err)
 	}
@@ -162,7 +162,7 @@ func (storage *LocalStagesStorage) ExportStage(ctx context.Context, stageDesc *i
 	return docker_registry.API().MutateAndPushImage(ctx, destinationReference, destinationReference, api.WithConfigMutation(mutateExportStageConfig(mutateConfigFunc)))
 }
 
-func (storage *LocalStagesStorage) DeleteStage(ctx context.Context, stageDesc *image.StageDesc, options DeleteImageOptions) error {
+func (storage *LocalRegistryStorage) DeleteStage(ctx context.Context, stageDesc *image.StageDesc, options DeleteImageOptions) error {
 	var imageReferences []string
 	imageInfo := stageDesc.Info
 
@@ -187,130 +187,130 @@ func (storage *LocalStagesStorage) DeleteStage(ctx context.Context, stageDesc *i
 	return nil
 }
 
-func (storage *LocalStagesStorage) AddStageCustomTag(_ context.Context, _ *image.StageDesc, _ string) error {
+func (storage *LocalRegistryStorage) AddStageCustomTag(_ context.Context, _ *image.StageDesc, _ string) error {
 	return fmt.Errorf("not implemented")
 }
 
-func (storage *LocalStagesStorage) CheckStageCustomTag(_ context.Context, _ *image.StageDesc, _ string) error {
+func (storage *LocalRegistryStorage) CheckStageCustomTag(_ context.Context, _ *image.StageDesc, _ string) error {
 	return fmt.Errorf("not implemented")
 }
 
-func (storage *LocalStagesStorage) DeleteStageCustomTag(_ context.Context, _ string) error {
+func (storage *LocalRegistryStorage) DeleteStageCustomTag(_ context.Context, _ string) error {
 	return fmt.Errorf("not implemented")
 }
 
-func (storage *LocalStagesStorage) RejectStage(_ context.Context, _, _ string, _ int64) error {
+func (storage *LocalRegistryStorage) RejectStage(_ context.Context, _, _ string, _ int64) error {
 	return nil
 }
 
-func (storage *LocalStagesStorage) GetRejectedStageIDs(_ context.Context, _ ...Option) ([]image.StageID, error) {
+func (storage *LocalRegistryStorage) GetRejectedStageIDs(_ context.Context, _ ...Option) ([]image.StageID, error) {
 	return nil, nil
 }
 
-func (storage *LocalStagesStorage) DeleteRejectedStageImage(_ context.Context, _ image.StageID, _ DeleteImageOptions) error {
+func (storage *LocalRegistryStorage) DeleteRejectedStageImage(_ context.Context, _ image.StageID, _ DeleteImageOptions) error {
 	return nil
 }
 
-func (storage *LocalStagesStorage) DeleteRejectedStageRecord(_ context.Context, _ image.StageID, _ DeleteImageOptions) error {
+func (storage *LocalRegistryStorage) DeleteRejectedStageRecord(_ context.Context, _ image.StageID, _ DeleteImageOptions) error {
 	return nil
 }
 
-func (storage *LocalStagesStorage) ConstructStageImageName(projectName, digest string, creationTs int64) string {
+func (storage *LocalRegistryStorage) ConstructStageImageName(projectName, digest string, creationTs int64) string {
 	if creationTs == 0 {
 		return fmt.Sprintf(LocalStage_ImageFormat, projectName, digest)
 	}
 	return fmt.Sprintf(LocalStage_ImageFormatWithCreationTs, projectName, digest, creationTs)
 }
 
-func (storage *LocalStagesStorage) FetchImage(ctx context.Context, img container_backend.LegacyImageInterface) error {
+func (storage *LocalRegistryStorage) FetchImage(ctx context.Context, img container_backend.LegacyImageInterface) error {
 	return nil
 }
 
-func (storage *LocalStagesStorage) StoreImage(ctx context.Context, img container_backend.LegacyImageInterface) error {
+func (storage *LocalRegistryStorage) StoreImage(ctx context.Context, img container_backend.LegacyImageInterface) error {
 	return storage.ContainerBackend.TagImageByName(ctx, img)
 }
 
-func (storage *LocalStagesStorage) ShouldFetchImage(ctx context.Context, img container_backend.LegacyImageInterface) (bool, error) {
+func (storage *LocalRegistryStorage) ShouldFetchImage(ctx context.Context, img container_backend.LegacyImageInterface) (bool, error) {
 	return false, nil
 }
 
-func (storage *LocalStagesStorage) CreateRepo(ctx context.Context) error { return nil }
+func (storage *LocalRegistryStorage) CreateRepo(ctx context.Context) error { return nil }
 
-func (storage *LocalStagesStorage) DeleteRepo(ctx context.Context) error { return nil }
+func (storage *LocalRegistryStorage) DeleteRepo(ctx context.Context) error { return nil }
 
-func (storage *LocalStagesStorage) AddManagedImage(ctx context.Context, projectName, imageNameOrManagedImageName string) error {
+func (storage *LocalRegistryStorage) AddManagedImage(ctx context.Context, projectName, imageNameOrManagedImageName string) error {
 	return nil
 }
 
-func (storage *LocalStagesStorage) RmManagedImage(ctx context.Context, projectName, imageNameOrManagedImageName string) error {
+func (storage *LocalRegistryStorage) RmManagedImage(ctx context.Context, projectName, imageNameOrManagedImageName string) error {
 	return nil
 }
 
-func (storage *LocalStagesStorage) IsManagedImageExist(ctx context.Context, projectName, imageNameOrManagedImageName string, opts ...Option) (bool, error) {
+func (storage *LocalRegistryStorage) IsManagedImageExist(ctx context.Context, projectName, imageNameOrManagedImageName string, opts ...Option) (bool, error) {
 	return false, nil
 }
 
-func (storage *LocalStagesStorage) GetManagedImages(ctx context.Context, projectName string, opts ...Option) ([]string, error) {
+func (storage *LocalRegistryStorage) GetManagedImages(ctx context.Context, projectName string, opts ...Option) ([]string, error) {
 	return []string{}, nil
 }
 
-func (storage *LocalStagesStorage) PutImageMetadata(ctx context.Context, projectName, imageNameOrManagedImageName, commit, stageID string) error {
+func (storage *LocalRegistryStorage) PutImageMetadata(ctx context.Context, projectName, imageNameOrManagedImageName, commit, stageID string) error {
 	return nil
 }
 
-func (storage *LocalStagesStorage) RmImageMetadata(ctx context.Context, projectName, imageNameOrManagedImageNameOrImageMetadataID, commit, stageID string) error {
+func (storage *LocalRegistryStorage) RmImageMetadata(ctx context.Context, projectName, imageNameOrManagedImageNameOrImageMetadataID, commit, stageID string) error {
 	return nil
 }
 
-func (storage *LocalStagesStorage) IsImageMetadataExist(ctx context.Context, projectName, imageNameOrManagedImageName, commit, stageID string, opts ...Option) (bool, error) {
+func (storage *LocalRegistryStorage) IsImageMetadataExist(ctx context.Context, projectName, imageNameOrManagedImageName, commit, stageID string, opts ...Option) (bool, error) {
 	return false, nil
 }
 
-func (storage *LocalStagesStorage) GetAllAndGroupImageMetadataByImageName(ctx context.Context, projectName string, imageNameOrManagedImageList []string, opts ...Option) (map[string]map[string][]string, map[string]map[string][]string, error) {
+func (storage *LocalRegistryStorage) GetAllAndGroupImageMetadataByImageName(ctx context.Context, projectName string, imageNameOrManagedImageList []string, opts ...Option) (map[string]map[string][]string, map[string]map[string][]string, error) {
 	return map[string]map[string][]string{}, map[string]map[string][]string{}, nil
 }
 
-func (storage *LocalStagesStorage) PostMultiplatformImage(_ context.Context, _, _ string, _ []*image.Info, _ []string) error {
+func (storage *LocalRegistryStorage) PostMultiplatformImage(_ context.Context, _, _ string, _ []*image.Info, _ []string) error {
 	return nil
 }
 
-func (storage *LocalStagesStorage) String() string {
+func (storage *LocalRegistryStorage) String() string {
 	return LocalStorageAddress
 }
 
-func (storage *LocalStagesStorage) Address() string {
+func (storage *LocalRegistryStorage) Address() string {
 	return LocalStorageAddress
 }
 
-func (storage *LocalStagesStorage) GetStageCustomTagMetadataIDs(_ context.Context, _ ...Option) ([]string, error) {
+func (storage *LocalRegistryStorage) GetStageCustomTagMetadataIDs(_ context.Context, _ ...Option) ([]string, error) {
 	return nil, nil
 }
 
-func (storage *LocalStagesStorage) GetStageCustomTagMetadata(_ context.Context, _ string) (*CustomTagMetadata, error) {
+func (storage *LocalRegistryStorage) GetStageCustomTagMetadata(_ context.Context, _ string) (*CustomTagMetadata, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
-func (storage *LocalStagesStorage) RegisterStageCustomTag(_ context.Context, _ string, _ *image.StageDesc, tag string) error {
+func (storage *LocalRegistryStorage) RegisterStageCustomTag(_ context.Context, _ string, _ *image.StageDesc, tag string) error {
 	return nil
 }
 
-func (storage *LocalStagesStorage) UnregisterStageCustomTag(_ context.Context, _ string) error {
+func (storage *LocalRegistryStorage) UnregisterStageCustomTag(_ context.Context, _ string) error {
 	return nil
 }
 
-func (storage *LocalStagesStorage) CopyFromStorage(_ context.Context, _ StagesStorage, _ string, _ image.StageID, _ CopyFromStorageOptions) (*image.StageDesc, error) {
+func (storage *LocalRegistryStorage) CopyFromStorage(_ context.Context, _ RegistryStorage, _ string, _ image.StageID, _ CopyFromStorageOptions) (*image.StageDesc, error) {
 	panic("not implemented")
 }
 
-func (storage *LocalStagesStorage) GetLastCleanupRecord(ctx context.Context, projectName string, opts ...Option) (*CleanupRecord, error) {
+func (storage *LocalRegistryStorage) GetLastCleanupRecord(ctx context.Context, projectName string, opts ...Option) (*CleanupRecord, error) {
 	panic("not implemented")
 }
 
-func (storage *LocalStagesStorage) PostLastCleanupRecord(ctx context.Context, projectName string) error {
+func (storage *LocalRegistryStorage) PostLastCleanupRecord(ctx context.Context, projectName string) error {
 	panic("not implemented")
 }
 
-func (storage *LocalStagesStorage) PostManifest(ctx context.Context, ref string, opts container_backend.PostManifestOpts) error {
+func (storage *LocalRegistryStorage) PostManifest(ctx context.Context, ref string, opts container_backend.PostManifestOpts) error {
 	if err := storage.ContainerBackend.PostManifest(ctx, ref, opts); err != nil {
 		return fmt.Errorf("unable to post manifest %s: %w", ref, err)
 	}
@@ -318,8 +318,8 @@ func (storage *LocalStagesStorage) PostManifest(ctx context.Context, ref string,
 	return nil
 }
 
-func (storage *LocalStagesStorage) MutateAndPushImage(ctx context.Context, src, dest string, newConfig image.SpecConfig, stageImage container_backend.LegacyImageInterface) error {
-	if err := logboek.Context(ctx).Debug().LogBlock("-- LocalStagesStorage.MutateAndPushImage imageSpecConfig").DoError(func() error {
+func (storage *LocalRegistryStorage) MutateAndPushImage(ctx context.Context, src, dest string, newConfig image.SpecConfig, stageImage container_backend.LegacyImageInterface) error {
+	if err := logboek.Context(ctx).Debug().LogBlock("-- LocalRegistryStorage.MutateAndPushImage imageSpecConfig").DoError(func() error {
 		newConfigData, err := yaml.Marshal(newConfig)
 		if err != nil {
 			return fmt.Errorf("unable to yaml marshal new config: %w", err)

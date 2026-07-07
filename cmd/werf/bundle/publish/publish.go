@@ -217,7 +217,7 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 
 	logboek.LogOptionalLn()
 
-	stagesStorage, err := common.GetStagesStorage(ctx, containerBackend, &commonCmdData, common.GetStagesStorageOpts{
+	registryStorage, err := common.GetStagesStorage(ctx, containerBackend, &commonCmdData, common.GetStagesStorageOpts{
 		CleanupDisabled:                werfConfig.Meta.Cleanup.DisableCleanup,
 		GitHistoryBasedCleanupDisabled: werfConfig.Meta.Cleanup.DisableGitHistoryBasedPolicy,
 	})
@@ -422,7 +422,7 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 	if finalImagesStorage != nil {
 		bundleRepo = finalImagesStorage.Address()
 	} else {
-		bundleRepo = stagesStorage.Address()
+		bundleRepo = registryStorage.Address()
 	}
 
 	opts.ChartLoadOpts.ChartType = nelmcommon.LegacyChartTypeBundle

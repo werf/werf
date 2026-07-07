@@ -15,7 +15,7 @@ import (
 )
 
 type fakeStagesStorage struct {
-	storage.StagesStorage
+	storage.RegistryStorage
 
 	mu sync.Mutex
 
@@ -72,11 +72,11 @@ func newFakeStorageManager() *fakeStorageManager {
 	}
 }
 
-func (f *fakeStorageManager) GetStagesStorage() storage.StagesStorage {
+func (f *fakeStorageManager) GetStagesStorage() storage.RegistryStorage {
 	return f.stages
 }
 
-func (f *fakeStorageManager) GetImagesStorage() storage.StagesStorage {
+func (f *fakeStorageManager) GetImagesStorage() storage.RegistryStorage {
 	return nil
 }
 

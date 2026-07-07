@@ -876,8 +876,8 @@ func (m *cleanupManager) deleteRejectedStagesWithLinkedTags(ctx context.Context)
 }
 
 func deleteRejectedStagesWithLinkedTags(ctx context.Context, storageManager manager.StorageManagerInterface, customTagsByStageID map[string][]string, dryRun bool) ([]string, error) {
-	stagesStorage := storageManager.GetStagesStorage()
-	rejectedStageIDs, err := stagesStorage.GetRejectedStageIDs(ctx, storage.WithCache())
+	registryStorage := storageManager.GetStagesStorage()
+	rejectedStageIDs, err := registryStorage.GetRejectedStageIDs(ctx, storage.WithCache())
 	if err != nil {
 		return nil, fmt.Errorf("unable to get rejected stage ids: %w", err)
 	}
@@ -911,7 +911,7 @@ func deleteRejectedStagesWithLinkedTags(ctx context.Context, storageManager mana
 		stageIDStr := stageID.String()
 
 		// 1. Stage image — broken-image fallback applies here (corrupt manifest may block delete).
-		if err := stagesStorage.DeleteRejectedStageImage(ctx, stageID, deleteImageOptions); err != nil {
+		if err := registryStorage.DeleteRejectedStageImage(ctx, stageID, deleteImageOptions); err != nil {
 			if err := handleDeletionError(err); err != nil {
 				return err
 			}
@@ -923,7 +923,7 @@ func deleteRejectedStagesWithLinkedTags(ctx context.Context, storageManager mana
 		// 2. Linked custom tags — sequential (avoids parallel-of-parallel registry pressure).
 		// Fail-fast: leave marker untouched on any failure so the next cleanup retries.
 		for _, customTag := range customTagsByStageID[stageIDStr] {
-			if err := stagesStorage.DeleteStageCustomTag(ctx, customTag); err != nil {
+			if err := registryStorage.DeleteStageCustomTag(ctx, customTag); err != nil {
 				if err := handleDeletionError(err); err != nil {
 					return err
 				}
@@ -934,7 +934,7 @@ func deleteRejectedStagesWithLinkedTags(ctx context.Context, storageManager mana
 		}
 
 		// 3. Rejected marker — only after stage image and all linked custom tags are gone.
-		if err := stagesStorage.DeleteRejectedStageRecord(ctx, stageID, deleteImageOptions); err != nil {
+		if err := registryStorage.DeleteRejectedStageRecord(ctx, stageID, deleteImageOptions); err != nil {
 			if err := handleDeletionError(err); err != nil {
 				return err
 			}

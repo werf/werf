@@ -821,8 +821,8 @@ func allStagesNames() []string {
 	return stageNames
 }
 
-func GetLocalStagesStorage(containerBackend container_backend.ContainerBackend) *storage.LocalStagesStorage {
-	return storage.NewLocalStagesStorage(containerBackend)
+func GetLocalRegistryStorage(containerBackend container_backend.ContainerBackend) *storage.LocalRegistryStorage {
+	return storage.NewLocalRegistryStorage(containerBackend)
 }
 
 type GetStagesStorageOpts struct {
@@ -831,7 +831,7 @@ type GetStagesStorageOpts struct {
 	SkipMetaCheck                  bool
 }
 
-func GetStagesStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData, opts GetStagesStorageOpts) (storage.StagesStorage, error) {
+func GetStagesStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData, opts GetStagesStorageOpts) (storage.RegistryStorage, error) {
 	buildahMode, _, err := GetBuildahMode()
 	if err != nil {
 		return nil, fmt.Errorf("unable to determine buildah mode: %w", err)
@@ -842,7 +842,7 @@ func GetStagesStorage(ctx context.Context, containerBackend container_backend.Co
 		return nil, fmt.Errorf("get insecure registry hosts: %w", err)
 	}
 
-	return cmdData.Repo.CreateStagesStorage(ctx, &CreateStagesStorageOptions{
+	return cmdData.Repo.CreateRegistryStorage(ctx, &CreateRegistryStorageOptions{
 		ContainerBackend:               containerBackend,
 		InsecureRegistry:               *cmdData.InsecureRegistry,
 		SkipTlsVerifyRegistry:          *cmdData.SkipTlsVerifyRegistry,
@@ -853,7 +853,7 @@ func GetStagesStorage(ctx context.Context, containerBackend container_backend.Co
 	})
 }
 
-func GetOptionalFinalImagesStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData) (storage.StagesStorage, error) {
+func GetOptionalFinalImagesStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData) (storage.RegistryStorage, error) {
 	if *cmdData.FinalRepo.Address == "" {
 		return nil, nil
 	}
@@ -868,7 +868,7 @@ func GetOptionalFinalImagesStorage(ctx context.Context, containerBackend contain
 		return nil, fmt.Errorf("get insecure registry hosts: %w", err)
 	}
 
-	return cmdData.FinalRepo.CreateStagesStorage(ctx, &CreateStagesStorageOptions{
+	return cmdData.FinalRepo.CreateRegistryStorage(ctx, &CreateRegistryStorageOptions{
 		ContainerBackend:      containerBackend,
 		InsecureRegistry:      *cmdData.InsecureRegistry,
 		SkipTlsVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
@@ -877,10 +877,10 @@ func GetOptionalFinalImagesStorage(ctx context.Context, containerBackend contain
 	})
 }
 
-func GetOptionalImagesStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData) (storage.StagesStorage, error) {
+func GetOptionalImagesStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData) (storage.RegistryStorage, error) {
 	address := GetImagesRepo(cmdData)
 	if address == "" {
-		return GetLocalStagesStorage(containerBackend), nil
+		return GetLocalRegistryStorage(containerBackend), nil
 	}
 
 	buildahMode, _, err := GetBuildahMode()
@@ -896,7 +896,7 @@ func GetOptionalImagesStorage(ctx context.Context, containerBackend container_ba
 	repoData := NewRepoData("images-repo", RepoDataOptions{OnlyAddress: true, OptionalRepo: true})
 	repoData.Address = &address
 
-	return repoData.CreateStagesStorage(ctx, &CreateStagesStorageOptions{
+	return repoData.CreateRegistryStorage(ctx, &CreateRegistryStorageOptions{
 		ContainerBackend:      containerBackend,
 		InsecureRegistry:      *cmdData.InsecureRegistry,
 		SkipTlsVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
@@ -905,8 +905,8 @@ func GetOptionalImagesStorage(ctx context.Context, containerBackend container_ba
 	})
 }
 
-func GetCacheStagesStorageList(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData) ([]storage.StagesStorage, error) {
-	var res []storage.StagesStorage
+func GetCacheStagesStorageList(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData) ([]storage.RegistryStorage, error) {
+	var res []storage.RegistryStorage
 
 	buildahMode, _, err := GetBuildahMode()
 	if err != nil {
@@ -922,7 +922,7 @@ func GetCacheStagesStorageList(ctx context.Context, containerBackend container_b
 		repoData := NewRepoData("cache-from", RepoDataOptions{OnlyAddress: true, OptionalRepo: true})
 		repoData.Address = &address
 
-		cacheStorage, err := repoData.CreateStagesStorage(ctx, &CreateStagesStorageOptions{
+		cacheStorage, err := repoData.CreateRegistryStorage(ctx, &CreateRegistryStorageOptions{
 			ContainerBackend:      containerBackend,
 			InsecureRegistry:      *cmdData.InsecureRegistry,
 			SkipTlsVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
@@ -941,8 +941,8 @@ func GetCacheStagesStorageList(ctx context.Context, containerBackend container_b
 // GetCacheToStagesStorageList builds the write fan-out list (--cache-to). Under
 // the --repo preset no explicit cache-to is given and stages are written to the
 // primary repo directly, so the write list is empty.
-func GetCacheToStagesStorageList(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData) ([]storage.StagesStorage, error) {
-	var res []storage.StagesStorage
+func GetCacheToStagesStorageList(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData) ([]storage.RegistryStorage, error) {
+	var res []storage.RegistryStorage
 
 	buildahMode, _, err := GetBuildahMode()
 	if err != nil {
@@ -958,7 +958,7 @@ func GetCacheToStagesStorageList(ctx context.Context, containerBackend container
 		repoData := NewRepoData("cache-to", RepoDataOptions{OnlyAddress: true})
 		repoData.Address = &address
 
-		cacheStorage, err := repoData.CreateStagesStorage(ctx, &CreateStagesStorageOptions{
+		cacheStorage, err := repoData.CreateRegistryStorage(ctx, &CreateRegistryStorageOptions{
 			ContainerBackend:      containerBackend,
 			InsecureRegistry:      *cmdData.InsecureRegistry,
 			SkipTlsVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
@@ -977,7 +977,7 @@ func GetCacheToStagesStorageList(ctx context.Context, containerBackend container
 // GetMetaStorage builds the storage holding build/cleanup metadata. Under
 // the --repo preset (no --meta-repo) it returns the primary stages storage so
 // metadata stays co-located, bit-for-bit as before.
-func GetMetaStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData, primary storage.StagesStorage) (storage.StagesStorage, error) {
+func GetMetaStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData, primary storage.RegistryStorage) (storage.RegistryStorage, error) {
 	metaAddr := ""
 	if cmdData.MetaRepo != nil {
 		metaAddr = *cmdData.MetaRepo
@@ -999,7 +999,7 @@ func GetMetaStorage(ctx context.Context, containerBackend container_backend.Cont
 	repoData := NewRepoData("meta-repo", RepoDataOptions{OnlyAddress: true})
 	repoData.Address = &metaAddr
 
-	return repoData.CreateStagesStorage(ctx, &CreateStagesStorageOptions{
+	return repoData.CreateRegistryStorage(ctx, &CreateRegistryStorageOptions{
 		ContainerBackend:      containerBackend,
 		InsecureRegistry:      *cmdData.InsecureRegistry,
 		SkipTlsVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
@@ -1008,11 +1008,11 @@ func GetMetaStorage(ctx context.Context, containerBackend container_backend.Cont
 	})
 }
 
-func GetSecondaryStagesStorageList(ctx context.Context, stagesStorage storage.StagesStorage, containerBackend container_backend.ContainerBackend, cmdData *CmdData) ([]storage.StagesStorage, error) {
-	var res []storage.StagesStorage
+func GetSecondaryStagesStorageList(ctx context.Context, registryStorage storage.RegistryStorage, containerBackend container_backend.ContainerBackend, cmdData *CmdData) ([]storage.RegistryStorage, error) {
+	var res []storage.RegistryStorage
 
-	if stagesStorage.Address() != storage.LocalStorageAddress {
-		res = append(res, storage.NewLocalStagesStorage(containerBackend))
+	if registryStorage.Address() != storage.LocalStorageAddress {
+		res = append(res, storage.NewLocalRegistryStorage(containerBackend))
 	}
 
 	buildahMode, _, err := GetBuildahMode()
@@ -1029,7 +1029,7 @@ func GetSecondaryStagesStorageList(ctx context.Context, stagesStorage storage.St
 		repoData := NewRepoData("secondary-repo", RepoDataOptions{OnlyAddress: true})
 		repoData.Address = &address
 
-		secondaryStorage, err := repoData.CreateStagesStorage(ctx, &CreateStagesStorageOptions{
+		secondaryStorage, err := repoData.CreateRegistryStorage(ctx, &CreateRegistryStorageOptions{
 			ContainerBackend:      containerBackend,
 			InsecureRegistry:      *cmdData.InsecureRegistry,
 			SkipTlsVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,

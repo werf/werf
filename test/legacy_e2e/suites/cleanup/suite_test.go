@@ -34,7 +34,7 @@ func TestSuite(t *testing.T) {
 var SuiteData struct {
 	suite_init.SuiteData
 	TestImplementation string
-	StagesStorage      storage.StagesStorage
+	RegistryStorage      storage.RegistryStorage
 	ContainerRegistry  docker_registry.Interface
 }
 
@@ -54,7 +54,7 @@ func perImplementationBeforeEach(implementationName string) func(ctx SpecContext
 		werfImplementationName := SuiteData.ContainerRegistryPerImplementation[implementationName].WerfImplementationName
 
 		repo := fmt.Sprintf("%s/%s", SuiteData.ContainerRegistryPerImplementation[implementationName].RegistryAddress, SuiteData.ProjectName)
-		InitStagesStorage(ctx, repo, werfImplementationName, SuiteData.ContainerRegistryPerImplementation[implementationName].RegistryOptions)
+		InitRegistryStorage(ctx, repo, werfImplementationName, SuiteData.ContainerRegistryPerImplementation[implementationName].RegistryOptions)
 		SuiteData.SetupRepo(ctx, repo, implementationName, SuiteData.StubsData)
 		SuiteData.TestImplementation = implementationName
 
@@ -65,24 +65,24 @@ func perImplementationBeforeEach(implementationName string) func(ctx SpecContext
 	}
 }
 
-func InitStagesStorage(ctx context.Context, stagesStorageAddress, implementationName string, dockerRegistryOptions docker_registry.DockerRegistryOptions) {
-	SuiteData.StagesStorage = utils.NewStagesStorage(ctx, stagesStorageAddress, implementationName, dockerRegistryOptions)
+func InitRegistryStorage(ctx context.Context, stagesStorageAddress, implementationName string, dockerRegistryOptions docker_registry.DockerRegistryOptions) {
+	SuiteData.RegistryStorage = utils.NewRegistryStorage(ctx, stagesStorageAddress, implementationName, dockerRegistryOptions)
 }
 
 func StagesCount(ctx context.Context) int {
-	return utils.StagesCount(ctx, SuiteData.StagesStorage)
+	return utils.StagesCount(ctx, SuiteData.RegistryStorage)
 }
 
 func ManagedImagesCount(ctx context.Context) int {
-	return utils.ManagedImagesCount(ctx, SuiteData.StagesStorage)
+	return utils.ManagedImagesCount(ctx, SuiteData.RegistryStorage)
 }
 
 func ImageMetadata(ctx context.Context, imageName string) map[string][]string {
-	return utils.ImageMetadata(ctx, SuiteData.StagesStorage, imageName)
+	return utils.ImageMetadata(ctx, SuiteData.RegistryStorage, imageName)
 }
 
 func CustomTags(ctx context.Context) []string {
-	tags, err := SuiteData.ContainerRegistry.Tags(ctx, SuiteData.StagesStorage.String())
+	tags, err := SuiteData.ContainerRegistry.Tags(ctx, SuiteData.RegistryStorage.String())
 	Expect(err).ShouldNot(HaveOccurred())
 
 	var result []string
@@ -96,5 +96,5 @@ func CustomTags(ctx context.Context) []string {
 }
 
 func CustomTagsMetadataList(ctx context.Context) []*storage.CustomTagMetadata {
-	return utils.CustomTagsMetadataList(ctx, SuiteData.StagesStorage)
+	return utils.CustomTagsMetadataList(ctx, SuiteData.RegistryStorage)
 }

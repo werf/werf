@@ -11,7 +11,7 @@ import (
 )
 
 type fakeMetaStorage struct {
-	storage.StagesStorage
+	storage.RegistryStorage
 	mu  sync.Mutex
 	put []string // "image|commit|stageID"
 }
@@ -32,9 +32,9 @@ type fakeSM struct {
 	meta *fakeMetaStorage
 }
 
-func (f *fakeSM) GetMetaStorage() storage.StagesStorage { return f.meta }
+func (f *fakeSM) GetMetaStorage() storage.RegistryStorage { return f.meta }
 
-func (f *fakeSM) GetImagesStorage() storage.StagesStorage { return nil }
+func (f *fakeSM) GetImagesStorage() storage.RegistryStorage { return nil }
 
 type fakeGit struct{}
 

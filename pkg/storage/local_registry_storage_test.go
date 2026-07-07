@@ -41,12 +41,12 @@ func (b *localMutationBackendStub) Tag(ctx context.Context, ref, newRef string, 
 	return nil
 }
 
-var _ = Describe("LocalStagesStorage", func() {
+var _ = Describe("LocalRegistryStorage", func() {
 	It("tags the mutated local image under the destination reference", func(ctx SpecContext) {
 		logCtx := logboek.NewContext(ctx, logboek.NewLogger(io.Discard, io.Discard))
 
 		backend := &localMutationBackendStub{}
-		storage := NewLocalStagesStorage(backend)
+		storage := NewLocalRegistryStorage(backend)
 		stageImage := container_backend.NewLegacyStageImage(nil, "tmp-scratch-compare:stage", backend, "")
 
 		err := storage.MutateAndPushImage(logCtx, "tmp-scratch-compare:stage", "tmp-scratch-compare:content-tag", image.SpecConfig{Labels: map[string]string{"werf-stage-content-digest": "digest"}}, stageImage)

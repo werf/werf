@@ -48,7 +48,7 @@ func (repoData *RepoData) CreateDockerRegistry(ctx context.Context, insecureRegi
 	return dockerRegistry, nil
 }
 
-type CreateStagesStorageOptions struct {
+type CreateRegistryStorageOptions struct {
 	ContainerBackend               container_backend.ContainerBackend
 	InsecureRegistry               bool
 	SkipTlsVerifyRegistry          bool
@@ -58,20 +58,20 @@ type CreateStagesStorageOptions struct {
 	SkipMetaCheck                  bool
 }
 
-func (repoData *RepoData) CreateStagesStorage(ctx context.Context, opts *CreateStagesStorageOptions) (storage.StagesStorage, error) {
+func (repoData *RepoData) CreateRegistryStorage(ctx context.Context, opts *CreateRegistryStorageOptions) (storage.RegistryStorage, error) {
 	addr, err := repoData.GetAddress()
 	if err != nil {
 		return nil, err
 	}
 
 	if addr == storage.LocalStorageAddress {
-		return storage.NewLocalStagesStorage(opts.ContainerBackend), nil
+		return storage.NewLocalRegistryStorage(opts.ContainerBackend), nil
 	} else {
 		dockerRegistry, err := repoData.CreateDockerRegistry(ctx, opts.InsecureRegistry, opts.SkipTlsVerifyRegistry, opts.InsecureRegistryHosts)
 		if err != nil {
 			return nil, err
 		}
-		return storage.NewRepoStagesStorage(&storage.NewRepoStagesStorageOptions{
+		return storage.NewRepoRegistryStorage(&storage.NewRepoRegistryStorageOptions{
 			RepoAddress:                    addr,
 			ContainerBackend:               opts.ContainerBackend,
 			DockerRegistry:                 dockerRegistry,

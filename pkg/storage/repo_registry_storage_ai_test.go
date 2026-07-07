@@ -112,7 +112,7 @@ func TestAI_GetRejectedStageIDs(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			r := newFakeRegistry()
 			r.tags = tc.tags
-			s := &RepoStagesStorage{RepoAddress: "registry.example/project", DockerRegistry: r}
+			s := &RepoRegistryStorage{RepoAddress: "registry.example/project", DockerRegistry: r}
 
 			got, err := s.GetRejectedStageIDs(context.Background())
 			require.NoError(t, err)
@@ -132,7 +132,7 @@ func TestAI_DeleteRejectedStageImage_HappyPath(t *testing.T) {
 
 	r := newFakeRegistry()
 	r.tryGetInfo[stageRef] = &image.Info{Name: stageRef}
-	s := &RepoStagesStorage{RepoAddress: "registry.example/project", DockerRegistry: r}
+	s := &RepoRegistryStorage{RepoAddress: "registry.example/project", DockerRegistry: r}
 
 	err := s.DeleteRejectedStageImage(context.Background(), *image.NewStageID(digest, ts), DeleteImageOptions{})
 	require.NoError(t, err)
@@ -143,7 +143,7 @@ func TestAI_DeleteRejectedStageImage_AlreadyGone(t *testing.T) {
 	digest := "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
 
 	r := newFakeRegistry()
-	s := &RepoStagesStorage{RepoAddress: "registry.example/project", DockerRegistry: r}
+	s := &RepoRegistryStorage{RepoAddress: "registry.example/project", DockerRegistry: r}
 
 	err := s.DeleteRejectedStageImage(context.Background(), *image.NewStageID(digest, 1700000000), DeleteImageOptions{})
 	require.NoError(t, err)
@@ -159,7 +159,7 @@ func TestAI_DeleteRejectedStageImage_BrokenFallback(t *testing.T) {
 	r.tryGetInfo[stageRef] = &image.Info{Name: stageRef}
 	r.deleteErrs[stageRef] = []error{errors.New("BLOB_UNKNOWN: corrupted blob"), nil}
 
-	s := &RepoStagesStorage{RepoAddress: "registry.example/project", DockerRegistry: r}
+	s := &RepoRegistryStorage{RepoAddress: "registry.example/project", DockerRegistry: r}
 
 	err := s.DeleteRejectedStageImage(context.Background(), *image.NewStageID(digest, ts), DeleteImageOptions{})
 	require.NoError(t, err)
@@ -176,7 +176,7 @@ func TestAI_DeleteRejectedStageImage_NonBrokenErrorPropagates(t *testing.T) {
 	r.tryGetInfo[stageRef] = &image.Info{Name: stageRef}
 	r.deleteErrs[stageRef] = []error{errors.New("UNAUTHORIZED")}
 
-	s := &RepoStagesStorage{RepoAddress: "registry.example/project", DockerRegistry: r}
+	s := &RepoRegistryStorage{RepoAddress: "registry.example/project", DockerRegistry: r}
 
 	err := s.DeleteRejectedStageImage(context.Background(), *image.NewStageID(digest, ts), DeleteImageOptions{})
 	require.Error(t, err)
@@ -194,7 +194,7 @@ func TestAI_DeleteRejectedStageImage_PushFallbackFails(t *testing.T) {
 	r.deleteErrs[stageRef] = []error{errors.New("MANIFEST_INVALID")}
 	r.pushErrs[stageRef] = errors.New("registry write denied")
 
-	s := &RepoStagesStorage{RepoAddress: "registry.example/project", DockerRegistry: r}
+	s := &RepoRegistryStorage{RepoAddress: "registry.example/project", DockerRegistry: r}
 
 	err := s.DeleteRejectedStageImage(context.Background(), *image.NewStageID(digest, ts), DeleteImageOptions{})
 	require.Error(t, err)
@@ -212,7 +212,7 @@ func TestAI_DeleteRejectedStageImage_FallbackVanishedAfterPushTreatedAsDeleted(t
 	r.deleteErrs[stageRef] = []error{errors.New("DIGEST_INVALID")}
 	calls := 0
 	wrap := &vanishingRegistry{fakeRegistry: r, origInfo: origInfo, ref: stageRef, calls: &calls}
-	s := &RepoStagesStorage{RepoAddress: "registry.example/project", DockerRegistry: wrap}
+	s := &RepoRegistryStorage{RepoAddress: "registry.example/project", DockerRegistry: wrap}
 
 	err := s.DeleteRejectedStageImage(context.Background(), *image.NewStageID(digest, ts), DeleteImageOptions{})
 	require.NoError(t, err)
@@ -229,7 +229,7 @@ func TestAI_DeleteRejectedStageImage_FallbackPushSucceedsRetryFails(t *testing.T
 	r.tryGetInfo[stageRef] = &image.Info{Name: stageRef}
 	r.deleteErrs[stageRef] = []error{errors.New("MANIFEST_INVALID"), errors.New("BLOB_UNKNOWN: still corrupt")}
 
-	s := &RepoStagesStorage{RepoAddress: "registry.example/project", DockerRegistry: r}
+	s := &RepoRegistryStorage{RepoAddress: "registry.example/project", DockerRegistry: r}
 
 	err := s.DeleteRejectedStageImage(context.Background(), *image.NewStageID(digest, ts), DeleteImageOptions{})
 	require.Error(t, err)
@@ -248,7 +248,7 @@ func TestAI_DeleteRejectedStageImage_FallbackPushImmutableTag(t *testing.T) {
 	r.deleteErrs[stageRef] = []error{errors.New("MANIFEST_INVALID")}
 	r.pushErrs[stageRef] = errors.New("ImageTagAlreadyExistsException: tag is immutable")
 
-	s := &RepoStagesStorage{RepoAddress: "registry.example/project", DockerRegistry: r}
+	s := &RepoRegistryStorage{RepoAddress: "registry.example/project", DockerRegistry: r}
 
 	err := s.DeleteRejectedStageImage(context.Background(), *image.NewStageID(digest, ts), DeleteImageOptions{})
 	require.Error(t, err)
@@ -264,7 +264,7 @@ func TestAI_DeleteRejectedStageRecord_HappyPath(t *testing.T) {
 
 	r := newFakeRegistry()
 	r.tryGetInfo[rejectedRef] = &image.Info{Name: rejectedRef}
-	s := &RepoStagesStorage{RepoAddress: "registry.example/project", DockerRegistry: r}
+	s := &RepoRegistryStorage{RepoAddress: "registry.example/project", DockerRegistry: r}
 
 	err := s.DeleteRejectedStageRecord(context.Background(), *image.NewStageID(digest, ts), DeleteImageOptions{})
 	require.NoError(t, err)
@@ -275,7 +275,7 @@ func TestAI_DeleteRejectedStageRecord_AlreadyGone(t *testing.T) {
 	digest := "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
 
 	r := newFakeRegistry()
-	s := &RepoStagesStorage{RepoAddress: "registry.example/project", DockerRegistry: r}
+	s := &RepoRegistryStorage{RepoAddress: "registry.example/project", DockerRegistry: r}
 
 	err := s.DeleteRejectedStageRecord(context.Background(), *image.NewStageID(digest, 1700000000), DeleteImageOptions{})
 	require.NoError(t, err)
@@ -293,7 +293,7 @@ func TestAI_DeleteRejectedStageRecord_BrokenErrorPropagatesNoFallback(t *testing
 	r.tryGetInfo[rejectedRef] = &image.Info{Name: rejectedRef}
 	r.deleteErrs[rejectedRef] = []error{errors.New("BLOB_UNKNOWN: corrupted marker")}
 
-	s := &RepoStagesStorage{RepoAddress: "registry.example/project", DockerRegistry: r}
+	s := &RepoRegistryStorage{RepoAddress: "registry.example/project", DockerRegistry: r}
 
 	err := s.DeleteRejectedStageRecord(context.Background(), *image.NewStageID(digest, ts), DeleteImageOptions{})
 	require.Error(t, err)
@@ -313,7 +313,7 @@ func TestAI_DeleteStage_DoesNotTouchRejectedMarker(t *testing.T) {
 	r := newFakeRegistry()
 	r.tryGetInfo[stageRef] = &image.Info{Name: stageRef}
 	r.tryGetInfo[rejectedRef] = &image.Info{Name: rejectedRef}
-	s := &RepoStagesStorage{RepoAddress: "registry.example/project", DockerRegistry: r}
+	s := &RepoRegistryStorage{RepoAddress: "registry.example/project", DockerRegistry: r}
 
 	stageDesc := &image.StageDesc{
 		StageID: image.NewStageID(digest, ts),
@@ -331,7 +331,7 @@ func TestAI_DeleteStageCustomTag_HappyPath(t *testing.T) {
 
 	r := newFakeRegistry()
 	r.tryGetInfo[customRef] = &image.Info{Name: customRef}
-	s := &RepoStagesStorage{RepoAddress: "registry.example/project", DockerRegistry: r}
+	s := &RepoRegistryStorage{RepoAddress: "registry.example/project", DockerRegistry: r}
 
 	err := s.DeleteStageCustomTag(context.Background(), tag)
 	require.NoError(t, err)
@@ -341,7 +341,7 @@ func TestAI_DeleteStageCustomTag_HappyPath(t *testing.T) {
 
 func TestAI_DeleteStageCustomTag_Missing(t *testing.T) {
 	r := newFakeRegistry()
-	s := &RepoStagesStorage{RepoAddress: "registry.example/project", DockerRegistry: r}
+	s := &RepoRegistryStorage{RepoAddress: "registry.example/project", DockerRegistry: r}
 
 	err := s.DeleteStageCustomTag(context.Background(), "missing")
 	require.NoError(t, err)
@@ -358,7 +358,7 @@ func TestAI_DeleteStageCustomTag_BrokenErrorPropagatesNoFallback(t *testing.T) {
 	r.tryGetInfo[customRef] = &image.Info{Name: customRef}
 	r.deleteErrs[customRef] = []error{errors.New("BLOB_UNKNOWN: corrupted custom tag")}
 
-	s := &RepoStagesStorage{RepoAddress: "registry.example/project", DockerRegistry: r}
+	s := &RepoRegistryStorage{RepoAddress: "registry.example/project", DockerRegistry: r}
 
 	err := s.DeleteStageCustomTag(context.Background(), tag)
 	require.Error(t, err)

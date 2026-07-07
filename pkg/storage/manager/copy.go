@@ -18,18 +18,18 @@ type CopyStageOptions struct {
 	IsMultiplatformImage bool
 }
 
-func (m *StorageManager) CopyStage(ctx context.Context, src, dest storage.StagesStorage, stageID image.StageID, opts CopyStageOptions) (*image.StageDesc, error) {
+func (m *StorageManager) CopyStage(ctx context.Context, src, dest storage.RegistryStorage, stageID image.StageID, opts CopyStageOptions) (*image.StageDesc, error) {
 	switch typedSrc := src.(type) {
-	case *storage.LocalStagesStorage:
+	case *storage.LocalRegistryStorage:
 		return m.copyStageFromLocalStorage(ctx, typedSrc, dest, stageID, opts)
-	case *storage.RepoStagesStorage:
+	case *storage.RepoRegistryStorage:
 		return dest.CopyFromStorage(ctx, src, m.ProjectName, stageID, storage.CopyFromStorageOptions{IsMultiplatformImage: opts.IsMultiplatformImage})
 	default:
 		panic(fmt.Sprintf("not implemented for storage %s", typedSrc))
 	}
 }
 
-func (m *StorageManager) copyStageFromLocalStorage(ctx context.Context, src *storage.LocalStagesStorage, dest storage.StagesStorage, stageID image.StageID, opts CopyStageOptions) (*image.StageDesc, error) {
+func (m *StorageManager) copyStageFromLocalStorage(ctx context.Context, src *storage.LocalRegistryStorage, dest storage.RegistryStorage, stageID image.StageID, opts CopyStageOptions) (*image.StageDesc, error) {
 	if opts.ContainerBackend == nil {
 		panic("expected non empty ContainerBackend parameter")
 	}
@@ -42,7 +42,7 @@ func (m *StorageManager) copyStageFromLocalStorage(ctx context.Context, src *sto
 
 	destImageName := dest.ConstructStageImageName(m.ProjectName, stageID.Digest, stageID.CreationTs)
 
-	if _, isLocalDest := dest.(*storage.LocalStagesStorage); !isLocalDest {
+	if _, isLocalDest := dest.(*storage.LocalRegistryStorage); !isLocalDest {
 		return m.copyLocalStageToRemoteStorage(ctx, src, dest, stageID, destImageName)
 	}
 
@@ -68,7 +68,7 @@ func (m *StorageManager) copyStageFromLocalStorage(ctx context.Context, src *sto
 	return newImg.GetStageDesc(), nil
 }
 
-func (m *StorageManager) copyLocalStageToRemoteStorage(ctx context.Context, src *storage.LocalStagesStorage, dest storage.StagesStorage, stageID image.StageID, destImageName string) (*image.StageDesc, error) {
+func (m *StorageManager) copyLocalStageToRemoteStorage(ctx context.Context, src *storage.LocalRegistryStorage, dest storage.RegistryStorage, stageID image.StageID, destImageName string) (*image.StageDesc, error) {
 	srcDesc, err := src.GetStageDesc(ctx, m.ProjectName, stageID)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get local stage %s description: %w", stageID.String(), err)

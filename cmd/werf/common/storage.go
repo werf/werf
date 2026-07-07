@@ -52,13 +52,13 @@ func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfi
 		}
 	}
 
-	var stagesStorage storage.StagesStorage
+	var registryStorage storage.RegistryStorage
 
 	if c.hostPurge {
-		stagesStorage = GetLocalStagesStorage(c.ContainerBackend)
+		registryStorage = GetLocalRegistryStorage(c.ContainerBackend)
 	} else {
 		var stgErr error
-		stagesStorage, stgErr = GetStagesStorage(ctx, c.ContainerBackend, c.CmdData, GetStagesStorageOpts{
+		registryStorage, stgErr = GetStagesStorage(ctx, c.ContainerBackend, c.CmdData, GetStagesStorageOpts{
 			CleanupDisabled:                c.CleanupDisabled,
 			GitHistoryBasedCleanupDisabled: c.GitHistoryBasedCleanupDisabled,
 			SkipMetaCheck:                  c.SkipMetaCheck,
@@ -71,11 +71,11 @@ func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfi
 	if c.hostPurge {
 		return &manager.StorageManager{
 			ProjectName: c.ProjectName,
-			Storages:    manager.NewStorages(manager.NewStoragesConfig{Stages: stagesStorage}),
+			Storages:    manager.NewStorages(manager.NewStoragesConfig{Stages: registryStorage}),
 		}, nil
 	}
 
-	storages, err := BuildStorage(ctx, c.ContainerBackend, c.CmdData, stagesStorage)
+	storages, err := BuildStorage(ctx, c.ContainerBackend, c.CmdData, registryStorage)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +91,7 @@ func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfi
 // --cache-to, secondary) into a single manager.Storages value. ResolveRepos
 // must have already run against cmdData (NewStorageManagerWithOptions calls
 // it before this).
-func BuildStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData, stagesStorage storage.StagesStorage) (manager.Storages, error) {
+func BuildStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData, registryStorage storage.RegistryStorage) (manager.Storages, error) {
 	finalImagesStorage, err := GetOptionalFinalImagesStorage(ctx, containerBackend, cmdData)
 	if err != nil {
 		return manager.Storages{}, fmt.Errorf("error get final stages storage: %w", err)
@@ -100,7 +100,7 @@ func BuildStorage(ctx context.Context, containerBackend container_backend.Contai
 	if err != nil {
 		return manager.Storages{}, fmt.Errorf("error get images storage: %w", err)
 	}
-	secondaryStagesStorageList, err := GetSecondaryStagesStorageList(ctx, stagesStorage, containerBackend, cmdData)
+	secondaryStagesStorageList, err := GetSecondaryStagesStorageList(ctx, registryStorage, containerBackend, cmdData)
 	if err != nil {
 		return manager.Storages{}, fmt.Errorf("error get secondary stages storage list: %w", err)
 	}
@@ -112,13 +112,13 @@ func BuildStorage(ctx context.Context, containerBackend container_backend.Contai
 	if err != nil {
 		return manager.Storages{}, fmt.Errorf("error get cache-to storage list: %w", err)
 	}
-	metaStorage, err := GetMetaStorage(ctx, containerBackend, cmdData, stagesStorage)
+	metaStorage, err := GetMetaStorage(ctx, containerBackend, cmdData, registryStorage)
 	if err != nil {
 		return manager.Storages{}, fmt.Errorf("error get meta stages storage: %w", err)
 	}
 
 	return manager.NewStorages(manager.NewStoragesConfig{
-		Stages:    stagesStorage,
+		Stages:    registryStorage,
 		Final:     finalImagesStorage,
 		Images:    imagesStorage,
 		Meta:      metaStorage,

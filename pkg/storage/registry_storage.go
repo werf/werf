@@ -49,7 +49,7 @@ type FilterStagesAndProcessRelatedDataOptions struct {
 	RmContainersThatUseImage bool
 }
 
-type StagesStorage interface {
+type RegistryStorage interface {
 	GetStagesIDs(ctx context.Context, projectName string, opts ...Option) ([]image.StageID, error)
 	GetStagesIDsByDigest(ctx context.Context, projectName, digest string, parentStageCreationTs int64, opts ...Option) ([]image.StageID, error)
 	GetStageDesc(ctx context.Context, projectName string, stageID image.StageID) (*image.StageDesc, error)
@@ -72,7 +72,7 @@ type StagesStorage interface {
 	// StoreImage will store a local image into the container-runtime, local built image should exist prior running store
 	StoreImage(ctx context.Context, img container_backend.LegacyImageInterface) error
 	ShouldFetchImage(ctx context.Context, img container_backend.LegacyImageInterface) (bool, error)
-	CopyFromStorage(ctx context.Context, src StagesStorage, projectName string, stageID image.StageID, opts CopyFromStorageOptions) (*image.StageDesc, error)
+	CopyFromStorage(ctx context.Context, src RegistryStorage, projectName string, stageID image.StageID, opts CopyFromStorageOptions) (*image.StageDesc, error)
 	MutateAndPushImage(ctx context.Context, src, dest string, newConfig image.SpecConfig, stageImage container_backend.LegacyImageInterface) error
 	PostManifest(ctx context.Context, ref string, opts container_backend.PostManifestOpts) error
 

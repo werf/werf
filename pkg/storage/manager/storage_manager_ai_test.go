@@ -13,7 +13,7 @@ import (
 func TestAI_GenerateStageDescCreationTs_AvoidsNameCollision(t *testing.T) {
 	m := &StorageManager{
 		ProjectName: "test-project",
-		Storages:    Storages{Stages: storage.NewLocalStagesStorage(nil)},
+		Storages:    Storages{Stages: storage.NewLocalRegistryStorage(nil)},
 	}
 	digest := "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 
@@ -37,12 +37,12 @@ func TestAI_GenerateStageDescCreationTs_AvoidsNameCollision(t *testing.T) {
 }
 
 func TestAI_GetCacheStagesStorageList_ReturnsReadList(t *testing.T) {
-	readStorage := storage.NewLocalStagesStorage(nil)
-	writeStorage := storage.NewLocalStagesStorage(nil)
+	readStorage := storage.NewLocalRegistryStorage(nil)
+	writeStorage := storage.NewLocalRegistryStorage(nil)
 	m := &StorageManager{
 		Storages: Storages{
-			CacheFrom: []storage.StagesStorage{readStorage},
-			CacheTo:   []storage.StagesStorage{writeStorage},
+			CacheFrom: []storage.RegistryStorage{readStorage},
+			CacheTo:   []storage.RegistryStorage{writeStorage},
 		},
 	}
 
@@ -54,12 +54,12 @@ func TestAI_GetCacheStagesStorageList_ReturnsReadList(t *testing.T) {
 }
 
 func TestAI_GetCacheStagesWriteList_ReturnsWriteList(t *testing.T) {
-	readStorage := storage.NewLocalStagesStorage(nil)
-	writeStorage := storage.NewLocalStagesStorage(nil)
+	readStorage := storage.NewLocalRegistryStorage(nil)
+	writeStorage := storage.NewLocalRegistryStorage(nil)
 	m := &StorageManager{
 		Storages: Storages{
-			CacheFrom: []storage.StagesStorage{readStorage},
-			CacheTo:   []storage.StagesStorage{writeStorage},
+			CacheFrom: []storage.RegistryStorage{readStorage},
+			CacheTo:   []storage.RegistryStorage{writeStorage},
 		},
 	}
 

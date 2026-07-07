@@ -58,10 +58,10 @@ func (r *pushImageRegistryStub) MutateAndPushImage(ctx context.Context, _, desti
 	return nil
 }
 
-var _ = Describe("RepoStagesStorage", func() {
+var _ = Describe("RepoRegistryStorage", func() {
 	It("pushes a manifest-only image to the registry in PostManifest", func(ctx SpecContext) {
 		registry := &pushImageRegistryStub{}
-		storage := &RepoStagesStorage{DockerRegistry: registry}
+		storage := &RepoRegistryStorage{DockerRegistry: registry}
 
 		err := storage.PostManifest(ctx, "registry.example/project:tag", container_backend.PostManifestOpts{
 			Labels: []string{"werf=project", "werf-stage-content-digest=digest"},
@@ -76,7 +76,7 @@ var _ = Describe("RepoStagesStorage", func() {
 	})
 
 	It("fails on malformed manifest label specs", func(ctx SpecContext) {
-		storage := &RepoStagesStorage{DockerRegistry: &pushImageRegistryStub{}}
+		storage := &RepoRegistryStorage{DockerRegistry: &pushImageRegistryStub{}}
 
 		err := storage.PostManifest(ctx, "registry.example/project:tag", container_backend.PostManifestOpts{
 			Labels: []string{"broken-label"},
@@ -87,7 +87,7 @@ var _ = Describe("RepoStagesStorage", func() {
 
 	It("accepts target platform option for manifest creation", func(ctx SpecContext) {
 		registry := &pushImageRegistryStub{}
-		storage := &RepoStagesStorage{DockerRegistry: registry}
+		storage := &RepoRegistryStorage{DockerRegistry: registry}
 
 		err := storage.PostManifest(ctx, "registry.example/project:tag", container_backend.PostManifestOpts{
 			CommonOpts: container_backend.CommonOpts{TargetPlatform: "linux/amd64"},
@@ -97,7 +97,7 @@ var _ = Describe("RepoStagesStorage", func() {
 	})
 
 	It("rejects unsupported manifests option", func(ctx SpecContext) {
-		storage := &RepoStagesStorage{DockerRegistry: &pushImageRegistryStub{}}
+		storage := &RepoRegistryStorage{DockerRegistry: &pushImageRegistryStub{}}
 
 		err := storage.PostManifest(ctx, "registry.example/project:tag", container_backend.PostManifestOpts{
 			Manifests: []*image.Info{{Name: "registry.example/project:tag"}},
@@ -108,7 +108,7 @@ var _ = Describe("RepoStagesStorage", func() {
 
 	It("preserves target platform in repo-backed mutation", func(ctx SpecContext) {
 		registry := &pushImageRegistryStub{}
-		storage := &RepoStagesStorage{DockerRegistry: registry}
+		storage := &RepoRegistryStorage{DockerRegistry: registry}
 		stageImage := container_backend.NewLegacyStageImage(nil, "registry.example/project:tag", nil, "linux/amd64")
 
 		err := storage.MutateAndPushImage(ctx, "registry.example/project:src", "registry.example/project:dest", image.SpecConfig{}, stageImage)

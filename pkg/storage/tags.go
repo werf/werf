@@ -24,7 +24,7 @@ const (
 — To disable all cleanup policies and suppress this warning, set 'cleanup.disable: true'.`
 )
 
-func (storage *RepoStagesStorage) checkMeta(ctx context.Context, tags []string, _ ...docker_registry.Option) error {
+func (storage *RepoRegistryStorage) checkMeta(ctx context.Context, tags []string, _ ...docker_registry.Option) error {
 	if len(tags) < cleanupTriggerTagCount || storage.cleanupDisabled {
 		return nil
 	}
@@ -50,12 +50,12 @@ func (storage *RepoStagesStorage) checkMeta(ctx context.Context, tags []string, 
 	return onceErr
 }
 
-func runCleanupNeededChecks(ctx context.Context, storage *RepoStagesStorage, tags []string, b *strings.Builder) error {
+func runCleanupNeededChecks(ctx context.Context, storage *RepoRegistryStorage, tags []string, b *strings.Builder) error {
 	if err := checkLastCleanup(ctx, storage, tags, b); errors.Is(err, ErrCleanupNotOverdue) {
 		return nil
 	}
 
-	extraChecks := []func(ctx context.Context, storage *RepoStagesStorage, tags []string, b *strings.Builder) error{
+	extraChecks := []func(ctx context.Context, storage *RepoRegistryStorage, tags []string, b *strings.Builder) error{
 		checkMetaTags,
 	}
 
@@ -68,7 +68,7 @@ func runCleanupNeededChecks(ctx context.Context, storage *RepoStagesStorage, tag
 	return nil
 }
 
-func checkMetaTags(_ context.Context, storage *RepoStagesStorage, tags []string, b *strings.Builder) error {
+func checkMetaTags(_ context.Context, storage *RepoRegistryStorage, tags []string, b *strings.Builder) error {
 	metaCount := countMetaTags(tags)
 
 	if metaCount == 0 {
@@ -99,7 +99,7 @@ func countMetaTags(tags []string) int {
 
 var ErrCleanupNotOverdue = fmt.Errorf("cleanup is not overdue, no need to warning")
 
-func checkLastCleanup(ctx context.Context, storage *RepoStagesStorage, tags []string, b *strings.Builder) error {
+func checkLastCleanup(ctx context.Context, storage *RepoRegistryStorage, tags []string, b *strings.Builder) error {
 	if len(tags) == 0 {
 		return nil
 	}
