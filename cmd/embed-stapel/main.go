@@ -28,14 +28,14 @@ func main() {
 }
 
 func run() error {
-	imageRef := os.Getenv("STAPEL_IMAGE")
+	imageRef := os.Getenv("WERF_STAPEL_IMAGE_NAME")
 	if imageRef == "" {
 		imageRef = "registry.werf.io/werf/stapel"
 	}
 
-	version := os.Getenv("STAPEL_VERSION")
+	version := os.Getenv("WERF_STAPEL_IMAGE_VERSION")
 	if version == "" {
-		return fmt.Errorf("STAPEL_VERSION is required")
+		return fmt.Errorf("WERF_STAPEL_IMAGE_VERSION is required")
 	}
 
 	embedRoot := os.Getenv("STAPEL_EMBED_ROOT")
