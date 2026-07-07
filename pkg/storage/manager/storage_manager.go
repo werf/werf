@@ -882,7 +882,6 @@ func ConvertStageDescForStagesStorage(stageDesc *image.StageDesc, stagesStorage 
 			Tag:               stageDesc.Info.Tag,
 			RepoDigest:        stageDesc.Info.RepoDigest,
 			ID:                stageDesc.Info.ID,
-			ParentID:          stageDesc.Info.ParentID,
 			Labels:            stageDesc.Info.Labels,
 			Size:              stageDesc.Info.Size,
 			CreatedAtUnixNano: stageDesc.Info.CreatedAtUnixNano,

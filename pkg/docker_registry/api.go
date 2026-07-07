@@ -280,14 +280,6 @@ func (api *api) getRepoImageByDesc(ctx context.Context, originalTag string, desc
 			}
 		}
 		repoImage.Size = totalSize
-
-		var parentID string
-		if configFile.Config.Labels != nil {
-			if id, ok := configFile.Config.Labels[image.WerfBaseImageIDLabel]; ok {
-				parentID = id
-			}
-		}
-		repoImage.ParentID = parentID
 	}
 
 	return repoImage, nil

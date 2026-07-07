@@ -1046,7 +1046,6 @@ func (m *cleanupManager) protectRelativeStageDescSetByStageDesc(targetStageDesc 
 	} else {
 		targetStageDescSet.Add(targetStageDesc)
 	}
-	stageDescSet := m.stageManager.GetStageDescSet()
 	currentStageDescSet := targetStageDescSet
 	for !currentStageDescSet.IsEmpty() {
 		for _, currentStageDesc := range currentStageDescSet.ToSlice() {
@@ -1083,15 +1082,6 @@ func (m *cleanupManager) protectRelativeStageDescSetByStageDesc(targetStageDesc 
 
 			// Parent stage checking.
 			{
-				// TODO: remove this legacy check in v3.
-				for stageDesc := range stageDescSet.Iter() {
-					if currentStageDesc.Info.ParentID == stageDesc.Info.ID {
-						currentStageDescSet.Add(stageDesc)
-						m.stageManager.MarkStageDescAsProtected(stageDesc, stage_manager.ProtectionReasonAncestor, false)
-						break
-					}
-				}
-
 				parentStageDesc := m.stageManager.GetStageDescByStageID(currentStageDesc.Info.Labels[image.WerfParentStageID])
 				if parentStageDesc != nil {
 					m.stageManager.MarkStageDescAsProtected(parentStageDesc, stage_manager.ProtectionReasonAncestor, false)
