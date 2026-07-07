@@ -44,7 +44,6 @@ tasks:
   format:
     desc: "Run all code formatters."
     cmds:
-      - task: stapel:embed
       - task: _remote-lint:format:gci
       - task: _remote-lint:format:gofumpt
 
