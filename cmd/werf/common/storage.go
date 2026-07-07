@@ -70,49 +70,60 @@ func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfi
 
 	if c.hostPurge {
 		return &manager.StorageManager{
-			ProjectName:                c.ProjectName,
-			StagesStorage:              stagesStorage,
-			FinalImageStorage:          nil,
-			ImagesStorage:              nil,
-			CacheStagesStorageList:     nil,
-			SecondaryStagesStorageList: nil,
+			ProjectName: c.ProjectName,
+			Storages:    manager.NewStorages(manager.NewStoragesConfig{Stages: stagesStorage}),
 		}, nil
 	}
 
-	finalImageStorage, err := GetOptionalFinalImageStorage(ctx, c.ContainerBackend, c.CmdData)
+	storages, err := BuildStorage(ctx, c.ContainerBackend, c.CmdData, stagesStorage)
 	if err != nil {
-		return nil, fmt.Errorf("error get final stages storage: %w", err)
-	}
-	imagesStorage, err := GetOptionalImagesStorage(ctx, c.ContainerBackend, c.CmdData)
-	if err != nil {
-		return nil, fmt.Errorf("error get images storage: %w", err)
+		return nil, err
 	}
 
-	secondaryStagesStorageList, err := GetSecondaryStagesStorageList(ctx, stagesStorage, c.ContainerBackend, c.CmdData)
-	if err != nil {
-		return nil, fmt.Errorf("error get secondary stages storage list: %w", err)
-	}
-	cacheStagesStorageList, err := GetCacheStagesStorageList(ctx, c.ContainerBackend, c.CmdData)
-	if err != nil {
-		return nil, fmt.Errorf("error get chache storage list: %w", err)
-	}
-	cacheStagesWriteList, err := GetCacheToStagesStorageList(ctx, c.ContainerBackend, c.CmdData)
-	if err != nil {
-		return nil, fmt.Errorf("error get cache-to storage list: %w", err)
-	}
-	metaStorage, err := GetMetaStorage(ctx, c.ContainerBackend, c.CmdData, stagesStorage)
-	if err != nil {
-		return nil, fmt.Errorf("error get meta stages storage: %w", err)
-	}
 	return &manager.StorageManager{
 		ProjectName: c.ProjectName,
-
-		StagesStorage:              stagesStorage,
-		MetaStorage:                metaStorage,
-		FinalImageStorage:          finalImageStorage,
-		ImagesStorage:              imagesStorage,
-		CacheStagesStorageList:     cacheStagesStorageList,
-		CacheStagesWriteList:       cacheStagesWriteList,
-		SecondaryStagesStorageList: secondaryStagesStorageList,
+		Storages:    storages,
 	}, nil
+}
+
+// BuildStorage resolves every repo/registry in use under the granular
+// registry model (--images-repo, --final-repo, --meta-repo, --cache-from,
+// --cache-to, secondary) into a single manager.Storages value. ResolveRepos
+// must have already run against cmdData (NewStorageManagerWithOptions calls
+// it before this).
+func BuildStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData, stagesStorage storage.PrimaryStagesStorage) (manager.Storages, error) {
+	finalImageStorage, err := GetOptionalFinalImageStorage(ctx, containerBackend, cmdData)
+	if err != nil {
+		return manager.Storages{}, fmt.Errorf("error get final stages storage: %w", err)
+	}
+	imagesStorage, err := GetOptionalImagesStorage(ctx, containerBackend, cmdData)
+	if err != nil {
+		return manager.Storages{}, fmt.Errorf("error get images storage: %w", err)
+	}
+	secondaryStagesStorageList, err := GetSecondaryStagesStorageList(ctx, stagesStorage, containerBackend, cmdData)
+	if err != nil {
+		return manager.Storages{}, fmt.Errorf("error get secondary stages storage list: %w", err)
+	}
+	cacheStagesStorageList, err := GetCacheStagesStorageList(ctx, containerBackend, cmdData)
+	if err != nil {
+		return manager.Storages{}, fmt.Errorf("error get cache storage list: %w", err)
+	}
+	cacheStagesWriteList, err := GetCacheToStagesStorageList(ctx, containerBackend, cmdData)
+	if err != nil {
+		return manager.Storages{}, fmt.Errorf("error get cache-to storage list: %w", err)
+	}
+	metaStorage, err := GetMetaStorage(ctx, containerBackend, cmdData, stagesStorage)
+	if err != nil {
+		return manager.Storages{}, fmt.Errorf("error get meta stages storage: %w", err)
+	}
+
+	return manager.NewStorages(manager.NewStoragesConfig{
+		Stages:    stagesStorage,
+		Final:     finalImageStorage,
+		Images:    imagesStorage,
+		Meta:      metaStorage,
+		CacheFrom: cacheStagesStorageList,
+		CacheTo:   cacheStagesWriteList,
+		Secondary: secondaryStagesStorageList,
+	}), nil
 }

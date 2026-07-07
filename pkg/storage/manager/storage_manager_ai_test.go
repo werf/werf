@@ -12,8 +12,8 @@ import (
 
 func TestAI_GenerateStageDescCreationTs_AvoidsNameCollision(t *testing.T) {
 	m := &StorageManager{
-		ProjectName:   "test-project",
-		StagesStorage: storage.NewLocalStagesStorage(nil),
+		ProjectName: "test-project",
+		Storages:    Storages{Stages: storage.NewLocalStagesStorage(nil)},
 	}
 	digest := "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 
@@ -22,7 +22,7 @@ func TestAI_GenerateStageDescCreationTs_AvoidsNameCollision(t *testing.T) {
 	occupied := image.NewStageDescSet()
 	occupiedNames := make(map[string]struct{})
 	for ts := baseTs; ts <= baseTs+10; ts++ {
-		name := m.StagesStorage.ConstructStageImageName(m.ProjectName, digest, ts)
+		name := m.Storages.Stages.ConstructStageImageName(m.ProjectName, digest, ts)
 		occupied.Add(&image.StageDesc{
 			StageID: image.NewStageID(digest, ts),
 			Info:    &image.Info{Name: name},
@@ -40,8 +40,10 @@ func TestAI_GetCacheStagesStorageList_ReturnsReadList(t *testing.T) {
 	readStorage := storage.NewLocalStagesStorage(nil)
 	writeStorage := storage.NewLocalStagesStorage(nil)
 	m := &StorageManager{
-		CacheStagesStorageList: []storage.StagesStorage{readStorage},
-		CacheStagesWriteList:   []storage.StagesStorage{writeStorage},
+		Storages: Storages{
+			CacheFrom: []storage.StagesStorage{readStorage},
+			CacheTo:   []storage.StagesStorage{writeStorage},
+		},
 	}
 
 	got := m.GetCacheStagesStorageList()
@@ -55,8 +57,10 @@ func TestAI_GetCacheStagesWriteList_ReturnsWriteList(t *testing.T) {
 	readStorage := storage.NewLocalStagesStorage(nil)
 	writeStorage := storage.NewLocalStagesStorage(nil)
 	m := &StorageManager{
-		CacheStagesStorageList: []storage.StagesStorage{readStorage},
-		CacheStagesWriteList:   []storage.StagesStorage{writeStorage},
+		Storages: Storages{
+			CacheFrom: []storage.StagesStorage{readStorage},
+			CacheTo:   []storage.StagesStorage{writeStorage},
+		},
 	}
 
 	got := m.GetCacheStagesWriteList()

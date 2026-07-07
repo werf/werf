@@ -205,7 +205,7 @@ func runCleanup(ctx context.Context, cmd *cobra.Command) error {
 		storageManager.EnableParallel(int(common.GetParallelTasksLimit(&commonCmdData)))
 	}
 
-	imagesNames, err := common.GetManagedImagesNames(ctx, projectName, storageManager.StagesStorage, werfConfig)
+	imagesNames, err := common.GetManagedImagesNames(ctx, projectName, storageManager.GetStagesStorage(), werfConfig)
 	if err != nil {
 		return err
 	}

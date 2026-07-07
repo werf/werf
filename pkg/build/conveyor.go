@@ -28,7 +28,6 @@ import (
 	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
 	imagePkg "github.com/werf/werf/v2/pkg/image"
-	"github.com/werf/werf/v2/pkg/storage"
 	"github.com/werf/werf/v2/pkg/storage/manager"
 	"github.com/werf/werf/v2/pkg/telemetry"
 	"github.com/werf/werf/v2/pkg/util/parallel"
@@ -492,7 +491,7 @@ func (c *Conveyor) GetImageInfoGettersWithOpts(opts imagePkg.InfoGetterOptions) 
 			}
 		}
 
-		if _, isLocal := c.StorageManager.GetImagesStorage().(*storage.LocalStagesStorage); !isLocal {
+		if c.StorageManager.ImagesIsRemote() {
 			if len(targetPlatforms) > 1 {
 				img := c.imagesTree.GetMultiplatformImage(name)
 

@@ -18,7 +18,6 @@ import (
 	"github.com/werf/werf/v2/pkg/build/image"
 	"github.com/werf/werf/v2/pkg/config"
 	imagePkg "github.com/werf/werf/v2/pkg/image"
-	"github.com/werf/werf/v2/pkg/storage"
 	"github.com/werf/werf/v2/pkg/telemetry"
 )
 
@@ -242,7 +241,7 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 			}
 		}
 
-		if _, isLocal := phase.Conveyor.StorageManager.GetImagesStorage().(*storage.LocalStagesStorage); !isLocal {
+		if phase.Conveyor.StorageManager.ImagesIsRemote() {
 			if len(targetPlatforms) > 1 {
 				img := phase.Conveyor.imagesTree.GetMultiplatformImage(name)
 				if img == nil {

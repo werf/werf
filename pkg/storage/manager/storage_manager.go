@@ -53,6 +53,7 @@ type StorageManagerInterface interface {
 	GetMetaStorage() storage.PrimaryStagesStorage
 	GetFinalImageStorage() storage.StagesStorage
 	GetImagesStorage() storage.StagesStorage
+	ImagesIsRemote() bool
 	GetSecondaryStagesStorageList() []storage.StagesStorage
 	GetCacheStagesStorageList() []storage.StagesStorage
 	GetCacheStagesWriteList() []storage.StagesStorage
@@ -134,11 +135,13 @@ func NewStorageManager(projectName string, stagesStorage storage.PrimaryStagesSt
 	return &StorageManager{
 		ProjectName: projectName,
 
-		StagesStorage:              stagesStorage,
-		FinalImageStorage:          finalImageStorage,
-		CacheStagesStorageList:     cacheStagesStorageList,
-		CacheStagesWriteList:       cacheStagesStorageList,
-		SecondaryStagesStorageList: secondaryStagesStorageList,
+		Storages: Storages{
+			Stages:    stagesStorage,
+			Final:     finalImageStorage,
+			CacheFrom: cacheStagesStorageList,
+			CacheTo:   cacheStagesStorageList,
+			Secondary: secondaryStagesStorageList,
+		},
 	}
 }
 
@@ -185,24 +188,10 @@ type StorageManager struct {
 
 	ProjectName string
 
-	StagesStorage     storage.PrimaryStagesStorage
-	FinalImageStorage storage.StagesStorage
-	// ImagesStorage holds content-tag storage — the exclusive home for content-tag
-	// resolution and publish (a later task redirects build_phase.go's content-tag
-	// lookup/publish here).
-	ImagesStorage storage.StagesStorage
-	// MetaStorage holds build/cleanup metadata (managed-image-*, meta-*,
-	// custom-tag-meta-*, import-metadata-*, cleanup). Under the --repo preset it
-	// is the same object as StagesStorage (co-located, bit-for-bit); with
-	// --meta-repo it points at a dedicated repo.
-	MetaStorage storage.PrimaryStagesStorage
-	// CacheStagesStorageList is the read list (--cache-from): searched in order
-	// when resolving stages.
-	CacheStagesStorageList []storage.StagesStorage
-	// CacheStagesWriteList is the write fan-out list (--cache-to): newly
-	// built/fetched stages are copied into all of these.
-	CacheStagesWriteList       []storage.StagesStorage
-	SecondaryStagesStorageList []storage.StagesStorage
+	// Storages groups every repo/registry in use under the granular registry
+	// model (--repo preset or --cache-from/--cache-to/--images-repo/
+	// --meta-repo/--final-repo). See Storages for field-by-field docs.
+	Storages Storages
 
 	// These will be released automatically when current process exits
 	SharedHostImagesLocks []lockgate.LockHandle
@@ -212,7 +201,7 @@ type StorageManager struct {
 }
 
 func (m *StorageManager) GetStagesStorage() storage.PrimaryStagesStorage {
-	return m.StagesStorage
+	return m.Storages.Stages
 }
 
 // LogRepositoriesUsed prints the effective repositories in use at the start of
@@ -231,59 +220,65 @@ func (m *StorageManager) LogRepositoriesUsed(ctx context.Context) {
 	}
 
 	imagesRepo := "-"
-	if m.ImagesStorage != nil {
-		imagesRepo = m.ImagesStorage.Address()
+	if m.Storages.Images != nil {
+		imagesRepo = m.Storages.Images.Address()
 	}
 
 	logboek.Context(ctx).Default().LogBlock("Repositories").Do(func() {
-		logboek.Context(ctx).Default().LogF("stages:      %s\n", m.StagesStorage.Address())
+		logboek.Context(ctx).Default().LogF("stages:      %s\n", m.Storages.Stages.Address())
 		logboek.Context(ctx).Default().LogF("meta-repo:   %s\n", m.GetMetaStorage().Address())
 		logboek.Context(ctx).Default().LogF("images-repo: %s\n", imagesRepo)
-		logboek.Context(ctx).Default().LogF("cache-from:  %s\n", addrs(m.CacheStagesStorageList))
-		logboek.Context(ctx).Default().LogF("cache-to:    %s\n", addrs(m.CacheStagesWriteList))
+		logboek.Context(ctx).Default().LogF("cache-from:  %s\n", addrs(m.Storages.CacheFrom))
+		logboek.Context(ctx).Default().LogF("cache-to:    %s\n", addrs(m.Storages.CacheTo))
 	})
 }
 
 func (m *StorageManager) GetFinalImageStorage() storage.StagesStorage {
-	return m.FinalImageStorage
+	return m.Storages.Final
 }
 
 func (m *StorageManager) GetImagesStorage() storage.StagesStorage {
-	return m.ImagesStorage
+	return m.Storages.Images
+}
+
+// ImagesIsRemote reports whether the content-tag storage (--images-repo) is a
+// remote registry, as opposed to :local. Image metadata publishing (managed-
+// image records, custom tags, git metadata) only makes sense for a remote
+// registry, so callers use this as the single guard deciding whether to run
+// metadata publishing at all.
+func (m *StorageManager) ImagesIsRemote() bool {
+	return m.Storages.ImagesIsRemote()
 }
 
 func (m *StorageManager) GetSecondaryStagesStorageList() []storage.StagesStorage {
-	return m.SecondaryStagesStorageList
+	return m.Storages.Secondary
 }
 
 func (m *StorageManager) GetCacheStagesStorageList() []storage.StagesStorage {
-	return m.CacheStagesStorageList
+	return m.Storages.CacheFrom
 }
 
 func (m *StorageManager) GetCacheStagesWriteList() []storage.StagesStorage {
-	return m.CacheStagesWriteList
+	return m.Storages.CacheTo
 }
 
 // GetMetaStorage returns the storage that holds build/cleanup metadata.
 // Falls back to the primary stages storage when no dedicated meta repo is set
 // (i.e. the --repo preset), preserving co-located behavior bit-for-bit.
 func (m *StorageManager) GetMetaStorage() storage.PrimaryStagesStorage {
-	if m.MetaStorage != nil {
-		return m.MetaStorage
-	}
-	return m.StagesStorage
+	return m.Storages.Meta()
 }
 
 func (m *StorageManager) GetServiceValuesRepo() string {
-	if m.FinalImageStorage != nil {
-		return m.FinalImageStorage.String()
+	if m.Storages.Final != nil {
+		return m.Storages.Final.String()
 	}
-	return m.StagesStorage.String()
+	return m.Storages.Stages.String()
 }
 
 func (m *StorageManager) GetImageInfoGetter(imageName string, stageDesc *image.StageDesc, opts image.InfoGetterOptions) *image.InfoGetter {
-	if m.FinalImageStorage != nil {
-		finalImageName := m.FinalImageStorage.ConstructStageImageName(m.ProjectName, stageDesc.StageID.Digest, stageDesc.StageID.CreationTs)
+	if m.Storages.Final != nil {
+		finalImageName := m.Storages.Final.ConstructStageImageName(m.ProjectName, stageDesc.StageID.Digest, stageDesc.StageID.CreationTs)
 		return image.NewInfoGetter(imageName, finalImageName, stageDesc.Info.GetDigest(), opts)
 	}
 
@@ -293,7 +288,7 @@ func (m *StorageManager) GetImageInfoGetter(imageName string, stageDesc *image.S
 func (m *StorageManager) InitCache(ctx context.Context) error {
 	logboek.Context(ctx).Info().LogF("Initializing storage manager cache\n")
 
-	if m.FinalImageStorage != nil {
+	if m.Storages.Final != nil {
 		if _, err := m.getOrCreateFinalImageListCache(ctx); err != nil {
 			return fmt.Errorf("unable to get or create final stages list cache: %w", err)
 		}
@@ -324,9 +319,9 @@ func (m *StorageManager) GetStageDescSet(ctx context.Context) (image.StageDescSe
 }
 
 func (m *StorageManager) getStageDescSet(ctx context.Context, opts ...storage.Option) (image.StageDescSet, error) {
-	stageIDs, err := m.StagesStorage.GetStagesIDs(ctx, m.ProjectName, opts...)
+	stageIDs, err := m.Storages.Stages.GetStagesIDs(ctx, m.ProjectName, opts...)
 	if err != nil {
-		return nil, fmt.Errorf("error getting stages ids from %s: %w", m.StagesStorage, err)
+		return nil, fmt.Errorf("error getting stages ids from %s: %w", m.Storages.Stages, err)
 	}
 
 	stageDescSet := image.NewStageDescSet()
@@ -335,10 +330,10 @@ func (m *StorageManager) getStageDescSet(ctx context.Context, opts ...storage.Op
 	}, func(ctx context.Context, taskId int) error {
 		stageID := stageIDs[taskId]
 
-		stageDesc, err := getStageDesc(ctx, m.ProjectName, stageID, m.StagesStorage, m.CacheStagesStorageList, getStageDescOptions{WithLocalManifestCache: m.getWithLocalManifestCacheOption()})
+		stageDesc, err := getStageDesc(ctx, m.ProjectName, stageID, m.Storages.Stages, m.Storages.CacheFrom, getStageDescOptions{WithLocalManifestCache: m.getWithLocalManifestCacheOption()})
 		if err != nil {
 			if storage.IsErrStageUnavailable(err) {
-				logboek.Context(ctx).Warn().LogF("Ignoring stage %s: cannot get stage description from %s: %s\n", stageID.String(), m.StagesStorage.String(), err)
+				logboek.Context(ctx).Warn().LogF("Ignoring stage %s: cannot get stage description from %s: %s\n", stageID.String(), m.Storages.Stages.String(), err)
 				return nil
 			}
 
@@ -358,7 +353,7 @@ func (m *StorageManager) getStageDescSet(ctx context.Context, opts ...storage.Op
 func (m *StorageManager) GetFinalStageDescSet(ctx context.Context) (image.StageDescSet, error) {
 	existingStagesListCache, err := m.getOrCreateFinalImageListCache(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("error getting existing stages list of final repo %s: %w", m.FinalImageStorage.String(), err)
+		return nil, fmt.Errorf("error getting existing stages list of final repo %s: %w", m.Storages.Final.String(), err)
 	}
 
 	logboek.Context(ctx).Debug().LogF("[%p] Got existing final stages list cache: %#v\n", m, existingStagesListCache.StageIDs)
@@ -370,14 +365,14 @@ func (m *StorageManager) GetFinalStageDescSet(ctx context.Context) (image.StageD
 	}, func(ctx context.Context, taskId int) error {
 		stageID := stageIDs[taskId]
 
-		stageDesc, err := getStageDesc(ctx, m.ProjectName, stageID, m.FinalImageStorage, nil, getStageDescOptions{WithLocalManifestCache: true})
+		stageDesc, err := getStageDesc(ctx, m.ProjectName, stageID, m.Storages.Final, nil, getStageDescOptions{WithLocalManifestCache: true})
 		if err != nil {
 			if storage.IsErrStageUnavailable(err) {
-				logboek.Context(ctx).Warn().LogF("Ignoring stage %s: cannot get stage description from %s: %s\n", stageID.String(), m.FinalImageStorage.String(), err)
+				logboek.Context(ctx).Warn().LogF("Ignoring stage %s: cannot get stage description from %s: %s\n", stageID.String(), m.Storages.Final.String(), err)
 				return nil
 			}
 
-			return fmt.Errorf("error getting stage %s description from %s: %w", stageID.String(), m.FinalImageStorage.String(), err)
+			return fmt.Errorf("error getting stage %s description from %s: %w", stageID.String(), m.Storages.Final.String(), err)
 		}
 
 		stageDescSet.Add(stageDesc)
@@ -397,13 +392,13 @@ func (m *StorageManager) ForEachDeleteFinalStage(ctx context.Context, options Fo
 		InitDockerCLIForEachWorker: true,
 	}, func(ctx context.Context, taskId int) error {
 		stageDesc, _ := stageDescSet.Pop()
-		err := m.FinalImageStorage.DeleteStage(ctx, stageDesc, options.DeleteImageOptions)
+		err := m.Storages.Final.DeleteStage(ctx, stageDesc, options.DeleteImageOptions)
 		return f(ctx, stageDesc, err)
 	})
 }
 
 func (m *StorageManager) ForEachDeleteStage(ctx context.Context, options ForEachDeleteStageOptions, stageDescSet image.StageDescSet, f func(ctx context.Context, stageDesc *image.StageDesc, err error) error) error {
-	if localStagesStorage, isLocal := m.StagesStorage.(*storage.LocalStagesStorage); isLocal {
+	if localStagesStorage, isLocal := m.Storages.Stages.(*storage.LocalStagesStorage); isLocal {
 		filteredStageDescSet, err := localStagesStorage.FilterStageDescSetAndProcessRelatedData(ctx, stageDescSet, options.FilterStagesAndProcessRelatedDataOptions)
 		if err != nil {
 			return fmt.Errorf("error filtering local docker server stages: %w", err)
@@ -419,13 +414,13 @@ func (m *StorageManager) ForEachDeleteStage(ctx context.Context, options ForEach
 	}, func(ctx context.Context, taskId int) error {
 		stageDesc, _ := stageDescSet.Pop()
 
-		for _, cacheStagesStorage := range m.CacheStagesStorageList {
+		for _, cacheStagesStorage := range m.Storages.CacheFrom {
 			if err := cacheStagesStorage.DeleteStage(ctx, stageDesc, options.DeleteImageOptions); err != nil {
 				logboek.Context(ctx).Warn().LogF("Unable to delete stage %s from the cache stages storage %s: %s\n", stageDesc.StageID.String(), cacheStagesStorage.String(), err)
 			}
 		}
 
-		err := m.StagesStorage.DeleteStage(ctx, stageDesc, options.DeleteImageOptions)
+		err := m.Storages.Stages.DeleteStage(ctx, stageDesc, options.DeleteImageOptions)
 		return f(ctx, stageDesc, err)
 	})
 }
@@ -490,12 +485,12 @@ func (m *StorageManager) FetchStageImage(ctx context.Context, containerBackend c
 		return FetchStageInfo{}, fmt.Errorf("error locking stage image %q: %w", stageImage.Image.Name(), err)
 	}
 
-	shouldFetch, err := m.StagesStorage.ShouldFetchImage(ctx, stageImage.Image)
+	shouldFetch, err := m.Storages.Stages.ShouldFetchImage(ctx, stageImage.Image)
 	if err != nil {
 		return FetchStageInfo{}, fmt.Errorf("error checking should fetch image: %w", err)
 	}
 	if !shouldFetch {
-		imageName := m.StagesStorage.ConstructStageImageName(m.ProjectName, stageImage.Image.GetStageDesc().StageID.Digest, stageImage.Image.GetStageDesc().StageID.CreationTs)
+		imageName := m.Storages.Stages.ConstructStageImageName(m.ProjectName, stageImage.Image.GetStageDesc().StageID.Digest, stageImage.Image.GetStageDesc().StageID.CreationTs)
 
 		logboek.Context(ctx).Info().LogF("Image %s exists, will not perform fetch\n", imageName)
 
@@ -551,7 +546,7 @@ func (m *StorageManager) FetchStageImage(ctx context.Context, containerBackend c
 
 			stageDesc, err := getStageDesc(ctx, m.ProjectName, *stageID, stagesStorage, nil, getStageDescOptions{WithLocalManifestCache: true})
 			if err != nil {
-				return nil, fmt.Errorf("error getting stage %s description from %s: %w", stageID.String(), m.FinalImageStorage.String(), err)
+				return nil, fmt.Errorf("error getting stage %s description from %s: %w", stageID.String(), m.Storages.Final.String(), err)
 			}
 			pulled = false
 			cacheStageImage.SetStageDesc(stageDesc)
@@ -566,7 +561,7 @@ func (m *StorageManager) FetchStageImage(ctx context.Context, containerBackend c
 
 	prepareCacheStageAsPrimary := func(cacheImg, primaryImg container_backend.LegacyImageInterface) error {
 		stageID := primaryImg.GetStageDesc().StageID
-		primaryImageName := m.StagesStorage.ConstructStageImageName(m.ProjectName, stageID.Digest, stageID.CreationTs)
+		primaryImageName := m.Storages.Stages.ConstructStageImageName(m.ProjectName, stageID.Digest, stageID.CreationTs)
 
 		if err := containerBackend.RenameImage(ctx, cacheImg, primaryImageName, true); err != nil {
 			return fmt.Errorf("unable to rename image %s to %s: %w", cacheImg.Name(), primaryImageName, err)
@@ -576,7 +571,7 @@ func (m *StorageManager) FetchStageImage(ctx context.Context, containerBackend c
 			return fmt.Errorf("unable to refresh stage image %s: %w", primaryImageName, err)
 		}
 
-		if err := storeStageDescIntoLocalManifestCache(ctx, m.ProjectName, *stageID, m.StagesStorage, primaryImg.GetStageDesc()); err != nil {
+		if err := storeStageDescIntoLocalManifestCache(ctx, m.ProjectName, *stageID, m.Storages.Stages, primaryImg.GetStageDesc()); err != nil {
 			return fmt.Errorf("error storing stage %s description into local manifest cache: %w", primaryImageName, err)
 		}
 
@@ -587,7 +582,7 @@ func (m *StorageManager) FetchStageImage(ctx context.Context, containerBackend c
 		return nil
 	}
 
-	for _, cacheStagesStorage := range m.CacheStagesStorageList {
+	for _, cacheStagesStorage := range m.Storages.CacheFrom {
 		cacheImg, err := fetchStageFromCache(cacheStagesStorage)
 		if err != nil {
 			if !storage.IsErrStageNotFound(err) {
@@ -616,30 +611,30 @@ func (m *StorageManager) FetchStageImage(ctx context.Context, containerBackend c
 		stageID := stageImage.Image.GetStageDesc().StageID
 		img := stageImage
 
-		err := logboek.Context(ctx).Default().LogProcess("Fetching stage %s from %s", logName, m.StagesStorage.String()).
+		err := logboek.Context(ctx).Default().LogProcess("Fetching stage %s from %s", logName, m.Storages.Stages.String()).
 			DoError(func() error {
-				return doFetchStage(ctx, m.ProjectName, m.StagesStorage, *stageID, img.Image)
+				return doFetchStage(ctx, m.ProjectName, m.Storages.Stages, *stageID, img.Image)
 			})
 
 		if storage.IsErrStageUnavailable(err) {
 			logboek.Context(ctx).Error().LogF("Stage %s image %s is no longer available: %s!\n", logName, stageImage.Image.Name(), err)
 
 			// Invalidate manifest cache for the rejected stage (do this regardless of RejectStage result)
-			stageImageName := m.StagesStorage.ConstructStageImageName(m.ProjectName, stageID.Digest, stageID.CreationTs)
-			if err := image.CommonManifestCache.DeleteImageInfo(ctx, m.StagesStorage.String(), stageImageName); err != nil {
+			stageImageName := m.Storages.Stages.ConstructStageImageName(m.ProjectName, stageID.Digest, stageID.CreationTs)
+			if err := image.CommonManifestCache.DeleteImageInfo(ctx, m.Storages.Stages.String(), stageImageName); err != nil {
 				logboek.Context(ctx).Warn().LogF("Unable to delete manifest cache for rejected stage %s: %s\n", stageImageName, err)
 			}
 
-			logboek.Context(ctx).Error().LogF("Will mark image %s as rejected in the stages storage %s\n", stageImage.Image.Name(), m.StagesStorage.String())
-			if err := m.StagesStorage.RejectStage(ctx, m.ProjectName, stageID.Digest, stageID.CreationTs); err != nil {
-				return FetchStageInfo{}, fmt.Errorf("unable to reject stage %s image %s in the stages storage %s: %w", logName, stageImage.Image.Name(), m.StagesStorage.String(), err)
+			logboek.Context(ctx).Error().LogF("Will mark image %s as rejected in the stages storage %s\n", stageImage.Image.Name(), m.Storages.Stages.String())
+			if err := m.Storages.Stages.RejectStage(ctx, m.ProjectName, stageID.Digest, stageID.CreationTs); err != nil {
+				return FetchStageInfo{}, fmt.Errorf("unable to reject stage %s image %s in the stages storage %s: %w", logName, stageImage.Image.Name(), m.Storages.Stages.String(), err)
 			}
 
 			return FetchStageInfo{}, ErrUnexpectedStagesStorageState
 		}
 
 		if err != nil {
-			return FetchStageInfo{}, fmt.Errorf("unable to fetch stage %s from stages storage %s: %w", stageID.String(), m.StagesStorage.String(), err)
+			return FetchStageInfo{}, fmt.Errorf("unable to fetch stage %s from stages storage %s: %w", stageID.String(), m.Storages.Stages.String(), err)
 		}
 
 		source = BaseImageSourceTypeRepo
@@ -651,7 +646,7 @@ func (m *StorageManager) FetchStageImage(ctx context.Context, containerBackend c
 
 		err := logboek.Context(ctx).Default().LogProcess("Copy stage %s into cache %s", logName, cacheStagesStorage.String()).
 			DoError(func() error {
-				if _, err := m.CopyStage(ctx, m.StagesStorage, cacheStagesStorage, *stageID, CopyStageOptions{
+				if _, err := m.CopyStage(ctx, m.Storages.Stages, cacheStagesStorage, *stageID, CopyStageOptions{
 					ContainerBackend: containerBackend,
 					LegacyImage:      fetchedImg,
 				}); err != nil {
@@ -676,7 +671,7 @@ func (m *StorageManager) CopyStageIntoCacheStorages(ctx context.Context, stageID
 					copyOpts.FetchStage = opts.FetchStage
 					copyOpts.LegacyImage = opts.FetchStage.GetStageImage().Image
 				}
-				if _, err := m.CopyStage(ctx, m.StagesStorage, cache, stageID, copyOpts); err != nil {
+				if _, err := m.CopyStage(ctx, m.Storages.Stages, cache, stageID, copyOpts); err != nil {
 					return fmt.Errorf("unable to copy stage %s into cache stages storage %s: %w", stageID.String(), cache.String(), err)
 				}
 				return nil
@@ -696,7 +691,7 @@ func (m *StorageManager) getOrCreateFinalImageListCache(ctx context.Context) (*S
 		return m.FinalImageListCache, nil
 	}
 
-	stageIDs, err := m.FinalImageStorage.GetStagesIDs(ctx, m.ProjectName)
+	stageIDs, err := m.Storages.Final.GetStagesIDs(ctx, m.ProjectName)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get final repo stages list: %w", err)
 	}
@@ -750,7 +745,7 @@ func (m *StorageManager) CopyStageIntoFinalStorage(ctx context.Context, stageID 
 				copyOpts.FetchStage = opts.FetchStage
 				copyOpts.LegacyImage = opts.FetchStage.GetStageImage().Image
 			}
-			stageDescCopy, err = m.CopyStage(ctx, m.ImagesStorage, finalImageStorage, stageID, copyOpts)
+			stageDescCopy, err = m.CopyStage(ctx, m.Storages.Images, finalImageStorage, stageID, copyOpts)
 			if err != nil {
 				return fmt.Errorf("unable to copy stage %s into the final repo %s: %w", stageID.String(), finalImageStorage.String(), err)
 			}
@@ -804,11 +799,11 @@ func (m *StorageManager) SelectSuitableStageDesc(ctx context.Context, c stage.Co
 }
 
 func (m *StorageManager) GetStageDescSetByDigestWithCache(ctx context.Context, stageName, stageDigest string, parentStageCreationTs int64) (image.StageDescSet, error) {
-	return m.GetStageDescSetByDigestFromStagesStorageWithCache(ctx, stageName, stageDigest, parentStageCreationTs, m.StagesStorage)
+	return m.GetStageDescSetByDigestFromStagesStorageWithCache(ctx, stageName, stageDigest, parentStageCreationTs, m.Storages.Stages)
 }
 
 func (m *StorageManager) GetStageDescSetByDigest(ctx context.Context, stageName, stageDigest string, parentStageCreationTs int64) (image.StageDescSet, error) {
-	return m.GetStageDescSetByDigestFromStagesStorage(ctx, stageName, stageDigest, parentStageCreationTs, m.StagesStorage)
+	return m.GetStageDescSetByDigestFromStagesStorage(ctx, stageName, stageDigest, parentStageCreationTs, m.Storages.Stages)
 }
 
 func (m *StorageManager) GetStageDescSetByDigestFromStagesStorageWithCache(ctx context.Context, stageName, stageDigest string, parentStageCreationTs int64, stagesStorage storage.StagesStorage) (image.StageDescSet, error) {
@@ -834,7 +829,7 @@ func (m *StorageManager) getStageDescSetByDigestFromStagesStorage(ctx context.Co
 		return nil, fmt.Errorf("unable to get stages ids from %s by digest %s for stage %s: %w", stagesStorage.String(), stageDigest, stageName, err)
 	}
 
-	stageDescSet, err := m.getStageDescSetFromStagesStorage(ctx, stageIDs, stagesStorage, m.CacheStagesStorageList)
+	stageDescSet, err := m.getStageDescSetFromStagesStorage(ctx, stageIDs, stagesStorage, m.Storages.CacheFrom)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get stage descriptions by ids from %s: %w", stagesStorage.String(), err)
 	}
@@ -861,7 +856,7 @@ func (m *StorageManager) CopySuitableStageDescByDigest(ctx context.Context, stag
 		return nil, fmt.Errorf("unable to store %s to %s: %w", stageDesc.Info.Name, destinationStagesStorage.String(), err)
 	}
 
-	if destinationStageDesc, err := getStageDesc(ctx, m.ProjectName, *stageDesc.StageID, destinationStagesStorage, m.CacheStagesStorageList, getStageDescOptions{WithLocalManifestCache: m.getWithLocalManifestCacheOption()}); err != nil {
+	if destinationStageDesc, err := getStageDesc(ctx, m.ProjectName, *stageDesc.StageID, destinationStagesStorage, m.Storages.CacheFrom, getStageDescOptions{WithLocalManifestCache: m.getWithLocalManifestCacheOption()}); err != nil {
 		return nil, fmt.Errorf("unable to get stage %s description from %s: %w", stageDesc.StageID.String(), destinationStagesStorage.String(), err)
 	} else {
 		return destinationStageDesc, nil
@@ -869,7 +864,7 @@ func (m *StorageManager) CopySuitableStageDescByDigest(ctx context.Context, stag
 }
 
 func (m *StorageManager) getWithLocalManifestCacheOption() bool {
-	return m.StagesStorage.Address() != storage.LocalStorageAddress
+	return m.Storages.Stages.Address() != storage.LocalStorageAddress
 }
 
 func (m *StorageManager) getStagesIDsByDigestFromStagesStorage(ctx context.Context, stageName, stageDigest string, parentStageCreationTs int64, stagesStorage storage.StagesStorage, opts ...storage.Option) ([]image.StageID, error) {
@@ -879,7 +874,7 @@ func (m *StorageManager) getStagesIDsByDigestFromStagesStorage(ctx context.Conte
 			var err error
 			stageIDs, err = stagesStorage.GetStagesIDsByDigest(ctx, m.ProjectName, stageDigest, parentStageCreationTs, opts...)
 			if err != nil {
-				return fmt.Errorf("error getting project %s stage %s images from storage: %w", m.StagesStorage.String(), stageDigest, err)
+				return fmt.Errorf("error getting project %s stage %s images from storage: %w", m.Storages.Stages.String(), stageDigest, err)
 			}
 
 			logboek.Context(ctx).Debug().LogF("Stages ids: %#v\n", stageIDs)
@@ -898,7 +893,7 @@ func (m *StorageManager) getStageDescSetFromStagesStorage(ctx context.Context, s
 		stageDesc, err := getStageDesc(ctx, m.ProjectName, stageID, stagesStorage, cacheStagesStorageList, getStageDescOptions{WithLocalManifestCache: m.getWithLocalManifestCacheOption()})
 		if err != nil {
 			if storage.IsErrStageUnavailable(err) {
-				logboek.Context(ctx).Warn().LogF("Ignoring stage %s: cannot get stage description from %s: %s\n", stageID.String(), m.StagesStorage.String(), err)
+				logboek.Context(ctx).Warn().LogF("Ignoring stage %s: cannot get stage description from %s: %s\n", stageID.String(), m.Storages.Stages.String(), err)
 				continue
 			}
 
@@ -1033,7 +1028,7 @@ func (m *StorageManager) GenerateStageDescCreationTs(digest string, stageDescSet
 	creationTs := timeNow.Unix()*1000 + int64(timeNow.Nanosecond()/1000000)
 
 	for {
-		imageName := m.StagesStorage.ConstructStageImageName(m.ProjectName, digest, creationTs)
+		imageName := m.Storages.Stages.ConstructStageImageName(m.ProjectName, digest, creationTs)
 
 		collision := false
 		for stageDesc := range stageDescSet.Iter() {
@@ -1104,7 +1099,7 @@ func (m *StorageManager) ForEachDeleteStageCustomTag(ctx context.Context, ids []
 
 		// The custom-tag alias image lives with the final images (primary/images
 		// repo); its metadata record lives in the meta repo.
-		if err := m.StagesStorage.DeleteStageCustomTag(ctx, id); err != nil {
+		if err := m.Storages.Stages.DeleteStageCustomTag(ctx, id); err != nil {
 			return f(ctx, id, fmt.Errorf("unable to delete stage custom tag: %w", err))
 		}
 		if err := m.GetMetaStorage().UnregisterStageCustomTag(ctx, id); err != nil {

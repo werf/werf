@@ -241,8 +241,10 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 				logboek.Context(ctx).LogOptionalLn()
 			}
 
-			// TODO: Separate LocalStagesStorage and RepoStagesStorage interfaces, local should not include metadata publishing methods at all
-			if _, isLocal := phase.Conveyor.StorageManager.GetImagesStorage().(*storage.LocalStagesStorage); !isLocal {
+			// Image metadata (managed-image records, custom tags, git metadata)
+			// only makes sense for a remote images-repo; a local Docker image
+			// has no such concept.
+			if phase.Conveyor.StorageManager.ImagesIsRemote() {
 				if err := phase.publishImageMetadata(ctx, name, img); err != nil {
 					return fmt.Errorf("unable to publish image %q metadata: %w", name, err)
 				}
@@ -251,8 +253,7 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 			img := image.NewMultiplatformImage(name, images, taskId, len(imagesPairs))
 			phase.Conveyor.imagesTree.SetMultiplatformImage(img)
 
-			// TODO: Separate LocalStagesStorage and RepoStagesStorage interfaces, local should not include metadata publishing methods at all
-			if _, isLocal := phase.Conveyor.StorageManager.GetImagesStorage().(*storage.LocalStagesStorage); !isLocal {
+			if phase.Conveyor.StorageManager.ImagesIsRemote() {
 				if err := logboek.Context(ctx).LogProcess(img.LogDetailedName()).
 					Options(func(options types.LogProcessOptionsInterface) {
 						options.Style(logging.ImageMetadataStyle())
@@ -268,15 +269,13 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 			}
 
 			finalImageStorage := phase.Conveyor.StorageManager.GetFinalImageStorage()
-			if img.IsFinal && finalImageStorage != nil {
-				if _, isLocal := phase.Conveyor.StorageManager.GetImagesStorage().(*storage.LocalStagesStorage); !isLocal {
-					if err := phase.publishMultiplatformFinalImage(ctx, name, img, finalImageStorage); err != nil {
-						return err
-					}
+			if img.IsFinal && finalImageStorage != nil && phase.Conveyor.StorageManager.ImagesIsRemote() {
+				if err := phase.publishMultiplatformFinalImage(ctx, name, img, finalImageStorage); err != nil {
+					return err
 				}
 			}
 
-			if _, isLocal := phase.Conveyor.StorageManager.GetImagesStorage().(*storage.LocalStagesStorage); !isLocal {
+			if phase.Conveyor.StorageManager.ImagesIsRemote() {
 				if err := phase.publishMultiplatformImageCustomTags(ctx, name, img); err != nil {
 					return fmt.Errorf("unable to publish image %q multiplatform custom tags: %w", name, err)
 				}
