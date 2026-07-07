@@ -44,8 +44,12 @@ type CmdData struct {
 	SecondaryStagesStorage *[]string
 	CacheStagesStorage     *[]string
 
-	CheckBuiltImages       *bool
-	LegacyCheckBuiltImages *bool // TODO(major): remove
+	CheckBuiltImages *bool
+	// LegacyCheckBuiltImages backs the hidden `-Z`/`--require-built-images` alias kept for
+	// backward compatibility with werf 1.2, where this flag had different semantics than the
+	// current `--require-built-images` (see RequireBuiltImages). Combined with CheckBuiltImages
+	// in GetCheckBuiltImages so either flag enables the check.
+	LegacyCheckBuiltImages *bool
 	RequireBuiltImages     *bool
 	StubTags               *bool
 

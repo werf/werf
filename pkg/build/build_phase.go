@@ -1196,9 +1196,6 @@ func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *imag
 		}
 
 		serviceLabels[imagePkg.WerfParentStageID] = prevBuiltImage.Image.GetStageDesc().StageID.String()
-
-		// TODO: remove this legacy logic in v3.
-		serviceLabels[imagePkg.WerfBaseImageIDLabel] = prevBuiltImage.Image.GetStageDesc().Info.ID
 	} else if img.IsBasedOnStage() {
 		baseStageImage := img.GetBaseStageImage()
 		serviceLabels[imagePkg.WerfParentStageID] = baseStageImage.Image.GetStageDesc().StageID.String()

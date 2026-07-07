@@ -685,13 +685,6 @@ func (backend *BuildahBackend) GetImageInfo(ctx context.Context, ref string, opt
 		}
 	}
 
-	var parentID string
-	if inspect.Docker.Config.Labels != nil {
-		if id, ok := inspect.Docker.Config.Labels[image.WerfBaseImageIDLabel]; ok {
-			parentID = id
-		}
-	}
-
 	var repository, tag, repoDigest string
 	if !strings.HasPrefix(ref, "sha256:") {
 		repository, tag = image.ParseRepositoryAndTag(ref)
@@ -721,7 +714,6 @@ func (backend *BuildahBackend) GetImageInfo(ctx context.Context, ref string, opt
 		OnBuild:           inspect.Docker.Config.OnBuild,
 		Env:               inspect.Docker.Config.Env,
 		ID:                imageID,
-		ParentID:          parentID,
 		Size:              inspect.Docker.Size,
 		Volumes:           inspect.Docker.Config.Volumes,
 	}, nil

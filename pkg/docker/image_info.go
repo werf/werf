@@ -15,13 +15,6 @@ func NewInfoFromInspect(ref string, inspect *dockerImage.InspectResponse) *image
 		repoDigest = image.ExtractRepoDigest(inspect.RepoDigests, repository)
 	}
 
-	var parentID string
-	if inspect.Config != nil && inspect.Config.Labels != nil {
-		if id, ok := inspect.Config.Labels[image.WerfBaseImageIDLabel]; ok {
-			parentID = id
-		}
-	}
-
 	var created string
 	if inspect.Created != "" {
 		created = inspect.Created
@@ -39,7 +32,6 @@ func NewInfoFromInspect(ref string, inspect *dockerImage.InspectResponse) *image
 		CreatedAtUnixNano: image.MustParseTimestampString(created).UnixNano(),
 		RepoDigest:        repoDigest,
 		ID:                inspect.ID,
-		ParentID:          parentID,
 		Size:              inspect.Size,
 		Volumes:           inspect.Config.Volumes,
 	}
