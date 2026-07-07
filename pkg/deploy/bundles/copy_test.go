@@ -483,7 +483,7 @@ werf:
 					},
 				},
 			},
-			Raw: []*chart.File{
+			Raw: []*chartcommon.File{
 				{
 					Name: "values.yaml",
 					Data: []byte(`
