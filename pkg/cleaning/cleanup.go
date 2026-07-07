@@ -94,7 +94,7 @@ func (m *cleanupManager) init(ctx context.Context) error {
 		return err
 	}
 
-	if m.StorageManager.GetFinalImageStorage() != nil {
+	if m.StorageManager.GetFinalImagesStorage() != nil {
 		if err := logboek.Context(ctx).Info().LogProcess("Fetching final repo manifests").DoError(func() error {
 			return m.stageManager.InitFinalStageDescSet(ctx, m.StorageManager)
 		}); err != nil {
@@ -219,7 +219,7 @@ func (m *cleanupManager) run(ctx context.Context) error {
 		return err
 	}
 
-	if m.StorageManager.GetFinalImageStorage() != nil {
+	if m.StorageManager.GetFinalImagesStorage() != nil {
 		if err := logboek.Context(ctx).LogProcess("Cleanup final stages").DoError(func() error {
 			return m.cleanupFinalStages(ctx)
 		}); err != nil {
@@ -319,7 +319,7 @@ func (m *cleanupManager) skipFinalStageIDsThatAreUsedInKubernetes(ctx context.Co
 Loop:
 	for stageDesc := range m.stageManager.GetFinalStageDescSet().Iter() {
 		stageID := stageDesc.StageID.String()
-		dockerImageName := fmt.Sprintf("%s:%s", m.StorageManager.GetFinalImageStorage().Address(), stageID)
+		dockerImageName := fmt.Sprintf("%s:%s", m.StorageManager.GetFinalImagesStorage().Address(), stageID)
 
 		for _, deployedDockerImage := range deployedDockerImages {
 			if deployedDockerImage.Name == dockerImageName {

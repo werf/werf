@@ -62,12 +62,12 @@ func (s *Storages) Meta() storage.PrimaryStagesStorage {
 	return s.Stages
 }
 
-// ImagesIsRemote reports whether the content-tag storage is a remote
+// IsRemoteImagesStorage reports whether the content-tag storage is a remote
 // registry, as opposed to :local. Image metadata (managed-image records,
 // custom tags, git metadata) is only meaningful for remote registries — a
 // local Docker image has no such concept — so this is the single guard that
 // decides whether metadata publishing runs at all.
-func (s *Storages) ImagesIsRemote() bool {
+func (s *Storages) IsRemoteImagesStorage() bool {
 	_, isLocal := s.Images.(*storage.LocalStagesStorage)
 	return !isLocal
 }

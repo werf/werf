@@ -233,7 +233,7 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 		if len(targetPlatforms) == 1 {
 			img := images[0]
 
-			finalImageStorage := phase.Conveyor.StorageManager.GetFinalImageStorage()
+			finalImageStorage := phase.Conveyor.StorageManager.GetFinalImagesStorage()
 			if img.IsFinal && finalImageStorage != nil {
 				if err := phase.publishFinalImage(ctx, name, img, finalImageStorage); err != nil {
 					return err
@@ -244,7 +244,7 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 			// Image metadata (managed-image records, custom tags, git metadata)
 			// only makes sense for a remote images-repo; a local Docker image
 			// has no such concept.
-			if phase.Conveyor.StorageManager.ImagesIsRemote() {
+			if phase.Conveyor.StorageManager.IsRemoteImagesStorage() {
 				if err := phase.publishImageMetadata(ctx, name, img); err != nil {
 					return fmt.Errorf("unable to publish image %q metadata: %w", name, err)
 				}
@@ -253,7 +253,7 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 			img := image.NewMultiplatformImage(name, images, taskId, len(imagesPairs))
 			phase.Conveyor.imagesTree.SetMultiplatformImage(img)
 
-			if phase.Conveyor.StorageManager.ImagesIsRemote() {
+			if phase.Conveyor.StorageManager.IsRemoteImagesStorage() {
 				if err := logboek.Context(ctx).LogProcess(img.LogDetailedName()).
 					Options(func(options types.LogProcessOptionsInterface) {
 						options.Style(logging.ImageMetadataStyle())
@@ -268,14 +268,14 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 				}
 			}
 
-			finalImageStorage := phase.Conveyor.StorageManager.GetFinalImageStorage()
-			if img.IsFinal && finalImageStorage != nil && phase.Conveyor.StorageManager.ImagesIsRemote() {
+			finalImageStorage := phase.Conveyor.StorageManager.GetFinalImagesStorage()
+			if img.IsFinal && finalImageStorage != nil && phase.Conveyor.StorageManager.IsRemoteImagesStorage() {
 				if err := phase.publishMultiplatformFinalImage(ctx, name, img, finalImageStorage); err != nil {
 					return err
 				}
 			}
 
-			if phase.Conveyor.StorageManager.ImagesIsRemote() {
+			if phase.Conveyor.StorageManager.IsRemoteImagesStorage() {
 				if err := phase.publishMultiplatformImageCustomTags(ctx, name, img); err != nil {
 					return fmt.Errorf("unable to publish image %q multiplatform custom tags: %w", name, err)
 				}
@@ -343,7 +343,7 @@ func (phase *BuildPhase) publishFinalImage(ctx context.Context, name string, img
 
 	desc, err := phase.Conveyor.StorageManager.CopyStageIntoFinalStorage(
 		ctx, *contentTagDesc.StageID,
-		phase.Conveyor.StorageManager.GetFinalImageStorage(),
+		phase.Conveyor.StorageManager.GetFinalImagesStorage(),
 		manager.CopyStageIntoStorageOptions{
 			ContainerBackend:  phase.Conveyor.ContainerBackend,
 			ShouldBeBuiltMode: phase.ShouldBeBuiltMode,
@@ -401,9 +401,9 @@ func (phase *BuildPhase) publishImageMetadata(ctx context.Context, name string, 
 
 	var customTagStorage storage.StagesStorage
 	var customContentTagDesc *imagePkg.StageDesc
-	if phase.Conveyor.StorageManager.GetFinalImageStorage() != nil {
-		customTagStorage = phase.Conveyor.StorageManager.GetFinalImageStorage()
-		customContentTagDesc = manager.ConvertStageDescForStagesStorage(phase.Conveyor.ProjectName(), img.GetContentTagDesc(), phase.Conveyor.StorageManager.GetFinalImageStorage())
+	if phase.Conveyor.StorageManager.GetFinalImagesStorage() != nil {
+		customTagStorage = phase.Conveyor.StorageManager.GetFinalImagesStorage()
+		customContentTagDesc = manager.ConvertStageDescForStagesStorage(phase.Conveyor.ProjectName(), img.GetContentTagDesc(), phase.Conveyor.StorageManager.GetFinalImagesStorage())
 	} else {
 		customTagStorage = phase.Conveyor.StorageManager.GetImagesStorage()
 		customContentTagDesc = img.GetContentTagDesc()
@@ -464,7 +464,7 @@ func (phase *BuildPhase) publishMultiplatformImageCustomTags(ctx context.Context
 	}
 
 	imagesStorage := phase.Conveyor.StorageManager.GetImagesStorage()
-	finalImageStorage := phase.Conveyor.StorageManager.GetFinalImageStorage()
+	finalImageStorage := phase.Conveyor.StorageManager.GetFinalImagesStorage()
 
 	var customTagStorage storage.StagesStorage
 	var customTagStageDesc *imagePkg.StageDesc

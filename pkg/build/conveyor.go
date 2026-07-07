@@ -491,7 +491,7 @@ func (c *Conveyor) GetImageInfoGettersWithOpts(opts imagePkg.InfoGetterOptions) 
 			}
 		}
 
-		if c.StorageManager.ImagesIsRemote() {
+		if c.StorageManager.IsRemoteImagesStorage() {
 			if len(targetPlatforms) > 1 {
 				img := c.imagesTree.GetMultiplatformImage(name)
 

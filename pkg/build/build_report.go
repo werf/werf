@@ -241,7 +241,7 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 			}
 		}
 
-		if phase.Conveyor.StorageManager.ImagesIsRemote() {
+		if phase.Conveyor.StorageManager.IsRemoteImagesStorage() {
 			if len(targetPlatforms) > 1 {
 				img := phase.Conveyor.imagesTree.GetMultiplatformImage(name)
 				if img == nil {

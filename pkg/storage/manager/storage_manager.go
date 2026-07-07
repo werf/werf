@@ -51,9 +51,9 @@ type StorageManagerInterface interface {
 
 	GetStagesStorage() storage.PrimaryStagesStorage
 	GetMetaStorage() storage.PrimaryStagesStorage
-	GetFinalImageStorage() storage.StagesStorage
+	GetFinalImagesStorage() storage.StagesStorage
 	GetImagesStorage() storage.StagesStorage
-	ImagesIsRemote() bool
+	IsRemoteImagesStorage() bool
 	GetSecondaryStagesStorageList() []storage.StagesStorage
 	GetCacheStagesStorageList() []storage.StagesStorage
 	GetCacheStagesWriteList() []storage.StagesStorage
@@ -257,7 +257,7 @@ func (m *StorageManager) LogRepositoriesUsed(ctx context.Context) {
 	})
 }
 
-func (m *StorageManager) GetFinalImageStorage() storage.StagesStorage {
+func (m *StorageManager) GetFinalImagesStorage() storage.StagesStorage {
 	return m.Storages.Final
 }
 
@@ -265,13 +265,13 @@ func (m *StorageManager) GetImagesStorage() storage.StagesStorage {
 	return m.Storages.Images
 }
 
-// ImagesIsRemote reports whether the content-tag storage (--images-repo) is a
-// remote registry, as opposed to :local. Image metadata publishing (managed-
-// image records, custom tags, git metadata) only makes sense for a remote
-// registry, so callers use this as the single guard deciding whether to run
-// metadata publishing at all.
-func (m *StorageManager) ImagesIsRemote() bool {
-	return m.Storages.ImagesIsRemote()
+// IsRemoteImagesStorage reports whether the content-tag storage
+// (--images-repo) is a remote registry, as opposed to :local. Image metadata
+// publishing (managed-image records, custom tags, git metadata) only makes
+// sense for a remote registry, so callers use this as the single guard
+// deciding whether to run metadata publishing at all.
+func (m *StorageManager) IsRemoteImagesStorage() bool {
+	return m.Storages.IsRemoteImagesStorage()
 }
 
 func (m *StorageManager) GetSecondaryStagesStorageList() []storage.StagesStorage {
@@ -736,9 +736,9 @@ func (m *StorageManager) CopyStageIntoFinalStorage(ctx context.Context, stageID 
 
 	for _, existingStg := range existingStagesListCache.GetStageIDs() {
 		if existingStg.IsEqual(stageID) {
-			desc, err := m.GetFinalImageStorage().GetStageDesc(ctx, m.ProjectName, stageID)
+			desc, err := m.GetFinalImagesStorage().GetStageDesc(ctx, m.ProjectName, stageID)
 			if err != nil && !storage.IsErrStageUnavailable(err) {
-				return nil, fmt.Errorf("unable to get stage %s descriptor from final repo %s: %w", stageID.String(), m.GetFinalImageStorage().String(), err)
+				return nil, fmt.Errorf("unable to get stage %s descriptor from final repo %s: %w", stageID.String(), m.GetFinalImagesStorage().String(), err)
 			}
 			if desc != nil {
 				logboek.Context(ctx).Info().LogF("Stage %s already exists in the final repo, skipping\n", stageID.String())
