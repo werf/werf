@@ -54,7 +54,7 @@ type ReportImageRecord struct {
 	BuildTime         string
 	Commit            string
 	Stages            []ReportStageRecord `json:"Stages,omitempty"`
-	StagesReused      bool                `json:"StagesReused,omitempty"`
+	StagesSkipped     bool                `json:"StagesSkipped,omitempty"`
 }
 
 type ReportStageRecord struct {
@@ -235,7 +235,7 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 				BuildTime:         fmt.Sprintf("%.2f", img.BuildDuration.Seconds()),
 				Commit:            imageDesc.Info.Labels[imagePkg.WerfProjectRepoCommitLabel],
 				Stages:            stages,
-				StagesReused:      img.AnchorReused,
+				StagesSkipped:     img.AnchorReused,
 				ConfigType:        configType,
 			}
 
@@ -293,7 +293,7 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 					BuildTime:         fmt.Sprintf("%.2f", buildDuration),
 					Commit:            stageDesc.Info.Labels[imagePkg.WerfProjectRepoCommitLabel],
 					Stages:            stages,
-					StagesReused:      allAnchorReused,
+					StagesSkipped:     allAnchorReused,
 				}
 				phase.ImagesReport.SetImageRecord(img.Name, record)
 			}
