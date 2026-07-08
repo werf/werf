@@ -477,7 +477,7 @@ werf build --repo registry.mycompany.org/project --meta-repo registry.mycompany.
 
 Separating metadata from stages is useful when stages and metadata have different lifecycles or access patterns — for example, when the stages repository is shared between projects while metadata must remain isolated, or when metadata should live on a cheaper or more available registry. The `werf cleanup` and `werf purge` commands must be invoked with the same `--meta-repo` value that was used during build.
 
-> **Caution!** There is no automatic migration of existing metadata from the main repository to `--meta-repo`. Enable this flag from the start of a project, or accept that metadata already in the main repository will be regenerated over subsequent builds and cleanups.
+> **Caution!** There is no automatic migration of existing metadata from the main repository to `--meta-repo`. Once the flag is enabled, werf reads and writes metadata only in `--meta-repo`; any metadata previously stored in `--repo` is no longer consulted and will remain there orphaned until manually removed. Enable this flag from the start of a project.
 
 ### Extra repository for quick access to the build cache
 
