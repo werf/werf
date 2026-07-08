@@ -545,27 +545,34 @@ func (phase *BuildPhase) BeforeImageStages(ctx context.Context, img *image.Image
 		}
 	}
 
-	if err := phase.CalculateImageContentDigest(ctx, img); err != nil {
-		return deferFn, fmt.Errorf("calculate content digest: %w", err)
+	stages := img.GetStages()
+	if len(stages) == 0 {
+		return deferFn, nil
+	}
+	anchor := stages[len(stages)-1]
+	if !anchor.IsContentAnchor() {
+		return deferFn, nil
 	}
 
-	if digest := img.GetContentDigest(); digest != "" {
-		// Held across resolve+publish so parallel doImage goroutines with the same
-		// digest do not both push; released via the composed deferFn.
-		phase.Conveyor.GetStageDigestMutex(digest).Lock()
-		prevDeferFn := deferFn
-		deferFn = func() {
-			if prevDeferFn != nil {
-				prevDeferFn()
-			}
-			phase.Conveyor.GetStageDigestMutex(digest).Unlock()
+	foundSuitable, unlockFn, err := phase.calculateStage(ctx, img, anchor)
+	// Release the digest mutex inline. Holding it would deadlock: if we miss and
+	// middles run, the anchor is re-entered via OnImageStage -> calculateStage,
+	// which re-locks the same digest. The resolve->build race is closed by the
+	// post-check under the mutex in atomicBuildStageImage.
+	if unlockFn != nil {
+		unlockFn()
+	}
+	if err != nil {
+		return deferFn, fmt.Errorf("resolve anchor stage: %w", err)
+	}
+	if foundSuitable {
+		stageDesc := anchor.GetStageImage().Image.GetStageDesc()
+		if stageDesc == nil {
+			return deferFn, fmt.Errorf("anchor stage %q of image %q reused with no stage descriptor", anchor.Name(), img.GetName())
 		}
-	}
-
-	if desc, err := phase.resolveExistingContentTag(ctx, img); err != nil {
-		return deferFn, fmt.Errorf("resolve existing content tag: %w", err)
-	} else if desc != nil {
-		img.SetContentTagDesc(desc)
+		img.SetContentTagDesc(stageDesc)
+		// conveyor.doImage short-circuits when GetContentTagDesc() != nil, so
+		// intermediate OnImageStage/AfterImageStages calls are skipped entirely.
 	}
 
 	return deferFn, nil
@@ -573,6 +580,12 @@ func (phase *BuildPhase) BeforeImageStages(ctx context.Context, img *image.Image
 
 func (phase *BuildPhase) AfterImageStages(ctx context.Context, img *image.Image) error {
 	img.SetLastNonEmptyStage(phase.StagesIterator.PrevNonEmptyStage)
+
+	// Anchor path already published the content-tag descriptor via afterImageStage
+	// (single image in the registry, no separate content-tag mutate/push).
+	if img.GetContentTagDesc() != nil {
+		return nil
+	}
 
 	if err := phase.publishContentTag(ctx, img); err != nil {
 		return fmt.Errorf("unable to publish content tag for image %q: %w", img.GetName(), err)
@@ -1080,6 +1093,10 @@ func (phase *BuildPhase) afterImageStage(ctx context.Context, img *image.Image, 
 				img.SetStagedDockerfileBaseEnv(image.EnvToMap(stg.GetStageImage().Image.GetStageDesc().Info.Env))
 			}
 		}
+	}
+
+	if stg.IsContentAnchor() {
+		img.SetContentTagDesc(stg.GetStageImage().Image.GetStageDesc())
 	}
 
 	return nil
