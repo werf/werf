@@ -623,7 +623,7 @@ func (phase *BuildPhase) publishContentTagToStorage(ctx context.Context, img *im
 		}
 		if desc := selectLatestStageDesc(contentTagStageDescSet); desc != nil {
 			logboek.Context(ctx).Default().LogF(
-				"Discarding newly built content tag for %s: detected already existing image %s in the repo\n",
+				"Adopting existing content tag for %s: image %s already in the repo\n",
 				img.GetName(), desc.Info.Name,
 			)
 			var platform string
