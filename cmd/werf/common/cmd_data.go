@@ -40,6 +40,7 @@ type CmdData struct {
 	WithoutImages   *bool
 	Repo            *RepoData
 	FinalRepo       *RepoData
+	MetaRepo        *RepoData
 
 	SecondaryStagesStorage *[]string
 	CacheStagesStorage     *[]string

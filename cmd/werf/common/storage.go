@@ -58,6 +58,7 @@ func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfi
 		return &manager.StorageManager{
 			ProjectName:                c.ProjectName,
 			StagesStorage:              stagesStorage,
+			MetaStorage:                stagesStorage,
 			FinalStagesStorage:         nil,
 			CacheStagesStorageList:     nil,
 			SecondaryStagesStorageList: nil,
@@ -67,6 +68,11 @@ func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfi
 	finalStagesStorage, err := GetOptionalFinalStagesStorage(ctx, c.ContainerBackend, c.CmdData)
 	if err != nil {
 		return nil, fmt.Errorf("error get final stages storage: %w", err)
+	}
+
+	metaStorage, err := GetOptionalMetaStorage(ctx, c.ContainerBackend, c.CmdData, stagesStorage)
+	if err != nil {
+		return nil, fmt.Errorf("error get meta storage: %w", err)
 	}
 
 	secondaryStagesStorageList, err := GetSecondaryStagesStorageList(ctx, stagesStorage, c.ContainerBackend, c.CmdData)
@@ -81,6 +87,7 @@ func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfi
 		ProjectName: c.ProjectName,
 
 		StagesStorage:              stagesStorage,
+		MetaStorage:                metaStorage,
 		FinalStagesStorage:         finalStagesStorage,
 		CacheStagesStorageList:     cacheStagesStorageList,
 		SecondaryStagesStorageList: secondaryStagesStorageList,

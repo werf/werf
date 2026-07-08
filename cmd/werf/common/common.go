@@ -468,6 +468,11 @@ func SetupFinalRepo(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.FinalRepo.SetupCmd(cmd)
 }
 
+func SetupMetaRepo(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.MetaRepo = NewRepoData("meta-repo", RepoDataOptions{OnlyAddress: true, OptionalRepo: true})
+	cmdData.MetaRepo.SetupCmd(cmd)
+}
+
 func SetupReleasesHistoryMax(cmdData *CmdData, cmd *cobra.Command) {
 	defaultValueP, err := util.GetIntEnvVar("WERF_RELEASES_HISTORY_MAX")
 	if err != nil {
@@ -851,6 +856,34 @@ func GetOptionalFinalStagesStorage(ctx context.Context, containerBackend contain
 	}
 
 	return cmdData.FinalRepo.CreateStagesStorage(ctx, &CreateStagesStorageOptions{
+		ContainerBackend:      containerBackend,
+		InsecureRegistry:      *cmdData.InsecureRegistry,
+		SkipTlsVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
+		InsecureRegistryHosts: insecureRegistryHosts,
+		SkipMetaCheck:         true,
+	})
+}
+
+func GetOptionalMetaStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData, stagesStorage storage.PrimaryStagesStorage) (storage.PrimaryStagesStorage, error) {
+	if cmdData.MetaRepo == nil || cmdData.MetaRepo.Address == nil || *cmdData.MetaRepo.Address == "" {
+		return stagesStorage, nil
+	}
+
+	if cmdData.Repo == nil || cmdData.Repo.Address == nil || *cmdData.Repo.Address == "" {
+		return nil, fmt.Errorf("--meta-repo requires --repo to be set")
+	}
+
+	buildahMode, _, err := GetBuildahMode()
+	if err != nil {
+		return nil, fmt.Errorf("unable to determine buildah mode: %w", err)
+	}
+
+	insecureRegistryHosts, err := GetInsecureRegistryHosts(ctx, cmdData, *buildahMode)
+	if err != nil {
+		return nil, fmt.Errorf("get insecure registry hosts: %w", err)
+	}
+
+	return cmdData.MetaRepo.CreateStagesStorage(ctx, &CreateStagesStorageOptions{
 		ContainerBackend:      containerBackend,
 		InsecureRegistry:      *cmdData.InsecureRegistry,
 		SkipTlsVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
