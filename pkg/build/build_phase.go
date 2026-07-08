@@ -505,6 +505,21 @@ func (phase *BuildPhase) BeforeImageStages(ctx context.Context, img *image.Image
 		return deferFn, fmt.Errorf("calculate content digest: %w", err)
 	}
 
+	if digest := img.GetContentDigest(); digest != "" {
+		// Hold the content-digest mutex from resolve through publish so parallel
+		// doImage goroutines with the same digest do not both push. Released via
+		// deferFn in conveyor.doImage after AfterImageStages (or after the
+		// content-tag short-circuit).
+		phase.Conveyor.GetStageDigestMutex(digest).Lock()
+		prevDeferFn := deferFn
+		deferFn = func() {
+			if prevDeferFn != nil {
+				prevDeferFn()
+			}
+			phase.Conveyor.GetStageDigestMutex(digest).Unlock()
+		}
+	}
+
 	if desc, err := phase.resolveExistingContentTag(ctx, img); err != nil {
 		return deferFn, fmt.Errorf("resolve existing content tag: %w", err)
 	} else if desc != nil {
@@ -596,20 +611,35 @@ func (phase *BuildPhase) publishContentTagToStorage(ctx context.Context, img *im
 
 	storageManager := phase.Conveyor.StorageManager
 
-	if desc, err := phase.resolveExistingContentTag(ctx, img); err != nil {
-		return nil, err
-	} else if desc != nil {
-		return desc, nil
-	}
-
 	if phase.ShouldBeBuiltMode {
 		logboek.Context(ctx).Error().LogF("%s/content-tag with content digest %s is not built\n", img.GetName(), contentDigest)
 		return nil, fmt.Errorf("stages required")
 	}
 
-	contentTagStageDescSet, err := storageManager.GetStageDescSetByDigest(ctx, img.LogDetailedName(), contentDigest, contentTagNoParentStageFilter)
-	if err != nil {
-		return nil, fmt.Errorf("get content tag set by digest %s: %w", contentDigest, err)
+	var contentTagStageDescSet imagePkg.StageDescSet
+	if os.Getenv("WERF_DISABLE_PUBLISH_TAG_CACHE_SYNC") == "1" {
+		contentTagStageDescSet = imagePkg.NewStageDescSet()
+	} else {
+		// Post-check under the digest mutex acquired in BeforeImageStages: another
+		// werf process may have pushed a matching content tag while we were
+		// building this image's stages. Adopt it and skip our own push.
+		var err error
+		contentTagStageDescSet, err = storageManager.GetStageDescSetByDigest(ctx, img.LogDetailedName(), contentDigest, contentTagNoParentStageFilter)
+		if err != nil {
+			return nil, fmt.Errorf("get content tag set by digest %s: %w", contentDigest, err)
+		}
+		if desc := selectLatestStageDesc(contentTagStageDescSet); desc != nil {
+			logboek.Context(ctx).Default().LogF(
+				"Discarding newly built content tag for %s: detected already existing image %s in the repo\n",
+				img.GetName(), desc.Info.Name,
+			)
+			var platform string
+			if img.ShouldLogPlatform() {
+				platform = img.TargetPlatform
+			}
+			container_backend.LogImageInfoByStageDesc(ctx, desc, platform)
+			return desc, nil
+		}
 	}
 
 	destReference, creationTs := storageManager.GenerateStageDescCreationTs(contentDigest, contentTagStageDescSet)
@@ -622,7 +652,7 @@ func (phase *BuildPhase) publishContentTagToStorage(ctx context.Context, img *im
 	labels[imagePkg.WerfParentStageID] = stageDesc.StageID.String()
 
 	var contentTagDesc *imagePkg.StageDesc
-	err = logboek.Context(ctx).Default().LogProcess("Building %s/content-tag", img.GetName()).
+	err := logboek.Context(ctx).Default().LogProcess("Building %s/content-tag", img.GetName()).
 		Options(func(options types.LogProcessOptionsInterface) {
 			options.Style(style.Highlight())
 		}).
