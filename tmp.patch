@@ -1,0 +1,1423 @@
+diff --git a/cleanup.test b/cleanup.test
+new file mode 100755
+index 000000000..f01ee5af0
+Binary files /dev/null and b/cleanup.test differ
+diff --git a/cmd/werf/build/main.go b/cmd/werf/build/main.go
+index 493ab6de3..8602194a9 100644
+--- a/cmd/werf/build/main.go
++++ b/cmd/werf/build/main.go
+@@ -76,6 +76,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
+ 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
+ 	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{OptionalRepo: true})
+ 	common.SetupFinalRepo(&commonCmdData, cmd)
++	common.SetupMetaRepo(&commonCmdData, cmd)
+ 
+ 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified repo, to pull base images")
+ 	common.SetupInsecureRegistry(&commonCmdData, cmd)
+diff --git a/cmd/werf/bundle/publish/publish.go b/cmd/werf/bundle/publish/publish.go
+index 1cea2630e..deb2f7042 100644
+--- a/cmd/werf/bundle/publish/publish.go
++++ b/cmd/werf/bundle/publish/publish.go
+@@ -98,6 +98,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
+ 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
+ 	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{})
+ 	common.SetupFinalRepo(&commonCmdData, cmd)
++	common.SetupMetaRepo(&commonCmdData, cmd)
+ 
+ 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified repo and to pull base images")
+ 	common.SetupInsecureRegistry(&commonCmdData, cmd)
+diff --git a/cmd/werf/cleanup/cleanup.go b/cmd/werf/cleanup/cleanup.go
+index e6a45bdba..afb21f063 100644
+--- a/cmd/werf/cleanup/cleanup.go
++++ b/cmd/werf/cleanup/cleanup.go
+@@ -71,6 +71,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
+ 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
+ 	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{OptionalRepo: false})
+ 	common.SetupFinalRepo(&commonCmdData, cmd)
++	common.SetupMetaRepo(&commonCmdData, cmd)
+ 	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultCleanupParallelTasksLimit)
+ 
+ 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and delete images from the specified repo")
+@@ -204,7 +205,7 @@ func runCleanup(ctx context.Context, cmd *cobra.Command) error {
+ 		storageManager.EnableParallel(int(common.GetParallelTasksLimit(&commonCmdData)))
+ 	}
+ 
+-	imagesNames, err := common.GetManagedImagesNames(ctx, projectName, storageManager.StagesStorage, werfConfig)
++	imagesNames, err := common.GetManagedImagesNames(ctx, projectName, storageManager.GetMetaStorage(), werfConfig)
+ 	if err != nil {
+ 		return err
+ 	}
+diff --git a/cmd/werf/common/cmd_data.go b/cmd/werf/common/cmd_data.go
+index ef3257ca5..0eff256f2 100644
+--- a/cmd/werf/common/cmd_data.go
++++ b/cmd/werf/common/cmd_data.go
+@@ -40,6 +40,7 @@ type CmdData struct {
+ 	WithoutImages   *bool
+ 	Repo            *RepoData
+ 	FinalRepo       *RepoData
++	MetaRepo        *RepoData
+ 
+ 	SecondaryStagesStorage *[]string
+ 	CacheStagesStorage     *[]string
+diff --git a/cmd/werf/common/common.go b/cmd/werf/common/common.go
+index 733842ad5..6984869ac 100644
+--- a/cmd/werf/common/common.go
++++ b/cmd/werf/common/common.go
+@@ -468,6 +468,11 @@ func SetupFinalRepo(cmdData *CmdData, cmd *cobra.Command) {
+ 	cmdData.FinalRepo.SetupCmd(cmd)
+ }
+ 
++func SetupMetaRepo(cmdData *CmdData, cmd *cobra.Command) {
++	cmdData.MetaRepo = NewRepoData("meta-repo", RepoDataOptions{OnlyAddress: true, OptionalRepo: true})
++	cmdData.MetaRepo.SetupCmd(cmd)
++}
++
+ func SetupReleasesHistoryMax(cmdData *CmdData, cmd *cobra.Command) {
+ 	defaultValueP, err := util.GetIntEnvVar("WERF_RELEASES_HISTORY_MAX")
+ 	if err != nil {
+@@ -859,6 +864,34 @@ func GetOptionalFinalStagesStorage(ctx context.Context, containerBackend contain
+ 	})
+ }
+ 
++func GetOptionalMetaStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData, stagesStorage storage.PrimaryStagesStorage) (storage.PrimaryStagesStorage, error) {
++	if cmdData.MetaRepo == nil || cmdData.MetaRepo.Address == nil || *cmdData.MetaRepo.Address == "" {
++		return stagesStorage, nil
++	}
++
++	if cmdData.Repo == nil || cmdData.Repo.Address == nil || *cmdData.Repo.Address == "" {
++		return nil, fmt.Errorf("--meta-repo requires --repo to be set")
++	}
++
++	buildahMode, _, err := GetBuildahMode()
++	if err != nil {
++		return nil, fmt.Errorf("unable to determine buildah mode: %w", err)
++	}
++
++	insecureRegistryHosts, err := GetInsecureRegistryHosts(ctx, cmdData, *buildahMode)
++	if err != nil {
++		return nil, fmt.Errorf("get insecure registry hosts: %w", err)
++	}
++
++	return cmdData.MetaRepo.CreateStagesStorage(ctx, &CreateStagesStorageOptions{
++		ContainerBackend:      containerBackend,
++		InsecureRegistry:      *cmdData.InsecureRegistry,
++		SkipTlsVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
++		InsecureRegistryHosts: insecureRegistryHosts,
++		SkipMetaCheck:         true,
++	})
++}
++
+ func GetCacheStagesStorageList(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData) ([]storage.StagesStorage, error) {
+ 	var res []storage.StagesStorage
+ 
+diff --git a/cmd/werf/common/managed_images.go b/cmd/werf/common/managed_images.go
+index c13c2ea74..d409840b4 100644
+--- a/cmd/werf/common/managed_images.go
++++ b/cmd/werf/common/managed_images.go
+@@ -14,9 +14,9 @@ func GetManagedImageName(userSpecifiedImageName string) string {
+ 	return userSpecifiedImageName
+ }
+ 
+-func GetManagedImagesNames(ctx context.Context, projectName string, stagesStorage storage.StagesStorage, werfConfig *config.WerfConfig) ([]string, error) {
++func GetManagedImagesNames(ctx context.Context, projectName string, metaStorage storage.StagesStorage, werfConfig *config.WerfConfig) ([]string, error) {
+ 	var names []string
+-	if publishedNames, err := stagesStorage.GetManagedImages(ctx, projectName); err != nil {
++	if publishedNames, err := metaStorage.GetManagedImages(ctx, projectName); err != nil {
+ 		return nil, fmt.Errorf("unable to get managed images for project %q: %w", projectName, err)
+ 	} else {
+ 		names = append(names, publishedNames...)
+diff --git a/cmd/werf/common/storage.go b/cmd/werf/common/storage.go
+index b152adaaa..2e7f44e7a 100644
+--- a/cmd/werf/common/storage.go
++++ b/cmd/werf/common/storage.go
+@@ -43,11 +43,16 @@ func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfi
+ 	if c.hostPurge {
+ 		stagesStorage = GetLocalStagesStorage(c.ContainerBackend)
+ 	} else {
++		skipMetaCheck := c.SkipMetaCheck
++		if c.CmdData != nil && c.CmdData.MetaRepo != nil && c.CmdData.MetaRepo.Address != nil && *c.CmdData.MetaRepo.Address != "" {
++			skipMetaCheck = true
++		}
++
+ 		var stgErr error
+ 		stagesStorage, stgErr = GetStagesStorage(ctx, c.ContainerBackend, c.CmdData, GetStagesStorageOpts{
+ 			CleanupDisabled:                c.CleanupDisabled,
+ 			GitHistoryBasedCleanupDisabled: c.GitHistoryBasedCleanupDisabled,
+-			SkipMetaCheck:                  c.SkipMetaCheck,
++			SkipMetaCheck:                  skipMetaCheck,
+ 		})
+ 		if stgErr != nil {
+ 			return nil, stgErr
+@@ -58,6 +63,7 @@ func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfi
+ 		return &manager.StorageManager{
+ 			ProjectName:                c.ProjectName,
+ 			StagesStorage:              stagesStorage,
++			MetaStorage:                stagesStorage,
+ 			FinalStagesStorage:         nil,
+ 			CacheStagesStorageList:     nil,
+ 			SecondaryStagesStorageList: nil,
+@@ -69,6 +75,11 @@ func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfi
+ 		return nil, fmt.Errorf("error get final stages storage: %w", err)
+ 	}
+ 
++	metaStorage, err := GetOptionalMetaStorage(ctx, c.ContainerBackend, c.CmdData, stagesStorage)
++	if err != nil {
++		return nil, fmt.Errorf("error get meta storage: %w", err)
++	}
++
+ 	secondaryStagesStorageList, err := GetSecondaryStagesStorageList(ctx, stagesStorage, c.ContainerBackend, c.CmdData)
+ 	if err != nil {
+ 		return nil, fmt.Errorf("error get secondary stages storage list: %w", err)
+@@ -81,6 +92,7 @@ func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfi
+ 		ProjectName: c.ProjectName,
+ 
+ 		StagesStorage:              stagesStorage,
++		MetaStorage:                metaStorage,
+ 		FinalStagesStorage:         finalStagesStorage,
+ 		CacheStagesStorageList:     cacheStagesStorageList,
+ 		SecondaryStagesStorageList: secondaryStagesStorageList,
+diff --git a/cmd/werf/compose/main.go b/cmd/werf/compose/main.go
+index 2735b3b62..4a98c056f 100644
+--- a/cmd/werf/compose/main.go
++++ b/cmd/werf/compose/main.go
+@@ -299,6 +299,7 @@ func newCmd(ctx context.Context, composeCmdName string, options *newCmdOptions)
+ 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
+ 	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{OptionalRepo: true})
+ 	common.SetupFinalRepo(&commonCmdData, cmd)
++	common.SetupMetaRepo(&commonCmdData, cmd)
+ 
+ 	common.SetupRequireBuiltImages(&commonCmdData, cmd)
+ 
+diff --git a/cmd/werf/converge/converge.go b/cmd/werf/converge/converge.go
+index 902d3871b..b1feb27f4 100644
+--- a/cmd/werf/converge/converge.go
++++ b/cmd/werf/converge/converge.go
+@@ -94,6 +94,7 @@ werf converge --repo registry.mydomain.com/web --env production`,
+ 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
+ 	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{})
+ 	common.SetupFinalRepo(&commonCmdData, cmd)
++	common.SetupMetaRepo(&commonCmdData, cmd)
+ 
+ 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified repo, to pull base images")
+ 	common.SetupInsecureRegistry(&commonCmdData, cmd)
+diff --git a/cmd/werf/dismiss/dismiss.go b/cmd/werf/dismiss/dismiss.go
+index 13e4690f7..e0aafc5f0 100644
+--- a/cmd/werf/dismiss/dismiss.go
++++ b/cmd/werf/dismiss/dismiss.go
+@@ -86,6 +86,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
+ 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
+ 	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{})
+ 	common.SetupFinalRepo(&commonCmdData, cmd)
++	common.SetupMetaRepo(&commonCmdData, cmd)
+ 
+ 	common.SetupDockerConfig(&commonCmdData, cmd, "")
+ 
+diff --git a/cmd/werf/export/export.go b/cmd/werf/export/export.go
+index cfe7a2237..efc3a5f37 100644
+--- a/cmd/werf/export/export.go
++++ b/cmd/werf/export/export.go
+@@ -101,6 +101,7 @@ func NewExportCmd(ctx context.Context) *cobra.Command {
+ 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
+ 	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{OptionalRepo: true})
+ 	common.SetupFinalRepo(&commonCmdData, cmd)
++	common.SetupMetaRepo(&commonCmdData, cmd)
+ 	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultBuildParallelTasksLimit)
+ 
+ 	common.SetupIntrospectAfterError(&commonCmdData, cmd)
+@@ -120,7 +121,6 @@ func NewExportCmd(ctx context.Context) *cobra.Command {
+ 	common.SetupLogOptions(&commonCmdData, cmd)
+ 	common.SetupLogProjectDir(&commonCmdData, cmd)
+ 
+-
+ 	commonCmdData.SetupPlatform(cmd)
+ 	commonCmdData.SetupBackendNetwork(cmd)
+ 	commonCmdData.SetupDebugTemplates(cmd)
+diff --git a/cmd/werf/helm/get_autogenerated_values.go b/cmd/werf/helm/get_autogenerated_values.go
+index fd0bed786..48f13da98 100644
+--- a/cmd/werf/helm/get_autogenerated_values.go
++++ b/cmd/werf/helm/get_autogenerated_values.go
+@@ -79,9 +79,9 @@ func NewGetAutogeneratedValuesCmd(ctx context.Context) *cobra.Command {
+ 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
+ 	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{OptionalRepo: true})
+ 	common.SetupFinalRepo(&commonCmdData, cmd)
++	common.SetupMetaRepo(&commonCmdData, cmd)
+ 	common.SetupStubTags(&commonCmdData, cmd)
+ 
+-
+ 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified repo and to pull base images")
+ 	common.SetupInsecureRegistry(&commonCmdData, cmd)
+ 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
+diff --git a/cmd/werf/kube_run/kube_run.go b/cmd/werf/kube_run/kube_run.go
+index 1f17a4e21..bba1c3cb2 100644
+--- a/cmd/werf/kube_run/kube_run.go
++++ b/cmd/werf/kube_run/kube_run.go
+@@ -167,6 +167,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
+ 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
+ 	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{})
+ 	common.SetupFinalRepo(&commonCmdData, cmd)
++	common.SetupMetaRepo(&commonCmdData, cmd)
+ 
+ 	common.SetupRequireBuiltImages(&commonCmdData, cmd)
+ 
+@@ -183,7 +184,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
+ 	common.SetupLogOptions(&commonCmdData, cmd)
+ 	common.SetupLogProjectDir(&commonCmdData, cmd)
+ 
+-
+ 	common.SetupDryRun(&commonCmdData, cmd)
+ 
+ 	commonCmdData.SetupPlatform(cmd)
+diff --git a/cmd/werf/lint/lint.go b/cmd/werf/lint/lint.go
+index 3f4c7185e..b0fb071a8 100644
+--- a/cmd/werf/lint/lint.go
++++ b/cmd/werf/lint/lint.go
+@@ -89,9 +89,9 @@ func NewCmd(ctx context.Context) *cobra.Command {
+ 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
+ 	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{OptionalRepo: true})
+ 	common.SetupFinalRepo(&commonCmdData, cmd)
++	common.SetupMetaRepo(&commonCmdData, cmd)
+ 	common.SetupStubTags(&commonCmdData, cmd)
+ 
+-
+ 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified repo and to pull base images")
+ 	common.SetupInsecureRegistry(&commonCmdData, cmd)
+ 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
+diff --git a/cmd/werf/managed_images/add/add.go b/cmd/werf/managed_images/add/add.go
+index 9a3f82033..3705666fa 100644
+--- a/cmd/werf/managed_images/add/add.go
++++ b/cmd/werf/managed_images/add/add.go
+@@ -55,6 +55,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
+ 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
+ 	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{})
+ 	common.SetupFinalRepo(&commonCmdData, cmd)
++	common.SetupMetaRepo(&commonCmdData, cmd)
+ 
+ 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read and write images to the specified repo")
+ 	common.SetupInsecureRegistry(&commonCmdData, cmd)
+@@ -64,7 +65,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
+ 	common.SetupLogOptions(&commonCmdData, cmd)
+ 	common.SetupLogProjectDir(&commonCmdData, cmd)
+ 
+-
+ 	commonCmdData.SetupPlatform(cmd)
+ 	commonCmdData.SetupDebugTemplates(cmd)
+ 	commonCmdData.SetupAllowIncludesUpdate(cmd)
+@@ -134,7 +134,7 @@ func run(ctx context.Context, imageName string) error {
+ 		return fmt.Errorf("unable to init storage manager: %w", err)
+ 	}
+ 
+-	if err := storageManager.StagesStorage.AddManagedImage(ctx, projectName, common.GetManagedImageName(imageName)); err != nil {
++	if err := storageManager.GetMetaStorage().AddManagedImage(ctx, projectName, common.GetManagedImageName(imageName)); err != nil {
+ 		return fmt.Errorf("unable to add managed image %q for project %q: %w", imageName, projectName, err)
+ 	}
+ 
+diff --git a/cmd/werf/managed_images/ls/ls.go b/cmd/werf/managed_images/ls/ls.go
+index d58ef6ed3..49fad3147 100644
+--- a/cmd/werf/managed_images/ls/ls.go
++++ b/cmd/werf/managed_images/ls/ls.go
+@@ -51,6 +51,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
+ 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
+ 	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{})
+ 	common.SetupFinalRepo(&commonCmdData, cmd)
++	common.SetupMetaRepo(&commonCmdData, cmd)
+ 
+ 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read images from the specified repo")
+ 	common.SetupInsecureRegistry(&commonCmdData, cmd)
+@@ -60,7 +61,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
+ 	common.SetupLogOptions(&commonCmdData, cmd)
+ 	common.SetupLogProjectDir(&commonCmdData, cmd)
+ 
+-
+ 	commonCmdData.SetupPlatform(cmd)
+ 	commonCmdData.SetupDebugTemplates(cmd)
+ 	commonCmdData.SetupAllowIncludesUpdate(cmd)
+@@ -130,7 +130,7 @@ func run(ctx context.Context) error {
+ 		return fmt.Errorf("unable to init storage manager: %w", err)
+ 	}
+ 
+-	if images, err := storageManager.StagesStorage.GetManagedImages(ctx, projectName); err != nil {
++	if images, err := storageManager.GetMetaStorage().GetManagedImages(ctx, projectName); err != nil {
+ 		return fmt.Errorf("unable to list known config image names for project %q: %w", projectName, err)
+ 	} else {
+ 		for _, imgName := range images {
+diff --git a/cmd/werf/managed_images/rm/rm.go b/cmd/werf/managed_images/rm/rm.go
+index 7cdc2a4ee..aefbb6848 100644
+--- a/cmd/werf/managed_images/rm/rm.go
++++ b/cmd/werf/managed_images/rm/rm.go
+@@ -55,6 +55,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
+ 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
+ 	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{})
+ 	common.SetupFinalRepo(&commonCmdData, cmd)
++	common.SetupMetaRepo(&commonCmdData, cmd)
+ 
+ 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read and write images to the specified repo")
+ 	common.SetupInsecureRegistry(&commonCmdData, cmd)
+@@ -64,7 +65,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
+ 	common.SetupLogOptions(&commonCmdData, cmd)
+ 	common.SetupLogProjectDir(&commonCmdData, cmd)
+ 
+-
+ 	commonCmdData.SetupPlatform(cmd)
+ 	commonCmdData.SetupDebugTemplates(cmd)
+ 	commonCmdData.SetupAllowIncludesUpdate(cmd)
+@@ -136,7 +136,7 @@ func run(ctx context.Context, imageNames []string) error {
+ 
+ 	errs := []error{}
+ 	for _, imageName := range imageNames {
+-		if err := storageManager.StagesStorage.RmManagedImage(ctx, projectName, common.GetManagedImageName(imageName)); err != nil {
++		if err := storageManager.GetMetaStorage().RmManagedImage(ctx, projectName, common.GetManagedImageName(imageName)); err != nil {
+ 			errs = append(errs, fmt.Errorf("unable to remove known config image name %q of project %q: %w", imageName, projectName, err))
+ 		}
+ 	}
+diff --git a/cmd/werf/plan/plan.go b/cmd/werf/plan/plan.go
+index 46b7555fa..6834131b8 100644
+--- a/cmd/werf/plan/plan.go
++++ b/cmd/werf/plan/plan.go
+@@ -99,6 +99,7 @@ werf plan --repo registry.mydomain.com/web --env production`,
+ 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
+ 	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{OptionalRepo: true})
+ 	common.SetupFinalRepo(&commonCmdData, cmd)
++	common.SetupMetaRepo(&commonCmdData, cmd)
+ 
+ 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified repo, to pull base images")
+ 	common.SetupInsecureRegistry(&commonCmdData, cmd)
+diff --git a/cmd/werf/purge/purge.go b/cmd/werf/purge/purge.go
+index 7d0752a9b..4da9d04a5 100644
+--- a/cmd/werf/purge/purge.go
++++ b/cmd/werf/purge/purge.go
+@@ -58,6 +58,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
+ 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
+ 	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{})
+ 	common.SetupFinalRepo(&commonCmdData, cmd)
++	common.SetupMetaRepo(&commonCmdData, cmd)
+ 	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultCleanupParallelTasksLimit)
+ 
+ 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to delete images from the specified repo")
+@@ -68,7 +69,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
+ 	common.SetupLogOptions(&commonCmdData, cmd)
+ 	common.SetupLogProjectDir(&commonCmdData, cmd)
+ 
+-
+ 	common.SetupDisableAutoHostCleanup(&commonCmdData, cmd)
+ 	common.SetupAllowedBackendStorageVolumeUsage(&commonCmdData, cmd)
+ 	common.SetupAllowedBackendStorageVolumeUsageMargin(&commonCmdData, cmd)
+diff --git a/cmd/werf/render/render.go b/cmd/werf/render/render.go
+index a708af740..367fe24eb 100644
+--- a/cmd/werf/render/render.go
++++ b/cmd/werf/render/render.go
+@@ -97,6 +97,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
+ 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
+ 	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{OptionalRepo: true})
+ 	common.SetupFinalRepo(&commonCmdData, cmd)
++	common.SetupMetaRepo(&commonCmdData, cmd)
+ 	common.SetupStubTags(&commonCmdData, cmd)
+ 
+ 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified repo and to pull base images")
+diff --git a/cmd/werf/run/run.go b/cmd/werf/run/run.go
+index 6e2e66d70..fc465721b 100644
+--- a/cmd/werf/run/run.go
++++ b/cmd/werf/run/run.go
+@@ -133,6 +133,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
+ 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
+ 	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{OptionalRepo: true})
+ 	common.SetupFinalRepo(&commonCmdData, cmd)
++	common.SetupMetaRepo(&commonCmdData, cmd)
+ 
+ 	common.SetupRequireBuiltImages(&commonCmdData, cmd)
+ 
+@@ -149,7 +150,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
+ 	common.SetupLogOptions(&commonCmdData, cmd)
+ 	common.SetupLogProjectDir(&commonCmdData, cmd)
+ 
+-
+ 	common.SetupDryRun(&commonCmdData, cmd)
+ 
+ 	commonCmdData.SetupPlatform(cmd)
+diff --git a/cmd/werf/stage/image/main.go b/cmd/werf/stage/image/main.go
+index eeb91b5ad..2df02615f 100644
+--- a/cmd/werf/stage/image/main.go
++++ b/cmd/werf/stage/image/main.go
+@@ -69,6 +69,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
+ 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
+ 	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{OptionalRepo: true})
+ 	common.SetupFinalRepo(&commonCmdData, cmd)
++	common.SetupMetaRepo(&commonCmdData, cmd)
+ 
+ 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified stages storage")
+ 	common.SetupInsecureRegistry(&commonCmdData, cmd)
+@@ -80,7 +81,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
+ 
+ 	common.SetupDryRun(&commonCmdData, cmd)
+ 
+-
+ 	commonCmdData.SetupPlatform(cmd)
+ 	commonCmdData.SetupDebugTemplates(cmd)
+ 	commonCmdData.SetupAllowIncludesUpdate(cmd)
+diff --git a/cmd/werf/stages/copy/copy.go b/cmd/werf/stages/copy/copy.go
+index f792726b8..62edf6bc9 100644
+--- a/cmd/werf/stages/copy/copy.go
++++ b/cmd/werf/stages/copy/copy.go
+@@ -103,6 +103,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
+ 	common.SetupSecondaryStagesStorageOptions(&commonCmdData, cmd)
+ 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
+ 	common.SetupFinalRepo(&commonCmdData, cmd)
++	common.SetupMetaRepo(&commonCmdData, cmd)
+ 
+ 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified repos")
+ 	common.SetupInsecureRegistry(&commonCmdData, cmd)
+@@ -117,7 +118,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
+ 	common.SetupBuildReportPath(&commonCmdData, cmd)
+ 	common.SetupUseBuildReport(&commonCmdData, cmd)
+ 
+-
+ 	common.SetupLogOptions(&commonCmdData, cmd)
+ 	common.SetupLogProjectDir(&commonCmdData, cmd)
+ 
+diff --git a/docs/_includes/reference/cli/werf_build.md b/docs/_includes/reference/cli/werf_build.md
+index 4a2ddf62a..221c8b7e2 100644
+--- a/docs/_includes/reference/cli/werf_build.md
++++ b/docs/_includes/reference/cli/werf_build.md
+@@ -206,6 +206,8 @@ werf build [IMAGE_NAME...] [options]
+             Enable verbose output (default $WERF_LOG_VERBOSE).
+       --loose-giterminism=false
+             Loose werf giterminism mode restrictions
++      --meta-repo=""
++            Container registry storage address (default $WERF_META_REPO)
+   -p, --parallel=true
+             Run in parallel (default $WERF_PARALLEL or true)
+       --parallel-tasks-limit=5
+diff --git a/docs/_includes/reference/cli/werf_bundle_publish.md b/docs/_includes/reference/cli/werf_bundle_publish.md
+index abe180300..d24df03c8 100644
+--- a/docs/_includes/reference/cli/werf_bundle_publish.md
++++ b/docs/_includes/reference/cli/werf_bundle_publish.md
+@@ -208,6 +208,8 @@ werf bundle publish [IMAGE_NAME...] [options]
+             Enable verbose output (default $WERF_LOG_VERBOSE).
+       --loose-giterminism=false
+             Loose werf giterminism mode restrictions
++      --meta-repo=""
++            Container registry storage address (default $WERF_META_REPO)
+   -p, --parallel=true
+             Run in parallel (default $WERF_PARALLEL or true)
+       --parallel-tasks-limit=5
+diff --git a/docs/_includes/reference/cli/werf_cleanup.md b/docs/_includes/reference/cli/werf_cleanup.md
+index 1f6bc26ca..20d23c4ad 100644
+--- a/docs/_includes/reference/cli/werf_cleanup.md
++++ b/docs/_includes/reference/cli/werf_cleanup.md
+@@ -176,6 +176,8 @@ werf cleanup [options]
+             Enable verbose output (default $WERF_LOG_VERBOSE).
+       --loose-giterminism=false
+             Loose werf giterminism mode restrictions
++      --meta-repo=""
++            Container registry storage address (default $WERF_META_REPO)
+   -p, --parallel=true
+             Run in parallel (default $WERF_PARALLEL or true)
+       --parallel-tasks-limit=10
+diff --git a/docs/_includes/reference/cli/werf_compose_config.md b/docs/_includes/reference/cli/werf_compose_config.md
+index 03e8aa80f..65f12a656 100644
+--- a/docs/_includes/reference/cli/werf_compose_config.md
++++ b/docs/_includes/reference/cli/werf_compose_config.md
+@@ -207,6 +207,8 @@ werf compose config [IMAGE_NAME...] [options] [--docker-compose-options="OPTIONS
+             Enable verbose output (default $WERF_LOG_VERBOSE).
+       --loose-giterminism=false
+             Loose werf giterminism mode restrictions
++      --meta-repo=""
++            Container registry storage address (default $WERF_META_REPO)
+       --platform=[]
+             Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT]     
+             ($WERF_PLATFORM or $DOCKER_DEFAULT_PLATFORM by default)
+diff --git a/docs/_includes/reference/cli/werf_compose_down.md b/docs/_includes/reference/cli/werf_compose_down.md
+index a8f66a931..ec6359df7 100644
+--- a/docs/_includes/reference/cli/werf_compose_down.md
++++ b/docs/_includes/reference/cli/werf_compose_down.md
+@@ -200,6 +200,8 @@ werf compose down [IMAGE_NAME...] [options] [--docker-compose-options="OPTIONS"]
+             Enable verbose output (default $WERF_LOG_VERBOSE).
+       --loose-giterminism=false
+             Loose werf giterminism mode restrictions
++      --meta-repo=""
++            Container registry storage address (default $WERF_META_REPO)
+       --platform=[]
+             Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT]     
+             ($WERF_PLATFORM or $DOCKER_DEFAULT_PLATFORM by default)
+diff --git a/docs/_includes/reference/cli/werf_compose_run.md b/docs/_includes/reference/cli/werf_compose_run.md
+index 32806c3f7..92fecdec9 100644
+--- a/docs/_includes/reference/cli/werf_compose_run.md
++++ b/docs/_includes/reference/cli/werf_compose_run.md
+@@ -197,6 +197,8 @@ werf compose run [IMAGE_NAME...] [options] [--docker-compose-options="OPTIONS"]
+             Enable verbose output (default $WERF_LOG_VERBOSE).
+       --loose-giterminism=false
+             Loose werf giterminism mode restrictions
++      --meta-repo=""
++            Container registry storage address (default $WERF_META_REPO)
+       --platform=[]
+             Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT]     
+             ($WERF_PLATFORM or $DOCKER_DEFAULT_PLATFORM by default)
+diff --git a/docs/_includes/reference/cli/werf_compose_up.md b/docs/_includes/reference/cli/werf_compose_up.md
+index f63c94c6e..6ac34283d 100644
+--- a/docs/_includes/reference/cli/werf_compose_up.md
++++ b/docs/_includes/reference/cli/werf_compose_up.md
+@@ -208,6 +208,8 @@ werf compose up [IMAGE_NAME...] [options] [--docker-compose-options="OPTIONS"] [
+             Enable verbose output (default $WERF_LOG_VERBOSE).
+       --loose-giterminism=false
+             Loose werf giterminism mode restrictions
++      --meta-repo=""
++            Container registry storage address (default $WERF_META_REPO)
+       --platform=[]
+             Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT]     
+             ($WERF_PLATFORM or $DOCKER_DEFAULT_PLATFORM by default)
+diff --git a/docs/_includes/reference/cli/werf_converge.md b/docs/_includes/reference/cli/werf_converge.md
+index 24d75dd64..065b8fc81 100644
+--- a/docs/_includes/reference/cli/werf_converge.md
++++ b/docs/_includes/reference/cli/werf_converge.md
+@@ -322,6 +322,8 @@ werf converge --repo registry.mydomain.com/web --env production
+             Enable verbose output (default $WERF_LOG_VERBOSE).
+       --loose-giterminism=false
+             Loose werf giterminism mode restrictions
++      --meta-repo=""
++            Container registry storage address (default $WERF_META_REPO)
+       --namespace=""
+             Use specified Kubernetes namespace (default [[ project ]]-[[ env ]] template or         
+             deploy.namespace custom template from werf.yaml or $WERF_NAMESPACE)
+diff --git a/docs/_includes/reference/cli/werf_dismiss.md b/docs/_includes/reference/cli/werf_dismiss.md
+index 227ad772c..50e3b4c16 100644
+--- a/docs/_includes/reference/cli/werf_dismiss.md
++++ b/docs/_includes/reference/cli/werf_dismiss.md
+@@ -238,6 +238,8 @@ werf dismiss [options]
+             Enable verbose output (default $WERF_LOG_VERBOSE).
+       --loose-giterminism=false
+             Loose werf giterminism mode restrictions
++      --meta-repo=""
++            Container registry storage address (default $WERF_META_REPO)
+       --namespace=""
+             Use specified Kubernetes namespace (default [[ project ]]-[[ env ]] template or         
+             deploy.namespace custom template from werf.yaml or $WERF_NAMESPACE)
+diff --git a/docs/_includes/reference/cli/werf_export.md b/docs/_includes/reference/cli/werf_export.md
+index e0f81d926..5cccb98b0 100644
+--- a/docs/_includes/reference/cli/werf_export.md
++++ b/docs/_includes/reference/cli/werf_export.md
+@@ -173,6 +173,8 @@ werf export [IMAGE_NAME...] [options]
+             Enable verbose output (default $WERF_LOG_VERBOSE).
+       --loose-giterminism=false
+             Loose werf giterminism mode restrictions
++      --meta-repo=""
++            Container registry storage address (default $WERF_META_REPO)
+   -p, --parallel=true
+             Run in parallel (default $WERF_PARALLEL or true)
+       --parallel-tasks-limit=5
+diff --git a/docs/_includes/reference/cli/werf_helm_get_autogenerated_values.md b/docs/_includes/reference/cli/werf_helm_get_autogenerated_values.md
+index 03587f235..c94cc658c 100644
+--- a/docs/_includes/reference/cli/werf_helm_get_autogenerated_values.md
++++ b/docs/_includes/reference/cli/werf_helm_get_autogenerated_values.md
+@@ -154,6 +154,8 @@ werf helm get-autogenerated-values [IMAGE_NAME...] [options]
+             Enable verbose output (default $WERF_LOG_VERBOSE).
+       --loose-giterminism=false
+             Loose werf giterminism mode restrictions
++      --meta-repo=""
++            Container registry storage address (default $WERF_META_REPO)
+       --namespace=""
+             Use specified Kubernetes namespace (default [[ project ]]-[[ env ]] template or         
+             deploy.namespace custom template from werf.yaml or $WERF_NAMESPACE)
+diff --git a/docs/_includes/reference/cli/werf_kube_run.md b/docs/_includes/reference/cli/werf_kube_run.md
+index 75bdb38d7..66c277e82 100644
+--- a/docs/_includes/reference/cli/werf_kube_run.md
++++ b/docs/_includes/reference/cli/werf_kube_run.md
+@@ -237,6 +237,8 @@ werf kube-run [options] [IMAGE_NAME] [-- COMMAND ARG...]
+             Enable verbose output (default $WERF_LOG_VERBOSE).
+       --loose-giterminism=false
+             Loose werf giterminism mode restrictions
++      --meta-repo=""
++            Container registry storage address (default $WERF_META_REPO)
+       --namespace=""
+             Use specified Kubernetes namespace (default [[ project ]]-[[ env ]] template or         
+             deploy.namespace custom template from werf.yaml or $WERF_NAMESPACE)
+diff --git a/docs/_includes/reference/cli/werf_lint.md b/docs/_includes/reference/cli/werf_lint.md
+index 26dd7d25c..ae4efa698 100644
+--- a/docs/_includes/reference/cli/werf_lint.md
++++ b/docs/_includes/reference/cli/werf_lint.md
+@@ -262,6 +262,8 @@ werf lint [IMAGE_NAME...] [options]
+             Enable verbose output (default $WERF_LOG_VERBOSE).
+       --loose-giterminism=false
+             Loose werf giterminism mode restrictions
++      --meta-repo=""
++            Container registry storage address (default $WERF_META_REPO)
+       --namespace=""
+             Use specified Kubernetes namespace (default [[ project ]]-[[ env ]] template or         
+             deploy.namespace custom template from werf.yaml or $WERF_NAMESPACE)
+diff --git a/docs/_includes/reference/cli/werf_managed_images_add.md b/docs/_includes/reference/cli/werf_managed_images_add.md
+index b9dd6aae5..e4f251411 100644
+--- a/docs/_includes/reference/cli/werf_managed_images_add.md
++++ b/docs/_includes/reference/cli/werf_managed_images_add.md
+@@ -115,6 +115,8 @@ werf managed-images add [options]
+             Enable verbose output (default $WERF_LOG_VERBOSE).
+       --loose-giterminism=false
+             Loose werf giterminism mode restrictions
++      --meta-repo=""
++            Container registry storage address (default $WERF_META_REPO)
+       --platform=[]
+             Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT]     
+             ($WERF_PLATFORM or $DOCKER_DEFAULT_PLATFORM by default)
+diff --git a/docs/_includes/reference/cli/werf_managed_images_ls.md b/docs/_includes/reference/cli/werf_managed_images_ls.md
+index 7e44054c1..4656bd384 100644
+--- a/docs/_includes/reference/cli/werf_managed_images_ls.md
++++ b/docs/_includes/reference/cli/werf_managed_images_ls.md
+@@ -115,6 +115,8 @@ werf managed-images ls [options]
+             Enable verbose output (default $WERF_LOG_VERBOSE).
+       --loose-giterminism=false
+             Loose werf giterminism mode restrictions
++      --meta-repo=""
++            Container registry storage address (default $WERF_META_REPO)
+       --platform=[]
+             Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT]     
+             ($WERF_PLATFORM or $DOCKER_DEFAULT_PLATFORM by default)
+diff --git a/docs/_includes/reference/cli/werf_managed_images_rm.md b/docs/_includes/reference/cli/werf_managed_images_rm.md
+index 692275b56..51342a7d6 100644
+--- a/docs/_includes/reference/cli/werf_managed_images_rm.md
++++ b/docs/_includes/reference/cli/werf_managed_images_rm.md
+@@ -115,6 +115,8 @@ werf managed-images rm [options]
+             Enable verbose output (default $WERF_LOG_VERBOSE).
+       --loose-giterminism=false
+             Loose werf giterminism mode restrictions
++      --meta-repo=""
++            Container registry storage address (default $WERF_META_REPO)
+       --platform=[]
+             Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT]     
+             ($WERF_PLATFORM or $DOCKER_DEFAULT_PLATFORM by default)
+diff --git a/docs/_includes/reference/cli/werf_plan.md b/docs/_includes/reference/cli/werf_plan.md
+index 1bc888152..3ed83d8b1 100644
+--- a/docs/_includes/reference/cli/werf_plan.md
++++ b/docs/_includes/reference/cli/werf_plan.md
+@@ -316,6 +316,8 @@ werf plan --repo registry.mydomain.com/web --env production
+             Enable verbose output (default $WERF_LOG_VERBOSE).
+       --loose-giterminism=false
+             Loose werf giterminism mode restrictions
++      --meta-repo=""
++            Container registry storage address (default $WERF_META_REPO)
+       --namespace=""
+             Use specified Kubernetes namespace (default [[ project ]]-[[ env ]] template or         
+             deploy.namespace custom template from werf.yaml or $WERF_NAMESPACE)
+diff --git a/docs/_includes/reference/cli/werf_purge.md b/docs/_includes/reference/cli/werf_purge.md
+index 3fb627261..f064d4956 100644
+--- a/docs/_includes/reference/cli/werf_purge.md
++++ b/docs/_includes/reference/cli/werf_purge.md
+@@ -144,6 +144,8 @@ werf purge [options]
+             Enable verbose output (default $WERF_LOG_VERBOSE).
+       --loose-giterminism=false
+             Loose werf giterminism mode restrictions
++      --meta-repo=""
++            Container registry storage address (default $WERF_META_REPO)
+   -p, --parallel=true
+             Run in parallel (default $WERF_PARALLEL or true)
+       --parallel-tasks-limit=10
+diff --git a/docs/_includes/reference/cli/werf_render.md b/docs/_includes/reference/cli/werf_render.md
+index 6ea99eec1..a69ffe479 100644
+--- a/docs/_includes/reference/cli/werf_render.md
++++ b/docs/_includes/reference/cli/werf_render.md
+@@ -256,6 +256,8 @@ werf render [IMAGE_NAME...] [options]
+             Enable verbose output (default $WERF_LOG_VERBOSE).
+       --loose-giterminism=false
+             Loose werf giterminism mode restrictions
++      --meta-repo=""
++            Container registry storage address (default $WERF_META_REPO)
+       --namespace=""
+             Use specified Kubernetes namespace (default [[ project ]]-[[ env ]] template or         
+             deploy.namespace custom template from werf.yaml or $WERF_NAMESPACE)
+diff --git a/docs/_includes/reference/cli/werf_run.md b/docs/_includes/reference/cli/werf_run.md
+index 3dafacc50..05828b1cf 100644
+--- a/docs/_includes/reference/cli/werf_run.md
++++ b/docs/_includes/reference/cli/werf_run.md
+@@ -149,6 +149,8 @@ werf run [options] [IMAGE_NAME] [-- COMMAND ARG...]
+             Enable verbose output (default $WERF_LOG_VERBOSE).
+       --loose-giterminism=false
+             Loose werf giterminism mode restrictions
++      --meta-repo=""
++            Container registry storage address (default $WERF_META_REPO)
+       --platform=[]
+             Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT]     
+             ($WERF_PLATFORM or $DOCKER_DEFAULT_PLATFORM by default)
+diff --git a/docs/_includes/reference/cli/werf_stages_copy.md b/docs/_includes/reference/cli/werf_stages_copy.md
+index a4e5c2500..2cd145f38 100644
+--- a/docs/_includes/reference/cli/werf_stages_copy.md
++++ b/docs/_includes/reference/cli/werf_stages_copy.md
+@@ -189,6 +189,8 @@ werf stages copy [options]
+             Enable verbose output (default $WERF_LOG_VERBOSE).
+       --loose-giterminism=false
+             Loose werf giterminism mode restrictions
++      --meta-repo=""
++            Container registry storage address (default $WERF_META_REPO)
+   -p, --parallel=true
+             Run in parallel (default $WERF_PARALLEL or true)
+       --parallel-tasks-limit=5
+diff --git a/pkg/build/build_phase.go b/pkg/build/build_phase.go
+index ae847cfc3..d77370977 100644
+--- a/pkg/build/build_phase.go
++++ b/pkg/build/build_phase.go
+@@ -391,7 +391,7 @@ func (phase *BuildPhase) publishImageMetadata(ctx context.Context, name string,
+ 			return err
+ 		}
+ 	} else {
+-		if err := phase.addCustomImageTags(ctx, img.GetName(), customContentTagDesc, customTagStorage, phase.Conveyor.StorageManager.GetStagesStorage(), phase.CustomTagFuncList); err != nil {
++		if err := phase.addCustomImageTags(ctx, img.GetName(), customContentTagDesc, customTagStorage, phase.Conveyor.StorageManager.GetMetaStorage(), phase.CustomTagFuncList); err != nil {
+ 			return fmt.Errorf("unable to add custom image tags to stages storage: %w", err)
+ 		}
+ 	}
+@@ -440,7 +440,8 @@ func (phase *BuildPhase) publishMultiplatformImageCustomTags(ctx context.Context
+ 		return nil
+ 	}
+ 
+-	primaryStagesStorage := phase.Conveyor.StorageManager.GetStagesStorage()
++	stagesStorage := phase.Conveyor.StorageManager.GetStagesStorage()
++	metaStorage := phase.Conveyor.StorageManager.GetMetaStorage()
+ 	finalStagesStorage := phase.Conveyor.StorageManager.GetFinalStagesStorage()
+ 
+ 	var customTagStorage storage.StagesStorage
+@@ -449,7 +450,7 @@ func (phase *BuildPhase) publishMultiplatformImageCustomTags(ctx context.Context
+ 		customTagStorage = finalStagesStorage
+ 		customTagStageDesc = manager.ConvertStageDescForStagesStorage(img.GetStageDesc(), finalStagesStorage)
+ 	} else {
+-		customTagStorage = primaryStagesStorage
++		customTagStorage = stagesStorage
+ 		customTagStageDesc = img.GetStageDesc()
+ 	}
+ 
+@@ -460,7 +461,7 @@ func (phase *BuildPhase) publishMultiplatformImageCustomTags(ctx context.Context
+ 		DoError(func() error {
+ 			for _, tagFunc := range phase.CustomTagFuncList {
+ 				tag := tagFunc(name, img.GetStageID().String())
+-				if err := addCustomImageTag(ctx, phase.Conveyor.ProjectName(), customTagStorage, primaryStagesStorage, customTagStageDesc, tag); err != nil {
++				if err := addCustomImageTag(ctx, phase.Conveyor.ProjectName(), customTagStorage, metaStorage, customTagStageDesc, tag); err != nil {
+ 					return err
+ 				}
+ 			}
+@@ -718,8 +719,8 @@ func (phase *BuildPhase) copyContentTagFromSecondaryStagesStorage(ctx context.Co
+ 
+ func (phase *BuildPhase) addManagedImage(ctx context.Context, name string) error {
+ 	if phase.Conveyor.ShouldAddManagedImagesRecords() {
+-		stagesStorage := phase.Conveyor.StorageManager.GetStagesStorage()
+-		exist, err := stagesStorage.IsManagedImageExist(ctx, phase.Conveyor.ProjectName(), name, storage.WithCache())
++		metaStorage := phase.Conveyor.StorageManager.GetMetaStorage()
++		exist, err := metaStorage.IsManagedImageExist(ctx, phase.Conveyor.ProjectName(), name, storage.WithCache())
+ 		if err != nil {
+ 			return fmt.Errorf("unable to check existence of managed image: %w", err)
+ 		}
+@@ -728,7 +729,7 @@ func (phase *BuildPhase) addManagedImage(ctx context.Context, name string) error
+ 			return nil
+ 		}
+ 
+-		if err := stagesStorage.AddManagedImage(ctx, phase.Conveyor.ProjectName(), name); err != nil {
++		if err := metaStorage.AddManagedImage(ctx, phase.Conveyor.ProjectName(), name); err != nil {
+ 			return fmt.Errorf("unable to add image %q to the managed images of project %q: %w", name, phase.Conveyor.ProjectName(), err)
+ 		}
+ 	}
+@@ -743,6 +744,7 @@ func (phase *BuildPhase) publishImageGitMetadata(ctx context.Context, imageName
+ 	commits = append(commits, headCommit)
+ 
+ 	stagesStorage := phase.Conveyor.StorageManager.GetStagesStorage()
++	metaStorage := phase.Conveyor.StorageManager.GetMetaStorage()
+ 
+ 	fullImageName := stagesStorage.ConstructStageImageName(phase.Conveyor.ProjectName(), stageID.Digest, stageID.CreationTs)
+ 	logboek.Context(ctx).Info().LogF("name: %s\n", fullImageName)
+@@ -751,13 +753,13 @@ func (phase *BuildPhase) publishImageGitMetadata(ctx context.Context, imageName
+ 	for _, commit := range commits {
+ 		logboek.Context(ctx).Info().LogF("  %s\n", commit)
+ 
+-		exist, err := stagesStorage.IsImageMetadataExist(ctx, phase.Conveyor.ProjectName(), imageName, commit, stageID.String(), storage.WithCache())
++		exist, err := metaStorage.IsImageMetadataExist(ctx, phase.Conveyor.ProjectName(), imageName, commit, stageID.String(), storage.WithCache())
+ 		if err != nil {
+ 			return fmt.Errorf("unable to get image %s metadata by commit %s and stage ID %s: %w", imageName, commit, stageID.String(), err)
+ 		}
+ 
+ 		if !exist {
+-			if err := stagesStorage.PutImageMetadata(ctx, phase.Conveyor.ProjectName(), imageName, commit, stageID.String()); err != nil {
++			if err := metaStorage.PutImageMetadata(ctx, phase.Conveyor.ProjectName(), imageName, commit, stageID.String()); err != nil {
+ 				return fmt.Errorf("unable to put image %s metadata by commit %s and stage ID %s: %w", imageName, commit, stageID.String(), err)
+ 			}
+ 		}
+diff --git a/pkg/cleaning/cleanup.go b/pkg/cleaning/cleanup.go
+index 126be64a2..f015c0d93 100644
+--- a/pkg/cleaning/cleanup.go
++++ b/pkg/cleaning/cleanup.go
+@@ -228,7 +228,7 @@ func (m *cleanupManager) run(ctx context.Context) error {
+ 	}
+ 
+ 	if err := logboek.Context(ctx).LogProcess("Push last cleanup info to meta image").DoError(func() error {
+-		err := m.StorageManager.GetStagesStorage().PostLastCleanupRecord(ctx, m.ProjectName)
++		err := m.StorageManager.GetMetaStorage().PostLastCleanupRecord(ctx, m.ProjectName)
+ 		if err != nil {
+ 			logboek.Context(ctx).Warn().LogF("WARNING: cleanup metadata update failed: %s\n", err)
+ 		}
+@@ -748,7 +748,7 @@ func purgeImageMetadata(ctx context.Context, projectName string, storageManager
+ 	var imageMetadataByImageName map[string]map[string][]string
+ 	if err := logboek.Context(ctx).Default().LogProcess("Fetching images metadata").DoError(func() error {
+ 		var err error
+-		_, imageMetadataByImageName, err = storageManager.GetStagesStorage().GetAllAndGroupImageMetadataByImageName(ctx, projectName, []string{}, storage.WithCache())
++		_, imageMetadataByImageName, err = storageManager.GetMetaStorage().GetAllAndGroupImageMetadataByImageName(ctx, projectName, []string{}, storage.WithCache())
+ 		return err
+ 	}); err != nil {
+ 		return err
+@@ -802,7 +802,7 @@ func purgeManagedImages(ctx context.Context, projectName string, storageManager
+ 	var managedImages []string
+ 	if err := logboek.Context(ctx).Default().LogProcess("Fetching managed images").DoError(func() error {
+ 		var err error
+-		managedImages, err = storageManager.GetStagesStorage().GetManagedImages(ctx, projectName, storage.WithCache())
++		managedImages, err = storageManager.GetMetaStorage().GetManagedImages(ctx, projectName, storage.WithCache())
+ 		return err
+ 	}); err != nil {
+ 		return err
+@@ -922,6 +922,7 @@ func deleteRejectedStagesWithLinkedTags(ctx context.Context, storageManager mana
+ 
+ 		// 2. Linked custom tags — sequential (avoids parallel-of-parallel registry pressure).
+ 		// Fail-fast: leave marker untouched on any failure so the next cleanup retries.
++		metaStorage := storageManager.GetMetaStorage()
+ 		for _, customTag := range customTagsByStageID[stageIDStr] {
+ 			if err := stagesStorage.DeleteStageCustomTag(ctx, customTag); err != nil {
+ 				if err := handleDeletionError(err); err != nil {
+@@ -930,6 +931,13 @@ func deleteRejectedStagesWithLinkedTags(ctx context.Context, storageManager mana
+ 				logboek.Context(ctx).Warn().LogF("WARNING: Custom tag %s linked to rejected stage %s deletion failed: %s; marker kept for retry\n", customTag, stageIDStr, err)
+ 				return nil
+ 			}
++			if err := metaStorage.UnregisterStageCustomTag(ctx, customTag); err != nil {
++				if err := handleDeletionError(err); err != nil {
++					return err
++				}
++				logboek.Context(ctx).Warn().LogF("WARNING: Custom tag %s metadata unregister for rejected stage %s failed: %s; marker kept for retry\n", customTag, stageIDStr, err)
++				return nil
++			}
+ 			logboek.Context(ctx).Default().LogFWithCustomStyle(deletedStyle, "  tag: %s\n", customTag)
+ 		}
+ 
+diff --git a/pkg/cleaning/cleanup_ai_test.go b/pkg/cleaning/cleanup_ai_test.go
+index 94777ea1c..93a0e1d98 100644
+--- a/pkg/cleaning/cleanup_ai_test.go
++++ b/pkg/cleaning/cleanup_ai_test.go
+@@ -22,13 +22,15 @@ type fakePrimaryStagesStorage struct {
+ 	rejectedStageIDs []image.StageID
+ 	rejectedErr      error
+ 
+-	deleteImageErrs  map[string]error
+-	deleteRecordErrs map[string]error
+-	deleteTagErrs    map[string]error
+-
+-	deletedImages  []image.StageID
+-	deletedRecords []image.StageID
+-	deletedTags    []string
++	deleteImageErrs   map[string]error
++	deleteRecordErrs  map[string]error
++	deleteTagErrs     map[string]error
++	unregisterTagErrs map[string]error
++
++	deletedImages    []image.StageID
++	deletedRecords   []image.StageID
++	deletedTags      []string
++	unregisteredTags []string
+ }
+ 
+ func (f *fakePrimaryStagesStorage) GetRejectedStageIDs(_ context.Context, _ ...storage.Option) ([]image.StageID, error) {
+@@ -56,19 +58,41 @@ func (f *fakePrimaryStagesStorage) DeleteStageCustomTag(_ context.Context, tag s
+ 	return f.deleteTagErrs[tag]
+ }
+ 
++func (f *fakePrimaryStagesStorage) UnregisterStageCustomTag(_ context.Context, tag string) error {
++	f.mu.Lock()
++	defer f.mu.Unlock()
++	f.unregisteredTags = append(f.unregisteredTags, tag)
++	return f.unregisterTagErrs[tag]
++}
++
+ type fakeStorageManager struct {
+ 	manager.StorageManagerInterface
+ 
+ 	stages *fakePrimaryStagesStorage
++	meta   *fakePrimaryStagesStorage
+ }
+ 
+ func newFakeStorageManager() *fakeStorageManager {
++	sm := &fakeStorageManager{
++		stages: newFakePrimaryStagesStorage(),
++	}
++	sm.meta = sm.stages
++	return sm
++}
++
++func newFakeStorageManagerWithSplitStorages() *fakeStorageManager {
+ 	return &fakeStorageManager{
+-		stages: &fakePrimaryStagesStorage{
+-			deleteImageErrs:  map[string]error{},
+-			deleteRecordErrs: map[string]error{},
+-			deleteTagErrs:    map[string]error{},
+-		},
++		stages: newFakePrimaryStagesStorage(),
++		meta:   newFakePrimaryStagesStorage(),
++	}
++}
++
++func newFakePrimaryStagesStorage() *fakePrimaryStagesStorage {
++	return &fakePrimaryStagesStorage{
++		deleteImageErrs:   map[string]error{},
++		deleteRecordErrs:  map[string]error{},
++		deleteTagErrs:     map[string]error{},
++		unregisterTagErrs: map[string]error{},
+ 	}
+ }
+ 
+@@ -76,6 +100,10 @@ func (f *fakeStorageManager) GetStagesStorage() storage.PrimaryStagesStorage {
+ 	return f.stages
+ }
+ 
++func (f *fakeStorageManager) GetMetaStorage() storage.PrimaryStagesStorage {
++	return f.meta
++}
++
+ func (f *fakeStorageManager) ForEachRejectedStage(ctx context.Context, stageIDs []image.StageID, cb func(ctx context.Context, stageID image.StageID) error) error {
+ 	for _, id := range stageIDs {
+ 		if err := cb(ctx, id); err != nil {
+@@ -189,6 +217,41 @@ func TestAI_deleteRejectedStagesWithLinkedTags_CustomTagFailureKeepsMarker(t *te
+ 	assert.Empty(t, sm.stages.deletedRecords, "marker MUST remain so next cleanup retries linked tags")
+ }
+ 
++func TestAI_deleteRejectedStagesWithLinkedTags_RoutesUnregisterToMetaStorage(t *testing.T) {
++	digest := "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
++	stageID := image.NewStageID(digest, 1700000000)
++
++	sm := newFakeStorageManagerWithSplitStorages()
++	sm.stages.rejectedStageIDs = []image.StageID{*stageID}
++
++	deleted, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, map[string][]string{stageID.String(): {"v1.0.0", "latest"}}, false)
++	require.NoError(t, err)
++
++	assert.Equal(t, []string{stageID.String()}, deleted)
++	assert.Equal(t, []string{"v1.0.0", "latest"}, sm.stages.deletedTags, "alias custom tags deleted from stages storage")
++	assert.Equal(t, []string{"v1.0.0", "latest"}, sm.meta.unregisteredTags, "custom-tag metadata records unregistered from meta storage")
++	assert.Empty(t, sm.meta.deletedTags, "meta storage MUST NOT receive alias image deletes")
++	assert.Empty(t, sm.stages.unregisteredTags, "stages storage MUST NOT receive metadata unregister calls")
++	assert.Equal(t, []image.StageID{*stageID}, sm.stages.deletedRecords, "marker deleted on stages after both alias and metadata cleanup succeeded")
++}
++
++func TestAI_deleteRejectedStagesWithLinkedTags_UnregisterFailureKeepsMarker(t *testing.T) {
++	digest := "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
++	stageID := image.NewStageID(digest, 1700000000)
++
++	sm := newFakeStorageManagerWithSplitStorages()
++	sm.stages.rejectedStageIDs = []image.StageID{*stageID}
++	sm.meta.unregisterTagErrs["v1.0.0"] = errors.New("temporary network glitch")
++
++	deleted, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, map[string][]string{stageID.String(): {"v1.0.0", "latest"}}, false)
++	require.NoError(t, err)
++
++	assert.Empty(t, deleted, "stage with failed metadata unregister must NOT be reported deleted")
++	assert.Equal(t, []string{"v1.0.0"}, sm.stages.deletedTags, "alias for v1.0.0 already deleted before unregister failed")
++	assert.Equal(t, []string{"v1.0.0"}, sm.meta.unregisteredTags, "fail-fast on first metadata unregister failure; latest not attempted")
++	assert.Empty(t, sm.stages.deletedRecords, "marker MUST remain so next cleanup retries orphan metadata")
++}
++
+ func TestAI_deleteRejectedStagesWithLinkedTags_MarkerFailureExcludesFromDeleted(t *testing.T) {
+ 	digest := "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
+ 	stageID := image.NewStageID(digest, 1700000000)
+diff --git a/pkg/cleaning/stage_manager/manager.go b/pkg/cleaning/stage_manager/manager.go
+index f7cad1f74..3dcd8fc20 100644
+--- a/pkg/cleaning/stage_manager/manager.go
++++ b/pkg/cleaning/stage_manager/manager.go
+@@ -80,7 +80,7 @@ type GitRepo interface {
+ }
+ 
+ func (m *Manager) InitImagesMetadata(ctx context.Context, storageManager manager.StorageManagerInterface, localGit GitRepo, projectName string, imageNameList []string) error {
+-	imageMetadataByImageName, imageMetadataByNotManagedImageName, err := storageManager.GetStagesStorage().GetAllAndGroupImageMetadataByImageName(ctx, projectName, imageNameList, storage.WithCache())
++	imageMetadataByImageName, imageMetadataByNotManagedImageName, err := storageManager.GetMetaStorage().GetAllAndGroupImageMetadataByImageName(ctx, projectName, imageNameList, storage.WithCache())
+ 	if err != nil {
+ 		return err
+ 	}
+@@ -145,7 +145,7 @@ func (m *Manager) InitCustomTagsMetadata(ctx context.Context, storageManager man
+ }
+ 
+ func GetCustomTagsMetadata(ctx context.Context, storageManager manager.StorageManagerInterface) (map[string][]string, error) {
+-	stageCustomTagMetadataIDs, err := storageManager.GetStagesStorage().GetStageCustomTagMetadataIDs(ctx, storage.WithCache())
++	stageCustomTagMetadataIDs, err := storageManager.GetMetaStorage().GetStageCustomTagMetadataIDs(ctx, storage.WithCache())
+ 	if err != nil {
+ 		return nil, fmt.Errorf("unable to get stage custom tag metadata IDs: %w", err)
+ 	}
+diff --git a/pkg/storage/manager/storage_manager.go b/pkg/storage/manager/storage_manager.go
+index 3c4ed3942..88b993cb0 100644
+--- a/pkg/storage/manager/storage_manager.go
++++ b/pkg/storage/manager/storage_manager.go
+@@ -50,6 +50,7 @@ type StorageManagerInterface interface {
+ 	InitCache(ctx context.Context) error
+ 
+ 	GetStagesStorage() storage.PrimaryStagesStorage
++	GetMetaStorage() storage.PrimaryStagesStorage
+ 	GetFinalStagesStorage() storage.StagesStorage
+ 	GetSecondaryStagesStorageList() []storage.StagesStorage
+ 	GetCacheStagesStorageList() []storage.StagesStorage
+@@ -132,12 +133,15 @@ func NewStorageManager(projectName string, stagesStorage storage.PrimaryStagesSt
+ 		ProjectName: projectName,
+ 
+ 		StagesStorage:              stagesStorage,
++		MetaStorage:                stagesStorage,
+ 		FinalStagesStorage:         finalStagesStorage,
+ 		CacheStagesStorageList:     cacheStagesStorageList,
+ 		SecondaryStagesStorageList: secondaryStagesStorageList,
+ 	}
+ }
+ 
++var _ StorageManagerInterface = (*StorageManager)(nil)
++
+ type StagesList struct {
+ 	Mux      sync.Mutex
+ 	StageIDs []image.StageID
+@@ -182,6 +186,7 @@ type StorageManager struct {
+ 	ProjectName string
+ 
+ 	StagesStorage              storage.PrimaryStagesStorage
++	MetaStorage                storage.PrimaryStagesStorage
+ 	FinalStagesStorage         storage.StagesStorage
+ 	CacheStagesStorageList     []storage.StagesStorage
+ 	SecondaryStagesStorageList []storage.StagesStorage
+@@ -197,6 +202,13 @@ func (m *StorageManager) GetStagesStorage() storage.PrimaryStagesStorage {
+ 	return m.StagesStorage
+ }
+ 
++func (m *StorageManager) GetMetaStorage() storage.PrimaryStagesStorage {
++	if m.MetaStorage != nil {
++		return m.MetaStorage
++	}
++	return m.StagesStorage
++}
++
+ func (m *StorageManager) GetFinalStagesStorage() storage.StagesStorage {
+ 	return m.FinalStagesStorage
+ }
+@@ -1002,7 +1014,7 @@ func (m *StorageManager) ForEachRmImageMetadata(ctx context.Context, projectName
+ 		MaxNumberOfWorkers: m.MaxNumberOfWorkers(),
+ 	}, func(ctx context.Context, taskId int) error {
+ 		task := tasks[taskId]
+-		err := m.StagesStorage.RmImageMetadata(ctx, projectName, imageNameOrID, task.commit, task.stageID)
++		err := m.GetMetaStorage().RmImageMetadata(ctx, projectName, imageNameOrID, task.commit, task.stageID)
+ 		return f(ctx, task.commit, task.stageID, err)
+ 	})
+ }
+@@ -1012,7 +1024,7 @@ func (m *StorageManager) ForEachRmManagedImage(ctx context.Context, projectName
+ 		MaxNumberOfWorkers: m.MaxNumberOfWorkers(),
+ 	}, func(ctx context.Context, taskId int) error {
+ 		managedImage := managedImages[taskId]
+-		err := m.StagesStorage.RmManagedImage(ctx, projectName, managedImage)
++		err := m.GetMetaStorage().RmManagedImage(ctx, projectName, managedImage)
+ 		return f(ctx, managedImage, err)
+ 	})
+ }
+@@ -1036,7 +1048,7 @@ func (m *StorageManager) ForEachDeleteStageCustomTag(ctx context.Context, ids []
+ 		if err := m.StagesStorage.DeleteStageCustomTag(ctx, id); err != nil {
+ 			return f(ctx, id, fmt.Errorf("unable to delete stage custom tag: %w", err))
+ 		}
+-		if err := m.StagesStorage.UnregisterStageCustomTag(ctx, id); err != nil {
++		if err := m.GetMetaStorage().UnregisterStageCustomTag(ctx, id); err != nil {
+ 			return f(ctx, id, fmt.Errorf("unable to unregister stage custom tag: %w", err))
+ 		}
+ 
+@@ -1049,7 +1061,7 @@ func (m *StorageManager) ForEachGetStageCustomTagMetadata(ctx context.Context, i
+ 		MaxNumberOfWorkers: m.MaxNumberOfWorkers(),
+ 	}, func(ctx context.Context, taskId int) error {
+ 		id := ids[taskId]
+-		metadata, err := m.StagesStorage.GetStageCustomTagMetadata(ctx, id)
++		metadata, err := m.GetMetaStorage().GetStageCustomTagMetadata(ctx, id)
+ 		return f(ctx, id, metadata, err)
+ 	})
+ }
+diff --git a/pkg/storage/manager/storage_manager_meta_routing_ai_test.go b/pkg/storage/manager/storage_manager_meta_routing_ai_test.go
+new file mode 100644
+index 000000000..31730e2ca
+--- /dev/null
++++ b/pkg/storage/manager/storage_manager_meta_routing_ai_test.go
+@@ -0,0 +1,121 @@
++package manager
++
++import (
++	"context"
++	"sync"
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++	"github.com/stretchr/testify/require"
++
++	"github.com/werf/werf/v2/pkg/storage"
++	"github.com/werf/werf/v2/pkg/werf"
++)
++
++type routingFakeStorage struct {
++	storage.PrimaryStagesStorage
++
++	name string
++	mu   sync.Mutex
++
++	rmImageMetadata     []string
++	rmManagedImage      []string
++	deleteCustomTag     []string
++	unregisterCustomTag []string
++	getCustomTagMeta    []string
++}
++
++func (f *routingFakeStorage) RmImageMetadata(_ context.Context, _, imageNameOrID, commit, stageID string) error {
++	f.mu.Lock()
++	defer f.mu.Unlock()
++	f.rmImageMetadata = append(f.rmImageMetadata, imageNameOrID+"/"+commit+"/"+stageID)
++	return nil
++}
++
++func (f *routingFakeStorage) RmManagedImage(_ context.Context, _, name string) error {
++	f.mu.Lock()
++	defer f.mu.Unlock()
++	f.rmManagedImage = append(f.rmManagedImage, name)
++	return nil
++}
++
++func (f *routingFakeStorage) DeleteStageCustomTag(_ context.Context, tag string) error {
++	f.mu.Lock()
++	defer f.mu.Unlock()
++	f.deleteCustomTag = append(f.deleteCustomTag, tag)
++	return nil
++}
++
++func (f *routingFakeStorage) UnregisterStageCustomTag(_ context.Context, tag string) error {
++	f.mu.Lock()
++	defer f.mu.Unlock()
++	f.unregisterCustomTag = append(f.unregisterCustomTag, tag)
++	return nil
++}
++
++func (f *routingFakeStorage) GetStageCustomTagMetadata(_ context.Context, id string) (*storage.CustomTagMetadata, error) {
++	f.mu.Lock()
++	defer f.mu.Unlock()
++	f.getCustomTagMeta = append(f.getCustomTagMeta, id)
++	return &storage.CustomTagMetadata{Tag: id}, nil
++}
++
++func TestAI_MetaStorageRouting_MetadataOpsGoToMeta_AliasStaysOnStages(t *testing.T) {
++	require.NoError(t, werf.Init(t.TempDir(), ""))
++
++	stages := &routingFakeStorage{name: "stages"}
++	meta := &routingFakeStorage{name: "meta"}
++
++	sm := &StorageManager{
++		ProjectName:   "proj",
++		StagesStorage: stages,
++		MetaStorage:   meta,
++	}
++	ctx := context.Background()
++
++	require.NoError(t, sm.ForEachRmImageMetadata(ctx, "proj", "img1", map[string][]string{
++		"stage-id-1": {"commit-a"},
++	}, func(_ context.Context, _, _ string, err error) error { return err }))
++
++	require.NoError(t, sm.ForEachRmManagedImage(ctx, "proj", []string{"mng1", "mng2"},
++		func(_ context.Context, _ string, err error) error { return err }))
++
++	require.NoError(t, sm.ForEachDeleteStageCustomTag(ctx, []string{"tag1"},
++		func(_ context.Context, _ string, err error) error { return err }))
++
++	require.NoError(t, sm.ForEachGetStageCustomTagMetadata(ctx, []string{"id1"},
++		func(_ context.Context, _ string, _ *storage.CustomTagMetadata, err error) error { return err }))
++
++	assert.Equal(t, []string{"img1/commit-a/stage-id-1"}, meta.rmImageMetadata, "RmImageMetadata MUST go to meta")
++	assert.Empty(t, stages.rmImageMetadata, "RmImageMetadata MUST NOT go to stages")
++
++	assert.ElementsMatch(t, []string{"mng1", "mng2"}, meta.rmManagedImage, "RmManagedImage MUST go to meta")
++	assert.Empty(t, stages.rmManagedImage, "RmManagedImage MUST NOT go to stages")
++
++	assert.Equal(t, []string{"tag1"}, stages.deleteCustomTag, "DeleteStageCustomTag (alias image) MUST stay on stages")
++	assert.Empty(t, meta.deleteCustomTag, "DeleteStageCustomTag MUST NOT go to meta")
++
++	assert.Equal(t, []string{"tag1"}, meta.unregisterCustomTag, "UnregisterStageCustomTag (metadata record) MUST go to meta")
++	assert.Empty(t, stages.unregisterCustomTag, "UnregisterStageCustomTag MUST NOT go to stages")
++
++	assert.Equal(t, []string{"id1"}, meta.getCustomTagMeta, "GetStageCustomTagMetadata MUST go to meta")
++	assert.Empty(t, stages.getCustomTagMeta, "GetStageCustomTagMetadata MUST NOT go to stages")
++}
++
++func TestAI_MetaStorageRouting_FallbackToStagesWhenMetaNil(t *testing.T) {
++	require.NoError(t, werf.Init(t.TempDir(), ""))
++
++	stages := &routingFakeStorage{name: "stages"}
++	sm := &StorageManager{
++		ProjectName:   "proj",
++		StagesStorage: stages,
++	}
++
++	assert.Same(t, stages, sm.GetMetaStorage(), "GetMetaStorage MUST fall back to StagesStorage when MetaStorage is nil")
++
++	ctx := context.Background()
++	require.NoError(t, sm.ForEachRmManagedImage(ctx, "proj", []string{"mng1"},
++		func(_ context.Context, _ string, err error) error { return err }))
++
++	assert.Equal(t, []string{"mng1"}, stages.rmManagedImage, "without meta, RmManagedImage falls through to stages")
++}
+diff --git a/test/legacy_e2e/suites/cleanup/cleanup_test.go b/test/legacy_e2e/suites/cleanup/cleanup_test.go
+index 91c76cb60..fc2975788 100644
+--- a/test/legacy_e2e/suites/cleanup/cleanup_test.go
++++ b/test/legacy_e2e/suites/cleanup/cleanup_test.go
+@@ -409,6 +409,50 @@ var _ = Describe("cleanup command", func() {
+ 						Expect(len(CustomTagsMetadataList(ctx))).Should(Equal(1))
+ 					})
+ 				})
++
++				Context("with --meta-repo", func() {
++					BeforeEach(func(ctx SpecContext) {
++						SetupMetaRepo(ctx, implementationName)
++					})
++
++					It("should route managed-image, image-metadata and custom-tag metadata to meta-repo and delete them from meta-repo on cleanup", func(ctx SpecContext) {
++						customTag1 := "tag1"
++						customTag2 := "tag2"
++
++						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build", "--add-custom-tag", fmt.Sprintf(customTagValueFormat, customTag1))
++
++						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "push", "--set-upstream", "origin", branchName)
++
++						Expect(MetaManagedImagesCount(ctx)).Should(BeNumerically(">", 0), "managed-image records live in meta-repo")
++						Expect(ManagedImagesCount(ctx)).Should(Equal(0), "managed-image records MUST NOT be written to stages-repo")
++						Expect(MetaImageMetadata(ctx, imageName)).ShouldNot(BeEmpty(), "image-metadata records live in meta-repo")
++						Expect(ImageMetadata(ctx, imageName)).Should(BeEmpty(), "image-metadata records MUST NOT be written to stages-repo")
++						Expect(len(MetaCustomTagsMetadataList(ctx))).Should(Equal(1), "custom-tag metadata records live in meta-repo")
++						Expect(len(CustomTagsMetadataList(ctx))).Should(Equal(0), "custom-tag metadata MUST NOT be written to stages-repo")
++						Expect(CustomTags(ctx)).Should(ContainElement(fmt.Sprintf(customTagValueFormat, customTag1)), "custom-tag alias image stays in stages-repo")
++
++						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "commit", "--allow-empty", "-m", "test")
++
++						SuiteData.Stubs.SetEnv("FROM_CACHE_VERSION", "REBUILD")
++
++						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build", "--add-custom-tag", fmt.Sprintf(customTagValueFormat, customTag2))
++
++						Expect(len(MetaCustomTagsMetadataList(ctx))).Should(Equal(2))
++
++						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "cleanup")
++
++						customTags := CustomTags(ctx)
++						Expect(customTags).Should(ContainElement(fmt.Sprintf(customTagValueFormat, customTag1)))
++						Expect(customTags).ShouldNot(ContainElement(fmt.Sprintf(customTagValueFormat, customTag2)), "stale custom-tag alias deleted from stages-repo")
++						Expect(len(MetaCustomTagsMetadataList(ctx))).Should(Equal(1), "stale custom-tag metadata deleted from meta-repo")
++						Expect(len(CustomTagsMetadataList(ctx))).Should(Equal(0), "stages-repo still holds no metadata records")
++						Expect(MetaLastCleanupRecord(ctx)).ShouldNot(BeNil(), "last-cleanup record written to meta-repo")
++						Expect(MetaManagedImagesCount(ctx)).Should(BeNumerically(">", 0), "active managed-image records remain in meta-repo after cleanup")
++						Expect(ManagedImagesCount(ctx)).Should(Equal(0), "managed-image records still not in stages-repo")
++						Expect(len(MetaImageMetadata(ctx, imageName))).Should(BeNumerically(">", 0), "image-metadata for active commit remains in meta-repo")
++						Expect(len(ImageMetadata(ctx, imageName))).Should(Equal(0), "image-metadata still not in stages-repo")
++					})
++				})
+ 			})
+ 		})
+ 	}
+diff --git a/test/legacy_e2e/suites/cleanup/purge_test.go b/test/legacy_e2e/suites/cleanup/purge_test.go
+index 32c9622db..182b6200d 100644
+--- a/test/legacy_e2e/suites/cleanup/purge_test.go
++++ b/test/legacy_e2e/suites/cleanup/purge_test.go
+@@ -51,6 +51,35 @@ var _ = Describe("purge command", func() {
+ 					Expect(len(CustomTagsMetadataList(ctx))).Should(Equal(0))
+ 				}
+ 			})
++
++			Context("with --meta-repo", func() {
++				BeforeEach(func(ctx SpecContext) {
++					SetupMetaRepo(ctx, implementationName)
++				})
++
++				It("should remove managed-image, image-metadata and custom-tag metadata from meta-repo on purge", func(ctx SpecContext) {
++					utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build", "--add-custom-tag", fmt.Sprintf(customTagValueFormat, "1"))
++
++					Expect(StagesCount(ctx)).Should(BeNumerically(">", 0))
++					Expect(MetaManagedImagesCount(ctx)).Should(BeNumerically(">", 0), "managed-image records land in meta-repo")
++					Expect(ManagedImagesCount(ctx)).Should(Equal(0), "stages-repo MUST NOT contain managed-image records")
++					Expect(len(MetaImageMetadata(ctx, imageName))).Should(BeNumerically(">", 0), "image-metadata records land in meta-repo")
++					Expect(len(ImageMetadata(ctx, imageName))).Should(Equal(0), "stages-repo MUST NOT contain image-metadata records")
++					Expect(len(CustomTags(ctx))).Should(BeNumerically(">", 0), "custom-tag alias images live in stages-repo")
++					Expect(len(MetaCustomTagsMetadataList(ctx))).Should(BeNumerically(">", 0), "custom-tag metadata records land in meta-repo")
++					Expect(len(CustomTagsMetadataList(ctx))).Should(Equal(0), "stages-repo MUST NOT contain custom-tag metadata")
++
++					utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "purge")
++
++					if SuiteData.TestImplementation != docker_registry.QuayImplementationName {
++						Expect(StagesCount(ctx)).Should(Equal(0))
++						Expect(MetaManagedImagesCount(ctx)).Should(Equal(0), "managed-image records purged from meta-repo")
++						Expect(len(MetaImageMetadata(ctx, imageName))).Should(Equal(0), "image-metadata records purged from meta-repo")
++						Expect(len(CustomTags(ctx))).Should(Equal(0), "custom-tag alias images removed from stages-repo")
++						Expect(len(MetaCustomTagsMetadataList(ctx))).Should(Equal(0), "custom-tag metadata records purged from meta-repo")
++					}
++				})
++			})
+ 		})
+ 	}
+ })
+diff --git a/test/legacy_e2e/suites/cleanup/suite_test.go b/test/legacy_e2e/suites/cleanup/suite_test.go
+index 23f314d44..69cd34b73 100644
+--- a/test/legacy_e2e/suites/cleanup/suite_test.go
++++ b/test/legacy_e2e/suites/cleanup/suite_test.go
+@@ -35,6 +35,7 @@ var SuiteData struct {
+ 	suite_init.SuiteData
+ 	TestImplementation string
+ 	StagesStorage      storage.PrimaryStagesStorage
++	MetaStorage        storage.PrimaryStagesStorage
+ 	ContainerRegistry  docker_registry.Interface
+ }
+ 
+@@ -69,6 +70,15 @@ func InitStagesStorage(ctx context.Context, stagesStorageAddress, implementation
+ 	SuiteData.StagesStorage = utils.NewStagesStorage(ctx, stagesStorageAddress, implementationName, dockerRegistryOptions)
+ }
+ 
++func SetupMetaRepo(ctx context.Context, implementationName string) {
++	werfImplementationName := SuiteData.ContainerRegistryPerImplementation[implementationName].WerfImplementationName
++
++	metaRepo := fmt.Sprintf("%s/%s-meta", SuiteData.ContainerRegistryPerImplementation[implementationName].RegistryAddress, SuiteData.ProjectName)
++
++	SuiteData.MetaStorage = utils.NewStagesStorage(ctx, metaRepo, werfImplementationName, SuiteData.ContainerRegistryPerImplementation[implementationName].RegistryOptions)
++	SuiteData.Stubs.SetEnv("WERF_META_REPO", metaRepo)
++}
++
+ func StagesCount(ctx context.Context) int {
+ 	return utils.StagesCount(ctx, SuiteData.StagesStorage)
+ }
+@@ -77,10 +87,18 @@ func ManagedImagesCount(ctx context.Context) int {
+ 	return utils.ManagedImagesCount(ctx, SuiteData.StagesStorage)
+ }
+ 
++func MetaManagedImagesCount(ctx context.Context) int {
++	return utils.ManagedImagesCount(ctx, SuiteData.MetaStorage)
++}
++
+ func ImageMetadata(ctx context.Context, imageName string) map[string][]string {
+ 	return utils.ImageMetadata(ctx, SuiteData.StagesStorage, imageName)
+ }
+ 
++func MetaImageMetadata(ctx context.Context, imageName string) map[string][]string {
++	return utils.ImageMetadata(ctx, SuiteData.MetaStorage, imageName)
++}
++
+ func CustomTags(ctx context.Context) []string {
+ 	tags, err := SuiteData.ContainerRegistry.Tags(ctx, SuiteData.StagesStorage.String())
+ 	Expect(err).ShouldNot(HaveOccurred())
+@@ -98,3 +116,13 @@ func CustomTags(ctx context.Context) []string {
+ func CustomTagsMetadataList(ctx context.Context) []*storage.CustomTagMetadata {
+ 	return utils.CustomTagsMetadataList(ctx, SuiteData.StagesStorage)
+ }
++
++func MetaCustomTagsMetadataList(ctx context.Context) []*storage.CustomTagMetadata {
++	return utils.CustomTagsMetadataList(ctx, SuiteData.MetaStorage)
++}
++
++func MetaLastCleanupRecord(ctx context.Context) *storage.CleanupRecord {
++	rec, err := SuiteData.MetaStorage.GetLastCleanupRecord(ctx, SuiteData.ProjectName)
++	Expect(err).ShouldNot(HaveOccurred())
++	return rec
++}
+diff --git a/test/pkg/utils/image.go b/test/pkg/utils/image.go
+index da9ba9304..0838172b5 100644
+--- a/test/pkg/utils/image.go
++++ b/test/pkg/utils/image.go
+@@ -97,14 +97,8 @@ func loadLocalImage(ctx context.Context, backendMode, imageName string) (v1.Imag
+ 
+ 	switch backendMode {
+ 	case "docker", "vanilla-docker", "buildkit-docker":
+-		if _, err := RunCommand(ctx, "/", "docker", "image", "inspect", imageName); err != nil {
+-			RunSucceedCommand(ctx, "/", "docker", "pull", imageName)
+-		}
+ 		RunSucceedCommand(ctx, "/", "docker", "save", "-o", tempTarPath, imageName)
+ 	case "native-rootless", "native-chroot":
+-		// The image may only exist in the local repo registry (e.g. when built with WithLocalRepo),
+-		// not in local buildah storage, so pull it first.
+-		RunSucceedCommand(ctx, "/", "buildah", "pull", "--tls-verify=false", imageName)
+ 		RunSucceedCommand(ctx, "/", "buildah", "push", "--tls-verify=false", "--format", "docker", imageName, "docker-archive:"+tempTarPath)
+ 	default:
+ 		Expect(false).To(BeTrue(), "unsupported backend mode: %s", backendMode)
