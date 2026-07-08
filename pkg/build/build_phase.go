@@ -611,18 +611,14 @@ func (phase *BuildPhase) publishContentTagToStorage(ctx context.Context, img *im
 
 	storageManager := phase.Conveyor.StorageManager
 
-	if phase.ShouldBeBuiltMode {
-		logboek.Context(ctx).Error().LogF("%s/content-tag with content digest %s is not built\n", img.GetName(), contentDigest)
-		return nil, fmt.Errorf("stages required")
-	}
-
 	var contentTagStageDescSet imagePkg.StageDescSet
 	if os.Getenv("WERF_DISABLE_PUBLISH_TAG_CACHE_SYNC") == "1" {
 		contentTagStageDescSet = imagePkg.NewStageDescSet()
 	} else {
-		// Post-check under the digest mutex acquired in BeforeImageStages: another
-		// werf process may have pushed a matching content tag while we were
-		// building this image's stages. Adopt it and skip our own push.
+		// Post-check under the digest mutex acquired in BeforeImageStages catches
+		// a content tag pushed by another werf process while we built our stages;
+		// mirrors atomicBuildStageImage and preserves the pre-Stage-A behavior of
+		// adopting a late-arriving content tag under ShouldBeBuiltMode.
 		var err error
 		contentTagStageDescSet, err = storageManager.GetStageDescSetByDigest(ctx, img.LogDetailedName(), contentDigest, contentTagNoParentStageFilter)
 		if err != nil {
@@ -640,6 +636,11 @@ func (phase *BuildPhase) publishContentTagToStorage(ctx context.Context, img *im
 			container_backend.LogImageInfoByStageDesc(ctx, desc, platform)
 			return desc, nil
 		}
+	}
+
+	if phase.ShouldBeBuiltMode {
+		logboek.Context(ctx).Error().LogF("%s/content-tag with content digest %s is not built\n", img.GetName(), contentDigest)
+		return nil, fmt.Errorf("stages required")
 	}
 
 	destReference, creationTs := storageManager.GenerateStageDescCreationTs(contentDigest, contentTagStageDescSet)

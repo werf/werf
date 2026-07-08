@@ -2,7 +2,6 @@ package build
 
 import (
 	"sync"
-	"sync/atomic"
 	"testing"
 	"time"
 
@@ -15,6 +14,17 @@ func newTestAIConveyor() *Conveyor {
 	}
 }
 
+func TestAI_ContentDigestMutex_SameKeyReturnsSameMutex(t *testing.T) {
+	c := newTestAIConveyor()
+
+	a := c.GetStageDigestMutex("k1")
+	b := c.GetStageDigestMutex("k1")
+	require.Same(t, a, b, "same digest key must return the same mutex instance")
+
+	other := c.GetStageDigestMutex("k2")
+	require.NotSame(t, a, other, "distinct digest keys must return distinct mutex instances")
+}
+
 func TestAI_ContentDigestMutex_SerializesSameDigest(t *testing.T) {
 	c := newTestAIConveyor()
 	const digest = "content-digest-x"
@@ -22,25 +32,19 @@ func TestAI_ContentDigestMutex_SerializesSameDigest(t *testing.T) {
 	mu := c.GetStageDigestMutex(digest)
 	mu.Lock()
 
-	var acquired atomic.Bool
-	done := make(chan struct{})
+	acquired := make(chan struct{})
 	go func() {
 		c.GetStageDigestMutex(digest).Lock()
-		acquired.Store(true)
+		close(acquired)
 		c.GetStageDigestMutex(digest).Unlock()
-		close(done)
 	}()
-
-	time.Sleep(20 * time.Millisecond)
-	require.False(t, acquired.Load(), "second Lock on same digest must block while first is held")
 
 	mu.Unlock()
 	select {
-	case <-done:
+	case <-acquired:
 	case <-time.After(time.Second):
 		t.Fatal("second goroutine did not acquire the digest mutex after release")
 	}
-	require.True(t, acquired.Load())
 }
 
 func TestAI_ContentDigestMutex_DifferentDigestsDoNotContend(t *testing.T) {
