@@ -39,6 +39,11 @@ func InitTelemetry(ctx context.Context) {
 func ShutdownTelemetry(ctx context.Context, exitCode int) {
 	telemetry.GetTelemetryWerfIO().CommandExited(ctx, exitCode)
 
+	telemetry.MetricsEnd(ctx, exitCode)
+	if err := telemetry.MetricsShutdown(ctx); err != nil {
+		telemetry.LogF("unable to shutdown metrics: %s", err)
+	}
+
 	if err := telemetry.Shutdown(ctx); err != nil {
 		telemetry.LogF("unable to shutdown: %s", err)
 	}
@@ -56,7 +61,18 @@ func TelemetryPreRun(cmd *cobra.Command, args []string) error {
 	}
 
 	InitTelemetry(ctx)
+
+	// Initialize OTLP metrics push exporter if enabled via flags
+	if root := cmd.Root(); root != nil {
+		enabled, _ := root.PersistentFlags().GetBool("telemetry-enabled")
+		endpoint, _ := root.PersistentFlags().GetString("telemetry-otlp-endpoint")
+		if err := telemetry.InitMetrics(ctx, enabled, endpoint); err != nil {
+			telemetry.LogF("error: %s", err)
+		}
+	}
+
 	telemetry.GetTelemetryWerfIO().SetCommand(ctx, command)
+	telemetry.MetricsStart(ctx, command)
 
 	var commandOptions []telemetry.CommandOption
 	for _, fs := range []*flag.FlagSet{cmd.Flags(), cmd.PersistentFlags(), cmd.LocalFlags(), cmd.InheritedFlags()} {

@@ -140,6 +140,10 @@ func ConstructRootCmd(ctx context.Context) (*cobra.Command, error) {
 
 	templates.ActsAsRootCommand(rootCmd, *groups...)
 
+	// Global telemetry flags (OTLP metrics push)
+	rootCmd.PersistentFlags().Bool("telemetry-enabled", false, "Enable OTLP metrics exporter (push)")
+	rootCmd.PersistentFlags().String("telemetry-otlp-endpoint", "", "OTLP collector endpoint, e.g., http://collector:4318/v1/metrics")
+
 	return rootCmd, nil
 }
 
