@@ -451,6 +451,7 @@ werf converge --repo registry.mycompany.org/project
 There are a number of additional repositories on top of the main repository:
 
 - `--final-repo` to store the final images in a dedicated repository;
+- `--meta-repo` to store werf service metadata (used for cleanup based on Git history) in a dedicated repository;
 - `--secondary-repo` to use the repository in `read-only` mode (e.g. to use a container registry CI that you cannot push into, but you can reuse the build cache);
 - `--cache-repo` to set the repository containing the build cache alongside the builders.
 
@@ -465,6 +466,18 @@ werf build --repo registry.mycompany.org/project --final-repo final-registry.myc
 ```
 
 Final repositories reduce image retrieval time and network load by bringing the container registry closer to the Kubernetes cluster on which the application is being deployed. Final repositories can also be used in the same container registry as the main repository (`--repo`), if necessary.
+
+### Extra repository for service metadata
+
+By default, werf stores service metadata (image-metadata used for cleanup based on Git history, managed images list, custom-tag metadata, rejected-stage markers, cleanup records) in the main repository (`--repo`) alongside image stages. If necessary, this metadata can be stored in a separate repository via `--meta-repo`:
+
+```shell
+werf build --repo registry.mycompany.org/project --meta-repo registry.mycompany.org/project-meta
+```
+
+Separating metadata from stages is useful when stages and metadata have different lifecycles or access patterns — for example, when the stages repository is shared between projects while metadata must remain isolated, or when metadata should live on a cheaper or more available registry. The `werf cleanup` and `werf purge` commands must be invoked with the same `--meta-repo` value that was used during build.
+
+> **Caution!** There is no automatic migration of existing metadata from the main repository to `--meta-repo`. Enable this flag from the start of a project, or accept that metadata already in the main repository will be regenerated over subsequent builds and cleanups.
 
 ### Extra repository for quick access to the build cache
 
