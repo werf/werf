@@ -123,9 +123,6 @@ werf compose run [IMAGE_NAME...] [options] [--docker-compose-options="OPTIONS"] 
       --disable-auto-host-cleanup=false
             Disable auto host cleanup procedure in main werf commands like werf-build,              
             werf-converge and other (default disabled or WERF_DISABLE_AUTO_HOST_CLEANUP)
-      --docker-compose-bin-path=""
-            DEPRECATED: "docker compose" command always used now, this option is ignored. Define    
-            docker-compose bin path (default $WERF_DOCKER_COMPOSE_BIN_PATH)
       --docker-compose-command-options=""
             Define docker-compose command options (default $WERF_DOCKER_COMPOSE_COMMAND_OPTIONS)
       --docker-compose-options=""
