@@ -86,5 +86,8 @@ var _ = Describe("nativeMutationEligible", func() {
 		Entry("both commandless", image.SpecConfig{
 			Env: []string{"FOO=bar"},
 		}, &v1.ConfigFile{Config: v1.Config{Env: []string{"FOO=bar"}}}, false),
+		Entry("base Entrypoint is a single empty string", image.SpecConfig{
+			Env: []string{"FOO=bar"},
+		}, &v1.ConfigFile{Config: v1.Config{Env: []string{"FOO=bar"}, Entrypoint: []string{""}}}, false),
 	)
 })

@@ -58,7 +58,8 @@ func nativeMutationEligible(newConfig image.SpecConfig, baseConfig *v1.ConfigFil
 
 	// docker create refuses images with no command ("no command specified"), so the native
 	// create+commit path can't handle a config whose effective Cmd and Entrypoint are both empty.
-	if len(newConfig.Cmd) == 0 && len(base.Cmd) == 0 && len(newConfig.Entrypoint) == 0 && len(base.Entrypoint) == 0 {
+	// A slice of only empty strings (e.g. Entrypoint [""]) counts as no command to the daemon.
+	if isEmptyCommand(newConfig.Cmd) && isEmptyCommand(base.Cmd) && isEmptyCommand(newConfig.Entrypoint) && isEmptyCommand(base.Entrypoint) {
 		return false
 	}
 
@@ -77,6 +78,15 @@ func nativeMutationEligible(newConfig image.SpecConfig, baseConfig *v1.ConfigFil
 		return false
 	}
 
+	return true
+}
+
+func isEmptyCommand(cmd []string) bool {
+	for _, c := range cmd {
+		if c != "" {
+			return false
+		}
+	}
 	return true
 }
 
