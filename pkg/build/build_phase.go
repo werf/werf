@@ -124,19 +124,32 @@ func (phase *BuildPhase) BeforeImages(ctx context.Context) error {
 }
 
 func (phase *BuildPhase) CalculateImageContentDigest(ctx context.Context, img *image.Image) error {
-	var stageDeps []string
+	inputs, err := collectHolisticInputs(ctx, img, phase.Conveyor, phase.buildContextArchive)
+	if err != nil {
+		return err
+	}
+	img.SetContentDigest(calculateContentDigest(img.TargetPlatform, inputs))
+	return nil
+}
+
+// collectHolisticInputs iterates image stages in order and returns
+// "<name>:<contentDeps>" entries for every non-empty content dependency.
+// The result feeds calculateDigestOptions.HolisticInputs for the anchor stage;
+// its byte layout MUST match legacy CalculateImageContentDigest so existing
+// content-tag images in registries remain reusable.
+func collectHolisticInputs(ctx context.Context, img *image.Image, conveyor stage.Conveyor, buildContextArchive container_backend.BuildContextArchiver) ([]string, error) {
+	var inputs []string
 	for _, stg := range img.GetStages() {
-		deps, err := stg.GetContentDependencies(ctx, phase.Conveyor, phase.buildContextArchive)
+		deps, err := stg.GetContentDependencies(ctx, conveyor, buildContextArchive)
 		if err != nil {
-			return fmt.Errorf("stage %q GetContentDependencies: %w", stg.Name(), err)
+			return nil, fmt.Errorf("stage %q GetContentDependencies: %w", stg.Name(), err)
 		}
 		if deps == "" {
 			continue
 		}
-		stageDeps = append(stageDeps, fmt.Sprintf("%s:%s", stg.Name(), deps))
+		inputs = append(inputs, fmt.Sprintf("%s:%s", stg.Name(), deps))
 	}
-	img.SetContentDigest(calculateContentDigest(img.TargetPlatform, stageDeps))
-	return nil
+	return inputs, nil
 }
 
 // calculateContentDigest hashes the target platform together with the
@@ -1134,27 +1147,39 @@ func (phase *BuildPhase) fetchBaseImageForStage(ctx context.Context, img *image.
 }
 
 func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, stg stage.Interface) (bool, cleanup.Func, error) {
-	// FIXME(stapel-to-buildah): store StageImage-s everywhere in stage and build pkgs
-	stageDependencies, err := stg.GetDependencies(ctx, phase.Conveyor, phase.Conveyor.ContainerBackend, phase.StagesIterator.GetPrevImage(img, stg), phase.StagesIterator.GetPrevBuiltImage(img, stg), phase.buildContextArchive)
-	if err != nil {
-		return false, nil, err
-	}
-
 	var opts calculateDigestOptions
 	opts.TargetPlatform = img.TargetPlatform
 
-	if img.IsDockerfileImage && img.DockerfileImageConfig.Staged {
-		if !stg.HasPrevStage() {
-			// FIXME: For werf.StagedDockerfileV2, this logic should also be the default.
-			// Currently, to avoid breaking tag reproducibility, this logic is only enabled for multi-stage cases.
-			// Eventually, this behavior should be default for all versions without the extra if condition.
-			if img.IsBasedOnStage() || werf.GetStagedDockerfileVersion() == werf.StagedDockerfileV1 {
-				opts.BaseImage = img.GetBaseImageReference()
+	var stageDependencies string
+	var prevNonEmptyStage stage.Interface
+	if stg.IsContentAnchor() {
+		holisticInputs, err := collectHolisticInputs(ctx, img, phase.Conveyor, phase.buildContextArchive)
+		if err != nil {
+			return false, nil, err
+		}
+		opts.HolisticInputs = holisticInputs
+	} else {
+		// FIXME(stapel-to-buildah): store StageImage-s everywhere in stage and build pkgs
+		deps, err := stg.GetDependencies(ctx, phase.Conveyor, phase.Conveyor.ContainerBackend, phase.StagesIterator.GetPrevImage(img, stg), phase.StagesIterator.GetPrevBuiltImage(img, stg), phase.buildContextArchive)
+		if err != nil {
+			return false, nil, err
+		}
+		stageDependencies = deps
+		prevNonEmptyStage = phase.StagesIterator.PrevNonEmptyStage
+
+		if img.IsDockerfileImage && img.DockerfileImageConfig.Staged {
+			if !stg.HasPrevStage() {
+				// FIXME: For werf.StagedDockerfileV2, this logic should also be the default.
+				// Currently, to avoid breaking tag reproducibility, this logic is only enabled for multi-stage cases.
+				// Eventually, this behavior should be default for all versions without the extra if condition.
+				if img.IsBasedOnStage() || werf.GetStagedDockerfileVersion() == werf.StagedDockerfileV1 {
+					opts.BaseImage = img.GetBaseImageReference()
+				}
 			}
 		}
 	}
 
-	stageDigest, err := calculateDigest(ctx, string(stg.Name()), stageDependencies, phase.StagesIterator.PrevNonEmptyStage, phase.Conveyor, opts)
+	stageDigest, err := calculateDigest(ctx, string(stg.Name()), stageDependencies, prevNonEmptyStage, phase.Conveyor, opts)
 	if err != nil {
 		return false, nil, err
 	}
@@ -1455,9 +1480,30 @@ func introspectStage(ctx context.Context, s stage.Interface) error {
 type calculateDigestOptions struct {
 	TargetPlatform string
 	BaseImage      string // TODO(staged-dockerfile): legacy compatibility field
+	// HolisticInputs, when non-empty, switches calculateDigest to the anchor path:
+	// Sha3_224(TargetPlatform, inputs...). Byte-identical to the legacy
+	// calculateContentDigest so existing registry content-tag images remain reusable.
+	HolisticInputs []string
 }
 
 func calculateDigest(ctx context.Context, stageName, stageDependencies string, prevNonEmptyStage stage.Interface, conveyor *Conveyor, opts calculateDigestOptions) (string, error) {
+	if len(opts.HolisticInputs) > 0 {
+		args := []string{opts.TargetPlatform}
+		for _, s := range opts.HolisticInputs {
+			if s == "" {
+				continue
+			}
+			args = append(args, s)
+		}
+		digest := util.Sha3_224Hash(args...)
+		logboek.Context(ctx).Debug().LogBlock(fmt.Sprintf("Anchor stage %s digest %s", stageName, digest)).Do(func() {
+			for i, a := range args {
+				logboek.Context(ctx).Debug().LogF("holistic[%d] => %q\n", i, a)
+			}
+		})
+		return digest, nil
+	}
+
 	var checksumArgs []string
 	var checksumArgsNames []string
 
