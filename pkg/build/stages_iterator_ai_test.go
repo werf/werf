@@ -9,8 +9,6 @@ import (
 	"github.com/werf/werf/v2/pkg/build/stage"
 )
 
-// hasPrevStub reports HasPrevStage()==true; used to force the code path that
-// touches iterator.PrevNonEmptyStage / iterator.PrevBuiltStage.
 type hasPrevStub struct {
 	*stage.BaseStage
 }

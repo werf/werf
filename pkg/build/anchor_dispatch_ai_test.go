@@ -10,9 +10,6 @@ import (
 	imagePkg "github.com/werf/werf/v2/pkg/image"
 )
 
-// anchorStub is a minimal stage.Interface implementer used to drive the
-// anchor-branch dispatch tests. Only the methods touched by
-// selectSuitableStageDescForStage are non-trivial.
 type anchorStub struct {
 	*stage.BaseStage
 	selectFn func(context.Context, stage.Conveyor, imagePkg.StageDescSet) (*imagePkg.StageDesc, error)
@@ -51,7 +48,7 @@ func TestAI_AnchorSelector_ReturnsLatestTsAtDispatchSite(t *testing.T) {
 }
 
 func TestAI_AnchorSelector_HonoursParentTsToggle(t *testing.T) {
-	phase := &BuildPhase{}
+	phase := &BuildPhase{StagesIterator: NewStagesIterator(nil)}
 
 	anchor := &anchorStub{BaseStage: stage.NewBaseStage(stage.ImageSpec, &stage.BaseStageOptions{})}
 	anchor.SetContentAnchor(true)
@@ -59,8 +56,8 @@ func TestAI_AnchorSelector_HonoursParentTsToggle(t *testing.T) {
 		"anchor stage must resolve with parentStageCreationTs=0")
 
 	nonAnchor := &anchorStub{BaseStage: stage.NewBaseStage(stage.Setup, &stage.BaseStageOptions{})}
-	// StagesIterator is nil here, but the non-anchor branch defers to
-	// phase.getPrevNonEmptyStageCreationTs which panics on nil iterator; the
-	// point of this assertion is only that the anchor branch is guarded.
-	require.True(t, !nonAnchor.IsContentAnchor())
+	// Non-anchor branch defers to phase.getPrevNonEmptyStageCreationTs, which
+	// returns 0 when PrevNonEmptyStage is nil.
+	require.Equal(t, int64(0), phase.getPrevNonEmptyStageCreationTsForStage(nonAnchor),
+		"non-anchor branch resolves through the iterator (nil PrevNonEmptyStage → 0)")
 }

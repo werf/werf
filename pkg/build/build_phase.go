@@ -123,9 +123,6 @@ func (phase *BuildPhase) BeforeImages(ctx context.Context) error {
 	return nil
 }
 
-// collectHolisticInputs iterates image stages in order and returns
-// "<name>:<contentDeps>" entries for every non-empty content dependency.
-// The result feeds calculateDigestOptions.HolisticInputs for the anchor stage.
 func collectHolisticInputs(ctx context.Context, img *image.Image, conveyor stage.Conveyor, buildContextArchive container_backend.BuildContextArchiver) ([]string, error) {
 	var inputs []string
 	for _, stg := range img.GetStages() {
@@ -141,10 +138,6 @@ func collectHolisticInputs(ctx context.Context, img *image.Image, conveyor stage
 	return inputs, nil
 }
 
-// selectStageDescByLatestCreationTs picks the most-recently-created descriptor,
-// tie-broken by StageID.String() (descending). Used at every dispatch site for
-// content-anchor stages: parent-stage-id filtering does not apply because the
-// holistic digest already accounts for every stage's content.
 func selectStageDescByLatestCreationTs(stageDescSet imagePkg.StageDescSet) *imagePkg.StageDesc {
 	if stageDescSet == nil {
 		return nil
@@ -167,10 +160,8 @@ func selectStageDescByLatestCreationTs(stageDescSet imagePkg.StageDescSet) *imag
 	return latestDesc
 }
 
-// selectSuitableStageDescForStage dispatches by stage type. For content-anchor
-// stages the parent-stage-id filter is skipped and the latest-ts descriptor
-// wins uniformly (bypassing per-stage-type SelectSuitableStageDesc overrides
-// in GitStage / UserWithGitPatchStage that would otherwise filter by ancestry).
+// selectSuitableStageDescForStage bypasses per-stage-type overrides
+// (GitStage/UserWithGitPatchStage ancestry filters) for content-anchor stages.
 func (phase *BuildPhase) selectSuitableStageDescForStage(ctx context.Context, stg stage.Interface, stageDescSet imagePkg.StageDescSet) (*imagePkg.StageDesc, error) {
 	if stg.IsContentAnchor() {
 		return selectStageDescByLatestCreationTs(stageDescSet), nil
@@ -178,8 +169,6 @@ func (phase *BuildPhase) selectSuitableStageDescForStage(ctx context.Context, st
 	return phase.Conveyor.StorageManager.SelectSuitableStageDesc(ctx, phase.Conveyor, stg, stageDescSet)
 }
 
-// getPrevNonEmptyStageCreationTsForStage returns 0 for content-anchor stages
-// (parent-ts filter off) and the iterator's prev-non-empty ts otherwise.
 func (phase *BuildPhase) getPrevNonEmptyStageCreationTsForStage(stg stage.Interface) int64 {
 	if stg.IsContentAnchor() {
 		return 0
@@ -706,13 +695,8 @@ func (phase *BuildPhase) OnImageStage(ctx context.Context, img *image.Image, stg
 	})
 }
 
-// composeEmptyAnchorLabels merges the previous built stage's labels with the
-// two werf-required overrides so a mutate+push under the anchor's tag produces
-// an image that is indistinguishable from a built anchor stage for cleanup and
-// reuse. `parentStageID` must be the previous built stage's StageID; the
-// content digest is the anchor's own signature. Both are required — an empty
-// value would break next-run cache reuse (the reuse paths panic on missing
-// WerfStageContentDigestLabel).
+// composeEmptyAnchorLabels panics on empty overrides: an anchor image published
+// without these labels would make every next-run reuse path panic on read.
 func composeEmptyAnchorLabels(prevLabels map[string]string, parentStageID, contentDigest string) map[string]string {
 	if parentStageID == "" {
 		panic("composeEmptyAnchorLabels: parentStageID must not be empty")
@@ -729,13 +713,9 @@ func composeEmptyAnchorLabels(prevLabels map[string]string, parentStageID, conte
 	return labels
 }
 
-// publishEmptyAnchor handles the case where the trailing anchor stage reports
-// IsEmpty=true (for example GitLatestPatchStage with no diff between HEAD and
-// the archive). The anchor is skipped by the shared build path, so nothing
-// under the holistic-digest tag would exist for fromImage/ShouldBeBuiltMode
-// consumers. The helper mutates+pushes the previous built image under the
-// anchor's holistic-digest tag with a post-check under the digest mutex,
-// symmetric to atomicBuildStageImage.
+// publishEmptyAnchor mutates+pushes the previous built image under the anchor's
+// holistic-digest tag for the empty-trailing-stage case (e.g. GitLatestPatch
+// with no diff). Digest-mutex + post-check symmetric to atomicBuildStageImage.
 func (phase *BuildPhase) publishEmptyAnchor(ctx context.Context, img *image.Image, stg stage.Interface) error {
 	mu := phase.Conveyor.GetStageDigestMutex(stg.GetDigest())
 	mu.Lock()
