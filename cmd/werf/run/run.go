@@ -150,7 +150,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupLogOptions(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 
-
 	common.SetupDryRun(&commonCmdData, cmd)
 
 	commonCmdData.SetupPlatform(cmd)

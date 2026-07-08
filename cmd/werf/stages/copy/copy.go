@@ -118,7 +118,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupBuildReportPath(&commonCmdData, cmd)
 	common.SetupUseBuildReport(&commonCmdData, cmd)
 
-
 	common.SetupLogOptions(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 
