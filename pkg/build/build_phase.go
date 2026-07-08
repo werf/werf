@@ -507,10 +507,8 @@ func (phase *BuildPhase) BeforeImageStages(ctx context.Context, img *image.Image
 	}
 
 	if digest := img.GetContentDigest(); digest != "" {
-		// Hold the content-digest mutex from resolve through publish so parallel
-		// doImage goroutines with the same digest do not both push. Released via
-		// deferFn in conveyor.doImage after AfterImageStages (or after the
-		// content-tag short-circuit).
+		// Held across resolve+publish so parallel doImage goroutines with the same
+		// digest do not both push; released via the composed deferFn.
 		phase.Conveyor.GetStageDigestMutex(digest).Lock()
 		prevDeferFn := deferFn
 		deferFn = func() {
@@ -616,10 +614,8 @@ func (phase *BuildPhase) publishContentTagToStorage(ctx context.Context, img *im
 	if os.Getenv("WERF_DISABLE_PUBLISH_TAG_CACHE_SYNC") == "1" {
 		contentTagStageDescSet = imagePkg.NewStageDescSet()
 	} else {
-		// Post-check under the digest mutex acquired in BeforeImageStages catches
-		// a content tag pushed by another werf process while we built our stages;
-		// mirrors atomicBuildStageImage and preserves the pre-Stage-A behavior of
-		// adopting a late-arriving content tag under ShouldBeBuiltMode.
+		// Post-check under the digest mutex; symmetric with atomicBuildStageImage.
+		// WERF_DISABLE_PUBLISH_TAG_CACHE_SYNC=1 skips it.
 		var err error
 		contentTagStageDescSet, err = storageManager.GetStageDescSetByDigest(ctx, img.LogDetailedName(), contentDigest, contentTagNoParentStageFilter)
 		if err != nil {
