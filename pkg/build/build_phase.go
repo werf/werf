@@ -440,7 +440,8 @@ func (phase *BuildPhase) publishMultiplatformImageCustomTags(ctx context.Context
 		return nil
 	}
 
-	primaryStagesStorage := phase.Conveyor.StorageManager.GetStagesStorage()
+	stagesStorage := phase.Conveyor.StorageManager.GetStagesStorage()
+	metaStorage := phase.Conveyor.StorageManager.GetMetaStorage()
 	finalStagesStorage := phase.Conveyor.StorageManager.GetFinalStagesStorage()
 
 	var customTagStorage storage.StagesStorage
@@ -449,7 +450,7 @@ func (phase *BuildPhase) publishMultiplatformImageCustomTags(ctx context.Context
 		customTagStorage = finalStagesStorage
 		customTagStageDesc = manager.ConvertStageDescForStagesStorage(img.GetStageDesc(), finalStagesStorage)
 	} else {
-		customTagStorage = primaryStagesStorage
+		customTagStorage = stagesStorage
 		customTagStageDesc = img.GetStageDesc()
 	}
 
@@ -460,7 +461,7 @@ func (phase *BuildPhase) publishMultiplatformImageCustomTags(ctx context.Context
 		DoError(func() error {
 			for _, tagFunc := range phase.CustomTagFuncList {
 				tag := tagFunc(name, img.GetStageID().String())
-				if err := addCustomImageTag(ctx, phase.Conveyor.ProjectName(), customTagStorage, primaryStagesStorage, customTagStageDesc, tag); err != nil {
+				if err := addCustomImageTag(ctx, phase.Conveyor.ProjectName(), customTagStorage, metaStorage, customTagStageDesc, tag); err != nil {
 					return err
 				}
 			}

@@ -120,3 +120,9 @@ func CustomTagsMetadataList(ctx context.Context) []*storage.CustomTagMetadata {
 func MetaCustomTagsMetadataList(ctx context.Context) []*storage.CustomTagMetadata {
 	return utils.CustomTagsMetadataList(ctx, SuiteData.MetaStorage)
 }
+
+func MetaLastCleanupRecord(ctx context.Context) *storage.CleanupRecord {
+	rec, err := SuiteData.MetaStorage.GetLastCleanupRecord(ctx, SuiteData.ProjectName)
+	Expect(err).ShouldNot(HaveOccurred())
+	return rec
+}

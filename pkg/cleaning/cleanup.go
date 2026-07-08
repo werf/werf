@@ -922,12 +922,21 @@ func deleteRejectedStagesWithLinkedTags(ctx context.Context, storageManager mana
 
 		// 2. Linked custom tags — sequential (avoids parallel-of-parallel registry pressure).
 		// Fail-fast: leave marker untouched on any failure so the next cleanup retries.
+		// Each tag is a two-target op: alias image on stages storage, metadata record on meta storage.
+		metaStorage := storageManager.GetMetaStorage()
 		for _, customTag := range customTagsByStageID[stageIDStr] {
 			if err := stagesStorage.DeleteStageCustomTag(ctx, customTag); err != nil {
 				if err := handleDeletionError(err); err != nil {
 					return err
 				}
 				logboek.Context(ctx).Warn().LogF("WARNING: Custom tag %s linked to rejected stage %s deletion failed: %s; marker kept for retry\n", customTag, stageIDStr, err)
+				return nil
+			}
+			if err := metaStorage.UnregisterStageCustomTag(ctx, customTag); err != nil {
+				if err := handleDeletionError(err); err != nil {
+					return err
+				}
+				logboek.Context(ctx).Warn().LogF("WARNING: Custom tag %s metadata unregister for rejected stage %s failed: %s; marker kept for retry\n", customTag, stageIDStr, err)
 				return nil
 			}
 			logboek.Context(ctx).Default().LogFWithCustomStyle(deletedStyle, "  tag: %s\n", customTag)

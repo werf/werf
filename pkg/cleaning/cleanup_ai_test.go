@@ -22,13 +22,15 @@ type fakePrimaryStagesStorage struct {
 	rejectedStageIDs []image.StageID
 	rejectedErr      error
 
-	deleteImageErrs  map[string]error
-	deleteRecordErrs map[string]error
-	deleteTagErrs    map[string]error
+	deleteImageErrs   map[string]error
+	deleteRecordErrs  map[string]error
+	deleteTagErrs     map[string]error
+	unregisterTagErrs map[string]error
 
-	deletedImages  []image.StageID
-	deletedRecords []image.StageID
-	deletedTags    []string
+	deletedImages    []image.StageID
+	deletedRecords   []image.StageID
+	deletedTags      []string
+	unregisteredTags []string
 }
 
 func (f *fakePrimaryStagesStorage) GetRejectedStageIDs(_ context.Context, _ ...storage.Option) ([]image.StageID, error) {
@@ -56,19 +58,41 @@ func (f *fakePrimaryStagesStorage) DeleteStageCustomTag(_ context.Context, tag s
 	return f.deleteTagErrs[tag]
 }
 
+func (f *fakePrimaryStagesStorage) UnregisterStageCustomTag(_ context.Context, tag string) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.unregisteredTags = append(f.unregisteredTags, tag)
+	return f.unregisterTagErrs[tag]
+}
+
 type fakeStorageManager struct {
 	manager.StorageManagerInterface
 
 	stages *fakePrimaryStagesStorage
+	meta   *fakePrimaryStagesStorage
 }
 
 func newFakeStorageManager() *fakeStorageManager {
+	sm := &fakeStorageManager{
+		stages: newFakePrimaryStagesStorage(),
+	}
+	sm.meta = sm.stages
+	return sm
+}
+
+func newFakeStorageManagerWithSplitStorages() *fakeStorageManager {
 	return &fakeStorageManager{
-		stages: &fakePrimaryStagesStorage{
-			deleteImageErrs:  map[string]error{},
-			deleteRecordErrs: map[string]error{},
-			deleteTagErrs:    map[string]error{},
-		},
+		stages: newFakePrimaryStagesStorage(),
+		meta:   newFakePrimaryStagesStorage(),
+	}
+}
+
+func newFakePrimaryStagesStorage() *fakePrimaryStagesStorage {
+	return &fakePrimaryStagesStorage{
+		deleteImageErrs:   map[string]error{},
+		deleteRecordErrs:  map[string]error{},
+		deleteTagErrs:     map[string]error{},
+		unregisterTagErrs: map[string]error{},
 	}
 }
 
@@ -77,7 +101,7 @@ func (f *fakeStorageManager) GetStagesStorage() storage.PrimaryStagesStorage {
 }
 
 func (f *fakeStorageManager) GetMetaStorage() storage.PrimaryStagesStorage {
-	return f.stages
+	return f.meta
 }
 
 func (f *fakeStorageManager) ForEachRejectedStage(ctx context.Context, stageIDs []image.StageID, cb func(ctx context.Context, stageID image.StageID) error) error {
@@ -191,6 +215,41 @@ func TestAI_deleteRejectedStagesWithLinkedTags_CustomTagFailureKeepsMarker(t *te
 	assert.Equal(t, []image.StageID{*stageID}, sm.stages.deletedImages, "stage image already deleted")
 	assert.Equal(t, []string{"v1.0.0"}, sm.stages.deletedTags, "fail-fast on first custom tag failure; 'latest' not attempted")
 	assert.Empty(t, sm.stages.deletedRecords, "marker MUST remain so next cleanup retries linked tags")
+}
+
+func TestAI_deleteRejectedStagesWithLinkedTags_RoutesUnregisterToMetaStorage(t *testing.T) {
+	digest := "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
+	stageID := image.NewStageID(digest, 1700000000)
+
+	sm := newFakeStorageManagerWithSplitStorages()
+	sm.stages.rejectedStageIDs = []image.StageID{*stageID}
+
+	deleted, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, map[string][]string{stageID.String(): {"v1.0.0", "latest"}}, false)
+	require.NoError(t, err)
+
+	assert.Equal(t, []string{stageID.String()}, deleted)
+	assert.Equal(t, []string{"v1.0.0", "latest"}, sm.stages.deletedTags, "alias custom tags deleted from stages storage")
+	assert.Equal(t, []string{"v1.0.0", "latest"}, sm.meta.unregisteredTags, "custom-tag metadata records unregistered from meta storage")
+	assert.Empty(t, sm.meta.deletedTags, "meta storage MUST NOT receive alias image deletes")
+	assert.Empty(t, sm.stages.unregisteredTags, "stages storage MUST NOT receive metadata unregister calls")
+	assert.Equal(t, []image.StageID{*stageID}, sm.stages.deletedRecords, "marker deleted on stages after both alias and metadata cleanup succeeded")
+}
+
+func TestAI_deleteRejectedStagesWithLinkedTags_UnregisterFailureKeepsMarker(t *testing.T) {
+	digest := "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
+	stageID := image.NewStageID(digest, 1700000000)
+
+	sm := newFakeStorageManagerWithSplitStorages()
+	sm.stages.rejectedStageIDs = []image.StageID{*stageID}
+	sm.meta.unregisterTagErrs["v1.0.0"] = errors.New("temporary network glitch")
+
+	deleted, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, map[string][]string{stageID.String(): {"v1.0.0", "latest"}}, false)
+	require.NoError(t, err)
+
+	assert.Empty(t, deleted, "stage with failed metadata unregister must NOT be reported deleted")
+	assert.Equal(t, []string{"v1.0.0"}, sm.stages.deletedTags, "alias for v1.0.0 already deleted before unregister failed")
+	assert.Equal(t, []string{"v1.0.0"}, sm.meta.unregisteredTags, "fail-fast on first metadata unregister failure; latest not attempted")
+	assert.Empty(t, sm.stages.deletedRecords, "marker MUST remain so next cleanup retries orphan metadata")
 }
 
 func TestAI_deleteRejectedStagesWithLinkedTags_MarkerFailureExcludesFromDeleted(t *testing.T) {
