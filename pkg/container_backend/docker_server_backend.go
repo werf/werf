@@ -441,9 +441,11 @@ func (backend *DockerServerBackend) MutateAndPushImageNative(ctx context.Context
 		WorkingDir:   newConfig.WorkingDir,
 		StopSignal:   newConfig.StopSignal,
 		ExposedPorts: toPortSet(newConfig.ExposedPorts),
-		// Shell is not part of image.SpecConfig and is never mutated by werf; carry over the base
-		// image's value explicitly since docker commit only preserves what's set on containerConfig.
-		Shell: baseConfig.Config.Shell,
+		// Shell and OnBuild are not part of image.SpecConfig and are never mutated by werf; carry
+		// over the base image's values explicitly since docker commit only preserves what's set on
+		// containerConfig, unlike the tarball-based mutation path which starts from the base config.
+		Shell:   baseConfig.Config.Shell,
+		OnBuild: baseConfig.Config.OnBuild,
 	}
 	if newConfig.HealthConfig != nil {
 		containerConfig.Healthcheck = &dockercontainer.HealthConfig{
