@@ -125,9 +125,7 @@ func (phase *BuildPhase) BeforeImages(ctx context.Context) error {
 
 // collectHolisticInputs iterates image stages in order and returns
 // "<name>:<contentDeps>" entries for every non-empty content dependency.
-// The result feeds calculateDigestOptions.HolisticInputs for the anchor stage;
-// its byte layout MUST match the pre-merge content-tag digest so existing
-// content-tag images in registries remain reusable.
+// The result feeds calculateDigestOptions.HolisticInputs for the anchor stage.
 func collectHolisticInputs(ctx context.Context, img *image.Image, conveyor stage.Conveyor, buildContextArchive container_backend.BuildContextArchiver) ([]string, error) {
 	var inputs []string
 	for _, stg := range img.GetStages() {
@@ -984,14 +982,6 @@ func (phase *BuildPhase) findAndFetchStageFromSecondaryStagesStorage(ctx context
 				contentDigest, exist := stageDescCopy.Info.Labels[imagePkg.WerfStageContentDigestLabel]
 				if exist {
 					stg.SetContentDigest(contentDigest)
-				} else if stg.IsContentAnchor() {
-					// Legacy content-tag images do not carry the content-digest label; recompute
-					// like the else-branch of calculateStage's main reuse path.
-					sig, err := calculateDigest(ctx, fmt.Sprintf("%s-content", stg.Name()), "", stg, phase.Conveyor, calculateDigestOptions{TargetPlatform: img.TargetPlatform})
-					if err != nil {
-						return fmt.Errorf("unable to calculate anchor stage %s content digest: %w", stg.Name(), err)
-					}
-					stg.SetContentDigest(sig)
 				} else {
 					panic(fmt.Sprintf("expected stage %q content digest label to be set!", stg.Name()))
 				}
@@ -1137,12 +1127,6 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, s
 		contentDigest, exist := stageDesc.Info.Labels[imagePkg.WerfStageContentDigestLabel]
 		if exist {
 			stageContentSig = contentDigest
-		} else if stg.IsContentAnchor() {
-			// Legacy content-tag images do not carry the label; recompute.
-			stageContentSig, err = calculateDigest(ctx, fmt.Sprintf("%s-content", stg.Name()), "", stg, phase.Conveyor, calculateDigestOptions{TargetPlatform: img.TargetPlatform})
-			if err != nil {
-				return false, phase.Conveyor.GetStageDigestMutex(stg.GetDigest()).Unlock, fmt.Errorf("unable to calculate anchor stage %s content digest: %w", stg.Name(), err)
-			}
 		} else {
 			panic(fmt.Sprintf("expected stage %q content digest label to be set!", stg.Name()))
 		}
@@ -1320,12 +1304,6 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 			contentDigest, exist := stageDesc.Info.Labels[imagePkg.WerfStageContentDigestLabel]
 			if exist {
 				stg.SetContentDigest(contentDigest)
-			} else if stg.IsContentAnchor() {
-				sig, err := calculateDigest(ctx, fmt.Sprintf("%s-content", stg.Name()), "", stg, phase.Conveyor, calculateDigestOptions{TargetPlatform: img.TargetPlatform})
-				if err != nil {
-					return fmt.Errorf("unable to calculate anchor stage %s content digest: %w", stg.Name(), err)
-				}
-				stg.SetContentDigest(sig)
 			} else {
 				panic(fmt.Sprintf("expected stage %q content digest label to be set!", stg.Name()))
 			}
@@ -1414,8 +1392,7 @@ type calculateDigestOptions struct {
 	TargetPlatform string
 	BaseImage      string // TODO(staged-dockerfile): legacy compatibility field
 	// Anchor switches calculateDigest to the anchor path:
-	// Sha3_224(TargetPlatform, HolisticInputs...). Byte-identical to the legacy
-	// content-tag digest so existing registry images remain reusable.
+	// Sha3_224(TargetPlatform, HolisticInputs...).
 	Anchor         bool
 	HolisticInputs []string
 }

@@ -9,8 +9,6 @@ import (
 
 // anchorDigest is a thin wrapper that exercises the anchor branch of
 // calculateDigest: pass HolisticInputs, get the platform-scoped hash.
-// Semantically identical to the pre-merge calculateContentDigest so
-// previously published content-tag images remain reusable byte-for-byte.
 func anchorDigest(targetPlatform string, deps []string) string {
 	d, err := calculateDigest(context.Background(), "anchor", "", nil, nil, calculateDigestOptions{
 		TargetPlatform: targetPlatform,
