@@ -503,7 +503,7 @@ func (phase *BuildPhase) BeforeImageStages(ctx context.Context, img *image.Image
 		return deferFn, nil
 	}
 
-	foundSuitable, unlockFn, err := phase.calculateStage(ctx, img, anchor)
+	foundInPrimary, unlockFn, err := phase.calculateStage(ctx, img, anchor)
 	// Release the digest mutex inline. Holding it would deadlock: if we miss and
 	// middles run, the anchor is re-entered via OnImageStage -> calculateStage,
 	// which re-locks the same digest. The resolve->build race is closed by the
@@ -515,6 +515,7 @@ func (phase *BuildPhase) BeforeImageStages(ctx context.Context, img *image.Image
 		return deferFn, fmt.Errorf("resolve anchor stage: %w", err)
 	}
 
+	foundSuitable := foundInPrimary
 	if !foundSuitable {
 		foundInSecondary, err := phase.findAndFetchStageFromSecondaryStagesStorage(ctx, img, anchor)
 		if err != nil {
@@ -529,8 +530,18 @@ func (phase *BuildPhase) BeforeImageStages(ctx context.Context, img *image.Image
 			return deferFn, fmt.Errorf("anchor stage %q of image %q reused with no stage descriptor", anchor.Name(), img.GetName())
 		}
 		img.SetContentTagDesc(stageDesc)
+		img.AnchorReused = true
 		// conveyor.doImage short-circuits when GetContentTagDesc() != nil, so
 		// intermediate OnImageStage/AfterImageStages calls are skipped entirely.
+
+		if foundInPrimary {
+			var platform string
+			if img.ShouldLogPlatform() {
+				platform = img.TargetPlatform
+			}
+			logboek.Context(ctx).Default().LogFHighlight("Use previously built image for %s\n", anchor.LogDetailedName())
+			container_backend.LogImageInfoByStageDesc(ctx, stageDesc, platform)
+		}
 	}
 
 	return deferFn, nil

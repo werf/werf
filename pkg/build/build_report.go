@@ -53,7 +53,8 @@ type ReportImageRecord struct {
 	Size              int64
 	BuildTime         string
 	Commit            string
-	Stages            []ReportStageRecord
+	Stages            []ReportStageRecord `json:"Stages,omitempty"`
+	StagesReused      bool                `json:"StagesReused,omitempty"`
 }
 
 type ReportStageRecord struct {
@@ -214,7 +215,10 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 
 		for _, img := range images {
 			imageDesc := img.GetContentTagDesc()
-			stages := getStagesReport(img, false)
+			var stages []ReportStageRecord
+			if !img.AnchorReused {
+				stages = getStagesReport(img, false)
+			}
 			configType := determineConfigType(phase.Conveyor.werfConfig, img.Name)
 
 			record := ReportImageRecord{
@@ -231,6 +235,7 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 				BuildTime:         fmt.Sprintf("%.2f", img.BuildDuration.Seconds()),
 				Commit:            imageDesc.Info.Labels[imagePkg.WerfProjectRepoCommitLabel],
 				Stages:            stages,
+				StagesReused:      img.AnchorReused,
 				ConfigType:        configType,
 			}
 
@@ -260,12 +265,18 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 				}
 
 				buildDuration := 0.0
-				stages := []ReportStageRecord{}
+				allAnchorReused := len(img.Images) > 0
 				for _, pImg := range img.Images {
-					for _, stage := range getStagesReport(pImg, true) {
-						stages = append(stages, stage)
+					if !pImg.AnchorReused {
+						allAnchorReused = false
 					}
 					buildDuration += pImg.BuildDuration.Seconds()
+				}
+				var stages []ReportStageRecord
+				if !allAnchorReused {
+					for _, pImg := range img.Images {
+						stages = append(stages, getStagesReport(pImg, true)...)
+					}
 				}
 
 				record := ReportImageRecord{
@@ -282,6 +293,7 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 					BuildTime:         fmt.Sprintf("%.2f", buildDuration),
 					Commit:            stageDesc.Info.Labels[imagePkg.WerfProjectRepoCommitLabel],
 					Stages:            stages,
+					StagesReused:      allAnchorReused,
 				}
 				phase.ImagesReport.SetImageRecord(img.Name, record)
 			}

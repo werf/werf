@@ -107,6 +107,7 @@ type Image struct {
 	StapelImageConfig       config.StapelImageInterface
 	TargetPlatform          string
 	BuildDuration           time.Duration
+	AnchorReused            bool
 
 	stages            []stage.Interface
 	stageDurations    map[stage.StageName]time.Duration
