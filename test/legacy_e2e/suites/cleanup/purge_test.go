@@ -51,6 +51,35 @@ var _ = Describe("purge command", func() {
 					Expect(len(CustomTagsMetadataList(ctx))).Should(Equal(0))
 				}
 			})
+
+			Context("with --meta-repo", func() {
+				BeforeEach(func(ctx SpecContext) {
+					SetupMetaRepo(ctx, implementationName)
+				})
+
+				It("should remove managed-image, image-metadata and custom-tag metadata from meta-repo on purge", func(ctx SpecContext) {
+					utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build", "--add-custom-tag", fmt.Sprintf(customTagValueFormat, "1"))
+
+					Expect(StagesCount(ctx)).Should(BeNumerically(">", 0))
+					Expect(MetaManagedImagesCount(ctx)).Should(BeNumerically(">", 0), "managed-image records land in meta-repo")
+					Expect(ManagedImagesCount(ctx)).Should(Equal(0), "stages-repo MUST NOT contain managed-image records")
+					Expect(len(MetaImageMetadata(ctx, imageName))).Should(BeNumerically(">", 0), "image-metadata records land in meta-repo")
+					Expect(len(ImageMetadata(ctx, imageName))).Should(Equal(0), "stages-repo MUST NOT contain image-metadata records")
+					Expect(len(CustomTags(ctx))).Should(BeNumerically(">", 0), "custom-tag alias images live in stages-repo")
+					Expect(len(MetaCustomTagsMetadataList(ctx))).Should(BeNumerically(">", 0), "custom-tag metadata records land in meta-repo")
+					Expect(len(CustomTagsMetadataList(ctx))).Should(Equal(0), "stages-repo MUST NOT contain custom-tag metadata")
+
+					utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "purge")
+
+					if SuiteData.TestImplementation != docker_registry.QuayImplementationName {
+						Expect(StagesCount(ctx)).Should(Equal(0))
+						Expect(MetaManagedImagesCount(ctx)).Should(Equal(0), "managed-image records purged from meta-repo")
+						Expect(len(MetaImageMetadata(ctx, imageName))).Should(Equal(0), "image-metadata records purged from meta-repo")
+						Expect(len(CustomTags(ctx))).Should(Equal(0), "custom-tag alias images removed from stages-repo")
+						Expect(len(MetaCustomTagsMetadataList(ctx))).Should(Equal(0), "custom-tag metadata records purged from meta-repo")
+					}
+				})
+			})
 		})
 	}
 })
