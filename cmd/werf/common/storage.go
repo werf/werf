@@ -43,11 +43,16 @@ func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfi
 	if c.hostPurge {
 		stagesStorage = GetLocalStagesStorage(c.ContainerBackend)
 	} else {
+		skipMetaCheck := c.SkipMetaCheck
+		if c.CmdData != nil && c.CmdData.MetaRepo != nil && c.CmdData.MetaRepo.Address != nil && *c.CmdData.MetaRepo.Address != "" {
+			skipMetaCheck = true
+		}
+
 		var stgErr error
 		stagesStorage, stgErr = GetStagesStorage(ctx, c.ContainerBackend, c.CmdData, GetStagesStorageOpts{
 			CleanupDisabled:                c.CleanupDisabled,
 			GitHistoryBasedCleanupDisabled: c.GitHistoryBasedCleanupDisabled,
-			SkipMetaCheck:                  c.SkipMetaCheck,
+			SkipMetaCheck:                  skipMetaCheck,
 		})
 		if stgErr != nil {
 			return nil, stgErr
