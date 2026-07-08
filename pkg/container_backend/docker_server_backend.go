@@ -471,9 +471,16 @@ func (backend *DockerServerBackend) MutateAndPushImageNative(ctx context.Context
 		}
 	}()
 
+	// docker commit sets the image author to CommitOptions.Author unconditionally, so an empty
+	// newConfig.Author would wipe the base author. UpdateConfigFile keeps it, so carry it over.
+	author := newConfig.Author
+	if author == "" {
+		author = baseConfig.Author
+	}
+
 	if _, err := docker.ContainerCommit(ctx, containerID, dockercontainer.CommitOptions{
 		Reference: dest,
-		Author:    newConfig.Author,
+		Author:    author,
 		Config:    containerConfig,
 	}); err != nil {
 		return fmt.Errorf("unable to commit mutated container %q as %q: %w", containerID, dest, err)
