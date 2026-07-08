@@ -12,6 +12,7 @@ import (
 	"github.com/samber/lo"
 	"sigs.k8s.io/yaml"
 
+	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/werf"
@@ -87,10 +88,14 @@ func GetServiceValues(ctx context.Context, projectName, repo string, imageInfoGe
 	globalRes := map[string]interface{}{}
 
 	if opts.Env != "" {
-		globalRes["env"] = opts.Env
+		if exposeLegacyValuesGlobalEnv() {
+			globalRes["env"] = opts.Env
+		}
 		werfInfo["env"] = opts.Env
 	} else if opts.IsStub && !opts.DisableEnvStub {
-		globalRes["env"] = ""
+		if exposeLegacyValuesGlobalEnv() {
+			globalRes["env"] = ""
+		}
 		werfInfo["env"] = ""
 	}
 
@@ -125,7 +130,9 @@ func GetBundleServiceValues(ctx context.Context, opts ServiceValuesOptions) (map
 	}
 
 	if opts.Env != "" {
-		globalInfo["env"] = opts.Env
+		if exposeLegacyValuesGlobalEnv() {
+			globalInfo["env"] = opts.Env
+		}
 		werfInfo["env"] = opts.Env
 	}
 
@@ -184,4 +191,8 @@ func writeDockerConfigJsonValue(ctx context.Context, values map[string]interface
 	logboek.Context(ctx).Default().LogF("NOTE: and in such case should not be used as imagePullSecrets.\n")
 
 	return nil
+}
+
+func exposeLegacyValuesGlobalEnv() bool {
+	return util.GetBoolEnvironmentDefaultFalse("WERF_LEGACY_VALUES_GLOBAL_ENV")
 }
