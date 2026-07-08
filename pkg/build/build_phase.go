@@ -175,7 +175,11 @@ func calculateContentDigest(targetPlatform string, stageDeps []string) string {
 // creation timestamp.
 const contentTagNoParentStageFilter int64 = 0
 
-func selectLatestStageDesc(stageDescSet imagePkg.StageDescSet) *imagePkg.StageDesc {
+// selectStageDescByLatestCreationTs picks the most-recently-created descriptor,
+// tie-broken by StageID.String() (descending). Used at every dispatch site for
+// content-anchor stages: parent-stage-id filtering does not apply because the
+// holistic digest already accounts for every stage's content.
+func selectStageDescByLatestCreationTs(stageDescSet imagePkg.StageDescSet) *imagePkg.StageDesc {
 	if stageDescSet == nil {
 		return nil
 	}
@@ -195,6 +199,32 @@ func selectLatestStageDesc(stageDescSet imagePkg.StageDescSet) *imagePkg.StageDe
 		}
 	}
 	return latestDesc
+}
+
+// selectLatestStageDesc is a deprecated alias retained for the legacy
+// content-tag publish path; the merged anchor path uses selectStageDescByLatestCreationTs.
+func selectLatestStageDesc(stageDescSet imagePkg.StageDescSet) *imagePkg.StageDesc {
+	return selectStageDescByLatestCreationTs(stageDescSet)
+}
+
+// selectSuitableStageDescForStage dispatches by stage type. For content-anchor
+// stages the parent-stage-id filter is skipped and the latest-ts descriptor
+// wins uniformly (bypassing per-stage-type SelectSuitableStageDesc overrides
+// in GitStage / UserWithGitPatchStage that would otherwise filter by ancestry).
+func (phase *BuildPhase) selectSuitableStageDescForStage(ctx context.Context, stg stage.Interface, stageDescSet imagePkg.StageDescSet) (*imagePkg.StageDesc, error) {
+	if stg.IsContentAnchor() {
+		return selectStageDescByLatestCreationTs(stageDescSet), nil
+	}
+	return phase.Conveyor.StorageManager.SelectSuitableStageDesc(ctx, phase.Conveyor, stg, stageDescSet)
+}
+
+// getPrevNonEmptyStageCreationTsForStage returns 0 for content-anchor stages
+// (parent-ts filter off) and the iterator's prev-non-empty ts otherwise.
+func (phase *BuildPhase) getPrevNonEmptyStageCreationTsForStage(stg stage.Interface) int64 {
+	if stg.IsContentAnchor() {
+		return 0
+	}
+	return phase.getPrevNonEmptyStageCreationTs()
 }
 
 func (phase *BuildPhase) AfterImages(ctx context.Context) error {
@@ -1072,6 +1102,14 @@ func (phase *BuildPhase) findAndFetchStageFromSecondaryStagesStorage(ctx context
 				contentDigest, exist := stageDescCopy.Info.Labels[imagePkg.WerfStageContentDigestLabel]
 				if exist {
 					stg.SetContentDigest(contentDigest)
+				} else if stg.IsContentAnchor() {
+					// Legacy content-tag images do not carry the content-digest label; recompute
+					// like the else-branch of calculateStage's main reuse path.
+					sig, err := calculateDigest(ctx, fmt.Sprintf("%s-content", stg.Name()), "", stg, phase.Conveyor, calculateDigestOptions{TargetPlatform: img.TargetPlatform})
+					if err != nil {
+						return fmt.Errorf("unable to calculate anchor stage %s content digest: %w", stg.Name(), err)
+					}
+					stg.SetContentDigest(sig)
 				} else {
 					panic(fmt.Sprintf("expected stage %q content digest label to be set!", stg.Name()))
 				}
@@ -1103,11 +1141,11 @@ func (phase *BuildPhase) findAndFetchStageFromSecondaryStagesStorage(ctx context
 
 ScanSecondaryStagesStorageList:
 	for _, secondaryStagesStorage := range storageManager.GetSecondaryStagesStorageList() {
-		secondaryStages, err := storageManager.GetStageDescSetByDigestFromStagesStorageWithCache(ctx, stg.LogDetailedName(), stg.GetDigest(), phase.getPrevNonEmptyStageCreationTs(), secondaryStagesStorage)
+		secondaryStages, err := storageManager.GetStageDescSetByDigestFromStagesStorageWithCache(ctx, stg.LogDetailedName(), stg.GetDigest(), phase.getPrevNonEmptyStageCreationTsForStage(stg), secondaryStagesStorage)
 		if err != nil {
 			return false, err
 		} else {
-			if secondaryStageDesc, err := storageManager.SelectSuitableStageDesc(ctx, phase.Conveyor, stg, secondaryStages); err != nil {
+			if secondaryStageDesc, err := phase.selectSuitableStageDescForStage(ctx, stg, secondaryStages); err != nil {
 				return false, err
 			} else if secondaryStageDesc != nil {
 				if err := atomicCopySuitableStageFromSecondaryStagesStorage(secondaryStageDesc, secondaryStagesStorage); err != nil {
@@ -1194,12 +1232,12 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, s
 		Do(phase.Conveyor.GetStageDigestMutex(stg.GetDigest()).Lock)
 
 	storageManager := phase.Conveyor.StorageManager
-	stageDescSet, err := storageManager.GetStageDescSetByDigestWithCache(ctx, stg.LogDetailedName(), stageDigest, phase.getPrevNonEmptyStageCreationTs())
+	stageDescSet, err := storageManager.GetStageDescSetByDigestWithCache(ctx, stg.LogDetailedName(), stageDigest, phase.getPrevNonEmptyStageCreationTsForStage(stg))
 	if err != nil {
 		return false, phase.Conveyor.GetStageDigestMutex(stg.GetDigest()).Unlock, err
 	}
 
-	stageDesc, err := storageManager.SelectSuitableStageDesc(ctx, phase.Conveyor, stg, stageDescSet)
+	stageDesc, err := phase.selectSuitableStageDescForStage(ctx, stg, stageDescSet)
 	if err != nil {
 		return false, phase.Conveyor.GetStageDigestMutex(stg.GetDigest()).Unlock, err
 	}
@@ -1216,6 +1254,12 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, s
 		contentDigest, exist := stageDesc.Info.Labels[imagePkg.WerfStageContentDigestLabel]
 		if exist {
 			stageContentSig = contentDigest
+		} else if stg.IsContentAnchor() {
+			// Legacy content-tag images do not carry the label; recompute.
+			stageContentSig, err = calculateDigest(ctx, fmt.Sprintf("%s-content", stg.Name()), "", stg, phase.Conveyor, calculateDigestOptions{TargetPlatform: img.TargetPlatform})
+			if err != nil {
+				return false, phase.Conveyor.GetStageDigestMutex(stg.GetDigest()).Unlock, fmt.Errorf("unable to calculate anchor stage %s content digest: %w", stg.Name(), err)
+			}
 		} else {
 			panic(fmt.Sprintf("expected stage %q content digest label to be set!", stg.Name()))
 		}
@@ -1370,11 +1414,11 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 		stageDescSet = imagePkg.NewStageDescSet()
 	} else {
 		var err error
-		stageDescSet, err = phase.Conveyor.StorageManager.GetStageDescSetByDigest(ctx, stg.LogDetailedName(), stg.GetDigest(), phase.getPrevNonEmptyStageCreationTs())
+		stageDescSet, err = phase.Conveyor.StorageManager.GetStageDescSetByDigest(ctx, stg.LogDetailedName(), stg.GetDigest(), phase.getPrevNonEmptyStageCreationTsForStage(stg))
 		if err != nil {
 			return err
 		}
-		stageDesc, err := phase.Conveyor.StorageManager.SelectSuitableStageDesc(ctx, phase.Conveyor, stg, stageDescSet)
+		stageDesc, err := phase.selectSuitableStageDescForStage(ctx, stg, stageDescSet)
 		if err != nil {
 			return err
 		}
@@ -1393,6 +1437,12 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 			contentDigest, exist := stageDesc.Info.Labels[imagePkg.WerfStageContentDigestLabel]
 			if exist {
 				stg.SetContentDigest(contentDigest)
+			} else if stg.IsContentAnchor() {
+				sig, err := calculateDigest(ctx, fmt.Sprintf("%s-content", stg.Name()), "", stg, phase.Conveyor, calculateDigestOptions{TargetPlatform: img.TargetPlatform})
+				if err != nil {
+					return fmt.Errorf("unable to calculate anchor stage %s content digest: %w", stg.Name(), err)
+				}
+				stg.SetContentDigest(sig)
 			} else {
 				panic(fmt.Sprintf("expected stage %q content digest label to be set!", stg.Name()))
 			}
