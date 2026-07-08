@@ -44,17 +44,20 @@ func (w *Worker) Write(p []byte) (int, error) {
 // It reads a file and accumulates total read offset.
 // It resumes reading from "total read offset" and reads until EOF, where EOF is handled with os.File.
 //
-// While the worker is still writing, a trailing incomplete UTF-8 sequence is
-// held back and returned on the next call instead. Without this, a fixed-size
-// read can land its boundary in the middle of a multi-byte rune (e.g. a
-// box-drawing character used for log prefixes), and the downstream logger
-// converts each half independently into a replacement character, producing
-// visible mojibake in the terminal.
+// A trailing incomplete UTF-8 sequence is held back and returned on the next
+// call as long as more bytes are still to come (either the worker is still
+// writing, or half-closed but not yet fully drained). Without this, a
+// fixed-size read can land its boundary in the middle of a multi-byte rune
+// (e.g. a box-drawing character used for log prefixes), and the downstream
+// logger converts each half independently into a replacement character,
+// producing visible mojibake in the terminal.
 func (w *Worker) Read(p []byte) (int, error) {
-	n, err := w.file.ReadAt(p, w.readOffset.Load())
+	readOffset := w.readOffset.Load()
+	n, err := w.file.ReadAt(p, readOffset)
 
-	if !w.halfClosed.Load() {
-		if complete := completeUTF8Len(p[:n]); complete < n {
+	atEnd := w.halfClosed.Load() && readOffset+int64(n) >= w.writeOffset.Load()
+	if !atEnd {
+		if complete := completeUTF8Len(p[:n]); complete > 0 && complete < n {
 			n = complete
 			err = nil
 		}

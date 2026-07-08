@@ -69,6 +69,38 @@ var _ = Describe("Worker.Read UTF-8 boundary safety", func() {
 		Expect(worker.Cleanup()).To(Succeed())
 	})
 
+	It("never splits a multi-byte rune across two reads even when the worker half-closed before printing started", func() {
+		Expect(werf.Init(GinkgoT().TempDir(), "")).To(Succeed())
+
+		worker, err := parallel.NewWorker(3)
+		Expect(err).To(Succeed())
+
+		// Same boundary alignment as the previous test, but this time the
+		// worker is half-closed BEFORE any read happens - matching the
+		// real-world case of a fast task finishing before the printer starts
+		// draining its temp file.
+		line := strings.Repeat("a", 1019) + "│ └ done\n"
+		_, err = worker.Write([]byte(line))
+		Expect(err).To(Succeed())
+		Expect(worker.HalfClose()).To(Succeed())
+
+		out := &runeSplittingWriter{}
+		readBuf := make([]byte, 1024)
+		for worker.Readable() {
+			n, readErr := worker.Read(readBuf)
+			if n > 0 {
+				_, err = out.Write(readBuf[:n])
+				Expect(err).To(Succeed())
+			}
+			Expect(readErr).To(Or(Succeed(), MatchError(io.EOF)))
+		}
+
+		Expect(out.buf.String()).To(Equal(line))
+		Expect(out.buf.String()).NotTo(ContainSubstring("\uFFFD"))
+
+		Expect(worker.Cleanup()).To(Succeed())
+	})
+
 	It("flushes a trailing incomplete rune once the worker is half-closed, without hanging", func() {
 		Expect(werf.Init(GinkgoT().TempDir(), "")).To(Succeed())
 
