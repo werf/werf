@@ -6,6 +6,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
@@ -683,6 +684,9 @@ func (phase *BuildPhase) getLogImageNetwork(img *image.Image) string {
 func (phase *BuildPhase) OnImageStage(ctx context.Context, img *image.Image, stg stage.Interface) error {
 	return phase.StagesIterator.OnImageStage(ctx, img, stg, func(img *image.Image, stg stage.Interface, isEmpty bool) error {
 		if isEmpty {
+			if stg.IsContentAnchor() {
+				return phase.publishEmptyAnchor(ctx, img, stg)
+			}
 			return nil
 		}
 		if err := phase.onImageStage(ctx, img, stg); err != nil {
@@ -693,6 +697,123 @@ func (phase *BuildPhase) OnImageStage(ctx context.Context, img *image.Image, stg
 		}
 		return nil
 	})
+}
+
+// publishEmptyAnchor handles the case where the trailing anchor stage reports
+// IsEmpty=true (for example GitLatestPatchStage with no diff between HEAD and
+// the archive). The anchor is skipped by the shared build path, so nothing
+// under the holistic-digest tag would exist for fromImage/ShouldBeBuiltMode
+// consumers. The helper mutates+pushes the previous built image under the
+// anchor's holistic-digest tag with a post-check under the digest mutex,
+// symmetric to atomicBuildStageImage.
+func (phase *BuildPhase) publishEmptyAnchor(ctx context.Context, img *image.Image, stg stage.Interface) error {
+	mu := phase.Conveyor.GetStageDigestMutex(stg.GetDigest())
+	mu.Lock()
+	defer mu.Unlock()
+
+	storageManager := phase.Conveyor.StorageManager
+
+	var stageDescSet imagePkg.StageDescSet
+	if os.Getenv("WERF_DISABLE_PUBLISH_TAG_CACHE_SYNC") == "1" {
+		stageDescSet = imagePkg.NewStageDescSet()
+	} else {
+		var err error
+		stageDescSet, err = storageManager.GetStageDescSetByDigest(ctx, stg.LogDetailedName(), stg.GetDigest(), phase.getPrevNonEmptyStageCreationTsForStage(stg))
+		if err != nil {
+			return fmt.Errorf("get anchor descriptor set by digest %s: %w", stg.GetDigest(), err)
+		}
+		if desc := selectStageDescByLatestCreationTs(stageDescSet); desc != nil {
+			logboek.Context(ctx).Default().LogFHighlight("Use previously built image for %s\n", stg.LogDetailedName())
+			i := phase.Conveyor.GetOrCreateStageImage(desc.Info.Name, phase.StagesIterator.GetPrevImage(img, stg), stg, img)
+			i.Image.SetStageDesc(desc)
+			stg.SetStageImage(i)
+			img.SetContentTagDesc(desc)
+			var platform string
+			if img.ShouldLogPlatform() {
+				platform = img.TargetPlatform
+			}
+			container_backend.LogImageInfoByStageDesc(ctx, desc, platform)
+			return nil
+		}
+	}
+
+	if phase.ShouldBeBuiltMode {
+		phase.printShouldBeBuiltError(ctx, img, stg)
+		return fmt.Errorf("stages required")
+	}
+
+	prevBuiltStage := phase.StagesIterator.PrevBuiltStage
+	if prevBuiltStage == nil {
+		return fmt.Errorf("no previous built stage for empty anchor %s of image %q", stg.Name(), img.GetName())
+	}
+	prevStageImage := prevBuiltStage.GetStageImage()
+	if prevStageImage == nil || prevStageImage.Image == nil {
+		return fmt.Errorf("previous built stage %s of image %q has no stage image", prevBuiltStage.Name(), img.GetName())
+	}
+	prevStageDesc := prevStageImage.Image.GetStageDesc()
+	if prevStageDesc == nil {
+		return fmt.Errorf("previous built stage %s of image %q has no stage descriptor", prevBuiltStage.Name(), img.GetName())
+	}
+
+	stagesStorage := storageManager.GetStagesStorage()
+	destReference, creationTs := storageManager.GenerateStageDescCreationTs(stg.GetDigest(), stageDescSet)
+	newStageID := imagePkg.NewStageID(stg.GetDigest(), creationTs)
+
+	labels := make(map[string]string, len(prevStageDesc.Info.Labels)+1)
+	for k, v := range prevStageDesc.Info.Labels {
+		labels[k] = v
+	}
+	labels[imagePkg.WerfParentStageID] = prevStageDesc.StageID.String()
+	if sig := stg.GetContentDigest(); sig != "" {
+		labels[imagePkg.WerfStageContentDigestLabel] = sig
+	}
+
+	stageImage := phase.Conveyor.GetOrCreateStageImage(destReference, phase.StagesIterator.GetPrevImage(img, stg), stg, img)
+	stageImage.Image.SetName(destReference)
+	stg.SetStageImage(stageImage)
+
+	var desc *imagePkg.StageDesc
+	if err := logboek.Context(ctx).Default().LogProcess("Publishing empty anchor %s", stg.LogDetailedName()).
+		Options(func(options types.LogProcessOptionsInterface) {
+			options.Style(style.Highlight())
+		}).
+		DoError(func() error {
+			if err := stagesStorage.MutateAndPushImage(ctx, prevStageDesc.Info.Name, destReference, imagePkg.SpecConfig{Created: time.Now().UTC().Format(time.RFC3339), Labels: labels, Env: prevStageDesc.Info.Env}, stageImage.Image); err != nil {
+				return fmt.Errorf("push empty anchor image %s: %w", destReference, err)
+			}
+			gotDesc, err := stagesStorage.GetStageDesc(ctx, phase.Conveyor.ProjectName(), *newStageID)
+			if err != nil {
+				return fmt.Errorf("get anchor descriptor %s: %w", destReference, err)
+			}
+			if gotDesc == nil {
+				return fmt.Errorf("anchor descriptor %s not found after push", destReference)
+			}
+			desc = gotDesc
+			var platform string
+			if img.ShouldLogPlatform() {
+				platform = img.TargetPlatform
+			}
+			container_backend.LogImageInfoByStageDesc(ctx, desc, platform)
+			return nil
+		}); err != nil {
+		return err
+	}
+
+	stageImage.Image.SetStageDesc(desc)
+	img.SetContentTagDesc(desc)
+
+	if err := storageManager.CopyStageIntoCacheStorages(
+		ctx, *newStageID,
+		storageManager.GetCacheStagesStorageList(),
+		manager.CopyStageIntoStorageOptions{
+			ContainerBackend: phase.Conveyor.ContainerBackend,
+			LogDetailedName:  stg.LogDetailedName(),
+		},
+	); err != nil {
+		return fmt.Errorf("unable to copy anchor %s into cache storages: %w", newStageID.String(), err)
+	}
+
+	return nil
 }
 
 func (phase *BuildPhase) onImageStage(ctx context.Context, img *image.Image, stg stage.Interface) error {
@@ -956,6 +1077,7 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, s
 		if err != nil {
 			return false, nil, err
 		}
+		opts.Anchor = true
 		opts.HolisticInputs = holisticInputs
 	} else {
 		// FIXME(stapel-to-buildah): store StageImage-s everywhere in stage and build pkgs
@@ -1291,14 +1413,15 @@ func introspectStage(ctx context.Context, s stage.Interface) error {
 type calculateDigestOptions struct {
 	TargetPlatform string
 	BaseImage      string // TODO(staged-dockerfile): legacy compatibility field
-	// HolisticInputs, when non-empty, switches calculateDigest to the anchor path:
-	// Sha3_224(TargetPlatform, inputs...). Byte-identical to the legacy
-	// calculateContentDigest so existing registry content-tag images remain reusable.
+	// Anchor switches calculateDigest to the anchor path:
+	// Sha3_224(TargetPlatform, HolisticInputs...). Byte-identical to the legacy
+	// content-tag digest so existing registry images remain reusable.
+	Anchor         bool
 	HolisticInputs []string
 }
 
 func calculateDigest(ctx context.Context, stageName, stageDependencies string, prevNonEmptyStage stage.Interface, conveyor *Conveyor, opts calculateDigestOptions) (string, error) {
-	if len(opts.HolisticInputs) > 0 {
+	if opts.Anchor {
 		args := []string{opts.TargetPlatform}
 		for _, s := range opts.HolisticInputs {
 			if s == "" {

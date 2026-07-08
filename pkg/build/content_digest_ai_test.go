@@ -14,6 +14,7 @@ import (
 func anchorDigest(targetPlatform string, deps []string) string {
 	d, err := calculateDigest(context.Background(), "anchor", "", nil, nil, calculateDigestOptions{
 		TargetPlatform: targetPlatform,
+		Anchor:         true,
 		HolisticInputs: deps,
 	})
 	if err != nil {
@@ -64,5 +65,16 @@ var _ = Describe("anchor holistic digest", func() {
 		deps := []string{"from-digest", "git-archive-digest"}
 		Expect(anchorDigest("linux/amd64", deps)).
 			NotTo(Equal(anchorDigest("linux/arm64", deps)))
+	})
+
+	It("anchor path is engaged even when every input is empty", func() {
+		nonAnchor, err := calculateDigest(context.Background(), "anchor", "", nil, nil, calculateDigestOptions{TargetPlatform: targetPlatform})
+		Expect(err).NotTo(HaveOccurred())
+
+		Expect(anchorDigest(targetPlatform, nil)).NotTo(Equal(nonAnchor),
+			"anchor digest with no inputs must not silently fall back to the chain-based digest formula")
+		Expect(anchorDigest(targetPlatform, nil)).
+			To(Equal(anchorDigest(targetPlatform, []string{"", ""})),
+				"anchor digest ignores empty inputs regardless of count")
 	})
 })
