@@ -525,6 +525,15 @@ func (phase *BuildPhase) BeforeImageStages(ctx context.Context, img *image.Image
 	if err != nil {
 		return deferFn, fmt.Errorf("resolve anchor stage: %w", err)
 	}
+
+	if !foundSuitable {
+		foundInSecondary, err := phase.findAndFetchStageFromSecondaryStagesStorage(ctx, img, anchor)
+		if err != nil {
+			return deferFn, fmt.Errorf("resolve anchor from secondary stages storage: %w", err)
+		}
+		foundSuitable = foundInSecondary
+	}
+
 	if foundSuitable {
 		stageDesc := anchor.GetStageImage().Image.GetStageDesc()
 		if stageDesc == nil {
@@ -735,6 +744,15 @@ func (phase *BuildPhase) publishEmptyAnchor(ctx context.Context, img *image.Imag
 		}
 	}
 
+	foundInSecondary, err := phase.findAndFetchStageFromSecondaryStagesStorage(ctx, img, stg)
+	if err != nil {
+		return fmt.Errorf("resolve empty anchor from secondary stages storage: %w", err)
+	}
+	if foundInSecondary {
+		img.SetContentTagDesc(stg.GetStageImage().Image.GetStageDesc())
+		return nil
+	}
+
 	if phase.ShouldBeBuiltMode {
 		phase.printShouldBeBuiltError(ctx, img, stg)
 		return fmt.Errorf("stages required")
@@ -757,17 +775,14 @@ func (phase *BuildPhase) publishEmptyAnchor(ctx context.Context, img *image.Imag
 	destReference, creationTs := storageManager.GenerateStageDescCreationTs(stg.GetDigest(), stageDescSet)
 	newStageID := imagePkg.NewStageID(stg.GetDigest(), creationTs)
 
-	labels := make(map[string]string, len(prevStageDesc.Info.Labels)+1)
+	labels := make(map[string]string, len(prevStageDesc.Info.Labels)+2)
 	for k, v := range prevStageDesc.Info.Labels {
 		labels[k] = v
 	}
 	labels[imagePkg.WerfParentStageID] = prevStageDesc.StageID.String()
-	if sig := stg.GetContentDigest(); sig != "" {
-		labels[imagePkg.WerfStageContentDigestLabel] = sig
-	}
+	labels[imagePkg.WerfStageContentDigestLabel] = stg.GetContentDigest()
 
 	stageImage := phase.Conveyor.GetOrCreateStageImage(destReference, phase.StagesIterator.GetPrevImage(img, stg), stg, img)
-	stageImage.Image.SetName(destReference)
 	stg.SetStageImage(stageImage)
 
 	var desc *imagePkg.StageDesc
