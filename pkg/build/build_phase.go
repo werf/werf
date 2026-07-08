@@ -706,6 +706,29 @@ func (phase *BuildPhase) OnImageStage(ctx context.Context, img *image.Image, stg
 	})
 }
 
+// composeEmptyAnchorLabels merges the previous built stage's labels with the
+// two werf-required overrides so a mutate+push under the anchor's tag produces
+// an image that is indistinguishable from a built anchor stage for cleanup and
+// reuse. `parentStageID` must be the previous built stage's StageID; the
+// content digest is the anchor's own signature. Both are required — an empty
+// value would break next-run cache reuse (the reuse paths panic on missing
+// WerfStageContentDigestLabel).
+func composeEmptyAnchorLabels(prevLabels map[string]string, parentStageID, contentDigest string) map[string]string {
+	if parentStageID == "" {
+		panic("composeEmptyAnchorLabels: parentStageID must not be empty")
+	}
+	if contentDigest == "" {
+		panic("composeEmptyAnchorLabels: contentDigest must not be empty")
+	}
+	labels := make(map[string]string, len(prevLabels)+2)
+	for k, v := range prevLabels {
+		labels[k] = v
+	}
+	labels[imagePkg.WerfParentStageID] = parentStageID
+	labels[imagePkg.WerfStageContentDigestLabel] = contentDigest
+	return labels
+}
+
 // publishEmptyAnchor handles the case where the trailing anchor stage reports
 // IsEmpty=true (for example GitLatestPatchStage with no diff between HEAD and
 // the archive). The anchor is skipped by the shared build path, so nothing
@@ -775,12 +798,7 @@ func (phase *BuildPhase) publishEmptyAnchor(ctx context.Context, img *image.Imag
 	destReference, creationTs := storageManager.GenerateStageDescCreationTs(stg.GetDigest(), stageDescSet)
 	newStageID := imagePkg.NewStageID(stg.GetDigest(), creationTs)
 
-	labels := make(map[string]string, len(prevStageDesc.Info.Labels)+2)
-	for k, v := range prevStageDesc.Info.Labels {
-		labels[k] = v
-	}
-	labels[imagePkg.WerfParentStageID] = prevStageDesc.StageID.String()
-	labels[imagePkg.WerfStageContentDigestLabel] = stg.GetContentDigest()
+	labels := composeEmptyAnchorLabels(prevStageDesc.Info.Labels, prevStageDesc.StageID.String(), stg.GetContentDigest())
 
 	stageImage := phase.Conveyor.GetOrCreateStageImage(destReference, phase.StagesIterator.GetPrevImage(img, stg), stg, img)
 	stg.SetStageImage(stageImage)
