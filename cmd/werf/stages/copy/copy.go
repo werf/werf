@@ -103,6 +103,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupSecondaryStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupFinalRepo(&commonCmdData, cmd)
+	common.SetupMetaRepo(&commonCmdData, cmd)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified repos")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
@@ -116,7 +117,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupSaveBuildReport(&commonCmdData, cmd)
 	common.SetupBuildReportPath(&commonCmdData, cmd)
 	common.SetupUseBuildReport(&commonCmdData, cmd)
-
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)

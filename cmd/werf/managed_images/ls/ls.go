@@ -51,6 +51,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{})
 	common.SetupFinalRepo(&commonCmdData, cmd)
+	common.SetupMetaRepo(&commonCmdData, cmd)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read images from the specified repo")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
@@ -59,7 +60,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
-
 
 	commonCmdData.SetupPlatform(cmd)
 	commonCmdData.SetupDebugTemplates(cmd)
@@ -130,7 +130,7 @@ func run(ctx context.Context) error {
 		return fmt.Errorf("unable to init storage manager: %w", err)
 	}
 
-	if images, err := storageManager.StagesStorage.GetManagedImages(ctx, projectName); err != nil {
+	if images, err := storageManager.GetMetaStorage().GetManagedImages(ctx, projectName); err != nil {
 		return fmt.Errorf("unable to list known config image names for project %q: %w", projectName, err)
 	} else {
 		for _, imgName := range images {

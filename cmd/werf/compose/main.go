@@ -299,6 +299,7 @@ func newCmd(ctx context.Context, composeCmdName string, options *newCmdOptions) 
 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{OptionalRepo: true})
 	common.SetupFinalRepo(&commonCmdData, cmd)
+	common.SetupMetaRepo(&commonCmdData, cmd)
 
 	common.SetupRequireBuiltImages(&commonCmdData, cmd)
 

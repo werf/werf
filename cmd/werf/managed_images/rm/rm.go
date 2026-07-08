@@ -55,6 +55,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{})
 	common.SetupFinalRepo(&commonCmdData, cmd)
+	common.SetupMetaRepo(&commonCmdData, cmd)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read and write images to the specified repo")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
@@ -63,7 +64,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
-
 
 	commonCmdData.SetupPlatform(cmd)
 	commonCmdData.SetupDebugTemplates(cmd)
@@ -136,7 +136,7 @@ func run(ctx context.Context, imageNames []string) error {
 
 	errs := []error{}
 	for _, imageName := range imageNames {
-		if err := storageManager.StagesStorage.RmManagedImage(ctx, projectName, common.GetManagedImageName(imageName)); err != nil {
+		if err := storageManager.GetMetaStorage().RmManagedImage(ctx, projectName, common.GetManagedImageName(imageName)); err != nil {
 			errs = append(errs, fmt.Errorf("unable to remove known config image name %q of project %q: %w", imageName, projectName, err))
 		}
 	}

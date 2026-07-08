@@ -238,6 +238,8 @@ werf dismiss [options]
             Enable verbose output (default $WERF_LOG_VERBOSE).
       --loose-giterminism=false
             Loose werf giterminism mode restrictions
+      --meta-repo=""
+            Container registry storage address (default $WERF_META_REPO)
       --namespace=""
             Use specified Kubernetes namespace (default [[ project ]]-[[ env ]] template or         
             deploy.namespace custom template from werf.yaml or $WERF_NAMESPACE)

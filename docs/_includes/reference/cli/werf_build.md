@@ -206,6 +206,8 @@ werf build [IMAGE_NAME...] [options]
             Enable verbose output (default $WERF_LOG_VERBOSE).
       --loose-giterminism=false
             Loose werf giterminism mode restrictions
+      --meta-repo=""
+            Container registry storage address (default $WERF_META_REPO)
   -p, --parallel=true
             Run in parallel (default $WERF_PARALLEL or true)
       --parallel-tasks-limit=5

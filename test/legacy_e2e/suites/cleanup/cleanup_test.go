@@ -409,6 +409,57 @@ var _ = Describe("cleanup command", func() {
 						Expect(len(CustomTagsMetadataList(ctx))).Should(Equal(1))
 					})
 				})
+
+				Context("with --meta-repo", func() {
+					BeforeEach(func(ctx SpecContext) {
+						SetupMetaRepo(ctx, implementationName)
+					})
+
+					It("should route managed-image, image-metadata and custom-tag metadata to meta-repo and delete them from meta-repo on cleanup", func(ctx SpecContext) {
+						customTag1 := "tag1"
+						customTag2 := "tag2"
+
+						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build", "--add-custom-tag", fmt.Sprintf(customTagValueFormat, customTag1))
+
+						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "push", "--set-upstream", "origin", branchName)
+
+						Expect(MetaManagedImagesCount(ctx)).Should(BeNumerically(">", 0), "managed-image records live in meta-repo")
+						Expect(ManagedImagesCount(ctx)).Should(Equal(0), "managed-image records MUST NOT be written to stages-repo")
+						Expect(MetaImageMetadata(ctx, imageName)).ShouldNot(BeEmpty(), "image-metadata records live in meta-repo")
+						Expect(ImageMetadata(ctx, imageName)).Should(BeEmpty(), "image-metadata records MUST NOT be written to stages-repo")
+						Expect(len(MetaCustomTagsMetadataList(ctx))).Should(Equal(1), "custom-tag metadata records live in meta-repo")
+						Expect(len(CustomTagsMetadataList(ctx))).Should(Equal(0), "custom-tag metadata MUST NOT be written to stages-repo")
+						Expect(CustomTags(ctx)).Should(ContainElement(fmt.Sprintf(customTagValueFormat, customTag1)), "custom-tag alias image stays in stages-repo")
+
+						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "commit", "--allow-empty", "-m", "test")
+
+						SuiteData.Stubs.SetEnv("FROM_CACHE_VERSION", "REBUILD")
+
+						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build", "--add-custom-tag", fmt.Sprintf(customTagValueFormat, customTag2))
+
+						Expect(len(MetaCustomTagsMetadataList(ctx))).Should(Equal(2))
+
+						metaImageMetadataBeforeCleanup := MetaImageMetadata(ctx, imageName)
+						Expect(len(metaImageMetadataBeforeCleanup)).Should(BeNumerically(">=", 2), "image-metadata for both built stageIDs present in meta-repo before cleanup")
+
+						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "cleanup")
+
+						customTags := CustomTags(ctx)
+						Expect(customTags).Should(ContainElement(fmt.Sprintf(customTagValueFormat, customTag1)))
+						Expect(customTags).ShouldNot(ContainElement(fmt.Sprintf(customTagValueFormat, customTag2)), "stale custom-tag alias deleted from stages-repo")
+						Expect(len(MetaCustomTagsMetadataList(ctx))).Should(Equal(1), "stale custom-tag metadata deleted from meta-repo")
+						Expect(len(CustomTagsMetadataList(ctx))).Should(Equal(0), "stages-repo still holds no metadata records")
+						Expect(MetaLastCleanupRecord(ctx)).ShouldNot(BeNil(), "last-cleanup record written to meta-repo")
+						Expect(MetaManagedImagesCount(ctx)).Should(BeNumerically(">", 0), "active managed-image records remain in meta-repo after cleanup")
+						Expect(ManagedImagesCount(ctx)).Should(Equal(0), "managed-image records still not in stages-repo")
+						if SuiteData.TestImplementation != docker_registry.QuayImplementationName {
+							metaImageMetadataAfterCleanup := MetaImageMetadata(ctx, imageName)
+							Expect(len(metaImageMetadataAfterCleanup)).Should(BeNumerically("<", len(metaImageMetadataBeforeCleanup)), "cleanup MUST delete stale image-metadata records from meta-repo")
+							Expect(len(metaImageMetadataAfterCleanup)).Should(BeNumerically(">=", 1), "image-metadata for the active stageID MUST remain in meta-repo")
+						}
+						Expect(len(ImageMetadata(ctx, imageName))).Should(Equal(0), "image-metadata still not in stages-repo")
+					})
+				})
 			})
 		})
 	}
