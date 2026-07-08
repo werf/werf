@@ -10,11 +10,14 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/containerd/containerd/platforms"
 	dockercontainer "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 	dockerImage "github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
+	"github.com/docker/go-connections/nat"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
+	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/lockgate"
@@ -26,7 +29,10 @@ import (
 	"github.com/werf/werf/v2/pkg/ssh_agent"
 )
 
-var _ ImageConfigFileGetter = (*DockerServerBackend)(nil)
+var (
+	_ ImageConfigFileGetter = (*DockerServerBackend)(nil)
+	_ NativeConfigMutator   = (*DockerServerBackend)(nil)
+)
 
 type DockerServerBackend struct {
 	locker lockgate.Locker
@@ -406,6 +412,97 @@ func (backend *DockerServerBackend) PruneVolumes(ctx context.Context, options pr
 
 func (backend *DockerServerBackend) SaveImageToStream(ctx context.Context, imageName string) (io.ReadCloser, error) {
 	return docker.CliImageSaveToStream(ctx, imageName)
+}
+
+// MutateAndPushImageNative mutates src's config into dest via a native docker create+commit,
+// avoiding the docker save/load roundtrip. docker commit merges the given config additively over
+// the base image config (re-adding omitted labels/env/volumes, stamping created=now, appending
+// history) and cannot clear fields. It is therefore used only when newConfig is a pure additive
+// superset of the base config (see nativeMutationEligible); otherwise this returns
+// errNativeMutationUnsupported and the caller falls back to the save/load path.
+func (backend *DockerServerBackend) MutateAndPushImageNative(ctx context.Context, src, dest string, newConfig image.SpecConfig, targetPlatform string) error {
+	baseConfig, err := backend.GetImageConfigFile(ctx, src)
+	if err != nil {
+		return fmt.Errorf("unable to get config of image %q: %w", src, err)
+	}
+
+	if !nativeMutationEligible(newConfig, baseConfig) {
+		return ErrNativeMutationUnsupported
+	}
+
+	containerConfig := &dockercontainer.Config{
+		Image:        src,
+		User:         newConfig.User,
+		Env:          newConfig.Env,
+		Entrypoint:   newConfig.Entrypoint,
+		Cmd:          newConfig.Cmd,
+		Labels:       newConfig.Labels,
+		Volumes:      newConfig.Volumes,
+		WorkingDir:   newConfig.WorkingDir,
+		StopSignal:   newConfig.StopSignal,
+		ExposedPorts: toPortSet(newConfig.ExposedPorts),
+		// Shell and OnBuild are not part of image.SpecConfig and are never mutated by werf; carry
+		// over the base image's values explicitly since docker commit only preserves what's set on
+		// containerConfig, unlike the tarball-based mutation path which starts from the base config.
+		Shell:   baseConfig.Config.Shell,
+		OnBuild: baseConfig.Config.OnBuild,
+	}
+	if newConfig.HealthConfig != nil {
+		containerConfig.Healthcheck = &dockercontainer.HealthConfig{
+			Test:        newConfig.HealthConfig.Test,
+			Interval:    newConfig.HealthConfig.Interval,
+			Timeout:     newConfig.HealthConfig.Timeout,
+			StartPeriod: newConfig.HealthConfig.StartPeriod,
+			Retries:     newConfig.HealthConfig.Retries,
+		}
+	}
+
+	var platform *ocispec.Platform
+	if targetPlatform != "" {
+		parsed, err := platforms.Parse(targetPlatform)
+		if err != nil {
+			return fmt.Errorf("unable to parse platform %q: %w", targetPlatform, err)
+		}
+		platform = &parsed
+	}
+
+	containerID, err := docker.ContainerCreate(ctx, containerConfig, platform, "")
+	if err != nil {
+		return fmt.Errorf("unable to create container from image %q: %w", src, err)
+	}
+	defer func() {
+		if err := docker.ContainerRemove(ctx, containerID, dockercontainer.RemoveOptions{Force: true}); err != nil {
+			logboek.Context(ctx).Error().LogF("ERROR: unable to remove temporary mutation container %q: %s\n", containerID, err)
+		}
+	}()
+
+	// docker commit sets the image author to CommitOptions.Author unconditionally, so an empty
+	// newConfig.Author would wipe the base author. UpdateConfigFile keeps it, so carry it over.
+	author := newConfig.Author
+	if author == "" {
+		author = baseConfig.Author
+	}
+
+	if _, err := docker.ContainerCommit(ctx, containerID, dockercontainer.CommitOptions{
+		Reference: dest,
+		Author:    author,
+		Config:    containerConfig,
+	}); err != nil {
+		return fmt.Errorf("unable to commit mutated container %q as %q: %w", containerID, dest, err)
+	}
+
+	return nil
+}
+
+func toPortSet(ports map[string]struct{}) nat.PortSet {
+	if len(ports) == 0 {
+		return nil
+	}
+	set := make(nat.PortSet, len(ports))
+	for port := range ports {
+		set[nat.Port(port)] = struct{}{}
+	}
+	return set
 }
 
 func (backend *DockerServerBackend) GetImageConfigFile(ctx context.Context, imageName string) (*v1.ConfigFile, error) {

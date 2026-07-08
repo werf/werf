@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
@@ -1158,6 +1159,47 @@ func (backend *BuildahBackend) Containers(ctx context.Context, opts ContainersOp
 
 func (backend *BuildahBackend) Rm(ctx context.Context, name string, opts RmOpts) error {
 	return backend.buildah.Rm(ctx, name, buildah.RmOpts{})
+}
+
+// MutateAndPushImageNative applies newConfig to src via a native buildah build+commit
+// (create container from src, mutate its config, commit to dest), without the
+// save-to-tar/load-from-tar roundtrip used by MutateAndPushImage. It implements the
+// NativeConfigMutator interface used by storage.LocalStagesStorage.
+func (backend *BuildahBackend) MutateAndPushImageNative(ctx context.Context, src, dest string, newConfig image.SpecConfig, targetPlatform string) error {
+	containerID := uuid.New().String()
+
+	if _, err := backend.buildah.FromCommand(ctx, containerID, src, buildah.FromCommandOpts(backend.getBuildahCommonOpts(ctx, true, nil, targetPlatform))); err != nil {
+		return fmt.Errorf("unable to create container from image %q: %w", src, err)
+	}
+	defer func() {
+		if err := backend.buildah.Rm(ctx, containerID, buildah.RmOpts{}); err != nil {
+			logboek.Context(ctx).Error().LogF("ERROR: unable to remove temporary mutation container %q: %s\n", containerID, err)
+		}
+	}()
+
+	if err := backend.buildah.MutateConfig(ctx, containerID, newConfig, backend.getBuildahCommonOpts(ctx, true, nil, targetPlatform)); err != nil {
+		return fmt.Errorf("unable to mutate config for container %q: %w", containerID, err)
+	}
+
+	var created *time.Time
+	if newConfig.Created != "" {
+		parsed, err := time.Parse(time.RFC3339, newConfig.Created)
+		if err != nil {
+			return fmt.Errorf("unable to parse created timestamp %q: %w", newConfig.Created, err)
+		}
+		created = &parsed
+	}
+
+	if _, err := backend.buildah.CommitMutation(ctx, containerID, buildah.CommitOpts{
+		CommonOpts:   backend.getBuildahCommonOpts(ctx, true, nil, targetPlatform),
+		Image:        dest,
+		ClearHistory: newConfig.ClearHistory,
+		Created:      created,
+	}); err != nil {
+		return fmt.Errorf("unable to commit mutated container %q as %q: %w", containerID, dest, err)
+	}
+
+	return nil
 }
 
 func (backend *BuildahBackend) PostManifest(ctx context.Context, ref string, opts PostManifestOpts) error {
