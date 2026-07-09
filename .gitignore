@@ -54,3 +54,5 @@ buildah-test
 
 /.sisyphus
 /.opencode
+/.pi
+/.pp
