@@ -692,10 +692,8 @@ func (phase *BuildPhase) onImageStage(ctx context.Context, img *image.Image, stg
 	}
 
 	if img.IsDockerfileImage && img.DockerfileImageConfig.Staged {
-		if werf.GetStagedDockerfileVersion() == werf.StagedDockerfileV2 {
-			if err := stg.ExpandDependencies(ctx, phase.Conveyor, img.GetStagedDockerfileBaseEnv()); err != nil {
-				return err
-			}
+		if err := stg.ExpandDependencies(ctx, phase.Conveyor, img.GetStagedDockerfileBaseEnv()); err != nil {
+			return err
 		}
 	}
 
@@ -811,10 +809,8 @@ func (phase *BuildPhase) afterImageStage(ctx context.Context, img *image.Image, 
 	// TODO(staged-dockerfile):  proxying ONBUILD instruction to chain of arbitrary instructions.
 
 	if img.IsDockerfileImage && img.DockerfileImageConfig.Staged {
-		if werf.GetStagedDockerfileVersion() == werf.StagedDockerfileV2 {
-			if _, isFromStage := stg.(*instruction.From); isFromStage {
-				img.SetStagedDockerfileBaseEnv(image.EnvToMap(stg.GetStageImage().Image.GetStageDesc().Info.Env))
-			}
+		if _, isFromStage := stg.(*instruction.From); isFromStage {
+			img.SetStagedDockerfileBaseEnv(image.EnvToMap(stg.GetStageImage().Image.GetStageDesc().Info.Env))
 		}
 	}
 
@@ -940,12 +936,7 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, s
 
 		if img.IsDockerfileImage && img.DockerfileImageConfig.Staged {
 			if !stg.HasPrevStage() {
-				// FIXME: For werf.StagedDockerfileV2, this logic should also be the default.
-				// Currently, to avoid breaking tag reproducibility, this logic is only enabled for multi-stage cases.
-				// Eventually, this behavior should be default for all versions without the extra if condition.
-				if img.IsBasedOnStage() || werf.GetStagedDockerfileVersion() == werf.StagedDockerfileV1 {
-					opts.BaseImage = img.GetBaseImageReference()
-				}
+				opts.BaseImage = img.GetBaseImageReference()
 			}
 		}
 	}
@@ -1267,7 +1258,7 @@ func introspectStage(ctx context.Context, s stage.Interface) error {
 
 type calculateDigestOptions struct {
 	TargetPlatform string
-	BaseImage      string // TODO(staged-dockerfile): legacy compatibility field
+	BaseImage      string
 	// Anchor switches calculateDigest to the anchor path:
 	// Sha3_224(TargetPlatform, HolisticInputs...).
 	Anchor         bool
@@ -1295,8 +1286,7 @@ func calculateDigest(ctx context.Context, stageName, stageDependencies string, p
 	var checksumArgs []string
 	var checksumArgsNames []string
 
-	// TODO: linux/amd64 not affects digest for compatibility with currently built stages.
-	if opts.TargetPlatform != "" && opts.TargetPlatform != "linux/amd64" {
+	if opts.TargetPlatform != "" {
 		checksumArgs = append(checksumArgs, opts.TargetPlatform)
 		checksumArgsNames = append(checksumArgsNames, "TargetPlatform")
 	}
