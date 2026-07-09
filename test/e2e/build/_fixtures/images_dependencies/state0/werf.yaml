@@ -13,7 +13,7 @@ shell:
 image: stapel
 from: registry.werf.io/base/alpine:latest
 dependencies:
-  - image: base-stapel
+  - from: base-stapel
     after: install
     imports:
       - type: ImageName
@@ -22,7 +22,7 @@ dependencies:
         targetEnv: BASE_STAPEL_IMAGE_REPO
       - type: ImageTag
         targetEnv: BASE_STAPEL_IMAGE_TAG
-  - image: base-dockerfile
+  - from: base-dockerfile
     after: install
     imports:
       - type: ImageName
@@ -56,7 +56,7 @@ shell:
 image: dockerfile
 dockerfile: ./Dockerfile
 dependencies:
-  - image: base-stapel
+  - from: base-stapel
     imports:
       - type: ImageName
         targetBuildArg: BASE_STAPEL_IMAGE_NAME
@@ -66,7 +66,7 @@ dependencies:
         targetBuildArg: BASE_STAPEL_IMAGE_TAG
       - type: ImageName
         targetBuildArg: BASE_IMAGE
-  - image: base-dockerfile
+  - from: base-dockerfile
     imports:
       - type: ImageName
         targetBuildArg: BASE_DOCKERFILE_IMAGE_NAME

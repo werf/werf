@@ -28,7 +28,7 @@ func (v *imagePlatformValidator) Validate(rawStapelImages []*rawStapelImage, raw
 
 	for _, img := range rawStapelImages {
 		for _, dep := range img.RawDependencies {
-			_, rightDiff := lo.Difference(allImagesPlatforms, v.crossJoinImagesPlatforms([]string{dep.Image}, img.Platform))
+			_, rightDiff := lo.Difference(allImagesPlatforms, v.crossJoinImagesPlatforms([]string{dep.From}, img.Platform))
 
 			if len(rightDiff) > 0 {
 				return v.newDependencyError(img.Images[0], rightDiff[0].A, rightDiff[0].B)
@@ -50,7 +50,7 @@ func (v *imagePlatformValidator) Validate(rawStapelImages []*rawStapelImage, raw
 
 	for _, img := range rawImagesFromDockerfile {
 		for _, dep := range img.RawDependencies {
-			_, rightDiff := lo.Difference(allImagesPlatforms, v.crossJoinImagesPlatforms([]string{dep.Image}, img.Platform))
+			_, rightDiff := lo.Difference(allImagesPlatforms, v.crossJoinImagesPlatforms([]string{dep.From}, img.Platform))
 
 			if len(rightDiff) > 0 {
 				return v.newDependencyError(img.Images[0], rightDiff[0].A, rightDiff[0].B)

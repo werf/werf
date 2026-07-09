@@ -61,7 +61,7 @@ var _ = Describe("FROM dependency expansion", func() {
 
 	deps := []*config.Dependency{
 		{
-			ImageName: "ssr",
+			From: "ssr",
 			Imports: []*config.DependencyImport{
 				{Type: config.ImageNameImport, TargetBuildArg: "SSR_IMAGE"},
 			},

@@ -615,7 +615,7 @@ func (s *FullDockerfileStage) PrepareImage(ctx context.Context, c Conveyor, cb c
 	}
 
 	for _, dep := range s.dependencies {
-		depStageID := c.GetImageContentTagStageID(s.targetPlatform, dep.ImageName)
+		depStageID := c.GetImageContentTagStageID(s.targetPlatform, dep.From)
 		stageImage.Builder.DockerfileBuilder().AppendLabels(fmt.Sprintf("%s=%s", dependencyLabelKey(depStageID), depStageID))
 	}
 

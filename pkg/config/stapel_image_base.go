@@ -70,7 +70,7 @@ func (c *StapelImageBase) dependsOn() DependsOn {
 	}
 
 	for _, dep := range c.Dependencies {
-		dependsOn.Dependencies = append(dependsOn.Dependencies, dep.ImageName)
+		dependsOn.Dependencies = append(dependsOn.Dependencies, dep.From)
 	}
 	dependsOn.Dependencies = util.UniqStrings(dependsOn.Dependencies)
 

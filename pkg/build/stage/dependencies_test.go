@@ -298,28 +298,28 @@ var _ = Describe("getDependencies helper", func() {
 			img := &config.StapelImageBase{
 				Dependencies: []*config.Dependency{
 					{
-						ImageName: "one",
-						Before:    "setup",
+						From:   "one",
+						Before: "setup",
 					},
 					{
-						ImageName: "two",
-						Before:    "setup",
+						From:   "two",
+						Before: "setup",
 					},
 					{
-						ImageName: "three",
-						Before:    "install",
+						From:   "three",
+						Before: "install",
 					},
 					{
-						ImageName: "four",
-						After:     "install",
+						From:  "four",
+						After: "install",
 					},
 					{
-						ImageName: "five",
-						After:     "install",
+						From:  "five",
+						After: "install",
 					},
 					{
-						ImageName: "six",
-						After:     "setup",
+						From:  "six",
+						After: "setup",
 					},
 				},
 			}
@@ -327,27 +327,27 @@ var _ = Describe("getDependencies helper", func() {
 			{
 				deps := getDependencies(img, &getImportsOptions{Before: "install"})
 				Expect(len(deps)).To(Equal(1))
-				Expect(deps[0].ImageName).To(Equal("three"))
+				Expect(deps[0].From).To(Equal("three"))
 			}
 
 			{
 				deps := getDependencies(img, &getImportsOptions{After: "install"})
 				Expect(len(deps)).To(Equal(2))
-				Expect(deps[0].ImageName).To(Equal("four"))
-				Expect(deps[1].ImageName).To(Equal("five"))
+				Expect(deps[0].From).To(Equal("four"))
+				Expect(deps[1].From).To(Equal("five"))
 			}
 
 			{
 				deps := getDependencies(img, &getImportsOptions{Before: "setup"})
 				Expect(len(deps)).To(Equal(2))
-				Expect(deps[0].ImageName).To(Equal("one"))
-				Expect(deps[1].ImageName).To(Equal("two"))
+				Expect(deps[0].From).To(Equal("one"))
+				Expect(deps[1].From).To(Equal("two"))
 			}
 
 			{
 				deps := getDependencies(img, &getImportsOptions{After: "setup"})
 				Expect(len(deps)).To(Equal(1))
-				Expect(deps[0].ImageName).To(Equal("six"))
+				Expect(deps[0].From).To(Equal("six"))
 			}
 		})
 	})

@@ -359,11 +359,16 @@ sections:
         collapsible: true
         isCollapsedByDefault: false
         directiveList:
-          - name: image
+          - name: from
             value: "string"
             description:
               en: "Dependency image name, which should be built before building current image"
               ru: "Имя зависимого образа, который должен быть собран до сборки текущего образа"
+          - name: image
+            value: "string"
+            description:
+              en: "Dependency image name, which should be built before building current image (DEPRECATED)"
+              ru: "Имя зависимого образа, который должен быть собран до сборки текущего образа (DEPRECATED)"
           - name: imports
             description:
               en: "Define target build args to import image information into current image (optional)"
@@ -846,11 +851,16 @@ sections:
         collapsible: true
         isCollapsedByDefault: false
         directiveList:
-          - name: image
+          - name: from
             value: "string"
             description:
               en: "Dependency image name, which should be built before building current image"
               ru: "Имя зависимого образа, который должен быть собран до сборки текущего образа"
+          - name: image
+            value: "string"
+            description:
+              en: "Dependency image name, which should be built before building current image (DEPRECATED)"
+              ru: "Имя зависимого образа, который должен быть собран до сборки текущего образа (DEPRECATED)"
           - name: before
             value: "string"
             description:
