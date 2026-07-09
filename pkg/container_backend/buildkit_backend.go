@@ -267,10 +267,6 @@ func (backend *BuildkitBackend) BuildDockerfile(ctx context.Context, dockerfile 
 	return builtID, nil
 }
 
-func (backend *BuildkitBackend) BuildStapelStage(ctx context.Context, baseImage string, opts BuildStapelStageOptions) (string, error) {
-	return "", fmt.Errorf("build stapel stage: %w", ErrUnsupportedFeature)
-}
-
 func (backend *BuildkitBackend) Tag(ctx context.Context, ref, newRef string, opts TagOpts) error {
 	return fmt.Errorf("tag image: %w", ErrUnsupportedFeature)
 }
