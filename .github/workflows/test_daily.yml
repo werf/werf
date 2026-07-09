@@ -54,24 +54,8 @@ jobs:
     uses: ./.github/workflows/_test_integration_regular.yml
     with:
       packages: test/legacy_e2e/suites
-      excludePackages: test/legacy_e2e/suites/deploy,test/legacy_e2e/suites/cleanup_after_converge,test/legacy_e2e/suites/helm/deploy_rollback,test/legacy_e2e/suites/bundles,test/legacy_e2e/suites/ansible,test/legacy_e2e/suites/build/stapel_image/git,test/legacy_e2e/suites/docs
+      excludePackages: test/legacy_e2e/suites/deploy,test/legacy_e2e/suites/cleanup_after_converge,test/legacy_e2e/suites/helm/deploy_rollback,test/legacy_e2e/suites/bundles,test/legacy_e2e/suites/docs
       fetchDepth: 0 # Git history as fixtures for tests.
-      coverage: true
-    secrets: inherit
-
-  integration_git:
-    needs: gate
-    uses: ./.github/workflows/_test_integration_regular.yml
-    with:
-      packages: test/legacy_e2e/suites/build/stapel_image/git
-      coverage: true
-    secrets: inherit
-
-  integration_ansible:
-    needs: gate
-    uses: ./.github/workflows/_test_integration_regular.yml
-    with:
-      packages: test/legacy_e2e/suites/ansible
       coverage: true
     secrets: inherit
 
@@ -101,8 +85,6 @@ jobs:
     needs:
       - unit
       - integration_main
-      - integration_git
-      - integration_ansible
       - integration_per-k8s
       - integration_per-cr
       - integration_per-k8s-and-cr
