@@ -14,11 +14,11 @@ args:
   TEST_ARG: "changed-test-arg"
   ANOTHER_ARG: "changed-another-arg"
 dependencies:
-- image: stapel-shell
+- from: stapel-shell
   imports:
   - type: ImageName
     targetBuildArg: STAPEL_SHELL_IMAGE_NAME
-- image: base-stapel-shell
+- from: base-stapel-shell
   imports:
   - type: ImageName
     targetBuildArg: BASE_STAPEL_SHELL_IMAGE_NAME

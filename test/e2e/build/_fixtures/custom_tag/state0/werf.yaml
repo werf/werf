@@ -14,7 +14,7 @@ platform:
   - linux/amd64
   - linux/arm64
 dependencies:
-  - image: base-dockerfile
+  - from: base-dockerfile
     imports:
       - type: ImageName
         targetBuildArg: BASE_DOCKERFILE_IMAGE_NAME
