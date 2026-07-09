@@ -870,6 +870,24 @@ func (c *Conveyor) SetStageImage(stageImage *stage.StageImage) {
 	c.stageImages[stageImageCacheKey(stageImage.Image.Name(), stageImage.Image.GetTargetPlatform())] = stageImage
 }
 
+func resolvePrevStageBaseImage(prevStageImage *stage.StageImage, isBuildkitBackend bool) string {
+	if prevStageImage == nil || prevStageImage.Image == nil {
+		return ""
+	}
+	if stageDesc := prevStageImage.Image.GetStageDesc(); stageDesc != nil && stageDesc.Info != nil {
+		if isBuildkitBackend {
+			if stageDesc.Info.RepoDigest != "" {
+				return stageDesc.Info.RepoDigest
+			}
+			return stageDesc.Info.Name
+		}
+		if _, err := digest.Parse(stageDesc.Info.ID); err == nil {
+			return stageDesc.Info.ID
+		}
+	}
+	return prevStageImage.Image.Name()
+}
+
 func (c *Conveyor) GetOrCreateStageImage(name string, prevStageImage *stage.StageImage, stg stage.Interface, img *image.Image) *stage.StageImage {
 	if stageImage := c.GetStageImageByPlatform(name, img.TargetPlatform); stageImage != nil {
 		return stageImage
@@ -877,24 +895,14 @@ func (c *Conveyor) GetOrCreateStageImage(name string, prevStageImage *stage.Stag
 
 	i := container_backend.NewLegacyStageImage(name, c.ContainerBackend, img.TargetPlatform)
 
-	resolvePrevStageBaseImage := func(prevStageImage *stage.StageImage) string {
-		if prevStageImage == nil || prevStageImage.Image == nil {
-			return ""
-		}
-		if stageDesc := prevStageImage.Image.GetStageDesc(); stageDesc != nil && stageDesc.Info != nil {
-			if _, err := digest.Parse(stageDesc.Info.ID); err == nil {
-				return stageDesc.Info.ID
-			}
-		}
-		return prevStageImage.Image.Name()
-	}
+	_, isBuildkitBackend := container_backend.AsBuildkitBackend(c.ContainerBackend)
 
 	var baseImage string
 	if stg != nil {
 		if stg.HasPrevStage() {
-			baseImage = resolvePrevStageBaseImage(prevStageImage)
+			baseImage = resolvePrevStageBaseImage(prevStageImage, isBuildkitBackend)
 		} else if stg.IsStapelStage() && stg.Name() == "from" {
-			baseImage = resolvePrevStageBaseImage(prevStageImage)
+			baseImage = resolvePrevStageBaseImage(prevStageImage, isBuildkitBackend)
 		} else {
 			baseImage = img.GetBaseImageReference()
 		}
