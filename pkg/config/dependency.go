@@ -18,7 +18,7 @@ type Dependency struct {
 
 func (d *Dependency) validate() error {
 	if d.From == "" {
-		return newDetailedConfigError("`from: NAME` is not specified for dependency (or deprecated `image: NAME`)", d.raw, d.raw.doc())
+		return newDetailedConfigError("`from: NAME` is not specified for dependency", d.raw, d.raw.doc())
 	}
 
 	switch imageType := d.raw.imageType(); imageType {

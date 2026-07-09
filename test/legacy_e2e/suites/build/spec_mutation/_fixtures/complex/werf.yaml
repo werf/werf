@@ -75,7 +75,6 @@ imageSpec:
     clearCmd: true
     clearEntrypoint: true
     keepEssentialWerfLabels: false
-    clearWerfLabels: true
 ---
 image: cmd-test
 from: base

@@ -304,7 +304,6 @@ func TestGetDependencies_StableHash(t *testing.T) {
 	imageSpec1 := &config.ImageSpec{
 		Author:          "test-author",
 		ClearHistory:    true,
-		ClearWerfLabels: false,
 		RemoveLabels:    []string{"label1", "label2"},
 		RemoveVolumes:   []string{"/data", "/cache"},
 		RemoveEnv:       []string{"ENV_VAR"},
@@ -324,7 +323,6 @@ func TestGetDependencies_StableHash(t *testing.T) {
 	imageSpec2 := &config.ImageSpec{
 		Author:          "test-author",
 		ClearHistory:    true,
-		ClearWerfLabels: false,
 		RemoveLabels:    []string{"label2", "label1"},
 		RemoveVolumes:   []string{"/cache", "/data"},
 		RemoveEnv:       []string{"ENV_VAR"},

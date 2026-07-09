@@ -102,7 +102,7 @@ var _ = Describe("rawStapelImage", func() {
 				"image": "image1",
 				"from":  "alpine",
 				"dependencies": []map[string]interface{}{{
-					"image":  "image2",
+					"from":   "image2",
 					"before": "install",
 				}},
 			},
@@ -117,7 +117,7 @@ var _ = Describe("rawStapelImage", func() {
 				"image": "image1",
 				"from":  "alpine",
 				"dependencies": []map[string]interface{}{{
-					"image":  "image2",
+					"from":   "image2",
 					"before": "install",
 					"imports": []map[string]string{{
 						"type":      string(ImageTagImport),
@@ -141,11 +141,11 @@ var _ = Describe("rawStapelImage", func() {
 				"from":  "alpine",
 				"dependencies": []map[string]interface{}{
 					{
-						"image":  "image2",
+						"from":   "image2",
 						"before": "install",
 					},
 					{
-						"image": "image3",
+						"from":  "image3",
 						"after": "install",
 						"imports": []map[string]string{
 							{
@@ -159,7 +159,7 @@ var _ = Describe("rawStapelImage", func() {
 						},
 					},
 					{
-						"image": "image4",
+						"from":  "image4",
 						"after": "setup",
 						"imports": []map[string]string{
 							{
@@ -265,7 +265,7 @@ var _ = Describe("rawStapelImage", func() {
 				"image": "image1",
 				"from":  "alpine",
 				"dependencies": []map[string]interface{}{{
-					"image": "image2",
+					"from": "image2",
 					"imports": []map[string]string{{
 						"type":      string(ImageTagImport),
 						"targetEnv": "IMAGE_TAG",
@@ -279,7 +279,7 @@ var _ = Describe("rawStapelImage", func() {
 				"image": "image1",
 				"from":  "alpine",
 				"dependencies": []map[string]interface{}{{
-					"image":  "image2",
+					"from":   "image2",
 					"before": "install",
 					"imports": []map[string]string{{
 						"targetEnv": "IMAGE_TAG",
@@ -293,7 +293,7 @@ var _ = Describe("rawStapelImage", func() {
 				"image": "image1",
 				"from":  "alpine",
 				"dependencies": []map[string]interface{}{{
-					"image":  "image2",
+					"from":   "image2",
 					"before": "install",
 					"imports": []map[string]string{{
 						"type": string(ImageTagImport),
@@ -307,7 +307,7 @@ var _ = Describe("rawStapelImage", func() {
 				"image": "image1",
 				"from":  "alpine",
 				"dependencies": []map[string]interface{}{{
-					"image":  "image2",
+					"from":   "image2",
 					"before": "install",
 					"imports": []map[string]string{{
 						"type":           string(ImageTagImport),

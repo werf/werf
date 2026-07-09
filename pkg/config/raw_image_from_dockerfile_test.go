@@ -100,7 +100,7 @@ var _ = Describe("rawImageFromDockerfile", func() {
 				"image":      "image1",
 				"dockerfile": "Dockerfile",
 				"dependencies": []map[string]interface{}{{
-					"image": "image2",
+					"from": "image2",
 				}},
 			},
 			[]*Dependency{{
@@ -113,7 +113,7 @@ var _ = Describe("rawImageFromDockerfile", func() {
 				"image":      "image1",
 				"dockerfile": "Dockerfile",
 				"dependencies": []map[string]interface{}{{
-					"image": "image2",
+					"from": "image2",
 					"imports": []map[string]string{{
 						"type":           string(ImageTagImport),
 						"targetBuildArg": "IMAGE_TAG",
@@ -138,10 +138,10 @@ var _ = Describe("rawImageFromDockerfile", func() {
 				},
 				"dependencies": []map[string]interface{}{
 					{
-						"image": "image2",
+						"from": "image2",
 					},
 					{
-						"image": "image3",
+						"from": "image3",
 						"imports": []map[string]string{
 							{
 								"type":           string(ImageTagImport),
@@ -154,7 +154,7 @@ var _ = Describe("rawImageFromDockerfile", func() {
 						},
 					},
 					{
-						"image": "image4",
+						"from": "image4",
 						"imports": []map[string]string{
 							{
 								"type":           string(ImageTagImport),
@@ -255,7 +255,7 @@ var _ = Describe("rawImageFromDockerfile", func() {
 				"image":      "image1",
 				"dockerfile": "Dockerfile",
 				"dependencies": []map[string]interface{}{{
-					"image":  "image2",
+					"from":   "image2",
 					"before": "install",
 				}},
 			},
@@ -266,7 +266,7 @@ var _ = Describe("rawImageFromDockerfile", func() {
 				"image":      "image1",
 				"dockerfile": "Dockerfile",
 				"dependencies": []map[string]interface{}{{
-					"image": "image2",
+					"from":  "image2",
 					"after": "install",
 				}},
 			},
@@ -277,7 +277,7 @@ var _ = Describe("rawImageFromDockerfile", func() {
 				"image":      "image1",
 				"dockerfile": "Dockerfile",
 				"dependencies": []map[string]interface{}{{
-					"image": "image2",
+					"from": "image2",
 					"imports": []map[string]string{{
 						"targetBuildArg": "IMAGE_TAG",
 					}},
@@ -290,7 +290,7 @@ var _ = Describe("rawImageFromDockerfile", func() {
 				"image":      "image1",
 				"dockerfile": "Dockerfile",
 				"dependencies": []map[string]interface{}{{
-					"image": "image2",
+					"from": "image2",
 					"imports": []map[string]string{{
 						"type": string(ImageTagImport),
 					}},
@@ -303,7 +303,7 @@ var _ = Describe("rawImageFromDockerfile", func() {
 				"image":      "image1",
 				"dockerfile": "Dockerfile",
 				"dependencies": []map[string]interface{}{{
-					"image": "image2",
+					"from": "image2",
 					"imports": []map[string]string{{
 						"type":      string(ImageTagImport),
 						"targetEnv": "IMAGE_TAG",
@@ -320,7 +320,7 @@ var _ = Describe("rawImageFromDockerfile", func() {
 					"IMAGE_TAG": "tag",
 				},
 				"dependencies": []map[string]interface{}{{
-					"image": "image2",
+					"from": "image2",
 					"imports": []map[string]string{{
 						"type":           string(ImageTagImport),
 						"targetBuildArg": "IMAGE_TAG",
