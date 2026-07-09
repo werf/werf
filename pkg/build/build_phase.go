@@ -936,11 +936,7 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, s
 
 		if img.IsDockerfileImage && img.DockerfileImageConfig.Staged {
 			if !stg.HasPrevStage() {
-				// FIXME: to avoid breaking tag reproducibility, this logic is only enabled for multi-stage cases.
-				// Eventually, this behavior should be default without the extra if condition.
-				if img.IsBasedOnStage() {
-					opts.BaseImage = img.GetBaseImageReference()
-				}
+				opts.BaseImage = img.GetBaseImageReference()
 			}
 		}
 	}
@@ -1262,7 +1258,7 @@ func introspectStage(ctx context.Context, s stage.Interface) error {
 
 type calculateDigestOptions struct {
 	TargetPlatform string
-	BaseImage      string // TODO(staged-dockerfile): legacy compatibility field
+	BaseImage      string
 	// Anchor switches calculateDigest to the anchor path:
 	// Sha3_224(TargetPlatform, HolisticInputs...).
 	Anchor         bool
@@ -1290,8 +1286,7 @@ func calculateDigest(ctx context.Context, stageName, stageDependencies string, p
 	var checksumArgs []string
 	var checksumArgsNames []string
 
-	// TODO: linux/amd64 not affects digest for compatibility with currently built stages.
-	if opts.TargetPlatform != "" && opts.TargetPlatform != "linux/amd64" {
+	if opts.TargetPlatform != "" {
 		checksumArgs = append(checksumArgs, opts.TargetPlatform)
 		checksumArgsNames = append(checksumArgsNames, "TargetPlatform")
 	}
