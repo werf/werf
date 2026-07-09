@@ -2,17 +2,20 @@ project: none
 configVersion: 1
 ---
 image: a
-from: registry.werf.io/base/alpine:3.21
-fromCacheVersion: a
+dockerfile: Dockerfile
+args:
+  CACHE_VERSION: a
 ---
 image: b
-from: registry.werf.io/base/alpine:3.21
-fromCacheVersion: b
+dockerfile: Dockerfile
+args:
+  CACHE_VERSION: b
 ---
 image: c
-from: registry.werf.io/base/alpine:3.21
-fromCacheVersion: c
+dockerfile: Dockerfile
+args:
+  CACHE_VERSION: c
 ---
 image: d
 final: false
-from: registry.werf.io/base/alpine:3.21
+dockerfile: Dockerfile

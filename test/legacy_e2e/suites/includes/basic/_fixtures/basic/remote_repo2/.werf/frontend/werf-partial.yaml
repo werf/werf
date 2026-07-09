@@ -1,6 +1,2 @@
 image: frontend
-from: registry.werf.io/base/{{ .BaseImage }}
-shell:
-  install:
-  - echo "install frontend"
-{{- include "common install commands" . | indent 2 }}
+dockerfile: frontend.Dockerfile

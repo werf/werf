@@ -121,17 +121,6 @@ var _ = Describe("build and mutate image spec", Label("integration", "build", "m
 				}
 			}
 		},
-		// Docker
-		Entry("with repo using Docker", simpleTestOptions{setupEnvOptions{
-			ContainerBackendMode:        "docker",
-			WithLocalRepo:               true,
-			WithStagedDockerfileBuilder: false,
-		}}),
-		Entry("without repo using Docker", simpleTestOptions{setupEnvOptions{
-			ContainerBackendMode:        "docker",
-			WithLocalRepo:               false,
-			WithStagedDockerfileBuilder: false,
-		}}),
 		Entry("with local repo using BuildKit", simpleTestOptions{setupEnvOptions{
 			ContainerBackendMode:        "buildkit",
 			WithLocalRepo:               true,

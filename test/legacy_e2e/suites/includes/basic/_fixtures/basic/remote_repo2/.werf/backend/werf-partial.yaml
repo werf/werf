@@ -1,6 +1,2 @@
 image: backend
-from: registry.werf.io/base/{{ .BaseImage }}
-shell:
-  install:
-  - echo "install backend"
-{{- include "common install commands" . | indent 2 }}
+dockerfile: backend.Dockerfile
