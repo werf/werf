@@ -330,13 +330,6 @@ func modifyEnv(env, removeKeys []string, addKeysMap map[string]string) ([]string
 		}
 	}
 
-	// TODO(major): This is a temporary solution to remove werf commit envs that persist after build.
-	removeKeys = append(removeKeys, []string{
-		"WERF_COMMIT_HASH",
-		"WERF_COMMIT_TIME_HUMAN",
-		"WERF_COMMIT_TIME_UNIX",
-	}...)
-
 	exactMatches, regexPatterns, err := compileRemovePatterns(removeKeys)
 	if err != nil {
 		return nil, err
