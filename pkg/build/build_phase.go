@@ -507,7 +507,7 @@ func (phase *BuildPhase) BeforeImageStages(ctx context.Context, img *image.Image
 			if img.ShouldLogPlatform() {
 				platform = img.TargetPlatform
 			}
-			logboek.Context(ctx).Default().LogFHighlight("Reusing image %s by content-based tag\n", img.LogDetailedName())
+			logboek.Context(ctx).Default().LogFHighlight("Reusing image %s by content-based tag\n", img.LogName())
 			container_backend.LogImageInfoByStageDesc(ctx, stageDesc, platform)
 		}
 	}
