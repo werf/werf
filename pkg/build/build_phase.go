@@ -6,7 +6,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
@@ -136,37 +135,6 @@ func collectHolisticInputs(ctx context.Context, img *image.Image, conveyor stage
 		inputs = append(inputs, fmt.Sprintf("%s:%s", stg.Name(), deps))
 	}
 	return inputs, nil
-}
-
-func selectStageDescByLatestCreationTs(stageDescSet imagePkg.StageDescSet) *imagePkg.StageDesc {
-	if stageDescSet == nil {
-		return nil
-	}
-
-	var latestDesc *imagePkg.StageDesc
-	for desc := range stageDescSet.Iter() {
-		if latestDesc == nil {
-			latestDesc = desc
-			continue
-		}
-		if desc.StageID.CreationTs > latestDesc.StageID.CreationTs {
-			latestDesc = desc
-			continue
-		}
-		if desc.StageID.CreationTs == latestDesc.StageID.CreationTs && desc.StageID.String() > latestDesc.StageID.String() {
-			latestDesc = desc
-		}
-	}
-	return latestDesc
-}
-
-// selectSuitableStageDescForStage bypasses per-stage-type overrides
-// (GitStage/UserWithGitPatchStage ancestry filters) for content-anchor stages.
-func (phase *BuildPhase) selectSuitableStageDescForStage(ctx context.Context, stg stage.Interface, stageDescSet imagePkg.StageDescSet) (*imagePkg.StageDesc, error) {
-	if stg.IsContentAnchor() {
-		return selectStageDescByLatestCreationTs(stageDescSet), nil
-	}
-	return phase.Conveyor.StorageManager.SelectSuitableStageDesc(ctx, phase.Conveyor, stg, stageDescSet)
 }
 
 func (phase *BuildPhase) getPrevNonEmptyStageCreationTsForStage(stg stage.Interface) int64 {
@@ -512,14 +480,14 @@ func (phase *BuildPhase) BeforeImageStages(ctx context.Context, img *image.Image
 		unlockFn()
 	}
 	if err != nil {
-		return deferFn, fmt.Errorf("resolve anchor stage: %w", err)
+		return deferFn, fmt.Errorf("resolve image content tag: %w", err)
 	}
 
 	foundSuitable := foundInPrimary
 	if !foundSuitable {
 		foundInSecondary, err := phase.findAndFetchStageFromSecondaryStagesStorage(ctx, img, anchor)
 		if err != nil {
-			return deferFn, fmt.Errorf("resolve anchor from secondary stages storage: %w", err)
+			return deferFn, fmt.Errorf("resolve image content tag from secondary stages storage: %w", err)
 		}
 		foundSuitable = foundInSecondary
 	}
@@ -527,7 +495,7 @@ func (phase *BuildPhase) BeforeImageStages(ctx context.Context, img *image.Image
 	if foundSuitable {
 		stageDesc := anchor.GetStageImage().Image.GetStageDesc()
 		if stageDesc == nil {
-			return deferFn, fmt.Errorf("anchor stage %q of image %q reused with no stage descriptor", anchor.Name(), img.GetName())
+			return deferFn, fmt.Errorf("image content tag for image %q resolved without stage descriptor", img.GetName())
 		}
 		img.SetContentTagDesc(stageDesc)
 		img.AnchorReused = true
@@ -691,9 +659,6 @@ func (phase *BuildPhase) getLogImageNetwork(img *image.Image) string {
 func (phase *BuildPhase) OnImageStage(ctx context.Context, img *image.Image, stg stage.Interface) error {
 	return phase.StagesIterator.OnImageStage(ctx, img, stg, func(img *image.Image, stg stage.Interface, isEmpty bool) error {
 		if isEmpty {
-			if stg.IsContentAnchor() {
-				return phase.publishEmptyAnchor(ctx, img, stg)
-			}
 			return nil
 		}
 		if err := phase.onImageStage(ctx, img, stg); err != nil {
@@ -704,138 +669,6 @@ func (phase *BuildPhase) OnImageStage(ctx context.Context, img *image.Image, stg
 		}
 		return nil
 	})
-}
-
-// composeEmptyAnchorLabels panics on empty overrides: an anchor image published
-// without these labels would make every next-run reuse path panic on read.
-func composeEmptyAnchorLabels(prevLabels map[string]string, parentStageID, contentDigest string) map[string]string {
-	if parentStageID == "" {
-		panic("composeEmptyAnchorLabels: parentStageID must not be empty")
-	}
-	if contentDigest == "" {
-		panic("composeEmptyAnchorLabels: contentDigest must not be empty")
-	}
-	labels := make(map[string]string, len(prevLabels)+2)
-	for k, v := range prevLabels {
-		labels[k] = v
-	}
-	labels[imagePkg.WerfParentStageID] = parentStageID
-	labels[imagePkg.WerfStageContentDigestLabel] = contentDigest
-	return labels
-}
-
-// publishEmptyAnchor mutates+pushes the previous built image under the anchor's
-// holistic-digest tag for the empty-trailing-stage case (e.g. GitLatestPatch
-// with no diff). Digest-mutex + post-check symmetric to atomicBuildStageImage.
-func (phase *BuildPhase) publishEmptyAnchor(ctx context.Context, img *image.Image, stg stage.Interface) error {
-	mu := phase.Conveyor.GetStageDigestMutex(stg.GetDigest())
-	mu.Lock()
-	defer mu.Unlock()
-
-	storageManager := phase.Conveyor.StorageManager
-
-	var stageDescSet imagePkg.StageDescSet
-	if os.Getenv("WERF_DISABLE_PUBLISH_TAG_CACHE_SYNC") == "1" {
-		stageDescSet = imagePkg.NewStageDescSet()
-	} else {
-		var err error
-		stageDescSet, err = storageManager.GetStageDescSetByDigest(ctx, stg.LogDetailedName(), stg.GetDigest(), phase.getPrevNonEmptyStageCreationTsForStage(stg))
-		if err != nil {
-			return fmt.Errorf("get anchor descriptor set by digest %s: %w", stg.GetDigest(), err)
-		}
-		if desc := selectStageDescByLatestCreationTs(stageDescSet); desc != nil {
-			logboek.Context(ctx).Default().LogFHighlight("Use previously built image for %s\n", stg.LogDetailedName())
-			i := phase.Conveyor.GetOrCreateStageImage(desc.Info.Name, phase.StagesIterator.GetPrevImage(img, stg), stg, img)
-			i.Image.SetStageDesc(desc)
-			stg.SetStageImage(i)
-			img.SetContentTagDesc(desc)
-			var platform string
-			if img.ShouldLogPlatform() {
-				platform = img.TargetPlatform
-			}
-			container_backend.LogImageInfoByStageDesc(ctx, desc, platform)
-			return nil
-		}
-	}
-
-	foundInSecondary, err := phase.findAndFetchStageFromSecondaryStagesStorage(ctx, img, stg)
-	if err != nil {
-		return fmt.Errorf("resolve empty anchor from secondary stages storage: %w", err)
-	}
-	if foundInSecondary {
-		img.SetContentTagDesc(stg.GetStageImage().Image.GetStageDesc())
-		return nil
-	}
-
-	if phase.ShouldBeBuiltMode {
-		phase.printShouldBeBuiltError(ctx, img, stg)
-		return fmt.Errorf("stages required")
-	}
-
-	prevBuiltStage := phase.StagesIterator.PrevBuiltStage
-	if prevBuiltStage == nil {
-		return fmt.Errorf("no previous built stage for empty anchor %s of image %q", stg.Name(), img.GetName())
-	}
-	prevStageImage := prevBuiltStage.GetStageImage()
-	if prevStageImage == nil || prevStageImage.Image == nil {
-		return fmt.Errorf("previous built stage %s of image %q has no stage image", prevBuiltStage.Name(), img.GetName())
-	}
-	prevStageDesc := prevStageImage.Image.GetStageDesc()
-	if prevStageDesc == nil {
-		return fmt.Errorf("previous built stage %s of image %q has no stage descriptor", prevBuiltStage.Name(), img.GetName())
-	}
-
-	stagesStorage := storageManager.GetStagesStorage()
-	destReference, creationTs := storageManager.GenerateStageDescCreationTs(stg.GetDigest(), stageDescSet)
-	newStageID := imagePkg.NewStageID(stg.GetDigest(), creationTs)
-
-	labels := composeEmptyAnchorLabels(prevStageDesc.Info.Labels, prevStageDesc.StageID.String(), stg.GetContentDigest())
-
-	stageImage := phase.Conveyor.GetOrCreateStageImage(destReference, phase.StagesIterator.GetPrevImage(img, stg), stg, img)
-	stg.SetStageImage(stageImage)
-
-	var desc *imagePkg.StageDesc
-	if err := logboek.Context(ctx).Default().LogProcess("Publishing empty anchor %s", stg.LogDetailedName()).
-		Options(func(options types.LogProcessOptionsInterface) {
-			options.Style(style.Highlight())
-		}).
-		DoError(func() error {
-			if err := stagesStorage.MutateAndPushImage(ctx, prevStageDesc.Info.Name, destReference, imagePkg.SpecConfig{Created: time.Now().UTC().Format(time.RFC3339), Labels: labels, Env: prevStageDesc.Info.Env}, stageImage.Image); err != nil {
-				return fmt.Errorf("push empty anchor image %s: %w", destReference, err)
-			}
-			gotDesc, err := stagesStorage.GetStageDesc(ctx, phase.Conveyor.ProjectName(), *newStageID)
-			if err != nil {
-				return fmt.Errorf("get anchor descriptor %s: %w", destReference, err)
-			}
-			if gotDesc == nil {
-				return fmt.Errorf("anchor descriptor %s not found after push", destReference)
-			}
-			desc = gotDesc
-			var platform string
-			if img.ShouldLogPlatform() {
-				platform = img.TargetPlatform
-			}
-			container_backend.LogImageInfoByStageDesc(ctx, desc, platform)
-			return nil
-		}); err != nil {
-		return err
-	}
-
-	stageImage.Image.SetStageDesc(desc)
-	img.SetContentTagDesc(desc)
-
-	if err := storageManager.CopyStageIntoCacheStorages(
-		ctx, *newStageID,
-		storageManager.GetCacheStagesStorageList(),
-		manager.CopyStageIntoStorageOptions{
-			ContainerBackend: phase.Conveyor.ContainerBackend,
-			LogDetailedName:  stg.LogDetailedName(),
-		},
-	); err != nil {
-		return fmt.Errorf("unable to copy anchor %s into cache storages: %w", newStageID.String(), err)
-	}
-
-	return nil
 }
 
 func (phase *BuildPhase) onImageStage(ctx context.Context, img *image.Image, stg stage.Interface) error {
@@ -1041,7 +874,7 @@ ScanSecondaryStagesStorageList:
 		if err != nil {
 			return false, err
 		} else {
-			if secondaryStageDesc, err := phase.selectSuitableStageDescForStage(ctx, stg, secondaryStages); err != nil {
+			if secondaryStageDesc, err := storageManager.SelectSuitableStageDesc(ctx, phase.Conveyor, stg, secondaryStages); err != nil {
 				return false, err
 			} else if secondaryStageDesc != nil {
 				if err := atomicCopySuitableStageFromSecondaryStagesStorage(secondaryStageDesc, secondaryStagesStorage); err != nil {
@@ -1134,7 +967,7 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, s
 		return false, phase.Conveyor.GetStageDigestMutex(stg.GetDigest()).Unlock, err
 	}
 
-	stageDesc, err := phase.selectSuitableStageDescForStage(ctx, stg, stageDescSet)
+	stageDesc, err := storageManager.SelectSuitableStageDesc(ctx, phase.Conveyor, stg, stageDescSet)
 	if err != nil {
 		return false, phase.Conveyor.GetStageDigestMutex(stg.GetDigest()).Unlock, err
 	}
@@ -1242,6 +1075,23 @@ func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *imag
 	return nil
 }
 
+func (phase *BuildPhase) emptyAnchorRebuildNote(ctx context.Context, img *image.Image, stg stage.Interface) string {
+	if !stg.IsContentAnchor() {
+		return ""
+	}
+	detector, ok := stg.(interface {
+		IsGitPatchEmpty(context.Context, stage.Conveyor, *stage.StageImage) (bool, error)
+	})
+	if !ok {
+		return ""
+	}
+	empty, err := detector.IsGitPatchEmpty(ctx, phase.Conveyor, phase.StagesIterator.GetPrevBuiltImage(img, stg))
+	if err != nil || !empty {
+		return ""
+	}
+	return " (no git changes; refreshing image content tag)"
+}
+
 func (phase *BuildPhase) buildStage(ctx context.Context, img *image.Image, stg stage.Interface) error {
 	if stg.IsBuildable() {
 		if !img.IsDockerfileImage && phase.Conveyor.UseLegacyStapelBuilder(phase.Conveyor.ContainerBackend) {
@@ -1259,7 +1109,7 @@ func (phase *BuildPhase) buildStage(ctx context.Context, img *image.Image, stg s
 		container_backend.LogImageInfo(ctx, stg.GetStageImage().Image, phase.getPrevNonEmptyStageImageSize(), img.ShouldLogPlatform(), phase.getLogImageNetwork(img))
 	}
 
-	if err := logboek.Context(ctx).Default().LogProcess("Building stage %s", stg.LogDetailedName()).
+	if err := logboek.Context(ctx).Default().LogProcess("Building stage %s%s", stg.LogDetailedName(), phase.emptyAnchorRebuildNote(ctx, img, stg)).
 		Options(func(options types.LogProcessOptionsInterface) {
 			options.InfoSectionFunc(infoSectionFunc)
 			options.Style(style.Highlight())
@@ -1309,7 +1159,7 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 		if err != nil {
 			return err
 		}
-		stageDesc, err := phase.selectSuitableStageDescForStage(ctx, stg, stageDescSet)
+		stageDesc, err := phase.Conveyor.StorageManager.SelectSuitableStageDesc(ctx, phase.Conveyor, stg, stageDescSet)
 		if err != nil {
 			return err
 		}

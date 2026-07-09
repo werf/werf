@@ -18,7 +18,17 @@ type GitLatestPatchStage struct {
 	*GitPatchStage
 }
 
+// IsEmpty for a content anchor is always false: even when the git patch is
+// empty, the stage must still publish under the image content tag, so it
+// goes through the normal build+push path (buildStage adds a UI note).
 func (s *GitLatestPatchStage) IsEmpty(ctx context.Context, c Conveyor, prevBuiltImage *StageImage) (bool, error) {
+	if s.IsContentAnchor() {
+		return false, nil
+	}
+	return s.IsGitPatchEmpty(ctx, c, prevBuiltImage)
+}
+
+func (s *GitLatestPatchStage) IsGitPatchEmpty(ctx context.Context, c Conveyor, prevBuiltImage *StageImage) (bool, error) {
 	if empty, err := s.GitPatchStage.IsEmpty(ctx, c, prevBuiltImage); err != nil {
 		return false, err
 	} else if empty {
