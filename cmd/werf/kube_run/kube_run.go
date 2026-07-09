@@ -12,11 +12,11 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/distribution/reference"
+	dockercliconfig "github.com/docker/cli/cli/config"
+	dockerclitypes "github.com/docker/cli/cli/config/types"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
-	"go.podman.io/image/v5/docker/reference"
-	config2 "go.podman.io/image/v5/pkg/docker/config"
-	imgtypes "go.podman.io/image/v5/types"
 	corev1 "k8s.io/api/core/v1"
 	errorsK8s "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -422,7 +422,7 @@ func run(ctx context.Context, pod, secret, namespace string, werfConfig *config.
 		"%container_image%": image,
 	})
 
-	var dockerAuthConf imgtypes.DockerAuthConfig
+	var dockerAuthConf dockerclitypes.AuthConfig
 	var namedRef reference.Named
 	if cmdData.AutoPullSecret {
 		var err error
@@ -431,7 +431,7 @@ func run(ctx context.Context, pod, secret, namespace string, werfConfig *config.
 			return fmt.Errorf("unable to get docker config credentials: %w", err)
 		}
 
-		if dockerAuthConf == (imgtypes.DockerAuthConfig{}) {
+		if dockerAuthConf.Username == "" && dockerAuthConf.Password == "" && dockerAuthConf.IdentityToken == "" {
 			logboek.Context(ctx).Debug().LogF("No credentials for werf repo found in Docker's config.json. No image pull secret will be created.\n")
 		} else {
 			cmdData.registryCredsFound = true
@@ -900,7 +900,7 @@ func createNamespace(ctx context.Context, namespace string, clientFactory kube.C
 	return nil
 }
 
-func createDockerRegistrySecret(ctx context.Context, name, namespace string, ref reference.Named, dockerAuthConf imgtypes.DockerAuthConfig, clientFactory kube.ClientFactorier) error {
+func createDockerRegistrySecret(ctx context.Context, name, namespace string, ref reference.Named, dockerAuthConf dockerclitypes.AuthConfig, clientFactory kube.ClientFactorier) error {
 	if *commonCmdData.DryRun || !cmdData.registryCredsFound {
 		return nil
 	}
@@ -945,21 +945,26 @@ func createDockerRegistrySecret(ctx context.Context, name, namespace string, ref
 	return nil
 }
 
-// Might return empty DockerAuthConfig.
-func getDockerConfigCredentials(ref string) (reference.Named, imgtypes.DockerAuthConfig, error) {
+// Might return empty AuthConfig.
+func getDockerConfigCredentials(ref string) (reference.Named, dockerclitypes.AuthConfig, error) {
 	namedRef, err := reference.ParseNormalizedNamed(ref)
 	if err != nil {
-		return nil, imgtypes.DockerAuthConfig{}, fmt.Errorf("unable to parse docker config registry reference %q: %w", ref, err)
+		return nil, dockerclitypes.AuthConfig{}, fmt.Errorf("unable to parse docker config registry reference %q: %w", ref, err)
 	}
 
-	sysContext := &imgtypes.SystemContext{}
-	if *commonCmdData.DockerConfig != "" {
-		sysContext.AuthFilePath = filepath.Join(*commonCmdData.DockerConfig, "config.json")
-	}
-
-	dockerAuthConf, err := config2.GetCredentialsForRef(sysContext, namedRef)
+	conf, err := dockercliconfig.Load(*commonCmdData.DockerConfig)
 	if err != nil {
-		return nil, imgtypes.DockerAuthConfig{}, fmt.Errorf("unable to get docker registry creds for ref %q: %w", ref, err)
+		return nil, dockerclitypes.AuthConfig{}, fmt.Errorf("unable to load docker config: %w", err)
+	}
+
+	registryHost := reference.Domain(namedRef)
+	if registryHost == "docker.io" {
+		registryHost = "https://index.docker.io/v1/"
+	}
+
+	dockerAuthConf, err := conf.GetAuthConfig(registryHost)
+	if err != nil {
+		return nil, dockerclitypes.AuthConfig{}, fmt.Errorf("unable to get docker registry creds for ref %q: %w", ref, err)
 	}
 
 	return namedRef, dockerAuthConf, nil

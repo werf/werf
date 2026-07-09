@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/distribution/reference"
 	"github.com/spf13/cobra"
-	"go.podman.io/image/v5/docker/reference"
 
 	"github.com/werf/werf/v2/pkg/cleaning"
 )

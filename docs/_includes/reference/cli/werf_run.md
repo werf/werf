@@ -57,7 +57,7 @@ werf run [options] [IMAGE_NAME] [-- COMMAND ARG...]
             Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf   
             in working directory)
       --container-registry-mirror=[]
-            (Buildah-only) Use specified mirrors for docker.io
+            Use specified mirrors for docker.io
       --debug-templates=false
             Enable debug mode for Go templates (default $WERF_DEBUG_TEMPLATES or false)
       --dev=false

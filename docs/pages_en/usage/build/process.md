@@ -1,8 +1,8 @@
 ---
 title: Build process
 permalink: usage/build/process.html
-keywords: werf build process, container registry authentication, image tagging, build cache, multi-platform build, cross-platform building, ssh agent, build secrets, buildah, docker, stapel, dockerfile, cache versioning, parallel builds, docker.io mirrors, custom tags, target platform builds
-tags: [build, docker, buildah, ssh, cache, registry, multi-arch, stapel]
+keywords: werf build process, container registry authentication, image tagging, build cache, multi-platform build, cross-platform building, ssh agent, build secrets, buildkit, docker, stapel, dockerfile, cache versioning, parallel builds, docker.io mirrors, custom tags, target platform builds
+tags: [build, docker, buildkit, ssh, cache, registry, multi-arch, stapel]
 ---
 
 {% include pages/en/cr_login.md.liquid %}
@@ -119,7 +119,7 @@ dockerfile: ./Dockerfile
 staged: true
 ```
 
-> **IMPORTANT**: The `staged: true` option is supported only when using the Buildah builder.
+> **IMPORTANT**: The `staged: true` option is supported only when using the BuildKit builder.
 
 <div class="details">
 <a href="javascript:void(0)" class="details__summary">**NOTE**: The staged Dockerfile caching feature is currently alpha</a>
@@ -303,7 +303,7 @@ Multi-platform builds use the cross-platform instruction execution mechanics pro
 
 The table below summarizes support of multi-platform building for different configuration syntaxes, building modes, and build backends:
 
-|                       | buildah      | docker-server    |
+|                       | buildkit     | docker-server    |
 | --------------------- | ------------ | ---------------- |
 | **Dockerfile**        | full support | full support     |
 | **staged Dockerfile** | full support | no support       |
@@ -402,9 +402,9 @@ Then restart the Docker daemon and logout from `docker.io` with:
 werf cr logout
 ```
 
-### Buildah
+### BuildKit
 
-If you are using Buildah backend, instead of editing `daemon.json`, add the `--container-registry-mirror` option to werf commands. For example:
+If you are using the BuildKit backend, instead of editing `daemon.json`, add the `--container-registry-mirror` option to werf commands. For example:
 
 ```shell
 werf build --container-registry-mirror=mirror.gcr.io
@@ -521,7 +521,7 @@ The `--save-build-report` flag is supported by all commands that perform a build
 The JSON report contains detailed information about the build:
 
 * **Runtime** — build runtime information:
-  * Selected container backend (`Backend`: `docker` or `buildah`)
+  * Selected container backend (`Backend`: `docker` or `buildkit`)
   * Whether werf is running inside a container (`InContainer`).
 
 * **Images** — list of built images:

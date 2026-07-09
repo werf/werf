@@ -152,27 +152,17 @@ var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
 			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: false,
 		}}),
-		Entry("with local repo using Native Buildah with rootless isolation", complexTestOptions{setupEnvOptions{
-			ContainerBackendMode:        "native-rootless",
-			WithLocalRepo:               true,
-			WithStagedDockerfileBuilder: false,
-		}}),
-		Entry("with local repo using Native Buildah with chroot isolation", complexTestOptions{setupEnvOptions{
-			ContainerBackendMode:        "native-chroot",
+		Entry("with local repo using BuildKit", complexTestOptions{setupEnvOptions{
+			ContainerBackendMode:        "buildkit",
 			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: false,
 		}}),
 		// TODO(1.3): after Full Dockerfile Builder removed and Staged Dockerfile Builder enabled by default this test no longer needed
-		Entry("with local repo using Native Buildah and Staged Dockerfile builder with rootless isolation", complexTestOptions{setupEnvOptions{
-			ContainerBackendMode:        "native-rootless",
+		Entry("with local repo using BuildKit and Staged Dockerfile builder", complexTestOptions{setupEnvOptions{
+			ContainerBackendMode:        "buildkit",
 			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: true,
 		}}),
 		// TODO(1.3): after Full Dockerfile Builder removed and Staged Dockerfile Builder enabled by default this test no longer needed
-		Entry("with local repo using Native Buildah and Staged Dockerfile builder with chroot isolation", complexTestOptions{setupEnvOptions{
-			ContainerBackendMode:        "native-chroot",
-			WithLocalRepo:               true,
-			WithStagedDockerfileBuilder: true,
-		}}),
 	)
 })

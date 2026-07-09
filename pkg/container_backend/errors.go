@@ -3,8 +3,6 @@ package container_backend
 import (
 	"errors"
 
-	"go.podman.io/storage/types"
-
 	"github.com/werf/werf/v2/pkg/log_sanitize"
 )
 
@@ -12,7 +10,7 @@ var (
 	ErrUnsupportedFeature           = errors.New("unsupported feature")
 	ErrCannotRemovePausedContainer  = errors.New("cannot remove paused container")
 	ErrCannotRemoveRunningContainer = errors.New("cannot remove running container")
-	ErrImageUsedByContainer         = types.ErrImageUsedByContainer
+	ErrImageUsedByContainer         = errors.New("image is in use by a container")
 	ErrPruneIsAlreadyRunning        = errors.New("a prune operation is already running")
 )
 

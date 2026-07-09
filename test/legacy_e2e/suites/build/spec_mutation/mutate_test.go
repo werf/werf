@@ -132,26 +132,9 @@ var _ = Describe("build and mutate image spec", Label("integration", "build", "m
 			WithLocalRepo:               false,
 			WithStagedDockerfileBuilder: false,
 		}}),
-		// Buildah rootless
-		Entry("with local repo using Native Buildah with rootless isolation", simpleTestOptions{setupEnvOptions{
-			ContainerBackendMode:        "native-rootless",
+		Entry("with local repo using BuildKit", simpleTestOptions{setupEnvOptions{
+			ContainerBackendMode:        "buildkit",
 			WithLocalRepo:               true,
-			WithStagedDockerfileBuilder: false,
-		}}),
-		Entry("without local repo using Native Buildah with chroot isolation", simpleTestOptions{setupEnvOptions{
-			ContainerBackendMode:        "native-rootless",
-			WithLocalRepo:               false,
-			WithStagedDockerfileBuilder: false,
-		}}),
-		// Buildah chroot
-		Entry("with local repo using Native Buildah with chroot isolation", simpleTestOptions{setupEnvOptions{
-			ContainerBackendMode:        "native-chroot",
-			WithLocalRepo:               true,
-			WithStagedDockerfileBuilder: false,
-		}}),
-		Entry("with local repo using Native Buildah with chroot isolation", simpleTestOptions{setupEnvOptions{
-			ContainerBackendMode:        "native-chroot",
-			WithLocalRepo:               false,
 			WithStagedDockerfileBuilder: false,
 		}}),
 	)

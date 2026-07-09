@@ -1,13 +1,9 @@
 package instruction
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
-
-	"github.com/werf/werf/v2/pkg/buildah"
-	"github.com/werf/werf/v2/pkg/container_backend"
 )
 
 type Label struct {
@@ -28,11 +24,4 @@ func (i *Label) LabelsAsList() []string {
 		labels = append(labels, fmt.Sprintf("%s=%s", item.Key, item.Value))
 	}
 	return labels
-}
-
-func (i *Label) Apply(ctx context.Context, containerName string, drv buildah.Buildah, drvOpts buildah.CommonOpts, buildContextArchive container_backend.BuildContextArchiver) error {
-	if err := drv.Config(ctx, containerName, buildah.ConfigOpts{CommonOpts: drvOpts, Labels: i.LabelsAsList()}); err != nil {
-		return fmt.Errorf("error setting labels %v for container %s: %w", i.LabelsAsList(), containerName, err)
-	}
-	return nil
 }

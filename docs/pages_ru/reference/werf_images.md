@@ -3,7 +3,7 @@ title: Образы werf
 permalink: reference/werf_images.html
 ---
 
-[Релизный процесс]({{ site.url }}/about/release_channels.html) werf включает публикацию образов с werf, необходимыми утилитами и предустановленными настройками для сборки со сборочным бэкендом Buildah.
+[Релизный процесс]({{ site.url }}/about/release_channels.html) werf включает публикацию образов с werf и необходимыми утилитами.
 
 > Примеры использования образов werf можно посмотреть в разделе [Быстрый старт]({{ site.url }}/getting_started/).
 

@@ -4,10 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"runtime"
 
-	"github.com/werf/werf/v2/pkg/buildah"
-	bdTypes "github.com/werf/werf/v2/pkg/buildah/thirdparty"
 	"github.com/werf/werf/v2/test/pkg/thirdparty/contruntime/manifest"
 )
 
@@ -15,20 +12,11 @@ var ErrRuntimeUnavailable = errors.New("requested runtime unavailable")
 
 func NewContainerBackend(mode string) (ContainerBackend, error) {
 	switch mode {
-	case "docker":
+	case "docker", "buildkit":
+		// buildkit-built images live in the test repo registry and are inspected via docker.
 		return NewDockerBackend(), nil
-	case "native-rootless":
-		if runtime.GOOS != "linux" {
-			return nil, ErrRuntimeUnavailable
-		}
-		return NewNativeBuildahBackend(bdTypes.IsolationOCIRootless, buildah.DefaultStorageDriver), nil
-	case "native-chroot":
-		if runtime.GOOS != "linux" {
-			return nil, ErrRuntimeUnavailable
-		}
-		return NewNativeBuildahBackend(bdTypes.IsolationChroot, buildah.DefaultStorageDriver), nil
 	default:
-		panic(fmt.Sprintf("unexpected buildah mode: %s", mode))
+		panic(fmt.Sprintf("unexpected container backend mode: %s", mode))
 	}
 }
 

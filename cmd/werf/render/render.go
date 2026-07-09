@@ -233,7 +233,7 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 		}
 		ctx = newCtx
 
-		if err := common.DockerRegistryInit(ctx, &commonCmdData, commonManager.RegistryMirrors(), commonManager.BuildahMode()); err != nil {
+		if err := common.DockerRegistryInit(ctx, &commonCmdData, commonManager.RegistryMirrors()); err != nil {
 			return err
 		}
 

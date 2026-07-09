@@ -1,8 +1,8 @@
 ---
 title: Сборочный процесс
 permalink: usage/build/process.html
-keywords: процесс сборки werf, аутентификация в контейнерном реестре, тегирование образов, кэширование сборки, многоплатформенная сборка, кросс-платформенная сборка, ssh агент, секреты сборки, buildah, docker, stapel, dockerfile, версионирование кэша, параллельная сборка, зеркала docker.io, пользовательские теги, сборка для целевой платформы
-tags: [сборка, docker, buildah, ssh, кэш, реестр, многоархитектурная, stapel]
+keywords: процесс сборки werf, аутентификация в контейнерном реестре, тегирование образов, кэширование сборки, многоплатформенная сборка, кросс-платформенная сборка, ssh агент, секреты сборки, buildkit, docker, stapel, dockerfile, версионирование кэша, параллельная сборка, зеркала docker.io, пользовательские теги, сборка для целевой платформы
+tags: [сборка, docker, buildkit, ssh, кэш, реестр, многоархитектурная, stapel]
 ---
 
 {% include pages/ru/cr_login.md.liquid %}
@@ -117,7 +117,7 @@ dockerfile: ./Dockerfile
 staged: true
 ```
 
-> **ВАЖНО**: Опция `staged: true` поддерживается только при использовании сборщика Buildah.
+> **ВАЖНО**: Опция `staged: true` поддерживается только при использовании сборщика BuildKit.
 
 <div class="details">
 <a href="javascript:void(0)" class="details__summary">**ЗАМЕЧАНИЕ**: Послойное кеширование Dockerfile на данный момент находится стадии альфа-тестирования.</a>
@@ -302,7 +302,7 @@ werf позволяет собирать образы как для родной
 
 Поддержка мультиплатформенной сборки для разных вариантов синтаксиса сборки, режимов сборки и используемого бэкенда:
 
-|                       | buildah          | docker-server      |
+|                       | buildkit         | docker-server      |
 | --------------------- | ---------------- | ------------------ |
 | **Dockerfile**        | полная поддержка | полная поддержка   |
 | **staged Dockerfile** | полная поддержка | не поддерживается  |
@@ -401,9 +401,9 @@ werf build --platform=linux/amd64,linux/i386
 werf cr logout
 ```
 
-### Buildah
+### BuildKit
 
-Если вы используете Buildah для сборки, вместо редактирования `daemon.json` используйте опцию `--container-registry-mirror` для werf-команд. Например:
+Если вы используете BuildKit для сборки, вместо редактирования `daemon.json` используйте опцию `--container-registry-mirror` для werf-команд. Например:
 
 ```shell
 werf build --container-registry-mirror=mirror.gcr.io
@@ -520,7 +520,7 @@ werf build --save-build-report --build-report-path .werf-build-report.env --repo
 JSON-отчёт содержит расширенную информацию о сборке:
 
 * **Runtime** — информация об окружении сборки:
-  * Используемый контейнерный бэкенд (`Backend`: `docker` или `buildah`)
+  * Используемый контейнерный бэкенд (`Backend`: `docker` или `buildkit`)
   * Флаг запуска werf внутри контейнера (`InContainer`).
 
 * **Images** — список собранных образов:

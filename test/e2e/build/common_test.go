@@ -1,6 +1,10 @@
 package e2e_build_test
 
 import (
+	"os"
+
+	. "github.com/onsi/ginkgo/v2"
+
 	"github.com/werf/werf/v2/test/pkg/suite_init"
 )
 
@@ -12,8 +16,20 @@ type setupEnvOptions struct {
 	State                       string
 }
 
+func buildkitHostOrSkip() string {
+	buildkitHost := os.Getenv("WERF_TEST_BUILDKIT_HOST")
+	if buildkitHost == "" {
+		Skip("WERF_TEST_BUILDKIT_HOST is not set")
+	}
+	return buildkitHost
+}
+
 func setupEnv(opts setupEnvOptions) {
-	SuiteData.Stubs.SetEnv("WERF_BUILDAH_MODE", opts.ContainerBackendMode)
+	if opts.ContainerBackendMode == "buildkit" {
+		SuiteData.Stubs.SetEnv("WERF_BUILDKIT_HOST", buildkitHostOrSkip())
+	} else {
+		SuiteData.Stubs.UnsetEnv("WERF_BUILDKIT_HOST")
+	}
 
 	if opts.WithLocalRepo {
 		SuiteData.Stubs.SetEnv(

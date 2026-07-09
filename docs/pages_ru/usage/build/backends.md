@@ -7,77 +7,71 @@ permalink: usage/build/backends.html
 
 werf позволяет работать со следующими сборочными бэкендами:
 
--	Docker — традиционный способ, использующий системный Docker Daemon.
--	Buildah — безопасная сборка без демона, поддерживает rootless-режим и полностью встроен в werf.
+-	Docker — традиционный способ, использующий системный Docker Daemon. Используется по умолчанию, если BuildKit-эндпоинт не задан.
+-	BuildKit — сборка образов через внешний демон [buildkitd](https://github.com/moby/buildkit). Включается заданием BuildKit-эндпоинта через переменную окружения.
 
 > Необходимые требования и подготовка системы для работы со сборочными бэкендами описаны в разделе сайта [Быстрый старт]({{ site.url }}/getting_started/).
 
-## Buildah
+## BuildKit
 
-> На данный момент Buildah доступен только для пользователей Linux и Windows с включённой подсистемой WSL2. Для пользователей MacOS на данный момент предлагается использование виртуальной машины для запуска werf в режиме Buildah.
+Бэкенд BuildKit включается установкой переменной окружения `WERF_BUILDKIT_HOST` (или стандартной `BUILDKIT_HOST`) в адрес запущенного демона buildkitd. Если ни одна из этих переменных не задана, werf использует Docker-бэкенд.
 
-Buildah включается установкой переменной окружения `WERF_BUILDAH_MODE` в один из вариантов:
+### Эндпоинты
 
-* `auto` — автоматический выбор режима в зависимости от платформы и окружения;
-* `native-chroot` использует `chroot`-изоляцию для сборочных контейнеров;
-* `native-rootless` использует `rootless`-изоляцию для сборочных контейнеров. На этом уровне изоляции werf использует среду выполнения сборочных операций в контейнерах (runc, crun, kata или runsc).
+Поддерживаются следующие схемы эндпоинтов:
+
+*	`unix://` — локальный Unix-сокет;
+*	`tcp://` — TCP-эндпоинт;
+*	`docker-container://` — buildkitd, запущенный в Docker-контейнере;
+*	`kube-pod://` — buildkitd, запущенный в Kubernetes-поде;
+*	`podman-container://` — buildkitd, запущенный в Podman-контейнере;
+*	`ssh://` — buildkitd, доступный по SSH.
+
+### Быстрый старт
+
+Запустите buildkitd в локальном Docker-контейнере и укажите его адрес werf:
 
 ```shell
-export WERF_BUILDAH_MODE=auto
+docker run -d --name buildkitd --privileged moby/buildkit
+export BUILDKIT_HOST=docker-container://buildkitd
 ```
 
-### Конфигурация container registry
+После этого любая команда сборки werf будет использовать BuildKit-бэкенд.
 
-При использовании Buildah werf читает настройки container registry из `registries.conf`.
+### Требуется container registry
 
-Для secure-зеркал `docker.io` также можно использовать опцию `--container-registry-mirror` и переменные окружения `WERF_CONTAINER_REGISTRY_MIRROR_*`. Зеркала, заданные таким способом, по умолчанию считаются secure (`https`) зеркалами. При необходимости для обращений к registry можно включить глобальный insecure-режим werf через `--insecure-registry` или `--skip-tls-verify-registry`.
+BuildKit-бэкенд требует наличия удалённого container registry. Опция `--repo` (или переменная `WERF_REPO`) обязательна — локальное хранилище стадий (`:local`) не поддерживается. Собранные стадии пушатся по digest напрямую из buildkitd в указанный repo; werf затем накладывает свой тег стадии на опубликованный манифест на стороне registry.
 
-Поддерживаются следующие пути в порядке приоритета:
+### Поддерживаемые возможности
 
-1. путь из переменной окружения `CONTAINERS_REGISTRIES_CONF`;
-2. `~/.config/containers/registries.conf`;
-3. `/etc/containers/registries.conf`.
+BuildKit-бэкенд поддерживает оба режима сборки на паритете с Docker-бэкендом:
 
-Если задан `CONTAINERS_REGISTRIES_CONF`, werf использует только этот файл и соседнюю директорию `<path>.d`.
+*	Stapel-сборки (shell- и ansible-сборщики).
+*	Dockerfile-сборки, staged и non-staged.
 
-Если `CONTAINERS_REGISTRIES_CONF` не задан, werf использует первый найденный файл из стандартных путей и соседнюю директорию `<path>.d` для этого файла.
+Паритет включает:
 
-werf использует из этой конфигурации:
+*	проброс ssh-agent в сборку;
+*	сборочные секреты;
+*	настраиваемую сборочную сеть (`default`, `host`, `none`);
+*	пользовательские mounts.
 
-- зеркала для `docker.io`;
-- standalone insecure registries из `[[registry]] insecure = true`.
+### Семантика host mounts
 
-werf не парсит и не подменяет другие файлы container-конфигурации, например `shortnames.conf`.
+Host mounts stapel (`fromPath`, `mount: build_dir`) отображаются на persistent cache mounts BuildKit с ключом по host-пути. Данные живут в кэше buildkitd на стороне демона, а не в директории на host-машине werf. Кэш сохраняется между сборками и разделяется по ключу host-пути.
 
-Insecure-зеркало для `docker.io` не делает тот же host standalone insecure registry автоматически. Если один и тот же host должен использоваться и как зеркало `docker.io`, и как standalone insecure registry, его нужно описать двумя отдельными записями.
+### Insecure и self-signed registries
 
-### Драйвер хранилища
+Доступ к insecure registry, пользовательские CA и отключение TLS-верификации настраиваются на стороне демона buildkitd (обычно через `buildkitd.toml`). werf не транслирует свои флаги `--insecure-registry` / `--skip-tls-verify-registry` в buildkitd.
 
-werf может использовать драйвер хранилища `overlay` или `vfs`:
+### Очистка хоста
 
-* `overlay` позволяет использовать файловую систему OverlayFS. Можно использовать либо встроенную в ядро Linux поддержку OverlayFS (если она доступна), либо реализацию fuse-overlayfs. Это рекомендуемый выбор по умолчанию.
-* `vfs` обеспечивает доступ к виртуальной файловой системе вместо OverlayFS. Эта файловая система уступает по производительности и требует привилегированного контейнера, поэтому ее не рекомендуется использовать. Однако в некоторых случаях она может пригодиться.
+При использовании удалённого buildkitd на host-машине werf нет локального хранилища образов. Команды `werf host purge` и другие команды host-cleanup вместо локальной директории хранилища прунят сборочный кэш buildkitd.
 
-Как правило, достаточно использовать драйвер по умолчанию (`overlay`). Драйвер хранилища можно задать с помощью переменной окружения `WERF_BUILDAH_STORAGE_DRIVER`.
+### Ограничения
 
-### Ulimits
+В первой итерации BuildKit-бэкенд не поддерживает следующие опции:
 
-По умолчанию Buildah режим в werf наследует системные ulimits при запуске сборочных контейнеров. Пользователь может переопределить эти параметры с помощью переменной окружения `WERF_BUILDAH_ULIMIT`.
-
-Формат `WERF_BUILDAH_ULIMIT=type:softlimit[:hardlimit][,type:softlimit[:hardlimit],...]` — конфигурация лимитов, указанные через запятую:
-
-* `core`: максимальный размер дампа ядра (ulimit -c).
-* `cpu`: максимальное время процессора (ulimit -t).
-* `data`: максимальный размер сегмента данных процесса (ulimit -d).
-* `fsize`: максимальный размер новых файлов (ulimit -f).
-* `locks`: максимальное количество блокировок файлов (ulimit -x).
-* `memlock`: максимальное количество заблокированной памяти (ulimit -l).
-* `msgqueue`: максимальное количество данных в очередях сообщений (ulimit -q).
-* `nice`: настройка "niceness" (nice -n, ulimit -e).
-* `nofile`: максимальное количество открытых файлов (ulimit -n).
-* `nproc`: максимальное количество процессов (ulimit -u).
-* `rss`: максимальный размер резидентного набора памяти процесса (ulimit -m).
-* `rtprio`: максимальный приоритет для реального времени (ulimit -r).
-* `rttime`: максимальное время реального исполнения между блокирующими системными вызовами.
-* `sigpending`: максимальное количество ожидающих сигналов (ulimit -i).
-* `stack`: максимальный размер стека (ulimit -s).
+*	`--introspect-error`;
+*	`--introspect-before-error`;
+*	`--introspect-stage`.

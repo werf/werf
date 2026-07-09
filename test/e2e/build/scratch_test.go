@@ -61,15 +61,5 @@ var _ = Describe("Scratch stapel build", Label("e2e", "build", "scratch", "simpl
 			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: false,
 		}}),
-		Entry("using Native Buildah with chroot isolation", scratchTestOptions{setupEnvOptions{
-			ContainerBackendMode:        "native-chroot",
-			WithLocalRepo:               false,
-			WithStagedDockerfileBuilder: false,
-		}}),
-		Entry("using Native Buildah with chroot isolation and local repo", scratchTestOptions{setupEnvOptions{
-			ContainerBackendMode:        "native-chroot",
-			WithLocalRepo:               true,
-			WithStagedDockerfileBuilder: false,
-		}}),
 	)
 })

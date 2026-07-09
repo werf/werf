@@ -15,10 +15,6 @@ import (
 	"github.com/werf/werf/v2/pkg/buildkit"
 )
 
-type BuildkitInstruction interface {
-	ApplyBuildkit(ctx context.Context, stage *buildkit.DockerfileStageState) error
-}
-
 func (backend *BuildkitBackend) BuildDockerfileStage(ctx context.Context, baseImage string, opts BuildDockerfileStageOptions, instructions ...InstructionInterface) (string, error) {
 	repo, err := backend.getStagesStorageRepo()
 	if err != nil {
@@ -61,11 +57,7 @@ func (backend *BuildkitBackend) BuildDockerfileStage(ctx context.Context, baseIm
 	}
 
 	for _, instr := range instructions {
-		buildkitInstr, ok := instr.(BuildkitInstruction)
-		if !ok {
-			return "", fmt.Errorf("instruction %s is not supported by buildkit backend", instr.Name())
-		}
-		if err := buildkitInstr.ApplyBuildkit(ctx, stage); err != nil {
+		if err := instr.ApplyBuildkit(ctx, stage); err != nil {
 			return "", fmt.Errorf("unable to apply instruction %s: %w", instr.Name(), err)
 		}
 	}

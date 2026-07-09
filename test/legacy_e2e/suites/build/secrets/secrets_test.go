@@ -67,34 +67,16 @@ var _ = Describe("build with secrets and ssh mounts", Label("integration", "buil
 		Entry("with Docker", testOptions{
 			ContainerBackendMode: "docker",
 		}),
-		// Entry("with Native Buildah with rootless isolation", testOptions{
-		//	ContainerBackendMode: "native-rootless",
+		// Entry("with BuildKit", testOptions{
+		//	ContainerBackendMode: "buildkit",
 		// }),
-		Entry("with Native Buildah with chroot isolation", testOptions{
-			ContainerBackendMode: "native-chroot",
-			SSH:                  false,
-		}),
-		Entry("with Native Buildah with chroot isolation STAGED", testOptions{
-			ContainerBackendMode:        "native-chroot",
-			WithStagedDockerfileBuilder: true,
-			SSH:                         false,
-		}),
 		Entry("with Docker with SSH", testOptions{
 			ContainerBackendMode: "docker",
 			SSH:                  true,
 		}),
-		Entry("with Native Buildah with rootless isolation with SSH", testOptions{
+		Entry("with BuildKit with SSH", testOptions{
 			SSH:                  true,
-			ContainerBackendMode: "native-rootless",
-		}),
-		Entry("with Native Buildah with chroot isolation with SSH", testOptions{
-			SSH:                  true,
-			ContainerBackendMode: "native-chroot",
-		}),
-		Entry("with Native Buildah with chroot isolation with SSH STAGED", testOptions{
-			SSH:                         true,
-			ContainerBackendMode:        "native-chroot",
-			WithStagedDockerfileBuilder: true,
+			ContainerBackendMode: "buildkit",
 		}),
 	)
 })

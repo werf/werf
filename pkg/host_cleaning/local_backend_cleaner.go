@@ -69,9 +69,6 @@ func NewLocalBackendCleaner(backend container_backend.ContainerBackend, locker l
 	case *container_backend.DockerServerBackend:
 		cleaner.backendType = containerBackendDocker
 		return cleaner, nil
-	case *container_backend.BuildahBackend:
-		cleaner.backendType = containerBackendBuildah
-		return cleaner, nil
 	default:
 		// returns cleaner for testing with mock
 		cleaner.backendType = containerBackendTest
@@ -395,7 +392,6 @@ func (cleaner *LocalBackendCleaner) pruneImages(ctx context.Context, options Run
 
 		// Both backends support filters listed above:
 		// Docker: https://github.com/moby/moby/blob/25.0/daemon/containerd/image_prune.go#L22
-		// Buildah: https://github.com/containers/common/blob/v0.58/libimage/filters.go#L111
 	}
 
 	if options.DryRun {
@@ -422,7 +418,7 @@ func (cleaner *LocalBackendCleaner) pruneImages(ctx context.Context, options Run
 // pruneVolumes removes all anonymous volumes not used by at least one container
 func (cleaner *LocalBackendCleaner) pruneVolumes(ctx context.Context, options RunGCOptions) (cleanupReport, error) {
 	if options.DryRun {
-		// NOTE: Buildah does not give us a way to precalculate pruned size.
+		// NOTE: the backend does not give us a way to precalculate pruned size.
 		// NOTE: Docker does not give us a way to precalculate pruned size.
 		return cleanupReport{}, errOptionDryRunNotSupported
 	}

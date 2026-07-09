@@ -200,7 +200,7 @@ permalink: resources/telemetry.html
   * для `CommandStarted`: список используемых опций команды с флагами (`asCli`, `asEnv`, `count`);
   * для `CommandExited`: код выхода (`exitCode`), длительность выполнения команды в миллисекундах (`durationMs`);
   * для `UnshallowFailed`: сообщение об ошибке (`errorMessage`), версии GitLab Runner (`gitlabRunnerVersion`) и Server (`gitlabServerVersion`);
-  * для `BuildStarted`: количество образов для сборки (`imagesCount`), используемый контейнерный бэкенд (`containerBackend`: `docker`/`buildah`), а также флаг запуска werf внутри контейнера (`inContainer`);
+  * для `BuildStarted`: количество образов для сборки (`imagesCount`), используемый контейнерный бэкенд (`containerBackend`: `docker`/`buildkit`), а также флаг запуска werf внутри контейнера (`inContainer`);
   * для `BuildFinished`: длительность сборки (`durationMs`), успешность (`success`), количество образов (`imagesCount`);
   * для `ImageBuildFinished`: имя образа (`image`), время сборки (`durationMs`), флаг пересборки (`rebuilt`), тип конфигурации образа (`configType`: `stapel`/`dockerfile`/`staged`/`unknown`);
   * для `StageBuildFinished`: имя образа (`image`), имя стадии (`stage`), время сборки (`durationMs`), флаг использования кэша (`fromCache`), источник базового образа (`baseImageSource`: `repo`/`secondary`/пустое значение), флаг загрузки базового образа (`baseImagePulled`).

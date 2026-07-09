@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/buildah"
+	"github.com/werf/werf/v2/pkg/buildkit"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/git_repo"
@@ -22,7 +22,6 @@ import (
 type ComponentsManager struct {
 	registryMirrors  *[]string
 	containerBackend container_backend.ContainerBackend
-	buildahMode      buildah.Mode
 }
 
 type InitCommonComponentsOptions struct {
@@ -116,23 +115,17 @@ func InitCommonComponents(ctx context.Context, opts InitCommonComponentsOptions)
 	return cmanager, ctx, nil
 }
 
-// InitContainerBackendComponents initializes buildah mode, docker config, registry mirrors,
+// InitContainerBackendComponents initializes docker config, registry mirrors,
 // docker registry and/or container backend, storing results on m. Safe to call multiple times;
 // each initXxx section only runs the parts requested by initDockerRegistry/initProcessContainerBackend.
 func (m *ComponentsManager) InitContainerBackendComponents(ctx context.Context, cmd *CmdData, initDockerRegistry, initProcessContainerBackend bool) (context.Context, error) {
-	buildahMode, _, err := GetBuildahMode()
-	if err != nil {
-		return ctx, fmt.Errorf("unable to determine buildah mode: %w", err)
-	}
-	m.buildahMode = *buildahMode
-
 	// Set DOCKER_CONFIG early so that authn.DefaultKeychain (used by go-containerregistry)
 	// picks up custom credentials even when the full container backend is not initialized.
 	if err := docker.InitDockerConfig(docker.InitOptions{DockerConfigDir: *cmd.DockerConfig}); err != nil {
 		return ctx, fmt.Errorf("init docker config: %w", err)
 	}
 
-	if initProcessContainerBackend && m.buildahMode == buildah.ModeDisabled {
+	if initProcessContainerBackend && buildkit.HostFromEnv() == "" {
 		newCtx, err := InitProcessDocker(ctx, cmd)
 		if err != nil {
 			return ctx, fmt.Errorf("unable to init docker: %w", err)
@@ -140,14 +133,14 @@ func (m *ComponentsManager) InitContainerBackendComponents(ctx context.Context, 
 		ctx = newCtx
 	}
 
-	rm, err := GetContainerRegistryMirror(ctx, cmd, m.buildahMode)
+	rm, err := GetContainerRegistryMirror(ctx, cmd)
 	if err != nil {
 		return ctx, fmt.Errorf("error get container registry mirrors: %w", err)
 	}
 	m.registryMirrors = &rm
 
 	if initDockerRegistry {
-		if err := DockerRegistryInit(ctx, cmd, *m.registryMirrors, m.buildahMode); err != nil {
+		if err := DockerRegistryInit(ctx, cmd, *m.registryMirrors); err != nil {
 			return ctx, fmt.Errorf("docker registry initialization error: %w", err)
 		}
 	}
@@ -199,10 +192,6 @@ func (m *ComponentsManager) ContainerBackend() container_backend.ContainerBacken
 // initialization is optional.
 func (m *ComponentsManager) TryContainerBackend() (container_backend.ContainerBackend, bool) {
 	return m.containerBackend, m.containerBackend != nil
-}
-
-func (m *ComponentsManager) BuildahMode() buildah.Mode {
-	return m.buildahMode
 }
 
 func (m *ComponentsManager) TerminateSSHAgent() {

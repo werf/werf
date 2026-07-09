@@ -24,7 +24,6 @@ import (
 	"github.com/werf/nelm/pkg/log"
 	"github.com/werf/werf/v2/pkg/build"
 	"github.com/werf/werf/v2/pkg/build/stage"
-	"github.com/werf/werf/v2/pkg/buildah"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/docker"
@@ -506,7 +505,7 @@ func SetupInsecureRegistry(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupContainerRegistryMirror(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.ContainerRegistryMirror = new([]string)
-	cmd.Flags().StringArrayVarP(cmdData.ContainerRegistryMirror, "container-registry-mirror", "", []string{}, "(Buildah-only) Use specified mirrors for docker.io")
+	cmd.Flags().StringArrayVarP(cmdData.ContainerRegistryMirror, "container-registry-mirror", "", []string{}, "Use specified mirrors for docker.io")
 }
 
 func SetupSkipTlsVerifyRegistry(cmdData *CmdData, cmd *cobra.Command) {
@@ -819,12 +818,7 @@ type GetStagesStorageOpts struct {
 }
 
 func GetStagesStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData, opts GetStagesStorageOpts) (storage.PrimaryStagesStorage, error) {
-	buildahMode, _, err := GetBuildahMode()
-	if err != nil {
-		return nil, fmt.Errorf("unable to determine buildah mode: %w", err)
-	}
-
-	insecureRegistryHosts, err := GetInsecureRegistryHosts(ctx, cmdData, *buildahMode)
+	insecureRegistryHosts, err := GetInsecureRegistryHosts(ctx, cmdData)
 	if err != nil {
 		return nil, fmt.Errorf("get insecure registry hosts: %w", err)
 	}
@@ -856,12 +850,7 @@ func GetOptionalFinalStagesStorage(ctx context.Context, containerBackend contain
 		return nil, nil
 	}
 
-	buildahMode, _, err := GetBuildahMode()
-	if err != nil {
-		return nil, fmt.Errorf("unable to determine buildah mode: %w", err)
-	}
-
-	insecureRegistryHosts, err := GetInsecureRegistryHosts(ctx, cmdData, *buildahMode)
+	insecureRegistryHosts, err := GetInsecureRegistryHosts(ctx, cmdData)
 	if err != nil {
 		return nil, fmt.Errorf("get insecure registry hosts: %w", err)
 	}
@@ -884,12 +873,7 @@ func GetOptionalMetaStorage(ctx context.Context, containerBackend container_back
 		return nil, fmt.Errorf("--meta-repo requires --repo to be set")
 	}
 
-	buildahMode, _, err := GetBuildahMode()
-	if err != nil {
-		return nil, fmt.Errorf("unable to determine buildah mode: %w", err)
-	}
-
-	insecureRegistryHosts, err := GetInsecureRegistryHosts(ctx, cmdData, *buildahMode)
+	insecureRegistryHosts, err := GetInsecureRegistryHosts(ctx, cmdData)
 	if err != nil {
 		return nil, fmt.Errorf("get insecure registry hosts: %w", err)
 	}
@@ -906,12 +890,7 @@ func GetOptionalMetaStorage(ctx context.Context, containerBackend container_back
 func GetCacheStagesStorageList(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData) ([]storage.StagesStorage, error) {
 	var res []storage.StagesStorage
 
-	buildahMode, _, err := GetBuildahMode()
-	if err != nil {
-		return nil, fmt.Errorf("unable to determine buildah mode: %w", err)
-	}
-
-	insecureRegistryHosts, err := GetInsecureRegistryHosts(ctx, cmdData, *buildahMode)
+	insecureRegistryHosts, err := GetInsecureRegistryHosts(ctx, cmdData)
 	if err != nil {
 		return nil, fmt.Errorf("get insecure registry hosts: %w", err)
 	}
@@ -943,12 +922,7 @@ func GetSecondaryStagesStorageList(ctx context.Context, stagesStorage storage.St
 		res = append(res, storage.NewLocalStagesStorage(containerBackend))
 	}
 
-	buildahMode, _, err := GetBuildahMode()
-	if err != nil {
-		return nil, fmt.Errorf("unable to determine buildah mode: %w", err)
-	}
-
-	insecureRegistryHosts, err := GetInsecureRegistryHosts(ctx, cmdData, *buildahMode)
+	insecureRegistryHosts, err := GetInsecureRegistryHosts(ctx, cmdData)
 	if err != nil {
 		return nil, fmt.Errorf("get insecure registry hosts: %w", err)
 	}
@@ -973,16 +947,16 @@ func GetSecondaryStagesStorageList(ctx context.Context, stagesStorage storage.St
 	return res, nil
 }
 
-func DockerRegistryInit(ctx context.Context, cmdData *CmdData, registryMirrors []string, buildahMode buildah.Mode) error {
-	insecureHosts, err := GetInsecureRegistryHosts(ctx, cmdData, buildahMode)
+func DockerRegistryInit(ctx context.Context, cmdData *CmdData, registryMirrors []string) error {
+	insecureHosts, err := GetInsecureRegistryHosts(ctx, cmdData)
 	if err != nil {
 		return fmt.Errorf("get insecure registry hosts: %w", err)
 	}
 	return docker_registry.Init(ctx, *cmdData.InsecureRegistry, *cmdData.SkipTlsVerifyRegistry, registryMirrors, insecureHosts)
 }
 
-func CreateDockerRegistryWithInsecureHosts(ctx context.Context, cmdData *CmdData, addr string, buildahMode buildah.Mode) (docker_registry.Interface, error) {
-	insecureHosts, err := GetInsecureRegistryHosts(ctx, cmdData, buildahMode)
+func CreateDockerRegistryWithInsecureHosts(ctx context.Context, cmdData *CmdData, addr string) (docker_registry.Interface, error) {
+	insecureHosts, err := GetInsecureRegistryHosts(ctx, cmdData)
 	if err != nil {
 		return nil, fmt.Errorf("get insecure registry hosts: %w", err)
 	}
@@ -990,7 +964,7 @@ func CreateDockerRegistryWithInsecureHosts(ctx context.Context, cmdData *CmdData
 	return CreateDockerRegistry(ctx, addr, *cmdData.InsecureRegistry, *cmdData.SkipTlsVerifyRegistry, insecureHosts)
 }
 
-func GetInsecureRegistryHosts(ctx context.Context, cmdData *CmdData, buildahMode buildah.Mode) ([]string, error) {
+func GetInsecureRegistryHosts(ctx context.Context, cmdData *CmdData) ([]string, error) {
 	if (cmdData.InsecureRegistry != nil && *cmdData.InsecureRegistry) || (cmdData.SkipTlsVerifyRegistry != nil && *cmdData.SkipTlsVerifyRegistry) {
 		return nil, nil
 	}
@@ -1008,22 +982,12 @@ func GetInsecureRegistryHosts(ctx context.Context, cmdData *CmdData, buildahMode
 		}
 	}
 
-	if buildahMode != buildah.ModeDisabled {
-		hosts, err := buildah.GetInsecureRegistriesFromConfig(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("get insecure registries from containers config: %w", err)
-		}
-		for _, h := range hosts {
-			addHost(h)
-		}
-	} else {
-		dockerInsecure, err := docker.GetInsecureRegistries(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("get docker insecure registries: %w", err)
-		}
-		for _, h := range dockerInsecure {
-			addHost(h)
-		}
+	dockerInsecure, err := docker.GetInsecureRegistries(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get docker insecure registries: %w", err)
+	}
+	for _, h := range dockerInsecure {
+		addHost(h)
 	}
 
 	return result, nil
@@ -1266,22 +1230,12 @@ func GetSecondaryStagesStorage(cmdData *CmdData) []string {
 	return append(util.PredefinedValuesByEnvNamePrefix("WERF_SECONDARY_REPO_"), *cmdData.SecondaryStagesStorage...)
 }
 
-func GetContainerRegistryMirror(ctx context.Context, cmdData *CmdData, buildahMode buildah.Mode) ([]string, error) {
+func GetContainerRegistryMirror(ctx context.Context, cmdData *CmdData) ([]string, error) {
 	cmdMirrors := append(util.PredefinedValuesByEnvNamePrefix("WERF_CONTAINER_REGISTRY_MIRROR_"), *cmdData.ContainerRegistryMirror...)
 
-	var backendMirrors []string
-	if buildahMode != buildah.ModeDisabled {
-		m, err := buildah.GetRegistryMirrorsFromConfig(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("get registry mirrors from containers config: %w", err)
-		}
-		backendMirrors = m
-	} else {
-		m, err := docker.GetRegistryMirrors(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("get docker registry mirrors: %w", err)
-		}
-		backendMirrors = m
+	backendMirrors, err := docker.GetRegistryMirrors(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get docker registry mirrors: %w", err)
 	}
 
 	var result []string

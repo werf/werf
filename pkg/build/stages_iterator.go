@@ -53,7 +53,7 @@ func (iterator *StagesIterator) GetPrevBuiltImage(img *build_image.Image, stg st
 }
 
 func (iterator *StagesIterator) OnImageStage(ctx context.Context, img *build_image.Image, stg stage.Interface, onImageStageFunc func(img *build_image.Image, stg stage.Interface, isEmpty bool) error) error {
-	isEmpty, err := stg.IsEmpty(ctx, iterator.Conveyor, iterator.GetPrevBuiltImage(img, stg)) // FIXME(stapel-to-buildah): use StageImage
+	isEmpty, err := stg.IsEmpty(ctx, iterator.Conveyor, iterator.GetPrevBuiltImage(img, stg)) // FIXME: use StageImage
 	if err != nil {
 		return fmt.Errorf("error checking stage %s is empty: %w", stg.Name(), err)
 	}

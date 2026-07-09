@@ -27,7 +27,7 @@ werf bundle plan [options]
             Also, can be specified with $WERF_ADD_LABEL_* (e.g.                                     
             $WERF_ADD_LABEL_1=labelName1=labelValue1, $WERF_ADD_LABEL_2=labelName2=labelValue2)
       --container-registry-mirror=[]
-            (Buildah-only) Use specified mirrors for docker.io
+            Use specified mirrors for docker.io
       --debug-templates=false
             Enable debug mode for Go templates (default $WERF_DEBUG_TEMPLATES or false)
       --delete-propagation=""

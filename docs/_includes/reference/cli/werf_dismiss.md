@@ -42,14 +42,14 @@ werf dismiss [options]
       --allow-includes-update=false
             Allow use includes latest versions (default $WERF_ALLOW_INCLUDES_UPDATE or false)
       --allowed-backend-storage-volume-usage=70
-            Set allowed percentage of backend (Docker or Buildah) storage volume usage which will   
-            cause cleanup of least recently used local backend images (default 70% or               
+            Set allowed percentage of backend (Docker) storage volume usage which will cause        
+            cleanup of least recently used local backend images (default 70% or                     
             $WERF_ALLOWED_BACKEND_STORAGE_VOLUME_USAGE)
       --allowed-backend-storage-volume-usage-margin=5
-            During cleanup of least recently used local backend (Docker or Buildah) images werf     
-            would delete images until volume usage becomes below                                    
-            "allowed-backend-storage-volume-usage - allowed-backend-storage-volume-usage-margin"    
-            level (default 5% or $WERF_ALLOWED_BACKEND_STORAGE_VOLUME_USAGE_MARGIN)
+            During cleanup of least recently used local backend (Docker) images werf would delete   
+            images until volume usage becomes below "allowed-backend-storage-volume-usage -         
+            allowed-backend-storage-volume-usage-margin" level (default 5% or                       
+            $WERF_ALLOWED_BACKEND_STORAGE_VOLUME_USAGE_MARGIN)
       --allowed-local-cache-volume-usage=70
             Set allowed percentage of local cache (~/.werf/local_cache by default) volume usage     
             which will cause cleanup of least recently used data from the local cache (default 70%  
@@ -60,9 +60,9 @@ werf dismiss [options]
             allowed-local-cache-volume-usage-margin" level (default 5% or                           
             $WERF_ALLOWED_LOCAL_CACHE_VOLUME_USAGE_MARGIN)
       --backend-storage-path=""
-            Use specified path to the local backend (Docker or Buildah) storage to check backend    
-            storage volume usage while performing garbage collection of local backend images        
-            (detect local backend storage path by default or use $WERF_BACKEND_STORAGE_PATH)
+            Use specified path to the local backend (Docker) storage to check backend storage       
+            volume usage while performing garbage collection of local backend images (detect local  
+            backend storage path by default or use $WERF_BACKEND_STORAGE_PATH)
       --cache-repo=[]
             Specify one or multiple cache repos with images that will be used as a cache. Cache     
             will be populated when pushing newly built images into the primary repo and when        
@@ -79,7 +79,7 @@ werf dismiss [options]
             Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf   
             in working directory)
       --container-registry-mirror=[]
-            (Buildah-only) Use specified mirrors for docker.io
+            Use specified mirrors for docker.io
       --debug-templates=false
             Enable debug mode for Go templates (default $WERF_DEBUG_TEMPLATES or false)
       --delete-propagation=""

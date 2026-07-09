@@ -33,7 +33,7 @@ werf bundle apply [options]
             Enable auto rollback of the failed release to the previous deployed release version     
             when current deploy process have failed ($WERF_AUTO_ROLLBACK by default)
       --container-registry-mirror=[]
-            (Buildah-only) Use specified mirrors for docker.io
+            Use specified mirrors for docker.io
       --debug-templates=false
             Enable debug mode for Go templates (default $WERF_DEBUG_TEMPLATES or false)
       --delete-propagation=""

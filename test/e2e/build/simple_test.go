@@ -79,13 +79,8 @@ var _ = Describe("Simple build", Label("e2e", "build", "simple"), func() {
 			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: false,
 		}}),
-		Entry("with local repo using Native Buildah with rootless isolation", simpleTestOptions{setupEnvOptions{
-			ContainerBackendMode:        "native-rootless",
-			WithLocalRepo:               true,
-			WithStagedDockerfileBuilder: false,
-		}}),
-		Entry("with local repo using Native Buildah with chroot isolation", simpleTestOptions{setupEnvOptions{
-			ContainerBackendMode:        "native-chroot",
+		Entry("with local repo using BuildKit", simpleTestOptions{setupEnvOptions{
+			ContainerBackendMode:        "buildkit",
 			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: false,
 		}}),

@@ -7,11 +7,11 @@ import (
 	"strings"
 )
 
-const _containerBackendTypeName = "DockerBuildahTest"
+const _containerBackendTypeName = "DockerTest"
 
-var _containerBackendTypeIndex = [...]uint8{0, 6, 13, 17}
+var _containerBackendTypeIndex = [...]uint8{0, 6, 10}
 
-const _containerBackendTypeLowerName = "dockerbuildahtest"
+const _containerBackendTypeLowerName = "dockertest"
 
 func (i containerBackendType) String() string {
 	if i >= containerBackendType(len(_containerBackendTypeIndex)-1) {
@@ -25,25 +25,21 @@ func (i containerBackendType) String() string {
 func _containerBackendTypeNoOp() {
 	var x [1]struct{}
 	_ = x[containerBackendDocker-(0)]
-	_ = x[containerBackendBuildah-(1)]
-	_ = x[containerBackendTest-(2)]
+	_ = x[containerBackendTest-(1)]
 }
 
-var _containerBackendTypeValues = []containerBackendType{containerBackendDocker, containerBackendBuildah, containerBackendTest}
+var _containerBackendTypeValues = []containerBackendType{containerBackendDocker, containerBackendTest}
 
 var _containerBackendTypeNameToValueMap = map[string]containerBackendType{
-	_containerBackendTypeName[0:6]:        containerBackendDocker,
-	_containerBackendTypeLowerName[0:6]:   containerBackendDocker,
-	_containerBackendTypeName[6:13]:       containerBackendBuildah,
-	_containerBackendTypeLowerName[6:13]:  containerBackendBuildah,
-	_containerBackendTypeName[13:17]:      containerBackendTest,
-	_containerBackendTypeLowerName[13:17]: containerBackendTest,
+	_containerBackendTypeName[0:6]:       containerBackendDocker,
+	_containerBackendTypeLowerName[0:6]:  containerBackendDocker,
+	_containerBackendTypeName[6:10]:      containerBackendTest,
+	_containerBackendTypeLowerName[6:10]: containerBackendTest,
 }
 
 var _containerBackendTypeNames = []string{
 	_containerBackendTypeName[0:6],
-	_containerBackendTypeName[6:13],
-	_containerBackendTypeName[13:17],
+	_containerBackendTypeName[6:10],
 }
 
 // containerBackendTypeString retrieves an enum value from the enum constants string name.

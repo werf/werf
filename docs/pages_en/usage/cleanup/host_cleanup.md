@@ -7,11 +7,11 @@ permalink: usage/cleanup/host_cleanup.html
 
 Host cleanup removes irrelevant data and reduces cache size **automatically** as part of the basic werf command invocation and **for all projects** at once. If necessary, the cleanup can be performed manually using the [**werf host cleanup**]({{"reference/cli/werf_host_cleanup.html" | true_relative_url }}) command.
 
-## Changing build backend (Docker or Buildah) storage directory
+## Changing build backend (Docker or BuildKit) storage directory
 
 The `--backend-storage-path` parameter (or the `WERF_BACKEND_STORAGE_PATH` environment variable) allows you to explicitly specify the backend storage directory in case werf fails to detect it automatically.
 
-## Changing the space usage threshold and cleanup depth of build backend (Docker or Buildah) storage
+## Changing the space usage threshold and cleanup depth of build backend (Docker or BuildKit) storage
 
 The `--allowed-backend-storage-volume-usage` (`WERF_ALLOWED_BACKEND_STORAGE_VOLUME_USAGE`) parameter allows you to adjust the volume usage threshold (the default is 70%). Reaching it will trigger a backend storage cleanup. You can specify the value as a percentage (e.g., `70`) or in absolute units (e.g., `50GB`, `100GiB`).
 
@@ -19,7 +19,7 @@ The `--allowed-backend-storage-volume-usage-margin` (`WERF_ALLOWED_BACKEND_STORA
 
 > **Note:** Options within the same group (e.g., usage and margin for backend storage) must use the same units. Mixing percentages and absolute units (e.g., `--allowed-backend-storage-volume-usage=100GB --allowed-backend-storage-volume-usage-margin=5`) is not allowed.
 
-## Cleaning a build backend cache (Docker or Buildah)
+## Cleaning a build backend cache (Docker or BuildKit)
 
 When cleaning up the host, werf removes containers, images, and unused volumes. However, the strategy for cleaning the build cache of the build backend is left to the user.
 
@@ -28,7 +28,7 @@ For example, when using the Docker backend, the following approaches can be used
 - Set a cache size limit in the [builder configuration](https://docs.docker.com/build/cache/garbage-collection/#configuration).
 - Configure periodic cleanup using `cron` and the `docker buildx prune --max-used-space=bytes` command.
 
-Similarly, users can set up a custom cleanup strategy for Buildah.
+Similarly, users can set up a custom cleanup strategy for BuildKit by pruning the buildkitd build cache (e.g., `buildctl prune`) on a schedule.
 
 ## Changing the space usage threshold and cleanup depth of the local cache
 

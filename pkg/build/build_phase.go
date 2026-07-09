@@ -107,7 +107,7 @@ func (phase *BuildPhase) BeforeImages(ctx context.Context) error {
 
 	backend := "docker"
 	if phase.Conveyor.ContainerBackend.HasStapelBuildSupport() {
-		backend = "buildah"
+		backend = "buildkit"
 	}
 
 	werfInContainer := os.Getenv("WERF_CONTAINERIZED") == "yes"
@@ -930,7 +930,7 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, s
 		opts.Anchor = true
 		opts.HolisticInputs = holisticInputs
 	} else {
-		// FIXME(stapel-to-buildah): store StageImage-s everywhere in stage and build pkgs
+		// FIXME: store StageImage-s everywhere in stage and build pkgs
 		deps, err := stg.GetDependencies(ctx, phase.Conveyor, phase.Conveyor.ContainerBackend, phase.StagesIterator.GetPrevImage(img, stg), phase.StagesIterator.GetPrevBuiltImage(img, stg), phase.buildContextArchive)
 		if err != nil {
 			return false, nil, err
@@ -1256,7 +1256,7 @@ func introspectStage(ctx context.Context, s stage.Interface) error {
 		}).
 		DoError(func() error {
 			if err := logboek.Context(ctx).Streams().DoErrorWithoutProxyStreamDataFormatting(func() error {
-				return s.GetStageImage().Image.Introspect(ctx) // FIXME(stapel-to-buildah): use container backend operation
+				return s.GetStageImage().Image.Introspect(ctx) // FIXME: use container backend operation
 			}); err != nil {
 				return fmt.Errorf("introspect error failed: %w", err)
 			}
