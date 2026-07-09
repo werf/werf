@@ -6,7 +6,7 @@ import (
 )
 
 func TestSlug(t *testing.T) {
-	legacyCaseWithTwoHyphensMaxSize := 48
+	trailingHyphenMaxSize := 48
 
 	tests := []struct {
 		name    string
@@ -35,16 +35,16 @@ func TestSlug(t *testing.T) {
 			result: strings.Repeat("x", DefaultSlugMaxSize-len("-27e2f02f")) + "-27e2f02f",
 		},
 		{
-			name:    "legacyCaseWithTwoHyphen",
+			name:    "trailingHyphenStripped",
 			data:    "postgres-feature-31981-change-delivery-date-del-result",
-			maxSize: &legacyCaseWithTwoHyphensMaxSize,
-			result:  "postgres-feature-31981-change-delivery--852739dc",
+			maxSize: &trailingHyphenMaxSize,
+			result:  "postgres-feature-31981-change-delivery-852739dc",
 		},
 		{
-			name:    "legacyCaseWithTwoHyphen_2",
+			name:    "trailingHyphenStripped_2",
 			data:    "php_fpm_exporter-monitoring-dev-encrypt-1",
-			maxSize: &legacyCaseWithTwoHyphensMaxSize,
-			result:  "php-fpm-exporter-monitoring-dev-encrypt--83286e5",
+			maxSize: &trailingHyphenMaxSize,
+			result:  "php-fpm-exporter-monitoring-dev-encrypt-83286e5",
 		},
 	}
 

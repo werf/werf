@@ -179,9 +179,7 @@ func slug(data string, maxSize int) string {
 	if sluggedData != "" {
 		croppedSluggedData := cropSluggedData(sluggedData, murmurHash, maxSize)
 
-		// legacy: this check cannot be fixed without breaking reproducibility.
-		// Fix by replacing HasPrefix on HasSuffix in the following major releases.
-		if strings.HasPrefix(croppedSluggedData, "-") {
+		if strings.HasSuffix(croppedSluggedData, "-") {
 			slugParts = append(slugParts, croppedSluggedData[:len(croppedSluggedData)-1])
 		} else {
 			slugParts = append(slugParts, croppedSluggedData)
