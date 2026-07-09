@@ -48,7 +48,7 @@ werf rollback --revision 10
             in working directory)
       --delete-propagation=""
             Set default delete propagation strategy (default $WERF_DELETE_PROPAGATION or            
-            Foreground).
+            Background).
       --dev=false
             Enable development mode (default $WERF_DEV).
             The mode allows working with project files without doing redundant commits during       
