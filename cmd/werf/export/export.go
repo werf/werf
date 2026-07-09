@@ -143,7 +143,6 @@ Also, can be specified with $WERF_EXPORT_ADD_LABEL_* (e.g. $WERF_EXPORT_ADD_LABE
 		cmd.Flags().StringVarP(&addLabelSeparator, "add-label-separator", "", defaultValue, fmt.Sprintf(`Separator for --add-label values (default $WERF_EXPORT_ADD_LABEL_SEPARATOR or %q)`, defaultAddLabelSeparator))
 	}
 
-	commonCmdData.SetupSkipImageSpecStage(cmd)
 
 	return cmd
 }

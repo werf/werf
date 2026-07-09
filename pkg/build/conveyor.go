@@ -80,7 +80,6 @@ type ConveyorOptions struct {
 	TargetPlatforms    []string
 	DeferBuildLog      bool
 	ImagesToProcess    config.ImagesToProcess
-	SkipImageSpecStage bool
 	UseBuildReport     bool
 	BuildReportPath    string
 }
@@ -372,13 +371,6 @@ func (c *Conveyor) GetRemoteGitRepo(key string) *git_repo.Remote {
 	defer c.GetServiceRWMutex("RemoteGitRepo").RUnlock()
 
 	return c.remoteGitRepos[key]
-}
-
-func (c *Conveyor) SkipImageSpecStage() bool {
-	c.GetServiceRWMutex("SkipImageSpecStage").RLock()
-	defer c.GetServiceRWMutex("SkipImageSpecStage").RUnlock()
-
-	return c.ConveyorOptions.SkipImageSpecStage
 }
 
 func (c *Conveyor) SetShouldAddManagedImagesRecords() {

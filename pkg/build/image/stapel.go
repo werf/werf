@@ -122,7 +122,7 @@ func initStages(ctx context.Context, image *Image, metaConfig *config.Meta, stap
 		stages = append(stages, stage.NewGitLatestPatchStage(gitPatchStageOptions, baseStageOptions))
 	}
 
-	if imageBaseConfig.ImageSpec != nil && !opts.Conveyor.SkipImageSpecStage() {
+	if imageBaseConfig.ImageSpec != nil {
 		stages = appendIfExist(ctx, stages, stage.GenerateImageSpecStage(imageBaseConfig.ImageSpec, baseStageOptions))
 	}
 
