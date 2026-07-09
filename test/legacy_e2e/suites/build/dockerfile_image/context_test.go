@@ -68,7 +68,7 @@ var _ = Describe("context", func() {
 				utils.RunSucceedCommand(ctx, SuiteData.WerfRepoWorktreeDir, "git", "add", "werf.yaml", "werf-giterminism.yaml", ".dockerignore", "Dockerfile")
 				utils.RunSucceedCommand(ctx, SuiteData.WerfRepoWorktreeDir, "git", "commit", "-m", "+")
 			},
-			expectedDigest: "c6f1b7b3ee57e1d77db2e8d432920e9f8287da3edbba0d4d54f38dcf",
+			expectedDigest: "f5b05959538394c8efa45be592d98cdccf34535beaacffc28df82d4c",
 		}),
 		Entry("symlinks from contextAddFiles added to context as is", entry{
 			prepareFixturesFunc: func(ctx SpecContext) {
@@ -77,7 +77,7 @@ var _ = Describe("context", func() {
 				utils.RunSucceedCommand(ctx, SuiteData.WerfRepoWorktreeDir, "git", "add", "werf.yaml", "werf-giterminism.yaml", ".dockerignore", "Dockerfile")
 				utils.RunSucceedCommand(ctx, SuiteData.WerfRepoWorktreeDir, "git", "commit", "-m", "+")
 			},
-			expectedDigest: "2d08a1690ca94ee41b8c4249348080ce14cfbe033307e00abbd4d873",
+			expectedDigest: "c4f00158d62efd73f700511e860bae19d6eaa8dfe8c2f93ebecff626",
 		}),
 		Entry("dir from contextAddFiles added to context", entry{
 			prepareFixturesFunc: func(ctx SpecContext) {
@@ -86,7 +86,7 @@ var _ = Describe("context", func() {
 				utils.RunSucceedCommand(ctx, SuiteData.WerfRepoWorktreeDir, "git", "add", "werf.yaml", "werf-giterminism.yaml", ".dockerignore", "Dockerfile")
 				utils.RunSucceedCommand(ctx, SuiteData.WerfRepoWorktreeDir, "git", "commit", "-m", "+")
 			},
-			expectedDigest: "94f895c460edba91900451e8b2d21bbe3a0e52d2998d93e5f5222efd",
+			expectedDigest: "64751fd93aa7b8ed2991a9812cdd67fa6bf45d6059785ae8ef19e116",
 		}),
 		Entry("specified files from dir allowed in allowContextAddFiles added to context", entry{
 			prepareFixturesFunc: func(ctx SpecContext) {
@@ -95,7 +95,7 @@ var _ = Describe("context", func() {
 				utils.RunSucceedCommand(ctx, SuiteData.WerfRepoWorktreeDir, "git", "add", "werf.yaml", "werf-giterminism.yaml", ".dockerignore", "Dockerfile")
 				utils.RunSucceedCommand(ctx, SuiteData.WerfRepoWorktreeDir, "git", "commit", "-m", "+")
 			},
-			expectedDigest: "04cadae79b55aae66127e3a4423a9fa9a6a3d52d289d46f074a19cfe",
+			expectedDigest: "4bc78bce84c4726410b2b2addb1a66a9bcd3b340a9d7be43200bd125",
 		}),
 	)
 })

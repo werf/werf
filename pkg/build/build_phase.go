@@ -1281,9 +1281,9 @@ func calculateDigest(ctx context.Context, stageName, stageDependencies string, p
 			args = append(args, s)
 		}
 		digest := util.Sha3_224Hash(args...)
-		logboek.Context(ctx).Debug().LogBlock(fmt.Sprintf("Anchor stage %s digest %s", stageName, digest)).Do(func() {
+		logboek.Context(ctx).Debug().LogBlock(fmt.Sprintf("Content-based tag stage %s digest %s", stageName, digest)).Do(func() {
 			for i, a := range args {
-				logboek.Context(ctx).Debug().LogF("holistic[%d] => %q\n", i, a)
+				logboek.Context(ctx).Debug().LogF("input[%d] => %q\n", i, a)
 			}
 		})
 		return digest, nil
