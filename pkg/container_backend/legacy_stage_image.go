@@ -2,7 +2,6 @@ package container_backend
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/werf/werf/v2/pkg/docker"
 )
@@ -42,14 +41,6 @@ func (i *LegacyStageImage) GetID() string {
 		return stageDesc.Info.Name
 	}
 	return i.legacyBaseImage.Name()
-}
-
-func (i *LegacyStageImage) MustGetBuiltID() string {
-	builtId := i.BuiltID()
-	if builtId == "" {
-		panic(fmt.Sprintf("image %s built id is not available", i.Name()))
-	}
-	return builtId
 }
 
 func (i *LegacyStageImage) SetBuiltID(builtID string) {

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 
@@ -18,11 +17,8 @@ import (
 	"github.com/werf/werf/v2/pkg/container_backend/stage_builder"
 )
 
-const scriptFileName = "script.sh"
-
 type Extra struct {
-	ContainerWerfPath string
-	TmpPath           string
+	TmpPath string
 }
 
 type Shell struct {
@@ -172,10 +168,6 @@ func (b *Shell) stageHostTmpDir(userStageName string) (string, error) {
 	}
 
 	return p, nil
-}
-
-func (b *Shell) containerTmpDir() string {
-	return path.Join(b.extra.ContainerWerfPath, "shell")
 }
 
 func (b *Shell) addBuildSecretsVolumes(stageHostTmpDir string, fn func(string)) error {

@@ -13,7 +13,7 @@ import (
 
 func getBuilder(imageBaseConfig *config.StapelImageBase, baseStageOptions *BaseStageOptions) builder.Builder {
 	var b builder.Builder
-	extra := &builder.Extra{ContainerWerfPath: baseStageOptions.ContainerWerfDir, TmpPath: baseStageOptions.ImageTmpDir}
+	extra := &builder.Extra{TmpPath: baseStageOptions.ImageTmpDir}
 	if imageBaseConfig.Shell != nil {
 		b = builder.NewShellBuilder(imageBaseConfig.Shell, extra, imageBaseConfig.Secrets, ssh_agent.SSHAuthSock)
 	}
