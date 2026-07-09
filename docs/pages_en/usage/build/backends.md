@@ -5,16 +5,14 @@ permalink: usage/build/backends.html
 
 ## Overview
 
-werf supports the following build backends:
+werf builds images through a [buildkitd](https://github.com/moby/buildkit) daemon. The endpoint is selected as follows:
 
--	Docker — the traditional method that uses the system Docker Daemon. Selected by default when no BuildKit endpoint is configured. Supports Dockerfile builds only.
--	BuildKit — builds images through an external [buildkitd](https://github.com/moby/buildkit) daemon. Selected by setting a BuildKit endpoint via environment variable. Required for stapel builds.
+-	`WERF_BUILDKIT_HOST` (or the standard `BUILDKIT_HOST`) is set — werf uses the specified buildkitd endpoint.
+-	Neither variable is set — werf automatically starts (or reuses) a local buildkitd container named `werf-buildkitd` on the local Docker daemon and uses it via `docker-container://werf-buildkitd`. Docker must be available in this case.
 
 > The requirements and system preparation steps for using these build backends are described in the [Getting Started]({{ site.url }}/getting_started/) section of the website.
 
 ## BuildKit
-
-The BuildKit backend is enabled by setting `WERF_BUILDKIT_HOST` (or the standard `BUILDKIT_HOST`) to the address of a running buildkitd daemon. When neither variable is set, werf uses the Docker backend.
 
 ### Endpoints
 
@@ -29,14 +27,13 @@ The following endpoint schemes are supported:
 
 ### Quick start
 
-Run buildkitd in a local Docker container and point werf at it:
+With Docker available locally no setup is needed: werf starts a `werf-buildkitd` container automatically on first build.
+
+To use an external buildkitd instead:
 
 ```shell
-docker run -d --name buildkitd --privileged moby/buildkit
-export BUILDKIT_HOST=docker-container://buildkitd
+export BUILDKIT_HOST=tcp://my-buildkitd:1234
 ```
-
-After that any werf build command will use the BuildKit backend.
 
 ### Container registry required
 
