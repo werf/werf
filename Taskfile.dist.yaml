@@ -37,8 +37,8 @@ vars:
   cgoTags: "{{.goTags}} osusergo exclude_graphdriver_devicemapper netgo no_devmapper static_build cni"
   cgoLDFlags: "{{.goLDFlags}} -linkmode external -extldflags=-static"
 
-  buildGoTags: "{{.goTags}} embedstapel"
-  buildCgoTags: "{{.cgoTags}} embedstapel"
+  buildGoTags: "{{.goTags}}"
+  buildCgoTags: "{{.cgoTags}}"
 
 tasks:
   format:
@@ -81,7 +81,6 @@ tasks:
   lint:
     desc: "Run all linters."
     cmds:
-      - task: stapel:embed
       - task: lint:golangci-lint
 
   _build-and-lint:
@@ -94,22 +93,7 @@ tasks:
       - task: format
       - task: _build-and-lint
 
-  stapel:embed:
-    desc: "Generate embedded stapel image tarballs for linux/amd64 and linux/arm64."
-    run: once
-    sources:
-      - pkg/stapel/stapel.go
-    generates:
-      - pkg/stapel/embed/linux/amd64/werf-stapel-toolchain.tar.gz
-      - pkg/stapel/embed/linux/amd64/werf-stapel-toolchain.tar.sha256
-      - pkg/stapel/embed/linux/arm64/werf-stapel-toolchain.tar.gz
-      - pkg/stapel/embed/linux/arm64/werf-stapel-toolchain.tar.sha256
-    cmds:
-      - env -u GOOS -u GOARCH WERF_STAPEL_IMAGE_VERSION="$(sed -n 's/.*VERSION *= *"\(.*\)"/\1/p' pkg/stapel/stapel.go | head -1)" go run ./cmd/embed-stapel
-
   _build:cgo:dev: &build_cgo_dev
-    deps:
-      - stapel:embed
     cmds:
       - go build {{if eq .raceDetectorEnabled "true" }}-race{{end}} -o "{{.outputDir | default (printf "./build/%s-%s" .targetOS .targetArch)}}/werf{{if (eq .targetOS "windows")}}.exe{{end}}"
         -compiler gc -ldflags="{{.cgoLDFlags}}" -tags="{{.buildCgoTags}}" {{.extraGoBuildArgs}} {{.CLI_ARGS}} {{.pkg | default .package}}
@@ -128,8 +112,6 @@ tasks:
         -compiler gc -ldflags="{{.cgoLDFlags}}" -tags="{{.buildCgoTags}}" {{.extraGoBuildArgs}} {{.CLI_ARGS}} {{.pkg | default .package}}
 
   _build:go:dev: &build_go_dev
-    deps:
-      - stapel:embed
     cmds:
       - go build {{if eq .raceDetectorEnabled "true" }}-race{{end}} -o "{{.outputDir | default (printf "./build/%s-%s" .targetOS .targetArch)}}/werf{{if (eq .targetOS "windows")}}.exe{{end}}"
         -ldflags="{{.goLDFlags}}" -tags="{{.buildGoTags}}" {{.extraGoBuildArgs}} {{.CLI_ARGS}} {{.pkg | default .package}}

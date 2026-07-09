@@ -33,10 +33,6 @@ func getImage() string {
 	return image
 }
 
-func isDefaultImageRef() bool {
-	return os.Getenv("WERF_STAPEL_IMAGE_NAME") == "" && os.Getenv("WERF_STAPEL_IMAGE_VERSION") == ""
-}
-
 func ImageName() string {
 	return fmt.Sprintf("%s:%s", getImage(), getVersion())
 }
