@@ -8,6 +8,7 @@ import (
 	"github.com/werf/werf/v2/pkg/buildkit"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/docker"
+	"github.com/werf/werf/v2/pkg/storage"
 )
 
 func wrapContainerBackend(containerBackend container_backend.ContainerBackend) container_backend.ContainerBackend {
@@ -18,7 +19,17 @@ func wrapContainerBackend(containerBackend container_backend.ContainerBackend) c
 }
 
 func InitProcessContainerBackend(ctx context.Context, cmdData *CmdData, registryMirrors []string) (container_backend.ContainerBackend, context.Context, error) {
-	buildkitHost, err := buildkit.ResolveHost(ctx)
+	var resolveHostOptions buildkit.ResolveHostOptions
+	if cmdData.Repo != nil && cmdData.Repo.Address != nil && *cmdData.Repo.Address != "" && *cmdData.Repo.Address != storage.LocalStorageAddress {
+		if *cmdData.InsecureRegistry {
+			resolveHostOptions.InsecureRegistryAddresses = append(resolveHostOptions.InsecureRegistryAddresses, *cmdData.Repo.Address)
+		}
+		if *cmdData.SkipTlsVerifyRegistry {
+			resolveHostOptions.SkipTLSVerifyRegistryAddresses = append(resolveHostOptions.SkipTLSVerifyRegistryAddresses, *cmdData.Repo.Address)
+		}
+	}
+
+	buildkitHost, err := buildkit.ResolveHost(ctx, resolveHostOptions)
 	if err != nil {
 		return nil, ctx, err
 	}

@@ -19,7 +19,7 @@ func NewStagesStorage(ctx context.Context, stagesStorageAddress, implementationN
 	dockerRegistry, err := docker_registry.NewDockerRegistry(ctx, stagesStorageAddress, implementationName, dockerRegistryOptions)
 	Expect(err).ShouldNot(HaveOccurred())
 
-	buildkitHost, err := buildkit.ResolveHost(ctx)
+	buildkitHost, err := buildkit.ResolveHost(ctx, buildkit.ResolveHostOptions{})
 	Expect(err).ShouldNot(HaveOccurred())
 
 	return storage.NewRepoStagesStorage(&storage.NewRepoStagesStorageOptions{
