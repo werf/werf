@@ -10,6 +10,7 @@ import (
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v2/pkg/buildah"
 	"github.com/werf/werf/v2/pkg/buildah/thirdparty"
+	"github.com/werf/werf/v2/pkg/buildkit"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/werf"
@@ -94,6 +95,18 @@ func wrapContainerBackend(containerBackend container_backend.ContainerBackend) c
 }
 
 func InitProcessContainerBackend(ctx context.Context, cmdData *CmdData, registryMirrors []string) (container_backend.ContainerBackend, context.Context, error) {
+	if buildkitHost := buildkit.HostFromEnv(); buildkitHost != "" {
+		var defaultPlatform string
+		if platforms := cmdData.GetPlatform(); len(platforms) == 1 {
+			defaultPlatform = platforms[0]
+		}
+
+		return wrapContainerBackend(container_backend.NewBuildkitBackend(buildkitHost, container_backend.BuildkitBackendOptions{
+			DefaultPlatform: defaultPlatform,
+			DockerConfigDir: *cmdData.DockerConfig,
+		})), ctx, nil
+	}
+
 	buildahMode, buildahIsolation, err := GetBuildahMode()
 	if err != nil {
 		return nil, ctx, fmt.Errorf("unable to determine buildah mode: %w", err)

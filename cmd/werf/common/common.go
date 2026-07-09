@@ -829,7 +829,7 @@ func GetStagesStorage(ctx context.Context, containerBackend container_backend.Co
 		return nil, fmt.Errorf("get insecure registry hosts: %w", err)
 	}
 
-	return cmdData.Repo.CreateStagesStorage(ctx, &CreateStagesStorageOptions{
+	stagesStorage, err := cmdData.Repo.CreateStagesStorage(ctx, &CreateStagesStorageOptions{
 		ContainerBackend:               containerBackend,
 		InsecureRegistry:               *cmdData.InsecureRegistry,
 		SkipTlsVerifyRegistry:          *cmdData.SkipTlsVerifyRegistry,
@@ -838,6 +838,15 @@ func GetStagesStorage(ctx context.Context, containerBackend container_backend.Co
 		GitHistoryBasedCleanupDisabled: opts.GitHistoryBasedCleanupDisabled,
 		SkipMetaCheck:                  opts.SkipMetaCheck,
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	if buildkitBackend, ok := container_backend.AsBuildkitBackend(containerBackend); ok {
+		buildkitBackend.SetStagesStorageRepo(stagesStorage.Address())
+	}
+
+	return stagesStorage, nil
 }
 
 func GetOptionalFinalStagesStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData) (storage.StagesStorage, error) {
