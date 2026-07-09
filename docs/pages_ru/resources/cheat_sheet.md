@@ -157,12 +157,6 @@ werf cleanup --repo ghcr.io/group/project
 werf render --dev
 ```
 
-Собрать образ и запустить интерактивную оболочку в контейнере с неудавшейся стадией в случае ошибки:
-
-```shell
-werf build --dev [--follow] --introspect-error
-```
-
 Собрать образ, запустить его в Pod'е Kubernetes и выполнить в нем команду:
 
 ```shell

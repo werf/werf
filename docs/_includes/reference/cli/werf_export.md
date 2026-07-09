@@ -126,25 +126,6 @@ werf export [IMAGE_NAME...] [options]
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --insecure-registry=false
             Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
-      --introspect-before-error=false
-            Introspect failed stage in the clean state, before running all assembly instructions of 
-            the stage
-      --introspect-error=false
-            Introspect failed stage in the state, right after running failed assembly instruction
-      --introspect-stage=[]
-            Introspect a specific stage. The option can be used multiple times to introspect        
-            several stages.
-            
-            There are the following formats to use:
-            * specify IMAGE_NAME/STAGE_NAME to introspect stage STAGE_NAME of image IMAGE_NAME
-            * specify STAGE_NAME or */STAGE_NAME for the introspection of all existing stages with  
-            name STAGE_NAME
-            
-            IMAGE_NAME is the name of an image described in werf.yaml.
-            STAGE_NAME should be one of the following: from, beforeInstall,                         
-            dependenciesBeforeInstall, gitArchive, install, dependenciesAfterInstall, beforeSetup,  
-            dependenciesBeforeSetup, setup, dependenciesAfterSetup, gitCache, gitLatestPatch,       
-            dockerfile, imageSpec
       --log-color-mode="auto"
             Set log color mode.
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        

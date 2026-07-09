@@ -13,7 +13,7 @@ werf has a built-in alternative syntax for describing assembly instructions call
 
 <!-- TODO(staged-dockerfile): delete point 5 as no longer relevant -->
 
-To build images using the Stapel builder, you have to define build instructions in the `werf.yaml` configuration file. Stapel is supported for both the Docker server builder backend and the BuildKit backend.
+To build images using the Stapel builder, you have to define build instructions in the `werf.yaml` configuration file. Stapel requires the BuildKit backend; the Docker server backend does not support building Stapel images.
 
 This section describes how to build images with the Stapel builder, its advanced features and how to use them.
 

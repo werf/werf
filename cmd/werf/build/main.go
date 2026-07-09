@@ -30,9 +30,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
   # Build image 'backend'
   $ werf build backend
 
-  # Build and enable drop-in shell session in the failed assembly container in the case when an error occurred
-  $ werf build --introspect-error
-
   # Build images and store/use stages from repo
   $ werf build --repo harbor.company.io/werf`,
 		Long:                  common.GetLongCommandDescription(GetBuildDocs().Long),

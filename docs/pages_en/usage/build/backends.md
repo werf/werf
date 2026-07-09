@@ -7,8 +7,8 @@ permalink: usage/build/backends.html
 
 werf supports the following build backends:
 
--	Docker — the traditional method that uses the system Docker Daemon. Selected by default when no BuildKit endpoint is configured.
--	BuildKit — builds images through an external [buildkitd](https://github.com/moby/buildkit) daemon. Selected by setting a BuildKit endpoint via environment variable.
+-	Docker — the traditional method that uses the system Docker Daemon. Selected by default when no BuildKit endpoint is configured. Supports Dockerfile builds only.
+-	BuildKit — builds images through an external [buildkitd](https://github.com/moby/buildkit) daemon. Selected by setting a BuildKit endpoint via environment variable. Required for stapel builds.
 
 > The requirements and system preparation steps for using these build backends are described in the [Getting Started]({{ site.url }}/getting_started/) section of the website.
 
@@ -67,11 +67,3 @@ Insecure registry access, custom CAs and TLS verification skipping are configure
 ### Host cleanup
 
 With a remote buildkitd there is no local image store on the werf host. `werf host purge` and other host-cleanup commands only clean up werf-owned service directories on the host; the buildkitd build cache is not pruned by werf in the first iteration — it is managed by buildkitd garbage collection (see `buildkitd.toml`) or manually via `buildctl prune`.
-
-### Limitations
-
-In the first iteration, the following options are not supported by the BuildKit backend:
-
-*	`--introspect-error`;
-*	`--introspect-before-error`;
-*	`--introspect-stage`.
