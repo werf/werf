@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/werf/werf/v2/pkg/docker_registry"
+	"github.com/werf/werf/v2/pkg/image"
 )
 
 func TestAI_BuildkitBackend_RepoNotSetError(t *testing.T) {
@@ -26,14 +27,55 @@ func TestAI_BuildkitBackend_RepoNotSetError(t *testing.T) {
 type copyImageRegistryStub struct {
 	docker_registry.Interface
 
-	copiedSrc  string
-	copiedDest string
+	copiedSrc   string
+	copiedDest  string
+	deletedRefs []string
 }
 
 func (r *copyImageRegistryStub) CopyImage(_ context.Context, src, dest string, _ docker_registry.CopyImageOptions) error {
 	r.copiedSrc = src
 	r.copiedDest = dest
 	return nil
+}
+
+func (r *copyImageRegistryStub) TryGetRepoImage(_ context.Context, reference string) (*image.Info, error) {
+	repository, tag := image.ParseRepositoryAndTag(reference)
+	return &image.Info{Name: reference, Repository: repository, Tag: tag}, nil
+}
+
+func (r *copyImageRegistryStub) DeleteRepoImage(_ context.Context, repoImage *image.Info) error {
+	r.deletedRefs = append(r.deletedRefs, repoImage.Name)
+	return nil
+}
+
+type fakeLegacyImage struct {
+	LegacyImageInterface
+
+	name string
+	info *image.Info
+}
+
+func (f *fakeLegacyImage) Name() string                   { return f.name }
+func (f *fakeLegacyImage) SetName(name string)            { f.name = name }
+func (f *fakeLegacyImage) GetTargetPlatform() string      { return "" }
+func (f *fakeLegacyImage) SetInfo(info *image.Info)       { f.info = info }
+func (f *fakeLegacyImage) GetStageDesc() *image.StageDesc { return nil }
+
+// Registry deletion works by manifest digest, so removing the old name of a same-repo rename
+// would also delete the freshly copied tag: it must be skipped.
+func TestAI_BuildkitBackend_RenameImageSameRepoKeepsManifest(t *testing.T) {
+	registryStub := &copyImageRegistryStub{}
+	backend := NewBuildkitBackend("tcp://localhost:1234", BuildkitBackendOptions{})
+	backend.SetStagesStorage("registry.example.com/project", registryStub)
+
+	img := &fakeLegacyImage{name: "registry.example.com/project:old-tag"}
+	require.NoError(t, backend.RenameImage(context.Background(), img, "registry.example.com/project:new-tag", true))
+	assert.Equal(t, "registry.example.com/project:new-tag", img.name)
+	assert.Empty(t, registryStub.deletedRefs)
+
+	crossRepoImg := &fakeLegacyImage{name: "registry.example.com/project:tag"}
+	require.NoError(t, backend.RenameImage(context.Background(), crossRepoImg, "registry.example.com/other:tag", true))
+	assert.Equal(t, []string{"registry.example.com/project:tag"}, registryStub.deletedRefs)
 }
 
 func TestAI_BuildkitBackend_TagIsRegistrySide(t *testing.T) {

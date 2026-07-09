@@ -37,7 +37,6 @@ cmd/werf/werf
 /.github/trdl/src/**/*.js
 /.github/trdl/lib
 main
-buildah-test
 
 /scripts/images/image
 

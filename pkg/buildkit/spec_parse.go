@@ -49,6 +49,10 @@ func ParseSSHSpec(spec, defaultAgentSock string) ([]sshprovider.AgentConfig, err
 
 	var configs []sshprovider.AgentConfig
 	for _, item := range strings.Split(spec, ";") {
+		item = strings.TrimSpace(item)
+		if item == "" {
+			continue
+		}
 		conf := sshprovider.AgentConfig{}
 		parts := strings.SplitN(item, "=", 2)
 		conf.ID = parts[0]

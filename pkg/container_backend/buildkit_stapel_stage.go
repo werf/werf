@@ -162,6 +162,11 @@ func applyStapelDataArchives(ctx context.Context, state llb.State, archives []Da
 		for _, dir := range tmpDirs {
 			os.RemoveAll(dir)
 		}
+		// Release archive streams left unconsumed by an early error; double close of the
+		// already-consumed ones is harmless.
+		for _, archive := range archives {
+			_ = archive.Archive.Close()
+		}
 	}
 
 	for i, archive := range archives {

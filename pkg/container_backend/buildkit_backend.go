@@ -471,7 +471,12 @@ func (backend *BuildkitBackend) RenameImage(ctx context.Context, img LegacyImage
 		return err
 	}
 
-	if removeOldName {
+	// Registry deletion works by manifest digest: within one repository the old and the new
+	// tags share the manifest after the copy, so deleting the old name would also destroy the
+	// just-created one. Leave the old tag for werf cleanup in that case.
+	oldRepository, _ := image.ParseRepositoryAndTag(img.Name())
+	newRepository, _ := image.ParseRepositoryAndTag(newImageName)
+	if removeOldName && oldRepository != newRepository {
 		if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Removing old image tag %s", img.Name())).DoError(func() error {
 			return backend.Rmi(ctx, img.Name(), RmiOpts{CommonOpts: CommonOpts{TargetPlatform: img.GetTargetPlatform()}})
 		}); err != nil {
