@@ -2,15 +2,27 @@ package container_backend
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
+	"net"
+	"strings"
 	"sync"
 
 	"github.com/containerd/containerd/platforms"
+	bkclient "github.com/moby/buildkit/client"
+	"github.com/moby/buildkit/client/llb"
+	"github.com/moby/buildkit/frontend/dockerfile/dockerfile2llb"
+	"github.com/moby/buildkit/frontend/dockerui"
+	"github.com/moby/buildkit/session"
+	ocispecs "github.com/opencontainers/image-spec/specs-go/v1"
+	"github.com/tonistiigi/fsutil"
 
+	"github.com/werf/werf/v2/pkg/buildkit"
 	"github.com/werf/werf/v2/pkg/container_backend/info"
 	"github.com/werf/werf/v2/pkg/container_backend/prune"
 	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/ssh_agent"
 )
 
 var _ ContainerBackend = (*BuildkitBackend)(nil)
@@ -30,8 +42,9 @@ type BuildkitBackend struct {
 	host string
 	BuildkitBackendOptions
 
-	mu   sync.Mutex
-	repo string
+	mu     sync.Mutex
+	repo   string
+	client *bkclient.Client
 }
 
 type BuildkitBackendOptions struct {
@@ -41,6 +54,83 @@ type BuildkitBackendOptions struct {
 
 func NewBuildkitBackend(host string, opts BuildkitBackendOptions) *BuildkitBackend {
 	return &BuildkitBackend{host: host, BuildkitBackendOptions: opts}
+}
+
+func (backend *BuildkitBackend) getClient(ctx context.Context) (*bkclient.Client, error) {
+	backend.mu.Lock()
+	defer backend.mu.Unlock()
+	if backend.client != nil {
+		return backend.client, nil
+	}
+
+	client, err := buildkit.NewClient(ctx, backend.host)
+	if err != nil {
+		return nil, err
+	}
+	backend.client = client
+	return backend.client, nil
+}
+
+func (backend *BuildkitBackend) parsePlatform(targetPlatform string) (*ocispecs.Platform, error) {
+	if targetPlatform == "" {
+		targetPlatform = backend.GetDefaultPlatform()
+	}
+	platform, err := platforms.Parse(targetPlatform)
+	if err != nil {
+		return nil, fmt.Errorf("parse platform %q: %w", targetPlatform, err)
+	}
+	return &platform, nil
+}
+
+func (backend *BuildkitBackend) getSessionAttachables(ssh string, secrets []string) ([]session.Attachable, error) {
+	sshSpec := ssh
+	if sshSpec == "" && ssh_agent.SSHAuthSock != "" {
+		sshSpec = "default"
+	}
+
+	sshAgentSocks, err := buildkit.ParseSSHSpec(sshSpec, ssh_agent.SSHAuthSock)
+	if err != nil {
+		return nil, fmt.Errorf("parse ssh spec: %w", err)
+	}
+
+	secretSources, err := buildkit.ParseSecretSpecs(secrets)
+	if err != nil {
+		return nil, fmt.Errorf("parse secret specs: %w", err)
+	}
+
+	return buildkit.SessionAttachables(buildkit.SessionAttachablesOptions{
+		DockerConfigDir: backend.DockerConfigDir,
+		SSHAgentSocks:   sshAgentSocks,
+		Secrets:         secretSources,
+	})
+}
+
+func parseKeyValuePairs(pairs []string, what string) (map[string]string, error) {
+	res := make(map[string]string, len(pairs))
+	for _, pair := range pairs {
+		parts := strings.SplitN(pair, "=", 2)
+		if len(parts) < 2 {
+			return nil, fmt.Errorf("invalid %s %q given, expected string in the key=value format", what, pair)
+		}
+		res[parts[0]] = parts[1]
+	}
+	return res, nil
+}
+
+func parseExtraHosts(addHost []string) ([]llb.HostIP, error) {
+	var res []llb.HostIP
+	for _, h := range addHost {
+		host, ip, ok := strings.Cut(h, ":")
+		if !ok {
+			return nil, fmt.Errorf("invalid add-host %q given, expected string in the host:ip format", h)
+		}
+		parsedIP := net.ParseIP(ip)
+		if parsedIP == nil {
+			return nil, fmt.Errorf("invalid add-host %q given: invalid ip %q", h, ip)
+		}
+		res = append(res, llb.HostIP{Host: host, IP: parsedIP})
+	}
+	return res, nil
 }
 
 func (backend *BuildkitBackend) SetStagesStorageRepo(repo string) {
@@ -82,11 +172,99 @@ func (backend *BuildkitBackend) String() string {
 }
 
 func (backend *BuildkitBackend) BuildDockerfile(ctx context.Context, dockerfile []byte, opts BuildDockerfileOpts) (string, error) {
-	return "", fmt.Errorf("build dockerfile: %w", ErrUnsupportedFeature)
-}
+	if opts.BuildContextArchive == nil {
+		panic(fmt.Sprintf("BuildContextArchive can't be nil: %+v", opts))
+	}
 
-func (backend *BuildkitBackend) BuildDockerfileStage(ctx context.Context, baseImage string, opts BuildDockerfileStageOptions, instructions ...InstructionInterface) (string, error) {
-	return "", fmt.Errorf("build dockerfile stage: %w", ErrUnsupportedFeature)
+	repo, err := backend.getStagesStorageRepo()
+	if err != nil {
+		return "", err
+	}
+
+	cl, err := backend.getClient(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	contextDir, err := opts.BuildContextArchive.ExtractOrGetExtractedDir(ctx)
+	if err != nil {
+		return "", fmt.Errorf("unable to extract build context: %w", err)
+	}
+
+	buildArgs, err := parseKeyValuePairs(opts.BuildArgs, "build argument")
+	if err != nil {
+		return "", err
+	}
+
+	labels, err := parseKeyValuePairs(opts.Labels, "label")
+	if err != nil {
+		return "", err
+	}
+
+	extraHosts, err := parseExtraHosts(opts.AddHost)
+	if err != nil {
+		return "", err
+	}
+
+	netMode, err := buildkit.ParseNetMode(opts.Network)
+	if err != nil {
+		return "", err
+	}
+
+	platform, err := backend.parsePlatform(opts.TargetPlatform)
+	if err != nil {
+		return "", err
+	}
+
+	contextState := llb.Local(dockerui.DefaultLocalNameContext)
+
+	convertResult, err := dockerfile2llb.Dockerfile2LLB(ctx, dockerfile, dockerfile2llb.ConvertOpt{
+		Config: dockerui.Config{
+			BuildArgs:   buildArgs,
+			Labels:      labels,
+			Target:      opts.Target,
+			ExtraHosts:  extraHosts,
+			NetworkMode: netMode,
+		},
+		MainContext:    &contextState,
+		TargetPlatform: platform,
+		MetaResolver:   buildkit.NewImageMetaResolver(platform),
+	})
+	if err != nil {
+		return "", fmt.Errorf("convert dockerfile to llb: %w", err)
+	}
+
+	def, err := convertResult.State.Marshal(ctx)
+	if err != nil {
+		return "", fmt.Errorf("marshal llb state: %w", err)
+	}
+
+	imageConfig, err := json.Marshal(convertResult.Image)
+	if err != nil {
+		return "", fmt.Errorf("marshal image config: %w", err)
+	}
+
+	attachables, err := backend.getSessionAttachables(opts.SSH, opts.Secrets)
+	if err != nil {
+		return "", err
+	}
+
+	contextFS, err := fsutil.NewFS(contextDir)
+	if err != nil {
+		return "", fmt.Errorf("create fs for build context %q: %w", contextDir, err)
+	}
+
+	builtID, err := buildkit.Solve(ctx, cl, def, buildkit.SolveOptions{
+		Repo:        repo,
+		ImageConfig: imageConfig,
+		LocalMounts: map[string]fsutil.FS{dockerui.DefaultLocalNameContext: contextFS},
+		Session:     attachables,
+	})
+	if err != nil {
+		return "", fmt.Errorf("build dockerfile: %w", err)
+	}
+
+	return builtID, nil
 }
 
 func (backend *BuildkitBackend) BuildStapelStage(ctx context.Context, baseImage string, opts BuildStapelStageOptions) (string, error) {
