@@ -23,7 +23,6 @@ import (
 	"github.com/werf/werf/v2/pkg/docker_registry"
 	imagePkg "github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/logging"
-	"github.com/werf/werf/v2/pkg/stapel"
 	"github.com/werf/werf/v2/pkg/storage"
 	"github.com/werf/werf/v2/pkg/storage/manager"
 	"github.com/werf/werf/v2/pkg/telemetry"
@@ -38,7 +37,6 @@ type BuildPhaseOptions struct {
 
 type BuildOptions struct {
 	ImageBuildOptions container_backend.BuildOptions
-	IntrospectOptions
 
 	ReportPath   string
 	ReportFormat ReportFormat
@@ -46,25 +44,6 @@ type BuildOptions struct {
 	SkipImageMetadataPublication bool
 	SkipAddManagedImagesRecords  bool
 	CustomTagFuncList            []imagePkg.CustomTagFunc
-}
-
-type IntrospectOptions struct {
-	Targets []IntrospectTarget
-}
-
-type IntrospectTarget struct {
-	ImageName string
-	StageName string
-}
-
-func (opts *IntrospectOptions) ImageStageShouldBeIntrospected(imageName, stageName string) bool {
-	for _, s := range opts.Targets {
-		if (s.ImageName == "*" || s.ImageName == imageName) && s.StageName == stageName {
-			return true
-		}
-	}
-
-	return false
 }
 
 func NewBuildPhase(c *Conveyor, opts BuildPhaseOptions) *BuildPhase {
@@ -730,12 +709,6 @@ func (phase *BuildPhase) onImageStage(ctx context.Context, img *image.Image, stg
 
 		logboek.Context(ctx).LogOptionalLn()
 
-		if phase.IntrospectOptions.ImageStageShouldBeIntrospected(img.GetName(), string(stg.Name())) {
-			if err := introspectStage(ctx, stg); err != nil {
-				return err
-			}
-		}
-
 		stg.SetMeta(&stage.StageMeta{
 			Rebuilt: false,
 		})
@@ -1030,11 +1003,7 @@ func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *imag
 	stageImage.Image.SetBuildServiceLabels(serviceLabels)
 
 	if stg.IsStapelStage() {
-		if phase.Conveyor.UseLegacyStapelBuilder(phase.Conveyor.ContainerBackend) {
-			stageImage.Builder.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions().AddLabel(serviceLabels)
-		} else {
-			stageImage.Builder.StapelStageBuilder().AddLabels(serviceLabels)
-		}
+		stageImage.Builder.StapelStageBuilder().AddLabels(serviceLabels)
 
 		headHash, err := phase.Conveyor.GiterminismManager().LocalGitRepo().HeadCommitHash(ctx)
 		if err != nil {
@@ -1050,11 +1019,7 @@ func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *imag
 			"WERF_COMMIT_TIME_UNIX":  strconv.FormatInt(headTime.Unix(), 10),
 		}
 
-		if phase.Conveyor.UseLegacyStapelBuilder(phase.Conveyor.ContainerBackend) {
-			stageImage.Builder.LegacyStapelStageBuilder().Container().AddBuildTimeEnv(commitEnvs)
-		} else {
-			stageImage.Builder.StapelStageBuilder().AddBuildTimeEnvs(commitEnvs)
-		}
+		stageImage.Builder.StapelStageBuilder().AddBuildTimeEnvs(commitEnvs)
 	} else if _, ok := stg.(*stage.FullDockerfileStage); ok {
 		var labels []string
 		for key, value := range serviceLabels {
@@ -1096,15 +1061,6 @@ func (phase *BuildPhase) emptyAnchorRebuildNote(ctx context.Context, img *image.
 }
 
 func (phase *BuildPhase) buildStage(ctx context.Context, img *image.Image, stg stage.Interface) error {
-	if stg.IsBuildable() {
-		if !img.IsDockerfileImage && phase.Conveyor.UseLegacyStapelBuilder(phase.Conveyor.ContainerBackend) {
-			_, err := stapel.GetOrCreateContainer(ctx, img.TargetPlatform)
-			if err != nil {
-				return fmt.Errorf("get or create stapel container failed: %w", err)
-			}
-		}
-	}
-
 	infoSectionFunc := func(err error) {
 		if err != nil {
 			return
@@ -1125,12 +1081,6 @@ func (phase *BuildPhase) buildStage(ctx context.Context, img *image.Image, stg s
 			return phase.atomicBuildStageImage(ctx, img, stg)
 		}); err != nil {
 		return err
-	}
-
-	if phase.IntrospectOptions.ImageStageShouldBeIntrospected(img.GetName(), string(stg.Name())) {
-		if err := introspectStage(ctx, stg); err != nil {
-			return err
-		}
 	}
 
 	return nil
@@ -1247,22 +1197,6 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 		return fmt.Errorf("unable to copy stage %s into cache storages: %w", stageImage.Image.GetStageDesc().StageID.String(), err)
 	}
 	return nil
-}
-
-func introspectStage(ctx context.Context, s stage.Interface) error {
-	return logboek.Context(ctx).Info().LogProcess("Introspecting stage %s", s.Name()).
-		Options(func(options types.LogProcessOptionsInterface) {
-			options.Style(style.Highlight())
-		}).
-		DoError(func() error {
-			if err := logboek.Context(ctx).Streams().DoErrorWithoutProxyStreamDataFormatting(func() error {
-				return s.GetStageImage().Image.Introspect(ctx) // FIXME: use container backend operation
-			}); err != nil {
-				return fmt.Errorf("introspect error failed: %w", err)
-			}
-
-			return nil
-		})
 }
 
 type calculateDigestOptions struct {

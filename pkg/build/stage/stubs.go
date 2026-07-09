@@ -16,65 +16,15 @@ import (
 
 type LegacyImageStub struct {
 	container_backend.LegacyImageInterface
-
-	_Container *LegacyContainerStub
 }
 
 func NewLegacyImageStub() *LegacyImageStub {
-	return &LegacyImageStub{
-		_Container: NewLegacyContainerStub(),
-	}
-}
-
-func (img *LegacyImageStub) Container() container_backend.LegacyContainer {
-	return img._Container
+	return &LegacyImageStub{}
 }
 
 func (img *LegacyImageStub) GetBuildServiceLabels() map[string]string {
 	return map[string]string{
 		"stub": "true",
-	}
-}
-
-type LegacyContainerStub struct {
-	container_backend.LegacyContainer
-
-	_ServiceCommitChangeOptions *LegacyContainerOptionsStub
-}
-
-func NewLegacyContainerStub() *LegacyContainerStub {
-	return &LegacyContainerStub{
-		_ServiceCommitChangeOptions: NewLegacyContainerOptionsStub(),
-	}
-}
-
-func (c *LegacyContainerStub) ServiceCommitChangeOptions() container_backend.LegacyContainerOptions {
-	return c._ServiceCommitChangeOptions
-}
-
-type LegacyContainerOptionsStub struct {
-	container_backend.LegacyContainerOptions
-
-	Env    map[string]string
-	Labels map[string]string
-}
-
-func NewLegacyContainerOptionsStub() *LegacyContainerOptionsStub {
-	return &LegacyContainerOptionsStub{
-		Env:    make(map[string]string),
-		Labels: make(map[string]string),
-	}
-}
-
-func (opts *LegacyContainerOptionsStub) AddEnv(envs map[string]string) {
-	for k, v := range envs {
-		opts.Env[k] = v
-	}
-}
-
-func (opts *LegacyContainerOptionsStub) AddLabel(labels map[string]string) {
-	for k, v := range labels {
-		opts.Labels[k] = v
 	}
 }
 
@@ -92,10 +42,6 @@ func NewConveyorStub(giterminismManager *GiterminismManagerStub, lastStageImageN
 		lastStageImageNameByImageName:   lastStageImageNameByImageName,
 		lastStageImageDigestByImageName: lastStageImageDigestByImageName,
 	}
-}
-
-func (c *ConveyorStub) UseLegacyStapelBuilder(cr container_backend.ContainerBackend) bool {
-	return true
 }
 
 func (c *ConveyorStub) GetImageContentTagDigest(targetPlatform, imageName string) string {

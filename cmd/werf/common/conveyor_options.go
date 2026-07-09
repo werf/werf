@@ -10,7 +10,6 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/level"
 	"github.com/werf/werf/v2/pkg/build"
-	"github.com/werf/werf/v2/pkg/buildkit"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/container_backend/thirdparty/platformutil"
@@ -70,7 +69,7 @@ func GetConveyorOptionsWithParallel(ctx context.Context, commonCmdData *CmdData,
 		return conveyorOptions, err
 	}
 
-	conveyorOptions.Parallel = !(buildStagesOptions.ImageBuildOptions.IntrospectAfterError || buildStagesOptions.ImageBuildOptions.IntrospectBeforeError || len(buildStagesOptions.Targets) != 0) && GetParallel(commonCmdData)
+	conveyorOptions.Parallel = GetParallel(commonCmdData)
 	conveyorOptions.ParallelTasksLimit = GetParallelTasksLimit(commonCmdData)
 
 	return conveyorOptions, nil
@@ -99,17 +98,6 @@ func GetShouldBeBuiltOptions(commonCmdData *CmdData, werfConfig *config.WerfConf
 }
 
 func GetBuildOptions(ctx context.Context, commonCmdData *CmdData, werfConfig *config.WerfConfig, imagesToProcess config.ImagesToProcess) (buildOptions build.BuildOptions, err error) {
-	introspectOptions, err := GetIntrospectOptions(commonCmdData, werfConfig)
-	if err != nil {
-		return buildOptions, err
-	}
-
-	if buildkit.HostFromEnv() != "" {
-		if GetIntrospectAfterError(commonCmdData) || GetIntrospectBeforeError(commonCmdData) || len(introspectOptions.Targets) > 0 {
-			return buildOptions, fmt.Errorf("--introspect-error, --introspect-before-error and --introspect-stage are not supported by buildkit backend (first iteration)")
-		}
-	}
-
 	customTagFuncList, err := getCustomTagFuncList(getCustomTagOptionValues(commonCmdData), commonCmdData, imagesToProcess)
 	if err != nil {
 		return buildOptions, err
@@ -120,11 +108,8 @@ func GetBuildOptions(ctx context.Context, commonCmdData *CmdData, werfConfig *co
 		SkipImageMetadataPublication: *commonCmdData.Dev || werfConfig.Meta.Cleanup.DisableGitHistoryBasedPolicy || werfConfig.Meta.Cleanup.DisableCleanup,
 		CustomTagFuncList:            customTagFuncList,
 		ImageBuildOptions: container_backend.BuildOptions{
-			IntrospectAfterError:  GetIntrospectAfterError(commonCmdData),
-			IntrospectBeforeError: GetIntrospectBeforeError(commonCmdData),
-			Network:               commonCmdData.GetBackendNetwork(),
+			Network: commonCmdData.GetBackendNetwork(),
 		},
-		IntrospectOptions: introspectOptions,
 	}
 
 	if GetSaveBuildReport(commonCmdData) {

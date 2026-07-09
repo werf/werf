@@ -23,7 +23,6 @@ import (
 	"github.com/werf/nelm/pkg/helm/pkg/engine"
 	"github.com/werf/nelm/pkg/log"
 	"github.com/werf/werf/v2/pkg/build"
-	"github.com/werf/werf/v2/pkg/build/stage"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/docker"
@@ -721,40 +720,6 @@ func SetupLogProjectDir(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(cmdData.LogProjectDir, "log-project-dir", "", util.GetBoolEnvironmentDefaultFalse("WERF_LOG_PROJECT_DIR"), `Print current project directory path (default $WERF_LOG_PROJECT_DIR)`)
 }
 
-func SetupIntrospectAfterError(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.IntrospectAfterError = new(bool)
-	cmd.Flags().BoolVarP(cmdData.IntrospectAfterError, "introspect-error", "", false, "Introspect failed stage in the state, right after running failed assembly instruction")
-}
-
-func GetIntrospectAfterError(cmdData *CmdData) bool {
-	return option.PtrValueOrDefault(cmdData.IntrospectAfterError, false)
-}
-
-func SetupIntrospectBeforeError(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.IntrospectBeforeError = new(bool)
-	cmd.Flags().BoolVarP(cmdData.IntrospectBeforeError, "introspect-before-error", "", false, "Introspect failed stage in the clean state, before running all assembly instructions of the stage")
-}
-
-func GetIntrospectBeforeError(cmdData *CmdData) bool {
-	return option.PtrValueOrDefault(cmdData.IntrospectBeforeError, false)
-}
-
-func GetIntrospectStage(cmdData *CmdData) []string {
-	return option.PtrValueOrDefault(cmdData.StagesToIntrospect, []string{})
-}
-
-func SetupIntrospectStage(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.StagesToIntrospect = new([]string)
-	cmd.Flags().StringArrayVarP(cmdData.StagesToIntrospect, "introspect-stage", "", []string{}, `Introspect a specific stage. The option can be used multiple times to introspect several stages.
-
-There are the following formats to use:
-* specify IMAGE_NAME/STAGE_NAME to introspect stage STAGE_NAME of image IMAGE_NAME
-* specify STAGE_NAME or */STAGE_NAME for the introspection of all existing stages with name STAGE_NAME
-
-IMAGE_NAME is the name of an image described in werf.yaml.
-STAGE_NAME should be one of the following: `+strings.Join(allStagesNames(), ", "))
-}
-
 // SetupRequireBuiltImages adds --require-built-images flag.
 // See also [quireBuiltImages].
 func SetupRequireBuiltImages(cmdData *CmdData, cmd *cobra.Command) {
@@ -796,15 +761,6 @@ func SetupTSOptions(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupDenoBinaryPath(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringVarP(&cmdData.DenoBinaryPath, "deno-binary-path", "", os.Getenv("WERF_DENO_BINARY_PATH"), "Path to the Deno binary to use instead of auto-downloading (default $WERF_DENO_BINARY_PATH)")
-}
-
-func allStagesNames() []string {
-	var stageNames []string
-	for _, stageName := range stage.AllStages {
-		stageNames = append(stageNames, string(stageName))
-	}
-
-	return stageNames
 }
 
 func GetLocalStagesStorage(containerBackend container_backend.ContainerBackend) *storage.LocalStagesStorage {
@@ -1292,50 +1248,6 @@ func GetReleaseLabel(cmdData *CmdData) []string {
 
 func GetSSHKey(cmdData *CmdData) []string {
 	return append(util.PredefinedValuesByEnvNamePrefix("WERF_SSH_KEY_"), *cmdData.SSHKeys...)
-}
-
-func GetIntrospectOptions(cmdData *CmdData, werfConfig *config.WerfConfig) (build.IntrospectOptions, error) {
-	isStageExist := func(sName string) bool {
-		for _, stageName := range allStagesNames() {
-			if sName == stageName {
-				return true
-			}
-		}
-
-		return false
-	}
-
-	introspectOptions := build.IntrospectOptions{}
-
-	for _, optionValue := range GetIntrospectStage(cmdData) {
-		var imageName, stageName string
-		{
-			parts := strings.SplitN(optionValue, "/", 2)
-			if len(parts) == 1 {
-				imageName = "*"
-				stageName = parts[0]
-			} else {
-				if parts[0] != "~" {
-					imageName = parts[0]
-				}
-
-				stageName = parts[1]
-			}
-		}
-
-		if imageName != "*" && werfConfig.GetImage(imageName) == nil {
-			return introspectOptions, fmt.Errorf("specified image %q (%q) is not defined in werf.yaml", imageName, optionValue)
-		}
-
-		if !isStageExist(stageName) {
-			return introspectOptions, fmt.Errorf("specified stage name %q (%q) is not exist", stageName, optionValue)
-		}
-
-		introspectTarget := build.IntrospectTarget{ImageName: imageName, StageName: stageName}
-		introspectOptions.Targets = append(introspectOptions.Targets, introspectTarget)
-	}
-
-	return introspectOptions, nil
 }
 
 func GetGiterminismManager(ctx context.Context, cmdData *CmdData) (*giterminism_manager.Manager, error) {

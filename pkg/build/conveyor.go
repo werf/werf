@@ -20,7 +20,6 @@ import (
 	stylePkg "github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
 	"github.com/werf/werf/v2/pkg/build/image"
-	"github.com/werf/werf/v2/pkg/build/import_server"
 	"github.com/werf/werf/v2/pkg/build/stage"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
@@ -59,7 +58,6 @@ type Conveyor struct {
 	StorageManager manager.StorageManagerInterface
 
 	onTerminateFuncs []ConveyorCleanupFunc
-	importServers    map[string]import_server.ImportServer
 
 	ConveyorOptions
 
@@ -100,7 +98,6 @@ func NewConveyor(werfConfig *config.WerfConfig, giterminismManager giterminism_m
 		baseImagesRepoErrCache: make(map[string]error),
 		remoteGitRepos:         make(map[string]*git_repo.Remote),
 		tmpDir:                 filepath.Join(baseTmpDir, util.GenerateConsistentRandomString(10)),
-		importServers:          make(map[string]import_server.ImportServer),
 
 		ContainerBackend: containerBackend,
 		StorageManager:   storageManager,
@@ -201,10 +198,6 @@ func (c *Conveyor) GetServiceRWMutex(service string) *sync.RWMutex {
 	return rwMutex
 }
 
-func (c *Conveyor) UseLegacyStapelBuilder(cr container_backend.ContainerBackend) bool {
-	return !cr.HasStapelBuildSupport()
-}
-
 func (c *Conveyor) IsBaseImagesRepoIdsCacheExist(key string) bool {
 	c.GetServiceRWMutex("BaseImagesRepoIdsCache").RLock()
 	defer c.GetServiceRWMutex("BaseImagesRepoIdsCache").RUnlock()
@@ -260,75 +253,6 @@ func (c *Conveyor) GetStageDigestMutex(stage string) *sync.Mutex {
 	}
 
 	return m
-}
-
-func (c *Conveyor) GetImportServer(ctx context.Context, targetPlatform, imageName string, fromExternalImage bool) (import_server.ImportServer, error) {
-	c.GetServiceRWMutex("ImportServer").Lock()
-	defer c.GetServiceRWMutex("ImportServer").Unlock()
-
-	importServerName := imageName
-
-	if targetPlatform == "" {
-		panic("assertion: targetPlatform cannot be empty")
-	}
-	importServerName += fmt.Sprintf("[%s]", targetPlatform)
-
-	if srv, hasKey := c.importServers[importServerName]; hasKey {
-		return srv, nil
-	}
-
-	var srv *import_server.RsyncServer
-
-	if !fromExternalImage {
-		img := c.GetImage(targetPlatform, imageName)
-		contentTagStageImage := img.GetContentTagStageImage()
-		if contentTagStageImage == nil {
-			return nil, fmt.Errorf("image %q has no content tag", imageName)
-		}
-		if _, err := c.StorageManager.FetchStageImage(ctx, c.ContainerBackend, imageName, contentTagStageImage); err != nil {
-			return nil, fmt.Errorf("unable to fetch stage %s: %w", contentTagStageImage.Image.Name(), err)
-		}
-	}
-
-	if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Firing up import rsync server for image %s", imageName)).
-		DoError(func() error {
-			var tmpDir, imageSubDir string
-
-			if fromExternalImage {
-				imageSubDir = strings.NewReplacer(":", "_", "/", "_").Replace(imageName)
-			} else {
-				imageSubDir = imageName
-			}
-
-			tmpDir = filepath.Join(c.tmpDir, "import-server", imageSubDir, targetPlatform)
-
-			if err := os.MkdirAll(tmpDir, os.ModePerm); err != nil {
-				return fmt.Errorf("unable to create dir %s: %w", tmpDir, err)
-			}
-
-			var dockerImageName string
-			if fromExternalImage {
-				dockerImageName = imageName
-			} else {
-				dockerImageName = c.GetImageContentTagName(targetPlatform, imageName)
-			}
-
-			var err error
-			srv, err = import_server.RunRsyncServer(ctx, dockerImageName, tmpDir, targetPlatform)
-			if err != nil {
-				return fmt.Errorf("unable to run rsync import server: %w", err)
-			}
-
-			c.AppendOnTerminateFunc(srv.Shutdown)
-
-			return nil
-		}); err != nil {
-		return nil, err
-	}
-
-	c.importServers[importServerName] = srv
-
-	return srv, nil
 }
 
 func (c *Conveyor) AppendOnTerminateFunc(f ConveyorCleanupFunc) {
@@ -616,6 +540,14 @@ func (c *Conveyor) printDeferredBuildLog(_ context.Context, buf *bytes.Buffer) {
 }
 
 func (c *Conveyor) Build(ctx context.Context, opts BuildOptions) ([]*ImagesReport, error) {
+	if !c.ContainerBackend.HasStapelBuildSupport() {
+		for _, i := range c.werfConfig.Images(false) {
+			if i.IsStapel() {
+				return nil, fmt.Errorf("building of stapel image %q is not supported by %s backend: use buildkit backend (set $WERF_BUILDKIT_HOST or $BUILDKIT_HOST to a buildkitd endpoint) or use Dockerfile-type image", i.GetName(), c.ContainerBackend.String())
+			}
+		}
+	}
+
 	if opts.ImageBuildOptions.Network != "" {
 		for _, i := range c.werfConfig.Images(false) {
 			if img, ok := i.(*config.ImageFromDockerfile); ok && img.Staged {
@@ -928,19 +860,12 @@ func (c *Conveyor) SetStageImage(stageImage *stage.StageImage) {
 	c.stageImages[stageImageCacheKey(stageImage.Image.Name(), stageImage.Image.GetTargetPlatform())] = stageImage
 }
 
-func extractLegacyStageImage(stageImage *stage.StageImage) *container_backend.LegacyStageImage {
-	if stageImage == nil || stageImage.Image == nil {
-		return nil
-	}
-	return stageImage.Image.(*container_backend.LegacyStageImage)
-}
-
 func (c *Conveyor) GetOrCreateStageImage(name string, prevStageImage *stage.StageImage, stg stage.Interface, img *image.Image) *stage.StageImage {
 	if stageImage := c.GetStageImageByPlatform(name, img.TargetPlatform); stageImage != nil {
 		return stageImage
 	}
 
-	i := container_backend.NewLegacyStageImage(extractLegacyStageImage(prevStageImage), name, c.ContainerBackend, img.TargetPlatform)
+	i := container_backend.NewLegacyStageImage(name, c.ContainerBackend, img.TargetPlatform)
 
 	resolvePrevStageBaseImage := func(prevStageImage *stage.StageImage) string {
 		if prevStageImage == nil || prevStageImage.Image == nil {

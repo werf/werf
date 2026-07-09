@@ -81,10 +81,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupHomeDir(&commonCmdData, cmd, common.SetupHomeDirOptions{})
 	common.SetupSSHKey(&commonCmdData, cmd)
 
-	common.SetupIntrospectAfterError(&commonCmdData, cmd)
-	common.SetupIntrospectBeforeError(&commonCmdData, cmd)
-	common.SetupIntrospectStage(&commonCmdData, cmd)
-
 	common.SetupSecondaryStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{OptionalRepo: true})

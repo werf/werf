@@ -84,8 +84,8 @@ var _ = Describe("Conveyor stage image cache", func() {
 
 	Describe("GetStageImageByPlatform", func() {
 		It("returns the correct image per platform", func() {
-			amd64Image := stage.NewStageImage(nil, "", container_backend.NewLegacyStageImage(nil, "alpine:3.22.3", nil, "linux/amd64"))
-			arm64Image := stage.NewStageImage(nil, "", container_backend.NewLegacyStageImage(nil, "alpine:3.22.3", nil, "linux/arm64"))
+			amd64Image := stage.NewStageImage(nil, "", container_backend.NewLegacyStageImage("alpine:3.22.3", nil, "linux/amd64"))
+			arm64Image := stage.NewStageImage(nil, "", container_backend.NewLegacyStageImage("alpine:3.22.3", nil, "linux/arm64"))
 
 			conveyor.SetStageImage(amd64Image)
 			conveyor.SetStageImage(arm64Image)
@@ -98,14 +98,14 @@ var _ = Describe("Conveyor stage image cache", func() {
 
 	Describe("getStageImage", func() {
 		It("returns nil when multiple platforms are cached", func() {
-			conveyor.SetStageImage(stage.NewStageImage(nil, "", container_backend.NewLegacyStageImage(nil, "alpine:3.22.3", nil, "linux/amd64")))
-			conveyor.SetStageImage(stage.NewStageImage(nil, "", container_backend.NewLegacyStageImage(nil, "alpine:3.22.3", nil, "linux/arm64")))
+			conveyor.SetStageImage(stage.NewStageImage(nil, "", container_backend.NewLegacyStageImage("alpine:3.22.3", nil, "linux/amd64")))
+			conveyor.SetStageImage(stage.NewStageImage(nil, "", container_backend.NewLegacyStageImage("alpine:3.22.3", nil, "linux/arm64")))
 
 			Expect(conveyor.getStageImage("alpine:3.22.3")).To(BeNil())
 		})
 
 		It("returns the image when only one platform is cached", func() {
-			arm64Image := stage.NewStageImage(nil, "", container_backend.NewLegacyStageImage(nil, "alpine:3.22.3", nil, "linux/arm64"))
+			arm64Image := stage.NewStageImage(nil, "", container_backend.NewLegacyStageImage("alpine:3.22.3", nil, "linux/arm64"))
 			conveyor.SetStageImage(arm64Image)
 
 			Expect(conveyor.getStageImage("alpine:3.22.3")).To(BeIdenticalTo(arm64Image))
@@ -114,8 +114,8 @@ var _ = Describe("Conveyor stage image cache", func() {
 
 	Describe("UnsetStageImageByPlatform", func() {
 		It("removes only the specified platform, leaving others intact", func() {
-			amd64Image := stage.NewStageImage(nil, "", container_backend.NewLegacyStageImage(nil, "alpine:3.22.3", nil, "linux/amd64"))
-			arm64Image := stage.NewStageImage(nil, "", container_backend.NewLegacyStageImage(nil, "alpine:3.22.3", nil, "linux/arm64"))
+			amd64Image := stage.NewStageImage(nil, "", container_backend.NewLegacyStageImage("alpine:3.22.3", nil, "linux/amd64"))
+			arm64Image := stage.NewStageImage(nil, "", container_backend.NewLegacyStageImage("alpine:3.22.3", nil, "linux/arm64"))
 
 			conveyor.SetStageImage(amd64Image)
 			conveyor.SetStageImage(arm64Image)
@@ -129,8 +129,8 @@ var _ = Describe("Conveyor stage image cache", func() {
 
 	Describe("UnsetStageImage", func() {
 		It("removes all platform variants", func() {
-			conveyor.SetStageImage(stage.NewStageImage(nil, "", container_backend.NewLegacyStageImage(nil, "alpine:3.22.3", nil, "linux/amd64")))
-			conveyor.SetStageImage(stage.NewStageImage(nil, "", container_backend.NewLegacyStageImage(nil, "alpine:3.22.3", nil, "linux/arm64")))
+			conveyor.SetStageImage(stage.NewStageImage(nil, "", container_backend.NewLegacyStageImage("alpine:3.22.3", nil, "linux/amd64")))
+			conveyor.SetStageImage(stage.NewStageImage(nil, "", container_backend.NewLegacyStageImage("alpine:3.22.3", nil, "linux/arm64")))
 
 			conveyor.UnsetStageImage("alpine:3.22.3")
 

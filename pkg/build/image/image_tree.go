@@ -3,7 +3,6 @@ package image
 import (
 	"context"
 	"fmt"
-	"path"
 	"path/filepath"
 	"reflect"
 	"slices"
@@ -386,11 +385,6 @@ func baseGitMappingInit(local *config.GitLocalExport, imageName string, conveyor
 	}
 
 	gitMapping := stage.NewGitMapping()
-
-	gitMapping.ContainerPatchesDir = path.Join(containerWerfDir, "patch")
-	gitMapping.ContainerArchivesDir = path.Join(containerWerfDir, "archive")
-	gitMapping.ScriptsDir = filepath.Join(tmpDir, imageName, "scripts")
-	gitMapping.ContainerScriptsDir = path.Join(containerWerfDir, "scripts")
 
 	gitMapping.Add = local.GitMappingAdd()
 	gitMapping.ExcludePaths = local.ExcludePaths

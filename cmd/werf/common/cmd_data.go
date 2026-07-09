@@ -74,10 +74,6 @@ type CmdData struct {
 	DevIgnore        *[]string
 	DevBranch        *string
 
-	IntrospectBeforeError *bool
-	IntrospectAfterError  *bool
-	StagesToIntrospect    *[]string
-
 	Follow *bool
 
 	// Logging options

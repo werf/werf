@@ -230,24 +230,8 @@ func (i *legacyImageForFromScratchTests) GetBuildServiceLabels() map[string]stri
 	return i.buildServiceLabels
 }
 
-func (i *legacyImageForFromScratchTests) Container() container_backend.LegacyContainer {
-	panic("unexpected call")
-}
-
-func (i *legacyImageForFromScratchTests) BuilderContainer() container_backend.LegacyBuilderContainer {
-	panic("unexpected call")
-}
-
-func (i *legacyImageForFromScratchTests) SetCommitChangeOptions(container_backend.LegacyCommitChangeOptions) {
-	panic("unexpected call")
-}
-
-func (i *legacyImageForFromScratchTests) Build(context.Context, container_backend.BuildOptions) error {
-	panic("unexpected call")
-}
 func (i *legacyImageForFromScratchTests) SetBuiltID(builtID string)         { i.builtID = builtID }
 func (i *legacyImageForFromScratchTests) BuiltID() string                   { return i.builtID }
-func (i *legacyImageForFromScratchTests) Introspect(context.Context) error  { panic("unexpected call") }
 func (i *legacyImageForFromScratchTests) SetInfo(*imagePkg.Info)            { panic("unexpected call") }
 func (i *legacyImageForFromScratchTests) IsExistsLocally() bool             { panic("unexpected call") }
 func (i *legacyImageForFromScratchTests) SetStageDesc(*imagePkg.StageDesc)  { panic("unexpected call") }

@@ -53,10 +53,8 @@ type BuildDockerfileStageOptions struct {
 }
 
 type BuildOptions struct {
-	TargetPlatform        string
-	Network               string
-	IntrospectBeforeError bool
-	IntrospectAfterError  bool
+	TargetPlatform string
+	Network        string
 }
 
 type ImagesOptions struct {

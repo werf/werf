@@ -83,10 +83,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 	common.SetupContainerRegistryMirror(&commonCmdData, cmd)
 
-	common.SetupIntrospectAfterError(&commonCmdData, cmd)
-	common.SetupIntrospectBeforeError(&commonCmdData, cmd)
-	common.SetupIntrospectStage(&commonCmdData, cmd)
-
 	common.SetupLogOptions(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 

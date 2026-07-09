@@ -297,11 +297,7 @@ func (s *BaseStage) PrepareImage(ctx context.Context, c Conveyor, cb container_b
 	s.addProjectRepoCommitLabel(ctx, c, cb, stageImage)
 
 	if s.network != "" {
-		if c.UseLegacyStapelBuilder(cb) {
-			stageImage.Builder.LegacyStapelStageBuilder().Container().RunOptions().AddNetwork(s.network)
-		} else {
-			stageImage.Builder.StapelStageBuilder().SetNetwork(s.network)
-		}
+		stageImage.Builder.StapelStageBuilder().SetNetwork(s.network)
 	}
 
 	serviceMounts := s.getServiceMounts(prevBuiltImage)
@@ -326,11 +322,7 @@ func (s *BaseStage) addProjectRepoCommitLabel(ctx context.Context, c Conveyor, c
 	}
 
 	addLabels := map[string]string{image.WerfProjectRepoCommitLabel: headCommit}
-	if c.UseLegacyStapelBuilder(cb) {
-		stageImage.Builder.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions().AddLabel(addLabels)
-	} else {
-		stageImage.Builder.StapelStageBuilder().AddLabels(addLabels)
-	}
+	stageImage.Builder.StapelStageBuilder().AddLabels(addLabels)
 }
 
 func (s *BaseStage) MutateImage(_ context.Context, _ ImageMutatorPusher, _, _ *StageImage) error {
@@ -405,13 +397,9 @@ func (s *BaseStage) addServiceMountsVolumes(mountpointsByType map[string][]strin
 			}
 
 			volume := fmt.Sprintf("%s:%s", absoluteFrom, absoluteMountpoint)
-			if c.UseLegacyStapelBuilder(cr) {
-				stageImage.Builder.LegacyStapelStageBuilder().Container().RunOptions().AddVolume(volume)
-			} else {
-				stageImage.Builder.StapelStageBuilder().AddBuildVolumes(volume)
-				if cleanupMountpoints {
-					stageImage.Builder.StapelStageBuilder().RemoveData(container_backend.RemoveInsidePath, []string{absoluteMountpoint}, nil)
-				}
+			stageImage.Builder.StapelStageBuilder().AddBuildVolumes(volume)
+			if cleanupMountpoints {
+				stageImage.Builder.StapelStageBuilder().RemoveData(container_backend.RemoveInsidePath, []string{absoluteMountpoint}, nil)
 			}
 		}
 	}
@@ -434,11 +422,7 @@ func (s *BaseStage) addServiceMountsLabels(mountpointsByType map[string][]string
 		labelValue := strings.Join(mountpoints, ";")
 
 		addLabels := map[string]string{labelName: labelValue}
-		if c.UseLegacyStapelBuilder(cr) {
-			stageImage.Builder.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions().AddLabel(addLabels)
-		} else {
-			stageImage.Builder.StapelStageBuilder().AddLabels(addLabels)
-		}
+		stageImage.Builder.StapelStageBuilder().AddLabels(addLabels)
 	}
 }
 
@@ -508,13 +492,9 @@ func (s *BaseStage) addCustomMountVolumes(mountpointsByFrom map[string][]string,
 			absoluteMountpoint := path.Join("/", mountpoint)
 
 			volume := fmt.Sprintf("%s:%s", absoluteFrom, absoluteMountpoint)
-			if c.UseLegacyStapelBuilder(cr) {
-				stageImage.Builder.LegacyStapelStageBuilder().Container().RunOptions().AddVolume(volume)
-			} else {
-				stageImage.Builder.StapelStageBuilder().AddBuildVolumes(volume)
-				if cleanupMountpoints {
-					stageImage.Builder.StapelStageBuilder().RemoveData(container_backend.RemoveInsidePath, []string{absoluteMountpoint}, nil)
-				}
+			stageImage.Builder.StapelStageBuilder().AddBuildVolumes(volume)
+			if cleanupMountpoints {
+				stageImage.Builder.StapelStageBuilder().RemoveData(container_backend.RemoveInsidePath, []string{absoluteMountpoint}, nil)
 			}
 		}
 	}
@@ -528,11 +508,7 @@ func (s *BaseStage) addCustomMountLabels(mountpointsByFrom map[string][]string, 
 		labelValue := strings.Join(mountpoints, ";")
 
 		addLabels := map[string]string{labelName: labelValue}
-		if c.UseLegacyStapelBuilder(cr) {
-			stageImage.Builder.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions().AddLabel(addLabels)
-		} else {
-			stageImage.Builder.StapelStageBuilder().AddLabels(addLabels)
-		}
+		stageImage.Builder.StapelStageBuilder().AddLabels(addLabels)
 	}
 }
 

@@ -9,18 +9,18 @@ import (
 	"github.com/werf/werf/v2/pkg/container_backend"
 )
 
-func GenerateBeforeSetupStage(ctx context.Context, imageBaseConfig *config.StapelImageBase, gitPatchStageOptions *NewGitPatchStageOptions, baseStageOptions *BaseStageOptions) *BeforeSetupStage {
+func GenerateBeforeSetupStage(ctx context.Context, imageBaseConfig *config.StapelImageBase, baseStageOptions *BaseStageOptions) *BeforeSetupStage {
 	b := getBuilder(imageBaseConfig, baseStageOptions)
 	if b != nil && !b.IsBeforeSetupEmpty(ctx) {
-		return newBeforeSetupStage(b, gitPatchStageOptions, baseStageOptions)
+		return newBeforeSetupStage(b, baseStageOptions)
 	}
 
 	return nil
 }
 
-func newBeforeSetupStage(builder builder.Builder, gitPatchStageOptions *NewGitPatchStageOptions, baseStageOptions *BaseStageOptions) *BeforeSetupStage {
+func newBeforeSetupStage(builder builder.Builder, baseStageOptions *BaseStageOptions) *BeforeSetupStage {
 	s := &BeforeSetupStage{}
-	s.UserWithGitPatchStage = newUserWithGitPatchStage(builder, BeforeSetup, gitPatchStageOptions, baseStageOptions)
+	s.UserWithGitPatchStage = newUserWithGitPatchStage(builder, BeforeSetup, baseStageOptions)
 	return s
 }
 
@@ -42,7 +42,7 @@ func (s *BeforeSetupStage) PrepareImage(ctx context.Context, c Conveyor, cb cont
 		return err
 	}
 
-	if err := s.builder.BeforeSetup(ctx, cb, stageImage.Builder, c.UseLegacyStapelBuilder(cb)); err != nil {
+	if err := s.builder.BeforeSetup(ctx, cb, stageImage.Builder); err != nil {
 		return err
 	}
 

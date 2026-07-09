@@ -48,7 +48,7 @@ var _ = Describe("LocalStagesStorage", func() {
 
 		backend := &localMutationBackendStub{}
 		storage := NewLocalStagesStorage(backend)
-		stageImage := container_backend.NewLegacyStageImage(nil, "tmp-scratch-compare:stage", backend, "")
+		stageImage := container_backend.NewLegacyStageImage("tmp-scratch-compare:stage", backend, "")
 
 		err := storage.MutateAndPushImage(logCtx, "tmp-scratch-compare:stage", "tmp-scratch-compare:content-tag", image.SpecConfig{Labels: map[string]string{"werf-stage-content-digest": "digest"}}, stageImage)
 		Expect(err).NotTo(HaveOccurred())
@@ -62,7 +62,7 @@ var _ = Describe("LocalStagesStorage", func() {
 
 		backend := &nativeMutatorBackendStub{localMutationBackendStub: localMutationBackendStub{}}
 		storage := NewLocalStagesStorage(backend)
-		stageImage := container_backend.NewLegacyStageImage(nil, "tmp-scratch-compare:stage", backend, "linux/amd64")
+		stageImage := container_backend.NewLegacyStageImage("tmp-scratch-compare:stage", backend, "linux/amd64")
 
 		newConfig := image.SpecConfig{Labels: map[string]string{"werf-stage-content-digest": "digest"}}
 		err := storage.MutateAndPushImage(logCtx, "tmp-scratch-compare:stage", "tmp-scratch-compare:content-tag", newConfig, stageImage)
@@ -84,7 +84,7 @@ var _ = Describe("LocalStagesStorage", func() {
 
 		backend := &nativeMutatorBackendStub{nativeErr: container_backend.ErrNativeMutationUnsupported}
 		storage := NewLocalStagesStorage(backend)
-		stageImage := container_backend.NewLegacyStageImage(nil, "tmp-scratch-compare:stage", backend, "")
+		stageImage := container_backend.NewLegacyStageImage("tmp-scratch-compare:stage", backend, "")
 
 		err := storage.MutateAndPushImage(logCtx, "tmp-scratch-compare:stage", "tmp-scratch-compare:content-tag", image.SpecConfig{}, stageImage)
 		Expect(err).NotTo(HaveOccurred())
@@ -100,7 +100,7 @@ var _ = Describe("LocalStagesStorage", func() {
 
 		backend := &nativeMutatorBackendStub{nativeErr: fmt.Errorf("boom")}
 		storage := NewLocalStagesStorage(backend)
-		stageImage := container_backend.NewLegacyStageImage(nil, "tmp-scratch-compare:stage", backend, "")
+		stageImage := container_backend.NewLegacyStageImage("tmp-scratch-compare:stage", backend, "")
 
 		err := storage.MutateAndPushImage(logCtx, "tmp-scratch-compare:stage", "tmp-scratch-compare:content-tag", image.SpecConfig{}, stageImage)
 		Expect(err).To(MatchError(ContainSubstring("boom")))
