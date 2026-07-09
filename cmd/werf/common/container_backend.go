@@ -26,8 +26,10 @@ func InitProcessContainerBackend(ctx context.Context, cmdData *CmdData, registry
 		}
 
 		return wrapContainerBackend(container_backend.NewBuildkitBackend(buildkitHost, container_backend.BuildkitBackendOptions{
-			DefaultPlatform: defaultPlatform,
-			DockerConfigDir: *cmdData.DockerConfig,
+			DefaultPlatform:       defaultPlatform,
+			DockerConfigDir:       *cmdData.DockerConfig,
+			InsecureRegistry:      *cmdData.InsecureRegistry,
+			SkipTLSVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
 		})), ctx, nil
 	}
 

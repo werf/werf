@@ -2,7 +2,9 @@ package buildkit
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
+	"net/http"
 	"sync"
 
 	"github.com/google/go-containerregistry/pkg/authn"
@@ -18,9 +20,15 @@ var _ sourceresolver.ImageMetaResolver = (*ImageMetaResolver)(nil)
 
 type ImageMetaResolver struct {
 	defaultPlatform *ocispecs.Platform
+	ImageMetaResolverOptions
 
 	mu    sync.Mutex
 	cache map[string]resolvedImage
+}
+
+type ImageMetaResolverOptions struct {
+	InsecureRegistry      bool
+	SkipTLSVerifyRegistry bool
 }
 
 type resolvedImage struct {
@@ -29,11 +37,19 @@ type resolvedImage struct {
 	config []byte
 }
 
-func NewImageMetaResolver(defaultPlatform *ocispecs.Platform) *ImageMetaResolver {
+func NewImageMetaResolver(defaultPlatform *ocispecs.Platform, opts ImageMetaResolverOptions) *ImageMetaResolver {
 	return &ImageMetaResolver{
-		defaultPlatform: defaultPlatform,
-		cache:           map[string]resolvedImage{},
+		defaultPlatform:          defaultPlatform,
+		ImageMetaResolverOptions: opts,
+		cache:                    map[string]resolvedImage{},
 	}
+}
+
+func (r *ImageMetaResolver) parseReferenceOptions() []name.Option {
+	if r.InsecureRegistry {
+		return []name.Option{name.Insecure}
+	}
+	return nil
 }
 
 // ResolvePinnedRef resolves ref and returns it pinned to the resolved digest
@@ -46,7 +62,7 @@ func (r *ImageMetaResolver) ResolvePinnedRef(ctx context.Context, ref string, pl
 		return "", nil, err
 	}
 
-	parsedRef, err := name.ParseReference(ref)
+	parsedRef, err := name.ParseReference(ref, r.parseReferenceOptions()...)
 	if err != nil {
 		return "", nil, fmt.Errorf("parse image reference %q: %w", ref, err)
 	}
@@ -72,7 +88,7 @@ func (r *ImageMetaResolver) ResolveImageConfig(ctx context.Context, ref string, 
 		return cached.ref, cached.digest, cached.config, nil
 	}
 
-	parsedRef, err := name.ParseReference(ref)
+	parsedRef, err := name.ParseReference(ref, r.parseReferenceOptions()...)
 	if err != nil {
 		return "", "", nil, fmt.Errorf("parse image reference %q: %w", ref, err)
 	}
@@ -80,6 +96,11 @@ func (r *ImageMetaResolver) ResolveImageConfig(ctx context.Context, ref string, 
 	remoteOpts := []remote.Option{
 		remote.WithContext(ctx),
 		remote.WithAuthFromKeychain(authn.DefaultKeychain),
+	}
+	if r.SkipTLSVerifyRegistry {
+		transport := remote.DefaultTransport.(*http.Transport).Clone()
+		transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+		remoteOpts = append(remoteOpts, remote.WithTransport(transport))
 	}
 	if platform != nil {
 		remoteOpts = append(remoteOpts, remote.WithPlatform(v1.Platform{

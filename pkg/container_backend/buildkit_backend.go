@@ -9,6 +9,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/containerd/containerd/platforms"
 	bkclient "github.com/moby/buildkit/client"
@@ -49,11 +50,16 @@ type BuildkitBackend struct {
 	repo           string
 	dockerRegistry docker_registry.Interface
 	client         *bkclient.Client
+
+	workerPlatformOnce sync.Once
+	workerPlatform     string
 }
 
 type BuildkitBackendOptions struct {
-	DefaultPlatform string
-	DockerConfigDir string
+	DefaultPlatform       string
+	DockerConfigDir       string
+	InsecureRegistry      bool
+	SkipTLSVerifyRegistry bool
 }
 
 func NewBuildkitBackend(host string, opts BuildkitBackendOptions) *BuildkitBackend {
@@ -84,6 +90,38 @@ func (backend *BuildkitBackend) parsePlatform(targetPlatform string) (*ocispecs.
 		return nil, fmt.Errorf("parse platform %q: %w", targetPlatform, err)
 	}
 	return &platform, nil
+}
+
+func (backend *BuildkitBackend) newResolver(platform *ocispecs.Platform) *buildkit.ImageMetaResolver {
+	return buildkit.NewImageMetaResolver(platform, buildkit.ImageMetaResolverOptions{
+		InsecureRegistry:      backend.InsecureRegistry,
+		SkipTLSVerifyRegistry: backend.SkipTLSVerifyRegistry,
+	})
+}
+
+// getWorkerPlatform queries the default platform of the buildkitd worker: builds run on the
+// daemon, so the werf client host platform is the wrong default (e.g. darwin client, linux
+// daemon). Falls back to the client platform when the daemon cannot be queried.
+func (backend *BuildkitBackend) getWorkerPlatform() string {
+	backend.workerPlatformOnce.Do(func() {
+		backend.workerPlatform = platforms.Format(platforms.DefaultSpec())
+
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+
+		cl, err := backend.getClient(ctx)
+		if err != nil {
+			return
+		}
+
+		workers, err := cl.ListWorkers(ctx)
+		if err != nil || len(workers) == 0 || len(workers[0].Platforms) == 0 {
+			return
+		}
+
+		backend.workerPlatform = platforms.Format(workers[0].Platforms[0])
+	})
+	return backend.workerPlatform
 }
 
 func (backend *BuildkitBackend) getSessionAttachables(ssh string, secrets []string) ([]session.Attachable, error) {
@@ -174,11 +212,11 @@ func (backend *BuildkitBackend) GetDefaultPlatform() string {
 	if backend.DefaultPlatform != "" {
 		return backend.DefaultPlatform
 	}
-	return platforms.Format(platforms.DefaultSpec())
+	return backend.getWorkerPlatform()
 }
 
 func (backend *BuildkitBackend) GetRuntimePlatform() string {
-	return platforms.Format(platforms.DefaultSpec())
+	return backend.getWorkerPlatform()
 }
 
 func (backend *BuildkitBackend) String() string {
@@ -242,7 +280,7 @@ func (backend *BuildkitBackend) BuildDockerfile(ctx context.Context, dockerfile 
 		},
 		MainContext:    &contextState,
 		TargetPlatform: platform,
-		MetaResolver:   buildkit.NewImageMetaResolver(platform),
+		MetaResolver:   backend.newResolver(platform),
 	})
 	if err != nil {
 		return "", fmt.Errorf("convert dockerfile to llb: %w", err)

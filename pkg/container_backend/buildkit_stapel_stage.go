@@ -42,7 +42,7 @@ func (backend *BuildkitBackend) BuildStapelStage(ctx context.Context, baseImage 
 		return "", err
 	}
 
-	resolver := buildkit.NewImageMetaResolver(platform)
+	resolver := backend.newResolver(platform)
 	pinnedBaseRef, baseConfig, err := resolver.ResolvePinnedRef(ctx, baseImage, platform)
 	if err != nil {
 		return "", fmt.Errorf("resolve base image %q: %w", baseImage, err)

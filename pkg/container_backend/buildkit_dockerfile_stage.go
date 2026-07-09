@@ -29,7 +29,7 @@ func (backend *BuildkitBackend) BuildDockerfileStage(ctx context.Context, baseIm
 		return "", err
 	}
 
-	resolver := buildkit.NewImageMetaResolver(platform)
+	resolver := backend.newResolver(platform)
 	pinnedBaseRef, baseConfig, err := resolver.ResolvePinnedRef(ctx, baseImage, platform)
 	if err != nil {
 		return "", fmt.Errorf("resolve base image %q: %w", baseImage, err)
