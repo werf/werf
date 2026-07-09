@@ -2,7 +2,7 @@
 
 All rules in this document are requirements — not suggestions. ALWAYS follow them.
 
-werf is a CNCF Sandbox CLI tool to implement full-cycle CI/CD to Kubernetes. werf integrates into your CI system and leverages familiar and reliable technologies, such as Git, Dockerfile, Helm, and Buildah. werf uses [werf/nelm](https://github.com/werf/nelm) as its deployment engine.
+werf is a CNCF Sandbox CLI tool to implement full-cycle CI/CD to Kubernetes. werf integrates into your CI system and leverages familiar and reliable technologies, such as Git, Dockerfile, Helm, and BuildKit. werf uses [werf/nelm](https://github.com/werf/nelm) as its deployment engine.
 
 ## Highest-priority rule (MANDATORY)
 

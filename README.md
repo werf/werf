@@ -13,14 +13,14 @@
   <a href="https://artifacthub.io/packages/search?repo=werf"><img src="https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/werf" alt="Artifact Hub"></a>
 </p>
 
-werf is a CNCF Sandbox CLI tool to implement full-cycle CI/CD to Kubernetes easily. werf integrates into your CI system and leverages familiar and reliable technologies, such as Git, Dockerfile, Helm, and Buildah.
+werf is a CNCF Sandbox CLI tool to implement full-cycle CI/CD to Kubernetes easily. werf integrates into your CI system and leverages familiar and reliable technologies, such as Git, Dockerfile, Helm, and BuildKit.
 
 What makes werf special:
 
 - **Complete application lifecycle management**: build and publish container images, test, deploy an application to Kubernetes, distribute release artifacts and clean up the container registry.
 - **Ease of use**: use Dockerfiles and Helm chart for configuration and let werf handle all the rest.
 - **Advanced features**: automatic build caching and content-based tagging, enhanced resource tracking and extra capabilities in Helm, a unique container registry cleanup approach, and more.
-- **Gluing common technologies**: Git, Buildah, Helm, Kubernetes, and your CI system of choice.
+- **Gluing common technologies**: Git, BuildKit, Helm, Kubernetes, and your CI system of choice.
 - **Production-ready**: werf has been used in production since 2017; thousands of projects rely on it to build & deploy various apps.
 
 ## Installation
