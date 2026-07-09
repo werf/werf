@@ -23,6 +23,7 @@ const (
 // when set, otherwise a werf-managed buildkitd container on the local Docker daemon.
 func ResolveHost(ctx context.Context) (string, error) {
 	if host := HostFromEnv(); host != "" {
+		logboek.Context(ctx).Default().LogF("Using buildkit backend with buildkitd at %s\n", host)
 		return host, nil
 	}
 
@@ -30,6 +31,7 @@ func ResolveHost(ctx context.Context) (string, error) {
 		return "", fmt.Errorf("unable to set up local buildkitd container (alternatively set $WERF_BUILDKIT_HOST or $BUILDKIT_HOST to an external buildkitd endpoint): %w", err)
 	}
 
+	logboek.Context(ctx).Default().LogF("Using buildkit backend with local buildkitd container %q\n", localBuildkitdContainerName)
 	return "docker-container://" + localBuildkitdContainerName, nil
 }
 
