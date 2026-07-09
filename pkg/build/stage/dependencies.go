@@ -74,7 +74,7 @@ func (s *DependenciesStage) GetDependencies(ctx context.Context, c Conveyor, _ c
 	}
 
 	for _, dep := range s.dependencies {
-		args = append(args, "Dependency", c.GetImageContentTagStageID(s.targetPlatform, dep.ImageName))
+		args = append(args, "Dependency", c.GetImageContentTagStageID(s.targetPlatform, dep.From))
 		for _, imp := range dep.Imports {
 			args = append(args, "DependencyImport", getDependencyImportID(imp))
 		}
@@ -111,8 +111,8 @@ func (s *DependenciesStage) prepareImageWithLegacyStapelBuilder(ctx context.Cont
 	for _, dep := range s.dependencies {
 		depImageServiceOptions := stageImage.Builder.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions()
 
-		depImageName := c.GetImageContentTagName(s.targetPlatform, dep.ImageName)
-		depImageDigest := c.GetImageContentTagDigest(s.targetPlatform, dep.ImageName)
+		depImageName := c.GetImageContentTagName(s.targetPlatform, dep.From)
+		depImageDigest := c.GetImageContentTagDigest(s.targetPlatform, dep.From)
 		depImageRepo, depImageTag := image.ParseRepositoryAndTag(depImageName)
 
 		for _, img := range dep.Imports {
@@ -165,8 +165,8 @@ func (s *DependenciesStage) prepareImage(ctx context.Context, c Conveyor, cr con
 	}
 
 	for _, dep := range s.dependencies {
-		depImageName := c.GetImageContentTagName(s.targetPlatform, dep.ImageName)
-		depImageDigest := c.GetImageContentTagDigest(s.targetPlatform, dep.ImageName)
+		depImageName := c.GetImageContentTagName(s.targetPlatform, dep.From)
+		depImageDigest := c.GetImageContentTagDigest(s.targetPlatform, dep.From)
 		depImageRepo, depImageTag := image.ParseRepositoryAndTag(depImageName)
 
 		for _, img := range dep.Imports {

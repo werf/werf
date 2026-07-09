@@ -39,7 +39,7 @@ func (dep *TestDependency) GetDockerImageName() string {
 }
 
 func (dep *TestDependency) ToConfigDependency() *config.Dependency {
-	depCfg := &config.Dependency{ImageName: dep.ImageName}
+	depCfg := &config.Dependency{From: dep.ImageName}
 
 	if dep.TargetEnvImageName != "" {
 		depCfg.Imports = append(depCfg.Imports, &config.DependencyImport{
