@@ -5,6 +5,5 @@ package host_cleaning
 type containerBackendType uint8
 
 const (
-	containerBackendDocker containerBackendType = iota
-	containerBackendTest
+	containerBackendTest containerBackendType = iota
 )

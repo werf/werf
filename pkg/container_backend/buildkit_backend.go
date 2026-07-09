@@ -204,10 +204,6 @@ func (backend *BuildkitBackend) Info(ctx context.Context) (info.Info, error) {
 	return info.Info{}, nil
 }
 
-func (backend *BuildkitBackend) HasStapelBuildSupport() bool {
-	return true
-}
-
 func (backend *BuildkitBackend) GetDefaultPlatform() string {
 	if backend.DefaultPlatform != "" {
 		return backend.DefaultPlatform

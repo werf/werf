@@ -125,20 +125,6 @@ func NewConveyor(werfConfig *config.WerfConfig, giterminismManager giterminism_m
 	return c
 }
 
-func validateBackendStapelSupport(backend container_backend.ContainerBackend, images []*image.Image) error {
-	if backend.HasStapelBuildSupport() {
-		return nil
-	}
-
-	for _, img := range images {
-		if !img.IsDockerfileImage {
-			return fmt.Errorf("building of stapel image %q is not supported by %s: use buildkit backend (set $WERF_BUILDKIT_HOST or $BUILDKIT_HOST to a buildkitd endpoint) or use Dockerfile-type image", img.Name, backend.String())
-		}
-	}
-
-	return nil
-}
-
 func validatePlatforms(platforms []string) error {
 	for _, p := range platforms {
 		parts := strings.Split(p, ",")
@@ -563,10 +549,6 @@ func (c *Conveyor) Build(ctx context.Context, opts BuildOptions) ([]*ImagesRepor
 	}
 
 	if err := c.determineStages(ctx); err != nil {
-		return nil, err
-	}
-
-	if err := validateBackendStapelSupport(c.ContainerBackend, c.imagesTree.GetImages()); err != nil {
 		return nil, err
 	}
 

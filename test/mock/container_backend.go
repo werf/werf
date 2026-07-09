@@ -153,20 +153,6 @@ func (mr *MockContainerBackendMockRecorder) GetRuntimePlatform() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRuntimePlatform", reflect.TypeOf((*MockContainerBackend)(nil).GetRuntimePlatform))
 }
 
-// HasStapelBuildSupport mocks base method.
-func (m *MockContainerBackend) HasStapelBuildSupport() bool {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "HasStapelBuildSupport")
-	ret0, _ := ret[0].(bool)
-	return ret0
-}
-
-// HasStapelBuildSupport indicates an expected call of HasStapelBuildSupport.
-func (mr *MockContainerBackendMockRecorder) HasStapelBuildSupport() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasStapelBuildSupport", reflect.TypeOf((*MockContainerBackend)(nil).HasStapelBuildSupport))
-}
-
 // Images mocks base method.
 func (m *MockContainerBackend) Images(ctx context.Context, opts container_backend.ImagesOptions) (image.ImagesList, error) {
 	m.ctrl.T.Helper()

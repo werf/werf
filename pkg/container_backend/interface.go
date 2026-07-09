@@ -90,7 +90,6 @@ type ContainerBackend interface {
 	BuildDockerfileStage(ctx context.Context, baseImage string, opts BuildDockerfileStageOptions, instructions ...InstructionInterface) (string, error)
 	BuildStapelStage(ctx context.Context, baseImage string, opts BuildStapelStageOptions) (string, error)
 
-	HasStapelBuildSupport() bool
 	GetDefaultPlatform() string
 	GetRuntimePlatform() string
 

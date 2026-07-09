@@ -108,6 +108,6 @@ func TestAI_AsBuildkitBackend_UnwrapsPerfCheck(t *testing.T) {
 	require.True(t, ok)
 	assert.Same(t, backend, unwrapped)
 
-	_, ok = AsBuildkitBackend(NewDockerServerBackend(nil))
+	_, ok = AsBuildkitBackend(nil)
 	assert.False(t, ok)
 }

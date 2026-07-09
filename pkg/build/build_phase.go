@@ -84,10 +84,7 @@ func (phase *BuildPhase) BeforeImages(ctx context.Context) error {
 
 	imagesPairs := phase.Conveyor.imagesTree.GetImagesByName(false)
 
-	backend := "docker"
-	if phase.Conveyor.ContainerBackend.HasStapelBuildSupport() {
-		backend = "buildkit"
-	}
+	backend := "buildkit"
 
 	werfInContainer := os.Getenv("WERF_CONTAINERIZED") == "yes"
 

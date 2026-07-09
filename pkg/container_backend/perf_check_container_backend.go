@@ -22,10 +22,6 @@ func (runtime *PerfCheckContainerBackend) Info(ctx context.Context) (info.Info, 
 	return runtime.ContainerBackend.Info(ctx)
 }
 
-func (runtime *PerfCheckContainerBackend) HasStapelBuildSupport() bool {
-	return runtime.ContainerBackend.HasStapelBuildSupport()
-}
-
 func (runtime *PerfCheckContainerBackend) GetDefaultPlatform() string {
 	return runtime.ContainerBackend.GetDefaultPlatform()
 }

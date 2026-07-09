@@ -51,13 +51,10 @@ func (i *LegacyStageImage) BuiltID() string {
 }
 
 func (i *LegacyStageImage) Tag(ctx context.Context, name string) error {
-	_ = i.ContainerBackend.(*DockerServerBackend)
 	return docker.CliTag(ctx, i.GetID(), name)
 }
 
 func (i *LegacyStageImage) Pull(ctx context.Context) error {
-	_ = i.ContainerBackend.(*DockerServerBackend)
-
 	var args []string
 	if i.targetPlatform != "" {
 		args = append(args, "--platform", i.targetPlatform)
@@ -74,8 +71,6 @@ func (i *LegacyStageImage) Pull(ctx context.Context) error {
 }
 
 func (i *LegacyStageImage) Push(ctx context.Context) error {
-	_ = i.ContainerBackend.(*DockerServerBackend)
-
 	return docker.CliPushWithRetries(ctx, i.name)
 }
 
