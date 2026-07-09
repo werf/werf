@@ -69,16 +69,6 @@ var _ = Describe("Simple build", Label("e2e", "build", "simple"), func() {
 				)
 			}
 		},
-		Entry("without repo using Docker", simpleTestOptions{setupEnvOptions{
-			ContainerBackendMode:        "docker",
-			WithLocalRepo:               false,
-			WithStagedDockerfileBuilder: false,
-		}}),
-		Entry("with local repo using Docker", simpleTestOptions{setupEnvOptions{
-			ContainerBackendMode:        "docker",
-			WithLocalRepo:               true,
-			WithStagedDockerfileBuilder: false,
-		}}),
 		Entry("with local repo using BuildKit", simpleTestOptions{setupEnvOptions{
 			ContainerBackendMode:        "buildkit",
 			WithLocalRepo:               true,

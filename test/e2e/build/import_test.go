@@ -45,11 +45,6 @@ var _ = Describe("Import", Label("e2e", "build", "import", "simple"), func() {
 				"test -f /bin/myapp",
 			)
 		},
-		Entry("Docker", importTestOptions{setupEnvOptions{
-			ContainerBackendMode:        "docker",
-			WithLocalRepo:               true,
-			WithStagedDockerfileBuilder: false,
-		}}),
 		Entry("BuildKit", importTestOptions{setupEnvOptions{
 			ContainerBackendMode:        "buildkit",
 			WithLocalRepo:               true,

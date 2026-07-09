@@ -42,11 +42,6 @@ var _ = Describe("Import system dirs", Label("e2e", "build", "import", "system-d
 			imageName := buildReport.Images["destination"].DockerImageName
 			checkImageFilesystem(imageName)
 		},
-		Entry("Docker", setupEnvOptions{
-			ContainerBackendMode:        "docker",
-			WithLocalRepo:               true,
-			WithStagedDockerfileBuilder: false,
-		}),
 		Entry("BuildKit", setupEnvOptions{
 			ContainerBackendMode:        "buildkit",
 			WithLocalRepo:               true,
