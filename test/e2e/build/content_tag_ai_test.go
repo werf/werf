@@ -29,11 +29,11 @@ var _ = Describe("Content tag reuse", Label("e2e", "build", "content-tag"), func
 		By("[1, :local] building all stages from scratch")
 		buildOut := werfProject.Build(ctx, &werf.BuildOptions{})
 		Expect(buildOut).To(ContainSubstring("Building stage stapel-scratch/"))
-		Expect(buildOut).NotTo(ContainSubstring("Reusing image stapel-scratch by content-based tag"))
+		Expect(buildOut).NotTo(ContainSubstring("Use previously built image for stapel-scratch by content-based tag"))
 
 		By("[2, :local] rebuilding reuses the image by content-based tag")
 		buildOut = werfProject.Build(ctx, &werf.BuildOptions{})
-		Expect(buildOut).To(ContainSubstring("Reusing image stapel-scratch by content-based tag"))
+		Expect(buildOut).To(ContainSubstring("Use previously built image for stapel-scratch by content-based tag"))
 		Expect(buildOut).NotTo(ContainSubstring("Building stage stapel-scratch/"))
 
 		By("[3, repo] building with --repo copies the content-based tag from the :local secondary")
@@ -58,7 +58,7 @@ var _ = Describe("Content tag reuse", Label("e2e", "build", "content-tag"), func
 				},
 			},
 		})
-		Expect(buildOut).To(ContainSubstring("Reusing image stapel-scratch by content-based tag"))
+		Expect(buildOut).To(ContainSubstring("Use previously built image for stapel-scratch by content-based tag"))
 		Expect(buildOut).NotTo(ContainSubstring("Building stage stapel-scratch/"))
 
 		By("[4, final] building with --final-repo does not rebuild any stage")
@@ -96,7 +96,7 @@ var _ = Describe("Content tag reuse", Label("e2e", "build", "content-tag"), func
 
 		By("[2, :local] rebuilding resolves the content-based tag without rebuilding stages")
 		buildOut = werfProject.Build(ctx, &werf.BuildOptions{})
-		Expect(buildOut).To(ContainSubstring("Reusing image app by content-based tag"))
+		Expect(buildOut).To(ContainSubstring("Use previously built image for app by content-based tag"))
 		Expect(buildOut).NotTo(ContainSubstring("Building stage app/"))
 		Expect(buildOut).NotTo(ContainSubstring("Use previously built image for app/from"))
 		Expect(buildOut).NotTo(ContainSubstring("Use previously built image for app/install"))
