@@ -18,9 +18,11 @@ import (
 	ocispecs "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/tonistiigi/fsutil"
 
+	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/buildkit"
 	"github.com/werf/werf/v2/pkg/container_backend/info"
 	"github.com/werf/werf/v2/pkg/container_backend/prune"
+	"github.com/werf/werf/v2/pkg/docker_registry"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/ssh_agent"
 )
@@ -42,9 +44,10 @@ type BuildkitBackend struct {
 	host string
 	BuildkitBackendOptions
 
-	mu     sync.Mutex
-	repo   string
-	client *bkclient.Client
+	mu             sync.Mutex
+	repo           string
+	dockerRegistry docker_registry.Interface
+	client         *bkclient.Client
 }
 
 type BuildkitBackendOptions struct {
@@ -133,10 +136,11 @@ func parseExtraHosts(addHost []string) ([]llb.HostIP, error) {
 	return res, nil
 }
 
-func (backend *BuildkitBackend) SetStagesStorageRepo(repo string) {
+func (backend *BuildkitBackend) SetStagesStorage(repo string, dockerRegistry docker_registry.Interface) {
 	backend.mu.Lock()
 	defer backend.mu.Unlock()
 	backend.repo = repo
+	backend.dockerRegistry = dockerRegistry
 }
 
 func (backend *BuildkitBackend) getStagesStorageRepo() (string, error) {
@@ -146,6 +150,15 @@ func (backend *BuildkitBackend) getStagesStorageRepo() (string, error) {
 		return "", fmt.Errorf("stages storage repo is not set: --repo is required when using buildkit backend")
 	}
 	return backend.repo, nil
+}
+
+func (backend *BuildkitBackend) getDockerRegistry() (docker_registry.Interface, error) {
+	backend.mu.Lock()
+	defer backend.mu.Unlock()
+	if backend.dockerRegistry == nil {
+		return nil, fmt.Errorf("stages storage docker registry is not set: --repo is required when using buildkit backend")
+	}
+	return backend.dockerRegistry, nil
 }
 
 func (backend *BuildkitBackend) Info(ctx context.Context) (info.Info, error) {
@@ -267,32 +280,67 @@ func (backend *BuildkitBackend) BuildDockerfile(ctx context.Context, dockerfile 
 	return builtID, nil
 }
 
+// Tag creates a registry-side tag pointing to the already-pushed image (built images are
+// pushed by digest during Solve), without re-uploading layers.
 func (backend *BuildkitBackend) Tag(ctx context.Context, ref, newRef string, opts TagOpts) error {
-	return fmt.Errorf("tag image: %w", ErrUnsupportedFeature)
+	dockerRegistry, err := backend.getDockerRegistry()
+	if err != nil {
+		return err
+	}
+	if err := dockerRegistry.CopyImage(ctx, ref, newRef, docker_registry.CopyImageOptions{}); err != nil {
+		return fmt.Errorf("tag image %q as %q in registry: %w", ref, newRef, err)
+	}
+	return nil
 }
 
+// Push is a no-op: images are pushed by digest during Solve and tagged registry-side by Tag.
 func (backend *BuildkitBackend) Push(ctx context.Context, ref string, opts PushOpts) error {
-	return fmt.Errorf("push image: %w", ErrUnsupportedFeature)
+	return nil
 }
 
 func (backend *BuildkitBackend) Pull(ctx context.Context, ref string, opts PullOpts) error {
-	return fmt.Errorf("pull image: %w", ErrUnsupportedFeature)
+	return fmt.Errorf("pull image to local store (there is no local image store with buildkit backend): %w", ErrUnsupportedFeature)
 }
 
 func (backend *BuildkitBackend) Rmi(ctx context.Context, ref string, opts RmiOpts) error {
-	return fmt.Errorf("remove image: %w", ErrUnsupportedFeature)
+	dockerRegistry, err := backend.getDockerRegistry()
+	if err != nil {
+		return err
+	}
+
+	info, err := dockerRegistry.TryGetRepoImage(ctx, ref)
+	if err != nil {
+		return fmt.Errorf("get image %q from registry: %w", ref, err)
+	}
+	if info == nil {
+		return nil
+	}
+
+	if err := dockerRegistry.DeleteRepoImage(ctx, info); err != nil {
+		return fmt.Errorf("delete image %q from registry: %w", ref, err)
+	}
+	return nil
 }
 
 func (backend *BuildkitBackend) Rm(ctx context.Context, name string, opts RmOpts) error {
-	return fmt.Errorf("remove container: %w", ErrUnsupportedFeature)
+	return nil
 }
 
 func (backend *BuildkitBackend) PostManifest(ctx context.Context, ref string, opts PostManifestOpts) error {
-	return fmt.Errorf("post manifest: %w", ErrUnsupportedFeature)
+	return fmt.Errorf("post manifest (only repo stages storage is supported by buildkit backend and it posts manifests registry-side): %w", ErrUnsupportedFeature)
 }
 
 func (backend *BuildkitBackend) GetImageInfo(ctx context.Context, ref string, opts GetImageInfoOpts) (*image.Info, error) {
-	return nil, fmt.Errorf("get image info: %w", ErrUnsupportedFeature)
+	dockerRegistry, err := backend.getDockerRegistry()
+	if err != nil {
+		return nil, err
+	}
+
+	info, err := dockerRegistry.TryGetRepoImage(ctx, ref)
+	if err != nil {
+		return nil, fmt.Errorf("get image %q from registry: %w", ref, err)
+	}
+	return info, nil
 }
 
 func (backend *BuildkitBackend) Images(ctx context.Context, opts ImagesOptions) (image.ImagesList, error) {
@@ -303,8 +351,30 @@ func (backend *BuildkitBackend) Containers(ctx context.Context, opts ContainersO
 	return image.ContainerList{}, nil
 }
 
+// PruneImages prunes the buildkitd build cache: there is no local image store to prune.
 func (backend *BuildkitBackend) PruneImages(ctx context.Context, options prune.Options) (prune.Report, error) {
-	return prune.Report{}, ErrUnsupportedFeature
+	cl, err := backend.getClient(ctx)
+	if err != nil {
+		return prune.Report{}, err
+	}
+
+	ch := make(chan bkclient.UsageInfo)
+	report := prune.Report{}
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		for usage := range ch {
+			report.ItemsDeleted = append(report.ItemsDeleted, usage.ID)
+			report.SpaceReclaimed += uint64(usage.Size)
+		}
+	}()
+
+	if err := cl.Prune(ctx, ch); err != nil {
+		return prune.Report{}, fmt.Errorf("prune buildkitd cache: %w", err)
+	}
+	<-done
+
+	return report, nil
 }
 
 func (backend *BuildkitBackend) PruneVolumes(ctx context.Context, options prune.Options) (prune.Report, error) {
@@ -316,23 +386,84 @@ func (backend *BuildkitBackend) RemoveHostDirs(ctx context.Context, mountDir str
 }
 
 func (backend *BuildkitBackend) RefreshImageObject(ctx context.Context, img LegacyImageInterface) error {
-	return fmt.Errorf("refresh image object: %w", ErrUnsupportedFeature)
+	info, err := backend.GetImageInfo(ctx, img.Name(), GetImageInfoOpts{TargetPlatform: img.GetTargetPlatform()})
+	if err != nil {
+		return err
+	}
+	img.SetInfo(info)
+	return nil
 }
 
+// PullImageFromRegistry refreshes the image info from the registry: there is no local image
+// store to pull into, builds fetch base images inside buildkitd.
 func (backend *BuildkitBackend) PullImageFromRegistry(ctx context.Context, img LegacyImageInterface) error {
-	return fmt.Errorf("pull image from registry: %w", ErrUnsupportedFeature)
+	info, err := backend.GetImageInfo(ctx, img.Name(), GetImageInfoOpts{TargetPlatform: img.GetTargetPlatform()})
+	if err != nil {
+		return fmt.Errorf("unable to get info of image %s: %w", img.Name(), err)
+	}
+	if info == nil {
+		return fmt.Errorf("image %s not found in registry", img.Name())
+	}
+	img.SetInfo(info)
+	return nil
 }
 
+// RenameImage copies the image to the new reference registry-side (registries have no rename).
 func (backend *BuildkitBackend) RenameImage(ctx context.Context, img LegacyImageInterface, newImageName string, removeOldName bool) error {
-	return fmt.Errorf("rename image: %w", ErrUnsupportedFeature)
+	dockerRegistry, err := backend.getDockerRegistry()
+	if err != nil {
+		return err
+	}
+
+	if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Tagging image %s by name %s", img.Name(), newImageName)).DoError(func() error {
+		if err := dockerRegistry.CopyImage(ctx, img.Name(), newImageName, docker_registry.CopyImageOptions{}); err != nil {
+			return fmt.Errorf("unable to copy image %s to %s in registry: %w", img.Name(), newImageName, err)
+		}
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	if removeOldName {
+		if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Removing old image tag %s", img.Name())).DoError(func() error {
+			return backend.Rmi(ctx, img.Name(), RmiOpts{CommonOpts: CommonOpts{TargetPlatform: img.GetTargetPlatform()}})
+		}); err != nil {
+			return err
+		}
+	}
+
+	img.SetName(newImageName)
+
+	if err := backend.RefreshImageObject(ctx, img); err != nil {
+		return err
+	}
+
+	if stageDesc := img.GetStageDesc(); stageDesc != nil {
+		repository, tag := image.ParseRepositoryAndTag(newImageName)
+		stageDesc.Info.Name = newImageName
+		stageDesc.Info.Repository = repository
+		stageDesc.Info.Tag = tag
+	}
+
+	return nil
 }
 
 func (backend *BuildkitBackend) RemoveImage(ctx context.Context, img LegacyImageInterface) error {
-	return fmt.Errorf("remove image: %w", ErrUnsupportedFeature)
+	return logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Removing image tag %s", img.Name())).DoError(func() error {
+		return backend.Rmi(ctx, img.Name(), RmiOpts{
+			CommonOpts: CommonOpts{TargetPlatform: img.GetTargetPlatform()},
+		})
+	})
 }
 
 func (backend *BuildkitBackend) TagImageByName(ctx context.Context, img LegacyImageInterface) error {
-	return fmt.Errorf("tag image by name: %w", ErrUnsupportedFeature)
+	if img.BuiltID() != "" {
+		if err := backend.Tag(ctx, img.BuiltID(), img.Name(), TagOpts{TargetPlatform: img.GetTargetPlatform()}); err != nil {
+			return fmt.Errorf("unable to tag image %s: %w", img.Name(), err)
+		}
+		return nil
+	}
+	return backend.RefreshImageObject(ctx, img)
 }
 
 func (backend *BuildkitBackend) SaveImageToStream(ctx context.Context, imageName string) (io.ReadCloser, error) {

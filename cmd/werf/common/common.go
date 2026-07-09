@@ -843,7 +843,9 @@ func GetStagesStorage(ctx context.Context, containerBackend container_backend.Co
 	}
 
 	if buildkitBackend, ok := container_backend.AsBuildkitBackend(containerBackend); ok {
-		buildkitBackend.SetStagesStorageRepo(stagesStorage.Address())
+		if repoStagesStorage, ok := stagesStorage.(*storage.RepoStagesStorage); ok {
+			buildkitBackend.SetStagesStorage(repoStagesStorage.Address(), repoStagesStorage.DockerRegistry)
+		}
 	}
 
 	return stagesStorage, nil

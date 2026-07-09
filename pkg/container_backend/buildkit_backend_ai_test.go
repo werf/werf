@@ -14,7 +14,7 @@ func TestAI_BuildkitBackend_RepoNotSetError(t *testing.T) {
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "--repo is required when using buildkit backend")
 
-	backend.SetStagesStorageRepo("registry.example.com/project")
+	backend.SetStagesStorage("registry.example.com/project", nil)
 	repo, err := backend.getStagesStorageRepo()
 	require.NoError(t, err)
 	assert.Equal(t, "registry.example.com/project", repo)
