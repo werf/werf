@@ -548,6 +548,37 @@ dependencies:
 	assert.Equal(t, "baseimg", dockerfileImage.Dependencies[0].From)
 }
 
+func TestAI_DependencyFromPassesPlatformValidator(t *testing.T) {
+	yamlImage1 := `
+image: base
+from: ubuntu:22.04
+`
+	yamlImage2 := `
+image: app
+from: ubuntu:22.04
+dependencies:
+- from: base
+  before: install
+`
+
+	giterminismManager := newTestGiterminismManager()
+
+	doc1 := &doc{Content: []byte(yamlImage1)}
+	rawImage1 := &rawStapelImage{doc: doc1}
+	require.NoError(t, yaml.Unmarshal(doc1.Content, rawImage1))
+
+	doc2 := &doc{Content: []byte(yamlImage2)}
+	rawImage2 := &rawStapelImage{doc: doc2}
+	require.NoError(t, yaml.Unmarshal(doc2.Content, rawImage2))
+
+	meta := &Meta{}
+	meta.ConfigVersion = 1
+	meta.Project = "test"
+
+	_, err := prepareWerfConfig(giterminismManager, []*rawStapelImage{rawImage1, rawImage2}, nil, meta)
+	require.NoError(t, err)
+}
+
 func TestAI_DockerfileDependencyFromAndImageBothSpecifiedIsRejected(t *testing.T) {
 	yamlContent := `
 image: testimage
