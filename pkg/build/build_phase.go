@@ -510,6 +510,9 @@ func (phase *BuildPhase) BeforeImageStages(ctx context.Context, img *image.Image
 			logboek.Context(ctx).Default().LogFHighlight("Use previously built image for %s by content-based tag\n", img.LogName())
 			container_backend.LogImageInfoByStageDesc(ctx, stageDesc, platform)
 		}
+	} else if phase.ShouldBeBuiltMode {
+		logboek.Context(ctx).Warn().LogFHighlight("Content-based digest %s for image %s not found\n", anchor.GetDigest(), img.LogName())
+		logboek.Context(ctx).Warn().LogLn()
 	}
 
 	return deferFn, nil
