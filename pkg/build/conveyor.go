@@ -132,7 +132,7 @@ func validateBackendStapelSupport(backend container_backend.ContainerBackend, im
 
 	for _, img := range images {
 		if !img.IsDockerfileImage {
-			return fmt.Errorf("building of stapel image %q is not supported by %s backend: use buildkit backend (set $WERF_BUILDKIT_HOST or $BUILDKIT_HOST to a buildkitd endpoint) or use Dockerfile-type image", img.Name, backend.String())
+			return fmt.Errorf("building of stapel image %q is not supported by %s: use buildkit backend (set $WERF_BUILDKIT_HOST or $BUILDKIT_HOST to a buildkitd endpoint) or use Dockerfile-type image", img.Name, backend.String())
 		}
 	}
 

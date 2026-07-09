@@ -11,7 +11,6 @@ type LegacyStageImage struct {
 	builtID        string
 	targetPlatform string
 
-	// TODO: remove after refactoring
 	buildServiceLabels map[string]string
 }
 
