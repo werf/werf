@@ -692,10 +692,8 @@ func (phase *BuildPhase) onImageStage(ctx context.Context, img *image.Image, stg
 	}
 
 	if img.IsDockerfileImage && img.DockerfileImageConfig.Staged {
-		if werf.GetStagedDockerfileVersion() == werf.StagedDockerfileV2 {
-			if err := stg.ExpandDependencies(ctx, phase.Conveyor, img.GetStagedDockerfileBaseEnv()); err != nil {
-				return err
-			}
+		if err := stg.ExpandDependencies(ctx, phase.Conveyor, img.GetStagedDockerfileBaseEnv()); err != nil {
+			return err
 		}
 	}
 
@@ -811,10 +809,8 @@ func (phase *BuildPhase) afterImageStage(ctx context.Context, img *image.Image, 
 	// TODO(staged-dockerfile):  proxying ONBUILD instruction to chain of arbitrary instructions.
 
 	if img.IsDockerfileImage && img.DockerfileImageConfig.Staged {
-		if werf.GetStagedDockerfileVersion() == werf.StagedDockerfileV2 {
-			if _, isFromStage := stg.(*instruction.From); isFromStage {
-				img.SetStagedDockerfileBaseEnv(image.EnvToMap(stg.GetStageImage().Image.GetStageDesc().Info.Env))
-			}
+		if _, isFromStage := stg.(*instruction.From); isFromStage {
+			img.SetStagedDockerfileBaseEnv(image.EnvToMap(stg.GetStageImage().Image.GetStageDesc().Info.Env))
 		}
 	}
 
@@ -940,10 +936,9 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, s
 
 		if img.IsDockerfileImage && img.DockerfileImageConfig.Staged {
 			if !stg.HasPrevStage() {
-				// FIXME: For werf.StagedDockerfileV2, this logic should also be the default.
-				// Currently, to avoid breaking tag reproducibility, this logic is only enabled for multi-stage cases.
-				// Eventually, this behavior should be default for all versions without the extra if condition.
-				if img.IsBasedOnStage() || werf.GetStagedDockerfileVersion() == werf.StagedDockerfileV1 {
+				// FIXME: to avoid breaking tag reproducibility, this logic is only enabled for multi-stage cases.
+				// Eventually, this behavior should be default without the extra if condition.
+				if img.IsBasedOnStage() {
 					opts.BaseImage = img.GetBaseImageReference()
 				}
 			}

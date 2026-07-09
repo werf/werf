@@ -22,7 +22,6 @@ import (
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
 	"github.com/werf/werf/v2/pkg/path_matcher"
 	"github.com/werf/werf/v2/pkg/util/option"
-	"github.com/werf/werf/v2/pkg/werf"
 )
 
 func MapDockerfileConfigToImagesSets(ctx context.Context, metaConfig *config.Meta, dockerfileImageConfig *config.ImageFromDockerfile, targetPlatform string, useCustomTag bool, opts CommonImageOptions) (ImagesSets, error) {
@@ -174,20 +173,14 @@ func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, 
 			Network:          dockerfileImageConfig.Network,
 		}
 
-		var instrNum int
+		baseStageOptions := *commonBaseStageOptions
+		baseStageOptions.LogName = "FROM1"
 
-		if werf.GetStagedDockerfileVersion() == werf.StagedDockerfileV2 {
-			baseStageOptions := *commonBaseStageOptions
-			baseStageOptions.LogName = "FROM1"
+		imageCacheVersion := option.ValueOrDefault(dockerfileImageConfig.CacheVersion(), metaConfig.Build.CacheVersion)
+		fromStage := stage_instruction.NewFrom(img.GetBaseImageReference(), img.GetBaseImageRepoDigest(), imageCacheVersion, dockerfileImageConfig.Dependencies, stg.ExpanderFactory, &baseStageOptions)
 
-			imageCacheVersion := option.ValueOrDefault(dockerfileImageConfig.CacheVersion(), metaConfig.Build.CacheVersion)
-			fromStage := stage_instruction.NewFrom(img.GetBaseImageReference(), img.GetBaseImageRepoDigest(), imageCacheVersion, dockerfileImageConfig.Dependencies, stg.ExpanderFactory, &baseStageOptions)
-
-			img.stages = append(img.stages, fromStage)
-			instrNum = 1
-		} else {
-			instrNum = 0
-		}
+		img.stages = append(img.stages, fromStage)
+		instrNum := 1
 
 		var entrypointResetCMD bool
 	loop:
@@ -254,12 +247,6 @@ func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, 
 			}
 
 			instrNum++
-		}
-
-		if werf.GetStagedDockerfileVersion() == werf.StagedDockerfileV1 {
-			if len(img.stages) == 0 {
-				return nil, fmt.Errorf("unsupported configuration, please enable staged dockerfile builder v2 by setting environment variable WERF_STAGED_DOCKERFILE_VERSION=v2")
-			}
 		}
 
 		if len(img.stages) > 0 {
