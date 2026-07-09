@@ -7,8 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-
-	"github.com/containers/buildah/copier"
+	"strings"
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
@@ -142,24 +141,31 @@ func (a *BuildContextArchive) CalculateGlobsChecksum(ctx context.Context, globs 
 	}
 	logboek.Context(ctx).Debug().LogF("Calculating checksum for globs %v in context dir %q: will scan following dirs globs: %v\n", globs, contextDir, contextGlobs)
 
-	globStats, err := copier.Stat(contextDir, contextDir, copier.StatOptions{CheckForArchives: checkForArchives}, contextGlobs)
-	if err != nil {
-		return "", fmt.Errorf("unable to stat globs: %w", err)
-	}
-	if len(globStats) == 0 {
-		return "", fmt.Errorf("no glob matches for globs: %v", globs)
-	}
-
+	// Mirrors the former buildah copier.Stat contract: a pattern glob without matches is
+	// silently skipped, a literal path without matches is an error, and no matches at all
+	// across all globs is an error.
 	var matches []string
-	for _, globStat := range globStats {
-		if globStat.Error != "" {
-			return "", fmt.Errorf("unable to stat glob %q: %s", globStat.Glob, globStat.Error)
+	matchedAny := false
+	for _, contextGlob := range contextGlobs {
+		globbed, err := extendedGlob(contextGlob)
+		if err != nil {
+			return "", fmt.Errorf("unable to stat glob %q: %s", contextGlob, err)
 		}
-		for _, match := range globStat.Globbed {
+		if len(globbed) == 0 {
+			if strings.ContainsAny(contextGlob, "*?[") {
+				continue
+			}
+			return "", fmt.Errorf("unable to stat glob %q: %s", contextGlob, os.ErrNotExist)
+		}
+		matchedAny = true
+		for _, match := range globbed {
 			relMatch := util.GetRelativeToBaseFilepath(contextDir, match)
 			logboek.Context(ctx).Debug().LogF("Calculating checksum for globs %v in context dir %q: matched path %q\n", globs, contextDir, relMatch)
 			matches = append(matches, relMatch)
 		}
+	}
+	if !matchedAny {
+		return "", fmt.Errorf("no glob matches for globs: %v", globs)
 	}
 
 	pathsChecksum, err := a.CalculatePathsChecksum(ctx, matches)
