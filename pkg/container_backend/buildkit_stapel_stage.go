@@ -11,9 +11,10 @@ import (
 	"strings"
 
 	"github.com/moby/buildkit/client/llb"
-	"github.com/moby/buildkit/client/llb/sourceresolver"
 	bkinstructions "github.com/moby/buildkit/frontend/dockerfile/instructions"
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
+	"github.com/moby/buildkit/session/secrets/secretsprovider"
+	"github.com/moby/buildkit/session/sshforward/sshprovider"
 	"github.com/moby/buildkit/solver/pb"
 	dockerspec "github.com/moby/docker-image-spec/specs-go/v1"
 	ocispecs "github.com/opencontainers/image-spec/specs-go/v1"
@@ -42,9 +43,7 @@ func (backend *BuildkitBackend) BuildStapelStage(ctx context.Context, baseImage 
 	}
 
 	resolver := buildkit.NewImageMetaResolver(platform)
-	_, baseDigest, baseConfig, err := resolver.ResolveImageConfig(ctx, baseImage, sourceresolver.Opt{
-		ImageOpt: &sourceresolver.ResolveImageOpt{Platform: platform},
-	})
+	pinnedBaseRef, baseConfig, err := resolver.ResolvePinnedRef(ctx, baseImage, platform)
 	if err != nil {
 		return "", fmt.Errorf("resolve base image %q: %w", baseImage, err)
 	}
@@ -54,7 +53,7 @@ func (backend *BuildkitBackend) BuildStapelStage(ctx context.Context, baseImage 
 		return "", fmt.Errorf("unmarshal base image %q config: %w", baseImage, err)
 	}
 
-	state := llb.Image(fmt.Sprintf("%s@%s", strings.Split(baseImage, "@")[0], baseDigest), llb.Platform(*platform))
+	state := llb.Image(pinnedBaseRef, llb.Platform(*platform))
 	state, err = state.WithImageConfig(baseConfig)
 	if err != nil {
 		return "", fmt.Errorf("apply base image %q config to llb state: %w", baseImage, err)
@@ -62,7 +61,7 @@ func (backend *BuildkitBackend) BuildStapelStage(ctx context.Context, baseImage 
 
 	localMounts := map[string]fsutil.FS{}
 
-	state, err = applyStapelDependencyImports(state, opts.DependencyImportSpecs, *platform)
+	state, err = applyStapelDependencyImports(ctx, state, resolver, opts.DependencyImportSpecs, *platform)
 	if err != nil {
 		return "", err
 	}
@@ -75,9 +74,9 @@ func (backend *BuildkitBackend) BuildStapelStage(ctx context.Context, baseImage 
 
 	state = applyStapelRemoveData(state, opts.RemoveDataSpecs, *platform)
 
-	var sshAgentSockUsed bool
+	var commandsSession stapelCommandsSession
 	if len(opts.Commands) > 0 {
-		state, sshAgentSockUsed, err = applyStapelCommands(ctx, state, opts, *platform)
+		state, commandsSession, err = applyStapelCommands(ctx, state, opts, *platform)
 		if err != nil {
 			return "", err
 		}
@@ -97,11 +96,19 @@ func (backend *BuildkitBackend) BuildStapelStage(ctx context.Context, baseImage 
 		return "", fmt.Errorf("marshal image config: %w", err)
 	}
 
-	var sshSpec string
-	if sshAgentSockUsed {
-		sshSpec = "default"
+	var sshAgentSocks []sshprovider.AgentConfig
+	if commandsSession.sshAgentSockUsed {
+		sshAgentSocks, err = buildkit.ParseSSHSpec("default", ssh_agent.SSHAuthSock)
+		if err != nil {
+			return "", fmt.Errorf("parse ssh spec: %w", err)
+		}
 	}
-	attachables, err := backend.getSessionAttachables(sshSpec, nil)
+
+	attachables, err := buildkit.SessionAttachables(buildkit.SessionAttachablesOptions{
+		DockerConfigDir: backend.DockerConfigDir,
+		SSHAgentSocks:   sshAgentSocks,
+		Secrets:         commandsSession.secretSources,
+	})
 	if err != nil {
 		return "", err
 	}
@@ -119,8 +126,17 @@ func (backend *BuildkitBackend) BuildStapelStage(ctx context.Context, baseImage 
 	return builtID, nil
 }
 
-func applyStapelDependencyImports(state llb.State, imports []DependencyImportSpec, platform ocispecs.Platform) (llb.State, error) {
+type imageRefPinner interface {
+	ResolvePinnedRef(ctx context.Context, ref string, platform *ocispecs.Platform) (string, []byte, error)
+}
+
+func applyStapelDependencyImports(ctx context.Context, state llb.State, pinner imageRefPinner, imports []DependencyImportSpec, platform ocispecs.Platform) (llb.State, error) {
 	for _, imp := range imports {
+		pinnedRef, _, err := pinner.ResolvePinnedRef(ctx, imp.ImageName, &platform)
+		if err != nil {
+			return state, fmt.Errorf("resolve dependency image %q: %w", imp.ImageName, err)
+		}
+
 		copyInfo := &llb.CopyInfo{
 			CopyDirContentsOnly: true,
 			CreateDestPath:      true,
@@ -130,7 +146,7 @@ func applyStapelDependencyImports(state llb.State, imports []DependencyImportSpe
 			ExcludePatterns:     imp.ExcludePaths,
 			ChownOpt:            makeChownOpt(imp.Owner, imp.Group),
 		}
-		src := llb.Image(imp.ImageName, llb.Platform(platform))
+		src := llb.Image(pinnedRef, llb.Platform(platform))
 		state = state.File(
 			llb.Copy(src, imp.FromPath, imp.ToPath, copyInfo),
 			llb.Platform(platform),
@@ -155,11 +171,13 @@ func applyStapelDataArchives(ctx context.Context, state llb.State, archives []Da
 		}
 		tmpDirs = append(tmpDirs, tmpDir)
 
-		if err := extractTarWithChown(archive.Archive, tmpDir, nil, nil); err != nil {
-			return state, cleanup, fmt.Errorf("unable to extract data archive into %s: %w", archive.To, err)
+		extractErr := extractTarWithChown(archive.Archive, tmpDir, nil, nil)
+		closeErr := archive.Archive.Close()
+		if extractErr != nil {
+			return state, cleanup, fmt.Errorf("unable to extract data archive into %s: %w", archive.To, extractErr)
 		}
-		if err := archive.Archive.Close(); err != nil {
-			return state, cleanup, fmt.Errorf("error closing archive data stream: %w", err)
+		if closeErr != nil {
+			return state, cleanup, fmt.Errorf("error closing archive data stream: %w", closeErr)
 		}
 
 		localName := fmt.Sprintf("data-archive-%d", i)
@@ -223,7 +241,13 @@ func applyStapelRemoveData(state llb.State, removeData []RemoveDataSpec, platfor
 	return state
 }
 
-func applyStapelCommands(ctx context.Context, state llb.State, opts BuildStapelStageOptions, platform ocispecs.Platform) (llb.State, bool, error) {
+type stapelCommandsSession struct {
+	sshAgentSockUsed bool
+	secretSources    []secretsprovider.Source
+}
+
+func applyStapelCommands(ctx context.Context, state llb.State, opts BuildStapelStageOptions, platform ocispecs.Platform) (llb.State, stapelCommandsSession, error) {
+	session := stapelCommandsSession{}
 	scriptContent := makeScript(opts.Commands, logboek.Context(ctx).IsAcceptedLevel(level.Info))
 	destScriptPath := "/.werf/script.sh"
 
@@ -253,7 +277,7 @@ func applyStapelCommands(ctx context.Context, state llb.State, opts BuildStapelS
 
 	netMode, err := buildkit.ParseNetMode(opts.Network)
 	if err != nil {
-		return state, false, err
+		return state, session, err
 	}
 	if netMode != pb.NetMode_UNSET {
 		runOpts = append(runOpts, llb.Network(netMode))
@@ -261,26 +285,38 @@ func applyStapelCommands(ctx context.Context, state llb.State, opts BuildStapelS
 
 	sshSockTarget := opts.BuildTimeEnvs[ssh_agent.SSHAuthSockEnv]
 
-	var sshAgentSockUsed bool
 	for _, volume := range opts.BuildVolumes {
-		from, to, _, err := parseVolume(volume)
+		from, to, mode, err := parseVolume(volume)
 		if err != nil {
-			return state, false, fmt.Errorf("invalid volume %q: %w", volume, err)
+			return state, session, fmt.Errorf("invalid volume %q: %w", volume, err)
 		}
 
 		if sshSockTarget != "" && to == sshSockTarget {
-			sshAgentSockUsed = true
+			session.sshAgentSockUsed = true
 			runOpts = append(runOpts, llb.AddSSHSocket(llb.SSHSocketTarget(to)))
+			continue
+		}
+
+		// A regular file on the werf host (e.g. a stapel build secret materialized into the
+		// stage tmp dir) cannot be delivered via a cache mount: ship it as a buildkit secret.
+		if fi, err := os.Stat(from); err == nil && fi.Mode().IsRegular() {
+			secretID := strings.ReplaceAll(strings.TrimPrefix(to, "/"), "/", "-")
+			session.secretSources = append(session.secretSources, secretsprovider.Source{ID: secretID, FilePath: from})
+			runOpts = append(runOpts, llb.AddSecret(to, llb.SecretID(secretID)))
 			continue
 		}
 
 		// Host bind mounts are not possible with a remote buildkitd: host-path-keyed shared
 		// cache mounts preserve the data-reuse semantics, but the data lives in the buildkitd
 		// cache instead of the host directory.
-		runOpts = append(runOpts, llb.AddMount(to, llb.Scratch(), llb.AsPersistentCacheDir(from, llb.CacheMountShared)))
+		mountOpts := []llb.MountOption{llb.AsPersistentCacheDir(from, llb.CacheMountShared)}
+		if mode == "ro" {
+			mountOpts = append(mountOpts, llb.Readonly)
+		}
+		runOpts = append(runOpts, llb.AddMount(to, llb.Scratch(), mountOpts...))
 	}
 
-	return state.Run(runOpts...).Root(), sshAgentSockUsed, nil
+	return state.Run(runOpts...).Root(), session, nil
 }
 
 func applyStapelImageConfig(img *dockerspec.DockerOCIImage, opts BuildStapelStageOptions) error {

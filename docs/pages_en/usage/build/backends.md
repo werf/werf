@@ -58,7 +58,7 @@ Feature parity includes:
 
 ### Host mounts semantics
 
-Stapel host mounts (`fromPath`, `mount: build_dir`) are mapped to BuildKit persistent cache mounts keyed by the host path. The data lives inside the buildkitd cache on the daemon side rather than in a directory on the werf host. The cache persists across builds and is shared by host-path key.
+Stapel host mounts (`fromPath`, `mount: build_dir`) are mapped to BuildKit persistent cache mounts keyed by the host path. The data lives inside the buildkitd cache on the daemon side rather than in a directory on the werf host. The cache persists across builds and is shared by host-path key. Note that pre-existing contents of the host directory are NOT delivered into the mount: the cache mount starts empty on first use and only accumulates data written during builds.
 
 ### Insecure and self-signed registries
 
@@ -66,7 +66,7 @@ Insecure registry access, custom CAs and TLS verification skipping are configure
 
 ### Host cleanup
 
-With a remote buildkitd there is no local image store on the werf host. `werf host purge` and other host-cleanup commands prune the buildkitd build cache instead of a local storage directory.
+With a remote buildkitd there is no local image store on the werf host. `werf host purge` and other host-cleanup commands only clean up werf-owned service directories on the host; the buildkitd build cache is not pruned by werf in the first iteration — it is managed by buildkitd garbage collection (see `buildkitd.toml`) or manually via `buildctl prune`.
 
 ### Limitations
 

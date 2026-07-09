@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"os"
 	"strings"
 	"sync"
 
@@ -381,8 +382,16 @@ func (backend *BuildkitBackend) PruneVolumes(ctx context.Context, options prune.
 	return prune.Report{}, ErrUnsupportedFeature
 }
 
+// RemoveHostDirs removes werf-owned host dirs directly: unlike docker/buildah there is no
+// container or chroot reexec to elevate privileges, and the buildkit path only produces
+// werf-owned files on the host.
 func (backend *BuildkitBackend) RemoveHostDirs(ctx context.Context, mountDir string, dirs []string) error {
-	return fmt.Errorf("remove host dirs: %w", ErrUnsupportedFeature)
+	for _, dir := range dirs {
+		if err := os.RemoveAll(dir); err != nil {
+			return fmt.Errorf("remove host dir %q: %w", dir, err)
+		}
+	}
+	return nil
 }
 
 func (backend *BuildkitBackend) RefreshImageObject(ctx context.Context, img LegacyImageInterface) error {

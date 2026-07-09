@@ -4,10 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
 
 	"github.com/moby/buildkit/client/llb"
-	"github.com/moby/buildkit/client/llb/sourceresolver"
 	"github.com/moby/buildkit/frontend/dockerui"
 	dockerspec "github.com/moby/docker-image-spec/specs-go/v1"
 	"github.com/tonistiigi/fsutil"
@@ -32,9 +30,7 @@ func (backend *BuildkitBackend) BuildDockerfileStage(ctx context.Context, baseIm
 	}
 
 	resolver := buildkit.NewImageMetaResolver(platform)
-	_, baseDigest, baseConfig, err := resolver.ResolveImageConfig(ctx, baseImage, sourceresolver.Opt{
-		ImageOpt: &sourceresolver.ResolveImageOpt{Platform: platform},
-	})
+	pinnedBaseRef, baseConfig, err := resolver.ResolvePinnedRef(ctx, baseImage, platform)
 	if err != nil {
 		return "", fmt.Errorf("resolve base image %q: %w", baseImage, err)
 	}
@@ -44,7 +40,7 @@ func (backend *BuildkitBackend) BuildDockerfileStage(ctx context.Context, baseIm
 		return "", fmt.Errorf("unmarshal base image %q config: %w", baseImage, err)
 	}
 
-	state := llb.Image(fmt.Sprintf("%s@%s", strings.Split(baseImage, "@")[0], baseDigest), llb.Platform(*platform))
+	state := llb.Image(pinnedBaseRef, llb.Platform(*platform))
 	state, err = state.WithImageConfig(baseConfig)
 	if err != nil {
 		return "", fmt.Errorf("apply base image %q config to llb state: %w", baseImage, err)

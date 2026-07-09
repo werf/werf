@@ -5,6 +5,8 @@ import (
 	"bytes"
 	"context"
 	"io"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/moby/buildkit/client/llb"
@@ -43,8 +45,14 @@ func stapelFileActions(t *testing.T, ops []*pb.Op) []*pb.FileAction {
 	return actions
 }
 
+type stubRefPinner struct{}
+
+func (stubRefPinner) ResolvePinnedRef(_ context.Context, ref string, _ *ocispecs.Platform) (string, []byte, error) {
+	return ref + "@sha256:2222222222222222222222222222222222222222222222222222222222222222", nil, nil
+}
+
 func TestAI_BuildkitStapel_DependencyImports(t *testing.T) {
-	state, err := applyStapelDependencyImports(llb.Scratch(), []DependencyImportSpec{
+	state, err := applyStapelDependencyImports(context.Background(), llb.Scratch(), stubRefPinner{}, []DependencyImportSpec{
 		{
 			ImageName:    "registry.example.com/project:dep",
 			FromPath:     "/from",
@@ -61,7 +69,7 @@ func TestAI_BuildkitStapel_DependencyImports(t *testing.T) {
 
 	var imageFound bool
 	for _, op := range ops {
-		if src := op.GetSource(); src != nil && src.Identifier == "docker-image://registry.example.com/project:dep" {
+		if src := op.GetSource(); src != nil && src.Identifier == "docker-image://registry.example.com/project:dep@sha256:2222222222222222222222222222222222222222222222222222222222222222" {
 			imageFound = true
 		}
 	}
@@ -159,9 +167,9 @@ func TestAI_BuildkitStapel_Commands(t *testing.T) {
 		BuildVolumes:  []string{"/host/build_dir:/container/build_dir"},
 	}
 
-	state, sshUsed, err := applyStapelCommands(context.Background(), llb.Scratch(), opts, testPlatform)
+	state, session, err := applyStapelCommands(context.Background(), llb.Scratch(), opts, testPlatform)
 	require.NoError(t, err)
-	assert.False(t, sshUsed)
+	assert.False(t, session.sshAgentSockUsed)
 
 	ops := marshalStapelOps(t, state)
 	var exec *pb.ExecOp
@@ -201,9 +209,9 @@ func TestAI_BuildkitStapel_CommandsSSHSocket(t *testing.T) {
 		BuildVolumes:  []string{"/host/agent.sock:/.werf/ssh-auth-sock"},
 	}
 
-	state, sshUsed, err := applyStapelCommands(context.Background(), llb.Scratch(), opts, testPlatform)
+	state, session, err := applyStapelCommands(context.Background(), llb.Scratch(), opts, testPlatform)
 	require.NoError(t, err)
-	assert.True(t, sshUsed)
+	assert.True(t, session.sshAgentSockUsed)
 
 	ops := marshalStapelOps(t, state)
 	var exec *pb.ExecOp
@@ -222,6 +230,71 @@ func TestAI_BuildkitStapel_CommandsSSHSocket(t *testing.T) {
 	}
 	require.NotNil(t, sshMount)
 	assert.Equal(t, "/.werf/ssh-auth-sock", sshMount.Dest)
+}
+
+func TestAI_BuildkitStapel_CommandsSecretFileVolume(t *testing.T) {
+	secretFile := filepath.Join(t.TempDir(), "secret")
+	require.NoError(t, os.WriteFile(secretFile, []byte("value"), 0o400))
+
+	opts := BuildStapelStageOptions{
+		Commands:     []string{"cat /run/secrets/mysecret"},
+		BuildVolumes: []string{secretFile + ":/run/secrets/mysecret:ro"},
+	}
+
+	state, session, err := applyStapelCommands(context.Background(), llb.Scratch(), opts, testPlatform)
+	require.NoError(t, err)
+
+	require.Len(t, session.secretSources, 1)
+	assert.Equal(t, "run-secrets-mysecret", session.secretSources[0].ID)
+	assert.Equal(t, secretFile, session.secretSources[0].FilePath)
+
+	ops := marshalStapelOps(t, state)
+	var exec *pb.ExecOp
+	for _, op := range ops {
+		if e := op.GetExec(); e != nil {
+			exec = e
+		}
+	}
+	require.NotNil(t, exec)
+
+	var secretMount *pb.Mount
+	for _, m := range exec.Mounts {
+		if m.MountType == pb.MountType_SECRET {
+			secretMount = m
+		}
+	}
+	require.NotNil(t, secretMount)
+	assert.Equal(t, "/run/secrets/mysecret", secretMount.Dest)
+	assert.Equal(t, "run-secrets-mysecret", secretMount.SecretOpt.ID)
+}
+
+func TestAI_BuildkitStapel_CommandsReadonlyVolume(t *testing.T) {
+	opts := BuildStapelStageOptions{
+		Commands:     []string{"ls /mnt"},
+		BuildVolumes: []string{"/host/dir:/mnt:ro"},
+	}
+
+	state, _, err := applyStapelCommands(context.Background(), llb.Scratch(), opts, testPlatform)
+	require.NoError(t, err)
+
+	ops := marshalStapelOps(t, state)
+	var exec *pb.ExecOp
+	for _, op := range ops {
+		if e := op.GetExec(); e != nil {
+			exec = e
+		}
+	}
+	require.NotNil(t, exec)
+
+	var cacheMount *pb.Mount
+	for _, m := range exec.Mounts {
+		if m.Dest == "/mnt" {
+			cacheMount = m
+		}
+	}
+	require.NotNil(t, cacheMount)
+	assert.Equal(t, pb.MountType_CACHE, cacheMount.MountType)
+	assert.True(t, cacheMount.Readonly)
 }
 
 func TestAI_BuildkitStapel_ImageConfig(t *testing.T) {

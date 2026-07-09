@@ -25,7 +25,7 @@ type SolveOptions struct {
 
 func Solve(ctx context.Context, cl *client.Client, def *llb.Definition, opts SolveOptions) (string, error) {
 	if opts.Repo == "" {
-		panic("Repo is required for buildkit solve")
+		return "", fmt.Errorf("repo is required for buildkit solve")
 	}
 
 	solveOpt := client.SolveOpt{

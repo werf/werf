@@ -12,7 +12,6 @@ import (
 func makeScript(commands []string, verbose bool) []byte {
 	var scriptCommands []string
 	for _, c := range commands {
-		// TODO: print commands by default when build secrets are supported.
 		if verbose {
 			scriptCommands = append(scriptCommands, fmt.Sprintf(`printf "$ %%s\n" %q`, c))
 		}
