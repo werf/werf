@@ -44,6 +44,8 @@ type Interface interface {
 
 	HasPrevStage() bool
 	IsStapelStage() bool
+	IsContentAnchor() bool
+	SetContentAnchor(bool)
 
 	UsesBuildContext() bool
 

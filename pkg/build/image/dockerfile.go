@@ -262,6 +262,10 @@ func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, 
 			}
 		}
 
+		if len(img.stages) > 0 {
+			img.stages[len(img.stages)-1].SetContentAnchor(true)
+		}
+
 		appendImageToCurrentSet(img)
 	}
 
@@ -362,6 +366,10 @@ func mapLegacyDockerfileToImage(ctx context.Context, metaConfig *config.Meta, do
 
 	if dockerfileImageConfig.ImageSpec != nil && !opts.Conveyor.SkipImageSpecStage() {
 		img.stages = append(img.stages, stage.GenerateImageSpecStage(dockerfileImageConfig.ImageSpec, baseStageOptions))
+	}
+
+	if len(img.stages) > 0 {
+		img.stages[len(img.stages)-1].SetContentAnchor(true)
 	}
 
 	logboek.Context(ctx).Info().LogFDetails("Using stage %s\n", dockerfileStage.Name())

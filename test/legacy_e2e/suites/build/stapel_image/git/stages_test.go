@@ -14,6 +14,8 @@ import (
 	"github.com/werf/werf/v2/test/pkg/utils/docker"
 )
 
+const gitLatestPatchNoChangesNote = "Building stage image/gitLatestPatch (no git changes; refreshing image content tag)"
+
 var _ = Describe("git stages", func() {
 	var fixturesPathParts []string
 	var specSteps []stagesSpecStep
@@ -34,8 +36,8 @@ var _ = Describe("git stages", func() {
 			checkResultedFilesChecksum: true,
 			expectedOutputMatchers: []types.GomegaMatcher{
 				Not(ContainSubstring("stage image/gitCache")),
-				Not(ContainSubstring("stage image/gitLatestPatch")),
 				ContainSubstring("Building stage image/gitArchive"),
+				ContainSubstring(gitLatestPatchNoChangesNote),
 			},
 		}
 
@@ -57,9 +59,9 @@ var _ = Describe("git stages", func() {
 				},
 				checkResultedFilesChecksum: true,
 				expectedOutputMatchers: []types.GomegaMatcher{
-					Not(ContainSubstring("stage image/gitLatestPatch")),
 					ContainSubstring("Use previously built image for image/gitArchive"),
 					ContainSubstring("Building stage image/gitCache"),
+					ContainSubstring(gitLatestPatchNoChangesNote),
 				},
 			}
 
@@ -98,9 +100,9 @@ var _ = Describe("git stages", func() {
 					},
 					checkResultedFilesChecksum: true,
 					expectedOutputMatchers: []types.GomegaMatcher{
-						Not(ContainSubstring("stage image/gitLatestPatch")),
 						ContainSubstring("Use previously built image for image/gitArchive"),
 						ContainSubstring("Building stage image/gitCache"),
+						ContainSubstring(gitLatestPatchNoChangesNote),
 					},
 				}
 
@@ -171,8 +173,8 @@ var _ = Describe("user stages", func() {
 			checkResultedFilesChecksum: true,
 			expectedOutputMatchers: []types.GomegaMatcher{
 				Not(ContainSubstring("stage image/gitCache")),
-				Not(ContainSubstring("stage image/gitLatestPatch")),
 				ContainSubstring("Building stage image/gitArchive"),
+				ContainSubstring(gitLatestPatchNoChangesNote),
 			},
 		}
 
@@ -183,9 +185,9 @@ var _ = Describe("user stages", func() {
 			},
 			checkResultedFilesChecksum: true,
 			expectedOutputMatchers: []types.GomegaMatcher{
-				Not(ContainSubstring("stage image/gitLatestPatch")),
 				ContainSubstring("Use previously built image for image/gitArchive"),
 				ContainSubstring("Building stage image/gitCache"),
+				ContainSubstring(gitLatestPatchNoChangesNote),
 			},
 		}
 
@@ -223,8 +225,8 @@ var _ = Describe("user stages", func() {
 							checkResultedFilesChecksum: true,
 							expectedOutputMatchers: []types.GomegaMatcher{
 								Not(ContainSubstring("stage image/gitCache")),
-								Not(ContainSubstring("stage image/gitLatestPatch")),
 								ContainSubstring("Building stage image/gitArchive"),
+								ContainSubstring(gitLatestPatchNoChangesNote),
 							},
 						})
 						runStagesSpecSteps(ctx, specSteps)
@@ -244,8 +246,8 @@ var _ = Describe("user stages", func() {
 								checkResultedFilesChecksum: true,
 								expectedOutputMatchers: []types.GomegaMatcher{
 									Not(ContainSubstring("stage image/gitCache")),
-									Not(ContainSubstring("stage image/gitLatestPatch")),
 									ContainSubstring(fmt.Sprintf("Building stage image/%s", boundedUserStage)),
+									ContainSubstring(gitLatestPatchNoChangesNote),
 								},
 							})
 							runStagesSpecSteps(ctx, specSteps)

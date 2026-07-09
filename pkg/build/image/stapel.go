@@ -134,6 +134,10 @@ func initStages(ctx context.Context, image *Image, metaConfig *config.Meta, stap
 		}
 	}
 
+	if len(stages) > 0 {
+		stages[len(stages)-1].SetContentAnchor(true)
+	}
+
 	image.SetStages(stages)
 
 	return nil

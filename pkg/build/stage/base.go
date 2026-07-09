@@ -99,6 +99,15 @@ type BaseStage struct {
 	projectName      string
 	network          string
 	meta             *StageMeta
+	isContentAnchor  bool
+}
+
+func (s *BaseStage) IsContentAnchor() bool {
+	return s.isContentAnchor
+}
+
+func (s *BaseStage) SetContentAnchor(v bool) {
+	s.isContentAnchor = v
 }
 
 type StageMeta struct {
