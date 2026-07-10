@@ -1,6 +1,9 @@
 package image
 
 import (
+	"fmt"
+	"sort"
+
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v2/pkg/image"
 	common_image "github.com/werf/werf/v2/pkg/image"
@@ -37,11 +40,20 @@ func NewMultiplatformImage(name string, images []*Image, logImageIndex, logImage
 		logImageTotal: logImageTotal,
 	}
 
-	metaStageDeps := util.MapFuncToSlice(images, func(img *Image) string {
-		stageDesc := img.GetLastNonEmptyStage().GetStageImage().Image.GetStageDesc()
-		return stageDesc.StageID.String()
+	sortedImages := make([]*Image, len(images))
+	copy(sortedImages, images)
+	sort.Slice(sortedImages, func(i, j int) bool {
+		return sortedImages[i].TargetPlatform < sortedImages[j].TargetPlatform
 	})
-	img.calculatedDigest = util.Sha3_224Hash(metaStageDeps...)
+
+	contentDeps := util.MapFuncToSlice(sortedImages, func(img *Image) string {
+		desc := img.GetContentTagDesc()
+		if desc == nil {
+			panic(fmt.Sprintf("content tag descriptor is not set for image %q platform %q", img.Name, img.TargetPlatform))
+		}
+		return desc.StageID.String()
+	})
+	img.calculatedDigest = util.Sha3_224Hash(contentDeps...)
 	img.stageID = *common_image.NewStageID(img.GetDigest(), 0)
 
 	return img
@@ -61,8 +73,11 @@ func (img *MultiplatformImage) GetStageID() common_image.StageID {
 
 func (img *MultiplatformImage) GetImagesInfoList() []*common_image.Info {
 	return util.MapFuncToSlice(img.Images, func(img *Image) *common_image.Info {
-		stageDesc := img.GetLastNonEmptyStage().GetStageImage().Image.GetStageDesc()
-		return stageDesc.Info
+		desc := img.GetContentTagDesc()
+		if desc == nil {
+			panic(fmt.Sprintf("content tag descriptor is not set for image %q platform %q", img.Name, img.TargetPlatform))
+		}
+		return desc.Info
 	})
 }
 

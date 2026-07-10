@@ -19,19 +19,18 @@ werf purge [options]
       --allow-includes-update=false
             Allow use includes latest versions (default $WERF_ALLOW_INCLUDES_UPDATE or false)
       --allowed-backend-storage-volume-usage=70
-            Set allowed percentage or absolute value (e.g. 10GB) of backend (Docker or Buildah)     
-            storage volume usage which will cause cleanup of least recently used local backend      
-            images (default 70% or $WERF_ALLOWED_BACKEND_STORAGE_VOLUME_USAGE)
+            Set allowed percentage of backend (Docker or Buildah) storage volume usage which will   
+            cause cleanup of least recently used local backend images (default 70% or               
+            $WERF_ALLOWED_BACKEND_STORAGE_VOLUME_USAGE)
       --allowed-backend-storage-volume-usage-margin=5
             During cleanup of least recently used local backend (Docker or Buildah) images werf     
             would delete images until volume usage becomes below                                    
             "allowed-backend-storage-volume-usage - allowed-backend-storage-volume-usage-margin"    
             level (default 5% or $WERF_ALLOWED_BACKEND_STORAGE_VOLUME_USAGE_MARGIN)
       --allowed-local-cache-volume-usage=70
-            Set allowed percentage or absolute value (e.g. 10GB) of local cache                     
-            (~/.werf/local_cache by default) volume usage which will cause cleanup of least         
-            recently used data from the local cache (default 70% or                                 
-            $WERF_ALLOWED_LOCAL_CACHE_VOLUME_USAGE)
+            Set allowed percentage of local cache (~/.werf/local_cache by default) volume usage     
+            which will cause cleanup of least recently used data from the local cache (default 70%  
+            or $WERF_ALLOWED_LOCAL_CACHE_VOLUME_USAGE)
       --allowed-local-cache-volume-usage-margin=5
             During cleanup of local cache werf would delete local cache data until volume usage     
             becomes below "allowed-local-cache-volume-usage -                                       
@@ -115,18 +114,8 @@ werf purge [options]
             (default $WERF_GITERMINISM_CONFIG or werf-giterminism.yaml in working directory)
       --home-dir=""
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
-      --insecure-helm-dependencies=false
-            No-op
       --insecure-registry=false
             Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
-      --kube-config=""
-            Kubernetes config file path (default $WERF_KUBE_CONFIG, or $WERF_KUBECONFIG, or         
-            $KUBECONFIG)
-      --kube-config-base64=""
-            Kubernetes config data as base64 string (default $WERF_KUBE_CONFIG_BASE64 or            
-            $WERF_KUBECONFIG_BASE64 or $KUBECONFIG_BASE64)
-      --kube-context=""
-            Kubernetes config context (default $WERF_KUBE_CONTEXT)
       --log-color-mode="auto"
             Set log color mode.
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        
@@ -155,6 +144,8 @@ werf purge [options]
             Enable verbose output (default $WERF_LOG_VERBOSE).
       --loose-giterminism=false
             Loose werf giterminism mode restrictions
+      --meta-repo=""
+            Container registry storage address (default $WERF_META_REPO)
   -p, --parallel=true
             Run in parallel (default $WERF_PARALLEL or true)
       --parallel-tasks-limit=10
@@ -193,16 +184,6 @@ werf purge [options]
       --skip-tls-verify-registry=false
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)
-  -S, --synchronization=""
-            Address of synchronizer for multiple werf processes to work with a single repo.
-            
-            Default:
-             - $WERF_SYNCHRONIZATION, or
-             - :local if --repo is not specified, or
-             - https://synchronization.werf.io if --repo has been specified.
-            
-            The same address should be specified for all werf processes that work with a single     
-            repo. :local address allows execution of werf processes from a single host only
       --tmp-dir=""
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
 ```

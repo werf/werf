@@ -3,7 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-List image and artifact names defined in `werf.yaml`.
+List image names defined in `werf.yaml`.
 
 {{ header }} Syntax
 
@@ -42,8 +42,8 @@ werf config list [options]
             should reside (default $WERF_DIR or current working directory)
       --env=""
             Use specified environment (default $WERF_ENV)
-      --final-images-only=false
-            Show only final images
+      --final-images-only=true
+            Show only final images (pass --final-images-only=false to include non-final images)
       --git-work-tree=""
             Use specified git work tree dir (default $WERF_WORK_TREE or lookup for directory that   
             contains .git in the current or parent directories)

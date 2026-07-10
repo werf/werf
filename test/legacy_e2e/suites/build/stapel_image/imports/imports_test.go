@@ -9,7 +9,6 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/werf/v2/test/pkg/utils"
 	"github.com/werf/werf/v2/test/pkg/utils/liveexec"
 )
@@ -33,9 +32,7 @@ func werfHostPurge(ctx context.Context, dir string, opts liveexec.ExecCommandOpt
 }
 
 var _ = Describe("Stapel imports", func() {
-	BeforeEach(func() {
-		Expect(kube.Init(kube.InitOptions{})).To(Succeed())
-	})
+	BeforeEach(func() {})
 
 	Context("importing files and directories from artifact", func() {
 		AfterEach(func(ctx SpecContext) {
@@ -48,7 +45,7 @@ var _ = Describe("Stapel imports", func() {
 			gotNoSuchFileError := false
 			Expect(werfBuild(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{
 				OutputLineHandler: func(line string) {
-					if strings.Contains(line, "/myartifact/no-such-dir") && strings.Contains(line, "No such file or directory") {
+					if strings.Contains(line, "/myartifact/no-such-dir") && (strings.Contains(line, "No such file or directory") || strings.Contains(line, "link_stat")) {
 						gotNoSuchFileError = true
 					}
 				},
@@ -60,7 +57,7 @@ var _ = Describe("Stapel imports", func() {
 			gotNoSuchFileError = false
 			Expect(werfBuild(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{
 				OutputLineHandler: func(line string) {
-					if strings.Contains(line, "/myartifact/file-no-such-file") && strings.Contains(line, "No such file or directory") {
+					if strings.Contains(line, "/myartifact/file-no-such-file") && (strings.Contains(line, "No such file or directory") || strings.Contains(line, "link_stat")) {
 						gotNoSuchFileError = true
 					}
 				},
@@ -167,28 +164,12 @@ var _ = Describe("Stapel imports", func() {
 		})
 	})
 
-	Context("caching by import source checksum", func() {
+	Context("caching by import source content digest", func() {
 		AfterEach(func(ctx SpecContext) {
 			werfHostPurge(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{}, "--force")
 		})
 
-		It("should cache image when import source checksum was not changed", func(ctx SpecContext) {
-			SuiteData.CommitProjectWorktree(ctx, SuiteData.ProjectName, utils.FixturePath("import_metadata", "001"), "initial commit")
-
-			utils.RunSucceedCommand(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "build")
-
-			lastStageImageNameAfterFirstBuild := utils.GetBuiltImageLastStageImageName(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "image")
-
-			SuiteData.CommitProjectWorktree(ctx, SuiteData.ProjectName, utils.FixturePath("import_metadata", "002"), "change artifact fromCacheVersion")
-
-			utils.RunSucceedCommand(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "build")
-
-			lastStageImageNameAfterSecondBuild := utils.GetBuiltImageLastStageImageName(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "image")
-
-			Expect(lastStageImageNameAfterFirstBuild).Should(Equal(lastStageImageNameAfterSecondBuild))
-		})
-
-		It("should rebuild image when import source checksum was changed under experimental flag", func(ctx SpecContext) {
+		It("should rebuild image when import source content digest changed", func(ctx SpecContext) {
 			SuiteData.CommitProjectWorktree(ctx, SuiteData.ProjectName, utils.FixturePath("import_metadata", "001"), "initial commit")
 
 			utils.RunSucceedCommand(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "build")
@@ -200,41 +181,6 @@ var _ = Describe("Stapel imports", func() {
 			utils.RunSucceedCommand(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "build")
 
 			lastStageImageNameAfterSecondBuild := utils.GetBuiltImageLastStageImageName(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "image")
-
-			Expect(lastStageImageNameAfterFirstBuild).ShouldNot(Equal(lastStageImageNameAfterSecondBuild))
-		})
-
-		It("should rebuild image when import source checksum and permissions were changed", func(ctx SpecContext) {
-			SuiteData.CommitProjectWorktree(ctx, SuiteData.ProjectName, utils.FixturePath("imports_app_5", "001"), "initial commit")
-
-			utils.RunSucceedCommand(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "build")
-
-			lastStageImageNameAfterFirstBuild := utils.GetBuiltImageLastStageImageName(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "final")
-
-			SuiteData.CommitProjectWorktree(ctx, SuiteData.ProjectName, utils.FixturePath("imports_app_5", "002"), "change permissions")
-
-			SuiteData.Stubs.SetEnv("WERF_EXPERIMENTAL_STAPEL_IMPORT_PERMISSIONS", "true")
-			_, _ = utils.RunCommandWithOptions(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, []string{"build"}, utils.RunCommandOptions{
-				ShouldSucceed: true,
-			})
-
-			lastStageImageNameAfterSecondBuild := utils.GetBuiltImageLastStageImageName(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "final")
-
-			Expect(lastStageImageNameAfterFirstBuild).ShouldNot(Equal(lastStageImageNameAfterSecondBuild))
-		})
-
-		It("should account symlinks when calculating import source checksum", func(ctx SpecContext) {
-			SuiteData.CommitProjectWorktree(ctx, SuiteData.ProjectName, utils.FixturePath("import_app_symlinks", "001"), "initial commit")
-
-			utils.RunSucceedCommand(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "build")
-
-			lastStageImageNameAfterFirstBuild := utils.GetBuiltImageLastStageImageName(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "final")
-
-			SuiteData.CommitProjectWorktree(ctx, SuiteData.ProjectName, utils.FixturePath("import_app_symlinks", "002"), "change symlink target")
-
-			utils.RunSucceedCommand(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "build")
-
-			lastStageImageNameAfterSecondBuild := utils.GetBuiltImageLastStageImageName(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "final")
 
 			Expect(lastStageImageNameAfterFirstBuild).ShouldNot(Equal(lastStageImageNameAfterSecondBuild))
 		})

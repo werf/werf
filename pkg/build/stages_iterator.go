@@ -24,6 +24,11 @@ func NewStagesIterator(conveyor *Conveyor) *StagesIterator {
 
 func (iterator *StagesIterator) GetPrevImage(img *build_image.Image, stg stage.Interface) *stage.StageImage {
 	if stg.HasPrevStage() {
+		// Pre-iterate anchor resolve runs before any stage has executed, so
+		// PrevNonEmptyStage may be nil legitimately; return nil rather than panic.
+		if iterator.PrevNonEmptyStage == nil {
+			return nil
+		}
 		return iterator.PrevNonEmptyStage.GetStageImage()
 	} else if stg.IsStapelStage() && stg.Name() == "from" {
 		return img.GetBaseStageImage()
@@ -35,6 +40,9 @@ func (iterator *StagesIterator) GetPrevImage(img *build_image.Image, stg stage.I
 
 func (iterator *StagesIterator) GetPrevBuiltImage(img *build_image.Image, stg stage.Interface) *stage.StageImage {
 	if stg.HasPrevStage() {
+		if iterator.PrevBuiltStage == nil {
+			return nil
+		}
 		return iterator.PrevBuiltStage.GetStageImage()
 	} else if stg.IsStapelStage() && stg.Name() == "from" {
 		return img.GetBaseStageImage()

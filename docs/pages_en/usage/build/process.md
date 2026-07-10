@@ -1,8 +1,8 @@
 ---
 title: Build process
 permalink: usage/build/process.html
-keywords: werf build process, container registry authentication, image tagging, build cache, multi-platform build, cross-platform building, ssh agent, build secrets, buildah, docker, stapel, dockerfile, cache versioning, parallel builds, docker.io mirrors, image synchronization, k8s build sync, custom tags, target platform builds
-tags: [build, docker, buildah, ssh, cache, registry, multi-arch, stapel, sync]
+keywords: werf build process, container registry authentication, image tagging, build cache, multi-platform build, cross-platform building, ssh agent, build secrets, buildah, docker, stapel, dockerfile, cache versioning, parallel builds, docker.io mirrors, custom tags, target platform builds
+tags: [build, docker, buildah, ssh, cache, registry, multi-arch, stapel]
 ---
 
 {% include pages/en/cr_login.md.liquid %}
@@ -72,7 +72,7 @@ werf build --repo REPO --add-custom-tag "%image%-latest"
 
 <!-- reference https://werf.io/docs/v2/internals/stages_and_storage.html#storage -->
 
-Layer-by-layer image caching is essential part of the werf build process. werf saves and reuses the build cache in the container registry and synchronizes parallel builders.
+Layer-by-layer image caching is essential part of the werf build process. werf saves and reuses the build cache in the container registry.
 
 <div class="details">
 <a href="javascript:void(0)" class="details__summary">How assembly works</a>
@@ -90,7 +90,7 @@ The image building algorithm in werf is different:
 1. If the next layer to be built is already present in the container registry, it will not be built or downloaded.
 2. If the next layer to be built is not in the container registry, the previous layer is downloaded (the base layer for building the current one).
 3. The new layer is built on the local machine and published to the container registry.
-4. At publishing time, werf automatically resolves conflicts between builders from different hosts that try to publish the same layer. This ensures that only one layer is published, and all other builders are required to reuse that layer. ([The built-in sync service](#synchronizing-builders) makes this possible).
+4. At publishing time, werf relies on the content-addressable nature of stages: a stage tag is derived from its content digest, so identical content always maps to the same tag and concurrent publishing of identical content is registry-safe. Parallel builders may therefore build the same layer independently, but the published result is identical.
 5. The process continues until all the layers of the image are built.
 
 The algorithm of stage selection in werf works as follows:
@@ -120,20 +120,6 @@ staged: true
 ```
 
 > **IMPORTANT**: The `staged: true` option is supported only when using the Buildah builder.
-
-<div class="details">
-<a href="javascript:void(0)" class="details__summary">**NOTE**: The staged Dockerfile caching feature is currently alpha</a>
-<div class="details__content" markdown="1">
-
-There are several generations of the staged dockerfile builder. You can switch between them using the `WERF_STAGED_DOCKERFILE_VERSION={v1|v2}` variable. Note that changing the version of a staged dockerfile can cause images to be rebuilt.
-
-* `v1` is used by default.
-* `v2` version enables a dedicated `FROM` layer for caching the base image specified in the `FROM` instruction.
-
-`v2` version compatibility may be broken in future releases.
-
-</div>
-</div>
 
 ### Stapel
 
@@ -451,6 +437,7 @@ werf converge --repo registry.mycompany.org/project
 There are a number of additional repositories on top of the main repository:
 
 - `--final-repo` to store the final images in a dedicated repository;
+- `--meta-repo` to store werf service metadata (used for cleanup based on Git history) in a dedicated repository;
 - `--secondary-repo` to use the repository in `read-only` mode (e.g. to use a container registry CI that you cannot push into, but you can reuse the build cache);
 - `--cache-repo` to set the repository containing the build cache alongside the builders.
 
@@ -466,6 +453,18 @@ werf build --repo registry.mycompany.org/project --final-repo final-registry.myc
 
 Final repositories reduce image retrieval time and network load by bringing the container registry closer to the Kubernetes cluster on which the application is being deployed. Final repositories can also be used in the same container registry as the main repository (`--repo`), if necessary.
 
+### Extra repository for service metadata
+
+By default, werf stores service metadata (image-metadata used for cleanup based on Git history, managed images list, custom-tag metadata, rejected-stage markers, cleanup records) in the main repository (`--repo`) alongside image stages. If necessary, this metadata can be stored in a separate repository via `--meta-repo`:
+
+```shell
+werf build --repo registry.mycompany.org/project --meta-repo registry.mycompany.org/project-meta
+```
+
+Separating metadata from stages is useful when stages and metadata have different lifecycles or access patterns — for example, when the stages repository is shared between projects while metadata must remain isolated, or when metadata should live on a cheaper or more available registry. The `werf cleanup` and `werf purge` commands must be invoked with the same `--meta-repo` value that was used during build.
+
+> **Caution!** There is no automatic migration of existing metadata from the main repository to `--meta-repo`. Once the flag is enabled, werf reads and writes metadata only in `--meta-repo`; any metadata previously stored in `--repo` is no longer consulted and will remain there orphaned until manually removed. Enable this flag from the start of a project.
+
 ### Extra repository for quick access to the build cache
 
 You can specify one or more so-called **caching** repositories using the `--cache-repo` parameter.
@@ -480,78 +479,6 @@ A caching repository can help reduce build cache loading times. However, for thi
 Caching repositories have higher priority than the main repository when the build cache is retrieved. When caching repositories are used, the build cache remains stored in the main repository as well.
 
 You can clean up a caching repository by deleting it entirely without any risks.
-
-## Synchronizing builders
-
-<!-- reference https://werf.io/docs/v2/advanced/synchronization.html -->
-
-To ensure consistency among parallel builders and to guarantee the reproducibility of images and intermediate layers, werf handles the synchronization of the builders. By default, the public synchronization service at [https://synchronization.werf.io/](https://synchronization.werf.io/) is used and no extra user interaction is required.
-
-<div class="details">
-<a href="javascript:void(0)" class="details__summary">How the synchronization service works</a>
-<div class="details__content" markdown="1">
-
-The synchronization service is a werf component that is designed to coordinate multiple werf processes. It acts as a _lock manager_. The locks are required to correctly publish new images to the container registry and to implement the build algorithm described in ["Layer-by-layer image caching"](#layer-by-layer-image-caching).
-
-The data sent to the sync service are anonymized and are hash sums of the tags published in the container registry.
-
-A synchronization service can be:
-1. An HTTP synchronization server implemented in the `werf synchronization` command.
-2. The ConfigMap resource in a Kubernetes cluster. The mechanism used is the [lockgate](https://github.com/werf/lockgate) library, which implements distributed locks by storing annotations in the selected resource.
-3. Local file locks provided by the operating system.
-
-</div>
-</div>
-
-### Using your own synchronization service
-
-#### HTTP server
-
-The synchronization server can be run with the `werf synchronization` command. In the example below, port 55581 (the default one) is used:
-
-```shell
-werf synchronization --host 0.0.0.0 --port 55581
-```
-
-— This server only supports HTTP mode. To use HTTPS, you have to configure additional SSL termination by third-party tools (e.g., via the Kubernetes Ingress).
-
-Then, for all werf commands that use the `--repo` parameter, the `--synchronization=http[s]://DOMAIN` parameter must be specified as well, for example:
-
-```shell
-werf build --repo registry.mydomain.org/repo --synchronization https://synchronization.domain.org
-werf converge --repo registry.mydomain.org/repo --synchronization https://synchronization.domain.org
-```
-
-#### Dedicated Kubernetes resource
-
-You only have to specify a running Kubernetes cluster and choose the namespace where the ConfigMap/werf service will reside. Its annotations will be used for distributed locking.
-
-Then, for all werf commands that use the `--repo` parameter, the `--synchronization=kubernetes://NAMESPACE[:CONTEXT][@(base64:CONFIG_DATA)|CONFIG_PATH]` parameter must be specified as well, for example:
-
-```shell
-# The regular ~/.kube/config or KUBECONFIG is used.
-werf build --repo registry.mydomain.org/repo --synchronization kubernetes://mynamespace
-werf converge --repo registry.mydomain.org/repo --synchronization kubernetes://mynamespace
-
-# Here, the base64-encoded contents of kubeconfig are explicitly specified.
-werf build --repo registry.mydomain.org/repo --synchronization kubernetes://mynamespace@base64:YXBpVmVyc2lvbjogdjEKa2luZDogQ29uZmlnCnByZWZlcmVuY2VzOiB7fQoKY2x1c3RlcnM6Ci0gY2x1c3RlcjoKICBuYW1lOiBkZXZlbG9wbWVudAotIGNsdXN0ZXI6CiAgbmFtZTogc2NyYXRjaAoKdXNlcnM6Ci0gbmFtZTogZGV2ZWxvcGVyCi0gbmFtZTogZXhwZXJpbWVudGVyCgpjb250ZXh0czoKLSBjb250ZXh0OgogIG5hbWU6IGRldi1mcm9udGVuZAotIGNvbnRleHQ6CiAgbmFtZTogZGV2LXN0b3JhZ2UKLSBjb250ZXh0OgogIG5hbWU6IGV4cC1zY3JhdGNoCg==
-
-# The mycontext context is used in the /etc/kubeconfig config.
-werf build --repo registry.mydomain.org/repo --synchronization kubernetes://mynamespace:mycontext@/etc/kubeconfig
-```
-
-> **NOTE:** This method is poorly suited when the project is delivered to different Kubernetes clusters from the same Git repository due to the difficulties of setting it up correctly. In this case, the same cluster address and resource must be specified for all werf commands even if the deployment occurs to different environments to ensure data consistency in the container registry. Therefore, it is recommended to run a dedicated shared synchronization service for this case to avoid the risk of incorrect configuration.
-
-#### Local synchronization
-
-Local synchronization is enabled by the `--synchronization=:local` option. The local _lock manager_ uses file locks provided by the operating system.
-
-```shell
-werf build --repo registry.mydomain.org/repo --synchronization :local
-werf converge --repo registry.mydomain.org/repo --synchronization :local
-```
-
-> **NOTE:** This method is only suitable if all werf runs are triggered by the same runner in your CI/CD system.
 
 ## Build report
 

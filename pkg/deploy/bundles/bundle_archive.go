@@ -7,8 +7,8 @@ import (
 	"io"
 
 	"github.com/werf/logboek"
-	"github.com/werf/nelm/pkg/export/helm/chart"
-	"github.com/werf/nelm/pkg/export/helm/werf/helmopts"
+	nelmcommon "github.com/werf/nelm/pkg/common"
+	chart "github.com/werf/nelm/pkg/helm/pkg/chart/v2"
 	"github.com/werf/werf/v2/pkg/image"
 )
 
@@ -31,13 +31,13 @@ func (bundle *BundleArchive) GetImageArchiveOpener(imageTag string) *ImageArchiv
 	return NewImageArchiveOpener(bundle, imageTag)
 }
 
-func (bundle *BundleArchive) ReadChart(ctx context.Context, opts helmopts.HelmOptions) (*chart.Chart, error) {
+func (bundle *BundleArchive) ReadChart(ctx context.Context, opts nelmcommon.HelmOptions) (*chart.Chart, error) {
 	chartBytes, err := bundle.Reader.ReadChartArchive()
 	if err != nil {
 		return nil, fmt.Errorf("unable to read chart archive: %w", err)
 	}
 
-	ch, err := BytesToChart(chartBytes, opts)
+	ch, err := BytesToChart(ctx, chartBytes, opts)
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse chart archive from bundle archive: %w", err)
 	}
@@ -45,7 +45,7 @@ func (bundle *BundleArchive) ReadChart(ctx context.Context, opts helmopts.HelmOp
 	return ch, nil
 }
 
-func (bundle *BundleArchive) WriteChart(ctx context.Context, ch *chart.Chart, opts helmopts.HelmOptions) error {
+func (bundle *BundleArchive) WriteChart(ctx context.Context, ch *chart.Chart, opts nelmcommon.HelmOptions) error {
 	chartBytes, err := ChartToBytes(ch)
 	if err != nil {
 		return fmt.Errorf("unable to dump chart to archive: %w", err)

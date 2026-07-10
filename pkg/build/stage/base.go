@@ -7,7 +7,6 @@ import (
 	"path"
 	"path/filepath"
 	"sort"
-	"strconv"
 	"strings"
 
 	"github.com/werf/common-go/pkg/util"
@@ -35,27 +34,10 @@ const (
 	DependenciesAfterSetup    StageName = "dependenciesAfterSetup"
 	GitCache                  StageName = "gitCache"
 	GitLatestPatch            StageName = "gitLatestPatch"
-	DockerInstructions        StageName = "dockerInstructions"
 
 	Dockerfile StageName = "dockerfile"
 	ImageSpec  StageName = "imageSpec"
 )
-
-// TODO(compatibility): remove in v3
-func GetLegacyCompatibleStageName(name StageName) string {
-	switch name {
-	case DependenciesBeforeInstall:
-		return "importsBeforeInstall"
-	case DependenciesAfterInstall:
-		return "importsAfterInstall"
-	case DependenciesBeforeSetup:
-		return "importsBeforeSetup"
-	case DependenciesAfterSetup:
-		return "importsAfterSetup"
-	default:
-		return string(name)
-	}
-}
 
 var AllStages = []StageName{
 	From,
@@ -70,7 +52,6 @@ var AllStages = []StageName{
 	DependenciesAfterSetup,
 	GitCache,
 	GitLatestPatch,
-	DockerInstructions,
 
 	Dockerfile,
 	ImageSpec,
@@ -86,25 +67,6 @@ type BaseStageOptions struct {
 	ContainerWerfDir  string
 	ProjectName       string
 	Network           string
-}
-
-const disableGitCommitAncestryCheckEnv = "WERF_DISABLE_GIT_COMMIT_ANCESTRY_CHECK"
-
-func isGitCommitAncestryCheckDisabled() bool {
-	v, hasKey := os.LookupEnv(disableGitCommitAncestryCheckEnv)
-	if !hasKey {
-		return false
-	}
-	if v == "" {
-		return false
-	}
-
-	disabled, err := strconv.ParseBool(v)
-	if err != nil {
-		return false
-	}
-
-	return disabled
 }
 
 func NewBaseStage(name StageName, options *BaseStageOptions) *BaseStage {
@@ -137,6 +99,15 @@ type BaseStage struct {
 	projectName      string
 	network          string
 	meta             *StageMeta
+	isContentAnchor  bool
+}
+
+func (s *BaseStage) IsContentAnchor() bool {
+	return s.isContentAnchor
+}
+
+func (s *BaseStage) SetContentAnchor(v bool) {
+	s.isContentAnchor = v
 }
 
 type StageMeta struct {
@@ -209,6 +180,10 @@ func (s *BaseStage) GetNextStageDependencies(_ context.Context, _ Conveyor) (str
 	return "", nil
 }
 
+func (s *BaseStage) GetContentDependencies(ctx context.Context, c Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+	panic("method must be implemented!")
+}
+
 func (s *BaseStage) getNextStageGitDependencies(ctx context.Context, c Conveyor) (string, error) {
 	var args []string
 	for _, gitMapping := range s.gitMappings {
@@ -264,19 +239,7 @@ func (s *BaseStage) selectAncestorStageDescByGitMappings(ctx context.Context, c 
 			return nil, fmt.Errorf("error getting latest commit of git mapping %s: %w", gitMapping.Name, err)
 		}
 
-		var currentCommit string
-		if currentCommitInfo.VirtualMerge {
-			currentCommit = currentCommitInfo.VirtualMergeFromCommit
-		} else {
-			currentCommit = currentCommitInfo.Commit
-		}
-
-		currentCommitsByIndex = append(currentCommitsByIndex, currentCommit)
-	}
-
-	disableAncestryCheck := isGitCommitAncestryCheckDisabled()
-	if disableAncestryCheck {
-		logboek.Context(ctx).Debug().LogF("Git commit ancestry check is disabled by %s\n", disableGitCommitAncestryCheckEnv)
+		currentCommitsByIndex = append(currentCommitsByIndex, currentCommitInfo.Commit)
 	}
 
 ScanImages:
@@ -290,12 +253,7 @@ ScanImages:
 				continue ScanImages
 			}
 
-			var commitToCheckAncestry string
-			if imageCommitInfo.VirtualMerge {
-				commitToCheckAncestry = imageCommitInfo.VirtualMergeFromCommit
-			} else {
-				commitToCheckAncestry = imageCommitInfo.Commit
-			}
+			commitToCheckAncestry := imageCommitInfo.Commit
 
 			exist, err := gitMapping.GitRepo().IsCommitExists(ctx, commitToCheckAncestry)
 			if err != nil {
@@ -305,10 +263,6 @@ ScanImages:
 			if !exist {
 				logboek.Context(ctx).Info().LogF("Skipping stage %s: commit %s does not exist in repo %s\n", stageDesc.Info.Name, commitToCheckAncestry, gitMapping.GitRepo().String())
 				continue ScanImages
-			}
-
-			if disableAncestryCheck {
-				continue
 			}
 
 			isOurAncestor, err := gitMapping.GitRepo().IsAncestor(ctx, commitToCheckAncestry, currentCommit)

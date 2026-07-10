@@ -9,8 +9,7 @@ This article contains description of annotations which control werf resource ope
 
  - [`werf.io/weight`](#resource-weight) — defines the weight of the resource, which will affect the order in which the resources are deployed.
  - [`werf.io/deploy-dependency-ANY_NAME`](#resource-dependencies) — define a dependency for the resource, which will affect the order in which the resources are deployed.
- - [`<any-name>.external-dependency.werf.io/resource`](#external-dependency-resource) — wait for specified external dependency to be up and running, and only then proceed to deploy the annotated resource.
- - [`<any-name>.external-dependency.werf.io/namespace`](#external-dependency-namespace) — specify the namespace for the external dependency.
+
  - [`werf.io/ownership`](#resource-ownership) — defines how resource deletions are handled and how release annotations are managed.
  - [`werf.io/deploy-on`](#conditional-resource-deployment) — defines when to render the resource for the deployment and on which stages should it be deployed.
  - [`werf.io/delete-policy`](#resource-delete-policy) — defines how resource deletions should be handled during resource deployment.
@@ -54,11 +53,12 @@ More info: [deployment order]({{ "/usage/deploy/deployment_order.html" | true_re
 
 ## Resource dependencies
 
-`werf.io/deploy-dependency-ANY_NAME: state=STATE[,name=NAME][,namespace=NAMESPACE][,kind=KIND][,group=GROUP][,version=VERSION]`
+`werf.io/deploy-dependency-ANY_NAME: state=STATE[,name=NAME][,namespace=NAMESPACE][,kind=KIND][,group=GROUP][,version=VERSION][,external=auto|true|false]`
 
 Example: \
 `werf.io/deploy-dependency-db: state=ready,kind=StatefulSet,name=postgres` \
-`werf.io/deploy-dependency-app: state=present,kind=Deployment,group=apps,version=v1,name=app,namespace=app`
+`werf.io/deploy-dependency-app: state=present,kind=Deployment,group=apps,version=v1,name=app,namespace=app` \
+`werf.io/deploy-dependency-secret: state=ready,kind=Secret,version=v1,name=my-vault-secret,external=true`
 
 Required parameters:
 - `state`: `ready` or `present`. If `present`, then wait until resource is created/updated, if `ready`, then wait until resource is created/updated and ready.
@@ -70,25 +70,8 @@ At least one of these parameters must be specified:
 - `group`: api group of a resource to depend on.
 - `version`: api version of a resource to depend on.
 
-More info: [deployment order]({{ "/usage/deploy/deployment_order.html" | true_relative_url }})
-
-## External dependency resource
-
-`<any-name>.external-dependency.werf.io/resource: type[.version.group]/name`
-
-Example: \
-`secret.external-dependency.werf.io/resource: secret/config` \
-`someapp.external-dependency.werf.io/resource: deployments.v1.apps/app`
-
-Sets the external dependency for the resource. The annotated resource won't be deployed until the external dependency has been created and ready.
-
-More info: [deployment order]({{ "/usage/deploy/deployment_order.html" | true_relative_url }})
-
-## External dependency namespace
-
-`<any-name>.external-dependency.werf.io/namespace: name`
-
-Sets the namespace for the external dependency specified by the [external dependency resource](#external-dependency-resource) annotation. The `<any-name>` prefix must be the same as in the annotation of the external dependency resource.
+Optional parameters:
+- `external`: `auto` (default), `true`, or `false`. Controls whether the dependency targets a release resource or an external cluster resource. With `auto`, if no matching resource is found in the release, the dependency is automatically treated as external and werf waits for it in the cluster. With `true`, always treated as external. With `false`, always treated as internal. When external, `name`, `kind`, and `version` must all be specified.
 
 More info: [deployment order]({{ "/usage/deploy/deployment_order.html" | true_relative_url }})
 
@@ -136,11 +119,12 @@ The default value is `Foreground`.
 
 ## Delete dependencies
 
-`werf.io/delete-dependency-ANY_NAME: state=STATE[,name=NAME][,namespace=NAMESPACE][,kind=KIND][,group=GROUP][,version=VERSION]`
+`werf.io/delete-dependency-ANY_NAME: state=STATE[,name=NAME][,namespace=NAMESPACE][,kind=KIND][,group=GROUP][,version=VERSION][,external=auto|true|false]`
 
 Example: \
 `werf.io/delete-dependency-db: state=absent,kind=StatefulSet,name=postgres` \
-`werf.io/delete-dependency-app: state=absent,kind=Deployment,group=apps,version=v1,name=app,namespace=app`
+`werf.io/delete-dependency-app: state=absent,kind=Deployment,group=apps,version=v1,name=app,namespace=app` \
+`werf.io/delete-dependency-secret: state=absent,kind=Secret,version=v1,name=my-vault-secret,external=true`
 
 Required parameters:
 - `state`: `absent`. Wait until resource is deleted.
@@ -151,6 +135,9 @@ At least one of these parameters must be specified:
 - `kind`: kind of a resource to depend on.
 - `group`: api group of a resource to depend on.
 - `version`: api version of a resource to depend on.
+
+Optional parameters:
+- `external`: `auto` (default), `true`, or `false`. Controls whether the dependency targets a release resource or an external cluster resource. With `auto`, if no matching resource is found in the release, the dependency is automatically treated as external and werf waits for it to be deleted from the cluster. With `true`, always treated as external. With `false`, always treated as internal. When external, `name`, `kind`, and `version` must all be specified.
 
 More info: [deployment order]({{ "/usage/deploy/deployment_order.html" | true_relative_url }})
 

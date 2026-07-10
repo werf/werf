@@ -212,13 +212,14 @@ func (r *Result) Checksum(ctx context.Context) string {
 
 	_ = r.lsTreeEntriesWalk(func(lsTreeEntry *LsTreeEntry) error {
 		h.Write([]byte(lsTreeEntry.Hash.String()))
+		h.Write([]byte(lsTreeEntry.Mode.String()))
 
 		logFilepath := lsTreeEntry.FullFilepath
 		if logFilepath == "" {
 			logFilepath = "."
 		}
 
-		logboek.Context(ctx).Debug().LogF("Entry was added: %s -> %s\n", logFilepath, lsTreeEntry.Hash.String())
+		logboek.Context(ctx).Debug().LogF("Entry was added: %s -> %s %s\n", logFilepath, lsTreeEntry.Mode.String(), lsTreeEntry.Hash.String())
 
 		return nil
 	})

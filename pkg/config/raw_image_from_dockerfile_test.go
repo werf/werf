@@ -83,7 +83,7 @@ var _ = Describe("rawImageFromDockerfile", func() {
 			Expect(err).To(Succeed())
 
 			for i, expectedDep := range expected {
-				Expect(expectedDep.ImageName).To(Equal(dockerfileImage.Dependencies[i].ImageName))
+				Expect(expectedDep.From).To(Equal(dockerfileImage.Dependencies[i].From))
 				Expect(expectedDep.After).To(Equal(dockerfileImage.Dependencies[i].After))
 				Expect(expectedDep.Before).To(Equal(dockerfileImage.Dependencies[i].Before))
 
@@ -104,7 +104,7 @@ var _ = Describe("rawImageFromDockerfile", func() {
 				}},
 			},
 			[]*Dependency{{
-				ImageName: "image2",
+				From: "image2",
 			}},
 		),
 		Entry(
@@ -121,7 +121,7 @@ var _ = Describe("rawImageFromDockerfile", func() {
 				}},
 			},
 			[]*Dependency{{
-				ImageName: "image2",
+				From: "image2",
 				Imports: []*DependencyImport{{
 					Type:           ImageTagImport,
 					TargetBuildArg: "IMAGE_TAG",
@@ -165,10 +165,6 @@ var _ = Describe("rawImageFromDockerfile", func() {
 								"targetBuildArg": "IMAGE_NAME_2",
 							},
 							{
-								"type":           string(ImageIDImport),
-								"targetBuildArg": "IMAGE_ID_2",
-							},
-							{
 								"type":           string(ImageDigestImport),
 								"targetBuildArg": "IMAGE_DIGEST_2",
 							},
@@ -182,10 +178,10 @@ var _ = Describe("rawImageFromDockerfile", func() {
 			},
 			[]*Dependency{
 				{
-					ImageName: "image2",
+					From: "image2",
 				},
 				{
-					ImageName: "image3",
+					From: "image3",
 					Imports: []*DependencyImport{
 						{
 							Type:           ImageTagImport,
@@ -198,7 +194,7 @@ var _ = Describe("rawImageFromDockerfile", func() {
 					},
 				},
 				{
-					ImageName: "image4",
+					From: "image4",
 					Imports: []*DependencyImport{
 						{
 							Type:           ImageTagImport,
@@ -207,10 +203,6 @@ var _ = Describe("rawImageFromDockerfile", func() {
 						{
 							Type:           ImageNameImport,
 							TargetBuildArg: "IMAGE_NAME_2",
-						},
-						{
-							Type:           ImageIDImport,
-							TargetBuildArg: "IMAGE_ID_2",
 						},
 						{
 							Type:           ImageDigestImport,

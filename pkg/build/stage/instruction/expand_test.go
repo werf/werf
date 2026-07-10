@@ -20,7 +20,7 @@ var _ = DescribeTable("backend instruction sync after env expansion",
 	func(ctx SpecContext, entry expandTestEntry) {
 		conveyor := stage.NewConveyorStub(
 			stage.NewGiterminismManagerStub(stage.NewLocalGitRepoStub("test"), stage.NewGiterminismInspectorStub()),
-			nil, nil, nil,
+			nil, nil,
 		)
 		Expect(entry.stg.ExpandDependencies(ctx, conveyor, map[string]string{"TEST_VAR": "resolved"})).To(Succeed())
 		entry.compare()
@@ -148,7 +148,7 @@ var _ = DescribeTable("backend instruction contains expanded values after env ex
 	func(ctx SpecContext, entry negativeTestEntry) {
 		conveyor := stage.NewConveyorStub(
 			stage.NewGiterminismManagerStub(stage.NewLocalGitRepoStub("test"), stage.NewGiterminismInspectorStub()),
-			nil, nil, nil,
+			nil, nil,
 		)
 		Expect(entry.stg.ExpandDependencies(ctx, conveyor, map[string]string{"TEST_VAR": "resolved"})).To(Succeed())
 		entry.verify()

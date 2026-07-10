@@ -8,6 +8,7 @@ Cleanup old unused werf cache and data of all projects on host machine.
 The data include:
 * Lost Docker containers and images from interrupted builds.
 * Old service tmp dirs, which werf creates during every `build`, `converge` and other commands.
+* Stale host lock files, no longer held by any werf process.
 * Local cache:
   * remote Git clones cache;
   * Git worktree cache.
@@ -24,19 +25,18 @@ werf host cleanup [options]
 
 ```shell
       --allowed-backend-storage-volume-usage=70
-            Set allowed percentage or absolute value (e.g. 10GB) of backend (Docker or Buildah)     
-            storage volume usage which will cause cleanup of least recently used local backend      
-            images (default 70% or $WERF_ALLOWED_BACKEND_STORAGE_VOLUME_USAGE)
+            Set allowed percentage of backend (Docker or Buildah) storage volume usage which will   
+            cause cleanup of least recently used local backend images (default 70% or               
+            $WERF_ALLOWED_BACKEND_STORAGE_VOLUME_USAGE)
       --allowed-backend-storage-volume-usage-margin=5
             During cleanup of least recently used local backend (Docker or Buildah) images werf     
             would delete images until volume usage becomes below                                    
             "allowed-backend-storage-volume-usage - allowed-backend-storage-volume-usage-margin"    
             level (default 5% or $WERF_ALLOWED_BACKEND_STORAGE_VOLUME_USAGE_MARGIN)
       --allowed-local-cache-volume-usage=70
-            Set allowed percentage or absolute value (e.g. 10GB) of local cache                     
-            (~/.werf/local_cache by default) volume usage which will cause cleanup of least         
-            recently used data from the local cache (default 70% or                                 
-            $WERF_ALLOWED_LOCAL_CACHE_VOLUME_USAGE)
+            Set allowed percentage of local cache (~/.werf/local_cache by default) volume usage     
+            which will cause cleanup of least recently used data from the local cache (default 70%  
+            or $WERF_ALLOWED_LOCAL_CACHE_VOLUME_USAGE)
       --allowed-local-cache-volume-usage-margin=5
             During cleanup of local cache werf would delete local cache data until volume usage     
             becomes below "allowed-local-cache-volume-usage -                                       

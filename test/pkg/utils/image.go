@@ -97,8 +97,14 @@ func loadLocalImage(ctx context.Context, backendMode, imageName string) (v1.Imag
 
 	switch backendMode {
 	case "docker", "vanilla-docker", "buildkit-docker":
+		if _, err := RunCommand(ctx, "/", "docker", "image", "inspect", imageName); err != nil {
+			RunSucceedCommand(ctx, "/", "docker", "pull", imageName)
+		}
 		RunSucceedCommand(ctx, "/", "docker", "save", "-o", tempTarPath, imageName)
 	case "native-rootless", "native-chroot":
+		// The image may only exist in the local repo registry (e.g. when built with WithLocalRepo),
+		// not in local buildah storage, so pull it first.
+		RunSucceedCommand(ctx, "/", "buildah", "pull", "--tls-verify=false", imageName)
 		RunSucceedCommand(ctx, "/", "buildah", "push", "--tls-verify=false", "--format", "docker", imageName, "docker-archive:"+tempTarPath)
 	default:
 		Expect(false).To(BeTrue(), "unsupported backend mode: %s", backendMode)

@@ -11,7 +11,7 @@ func GetComposeDocs(short string) structs.DocsStruct {
 
 	docs.Long = short
 	docs.Long += `
-Image environment name format: $WERF_<FORMATTED_WERF_IMAGE_NAME>_DOCKER_IMAGE_NAME ($WERF_DOCKER_IMAGE_NAME for nameless image).
+Image environment name format: $WERF_<FORMATTED_WERF_IMAGE_NAME>_DOCKER_IMAGE_NAME.
 <FORMATTED_WERF_IMAGE_NAME> is werf image name from werf.yaml modified according to the following rules:
 - all characters are uppercase (app -> APP);
 - charset /- is replaced with _ (DEV/APP-FRONTEND -> DEV_APP_FRONTEND).
@@ -36,9 +36,8 @@ services:
 `
 
 	docs.LongMD = short + "\n\n" +
-		"Image environment name format: `$WERF_<FORMATTED_WERF_IMAGE_NAME>_DOCKER_IMAGE_NAME`:\n" +
-		"* `$WERF_DOCKER_IMAGE_NAME` for nameless image;\n" +
-		"* `<FORMATTED_WERF_IMAGE_NAME>` is werf image name from `werf.yaml` modified according to the following\n" +
+		"Image environment name format: `$WERF_<FORMATTED_WERF_IMAGE_NAME>_DOCKER_IMAGE_NAME`.\n" +
+		"`<FORMATTED_WERF_IMAGE_NAME>` is werf image name from `werf.yaml` modified according to the following\n" +
 		"rules:\n" +
 		"  * all characters are uppercase (`app` -&gt; `APP`);\n" +
 		"  * charset `/` - is replaced with `_` (`DEV/APP-FRONTEND` -&gt; `DEV_APP_FRONTEND`).\n\n" +

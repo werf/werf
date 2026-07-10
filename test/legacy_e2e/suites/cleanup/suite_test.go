@@ -35,6 +35,7 @@ var SuiteData struct {
 	suite_init.SuiteData
 	TestImplementation string
 	StagesStorage      storage.PrimaryStagesStorage
+	MetaStorage        storage.PrimaryStagesStorage
 	ContainerRegistry  docker_registry.Interface
 }
 
@@ -69,6 +70,15 @@ func InitStagesStorage(ctx context.Context, stagesStorageAddress, implementation
 	SuiteData.StagesStorage = utils.NewStagesStorage(ctx, stagesStorageAddress, implementationName, dockerRegistryOptions)
 }
 
+func SetupMetaRepo(ctx context.Context, implementationName string) {
+	werfImplementationName := SuiteData.ContainerRegistryPerImplementation[implementationName].WerfImplementationName
+
+	metaRepo := fmt.Sprintf("%s/%s-meta", SuiteData.ContainerRegistryPerImplementation[implementationName].RegistryAddress, SuiteData.ProjectName)
+
+	SuiteData.MetaStorage = utils.NewStagesStorage(ctx, metaRepo, werfImplementationName, SuiteData.ContainerRegistryPerImplementation[implementationName].RegistryOptions)
+	SuiteData.Stubs.SetEnv("WERF_META_REPO", metaRepo)
+}
+
 func StagesCount(ctx context.Context) int {
 	return utils.StagesCount(ctx, SuiteData.StagesStorage)
 }
@@ -77,12 +87,16 @@ func ManagedImagesCount(ctx context.Context) int {
 	return utils.ManagedImagesCount(ctx, SuiteData.StagesStorage)
 }
 
+func MetaManagedImagesCount(ctx context.Context) int {
+	return utils.ManagedImagesCount(ctx, SuiteData.MetaStorage)
+}
+
 func ImageMetadata(ctx context.Context, imageName string) map[string][]string {
 	return utils.ImageMetadata(ctx, SuiteData.StagesStorage, imageName)
 }
 
-func ImportMetadataIDs(ctx context.Context) []string {
-	return utils.ImportMetadataIDs(ctx, SuiteData.StagesStorage)
+func MetaImageMetadata(ctx context.Context, imageName string) map[string][]string {
+	return utils.ImageMetadata(ctx, SuiteData.MetaStorage, imageName)
 }
 
 func CustomTags(ctx context.Context) []string {
@@ -101,4 +115,14 @@ func CustomTags(ctx context.Context) []string {
 
 func CustomTagsMetadataList(ctx context.Context) []*storage.CustomTagMetadata {
 	return utils.CustomTagsMetadataList(ctx, SuiteData.StagesStorage)
+}
+
+func MetaCustomTagsMetadataList(ctx context.Context) []*storage.CustomTagMetadata {
+	return utils.CustomTagsMetadataList(ctx, SuiteData.MetaStorage)
+}
+
+func MetaLastCleanupRecord(ctx context.Context) *storage.CleanupRecord {
+	rec, err := SuiteData.MetaStorage.GetLastCleanupRecord(ctx, SuiteData.ProjectName)
+	Expect(err).ShouldNot(HaveOccurred())
+	return rec
 }

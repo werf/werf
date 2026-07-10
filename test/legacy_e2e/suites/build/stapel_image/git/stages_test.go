@@ -14,6 +14,8 @@ import (
 	"github.com/werf/werf/v2/test/pkg/utils/docker"
 )
 
+const gitLatestPatchNoChangesNote = "Building stage image/gitLatestPatch (no git changes; refreshing image content tag)"
+
 var _ = Describe("git stages", func() {
 	var fixturesPathParts []string
 	var specSteps []stagesSpecStep
@@ -34,8 +36,8 @@ var _ = Describe("git stages", func() {
 			checkResultedFilesChecksum: true,
 			expectedOutputMatchers: []types.GomegaMatcher{
 				Not(ContainSubstring("stage image/gitCache")),
-				Not(ContainSubstring("stage image/gitLatestPatch")),
 				ContainSubstring("Building stage image/gitArchive"),
+				ContainSubstring(gitLatestPatchNoChangesNote),
 			},
 		}
 
@@ -57,9 +59,9 @@ var _ = Describe("git stages", func() {
 				},
 				checkResultedFilesChecksum: true,
 				expectedOutputMatchers: []types.GomegaMatcher{
-					Not(ContainSubstring("stage image/gitLatestPatch")),
 					ContainSubstring("Use previously built image for image/gitArchive"),
 					ContainSubstring("Building stage image/gitCache"),
+					ContainSubstring(gitLatestPatchNoChangesNote),
 				},
 			}
 
@@ -98,9 +100,9 @@ var _ = Describe("git stages", func() {
 					},
 					checkResultedFilesChecksum: true,
 					expectedOutputMatchers: []types.GomegaMatcher{
-						Not(ContainSubstring("stage image/gitLatestPatch")),
 						ContainSubstring("Use previously built image for image/gitArchive"),
 						ContainSubstring("Building stage image/gitCache"),
+						ContainSubstring(gitLatestPatchNoChangesNote),
 					},
 				}
 
@@ -149,50 +151,6 @@ var _ = Describe("git stages", func() {
 			})
 		})
 	})
-
-	Context("disableGitAfterPatch", func() {
-		toBuildGitArchiveStageStep := stagesSpecStep{
-			byText:                     "First build: gitArchive stage should be built",
-			beforeBuildHookFunc:        nil,
-			checkResultedFilesChecksum: true,
-			expectedOutputMatchers: []types.GomegaMatcher{
-				ContainSubstring("Building stage artifact/gitArchive"),
-			},
-		}
-
-		toBuildNothingStep := stagesSpecStep{
-			byText: "Any changes: nothing should be built",
-			beforeBuildHookFunc: func(ctx context.Context) {
-				createAndCommitFile(ctx, SuiteData.TestDirPath, "file", gitCacheSizeStep)
-			},
-			checkResultedFilesChecksum: false,
-			expectedOutputMatchers: []types.GomegaMatcher{
-				Not(ContainSubstring("Building stage")),
-				ContainSubstring("Use previously built image for artifact/gitArchive"),
-			},
-		}
-
-		BeforeEach(func(ctx SpecContext) {
-			fixturesPathParts = append(fixturesPathParts, "artifact")
-			commonBeforeEach(ctx, utils.FixturePath(fixturesPathParts...))
-		})
-
-		It("gitArchive stage should be built", func(ctx SpecContext) {
-			specSteps = append(specSteps, toBuildGitArchiveStageStep)
-			runStagesSpecSteps(ctx, specSteps)
-		})
-
-		When("gitArchive stage is built", func() {
-			BeforeEach(func() {
-				specSteps = append(specSteps, toBuildGitArchiveStageStep)
-			})
-
-			It("nothing should be built", func(ctx SpecContext) {
-				specSteps = append(specSteps, toBuildNothingStep)
-				runStagesSpecSteps(ctx, specSteps)
-			})
-		})
-	})
 })
 
 var _ = Describe("user stages", func() {
@@ -215,8 +173,8 @@ var _ = Describe("user stages", func() {
 			checkResultedFilesChecksum: true,
 			expectedOutputMatchers: []types.GomegaMatcher{
 				Not(ContainSubstring("stage image/gitCache")),
-				Not(ContainSubstring("stage image/gitLatestPatch")),
 				ContainSubstring("Building stage image/gitArchive"),
+				ContainSubstring(gitLatestPatchNoChangesNote),
 			},
 		}
 
@@ -227,9 +185,9 @@ var _ = Describe("user stages", func() {
 			},
 			checkResultedFilesChecksum: true,
 			expectedOutputMatchers: []types.GomegaMatcher{
-				Not(ContainSubstring("stage image/gitLatestPatch")),
 				ContainSubstring("Use previously built image for image/gitArchive"),
 				ContainSubstring("Building stage image/gitCache"),
+				ContainSubstring(gitLatestPatchNoChangesNote),
 			},
 		}
 
@@ -267,8 +225,8 @@ var _ = Describe("user stages", func() {
 							checkResultedFilesChecksum: true,
 							expectedOutputMatchers: []types.GomegaMatcher{
 								Not(ContainSubstring("stage image/gitCache")),
-								Not(ContainSubstring("stage image/gitLatestPatch")),
 								ContainSubstring("Building stage image/gitArchive"),
+								ContainSubstring(gitLatestPatchNoChangesNote),
 							},
 						})
 						runStagesSpecSteps(ctx, specSteps)
@@ -288,8 +246,8 @@ var _ = Describe("user stages", func() {
 								checkResultedFilesChecksum: true,
 								expectedOutputMatchers: []types.GomegaMatcher{
 									Not(ContainSubstring("stage image/gitCache")),
-									Not(ContainSubstring("stage image/gitLatestPatch")),
 									ContainSubstring(fmt.Sprintf("Building stage image/%s", boundedUserStage)),
+									ContainSubstring(gitLatestPatchNoChangesNote),
 								},
 							})
 							runStagesSpecSteps(ctx, specSteps)
@@ -302,22 +260,6 @@ var _ = Describe("user stages", func() {
 				})
 
 				userStagesSpecSetFunc()
-
-				When("gitCache stage is built", func() {
-					BeforeEach(func() {
-						specSteps = append(specSteps, toBuildGitCacheStageStep)
-					})
-
-					userStagesSpecSetFunc()
-				})
-
-				When("gitLatestPatch stage is built", func() {
-					BeforeEach(func() {
-						specSteps = append(specSteps, toBuildGitLatestPatchStageStep)
-					})
-
-					userStagesSpecSetFunc()
-				})
 			})
 		})
 
@@ -370,125 +312,6 @@ var _ = Describe("user stages", func() {
 					})
 
 					userStagesSpecSetFunc()
-				})
-			})
-		})
-	})
-
-	When("disableGitAfterPatch", func() {
-		toBuildGitArchiveStageStep := stagesSpecStep{
-			byText:                     "First build: gitArchive stage should be built",
-			beforeBuildHookFunc:        nil,
-			checkResultedFilesChecksum: true,
-			expectedOutputMatchers: []types.GomegaMatcher{
-				ContainSubstring("Building stage artifact/gitArchive"),
-			},
-		}
-
-		toBuildNothingStep := stagesSpecStep{
-			byText: "Any changes: nothing should be built",
-			beforeBuildHookFunc: func(ctx context.Context) {
-				createAndCommitFile(ctx, SuiteData.TestDirPath, "file", gitCacheSizeStep)
-			},
-			checkResultedFilesChecksum: false,
-			expectedOutputMatchers: []types.GomegaMatcher{
-				Not(ContainSubstring("Building stage")),
-				ContainSubstring("Use previously built image for artifact/gitArchive"),
-			},
-		}
-
-		BeforeEach(func() {
-			fixturesPathParts = append(fixturesPathParts, "artifact")
-		})
-
-		When("stageDependencies are not defined", func() {
-			BeforeEach(func(ctx SpecContext) {
-				fixturesPathParts = append(fixturesPathParts, "without_stage_dependencies")
-				commonBeforeEach(ctx, utils.FixturePath(fixturesPathParts...))
-			})
-
-			When("gitArchive stage is built", func() {
-				toBuildBeforeInstallStageStep := stagesSpecStep{
-					byText: fmt.Sprintf("beforeInstallCacheVersion changed: beforeInstall stage should be built"),
-					beforeBuildHookFunc: func(_ context.Context) {
-						SuiteData.Stubs.SetEnv("WERF_CONFIG", "werf_beforeInstallCacheVersion.yaml")
-					},
-					checkResultedFilesChecksum: true,
-					expectedOutputMatchers: []types.GomegaMatcher{
-						ContainSubstring("Building stage artifact/gitArchive"),
-					},
-				}
-
-				BeforeEach(func() {
-					specSteps = append(specSteps, toBuildGitArchiveStageStep)
-				})
-
-				It("gitArchive stage should be built (beforeInstall)", func(ctx SpecContext) {
-					specSteps = append(specSteps, toBuildBeforeInstallStageStep)
-					runStagesSpecSteps(ctx, specSteps)
-				})
-
-				for _, userStage := range []string{"install", "beforeSetup", "setup"} {
-					boundedUserStage := userStage
-
-					itMsg := fmt.Sprintf("%s stage should be built", boundedUserStage)
-
-					It(itMsg, func(ctx SpecContext) {
-						specSteps = append(specSteps, stagesSpecStep{
-							byText: fmt.Sprintf("%[1]sCacheVersion changed: %[1]s stage should be built", boundedUserStage),
-							beforeBuildHookFunc: func(_ context.Context) {
-								SuiteData.Stubs.SetEnv("WERF_CONFIG", fmt.Sprintf("werf_%sCacheVersion.yaml", boundedUserStage))
-							},
-							checkResultedFilesChecksum: true,
-							expectedOutputMatchers: []types.GomegaMatcher{
-								ContainSubstring(fmt.Sprintf("Building stage artifact/%s", boundedUserStage)),
-							},
-						})
-						runStagesSpecSteps(ctx, specSteps)
-					})
-				}
-
-				It("nothing should be built", func(ctx SpecContext) {
-					specSteps = append(specSteps, toBuildNothingStep)
-					runStagesSpecSteps(ctx, specSteps)
-				})
-			})
-		})
-
-		When("stageDependencies are defined", func() {
-			BeforeEach(func(ctx SpecContext) {
-				fixturesPathParts = append(fixturesPathParts, "with_stage_dependencies")
-				commonBeforeEach(ctx, utils.FixturePath(fixturesPathParts...))
-			})
-
-			When("gitArchive stage is built", func() {
-				BeforeEach(func() {
-					specSteps = append(specSteps, toBuildGitArchiveStageStep)
-				})
-
-				for _, userStage := range []string{"install", "beforeSetup", "setup"} {
-					boundedUserStage := userStage
-
-					itMsg := fmt.Sprintf("%s stage should be built", boundedUserStage)
-
-					It(itMsg, func(ctx SpecContext) {
-						specSteps = append(specSteps, stagesSpecStep{
-							byText: fmt.Sprintf("Dependent file changed: %s stage should be built", boundedUserStage),
-							beforeBuildHookFunc: func(ctx context.Context) {
-								createAndCommitFile(ctx, SuiteData.TestDirPath, boundedUserStage, 10)
-							},
-							checkResultedFilesChecksum: true,
-							expectedOutputMatchers: []types.GomegaMatcher{
-								ContainSubstring(fmt.Sprintf("Building stage artifact/%s", boundedUserStage)),
-							},
-						})
-						runStagesSpecSteps(ctx, specSteps)
-					})
-				}
-
-				It("nothing should be built", func(ctx SpecContext) {
-					specSteps = append(specSteps, toBuildNothingStep)
-					runStagesSpecSteps(ctx, specSteps)
 				})
 			})
 		})

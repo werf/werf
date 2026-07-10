@@ -17,7 +17,7 @@ func parseRunCommandAI(dockerfileText string) *instructions.RunCommand {
 	p, err := parser.Parse(bytes.NewReader([]byte(dockerfileText)))
 	Expect(err).To(Succeed())
 
-	dockerStages, _, err := instructions.Parse(p.AST)
+	dockerStages, _, err := instructions.Parse(p.AST, nil)
 	Expect(err).To(Succeed())
 	Expect(dockerStages).NotTo(BeEmpty())
 
@@ -52,7 +52,7 @@ var _ = Describe("TestAI_ RUN mount from stage resolution", func() {
 		conveyor := stage.NewConveyorStub(
 			stage.NewGiterminismManagerStub(stage.NewLocalGitRepoStub("test"), stage.NewGiterminismInspectorStub()),
 			map[string]string{"/stage/os": resolvedOsImage},
-			nil, nil,
+			nil,
 		)
 
 		Expect(stg.ExpandDependencies(ctx, conveyor, map[string]string{})).To(Succeed())
@@ -70,7 +70,7 @@ var _ = Describe("TestAI_ RUN mount from stage resolution", func() {
 
 		conveyor := stage.NewConveyorStub(
 			stage.NewGiterminismManagerStub(stage.NewLocalGitRepoStub("test"), stage.NewGiterminismInspectorStub()),
-			nil, nil, nil,
+			nil, nil,
 		)
 
 		Expect(stg.ExpandDependencies(ctx, conveyor, map[string]string{})).To(Succeed())
@@ -89,7 +89,7 @@ var _ = Describe("TestAI_ RUN mount from stage resolution", func() {
 		conveyor := stage.NewConveyorStub(
 			stage.NewGiterminismManagerStub(stage.NewLocalGitRepoStub("test"), stage.NewGiterminismInspectorStub()),
 			map[string]string{"/stage/os": resolvedImage},
-			nil, nil,
+			nil,
 		)
 
 		Expect(stg.ExpandDependencies(ctx, conveyor, map[string]string{})).To(Succeed())

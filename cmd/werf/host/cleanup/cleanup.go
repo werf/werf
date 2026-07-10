@@ -105,13 +105,13 @@ func runCleanup(ctx context.Context) error {
 	logboek.LogOptionalLn()
 
 	hostCleanupOptions := host_cleaning.HostCleanupOptions{
-		DryRun:                                 *commonCmdData.DryRun,
-		Force:                                  cmdData.Force,
-		AllowedBackendStorageVolumeUsage:       commonCmdData.AllowedBackendStorageVolumeUsage,
-		AllowedBackendStorageVolumeUsageMargin: commonCmdData.AllowedBackendStorageVolumeUsageMargin,
-		AllowedLocalCacheVolumeUsage:           commonCmdData.AllowedLocalCacheVolumeUsage,
-		AllowedLocalCacheVolumeUsageMargin:     commonCmdData.AllowedLocalCacheVolumeUsageMargin,
-		BackendStoragePath:                     commonCmdData.BackendStoragePath,
+		DryRun: *commonCmdData.DryRun,
+		Force:  cmdData.Force,
+		AllowedBackendStorageVolumeUsagePercentage:       commonCmdData.AllowedBackendStorageVolumeUsage,
+		AllowedBackendStorageVolumeUsageMarginPercentage: commonCmdData.AllowedBackendStorageVolumeUsageMargin,
+		AllowedLocalCacheVolumeUsagePercentage:           commonCmdData.AllowedLocalCacheVolumeUsage,
+		AllowedLocalCacheVolumeUsageMarginPercentage:     commonCmdData.AllowedLocalCacheVolumeUsageMargin,
+		BackendStoragePath:                               commonCmdData.BackendStoragePath,
 	}
 
 	return host_cleaning.RunHostCleanup(ctx, commonManager.ContainerBackend(), hostCleanupOptions)

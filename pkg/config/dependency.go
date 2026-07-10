@@ -8,17 +8,17 @@ import (
 )
 
 type Dependency struct {
-	ImageName string
-	Before    string
-	After     string
-	Imports   []*DependencyImport
+	From    string
+	Before  string
+	After   string
+	Imports []*DependencyImport
 
 	raw *rawDependency
 }
 
 func (d *Dependency) validate() error {
-	if d.ImageName == "" {
-		return newDetailedConfigError("image name is not specified for dependency", d.raw, d.raw.doc())
+	if d.From == "" {
+		return newDetailedConfigError("`from: NAME` is not specified for dependency (or deprecated `image: NAME`)", d.raw, d.raw.doc())
 	}
 
 	switch imageType := d.raw.imageType(); imageType {

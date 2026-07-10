@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"sync/atomic"
+	"unicode/utf8"
 
 	"github.com/werf/werf/v2/pkg/tmp_manager"
 )
@@ -42,10 +43,63 @@ func (w *Worker) Write(p []byte) (int, error) {
 // Read implements io.Reader.
 // It reads a file and accumulates total read offset.
 // It resumes reading from "total read offset" and reads until EOF, where EOF is handled with os.File.
+//
+// A trailing incomplete UTF-8 sequence is held back and returned on the next
+// call as long as more bytes are still to come (either the worker is still
+// writing, or half-closed but not yet fully drained). Without this, a
+// fixed-size read can land its boundary in the middle of a multi-byte rune
+// (e.g. a box-drawing character used for log prefixes), and the downstream
+// logger converts each half independently into a replacement character,
+// producing visible mojibake in the terminal.
 func (w *Worker) Read(p []byte) (int, error) {
-	offset, err := w.file.ReadAt(p, w.readOffset.Load())
-	w.readOffset.Add(int64(offset))
-	return offset, err
+	readOffset := w.readOffset.Load()
+	n, err := w.file.ReadAt(p, readOffset)
+
+	atEnd := w.halfClosed.Load() && readOffset+int64(n) >= w.writeOffset.Load()
+	if !atEnd {
+		if complete := completeUTF8Len(p[:n]); complete > 0 && complete < n {
+			n = complete
+			err = nil
+		}
+	}
+
+	w.readOffset.Add(int64(n))
+	return n, err
+}
+
+// completeUTF8Len returns the length of the longest prefix of b that does not
+// end with a truncated multi-byte UTF-8 sequence.
+func completeUTF8Len(b []byte) int {
+	n := len(b)
+
+	for i := 1; i < utf8.UTFMax && i <= n; i++ {
+		c := b[n-i]
+		if utf8.RuneStart(c) {
+			if utf8SequenceLen(c) > i {
+				return n - i
+			}
+			break
+		}
+	}
+
+	return n
+}
+
+// utf8SequenceLen returns the expected total byte length of the UTF-8
+// sequence starting with lead byte c.
+func utf8SequenceLen(c byte) int {
+	switch {
+	case c&0x80 == 0x00:
+		return 1
+	case c&0xE0 == 0xC0:
+		return 2
+	case c&0xF0 == 0xE0:
+		return 3
+	case c&0xF8 == 0xF0:
+		return 4
+	default:
+		return 1
+	}
 }
 
 // HalfClose closes writing or returns error if already half-closed

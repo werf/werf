@@ -1,6 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: values
-data:
-  test1: {{ .Values.apps.app1.prod.test1 }}

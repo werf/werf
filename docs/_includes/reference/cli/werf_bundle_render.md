@@ -62,9 +62,6 @@ werf bundle render [options]
       --extra-apiversions=[]
             Extra Kubernetes API versions passed to $.Capabilities.APIVersions. Can be also set     
             with $WERF_EXTRA_APIVERSIONS_* environment variables, values can be comma-separated
-      --force-adoption=false
-            Always adopt resources, even if they belong to a different Helm release (default        
-            $WERF_FORCE_ADOPTION or false)
       --home-dir=""
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --ignore-bundle-js=false
@@ -251,13 +248,6 @@ werf bundle render [options]
             or separate values with commas: key1=val1,key2=val2.
             Also, can be defined with $WERF_SET_ROOT_JSON_* (e.g. $WERF_SET_ROOT_JSON_1=key1=val1,  
             $WERF_SET_ROOT_JSON_2=key2=val2)
-      --set-runtime-json=[]
-            Set new keys in $.Runtime, where the key is the value path and the value is JSON. This  
-            is meant to be generated inside the program, so use --set-json instead, unless you know 
-            what you are doing. Can specify multiple or separate values with commas:                
-            key1=val1,key2=val2.
-            Also, can be defined with $WERF_SET_RUNTIME_JSON_* (e.g.                                
-            $WERF_SET_RUNTIME_JSON_1=key1=val1, $WERF_SET_RUNTIME_JSON_2=key2=val2)
       --set-string=[]
             Set STRING helm values on the command line (can specify multiple or separate values     
             with commas: key1=val1,key2=val2).

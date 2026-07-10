@@ -10,7 +10,6 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/nelm/pkg/common"
-	"github.com/werf/werf/v2/pkg/host_cleaning/units"
 	"github.com/werf/werf/v2/pkg/util/option"
 )
 
@@ -41,19 +40,23 @@ type CmdData struct {
 	WithoutImages   *bool
 	Repo            *RepoData
 	FinalRepo       *RepoData
+	MetaRepo        *RepoData
 
 	SecondaryStagesStorage *[]string
 	CacheStagesStorage     *[]string
 
-	CheckBuiltImages       *bool
-	LegacyCheckBuiltImages *bool // TODO(major): remove
+	CheckBuiltImages *bool
+	// LegacyCheckBuiltImages backs the hidden `-Z`/`--require-built-images` alias kept for
+	// backward compatibility with werf 1.2, where this flag had different semantics than the
+	// current `--require-built-images` (see RequireBuiltImages). Combined with CheckBuiltImages
+	// in GetCheckBuiltImages so either flag enables the check.
+	LegacyCheckBuiltImages *bool
 	RequireBuiltImages     *bool
 	StubTags               *bool
 
 	AddCustomTag *[]string
 	UseCustomTag *string
 
-	Synchronization    *string
 	BackendNetwork     *string
 	Parallel           *bool
 	ParallelTasksLimit *int64
@@ -92,18 +95,15 @@ type CmdData struct {
 	BuildReportPath *string
 	UseBuildReport  *bool
 
-	VirtualMerge *bool
-
 	ScanContextNamespaceOnly *bool
-	KubeScanNamespaces       *[]string
 
 	// Host storage cleanup options
 	DisableAutoHostCleanup                 *bool
 	BackendStoragePath                     *string
-	AllowedBackendStorageVolumeUsage       *units.UnitValue
-	AllowedBackendStorageVolumeUsageMargin *units.UnitValue
-	AllowedLocalCacheVolumeUsage           *units.UnitValue
-	AllowedLocalCacheVolumeUsageMargin     *units.UnitValue
+	AllowedBackendStorageVolumeUsage       *uint
+	AllowedBackendStorageVolumeUsageMargin *uint
+	AllowedLocalCacheVolumeUsage           *uint
+	AllowedLocalCacheVolumeUsageMargin     *uint
 
 	Platform *[]string
 
@@ -272,39 +272,6 @@ func (cmdData *CmdData) ProcessFlags() error {
 }
 
 func (cmdData *CmdData) validateFlags() error {
-	if err := cmdData.validateHostCleanupFlags(); err != nil {
-		return fmt.Errorf("host cleanup: %w", err)
-	}
-
-	return nil
-}
-
-func (cmdData *CmdData) validateHostCleanupFlags() error {
-	groups := []struct {
-		name   string
-		usage  *units.UnitValue
-		margin *units.UnitValue
-	}{
-		{
-			name:   "backend storage",
-			usage:  cmdData.AllowedBackendStorageVolumeUsage,
-			margin: cmdData.AllowedBackendStorageVolumeUsageMargin,
-		},
-		{
-			name:   "local cache",
-			usage:  cmdData.AllowedLocalCacheVolumeUsage,
-			margin: cmdData.AllowedLocalCacheVolumeUsageMargin,
-		},
-	}
-
-	for _, g := range groups {
-		if g.usage != nil && g.margin != nil {
-			if g.usage.IsAbsolute() != g.margin.IsAbsolute() {
-				return fmt.Errorf("mixing percentages and absolute units in %s group is not allowed (usage: %q, margin: %q)", g.name, g.usage.String(), g.margin.String())
-			}
-		}
-	}
-
 	return nil
 }
 
@@ -391,7 +358,6 @@ func (cmdData *CmdData) processFlags() error {
 	cmdData.ValuesSetString = append(util.PredefinedValuesByEnvNamePrefix("WERF_SET_STRING_"), cmdData.ValuesSetString...)
 	cmdData.ValuesSetFile = append(util.PredefinedValuesByEnvNamePrefix("WERF_SET_FILE_"), cmdData.ValuesSetFile...)
 	cmdData.RootSetJSON = append(util.PredefinedValuesByEnvNamePrefix("WERF_SET_ROOT_JSON_"), cmdData.RootSetJSON...)
-	cmdData.RuntimeSetJSON = append(util.PredefinedValuesByEnvNamePrefix("WERF_SET_RUNTIME_JSON_"), cmdData.RuntimeSetJSON...)
 	cmdData.ValuesSetJSON = append(util.PredefinedValuesByEnvNamePrefix("WERF_SET_JSON_"), cmdData.ValuesSetJSON...)
 	cmdData.ValuesSetLiteral = append(util.PredefinedValuesByEnvNamePrefix("WERF_SET_LITERAL_"), cmdData.ValuesSetLiteral...)
 	cmdData.ValuesFiles = append(util.PredefinedValuesByEnvNamePrefix("WERF_VALUES_"), cmdData.ValuesFiles...)

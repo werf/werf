@@ -12,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/opencontainers/go-digest"
 	"github.com/samber/lo"
 
 	"github.com/werf/common-go/pkg/util"
@@ -29,7 +30,6 @@ import (
 	imagePkg "github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/storage"
 	"github.com/werf/werf/v2/pkg/storage/manager"
-	"github.com/werf/werf/v2/pkg/storage/synchronization/lock_manager"
 	"github.com/werf/werf/v2/pkg/telemetry"
 	"github.com/werf/werf/v2/pkg/util/parallel"
 )
@@ -56,8 +56,7 @@ type Conveyor struct {
 
 	ContainerBackend container_backend.ContainerBackend
 
-	StorageLockManager lock_manager.Interface
-	StorageManager     manager.StorageManagerInterface
+	StorageManager manager.StorageManagerInterface
 
 	onTerminateFuncs []ConveyorCleanupFunc
 	importServers    map[string]import_server.ImportServer
@@ -76,18 +75,17 @@ func stageImageCacheKey(name, targetPlatform string) string {
 type ConveyorCleanupFunc func(context.Context) error
 
 type ConveyorOptions struct {
-	Parallel                        bool
-	ParallelTasksLimit              int64
-	LocalGitRepoVirtualMergeOptions stage.VirtualMergeOptions
-	TargetPlatforms                 []string
-	DeferBuildLog                   bool
-	ImagesToProcess                 config.ImagesToProcess
-	SkipImageSpecStage              bool
-	UseBuildReport                  bool
-	BuildReportPath                 string
+	Parallel           bool
+	ParallelTasksLimit int64
+	TargetPlatforms    []string
+	DeferBuildLog      bool
+	ImagesToProcess    config.ImagesToProcess
+	SkipImageSpecStage bool
+	UseBuildReport     bool
+	BuildReportPath    string
 }
 
-func NewConveyor(werfConfig *config.WerfConfig, giterminismManager giterminism_manager.Interface, projectDir, baseTmpDir string, containerBackend container_backend.ContainerBackend, storageManager manager.StorageManagerInterface, storageLockManager lock_manager.Interface, opts ConveyorOptions) *Conveyor {
+func NewConveyor(werfConfig *config.WerfConfig, giterminismManager giterminism_manager.Interface, projectDir, baseTmpDir string, containerBackend container_backend.ContainerBackend, storageManager manager.StorageManagerInterface, opts ConveyorOptions) *Conveyor {
 	c := &Conveyor{
 		werfConfig: werfConfig,
 
@@ -104,9 +102,8 @@ func NewConveyor(werfConfig *config.WerfConfig, giterminismManager giterminism_m
 		tmpDir:                 filepath.Join(baseTmpDir, util.GenerateConsistentRandomString(10)),
 		importServers:          make(map[string]import_server.ImportServer),
 
-		ContainerBackend:   containerBackend,
-		StorageLockManager: storageLockManager,
-		StorageManager:     storageManager,
+		ContainerBackend: containerBackend,
+		StorageManager:   storageManager,
 
 		ConveyorOptions: opts,
 
@@ -265,18 +262,11 @@ func (c *Conveyor) GetStageDigestMutex(stage string) *sync.Mutex {
 	return m
 }
 
-func (c *Conveyor) GetLocalGitRepoVirtualMergeOptions() stage.VirtualMergeOptions {
-	return c.ConveyorOptions.LocalGitRepoVirtualMergeOptions
-}
-
-func (c *Conveyor) GetImportServer(ctx context.Context, targetPlatform, imageName, stageName string, fromExternalImage bool) (import_server.ImportServer, error) {
+func (c *Conveyor) GetImportServer(ctx context.Context, targetPlatform, imageName string, fromExternalImage bool) (import_server.ImportServer, error) {
 	c.GetServiceRWMutex("ImportServer").Lock()
 	defer c.GetServiceRWMutex("ImportServer").Unlock()
 
 	importServerName := imageName
-	if stageName != "" {
-		importServerName += "/" + stageName
-	}
 
 	if targetPlatform == "" {
 		panic("assertion: targetPlatform cannot be empty")
@@ -289,25 +279,14 @@ func (c *Conveyor) GetImportServer(ctx context.Context, targetPlatform, imageNam
 
 	var srv *import_server.RsyncServer
 
-	var stg stage.Interface
-
 	if !fromExternalImage {
-		if stageName != "" {
-			var err error
-			stg, err = c.findImageStage(targetPlatform, imageName, stageName)
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			var err error
-			stg, err = c.findLastNonEmptyImageStage(targetPlatform, imageName)
-			if err != nil {
-				return nil, err
-			}
+		img := c.GetImage(targetPlatform, imageName)
+		contentTagStageImage := img.GetContentTagStageImage()
+		if contentTagStageImage == nil {
+			return nil, fmt.Errorf("image %q has no content tag", imageName)
 		}
-
-		if _, err := c.StorageManager.FetchStage(ctx, c.ContainerBackend, stg); err != nil {
-			return nil, fmt.Errorf("unable to fetch stage %s: %w", stg.GetStageImage().Image.Name(), err)
+		if _, err := c.StorageManager.FetchStageImage(ctx, c.ContainerBackend, imageName, contentTagStageImage); err != nil {
+			return nil, fmt.Errorf("unable to fetch stage %s: %w", contentTagStageImage.Image.Name(), err)
 		}
 	}
 
@@ -321,11 +300,7 @@ func (c *Conveyor) GetImportServer(ctx context.Context, targetPlatform, imageNam
 				imageSubDir = imageName
 			}
 
-			if stageName == "" {
-				tmpDir = filepath.Join(c.tmpDir, "import-server", imageSubDir, targetPlatform)
-			} else {
-				tmpDir = filepath.Join(c.tmpDir, "import-server", fmt.Sprintf("%s-%s", imageSubDir, stageName), targetPlatform)
-			}
+			tmpDir = filepath.Join(c.tmpDir, "import-server", imageSubDir, targetPlatform)
 
 			if err := os.MkdirAll(tmpDir, os.ModePerm); err != nil {
 				return fmt.Errorf("unable to create dir %s: %w", tmpDir, err)
@@ -335,19 +310,7 @@ func (c *Conveyor) GetImportServer(ctx context.Context, targetPlatform, imageNam
 			if fromExternalImage {
 				dockerImageName = imageName
 			} else {
-				if stageName == "" {
-					lastStage, err := c.findLastNonEmptyImageStage(targetPlatform, imageName)
-					if err != nil {
-						return err
-					}
-					dockerImageName = lastStage.GetStageImage().Image.Name()
-				} else {
-					resolvedStage, err := c.findImageStage(targetPlatform, imageName, stageName)
-					if err != nil {
-						return err
-					}
-					dockerImageName = resolvedStage.GetStageImage().Image.Name()
-				}
+				dockerImageName = c.GetImageContentTagName(targetPlatform, imageName)
 			}
 
 			var err error
@@ -471,8 +434,12 @@ func (c *Conveyor) ShouldBeBuilt(ctx context.Context, opts ShouldBeBuiltOptions)
 }
 
 func (c *Conveyor) FetchLastImageStage(ctx context.Context, targetPlatform, imageName string) error {
-	lastImageStage := c.GetImage(targetPlatform, imageName).GetLastNonEmptyStage()
-	_, err := c.StorageManager.FetchStage(ctx, c.ContainerBackend, lastImageStage)
+	img := c.GetImage(targetPlatform, imageName)
+	contentTagStageImage := img.GetContentTagStageImage()
+	if contentTagStageImage == nil {
+		return fmt.Errorf("image %q has no content tag", imageName)
+	}
+	_, err := c.StorageManager.FetchStageImage(ctx, c.ContainerBackend, imageName, contentTagStageImage)
 
 	return err
 }
@@ -554,7 +521,7 @@ func (c *Conveyor) GetImageInfoGetters(opts imagePkg.InfoGetterOptions) ([]*imag
 
 		if len(platforms) == 1 {
 			img := images[0]
-			getter := c.StorageManager.GetImageInfoGetter(img.Name, img.GetLastNonEmptyStage().GetStageImage().Image.GetStageDesc(), opts)
+			getter := c.StorageManager.GetImageInfoGetter(img.Name, img.GetContentTagDesc(), opts)
 			imagesGetters = append(imagesGetters, getter)
 		} else {
 			img := c.imagesTree.GetMultiplatformImage(name)
@@ -596,7 +563,7 @@ func (c *Conveyor) GetImagesEnvArray() []string {
 			continue
 		}
 
-		envArray = append(envArray, GenerateImageEnv(img.Name, c.GetImageNameForLastImageStage(img.TargetPlatform, img.Name)))
+		envArray = append(envArray, GenerateImageEnv(img.Name, c.GetImageContentTagName(img.TargetPlatform, img.Name)))
 	}
 
 	return envArray
@@ -629,44 +596,6 @@ func (c *Conveyor) GetImageNameForLastImageStageFromReport(image ReportImageReco
 	return image.Stages[len(image.Stages)-1].DockerImageName
 }
 
-func (c *Conveyor) checkContainerBackendSupported(ctx context.Context) error {
-	targetPlatforms, err := c.GetTargetPlatforms()
-	if err != nil {
-		return fmt.Errorf("error getting target platforms: %w", err)
-	}
-	c.ContainerBackend.ClaimTargetPlatforms(ctx, targetPlatforms)
-
-	if _, isBuildah := c.ContainerBackend.(*container_backend.BuildahBackend); !isBuildah {
-		return nil
-	}
-
-	// Check if ansible builder is used with buildah container backend.
-	{
-		var nameList []string
-		for _, i := range c.werfConfig.Images(false) {
-			switch imageOrArtifact := i.(type) {
-			case config.StapelImageInterface:
-				if imageOrArtifact.ImageBaseConfig().Ansible != nil {
-					nameList = append(nameList, fmt.Sprintf("%q", imageOrArtifact.GetName()))
-				}
-			case *config.ImageFromDockerfile:
-			default:
-				panic(fmt.Errorf("unexpected image type %T", imageOrArtifact))
-			}
-		}
-
-		if len(nameList) > 0 {
-			return fmt.Errorf(`Unable to build stapel images or/and artifacts (%s), which use ansible builder when buildah container backend is enabled.
-
-Please use shell builder instead, or select docker server backend to continue usage of ansible builder (disable buildah runtime by unsetting WERF_BUILDAH_MODE environment variable).
-
-It is recommended to use shell builder, because ansible builder will be deprecated soon.`, strings.Join(nameList, ", "))
-		}
-	}
-
-	return nil
-}
-
 // prepareBuildCtx creates buffer and a new logger context if printing build log should be deferred.
 func (c *Conveyor) prepareBuildCtx(ctx context.Context) (context.Context, *bytes.Buffer) {
 	if !c.DeferBuildLog {
@@ -697,10 +626,6 @@ func (c *Conveyor) Build(ctx context.Context, opts BuildOptions) ([]*ImagesRepor
 				return nil, fmt.Errorf("staged Dockerfile build (staged: true) is not supported with --network option (use staged: false for %q image or remove --network option)", img.Name)
 			}
 		}
-	}
-
-	if err := c.checkContainerBackendSupported(ctx); err != nil {
-		return nil, err
 	}
 
 	if err := c.determineStages(ctx); err != nil {
@@ -902,6 +827,11 @@ func (c *Conveyor) doImage(ctx context.Context, img *image.Image, phases []Phase
 				}
 				logProcess.End()
 
+				if contentTagDesc := img.GetContentTagDesc(); contentTagDesc != nil {
+					logboek.Context(ctx).LogOptionalLn()
+					return nil
+				}
+
 				logProcess = logboek.Context(ctx).Debug().LogProcess("Phase %s -- OnImageStage()", phase.Name())
 				logProcess.Start()
 				for _, stg := range img.GetStages() {
@@ -1020,6 +950,11 @@ func (c *Conveyor) GetOrCreateStageImage(name string, prevStageImage *stage.Stag
 		if prevStageImage == nil || prevStageImage.Image == nil {
 			return ""
 		}
+		if stageDesc := prevStageImage.Image.GetStageDesc(); stageDesc != nil && stageDesc.Info != nil {
+			if _, err := digest.Parse(stageDesc.Info.ID); err == nil {
+				return stageDesc.Info.ID
+			}
+		}
 		return prevStageImage.Image.Name()
 	}
 
@@ -1039,16 +974,18 @@ func (c *Conveyor) GetOrCreateStageImage(name string, prevStageImage *stage.Stag
 	return stageImage
 }
 
-// GetImage returns the image for the given target platform and name.
-// TODO: migrate callers to FindImage and remove this method — GetImage is a legacy wrapper
-// that panics on error because its signature is part of the stage.Conveyor interface which
-// does not support error returns yet.
 func (c *Conveyor) GetImage(targetPlatform, name string) *image.Image {
-	img, err := c.FindImage(targetPlatform, name)
-	if err != nil {
-		panic(err.Error())
+	if targetPlatform == "" {
+		panic("assertion: targetPlatform should not be empty")
 	}
-	return img
+
+	for _, img := range c.imagesTree.GetImages() {
+		if img.GetName() == name && img.TargetPlatform == targetPlatform {
+			return img
+		}
+	}
+
+	panic(fmt.Sprintf("Image %q with target platform %q not found!", name, targetPlatform))
 }
 
 func (c *Conveyor) FindImage(targetPlatform, name string) (*image.Image, error) {
@@ -1074,110 +1011,14 @@ func (c *Conveyor) FindImage(targetPlatform, name string) (*image.Image, error) 
 	return nil, fmt.Errorf("image %q not found", name)
 }
 
-func (c *Conveyor) GetImageStageContentDigest(targetPlatform, imageName, stageName string) string {
-	return c.getImageStage(targetPlatform, imageName, stageName).GetContentDigest()
+func (c *Conveyor) GetImageContentTagStageID(targetPlatform, imageName string) string {
+	return c.GetImage(targetPlatform, imageName).GetContentTagDesc().StageID.String()
 }
 
-func (c *Conveyor) GetImageContentDigest(targetPlatform, imageName string) string {
-	return c.GetImage(targetPlatform, imageName).GetContentDigest()
+func (c *Conveyor) GetImageContentTagName(targetPlatform, imageName string) string {
+	return c.GetImage(targetPlatform, imageName).GetContentTagDesc().Info.Name
 }
 
-func (c *Conveyor) findImageStage(targetPlatform, imageName, stageName string) (stage.Interface, error) {
-	img, err := c.FindImage(targetPlatform, imageName)
-	if err != nil {
-		return nil, err
-	}
-
-	if stg := img.GetStage(stage.StageName(stageName)); stg != nil {
-		return stg, nil
-	}
-
-	return c.findLastNonEmptyImageStage(targetPlatform, imageName)
-}
-
-func (c *Conveyor) findLastNonEmptyImageStage(targetPlatform, imageName string) (stage.Interface, error) {
-	img, err := c.FindImage(targetPlatform, imageName)
-	if err != nil {
-		return nil, err
-	}
-
-	return img.GetLastNonEmptyStage(), nil
-}
-
-func (c *Conveyor) getImageStage(targetPlatform, imageName, stageName string) stage.Interface {
-	stg, err := c.findImageStage(targetPlatform, imageName, stageName)
-	if err != nil {
-		panic(err.Error())
-	}
-	return stg
-}
-
-func (c *Conveyor) FetchImageStage(ctx context.Context, targetPlatform, imageName, stageName string) error {
-	stg, err := c.findImageStage(targetPlatform, imageName, stageName)
-	if err != nil {
-		return err
-	}
-
-	_, err = c.StorageManager.FetchStage(ctx, c.ContainerBackend, stg)
-	return err
-}
-
-func (c *Conveyor) FetchLastNonEmptyImageStage(ctx context.Context, targetPlatform, imageName string) error {
-	stg, err := c.findLastNonEmptyImageStage(targetPlatform, imageName)
-	if err != nil {
-		return err
-	}
-
-	_, err = c.StorageManager.FetchStage(ctx, c.ContainerBackend, stg)
-	return err
-}
-
-func (c *Conveyor) GetImageNameForLastImageStage(targetPlatform, imageName string) string {
-	return c.GetImage(targetPlatform, imageName).GetLastNonEmptyStage().GetStageImage().Image.Name()
-}
-
-func (c *Conveyor) GetImageNameForImageStage(targetPlatform, imageName, stageName string) string {
-	return c.getImageStage(targetPlatform, imageName, stageName).GetStageImage().Image.Name()
-}
-
-func (c *Conveyor) GetStageID(targetPlatform, imageName string) string {
-	return c.GetImage(targetPlatform, imageName).GetStageID()
-}
-
-// TODO: remove this legacy logic in v3.
-func (c *Conveyor) GetImageIDForLastImageStage(targetPlatform, imageName string) string {
-	return c.GetImage(targetPlatform, imageName).GetLastNonEmptyStage().GetStageImage().Image.GetStageDesc().Info.ID
-}
-
-func (c *Conveyor) GetStageIDForLastImageStage(targetPlatform, imageName string) string {
-	return c.GetImage(targetPlatform, imageName).GetLastNonEmptyStage().GetStageImage().Image.GetStageDesc().StageID.String()
-}
-
-func (c *Conveyor) GetImageDigestForLastImageStage(targetPlatform, imageName string) string {
-	return c.GetImage(targetPlatform, imageName).GetLastNonEmptyStage().GetStageImage().Image.GetStageDesc().Info.GetDigest()
-}
-
-// TODO: remove this legacy logic in v3.
-func (c *Conveyor) GetImageIDForImageStage(targetPlatform, imageName, stageName string) string {
-	return c.getImageStage(targetPlatform, imageName, stageName).GetStageImage().Image.GetStageDesc().Info.ID
-}
-
-func (c *Conveyor) GetStageIDForImageStage(targetPlatform, imageName, stageName string) string {
-	return c.getImageStage(targetPlatform, imageName, stageName).GetStageImage().Image.GetStageDesc().StageID.String()
-}
-
-func (c *Conveyor) GetImportMetadata(ctx context.Context, projectName, id string) (*storage.ImportMetadata, error) {
-	return c.StorageManager.GetStagesStorage().GetImportMetadata(ctx, projectName, id)
-}
-
-func (c *Conveyor) FetchImportMetadata(ctx context.Context, projectName, id string) (*storage.ImportMetadata, error) {
-	return c.StorageManager.FetchImportMetadata(ctx, projectName, id)
-}
-
-func (c *Conveyor) PutImportMetadata(ctx context.Context, projectName string, metadata *storage.ImportMetadata, opts storage.PutImportMetadataOptions) error {
-	return c.StorageManager.GetStagesStorage().PutImportMetadata(ctx, projectName, metadata, opts)
-}
-
-func (c *Conveyor) RmImportMetadata(ctx context.Context, projectName, id string) error {
-	return c.StorageManager.GetStagesStorage().RmImportMetadata(ctx, projectName, id)
+func (c *Conveyor) GetImageContentTagDigest(targetPlatform, imageName string) string {
+	return c.GetImage(targetPlatform, imageName).GetContentTagDesc().Info.GetDigest()
 }

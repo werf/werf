@@ -4,20 +4,22 @@ silent: true
 
 env:
   GO111MODULE: "on"
-  HELM_PLUGINS: ""
   KUBECONFIG:
     sh: echo "$HOME/.kube/config"
   PRETTIER_VERSION: "3.5.3"
+  GOLANGCI_LINT_CONFIG: ".golangci.yml"
 
 includes:
-  lint:
+  _remote-lint:
     taskfile: https://raw.githubusercontent.com/werf/common-ci/refs/heads/main/Taskfile.format_lint.yml
-    flatten: true
     vars:
       golangciPaths: "./cmd/... ./pkg/... ./test/..."
+      golangciLintVersion: "v2.11.4"
   deps:
     taskfile: https://raw.githubusercontent.com/werf/common-ci/refs/heads/main/Taskfile.deps.yml
     flatten: true
+    vars:
+      golangciLintVersion: "v2.11.4"
 
 vars:
   version: "dev"
@@ -35,7 +37,53 @@ vars:
   cgoTags: "{{.goTags}} osusergo exclude_graphdriver_devicemapper netgo no_devmapper static_build cni"
   cgoLDFlags: "{{.goLDFlags}} -linkmode external -extldflags=-static"
 
+  buildGoTags: "{{.goTags}} embedstapel"
+  buildCgoTags: "{{.cgoTags}} embedstapel"
+
 tasks:
+  format:
+    desc: "Run all code formatters."
+    cmds:
+      - task: _remote-lint:format:gci
+      - task: _remote-lint:format:gofumpt
+
+  lint:golangci-lint:go:
+    desc: 'Lint with golangci-lint without cgo. Important vars: "golangciPaths", "golangciLintVersion".'
+    cmds:
+      - |
+        if [ ! -f "./bin/golangci-lint-v2.11.4" ]; then
+          echo "golangci-lint not installed, run: task deps:install:golangci-lint"
+          exit 1
+        fi
+        ./bin/golangci-lint-v2.11.4 run --build-tags="{{.buildGoTags}}" -c .golangci.yml {{.CLI_ARGS}} {{.golangciPaths | default "./cmd/... ./pkg/... ./test/..."}}
+    env:
+      CGO_ENABLED: "0"
+
+  lint:golangci-lint:cgo:
+    desc: 'Lint with golangci-lint for cgo. Important vars: "golangciPaths", "golangciLintVersion".'
+    cmds:
+      - |
+        if [ ! -f "./bin/golangci-lint-v2.11.4" ]; then
+          echo "golangci-lint not installed, run: task deps:install:golangci-lint"
+          exit 1
+        fi
+        ./bin/golangci-lint-v2.11.4 run --build-tags="{{.cgoTags}}" -c .golangci.yml {{.CLI_ARGS}} {{.golangciPaths | default "./cmd/... ./pkg/... ./test/..."}}
+    env:
+      CGO_ENABLED: "1"
+
+  lint:golangci-lint:
+    desc: 'Lint with golangci-lint. Important vars: "golangciPaths".'
+    deps:
+      - task: lint:golangci-lint:go
+        vars:
+          golangciPaths: "{{.golangciPaths}}"
+
+  lint:
+    desc: "Run all linters."
+    cmds:
+      - task: stapel:embed
+      - task: lint:golangci-lint
+
   _build-and-lint:
     deps:
       - build
@@ -46,10 +94,25 @@ tasks:
       - task: format
       - task: _build-and-lint
 
+  stapel:embed:
+    desc: "Generate embedded stapel image tarballs for linux/amd64 and linux/arm64."
+    run: once
+    sources:
+      - pkg/stapel/stapel.go
+    generates:
+      - pkg/stapel/embed/linux/amd64/werf-stapel-toolchain.tar.gz
+      - pkg/stapel/embed/linux/amd64/werf-stapel-toolchain.tar.sha256
+      - pkg/stapel/embed/linux/arm64/werf-stapel-toolchain.tar.gz
+      - pkg/stapel/embed/linux/arm64/werf-stapel-toolchain.tar.sha256
+    cmds:
+      - env -u GOOS -u GOARCH WERF_STAPEL_IMAGE_VERSION="$(sed -n 's/.*VERSION *= *"\(.*\)"/\1/p' pkg/stapel/stapel.go | head -1)" go run ./cmd/embed-stapel
+
   _build:cgo:dev: &build_cgo_dev
+    deps:
+      - stapel:embed
     cmds:
       - go build {{if eq .raceDetectorEnabled "true" }}-race{{end}} -o "{{.outputDir | default (printf "./build/%s-%s" .targetOS .targetArch)}}/werf{{if (eq .targetOS "windows")}}.exe{{end}}"
-        -compiler gc -ldflags="{{.cgoLDFlags}}" -tags="{{.cgoTags}}" {{.extraGoBuildArgs}} {{.CLI_ARGS}} {{.pkg | default .package}}
+        -compiler gc -ldflags="{{.cgoLDFlags}}" -tags="{{.buildCgoTags}}" {{.extraGoBuildArgs}} {{.CLI_ARGS}} {{.pkg | default .package}}
     env:
       CGO_ENABLED: "1"
       GOOS: "{{.targetOS}}"
@@ -62,12 +125,14 @@ tasks:
     <<: *build_cgo_dev
     cmds:
       - go build -o "{{.outputDir | default (printf "./dist/%s/%s-%s/bin" .version .targetOS .targetArch)}}/werf{{if (eq .targetOS "windows")}}.exe{{end}}"
-        -compiler gc -ldflags="{{.cgoLDFlags}}" -tags="{{.cgoTags}}" {{.extraGoBuildArgs}} {{.CLI_ARGS}} {{.pkg | default .package}}
+        -compiler gc -ldflags="{{.cgoLDFlags}}" -tags="{{.buildCgoTags}}" {{.extraGoBuildArgs}} {{.CLI_ARGS}} {{.pkg | default .package}}
 
   _build:go:dev: &build_go_dev
+    deps:
+      - stapel:embed
     cmds:
       - go build {{if eq .raceDetectorEnabled "true" }}-race{{end}} -o "{{.outputDir | default (printf "./build/%s-%s" .targetOS .targetArch)}}/werf{{if (eq .targetOS "windows")}}.exe{{end}}"
-        -ldflags="{{.goLDFlags}}" -tags="{{.goTags}}" {{.extraGoBuildArgs}} {{.CLI_ARGS}} {{.pkg | default .package}}
+        -ldflags="{{.goLDFlags}}" -tags="{{.buildGoTags}}" {{.extraGoBuildArgs}} {{.CLI_ARGS}} {{.pkg | default .package}}
     env:
       CGO_ENABLED: "0"
       GOOS: "{{.targetOS}}"
@@ -79,7 +144,7 @@ tasks:
     <<: *build_go_dev
     cmds:
       - go build -o "{{.outputDir | default (printf "./dist/%s/%s-%s/bin" .version .targetOS .targetArch)}}/werf{{if (eq .targetOS "windows")}}.exe{{end}}"
-        -ldflags="{{.goLDFlags}}" -tags="{{.goTags}}" {{.extraGoBuildArgs}} {{.CLI_ARGS}} {{.pkg | default .package}}
+        -ldflags="{{.goLDFlags}}" -tags="{{.buildGoTags}}" {{.extraGoBuildArgs}} {{.CLI_ARGS}} {{.pkg | default .package}}
 
   build:
     desc: "Build werf dev binary."
@@ -399,6 +464,12 @@ tasks:
     desc: 'Verify that the distributable binaries are built and have correct platform/arch. Important vars: "version".'
     cmds:
       - ./scripts/verify-dist-binaries.sh {{.version}}
+
+  compress:binaries:dist:all:
+    desc: 'Compress distributable binaries with upx. Important vars: "version".'
+    cmds:
+      - |
+        find "./dist/{{.version}}" -type f \( -path "*/linux-*/bin/werf" -o -path "*/windows-*/bin/werf.exe" \) -exec upx --best {} +
 
   mock:generate:
     desc: "Generate mocks."

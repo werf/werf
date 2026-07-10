@@ -61,7 +61,6 @@ var _ = Describe("rawStapelImage", func() {
 					platform:     []string{},
 					final:        true,
 				},
-				Docker: nil,
 			},
 		),
 	)
@@ -86,7 +85,7 @@ var _ = Describe("rawStapelImage", func() {
 			Expect(err).To(Succeed())
 
 			for i, expectedDep := range expected {
-				Expect(expectedDep.ImageName).To(Equal(stapelImage.Dependencies[i].ImageName))
+				Expect(expectedDep.From).To(Equal(stapelImage.Dependencies[i].From))
 				Expect(expectedDep.After).To(Equal(stapelImage.Dependencies[i].After))
 				Expect(expectedDep.Before).To(Equal(stapelImage.Dependencies[i].Before))
 
@@ -108,8 +107,8 @@ var _ = Describe("rawStapelImage", func() {
 				}},
 			},
 			[]*Dependency{{
-				ImageName: "image2",
-				Before:    "install",
+				From:   "image2",
+				Before: "install",
 			}},
 		),
 		Entry(
@@ -127,8 +126,8 @@ var _ = Describe("rawStapelImage", func() {
 				}},
 			},
 			[]*Dependency{{
-				ImageName: "image2",
-				Before:    "install",
+				From:   "image2",
+				Before: "install",
 				Imports: []*DependencyImport{{
 					Type:      ImageTagImport,
 					TargetEnv: "IMAGE_TAG",
@@ -172,10 +171,6 @@ var _ = Describe("rawStapelImage", func() {
 								"targetEnv": "IMAGE_NAME_2",
 							},
 							{
-								"type":      string(ImageIDImport),
-								"targetEnv": "IMAGE_ID_2",
-							},
-							{
 								"type":      string(ImageDigestImport),
 								"targetEnv": "IMAGE_DIGEST_2",
 							},
@@ -189,12 +184,12 @@ var _ = Describe("rawStapelImage", func() {
 			},
 			[]*Dependency{
 				{
-					ImageName: "image2",
-					Before:    "install",
+					From:   "image2",
+					Before: "install",
 				},
 				{
-					ImageName: "image3",
-					After:     "install",
+					From:  "image3",
+					After: "install",
 					Imports: []*DependencyImport{
 						{
 							Type:      ImageTagImport,
@@ -207,8 +202,8 @@ var _ = Describe("rawStapelImage", func() {
 					},
 				},
 				{
-					ImageName: "image4",
-					After:     "setup",
+					From:  "image4",
+					After: "setup",
 					Imports: []*DependencyImport{
 						{
 							Type:      ImageTagImport,
@@ -217,10 +212,6 @@ var _ = Describe("rawStapelImage", func() {
 						{
 							Type:      ImageNameImport,
 							TargetEnv: "IMAGE_NAME_2",
-						},
-						{
-							Type:      ImageIDImport,
-							TargetEnv: "IMAGE_ID_2",
 						},
 						{
 							Type:      ImageDigestImport,

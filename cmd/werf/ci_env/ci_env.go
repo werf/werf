@@ -12,7 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Masterminds/semver"
 	"github.com/spf13/cobra"
 
 	"github.com/werf/common-go/pkg/util"
@@ -81,7 +80,7 @@ Currently supported only GitLab (gitlab) and GitHub (github) CI systems`,
 	commonCmdData.SetupAllowIncludesUpdate(cmd)
 
 	cmd.Flags().BoolVarP(&cmdData.AllowRegistryLogin, "login-to-registry", "", util.GetBoolEnvironmentDefaultTrue("WERF_LOGIN_TO_REGISTRY"), "Log in to CI-specific registry automatically if possible (default $WERF_LOGIN_TO_REGISTRY).")
-	cmd.Flags().BoolVarP(&cmdData.UseDockerAuthConfig, "use-docker-auth-config", "", util.GetBoolEnvironmentDefaultFalse("WERF_USE_DOCKER_AUTH_CONFIG"), "Generate Docker config from DOCKER_AUTH_CONFIG environment variable instead of copying current Docker config (default $WERF_USE_DOCKER_AUTH_CONFIG).")
+	cmd.Flags().BoolVarP(&cmdData.UseDockerAuthConfig, "use-docker-auth-config", "", util.GetBoolEnvironmentDefaultFalse("WERF_USE_DOCKER_AUTH_CONFIG"), "Generate Docker config from DOCKER_AUTH_CONFIG environment variable instead of copying current Docker config. Enabled automatically when DOCKER_AUTH_CONFIG is set, unless explicitly disabled (default $WERF_USE_DOCKER_AUTH_CONFIG).")
 	cmd.Flags().BoolVarP(&cmdData.AsFile, "as-file", "", util.GetBoolEnvironmentDefaultFalse("WERF_AS_FILE"), "Create the script and print the path for sourcing (default $WERF_AS_FILE).")
 	cmd.Flags().BoolVarP(&cmdData.AsEnvFile, "as-env-file", "", util.GetBoolEnvironmentDefaultFalse("WERF_AS_ENV_FILE"), "Create the .env file and print the path for sourcing (default $WERF_AS_ENV_FILE).")
 	cmd.Flags().StringVarP(&cmdData.OutputFilePath, "output-file-path", "o", os.Getenv("WERF_OUTPUT_FILE_PATH"), "Write to custom file (default $WERF_OUTPUT_FILE_PATH).")
@@ -119,7 +118,7 @@ func runCIEnv(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	dockerConfig, err := generateSessionDockerConfigDir(ctx)
+	dockerConfig, err := generateSessionDockerConfigDir(ctx, cmd)
 	if err != nil {
 		return err
 	}
@@ -287,21 +286,6 @@ func generateGitlabEnvs(ctx context.Context, w io.Writer, dockerConfig string) e
 
 	writeHeader(w, "OTHER", true)
 
-	werfLogColorMode := "on"
-	ciServerVersion := os.Getenv("CI_SERVER_VERSION")
-	if ciServerVersion != "" {
-		currentVersion, err := semver.NewVersion(ciServerVersion)
-		if err == nil {
-			colorWorkTillVersion, _ := semver.NewVersion("12.1.3")
-			colorWorkSinceVersion, _ := semver.NewVersion("12.2.0")
-
-			if currentVersion.GreaterThan(colorWorkTillVersion) && currentVersion.LessThan(colorWorkSinceVersion) {
-				werfLogColorMode = "off"
-			}
-		}
-	}
-
-	writeEnv(w, "WERF_LOG_COLOR_MODE", werfLogColorMode, false)
 	writeEnv(w, "WERF_LOG_PROJECT_DIR", "1", false)
 	writeEnv(w, "WERF_ENABLE_PROCESS_EXTERMINATOR", "1", false)
 	writeEnv(w, "WERF_LOG_TERMINAL_WIDTH", "130", false)
@@ -318,18 +302,10 @@ func generateGithubEnvs(ctx context.Context, w io.Writer, dockerConfig string) e
 		return fmt.Errorf("unable to generate default repo: %w", err)
 	}
 
-	// TODO: legacy, delete when upgrading to v3
-	registryToLogin := defaultRegistry
-	customRepo := os.Getenv("WERF_REPO")
-	gitHubPackagesRegistryAddressOld := "docker.pkg.github.com"
-	if strings.HasPrefix(customRepo, gitHubPackagesRegistryAddressOld) {
-		registryToLogin = gitHubPackagesRegistryAddressOld
-	}
-
 	ciGithubActor := os.Getenv("GITHUB_ACTOR")
 	ciGithubToken := os.Getenv("GITHUB_TOKEN")
 	if ciGithubActor != "" && ciGithubToken != "" && cmdData.AllowRegistryLogin {
-		err := docker.Login(ctx, ciGithubActor, ciGithubToken, registryToLogin)
+		err := docker.Login(ctx, ciGithubActor, ciGithubToken, defaultRegistry)
 		if err != nil {
 			return fmt.Errorf("unable to login into docker registry %s: %w", defaultRegistry, err)
 		}
@@ -411,9 +387,14 @@ func generateGithubDefaultRepo(ctx context.Context, defaultRegistry, ciGithubDoc
 	return defaultRepo, nil
 }
 
-func generateSessionDockerConfigDir(ctx context.Context) (string, error) {
-	if cmdData.UseDockerAuthConfig {
-		authConfig := os.Getenv("DOCKER_AUTH_CONFIG")
+func generateSessionDockerConfigDir(ctx context.Context, cmd *cobra.Command) (string, error) {
+	authConfig := os.Getenv("DOCKER_AUTH_CONFIG")
+	useDockerAuthConfig := cmdData.UseDockerAuthConfig
+	if !cmd.Flags().Changed("use-docker-auth-config") && authConfig != "" {
+		useDockerAuthConfig = true
+	}
+
+	if useDockerAuthConfig {
 		if authConfig == "" {
 			return "", fmt.Errorf("DOCKER_AUTH_CONFIG environment variable is not set, but --use-docker-auth-config flag is enabled")
 		}
@@ -441,7 +422,6 @@ func generateSessionDockerConfigDir(ctx context.Context) (string, error) {
 
 func generateOther(w io.Writer) error {
 	writeHeader(w, "OTHER", true)
-	writeEnv(w, "WERF_LOG_COLOR_MODE", "on", false)
 	writeEnv(w, "WERF_LOG_PROJECT_DIR", "1", false)
 	writeEnv(w, "WERF_ENABLE_PROCESS_EXTERMINATOR", "1", false)
 	writeEnv(w, "WERF_LOG_TERMINAL_WIDTH", "130", false)

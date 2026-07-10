@@ -376,7 +376,7 @@ shell:
 image: app
 from: alpine:latest
 import:
-- image: builder
+- from: builder
   add: /app/build/app
   to: /usr/local/bin/app
   after: install
@@ -481,7 +481,7 @@ imageSpec:
       - "/var/lib/postgresql/data"
 ---
 image: app
-fromImage: base
+from: base
 git:
   add: /postgresql/data
   to: /var/lib/postgresql/data
@@ -610,7 +610,7 @@ dockerfile: base.Dockerfile
 image: app
 dockerfile: Dockerfile
 dependencies:
-- image: base
+- from: base
   imports:
   - type: ImageName
     targetBuildArg: BASE_IMAGE
@@ -636,7 +636,7 @@ shell:
 image: app
 dockerfile: Dockerfile
 dependencies:
-- image: builder
+- from: builder
   imports:
   - type: ImageName
     targetBuildArg: BUILDER_IMAGE
@@ -705,13 +705,13 @@ context: modules/controlplane/
 image: app
 dockerfile: Dockerfile
 dependencies:
-- image: auth
+- from: auth
   imports:
   - type: ImageName
     targetBuildArg: AUTH_IMAGE_NAME
   - type: ImageDigest
     targetBuildArg: AUTH_IMAGE_DIGEST
-- image: controlplane
+- from: controlplane
   imports:
   - type: ImageName
     targetBuildArg: CONTROLPLANE_IMAGE_NAME
@@ -744,7 +744,7 @@ dockerfile: Dockerfile.builder
 image: app
 dockerfile: Dockerfile.app
 dependencies:
-- image: builder
+- from: builder
   imports:
   - type: ImageName
     targetBuildArg: BUILDER_IMAGE_NAME

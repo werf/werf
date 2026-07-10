@@ -14,6 +14,7 @@ type BuildStapelStageOptionsInterface interface {
 	AddVolumes(volumes []string) BuildStapelStageOptionsInterface
 	AddExpose(expose []string) BuildStapelStageOptionsInterface
 	AddEnvs(envs map[string]string) BuildStapelStageOptionsInterface
+	AddBuildTimeEnvs(envs map[string]string) BuildStapelStageOptionsInterface
 	SetCmd(cmd []string) BuildStapelStageOptionsInterface
 	SetEntrypoint(entrypoint []string) BuildStapelStageOptionsInterface
 	SetUser(user string) BuildStapelStageOptionsInterface
@@ -33,16 +34,17 @@ type BuildStapelStageOptionsInterface interface {
 type BuildStapelStageOptions struct {
 	TargetPlatform string
 
-	Labels      []string
-	Volumes     []string
-	Expose      []string
-	Envs        map[string]string
-	Cmd         []string
-	Entrypoint  []string
-	User        string
-	Workdir     string
-	Healthcheck string
-	Network     string
+	Labels        []string
+	Volumes       []string
+	Expose        []string
+	Envs          map[string]string
+	BuildTimeEnvs map[string]string
+	Cmd           []string
+	Entrypoint    []string
+	User          string
+	Workdir       string
+	Healthcheck   string
+	Network       string
 
 	BuildVolumes []string
 	Commands     []string
@@ -116,6 +118,18 @@ func (opts *BuildStapelStageOptions) AddEnvs(envs map[string]string) BuildStapel
 
 	for k, v := range envs {
 		opts.Envs[k] = v
+	}
+
+	return opts
+}
+
+func (opts *BuildStapelStageOptions) AddBuildTimeEnvs(envs map[string]string) BuildStapelStageOptionsInterface {
+	if opts.BuildTimeEnvs == nil {
+		opts.BuildTimeEnvs = map[string]string{}
+	}
+
+	for k, v := range envs {
+		opts.BuildTimeEnvs[k] = v
 	}
 
 	return opts
@@ -200,5 +214,5 @@ func (opts *BuildStapelStageOptions) MountSSHAgentSocket(sshAuthSock string) {
 	}
 	vol, env := setSSHMountPoint(sshAuthSock)
 	opts.AddBuildVolumes(vol)
-	opts.AddEnvs(env)
+	opts.AddBuildTimeEnvs(env)
 }

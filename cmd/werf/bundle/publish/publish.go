@@ -16,27 +16,25 @@ import (
 	"github.com/spf13/cobra"
 	"sigs.k8s.io/yaml"
 
-	"github.com/werf/common-go/pkg/secrets_manager"
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
-	"github.com/werf/nelm/pkg/export/helm/chart"
-	"github.com/werf/nelm/pkg/export/helm/chart/loader"
-	"github.com/werf/nelm/pkg/export/helm/chartutil"
-	"github.com/werf/nelm/pkg/export/helm/cli/values"
-	"github.com/werf/nelm/pkg/export/helm/cmd/helm"
-	"github.com/werf/nelm/pkg/export/helm/downloader"
-	"github.com/werf/nelm/pkg/export/helm/getter"
-	"github.com/werf/nelm/pkg/export/helm/werf/file"
-	"github.com/werf/nelm/pkg/export/helm/werf/helmopts"
-	"github.com/werf/nelm/pkg/export/helm/werf/secrets"
-	"github.com/werf/nelm/pkg/export/helm/werf/secrets/runtimedata"
+	nelmcommon "github.com/werf/nelm/pkg/common"
 	"github.com/werf/nelm/pkg/featgate"
+	helmchart "github.com/werf/nelm/pkg/helm/pkg/chart"
+	chartcommonutil "github.com/werf/nelm/pkg/helm/pkg/chart/common/util"
+	"github.com/werf/nelm/pkg/helm/pkg/chart/loader"
+	chart "github.com/werf/nelm/pkg/helm/pkg/chart/v2"
+	"github.com/werf/nelm/pkg/helm/pkg/cli/values"
+	helm "github.com/werf/nelm/pkg/helm/pkg/cmd"
+	"github.com/werf/nelm/pkg/helm/pkg/downloader"
+	"github.com/werf/nelm/pkg/helm/pkg/getter"
+	legacysecret "github.com/werf/nelm/pkg/legacy/secret"
 	"github.com/werf/nelm/pkg/ts"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/build"
 	"github.com/werf/werf/v2/pkg/config"
+	"github.com/werf/werf/v2/pkg/deploy"
 	"github.com/werf/werf/v2/pkg/deploy/bundles"
-	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/tmp_manager"
 	"github.com/werf/werf/v2/pkg/true_git"
@@ -101,6 +99,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{})
 	common.SetupFinalRepo(&commonCmdData, cmd)
+	common.SetupMetaRepo(&commonCmdData, cmd)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified repo and to pull base images")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
@@ -110,7 +109,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupLogOptions(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 
-	common.SetupSynchronization(&commonCmdData, cmd)
 	common.SetupDenoBinaryPath(&commonCmdData, cmd)
 
 	common.SetupSaveBuildReport(&commonCmdData, cmd)
@@ -119,7 +117,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupUseCustomTag(&commonCmdData, cmd)
 	common.SetupAddCustomTag(&commonCmdData, cmd)
-	common.SetupVirtualMerge(&commonCmdData, cmd)
 
 	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultBuildParallelTasksLimit)
 
@@ -139,10 +136,9 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	commonCmdData.SetupDebugTemplates(cmd)
 	commonCmdData.SetupAllowIncludesUpdate(cmd)
 
-	lo.Must0(common.SetupMinimalKubeConnectionFlags(&commonCmdData, cmd))
 	lo.Must0(common.SetupChartRepoConnectionFlags(&commonCmdData, cmd))
 	lo.Must0(common.SetupValuesFlags(&commonCmdData, cmd))
-	lo.Must0(common.SetupSecretValuesFlags(&commonCmdData, cmd))
+	common.SetupSecretValuesFileFlags(&commonCmdData, cmd)
 
 	common.SetupAddAnnotations(&commonCmdData, cmd)
 	common.SetupAddLabels(&commonCmdData, cmd)
@@ -160,20 +156,18 @@ func NewCmd(ctx context.Context) *cobra.Command {
 }
 
 func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
-	global_warnings.PostponeMultiwerfNotUpToDateWarning(ctx)
 	commonManager, ctx, err := common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
 		Cmd: &commonCmdData,
 		InitTrueGitWithOptions: &common.InitTrueGitOptions{
 			Options: true_git.Options{LiveGitOutput: *commonCmdData.LogDebug},
 		},
-		InitDockerRegistry:           true,
-		InitProcessContainerBackend:  true,
-		InitWerf:                     true,
-		InitGitDataManager:           true,
-		InitManifestCache:            true,
-		InitLRUImagesCache:           true,
-		InitSSHAgent:                 true,
-		SetupOndemandKubeInitializer: true,
+		InitDockerRegistry:          true,
+		InitProcessContainerBackend: true,
+		InitWerf:                    true,
+		InitGitDataManager:          true,
+		InitManifestCache:           true,
+		InitLRUImagesCache:          true,
+		InitSSHAgent:                true,
 	})
 	if err != nil {
 		return fmt.Errorf("component init error: %w", err)
@@ -265,7 +259,7 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 			return err
 		}
 
-		conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, giterminismManager.ProjectDir(), projectTmpDir, containerBackend, storageManager, storageManager.StorageLockManager, conveyorOptions)
+		conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, giterminismManager.ProjectDir(), projectTmpDir, containerBackend, storageManager, conveyorOptions)
 		defer conveyorWithRetry.Terminate()
 
 		if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
@@ -345,7 +339,7 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 		return err
 	}
 
-	file.SetChartFileReader(giterminismManager.FileManager)
+	nelmcommon.ChartFileReader = giterminismManager.FileManager
 
 	headHash, err := giterminismManager.LocalGitRepo().HeadCommitHash(ctx)
 	if err != nil {
@@ -357,7 +351,7 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 		return fmt.Errorf("getting HEAD commit time failed: %w", err)
 	}
 
-	serviceValues, err := helpers.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepo, imagesInfoGetters, helpers.ServiceValuesOptions{
+	serviceValues, err := deploy.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepo, imagesInfoGetters, deploy.ServiceValuesOptions{
 		Env:        commonCmdData.Environment,
 		CommitHash: headHash,
 		CommitDate: headTime,
@@ -368,11 +362,6 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 
 	helm.Settings.Debug = *commonCmdData.LogDebug
 
-	// TODO(major): compatibility mode with older 1.2 versions, which do not require WERF_SECRET_KEY in the 'werf bundle publish' command
-	if err := secrets_manager.Manager.AllowMissedSecretKeyMode(giterminismManager.ProjectDir()); err != nil {
-		return err
-	}
-
 	sv, err := bundles.BundleTagToChartVersion(ctx, cmdData.Tag, time.Now())
 	if err != nil {
 		return fmt.Errorf("unable to set chart version from bundle tag %q: %w", cmdData.Tag, err)
@@ -382,28 +371,28 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 	bundleTmpDir := filepath.Join(werf.GetServiceDir(), "tmp", "bundles", uuid.NewString())
 	defer os.RemoveAll(bundleTmpDir)
 
-	opts := helmopts.HelmOptions{
-		ChartLoadOpts: helmopts.ChartLoadOptions{
+	opts := nelmcommon.HelmOptions{
+		ChartLoadOpts: nelmcommon.ChartLoadOptions{
 			ChartAppVersion:            common.GetHelmChartConfigAppVersion(werfConfig),
 			DefaultChartAPIVersion:     chart.APIVersionV2,
 			DefaultChartName:           werfConfig.Meta.Project,
 			DefaultChartVersion:        "1.0.0",
 			DefaultSecretValuesDisable: commonCmdData.DefaultSecretValuesDisable,
 			DefaultValuesDisable:       commonCmdData.DefaultValuesDisable,
-			DepDownloader: &downloader.Manager{
+			NoSecrets:                  true,
+			ChartDepsDownloader: &downloader.Manager{
 				Out:               logboek.Context(ctx).OutStream(),
 				ChartPath:         bundleTmpDir,
+				ContentCache:      helm.Settings.ContentCache,
 				AllowMissingRepos: true,
-				Getters:           getter.All(helm.Settings),
+				Getters:           getter.Getters(),
 				RegistryClient:    helmRegistryClient,
 				RepositoryConfig:  helm.Settings.RepositoryConfig,
 				RepositoryCache:   helm.Settings.RepositoryCache,
 				Debug:             helm.Settings.Debug,
 			},
 			ExtraValues:       serviceValues,
-			SecretKeyIgnore:   commonCmdData.SecretKeyIgnore,
 			SecretValuesFiles: commonCmdData.SecretValuesFiles,
-			SecretWorkDir:     giterminismManager.ProjectDir(),
 		},
 	}
 
@@ -438,7 +427,7 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 		bundleRepo = stagesStorage.Address()
 	}
 
-	opts.ChartLoadOpts.ChartType = helmopts.ChartTypeBundle
+	opts.ChartLoadOpts.ChartType = nelmcommon.LegacyChartTypeBundle
 
 	return bundles.Publish(ctx, bundleTmpDir, fmt.Sprintf("%s:%s", bundleRepo, cmdData.Tag), bundlesRegistryClient, bundles.PublishOptions{
 		HelmCompatibleChart: commonCmdData.HelmCompatibleChart,
@@ -459,11 +448,21 @@ func createNewBundle(
 	chartVersion string,
 	denoBinaryPath string,
 	vals *values.Options,
-	opts helmopts.HelmOptions,
+	opts nelmcommon.HelmOptions,
 ) error {
-	chrt, err := loader.LoadDir(chartDir, opts)
+	loadedChart, err := loader.LoadDir(nelmcommon.ContextWithHelmOptions(ctx, opts), chartDir)
 	if err != nil {
 		return fmt.Errorf("error loading chart %q: %w", chartDir, err)
+	}
+
+	chrt, err := helmchart.NewAccessor(loadedChart)
+	if err != nil {
+		return fmt.Errorf("create chart accessor: %w", err)
+	}
+
+	v2Chrt, ok := chrt.Charter().(*chart.Chart)
+	if !ok {
+		return fmt.Errorf("unexpected chart type %T", chrt.Charter())
 	}
 
 	if featgate.FeatGateTypescript.Enabled() {
@@ -474,13 +473,13 @@ func createNewBundle(
 
 	var valsData []byte
 	{
-		p := getter.All(helm.Settings)
-		vals, err := vals.MergeValues(p, opts)
+		p := getter.Getters()
+		vals, err := vals.MergeValues(nelmcommon.ContextWithHelmOptions(ctx, opts), p)
 		if err != nil {
 			return fmt.Errorf("unable to merge input values: %w", err)
 		}
 
-		bundleVals, err := makeBundleValues(ctx, chrt, vals, serviceValues)
+		bundleVals, err := makeBundleValues(ctx, v2Chrt, vals, serviceValues)
 		if err != nil {
 			return fmt.Errorf("unable to construct bundle values: %w", err)
 		}
@@ -491,21 +490,21 @@ func createNewBundle(
 		}
 	}
 
-	var secretValsData []byte
-	if chrt.SecretsRuntimeData != nil && !secrets_manager.Manager.IsMissedSecretKeyModeEnabled() {
-		vals, err := makeBundleSecretValues(ctx, chrt.SecretsRuntimeData, opts)
-		if err != nil {
-			return fmt.Errorf("unable to construct bundle secret values: %w", err)
-		}
+	mergedSecretVals, err := mergeRawSecretValues(ctx, v2Chrt, commonCmdData.SecretValuesFiles, commonCmdData.DefaultSecretValuesDisable)
+	if err != nil {
+		return fmt.Errorf("unable to merge secret values: %w", err)
+	}
 
-		secretValsData, err = yaml.Marshal(vals)
+	var secretValsData []byte
+	if len(mergedSecretVals) > 0 {
+		secretValsData, err = yaml.Marshal(mergedSecretVals)
 		if err != nil {
 			return fmt.Errorf("unable to marshal bundle secret values: %w", err)
 		}
 	}
 
 	if destDir == "" {
-		destDir = chrt.Metadata.Name
+		destDir = v2Chrt.Metadata.Name
 	}
 
 	if err := os.RemoveAll(destDir); err != nil {
@@ -529,11 +528,11 @@ func createNewBundle(
 		}
 	}
 
-	if chrt.Metadata == nil {
+	if v2Chrt.Metadata == nil {
 		panic("unexpected condition")
 	}
 
-	bundleMetadata := *chrt.Metadata
+	bundleMetadata := *v2Chrt.Metadata
 	// Force api v2
 	bundleMetadata.APIVersion = chart.APIVersionV2
 	bundleMetadata.Version = chartVersion
@@ -545,9 +544,9 @@ func createNewBundle(
 		return fmt.Errorf("unable to write %q: %w", chartYamlFile, err)
 	}
 
-	if chrt.Lock != nil {
+	if v2Chrt.Lock != nil {
 		chartLockFile := filepath.Join(destDir, "Chart.lock")
-		if data, err := json.Marshal(chrt.Lock); err != nil {
+		if data, err := json.Marshal(v2Chrt.Lock); err != nil {
 			return fmt.Errorf("unable to prepare Chart.lock data: %w", err)
 		} else if err := ioutil.WriteFile(chartLockFile, append(data, []byte("\n")...), os.ModePerm); err != nil {
 			return fmt.Errorf("unable to write %q: %w", chartLockFile, err)
@@ -559,7 +558,7 @@ func createNewBundle(
 		return fmt.Errorf("unable to create dir %q: %w", templatesDir, err)
 	}
 
-	for _, f := range chrt.Templates {
+	for _, f := range chrt.Templates() {
 		if err := writeChartFile(ctx, destDir, f.Name, f.Data); err != nil {
 			return fmt.Errorf("error writing chart template: %w", err)
 		}
@@ -567,7 +566,7 @@ func createNewBundle(
 
 	chartDirAbs := filepath.Join(projectDir, chartDir)
 
-	ignoreChartValuesFiles := []string{secrets.DefaultSecretValuesFileName}
+	ignoreChartValuesFiles := []string{legacysecret.DefaultSecretValuesFileName}
 
 	// Do not publish into the bundle no custom values nor custom secret values.
 	// Final bundle values and secret values will be preconstructed, merged and
@@ -580,7 +579,7 @@ func createNewBundle(
 	}
 
 WritingFiles:
-	for _, f := range chrt.Files {
+	for _, f := range chrt.Files() {
 		for _, ignoreValuesFile := range ignoreChartValuesFiles {
 			if f.Name == ignoreValuesFile {
 				continue WritingFiles
@@ -592,13 +591,13 @@ WritingFiles:
 		}
 	}
 
-	for _, f := range chrt.RuntimeFiles {
+	for _, f := range chrt.RuntimeFiles() {
 		if err := writeChartFile(ctx, destDir, f.Name, f.Data); err != nil {
 			return fmt.Errorf("error writing chart runtime file: %w", err)
 		}
 	}
 
-	for _, dep := range chrt.Metadata.Dependencies {
+	for _, dep := range v2Chrt.Metadata.Dependencies {
 		var depPath string
 
 		switch {
@@ -610,7 +609,7 @@ WritingFiles:
 			depPath = fmt.Sprintf("charts/%s-%s.tgz", dep.Name, dep.Version)
 		}
 
-		for _, f := range chrt.Raw {
+		for _, f := range chrt.RawFiles() {
 			if strings.HasPrefix(f.Name, depPath) {
 				if err := writeChartFile(ctx, destDir, f.Name, f.Data); err != nil {
 					return fmt.Errorf("error writing subchart file: %w", err)
@@ -619,12 +618,12 @@ WritingFiles:
 		}
 	}
 
-	if chrt.Schema != nil {
+	if chrt.Schema() != nil {
 		schemaFile := filepath.Join(destDir, "values.schema.json")
-		if err := writeChartFile(ctx, destDir, "values.schema.json", chrt.Schema); err != nil {
+		if err := writeChartFile(ctx, destDir, "values.schema.json", chrt.Schema()); err != nil {
 			return fmt.Errorf("error writing chart values schema: %w", err)
 		}
-		if err := ioutil.WriteFile(schemaFile, chrt.Schema, os.ModePerm); err != nil {
+		if err := ioutil.WriteFile(schemaFile, chrt.Schema(), os.ModePerm); err != nil {
 			return fmt.Errorf("unable to write %q: %w", schemaFile, err)
 		}
 	}
@@ -671,7 +670,7 @@ func writeBundleJsonMap(dataMap map[string]string, path string) error {
 }
 
 func makeBundleValues(ctx context.Context, chrt *chart.Chart, inputVals, serviceValues map[string]interface{}) (map[string]interface{}, error) {
-	vals, err := chartutil.MergeInternal(ctx, inputVals, serviceValues, nil)
+	vals, err := chartcommonutil.MergeInternal(ctx, inputVals, serviceValues, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to coalesce werf chart values: %w", err)
 	}
@@ -687,15 +686,45 @@ func makeBundleValues(ctx context.Context, chrt *chart.Chart, inputVals, service
 		valsCopy = make(map[string]interface{})
 	}
 
-	chartutil.CoalesceChartValues(chrt, valsCopy, true)
+	mergedVals, err := chartcommonutil.MergeValues(chrt, valsCopy)
+	if err != nil {
+		return nil, fmt.Errorf("failed to merge chart values: %w", err)
+	}
+
+	valsCopy = mergedVals
 
 	return valsCopy, nil
 }
 
-func makeBundleSecretValues(
-	ctx context.Context,
-	secretsRuntimeData runtimedata.RuntimeData,
-	opts helmopts.HelmOptions,
-) (map[string]interface{}, error) {
-	return secretsRuntimeData.GetEncodedSecretValues(ctx, secrets_manager.Manager, opts.ChartLoadOpts.SecretWorkDir, opts.ChartLoadOpts.SecretKeyIgnore)
+func mergeRawSecretValues(ctx context.Context, chrt *chart.Chart, customSecretValuesFiles []string, defaultSecretValuesDisable bool) (map[string]interface{}, error) {
+	var result map[string]interface{}
+
+	if !defaultSecretValuesDisable {
+		for _, f := range chrt.Files {
+			if f.Name == legacysecret.DefaultSecretValuesFileName {
+				vals := map[string]interface{}{}
+				if err := yaml.Unmarshal(f.Data, &vals); err != nil {
+					return nil, fmt.Errorf("unmarshal %s: %w", f.Name, err)
+				}
+				result = nelmcommon.LegacyCoalesceTablesFunc(vals, result)
+				break
+			}
+		}
+	}
+
+	for _, filePath := range customSecretValuesFiles {
+		data, err := nelmcommon.ChartFileReader.ReadChartFile(ctx, filePath)
+		if err != nil {
+			return nil, fmt.Errorf("read secret values file %q: %w", filePath, err)
+		}
+
+		vals := map[string]interface{}{}
+		if err := yaml.Unmarshal(data, &vals); err != nil {
+			return nil, fmt.Errorf("unmarshal secret values file %q: %w", filePath, err)
+		}
+
+		result = nelmcommon.LegacyCoalesceTablesFunc(vals, result)
+	}
+
+	return result, nil
 }

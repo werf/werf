@@ -61,7 +61,7 @@ var _ = Describe("FROM dependency expansion", func() {
 
 	deps := []*config.Dependency{
 		{
-			ImageName: "ssr",
+			From: "ssr",
 			Imports: []*config.DependencyImport{
 				{Type: config.ImageNameImport, TargetBuildArg: "SSR_IMAGE"},
 			},
@@ -73,7 +73,7 @@ var _ = Describe("FROM dependency expansion", func() {
 	It("should produce different digests when dependency image changes", func(ctx SpecContext) {
 		conveyorV1 := stage.NewConveyorStub(
 			newGiterminismManager(),
-			map[string]string{"ssr": "registry.example.com/ssr:v1"}, nil, nil,
+			map[string]string{"ssr": "registry.example.com/ssr:v1"}, nil,
 		)
 		fromV1 := instruction.NewFrom("${SSR_IMAGE}", "", "", deps, expanderFactory, &stage.BaseStageOptions{})
 		Expect(fromV1.ExpandDependencies(ctx, conveyorV1, nil)).To(Succeed())
@@ -83,7 +83,7 @@ var _ = Describe("FROM dependency expansion", func() {
 
 		conveyorV2 := stage.NewConveyorStub(
 			newGiterminismManager(),
-			map[string]string{"ssr": "registry.example.com/ssr:v2"}, nil, nil,
+			map[string]string{"ssr": "registry.example.com/ssr:v2"}, nil,
 		)
 		fromV2 := instruction.NewFrom("${SSR_IMAGE}", "", "", deps, expanderFactory, &stage.BaseStageOptions{})
 		Expect(fromV2.ExpandDependencies(ctx, conveyorV2, nil)).To(Succeed())
@@ -97,7 +97,7 @@ var _ = Describe("FROM dependency expansion", func() {
 	It("should leave BaseImageReference unchanged when no expander factory provided", func(ctx SpecContext) {
 		conveyor := stage.NewConveyorStub(
 			newGiterminismManager(),
-			map[string]string{"ssr": "registry.example.com/ssr:v1"}, nil, nil,
+			map[string]string{"ssr": "registry.example.com/ssr:v1"}, nil,
 		)
 		from := instruction.NewFrom("${SSR_IMAGE}", "", "", deps, nil, &stage.BaseStageOptions{})
 		Expect(from.ExpandDependencies(ctx, conveyor, nil)).To(Succeed())

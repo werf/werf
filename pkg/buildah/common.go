@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 	"github.com/opencontainers/runtime-spec/specs-go"
@@ -99,6 +100,15 @@ type CommitOpts struct {
 	CommonOpts
 
 	Image string
+
+	// ClearHistory and Created are only honored by CommitMutation, not by Commit.
+
+	// ClearHistory, when true, omits the base image's layer history from the committed image.
+	ClearHistory bool
+
+	// Created overrides the "created" timestamp recorded on the committed image.
+	// When nil, the commit time is used.
+	Created *time.Time
 }
 
 type PruneImagesOptions struct {
@@ -155,7 +165,6 @@ type AddOpts struct {
 
 type ImagesOptions struct {
 	CommitOpts
-	Names   []string
 	Filters []util.Pair[string, string]
 }
 
@@ -192,6 +201,14 @@ type Buildah interface {
 	Umount(ctx context.Context, container string, opts UmountOpts) error
 	Commit(ctx context.Context, container string, opts CommitOpts) (string, error)
 	Config(ctx context.Context, container string, opts ConfigOpts) error
+	// MutateConfig applies a full-replace image config mutation (as described by newConfig) to
+	// container, mirroring image.UpdateConfigFile semantics. Unlike Config, it does not merge
+	// individual fields additively: Labels/Env/Volumes are always fully replaced with the final
+	// resolved values, and Clear* flags reset the corresponding field to its zero value.
+	MutateConfig(ctx context.Context, container string, newConfig image.SpecConfig, opts CommonOpts) error
+	// CommitMutation commits container the same way as Commit, but honors opts.ClearHistory and
+	// opts.Created instead of always omitting history. Intended for use after MutateConfig.
+	CommitMutation(ctx context.Context, container string, opts CommitOpts) (string, error)
 	Copy(ctx context.Context, container, contextDir string, src []string, dst string, opts CopyOpts) error
 	Add(ctx context.Context, container string, src []string, dst string, opts AddOpts) error
 	Images(ctx context.Context, opts ImagesOptions) (image.ImagesList, error)

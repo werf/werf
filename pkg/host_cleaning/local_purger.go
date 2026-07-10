@@ -15,15 +15,12 @@ import (
 )
 
 type localPurger struct {
-	backend     container_backend.ContainerBackend
-	backendType containerBackendType
+	backend container_backend.ContainerBackend
 }
 
 func newLocalPurger(backend container_backend.ContainerBackend) *localPurger {
-	backendType, _ := resolveContainerBackendType(backend)
 	return &localPurger{
-		backend:     backend,
-		backendType: backendType,
+		backend: backend,
 	}
 }
 
@@ -98,10 +95,6 @@ func (purger *localPurger) PurgeWerfHomeFiles(ctx context.Context, options Commo
 
 func (purger *localPurger) PurgeStapelFiles(ctx context.Context, options CommonOptions) error {
 	if options.DryRun {
-		return nil
-	}
-
-	if purger.backendType != containerBackendDocker {
 		return nil
 	}
 

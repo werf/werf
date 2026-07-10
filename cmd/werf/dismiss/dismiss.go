@@ -12,11 +12,8 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/werf/common-go/pkg/util"
-	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/logboek"
 	"github.com/werf/nelm/pkg/action"
-	helmrelease "github.com/werf/nelm/pkg/export/helm/release"
-	"github.com/werf/nelm/pkg/log"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/config/deploy_params"
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
@@ -27,7 +24,6 @@ import (
 
 var cmdData struct {
 	WithNamespace bool
-	WithHooks     bool
 }
 
 var commonCmdData common.CmdData
@@ -90,7 +86,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{})
 	common.SetupFinalRepo(&commonCmdData, cmd)
-	common.SetupSynchronization(&commonCmdData, cmd)
+	common.SetupMetaRepo(&commonCmdData, cmd)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "")
 
@@ -115,6 +111,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	lo.Must0(common.SetupKubeConnectionFlags(&commonCmdData, cmd))
 	lo.Must0(common.SetupTrackingFlags(&commonCmdData, cmd))
 
+	common.SetupDefaultDeletePropagation(&commonCmdData, cmd)
 	common.SetupDeployReportPath(&commonCmdData, cmd)
 	common.SetupNamespace(&commonCmdData, cmd, true)
 	common.SetupNetworkParallelism(&commonCmdData, cmd)
@@ -123,19 +120,12 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupReleaseStorageDriver(&commonCmdData, cmd)
 	common.SetupReleaseStorageSQLConnection(&commonCmdData, cmd)
 	common.SetupReleasesHistoryMax(&commonCmdData, cmd)
+	common.SetupSaveUninstallReport(&commonCmdData, cmd)
+	common.SetupUninstallGraphPath(&commonCmdData, cmd)
+	common.SetupUninstallReportPath(&commonCmdData, cmd)
 	common.SetupUseDeployReport(&commonCmdData, cmd)
-	common.StubSetupInsecureHelmDependencies(&commonCmdData, cmd)
 
 	cmd.Flags().BoolVarP(&cmdData.WithNamespace, "with-namespace", "", util.GetBoolEnvironmentDefaultFalse("WERF_WITH_NAMESPACE"), "Delete Kubernetes Namespace after purging Helm Release (default $WERF_WITH_NAMESPACE)")
-
-	if util.GetBoolEnvironmentDefaultFalse("WERF_EXPERIMENT_NEW_DISMISS") {
-		common.SetupDefaultDeletePropagation(&commonCmdData, cmd)
-		common.SetupSaveUninstallReport(&commonCmdData, cmd)
-		common.SetupUninstallGraphPath(&commonCmdData, cmd)
-		common.SetupUninstallReportPath(&commonCmdData, cmd)
-	} else {
-		cmd.Flags().BoolVarP(&cmdData.WithHooks, "with-hooks", "", util.GetBoolEnvironmentDefaultTrue("WERF_WITH_HOOKS"), "Delete Helm Release hooks getting from existing revisions (default $WERF_WITH_HOOKS or true)")
-	}
 
 	return cmd
 }
@@ -162,8 +152,6 @@ func runDismiss(ctx context.Context) error {
 		}
 	}()
 
-	common.LogKubeContext(kube.Context)
-
 	giterminismManager, err := common.GetGiterminismManager(ctx, &commonCmdData)
 	var gitNotFoundErr *common.GitWorktreeNotFoundError
 	if err != nil {
@@ -181,43 +169,29 @@ func runDismiss(ctx context.Context) error {
 		return fmt.Errorf("get release name and namespace: %w", err)
 	}
 
-	ctx = log.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultLegacyReleaseUninstallLogLevel), log.SetupLoggingOptions{
+	ctx = action.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultReleaseUninstallLogLevel), action.SetupLoggingOptions{
 		ColorMode: *commonCmdData.LogColorMode,
 	})
 
-	if util.GetBoolEnvironmentDefaultFalse("WERF_EXPERIMENT_NEW_DISMISS") {
-		var uninstallReportPath string
-		if commonCmdData.SaveUninstallReport {
-			uninstallReportPath = commonCmdData.UninstallReportPath
-		}
+	var uninstallReportPath string
+	if commonCmdData.SaveUninstallReport {
+		uninstallReportPath = commonCmdData.UninstallReportPath
+	}
 
-		if err := action.ReleaseUninstall(ctx, releaseName, releaseNamespace, action.ReleaseUninstallOptions{
-			KubeConnectionOptions:       commonCmdData.KubeConnectionOptions,
-			TrackingOptions:             commonCmdData.TrackingOptions,
-			DefaultDeletePropagation:    commonCmdData.DefaultDeletePropagation,
-			DeleteReleaseNamespace:      cmdData.WithNamespace,
-			NetworkParallelism:          commonCmdData.NetworkParallelism,
-			NoRemoveManualChanges:       commonCmdData.NoRemoveManualChanges,
-			ReleaseHistoryLimit:         commonCmdData.ReleaseHistoryLimit,
-			ReleaseStorageDriver:        commonCmdData.ReleaseStorageDriver,
-			ReleaseStorageSQLConnection: commonCmdData.ReleaseStorageSQLConnection,
-			UninstallGraphPath:          commonCmdData.UninstallGraphPath,
-			UninstallReportPath:         uninstallReportPath,
-		}); err != nil {
-			return fmt.Errorf("release uninstall: %w", err)
-		}
-	} else {
-		if err := action.LegacyReleaseUninstall(ctx, releaseName, releaseNamespace, action.LegacyReleaseUninstallOptions{
-			KubeConnectionOptions:  commonCmdData.KubeConnectionOptions,
-			TrackingOptions:        commonCmdData.TrackingOptions,
-			NoDeleteHooks:          !cmdData.WithHooks,
-			DeleteReleaseNamespace: cmdData.WithNamespace,
-			NetworkParallelism:     commonCmdData.NetworkParallelism,
-			ReleaseHistoryLimit:    commonCmdData.ReleaseHistoryLimit,
-			ReleaseStorageDriver:   commonCmdData.ReleaseStorageDriver,
-		}); err != nil {
-			return fmt.Errorf("release uninstall: %w", err)
-		}
+	if err := action.ReleaseUninstall(ctx, releaseName, releaseNamespace, action.ReleaseUninstallOptions{
+		KubeConnectionOptions:       commonCmdData.KubeConnectionOptions,
+		TrackingOptions:             commonCmdData.TrackingOptions,
+		DefaultDeletePropagation:    commonCmdData.DefaultDeletePropagation,
+		DeleteReleaseNamespace:      cmdData.WithNamespace,
+		NetworkParallelism:          commonCmdData.NetworkParallelism,
+		NoRemoveManualChanges:       commonCmdData.NoRemoveManualChanges,
+		ReleaseHistoryLimit:         commonCmdData.ReleaseHistoryLimit,
+		ReleaseStorageDriver:        commonCmdData.ReleaseStorageDriver,
+		ReleaseStorageSQLConnection: commonCmdData.ReleaseStorageSQLConnection,
+		UninstallGraphPath:          commonCmdData.UninstallGraphPath,
+		UninstallReportPath:         uninstallReportPath,
+	}); err != nil {
+		return fmt.Errorf("release uninstall: %w", err)
 	}
 
 	return nil
@@ -245,7 +219,7 @@ func getNamespaceAndRelease(
 			return "", "", fmt.Errorf("unable to read deploy report file %q: %w", deployReportPath, err)
 		}
 
-		var deployReport helmrelease.DeployReport
+		var deployReport action.ReleaseReportV3
 		if err := json.Unmarshal(deployReportByte, &deployReport); err != nil {
 			return "", "", fmt.Errorf("unable to unmarshal deploy report file %q: %w", deployReportPath, err)
 		}

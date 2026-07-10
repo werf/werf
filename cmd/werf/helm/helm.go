@@ -4,21 +4,15 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"path/filepath"
-	"time"
+	"strings"
 
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 
-	helm_v3 "github.com/werf/3p-helm-for-werf-helm/cmd/helm"
-	"github.com/werf/3p-helm-for-werf-helm/pkg/action"
-	"github.com/werf/3p-helm-for-werf-helm/pkg/chart"
-	"github.com/werf/3p-helm-for-werf-helm/pkg/chart/loader"
-	registry_legacy "github.com/werf/3p-helm-for-werf-helm/pkg/registry"
-	"github.com/werf/kubedog-for-werf-helm/pkg/kube"
-	"github.com/werf/logboek"
+	"github.com/werf/nelm/pkg/action"
+	helmcmd "github.com/werf/nelm/pkg/helm/pkg/cmd"
+	"github.com/werf/nelm/pkg/log"
 	"github.com/werf/werf/v2/cmd/werf/common"
-	helm2 "github.com/werf/werf/v2/cmd/werf/docs/replacers/helm"
 	helm_secret_decrypt "github.com/werf/werf/v2/cmd/werf/helm/secret/decrypt"
 	helm_secret_encrypt "github.com/werf/werf/v2/cmd/werf/helm/secret/encrypt"
 	helm_secret_file_decrypt "github.com/werf/werf/v2/cmd/werf/helm/secret/file/decrypt"
@@ -29,21 +23,12 @@ import (
 	helm_secret_values_decrypt "github.com/werf/werf/v2/cmd/werf/helm/secret/values/decrypt"
 	helm_secret_values_edit "github.com/werf/werf/v2/cmd/werf/helm/secret/values/edit"
 	helm_secret_values_encrypt "github.com/werf/werf/v2/cmd/werf/helm/secret/values/encrypt"
-	helm "github.com/werf/werf/v2/pkg/deploy/helm_for_werf_helm"
-	chart_extender "github.com/werf/werf/v2/pkg/deploy/helm_for_werf_helm/chart_extender_for_werf_helm"
-	helpers "github.com/werf/werf/v2/pkg/deploy/helm_for_werf_helm/chart_extender_for_werf_helm/helpers_for_werf_helm"
-	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/werf"
 )
 
 var _commonCmdData common.CmdData
 
-func IsHelm3Mode() bool {
-	return os.Getenv("WERF_HELM3_MODE") == "1"
-}
-
 func NewCmd(ctx context.Context) (*cobra.Command, error) {
-	var namespace string
 	ctx = common.NewContextWithCmdData(ctx, &_commonCmdData)
 	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:          "helm",
@@ -51,195 +36,62 @@ func NewCmd(ctx context.Context) (*cobra.Command, error) {
 		SilenceUsage: true,
 	})
 
-	registryClient, err := registry_legacy.NewClient(
-		registry_legacy.ClientOptDebug(logboek.Context(ctx).Debug().IsAccepted()),
-		registry_legacy.ClientOptWriter(logboek.Context(ctx).OutStream()),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("unable to create helm registry client: %w", err)
-	}
-
-	actionConfig := new(action.Configuration)
-	actionConfig.RegistryClient = registryClient
-
-	wc := chart_extender.NewWerfChartStub(ctx, false)
-
-	loader.GlobalLoadOptions = &loader.LoadOptions{
-		ChartExtender:               wc,
-		SubchartExtenderFactoryFunc: func() chart.ChartExtender { return chart_extender.NewWerfChartStub(ctx, false) },
-	}
-
-	os.Setenv("HELM_EXPERIMENTAL_OCI", "1")
-
-	cmd.PersistentFlags().StringVarP(&namespace, "namespace", "n", *helm_v3.Settings.GetNamespaceP(), "namespace scope for this request")
 	common.SetupTmpDir(&_commonCmdData, cmd, common.SetupTmpDirOptions{})
 	common.SetupHomeDir(&_commonCmdData, cmd, common.SetupHomeDirOptions{})
-	common.SetupReleasesHistoryMax(&_commonCmdData, cmd)
 	common.SetupLogOptions(&_commonCmdData, cmd)
-	common.SetupChartRepoInsecure(&_commonCmdData, cmd)
-	common.SetupDockerConfig(&_commonCmdData, cmd, "")
 
-	lo.Must0(common.SetupMinimalKubeConnectionFlags(&_commonCmdData, cmd))
-	lo.Must0(common.SetupLegacyProgressTablePrintInterval(&_commonCmdData, cmd))
-	common.StubSetupHooksStatusProgressPeriod(&_commonCmdData, cmd)
+	// FIXME(major): add missing werf get/history/list commands
+	// FIXME(major): restore werf/nelm/cmd/create.go
 
-	dependencyCmd := helm_v3.NewDependencyCmd(actionConfig, os.Stdout)
-	for _, depCmd := range dependencyCmd.Commands() {
-		if depCmd.Name() == "update" {
-			oldRunE := depCmd.RunE
-			depCmd.RunE = func(cmd *cobra.Command, args []string) error {
-				if err := oldRunE(cmd, args); err != nil {
-					return err
-				}
-
-				chartpath := "."
-				if len(args) > 0 {
-					chartpath = filepath.Clean(args[0])
-				}
-
-				ch, err := loader.LoadDir(chartpath)
-				if err != nil {
-					return fmt.Errorf("error loading chart %q: %w", chartpath, err)
-				}
-
-				return chart_extender.CopyChartDependenciesIntoCache(cmd.Context(), chartpath, ch)
-			}
-		}
+	helmRootCmd, err := helmcmd.NewRootCmd(os.Stdout, os.Args[1:], helmcmd.SetupLogging)
+	if err != nil {
+		return nil, fmt.Errorf("init helm: %w", err)
 	}
 
 	cmd.AddCommand(
-		helm2.ReplaceHelmUninstallDocs(helm_v3.NewUninstallCmd(actionConfig, os.Stdout, helm_v3.UninstallCmdOptions{
-			StagesSplitter: helm.NewStagesSplitter(),
+		lo.Must(lo.Find(helmRootCmd.Commands(), func(c *cobra.Command) bool {
+			return strings.HasPrefix(c.Use, "create")
 		})),
-		helm2.ReplaceHelmDependencyDocs(dependencyCmd),
-		helm2.ReplaceHelmGetDocs(helm_v3.NewGetCmd(actionConfig, os.Stdout)),
-		helm2.ReplaceHelmHistoryDocs(helm_v3.NewHistoryCmd(actionConfig, os.Stdout)),
-		NewLintCmd(actionConfig, wc),
-		helm2.ReplaceHelmListDocs(helm_v3.NewListCmd(actionConfig, os.Stdout)),
-		NewTemplateCmd(actionConfig, wc, &namespace),
-		helm2.ReplaceHelmRepoDocs(helm_v3.NewRepoCmd(os.Stdout)),
-		helm2.ReplaceHelmRollbackDocs(helm_v3.NewRollbackCmd(actionConfig, os.Stdout, helm_v3.RollbackCmdOptions{
-			StagesSplitter:              helm.NewStagesSplitter(),
-			StagesExternalDepsGenerator: helm.NewStagesExternalDepsGenerator(&actionConfig.RESTClientGetter, &namespace),
+		lo.Must(lo.Find(helmRootCmd.Commands(), func(c *cobra.Command) bool {
+			return strings.HasPrefix(c.Use, "dependency")
 		})),
-		NewInstallCmd(actionConfig, wc, &namespace),
-		helm2.ReplaceHelmUpgradeDocs(NewUpgradeCmd(actionConfig, wc, &namespace)),
-		helm2.ReplaceHelmCreateDocs(helm_v3.NewCreateCmd(os.Stdout)),
-		helm2.ReplaceHelmEnvDocs(helm_v3.NewEnvCmd(os.Stdout)),
-		helm2.ReplaceHelmPackageDocs(helm_v3.NewPackageCmd(actionConfig, os.Stdout)),
-		helm2.ReplaceHelmPluginDocs(helm_v3.NewPluginCmd(os.Stdout)),
-		helm2.ReplaceHelmPullDocs(helm_v3.NewPullCmd(actionConfig, os.Stdout)),
-		helm2.ReplaceHelmSearchDocs(helm_v3.NewSearchCmd(os.Stdout)),
-		helm2.ReplaceHelmShowDocs(helm_v3.NewShowCmd(actionConfig, os.Stdout)),
-		helm2.ReplaceHelmStatusDocs(helm_v3.NewStatusCmd(actionConfig, os.Stdout)),
-		helm_v3.NewTestCmd(actionConfig, os.Stdout),
-		helm2.ReplaceHelmVerifyDocs(helm_v3.NewVerifyCmd(os.Stdout)),
-		helm2.ReplaceHelmVersionDocs(helm_v3.NewVersionCmd(os.Stdout)),
+		lo.Must(lo.Find(helmRootCmd.Commands(), func(c *cobra.Command) bool {
+			return strings.HasPrefix(c.Use, "repo")
+		})),
+		lo.Must(lo.Find(helmRootCmd.Commands(), func(c *cobra.Command) bool {
+			return strings.HasPrefix(c.Use, "env")
+		})),
+		lo.Must(lo.Find(helmRootCmd.Commands(), func(c *cobra.Command) bool {
+			return strings.HasPrefix(c.Use, "package")
+		})),
+		lo.Must(lo.Find(helmRootCmd.Commands(), func(c *cobra.Command) bool {
+			return strings.HasPrefix(c.Use, "pull")
+		})),
+		lo.Must(lo.Find(helmRootCmd.Commands(), func(c *cobra.Command) bool {
+			return strings.HasPrefix(c.Use, "search")
+		})),
+		lo.Must(lo.Find(helmRootCmd.Commands(), func(c *cobra.Command) bool {
+			return strings.HasPrefix(c.Use, "show")
+		})),
+		lo.Must(lo.Find(helmRootCmd.Commands(), func(c *cobra.Command) bool {
+			return strings.HasPrefix(c.Use, "verify")
+		})),
+		lo.Must(lo.Find(helmRootCmd.Commands(), func(c *cobra.Command) bool {
+			return strings.HasPrefix(c.Use, "version")
+		})),
+		lo.Must(lo.Find(helmRootCmd.Commands(), func(c *cobra.Command) bool {
+			return strings.HasPrefix(c.Use, "registry")
+		})),
+	)
+
+	overrideRunE(ctx, cmd)
+
+	cmd.AddCommand(
 		secretCmd(ctx),
 		NewGetAutogeneratedValuesCmd(ctx),
 		NewGetNamespaceCmd(ctx),
 		NewGetReleaseCmd(ctx),
-		helm_v3.NewRegistryCmd(actionConfig, os.Stdout),
 	)
-
-	if IsHelm3Mode() {
-		helm_v3.LoadPlugins(cmd, os.Stdout)
-	} else {
-		func() {
-			if len(os.Args) > 1 {
-				saveArgs := os.Args
-				os.Args = os.Args[1:]
-				defer func() {
-					os.Args = saveArgs
-				}()
-			}
-
-			helm_v3.LoadPlugins(cmd, os.Stdout)
-		}()
-	}
-
-	commandsQueue := []*cobra.Command{cmd}
-	for len(commandsQueue) > 0 {
-		cmd := commandsQueue[0]
-		commandsQueue = commandsQueue[1:]
-
-		commandsQueue = append(commandsQueue, cmd.Commands()...)
-
-		if cmd.Runnable() {
-			oldRunE := cmd.RunE
-			cmd.RunE = nil
-
-			oldRun := cmd.Run
-			cmd.Run = nil
-
-			cmd.RunE = func(cmd *cobra.Command, args []string) error {
-				// NOTE: Common init block for all runnable commands.
-				ctx := cmd.Context()
-
-				if err := werf.Init(*_commonCmdData.TmpDir, *_commonCmdData.HomeDir); err != nil {
-					return err
-				}
-
-				if err := common.ProcessLogOptions(&_commonCmdData); err != nil {
-					common.PrintHelp(cmd)
-					return err
-				}
-
-				os.Setenv("WERF_HELM3_MODE", "1")
-				os.Setenv("HELM_NAMESPACE", namespace)
-
-				if _commonCmdData.LogDebug != nil && *_commonCmdData.LogDebug {
-					helm_v3.Settings.Debug = *_commonCmdData.LogDebug
-				}
-
-				stubCommitDate := time.Unix(0, 0)
-
-				if vals, err := helpers.GetServiceValues(ctx, "PROJECT", "REPO", nil, helpers.ServiceValuesOptions{
-					Namespace:  namespace,
-					IsStub:     true,
-					CommitHash: "COMMIT_HASH",
-					CommitDate: &stubCommitDate,
-				}); err != nil {
-					return fmt.Errorf("error creating service values: %w", err)
-				} else {
-					wc.SetStubServiceValues(vals)
-				}
-
-				registry_legacy.ClientOptCredentialsFile(docker.GetDockerConfigCredentialsFile(*_commonCmdData.DockerConfig))(registryClient)
-				if _commonCmdData.ChartRepoInsecure {
-					registry_legacy.ClientOptPlainHTTP()
-				}
-
-				common.SetupOndemandKubeInitializer(_commonCmdData.KubeContextCurrent, _commonCmdData.LegacyKubeConfigPath, _commonCmdData.KubeConfigBase64, _commonCmdData.LegacyKubeConfigPathsMergeList, _commonCmdData.KubeBearerTokenData, _commonCmdData.KubeBearerTokenPath)
-
-				helm.InitActionConfig(ctx, common.GetOndemandKubeInitializer(), namespace, helm_v3.Settings, actionConfig, helm.InitActionConfigOptions{
-					StatusProgressPeriod:      time.Duration(_commonCmdData.LegacyProgressTablePrintInterval) * time.Second,
-					HooksStatusProgressPeriod: time.Duration(_commonCmdData.LegacyProgressTablePrintInterval) * time.Second,
-					KubeConfigOptions: kube.KubeConfigOptions{
-						Context:             _commonCmdData.KubeContextCurrent,
-						ConfigPath:          _commonCmdData.LegacyKubeConfigPath,
-						ConfigPathMergeList: _commonCmdData.LegacyKubeConfigPathsMergeList,
-						ConfigDataBase64:    _commonCmdData.KubeConfigBase64,
-					},
-					ReleasesHistoryMax: _commonCmdData.ReleaseHistoryLimit,
-				})
-
-				if oldRunE != nil {
-					return oldRunE(cmd, args)
-				} else if oldRun != nil {
-					oldRun(cmd, args)
-					return nil
-				} else {
-					panic(fmt.Sprintf("unexpected command %q, please report bug to the https://github.com/werf/werf", cmd.Name()))
-				}
-			}
-		}
-	}
-
-	if len(os.Args) > 1 {
-		cmd.PersistentFlags().ParseErrorsWhitelist.UnknownFlags = true
-		cmd.PersistentFlags().Parse(os.Args[1:])
-	}
 
 	return cmd, nil
 }
@@ -282,4 +134,30 @@ func secretCmd(ctx context.Context) *cobra.Command {
 	)
 
 	return cmd
+}
+
+func overrideRunE(ctx context.Context, cmd *cobra.Command) {
+	if !cmd.Runnable() {
+		return
+	}
+
+	oldRunE := cmd.RunE
+	cmd.RunE = func(cmd *cobra.Command, args []string) error {
+		helmSettings := helmcmd.Settings
+
+		ctx := action.SetupLogging(ctx, lo.Ternary(helmSettings.Debug, log.DebugLevel, log.InfoLevel), action.SetupLoggingOptions{
+			ColorMode: log.LogColorModeOff,
+		})
+		cmd.SetContext(ctx)
+
+		if err := werf.Init(*_commonCmdData.TmpDir, *_commonCmdData.HomeDir); err != nil {
+			return err
+		}
+
+		return oldRunE(cmd, args)
+	}
+
+	for _, c := range cmd.Commands() {
+		overrideRunE(ctx, c)
+	}
 }
