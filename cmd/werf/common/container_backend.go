@@ -21,6 +21,7 @@ func wrapContainerBackend(containerBackend container_backend.ContainerBackend) c
 func InitProcessContainerBackend(ctx context.Context, cmdData *CmdData, registryMirrors []string) (container_backend.ContainerBackend, context.Context, error) {
 	var resolveHostOptions buildkit.ResolveHostOptions
 	if cmdData.Repo != nil && cmdData.Repo.Address != nil && *cmdData.Repo.Address != "" && *cmdData.Repo.Address != storage.LocalStorageAddress {
+		resolveHostOptions.RepoAddress = *cmdData.Repo.Address
 		if *cmdData.InsecureRegistry {
 			resolveHostOptions.InsecureRegistryAddresses = append(resolveHostOptions.InsecureRegistryAddresses, *cmdData.Repo.Address)
 		}

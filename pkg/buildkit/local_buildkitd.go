@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"maps"
+	"net"
 	"slices"
 	"strings"
 	"time"
@@ -28,6 +29,10 @@ const (
 )
 
 type ResolveHostOptions struct {
+	// RepoAddress is the stages storage repo address, used to validate its reachability from
+	// the werf-managed buildkitd (no effect when an external buildkitd endpoint is set via
+	// environment).
+	RepoAddress string
 	// Registry addresses to configure as insecure in the werf-managed buildkitd
 	// (no effect when an external buildkitd endpoint is set via environment).
 	InsecureRegistryAddresses      []string
@@ -47,7 +52,7 @@ func ResolveHost(ctx context.Context, opts ResolveHostOptions) (string, error) {
 		return "", err
 	}
 
-	if err := ensureLocalBuildkitd(ctx, buildkitdConfig); err != nil {
+	if err := ensureLocalBuildkitd(ctx, buildkitdConfig, opts.RepoAddress); err != nil {
 		return "", fmt.Errorf("unable to set up local buildkitd container (alternatively set $WERF_BUILDKIT_HOST or $BUILDKIT_HOST to an external buildkitd endpoint): %w", err)
 	}
 
@@ -106,6 +111,29 @@ func (s localBuildkitdNetworkSetup) String() string {
 // that localhost registries on the daemon host are reachable from buildkitd. Docker Desktop
 // runs containers in a VM where host networking would not reach the host: keep the default
 // bridge network and map host.docker.internal to the host gateway instead.
+// validateRepoReachability fails early when the repo points to localhost while buildkitd runs
+// in a bridge-network container (Docker Desktop): localhost inside the container is not the
+// host, so pulls/pushes would fail there with a confusing error.
+func validateRepoReachability(repoAddress string, netSetup localBuildkitdNetworkSetup) error {
+	if repoAddress == "" || netSetup.NetworkMode == "host" {
+		return nil
+	}
+
+	ref, err := name.ParseReference(repoAddress, name.WeakValidation)
+	if err != nil {
+		return nil
+	}
+
+	host := ref.Context().RegistryStr()
+	if h, _, err := net.SplitHostPort(host); err == nil {
+		host = h
+	}
+	if host == "localhost" || net.ParseIP(host) != nil && net.ParseIP(host).IsLoopback() {
+		return fmt.Errorf("repo %q is not reachable from the werf-managed buildkitd container: localhost inside the container is not this host; use the host LAN IP instead (e.g. --repo $(ipconfig getifaddr en0):<port>/<project> on macOS) or set $WERF_BUILDKIT_HOST to a buildkitd that can reach the registry", repoAddress)
+	}
+	return nil
+}
+
 func detectLocalBuildkitdNetworkSetup(ctx context.Context, cli *client.Client) localBuildkitdNetworkSetup {
 	info, err := cli.Info(ctx)
 	if err == nil && !strings.Contains(info.OperatingSystem, "Docker Desktop") {
@@ -114,7 +142,7 @@ func detectLocalBuildkitdNetworkSetup(ctx context.Context, cli *client.Client) l
 	return localBuildkitdNetworkSetup{ExtraHosts: []string{"host.docker.internal:host-gateway"}}
 }
 
-func ensureLocalBuildkitd(ctx context.Context, buildkitdConfig string) error {
+func ensureLocalBuildkitd(ctx context.Context, buildkitdConfig, repoAddress string) error {
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		return fmt.Errorf("create docker client: %w", err)
@@ -126,6 +154,10 @@ func ensureLocalBuildkitd(ctx context.Context, buildkitdConfig string) error {
 	}
 
 	netSetup := detectLocalBuildkitdNetworkSetup(ctx, cli)
+
+	if err := validateRepoReachability(repoAddress, netSetup); err != nil {
+		return err
+	}
 	configHash := localBuildkitdConfigHash(buildkitdConfig, netSetup)
 
 	inspect, err := cli.ContainerInspect(ctx, localBuildkitdContainerName)

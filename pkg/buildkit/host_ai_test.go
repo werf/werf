@@ -63,3 +63,15 @@ func TestAI_LocalBuildkitdConfigHash_ChangesWithNetworkSetup(t *testing.T) {
 	assert.NotEqual(t, localBuildkitdConfigHash("", hostNet), localBuildkitdConfigHash("", bridgeNet))
 	assert.Equal(t, localBuildkitdConfigHash("", hostNet), localBuildkitdConfigHash("", hostNet))
 }
+
+func TestAI_ValidateRepoReachability(t *testing.T) {
+	bridge := localBuildkitdNetworkSetup{ExtraHosts: []string{"host.docker.internal:host-gateway"}}
+	hostNet := localBuildkitdNetworkSetup{NetworkMode: "host"}
+
+	assert.Error(t, validateRepoReachability("localhost:5001/test", bridge))
+	assert.Error(t, validateRepoReachability("127.0.0.1:5001/test", bridge))
+	assert.NoError(t, validateRepoReachability("localhost:5001/test", hostNet))
+	assert.NoError(t, validateRepoReachability("192.168.1.66:5556/test", bridge))
+	assert.NoError(t, validateRepoReachability("registry.example.com/test", bridge))
+	assert.NoError(t, validateRepoReachability("", bridge))
+}
