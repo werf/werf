@@ -1,4 +1,4 @@
-docker_image: registry-write.werf.io/werf/builder:dd0d768103857f81c7e652cb2457e0bad53c82ba@sha256:97a3c1030c5822a4a45f783da0b1ffd6fb19fdc9f1c89a9514210a46a2cea65b
+docker_image: registry.werf.io/werf/builder:dd0d768103857f81c7e652cb2457e0bad53c82ba@sha256:97a3c1030c5822a4a45f783da0b1ffd6fb19fdc9f1c89a9514210a46a2cea65b
 commands:
   - TASK_X_REMOTE_TASKFILES=1 task --yes -o group -p build:dist:all version={{ .Tag }}
   - TASK_X_REMOTE_TASKFILES=1 task --yes -p verify:binaries:dist:all version={{ .Tag }}
