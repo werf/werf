@@ -57,6 +57,15 @@ BuildKit-бэкенд поддерживает оба режима сборки 
 
 Host mounts stapel (`fromPath`, `mount: build_dir`) отображаются на persistent cache mounts BuildKit с ключом по host-пути. Данные живут в кэше buildkitd на стороне демона, а не в директории на host-машине werf. Кэш сохраняется между сборками и разделяется по ключу host-пути. Обратите внимание: существующее содержимое host-директории НЕ доставляется в mount — cache mount при первом использовании пуст и накапливает только данные, записанные во время сборок.
 
+### Локальный registry
+
+Адрес registry должен быть доступен и с хоста werf, и изнутри контейнера buildkitd:
+
+*	На нативном Linux Docker-демоне werf-контейнер buildkitd использует host-сеть, поэтому registry на `localhost:<port>` работает как есть.
+*	На Docker Desktop (macOS/Windows) вместо `localhost` используйте LAN IP хоста: `werf build --repo <host-ip>:5000/myproject --insecure-registry --skip-tls-verify-registry`.
+
+С флагами `--insecure-registry` / `--skip-tls-verify-registry` werf автоматически настраивает werf-контейнер buildkitd для работы с plain-HTTP или self-signed registry.
+
 ### Insecure и self-signed registries
 
 Доступ к insecure registry, пользовательские CA и отключение TLS-верификации настраиваются на стороне демона buildkitd (обычно через `buildkitd.toml`). werf не транслирует свои флаги `--insecure-registry` / `--skip-tls-verify-registry` в buildkitd.

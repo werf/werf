@@ -9,6 +9,7 @@ import (
 	"io"
 	"maps"
 	"slices"
+	"strings"
 	"time"
 
 	cerrdefs "github.com/containerd/errdefs"
@@ -88,8 +89,29 @@ func makeLocalBuildkitdConfig(opts ResolveHostOptions) (string, error) {
 	return config.String(), nil
 }
 
-func localBuildkitdConfigHash(buildkitdConfig string) string {
-	return fmt.Sprintf("%x", sha256.Sum256([]byte(localBuildkitdImage+"\n"+buildkitdConfig)))
+func localBuildkitdConfigHash(buildkitdConfig string, netSetup localBuildkitdNetworkSetup) string {
+	return fmt.Sprintf("%x", sha256.Sum256([]byte(localBuildkitdImage+"\n"+netSetup.String()+"\n"+buildkitdConfig)))
+}
+
+type localBuildkitdNetworkSetup struct {
+	NetworkMode string
+	ExtraHosts  []string
+}
+
+func (s localBuildkitdNetworkSetup) String() string {
+	return s.NetworkMode + "|" + strings.Join(s.ExtraHosts, ",")
+}
+
+// detectLocalBuildkitdNetworkSetup picks host networking on a native Linux docker daemon so
+// that localhost registries on the daemon host are reachable from buildkitd. Docker Desktop
+// runs containers in a VM where host networking would not reach the host: keep the default
+// bridge network and map host.docker.internal to the host gateway instead.
+func detectLocalBuildkitdNetworkSetup(ctx context.Context, cli *client.Client) localBuildkitdNetworkSetup {
+	info, err := cli.Info(ctx)
+	if err == nil && !strings.Contains(info.OperatingSystem, "Docker Desktop") {
+		return localBuildkitdNetworkSetup{NetworkMode: "host"}
+	}
+	return localBuildkitdNetworkSetup{ExtraHosts: []string{"host.docker.internal:host-gateway"}}
 }
 
 func ensureLocalBuildkitd(ctx context.Context, buildkitdConfig string) error {
@@ -103,7 +125,8 @@ func ensureLocalBuildkitd(ctx context.Context, buildkitdConfig string) error {
 		return fmt.Errorf("ping docker daemon: %w", err)
 	}
 
-	configHash := localBuildkitdConfigHash(buildkitdConfig)
+	netSetup := detectLocalBuildkitdNetworkSetup(ctx, cli)
+	configHash := localBuildkitdConfigHash(buildkitdConfig, netSetup)
 
 	inspect, err := cli.ContainerInspect(ctx, localBuildkitdContainerName)
 	switch {
@@ -112,7 +135,7 @@ func ensureLocalBuildkitd(ctx context.Context, buildkitdConfig string) error {
 		if err := cli.ContainerRemove(ctx, localBuildkitdContainerName, container.RemoveOptions{Force: true}); err != nil {
 			return fmt.Errorf("remove container %q: %w", localBuildkitdContainerName, err)
 		}
-		if err := createLocalBuildkitdContainer(ctx, cli, buildkitdConfig, configHash); err != nil {
+		if err := createLocalBuildkitdContainer(ctx, cli, buildkitdConfig, configHash, netSetup); err != nil {
 			return err
 		}
 	case err == nil:
@@ -120,7 +143,7 @@ func ensureLocalBuildkitd(ctx context.Context, buildkitdConfig string) error {
 			return nil
 		}
 	case client.IsErrNotFound(err):
-		if err := createLocalBuildkitdContainer(ctx, cli, buildkitdConfig, configHash); err != nil {
+		if err := createLocalBuildkitdContainer(ctx, cli, buildkitdConfig, configHash, netSetup); err != nil {
 			return err
 		}
 	default:
@@ -147,7 +170,7 @@ func needRecreateLocalBuildkitd(containerConfig *container.Config, buildkitdConf
 	return containerConfig == nil || containerConfig.Labels[localBuildkitdConfigHashLabel] != configHash
 }
 
-func createLocalBuildkitdContainer(ctx context.Context, cli *client.Client, buildkitdConfig, configHash string) error {
+func createLocalBuildkitdContainer(ctx context.Context, cli *client.Client, buildkitdConfig, configHash string, netSetup localBuildkitdNetworkSetup) error {
 	if _, err := cli.ImageInspect(ctx, localBuildkitdImage); err != nil {
 		logboek.Context(ctx).Default().LogF("Pulling %s\n", localBuildkitdImage)
 		rc, err := cli.ImagePull(ctx, localBuildkitdImage, image.PullOptions{})
@@ -170,6 +193,8 @@ func createLocalBuildkitdContainer(ctx context.Context, cli *client.Client, buil
 		&container.HostConfig{
 			Privileged:    true,
 			RestartPolicy: container.RestartPolicy{Name: container.RestartPolicyUnlessStopped},
+			NetworkMode:   container.NetworkMode(netSetup.NetworkMode),
+			ExtraHosts:    netSetup.ExtraHosts,
 		},
 		nil, nil, localBuildkitdContainerName,
 	)

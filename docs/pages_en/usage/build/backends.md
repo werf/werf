@@ -57,6 +57,15 @@ Feature parity includes:
 
 Stapel host mounts (`fromPath`, `mount: build_dir`) are mapped to BuildKit persistent cache mounts keyed by the host path. The data lives inside the buildkitd cache on the daemon side rather than in a directory on the werf host. The cache persists across builds and is shared by host-path key. Note that pre-existing contents of the host directory are NOT delivered into the mount: the cache mount starts empty on first use and only accumulates data written during builds.
 
+### Local registry
+
+The registry address must be reachable both from the werf host and from inside the buildkitd container:
+
+*	On a native Linux Docker daemon the werf-managed buildkitd container uses host networking, so a registry on `localhost:<port>` works as is.
+*	On Docker Desktop (macOS/Windows) use the host LAN IP instead of `localhost`: `werf build --repo <host-ip>:5000/myproject --insecure-registry --skip-tls-verify-registry`.
+
+With `--insecure-registry` / `--skip-tls-verify-registry` werf configures the werf-managed buildkitd for the plain-HTTP or self-signed registry automatically.
+
 ### Insecure and self-signed registries
 
 Insecure registry access, custom CAs and TLS verification skipping are configured on the buildkitd daemon side (typically via `buildkitd.toml`). werf does not forward its own `--insecure-registry` / `--skip-tls-verify-registry` flags to buildkitd.

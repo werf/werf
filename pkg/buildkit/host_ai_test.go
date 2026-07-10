@@ -56,3 +56,10 @@ func TestAI_MakeLocalBuildkitdConfig_EmptyWithoutFlags(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Empty(t, config)
 }
+
+func TestAI_LocalBuildkitdConfigHash_ChangesWithNetworkSetup(t *testing.T) {
+	hostNet := localBuildkitdNetworkSetup{NetworkMode: "host"}
+	bridgeNet := localBuildkitdNetworkSetup{ExtraHosts: []string{"host.docker.internal:host-gateway"}}
+	assert.NotEqual(t, localBuildkitdConfigHash("", hostNet), localBuildkitdConfigHash("", bridgeNet))
+	assert.Equal(t, localBuildkitdConfigHash("", hostNet), localBuildkitdConfigHash("", hostNet))
+}
