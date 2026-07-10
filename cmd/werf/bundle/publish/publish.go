@@ -20,6 +20,7 @@ import (
 	"github.com/werf/logboek"
 	nelmcommon "github.com/werf/nelm/pkg/common"
 	"github.com/werf/nelm/pkg/featgate"
+	helmchart "github.com/werf/nelm/pkg/helm/pkg/chart"
 	chartcommonutil "github.com/werf/nelm/pkg/helm/pkg/chart/common/util"
 	"github.com/werf/nelm/pkg/helm/pkg/chart/loader"
 	chart "github.com/werf/nelm/pkg/helm/pkg/chart/v2"
@@ -454,9 +455,14 @@ func createNewBundle(
 		return fmt.Errorf("error loading chart %q: %w", chartDir, err)
 	}
 
-	chrt, ok := loadedChart.(*chart.Chart)
+	chrt, err := helmchart.NewAccessor(loadedChart)
+	if err != nil {
+		return fmt.Errorf("create chart accessor: %w", err)
+	}
+
+	v2Chrt, ok := chrt.Charter().(*chart.Chart)
 	if !ok {
-		return fmt.Errorf("unsupported chart type %T", loadedChart)
+		return fmt.Errorf("unexpected chart type %T", chrt.Charter())
 	}
 
 	if featgate.FeatGateTypescript.Enabled() {
@@ -473,7 +479,7 @@ func createNewBundle(
 			return fmt.Errorf("unable to merge input values: %w", err)
 		}
 
-		bundleVals, err := makeBundleValues(ctx, chrt, vals, serviceValues)
+		bundleVals, err := makeBundleValues(ctx, v2Chrt, vals, serviceValues)
 		if err != nil {
 			return fmt.Errorf("unable to construct bundle values: %w", err)
 		}
@@ -484,7 +490,7 @@ func createNewBundle(
 		}
 	}
 
-	mergedSecretVals, err := mergeRawSecretValues(ctx, chrt, commonCmdData.SecretValuesFiles, commonCmdData.DefaultSecretValuesDisable)
+	mergedSecretVals, err := mergeRawSecretValues(ctx, v2Chrt, commonCmdData.SecretValuesFiles, commonCmdData.DefaultSecretValuesDisable)
 	if err != nil {
 		return fmt.Errorf("unable to merge secret values: %w", err)
 	}
@@ -498,7 +504,7 @@ func createNewBundle(
 	}
 
 	if destDir == "" {
-		destDir = chrt.Metadata.Name
+		destDir = v2Chrt.Metadata.Name
 	}
 
 	if err := os.RemoveAll(destDir); err != nil {
@@ -522,11 +528,11 @@ func createNewBundle(
 		}
 	}
 
-	if chrt.Metadata == nil {
+	if v2Chrt.Metadata == nil {
 		panic("unexpected condition")
 	}
 
-	bundleMetadata := *chrt.Metadata
+	bundleMetadata := *v2Chrt.Metadata
 	// Force api v2
 	bundleMetadata.APIVersion = chart.APIVersionV2
 	bundleMetadata.Version = chartVersion
@@ -538,9 +544,9 @@ func createNewBundle(
 		return fmt.Errorf("unable to write %q: %w", chartYamlFile, err)
 	}
 
-	if chrt.Lock != nil {
+	if v2Chrt.Lock != nil {
 		chartLockFile := filepath.Join(destDir, "Chart.lock")
-		if data, err := json.Marshal(chrt.Lock); err != nil {
+		if data, err := json.Marshal(v2Chrt.Lock); err != nil {
 			return fmt.Errorf("unable to prepare Chart.lock data: %w", err)
 		} else if err := ioutil.WriteFile(chartLockFile, append(data, []byte("\n")...), os.ModePerm); err != nil {
 			return fmt.Errorf("unable to write %q: %w", chartLockFile, err)
@@ -552,7 +558,7 @@ func createNewBundle(
 		return fmt.Errorf("unable to create dir %q: %w", templatesDir, err)
 	}
 
-	for _, f := range chrt.Templates {
+	for _, f := range chrt.Templates() {
 		if err := writeChartFile(ctx, destDir, f.Name, f.Data); err != nil {
 			return fmt.Errorf("error writing chart template: %w", err)
 		}
@@ -573,7 +579,7 @@ func createNewBundle(
 	}
 
 WritingFiles:
-	for _, f := range chrt.Files {
+	for _, f := range chrt.Files() {
 		for _, ignoreValuesFile := range ignoreChartValuesFiles {
 			if f.Name == ignoreValuesFile {
 				continue WritingFiles
@@ -585,13 +591,13 @@ WritingFiles:
 		}
 	}
 
-	for _, f := range chrt.RuntimeFiles {
+	for _, f := range chrt.RuntimeFiles() {
 		if err := writeChartFile(ctx, destDir, f.Name, f.Data); err != nil {
 			return fmt.Errorf("error writing chart runtime file: %w", err)
 		}
 	}
 
-	for _, dep := range chrt.Metadata.Dependencies {
+	for _, dep := range v2Chrt.Metadata.Dependencies {
 		var depPath string
 
 		switch {
@@ -603,7 +609,7 @@ WritingFiles:
 			depPath = fmt.Sprintf("charts/%s-%s.tgz", dep.Name, dep.Version)
 		}
 
-		for _, f := range chrt.Raw {
+		for _, f := range chrt.RawFiles() {
 			if strings.HasPrefix(f.Name, depPath) {
 				if err := writeChartFile(ctx, destDir, f.Name, f.Data); err != nil {
 					return fmt.Errorf("error writing subchart file: %w", err)
@@ -612,12 +618,12 @@ WritingFiles:
 		}
 	}
 
-	if chrt.Schema != nil {
+	if chrt.Schema() != nil {
 		schemaFile := filepath.Join(destDir, "values.schema.json")
-		if err := writeChartFile(ctx, destDir, "values.schema.json", chrt.Schema); err != nil {
+		if err := writeChartFile(ctx, destDir, "values.schema.json", chrt.Schema()); err != nil {
 			return fmt.Errorf("error writing chart values schema: %w", err)
 		}
-		if err := ioutil.WriteFile(schemaFile, chrt.Schema, os.ModePerm); err != nil {
+		if err := ioutil.WriteFile(schemaFile, chrt.Schema(), os.ModePerm); err != nil {
 			return fmt.Errorf("unable to write %q: %w", schemaFile, err)
 		}
 	}

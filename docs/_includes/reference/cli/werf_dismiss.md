@@ -84,7 +84,7 @@ werf dismiss [options]
             Enable debug mode for Go templates (default $WERF_DEBUG_TEMPLATES or false)
       --delete-propagation=""
             Set default delete propagation strategy (default $WERF_DELETE_PROPAGATION or            
-            Foreground).
+            Background).
       --deploy-report-path=""
             Change deploy report path and format (by default $WERF_DEPLOY_REPORT_PATH or            
             ".werf-deploy-report.json" if not set). Extension must be .json for JSON format. If     
