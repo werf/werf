@@ -61,8 +61,6 @@ You can also check the existing [issues](https://github.com/werf/werf/issues), [
 
    - `task deps:install:all`
 
-   Additionally, to build the `werf` binary, you need to install the `libbtrfs-dev` package.
-
 4. Make your changes.
 5. Run `task` with no arguments to run all essential checks (build, lint, format, quick tests, and others).
 
