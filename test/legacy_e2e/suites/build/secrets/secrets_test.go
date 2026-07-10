@@ -28,13 +28,9 @@ var _ = Describe("build with secrets and ssh mounts", Label("integration", "buil
 	DescribeTable("should succeed",
 		func(ctx SpecContext, testOpts testOptions) {
 			setupEnv(testOpts)
-			_, err := contback.NewContainerBackend(testOpts.ContainerBackendMode)
-			if err == contback.ErrRuntimeUnavailable {
-				Skip(err.Error())
-			} else if err != nil {
-				Fail(err.Error())
-			}
+			_ = contback.NewContainerBackend()
 
+			var err error
 			runOpts := &werf.BuildOptions{}
 			repoDirname := "repo0"
 			fixtureRelPath := "build_with_secrets"

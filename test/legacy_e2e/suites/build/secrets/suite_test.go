@@ -36,12 +36,8 @@ var (
 )
 
 func setupEnv(opts testOptions) {
-	if opts.ContainerBackendMode == "buildkit" {
-		buildkitHost := os.Getenv("WERF_TEST_BUILDKIT_HOST")
-		if buildkitHost == "" {
-			Skip("WERF_TEST_BUILDKIT_HOST is not set")
-		}
-		SuiteData.Stubs.SetEnv("WERF_BUILDKIT_HOST", buildkitHost)
+	if host := os.Getenv("WERF_TEST_BUILDKIT_HOST"); host != "" {
+		SuiteData.Stubs.SetEnv("WERF_BUILDKIT_HOST", host)
 	} else {
 		SuiteData.Stubs.UnsetEnv("WERF_BUILDKIT_HOST")
 	}

@@ -17,12 +17,7 @@ var _ = Describe("Import", Label("e2e", "build", "import", "simple"), func() {
 		func(ctx SpecContext, testOpts importTestOptions) {
 			By("initializing")
 			setupEnv(testOpts.setupEnvOptions)
-			contRuntime, err := contback.NewContainerBackend(testOpts.ContainerBackendMode)
-			if err == contback.ErrRuntimeUnavailable {
-				Skip(err.Error())
-			} else if err != nil {
-				Fail(err.Error())
-			}
+			contRuntime := contback.NewContainerBackend()
 
 			By("building")
 			repoDirname := "repo0"
@@ -46,8 +41,6 @@ var _ = Describe("Import", Label("e2e", "build", "import", "simple"), func() {
 			)
 		},
 		Entry("BuildKit", importTestOptions{setupEnvOptions{
-			ContainerBackendMode:        "buildkit",
-			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: false,
 		}}),
 	)

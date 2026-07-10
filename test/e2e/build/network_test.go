@@ -4,7 +4,6 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/werf/v2/test/pkg/contback"
 	"github.com/werf/werf/v2/test/pkg/werf"
 )
 
@@ -21,12 +20,6 @@ var _ = Describe("Network isolation build", Label("e2e", "build", "network"), fu
 		func(ctx SpecContext, testOpts networkTestOptions) {
 			By("initializing")
 			setupEnv(testOpts.setupEnvOptions)
-			_, err := contback.NewContainerBackend(testOpts.ContainerBackendMode)
-			if err == contback.ErrRuntimeUnavailable {
-				Skip(err.Error())
-			} else if err != nil {
-				Fail(err.Error())
-			}
 
 			repoDirname := "repo0"
 			fixtureRelPath := testOpts.FixturePath
@@ -61,13 +54,13 @@ var _ = Describe("Network isolation build", Label("e2e", "build", "network"), fu
 
 		// CLI tests (verify CLI works when YAML is empty)
 		Entry("Dockerfile (Docker): Failure with --backend-network=none", Label("dockerfile"), networkTestOptions{
-			setupEnvOptions: setupEnvOptions{ContainerBackendMode: "docker", WithLocalRepo: false},
+			setupEnvOptions: setupEnvOptions{},
 			ExpectError:     true,
 			FixturePath:     "network/dockerfile",
 			NetworkNone:     true,
 		}),
 		Entry("Dockerfile (Docker): Success without --backend-network flag", Label("dockerfile"), networkTestOptions{
-			setupEnvOptions: setupEnvOptions{ContainerBackendMode: "docker", WithLocalRepo: false},
+			setupEnvOptions: setupEnvOptions{},
 			ExpectError:     false,
 			FixturePath:     "network/dockerfile",
 			NetworkNone:     false,
@@ -75,13 +68,13 @@ var _ = Describe("Network isolation build", Label("e2e", "build", "network"), fu
 
 		// YAML tests (verify network directive in werf.yaml)
 		Entry("Dockerfile (Docker): Failure with network:none in werf.yaml", Label("dockerfile", "yml"), networkTestOptions{
-			setupEnvOptions: setupEnvOptions{ContainerBackendMode: "docker", WithLocalRepo: false},
+			setupEnvOptions: setupEnvOptions{},
 			ExpectError:     true,
 			FixturePath:     "network/dockerfile_yml",
 			NetworkNone:     false,
 		}),
 		Entry("Dockerfile (Docker): Success with network:host in werf.yaml", Label("dockerfile", "yml"), networkTestOptions{
-			setupEnvOptions:    setupEnvOptions{ContainerBackendMode: "docker", WithLocalRepo: false},
+			setupEnvOptions:    setupEnvOptions{},
 			ExpectError:        false,
 			FixturePath:        "network/dockerfile_yml_success",
 			NetworkNone:        false,

@@ -18,12 +18,7 @@ var _ = Describe("Simple build", Label("e2e", "build", "simple"), func() {
 		func(ctx SpecContext, testOpts simpleTestOptions) {
 			By("initializing")
 			setupEnv(testOpts.setupEnvOptions)
-			contRuntime, err := contback.NewContainerBackend(testOpts.ContainerBackendMode)
-			if err == contback.ErrRuntimeUnavailable {
-				Skip(err.Error())
-			} else if err != nil {
-				Fail(err.Error())
-			}
+			contRuntime := contback.NewContainerBackend()
 
 			By("state0: starting")
 			{
@@ -70,8 +65,6 @@ var _ = Describe("Simple build", Label("e2e", "build", "simple"), func() {
 			}
 		},
 		Entry("with local repo using BuildKit", simpleTestOptions{setupEnvOptions{
-			ContainerBackendMode:        "buildkit",
-			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: false,
 		}}),
 	)

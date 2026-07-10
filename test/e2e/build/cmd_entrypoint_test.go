@@ -26,12 +26,7 @@ var _ = Describe("CMD and ENTRYPOINT combinations", Label("e2e", "build", "extra
 
 		By("initializing")
 		setupEnv(testOpts.setupEnvOptions)
-		contRuntime, err := contback.NewContainerBackend(testOpts.ContainerBackendMode)
-		if err == contback.ErrRuntimeUnavailable {
-			Skip(err.Error())
-		} else if err != nil {
-			Fail(err.Error())
-		}
+		contRuntime := contback.NewContainerBackend()
 
 		By("preparing test repo")
 		SuiteData.InitTestRepo(ctx, repoDirname, fixtureRelPath)
@@ -67,35 +62,20 @@ var _ = Describe("CMD and ENTRYPOINT combinations", Label("e2e", "build", "extra
 		options setupEnvOptions
 	}{
 		{
-			name: "docker",
+			name: "default",
 			options: setupEnvOptions{
-				ContainerBackendMode:        "docker",
-				WithLocalRepo:               false,
 				WithStagedDockerfileBuilder: false,
 			},
 		},
 		{
-			name: "buildkit",
+			name: "staged-dockerfile",
 			options: setupEnvOptions{
-				ContainerBackendMode:        "buildkit",
-				WithLocalRepo:               true,
-				WithStagedDockerfileBuilder: false,
-			},
-		},
-		{
-			name: "buildkit-staged",
-			options: setupEnvOptions{
-				ContainerBackendMode:        "buildkit",
-				WithLocalRepo:               true,
 				WithStagedDockerfileBuilder: true,
 			},
 		},
 	}
 
 	for _, backend := range backends {
-		// Prevent closure over loop variable.
-		backend = backend
-
 		Describe(fmt.Sprintf("dockerfile with %s backend", backend.name), func() {
 			DescribeTable("should produce expected image configurations", checkFunc,
 				Entry("Shell form ENTRYPOINT", cmdEntrypointTestOptions{setupEnvOptions: backend.options}, "dockerfile_shell_entrypoint", strslice.StrSlice{"/bin/sh", "-c", "echo \"ENTRYPOINT (shell)\""}, nil),

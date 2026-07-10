@@ -1,7 +1,6 @@
 package e2e_build_test
 
 import (
-	"errors"
 	"fmt"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -22,12 +21,7 @@ var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
 		func(ctx SpecContext, testOpts complexTestOptions) {
 			By("initializing")
 			setupEnv(testOpts.setupEnvOptions)
-			contRuntime, err := contback.NewContainerBackend(testOpts.ContainerBackendMode)
-			if errors.Is(err, contback.ErrRuntimeUnavailable) {
-				Skip(err.Error())
-			} else if err != nil {
-				Fail(err.Error())
-			}
+			contRuntime := contback.NewContainerBackend()
 
 			By("state0: starting")
 			{
@@ -52,10 +46,8 @@ var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
 				))
 
 				By(`state0: getting built images metadata`)
-				if testOpts.WithLocalRepo {
-					contRuntime.Pull(ctx, buildReport.Images["dockerfile"].DockerImageName)
-					contRuntime.Pull(ctx, buildReport.Images["stapel-shell"].DockerImageName)
-				}
+				contRuntime.Pull(ctx, buildReport.Images["dockerfile"].DockerImageName)
+				contRuntime.Pull(ctx, buildReport.Images["stapel-shell"].DockerImageName)
 
 				inspectOfDockerfileImage := contRuntime.GetImageInspect(ctx, buildReport.Images["dockerfile"].DockerImageName)
 				dockerfileImgCfg := inspectOfDockerfileImage.Config
@@ -117,10 +109,8 @@ var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
 				))
 
 				By(`state1: getting built images metadata`)
-				if testOpts.WithLocalRepo {
-					contRuntime.Pull(ctx, buildReport.Images["dockerfile"].DockerImageName)
-					contRuntime.Pull(ctx, buildReport.Images["stapel-shell"].DockerImageName)
-				}
+				contRuntime.Pull(ctx, buildReport.Images["dockerfile"].DockerImageName)
+				contRuntime.Pull(ctx, buildReport.Images["stapel-shell"].DockerImageName)
 
 				inspectOfDockerfileImg := contRuntime.GetImageInspect(ctx, buildReport.Images["dockerfile"].DockerImageName)
 				dockerfileImgCfg := inspectOfDockerfileImg.Config
@@ -143,14 +133,10 @@ var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
 			}
 		},
 		Entry("with local repo using BuildKit", complexTestOptions{setupEnvOptions{
-			ContainerBackendMode:        "buildkit",
-			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: false,
 		}}),
 		// TODO(1.3): after Full Dockerfile Builder removed and Staged Dockerfile Builder enabled by default this test no longer needed
 		Entry("with local repo using BuildKit and Staged Dockerfile builder", complexTestOptions{setupEnvOptions{
-			ContainerBackendMode:        "buildkit",
-			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: true,
 		}}),
 		// TODO(1.3): after Full Dockerfile Builder removed and Staged Dockerfile Builder enabled by default this test no longer needed

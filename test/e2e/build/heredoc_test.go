@@ -1,7 +1,6 @@
 package e2e_build_test
 
 import (
-	"errors"
 	"fmt"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -24,12 +23,7 @@ var _ = Describe("Build with staged dockerfile and heredoc", Label("e2e", "build
 		func(ctx SpecContext, testOpts heredocTestOptions) {
 			By("initializing")
 			setupEnv(testOpts.setupEnvOptions)
-			contRuntime, err := contback.NewContainerBackend(testOpts.ContainerBackendMode)
-			if errors.Is(err, contback.ErrRuntimeUnavailable) {
-				Skip(err.Error())
-			} else if err != nil {
-				Fail(err.Error())
-			}
+			contRuntime := contback.NewContainerBackend()
 
 			By("heredoc: starting")
 			{
@@ -54,8 +48,6 @@ var _ = Describe("Build with staged dockerfile and heredoc", Label("e2e", "build
 		},
 		Entry("with simple heredoc content and local repo using BuildKit", heredocTestOptions{
 			setupEnvOptions: setupEnvOptions{
-				ContainerBackendMode:        "buildkit",
-				WithLocalRepo:               true,
 				WithStagedDockerfileBuilder: true,
 			},
 			FixtureRelPath: "heredoc/simple",
@@ -63,8 +55,6 @@ var _ = Describe("Build with staged dockerfile and heredoc", Label("e2e", "build
 		}),
 		Entry("with multiple heredoc content and local repo using BuildKit", heredocTestOptions{
 			setupEnvOptions: setupEnvOptions{
-				ContainerBackendMode:        "buildkit",
-				WithLocalRepo:               true,
 				WithStagedDockerfileBuilder: true,
 			},
 			FixtureRelPath: "heredoc/multiple",
@@ -76,12 +66,6 @@ var _ = Describe("Build with staged dockerfile and heredoc", Label("e2e", "build
 		func(ctx SpecContext, testOpts heredocTestOptions) {
 			By("initializing")
 			setupEnv(testOpts.setupEnvOptions)
-			_, err := contback.NewContainerBackend(testOpts.ContainerBackendMode)
-			if errors.Is(err, contback.ErrRuntimeUnavailable) {
-				Skip(err.Error())
-			} else if err != nil {
-				Fail(err.Error())
-			}
 
 			By("heredoc: starting")
 			{
@@ -105,8 +89,6 @@ var _ = Describe("Build with staged dockerfile and heredoc", Label("e2e", "build
 		},
 		Entry("with unsupported COPY heredoc and local repo using BuildKit", heredocTestOptions{
 			setupEnvOptions: setupEnvOptions{
-				ContainerBackendMode:        "buildkit",
-				WithLocalRepo:               true,
 				WithStagedDockerfileBuilder: true,
 			},
 			FixtureRelPath: "heredoc/copy",
@@ -114,8 +96,6 @@ var _ = Describe("Build with staged dockerfile and heredoc", Label("e2e", "build
 		}),
 		Entry("with unsupported ADD heredoc and local repo using BuildKit", heredocTestOptions{
 			setupEnvOptions: setupEnvOptions{
-				ContainerBackendMode:        "buildkit",
-				WithLocalRepo:               true,
 				WithStagedDockerfileBuilder: true,
 			},
 			FixtureRelPath: "heredoc/add",

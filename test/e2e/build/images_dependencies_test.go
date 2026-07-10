@@ -2,6 +2,7 @@ package e2e_build_test
 
 import (
 	"context"
+	"os"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -27,14 +28,16 @@ var _ = Describe("Images dependencies", Label("e2e", "build", "extra"), func() {
 				"_fixtures/images_dependencies/state1",
 				"initial commit",
 			)
+			env := map[string]string{}
+			if host := os.Getenv("WERF_TEST_BUILDKIT_HOST"); host != "" {
+				env["WERF_BUILDKIT_HOST"] = host
+			}
 			Expect(
 				werfBuild(
 					ctx,
 					SuiteData.GetProjectWorktree(SuiteData.ProjectName),
 					liveexec.ExecCommandOptions{
-						Env: map[string]string{
-							"WERF_BUILDKIT_HOST": buildkitHostOrSkip(),
-						},
+						Env: env,
 					},
 				),
 			).To(Succeed())
