@@ -47,3 +47,7 @@ groups:
         version: 2.72.2
       - name: rock-solid
         version: 2.71.0
+  - name: "3"
+    channels:
+      - name: dev
+        version: 3.0.0-alpha.1
