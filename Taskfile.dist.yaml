@@ -465,6 +465,12 @@ tasks:
     cmds:
       - ./scripts/verify-dist-binaries.sh {{.version}}
 
+  compress:binaries:dist:all:
+    desc: 'Compress distributable binaries with upx. Important vars: "version".'
+    cmds:
+      - |
+        find "./dist/{{.version}}" -type f \( -path "*/linux-*/bin/werf" -o -path "*/windows-*/bin/werf.exe" \) -exec upx --best {} +
+
   mock:generate:
     desc: "Generate mocks."
     cmds:
