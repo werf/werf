@@ -18,8 +18,8 @@ ADD go.mod go.sum Taskfile.dist.yaml /.werf-deps/
 ADD scripts /.werf-deps/scripts
 
 RUN cd /.werf-deps && \
-    task --yes build:dist:all version=base && \
-    task --yes verify:binaries:dist:all version=base && \
+    task --yes -o group -p build:dist:all version=base && \
+    task --yes -o group -p verify:binaries:dist:all version=base && \
     rm -rf /.werf-deps
 
 RUN git config --global --add safe.directory /git
