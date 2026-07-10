@@ -33,11 +33,11 @@ var listItBody = func(ctx SpecContext, entry listEntry) {
 
 var _ = DescribeTable("config list", listItBody,
 	Entry("all", listEntry{
-		extraArgs:           []string{},
+		extraArgs:           []string{"--final-images-only=false"},
 		expectedImagesNames: []string{"image_a", "image_b", "image_c", "artifact"},
 	}),
-	Entry("images only", listEntry{
-		extraArgs:              []string{"--images-only"},
+	Entry("final images only (default)", listEntry{
+		extraArgs:              []string{},
 		expectedImagesNames:    []string{"image_a", "image_b", "image_c"},
 		notExpectedImagesNames: []string{"artifact"},
 	}))
