@@ -18,7 +18,7 @@ const (
 	WerfMountBuildDirLabel        = "werf-mount-type-build-dir"
 	WerfMountCustomDirLabelPrefix = "werf-mount-type-custom-dir-"
 
-	BuildCacheVersion = "1.2"
+	BuildCacheVersion = "2.0"
 
 	StageContainerNamePrefix        = "werf.build."
 	ImportServerContainerNamePrefix = "import-server-"

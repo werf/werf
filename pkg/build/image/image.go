@@ -21,7 +21,6 @@ import (
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/logging"
 	"github.com/werf/werf/v2/pkg/storage/manager"
-	"github.com/werf/werf/v2/pkg/werf"
 )
 
 type BaseImageType string
@@ -326,46 +325,6 @@ func (i *Image) SetupBaseImage(ctx context.Context, storageManager manager.Stora
 			break
 		}
 
-		if i.IsDockerfileImage && i.DockerfileImageConfig.Staged {
-			if werf.GetStagedDockerfileVersion() == werf.StagedDockerfileV1 {
-				var info *image.Info
-
-				if i.baseImageReference != "scratch" {
-					var err error
-					info, err = i.ContainerBackend.GetImageInfo(ctx, i.baseImageReference, container_backend.GetImageInfoOpts{})
-					if err != nil {
-						return fmt.Errorf("unable to get base image %q manifest: %w", i.baseImageReference, err)
-					}
-					if info == nil {
-						if err := logboek.Context(ctx).Default().LogProcess("Pulling base image %s", i.baseStageImage.Image.Name()).
-							Options(func(options types.LogProcessOptionsInterface) {
-								options.Style(style.Highlight())
-							}).
-							DoError(func() error {
-								return container_backend.PullImageFromRegistry(ctx, i.ContainerBackend, i.baseStageImage.Image)
-							}); err != nil {
-							return err
-						}
-
-						info, err = i.ContainerBackend.GetImageInfo(ctx, i.baseImageReference, container_backend.GetImageInfoOpts{})
-						if err != nil {
-							return fmt.Errorf("unable to get base image %q manifest: %w", i.baseImageReference, err)
-						}
-					}
-				} else {
-					info = &image.Info{
-						Name: i.baseImageReference,
-						Env:  nil,
-					}
-				}
-
-				i.baseStageImage.Image.SetStageDesc(&image.StageDesc{
-					StageID: nil, // this is not a stage actually, TODO
-					Info:    info,
-				})
-			}
-		}
-
 	case ScratchBaseImage:
 		i.baseStageImage = i.Conveyor.GetOrCreateStageImage("scratch", nil, nil, i)
 		i.baseStageImage.Image.SetStageDesc(&image.StageDesc{
@@ -377,17 +336,6 @@ func (i *Image) SetupBaseImage(ctx context.Context, storageManager manager.Stora
 
 	default:
 		panic(fmt.Sprintf("unknown base image type %q", i.baseImageType))
-	}
-
-	if i.IsDockerfileImage && i.DockerfileImageConfig.Staged {
-		if werf.GetStagedDockerfileVersion() == werf.StagedDockerfileV1 {
-			switch i.baseImageType {
-			case FromImage, ImageFromRegistryAsBaseImage:
-				if err := i.ExpandDependencies(ctx, EnvToMap(i.baseStageImage.Image.GetStageDesc().Info.Env)); err != nil {
-					return err
-				}
-			}
-		}
 	}
 
 	return nil

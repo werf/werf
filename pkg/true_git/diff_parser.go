@@ -339,52 +339,8 @@ func (p *diffParser) handleModifyFileDiff(line string) error {
 	return p.writeOutLine(line)
 }
 
-// TODO(major): remove index line from resulting patch completely
-func (p *diffParser) handleIndexDiffLine(line string) error {
-	var prefix, hashes, suffix string
-
-	parts := strings.SplitN(line, " ", 3)
-	switch {
-	case len(parts) == 3:
-		prefix, hashes, suffix = parts[0], parts[1], parts[2]
-	case len(parts) == 2:
-		prefix, hashes = parts[0], parts[1]
-	default:
-		return p.writeOutLine(line)
-	}
-
-	hashesParts := strings.SplitN(hashes, "..", 2)
-	if len(hashesParts) != 2 {
-		// unexpected format
-		return p.writeOutLine(line)
-	}
-
-	stripHashFunc := func(h string) string {
-		if len(h) < 8 {
-			return h
-		}
-		return h[:8]
-	}
-
-	var leftHashes []string
-	for _, h := range strings.Split(hashesParts[0], ",") {
-		leftHashes = append(leftHashes, stripHashFunc(h))
-	}
-
-	var rightHashes []string
-	for _, h := range strings.Split(hashesParts[1], ",") {
-		rightHashes = append(rightHashes, stripHashFunc(h))
-	}
-
-	var newLine string
-
-	if suffix == "" {
-		newLine = fmt.Sprintf("%s %s..%s", prefix, strings.Join(leftHashes, ","), strings.Join(rightHashes, ","))
-	} else {
-		newLine = fmt.Sprintf("%s %s..%s %s", prefix, strings.Join(leftHashes, ","), strings.Join(rightHashes, ","), suffix)
-	}
-
-	return p.writeOutLine(newLine)
+func (p *diffParser) handleIndexDiffLine(_ string) error {
+	return nil
 }
 
 func (p *diffParser) handleModifyFilePathA(line string) error {

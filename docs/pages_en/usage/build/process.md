@@ -121,20 +121,6 @@ staged: true
 
 > **IMPORTANT**: The `staged: true` option is supported only when using the Buildah builder.
 
-<div class="details">
-<a href="javascript:void(0)" class="details__summary">**NOTE**: The staged Dockerfile caching feature is currently alpha</a>
-<div class="details__content" markdown="1">
-
-There are several generations of the staged dockerfile builder. You can switch between them using the `WERF_STAGED_DOCKERFILE_VERSION={v1|v2}` variable. Note that changing the version of a staged dockerfile can cause images to be rebuilt.
-
-* `v1` is used by default.
-* `v2` version enables a dedicated `FROM` layer for caching the base image specified in the `FROM` instruction.
-
-`v2` version compatibility may be broken in future releases.
-
-</div>
-</div>
-
 ### Stapel
 
 Stapel images are cached layer-by-layer in the container registry by default and do not require any configuration.
