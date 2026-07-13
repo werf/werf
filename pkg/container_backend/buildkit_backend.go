@@ -53,6 +53,7 @@ type BuildkitBackend struct {
 
 	workerPlatformOnce sync.Once
 	workerPlatform     string
+	workerPlatforms    []ocispecs.Platform
 }
 
 type BuildkitBackendOptions struct {
@@ -89,7 +90,36 @@ func (backend *BuildkitBackend) parsePlatform(targetPlatform string) (*ocispecs.
 	if err != nil {
 		return nil, fmt.Errorf("parse platform %q: %w", targetPlatform, err)
 	}
+
+	backend.getWorkerPlatform()
+	if err := validateWorkerPlatform(platform, backend.workerPlatforms); err != nil {
+		return nil, err
+	}
+
 	return &platform, nil
+}
+
+// validateWorkerPlatform fails fast when the buildkitd worker cannot execute the requested
+// platform: without qemu binfmt on the daemon host a foreign-arch build would fail later
+// with a confusing "exec format error". Empty workerPlatforms (daemon not queried) skips
+// the check.
+func validateWorkerPlatform(platform ocispecs.Platform, workerPlatforms []ocispecs.Platform) error {
+	if len(workerPlatforms) == 0 {
+		return nil
+	}
+
+	matcher := platforms.Only(platform)
+	for _, workerPlatform := range workerPlatforms {
+		if matcher.Match(workerPlatform) {
+			return nil
+		}
+	}
+
+	available := make([]string, 0, len(workerPlatforms))
+	for _, p := range workerPlatforms {
+		available = append(available, platforms.Format(p))
+	}
+	return fmt.Errorf("platform %q is not supported by the buildkitd worker (available: %s): register qemu binfmt on the buildkitd host, e.g. run \"docker run --privileged --rm tonistiigi/binfmt --install all\"", platforms.Format(platform), strings.Join(available, ", "))
 }
 
 func (backend *BuildkitBackend) newResolver(platform *ocispecs.Platform) *buildkit.ImageMetaResolver {
@@ -120,6 +150,7 @@ func (backend *BuildkitBackend) getWorkerPlatform() string {
 		}
 
 		backend.workerPlatform = platforms.Format(workers[0].Platforms[0])
+		backend.workerPlatforms = workers[0].Platforms
 	})
 	return backend.workerPlatform
 }
