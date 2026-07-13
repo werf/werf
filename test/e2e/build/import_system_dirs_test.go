@@ -10,7 +10,6 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/werf/v2/test/pkg/contback"
 	"github.com/werf/werf/v2/test/pkg/report"
 	"github.com/werf/werf/v2/test/pkg/werf"
 )
@@ -20,12 +19,6 @@ var _ = Describe("Import system dirs", Label("e2e", "build", "import", "system-d
 		func(ctx SpecContext, testOpts setupEnvOptions) {
 			By("initializing")
 			setupEnv(testOpts)
-			_, err := contback.NewContainerBackend(testOpts.ContainerBackendMode)
-			if err == contback.ErrRuntimeUnavailable {
-				Skip(err.Error())
-			} else if err != nil {
-				Fail(err.Error())
-			}
 
 			By("building")
 			repoDirname := "repo0"
@@ -42,14 +35,7 @@ var _ = Describe("Import system dirs", Label("e2e", "build", "import", "system-d
 			imageName := buildReport.Images["destination"].DockerImageName
 			checkImageFilesystem(imageName)
 		},
-		Entry("Docker", setupEnvOptions{
-			ContainerBackendMode:        "docker",
-			WithLocalRepo:               true,
-			WithStagedDockerfileBuilder: false,
-		}),
 		Entry("BuildKit", setupEnvOptions{
-			ContainerBackendMode:        "buildkit",
-			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: false,
 		}),
 	)

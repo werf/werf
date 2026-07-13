@@ -5,34 +5,16 @@ import (
 	"fmt"
 
 	"github.com/werf/werf/v2/pkg/container_backend"
-	"github.com/werf/werf/v2/pkg/git_repo"
 )
 
-type NewGitPatchStageOptions struct {
-	ScriptsDir           string
-	ContainerPatchesDir  string
-	ContainerArchivesDir string
-	ContainerScriptsDir  string
-}
-
-func newGitPatchStage(name StageName, gitPatchStageOptions *NewGitPatchStageOptions, baseStageOptions *BaseStageOptions) *GitPatchStage {
-	s := &GitPatchStage{
-		ScriptsDir:           gitPatchStageOptions.ScriptsDir,
-		ContainerPatchesDir:  gitPatchStageOptions.ContainerPatchesDir,
-		ContainerArchivesDir: gitPatchStageOptions.ContainerArchivesDir,
-		ContainerScriptsDir:  gitPatchStageOptions.ContainerScriptsDir,
-	}
+func newGitPatchStage(name StageName, baseStageOptions *BaseStageOptions) *GitPatchStage {
+	s := &GitPatchStage{}
 	s.GitStage = newGitStage(name, baseStageOptions)
 	return s
 }
 
 type GitPatchStage struct {
 	*GitStage
-
-	ScriptsDir           string
-	ContainerPatchesDir  string
-	ContainerArchivesDir string
-	ContainerScriptsDir  string
 }
 
 func (s *GitPatchStage) IsEmpty(ctx context.Context, c Conveyor, prevBuiltImage *StageImage) (bool, error) {
@@ -82,12 +64,6 @@ func (s *GitPatchStage) prepareImage(ctx context.Context, c Conveyor, cr contain
 		if err := gitMapping.PreparePatchForImage(ctx, c, cr, prevBuiltImage, stageImage); err != nil {
 			return err
 		}
-	}
-
-	if c.UseLegacyStapelBuilder(cr) {
-		stageImage.Builder.LegacyStapelStageBuilder().Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", git_repo.CommonGitDataManager.GetPatchesCacheDir(), s.ContainerPatchesDir))
-		stageImage.Builder.LegacyStapelStageBuilder().Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", git_repo.CommonGitDataManager.GetArchivesCacheDir(), s.ContainerArchivesDir))
-		stageImage.Builder.LegacyStapelStageBuilder().Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", s.ScriptsDir, s.ContainerScriptsDir))
 	}
 
 	return nil

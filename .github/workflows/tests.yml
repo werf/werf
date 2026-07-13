@@ -59,7 +59,7 @@ jobs:
     uses: ./.github/workflows/_test_integration_regular.yml
     with:
       packages: test/legacy_e2e/suites
-      excludePackages: test/legacy_e2e/suites/deploy,test/legacy_e2e/suites/cleanup_after_converge,test/legacy_e2e/suites/helm/deploy_rollback,test/legacy_e2e/suites/bundles,test/legacy_e2e/suites/build/stapel_image/git,test/legacy_e2e/suites/docs
+      excludePackages: test/legacy_e2e/suites/deploy,test/legacy_e2e/suites/cleanup_after_converge,test/legacy_e2e/suites/helm/deploy_rollback,test/legacy_e2e/suites/bundles,test/legacy_e2e/suites/docs
       fetchDepth: 0 # Git history as fixtures for tests.
     secrets: inherit
 
@@ -89,16 +89,6 @@ jobs:
     with:
       scope: extra
     secrets: inherit
-
-  integration_git:
-    if: github.ref == 'refs/heads/main' ||
-      needs.detect-changes.outputs.workflow_proceed != 'false'
-    needs: detect-changes
-    uses: ./.github/workflows/_test_integration_regular.yml
-    with:
-      packages: test/legacy_e2e/suites/build/stapel_image/git
-    secrets: inherit
-
 
   build:
     if: needs.detect-changes.outputs.workflow_proceed != 'false'
@@ -130,7 +120,6 @@ jobs:
       - lint
       - unit
       - integration_main
-      - integration_git
       - e2e_simple
       - e2e_complex
       - e2e_extra

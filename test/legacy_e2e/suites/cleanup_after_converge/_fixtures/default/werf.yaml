@@ -7,30 +7,7 @@ gitWorktree:
   allowFetchOriginBranchesAndTags: false
 ---
 image: backend
-from: registry.werf.io/base/python:alpine
-shell:
-  install:
-    - mkdir -p /app && chmod 0755 /app
-    - |
-      cat << 'EOF' > /app/index.html
-      <!DOCTYPE html>
-      <html>
-        <body>
-          <h2>Congratulations!</h2>
-          <img src="https://flant.com/images/logo_en.png" style="max-height:100%;" height="76">
-        </body>
-      </html>
-      EOF
-import:
-  - from: artifact
-    add: /artifact
-    to: /artifact
-    before: setup
----
-image: artifact
-final: false
-from: registry.werf.io/base/alpine:3.21
-fromCacheVersion: {{ env "ARTIFACT_CACHE_VERSION" }}
-shell:
-  install:
-    - echo {{ env "ARTIFACT_DATA" }} > /artifact
+dockerfile: Dockerfile
+args:
+  ARTIFACT_CACHE_VERSION: {{ env "ARTIFACT_CACHE_VERSION" | quote }}
+  ARTIFACT_DATA: {{ env "ARTIFACT_DATA" | quote }}

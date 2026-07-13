@@ -40,17 +40,10 @@ var _ = Describe("Multiarch build", Label("e2e", "build", "multiarch", "simple")
 	DescribeTable("should build images for multiple architectures and publish multiarch manifests",
 		func(ctx SpecContext, testOpts multiarchTestOptions) {
 			setupEnv(testOpts.setupEnvOptions)
-			if testOpts.setupEnvOptions.WithLocalRepo {
-				SuiteData.WerfRepo = suite_init.TestRepo(SuiteData.ProjectName)
-			}
+			SuiteData.WerfRepo = suite_init.TestRepo(SuiteData.ProjectName)
 			Expect(SuiteData.WerfRepo).NotTo(BeEmpty())
 
-			contBack, err := contback.NewContainerBackend(testOpts.ContainerBackendMode)
-			if err == contback.ErrRuntimeUnavailable {
-				Skip(err.Error())
-			} else if err != nil {
-				Fail(err.Error())
-			}
+			contBack := contback.NewContainerBackend()
 
 			repoDirname := "repo0"
 			fixtureRelPath := "multiarch/state0"
@@ -137,27 +130,8 @@ var _ = Describe("Multiarch build", Label("e2e", "build", "multiarch", "simple")
 			}
 		},
 
-		Entry("Docker backend, docker can build stapel image only for linux/amd64 platform", multiarchTestOptions{
-			setupEnvOptions: setupEnvOptions{
-				WithLocalRepo:        true,
-				ContainerBackendMode: "docker",
-			},
-			Platforms:         []string{"linux/amd64"},
-			EnableStapelImage: true,
-
-			ExpectedStapelImageInfo: expectedImageInfo{
-				ImageName: "orange",
-				DigestByPlatform: map[string]string{
-					"linux/amd64": "f401fc847eba504268377fe9a6e192bd90cd9cd4e9333c3564846264",
-				},
-			},
-		}),
-
 		Entry("Docker backend, build arbitrary platforms, only non-staged dockerfile builder available", multiarchTestOptions{
-			setupEnvOptions: setupEnvOptions{
-				WithLocalRepo:        true,
-				ContainerBackendMode: "docker",
-			},
+			setupEnvOptions:       setupEnvOptions{},
 			Platforms:             []string{"linux/arm64", "linux/amd64"},
 			EnableDockerfileImage: true,
 

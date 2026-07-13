@@ -3,7 +3,6 @@ package image
 import (
 	"context"
 	"fmt"
-	"path"
 	"path/filepath"
 
 	"github.com/werf/logboek"
@@ -76,19 +75,6 @@ func initStages(ctx context.Context, image *Image, metaConfig *config.Meta, stap
 		Network:          imageBaseConfig.Network,
 	}
 
-	gitArchiveStageOptions := &stage.NewGitArchiveStageOptions{
-		ScriptsDir:           filepath.Join(opts.TmpDir, imageName, "scripts"),
-		ContainerArchivesDir: path.Join(opts.ContainerWerfDir, "archive"),
-		ContainerScriptsDir:  path.Join(opts.ContainerWerfDir, "scripts"),
-	}
-
-	gitPatchStageOptions := &stage.NewGitPatchStageOptions{
-		ScriptsDir:           filepath.Join(opts.TmpDir, imageName, "scripts"),
-		ContainerPatchesDir:  path.Join(opts.ContainerWerfDir, "patch"),
-		ContainerArchivesDir: path.Join(opts.ContainerWerfDir, "archive"),
-		ContainerScriptsDir:  path.Join(opts.ContainerWerfDir, "scripts"),
-	}
-
 	gitMappings, err := generateGitMappings(ctx, metaConfig, imageBaseConfig, opts)
 	if err != nil {
 		return err
@@ -107,19 +93,19 @@ func initStages(ctx context.Context, image *Image, metaConfig *config.Meta, stap
 	stages = appendIfExist(ctx, stages, stage.GenerateDependenciesBeforeInstallStage(imageBaseConfig, baseStageOptions))
 
 	if gitMappingsExist {
-		stages = append(stages, stage.NewGitArchiveStage(gitArchiveStageOptions, baseStageOptions))
+		stages = append(stages, stage.NewGitArchiveStage(baseStageOptions))
 	}
 
-	stages = appendIfExist(ctx, stages, stage.GenerateInstallStage(ctx, imageBaseConfig, gitPatchStageOptions, baseStageOptions))
+	stages = appendIfExist(ctx, stages, stage.GenerateInstallStage(ctx, imageBaseConfig, baseStageOptions))
 	stages = appendIfExist(ctx, stages, stage.GenerateDependenciesAfterInstallStage(imageBaseConfig, baseStageOptions))
-	stages = appendIfExist(ctx, stages, stage.GenerateBeforeSetupStage(ctx, imageBaseConfig, gitPatchStageOptions, baseStageOptions))
+	stages = appendIfExist(ctx, stages, stage.GenerateBeforeSetupStage(ctx, imageBaseConfig, baseStageOptions))
 	stages = appendIfExist(ctx, stages, stage.GenerateDependenciesBeforeSetupStage(imageBaseConfig, baseStageOptions))
-	stages = appendIfExist(ctx, stages, stage.GenerateSetupStage(ctx, imageBaseConfig, gitPatchStageOptions, baseStageOptions))
+	stages = appendIfExist(ctx, stages, stage.GenerateSetupStage(ctx, imageBaseConfig, baseStageOptions))
 	stages = appendIfExist(ctx, stages, stage.GenerateDependenciesAfterSetupStage(imageBaseConfig, baseStageOptions))
 
 	if gitMappingsExist {
-		stages = append(stages, stage.NewGitCacheStage(gitPatchStageOptions, baseStageOptions))
-		stages = append(stages, stage.NewGitLatestPatchStage(gitPatchStageOptions, baseStageOptions))
+		stages = append(stages, stage.NewGitCacheStage(baseStageOptions))
+		stages = append(stages, stage.NewGitLatestPatchStage(baseStageOptions))
 	}
 
 	if imageBaseConfig.ImageSpec != nil && !opts.Conveyor.SkipImageSpecStage() {

@@ -8,7 +8,7 @@ import (
 	"github.com/werf/werf/v2/pkg/buildkit"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/docker"
-	"github.com/werf/werf/v2/pkg/werf"
+	"github.com/werf/werf/v2/pkg/storage"
 )
 
 func wrapContainerBackend(containerBackend container_backend.ContainerBackend) container_backend.ContainerBackend {
@@ -19,27 +19,33 @@ func wrapContainerBackend(containerBackend container_backend.ContainerBackend) c
 }
 
 func InitProcessContainerBackend(ctx context.Context, cmdData *CmdData, registryMirrors []string) (container_backend.ContainerBackend, context.Context, error) {
-	if buildkitHost := buildkit.HostFromEnv(); buildkitHost != "" {
-		var defaultPlatform string
-		if platforms := cmdData.GetPlatform(); len(platforms) == 1 {
-			defaultPlatform = platforms[0]
+	var resolveHostOptions buildkit.ResolveHostOptions
+	if cmdData.Repo != nil && cmdData.Repo.Address != nil && *cmdData.Repo.Address != "" && *cmdData.Repo.Address != storage.LocalStorageAddress {
+		resolveHostOptions.RepoAddress = *cmdData.Repo.Address
+		if *cmdData.InsecureRegistry {
+			resolveHostOptions.InsecureRegistryAddresses = append(resolveHostOptions.InsecureRegistryAddresses, *cmdData.Repo.Address)
 		}
-
-		return wrapContainerBackend(container_backend.NewBuildkitBackend(buildkitHost, container_backend.BuildkitBackendOptions{
-			DefaultPlatform:       defaultPlatform,
-			DockerConfigDir:       *cmdData.DockerConfig,
-			InsecureRegistry:      *cmdData.InsecureRegistry,
-			SkipTLSVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
-		})), ctx, nil
+		if *cmdData.SkipTlsVerifyRegistry {
+			resolveHostOptions.SkipTLSVerifyRegistryAddresses = append(resolveHostOptions.SkipTLSVerifyRegistryAddresses, *cmdData.Repo.Address)
+		}
 	}
 
-	newCtx, err := InitProcessDocker(ctx, cmdData)
+	buildkitHost, err := buildkit.ResolveHost(ctx, resolveHostOptions)
 	if err != nil {
-		return nil, ctx, fmt.Errorf("unable to init process docker for docker-server container backend: %w", err)
+		return nil, ctx, err
 	}
-	ctx = newCtx
 
-	return wrapContainerBackend(container_backend.NewDockerServerBackend(werf.HostLocker().Locker())), ctx, nil
+	var defaultPlatform string
+	if platforms := cmdData.GetPlatform(); len(platforms) == 1 {
+		defaultPlatform = platforms[0]
+	}
+
+	return wrapContainerBackend(container_backend.NewBuildkitBackend(buildkitHost, container_backend.BuildkitBackendOptions{
+		DefaultPlatform:       defaultPlatform,
+		DockerConfigDir:       *cmdData.DockerConfig,
+		InsecureRegistry:      *cmdData.InsecureRegistry,
+		SkipTLSVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
+	})), ctx, nil
 }
 
 func InitProcessDocker(ctx context.Context, cmdData *CmdData) (context.Context, error) {

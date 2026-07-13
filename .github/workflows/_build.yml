@@ -9,8 +9,7 @@ jobs:
       fail-fast: false
       matrix:
         osPlatform:
-          - build:dev:linux:amd64:cgo
-          - build:dev:linux:amd64:go
+          - build:dev:linux:amd64
           - build:dev:linux:arm64
           - build:dev:darwin:amd64
           - build:dev:darwin:arm64
@@ -18,11 +17,6 @@ jobs:
     runs-on: ubuntu-22.04
     timeout-minutes: 60
     steps:
-      - name: Install werf build dependencies
-        run: |
-          sudo apt update
-          sudo apt install -y gcc-aarch64-linux-gnu libbtrfs-dev file
-
       - name: Checkout code
         uses: actions/checkout@v6
 

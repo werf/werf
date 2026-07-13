@@ -81,7 +81,7 @@ var _ = Describe("FullDockerfileStage", func() {
 
 			err = stage.PrepareImage(ctx, conveyor, containerBackend, nil, stageImage, nil)
 			Expect(err).To(Succeed())
-			CheckImageDependenciesAfterPrepare(img, stageBuilder, data.TestDependencies.Dependencies)
+			CheckImageDependenciesAfterPrepare(stageBuilder, data.TestDependencies.Dependencies)
 		},
 
 		Entry("should calculate dockerfile stage digest when no dependencies are set",

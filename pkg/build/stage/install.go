@@ -9,18 +9,18 @@ import (
 	"github.com/werf/werf/v2/pkg/container_backend"
 )
 
-func GenerateInstallStage(ctx context.Context, imageBaseConfig *config.StapelImageBase, gitPatchStageOptions *NewGitPatchStageOptions, baseStageOptions *BaseStageOptions) *InstallStage {
+func GenerateInstallStage(ctx context.Context, imageBaseConfig *config.StapelImageBase, baseStageOptions *BaseStageOptions) *InstallStage {
 	b := getBuilder(imageBaseConfig, baseStageOptions)
 	if b != nil && !b.IsInstallEmpty(ctx) {
-		return newInstallStage(b, gitPatchStageOptions, baseStageOptions)
+		return newInstallStage(b, baseStageOptions)
 	}
 
 	return nil
 }
 
-func newInstallStage(builder builder.Builder, gitPatchStageOptions *NewGitPatchStageOptions, baseStageOptions *BaseStageOptions) *InstallStage {
+func newInstallStage(builder builder.Builder, baseStageOptions *BaseStageOptions) *InstallStage {
 	s := &InstallStage{}
-	s.UserWithGitPatchStage = newUserWithGitPatchStage(builder, Install, gitPatchStageOptions, baseStageOptions)
+	s.UserWithGitPatchStage = newUserWithGitPatchStage(builder, Install, baseStageOptions)
 	return s
 }
 
@@ -42,7 +42,7 @@ func (s *InstallStage) PrepareImage(ctx context.Context, c Conveyor, cb containe
 		return err
 	}
 
-	if err := s.builder.Install(ctx, cb, stageImage.Builder, c.UseLegacyStapelBuilder(cb)); err != nil {
+	if err := s.builder.Install(ctx, cb, stageImage.Builder); err != nil {
 		return err
 	}
 

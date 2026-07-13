@@ -104,10 +104,6 @@ func NewExportCmd(ctx context.Context) *cobra.Command {
 	common.SetupMetaRepo(&commonCmdData, cmd)
 	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultBuildParallelTasksLimit)
 
-	common.SetupIntrospectAfterError(&commonCmdData, cmd)
-	common.SetupIntrospectBeforeError(&commonCmdData, cmd)
-	common.SetupIntrospectStage(&commonCmdData, cmd)
-
 	common.SetupRequireBuiltImages(&commonCmdData, cmd)
 
 	common.SetupBuildReportPath(&commonCmdData, cmd)

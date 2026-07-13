@@ -110,10 +110,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 	common.SetupContainerRegistryMirror(&commonCmdData, cmd)
 
-	common.SetupIntrospectAfterError(&commonCmdData, cmd)
-	common.SetupIntrospectBeforeError(&commonCmdData, cmd)
-	common.SetupIntrospectStage(&commonCmdData, cmd)
-
 	common.SetupSaveBuildReport(&commonCmdData, cmd)
 	common.SetupBuildReportPath(&commonCmdData, cmd)
 	common.SetupUseBuildReport(&commonCmdData, cmd)

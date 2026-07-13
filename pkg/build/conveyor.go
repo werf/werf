@@ -20,7 +20,6 @@ import (
 	stylePkg "github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
 	"github.com/werf/werf/v2/pkg/build/image"
-	"github.com/werf/werf/v2/pkg/build/import_server"
 	"github.com/werf/werf/v2/pkg/build/stage"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
@@ -59,7 +58,6 @@ type Conveyor struct {
 	StorageManager manager.StorageManagerInterface
 
 	onTerminateFuncs []ConveyorCleanupFunc
-	importServers    map[string]import_server.ImportServer
 
 	ConveyorOptions
 
@@ -100,7 +98,6 @@ func NewConveyor(werfConfig *config.WerfConfig, giterminismManager giterminism_m
 		baseImagesRepoErrCache: make(map[string]error),
 		remoteGitRepos:         make(map[string]*git_repo.Remote),
 		tmpDir:                 filepath.Join(baseTmpDir, util.GenerateConsistentRandomString(10)),
-		importServers:          make(map[string]import_server.ImportServer),
 
 		ContainerBackend: containerBackend,
 		StorageManager:   storageManager,
@@ -201,10 +198,6 @@ func (c *Conveyor) GetServiceRWMutex(service string) *sync.RWMutex {
 	return rwMutex
 }
 
-func (c *Conveyor) UseLegacyStapelBuilder(cr container_backend.ContainerBackend) bool {
-	return !cr.HasStapelBuildSupport()
-}
-
 func (c *Conveyor) IsBaseImagesRepoIdsCacheExist(key string) bool {
 	c.GetServiceRWMutex("BaseImagesRepoIdsCache").RLock()
 	defer c.GetServiceRWMutex("BaseImagesRepoIdsCache").RUnlock()
@@ -260,75 +253,6 @@ func (c *Conveyor) GetStageDigestMutex(stage string) *sync.Mutex {
 	}
 
 	return m
-}
-
-func (c *Conveyor) GetImportServer(ctx context.Context, targetPlatform, imageName string, fromExternalImage bool) (import_server.ImportServer, error) {
-	c.GetServiceRWMutex("ImportServer").Lock()
-	defer c.GetServiceRWMutex("ImportServer").Unlock()
-
-	importServerName := imageName
-
-	if targetPlatform == "" {
-		panic("assertion: targetPlatform cannot be empty")
-	}
-	importServerName += fmt.Sprintf("[%s]", targetPlatform)
-
-	if srv, hasKey := c.importServers[importServerName]; hasKey {
-		return srv, nil
-	}
-
-	var srv *import_server.RsyncServer
-
-	if !fromExternalImage {
-		img := c.GetImage(targetPlatform, imageName)
-		contentTagStageImage := img.GetContentTagStageImage()
-		if contentTagStageImage == nil {
-			return nil, fmt.Errorf("image %q has no content tag", imageName)
-		}
-		if _, err := c.StorageManager.FetchStageImage(ctx, c.ContainerBackend, imageName, contentTagStageImage); err != nil {
-			return nil, fmt.Errorf("unable to fetch stage %s: %w", contentTagStageImage.Image.Name(), err)
-		}
-	}
-
-	if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Firing up import rsync server for image %s", imageName)).
-		DoError(func() error {
-			var tmpDir, imageSubDir string
-
-			if fromExternalImage {
-				imageSubDir = strings.NewReplacer(":", "_", "/", "_").Replace(imageName)
-			} else {
-				imageSubDir = imageName
-			}
-
-			tmpDir = filepath.Join(c.tmpDir, "import-server", imageSubDir, targetPlatform)
-
-			if err := os.MkdirAll(tmpDir, os.ModePerm); err != nil {
-				return fmt.Errorf("unable to create dir %s: %w", tmpDir, err)
-			}
-
-			var dockerImageName string
-			if fromExternalImage {
-				dockerImageName = imageName
-			} else {
-				dockerImageName = c.GetImageContentTagName(targetPlatform, imageName)
-			}
-
-			var err error
-			srv, err = import_server.RunRsyncServer(ctx, dockerImageName, tmpDir, targetPlatform)
-			if err != nil {
-				return fmt.Errorf("unable to run rsync import server: %w", err)
-			}
-
-			c.AppendOnTerminateFunc(srv.Shutdown)
-
-			return nil
-		}); err != nil {
-		return nil, err
-	}
-
-	c.importServers[importServerName] = srv
-
-	return srv, nil
 }
 
 func (c *Conveyor) AppendOnTerminateFunc(f ConveyorCleanupFunc) {
@@ -928,11 +852,22 @@ func (c *Conveyor) SetStageImage(stageImage *stage.StageImage) {
 	c.stageImages[stageImageCacheKey(stageImage.Image.Name(), stageImage.Image.GetTargetPlatform())] = stageImage
 }
 
-func extractLegacyStageImage(stageImage *stage.StageImage) *container_backend.LegacyStageImage {
-	if stageImage == nil || stageImage.Image == nil {
-		return nil
+func resolvePrevStageBaseImage(prevStageImage *stage.StageImage, isBuildkitBackend bool) string {
+	if prevStageImage == nil || prevStageImage.Image == nil {
+		return ""
 	}
-	return stageImage.Image.(*container_backend.LegacyStageImage)
+	if stageDesc := prevStageImage.Image.GetStageDesc(); stageDesc != nil && stageDesc.Info != nil {
+		if isBuildkitBackend {
+			if stageDesc.Info.RepoDigest != "" {
+				return stageDesc.Info.RepoDigest
+			}
+			return stageDesc.Info.Name
+		}
+		if _, err := digest.Parse(stageDesc.Info.ID); err == nil {
+			return stageDesc.Info.ID
+		}
+	}
+	return prevStageImage.Image.Name()
 }
 
 func (c *Conveyor) GetOrCreateStageImage(name string, prevStageImage *stage.StageImage, stg stage.Interface, img *image.Image) *stage.StageImage {
@@ -940,26 +875,16 @@ func (c *Conveyor) GetOrCreateStageImage(name string, prevStageImage *stage.Stag
 		return stageImage
 	}
 
-	i := container_backend.NewLegacyStageImage(extractLegacyStageImage(prevStageImage), name, c.ContainerBackend, img.TargetPlatform)
+	i := container_backend.NewLegacyStageImage(name, c.ContainerBackend, img.TargetPlatform)
 
-	resolvePrevStageBaseImage := func(prevStageImage *stage.StageImage) string {
-		if prevStageImage == nil || prevStageImage.Image == nil {
-			return ""
-		}
-		if stageDesc := prevStageImage.Image.GetStageDesc(); stageDesc != nil && stageDesc.Info != nil {
-			if _, err := digest.Parse(stageDesc.Info.ID); err == nil {
-				return stageDesc.Info.ID
-			}
-		}
-		return prevStageImage.Image.Name()
-	}
+	_, isBuildkitBackend := container_backend.AsBuildkitBackend(c.ContainerBackend)
 
 	var baseImage string
 	if stg != nil {
 		if stg.HasPrevStage() {
-			baseImage = resolvePrevStageBaseImage(prevStageImage)
+			baseImage = resolvePrevStageBaseImage(prevStageImage, isBuildkitBackend)
 		} else if stg.IsStapelStage() && stg.Name() == "from" {
-			baseImage = resolvePrevStageBaseImage(prevStageImage)
+			baseImage = resolvePrevStageBaseImage(prevStageImage, isBuildkitBackend)
 		} else {
 			baseImage = img.GetBaseImageReference()
 		}

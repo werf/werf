@@ -2,22 +2,13 @@ package contback
 
 import (
 	"context"
-	"errors"
-	"fmt"
 
 	"github.com/werf/werf/v2/test/pkg/thirdparty/contruntime/manifest"
 )
 
-var ErrRuntimeUnavailable = errors.New("requested runtime unavailable")
-
-func NewContainerBackend(mode string) (ContainerBackend, error) {
-	switch mode {
-	case "docker", "buildkit":
-		// buildkit-built images live in the test repo registry and are inspected via docker.
-		return NewDockerBackend(), nil
-	default:
-		panic(fmt.Sprintf("unexpected container backend mode: %s", mode))
-	}
+func NewContainerBackend() ContainerBackend {
+	// buildkit-built images live in the test repo registry and are inspected via docker.
+	return NewDockerBackend()
 }
 
 type ContainerBackend interface {

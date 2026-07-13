@@ -9,18 +9,18 @@ import (
 	"github.com/werf/werf/v2/pkg/container_backend"
 )
 
-func GenerateSetupStage(ctx context.Context, imageBaseConfig *config.StapelImageBase, gitPatchStageOptions *NewGitPatchStageOptions, baseStageOptions *BaseStageOptions) *SetupStage {
+func GenerateSetupStage(ctx context.Context, imageBaseConfig *config.StapelImageBase, baseStageOptions *BaseStageOptions) *SetupStage {
 	b := getBuilder(imageBaseConfig, baseStageOptions)
 	if b != nil && !b.IsSetupEmpty(ctx) {
-		return newSetupStage(b, gitPatchStageOptions, baseStageOptions)
+		return newSetupStage(b, baseStageOptions)
 	}
 
 	return nil
 }
 
-func newSetupStage(builder builder.Builder, gitPatchStageOptions *NewGitPatchStageOptions, baseStageOptions *BaseStageOptions) *SetupStage {
+func newSetupStage(builder builder.Builder, baseStageOptions *BaseStageOptions) *SetupStage {
 	s := &SetupStage{}
-	s.UserWithGitPatchStage = newUserWithGitPatchStage(builder, Setup, gitPatchStageOptions, baseStageOptions)
+	s.UserWithGitPatchStage = newUserWithGitPatchStage(builder, Setup, baseStageOptions)
 	return s
 }
 
@@ -42,7 +42,7 @@ func (s *SetupStage) PrepareImage(ctx context.Context, c Conveyor, cb container_
 		return err
 	}
 
-	if err := s.builder.Setup(ctx, cb, stageImage.Builder, c.UseLegacyStapelBuilder(cb)); err != nil {
+	if err := s.builder.Setup(ctx, cb, stageImage.Builder); err != nil {
 		return err
 	}
 

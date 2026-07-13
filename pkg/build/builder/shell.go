@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 
@@ -16,14 +15,10 @@ import (
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/container_backend/stage_builder"
-	"github.com/werf/werf/v2/pkg/stapel"
 )
 
-const scriptFileName = "script.sh"
-
 type Extra struct {
-	ContainerWerfPath string
-	TmpPath           string
+	TmpPath string
 }
 
 type Shell struct {
@@ -46,20 +41,20 @@ func (b *Shell) IsBeforeSetupEmpty(ctx context.Context) bool {
 }
 func (b *Shell) IsSetupEmpty(ctx context.Context) bool { return b.isEmptyStage(ctx, "Setup") }
 
-func (b *Shell) BeforeInstall(_ context.Context, cr container_backend.ContainerBackend, stageBuilder stage_builder.StageBuilderInterface, useLegacyStapelBuilder bool) error {
-	return b.stage(cr, stageBuilder, useLegacyStapelBuilder, "BeforeInstall")
+func (b *Shell) BeforeInstall(_ context.Context, cr container_backend.ContainerBackend, stageBuilder stage_builder.StageBuilderInterface) error {
+	return b.stage(cr, stageBuilder, "BeforeInstall")
 }
 
-func (b *Shell) Install(_ context.Context, cr container_backend.ContainerBackend, stageBuilder stage_builder.StageBuilderInterface, useLegacyStapelBuilder bool) error {
-	return b.stage(cr, stageBuilder, useLegacyStapelBuilder, "Install")
+func (b *Shell) Install(_ context.Context, cr container_backend.ContainerBackend, stageBuilder stage_builder.StageBuilderInterface) error {
+	return b.stage(cr, stageBuilder, "Install")
 }
 
-func (b *Shell) BeforeSetup(_ context.Context, cr container_backend.ContainerBackend, stageBuilder stage_builder.StageBuilderInterface, useLegacyStapelBuilder bool) error {
-	return b.stage(cr, stageBuilder, useLegacyStapelBuilder, "BeforeSetup")
+func (b *Shell) BeforeSetup(_ context.Context, cr container_backend.ContainerBackend, stageBuilder stage_builder.StageBuilderInterface) error {
+	return b.stage(cr, stageBuilder, "BeforeSetup")
 }
 
-func (b *Shell) Setup(_ context.Context, cr container_backend.ContainerBackend, stageBuilder stage_builder.StageBuilderInterface, useLegacyStapelBuilder bool) error {
-	return b.stage(cr, stageBuilder, useLegacyStapelBuilder, "Setup")
+func (b *Shell) Setup(_ context.Context, cr container_backend.ContainerBackend, stageBuilder stage_builder.StageBuilderInterface) error {
+	return b.stage(cr, stageBuilder, "Setup")
 }
 
 func (b *Shell) BeforeInstallChecksum(ctx context.Context) string {
@@ -75,45 +70,19 @@ func (b *Shell) isEmptyStage(ctx context.Context, userStageName string) bool {
 	return b.stageChecksum(ctx, userStageName) == ""
 }
 
-func (b *Shell) stage(cr container_backend.ContainerBackend, stageBuilder stage_builder.StageBuilderInterface, useLegacyStapelBuilder bool, userStageName string) error {
+func (b *Shell) stage(cr container_backend.ContainerBackend, stageBuilder stage_builder.StageBuilderInterface, userStageName string) error {
 	stageHostTmpDir, err := b.stageHostTmpDir(userStageName)
 	if err != nil {
 		return err
 	}
-	if useLegacyStapelBuilder {
-		container := stageBuilder.LegacyStapelStageBuilder().BuilderContainer()
 
-		container.MountSSHAgentSocket(b.sshAuthSock)
-		container.AddVolume(
-			fmt.Sprintf("%s:%s:rw", stageHostTmpDir, b.containerTmpDir()),
-		)
+	stageBuilder.StapelStageBuilder().MountSSHAgentSocket(b.sshAuthSock)
+	stageBuilder.StapelStageBuilder().AddCommands(b.stageCommands(userStageName)...)
 
-		stageHostTmpScriptFilePath := filepath.Join(stageHostTmpDir, scriptFileName)
-		containerTmpScriptFilePath := path.Join(b.containerTmpDir(), scriptFileName)
-
-		if err := stapel.CreateScript(stageHostTmpScriptFilePath, b.stageCommands(userStageName)); err != nil {
-			return err
-		}
-
-		err := b.addBuildSecretsVolumes(stageHostTmpDir, func(secretPath string) {
-			container.AddVolume(secretPath)
-		})
-		if err != nil {
-			return fmt.Errorf("unable to add volumes: %w", err)
-		}
-
-		container.AddServiceRunCommands(containerTmpScriptFilePath)
-
-	} else {
-		stageBuilder.StapelStageBuilder().MountSSHAgentSocket(b.sshAuthSock)
-		stageBuilder.StapelStageBuilder().AddCommands(b.stageCommands(userStageName)...)
-
-		err = b.addBuildSecretsVolumes(stageHostTmpDir, func(secretPath string) {
-			stageBuilder.StapelStageBuilder().AddBuildVolumes(secretPath)
-		})
-		if err != nil {
-			return fmt.Errorf("unable to add volumes: %w", err)
-		}
+	if err := b.addBuildSecretsVolumes(stageHostTmpDir, func(secretPath string) {
+		stageBuilder.StapelStageBuilder().AddBuildVolumes(secretPath)
+	}); err != nil {
+		return fmt.Errorf("unable to add volumes: %w", err)
 	}
 
 	return nil
@@ -199,10 +168,6 @@ func (b *Shell) stageHostTmpDir(userStageName string) (string, error) {
 	}
 
 	return p, nil
-}
-
-func (b *Shell) containerTmpDir() string {
-	return path.Join(b.extra.ContainerWerfPath, "shell")
 }
 
 func (b *Shell) addBuildSecretsVolumes(stageHostTmpDir string, fn func(string)) error {

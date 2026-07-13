@@ -8,9 +8,9 @@ import (
 	"github.com/werf/werf/v2/pkg/container_backend"
 )
 
-func NewGitLatestPatchStage(gitPatchStageOptions *NewGitPatchStageOptions, baseStageOptions *BaseStageOptions) *GitLatestPatchStage {
+func NewGitLatestPatchStage(baseStageOptions *BaseStageOptions) *GitLatestPatchStage {
 	s := &GitLatestPatchStage{}
-	s.GitPatchStage = newGitPatchStage(GitLatestPatch, gitPatchStageOptions, baseStageOptions)
+	s.GitPatchStage = newGitPatchStage(GitLatestPatch, baseStageOptions)
 	return s
 }
 

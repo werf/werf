@@ -5,16 +5,14 @@ permalink: usage/build/backends.html
 
 ## Overview
 
-werf supports the following build backends:
+werf builds images through a [buildkitd](https://github.com/moby/buildkit) daemon. The endpoint is selected as follows:
 
--	Docker — the traditional method that uses the system Docker Daemon. Selected by default when no BuildKit endpoint is configured.
--	BuildKit — builds images through an external [buildkitd](https://github.com/moby/buildkit) daemon. Selected by setting a BuildKit endpoint via environment variable.
+-	`WERF_BUILDKIT_HOST` (or the standard `BUILDKIT_HOST`) is set — werf uses the specified buildkitd endpoint.
+-	Neither variable is set — werf automatically starts (or reuses) a local buildkitd container named `werf-buildkitd` on the local Docker daemon and uses it via `docker-container://werf-buildkitd`. Docker must be available in this case.
 
 > The requirements and system preparation steps for using these build backends are described in the [Getting Started]({{ site.url }}/getting_started/) section of the website.
 
 ## BuildKit
-
-The BuildKit backend is enabled by setting `WERF_BUILDKIT_HOST` (or the standard `BUILDKIT_HOST`) to the address of a running buildkitd daemon. When neither variable is set, werf uses the Docker backend.
 
 ### Endpoints
 
@@ -29,14 +27,13 @@ The following endpoint schemes are supported:
 
 ### Quick start
 
-Run buildkitd in a local Docker container and point werf at it:
+With Docker available locally no setup is needed: werf starts a `werf-buildkitd` container automatically on first build.
+
+To use an external buildkitd instead:
 
 ```shell
-docker run -d --name buildkitd --privileged moby/buildkit
-export BUILDKIT_HOST=docker-container://buildkitd
+export BUILDKIT_HOST=tcp://my-buildkitd:1234
 ```
-
-After that any werf build command will use the BuildKit backend.
 
 ### Container registry required
 
@@ -60,6 +57,15 @@ Feature parity includes:
 
 Stapel host mounts (`fromPath`, `mount: build_dir`) are mapped to BuildKit persistent cache mounts keyed by the host path. The data lives inside the buildkitd cache on the daemon side rather than in a directory on the werf host. The cache persists across builds and is shared by host-path key. Note that pre-existing contents of the host directory are NOT delivered into the mount: the cache mount starts empty on first use and only accumulates data written during builds.
 
+### Local registry
+
+The registry address must be reachable both from the werf host and from inside the buildkitd container:
+
+*	On a native Linux Docker daemon the werf-managed buildkitd container uses host networking, so a registry on `localhost:<port>` works as is.
+*	On Docker Desktop (macOS/Windows) use the host LAN IP instead of `localhost`: `werf build --repo <host-ip>:5000/myproject --insecure-registry --skip-tls-verify-registry`.
+
+With `--insecure-registry` / `--skip-tls-verify-registry` werf configures the werf-managed buildkitd for the plain-HTTP or self-signed registry automatically.
+
 ### Insecure and self-signed registries
 
 Insecure registry access, custom CAs and TLS verification skipping are configured on the buildkitd daemon side (typically via `buildkitd.toml`). werf does not forward its own `--insecure-registry` / `--skip-tls-verify-registry` flags to buildkitd.
@@ -67,11 +73,3 @@ Insecure registry access, custom CAs and TLS verification skipping are configure
 ### Host cleanup
 
 With a remote buildkitd there is no local image store on the werf host. `werf host purge` and other host-cleanup commands only clean up werf-owned service directories on the host; the buildkitd build cache is not pruned by werf in the first iteration — it is managed by buildkitd garbage collection (see `buildkitd.toml`) or manually via `buildctl prune`.
-
-### Limitations
-
-In the first iteration, the following options are not supported by the BuildKit backend:
-
-*	`--introspect-error`;
-*	`--introspect-before-error`;
-*	`--introspect-stage`.

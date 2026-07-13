@@ -24,7 +24,4 @@ var _ = Describe("stapel container naming", func() {
 		Expect(container.Name).To(Equal(expectedName))
 	})
 
-	It("formats stapel image lock name", func() {
-		Expect(stapelImageLockName("registry.werf.io/werf/stapel:0.6.2@sha256:abc")).To(Equal("stapel.image.registry.werf.io_werf_stapel_0.6.2_sha256_abc"))
-	})
 })

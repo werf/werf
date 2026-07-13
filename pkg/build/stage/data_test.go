@@ -102,19 +102,19 @@ func GetConfigDependencies(dependencies []*TestDependency) (res []*config.Depend
 	return
 }
 
-func CheckImageDependenciesAfterPrepare(img *LegacyImageStub, stageBuilder *stage_builder.StageBuilder, dependencies []*TestDependency) {
+func CheckImageDependenciesAfterPrepare(stageBuilder *stage_builder.StageBuilder, dependencies []*TestDependency) {
 	for _, dep := range dependencies {
 		if dep.TargetEnvImageName != "" {
-			Expect(img._Container._ServiceCommitChangeOptions.Env[dep.TargetEnvImageName]).To(Equal(dep.GetDockerImageName()))
+			Expect(stageBuilder.GetStapelStageBuilderImplementation().Envs[dep.TargetEnvImageName]).To(Equal(dep.GetDockerImageName()))
 		}
 		if dep.TargetEnvImageRepo != "" {
-			Expect(img._Container._ServiceCommitChangeOptions.Env[dep.TargetEnvImageRepo]).To(Equal(dep.DockerImageRepo))
+			Expect(stageBuilder.GetStapelStageBuilderImplementation().Envs[dep.TargetEnvImageRepo]).To(Equal(dep.DockerImageRepo))
 		}
 		if dep.TargetEnvImageTag != "" {
-			Expect(img._Container._ServiceCommitChangeOptions.Env[dep.TargetEnvImageTag]).To(Equal(dep.DockerImageTag))
+			Expect(stageBuilder.GetStapelStageBuilderImplementation().Envs[dep.TargetEnvImageTag]).To(Equal(dep.DockerImageTag))
 		}
 		if dep.TargetEnvImageDigest != "" {
-			Expect(img._Container._ServiceCommitChangeOptions.Env[dep.TargetEnvImageDigest]).To(Equal(dep.DockerImageDigest))
+			Expect(stageBuilder.GetStapelStageBuilderImplementation().Envs[dep.TargetEnvImageDigest]).To(Equal(dep.DockerImageDigest))
 		}
 
 		if dep.TargetBuildArgImageName != "" {

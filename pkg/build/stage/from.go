@@ -5,13 +5,11 @@ import (
 	"fmt"
 	"path"
 	"path/filepath"
-	"strings"
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	imagePkg "github.com/werf/werf/v2/pkg/image"
-	"github.com/werf/werf/v2/pkg/stapel"
 )
 
 func GenerateFromStage(imageBaseConfig *config.StapelImageBase, baseImageRepoId, imageCacheVersion string, baseStageOptions *BaseStageOptions) *FromStage {
@@ -119,29 +117,14 @@ func (s *FromStage) PrepareImage(ctx context.Context, c Conveyor, cb container_b
 
 	serviceMounts := s.getServiceMounts(prevBuiltImage)
 	s.addServiceMountsLabels(serviceMounts, c, cb, stageImage)
-	if !c.UseLegacyStapelBuilder(cb) {
-		if err := s.addServiceMountsVolumes(serviceMounts, c, cb, stageImage, true); err != nil {
-			return fmt.Errorf("error adding mounts volumes: %w", err)
-		}
+	if err := s.addServiceMountsVolumes(serviceMounts, c, cb, stageImage, true); err != nil {
+		return fmt.Errorf("error adding mounts volumes: %w", err)
 	}
 
 	customMounts := s.getCustomMounts(prevBuiltImage)
 	s.addCustomMountLabels(customMounts, c, cb, stageImage)
-	if !c.UseLegacyStapelBuilder(cb) {
-		if err := s.addCustomMountVolumes(customMounts, c, cb, stageImage, true); err != nil {
-			return fmt.Errorf("error adding mounts volumes: %w", err)
-		}
-	}
-
-	var mountpoints []string
-	for _, mountCfg := range s.configMounts {
-		mountpoints = append(mountpoints, mountCfg.To)
-	}
-	if len(mountpoints) > 0 {
-		if c.UseLegacyStapelBuilder(cb) {
-			mountpointsStr := strings.Join(mountpoints, " ")
-			stageImage.Builder.LegacyStapelStageBuilder().Container().AddServiceRunCommands(fmt.Sprintf("%s -rf %s", stapel.RmBinPath(), mountpointsStr))
-		}
+	if err := s.addCustomMountVolumes(customMounts, c, cb, stageImage, true); err != nil {
+		return fmt.Errorf("error adding mounts volumes: %w", err)
 	}
 
 	return nil

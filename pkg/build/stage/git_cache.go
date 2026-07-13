@@ -10,9 +10,9 @@ import (
 
 const patchSizeStep = 1024 * 1024
 
-func NewGitCacheStage(gitPatchStageOptions *NewGitPatchStageOptions, baseStageOptions *BaseStageOptions) *GitCacheStage {
+func NewGitCacheStage(baseStageOptions *BaseStageOptions) *GitCacheStage {
 	s := &GitCacheStage{}
-	s.GitPatchStage = newGitPatchStage(GitCache, gitPatchStageOptions, baseStageOptions)
+	s.GitPatchStage = newGitPatchStage(GitCache, baseStageOptions)
 	return s
 }
 

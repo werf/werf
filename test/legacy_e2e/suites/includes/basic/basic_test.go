@@ -41,12 +41,7 @@ var _ = Describe("build and mutate image spec", Label("integration", "build", "m
 		func(ctx SpecContext, testOpts simpleTestOptions) {
 			By("initializing")
 			setupEnv(testOpts.setupEnvOptions)
-			_, err := contback.NewContainerBackend(testOpts.ContainerBackendMode)
-			if err == contback.ErrRuntimeUnavailable {
-				Skip(err.Error())
-			} else if err != nil {
-				Fail(err.Error())
-			}
+			_ = contback.NewContainerBackend()
 
 			By("prepearing repos")
 			{

@@ -1,8 +1,0 @@
-giterminismConfigVersion: 1
-config:
-  goTemplateRendering:
-    allowEnvVariables:
-      - ARTIFACT_CACHE_VERSION
-      - ARTIFACT_DATA
-cli:
-  allowCustomTags: true

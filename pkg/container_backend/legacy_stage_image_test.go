@@ -12,7 +12,7 @@ var _ = Describe("LegacyStageImage", func() {
 	It("returns stage image name", func() {
 		t := GinkgoT()
 
-		stageImage := NewLegacyStageImage(nil, "repo:tag", nil, "")
+		stageImage := NewLegacyStageImage("repo:tag", nil, "")
 		stageImage.SetStageDesc(&image.StageDesc{
 			Info: &image.Info{
 				Name: "repo:tag",

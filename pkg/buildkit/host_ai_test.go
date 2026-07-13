@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestAI_HostFromEnv_WerfEnvWinsOverBare(t *testing.T) {
@@ -19,13 +18,60 @@ func TestAI_HostFromEnv_FallsBackToBare(t *testing.T) {
 	assert.Equal(t, "unix:///run/buildkit/buildkitd.sock", HostFromEnv())
 }
 
-func TestAI_GetHost_ErrorWhenUnset(t *testing.T) {
+func TestAI_ResolveHost_EnvWinsWithoutDocker(t *testing.T) {
+	t.Setenv("WERF_BUILDKIT_HOST", "tcp://werf-host:1234")
+
+	host, err := ResolveHost(t.Context(), ResolveHostOptions{})
+	assert.NoError(t, err)
+	assert.Equal(t, "tcp://werf-host:1234", host)
+}
+
+func TestAI_ResolveHost_ErrorMentionsEnvVarsWhenDockerUnavailable(t *testing.T) {
 	t.Setenv("WERF_BUILDKIT_HOST", "")
 	t.Setenv("BUILDKIT_HOST", "")
+	t.Setenv("DOCKER_HOST", "unix:///nonexistent/docker.sock")
 
-	_, err := GetHost()
-	require.Error(t, err)
+	_, err := ResolveHost(t.Context(), ResolveHostOptions{})
+	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "WERF_BUILDKIT_HOST")
 	assert.Contains(t, err.Error(), "BUILDKIT_HOST")
-	assert.Contains(t, err.Error(), "docker run")
+}
+
+func TestAI_MakeLocalBuildkitdConfig_MapsFlagsToRegistryOptions(t *testing.T) {
+	config, err := makeLocalBuildkitdConfig(ResolveHostOptions{
+		InsecureRegistryAddresses:      []string{"192.168.1.66:5556/werf-stapel-test"},
+		SkipTLSVerifyRegistryAddresses: []string{"192.168.1.66:5556/werf-stapel-test", "my.registry.example/proj"},
+	})
+	assert.NoError(t, err)
+	assert.Equal(t, `[registry."192.168.1.66:5556"]
+  http = true
+  insecure = true
+[registry."my.registry.example"]
+  insecure = true
+`, config)
+}
+
+func TestAI_MakeLocalBuildkitdConfig_EmptyWithoutFlags(t *testing.T) {
+	config, err := makeLocalBuildkitdConfig(ResolveHostOptions{})
+	assert.NoError(t, err)
+	assert.Empty(t, config)
+}
+
+func TestAI_LocalBuildkitdConfigHash_ChangesWithNetworkSetup(t *testing.T) {
+	hostNet := localBuildkitdNetworkSetup{NetworkMode: "host"}
+	bridgeNet := localBuildkitdNetworkSetup{ExtraHosts: []string{"host.docker.internal:host-gateway"}}
+	assert.NotEqual(t, localBuildkitdConfigHash("", hostNet), localBuildkitdConfigHash("", bridgeNet))
+	assert.Equal(t, localBuildkitdConfigHash("", hostNet), localBuildkitdConfigHash("", hostNet))
+}
+
+func TestAI_ValidateRepoReachability(t *testing.T) {
+	bridge := localBuildkitdNetworkSetup{ExtraHosts: []string{"host.docker.internal:host-gateway"}}
+	hostNet := localBuildkitdNetworkSetup{NetworkMode: "host"}
+
+	assert.Error(t, validateRepoReachability("localhost:5001/test", bridge))
+	assert.Error(t, validateRepoReachability("127.0.0.1:5001/test", bridge))
+	assert.NoError(t, validateRepoReachability("localhost:5001/test", hostNet))
+	assert.NoError(t, validateRepoReachability("192.168.1.66:5556/test", bridge))
+	assert.NoError(t, validateRepoReachability("registry.example.com/test", bridge))
+	assert.NoError(t, validateRepoReachability("", bridge))
 }

@@ -157,12 +157,6 @@ Rendering and showing manifests:
 werf render --dev
 ```
 
-Building an image and starting the interactive shell in a container with a failed stage in case of failure:
-
-```shell
-werf build --dev [--follow] --introspect-error
-```
-
 Building an image, running it in a Kubernetes Pod, and executing the command in it:
 
 ```shell

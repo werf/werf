@@ -5,24 +5,28 @@ import (
 
 	. "github.com/onsi/gomega"
 
+	"github.com/werf/werf/v2/pkg/buildkit"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/docker_registry"
 	"github.com/werf/werf/v2/pkg/storage"
-	"github.com/werf/werf/v2/pkg/werf"
 )
 
 func NewStagesStorage(ctx context.Context, stagesStorageAddress, implementationName string, dockerRegistryOptions docker_registry.DockerRegistryOptions) storage.PrimaryStagesStorage {
 	if stagesStorageAddress == storage.LocalStorageAddress {
-		return storage.NewLocalStagesStorage(container_backend.NewDockerServerBackend(werf.HostLocker().Locker()))
-	} else {
-		dockerRegistry, err := docker_registry.NewDockerRegistry(ctx, stagesStorageAddress, implementationName, dockerRegistryOptions)
-		Expect(err).ShouldNot(HaveOccurred())
-		return storage.NewRepoStagesStorage(&storage.NewRepoStagesStorageOptions{
-			RepoAddress:      stagesStorageAddress,
-			ContainerBackend: container_backend.NewDockerServerBackend(werf.HostLocker().Locker()),
-			DockerRegistry:   dockerRegistry,
-		})
+		panic("local stages storage is not supported by buildkit backend, use a repo address in tests")
 	}
+
+	dockerRegistry, err := docker_registry.NewDockerRegistry(ctx, stagesStorageAddress, implementationName, dockerRegistryOptions)
+	Expect(err).ShouldNot(HaveOccurred())
+
+	buildkitHost, err := buildkit.ResolveHost(ctx, buildkit.ResolveHostOptions{})
+	Expect(err).ShouldNot(HaveOccurred())
+
+	return storage.NewRepoStagesStorage(&storage.NewRepoStagesStorageOptions{
+		RepoAddress:      stagesStorageAddress,
+		ContainerBackend: container_backend.NewBuildkitBackend(buildkitHost, container_backend.BuildkitBackendOptions{}),
+		DockerRegistry:   dockerRegistry,
+	})
 }
 
 func StagesCount(ctx context.Context, stagesStorage storage.StagesStorage) int {

@@ -10,31 +10,14 @@ import (
 	"github.com/werf/werf/v2/pkg/git_repo"
 )
 
-type NewGitArchiveStageOptions struct {
-	ArchivesDir          string
-	ScriptsDir           string
-	ContainerArchivesDir string
-	ContainerScriptsDir  string
-}
-
-func NewGitArchiveStage(gitArchiveStageOptions *NewGitArchiveStageOptions, baseStageOptions *BaseStageOptions) *GitArchiveStage {
-	s := &GitArchiveStage{
-		ArchivesDir:          gitArchiveStageOptions.ArchivesDir,
-		ScriptsDir:           gitArchiveStageOptions.ScriptsDir,
-		ContainerArchivesDir: gitArchiveStageOptions.ContainerArchivesDir,
-		ContainerScriptsDir:  gitArchiveStageOptions.ContainerScriptsDir,
-	}
+func NewGitArchiveStage(baseStageOptions *BaseStageOptions) *GitArchiveStage {
+	s := &GitArchiveStage{}
 	s.GitStage = newGitStage(GitArchive, baseStageOptions)
 	return s
 }
 
 type GitArchiveStage struct {
 	*GitStage
-
-	ArchivesDir          string
-	ScriptsDir           string
-	ContainerArchivesDir string
-	ContainerScriptsDir  string
 }
 
 // TODO: 1.3 add git mapping type (dir, file, ...) to gitArchive stage digest
@@ -107,11 +90,6 @@ func (s *GitArchiveStage) PrepareImage(ctx context.Context, c Conveyor, cb conta
 		if err := gitMapping.PrepareArchiveForImage(ctx, c, cb, stageImage); err != nil {
 			return fmt.Errorf("unable to prepare git mapping %s for image stage: %w", gitMapping.Name, err)
 		}
-	}
-
-	if c.UseLegacyStapelBuilder(cb) {
-		stageImage.Builder.LegacyStapelStageBuilder().Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", git_repo.CommonGitDataManager.GetArchivesCacheDir(), s.ContainerArchivesDir))
-		stageImage.Builder.LegacyStapelStageBuilder().Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", s.ScriptsDir, s.ContainerScriptsDir))
 	}
 
 	return nil

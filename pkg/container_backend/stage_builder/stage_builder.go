@@ -10,7 +10,6 @@ type StageBuilderInterface interface {
 	StapelStageBuilder() StapelStageBuilderInterface
 	DockerfileBuilder() DockerfileBuilderInterface
 	DockerfileStageBuilder() DockerfileStageBuilderInterface
-	LegacyStapelStageBuilder() LegacyStapelStageBuilderInterface
 
 	Build(ctx context.Context, opts container_backend.BuildOptions) error
 }
@@ -28,10 +27,9 @@ type StageBuilder struct {
 	BaseImage        string
 	Image            container_backend.LegacyImageInterface // TODO: use ImageInterface
 
-	dockerfileBuilder        *DockerfileBuilder
-	dockerfileStageBuilder   *DockerfileStageBuilder
-	stapelStageBuilder       *StapelStageBuilder
-	legacyStapelStageBuilder *LegacyStapelStageBuilder
+	dockerfileBuilder      *DockerfileBuilder
+	dockerfileStageBuilder *DockerfileStageBuilder
+	stapelStageBuilder     *StapelStageBuilder
 }
 
 func (stageBuilder *StageBuilder) GetDockerfileBuilderImplementation() *DockerfileBuilder {
@@ -46,22 +44,11 @@ func (stageBuilder *StageBuilder) GetStapelStageBuilderImplementation() *StapelS
 	return stageBuilder.stapelStageBuilder
 }
 
-func (stageBuilder *StageBuilder) GetLegacyStapelStageBuilderImplmentation() *LegacyStapelStageBuilder {
-	return stageBuilder.legacyStapelStageBuilder
-}
-
 func (stageBuilder *StageBuilder) StapelStageBuilder() StapelStageBuilderInterface {
 	if stageBuilder.stapelStageBuilder == nil {
 		stageBuilder.stapelStageBuilder = NewStapelStageBuilder(stageBuilder.ContainerBackend, stageBuilder.BaseImage, stageBuilder.Image)
 	}
 	return stageBuilder.stapelStageBuilder
-}
-
-func (stageBuilder *StageBuilder) LegacyStapelStageBuilder() LegacyStapelStageBuilderInterface {
-	if stageBuilder.legacyStapelStageBuilder == nil {
-		stageBuilder.legacyStapelStageBuilder = NewLegacyStapelStageBuilder(stageBuilder.ContainerBackend, stageBuilder.Image)
-	}
-	return stageBuilder.legacyStapelStageBuilder
 }
 
 func (stageBuilder *StageBuilder) DockerfileBuilder() DockerfileBuilderInterface {
@@ -86,8 +73,6 @@ func (stageBuilder *StageBuilder) Build(ctx context.Context, opts container_back
 		return stageBuilder.dockerfileStageBuilder.Build(ctx, opts)
 	case stageBuilder.stapelStageBuilder != nil:
 		return stageBuilder.stapelStageBuilder.Build(ctx, opts)
-	case stageBuilder.legacyStapelStageBuilder != nil:
-		return stageBuilder.legacyStapelStageBuilder.Build(ctx, opts)
 	}
 
 	panic("no builder has been activated yet")

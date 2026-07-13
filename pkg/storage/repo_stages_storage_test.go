@@ -109,7 +109,7 @@ var _ = Describe("RepoStagesStorage", func() {
 	It("preserves target platform in repo-backed mutation", func(ctx SpecContext) {
 		registry := &pushImageRegistryStub{}
 		storage := &RepoStagesStorage{DockerRegistry: registry}
-		stageImage := container_backend.NewLegacyStageImage(nil, "registry.example/project:tag", nil, "linux/amd64")
+		stageImage := container_backend.NewLegacyStageImage("registry.example/project:tag", nil, "linux/amd64")
 
 		err := storage.MutateAndPushImage(ctx, "registry.example/project:src", "registry.example/project:dest", image.SpecConfig{}, stageImage)
 		Expect(err).NotTo(HaveOccurred())

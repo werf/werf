@@ -8,8 +8,6 @@ import (
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/cmd/werf/common"
-	"github.com/werf/werf/v2/pkg/cleaning"
-	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/host_cleaning"
 	"github.com/werf/werf/v2/pkg/tmp_manager"
 	"github.com/werf/werf/v2/pkg/werf/global_warnings"
@@ -91,28 +89,8 @@ func runReset(ctx context.Context) error {
 			return err
 		}
 	} else {
-		if _, ok := containerBackend.(*container_backend.DockerServerBackend); !ok {
-			logboek.Context(ctx).Warn().LogF("Skip cleaning local storage with buildkit backend (not implemented)\n")
-			return nil
-		}
-		storageManager, err := common.NewStorageManagerWithOptions(ctx, &common.NewStorageManagerConfig{
-			ProjectName:      projectName,
-			ContainerBackend: containerBackend,
-			CmdData:          &commonCmdData,
-		}, common.WithHostPurge())
-		if err != nil {
-			return fmt.Errorf("unable to init storage manager: %w", err)
-		}
-
-		purgeOptions := cleaning.PurgeOptions{
-			RmContainersThatUseWerfImages: cmdData.Force,
-			DryRun:                        *commonCmdData.DryRun,
-		}
-
-		logboek.LogOptionalLn()
-		if err := cleaning.Purge(ctx, projectName, storageManager, purgeOptions); err != nil {
-			return err
-		}
+		logboek.Context(ctx).Warn().LogF("Skip cleaning local storage with buildkit backend (not implemented)\n")
+		return nil
 	}
 
 	return nil

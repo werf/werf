@@ -7,7 +7,6 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/werf/werf/v2/pkg/config"
-	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/container_backend/stage_builder"
 	"github.com/werf/werf/v2/pkg/image"
 )
@@ -39,7 +38,7 @@ var _ = Describe("DependenciesStage", func() {
 
 			err = stage.PrepareImage(ctx, conveyor, containerBackend, nil, stageImage, nil)
 			Expect(err).To(Succeed())
-			CheckImageDependenciesAfterPrepare(img, stageBuilder, data.Dependencies)
+			CheckImageDependenciesAfterPrepare(stageBuilder, data.Dependencies)
 		},
 
 		Entry("should calculate basic stage digest when no dependencies are set",
@@ -247,22 +246,8 @@ var _ = Describe("DependenciesStage", func() {
 			}
 		}
 
-		It("should set current commit label for legacy stapel builder", func(ctx SpecContext) {
-			conveyor := NewConveyorStubForDependencies(NewGiterminismManagerStub(NewLocalGitRepoStub(commit), NewGiterminismInspectorStub()), nil)
-			containerBackend := NewContainerBackendStub()
-			stage := newDependenciesStage(nil, nil, DependenciesAfterSetup, &BaseStageOptions{
-				ImageName:   "example-image",
-				ProjectName: "example-project",
-			})
-
-			img, _, stageImage := newStageImage(containerBackend)
-
-			Expect(stage.PrepareImage(ctx, conveyor, containerBackend, nil, stageImage, nil)).To(Succeed())
-			Expect(img._Container._ServiceCommitChangeOptions.Labels[image.WerfProjectRepoCommitLabel]).To(Equal(commit))
-		})
-
 		It("should set current commit label for stapel builder", func(ctx SpecContext) {
-			conveyor := &nonLegacyDependenciesConveyorStub{ConveyorStub: NewConveyorStubForDependencies(NewGiterminismManagerStub(NewLocalGitRepoStub(commit), NewGiterminismInspectorStub()), nil)}
+			conveyor := NewConveyorStubForDependencies(NewGiterminismManagerStub(NewLocalGitRepoStub(commit), NewGiterminismInspectorStub()), nil)
 			containerBackend := NewContainerBackendStub()
 			stage := newDependenciesStage(nil, nil, DependenciesAfterSetup, &BaseStageOptions{
 				ImageName:   "example-image",
@@ -276,7 +261,7 @@ var _ = Describe("DependenciesStage", func() {
 			Expect(stageBuilder.GetStapelStageBuilderImplementation().Labels).To(ContainElement(fmt.Sprintf("%s=%s", image.WerfProjectRepoCommitLabel, commit)))
 		})
 
-		It("should not set empty commit label for legacy stapel builder", func(ctx SpecContext) {
+		It("should not set empty commit label for stapel builder", func(ctx SpecContext) {
 			conveyor := NewConveyorStubForDependencies(NewGiterminismManagerStub(NewLocalGitRepoStub(""), NewGiterminismInspectorStub()), nil)
 			containerBackend := NewContainerBackendStub()
 			stage := newDependenciesStage(nil, nil, DependenciesAfterSetup, &BaseStageOptions{
@@ -284,10 +269,10 @@ var _ = Describe("DependenciesStage", func() {
 				ProjectName: "example-project",
 			})
 
-			img, _, stageImage := newStageImage(containerBackend)
+			_, stageBuilder, stageImage := newStageImage(containerBackend)
 
 			Expect(stage.PrepareImage(ctx, conveyor, containerBackend, nil, stageImage, nil)).To(Succeed())
-			Expect(img._Container._ServiceCommitChangeOptions.Labels).NotTo(HaveKey(image.WerfProjectRepoCommitLabel))
+			Expect(stageBuilder.GetStapelStageBuilderImplementation()).To(BeNil())
 		})
 	})
 })
@@ -363,12 +348,4 @@ func NewConveyorStubForDependencies(giterminismManager *GiterminismManagerStub, 
 	}
 
 	return NewConveyorStub(giterminismManager, lastStageImageNameByImageName, lastStageImageDigestByImageName)
-}
-
-type nonLegacyDependenciesConveyorStub struct {
-	*ConveyorStub
-}
-
-func (c *nonLegacyDependenciesConveyorStub) UseLegacyStapelBuilder(container_backend.ContainerBackend) bool {
-	return false
 }

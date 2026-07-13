@@ -1,7 +1,6 @@
 package e2e_build_test
 
 import (
-	"errors"
 	"fmt"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -22,12 +21,7 @@ var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
 		func(ctx SpecContext, testOpts complexTestOptions) {
 			By("initializing")
 			setupEnv(testOpts.setupEnvOptions)
-			contRuntime, err := contback.NewContainerBackend(testOpts.ContainerBackendMode)
-			if errors.Is(err, contback.ErrRuntimeUnavailable) {
-				Skip(err.Error())
-			} else if err != nil {
-				Fail(err.Error())
-			}
+			contRuntime := contback.NewContainerBackend()
 
 			By("state0: starting")
 			{
@@ -52,10 +46,8 @@ var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
 				))
 
 				By(`state0: getting built images metadata`)
-				if testOpts.WithLocalRepo {
-					contRuntime.Pull(ctx, buildReport.Images["dockerfile"].DockerImageName)
-					contRuntime.Pull(ctx, buildReport.Images["stapel-shell"].DockerImageName)
-				}
+				contRuntime.Pull(ctx, buildReport.Images["dockerfile"].DockerImageName)
+				contRuntime.Pull(ctx, buildReport.Images["stapel-shell"].DockerImageName)
 
 				inspectOfDockerfileImage := contRuntime.GetImageInspect(ctx, buildReport.Images["dockerfile"].DockerImageName)
 				dockerfileImgCfg := inspectOfDockerfileImage.Config
@@ -117,10 +109,8 @@ var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
 				))
 
 				By(`state1: getting built images metadata`)
-				if testOpts.WithLocalRepo {
-					contRuntime.Pull(ctx, buildReport.Images["dockerfile"].DockerImageName)
-					contRuntime.Pull(ctx, buildReport.Images["stapel-shell"].DockerImageName)
-				}
+				contRuntime.Pull(ctx, buildReport.Images["dockerfile"].DockerImageName)
+				contRuntime.Pull(ctx, buildReport.Images["stapel-shell"].DockerImageName)
 
 				inspectOfDockerfileImg := contRuntime.GetImageInspect(ctx, buildReport.Images["dockerfile"].DockerImageName)
 				dockerfileImgCfg := inspectOfDockerfileImg.Config
@@ -142,25 +132,11 @@ var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
 				contRuntime.ExpectCmdsToSucceed(ctx, buildReport.Images["stapel-shell"].DockerImageName, "test -f /app/README.md", "stat -c %u:%g /app/README.md | diff <(echo 1050:1051) -", "grep -qF 'https://cloud.google.com/sdk/' /app/README.md", "test -f /app/static/index.html", "stat -c %u:%g /app/static/index.html | diff <(echo 1050:1051) -", "grep -qF '<title>Hello, world</title>' /app/static/index.html", "! test -e /app/static/style.css", "test -f /app/app.go", "stat -c %u:%g /app/app.go | diff <(echo 1050:1051) -", "grep -qF 'package hello' /app/app.go", "! test -e /app/static/script.js", "test -f /triggered-stages", "stat -c %u:%g /triggered-stages | diff <(echo 0:0) -", "echo 'beforeInstall\ninstall\nbeforeSetup\nsetup' | diff /triggered-stages -", "! test -e /tmp_dir/file", "test -f /basedir/file", "stat -c %u:%g /basedir/file | diff <(echo 0:0) -", "echo 'content' | diff /basedir/file -", "test -f /basedir-imported/file", "stat -c %u:%g /basedir-imported/file | diff <(echo 1060:1061) -", "echo 'content' | diff /basedir-imported/file -")
 			}
 		},
-		Entry("without repo using Docker", complexTestOptions{setupEnvOptions{
-			ContainerBackendMode:        "docker",
-			WithLocalRepo:               false,
-			WithStagedDockerfileBuilder: false,
-		}}),
-		Entry("with local repo using Docker", complexTestOptions{setupEnvOptions{
-			ContainerBackendMode:        "docker",
-			WithLocalRepo:               true,
-			WithStagedDockerfileBuilder: false,
-		}}),
 		Entry("with local repo using BuildKit", complexTestOptions{setupEnvOptions{
-			ContainerBackendMode:        "buildkit",
-			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: false,
 		}}),
 		// TODO(1.3): after Full Dockerfile Builder removed and Staged Dockerfile Builder enabled by default this test no longer needed
 		Entry("with local repo using BuildKit and Staged Dockerfile builder", complexTestOptions{setupEnvOptions{
-			ContainerBackendMode:        "buildkit",
-			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: true,
 		}}),
 		// TODO(1.3): after Full Dockerfile Builder removed and Staged Dockerfile Builder enabled by default this test no longer needed

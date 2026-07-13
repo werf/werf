@@ -87,63 +87,6 @@ func (s *DependenciesStage) GetContentDependencies(ctx context.Context, c Convey
 	return s.GetDependencies(ctx, c, nil, nil, nil, buildContextArchive)
 }
 
-func (s *DependenciesStage) prepareImageWithLegacyStapelBuilder(ctx context.Context, c Conveyor, cr container_backend.ContainerBackend, _, stageImage *StageImage) error {
-	imageServiceCommitChangeOptions := stageImage.Builder.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions()
-
-	for _, elm := range s.imports {
-		sourceImageName := getSourceImageName(elm)
-		srv, err := c.GetImportServer(ctx, s.targetPlatform, sourceImageName, elm.ExternalImage)
-		if err != nil {
-			return fmt.Errorf("unable to get import server for image %q: %w", sourceImageName, err)
-		}
-
-		command := srv.GetCopyCommand(ctx, elm)
-		stageImage.Builder.LegacyStapelStageBuilder().Container().AddServiceRunCommands(command)
-
-		sourceStageIDLabelKey := image.WerfImportSourceStageIDLabelPrefix + getImportID(elm)
-		sourceStageID := getSourceStageID(c, s.targetPlatform, elm)
-
-		imageServiceCommitChangeOptions.AddLabel(map[string]string{
-			sourceStageIDLabelKey: sourceStageID,
-		})
-	}
-
-	for _, dep := range s.dependencies {
-		depImageServiceOptions := stageImage.Builder.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions()
-
-		depImageName := c.GetImageContentTagName(s.targetPlatform, dep.ImageName)
-		depImageDigest := c.GetImageContentTagDigest(s.targetPlatform, dep.ImageName)
-		depImageRepo, depImageTag := image.ParseRepositoryAndTag(depImageName)
-
-		for _, img := range dep.Imports {
-			switch img.Type {
-			case config.ImageRepoImport:
-				depImageServiceOptions.AddEnv(map[string]string{
-					img.TargetEnv: depImageRepo,
-				})
-			case config.ImageTagImport:
-				depImageServiceOptions.AddEnv(map[string]string{
-					img.TargetEnv: depImageTag,
-				})
-			case config.ImageNameImport:
-				depImageServiceOptions.AddEnv(map[string]string{
-					img.TargetEnv: depImageName,
-				})
-			case config.ImageDigestImport:
-				depImageServiceOptions.AddEnv(map[string]string{
-					img.TargetEnv: depImageDigest,
-				})
-			}
-		}
-
-		imageServiceCommitChangeOptions.AddLabel(map[string]string{
-			dependencyLabelKey(depImageName): depImageName,
-		})
-	}
-
-	return nil
-}
-
 func (s *DependenciesStage) prepareImage(ctx context.Context, c Conveyor, cr container_backend.ContainerBackend, _, stageImage *StageImage) error {
 	for _, elm := range s.imports {
 
@@ -200,11 +143,7 @@ func (s *DependenciesStage) prepareImage(ctx context.Context, c Conveyor, cr con
 func (s *DependenciesStage) PrepareImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) error {
 	s.addProjectRepoCommitLabel(ctx, c, cb, stageImage)
 
-	if c.UseLegacyStapelBuilder(cb) {
-		return s.prepareImageWithLegacyStapelBuilder(ctx, c, cb, prevBuiltImage, stageImage)
-	} else {
-		return s.prepareImage(ctx, c, cb, prevBuiltImage, stageImage)
-	}
+	return s.prepareImage(ctx, c, cb, prevBuiltImage, stageImage)
 }
 
 func getDependencyImportID(dependencyImport *config.DependencyImport) string {

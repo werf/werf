@@ -461,7 +461,7 @@ func (m *StorageManager) FetchStageImage(ctx context.Context, containerBackend c
 	fetchStageFromCache := func(stagesStorage storage.StagesStorage) (container_backend.LegacyImageInterface, error) {
 		stageID := stageImage.Image.GetStageDesc().StageID
 		imageName := stagesStorage.ConstructStageImageName(m.ProjectName, stageID.Digest, stageID.CreationTs)
-		cacheStageImage := container_backend.NewLegacyStageImage(nil, imageName, containerBackend, stageImage.Image.GetTargetPlatform())
+		cacheStageImage := container_backend.NewLegacyStageImage(imageName, containerBackend, stageImage.Image.GetTargetPlatform())
 
 		shouldFetch, err := stagesStorage.ShouldFetchImage(ctx, cacheStageImage)
 		if err != nil {
@@ -790,7 +790,7 @@ func (m *StorageManager) getStageDescSetByDigestFromStagesStorage(ctx context.Co
 }
 
 func (m *StorageManager) CopySuitableStageDescByDigest(ctx context.Context, stageDesc *image.StageDesc, sourceStagesStorage, destinationStagesStorage storage.StagesStorage, containerBackend container_backend.ContainerBackend, targetPlatform string) (*image.StageDesc, error) {
-	img := container_backend.NewLegacyStageImage(nil, stageDesc.Info.Name, containerBackend, targetPlatform)
+	img := container_backend.NewLegacyStageImage(stageDesc.Info.Name, containerBackend, targetPlatform)
 
 	logboek.Context(ctx).Info().LogF("Fetching %s\n", img.Name())
 	if err := sourceStagesStorage.FetchImage(ctx, img); err != nil {
