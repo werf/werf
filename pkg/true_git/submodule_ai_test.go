@@ -23,16 +23,20 @@ func TestAI_GetIncludePathOptions(t *testing.T) {
 
 	runGitAI(t, repoDir, "config", "--add", "include.path", "/abs/ext.conf")
 	runGitAI(t, repoDir, "config", "--add", "include.path", "rel/ext.conf")
+	runGitAI(t, repoDir, "config", "--add", "include.path", "~/tilde-ext.conf")
 
 	opts, err = getIncludePathOptions(ctx, gitDir)
 	require.NoError(t, err)
-	require.Len(t, opts, 4)
+	require.Len(t, opts, 6)
 	require.Equal(t, "-c", opts[0])
 	require.Equal(t, "include.path=/abs/ext.conf", opts[1])
 	require.Equal(t, "-c", opts[2])
 	require.True(t, strings.HasPrefix(opts[3], "include.path="))
-	require.True(t, filepath.IsAbs(strings.TrimPrefix(opts[3], "include.path=")))
-	require.True(t, strings.HasSuffix(opts[3], filepath.Join("rel", "ext.conf")))
+	relResolved := strings.TrimPrefix(opts[3], "include.path=")
+	require.True(t, filepath.IsAbs(relResolved))
+	require.Equal(t, filepath.Join(gitDir, "rel", "ext.conf"), relResolved)
+	require.Equal(t, "-c", opts[4])
+	require.Equal(t, "include.path=~/tilde-ext.conf", opts[5])
 }
 
 func TestAI_UpdateSubmodulesForwardsIncludePath(t *testing.T) {
