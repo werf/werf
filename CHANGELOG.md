@@ -1,5 +1,20 @@
 # Changelog
 
+## [2.74.0](https://github.com/werf/werf/compare/v2.73.2...v2.74.0) (2026-07-14)
+
+
+### Features
+
+* **deploy:** add `werf.io/resource-policy` annotation ([#7613](https://github.com/werf/werf/issues/7613)) ([72ae0f2](https://github.com/werf/werf/commit/72ae0f24ea745a81c61656d1c25df8dace2538f6))
+
+
+### Bug Fixes
+
+* **build:** forward include.path to submodule sync/update commands ([#7660](https://github.com/werf/werf/issues/7660)) ([5ab32d2](https://github.com/werf/werf/commit/5ab32d2fd7598bfcdb598f1f1217138e15a9e4b2))
+* **build:** send valid empty tar for docker from:scratch import ([#7609](https://github.com/werf/werf/issues/7609)) ([1c59585](https://github.com/werf/werf/commit/1c5958506a960167c76dede2cfa88ed130db1d12))
+* **bundle:** update .Values.global.werf.images during bundle copy ([#7600](https://github.com/werf/werf/issues/7600)) ([cf2fb96](https://github.com/werf/werf/commit/cf2fb96d2de01c13d8c733589cb02262eb9521b1))
+* **deploy:** `werf.io/resource-policy` should only respect skip-delete from live ([#7623](https://github.com/werf/werf/issues/7623)) ([f261028](https://github.com/werf/werf/commit/f261028ca4b92b48ef9e26c353c0adade1e331ea))
+
 ## [2.73.2](https://github.com/werf/werf/compare/v2.73.1...v2.73.2) (2026-07-01)
 
 
