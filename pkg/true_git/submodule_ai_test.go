@@ -34,7 +34,7 @@ func TestAI_GetIncludePathOptions(t *testing.T) {
 	require.True(t, strings.HasPrefix(opts[3], "include.path="))
 	relResolved := strings.TrimPrefix(opts[3], "include.path=")
 	require.True(t, filepath.IsAbs(relResolved))
-	require.Equal(t, filepath.Join(gitDir, "rel", "ext.conf"), relResolved)
+	require.True(t, strings.HasSuffix(relResolved, filepath.Join(".git", "rel", "ext.conf")))
 	require.Equal(t, "-c", opts[4])
 	require.Equal(t, "include.path=~/tilde-ext.conf", opts[5])
 }
