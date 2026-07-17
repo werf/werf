@@ -135,6 +135,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupExtraRuntimeLabels(&commonCmdData, cmd)
 	common.SetupForceAdoption(&commonCmdData, cmd)
 	common.SetupKubeVersion(&commonCmdData, cmd)
+	common.SetupLocalLookupResourcesPaths(&commonCmdData, cmd)
 	common.SetupNamespace(&commonCmdData, cmd, true)
 	common.SetupNetworkParallelism(&commonCmdData, cmd)
 	common.SetupNoFinalTrackingFlag(&commonCmdData, cmd)
@@ -409,6 +410,7 @@ func runLint(ctx context.Context, imageNameListFromArgs []string) error {
 		LegacyExtraValues:           serviceValues,
 		LegacyLogRegistryStreamOut:  os.Stdout,
 		LocalKubeVersion:            commonCmdData.KubeVersion,
+		LocalLookupResourcesPaths:   commonCmdData.LocalLookupResourcesPaths,
 		NetworkParallelism:          commonCmdData.NetworkParallelism,
 		NoFinalTracking:             commonCmdData.NoFinalTracking,
 		NoRemoveManualChanges:       commonCmdData.NoRemoveManualChanges,
