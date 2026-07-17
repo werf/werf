@@ -132,6 +132,7 @@ type CmdData struct {
 	LegacyKubeConfigPathsMergeList   []string
 	LegacyProgressTablePrintInterval int
 	LegacyTrackTimeout               int
+	LocalLookupResourcesPaths        []string
 	Namespace                        string
 	NetworkParallelism               int
 	NoInstallStandaloneCRDs          bool
@@ -399,6 +400,7 @@ func (cmdData *CmdData) processFlags() error {
 	cmdData.ValidationSkip = append(util.PredefinedValuesByEnvNamePrefix("WERF_RESOURCE_VALIDATION_SKIP_"), cmdData.ValidationSkip...)
 	cmdData.ValidationExtraSchemas = append(util.PredefinedValuesByEnvNamePrefix("WERF_RESOURCE_VALIDATION_EXTRA_SCHEMA_"), cmdData.ValidationExtraSchemas...)
 	cmdData.ExtraAPIVersions = append(util.PredefinedValuesByEnvNamePrefix("WERF_EXTRA_APIVERSIONS_"), cmdData.ExtraAPIVersions...)
+	cmdData.LocalLookupResourcesPaths = append(util.PredefinedValuesByEnvNamePrefix("WERF_LOOKUP_RESOURCES_"), cmdData.LocalLookupResourcesPaths...)
 
 	return nil
 }

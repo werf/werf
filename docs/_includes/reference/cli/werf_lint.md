@@ -261,6 +261,12 @@ werf lint [IMAGE_NAME...] [options]
             Specify custom log time format (default $WERF_LOG_TIME_FORMAT or RFC3339 format).
       --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
+      --lookup-resources=[]
+            Manifest files used as a cluster stub for the lookup template function in non-remote    
+            mode. Multi-document and kind:List supported. Namespaced resources must set             
+            metadata.namespace, otherwise namespace-scoped lookups ignore the requested namespace.  
+            Can be also set with $WERF_LOOKUP_RESOURCES_* environment variables (can specify        
+            multiple)
       --loose-giterminism=false
             Loose werf giterminism mode restrictions
       --namespace=""
