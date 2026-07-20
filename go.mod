@@ -60,7 +60,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/werf/3p-helm-for-werf-helm v0.0.0-20241217155820-089f92cd5c9d
 	github.com/werf/common-go v0.0.0-20260414103517-0558f83edc6d
-	github.com/werf/copy-recurse v0.2.8
+	github.com/werf/copy-recurse v0.3.1
 	github.com/werf/kubedog v0.13.1-0.20260616105957-2c00b08fb99e
 	github.com/werf/kubedog-for-werf-helm v0.0.0-20241217155728-9d45c48b82b6
 	github.com/werf/lockgate v0.1.1
