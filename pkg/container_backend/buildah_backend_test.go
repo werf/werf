@@ -1,11 +1,16 @@
 package container_backend
 
 import (
+	"context"
+	"errors"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 
+	"github.com/werf/werf/v2/pkg/buildah"
 	"github.com/werf/werf/v2/pkg/buildah/thirdparty"
+	"github.com/werf/werf/v2/test/pkg/buildahstub"
 )
 
 var _ = Describe("BuildahBackend pulledImageIDs", func() {
@@ -81,4 +86,37 @@ var _ = Describe("platformMatches", func() {
 		// (OCI default: arm64 without explicit variant is equivalent to v8)
 		Entry("target has variant, image variant empty", "linux", "arm64", "", "linux/arm64/v8", true),
 	)
+})
+
+var _ = Describe("BuildahBackend createContainers", func() {
+	It("re-pulls image by ref when cached imageID is missing locally", func() {
+		fakeBuildah := &buildahstub.BuildahStub{}
+		fakeBuildah.FromCommandFunc = func(_ context.Context, _ string, imageRef string, _ buildah.FromCommandOpts) (string, error) {
+			switch imageRef {
+			case "sha256:stale":
+				return "", errors.New("image not known")
+			case "sha256:fresh":
+				return "container-id", nil
+			default:
+				return "", errors.New("unexpected image ref")
+			}
+		}
+		fakeBuildah.PullFunc = func(_ context.Context, ref string, _ buildah.PullOpts) (string, error) {
+			Expect(ref).To(Equal("registry.example.org/project/stage:tag"))
+			return "sha256:fresh", nil
+		}
+
+		backend := NewBuildahBackend(fakeBuildah, BuildahBackendOptions{})
+		backend.storePulledImageID("registry.example.org/project/stage:tag", "linux/amd64", "sha256:stale")
+
+		containers, err := backend.createContainers(context.Background(), []string{"registry.example.org/project/stage:tag"}, CommonOpts{TargetPlatform: "linux/amd64"})
+		Expect(err).ToNot(HaveOccurred())
+		Expect(containers).To(HaveLen(1))
+		Expect(fakeBuildah.FromCommandImages).To(Equal([]string{"sha256:stale", "sha256:fresh"}))
+		Expect(fakeBuildah.PullRefs).To(Equal([]string{"registry.example.org/project/stage:tag"}))
+
+		cachedID, ok := backend.getPulledImageID("registry.example.org/project/stage:tag", "linux/amd64")
+		Expect(ok).To(BeTrue())
+		Expect(cachedID).To(Equal("sha256:fresh"))
+	})
 })
