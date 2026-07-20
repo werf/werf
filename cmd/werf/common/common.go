@@ -293,6 +293,10 @@ func SetupNoShowNotes(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(&cmdData.NoShowNotes, "no-notes", "", util.GetBoolEnvironmentDefaultFalse("WERF_NO_NOTES"), `Don't show release notes at the end of the release (default $WERF_NO_NOTES)`)
 }
 
+func SetupNoCreateNamespace(cmdData *CmdData, cmd *cobra.Command) {
+	cmd.Flags().BoolVarP(&cmdData.NoCreateNamespace, "no-create-namespace", "", util.GetBoolEnvironmentDefaultFalse("WERF_NO_CREATE_NAMESPACE"), `Don't create the release namespace (default $WERF_NO_CREATE_NAMESPACE)`)
+}
+
 func SetupTemplatesAllowDNS(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(&cmdData.TemplatesAllowDNS, "templates-allow-dns", "", util.GetBoolEnvironmentDefaultFalse("WERF_TEMPLATES_ALLOW_DNS"), `Allow performing DNS requests in templating (default $WERF_TEMPLATES_ALLOW_DNS)`)
 }

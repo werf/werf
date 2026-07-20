@@ -176,6 +176,7 @@ werf converge --repo registry.mydomain.com/web --env production`,
 	common.SetupNoInstallCRDs(&commonCmdData, cmd)
 	common.SetupNoRemoveManualChanges(&commonCmdData, cmd)
 	common.SetupNoShowNotes(&commonCmdData, cmd)
+	common.SetupNoCreateNamespace(&commonCmdData, cmd)
 	common.SetupRelease(&commonCmdData, cmd, true)
 	common.SetupReleaseInfoAnnotations(&commonCmdData, cmd)
 	common.SetupReleaseLabel(&commonCmdData, cmd)
@@ -496,6 +497,7 @@ func run(
 		LegacyLogRegistryStreamOut: os.Stdout,
 		NetworkParallelism:         commonCmdData.NetworkParallelism,
 		NoShowNotes:                commonCmdData.NoShowNotes,
+		NoCreateNamespace:          commonCmdData.NoCreateNamespace,
 		PlanArtifactPath:           cmdData.PlanArtifactPath,
 		PlanArtifactLifetime:       cmdData.PlanArtifactLifetime,
 		RegistryCredentialsPath:    registryCredentialsPath,
