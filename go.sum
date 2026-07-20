@@ -1408,6 +1408,10 @@ github.com/werf/common-go v0.0.0-20260414103517-0558f83edc6d h1:WFZpNiMTDOu6nRCE
 github.com/werf/common-go v0.0.0-20260414103517-0558f83edc6d/go.mod h1:MXS0JR9zut+oR9oEM8PEkdXXoEbKDILTmWopt0z1eZs=
 github.com/werf/copy-recurse v0.2.8 h1:8IeAx0dGDzvVVaxci7SdVUhOjlkhgDcOVJfxQkxBhUU=
 github.com/werf/copy-recurse v0.2.8/go.mod h1:6Ypb+qN+hRBJgoCgEkX1vpbqcQ+8q69BQ3hi8s8Y6Qc=
+github.com/werf/copy-recurse v0.3.0 h1:OQDPzNPGGPBL5KTPYQjgdDSVZGkTMxm2SQiQfWivvdA=
+github.com/werf/copy-recurse v0.3.0/go.mod h1:6Ypb+qN+hRBJgoCgEkX1vpbqcQ+8q69BQ3hi8s8Y6Qc=
+github.com/werf/copy-recurse v0.3.1 h1:1DXl5+CnxOP9pcvXu7qkY2hnqxUHnE5KWdydALL/Ycs=
+github.com/werf/copy-recurse v0.3.1/go.mod h1:6Ypb+qN+hRBJgoCgEkX1vpbqcQ+8q69BQ3hi8s8Y6Qc=
 github.com/werf/kubedog v0.13.1-0.20260616105957-2c00b08fb99e h1:0GnrtMMti+Qywd4bs4tHtchBS61EzS6t1NYqMPql5dE=
 github.com/werf/kubedog v0.13.1-0.20260616105957-2c00b08fb99e/go.mod h1:gu4EY4hxtiYVDy5o6WE2lRZS0YWqrOV0HS//GTYyrUE=
 github.com/werf/kubedog-for-werf-helm v0.0.0-20241217155728-9d45c48b82b6 h1:lpgQPTCp+wNJfTqJWtR6A5gRA4e4m/eRJFV7V18XCoA=
