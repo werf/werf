@@ -331,6 +331,8 @@ werf converge --repo registry.mydomain.com/web --env production
             deploy.namespace custom template from werf.yaml or $WERF_NAMESPACE)
       --network-parallelism=30
             Parallelize some network operations (default $WERF_NETWORK_PARALLELISM or 30)
+      --no-create-namespace=false
+            Don`t create the release namespace (default $WERF_NO_CREATE_NAMESPACE)
       --no-final-tracking=false
             By default disable tracking operations that have no create/update/delete resource       
             operations after them, which are most tracking operations, to speed up the release      

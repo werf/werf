@@ -138,6 +138,7 @@ type CmdData struct {
 	NoInstallStandaloneCRDs          bool
 	NoRemoveManualChanges            bool
 	NoShowNotes                      bool
+	NoCreateNamespace                bool
 	Release                          string
 	ReleaseHistoryLimit              int
 	ReleaseInfoAnnotations           map[string]string
