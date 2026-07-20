@@ -91,7 +91,7 @@ var _ = Describe("platformMatches", func() {
 var _ = Describe("BuildahBackend createContainers", func() {
 	It("re-pulls image by ref when cached imageID is missing locally", func() {
 		fakeBuildah := &buildahstub.BuildahStub{}
-		fakeBuildah.FromCommandFunc = func(_ context.Context, _ string, imageRef string, _ buildah.FromCommandOpts) (string, error) {
+		fakeBuildah.FromCommandFunc = func(_ context.Context, _, imageRef string, _ buildah.FromCommandOpts) (string, error) {
 			switch imageRef {
 			case "sha256:stale":
 				return "", errors.New("image not known")
