@@ -63,16 +63,9 @@ Follow [Effective Go](https://go.dev/doc/effective_go) and [Go Code Review Comme
 
 ALWAYS use these `task` commands. NEVER use raw `go build`, `go test`, `go fmt`, `go vet`, or `golangci-lint` directly. Pass extra args after `--` to forward them to the underlying command (e.g., `task test:unit -- -run TestMyFunc`).
 
-**Environment**: `Taskfile.dist.yaml` uses remote taskfile includes. You MUST enable the experimental feature before running any `task` command:
-```bash
-export TASK_X_REMOTE_TASKFILES=1
-```
-Set this once per shell session. Without it, ALL `task` commands will fail with `Remote taskfiles are not enabled`.
-
-
 - NEVER `go build` → ALWAYS `task build`. Builds binary to `./bin/`. Accepts `pkg=...`.
 - NEVER `go test` → ALWAYS `task test:unit`. Accepts `paths="./pkg/..."`.
-- NEVER `go test` (e2e) → ALWAYS `task test:e2e`. Accepts `paths="./pkg/..."` and `labelFilter="..."` (Ginkgo label filter). ALWAYS use `labelFilter` to target specific tests.
+- NEVER `go test` (e2e) → ALWAYS `task test:e2e` with `paths="./pkg/..."` and `labelFilter="..."` (Ginkgo label filter) to target specific tests.
 - NEVER `go test` (integration) → ALWAYS `task test:integration`. Legacy e2e tests.
 - NEVER `go vet` → ALWAYS `task lint:golangci-lint`. golangci-lint includes vet checks. Accepts `golangciPaths="./pkg/..."`.
 - NEVER `go fmt`/`gofmt` → ALWAYS `task format`. Accepts `paths="./pkg/..."`.
@@ -85,10 +78,9 @@ Set this once per shell session. Without it, ALL `task` commands will fail with 
 
 ## Testing (MANDATORY)
 
-- ALWAYS use `testify` (`assert`, `require`) when writing new tests.
+- ALWAYS use Ginkgo and Gomega when writing new tests. Prefer table-driven tests with `DescribeTable`.
 - ALWAYS place tests alongside source files, not in a separate directory.
-- When writing tests as an AI agent → ALWAYS name the file `*_ai_test.go`, prefix test functions with `TestAI_`.
-- Test helpers go in `helpers_test.go` (or `helpers_ai_test.go` for AI-written helpers).
+- Test helpers go in `helpers_test.go`.
 - Test fixtures go in `testdata/` subdirectory next to the tests.
 - Shared test helpers are in `test/pkg/`.
 
