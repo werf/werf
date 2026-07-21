@@ -73,17 +73,17 @@ var _ = Describe("CMD and ENTRYPOINT combinations", Label("e2e", "build", "extra
 			},
 		},
 		{
-			name: "native-rootless",
+			name: "buildkit",
 			options: setupEnvOptions{
-				ContainerBackendMode:        "native-rootless",
+				ContainerBackendMode:        "buildkit",
 				WithLocalRepo:               true,
 				WithStagedDockerfileBuilder: false,
 			},
 		},
 		{
-			name: "native-rootless-staged",
+			name: "buildkit-staged",
 			options: setupEnvOptions{
-				ContainerBackendMode:        "native-rootless",
+				ContainerBackendMode:        "buildkit",
 				WithLocalRepo:               true,
 				WithStagedDockerfileBuilder: true,
 			},
@@ -106,17 +106,9 @@ var _ = Describe("CMD and ENTRYPOINT combinations", Label("e2e", "build", "extra
 				Entry("Base image CMD", cmdEntrypointTestOptions{setupEnvOptions: backend.options}, "dockerfile_base_image_cmd", nil, strslice.StrSlice{"/bin/sh", "-c", "echo \"CMD (shell, base image)\""}),
 			)
 
-			if backend.name == "native-rootless" {
-				// Dockerfile SHELL instruction is ignored by pure Buildah.
-				// rel https://github.com/containers/buildah/issues/2959.
-				DescribeTable("should produce expected image configurations", checkFunc,
-					Entry("Custom shell", cmdEntrypointTestOptions{setupEnvOptions: backend.options}, "dockerfile_custom_shell_exec_cmd_and_entrypoint", strslice.StrSlice{"/bin/sh", "-c", "echo \"ENTRYPOINT (shell)\""}, strslice.StrSlice{"/bin/sh", "-c", "echo \"CMD (shell)\""}),
-				)
-			} else {
-				DescribeTable("should produce expected image configurations", checkFunc,
-					Entry("Custom shell", cmdEntrypointTestOptions{setupEnvOptions: backend.options}, "dockerfile_custom_shell_exec_cmd_and_entrypoint", strslice.StrSlice{"/bin/bash", "-c", "echo \"ENTRYPOINT (shell)\""}, strslice.StrSlice{"/bin/bash", "-c", "echo \"CMD (shell)\""}),
-				)
-			}
+			DescribeTable("should produce expected image configurations", checkFunc,
+				Entry("Custom shell", cmdEntrypointTestOptions{setupEnvOptions: backend.options}, "dockerfile_custom_shell_exec_cmd_and_entrypoint", strslice.StrSlice{"/bin/bash", "-c", "echo \"ENTRYPOINT (shell)\""}, strslice.StrSlice{"/bin/bash", "-c", "echo \"CMD (shell)\""}),
+			)
 		})
 	}
 })

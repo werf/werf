@@ -92,7 +92,7 @@ func runReset(ctx context.Context) error {
 		}
 	} else {
 		if _, ok := containerBackend.(*container_backend.DockerServerBackend); !ok {
-			logboek.Context(ctx).Warn().LogF("Skip cleaning local storage with buildah backend (not implemented)\n")
+			logboek.Context(ctx).Warn().LogF("Skip cleaning local storage with buildkit backend (not implemented)\n")
 			return nil
 		}
 		storageManager, err := common.NewStorageManagerWithOptions(ctx, &common.NewStorageManagerConfig{

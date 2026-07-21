@@ -50,15 +50,10 @@ var _ = Describe("Import", Label("e2e", "build", "import", "simple"), func() {
 			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: false,
 		}}),
-		Entry("Native Buildah rootless", importTestOptions{setupEnvOptions{
-			ContainerBackendMode:        "native-rootless",
+		Entry("BuildKit", importTestOptions{setupEnvOptions{
+			ContainerBackendMode:        "buildkit",
 			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: false,
-		}}),
-		Entry("Native Buildah chroot", importTestOptions{setupEnvOptions{
-			ContainerBackendMode:        "native-chroot",
-			WithLocalRepo:               true,
-			WithStagedDockerfileBuilder: true,
 		}}),
 	)
 })

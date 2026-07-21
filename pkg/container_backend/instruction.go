@@ -3,11 +3,11 @@ package container_backend
 import (
 	"context"
 
-	"github.com/werf/werf/v2/pkg/buildah"
+	"github.com/werf/werf/v2/pkg/buildkit"
 )
 
 type InstructionInterface interface {
 	Name() string
-	Apply(ctx context.Context, containerName string, drv buildah.Buildah, drvOpts buildah.CommonOpts, buildContextArchive BuildContextArchiver) error
+	ApplyBuildkit(ctx context.Context, stage *buildkit.DockerfileStageState) error
 	UsesBuildContext() bool
 }

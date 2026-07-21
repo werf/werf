@@ -16,7 +16,7 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/build"
-	"github.com/werf/werf/v2/pkg/buildah"
+	"github.com/werf/werf/v2/pkg/buildkit"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/docker"
@@ -65,10 +65,8 @@ func NewCmd(ctx context.Context) *cobra.Command {
 			common.DocsLongMD:                  GetRunDocs().LongMD,
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if mode, _, err := common.GetBuildahMode(); err != nil {
-				return err
-			} else if *mode != buildah.ModeDisabled {
-				return fmt.Errorf(`command "werf run" is not implemented for Buildah mode`)
+			if buildkit.HostFromEnv() != "" {
+				return fmt.Errorf(`command "werf run" is not implemented for buildkit backend`)
 			}
 
 			ctx := cmd.Context()

@@ -125,7 +125,7 @@ Supported scopes are the following:
   - stapel
   - dockerfile
   - docker
-  - buildah
+  - buildkit
   - tagging
   - stages
 - deploy

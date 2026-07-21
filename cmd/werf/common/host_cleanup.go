@@ -67,7 +67,7 @@ func SetupAllowedBackendStorageVolumeUsage(cmdData *CmdData, cmd *cobra.Command)
 			alias.ParamName,
 			"",
 			defaultVal,
-			fmt.Sprintf("Set allowed percentage of backend (Docker or Buildah) storage volume usage which will cause cleanup of least recently used local backend images (default %d%% or $%s)", uint(host_cleaning.DefaultAllowedBackendStorageVolumeUsagePercentage), alias.EnvName),
+			fmt.Sprintf("Set allowed percentage of backend (Docker) storage volume usage which will cause cleanup of least recently used local backend images (default %d%% or $%s)", uint(host_cleaning.DefaultAllowedBackendStorageVolumeUsagePercentage), alias.EnvName),
 		)
 	}
 
@@ -104,7 +104,7 @@ func SetupAllowedBackendStorageVolumeUsageMargin(cmdData *CmdData, cmd *cobra.Co
 			alias.ParamName,
 			"",
 			defaultVal,
-			fmt.Sprintf("During cleanup of least recently used local backend (Docker or Buildah) images werf would delete images until volume usage becomes below \"allowed-backend-storage-volume-usage - allowed-backend-storage-volume-usage-margin\" level (default %d%% or $%s)", uint(host_cleaning.DefaultAllowedBackendStorageVolumeUsageMarginPercentage), alias.EnvName),
+			fmt.Sprintf("During cleanup of least recently used local backend (Docker) images werf would delete images until volume usage becomes below \"allowed-backend-storage-volume-usage - allowed-backend-storage-volume-usage-margin\" level (default %d%% or $%s)", uint(host_cleaning.DefaultAllowedBackendStorageVolumeUsageMarginPercentage), alias.EnvName),
 		)
 	}
 
@@ -134,7 +134,7 @@ func SetupBackendStoragePath(cmdData *CmdData, cmd *cobra.Command) {
 			alias.ParamName,
 			"",
 			defaultVal,
-			fmt.Sprintf("Use specified path to the local backend (Docker or Buildah) storage to check backend storage volume usage while performing garbage collection of local backend images (detect local backend storage path by default or use $%s)", alias.EnvName),
+			fmt.Sprintf("Use specified path to the local backend (Docker) storage to check backend storage volume usage while performing garbage collection of local backend images (detect local backend storage path by default or use $%s)", alias.EnvName),
 		)
 	}
 

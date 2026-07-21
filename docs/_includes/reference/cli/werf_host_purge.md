@@ -25,7 +25,7 @@ werf host purge [options]
 
 ```shell
       --container-registry-mirror=[]
-            (Buildah-only) Use specified mirrors for docker.io
+            Use specified mirrors for docker.io
       --dev=false
             Enable development mode (default $WERF_DEV).
             The mode allows working with project files without doing redundant commits during       

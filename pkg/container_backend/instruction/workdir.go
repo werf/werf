@@ -1,13 +1,7 @@
 package instruction
 
 import (
-	"context"
-	"fmt"
-
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
-
-	"github.com/werf/werf/v2/pkg/buildah"
-	"github.com/werf/werf/v2/pkg/container_backend"
 )
 
 type Workdir struct {
@@ -20,11 +14,4 @@ func NewWorkdir(i instructions.WorkdirCommand) *Workdir {
 
 func (i *Workdir) UsesBuildContext() bool {
 	return false
-}
-
-func (i *Workdir) Apply(ctx context.Context, containerName string, drv buildah.Buildah, drvOpts buildah.CommonOpts, buildContextArchive container_backend.BuildContextArchiver) error {
-	if err := drv.Config(ctx, containerName, buildah.ConfigOpts{CommonOpts: drvOpts, Workdir: i.Path}); err != nil {
-		return fmt.Errorf("error setting workdir %s for container %s: %w", i.Path, containerName, err)
-	}
-	return nil
 }

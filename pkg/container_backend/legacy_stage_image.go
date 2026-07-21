@@ -92,7 +92,7 @@ func (i *LegacyStageImage) Build(ctx context.Context, options BuildOptions) erro
 	if targetPlatform != "" && targetPlatform != "linux/amd64" {
 		if !isArm64Platform(targetPlatform) {
 			logboek.Context(ctx).Error().LogF("Building of stapel-type images using Docker-Server backend for platforms other than linux/amd64 is not supported.\n")
-			logboek.Context(ctx).Error().LogF("Please either:\n * use Buildah backend to build stapel-type images for arbitrary platforms;\n * or use Dockerfile-type images with any backend.\n")
+			logboek.Context(ctx).Error().LogF("Please either:\n * use BuildKit backend to build stapel-type images for arbitrary platforms;\n * or use Dockerfile-type images with any backend.\n")
 			logboek.Context(ctx).Error().LogLn()
 			return fmt.Errorf("building of stapel image using Docker-Server backend is unsupported for specified platform %q", targetPlatform)
 		}

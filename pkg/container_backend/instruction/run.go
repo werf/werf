@@ -1,16 +1,7 @@
 package instruction
 
 import (
-	"context"
-	"fmt"
-	"strings"
-
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
-
-	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/buildah"
-	"github.com/werf/werf/v2/pkg/container_backend"
-	"github.com/werf/werf/v2/pkg/dockerfile"
 )
 
 type Run struct {
@@ -44,44 +35,4 @@ func (i *Run) GetSecurity() string {
 
 func (i *Run) GetNetwork() string {
 	return instructions.GetNetwork(&i.RunCommand)
-}
-
-func (i *Run) Apply(ctx context.Context, containerName string, drv buildah.Buildah, drvOpts buildah.CommonOpts, buildContextArchive container_backend.BuildContextArchiver) error {
-	var contextDir string
-	if i.UsesBuildContext() {
-		var err error
-		contextDir, err = buildContextArchive.ExtractOrGetExtractedDir(ctx)
-		if err != nil {
-			return fmt.Errorf("unable to extract build context: %w", err)
-		}
-	}
-
-	var addCapabilities []string
-	if i.GetSecurity() == "insecure" {
-		addCapabilities = []string{"all"}
-	}
-
-	if len(i.Files) > 0 {
-		full, prependShell := dockerfile.MapToCorrectHeredocCmd(i.ShellDependantCmdLine)
-		i.CmdLine = []string{full}
-		i.PrependShell = prependShell
-	}
-
-	logboek.Context(ctx).Default().LogF("$ %s\n", strings.Join(i.CmdLine, " "))
-
-	if err := drv.RunCommand(ctx, containerName, i.CmdLine, buildah.RunCommandOpts{
-		CommonOpts:      drvOpts,
-		ContextDir:      contextDir,
-		PrependShell:    i.PrependShell,
-		AddCapabilities: addCapabilities,
-		NetworkType:     i.GetNetwork(),
-		RunMounts:       i.GetMounts(),
-		Envs:            i.Envs,
-		Secrets:         i.Secrets,
-		SSH:             i.SSH,
-	}); err != nil {
-		return fmt.Errorf("error running command %v for container %s: %w", i.CmdLine, containerName, err)
-	}
-
-	return nil
 }

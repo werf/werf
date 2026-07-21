@@ -59,9 +59,9 @@ werf stages copy [options]
       --allow-includes-update=false
             Allow use includes latest versions (default $WERF_ALLOW_INCLUDES_UPDATE or false)
       --backend-storage-path=""
-            Use specified path to the local backend (Docker or Buildah) storage to check backend    
-            storage volume usage while performing garbage collection of local backend images        
-            (detect local backend storage path by default or use $WERF_BACKEND_STORAGE_PATH)
+            Use specified path to the local backend (Docker) storage to check backend storage       
+            volume usage while performing garbage collection of local backend images (detect local  
+            backend storage path by default or use $WERF_BACKEND_STORAGE_PATH)
       --build-report-path=""
             Change build report path and format (by default $WERF_BUILD_REPORT_PATH or              
             ".werf-build-report.json" if not set). Extension must be either .json for JSON format   
@@ -82,7 +82,7 @@ werf stages copy [options]
             Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf   
             in working directory)
       --container-registry-mirror=[]
-            (Buildah-only) Use specified mirrors for docker.io
+            Use specified mirrors for docker.io
       --debug-templates=false
             Enable debug mode for Go templates (default $WERF_DEBUG_TEMPLATES or false)
       --dev=false

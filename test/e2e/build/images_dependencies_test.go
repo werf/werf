@@ -104,7 +104,7 @@ var _ = Describe("Images dependencies", Label("e2e", "build", "extra"), func() {
 					SuiteData.GetProjectWorktree(SuiteData.ProjectName),
 					liveexec.ExecCommandOptions{
 						Env: map[string]string{
-							"WERF_BUILDAH_MODE": "auto",
+							"WERF_BUILDKIT_HOST": buildkitHostOrSkip(),
 						},
 					},
 				),

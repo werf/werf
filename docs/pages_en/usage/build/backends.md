@@ -7,77 +7,71 @@ permalink: usage/build/backends.html
 
 werf supports the following build backends:
 
--	Docker — the traditional method that uses the system Docker Daemon.
--	Buildah — a secure, daemonless build option that supports rootless mode and is fully embedded into werf.
+-	Docker — the traditional method that uses the system Docker Daemon. Selected by default when no BuildKit endpoint is configured.
+-	BuildKit — builds images through an external [buildkitd](https://github.com/moby/buildkit) daemon. Selected by setting a BuildKit endpoint via environment variable.
 
 > The requirements and system preparation steps for using these build backends are described in the [Getting Started]({{ site.url }}/getting_started/) section of the website.
 
-## Buildah
+## BuildKit
 
-> Currently, Buildah is available only for Linux users and Windows users with WSL2 enabled. For macOS users, it is recommended to use a virtual machine to run werf in Buildah mode.
+The BuildKit backend is enabled by setting `WERF_BUILDKIT_HOST` (or the standard `BUILDKIT_HOST`) to the address of a running buildkitd daemon. When neither variable is set, werf uses the Docker backend.
 
-Buildah can be enabled by setting the environment variable `WERF_BUILDAH_MODE` to one of the following:
+### Endpoints
 
-* auto — automatic mode selection based on the platform and environment.
-*	native-chroot — uses chroot isolation for build containers.
-*	native-rootless — uses rootless isolation for build containers. At this level, werf utilizes a container runtime for build operations (e.g., runc, crun, kata, or runsc).
+The following endpoint schemes are supported:
+
+*	`unix://` — local Unix socket;
+*	`tcp://` — TCP endpoint;
+*	`docker-container://` — buildkitd running inside a Docker container;
+*	`kube-pod://` — buildkitd running inside a Kubernetes pod;
+*	`podman-container://` — buildkitd running inside a Podman container;
+*	`ssh://` — buildkitd reachable over SSH.
+
+### Quick start
+
+Run buildkitd in a local Docker container and point werf at it:
 
 ```shell
-export WERF_BUILDAH_MODE=auto
+docker run -d --name buildkitd --privileged moby/buildkit
+export BUILDKIT_HOST=docker-container://buildkitd
 ```
 
-### Container registry configuration
+After that any werf build command will use the BuildKit backend.
 
-When using Buildah, werf reads container registry settings from `registries.conf`.
+### Container registry required
 
-For secure `docker.io` mirrors, you can also use the `--container-registry-mirror` option and `WERF_CONTAINER_REGISTRY_MIRROR_*` environment variables. Mirrors configured this way are treated as secure (`https`) mirrors by default. If needed, you can enable werf global insecure mode for registry access with `--insecure-registry` or `--skip-tls-verify-registry`.
+The BuildKit backend requires a remote container registry. The `--repo` option (or `WERF_REPO`) is mandatory — the local stages storage (`:local`) is not supported. Built stages are pushed by digest directly from buildkitd to the configured repo; werf then applies its stage tag to the pushed manifest on the registry side.
 
-The following paths are supported in priority order:
+### Supported features
 
-1. the path from `CONTAINERS_REGISTRIES_CONF`;
-2. `~/.config/containers/registries.conf`;
-3. `/etc/containers/registries.conf`.
+The BuildKit backend supports both build modes on par with the Docker backend:
 
-If `CONTAINERS_REGISTRIES_CONF` is set, werf uses only that file and its neighboring `<path>.d` directory.
+*	Stapel builds (shell and ansible builders).
+*	Dockerfile builds, both staged and non-staged.
 
-If `CONTAINERS_REGISTRIES_CONF` is not set, werf uses the first existing file from the standard paths and the neighboring `<path>.d` directory for that file.
+Feature parity includes:
 
-werf uses the following data from this configuration:
+*	ssh-agent forwarding for the build;
+*	build secrets;
+*	custom build networks (`default`, `host`, `none`);
+*	custom mounts.
 
-- mirrors for `docker.io`;
-- standalone insecure registries from `[[registry]] insecure = true`.
+### Host mounts semantics
 
-werf does not parse or override other container configuration files such as `shortnames.conf`.
+Stapel host mounts (`fromPath`, `mount: build_dir`) are mapped to BuildKit persistent cache mounts keyed by the host path. The data lives inside the buildkitd cache on the daemon side rather than in a directory on the werf host. The cache persists across builds and is shared by host-path key. Note that pre-existing contents of the host directory are NOT delivered into the mount: the cache mount starts empty on first use and only accumulates data written during builds.
 
-An insecure mirror for `docker.io` does not automatically make the same host a standalone insecure registry. If the same host must be used both as a `docker.io` mirror and as a standalone insecure registry, it must be described by two separate entries.
+### Insecure and self-signed registries
 
-### Storage Driver
+Insecure registry access, custom CAs and TLS verification skipping are configured on the buildkitd daemon side (typically via `buildkitd.toml`). werf does not forward its own `--insecure-registry` / `--skip-tls-verify-registry` flags to buildkitd.
 
-werf can use either the `overlay` or `vfs` storage driver:
+### Host cleanup
 
-* `overlay`: Uses the OverlayFS file system. Either kernel-integrated OverlayFS support (if available) or the fuse-overlayfs implementation can be used. This is the recommended default option.
-* `vfs`: Provides access to a virtual file system instead of OverlayFS. This option has lower performance and requires a privileged container, so it is not recommended. However, it may be useful in some cases.
+With a remote buildkitd there is no local image store on the werf host. `werf host purge` and other host-cleanup commands only clean up werf-owned service directories on the host; the buildkitd build cache is not pruned by werf in the first iteration — it is managed by buildkitd garbage collection (see `buildkitd.toml`) or manually via `buildctl prune`.
 
-In general, the default driver (`overlay`) should suffice. The storage driver can be specified using the environment variable `WERF_BUILDAH_STORAGE_DRIVER`.
+### Limitations
 
-### Ulimits
+In the first iteration, the following options are not supported by the BuildKit backend:
 
-By default, Buildah mode in werf inherits the system ulimits when launching build containers. Users can override these parameters using the `WERF_BUILDAH_ULIMIT` environment variable.
-
-Format: `WERF_BUILDAH_ULIMIT=type:softlimit[:hardlimit][,type:softlimit[:hardlimit],...]` — a comma-separated list of limits:
-
-* `core`: maximum core dump size (ulimit -c).
-* `cpu`: maximum CPU time (ulimit -t).
-* `data`: maximum size of a process's data segment (ulimit -d).
-* `fsize`: maximum size of new files (ulimit -f).
-* `locks`: maximum number of file locks (ulimit -x).
-* `memlock`: maximum amount of locked memory (ulimit -l).
-* `msgqueue`: maximum amount of data in message queues (ulimit -q).
-* `nice`: niceness adjustment (nice -n, ulimit -e).
-* `nofile`: maximum number of open files (ulimit -n).
-* `nproc`: maximum number of processes (ulimit -u).
-* `rss`: maximum size of a process's resident set size (ulimit -m).
-* `rtprio`: maximum real-time scheduling priority (ulimit -r).
-* `rttime`: maximum real-time execution between blocking syscalls.
-* `sigpending`: maximum number of pending signals (ulimit -i).
-* `stack`: maximum stack size (ulimit -s).
+*	`--introspect-error`;
+*	`--introspect-before-error`;
+*	`--introspect-stage`.

@@ -65,6 +65,9 @@ func (repoData *RepoData) CreateStagesStorage(ctx context.Context, opts *CreateS
 	}
 
 	if addr == storage.LocalStorageAddress {
+		if _, ok := container_backend.AsBuildkitBackend(opts.ContainerBackend); ok {
+			return nil, fmt.Errorf("local stages storage is not supported by buildkit backend: --%s is required", repoData.Name)
+		}
 		return storage.NewLocalStagesStorage(opts.ContainerBackend), nil
 	} else {
 		dockerRegistry, err := repoData.CreateDockerRegistry(ctx, opts.InsecureRegistry, opts.SkipTlsVerifyRegistry, opts.InsecureRegistryHosts)

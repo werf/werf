@@ -6,6 +6,5 @@ type containerBackendType uint8
 
 const (
 	containerBackendDocker containerBackendType = iota
-	containerBackendBuildah
 	containerBackendTest
 )

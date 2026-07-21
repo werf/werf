@@ -200,7 +200,7 @@ In the examples above, the following usage data is sent:
   * for `CommandStarted`: list of command options with flags (`asCli`, `asEnv`, `count`);
   * for `CommandExited`: exit code (`exitCode`) and command execution duration in milliseconds (`durationMs`);
   * for `UnshallowFailed`: error message (`errorMessage`), GitLab Runner version (`gitlabRunnerVersion`), and GitLab Server version (`gitlabServerVersion`);
-  * for `BuildStarted`: number of images to build (`imagesCount`), selected container backend (`containerBackend`: `docker`/`buildah`), and whether werf runs inside a container (`inContainer`);
+  * for `BuildStarted`: number of images to build (`imagesCount`), selected container backend (`containerBackend`: `docker`/`buildkit`), and whether werf runs inside a container (`inContainer`);
   * for `BuildFinished`: build duration (`durationMs`), success status (`success`), and number of images (`imagesCount`);
   * for `ImageBuildFinished`: image name (`image`), build time (`durationMs`), rebuild flag (`rebuilt`), and image config type (`configType`: `stapel`/`dockerfile`/`staged`/`unknown`);
   * for `StageBuildFinished`: image name (`image`), stage name (`stage`), build time (`durationMs`), cache usage flag (`fromCache`), base image source (`baseImageSource`: `repo`/`secondary`/empty value), and whether the base image was pulled (`baseImagePulled`).

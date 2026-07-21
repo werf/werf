@@ -124,7 +124,6 @@ func runCIEnv(cmd *cobra.Command, args []string) error {
 	}
 
 	// FIXME(multiarch): do not initialize platform in backend here
-	// FIXME(multiarch): why docker initialization here? what if buildah backend enabled?
 	opts := docker.InitOptions{
 		DockerConfigDir: dockerConfig,
 		ClaimPlatforms:  commonCmdData.GetPlatform(),

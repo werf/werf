@@ -137,39 +137,6 @@ var _ = Describe("Multiarch build", Label("e2e", "build", "multiarch", "simple")
 			}
 		},
 
-		Entry("Buildah backend, build arbitrary platforms, all builders available", multiarchTestOptions{
-			setupEnvOptions: setupEnvOptions{
-				WithLocalRepo:        true,
-				ContainerBackendMode: "native-chroot",
-			},
-			Platforms:                   []string{"linux/arm64", "linux/amd64"},
-			EnableStapelImage:           true,
-			EnableStagedDockerfileImage: true,
-			EnableDockerfileImage:       true,
-
-			ExpectedStapelImageInfo: expectedImageInfo{
-				ImageName: "orange",
-				DigestByPlatform: map[string]string{
-					"linux/arm64": "0bfe25871a0014046617e5c47e399183886b23ab394ee8422cc8b10c",
-					"linux/amd64": "f401fc847eba504268377fe9a6e192bd90cd9cd4e9333c3564846264",
-				},
-			},
-			ExpectedStagedDockerfileImageInfo: expectedImageInfo{
-				ImageName: "apple",
-				DigestByPlatform: map[string]string{
-					"linux/arm64": "e09a53cbff65cd32668dd9749845923d46be8a70c1e1f12b1ae3318b",
-					"linux/amd64": "8f89f4cdc76a994e38f4146ef4e3edd83e070266cc15c135696bddd2",
-				},
-			},
-			ExpectedDockerfileImageInfo: expectedImageInfo{
-				ImageName: "potato",
-				DigestByPlatform: map[string]string{
-					"linux/arm64": "cd8956d94612821a843cfbbb3b44d9ed837f8001f2a2361a4815acce",
-					"linux/amd64": "30bd7a840fcb35eb283d9940f58d1dd02a576a6967e416d9c13deaf2",
-				},
-			},
-		}),
-
 		Entry("Docker backend, docker can build stapel image only for linux/amd64 platform", multiarchTestOptions{
 			setupEnvOptions: setupEnvOptions{
 				WithLocalRepo:        true,

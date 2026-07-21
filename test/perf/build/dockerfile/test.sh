@@ -9,7 +9,7 @@ usage="Usage: $(basename "$0") [options] docker_repository
 Options:
   -e  path to werf executable (default: $werf_path)
   -v  do vanilla build (default: $vanilla_build_enabled)
-  -n  do native-rootless build (default: $native_build_enabled)
+  -n  do buildkit build (default: $native_build_enabled)
 
 Example:
   $(basename "$0") -vfn docker.io/user/repo:20.04"
@@ -74,8 +74,6 @@ git add .
 git commit -m init
 
 docker pull ubuntu:20.04 || true
-podman pull ubuntu:20.04 || true
-buildah pull ubuntu:20.04 || true
 
 export WERF_REPO="$repo"
 export WERF_LOG_DEBUG=1
@@ -89,9 +87,9 @@ if [[ $vanilla_build_enabled == 1 ]]; then
 fi
 
 if [[ $native_build_enabled == 1 ]]; then
-  echo "Running native rootless werf build"
-  WERF_BUILDAH_MODE="native-rootless" "$werf_path" build | tee ../native-rootless-build.log
-  echo "Finished native rootless werf build"
+  echo "Running buildkit werf build"
+  WERF_BUILDKIT_HOST="${WERF_TEST_BUILDKIT_HOST:?WERF_TEST_BUILDKIT_HOST is required for buildkit build}" "$werf_path" build | tee ../buildkit-build.log
+  echo "Finished buildkit werf build"
 fi
 
 grep --color=never -HE ' seconds' ../*.log

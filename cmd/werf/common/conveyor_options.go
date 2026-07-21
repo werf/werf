@@ -10,6 +10,7 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/level"
 	"github.com/werf/werf/v2/pkg/build"
+	"github.com/werf/werf/v2/pkg/buildkit"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/container_backend/thirdparty/platformutil"
@@ -101,6 +102,12 @@ func GetBuildOptions(ctx context.Context, commonCmdData *CmdData, werfConfig *co
 	introspectOptions, err := GetIntrospectOptions(commonCmdData, werfConfig)
 	if err != nil {
 		return buildOptions, err
+	}
+
+	if buildkit.HostFromEnv() != "" {
+		if GetIntrospectAfterError(commonCmdData) || GetIntrospectBeforeError(commonCmdData) || len(introspectOptions.Targets) > 0 {
+			return buildOptions, fmt.Errorf("--introspect-error, --introspect-before-error and --introspect-stage are not supported by buildkit backend (first iteration)")
+		}
 	}
 
 	customTagFuncList, err := getCustomTagFuncList(getCustomTagOptionValues(commonCmdData), commonCmdData, imagesToProcess)

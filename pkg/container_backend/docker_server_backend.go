@@ -139,7 +139,7 @@ func (backend *DockerServerBackend) BuildDockerfile(ctx context.Context, _ []byt
 func (backend *DockerServerBackend) BuildDockerfileStage(ctx context.Context, baseImage string, opts BuildDockerfileStageOptions, instructions ...InstructionInterface) (string, error) {
 	logboek.Context(ctx).Error().LogF("Staged build of Dockerfile is not available for Docker Server backend.\n")
 	logboek.Context(ctx).Error().LogF("Please either:\n")
-	logboek.Context(ctx).Error().LogF(" * switch to Buildah backend;\n")
+	logboek.Context(ctx).Error().LogF(" * switch to BuildKit backend;\n")
 	logboek.Context(ctx).Error().LogF(" * or disable staged build by setting `staged: false` for the image in the werf.yaml.\n")
 	logboek.Context(ctx).Error().LogLn()
 	return "", fmt.Errorf("staged Dockerfile is not available for Docker Server backend")

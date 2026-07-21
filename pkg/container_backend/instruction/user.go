@@ -1,13 +1,7 @@
 package instruction
 
 import (
-	"context"
-	"fmt"
-
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
-
-	"github.com/werf/werf/v2/pkg/buildah"
-	"github.com/werf/werf/v2/pkg/container_backend"
 )
 
 type User struct {
@@ -20,11 +14,4 @@ func NewUser(i instructions.UserCommand) *User {
 
 func (i *User) UsesBuildContext() bool {
 	return false
-}
-
-func (i *User) Apply(ctx context.Context, containerName string, drv buildah.Buildah, drvOpts buildah.CommonOpts, buildContextArchive container_backend.BuildContextArchiver) error {
-	if err := drv.Config(ctx, containerName, buildah.ConfigOpts{CommonOpts: drvOpts, User: i.User}); err != nil {
-		return fmt.Errorf("error setting user %s for container %s: %w", i.User, containerName, err)
-	}
-	return nil
 }

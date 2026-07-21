@@ -36,14 +36,6 @@ func main() {
 
 	root.PrintStackTraces()
 
-	shouldTerminate, err := common.ContainerBackendProcessStartupHook()
-	if err != nil {
-		graceful.Terminate(ctx, err, 1)
-		return
-	} else if shouldTerminate {
-		return
-	}
-
 	if err := process_exterminator.Init(); err != nil {
 		graceful.Terminate(ctx, fmt.Errorf("process exterminator initialization failed: %w", err), 1)
 		return

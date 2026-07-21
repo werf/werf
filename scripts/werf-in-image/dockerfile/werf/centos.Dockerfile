@@ -1,8 +1,8 @@
 FROM quay.io/centos/centos:stream9
 ARG TARGETARCH
-ARG USERS="build build1001"
+ARG USERS="build"
 
-RUN dnf -y install fuse-overlayfs git git-lfs gnupg nano jq bash make ca-certificates openssh-clients telnet iputils iproute dnsutils tzdata && \
+RUN dnf -y install git git-lfs gnupg nano jq bash make ca-certificates openssh-clients telnet iputils iproute dnsutils tzdata && \
     dnf clean all && rm -rf /var/cache /var/log/dnf* /var/log/yum.*
 
 RUN curl -sSLO https://github.com/mikefarah/yq/releases/latest/download/yq_linux_${TARGETARCH} && \
@@ -15,26 +15,16 @@ RUN ARCH=`uname -m` && \
     tar -zxvf go-containerregistry.tar.gz -C /usr/local/bin/ crane && \
     rm -f go-containerregistry.tar.gz
 
-# Fix messed up setuid/setgid capabilities.
-RUN setcap cap_setuid+ep /usr/bin/newuidmap && \
-    setcap cap_setgid+ep /usr/bin/newgidmap && \
-    chmod u-s,g-s /usr/bin/newuidmap /usr/bin/newgidmap
-
 RUN for u in $USERS; do \
     useradd -m $u && \
-    mkdir -p /home/$u/.local/share/containers /home/$u/.werf && \
+    mkdir -p /home/$u/.werf && \
     chown -R $u:$u /home/$u && \
     runuser -u $u -- git config --global --add safe.directory '*' ; \
     done
 
-USER build1001:build1001
-VOLUME /home/build1001/.local/share/containers
-
 USER build:build
-VOLUME /home/build/.local/share/containers
 
 WORKDIR /home/build
 
 ENV WERF_CONTAINERIZED=yes
-ENV WERF_BUILDAH_MODE=auto
 ENV WERF_DISABLE_AUTO_HOST_CLEANUP=1

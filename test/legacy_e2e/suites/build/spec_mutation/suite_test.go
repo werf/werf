@@ -1,6 +1,7 @@
 package common_test
 
 import (
+	"os"
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -47,7 +48,15 @@ var (
 )
 
 func setupEnv(opts setupEnvOptions) {
-	SuiteData.Stubs.SetEnv("WERF_BUILDAH_MODE", opts.ContainerBackendMode)
+	if opts.ContainerBackendMode == "buildkit" {
+		buildkitHost := os.Getenv("WERF_TEST_BUILDKIT_HOST")
+		if buildkitHost == "" {
+			Skip("WERF_TEST_BUILDKIT_HOST is not set")
+		}
+		SuiteData.Stubs.SetEnv("WERF_BUILDKIT_HOST", buildkitHost)
+	} else {
+		SuiteData.Stubs.UnsetEnv("WERF_BUILDKIT_HOST")
+	}
 
 	if opts.WithLocalRepo {
 		SuiteData.Stubs.SetEnv("WERF_INSECURE_REGISTRY", "1")
