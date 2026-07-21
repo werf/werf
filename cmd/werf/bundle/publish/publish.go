@@ -143,7 +143,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupAddAnnotations(&commonCmdData, cmd)
 	common.SetupAddLabels(&commonCmdData, cmd)
 	commonCmdData.SetupSkipDependenciesRepoRefresh(cmd)
-	commonCmdData.SetupHelmCompatibleChart(cmd, false)
+	commonCmdData.SetupHelmCompatibleChart(cmd, true)
 	commonCmdData.SetupRenameChart(cmd)
 
 	defaultTag := os.Getenv("WERF_TAG")
