@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.1.0-alpha.1](https://github.com/werf/werf/compare/v3.0.0-alpha.1...v3.1.0-alpha.1) (2026-07-21)
+
+
+### Features
+
+* add --diff-patches and patches.yaml support ([#7661](https://github.com/werf/werf/issues/7661)) ([4f2aae6](https://github.com/werf/werf/commit/4f2aae647b76c18bc5b245b20aa2a146a2a9eaf3))
+* bundle publish now publishes helm compatible charts by default ([2bd5438](https://github.com/werf/werf/commit/2bd5438fd6816b2036f13649ca5c6046db115208))
+
 ## [3.0.0-alpha.1](https://github.com/werf/werf/compare/v2.73.2...v3.0.0-alpha.1) (2026-07-10)
 
 
