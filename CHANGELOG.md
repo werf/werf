@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.75.0](https://github.com/werf/werf/compare/v2.74.0...v2.75.0) (2026-07-20)
+
+
+### Features
+
+* **deploy:** add --lookup-resources flag for offline lookup in render/lint commands ([#7666](https://github.com/werf/werf/issues/7666)) ([3b0f422](https://github.com/werf/werf/commit/3b0f42205264a8aea563f881c9b9378aeba1d351))
+
+
+### Bug Fixes
+
+* `werf.io/deploy-dependency` didn't work if no readiness operation in plan or if `namespace=releasens` ([284d18d](https://github.com/werf/werf/commit/284d18deff57f0496cbdffddba44716c0e43de60))
+* **deploy:** create release namespace under strict RBAC, `--no-create-namespace` flag ([#7668](https://github.com/werf/werf/issues/7668)) ([5c9d62a](https://github.com/werf/werf/commit/5c9d62a0c8b73fd13e861136961537a5470679c1))
+
 ## [2.74.0](https://github.com/werf/werf/compare/v2.73.2...v2.74.0) (2026-07-14)
 
 
