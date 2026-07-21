@@ -33,9 +33,6 @@ func GetConveyorOptions(ctx context.Context, commonCmdData *CmdData, imagesToPro
 	}
 
 	conveyorOptions.DeferBuildLog = GetDeferredBuildLog(ctx, commonCmdData)
-	if commonCmdData.SkipImageSpecStage != nil {
-		conveyorOptions.SkipImageSpecStage = *commonCmdData.SkipImageSpecStage
-	}
 
 	useBuildReport := GetUseBuildReport(commonCmdData)
 	buildReportPath := GetBuildReportPath(commonCmdData)

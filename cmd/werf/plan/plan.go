@@ -134,7 +134,6 @@ werf plan --repo registry.mydomain.com/web --env production`,
 	common.SetupBackendStoragePath(&commonCmdData, cmd)
 	common.SetupProjectName(&commonCmdData, cmd, false)
 
-	commonCmdData.SetupSkipImageSpecStage(cmd)
 	commonCmdData.SetupDebugTemplates(cmd)
 	commonCmdData.SetupAllowIncludesUpdate(cmd)
 

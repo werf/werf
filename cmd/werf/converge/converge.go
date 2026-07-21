@@ -130,7 +130,6 @@ werf converge --repo registry.mydomain.com/web --env production`,
 
 	commonCmdData.SetupDebugTemplates(cmd)
 	commonCmdData.SetupAllowIncludesUpdate(cmd)
-	commonCmdData.SetupSkipImageSpecStage(cmd)
 
 	lo.Must0(common.SetupKubeConnectionFlags(&commonCmdData, cmd))
 	lo.Must0(common.SetupChartRepoConnectionFlags(&commonCmdData, cmd))
