@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.75.1](https://github.com/werf/werf/compare/v2.75.0...v2.75.1) (2026-07-22)
+
+
+### Bug Fixes
+
+* **deploy:** don't block deploy when Helm managed fields reconstruction hits incompatible historical manifest ([#7673](https://github.com/werf/werf/issues/7673)) ([c7f3677](https://github.com/werf/werf/commit/c7f3677b80ddf34b98182ff00a7a622994dbf05c))
+
 ## [2.75.0](https://github.com/werf/werf/compare/v2.74.0...v2.75.0) (2026-07-20)
 
 
