@@ -1,0 +1,120 @@
+name: docs:deploy:production (internal)
+
+on:
+  workflow_call:
+    inputs:
+      targetCluster:
+        required: true
+        type: string
+      kubeConfigSecretPath:
+        required: true
+        type: string
+      githubRefOverride:
+        required: false
+        default: ""
+        type: string
+      runner:
+        default: prod-github-runner-0
+        type: string
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  deploy-production:
+    runs-on: ${{ inputs.runner }}
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      id-token: write
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.githubRefOverride != '' && inputs.githubRefOverride || github.ref }}
+
+      - name: Set dynamic WERF_* env vars
+        run: |
+          github_ref_override='${{ inputs.githubRefOverride }}'
+
+          if [[ -n "$github_ref_override" ]]; then
+            github_ref_value="$github_ref_override"
+          else
+            github_ref_value='${{ github.ref_name }}'
+          fi
+
+          case "$github_ref_value" in
+            2|v2|v2.*)
+              docs_ref_value="v2"
+              release_name="werfio-v2-production"
+              ;;
+            1.2|v1.2|v1.2.*)
+              docs_ref_value="v1.2"
+              release_name="werfio-v1-dot-2-production"
+              ;;
+            main|latest)
+              docs_ref_value="v2"
+              release_name="werfio-v2-production"
+              ;;
+            *)
+              echo "Unsupported docs production ref: $github_ref_value" >&2
+              exit 1
+              ;;
+          esac
+
+          cat >> "$GITHUB_ENV" <<EOF
+          WERF_RELEASE=$release_name
+          WERF_SET_GITHUB_REF=global.github_ref=$docs_ref_value
+          EOF
+
+      - name: Install werf
+        uses: werf/actions/install@v2
+
+      - name: Authenticate in Seguro
+        id: vault
+        uses: hashicorp/vault-action@v4
+        with:
+          url: https://seguro.flant.com
+          path: github
+          role: werf-web
+          method: jwt
+          jwtGithubAudience: github-access-aud
+          exportToken: true
+
+      - name: Read and normalize kubeconfig from Bob
+        id: kubeconfig
+        run: |
+          set -euo pipefail
+
+          response="$(curl -fsSL -H "X-Vault-Token: $VAULT_TOKEN" "https://seguro.flant.com/v1/${{ inputs.kubeConfigSecretPath }}")"
+          secret_value="$(printf '%s' "$response" | jq -r '.data.data["kube.config"]')"
+
+          if [[ -z "$secret_value" || "$secret_value" == "null" ]]; then
+            echo "Bob kubeconfig secret is empty" >&2
+            exit 1
+          fi
+
+          if printf '%s' "$secret_value" | base64 -d >/tmp/docs-kubeconfig-decoded 2>/dev/null && grep -q '^apiVersion:' /tmp/docs-kubeconfig-decoded; then
+            kubeconfig_base64="$secret_value"
+          else
+            kubeconfig_base64="$(printf '%s' "$secret_value" | base64 | tr -d '\n')"
+          fi
+
+          echo "::add-mask::$kubeconfig_base64"
+          echo "kubeconfig_base64=$kubeconfig_base64" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy production docs
+        run: |
+          . $(werf ci-env github --as-file)
+          werf converge --set "global.targetCluster=${{ inputs.targetCluster }}"
+        env:
+          WERF_NAMESPACE: werfio-production
+          WERF_DIR: docs
+          WERF_LOG_VERBOSE: on
+          WERF_REPO: ghcr.io/${{ github.repository_owner }}/werfio
+          WERF_ENV: production
+          WERF_KUBE_CONFIG_BASE64: ${{ steps.kubeconfig.outputs.kubeconfig_base64 }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

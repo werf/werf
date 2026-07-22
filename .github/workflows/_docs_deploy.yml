@@ -3,11 +3,16 @@ name: xxxxx(internal)
 on:
   workflow_call:
     inputs:
+      checkoutRef:
+        required: false
+        default: ""
+        type: string
       env:
         required: true
         type: string
-      persistent:
-        default: false
+      githubRefOverride:
+        required: false
+        default: ""
         type: string
       runner:
         default: ubuntu-22.04
@@ -26,31 +31,43 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          ref: ${{ inputs.checkoutRef != '' && inputs.checkoutRef || github.ref }}
 
       - name: Set dynamic WERF_* env vars
         run: |
-          if ${{ inputs.persistent }}; then
-            cat >> "$GITHUB_ENV" <<EOF
-          WERF_RELEASE=werfio-$(echo $GITHUB_REF | cut -d\/ -f 3 | sed 's/\+/-plus-/' | sed 's/\_/-u-/')-${{ inputs.env }}
-          WERF_SET_GITHUB_REF=global.github_ref=${{ github.ref }}
-          EOF
+          github_ref_override='${{ inputs.githubRefOverride }}'
+          pr_number='${{ github.event.pull_request.number }}'
+
+          if [[ -n "$github_ref_override" ]]; then
+            github_ref_value="$github_ref_override"
           else
-            cat >> "$GITHUB_ENV" <<EOF
-          WERF_RELEASE=werfio-documentation-${{ inputs.env }}
-          WERF_SET_GITHUB_REF=global.github_ref=main
-          EOF
+            if [[ -z "$pr_number" ]]; then
+              echo "PR number is required for docs deploy when githubRefOverride is not set" >&2
+              exit 1
+            fi
+            github_ref_value="pr-${pr_number}"
           fi
 
+          cat >> "$GITHUB_ENV" <<EOF
+          WERF_RELEASE=werfio-${github_ref_value}
+          WERF_SET_GITHUB_REF=global.github_ref=$github_ref_value
+          EOF
+
+      - name: Install werf
+        uses: werf/actions/install@v2
+
       - name: Deploy
-        uses: werf/actions/converge@v2
-        with:
-          env: ${{ inputs.env }}
-          kube-config-base64-data: ${{ secrets.kubeConfig }}
+        run: |
+          . $(werf ci-env github --as-file)
+          werf converge --virtual-merge=false
         env:
           WERF_NAMESPACE: werfio-${{ inputs.env }}
           WERF_DIR: docs
           WERF_LOG_VERBOSE: on
           WERF_REPO: ghcr.io/${{ github.repository_owner }}/werfio
+          WERF_ENV: ${{ inputs.env }}
+          WERF_KUBE_CONFIG_BASE64: ${{ secrets.kubeConfig }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,10 +1,29 @@
+global:
+  targetCluster: ""
+
+clusters:
+  eu:
+    placement:
+      nodeSelector: {}
+      tolerations: []
+      affinity: {}
+  ru:
+    placement:
+      nodeSelector: {}
+      tolerations: []
+      affinity: {}
+
 priorityClassName:
   _default: develop
   production: production-medium
 host:
   production: werf.io
-  dev: werf.dev.flant.com
-  _default: werf.test.flant.com
+  test: werf.test.flant.dev
+  _default: werf.test.flant.dev
+
+ingressSecretName:
+  _default: wildcard-dev-flant-dev
+  test: wildcard-test-flant-dev
 
 ingressClassName:
   _default: "nginx"
@@ -15,3 +34,12 @@ resources:
     memory:
       _default: 20M
       production: 50M
+  limits:
+    memory:
+      _default: 20M
+      production: 50M
+
+docs:
+  currentRoot: v2
+  supportedRoots: [v2, v1.2]
+  latestAliasEnabled: true
