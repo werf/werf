@@ -1,0 +1,107 @@
+name: docs:deploy:test-versions
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Which versions to deploy"
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - v2
+          - v1.2
+          - latest
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  deploy-v2:
+    if: ${{ github.event.inputs.version == 'all' || github.event.inputs.version == 'v2' }}
+    runs-on: prod-github-runner-0
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Install werf
+        uses: werf/actions/install@v2
+
+      - name: Deploy v2 docs to test
+        run: |
+          . $(werf ci-env github --as-file)
+          werf converge --virtual-merge=false
+        env:
+          WERF_NAMESPACE: werfio-test
+          WERF_DIR: docs
+          WERF_ENV: test
+          WERF_RELEASE: werfio-v2-test
+          WERF_SET_GITHUB_REF: global.github_ref=v2
+          WERF_REPO: ghcr.io/${{ github.repository_owner }}/werfio
+          WERF_KUBE_CONFIG_BASE64: ${{ secrets.KUBECONFIG_BASE64_DEV }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  deploy-v1-2:
+    if: ${{ github.event.inputs.version == 'all' || github.event.inputs.version == 'v1.2' }}
+    runs-on: prod-github-runner-0
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Install werf
+        uses: werf/actions/install@v2
+
+      - name: Deploy v1.2 docs to test
+        run: |
+          . $(werf ci-env github --as-file)
+          werf converge --virtual-merge=false
+        env:
+          WERF_NAMESPACE: werfio-test
+          WERF_DIR: docs
+          WERF_ENV: test
+          WERF_RELEASE: werfio-v1-dot-2-test
+          WERF_SET_GITHUB_REF: global.github_ref=v1.2
+          WERF_REPO: ghcr.io/${{ github.repository_owner }}/werfio
+          WERF_KUBE_CONFIG_BASE64: ${{ secrets.KUBECONFIG_BASE64_DEV }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  deploy-latest:
+    if: ${{ github.event.inputs.version == 'all' || github.event.inputs.version == 'latest' }}
+    runs-on: prod-github-runner-0
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Install werf
+        uses: werf/actions/install@v2
+
+      - name: Deploy latest docs to test
+        run: |
+          . $(werf ci-env github --as-file)
+          werf converge --virtual-merge=false
+        env:
+          WERF_NAMESPACE: werfio-test
+          WERF_DIR: docs
+          WERF_ENV: test
+          WERF_RELEASE: werfio-latest-test
+          WERF_SET_GITHUB_REF: global.github_ref=main
+          WERF_REPO: ghcr.io/${{ github.repository_owner }}/werfio
+          WERF_KUBE_CONFIG_BASE64: ${{ secrets.KUBECONFIG_BASE64_DEV }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
