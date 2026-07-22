@@ -1,5 +1,18 @@
 # Changelog
 
+### [1.2.337](https://www.github.com/werf/werf/compare/v1.2.336...v1.2.337) (2026-07-22)
+
+
+### Bug Fixes
+
+* **ci:** update runner ([#7265](https://www.github.com/werf/werf/issues/7265)) ([0edea47](https://www.github.com/werf/werf/commit/0edea47f66b39dd0f25237754fb7c7dcd596331d))
+* **docs:** fix ingressClassName ([#7267](https://www.github.com/werf/werf/issues/7267)) ([d2afce5](https://www.github.com/werf/werf/commit/d2afce5e8f93cb80ebe0ba6769f4d8205a1d574e))
+
+
+### Miscellaneous Chores
+
+* **release:** force 1.2.337 ([53f9236](https://www.github.com/werf/werf/commit/53f9236bda17045f73aef087ab2112ddcf49e5fc))
+
 ### [1.2.336](https://www.github.com/werf/werf/compare/v1.2.335...v1.2.336) (2025-10-31)
 
 
