@@ -15,13 +15,10 @@ jobs:
   cleanup:
     if: github.repository == 'werf/werf'
     runs-on: prod-github-runner-0
-<<<<<<< HEAD
     permissions:
       id-token: write
       contents: read
       packages: write
-=======
->>>>>>> f972844e1 (refactor(docs): switch production docs deploy to major tracks)
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
