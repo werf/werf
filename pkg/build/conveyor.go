@@ -16,6 +16,7 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
+	"github.com/werf/logboek/pkg/level"
 	stylePkg "github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
 	"github.com/werf/werf/v2/pkg/build/image"
@@ -27,6 +28,7 @@ import (
 	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
 	imagePkg "github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/opstats"
 	"github.com/werf/werf/v2/pkg/storage"
 	"github.com/werf/werf/v2/pkg/storage/manager"
 	"github.com/werf/werf/v2/pkg/storage/synchronization/lock_manager"
@@ -703,6 +705,12 @@ func (c *Conveyor) Build(ctx context.Context, opts BuildOptions) ([]*ImagesRepor
 		return nil, err
 	}
 
+	var opsCollector *opstats.Collector
+	if logboek.Context(ctx).IsAcceptedLevel(level.Debug) {
+		opsCollector = opstats.NewCollector()
+		ctx = opstats.NewContext(ctx, opsCollector)
+	}
+
 	if err := c.determineStages(ctx); err != nil {
 		return nil, err
 	}
@@ -719,6 +727,8 @@ func (c *Conveyor) Build(ctx context.Context, opts BuildOptions) ([]*ImagesRepor
 	if err != nil {
 		c.printDeferredBuildLog(ctx, buf)
 	}
+
+	c.logOperationsSummary(ctx, opsCollector)
 
 	reports := lo.Map(phases, func(phase Phase, _ int) *ImagesReport {
 		return phase.Report()
@@ -751,6 +761,27 @@ func (c *Conveyor) doDetermineStages(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (c *Conveyor) logOperationsSummary(ctx context.Context, collector *opstats.Collector) {
+	if collector == nil {
+		return
+	}
+
+	summary := collector.Summary()
+	if len(summary) == 0 {
+		return
+	}
+
+	logboek.Context(ctx).LogBlock("Operations summary (wall-clock, low-level operations)").
+		Options(func(options types.LogBlockOptionsInterface) {
+			options.Style(stylePkg.Highlight())
+		}).
+		Do(func() {
+			for _, s := range summary {
+				logboek.Context(ctx).LogFHighlight("- %-14s %4d operation(s) %8.2f seconds\n", s.Operation, s.Count, s.WallTime.Seconds())
+			}
+		})
 }
 
 func (c *Conveyor) runPhases(ctx context.Context, phases []Phase, logImages bool) error {

@@ -15,6 +15,7 @@ import (
 	"github.com/werf/lockgate/pkg/distributed_locker"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/kubeutils"
+	"github.com/werf/werf/v2/pkg/opstats"
 )
 
 func NewKubernetes(
@@ -79,6 +80,7 @@ func (manager *Kubernetes) LockStage(
 	if locker, err := manager.getLockerForProject(ctx, projectName); err != nil {
 		return LockHandle{}, err
 	} else {
+		defer opstats.Observe(ctx, opstats.OperationStageLockWait)()
 		options := lockerPkg.SetupDefaultOptions(ctx, lockgate.AcquireOptions{})
 		_, lock, err := locker.Acquire(kubernetesStageLockName(projectName, digest), options)
 		return LockHandle{LockgateHandle: lock, ProjectName: projectName}, err
