@@ -21,6 +21,7 @@ import (
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/git_repo/repo_handle"
+	"github.com/werf/werf/v2/pkg/opstats"
 	"github.com/werf/werf/v2/pkg/path_matcher"
 	"github.com/werf/werf/v2/pkg/true_git"
 	"github.com/werf/werf/v2/pkg/werf"
@@ -220,6 +221,8 @@ func (repo *Remote) Clone(ctx context.Context) (bool, error) {
 			return nil
 		}
 
+		defer opstats.Observe(ctx, opstats.OperationGitClone)()
+
 		logboek.Context(ctx).Default().LogFDetails("Clone %s\n", repo.Url)
 
 		if err := os.MkdirAll(filepath.Dir(repo.GetClonePath()), 0o755); err != nil {
@@ -307,6 +310,8 @@ func (repo *Remote) FetchOrigin(ctx context.Context, opts FetchOptions) error {
 	}
 
 	return repo.withRemoteRepoLock(ctx, func() error {
+		defer opstats.Observe(ctx, opstats.OperationGitFetch)()
+
 		rawRepo, err := repo.PlainOpen()
 		if err != nil {
 			return fmt.Errorf("cannot open repo: %w", err)

@@ -102,6 +102,9 @@ func NewDockerRegistry(ctx context.Context, repositoryAddress, implementation st
 	if err != nil {
 		return nil, err
 	}
+
+	res = newTimingDockerRegistry(res)
+
 	if debugDockerRegistry() {
 		res = NewDockerRegistryTracer(res, nil)
 	}

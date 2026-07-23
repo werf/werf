@@ -20,6 +20,7 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/types"
 	"github.com/werf/werf/v2/pkg/git_repo/repo_handle"
+	"github.com/werf/werf/v2/pkg/opstats"
 	"github.com/werf/werf/v2/pkg/path_matcher"
 	"github.com/werf/werf/v2/pkg/true_git"
 	"github.com/werf/werf/v2/pkg/true_git/ls_tree"
@@ -177,6 +178,7 @@ func (repo *Base) getOrCreatePatch(ctx context.Context, repoPath, gitDir, repoID
 }
 
 func (repo *Base) CreatePatch(ctx context.Context, repoPath, gitDir, repoID, workTreeCacheDir string, opts PatchOptions) (patch Patch, err error) {
+	defer opstats.Observe(ctx, opstats.OperationGitPatch)()
 	logboek.Context(ctx).Debug().LogProcess("Creating patch").Do(func() {
 		logboek.Context(ctx).Debug().LogFDetails("repository: %s\noptions: %+v\n", repo.Name, opts)
 		logboek.Context(ctx).Debug().LogOptionalLn()
@@ -363,6 +365,7 @@ func (repo *Base) getOrCreateArchive(ctx context.Context, repoPath, gitDir, repo
 }
 
 func (repo *Base) CreateArchive(ctx context.Context, repoPath, gitDir, repoID, workTreeCacheDir string, opts ArchiveOptions) (archive Archive, err error) {
+	defer opstats.Observe(ctx, opstats.OperationGitArchive)()
 	logboek.Context(ctx).Debug().LogProcess("Creating archive").Do(func() {
 		logboek.Context(ctx).Debug().LogFDetails("repository: %s\noptions: %+v\n", repo.Name, opts)
 		logboek.Context(ctx).Debug().LogOptionalLn()
@@ -541,6 +544,7 @@ func (repo *Base) getOrCreateChecksum(ctx context.Context, repoHandle repo_handl
 }
 
 func (repo *Base) CreateChecksum(ctx context.Context, repoHandle repo_handle.Handle, opts ChecksumOptions) (checksum string, err error) {
+	defer opstats.Observe(ctx, opstats.OperationGitChecksum)()
 	logboek.Context(ctx).Debug().LogProcess("Creating checksum").Do(func() {
 		logboek.Context(ctx).Debug().LogFDetails("repository: %s\noptions: %+v\n", repo.Name, opts)
 		logboek.Context(ctx).Debug().LogOptionalLn()
