@@ -88,9 +88,9 @@ func GetBuildahStorageDriver() (*buildah.StorageDriver, error) {
 
 func wrapContainerBackend(containerBackend container_backend.ContainerBackend) container_backend.ContainerBackend {
 	if os.Getenv("WERF_PERF_TEST_CONTAINER_RUNTIME") == "1" {
-		containerBackend = container_backend.NewPerfCheckContainerBackend(containerBackend)
+		return container_backend.NewPerfCheckContainerBackend(containerBackend)
 	}
-	return container_backend.NewTimingContainerBackend(containerBackend)
+	return containerBackend
 }
 
 func InitProcessContainerBackend(ctx context.Context, cmdData *CmdData, registryMirrors []string) (container_backend.ContainerBackend, context.Context, error) {
