@@ -717,6 +717,11 @@ func (backend *BuildahBackend) BuildStapelStage(ctx context.Context, baseImage s
 }
 
 // GetImageInfo returns nil, nil if image not found.
+func (backend *BuildahBackend) EnsureImageContent(ctx context.Context, ref string, opts EnsureImageContentOpts) error {
+	return nil
+}
+
+// GetImageInfo returns nil, nil if image not found.
 func (backend *BuildahBackend) GetImageInfo(ctx context.Context, ref string, opts GetImageInfoOpts) (*image.Info, error) {
 	inspectRef := ref
 	inspectedByCachedID := false

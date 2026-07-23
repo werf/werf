@@ -436,6 +436,13 @@ func (i *Image) FetchBaseImage(ctx context.Context) (FetchBaseImageInfo, error) 
 				} else {
 					logboek.Context(ctx).Info().LogF("No pull needed for base image %s of image %q: image by digest %s is up to date\n", i.baseImageReference, i.Name, i.baseImageRepoDigest)
 				}
+
+				// Even though metadata is present, verify content integrity.
+				// With containerd-snapshotter, inspect can succeed while blobs are missing.
+				if err := i.ContainerBackend.EnsureImageContent(ctx, i.baseStageImage.Image.Name(), container_backend.EnsureImageContentOpts{}); err != nil {
+					return FetchBaseImageInfo{}, fmt.Errorf("verify base image %s content integrity: %w", i.baseStageImage.Image.Name(), err)
+				}
+
 				// No image pull
 				return FetchBaseImageInfo{BaseImagePulled: false}, nil
 			}
