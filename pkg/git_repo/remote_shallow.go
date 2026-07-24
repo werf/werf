@@ -471,7 +471,7 @@ func basicAuthEnv(auth *BasicAuth) ([]string, func(), error) {
 		return env, func() {}, nil
 	}
 
-	dir, err := os.MkdirTemp("", "werf-git-askpass-")
+	dir, err := os.MkdirTemp(werf.GetTmpDir(), "werf-git-askpass-")
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to create askpass temp dir: %w", err)
 	}

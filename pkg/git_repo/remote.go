@@ -235,7 +235,7 @@ func buildFetchOptions(remoteName, branch string) *git.FetchOptions {
 		// Explicit wildcard refspec: the mirror could have been cloned
 		// single-branch by a branch mapping of the same URL, in which case its
 		// configured refspec would never fetch commits outside that branch.
-		opts.RefSpecs = []gitconfig.RefSpec{"+refs/heads/*:refs/remotes/origin/*"}
+		opts.RefSpecs = []gitconfig.RefSpec{gitconfig.RefSpec(fmt.Sprintf("+refs/heads/*:refs/remotes/%s/*", remoteName))}
 	}
 
 	return opts

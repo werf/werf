@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 
 	"github.com/go-git/go-git/v5"
@@ -379,9 +380,27 @@ var _ = Describe("Remote shallow mirror", func() {
 		})
 
 		It("fetches all branches and tags when no branch is set so off-branch commits are reachable after fallback", func() {
-			opts := buildFetchOptions("origin", "")
+			opts := buildFetchOptions("upstream", "")
 			Expect(opts.Tags).To(Equal(git.AllTags))
-			Expect(opts.RefSpecs).To(ConsistOf(gitconfig.RefSpec("+refs/heads/*:refs/remotes/origin/*")))
+			Expect(opts.RefSpecs).To(ConsistOf(gitconfig.RefSpec("+refs/heads/*:refs/remotes/upstream/*")))
+		})
+	})
+
+	Describe("basicAuthEnv", func() {
+		It("creates the askpass helper in the werf temp directory", func() {
+			env, cleanup, err := basicAuthEnv(&BasicAuth{Username: "user", Password: "password"})
+			Expect(err).NotTo(HaveOccurred())
+			defer cleanup()
+
+			var askpassPath string
+			for _, entry := range env {
+				if strings.HasPrefix(entry, "GIT_ASKPASS=") {
+					askpassPath = strings.TrimPrefix(entry, "GIT_ASKPASS=")
+					break
+				}
+			}
+			Expect(askpassPath).NotTo(BeEmpty())
+			Expect(filepath.Dir(filepath.Dir(askpassPath))).To(Equal(werf.GetTmpDir()))
 		})
 	})
 
