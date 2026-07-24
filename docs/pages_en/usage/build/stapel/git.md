@@ -47,8 +47,6 @@ The _git mapping_ configuration for a remote repository has some additional para
 
 When a fixed `tag` or `commit` is specified, werf treats the ref as immutable and maintains a shallow mirror of the remote repository (`git fetch --depth=1`) instead of fetching the full history. If the target commit is already present in the local cache, werf skips network access entirely. For `branch`, as well as when the shallow fetch is refused by the git server or the repository uses submodules, werf automatically falls back to a full-history mirror.
 
-> Note a limitation of the shallow mode: if a tag is force-moved to another commit (`git tag -f`), the previous commit is not retained in the shallow mirror, so ancestry-based reuse of cached stages built for the old tag position is not possible. This does not affect `branch` mappings or the first build of any given ref.
-
 ## Using git mappings
 
 ### Copying directories
