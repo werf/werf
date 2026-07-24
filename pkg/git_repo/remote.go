@@ -544,6 +544,10 @@ func (repo *Remote) GetOrCreatePatch(ctx context.Context, opts PatchOptions) (Pa
 	return repo.getOrCreatePatch(ctx, repo.GetClonePath(), repo.GetClonePath(), repo.getRepoID(), repo.getWorkTreeCacheDir(repo.getRepoID()), opts)
 }
 
+func (repo *Remote) GetOrCreateChangedPaths(ctx context.Context, fromCommit, toCommit string) ([]true_git.ChangedPath, error) {
+	return repo.getOrCreateChangedPaths(ctx, repo.GetClonePath(), fromCommit, toCommit)
+}
+
 func (repo *Remote) GetOrCreateArchive(ctx context.Context, opts ArchiveOptions) (Archive, error) {
 	return repo.getOrCreateArchive(ctx, repo.GetClonePath(), repo.GetClonePath(), repo.getRepoID(), repo.getWorkTreeCacheDir(repo.getRepoID()), opts)
 }
