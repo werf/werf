@@ -13,7 +13,7 @@ import (
 	"github.com/werf/werf/v2/pkg/werf"
 )
 
-const GitReposCacheVersion = "5"
+const GitReposCacheVersion = "6"
 
 type (
 	PatchOptions    true_git.PatchOptions
@@ -34,6 +34,13 @@ type ArchiveType string
 const (
 	FileArchive      ArchiveType = "file"
 	DirectoryArchive ArchiveType = "directory"
+)
+
+type mirrorKind string
+
+const (
+	mirrorKindFull    mirrorKind = "full"
+	mirrorKindShallow mirrorKind = "shallow"
 )
 
 //go:generate mockgen -source git_repo.go -package mock -destination ../../test/mock/git_repo.go

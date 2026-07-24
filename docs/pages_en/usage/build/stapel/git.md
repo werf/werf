@@ -45,6 +45,8 @@ The _git mapping_ configuration for a remote repository has some additional para
 
 > By default, the use of the `branch` directive is not allowed by giterminism (read more about it [here]({{ "usage/project_configuration/giterminism.html" | true_relative_url }}))
 
+When a fixed `tag` or `commit` is specified, werf treats the ref as immutable and maintains a shallow mirror of the remote repository (`git fetch --depth=1`) instead of fetching the full history. If the target commit is already present in the local cache, werf skips network access entirely. For `branch`, as well as when the shallow fetch is refused by the git server or the repository uses submodules, werf automatically falls back to a full-history mirror.
+
 ## Using git mappings
 
 ### Copying directories

@@ -229,7 +229,7 @@ func generateGitMappings(ctx context.Context, metaConfig *config.Meta, imageBase
 	}
 
 	for _, remoteGitMappingConfig := range imageBaseConfig.Git.Remote {
-		remoteGitRepo := opts.Conveyor.GetRemoteGitRepo(remoteGitMappingConfig.Name)
+		remoteGitRepo := opts.Conveyor.GetRemoteGitRepo(remoteGitMappingConfig.RepoCacheKey)
 		if remoteGitRepo == nil {
 			var err error
 			remoteGitRepo, err = git_repo.OpenRemoteRepo(remoteGitMappingConfig.Name, remoteGitMappingConfig.Url, remoteGitMappingConfig.BasicAuth)
@@ -247,7 +247,7 @@ func generateGitMappings(ctx context.Context, metaConfig *config.Meta, imageBase
 				return nil, err
 			}
 
-			opts.Conveyor.SetRemoteGitRepo(remoteGitMappingConfig.Name, remoteGitRepo)
+			opts.Conveyor.SetRemoteGitRepo(remoteGitMappingConfig.RepoCacheKey, remoteGitRepo)
 		}
 
 		gitMapping, err := gitRemoteArtifactInit(ctx, remoteGitMappingConfig, remoteGitRepo, imageBaseConfig.Name, opts.Conveyor, opts.ContainerWerfDir, opts.TmpDir)
