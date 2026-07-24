@@ -2,8 +2,9 @@ package config
 
 type GitRemote struct {
 	*GitRemoteExport
-	Name string
-	Url  string
+	Name         string
+	Url          string
+	RepoCacheKey string
 
 	raw *rawGit
 }
