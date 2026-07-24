@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"os/exec"
 
 	"github.com/werf/common-go/pkg/util"
@@ -31,6 +32,10 @@ func NewGitCmd(ctx context.Context, opts *GitCmdOptions, cliArgs ...string) GitC
 
 	gitCmd.Dir = opts.RepoDir
 
+	if len(opts.Env) > 0 {
+		gitCmd.Cmd.Env = append(os.Environ(), opts.Env...)
+	}
+
 	stdoutBuffs := []io.Writer{gitCmd.OutBuf, gitCmd.OutErrBuf}
 	stderrBuffs := []io.Writer{gitCmd.ErrBuf, gitCmd.OutErrBuf}
 
@@ -47,6 +52,7 @@ func NewGitCmd(ctx context.Context, opts *GitCmdOptions, cliArgs ...string) GitC
 
 type GitCmdOptions struct {
 	RepoDir string
+	Env     []string
 }
 
 type GitCmd struct {
