@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/go-git/go-git/v5"
+	gitconfig "github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/plumbing/storer"
@@ -141,7 +142,7 @@ func (repo *Remote) IsEmpty(ctx context.Context) (bool, error) {
 }
 
 func (repo *Remote) IsShallowClone(ctx context.Context) (bool, error) {
-	panic("not implemented")
+	return true_git.IsShallowClone(ctx, repo.GetClonePath())
 }
 
 func (repo *Remote) IsAncestor(ctx context.Context, ancestorCommit, descendantCommit string) (bool, error) {
@@ -221,16 +222,22 @@ func buildCloneOptions(url, branch string) *git.CloneOptions {
 }
 
 func buildFetchOptions(remoteName, branch string) *git.FetchOptions {
-	tags := git.AllTags
-	if branch != "" {
-		tags = git.NoTags
-	}
-
-	return &git.FetchOptions{
+	opts := &git.FetchOptions{
 		RemoteName: remoteName,
 		Force:      true,
-		Tags:       tags,
+		Tags:       git.AllTags,
 	}
+
+	if branch != "" {
+		opts.Tags = git.NoTags
+	} else {
+		// Explicit wildcard refspec: the mirror could have been cloned
+		// single-branch by a branch mapping of the same URL, in which case its
+		// configured refspec would never fetch commits outside that branch.
+		opts.RefSpecs = []gitconfig.RefSpec{"+refs/heads/*:refs/remotes/origin/*"}
+	}
+
+	return opts
 }
 
 func (repo *Remote) Clone(ctx context.Context) (bool, error) {

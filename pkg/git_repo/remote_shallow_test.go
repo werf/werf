@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"sync"
 
+	"github.com/go-git/go-git/v5"
+	gitconfig "github.com/go-git/go-git/v5/config"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
@@ -38,9 +40,7 @@ var _ = Describe("Remote shallow mirror", func() {
 		Expect(true_git.Init(ctx, true_git.Options{})).To(Succeed())
 		Expect(Init(&fakeGitDataManager{})).To(Succeed())
 
-		lsRemoteTagsCacheMu.Lock()
-		lsRemoteTagsCache = map[string]map[string]true_git.RemoteTagRef{}
-		lsRemoteTagsCacheMu.Unlock()
+		resetLsRemoteTagsCache()
 
 		sourceDir = filepath.Join(tmpDir, "source")
 		Expect(os.MkdirAll(sourceDir, 0o755)).To(Succeed())
@@ -236,9 +236,7 @@ var _ = Describe("Remote shallow mirror", func() {
 			Expect(prevCommit).NotTo(Equal(headCommit))
 
 			gitInSource(ctx, "tag", "-f", "v1", headCommit)
-			lsRemoteTagsCacheMu.Lock()
-			lsRemoteTagsCache = map[string]map[string]true_git.RemoteTagRef{}
-			lsRemoteTagsCacheMu.Unlock()
+			resetLsRemoteTagsCache()
 
 			repoV1Again := openRemote("", "v1", "")
 			Expect(repoV1Again.CloneAndFetch(ctx)).To(Succeed())
@@ -257,9 +255,7 @@ var _ = Describe("Remote shallow mirror", func() {
 			gitInSource(ctx, "tag", "-f", "v1")
 			newHeadCommit := utils.GetHeadCommit(ctx, sourceDir)
 
-			lsRemoteTagsCacheMu.Lock()
-			lsRemoteTagsCache = map[string]map[string]true_git.RemoteTagRef{}
-			lsRemoteTagsCacheMu.Unlock()
+			resetLsRemoteTagsCache()
 
 			repo2 := openRemote("", "v1", "")
 			Expect(repo2.CloneAndFetch(ctx)).To(Succeed())
@@ -287,9 +283,9 @@ var _ = Describe("Remote shallow mirror", func() {
 			Expect(repo.CloneAndFetch(ctx)).To(Succeed())
 
 			lsRemoteTagsCacheMu.Lock()
-			_, cached := lsRemoteTagsCache[sourceURL]
+			lenCache := len(lsRemoteTagsCache)
 			lsRemoteTagsCacheMu.Unlock()
-			Expect(cached).To(BeTrue())
+			Expect(lenCache).To(Equal(1))
 		})
 	})
 
@@ -329,6 +325,31 @@ var _ = Describe("Remote shallow mirror", func() {
 
 			_, statErr := os.Stat(repo.requiresFullMarkerPath())
 			Expect(os.IsNotExist(statErr)).To(BeTrue())
+		})
+
+		It("does not persist marker for a well-formed but nonexistent commit", func(ctx SpecContext) {
+			repo := openRemote("", "", "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef")
+
+			err := repo.CloneAndFetch(ctx)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("not found in full mirror after fallback"))
+
+			_, statErr := os.Stat(repo.requiresFullMarkerPath())
+			Expect(os.IsNotExist(statErr)).To(BeTrue())
+		})
+	})
+
+	Describe("buildFetchOptions", func() {
+		It("fetches only the mapped branch and no tags for a branch mapping", func() {
+			opts := buildFetchOptions("origin", "main")
+			Expect(opts.Tags).To(Equal(git.NoTags))
+			Expect(opts.RefSpecs).To(BeEmpty())
+		})
+
+		It("fetches all branches and tags when no branch is set so off-branch commits are reachable after fallback", func() {
+			opts := buildFetchOptions("origin", "")
+			Expect(opts.Tags).To(Equal(git.AllTags))
+			Expect(opts.RefSpecs).To(ConsistOf(gitconfig.RefSpec("+refs/heads/*:refs/remotes/origin/*")))
 		})
 	})
 

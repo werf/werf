@@ -10,6 +10,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/go-git/go-git/v5"
+
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/true_git"
@@ -36,6 +38,12 @@ var (
 	lsRemoteTagsCacheMu sync.Mutex
 	lsRemoteTagsCache   = map[string]map[string]true_git.RemoteTagRef{}
 )
+
+func resetLsRemoteTagsCache() {
+	lsRemoteTagsCacheMu.Lock()
+	defer lsRemoteTagsCacheMu.Unlock()
+	lsRemoteTagsCache = map[string]map[string]true_git.RemoteTagRef{}
+}
 
 func (repo *Remote) cloneAndFetchShallow(ctx context.Context) error {
 	if repo.IsDryRun {
@@ -138,7 +146,7 @@ func (repo *Remote) syncShallowCommit(ctx context.Context) error {
 		return err
 	}
 	if !commitExists {
-		return fmt.Errorf("bad commit %q of repo %s: not found after shallow fetch", repo.Commit, repo.String())
+		return shallowUserError{fmt.Errorf("bad commit %q of repo %s: not found after shallow fetch", repo.Commit, repo.String())}
 	}
 
 	return repo.checkShallowCommitSubmodules(shallowPath, repo.Commit)
@@ -236,8 +244,10 @@ func (repo *Remote) localTagCommit(shallowPath string) (string, error) {
 	}
 
 	ref, err := rawRepo.Tag(repo.Tag)
-	if err != nil {
+	if errors.Is(err, git.ErrTagNotFound) {
 		return "", nil
+	} else if err != nil {
+		return "", fmt.Errorf("bad tag %q of repo %s: %w", repo.Tag, repo.String(), err)
 	}
 
 	commitHash, err := peelToCommitHash(rawRepo, ref.Hash())
@@ -255,7 +265,9 @@ func (repo *Remote) lsRemoteTag(ctx context.Context, fresh bool) (string, error)
 	lsRemoteTagsCacheMu.Lock()
 	defer lsRemoteTagsCacheMu.Unlock()
 
-	tags, cached := lsRemoteTagsCache[repo.Url]
+	cacheKey := repo.lsRemoteTagsCacheKey()
+
+	tags, cached := lsRemoteTagsCache[cacheKey]
 	if !cached || fresh {
 		env, cleanup, err := basicAuthEnv(repo.BasicAuth)
 		if err != nil {
@@ -268,7 +280,7 @@ func (repo *Remote) lsRemoteTag(ctx context.Context, fresh bool) (string, error)
 			return "", fmt.Errorf("cannot list remote tags of repo %q: %w", repo.String(), err)
 		}
 
-		lsRemoteTagsCache[repo.Url] = tags
+		lsRemoteTagsCache[cacheKey] = tags
 	}
 
 	tagRef, found := tags[repo.Tag]
@@ -280,6 +292,15 @@ func (repo *Remote) lsRemoteTag(ctx context.Context, fresh bool) (string, error)
 		return tagRef.PeeledSHA, nil
 	}
 	return tagRef.ObjectSHA, nil
+}
+
+func (repo *Remote) lsRemoteTagsCacheKey() string {
+	var user, password string
+	if repo.BasicAuth != nil {
+		user = repo.BasicAuth.Username
+		password = repo.BasicAuth.Password
+	}
+	return util.Sha256Hash(repo.Url, user, password)
 }
 
 func (repo *Remote) shallowFetch(ctx context.Context, shallowPath, refSpec string) error {
@@ -390,6 +411,10 @@ func (repo *Remote) downgradeToFull(ctx context.Context, persistMarker bool) err
 			}
 		}
 
+		if err := repo.verifyTargetInFullMirror(ctx, repo.clonePathForKind(mirrorKindFull)); err != nil {
+			return err
+		}
+
 		if persistMarker {
 			if err := repo.writeRequiresFullMarker(); err != nil {
 				return err
@@ -408,6 +433,31 @@ func (repo *Remote) downgradeToFull(ctx context.Context, persistMarker bool) err
 
 		return nil
 	})
+}
+
+func (repo *Remote) verifyTargetInFullMirror(ctx context.Context, fullPath string) error {
+	if repo.Commit != "" {
+		exists, err := repo.isCommitExists(ctx, fullPath, fullPath, repo.Commit)
+		if err != nil {
+			return err
+		}
+		if !exists {
+			return fmt.Errorf("bad commit %q of repo %s: not found in full mirror after fallback", repo.Commit, repo.String())
+		}
+		return nil
+	}
+
+	if repo.Tag != "" {
+		tagCommit, err := repo.localTagCommit(fullPath)
+		if err != nil {
+			return err
+		}
+		if tagCommit == "" {
+			return fmt.Errorf("bad tag %q of repo %s: not found in full mirror after fallback", repo.Tag, repo.String())
+		}
+	}
+
+	return nil
 }
 
 func (repo *Remote) writeRequiresFullMarker() error {
