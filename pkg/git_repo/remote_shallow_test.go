@@ -104,6 +104,21 @@ var _ = Describe("Remote shallow mirror", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(tagCommit).To(Equal(headCommit))
 		})
+
+		It("fetches another branch into an existing single-branch full mirror", func(ctx SpecContext) {
+			mainRepo := openRemote("main", "", "")
+			Expect(mainRepo.CloneAndFetch(ctx)).To(Succeed())
+
+			gitInSource(ctx, "checkout", "-b", "other")
+			gitInSource(ctx, "commit", "--allow-empty", "-m", "other")
+			otherCommit := utils.GetHeadCommit(ctx, sourceDir)
+
+			otherRepo := openRemote("other", "", "")
+			Expect(otherRepo.CloneAndFetch(ctx)).To(Succeed())
+			resolvedCommit, err := otherRepo.LatestBranchCommit(ctx, "other")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(resolvedCommit).To(Equal(otherCommit))
+		})
 	})
 
 	Describe("TagCommit peel", func() {
