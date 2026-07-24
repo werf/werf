@@ -75,7 +75,7 @@ func (repo *Remote) cloneAndFetchShallow(ctx context.Context) error {
 	})
 }
 
-// isBySHAFetchRefusal recognises server-side policy refusal of by-SHA fetch
+// isBySHAFetchRefusal recognizes server-side policy refusal of by-SHA fetch
 // (uploadpack.allowReachableSHA1InWant disabled) as opposed to transient errors.
 func isBySHAFetchRefusal(err error) bool {
 	msg := err.Error()
