@@ -357,10 +357,10 @@ var _ = Describe("Remote shallow mirror", func() {
 	})
 
 	Describe("buildFetchOptions", func() {
-		It("fetches only the mapped branch and no tags for a branch mapping", func() {
+		It("fetches the mapped branch explicitly and no tags", func() {
 			opts := buildFetchOptions("origin", "main")
 			Expect(opts.Tags).To(Equal(git.NoTags))
-			Expect(opts.RefSpecs).To(BeEmpty())
+			Expect(opts.RefSpecs).To(ConsistOf(gitconfig.RefSpec("+refs/heads/main:refs/remotes/origin/main")))
 		})
 
 		It("fetches all branches and tags when no branch is set so off-branch commits are reachable after fallback", func() {

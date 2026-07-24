@@ -230,6 +230,7 @@ func buildFetchOptions(remoteName, branch string) *git.FetchOptions {
 
 	if branch != "" {
 		opts.Tags = git.NoTags
+		opts.RefSpecs = []gitconfig.RefSpec{gitconfig.RefSpec(fmt.Sprintf("+refs/heads/%s:refs/remotes/%s/%s", branch, remoteName, branch))}
 	} else {
 		// Explicit wildcard refspec: the mirror could have been cloned
 		// single-branch by a branch mapping of the same URL, in which case its
