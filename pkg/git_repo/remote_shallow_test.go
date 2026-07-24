@@ -290,29 +290,46 @@ var _ = Describe("Remote shallow mirror", func() {
 	})
 
 	Describe("fallback to full mirror", func() {
-		It("downgrades on submodule detection and persists requires_full marker", func(ctx SpecContext) {
+		It("keeps sibling shallow mappings usable after submodule downgrade", func(ctx SpecContext) {
+			gitInSource(ctx, "tag", "v1")
+			v1Commit := utils.GetHeadCommit(ctx, sourceDir)
+
+			shallowRepo := openRemote("", "v1", "")
+			Expect(shallowRepo.CloneAndFetch(ctx)).To(Succeed())
+			_, err := shallowRepo.initRepoHandleBackedByWorkTree(ctx, v1Commit)
+			Expect(err).NotTo(HaveOccurred())
+			shallowPath := shallowRepo.GetClonePath()
+			shallowWorktreePath := shallowRepo.getWorkTreeCacheDir(shallowRepo.getRepoID())
+
 			gitmodulesPath := filepath.Join(sourceDir, ".gitmodules")
 			Expect(os.WriteFile(gitmodulesPath, []byte("[submodule \"sub\"]\n\tpath = sub\n\turl = ../sub\n"), 0o644)).To(Succeed())
 			gitInSource(ctx, "add", ".gitmodules")
 			gitInSource(ctx, "commit", "-m", "add submodule")
-			gitInSource(ctx, "tag", "v1")
-			headCommit := utils.GetHeadCommit(ctx, sourceDir)
+			gitInSource(ctx, "tag", "v2")
+			v2Commit := utils.GetHeadCommit(ctx, sourceDir)
+			resetLsRemoteTagsCache()
 
-			repo := openRemote("", "v1", "")
-			Expect(repo.CloneAndFetch(ctx)).To(Succeed())
-
-			Expect(repo.GetClonePath()).To(HaveSuffix(string(mirrorKindFull)))
-			Expect(repo.GetClonePath()).To(BeADirectory())
-			Expect(repo.requiresFullMarkerPath()).To(BeARegularFile())
-			Expect(repo.clonePathForKind(mirrorKindShallow)).NotTo(BeADirectory())
-
-			tagCommit, err := repo.TagCommit(ctx, "v1")
+			fullRepo := openRemote("", "v2", "")
+			Expect(fullRepo.CloneAndFetch(ctx)).To(Succeed())
+			Expect(fullRepo.GetClonePath()).To(HaveSuffix(string(mirrorKindFull)))
+			Expect(fullRepo.GetClonePath()).To(BeADirectory())
+			Expect(fullRepo.requiresFullMarkerPath()).To(BeARegularFile())
+			Expect(shallowPath).To(BeADirectory())
+			Expect(shallowWorktreePath).To(BeADirectory())
+			_, err = shallowRepo.initRepoHandleBackedByWorkTree(ctx, v1Commit)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(tagCommit).To(Equal(headCommit))
 
-			repo2 := openRemote("", "v1", "")
-			Expect(repo2.CloneAndFetch(ctx)).To(Succeed())
-			Expect(repo2.GetClonePath()).To(HaveSuffix(string(mirrorKindFull)))
+			v1TagCommit, err := shallowRepo.TagCommit(ctx, "v1")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(v1TagCommit).To(Equal(v1Commit))
+
+			v2TagCommit, err := fullRepo.TagCommit(ctx, "v2")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(v2TagCommit).To(Equal(v2Commit))
+
+			nextRepo := openRemote("", "v1", "")
+			Expect(nextRepo.CloneAndFetch(ctx)).To(Succeed())
+			Expect(nextRepo.GetClonePath()).To(HaveSuffix(string(mirrorKindFull)))
 		})
 
 		It("does not persist marker when remote is unreachable", func(ctx SpecContext) {

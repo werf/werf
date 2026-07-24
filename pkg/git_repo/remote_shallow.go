@@ -379,10 +379,6 @@ func (repo *Remote) ensureShallowMirror(ctx context.Context) (bool, error) {
 	return false, nil
 }
 
-// downgradeToFull is entered while the shallow mirror kind lock is held. It
-// prepares the full mirror under the full kind lock, optionally persists the
-// requires_full marker (only for capability/submodule-driven downgrades, and
-// only after the full mirror is confirmed usable), and switches repo.kind.
 func (repo *Remote) downgradeToFull(ctx context.Context, persistMarker bool) error {
 	return repo.withMirrorKindLock(ctx, mirrorKindFull, func() error {
 		exists, err := repo.isCloneExistsForKind(mirrorKindFull)
@@ -418,14 +414,6 @@ func (repo *Remote) downgradeToFull(ctx context.Context, persistMarker bool) err
 		if persistMarker {
 			if err := repo.writeRequiresFullMarker(); err != nil {
 				return err
-			}
-
-			shallowPath := repo.clonePathForKind(mirrorKindShallow)
-			if err := os.RemoveAll(shallowPath); err != nil {
-				return fmt.Errorf("unable to remove stale shallow mirror %q: %w", shallowPath, err)
-			}
-			if err := os.RemoveAll(repo.getWorkTreeCacheDir(repo.getRepoID())); err != nil {
-				return fmt.Errorf("unable to remove stale shallow worktree cache: %w", err)
 			}
 		}
 
