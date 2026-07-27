@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.75.2](https://github.com/werf/werf/compare/v2.75.1...v2.75.2) (2026-07-27)
+
+
+### Miscellaneous Chores
+
+* release 2.75.2 ([def3a23](https://github.com/werf/werf/commit/def3a23e1e672485a3e8aa8bd37e5efc3963ab81))
+
 ## [2.75.1](https://github.com/werf/werf/compare/v2.75.0...v2.75.1) (2026-07-24)
 
 
