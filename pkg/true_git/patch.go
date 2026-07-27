@@ -157,6 +157,12 @@ func writePatch(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir str
 		gitArgs = append(gitArgs, diffOpts...)
 		gitArgs = append(gitArgs, opts.FromCommit, opts.ToCommit)
 
+		// Limit diff computation to the path scope. Not used with submodules: pathspec is
+		// evaluated at the superproject level and would not match paths inside submodules.
+		if pathScope := filepath.ToSlash(filepath.Clean(opts.PathScope)); pathScope != "." && pathScope != "/" && !strings.HasPrefix(pathScope, ":") {
+			gitArgs = append(gitArgs, "--", ":(literal)"+pathScope)
+		}
+
 		if debugPatch() {
 			fmt.Printf("# git %s\n", strings.Join(gitArgs, " "))
 		}
