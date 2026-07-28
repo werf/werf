@@ -19,6 +19,7 @@ import (
 	git_repo "github.com/werf/werf/v2/pkg/git_repo"
 	repo_handle "github.com/werf/werf/v2/pkg/git_repo/repo_handle"
 	path_matcher "github.com/werf/werf/v2/pkg/path_matcher"
+	true_git "github.com/werf/werf/v2/pkg/true_git"
 	ls_tree "github.com/werf/werf/v2/pkg/true_git/ls_tree"
 )
 
@@ -132,6 +133,21 @@ func (m *MockGitRepo) GetOrCreateArchive(ctx context.Context, opts git_repo.Arch
 func (mr *MockGitRepoMockRecorder) GetOrCreateArchive(ctx, opts any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrCreateArchive", reflect.TypeOf((*MockGitRepo)(nil).GetOrCreateArchive), ctx, opts)
+}
+
+// GetOrCreateChangedPaths mocks base method.
+func (m *MockGitRepo) GetOrCreateChangedPaths(ctx context.Context, fromCommit, toCommit string) ([]true_git.ChangedPath, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetOrCreateChangedPaths", ctx, fromCommit, toCommit)
+	ret0, _ := ret[0].([]true_git.ChangedPath)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetOrCreateChangedPaths indicates an expected call of GetOrCreateChangedPaths.
+func (mr *MockGitRepoMockRecorder) GetOrCreateChangedPaths(ctx, fromCommit, toCommit any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrCreateChangedPaths", reflect.TypeOf((*MockGitRepo)(nil).GetOrCreateChangedPaths), ctx, fromCommit, toCommit)
 }
 
 // GetOrCreateChecksum mocks base method.
@@ -672,6 +688,21 @@ func (m *MockgitRepo) GetOrCreateArchive(ctx context.Context, opts git_repo.Arch
 func (mr *MockgitRepoMockRecorder) GetOrCreateArchive(ctx, opts any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrCreateArchive", reflect.TypeOf((*MockgitRepo)(nil).GetOrCreateArchive), ctx, opts)
+}
+
+// GetOrCreateChangedPaths mocks base method.
+func (m *MockgitRepo) GetOrCreateChangedPaths(ctx context.Context, fromCommit, toCommit string) ([]true_git.ChangedPath, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetOrCreateChangedPaths", ctx, fromCommit, toCommit)
+	ret0, _ := ret[0].([]true_git.ChangedPath)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetOrCreateChangedPaths indicates an expected call of GetOrCreateChangedPaths.
+func (mr *MockgitRepoMockRecorder) GetOrCreateChangedPaths(ctx, fromCommit, toCommit any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrCreateChangedPaths", reflect.TypeOf((*MockgitRepo)(nil).GetOrCreateChangedPaths), ctx, fromCommit, toCommit)
 }
 
 // GetOrCreateChecksum mocks base method.

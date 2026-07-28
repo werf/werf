@@ -10,7 +10,9 @@ import (
 	"time"
 
 	"github.com/go-git/go-git/v5"
+	gitconfig "github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/plumbing/storer"
 	"github.com/go-git/go-git/v5/plumbing/transport"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
@@ -38,6 +40,8 @@ type Remote struct {
 	Branch string
 	Tag    string
 	Commit string
+
+	kind mirrorKind
 }
 
 func OpenRemoteRepo(name, url string, auth *BasicAuthCredentials) (*Remote, error) {
@@ -95,7 +99,38 @@ func (repo *Remote) getFilesystemRelativePathByEndpoint() string {
 }
 
 func (repo *Remote) GetClonePath() string {
-	return filepath.Join(GetGitRepoCacheDir(), repo.getRepoID())
+	return repo.clonePathForKind(repo.mirrorKind())
+}
+
+func (repo *Remote) clonePathForKind(kind mirrorKind) string {
+	return filepath.Join(GetGitRepoCacheDir(), repo.getRepoID(), string(kind))
+}
+
+func (repo *Remote) mirrorKind() mirrorKind {
+	if repo.kind == "" {
+		return mirrorKindFull
+	}
+	return repo.kind
+}
+
+func (repo *Remote) requiresFullMarkerPath() string {
+	return filepath.Join(GetGitRepoCacheDir(), repo.getRepoID(), "requires_full")
+}
+
+func (repo *Remote) resolveMirrorKind() (mirrorKind, error) {
+	if repo.Tag == "" && repo.Commit == "" {
+		return mirrorKindFull, nil
+	}
+
+	markerExists, err := util.FileExists(repo.requiresFullMarkerPath())
+	if err != nil {
+		return "", fmt.Errorf("unable to check requires_full marker %q: %w", repo.requiresFullMarkerPath(), err)
+	}
+	if markerExists {
+		return mirrorKindFull, nil
+	}
+
+	return mirrorKindShallow, nil
 }
 
 func (repo *Remote) RemoteOriginUrl(_ context.Context) (string, error) {
@@ -107,7 +142,7 @@ func (repo *Remote) IsEmpty(ctx context.Context) (bool, error) {
 }
 
 func (repo *Remote) IsShallowClone(ctx context.Context) (bool, error) {
-	panic("not implemented")
+	return true_git.IsShallowClone(ctx, repo.GetClonePath())
 }
 
 func (repo *Remote) IsAncestor(ctx context.Context, ancestorCommit, descendantCommit string) (bool, error) {
@@ -115,6 +150,22 @@ func (repo *Remote) IsAncestor(ctx context.Context, ancestorCommit, descendantCo
 }
 
 func (repo *Remote) CloneAndFetch(ctx context.Context) error {
+	kind, err := repo.resolveMirrorKind()
+	if err != nil {
+		return err
+	}
+	repo.kind = kind
+
+	logboek.Context(ctx).Debug().LogF("Using %s mirror for repo %q\n", kind, repo.String())
+
+	if kind == mirrorKindShallow {
+		return repo.cloneAndFetchShallow(ctx)
+	}
+
+	return repo.cloneAndFetchFull(ctx)
+}
+
+func (repo *Remote) cloneAndFetchFull(ctx context.Context) error {
 	isCloned, err := repo.Clone(ctx)
 	if err != nil {
 		return err
@@ -130,8 +181,8 @@ func (repo *Remote) CloneAndFetch(ctx context.Context) error {
 	return repo.FetchOrigin(ctx, FetchOptions{})
 }
 
-func (repo *Remote) isCloneExists() (bool, error) {
-	_, err := os.Stat(repo.GetClonePath())
+func (repo *Remote) isCloneExistsForKind(kind mirrorKind) (bool, error) {
+	_, err := os.Stat(repo.clonePathForKind(kind))
 	if err == nil {
 		return true, nil
 	}
@@ -171,16 +222,23 @@ func buildCloneOptions(url, branch string) *git.CloneOptions {
 }
 
 func buildFetchOptions(remoteName, branch string) *git.FetchOptions {
-	tags := git.AllTags
-	if branch != "" {
-		tags = git.NoTags
-	}
-
-	return &git.FetchOptions{
+	opts := &git.FetchOptions{
 		RemoteName: remoteName,
 		Force:      true,
-		Tags:       tags,
+		Tags:       git.AllTags,
 	}
+
+	if branch != "" {
+		opts.Tags = git.NoTags
+		opts.RefSpecs = []gitconfig.RefSpec{gitconfig.RefSpec(fmt.Sprintf("+refs/heads/%s:refs/remotes/%s/%s", branch, remoteName, branch))}
+	} else {
+		// Explicit wildcard refspec: the mirror could have been cloned
+		// single-branch by a branch mapping of the same URL, in which case its
+		// configured refspec would never fetch commits outside that branch.
+		opts.RefSpecs = []gitconfig.RefSpec{gitconfig.RefSpec(fmt.Sprintf("+refs/heads/*:refs/remotes/%s/*", remoteName))}
+	}
+
+	return opts
 }
 
 func (repo *Remote) Clone(ctx context.Context) (bool, error) {
@@ -194,67 +252,72 @@ func (repo *Remote) Clone(ctx context.Context) (bool, error) {
 		defer werf.HostLocker().ReleaseLock(lock)
 	}
 
-	var err error
+	kind := repo.mirrorKind()
 
-	exists, err := repo.isCloneExists()
+	exists, err := repo.isCloneExistsForKind(kind)
 	if err != nil {
 		return false, err
 	}
 	if exists {
-		if err := repo.updateLastAccessAt(ctx, repo.GetClonePath()); err != nil {
+		if err := repo.updateLastAccessAt(ctx, repo.clonePathForKind(kind)); err != nil {
 			return false, fmt.Errorf("error updating last access at timestamp: %w", err)
 		}
 		return false, nil
 	}
 
-	return true, repo.withRemoteRepoLock(ctx, func() error {
-		exists, err := repo.isCloneExists()
-		if err != nil {
-			return err
-		}
-		if exists {
-			if err := repo.updateLastAccessAt(ctx, repo.GetClonePath()); err != nil {
-				return fmt.Errorf("error updating last access at timestamp: %w", err)
-			}
+	return true, repo.withMirrorKindLock(ctx, kind, func() error {
+		return repo.cloneFullCore(ctx, kind)
+	})
+}
 
-			return nil
-		}
+func (repo *Remote) cloneFullCore(ctx context.Context, kind mirrorKind) error {
+	clonePath := repo.clonePathForKind(kind)
 
-		logboek.Context(ctx).Default().LogFDetails("Clone %s\n", repo.Url)
-
-		if err := os.MkdirAll(filepath.Dir(repo.GetClonePath()), 0o755); err != nil {
-			return fmt.Errorf("unable to create dir %s: %w", filepath.Dir(repo.GetClonePath()), err)
-		}
-
-		tmpPath := fmt.Sprintf("%s.tmp", repo.GetClonePath())
-		// Remove previously created possibly existing dir
-		if err := os.RemoveAll(tmpPath); err != nil {
-			return fmt.Errorf("unable to prepare tmp path %s: failed to remove: %w", tmpPath, err)
-		}
-		// Ensure cleanup on failure
-		defer os.RemoveAll(tmpPath)
-
-		cloneOpts := buildCloneOptions(repo.Url, repo.Branch)
-
-		if repo.BasicAuth != nil {
-			cloneOpts.Auth = newBasicAuth(repo.BasicAuth.Username, repo.BasicAuth.Password).AuthMethod
-		}
-
-		_, err = git.PlainCloneContext(ctx, tmpPath, true, cloneOpts)
-		if err != nil {
-			return fmt.Errorf("unable to clone repo: %w", err)
-		}
-
-		if err := repo.updateLastAccessAt(ctx, tmpPath); err != nil {
+	exists, err := repo.isCloneExistsForKind(kind)
+	if err != nil {
+		return err
+	}
+	if exists {
+		if err := repo.updateLastAccessAt(ctx, clonePath); err != nil {
 			return fmt.Errorf("error updating last access at timestamp: %w", err)
 		}
 
-		if err := os.Rename(tmpPath, repo.GetClonePath()); err != nil {
-			return fmt.Errorf("rename %s to %s failed: %w", tmpPath, repo.GetClonePath(), err)
-		}
-
 		return nil
-	})
+	}
+
+	logboek.Context(ctx).Default().LogFDetails("Clone %s\n", repo.Url)
+
+	if err := os.MkdirAll(filepath.Dir(clonePath), 0o755); err != nil {
+		return fmt.Errorf("unable to create dir %s: %w", filepath.Dir(clonePath), err)
+	}
+
+	tmpPath := fmt.Sprintf("%s.tmp", clonePath)
+	// Remove previously created possibly existing dir
+	if err := os.RemoveAll(tmpPath); err != nil {
+		return fmt.Errorf("unable to prepare tmp path %s: failed to remove: %w", tmpPath, err)
+	}
+	// Ensure cleanup on failure
+	defer os.RemoveAll(tmpPath)
+
+	cloneOpts := buildCloneOptions(repo.Url, repo.Branch)
+
+	if repo.BasicAuth != nil {
+		cloneOpts.Auth = newBasicAuth(repo.BasicAuth.Username, repo.BasicAuth.Password).AuthMethod
+	}
+
+	if _, err := git.PlainCloneContext(ctx, tmpPath, true, cloneOpts); err != nil {
+		return fmt.Errorf("unable to clone repo: %w", err)
+	}
+
+	if err := repo.updateLastAccessAt(ctx, tmpPath); err != nil {
+		return fmt.Errorf("error updating last access at timestamp: %w", err)
+	}
+
+	if err := os.Rename(tmpPath, clonePath); err != nil {
+		return fmt.Errorf("rename %s to %s failed: %w", tmpPath, clonePath, err)
+	}
+
+	return nil
 }
 
 type Auth struct {
@@ -288,7 +351,17 @@ func (repo *Remote) FetchOrigin(ctx context.Context, opts FetchOptions) error {
 		return nil
 	}
 
-	cfgPath := filepath.Join(repo.GetClonePath(), "config")
+	kind := repo.mirrorKind()
+
+	return repo.withMirrorKindLock(ctx, kind, func() error {
+		return repo.fetchOriginFullCore(ctx, kind)
+	})
+}
+
+func (repo *Remote) fetchOriginFullCore(ctx context.Context, kind mirrorKind) error {
+	clonePath := repo.clonePathForKind(kind)
+
+	cfgPath := filepath.Join(clonePath, "config")
 
 	cfg, err := ini.Load(cfgPath)
 	if err != nil {
@@ -306,31 +379,29 @@ func (repo *Remote) FetchOrigin(ctx context.Context, opts FetchOptions) error {
 		}
 	}
 
-	return repo.withRemoteRepoLock(ctx, func() error {
-		rawRepo, err := repo.PlainOpen()
-		if err != nil {
-			return fmt.Errorf("cannot open repo: %w", err)
-		}
+	rawRepo, err := gitRepoPlainOpen(clonePath)
+	if err != nil {
+		return fmt.Errorf("cannot open repo: %w", err)
+	}
 
-		logboek.Context(ctx).Default().LogFDetails("Fetch remote %s of %s\n", remoteName, repo.Url)
+	logboek.Context(ctx).Default().LogFDetails("Fetch remote %s of %s\n", remoteName, repo.Url)
 
-		fetchOpts := buildFetchOptions(remoteName, repo.Branch)
+	fetchOpts := buildFetchOptions(remoteName, repo.Branch)
 
-		if repo.BasicAuth != nil {
-			fetchOpts.Auth = newBasicAuth(repo.BasicAuth.Username, repo.BasicAuth.Password).AuthMethod
-		}
+	if repo.BasicAuth != nil {
+		fetchOpts.Auth = newBasicAuth(repo.BasicAuth.Username, repo.BasicAuth.Password).AuthMethod
+	}
 
-		err = rawRepo.FetchContext(ctx, fetchOpts)
-		if err != nil && !errors.Is(err, git.NoErrAlreadyUpToDate) {
-			return fmt.Errorf("cannot fetch remote %q of repo %q: %w", remoteName, repo.String(), err)
-		}
+	err = rawRepo.FetchContext(ctx, fetchOpts)
+	if err != nil && !errors.Is(err, git.NoErrAlreadyUpToDate) {
+		return fmt.Errorf("cannot fetch remote %q of repo %q: %w", remoteName, repo.String(), err)
+	}
 
-		if err := repo.syncLocalBranches(ctx, rawRepo); err != nil {
-			return fmt.Errorf("cannot update local branches of repo %q: %w", repo.String(), err)
-		}
+	if err := repo.syncLocalBranches(ctx, rawRepo); err != nil {
+		return fmt.Errorf("cannot update local branches of repo %q: %w", repo.String(), err)
+	}
 
-		return nil
-	})
+	return nil
 }
 
 func (repo *Remote) syncLocalBranches(ctx context.Context, rawRepo *git.Repository) error {
@@ -430,26 +501,51 @@ func (repo *Remote) TagCommit(ctx context.Context, tag string) (string, error) {
 		return "", fmt.Errorf("bad tag %q of repo %s: %w", tag, repo.String(), err)
 	}
 
-	var res string
-
-	obj, err := rawRepo.TagObject(ref.Hash())
-	switch err {
-	case nil:
-		// Tag object present
-		res = obj.Target.String()
-	case plumbing.ErrObjectNotFound:
-		res = ref.Hash().String()
-	default:
+	commitHash, err := peelToCommitHash(rawRepo, ref.Hash())
+	if err != nil {
 		return "", fmt.Errorf("bad tag %q of repo %s: %w", tag, repo.String(), err)
 	}
+
+	res := commitHash.String()
 
 	logboek.Context(ctx).Info().LogF("Using commit %q of repo %q tag %q\n", res, repo.String(), tag)
 
 	return res, nil
 }
 
+func peelToCommitHash(rawRepo *git.Repository, hash plumbing.Hash) (plumbing.Hash, error) {
+	obj, err := rawRepo.Object(plumbing.AnyObject, hash)
+	if err != nil {
+		return plumbing.ZeroHash, err
+	}
+
+	for {
+		switch typedObj := obj.(type) {
+		case *object.Tag:
+			if typedObj.TargetType != plumbing.CommitObject {
+				obj, err = typedObj.Object()
+				if err != nil {
+					return plumbing.ZeroHash, err
+				}
+
+				continue
+			}
+
+			return typedObj.Target, nil
+		case *object.Commit:
+			return typedObj.Hash, nil
+		default:
+			return plumbing.ZeroHash, fmt.Errorf("unsupported tag target %q", typedObj.Type())
+		}
+	}
+}
+
 func (repo *Remote) GetOrCreatePatch(ctx context.Context, opts PatchOptions) (Patch, error) {
 	return repo.getOrCreatePatch(ctx, repo.GetClonePath(), repo.GetClonePath(), repo.getRepoID(), repo.getWorkTreeCacheDir(repo.getRepoID()), opts)
+}
+
+func (repo *Remote) GetOrCreateChangedPaths(ctx context.Context, fromCommit, toCommit string) ([]true_git.ChangedPath, error) {
+	return repo.getOrCreateChangedPaths(ctx, repo.GetClonePath(), fromCommit, toCommit)
 }
 
 func (repo *Remote) GetOrCreateArchive(ctx context.Context, opts ArchiveOptions) (Archive, error) {
@@ -474,11 +570,11 @@ func (repo *Remote) getRepoID() string {
 }
 
 func (repo *Remote) getWorkTreeCacheDir(repoID string) string {
-	return filepath.Join(GetWorkTreeCacheDir(), "remote", repoID)
+	return filepath.Join(GetWorkTreeCacheDir(), "remote", fmt.Sprintf("%s.%s", repoID, repo.mirrorKind()))
 }
 
-func (repo *Remote) withRemoteRepoLock(ctx context.Context, f func() error) error {
-	lockName := fmt.Sprintf("remote_git_mapping.%s", repo.Name)
+func (repo *Remote) withMirrorKindLock(ctx context.Context, kind mirrorKind, f func() error) error {
+	lockName := fmt.Sprintf("remote_git.%s.%s", repo.getRepoID(), kind)
 	return werf.HostLocker().WithLock(ctx, lockName, lockgate.AcquireOptions{Timeout: 600 * time.Second}, f)
 }
 

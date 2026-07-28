@@ -3,6 +3,7 @@ package config
 import (
 	"regexp"
 
+	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
 )
@@ -135,6 +136,7 @@ func (c *rawGit) toGitRemoteDirective(giterminismManager giterminism_manager.Int
 
 	gitRemote.Url = c.Url
 	gitRemote.Name = getRepositoryID(c.Url)
+	gitRemote.RepoCacheKey = gitRemoteRepoCacheKey(c.Url, c.Branch, c.Tag, c.Commit, c.BasicAuth)
 	gitRemote.raw = c
 
 	if err := c.validateGitRemoteDirective(gitRemote); err != nil {
@@ -181,6 +183,21 @@ func (c *rawGit) validateGitRemoteExportDirective(gitRemoteExport *GitRemoteExpo
 	}
 
 	return nil
+}
+
+func gitRemoteRepoCacheKey(url, branch, tag, commit string, auth *git_repo.BasicAuthCredentials) string {
+	username := ""
+	passwordEnv := ""
+	passwordSrc := ""
+	passwordValue := ""
+	if auth != nil {
+		username = auth.Username
+		passwordEnv = auth.Password.Env
+		passwordSrc = auth.Password.Src
+		passwordValue = auth.Password.PlainValue
+	}
+
+	return util.Sha256Hash(url, branch, tag, commit, username, passwordEnv, passwordSrc, passwordValue)
 }
 
 func getRepositoryID(repository string) string {

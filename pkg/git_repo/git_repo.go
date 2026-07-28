@@ -13,7 +13,7 @@ import (
 	"github.com/werf/werf/v2/pkg/werf"
 )
 
-const GitReposCacheVersion = "5"
+const GitReposCacheVersion = "6"
 
 type (
 	PatchOptions    true_git.PatchOptions
@@ -36,6 +36,13 @@ const (
 	DirectoryArchive ArchiveType = "directory"
 )
 
+type mirrorKind string
+
+const (
+	mirrorKindFull    mirrorKind = "full"
+	mirrorKindShallow mirrorKind = "shallow"
+)
+
 //go:generate mockgen -source git_repo.go -package mock -destination ../../test/mock/git_repo.go
 
 type GitRepo interface {
@@ -53,6 +60,7 @@ type GitRepo interface {
 	GetCommitTreeEntry(ctx context.Context, commit, path string) (*ls_tree.LsTreeEntry, error)
 	GetMergeCommitParents(ctx context.Context, commit string) ([]string, error)
 	GetOrCreateArchive(ctx context.Context, opts ArchiveOptions) (Archive, error)
+	GetOrCreateChangedPaths(ctx context.Context, fromCommit, toCommit string) ([]true_git.ChangedPath, error)
 	GetOrCreateChecksum(ctx context.Context, opts ChecksumOptions) (string, error)
 	GetOrCreatePatch(ctx context.Context, opts PatchOptions) (Patch, error)
 	HeadCommitHash(ctx context.Context) (string, error)

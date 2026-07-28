@@ -49,13 +49,15 @@ func NewBase(name string, initRepoHandleBackedByWorkTreeFunc func(context.Contex
 }
 
 type Cache struct {
-	Patches   sync.Map // map[patchID]Patch
-	Archives  map[string]Archive
-	Checksums sync.Map
+	Patches      sync.Map // map[patchID]Patch
+	Archives     map[string]Archive
+	Checksums    sync.Map
+	ChangedPaths sync.Map // map[fromCommit_toCommit][]true_git.ChangedPath
 
-	archivesMutex  sync.Mutex
-	patchesMutex   sync.Map
-	checksumsMutex sync.Map
+	archivesMutex     sync.Mutex
+	patchesMutex      sync.Map
+	checksumsMutex    sync.Map
+	changedPathsMutex sync.Map
 }
 
 func (repo *Base) initRepoHandleBackedByWorkTree(ctx context.Context, commit string) (repo_handle.Handle, error) {
@@ -174,6 +176,26 @@ func (repo *Base) getOrCreatePatch(ctx context.Context, repoPath, gitDir, repoID
 	repo.Cache.Patches.Store(patchID, patch)
 
 	return patch, nil
+}
+
+func (repo *Base) getOrCreateChangedPaths(ctx context.Context, gitDir, fromCommit, toCommit string) ([]true_git.ChangedPath, error) {
+	key := fmt.Sprintf("%s_%s", fromCommit, toCommit)
+
+	mutex := util.MapLoadOrCreateMutex(&repo.Cache.changedPathsMutex, key)
+	mutex.Lock()
+	defer mutex.Unlock()
+
+	if val, ok := repo.Cache.ChangedPaths.Load(key); ok {
+		return val.([]true_git.ChangedPath), nil
+	}
+
+	changedPaths, err := true_git.ListChangedPaths(ctx, gitDir, fromCommit, toCommit)
+	if err != nil {
+		return nil, fmt.Errorf("list changed paths between %q and %q commits: %w", fromCommit, toCommit, err)
+	}
+	repo.Cache.ChangedPaths.Store(key, changedPaths)
+
+	return changedPaths, nil
 }
 
 func (repo *Base) CreatePatch(ctx context.Context, repoPath, gitDir, repoID, workTreeCacheDir string, opts PatchOptions) (patch Patch, err error) {

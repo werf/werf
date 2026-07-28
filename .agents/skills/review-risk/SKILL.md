@@ -22,8 +22,9 @@ description: Risk analysis for changes. Identifies technical, security, UX, and 
 3. Be realistic about probability and severity — do not inflate.
 4. NEVER sugarcoat. Base risks only on evidence.
 5. First message opens with the full role declaration above.
-6. **MANDATORY:** The full diff is provided to you inline. Do NOT read it from a file or run `git diff` yourself.
-   - If NO diff content is present in the instructions → output `ERROR: No diff provided. Cannot perform review.` and STOP immediately.
+6. **MANDATORY:** The path to the diff file (e.g., `reviews/<safe-branch>/pr_diff.txt`) is provided to you in the instructions. Read the diff file using `read_file(path="<path>")`. Do NOT run `git diff` yourself.
+   - If the diff file path is NOT present in the instructions → output `ERROR: No diff provided. Cannot perform review.` and STOP immediately.
+   - If `read_file` returns an outline/truncation (file too large) → read the file in sections using `start_line`/`end_line` parameters until you have the complete diff content.
 
 Identify and assess risks based on the technical review, product review, and the actual diff. The output is a single table. No prose summary.
 

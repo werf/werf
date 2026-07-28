@@ -10,6 +10,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -428,8 +429,9 @@ func (backend *BuildahBackend) applyDependenciesImports(ctx context.Context, con
 					relPath := util.GetRelativeToBaseFilepath(absFrom, path)
 					return pathMatcher.IsPathMatched(relPath), err
 				},
-				UID: uid,
-				GID: gid,
+				UID:         uid,
+				GID:         gid,
+				Parallelism: dependencyImportParallelism(),
 			})
 			if err != nil {
 				return fmt.Errorf("error creating recursive copy command: %w", err)
@@ -442,6 +444,22 @@ func (backend *BuildahBackend) applyDependenciesImports(ctx context.Context, con
 	}
 
 	return nil
+}
+
+func dependencyImportParallelism() int {
+	if p, ok := os.LookupEnv("WERF_BUILDAH_IMPORT_PARALLELISM"); ok {
+		if n, err := strconv.Atoi(p); err == nil && n > 0 {
+			return n
+		}
+	}
+	n := runtime.NumCPU()
+	if n > 8 {
+		n = 8
+	}
+	if n < 1 {
+		n = 1
+	}
+	return n
 }
 
 func normalizeDependencyImportDestination(rootMount, absFrom, absTo string) (string, error) {

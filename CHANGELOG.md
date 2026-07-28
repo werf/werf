@@ -42,6 +42,48 @@
 
 * release 3.0.0-alpha.1 ([5753958](https://github.com/werf/werf/commit/5753958be672640442d6d193c2d6365f07c9c603))
 
+## [2.75.2](https://github.com/werf/werf/compare/v2.75.1...v2.75.2) (2026-07-27)
+
+
+### Miscellaneous Chores
+
+* release 2.75.2 ([def3a23](https://github.com/werf/werf/commit/def3a23e1e672485a3e8aa8bd37e5efc3963ab81))
+
+## [2.75.1](https://github.com/werf/werf/compare/v2.75.0...v2.75.1) (2026-07-24)
+
+
+### Bug Fixes
+
+* **deploy:** don't block deploy when Helm managed fields reconstruction hits incompatible historical manifest ([#7673](https://github.com/werf/werf/issues/7673)) ([c7f3677](https://github.com/werf/werf/commit/c7f3677b80ddf34b98182ff00a7a622994dbf05c))
+
+## [2.75.0](https://github.com/werf/werf/compare/v2.74.0...v2.75.0) (2026-07-20)
+
+
+### Features
+
+* **deploy:** add --lookup-resources flag for offline lookup in render/lint commands ([#7666](https://github.com/werf/werf/issues/7666)) ([3b0f422](https://github.com/werf/werf/commit/3b0f42205264a8aea563f881c9b9378aeba1d351))
+
+
+### Bug Fixes
+
+* `werf.io/deploy-dependency` didn't work if no readiness operation in plan or if `namespace=releasens` ([284d18d](https://github.com/werf/werf/commit/284d18deff57f0496cbdffddba44716c0e43de60))
+* **deploy:** create release namespace under strict RBAC, `--no-create-namespace` flag ([#7668](https://github.com/werf/werf/issues/7668)) ([5c9d62a](https://github.com/werf/werf/commit/5c9d62a0c8b73fd13e861136961537a5470679c1))
+
+## [2.74.0](https://github.com/werf/werf/compare/v2.73.2...v2.74.0) (2026-07-14)
+
+
+### Features
+
+* **deploy:** add `werf.io/resource-policy` annotation ([#7613](https://github.com/werf/werf/issues/7613)) ([72ae0f2](https://github.com/werf/werf/commit/72ae0f24ea745a81c61656d1c25df8dace2538f6))
+
+
+### Bug Fixes
+
+* **build:** forward include.path to submodule sync/update commands ([#7660](https://github.com/werf/werf/issues/7660)) ([5ab32d2](https://github.com/werf/werf/commit/5ab32d2fd7598bfcdb598f1f1217138e15a9e4b2))
+* **build:** send valid empty tar for docker from:scratch import ([#7609](https://github.com/werf/werf/issues/7609)) ([1c59585](https://github.com/werf/werf/commit/1c5958506a960167c76dede2cfa88ed130db1d12))
+* **bundle:** update .Values.global.werf.images during bundle copy ([#7600](https://github.com/werf/werf/issues/7600)) ([cf2fb96](https://github.com/werf/werf/commit/cf2fb96d2de01c13d8c733589cb02262eb9521b1))
+* **deploy:** `werf.io/resource-policy` should only respect skip-delete from live ([#7623](https://github.com/werf/werf/issues/7623)) ([f261028](https://github.com/werf/werf/commit/f261028ca4b92b48ef9e26c353c0adade1e331ea))
+
 ## [2.73.2](https://github.com/werf/werf/compare/v2.73.1...v2.73.2) (2026-07-01)
 
 

@@ -148,12 +148,12 @@ werf bundle publish [IMAGE_NAME...] [options]
       --giterminism-config=""
             Custom path to the giterminism configuration file relative to working directory         
             (default $WERF_GITERMINISM_CONFIG or werf-giterminism.yaml in working directory)
-  -C, --helm-compatible-chart=false
+  -C, --helm-compatible-chart=true
             Set chart name in the Chart.yaml of the published chart to the last path component of   
             container registry repo (for REGISTRY/PATH/TO/REPO address chart name will be REPO,     
             more info https://helm.sh/docs/topics/registries/#oci-feature-deprecation-and-behavior-c
             hanges-with-v370). In helm compatibility mode chart is fully conforming with the helm   
-            OCI registry requirements. Default false or $WERF_HELM_COMPATIBLE_CHART.
+            OCI registry requirements. Default true or $WERF_HELM_COMPATIBLE_CHART.
       --home-dir=""
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --insecure-helm-dependencies=false

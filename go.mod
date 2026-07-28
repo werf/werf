@@ -55,7 +55,7 @@ require (
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
 	github.com/werf/common-go v0.0.0-20260504183956-43da716392f7
-	github.com/werf/copy-recurse v0.2.7
+	github.com/werf/copy-recurse v0.3.1
 	github.com/werf/lockgate v0.2.0
 	github.com/werf/logboek v0.7.1
 	github.com/werf/nelm v1.26.2-0.20260714210400-9241ea8a51d0
@@ -141,6 +141,8 @@ require (
 	github.com/hashicorp/go-retryablehttp v0.7.8 // indirect
 	github.com/hiddeco/sshsig v0.2.0 // indirect
 	github.com/in-toto/attestation v1.1.2 // indirect
+	github.com/itchyny/gojq v0.12.19 // indirect
+	github.com/itchyny/timefmt-go v0.1.8 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.7 // indirect
 	github.com/lestrrat-go/blackmagic v1.0.4 // indirect
 	github.com/lestrrat-go/dsig v1.0.0 // indirect

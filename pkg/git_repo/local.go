@@ -280,6 +280,10 @@ func (repo *Local) GetOrCreatePatch(ctx context.Context, opts PatchOptions) (Pat
 	return repo.getOrCreatePatch(ctx, repo.WorkTreeDir, repo.GitDir, repo.getRepoID(), repo.getRepoWorkTreeCacheDir(repo.getRepoID()), opts)
 }
 
+func (repo *Local) GetOrCreateChangedPaths(ctx context.Context, fromCommit, toCommit string) ([]true_git.ChangedPath, error) {
+	return repo.getOrCreateChangedPaths(ctx, repo.GitDir, fromCommit, toCommit)
+}
+
 func (repo *Local) GetOrCreateArchive(ctx context.Context, opts ArchiveOptions) (Archive, error) {
 	return repo.getOrCreateArchive(ctx, repo.WorkTreeDir, repo.GitDir, repo.getRepoID(), repo.getRepoWorkTreeCacheDir(repo.getRepoID()), opts)
 }

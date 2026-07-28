@@ -716,6 +716,12 @@ func (gm *GitMapping) PatchSize(ctx context.Context, c Conveyor, fromCommit stri
 		return 0, nil
 	}
 
+	if isEmpty, resolved, err := gm.isPatchEmptyByChangedPaths(ctx, fromCommit, toCommitInfo.Commit); err != nil {
+		return 0, err
+	} else if resolved && isEmpty {
+		return 0, nil
+	}
+
 	patchOpts, err := gm.makePatchOptions(ctx, fromCommit, toCommitInfo.Commit, true, true)
 	if err != nil {
 		return 0, err
@@ -828,6 +834,12 @@ func (gm *GitMapping) baseIsPatchEmpty(ctx context.Context, fromCommit, toCommit
 		return true, nil
 	}
 
+	if isEmpty, resolved, err := gm.isPatchEmptyByChangedPaths(ctx, fromCommit, toCommit); err != nil {
+		return false, err
+	} else if resolved {
+		return isEmpty, nil
+	}
+
 	patchOpts, err := gm.makePatchOptions(ctx, fromCommit, toCommit, false, false)
 	if err != nil {
 		return false, err
@@ -839,6 +851,33 @@ func (gm *GitMapping) baseIsPatchEmpty(ctx context.Context, fromCommit, toCommit
 	}
 
 	return patch.IsEmpty(), nil
+}
+
+// isPatchEmptyByChangedPaths determines patch emptiness by the list of paths changed between
+// two commits, avoiding expensive patch content generation. The changed paths list is computed
+// once per commit pair and shared by all git mappings. resolved=false means emptiness cannot be
+// decided without a real patch: a changed submodule potentially overlaps the mapping paths.
+func (gm *GitMapping) isPatchEmptyByChangedPaths(ctx context.Context, fromCommit, toCommit string) (isEmpty, resolved bool, err error) {
+	changedPaths, err := gm.GitRepo().GetOrCreateChangedPaths(ctx, fromCommit, toCommit)
+	if err != nil {
+		return false, false, fmt.Errorf("unable to get changed paths between %q and %q commits for git mapping %s: %w", fromCommit, toCommit, gm.GetFullName(), err)
+	}
+
+	pathMatcher := gm.getPathMatcher()
+	for _, changedPath := range changedPaths {
+		if changedPath.IsSubmodule {
+			if pathMatcher.IsDirOrSubmodulePathMatched(changedPath.Path) {
+				return false, false, nil
+			}
+			continue
+		}
+
+		if pathMatcher.IsPathMatched(changedPath.Path) {
+			return false, true, nil
+		}
+	}
+
+	return true, true, nil
 }
 
 func (gm *GitMapping) prepareArchiveFile(archive git_repo.Archive) (*ContainerFileDescriptor, error) {

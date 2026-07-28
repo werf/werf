@@ -7,7 +7,11 @@ on:
     inputs:
       prNumber:
         description: "PR number to clean up manually"
-        required: true
+        required: false
+        type: string
+      releaseName:
+        description: "Override release name to dismiss (e.g. werfio-docs-major-routing-v2-test). Takes priority over prNumber."
+        required: false
         type: string
 
 jobs:
@@ -36,5 +40,5 @@ jobs:
           WERF_ENV: test
           WERF_KUBE_CONFIG_BASE64: ${{ secrets.KUBECONFIG_BASE64_DEV }}
           WERF_NAMESPACE: werfio-test
-          WERF_RELEASE: werfio-pr-${{ github.event_name == 'workflow_dispatch' && github.event.inputs.prNumber || github.event.pull_request.number }}-test
+          WERF_RELEASE: ${{ github.event.inputs.releaseName != '' && github.event.inputs.releaseName || format('werfio-pr-{0}', github.event_name == 'workflow_dispatch' && github.event.inputs.prNumber || github.event.pull_request.number) }}
           WERF_SET_GITHUB_REF: global.github_ref=pr-${{ github.event_name == 'workflow_dispatch' && github.event.inputs.prNumber || github.event.pull_request.number }}
