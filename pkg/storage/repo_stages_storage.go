@@ -756,7 +756,7 @@ func (storage *RepoStagesStorage) IsImageMetadataExist(ctx context.Context, proj
 
 func (storage *RepoStagesStorage) GetAllAndGroupImageMetadataByImageName(ctx context.Context, projectName string, imageNameOrManagedImageList []string, opts ...Option) (map[string]map[string][]string, map[string]map[string][]string, error) {
 	if debugStagesStorage() {
-		logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetImageNameStageIDCommitList %s %s\n", projectName)
+		logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetImageNameStageIDCommitList %s\n", projectName)
 	}
 
 	o := makeOptions(opts...)

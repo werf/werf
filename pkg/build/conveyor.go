@@ -763,10 +763,19 @@ func muteUnlessDebugConveyorPhases(options types.LogProcessOptionsInterface) {
 	}
 }
 
+// Mute() only affects the Do/DoError path in logboek; the imperative
+// Start/Fail/End path honors Disable() instead. Disable() must not be used
+// with DoError, as it would skip the closure entirely.
+func disableUnlessDebugConveyorPhases(logProcess types.LogProcessInterface) types.LogProcessInterface {
+	if !debugConveyorPhases() {
+		logProcess.Disable()
+	}
+	return logProcess
+}
+
 func (c *Conveyor) runPhases(ctx context.Context, phases []Phase, logImages bool) error {
 	for _, phase := range phases {
-		logProcess := logboek.Context(ctx).Debug().LogProcess("Phase %s -- BeforeImages()", phase.Name()).
-			Options(muteUnlessDebugConveyorPhases)
+		logProcess := disableUnlessDebugConveyorPhases(logboek.Context(ctx).Debug().LogProcess("Phase %s -- BeforeImages()", phase.Name()))
 		logProcess.Start()
 		if err := phase.BeforeImages(ctx); err != nil {
 			logProcess.Fail()
@@ -902,8 +911,7 @@ func (c *Conveyor) doImage(ctx context.Context, img *image.Image, phases []Phase
 		}).
 		DoError(func() error {
 			for _, phase := range phases {
-				logProcess := logboek.Context(ctx).Debug().LogProcess("Phase %s -- BeforeImageStages()", phase.Name()).
-					Options(muteUnlessDebugConveyorPhases)
+				logProcess := disableUnlessDebugConveyorPhases(logboek.Context(ctx).Debug().LogProcess("Phase %s -- BeforeImageStages()", phase.Name()))
 				logProcess.Start()
 				deferFn, err := phase.BeforeImageStages(ctx, img)
 				if deferFn != nil {
@@ -915,8 +923,7 @@ func (c *Conveyor) doImage(ctx context.Context, img *image.Image, phases []Phase
 				}
 				logProcess.End()
 
-				logProcess = logboek.Context(ctx).Debug().LogProcess("Phase %s -- OnImageStage()", phase.Name()).
-					Options(muteUnlessDebugConveyorPhases)
+				logProcess = disableUnlessDebugConveyorPhases(logboek.Context(ctx).Debug().LogProcess("Phase %s -- OnImageStage()", phase.Name()))
 				logProcess.Start()
 				for _, stg := range img.GetStages() {
 					if debugConveyorPhases() {
@@ -931,8 +938,7 @@ func (c *Conveyor) doImage(ctx context.Context, img *image.Image, phases []Phase
 				}
 				logProcess.End()
 
-				logProcess = logboek.Context(ctx).Debug().LogProcess("Phase %s -- AfterImageStages()", phase.Name()).
-					Options(muteUnlessDebugConveyorPhases)
+				logProcess = disableUnlessDebugConveyorPhases(logboek.Context(ctx).Debug().LogProcess("Phase %s -- AfterImageStages()", phase.Name()))
 				logProcess.Start()
 				if err := phase.AfterImageStages(ctx, img); err != nil {
 					logProcess.Fail()
@@ -940,8 +946,7 @@ func (c *Conveyor) doImage(ctx context.Context, img *image.Image, phases []Phase
 				}
 				logProcess.End()
 
-				logProcess = logboek.Context(ctx).Debug().LogProcess("Phase %s -- ImageProcessingShouldBeStopped()", phase.Name()).
-					Options(muteUnlessDebugConveyorPhases)
+				logProcess = disableUnlessDebugConveyorPhases(logboek.Context(ctx).Debug().LogProcess("Phase %s -- ImageProcessingShouldBeStopped()", phase.Name()))
 				logProcess.Start()
 				if phase.ImageProcessingShouldBeStopped(ctx, img) {
 					logProcess.End()

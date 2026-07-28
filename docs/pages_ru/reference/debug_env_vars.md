@@ -36,7 +36,7 @@ werf поддерживает набор переменных окружения
 
 | Переменная | Описание |
 |------------|----------|
-| `WERF_DEBUG_TRUE_GIT` | Трассировка выполнения git-команд |
+| `WERF_DEBUG_TRUE_GIT` | Трассировка выполнения git-команд. Требует `--log-debug` |
 | `WERF_TRUE_GIT_DEBUG_ARCHIVE` | Пофайловый вывод при создании git-архивов. Требует `--log-debug` |
 | `WERF_TRUE_GIT_DEBUG_PATCH` | Отладочный вывод создания git-патчей |
 | `WERF_TRUE_GIT_DEBUG_PATCH_PARSER` | Отладочный вывод парсера git-патчей |
