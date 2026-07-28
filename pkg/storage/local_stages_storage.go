@@ -268,7 +268,6 @@ func (storage *LocalStagesStorage) GetImportMetadata(ctx context.Context, projec
 	logboek.Context(ctx).Debug().LogF("-- LocalStagesStorage.GetImportMetadata %s %s\n", projectName, id)
 
 	fullImageName := makeLocalImportMetadataName(projectName, id)
-	logboek.Context(ctx).Debug().LogF("-- LocalStagesStorage.GetImportMetadata full image name: %s\n", fullImageName)
 
 	info, err := storage.ContainerBackend.GetImageInfo(ctx, fullImageName, container_backend.GetImageInfoOpts{})
 	if err != nil {
@@ -284,7 +283,6 @@ func (storage *LocalStagesStorage) PutImportMetadata(ctx context.Context, projec
 	logboek.Context(ctx).Debug().LogF("-- LocalStagesStorage.PutImportMetadata %s %v\n", projectName, metadata)
 
 	fullImageName := makeLocalImportMetadataName(projectName, metadata.ImportSourceID)
-	logboek.Context(ctx).Debug().LogF("-- LocalStagesStorage.PutImportMetadata full image name: %s\n", fullImageName)
 
 	if !opts.Force {
 		if info, err := storage.ContainerBackend.GetImageInfo(ctx, fullImageName, container_backend.GetImageInfoOpts{}); err != nil {
@@ -306,7 +304,6 @@ func (storage *LocalStagesStorage) RmImportMetadata(ctx context.Context, project
 	logboek.Context(ctx).Debug().LogF("-- LocalStagesStorage.RmImportMetadata %s %s\n", projectName, id)
 
 	fullImageName := makeLocalImportMetadataName(projectName, id)
-	logboek.Context(ctx).Debug().LogF("-- LocalStagesStorage.RmImportMetadata full image name: %s\n", fullImageName)
 
 	if info, err := storage.ContainerBackend.GetImageInfo(ctx, fullImageName, container_backend.GetImageInfoOpts{}); err != nil {
 		return fmt.Errorf("unable to check existence of image %s: %w", fullImageName, err)
