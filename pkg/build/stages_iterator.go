@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/werf/logboek"
 	build_image "github.com/werf/werf/v2/pkg/build/image"
 	"github.com/werf/werf/v2/pkg/build/stage"
 )
@@ -49,7 +48,6 @@ func (iterator *StagesIterator) OnImageStage(ctx context.Context, img *build_ima
 	if err != nil {
 		return fmt.Errorf("error checking stage %s is empty: %w", stg.Name(), err)
 	}
-	logboek.Context(ctx).Debug().LogF("%s stage is empty: %v\n", stg.LogDetailedName(), isEmpty)
 
 	if stg.HasPrevStage() && iterator.PrevStage == nil {
 		panic(fmt.Sprintf("expected PrevStage to be set for image %q stage %s!", img.GetName(), stg.Name()))
@@ -60,20 +58,16 @@ func (iterator *StagesIterator) OnImageStage(ctx context.Context, img *build_ima
 	}
 
 	iterator.PrevStage = stg
-	logboek.Context(ctx).Debug().LogF("Set prev stage = %q %s\n", iterator.PrevStage.Name(), iterator.PrevStage.GetDigest())
 
 	if !isEmpty {
 		iterator.PrevNonEmptyStage = stg
-		logboek.Context(ctx).Debug().LogF("Set prev non empty stage = %q %s\n", iterator.PrevNonEmptyStage.Name(), iterator.PrevNonEmptyStage.GetDigest())
 
 		if iterator.PrevNonEmptyStage.GetStageImage().Image.GetStageDesc() != nil {
 			iterator.PrevNonEmptyStageImageSize = iterator.PrevNonEmptyStage.GetStageImage().Image.GetStageDesc().Info.Size
-			logboek.Context(ctx).Debug().LogF("Set prev non empty stage image size = %d %q %s\n", iterator.PrevNonEmptyStageImageSize, iterator.PrevNonEmptyStage.Name(), iterator.PrevNonEmptyStage.GetDigest())
 		}
 
 		if stg.GetStageImage().Image.GetStageDesc() != nil {
 			iterator.PrevBuiltStage = stg
-			logboek.Context(ctx).Debug().LogF("Set prev built stage = %q (image %s)\n", iterator.PrevBuiltStage.Name(), iterator.PrevBuiltStage.GetStageImage().Image.Name())
 		}
 	}
 
