@@ -129,18 +129,6 @@ func RetryOnUnexpectedStagesStorageState(ctx context.Context, _ StorageManagerIn
 	return err
 }
 
-func NewStorageManager(projectName string, stagesStorage storage.PrimaryStagesStorage, finalStagesStorage storage.StagesStorage, secondaryStagesStorageList, cacheStagesStorageList []storage.StagesStorage) *StorageManager {
-	return &StorageManager{
-		ProjectName: projectName,
-
-		StagesStorage:              stagesStorage,
-		MetaStorage:                stagesStorage,
-		FinalStagesStorage:         finalStagesStorage,
-		CacheStagesStorageList:     cacheStagesStorageList,
-		SecondaryStagesStorageList: secondaryStagesStorageList,
-	}
-}
-
 var _ StorageManagerInterface = (*StorageManager)(nil)
 
 type StagesList struct {

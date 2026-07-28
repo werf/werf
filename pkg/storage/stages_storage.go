@@ -28,7 +28,6 @@ var (
 	ErrBrokenImage               = errors.New("broken image")
 	ErrStageNotFound             = errors.New("stage not found")
 	ErrStageRejected             = errors.New("stage rejected")
-	ErrImportMetadataNotFound    = errors.New("import metadata not found")
 	ErrCustomTagMetadataNotFound = errors.New("custom tag metadata not found")
 )
 
@@ -42,10 +41,6 @@ func IsErrStageNotFound(err error) bool {
 
 func IsErrStageUnavailable(err error) bool {
 	return errors.Is(err, ErrStageNotFound) || errors.Is(err, ErrBrokenImage) || errors.Is(err, ErrStageRejected)
-}
-
-func IsErrImportMetadataNotFound(err error) bool {
-	return errors.Is(err, ErrImportMetadataNotFound)
 }
 
 func IsErrCustomTagMetadataNotFound(err error) bool {

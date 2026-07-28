@@ -78,10 +78,6 @@ func GetTmpDir() string {
 	return tmpDir
 }
 
-func GetStagesStorageCacheDir() string {
-	return filepath.Join(GetSharedContextDir(), "storage", "stages_storage_cache", "1")
-}
-
 // Init initialize variables, locks, secrets, etc.
 func Init(tmpDirOption, homeDirOption string) error {
 	val, ok := os.LookupEnv("WERF_TMP_DIR")

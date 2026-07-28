@@ -278,10 +278,6 @@ func CliRmi(ctx context.Context, args ...string) error {
 	})
 }
 
-func CliRmi_LiveOutput(ctx context.Context, args ...string) error {
-	return doCliRmi(ctx, cli(ctx), args...)
-}
-
 type CliBuildOptions struct {
 	DockerfileName string
 	Tags           []string
