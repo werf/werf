@@ -27,9 +27,9 @@ Code structure and correctness only — user impact belongs to the product persp
 
 Cover the ones the diff actually touches; stay silent about the rest.
 
-## When the diff was written by an agent
+## Tests as evidence
 
-Passing tests, high coverage, and the author's confidence are not evidence of correctness. Ask what evidence would fail if the implementation were wrong.
+Passing tests, high coverage, and the author's confidence are not evidence of correctness, whoever wrote the diff. Ask what evidence would fail if the implementation were wrong.
 
 Would each load-bearing test fail if:
 
