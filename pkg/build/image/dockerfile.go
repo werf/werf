@@ -24,7 +24,7 @@ import (
 	"github.com/werf/werf/v2/pkg/util/option"
 )
 
-func MapDockerfileConfigToImagesSets(ctx context.Context, metaConfig *config.Meta, dockerfileImageConfig *config.ImageFromDockerfile, targetPlatform string, useCustomTag bool, opts CommonImageOptions) (ImagesSets, error) {
+func MapDockerfileConfigToImages(ctx context.Context, metaConfig *config.Meta, dockerfileImageConfig *config.ImageFromDockerfile, targetPlatform string, useCustomTag bool, opts CommonImageOptions) ([]*Image, error) {
 	if dockerfileImageConfig.Staged {
 		relDockerfilePath := filepath.Join(dockerfileImageConfig.Context, dockerfileImageConfig.Dockerfile)
 		dockerfileData, err := opts.GiterminismManager.FileManager.ReadDockerfile(ctx, relDockerfilePath)
@@ -47,7 +47,7 @@ func MapDockerfileConfigToImagesSets(ctx context.Context, metaConfig *config.Met
 			return nil, fmt.Errorf("unable to parse dockerfile %s: %w", relDockerfilePath, err)
 		}
 
-		return mapDockerfileToImagesSets(ctx, d, metaConfig, dockerfileImageConfig, targetPlatform, useCustomTag, opts)
+		return mapDockerfileToImages(ctx, d, metaConfig, dockerfileImageConfig, targetPlatform, useCustomTag, opts)
 	}
 
 	img, err := mapLegacyDockerfileToImage(ctx, metaConfig, dockerfileImageConfig, targetPlatform, useCustomTag, opts)
@@ -55,13 +55,17 @@ func MapDockerfileConfigToImagesSets(ctx context.Context, metaConfig *config.Met
 		return nil, err
 	}
 
-	ret := ImagesSets{[]*Image{img}}
-
-	return ret, nil
+	return []*Image{img}, nil
 }
 
-func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, metaConfig *config.Meta, dockerfileImageConfig *config.ImageFromDockerfile, targetPlatform string, useCustomTag bool, opts CommonImageOptions) (ImagesSets, error) {
-	var ret ImagesSets
+// mapDockerfileToImages maps every Dockerfile stage reachable from the target
+// stage (via FROM and COPY/RUN --from=<stage> references) to its own *Image,
+// recording each image's stage-reference predecessors as build dependencies
+// so the build scheduler can start each stage as soon as its own specific
+// predecessors are ready, instead of waiting for unrelated stages.
+func mapDockerfileToImages(ctx context.Context, cfg *dockerfile.Dockerfile, metaConfig *config.Meta, dockerfileImageConfig *config.ImageFromDockerfile, targetPlatform string, useCustomTag bool, opts CommonImageOptions) ([]*Image, error) {
+	var images []*Image
+	visited := map[string]bool{}
 
 	targetStage, err := cfg.GetTargetStage()
 	if err != nil {
@@ -71,19 +75,17 @@ func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, 
 	queue := []struct {
 		WerfImageName string
 		Stage         *dockerfile.DockerfileStage
-		Level         int
 		IsTargetStage bool
 	}{
-		{WerfImageName: dockerfileImageConfig.Name, Stage: targetStage, Level: 0, IsTargetStage: true},
+		{WerfImageName: dockerfileImageConfig.Name, Stage: targetStage, IsTargetStage: true},
 	}
 
-	appendQueue := func(werfImageName string, stage *dockerfile.DockerfileStage, level int) {
+	appendQueue := func(werfImageName string, stage *dockerfile.DockerfileStage) {
 		queue = append(queue, struct {
 			WerfImageName string
 			Stage         *dockerfile.DockerfileStage
-			Level         int
 			IsTargetStage bool
-		}{WerfImageName: werfImageName, Stage: stage, Level: level})
+		}{WerfImageName: werfImageName, Stage: stage})
 	}
 
 	buildSecrets := make([]string, 0, len(dockerfileImageConfig.Secrets))
@@ -99,36 +101,10 @@ func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, 
 		item := queue[0]
 		queue = queue[1:]
 
-		appendImageToCurrentSet := func(newImg *Image) {
-			if item.Level == len(ret) {
-				// prepend new images set
-				// ret minimal len is 1 at this moment
-				ret = append([][]*Image{nil}, ret...)
-			}
-
-			// find existing same stage in the current images set
-			for _, img := range ret[0] {
-				if img.Name == newImg.Name {
-					return
-				}
-			}
-
-			// exclude same stage from all previous images sets (optimization)
-			for i := 1; i < len(ret); i++ {
-				var newSet []*Image
-				for _, img := range ret[i] {
-					if img.Name != newImg.Name {
-						newSet = append(newSet, img)
-					}
-				}
-				if len(ret[i]) != len(newSet) {
-					// replace previous set only when image was excluded
-					ret[i] = newSet
-				}
-			}
-
-			ret[0] = append(ret[0], newImg)
+		if visited[item.WerfImageName] {
+			continue
 		}
+		visited[item.WerfImageName] = true
 
 		stg := item.Stage
 
@@ -148,7 +124,8 @@ func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, 
 				return nil, fmt.Errorf("unable to map stage %s to werf image %q: %w", stg.LogName(), dockerfileImageConfig.Name, err)
 			}
 
-			appendQueue(baseStg.GetWerfImageName(), baseStg, item.Level+1)
+			img.AddDependencyName(baseStg.GetWerfImageName())
+			appendQueue(baseStg.GetWerfImageName(), baseStg)
 		} else {
 			img, err = NewImage(ctx, targetPlatform, item.WerfImageName, ImageFromRegistryAsBaseImage, ImageOptions{
 				IsDockerfileImage:         true,
@@ -243,7 +220,8 @@ func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, 
 			img.stages = append(img.stages, stg)
 
 			for _, dep := range instr.GetDependenciesByStageRef() {
-				appendQueue(dep.GetWerfImageName(), dep, item.Level+1)
+				img.AddDependencyName(dep.GetWerfImageName())
+				appendQueue(dep.GetWerfImageName(), dep)
 			}
 
 			instrNum++
@@ -253,10 +231,10 @@ func mapDockerfileToImagesSets(ctx context.Context, cfg *dockerfile.Dockerfile, 
 			img.stages[len(img.stages)-1].SetContentAnchor(true)
 		}
 
-		appendImageToCurrentSet(img)
+		images = append(images, img)
 	}
 
-	return ret, nil
+	return images, nil
 }
 
 func mapLegacyDockerfileToImage(ctx context.Context, metaConfig *config.Meta, dockerfileImageConfig *config.ImageFromDockerfile, targetPlatform string, useCustomTag bool, opts CommonImageOptions) (*Image, error) {

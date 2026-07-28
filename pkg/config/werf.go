@@ -3,6 +3,7 @@ package config
 import (
 	"errors"
 	"fmt"
+	"sort"
 	"strings"
 )
 
@@ -181,7 +182,7 @@ func (c *WerfConfig) validateImageInfiniteLoop(imageName string, imageNameStack 
 		panic(fmt.Sprintf("image %q not found but must be found", imageName))
 	}
 
-	for _, relatedImageName := range image.dependsOn().relatedImageNameList() {
+	for _, relatedImageName := range image.dependsOn().RelatedImageNameList() {
 		if c.GetImage(relatedImageName) == nil {
 			continue
 		}
@@ -230,6 +231,36 @@ func (c *WerfConfig) GroupImagesByIndependentSets(imagesToProcess ImagesToProces
 	return sets, nil
 }
 
+// GetImagesForProcessing returns the flat, deterministically ordered transitive
+// closure of images to process (the requested images plus everything they
+// depend on), for use by build-time image-graph construction.
+func (c *WerfConfig) GetImagesForProcessing(imagesToProcess ImagesToProcess) ([]ImageInterface, error) {
+	if imagesToProcess.WithoutImages {
+		return nil, nil
+	}
+
+	images := c.getSpecificImages(imagesToProcess)
+	imageRelativesListToHandle := c.getImageRelativesInOrder(images)
+
+	var result []ImageInterface
+	for image := range imageRelativesListToHandle {
+		result = append(result, image)
+	}
+
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].GetName() < result[j].GetName()
+	})
+
+	return result, nil
+}
+
+// GetImageDependsOn returns the resolved DependsOn (from/import/dependencies)
+// for the given image, i.e. only the related images that are actually part of
+// this werf config (external base images/imports are excluded).
+func (c *WerfConfig) GetImageDependsOn(image ImageInterface) DependsOn {
+	return c.updateDependencies(image)
+}
+
 func (c *WerfConfig) getImageRelativesInOrder(images []ImageInterface) map[ImageInterface][]ImageInterface {
 	imageRelatives := map[ImageInterface][]ImageInterface{}
 	stack := images
@@ -240,7 +271,7 @@ func (c *WerfConfig) getImageRelativesInOrder(images []ImageInterface) map[Image
 
 		var relatives []ImageInterface
 		depends := c.updateDependencies(current)
-		for _, imageName := range depends.relatedImageNameList() {
+		for _, imageName := range depends.RelatedImageNameList() {
 			relatives = append(relatives, c.GetImage(imageName))
 		}
 		imageRelatives[current] = relatives
@@ -271,7 +302,7 @@ type DependsOn struct {
 	Dependencies []string `yaml:"dependencies,omitempty"`
 }
 
-func (d DependsOn) relatedImageNameList() []string {
+func (d DependsOn) RelatedImageNameList() []string {
 	var list []string
 
 	if d.From != "" {
