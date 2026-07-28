@@ -3,6 +3,7 @@ package image
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -399,6 +400,10 @@ type FetchBaseImageInfo struct {
 	BaseImageSource string
 }
 
+func debugStagesStorage() bool {
+	return os.Getenv("WERF_DEBUG_STAGES_STORAGE") == "1"
+}
+
 func (i *Image) FetchBaseImage(ctx context.Context) (FetchBaseImageInfo, error) {
 	logboek.Context(ctx).Debug().LogF(" -- FetchBaseImage for %q\n", i.Name)
 
@@ -414,7 +419,9 @@ func (i *Image) FetchBaseImage(ctx context.Context) (FetchBaseImageInfo, error) 
 		if info, err := i.ContainerBackend.GetImageInfo(ctx, i.baseStageImage.Image.Name(), container_backend.GetImageInfoOpts{TargetPlatform: i.TargetPlatform}); err != nil {
 			return FetchBaseImageInfo{}, fmt.Errorf("unable to inspect local image %s: %w", i.baseStageImage.Image.Name(), err)
 		} else if info != nil {
-			logboek.Context(ctx).Debug().LogF("GetImageInfo of %q -> %#v\n", i.baseStageImage.Image.Name(), info)
+			if debugStagesStorage() {
+				logboek.Context(ctx).Debug().LogF("GetImageInfo of %q -> %#v\n", i.baseStageImage.Image.Name(), info)
+			}
 
 			// TODO: do not use container_backend.LegacyStageImage for base image
 			// TODO: It might be a stage as base image (passed as dependency), and the absence of StageID in the description will lead to breaking the logic.

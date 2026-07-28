@@ -50,7 +50,7 @@ func API() GenericApiInterface {
 }
 
 func debugDockerRegistry() bool {
-	return os.Getenv("WERF_DOCKER_REGISTRY_DEBUG") == "1"
+	return os.Getenv("WERF_DEBUG_DOCKER_REGISTRY") == "1" || os.Getenv("WERF_DOCKER_REGISTRY_DEBUG") == "1"
 }
 
 func debugDockerRegistryAPI() bool {

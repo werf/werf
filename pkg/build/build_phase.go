@@ -952,8 +952,6 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, s
 }
 
 func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *image.Image, stg stage.Interface) error {
-	logboek.Context(ctx).Debug().LogF("-- BuildPhase.prepareStage %s %s\n", img.LogDetailedName(), stg.LogDetailedName())
-
 	stageImage := stg.GetStageImage()
 
 	serviceLabels := map[string]string{

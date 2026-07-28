@@ -265,10 +265,11 @@ func (storage *LocalStagesStorage) GetAllAndGroupImageMetadataByImageName(ctx co
 }
 
 func (storage *LocalStagesStorage) GetImportMetadata(ctx context.Context, projectName, id string) (*ImportMetadata, error) {
-	logboek.Context(ctx).Debug().LogF("-- LocalStagesStorage.GetImportMetadata %s %s\n", projectName, id)
+	if debugStagesStorage() {
+		logboek.Context(ctx).Debug().LogF("-- LocalStagesStorage.GetImportMetadata %s %s\n", projectName, id)
+	}
 
 	fullImageName := makeLocalImportMetadataName(projectName, id)
-	logboek.Context(ctx).Debug().LogF("-- LocalStagesStorage.GetImportMetadata full image name: %s\n", fullImageName)
 
 	info, err := storage.ContainerBackend.GetImageInfo(ctx, fullImageName, container_backend.GetImageInfoOpts{})
 	if err != nil {
@@ -281,10 +282,11 @@ func (storage *LocalStagesStorage) GetImportMetadata(ctx context.Context, projec
 }
 
 func (storage *LocalStagesStorage) PutImportMetadata(ctx context.Context, projectName string, metadata *ImportMetadata, opts PutImportMetadataOptions) error {
-	logboek.Context(ctx).Debug().LogF("-- LocalStagesStorage.PutImportMetadata %s %v\n", projectName, metadata)
+	if debugStagesStorage() {
+		logboek.Context(ctx).Debug().LogF("-- LocalStagesStorage.PutImportMetadata %s %v\n", projectName, metadata)
+	}
 
 	fullImageName := makeLocalImportMetadataName(projectName, metadata.ImportSourceID)
-	logboek.Context(ctx).Debug().LogF("-- LocalStagesStorage.PutImportMetadata full image name: %s\n", fullImageName)
 
 	if !opts.Force {
 		if info, err := storage.ContainerBackend.GetImageInfo(ctx, fullImageName, container_backend.GetImageInfoOpts{}); err != nil {
@@ -303,10 +305,11 @@ func (storage *LocalStagesStorage) PutImportMetadata(ctx context.Context, projec
 }
 
 func (storage *LocalStagesStorage) RmImportMetadata(ctx context.Context, projectName, id string) error {
-	logboek.Context(ctx).Debug().LogF("-- LocalStagesStorage.RmImportMetadata %s %s\n", projectName, id)
+	if debugStagesStorage() {
+		logboek.Context(ctx).Debug().LogF("-- LocalStagesStorage.RmImportMetadata %s %s\n", projectName, id)
+	}
 
 	fullImageName := makeLocalImportMetadataName(projectName, id)
-	logboek.Context(ctx).Debug().LogF("-- LocalStagesStorage.RmImportMetadata full image name: %s\n", fullImageName)
 
 	if info, err := storage.ContainerBackend.GetImageInfo(ctx, fullImageName, container_backend.GetImageInfoOpts{}); err != nil {
 		return fmt.Errorf("unable to check existence of image %s: %w", fullImageName, err)
@@ -321,7 +324,9 @@ func (storage *LocalStagesStorage) RmImportMetadata(ctx context.Context, project
 }
 
 func (storage *LocalStagesStorage) GetImportMetadataIDs(ctx context.Context, projectName string, opts ...Option) ([]string, error) {
-	logboek.Context(ctx).Debug().LogF("-- LocalStagesStorage.GetImportMetadataIDs %s\n", projectName)
+	if debugStagesStorage() {
+		logboek.Context(ctx).Debug().LogF("-- LocalStagesStorage.GetImportMetadataIDs %s\n", projectName)
+	}
 
 	imagesOpts := container_backend.ImagesOptions{}
 	imagesOpts.Filters = append(imagesOpts.Filters, util.NewPair("reference", fmt.Sprintf(LocalImportMetadata_ImageNameFormat, projectName)))
@@ -415,16 +420,18 @@ func (storage *LocalStagesStorage) PostManifest(ctx context.Context, ref string,
 }
 
 func (storage *LocalStagesStorage) MutateAndPushImage(ctx context.Context, src, _ string, newConfig image.SpecConfig, stageImage container_backend.LegacyImageInterface) error {
-	if err := logboek.Context(ctx).Debug().LogBlock("-- LocalStagesStorage.MutateAndPushImage imageSpecConfig").DoError(func() error {
-		newConfigData, err := yaml.Marshal(newConfig)
-		if err != nil {
-			return fmt.Errorf("unable to yaml marshal new config: %w", err)
-		}
+	if debugImageSpec() {
+		if err := logboek.Context(ctx).Debug().LogBlock("-- LocalStagesStorage.MutateAndPushImage imageSpecConfig").DoError(func() error {
+			newConfigData, err := yaml.Marshal(newConfig)
+			if err != nil {
+				return fmt.Errorf("unable to yaml marshal new config: %w", err)
+			}
 
-		logboek.Context(ctx).Debug().LogF(string(newConfigData))
-		return nil
-	}); err != nil {
-		return err
+			logboek.Context(ctx).Debug().LogF(string(newConfigData))
+			return nil
+		}); err != nil {
+			return err
+		}
 	}
 
 	newId, err := container_backend.MutateAndPushImage(ctx, src, stageImage.GetTargetPlatform(), newConfig, storage.ContainerBackend)

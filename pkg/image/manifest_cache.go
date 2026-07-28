@@ -33,8 +33,15 @@ func NewManifestCache(cacheDir string) *ManifestCache {
 	return &ManifestCache{CacheDir: cacheDir}
 }
 
+func debugManifestCache() bool {
+	return os.Getenv("WERF_DEBUG_STAGES_STORAGE") == "1"
+}
+
 func (cache *ManifestCache) GetImageInfo(ctx context.Context, storageName, imageName string) (*Info, error) {
 	logProcess := logboek.Context(ctx).Debug().LogProcess("-- ManifestCache.GetImageInfo %s %s", storageName, imageName)
+	if !debugManifestCache() {
+		logProcess.Disable()
+	}
 	logProcess.Start()
 	defer logProcess.End()
 
@@ -64,6 +71,9 @@ func (cache *ManifestCache) GetImageInfo(ctx context.Context, storageName, image
 
 func (cache *ManifestCache) StoreImageInfo(ctx context.Context, storageName string, imgInfo *Info) error {
 	logProcess := logboek.Context(ctx).Debug().LogProcess("-- ManifestCache.StoreImageInfo %s %s", storageName, imgInfo.Name)
+	if !debugManifestCache() {
+		logProcess.Disable()
+	}
 	logProcess.Start()
 	defer logProcess.End()
 
@@ -81,7 +91,9 @@ func (cache *ManifestCache) StoreImageInfo(ctx context.Context, storageName stri
 }
 
 func (cache *ManifestCache) DeleteImageInfo(ctx context.Context, storageName, imageName string) error {
-	logboek.Context(ctx).Debug().LogF("Deleting manifest cache entry for %s/%s\n", storageName, imageName)
+	if debugManifestCache() {
+		logboek.Context(ctx).Debug().LogF("Deleting manifest cache entry for %s/%s\n", storageName, imageName)
+	}
 
 	if lock, err := cache.lock(ctx, storageName, imageName); err != nil {
 		return err

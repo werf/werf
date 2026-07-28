@@ -157,7 +157,9 @@ func (a *BuildContextArchive) CalculateGlobsChecksum(ctx context.Context, globs 
 		}
 		for _, match := range globStat.Globbed {
 			relMatch := util.GetRelativeToBaseFilepath(contextDir, match)
-			logboek.Context(ctx).Debug().LogF("Calculating checksum for globs %v in context dir %q: matched path %q\n", globs, contextDir, relMatch)
+			if dockerfileStageDependenciesDebug() {
+				logboek.Context(ctx).Debug().LogF("Calculating checksum for globs %v in context dir %q: matched path %q\n", globs, contextDir, relMatch)
+			}
 			matches = append(matches, relMatch)
 		}
 	}
@@ -192,4 +194,8 @@ func (a *BuildContextArchive) CalculatePathsChecksum(ctx context.Context, paths 
 	}
 
 	return util.Sha256Hash(pathsHashes...), nil
+}
+
+func dockerfileStageDependenciesDebug() bool {
+	return os.Getenv("WERF_DEBUG_DOCKERFILE_STAGE_DEPENDENCIES") == "1"
 }

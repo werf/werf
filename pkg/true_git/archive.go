@@ -60,7 +60,7 @@ func Archive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir string
 }
 
 func debugArchive() bool {
-	return os.Getenv("WERF_TRUE_GIT_DEBUG_ARCHIVE") == "1"
+	return os.Getenv("WERF_DEBUG_TRUE_GIT_ARCHIVE") == "1" || os.Getenv("WERF_TRUE_GIT_DEBUG_ARCHIVE") == "1"
 }
 
 func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir string, withSubmodules bool, opts ArchiveOptions) error {
@@ -115,7 +115,9 @@ func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir s
 	creadedDirEntries := make(map[string]bool)
 
 	if err := result.Walk(func(lsTreeEntry *ls_tree.LsTreeEntry) error {
-		logboek.Context(ctx).Debug().LogF("ls-tree entry %s\n", lsTreeEntry.FullFilepath)
+		if debugArchive() {
+			logboek.Context(ctx).Debug().LogF("ls-tree entry %s\n", lsTreeEntry.FullFilepath)
+		}
 
 		gitFileMode := lsTreeEntry.Mode
 		absFilepath := filepath.Join(workTreeDir, lsTreeEntry.FullFilepath)
