@@ -30,7 +30,7 @@ werf поддерживает набор переменных окружения
 | `WERF_CONTAINER_RUNTIME_DEBUG` | Внутренности сборочного бэкенда: удаление путей в контейнере, mount/unmount buildah-контейнеров, пофайловый расчёт контрольных сумм. Требует `--log-debug` |
 | `WERF_BUILDAH_DEBUG` | Отладочный вывод бэкенда Buildah |
 | `WERF_DEBUG_DOCKER` | Debug-режим Docker CLI |
-| `WERF_DEBUG_DOCKER_RUN_COMMAND` | Печать полных команд `docker run`. Требует `--log-debug` |
+| `WERF_DEBUG_DOCKER_RUN_COMMAND` | Печать полных команд `docker run` |
 
 ### Git
 

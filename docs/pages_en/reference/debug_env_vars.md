@@ -30,7 +30,7 @@ The variables below enable narrow debug channels. Channels that write to the deb
 | `WERF_CONTAINER_RUNTIME_DEBUG` | Container backend internals: container path removal, buildah container mount/unmount, per-file checksum calculation. Requires `--log-debug` |
 | `WERF_BUILDAH_DEBUG` | Buildah backend debug output |
 | `WERF_DEBUG_DOCKER` | Docker CLI debug mode |
-| `WERF_DEBUG_DOCKER_RUN_COMMAND` | Print full `docker run` commands. Requires `--log-debug` |
+| `WERF_DEBUG_DOCKER_RUN_COMMAND` | Print full `docker run` commands |
 
 ### Git
 
