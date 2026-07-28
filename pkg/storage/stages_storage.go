@@ -16,6 +16,10 @@ func debugStagesStorage() bool {
 	return os.Getenv("WERF_DEBUG_STAGES_STORAGE") == "1"
 }
 
+func debugImageSpec() bool {
+	return os.Getenv("WERF_DEBUG_IMAGE_SPEC") == "1"
+}
+
 const (
 	LocalStorageAddress             = ":local"
 	DefaultKubernetesStorageAddress = "kubernetes://werf-synchronization"
