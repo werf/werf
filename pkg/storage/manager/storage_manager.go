@@ -739,7 +739,7 @@ func (m *StorageManager) SelectSuitableStageDesc(ctx context.Context, c stage.Co
 	}
 
 	var stageDesc *image.StageDesc
-	if err := logboek.Context(ctx).Info().LogProcess("Selecting suitable image for stage %s by digest %s", stg.Name(), stg.GetDigest()).
+	if err := logboek.Context(ctx).Debug().LogProcess("Selecting suitable image for stage %s by digest %s", stg.Name(), stg.GetDigest()).
 		DoError(func() error {
 			var err error
 			stageDesc, err = stg.SelectSuitableStageDesc(ctx, c, stageDescSet)
@@ -896,14 +896,16 @@ func getStageDescFromLocalManifestCache(ctx context.Context, projectName string,
 	}
 
 	if imgInfo != nil {
-		logboek.Context(ctx).Info().LogF("Got image %s info from the manifest cache (CACHE HIT)\n", stageImageName)
+		if debugStagesStorage() {
+			logboek.Context(ctx).Debug().LogF("Got image %s info from the manifest cache (CACHE HIT)\n", stageImageName)
+		}
 
 		return &image.StageDesc{
 			StageID: image.NewStageID(stageID.Digest, stageID.CreationTs),
 			Info:    imgInfo,
 		}, nil
-	} else {
-		logboek.Context(ctx).Info().LogF("Not found %s image info in the manifest cache (CACHE MISS)\n", stageImageName)
+	} else if debugStagesStorage() {
+		logboek.Context(ctx).Debug().LogF("Not found %s image info in the manifest cache (CACHE MISS)\n", stageImageName)
 	}
 
 	return nil, nil

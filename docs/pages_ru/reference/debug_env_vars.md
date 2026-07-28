@@ -24,6 +24,7 @@ werf поддерживает набор переменных окружения
 | `WERF_DEBUG_CONVEYOR_PHASES` | Обёртки фаз сборочного конвейера (BeforeImages, OnImageStage, AfterImages и др.). Требует `--log-debug` |
 | `WERF_DEBUG_IMAGE_SPEC` | YAML-снимки конфигурации image spec (информация об исходном образе, подготовленный и публикуемый конфиг). Требует `--log-debug` |
 | `WERF_DEBUG_IMPORT_SERVER` | Трейсы rsync-сервера импортов. Требует `--log-debug` |
+| `WERF_DEBUG_STAGE_DIGEST` | Аргументы расчёта digest'а стадии (именованные значения, из которых он вычисляется). Сам итоговый digest логируется всегда. Требует `--log-debug` |
 | `WERF_DEBUG_USER_STAGE_CHECKSUM` | Детали расчёта контрольной суммы пользовательских стадий. Требует `--log-debug` |
 | `WERF_DEBUG_IMPORT_SOURCE_CHECKSUM` | Детали расчёта контрольной суммы источников импорта. Требует `--log-debug` |
 | `WERF_DEBUG_DOCKERFILE_STAGE_DEPENDENCIES` | Управляет двумя каналами: расчёт зависимостей стадий Dockerfile и перечисление совпавших путей build-контекста при расчёте его контрольной суммы. Требует `--log-debug` |
