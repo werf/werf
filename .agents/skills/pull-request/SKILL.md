@@ -1,5 +1,5 @@
 ---
-name: pull-request-name
+name: pull-request
 description: Generates Pull Request titles and descriptions according to werf conventions. Use when creating or updating a PR.
 ---
 
@@ -15,7 +15,8 @@ description: Generates Pull Request titles and descriptions according to werf co
 2. The PR title should mirror the header of the main commit in the PR.
 3. Format the title as `<type>(<scope>): <subject>`.
 4. Keep the total length ≤ 72 characters.
-5. Nested scopes are allowed and encouraged.
+5. Nested scopes are allowed and encouraged (e.g. `feat(build/stapel): …`).
+6. Subject: imperative present tense, no capitalized first letter, no trailing dot.
 
 ## Description
 
@@ -44,7 +45,7 @@ Use the following structure. Every section is **mandatory** — omit a section o
 
 ### Rules
 
-- Language: match the project's primary language (English by default).
+- Language: English.
 - Be specific: name files, modules, functions — not "updated some code".
 - *Key changes*: group related items; use sub-bullets for detail when helpful.
 - *Why*: explain the reason, not what changed (that's *Key changes*).

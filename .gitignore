@@ -49,6 +49,8 @@ buildah-test
 .task
 /playground/s3_registry/data
 
+/reviews
+
 /.sisyphus
 /.opencode
 /.pp
