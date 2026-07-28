@@ -36,7 +36,7 @@ The variables below enable narrow debug channels. Channels that write to the deb
 
 | Variable | Description |
 |----------|-------------|
-| `WERF_DEBUG_TRUE_GIT` | Git command execution tracing |
+| `WERF_DEBUG_TRUE_GIT` | Git command execution tracing. Requires `--log-debug` |
 | `WERF_TRUE_GIT_DEBUG_ARCHIVE` | Per-file entries when creating git archives. Requires `--log-debug` |
 | `WERF_TRUE_GIT_DEBUG_PATCH` | Git patch creation debug output |
 | `WERF_TRUE_GIT_DEBUG_PATCH_PARSER` | Git patch parser debug output |
