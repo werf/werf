@@ -218,7 +218,9 @@ func (r *Result) Checksum(ctx context.Context) string {
 			logFilepath = "."
 		}
 
-		logboek.Context(ctx).Debug().LogF("Entry was added: %s -> %s\n", logFilepath, lsTreeEntry.Hash.String())
+		if debug() {
+			logboek.Context(ctx).Debug().LogF("Entry was added: %s -> %s\n", logFilepath, lsTreeEntry.Hash.String())
+		}
 
 		return nil
 	})
