@@ -484,7 +484,7 @@ func (cleaner *LocalBackendCleaner) cleanupWerfContainers(ctx context.Context, o
 		if err != nil {
 			return cleanupReport{}, fmt.Errorf("error getting volume usage by path %q: %w", options.StoragePath, err)
 		}
-		report.SpaceReclaimed = vu.UsedBytes - vuAfter.UsedBytes
+		report.SpaceReclaimed = lo.Ternary(vu.UsedBytes > vuAfter.UsedBytes, vu.UsedBytes-vuAfter.UsedBytes, 0)
 	}
 
 	return report.Normalize(), nil
@@ -545,13 +545,14 @@ func (cleaner *LocalBackendCleaner) cleanupWerfImages(ctx context.Context, optio
 			return report, fmt.Errorf("error getting volume usage by path %q: %w", options.StoragePath, err)
 		}
 
-		report.SpaceReclaimed += vu.UsedBytes - vuAfter.UsedBytes
-
-		// 7. If no space was reclaimed (e.g., due to filesystem specifics or shared layers),
-		// we must stop to avoid an infinite loop on the same images.
+		// 7. If no space was reclaimed (e.g., due to filesystem specifics or shared layers, or disk
+		// usage grew concurrently), we must stop here — before accounting for it below — to avoid
+		// both an infinite loop on the same images and an underflowing SpaceReclaimed total.
 		if vuAfter.UsedBytes >= vu.UsedBytes {
 			break
 		}
+
+		report.SpaceReclaimed += vu.UsedBytes - vuAfter.UsedBytes
 
 		// 8. Update disk state and move to the next set of images.
 		vu = vuAfter

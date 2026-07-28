@@ -471,6 +471,15 @@ func (phase *BuildPhase) BeforeImageStages(ctx context.Context, img *image.Image
 		return deferFn, nil
 	}
 
+	if img.IsDockerfileImage && img.DockerfileImageConfig.Staged {
+		// The anchor's digest must reflect expanded dependencies (e.g. COPY --from=<dependency>)
+		// the same way the normal per-stage loop computes it in onImageStage, otherwise this
+		// pre-check digest never matches and the content-tag short-circuit never triggers.
+		if err := anchor.ExpandDependencies(ctx, phase.Conveyor, img.GetStagedDockerfileBaseEnv()); err != nil {
+			return deferFn, fmt.Errorf("unable to expand dependencies for stage %s: %w", anchor.LogDetailedName(), err)
+		}
+	}
+
 	foundInPrimary, unlockFn, err := phase.calculateStage(ctx, img, anchor)
 	// Release the digest mutex inline. Holding it would deadlock: if we miss and
 	// middles run, the anchor is re-entered via OnImageStage -> calculateStage,

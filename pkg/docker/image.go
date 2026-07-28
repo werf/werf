@@ -403,6 +403,13 @@ func CliLoadFromStream(ctx context.Context, input io.Reader) (string, error) {
 			return "", fmt.Errorf("decode load response: %w", err)
 		}
 
+		if msg.Error != nil {
+			return "", fmt.Errorf("load failed: %w", msg.Error)
+		}
+		if msg.ErrorMessage != "" {
+			return "", fmt.Errorf("load failed: %s", msg.ErrorMessage)
+		}
+
 		msg.Stream = strings.TrimSpace(msg.Stream)
 
 		if _, imageID, hasID := strings.Cut(msg.Stream, "Loaded image ID: "); hasID {
