@@ -4,6 +4,16 @@ All rules in this document are requirements — not suggestions. ALWAYS follow t
 
 werf is a CNCF Sandbox CLI tool to implement full-cycle CI/CD to Kubernetes. werf integrates into your CI system and leverages familiar and reliable technologies, such as Git, Dockerfile, Helm, and Buildah. werf uses [werf/nelm](https://github.com/werf/nelm) as its deployment engine.
 
+## Repository map
+
+- `cmd/werf` — CLI commands and flags. Deploy commands call nelm directly.
+- `pkg/build`, `pkg/dockerfile`, `pkg/stapel`, `pkg/container_backend`, `pkg/buildah` — image build: stage assembly, Dockerfile and Stapel builders, Docker and Buildah backends. Buildah code is split into `*_linux.go` and `*_others.go`.
+- `pkg/storage`, `pkg/image`, `pkg/docker_registry` — stage storage, image metadata, container registry clients.
+- `pkg/cleaning`, `pkg/host_cleaning` — registry cleanup and local cache cleanup.
+- `pkg/deploy` — bundles and Helm chart extenders; the deployment itself is driven by nelm.
+- `pkg/config`, `pkg/giterminism_manager`, `pkg/git_repo`, `pkg/true_git` — `werf.yaml` parsing, giterminism, git access.
+- `test/e2e` — e2e suites, `test/legacy_e2e` — what `task test:integration` runs, `test/pkg` — shared test helpers.
+
 ## Highest-priority rule (MANDATORY)
 
 - NEVER add comments unless they document a non-obvious public API or explain genuinely non-obvious logic. NEVER add comments that restate what the code does, repeat the field/function name, describe obvious error handling, or act as section separators. When in doubt, don't comment.
@@ -68,6 +78,8 @@ After changing Go code, run these in order — `task format` mutates files, so i
 
 NEVER assume a change compiles. While iterating, scope the slow steps (`task lint:golangci-lint golangciPaths="./pkg/foo/..."`, `task test:unit paths="./pkg/foo/..."`), then run them unscoped before handing the work over.
 
+On macOS `task build` produces a **non-CGO** binary — the Buildah backend is only built for linux/amd64 (`task build:dev:linux:amd64:cgo`), so Buildah changes cannot be compiled or exercised locally. Unit tests run anywhere; e2e and integration tests need Linux with Docker and kind (`task test:setup:environment`).
+
 ## Testing (MANDATORY)
 
 - ALWAYS use Ginkgo and Gomega when writing new tests. Prefer table-driven tests with `DescribeTable`.
@@ -92,3 +104,7 @@ When a mistake was caused by a rule missing from AGENTS.md or CODESTYLE.md, prop
 - [werf/3p-helm](https://github.com/werf/3p-helm) — Helm fork. Provides chart loading, rendering, and release primitives. Changes to Helm internals go here, not in werf.
 - [werf/kubedog](https://github.com/werf/kubedog) — Kubernetes resource tracking library.
 - [werf/common-go](https://github.com/werf/common-go) — Shared Go libraries (secrets, CLI utilities, locking).
+
+`nelm`, `3p-helm`, `kubedog`, and `common-go` are ordinary versioned dependencies: fixing something inside them means a PR in that repository plus a version bump here — NEVER a local patch.
+
+`go.mod` also has a `replace` block pointing several dependencies at forks, including `spf13/cobra` → `andremueller/cobra` and `containers/buildah`, `deislabs/oras`, `docker/buildx` → `werf/3p-*`. ALWAYS check that block before trusting upstream documentation for these libraries.
