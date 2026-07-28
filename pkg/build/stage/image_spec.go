@@ -84,6 +84,11 @@ func (s *ImageSpecStage) PrepareImage(ctx context.Context, _ Conveyor, _ contain
 		}
 
 		newConfig := s.baseConfig()
+		// Populate a valid creation timestamp so the mutated config doesn't fall back to the
+		// zero value, which renders as a bogus date (e.g. 1754-08-30) when the descriptor is
+		// re-read. This doesn't affect the stage digest: GetDependencies hashes s.imageSpec
+		// directly, not s.newConfig.
+		newConfig.Created = time.Now().UTC().Format(time.RFC3339)
 
 		{
 			// labels
