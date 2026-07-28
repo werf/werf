@@ -293,6 +293,10 @@ func SetupNoShowNotes(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(&cmdData.NoShowNotes, "no-notes", "", util.GetBoolEnvironmentDefaultFalse("WERF_NO_NOTES"), `Don't show release notes at the end of the release (default $WERF_NO_NOTES)`)
 }
 
+func SetupNoCreateNamespace(cmdData *CmdData, cmd *cobra.Command) {
+	cmd.Flags().BoolVarP(&cmdData.NoCreateNamespace, "no-create-namespace", "", util.GetBoolEnvironmentDefaultFalse("WERF_NO_CREATE_NAMESPACE"), `Don't create the release namespace (default $WERF_NO_CREATE_NAMESPACE)`)
+}
+
 func SetupTemplatesAllowDNS(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(&cmdData.TemplatesAllowDNS, "templates-allow-dns", "", util.GetBoolEnvironmentDefaultFalse("WERF_TEMPLATES_ALLOW_DNS"), `Allow performing DNS requests in templating (default $WERF_TEMPLATES_ALLOW_DNS)`)
 }
@@ -315,6 +319,10 @@ func SetupDefaultDeletePropagation(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupExtraAPIVersions(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringSliceVarP(&cmdData.ExtraAPIVersions, "extra-apiversions", "", []string{}, "Extra Kubernetes API versions passed to $.Capabilities.APIVersions. Can be also set with $WERF_EXTRA_APIVERSIONS_* environment variables, values can be comma-separated")
+}
+
+func SetupLocalLookupResourcesPaths(cmdData *CmdData, cmd *cobra.Command) {
+	cmd.Flags().StringArrayVarP(&cmdData.LocalLookupResourcesPaths, "lookup-resources", "", []string{}, "Manifest files used as a cluster stub for the lookup template function in non-remote mode. Multi-document and kind:List supported. Namespaced resources must set metadata.namespace, otherwise namespace-scoped lookups ignore the requested namespace. Can be also set with $WERF_LOOKUP_RESOURCES_* environment variables (can specify multiple)")
 }
 
 func SetupNoRemoveManualChanges(cmdData *CmdData, cmd *cobra.Command) {
