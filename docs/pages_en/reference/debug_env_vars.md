@@ -80,4 +80,4 @@ The variables below enable narrow debug channels. Channels that write to the deb
 | Variable | Description |
 |----------|-------------|
 | `WERF_PRINT_STACK_TRACES` | Periodically print goroutine stack traces |
-| `WERF_PRINT_STACK_TRACES_PERIOD` | Interval between stack trace prints (e.g. `10s`, `1m`) |
+| `WERF_PRINT_STACK_TRACES_PERIOD` | Integer number of seconds between stack trace prints (default `5`); only takes effect with `WERF_PRINT_STACK_TRACES=1` |
