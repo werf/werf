@@ -3,6 +3,7 @@ package image
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -397,6 +398,10 @@ const (
 type FetchBaseImageInfo struct {
 	BaseImagePulled bool
 	BaseImageSource string
+}
+
+func debugStagesStorage() bool {
+	return os.Getenv("WERF_DEBUG_STAGES_STORAGE") == "1"
 }
 
 func (i *Image) FetchBaseImage(ctx context.Context) (FetchBaseImageInfo, error) {
