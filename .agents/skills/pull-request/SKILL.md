@@ -15,7 +15,7 @@ description: Generates Pull Request titles and descriptions according to werf co
 2. The PR title should mirror the header of the main commit in the PR.
 3. Format the title as `<type>(<scope>): <subject>`.
 4. Keep the total length ≤ 72 characters.
-5. Nested scopes are allowed and encouraged (e.g. `feat(build/stapel): …`).
+5. Nested scopes are allowed and encouraged, comma-separated: `fix(build, stapel, import): …`.
 6. Subject: imperative present tense, no capitalized first letter, no trailing dot.
 
 ## Description

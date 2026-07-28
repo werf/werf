@@ -26,7 +26,7 @@ Types and scopes are defined in `CONTRIBUTING.md#conventions` — that file is t
 ```
 
 - Determine type and scope from `git diff --cached`.
-- **Header:** ≤ 72 characters. Nested scopes are allowed.
+- **Header:** ≤ 72 characters. Nested scopes are allowed, comma-separated: `fix(build, stapel, import): …`.
 - **Subject:** imperative, lower-case, no trailing period.
 - **Body:** imperative; state the motivation for the change and contrast it with previous behavior.
 
