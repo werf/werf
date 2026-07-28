@@ -365,7 +365,9 @@ FindSuitableStages:
 			}
 			return nil, fmt.Errorf("unable to get digest and creation timestamp from tag %q: %w", tag, err)
 		} else if parentStageCreationTs > creationTs {
-			logboek.Context(ctx).Debug().LogF("Skip stage %s (parent stage creation timestamp %d is greater than the stage creation timestamp %d)\n", tag, parentStageCreationTs, creationTs)
+			if debugStagesStorage() {
+				logboek.Context(ctx).Debug().LogF("Skip stage %s (parent stage creation timestamp %d is greater than the stage creation timestamp %d)\n", tag, parentStageCreationTs, creationTs)
+			}
 			continue
 		} else {
 			stageID := image.NewStageID(digest, creationTs)
@@ -377,7 +379,9 @@ FindSuitableStages:
 				}
 			}
 
-			logboek.Context(ctx).Debug().LogF("Stage %q is suitable for digest %q\n", tag, digest)
+			if debugStagesStorage() {
+				logboek.Context(ctx).Debug().LogF("Stage %q is suitable for digest %q\n", tag, digest)
+			}
 			res = append(res, *stageID)
 		}
 	}
@@ -1189,25 +1193,19 @@ func (storage *RepoStagesStorage) PostSyncServerRecord(ctx context.Context, proj
 }
 
 func (storage *RepoStagesStorage) Tags(ctx context.Context, reference string, opts ...docker_registry.Option) ([]string, error) {
-	var tags []string
-	if err := logboek.Context(ctx).Info().LogProcess("List tags for repo %s", reference).DoError(func() error {
-		var err error
-		tags, err = storage.DockerRegistry.Tags(ctx, reference, opts...)
-		if err != nil {
-			return err
-		}
-		logboek.Context(ctx).Info().LogF("Total tags listed: %d\n", len(tags))
-
-		if !storage.skipMetaCheck {
-			if err := storage.checkMeta(ctx, tags, opts...); err != nil {
-				logboek.Context(ctx).Warn().LogF("unable to check meta tags: %s\n", err)
-			}
-		}
-
-		return nil
-	}); err != nil {
+	startedAt := time.Now()
+	tags, err := storage.DockerRegistry.Tags(ctx, reference, opts...)
+	if err != nil {
 		return nil, err
 	}
+	logboek.Context(ctx).Debug().LogF("Listed %d tags for repo %s (%.2f seconds)\n", len(tags), reference, time.Since(startedAt).Seconds())
+
+	if !storage.skipMetaCheck {
+		if err := storage.checkMeta(ctx, tags, opts...); err != nil {
+			logboek.Context(ctx).Warn().LogF("unable to check meta tags: %s\n", err)
+		}
+	}
+
 	return tags, nil
 }
 

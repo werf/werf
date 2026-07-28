@@ -24,6 +24,7 @@ The variables below enable narrow debug channels. Channels that write to the deb
 | `WERF_DEBUG_CONVEYOR_PHASES` | Build conveyor phase wrappers (BeforeImages, OnImageStage, AfterImages, etc.). Requires `--log-debug` |
 | `WERF_DEBUG_IMAGE_SPEC` | YAML snapshots of the image spec configuration (source image info, prepared and pushed config). Requires `--log-debug` |
 | `WERF_DEBUG_IMPORT_SERVER` | Rsync import server traces. Requires `--log-debug` |
+| `WERF_DEBUG_STAGE_DIGEST` | Stage digest calculation arguments (the named values the digest is derived from). The resulting digest itself is logged with `--log-debug` regardless of this variable. Requires `--log-debug` |
 | `WERF_DEBUG_USER_STAGE_CHECKSUM` | User stage checksum calculation details. Requires `--log-debug` |
 | `WERF_DEBUG_IMPORT_SOURCE_CHECKSUM` | Import source checksum calculation details. Requires `--log-debug` |
 | `WERF_DEBUG_DOCKERFILE_STAGE_DEPENDENCIES` | Controls two channels: Dockerfile stage dependency calculation and per-match build context paths during context checksum calculation. Requires `--log-debug` |
