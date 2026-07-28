@@ -12,6 +12,7 @@ import (
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
+	"github.com/werf/logboek/pkg/types"
 	"github.com/werf/werf/v2/pkg/slug"
 	"github.com/werf/werf/v2/pkg/werf"
 )
@@ -33,8 +34,17 @@ func NewManifestCache(cacheDir string) *ManifestCache {
 	return &ManifestCache{CacheDir: cacheDir}
 }
 
+func debugStagesStorage() bool {
+	return os.Getenv("WERF_DEBUG_STAGES_STORAGE") == "1"
+}
+
 func (cache *ManifestCache) GetImageInfo(ctx context.Context, storageName, imageName string) (*Info, error) {
-	logProcess := logboek.Context(ctx).Debug().LogProcess("-- ManifestCache.GetImageInfo %s %s", storageName, imageName)
+	logProcess := logboek.Context(ctx).Debug().LogProcess("-- ManifestCache.GetImageInfo %s %s", storageName, imageName).
+		Options(func(options types.LogProcessOptionsInterface) {
+			if !debugStagesStorage() {
+				options.Mute()
+			}
+		})
 	logProcess.Start()
 	defer logProcess.End()
 
@@ -63,7 +73,12 @@ func (cache *ManifestCache) GetImageInfo(ctx context.Context, storageName, image
 }
 
 func (cache *ManifestCache) StoreImageInfo(ctx context.Context, storageName string, imgInfo *Info) error {
-	logProcess := logboek.Context(ctx).Debug().LogProcess("-- ManifestCache.StoreImageInfo %s %s", storageName, imgInfo.Name)
+	logProcess := logboek.Context(ctx).Debug().LogProcess("-- ManifestCache.StoreImageInfo %s %s", storageName, imgInfo.Name).
+		Options(func(options types.LogProcessOptionsInterface) {
+			if !debugStagesStorage() {
+				options.Mute()
+			}
+		})
 	logProcess.Start()
 	defer logProcess.End()
 
@@ -81,7 +96,9 @@ func (cache *ManifestCache) StoreImageInfo(ctx context.Context, storageName stri
 }
 
 func (cache *ManifestCache) DeleteImageInfo(ctx context.Context, storageName, imageName string) error {
-	logboek.Context(ctx).Debug().LogF("Deleting manifest cache entry for %s/%s\n", storageName, imageName)
+	if debugStagesStorage() {
+		logboek.Context(ctx).Debug().LogF("Deleting manifest cache entry for %s/%s\n", storageName, imageName)
+	}
 
 	if lock, err := cache.lock(ctx, storageName, imageName); err != nil {
 		return err

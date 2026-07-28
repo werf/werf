@@ -4,12 +4,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/image"
 )
+
+func debugStagesStorage() bool {
+	return os.Getenv("WERF_DEBUG_STAGES_STORAGE") == "1"
+}
 
 const (
 	LocalStorageAddress             = ":local"
