@@ -199,3 +199,7 @@ func (a *BuildContextArchive) CalculatePathsChecksum(ctx context.Context, paths 
 func dockerfileStageDependenciesDebug() bool {
 	return os.Getenv("WERF_DEBUG_DOCKERFILE_STAGE_DEPENDENCIES") == "1"
 }
+
+func debugStagesStorage() bool {
+	return os.Getenv("WERF_DEBUG_STAGES_STORAGE") == "1"
+}

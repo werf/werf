@@ -56,7 +56,7 @@ The variables below enable narrow debug channels. Channels that write to the deb
 | Variable | Description |
 |----------|-------------|
 | `WERF_DEBUG_TEMPLATES` | boolean; same as `--debug-templates`: debug mode for Go templates |
-| `WERF_DEBUG_SECRET_VALUES` | Debug output of secret values decoding |
+| `WERF_DEBUG_SECRET_VALUES` | Debug output of secret values decoding. Requires `--log-debug` |
 
 ### Deploy
 
