@@ -239,6 +239,10 @@ func appendExtraData(node *yaml_v3.Node, key string, data interface{}) error {
 	return nil
 }
 
+func debugExtraAnnotationsAndLabels() bool {
+	return os.Getenv("WERF_DEBUG_HELM_V3_EXTRA_ANNOTATIONS_AND_LABELS") == "1" || os.Getenv("WERF_HELM_V3_EXTRA_ANNOTATIONS_AND_LABELS_DEBUG") == "1"
+}
+
 func (pr *ExtraAnnotationsAndLabelsPostRenderer) Run(renderedManifests *bytes.Buffer) (*bytes.Buffer, error) {
 	extraAnnotations := map[string]string{}
 	for k, v := range WerfRuntimeAnnotations {
@@ -269,7 +273,7 @@ func (pr *ExtraAnnotationsAndLabelsPostRenderer) Run(renderedManifests *bytes.Bu
 	for _, manifestKey := range manifestsKeys {
 		manifestContent := splitManifestsByKeys[manifestKey]
 
-		if os.Getenv("WERF_HELM_V3_EXTRA_ANNOTATIONS_AND_LABELS_DEBUG") == "1" {
+		if debugExtraAnnotationsAndLabels() {
 			fmt.Printf("ExtraAnnotationsAndLabelsPostRenderer -- original manifest BEGIN\n")
 			fmt.Printf("%s\n", manifestContent)
 			fmt.Printf("ExtraAnnotationsAndLabelsPostRenderer -- original manifest END\n")
@@ -293,7 +297,7 @@ func (pr *ExtraAnnotationsAndLabelsPostRenderer) Run(renderedManifests *bytes.Bu
 			continue
 		}
 
-		if os.Getenv("WERF_HELM_V3_EXTRA_ANNOTATIONS_AND_LABELS_DEBUG") == "1" {
+		if debugExtraAnnotationsAndLabels() {
 			fmt.Printf("Unpacket obj annotations: %#v\n", obj.GetAnnotations())
 		}
 
@@ -348,7 +352,7 @@ func (pr *ExtraAnnotationsAndLabelsPostRenderer) Run(renderedManifests *bytes.Bu
 		} else {
 			splitModifiedManifests = append(splitModifiedManifests, modifiedManifestContent.String())
 
-			if os.Getenv("WERF_HELM_V3_EXTRA_ANNOTATIONS_AND_LABELS_DEBUG") == "1" {
+			if debugExtraAnnotationsAndLabels() {
 				fmt.Printf("ExtraAnnotationsAndLabelsPostRenderer -- modified manifest BEGIN\n")
 				fmt.Printf("%s", modifiedManifestContent.String())
 				fmt.Printf("ExtraAnnotationsAndLabelsPostRenderer -- modified manifest END\n")
@@ -357,7 +361,7 @@ func (pr *ExtraAnnotationsAndLabelsPostRenderer) Run(renderedManifests *bytes.Bu
 	}
 
 	modifiedManifests := bytes.NewBufferString(strings.Join(splitModifiedManifests, "---\n"))
-	if os.Getenv("WERF_HELM_V3_EXTRA_ANNOTATIONS_AND_LABELS_DEBUG") == "1" {
+	if debugExtraAnnotationsAndLabels() {
 		fmt.Printf("ExtraAnnotationsAndLabelsPostRenderer -- modified manifests RESULT BEGIN\n")
 		fmt.Printf("%s\n", modifiedManifests.String())
 		fmt.Printf("ExtraAnnotationsAndLabelsPostRenderer -- modified manifests RESULT END\n")

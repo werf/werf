@@ -27,8 +27,8 @@ werf поддерживает набор переменных окружения
 | `WERF_DEBUG_USER_STAGE_CHECKSUM` | Детали расчёта контрольной суммы пользовательских стадий. Требует `--log-debug` |
 | `WERF_DEBUG_IMPORT_SOURCE_CHECKSUM` | Детали расчёта контрольной суммы источников импорта. Требует `--log-debug` |
 | `WERF_DEBUG_DOCKERFILE_STAGE_DEPENDENCIES` | Управляет двумя каналами: расчёт зависимостей стадий Dockerfile и перечисление совпавших путей build-контекста при расчёте его контрольной суммы. Требует `--log-debug` |
-| `WERF_CONTAINER_RUNTIME_DEBUG` | Внутренности сборочного бэкенда: удаление путей в контейнере, mount/unmount buildah-контейнеров, пофайловый расчёт контрольных сумм. Требует `--log-debug` |
-| `WERF_BUILDAH_DEBUG` | Отладочный вывод бэкенда Buildah |
+| `WERF_DEBUG_CONTAINER_RUNTIME` (устаревший синоним: `WERF_CONTAINER_RUNTIME_DEBUG`) | Внутренности сборочного бэкенда: удаление путей в контейнере, mount/unmount buildah-контейнеров, пофайловый расчёт контрольных сумм. Требует `--log-debug` |
+| `WERF_DEBUG_BUILDAH` (устаревший синоним: `WERF_BUILDAH_DEBUG`) | Отладочный вывод бэкенда Buildah |
 | `WERF_DEBUG_DOCKER` | Debug-режим Docker CLI |
 | `WERF_DEBUG_DOCKER_RUN_COMMAND` | Печать полных команд `docker run` |
 
@@ -37,9 +37,9 @@ werf поддерживает набор переменных окружения
 | Переменная | Описание |
 |------------|----------|
 | `WERF_DEBUG_TRUE_GIT` | Трассировка выполнения git-команд. Требует `--log-debug` |
-| `WERF_TRUE_GIT_DEBUG_ARCHIVE` | Пофайловый вывод при создании git-архивов. Требует `--log-debug` |
-| `WERF_TRUE_GIT_DEBUG_PATCH` | Отладочный вывод создания git-патчей |
-| `WERF_TRUE_GIT_DEBUG_PATCH_PARSER` | Отладочный вывод парсера git-патчей |
+| `WERF_DEBUG_TRUE_GIT_ARCHIVE` (устаревший синоним: `WERF_TRUE_GIT_DEBUG_ARCHIVE`) | Пофайловый вывод при создании git-архивов. Требует `--log-debug` |
+| `WERF_DEBUG_TRUE_GIT_PATCH` (устаревший синоним: `WERF_TRUE_GIT_DEBUG_PATCH`) | Отладочный вывод создания git-патчей |
+| `WERF_DEBUG_TRUE_GIT_PATCH_PARSER` (устаревший синоним: `WERF_TRUE_GIT_DEBUG_PATCH_PARSER`) | Отладочный вывод парсера git-патчей |
 | `WERF_DEBUG_LS_TREE_PROCESS` | Обход git ls-tree и пофайловые записи при расчёте контрольных сумм. Требует `--log-debug` |
 | `WERF_DEBUG_GIT_STATUS` | Детали результата git status. Требует `--log-debug` |
 | `WERF_DEBUG_GITERMINISM_MANAGER` | Операции чтения файлов giterminism manager. Требует `--log-debug` |
@@ -48,7 +48,7 @@ werf поддерживает набор переменных окружения
 
 | Переменная | Описание |
 |------------|----------|
-| `WERF_DOCKER_REGISTRY_DEBUG` | Трассировка вызовов API registry и progress-тики push/pull. Для progress-тиков требует `--log-debug` |
+| `WERF_DEBUG_DOCKER_REGISTRY` (устаревший синоним: `WERF_DOCKER_REGISTRY_DEBUG`) | Трассировка вызовов API registry и progress-тики push/pull. Для progress-тиков требует `--log-debug` |
 | `WERF_DEBUG_DOCKER_REGISTRY_API` | Отладочные логи библиотеки go-containerregistry |
 
 ### Конфигурация и шаблоны
@@ -63,7 +63,7 @@ werf поддерживает набор переменных окружения
 | Переменная | Описание |
 |------------|----------|
 | `WERF_NELM_TRACE` | boolean; включает trace-уровень логирования движка деплоя Nelm |
-| `WERF_HELM_V3_EXTRA_ANNOTATIONS_AND_LABELS_DEBUG` | Отладочный вывод post-renderer'а дополнительных аннотаций и лейблов |
+| `WERF_DEBUG_HELM_V3_EXTRA_ANNOTATIONS_AND_LABELS` (устаревший синоним: `WERF_HELM_V3_EXTRA_ANNOTATIONS_AND_LABELS_DEBUG`) | Отладочный вывод post-renderer'а дополнительных аннотаций и лейблов |
 | `WERF_SHOW_VERBOSE_DIFFS` | boolean, по умолчанию `true`; то же, что `--show-verbose-diffs` в `werf plan`: подробные строки диффов |
 | `WERF_SHOW_VERBOSE_CRD_DIFFS` | boolean, по умолчанию `false`; то же, что `--show-verbose-crd-diffs` в `werf plan`: подробные строки диффов CRD |
 

@@ -60,7 +60,7 @@ func Archive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir string
 }
 
 func debugArchive() bool {
-	return os.Getenv("WERF_TRUE_GIT_DEBUG_ARCHIVE") == "1"
+	return os.Getenv("WERF_DEBUG_TRUE_GIT_ARCHIVE") == "1" || os.Getenv("WERF_TRUE_GIT_DEBUG_ARCHIVE") == "1"
 }
 
 func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir string, withSubmodules bool, opts ArchiveOptions) error {

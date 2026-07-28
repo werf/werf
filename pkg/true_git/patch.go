@@ -91,7 +91,7 @@ func Patch(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir string, 
 }
 
 func debugPatch() bool {
-	return os.Getenv("WERF_TRUE_GIT_DEBUG_PATCH") == "1"
+	return os.Getenv("WERF_DEBUG_TRUE_GIT_PATCH") == "1" || os.Getenv("WERF_TRUE_GIT_DEBUG_PATCH") == "1"
 }
 
 func writePatch(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir string, withSubmodules bool, opts PatchOptions) (*PatchDescriptor, error) {
