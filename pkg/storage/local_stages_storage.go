@@ -420,16 +420,18 @@ func (storage *LocalStagesStorage) PostManifest(ctx context.Context, ref string,
 }
 
 func (storage *LocalStagesStorage) MutateAndPushImage(ctx context.Context, src, _ string, newConfig image.SpecConfig, stageImage container_backend.LegacyImageInterface) error {
-	if err := logboek.Context(ctx).Debug().LogBlock("-- LocalStagesStorage.MutateAndPushImage imageSpecConfig").DoError(func() error {
-		newConfigData, err := yaml.Marshal(newConfig)
-		if err != nil {
-			return fmt.Errorf("unable to yaml marshal new config: %w", err)
-		}
+	if debugImageSpec() {
+		if err := logboek.Context(ctx).Debug().LogBlock("-- LocalStagesStorage.MutateAndPushImage imageSpecConfig").DoError(func() error {
+			newConfigData, err := yaml.Marshal(newConfig)
+			if err != nil {
+				return fmt.Errorf("unable to yaml marshal new config: %w", err)
+			}
 
-		logboek.Context(ctx).Debug().LogF(string(newConfigData))
-		return nil
-	}); err != nil {
-		return err
+			logboek.Context(ctx).Debug().LogF(string(newConfigData))
+			return nil
+		}); err != nil {
+			return err
+		}
 	}
 
 	newId, err := container_backend.MutateAndPushImage(ctx, src, stageImage.GetTargetPlatform(), newConfig, storage.ContainerBackend)

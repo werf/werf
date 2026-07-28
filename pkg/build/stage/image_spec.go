@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"html/template"
 	"maps"
+	"os"
 	"regexp"
 	"slices"
 	"sort"
@@ -59,21 +60,27 @@ func (s *ImageSpecStage) IsMutable() bool {
 	return true
 }
 
+func debugImageSpec() bool {
+	return os.Getenv("WERF_DEBUG_IMAGE_SPEC") == "1"
+}
+
 func (s *ImageSpecStage) PrepareImage(ctx context.Context, _ Conveyor, _ container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, _ container_backend.BuildContextArchiver) error {
 	if s.imageSpec != nil {
 		// NOTE. We need a copy, because we mutate labels, volumes and envs.
 		imageInfo := prevBuiltImage.Image.GetStageDesc().Info.GetCopy()
 
-		if err := logboek.Context(ctx).Debug().LogBlock("-- ImageSpecStage.PrepareImage source image info").DoError(func() error {
-			data, err := yaml.Marshal(imageInfo)
-			if err != nil {
-				return fmt.Errorf("unable to yaml marshal: %w", err)
-			}
+		if debugImageSpec() {
+			if err := logboek.Context(ctx).Debug().LogBlock("-- ImageSpecStage.PrepareImage source image info").DoError(func() error {
+				data, err := yaml.Marshal(imageInfo)
+				if err != nil {
+					return fmt.Errorf("unable to yaml marshal: %w", err)
+				}
 
-			logboek.Context(ctx).Debug().LogF(string(data))
-			return nil
-		}); err != nil {
-			return err
+				logboek.Context(ctx).Debug().LogF(string(data))
+				return nil
+			}); err != nil {
+				return err
+			}
 		}
 
 		newConfig := s.baseConfig()
@@ -127,16 +134,18 @@ func (s *ImageSpecStage) PrepareImage(ctx context.Context, _ Conveyor, _ contain
 		// set config
 		s.newConfig = newConfig
 
-		if err := logboek.Context(ctx).Debug().LogBlock("-- ImageSpecStage.PrepareImage prepared image spec config").DoError(func() error {
-			data, err := yaml.Marshal(s.newConfig)
-			if err != nil {
-				return fmt.Errorf("unable to yaml marshal: %w", err)
-			}
+		if debugImageSpec() {
+			if err := logboek.Context(ctx).Debug().LogBlock("-- ImageSpecStage.PrepareImage prepared image spec config").DoError(func() error {
+				data, err := yaml.Marshal(s.newConfig)
+				if err != nil {
+					return fmt.Errorf("unable to yaml marshal: %w", err)
+				}
 
-			logboek.Context(ctx).Debug().LogF(string(data))
-			return nil
-		}); err != nil {
-			return err
+				logboek.Context(ctx).Debug().LogF(string(data))
+				return nil
+			}); err != nil {
+				return err
+			}
 		}
 	}
 
