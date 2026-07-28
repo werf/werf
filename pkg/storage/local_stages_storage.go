@@ -265,7 +265,9 @@ func (storage *LocalStagesStorage) GetAllAndGroupImageMetadataByImageName(ctx co
 }
 
 func (storage *LocalStagesStorage) GetImportMetadata(ctx context.Context, projectName, id string) (*ImportMetadata, error) {
-	logboek.Context(ctx).Debug().LogF("-- LocalStagesStorage.GetImportMetadata %s %s\n", projectName, id)
+	if debugStagesStorage() {
+		logboek.Context(ctx).Debug().LogF("-- LocalStagesStorage.GetImportMetadata %s %s\n", projectName, id)
+	}
 
 	fullImageName := makeLocalImportMetadataName(projectName, id)
 
@@ -280,7 +282,9 @@ func (storage *LocalStagesStorage) GetImportMetadata(ctx context.Context, projec
 }
 
 func (storage *LocalStagesStorage) PutImportMetadata(ctx context.Context, projectName string, metadata *ImportMetadata, opts PutImportMetadataOptions) error {
-	logboek.Context(ctx).Debug().LogF("-- LocalStagesStorage.PutImportMetadata %s %v\n", projectName, metadata)
+	if debugStagesStorage() {
+		logboek.Context(ctx).Debug().LogF("-- LocalStagesStorage.PutImportMetadata %s %v\n", projectName, metadata)
+	}
 
 	fullImageName := makeLocalImportMetadataName(projectName, metadata.ImportSourceID)
 
@@ -301,7 +305,9 @@ func (storage *LocalStagesStorage) PutImportMetadata(ctx context.Context, projec
 }
 
 func (storage *LocalStagesStorage) RmImportMetadata(ctx context.Context, projectName, id string) error {
-	logboek.Context(ctx).Debug().LogF("-- LocalStagesStorage.RmImportMetadata %s %s\n", projectName, id)
+	if debugStagesStorage() {
+		logboek.Context(ctx).Debug().LogF("-- LocalStagesStorage.RmImportMetadata %s %s\n", projectName, id)
+	}
 
 	fullImageName := makeLocalImportMetadataName(projectName, id)
 
@@ -318,7 +324,9 @@ func (storage *LocalStagesStorage) RmImportMetadata(ctx context.Context, project
 }
 
 func (storage *LocalStagesStorage) GetImportMetadataIDs(ctx context.Context, projectName string, opts ...Option) ([]string, error) {
-	logboek.Context(ctx).Debug().LogF("-- LocalStagesStorage.GetImportMetadataIDs %s\n", projectName)
+	if debugStagesStorage() {
+		logboek.Context(ctx).Debug().LogF("-- LocalStagesStorage.GetImportMetadataIDs %s\n", projectName)
+	}
 
 	imagesOpts := container_backend.ImagesOptions{}
 	imagesOpts.Filters = append(imagesOpts.Filters, util.NewPair("reference", fmt.Sprintf(LocalImportMetadata_ImageNameFormat, projectName)))
