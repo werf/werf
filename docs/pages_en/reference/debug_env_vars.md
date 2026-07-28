@@ -20,7 +20,7 @@ The variables below enable narrow debug channels. Channels that write to the deb
 
 | Variable | Description |
 |----------|-------------|
-| `WERF_DEBUG_STAGES_STORAGE` | Stages storage internals: storage method call traces, manifest cache operations, per-tag stage listings, selected stage description dumps. Requires `--log-debug` |
+| `WERF_DEBUG_STAGES_STORAGE` | Stages storage internals: storage method call traces, manifest cache operations, per-tag stage listings, selected stage and base image description dumps. Requires `--log-debug` |
 | `WERF_DEBUG_CONVEYOR_PHASES` | Build conveyor phase wrappers (BeforeImages, OnImageStage, AfterImages, etc.). Requires `--log-debug` |
 | `WERF_DEBUG_IMAGE_SPEC` | YAML snapshots of the image spec configuration (source image info, prepared and pushed config). Requires `--log-debug` |
 | `WERF_DEBUG_IMPORT_SERVER` | Rsync import server traces. Requires `--log-debug` |
