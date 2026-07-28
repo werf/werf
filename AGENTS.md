@@ -18,46 +18,25 @@ werf is a CNCF Sandbox CLI tool to implement full-cycle CI/CD to Kubernetes. wer
 - When renaming a type, function, or constant, ALWAYS rename all related local variables, parameters, and error messages that reference the old name. A rename is not complete until grep for the old name returns zero hits in affected packages.
 - When removing a feature that has documentation in multiple languages (e.g. `pages_en/`, `pages_ru/`), ALWAYS apply the same removal to ALL language versions. NEVER assume English-only cleanup is sufficient.
 
-## Code style
+## Code style (MANDATORY)
 
-### Design (MANDATORY)
+[CODESTYLE.md](CODESTYLE.md) is the source of truth for design and conventions — it is short, read it before writing Go. Rules that get broken most often:
 
-> The code style rules below are adapted from [CODESTYLE.md](CODESTYLE.md). If you are asked to update code style rules, update CODESTYLE.md first, then regenerate this section to match, using ALWAYS/NEVER/MUST phrasing.
-
-- ALWAYS prefer stupid and simple over abstract and extendable.
-- ALWAYS prefer a bit of duplication over complex abstractions.
-- ALWAYS prefer clarity over brevity in names.
-- ALWAYS minimize interfaces, generics, embedding.
-- ALWAYS prefer fewer types. Prefer no types over few. Prefer data types over types with behavior.
-- ALWAYS prefer functions over methods. ALWAYS prefer public fields over getters/setters.
-- ALWAYS keep everything private/internal as much as possible.
-- ALWAYS validate early, validate a lot. ALWAYS keep APIs stupid and minimal.
-- NEVER prefer global state. ALWAYS prefer simplicity over micro-optimizations.
-- ALWAYS use libraries for complex things instead of reinventing the wheel.
-- NEVER add comments unless they document a non-obvious public API or explain genuinely non-obvious logic. NEVER add obvious/redundant comments, NEVER add comments restating what code does. When in doubt, don't comment.
-
-### Conventions (MANDATORY)
-
-> The code style rules below are adapted from [CODESTYLE.md](CODESTYLE.md). If you are asked to update code style rules, update CODESTYLE.md first, then regenerate this section to match, using ALWAYS/NEVER/MUST phrasing.
-
-- All public functions/methods MUST accept `context.Context` as the first parameter.
-- All arguments of a public function are required — passing nil not allowed.
-- Optional arguments via `<FunctionName>Options` as the last argument. NEVER use functional options.
+- Public functions and methods MUST take `context.Context` first, and all their arguments are required — passing nil is not allowed.
+- Optional arguments go into a `<FunctionName>Options` struct passed last. NEVER use the functional options pattern.
+- Every interface implementation MUST have a compile-time check: `var _ Animal = (*Dog)(nil)`.
+- ALWAYS wrap errors with what was being done: `fmt.Errorf("read config: %w", err)`, not `"cannot read config"`.
+- Avoid `iota`; prefix enum constants with the type name: `LogLevelDebug LogLevel = "debug"`.
 - Use guard clauses and early returns to keep the happy path unindented.
-- Use `samber/lo` helpers: `lo.Filter`, `lo.Find`, `lo.Map`, `lo.Contains`, `lo.Ternary`, `lo.ToPtr`, `lo.Must`, etc.
-- Constructors: `New<TypeName>[...]()`. No network/filesystem calls in constructors.
-- Interfaces: ALWAYS add `var _ Animal = (*Dog)(nil)` compile-time check.
-- Constants: avoid `iota`. Prefix enum constants with type name: `LogLevelDebug LogLevel = "debug"`.
-- Errors: ALWAYS wrap with context: `fmt.Errorf("read config: %w", err)`. Describe what is being done, not what failed. Panic on programmer errors. Prefer one-line `if err := ...; err != nil`.
+- Use `samber/lo` helpers (`lo.Filter`, `lo.Map`, `lo.Ternary`, `lo.ToPtr`, …) when the standard library has no equivalent.
 
-### Go standard guidelines (MANDATORY)
+Follow [Effective Go](https://go.dev/doc/effective_go) and [Go Code Review Comments](https://go.dev/wiki/CodeReviewComments). Violated here most often: NEVER use `this`/`self` as a receiver name, NEVER discard errors with `_`, NEVER use dot imports, NEVER use named or naked returns.
 
-Follow [Effective Go](https://go.dev/doc/effective_go) and [Go Code Review Comments](https://go.dev/wiki/CodeReviewComments). Commonly violated rules:
+## Code navigation (MANDATORY)
 
-- NEVER use `this`/`self` as receiver names. Use 1-2 letter names, consistent across methods.
-- NEVER discard errors with `_`. Indent error flow, not happy path.
-- NEVER use dot imports.
-- NEVER use named returns or naked returns.
+- ALWAYS use LSP (`goToDefinition`, `findReferences`, `documentSymbol`, `hover`, `goToImplementation`, call hierarchy) to find definitions, usages, implementations, and callers. `grep` matches strings blindly: it hits comments and unrelated identifiers, and misses interface dispatch and aliased imports.
+- Use `grep` ONLY for literal text — config keys, error message strings, annotation names.
+- If your harness has a semantic code-search tool, prefer it over `grep` for intent-based questions ("how does X work"). If it does not, read the code: NEVER substitute keyword grepping for understanding.
 
 ## Commands (MANDATORY)
 
@@ -76,6 +55,19 @@ ALWAYS use these `task` commands. NEVER use raw `go build`, `go test`, `go fmt`,
 - `task mock:check` — verify generated mocks are up to date (runs `go generate -run mockgen` and diffs).
 - `task doc:gen` — regenerate CLI reference docs. ALWAYS run after changing command descriptions, flags, or help text in Go source.
 
+`format` and `lint*` come from a remote taskfile ([werf/common-ci](https://github.com/werf/common-ci)), so they need `TASK_X_REMOTE_TASKFILES=1` and network access.
+
+## Verifying changes (MANDATORY)
+
+After changing Go code, run these in order — `task format` mutates files, so it goes first:
+
+1. `task format`
+2. `task build`
+3. `task lint`
+4. `task test:unit`
+
+NEVER assume a change compiles. While iterating, scope the slow steps (`task lint:golangci-lint golangciPaths="./pkg/foo/..."`, `task test:unit paths="./pkg/foo/..."`), then run them unscoped before handing the work over.
+
 ## Testing (MANDATORY)
 
 - ALWAYS use Ginkgo and Gomega when writing new tests. Prefer table-driven tests with `DescribeTable`.
@@ -90,13 +82,9 @@ ALWAYS use these `task` commands. NEVER use raw `go build`, `go test`, `go fmt`,
 - NEVER introduce breaking user-facing changes (not API changes) unless they are hidden behind a feature flag. Flag to the user first.
 - NEVER introduce changes that may compromise security. Flag to the user first.
 
-## Self-improvement (MANDATORY)
+## Self-improvement
 
-ALWAYS perform this step after completing any user request. NEVER skip it, even if the work "looks fine."
-
-- Review what went wrong during execution: wasted steps, wrong assumptions, missed dependencies.
-- If a mistake was caused by a missing rule in AGENTS.md or OPENCODE.md, propose a concrete rule addition to the user.
-- NEVER silently swallow lessons learned. ALWAYS surface them.
+When a mistake was caused by a rule missing from AGENTS.md or CODESTYLE.md, propose that concrete rule to the user instead of silently swallowing the lesson.
 
 ## Related repositories
 
