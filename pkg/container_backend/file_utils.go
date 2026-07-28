@@ -16,7 +16,9 @@ func removeExactPath(ctx context.Context, path string) error {
 	case err != nil:
 		return fmt.Errorf("unable to access path %q: %w", path, err)
 	default:
-		logboek.Context(ctx).Debug().LogF("Removing path %s\n", path)
+		if Debug() {
+			logboek.Context(ctx).Debug().LogF("Removing path %s\n", path)
+		}
 		if err := os.RemoveAll(path); err != nil {
 			return fmt.Errorf("unable to remove path %s: %w", path, err)
 		}
@@ -32,7 +34,9 @@ func removeExactPathWithEmptyParentDirs(ctx context.Context, path string, keepPa
 	case err != nil:
 		return fmt.Errorf("unable to access path %q: %w", path, err)
 	default:
-		logboek.Context(ctx).Debug().LogF("Removing path %s\n", path)
+		if Debug() {
+			logboek.Context(ctx).Debug().LogF("Removing path %s\n", path)
+		}
 		if err := os.RemoveAll(path); err != nil {
 			return fmt.Errorf("unable to remove path %s: %w", path, err)
 		}
@@ -68,7 +72,9 @@ func removeExactPathWithEmptyParentDirs(ctx context.Context, path string, keepPa
 		if len(entries) > 0 {
 			return nil
 		}
-		logboek.Context(ctx).Debug().LogF("Removing empty dir %s\n", p)
+		if Debug() {
+			logboek.Context(ctx).Debug().LogF("Removing empty dir %s\n", p)
+		}
 		if err := os.RemoveAll(p); err != nil {
 			return fmt.Errorf("unable to remove empty dir %q: %w", p, err)
 		}
@@ -96,7 +102,9 @@ func removeInsidePath(ctx context.Context, path string) error {
 	for _, entry := range entries {
 		destPath := filepath.Join(path, entry.Name())
 
-		logboek.Context(ctx).Debug().LogF("Removing path %s\n", destPath)
+		if Debug() {
+			logboek.Context(ctx).Debug().LogF("Removing path %s\n", destPath)
+		}
 		if err := os.RemoveAll(destPath); err != nil {
 			return fmt.Errorf("unable to remove path %q: %w", destPath, err)
 		}
