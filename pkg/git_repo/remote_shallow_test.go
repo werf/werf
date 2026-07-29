@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/go-git/go-git/v5"
 	gitconfig "github.com/go-git/go-git/v5/config"
@@ -152,7 +153,7 @@ var _ = Describe("Remote shallow mirror", func() {
 
 				repo := openRemote("", tag, "")
 				Expect(repo.CloneAndFetch(ctx)).To(Succeed())
-				Expect(repo.GetClonePath()).To(HaveSuffix(string(mirrorKindShallow)))
+				Expect(repo.GetClonePath()).To(Equal(filepath.Join(GetGitMirrorsCacheDir(), repo.getRepoID(), string(mirrorKindShallow))))
 
 				headCommit := utils.GetHeadCommit(ctx, sourceDir)
 				tagCommit, err := repo.TagCommit(ctx, tag)
@@ -186,7 +187,7 @@ var _ = Describe("Remote shallow mirror", func() {
 
 			repo := openRemote("", "", headCommit)
 			Expect(repo.CloneAndFetch(ctx)).To(Succeed())
-			Expect(repo.GetClonePath()).To(HaveSuffix(string(mirrorKindShallow)))
+			Expect(repo.GetClonePath()).To(Equal(filepath.Join(GetGitMirrorsCacheDir(), repo.getRepoID(), string(mirrorKindShallow))))
 
 			exists, err := repo.IsCommitExists(ctx, headCommit)
 			Expect(err).NotTo(HaveOccurred())
@@ -387,7 +388,19 @@ var _ = Describe("Remote shallow mirror", func() {
 	})
 
 	Describe("renameCloneIntoPlace", func() {
-		It("succeeds when a peer already moved a clone into place", func() {
+		It("reports no race when the rename succeeds", func() {
+			dir := GinkgoT().TempDir()
+			tmpPath := filepath.Join(dir, "clone.tmp")
+			clonePath := filepath.Join(dir, "clone")
+			Expect(os.MkdirAll(tmpPath, 0o755)).To(Succeed())
+
+			peerWon, err := renameCloneIntoPlace(tmpPath, clonePath)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(peerWon).To(BeFalse())
+			Expect(clonePath).To(BeADirectory())
+		})
+
+		It("reports a peer win when a peer already moved a clone into place", func() {
 			dir := GinkgoT().TempDir()
 			tmpPath := filepath.Join(dir, "clone.tmp")
 			clonePath := filepath.Join(dir, "clone")
@@ -395,7 +408,9 @@ var _ = Describe("Remote shallow mirror", func() {
 			Expect(os.MkdirAll(clonePath, 0o755)).To(Succeed())
 			Expect(os.WriteFile(filepath.Join(clonePath, "HEAD"), []byte("ref"), 0o644)).To(Succeed())
 
-			Expect(renameCloneIntoPlace(tmpPath, clonePath)).To(Succeed())
+			peerWon, err := renameCloneIntoPlace(tmpPath, clonePath)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(peerWon).To(BeTrue())
 		})
 
 		It("returns the rename error when the destination does not appear", func() {
@@ -404,9 +419,30 @@ var _ = Describe("Remote shallow mirror", func() {
 			Expect(os.MkdirAll(tmpPath, 0o755)).To(Succeed())
 			clonePath := filepath.Join(dir, "missing-parent", "clone")
 
-			err := renameCloneIntoPlace(tmpPath, clonePath)
+			peerWon, err := renameCloneIntoPlace(tmpPath, clonePath)
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("rename"))
+			Expect(peerWon).To(BeFalse())
+		})
+	})
+
+	Describe("removeStaleCloneTmpDirs", func() {
+		It("removes only stale tmp siblings of the clone path", func(ctx SpecContext) {
+			dir := GinkgoT().TempDir()
+			clonePath := filepath.Join(dir, "abc")
+			staleTmp := clonePath + ".111.tmp"
+			freshTmp := clonePath + ".222.tmp"
+			Expect(os.MkdirAll(clonePath, 0o755)).To(Succeed())
+			Expect(os.MkdirAll(staleTmp, 0o755)).To(Succeed())
+			Expect(os.MkdirAll(freshTmp, 0o755)).To(Succeed())
+			old := time.Now().Add(-cloneTmpStalenessWindow - time.Hour)
+			Expect(os.Chtimes(staleTmp, old, old)).To(Succeed())
+
+			removeStaleCloneTmpDirs(ctx, clonePath)
+
+			Expect(staleTmp).NotTo(BeAnExistingFile())
+			Expect(freshTmp).To(BeADirectory())
+			Expect(clonePath).To(BeADirectory())
 		})
 	})
 

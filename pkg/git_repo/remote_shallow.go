@@ -359,6 +359,8 @@ func (repo *Remote) ensureShallowMirror(ctx context.Context) (bool, error) {
 		return false, fmt.Errorf("unable to create dir %s: %w", filepath.Dir(shallowPath), err)
 	}
 
+	removeStaleCloneTmpDirs(ctx, shallowPath)
+
 	tmpPath := fmt.Sprintf("%s.%s.tmp", shallowPath, uuid.New().String())
 	defer os.RemoveAll(tmpPath)
 
@@ -370,7 +372,7 @@ func (repo *Remote) ensureShallowMirror(ctx context.Context) (bool, error) {
 		return false, fmt.Errorf("error updating last access at timestamp: %w", err)
 	}
 
-	if err := renameCloneIntoPlace(tmpPath, shallowPath); err != nil {
+	if _, err := renameCloneIntoPlace(tmpPath, shallowPath); err != nil {
 		return false, err
 	}
 

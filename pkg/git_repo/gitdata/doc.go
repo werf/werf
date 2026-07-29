@@ -91,9 +91,12 @@
 // same plus <id>.patch and <id>.patch.<hash>.paths_list; see the doc comments
 // of GetGitArchivesAndRemoveInvalid and GetGitPatchesAndRemoveInvalid.
 //
-// Additive changes are safe exactly as far as other versions' collectors
-// tolerate them: an extra plain file inside an entry is tolerated, an extra
-// directory in a version root is not. A new kind of artifact gets its own
-// root with its own version, its own wipeCacheDirs call and its own LRU
-// collection.
+// Additive changes are safe exactly as far as other versions' collectors and
+// readers tolerate them, and tolerance differs per root: the flat git_repos
+// collector turns any extra directory in its version root into an LRU entry
+// and removes non-directories; werf 2.74.x tolerates extra plain files inside
+// a mirror but breaks on nesting; the git_mirrors collector treats <repoID>
+// as a closed set and removes every child other than shallow/ and
+// requires_full. A new kind of artifact gets its own root with its own
+// version, its own wipeCacheDirs call and its own LRU collection.
 package gitdata

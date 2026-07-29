@@ -295,6 +295,8 @@ func (repo *Remote) cloneFullCore(ctx context.Context, kind mirrorKind) error {
 		return fmt.Errorf("unable to create dir %s: %w", filepath.Dir(clonePath), err)
 	}
 
+	removeStaleCloneTmpDirs(ctx, clonePath)
+
 	tmpPath := fmt.Sprintf("%s.%s.tmp", clonePath, uuid.New().String())
 	defer os.RemoveAll(tmpPath)
 
@@ -312,24 +314,61 @@ func (repo *Remote) cloneFullCore(ctx context.Context, kind mirrorKind) error {
 		return fmt.Errorf("error updating last access at timestamp: %w", err)
 	}
 
-	return renameCloneIntoPlace(tmpPath, clonePath)
+	peerWon, err := renameCloneIntoPlace(tmpPath, clonePath)
+	if err != nil {
+		return err
+	}
+	if peerWon {
+		return repo.fetchOriginFullCore(ctx, kind)
+	}
+
+	return nil
 }
 
-// renameCloneIntoPlace treats a failed rename as success when the destination
-// already exists: a concurrent werf process (possibly another version sharing
-// WERF_HOME) may have cloned the same mirror first, and its clone is as good
-// as ours.
-func renameCloneIntoPlace(tmpPath, clonePath string) error {
+const cloneTmpStalenessWindow = 3 * 24 * time.Hour
+
+// removeStaleCloneTmpDirs reclaims tmp dirs abandoned by SIGKILLed clones.
+// The age check makes the sweep safe even against a werf process that does
+// not share our locker dir: no clone stays in progress for days.
+func removeStaleCloneTmpDirs(ctx context.Context, clonePath string) {
+	tmpPaths, err := filepath.Glob(clonePath + ".*")
+	if err != nil {
+		logboek.Context(ctx).Warn().LogF("Unable to look up stale tmp dirs of %q: %s\n", clonePath, err)
+		return
+	}
+
+	for _, tmpPath := range tmpPaths {
+		if !strings.HasSuffix(tmpPath, ".tmp") {
+			continue
+		}
+
+		info, err := os.Stat(tmpPath)
+		if err != nil || time.Since(info.ModTime()) <= cloneTmpStalenessWindow {
+			continue
+		}
+
+		if err := os.RemoveAll(tmpPath); err != nil {
+			logboek.Context(ctx).Warn().LogF("Unable to remove stale tmp dir %q: %s\n", tmpPath, err)
+		}
+	}
+}
+
+// renameCloneIntoPlace treats a failed rename as a lost race when the
+// destination already exists: a concurrent werf process (possibly another
+// version sharing WERF_HOME) cloned the same mirror first. The peer's clone
+// may have been made with a different refspec, so callers must fetch their
+// own refs into it instead of treating it as their fresh clone.
+func renameCloneIntoPlace(tmpPath, clonePath string) (bool, error) {
 	renameErr := os.Rename(tmpPath, clonePath)
 	if renameErr == nil {
-		return nil
+		return false, nil
 	}
 
 	if _, err := os.Stat(clonePath); err == nil {
-		return nil
+		return true, nil
 	}
 
-	return fmt.Errorf("rename %s to %s failed: %w", tmpPath, clonePath, renameErr)
+	return false, fmt.Errorf("rename %s to %s failed: %w", tmpPath, clonePath, renameErr)
 }
 
 type Auth struct {
