@@ -11,11 +11,10 @@ import (
 	"github.com/werf/common-go/pkg/util/timestamps"
 )
 
-func writeMirror(root, hash, kind string, ts time.Time) string {
-	mirror := filepath.Join(root, hash, kind)
-	Expect(os.MkdirAll(mirror, 0o755)).To(Succeed())
-	Expect(timestamps.WriteTimestampFile(filepath.Join(mirror, "last_access_at"), ts)).To(Succeed())
-	return mirror
+func writeMirror(mirrorPath string, ts time.Time) string {
+	Expect(os.MkdirAll(mirrorPath, 0o755)).To(Succeed())
+	Expect(timestamps.WriteTimestampFile(filepath.Join(mirrorPath, "last_access_at"), ts)).To(Succeed())
+	return mirrorPath
 }
 
 var _ = Describe("GetGitReposAndRemoveInvalid", func() {
@@ -46,57 +45,34 @@ var _ = Describe("GetGitReposAndRemoveInvalid", func() {
 		Expect(stray).NotTo(BeAnExistingFile())
 	})
 
-	DescribeTable("mirror subdir combinations",
-		func(ctx SpecContext, kinds []string, expected int) {
-			root := GinkgoT().TempDir()
-			hash := "abc"
-			now := time.Now().Truncate(time.Second)
-
-			var mirrorPaths []string
-			for _, k := range kinds {
-				mirrorPaths = append(mirrorPaths, writeMirror(root, hash, k, now))
-			}
-
-			res, err := GetGitReposAndRemoveInvalid(ctx, root)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(res).To(HaveLen(expected))
-
-			paths := make(map[string]GitDataEntry, len(res))
-			for _, e := range res {
-				Expect(e.GetCacheBasePath()).To(Equal(root))
-				Expect(e.GetLastAccessAt().Unix()).To(Equal(now.Unix()))
-				Expect(e.GetPaths()).To(HaveLen(1))
-				paths[e.GetPaths()[0]] = e
-			}
-			for _, mp := range mirrorPaths {
-				Expect(paths).To(HaveKey(mp))
-			}
-		},
-		Entry("only full", []string{"full"}, 1),
-		Entry("only shallow", []string{"shallow"}, 1),
-		Entry("both full and shallow", []string{"full", "shallow"}, 2),
-	)
-
-	It("removes repo dir with neither full nor shallow, even if requires_full marker is present", func(ctx SpecContext) {
+	It("yields one entry per flat repo dir", func(ctx SpecContext) {
 		root := GinkgoT().TempDir()
-		repo := filepath.Join(root, "abc")
-		Expect(os.MkdirAll(repo, 0o755)).To(Succeed())
-		Expect(os.WriteFile(filepath.Join(repo, "requires_full"), nil, 0o644)).To(Succeed())
+		now := time.Now().Truncate(time.Second)
+		mirrorA := writeMirror(filepath.Join(root, "aaa"), now)
+		mirrorB := writeMirror(filepath.Join(root, "bbb"), now)
 
 		res, err := GetGitReposAndRemoveInvalid(ctx, root)
 		Expect(err).NotTo(HaveOccurred())
-		Expect(res).To(BeEmpty())
-		Expect(repo).NotTo(BeAnExistingFile())
+		Expect(res).To(HaveLen(2))
+
+		paths := make(map[string]GitDataEntry, len(res))
+		for _, e := range res {
+			Expect(e.GetCacheBasePath()).To(Equal(root))
+			Expect(e.GetLastAccessAt().Unix()).To(Equal(now.Unix()))
+			Expect(e.GetPaths()).To(HaveLen(1))
+			paths[e.GetPaths()[0]] = e
+		}
+		Expect(paths).To(HaveKey(mirrorA))
+		Expect(paths).To(HaveKey(mirrorB))
 	})
 
-	DescribeTable("mirror with missing or corrupt last_access_at yields a zero LastAccessAt entry so LRU can prune it",
+	DescribeTable("repo dir with missing or corrupt last_access_at yields a zero LastAccessAt entry so LRU can prune it",
 		func(ctx SpecContext, brokenSetup func(path string)) {
 			root := GinkgoT().TempDir()
-			hash := "abc"
 			now := time.Now().Truncate(time.Second)
-			validMirror := writeMirror(root, hash, "full", now)
+			validMirror := writeMirror(filepath.Join(root, "valid"), now)
 
-			brokenMirror := filepath.Join(root, hash, "shallow")
+			brokenMirror := filepath.Join(root, "broken")
 			Expect(os.MkdirAll(brokenMirror, 0o755)).To(Succeed())
 			brokenSetup(filepath.Join(brokenMirror, "last_access_at"))
 

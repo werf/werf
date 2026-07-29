@@ -31,6 +31,7 @@ werf is a CNCF Sandbox CLI tool to implement full-cycle CI/CD to Kubernetes. wer
 - When removing a feature that has documentation in multiple languages (e.g. `pages_en/`, `pages_ru/`), ALWAYS apply the same removal to ALL language versions. NEVER assume English-only cleanup is sufficient.
 - NEVER trust LSP/gopls diagnostics from unrelated files as proof of build failure. The ONLY source of truth for compilation is `task build`. LSP often reports false errors due to stale cache or incomplete workspace indexing.
 - If you encounter errors in files OUTSIDE your task scope — STOP and report to the orchestrator. NEVER fix them yourself. Unsolicited fixes to unrelated files cause scope creep and may introduce regressions.
+- If a package has a doc.go, ALWAYS read it before changing that package or the on-disk data it owns — invariants and compatibility contracts live there (e.g. pkg/git_repo/gitdata owns the shared $WERF_HOME/local_cache).
 
 ## Code style (MANDATORY)
 

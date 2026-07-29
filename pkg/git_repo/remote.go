@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -16,6 +17,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/storer"
 	"github.com/go-git/go-git/v5/plumbing/transport"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
+	"github.com/google/uuid"
 	"gopkg.in/ini.v1"
 
 	"github.com/werf/common-go/pkg/util"
@@ -103,7 +105,10 @@ func (repo *Remote) GetClonePath() string {
 }
 
 func (repo *Remote) clonePathForKind(kind mirrorKind) string {
-	return filepath.Join(GetGitRepoCacheDir(), repo.getRepoID(), string(kind))
+	if kind == mirrorKindFull {
+		return filepath.Join(GetGitRepoCacheDir(), repo.getRepoID())
+	}
+	return filepath.Join(GetGitMirrorsCacheDir(), repo.getRepoID(), string(kind))
 }
 
 func (repo *Remote) mirrorKind() mirrorKind {
@@ -114,7 +119,7 @@ func (repo *Remote) mirrorKind() mirrorKind {
 }
 
 func (repo *Remote) requiresFullMarkerPath() string {
-	return filepath.Join(GetGitRepoCacheDir(), repo.getRepoID(), "requires_full")
+	return filepath.Join(GetGitMirrorsCacheDir(), repo.getRepoID(), "requires_full")
 }
 
 func (repo *Remote) resolveMirrorKind() (mirrorKind, error) {
@@ -291,12 +296,9 @@ func (repo *Remote) cloneFullCore(ctx context.Context, kind mirrorKind) error {
 		return fmt.Errorf("unable to create dir %s: %w", filepath.Dir(clonePath), err)
 	}
 
-	tmpPath := fmt.Sprintf("%s.tmp", clonePath)
-	// Remove previously created possibly existing dir
-	if err := os.RemoveAll(tmpPath); err != nil {
-		return fmt.Errorf("unable to prepare tmp path %s: failed to remove: %w", tmpPath, err)
-	}
-	// Ensure cleanup on failure
+	removeStaleCloneTmpDirs(ctx, clonePath)
+
+	tmpPath := fmt.Sprintf("%s.%s.tmp", clonePath, uuid.New().String())
 	defer os.RemoveAll(tmpPath)
 
 	cloneOpts := buildCloneOptions(repo.Url, repo.Branch)
@@ -309,15 +311,102 @@ func (repo *Remote) cloneFullCore(ctx context.Context, kind mirrorKind) error {
 		return fmt.Errorf("unable to clone repo: %w", err)
 	}
 
-	if err := repo.updateLastAccessAt(ctx, tmpPath); err != nil {
-		return fmt.Errorf("error updating last access at timestamp: %w", err)
+	if err := timestamps.WriteTimestampFile(filepath.Join(tmpPath, "last_access_at"), time.Now()); err != nil {
+		return fmt.Errorf("error writing last access at timestamp: %w", err)
 	}
 
-	if err := os.Rename(tmpPath, clonePath); err != nil {
-		return fmt.Errorf("rename %s to %s failed: %w", tmpPath, clonePath, err)
+	peerWon, err := renameCloneIntoPlace(tmpPath, clonePath)
+	if err != nil {
+		return err
+	}
+	if peerWon {
+		return repo.fetchOriginFullCore(ctx, kind)
 	}
 
 	return nil
+}
+
+// cloneTmpStalenessWindow encodes the same judgement as gitdata's
+// cacheVersionStalenessWindow: how long a werf process can plausibly still be
+// mid-operation. Tune them together.
+const cloneTmpStalenessWindow = 3 * 24 * time.Hour
+
+// removeStaleCloneTmpDirs reclaims tmp dirs abandoned by SIGKILLed clones. A
+// tmp dir is swept only when nothing in its subtree was written within the
+// window (unlike gitdata's hasFreshFiles, directory mtimes count — keeping is
+// the safe direction here), which makes the sweep safe even against a werf
+// process that does not share our locker dir: a live clone writes
+// continuously.
+func removeStaleCloneTmpDirs(ctx context.Context, clonePath string) {
+	parentDir := filepath.Dir(clonePath)
+
+	entries, err := os.ReadDir(parentDir)
+	if err != nil {
+		logboek.Context(ctx).Warn().LogF("Unable to look up stale tmp dirs of %q: %s\n", clonePath, err)
+		return
+	}
+
+	prefix := filepath.Base(clonePath) + "."
+
+	for _, entry := range entries {
+		if !strings.HasPrefix(entry.Name(), prefix) || !strings.HasSuffix(entry.Name(), ".tmp") {
+			continue
+		}
+
+		tmpPath := filepath.Join(parentDir, entry.Name())
+		if !isCloneTmpDirAbandoned(tmpPath) {
+			continue
+		}
+
+		if err := os.RemoveAll(tmpPath); err != nil {
+			logboek.Context(ctx).Warn().LogF("Unable to remove stale tmp dir %q: %s\n", tmpPath, err)
+		}
+	}
+}
+
+func isCloneTmpDirAbandoned(tmpPath string) bool {
+	abandoned := true
+
+	err := filepath.WalkDir(tmpPath, func(_ string, dirEntry fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		info, err := dirEntry.Info()
+		if err != nil {
+			return err
+		}
+
+		if time.Since(info.ModTime()) <= cloneTmpStalenessWindow {
+			abandoned = false
+			return filepath.SkipAll
+		}
+
+		return nil
+	})
+	if err != nil {
+		return false
+	}
+
+	return abandoned
+}
+
+// renameCloneIntoPlace treats a failed rename as a lost race when the
+// destination already exists: a concurrent werf process (possibly another
+// version sharing WERF_HOME) cloned the same mirror first. The peer's clone
+// may have been made with a different refspec, so callers must fetch their
+// own refs into it instead of treating it as their fresh clone.
+func renameCloneIntoPlace(tmpPath, clonePath string) (bool, error) {
+	renameErr := os.Rename(tmpPath, clonePath)
+	if renameErr == nil {
+		return false, nil
+	}
+
+	if _, err := os.Stat(clonePath); err == nil {
+		return true, nil
+	}
+
+	return false, fmt.Errorf("rename %s to %s failed: %w", tmpPath, clonePath, renameErr)
 }
 
 type Auth struct {
@@ -570,12 +659,26 @@ func (repo *Remote) getRepoID() string {
 }
 
 func (repo *Remote) getWorkTreeCacheDir(repoID string) string {
+	if repo.mirrorKind() == mirrorKindFull {
+		return filepath.Join(GetWorkTreeCacheDir(), "remote", repoID)
+	}
 	return filepath.Join(GetWorkTreeCacheDir(), "remote", fmt.Sprintf("%s.%s", repoID, repo.mirrorKind()))
 }
 
 func (repo *Remote) withMirrorKindLock(ctx context.Context, kind mirrorKind, f func() error) error {
-	lockName := fmt.Sprintf("remote_git.%s.%s", repo.getRepoID(), kind)
-	return werf.HostLocker().WithLock(ctx, lockName, lockgate.AcquireOptions{Timeout: 600 * time.Second}, f)
+	opts := lockgate.AcquireOptions{Timeout: 600 * time.Second}
+	repoIDLockName := fmt.Sprintf("remote_git.%s.%s", repo.getRepoID(), kind)
+
+	if kind == mirrorKindFull {
+		// remote_git_mapping.<name> is the lock name used by released werf 2.74.x
+		// binaries for the shared full-mirror dir; matching it byte-for-byte is
+		// what gives cross-version exclusion on hosts with a shared WERF_HOME.
+		return werf.HostLocker().WithLock(ctx, fmt.Sprintf("remote_git_mapping.%s", repo.Name), opts, func() error {
+			return werf.HostLocker().WithLock(ctx, repoIDLockName, opts, f)
+		})
+	}
+
+	return werf.HostLocker().WithLock(ctx, repoIDLockName, opts, f)
 }
 
 func (repo *Remote) TagsList(_ context.Context) ([]string, error) {
