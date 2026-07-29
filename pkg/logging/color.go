@@ -8,10 +8,6 @@ import (
 	"github.com/werf/logboek"
 )
 
-func BoldF(format string, a ...interface{}) string {
-	return styleF(color.New(color.Bold), format, a...)
-}
-
 func BlueF(format string, a ...interface{}) string {
 	return styleF(color.New(color.FgBlue), format, a...)
 }

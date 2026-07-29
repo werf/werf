@@ -8,6 +8,7 @@ import (
 	helmreleasecommon "github.com/werf/nelm/pkg/helm/pkg/release/common"
 	"github.com/werf/nelm/pkg/kube"
 	"github.com/werf/werf/v2/test/pkg/report"
+	"github.com/werf/werf/v2/test/pkg/utils"
 	"github.com/werf/werf/v2/test/pkg/werf"
 )
 
@@ -15,27 +16,26 @@ var _ = Describe("Simple converge", Label("e2e", "converge", "simple"), func() {
 	var repoDirname string
 	var werfProject *werf.Project
 
-	// TEMP: disabled due to werf dismiss hang on "Waiting for resources elimination"
-	// AfterEach(func(ctx SpecContext) {
-	// 	utils.RunSucceedCommand(
-	// 		ctx,
-	// 		SuiteData.GetTestRepoPath(repoDirname),
-	// 		SuiteData.WerfBinPath,
-	// 		"dismiss",
-	// 		"--with-namespace",
-	// 	)
-	//
-	// 	werfProject.KubeCtl(ctx, &werf.KubeCtlOptions{
-	// 		werf.CommonOptions{
-	// 			ExtraArgs: []string{
-	// 				"delete",
-	// 				"namespace",
-	// 				"--ignore-not-found",
-	// 				werfProject.Namespace(ctx),
-	// 			},
-	// 		},
-	// 	})
-	// })
+	AfterEach(func(ctx SpecContext) {
+		utils.RunSucceedCommand(
+			ctx,
+			SuiteData.GetTestRepoPath(repoDirname),
+			SuiteData.WerfBinPath,
+			"dismiss",
+			"--with-namespace",
+		)
+
+		werfProject.KubeCtl(ctx, &werf.KubeCtlOptions{
+			werf.CommonOptions{
+				ExtraArgs: []string{
+					"delete",
+					"namespace",
+					"--ignore-not-found",
+					werfProject.Namespace(ctx),
+				},
+			},
+		})
+	})
 
 	It("should succeed and deploy expected resources",
 		func(ctx SpecContext) {

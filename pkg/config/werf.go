@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+
+	"github.com/distribution/reference"
 )
 
 type WerfConfig struct {
@@ -89,6 +91,24 @@ func (c *WerfConfig) validateConflictBetweenImagesNames() error {
 	return nil
 }
 
+// hasExplicitTagOrDigest reports whether ref includes an explicit tag or digest, as opposed to
+// implicitly resolving to `:latest`. Unlike a naive strings.Contains(ref, ":") check, this
+// correctly distinguishes a tag from a registry `host:port` with no tag (e.g.
+// "registry.example.com:5000/base-image").
+func hasExplicitTagOrDigest(ref string) bool {
+	parsed, err := reference.Parse(ref)
+	if err != nil {
+		return false
+	}
+
+	switch parsed.(type) {
+	case reference.Tagged, reference.Digested:
+		return true
+	default:
+		return false
+	}
+}
+
 func (c *WerfConfig) validateExternalImageReferences() error {
 	for _, image := range c.Images(false) {
 		if !image.IsStapel() {
@@ -101,7 +121,7 @@ func (c *WerfConfig) validateExternalImageReferences() error {
 		}
 
 		if c.GetImage(from) == nil {
-			if !strings.Contains(from, ":") && !strings.Contains(from, "@") {
+			if !hasExplicitTagOrDigest(from) {
 				return newDetailedConfigError(
 					fmt.Sprintf("external image reference %q in `from` must include a tag (`:TAG`) or digest (`@sha256:...`)", from),
 					nil, image.rawDoc(),
@@ -121,7 +141,7 @@ func (c *WerfConfig) validateExternalImageReferences() error {
 					)
 				}
 				if c.GetImage(imp.From) == nil {
-					if !strings.Contains(imp.From, ":") && !strings.Contains(imp.From, "@") {
+					if !hasExplicitTagOrDigest(imp.From) {
 						return newDetailedConfigError(
 							fmt.Sprintf("external image reference %q in import `from` must include a tag (`:TAG`) or digest (`@sha256:...`)", imp.From),
 							imp.raw, image.rawDoc(),

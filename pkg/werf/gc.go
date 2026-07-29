@@ -1,6 +1,9 @@
 package werf
 
 import (
+	"errors"
+	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"time"
@@ -74,7 +77,10 @@ func ShouldRunHostLocksGC() (bool, error) {
 			}
 		}
 		if err != nil {
-			break // io.EOF or read error: stop scanning
+			if errors.Is(err, io.EOF) {
+				break
+			}
+			return false, fmt.Errorf("read host locker dir %q: %w", dir, err)
 		}
 	}
 

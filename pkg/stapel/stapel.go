@@ -108,14 +108,6 @@ func RmBinPath() string {
 	return embeddedBinPath("rm")
 }
 
-func GitBinPath() string {
-	return embeddedBinPath("git")
-}
-
-func PythonBinPath() string {
-	return embeddedBinPath("python")
-}
-
 func InstallBinPath() string {
 	return embeddedBinPath("install")
 }
@@ -136,45 +128,12 @@ func BashBinPath() string {
 	return embeddedBinPath("bash")
 }
 
-func CutBinPath() string {
-	return embeddedBinPath("cut")
-}
-
 func RsyncBinPath() string {
 	return embeddedBinPath("rsync")
 }
 
 func HeadBinPath() string {
 	return embeddedBinPath("head")
-}
-
-func StatBinPath() string {
-	return embeddedBinPath("stat")
-}
-
-func SudoBinPath() string {
-	return embeddedBinPath("sudo")
-}
-
-func SortBinPath() string {
-	return embeddedBinPath("sort")
-}
-
-func Md5sumBinPath() string {
-	return embeddedBinPath("md5sum")
-}
-
-func ChownBinPath() string {
-	return embeddedBinPath("chown")
-}
-
-func SystemPATH() string {
-	return strings.Join([]string{
-		path.Join(CONTAINER_MOUNT_ROOT, "stapel/sbin"),
-		path.Join(CONTAINER_MOUNT_ROOT, "stapel/embedded/sbin"),
-		path.Join(CONTAINER_MOUNT_ROOT, "stapel/bin"),
-		path.Join(CONTAINER_MOUNT_ROOT, "stapel/embedded/bin"),
-	}, ":")
 }
 
 func embeddedBinPath(bin string) string {

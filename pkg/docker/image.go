@@ -278,10 +278,6 @@ func CliRmi(ctx context.Context, args ...string) error {
 	})
 }
 
-func CliRmi_LiveOutput(ctx context.Context, args ...string) error {
-	return doCliRmi(ctx, cli(ctx), args...)
-}
-
 type CliBuildOptions struct {
 	DockerfileName string
 	Tags           []string
@@ -401,6 +397,13 @@ func CliLoadFromStream(ctx context.Context, input io.Reader) (string, error) {
 				break
 			}
 			return "", fmt.Errorf("decode load response: %w", err)
+		}
+
+		if msg.Error != nil {
+			return "", fmt.Errorf("load failed: %w", msg.Error)
+		}
+		if msg.ErrorMessage != "" {
+			return "", fmt.Errorf("load failed: %s", msg.ErrorMessage)
 		}
 
 		msg.Stream = strings.TrimSpace(msg.Stream)

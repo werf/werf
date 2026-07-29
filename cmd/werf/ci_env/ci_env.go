@@ -390,7 +390,8 @@ func generateGithubDefaultRepo(ctx context.Context, defaultRegistry, ciGithubDoc
 func generateSessionDockerConfigDir(ctx context.Context, cmd *cobra.Command) (string, error) {
 	authConfig := os.Getenv("DOCKER_AUTH_CONFIG")
 	useDockerAuthConfig := cmdData.UseDockerAuthConfig
-	if !cmd.Flags().Changed("use-docker-auth-config") && authConfig != "" {
+	_, useDockerAuthConfigEnvSet := os.LookupEnv("WERF_USE_DOCKER_AUTH_CONFIG")
+	if !cmd.Flags().Changed("use-docker-auth-config") && !useDockerAuthConfigEnvSet && authConfig != "" {
 		useDockerAuthConfig = true
 	}
 

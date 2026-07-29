@@ -1,7 +1,6 @@
 package image
 
 import (
-	"context"
 	"time"
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
@@ -35,14 +34,6 @@ type HealthConfig struct {
 	Timeout     time.Duration `json:",omitempty"`
 	StartPeriod time.Duration `json:",omitempty"`
 	Retries     int           `json:",omitempty"`
-}
-
-type Storage interface {
-	MutateAndPushImage(ctx context.Context, src, dest string, newConfig SpecConfig) error
-}
-
-func MutateAndPushImage(ctx context.Context, storage Storage, sourceReference, destinationReference string, newConfig SpecConfig) error {
-	return storage.MutateAndPushImage(ctx, sourceReference, destinationReference, newConfig)
 }
 
 func UpdateConfigFile(updates SpecConfig, target *v1.ConfigFile) {

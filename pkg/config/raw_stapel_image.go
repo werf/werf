@@ -136,25 +136,6 @@ func (c *rawStapelImage) validateStapelImageDirective(image *StapelImage) (err e
 	return nil
 }
 
-//nolint:unused
-func (c *rawStapelImage) toShellDirectiveByCommandAndStage(command, stage string) (shell *Shell) {
-	shell = &Shell{}
-	switch stage {
-	case "beforeInstall":
-		shell.BeforeInstall = []string{command}
-	case "install":
-		shell.Install = []string{command}
-	case "beforeSetup":
-		shell.BeforeSetup = []string{command}
-	case "setup":
-		shell.Setup = []string{command}
-	}
-
-	shell.raw = c.RawShell
-
-	return
-}
-
 func (c *rawStapelImage) toStapelImageBaseDirective(giterminismManager giterminism_manager.Interface, name string) (imageBase *StapelImageBase, err error) {
 	if imageBase, err = c.toBaseStapelImageBaseDirective(giterminismManager, name); err != nil {
 		return nil, err

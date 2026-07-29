@@ -65,18 +65,13 @@ func NewLocalBackendCleaner(backend container_backend.ContainerBackend, locker l
 		lrumetaGetImageLastAccessTime:   lrumeta.CommonLRUImagesCache.GetImageLastAccessTime,
 	}
 
-	switch backend.(type) {
-	case *container_backend.DockerServerBackend:
-		cleaner.backendType = containerBackendDocker
-		return cleaner, nil
-	case *container_backend.BuildahBackend:
-		cleaner.backendType = containerBackendBuildah
-		return cleaner, nil
-	default:
-		// returns cleaner for testing with mock
-		cleaner.backendType = containerBackendTest
-		return cleaner, ErrUnsupportedContainerBackend
+	backendType, err := resolveContainerBackendType(backend)
+	if err != nil {
+		return cleaner, err
 	}
+	cleaner.backendType = backendType
+
+	return cleaner, nil
 }
 
 func (cleaner *LocalBackendCleaner) BackendName() string {
@@ -489,7 +484,7 @@ func (cleaner *LocalBackendCleaner) cleanupWerfContainers(ctx context.Context, o
 		if err != nil {
 			return cleanupReport{}, fmt.Errorf("error getting volume usage by path %q: %w", options.StoragePath, err)
 		}
-		report.SpaceReclaimed = vu.UsedBytes - vuAfter.UsedBytes
+		report.SpaceReclaimed = lo.Ternary(vu.UsedBytes > vuAfter.UsedBytes, vu.UsedBytes-vuAfter.UsedBytes, 0)
 	}
 
 	return report.Normalize(), nil
@@ -550,13 +545,14 @@ func (cleaner *LocalBackendCleaner) cleanupWerfImages(ctx context.Context, optio
 			return report, fmt.Errorf("error getting volume usage by path %q: %w", options.StoragePath, err)
 		}
 
-		report.SpaceReclaimed += vu.UsedBytes - vuAfter.UsedBytes
-
-		// 7. If no space was reclaimed (e.g., due to filesystem specifics or shared layers),
-		// we must stop to avoid an infinite loop on the same images.
+		// 7. If no space was reclaimed (e.g., due to filesystem specifics or shared layers, or disk
+		// usage grew concurrently), we must stop here — before accounting for it below — to avoid
+		// both an infinite loop on the same images and an underflowing SpaceReclaimed total.
 		if vuAfter.UsedBytes >= vu.UsedBytes {
 			break
 		}
+
+		report.SpaceReclaimed += vu.UsedBytes - vuAfter.UsedBytes
 
 		// 8. Update disk state and move to the next set of images.
 		vu = vuAfter
