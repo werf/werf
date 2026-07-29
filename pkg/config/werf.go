@@ -195,48 +195,12 @@ func (c *WerfConfig) validateImageInfiniteLoop(imageName string, imageNameStack 
 	return nil, nil
 }
 
-func (c *WerfConfig) GroupImagesByIndependentSets(imagesToProcess ImagesToProcess) (sets [][]ImageInterface, err error) {
-	if imagesToProcess.WithoutImages {
-		return nil, nil
-	}
-
-	images := c.getSpecificImages(imagesToProcess)
-	sets = [][]ImageInterface{}
-	isRelativeChecked := map[ImageInterface]bool{}
-	imageRelativesListToHandle := c.getImageRelativesInOrder(images)
-
-	for len(imageRelativesListToHandle) != 0 {
-		var currentRelatives []ImageInterface
-
-	outerLoop:
-		for image, relatives := range imageRelativesListToHandle {
-			for _, relativeImage := range relatives {
-				_, ok := isRelativeChecked[relativeImage]
-				if !ok {
-					continue outerLoop
-				}
-			}
-
-			currentRelatives = append(currentRelatives, image)
-		}
-
-		for _, relativeImage := range currentRelatives {
-			isRelativeChecked[relativeImage] = true
-			delete(imageRelativesListToHandle, relativeImage)
-		}
-
-		sets = append(sets, currentRelatives)
-	}
-
-	return sets, nil
-}
-
 // GetImagesForProcessing returns the flat, deterministically ordered transitive
 // closure of images to process (the requested images plus everything they
 // depend on), for use by build-time image-graph construction.
-func (c *WerfConfig) GetImagesForProcessing(imagesToProcess ImagesToProcess) ([]ImageInterface, error) {
+func (c *WerfConfig) GetImagesForProcessing(imagesToProcess ImagesToProcess) []ImageInterface {
 	if imagesToProcess.WithoutImages {
-		return nil, nil
+		return nil
 	}
 
 	images := c.getSpecificImages(imagesToProcess)
@@ -251,12 +215,15 @@ func (c *WerfConfig) GetImagesForProcessing(imagesToProcess ImagesToProcess) ([]
 		return result[i].GetName() < result[j].GetName()
 	})
 
-	return result, nil
+	return result
 }
 
 // GetImageDependsOn returns the resolved DependsOn (from/import/dependencies)
 // for the given image, i.e. only the related images that are actually part of
-// this werf config (external base images/imports are excluded).
+// this werf config (external base images/imports are excluded). Resolution
+// also mutates image state via updateDependencies (image.SetFromExternal()
+// for a non-config from, imp.ExternalImage = true for non-config imports),
+// which mapStapelConfigToImage relies on.
 func (c *WerfConfig) GetImageDependsOn(image ImageInterface) DependsOn {
 	return c.updateDependencies(image)
 }

@@ -47,11 +47,7 @@ func NewImagesTree(werfConfig *config.WerfConfig, opts ImagesTreeOptions) *Image
 }
 
 func (tree *ImagesTree) Calculate(ctx context.Context) error {
-	imagesToProcess, err := tree.werfConfig.GetImagesForProcessing(tree.ImagesToProcess)
-	if err != nil {
-		return fmt.Errorf("unable to get werf config images for processing: %w", err)
-	}
-
+	imagesToProcess := tree.werfConfig.GetImagesForProcessing(tree.ImagesToProcess)
 	if len(imagesToProcess) == 0 {
 		return nil
 	}
