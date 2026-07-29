@@ -2,7 +2,9 @@ package gitdata
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io/fs"
 	"io/ioutil"
 	"math"
 	"os"
@@ -22,10 +24,9 @@ import (
 	"github.com/werf/werf/v2/pkg/werf"
 )
 
-const (
-	KeepGitWorkTreeCacheVersionV1_1 = "6"
-	KeepGitRepoCacheVersionV1_1     = "3"
-)
+const cacheVersionStalenessWindow = 3 * 24 * time.Hour
+
+var errFreshFileFound = errors.New("fresh file found")
 
 func ShouldRunAutoGC(ctx context.Context, allowedVolumeUsageBytes uint64) (bool, error) {
 	vu, err := volumeutils.GetVolumeUsageByPath(ctx, werf.GetLocalCacheDir())
@@ -49,31 +50,23 @@ func RunGC(ctx context.Context, options RunGCOptions) error {
 		defer werf.HostLocker().ReleaseLock(lock)
 	}
 
-	keepGitDataV1_1, err := shouldKeepGitDataV1_1(ctx)
-	if err != nil {
-		return fmt.Errorf("unable to check if git data v1.1 should be kept: %w", err)
-	}
-
 	{
-		keepCacheVersions := []string{git_repo.GitReposCacheVersion}
-		if keepGitDataV1_1 {
-			keepCacheVersions = append(keepCacheVersions, KeepGitRepoCacheVersionV1_1)
-		}
-
 		cacheRoot := filepath.Join(werf.GetLocalCacheDir(), "git_repos")
-		if err := wipeCacheDirs(ctx, cacheRoot, keepCacheVersions); err != nil {
+		if err := wipeCacheDirs(ctx, cacheRoot, []string{git_repo.GitReposCacheVersion}); err != nil {
 			return fmt.Errorf("unable to wipe old git repos cache dirs in %q: %w", cacheRoot, err)
 		}
 	}
 
 	{
-		keepCacheVersions := []string{git_repo.GitWorktreesCacheVersion}
-		if keepGitDataV1_1 {
-			keepCacheVersions = append(keepCacheVersions, KeepGitWorkTreeCacheVersionV1_1)
+		cacheRoot := filepath.Join(werf.GetLocalCacheDir(), "git_mirrors")
+		if err := wipeCacheDirs(ctx, cacheRoot, []string{git_repo.GitMirrorsCacheVersion}); err != nil {
+			return fmt.Errorf("unable to wipe old git mirrors cache dirs in %q: %w", cacheRoot, err)
 		}
+	}
 
+	{
 		cacheRoot := filepath.Join(werf.GetLocalCacheDir(), "git_worktrees")
-		if err := wipeCacheDirs(ctx, cacheRoot, keepCacheVersions); err != nil {
+		if err := wipeCacheDirs(ctx, cacheRoot, []string{git_repo.GitWorktreesCacheVersion}); err != nil {
 			return fmt.Errorf("unable to wipe old git worktrees cache dirs in %q: %w", cacheRoot, err)
 		}
 	}
@@ -126,6 +119,17 @@ func RunGC(ctx context.Context, options RunGCOptions) error {
 		entries, err := GetGitReposAndRemoveInvalid(ctx, cacheVersionRoot)
 		if err != nil {
 			return fmt.Errorf("unable to process git repos from %q: %w", cacheVersionRoot, err)
+		}
+
+		gitDataEntries = append(gitDataEntries, entries...)
+	}
+
+	{
+		cacheVersionRoot := filepath.Join(werf.GetLocalCacheDir(), "git_mirrors", git_repo.GitMirrorsCacheVersion)
+
+		entries, err := GetGitMirrorsAndRemoveInvalid(ctx, cacheVersionRoot)
+		if err != nil {
+			return fmt.Errorf("unable to process git mirrors from %q: %w", cacheVersionRoot, err)
 		}
 
 		gitDataEntries = append(gitDataEntries, entries...)
@@ -226,8 +230,10 @@ func RemovePathWithEmptyParentDirsInsideScope(scopeDir, path string) error {
 	return nil
 }
 
-// wipeCacheDirs removes all subdirectories from the specified cache root directory,
-// except for those listed in keepCacheVersions.
+// wipeCacheDirs removes non-current version dirs from cacheRootDir, but only
+// stale ones: local_cache is shared by all werf versions on the host (see
+// package doc), and a version dir with recent file mtimes belongs to another
+// werf version that may be mid-build right now.
 func wipeCacheDirs(ctx context.Context, cacheRootDir string, keepCacheVersions []string) error {
 	logboek.Context(ctx).Debug().LogF("wipeCacheDirs %q\n", cacheRootDir)
 
@@ -250,6 +256,16 @@ func wipeCacheDirs(ctx context.Context, cacheRootDir string, keepCacheVersions [
 
 		versionedCacheDir := filepath.Join(cacheRootDir, finfo.Name())
 
+		fresh, err := hasFreshFiles(versionedCacheDir)
+		if err != nil {
+			logboek.Context(ctx).Warn().LogF("Keeping %q: unable to check for fresh files: %s\n", versionedCacheDir, err)
+			continue
+		}
+		if fresh {
+			logboek.Context(ctx).Debug().LogF("wipeCacheDirs in %q: keep fresh %q\n", cacheRootDir, finfo.Name())
+			continue
+		}
+
 		if err = os.RemoveAll(versionedCacheDir); err != nil {
 			return fmt.Errorf("unable to remove %q: %w", versionedCacheDir, err)
 		}
@@ -258,17 +274,44 @@ func wipeCacheDirs(ctx context.Context, cacheRootDir string, keepCacheVersions [
 	return nil
 }
 
+func hasFreshFiles(path string) (bool, error) {
+	err := filepath.WalkDir(path, func(_ string, dirEntry fs.DirEntry, err error) error {
+		if err != nil {
+			if os.IsNotExist(err) {
+				return nil
+			}
+			return err
+		}
+
+		if !dirEntry.Type().IsRegular() {
+			return nil
+		}
+
+		info, err := dirEntry.Info()
+		if err != nil {
+			if os.IsNotExist(err) {
+				return nil
+			}
+			return err
+		}
+
+		if time.Since(info.ModTime()) <= cacheVersionStalenessWindow {
+			return errFreshFileFound
+		}
+
+		return nil
+	})
+	if errors.Is(err, errFreshFileFound) {
+		return true, nil
+	}
+	if err != nil {
+		return false, err
+	}
+
+	return false, nil
+}
+
 func lockGC(ctx context.Context, shared bool) (lockgate.LockHandle, error) {
 	_, handle, err := werf.HostLocker().AcquireLock(ctx, "git_data_manager", lockgate.AcquireOptions{Shared: shared})
 	return handle, err
-}
-
-// shouldKeepGitDataV1_1 returns true if the last run of werf v1.1 was within the last 3 days.
-func shouldKeepGitDataV1_1(ctx context.Context) (bool, error) {
-	v1_1LastRunAt, err := werf.GetWerfLastRunAtV1_1(ctx)
-	if err != nil {
-		return false, fmt.Errorf("error getting last run timestamp for werf v1.1: %w", err)
-	}
-
-	return time.Since(v1_1LastRunAt) <= time.Hour*24*3, nil
 }
