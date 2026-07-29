@@ -9,11 +9,13 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/google/uuid"
 
 	"github.com/werf/common-go/pkg/util"
+	"github.com/werf/common-go/pkg/util/timestamps"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/true_git"
 	"github.com/werf/werf/v2/pkg/werf"
@@ -368,10 +370,12 @@ func (repo *Remote) ensureShallowMirror(ctx context.Context) (bool, error) {
 		return false, err
 	}
 
-	if err := repo.updateLastAccessAt(ctx, tmpPath); err != nil {
-		return false, fmt.Errorf("error updating last access at timestamp: %w", err)
+	if err := timestamps.WriteTimestampFile(filepath.Join(tmpPath, "last_access_at"), time.Now()); err != nil {
+		return false, fmt.Errorf("error writing last access at timestamp: %w", err)
 	}
 
+	// A peer win needs no handling here: returning exists == false already
+	// makes the callers fetch into the peer's mirror.
 	if _, err := renameCloneIntoPlace(tmpPath, shallowPath); err != nil {
 		return false, err
 	}

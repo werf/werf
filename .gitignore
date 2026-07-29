@@ -8,7 +8,6 @@
 /.zed
 .env
 cmd/werf/werf
-/kubedog
 
 /docs/vendor
 /docs/.ruby-version

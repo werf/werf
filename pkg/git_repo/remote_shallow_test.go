@@ -444,6 +444,21 @@ var _ = Describe("Remote shallow mirror", func() {
 			Expect(freshTmp).To(BeADirectory())
 			Expect(clonePath).To(BeADirectory())
 		})
+
+		It("keeps a tmp dir with a stale top level but recent writes inside", func(ctx SpecContext) {
+			dir := GinkgoT().TempDir()
+			clonePath := filepath.Join(dir, "abc")
+			liveTmp := clonePath + ".111.tmp"
+			innerDir := filepath.Join(liveTmp, "objects", "pack")
+			Expect(os.MkdirAll(innerDir, 0o755)).To(Succeed())
+			Expect(os.WriteFile(filepath.Join(innerDir, "pack-1.pack"), []byte("x"), 0o644)).To(Succeed())
+			old := time.Now().Add(-cloneTmpStalenessWindow - time.Hour)
+			Expect(os.Chtimes(liveTmp, old, old)).To(Succeed())
+
+			removeStaleCloneTmpDirs(ctx, clonePath)
+
+			Expect(liveTmp).To(BeADirectory())
+		})
 	})
 
 	Describe("basicAuthEnv", func() {

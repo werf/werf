@@ -73,6 +73,11 @@
 //   - The mirror carries refs/remotes/origin/* and tags; never rely on a
 //     refspec written into the mirror's config by another version — use
 //     explicit refspecs only (see buildFetchOptions).
+//   - During a clone a sibling <repoID>.<uuid>.tmp dir exists; one abandoned
+//     by a killed process may carry a fresh last_access_at, is not reclaimed
+//     by werf 2.74.x (which only removes its fixed <repoID>.tmp), and is
+//     swept by the next clone of the repo once stale (see
+//     removeStaleCloneTmpDirs).
 //
 // git_mirrors/<v>/<repoID>: shallow/ is a bare shallow mirror with
 // last_access_at inside; requires_full is a marker file (not a mirror) that

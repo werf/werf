@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -310,8 +311,8 @@ func (repo *Remote) cloneFullCore(ctx context.Context, kind mirrorKind) error {
 		return fmt.Errorf("unable to clone repo: %w", err)
 	}
 
-	if err := repo.updateLastAccessAt(ctx, tmpPath); err != nil {
-		return fmt.Errorf("error updating last access at timestamp: %w", err)
+	if err := timestamps.WriteTimestampFile(filepath.Join(tmpPath, "last_access_at"), time.Now()); err != nil {
+		return fmt.Errorf("error writing last access at timestamp: %w", err)
 	}
 
 	peerWon, err := renameCloneIntoPlace(tmpPath, clonePath)
@@ -325,25 +326,33 @@ func (repo *Remote) cloneFullCore(ctx context.Context, kind mirrorKind) error {
 	return nil
 }
 
+// cloneTmpStalenessWindow encodes the same judgement as gitdata's
+// cacheVersionStalenessWindow: how long a werf process can plausibly still be
+// mid-operation. Tune them together.
 const cloneTmpStalenessWindow = 3 * 24 * time.Hour
 
-// removeStaleCloneTmpDirs reclaims tmp dirs abandoned by SIGKILLed clones.
-// The age check makes the sweep safe even against a werf process that does
-// not share our locker dir: no clone stays in progress for days.
+// removeStaleCloneTmpDirs reclaims tmp dirs abandoned by SIGKILLed clones. A
+// tmp dir is swept only when nothing in its subtree was written within the
+// window, which makes the sweep safe even against a werf process that does
+// not share our locker dir: a live clone writes continuously.
 func removeStaleCloneTmpDirs(ctx context.Context, clonePath string) {
-	tmpPaths, err := filepath.Glob(clonePath + ".*")
+	parentDir := filepath.Dir(clonePath)
+
+	entries, err := os.ReadDir(parentDir)
 	if err != nil {
 		logboek.Context(ctx).Warn().LogF("Unable to look up stale tmp dirs of %q: %s\n", clonePath, err)
 		return
 	}
 
-	for _, tmpPath := range tmpPaths {
-		if !strings.HasSuffix(tmpPath, ".tmp") {
+	prefix := filepath.Base(clonePath) + "."
+
+	for _, entry := range entries {
+		if !strings.HasPrefix(entry.Name(), prefix) || !strings.HasSuffix(entry.Name(), ".tmp") {
 			continue
 		}
 
-		info, err := os.Stat(tmpPath)
-		if err != nil || time.Since(info.ModTime()) <= cloneTmpStalenessWindow {
+		tmpPath := filepath.Join(parentDir, entry.Name())
+		if !isCloneTmpDirAbandoned(tmpPath) {
 			continue
 		}
 
@@ -351,6 +360,33 @@ func removeStaleCloneTmpDirs(ctx context.Context, clonePath string) {
 			logboek.Context(ctx).Warn().LogF("Unable to remove stale tmp dir %q: %s\n", tmpPath, err)
 		}
 	}
+}
+
+func isCloneTmpDirAbandoned(tmpPath string) bool {
+	abandoned := true
+
+	err := filepath.WalkDir(tmpPath, func(_ string, dirEntry fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		info, err := dirEntry.Info()
+		if err != nil {
+			return err
+		}
+
+		if time.Since(info.ModTime()) <= cloneTmpStalenessWindow {
+			abandoned = false
+			return filepath.SkipAll
+		}
+
+		return nil
+	})
+	if err != nil {
+		return false
+	}
+
+	return abandoned
 }
 
 // renameCloneIntoPlace treats a failed rename as a lost race when the
