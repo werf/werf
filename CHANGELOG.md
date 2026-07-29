@@ -1,5 +1,25 @@
 # Changelog
 
+## [3.0.0-alpha.2](https://github.com/werf/werf/compare/v2.75.2...v3.0.0-alpha.2) (2026-07-29)
+
+
+### Features
+
+* **deploy:** restore --no-create-namespace and --lookup-resources ([bb5f9e5](https://github.com/werf/werf/commit/bb5f9e54f5194e6fec97e083033093a3e187ca4b))
+
+
+### Bug Fixes
+
+* address v3 branch review findings from [#7686](https://github.com/werf/werf/issues/7686) ([#7692](https://github.com/werf/werf/issues/7692)) ([c34fedd](https://github.com/werf/werf/commit/c34feddad62a005d61a633809be254d32bb5b99b))
+* **build, dockerfile:** treat COPY --parents destination as a directory ([#7693](https://github.com/werf/werf/issues/7693)) ([05faec0](https://github.com/werf/werf/commit/05faec0564d9b18d38d162dc673ebce91709ba6e))
+* **build:** honor COPY --parents in staged Dockerfile build ([#7690](https://github.com/werf/werf/issues/7690)) ([c6e5df4](https://github.com/werf/werf/commit/c6e5df4cceabe16b9ba17dc332d6fad1f2096999))
+* **build:** honor COPY/ADD --exclude in staged Dockerfile build ([#7691](https://github.com/werf/werf/issues/7691)) ([1ee4aac](https://github.com/werf/werf/commit/1ee4aac13a9af6ad04eba684cef7fd9699ffa2e6))
+
+
+### Miscellaneous Chores
+
+* release 3.0.0-alpha.2 ([776c33d](https://github.com/werf/werf/commit/776c33d3d553595bca413ce0ee03cd6a5d9035c1))
+
 ## [3.0.0-alpha.1](https://github.com/werf/werf/compare/v2.73.2...v3.0.0-alpha.1) (2026-07-10)
 
 
