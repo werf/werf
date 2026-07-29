@@ -219,8 +219,6 @@ In this case, werf will print the following build plan:
 
 ```shell
 ┌ Concurrent build plan (no more than 5 images at the same time)
-│ An image starts building once all of its dependencies are built and a worker is available.
-│ 
 │ Level #0:
 │ - 🛳️  (1/3) image backend
 │ - 🛳️  (2/3) image frontend

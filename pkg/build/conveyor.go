@@ -734,8 +734,6 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 				options.Style(stylePkg.Highlight())
 			}).
 			Do(func() {
-				logboek.Context(ctx).LogLnHighlight("An image starts building once all of its dependencies are built and a worker is available.")
-				logboek.Context(ctx).LogOptionalLn()
 				for levelId, level := range graph.Levels() {
 					logboek.Context(ctx).LogFHighlight("Level #%d:\n", levelId)
 					for _, img := range level {
