@@ -80,7 +80,7 @@ func NewBuildContextStub(files []*FileData) *BuildContextStub {
 	return &BuildContextStub{Files: files}
 }
 
-func (buildContext *BuildContextStub) CalculateGlobsChecksum(ctx context.Context, globs []string, checkForArchive bool) (string, error) {
+func (buildContext *BuildContextStub) CalculateGlobsChecksum(ctx context.Context, globs []string, opts container_backend.CalculateGlobsChecksumOptions) (string, error) {
 	var args []string
 
 	for _, p := range globs {

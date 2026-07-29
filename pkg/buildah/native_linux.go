@@ -945,12 +945,18 @@ func (b *NativeBuildah) Copy(ctx context.Context, container, contextDir string, 
 
 	var absSrc []string
 	for _, s := range src {
+		// filepath.Join cleans away the "/./" pivot point which --parents relies on
+		if prefix, suffix, found := strings.Cut(s, "/./"); found && opts.Parents {
+			absSrc = append(absSrc, filepath.Join(contextDir, prefix)+"/./"+filepath.Clean(suffix))
+			continue
+		}
 		absSrc = append(absSrc, filepath.Join(contextDir, s))
 	}
 
 	if err := builder.Add(dst, false, buildah.AddAndCopyOptions{
 		Chown:             opts.Chown,
 		Chmod:             opts.Chmod,
+		Parents:           opts.Parents,
 		PreserveOwnership: false,
 		ContextDir:        contextDir,
 		Excludes:          opts.Ignores,

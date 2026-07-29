@@ -57,8 +57,13 @@ func (stg *Copy) GetDependencies(ctx context.Context, c stage.Conveyor, cb conta
 	args = append(args, "Chmod", stg.instruction.Data.Chmod)
 	args = append(args, "ExpandedFrom", stg.backendInstruction.From)
 
+	// appended only when set to keep digests of already built COPY stages intact
+	if stg.instruction.Data.Parents {
+		args = append(args, "Parents", "true")
+	}
+
 	if stg.UsesBuildContext() {
-		if srcChecksum, err := buildContextArchive.CalculateGlobsChecksum(ctx, stg.instruction.Data.SourcePaths, false); err != nil {
+		if srcChecksum, err := buildContextArchive.CalculateGlobsChecksum(ctx, stg.instruction.Data.SourcePaths, container_backend.CalculateGlobsChecksumOptions{IncludeMatchedPaths: stg.instruction.Data.Parents}); err != nil {
 			return "", fmt.Errorf("unable to calculate build context globs checksum: %w", err)
 		} else {
 			args = append(args, "SourcesChecksum", srcChecksum)

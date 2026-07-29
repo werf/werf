@@ -151,6 +151,7 @@ type CopyOpts struct {
 
 	Chown   string
 	Chmod   string
+	Parents bool
 	Ignores []string
 }
 
