@@ -105,7 +105,7 @@ var _ = Describe("Complex bundle publish/apply", Label("e2e", "bundle-publish-ap
 					"werf_namespace": werfProject.Namespace(ctx),
 					"werf_env":       "test",
 
-					"chart_name":                   "rootchart",
+					"chart_name":                   SuiteData.ProjectName,
 					"chart_app_version":            "0.1.0",
 					"chart_deprecated":             "false",
 					"chart_icon":                   "myicon",
@@ -124,8 +124,8 @@ var _ = Describe("Complex bundle publish/apply", Label("e2e", "bundle-publish-ap
 					"release_namespace":  werfProject.Namespace(ctx),
 					"release_revision":   "1",
 
-					"template_base_path": "rootchart/templates",
-					"template_name":      "rootchart/templates/configmap.yaml",
+					"template_base_path": SuiteData.ProjectName + "/templates",
+					"template_name":      SuiteData.ProjectName + "/templates/configmap.yaml",
 
 					"capabilities_kube_version_major":  "1",
 					"capabilities_api_versions_has_v1": "true",
@@ -165,8 +165,8 @@ var _ = Describe("Complex bundle publish/apply", Label("e2e", "bundle-publish-ap
 
 					"chart_name": "subchart",
 
-					"template_base_path": "rootchart/charts/subchart/templates",
-					"template_name":      "rootchart/charts/subchart/templates/configmap.yaml",
+					"template_base_path": SuiteData.ProjectName + "/charts/subchart/templates",
+					"template_name":      SuiteData.ProjectName + "/charts/subchart/templates/configmap.yaml",
 
 					"global_preserved":                  "preserved",
 					"preserved":                         "preserved",
