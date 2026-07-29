@@ -14,6 +14,7 @@ import (
 	"github.com/samber/lo"
 
 	"github.com/werf/common-go/pkg/util"
+	"github.com/werf/common-go/pkg/util/timestamps"
 	"github.com/werf/kubedog/pkg/utils"
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
@@ -49,49 +50,6 @@ func RunGC(ctx context.Context, options RunGCOptions) error {
 		defer werf.HostLocker().ReleaseLock(lock)
 	}
 
-	keepGitDataV1_1, err := shouldKeepGitDataV1_1(ctx)
-	if err != nil {
-		return fmt.Errorf("unable to check if git data v1.1 should be kept: %w", err)
-	}
-
-	{
-		keepCacheVersions := []string{git_repo.GitReposCacheVersion}
-		if keepGitDataV1_1 {
-			keepCacheVersions = append(keepCacheVersions, KeepGitRepoCacheVersionV1_1)
-		}
-
-		cacheRoot := filepath.Join(werf.GetLocalCacheDir(), "git_repos")
-		if err := wipeCacheDirs(ctx, cacheRoot, keepCacheVersions); err != nil {
-			return fmt.Errorf("unable to wipe old git repos cache dirs in %q: %w", cacheRoot, err)
-		}
-	}
-
-	{
-		keepCacheVersions := []string{git_repo.GitWorktreesCacheVersion}
-		if keepGitDataV1_1 {
-			keepCacheVersions = append(keepCacheVersions, KeepGitWorkTreeCacheVersionV1_1)
-		}
-
-		cacheRoot := filepath.Join(werf.GetLocalCacheDir(), "git_worktrees")
-		if err := wipeCacheDirs(ctx, cacheRoot, keepCacheVersions); err != nil {
-			return fmt.Errorf("unable to wipe old git worktrees cache dirs in %q: %w", cacheRoot, err)
-		}
-	}
-
-	{
-		cacheRoot := filepath.Join(werf.GetLocalCacheDir(), "git_archives")
-		if err := wipeCacheDirs(ctx, cacheRoot, []string{GitArchivesCacheVersion}); err != nil {
-			return fmt.Errorf("unable to wipe old git archives cache dirs in %q: %w", cacheRoot, err)
-		}
-	}
-
-	{
-		cacheRoot := filepath.Join(werf.GetLocalCacheDir(), "git_patches")
-		if err := wipeCacheDirs(ctx, cacheRoot, []string{GitPatchesCacheVersion}); err != nil {
-			return fmt.Errorf("unable to wipe old git patches cache dirs in %q: %w", cacheRoot, err)
-		}
-	}
-
 	vu, err := volumeutils.GetVolumeUsageByPath(ctx, werf.GetLocalCacheDir())
 	if err != nil {
 		return fmt.Errorf("error getting volume usage by path %q: %w", werf.GetLocalCacheDir(), err)
@@ -119,6 +77,11 @@ func RunGC(ctx context.Context, options RunGCOptions) error {
 	})
 
 	var gitDataEntries []GitDataEntry
+
+	keepGitDataV1_1, err := shouldKeepGitDataV1_1(ctx)
+	if err != nil {
+		return fmt.Errorf("unable to check if git data v1.1 should be kept: %w", err)
+	}
 
 	{
 		cacheVersionRoot := filepath.Join(werf.GetLocalCacheDir(), "git_repos", git_repo.GitReposCacheVersion)
@@ -164,6 +127,23 @@ func RunGC(ctx context.Context, options RunGCOptions) error {
 		gitDataEntries = append(gitDataEntries, entries...)
 	}
 
+	for _, foreignVersionsDesc := range []struct {
+		cacheRoot    string
+		keepVersions []string
+	}{
+		{filepath.Join(werf.GetLocalCacheDir(), "git_repos"), lo.Ternary(keepGitDataV1_1, []string{git_repo.GitReposCacheVersion, KeepGitRepoCacheVersionV1_1}, []string{git_repo.GitReposCacheVersion})},
+		{filepath.Join(werf.GetLocalCacheDir(), "git_worktrees"), lo.Ternary(keepGitDataV1_1, []string{git_repo.GitWorktreesCacheVersion, KeepGitWorkTreeCacheVersionV1_1}, []string{git_repo.GitWorktreesCacheVersion})},
+		{filepath.Join(werf.GetLocalCacheDir(), "git_archives"), []string{GitArchivesCacheVersion}},
+		{filepath.Join(werf.GetLocalCacheDir(), "git_patches"), []string{GitPatchesCacheVersion}},
+	} {
+		entries, err := getForeignCacheVersionEntries(foreignVersionsDesc.cacheRoot, foreignVersionsDesc.keepVersions)
+		if err != nil {
+			return fmt.Errorf("unable to process foreign cache versions in %q: %w", foreignVersionsDesc.cacheRoot, err)
+		}
+
+		gitDataEntries = append(gitDataEntries, entries...)
+	}
+
 	gitDataEntries = keepGitDataByLru(gitDataEntries)
 
 	var freedBytes uint64
@@ -196,8 +176,15 @@ func RemovePathWithEmptyParentDirsInsideScope(scopeDir, path string) error {
 		return nil
 	}
 
-	if err := os.RemoveAll(path); err != nil {
-		return fmt.Errorf("unable to remove %q: %w", path, err)
+	// Rename before removal so that concurrent readers see the path disappear atomically
+	// instead of observing a partially deleted directory.
+	removePath := fmt.Sprintf("%s.removing.%d", path, time.Now().UnixNano())
+	if err := os.Rename(path, removePath); err != nil {
+		removePath = path
+	}
+
+	if err := os.RemoveAll(removePath); err != nil {
+		return fmt.Errorf("unable to remove %q: %w", removePath, err)
 	}
 
 	dir := filepath.Dir(path)
@@ -226,36 +213,107 @@ func RemovePathWithEmptyParentDirsInsideScope(scopeDir, path string) error {
 	return nil
 }
 
-// wipeCacheDirs removes all subdirectories from the specified cache root directory,
-// except for those listed in keepCacheVersions.
-func wipeCacheDirs(ctx context.Context, cacheRootDir string, keepCacheVersions []string) error {
-	logboek.Context(ctx).Debug().LogF("wipeCacheDirs %q\n", cacheRootDir)
+type foreignCacheVersionDesc struct {
+	Path          string
+	LastAccessAt  time.Time
+	Size          uint64
+	CacheBasePath string
+}
 
-	if _, err := os.Stat(cacheRootDir); os.IsNotExist(err) {
-		return nil
-	} else if err != nil {
-		return fmt.Errorf("error accessing %q: %w", cacheRootDir, err)
-	}
+var _ GitDataEntry = (*foreignCacheVersionDesc)(nil)
 
+func (entry *foreignCacheVersionDesc) GetPaths() []string {
+	return []string{entry.Path}
+}
+
+func (entry *foreignCacheVersionDesc) GetSize() uint64 {
+	return entry.Size
+}
+
+func (entry *foreignCacheVersionDesc) GetLastAccessAt() time.Time {
+	return entry.LastAccessAt
+}
+
+func (entry *foreignCacheVersionDesc) GetCacheBasePath() string {
+	return entry.CacheBasePath
+}
+
+// getForeignCacheVersionEntries returns LRU entries for cache version dirs maintained by other
+// werf versions running on the same host. Each foreign version dir is a single entry: its layout
+// is unknown to the current werf version, so it is only measured, never validated or modified.
+// Last access time is the newest last_access_at timestamp found near the top of the dir, falling
+// back to the dir modification time.
+func getForeignCacheVersionEntries(cacheRootDir string, keepVersions []string) ([]GitDataEntry, error) {
 	dirs, err := ioutil.ReadDir(cacheRootDir)
-	if err != nil {
-		return fmt.Errorf("error reading dir %q: %w", cacheRootDir, err)
+	if os.IsNotExist(err) {
+		return nil, nil
+	} else if err != nil {
+		return nil, fmt.Errorf("error reading dir %q: %w", cacheRootDir, err)
 	}
 
-	for _, finfo := range dirs {
-		if slices.Contains(keepCacheVersions, finfo.Name()) {
-			logboek.Context(ctx).Debug().LogF("wipeCacheDirs in %q: keep cache version %q\n", cacheRootDir, finfo.Name())
+	var res []GitDataEntry
+
+	for _, versionDirInfo := range dirs {
+		if !versionDirInfo.IsDir() || slices.Contains(keepVersions, versionDirInfo.Name()) {
 			continue
 		}
 
-		versionedCacheDir := filepath.Join(cacheRootDir, finfo.Name())
+		versionDir := filepath.Join(cacheRootDir, versionDirInfo.Name())
 
-		if err = os.RemoveAll(versionedCacheDir); err != nil {
-			return fmt.Errorf("unable to remove %q: %w", versionedCacheDir, err)
+		size, err := volumeutils.DirSizeBytes(versionDir)
+		if err != nil {
+			return nil, fmt.Errorf("error getting dir %q size: %w", versionDir, err)
+		}
+
+		lastAccessAt, found := findMaxLastAccessAt(versionDir, 2)
+		if !found {
+			lastAccessAt = versionDirInfo.ModTime()
+		}
+
+		res = append(res, &foreignCacheVersionDesc{
+			Path:          versionDir,
+			LastAccessAt:  lastAccessAt,
+			Size:          size,
+			CacheBasePath: cacheRootDir,
+		})
+	}
+
+	return res, nil
+}
+
+func findMaxLastAccessAt(dir string, depth int) (time.Time, bool) {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return time.Time{}, false
+	}
+
+	var res time.Time
+	var found bool
+
+	for _, entry := range entries {
+		path := filepath.Join(dir, entry.Name())
+
+		if entry.IsDir() {
+			if depth > 0 {
+				if t, ok := findMaxLastAccessAt(path, depth-1); ok && t.After(res) {
+					res = t
+					found = true
+				}
+			}
+			continue
+		}
+
+		if entry.Name() != "last_access_at" {
+			continue
+		}
+
+		if t, err := timestamps.ReadTimestampFile(path); err == nil && t.After(res) {
+			res = t
+			found = true
 		}
 	}
 
-	return nil
+	return res, found
 }
 
 func lockGC(ctx context.Context, shared bool) (lockgate.LockHandle, error) {
