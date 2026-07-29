@@ -11,6 +11,7 @@ import (
 	"sync"
 
 	"github.com/go-git/go-git/v5"
+	"github.com/google/uuid"
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
@@ -358,10 +359,7 @@ func (repo *Remote) ensureShallowMirror(ctx context.Context) (bool, error) {
 		return false, fmt.Errorf("unable to create dir %s: %w", filepath.Dir(shallowPath), err)
 	}
 
-	tmpPath := fmt.Sprintf("%s.tmp", shallowPath)
-	if err := os.RemoveAll(tmpPath); err != nil {
-		return false, fmt.Errorf("unable to prepare tmp path %s: failed to remove: %w", tmpPath, err)
-	}
+	tmpPath := fmt.Sprintf("%s.%s.tmp", shallowPath, uuid.New().String())
 	defer os.RemoveAll(tmpPath)
 
 	if err := true_git.InitBareRepoWithOrigin(ctx, tmpPath, repo.Url); err != nil {
@@ -372,8 +370,8 @@ func (repo *Remote) ensureShallowMirror(ctx context.Context) (bool, error) {
 		return false, fmt.Errorf("error updating last access at timestamp: %w", err)
 	}
 
-	if err := os.Rename(tmpPath, shallowPath); err != nil {
-		return false, fmt.Errorf("rename %s to %s failed: %w", tmpPath, shallowPath, err)
+	if err := renameCloneIntoPlace(tmpPath, shallowPath); err != nil {
+		return false, err
 	}
 
 	return false, nil
@@ -450,6 +448,10 @@ func (repo *Remote) verifyTargetInFullMirror(ctx context.Context, fullPath strin
 
 func (repo *Remote) writeRequiresFullMarker() error {
 	markerPath := repo.requiresFullMarkerPath()
+
+	if err := os.MkdirAll(filepath.Dir(markerPath), 0o755); err != nil {
+		return fmt.Errorf("unable to create dir %s: %w", filepath.Dir(markerPath), err)
+	}
 
 	tmpPath := fmt.Sprintf("%s.tmp", markerPath)
 	if err := os.WriteFile(tmpPath, nil, 0o644); err != nil {

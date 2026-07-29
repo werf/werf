@@ -13,7 +13,11 @@ import (
 	"github.com/werf/werf/v2/pkg/werf"
 )
 
-const GitReposCacheVersion = "6"
+// Before changing: read the local_cache contract in the package doc of pkg/git_repo/gitdata.
+const GitReposCacheVersion = "5"
+
+// Before changing: read the local_cache contract in the package doc of pkg/git_repo/gitdata.
+const GitMirrorsCacheVersion = "1"
 
 type (
 	PatchOptions    true_git.PatchOptions
@@ -111,4 +115,8 @@ type Archive interface {
 
 func GetGitRepoCacheDir() string {
 	return filepath.Join(werf.GetLocalCacheDir(), "git_repos", GitReposCacheVersion)
+}
+
+func GetGitMirrorsCacheDir() string {
+	return filepath.Join(werf.GetLocalCacheDir(), "git_mirrors", GitMirrorsCacheVersion)
 }

@@ -83,7 +83,7 @@ var _ = Describe("Remote shallow mirror", func() {
 			repo := openRemote("main", "", "")
 			Expect(repo.CloneAndFetch(ctx)).To(Succeed())
 
-			Expect(repo.GetClonePath()).To(HaveSuffix(string(mirrorKindFull)))
+			Expect(repo.GetClonePath()).To(Equal(filepath.Join(GetGitRepoCacheDir(), repo.getRepoID())))
 			Expect(repo.GetClonePath()).To(BeADirectory())
 
 			headCommit := utils.GetHeadCommit(ctx, sourceDir)
@@ -98,7 +98,7 @@ var _ = Describe("Remote shallow mirror", func() {
 			repo := openRemote("", "", "")
 			Expect(repo.CloneAndFetch(ctx)).To(Succeed())
 
-			Expect(repo.GetClonePath()).To(HaveSuffix(string(mirrorKindFull)))
+			Expect(repo.GetClonePath()).To(Equal(filepath.Join(GetGitRepoCacheDir(), repo.getRepoID())))
 
 			headCommit := utils.GetHeadCommit(ctx, sourceDir)
 			tagCommit, err := repo.TagCommit(ctx, "v1")
@@ -327,7 +327,7 @@ var _ = Describe("Remote shallow mirror", func() {
 
 			fullRepo := openRemote("", "v2", "")
 			Expect(fullRepo.CloneAndFetch(ctx)).To(Succeed())
-			Expect(fullRepo.GetClonePath()).To(HaveSuffix(string(mirrorKindFull)))
+			Expect(fullRepo.GetClonePath()).To(Equal(filepath.Join(GetGitRepoCacheDir(), fullRepo.getRepoID())))
 			Expect(fullRepo.GetClonePath()).To(BeADirectory())
 			Expect(fullRepo.requiresFullMarkerPath()).To(BeARegularFile())
 			Expect(shallowPath).To(BeADirectory())
@@ -345,7 +345,7 @@ var _ = Describe("Remote shallow mirror", func() {
 
 			nextRepo := openRemote("", "v1", "")
 			Expect(nextRepo.CloneAndFetch(ctx)).To(Succeed())
-			Expect(nextRepo.GetClonePath()).To(HaveSuffix(string(mirrorKindFull)))
+			Expect(nextRepo.GetClonePath()).To(Equal(filepath.Join(GetGitRepoCacheDir(), nextRepo.getRepoID())))
 		})
 
 		It("does not persist marker when remote is unreachable", func(ctx SpecContext) {
@@ -383,6 +383,30 @@ var _ = Describe("Remote shallow mirror", func() {
 			opts := buildFetchOptions("upstream", "")
 			Expect(opts.Tags).To(Equal(git.AllTags))
 			Expect(opts.RefSpecs).To(ConsistOf(gitconfig.RefSpec("+refs/heads/*:refs/remotes/upstream/*")))
+		})
+	})
+
+	Describe("renameCloneIntoPlace", func() {
+		It("succeeds when a peer already moved a clone into place", func() {
+			dir := GinkgoT().TempDir()
+			tmpPath := filepath.Join(dir, "clone.tmp")
+			clonePath := filepath.Join(dir, "clone")
+			Expect(os.MkdirAll(tmpPath, 0o755)).To(Succeed())
+			Expect(os.MkdirAll(clonePath, 0o755)).To(Succeed())
+			Expect(os.WriteFile(filepath.Join(clonePath, "HEAD"), []byte("ref"), 0o644)).To(Succeed())
+
+			Expect(renameCloneIntoPlace(tmpPath, clonePath)).To(Succeed())
+		})
+
+		It("returns the rename error when the destination does not appear", func() {
+			dir := GinkgoT().TempDir()
+			tmpPath := filepath.Join(dir, "clone.tmp")
+			Expect(os.MkdirAll(tmpPath, 0o755)).To(Succeed())
+			clonePath := filepath.Join(dir, "missing-parent", "clone")
+
+			err := renameCloneIntoPlace(tmpPath, clonePath)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("rename"))
 		})
 	})
 
