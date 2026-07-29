@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	VERSION              = "0.7.1"
+	VERSION              = "0.7.2"
 	IMAGE                = "registry.werf.io/werf/stapel"
 	CONTAINER_MOUNT_ROOT = "/.werf"
 )
