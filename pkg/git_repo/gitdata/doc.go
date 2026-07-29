@@ -23,10 +23,12 @@
 //	git_patches/<v>    version: GitPatchesCacheVersion             cleaned: wipeCacheDirs + LRU
 //	manifests/<v>      version: image.ManifestCacheVersion         cleaned: never
 //	lru_images/<v>     version: lrumeta.LRUImagesCacheVersion      cleaned: never
+//	helm_chart_dependencies/<v>  version: nelm chart loader          cleaned: never
 //
-// Nothing cleans manifests and lru_images: a version bump there leaks the old
-// data forever but destroys nothing. The whole local_cache is removed only by
-// `werf host purge`.
+// Nothing cleans manifests, lru_images and helm_chart_dependencies (the last
+// is owned by the nelm chart loader via loader.SetLocalCacheDir): a version
+// bump there leaks the old data forever but destroys nothing. The whole
+// local_cache is removed only by `werf host purge`.
 //
 // # Bumping a cache version
 //
@@ -82,7 +84,10 @@
 // git_mirrors/<v>/<repoID>: shallow/ is a bare shallow mirror with
 // last_access_at inside; requires_full is a marker file (not a mirror) that
 // pins the repo to the full mirror; a repoID dir holding only the marker is
-// valid and kept.
+// valid and kept. The collector removes every other child, including werf's
+// own in-flight shallow.<uuid>.tmp — that is safe only because clone and GC
+// exclude each other via the git_data_manager lock, so every binary sharing
+// this root must share that lock's locker dir (or add an age guard first).
 //
 // git_worktrees/<v>/{local,remote}/<name> with last_access_at inside; for
 // local, <name> is sha256 of the repository's absolute path. The full-mirror

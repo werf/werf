@@ -333,8 +333,10 @@ const cloneTmpStalenessWindow = 3 * 24 * time.Hour
 
 // removeStaleCloneTmpDirs reclaims tmp dirs abandoned by SIGKILLed clones. A
 // tmp dir is swept only when nothing in its subtree was written within the
-// window, which makes the sweep safe even against a werf process that does
-// not share our locker dir: a live clone writes continuously.
+// window (unlike gitdata's hasFreshFiles, directory mtimes count — keeping is
+// the safe direction here), which makes the sweep safe even against a werf
+// process that does not share our locker dir: a live clone writes
+// continuously.
 func removeStaleCloneTmpDirs(ctx context.Context, clonePath string) {
 	parentDir := filepath.Dir(clonePath)
 
