@@ -20,12 +20,13 @@ description: Generates Pull Request titles and descriptions according to werf co
 
 ## Description
 
-Use the following structure. Every section is **mandatory** — omit a section only when it genuinely does not apply (e.g. single-line typo fix may skip *Review focus / risks*).
+Use the following structure. *Summary*, *Why* and *Verification* are **mandatory**. Omit *Key changes* when it would only restate *Summary*, and *Review focus / risks* when there is genuinely nothing to guide the reviewer to. NEVER rename or substitute the sections.
 
 ```
 ## Summary
 
-<1-3 sentence high-level overview of what the PR does and why it exists.>
+<1-3 sentence high-level overview of what the PR does and why it exists. For a `fix`, lead with the
+observed wrong behavior and add a minimal repro (Dockerfile / werf.yaml / command) plus expected vs actual.>
 
 ## Key changes
 
@@ -37,6 +38,11 @@ Use the following structure. Every section is **mandatory** — omit a section o
 
 <Motivation: what problem this solves, what maintenance/UX/perf gain it brings.>
 
+## Verification
+
+- <manual or hand-run e2e check, and the environment it needed>
+- <what could not be run>
+
 ## Review focus / risks
 
 - <area or file that deserves careful review>
@@ -46,10 +52,11 @@ Use the following structure. Every section is **mandatory** — omit a section o
 ### Rules
 
 - Language: English.
-- Be specific: name files, modules, functions — not "updated some code".
-- *Key changes*: group related items; use sub-bullets for detail when helpful.
+- Be specific about behavior, not "updated some code". Lead each bullet with what changed; add a path only when it helps navigation — a new file, a non-obvious location, or when the point is that the change plumbs through several layers. The Files tab already lists paths.
+- *Key changes*: group related items by theme, not one bullet per file; use sub-bullets for detail when helpful.
 - *Why*: explain the reason, not what changed (that's *Key changes*).
-- *Review focus / risks*: guide the reviewer — call out non-obvious consequences, large generated diffs, breaking changes.
+- *Verification*: only the delta over CI — manual runs, hand-run e2e/real-cluster checks, the environment they required, and what could NOT be run. CI builds and runs the whole suite, so `task build`/`task test:unit` are noise unless a scoped local run is itself the point — then name it by its `task` command, never raw `go test`/`go vet`/`gofmt`. Plain list, not checkboxes — the reviewer is not the one ticking them.
+- *Review focus / risks*: guide the reviewer — call out non-obvious consequences, large generated diffs, breaking changes, and any deliberately accepted limitation of the chosen approach.
 - No AI-slop filler ("This PR improves the codebase…"). Every sentence must carry information.
 
 ## Output
