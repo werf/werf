@@ -62,6 +62,28 @@ func TestAI_BuildImagesGraph_UnresolvableDependencyNameIsIgnoredNotFatal(t *test
 	require.Equal(t, []*Image{a}, graph.Nodes())
 }
 
+func TestAI_BuildImagesGraph_ErrorsOnNameCollisionBetweenDistinctImages(t *testing.T) {
+	// Simulates two distinct images that happen to produce the same
+	// (name, platform) graph key — e.g. a plain image literally named
+	// "app/stage/builder" colliding with a synthesized Dockerfile stage name.
+	// Silently letting the last one win in the name->*Image map would
+	// resolve dependency edges against the wrong node.
+	first := newTestImage(t, "linux/amd64", "app/stage/builder")
+	second := newTestImage(t, "linux/amd64", "app/stage/builder")
+
+	_, err := BuildImagesGraph([]*Image{first, second})
+	require.Error(t, err)
+	require.ErrorContains(t, err, "app/stage/builder")
+}
+
+func TestAI_BuildImagesGraph_SameImagePointerListedTwiceIsNotACollision(t *testing.T) {
+	a := newTestImage(t, "linux/amd64", "a")
+
+	graph, err := BuildImagesGraph([]*Image{a, a})
+	require.NoError(t, err)
+	require.Equal(t, []*Image{a}, graph.Nodes())
+}
+
 func TestAI_BuildImagesGraph_DetectsCycle(t *testing.T) {
 	a := newTestImage(t, "linux/amd64", "a")
 	b := newTestImage(t, "linux/amd64", "b")

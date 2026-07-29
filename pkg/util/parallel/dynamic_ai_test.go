@@ -3,8 +3,10 @@ package parallel_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -59,6 +61,51 @@ var _ = Describe("DoTasksDynamic", func() {
 		Expect(err).To(Succeed())
 		Expect(callsCount.Load()).To(Equal(int32(total)))
 		Expect(maxInFlight.Load()).To(BeNumerically("<=", int32(maxWorkers)))
+	})
+
+	It("actually runs tasks concurrently, not just below a cap", func() {
+		// Deterministic proof of real concurrency (not a timing-based flaky
+		// check): every one of `workers` tasks must reach the barrier before
+		// any of them is allowed to return. A sequential (or otherwise
+		// broken) scheduler would deadlock here — task 0 would sit on the
+		// barrier forever because no other task ever gets to start — and
+		// the test fails via the context timeout instead of hanging.
+		const workers = 3
+
+		var mu sync.Mutex
+		produced := 0
+		next := func(ctx context.Context) (int, bool, error) {
+			mu.Lock()
+			defer mu.Unlock()
+			if produced >= workers {
+				return 0, false, nil
+			}
+			id := produced
+			produced++
+			return id, true, nil
+		}
+
+		var arrived atomic.Int32
+		barrier := make(chan struct{})
+		var closeOnce sync.Once
+
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		err := parallel.DoTasksDynamic(ctx, workers, parallel.DoTasksOptions{MaxNumberOfWorkers: workers}, next, func(ctx context.Context, taskId int) error {
+			if arrived.Add(1) == int32(workers) {
+				closeOnce.Do(func() { close(barrier) })
+			}
+
+			select {
+			case <-barrier:
+				return nil
+			case <-ctx.Done():
+				return fmt.Errorf("task %d timed out waiting for the other %d worker(s) to start concurrently — DoTasksDynamic is not running tasks in parallel", taskId, workers-1)
+			}
+		})
+
+		Expect(err).To(Succeed())
 	})
 
 	It("fails fast: an error from one task stops scheduling of further tasks", func() {

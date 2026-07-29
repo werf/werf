@@ -87,13 +87,7 @@ func (tree *ImagesTree) Calculate(ctx context.Context) error {
 
 		commonImageOpts.ForceTargetPlatformLogging = len(targetPlatforms) > 1
 
-		dependsOn := tree.werfConfig.GetImageDependsOn(imageConfigI)
-		var dependencyNames []string
-		if dependsOn.From != "" {
-			dependencyNames = append(dependencyNames, dependsOn.From)
-		}
-		dependencyNames = append(dependencyNames, dependsOn.Imports...)
-		dependencyNames = append(dependencyNames, dependsOn.Dependencies...)
+		dependencyNames := tree.werfConfig.GetImageDependsOn(imageConfigI).RelatedImageNameList()
 
 		for _, targetPlatform := range targetPlatforms {
 			imageLogName := logging.ImageLogProcessName(imageConfigI.GetName(), imageConfigI.IsFinal(), targetPlatform)
@@ -243,6 +237,15 @@ func (tree *ImagesTree) GetImages() []*Image {
 
 func (tree *ImagesTree) AppendImageForTests(img *Image) {
 	tree.images = append(tree.images, img)
+}
+
+// SetImagesGraphForTests wires a pre-built ImagesGraph (see BuildImagesGraph)
+// directly into the tree, bypassing Calculate/werfConfig. Used by tests that
+// need to exercise real build scheduling (Conveyor.doImagesInParallel) over a
+// hand-constructed dependency graph.
+func (tree *ImagesTree) SetImagesGraphForTests(graph *ImagesGraph) {
+	tree.imagesGraph = graph
+	tree.images = graph.Nodes()
 }
 
 func (tree *ImagesTree) GetImagesGraph() *ImagesGraph {

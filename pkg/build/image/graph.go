@@ -26,7 +26,11 @@ type ImagesGraph struct {
 func BuildImagesGraph(images []*Image) (*ImagesGraph, error) {
 	byNameAndPlatform := make(map[string]*Image, len(images))
 	for _, img := range images {
-		byNameAndPlatform[imageGraphKey(img.Name, img.TargetPlatform)] = img
+		key := imageGraphKey(img.Name, img.TargetPlatform)
+		if existing, ok := byNameAndPlatform[key]; ok && existing != img {
+			return nil, fmt.Errorf("build graph name conflict: two distinct images both resolve to name %q on platform %q — image names must not collide with synthesized Dockerfile stage names (\"<image>/stage/<name>\")", img.Name, img.TargetPlatform)
+		}
+		byNameAndPlatform[key] = img
 	}
 
 	g := &ImagesGraph{
