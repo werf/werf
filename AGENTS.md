@@ -29,6 +29,7 @@ werf is a CNCF Sandbox CLI tool to implement full-cycle CI/CD to Kubernetes. wer
 - When removing content, ALWAYS clean up orphaned structural elements (comment separators, section headers, blank-line groups) that no longer serve a purpose.
 - When renaming a type, function, or constant, ALWAYS rename all related local variables, parameters, and error messages that reference the old name. A rename is not complete until grep for the old name returns zero hits in affected packages.
 - When removing a feature that has documentation in multiple languages (e.g. `pages_en/`, `pages_ru/`), ALWAYS apply the same removal to ALL language versions. NEVER assume English-only cleanup is sufficient.
+- If a package has a doc.go, ALWAYS read it before changing that package or the on-disk data it owns — invariants and compatibility contracts live there (e.g. pkg/git_repo/gitdata owns the shared $WERF_HOME/local_cache).
 
 ## Code style (MANDATORY)
 
