@@ -31,12 +31,80 @@ type TaskFunc func(ctx context.Context, taskId int) error
 func DoTasks(ctx context.Context, numberOfTasks int, options DoTasksOptions, taskFunc TaskFunc) error {
 	logboek.Context(ctx).Debug().LogF("parallel: initializing with options %d (workers) per %d (tasks)\n", options.MaxNumberOfWorkers, numberOfTasks)
 
-	g, groupCtx := errgroup.WithContext(ctx)
-
-	// Determine number of workers and tasks per worker
 	numberOfWorkers, numberOfTasksPerWorker := calculateTasksDistribution(numberOfTasks, options.MaxNumberOfWorkers)
 
+	return runWorkers(ctx, numberOfWorkers, options, func(workerCtx context.Context, worker *Worker) error {
+		for workerTaskId := 0; workerTaskId < numberOfTasksPerWorker[worker.ID]; workerTaskId++ {
+			select {
+			case <-workerCtx.Done():
+				logboek.Context(ctx).Debug().LogF("parallel: canceling worker %d with ctx %p for task %d/%d (%d)\n", worker.ID, workerCtx, workerTaskId, numberOfTasksPerWorker[worker.ID], numberOfTasks)
+				return workerCtx.Err()
+			default:
+				taskId := calculateTaskId(numberOfTasks, numberOfWorkers, worker.ID, workerTaskId)
+				logboek.Context(ctx).Debug().LogF("parallel: running worker %d with ctx %p for task %d/%d (%d)\n", worker.ID, workerCtx, workerTaskId, numberOfTasksPerWorker[worker.ID], numberOfTasks)
+
+				if err := taskFunc(workerCtx, taskId); err != nil {
+					return NewWorkerError(worker.ID, err)
+				}
+			}
+		}
+
+		return nil
+	})
+}
+
+// NextTaskFunc returns the next task to run. It may block until a task
+// becomes runnable. ok=false is terminal: the calling worker returns and is
+// never asked again.
+type NextTaskFunc func(ctx context.Context) (taskId int, ok bool, err error)
+
+// DoTasksDynamic runs workers that each repeatedly pull the next task to run
+// from `next` (instead of a fixed, statically-partitioned task range like
+// DoTasks) until `next` reports there's nothing left. This allows the caller
+// to drive a dynamic dependency-graph scheduler where the set of runnable
+// tasks isn't known upfront and grows as earlier tasks complete.
+//
+// options.MaxNumberOfWorkers <= 0 means a single worker (the task count is
+// unknown upfront), unlike DoTasks where it means one worker per task.
+func DoTasksDynamic(ctx context.Context, options DoTasksOptions, next NextTaskFunc, taskFunc TaskFunc) error {
+	numberOfWorkers := options.MaxNumberOfWorkers
+	if numberOfWorkers <= 0 {
+		numberOfWorkers = 1
+	}
+
+	logboek.Context(ctx).Debug().LogF("parallel: initializing dynamic scheduler with %d workers\n", numberOfWorkers)
+
+	return runWorkers(ctx, numberOfWorkers, options, func(workerCtx context.Context, worker *Worker) error {
+		for {
+			select {
+			case <-workerCtx.Done():
+				logboek.Context(ctx).Debug().LogF("parallel: canceling worker %d with ctx %p\n", worker.ID, workerCtx)
+				return workerCtx.Err()
+			default:
+			}
+
+			taskId, ok, err := next(workerCtx)
+			if err != nil {
+				return NewWorkerError(worker.ID, err)
+			}
+			if !ok {
+				return nil
+			}
+
+			logboek.Context(ctx).Debug().LogF("parallel: running worker %d with ctx %p for task %d\n", worker.ID, workerCtx, taskId)
+
+			if err := taskFunc(workerCtx, taskId); err != nil {
+				return NewWorkerError(worker.ID, err)
+			}
+		}
+	})
+}
+
+func runWorkers(ctx context.Context, numberOfWorkers int, options DoTasksOptions, workerLoop func(workerCtx context.Context, worker *Worker) error) error {
+	g, groupCtx := errgroup.WithContext(ctx)
+
 	workers := make([]*Worker, 0, numberOfWorkers)
+	workerCtxs := make([]context.Context, 0, numberOfWorkers)
 
 	defer func() {
 		for _, worker := range workers {
@@ -49,6 +117,8 @@ func DoTasks(ctx context.Context, numberOfTasks int, options DoTasksOptions, tas
 		}
 	}()
 
+	// All workers and their contexts are created before any goroutine starts,
+	// so an initialization failure returns with nothing spawned.
 	for i := 0; i < numberOfWorkers; i++ {
 		worker, err := NewWorker(i)
 		if err != nil {
@@ -56,7 +126,6 @@ func DoTasks(ctx context.Context, numberOfTasks int, options DoTasksOptions, tas
 		}
 		workers = append(workers, worker)
 
-		// Create a new context with a background task ID for each worker
 		taskIDCtx := context.WithValue(groupCtx, CtxBackgroundTaskIDKey, worker.ID)
 		workerCtx := logboek.NewContext(taskIDCtx, logging.NewSubLogger(taskIDCtx, worker, worker))
 
@@ -66,29 +135,20 @@ func DoTasks(ctx context.Context, numberOfTasks int, options DoTasksOptions, tas
 			}
 		}
 
+		workerCtxs = append(workerCtxs, workerCtx)
+	}
+
+	for _, worker := range workers {
+		workerCtx := workerCtxs[worker.ID]
+
 		g.Go(func() error {
 			defer func() {
-				if err = worker.HalfClose(); err != nil {
+				if err := worker.HalfClose(); err != nil {
 					logboek.Context(ctx).Warn().LogF("parallel: failed to half-close worker %d: %s\n", worker.ID, err)
 				}
 			}()
 
-			for workerTaskId := 0; workerTaskId < numberOfTasksPerWorker[worker.ID]; workerTaskId++ {
-				select {
-				case <-workerCtx.Done():
-					logboek.Context(ctx).Debug().LogF("parallel: canceling worker %d with ctx %p for task %d/%d (%d)\n", worker.ID, workerCtx, workerTaskId, numberOfTasksPerWorker[worker.ID], numberOfTasks)
-					return workerCtx.Err()
-				default:
-					taskId := calculateTaskId(numberOfTasks, numberOfWorkers, worker.ID, workerTaskId)
-					logboek.Context(ctx).Debug().LogF("parallel: running worker %d with ctx %p for task %d/%d (%d)\n", worker.ID, workerCtx, workerTaskId, numberOfTasksPerWorker[worker.ID], numberOfTasks)
-
-					if err = taskFunc(workerCtx, taskId); err != nil {
-						return NewWorkerError(worker.ID, err)
-					}
-				}
-			}
-
-			return nil
+			return workerLoop(workerCtx, worker)
 		})
 	}
 
@@ -118,114 +178,6 @@ func DoTasks(ctx context.Context, numberOfTasks int, options DoTasksOptions, tas
 					printer.Swap(printer.Max(), workerErr.ID) // move filed worker to the end of the printing queue
 				} else {
 					printer.SetMax(printer.Cur()) // discard logs from the rest workers
-				}
-			}
-		}
-
-		err1 := printer.Print(context.WithoutCancel(ctx))
-
-		return errors.Join(err, err1)
-	}
-
-	return nil
-}
-
-// NextTaskFunc returns the next task to run. ok is false when there are no
-// more tasks left to schedule right now (the caller may be asked again later,
-// once in-flight tasks free up new work, until ctx is done).
-type NextTaskFunc func(ctx context.Context) (taskId int, ok bool, err error)
-
-// DoTasksDynamic runs numberOfWorkers workers that each repeatedly pull the
-// next task to run from `next` (instead of a fixed, statically-partitioned
-// task range like DoTasks) until `next` reports there's nothing left. This
-// allows the caller to drive a dynamic dependency-graph scheduler where the
-// set of runnable tasks isn't known upfront and grows as earlier tasks
-// complete.
-func DoTasksDynamic(ctx context.Context, numberOfWorkers int, options DoTasksOptions, next NextTaskFunc, taskFunc TaskFunc) error {
-	if numberOfWorkers <= 0 {
-		numberOfWorkers = 1
-	}
-
-	logboek.Context(ctx).Debug().LogF("parallel: initializing dynamic scheduler with %d workers\n", numberOfWorkers)
-
-	g, groupCtx := errgroup.WithContext(ctx)
-
-	workers := make([]*Worker, 0, numberOfWorkers)
-
-	defer func() {
-		for _, worker := range workers {
-			if err := worker.Close(); err != nil {
-				logboek.Context(ctx).Warn().LogF("parallel: failed to close worker %d: %s\n", worker.ID, err)
-			}
-			if err := worker.Cleanup(); err != nil {
-				logboek.Context(ctx).Warn().LogF("parallel: failed to cleanup worker %d: %s\n", worker.ID, err)
-			}
-		}
-	}()
-
-	for i := 0; i < numberOfWorkers; i++ {
-		worker, err := NewWorker(i)
-		if err != nil {
-			return fmt.Errorf("failed to create worker %d: %w", i, err)
-		}
-		workers = append(workers, worker)
-
-		taskIDCtx := context.WithValue(groupCtx, CtxBackgroundTaskIDKey, worker.ID)
-		workerCtx := logboek.NewContext(taskIDCtx, logging.NewSubLogger(taskIDCtx, worker, worker))
-
-		if options.InitDockerCLIForEachWorker {
-			if workerCtx, err = docker.NewContext(workerCtx); err != nil {
-				return err
-			}
-		}
-
-		g.Go(func() error {
-			defer func() {
-				if err = worker.HalfClose(); err != nil {
-					logboek.Context(ctx).Warn().LogF("parallel: failed to half-close worker %d: %s\n", worker.ID, err)
-				}
-			}()
-
-			for {
-				select {
-				case <-workerCtx.Done():
-					logboek.Context(ctx).Debug().LogF("parallel: canceling worker %d with ctx %p\n", worker.ID, workerCtx)
-					return workerCtx.Err()
-				default:
-				}
-
-				taskId, ok, err := next(workerCtx)
-				if err != nil {
-					return NewWorkerError(worker.ID, err)
-				}
-				if !ok {
-					return nil
-				}
-
-				logboek.Context(ctx).Debug().LogF("parallel: running worker %d with ctx %p for task %d\n", worker.ID, workerCtx, taskId)
-
-				if err := taskFunc(workerCtx, taskId); err != nil {
-					return NewWorkerError(worker.ID, err)
-				}
-			}
-		})
-	}
-
-	printer := NewPrinter(workers)
-
-	g.Go(func() error {
-		return printer.Print(groupCtx)
-	})
-
-	if err := g.Wait(); err != nil {
-		if !isCanceledErr(err) {
-			var workerErr *WorkerError
-
-			if errors.As(err, &workerErr) {
-				if printer.Cur() != workerErr.ID {
-					printer.Swap(printer.Max(), workerErr.ID)
-				} else {
-					printer.SetMax(printer.Cur())
 				}
 			}
 		}

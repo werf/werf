@@ -42,7 +42,7 @@ var _ = Describe("DoTasksDynamic", func() {
 		var callsCount atomic.Int32
 		seen := make([]atomic.Bool, total)
 
-		err := parallel.DoTasksDynamic(context.Background(), maxWorkers, parallel.DoTasksOptions{MaxNumberOfWorkers: maxWorkers}, next, func(ctx context.Context, taskId int) error {
+		err := parallel.DoTasksDynamic(context.Background(), parallel.DoTasksOptions{MaxNumberOfWorkers: maxWorkers}, next, func(ctx context.Context, taskId int) error {
 			cur := inFlight.Add(1)
 			defer inFlight.Add(-1)
 			for {
@@ -92,7 +92,7 @@ var _ = Describe("DoTasksDynamic", func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		err := parallel.DoTasksDynamic(ctx, workers, parallel.DoTasksOptions{MaxNumberOfWorkers: workers}, next, func(ctx context.Context, taskId int) error {
+		err := parallel.DoTasksDynamic(ctx, parallel.DoTasksOptions{MaxNumberOfWorkers: workers}, next, func(ctx context.Context, taskId int) error {
 			if arrived.Add(1) == int32(workers) {
 				closeOnce.Do(func() { close(barrier) })
 			}
@@ -126,7 +126,7 @@ var _ = Describe("DoTasksDynamic", func() {
 			return id, true, nil
 		}
 
-		err := parallel.DoTasksDynamic(context.Background(), 2, parallel.DoTasksOptions{MaxNumberOfWorkers: 2}, next, func(ctx context.Context, taskId int) error {
+		err := parallel.DoTasksDynamic(context.Background(), parallel.DoTasksOptions{MaxNumberOfWorkers: 2}, next, func(ctx context.Context, taskId int) error {
 			if taskId == 0 {
 				return errors.New("boom")
 			}
@@ -144,12 +144,50 @@ var _ = Describe("DoTasksDynamic", func() {
 		}
 
 		called := false
-		err := parallel.DoTasksDynamic(context.Background(), 2, parallel.DoTasksOptions{MaxNumberOfWorkers: 2}, next, func(ctx context.Context, taskId int) error {
+		err := parallel.DoTasksDynamic(context.Background(), parallel.DoTasksOptions{MaxNumberOfWorkers: 2}, next, func(ctx context.Context, taskId int) error {
 			called = true
 			return nil
 		})
 
 		Expect(err).To(Succeed())
 		Expect(called).To(BeFalse())
+	})
+
+	It("runs tasks sequentially on a single worker when MaxNumberOfWorkers is not positive", func() {
+		const total = 4
+
+		var mu sync.Mutex
+		produced := 0
+		next := func(ctx context.Context) (int, bool, error) {
+			mu.Lock()
+			defer mu.Unlock()
+			if produced >= total {
+				return 0, false, nil
+			}
+			id := produced
+			produced++
+			return id, true, nil
+		}
+
+		var inFlight, maxInFlight atomic.Int32
+		var tasksRun []int
+
+		err := parallel.DoTasksDynamic(context.Background(), parallel.DoTasksOptions{MaxNumberOfWorkers: 0}, next, func(ctx context.Context, taskId int) error {
+			cur := inFlight.Add(1)
+			defer inFlight.Add(-1)
+			for {
+				m := maxInFlight.Load()
+				if cur <= m || maxInFlight.CompareAndSwap(m, cur) {
+					break
+				}
+			}
+
+			tasksRun = append(tasksRun, taskId)
+			return nil
+		})
+
+		Expect(err).To(Succeed())
+		Expect(tasksRun).To(Equal([]int{0, 1, 2, 3}))
+		Expect(maxInFlight.Load()).To(Equal(int32(1)))
 	})
 })

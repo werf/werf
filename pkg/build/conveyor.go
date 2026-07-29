@@ -734,8 +734,10 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 				options.Style(stylePkg.Highlight())
 			}).
 			Do(func() {
+				logboek.Context(ctx).LogLnHighlight("An image starts building once all of its dependencies are built and a worker is available.")
+				logboek.Context(ctx).LogOptionalLn()
 				for levelId, level := range graph.Levels() {
-					logboek.Context(ctx).LogFHighlight("Set #%d:\n", levelId)
+					logboek.Context(ctx).LogFHighlight("Level #%d:\n", levelId)
 					for _, img := range level {
 						logboek.Context(ctx).LogLnHighlight("-", img.LogDetailedName())
 					}
@@ -749,12 +751,9 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 		numberOfWorkers = len(nodes)
 	}
 
-	var imageExecutionTimes []string
-	imageExecutionTimesMutex := c.GetServiceRWMutex("SetImageExecutionTimes")
-
 	scheduler := newGraphScheduler(graph)
 
-	if err := parallel.DoTasksDynamic(ctx, numberOfWorkers, parallel.DoTasksOptions{
+	if err := parallel.DoTasksDynamic(ctx, parallel.DoTasksOptions{
 		InitDockerCLIForEachWorker: true,
 		MaxNumberOfWorkers:         numberOfWorkers,
 	}, scheduler.next, func(ctx context.Context, taskId int) error {
@@ -768,13 +767,6 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 		if err := c.doImage(ctx, taskImage, taskPhases); err != nil {
 			return fmt.Errorf("unable to process image %q with parallel task %d: %w", taskImage.LogName(), taskId, err)
 		}
-
-		imageExecutionTimesMutex.Lock()
-		imageExecutionTimes = append(
-			imageExecutionTimes,
-			fmt.Sprintf("%s (%.2f seconds)", taskImage.LogDetailedName(), taskImage.BuildDuration.Seconds()),
-		)
-		imageExecutionTimesMutex.Unlock()
 
 		scheduler.complete(taskImage)
 
@@ -790,8 +782,8 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 				options.Style(stylePkg.Highlight())
 			}).
 			Do(func() {
-				for _, msg := range imageExecutionTimes {
-					logboek.Context(ctx).LogLnHighlight("-", msg)
+				for _, img := range nodes {
+					logboek.Context(ctx).LogLnHighlight("-", fmt.Sprintf("%s (%.2f seconds)", img.LogDetailedName(), img.BuildDuration.Seconds()))
 				}
 			})
 	}
