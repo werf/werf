@@ -13,15 +13,13 @@ import (
 	"github.com/werf/werf/v2/pkg/util/option"
 )
 
-func MapStapelConfigToImagesSets(ctx context.Context, metaConfig *config.Meta, stapelImageConfig config.StapelImageInterface, targetPlatform string, useCustomTag bool, opts CommonImageOptions) (ImagesSets, error) {
+func MapStapelConfigToImages(ctx context.Context, metaConfig *config.Meta, stapelImageConfig config.StapelImageInterface, targetPlatform string, useCustomTag bool, opts CommonImageOptions) ([]*Image, error) {
 	img, err := mapStapelConfigToImage(ctx, metaConfig, stapelImageConfig, targetPlatform, useCustomTag, opts)
 	if err != nil {
 		return nil, err
 	}
 
-	ret := ImagesSets{[]*Image{img}}
-
-	return ret, nil
+	return []*Image{img}, nil
 }
 
 func mapStapelConfigToImage(ctx context.Context, metaConfig *config.Meta, stapelImageConfig config.StapelImageInterface, targetPlatform string, useCustomTag bool, opts CommonImageOptions) (*Image, error) {

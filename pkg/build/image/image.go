@@ -132,6 +132,29 @@ type Image struct {
 
 	logImageIndex  int
 	logTotalImages int
+
+	// dependencyNames holds the names (same TargetPlatform) of the images this
+	// image must be fully built after: base image (fromImage), import/artifact
+	// sources, explicit `dependencies:`, and — for staged Dockerfile images —
+	// the werf-image-name of every other Dockerfile stage referenced via
+	// `FROM`/`COPY --from=`/`RUN --mount=from=`.
+	dependencyNames []string
+}
+
+// AddDependencyName registers another image (by name, same target platform)
+// that must be fully built before this image's build can start.
+func (i *Image) AddDependencyName(name string) {
+	for _, existing := range i.dependencyNames {
+		if existing == name {
+			return
+		}
+	}
+	i.dependencyNames = append(i.dependencyNames, name)
+}
+
+// GetDependencyNames returns the names of images this image directly depends on.
+func (i *Image) GetDependencyNames() []string {
+	return i.dependencyNames
 }
 
 func (i *Image) LogName() string {

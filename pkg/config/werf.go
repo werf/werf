@@ -3,6 +3,7 @@ package config
 import (
 	"errors"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/distribution/reference"
@@ -201,7 +202,7 @@ func (c *WerfConfig) validateImageInfiniteLoop(imageName string, imageNameStack 
 		panic(fmt.Sprintf("image %q not found but must be found", imageName))
 	}
 
-	for _, relatedImageName := range image.dependsOn().relatedImageNameList() {
+	for _, relatedImageName := range image.dependsOn().RelatedImageNameList() {
 		if c.GetImage(relatedImageName) == nil {
 			continue
 		}
@@ -214,40 +215,37 @@ func (c *WerfConfig) validateImageInfiniteLoop(imageName string, imageNameStack 
 	return nil, nil
 }
 
-func (c *WerfConfig) GroupImagesByIndependentSets(imagesToProcess ImagesToProcess) (sets [][]ImageInterface, err error) {
+// GetImagesForProcessing returns the flat, deterministically ordered transitive
+// closure of images to process (the requested images plus everything they
+// depend on), for use by build-time image-graph construction.
+func (c *WerfConfig) GetImagesForProcessing(imagesToProcess ImagesToProcess) []ImageInterface {
 	if imagesToProcess.WithoutImages {
-		return nil, nil
+		return nil
 	}
 
 	images := c.getSpecificImages(imagesToProcess)
-	sets = [][]ImageInterface{}
-	isRelativeChecked := map[ImageInterface]bool{}
 	imageRelativesListToHandle := c.getImageRelativesInOrder(images)
 
-	for len(imageRelativesListToHandle) != 0 {
-		var currentRelatives []ImageInterface
-
-	outerLoop:
-		for image, relatives := range imageRelativesListToHandle {
-			for _, relativeImage := range relatives {
-				_, ok := isRelativeChecked[relativeImage]
-				if !ok {
-					continue outerLoop
-				}
-			}
-
-			currentRelatives = append(currentRelatives, image)
-		}
-
-		for _, relativeImage := range currentRelatives {
-			isRelativeChecked[relativeImage] = true
-			delete(imageRelativesListToHandle, relativeImage)
-		}
-
-		sets = append(sets, currentRelatives)
+	var result []ImageInterface
+	for image := range imageRelativesListToHandle {
+		result = append(result, image)
 	}
 
-	return sets, nil
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].GetName() < result[j].GetName()
+	})
+
+	return result
+}
+
+// GetImageDependsOn returns the resolved DependsOn (from/import/dependencies)
+// for the given image, i.e. only the related images that are actually part of
+// this werf config (external base images/imports are excluded). Resolution
+// also mutates image state via updateDependencies (image.SetFromExternal()
+// for a non-config from, imp.ExternalImage = true for non-config imports),
+// which mapStapelConfigToImage relies on.
+func (c *WerfConfig) GetImageDependsOn(image ImageInterface) DependsOn {
+	return c.updateDependencies(image)
 }
 
 func (c *WerfConfig) getImageRelativesInOrder(images []ImageInterface) map[ImageInterface][]ImageInterface {
@@ -260,7 +258,7 @@ func (c *WerfConfig) getImageRelativesInOrder(images []ImageInterface) map[Image
 
 		var relatives []ImageInterface
 		depends := c.updateDependencies(current)
-		for _, imageName := range depends.relatedImageNameList() {
+		for _, imageName := range depends.RelatedImageNameList() {
 			relatives = append(relatives, c.GetImage(imageName))
 		}
 		imageRelatives[current] = relatives
@@ -291,7 +289,7 @@ type DependsOn struct {
 	Dependencies []string `yaml:"dependencies,omitempty"`
 }
 
-func (d DependsOn) relatedImageNameList() []string {
+func (d DependsOn) RelatedImageNameList() []string {
 	var list []string
 
 	if d.From != "" {

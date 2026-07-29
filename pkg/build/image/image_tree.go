@@ -25,8 +25,8 @@ type ImagesTree struct {
 
 	werfConfig *config.WerfConfig
 
-	images     []*Image
-	imagesSets ImagesSets
+	images      []*Image
+	imagesGraph *ImagesGraph
 
 	multiplatformImages []*MultiplatformImage
 	mutex               sync.RWMutex
@@ -47,12 +47,8 @@ func NewImagesTree(werfConfig *config.WerfConfig, opts ImagesTreeOptions) *Image
 }
 
 func (tree *ImagesTree) Calculate(ctx context.Context) error {
-	imageConfigSets, err := tree.werfConfig.GroupImagesByIndependentSets(tree.ImagesToProcess)
-	if err != nil {
-		return fmt.Errorf("unable to group werf config images by independent sets: %w", err)
-	}
-
-	if len(imageConfigSets) == 0 {
+	imagesToProcess := tree.werfConfig.GetImagesForProcessing(tree.ImagesToProcess)
+	if len(imagesToProcess) == 0 {
 		return nil
 	}
 
@@ -66,68 +62,83 @@ func (tree *ImagesTree) Calculate(ctx context.Context) error {
 	}
 
 	commonImageOpts := tree.CommonImageOptions
-	builder := NewImagesSetsBuilder()
 
-	for _, iteration := range imageConfigSets {
-		for _, imageConfigI := range iteration {
-			var targetPlatforms []string
-			if len(forcedTargetPlatforms) > 0 {
-				targetPlatforms = forcedTargetPlatforms
-			} else {
-				imageTargetPlatforms, err := tree.Conveyor.GetImageTargetPlatforms(imageConfigI.GetName())
-				if err != nil {
-					return fmt.Errorf("invalid image %q target platforms: %w", imageConfigI.GetName(), err)
-				}
-				if len(imageTargetPlatforms) > 0 {
-					targetPlatforms = imageTargetPlatforms
-				} else {
-					targetPlatforms = commonTargetPlatforms
-				}
+	var allImages []*Image
+
+	for _, imageConfigI := range imagesToProcess {
+		var targetPlatforms []string
+		if len(forcedTargetPlatforms) > 0 {
+			targetPlatforms = forcedTargetPlatforms
+		} else {
+			imageTargetPlatforms, err := tree.Conveyor.GetImageTargetPlatforms(imageConfigI.GetName())
+			if err != nil {
+				return fmt.Errorf("invalid image %q target platforms: %w", imageConfigI.GetName(), err)
 			}
-
-			commonImageOpts.ForceTargetPlatformLogging = len(targetPlatforms) > 1
-
-			for _, targetPlatform := range targetPlatforms {
-				imageLogName := logging.ImageLogProcessName(imageConfigI.GetName(), imageConfigI.IsFinal(), targetPlatform)
-				style := ImageLogProcessStyle(imageConfigI.IsFinal())
-				err := logboek.Context(ctx).Info().LogProcess(imageLogName).
-					Options(func(options types.LogProcessOptionsInterface) {
-						options.Style(style)
-					}).
-					DoError(func() error {
-						var err error
-						var newImagesSets ImagesSets
-
-						useCustomTag := slices.Contains(tree.ImagesToProcess.ImageNameList, imageConfigI.GetName())
-
-						switch imageConfig := imageConfigI.(type) {
-						case config.StapelImageInterface:
-							newImagesSets, err = MapStapelConfigToImagesSets(ctx, tree.werfConfig.Meta, imageConfig, targetPlatform, useCustomTag, commonImageOpts)
-							if err != nil {
-								return fmt.Errorf("unable to map stapel config to images sets: %w", err)
-							}
-						case *config.ImageFromDockerfile:
-							newImagesSets, err = MapDockerfileConfigToImagesSets(ctx, tree.werfConfig.Meta, imageConfig, targetPlatform, useCustomTag, commonImageOpts)
-							if err != nil {
-								return fmt.Errorf("unable to map dockerfile to images sets: %w", err)
-							}
-						}
-
-						builder.MergeImagesSets(newImagesSets)
-
-						return nil
-					})
-				if err != nil {
-					return err
-				}
+			if len(imageTargetPlatforms) > 0 {
+				targetPlatforms = imageTargetPlatforms
+			} else {
+				targetPlatforms = commonTargetPlatforms
 			}
 		}
 
-		builder.Next()
+		commonImageOpts.ForceTargetPlatformLogging = len(targetPlatforms) > 1
+
+		dependencyNames := tree.werfConfig.GetImageDependsOn(imageConfigI).RelatedImageNameList()
+
+		for _, targetPlatform := range targetPlatforms {
+			imageLogName := logging.ImageLogProcessName(imageConfigI.GetName(), imageConfigI.IsFinal(), targetPlatform)
+			style := ImageLogProcessStyle(imageConfigI.IsFinal())
+			err := logboek.Context(ctx).Info().LogProcess(imageLogName).
+				Options(func(options types.LogProcessOptionsInterface) {
+					options.Style(style)
+				}).
+				DoError(func() error {
+					var err error
+					var newImages []*Image
+
+					useCustomTag := slices.Contains(tree.ImagesToProcess.ImageNameList, imageConfigI.GetName())
+
+					switch imageConfig := imageConfigI.(type) {
+					case config.StapelImageInterface:
+						newImages, err = MapStapelConfigToImages(ctx, tree.werfConfig.Meta, imageConfig, targetPlatform, useCustomTag, commonImageOpts)
+						if err != nil {
+							return fmt.Errorf("unable to map stapel config to images: %w", err)
+						}
+					case *config.ImageFromDockerfile:
+						newImages, err = MapDockerfileConfigToImages(ctx, tree.werfConfig.Meta, imageConfig, targetPlatform, useCustomTag, commonImageOpts)
+						if err != nil {
+							return fmt.Errorf("unable to map dockerfile to images: %w", err)
+						}
+					}
+
+					// The `dependencies:`/`fromImage:`/`import:` names apply to
+					// the whole config-level image, which for a staged
+					// Dockerfile expands into multiple per-stage sub-images —
+					// all of them need these dependencies (e.g. `dependencies:`
+					// args can be used in any stage).
+					for _, img := range newImages {
+						for _, depName := range dependencyNames {
+							img.AddDependencyName(depName)
+						}
+					}
+
+					allImages = append(allImages, newImages...)
+
+					return nil
+				})
+			if err != nil {
+				return err
+			}
+		}
 	}
 
-	tree.imagesSets = builder.GetImagesSets()
-	tree.images = builder.GetImages()
+	graph, err := BuildImagesGraph(allImages)
+	if err != nil {
+		return fmt.Errorf("unable to build images dependency graph: %w", err)
+	}
+
+	tree.imagesGraph = graph
+	tree.images = graph.Nodes()
 
 	for ind, img := range tree.images {
 		img.logImageIndex = ind
@@ -224,8 +235,17 @@ func (tree *ImagesTree) AppendImageForTests(img *Image) {
 	tree.images = append(tree.images, img)
 }
 
-func (tree *ImagesTree) GetImagesSets() ImagesSets {
-	return tree.imagesSets
+// SetImagesGraphForTests wires a pre-built ImagesGraph (see BuildImagesGraph)
+// directly into the tree, bypassing Calculate/werfConfig. Used by tests that
+// need to exercise real build scheduling (Conveyor.doImagesInParallel) over a
+// hand-constructed dependency graph.
+func (tree *ImagesTree) SetImagesGraphForTests(graph *ImagesGraph) {
+	tree.imagesGraph = graph
+	tree.images = graph.Nodes()
+}
+
+func (tree *ImagesTree) GetImagesGraph() *ImagesGraph {
+	return tree.imagesGraph
 }
 
 func (tree *ImagesTree) GetMultiplatformImage(name string) *MultiplatformImage {

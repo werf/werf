@@ -155,11 +155,13 @@ from: alpine:3.14
 
 <!-- reference: https://werf.io/docs/v2/internals/build_process.html#parallel-build -->
 
-All the images described in `werf.yaml` are built in parallel on the same build host. If there are dependencies between the images, the build is split into stages, with each stage containing a set of independent images that can be built in parallel.
+All the images described in `werf.yaml` are built in parallel on the same build host. Each image starts building as soon as all the images it depends on have been built — an image never waits for unrelated images.
+
+Note that the build log output is grouped per worker rather than per image dependency: the order of image log blocks may differ from the dependency order and may vary between runs.
 
 > When Dockerfile stages are used, the parallelism of their assembly is also determined based on the dependency tree. On top of that, if different images use a Dockerfile stage declared in `werf.yaml`, werf will make sure that this common stage is built only once, without any redundant rebuilds.
 
-The parallel assembly in werf is regulated by two parameters: `--parallel` and `--parallel-tasks-limit`. By default, the parallel build is enabled and no more than 5 images can be built at a time.
+The parallel assembly in werf is regulated by two parameters: `--parallel` and `--parallel-tasks-limit`. By default, the parallel build is enabled and no more than 5 images can be built at a time. Setting `--parallel-tasks-limit` to `0` or a negative value runs one worker per image, so all currently eligible images are built simultaneously.
 
 Let's look at the following example:
 
@@ -211,16 +213,16 @@ context: frontend
 target: assets
 ```
 
-There are 3 images: `backend`, `frontend` and `frontend-assets`. The `frontend-assets` image depends on `frontend` because it imports compiled assets from `frontend`.
+There are 3 images: `backend`, `frontend` and `frontend-assets`. They have no werf-level dependencies on each other — `COPY --from=application` is resolved inside the Dockerfile build, and `staged` defaults to `false` — so all of them land in `Level #0`. werf-level dependencies (`dependencies:`, `import:`, `fromImage:` or the stages of a Dockerfile image with `staged: true`) produce later levels.
 
-In this case, werf will compose the following sets to build:
+In this case, werf will print the following build plan:
 
 ```shell
 ┌ Concurrent build plan (no more than 5 images at the same time)
-│ Set #0:
-│ - 🛳  (1/3) image frontend-assets
-│ - 🛳  (2/3) image backend
-│ - 🛳  (3/3) image frontend
+│ Level #0:
+│ - 🛳️  (1/3) image backend
+│ - 🛳️  (2/3) image frontend
+│ - 🛳️  (3/3) image frontend-assets
 └ Concurrent build plan (no more than 5 images at the same time)
 ```
 

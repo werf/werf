@@ -741,6 +741,9 @@ func (c *Conveyor) doImages(ctx context.Context, phases []Phase, logImages bool)
 }
 
 func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logImages bool) error {
+	graph := c.imagesTree.GetImagesGraph()
+	nodes := graph.Nodes()
+
 	if logImages {
 		blockMsg := "Concurrent build plan"
 		if c.ParallelTasksLimit > 0 {
@@ -752,9 +755,9 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 				options.Style(stylePkg.Highlight())
 			}).
 			Do(func() {
-				for setId := range c.imagesTree.GetImagesSets() {
-					logboek.Context(ctx).LogFHighlight("Set #%d:\n", setId)
-					for _, img := range c.imagesTree.GetImagesSets()[setId] {
+				for levelId, level := range graph.Levels() {
+					logboek.Context(ctx).LogFHighlight("Level #%d:\n", levelId)
+					for _, img := range level {
 						logboek.Context(ctx).LogLnHighlight("-", img.LogDetailedName())
 					}
 					logboek.Context(ctx).LogOptionalLn()
@@ -762,41 +765,33 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 			})
 	}
 
-	var setImageExecutionTimesArray [][]string
-	for setId := range c.imagesTree.GetImagesSets() {
-		numberOfTasks := len(c.imagesTree.GetImagesSets()[setId])
-		numberOfWorkers := int(c.ParallelTasksLimit)
+	numberOfWorkers := int(c.ParallelTasksLimit)
+	if numberOfWorkers <= 0 || numberOfWorkers > len(nodes) {
+		numberOfWorkers = len(nodes)
+	}
 
-		var setImageExecutionTimes []string
-		setImageExecutionTimesMutex := c.GetServiceRWMutex("SetImageExecutionTimes")
-		if err := parallel.DoTasks(ctx, numberOfTasks, parallel.DoTasksOptions{
-			InitDockerCLIForEachWorker: true,
-			MaxNumberOfWorkers:         numberOfWorkers,
-		}, func(ctx context.Context, taskId int) error {
-			taskImage := c.imagesTree.GetImagesSets()[setId][taskId]
+	scheduler := newGraphScheduler(graph)
 
-			var taskPhases []Phase
-			for _, phase := range phases {
-				taskPhases = append(taskPhases, phase.Clone())
-			}
+	if err := parallel.DoTasksDynamic(ctx, parallel.DoTasksOptions{
+		InitDockerCLIForEachWorker: true,
+		MaxNumberOfWorkers:         numberOfWorkers,
+	}, scheduler.next, func(ctx context.Context, taskId int) error {
+		taskImage := nodes[taskId]
 
-			if err := c.doImage(ctx, taskImage, taskPhases); err != nil {
-				return fmt.Errorf("unable to process image %q with parallel task %d: %w", taskImage.LogName(), taskId, err)
-			}
-
-			setImageExecutionTimesMutex.Lock()
-			setImageExecutionTimes = append(
-				setImageExecutionTimes,
-				fmt.Sprintf("%s (%.2f seconds)", taskImage.LogDetailedName(), taskImage.BuildDuration.Seconds()),
-			)
-			setImageExecutionTimesMutex.Unlock()
-
-			return nil
-		}); err != nil {
-			return err
+		var taskPhases []Phase
+		for _, phase := range phases {
+			taskPhases = append(taskPhases, phase.Clone())
 		}
 
-		setImageExecutionTimesArray = append(setImageExecutionTimesArray, setImageExecutionTimes)
+		if err := c.doImage(ctx, taskImage, taskPhases); err != nil {
+			return fmt.Errorf("unable to process image %q with parallel task %d: %w", taskImage.LogName(), taskId, err)
+		}
+
+		scheduler.complete(taskImage)
+
+		return nil
+	}); err != nil {
+		return err
 	}
 
 	if logImages {
@@ -806,12 +801,8 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 				options.Style(stylePkg.Highlight())
 			}).
 			Do(func() {
-				for setId, setImageExecutionTimes := range setImageExecutionTimesArray {
-					logboek.Context(ctx).LogFHighlight("Set #%d:\n", setId)
-					for _, msg := range setImageExecutionTimes {
-						logboek.Context(ctx).LogLnHighlight("-", msg)
-					}
-					logboek.Context(ctx).LogOptionalLn()
+				for _, img := range nodes {
+					logboek.Context(ctx).LogLnHighlight("-", fmt.Sprintf("%s (%.2f seconds)", img.LogDetailedName(), img.BuildDuration.Seconds()))
 				}
 			})
 	}
