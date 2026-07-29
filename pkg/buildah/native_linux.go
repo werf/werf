@@ -953,6 +953,12 @@ func (b *NativeBuildah) Copy(ctx context.Context, container, contextDir string, 
 		absSrc = append(absSrc, filepath.Join(contextDir, s))
 	}
 
+	// with --parents the source path is kept under the destination, so the destination is always
+	// a directory: without the trailing separator buildah copies a single file source onto it
+	if opts.Parents && !strings.HasSuffix(dst, string(filepath.Separator)) {
+		dst += string(filepath.Separator)
+	}
+
 	if err := builder.Add(dst, false, buildah.AddAndCopyOptions{
 		Chown:             opts.Chown,
 		Chmod:             opts.Chmod,
