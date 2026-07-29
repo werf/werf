@@ -47,6 +47,7 @@ func (i *Copy) Apply(ctx context.Context, containerName string, drv buildah.Buil
 		Chown:      i.Chown,
 		Chmod:      i.Chmod,
 		Parents:    i.Parents,
+		Ignores:    contextRelativeExcludes(i.SourcePaths, i.ExcludePatterns),
 	}); err != nil {
 		return fmt.Errorf("error copying %v to %s for container %s: %w", i.SourcePaths, i.DestPath, containerName, err)
 	}
