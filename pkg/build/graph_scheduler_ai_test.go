@@ -1,6 +1,7 @@
 package build
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -116,4 +117,44 @@ func TestAI_GraphScheduler_DiamondDependencyReadyOnlyAfterBothParents(t *testing
 	default:
 		t.Fatal("scheduler must be done once every node has completed")
 	}
+}
+
+func TestAI_GraphScheduler_IndependentSetHandsOutEveryNodeExactlyOnceThenTerminates(t *testing.T) {
+	a := &image.Image{Name: "a", TargetPlatform: "linux/amd64"}
+	b := &image.Image{Name: "b", TargetPlatform: "linux/amd64"}
+	c := &image.Image{Name: "c", TargetPlatform: "linux/amd64"}
+
+	graph, err := image.BuildImagesGraph([]*image.Image{a, b, c})
+	require.NoError(t, err)
+
+	nodes := graph.Nodes()
+	s := newGraphScheduler(graph)
+
+	handedOut := map[string]int{}
+	for {
+		taskId, ok, err := s.next(context.Background())
+		require.NoError(t, err)
+		if !ok {
+			break
+		}
+		handedOut[nodes[taskId].Name]++
+		s.complete(nodes[taskId])
+	}
+
+	require.Equal(t, map[string]int{"a": 1, "b": 1, "c": 1}, handedOut)
+
+	_, ok, err := s.next(context.Background())
+	require.NoError(t, err)
+	require.False(t, ok, "next must stay terminal after every node has completed")
+}
+
+func TestAI_GraphScheduler_ZeroNodesTerminatesImmediately(t *testing.T) {
+	graph, err := image.BuildImagesGraph(nil)
+	require.NoError(t, err)
+
+	s := newGraphScheduler(graph)
+
+	_, ok, err := s.next(context.Background())
+	require.NoError(t, err)
+	require.False(t, ok)
 }
