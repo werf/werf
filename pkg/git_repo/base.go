@@ -189,6 +189,12 @@ func (repo *Base) getOrCreateChangedPaths(ctx context.Context, gitDir, fromCommi
 		return val.([]true_git.ChangedPath), nil
 	}
 
+	if lock, err := CommonGitDataManager.LockGC(ctx, true); err != nil {
+		return nil, err
+	} else {
+		defer werf.HostLocker().ReleaseLock(lock)
+	}
+
 	changedPaths, err := true_git.ListChangedPaths(ctx, gitDir, fromCommit, toCommit)
 	if err != nil {
 		return nil, fmt.Errorf("list changed paths between %q and %q commits: %w", fromCommit, toCommit, err)
