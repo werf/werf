@@ -32,11 +32,14 @@ RUN apk add --no-cache --virtual .build-deps \
   automake \
   libtool
 
+# rsync 3.1.x routes every chmod through lchmod() when configure finds it, and musl's
+# lchmod always fails with EOPNOTSUPP on a symlink, which breaks --keep-dirlinks imports.
+# Upstream stopped using lchmod on Linux in 3.2.4; the glibc stapel build never linked it.
 RUN cd /tmp && \
   wget https://github.com/RsyncProject/rsync/archive/v3.1.2.tar.gz && \
   tar xzf v3.1.2.tar.gz && \
   cd rsync-3.1.2 && \
-  ./configure --prefix=/usr && \
+  ./configure --prefix=/usr ac_cv_func_lchmod=no && \
   make && \
   make install && \
   cd / && \
