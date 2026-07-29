@@ -21,6 +21,8 @@ Key changes:
 1. Applying git patches in the legacy stapel builder no longer goes through `git apply`; a file modified by an earlier `install`/`beforeSetup`/`setup` command is silently overwritten instead of failing with a conflict error.
 1. The `AllowMissedSecretKeyMode` v1.2 secret-key compatibility mode is removed. `bundle publish` itself still doesn't require a secret key by default (secret values are handled via a different, non-decrypting mechanism now), but the old compatibility flag/behavior is gone.
 1. The `werf.io/base-image-id` image label and the corresponding `Info.ParentID` field are removed. Ancestor-tracking during cleanup now relies solely on `werf.io/parent-stage-id`.
+1. The git commit ancestry check on git-stage reuse is removed together with the `WERF_DISABLE_GIT_COMMIT_ANCESTRY_CHECK` env var: a cached git stage is now reused regardless of whether its commit is an ancestor of the current one.
+1. Command `werf bundle publish` now defaults `--helm-compatible-chart` to `true`: the published chart name in `Chart.yaml` is set to the last path component of the repo address, so `.Chart.Name` and template paths change. Pass `--helm-compatible-chart=false` to keep the name from your `Chart.yaml`.
 
 Other changes:
 1. `fromImage` (stapel image directive) and `import: - image:` are deprecated in favor of `from:`; they still work but emit a deprecation warning. Specifying both the old and new key together is a hard error.
