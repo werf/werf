@@ -23,18 +23,8 @@ const HostLocksGCMinAge = 24 * time.Hour
 // inode-exhaustion failure mode this addresses.
 const hostLocksAutoGCThreshold = 10000
 
-// hostLockerDirSchemaVersion namespaces the host locker directory so that
-// older werf binaries (which acquire locks without the inode-safe retry
-// against GCLockFileDir) never share a locks directory with a GC-capable
-// werf. Mixing the two on the same host could otherwise let a new process's
-// GC pass unlink a lock file an old process just opened, right before the
-// old process takes its flock — the old acquire path has no way to detect
-// the resulting dead inode. Bump this whenever the locking protocol changes
-// in an incompatible way.
-const hostLockerDirSchemaVersion = "2"
-
 func getHostLockerDir() string {
-	return filepath.Join(GetServiceDir(), "locks", hostLockerDirSchemaVersion)
+	return filepath.Join(GetServiceDir(), "locks")
 }
 
 // GCHostLockerDir removes stale host lock files older than HostLocksGCMinAge.
