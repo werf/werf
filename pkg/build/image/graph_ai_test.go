@@ -78,10 +78,24 @@ func TestAI_BuildImagesGraph_ErrorsOnNameCollisionBetweenDistinctImages(t *testi
 
 func TestAI_BuildImagesGraph_SameImagePointerListedTwiceIsNotACollision(t *testing.T) {
 	a := newTestImage(t, "linux/amd64", "a")
+	b := newTestImage(t, "linux/amd64", "b")
+	b.AddDependencyName("a")
 
-	graph, err := BuildImagesGraph([]*Image{a, a})
+	graph, err := BuildImagesGraph([]*Image{a, a, b, b})
 	require.NoError(t, err)
-	require.Equal(t, []*Image{a}, graph.Nodes())
+	require.Equal(t, []*Image{a, b}, graph.Nodes())
+	require.Equal(t, []*Image{a}, graph.Dependencies(b))
+	require.Equal(t, []*Image{b}, graph.Dependents(a))
+}
+
+func TestAI_BuildImagesGraph_ErrorsOnDependencyBuiltOnlyForOtherPlatforms(t *testing.T) {
+	dep := newTestImage(t, "linux/arm64", "dep")
+	app := newTestImage(t, "linux/amd64", "app")
+	app.AddDependencyName("dep")
+
+	_, err := BuildImagesGraph([]*Image{dep, app})
+	require.Error(t, err)
+	require.ErrorContains(t, err, `image "app" (platform "linux/amd64") depends on image "dep", which is not built for this platform (built for: linux/arm64)`)
 }
 
 func TestAI_BuildImagesGraph_DetectsCycle(t *testing.T) {
@@ -120,4 +134,25 @@ func TestAI_BuildImagesGraph_DiamondDependencyOrder(t *testing.T) {
 	require.Less(t, order["base"], order["right"])
 	require.Less(t, order["left"], order["top"])
 	require.Less(t, order["right"], order["top"])
+}
+
+func TestAI_ImagesGraph_LevelsGroupsDiamondByLongestPath(t *testing.T) {
+	base := newTestImage(t, "linux/amd64", "base")
+	left := newTestImage(t, "linux/amd64", "left")
+	right := newTestImage(t, "linux/amd64", "right")
+	top := newTestImage(t, "linux/amd64", "top")
+
+	left.AddDependencyName("base")
+	right.AddDependencyName("base")
+	top.AddDependencyName("left")
+	top.AddDependencyName("right")
+
+	graph, err := BuildImagesGraph([]*Image{top, right, left, base})
+	require.NoError(t, err)
+
+	levels := graph.Levels()
+	require.Len(t, levels, 3)
+	require.Equal(t, []*Image{base}, levels[0])
+	require.ElementsMatch(t, []*Image{left, right}, levels[1])
+	require.Equal(t, []*Image{top}, levels[2])
 }

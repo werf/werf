@@ -1,6 +1,10 @@
 package image
 
-import "fmt"
+import (
+	"fmt"
+	"sort"
+	"strings"
+)
 
 // ImagesGraph is the build-time dependency graph over all *Image nodes
 // (across all config images, their platforms, and — for staged Dockerfile
@@ -18,30 +22,50 @@ type ImagesGraph struct {
 // target platform) and returns the resulting graph. Nodes() returns images
 // in topological order (dependencies before dependents).
 //
-// A dependency name that cannot be resolved among the given images is
-// ignored here: it either refers to an external base image (not built by
-// werf) or will surface as a build-time error where the dependency's result
-// is actually consumed (e.g. Image.SetupBaseImage), so this is not treated
-// as a fatal error during graph construction.
+// A dependency name that resolves to no given image on any platform is
+// ignored here: it refers to an external base image (not built by werf). A
+// dependency name that resolves to a given image only on OTHER platforms is
+// a configuration error (the dependency's result could never be consumed on
+// the dependent's platform) and fails graph construction. Duplicate *Image
+// pointers in the input are deduplicated.
 func BuildImagesGraph(images []*Image) (*ImagesGraph, error) {
-	byNameAndPlatform := make(map[string]*Image, len(images))
+	seen := make(map[*Image]struct{}, len(images))
+	dedupedImages := make([]*Image, 0, len(images))
 	for _, img := range images {
+		if _, ok := seen[img]; ok {
+			continue
+		}
+		seen[img] = struct{}{}
+		dedupedImages = append(dedupedImages, img)
+	}
+
+	byNameAndPlatform := make(map[string]*Image, len(dedupedImages))
+	platformsByName := make(map[string][]string, len(dedupedImages))
+	for _, img := range dedupedImages {
 		key := imageGraphKey(img.Name, img.TargetPlatform)
-		if existing, ok := byNameAndPlatform[key]; ok && existing != img {
+		if _, ok := byNameAndPlatform[key]; ok {
 			return nil, fmt.Errorf("build graph name conflict: two distinct images both resolve to name %q on platform %q — image names must not collide with synthesized Dockerfile stage names (\"<image>/stage/<name>\")", img.Name, img.TargetPlatform)
 		}
 		byNameAndPlatform[key] = img
+		platformsByName[img.Name] = append(platformsByName[img.Name], img.TargetPlatform)
 	}
 
 	g := &ImagesGraph{
-		deps:       make(map[*Image][]*Image, len(images)),
-		dependents: make(map[*Image][]*Image, len(images)),
+		deps:       make(map[*Image][]*Image, len(dedupedImages)),
+		dependents: make(map[*Image][]*Image, len(dedupedImages)),
 	}
 
-	for _, img := range images {
+	for _, img := range dedupedImages {
 		for _, depName := range img.GetDependencyNames() {
 			depImg, ok := byNameAndPlatform[imageGraphKey(depName, img.TargetPlatform)]
-			if !ok || depImg == img {
+			if !ok {
+				if platforms, isNode := platformsByName[depName]; isNode {
+					sort.Strings(platforms)
+					return nil, fmt.Errorf("image %q (platform %q) depends on image %q, which is not built for this platform (built for: %s)", img.Name, img.TargetPlatform, depName, strings.Join(platforms, ", "))
+				}
+				continue
+			}
+			if depImg == img {
 				continue
 			}
 
@@ -50,7 +74,7 @@ func BuildImagesGraph(images []*Image) (*ImagesGraph, error) {
 		}
 	}
 
-	nodes, err := topologicalSort(images, g.deps)
+	nodes, err := topologicalSort(dedupedImages, g.deps)
 	if err != nil {
 		return nil, err
 	}
