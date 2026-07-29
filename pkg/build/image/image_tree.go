@@ -336,9 +336,8 @@ func filterAndLogGitMappings(ctx context.Context, gitMappings []*stage.GitMappin
 	return res, nil
 }
 
-func appendIfExist(ctx context.Context, stages []stage.Interface, stage stage.Interface) []stage.Interface {
+func appendIfExist(stages []stage.Interface, stage stage.Interface) []stage.Interface {
 	if !reflect.ValueOf(stage).IsNil() {
-		logboek.Context(ctx).Info().LogFDetails("Using stage %s\n", stage.Name())
 		return append(stages, stage)
 	}
 

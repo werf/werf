@@ -359,8 +359,6 @@ func mapLegacyDockerfileToImage(ctx context.Context, metaConfig *config.Meta, do
 		img.stages[len(img.stages)-1].SetContentAnchor(true)
 	}
 
-	logboek.Context(ctx).Info().LogFDetails("Using stage %s\n", dockerfileStage.Name())
-
 	return img, nil
 }
 

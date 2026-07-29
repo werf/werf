@@ -26,7 +26,7 @@ var (
 )
 
 func Debug() bool {
-	return os.Getenv("WERF_CONTAINER_RUNTIME_DEBUG") == "1"
+	return os.Getenv("WERF_DEBUG_CONTAINER_RUNTIME") == "1" || os.Getenv("WERF_CONTAINER_RUNTIME_DEBUG") == "1"
 }
 
 func LogImageName(ctx context.Context, name string) {

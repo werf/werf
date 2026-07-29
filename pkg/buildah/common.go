@@ -313,7 +313,7 @@ func GetDefaultIsolation() (thirdparty.Isolation, error) {
 //
 //nolint:nolintlint,unused
 func debug() bool {
-	return os.Getenv("WERF_BUILDAH_DEBUG") == "1"
+	return os.Getenv("WERF_DEBUG_BUILDAH") == "1" || os.Getenv("WERF_BUILDAH_DEBUG") == "1"
 }
 
 type StoreOptions struct {

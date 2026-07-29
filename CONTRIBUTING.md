@@ -152,6 +152,8 @@ Supported scopes are the following:
 - deps
 ```
 
+In the header, multiple and nested scopes are separated by commas, from the broadest to the most specific: `fix(build, stapel, import): ...`.
+
 #### Subject
 
 The subject contains a succinct description of the change:

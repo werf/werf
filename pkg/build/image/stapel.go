@@ -102,20 +102,20 @@ func initStages(ctx context.Context, image *Image, metaConfig *config.Meta, stap
 
 	imageCacheVersion := option.ValueOrDefault(stapelImageConfig.CacheVersion(), metaConfig.Build.CacheVersion)
 
-	stages = appendIfExist(ctx, stages, stage.GenerateFromStage(imageBaseConfig, image.baseImageRepoId, imageCacheVersion, baseStageOptions))
-	stages = appendIfExist(ctx, stages, stage.GenerateBeforeInstallStage(ctx, imageBaseConfig, baseStageOptions))
-	stages = appendIfExist(ctx, stages, stage.GenerateDependenciesBeforeInstallStage(imageBaseConfig, baseStageOptions))
+	stages = appendIfExist(stages, stage.GenerateFromStage(imageBaseConfig, image.baseImageRepoId, imageCacheVersion, baseStageOptions))
+	stages = appendIfExist(stages, stage.GenerateBeforeInstallStage(ctx, imageBaseConfig, baseStageOptions))
+	stages = appendIfExist(stages, stage.GenerateDependenciesBeforeInstallStage(imageBaseConfig, baseStageOptions))
 
 	if gitMappingsExist {
 		stages = append(stages, stage.NewGitArchiveStage(gitArchiveStageOptions, baseStageOptions))
 	}
 
-	stages = appendIfExist(ctx, stages, stage.GenerateInstallStage(ctx, imageBaseConfig, gitPatchStageOptions, baseStageOptions))
-	stages = appendIfExist(ctx, stages, stage.GenerateDependenciesAfterInstallStage(imageBaseConfig, baseStageOptions))
-	stages = appendIfExist(ctx, stages, stage.GenerateBeforeSetupStage(ctx, imageBaseConfig, gitPatchStageOptions, baseStageOptions))
-	stages = appendIfExist(ctx, stages, stage.GenerateDependenciesBeforeSetupStage(imageBaseConfig, baseStageOptions))
-	stages = appendIfExist(ctx, stages, stage.GenerateSetupStage(ctx, imageBaseConfig, gitPatchStageOptions, baseStageOptions))
-	stages = appendIfExist(ctx, stages, stage.GenerateDependenciesAfterSetupStage(imageBaseConfig, baseStageOptions))
+	stages = appendIfExist(stages, stage.GenerateInstallStage(ctx, imageBaseConfig, gitPatchStageOptions, baseStageOptions))
+	stages = appendIfExist(stages, stage.GenerateDependenciesAfterInstallStage(imageBaseConfig, baseStageOptions))
+	stages = appendIfExist(stages, stage.GenerateBeforeSetupStage(ctx, imageBaseConfig, gitPatchStageOptions, baseStageOptions))
+	stages = appendIfExist(stages, stage.GenerateDependenciesBeforeSetupStage(imageBaseConfig, baseStageOptions))
+	stages = appendIfExist(stages, stage.GenerateSetupStage(ctx, imageBaseConfig, gitPatchStageOptions, baseStageOptions))
+	stages = appendIfExist(stages, stage.GenerateDependenciesAfterSetupStage(imageBaseConfig, baseStageOptions))
 
 	if gitMappingsExist {
 		stages = append(stages, stage.NewGitCacheStage(gitPatchStageOptions, baseStageOptions))
@@ -123,7 +123,7 @@ func initStages(ctx context.Context, image *Image, metaConfig *config.Meta, stap
 	}
 
 	if imageBaseConfig.ImageSpec != nil {
-		stages = appendIfExist(ctx, stages, stage.GenerateImageSpecStage(imageBaseConfig.ImageSpec, baseStageOptions))
+		stages = appendIfExist(stages, stage.GenerateImageSpecStage(imageBaseConfig.ImageSpec, baseStageOptions))
 	}
 
 	if len(gitMappings) != 0 {

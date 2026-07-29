@@ -300,9 +300,6 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 		}
 	}
 
-	debugJsonData, err := phase.ImagesReport.ToJsonData()
-	logboek.Context(ctx).Debug().LogF("ImagesReport: (err: %v)\n%s", err, debugJsonData)
-
 	phase.ImagesReport.sendTelemetry(ctx)
 
 	for imageName, record := range phase.ImagesReport.Images {
@@ -324,10 +321,10 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 			if data, err = phase.ImagesReport.ToJsonData(); err != nil {
 				return fmt.Errorf("unable to prepare report json: %w", err)
 			}
-			logboek.Context(ctx).Debug().LogF("Writing json report to the %q:\n%s", phase.ReportPath, data)
+			logboek.Context(ctx).Debug().LogF("Writing json report to the %q\n", phase.ReportPath)
 		case ReportEnvFile:
 			data = phase.ImagesReport.ToEnvFileData()
-			logboek.Context(ctx).Debug().LogF("Writing envfile report to the %q:\n%s", phase.ReportPath, data)
+			logboek.Context(ctx).Debug().LogF("Writing envfile report to the %q\n", phase.ReportPath)
 		default:
 			panic(fmt.Sprintf("unknown report format %q", phase.ReportFormat))
 		}

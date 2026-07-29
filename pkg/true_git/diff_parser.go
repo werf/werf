@@ -112,7 +112,7 @@ func (p *diffParser) writeUnrecognizedLine(line string) error {
 }
 
 func debugPatchParser() bool {
-	return os.Getenv("WERF_TRUE_GIT_DEBUG_PATCH_PARSER") == "1"
+	return os.Getenv("WERF_DEBUG_TRUE_GIT_PATCH_PARSER") == "1" || os.Getenv("WERF_TRUE_GIT_DEBUG_PATCH_PARSER") == "1"
 }
 
 func (p *diffParser) handleDiffLine(line string) error {

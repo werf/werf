@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path"
 	"sort"
 	"strings"
@@ -18,6 +19,10 @@ import (
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/stapel"
 )
+
+func debugImportServer() bool {
+	return os.Getenv("WERF_DEBUG_IMPORT_SERVER") == "1"
+}
 
 const rsyncServerPort = "873"
 
@@ -52,7 +57,9 @@ type RsyncServer struct {
 }
 
 func RunRsyncServer(ctx context.Context, dockerImageName, tmpDir, targetPlatform string) (*RsyncServer, error) {
-	logboek.Context(ctx).Debug().LogF("RunRsyncServer for docker image %q\n", dockerImageName)
+	if debugImportServer() {
+		logboek.Context(ctx).Debug().LogF("RunRsyncServer for docker image %q\n", dockerImageName)
+	}
 
 	srv := &RsyncServer{
 		Port:                rsyncServerPort,
@@ -97,14 +104,18 @@ func RunRsyncServer(ctx context.Context, dockerImageName, tmpDir, targetPlatform
 		"--no-detach",
 		"--config=/.werf/rsyncd.conf",
 	)
-	logboek.Context(ctx).Debug().LogF("Run rsync server command: %q\n", fmt.Sprintf("docker run %s", strings.Join(runArgs, " ")))
+	if debugImportServer() {
+		logboek.Context(ctx).Debug().LogF("Run rsync server command: %q\n", fmt.Sprintf("docker run %s", strings.Join(runArgs, " ")))
+	}
 	if output, err := docker.CliRun_RecordedOutput(ctx, runArgs...); err != nil {
 		logboek.Context(ctx).Error().LogF("Unable to run rsync server command: %q\n", fmt.Sprintf("docker run %s", strings.Join(runArgs, " ")))
 		logboek.Context(ctx).Error().LogF("%s", output)
 		return nil, err
 	}
 
-	logboek.Context(ctx).Debug().LogF("Inspect container %s\n", srv.DockerContainerName)
+	if debugImportServer() {
+		logboek.Context(ctx).Debug().LogF("Inspect container %s\n", srv.DockerContainerName)
+	}
 
 	if inspect, err := docker.ContainerInspect(ctx, srv.DockerContainerName); err != nil {
 		return nil, fmt.Errorf("unable to inspect import server container %s: %w", srv.DockerContainerName, err)
@@ -166,7 +177,9 @@ func (srv *RsyncServer) GetCopyCommand(ctx context.Context, importConfig *config
 
 	command := strings.Join(args, " && ")
 
-	logboek.Context(ctx).Debug().LogF("Rsync server copy commands for import: image=%q add=%s to=%s includePaths=%v excludePaths=%v: %q\n", importConfig.From, importConfig.Add, importConfig.To, importConfig.IncludePaths, importConfig.ExcludePaths, command)
+	if debugImportServer() {
+		logboek.Context(ctx).Debug().LogF("Rsync server copy commands for import: image=%q add=%s to=%s includePaths=%v excludePaths=%v: %q\n", importConfig.From, importConfig.Add, importConfig.To, importConfig.IncludePaths, importConfig.ExcludePaths, command)
+	}
 
 	return command
 }

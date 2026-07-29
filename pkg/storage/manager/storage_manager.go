@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -308,7 +309,7 @@ func (m *StorageManager) GetFinalStageDescSet(ctx context.Context) (image.StageD
 		return nil, fmt.Errorf("error getting existing stages list of final repo %s: %w", m.FinalStagesStorage.String(), err)
 	}
 
-	logboek.Context(ctx).Debug().LogF("[%p] Got existing final stages list cache: %#v\n", m, existingStagesListCache.StageIDs)
+	logboek.Context(ctx).Debug().LogF("[%p] Got existing final stages list cache (%d stages)\n", m, len(existingStagesListCache.StageIDs))
 
 	stageIDs := existingStagesListCache.GetStageIDs()
 	stageDescSet := image.NewStageDescSet()
@@ -658,7 +659,7 @@ func (m *StorageManager) CopyStageIntoFinalStorage(ctx context.Context, stageID 
 		return nil, fmt.Errorf("error getting existing stages list of final repo %s: %w", finalStagesStorage.String(), err)
 	}
 
-	logboek.Context(ctx).Debug().LogF("[%p] Got existing final stages list cache: %#v\n", m, existingStagesListCache.StageIDs)
+	logboek.Context(ctx).Debug().LogF("[%p] Got existing final stages list cache (%d stages)\n", m, len(existingStagesListCache.StageIDs))
 
 	finalImageName := finalStagesStorage.ConstructStageImageName(m.ProjectName, stageID.Digest, stageID.CreationTs)
 
@@ -711,7 +712,7 @@ func (m *StorageManager) CopyStageIntoFinalStorage(ctx context.Context, stageID 
 	}
 
 	existingStagesListCache.AddStageID(stageID)
-	logboek.Context(ctx).Debug().LogF("Updated existing final stages list: %#v\n", m.FinalStagesListCache.StageIDs)
+	logboek.Context(ctx).Debug().LogF("Updated existing final stages list (%d stages)\n", len(m.FinalStagesListCache.StageIDs))
 
 	return stageDescCopy, nil
 }
@@ -722,7 +723,7 @@ func (m *StorageManager) SelectSuitableStageDesc(ctx context.Context, c stage.Co
 	}
 
 	var stageDesc *image.StageDesc
-	if err := logboek.Context(ctx).Info().LogProcess("Selecting suitable image for stage %s by digest %s", stg.Name(), stg.GetDigest()).
+	if err := logboek.Context(ctx).Debug().LogProcess("Selecting suitable image for stage %s by digest %s", stg.Name(), stg.GetDigest()).
 		DoError(func() error {
 			var err error
 			stageDesc, err = stg.SelectSuitableStageDesc(ctx, c, stageDescSet)
@@ -734,18 +735,20 @@ func (m *StorageManager) SelectSuitableStageDesc(ctx context.Context, c stage.Co
 		return nil, nil
 	}
 
-	imgInfoData, err := yaml.Marshal(stageDesc)
-	if err != nil {
-		panic(err)
-	}
+	if debugStagesStorage() {
+		imgInfoData, err := yaml.Marshal(stageDesc)
+		if err != nil {
+			return nil, fmt.Errorf("marshal stage description: %w", err)
+		}
 
-	logboek.Context(ctx).Debug().LogBlock("Selected cache image").
-		Options(func(options types.LogBlockOptionsInterface) {
-			options.Style(style.Highlight())
-		}).
-		Do(func() {
-			logboek.Context(ctx).Debug().LogF(string(imgInfoData))
-		})
+		logboek.Context(ctx).Debug().LogBlock("Selected cache image").
+			Options(func(options types.LogBlockOptionsInterface) {
+				options.Style(style.Highlight())
+			}).
+			Do(func() {
+				logboek.Context(ctx).Debug().LogF(string(imgInfoData))
+			})
+	}
 
 	return stageDesc, nil
 }
@@ -815,6 +818,10 @@ func (m *StorageManager) CopySuitableStageDescByDigest(ctx context.Context, stag
 	}
 }
 
+func debugStagesStorage() bool {
+	return os.Getenv("WERF_DEBUG_STAGES_STORAGE") == "1"
+}
+
 func (m *StorageManager) getWithLocalManifestCacheOption() bool {
 	return m.StagesStorage.Address() != storage.LocalStorageAddress
 }
@@ -829,7 +836,9 @@ func (m *StorageManager) getStagesIDsByDigestFromStagesStorage(ctx context.Conte
 				return fmt.Errorf("error getting project %s stage %s images from storage: %w", m.StagesStorage.String(), stageDigest, err)
 			}
 
-			logboek.Context(ctx).Debug().LogF("Stages ids: %#v\n", stageIDs)
+			if debugStagesStorage() {
+				logboek.Context(ctx).Debug().LogF("Stages ids: %#v\n", stageIDs)
+			}
 
 			return nil
 		}); err != nil {
@@ -865,21 +874,22 @@ type getStageDescOptions struct {
 func getStageDescFromLocalManifestCache(ctx context.Context, projectName string, stageID image.StageID, stagesStorage storage.StagesStorage) (*image.StageDesc, error) {
 	stageImageName := stagesStorage.ConstructStageImageName(projectName, stageID.Digest, stageID.CreationTs)
 
-	logboek.Context(ctx).Debug().LogF("Getting image %s info from the manifest cache...\n", stageImageName)
 	imgInfo, err := image.CommonManifestCache.GetImageInfo(ctx, stagesStorage.String(), stageImageName)
 	if err != nil {
 		return nil, fmt.Errorf("error getting image %s info: %w", stageImageName, err)
 	}
 
 	if imgInfo != nil {
-		logboek.Context(ctx).Info().LogF("Got image %s info from the manifest cache (CACHE HIT)\n", stageImageName)
+		if debugStagesStorage() {
+			logboek.Context(ctx).Debug().LogF("Got image %s info from the manifest cache (CACHE HIT)\n", stageImageName)
+		}
 
 		return &image.StageDesc{
 			StageID: image.NewStageID(stageID.Digest, stageID.CreationTs),
 			Info:    imgInfo,
 		}, nil
-	} else {
-		logboek.Context(ctx).Info().LogF("Not found %s image info in the manifest cache (CACHE MISS)\n", stageImageName)
+	} else if debugStagesStorage() {
+		logboek.Context(ctx).Debug().LogF("Not found %s image info in the manifest cache (CACHE MISS)\n", stageImageName)
 	}
 
 	return nil, nil
@@ -932,7 +942,9 @@ func getStageDesc(ctx context.Context, projectName string, stageID image.StageID
 				var err error
 				stageDesc, err = cacheStagesStorage.GetStageDesc(ctx, projectName, stageID)
 
-				logboek.Context(ctx).Debug().LogF("Got stage description: %#v\n", stageDesc)
+				if debugStagesStorage() {
+					logboek.Context(ctx).Debug().LogF("Got stage description: %#v\n", stageDesc)
+				}
 				return err
 			})
 		if err != nil {

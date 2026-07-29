@@ -653,7 +653,9 @@ func (api *api) writeToRemote(ctx context.Context, ref name.Reference, imageOrIn
 			case upd.Error != nil:
 				return fmt.Errorf("error pushing image: %w", upd.Error)
 			default:
-				logboek.Context(ctx).Debug().LogF("(%d/%d) pushing image %s is in progress\n", upd.Complete, upd.Total, ref.String())
+				if debugDockerRegistry() {
+					logboek.Context(ctx).Debug().LogF("(%d/%d) pushing image %s is in progress\n", upd.Complete, upd.Total, ref.String())
+				}
 			}
 		}
 		return nil
@@ -688,7 +690,9 @@ func (api *api) PullImageArchive(ctx context.Context, archiveWriter io.Writer, r
 		case upd.Error != nil:
 			return fmt.Errorf("error receiving image data: %w", upd.Error)
 		default:
-			logboek.Context(ctx).Debug().LogF("(%d/%d) pulling image %s is in progress\n", upd.Complete, upd.Total, reference)
+			if debugDockerRegistry() {
+				logboek.Context(ctx).Debug().LogF("(%d/%d) pulling image %s is in progress\n", upd.Complete, upd.Total, reference)
+			}
 		}
 	}
 

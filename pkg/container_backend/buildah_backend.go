@@ -379,12 +379,16 @@ func (backend *BuildahBackend) applyDependenciesImports(ctx context.Context, con
 	}()
 
 	// NOTE: maybe it is more optimal not to mount all dependencies at once, but mount one-by-one
-	logboek.Context(ctx).Debug().LogF("Mounting depContainers containers %v\n", createdDepContainers)
+	if Debug() {
+		logboek.Context(ctx).Debug().LogF("Mounting depContainers containers %v\n", createdDepContainers)
+	}
 	if err := backend.mountContainers(ctx, createdDepContainers, opts); err != nil {
 		return fmt.Errorf("unable to mount containers: %w", err)
 	}
 	defer func() {
-		logboek.Context(ctx).Debug().LogF("Unmounting depContainers containers %v\n", createdDepContainers)
+		if Debug() {
+			logboek.Context(ctx).Debug().LogF("Unmounting depContainers containers %v\n", createdDepContainers)
+		}
 		if err := backend.unmountContainers(ctx, createdDepContainers, opts); err != nil {
 			logboek.Context(ctx).Error().LogF("ERROR: unable to unmount containers: %s\n", err)
 		}
@@ -557,12 +561,16 @@ func (backend *BuildahBackend) BuildDockerfileStage(ctx context.Context, baseIma
 	}()
 	// TODO: cleanup orphan build containers in werf-host-cleanup procedure
 
-	logboek.Context(ctx).Debug().LogF("Mounting build container %s\n", container.Name)
+	if Debug() {
+		logboek.Context(ctx).Debug().LogF("Mounting build container %s\n", container.Name)
+	}
 	if err := backend.mountContainers(ctx, []*containerDesc{container}, opts.CommonOpts); err != nil {
 		return "", fmt.Errorf("unable to mount build container %s: %w", container.Name, err)
 	}
 	defer func() {
-		logboek.Context(ctx).Debug().LogF("Unmounting build container %s\n", container.Name)
+		if Debug() {
+			logboek.Context(ctx).Debug().LogF("Unmounting build container %s\n", container.Name)
+		}
 		if err := backend.unmountContainers(ctx, []*containerDesc{container}, opts.CommonOpts); err != nil {
 			logboek.Context(ctx).Error().LogF("ERROR: unable to unmount containers: %s\n", err)
 		}
@@ -604,12 +612,16 @@ func (backend *BuildahBackend) BuildStapelStage(ctx context.Context, baseImage s
 	// TODO(stapel-to-buildah): cleanup orphan build containers in werf-host-cleanup procedure
 
 	if len(opts.DependencyImportSpecs)+len(opts.DataArchiveSpecs)+len(opts.RemoveDataSpecs) > 0 {
-		logboek.Context(ctx).Debug().LogF("Mounting build container %s\n", container.Name)
+		if Debug() {
+			logboek.Context(ctx).Debug().LogF("Mounting build container %s\n", container.Name)
+		}
 		if err := backend.mountContainers(ctx, []*containerDesc{container}, commonOpts); err != nil {
 			return "", fmt.Errorf("unable to mount build container %s: %w", container.Name, err)
 		}
 		defer func() {
-			logboek.Context(ctx).Debug().LogF("Unmounting build container %s\n", container.Name)
+			if Debug() {
+				logboek.Context(ctx).Debug().LogF("Unmounting build container %s\n", container.Name)
+			}
 			if err := backend.unmountContainers(ctx, []*containerDesc{container}, commonOpts); err != nil {
 				logboek.Context(ctx).Error().LogF("ERROR: unable to unmount containers: %s\n", err)
 			}

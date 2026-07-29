@@ -115,7 +115,7 @@ func (storage *RepoStagesStorage) GetStagesIDs(ctx context.Context, _ string, op
 		return nil, fmt.Errorf("unable to fetch tags for repo %q: %w", storage.RepoAddress, err)
 	}
 
-	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetStagesIDs fetched tags for %q: %#v\n", storage.RepoAddress, tags)
+	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetStagesIDs fetched %d tags for %q\n", len(tags), storage.RepoAddress)
 
 	for _, tag := range tags {
 		isRegularStage := (len(tag) == 70 && len(strings.Split(tag, "-")) == 2) // 2604b86b2c7a1c6d19c62601aadb19e7d5c6bb8f17bc2bf26a390ea7-1611836746968
@@ -137,7 +137,9 @@ func (storage *RepoStagesStorage) GetStagesIDs(ctx context.Context, _ string, op
 		} else {
 			res = append(res, *image.NewStageID(digest, creationTs))
 
-			logboek.Context(ctx).Debug().LogF("Selected stage by digest %q creation timestamp %d\n", digest, creationTs)
+			if debugStagesStorage() {
+				logboek.Context(ctx).Debug().LogF("Selected stage by digest %q creation timestamp %d\n", digest, creationTs)
+			}
 		}
 	}
 
@@ -173,7 +175,9 @@ func (storage *RepoStagesStorage) DeleteStage(ctx context.Context, stageDesc *im
 
 func (storage *RepoStagesStorage) deleteRejectedImageRecord(ctx context.Context, digest string, creationTs int64) error {
 	rejectedImageName := makeRepoRejectedStageImageRecord(storage.RepoAddress, digest, creationTs)
-	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.deleteRejectedImageRecord full image name: %s\n", rejectedImageName)
+	if debugStagesStorage() {
+		logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.deleteRejectedImageRecord full image name: %s\n", rejectedImageName)
+	}
 
 	rejectedImgInfo, err := storage.DockerRegistry.TryGetRepoImage(ctx, rejectedImageName)
 	if err != nil {
@@ -233,14 +237,18 @@ func (storage *RepoStagesStorage) GetRejectedStageIDs(ctx context.Context, opts 
 		match := rejectedStageTagRegexp.FindStringSubmatch(tag)
 		if match == nil {
 			if strings.HasSuffix(tag, RepoRejectedStageImageRecord_ImageTagSuffix) {
-				logboek.Context(ctx).Debug().LogF("Skipping tag %q: does not match werf rejected-stage format\n", tag)
+				if debugStagesStorage() {
+					logboek.Context(ctx).Debug().LogF("Skipping tag %q: does not match werf rejected-stage format\n", tag)
+				}
 			}
 			continue
 		}
 
 		creationTs, err := image.ParseCreationTs(match[2])
 		if err != nil {
-			logboek.Context(ctx).Debug().LogF("Skipping rejected tag %q: cannot parse creation timestamp %q: %s\n", tag, match[2], err)
+			if debugStagesStorage() {
+				logboek.Context(ctx).Debug().LogF("Skipping rejected tag %q: cannot parse creation timestamp %q: %s\n", tag, match[2], err)
+			}
 			continue
 		}
 
@@ -274,10 +282,11 @@ func makeRepoRejectedStageImageRecord(repoAddress, digest string, creationTs int
 }
 
 func (storage *RepoStagesStorage) RejectStage(ctx context.Context, projectName, digest string, creationTs int64) error {
-	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.RejectStage %s %s %d\n", projectName, digest, creationTs)
+	if debugStagesStorage() {
+		logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.RejectStage %s %s %d\n", projectName, digest, creationTs)
+	}
 
 	rejectedImageName := makeRepoRejectedStageImageRecord(storage.RepoAddress, digest, creationTs)
-	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.RejectStage full image name: %s\n", rejectedImageName)
 
 	opts := &docker_registry.PushImageOptions{Labels: map[string]string{image.WerfLabel: projectName}}
 	if err := storage.DockerRegistry.PushImage(ctx, rejectedImageName, opts); err != nil {
@@ -344,7 +353,9 @@ FindSuitableStages:
 			}
 			return nil, fmt.Errorf("unable to get digest and creation timestamp from tag %q: %w", tag, err)
 		} else if parentStageCreationTs > creationTs {
-			logboek.Context(ctx).Debug().LogF("Skip stage %s (parent stage creation timestamp %d is greater than the stage creation timestamp %d)\n", tag, parentStageCreationTs, creationTs)
+			if debugStagesStorage() {
+				logboek.Context(ctx).Debug().LogF("Skip stage %s (parent stage creation timestamp %d is greater than the stage creation timestamp %d)\n", tag, parentStageCreationTs, creationTs)
+			}
 			continue
 		} else {
 			stageID := image.NewStageID(digest, creationTs)
@@ -356,12 +367,12 @@ FindSuitableStages:
 				}
 			}
 
-			logboek.Context(ctx).Debug().LogF("Stage %q is suitable for digest %q\n", tag, digest)
+			if debugStagesStorage() {
+				logboek.Context(ctx).Debug().LogF("Stage %q is suitable for digest %q\n", tag, digest)
+			}
 			res = append(res, *stageID)
 		}
 	}
-
-	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetRepoImagesByDigest result for %q: %#v\n", storage.RepoAddress, res)
 
 	return res, nil
 }
@@ -373,8 +384,10 @@ FindSuitableStages:
 func (storage *RepoStagesStorage) GetStageDesc(ctx context.Context, projectName string, stageID image.StageID) (*image.StageDesc, error) {
 	stageImageName := storage.ConstructStageImageName(projectName, stageID.Digest, stageID.CreationTs)
 
-	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage GetStageDesc %s %s %d\n", projectName, stageID.Digest, stageID.CreationTs)
-	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage stageImageName = %q\n", stageImageName)
+	if debugStagesStorage() {
+		logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage GetStageDesc %s %s %d\n", projectName, stageID.Digest, stageID.CreationTs)
+		logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage stageImageName = %q\n", stageImageName)
+	}
 
 	imgInfo, err := storage.DockerRegistry.GetRepoImage(ctx, stageImageName)
 	if docker_registry.IsImageNotFoundError(err) {
@@ -388,7 +401,9 @@ func (storage *RepoStagesStorage) GetStageDesc(ctx context.Context, projectName 
 	}
 
 	rejectedImageName := makeRepoRejectedStageImageRecord(storage.RepoAddress, stageID.Digest, stageID.CreationTs)
-	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetStageDesc check rejected image name: %s\n", rejectedImageName)
+	if debugStagesStorage() {
+		logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetStageDesc check rejected image name: %s\n", rejectedImageName)
+	}
 
 	if rejected, err := storage.DockerRegistry.IsTagExist(ctx, rejectedImageName, docker_registry.WithCachedTags()); err != nil {
 		return nil, fmt.Errorf("unable to check rejected image record %q: %w", rejectedImageName, err)
@@ -532,10 +547,11 @@ func (storage *RepoStagesStorage) UnregisterStageCustomTag(ctx context.Context, 
 }
 
 func (storage *RepoStagesStorage) AddManagedImage(ctx context.Context, projectName, imageNameOrManagedImageName string) error {
-	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.AddManagedImage %s %s\n", projectName, imageNameOrManagedImageName)
+	if debugStagesStorage() {
+		logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.AddManagedImage %s %s\n", projectName, imageNameOrManagedImageName)
+	}
 
 	fullImageName := makeRepoManagedImageRecord(storage.RepoAddress, imageNameOrManagedImageName)
-	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.AddManagedImage full image name: %s\n", fullImageName)
 
 	opts := &docker_registry.PushImageOptions{Labels: map[string]string{image.WerfLabel: projectName}}
 	if err := storage.DockerRegistry.PushImage(ctx, fullImageName, opts); err != nil {
@@ -546,7 +562,9 @@ func (storage *RepoStagesStorage) AddManagedImage(ctx context.Context, projectNa
 }
 
 func (storage *RepoStagesStorage) RmManagedImage(ctx context.Context, projectName, imageNameOrManagedImageName string) error {
-	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.RmManagedImage %s %s\n", projectName, imageNameOrManagedImageName)
+	if debugStagesStorage() {
+		logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.RmManagedImage %s %s\n", projectName, imageNameOrManagedImageName)
+	}
 
 	fullImageName := makeRepoManagedImageRecord(storage.RepoAddress, imageNameOrManagedImageName)
 
@@ -556,7 +574,9 @@ func (storage *RepoStagesStorage) RmManagedImage(ctx context.Context, projectNam
 	}
 
 	if imgInfo == nil {
-		logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.RmManagedImage record %q does not exist => exiting\n", fullImageName)
+		if debugStagesStorage() {
+			logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.RmManagedImage record %q does not exist => exiting\n", fullImageName)
+		}
 		return nil
 	}
 
@@ -574,7 +594,9 @@ func (storage *RepoStagesStorage) IsManagedImageExist(ctx context.Context, _, im
 }
 
 func (storage *RepoStagesStorage) GetManagedImages(ctx context.Context, projectName string, opts ...Option) ([]string, error) {
-	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetManagedImages %s\n", projectName)
+	if debugStagesStorage() {
+		logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetManagedImages %s\n", projectName)
+	}
 
 	o := makeOptions(opts...)
 	tags, err := storage.Tags(ctx, storage.RepoAddress, o.dockerRegistryOptions...)
@@ -633,7 +655,9 @@ func (storage *RepoStagesStorage) ShouldFetchImage(ctx context.Context, img cont
 }
 
 func (storage *RepoStagesStorage) PutImageMetadata(ctx context.Context, projectName, imageNameOrManagedImageName, commit, stageID string) error {
-	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PutImageMetadata %s %s %s %s\n", projectName, imageNameOrManagedImageName, commit, stageID)
+	if debugStagesStorage() {
+		logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PutImageMetadata %s %s %s %s\n", projectName, imageNameOrManagedImageName, commit, stageID)
+	}
 
 	tagName := makeRepoImageMetadataTagName(imageNameOrManagedImageName, commit, stageID)
 	tags, err := storage.Tags(ctx, storage.RepoAddress)
@@ -650,7 +674,6 @@ func (storage *RepoStagesStorage) PutImageMetadata(ctx context.Context, projectN
 	}
 
 	fullImageName := makeRepoImageMetadataName(storage.RepoAddress, imageNameOrManagedImageName, commit, stageID)
-	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PutImageMetadata full image name: %s\n", fullImageName)
 
 	opts := &docker_registry.PushImageOptions{Labels: map[string]string{image.WerfLabel: projectName}}
 
@@ -669,7 +692,9 @@ func (storage *RepoStagesStorage) PutImageMetadata(ctx context.Context, projectN
 }
 
 func (storage *RepoStagesStorage) RmImageMetadata(ctx context.Context, projectName, imageNameOrManagedImageNameOrImageMetadataID, commit, stageID string) error {
-	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.RmImageMetadata %s %s %s %s\n", projectName, imageNameOrManagedImageNameOrImageMetadataID, commit, stageID)
+	if debugStagesStorage() {
+		logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.RmImageMetadata %s %s %s %s\n", projectName, imageNameOrManagedImageNameOrImageMetadataID, commit, stageID)
+	}
 
 	img, err := storage.selectMetadataNameImage(ctx, imageNameOrManagedImageNameOrImageMetadataID, commit, stageID)
 	if err != nil {
@@ -679,7 +704,6 @@ func (storage *RepoStagesStorage) RmImageMetadata(ctx context.Context, projectNa
 	if img == nil {
 		return nil
 	}
-	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.RmImageMetadata full image name: %s\n", img.Tag)
 
 	if err := storage.DockerRegistry.DeleteRepoImage(ctx, img); err != nil {
 		return fmt.Errorf("unable to remove repo image %s: %w", img.Tag, err)
@@ -726,17 +750,20 @@ func (storage *RepoStagesStorage) selectMetadataNameImage(ctx context.Context, i
 }
 
 func (storage *RepoStagesStorage) IsImageMetadataExist(ctx context.Context, projectName, imageNameOrManagedImageName, commit, stageID string, opts ...Option) (bool, error) {
-	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.IsImageMetadataExist %s %s %s %s\n", projectName, imageNameOrManagedImageName, commit, stageID)
+	if debugStagesStorage() {
+		logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.IsImageMetadataExist %s %s %s %s\n", projectName, imageNameOrManagedImageName, commit, stageID)
+	}
 
 	fullImageName := makeRepoImageMetadataName(storage.RepoAddress, imageNameOrManagedImageName, commit, stageID)
-	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.IsImageMetadataExist full image name: %s\n", fullImageName)
 
 	o := makeOptions(opts...)
 	return storage.DockerRegistry.IsTagExist(ctx, fullImageName, o.dockerRegistryOptions...)
 }
 
 func (storage *RepoStagesStorage) GetAllAndGroupImageMetadataByImageName(ctx context.Context, projectName string, imageNameOrManagedImageList []string, opts ...Option) (map[string]map[string][]string, map[string]map[string][]string, error) {
-	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetImageNameStageIDCommitList %s %s\n", projectName)
+	if debugStagesStorage() {
+		logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetImageNameStageIDCommitList %s\n", projectName)
+	}
 
 	o := makeOptions(opts...)
 	tags, err := storage.Tags(ctx, storage.RepoAddress, o.dockerRegistryOptions...)
@@ -773,7 +800,9 @@ func groupImageMetadataTagsByImageName(ctx context.Context, imageNameOrManagedIm
 		tagCommit := sluggedImageAndCommitParts[1]
 		tagStageID := sluggedImageAndCommitParts[2]
 
-		logboek.Context(ctx).Debug().LogF("Found image ID %s commit %s stage ID %s\n", tagImageNameID, tagCommit, tagStageID)
+		if debugStagesStorage() {
+			logboek.Context(ctx).Debug().LogF("Found image ID %s commit %s stage ID %s\n", tagImageNameID, tagCommit, tagStageID)
+		}
 
 		imageName, ok := imageMetadataIDImageNameOrManagedImageName[tagImageNameID]
 		if !ok {
@@ -867,11 +896,11 @@ func unslugImageName(tag string) string {
 }
 
 func (storage *RepoStagesStorage) PostMultiplatformImage(ctx context.Context, projectName, tag string, allPlatformsImages []*image.Info, platforms []string) error {
-	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PostMultiplatformImage by tag %s for project %s\n", tag, projectName)
+	if debugStagesStorage() {
+		logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PostMultiplatformImage by tag %s for project %s\n", tag, projectName)
+	}
 
 	fullImageName := fmt.Sprintf("%s:%s", storage.RepoAddress, tag)
-
-	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PostMultiplatformImage full image name: %s\n", fullImageName)
 
 	opts := docker_registry.ManifestListOptions{Manifests: allPlatformsImages, Platforms: platforms}
 	if err := storage.DockerRegistry.PushManifestList(ctx, fullImageName, opts); err != nil {
@@ -910,30 +939,26 @@ func (storage *RepoStagesStorage) FilterStageDescSetAndProcessRelatedData(_ cont
 }
 
 func (storage *RepoStagesStorage) Tags(ctx context.Context, reference string, opts ...docker_registry.Option) ([]string, error) {
-	var tags []string
-	if err := logboek.Context(ctx).Info().LogProcess("List tags for repo %s", reference).DoError(func() error {
-		var err error
-		tags, err = storage.DockerRegistry.Tags(ctx, reference, opts...)
-		if err != nil {
-			return err
-		}
-		logboek.Context(ctx).Info().LogF("Total tags listed: %d\n", len(tags))
-
-		if !storage.skipMetaCheck {
-			if err := storage.checkMeta(ctx, tags, opts...); err != nil {
-				logboek.Context(ctx).Warn().LogF("unable to check meta tags: %s\n", err)
-			}
-		}
-
-		return nil
-	}); err != nil {
+	startedAt := time.Now()
+	tags, err := storage.DockerRegistry.Tags(ctx, reference, opts...)
+	if err != nil {
 		return nil, err
 	}
+	logboek.Context(ctx).Debug().LogF("Listed %d tags for repo %s (%.2f seconds)\n", len(tags), reference, time.Since(startedAt).Seconds())
+
+	if !storage.skipMetaCheck {
+		if err := storage.checkMeta(ctx, tags, opts...); err != nil {
+			logboek.Context(ctx).Warn().LogF("unable to check meta tags: %s\n", err)
+		}
+	}
+
 	return tags, nil
 }
 
 func (storage *RepoStagesStorage) GetLastCleanupRecord(ctx context.Context, projectName string, opts ...Option) (*CleanupRecord, error) {
-	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetLastCleanupRecord for project %s\n", projectName)
+	if debugStagesStorage() {
+		logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetLastCleanupRecord for project %s\n", projectName)
+	}
 
 	o := makeOptions(opts...)
 	tags, err := storage.Tags(ctx, storage.RepoAddress, o.dockerRegistryOptions...)
@@ -971,30 +996,36 @@ func getLastCleanupRecord(ctx context.Context, registry docker_registry.Interfac
 				TimestampMillisec: timestampMillisec,
 			}
 
-			logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetLastCleanupRecord got record: %s\n", rec)
+			if debugStagesStorage() {
+				logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetLastCleanupRecord got record: %s\n", rec)
+			}
 			return rec, nil
 
 		}
 	}
 
-	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetLastCleanupRecord no records found\n")
+	if debugStagesStorage() {
+		logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.GetLastCleanupRecord no records found\n")
+	}
 
 	return nil, nil
 }
 
 func (storage *RepoStagesStorage) PostLastCleanupRecord(ctx context.Context, projectName string) error {
 	if storage.cleanupDisabled {
-		logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PostLastCleanupRecord cleanup is disabled for project %s\n", projectName)
+		if debugStagesStorage() {
+			logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PostLastCleanupRecord cleanup is disabled for project %s\n", projectName)
+		}
 		return nil
 	}
 
-	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PostLastCleanupRecord for project %s\n", projectName)
+	if debugStagesStorage() {
+		logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PostLastCleanupRecord for project %s\n", projectName)
+	}
 
 	fullImageName := fmt.Sprintf(RepoCleanUpRecord_ImageNameFormat, storage.RepoAddress)
 	now := time.Now()
 	timestampMillisec := now.UnixMilli()
-
-	logboek.Context(ctx).Debug().LogF("-- RepoStagesStorage.PostLastCleanupRecord full image name: %s\n", fullImageName)
 
 	opts := &docker_registry.PushImageOptions{
 		Labels: map[string]string{
