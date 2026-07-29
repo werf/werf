@@ -29,6 +29,7 @@ Types and scopes are defined in `CONTRIBUTING.md#conventions` — that file is t
 - **Header:** ≤ 72 characters. Nested scopes are allowed, comma-separated: `fix(build, stapel, import): …`.
 - **Subject:** imperative, lower-case, no trailing period.
 - **Body:** imperative; state the motivation for the change and contrast it with previous behavior.
+- NEVER include sensitive or customer-identifying details: client/company names, internal hostnames or filesystem paths, private build tags or version suffixes, credentials. Describe environments generically.
 
 ## Output
 
