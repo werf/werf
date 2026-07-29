@@ -268,7 +268,7 @@ setup:
 
 Функция `.Files.Glob` позволяет работать с файлами проекта и их содержимым по глобу. 
 
-Функция поддерживает [shell pattern matching](https://www.gnu.org/software/findutils/manual/html_node/find_html/Shell-Pattern-Matching.html) и `**`. Результаты вызова функции можно объединить, используя sprig-функцию [merge](https://github.com/Masterminds/sprig/blob/master/docs/dicts.md#merge-mustmerge) (к примеру, {% raw %}`{{ $filesDict := merge (.Files.Glob "glob1") (.Files.Glob "glob2") }}`{% endraw %})
+Функция поддерживает [shell pattern matching](https://www.gnu.org/software/findutils/manual/find.html#Shell-Pattern-Matching) и `**`. Результаты вызова функции можно объединить, используя sprig-функцию [merge](https://github.com/Masterminds/sprig/blob/master/docs/dicts.md#merge-mustmerge) (к примеру, {% raw %}`{{ $filesDict := merge (.Files.Glob "glob1") (.Files.Glob "glob2") }}`{% endraw %})
 
 __Синтаксис__:
 {% raw %}
