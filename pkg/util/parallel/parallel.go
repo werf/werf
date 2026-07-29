@@ -101,7 +101,10 @@ func DoTasksDynamic(ctx context.Context, options DoTasksOptions, next NextTaskFu
 }
 
 func runWorkers(ctx context.Context, numberOfWorkers int, options DoTasksOptions, workerLoop func(workerCtx context.Context, worker *Worker) error) error {
-	g, groupCtx := errgroup.WithContext(ctx)
+	groupParentCtx, cancelGroupParentCtx := context.WithCancel(ctx)
+	defer cancelGroupParentCtx()
+
+	g, groupCtx := errgroup.WithContext(groupParentCtx)
 
 	workers := make([]*Worker, 0, numberOfWorkers)
 	workerCtxs := make([]context.Context, 0, numberOfWorkers)
@@ -138,8 +141,8 @@ func runWorkers(ctx context.Context, numberOfWorkers int, options DoTasksOptions
 		workerCtxs = append(workerCtxs, workerCtx)
 	}
 
-	for _, worker := range workers {
-		workerCtx := workerCtxs[worker.ID]
+	for i, worker := range workers {
+		workerCtx := workerCtxs[i]
 
 		g.Go(func() error {
 			defer func() {
