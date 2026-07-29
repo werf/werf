@@ -63,7 +63,7 @@ func (stg *Copy) GetDependencies(ctx context.Context, c stage.Conveyor, cb conta
 	}
 
 	if stg.UsesBuildContext() {
-		if srcChecksum, err := buildContextArchive.CalculateGlobsChecksum(ctx, stg.instruction.Data.SourcePaths, false); err != nil {
+		if srcChecksum, err := buildContextArchive.CalculateGlobsChecksum(ctx, stg.instruction.Data.SourcePaths, container_backend.CalculateGlobsChecksumOptions{IncludeMatchedPaths: stg.instruction.Data.Parents}); err != nil {
 			return "", fmt.Errorf("unable to calculate build context globs checksum: %w", err)
 		} else {
 			args = append(args, "SourcesChecksum", srcChecksum)

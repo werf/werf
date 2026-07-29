@@ -130,7 +130,7 @@ func (a *BuildContextArchive) CleanupExtractedDir(ctx context.Context) {
 	}
 }
 
-func (a *BuildContextArchive) CalculateGlobsChecksum(ctx context.Context, globs []string, checkForArchives bool) (string, error) {
+func (a *BuildContextArchive) CalculateGlobsChecksum(ctx context.Context, globs []string, opts container_backend.CalculateGlobsChecksumOptions) (string, error) {
 	contextDir, err := a.ExtractOrGetExtractedDir(ctx)
 	if err != nil {
 		return "", fmt.Errorf("unable to get build context dir: %w", err)
@@ -142,7 +142,7 @@ func (a *BuildContextArchive) CalculateGlobsChecksum(ctx context.Context, globs 
 	}
 	logboek.Context(ctx).Debug().LogF("Calculating checksum for globs %v in context dir %q: will scan following dirs globs: %v\n", globs, contextDir, contextGlobs)
 
-	globStats, err := copier.Stat(contextDir, contextDir, copier.StatOptions{CheckForArchives: checkForArchives}, contextGlobs)
+	globStats, err := copier.Stat(contextDir, contextDir, copier.StatOptions{CheckForArchives: opts.CheckForArchives}, contextGlobs)
 	if err != nil {
 		return "", fmt.Errorf("unable to stat globs: %w", err)
 	}
@@ -164,12 +164,19 @@ func (a *BuildContextArchive) CalculateGlobsChecksum(ctx context.Context, globs 
 		}
 	}
 
+	sort.Strings(matches)
+	matches = util.UniqStrings(matches)
+
 	pathsChecksum, err := a.CalculatePathsChecksum(ctx, matches)
 	if err != nil {
 		return "", fmt.Errorf("unable to calculate build context paths checksum: %w", err)
 	}
 
-	return pathsChecksum, nil
+	if !opts.IncludeMatchedPaths {
+		return pathsChecksum, nil
+	}
+
+	return util.Sha256Hash(append(matches, pathsChecksum)...), nil
 }
 
 func (a *BuildContextArchive) CalculatePathsChecksum(ctx context.Context, paths []string) (string, error) {

@@ -57,7 +57,7 @@ func (stg *Add) GetDependencies(ctx context.Context, c stage.Conveyor, cb contai
 	}
 
 	if len(fileGlobSrc) > 0 {
-		if srcChecksum, err := buildContextArchive.CalculateGlobsChecksum(ctx, fileGlobSrc, true); err != nil {
+		if srcChecksum, err := buildContextArchive.CalculateGlobsChecksum(ctx, fileGlobSrc, container_backend.CalculateGlobsChecksumOptions{CheckForArchives: true}); err != nil {
 			return "", fmt.Errorf("unable to calculate build context globs checksum: %w", err)
 		} else {
 			args = append(args, "SourcesChecksum", srcChecksum)
