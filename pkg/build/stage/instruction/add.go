@@ -49,6 +49,11 @@ func (stg *Add) GetDependencies(ctx context.Context, c stage.Conveyor, cb contai
 	args = append(args, "Chown", stg.instruction.Data.Chown)
 	args = append(args, "Chmod", stg.instruction.Data.Chmod)
 
+	// appended only when set to keep digests of already built ADD stages intact
+	if len(stg.instruction.Data.ExcludePatterns) > 0 {
+		args = append(args, append([]string{"ExcludePatterns"}, stg.instruction.Data.ExcludePatterns...)...)
+	}
+
 	var fileGlobSrc []string
 	for _, src := range stg.instruction.Data.SourcePaths {
 		if !strings.HasPrefix(src, "http://") && !strings.HasPrefix(src, "https://") {

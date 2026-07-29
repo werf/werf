@@ -61,6 +61,9 @@ func (stg *Copy) GetDependencies(ctx context.Context, c stage.Conveyor, cb conta
 	if stg.instruction.Data.Parents {
 		args = append(args, "Parents", "true")
 	}
+	if len(stg.instruction.Data.ExcludePatterns) > 0 {
+		args = append(args, append([]string{"ExcludePatterns"}, stg.instruction.Data.ExcludePatterns...)...)
+	}
 
 	if stg.UsesBuildContext() {
 		if srcChecksum, err := buildContextArchive.CalculateGlobsChecksum(ctx, stg.instruction.Data.SourcePaths, container_backend.CalculateGlobsChecksumOptions{IncludeMatchedPaths: stg.instruction.Data.Parents}); err != nil {
