@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.0.1](https://github.com/werf/werf/compare/v3.0.0-alpha.2...v3.0.1) (2026-07-29)
+
+
+### Bug Fixes
+
+* **build, stapel, import:** build rsync without lchmod support ([#7695](https://github.com/werf/werf/issues/7695)) ([f55c669](https://github.com/werf/werf/commit/f55c66913460d4cb6b9a8735fc75d5bb8ff7a9c8))
+
+
+### Miscellaneous Chores
+
+* release 3.0.1 ([7c8239e](https://github.com/werf/werf/commit/7c8239ebbd4d99a81a0ae3343413d1989abfb0a9))
+
 ## [3.0.0-alpha.2](https://github.com/werf/werf/compare/v2.75.2...v3.0.0-alpha.2) (2026-07-29)
 
 
