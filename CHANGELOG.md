@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.0.2](https://github.com/werf/werf/compare/v3.0.1...v3.0.2) (2026-07-30)
+
+
+### Bug Fixes
+
+* **build:** assign per-image build-log progress index by real start order ([#7703](https://github.com/werf/werf/issues/7703)) ([7420f5f](https://github.com/werf/werf/commit/7420f5f5adee048916eb753dcd5e01d6b352e61e))
+
 ## [3.0.1](https://github.com/werf/werf/compare/v3.0.0-alpha.2...v3.0.1) (2026-07-29)
 
 
