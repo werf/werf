@@ -83,9 +83,9 @@ Print the report. Do not write it into the repository unless the user asks for a
 
 ## DoD Criteria
 
-| Criteria | Met? | Evidence |
-| :--- | :--- | :--- |
-| [criterion] | ✅/⚠️/❌ | file:line |
+| Criteria | Inferred? | Met? | Evidence |
+| :--- | :--- | :--- | :--- |
+| [criterion] | yes/no | ✅/⚠️/❌ | file:line |
 
 ## Issues
 
