@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -805,13 +806,22 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 	}
 
 	if logImages {
+		// Print in build-order (not nodes' topological order): the two can
+		// diverge, and listing topologically while showing each image's
+		// build-order index would make the summary numbers look scattered
+		// again, defeating the point of assigning them in the first place.
+		byBuildOrder := slices.Clone(nodes)
+		sort.Slice(byBuildOrder, func(i, j int) bool {
+			return byBuildOrder[i].GetBuildOrderIndex() < byBuildOrder[j].GetBuildOrderIndex()
+		})
+
 		blockMsg := "Build summary"
 		logboek.Context(ctx).LogBlock(blockMsg).
 			Options(func(options types.LogBlockOptionsInterface) {
 				options.Style(stylePkg.Highlight())
 			}).
 			Do(func() {
-				for _, img := range nodes {
+				for _, img := range byBuildOrder {
 					logboek.Context(ctx).LogLnHighlight("-", fmt.Sprintf("%s (%.2f seconds)", img.LogDetailedName(), img.BuildDuration.Seconds()))
 				}
 			})

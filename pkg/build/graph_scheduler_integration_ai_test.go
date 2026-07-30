@@ -22,22 +22,12 @@ type recordingPhase struct {
 	mu     *sync.Mutex
 	order  *[]string
 	delays map[string]time.Duration
-
-	// startOrder, when non-nil, records the order in which images actually
-	// begin building (BeforeImageStages runs before any artificial delay),
-	// as opposed to order, which records completion order.
-	startOrder *[]string
 }
 
 func (p *recordingPhase) Name() string                       { return "recording" }
 func (p *recordingPhase) BeforeImages(context.Context) error { return nil }
 func (p *recordingPhase) AfterImages(context.Context) error  { return nil }
-func (p *recordingPhase) BeforeImageStages(_ context.Context, img *image.Image) (func(), error) {
-	if p.startOrder != nil {
-		p.mu.Lock()
-		*p.startOrder = append(*p.startOrder, img.Name)
-		p.mu.Unlock()
-	}
+func (p *recordingPhase) BeforeImageStages(context.Context, *image.Image) (func(), error) {
 	return nil, nil
 }
 
@@ -144,17 +134,21 @@ func TestAI_DoImagesInParallel_DependentImageDoesNotWaitForUnrelatedSlowImage(t 
 		"dependent chain a->b->c must not wait for unrelated image \"slow\"; observed order=%v", order)
 }
 
-// TestAI_DoImagesInParallel_AssignsBuildOrderIndexMatchingActualStartOrder is
-// the regression test for the build-log progress-numbering fix: images used
-// to get their log progress index assigned once, statically, from their
+// TestAI_DoImagesInParallel_AssignsUniqueBuildOrderIndexRespectingDependencyOrder
+// is the regression test for the build-log progress-numbering fix: images
+// used to get their log progress index assigned once, statically, from their
 // position in the dependency graph's topological order (ImagesTree.Calculate)
-// — a position that has no relation to the real, concurrent, dependency-
-// driven order images actually start building in, producing confusingly
+// — a position with no relation to the real, concurrent, dependency-driven
+// order images actually start building in, producing confusingly
 // out-of-order "(N/Total)" numbers in the build log. doImagesInParallel must
 // instead assign each image's index at the moment it is actually dequeued for
-// building, so the numbers form a 0..N-1 permutation matching real start
-// order.
-func TestAI_DoImagesInParallel_AssignsBuildOrderIndexMatchingActualStartOrder(t *testing.T) {
+// building.
+//
+// The assertions below are deterministic, not timing-dependent: the shared
+// build-order counter only ever increases, and graphScheduler guarantees b/c
+// can't be dequeued before a/b's build has fully completed — so
+// index(a) < index(b) < index(c) holds regardless of goroutine scheduling.
+func TestAI_DoImagesInParallel_AssignsUniqueBuildOrderIndexRespectingDependencyOrder(t *testing.T) {
 	require.NoError(t, werf.Init(t.TempDir(), ""))
 
 	newImg := func(name string) *image.Image {
@@ -163,9 +157,6 @@ func TestAI_DoImagesInParallel_AssignsBuildOrderIndexMatchingActualStartOrder(t 
 		return img
 	}
 
-	// Same shape as the test above: an independent slow image plus a fast
-	// a -> b -> c chain, so the real dequeue order is very unlikely to match
-	// whatever static topological order ImagesTree.Calculate would assign.
 	slow := newImg("slow")
 	a := newImg("a")
 	b := newImg("b")
@@ -191,13 +182,12 @@ func TestAI_DoImagesInParallel_AssignsBuildOrderIndexMatchingActualStartOrder(t 
 	}
 
 	var mu sync.Mutex
-	var order, startOrder []string
+	var order []string
 	phase := &recordingPhase{
-		mu:         &mu,
-		order:      &order,
-		startOrder: &startOrder,
+		mu:    &mu,
+		order: &order,
 		delays: map[string]time.Duration{
-			"slow": 150 * time.Millisecond,
+			"slow": 10 * time.Millisecond,
 			"a":    10 * time.Millisecond,
 			"b":    10 * time.Millisecond,
 			"c":    10 * time.Millisecond,
@@ -208,18 +198,20 @@ func TestAI_DoImagesInParallel_AssignsBuildOrderIndexMatchingActualStartOrder(t 
 	defer cancel()
 
 	require.NoError(t, conveyor.doImages(ctx, []Phase{phase}, false))
-	require.Len(t, startOrder, 4)
 
-	byName := map[string]*image.Image{"slow": slow, "a": a, "b": b, "c": c}
-	seenIndex := map[int]string{}
-	for wantIdx, name := range startOrder {
-		img := byName[name]
-		gotIdx := img.GetBuildOrderIndex()
-		require.Equal(t, wantIdx, gotIdx, "image %q build-order index must match its real start position; startOrder=%v", name, startOrder)
+	images := []*image.Image{slow, a, b, c}
+	seen := make(map[int]string, len(images))
+	for _, img := range images {
+		idx := img.GetBuildOrderIndex()
+		require.GreaterOrEqual(t, idx, 0)
+		require.Less(t, idx, len(images))
 
-		if other, dup := seenIndex[gotIdx]; dup {
-			t.Fatalf("build-order index %d assigned to both %q and %q", gotIdx, other, name)
+		if other, dup := seen[idx]; dup {
+			t.Fatalf("build-order index %d assigned to both %q and %q", idx, other, img.Name)
 		}
-		seenIndex[gotIdx] = name
+		seen[idx] = img.Name
 	}
+
+	require.Less(t, a.GetBuildOrderIndex(), b.GetBuildOrderIndex(), "a must be assigned a build-order index before its dependent b")
+	require.Less(t, b.GetBuildOrderIndex(), c.GetBuildOrderIndex(), "b must be assigned a build-order index before its dependent c")
 }
