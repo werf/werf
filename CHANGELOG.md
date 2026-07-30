@@ -74,6 +74,13 @@
 
 * release 3.0.0-alpha.1 ([5753958](https://github.com/werf/werf/commit/5753958be672640442d6d193c2d6365f07c9c603))
 
+## [2.75.3](https://github.com/werf/werf/compare/v2.75.2...v2.75.3) (2026-07-29)
+
+
+### Bug Fixes
+
+* **host-cleanup:** stop wiping other werf versions' live git cache ([#7699](https://github.com/werf/werf/issues/7699)) ([3e43c28](https://github.com/werf/werf/commit/3e43c28ba80c0cc2d8ea1f52e5e2fb314977b6f1))
+
 ## [2.75.2](https://github.com/werf/werf/compare/v2.75.1...v2.75.2) (2026-07-27)
 
 
