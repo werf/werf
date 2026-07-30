@@ -21,6 +21,11 @@ var (
 	projectNameRegex   = regexp.MustCompile(`^(?:[a-z0-9]|[a-z0-9][a-z0-9-]*[a-z0-9])$`)
 	projectNameMaxSize = 50
 
+	// Slash-separated segments are allowed because hierarchical image names are a common
+	// layout in large projects. Requiring every segment to start with an alphanumeric
+	// rejects the empty segments that a partially rendered template produces.
+	imageNameRegex = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9_.-]*(/[A-Za-z0-9][A-Za-z0-9_.-]*)*$`)
+
 	kubernetesNamespaceMaxSize = 63
 	helmReleaseMaxSize         = 53
 )
@@ -86,6 +91,13 @@ func Project(name string) string {
 
 func ValidateProject(name string) error {
 	return validateProject(name)
+}
+
+func ValidateImage(name string) error {
+	if imageNameRegex.MatchString(name) {
+		return nil
+	}
+	return fmt.Errorf("image name %q should comply with regex %q", name, imageNameRegex)
 }
 
 func validateProject(name string) error {

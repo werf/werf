@@ -7,6 +7,8 @@ import (
 	"strings"
 
 	"github.com/distribution/reference"
+
+	"github.com/werf/werf/v2/pkg/slug"
 )
 
 type WerfConfig struct {
@@ -69,6 +71,16 @@ func (c *WerfConfig) GetImage(imageName string) ImageInterface {
 		if image.GetName() == imageName {
 			c.imagesCache[imageName] = image
 			return image
+		}
+	}
+
+	return nil
+}
+
+func (c *WerfConfig) validateImagesNames() error {
+	for _, image := range c.Images(false) {
+		if err := slug.ValidateImage(image.GetName()); err != nil {
+			return newDetailedConfigError(err.Error(), nil, image.rawDoc())
 		}
 	}
 
