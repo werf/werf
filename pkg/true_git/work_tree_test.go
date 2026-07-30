@@ -51,7 +51,7 @@ var _ = Describe("Work tree helpers", func() {
 
 				utils.RunSucceedCommand(ctx, mainWtDir, "git", "checkout", "-b", "main")
 
-				utils.RunSucceedCommand(ctx, mainWtDir, "git", "commit", "--allow-empty", "-m", "Initial commit")
+				gitCommitSucceed(ctx, mainWtDir, "--allow-empty", "-m", "Initial commit")
 
 				utils.RunSucceedCommand(ctx, mainWtDir, "git", "worktree", "add", sideWtDir)
 
@@ -81,7 +81,7 @@ var _ = Describe("Work tree helpers", func() {
 
 			utils.RunSucceedCommand(ctx, mainWtDir, "git", "checkout", "-b", "main")
 
-			utils.RunSucceedCommand(ctx, mainWtDir, "git", "commit", "--allow-empty", "-m", "Initial commit")
+			gitCommitSucceed(ctx, mainWtDir, "--allow-empty", "-m", "Initial commit")
 
 			utils.RunSucceedCommand(ctx, mainWtDir, "git", "worktree", "add", sideWtDir)
 		})

@@ -21,7 +21,7 @@ var _ = Describe("Git command", func() {
 
 		utils.RunSucceedCommand(ctx, gitRepoPath, "git", "checkout", "-b", "main")
 
-		utils.RunSucceedCommand(ctx, gitRepoPath, "git", "commit", "--allow-empty", "-m", "Initial commit")
+		gitCommitSucceed(ctx, gitRepoPath, "--allow-empty", "-m", "Initial commit")
 
 		Expect(Init(ctx, Options{})).Should(Succeed())
 	})

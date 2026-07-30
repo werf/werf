@@ -32,7 +32,7 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 
 		gitDir = filepath.Join(sourceWorkTreeDir, ".git")
 
-		utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "commit", "--allow-empty", "-m", "Initial commit")
+		gitCommitSucceed(ctx, sourceWorkTreeDir, "--allow-empty", "-m", "Initial commit")
 
 		sourceHeadCommit = utils.GetHeadCommit(ctx, sourceWorkTreeDir)
 
@@ -308,7 +308,7 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 				)
 				Expect(err).Should(Succeed())
 
-				utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "commit", "-m", "1")
+				gitCommitSucceed(ctx, sourceWorkTreeDir, "-m", "1")
 				sourceHeadCommit = utils.GetHeadCommit(ctx, sourceWorkTreeDir)
 
 				_, err = SyncSourceWorktreeWithServiceBranch(
@@ -328,7 +328,7 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 				ctx = logging.WithLogger(ctx)
 
 				utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "add", ".")
-				utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "commit", "-m", "1")
+				gitCommitSucceed(ctx, sourceWorkTreeDir, "-m", "1")
 				sourceHeadCommit = utils.GetHeadCommit(ctx, sourceWorkTreeDir)
 
 				_, err := SyncSourceWorktreeWithServiceBranch(
@@ -361,7 +361,7 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 
 				utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "mv", trackedFilePath, trackedFilePathMoved)
 				utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "add", ".")
-				utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "commit", "-m", "2")
+				gitCommitSucceed(ctx, sourceWorkTreeDir, "-m", "2")
 				sourceHeadCommit = utils.GetHeadCommit(ctx, sourceWorkTreeDir)
 
 				_, err = SyncSourceWorktreeWithServiceBranch(
