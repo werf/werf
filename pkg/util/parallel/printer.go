@@ -11,6 +11,22 @@ import (
 	"github.com/werf/logboek"
 )
 
+// Printer renders worker output as coherent, uninterrupted per-worker
+// blocks, in worker-ID order (see indexes/Swap/SetMax for how fail-fast
+// reordering changes that order on error) — it fully drains one worker's
+// stream before moving to the next, rather than interleaving concurrent
+// workers' output line by line. This keeps each block readable as a single
+// coherent log (e.g. one image's build steps in sequence) instead of a
+// scrambled interleaving of multiple images' output.
+//
+// Under DoTasksDynamic, a single worker can process many tasks back to
+// back over the run, so its printed block can span several unrelated
+// tasks' output concatenated together. The printed sequence across
+// DIFFERENT workers' blocks therefore reflects worker-ID order, not global
+// chronological (task-start/completion) order — any per-task ordinal a
+// caller embeds in its own output (see Conveyor's build-order index in
+// pkg/build/conveyor.go) can still appear non-contiguous across block
+// boundaries, even though it increases correctly within any single block.
 type Printer struct {
 	workers   []*Worker
 	indexes   []int

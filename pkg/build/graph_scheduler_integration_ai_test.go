@@ -134,7 +134,7 @@ func TestAI_DoImagesInParallel_DependentImageDoesNotWaitForUnrelatedSlowImage(t 
 		"dependent chain a->b->c must not wait for unrelated image \"slow\"; observed order=%v", order)
 }
 
-// TestAI_DoImagesInParallel_AssignsUniqueBuildOrderIndexRespectingDependencyOrder
+// TestAI_DoImagesInParallel_AssignsBuildOrderIndexByRealDequeueNotStaticTopology
 // is the regression test for the build-log progress-numbering fix: images
 // used to get their log progress index assigned once, statically, from their
 // position in the dependency graph's topological order (ImagesTree.Calculate)
@@ -144,11 +144,25 @@ func TestAI_DoImagesInParallel_DependentImageDoesNotWaitForUnrelatedSlowImage(t 
 // instead assign each image's index at the moment it is actually dequeued for
 // building.
 //
-// The assertions below are deterministic, not timing-dependent: the shared
-// build-order counter only ever increases, and graphScheduler guarantees b/c
-// can't be dequeued before a/b's build has fully completed — so
-// index(a) < index(b) < index(c) holds regardless of goroutine scheduling.
-func TestAI_DoImagesInParallel_AssignsUniqueBuildOrderIndexRespectingDependencyOrder(t *testing.T) {
+// The graph is built with "slow" listed LAST (images passed to
+// BuildImagesGraph as [a, b, c, slow]), which — because "slow" has no
+// dependencies and is a DFS leaf reachable only after a/b/c in that input
+// order — places it LAST (index 3) in the graph's static topological order
+// (graph.Nodes()). If build-order numbering regressed back to that static
+// position, "slow" would get index 3. But "slow" has no dependencies, so the
+// real scheduler makes it ready to build from the very start, alongside "a"
+// — it must get an early real build-order index (0 or 1), not the late
+// static one. This is what actually distinguishes "assigned by real dequeue
+// order" from "assigned by static topological position": a graph where a
+// dependency-free image's real-time readiness and its topological-sort
+// position disagree.
+//
+// The a < b < c assertion is a separate, always-true invariant (the shared
+// build-order counter only increases, and graphScheduler guarantees b/c
+// can't be dequeued before a/b's build has fully completed) kept here as a
+// basic sanity check, not the core regression signal — a purely topological
+// assignment would also happen to satisfy it for a simple chain.
+func TestAI_DoImagesInParallel_AssignsBuildOrderIndexByRealDequeueNotStaticTopology(t *testing.T) {
 	require.NoError(t, werf.Init(t.TempDir(), ""))
 
 	newImg := func(name string) *image.Image {
@@ -164,7 +178,8 @@ func TestAI_DoImagesInParallel_AssignsUniqueBuildOrderIndexRespectingDependencyO
 	b.AddDependencyName("a")
 	c.AddDependencyName("b")
 
-	graph, err := image.BuildImagesGraph([]*image.Image{slow, a, b, c})
+	// "slow" listed last on purpose — see the doc comment above.
+	graph, err := image.BuildImagesGraph([]*image.Image{a, b, c, slow})
 	require.NoError(t, err)
 
 	tree := &image.ImagesTree{}
@@ -214,4 +229,12 @@ func TestAI_DoImagesInParallel_AssignsUniqueBuildOrderIndexRespectingDependencyO
 
 	require.Less(t, a.GetBuildOrderIndex(), b.GetBuildOrderIndex(), "a must be assigned a build-order index before its dependent b")
 	require.Less(t, b.GetBuildOrderIndex(), c.GetBuildOrderIndex(), "b must be assigned a build-order index before its dependent c")
+
+	// The core regression signal: "slow" has no dependencies and is ready to
+	// build from the very start (same as "a"), so it must get an early
+	// build-order index. Under the old, reverted-to bug (static topological
+	// index), "slow" would instead get index 3 — the last position, because
+	// it was listed last in the input passed to BuildImagesGraph above.
+	require.LessOrEqual(t, slow.GetBuildOrderIndex(), 1,
+		"\"slow\" has no dependencies and must be dequeued near the start (index 0 or 1), not assigned the static topological tail position (3) it would get under the old bug; got %d", slow.GetBuildOrderIndex())
 }
