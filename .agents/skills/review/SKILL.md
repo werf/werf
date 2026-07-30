@@ -7,6 +7,10 @@ description: Code review of a pull request, branch, or diff. Covers technical, p
 
 Evidence-based and blunt. Every finding references a specific `file:line`, function, or component. NEVER sugarcoat, NEVER pad with praise, NEVER report a concern that is not grounded in the diff or the codebase. Style preferences are not defects — but a violation of `AGENTS.md` or `CODESTYLE.md` is a convention finding, not a preference.
 
+## If you are the diff's author
+
+If you wrote the diff you are reviewing now, say so explicitly in the report's Verdict, and treat this pass as necessary but insufficient. Self-review — even done adversarially, even after mutating your own tests — inherits your own design assumptions: it reliably catches localized bugs and weak tests, but is a poor substitute for a second opinion on whether the overall approach is sound. For anything beyond a mechanical or low-risk change, recommend an independently invoked reviewer (a fresh session/agent with no memory of your rationale, or an external tool) before merge, and say so in the report rather than treating your own pass as the final word.
+
 ## Before reviewing
 
 1. Ask the user for numbered acceptance criteria (DoD). If there are none, derive them from the PR description or the linked issue, mark them `(inferred)`, and proceed — do not stall, and do not invent criteria silently.
@@ -30,16 +34,7 @@ Cover the ones the diff actually touches; stay silent about the rest.
 
 ## Tests as evidence
 
-Passing tests, high coverage, and the author's confidence are not evidence of correctness, whoever wrote the diff. Ask what evidence would fail if the implementation were wrong.
-
-Would each load-bearing test fail if:
-
-- the core behavior were removed;
-- a condition were inverted;
-- the return value were a constant;
-- a side effect happened zero or two times?
-
-Name the smallest mutation that should be tried. A suite that cannot detect a plausible fault is weak even when green.
+Passing tests, high coverage, and the author's confidence are not evidence of correctness, whoever wrote the diff. Read `test-the-tests/SKILL.md` and apply it to every load-bearing test: verify by mutating the implementation and confirming the test fails, not by reading the assertions and trusting they'd catch a regression.
 
 High risk by default:
 
