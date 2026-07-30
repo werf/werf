@@ -291,11 +291,11 @@ Multi-platform builds use the cross-platform instruction execution mechanics pro
 
 The table below summarizes support of multi-platform building for different configuration syntaxes, building modes, and build backends:
 
-|                       | buildah      | docker-server    |
-| --------------------- | ------------ | ---------------- |
-| **Dockerfile**        | full support | full support     |
-| **staged Dockerfile** | full support | no support       |
-| **stapel**            | full support | linux/amd64 only |
+|                       | buildah      | docker-server                    |
+| --------------------- | ------------ | -------------------------------- |
+| **Dockerfile**        | full support | full support                     |
+| **staged Dockerfile** | full support | no support                       |
+| **stapel**            | full support | linux/amd64 and linux/arm64 only |
 
 ### Building for single target platform
 
