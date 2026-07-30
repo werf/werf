@@ -238,3 +238,69 @@ func TestAI_DoImagesInParallel_AssignsBuildOrderIndexByRealDequeueNotStaticTopol
 	require.LessOrEqual(t, slow.GetBuildOrderIndex(), 1,
 		"\"slow\" has no dependencies and must be dequeued near the start (index 0 or 1), not assigned the static topological tail position (3) it would get under the old bug; got %d", slow.GetBuildOrderIndex())
 }
+
+// TestAI_DoImagesInParallel_AnnotatesEachImageWithARealWorkerID is the
+// end-to-end test for the worker-ID log annotation: it exercises the real
+// path — parallel.DoTasksDynamic stashing the worker ID into the task
+// context, Conveyor.doImagesInParallel reading it back out via
+// ctx.Value(parallel.CtxBackgroundTaskIDKey) and calling
+// Image.SetWorkerID — rather than only unit-testing the string formatting
+// in isolation (pkg/logging/image_ai_test.go). With 4 independent images
+// and exactly 2 workers, both worker IDs must actually get used (not just
+// a default/zero value), and every image must end up with a worker ID set.
+func TestAI_DoImagesInParallel_AnnotatesEachImageWithARealWorkerID(t *testing.T) {
+	require.NoError(t, werf.Init(t.TempDir(), ""))
+
+	newImg := func(name string) *image.Image {
+		img := &image.Image{Name: name, TargetPlatform: "linux/amd64"}
+		img.ForceTargetPlatformLogging = true
+		return img
+	}
+
+	images := []*image.Image{newImg("w1"), newImg("w2"), newImg("w3"), newImg("w4")}
+
+	graph, err := image.BuildImagesGraph([]*image.Image{images[0], images[1], images[2], images[3]})
+	require.NoError(t, err)
+
+	tree := &image.ImagesTree{}
+	tree.SetImagesGraphForTests(graph)
+
+	conveyor := &Conveyor{
+		ConveyorOptions: ConveyorOptions{
+			Parallel:           true,
+			ParallelTasksLimit: 2,
+		},
+		imagesTree:       tree,
+		stageImages:      make(map[string]*stage.StageImage),
+		serviceRWMutex:   map[string]*sync.RWMutex{},
+		stageDigestMutex: map[string]*sync.Mutex{},
+	}
+
+	var mu sync.Mutex
+	var order []string
+	phase := &recordingPhase{
+		mu:    &mu,
+		order: &order,
+		delays: map[string]time.Duration{
+			"w1": 20 * time.Millisecond,
+			"w2": 20 * time.Millisecond,
+			"w3": 20 * time.Millisecond,
+			"w4": 20 * time.Millisecond,
+		},
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	require.NoError(t, conveyor.doImages(ctx, []Phase{phase}, false))
+
+	seenWorkers := map[int]bool{}
+	for _, img := range images {
+		workerID, ok := img.GetWorkerID()
+		require.True(t, ok, "image %q must have a worker ID set by the real doImagesInParallel path", img.Name)
+		require.True(t, workerID == 0 || workerID == 1, "worker ID for %q must be 0 or 1 (ParallelTasksLimit=2), got %d", img.Name, workerID)
+		seenWorkers[workerID] = true
+	}
+
+	require.Len(t, seenWorkers, 2, "both workers must actually have been used across 4 images with ParallelTasksLimit=2, not just one")
+}
