@@ -24,7 +24,7 @@ Match the description to the size of the diff. Two tiers, nothing in between.
 
 **Small** — one logical change, under ~20 changed lines, no user-visible behavior change (test fix, typo, non-portable flag, dependency bump): no headings at all. One to three sentences — what was wrong, what it is now. If the title already says it, one sentence is the whole description.
 
-**Everything else** — the structure below. *Summary*, *Why* and *Verification* are mandatory; a section earns its place only by telling the reviewer something the title and the diff do not. Omit *Key changes* when it would only restate *Summary*, and *Review focus / risks* when there is genuinely nothing to guide the reviewer to. NEVER rename or substitute the sections.
+**Everything else** — the structure below. A section earns its place only by telling the reviewer something the title and the diff do not. A section written to complete the template is slop. NEVER rename or substitute the sections.
 
 ```
 ## Summary
