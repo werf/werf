@@ -395,6 +395,11 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 		},
 	}
 
+	denoBinaryPath, err := common.GetDenoBinaryPath(ctx, &commonCmdData)
+	if err != nil {
+		return fmt.Errorf("get Deno binary path: %w", err)
+	}
+
 	if err = createNewBundle(
 		ctx,
 		serviceValues,
@@ -405,7 +410,7 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 		chartDir,
 		bundleTmpDir,
 		chartVersion,
-		commonCmdData.DenoBinaryPath,
+		denoBinaryPath,
 		&values.Options{
 			ValueFiles:    commonCmdData.ValuesFiles,
 			StringValues:  commonCmdData.ValuesSetString,

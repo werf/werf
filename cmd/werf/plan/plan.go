@@ -465,6 +465,11 @@ func run(
 	})
 	engine.Debug = commonCmdData.DebugTemplates
 
+	denoBinaryPath, err := common.GetDenoBinaryPath(ctx, &commonCmdData)
+	if err != nil {
+		return fmt.Errorf("get Deno binary path: %w", err)
+	}
+
 	if _, err := action.ReleasePlanInstall(ctx, releaseName, releaseNamespace, action.ReleasePlanInstallOptions{
 		KubeConnectionOptions:      commonCmdData.KubeConnectionOptions,
 		ChartRepoConnectionOptions: commonCmdData.ChartRepoConnectionOptions,
@@ -509,7 +514,7 @@ func run(
 			ShowInsignificantDiffs: cmdData.ShowInsignificantDiffs,
 		},
 		IgnoreBundleJS: commonCmdData.IgnoreBundleJS,
-		DenoBinaryPath: commonCmdData.DenoBinaryPath,
+		DenoBinaryPath: denoBinaryPath,
 	}); err != nil {
 		return fmt.Errorf("release plan install: %w", err)
 	}

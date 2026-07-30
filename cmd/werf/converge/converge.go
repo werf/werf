@@ -457,6 +457,11 @@ func run(
 	})
 	engine.Debug = commonCmdData.DebugTemplates
 
+	denoBinaryPath, err := common.GetDenoBinaryPath(ctx, &commonCmdData)
+	if err != nil {
+		return ctx, fmt.Errorf("get Deno binary path: %w", err)
+	}
+
 	if err := action.ReleaseInstall(ctx, releaseName, releaseNamespace, action.ReleaseInstallOptions{
 		KubeConnectionOptions:      commonCmdData.KubeConnectionOptions,
 		ChartRepoConnectionOptions: commonCmdData.ChartRepoConnectionOptions,
@@ -486,7 +491,7 @@ func run(
 		ShowSubchartNotes:          commonCmdData.ShowSubchartNotes,
 		TemplatesAllowDNS:          commonCmdData.TemplatesAllowDNS,
 		IgnoreBundleJS:             commonCmdData.IgnoreBundleJS,
-		DenoBinaryPath:             commonCmdData.DenoBinaryPath,
+		DenoBinaryPath:             denoBinaryPath,
 		ReleaseInstallRuntimeOptions: nelmcommon.ReleaseInstallRuntimeOptions{
 			ResourceValidationOptions:   commonCmdData.ResourceValidationOptions,
 			DefaultDeletePropagation:    commonCmdData.DefaultDeletePropagation,

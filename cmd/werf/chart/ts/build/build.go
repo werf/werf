@@ -99,9 +99,14 @@ func runChartTSBuild(ctx context.Context, chartDir string) error {
 		ColorMode: *commonCmdData.LogColorMode,
 	})
 
+	denoBinaryPath, err := common.GetDenoBinaryPath(ctx, &commonCmdData)
+	if err != nil {
+		return fmt.Errorf("get Deno binary path: %w", err)
+	}
+
 	if err := action.ChartTSBuild(ctx, action.ChartTSBuildOptions{
 		ChartDirPath:   chartPath,
-		DenoBinaryPath: commonCmdData.DenoBinaryPath,
+		DenoBinaryPath: denoBinaryPath,
 	}); err != nil {
 		return fmt.Errorf("chart ts build: %w", err)
 	}

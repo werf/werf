@@ -242,6 +242,11 @@ func runApply(ctx context.Context) error {
 	})
 	engine.Debug = commonCmdData.DebugTemplates
 
+	denoBinaryPath, err := common.GetDenoBinaryPath(ctx, &commonCmdData)
+	if err != nil {
+		return fmt.Errorf("get Deno binary path: %w", err)
+	}
+
 	if err := action.ReleaseInstall(ctx, releaseName, releaseNamespace, action.ReleaseInstallOptions{
 		KubeConnectionOptions:      commonCmdData.KubeConnectionOptions,
 		ChartRepoConnectionOptions: commonCmdData.ChartRepoConnectionOptions,
@@ -284,7 +289,7 @@ func runApply(ctx context.Context) error {
 			ReleaseStorageSQLConnection: commonCmdData.ReleaseStorageSQLConnection,
 		},
 		IgnoreBundleJS: commonCmdData.IgnoreBundleJS,
-		DenoBinaryPath: commonCmdData.DenoBinaryPath,
+		DenoBinaryPath: denoBinaryPath,
 	}); err != nil {
 		return fmt.Errorf("release install: %w", err)
 	}
