@@ -788,6 +788,9 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 	}, scheduler.next, func(ctx context.Context, taskId int) error {
 		taskImage := nodes[taskId]
 		taskImage.SetBuildOrderIndex(int(buildOrder.Add(1)) - 1)
+		if workerID, ok := ctx.Value(parallel.CtxBackgroundTaskIDKey).(int); ok {
+			taskImage.SetWorkerID(workerID)
+		}
 
 		var taskPhases []Phase
 		for _, phase := range phases {

@@ -133,6 +133,9 @@ type Image struct {
 	logImageIndex  int
 	logTotalImages int
 
+	hasWorkerID bool
+	workerID    int
+
 	// dependencyNames holds the names (same TargetPlatform) of the images this
 	// image must be fully built after: base image (fromImage), import/artifact
 	// sources, explicit `dependencies:`, and — for staged Dockerfile images —
@@ -170,7 +173,13 @@ func (i *Image) LogDetailedName() string {
 	if i.ShouldLogPlatform() {
 		targetPlatformForLog = i.TargetPlatform
 	}
-	return logging.ImageLogProcessName(i.Name, i.IsFinal, targetPlatformForLog, logging.WithProgress(i.logImageIndex+1, i.logTotalImages))
+
+	opts := []logging.Option{logging.WithProgress(i.logImageIndex+1, i.logTotalImages)}
+	if i.hasWorkerID {
+		opts = append(opts, logging.WithWorker(i.workerID))
+	}
+
+	return logging.ImageLogProcessName(i.Name, i.IsFinal, targetPlatformForLog, opts...)
 }
 
 // LogPlanName is like LogDetailedName but without a progress number: it is
@@ -199,6 +208,23 @@ func (i *Image) SetBuildOrderIndex(index int) {
 // SetBuildOrderIndex).
 func (i *Image) GetBuildOrderIndex() int {
 	return i.logImageIndex
+}
+
+// SetWorkerID annotates the image's log lines (see LogDetailedName) with
+// the parallel worker that is building it, so a jump in the build-order
+// index between consecutive log lines can be told apart from a worker
+// change (parallel.Printer prints one worker's whole output before moving
+// to the next) rather than looking like a scrambled sequence.
+func (i *Image) SetWorkerID(id int) {
+	i.hasWorkerID = true
+	i.workerID = id
+}
+
+// GetWorkerID returns the worker ID set via SetWorkerID and whether one was
+// ever set (false for images built via the sequential path, which has no
+// concept of parallel workers).
+func (i *Image) GetWorkerID() (int, bool) {
+	return i.workerID, i.hasWorkerID
 }
 
 func (i *Image) LogProcessStyle() color.Style {
