@@ -22,9 +22,11 @@ var (
 	projectNameMaxSize = 50
 
 	// Slash-separated segments are allowed because hierarchical image names are a common
-	// layout in large projects. Requiring every segment to start with an alphanumeric
-	// rejects the empty segments that a partially rendered template produces.
-	imageNameRegex = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9_.-]*(/[A-Za-z0-9][A-Za-z0-9_.-]*)*$`)
+	// layout in large projects. Requiring every segment to both start and end with an
+	// alphanumeric rejects the dangling separators that a partially rendered template
+	// produces, whichever side of the name the empty value lands on.
+	imageNameSegment = `[A-Za-z0-9](?:[A-Za-z0-9_.-]*[A-Za-z0-9])?`
+	imageNameRegex   = regexp.MustCompile(`^` + imageNameSegment + `(?:/` + imageNameSegment + `)*$`)
 
 	kubernetesNamespaceMaxSize = 63
 	helmReleaseMaxSize         = 53
