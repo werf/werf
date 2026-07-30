@@ -9,7 +9,7 @@ import (
 
 func runGitAI(t *testing.T, dir string, args ...string) string {
 	t.Helper()
-	cmd := exec.Command("git", append([]string{"-C", dir}, args...)...)
+	cmd := exec.Command("git", append([]string{"-C", dir, "-c", "commit.gpgsign=false"}, args...)...)
 	out, err := cmd.CombinedOutput()
 	require.NoError(t, err, "git %v: %s", args, out)
 	return string(out)
