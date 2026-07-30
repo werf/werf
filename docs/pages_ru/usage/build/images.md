@@ -131,6 +131,25 @@ dockerfile: Dockerfile
 
 Для образа `docs` будет использоваться Dockerfile по пути `docs/Dockerfile`, а для `service` — `service/Dockerfile`.
 
+#### Исключение файлов из сборочного контекста
+
+werf учитывает файл `.dockerignore`. В директории контекста сначала ищется `<dockerfile>.dockerignore`, затем `.dockerignore`; используется только первый найденный файл.
+
+```yaml
+project: example
+configVersion: 1
+---
+image: app
+context: app
+dockerfile: Dockerfile
+```
+
+Для такой конфигурации werf прочитает `app/Dockerfile.dockerignore`, а если его нет — `app/.dockerignore`.
+
+Исключённые файлы не попадают в сборочный контекст и не учитываются при расчёте дайджеста образа, поэтому их изменение не приводит к пересборке.
+
+Файл `.dockerignore` является конфигурационным, поэтому по умолчанию должен быть закоммичен в Git. Чтобы использовать незакоммиченный файл, разрешите его директивой `allowUncommittedDockerignoreFiles` в [werf-giterminism.yaml]({{ "reference/werf_giterminism_yaml.html" | true_relative_url }}).
+
 #### Использование сборочных секретов
 
 > **ЗАМЕЧАНИЕ:** Чтобы использовать секреты в сборках, их нужно явно разрешить в настройках гитерминизма. Подробнее ([здесь]({{ "/usage/project_configuration/giterminism.html#использование-сборочных-секретов" | true_relative_url }}))

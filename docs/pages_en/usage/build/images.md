@@ -131,6 +131,25 @@ dockerfile: Dockerfile
 
 In the example above, werf will use the Dockerfile at `docs/Dockerfile` to build the `docs` image and the Dockerfile at `service/Dockerfile` to build the `service` image.
 
+#### Excluding files from the build context
+
+werf honours the `.dockerignore` file. Inside the context directory it looks for `<dockerfile>.dockerignore` first and falls back to `.dockerignore`; only the first file found is used.
+
+```yaml
+project: example
+configVersion: 1
+---
+image: app
+context: app
+dockerfile: Dockerfile
+```
+
+For this configuration werf reads `app/Dockerfile.dockerignore`, or `app/.dockerignore` if the former does not exist.
+
+Excluded files are neither sent to the build context nor taken into account when calculating the image digest, so changing them does not cause a rebuild.
+
+The `.dockerignore` file is a configuration file, so by default it must be committed to Git. To use an uncommitted one, allow it with the `allowUncommittedDockerignoreFiles` directive in [werf-giterminism.yaml]({{"reference/werf_giterminism_yaml.html" | true_relative_url }}).
+
 #### Using build secrets
 
 > **NOTE:** To use secrets in builds, you need to enable them explicitly in the giterminism settings. Learn more ([here]({{ "/usage/project_configuration/giterminism.html#using-build-secrets" | true_relative_url }}))
