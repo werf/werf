@@ -36,16 +36,7 @@ Cover the ones the diff actually touches; stay silent about the rest.
 
 Passing tests, high coverage, and the author's confidence are not evidence of correctness, whoever wrote the diff. Read `test-the-tests/SKILL.md` and apply it to every load-bearing test: verify by mutating the implementation and confirming the test fails, not by reading the assertions and trusting they'd catch a regression.
 
-High risk by default:
-
-- weakened or deleted assertions;
-- golden files updated without an explained behavioral change;
-- skipped, quarantined, or filtered tests;
-- lowered quality thresholds;
-- test-only branches or CI-environment detection;
-- fixture-specific hardcoding;
-- critical behavior covered only by mocks;
-- verification scripts changed together with the implementation.
+If the diff's author is an agent, or the diff touches tests or verification infrastructure, also read `agent-code-review/SKILL.md` — it covers check-gaming detection (weakened assertions, quietly skipped tests, mocked-out critical behavior, and more) in one place, so this list doesn't drift from it again.
 
 ## Product perspective
 
