@@ -22,12 +22,22 @@ type recordingPhase struct {
 	mu     *sync.Mutex
 	order  *[]string
 	delays map[string]time.Duration
+
+	// startOrder, when non-nil, records the order in which images actually
+	// begin building (BeforeImageStages runs before any artificial delay),
+	// as opposed to order, which records completion order.
+	startOrder *[]string
 }
 
 func (p *recordingPhase) Name() string                       { return "recording" }
 func (p *recordingPhase) BeforeImages(context.Context) error { return nil }
 func (p *recordingPhase) AfterImages(context.Context) error  { return nil }
-func (p *recordingPhase) BeforeImageStages(context.Context, *image.Image) (func(), error) {
+func (p *recordingPhase) BeforeImageStages(_ context.Context, img *image.Image) (func(), error) {
+	if p.startOrder != nil {
+		p.mu.Lock()
+		*p.startOrder = append(*p.startOrder, img.Name)
+		p.mu.Unlock()
+	}
 	return nil, nil
 }
 
@@ -132,4 +142,84 @@ func TestAI_DoImagesInParallel_DependentImageDoesNotWaitForUnrelatedSlowImage(t 
 	// 10ms on a/b/c, both b and c finish well before "slow" does.
 	require.Less(t, indexOf("c"), indexOf("slow"),
 		"dependent chain a->b->c must not wait for unrelated image \"slow\"; observed order=%v", order)
+}
+
+// TestAI_DoImagesInParallel_AssignsBuildOrderIndexMatchingActualStartOrder is
+// the regression test for the build-log progress-numbering fix: images used
+// to get their log progress index assigned once, statically, from their
+// position in the dependency graph's topological order (ImagesTree.Calculate)
+// — a position that has no relation to the real, concurrent, dependency-
+// driven order images actually start building in, producing confusingly
+// out-of-order "(N/Total)" numbers in the build log. doImagesInParallel must
+// instead assign each image's index at the moment it is actually dequeued for
+// building, so the numbers form a 0..N-1 permutation matching real start
+// order.
+func TestAI_DoImagesInParallel_AssignsBuildOrderIndexMatchingActualStartOrder(t *testing.T) {
+	require.NoError(t, werf.Init(t.TempDir(), ""))
+
+	newImg := func(name string) *image.Image {
+		img := &image.Image{Name: name, TargetPlatform: "linux/amd64"}
+		img.ForceTargetPlatformLogging = true
+		return img
+	}
+
+	// Same shape as the test above: an independent slow image plus a fast
+	// a -> b -> c chain, so the real dequeue order is very unlikely to match
+	// whatever static topological order ImagesTree.Calculate would assign.
+	slow := newImg("slow")
+	a := newImg("a")
+	b := newImg("b")
+	c := newImg("c")
+	b.AddDependencyName("a")
+	c.AddDependencyName("b")
+
+	graph, err := image.BuildImagesGraph([]*image.Image{slow, a, b, c})
+	require.NoError(t, err)
+
+	tree := &image.ImagesTree{}
+	tree.SetImagesGraphForTests(graph)
+
+	conveyor := &Conveyor{
+		ConveyorOptions: ConveyorOptions{
+			Parallel:           true,
+			ParallelTasksLimit: -1,
+		},
+		imagesTree:       tree,
+		stageImages:      make(map[string]*stage.StageImage),
+		serviceRWMutex:   map[string]*sync.RWMutex{},
+		stageDigestMutex: map[string]*sync.Mutex{},
+	}
+
+	var mu sync.Mutex
+	var order, startOrder []string
+	phase := &recordingPhase{
+		mu:         &mu,
+		order:      &order,
+		startOrder: &startOrder,
+		delays: map[string]time.Duration{
+			"slow": 150 * time.Millisecond,
+			"a":    10 * time.Millisecond,
+			"b":    10 * time.Millisecond,
+			"c":    10 * time.Millisecond,
+		},
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	require.NoError(t, conveyor.doImages(ctx, []Phase{phase}, false))
+	require.Len(t, startOrder, 4)
+
+	byName := map[string]*image.Image{"slow": slow, "a": a, "b": b, "c": c}
+	seenIndex := map[int]string{}
+	for wantIdx, name := range startOrder {
+		img := byName[name]
+		gotIdx := img.GetBuildOrderIndex()
+		require.Equal(t, wantIdx, gotIdx, "image %q build-order index must match its real start position; startOrder=%v", name, startOrder)
+
+		if other, dup := seenIndex[gotIdx]; dup {
+			t.Fatalf("build-order index %d assigned to both %q and %q", gotIdx, other, name)
+		}
+		seenIndex[gotIdx] = name
+	}
 }

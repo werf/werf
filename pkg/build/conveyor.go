@@ -10,6 +10,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/opencontainers/go-digest"
@@ -758,7 +759,7 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 				for levelId, level := range graph.Levels() {
 					logboek.Context(ctx).LogFHighlight("Level #%d:\n", levelId)
 					for _, img := range level {
-						logboek.Context(ctx).LogLnHighlight("-", img.LogDetailedName())
+						logboek.Context(ctx).LogLnHighlight("-", img.LogPlanName())
 					}
 					logboek.Context(ctx).LogOptionalLn()
 				}
@@ -772,11 +773,20 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 
 	scheduler := newGraphScheduler(graph)
 
+	// buildOrder assigns each image its build-time log progress index in the
+	// order it is actually handed out for building, instead of the static
+	// topological position ImagesTree.Calculate assigned it — the two can
+	// diverge arbitrarily under concurrent, dependency-driven scheduling, and
+	// only the former is a meaningful "N/Total" progress indicator to a user
+	// watching the log.
+	var buildOrder atomic.Int64
+
 	if err := parallel.DoTasksDynamic(ctx, parallel.DoTasksOptions{
 		InitDockerCLIForEachWorker: true,
 		MaxNumberOfWorkers:         numberOfWorkers,
 	}, scheduler.next, func(ctx context.Context, taskId int) error {
 		taskImage := nodes[taskId]
+		taskImage.SetBuildOrderIndex(int(buildOrder.Add(1)) - 1)
 
 		var taskPhases []Phase
 		for _, phase := range phases {
