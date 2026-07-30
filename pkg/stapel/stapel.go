@@ -235,5 +235,15 @@ func CreateScript(path string, lines []string) error {
 	scriptLines = append(scriptLines, lines...)
 	scriptData := []byte(strings.Join(scriptLines, "\n") + "\n")
 
-	return os.WriteFile(path, scriptData, os.FileMode(0o667))
+	if err := os.WriteFile(path, scriptData, 0o755); err != nil {
+		return fmt.Errorf("write script %s: %w", path, err)
+	}
+
+	// os.WriteFile applies the process umask, which can leave the script without any
+	// executable bit, and then even root cannot run it.
+	if err := os.Chmod(path, 0o755); err != nil {
+		return fmt.Errorf("chmod script %s: %w", path, err)
+	}
+
+	return nil
 }
