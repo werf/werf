@@ -133,6 +133,9 @@ type Image struct {
 	logImageIndex  int
 	logTotalImages int
 
+	hasWorkerID bool
+	workerID    int
+
 	// dependencyNames holds the names (same TargetPlatform) of the images this
 	// image must be fully built after: base image (fromImage), import/artifact
 	// sources, explicit `dependencies:`, and — for staged Dockerfile images —
@@ -170,7 +173,58 @@ func (i *Image) LogDetailedName() string {
 	if i.ShouldLogPlatform() {
 		targetPlatformForLog = i.TargetPlatform
 	}
-	return logging.ImageLogProcessName(i.Name, i.IsFinal, targetPlatformForLog, logging.WithProgress(i.logImageIndex+1, i.logTotalImages))
+
+	opts := []logging.Option{logging.WithProgress(i.logImageIndex+1, i.logTotalImages)}
+	if i.hasWorkerID {
+		opts = append(opts, logging.WithWorker(i.workerID))
+	}
+
+	return logging.ImageLogProcessName(i.Name, i.IsFinal, targetPlatformForLog, opts...)
+}
+
+// LogPlanName is like LogDetailedName but without a progress number: it is
+// meant for pre-build listings (e.g. a "concurrent build plan" preview)
+// where no build-order index is known yet, unlike LogDetailedName which is
+// used for real build-time log lines.
+func (i *Image) LogPlanName() string {
+	var targetPlatformForLog string
+	if i.ShouldLogPlatform() {
+		targetPlatformForLog = i.TargetPlatform
+	}
+	return logging.ImageLogProcessName(i.Name, i.IsFinal, targetPlatformForLog)
+}
+
+// SetBuildOrderIndex overrides the image's log progress index (see
+// LogDetailedName). ImagesTree.Calculate assigns a static index reflecting
+// each image's position in the dependency graph's topological order, which
+// is only a meaningful "build progress" indicator for the sequential build
+// path. The parallel build scheduler calls this to reassign the index to
+// reflect the image's actual position in real build-start order instead.
+func (i *Image) SetBuildOrderIndex(index int) {
+	i.logImageIndex = index
+}
+
+// GetBuildOrderIndex returns the image's current log progress index (see
+// SetBuildOrderIndex).
+func (i *Image) GetBuildOrderIndex() int {
+	return i.logImageIndex
+}
+
+// SetWorkerID annotates the image's log lines (see LogDetailedName) with
+// the parallel worker that is building it, so a jump in the build-order
+// index between consecutive log lines can be told apart from a worker
+// change (parallel.Printer prints one worker's whole output before moving
+// to the next) rather than looking like a scrambled sequence.
+func (i *Image) SetWorkerID(id int) {
+	i.hasWorkerID = true
+	i.workerID = id
+}
+
+// GetWorkerID returns the worker ID set via SetWorkerID and whether one was
+// ever set (false for images built via the sequential path, which has no
+// concept of parallel workers).
+func (i *Image) GetWorkerID() (int, bool) {
+	return i.workerID, i.hasWorkerID
 }
 
 func (i *Image) LogProcessStyle() color.Style {

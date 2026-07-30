@@ -7,9 +7,11 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/opencontainers/go-digest"
@@ -758,7 +760,7 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 				for levelId, level := range graph.Levels() {
 					logboek.Context(ctx).LogFHighlight("Level #%d:\n", levelId)
 					for _, img := range level {
-						logboek.Context(ctx).LogLnHighlight("-", img.LogDetailedName())
+						logboek.Context(ctx).LogLnHighlight("-", img.LogPlanName())
 					}
 					logboek.Context(ctx).LogOptionalLn()
 				}
@@ -772,11 +774,23 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 
 	scheduler := newGraphScheduler(graph)
 
+	// buildOrder assigns each image its build-time log progress index in the
+	// order it is actually handed out for building, instead of the static
+	// topological position ImagesTree.Calculate assigned it — the two can
+	// diverge arbitrarily under concurrent, dependency-driven scheduling, and
+	// only the former is a meaningful "N/Total" progress indicator to a user
+	// watching the log.
+	var buildOrder atomic.Int64
+
 	if err := parallel.DoTasksDynamic(ctx, parallel.DoTasksOptions{
 		InitDockerCLIForEachWorker: true,
 		MaxNumberOfWorkers:         numberOfWorkers,
 	}, scheduler.next, func(ctx context.Context, taskId int) error {
 		taskImage := nodes[taskId]
+		taskImage.SetBuildOrderIndex(int(buildOrder.Add(1)) - 1)
+		if workerID, ok := ctx.Value(parallel.CtxBackgroundTaskIDKey).(int); ok {
+			taskImage.SetWorkerID(workerID)
+		}
 
 		var taskPhases []Phase
 		for _, phase := range phases {
@@ -795,13 +809,22 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 	}
 
 	if logImages {
+		// Print in build-order (not nodes' topological order): the two can
+		// diverge, and listing topologically while showing each image's
+		// build-order index would make the summary numbers look scattered
+		// again, defeating the point of assigning them in the first place.
+		byBuildOrder := slices.Clone(nodes)
+		sort.Slice(byBuildOrder, func(i, j int) bool {
+			return byBuildOrder[i].GetBuildOrderIndex() < byBuildOrder[j].GetBuildOrderIndex()
+		})
+
 		blockMsg := "Build summary"
 		logboek.Context(ctx).LogBlock(blockMsg).
 			Options(func(options types.LogBlockOptionsInterface) {
 				options.Style(stylePkg.Highlight())
 			}).
 			Do(func() {
-				for _, img := range nodes {
+				for _, img := range byBuildOrder {
 					logboek.Context(ctx).LogLnHighlight("-", fmt.Sprintf("%s (%.2f seconds)", img.LogDetailedName(), img.BuildDuration.Seconds()))
 				}
 			})
