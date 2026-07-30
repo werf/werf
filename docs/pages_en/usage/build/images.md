@@ -131,6 +131,8 @@ dockerfile: Dockerfile
 
 In the example above, werf will use the Dockerfile at `docs/Dockerfile` to build the `docs` image and the Dockerfile at `service/Dockerfile` to build the `service` image.
 
+The Dockerfile may also reside outside the context, e.g. `dockerfile: ../dockerfiles/app.Dockerfile` with `context: app`, as long as its path does not go outside the project directory. Such a Dockerfile does not become a part of the build context.
+
 #### Using build secrets
 
 > **NOTE:** To use secrets in builds, you need to enable them explicitly in the giterminism settings. Learn more ([here]({{ "/usage/project_configuration/giterminism.html#using-build-secrets" | true_relative_url }}))

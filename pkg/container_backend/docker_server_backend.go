@@ -27,6 +27,7 @@ import (
 	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/ssh_agent"
+	"github.com/werf/werf/v2/pkg/tmp_manager"
 )
 
 var (
@@ -83,7 +84,7 @@ func (backend *DockerServerBackend) BuildStapelStage(ctx context.Context, baseIm
 	panic("BuildStapelStage does not implemented for DockerServerBackend. Please report the bug if you've received this message.")
 }
 
-func (backend *DockerServerBackend) BuildDockerfile(ctx context.Context, _ []byte, opts BuildDockerfileOpts) (string, error) {
+func (backend *DockerServerBackend) BuildDockerfile(ctx context.Context, dockerfileContent []byte, opts BuildDockerfileOpts) (string, error) {
 	switch {
 	case opts.BuildContextArchive == nil:
 		panic(fmt.Sprintf("BuildContextArchive can't be nil: %+v", opts))
@@ -102,6 +103,7 @@ func (backend *DockerServerBackend) BuildDockerfile(ctx context.Context, _ []byt
 	}
 
 	buildOpts := docker.CliBuildOptions{
+		ContextPath:    "-",
 		DockerfileName: opts.DockerfileCtxRelPath,
 		Tags:           opts.Tags,
 		BuildArgs:      opts.BuildArgs,
@@ -112,6 +114,32 @@ func (backend *DockerServerBackend) BuildDockerfile(ctx context.Context, _ []byt
 		ExtraHosts:     opts.AddHost,
 		SSH:            sshOpt,
 		Secrets:        opts.Secrets,
+	}
+
+	// A dockerfile outside the build context cannot be addressed within the context archive
+	// streamed to the daemon, so the context is passed as a directory instead, which allows
+	// buildkit to read the dockerfile from a standalone file.
+	if !filepath.IsLocal(opts.DockerfileCtxRelPath) {
+		contextDir, err := opts.BuildContextArchive.ExtractOrGetExtractedDir(ctx)
+		if err != nil {
+			return "", fmt.Errorf("extract build context: %w", err)
+		}
+
+		dockerfile, err := tmp_manager.TempFile("*.Dockerfile")
+		if err != nil {
+			return "", fmt.Errorf("create temporary dockerfile: %w", err)
+		}
+		defer os.Remove(dockerfile.Name())
+
+		if _, err := dockerfile.Write(dockerfileContent); err != nil {
+			return "", fmt.Errorf("write temporary dockerfile %s: %w", dockerfile.Name(), err)
+		}
+		if err := dockerfile.Close(); err != nil {
+			return "", fmt.Errorf("close temporary dockerfile %s: %w", dockerfile.Name(), err)
+		}
+
+		buildOpts.ContextPath = contextDir
+		buildOpts.DockerfileName = dockerfile.Name()
 	}
 
 	if Debug() {
