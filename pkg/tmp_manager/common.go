@@ -40,6 +40,12 @@ func TempFile(pattern string) (f *os.File, err error) {
 	return os.CreateTemp(werf.GetTmpDir(), pattern)
 }
 
+// TempDir creates a temporary directory named after the common werf prefix, so that a
+// directory leaked by an interrupted command is swept by `werf host purge`.
+func TempDir(pattern string) (string, error) {
+	return os.MkdirTemp(werf.GetTmpDir(), commonPrefix+pattern)
+}
+
 func newTmpDir(prefix string) (string, error) {
 	newDir, err := os.MkdirTemp(werf.GetTmpDir(), prefix)
 	if err != nil {

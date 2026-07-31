@@ -344,7 +344,9 @@ func createDockerIgnorePathMatcher(ctx context.Context, giterminismMgr gitermini
 	var dockerIgnorePatterns []string
 	for _, dockerIgnoreRelToContextPath := range []string{
 		dockerfileRelToContextPath + ".dockerignore",
+		dockerfileRelToContextPath + ".containerignore",
 		".dockerignore",
+		".containerignore",
 	} {
 		relDockerIgnorePath := filepath.Join(contextGitSubDir, dockerIgnoreRelToContextPath)
 		if exist, err := giterminismMgr.FileManager.IsDockerignoreExistAnywhere(ctx, relDockerIgnorePath); err != nil {
@@ -367,20 +369,22 @@ func createDockerIgnorePathMatcher(ctx context.Context, giterminismMgr gitermini
 		break
 	}
 
+	contextRelToGitPath := filepath.Join(giterminismMgr.RelativeToGitProjectDir(), contextGitSubDir)
+
 	dockerIgnorePathMatcher := path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{
-		BasePath:             filepath.Join(giterminismMgr.RelativeToGitProjectDir(), contextGitSubDir),
+		BasePath:             contextRelToGitPath,
 		DockerignorePatterns: dockerIgnorePatterns,
 	})
 
-	dockerfileRelToGitPath := filepath.Join(giterminismMgr.RelativeToGitProjectDir(), contextGitSubDir, dockerfileRelToContextPath)
-	if !dockerIgnorePathMatcher.IsPathMatched(dockerfileRelToGitPath) {
+	dockerfileRelToGitPath := filepath.Join(contextRelToGitPath, dockerfileRelToContextPath)
+	if filepath.IsLocal(dockerfileRelToContextPath) && !dockerIgnorePathMatcher.IsPathMatched(dockerfileRelToGitPath) {
 		logboek.Context(ctx).Warn().LogLn("WARNING: There is no way to ignore the Dockerfile due to docker limitation when building an image for a compressed context that reads from STDIN.")
 		logboek.Context(ctx).Warn().LogF("WARNING: To hide this message, remove the Dockerfile ignore rule or add an exception rule.\n")
 
 		exceptionRule := "!" + dockerfileRelToContextPath
 		dockerIgnorePatterns = append(dockerIgnorePatterns, exceptionRule)
 		dockerIgnorePathMatcher = path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{
-			BasePath:             filepath.Join(giterminismMgr.RelativeToGitProjectDir(), contextGitSubDir),
+			BasePath:             contextRelToGitPath,
 			DockerignorePatterns: dockerIgnorePatterns,
 		})
 	}

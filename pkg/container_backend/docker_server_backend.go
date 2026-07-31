@@ -27,6 +27,7 @@ import (
 	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/ssh_agent"
+	"github.com/werf/werf/v2/pkg/tmp_manager"
 )
 
 var (
@@ -83,7 +84,7 @@ func (backend *DockerServerBackend) BuildStapelStage(ctx context.Context, baseIm
 	panic("BuildStapelStage does not implemented for DockerServerBackend. Please report the bug if you've received this message.")
 }
 
-func (backend *DockerServerBackend) BuildDockerfile(ctx context.Context, _ []byte, opts BuildDockerfileOpts) (string, error) {
+func (backend *DockerServerBackend) BuildDockerfile(ctx context.Context, dockerfileContent []byte, opts BuildDockerfileOpts) (string, error) {
 	switch {
 	case opts.BuildContextArchive == nil:
 		panic(fmt.Sprintf("BuildContextArchive can't be nil: %+v", opts))
@@ -102,6 +103,7 @@ func (backend *DockerServerBackend) BuildDockerfile(ctx context.Context, _ []byt
 	}
 
 	buildOpts := docker.CliBuildOptions{
+		ContextPath:    "-",
 		DockerfileName: opts.DockerfileCtxRelPath,
 		Tags:           opts.Tags,
 		BuildArgs:      opts.BuildArgs,
@@ -112,6 +114,44 @@ func (backend *DockerServerBackend) BuildDockerfile(ctx context.Context, _ []byt
 		ExtraHosts:     opts.AddHost,
 		SSH:            sshOpt,
 		Secrets:        opts.Secrets,
+	}
+
+	// A dockerfile outside the build context cannot be addressed within the context archive
+	// streamed to the daemon, so the context is passed as a directory instead, which allows
+	// buildkit to read the dockerfile from a standalone file.
+	if !filepath.IsLocal(opts.DockerfileCtxRelPath) {
+		contextDir, err := opts.BuildContextArchive.ExtractOrGetExtractedDir(ctx)
+		if err != nil {
+			return "", fmt.Errorf("extract build context: %w", err)
+		}
+
+		dockerfileDir, err := tmp_manager.TempDir("dockerfile-*")
+		if err != nil {
+			return "", fmt.Errorf("create temporary dockerfile dir: %w", err)
+		}
+		defer func() {
+			if err := os.RemoveAll(dockerfileDir); err != nil {
+				logboek.Context(ctx).Error().LogF("ERROR: unable to remove temporary dockerfile dir %s: %s\n", dockerfileDir, err)
+			}
+		}()
+
+		dockerfilePath := filepath.Join(dockerfileDir, "Dockerfile")
+		if err := os.WriteFile(dockerfilePath, dockerfileContent, 0o600); err != nil {
+			return "", fmt.Errorf("write temporary dockerfile %s: %w", dockerfilePath, err)
+		}
+
+		// buildkit reads the ignore file next to the dockerfile and only falls back to the
+		// context .dockerignore when there is none. The context archive has already been
+		// filtered by werf, so a fallback would apply the patterns a second time and undo
+		// contextAddFiles and the dockerignore file selection made by werf. The file must not
+		// be empty, otherwise buildkit may still treat it as absent.
+		ignorePath := dockerfilePath + ".dockerignore"
+		if err := os.WriteFile(ignorePath, []byte("# the build context is already filtered by werf\n"), 0o600); err != nil {
+			return "", fmt.Errorf("write temporary dockerignore %s: %w", ignorePath, err)
+		}
+
+		buildOpts.ContextPath = contextDir
+		buildOpts.DockerfileName = dockerfilePath
 	}
 
 	if Debug() {

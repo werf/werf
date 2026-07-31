@@ -279,6 +279,7 @@ func CliRmi(ctx context.Context, args ...string) error {
 }
 
 type CliBuildOptions struct {
+	ContextPath    string
 	DockerfileName string
 	Tags           []string
 	BuildArgs      []string
@@ -293,7 +294,7 @@ type CliBuildOptions struct {
 
 func CliBuild_LiveOutputWithCustomIn(ctx context.Context, rc io.ReadCloser, cliOpts CliBuildOptions) (string, error) {
 	buildOpts := &commands.BuildOptions{
-		ContextPath:            "-",
+		ContextPath:            cliOpts.ContextPath,
 		ExportLoad:             true,
 		DockerfileName:         cliOpts.DockerfileName,
 		Tags:                   cliOpts.Tags,
