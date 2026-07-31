@@ -16,7 +16,7 @@ on:
         default: false
         type: string
       linuxAmd64Runner:
-        default: ubuntu-22.04
+        default: ubuntu-24.04
         type: string
       fetchDepth:
         default: 1
@@ -41,7 +41,9 @@ jobs:
     timeout-minutes: 120
     steps:
       - name: Install werf build dependencies
-        run: sudo apt-get install -y libbtrfs-dev slirp4netns
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libbtrfs-dev netavark passt
 
       - name: Checkout code
         uses: actions/checkout@v6
