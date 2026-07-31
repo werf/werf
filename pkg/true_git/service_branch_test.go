@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -499,8 +500,12 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 			Expect(cleanFilterInvocationCount(counterPath)).Should(BeNumerically(">", countAfter1))
 		})
 
-		It("reseeds when filter configuration changes so an unchanged file is re-filtered", func(ctx context.Context) {
+		It("reseeds when an untracked .gitattributes newly filters a stat-unchanged file", func(ctx context.Context) {
 			ctx = logging.WithLogger(ctx)
+
+			// Filter config pre-exists; only an UNTRACKED .gitattributes appears between syncs, so
+			// the reseed must come from hashing worktree (not just index-tracked) .gitattributes.
+			utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "config", "filter.up.clean", "tr 'a-z' 'A-Z'")
 
 			const fRel = "cased_file"
 			fPath := filepath.Join(sourceWorkTreeDir, fRel)
@@ -508,13 +513,15 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 			utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "add", fRel)
 			utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "commit", "-m", "add cased_file")
 			sourceHeadCommit = utils.GetHeadCommit(ctx, sourceWorkTreeDir)
+			past := time.Unix(1, 0)
+			Expect(os.Chtimes(fPath, past, past)).Should(Succeed())
 
 			serviceCommit1, err := SyncSourceWorktreeWithServiceBranch(ctx, gitDir, sourceWorkTreeDir, workTreeCacheDir, sourceHeadCommit, syncOptions)
 			Expect(err).Should(Succeed())
 			Expect(utils.SucceedCommandOutputString(ctx, sourceWorkTreeDir, "git", "show", serviceCommit1+":"+fRel)).Should(Equal("abc"))
 
+			// Only create the untracked .gitattributes; do NOT touch fPath or git config.
 			utils.WriteFile(filepath.Join(sourceWorkTreeDir, ".gitattributes"), []byte(bigFileRelPath+" filter=count\n"+fRel+" filter=up\n"))
-			utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "config", "filter.up.clean", "tr 'a-z' 'A-Z'")
 
 			serviceCommit2, err := SyncSourceWorktreeWithServiceBranch(ctx, gitDir, sourceWorkTreeDir, workTreeCacheDir, sourceHeadCommit, syncOptions)
 			Expect(err).Should(Succeed())
@@ -570,6 +577,72 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 			serviceCommit, err := SyncSourceWorktreeWithServiceBranch(ctx, gitDir, sourceWorkTreeDir, workTreeCacheDir, sourceHeadCommit, syncOptions)
 			Expect(err).Should(Succeed())
 			Expect(utils.SucceedCommandOutputString(ctx, sourceWorkTreeDir, "git", "show", serviceCommit+":"+rel)).Should(Equal("content"))
+		})
+	})
+
+	When("the source worktree has a submodule", func() {
+		syncOptions := SyncSourceWorktreeWithServiceBranchOptions{ServiceBranch: "_werf-dev"}
+
+		It("records the submodule gitlink in the service commit", func(ctx context.Context) {
+			ctx = logging.WithLogger(ctx)
+
+			subRepoDir := filepath.Join(SuiteData.TestDirPath, "submodule-src")
+			utils.MkdirAll(subRepoDir)
+			utils.RunSucceedCommand(ctx, subRepoDir, "git", "-c", "init.defaultBranch=main", "init")
+			utils.WriteFile(filepath.Join(subRepoDir, "subfile"), []byte("sub"))
+			utils.RunSucceedCommand(ctx, subRepoDir, "git", "add", ".")
+			utils.RunSucceedCommand(ctx, subRepoDir, "git", "commit", "-m", "sub init")
+			subHead := utils.GetHeadCommit(ctx, subRepoDir)
+
+			// git blocks file:// submodule transport by default (CVE-2022-39253). werf's internal
+			// `git submodule update` runs without -c overrides but inherits our env, so allow it via
+			// GIT_CONFIG_* which git applies process-wide including to spawned git.
+			GinkgoT().Setenv("GIT_CONFIG_COUNT", "1")
+			GinkgoT().Setenv("GIT_CONFIG_KEY_0", "protocol.file.allow")
+			GinkgoT().Setenv("GIT_CONFIG_VALUE_0", "always")
+
+			utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "submodule", "add", subRepoDir, "sub")
+			utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "commit", "-m", "add submodule")
+			sourceHeadCommit = utils.GetHeadCommit(ctx, sourceWorkTreeDir)
+
+			serviceCommit, err := SyncSourceWorktreeWithServiceBranch(ctx, gitDir, sourceWorkTreeDir, workTreeCacheDir, sourceHeadCommit, syncOptions)
+			Expect(err).Should(Succeed())
+
+			lsTree := utils.SucceedCommandOutputString(ctx, sourceWorkTreeDir, "git", "ls-tree", serviceCommit, "sub")
+			Expect(lsTree).Should(ContainSubstring("commit " + subHead))
+		})
+	})
+
+	When("validating the service tree against a full git-add snapshot", func() {
+		syncOptions := SyncSourceWorktreeWithServiceBranchOptions{ServiceBranch: "_werf-dev"}
+
+		It("equals an independent full snapshot even with staged and unstaged changes", func(ctx context.Context) {
+			ctx = logging.WithLogger(ctx)
+
+			utils.WriteFile(filepath.Join(sourceWorkTreeDir, "staged_file"), []byte("staged"))
+			utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "add", "staged_file")
+			utils.WriteFile(filepath.Join(sourceWorkTreeDir, "unstaged_file"), []byte("unstaged"))
+
+			serviceCommit, err := SyncSourceWorktreeWithServiceBranch(ctx, gitDir, sourceWorkTreeDir, workTreeCacheDir, sourceHeadCommit, syncOptions)
+			Expect(err).Should(Succeed())
+			serviceTree := utils.SucceedCommandOutputString(ctx, sourceWorkTreeDir, "git", "rev-parse", serviceCommit+"^{tree}")
+
+			// Build the oracle with a disposable index so the user's real index is untouched.
+			oracleEnv := []string{"GIT_INDEX_FILE=" + filepath.Join(SuiteData.TestDirPath, "oracle_index")}
+			runOracle := func(args ...string) string {
+				res, err := utils.RunCommandWithOptions(ctx, sourceWorkTreeDir, "git", args, utils.RunCommandOptions{ExtraEnv: oracleEnv, ShouldSucceed: true, NoStderr: true})
+				Expect(err).Should(Succeed())
+				return string(res)
+			}
+			runOracle("read-tree", sourceHeadCommit)
+			runOracle("add", "--", ":.")
+			oracleTree := runOracle("write-tree")
+
+			Expect(strings.TrimSpace(serviceTree)).Should(Equal(strings.TrimSpace(oracleTree)))
+
+			// staged content is in the snapshot; the user index still shows staged_file staged.
+			Expect(utils.SucceedCommandOutputString(ctx, sourceWorkTreeDir, "git", "show", serviceCommit+":staged_file")).Should(Equal("staged"))
+			Expect(utils.SucceedCommandOutputString(ctx, sourceWorkTreeDir, "git", "show", serviceCommit+":unstaged_file")).Should(Equal("unstaged"))
 		})
 	})
 })

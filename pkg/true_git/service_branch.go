@@ -77,14 +77,19 @@ func syncWorktreeWithServiceWorktreeBranch(ctx context.Context, sourceWorktreeDi
 		return "", fmt.Errorf("unable to compute conversion config signature: %w", err)
 	}
 
-	treeSHA, err := prepareDevIndexAndWriteTree(ctx, sourceWorktreeDir, serviceWorktreeDir, worktreeCacheDir, sourceCommit, serviceBranchHeadCommit, conversionSignature, globExcludeList)
+	treeSHA, seeded, err := prepareDevIndexAndWriteTree(ctx, sourceWorktreeDir, serviceWorktreeDir, worktreeCacheDir, sourceCommit, serviceBranchHeadCommit, conversionSignature, globExcludeList)
 	if err != nil {
-		// The persistent index may be corrupt or left inconsistent by an interrupted run;
-		// discard it and rebuild once from a clean read-tree seed before surfacing the error.
+		// A reused (warm) index may be corrupt or left inconsistent by an interrupted run; discard
+		// it and rebuild once from a clean read-tree seed. When the attempt already ran from a
+		// fresh seed the failure is deterministic (broken clean filter, disk full, ...), so retrying
+		// would only double a potentially multi-minute run — surface it instead.
+		if seeded {
+			return "", fmt.Errorf("unable to prepare dev-index: %w", err)
+		}
 		if rmErr := removeDevIndexFiles(worktreeCacheDir); rmErr != nil {
 			return "", fmt.Errorf("unable to discard dev-index after failure (%v): %w", err, rmErr)
 		}
-		treeSHA, err = prepareDevIndexAndWriteTree(ctx, sourceWorktreeDir, serviceWorktreeDir, worktreeCacheDir, sourceCommit, serviceBranchHeadCommit, conversionSignature, globExcludeList)
+		treeSHA, _, err = prepareDevIndexAndWriteTree(ctx, sourceWorktreeDir, serviceWorktreeDir, worktreeCacheDir, sourceCommit, serviceBranchHeadCommit, conversionSignature, globExcludeList)
 		if err != nil {
 			return "", fmt.Errorf("unable to rebuild dev-index after failure: %w", err)
 		}
@@ -155,34 +160,34 @@ func devIndexBaseMatches(worktreeCacheDir, expected string) bool {
 // its base marker is absent/mismatched (e.g. the service-branch head moved or the add-time
 // conversion config changed), so unchanged files keep matching the source worktree's stat cache
 // and are not re-read or re-hashed.
-func prepareDevIndexAndWriteTree(ctx context.Context, sourceWorktreeDir, serviceWorktreeDir, worktreeCacheDir, sourceCommit, serviceBranchHeadCommit, conversionSignature string, globExcludeList []string) (string, error) {
+func prepareDevIndexAndWriteTree(ctx context.Context, sourceWorktreeDir, serviceWorktreeDir, worktreeCacheDir, sourceCommit, serviceBranchHeadCommit, conversionSignature string, globExcludeList []string) (string, bool, error) {
 	devIndexFile := devIndexFilePath(worktreeCacheDir)
 	expectedBase := devIndexBaseSignature(serviceBranchHeadCommit, conversionSignature)
 
-	needSeed := true
+	seeded := true
 	if _, err := os.Stat(devIndexFile); err == nil && devIndexBaseMatches(worktreeCacheDir, expectedBase) {
-		needSeed = false
+		seeded = false
 	}
-	if needSeed {
+	if seeded {
 		if err := seedDevIndex(ctx, serviceWorktreeDir, devIndexFile, serviceBranchHeadCommit); err != nil {
-			return "", fmt.Errorf("unable to seed dev-index from %s: %w", serviceBranchHeadCommit, err)
+			return "", seeded, fmt.Errorf("unable to seed dev-index from %s: %w", serviceBranchHeadCommit, err)
 		}
 	}
 
 	if err := revertExcludedChangesInDevIndex(ctx, serviceWorktreeDir, devIndexFile, sourceCommit, serviceBranchHeadCommit, globExcludeList); err != nil {
-		return "", fmt.Errorf("unable to revert excluded changes in dev-index: %w", err)
+		return "", seeded, fmt.Errorf("unable to revert excluded changes in dev-index: %w", err)
 	}
 
 	if err := runGitAddCmd(ctx, sourceWorktreeDir, serviceWorktreeDir, devIndexFile, globExcludeList); err != nil {
-		return "", fmt.Errorf("unable to add source worktree changes to dev-index: %w", err)
+		return "", seeded, fmt.Errorf("unable to add source worktree changes to dev-index: %w", err)
 	}
 
 	treeSHA, err := writeDevIndexTree(ctx, serviceWorktreeDir, devIndexFile)
 	if err != nil {
-		return "", fmt.Errorf("unable to write tree from dev-index: %w", err)
+		return "", seeded, fmt.Errorf("unable to write tree from dev-index: %w", err)
 	}
 
-	return treeSHA, nil
+	return treeSHA, seeded, nil
 }
 
 func seedDevIndex(ctx context.Context, serviceWorktreeDir, devIndexFile, serviceBranchHeadCommit string) error {
@@ -222,7 +227,7 @@ func computeConversionConfigSignature(ctx context.Context, sourceWorktreeDir str
 	}
 	fmt.Fprintf(h, "filter-config\x00%s\x00", filterConfig)
 
-	attrFiles, err := trackedGitattributesFiles(ctx, sourceWorktreeDir)
+	attrFiles, err := worktreeGitattributesFiles(ctx, sourceWorktreeDir)
 	if err != nil {
 		return "", err
 	}
@@ -265,16 +270,27 @@ func gitConfigFilterValues(ctx context.Context, repoDir string) (string, error) 
 	return configCmd.OutBuf.String(), nil
 }
 
-func trackedGitattributesFiles(ctx context.Context, sourceWorktreeDir string) ([]string, error) {
-	lsCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: sourceWorktreeDir}, "ls-files", "-z", "--", ".gitattributes", ":(glob)**/.gitattributes")
+// worktreeGitattributesFiles lists every .gitattributes in the worktree, tracked AND untracked:
+// git add applies attributes from an untracked .gitattributes too, so a signature keyed only on
+// index-tracked files would miss `git lfs track`-style changes and leave a stale blob in the warm
+// index. --exclude-standard is deliberately NOT passed: a gitignored .gitattributes still governs
+// conversion of non-ignored files.
+func worktreeGitattributesFiles(ctx context.Context, sourceWorktreeDir string) ([]string, error) {
+	lsCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: sourceWorktreeDir}, "ls-files", "-z", "--cached", "--others", "--", ".gitattributes", ":(glob)**/.gitattributes")
 	if err := lsCmd.Run(ctx); err != nil {
 		return nil, fmt.Errorf("git ls-files command failed: %w", err)
 	}
+	seen := make(map[string]struct{})
 	var files []string
 	for _, p := range strings.Split(lsCmd.OutBuf.String(), "\x00") {
-		if p != "" {
-			files = append(files, p)
+		if p == "" {
+			continue
 		}
+		if _, ok := seen[p]; ok {
+			continue
+		}
+		seen[p] = struct{}{}
+		files = append(files, p)
 	}
 	sort.Strings(files)
 	return files, nil
@@ -298,12 +314,26 @@ func extraAttributesFilePaths(ctx context.Context, sourceWorktreeDir string) []s
 		if p := strings.TrimSpace(attrFileCmd.OutBuf.String()); p != "" {
 			paths = append(paths, expandTilde(p))
 		}
+	} else if p := defaultGlobalAttributesFile(); p != "" {
+		paths = append(paths, p)
 	}
 
 	return paths
 }
 
+func defaultGlobalAttributesFile() string {
+	if xdg := os.Getenv("XDG_CONFIG_HOME"); xdg != "" {
+		return filepath.Join(xdg, "git", "attributes")
+	}
+	if home, err := os.UserHomeDir(); err == nil {
+		return filepath.Join(home, ".config", "git", "attributes")
+	}
+	return ""
+}
+
 func expandTilde(path string) string {
+	// ponytail: only ~ and ~/ are expanded; git's ~user/ form is left as-is (rare, and a
+	// stable literal still yields a stable signature — over-hashing at worst, never a miss).
 	if path == "~" || strings.HasPrefix(path, "~/") {
 		if home, err := os.UserHomeDir(); err == nil {
 			return filepath.Join(home, strings.TrimPrefix(path[1:], "/"))
