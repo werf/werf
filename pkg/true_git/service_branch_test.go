@@ -3,7 +3,9 @@ package true_git
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
+	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -12,6 +14,14 @@ import (
 	"github.com/werf/werf/v2/pkg/werf"
 	"github.com/werf/werf/v2/test/pkg/utils"
 )
+
+func cleanFilterInvocationCount(counterPath string) int {
+	data, err := os.ReadFile(counterPath)
+	if err != nil {
+		return 0
+	}
+	return len(data)
+}
 
 var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 	var sourceWorkTreeDir string
@@ -447,6 +457,119 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 
 			output := string(bytes)
 			Expect(output).Should(ContainSubstring(fmt.Sprintf("'%s' exists on disk, but not in '%s'", untrackedFileRelPath, serviceCommit)))
+		})
+	})
+
+	When("a clean filter is configured", func() {
+		const bigFileRelPath = "bigfile"
+		var counterPath string
+		syncOptions := SyncSourceWorktreeWithServiceBranchOptions{ServiceBranch: "_werf-dev"}
+
+		BeforeEach(func(ctx SpecContext) {
+			counterPath = filepath.Join(SuiteData.TestDirPath, "clean_count")
+			utils.WriteFile(filepath.Join(sourceWorkTreeDir, ".gitattributes"), []byte(bigFileRelPath+" filter=count\n"))
+			bigFilePath := filepath.Join(sourceWorkTreeDir, bigFileRelPath)
+			utils.WriteFile(bigFilePath, []byte("payload"))
+			// Push mtime into the past so the first sync's index is not "racily clean":
+			// git re-hashes entries whose mtime is not older than the index timestamp, which
+			// would otherwise re-invoke the clean filter on the unchanged second sync.
+			past := time.Unix(1, 0)
+			Expect(os.Chtimes(bigFilePath, past, past)).Should(Succeed())
+			utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "config", "filter.count.clean", fmt.Sprintf("printf x >> '%s'; cat", counterPath))
+		})
+
+		It("does not re-run the clean filter on an unchanged second sync (#4754)", func(ctx context.Context) {
+			ctx = logging.WithLogger(ctx)
+
+			serviceCommit1, err := SyncSourceWorktreeWithServiceBranch(ctx, gitDir, sourceWorkTreeDir, workTreeCacheDir, sourceHeadCommit, syncOptions)
+			Expect(err).Should(Succeed())
+			countAfter1 := cleanFilterInvocationCount(counterPath)
+			Expect(countAfter1).Should(BeNumerically(">", 0))
+
+			serviceCommit2, err := SyncSourceWorktreeWithServiceBranch(ctx, gitDir, sourceWorkTreeDir, workTreeCacheDir, sourceHeadCommit, syncOptions)
+			Expect(err).Should(Succeed())
+			Expect(serviceCommit2).Should(Equal(serviceCommit1))
+			Expect(cleanFilterInvocationCount(counterPath)).Should(Equal(countAfter1))
+
+			utils.WriteFile(filepath.Join(sourceWorkTreeDir, bigFileRelPath), []byte("payload-modified"))
+
+			serviceCommit3, err := SyncSourceWorktreeWithServiceBranch(ctx, gitDir, sourceWorkTreeDir, workTreeCacheDir, sourceHeadCommit, syncOptions)
+			Expect(err).Should(Succeed())
+			Expect(serviceCommit3).ShouldNot(Equal(serviceCommit1))
+			Expect(cleanFilterInvocationCount(counterPath)).Should(BeNumerically(">", countAfter1))
+		})
+
+		It("reseeds when filter configuration changes so an unchanged file is re-filtered", func(ctx context.Context) {
+			ctx = logging.WithLogger(ctx)
+
+			const fRel = "cased_file"
+			fPath := filepath.Join(sourceWorkTreeDir, fRel)
+			utils.WriteFile(fPath, []byte("abc"))
+			utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "add", fRel)
+			utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "commit", "-m", "add cased_file")
+			sourceHeadCommit = utils.GetHeadCommit(ctx, sourceWorkTreeDir)
+
+			serviceCommit1, err := SyncSourceWorktreeWithServiceBranch(ctx, gitDir, sourceWorkTreeDir, workTreeCacheDir, sourceHeadCommit, syncOptions)
+			Expect(err).Should(Succeed())
+			Expect(utils.SucceedCommandOutputString(ctx, sourceWorkTreeDir, "git", "show", serviceCommit1+":"+fRel)).Should(Equal("abc"))
+
+			utils.WriteFile(filepath.Join(sourceWorkTreeDir, ".gitattributes"), []byte(bigFileRelPath+" filter=count\n"+fRel+" filter=up\n"))
+			utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "config", "filter.up.clean", "tr 'a-z' 'A-Z'")
+
+			serviceCommit2, err := SyncSourceWorktreeWithServiceBranch(ctx, gitDir, sourceWorkTreeDir, workTreeCacheDir, sourceHeadCommit, syncOptions)
+			Expect(err).Should(Succeed())
+			Expect(utils.SucceedCommandOutputString(ctx, sourceWorkTreeDir, "git", "show", serviceCommit2+":"+fRel)).Should(Equal("ABC"))
+		})
+	})
+
+	When("the persistent dev-index is corrupted", func() {
+		syncOptions := SyncSourceWorktreeWithServiceBranchOptions{ServiceBranch: "_werf-dev"}
+
+		It("self-heals and produces the same commit", func(ctx context.Context) {
+			ctx = logging.WithLogger(ctx)
+			utils.WriteFile(filepath.Join(sourceWorkTreeDir, "tracked_file"), []byte("state"))
+
+			serviceCommit1, err := SyncSourceWorktreeWithServiceBranch(ctx, gitDir, sourceWorkTreeDir, workTreeCacheDir, sourceHeadCommit, syncOptions)
+			Expect(err).Should(Succeed())
+
+			utils.WriteFile(filepath.Join(workTreeCacheDir, "dev_index"), []byte("corrupt-not-an-index"))
+
+			serviceCommit2, err := SyncSourceWorktreeWithServiceBranch(ctx, gitDir, sourceWorkTreeDir, workTreeCacheDir, sourceHeadCommit, syncOptions)
+			Expect(err).Should(Succeed())
+			Expect(serviceCommit2).Should(Equal(serviceCommit1))
+		})
+	})
+
+	When("a failing repository pre-commit hook is installed", func() {
+		syncOptions := SyncSourceWorktreeWithServiceBranchOptions{ServiceBranch: "_werf-dev"}
+
+		It("does not run the hook during sync", func(ctx context.Context) {
+			ctx = logging.WithLogger(ctx)
+			utils.MkdirAll(filepath.Join(gitDir, "hooks"))
+			hookPath := filepath.Join(gitDir, "hooks", "pre-commit")
+			utils.WriteFile(hookPath, []byte("#!/bin/sh\nexit 1\n"))
+			Expect(os.Chmod(hookPath, 0o755)).Should(Succeed())
+
+			utils.WriteFile(filepath.Join(sourceWorkTreeDir, "tracked_file"), []byte("state"))
+
+			serviceCommit, err := SyncSourceWorktreeWithServiceBranch(ctx, gitDir, sourceWorkTreeDir, workTreeCacheDir, sourceHeadCommit, syncOptions)
+			Expect(err).Should(Succeed())
+			Expect(serviceCommit).ShouldNot(Equal(sourceHeadCommit))
+		})
+	})
+
+	When("paths contain spaces and unicode", func() {
+		syncOptions := SyncSourceWorktreeWithServiceBranchOptions{ServiceBranch: "_werf-dev"}
+
+		It("captures them into the service commit", func(ctx context.Context) {
+			ctx = logging.WithLogger(ctx)
+			const rel = "dir with space/файл.txt"
+			utils.MkdirAll(filepath.Join(sourceWorkTreeDir, "dir with space"))
+			utils.WriteFile(filepath.Join(sourceWorkTreeDir, rel), []byte("content"))
+
+			serviceCommit, err := SyncSourceWorktreeWithServiceBranch(ctx, gitDir, sourceWorkTreeDir, workTreeCacheDir, sourceHeadCommit, syncOptions)
+			Expect(err).Should(Succeed())
+			Expect(utils.SucceedCommandOutputString(ctx, sourceWorkTreeDir, "git", "show", serviceCommit+":"+rel)).Should(Equal("content"))
 		})
 	})
 })
