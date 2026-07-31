@@ -21,7 +21,15 @@ description: Generates Pull Request titles and descriptions according to werf co
 
 ## Description
 
-Use the following structure. *Summary*, *Why* and *Verification* are **mandatory**. Omit *Key changes* when it would only restate *Summary*, and *Review focus / risks* when there is genuinely nothing to guide the reviewer to. NEVER rename or substitute the sections.
+Match the description to the size of the diff. Two tiers, nothing in between.
+
+**Small** — one logical change, under ~20 changed lines, no user-visible behavior change (doc or
+skill wording, test fix, typo, dependency bump): no headings at all. One to three sentences — what
+was wrong, what it is now. If the title already says it, one sentence is the whole description.
+
+**Everything else** — the structure below. *Summary*, *Why* and *Verification* are **mandatory**.
+Omit *Key changes* when it would only restate *Summary*, and *Review focus / risks* when there is
+genuinely nothing to guide the reviewer to. NEVER rename or substitute the sections.
 
 ```
 ## Summary
@@ -59,6 +67,7 @@ observed wrong behavior and add a minimal repro (Dockerfile / werf.yaml / comman
 - *Verification*: only the delta over CI — manual runs, hand-run e2e/real-cluster checks, the environment they required, and what could NOT be run. CI builds and runs the whole suite, so `task build`/`task test:unit` are noise unless a scoped local run is itself the point — then name it by its `task` command, never raw `go test`/`go vet`/`gofmt`. Plain list, not checkboxes — the reviewer is not the one ticking them.
 - *Review focus / risks*: guide the reviewer — call out non-obvious consequences, large generated diffs, breaking changes, and any deliberately accepted limitation of the chosen approach.
 - No AI-slop filler ("This PR improves the codebase…"). Every sentence must carry information.
+- Length is a budget, not a target: under ~300 characters for a small PR, under ~1500 for a normal one. Cut any sentence that restates the title, another section, or the diff.
 - NEVER include sensitive or customer-identifying details in the title or description: client/company names, internal hostnames or filesystem paths, private build tags or version suffixes, credentials. Describe the environment generically (e.g. "long-lived CI runners sharing WERF_HOME", not a customer's runner path).
 
 ## Output
