@@ -325,6 +325,9 @@ werf plan --repo registry.mydomain.com/web --env production
             deploy.namespace custom template from werf.yaml or $WERF_NAMESPACE)
       --network-parallelism=30
             Parallelize some network operations (default $WERF_NETWORK_PARALLELISM or 30)
+      --no-default-patches=false
+            Ignore patches.yaml of the top-level chart and subcharts (default                       
+            $WERF_NO_DEFAULT_PATCHES or false)
       --no-final-tracking=false
             By default disable tracking operations that have no create/update/delete resource       
             operations after them, which are most tracking operations, to speed up the release      
@@ -342,6 +345,10 @@ werf plan --repo registry.mydomain.com/web --env production
       --parallel-tasks-limit=5
             Parallel tasks limit, set -1 to remove the limitation (default                          
             $WERF_PARALLEL_TASKS_LIMIT or 5)
+      --patches=[]
+            Additional patches files (diff patches for drift detection). Also, can be defined with  
+            $WERF_PATCHES_* (e.g. $WERF_PATCHES_1=.helm/patches_1.yaml,                             
+            $WERF_PATCHES_2=.helm/patches_2.yaml)
       --platform=[]
             Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT]     
             ($WERF_PLATFORM or $DOCKER_DEFAULT_PLATFORM by default)

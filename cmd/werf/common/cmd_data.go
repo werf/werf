@@ -138,6 +138,8 @@ type CmdData struct {
 	NoInstallStandaloneCRDs          bool
 	NoRemoveManualChanges            bool
 	NoShowNotes                      bool
+	PatchesFiles                     []string
+	DefaultPatchesDisable            bool
 	NoCreateNamespace                bool
 	Release                          string
 	ReleaseHistoryLimit              int
@@ -390,6 +392,7 @@ func (cmdData *CmdData) processFlags() error {
 	cmdData.ValuesSetLiteral = append(util.PredefinedValuesByEnvNamePrefix("WERF_SET_LITERAL_"), cmdData.ValuesSetLiteral...)
 	cmdData.ValuesFiles = append(util.PredefinedValuesByEnvNamePrefix("WERF_VALUES_"), cmdData.ValuesFiles...)
 	cmdData.SecretValuesFiles = append(util.PredefinedValuesByEnvNamePrefix("WERF_SECRET_VALUES_"), cmdData.SecretValuesFiles...)
+	cmdData.PatchesFiles = append(util.PredefinedValuesByEnvNamePrefix("WERF_PATCHES_"), cmdData.PatchesFiles...)
 	cmdData.ValidationSkip = append(util.PredefinedValuesByEnvNamePrefix("WERF_RESOURCE_VALIDATION_SKIP_"), cmdData.ValidationSkip...)
 	cmdData.ValidationExtraSchemas = append(util.PredefinedValuesByEnvNamePrefix("WERF_RESOURCE_VALIDATION_EXTRA_SCHEMA_"), cmdData.ValidationExtraSchemas...)
 	cmdData.ExtraAPIVersions = append(util.PredefinedValuesByEnvNamePrefix("WERF_EXTRA_APIVERSIONS_"), cmdData.ExtraAPIVersions...)

@@ -1145,6 +1145,11 @@ Also, can be defined with $WERF_SET_STRING_* (e.g. $WERF_SET_STRING_1=key1=val1,
 	return nil
 }
 
+func SetupPatchesFlags(cmdData *CmdData, cmd *cobra.Command) {
+	cmd.Flags().StringArrayVarP(&cmdData.PatchesFiles, "patches", "", []string{}, `Additional patches files (diff patches for drift detection). Also, can be defined with $WERF_PATCHES_* (e.g. $WERF_PATCHES_1=.helm/patches_1.yaml, $WERF_PATCHES_2=.helm/patches_2.yaml)`)
+	cmd.Flags().BoolVarP(&cmdData.DefaultPatchesDisable, "no-default-patches", "", util.GetBoolEnvironmentDefaultFalse("WERF_NO_DEFAULT_PATCHES"), `Ignore patches.yaml of the top-level chart and subcharts (default $WERF_NO_DEFAULT_PATCHES or false)`)
+}
+
 func SetupSecretValuesFlags(cmdData *CmdData, cmd *cobra.Command) error {
 	SetupSecretValuesFileFlags(cmdData, cmd)
 	SetupSecretKeyFlags(cmdData, cmd)
