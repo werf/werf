@@ -39,6 +39,7 @@ Types and scopes are defined in `CONTRIBUTING.md#conventions` — that file is t
 
 - ALWAYS check the current branch (`git branch --show-current`) — a stale local `main` or someone else's WIP branch is easy to miss.
 - NEVER push to a release branch (`main`, `3`, `2`, `1.2`) directly — branch from the current `origin/<base>` and open a PR.
+- When a commit carries recorded fixtures or logs, scrub every class of identifier — uuids, numeric ids, initials, avatar urls — not just names and emails. A name-only pass leaves pseudonymous ids that map back to people through internal tables, and rewriting history afterwards is the expensive path.
 - If a push is rejected, don't retry with force. Find out why the ref diverged first: `--force-with-lease` is also rejected as `stale info` when there is no remote-tracking ref for the branch (e.g. after pushing by URL) — that is a missing lease baseline, not a diverged history, and the fix is `--force-with-lease=<ref>:<sha>`.
 
 ## Output
