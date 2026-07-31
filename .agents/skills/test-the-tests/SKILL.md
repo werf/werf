@@ -27,6 +27,11 @@ trivial getter):
 If running the mutation isn't practical, name the smallest mutation that should be tried
 instead of skipping the exercise — that name is itself the finding.
 
+"Not practical" is a conclusion, not an assumption — establish it as `AGENTS.md` requires
+(is the runtime actually missing, is a Linux host available) before falling back to naming
+the mutation. A "can't run it here" that turns out to be wrong ships tests nobody has ever
+seen fail.
+
 ## Common ways a test looks strong but isn't
 
 - **The assertion holds under the bug too.** A chain assertion like
@@ -41,6 +46,14 @@ instead of skipping the exercise — that name is itself the finding.
   break. Prefer driving the real entry point end-to-end when the risk is in the wiring.
 - **It asserts implementation trivia** (mock called N times, internal helper ran) instead
   of externally observable behavior.
+- **Coverage number, not falsifiability.** A line being executed says nothing about whether
+  a wrong value on that line would be caught.
+- **An extended test quietly drops what the old one proved.** Adding cases to a fixture can
+  remove the conflict that made an earlier property observable. After editing an existing
+  test, re-run the mutations the previous version caught, not only the new ones.
+- **Ordered behavior tested without conflicts.** For precedence lists and fallback chains,
+  a fixture with one candidate per level survives swapping adjacent candidates. Give every
+  level two candidates whose effects differ.
 
 ## Output
 
