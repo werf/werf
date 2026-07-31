@@ -20,6 +20,7 @@ issue/PR template, or a `docs/` page. Pick the landing spot from the finding, no
 - **Repeated explanations**: anything explained more than once — the current instructions don't cover it.
 - **Discovered conventions**: facts that came from the user or from reading the repo, not from any doc — build quirks, naming schemes, "we always do X here".
 - **Skill bugs found in use**: a skill that gave wrong guidance, missed a step, or referenced a stale path or command.
+- **Workflow decisions**: the user picked one approach over another ("always do it this way from now on") — a durable preference, not a one-off call.
 - **Friction**: a check that was slow, awkward, or easy to forget, or a step done by hand that a `task` target could do.
 - **Near-misses**: something caught just before landing (wrong branch, guessed path, unverified assumption) — the cheapest lesson, the cost is already paid.
 
@@ -49,6 +50,7 @@ file. Extend the closest existing skill or section rather than creating a near-d
 - Match the file's existing tone — `AGENTS.md` and `CODESTYLE.md` are terse, imperative, bulleted.
 - A rule belongs in exactly one place. Cross-reference instead of duplicating; a copied rule drifts.
 - Don't restate in prose what a `task` command or linter already enforces.
+- When a tool has become self-documenting — its own descriptions now carry the contract — TRIM the skill that taught workarounds for it instead of layering notes on top. A skill keeps only what the tool cannot know: local conventions and domain norms.
 
 ## 4. Confirm before applying
 
