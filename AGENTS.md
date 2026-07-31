@@ -92,6 +92,7 @@ On macOS `task build` produces a **non-CGO** binary — the Buildah backend is o
 - Test helpers go in `helpers_test.go`.
 - Test fixtures go in `testdata/` subdirectory next to the tests.
 - Shared test helpers are in `test/pkg/`.
+- NEVER call raw `git commit` in tests. Use a helper that sets `commit.gpgsign=false` (e.g. `gitCommitSucceed` in `pkg/true_git/helpers_test.go`). A developer's global `commit.gpgsign=true` otherwise makes tests depend on a working gpg-agent and flake intermittently under Ginkgo's parallel procs.
 
 ## PR review guidelines (MANDATORY)
 
