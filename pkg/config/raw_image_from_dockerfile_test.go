@@ -218,6 +218,35 @@ var _ = Describe("rawImageFromDockerfile", func() {
 		),
 	)
 
+	DescribeTable("validate dockerfile path",
+		func(context, dockerfile string, valid bool) {
+			rawYaml, err := yaml.Marshal(map[string]interface{}{
+				"image":      "image1",
+				"context":    context,
+				"dockerfile": dockerfile,
+			})
+			Expect(err).To(Succeed())
+
+			doc := &doc{Content: rawYaml}
+			rawDockerfileImage := &rawImageFromDockerfile{doc: doc}
+
+			Expect(yaml.UnmarshalStrict(doc.Content, rawDockerfileImage)).To(Succeed())
+
+			_, err = rawDockerfileImage.toImageFromDockerfileDirective(giterminismManager, "image1")
+			if valid {
+				Expect(err).To(Succeed())
+				return
+			}
+
+			var errConf *configError
+			Expect(errors.As(err, &errConf)).To(BeTrue())
+		},
+		Entry("inside context", "app", "Dockerfile", true),
+		Entry("outside context, inside project", "app", "../build/app.Dockerfile", true),
+		Entry("outside project", "app", "../../app.Dockerfile", false),
+		Entry("absolute", "app", "/app.Dockerfile", false),
+	)
+
 	DescribeTable("unmarshal and convert to directive fail with configError",
 		func(yamlMap map[string]interface{}) {
 			if len(yamlMap) == 0 {

@@ -79,3 +79,18 @@ You can also specify an owner and a group for the imported resources, `owner: <o
 This behavior is similar to the one used when adding code from Git repositories, and you can read more about it in the [git directive section]({{ "usage/build/stapel/git.html" | true_relative_url }}).
 
 > Note that the path of imported resources and the path specified in _git mappings_ must not overlap.
+
+### Destination path rules
+
+What ends up at the _destination path_ depends on whether the _source path_ is a directory or a file.
+
+If `add` is a **directory**, its contents are merged into `to`. Files already present in `to` are kept, and files with the same name are overwritten. This is why several imports may target the same directory.
+
+If `add` is a **file**, the outcome depends on the _destination image_:
+
+- if `to` does not exist, the file is created at exactly that path — `add: /app/config.yaml` with `to: /etc/app.yaml` produces `/etc/app.yaml`;
+- if `to` already exists as a directory, the file is placed inside it — the same import with `to: /etc` produces `/etc/config.yaml`.
+
+werf creates only the parent directory of `to`, so whether `to` itself exists is decided by the _destination image_ — pin the full file path when the difference matters.
+
+A trailing slash in `to` (anything other than `to: /`) is a configuration error and fails the build: write `to: /usr/sbin`, not `to: /usr/sbin/`.

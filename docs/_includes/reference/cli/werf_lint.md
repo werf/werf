@@ -233,7 +233,8 @@ werf lint [IMAGE_NAME...] [options]
       --kube-version=""
             Set specific Capabilities.KubeVersion (default $WERF_KUBE_VERSION)
       --local-resource-validation=false
-            Do not use external json schema sources (default $WERF_LOCAL_RESOURCE_VALIDATION)
+            Do not use external json schema sources, validate against the json schemas embedded     
+            into the binary instead (default $WERF_LOCAL_RESOURCE_VALIDATION)
       --log-color-mode="auto"
             Set log color mode.
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        
@@ -335,20 +336,11 @@ werf lint [IMAGE_NAME...] [options]
             How long local schema cache will be valid. Also can be defined by                       
             $WERF_RESOURCE_VALIDATION_CACHE_LIFETIME
       --resource-validation-extra-schema=[]
-            Extra json schema sources to validate resources (preferred over default sources). Must  
+            Extra json schema sources to validate resources (preferred over ebedded sources). Must  
             be a valid go template defining a http(s) URL, or an absolute path on local file        
             system. Also, can be defined with $WERF_RESOURCE_VALIDATION_EXTRA_SCHEMA_* (eg. $WERF_RE
             SOURCE_VALIDATION_EXTRA_SCHEMA_1=`https://raw.githubusercontent.com/datreeio/CRDs-catalo
             g/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json`)
-      --resource-validation-kube-version="1.35.0"
-            Kubernetes schemas version to use during resource validation. Also can be defined by    
-            $WERF_RESOURCE_VALIDATION_KUBE_VERSION
-      --resource-validation-schema=[https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/{{ .NormalizedKubernetesVersion }}-standalone{{ .StrictSuffix }}/{{ .ResourceKind }}{{ .KindSuffix }}.json,https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json]
-            Default json schema sources to validate resources. Must be a valid go template defining 
-            a http(s) URL, or an absolute path on local file system. Also, can be defined with      
-            $WERF_RESOURCE_VALIDATION_SCHEMA_* (eg. $WERF_RESOURCE_VALIDATION_SCHEMA_1=`https://raw.
-            githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.Resourc
-            eAPIVersion}}.json`)
       --resource-validation-skip=[]
             Skip resource validation for resources with specified attributes (can specify           
             multiple). Format: key1=value1,key2=value2. Supported keys: group, version, kind, name, 

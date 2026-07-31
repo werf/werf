@@ -845,21 +845,31 @@ func (backend *BuildahBackend) BuildDockerfile(ctx context.Context, dockerfileCo
 		return "", fmt.Errorf("unable to extract build context: %w", err)
 	}
 
-	dockerfile, err := tmp_manager.TempFile("*.Dockerfile")
+	dockerfileDir, err := tmp_manager.TempDir("dockerfile-*")
 	if err != nil {
-		return "", fmt.Errorf("error creating temporary dockerfile: %w", err)
-	}
-
-	if _, err := dockerfile.Write(dockerfileContent); err != nil {
-		return "", fmt.Errorf("error writing temporary dockerfile: %w", err)
+		return "", fmt.Errorf("error creating temporary dockerfile dir: %w", err)
 	}
 	defer func() {
-		if err := os.Remove(dockerfile.Name()); err != nil {
-			logboek.Context(ctx).Error().LogF("ERROR: unable to remove temporary dockerfile %s: %s\n", dockerfile.Name(), err)
+		if err := os.RemoveAll(dockerfileDir); err != nil {
+			logboek.Context(ctx).Error().LogF("ERROR: unable to remove temporary dockerfile dir %s: %s\n", dockerfileDir, err)
 		}
 	}()
 
-	return backend.buildah.BuildFromDockerfile(ctx, dockerfile.Name(), buildah.BuildFromDockerfileOpts{
+	dockerfilePath := filepath.Join(dockerfileDir, "Dockerfile")
+	if err := os.WriteFile(dockerfilePath, dockerfileContent, 0o600); err != nil {
+		return "", fmt.Errorf("error writing temporary dockerfile %s: %w", dockerfilePath, err)
+	}
+
+	// buildah reads the ignore file next to the dockerfile and only falls back to the ignore
+	// files of the context when there is none. The build context has already been filtered by
+	// werf, so a fallback would apply the patterns a second time and undo contextAddFiles and
+	// the ignore file selection made by werf.
+	ignorePath := dockerfilePath + ".dockerignore"
+	if err := os.WriteFile(ignorePath, []byte("# the build context is already filtered by werf\n"), 0o600); err != nil {
+		return "", fmt.Errorf("error writing temporary dockerignore %s: %w", ignorePath, err)
+	}
+
+	return backend.buildah.BuildFromDockerfile(ctx, dockerfilePath, buildah.BuildFromDockerfileOpts{
 		CommonOpts: backend.getBuildahCommonOpts(ctx, false, nil, opts.TargetPlatform),
 		ContextDir: buildContextTmpDir,
 		BuildArgs:  buildArgs,

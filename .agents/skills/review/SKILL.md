@@ -9,7 +9,7 @@ Evidence-based and blunt. Every finding references a specific `file:line`, funct
 
 ## If you are the diff's author
 
-If you wrote the diff you are reviewing now, say so explicitly in the report's Verdict, and treat this pass as necessary but insufficient. Self-review — even done adversarially, even after mutating your own tests — inherits your own design assumptions: it reliably catches localized bugs and weak tests, but is a poor substitute for a second opinion on whether the overall approach is sound. For anything beyond a mechanical or low-risk change, recommend an independently invoked reviewer (a fresh session/agent with no memory of your rationale, or an external tool) before merge, and say so in the report rather than treating your own pass as the final word.
+If you wrote the diff you are reviewing now, say so explicitly in the report's Verdict and treat this pass as necessary but insufficient. `agent-code-review/SKILL.md` covers why self-review inherits your own design assumptions and what to recommend instead — read it, don't re-derive it here.
 
 ## Before reviewing
 
@@ -34,7 +34,7 @@ Cover the ones the diff actually touches; stay silent about the rest.
 
 ## Tests as evidence
 
-Passing tests, high coverage, and the author's confidence are not evidence of correctness, whoever wrote the diff. Read `test-the-tests/SKILL.md` and apply it to every load-bearing test: verify by mutating the implementation and confirming the test fails, not by reading the assertions and trusting they'd catch a regression.
+Passing tests, high coverage, and the author's confidence are not evidence of correctness, whoever wrote the diff. Read `test-the-tests/SKILL.md` and run its mutation loop against every load-bearing test: mutate the implementation and confirm the test fails, rather than reading the assertions and trusting they'd catch a regression. This is not optional — skipping it because the tests "look thorough" is exactly the failure mode it exists to catch.
 
 If the diff's author is an agent, or the diff touches tests or verification infrastructure, also read `agent-code-review/SKILL.md` — it covers check-gaming detection (weakened assertions, quietly skipped tests, mocked-out critical behavior, and more) in one place, so this list doesn't drift from it again.
 
@@ -83,9 +83,9 @@ Print the report. Do not write it into the repository unless the user asks for a
 
 ## DoD Criteria
 
-| Criteria | Met? | Evidence |
-| :--- | :--- | :--- |
-| [criterion] | ✅/⚠️/❌ | file:line |
+| Criteria | Inferred? | Met? | Evidence |
+| :--- | :--- | :--- | :--- |
+| [criterion] | yes/no | ✅/⚠️/❌ | file:line |
 
 ## Issues
 

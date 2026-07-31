@@ -19,8 +19,8 @@ werf is a CNCF Sandbox CLI tool to implement full-cycle CI/CD to Kubernetes. wer
 
 - NEVER add comments unless they document a non-obvious public API or explain genuinely non-obvious logic. NEVER add comments that restate what the code does, repeat the field/function name, describe obvious error handling, or act as section separators. When in doubt, don't comment.
 - ALWAYS use `task` commands for build/test/lint/format — NEVER raw `go build`, `go test`, `go vet`, `go fmt`, or `golangci-lint` directly.
-- ALWAYS read the matching skill in `.agents/skills/` BEFORE the action it governs and follow it verbatim: `git-conventions/SKILL.md` before naming a branch or writing a commit message, `pull-request/SKILL.md` before creating or updating a PR (title, description, draft by default), `review/SKILL.md` before reviewing code, `test-the-tests/SKILL.md` before considering a new or changed test done, `agent-code-review/SKILL.md` in addition to `review/SKILL.md` when the diff's author is an agent or the diff touches tests/verification infrastructure. These files are the source of truth and are NOT duplicated here.
-- ALWAYS verify, don't assume — check the actual state before making changes.
+- ALWAYS read the matching skill in `.agents/skills/` BEFORE the action it governs and follow it verbatim: `git-conventions/SKILL.md` before naming a branch or writing a commit message, `pull-request/SKILL.md` before creating or updating a PR (title, description, draft by default), `review/SKILL.md` before reviewing code, `test-the-tests/SKILL.md` before considering a new or changed test done, `agent-code-review/SKILL.md` in addition to `review/SKILL.md` when the diff's author is an agent or the diff touches tests/verification infrastructure, `session-retro/SKILL.md` when wrapping up a session or asked to reflect on it. These files are the source of truth and are NOT duplicated here.
+- ALWAYS verify, don't assume — check the actual state before making changes. Before concluding that a check cannot run here, establish it: whether a runtime is actually missing, and whether a remote host is available.
 - ALWAYS start with the simplest possible solution. If it works, stop. Add complexity only when justified by a concrete, current requirement — NEVER for hypothetical future needs.
 - NEVER leave TODOs, stubs, or partial implementations.
 - ALWAYS stay within the scope of what was asked. When asked to update a plan — only update the plan, don't change code. When asked to brainstorm/discuss — only discuss, don't write code. When asked to do X — do X and nothing else. NEVER make unsolicited changes.
@@ -83,7 +83,7 @@ After changing Go code, run these in order — `task format` mutates files, so i
 
 NEVER assume a change compiles. While iterating, scope the slow steps (`task lint:golangci-lint golangciPaths="./pkg/foo/..."`, `task test:unit paths="./pkg/foo/..."`), then run them unscoped before handing the work over.
 
-On macOS `task build` produces a **non-CGO** binary — the Buildah backend is only built for linux/amd64 (`task build:dev:linux:amd64:cgo`), so Buildah changes cannot be compiled or exercised locally. Unit tests run anywhere; e2e and integration tests need Linux with Docker and kind (`task test:setup:environment`).
+On macOS `task build` produces a **non-CGO** binary — the Buildah backend is only built for linux/amd64 (`task build:dev:linux:amd64:cgo`), so Buildah changes cannot be compiled or exercised locally. Unit tests run anywhere. The Docker-backend entries of the e2e suites also run on macOS with Docker Desktop — `task test:e2e paths="./test/e2e/build" labelFilter="..." parallel=1`, with `WERF_TEST_K8S_DOCKER_REGISTRY` set even when the entries need no registry. Buildah entries, and any suite that needs kind, require Linux (`task test:setup:environment`).
 
 ## Testing (MANDATORY)
 

@@ -77,7 +77,7 @@ func findProcessLineByCommand(ctx context.Context, command string) (string, erro
 	b := backoff.NewConstantBackOff(time.Millisecond * 10)
 
 	operation := func() (string, error) {
-		cmd := exec.CommandContext(ctx, "ps", "-eo", "pid,cmd")
+		cmd := exec.CommandContext(ctx, "ps", "-eo", "pid,command")
 		outBytes, err := cmd.Output()
 		Expect(err).To(Succeed())
 
