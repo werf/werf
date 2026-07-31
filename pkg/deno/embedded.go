@@ -2,20 +2,11 @@
 
 package deno
 
-import (
-	"context"
-	"strings"
+import "strings"
 
-	"github.com/werf/nelm/pkg/ts"
-)
-
-// EmbeddedBinaryPath extracts the embedded Deno binary and returns its path.
-// The second result reports whether an embedded binary is available at all.
-func EmbeddedBinaryPath(ctx context.Context) (string, bool, error) {
-	path, err := ts.ExtractEmbeddedDeno(ctx, embeddedDeno, strings.TrimSpace(embeddedDenoSHA256))
-	if err != nil {
-		return "", false, err
-	}
-
-	return path, true, nil
+// EmbeddedDenoData returns the compressed embedded Deno binary and its
+// expected sha256. The last result reports whether an embedded binary is
+// available at all.
+func EmbeddedDenoData() ([]byte, string, bool) {
+	return embeddedDeno, strings.TrimSpace(embeddedDenoSHA256), true
 }
