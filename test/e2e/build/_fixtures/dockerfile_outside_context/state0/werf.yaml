@@ -5,3 +5,4 @@ configVersion: 1
 image: dockerfile
 context: app
 dockerfile: ../build/app.Dockerfile
+contextAddFiles: [generated.txt]

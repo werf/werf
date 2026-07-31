@@ -40,6 +40,10 @@ func TempFile(pattern string) (f *os.File, err error) {
 	return os.CreateTemp(werf.GetTmpDir(), pattern)
 }
 
+func TempDir(pattern string) (string, error) {
+	return os.MkdirTemp(werf.GetTmpDir(), pattern)
+}
+
 func newTmpDir(prefix string) (string, error) {
 	newDir, err := os.MkdirTemp(werf.GetTmpDir(), prefix)
 	if err != nil {

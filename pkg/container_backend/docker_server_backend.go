@@ -125,21 +125,33 @@ func (backend *DockerServerBackend) BuildDockerfile(ctx context.Context, dockerf
 			return "", fmt.Errorf("extract build context: %w", err)
 		}
 
-		dockerfile, err := tmp_manager.TempFile("*.Dockerfile")
+		dockerfileDir, err := tmp_manager.TempDir("dockerfile-*")
 		if err != nil {
-			return "", fmt.Errorf("create temporary dockerfile: %w", err)
+			return "", fmt.Errorf("create temporary dockerfile dir: %w", err)
 		}
-		defer os.Remove(dockerfile.Name())
+		defer func() {
+			if err := os.RemoveAll(dockerfileDir); err != nil {
+				logboek.Context(ctx).Error().LogF("ERROR: unable to remove temporary dockerfile dir %s: %s\n", dockerfileDir, err)
+			}
+		}()
 
-		if _, err := dockerfile.Write(dockerfileContent); err != nil {
-			return "", fmt.Errorf("write temporary dockerfile %s: %w", dockerfile.Name(), err)
+		dockerfilePath := filepath.Join(dockerfileDir, "Dockerfile")
+		if err := os.WriteFile(dockerfilePath, dockerfileContent, 0o600); err != nil {
+			return "", fmt.Errorf("write temporary dockerfile %s: %w", dockerfilePath, err)
 		}
-		if err := dockerfile.Close(); err != nil {
-			return "", fmt.Errorf("close temporary dockerfile %s: %w", dockerfile.Name(), err)
+
+		// buildkit reads the ignore file next to the dockerfile and only falls back to the
+		// context .dockerignore when there is none. The context archive has already been
+		// filtered by werf, so a fallback would apply the patterns a second time and undo
+		// contextAddFiles and the dockerignore file selection made by werf. The file must not
+		// be empty, otherwise buildkit may still treat it as absent.
+		ignorePath := dockerfilePath + ".dockerignore"
+		if err := os.WriteFile(ignorePath, []byte("# the build context is already filtered by werf\n"), 0o600); err != nil {
+			return "", fmt.Errorf("write temporary dockerignore %s: %w", ignorePath, err)
 		}
 
 		buildOpts.ContextPath = contextDir
-		buildOpts.DockerfileName = dockerfile.Name()
+		buildOpts.DockerfileName = dockerfilePath
 	}
 
 	if Debug() {

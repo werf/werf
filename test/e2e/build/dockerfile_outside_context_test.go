@@ -14,7 +14,7 @@ type dockerfileOutsideContextTestOptions struct {
 }
 
 var _ = Describe("Build with dockerfile outside context", Label("e2e", "build", "dockerfile-outside-context"), func() {
-	DescribeTable("should build image and keep the dockerfile out of the build context",
+	DescribeTable("should build image with the build context assembled by werf only",
 		func(ctx SpecContext, testOpts dockerfileOutsideContextTestOptions) {
 			By("initializing")
 			setupEnv(testOpts.setupEnvOptions)
@@ -33,13 +33,18 @@ var _ = Describe("Build with dockerfile outside context", Label("e2e", "build", 
 			reportProject := report.NewProjectWithReport(werfProject)
 			buildOut, buildReport := reportProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath("report0.json"), nil)
 			Expect(buildOut).To(ContainSubstring("Building stage"))
+			Expect(buildOut).NotTo(ContainSubstring("There is no way to ignore the Dockerfile"))
 
 			By("checking build context contents")
 			contRuntime.ExpectCmdsToSucceed(
 				ctx,
 				buildReport.Images["dockerfile"].DockerImageName,
+				// the context .dockerignore ignores this file, but the dockerfile-specific one
+				// takes precedence, so only the container backend could have dropped it
 				"echo 'filecontent' | diff /ctx/file -",
-				"test 1 = $(ls -A /ctx | wc -l)",
+				"echo 'generated' | diff /ctx/generated.txt -",
+				"test ! -e /ctx/ignored",
+				"test 3 = $(ls -A /ctx | wc -l)",
 			)
 		},
 		Entry("using Docker", dockerfileOutsideContextTestOptions{setupEnvOptions{
