@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Masterminds/semver"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
@@ -527,6 +528,51 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 			Expect(err).Should(Succeed())
 			Expect(utils.SucceedCommandOutputString(ctx, sourceWorkTreeDir, "git", "show", serviceCommit2+":"+fRel)).Should(Equal("ABC"))
 		})
+
+		It("reseeds when the global gitattributes file newly filters a stat-unchanged file", func(ctx context.Context) {
+			ctx = logging.WithLogger(ctx)
+
+			// git var GIT_ATTR_GLOBAL honors XDG_CONFIG_HOME (git >= 2.43); on older git the
+			// signature falls back to the same XDG default, so both paths are exercised here.
+			xdg := filepath.Join(SuiteData.TestDirPath, "xdg")
+			globalAttrs := filepath.Join(xdg, "git", "attributes")
+			utils.MkdirAll(filepath.Dir(globalAttrs))
+			utils.WriteFile(globalAttrs, []byte(""))
+			GinkgoT().Setenv("XDG_CONFIG_HOME", xdg)
+
+			utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "config", "filter.up.clean", "tr 'a-z' 'A-Z'")
+
+			const fRel = "global_cased"
+			fPath := filepath.Join(sourceWorkTreeDir, fRel)
+			utils.WriteFile(fPath, []byte("abc"))
+			utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "add", fRel)
+			utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "commit", "-m", "add global_cased")
+			sourceHeadCommit = utils.GetHeadCommit(ctx, sourceWorkTreeDir)
+			past := time.Unix(1, 0)
+			Expect(os.Chtimes(fPath, past, past)).Should(Succeed())
+
+			serviceCommit1, err := SyncSourceWorktreeWithServiceBranch(ctx, gitDir, sourceWorkTreeDir, workTreeCacheDir, sourceHeadCommit, syncOptions)
+			Expect(err).Should(Succeed())
+			Expect(utils.SucceedCommandOutputString(ctx, sourceWorkTreeDir, "git", "show", serviceCommit1+":"+fRel)).Should(Equal("abc"))
+
+			// Change ONLY the global attributes file content; repo config and file stat unchanged.
+			utils.WriteFile(globalAttrs, []byte(fRel+" filter=up\n"))
+
+			serviceCommit2, err := SyncSourceWorktreeWithServiceBranch(ctx, gitDir, sourceWorkTreeDir, workTreeCacheDir, sourceHeadCommit, syncOptions)
+			Expect(err).Should(Succeed())
+			Expect(utils.SucceedCommandOutputString(ctx, sourceWorkTreeDir, "git", "show", serviceCommit2+":"+fRel)).Should(Equal("ABC"))
+		})
+
+		It("includes the system gitattributes path in the conversion signature (git >= 2.43)", func(ctx context.Context) {
+			ctx = logging.WithLogger(ctx)
+			if gitVersion.LessThan(semver.MustParse("2.43.0")) {
+				Skip("git var GIT_ATTR_SYSTEM requires git >= 2.43")
+			}
+
+			systemPath := strings.TrimSpace(utils.SucceedCommandOutputString(ctx, sourceWorkTreeDir, "git", "var", "GIT_ATTR_SYSTEM"))
+			Expect(systemPath).ShouldNot(BeEmpty())
+			Expect(globalAndSystemAttributesFilePaths(ctx, sourceWorkTreeDir)).Should(ContainElement(systemPath))
+		})
 	})
 
 	When("the persistent dev-index is corrupted", func() {
@@ -540,6 +586,21 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 			Expect(err).Should(Succeed())
 
 			utils.WriteFile(filepath.Join(workTreeCacheDir, "dev_index"), []byte("corrupt-not-an-index"))
+
+			serviceCommit2, err := SyncSourceWorktreeWithServiceBranch(ctx, gitDir, sourceWorkTreeDir, workTreeCacheDir, sourceHeadCommit, syncOptions)
+			Expect(err).Should(Succeed())
+			Expect(serviceCommit2).Should(Equal(serviceCommit1))
+		})
+
+		It("self-heals past a stale dev_index.lock left by a killed run", func(ctx context.Context) {
+			ctx = logging.WithLogger(ctx)
+			utils.WriteFile(filepath.Join(sourceWorkTreeDir, "tracked_file"), []byte("state"))
+
+			serviceCommit1, err := SyncSourceWorktreeWithServiceBranch(ctx, gitDir, sourceWorkTreeDir, workTreeCacheDir, sourceHeadCommit, syncOptions)
+			Expect(err).Should(Succeed())
+
+			// A SIGKILLed git leaves this behind; every later index op would fail to lock.
+			utils.WriteFile(filepath.Join(workTreeCacheDir, "dev_index.lock"), []byte("stale"))
 
 			serviceCommit2, err := SyncSourceWorktreeWithServiceBranch(ctx, gitDir, sourceWorkTreeDir, workTreeCacheDir, sourceHeadCommit, syncOptions)
 			Expect(err).Should(Succeed())

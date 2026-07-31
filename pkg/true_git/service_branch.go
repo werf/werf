@@ -128,11 +128,18 @@ func devIndexBaseFilePath(worktreeCacheDir string) string {
 }
 
 func removeDevIndexFiles(worktreeCacheDir string) error {
-	if err := os.RemoveAll(devIndexFilePath(worktreeCacheDir)); err != nil {
-		return fmt.Errorf("unable to remove %s: %w", devIndexFilePath(worktreeCacheDir), err)
-	}
-	if err := os.RemoveAll(devIndexBaseFilePath(worktreeCacheDir)); err != nil {
-		return fmt.Errorf("unable to remove %s: %w", devIndexBaseFilePath(worktreeCacheDir), err)
+	// Also drop a stale <dev_index>.lock: git leaves it behind when a command through the
+	// dev-index is SIGKILLed (werf's WaitDelay escalates SIGTERM to SIGKILL after 5m), and every
+	// later read-tree/add/write-tree would then fail to lock. Safe to remove here because the
+	// whole flow runs under withWorkTreeCacheLock, so no live git legitimately holds it.
+	for _, path := range []string{
+		devIndexFilePath(worktreeCacheDir),
+		devIndexFilePath(worktreeCacheDir) + ".lock",
+		devIndexBaseFilePath(worktreeCacheDir),
+	} {
+		if err := os.RemoveAll(path); err != nil {
+			return fmt.Errorf("unable to remove %s: %w", path, err)
+		}
 	}
 	return nil
 }
@@ -275,6 +282,9 @@ func gitConfigFilterValues(ctx context.Context, repoDir string) (string, error) 
 // index-tracked files would miss `git lfs track`-style changes and leave a stale blob in the warm
 // index. --exclude-standard is deliberately NOT passed: a gitignored .gitattributes still governs
 // conversion of non-ignored files.
+// ponytail: omitting --exclude-standard makes --others walk fully-ignored trees (node_modules,
+// build output) on every sync; readdir/lstat-only (no content reads, so #4754 stays fixed), but
+// revisit with a smarter enumeration if a repo with a huge ignored tree reports latency here.
 func worktreeGitattributesFiles(ctx context.Context, sourceWorktreeDir string) ([]string, error) {
 	lsCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: sourceWorktreeDir}, "ls-files", "-z", "--cached", "--others", "--", ".gitattributes", ":(glob)**/.gitattributes")
 	if err := lsCmd.Run(ctx); err != nil {
@@ -309,26 +319,42 @@ func extraAttributesFilePaths(ctx context.Context, sourceWorktreeDir string) []s
 		}
 	}
 
+	return append(paths, globalAndSystemAttributesFilePaths(ctx, sourceWorktreeDir)...)
+}
+
+// globalAndSystemAttributesFilePaths returns the per-user and system-wide gitattributes files that
+// git consults during `git add`. git 2.43+ exposes their resolved locations via `git var`
+// (honoring GIT_ATTR_NOSYSTEM and the compiled-in/runtime prefix); on older git the system path is
+// undiscoverable, so fall back to core.attributesFile / the XDG default for the per-user file only.
+func globalAndSystemAttributesFilePaths(ctx context.Context, sourceWorktreeDir string) []string {
+	if !gitVersion.LessThan(semver.MustParse("2.43.0")) {
+		var paths []string
+		for _, v := range []string{"GIT_ATTR_SYSTEM", "GIT_ATTR_GLOBAL"} {
+			varCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: sourceWorktreeDir}, "var", v)
+			if err := varCmd.Run(ctx); err == nil {
+				if p := strings.TrimSpace(varCmd.OutBuf.String()); p != "" {
+					paths = append(paths, p)
+				}
+			}
+		}
+		return paths
+	}
+
 	attrFileCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: sourceWorktreeDir}, "config", "--get", "core.attributesFile")
 	if err := attrFileCmd.Run(ctx); err == nil {
 		if p := strings.TrimSpace(attrFileCmd.OutBuf.String()); p != "" {
-			paths = append(paths, expandTilde(p))
+			return []string{expandTilde(p)}
 		}
-	} else if p := defaultGlobalAttributesFile(); p != "" {
-		paths = append(paths, p)
 	}
-
-	return paths
-}
-
-func defaultGlobalAttributesFile() string {
+	// ponytail: on git <2.43 the system gitattributes path is undiscoverable, so it is not
+	// hashed — an extremely rare, unmanaged file; revisit only if reported.
 	if xdg := os.Getenv("XDG_CONFIG_HOME"); xdg != "" {
-		return filepath.Join(xdg, "git", "attributes")
+		return []string{filepath.Join(xdg, "git", "attributes")}
 	}
 	if home, err := os.UserHomeDir(); err == nil {
-		return filepath.Join(home, ".config", "git", "attributes")
+		return []string{filepath.Join(home, ".config", "git", "attributes")}
 	}
-	return ""
+	return nil
 }
 
 func expandTilde(path string) string {
