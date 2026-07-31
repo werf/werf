@@ -41,6 +41,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libbtrfs-dev netavark passt
+          # ubuntu-24.04 blocks unprivileged user namespaces by default, breaking rootless buildah
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
 
       - name: Checkout code
         uses: actions/checkout@v6
