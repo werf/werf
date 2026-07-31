@@ -111,10 +111,13 @@ tasks:
   deno:embed:
     desc: 'Download and embed the Deno binary for one platform. Important vars: "platform".'
     run: when_changed
+    label: 'deno:embed:{{.platform}}'
     vars:
       platform: '{{.platform | default (printf "%s/%s" .os .arch)}}'
+      denoVersionSource:
+        sh: printf '%s/pkg/ts/downloader.go' "$(go list -m -f '{{`{{.Dir}}`}}' github.com/werf/nelm)"
     sources:
-      - go.mod
+      - '{{.denoVersionSource}}'
     generates:
       - pkg/deno/embed/{{.platform}}/deno.gz
       - pkg/deno/embed/{{.platform}}/deno.sha256
