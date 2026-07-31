@@ -457,7 +457,7 @@ func run(
 	})
 	engine.Debug = commonCmdData.DebugTemplates
 
-	ctx = common.SetupDenoContext(ctx, &commonCmdData)
+	ctx = common.SetupDenoContext(ctx)
 
 	if err := action.ReleaseInstall(ctx, releaseName, releaseNamespace, action.ReleaseInstallOptions{
 		KubeConnectionOptions:      commonCmdData.KubeConnectionOptions,

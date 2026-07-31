@@ -809,17 +809,15 @@ func SetupDenoBinaryPath(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringVarP(&cmdData.DenoBinaryPath, "deno-binary-path", "", os.Getenv("WERF_DENO_BINARY_PATH"), "Path to the Deno binary to use instead of auto-downloading (default $WERF_DENO_BINARY_PATH)")
 }
 
-// SetupDenoContext puts the embedded Deno data and the explicitly configured
-// binary path into ctx, so nelm can extract the embedded binary lazily — only
-// when a chart actually contains TypeScript.
-func SetupDenoContext(ctx context.Context, cmdData *CmdData) context.Context {
+// SetupDenoContext puts the embedded Deno data into ctx, so nelm can extract
+// the embedded binary lazily — only when a chart actually contains TypeScript.
+func SetupDenoContext(ctx context.Context) context.Context {
 	compressed, sha256, embedded := deno.EmbeddedDenoData()
-	if !embedded && cmdData.DenoBinaryPath == "" {
+	if !embedded {
 		return ctx
 	}
 
 	return ts.NewContextWithTSOptions(ctx, common.TypeScriptOptions{
-		DenoBinaryPath:         cmdData.DenoBinaryPath,
 		EmbeddedDenoCompressed: compressed,
 		EmbeddedDenoSHA256:     sha256,
 	})
