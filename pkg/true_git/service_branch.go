@@ -72,7 +72,7 @@ func syncWorktreeWithServiceWorktreeBranch(ctx context.Context, sourceWorktreeDi
 		return "", fmt.Errorf("unable to get service worktree commit SHA: %w", err)
 	}
 
-	conversionSignature, err := computeConversionConfigSignature(ctx, sourceWorktreeDir)
+	conversionSignature, err := computeConversionConfigSignature(ctx, sourceWorktreeDir, serviceWorktreeDir)
 	if err != nil {
 		return "", fmt.Errorf("unable to compute conversion config signature: %w", err)
 	}
@@ -171,6 +171,13 @@ func prepareDevIndexAndWriteTree(ctx context.Context, sourceWorktreeDir, service
 	devIndexFile := devIndexFilePath(worktreeCacheDir)
 	expectedBase := devIndexBaseSignature(serviceBranchHeadCommit, conversionSignature)
 
+	// Always drop a stale <dev_index>.lock up front: a SIGKILLed run (werf escalates SIGTERM to
+	// SIGKILL after WaitDelay) leaves it behind, and it would otherwise wedge even the cold seed
+	// (read-tree) path where the retry-with-rebuild does not run. Safe under withWorkTreeCacheLock.
+	if err := os.RemoveAll(devIndexFile + ".lock"); err != nil {
+		return "", false, fmt.Errorf("unable to remove stale dev-index lock: %w", err)
+	}
+
 	seeded := true
 	if _, err := os.Stat(devIndexFile); err == nil && devIndexBaseMatches(worktreeCacheDir, expectedBase) {
 		seeded = false
@@ -223,12 +230,15 @@ func resolveTreeSHA(ctx context.Context, serviceWorktreeDir, commit string) (str
 
 // computeConversionConfigSignature captures everything that affects how `git add` converts working
 // tree content into blobs, so a change forces a full reseed instead of silently keeping stale blobs
-// for files whose own content and stat did not change. Read from git in the source worktree's own
-// config context so global filters (e.g. git-lfs's ~/.gitconfig filter.lfs) are included.
-func computeConversionConfigSignature(ctx context.Context, sourceWorktreeDir string) (string, error) {
+// for files whose own content and stat did not change. Config-dependent inputs (filter.*, the
+// global/system attributes locations) are read from serviceWorktreeDir — the same git config
+// context the real `git add` runs in — so a worktree-specific config change cannot slip past the
+// signature; the attribute FILES are enumerated from sourceWorktreeDir, where the working tree and
+// its .gitattributes actually live.
+func computeConversionConfigSignature(ctx context.Context, sourceWorktreeDir, serviceWorktreeDir string) (string, error) {
 	h := sha256.New()
 
-	filterConfig, err := gitConfigFilterValues(ctx, sourceWorktreeDir)
+	filterConfig, err := gitConfigFilterValues(ctx, serviceWorktreeDir)
 	if err != nil {
 		return "", err
 	}
@@ -250,7 +260,7 @@ func computeConversionConfigSignature(ctx context.Context, sourceWorktreeDir str
 		h.Write(content)
 	}
 
-	for _, extra := range extraAttributesFilePaths(ctx, sourceWorktreeDir) {
+	for _, extra := range extraAttributesFilePaths(ctx, sourceWorktreeDir, serviceWorktreeDir) {
 		content, err := os.ReadFile(extra)
 		if err != nil {
 			if errors.Is(err, os.ErrNotExist) {
@@ -306,7 +316,7 @@ func worktreeGitattributesFiles(ctx context.Context, sourceWorktreeDir string) (
 	return files, nil
 }
 
-func extraAttributesFilePaths(ctx context.Context, sourceWorktreeDir string) []string {
+func extraAttributesFilePaths(ctx context.Context, sourceWorktreeDir, serviceWorktreeDir string) []string {
 	var paths []string
 
 	gitPathCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: sourceWorktreeDir}, "rev-parse", "--git-path", "info/attributes")
@@ -319,18 +329,19 @@ func extraAttributesFilePaths(ctx context.Context, sourceWorktreeDir string) []s
 		}
 	}
 
-	return append(paths, globalAndSystemAttributesFilePaths(ctx, sourceWorktreeDir)...)
+	return append(paths, globalAndSystemAttributesFilePaths(ctx, serviceWorktreeDir)...)
 }
 
 // globalAndSystemAttributesFilePaths returns the per-user and system-wide gitattributes files that
-// git consults during `git add`. git 2.43+ exposes their resolved locations via `git var`
-// (honoring GIT_ATTR_NOSYSTEM and the compiled-in/runtime prefix); on older git the system path is
-// undiscoverable, so fall back to core.attributesFile / the XDG default for the per-user file only.
-func globalAndSystemAttributesFilePaths(ctx context.Context, sourceWorktreeDir string) []string {
+// git consults during `git add`, resolved in the same config context as the real add. git 2.43+
+// exposes their locations via `git var` (honoring GIT_ATTR_NOSYSTEM and the compiled-in/runtime
+// prefix); on older git the system path is undiscoverable, so fall back to core.attributesFile /
+// the XDG default for the per-user file only.
+func globalAndSystemAttributesFilePaths(ctx context.Context, repoDir string) []string {
 	if !gitVersion.LessThan(semver.MustParse("2.43.0")) {
 		var paths []string
 		for _, v := range []string{"GIT_ATTR_SYSTEM", "GIT_ATTR_GLOBAL"} {
-			varCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: sourceWorktreeDir}, "var", v)
+			varCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: repoDir}, "var", v)
 			if err := varCmd.Run(ctx); err == nil {
 				if p := strings.TrimSpace(varCmd.OutBuf.String()); p != "" {
 					paths = append(paths, p)
@@ -340,7 +351,7 @@ func globalAndSystemAttributesFilePaths(ctx context.Context, sourceWorktreeDir s
 		return paths
 	}
 
-	attrFileCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: sourceWorktreeDir}, "config", "--get", "core.attributesFile")
+	attrFileCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: repoDir}, "config", "--get", "core.attributesFile")
 	if err := attrFileCmd.Run(ctx); err == nil {
 		if p := strings.TrimSpace(attrFileCmd.OutBuf.String()); p != "" {
 			return []string{expandTilde(p)}

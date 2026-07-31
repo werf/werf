@@ -534,11 +534,16 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 
 			// git var GIT_ATTR_GLOBAL honors XDG_CONFIG_HOME (git >= 2.43); on older git the
 			// signature falls back to the same XDG default, so both paths are exercised here.
+			// Isolate from the host's real global config, which could set core.attributesFile and
+			// redirect GIT_ATTR_GLOBAL away from our XDG file.
 			xdg := filepath.Join(SuiteData.TestDirPath, "xdg")
 			globalAttrs := filepath.Join(xdg, "git", "attributes")
 			utils.MkdirAll(filepath.Dir(globalAttrs))
 			utils.WriteFile(globalAttrs, []byte(""))
 			GinkgoT().Setenv("XDG_CONFIG_HOME", xdg)
+			emptyGlobalConfig := filepath.Join(SuiteData.TestDirPath, "empty_global_gitconfig")
+			utils.WriteFile(emptyGlobalConfig, []byte(""))
+			GinkgoT().Setenv("GIT_CONFIG_GLOBAL", emptyGlobalConfig)
 
 			utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "config", "filter.up.clean", "tr 'a-z' 'A-Z'")
 
@@ -570,7 +575,9 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 			}
 
 			systemPath := strings.TrimSpace(utils.SucceedCommandOutputString(ctx, sourceWorkTreeDir, "git", "var", "GIT_ATTR_SYSTEM"))
-			Expect(systemPath).ShouldNot(BeEmpty())
+			if systemPath == "" {
+				Skip("system gitattributes disabled (GIT_ATTR_NOSYSTEM)")
+			}
 			Expect(globalAndSystemAttributesFilePaths(ctx, sourceWorkTreeDir)).Should(ContainElement(systemPath))
 		})
 	})
@@ -605,6 +612,19 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 			serviceCommit2, err := SyncSourceWorktreeWithServiceBranch(ctx, gitDir, sourceWorkTreeDir, workTreeCacheDir, sourceHeadCommit, syncOptions)
 			Expect(err).Should(Succeed())
 			Expect(serviceCommit2).Should(Equal(serviceCommit1))
+		})
+
+		It("self-heals past a stale dev_index.lock left by a killed COLD run", func(ctx context.Context) {
+			ctx = logging.WithLogger(ctx)
+			utils.WriteFile(filepath.Join(sourceWorkTreeDir, "tracked_file"), []byte("state"))
+
+			// No prior successful sync: marker absent ⇒ next sync takes the cold seed path, where
+			// the warm retry-with-rebuild does not run. A stale lock here must still be cleared.
+			utils.WriteFile(filepath.Join(workTreeCacheDir, "dev_index.lock"), []byte("stale"))
+
+			serviceCommit, err := SyncSourceWorktreeWithServiceBranch(ctx, gitDir, sourceWorkTreeDir, workTreeCacheDir, sourceHeadCommit, syncOptions)
+			Expect(err).Should(Succeed())
+			Expect(serviceCommit).ShouldNot(Equal(sourceHeadCommit))
 		})
 	})
 
