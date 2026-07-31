@@ -133,6 +133,17 @@ In the example above, werf will use the Dockerfile at `docs/Dockerfile` to build
 
 The Dockerfile may also reside outside the context, e.g. `dockerfile: ../dockerfiles/app.Dockerfile` with `context: app`, as long as its path does not go outside the project directory. Such a Dockerfile does not become a part of the build context.
 
+#### Excluding files from the build context
+
+werf assembles and filters the build context itself, so the resulting context does not depend on the container backend in use. The patterns are taken from the first of the following files that exists, and the remaining ones are not read at all:
+
+1. `<dockerfile>.dockerignore`
+2. `<dockerfile>.containerignore`
+3. `.dockerignore`
+4. `.containerignore`
+
+The first two are looked up next to the Dockerfile, the other two in the root of the context. Files added with `contextAddFiles` are added after the filtering, so the ignore patterns do not affect them.
+
 #### Using build secrets
 
 > **NOTE:** To use secrets in builds, you need to enable them explicitly in the giterminism settings. Learn more ([here]({{ "/usage/project_configuration/giterminism.html#using-build-secrets" | true_relative_url }}))

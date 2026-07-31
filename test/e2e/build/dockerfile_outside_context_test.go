@@ -28,23 +28,33 @@ var _ = Describe("Build with dockerfile outside context", Label("e2e", "build", 
 			By("preparing test repo")
 			SuiteData.InitTestRepo(ctx, "repo0", "dockerfile_outside_context/state0")
 
-			By("building image")
+			By("building images")
 			werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath("repo0"))
 			reportProject := report.NewProjectWithReport(werfProject)
 			buildOut, buildReport := reportProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath("report0.json"), nil)
 			Expect(buildOut).To(ContainSubstring("Building stage"))
 			Expect(buildOut).NotTo(ContainSubstring("There is no way to ignore the Dockerfile"))
 
-			By("checking build context contents")
+			By("checking that the dockerfile-specific ignore file wins over the ones of the context")
 			contRuntime.ExpectCmdsToSucceed(
 				ctx,
 				buildReport.Images["dockerfile"].DockerImageName,
-				// the context .dockerignore ignores this file, but the dockerfile-specific one
-				// takes precedence, so only the container backend could have dropped it
+				// only the container backend could have dropped these: the context ignore
+				// files match them, but the dockerfile-specific one takes precedence
 				"echo 'filecontent' | diff /ctx/file -",
 				"echo 'generated' | diff /ctx/generated.txt -",
+				"echo 'keep' | diff /ctx/keepme -",
 				"test ! -e /ctx/ignored",
-				"test 3 = $(ls -A /ctx | wc -l)",
+				"test 5 = $(ls -A /ctx | wc -l)",
+			)
+
+			By("checking that .containerignore of the context is applied when there is nothing else")
+			contRuntime.ExpectCmdsToSucceed(
+				ctx,
+				buildReport.Images["containerignore"].DockerImageName,
+				"echo 'filecontent' | diff /ctx/file -",
+				"test ! -e /ctx/ignored",
+				"test 2 = $(ls -A /ctx | wc -l)",
 			)
 		},
 		Entry("using Docker", dockerfileOutsideContextTestOptions{setupEnvOptions{

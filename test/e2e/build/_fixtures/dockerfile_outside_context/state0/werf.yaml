@@ -6,3 +6,8 @@ image: dockerfile
 context: app
 dockerfile: ../build/app.Dockerfile
 contextAddFiles: [generated.txt]
+
+---
+image: containerignore
+context: app2
+dockerfile: ../build/app2.Dockerfile

@@ -344,7 +344,9 @@ func createDockerIgnorePathMatcher(ctx context.Context, giterminismMgr gitermini
 	var dockerIgnorePatterns []string
 	for _, dockerIgnoreRelToContextPath := range []string{
 		dockerfileRelToContextPath + ".dockerignore",
+		dockerfileRelToContextPath + ".containerignore",
 		".dockerignore",
+		".containerignore",
 	} {
 		relDockerIgnorePath := filepath.Join(contextGitSubDir, dockerIgnoreRelToContextPath)
 		if exist, err := giterminismMgr.FileManager.IsDockerignoreExistAnywhere(ctx, relDockerIgnorePath); err != nil {
