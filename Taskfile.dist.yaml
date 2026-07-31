@@ -115,14 +115,13 @@ tasks:
     vars:
       platform: '{{.platform | default (printf "%s/%s" .os .arch)}}'
       denoVersionSource:
-        sh: printf '%s/pkg/ts/downloader.go' "$(go list -m -f '{{`{{.Dir}}`}}' github.com/werf/nelm)"
+        sh: printf '%s/pkg/ts/denolock/data/lock.json' "$(go list -m -f '{{`{{.Dir}}`}}' github.com/werf/nelm)"
     sources:
       - '{{.denoVersionSource}}'
     generates:
       - pkg/deno/embed/{{.platform}}/deno.gz
-      - pkg/deno/embed/{{.platform}}/deno.sha256
     cmds:
-      - env -u GOOS -u GOARCH DENO_EMBED_ROOT=pkg/deno/embed DENO_EMBED_PLATFORM="{{.platform}}" go run github.com/werf/nelm/cmd/embed-deno
+      - env -u GOOS -u GOARCH DENO_EMBED_ROOT=pkg/deno/embed DENO_EMBED_PLATFORM="{{.platform}}" go run github.com/werf/nelm/scripts/embed-deno
 
   _build:cgo:dev: &build_cgo_dev
     deps:

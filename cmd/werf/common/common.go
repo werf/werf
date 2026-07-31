@@ -812,14 +812,13 @@ func SetupDenoBinaryPath(cmdData *CmdData, cmd *cobra.Command) {
 // SetupDenoContext puts the embedded Deno data into ctx, so nelm can extract
 // the embedded binary lazily — only when a chart actually contains TypeScript.
 func SetupDenoContext(ctx context.Context) context.Context {
-	compressed, sha256, embedded := deno.EmbeddedDenoData()
+	compressed, embedded := deno.EmbeddedDenoData()
 	if !embedded {
 		return ctx
 	}
 
 	return ts.NewContextWithTSOptions(ctx, common.TypeScriptOptions{
 		EmbeddedDenoCompressed: compressed,
-		EmbeddedDenoSHA256:     sha256,
 	})
 }
 
