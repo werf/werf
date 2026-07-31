@@ -22,7 +22,9 @@ RUN setcap cap_setuid+ep /usr/bin/newuidmap && \
     setcap cap_setgid+ep /usr/bin/newgidmap && \
     chmod u-s,g-s /usr/bin/newuidmap /usr/bin/newgidmap
 
-RUN for u in $USERS; do \
+# Remove the stock ubuntu user (UID 1000) so build/build1001 keep UIDs 1000/1001
+RUN userdel -r ubuntu && \
+    for u in $USERS; do \
     useradd -m $u && \
     mkdir -p /home/$u/.local/share/containers /home/$u/.werf && \
     chown -R $u:$u /home/$u && \
