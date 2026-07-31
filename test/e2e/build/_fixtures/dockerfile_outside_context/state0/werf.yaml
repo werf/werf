@@ -11,3 +11,8 @@ contextAddFiles: [generated.txt]
 image: containerignore
 context: app2
 dockerfile: ../build/app2.Dockerfile
+
+---
+image: dockerignore-priority
+context: app3
+dockerfile: ../build/app3.Dockerfile

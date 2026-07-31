@@ -35,17 +35,28 @@ var _ = Describe("Build with dockerfile outside context", Label("e2e", "build", 
 			Expect(buildOut).To(ContainSubstring("Building stage"))
 			Expect(buildOut).NotTo(ContainSubstring("There is no way to ignore the Dockerfile"))
 
-			By("checking that the dockerfile-specific ignore file wins over the ones of the context")
+			By("checking that the dockerfile-specific .dockerignore wins over every other ignore file")
 			contRuntime.ExpectCmdsToSucceed(
 				ctx,
 				buildReport.Images["dockerfile"].DockerImageName,
-				// only the container backend could have dropped these: the context ignore
-				// files match them, but the dockerfile-specific one takes precedence
+				// the dockerfile-specific .containerignore matches this file
 				"echo 'filecontent' | diff /ctx/file -",
-				"echo 'generated' | diff /ctx/generated.txt -",
+				// the ignore files of the context match this one, and only the container
+				// backend could have dropped it
 				"echo 'keep' | diff /ctx/keepme -",
+				"echo 'generated' | diff /ctx/generated.txt -",
 				"test ! -e /ctx/ignored",
 				"test 5 = $(ls -A /ctx | wc -l)",
+			)
+
+			By("checking that .dockerignore of the context wins over .containerignore of the context")
+			contRuntime.ExpectCmdsToSucceed(
+				ctx,
+				buildReport.Images["dockerignore-priority"].DockerImageName,
+				"echo 'keep' | diff /ctx/keep -",
+				"echo 'only-ci' | diff /ctx/only-ci -",
+				"test ! -e /ctx/only-di",
+				"test 4 = $(ls -A /ctx | wc -l)",
 			)
 
 			By("checking that .containerignore of the context is applied when there is nothing else")
