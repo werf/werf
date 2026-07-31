@@ -1,6 +1,7 @@
 package true_git
 
 import (
+	"os"
 	"os/exec"
 	"testing"
 
@@ -13,6 +14,15 @@ func runGitAI(t *testing.T, dir string, args ...string) string {
 	out, err := cmd.CombinedOutput()
 	require.NoError(t, err, "git %v: %s", args, out)
 	return string(out)
+}
+
+// isolateGitConfigAI detaches the test from the developer's global/system git config, so an ambient
+// setting (notably protocol.file.allow=always) cannot mask a missing production option.
+func isolateGitConfigAI(t *testing.T) {
+	t.Helper()
+	t.Setenv("GIT_CONFIG_GLOBAL", os.DevNull)
+	t.Setenv("GIT_CONFIG_SYSTEM", os.DevNull)
+	t.Setenv("GIT_TERMINAL_PROMPT", "0")
 }
 
 func initGitRepoAI(t *testing.T, dir string) {

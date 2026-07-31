@@ -64,6 +64,7 @@ func TestAI_UpdateSubmodulesForwardsIncludePath(t *testing.T) {
 
 func TestAI_UpdateSubmodulesReusesLocalObjectsWithoutRemote(t *testing.T) {
 	ctx := context.Background()
+	isolateGitConfigAI(t)
 
 	subRemote := t.TempDir()
 	initGitRepoAI(t, subRemote)
@@ -94,6 +95,7 @@ func TestAI_UpdateSubmodulesReusesLocalObjectsWithoutRemote(t *testing.T) {
 
 func TestAI_UpdateSubmodulesReusesLocalObjectsForNestedWithoutRemote(t *testing.T) {
 	ctx := context.Background()
+	isolateGitConfigAI(t)
 
 	leafRemote := t.TempDir()
 	initGitRepoAI(t, leafRemote)
@@ -127,6 +129,104 @@ func TestAI_UpdateSubmodulesReusesLocalObjectsForNestedWithoutRemote(t *testing.
 	content, err := os.ReadFile(filepath.Join(workTreeDir, "mid", "leaf", "leaf.txt"))
 	require.NoError(t, err)
 	require.Equal(t, "LEAF", string(content))
+}
+
+// A submodule name reused at another nesting level cannot be expressed as a process-global
+// submodule.<name>.url, so no override may be emitted: an override for the top-level copy would
+// otherwise hijack the nested clone and fail the whole update.
+func TestAI_UpdateSubmodulesSkipsOverridesOnDuplicateSubmoduleName(t *testing.T) {
+	ctx := context.Background()
+	isolateGitConfigAI(t)
+
+	newLib := func(marker string) string {
+		dir := t.TempDir()
+		initGitRepoAI(t, dir)
+		require.NoError(t, os.WriteFile(filepath.Join(dir, "who.txt"), []byte(marker), 0o644))
+		runGitAI(t, dir, "add", ".")
+		runGitAI(t, dir, "commit", "-m", "lib "+marker)
+		return dir
+	}
+	libA := newLib("A")
+	libB := newLib("B")
+
+	// mid carries a DIFFERENT repo under the same submodule name "lib".
+	midRemote := t.TempDir()
+	initGitRepoAI(t, midRemote)
+	runGitAI(t, midRemote, "-c", "protocol.file.allow=always", "submodule", "add", libB, "lib")
+	runGitAI(t, midRemote, "commit", "-m", "add lib B")
+
+	superRepo := t.TempDir()
+	initGitRepoAI(t, superRepo)
+	runGitAI(t, superRepo, "-c", "protocol.file.allow=always", "submodule", "add", libA, "lib")
+	runGitAI(t, superRepo, "-c", "protocol.file.allow=always", "submodule", "add", midRemote, "mid")
+	runGitAI(t, superRepo, "-c", "protocol.file.allow=always", "submodule", "update", "--init", "--recursive")
+	runGitAI(t, superRepo, "commit", "-m", "add lib A and mid")
+	headSHA := strings.TrimSpace(runGitAI(t, superRepo, "rev-parse", "HEAD"))
+
+	overrides, blockers, err := submoduleLocalURLOverrides(ctx, superRepo)
+	require.NoError(t, err)
+	require.Empty(t, overrides, "no override may be emitted for a duplicated submodule name")
+	require.NotEmpty(t, blockers)
+
+	// Remotes stay reachable here, so the plain remote update must still produce correct content for
+	// BOTH same-named submodules. These test "remotes" are local paths, hence the explicit transport
+	// allowance that a real https remote would not need.
+	t.Setenv("GIT_ALLOW_PROTOCOL", "file")
+	workTreeDir := filepath.Join(t.TempDir(), "worktree")
+	runGitAI(t, superRepo, "worktree", "add", "--detach", workTreeDir, headSHA)
+	require.NoError(t, updateSubmodules(ctx, filepath.Join(superRepo, ".git"), workTreeDir))
+
+	topWho, err := os.ReadFile(filepath.Join(workTreeDir, "lib", "who.txt"))
+	require.NoError(t, err)
+	require.Equal(t, "A", string(topWho))
+	nestedWho, err := os.ReadFile(filepath.Join(workTreeDir, "mid", "lib", "who.txt"))
+	require.NoError(t, err)
+	require.Equal(t, "B", string(nestedWho))
+}
+
+// protocol.file.allow=always is only safe while every URL of the invocation is one werf computed,
+// so a submodule that cannot be served locally must suppress the overrides entirely — otherwise the
+// relaxed transport would also un-block a file:// URL taken from committed .gitmodules
+// (CVE-2022-39253 class).
+func TestAI_UpdateSubmodulesKeepsFileTransportBlockedForNonLocalSubmodule(t *testing.T) {
+	ctx := context.Background()
+	isolateGitConfigAI(t)
+
+	okRemote := t.TempDir()
+	initGitRepoAI(t, okRemote)
+	require.NoError(t, os.WriteFile(filepath.Join(okRemote, "ok.txt"), []byte("OK"), 0o644))
+	runGitAI(t, okRemote, "add", ".")
+	runGitAI(t, okRemote, "commit", "-m", "ok content")
+
+	evilRemote := t.TempDir()
+	initGitRepoAI(t, evilRemote)
+	require.NoError(t, os.WriteFile(filepath.Join(evilRemote, "evil.txt"), []byte("EVIL"), 0o644))
+	runGitAI(t, evilRemote, "add", ".")
+	runGitAI(t, evilRemote, "commit", "-m", "evil content")
+
+	superRepo := t.TempDir()
+	initGitRepoAI(t, superRepo)
+	runGitAI(t, superRepo, "-c", "protocol.file.allow=always", "submodule", "add", okRemote, "ok")
+	runGitAI(t, superRepo, "-c", "protocol.file.allow=always", "submodule", "add", "file://"+evilRemote, "evil")
+	runGitAI(t, superRepo, "commit", "-m", "add submodules")
+	headSHA := strings.TrimSpace(runGitAI(t, superRepo, "rev-parse", "HEAD"))
+
+	// Only "ok" is available locally: deinit "evil" so its module store no longer holds the pin.
+	runGitAI(t, superRepo, "submodule", "deinit", "-f", "evil")
+	require.NoError(t, os.RemoveAll(filepath.Join(superRepo, ".git", "modules", "evil")))
+
+	overrides, blockers, err := submoduleLocalURLOverrides(ctx, superRepo)
+	require.NoError(t, err)
+	require.Empty(t, overrides, "a non-local submodule must suppress all overrides")
+	require.NotEmpty(t, blockers)
+
+	workTreeDir := filepath.Join(t.TempDir(), "worktree")
+	runGitAI(t, superRepo, "worktree", "add", "--detach", workTreeDir, headSHA)
+
+	err = updateSubmodules(ctx, filepath.Join(superRepo, ".git"), workTreeDir)
+	require.Error(t, err, "git must still refuse the file:// submodule")
+	require.Contains(t, err.Error(), "transport 'file' not allowed")
+	require.NoFileExists(t, filepath.Join(workTreeDir, "evil", "evil.txt"))
 }
 
 func TestAI_SwitchWorkTreeNonSubmodulesUnaffectedByIncludePath(t *testing.T) {

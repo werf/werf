@@ -37,14 +37,14 @@ func updateSubmodules(ctx context.Context, repoDir, workTreeDir string) error {
 			return err
 		}
 
-		localURLOpts, remoteOnly, err := submoduleLocalURLOverrides(ctx, workTreeDir)
+		localURLOpts, blockers, err := submoduleLocalURLOverrides(ctx, workTreeDir)
 		if err != nil {
 			return err
 		}
-		if len(remoteOnly) > 0 {
+		if len(blockers) > 0 {
 			logboek.Context(ctx).Warn().LogF(
-				"WARNING: submodules %s are not present in the local object store and will be fetched from their remotes (credentials may be requested).\nRun `git submodule update --init --recursive` in your working tree beforehand so werf reuses the local objects and touches no network.\n",
-				strings.Join(remoteOnly, ", "),
+				"WARNING: unable to reuse local git objects for submodules: %s.\nAll submodules will be checked out from their remotes, which may request credentials. Run `git submodule update --init --recursive` in your working tree beforehand to let werf reuse the local objects instead.\n",
+				strings.Join(blockers, ", "),
 			)
 		}
 
@@ -53,6 +53,8 @@ func updateSubmodules(ctx context.Context, repoDir, workTreeDir string) error {
 		if len(localURLOpts) > 0 {
 			// The overrides point submodule URLs at the on-disk module store, which git clones over
 			// the file transport — blocked by the default protocol.file.allow=user for submodules.
+			// Safe only because overrides are all-or-nothing: every URL used by this invocation is
+			// then a path werf computed itself, never one taken from committed .gitmodules.
 			updateArgs = append(updateArgs, "-c", "protocol.file.allow=always")
 			updateArgs = append(updateArgs, localURLOpts...)
 		}
@@ -73,18 +75,21 @@ type submoduleNode struct {
 	moduleDir   string
 }
 
-// submoduleLocalURLOverrides walks the superproject's submodules recursively and, for those whose
-// pinned commit is already present in the local module store (<parent-module-dir>/modules/<name>,
-// rooted at <git-common-dir>), returns `-c submodule.<name>.url=<local-path>` overrides so
-// `git submodule update --recursive` clones them from those local objects instead of their remotes
-// — no network, no credentials. These -c options propagate to the nested update invocations via
-// GIT_CONFIG_PARAMETERS, so nested submodules are covered too. Submodules missing locally keep
-// their remote URL and are returned in remoteOnly so the caller can warn they will be fetched.
+// submoduleLocalURLOverrides walks the superproject's submodules recursively and, when EVERY
+// submodule's pinned commit is already present in the local module store
+// (<parent-module-dir>/modules/<name>, rooted at <git-common-dir>), returns
+// `-c submodule.<name>.url=<local-path>` overrides so `git submodule update --recursive` checks them
+// all out from those local objects instead of their remotes — no network, no credentials. These -c
+// options propagate into the nested update invocations via GIT_CONFIG_PARAMETERS.
 //
-// A submodule.<name>.url override is global to the git process, so when the same submodule name
-// occurs more than once at different module dirs it cannot be expressed unambiguously; such names
-// are dropped from the overrides and fall back to their remotes instead of risking a wrong source.
-func submoduleLocalURLOverrides(ctx context.Context, workTreeDir string) (overrides, remoteOnly []string, err error) {
+// The overrides are deliberately all-or-nothing: whatever cannot be served locally is reported in
+// blockers and NO override is emitted, leaving the plain remote update werf has always done. Partial
+// reuse is unsafe because `submodule.<name>.url` is global to the git process, so an override for one
+// submodule also redirects a same-named submodule elsewhere in the tree — and a subtree that is not
+// available locally cannot be enumerated at all, so such a collision could not even be detected.
+// All-or-nothing additionally keeps `protocol.file.allow=always`, which the local paths require, from
+// ever applying to a URL werf did not compute itself.
+func submoduleLocalURLOverrides(ctx context.Context, workTreeDir string) (overrides, blockers []string, err error) {
 	names, paths, err := parseGitmodulesPaths(ctx, &GitCmdOptions{RepoDir: workTreeDir}, "config", "-f", ".gitmodules")
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to list submodules: %w", err)
@@ -98,46 +103,68 @@ func submoduleLocalURLOverrides(ctx context.Context, workTreeDir string) (overri
 		return nil, nil, err
 	}
 
-	var localNodes []submoduleNode
+	var nodes []submoduleNode
 	for i, name := range names {
 		pinnedCommit, err := lsTreeGitlink(ctx, workTreeDir, "HEAD", paths[i])
 		if err != nil {
 			return nil, nil, err
 		}
-		if err := walkSubmodule(ctx, commonDir, name, paths[i], pinnedCommit, &localNodes, &remoteOnly); err != nil {
+		if err := walkSubmodule(ctx, commonDir, name, paths[i], pinnedCommit, &nodes, &blockers); err != nil {
 			return nil, nil, err
 		}
 	}
 
-	nameCount := make(map[string]int, len(localNodes))
-	for _, node := range localNodes {
-		nameCount[node.name]++
-	}
-	for _, node := range localNodes {
-		if nameCount[node.name] == 1 {
-			overrides = append(overrides, "-c", "submodule."+node.name+".url="+node.moduleDir)
-		} else {
-			remoteOnly = append(remoteOnly, node.displayPath)
+	seen := make(map[string]struct{}, len(nodes))
+	for _, node := range nodes {
+		if _, ok := seen[node.name]; ok {
+			blockers = append(blockers, fmt.Sprintf("%s (submodule name %q is used more than once)", node.displayPath, node.name))
 		}
+		seen[node.name] = struct{}{}
 	}
 
-	return overrides, remoteOnly, nil
+	if len(blockers) > 0 {
+		return nil, blockers, nil
+	}
+
+	for _, node := range nodes {
+		overrides = append(overrides, "-c", "submodule."+node.name+".url="+node.moduleDir)
+	}
+
+	return overrides, nil, nil
 }
 
 // walkSubmodule resolves one submodule against the local module store and recurses into its nested
 // submodules, reading their definitions from the module store at the pinned commit (no checkout
 // needed). parentModuleDir is the git dir whose modules/<name> hosts this submodule's store.
-func walkSubmodule(ctx context.Context, parentModuleDir, name, displayPath, pinnedCommit string, localNodes *[]submoduleNode, remoteOnly *[]string) error {
+func walkSubmodule(ctx context.Context, parentModuleDir, name, displayPath, pinnedCommit string, nodes *[]submoduleNode, blockers *[]string) error {
+	// A .gitmodules entry without a gitlink in the tree is not checked out by git either.
 	if pinnedCommit == "" {
+		return nil
+	}
+
+	if submoduleNameUnsafe(name) {
+		*blockers = append(*blockers, fmt.Sprintf("%s (unsupported submodule name %q)", displayPath, name))
 		return nil
 	}
 
 	moduleDir := filepath.Join(parentModuleDir, "modules", name)
 	if !moduleStoreHasCommit(ctx, moduleDir, pinnedCommit) {
-		*remoteOnly = append(*remoteOnly, displayPath)
+		*blockers = append(*blockers, fmt.Sprintf("%s (not initialized locally)", displayPath))
 		return nil
 	}
-	*localNodes = append(*localNodes, submoduleNode{name: name, displayPath: displayPath, moduleDir: moduleDir})
+
+	// A partial clone can hold the commit while its blobs still live on the promisor remote, so
+	// cloning from it would fail or need the network — exactly what reuse is meant to avoid.
+	isPartial, err := moduleStoreIsPartial(ctx, moduleDir)
+	if err != nil {
+		return err
+	}
+	if isPartial {
+		*blockers = append(*blockers, fmt.Sprintf("%s (local clone is partial)", displayPath))
+		return nil
+	}
+
+	*nodes = append(*nodes, submoduleNode{name: name, displayPath: displayPath, moduleDir: moduleDir})
 
 	nestedNames, nestedPaths, err := parseGitmodulesPaths(ctx, &GitCmdOptions{RepoDir: moduleDir}, "config", "--blob", pinnedCommit+":.gitmodules")
 	if err != nil {
@@ -148,12 +175,35 @@ func walkSubmodule(ctx context.Context, parentModuleDir, name, displayPath, pinn
 		if err != nil {
 			return err
 		}
-		if err := walkSubmodule(ctx, moduleDir, nestedName, displayPath+"/"+nestedPaths[i], nestedPin, localNodes, remoteOnly); err != nil {
+		if err := walkSubmodule(ctx, moduleDir, nestedName, displayPath+"/"+nestedPaths[i], nestedPin, nodes, blockers); err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+// submoduleNameUnsafe rejects names that cannot be expressed safely as a `-c submodule.<name>.url`
+// option or that would resolve outside the module store: `=` terminates the config key early and
+// would set an unrelated option, and separators or `.`/`..` components would move the resolved path.
+// .gitmodules is repo-controlled and `git config -f` does not reject these itself.
+func submoduleNameUnsafe(name string) bool {
+	if strings.ContainsAny(name, "=\n/\\") {
+		return true
+	}
+	return name == "." || name == ".."
+}
+
+func moduleStoreIsPartial(ctx context.Context, moduleDir string) (bool, error) {
+	configCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: moduleDir}, "config", "--get-regexp", "^(extensions\\.partialclone|remote\\..*\\.(promisor|partialclonefilter))$")
+	if err := configCmd.Run(ctx); err != nil {
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) && exitErr.ExitCode() == 1 {
+			return false, nil
+		}
+		return false, fmt.Errorf("git config command failed: %w", err)
+	}
+	return configCmd.OutBuf.Len() > 0, nil
 }
 
 // parseGitmodulesPaths runs a `git config ... -z --get-regexp \.path$` over a .gitmodules source
@@ -192,7 +242,7 @@ func parseGitmodulesPaths(ctx context.Context, opts *GitCmdOptions, configArgs .
 }
 
 func lsTreeGitlink(ctx context.Context, repoDir, treeish, submodulePath string) (string, error) {
-	lsTreeCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: repoDir}, "ls-tree", treeish, "--", submodulePath)
+	lsTreeCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: repoDir}, "ls-tree", treeish, "--", ":(literal)"+submodulePath)
 	if err := lsTreeCmd.Run(ctx); err != nil {
 		return "", fmt.Errorf("git ls-tree command failed: %w", err)
 	}
@@ -208,7 +258,8 @@ func moduleStoreHasCommit(ctx context.Context, moduleDir, commit string) bool {
 	if _, err := os.Stat(moduleDir); err != nil {
 		return false
 	}
-	catFileCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: moduleDir}, "cat-file", "-e", commit+"^{commit}")
+	// GIT_NO_LAZY_FETCH keeps the probe itself from reaching out to a promisor remote (git 2.41+).
+	catFileCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: moduleDir, Env: []string{"GIT_NO_LAZY_FETCH=1"}}, "cat-file", "-e", commit+"^{commit}")
 	return catFileCmd.Run(ctx) == nil
 }
 
