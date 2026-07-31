@@ -1048,6 +1048,8 @@ github.com/werf/nelm v1.26.2-0.20260714210400-9241ea8a51d0 h1:GF/D3qu2r19zJcrR+8
 github.com/werf/nelm v1.26.2-0.20260714210400-9241ea8a51d0/go.mod h1:3jr18vadayMPDKQaXzCsc5RFtfPRwnZOxvawwHhm+4M=
 github.com/werf/nelm v1.26.2-0.20260728083400-0d2b4e06f3a6 h1:4XE06yWKh/XgR2AodJnk8LDRsyl6zYcHF0fmcTO4Mi8=
 github.com/werf/nelm v1.26.2-0.20260728083400-0d2b4e06f3a6/go.mod h1:eI4z6u+zG3t+CLdqRvAxNjoLH/5Jq3wStjUILE4HjFc=
+github.com/werf/nelm v1.26.2-0.20260731082534-9b5c1ee8dfe1 h1:Z5qKqRRq9wMphR6elaAqIxAt60Lg7KzFeSrL6O3a+kg=
+github.com/werf/nelm v1.26.2-0.20260731082534-9b5c1ee8dfe1/go.mod h1:eI4z6u+zG3t+CLdqRvAxNjoLH/5Jq3wStjUILE4HjFc=
 github.com/x448/float16 v0.8.4 h1:qLwI1I70+NjRFUR3zs1JPUCgaCXSh3SW62uAKT1mSBM=
 github.com/x448/float16 v0.8.4/go.mod h1:14CWIYCyZA/cWjXOioeEpHeN/83MdbZDRQHoFcYsOfg=
 github.com/xanzy/ssh-agent v0.3.3 h1:+/15pJfg/RsTxqYcX6fHqOXZwwMP+2VyYWJeWM2qQFM=
