@@ -8,6 +8,7 @@ description: Generates Pull Request titles and descriptions according to werf co
 ## Defaults
 
 - Always create PRs as draft (`gh pr create --draft`). The author marks it ready for review manually.
+- When a pushed commit changes what the PR does, update the title and description in the same step. A description that describes an earlier state of the branch is what the reviewer reads.
 
 ## Title
 
