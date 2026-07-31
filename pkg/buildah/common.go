@@ -26,7 +26,11 @@ const (
 	DefaultShmSize          = "65536k"
 	DefaultContainersConfig = `
 [network]
-default_rootless_network_cmd="slirp4netns"
+# Pin the network backend and the rootless network command explicitly so behavior does not
+# depend on host config or upstream defaults (buildah maps an empty rootless network cmd to
+# its legacy default, not to pasta)
+network_backend="netavark"
+default_rootless_network_cmd="pasta"
 [engine]
 # Prefer runc over crun since old versions of crun (including one shipped in Ubuntu 22.04) cause
 # "unknown version specified" error
