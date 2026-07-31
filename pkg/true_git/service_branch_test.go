@@ -512,7 +512,7 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 			fPath := filepath.Join(sourceWorkTreeDir, fRel)
 			utils.WriteFile(fPath, []byte("abc"))
 			utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "add", fRel)
-			utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "commit", "-m", "add cased_file")
+			gitCommitSucceed(ctx, sourceWorkTreeDir, "-m", "add cased_file")
 			sourceHeadCommit = utils.GetHeadCommit(ctx, sourceWorkTreeDir)
 			past := time.Unix(1, 0)
 			Expect(os.Chtimes(fPath, past, past)).Should(Succeed())
@@ -551,7 +551,7 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 			fPath := filepath.Join(sourceWorkTreeDir, fRel)
 			utils.WriteFile(fPath, []byte("abc"))
 			utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "add", fRel)
-			utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "commit", "-m", "add global_cased")
+			gitCommitSucceed(ctx, sourceWorkTreeDir, "-m", "add global_cased")
 			sourceHeadCommit = utils.GetHeadCommit(ctx, sourceWorkTreeDir)
 			past := time.Unix(1, 0)
 			Expect(os.Chtimes(fPath, past, past)).Should(Succeed())
@@ -672,7 +672,7 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 			utils.RunSucceedCommand(ctx, subRepoDir, "git", "-c", "init.defaultBranch=main", "init")
 			utils.WriteFile(filepath.Join(subRepoDir, "subfile"), []byte("sub"))
 			utils.RunSucceedCommand(ctx, subRepoDir, "git", "add", ".")
-			utils.RunSucceedCommand(ctx, subRepoDir, "git", "commit", "-m", "sub init")
+			gitCommitSucceed(ctx, subRepoDir, "-m", "sub init")
 			subHead := utils.GetHeadCommit(ctx, subRepoDir)
 
 			// git blocks file:// submodule transport by default (CVE-2022-39253). werf's internal
@@ -683,7 +683,7 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 			GinkgoT().Setenv("GIT_CONFIG_VALUE_0", "always")
 
 			utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "submodule", "add", subRepoDir, "sub")
-			utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "commit", "-m", "add submodule")
+			gitCommitSucceed(ctx, sourceWorkTreeDir, "-m", "add submodule")
 			sourceHeadCommit = utils.GetHeadCommit(ctx, sourceWorkTreeDir)
 
 			serviceCommit, err := SyncSourceWorktreeWithServiceBranch(ctx, gitDir, sourceWorkTreeDir, workTreeCacheDir, sourceHeadCommit, syncOptions)
