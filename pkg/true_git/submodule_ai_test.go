@@ -230,6 +230,69 @@ func TestAI_UpdateSubmodulesReusesLocalObjectsAfterNestedGitlinkMovedInWarmWorkT
 	require.Equal(t, "second", string(content))
 }
 
+// The fallback discards the service worktree's submodule state, and in a main work tree that same
+// path is the repository-wide submodule store. It must refuse rather than destroy the user's data.
+func TestAI_DiscardWorktreeSubmoduleGitDirsRefusesMainWorkTree(t *testing.T) {
+	ctx := context.Background()
+	isolateGitConfigAI(t)
+
+	subRemote := t.TempDir()
+	initGitRepoAI(t, subRemote)
+	require.NoError(t, os.WriteFile(filepath.Join(subRemote, "file.txt"), []byte("hello"), 0o644))
+	runGitAI(t, subRemote, "add", ".")
+	runGitAI(t, subRemote, "commit", "-m", "content")
+
+	superRepo := t.TempDir()
+	initGitRepoAI(t, superRepo)
+	runGitAI(t, superRepo, "-c", "protocol.file.allow=always", "submodule", "add", subRemote, "sub")
+	runGitAI(t, superRepo, "commit", "-m", "add submodule")
+
+	sharedStore := filepath.Join(superRepo, ".git", "modules", "sub")
+	require.DirExists(t, sharedStore)
+
+	err := discardWorktreeSubmoduleGitDirs(ctx, superRepo)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "not a linked work tree")
+	require.DirExists(t, sharedStore, "the repository-wide submodule store must survive")
+	require.FileExists(t, filepath.Join(superRepo, "sub", "file.txt"))
+}
+
+// .gitmodules is committed content, and git does not validate its paths, so the discard must not
+// delete at a path HEAD does not record as a gitlink.
+func TestAI_DiscardWorktreeSubmoduleGitDirsIgnoresPathsWithoutGitlink(t *testing.T) {
+	ctx := context.Background()
+	isolateGitConfigAI(t)
+
+	outside := t.TempDir()
+	require.NoError(t, os.MkdirAll(filepath.Join(outside, "inner"), 0o755))
+	victim := filepath.Join(outside, "inner", "data.txt")
+	require.NoError(t, os.WriteFile(victim, []byte("precious"), 0o644))
+
+	superRepo := t.TempDir()
+	initGitRepoAI(t, superRepo)
+	escape, err := filepath.Rel(superRepo, outside)
+	require.NoError(t, err)
+	gitmodules := "[submodule \"escape\"]\n\tpath = " + escape + "\n\turl = https://werf-test-nonexistent.invalid/x.git\n"
+	require.NoError(t, os.WriteFile(filepath.Join(superRepo, ".gitmodules"), []byte(gitmodules), 0o644))
+	runGitAI(t, superRepo, "add", ".gitmodules")
+	runGitAI(t, superRepo, "commit", "-m", "gitmodules entry without a gitlink")
+
+	// The second variant reaches outside through a committed symlink used as an intermediate path
+	// component, so it looks work-tree local and only the gitlink check rejects it. RemoveAll would
+	// follow it, unlike a symlink in the final position, which it would merely unlink.
+	require.NoError(t, os.Symlink(outside, filepath.Join(superRepo, "link")))
+	gitmodules += "[submodule \"vialink\"]\n\tpath = link/inner\n\turl = https://werf-test-nonexistent.invalid/y.git\n"
+	require.NoError(t, os.WriteFile(filepath.Join(superRepo, ".gitmodules"), []byte(gitmodules), 0o644))
+	runGitAI(t, superRepo, "add", ".gitmodules", "link")
+	runGitAI(t, superRepo, "commit", "-m", "symlinked gitmodules path")
+
+	workTreeDir := filepath.Join(t.TempDir(), "worktree")
+	runGitAI(t, superRepo, "worktree", "add", "--detach", workTreeDir, strings.TrimSpace(runGitAI(t, superRepo, "rev-parse", "HEAD")))
+
+	require.NoError(t, discardWorktreeSubmoduleGitDirs(ctx, workTreeDir))
+	require.FileExists(t, victim, "a path outside the work tree must never be removed")
+}
+
 // Reuse rests on git behavior that is not promised, so a store that passes every check and still
 // cannot serve the checkout must cost a slower build, not a failed one.
 func TestAI_UpdateSubmodulesFallsBackToRemoteWhenLocalStoreCannotServe(t *testing.T) {
@@ -262,11 +325,25 @@ func TestAI_UpdateSubmodulesFallsBackToRemoteWhenLocalStoreCannotServe(t *testin
 	workTreeDir := filepath.Join(t.TempDir(), "worktree")
 	runGitAI(t, superRepo, "worktree", "add", "--detach", workTreeDir, headSHA)
 	require.NoError(t, syncSubmodules(ctx, gitDir, workTreeDir))
+
+	// Pins that the broken store is still reuse-eligible. Without this the test would keep passing
+	// through the ordinary remote path if the store ever stopped qualifying, and would no longer
+	// exercise the retry it is named for.
+	overrides, blockers, err := submoduleLocalURLOverrides(ctx, workTreeDir)
+	require.NoError(t, err)
+	require.Empty(t, blockers, "a missing blob is undetectable up front, so nothing may block reuse")
+	require.NotEmpty(t, overrides)
+
 	require.NoError(t, updateSubmodules(ctx, gitDir, workTreeDir))
 
 	content, err := os.ReadFile(filepath.Join(workTreeDir, "sub", "file.txt"))
 	require.NoError(t, err)
 	require.Equal(t, "hello", string(content))
+
+	// The submodule ends up served by the retry, so it records the real remote rather than the store.
+	worktreeGitDir := strings.TrimSpace(runGitAI(t, workTreeDir, "rev-parse", "--absolute-git-dir"))
+	servedFrom := strings.TrimSpace(runGitAI(t, filepath.Join(worktreeGitDir, "modules", "sub"), "config", "--get", "remote.origin.url"))
+	require.Equal(t, subRemote, servedFrom)
 }
 
 // GitLab CI clones submodules shallow for GIT_SUBMODULE_DEPTH. A shallow store is not a partial

@@ -77,11 +77,11 @@ func updateSubmodules(ctx context.Context, repoDir, workTreeDir string) error {
 			// The failed attempt leaves the service worktree's own submodule git dirs pointing at the
 			// store, and an initialized submodule is never re-cloned, so the retry would inherit the
 			// very state that just failed. Discard them; they belong to this worktree alone.
-			if err := discardWorktreeSubmoduleGitDirs(ctx, workTreeDir); err != nil {
-				return err
+			if discardErr := discardWorktreeSubmoduleGitDirs(ctx, workTreeDir); discardErr != nil {
+				return fmt.Errorf("submodule update command failed: %w (unable to discard the failed attempt: %s)", err, discardErr)
 			}
-			if err := runUpdate(nil); err != nil {
-				return fmt.Errorf("submodule update command failed: %w", err)
+			if retryErr := runUpdate(nil); retryErr != nil {
+				return fmt.Errorf("submodule update command failed: %w (local object store reuse had failed with: %s)", retryErr, err)
 			}
 		}
 
@@ -170,7 +170,9 @@ func submoduleLocalURLOverrides(ctx context.Context, workTreeDir string) (overri
 			blockers = append(blockers, fmt.Sprintf("%s (submodule has no remote URL to redirect)", node.displayPath))
 			continue
 		}
-		// An earlier run already recorded the store as the remote, so the fetch is local as is.
+		// Nothing to redirect when the recorded remote is the store itself, and skipping it also
+		// keeps the store-prefix blocker below from matching this URL against its own store and
+		// disabling reuse outright.
 		if fetchURL == node.moduleDir {
 			continue
 		}
@@ -184,10 +186,14 @@ func submoduleLocalURLOverrides(ctx context.Context, workTreeDir string) (overri
 
 	// insteadOf matches by prefix, so a remote URL that prefixes one of the store paths would also
 	// rewrite the store URL the clone path relies on.
-	for _, fetchURL := range fetchURLs {
+	for _, owner := range nodes {
+		fetchURL, ok := fetchURLs[owner.displayPath]
+		if !ok {
+			continue
+		}
 		for _, node := range nodes {
 			if strings.HasPrefix(node.moduleDir, fetchURL) {
-				blockers = append(blockers, fmt.Sprintf("%s (remote URL prefixes the local object store path)", node.displayPath))
+				blockers = append(blockers, fmt.Sprintf("%s (its remote URL prefixes the object store path of %s)", owner.displayPath, node.displayPath))
 			}
 		}
 	}
@@ -209,11 +215,26 @@ func submoduleLocalURLOverrides(ctx context.Context, workTreeDir string) (overri
 // discardWorktreeSubmoduleGitDirs drops everything the service worktree holds for its submodules,
 // so the next update clones them afresh. Submodule working directories are tracked gitlinks, which
 // git clean leaves alone, and a leftover .git file there would outlive its discarded git dir.
+//
+// Everything removed here must belong to the service worktree alone. A linked worktree has its own
+// git dir, so its modules/ holds only its submodule git dirs; in a main worktree that same path is
+// the repository-wide submodule store, and removing it would destroy the user's own submodule data.
+// Refuse in that case rather than trust the caller.
 func discardWorktreeSubmoduleGitDirs(ctx context.Context, workTreeDir string) error {
 	worktreeGitDir, err := gitAbsoluteGitDir(ctx, workTreeDir)
 	if err != nil {
 		return err
 	}
+	commonDir, err := gitCommonDir(ctx, workTreeDir)
+	if err != nil {
+		return err
+	}
+	// The two are compared through EvalSymlinks because they are produced differently: git resolves
+	// the one, werf joins the other onto a caller-supplied path that may still hold a symlink.
+	if resolvePathForCompare(worktreeGitDir) == resolvePathForCompare(commonDir) {
+		return fmt.Errorf("refusing to discard submodule git dirs of %s: not a linked work tree", workTreeDir)
+	}
+
 	if err := os.RemoveAll(filepath.Join(worktreeGitDir, "modules")); err != nil {
 		return fmt.Errorf("unable to discard submodule git dirs of work tree %s: %w", workTreeDir, err)
 	}
@@ -223,12 +244,34 @@ func discardWorktreeSubmoduleGitDirs(ctx context.Context, workTreeDir string) er
 		return err
 	}
 	for _, path := range paths {
+		// .gitmodules is repo-controlled and git validates none of it, so two things must hold before
+		// a path reaches RemoveAll. It has to be work-tree local, which rules out an absolute or
+		// ".." path git would anyway refuse as a pathspec; and HEAD has to record it as a gitlink,
+		// which rules out a symlinked component RemoveAll would follow out of the work tree, since
+		// every component leading to a gitlink is itself a tree.
+		if !filepath.IsLocal(path) {
+			continue
+		}
+		gitlink, err := lsTreeGitlink(ctx, workTreeDir, "HEAD", path)
+		if err != nil {
+			return err
+		}
+		if gitlink == "" {
+			continue
+		}
 		if err := os.RemoveAll(filepath.Join(workTreeDir, path)); err != nil {
 			return fmt.Errorf("unable to discard submodule work tree %s: %w", path, err)
 		}
 	}
 
 	return nil
+}
+
+func resolvePathForCompare(path string) string {
+	if resolved, err := filepath.EvalSymlinks(path); err == nil {
+		return resolved
+	}
+	return filepath.Clean(path)
 }
 
 func gitAbsoluteGitDir(ctx context.Context, workTreeDir string) (string, error) {
