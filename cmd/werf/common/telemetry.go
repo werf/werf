@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"os"
 	"strings"
 
 	"github.com/go-git/go-git/v5/plumbing/transport"
@@ -21,6 +22,22 @@ var telemetryIgnoreCommands = []string{
 	"werf synchronization",
 	"werf completion",
 }
+
+// Flag and env var names for the OTLP metrics push exporter. Kept as
+// constants because they're referenced from both root.go (flag
+// registration) and here (flag lookup).
+const (
+	FlagOTLPMetricsEnabled  = "otlp-metrics-enabled"
+	FlagOTLPMetricsEndpoint = "otlp-metrics-endpoint"
+	EnvOTLPMetricsEnabled   = "WERF_OTLP_METRICS_ENABLED"
+	EnvOTLPMetricsEndpoint  = "WERF_OTLP_METRICS_ENDPOINT"
+)
+
+// metricsHandle bridges the PreRun (where the OTLP pipeline is initialized
+// from CLI flags) to ShutdownTelemetry (called once from main.go after the
+// command finishes). pkg/telemetry itself holds no package-level state; see
+// telemetry.MetricsHandle.
+var metricsHandle *telemetry.MetricsHandle
 
 func InitTelemetry(ctx context.Context) {
 	if err := telemetry.Init(ctx, telemetry.TelemetryOptions{
@@ -39,8 +56,8 @@ func InitTelemetry(ctx context.Context) {
 func ShutdownTelemetry(ctx context.Context, exitCode int) {
 	telemetry.GetTelemetryWerfIO().CommandExited(ctx, exitCode)
 
-	telemetry.MetricsEnd(ctx, exitCode)
-	if err := telemetry.MetricsShutdown(ctx); err != nil {
+	metricsHandle.MetricsEnd(ctx, exitCode)
+	if err := metricsHandle.MetricsShutdown(ctx); err != nil {
 		telemetry.LogF("unable to shutdown metrics: %s", err)
 	}
 
@@ -62,17 +79,32 @@ func TelemetryPreRun(cmd *cobra.Command, args []string) error {
 
 	InitTelemetry(ctx)
 
-	// Initialize OTLP metrics push exporter if enabled via flags
+	// Initialize OTLP metrics push exporter if enabled via flags/env.
 	if root := cmd.Root(); root != nil {
-		enabled, _ := root.PersistentFlags().GetBool("telemetry-enabled")
-		endpoint, _ := root.PersistentFlags().GetString("telemetry-otlp-endpoint")
-		if err := telemetry.InitMetrics(ctx, enabled, endpoint); err != nil {
+		enabled, err := root.PersistentFlags().GetBool(FlagOTLPMetricsEnabled)
+		if err != nil {
+			return fmt.Errorf("get --%s flag: %w", FlagOTLPMetricsEnabled, err)
+		}
+		endpoint, err := root.PersistentFlags().GetString(FlagOTLPMetricsEndpoint)
+		if err != nil {
+			return fmt.Errorf("get --%s flag: %w", FlagOTLPMetricsEndpoint, err)
+		}
+
+		handle, err := telemetry.InitMetrics(ctx, enabled, endpoint)
+		if err != nil {
+			if enabled {
+				// The user explicitly opted in: a misconfiguration must be
+				// visible instead of silently discarded (telemetry.LogF only
+				// writes when WERF_TELEMETRY_LOG_FILE is set).
+				fmt.Fprintf(os.Stderr, "WARNING: otlp metrics: %s\n", err)
+			}
 			telemetry.LogF("error: %s", err)
 		}
+		metricsHandle = handle
 	}
 
 	telemetry.GetTelemetryWerfIO().SetCommand(ctx, command)
-	telemetry.MetricsStart(ctx, command)
+	metricsHandle.MetricsStart(ctx, command)
 
 	var commandOptions []telemetry.CommandOption
 	for _, fs := range []*flag.FlagSet{cmd.Flags(), cmd.PersistentFlags(), cmd.LocalFlags(), cmd.InheritedFlags()} {

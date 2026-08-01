@@ -11,6 +11,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v2/cmd/werf/build"
 	bundle_apply "github.com/werf/werf/v2/cmd/werf/bundle/apply"
 	bundle_copy "github.com/werf/werf/v2/cmd/werf/bundle/copy"
@@ -140,9 +141,8 @@ func ConstructRootCmd(ctx context.Context) (*cobra.Command, error) {
 
 	templates.ActsAsRootCommand(rootCmd, *groups...)
 
-	// Global telemetry flags (OTLP metrics push)
-	rootCmd.PersistentFlags().Bool("telemetry-enabled", false, "Enable OTLP metrics exporter (push)")
-	rootCmd.PersistentFlags().String("telemetry-otlp-endpoint", "", "OTLP collector endpoint, e.g., http://collector:4318/v1/metrics")
+	rootCmd.PersistentFlags().Bool(common.FlagOTLPMetricsEnabled, util.GetBoolEnvironmentDefaultFalse(common.EnvOTLPMetricsEnabled), fmt.Sprintf("Enable pushing werf_runs/werf_run_duration_seconds metrics to an OTLP HTTP collector (default $%s). Unauthenticated collectors only", common.EnvOTLPMetricsEnabled))
+	rootCmd.PersistentFlags().String(common.FlagOTLPMetricsEndpoint, os.Getenv(common.EnvOTLPMetricsEndpoint), fmt.Sprintf("OTLP metrics collector endpoint, e.g. http://collector:4318/v1/metrics (default $%s)", common.EnvOTLPMetricsEndpoint))
 
 	return rootCmd, nil
 }
