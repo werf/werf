@@ -29,7 +29,7 @@ Match the description to the size of the diff. Two tiers, nothing in between.
 ```
 ## Summary
 
-<1-3 sentence high-level overview of what the PR does and why it exists. For a `fix`, lead with the
+<1-3 sentence high-level overview of what the PR does. For a `fix`, lead with the
 observed wrong behavior and add a minimal repro (Dockerfile / werf.yaml / command) plus expected vs actual.>
 
 ## Key changes
@@ -58,7 +58,7 @@ observed wrong behavior and add a minimal repro (Dockerfile / werf.yaml / comman
 - Language: English.
 - Be specific about behavior, not "updated some code". Lead each bullet with what changed; add a path only when it helps navigation — a new file, a non-obvious location, or when the point is that the change plumbs through several layers. The Files tab already lists paths.
 - *Key changes*: group related items by theme, not one bullet per file; use sub-bullets for detail when helpful.
-- *Why*: explain the reason, not what changed (that's *Key changes*).
+- *Summary* and *Why* answer different questions and NEVER restate each other. *Summary*: the observed behavior and what the PR does about it. *Why*: the root cause, and what leaving it alone costs — never a reworded list of the changes (that's *Key changes*). For the umask fix: *Summary* was "mode `0667` loses its only executable bit to the umask, so `execve` fails", *Why* was "the old mode worked by luck — the common umasks 022 and 002 don't touch the last digit".
 - *Verification*: only the delta over CI — manual runs, hand-run e2e/real-cluster checks, the environment they required, and what could NOT be run. CI builds and runs the whole suite, so `task build`/`task test:unit` are noise unless a scoped local run is itself the point — then name it by its `task` command, never raw `go test`/`go vet`/`gofmt`. Plain list, not checkboxes — the reviewer is not the one ticking them.
 - *Review focus / risks*: guide the reviewer — call out non-obvious consequences, large generated diffs, breaking changes, and any deliberately accepted limitation of the chosen approach.
 - No AI-slop filler ("This PR improves the codebase…"). Every sentence must carry information.
