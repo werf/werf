@@ -20,9 +20,9 @@ description: Generates Pull Request titles and descriptions according to werf co
 
 ## Description
 
-Match the description to the size of the diff. Two tiers, nothing in between.
+Match the description to what the reviewer cannot infer from the diff. Two tiers, nothing in between.
 
-**Small** — one logical change, under ~20 changed lines, no user-visible behavior change (test fix, typo, non-portable flag, dependency bump): no headings at all. One to three sentences — what was wrong, what it is now. If the title already says it, one sentence is the whole description.
+**Small** — one logical change whose reason is obvious from the title and the diff (doc or skill wording, typo, dependency bump): no headings at all. One to three sentences — what was wrong, what it is now. If the title already says it, one sentence is the whole description. Line count does not decide this — a two-line fix with a non-obvious *why* is not small.
 
 **Everything else** — the structure below. A section earns its place only by telling the reviewer something the title and the diff do not. A section written to complete the template is slop. NEVER rename or substitute the sections.
 
@@ -62,7 +62,7 @@ observed wrong behavior and add a minimal repro (Dockerfile / werf.yaml / comman
 - *Verification*: only the delta over CI — manual runs, hand-run e2e/real-cluster checks, the environment they required, and what could NOT be run. CI builds and runs the whole suite, so `task build`/`task test:unit` are noise unless a scoped local run is itself the point — then name it by its `task` command, never raw `go test`/`go vet`/`gofmt`. Plain list, not checkboxes — the reviewer is not the one ticking them.
 - *Review focus / risks*: guide the reviewer — call out non-obvious consequences, large generated diffs, breaking changes, and any deliberately accepted limitation of the chosen approach.
 - No AI-slop filler ("This PR improves the codebase…"). Every sentence must carry information.
-- Length is a budget, not a target: under ~300 characters for a small PR, under ~1500 for a normal one. Cut any sentence that restates the title, another section, or the diff.
+- Length follows the number of things the reviewer cannot infer from the diff — the observed behavior, the root cause, each accepted risk, each check CI does not run — never the number of changed lines. A 1000-line mechanical change can need three sentences; a two-line one can need a paragraph. Budget one short paragraph or bullet per such item, ~300 characters for a small PR. Cut every sentence that restates the title, another section, or the diff, but NEVER buy length back by dropping a risk or a Verification bullet.
 - The only code block worth its space is a repro the reviewer can paste (Dockerfile, werf.yaml, command). Never paste a terminal transcript of an error that the repro already produces.
 - NEVER speculate in *Review focus / risks*. List what you know. "Probably fine because …" is filler — drop the whole bullet.
 - NEVER include sensitive or customer-identifying details in the title or description: client/company names, internal hostnames or filesystem paths, private build tags or version suffixes, credentials. Describe the environment generically (e.g. "long-lived CI runners sharing WERF_HOME", not a customer's runner path).
