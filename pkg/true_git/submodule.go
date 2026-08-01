@@ -48,21 +48,41 @@ func updateSubmodules(ctx context.Context, repoDir, workTreeDir string) error {
 			)
 		}
 
-		updateArgs := make([]string, 0, len(includePathOpts)+len(localURLOpts)+8)
-		updateArgs = append(updateArgs, includePathOpts...)
-		if len(localURLOpts) > 0 {
-			// The overrides point submodule URLs at the on-disk module store, which git clones over
-			// the file transport — blocked by the default protocol.file.allow=user for submodules.
-			// Safe only because overrides are all-or-nothing: every URL used by this invocation is
-			// then a path werf computed itself, never one taken from committed .gitmodules.
-			updateArgs = append(updateArgs, "-c", "protocol.file.allow=always")
-			updateArgs = append(updateArgs, localURLOpts...)
-		}
-		updateArgs = append(updateArgs, "submodule", "update", "--checkout", "--force", "--init", "--recursive")
+		runUpdate := func(reuseOpts []string) error {
+			updateArgs := make([]string, 0, len(includePathOpts)+len(reuseOpts)+8)
+			updateArgs = append(updateArgs, includePathOpts...)
+			if len(reuseOpts) > 0 {
+				// The redirects point submodule URLs at the on-disk module store, which git reaches
+				// over the file transport — blocked by the default protocol.file.allow=user for
+				// submodules. Safe only because reuse is all-or-nothing: every URL used by this
+				// invocation is then a path werf computed itself, never one from committed
+				// .gitmodules.
+				updateArgs = append(updateArgs, "-c", "protocol.file.allow=always")
+				updateArgs = append(updateArgs, reuseOpts...)
+			}
+			updateArgs = append(updateArgs, "submodule", "update", "--checkout", "--force", "--init", "--recursive")
 
-		submUpdateCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: workTreeDir}, updateArgs...)
-		if err := submUpdateCmd.Run(ctx); err != nil {
-			return fmt.Errorf("submodule update command failed: %w", err)
+			submUpdateCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: workTreeDir}, updateArgs...)
+			return submUpdateCmd.Run(ctx)
+		}
+
+		if err := runUpdate(localURLOpts); err != nil {
+			// Reuse rests on where git keeps submodule git dirs and on -c reaching nested updates,
+			// neither of which git promises. Anything unanticipated there must cost a slower build,
+			// not a broken one, so fall back to the plain remote update this has always been.
+			if len(localURLOpts) == 0 {
+				return fmt.Errorf("submodule update command failed: %w", err)
+			}
+			logboek.Context(ctx).Warn().LogF("WARNING: unable to check out submodules from the local object store (%s), retrying from their remotes, which may request credentials.\n", err)
+			// The failed attempt leaves the service worktree's own submodule git dirs pointing at the
+			// store, and an initialized submodule is never re-cloned, so the retry would inherit the
+			// very state that just failed. Discard them; they belong to this worktree alone.
+			if err := discardWorktreeSubmoduleGitDirs(ctx, workTreeDir); err != nil {
+				return err
+			}
+			if err := runUpdate(nil); err != nil {
+				return fmt.Errorf("submodule update command failed: %w", err)
+			}
 		}
 
 		return nil
@@ -184,6 +204,31 @@ func submoduleLocalURLOverrides(ctx context.Context, workTreeDir string) (overri
 	}
 
 	return overrides, nil, nil
+}
+
+// discardWorktreeSubmoduleGitDirs drops everything the service worktree holds for its submodules,
+// so the next update clones them afresh. Submodule working directories are tracked gitlinks, which
+// git clean leaves alone, and a leftover .git file there would outlive its discarded git dir.
+func discardWorktreeSubmoduleGitDirs(ctx context.Context, workTreeDir string) error {
+	worktreeGitDir, err := gitAbsoluteGitDir(ctx, workTreeDir)
+	if err != nil {
+		return err
+	}
+	if err := os.RemoveAll(filepath.Join(worktreeGitDir, "modules")); err != nil {
+		return fmt.Errorf("unable to discard submodule git dirs of work tree %s: %w", workTreeDir, err)
+	}
+
+	_, paths, err := parseGitmodulesPaths(ctx, &GitCmdOptions{RepoDir: workTreeDir}, "config", "-f", ".gitmodules")
+	if err != nil {
+		return err
+	}
+	for _, path := range paths {
+		if err := os.RemoveAll(filepath.Join(workTreeDir, path)); err != nil {
+			return fmt.Errorf("unable to discard submodule work tree %s: %w", path, err)
+		}
+	}
+
+	return nil
 }
 
 func gitAbsoluteGitDir(ctx context.Context, workTreeDir string) (string, error) {

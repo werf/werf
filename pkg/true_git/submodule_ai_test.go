@@ -230,6 +230,45 @@ func TestAI_UpdateSubmodulesReusesLocalObjectsAfterNestedGitlinkMovedInWarmWorkT
 	require.Equal(t, "second", string(content))
 }
 
+// Reuse rests on git behavior that is not promised, so a store that passes every check and still
+// cannot serve the checkout must cost a slower build, not a failed one.
+func TestAI_UpdateSubmodulesFallsBackToRemoteWhenLocalStoreCannotServe(t *testing.T) {
+	ctx := context.Background()
+	isolateGitConfigAI(t)
+	// The retry deliberately drops the transport allowance that only the local store needs, so this
+	// stand-in for an https remote has to be reachable some other way.
+	t.Setenv("GIT_ALLOW_PROTOCOL", "file")
+
+	subRemote := t.TempDir()
+	initGitRepoAI(t, subRemote)
+	require.NoError(t, os.WriteFile(filepath.Join(subRemote, "file.txt"), []byte("hello"), 0o644))
+	runGitAI(t, subRemote, "add", ".")
+	runGitAI(t, subRemote, "commit", "-m", "content")
+
+	superRepo := t.TempDir()
+	initGitRepoAI(t, superRepo)
+	runGitAI(t, superRepo, "-c", "protocol.file.allow=always", "submodule", "add", subRemote, "sub")
+	runGitAI(t, superRepo, "commit", "-m", "add submodule")
+	headSHA := strings.TrimSpace(runGitAI(t, superRepo, "rev-parse", "HEAD"))
+
+	// Drop the blob from the store while leaving the pinned commit reachable: the probe still
+	// succeeds, and nothing marks the store as partial, so only the checkout can discover this.
+	subSHA := strings.Fields(runGitAI(t, superRepo, "ls-tree", "HEAD", "--", "sub"))[2]
+	storeDir := filepath.Join(superRepo, ".git", "modules", "sub")
+	blobSHA := strings.TrimSpace(runGitAI(t, storeDir, "rev-parse", subSHA+":file.txt"))
+	require.NoError(t, os.Remove(filepath.Join(storeDir, "objects", blobSHA[:2], blobSHA[2:])))
+
+	gitDir := filepath.Join(superRepo, ".git")
+	workTreeDir := filepath.Join(t.TempDir(), "worktree")
+	runGitAI(t, superRepo, "worktree", "add", "--detach", workTreeDir, headSHA)
+	require.NoError(t, syncSubmodules(ctx, gitDir, workTreeDir))
+	require.NoError(t, updateSubmodules(ctx, gitDir, workTreeDir))
+
+	content, err := os.ReadFile(filepath.Join(workTreeDir, "sub", "file.txt"))
+	require.NoError(t, err)
+	require.Equal(t, "hello", string(content))
+}
+
 // GitLab CI clones submodules shallow for GIT_SUBMODULE_DEPTH. A shallow store is not a partial
 // one — it has every object of the commits it holds — so it must stay eligible for reuse.
 func TestAI_UpdateSubmodulesReusesLocalObjectsFromShallowSubmoduleStore(t *testing.T) {
