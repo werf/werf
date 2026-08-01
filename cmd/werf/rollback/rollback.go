@@ -77,6 +77,7 @@ werf rollback --revision 10`,
 
 	lo.Must0(common.SetupKubeConnectionFlags(&commonCmdData, cmd))
 	lo.Must0(common.SetupResourceValidationFlags(&commonCmdData, cmd))
+	common.SetupPatchesFlags(&commonCmdData, cmd)
 	lo.Must0(common.SetupTrackingFlags(&commonCmdData, cmd))
 
 	common.SetupAddAnnotations(&commonCmdData, cmd)
@@ -181,6 +182,8 @@ func run(ctx context.Context) error {
 		KubeConnectionOptions:       commonCmdData.KubeConnectionOptions,
 		NetworkParallelism:          commonCmdData.NetworkParallelism,
 		NoRemoveManualChanges:       commonCmdData.NoRemoveManualChanges,
+		PatchesFiles:                commonCmdData.PatchesFiles,
+		DefaultPatchesDisable:       commonCmdData.DefaultPatchesDisable,
 		NoShowNotes:                 commonCmdData.NoShowNotes,
 		ReleaseHistoryLimit:         commonCmdData.ReleaseHistoryLimit,
 		ReleaseInfoAnnotations:      releaseInfoAnnotations,
