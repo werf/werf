@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/werf/werf/v2/pkg/cleanup_report"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/storage"
 	"github.com/werf/werf/v2/pkg/storage/manager"
@@ -113,10 +114,19 @@ func (f *fakeStorageManager) ForEachRejectedStage(ctx context.Context, stageIDs 
 	return nil
 }
 
+func (f *fakeStorageManager) ForEachDeleteStageCustomTag(ctx context.Context, tags []string, cb func(ctx context.Context, tag string, err error) error) error {
+	for _, tag := range tags {
+		if err := cb(ctx, tag, f.stages.deleteTagErrs[tag]); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func TestAI_deleteRejectedStagesWithLinkedTags_NoRejected(t *testing.T) {
 	sm := newFakeStorageManager()
 
-	deleted, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, nil, false)
+	deleted, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, nil, false, nil)
 	require.NoError(t, err)
 	assert.Empty(t, deleted)
 	assert.Empty(t, sm.stages.deletedImages)
@@ -137,7 +147,7 @@ func TestAI_deleteRejectedStagesWithLinkedTags_OrderStageThenTagsThenMarker(t *t
 		otherStageID.String(): {"unrelated"},
 	}
 
-	deleted, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, customTagsByStageID, false)
+	deleted, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, customTagsByStageID, false, nil)
 	require.NoError(t, err)
 
 	assert.Equal(t, []string{stageID.String()}, deleted)
@@ -153,7 +163,7 @@ func TestAI_deleteRejectedStagesWithLinkedTags_DryRun(t *testing.T) {
 	sm := newFakeStorageManager()
 	sm.stages.rejectedStageIDs = []image.StageID{*stageID}
 
-	deleted, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, map[string][]string{stageID.String(): {"v1.0.0"}}, true)
+	deleted, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, map[string][]string{stageID.String(): {"v1.0.0"}}, true, nil)
 	require.NoError(t, err)
 	assert.Equal(t, []string{stageID.String()}, deleted)
 	assert.Empty(t, sm.stages.deletedImages, "dry run must not touch registry")
@@ -165,7 +175,7 @@ func TestAI_deleteRejectedStagesWithLinkedTags_PropagatesGetError(t *testing.T) 
 	sm := newFakeStorageManager()
 	sm.stages.rejectedErr = errors.New("registry down")
 
-	_, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, nil, false)
+	_, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, nil, false, nil)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "unable to get rejected stage ids")
 }
@@ -178,7 +188,7 @@ func TestAI_deleteRejectedStagesWithLinkedTags_StageImageNonFatalFailureKeepsMar
 	sm.stages.rejectedStageIDs = []image.StageID{*stageID}
 	sm.stages.deleteImageErrs[stageID.String()] = errors.New("temporary network glitch")
 
-	deleted, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, map[string][]string{stageID.String(): {"v1.0.0"}}, false)
+	deleted, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, map[string][]string{stageID.String(): {"v1.0.0"}}, false, nil)
 	require.NoError(t, err)
 
 	assert.Empty(t, deleted, "stage image deletion failed: stage not reported deleted, retry on next cleanup")
@@ -195,7 +205,7 @@ func TestAI_deleteRejectedStagesWithLinkedTags_StageImageFatalFailurePropagates(
 	sm.stages.rejectedStageIDs = []image.StageID{*stageID}
 	sm.stages.deleteImageErrs[stageID.String()] = errors.New("UNAUTHORIZED")
 
-	_, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, nil, false)
+	_, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, nil, false, nil)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "UNAUTHORIZED")
 }
@@ -208,7 +218,7 @@ func TestAI_deleteRejectedStagesWithLinkedTags_CustomTagFailureKeepsMarker(t *te
 	sm.stages.rejectedStageIDs = []image.StageID{*stageID}
 	sm.stages.deleteTagErrs["v1.0.0"] = errors.New("temporary network glitch")
 
-	deleted, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, map[string][]string{stageID.String(): {"v1.0.0", "latest"}}, false)
+	deleted, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, map[string][]string{stageID.String(): {"v1.0.0", "latest"}}, false, nil)
 	require.NoError(t, err)
 
 	assert.Empty(t, deleted, "stage with failed custom tag must NOT be reported deleted")
@@ -224,7 +234,7 @@ func TestAI_deleteRejectedStagesWithLinkedTags_RoutesUnregisterToMetaStorage(t *
 	sm := newFakeStorageManagerWithSplitStorages()
 	sm.stages.rejectedStageIDs = []image.StageID{*stageID}
 
-	deleted, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, map[string][]string{stageID.String(): {"v1.0.0", "latest"}}, false)
+	deleted, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, map[string][]string{stageID.String(): {"v1.0.0", "latest"}}, false, nil)
 	require.NoError(t, err)
 
 	assert.Equal(t, []string{stageID.String()}, deleted)
@@ -243,7 +253,7 @@ func TestAI_deleteRejectedStagesWithLinkedTags_UnregisterFailureKeepsMarker(t *t
 	sm.stages.rejectedStageIDs = []image.StageID{*stageID}
 	sm.meta.unregisterTagErrs["v1.0.0"] = errors.New("temporary network glitch")
 
-	deleted, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, map[string][]string{stageID.String(): {"v1.0.0", "latest"}}, false)
+	deleted, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, map[string][]string{stageID.String(): {"v1.0.0", "latest"}}, false, nil)
 	require.NoError(t, err)
 
 	assert.Empty(t, deleted, "stage with failed metadata unregister must NOT be reported deleted")
@@ -260,10 +270,88 @@ func TestAI_deleteRejectedStagesWithLinkedTags_MarkerFailureExcludesFromDeleted(
 	sm.stages.rejectedStageIDs = []image.StageID{*stageID}
 	sm.stages.deleteRecordErrs[stageID.String()] = errors.New("temporary network glitch")
 
-	deleted, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, nil, false)
+	deleted, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, nil, false, nil)
 	require.NoError(t, err)
 
 	assert.Empty(t, deleted, "marker deletion failed: stage not in deleted list")
 	assert.Equal(t, []image.StageID{*stageID}, sm.stages.deletedImages)
 	assert.Equal(t, []image.StageID{*stageID}, sm.stages.deletedRecords, "attempt was made")
+}
+
+func TestAI_deleteRejectedStagesWithLinkedTags_ReportRecordsEachSubAction(t *testing.T) {
+	digest := "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
+	stageID := image.NewStageID(digest, 1700000000)
+
+	sm := newFakeStorageManager()
+	sm.stages.rejectedStageIDs = []image.StageID{*stageID}
+
+	report := cleanup_report.NewReport("cleanup", false, "example.com/repo", "")
+
+	_, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, map[string][]string{stageID.String(): {"v1.0.0", "latest"}}, false, report)
+	require.NoError(t, err)
+
+	assert.ElementsMatch(t, []cleanup_report.Item{
+		{Type: cleanup_report.ItemTypeRejectedStage, Tag: stageID.String()},
+		{Type: cleanup_report.ItemTypeCustomTag, Tag: "v1.0.0"},
+		{Type: cleanup_report.ItemTypeCustomTag, Tag: "latest"},
+		{Type: cleanup_report.ItemTypeRejectedStageMarker, Tag: stageID.String() + "-rejected"},
+	}, report.Deleted)
+}
+
+func TestAI_deleteRejectedStagesWithLinkedTags_ReportOmitsFailedSubActions(t *testing.T) {
+	digest := "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
+	stageID := image.NewStageID(digest, 1700000000)
+
+	sm := newFakeStorageManager()
+	sm.stages.rejectedStageIDs = []image.StageID{*stageID}
+	sm.stages.deleteTagErrs["v1.0.0"] = errors.New("temporary network glitch")
+
+	report := cleanup_report.NewReport("cleanup", false, "example.com/repo", "")
+
+	_, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, map[string][]string{stageID.String(): {"v1.0.0", "latest"}}, false, report)
+	require.NoError(t, err)
+
+	assert.Equal(t, []cleanup_report.Item{
+		{Type: cleanup_report.ItemTypeRejectedStage, Tag: stageID.String()},
+	}, report.Deleted, "only the stage image succeeded: the failed custom tag and the untouched marker must be absent")
+}
+
+func TestAI_deleteRejectedStagesWithLinkedTags_ReportRecordsDryRunPlan(t *testing.T) {
+	digest := "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
+	stageID := image.NewStageID(digest, 1700000000)
+
+	sm := newFakeStorageManager()
+	sm.stages.rejectedStageIDs = []image.StageID{*stageID}
+
+	report := cleanup_report.NewReport("cleanup", true, "example.com/repo", "")
+
+	_, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, map[string][]string{stageID.String(): {"v1.0.0"}}, true, report)
+	require.NoError(t, err)
+
+	assert.Equal(t, []cleanup_report.Item{
+		{Type: cleanup_report.ItemTypeRejectedStage, Tag: stageID.String()},
+		{Type: cleanup_report.ItemTypeCustomTag, Tag: "v1.0.0"},
+		{Type: cleanup_report.ItemTypeRejectedStageMarker, Tag: stageID.String() + "-rejected"},
+	}, report.Deleted)
+}
+
+func TestAI_deleteCustomTags_ReportSkipsFailedDeletion(t *testing.T) {
+	sm := newFakeStorageManager()
+	sm.stages.deleteTagErrs["broken"] = errors.New("temporary network glitch")
+
+	report := cleanup_report.NewReport("purge", false, "example.com/repo", "")
+
+	require.NoError(t, deleteCustomTags(context.Background(), sm, []string{"ok", "broken"}, false, report))
+
+	assert.Equal(t, []cleanup_report.Item{
+		{Type: cleanup_report.ItemTypeCustomTag, Tag: "ok"},
+	}, report.Deleted, "log prints the failed tag as deleted, the report must not")
+}
+
+func TestAI_deleteCustomTags_NilReportKeepsBehaviour(t *testing.T) {
+	sm := newFakeStorageManager()
+	sm.stages.deleteTagErrs["broken"] = errors.New("temporary network glitch")
+
+	require.NoError(t, deleteCustomTags(context.Background(), sm, []string{"ok", "broken"}, false, nil))
+	require.NoError(t, deleteCustomTags(context.Background(), sm, []string{"ok"}, true, nil))
 }

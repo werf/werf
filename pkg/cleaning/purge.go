@@ -6,6 +6,7 @@ import (
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/cleaning/stage_manager"
+	"github.com/werf/werf/v2/pkg/cleanup_report"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/storage"
 	"github.com/werf/werf/v2/pkg/storage/manager"
@@ -14,6 +15,7 @@ import (
 type PurgeOptions struct {
 	RmContainersThatUseWerfImages bool
 	DryRun                        bool
+	Report                        *cleanup_report.Report
 }
 
 func Purge(ctx context.Context, projectName string, storageManager *manager.StorageManager, options PurgeOptions) error {
@@ -26,6 +28,7 @@ func newPurgeManager(projectName string, storageManager *manager.StorageManager,
 		ProjectName:                   projectName,
 		RmContainersThatUseWerfImages: options.RmContainersThatUseWerfImages,
 		DryRun:                        options.DryRun,
+		report:                        options.Report,
 	}
 }
 
@@ -34,6 +37,8 @@ type purgeManager struct {
 	ProjectName                   string
 	RmContainersThatUseWerfImages bool
 	DryRun                        bool
+
+	report *cleanup_report.Report
 }
 
 func (m *purgeManager) run(ctx context.Context) error {
@@ -94,15 +99,15 @@ func (m *purgeManager) deleteStageDescSet(ctx context.Context, stageDescSet imag
 		},
 	}
 
-	return deleteStageDescSet(ctx, m.StorageManager, m.DryRun, deleteStageOptions, stageDescSet, isFinal)
+	return deleteStageDescSet(ctx, m.StorageManager, m.DryRun, deleteStageOptions, stageDescSet, isFinal, m.report)
 }
 
 func (m *purgeManager) purgeImageMetadata(ctx context.Context) error {
-	return purgeImageMetadata(ctx, m.ProjectName, m.StorageManager, m.DryRun)
+	return purgeImageMetadata(ctx, m.ProjectName, m.StorageManager, m.DryRun, m.report)
 }
 
 func (m *purgeManager) purgeManagedImages(ctx context.Context) error {
-	return purgeManagedImages(ctx, m.ProjectName, m.StorageManager, m.DryRun)
+	return purgeManagedImages(ctx, m.ProjectName, m.StorageManager, m.DryRun, m.report)
 }
 
 func (m *purgeManager) deleteCustomTags(ctx context.Context) error {
@@ -117,7 +122,7 @@ func (m *purgeManager) deleteCustomTags(ctx context.Context) error {
 			customTagList = append(customTagList, list...)
 		}
 
-		if err := deleteCustomTags(ctx, m.StorageManager, customTagList, m.DryRun); err != nil {
+		if err := deleteCustomTags(ctx, m.StorageManager, customTagList, m.DryRun, m.report); err != nil {
 			return err
 		}
 
@@ -129,11 +134,12 @@ func (m *purgeManager) deleteCustomTags(ctx context.Context) error {
 	return nil
 }
 
-func deleteCustomTags(ctx context.Context, storageManager manager.StorageManagerInterface, customTagList []string, dryRun bool) error {
+func deleteCustomTags(ctx context.Context, storageManager manager.StorageManagerInterface, customTagList []string, dryRun bool, report *cleanup_report.Report) error {
 	if dryRun {
 		for _, customTag := range customTagList {
 			logboek.Context(ctx).Default().LogFWithCustomStyle(deletedStyle, "  tag: %s\n", customTag)
 			logboek.Context(ctx).Default().LogOptionalLn()
+			report.AddDeleted(cleanup_report.Item{Type: cleanup_report.ItemTypeCustomTag, Tag: customTag})
 		}
 
 		return nil
@@ -144,6 +150,8 @@ func deleteCustomTags(ctx context.Context, storageManager manager.StorageManager
 			if err := handleDeletionError(err); err != nil {
 				return err
 			}
+		} else {
+			report.AddDeleted(cleanup_report.Item{Type: cleanup_report.ItemTypeCustomTag, Tag: tag})
 		}
 
 		logboek.Context(ctx).Default().LogFWithCustomStyle(deletedStyle, "  tag: %s\n", tag)
@@ -162,7 +170,7 @@ func (m *purgeManager) purgeRejectedStages(ctx context.Context) error {
 		return fmt.Errorf("unable to get custom tags metadata: %w", err)
 	}
 
-	if _, err := deleteRejectedStagesWithLinkedTags(ctx, m.StorageManager, customTagsByStageID, m.DryRun); err != nil {
+	if _, err := deleteRejectedStagesWithLinkedTags(ctx, m.StorageManager, customTagsByStageID, m.DryRun, m.report); err != nil {
 		return err
 	}
 	return nil
