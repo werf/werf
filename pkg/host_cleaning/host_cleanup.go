@@ -64,10 +64,14 @@ func RunAutoHostCleanup(ctx context.Context, backend container_backend.Container
 
 	var args []string
 
+	// exec.Detach passes os.Environ() to the fork, so WERF_SAVE_HOST_CLEANUP_REPORT would otherwise
+	// enable the report here and write it long after the parent command exited. Pinned off like
+	// --dry-run and --force, which are spelled out for the same reason.
 	args = append(args,
 		"host", "cleanup",
 		fmt.Sprintf("--dry-run=%v", options.DryRun),
 		fmt.Sprintf("--force=%v", options.Force),
+		"--save-host-cleanup-report=false",
 	)
 
 	if options.AllowedBackendStorageVolumeUsage != nil {

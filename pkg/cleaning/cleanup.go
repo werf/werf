@@ -953,6 +953,10 @@ func deleteRejectedStagesWithLinkedTags(ctx context.Context, storageManager mana
 				logboek.Context(ctx).Warn().LogF("WARNING: Custom tag %s linked to rejected stage %s deletion failed: %s; marker kept for retry\n", customTag, stageIDStr, err)
 				return nil
 			}
+			// Recorded before the unregister attempt: the alias is already irreversibly gone, and a
+			// retry will not delete it again, so a later record would never happen.
+			report.AddDeleted(cleanup_report.Item{Type: cleanup_report.ItemTypeCustomTag, Tag: customTag})
+
 			if err := metaStorage.UnregisterStageCustomTag(ctx, customTag); err != nil {
 				if err := handleDeletionError(err); err != nil {
 					return err
@@ -961,7 +965,6 @@ func deleteRejectedStagesWithLinkedTags(ctx context.Context, storageManager mana
 				return nil
 			}
 			logboek.Context(ctx).Default().LogFWithCustomStyle(deletedStyle, "  tag: %s\n", customTag)
-			report.AddDeleted(cleanup_report.Item{Type: cleanup_report.ItemTypeCustomTag, Tag: customTag})
 		}
 
 		// 3. Rejected marker — only after stage image and all linked custom tags are gone.

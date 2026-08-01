@@ -355,3 +355,23 @@ func TestAI_deleteCustomTags_NilReportKeepsBehaviour(t *testing.T) {
 	require.NoError(t, deleteCustomTags(context.Background(), sm, []string{"ok", "broken"}, false, nil))
 	require.NoError(t, deleteCustomTags(context.Background(), sm, []string{"ok"}, true, nil))
 }
+
+func TestAI_deleteRejectedStagesWithLinkedTags_ReportKeepsTagDeletedBeforeFailedUnregister(t *testing.T) {
+	digest := "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
+	stageID := image.NewStageID(digest, 1700000000)
+
+	sm := newFakeStorageManagerWithSplitStorages()
+	sm.stages.rejectedStageIDs = []image.StageID{*stageID}
+	sm.meta.unregisterTagErrs["v1.0.0"] = errors.New("temporary network glitch")
+
+	report := cleanup_report.NewReport("cleanup", false, "example.com/repo", "")
+
+	_, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, map[string][]string{stageID.String(): {"v1.0.0", "latest"}}, false, report)
+	require.NoError(t, err)
+
+	assert.Equal(t, []string{"v1.0.0"}, sm.stages.deletedTags, "alias was really deleted before the unregister failed")
+	assert.Equal(t, []cleanup_report.Item{
+		{Type: cleanup_report.ItemTypeRejectedStage, Tag: stageID.String()},
+		{Type: cleanup_report.ItemTypeCustomTag, Tag: "v1.0.0"},
+	}, report.Deleted, "the deleted alias must be reported even though its metadata unregister failed; the marker must not")
+}
