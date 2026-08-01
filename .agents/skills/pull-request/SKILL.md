@@ -45,6 +45,7 @@ observed wrong behavior and add a minimal repro (Dockerfile / werf.yaml / comman
 ## Verification
 
 - <manual or hand-run e2e check, and the environment it needed>
+- <mutation run for a new or changed test, and what failed without it>
 - <what could not be run>
 
 ## Review focus / risks
@@ -60,6 +61,7 @@ observed wrong behavior and add a minimal repro (Dockerfile / werf.yaml / comman
 - *Key changes*: group related items by theme, not one bullet per file; use sub-bullets for detail when helpful.
 - *Why*: explain the reason, not what changed (that's *Key changes*).
 - *Verification*: only the delta over CI — manual runs, hand-run e2e/real-cluster checks, the environment they required, and what could NOT be run. CI builds and runs the whole suite, so `task build`/`task test:unit` are noise unless a scoped local run is itself the point — then name it by its `task` command, never raw `go test`/`go vet`/`gofmt`. Plain list, not checkboxes — the reviewer is not the one ticking them.
+- *Verification*: when the PR adds or changes a test, name the mutation that was run and what failed without it. CI only runs the suite as it exists after the PR, so a green CI cannot show that a new test discriminates — that line is the reviewer's only evidence it does. A test whose mutation was not run is called out as not run, with the mutation that should be tried (`test-the-tests`).
 - *Review focus / risks*: guide the reviewer — call out non-obvious consequences, large generated diffs, breaking changes, and any deliberately accepted limitation of the chosen approach.
 - No AI-slop filler ("This PR improves the codebase…"). Every sentence must carry information.
 - Length is a budget, not a target: under ~300 characters for a small PR, under ~1500 for a normal one. Cut any sentence that restates the title, another section, or the diff.
