@@ -457,15 +457,34 @@ Final repositories reduce image retrieval time and network load by bringing the 
 
 ### Extra repository for service metadata
 
-By default, werf stores service metadata (image-metadata used for cleanup based on Git history, managed images list, custom-tag metadata, rejected-stage markers, cleanup records) in the main repository (`--repo`) alongside image stages. If necessary, this metadata can be stored in a separate repository via `--meta-repo`:
+By default, werf stores service metadata in the main repository (`--repo`) alongside image stages. If necessary, four metadata families — image-metadata used for cleanup based on Git history, the managed images list, custom-tag metadata, and the last-cleanup record — can be stored in a separate repository via `--meta-repo`:
 
 ```shell
 werf build --repo registry.mycompany.org/project --meta-repo registry.mycompany.org/project-meta
 ```
 
-Separating metadata from stages is useful when stages and metadata have different lifecycles or access patterns — for example, when the stages repository is shared between projects while metadata must remain isolated, or when metadata should live on a cheaper or more available registry. The `werf cleanup` and `werf purge` commands must be invoked with the same `--meta-repo` value that was used during build.
+(Rejected-stage markers and the custom-tag aliases on stage images stay in `--repo` because they are tied to stage images.)
 
-> **Caution!** There is no automatic migration of existing metadata from the main repository to `--meta-repo`. Once the flag is enabled, werf reads and writes metadata only in `--meta-repo`; any metadata previously stored in `--repo` is no longer consulted and will remain there orphaned until manually removed. Enable this flag from the start of a project.
+Separating metadata from stages is useful when stages and metadata have different lifecycles or access patterns — for example, when the stages repository is shared between projects while metadata must remain isolated, or when metadata should live on a cheaper or more available registry. Every werf command (`build`, `cleanup`, `purge`, etc.) must be invoked with the same `--meta-repo` value.
+
+#### Safeguard against inconsistent `--meta-repo` usage
+
+To prevent metadata from splitting between the two repositories (which can make cleanup delete in-use images), werf records a per-project marker in `--repo` on the first metadata write to a `--meta-repo`. Afterwards the marker is enforced on every run:
+
+- omitting `--meta-repo`, or passing a different one, is a **hard error**;
+- read-only commands only validate the marker and never write it, so pull-only credentials keep working.
+
+#### Adopting `--meta-repo` on an existing project
+
+If `--repo` already contains metadata for the project, werf refuses to enable `--meta-repo` automatically (that would orphan the existing metadata). Move it first:
+
+```shell
+werf meta-repo migrate --repo registry.mycompany.org/project --meta-repo registry.mycompany.org/project-meta
+```
+
+`migrate` copies the four metadata families into `--meta-repo` (copy-first, verified, idempotent — safe to re-run) and then records the marker in `--repo`. Add `--remove-source` to delete the originals from `--repo`, which happens only after each copy is verified present in `--meta-repo`.
+
+To release the safeguard, run `werf meta-repo disable --repo registry.mycompany.org/project`. This removes only the marker; the metadata is **not** moved back, so subsequent runs without `--meta-repo` will read stale or empty metadata from `--repo`.
 
 ### Extra repository for quick access to the build cache
 
