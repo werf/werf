@@ -16,6 +16,7 @@ import (
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
+	"github.com/werf/werf/v2/pkg/cleanup_report"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/container_backend/filter"
 	"github.com/werf/werf/v2/pkg/container_backend/prune"
@@ -36,6 +37,8 @@ type RunGCOptions struct {
 	StoragePath                          string
 	Force                                bool
 	DryRun                               bool
+
+	Report *cleanup_report.HostReport
 }
 
 type RunAutoGCOptions struct {
@@ -284,6 +287,7 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 
 		logboek.Context(ctx).LogF("Freed space: %s\n", logging.RedF("%s", humanize.Bytes(reportVolumes.SpaceReclaimed)))
 		logDeletedItems(ctx, reportVolumes.ItemsDeleted)
+		recordBackendPruneReport(options.Report, cleanup_report.ItemTypeVolume, reportVolumes)
 
 		return nil
 	})
@@ -302,6 +306,7 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 
 		logboek.Context(ctx).LogF("Freed space: %s\n", logging.RedF("%s", humanize.Bytes(reportImages.SpaceReclaimed)))
 		logDeletedItems(ctx, reportImages.ItemsDeleted)
+		recordBackendPruneReport(options.Report, cleanup_report.ItemTypeImage, reportImages)
 
 		return nil
 	})
@@ -331,6 +336,7 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 
 		logboek.Context(ctx).LogF("Freed space: %s\n", logging.RedF("%s", humanize.Bytes(reportWerfContainers.SpaceReclaimed)))
 		logDeletedItems(ctx, reportWerfContainers.ItemsDeleted)
+		recordBackendPruneReport(options.Report, cleanup_report.ItemTypeContainer, reportWerfContainers)
 
 		return nil
 	})
@@ -349,6 +355,7 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 
 		logboek.Context(ctx).LogF("Freed space: %s\n", logging.RedF("%s", humanize.Bytes(reportWerfImages.SpaceReclaimed)))
 		logDeletedItems(ctx, reportWerfImages.ItemsDeleted)
+		recordBackendPruneReport(options.Report, cleanup_report.ItemTypeImage, reportWerfImages)
 
 		return nil
 	})
@@ -378,7 +385,7 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 }
 
 // pruneImages removes werf dangling images
-func (cleaner *LocalBackendCleaner) pruneImages(ctx context.Context, options RunGCOptions) (cleanupReport, error) {
+func (cleaner *LocalBackendCleaner) pruneImages(ctx context.Context, options RunGCOptions) (backendPruneReport, error) {
 	filters := filter.FilterList{
 		// 1. Select all dangling images.
 		filter.DanglingTrue,
@@ -396,9 +403,9 @@ func (cleaner *LocalBackendCleaner) pruneImages(ctx context.Context, options Run
 	if options.DryRun {
 		list, err := cleaner.backend.Images(ctx, buildImagesOptions(filters.ToPairs()...))
 		if err != nil {
-			return cleanupReport{}, err
+			return backendPruneReport{}, err
 		}
-		return mapImageListToCleanupReport(list), nil
+		return newBackendPruneReportFromImageList(list), nil
 	}
 
 	report, err := cleaner.backend.PruneImages(ctx, prune.Options{Filters: filters})
@@ -406,20 +413,20 @@ func (cleaner *LocalBackendCleaner) pruneImages(ctx context.Context, options Run
 	case errors.Is(err, container_backend.ErrImageUsedByContainer),
 		errors.Is(err, container_backend.ErrPruneIsAlreadyRunning):
 		logboek.Context(ctx).Info().LogF("NOTE: Ignore image pruning: %s\n", err.Error())
-		return cleanupReport{}, nil
+		return backendPruneReport{}, nil
 	case err != nil:
-		return cleanupReport{}, err
+		return backendPruneReport{}, err
 	}
 
-	return mapPruneReportToCleanupReport(report), err
+	return newBackendPruneReport(report), err
 }
 
 // pruneVolumes removes all anonymous volumes not used by at least one container
-func (cleaner *LocalBackendCleaner) pruneVolumes(ctx context.Context, options RunGCOptions) (cleanupReport, error) {
+func (cleaner *LocalBackendCleaner) pruneVolumes(ctx context.Context, options RunGCOptions) (backendPruneReport, error) {
 	if options.DryRun {
 		// NOTE: Buildah does not give us a way to precalculate pruned size.
 		// NOTE: Docker does not give us a way to precalculate pruned size.
-		return cleanupReport{}, errOptionDryRunNotSupported
+		return backendPruneReport{}, errOptionDryRunNotSupported
 	}
 
 	report, err := cleaner.backend.PruneVolumes(ctx, prune.Options{})
@@ -427,21 +434,21 @@ func (cleaner *LocalBackendCleaner) pruneVolumes(ctx context.Context, options Ru
 	switch {
 	case errors.Is(err, container_backend.ErrPruneIsAlreadyRunning):
 		logboek.Context(ctx).Info().LogF("NOTE: Ignore volume pruning: %s\n", err.Error())
-		return cleanupReport{}, nil
+		return backendPruneReport{}, nil
 	case err != nil:
-		return cleanupReport{}, err
+		return backendPruneReport{}, err
 	}
 
-	return mapPruneReportToCleanupReport(report), err
+	return newBackendPruneReport(report), err
 }
 
-func (cleaner *LocalBackendCleaner) cleanupWerfContainers(ctx context.Context, options RunGCOptions, vu volumeutils.VolumeUsage) (cleanupReport, error) {
+func (cleaner *LocalBackendCleaner) cleanupWerfContainers(ctx context.Context, options RunGCOptions, vu volumeutils.VolumeUsage) (backendPruneReport, error) {
 	containers, err := werfContainersByContainersOptions(ctx, cleaner.backend, buildContainersOptions())
 	if err != nil {
-		return cleanupReport{}, fmt.Errorf("cannot get build containers: %w", err)
+		return backendPruneReport{}, fmt.Errorf("cannot get build containers: %w", err)
 	}
 
-	report := cleanupReport{
+	report := backendPruneReport{
 		ItemsDeleted:   make([]string, 0, len(containers)),
 		SpaceReclaimed: 0,
 	}
@@ -455,7 +462,7 @@ func (cleaner *LocalBackendCleaner) cleanupWerfContainers(ctx context.Context, o
 		}
 
 		if ok, err := cleaner.isLocked(container_backend.ContainerLockName(containerName)); err != nil {
-			return cleanupReport{}, fmt.Errorf("checking lock %q: %w", container_backend.ContainerLockName(containerName), err)
+			return backendPruneReport{}, fmt.Errorf("checking lock %q: %w", container_backend.ContainerLockName(containerName), err)
 		} else if ok {
 			continue
 		}
@@ -482,7 +489,7 @@ func (cleaner *LocalBackendCleaner) cleanupWerfContainers(ctx context.Context, o
 		// But we can calculate it implicitly via disk usage check.
 		vuAfter, err := cleaner.volumeutilsGetVolumeUsageByPath(ctx, options.StoragePath)
 		if err != nil {
-			return cleanupReport{}, fmt.Errorf("error getting volume usage by path %q: %w", options.StoragePath, err)
+			return backendPruneReport{}, fmt.Errorf("error getting volume usage by path %q: %w", options.StoragePath, err)
 		}
 		report.SpaceReclaimed = lo.Ternary(vu.UsedBytes > vuAfter.UsedBytes, vu.UsedBytes-vuAfter.UsedBytes, 0)
 	}
@@ -490,13 +497,13 @@ func (cleaner *LocalBackendCleaner) cleanupWerfContainers(ctx context.Context, o
 	return report.Normalize(), nil
 }
 
-func (cleaner *LocalBackendCleaner) cleanupWerfImages(ctx context.Context, options RunGCOptions, vu volumeutils.VolumeUsage, targetVolumeUsageBytes uint64) (cleanupReport, error) {
+func (cleaner *LocalBackendCleaner) cleanupWerfImages(ctx context.Context, options RunGCOptions, vu volumeutils.VolumeUsage, targetVolumeUsageBytes uint64) (backendPruneReport, error) {
 	images, err := cleaner.werfImages(ctx)
 	if err != nil {
-		return cleanupReport{}, err
+		return backendPruneReport{}, err
 	}
 
-	report := cleanupReport{
+	report := backendPruneReport{
 		ItemsDeleted:   make([]string, 0, len(images)),
 		SpaceReclaimed: 0,
 	}

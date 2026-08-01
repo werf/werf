@@ -7,6 +7,7 @@ import (
 
 	"github.com/werf/common-go/pkg/graceful"
 	"github.com/werf/logboek"
+	"github.com/werf/werf/v2/pkg/cleanup_report"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
 	"github.com/werf/werf/v2/pkg/host_cleaning/units"
@@ -40,6 +41,8 @@ type HostCleanupOptions struct {
 
 	DryRun bool
 	Force  bool
+
+	Report *cleanup_report.HostReport
 }
 
 func getRequirementInBytes(val *units.UnitValue, defaultPercent, totalBytes uint64) uint64 {
@@ -171,6 +174,7 @@ func RunHostCleanup(ctx context.Context, backend container_backend.ContainerBack
 			StoragePath:                          *options.BackendStoragePath,
 			Force:                                options.Force,
 			DryRun:                               options.DryRun,
+			Report:                               options.Report,
 		})
 		if err != nil {
 			return fmt.Errorf("local %s backend GC failed: %w", cleaner.BackendName(), err)

@@ -9,6 +9,7 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
+	"github.com/werf/werf/v2/pkg/cleanup_report"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/image"
 )
@@ -129,6 +130,8 @@ func imageReferencesRemove(ctx context.Context, backend container_backend.Contai
 				return fmt.Errorf("container_backend rmi: %w", err)
 			}
 		}
+
+		options.Report.AddDeleted(cleanup_report.Item{Type: cleanup_report.ItemTypeImage, ID: ref})
 	}
 
 	return nil

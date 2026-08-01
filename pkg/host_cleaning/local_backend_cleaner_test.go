@@ -96,7 +96,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 				DryRun: true,
 			})
 			Expect(err).To(Succeed())
-			Expect(report).To(Equal(mapImageListToCleanupReport(list)))
+			Expect(report).To(Equal(newBackendPruneReportFromImageList(list)))
 		})
 		It("should return err=some_err and empty report if opts.DryRun=false calling backend.PruneImages() which returns pruneErr=err", func(ctx SpecContext) {
 			err0 := errors.New("some_err")
@@ -104,7 +104,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 
 			report, err := cleaner.pruneImages(ctx, RunGCOptions{})
 			Expect(err).To(Equal(err0))
-			Expect(report).To(Equal(cleanupReport{}))
+			Expect(report).To(Equal(backendPruneReport{}))
 		})
 		It("should return err=nil and empty report if opts.DryRun=false calling backend.PruneImages() which returns pruneErr=ErrImageUsedByContainer", func(ctx context.Context) {
 			ctx = logging.WithLogger(ctx)
@@ -113,7 +113,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 
 			report, err := cleaner.pruneImages(ctx, RunGCOptions{})
 			Expect(err).To(Succeed())
-			Expect(report).To(Equal(cleanupReport{}))
+			Expect(report).To(Equal(backendPruneReport{}))
 		})
 		It("should return err=nil and empty report if opts.DryRun=false calling backend.PruneImages() which returns pruneErr=ErrPruneIsAlreadyRunning", func(ctx context.Context) {
 			ctx = logging.WithLogger(ctx)
@@ -122,7 +122,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 
 			report, err := cleaner.pruneImages(ctx, RunGCOptions{})
 			Expect(err).To(Succeed())
-			Expect(report).To(Equal(cleanupReport{}))
+			Expect(report).To(Equal(backendPruneReport{}))
 		})
 		It("should return err=nil and full report if opts.DryRun=false calling backend.PruneImages() which returns pruneErr=nil", func(ctx SpecContext) {
 			pruneReport := prune.Report{
@@ -132,7 +132,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 
 			report, err := cleaner.pruneImages(ctx, RunGCOptions{})
 			Expect(err).To(Succeed())
-			Expect(report).To(Equal(mapPruneReportToCleanupReport(pruneReport)))
+			Expect(report).To(Equal(newBackendPruneReport(pruneReport)))
 		})
 	})
 
@@ -142,7 +142,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 				DryRun: true,
 			})
 			Expect(errors.Is(err, errOptionDryRunNotSupported)).To(BeTrue())
-			Expect(report).To(Equal(cleanupReport{}))
+			Expect(report).To(Equal(backendPruneReport{}))
 		})
 		It("should return err=nil and empty report if opts.DryRun=false calling backend.PruneVolumes() which returns returns pruneErr=ErrPruneIsAlreadyRunning", func(ctx context.Context) {
 			ctx = logging.WithLogger(ctx)
@@ -151,7 +151,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 
 			report, err := cleaner.pruneVolumes(ctx, RunGCOptions{})
 			Expect(err).To(Succeed())
-			Expect(report).To(Equal(cleanupReport{}))
+			Expect(report).To(Equal(backendPruneReport{}))
 		})
 		It("should return err=some_err and empty report if opts.DryRun=false calling backend.PruneVolumes() which returns returns pruneErr=err", func(ctx SpecContext) {
 			err0 := errors.New("some_err")
@@ -159,7 +159,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 
 			report, err := cleaner.pruneVolumes(ctx, RunGCOptions{})
 			Expect(err).To(Equal(err0))
-			Expect(report).To(Equal(cleanupReport{}))
+			Expect(report).To(Equal(backendPruneReport{}))
 		})
 		It("should return err=nil and full report if opts.DryRun=false calling backend.PruneVolumes() which returns pruneErr=nil", func(ctx SpecContext) {
 			pruneReport := prune.Report{
@@ -169,12 +169,12 @@ var _ = Describe("LocalBackendCleaner", func() {
 
 			report, err := cleaner.pruneVolumes(ctx, RunGCOptions{})
 			Expect(err).To(Succeed())
-			Expect(report).To(Equal(mapPruneReportToCleanupReport(pruneReport)))
+			Expect(report).To(Equal(newBackendPruneReport(pruneReport)))
 		})
 	})
 
 	DescribeTable("cleanupWerfContainers",
-		func(ctx context.Context, runOpts RunGCOptions, container image.Container, isAcquired bool, rmErr error, expectedReport cleanupReport) {
+		func(ctx context.Context, runOpts RunGCOptions, container image.Container, isAcquired bool, rmErr error, expectedReport backendPruneReport) {
 			ctx = logging.WithLogger(ctx)
 
 			backend.EXPECT().Containers(ctx, buildContainersOptions(
@@ -211,7 +211,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 			},
 			true,
 			container_backend.ErrCannotRemovePausedContainer,
-			cleanupReport{},
+			backendPruneReport{},
 		),
 		Entry(
 			"should not return err if backend.Rm() returns 'container is running' error",
@@ -222,7 +222,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 			},
 			true,
 			container_backend.ErrCannotRemoveRunningContainer,
-			cleanupReport{},
+			backendPruneReport{},
 		),
 		Entry(
 			"should not call backend.Rm() if lock was not acquired",
@@ -233,7 +233,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 			},
 			false,
 			nil,
-			cleanupReport{},
+			backendPruneReport{},
 		),
 		Entry(
 			"should return full report in dry run mode if lock was acquired",
@@ -246,7 +246,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 			},
 			true,
 			nil,
-			cleanupReport{
+			backendPruneReport{
 				ItemsDeleted:   []string{"some-id"},
 				SpaceReclaimed: 0,
 			},
@@ -262,7 +262,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 			},
 			false,
 			nil,
-			cleanupReport{},
+			backendPruneReport{},
 		),
 	)
 
@@ -313,7 +313,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 	})
 
 	DescribeTable("cleanupWerfImages",
-		func(ctx context.Context, vu volumeutils.VolumeUsage, imgList image.ImagesList, vuStub volumeutils.VolumeUsage, rmiRefs []string, expectedReport cleanupReport) {
+		func(ctx context.Context, vu volumeutils.VolumeUsage, imgList image.ImagesList, vuStub volumeutils.VolumeUsage, rmiRefs []string, expectedReport backendPruneReport) {
 			ctx = logging.WithLogger(ctx)
 
 			backend.EXPECT().Images(ctx, buildImagesOptions(
@@ -355,7 +355,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 				TotalBytes: 1000,
 			},
 			[]string{"one-digest", "two-digest", "three-digest"},
-			cleanupReport{
+			backendPruneReport{
 				ItemsDeleted:   []string{"one", "two", "three"},
 				SpaceReclaimed: 200,
 			},
@@ -374,7 +374,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 				TotalBytes: 1000,
 			},
 			[]string{},
-			cleanupReport{},
+			backendPruneReport{},
 		),
 	)
 
