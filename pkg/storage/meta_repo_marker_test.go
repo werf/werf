@@ -258,6 +258,20 @@ var _ = Describe("meta-repo marker", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(has).To(BeFalse())
 		})
+
+		It("conservatively treats unlabeled image-metadata as the project's (legacy records)", func(ctx SpecContext) {
+			reg.put(stagesRepo+":meta-abc_commit_stage", map[string]string{})
+			has, err := stages.HasProjectMetadata(ctx, proj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(has).To(BeTrue())
+		})
+
+		It("excludes image-metadata explicitly labeled for another project", func(ctx SpecContext) {
+			reg.put(stagesRepo+":meta-abc_commit_stage", map[string]string{image.WerfLabel: "otherproject"})
+			has, err := stages.HasProjectMetadata(ctx, proj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(has).To(BeFalse())
+		})
 	})
 
 	Describe("decorator", func() {
@@ -447,7 +461,16 @@ var _ = Describe("meta-repo marker", func() {
 			reg.put(metaRepo+":managed-image-app", map[string]string{image.WerfLabel: "otherproject"})
 			err := MigrateMetaRepo(ctx, proj, stages, meta, MigrateMetaRepoOptions{})
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("belongs to project"))
+			Expect(err.Error()).To(ContainSubstring("not a valid metadata record"))
+		})
+
+		It("refuses to delete source when the destination cleanup record lacks the timestamp", func(ctx SpecContext) {
+			reg.put(stagesRepo+":cleanup", map[string]string{image.WerfLabel: proj, RepoCleanUpRecord_LabelTimestamp: "123"})
+			reg.put(metaRepo+":cleanup", map[string]string{image.WerfLabel: proj})
+			err := MigrateMetaRepo(ctx, proj, stages, meta, MigrateMetaRepoOptions{RemoveSource: true})
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("not a valid metadata record"))
+			Expect(reg.has(stagesRepo + ":cleanup")).To(BeTrue())
 		})
 
 		It("leaves source intact when a copy fails", func(ctx SpecContext) {
