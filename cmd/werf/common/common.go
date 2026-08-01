@@ -48,6 +48,11 @@ const (
 	DefaultBuildReportPathJSON = ".werf-build-report.json"
 	DefaultUseBuildReport      = false
 
+	DefaultSaveCleanupReport         = false
+	DefaultCleanupReportPathJSON     = ".werf-cleanup-report.json"
+	DefaultSaveHostCleanupReport     = false
+	DefaultHostCleanupReportPathJSON = ".werf-host-cleanup-report.json"
+
 	DefaultSaveDeployReport        = false
 	DefaultSaveRollbackReport      = false
 	DefaultUseDeployReport         = false
@@ -194,6 +199,57 @@ func GetBuildReportPath(cmdData *CmdData) string {
 
 func GetUseBuildReport(cmdData *CmdData) bool {
 	return option.PtrValueOrDefault(cmdData.UseBuildReport, false)
+}
+
+func SetupSaveCleanupReport(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.SaveCleanupReport = new(bool)
+	cmd.Flags().BoolVarP(cmdData.SaveCleanupReport, "save-cleanup-report", "", util.GetBoolEnvironmentDefaultFalse("WERF_SAVE_CLEANUP_REPORT"), fmt.Sprintf("Save cleanup report (by default $WERF_SAVE_CLEANUP_REPORT or %t). Its path configured with --cleanup-report-path", DefaultSaveCleanupReport))
+}
+
+func SetupCleanupReportPath(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.CleanupReportPath = new(string)
+	cmd.Flags().StringVarP(cmdData.CleanupReportPath, "cleanup-report-path", "", os.Getenv("WERF_CLEANUP_REPORT_PATH"), fmt.Sprintf("Change cleanup report path (by default $WERF_CLEANUP_REPORT_PATH or %q if not set). Extension must be .json for JSON format. If extension not specified, then .json is used", DefaultCleanupReportPathJSON))
+}
+
+func SetupSaveHostCleanupReport(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.SaveHostCleanupReport = new(bool)
+	cmd.Flags().BoolVarP(cmdData.SaveHostCleanupReport, "save-host-cleanup-report", "", util.GetBoolEnvironmentDefaultFalse("WERF_SAVE_HOST_CLEANUP_REPORT"), fmt.Sprintf("Save host cleanup report (by default $WERF_SAVE_HOST_CLEANUP_REPORT or %t). Its path configured with --host-cleanup-report-path", DefaultSaveHostCleanupReport))
+}
+
+func SetupHostCleanupReportPath(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.HostCleanupReportPath = new(string)
+	cmd.Flags().StringVarP(cmdData.HostCleanupReportPath, "host-cleanup-report-path", "", os.Getenv("WERF_HOST_CLEANUP_REPORT_PATH"), fmt.Sprintf("Change host cleanup report path (by default $WERF_HOST_CLEANUP_REPORT_PATH or %q if not set). Extension must be .json for JSON format. If extension not specified, then .json is used", DefaultHostCleanupReportPathJSON))
+}
+
+func GetSaveCleanupReport(cmdData *CmdData) bool {
+	return option.PtrValueOrDefault(cmdData.SaveCleanupReport, false)
+}
+
+func GetSaveHostCleanupReport(cmdData *CmdData) bool {
+	return option.PtrValueOrDefault(cmdData.SaveHostCleanupReport, false)
+}
+
+func GetCleanupReportPath(cmdData *CmdData) (string, error) {
+	return resolveJSONReportPath("--cleanup-report-path", option.PtrValueOrDefault(cmdData.CleanupReportPath, ""), DefaultCleanupReportPathJSON)
+}
+
+func GetHostCleanupReportPath(cmdData *CmdData) (string, error) {
+	return resolveJSONReportPath("--host-cleanup-report-path", option.PtrValueOrDefault(cmdData.HostCleanupReportPath, ""), DefaultHostCleanupReportPathJSON)
+}
+
+func resolveJSONReportPath(flagName, path, defaultPath string) (string, error) {
+	if path == "" {
+		return defaultPath, nil
+	}
+
+	switch ext := filepath.Ext(path); ext {
+	case ".json":
+		return path, nil
+	case "":
+		return path + ".json", nil
+	default:
+		return "", fmt.Errorf("invalid %s %q: extension must be either .json or unspecified", flagName, path)
+	}
 }
 
 func GetBuildReportPathAndFormat(cmdData *CmdData) (string, build.ReportFormat, error) {
