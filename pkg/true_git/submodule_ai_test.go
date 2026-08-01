@@ -131,6 +131,53 @@ func TestAI_UpdateSubmodulesReusesLocalObjectsForNestedWithoutRemote(t *testing.
 	require.Equal(t, "LEAF", string(content))
 }
 
+// An already-populated submodule is not re-cloned, so it is fetched from the URL recorded in the
+// service worktree's own submodule git dir. Moving the gitlink must therefore still resolve from
+// the superproject store rather than from the remote.
+func TestAI_UpdateSubmodulesReusesLocalObjectsAfterGitlinkMovedInWarmWorkTree(t *testing.T) {
+	ctx := context.Background()
+	isolateGitConfigAI(t)
+
+	subRemote := t.TempDir()
+	initGitRepoAI(t, subRemote)
+	require.NoError(t, os.WriteFile(filepath.Join(subRemote, "file.txt"), []byte("first"), 0o644))
+	runGitAI(t, subRemote, "add", ".")
+	runGitAI(t, subRemote, "commit", "-m", "first")
+
+	superRepo := t.TempDir()
+	initGitRepoAI(t, superRepo)
+	runGitAI(t, superRepo, "-c", "protocol.file.allow=always", "submodule", "add", subRemote, "sub")
+	runGitAI(t, superRepo, "commit", "-m", "add submodule")
+	firstSHA := strings.TrimSpace(runGitAI(t, superRepo, "rev-parse", "HEAD"))
+
+	// Warm the service worktree on the first gitlink, exactly as an earlier werf run would — sync
+	// included, since it rewrites the submodule remote from .gitmodules on every run.
+	gitDir := filepath.Join(superRepo, ".git")
+	workTreeDir := filepath.Join(t.TempDir(), "worktree")
+	runGitAI(t, superRepo, "worktree", "add", "--detach", workTreeDir, firstSHA)
+	require.NoError(t, syncSubmodules(ctx, gitDir, workTreeDir))
+	require.NoError(t, updateSubmodules(ctx, gitDir, workTreeDir))
+
+	// Move the gitlink, and let the superproject store learn the new commit the way CI would.
+	require.NoError(t, os.WriteFile(filepath.Join(subRemote, "file.txt"), []byte("second"), 0o644))
+	runGitAI(t, subRemote, "commit", "-am", "second")
+	runGitAI(t, superRepo, "-c", "protocol.file.allow=always", "submodule", "update", "--remote", "sub")
+	runGitAI(t, superRepo, "commit", "-am", "bump submodule")
+	secondSHA := strings.TrimSpace(runGitAI(t, superRepo, "rev-parse", "HEAD"))
+	runGitAI(t, superRepo, "-c", "protocol.file.allow=always", "submodule", "update", "--init")
+
+	// Only now drop the remote: the moved commit exists locally, so no fetch may be needed.
+	require.NoError(t, os.RemoveAll(subRemote))
+
+	runGitAI(t, workTreeDir, "checkout", "--force", "--detach", secondSHA)
+	require.NoError(t, syncSubmodules(ctx, gitDir, workTreeDir))
+	require.NoError(t, updateSubmodules(ctx, gitDir, workTreeDir))
+
+	content, err := os.ReadFile(filepath.Join(workTreeDir, "sub", "file.txt"))
+	require.NoError(t, err)
+	require.Equal(t, "second", string(content))
+}
+
 // A submodule name reused at another nesting level cannot be expressed as a process-global
 // submodule.<name>.url, so no override may be emitted: an override for the top-level copy would
 // otherwise hijack the nested clone and fail the whole update.

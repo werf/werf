@@ -70,9 +70,15 @@ func updateSubmodules(ctx context.Context, repoDir, workTreeDir string) error {
 }
 
 type submoduleNode struct {
-	name        string
+	name string
+	// displayPath is the slash-joined path through the tree, used only for messages.
 	displayPath string
-	moduleDir   string
+	// moduleDir is the superproject-side store the objects are reused from.
+	moduleDir string
+	// worktreeModuleDir is where git keeps this submodule's git dir for the service worktree. It is
+	// separate from moduleDir, which is exactly why an already-populated submodule fetches instead
+	// of reusing what the superproject already has.
+	worktreeModuleDir string
 }
 
 // submoduleLocalURLOverrides walks the superproject's submodules recursively and, when EVERY
@@ -103,23 +109,52 @@ func submoduleLocalURLOverrides(ctx context.Context, workTreeDir string) (overri
 		return nil, nil, err
 	}
 
+	worktreeGitDir, err := gitAbsoluteGitDir(ctx, workTreeDir)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	var nodes []submoduleNode
 	for i, name := range names {
 		pinnedCommit, err := lsTreeGitlink(ctx, workTreeDir, "HEAD", paths[i])
 		if err != nil {
 			return nil, nil, err
 		}
-		if err := walkSubmodule(ctx, commonDir, name, paths[i], pinnedCommit, &nodes, &blockers); err != nil {
+		if err := walkSubmodule(ctx, commonDir, worktreeGitDir, name, paths[i], pinnedCommit, &nodes, &blockers); err != nil {
 			return nil, nil, err
 		}
 	}
 
-	seen := make(map[string]struct{}, len(nodes))
+	seenName := make(map[string]struct{}, len(nodes))
 	for _, node := range nodes {
-		if _, ok := seen[node.name]; ok {
+		if _, ok := seenName[node.name]; ok {
 			blockers = append(blockers, fmt.Sprintf("%s (submodule name %q is used more than once)", node.displayPath, node.name))
 		}
-		seen[node.name] = struct{}{}
+		seenName[node.name] = struct{}{}
+	}
+
+	// An already-populated submodule is not re-cloned, so submodule.<name>.url does not reach it:
+	// git fetches the moved gitlink from the URL recorded in the service worktree's own submodule
+	// git dir. Rewriting that URL to the superproject store keeps such a fetch local too.
+	fetchURLs := make(map[string]string, len(nodes))
+	seenURL := make(map[string]struct{}, len(nodes))
+	for _, node := range nodes {
+		if node.worktreeModuleDir == "" {
+			continue
+		}
+		fetchURL, err := gitConfigValue(ctx, node.worktreeModuleDir, "remote.origin.url")
+		if err != nil {
+			return nil, nil, err
+		}
+		if fetchURL == "" {
+			continue
+		}
+		if _, ok := seenURL[fetchURL]; ok {
+			blockers = append(blockers, fmt.Sprintf("%s (remote URL is shared with another submodule)", node.displayPath))
+			continue
+		}
+		seenURL[fetchURL] = struct{}{}
+		fetchURLs[node.displayPath] = fetchURL
 	}
 
 	if len(blockers) > 0 {
@@ -128,15 +163,38 @@ func submoduleLocalURLOverrides(ctx context.Context, workTreeDir string) (overri
 
 	for _, node := range nodes {
 		overrides = append(overrides, "-c", "submodule."+node.name+".url="+node.moduleDir)
+		if fetchURL, ok := fetchURLs[node.displayPath]; ok {
+			overrides = append(overrides, "-c", "url."+node.moduleDir+".insteadOf="+fetchURL)
+		}
 	}
 
 	return overrides, nil, nil
 }
 
+func gitAbsoluteGitDir(ctx context.Context, workTreeDir string) (string, error) {
+	revParseCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: workTreeDir}, "rev-parse", "--absolute-git-dir")
+	if err := revParseCmd.Run(ctx); err != nil {
+		return "", fmt.Errorf("git rev-parse --absolute-git-dir command failed: %w", err)
+	}
+	return strings.TrimSpace(revParseCmd.OutBuf.String()), nil
+}
+
+func gitConfigValue(ctx context.Context, repoDir, key string) (string, error) {
+	configCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: repoDir}, "config", "--get", key)
+	if err := configCmd.Run(ctx); err != nil {
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) && exitErr.ExitCode() == 1 {
+			return "", nil
+		}
+		return "", fmt.Errorf("git config command failed: %w", err)
+	}
+	return strings.TrimSpace(configCmd.OutBuf.String()), nil
+}
+
 // walkSubmodule resolves one submodule against the local module store and recurses into its nested
 // submodules, reading their definitions from the module store at the pinned commit (no checkout
 // needed). parentModuleDir is the git dir whose modules/<name> hosts this submodule's store.
-func walkSubmodule(ctx context.Context, parentModuleDir, name, displayPath, pinnedCommit string, nodes *[]submoduleNode, blockers *[]string) error {
+func walkSubmodule(ctx context.Context, parentModuleDir, parentWorktreeModuleDir, name, displayPath, pinnedCommit string, nodes *[]submoduleNode, blockers *[]string) error {
 	// A .gitmodules entry without a gitlink in the tree is not checked out by git either.
 	if pinnedCommit == "" {
 		return nil
@@ -164,7 +222,17 @@ func walkSubmodule(ctx context.Context, parentModuleDir, name, displayPath, pinn
 		return nil
 	}
 
-	*nodes = append(*nodes, submoduleNode{name: name, displayPath: displayPath, moduleDir: moduleDir})
+	worktreeModuleDir := filepath.Join(parentWorktreeModuleDir, "modules", name)
+	if _, err := os.Stat(worktreeModuleDir); err != nil {
+		worktreeModuleDir = ""
+	}
+
+	*nodes = append(*nodes, submoduleNode{
+		name:              name,
+		displayPath:       displayPath,
+		moduleDir:         moduleDir,
+		worktreeModuleDir: worktreeModuleDir,
+	})
 
 	nestedNames, nestedPaths, err := parseGitmodulesPaths(ctx, &GitCmdOptions{RepoDir: moduleDir}, "config", "--blob", pinnedCommit+":.gitmodules")
 	if err != nil {
@@ -175,7 +243,7 @@ func walkSubmodule(ctx context.Context, parentModuleDir, name, displayPath, pinn
 		if err != nil {
 			return err
 		}
-		if err := walkSubmodule(ctx, moduleDir, nestedName, displayPath+"/"+nestedPaths[i], nestedPin, nodes, blockers); err != nil {
+		if err := walkSubmodule(ctx, moduleDir, worktreeModuleDir, nestedName, displayPath+"/"+nestedPaths[i], nestedPin, nodes, blockers); err != nil {
 			return err
 		}
 	}
