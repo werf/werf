@@ -206,6 +206,13 @@ var _ = Describe("meta-repo marker", func() {
 			Expect(isMetadataCandidateTag(RepoMetaRepoMarker_ImageTagPrefix + getMetaRepoMarkerID(proj))).To(BeFalse())
 		})
 
+		It("gates metadata detection to exact record formats", func() {
+			Expect(isMetadataCandidateTag("cleanup")).To(BeTrue())
+			Expect(isMetadataCandidateTag("cleanup-foo")).To(BeFalse())
+			Expect(isMetadataCandidateTag("meta-abc_commit_stage")).To(BeTrue())
+			Expect(isMetadataCandidateTag("meta-foo")).To(BeFalse())
+		})
+
 		It("with a -rejected-suffixed project name is not returned by GetRejectedStageIDs", func(ctx SpecContext) {
 			rejectedProj := "myproj-rejected"
 			Expect(stages.PutMetaRepoMarker(ctx, rejectedProj, metaRepo)).To(Succeed())
@@ -346,6 +353,13 @@ var _ = Describe("meta-repo marker", func() {
 			Expect(err.Error()).To(ContainSubstring("pass --meta-repo"))
 		})
 
+		It("rejects a malformed marker (present, no address)", func(ctx SpecContext) {
+			reg.put(markerRef(proj), map[string]string{image.WerfLabel: proj})
+			_, err := SetupMetaRepoSafeguard(ctx, proj, stages, meta, false)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("malformed"))
+		})
+
 		It("configured + matching marker → decorated", func(ctx SpecContext) {
 			Expect(stages.PutMetaRepoMarker(ctx, proj, metaRepo)).To(Succeed())
 			got, err := SetupMetaRepoSafeguard(ctx, proj, stages, meta, false)
@@ -418,6 +432,22 @@ var _ = Describe("meta-repo marker", func() {
 			err := MigrateMetaRepo(ctx, proj, stages, meta, MigrateMetaRepoOptions{})
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("refusing to migrate"))
+		})
+
+		It("refuses when --meta-repo resolves to the same repo as --repo and deletes nothing", func(ctx SpecContext) {
+			sameMeta := newRepoStorage(reg, stagesRepo)
+			err := MigrateMetaRepo(ctx, proj, stages, sameMeta, MigrateMetaRepoOptions{RemoveSource: true})
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("same repository"))
+			Expect(reg.has(stagesRepo + ":managed-image-app")).To(BeTrue())
+			Expect(reg.has(stagesRepo + ":meta-abc_commit_stage")).To(BeTrue())
+		})
+
+		It("refuses when a destination record is owned by another project", func(ctx SpecContext) {
+			reg.put(metaRepo+":managed-image-app", map[string]string{image.WerfLabel: "otherproject"})
+			err := MigrateMetaRepo(ctx, proj, stages, meta, MigrateMetaRepoOptions{})
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("belongs to project"))
 		})
 
 		It("leaves source intact when a copy fails", func(ctx SpecContext) {

@@ -6,6 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/storage"
@@ -66,7 +67,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	commonCmdData.SetupDebugTemplates(cmd)
 	commonCmdData.SetupAllowIncludesUpdate(cmd)
 
-	cmd.Flags().BoolVar(&removeSource, "remove-source", false, "Delete the original metadata records from --repo after they are verified present in --meta-repo (default $WERF_REMOVE_SOURCE)")
+	cmd.Flags().BoolVar(&removeSource, "remove-source", util.GetBoolEnvironmentDefaultFalse("WERF_REMOVE_SOURCE"), "Delete the original metadata records from --repo after they are verified present in --meta-repo (default $WERF_REMOVE_SOURCE)")
 
 	return cmd
 }

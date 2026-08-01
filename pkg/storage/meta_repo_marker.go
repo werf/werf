@@ -93,13 +93,18 @@ func isMetadataCandidateTag(tag string) bool {
 	if strings.HasSuffix(tag, RepoRejectedStageImageRecord_ImageTagSuffix) {
 		return false
 	}
-	if strings.HasPrefix(tag, RepoMetaRepoMarker_ImageTagPrefix) {
+	switch {
+	case strings.HasPrefix(tag, RepoManagedImageRecord_ImageTagPrefix):
+		return true
+	case strings.HasPrefix(tag, RepoCustomTagMetadata_ImageTagPrefix):
+		return true
+	case tag == RepoCleanUpRecord_ImageTagPrefix:
+		return true
+	case strings.HasPrefix(tag, RepoImageMetadataByCommitRecord_ImageTagPrefix):
+		return len(strings.Split(strings.TrimPrefix(tag, RepoImageMetadataByCommitRecord_ImageTagPrefix), "_")) == 3
+	default:
 		return false
 	}
-	return strings.HasPrefix(tag, RepoManagedImageRecord_ImageTagPrefix) ||
-		strings.HasPrefix(tag, RepoImageMetadataByCommitRecord_ImageTagPrefix) ||
-		strings.HasPrefix(tag, RepoCustomTagMetadata_ImageTagPrefix) ||
-		strings.HasPrefix(tag, RepoCleanUpRecord_ImageTagPrefix)
 }
 
 type projectMetadataRecord struct {
@@ -246,6 +251,7 @@ const (
 	metaRepoMismatchMsg    = "metadata for project %q is stored in meta-repo %q (per the marker in %s), but --meta-repo=%q was given — they must match"
 	metaRepoMissingFlagMsg = "metadata for project %q is stored in a separate meta-repo %q (per the marker in %s); pass --meta-repo %q, or run 'werf meta-repo disable' to remove the safeguard"
 	metaRepoMigrateMsg     = "--repo %q already contains metadata for project %q; run 'werf meta-repo migrate --repo %q --meta-repo %q' to move it before using --meta-repo"
+	metaRepoMalformedMsg   = "the meta-repo marker for project %q in %s is malformed (no meta-repo address); run 'werf meta-repo disable' to remove it"
 )
 
 // SetupMetaRepoSafeguard validates the per-project meta-repo marker and, when a
@@ -281,6 +287,10 @@ func SetupMetaRepoSafeguard(ctx context.Context, projectName string, stagesStora
 	markerAddr, markerFound, err := repoStages.GetMetaRepoMarker(ctx, projectName)
 	if err != nil {
 		return nil, err
+	}
+
+	if markerFound && markerAddr == "" {
+		return nil, fmt.Errorf(metaRepoMalformedMsg, projectName, repoStages.Address())
 	}
 
 	if !metaConfigured {
@@ -322,9 +332,16 @@ type MigrateMetaRepoOptions struct {
 // marker in the source, and — with RemoveSource — deletes each source original
 // only after its destination copy is verified present.
 func MigrateMetaRepo(ctx context.Context, projectName string, src, dst *RepoStagesStorage, opts MigrateMetaRepoOptions) error {
+	srcCanonical, err := CanonicalRepoAddress(src.Address())
+	if err != nil {
+		return err
+	}
 	dstCanonical, err := CanonicalRepoAddress(dst.Address())
 	if err != nil {
 		return err
+	}
+	if srcCanonical == dstCanonical {
+		return fmt.Errorf("--meta-repo %q resolves to the same repository as --repo %q; nothing to migrate", dst.Address(), src.Address())
 	}
 
 	markerAddr, markerFound, err := src.GetMetaRepoMarker(ctx, projectName)
@@ -342,11 +359,14 @@ func MigrateMetaRepo(ctx context.Context, projectName string, src, dst *RepoStag
 
 	for _, rec := range records {
 		dstRef := fmt.Sprintf("%s:%s", dst.Address(), rec.tag)
-		exists, err := dst.DockerRegistry.IsTagExist(ctx, dstRef)
+		existing, err := dst.DockerRegistry.TryGetRepoImage(ctx, dstRef)
 		if err != nil {
 			return fmt.Errorf("unable to check destination %q: %w", dstRef, err)
 		}
-		if exists {
+		if existing != nil {
+			if existing.Labels[image.WerfLabel] != projectName {
+				return fmt.Errorf("destination %q already exists but belongs to project %q, not %q; refusing to migrate", dstRef, existing.Labels[image.WerfLabel], projectName)
+			}
 			logboek.Context(ctx).Info().LogF("Skipping %s (already present in meta-repo)\n", rec.tag)
 			continue
 		}
