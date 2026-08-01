@@ -85,8 +85,8 @@ func TestAI_UpdateSubmodulesReusesLocalObjectsWithoutRemote(t *testing.T) {
 	workTreeDir := filepath.Join(t.TempDir(), "worktree")
 	runGitAI(t, superRepo, "worktree", "add", "--detach", workTreeDir, headSHA)
 
-	err := updateSubmodules(ctx, filepath.Join(superRepo, ".git"), workTreeDir)
-	require.NoError(t, err)
+	require.NoError(t, syncSubmodules(ctx, filepath.Join(superRepo, ".git"), workTreeDir))
+	require.NoError(t, updateSubmodules(ctx, filepath.Join(superRepo, ".git"), workTreeDir))
 
 	content, err := os.ReadFile(filepath.Join(workTreeDir, "sub", "file.txt"))
 	require.NoError(t, err)
@@ -123,8 +123,8 @@ func TestAI_UpdateSubmodulesReusesLocalObjectsForNestedWithoutRemote(t *testing.
 	workTreeDir := filepath.Join(t.TempDir(), "worktree")
 	runGitAI(t, superRepo, "worktree", "add", "--detach", workTreeDir, headSHA)
 
-	err := updateSubmodules(ctx, filepath.Join(superRepo, ".git"), workTreeDir)
-	require.NoError(t, err)
+	require.NoError(t, syncSubmodules(ctx, filepath.Join(superRepo, ".git"), workTreeDir))
+	require.NoError(t, updateSubmodules(ctx, filepath.Join(superRepo, ".git"), workTreeDir))
 
 	content, err := os.ReadFile(filepath.Join(workTreeDir, "mid", "leaf", "leaf.txt"))
 	require.NoError(t, err)
@@ -178,6 +178,58 @@ func TestAI_UpdateSubmodulesReusesLocalObjectsAfterGitlinkMovedInWarmWorkTree(t 
 	require.Equal(t, "second", string(content))
 }
 
+// The fetch redirect must reach nested levels too: their git dirs are per-worktree just like the
+// top-level one, so a moved nested gitlink is fetched, not re-cloned.
+func TestAI_UpdateSubmodulesReusesLocalObjectsAfterNestedGitlinkMovedInWarmWorkTree(t *testing.T) {
+	ctx := context.Background()
+	isolateGitConfigAI(t)
+
+	leafRemote := t.TempDir()
+	initGitRepoAI(t, leafRemote)
+	require.NoError(t, os.WriteFile(filepath.Join(leafRemote, "leaf.txt"), []byte("first"), 0o644))
+	runGitAI(t, leafRemote, "add", ".")
+	runGitAI(t, leafRemote, "commit", "-m", "first")
+
+	midRemote := t.TempDir()
+	initGitRepoAI(t, midRemote)
+	runGitAI(t, midRemote, "-c", "protocol.file.allow=always", "submodule", "add", leafRemote, "leaf")
+	runGitAI(t, midRemote, "commit", "-m", "add leaf")
+
+	superRepo := t.TempDir()
+	initGitRepoAI(t, superRepo)
+	runGitAI(t, superRepo, "-c", "protocol.file.allow=always", "submodule", "add", midRemote, "mid")
+	runGitAI(t, superRepo, "-c", "protocol.file.allow=always", "submodule", "update", "--init", "--recursive")
+	runGitAI(t, superRepo, "commit", "-m", "add mid")
+	firstSHA := strings.TrimSpace(runGitAI(t, superRepo, "rev-parse", "HEAD"))
+
+	gitDir := filepath.Join(superRepo, ".git")
+	workTreeDir := filepath.Join(t.TempDir(), "worktree")
+	runGitAI(t, superRepo, "worktree", "add", "--detach", workTreeDir, firstSHA)
+	require.NoError(t, syncSubmodules(ctx, gitDir, workTreeDir))
+	require.NoError(t, updateSubmodules(ctx, gitDir, workTreeDir))
+
+	// Move the NESTED gitlink and let the superproject stores learn the new commits.
+	require.NoError(t, os.WriteFile(filepath.Join(leafRemote, "leaf.txt"), []byte("second"), 0o644))
+	runGitAI(t, leafRemote, "commit", "-am", "second")
+	runGitAI(t, midRemote, "-c", "protocol.file.allow=always", "submodule", "update", "--remote", "leaf")
+	runGitAI(t, midRemote, "commit", "-am", "bump leaf")
+	runGitAI(t, superRepo, "-c", "protocol.file.allow=always", "submodule", "update", "--remote", "mid")
+	runGitAI(t, superRepo, "commit", "-am", "bump mid")
+	secondSHA := strings.TrimSpace(runGitAI(t, superRepo, "rev-parse", "HEAD"))
+	runGitAI(t, superRepo, "-c", "protocol.file.allow=always", "submodule", "update", "--init", "--recursive")
+
+	require.NoError(t, os.RemoveAll(leafRemote))
+	require.NoError(t, os.RemoveAll(midRemote))
+
+	runGitAI(t, workTreeDir, "checkout", "--force", "--detach", secondSHA)
+	require.NoError(t, syncSubmodules(ctx, gitDir, workTreeDir))
+	require.NoError(t, updateSubmodules(ctx, gitDir, workTreeDir))
+
+	content, err := os.ReadFile(filepath.Join(workTreeDir, "mid", "leaf", "leaf.txt"))
+	require.NoError(t, err)
+	require.Equal(t, "second", string(content))
+}
+
 // A submodule name reused at another nesting level cannot be expressed as a process-global
 // submodule.<name>.url, so no override may be emitted: an override for the top-level copy would
 // otherwise hijack the nested clone and fail the whole update.
@@ -221,6 +273,7 @@ func TestAI_UpdateSubmodulesSkipsOverridesOnDuplicateSubmoduleName(t *testing.T)
 	t.Setenv("GIT_ALLOW_PROTOCOL", "file")
 	workTreeDir := filepath.Join(t.TempDir(), "worktree")
 	runGitAI(t, superRepo, "worktree", "add", "--detach", workTreeDir, headSHA)
+	require.NoError(t, syncSubmodules(ctx, filepath.Join(superRepo, ".git"), workTreeDir))
 	require.NoError(t, updateSubmodules(ctx, filepath.Join(superRepo, ".git"), workTreeDir))
 
 	topWho, err := os.ReadFile(filepath.Join(workTreeDir, "lib", "who.txt"))
@@ -270,6 +323,7 @@ func TestAI_UpdateSubmodulesKeepsFileTransportBlockedForNonLocalSubmodule(t *tes
 	workTreeDir := filepath.Join(t.TempDir(), "worktree")
 	runGitAI(t, superRepo, "worktree", "add", "--detach", workTreeDir, headSHA)
 
+	require.NoError(t, syncSubmodules(ctx, filepath.Join(superRepo, ".git"), workTreeDir))
 	err = updateSubmodules(ctx, filepath.Join(superRepo, ".git"), workTreeDir)
 	require.Error(t, err, "git must still refuse the file:// submodule")
 	require.Contains(t, err.Error(), "transport 'file' not allowed")

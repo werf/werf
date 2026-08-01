@@ -147,6 +147,11 @@ func submoduleLocalURLOverrides(ctx context.Context, workTreeDir string) (overri
 			return nil, nil, err
 		}
 		if fetchURL == "" {
+			blockers = append(blockers, fmt.Sprintf("%s (submodule has no remote URL to redirect)", node.displayPath))
+			continue
+		}
+		// An earlier run already recorded the store as the remote, so the fetch is local as is.
+		if fetchURL == node.moduleDir {
 			continue
 		}
 		if _, ok := seenURL[fetchURL]; ok {
@@ -155,6 +160,16 @@ func submoduleLocalURLOverrides(ctx context.Context, workTreeDir string) (overri
 		}
 		seenURL[fetchURL] = struct{}{}
 		fetchURLs[node.displayPath] = fetchURL
+	}
+
+	// insteadOf matches by prefix, so a remote URL that prefixes one of the store paths would also
+	// rewrite the store URL the clone path relies on.
+	for _, fetchURL := range fetchURLs {
+		for _, node := range nodes {
+			if strings.HasPrefix(node.moduleDir, fetchURL) {
+				blockers = append(blockers, fmt.Sprintf("%s (remote URL prefixes the local object store path)", node.displayPath))
+			}
+		}
 	}
 
 	if len(blockers) > 0 {
@@ -222,9 +237,14 @@ func walkSubmodule(ctx context.Context, parentModuleDir, parentWorktreeModuleDir
 		return nil
 	}
 
-	worktreeModuleDir := filepath.Join(parentWorktreeModuleDir, "modules", name)
-	if _, err := os.Stat(worktreeModuleDir); err != nil {
-		worktreeModuleDir = ""
+	// Absent parent means the whole subtree is unpopulated in the service worktree; keep the empty
+	// marker instead of joining onto it, which would yield a relative path probed against the CWD.
+	var worktreeModuleDir string
+	if parentWorktreeModuleDir != "" {
+		candidate := filepath.Join(parentWorktreeModuleDir, "modules", name)
+		if _, err := os.Stat(candidate); err == nil {
+			worktreeModuleDir = candidate
+		}
 	}
 
 	*nodes = append(*nodes, submoduleNode{
