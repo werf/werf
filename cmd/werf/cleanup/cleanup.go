@@ -82,6 +82,9 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupScanContextNamespaceOnly(&commonCmdData, cmd)
 	common.SetupDryRun(&commonCmdData, cmd)
 
+	common.SetupSaveCleanupReport(&commonCmdData, cmd)
+	common.SetupCleanupReportPath(&commonCmdData, cmd)
+
 	common.SetupLogOptions(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 
@@ -240,6 +243,11 @@ func runCleanup(ctx context.Context, cmd *cobra.Command) error {
 		}
 	}
 
+	report, reportPath, err := common.NewCleanupReport(&commonCmdData, "cleanup", *commonCmdData.DryRun, storageManager)
+	if err != nil {
+		return err
+	}
+
 	cleanupOptions := cleaning.CleanupOptions{
 		ImageNameList:                           imagesNames,
 		LocalGit:                                giterminismManager.LocalGitRepo().(*git_repo.Local),
@@ -252,8 +260,13 @@ func runCleanup(ctx context.Context, cmd *cobra.Command) error {
 		Parallel:                                common.GetParallel(&commonCmdData),
 		ParallelTasksLimit:                      common.GetParallelTasksLimit(&commonCmdData),
 		KeepList:                                keepList,
+		Report:                                  report,
 	}
 
 	logboek.LogOptionalLn()
-	return cleaning.Cleanup(ctx, projectName, storageManager, cleanupOptions)
+	if err := cleaning.Cleanup(ctx, projectName, storageManager, cleanupOptions); err != nil {
+		return err
+	}
+
+	return report.Save(reportPath)
 }

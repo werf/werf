@@ -25,6 +25,7 @@ import (
 	"github.com/werf/werf/v2/pkg/build"
 	"github.com/werf/werf/v2/pkg/build/stage"
 	"github.com/werf/werf/v2/pkg/buildah"
+	"github.com/werf/werf/v2/pkg/cleanup_report"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/docker"
@@ -33,6 +34,7 @@ import (
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
 	"github.com/werf/werf/v2/pkg/logging"
 	"github.com/werf/werf/v2/pkg/storage"
+	"github.com/werf/werf/v2/pkg/storage/manager"
 	"github.com/werf/werf/v2/pkg/true_git"
 	"github.com/werf/werf/v2/pkg/util/option"
 	"github.com/werf/werf/v2/pkg/werf"
@@ -235,6 +237,41 @@ func GetCleanupReportPath(cmdData *CmdData) (string, error) {
 
 func GetHostCleanupReportPath(cmdData *CmdData) (string, error) {
 	return resolveJSONReportPath("--host-cleanup-report-path", option.PtrValueOrDefault(cmdData.HostCleanupReportPath, ""), DefaultHostCleanupReportPathJSON)
+}
+
+// NewCleanupReport returns a nil report when --save-cleanup-report is not set. A nil report accumulates
+// nothing and saves nothing, so callers need no further checks.
+func NewCleanupReport(cmdData *CmdData, command string, dryRun bool, storageManager *manager.StorageManager) (*cleanup_report.Report, string, error) {
+	if !GetSaveCleanupReport(cmdData) {
+		return nil, "", nil
+	}
+
+	reportPath, err := GetCleanupReportPath(cmdData)
+	if err != nil {
+		return nil, "", err
+	}
+
+	var finalRepo string
+	if finalStagesStorage := storageManager.GetFinalStagesStorage(); finalStagesStorage != nil {
+		finalRepo = finalStagesStorage.Address()
+	}
+
+	return cleanup_report.NewReport(command, dryRun, storageManager.GetStagesStorage().Address(), finalRepo), reportPath, nil
+}
+
+// NewHostCleanupReport returns a nil report when --save-host-cleanup-report is not set. A nil report
+// accumulates nothing and saves nothing, so callers need no further checks.
+func NewHostCleanupReport(cmdData *CmdData, command string, dryRun bool) (*cleanup_report.HostReport, string, error) {
+	if !GetSaveHostCleanupReport(cmdData) {
+		return nil, "", nil
+	}
+
+	reportPath, err := GetHostCleanupReportPath(cmdData)
+	if err != nil {
+		return nil, "", err
+	}
+
+	return cleanup_report.NewHostReport(command, dryRun), reportPath, nil
 }
 
 func resolveJSONReportPath(flagName, path, defaultPath string) (string, error) {

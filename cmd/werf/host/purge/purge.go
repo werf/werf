@@ -58,6 +58,12 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupContainerRegistryMirror(&commonCmdData, cmd)
 
 	common.SetupDryRun(&commonCmdData, cmd)
+
+	common.SetupSaveCleanupReport(&commonCmdData, cmd)
+	common.SetupCleanupReportPath(&commonCmdData, cmd)
+	common.SetupSaveHostCleanupReport(&commonCmdData, cmd)
+	common.SetupHostCleanupReportPath(&commonCmdData, cmd)
+
 	cmd.Flags().BoolVarP(&cmdData.Force, "force", "", false, common.CleaningCommandsForceOptionDescription)
 
 	return cmd
@@ -85,9 +91,18 @@ func runReset(ctx context.Context) error {
 
 	projectName := *commonCmdData.ProjectName
 	if projectName == "" {
+		report, reportPath, err := common.NewHostCleanupReport(&commonCmdData, "host purge", *commonCmdData.DryRun)
+		if err != nil {
+			return err
+		}
+
 		logboek.LogOptionalLn()
-		hostPurgeOptions := host_cleaning.HostPurgeOptions{DryRun: *commonCmdData.DryRun, RmContainersThatUseWerfImages: cmdData.Force}
+		hostPurgeOptions := host_cleaning.HostPurgeOptions{DryRun: *commonCmdData.DryRun, RmContainersThatUseWerfImages: cmdData.Force, Report: report}
 		if err := host_cleaning.HostPurge(ctx, containerBackend, hostPurgeOptions); err != nil {
+			return err
+		}
+
+		if err := report.Save(reportPath); err != nil {
 			return err
 		}
 	} else {
@@ -104,13 +119,23 @@ func runReset(ctx context.Context) error {
 			return fmt.Errorf("unable to init storage manager: %w", err)
 		}
 
+		report, reportPath, err := common.NewCleanupReport(&commonCmdData, "host purge", *commonCmdData.DryRun, storageManager)
+		if err != nil {
+			return err
+		}
+
 		purgeOptions := cleaning.PurgeOptions{
 			RmContainersThatUseWerfImages: cmdData.Force,
 			DryRun:                        *commonCmdData.DryRun,
+			Report:                        report,
 		}
 
 		logboek.LogOptionalLn()
 		if err := cleaning.Purge(ctx, projectName, storageManager, purgeOptions); err != nil {
+			return err
+		}
+
+		if err := report.Save(reportPath); err != nil {
 			return err
 		}
 	}

@@ -60,6 +60,9 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupDryRun(&commonCmdData, cmd)
 
+	common.SetupSaveHostCleanupReport(&commonCmdData, cmd)
+	common.SetupHostCleanupReportPath(&commonCmdData, cmd)
+
 	common.SetupDisableAutoHostCleanup(&commonCmdData, cmd)
 	common.SetupAllowedBackendStorageVolumeUsage(&commonCmdData, cmd)
 	common.SetupAllowedBackendStorageVolumeUsageMargin(&commonCmdData, cmd)
@@ -104,9 +107,15 @@ func runCleanup(ctx context.Context) error {
 
 	logboek.LogOptionalLn()
 
+	report, reportPath, err := common.NewHostCleanupReport(&commonCmdData, "host cleanup", *commonCmdData.DryRun)
+	if err != nil {
+		return err
+	}
+
 	hostCleanupOptions := host_cleaning.HostCleanupOptions{
 		DryRun:                                 *commonCmdData.DryRun,
 		Force:                                  cmdData.Force,
+		Report:                                 report,
 		AllowedBackendStorageVolumeUsage:       commonCmdData.AllowedBackendStorageVolumeUsage,
 		AllowedBackendStorageVolumeUsageMargin: commonCmdData.AllowedBackendStorageVolumeUsageMargin,
 		AllowedLocalCacheVolumeUsage:           commonCmdData.AllowedLocalCacheVolumeUsage,
@@ -114,5 +123,9 @@ func runCleanup(ctx context.Context) error {
 		BackendStoragePath:                     commonCmdData.BackendStoragePath,
 	}
 
-	return host_cleaning.RunHostCleanup(ctx, commonManager.ContainerBackend(), hostCleanupOptions)
+	if err := host_cleaning.RunHostCleanup(ctx, commonManager.ContainerBackend(), hostCleanupOptions); err != nil {
+		return err
+	}
+
+	return report.Save(reportPath)
 }
