@@ -230,6 +230,78 @@ func TestAI_UpdateSubmodulesReusesLocalObjectsAfterNestedGitlinkMovedInWarmWorkT
 	require.Equal(t, "second", string(content))
 }
 
+// GitLab CI clones submodules shallow for GIT_SUBMODULE_DEPTH. A shallow store is not a partial
+// one — it has every object of the commits it holds — so it must stay eligible for reuse.
+func TestAI_UpdateSubmodulesReusesLocalObjectsFromShallowSubmoduleStore(t *testing.T) {
+	ctx := context.Background()
+	isolateGitConfigAI(t)
+
+	subRemote := t.TempDir()
+	initGitRepoAI(t, subRemote)
+	for _, marker := range []string{"first", "second"} {
+		require.NoError(t, os.WriteFile(filepath.Join(subRemote, "file.txt"), []byte(marker), 0o644))
+		runGitAI(t, subRemote, "add", ".")
+		runGitAI(t, subRemote, "commit", "-m", marker)
+	}
+
+	superRepo := t.TempDir()
+	initGitRepoAI(t, superRepo)
+	// A depth-limited clone is only honored over file://, not over a plain local path.
+	runGitAI(t, superRepo, "-c", "protocol.file.allow=always", "submodule", "add", "file://"+subRemote, "sub")
+	runGitAI(t, superRepo, "commit", "-m", "add submodule")
+	runGitAI(t, superRepo, "submodule", "deinit", "-f", "sub")
+	require.NoError(t, os.RemoveAll(filepath.Join(superRepo, ".git", "modules", "sub")))
+	runGitAI(t, superRepo, "-c", "protocol.file.allow=always", "submodule", "update", "--init", "--depth=1")
+	require.FileExists(t, filepath.Join(superRepo, ".git", "modules", "sub", "shallow"))
+	headSHA := strings.TrimSpace(runGitAI(t, superRepo, "rev-parse", "HEAD"))
+
+	require.NoError(t, os.RemoveAll(subRemote))
+
+	gitDir := filepath.Join(superRepo, ".git")
+	workTreeDir := filepath.Join(t.TempDir(), "worktree")
+	runGitAI(t, superRepo, "worktree", "add", "--detach", workTreeDir, headSHA)
+	require.NoError(t, syncSubmodules(ctx, gitDir, workTreeDir))
+	require.NoError(t, updateSubmodules(ctx, gitDir, workTreeDir))
+
+	content, err := os.ReadFile(filepath.Join(workTreeDir, "sub", "file.txt"))
+	require.NoError(t, err)
+	require.Equal(t, "second", string(content))
+}
+
+// GIT_SUBMODULE_FORCE_HTTPS makes GitLab CI install its own broad insteadOf prefix rewrite. Ours is
+// keyed on the full submodule URL, and git resolves insteadOf by longest match, so reuse must win.
+func TestAI_UpdateSubmodulesReusesLocalObjectsDespiteExistingInsteadOfRule(t *testing.T) {
+	ctx := context.Background()
+	isolateGitConfigAI(t)
+
+	subRemote := t.TempDir()
+	initGitRepoAI(t, subRemote)
+	require.NoError(t, os.WriteFile(filepath.Join(subRemote, "file.txt"), []byte("hello"), 0o644))
+	runGitAI(t, subRemote, "add", ".")
+	runGitAI(t, subRemote, "commit", "-m", "content")
+
+	superRepo := t.TempDir()
+	initGitRepoAI(t, superRepo)
+	runGitAI(t, superRepo, "-c", "protocol.file.allow=always", "submodule", "add", subRemote, "sub")
+	runGitAI(t, superRepo, "commit", "-m", "add submodule")
+	headSHA := strings.TrimSpace(runGitAI(t, superRepo, "rev-parse", "HEAD"))
+
+	// Redirect the remote's parent prefix at a path that does not exist, standing in for the CI's
+	// token rewrite: reuse must not depend on where that rule points.
+	runGitAI(t, superRepo, "config", "url."+filepath.Join(t.TempDir(), "tokenized")+"/.insteadOf", filepath.Dir(subRemote)+"/")
+	require.NoError(t, os.RemoveAll(subRemote))
+
+	gitDir := filepath.Join(superRepo, ".git")
+	workTreeDir := filepath.Join(t.TempDir(), "worktree")
+	runGitAI(t, superRepo, "worktree", "add", "--detach", workTreeDir, headSHA)
+	require.NoError(t, syncSubmodules(ctx, gitDir, workTreeDir))
+	require.NoError(t, updateSubmodules(ctx, gitDir, workTreeDir))
+
+	content, err := os.ReadFile(filepath.Join(workTreeDir, "sub", "file.txt"))
+	require.NoError(t, err)
+	require.Equal(t, "hello", string(content))
+}
+
 // A submodule name reused at another nesting level cannot be expressed as a process-global
 // submodule.<name>.url, so no override may be emitted: an override for the top-level copy would
 // otherwise hijack the nested clone and fail the whole update.
