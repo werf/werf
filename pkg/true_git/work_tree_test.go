@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -66,6 +67,33 @@ var _ = Describe("Work tree helpers", func() {
 
 				Expect(switchWorkTree(ctx, mainWtDir, sideWtDir, commit, false)).To(Succeed())
 			})
+		})
+	})
+
+	When("a stale index.lock is left in a cached worktree", func() {
+		var mainWtDir, sideWtDir string
+
+		BeforeEach(func(ctx SpecContext) {
+			mainWtDir = filepath.Join(SuiteData.TestDirPath, "main-wt")
+			sideWtDir = filepath.Join(SuiteData.TestDirPath, "side-wt")
+
+			Expect(os.MkdirAll(mainWtDir, os.ModePerm)).To(Succeed())
+			utils.RunSucceedCommand(ctx, mainWtDir, "git", "-c", "init.defaultBranch=main", "init")
+			utils.RunSucceedCommand(ctx, mainWtDir, "git", "checkout", "-b", "main")
+			gitCommitSucceed(ctx, mainWtDir, "--allow-empty", "-m", "Initial commit")
+			utils.RunSucceedCommand(ctx, mainWtDir, "git", "worktree", "add", "--detach", sideWtDir)
+		})
+
+		It("self-heals and switches the worktree", func(ctx SpecContext) {
+			commit := getHeadCommit(ctx, mainWtDir)
+
+			lockPath := strings.TrimSpace(utils.SucceedCommandOutputString(ctx, sideWtDir, "git", "rev-parse", "--git-path", "index.lock"))
+			if !filepath.IsAbs(lockPath) {
+				lockPath = filepath.Join(sideWtDir, lockPath)
+			}
+			Expect(os.WriteFile(lockPath, []byte("stale"), 0o644)).To(Succeed())
+
+			Expect(switchWorkTree(ctx, mainWtDir, sideWtDir, commit, false)).To(Succeed())
 		})
 	})
 
