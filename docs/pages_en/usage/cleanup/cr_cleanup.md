@@ -244,6 +244,64 @@ werf uses the _GitLab container registry API_ or _Docker Registry API_ (dependin
 
 ## Saving the result of work
 
+### Cleanup report
+
+The `--save-cleanup-report` option makes `werf cleanup` write a machine-readable JSON report of what was kept and what was deleted. The report path is `.werf-cleanup-report.json` by default and is configured with `--cleanup-report-path` (the extension must be `.json`).
+
+Generating a keep-list then takes a single `jq` call:
+
+```bash
+werf cleanup --repo registry.mydomain.com/app --dry-run --save-cleanup-report
+jq -r '.kept[].tag' .werf-cleanup-report.json > keep-list.txt
+```
+
+The report of the command above looks as follows:
+
+```json
+{
+  "apiVersion": "v1",
+  "command": "cleanup",
+  "dryRun": true,
+  "repo": "registry.mydomain.com/app",
+  "finalRepo": "registry.mydomain.com/app-final",
+  "kept": [
+    { "type": "stage", "tag": "1e09fb543b4ef442ce5ed36bfeee6b27866bf1e68541db5995962b24-1749456960043", "reason": "used in Kubernetes" },
+    { "type": "stage", "tag": "8c4a1f9b2d7e5a3c6b0d9e8f7a2c1b4d3e6f5a8c9b0d1e2f3a4b5c6d-1749390012345", "reason": "git policy" },
+    { "type": "customTag", "tag": "my-custom-tag" }
+  ],
+  "deleted": [
+    { "type": "stage", "tag": "ff00112233445566778899aabbccddeeff00112233445566778899aa-1748001122334" },
+    { "type": "customTag", "tag": "review-1234" },
+    { "type": "imageMetadata", "imageName": "backend", "stageID": "ff00112233445566778899aabbccddeeff00112233445566778899aa-1748001122334", "commit": "a3f1c92e4b7d8056f1a2b3c4d5e6f7a8b9c0d1e2" },
+    { "type": "managedImage", "imageName": "frontend" }
+  ]
+}
+```
+
+The `dryRun` field tells a planned cleanup from an actual one. Every item carries a `type`: `stage`, `finalStage`, `customTag`, `rejectedStage`, `rejectedStageMarker`, `imageMetadata` or `managedImage`. Only tags that were really deleted get into `deleted` — failed deletions are reported as warnings in the log instead.
+
+The same options are supported by `werf purge`, and by `werf host purge` when it is called with `--project-name`.
+
+### Host cleanup report
+
+`werf host cleanup` and `werf host purge` support `--save-host-cleanup-report` and `--host-cleanup-report-path` (`.werf-host-cleanup-report.json` by default). The host report lists the local container backend objects that were deleted:
+
+```json
+{
+  "apiVersion": "v1",
+  "command": "host cleanup",
+  "dryRun": false,
+  "spaceReclaimed": 8271948800,
+  "deleted": [
+    { "type": "volume", "id": "e4f1c0a9b7d6" },
+    { "type": "image", "id": "sha256:8f7e6d5c4b3a2918f0e1d2c3b4a59687766554433221100ffeeddccbbaa9988" },
+    { "type": "container", "id": "3a9f1c0e7b2d" }
+  ]
+}
+```
+
+Cleanup of temporary files, locks and git data is not reflected in the report, and `spaceReclaimed` accounts for the container backend only.
+
 During operation, `werf cleanup` highlights tags using colors to indicate their status:
 
 + <span style="color: green;">Green color</span> — tag is kept.
