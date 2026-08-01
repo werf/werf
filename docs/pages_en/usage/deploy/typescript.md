@@ -112,7 +112,7 @@ Simply run `werf converge`: the Deno binary will be unpacked from werf into the 
 
 ## Deploying into isolated environments
 
-Deno needs nothing from the network, so an isolated environment only requires the chart itself to be self-contained:
+Deno runtime is shipped inside werf, so an isolated environment only requires the chart itself to be self-contained:
 
 1. Publish the chart:
    ```shell

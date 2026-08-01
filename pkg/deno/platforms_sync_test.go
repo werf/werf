@@ -1,17 +1,20 @@
 package deno
 
 import (
+	"maps"
 	"os"
 	"path/filepath"
 	"regexp"
-	"sort"
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/werf/nelm/pkg/ts/denolock"
 )
 
-func TestAI_EmbedPlatformListsInSync(t *testing.T) {
+func TestEmbedPlatformListsInSync(t *testing.T) {
 	embedFiles, err := filepath.Glob("embed_*.go")
 	require.NoError(t, err)
 
@@ -25,20 +28,29 @@ func TestAI_EmbedPlatformListsInSync(t *testing.T) {
 	}
 
 	require.NotEmpty(t, embedPlatforms)
-	sort.Strings(embedPlatforms)
+	slices.Sort(embedPlatforms)
 
 	taskfileSrc, err := os.ReadFile(filepath.Join("..", "..", "Taskfile.dist.yaml"))
 	require.NoError(t, err)
 
 	taskfileRe := regexp.MustCompile(`- build:dist:([a-z0-9]+):([a-z0-9]+)`)
 
-	var releasePlatforms []string
+	releaseSeen := make(map[string]struct{})
 	for _, m := range taskfileRe.FindAllStringSubmatch(string(taskfileSrc), -1) {
-		releasePlatforms = append(releasePlatforms, m[1]+"/"+m[2])
+		releaseSeen[m[1]+"/"+m[2]] = struct{}{}
 	}
 
-	require.NotEmpty(t, releasePlatforms)
-	sort.Strings(releasePlatforms)
+	require.NotEmpty(t, releaseSeen)
 
-	assert.Equal(t, releasePlatforms, embedPlatforms, "pkg/deno/embed_*.go files out of sync with build:dist:all release targets in Taskfile.dist.yaml")
+	releasePlatforms := slices.Sorted(maps.Keys(releaseSeen))
+
+	lock, err := denolock.Read()
+	require.NoError(t, err)
+
+	pinnedPlatforms := slices.Sorted(maps.Keys(lock.Platforms))
+
+	assert.Equal(t, releasePlatforms, embedPlatforms,
+		"pkg/deno/embed_*.go files out of sync with build:dist:all release targets in Taskfile.dist.yaml")
+	assert.Equal(t, pinnedPlatforms, embedPlatforms,
+		"pkg/deno/embed_*.go files out of sync with the platforms nelm pins in pkg/ts/denolock")
 }

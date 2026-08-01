@@ -37,8 +37,13 @@ vars:
   cgoTags: "{{.goTags}} osusergo exclude_graphdriver_devicemapper netgo no_devmapper static_build cni"
   cgoLDFlags: "{{.goLDFlags}} -linkmode external -extldflags=-static"
 
-  buildGoTags: "{{.goTags}} embedstapel embedwerfdeno"
-  buildCgoTags: "{{.cgoTags}} embedstapel embedwerfdeno"
+  buildGoTags: "{{.goTags}} embedstapel"
+  buildCgoTags: "{{.cgoTags}} embedstapel"
+
+  # Deno is embedded for release binaries only: a dev build would pay a ~45 MiB download and ~42 MiB
+  # of linked blob for a runtime it can just as well fetch on demand.
+  distGoTags: "{{.buildGoTags}} embedwerfdeno"
+  distCgoTags: "{{.buildCgoTags}} embedwerfdeno"
 
 tasks:
   format:
@@ -55,7 +60,7 @@ tasks:
           echo "golangci-lint not installed, run: task deps:install:golangci-lint"
           exit 1
         fi
-        ./bin/golangci-lint-v2.11.4 run --build-tags="{{.buildGoTags}}" -c .golangci.yml {{.CLI_ARGS}} {{.golangciPaths | default "./cmd/... ./pkg/... ./test/..."}}
+        ./bin/golangci-lint-v2.11.4 run --build-tags="{{.distGoTags}}" -c .golangci.yml {{.CLI_ARGS}} {{.golangciPaths | default "./cmd/... ./pkg/... ./test/..."}}
     env:
       CGO_ENABLED: "0"
 
@@ -117,6 +122,9 @@ tasks:
       denoVersionSource:
         sh: printf '%s/pkg/ts/denolock/data/lock.json' "$(go list -m -f '{{`{{.Dir}}`}}' github.com/werf/nelm)"
     sources:
+      # The pinned nelm version determines the lock, and unlike the path below it always resolves: on
+      # a cold module cache "go list -m" reports an empty Dir and that entry matches nothing.
+      - go.mod
       - '{{.denoVersionSource}}'
     generates:
       - pkg/deno/embed/{{.platform}}/deno.gz
@@ -126,9 +134,6 @@ tasks:
   _build:cgo:dev: &build_cgo_dev
     deps:
       - stapel:embed
-      - task: deno:embed
-        vars:
-          platform: "{{.targetOS}}/{{.targetArch}}"
     cmds:
       - go build {{if eq .raceDetectorEnabled "true" }}-race{{end}} -o "{{.outputDir | default (printf "./build/%s-%s" .targetOS .targetArch)}}/werf{{if (eq .targetOS "windows")}}.exe{{end}}"
         -compiler gc -ldflags="{{.cgoLDFlags}}" -tags="{{.buildCgoTags}}" {{.extraGoBuildArgs}} {{.CLI_ARGS}} {{.pkg | default .package}}
@@ -142,16 +147,18 @@ tasks:
 
   _build:cgo:dist:
     <<: *build_cgo_dev
-    cmds:
-      - go build -o "{{.outputDir | default (printf "./dist/%s/%s-%s/bin" .version .targetOS .targetArch)}}/werf{{if (eq .targetOS "windows")}}.exe{{end}}"
-        -compiler gc -ldflags="{{.cgoLDFlags}}" -tags="{{.buildCgoTags}}" {{.extraGoBuildArgs}} {{.CLI_ARGS}} {{.pkg | default .package}}
-
-  _build:go:dev: &build_go_dev
     deps:
       - stapel:embed
       - task: deno:embed
         vars:
           platform: "{{.targetOS}}/{{.targetArch}}"
+    cmds:
+      - go build -o "{{.outputDir | default (printf "./dist/%s/%s-%s/bin" .version .targetOS .targetArch)}}/werf{{if (eq .targetOS "windows")}}.exe{{end}}"
+        -compiler gc -ldflags="{{.cgoLDFlags}}" -tags="{{.distCgoTags}}" {{.extraGoBuildArgs}} {{.CLI_ARGS}} {{.pkg | default .package}}
+
+  _build:go:dev: &build_go_dev
+    deps:
+      - stapel:embed
     cmds:
       - go build {{if eq .raceDetectorEnabled "true" }}-race{{end}} -o "{{.outputDir | default (printf "./build/%s-%s" .targetOS .targetArch)}}/werf{{if (eq .targetOS "windows")}}.exe{{end}}"
         -ldflags="{{.goLDFlags}}" -tags="{{.buildGoTags}}" {{.extraGoBuildArgs}} {{.CLI_ARGS}} {{.pkg | default .package}}
@@ -164,9 +171,14 @@ tasks:
 
   _build:go:dist:
     <<: *build_go_dev
+    deps:
+      - stapel:embed
+      - task: deno:embed
+        vars:
+          platform: "{{.targetOS}}/{{.targetArch}}"
     cmds:
       - go build -o "{{.outputDir | default (printf "./dist/%s/%s-%s/bin" .version .targetOS .targetArch)}}/werf{{if (eq .targetOS "windows")}}.exe{{end}}"
-        -ldflags="{{.goLDFlags}}" -tags="{{.buildGoTags}}" {{.extraGoBuildArgs}} {{.CLI_ARGS}} {{.pkg | default .package}}
+        -ldflags="{{.goLDFlags}}" -tags="{{.distGoTags}}" {{.extraGoBuildArgs}} {{.CLI_ARGS}} {{.pkg | default .package}}
 
   build:
     desc: "Build werf dev binary."

@@ -2,20 +2,10 @@
 
 package deno
 
-import (
-	"runtime"
-
-	"github.com/werf/nelm/pkg/ts/denolock"
-)
-
-// EmbeddedDenoData returns the compressed embedded Deno binary. The last
-// result reports whether an embedded binary is available at all.
+// EmbeddedDenoData returns the compressed embedded Deno binary. Whether it is usable is nelm's call,
+// not werf's: it checks the bytes against the release its lock pins, which is the same lock the
+// generator that produced them verified against. There is a blob only for the platforms that lock
+// pins, so a tagged build for any other one fails with "undefined: embeddedDeno".
 func EmbeddedDenoData() ([]byte, bool) {
-	// The blob is downloaded by nelm's embed-deno, which verifies it against the release nelm pins,
-	// so a platform nelm does not pin cannot have produced one.
-	if _, err := denolock.Get(runtime.GOOS, runtime.GOARCH); err != nil {
-		return nil, false
-	}
-
 	return embeddedDeno, true
 }
