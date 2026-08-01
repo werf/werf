@@ -113,27 +113,20 @@ type projectMetadataRecord struct {
 }
 
 // metadataRecordMatchesProject decides whether a metadata candidate record
-// belongs to the project. managed-image and cleanup records reliably carry the
-// werf=<project> label (cleanup additionally requires the timestamp label), so
-// they are matched strictly. image-metadata and custom-tag-metadata records were
-// historically pushed without the label, so ownership is ambiguous: unlabeled
-// records are conservatively treated as the project's (a foreign label excludes
-// them), matching the plan's requirement to refuse adoption rather than orphan
-// metadata that git-history cleanup still consults.
+// belongs to the project. The cleanup record was introduced already labeled and
+// timestamped, so it is matched strictly. managed-image, image-metadata and
+// custom-tag-metadata records were historically pushed without the werf label
+// (and the read paths that consult them are label-blind), so ownership is
+// ambiguous: an unlabeled record is conservatively treated as the project's (a
+// foreign label excludes it), matching the plan's requirement to refuse adoption
+// rather than orphan metadata that cleanup still reads.
 func metadataRecordMatchesProject(tag string, labels map[string]string, projectName string) bool {
 	owner, hasOwner := labels[image.WerfLabel]
-	switch {
-	case strings.HasPrefix(tag, RepoManagedImageRecord_ImageTagPrefix):
-		return owner == projectName
-	case tag == RepoCleanUpRecord_ImageTagPrefix:
-		_, hasTs := labels[RepoCleanUpRecord_LabelTimestamp]
-		return hasTs && owner == projectName
-	case strings.HasPrefix(tag, RepoCustomTagMetadata_ImageTagPrefix),
-		strings.HasPrefix(tag, RepoImageMetadataByCommitRecord_ImageTagPrefix):
-		return !hasOwner || owner == "" || owner == projectName
-	default:
-		return false
+	if tag == RepoCleanUpRecord_ImageTagPrefix {
+		_, hasTimestamp := labels[RepoCleanUpRecord_LabelTimestamp]
+		return hasTimestamp && owner == projectName
 	}
+	return !hasOwner || owner == "" || owner == projectName
 }
 
 // collectProjectMetadataRecords returns the metadata records in this repo owned

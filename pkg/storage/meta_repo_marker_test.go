@@ -266,6 +266,13 @@ var _ = Describe("meta-repo marker", func() {
 			Expect(has).To(BeTrue())
 		})
 
+		It("conservatively treats unlabeled managed-image records as the project's (legacy records)", func(ctx SpecContext) {
+			reg.put(stagesRepo+":managed-image-app", map[string]string{})
+			has, err := stages.HasProjectMetadata(ctx, proj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(has).To(BeTrue())
+		})
+
 		It("excludes image-metadata explicitly labeled for another project", func(ctx SpecContext) {
 			reg.put(stagesRepo+":meta-abc_commit_stage", map[string]string{image.WerfLabel: "otherproject"})
 			has, err := stages.HasProjectMetadata(ctx, proj)
@@ -431,6 +438,16 @@ var _ = Describe("meta-repo marker", func() {
 			Expect(reg.has(metaRepo + ":abc-123-rejected")).To(BeFalse())
 			Expect(reg.has(stagesRepo + ":managed-image-app")).To(BeTrue())
 			addr, found, _ := stages.GetMetaRepoMarker(ctx, proj)
+			Expect(found).To(BeTrue())
+			Expect(addr).To(Equal(metaRepo))
+		})
+
+		It("succeeds and plants the marker for a project with no metadata", func(ctx SpecContext) {
+			emptyReg := newMarkerRegistry()
+			src := newRepoStorage(emptyReg, stagesRepo)
+			dst := newRepoStorage(emptyReg, metaRepo)
+			Expect(MigrateMetaRepo(ctx, proj, src, dst, MigrateMetaRepoOptions{})).To(Succeed())
+			addr, found, _ := src.GetMetaRepoMarker(ctx, proj)
 			Expect(found).To(BeTrue())
 			Expect(addr).To(Equal(metaRepo))
 		})
