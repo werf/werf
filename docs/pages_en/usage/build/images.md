@@ -144,6 +144,10 @@ werf assembles and filters the build context itself, so the resulting context do
 
 The first two are looked up next to the Dockerfile, the other two in the root of the context. Files added with `contextAddFiles` are added after the filtering, so the ignore patterns do not affect them.
 
+Excluded files are neither sent to the build context nor taken into account when calculating the image digest, so changing them does not cause a rebuild.
+
+The ignore file is a configuration file, so by default it must be committed to Git. To use an uncommitted one, allow it with the `allowUncommittedDockerignoreFiles` directive in `werf-giterminism.yaml` (more [about giterminism]({{"/usage/project_configuration/giterminism.html" | true_relative_url }})).
+
 #### Using build secrets
 
 > **NOTE:** To use secrets in builds, you need to enable them explicitly in the giterminism settings. Learn more ([here]({{ "/usage/project_configuration/giterminism.html#using-build-secrets" | true_relative_url }}))
