@@ -46,6 +46,7 @@ observed wrong behavior and add a minimal repro (Dockerfile / werf.yaml / comman
 ## Verification
 
 - <manual or hand-run e2e check, and the environment it needed>
+- <mutation run for a new or changed test, and what failed without it>
 - <what could not be run>
 
 ## Review focus / risks
@@ -65,6 +66,7 @@ observed wrong behavior and add a minimal repro (Dockerfile / werf.yaml / comman
 - *Key changes*: group related items by theme, not one bullet per file; use sub-bullets for detail when helpful.
 - *Summary* and *Why* answer different questions and NEVER restate each other. *Summary*: the observed behavior and what the PR does about it. *Why*: the root cause, and what leaving it alone costs — never a reworded list of the changes (that's *Key changes*). For the umask fix: *Summary* was "mode `0667` loses its only executable bit to the umask, so `execve` fails", *Why* was "the old mode worked by luck — the common umasks 022 and 002 don't touch the last digit".
 - *Verification*: only the delta over CI — manual runs, hand-run e2e/real-cluster checks, the environment they required, and what could NOT be run. CI builds and runs the whole suite, so `task build`/`task test:unit` are noise unless a scoped local run is itself the point — then name it by its `task` command, never raw `go test`/`go vet`/`gofmt`. Plain list, not checkboxes — the reviewer is not the one ticking them.
+- *Verification*: when the PR adds or changes a test, name the mutation that was run and what failed without it. CI only runs the suite as it exists after the PR, so a green CI cannot show that a new test discriminates — that line is the reviewer's only evidence it does. A test whose mutation was not run is called out as not run, with the mutation that should be tried (`test-the-tests`).
 - *Review focus / risks*: guide the reviewer — call out non-obvious consequences, large generated diffs, breaking changes, and any deliberately accepted limitation of the chosen approach.
 - No AI-slop filler ("This PR improves the codebase…"). Every sentence must carry information.
 - Length follows the number of things the reviewer cannot infer from the diff — the observed behavior, the root cause, each accepted risk, each check CI does not run — never the number of changed lines. A 1000-line mechanical change can need three sentences; a two-line one can need a paragraph. Budget one short paragraph or bullet per such item, ~300 characters for a small PR. Cut every sentence that restates the title, another section, or the diff, but NEVER buy length back by dropping a risk or a Verification bullet.
