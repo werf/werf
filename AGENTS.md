@@ -62,7 +62,7 @@ ALWAYS use these `task` commands. NEVER use raw `go build`, `go test`, `go fmt`,
 - NEVER `go test` (e2e) → ALWAYS `task test:e2e` with `paths="./pkg/..."` and `labelFilter="..."` (Ginkgo label filter) to target specific tests.
 - NEVER `go test` (integration) → ALWAYS `task test:integration`. Legacy e2e tests.
 - NEVER `go vet` → ALWAYS `task lint:golangci-lint`. golangci-lint includes vet checks. Accepts `golangciPaths="./pkg/..."`.
-- NEVER `go fmt`/`gofmt` → ALWAYS `task format`. Accepts `paths="./pkg/..."`.
+- NEVER `go fmt`/`gofmt` → ALWAYS `task format`. Accepts `paths="pkg/foo"` — plain directories only; the `./pkg/foo/...` wildcard the test and lint tasks take makes the formatters fail.
 - NEVER `golangci-lint` → ALWAYS `task lint:golangci-lint`. Accepts `golangciPaths="./pkg/..."`.
 - `task lint` — run all linters in parallel.
 - `task enum:generate` — run enum generators.

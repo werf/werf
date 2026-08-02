@@ -83,7 +83,7 @@ func TestAI_EnvBuildReport_ValidateParsedEnv(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, parsed)
 
-	require.NoError(t, validateBuildReport(context.Background(), "test.env", parsed))
+	require.NoError(t, validateBuildReport(parsed))
 }
 
 func newTestReportImageRecord(werfImageName string, final bool) ReportImageRecord {

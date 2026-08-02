@@ -302,17 +302,6 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 
 	phase.ImagesReport.sendTelemetry(ctx)
 
-	for imageName, record := range phase.ImagesReport.Images {
-		if record.DockerImageDigest == "" {
-			logboek.Context(ctx).Warn().LogF("WARNING: Build report: image %q has empty DockerImageDigest (expected when using local storage without registry)\n", imageName)
-		}
-		for _, stg := range record.Stages {
-			if stg.DockerImageDigest == "" {
-				logboek.Context(ctx).Warn().LogF("WARNING: Build report: image %q stage %q has empty DockerImageDigest (expected when using local storage without registry)\n", imageName, stg.Name)
-			}
-		}
-	}
-
 	if phase.ReportPath != "" {
 		var data []byte
 		var err error
@@ -387,7 +376,7 @@ func LoadBuildReportFromFile(ctx context.Context, path string) (*ImagesReport, e
 		return nil, fmt.Errorf("unable to parse build report file %q: %w", path, err)
 	}
 
-	if err := validateBuildReport(ctx, path, report); err != nil {
+	if err := validateBuildReport(report); err != nil {
 		return nil, fmt.Errorf("invalid build report file %q: %w", path, err)
 	}
 
@@ -405,20 +394,20 @@ func parseBuildReport(reader io.Reader) (*ImagesReport, error) {
 	return &report, nil
 }
 
-func validateBuildReport(ctx context.Context, path string, report *ImagesReport) error {
+func validateBuildReport(report *ImagesReport) error {
 	if len(report.Images) == 0 {
 		return fmt.Errorf("build report contains no images")
 	}
 
 	for imageName, record := range report.Images {
-		if err := validateImageRecord(ctx, path, imageName, record); err != nil {
+		if err := validateImageRecord(imageName, record); err != nil {
 			return err
 		}
 	}
 
 	for imageName, platformRecords := range report.ImagesByPlatform {
 		for platform, record := range platformRecords {
-			if err := validateImageRecord(ctx, path, fmt.Sprintf("%s[%s]", imageName, platform), record); err != nil {
+			if err := validateImageRecord(fmt.Sprintf("%s[%s]", imageName, platform), record); err != nil {
 				return err
 			}
 		}
@@ -427,7 +416,7 @@ func validateBuildReport(ctx context.Context, path string, report *ImagesReport)
 	return nil
 }
 
-func validateImageRecord(ctx context.Context, path, imageName string, record ReportImageRecord) error {
+func validateImageRecord(imageName string, record ReportImageRecord) error {
 	if record.WerfImageName == "" {
 		return fmt.Errorf("image %q has empty WerfImageName", imageName)
 	}
@@ -443,12 +432,9 @@ func validateImageRecord(ctx context.Context, path, imageName string, record Rep
 	if record.DockerImageID == "" {
 		return fmt.Errorf("image %q has empty DockerImageID", imageName)
 	}
-	if record.DockerImageDigest == "" {
-		logboek.Context(ctx).Warn().LogF("WARNING: Build report %q: image %q has empty DockerImageDigest (expected when using local storage without registry)\n", path, imageName)
-	}
 
 	for i, stage := range record.Stages {
-		if err := validateStageRecord(ctx, path, imageName, i, stage); err != nil {
+		if err := validateStageRecord(imageName, i, stage); err != nil {
 			return err
 		}
 	}
@@ -456,7 +442,7 @@ func validateImageRecord(ctx context.Context, path, imageName string, record Rep
 	return nil
 }
 
-func validateStageRecord(ctx context.Context, path, imageName string, stageIndex int, stage ReportStageRecord) error {
+func validateStageRecord(imageName string, stageIndex int, stage ReportStageRecord) error {
 	stageRef := fmt.Sprintf("image %q stage #%d", imageName, stageIndex)
 
 	if stage.Name == "" {
@@ -470,9 +456,6 @@ func validateStageRecord(ctx context.Context, path, imageName string, stageIndex
 	}
 	if stage.DockerImageID == "" {
 		return fmt.Errorf("%s has empty DockerImageID", stageRef)
-	}
-	if stage.DockerImageDigest == "" {
-		logboek.Context(ctx).Warn().LogF("WARNING: Build report %q: %s has empty DockerImageDigest (expected when using local storage without registry)\n", path, stageRef)
 	}
 
 	return nil
