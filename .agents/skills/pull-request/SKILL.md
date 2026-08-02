@@ -33,15 +33,15 @@ Match the description to what the reviewer cannot infer from the diff. Two tiers
 <1-3 sentence high-level overview of what the PR does. For a `fix`, lead with the
 observed wrong behavior and add a minimal repro (Dockerfile / werf.yaml / command) plus expected vs actual.>
 
+## Why
+
+<Motivation: what problem this solves, what maintenance/UX/perf gain it brings.>
+
 ## Key changes
 
 - <concrete change 1>
 - <concrete change 2>
 - …
-
-## Why
-
-<Motivation: what problem this solves, what maintenance/UX/perf gain it brings.>
 
 ## Verification
 
