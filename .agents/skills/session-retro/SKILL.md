@@ -1,6 +1,6 @@
 ---
 name: session-retro
-description: Analyze the current session for harness-worthy lessons — repeated corrections, discovered conventions, skill bugs — and turn them into concrete repo changes: docs, skills, task targets, linter rules, CI checks. Use at the end of a session, when asked to reflect/retro, or when invoked as /session-retro.
+description: "Analyze the current session for harness-worthy lessons — repeated corrections, discovered conventions, skill bugs — and turn them into concrete repo changes: docs, skills, task targets, linter rules, CI checks. Use at the end of a session, when asked to reflect/retro, or when invoked as /session-retro."
 ---
 
 # Session Retro
