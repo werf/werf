@@ -31,9 +31,13 @@ Types and scopes are defined in `CONTRIBUTING.md#conventions` — that file is t
 - **Body:** imperative; state the motivation for the change and contrast it with previous behavior.
 - NEVER include sensitive or customer-identifying details: client/company names, internal hostnames or filesystem paths, private build tags or version suffixes, credentials. Describe environments generically.
 
+## Before starting work
+
+- `git fetch` and compare your base against `origin/<base>` BEFORE writing code, not at push time. A moved base can have refactored the very file you are about to edit, and the whole diff then has to be re-ported by hand during the rebase.
+
 ## Before staging
 
-- Check `git status` for unrelated untracked files before staging. This worktree carries local working files (`.dev/`, scratch notes, orchestrator state), so prefer explicit paths over `git add -A` — a blanket add sweeps them in, and untracking later costs an extra commit.
+- Check `git status` for unrelated untracked files before staging. This worktree carries local working files (`.dev/`, scratch notes, orchestrator state), so prefer explicit paths over `git add -A` — a blanket add sweeps them in, and untracking later costs an extra commit. An orchestrator or helper commit command stages broadly — inspect `git status` BEFORE invoking it, not after.
 
 ## Before pushing
 
