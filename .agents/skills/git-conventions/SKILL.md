@@ -33,6 +33,7 @@ Types and scopes are defined in `CONTRIBUTING.md#conventions` — that file is t
 
 ## Before starting work
 
+- Create the topic branch BEFORE the first commit, not before the push. `main`, `3`, `2`, `1.2` are release branches: a commit landed on one has to be moved by hand afterwards and its message amended along with it, and until someone asks for a PR nothing reveals it is on the wrong branch.
 - `git fetch` and compare your base against `origin/<base>` BEFORE writing code, not at push time. A moved base can have refactored the very file you are about to edit, and the whole diff then has to be re-ported by hand during the rebase.
 
 ## Before staging
