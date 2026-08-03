@@ -23,8 +23,13 @@ issue/PR template, or a `docs/` page. Pick the landing spot from the finding, no
 - **Workflow decisions**: the user picked one approach over another ("always do it this way from now on") — a durable preference, not a one-off call.
 - **Friction**: a check that was slow, awkward, or easy to forget, or a step done by hand that a `task` target could do.
 - **Near-misses**: something caught just before landing (wrong branch, guessed path, unverified assumption) — the cheapest lesson, the cost is already paid.
+- **Context waste**: tool calls that cost a lot of context for little return — a whole-file read where a grep would do, the same file read twice, a raw `task build`/`task test` log pasted in full, a subagent spawned for a one-line lookup, or a wide search done inline instead of delegated. A generic `bash` call where a purpose-built tool exists is the expensive one. Each maps to a rule.
+- **Skill usage**: which skills actually fired, and whether it mattered. A skill whose body was never opened during the work it governs guided nothing, however apt its name.
+- **Prompt friction**: the request as posed cost tokens — a file the user already knew and you hunted for, a constraint revealed after you built the wrong thing, work redone that one clarifying question would have prevented. If a question you should have asked would have caught it, that is a rule for you; otherwise it is feedback for the user, not a file.
 
-Ignore one-off task specifics and anything an existing doc, skill, or check already covers.
+Those three are denominated in tokens, so measure them instead of recalling them: per-message usage lives in the session transcript (`~/.pi/agent/sessions/<cwd-slug>/*.jsonl`, or `~/.claude/projects/<cwd-slug>/*.jsonl`). Aggregate inside the analysis script and print only the top consumers — dumping per-message rows into the conversation costs more than the finding is worth. Match skills by **file path** (`skills/<name>/SKILL.md`), never the bare name, and keep frontmatter-only, body-read, and edited apart. With no transcript available, drop these cuts rather than estimating from memory.
+
+Ignore one-off task specifics, anything an existing doc, skill, or check already covers, and raw totals with no attributable cause — a per-tool call-count table is not a finding.
 
 ## 2. Classify each finding
 
@@ -67,4 +72,7 @@ check is worse than none.
 ## 6. Report
 
 List what changed, file by file, and where each finding was routed — including the ones dropped as
-one-off, so nothing is silently omitted.
+one-off, so nothing is silently omitted. Report skill usage as a short table — skill, tier reached,
+body reads, and one line of impact: what it changed, or what it would have prevented. Report
+context-waste and prompt-friction findings with their measured cost and the turn they came from,
+even when they produce no file.
