@@ -109,6 +109,6 @@ When a mistake was caused by a rule missing from AGENTS.md or CODESTYLE.md, prop
 - [werf/kubedog](https://github.com/werf/kubedog) — Kubernetes resource tracking library.
 - [werf/common-go](https://github.com/werf/common-go) — Shared Go libraries (secrets, CLI utilities, locking).
 
-`nelm`, `3p-helm`, `kubedog`, and `common-go` are ordinary versioned dependencies: fixing something inside them means a PR in that repository plus a version bump here — NEVER a local patch.
+`nelm`, `kubedog`, and `common-go` are ordinary versioned dependencies: fixing something inside them means a PR in that repository plus a version bump here — NEVER a local patch.
 
-`go.mod` also has a `replace` block pointing several dependencies at forks, including `spf13/cobra` → `andremueller/cobra` and `containers/buildah`, `deislabs/oras`, `docker/buildx` → `werf/3p-*`. ALWAYS check that block before trusting upstream documentation for these libraries.
+`go.mod` also has a `replace` block pointing several dependencies at forks: `spf13/cobra` → `werf/3p-cobra`, `deislabs/oras` → `werf/3p-oras`, `oras.land/oras-go` → `werf/3p-oras-go`. ALWAYS check that block before trusting upstream documentation for these libraries.
