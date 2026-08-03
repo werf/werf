@@ -18,6 +18,7 @@ description: Generates Pull Request titles and descriptions according to werf co
 4. Keep the total length ≤ 72 characters.
 5. Nested scopes are allowed and encouraged, comma-separated: `fix(build, stapel, import): …`.
 6. Subject: imperative present tense, no capitalized first letter, no trailing dot.
+7. For a `feat`/`fix`, the subject states the observed outcome and not the mechanism, by the same rule as the commit subject (`git-conventions`) — it ends up in the release notes verbatim.
 
 ## Description
 
@@ -31,7 +32,9 @@ Match the description to what the reviewer cannot infer from the diff. Two tiers
 ## Summary
 
 <1-3 sentence high-level overview of what the PR does. For a `fix`, lead with the
-observed wrong behavior and add a minimal repro (Dockerfile / werf.yaml / command) plus expected vs actual.>
+observed wrong behavior and add a minimal repro (Dockerfile / werf.yaml / command) plus expected vs actual.
+For a `feat`, lead with what the user can now do and the workflow that needed it, then the command or
+werf.yaml snippet that uses it.>
 
 ## Why
 

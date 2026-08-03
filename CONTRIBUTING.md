@@ -161,6 +161,8 @@ The subject contains a succinct description of the change:
 - use the imperative, present tense: "change" not "changed" nor "changes"
 - don't capitalize the first letter
 - no dot (.) at the end
+- for **feat** and **fix**, describe the change from the user's side — the symptom that goes away, or what becomes possible. Release notes in `CHANGELOG.md` are generated from these subjects verbatim, and their reader has never seen the code, so internal names and the mechanism belong in the **body**. Prefer "importing into symlinked directories no longer silently loses files" over "resolve symlinks in the import target path".
+- for **refactor**, **test** and **chore**, the reader is a developer, so the mechanism is the right subject.
 
 #### Body
 
