@@ -74,7 +74,7 @@ observed wrong behavior and add a minimal repro (Dockerfile / werf.yaml / comman
 - NEVER speculate in *Review focus / risks*. List what you know. "Probably fine because …" is filler — drop the whole bullet.
 - NEVER include sensitive or customer-identifying details in the title or description: client/company names, internal hostnames or filesystem paths, private build tags or version suffixes, credentials. Describe the environment generically (e.g. "long-lived CI runners sharing WERF_HOME", not a customer's runner path).
 - The description must be repo-scoped: no local paths (`~/...`), no references to artifacts that don't live in the repo (session notes, review matrices). A reviewer sees only the repo — every referenced fact must be visible from it.
-- A `Fixes`/`Closes` reference to an issue in another repository (`werf/nelm`, `werf/3p-helm`, `werf/kubedog`, `werf/common-go`) does not close it — GitHub only auto-closes same-repo issues. Link it, and close it by hand once the change reaches the consumer.
+- A `Fixes`/`Closes` reference to an issue in another repository (`werf/nelm`, `werf/kubedog`, `werf/common-go`) does not close it — GitHub only auto-closes same-repo issues. Link it, and close it by hand once the change reaches the consumer.
 
 ### After merge
 
