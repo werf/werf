@@ -33,6 +33,6 @@ func (s *GitStage) PrepareImage(ctx context.Context, c Conveyor, cb container_ba
 	return s.BaseStage.PrepareImage(ctx, c, cb, prevBuiltImage, stageImage, nil)
 }
 
-func (s *GitStage) SelectSuitableStageDesc(ctx context.Context, c Conveyor, stageDescSet image.StageDescSet) (*image.StageDesc, error) {
-	return s.selectAncestorStageDescByGitMappings(ctx, c, stageDescSet)
+func (s *GitStage) SelectSuitableStageDesc(ctx context.Context, _ Conveyor, stageDescSet image.StageDescSet) (*image.StageDesc, error) {
+	return s.selectStageDescByExistingGitCommits(ctx, stageDescSet)
 }

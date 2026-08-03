@@ -231,52 +231,31 @@ func selectStageDescByOldestCreationTs(ctx context.Context, stageDescSet image.S
 	return nil, nil
 }
 
-func (s *BaseStage) selectAncestorStageDescByGitMappings(ctx context.Context, c Conveyor, stageDescSet image.StageDescSet) (*image.StageDesc, error) {
-	var currentCommitsByIndex []string
-	for _, gitMapping := range s.gitMappings {
-		currentCommitInfo, err := gitMapping.GetLatestCommitInfo(ctx, c)
-		if err != nil {
-			return nil, fmt.Errorf("error getting latest commit of git mapping %s: %w", gitMapping.Name, err)
-		}
-
-		currentCommitsByIndex = append(currentCommitsByIndex, currentCommitInfo.Commit)
-	}
-
+// selectStageDescByExistingGitCommits reuses the oldest cached stage whose recorded commit is
+// still reachable in the repo. The commit is not required to be an ancestor of the current one:
+// patches are built from that commit, so it only has to exist.
+func (s *BaseStage) selectStageDescByExistingGitCommits(ctx context.Context, stageDescSet image.StageDescSet) (*image.StageDesc, error) {
 ScanImages:
 	for _, stageDesc := range sortStageDescSetByOldestCreationTs(stageDescSet) {
-		for i, gitMapping := range s.gitMappings {
-			currentCommit := currentCommitsByIndex[i]
-
+		for _, gitMapping := range s.gitMappings {
 			imageCommitInfo, err := gitMapping.GetBuiltImageCommitInfo(stageDesc.Info.Labels)
 			if err != nil {
 				logboek.Context(ctx).Warn().LogF("Ignoring stage %s: unable to get image commit info for git repo %s: %s\n", stageDesc.Info.Name, gitMapping.GitRepo().String(), err)
 				continue ScanImages
 			}
 
-			commitToCheckAncestry := imageCommitInfo.Commit
-
-			exist, err := gitMapping.GitRepo().IsCommitExists(ctx, commitToCheckAncestry)
+			exist, err := gitMapping.GitRepo().IsCommitExists(ctx, imageCommitInfo.Commit)
 			if err != nil {
-				return nil, fmt.Errorf("error checking if commit %s exists: %w", commitToCheckAncestry, err)
+				return nil, fmt.Errorf("error checking if commit %s exists: %w", imageCommitInfo.Commit, err)
 			}
 
 			if !exist {
-				logboek.Context(ctx).Info().LogF("Skipping stage %s: commit %s does not exist in repo %s\n", stageDesc.Info.Name, commitToCheckAncestry, gitMapping.GitRepo().String())
-				continue ScanImages
-			}
-
-			isOurAncestor, err := gitMapping.GitRepo().IsAncestor(ctx, commitToCheckAncestry, currentCommit)
-			if err != nil {
-				return nil, fmt.Errorf("error checking commits ancestry %s<-%s: %w", commitToCheckAncestry, currentCommit, err)
-			}
-
-			if !isOurAncestor {
-				logboek.Context(ctx).Info().LogF("Skipping stage %s: commit %s is not an ancestor of %s in repo %s\n", stageDesc.Info.Name, commitToCheckAncestry, currentCommit, gitMapping.GitRepo().String())
+				logboek.Context(ctx).Info().LogF("Skipping stage %s: commit %s does not exist in repo %s\n", stageDesc.Info.Name, imageCommitInfo.Commit, gitMapping.GitRepo().String())
 				continue ScanImages
 			}
 		}
 
-		logboek.Context(ctx).Info().LogF("Using stage %s (ancestor)\n", stageDesc.Info.Name)
+		logboek.Context(ctx).Info().LogF("Using stage %s\n", stageDesc.Info.Name)
 
 		return stageDesc, nil
 	}
