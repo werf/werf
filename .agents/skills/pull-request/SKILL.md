@@ -53,6 +53,10 @@ observed wrong behavior and add a minimal repro (Dockerfile / werf.yaml / comman
 
 - <area or file that deserves careful review>
 - <potential risk or side-effect>
+
+## After merge
+
+- [ ] <action that has to happen outside this PR, and where>
 ```
 
 ### Rules
@@ -69,6 +73,18 @@ observed wrong behavior and add a minimal repro (Dockerfile / werf.yaml / comman
 - The only code block worth its space is a repro the reviewer can paste (Dockerfile, werf.yaml, command). Never paste a terminal transcript of an error that the repro already produces.
 - NEVER speculate in *Review focus / risks*. List what you know. "Probably fine because …" is filler — drop the whole bullet.
 - NEVER include sensitive or customer-identifying details in the title or description: client/company names, internal hostnames or filesystem paths, private build tags or version suffixes, credentials. Describe the environment generically (e.g. "long-lived CI runners sharing WERF_HOME", not a customer's runner path).
+- The description must be repo-scoped: no local paths (`~/...`), no references to artifacts that don't live in the repo (session notes, review matrices). A reviewer sees only the repo — every referenced fact must be visible from it.
+- A `Fixes`/`Closes` reference to an issue in another repository (`werf/nelm`, `werf/3p-helm`, `werf/kubedog`, `werf/common-go`) does not close it — GitHub only auto-closes same-repo issues. Link it, and close it by hand once the change reaches the consumer.
+
+### After merge
+
+Anything the change needs that this PR cannot contain — a version bump in a consumer or in werf, a release note, an issue to file or to close by hand — goes in a final `## After merge` section, written as a GitHub task list so a human or a bot can work through it and see what is left. Add it to a small PR too when it has such an action; it is the one section that does not depend on the diff's size.
+
+- Checkboxes, never prose. The section exists to be worked through, not read once.
+- One action per line, each naming where it happens (`owner/repo`, a file, a command). An item nobody can act on without asking you first is not an action.
+- Mark the ones that must not be skipped. When a release note is the only mitigation for a breaking change, say so on the line — otherwise the whole list reads as optional cleanup.
+- This is the one section where cross-repo references are expected. Name repositories explicitly rather than "the consumer".
+- Omit the section when there is nothing to do. A list padded with speculative or already-done items trains everyone to skip it, which costs you the one item that mattered.
 
 ## Output
 

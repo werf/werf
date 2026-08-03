@@ -24,6 +24,10 @@ trivial getter):
 3. Revert immediately, confirm the tree is clean (`git status`/`git diff`), confirm the
    suite passes again. NEVER leave mutated code in the repository between steps.
 
+Copy the file before mutating it (`cp f f.bak`) and restore from the copy. NEVER restore with
+`git checkout`/`git restore` while the work under test is still uncommitted — those discard the
+work along with the mutation. Commit first, or use the copy.
+
 If running the mutation isn't practical, name the smallest mutation that should be tried
 instead of skipping the exercise — that name is itself the finding.
 

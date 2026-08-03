@@ -79,6 +79,17 @@ invoked reviewer before merging — don't treat your own adversarial pass as the
 Say so explicitly in your findings when you are the diff's author and no second reviewer
 has looked yet, so the person deciding whether to merge knows that gap exists.
 
+When that review comes back and you disagree, separate the finding from the fix it
+proposes: a correct finding often ships with a remedy that does not work, and verifying the
+mechanism tells you which half to reject. Say which one you are rejecting and show the
+evidence.
+
+Two failure modes on your side. "It does not reduce the headline risk" is not sufficient
+grounds to decline a cheap fix that closes a silent-failure path — measure the cost, and if
+it is small, take it. And if a reviewer raises the same finding a second time, re-examine
+whether the fix is feasible instead of restating your position; the second request is
+evidence your explanation did not land, not that it needs repeating.
+
 ## Output
 
 Report only actionable findings. Each one: where the problem is visible, what fails and
