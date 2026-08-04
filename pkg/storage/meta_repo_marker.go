@@ -261,6 +261,7 @@ func (s *metaRepoMarkerStorage) PostLastCleanupRecord(ctx context.Context, proje
 const (
 	metaRepoMismatchMsg    = "metadata for project %q is stored in meta-repo %q (per the marker in %s), but --meta-repo=%q was given — they must match"
 	metaRepoMissingFlagMsg = "metadata for project %q is stored in a separate meta-repo %q (per the marker in %s); pass --meta-repo %q, or run 'werf meta-repo detach' to remove the safeguard"
+	metaRepoSameAsRepoMsg  = "metadata for project %q is stored in a separate meta-repo %q (per the marker in %s), but --meta-repo=%q resolves to the same repository as --repo; pass --meta-repo %q, or run 'werf meta-repo detach' to remove the safeguard"
 	metaRepoMigrateMsg     = "--repo %q already contains metadata for project %q; run 'werf meta-repo migrate --repo %q --meta-repo %q' to move it before using --meta-repo"
 	metaRepoMalformedMsg   = "the meta-repo marker for project %q in %s is malformed (no meta-repo address); run 'werf meta-repo detach' to remove it"
 )
@@ -268,7 +269,8 @@ const (
 // SetupMetaRepoSafeguard validates the per-project meta-repo marker and, when a
 // distinct meta-repo is in use, returns a decorated meta storage that plants the
 // marker on the first real metadata write. It is a no-op for non-registry stages
-// storage and when --meta-repo canonicalizes to --repo.
+// storage. A --meta-repo canonicalizing to --repo is still validated against the
+// marker, since that spelling would otherwise defeat the safeguard.
 func SetupMetaRepoSafeguard(ctx context.Context, projectName string, stagesStorage, metaStorage PrimaryStagesStorage, cleanupDisabled bool) (PrimaryStagesStorage, error) {
 	repoStages, ok := stagesStorage.(*RepoStagesStorage)
 	if !ok {
@@ -291,10 +293,6 @@ func SetupMetaRepoSafeguard(ctx context.Context, projectName string, stagesStora
 		metaConfigured = metaCanonical != repoCanonical
 	}
 
-	if !noFlag && !metaConfigured {
-		return metaStorage, nil
-	}
-
 	markerAddr, markerFound, err := repoStages.GetMetaRepoMarker(ctx, projectName)
 	if err != nil {
 		return nil, err
@@ -305,8 +303,11 @@ func SetupMetaRepoSafeguard(ctx context.Context, projectName string, stagesStora
 	}
 
 	if !metaConfigured {
-		if markerFound {
+		switch {
+		case markerFound && noFlag:
 			return nil, fmt.Errorf(metaRepoMissingFlagMsg, projectName, markerAddr, repoStages.Address(), markerAddr)
+		case markerFound:
+			return nil, fmt.Errorf(metaRepoSameAsRepoMsg, projectName, markerAddr, repoStages.Address(), metaStorage.Address(), markerAddr)
 		}
 		return metaStorage, nil
 	}

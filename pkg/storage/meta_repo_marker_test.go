@@ -410,8 +410,17 @@ var _ = Describe("meta-repo marker", func() {
 			Expect(ok).To(BeTrue())
 		})
 
-		It("meta-repo equal to repo → passthrough, no validation", func(ctx SpecContext) {
-			Expect(stages.PutMetaRepoMarker(ctx, proj, stagesRepo)).To(Succeed())
+		It("meta-repo equal to repo + marker to a distinct repo → hard error", func(ctx SpecContext) {
+			Expect(stages.PutMetaRepoMarker(ctx, proj, metaRepo)).To(Succeed())
+			sameMeta := newRepoStorage(reg, stagesRepo)
+			_, err := SetupMetaRepoSafeguard(ctx, proj, stages, sameMeta, false)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("resolves to the same repository as --repo"))
+			Expect(err.Error()).To(ContainSubstring(metaRepo))
+			Expect(err.Error()).To(ContainSubstring("werf meta-repo detach"))
+		})
+
+		It("meta-repo equal to repo + no marker → passthrough", func(ctx SpecContext) {
 			sameMeta := newRepoStorage(reg, stagesRepo)
 			got, err := SetupMetaRepoSafeguard(ctx, proj, stages, sameMeta, false)
 			Expect(err).NotTo(HaveOccurred())
