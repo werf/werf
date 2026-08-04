@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"strings"
 	"sync"
 
@@ -12,6 +13,55 @@ import (
 	"github.com/werf/werf/v2/pkg/docker_registry"
 	"github.com/werf/werf/v2/pkg/image"
 )
+
+// markerGuardedMethods write project metadata, so metaRepoMarkerStorage must
+// override each one to plant the marker before delegating.
+var markerGuardedMethods = []string{
+	"AddManagedImage",
+	"PostLastCleanupRecord",
+	"PutImageMetadata",
+	"RegisterStageCustomTag",
+	"RmImageMetadata",
+	"RmManagedImage",
+	"UnregisterStageCustomTag",
+}
+
+// markerUnguardedMethods either read, or act on stages rather than on the
+// project metadata routed through the meta-repo.
+var markerUnguardedMethods = []string{
+	"AddStageCustomTag",
+	"Address",
+	"CheckStageCustomTag",
+	"ConstructStageImageName",
+	"CopyFromStorage",
+	"CreateRepo",
+	"DeleteRejectedStageImage",
+	"DeleteRejectedStageRecord",
+	"DeleteRepo",
+	"DeleteStage",
+	"DeleteStageCustomTag",
+	"ExportStage",
+	"FetchImage",
+	"FilterStageDescSetAndProcessRelatedData",
+	"GetAllAndGroupImageMetadataByImageName",
+	"GetLastCleanupRecord",
+	"GetManagedImages",
+	"GetRejectedStageIDs",
+	"GetStageCustomTagMetadata",
+	"GetStageCustomTagMetadataIDs",
+	"GetStageDesc",
+	"GetStagesIDs",
+	"GetStagesIDsByDigest",
+	"IsImageMetadataExist",
+	"IsManagedImageExist",
+	"MutateAndPushImage",
+	"PostManifest",
+	"PostMultiplatformImage",
+	"RejectStage",
+	"ShouldFetchImage",
+	"StoreImage",
+	"String",
+}
 
 type markerRegistry struct {
 	docker_registry.Interface
@@ -378,6 +428,54 @@ var _ = Describe("meta-repo marker", func() {
 			}
 			wg.Wait()
 			Expect(reg.pushCount(markerRef(proj))).To(Equal(1))
+		})
+
+		DescribeTable("plants the marker on every metadata write",
+			func(ctx SpecContext, write func(ctx context.Context, d *metaRepoMarkerStorage) error) {
+				d := newDecorator(false)
+				Expect(write(ctx, d)).To(Succeed())
+				Expect(reg.has(markerRef(proj))).To(BeTrue())
+			},
+			Entry("AddManagedImage", func(ctx context.Context, d *metaRepoMarkerStorage) error {
+				return d.AddManagedImage(ctx, proj, "app")
+			}),
+			Entry("RmManagedImage", func(ctx context.Context, d *metaRepoMarkerStorage) error {
+				return d.RmManagedImage(ctx, proj, "app")
+			}),
+			Entry("PutImageMetadata", func(ctx context.Context, d *metaRepoMarkerStorage) error {
+				return d.PutImageMetadata(ctx, proj, "app", "commit", "stage")
+			}),
+			Entry("RmImageMetadata", func(ctx context.Context, d *metaRepoMarkerStorage) error {
+				return d.RmImageMetadata(ctx, proj, "app", "commit", "stage")
+			}),
+			Entry("RegisterStageCustomTag", func(ctx context.Context, d *metaRepoMarkerStorage) error {
+				stageDesc := &image.StageDesc{StageID: image.NewStageID("digest", 1)}
+				return d.RegisterStageCustomTag(ctx, proj, stageDesc, "release")
+			}),
+			Entry("UnregisterStageCustomTag", func(ctx context.Context, d *metaRepoMarkerStorage) error {
+				reg.put(makeRepoCustomTagMetadataRecord(metaRepo, "release"), nil)
+				return d.UnregisterStageCustomTag(ctx, "release")
+			}),
+			Entry("PostLastCleanupRecord", func(ctx context.Context, d *metaRepoMarkerStorage) error {
+				return d.PostLastCleanupRecord(ctx, proj)
+			}),
+		)
+
+		// metaRepoMarkerStorage embeds the PrimaryStagesStorage interface, so a
+		// method it does not override is forwarded to the meta storage unwrapped
+		// and writes metadata without planting the marker — and the compile-time
+		// interface check still passes. Pin the method set so growing the
+		// interface forces a decision about the new method.
+		It("classifies every PrimaryStagesStorage method", func() {
+			iface := reflect.TypeOf((*PrimaryStagesStorage)(nil)).Elem()
+
+			methods := make([]string, 0, iface.NumMethod())
+			for i := 0; i < iface.NumMethod(); i++ {
+				methods = append(methods, iface.Method(i).Name)
+			}
+
+			Expect(methods).To(ConsistOf(append(markerGuardedMethods, markerUnguardedMethods...)),
+				"PrimaryStagesStorage changed: a method that writes project metadata must be overridden in metaRepoMarkerStorage, covered by the table above and listed in markerGuardedMethods; anything else goes into markerUnguardedMethods")
 		})
 	})
 
