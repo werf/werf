@@ -86,7 +86,7 @@ func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfi
 		return nil, fmt.Errorf("error get final stages storage: %w", err)
 	}
 
-	metaStorage, err := GetOptionalMetaStorage(ctx, c.ContainerBackend, c.CmdData, stagesStorage)
+	metaStorage, err := GetOptionalMetaStorage(ctx, c.ContainerBackend, c.CmdData, stagesStorage, c.CleanupDisabled)
 	if err != nil {
 		return nil, fmt.Errorf("error get meta storage: %w", err)
 	}

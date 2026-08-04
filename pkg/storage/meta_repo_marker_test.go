@@ -319,6 +319,21 @@ var _ = Describe("meta-repo marker", func() {
 			Expect(reg.has(markerRef(proj))).To(BeFalse())
 		})
 
+		It("writes neither record nor marker when cleanup is disabled", func(ctx SpecContext) {
+			d := newDecorator(true)
+			meta.cleanupDisabled = true
+			Expect(d.PostLastCleanupRecord(ctx, proj)).To(Succeed())
+			Expect(reg.has(fmt.Sprintf(RepoCleanUpRecord_ImageNameFormat, metaRepo))).To(BeFalse())
+			Expect(reg.has(markerRef(proj))).To(BeFalse())
+		})
+
+		It("writes both record and marker when cleanup is enabled", func(ctx SpecContext) {
+			d := newDecorator(false)
+			Expect(d.PostLastCleanupRecord(ctx, proj)).To(Succeed())
+			Expect(reg.has(fmt.Sprintf(RepoCleanUpRecord_ImageNameFormat, metaRepo))).To(BeTrue())
+			Expect(reg.has(markerRef(proj))).To(BeTrue())
+		})
+
 		It("does not plant on read-only access", func(ctx SpecContext) {
 			d := newDecorator(false)
 			_, err := d.GetManagedImages(ctx, proj)

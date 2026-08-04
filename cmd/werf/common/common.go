@@ -872,7 +872,7 @@ func GetOptionalFinalStagesStorage(ctx context.Context, containerBackend contain
 	})
 }
 
-func GetOptionalMetaStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData, stagesStorage storage.PrimaryStagesStorage) (storage.PrimaryStagesStorage, error) {
+func GetOptionalMetaStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData, stagesStorage storage.PrimaryStagesStorage, cleanupDisabled bool) (storage.PrimaryStagesStorage, error) {
 	if cmdData.MetaRepo == nil || cmdData.MetaRepo.Address == nil || *cmdData.MetaRepo.Address == "" {
 		return stagesStorage, nil
 	}
@@ -896,6 +896,7 @@ func GetOptionalMetaStorage(ctx context.Context, containerBackend container_back
 		InsecureRegistry:      *cmdData.InsecureRegistry,
 		SkipTlsVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
 		InsecureRegistryHosts: insecureRegistryHosts,
+		CleanupDisabled:       cleanupDisabled,
 		SkipMetaCheck:         true,
 	})
 }
