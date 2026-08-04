@@ -217,6 +217,33 @@ var _ = Describe("meta-repo marker", func() {
 		return fmt.Sprintf("%s:%s%s", stagesRepo, RepoMetaRepoMarker_ImageTagPrefix, getMetaRepoMarkerID(project))
 	}
 
+	Describe("CanonicalRepoAddress", func() {
+		DescribeTable("resolves equivalent spellings to one address",
+			func(address, expected string) {
+				got, err := CanonicalRepoAddress(address)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(got).To(Equal(expected))
+			},
+			Entry("drops the tag", "registry.example/meta:v1", "registry.example/meta"),
+			Entry("keeps a tagless address", "registry.example/meta", "registry.example/meta"),
+			Entry("expands a docker hub shorthand", "myproject", "index.docker.io/library/myproject"),
+			Entry("normalizes the docker hub host", "docker.io/myuser/myproject", "index.docker.io/myuser/myproject"),
+			Entry("keeps a port", "localhost:5000/meta:v1", "localhost:5000/meta"),
+		)
+
+		It("rejects an unparseable address", func() {
+			_, err := CanonicalRepoAddress("registry.example/UPPERCASE")
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("parse repo address"))
+		})
+
+		It("rejects an address that is not a container registry address", func() {
+			_, err := CanonicalRepoAddress("archive:/tmp/repo.tar")
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("is not a container registry address"))
+		})
+	})
+
 	Describe("marker record", func() {
 		It("round-trips address and found flag", func(ctx SpecContext) {
 			addr, found, err := stages.GetMetaRepoMarker(ctx, proj)
