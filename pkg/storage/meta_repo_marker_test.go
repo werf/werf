@@ -20,6 +20,7 @@ type markerRegistry struct {
 	images     map[string]*image.Info
 	pushCounts map[string]int
 	copyErr    error
+	copyNoop   bool
 }
 
 func newMarkerRegistry() *markerRegistry {
@@ -102,6 +103,9 @@ func (r *markerRegistry) CopyImage(_ context.Context, sourceReference, destinati
 	defer r.mu.Unlock()
 	if r.copyErr != nil {
 		return r.copyErr
+	}
+	if r.copyNoop {
+		return nil
 	}
 	src := r.images[sourceReference]
 	if src == nil {
@@ -521,12 +525,47 @@ var _ = Describe("meta-repo marker", func() {
 			Expect(reg.has(stagesRepo + ":managed-image-app")).To(BeTrue())
 		})
 
-		It("removes source only after verifying the destination copy", func(ctx SpecContext) {
+		It("removes source after a verified copy", func(ctx SpecContext) {
 			Expect(MigrateMetaRepo(ctx, proj, stages, meta, MigrateMetaRepoOptions{RemoveSource: true})).To(Succeed())
 			Expect(reg.has(stagesRepo + ":managed-image-app")).To(BeFalse())
 			Expect(reg.has(stagesRepo + ":meta-abc_commit_stage")).To(BeFalse())
 			Expect(reg.has(metaRepo + ":managed-image-app")).To(BeTrue())
 			Expect(reg.has(stagesRepo + ":managed-image-other")).To(BeTrue())
+		})
+
+		It("keeps the source when the destination is absent despite a reported copy", func(ctx SpecContext) {
+			reg.copyNoop = true
+			err := MigrateMetaRepo(ctx, proj, stages, meta, MigrateMetaRepoOptions{RemoveSource: true})
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("not deleting source"))
+			Expect(reg.has(stagesRepo + ":managed-image-app")).To(BeTrue())
+			Expect(reg.has(stagesRepo + ":meta-abc_commit_stage")).To(BeTrue())
+		})
+
+		It("refuses to delete a record with no werf label", func(ctx SpecContext) {
+			reg.put(stagesRepo+":managed-image-legacy", map[string]string{})
+			err := MigrateMetaRepo(ctx, proj, stages, meta, MigrateMetaRepoOptions{RemoveSource: true})
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("refusing to delete"))
+			Expect(err.Error()).To(ContainSubstring("--remove-source=false"))
+			Expect(reg.has(stagesRepo + ":managed-image-legacy")).To(BeTrue())
+			Expect(reg.has(stagesRepo + ":managed-image-app")).To(BeTrue())
+		})
+
+		It("refuses to delete a record whose werf label is empty", func(ctx SpecContext) {
+			reg.put(stagesRepo+":managed-image-legacy", map[string]string{image.WerfLabel: ""})
+			err := MigrateMetaRepo(ctx, proj, stages, meta, MigrateMetaRepoOptions{RemoveSource: true})
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("refusing to delete"))
+			Expect(reg.has(stagesRepo + ":managed-image-legacy")).To(BeTrue())
+			Expect(reg.has(stagesRepo + ":managed-image-app")).To(BeTrue())
+		})
+
+		It("copies an unlabeled record without --remove-source", func(ctx SpecContext) {
+			reg.put(stagesRepo+":managed-image-legacy", map[string]string{})
+			Expect(MigrateMetaRepo(ctx, proj, stages, meta, MigrateMetaRepoOptions{})).To(Succeed())
+			Expect(reg.has(metaRepo + ":managed-image-legacy")).To(BeTrue())
+			Expect(reg.has(stagesRepo + ":managed-image-legacy")).To(BeTrue())
 		})
 	})
 })

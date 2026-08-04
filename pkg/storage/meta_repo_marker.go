@@ -342,7 +342,9 @@ type MigrateMetaRepoOptions struct {
 // MigrateMetaRepo copies the project's metadata records from the source stages
 // repo into the destination meta-repo (copy-first, idempotent), plants the
 // marker in the source, and — with RemoveSource — deletes each source original
-// only after its destination copy is verified present.
+// only after its destination copy is verified present. Deletion is refused
+// outright when any record carries no owning project, since such a record may
+// belong to a different project sharing the repo.
 func MigrateMetaRepo(ctx context.Context, projectName string, src, dst *RepoStagesStorage, opts MigrateMetaRepoOptions) error {
 	srcCanonical, err := CanonicalRepoAddress(src.Address())
 	if err != nil {
@@ -367,6 +369,18 @@ func MigrateMetaRepo(ctx context.Context, projectName string, src, dst *RepoStag
 	records, err := src.collectProjectMetadataRecords(ctx, projectName, false)
 	if err != nil {
 		return err
+	}
+
+	if opts.RemoveSource {
+		var unlabeled int
+		for _, rec := range records {
+			if rec.info.Labels[image.WerfLabel] == "" {
+				unlabeled++
+			}
+		}
+		if unlabeled > 0 {
+			return fmt.Errorf("refusing to delete %d unlabeled metadata record(s) from --repo %q: they may belong to another project; pass --remove-source=false to migrate without deleting", unlabeled, src.Address())
+		}
 	}
 
 	for _, rec := range records {

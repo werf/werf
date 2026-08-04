@@ -67,7 +67,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	commonCmdData.SetupDebugTemplates(cmd)
 	commonCmdData.SetupAllowIncludesUpdate(cmd)
 
-	cmd.Flags().BoolVar(&removeSource, "remove-source", util.GetBoolEnvironmentDefaultFalse("WERF_REMOVE_SOURCE"), "Delete the original metadata records from --repo after they are verified present in --meta-repo (default $WERF_REMOVE_SOURCE)")
+	cmd.Flags().BoolVar(&removeSource, "remove-source", util.GetBoolEnvironmentDefaultTrue("WERF_REMOVE_SOURCE"), "Delete the original metadata records from --repo after they are verified present in --meta-repo (default $WERF_REMOVE_SOURCE or true if not specified)")
 
 	return cmd
 }
