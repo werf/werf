@@ -457,7 +457,7 @@ Final repositories reduce image retrieval time and network load by bringing the 
 
 ### Extra repository for service metadata
 
-By default, werf stores service metadata in the main repository (`--repo`) alongside image stages. If necessary, four metadata families — image-metadata used for cleanup based on Git history, the managed images list, custom-tag metadata, and the last-cleanup record — can be stored in a separate repository via `--meta-repo`:
+By default, werf stores service metadata in the main repository (`--repo`) alongside image stages. If necessary, that metadata — image-metadata used for cleanup based on Git history, the managed images list, custom-tag metadata, and the last-cleanup record — can be stored in a separate repository via `--meta-repo`:
 
 ```shell
 werf build --repo registry.mycompany.org/project --meta-repo registry.mycompany.org/project-meta
@@ -484,7 +484,7 @@ If `--repo` already contains metadata for the project, werf refuses to enable `-
 werf meta-repo migrate --repo registry.mycompany.org/project --meta-repo registry.mycompany.org/project-meta
 ```
 
-`migrate` copies the four metadata families into `--meta-repo` (copy-first, verified, idempotent — safe to re-run), records the marker in `--repo`, and then deletes each original from `--repo` once its copy is verified present in `--meta-repo`. Pass `--remove-source=false` to keep the originals.
+`migrate` copies the metadata into `--meta-repo` (copy-first, verified, idempotent — safe to re-run), records the marker in `--repo`, and then deletes each original from `--repo` once its copy is verified present in `--meta-repo`. Pass `--remove-source=false` to keep the originals.
 
 Deletion is refused outright, before anything is changed, if any record to be deleted carries no owning project: on a `--repo` shared by several projects since before werf started labeling these records, such a record may belong to another project. Unlabeled records are still copied, so `--remove-source=false` migrates them.
 
@@ -492,7 +492,7 @@ To release the safeguard, run `werf meta-repo detach --repo registry.mycompany.o
 
 #### Running werf v2 and werf v3 against one `--repo`
 
-werf v2 has no `--meta-repo` and writes all four metadata families into `--repo`. To keep both versions working against one repository for a transition period, cleanup is run in two steps: migrate the metadata v2 has accumulated, then clean up.
+werf v2 has no `--meta-repo` and writes the image-metadata, managed images list, custom-tag metadata and last-cleanup record into `--repo`. To keep both versions working against one repository for a transition period, cleanup is run in two steps: migrate the metadata v2 has accumulated, then clean up.
 
 ```shell
 werf meta-repo migrate --repo registry.mycompany.org/project --meta-repo registry.mycompany.org/project-meta --remove-source=false
@@ -501,7 +501,7 @@ werf cleanup --repo registry.mycompany.org/project --meta-repo registry.mycompan
 
 This arrangement has limits worth knowing before relying on it:
 
-- `--remove-source=false` is mandatory here. werf v2 keeps reading all four families from `--repo`, so the default behaviour of `migrate` would delete the metadata v2 depends on.
+- `--remove-source=false` is mandatory here. werf v2 keeps reading its metadata from `--repo`, so the default behaviour of `migrate` would delete the metadata v2 depends on.
 - Only werf v3 may run `cleanup` or `purge` against the shared `--repo`. werf v2 would decide the fate of stages from a metadata view that v3 has been moving, and could delete images that are still in use.
 - werf v2 builds must be stopped, or serialized externally, around the migrate step. `migrate` works from a snapshot of the tag list, so metadata a v2 build publishes after that snapshot is missed by the cleanup that immediately follows it.
 - `--repo` keeps accumulating image-metadata records for the whole transition, and every pre-cleanup migrate re-copies the records the previous cleanup already pruned from `--meta-repo`. That is extra work proportional to the number of stale records, not data loss: cleanup re-classifies and re-deletes them.
