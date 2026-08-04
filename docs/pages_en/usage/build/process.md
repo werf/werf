@@ -478,7 +478,7 @@ The marker is a best-effort guard rather than an absolute guarantee: it is writt
 
 #### Adopting `--meta-repo` on an existing project
 
-If `--repo` already contains metadata for the project, werf refuses to enable `--meta-repo` automatically (that would orphan the existing metadata). Move it first:
+Passing `--meta-repo` to a project that already has metadata in `--repo` is allowed: new metadata goes to the meta-repo right away, and werf v2 can keep working against the same `--repo` in parallel. The metadata already in `--repo` does not follow, though, and werf reading only `--meta-repo` cannot see it — so move it before the first `cleanup`, which would otherwise decide the fate of stages from an incomplete picture and delete images that are still in use:
 
 ```shell
 werf meta-repo migrate --repo registry.mycompany.org/project --meta-repo registry.mycompany.org/project-meta

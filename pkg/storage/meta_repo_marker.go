@@ -158,10 +158,8 @@ func metadataRecordMatchesProject(tag string, info *image.Info, projectName stri
 }
 
 // collectProjectMetadataRecords returns the metadata records in this repo owned
-// by the project (the four families routed through the meta-repo), per
-// metadataRecordMatchesProject. When stopOnFirst is set it returns after the
-// first match (cheap existence probe).
-func (storage *RepoStagesStorage) collectProjectMetadataRecords(ctx context.Context, projectName string, stopOnFirst bool) ([]projectMetadataRecord, error) {
+// by the project, per metadataRecordMatchesProject.
+func (storage *RepoStagesStorage) collectProjectMetadataRecords(ctx context.Context, projectName string) ([]projectMetadataRecord, error) {
 	tags, err := storage.Tags(ctx, storage.RepoAddress, docker_registry.WithCachedTags())
 	if err != nil {
 		return nil, fmt.Errorf("unable to get repo %s tags: %w", storage.RepoAddress, err)
@@ -183,19 +181,8 @@ func (storage *RepoStagesStorage) collectProjectMetadataRecords(ctx context.Cont
 		}
 
 		res = append(res, projectMetadataRecord{tag: tag, info: img})
-		if stopOnFirst {
-			return res, nil
-		}
 	}
 	return res, nil
-}
-
-func (storage *RepoStagesStorage) HasProjectMetadata(ctx context.Context, projectName string) (bool, error) {
-	records, err := storage.collectProjectMetadataRecords(ctx, projectName, true)
-	if err != nil {
-		return false, err
-	}
-	return len(records) > 0, nil
 }
 
 func (storage *RepoStagesStorage) ensureMetaRepoMarker(ctx context.Context, projectName, metaRepoAddress string) error {
@@ -290,7 +277,6 @@ const (
 	metaRepoMismatchMsg       = "metadata for project %q is stored in meta-repo %q (per the marker in %s), but --meta-repo=%q was given — they must match"
 	metaRepoMissingFlagMsg    = "metadata for project %q is stored in a separate meta-repo %q (per the marker in %s); pass --meta-repo %q, or run 'werf meta-repo detach' to remove the safeguard"
 	metaRepoSameAsRepoMsg     = "metadata for project %q is stored in a separate meta-repo %q (per the marker in %s), but --meta-repo=%q resolves to the same repository as --repo; pass --meta-repo %q, or run 'werf meta-repo detach' to remove the safeguard"
-	metaRepoMigrateMsg        = "--repo %q already contains metadata for project %q; run 'werf meta-repo migrate --repo %q --meta-repo %q' to move it before using --meta-repo"
 	metaRepoMalformedMsg      = "the meta-repo marker for project %q in %s is malformed (no meta-repo address); run 'werf meta-repo detach' to remove it"
 	metaRepoMarkerOccupiedMsg = "%q is a stage image or custom tag alias, but werf reserves that tag for the meta-repo safeguard; rename or remove that tag"
 )
@@ -341,18 +327,8 @@ func SetupMetaRepoSafeguard(ctx context.Context, projectName string, stagesStora
 		return metaStorage, nil
 	}
 
-	if markerFound {
-		if markerAddr != metaCanonical {
-			return nil, fmt.Errorf(metaRepoMismatchMsg, projectName, markerAddr, repoStages.Address(), metaStorage.Address())
-		}
-	} else {
-		has, err := repoStages.HasProjectMetadata(ctx, projectName)
-		if err != nil {
-			return nil, err
-		}
-		if has {
-			return nil, fmt.Errorf(metaRepoMigrateMsg, repoStages.Address(), projectName, repoStages.Address(), metaStorage.Address())
-		}
+	if markerFound && markerAddr != metaCanonical {
+		return nil, fmt.Errorf(metaRepoMismatchMsg, projectName, markerAddr, repoStages.Address(), metaStorage.Address())
 	}
 
 	return &metaRepoMarkerStorage{
@@ -395,7 +371,7 @@ func MigrateMetaRepo(ctx context.Context, projectName string, src, dst *RepoStag
 		return fmt.Errorf("--repo %q already has a meta-repo safeguard for project %q pointing at %q; refusing to migrate to %q", src.Address(), projectName, markerAddr, dstCanonical)
 	}
 
-	records, err := src.collectProjectMetadataRecords(ctx, projectName, false)
+	records, err := src.collectProjectMetadataRecords(ctx, projectName)
 	if err != nil {
 		return err
 	}

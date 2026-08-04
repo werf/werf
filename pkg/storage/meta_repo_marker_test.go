@@ -315,7 +315,17 @@ var _ = Describe("meta-repo marker", func() {
 		})
 	})
 
-	Describe("HasProjectMetadata / collectProjectMetadataRecords", func() {
+	Describe("collectProjectMetadataRecords", func() {
+		ownedTags := func(ctx context.Context) []string {
+			records, err := stages.collectProjectMetadataRecords(ctx, proj)
+			Expect(err).NotTo(HaveOccurred())
+			tags := make([]string, 0, len(records))
+			for _, rec := range records {
+				tags = append(tags, rec.tag)
+			}
+			return tags
+		}
+
 		It("detects each owned family and ignores foreign / excluded records", func(ctx SpecContext) {
 			reg.put(stagesRepo+":managed-image-app", map[string]string{image.WerfLabel: proj})
 			reg.put(stagesRepo+":meta-abc_commit_stage", map[string]string{image.WerfLabel: proj})
@@ -325,52 +335,32 @@ var _ = Describe("meta-repo marker", func() {
 			reg.put(stagesRepo+":abc-123-rejected", map[string]string{image.WerfLabel: proj})
 			reg.put(markerRef(proj), map[string]string{image.WerfLabel: proj, RepoMetaRepoMarker_LabelMetaRepo: metaRepo})
 
-			has, err := stages.HasProjectMetadata(ctx, proj)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(has).To(BeTrue())
-
-			records, err := stages.collectProjectMetadataRecords(ctx, proj, false)
-			Expect(err).NotTo(HaveOccurred())
-			var tags []string
-			for _, rec := range records {
-				tags = append(tags, rec.tag)
-			}
-			Expect(tags).To(ConsistOf("managed-image-app", "meta-abc_commit_stage", "custom-tag-meta-v1", "cleanup"))
+			Expect(ownedTags(ctx)).To(ConsistOf("managed-image-app", "meta-abc_commit_stage", "custom-tag-meta-v1", "cleanup"))
 		})
 
 		It("ignores a cleanup record without the timestamp label", func(ctx SpecContext) {
 			reg.put(stagesRepo+":cleanup", map[string]string{image.WerfLabel: proj})
-			has, err := stages.HasProjectMetadata(ctx, proj)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(has).To(BeFalse())
+			Expect(ownedTags(ctx)).To(BeEmpty())
 		})
 
 		It("returns false when only another project's metadata is present", func(ctx SpecContext) {
 			reg.put(stagesRepo+":managed-image-app", map[string]string{image.WerfLabel: "otherproject"})
-			has, err := stages.HasProjectMetadata(ctx, proj)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(has).To(BeFalse())
+			Expect(ownedTags(ctx)).To(BeEmpty())
 		})
 
 		It("conservatively treats unlabeled image-metadata as the project's (legacy records)", func(ctx SpecContext) {
 			reg.put(stagesRepo+":meta-abc_commit_stage", map[string]string{})
-			has, err := stages.HasProjectMetadata(ctx, proj)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(has).To(BeTrue())
+			Expect(ownedTags(ctx)).NotTo(BeEmpty())
 		})
 
 		It("conservatively treats unlabeled managed-image records as the project's (legacy records)", func(ctx SpecContext) {
 			reg.put(stagesRepo+":managed-image-app", map[string]string{})
-			has, err := stages.HasProjectMetadata(ctx, proj)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(has).To(BeTrue())
+			Expect(ownedTags(ctx)).NotTo(BeEmpty())
 		})
 
 		It("excludes image-metadata explicitly labeled for another project", func(ctx SpecContext) {
 			reg.put(stagesRepo+":meta-abc_commit_stage", map[string]string{image.WerfLabel: "otherproject"})
-			has, err := stages.HasProjectMetadata(ctx, proj)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(has).To(BeFalse())
+			Expect(ownedTags(ctx)).To(BeEmpty())
 		})
 	})
 
@@ -552,11 +542,12 @@ var _ = Describe("meta-repo marker", func() {
 			Expect(err.Error()).To(ContainSubstring("they must match"))
 		})
 
-		It("configured + no marker + existing metadata → migrate error", func(ctx SpecContext) {
+		It("configured + no marker + metadata already in --repo → decorated", func(ctx SpecContext) {
 			reg.put(stagesRepo+":managed-image-app", map[string]string{image.WerfLabel: proj})
-			_, err := SetupMetaRepoSafeguard(ctx, proj, stages, meta, false)
-			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("werf meta-repo migrate"))
+			got, err := SetupMetaRepoSafeguard(ctx, proj, stages, meta, false)
+			Expect(err).NotTo(HaveOccurred())
+			_, ok := got.(*metaRepoMarkerStorage)
+			Expect(ok).To(BeTrue())
 		})
 
 		It("configured + no marker + clean repo → decorated", func(ctx SpecContext) {
