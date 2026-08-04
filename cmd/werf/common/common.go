@@ -1205,6 +1205,16 @@ func SetupResourceValidationFlags(cmdData *CmdData, cmd *cobra.Command) error {
 	cmd.Flags().StringArrayVarP(&cmdData.ValidationExtraSchemas, "resource-validation-extra-schema", "", []string{}, "Extra json schema sources to validate resources (preferred over ebedded sources). Must be a valid go template defining a http(s) URL, or an absolute path on local file system. Also, can be defined with $WERF_RESOURCE_VALIDATION_EXTRA_SCHEMA_* (eg. $WERF_RESOURCE_VALIDATION_EXTRA_SCHEMA_1='https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json')")
 	cmd.Flags().DurationVarP(&cmdData.ValidationSchemaCacheLifetime, "resource-validation-cache-lifetime", "", defaultValidationCacheLifetime, "How long local schema cache will be valid. Also can be defined by $WERF_RESOURCE_VALIDATION_CACHE_LIFETIME")
 
+	if err := SetupNoValuesSchemaValidationFlag(cmdData, cmd); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func SetupNoValuesSchemaValidationFlag(cmdData *CmdData, cmd *cobra.Command) error {
+	cmd.Flags().BoolVarP(&cmdData.NoValuesSchemaValidation, "no-values-schema-validation", "", util.GetBoolEnvironmentDefaultFalse("WERF_NO_VALUES_SCHEMA_VALIDATION"), "Disable values validation against JSON schema (default $WERF_NO_VALUES_SCHEMA_VALIDATION)")
+
 	return nil
 }
 

@@ -188,6 +188,9 @@ werf bundle plan [options]
             present in the manifest (default $WERF_NO_REMOVE_MANUAL_CHANGES)
       --no-resource-validation=false
             Disable resource validation (default $WERF_NO_RESOURCE_VALIDATION)
+      --no-values-schema-validation=false
+            Disable values validation against JSON schema (default                                  
+            $WERF_NO_VALUES_SCHEMA_VALIDATION)
       --patches=[]
             Additional patches files (diff patches for drift detection). Also, can be defined with  
             $WERF_PATCHES_* (e.g. $WERF_PATCHES_1=.helm/patches_1.yaml,                             

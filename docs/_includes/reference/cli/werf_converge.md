@@ -352,6 +352,9 @@ werf converge --repo registry.mydomain.com/web --env production
             present in the manifest (default $WERF_NO_REMOVE_MANUAL_CHANGES)
       --no-resource-validation=false
             Disable resource validation (default $WERF_NO_RESOURCE_VALIDATION)
+      --no-values-schema-validation=false
+            Disable values validation against JSON schema (default                                  
+            $WERF_NO_VALUES_SCHEMA_VALIDATION)
   -p, --parallel=true
             Run in parallel (default $WERF_PARALLEL or true)
       --parallel-tasks-limit=5
