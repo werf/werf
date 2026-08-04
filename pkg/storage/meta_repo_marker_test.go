@@ -518,6 +518,17 @@ var _ = Describe("meta-repo marker", func() {
 			Expect(reg.has(stagesRepo + ":cleanup")).To(BeTrue())
 		})
 
+		It("lets the source cleanup record win over a stale destination one", func(ctx SpecContext) {
+			reg.put(stagesRepo+":cleanup", map[string]string{image.WerfLabel: proj, RepoCleanUpRecord_LabelTimestamp: "999"})
+			reg.put(metaRepo+":cleanup", map[string]string{image.WerfLabel: proj, RepoCleanUpRecord_LabelTimestamp: "111"})
+			Expect(MigrateMetaRepo(ctx, proj, stages, meta, MigrateMetaRepoOptions{RemoveSource: true})).To(Succeed())
+			img, err := reg.TryGetRepoImage(ctx, metaRepo+":cleanup")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(img).NotTo(BeNil())
+			Expect(img.Labels[RepoCleanUpRecord_LabelTimestamp]).To(Equal("999"))
+			Expect(reg.has(stagesRepo + ":cleanup")).To(BeFalse())
+		})
+
 		It("leaves source intact when a copy fails", func(ctx SpecContext) {
 			reg.copyErr = fmt.Errorf("boom")
 			err := MigrateMetaRepo(ctx, proj, stages, meta, MigrateMetaRepoOptions{RemoveSource: true})

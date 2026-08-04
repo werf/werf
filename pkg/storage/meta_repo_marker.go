@@ -393,8 +393,15 @@ func MigrateMetaRepo(ctx context.Context, projectName string, src, dst *RepoStag
 			if !metadataRecordMatchesProject(rec.tag, existing.Labels, projectName) {
 				return fmt.Errorf("destination %q already exists but is not a valid metadata record owned by project %q; refusing to migrate", dstRef, projectName)
 			}
-			logboek.Context(ctx).Info().LogF("Skipping %s (already present in meta-repo)\n", rec.tag)
-			continue
+			// Every family but the cleanup record is content-addressed by its tag,
+			// so an existing destination is necessarily the same record. The cleanup
+			// record is a singleton whose timestamp differs between the two repos,
+			// and skipping it would keep a stale destination while RemoveSource
+			// deletes the newer source.
+			if rec.tag != RepoCleanUpRecord_ImageTagPrefix {
+				logboek.Context(ctx).Info().LogF("Skipping %s (already present in meta-repo)\n", rec.tag)
+				continue
+			}
 		}
 
 		srcRef := fmt.Sprintf("%s:%s", src.Address(), rec.tag)
