@@ -507,6 +507,7 @@ This arrangement has limits worth knowing before relying on it:
 - `--repo` keeps accumulating image-metadata records for the whole transition, and every pre-cleanup migrate re-copies the records the previous cleanup already pruned from `--meta-repo`. That is extra work proportional to the number of stale records, not data loss: cleanup re-classifies and re-deletes them.
 - Each migrate lists every tag in `--repo` and requests the manifest of every metadata candidate. On a large shared repository that is a substantial number of registry requests and can run into rate limits.
 - If `--repo` is shared with other projects and predates werf labeling these records, their unlabeled records may be copied into your `--meta-repo` as well.
+- Do not set the same custom tag (`--add-custom-tag`, `--use-custom-tag`) from both werf versions. A v3 build writes the alias into `--repo` but its metadata into `--meta-repo`, while the record v2 left in `--repo` is never removed under `--remove-source=false`. `migrate` treats the record in `--repo` as authoritative, so it overwrites the newer one, and the following cleanup can then delete an alias that points at a live stage.
 
 `werf meta-repo detach` is not a reverse migration: it deletes the marker and leaves the metadata in `--meta-repo`.
 

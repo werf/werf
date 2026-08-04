@@ -57,6 +57,9 @@ func (storage *RepoStagesStorage) GetMetaRepoMarker(ctx context.Context, project
 	if img == nil {
 		return "", false, nil
 	}
+	if _, isStageImage := img.Labels[image.WerfStageContentDigestLabel]; isStageImage {
+		return "", false, fmt.Errorf(metaRepoMarkerOccupiedMsg, fullImageName, projectName)
+	}
 	return img.Labels[RepoMetaRepoMarker_LabelMetaRepo], true, nil
 }
 
@@ -82,6 +85,9 @@ func (storage *RepoStagesStorage) RmMetaRepoMarker(ctx context.Context, projectN
 	}
 	if imgInfo == nil {
 		return nil
+	}
+	if _, isStageImage := imgInfo.Labels[image.WerfStageContentDigestLabel]; isStageImage {
+		return fmt.Errorf(metaRepoMarkerOccupiedMsg, fullImageName, projectName)
 	}
 	if err := storage.DockerRegistry.DeleteRepoImage(ctx, imgInfo); err != nil {
 		return fmt.Errorf("unable to delete meta-repo marker %q: %w", fullImageName, err)
@@ -121,6 +127,15 @@ type projectMetadataRecord struct {
 // foreign label excludes it), matching the plan's requirement to refuse adoption
 // rather than orphan metadata that cleanup still reads.
 func metadataRecordMatchesProject(tag string, labels map[string]string, projectName string) bool {
+	// Metadata records are dummy images carrying labels only. A custom tag is a
+	// plain Docker tag on a stage manifest and nothing reserves the metadata
+	// prefixes, so an alias such as custom-tag-meta-release matches these tag
+	// shapes while pointing at a real stage. Deleting it would delete the stage
+	// with it, since the registry drops the manifest by digest.
+	if _, isStageImage := labels[image.WerfStageContentDigestLabel]; isStageImage {
+		return false
+	}
+
 	owner, hasOwner := labels[image.WerfLabel]
 	if tag == RepoCleanUpRecord_ImageTagPrefix {
 		_, hasTimestamp := labels[RepoCleanUpRecord_LabelTimestamp]
@@ -259,11 +274,12 @@ func (s *metaRepoMarkerStorage) PostLastCleanupRecord(ctx context.Context, proje
 }
 
 const (
-	metaRepoMismatchMsg    = "metadata for project %q is stored in meta-repo %q (per the marker in %s), but --meta-repo=%q was given — they must match"
-	metaRepoMissingFlagMsg = "metadata for project %q is stored in a separate meta-repo %q (per the marker in %s); pass --meta-repo %q, or run 'werf meta-repo detach' to remove the safeguard"
-	metaRepoSameAsRepoMsg  = "metadata for project %q is stored in a separate meta-repo %q (per the marker in %s), but --meta-repo=%q resolves to the same repository as --repo; pass --meta-repo %q, or run 'werf meta-repo detach' to remove the safeguard"
-	metaRepoMigrateMsg     = "--repo %q already contains metadata for project %q; run 'werf meta-repo migrate --repo %q --meta-repo %q' to move it before using --meta-repo"
-	metaRepoMalformedMsg   = "the meta-repo marker for project %q in %s is malformed (no meta-repo address); run 'werf meta-repo detach' to remove it"
+	metaRepoMismatchMsg       = "metadata for project %q is stored in meta-repo %q (per the marker in %s), but --meta-repo=%q was given — they must match"
+	metaRepoMissingFlagMsg    = "metadata for project %q is stored in a separate meta-repo %q (per the marker in %s); pass --meta-repo %q, or run 'werf meta-repo detach' to remove the safeguard"
+	metaRepoSameAsRepoMsg     = "metadata for project %q is stored in a separate meta-repo %q (per the marker in %s), but --meta-repo=%q resolves to the same repository as --repo; pass --meta-repo %q, or run 'werf meta-repo detach' to remove the safeguard"
+	metaRepoMigrateMsg        = "--repo %q already contains metadata for project %q; run 'werf meta-repo migrate --repo %q --meta-repo %q' to move it before using --meta-repo"
+	metaRepoMalformedMsg      = "the meta-repo marker for project %q in %s is malformed (no meta-repo address); run 'werf meta-repo detach' to remove it"
+	metaRepoMarkerOccupiedMsg = "%q is a stage image or custom tag alias of project %q, but werf reserves that tag for the meta-repo safeguard; rename or remove the custom tag"
 )
 
 // SetupMetaRepoSafeguard validates the per-project meta-repo marker and, when a

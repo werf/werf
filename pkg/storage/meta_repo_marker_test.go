@@ -439,6 +439,16 @@ var _ = Describe("meta-repo marker", func() {
 			Expect(err.Error()).To(ContainSubstring("werf meta-repo detach"))
 		})
 
+		It("refuses when the marker tag is occupied by a stage image", func(ctx SpecContext) {
+			reg.put(markerRef(proj), map[string]string{
+				image.WerfLabel:                   proj,
+				image.WerfStageContentDigestLabel: "deadbeef",
+			})
+			_, err := SetupMetaRepoSafeguard(ctx, proj, stages, meta, false)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("reserves that tag for the meta-repo safeguard"))
+		})
+
 		It("meta-repo equal to repo + no marker → passthrough", func(ctx SpecContext) {
 			sameMeta := newRepoStorage(reg, stagesRepo)
 			got, err := SetupMetaRepoSafeguard(ctx, proj, stages, sameMeta, false)
@@ -545,6 +555,25 @@ var _ = Describe("meta-repo marker", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(img).NotTo(BeNil())
 			Expect(img.Labels[image.WerfCustomTagMetadataStageIDLabel]).To(Equal("stage-b"))
+		})
+
+		It("never migrates or deletes a custom tag alias that collides with a metadata tag", func(ctx SpecContext) {
+			stageLabels := map[string]string{
+				image.WerfLabel:                   proj,
+				image.WerfStageContentDigestLabel: "deadbeef",
+			}
+			reg.put(stagesRepo+":managed-image-release", stageLabels)
+			reg.put(stagesRepo+":custom-tag-meta-release", stageLabels)
+			reg.put(stagesRepo+":meta-a_b_c", stageLabels)
+
+			Expect(MigrateMetaRepo(ctx, proj, stages, meta, MigrateMetaRepoOptions{RemoveSource: true})).To(Succeed())
+
+			Expect(reg.has(stagesRepo+":managed-image-release")).To(BeTrue(), "a stage manifest reached through a colliding alias must never be deleted")
+			Expect(reg.has(stagesRepo + ":custom-tag-meta-release")).To(BeTrue())
+			Expect(reg.has(stagesRepo + ":meta-a_b_c")).To(BeTrue())
+			Expect(reg.has(metaRepo+":managed-image-release")).To(BeFalse(), "and must not be copied into the meta-repo")
+			Expect(reg.has(metaRepo + ":custom-tag-meta-release")).To(BeFalse())
+			Expect(reg.has(metaRepo + ":meta-a_b_c")).To(BeFalse())
 		})
 
 		It("leaves source intact when a copy fails", func(ctx SpecContext) {
