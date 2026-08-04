@@ -4,11 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync"
 
+	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 )
 
@@ -39,13 +42,19 @@ func updateSubmodules(ctx context.Context, repoDir, workTreeDir string) error {
 
 		localURLOpts, blockers, err := submoduleLocalURLOverrides(ctx, workTreeDir)
 		if err != nil {
-			return err
+			// Reuse is an optimization, so a failure to even determine whether it applies must cost a
+			// slower build rather than a failed one, exactly like a store that cannot serve the checkout.
+			localURLOpts, blockers = nil, []string{fmt.Sprintf("unable to inspect the local object store: %s", err)}
 		}
 		if len(blockers) > 0 {
-			logboek.Context(ctx).Warn().LogF(
-				"WARNING: unable to reuse local git objects for submodules: %s.\nAll submodules will be checked out from their remotes, which may request credentials. Run `git submodule update --init --recursive` in your working tree beforehand to let werf reuse the local objects instead.\n",
-				strings.Join(blockers, ", "),
-			)
+			// The blockers describe the user's checkout, not this worktree switch, so warning on every
+			// switch of every worktree in a build would repeat the same text many times.
+			submoduleReuseWarnOnce.Do(func() {
+				logboek.Context(ctx).Warn().LogF(
+					"WARNING: unable to reuse local git objects for submodules: %s.\nAll submodules will be checked out from their remotes, which may request credentials. Run `git submodule update --init --recursive` in your working tree beforehand to let werf reuse the local objects instead.\n",
+					strings.Join(blockers, ", "),
+				)
+			})
 		}
 
 		runUpdate := func(reuseOpts []string) error {
@@ -54,9 +63,9 @@ func updateSubmodules(ctx context.Context, repoDir, workTreeDir string) error {
 			if len(reuseOpts) > 0 {
 				// The redirects point submodule URLs at the on-disk module store, which git reaches
 				// over the file transport — blocked by the default protocol.file.allow=user for
-				// submodules. Safe only because reuse is all-or-nothing: every URL used by this
-				// invocation is then a path werf computed itself, never one from committed
-				// .gitmodules.
+				// submodules. Safe only because reuse is all-or-nothing: no URL read from committed
+				// .gitmodules is then used while the transport is relaxed (CVE-2022-39253 class).
+				// Ambient trusted configuration may still rewrite the store paths werf computes.
 				updateArgs = append(updateArgs, "-c", "protocol.file.allow=always")
 				updateArgs = append(updateArgs, reuseOpts...)
 			}
@@ -89,6 +98,8 @@ func updateSubmodules(ctx context.Context, repoDir, workTreeDir string) error {
 	})
 }
 
+var submoduleReuseWarnOnce sync.Once
+
 type submoduleNode struct {
 	name string
 	// displayPath is the slash-joined path through the tree, used only for messages.
@@ -99,6 +110,8 @@ type submoduleNode struct {
 	// separate from moduleDir, which is exactly why an already-populated submodule fetches instead
 	// of reusing what the superproject already has.
 	worktreeModuleDir string
+	// fetchURL is the remote recorded in worktreeModuleDir, empty when there is nothing to redirect.
+	fetchURL string
 }
 
 // submoduleLocalURLOverrides walks the superproject's submodules recursively and, when EVERY
@@ -114,8 +127,8 @@ type submoduleNode struct {
 // submodule also redirects a same-named submodule elsewhere in the tree — and a subtree that is not
 // available locally cannot be enumerated at all, so such a collision could not even be detected.
 // All-or-nothing additionally keeps `protocol.file.allow=always`, which the local paths require, from
-// ever applying to a URL werf did not compute itself.
-func submoduleLocalURLOverrides(ctx context.Context, workTreeDir string) (overrides, blockers []string, err error) {
+// ever applying to a URL read from committed .gitmodules.
+func submoduleLocalURLOverrides(ctx context.Context, workTreeDir string) ([]string, []string, error) {
 	names, paths, err := parseGitmodulesPaths(ctx, &GitCmdOptions{RepoDir: workTreeDir}, "config", "-f", ".gitmodules")
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to list submodules: %w", err)
@@ -124,17 +137,13 @@ func submoduleLocalURLOverrides(ctx context.Context, workTreeDir string) (overri
 		return nil, nil, nil
 	}
 
-	commonDir, err := gitCommonDir(ctx, workTreeDir)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	worktreeGitDir, err := gitAbsoluteGitDir(ctx, workTreeDir)
+	worktreeGitDir, commonDir, err := resolveWorkTreeGitDirs(ctx, workTreeDir)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	var nodes []submoduleNode
+	var blockers []string
 	for i, name := range names {
 		pinnedCommit, err := lsTreeGitlink(ctx, workTreeDir, "HEAD", paths[i])
 		if err != nil {
@@ -156,9 +165,9 @@ func submoduleLocalURLOverrides(ctx context.Context, workTreeDir string) (overri
 	// An already-populated submodule is not re-cloned, so submodule.<name>.url does not reach it:
 	// git fetches the moved gitlink from the URL recorded in the service worktree's own submodule
 	// git dir. Rewriting that URL to the superproject store keeps such a fetch local too.
-	fetchURLs := make(map[string]string, len(nodes))
 	seenURL := make(map[string]struct{}, len(nodes))
-	for _, node := range nodes {
+	for i := range nodes {
+		node := &nodes[i]
 		if node.worktreeModuleDir == "" {
 			continue
 		}
@@ -181,18 +190,17 @@ func submoduleLocalURLOverrides(ctx context.Context, workTreeDir string) (overri
 			continue
 		}
 		seenURL[fetchURL] = struct{}{}
-		fetchURLs[node.displayPath] = fetchURL
+		node.fetchURL = fetchURL
 	}
 
 	// insteadOf matches by prefix, so a remote URL that prefixes one of the store paths would also
 	// rewrite the store URL the clone path relies on.
 	for _, owner := range nodes {
-		fetchURL, ok := fetchURLs[owner.displayPath]
-		if !ok {
+		if owner.fetchURL == "" {
 			continue
 		}
 		for _, node := range nodes {
-			if strings.HasPrefix(node.moduleDir, fetchURL) {
+			if strings.HasPrefix(node.moduleDir, owner.fetchURL) {
 				blockers = append(blockers, fmt.Sprintf("%s (its remote URL prefixes the object store path of %s)", owner.displayPath, node.displayPath))
 			}
 		}
@@ -202,10 +210,11 @@ func submoduleLocalURLOverrides(ctx context.Context, workTreeDir string) (overri
 		return nil, blockers, nil
 	}
 
+	var overrides []string
 	for _, node := range nodes {
 		overrides = append(overrides, "-c", "submodule."+node.name+".url="+node.moduleDir)
-		if fetchURL, ok := fetchURLs[node.displayPath]; ok {
-			overrides = append(overrides, "-c", "url."+node.moduleDir+".insteadOf="+fetchURL)
+		if node.fetchURL != "" {
+			overrides = append(overrides, "-c", "url."+node.moduleDir+".insteadOf="+node.fetchURL)
 		}
 	}
 
@@ -221,17 +230,11 @@ func submoduleLocalURLOverrides(ctx context.Context, workTreeDir string) (overri
 // the repository-wide submodule store, and removing it would destroy the user's own submodule data.
 // Refuse in that case rather than trust the caller.
 func discardWorktreeSubmoduleGitDirs(ctx context.Context, workTreeDir string) error {
-	worktreeGitDir, err := gitAbsoluteGitDir(ctx, workTreeDir)
+	worktreeGitDir, commonDir, err := resolveWorkTreeGitDirs(ctx, workTreeDir)
 	if err != nil {
 		return err
 	}
-	commonDir, err := gitCommonDir(ctx, workTreeDir)
-	if err != nil {
-		return err
-	}
-	// The two are compared through EvalSymlinks because they are produced differently: git resolves
-	// the one, werf joins the other onto a caller-supplied path that may still hold a symlink.
-	if resolvePathForCompare(worktreeGitDir) == resolvePathForCompare(commonDir) {
+	if !util.IsSubpathOfBasePath(filepath.Join(commonDir, "worktrees"), worktreeGitDir) {
 		return fmt.Errorf("refusing to discard submodule git dirs of %s: not a linked work tree", workTreeDir)
 	}
 
@@ -267,19 +270,45 @@ func discardWorktreeSubmoduleGitDirs(ctx context.Context, workTreeDir string) er
 	return nil
 }
 
-func resolvePathForCompare(path string) string {
-	if resolved, err := filepath.EvalSymlinks(path); err == nil {
-		return resolved
+// resolveWorkTreeGitDirs returns the git dir of workTreeDir and the repository's common dir, read
+// from disk rather than from `git rev-parse`: an inherited GIT_DIR or GIT_COMMON_DIR redirects
+// rev-parse at an unrelated repository, and both the store paths werf injects and the discard's
+// os.RemoveAll are derived from these. The .git pointer of the very work tree being operated on is
+// immune to that.
+func resolveWorkTreeGitDirs(ctx context.Context, workTreeDir string) (string, string, error) {
+	dotGitPath := filepath.Join(workTreeDir, ".git")
+	info, err := os.Stat(dotGitPath)
+	if err != nil {
+		return "", "", fmt.Errorf("unable to access %s: %w", dotGitPath, err)
 	}
-	return filepath.Clean(path)
-}
+	if info.IsDir() {
+		return dotGitPath, dotGitPath, nil
+	}
 
-func gitAbsoluteGitDir(ctx context.Context, workTreeDir string) (string, error) {
-	revParseCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: workTreeDir}, "rev-parse", "--absolute-git-dir")
-	if err := revParseCmd.Run(ctx); err != nil {
-		return "", fmt.Errorf("git rev-parse --absolute-git-dir command failed: %w", err)
+	gitDir, err := resolveDotGitFile(ctx, dotGitPath)
+	if err != nil {
+		return "", "", fmt.Errorf("unable to resolve dot-git file %q: %w", dotGitPath, err)
 	}
-	return strings.TrimSpace(revParseCmd.OutBuf.String()), nil
+	if !filepath.IsAbs(gitDir) {
+		gitDir = filepath.Join(workTreeDir, gitDir)
+	}
+	gitDir = filepath.Clean(gitDir)
+
+	commonDirPath := filepath.Join(gitDir, "commondir")
+	data, err := os.ReadFile(commonDirPath)
+	if errors.Is(err, fs.ErrNotExist) {
+		return gitDir, gitDir, nil
+	}
+	if err != nil {
+		return "", "", fmt.Errorf("error reading %q: %w", commonDirPath, err)
+	}
+
+	commonDir := strings.TrimSpace(string(data))
+	if !filepath.IsAbs(commonDir) {
+		commonDir = filepath.Join(gitDir, commonDir)
+	}
+
+	return gitDir, filepath.Clean(commonDir), nil
 }
 
 func gitConfigValue(ctx context.Context, repoDir, key string) (string, error) {
@@ -309,19 +338,38 @@ func walkSubmodule(ctx context.Context, parentModuleDir, parentWorktreeModuleDir
 	}
 
 	moduleDir := filepath.Join(parentModuleDir, "modules", name)
-	if !moduleStoreHasCommit(ctx, moduleDir, pinnedCommit) {
+	// The store path lands in the key of `-c url.<path>.insteadOf`, which git rejects outright when
+	// the path itself carries a `=` or a newline.
+	if strings.ContainsAny(moduleDir, "=\n") {
+		*blockers = append(*blockers, fmt.Sprintf("%s (object store path %q cannot be expressed as a git config key)", displayPath, moduleDir))
+		return nil
+	}
+	if _, err := os.Stat(moduleDir); err != nil {
 		*blockers = append(*blockers, fmt.Sprintf("%s (not initialized locally)", displayPath))
 		return nil
 	}
 
 	// A partial clone can hold the commit while its blobs still live on the promisor remote, so
-	// cloning from it would fail or need the network — exactly what reuse is meant to avoid.
+	// cloning from it would fail or need the network — exactly what reuse is meant to avoid. This runs
+	// before any object is looked up, because GIT_NO_LAZY_FETCH is honored only from git 2.45 and werf
+	// supports older git: on those the lookup itself could reach the promisor remote.
 	isPartial, err := moduleStoreIsPartial(ctx, moduleDir)
 	if err != nil {
 		return err
 	}
 	if isPartial {
 		*blockers = append(*blockers, fmt.Sprintf("%s (local clone is partial)", displayPath))
+		return nil
+	}
+
+	// Peeling to the tree covers both the commit and the tree werf enumerates nested submodules from,
+	// so a store holding the commit alone is not mistaken for a serviceable one.
+	hasPinnedTree, err := gitObjectExists(ctx, moduleDir, pinnedCommit+"^{tree}")
+	if err != nil {
+		return err
+	}
+	if !hasPinnedTree {
+		*blockers = append(*blockers, fmt.Sprintf("%s (not initialized locally)", displayPath))
 		return nil
 	}
 
@@ -342,6 +390,16 @@ func walkSubmodule(ctx context.Context, parentModuleDir, parentWorktreeModuleDir
 		worktreeModuleDir: worktreeModuleDir,
 	})
 
+	// `git config --blob` of a missing blob writes an error to stderr, which every leaf submodule
+	// would otherwise produce on the happy path.
+	hasGitmodules, err := gitObjectExists(ctx, moduleDir, pinnedCommit+":.gitmodules")
+	if err != nil {
+		return err
+	}
+	if !hasGitmodules {
+		return nil
+	}
+
 	nestedNames, nestedPaths, err := parseGitmodulesPaths(ctx, &GitCmdOptions{RepoDir: moduleDir}, "config", "--blob", pinnedCommit+":.gitmodules")
 	if err != nil {
 		return err
@@ -359,9 +417,10 @@ func walkSubmodule(ctx context.Context, parentModuleDir, parentWorktreeModuleDir
 	return nil
 }
 
-// submoduleNameUnsafe rejects names that cannot be expressed safely as a `-c submodule.<name>.url`
-// option or that would resolve outside the module store: `=` terminates the config key early and
-// would set an unrelated option, and separators or `.`/`..` components would move the resolved path.
+// submoduleNameUnsafe rejects a repo-controlled name that cannot be carried safely by a
+// `-c submodule.<name>.url` option: `=` ends the config key early, so the rest of the name becomes
+// part of the URL value git uses, and a separator or a `.`/`..` component moves the store path the
+// name is joined into. The fixed `submodule.` prefix keeps such a name out of unrelated config keys.
 // .gitmodules is repo-controlled and `git config -f` does not reject these itself.
 func submoduleNameUnsafe(name string) bool {
 	if strings.ContainsAny(name, "=\n/\\") {
@@ -382,13 +441,14 @@ func moduleStoreIsPartial(ctx context.Context, moduleDir string) (bool, error) {
 	return configCmd.OutBuf.Len() > 0, nil
 }
 
-// parseGitmodulesPaths runs a `git config ... -z --get-regexp \.path$` over a .gitmodules source
-// (a working-tree file via -f, or a tree blob via --blob) and returns the submodule names and
-// paths. A missing source or no matches (git exit code 1) yields empty slices, not an error.
-func parseGitmodulesPaths(ctx context.Context, opts *GitCmdOptions, configArgs ...string) (names, paths []string, err error) {
+// parseGitmodulesPaths runs a `git config ... -z --get-regexp ^submodule\..*\.path$` over a
+// .gitmodules source (a working-tree file via -f, or a tree blob via --blob) and returns the
+// submodule names and paths. A missing source or no matches (git exit code 1) yields empty slices,
+// not an error.
+func parseGitmodulesPaths(ctx context.Context, opts *GitCmdOptions, configArgs ...string) ([]string, []string, error) {
 	args := make([]string, 0, len(configArgs)+3)
 	args = append(args, configArgs...)
-	args = append(args, "-z", "--get-regexp", "\\.path$")
+	args = append(args, "-z", "--get-regexp", "^submodule\\..*\\.path$")
 	configCmd := NewGitCmd(ctx, opts, args...)
 	if err := configCmd.Run(ctx); err != nil {
 		var exitErr *exec.ExitError
@@ -398,6 +458,7 @@ func parseGitmodulesPaths(ctx context.Context, opts *GitCmdOptions, configArgs .
 		return nil, nil, fmt.Errorf("git config command failed: %w", err)
 	}
 
+	var names, paths []string
 	for _, entry := range strings.Split(configCmd.OutBuf.String(), "\x00") {
 		if entry == "" {
 			continue
@@ -418,6 +479,12 @@ func parseGitmodulesPaths(ctx context.Context, opts *GitCmdOptions, configArgs .
 }
 
 func lsTreeGitlink(ctx context.Context, repoDir, treeish, submodulePath string) (string, error) {
+	// An absolute or ".." path from committed .gitmodules, which git validates in no way, makes the
+	// pathspec below fail the whole command. git checks out no submodule at such a path either.
+	if !filepath.IsLocal(submodulePath) {
+		return "", nil
+	}
+
 	lsTreeCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: repoDir}, "ls-tree", treeish, "--", ":(literal)"+submodulePath)
 	if err := lsTreeCmd.Run(ctx); err != nil {
 		return "", fmt.Errorf("git ls-tree command failed: %w", err)
@@ -430,23 +497,17 @@ func lsTreeGitlink(ctx context.Context, repoDir, treeish, submodulePath string) 
 	return fields[2], nil
 }
 
-func moduleStoreHasCommit(ctx context.Context, moduleDir, commit string) bool {
-	if _, err := os.Stat(moduleDir); err != nil {
-		return false
-	}
-	// GIT_NO_LAZY_FETCH keeps the probe itself from reaching out to a promisor remote (git 2.41+).
-	catFileCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: moduleDir, Env: []string{"GIT_NO_LAZY_FETCH=1"}}, "cat-file", "-e", commit+"^{commit}")
-	return catFileCmd.Run(ctx) == nil
-}
-
-func gitCommonDir(ctx context.Context, workTreeDir string) (string, error) {
-	revParseCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: workTreeDir}, "rev-parse", "--git-common-dir")
+// gitObjectExists reports whether rev resolves to an object present in repoDir, quietly: --verify
+// --quiet exits 1 without writing to stderr. GIT_NO_LAZY_FETCH keeps the lookup from reaching a
+// promisor remote on git 2.45+; on older git the partial-store blocker is what covers that.
+func gitObjectExists(ctx context.Context, repoDir, rev string) (bool, error) {
+	revParseCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: repoDir, Env: []string{"GIT_NO_LAZY_FETCH=1"}}, "rev-parse", "--verify", "--quiet", rev)
 	if err := revParseCmd.Run(ctx); err != nil {
-		return "", fmt.Errorf("git rev-parse --git-common-dir command failed: %w", err)
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) && exitErr.ExitCode() == 1 {
+			return false, nil
+		}
+		return false, fmt.Errorf("git rev-parse command failed: %w", err)
 	}
-	commonDir := strings.TrimSpace(revParseCmd.OutBuf.String())
-	if !filepath.IsAbs(commonDir) {
-		commonDir = filepath.Join(workTreeDir, commonDir)
-	}
-	return commonDir, nil
+	return true, nil
 }
