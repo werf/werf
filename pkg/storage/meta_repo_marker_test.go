@@ -125,6 +125,12 @@ func (r *markerRegistry) put(reference string, labels map[string]string) {
 	r.images[reference] = &image.Info{Name: reference, Tag: refTag(reference), Labels: labels}
 }
 
+func (r *markerRegistry) putIndex(reference string) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.images[reference] = &image.Info{Name: reference, Tag: refTag(reference), IsIndex: true}
+}
+
 func (r *markerRegistry) pushCount(reference string) int {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -190,6 +196,12 @@ var _ = Describe("meta-repo marker", func() {
 			Expect(stages.PutMetaRepoMarker(ctx, proj, metaRepo)).To(Succeed())
 			Expect(stages.RmMetaRepoMarker(ctx, proj)).To(Succeed())
 			Expect(reg.has(markerRef(proj))).To(BeFalse())
+		})
+
+		It("refuses to delete a stage image occupying the marker tag", func(ctx SpecContext) {
+			reg.putIndex(markerRef(proj))
+			Expect(stages.RmMetaRepoMarker(ctx, proj)).NotTo(Succeed())
+			Expect(reg.has(markerRef(proj))).To(BeTrue(), "a stage image at the marker tag must survive marker removal")
 		})
 
 		It("encodes the project with the managed-image slug (identity for tag-safe names)", func() {
@@ -439,6 +451,14 @@ var _ = Describe("meta-repo marker", func() {
 			Expect(err.Error()).To(ContainSubstring("werf meta-repo detach"))
 		})
 
+		It("refuses when the marker tag is occupied by a multi-platform stage image", func(ctx SpecContext) {
+			reg.putIndex(markerRef(proj))
+			_, err := SetupMetaRepoSafeguard(ctx, proj, stages, meta, false)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("reserves that tag for the meta-repo safeguard"))
+			Expect(err.Error()).NotTo(ContainSubstring("malformed"))
+		})
+
 		It("refuses when the marker tag is occupied by a stage image", func(ctx SpecContext) {
 			reg.put(markerRef(proj), map[string]string{
 				image.WerfLabel:                   proj,
@@ -555,6 +575,19 @@ var _ = Describe("meta-repo marker", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(img).NotTo(BeNil())
 			Expect(img.Labels[image.WerfCustomTagMetadataStageIDLabel]).To(Equal("stage-b"))
+		})
+
+		It("never migrates or deletes a multi-platform custom tag alias that collides with a metadata tag", func(ctx SpecContext) {
+			reg.putIndex(stagesRepo + ":managed-image-release")
+			reg.putIndex(stagesRepo + ":custom-tag-meta-release")
+			reg.putIndex(stagesRepo + ":meta-a_b_c")
+
+			Expect(MigrateMetaRepo(ctx, proj, stages, meta, MigrateMetaRepoOptions{RemoveSource: true})).To(Succeed())
+
+			Expect(reg.has(stagesRepo+":managed-image-release")).To(BeTrue(), "an index reached through a colliding alias carries no labels and must never be deleted")
+			Expect(reg.has(stagesRepo + ":custom-tag-meta-release")).To(BeTrue())
+			Expect(reg.has(stagesRepo + ":meta-a_b_c")).To(BeTrue())
+			Expect(reg.has(metaRepo + ":managed-image-release")).To(BeFalse())
 		})
 
 		It("never migrates or deletes a custom tag alias that collides with a metadata tag", func(ctx SpecContext) {

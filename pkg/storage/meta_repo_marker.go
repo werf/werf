@@ -46,7 +46,8 @@ func makeRepoMetaRepoMarkerRecord(repoAddress, projectName string) string {
 
 // GetMetaRepoMarker returns the canonical meta-repo address recorded for the
 // project in this repo. found is false when no marker exists; found is true with
-// an empty address when the marker is present but malformed.
+// an empty address when the marker is present but malformed. It errors when the
+// reserved tag is occupied by a stage image instead of a marker.
 func (storage *RepoStagesStorage) GetMetaRepoMarker(ctx context.Context, projectName string) (address string, found bool, err error) {
 	fullImageName := makeRepoMetaRepoMarkerRecord(storage.RepoAddress, projectName)
 
@@ -57,8 +58,8 @@ func (storage *RepoStagesStorage) GetMetaRepoMarker(ctx context.Context, project
 	if img == nil {
 		return "", false, nil
 	}
-	if _, isStageImage := img.Labels[image.WerfStageContentDigestLabel]; isStageImage {
-		return "", false, fmt.Errorf(metaRepoMarkerOccupiedMsg, fullImageName, projectName)
+	if isStageImageOrAlias(img) {
+		return "", false, fmt.Errorf(metaRepoMarkerOccupiedMsg, fullImageName)
 	}
 	return img.Labels[RepoMetaRepoMarker_LabelMetaRepo], true, nil
 }
@@ -86,8 +87,8 @@ func (storage *RepoStagesStorage) RmMetaRepoMarker(ctx context.Context, projectN
 	if imgInfo == nil {
 		return nil
 	}
-	if _, isStageImage := imgInfo.Labels[image.WerfStageContentDigestLabel]; isStageImage {
-		return fmt.Errorf(metaRepoMarkerOccupiedMsg, fullImageName, projectName)
+	if isStageImageOrAlias(imgInfo) {
+		return fmt.Errorf(metaRepoMarkerOccupiedMsg, fullImageName)
 	}
 	if err := storage.DockerRegistry.DeleteRepoImage(ctx, imgInfo); err != nil {
 		return fmt.Errorf("unable to delete meta-repo marker %q: %w", fullImageName, err)
@@ -118,6 +119,23 @@ type projectMetadataRecord struct {
 	info *image.Info
 }
 
+// isStageImageOrAlias reports whether a record found at a reserved tag is really
+// a stage image rather than one of werf's dummy metadata records. Nothing
+// reserves the metadata tag prefixes and a custom tag is a plain Docker tag on a
+// stage manifest, so an alias like custom-tag-meta-release matches those tag
+// shapes while pointing at a real stage. Deleting it would take the stage with
+// it, because the registry drops the manifest by digest. Metadata records are
+// single manifests pushed with labels only, so a stage is recognized by its
+// content-digest label — or, for a multi-platform stage, by being an index,
+// which registry inspection reports with no top-level labels at all.
+func isStageImageOrAlias(info *image.Info) bool {
+	if info.IsIndex {
+		return true
+	}
+	_, hasStageContentDigest := info.Labels[image.WerfStageContentDigestLabel]
+	return hasStageContentDigest
+}
+
 // metadataRecordMatchesProject decides whether a metadata candidate record
 // belongs to the project. The cleanup record was introduced already labeled and
 // timestamped, so it is matched strictly. managed-image, image-metadata and
@@ -126,19 +144,14 @@ type projectMetadataRecord struct {
 // ambiguous: an unlabeled record is conservatively treated as the project's (a
 // foreign label excludes it), matching the plan's requirement to refuse adoption
 // rather than orphan metadata that cleanup still reads.
-func metadataRecordMatchesProject(tag string, labels map[string]string, projectName string) bool {
-	// Metadata records are dummy images carrying labels only. A custom tag is a
-	// plain Docker tag on a stage manifest and nothing reserves the metadata
-	// prefixes, so an alias such as custom-tag-meta-release matches these tag
-	// shapes while pointing at a real stage. Deleting it would delete the stage
-	// with it, since the registry drops the manifest by digest.
-	if _, isStageImage := labels[image.WerfStageContentDigestLabel]; isStageImage {
+func metadataRecordMatchesProject(tag string, info *image.Info, projectName string) bool {
+	if isStageImageOrAlias(info) {
 		return false
 	}
 
-	owner, hasOwner := labels[image.WerfLabel]
+	owner, hasOwner := info.Labels[image.WerfLabel]
 	if tag == RepoCleanUpRecord_ImageTagPrefix {
-		_, hasTimestamp := labels[RepoCleanUpRecord_LabelTimestamp]
+		_, hasTimestamp := info.Labels[RepoCleanUpRecord_LabelTimestamp]
 		return hasTimestamp && owner == projectName
 	}
 	return !hasOwner || owner == "" || owner == projectName
@@ -165,7 +178,7 @@ func (storage *RepoStagesStorage) collectProjectMetadataRecords(ctx context.Cont
 		if err != nil {
 			return nil, fmt.Errorf("unable to get repo image %q: %w", fullImageName, err)
 		}
-		if img == nil || !metadataRecordMatchesProject(tag, img.Labels, projectName) {
+		if img == nil || !metadataRecordMatchesProject(tag, img, projectName) {
 			continue
 		}
 
@@ -279,7 +292,7 @@ const (
 	metaRepoSameAsRepoMsg     = "metadata for project %q is stored in a separate meta-repo %q (per the marker in %s), but --meta-repo=%q resolves to the same repository as --repo; pass --meta-repo %q, or run 'werf meta-repo detach' to remove the safeguard"
 	metaRepoMigrateMsg        = "--repo %q already contains metadata for project %q; run 'werf meta-repo migrate --repo %q --meta-repo %q' to move it before using --meta-repo"
 	metaRepoMalformedMsg      = "the meta-repo marker for project %q in %s is malformed (no meta-repo address); run 'werf meta-repo detach' to remove it"
-	metaRepoMarkerOccupiedMsg = "%q is a stage image or custom tag alias of project %q, but werf reserves that tag for the meta-repo safeguard; rename or remove the custom tag"
+	metaRepoMarkerOccupiedMsg = "%q is a stage image or custom tag alias, but werf reserves that tag for the meta-repo safeguard; rename or remove that tag"
 )
 
 // SetupMetaRepoSafeguard validates the per-project meta-repo marker and, when a
@@ -406,7 +419,7 @@ func MigrateMetaRepo(ctx context.Context, projectName string, src, dst *RepoStag
 			return fmt.Errorf("unable to check destination %q: %w", dstRef, err)
 		}
 		if existing != nil {
-			if !metadataRecordMatchesProject(rec.tag, existing.Labels, projectName) {
+			if !metadataRecordMatchesProject(rec.tag, existing, projectName) {
 				return fmt.Errorf("destination %q already exists but is not a valid metadata record owned by project %q; refusing to migrate", dstRef, projectName)
 			}
 			// The managed-image and image-metadata tags fully determine their own
@@ -442,7 +455,7 @@ func MigrateMetaRepo(ctx context.Context, projectName string, src, dst *RepoStag
 		if err != nil {
 			return fmt.Errorf("unable to verify destination %q: %w", dstRef, err)
 		}
-		if img == nil || !metadataRecordMatchesProject(rec.tag, img.Labels, projectName) {
+		if img == nil || !metadataRecordMatchesProject(rec.tag, img, projectName) {
 			return fmt.Errorf("destination %q missing or not a valid record for project %q after copy; not deleting source", dstRef, projectName)
 		}
 		if err := src.DockerRegistry.DeleteRepoImage(ctx, rec.info); err != nil {
