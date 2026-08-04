@@ -478,7 +478,7 @@ The marker is a best-effort guard rather than an absolute guarantee: it is writt
 
 #### Adopting `--meta-repo` on an existing project
 
-Passing `--meta-repo` to a project that already has metadata in `--repo` is allowed: new metadata goes to the meta-repo right away, and werf v2 can keep working against the same `--repo` in parallel. The metadata already in `--repo` does not follow, though, and werf reading only `--meta-repo` cannot see it — so move it before the first `cleanup`, which would otherwise decide the fate of stages from an incomplete picture and delete images that are still in use:
+Passing `--meta-repo` to a project that already has metadata in `--repo` is allowed: new metadata goes to the meta-repo right away. The metadata already in `--repo` does not follow, though, and werf reading only `--meta-repo` cannot see it — so move it before the first `cleanup`, which would otherwise decide the fate of stages from an incomplete picture and delete images that are still in use:
 
 ```shell
 werf meta-repo migrate --repo registry.mycompany.org/project --meta-repo registry.mycompany.org/project-meta
@@ -487,8 +487,6 @@ werf meta-repo migrate --repo registry.mycompany.org/project --meta-repo registr
 `migrate` copies the metadata into `--meta-repo` (copy-first, verified, idempotent — safe to re-run), records the marker in `--repo`, and then deletes each original from `--repo` once its copy is verified present in `--meta-repo`. Pass `--remove-source=false` to keep the originals.
 
 To release the safeguard, run `werf meta-repo detach --repo registry.mycompany.org/project`. This removes only the marker; the metadata is **not** moved back, so subsequent runs without `--meta-repo` will read stale or empty metadata from `--repo`.
-
-Running werf v2 and werf v3 against one `--repo` during a transition needs `--remove-source=false` and has its own limits — see [Migration from v2 to v3]({{ "/resources/migration_from_v2_to_v3.html" | true_relative_url }}).
 
 `werf purge` removes the marker as its last step, after the project's stages and metadata are deleted. A re-created project can therefore be built without `--meta-repo` again, with no `werf meta-repo detach` needed. If the purge fails partway, the marker is left in place so that the metadata still in `--meta-repo` stays protected.
 
