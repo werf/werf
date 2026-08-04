@@ -471,8 +471,10 @@ Separating metadata from stages is useful when stages and metadata have differen
 
 To prevent metadata from splitting between the two repositories (which can make cleanup delete in-use images), werf records a per-project marker in `--repo` on the first metadata write to a `--meta-repo`. Afterwards the marker is enforced on every run:
 
-- omitting `--meta-repo`, or passing a different one, is a **hard error**;
+- omitting `--meta-repo`, or passing a different one, is a **hard error** — including a `--meta-repo` that resolves to the same repository as `--repo`;
 - read-only commands only validate the marker and never write it, so pull-only credentials keep working.
+
+The marker is a best-effort guard rather than an absolute guarantee: it is written with a plain read-then-write against the container registry, which offers no atomic compare-and-set. Two first runs started concurrently with different `--meta-repo` values can both find no marker and both write one. Once a marker exists, enforcement is exact.
 
 #### Adopting `--meta-repo` on an existing project
 
@@ -482,9 +484,31 @@ If `--repo` already contains metadata for the project, werf refuses to enable `-
 werf meta-repo migrate --repo registry.mycompany.org/project --meta-repo registry.mycompany.org/project-meta
 ```
 
-`migrate` copies the four metadata families into `--meta-repo` (copy-first, verified, idempotent — safe to re-run) and then records the marker in `--repo`. Add `--remove-source` to delete the originals from `--repo`, which happens only after each copy is verified present in `--meta-repo`. On a `--repo` shared by several projects since before werf started labeling these records, unlabeled legacy records of other projects may be moved too.
+`migrate` copies the four metadata families into `--meta-repo` (copy-first, verified, idempotent — safe to re-run), records the marker in `--repo`, and then deletes each original from `--repo` once its copy is verified present in `--meta-repo`. Pass `--remove-source=false` to keep the originals.
+
+Deletion is refused outright, before anything is changed, if any record to be deleted carries no owning project: on a `--repo` shared by several projects since before werf started labeling these records, such a record may belong to another project. Unlabeled records are still copied, so `--remove-source=false` migrates them.
 
 To release the safeguard, run `werf meta-repo detach --repo registry.mycompany.org/project`. This removes only the marker; the metadata is **not** moved back, so subsequent runs without `--meta-repo` will read stale or empty metadata from `--repo`.
+
+#### Running werf v2 and werf v3 against one `--repo`
+
+werf v2 has no `--meta-repo` and writes all four metadata families into `--repo`. To keep both versions working against one repository for a transition period, cleanup is run in two steps: migrate the metadata v2 has accumulated, then clean up.
+
+```shell
+werf meta-repo migrate --repo registry.mycompany.org/project --meta-repo registry.mycompany.org/project-meta --remove-source=false
+werf cleanup --repo registry.mycompany.org/project --meta-repo registry.mycompany.org/project-meta
+```
+
+This arrangement has limits worth knowing before relying on it:
+
+- `--remove-source=false` is mandatory here. werf v2 keeps reading all four families from `--repo`, so the default behaviour of `migrate` would delete the metadata v2 depends on.
+- Only werf v3 may run `cleanup` or `purge` against the shared `--repo`. werf v2 would decide the fate of stages from a metadata view that v3 has been moving, and could delete images that are still in use.
+- werf v2 builds must be stopped, or serialized externally, around the migrate step. `migrate` works from a snapshot of the tag list, so metadata a v2 build publishes after that snapshot is missed by the cleanup that immediately follows it.
+- `--repo` keeps accumulating image-metadata records for the whole transition, and every pre-cleanup migrate re-copies the records the previous cleanup already pruned from `--meta-repo`. That is extra work proportional to the number of stale records, not data loss: cleanup re-classifies and re-deletes them.
+- Each migrate lists every tag in `--repo` and requests the manifest of every metadata candidate. On a large shared repository that is a substantial number of registry requests and can run into rate limits.
+- If `--repo` is shared with other projects and predates werf labeling these records, their unlabeled records may be copied into your `--meta-repo` as well.
+
+`werf meta-repo detach` is not a reverse migration: it deletes the marker and leaves the metadata in `--meta-repo`.
 
 ### Extra repository for quick access to the build cache
 
