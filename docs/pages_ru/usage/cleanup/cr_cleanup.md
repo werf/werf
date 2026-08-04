@@ -280,7 +280,7 @@ jq -r '.kept[] | select(.type == "stage") | .tag' .werf-cleanup-report.json > ke
 
 Поле `dryRun` позволяет отличить спланированную очистку от фактической. У каждого элемента есть поле `type`: `stage`, `finalStage`, `customTag`, `rejectedStage`, `rejectedStageMarker`, `imageMetadata` или `managedImage` — именно поэтому для keep-list нужно выбирать элементы `stage`, а не брать все `tag` подряд. В `deleted` попадают только реально удалённые теги — о неудавшихся удалениях сообщается предупреждениями в логе.
 
-`repo` — это stages storage, против которого работала очистка. `finalRepo` появляется, когда настроен final-репозиторий, а `metaRepo` — когда `--meta-repo` указывает хранилище managed-образов и метаданных не туда, куда `repo`: элементы `managedImage`, `imageMetadata`, `customTag` и `rejectedStageMarker` удаляются именно по этому адресу.
+`repo` — это stages storage, против которого работала очистка. `finalRepo` появляется, когда настроен final-репозиторий, а `metaRepo` — когда `--meta-repo` указывает хранилище managed-образов и метаданных не туда, куда `repo`. Адрес, из которого удалён элемент, следует из его `type`: `stage`, `rejectedStage` и `rejectedStageMarker` лежат в `repo`, `finalStage` — в `finalRepo`, `managedImage` и `imageMetadata` — в `metaRepo`. Элемент `customTag` затрагивает сразу два адреса: сам тег удаляется из `repo`, а его регистрация — из `metaRepo`, поэтому одному элементу отвечает работа в обоих.
 
 Отчёт записывается даже если очистка упала на полпути, поэтому он всегда описывает реально выполненные удаления; команда при этом завершается ненулевым кодом. Запись атомарная: прерванный запуск оставляет предыдущий отчёт целым, а не обрезанным.
 

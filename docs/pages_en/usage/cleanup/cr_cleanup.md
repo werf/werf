@@ -281,7 +281,7 @@ The report of the command above looks as follows:
 
 The `dryRun` field tells a planned cleanup from an actual one. Every item carries a `type`: `stage`, `finalStage`, `customTag`, `rejectedStage`, `rejectedStageMarker`, `imageMetadata` or `managedImage` — which is why a keep-list has to select `stage` items rather than read every `tag`. Only tags that were really deleted get into `deleted` — failed deletions are reported as warnings in the log instead.
 
-`repo` is the stages storage the cleanup ran against. `finalRepo` appears when a final repository is configured, and `metaRepo` when `--meta-repo` points the managed-image and image-metadata storage somewhere other than `repo` — `managedImage`, `imageMetadata`, `customTag` and `rejectedStageMarker` items are deleted from that address.
+`repo` is the stages storage the cleanup ran against. `finalRepo` appears when a final repository is configured, and `metaRepo` when `--meta-repo` points the managed-image and image-metadata storage somewhere other than `repo`. Which address an item was deleted from follows from its `type`: `stage`, `rejectedStage` and `rejectedStageMarker` live in `repo`, `finalStage` in `finalRepo`, `managedImage` and `imageMetadata` in `metaRepo`. A `customTag` spans two — the tag itself is deleted from `repo` and its registration from `metaRepo` — so a single item can correspond to work in both.
 
 The report is written even when the cleanup fails partway, so it always describes the deletions that actually happened; the command then exits non-zero. It is written atomically, so an interrupted run leaves the previous report intact rather than a truncated one.
 
