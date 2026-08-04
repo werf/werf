@@ -59,12 +59,13 @@ type CommonOpts struct {
 type BuildFromDockerfileOpts struct {
 	CommonOpts
 
-	ContextDir string
-	BuildArgs  map[string]string
-	Target     string
-	Labels     []string
-	Secrets    []string
-	SSH        string
+	ContextDir  string
+	BuildArgs   map[string]string
+	Target      string
+	Labels      []string
+	Secrets     []string
+	SSH         string
+	NetworkType string
 }
 
 type RunMount struct {
