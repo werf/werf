@@ -17,14 +17,14 @@ func TestAI_ReportJSON(t *testing.T) {
 
 	report := NewReport(ctx, "cleanup", true, "registry.mydomain.com/myproject/werf", NewReportOptions{FinalRepo: "registry.mydomain.com/myproject/werf-final"})
 
-	report.AddKept(ctx, 
+	report.AddKept(ctx,
 		Item{Type: ItemTypeStage, Tag: "1e09fb543b4ef442ce5ed36bfeee6b27866bf1e68541db5995962b24-1749456960043", Reason: "used in Kubernetes"},
 		Item{Type: ItemTypeStage, Tag: "8c4a1f9b2d7e5a3c6b0d9e8f7a2c1b4d3e6f5a8c9b0d1e2f3a4b5c6d-1749390012345", Reason: "git policy"},
 		Item{Type: ItemTypeStage, Tag: "d41d8cd98f00b204e9800998ecf8427e5a1b2c3d4e5f6a7b8c9d0e1f-1749455000111", Reason: "built within last 2 hours"},
 		Item{Type: ItemTypeStage, Tag: "aa11bb22cc33dd44ee55ff66aa77bb88cc99dd00ee11ff22aa33bb44-1749300000999", Reason: "import source"},
 		Item{Type: ItemTypeCustomTag, Tag: "my-custom-tag"},
 	)
-	report.AddDeleted(ctx, 
+	report.AddDeleted(ctx,
 		Item{Type: ItemTypeStage, Tag: "ff00112233445566778899aabbccddeeff00112233445566778899aa-1748001122334"},
 		Item{Type: ItemTypeFinalStage, Tag: "ff00112233445566778899aabbccddeeff00112233445566778899aa-1748001122334"},
 		Item{Type: ItemTypeCustomTag, Tag: "review-1234"},

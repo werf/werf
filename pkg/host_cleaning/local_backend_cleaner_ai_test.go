@@ -107,6 +107,44 @@ var _ = Describe("LocalBackendCleaner host cleanup report", func() {
 		Expect(report.SpaceReclaimed).To(HaveValue(Equal(uint64(300))))
 	})
 
+	It("should keep already removed containers in the report when the phase then fails", func(ctx context.Context) {
+		ctx = logging.WithLogger(ctx)
+
+		callIndex := 0
+		stubs.Stub(&cleaner.volumeutilsGetVolumeUsageByPath, func(_ context.Context, _ string) (volumeutils.VolumeUsage, error) {
+			callIndex++
+			if callIndex == 1 {
+				return volumeutils.VolumeUsage{UsedBytes: 500, TotalBytes: 1000}, nil
+			}
+			return volumeutils.VolumeUsage{}, errors.New("disk usage unavailable")
+		})
+		stubs.StubFunc(&cleaner.werfGetWerfLastRunAtV1_1, time.Unix(1, 0), nil)
+
+		backend.EXPECT().PruneVolumes(ctx, prune.Options{}).
+			Return(prune.Report{ItemsDeleted: []string{"vol-1"}, SpaceReclaimed: 100}, nil)
+		backend.EXPECT().PruneImages(ctx, prune.Options{Filters: filter.FilterList{
+			filter.DanglingTrue,
+			filter.NewFilter("label", image.WerfLabel),
+			filter.NewFilter("until", "15m"),
+		}}).Return(prune.Report{ItemsDeleted: []string{"img-1"}, SpaceReclaimed: 200}, nil)
+		backend.EXPECT().Containers(ctx, buildContainersOptions(
+			image.ContainerFilter{Name: image.StageContainerNamePrefix},
+			image.ContainerFilter{Name: image.ImportServerContainerNamePrefix},
+		)).Return(containers, nil)
+		locker.EXPECT().Acquire(container_backend.ContainerLockName(werfContainerName(containers[0])), lockgate.AcquireOptions{NonBlocking: true}).
+			Return(true, lockgate.LockHandle{}, nil)
+		locker.EXPECT().Release(lockgate.LockHandle{}).Return(nil)
+		backend.EXPECT().Rm(ctx, containers[0].ID, container_backend.RmOpts{}).Return(nil)
+
+		report := cleanup_report.NewHostReport(context.Background(), "host cleanup", false)
+
+		Expect(cleaner.RunGC(ctx, RunGCOptions{StoragePath: t.TempDir(), Report: report})).NotTo(Succeed())
+
+		Expect(report.Deleted).To(ContainElement(
+			cleanup_report.Item{Type: cleanup_report.ItemTypeContainer, ID: "cont-1"},
+		), "the container was removed for real, so losing it from the report loses the only record of it")
+	})
+
 	It("should not fail without a report", func(ctx context.Context) {
 		ctx = logging.WithLogger(ctx)
 		expectBackendCalls(ctx)
