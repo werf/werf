@@ -426,12 +426,14 @@ func MigrateMetaRepo(ctx context.Context, projectName string, src, dst *RepoStag
 			// content, so an existing destination record is necessarily identical.
 			// The other two carry mutable content under a stable tag — the cleanup
 			// record its timestamp, custom-tag metadata the stage ID the alias
-			// currently points at — so the source has to win, or the destination
-			// keeps a stale value that cleanup then acts on.
-			if rec.tag != RepoCleanUpRecord_ImageTagPrefix && !strings.HasPrefix(rec.tag, RepoCustomTagMetadata_ImageTagPrefix) {
+			// currently points at — so the two copies can disagree. The meta-repo
+			// is the copy werf reads, so it wins and the source one is dropped.
+			if rec.tag == RepoCleanUpRecord_ImageTagPrefix || strings.HasPrefix(rec.tag, RepoCustomTagMetadata_ImageTagPrefix) {
+				logboek.Context(ctx).Warn().LogF("WARNING: %s already exists in meta-repo %s and its content may differ from the one in %s; keeping the meta-repo record\n", rec.tag, dst.Address(), src.Address())
+			} else {
 				logboek.Context(ctx).Info().LogF("Skipping %s (already present in meta-repo)\n", rec.tag)
-				continue
 			}
+			continue
 		}
 
 		srcRef := fmt.Sprintf("%s:%s", src.Address(), rec.tag)
