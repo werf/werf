@@ -114,7 +114,7 @@ func isMetadataCandidateTag(tag string) bool {
 	}
 }
 
-type projectMetadataRecord struct {
+type metadataRecord struct {
 	tag  string
 	info *image.Info
 }
@@ -136,36 +136,33 @@ func isStageImageOrAlias(info *image.Info) bool {
 	return hasStageContentDigest
 }
 
-// metadataRecordMatchesProject decides whether a metadata candidate record
-// belongs to the project. The cleanup record was introduced already labeled and
-// timestamped, so it is matched strictly. managed-image, image-metadata and
-// custom-tag-metadata records were historically pushed without the werf label
-// (and the read paths that consult them are label-blind), so ownership is
-// ambiguous: an unlabeled record is conservatively treated as the project's (a
-// foreign label excludes it), matching the plan's requirement to refuse adoption
-// rather than orphan metadata that cleanup still reads.
-func metadataRecordMatchesProject(tag string, info *image.Info, projectName string) bool {
+// isMetadataRecord decides whether a record found at a metadata candidate tag is
+// really one of werf's metadata records. A repository holds one project, so the
+// werf label is not consulted: it is absent on records written before werf
+// started labeling them, and the read paths that consult those records are
+// label-blind too. The cleanup record is checked for its timestamp, because
+// "cleanup" is a plausible tag for an unrelated image.
+func isMetadataRecord(tag string, info *image.Info) bool {
 	if isStageImageOrAlias(info) {
 		return false
 	}
 
-	owner, hasOwner := info.Labels[image.WerfLabel]
 	if tag == RepoCleanUpRecord_ImageTagPrefix {
 		_, hasTimestamp := info.Labels[RepoCleanUpRecord_LabelTimestamp]
-		return hasTimestamp && owner == projectName
+		return hasTimestamp
 	}
-	return !hasOwner || owner == "" || owner == projectName
+	return true
 }
 
-// collectProjectMetadataRecords returns the metadata records in this repo owned
-// by the project, per metadataRecordMatchesProject.
-func (storage *RepoStagesStorage) collectProjectMetadataRecords(ctx context.Context, projectName string) ([]projectMetadataRecord, error) {
+// collectMetadataRecords returns the metadata records stored in this repo, per
+// isMetadataRecord.
+func (storage *RepoStagesStorage) collectMetadataRecords(ctx context.Context) ([]metadataRecord, error) {
 	tags, err := storage.Tags(ctx, storage.RepoAddress, docker_registry.WithCachedTags())
 	if err != nil {
 		return nil, fmt.Errorf("unable to get repo %s tags: %w", storage.RepoAddress, err)
 	}
 
-	var res []projectMetadataRecord
+	var res []metadataRecord
 	for _, tag := range tags {
 		if !isMetadataCandidateTag(tag) {
 			continue
@@ -176,11 +173,11 @@ func (storage *RepoStagesStorage) collectProjectMetadataRecords(ctx context.Cont
 		if err != nil {
 			return nil, fmt.Errorf("unable to get repo image %q: %w", fullImageName, err)
 		}
-		if img == nil || !metadataRecordMatchesProject(tag, img, projectName) {
+		if img == nil || !isMetadataRecord(tag, img) {
 			continue
 		}
 
-		res = append(res, projectMetadataRecord{tag: tag, info: img})
+		res = append(res, metadataRecord{tag: tag, info: img})
 	}
 	return res, nil
 }
@@ -347,9 +344,7 @@ type MigrateMetaRepoOptions struct {
 // MigrateMetaRepo copies the project's metadata records from the source stages
 // repo into the destination meta-repo (copy-first, idempotent), plants the
 // marker in the source, and — with RemoveSource — deletes each source original
-// only after its destination copy is verified present. Deletion is refused
-// outright when any record carries no owning project, since such a record may
-// belong to a different project sharing the repo.
+// only after its destination copy is verified present.
 func MigrateMetaRepo(ctx context.Context, projectName string, src, dst *RepoStagesStorage, opts MigrateMetaRepoOptions) error {
 	srcCanonical, err := CanonicalRepoAddress(src.Address())
 	if err != nil {
@@ -371,21 +366,9 @@ func MigrateMetaRepo(ctx context.Context, projectName string, src, dst *RepoStag
 		return fmt.Errorf("--repo %q already has a meta-repo safeguard for project %q pointing at %q; refusing to migrate to %q", src.Address(), projectName, markerAddr, dstCanonical)
 	}
 
-	records, err := src.collectProjectMetadataRecords(ctx, projectName)
+	records, err := src.collectMetadataRecords(ctx)
 	if err != nil {
 		return err
-	}
-
-	if opts.RemoveSource {
-		var unlabeled int
-		for _, rec := range records {
-			if rec.info.Labels[image.WerfLabel] == "" {
-				unlabeled++
-			}
-		}
-		if unlabeled > 0 {
-			return fmt.Errorf("refusing to delete %d unlabeled metadata record(s) from --repo %q: they may belong to another project; pass --remove-source=false to migrate without deleting", unlabeled, src.Address())
-		}
 	}
 
 	for _, rec := range records {
@@ -395,8 +378,8 @@ func MigrateMetaRepo(ctx context.Context, projectName string, src, dst *RepoStag
 			return fmt.Errorf("unable to check destination %q: %w", dstRef, err)
 		}
 		if existing != nil {
-			if !metadataRecordMatchesProject(rec.tag, existing, projectName) {
-				return fmt.Errorf("destination %q already exists but is not a valid metadata record owned by project %q; refusing to migrate", dstRef, projectName)
+			if !isMetadataRecord(rec.tag, existing) {
+				return fmt.Errorf("destination %q already exists but is not a valid metadata record; refusing to migrate", dstRef)
 			}
 			// The managed-image and image-metadata tags fully determine their own
 			// content, so an existing destination record is necessarily identical.
@@ -433,8 +416,8 @@ func MigrateMetaRepo(ctx context.Context, projectName string, src, dst *RepoStag
 		if err != nil {
 			return fmt.Errorf("unable to verify destination %q: %w", dstRef, err)
 		}
-		if img == nil || !metadataRecordMatchesProject(rec.tag, img, projectName) {
-			return fmt.Errorf("destination %q missing or not a valid record for project %q after copy; not deleting source", dstRef, projectName)
+		if img == nil || !isMetadataRecord(rec.tag, img) {
+			return fmt.Errorf("destination %q missing or not a valid metadata record after copy; not deleting source", dstRef)
 		}
 		if err := src.DockerRegistry.DeleteRepoImage(ctx, rec.info); err != nil {
 			return fmt.Errorf("unable to delete source %q: %w", rec.info.Name, err)

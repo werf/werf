@@ -486,8 +486,6 @@ werf meta-repo migrate --repo registry.mycompany.org/project --meta-repo registr
 
 `migrate` copies the metadata into `--meta-repo` (copy-first, verified, idempotent — safe to re-run), records the marker in `--repo`, and then deletes each original from `--repo` once its copy is verified present in `--meta-repo`. Pass `--remove-source=false` to keep the originals.
 
-Deletion is refused outright, before anything is changed, if any record to be deleted carries no owning project: on a `--repo` shared by several projects since before werf started labeling these records, such a record may belong to another project. Unlabeled records are still copied, so `--remove-source=false` migrates them.
-
 To release the safeguard, run `werf meta-repo detach --repo registry.mycompany.org/project`. This removes only the marker; the metadata is **not** moved back, so subsequent runs without `--meta-repo` will read stale or empty metadata from `--repo`.
 
 Running werf v2 and werf v3 against one `--repo` during a transition needs `--remove-source=false` and has its own limits — see [Migration from v2 to v3]({{ "/resources/migration_from_v2_to_v3.html" | true_relative_url }}).

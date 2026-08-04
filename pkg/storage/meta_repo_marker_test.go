@@ -315,9 +315,9 @@ var _ = Describe("meta-repo marker", func() {
 		})
 	})
 
-	Describe("collectProjectMetadataRecords", func() {
-		ownedTags := func(ctx context.Context) []string {
-			records, err := stages.collectProjectMetadataRecords(ctx, proj)
+	Describe("collectMetadataRecords", func() {
+		collectedTags := func(ctx context.Context) []string {
+			records, err := stages.collectMetadataRecords(ctx)
 			Expect(err).NotTo(HaveOccurred())
 			tags := make([]string, 0, len(records))
 			for _, rec := range records {
@@ -326,42 +326,32 @@ var _ = Describe("meta-repo marker", func() {
 			return tags
 		}
 
-		It("detects each owned family and ignores foreign / excluded records", func(ctx SpecContext) {
+		It("collects each family and skips the rejected-stage and marker tags", func(ctx SpecContext) {
 			reg.put(stagesRepo+":managed-image-app", map[string]string{image.WerfLabel: proj})
 			reg.put(stagesRepo+":meta-abc_commit_stage", map[string]string{image.WerfLabel: proj})
 			reg.put(stagesRepo+":custom-tag-meta-v1", map[string]string{image.WerfLabel: proj})
 			reg.put(stagesRepo+":cleanup", map[string]string{image.WerfLabel: proj, RepoCleanUpRecord_LabelTimestamp: "123"})
-			reg.put(stagesRepo+":managed-image-other", map[string]string{image.WerfLabel: "otherproject"})
 			reg.put(stagesRepo+":abc-123-rejected", map[string]string{image.WerfLabel: proj})
 			reg.put(markerRef(proj), map[string]string{image.WerfLabel: proj, RepoMetaRepoMarker_LabelMetaRepo: metaRepo})
 
-			Expect(ownedTags(ctx)).To(ConsistOf("managed-image-app", "meta-abc_commit_stage", "custom-tag-meta-v1", "cleanup"))
+			Expect(collectedTags(ctx)).To(ConsistOf("managed-image-app", "meta-abc_commit_stage", "custom-tag-meta-v1", "cleanup"))
 		})
 
 		It("ignores a cleanup record without the timestamp label", func(ctx SpecContext) {
 			reg.put(stagesRepo+":cleanup", map[string]string{image.WerfLabel: proj})
-			Expect(ownedTags(ctx)).To(BeEmpty())
+			Expect(collectedTags(ctx)).To(BeEmpty())
 		})
 
-		It("returns false when only another project's metadata is present", func(ctx SpecContext) {
-			reg.put(stagesRepo+":managed-image-app", map[string]string{image.WerfLabel: "otherproject"})
-			Expect(ownedTags(ctx)).To(BeEmpty())
-		})
-
-		It("conservatively treats unlabeled image-metadata as the project's (legacy records)", func(ctx SpecContext) {
-			reg.put(stagesRepo+":meta-abc_commit_stage", map[string]string{})
-			Expect(ownedTags(ctx)).NotTo(BeEmpty())
-		})
-
-		It("conservatively treats unlabeled managed-image records as the project's (legacy records)", func(ctx SpecContext) {
-			reg.put(stagesRepo+":managed-image-app", map[string]string{})
-			Expect(ownedTags(ctx)).NotTo(BeEmpty())
-		})
-
-		It("excludes image-metadata explicitly labeled for another project", func(ctx SpecContext) {
-			reg.put(stagesRepo+":meta-abc_commit_stage", map[string]string{image.WerfLabel: "otherproject"})
-			Expect(ownedTags(ctx)).To(BeEmpty())
-		})
+		DescribeTable("does not consult the werf label, since a repository holds one project",
+			func(ctx SpecContext, tag string, labels map[string]string) {
+				reg.put(stagesRepo+":"+tag, labels)
+				Expect(collectedTags(ctx)).To(ConsistOf(tag))
+			},
+			Entry("unlabeled image-metadata", "meta-abc_commit_stage", map[string]string{}),
+			Entry("unlabeled managed-image", "managed-image-app", map[string]string{}),
+			Entry("empty werf label", "managed-image-app", map[string]string{image.WerfLabel: ""}),
+			Entry("foreign werf label", "meta-abc_commit_stage", map[string]string{image.WerfLabel: "otherproject"}),
+		)
 	})
 
 	Describe("decorator", func() {
@@ -600,15 +590,13 @@ var _ = Describe("meta-repo marker", func() {
 			meta = newRepoStorage(reg, metaRepo)
 			reg.put(stagesRepo+":managed-image-app", map[string]string{image.WerfLabel: proj})
 			reg.put(stagesRepo+":meta-abc_commit_stage", map[string]string{image.WerfLabel: proj})
-			reg.put(stagesRepo+":managed-image-other", map[string]string{image.WerfLabel: "otherproject"})
 			reg.put(stagesRepo+":abc-123-rejected", map[string]string{image.WerfLabel: proj})
 		})
 
-		It("copies owned records, plants marker, keeps source", func(ctx SpecContext) {
+		It("copies the metadata records, plants the marker, keeps the source", func(ctx SpecContext) {
 			Expect(MigrateMetaRepo(ctx, proj, stages, meta, MigrateMetaRepoOptions{})).To(Succeed())
 			Expect(reg.has(metaRepo + ":managed-image-app")).To(BeTrue())
 			Expect(reg.has(metaRepo + ":meta-abc_commit_stage")).To(BeTrue())
-			Expect(reg.has(metaRepo + ":managed-image-other")).To(BeFalse())
 			Expect(reg.has(metaRepo + ":abc-123-rejected")).To(BeFalse())
 			Expect(reg.has(stagesRepo + ":managed-image-app")).To(BeTrue())
 			addr, found, _ := stages.GetMetaRepoMarker(ctx, proj)
@@ -648,8 +636,8 @@ var _ = Describe("meta-repo marker", func() {
 			Expect(reg.has(stagesRepo + ":meta-abc_commit_stage")).To(BeTrue())
 		})
 
-		It("refuses when a destination record is owned by another project", func(ctx SpecContext) {
-			reg.put(metaRepo+":managed-image-app", map[string]string{image.WerfLabel: "otherproject"})
+		It("refuses when a destination record is a stage image rather than metadata", func(ctx SpecContext) {
+			reg.putIndex(metaRepo + ":managed-image-app")
 			err := MigrateMetaRepo(ctx, proj, stages, meta, MigrateMetaRepoOptions{})
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("not a valid metadata record"))
@@ -737,7 +725,6 @@ var _ = Describe("meta-repo marker", func() {
 			Expect(reg.has(stagesRepo + ":managed-image-app")).To(BeFalse())
 			Expect(reg.has(stagesRepo + ":meta-abc_commit_stage")).To(BeFalse())
 			Expect(reg.has(metaRepo + ":managed-image-app")).To(BeTrue())
-			Expect(reg.has(stagesRepo + ":managed-image-other")).To(BeTrue())
 		})
 
 		It("keeps the source when the destination is absent despite a reported copy", func(ctx SpecContext) {
@@ -749,26 +736,14 @@ var _ = Describe("meta-repo marker", func() {
 			Expect(reg.has(stagesRepo + ":meta-abc_commit_stage")).To(BeTrue())
 		})
 
-		It("refuses to delete a record with no werf label", func(ctx SpecContext) {
+		It("moves an unlabeled legacy record like any other", func(ctx SpecContext) {
 			reg.put(stagesRepo+":managed-image-legacy", map[string]string{})
-			err := MigrateMetaRepo(ctx, proj, stages, meta, MigrateMetaRepoOptions{RemoveSource: true})
-			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("refusing to delete"))
-			Expect(err.Error()).To(ContainSubstring("--remove-source=false"))
-			Expect(reg.has(stagesRepo + ":managed-image-legacy")).To(BeTrue())
-			Expect(reg.has(stagesRepo + ":managed-image-app")).To(BeTrue())
+			Expect(MigrateMetaRepo(ctx, proj, stages, meta, MigrateMetaRepoOptions{RemoveSource: true})).To(Succeed())
+			Expect(reg.has(metaRepo + ":managed-image-legacy")).To(BeTrue())
+			Expect(reg.has(stagesRepo + ":managed-image-legacy")).To(BeFalse())
 		})
 
-		It("refuses to delete a record whose werf label is empty", func(ctx SpecContext) {
-			reg.put(stagesRepo+":managed-image-legacy", map[string]string{image.WerfLabel: ""})
-			err := MigrateMetaRepo(ctx, proj, stages, meta, MigrateMetaRepoOptions{RemoveSource: true})
-			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("refusing to delete"))
-			Expect(reg.has(stagesRepo + ":managed-image-legacy")).To(BeTrue())
-			Expect(reg.has(stagesRepo + ":managed-image-app")).To(BeTrue())
-		})
-
-		It("copies an unlabeled record without --remove-source", func(ctx SpecContext) {
+		It("copies an unlabeled legacy record without --remove-source", func(ctx SpecContext) {
 			reg.put(stagesRepo+":managed-image-legacy", map[string]string{})
 			Expect(MigrateMetaRepo(ctx, proj, stages, meta, MigrateMetaRepoOptions{})).To(Succeed())
 			Expect(reg.has(metaRepo + ":managed-image-legacy")).To(BeTrue())
