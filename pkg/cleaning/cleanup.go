@@ -611,7 +611,7 @@ func deleteStageDescSet(ctx context.Context, storageManager manager.StorageManag
 	if dryRun {
 		for stageDesc := range stageDescSet.Iter() {
 			logboek.Context(ctx).Default().LogFWithCustomStyle(deletedStyle, "%s\n", stageDesc.StageID.String())
-			report.AddDeleted(ctx, cleanup_report.Item{Type: stageItemType, Tag: stageDesc.StageID.String()})
+			report.AddDeleted(ctx, cleanup_report.Item{Type: stageItemType, Tag: stageDesc.Info.Tag})
 		}
 		logboek.Context(ctx).LogOptionalLn()
 		return nil
@@ -1044,6 +1044,12 @@ FilterOutFinalStages:
 		}
 
 		m.stageManager.MarkFinalStageDescAsProtected(finalStageDesc, stage_manager.ProtectionReasonNotFoundInRepo, false)
+	}
+
+	for reason, finalStageDescSetToKeep := range m.stageManager.GetFinalProtectedStageDescSetByReason() {
+		for finalStageDescToKeep := range finalStageDescSetToKeep.Iter() {
+			m.report.AddKept(ctx, cleanup_report.Item{Type: cleanup_report.ItemTypeFinalStage, Tag: finalStageDescToKeep.Info.Tag, Reason: reason.String()})
+		}
 	}
 
 	finalStageDescSetToDelete := m.stageManager.GetFinalStageDescSet().Difference(m.stageManager.GetFinalProtectedStageDescSet())

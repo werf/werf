@@ -252,7 +252,7 @@ Generating a keep-list then takes a single `jq` call:
 
 ```bash
 werf cleanup --repo registry.mydomain.com/app --dry-run --save-cleanup-report
-jq -r '.kept[].tag' .werf-cleanup-report.json > keep-list.txt
+jq -r '.kept[] | select(.type == "stage") | .tag' .werf-cleanup-report.json > keep-list.txt
 ```
 
 The report of the command above looks as follows:
@@ -264,6 +264,7 @@ The report of the command above looks as follows:
   "dryRun": true,
   "repo": "registry.mydomain.com/app",
   "finalRepo": "registry.mydomain.com/app-final",
+  "metaRepo": "registry.mydomain.com/app-meta",
   "kept": [
     { "type": "stage", "tag": "1e09fb543b4ef442ce5ed36bfeee6b27866bf1e68541db5995962b24-1749456960043", "reason": "used in Kubernetes" },
     { "type": "stage", "tag": "8c4a1f9b2d7e5a3c6b0d9e8f7a2c1b4d3e6f5a8c9b0d1e2f3a4b5c6d-1749390012345", "reason": "git policy" },
@@ -278,7 +279,11 @@ The report of the command above looks as follows:
 }
 ```
 
-The `dryRun` field tells a planned cleanup from an actual one. Every item carries a `type`: `stage`, `finalStage`, `customTag`, `rejectedStage`, `rejectedStageMarker`, `imageMetadata` or `managedImage`. Only tags that were really deleted get into `deleted` — failed deletions are reported as warnings in the log instead.
+The `dryRun` field tells a planned cleanup from an actual one. Every item carries a `type`: `stage`, `finalStage`, `customTag`, `rejectedStage`, `rejectedStageMarker`, `imageMetadata` or `managedImage` — which is why a keep-list has to select `stage` items rather than read every `tag`. Only tags that were really deleted get into `deleted` — failed deletions are reported as warnings in the log instead.
+
+`repo` is the stages storage the cleanup ran against. `finalRepo` appears when a final repository is configured, and `metaRepo` when `--meta-repo` points the managed-image and image-metadata storage somewhere other than `repo` — `managedImage`, `imageMetadata`, `customTag` and `rejectedStageMarker` items are deleted from that address.
+
+The report is written even when the cleanup fails partway, so it always describes the deletions that actually happened; the command then exits non-zero. It is written atomically, so an interrupted run leaves the previous report intact rather than a truncated one.
 
 The same options are supported by `werf purge`, and by `werf host purge` when it is called with `--project-name`.
 
@@ -300,7 +305,9 @@ The same options are supported by `werf purge`, and by `werf host purge` when it
 }
 ```
 
-Cleanup of temporary files, locks and git data is not reflected in the report, and `spaceReclaimed` accounts for the container backend only.
+Cleanup of temporary files, locks and git data is not reflected in the report, and `spaceReclaimed` accounts for the container backend only. `spaceReclaimed` is absent when the command frees space without measuring it, which is the case for `werf host purge` — an absent field means "not measured", `0` means "measured as zero".
+
+An `image` item always carries the backend image `id`. It also carries `reference` when the image was removed by a tag rather than by id, so an image with several tags yields one item per tag with the same `id`.
 
 During operation, `werf cleanup` highlights tags using colors to indicate their status:
 

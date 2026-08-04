@@ -251,7 +251,7 @@ HUB_TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username":
 
 ```bash
 werf cleanup --repo registry.mydomain.com/app --dry-run --save-cleanup-report
-jq -r '.kept[].tag' .werf-cleanup-report.json > keep-list.txt
+jq -r '.kept[] | select(.type == "stage") | .tag' .werf-cleanup-report.json > keep-list.txt
 ```
 
 Отчёт команды выше выглядит следующим образом:
@@ -263,6 +263,7 @@ jq -r '.kept[].tag' .werf-cleanup-report.json > keep-list.txt
   "dryRun": true,
   "repo": "registry.mydomain.com/app",
   "finalRepo": "registry.mydomain.com/app-final",
+  "metaRepo": "registry.mydomain.com/app-meta",
   "kept": [
     { "type": "stage", "tag": "1e09fb543b4ef442ce5ed36bfeee6b27866bf1e68541db5995962b24-1749456960043", "reason": "used in Kubernetes" },
     { "type": "stage", "tag": "8c4a1f9b2d7e5a3c6b0d9e8f7a2c1b4d3e6f5a8c9b0d1e2f3a4b5c6d-1749390012345", "reason": "git policy" },
@@ -277,7 +278,11 @@ jq -r '.kept[].tag' .werf-cleanup-report.json > keep-list.txt
 }
 ```
 
-Поле `dryRun` позволяет отличить спланированную очистку от фактической. У каждого элемента есть поле `type`: `stage`, `finalStage`, `customTag`, `rejectedStage`, `rejectedStageMarker`, `imageMetadata` или `managedImage`. В `deleted` попадают только реально удалённые теги — о неудавшихся удалениях сообщается предупреждениями в логе.
+Поле `dryRun` позволяет отличить спланированную очистку от фактической. У каждого элемента есть поле `type`: `stage`, `finalStage`, `customTag`, `rejectedStage`, `rejectedStageMarker`, `imageMetadata` или `managedImage` — именно поэтому для keep-list нужно выбирать элементы `stage`, а не брать все `tag` подряд. В `deleted` попадают только реально удалённые теги — о неудавшихся удалениях сообщается предупреждениями в логе.
+
+`repo` — это stages storage, против которого работала очистка. `finalRepo` появляется, когда настроен final-репозиторий, а `metaRepo` — когда `--meta-repo` указывает хранилище managed-образов и метаданных не туда, куда `repo`: элементы `managedImage`, `imageMetadata`, `customTag` и `rejectedStageMarker` удаляются именно по этому адресу.
+
+Отчёт записывается даже если очистка упала на полпути, поэтому он всегда описывает реально выполненные удаления; команда при этом завершается ненулевым кодом. Запись атомарная: прерванный запуск оставляет предыдущий отчёт целым, а не обрезанным.
 
 Эти же опции поддерживают `werf purge` и `werf host purge`, вызванный с `--project-name`.
 
@@ -299,7 +304,9 @@ jq -r '.kept[].tag' .werf-cleanup-report.json > keep-list.txt
 }
 ```
 
-Очистка временных файлов, блокировок и данных git в отчёте не отражается, а `spaceReclaimed` учитывает только container backend.
+Очистка временных файлов, блокировок и данных git в отчёте не отражается, а `spaceReclaimed` учитывает только container backend. Поле `spaceReclaimed` отсутствует, когда команда освобождает место, но не измеряет его — так работает `werf host purge`: отсутствие поля означает «не измерено», а `0` — «измерено и равно нулю».
+
+У элемента `image` всегда есть `id` образа в container backend. Дополнительное поле `reference` появляется, когда образ был удалён по тегу, а не по id, поэтому образ с несколькими тегами даёт по элементу на тег с одним и тем же `id`.
 
 Во время выполнения команда `werf cleanup` подсвечивает теги цветом в зависимости от их статуса:
 

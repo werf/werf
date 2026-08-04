@@ -90,21 +90,35 @@ func exceptImage(images image.ImagesList, imageToExclude image.Summary) image.Im
 	return newImages
 }
 
+// imageRemovalRef keeps the image id alongside the reference the removal is addressed to, so
+// the report can name both instead of one field meaning either.
+type imageRemovalRef struct {
+	id  string
+	ref string
+}
+
+func (r imageRemovalRef) removalArg() string {
+	if r.ref != "" {
+		return r.ref
+	}
+	return r.id
+}
+
 func imagesRemove(ctx context.Context, backend container_backend.ContainerBackend, images image.ImagesList, options CommonOptions) error {
-	var imageReferences []string
+	var imageReferences []imageRemovalRef
 
 	for _, img := range images {
 		if len(img.RepoTags) == 0 {
-			imageReferences = append(imageReferences, img.ID)
+			imageReferences = append(imageReferences, imageRemovalRef{id: img.ID})
 		} else {
 			for _, repoTag := range img.RepoTags {
 				isDanglingImage := repoTag == "<none>:<none>"
 				isTaglessImage := !isDanglingImage && strings.HasSuffix(repoTag, "<none>")
 
 				if isDanglingImage || isTaglessImage {
-					imageReferences = append(imageReferences, img.ID)
+					imageReferences = append(imageReferences, imageRemovalRef{id: img.ID})
 				} else {
-					imageReferences = append(imageReferences, repoTag)
+					imageReferences = append(imageReferences, imageRemovalRef{id: img.ID, ref: repoTag})
 				}
 			}
 		}
@@ -117,13 +131,13 @@ func imagesRemove(ctx context.Context, backend container_backend.ContainerBacken
 	return nil
 }
 
-func imageReferencesRemove(ctx context.Context, backend container_backend.ContainerBackend, references []string, options CommonOptions) error {
-	for _, ref := range references {
+func imageReferencesRemove(ctx context.Context, backend container_backend.ContainerBackend, references []imageRemovalRef, options CommonOptions) error {
+	for _, reference := range references {
 		if options.DryRun {
-			logboek.Context(ctx).LogLn(ref)
+			logboek.Context(ctx).LogLn(reference.removalArg())
 			logboek.Context(ctx).LogOptionalLn()
 		} else {
-			err := backend.Rmi(ctx, ref, container_backend.RmiOpts{
+			err := backend.Rmi(ctx, reference.removalArg(), container_backend.RmiOpts{
 				Force: options.RmiForce,
 			})
 			if err != nil {
@@ -131,7 +145,7 @@ func imageReferencesRemove(ctx context.Context, backend container_backend.Contai
 			}
 		}
 
-		options.Report.AddDeleted(ctx, cleanup_report.Item{Type: cleanup_report.ItemTypeImage, ID: ref})
+		options.Report.AddDeleted(ctx, cleanup_report.Item{Type: cleanup_report.ItemTypeImage, ID: reference.id, Reference: reference.ref})
 	}
 
 	return nil
