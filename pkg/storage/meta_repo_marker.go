@@ -260,9 +260,9 @@ func (s *metaRepoMarkerStorage) PostLastCleanupRecord(ctx context.Context, proje
 
 const (
 	metaRepoMismatchMsg    = "metadata for project %q is stored in meta-repo %q (per the marker in %s), but --meta-repo=%q was given — they must match"
-	metaRepoMissingFlagMsg = "metadata for project %q is stored in a separate meta-repo %q (per the marker in %s); pass --meta-repo %q, or run 'werf meta-repo disable' to remove the safeguard"
+	metaRepoMissingFlagMsg = "metadata for project %q is stored in a separate meta-repo %q (per the marker in %s); pass --meta-repo %q, or run 'werf meta-repo detach' to remove the safeguard"
 	metaRepoMigrateMsg     = "--repo %q already contains metadata for project %q; run 'werf meta-repo migrate --repo %q --meta-repo %q' to move it before using --meta-repo"
-	metaRepoMalformedMsg   = "the meta-repo marker for project %q in %s is malformed (no meta-repo address); run 'werf meta-repo disable' to remove it"
+	metaRepoMalformedMsg   = "the meta-repo marker for project %q in %s is malformed (no meta-repo address); run 'werf meta-repo detach' to remove it"
 )
 
 // SetupMetaRepoSafeguard validates the per-project meta-repo marker and, when a

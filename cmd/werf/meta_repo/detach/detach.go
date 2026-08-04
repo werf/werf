@@ -1,4 +1,4 @@
-package disable
+package detach
 
 import (
 	"context"
@@ -18,7 +18,7 @@ var commonCmdData common.CmdData
 func NewCmd(ctx context.Context) *cobra.Command {
 	ctx = common.NewContextWithCmdData(ctx, &commonCmdData)
 	cmd := common.SetCommandContext(ctx, &cobra.Command{
-		Use:                   "disable",
+		Use:                   "detach",
 		DisableFlagsInUseLine: true,
 		Short:                 "Remove the meta-repo safeguard marker for the project from --repo.",
 		Long:                  "Remove the per-project meta-repo marker from --repo so werf no longer forces --meta-repo usage. Metadata already stored in the meta-repo is NOT moved back.",

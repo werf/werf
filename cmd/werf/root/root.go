@@ -46,7 +46,7 @@ import (
 	managed_images_add "github.com/werf/werf/v2/cmd/werf/managed_images/add"
 	managed_images_ls "github.com/werf/werf/v2/cmd/werf/managed_images/ls"
 	managed_images_rm "github.com/werf/werf/v2/cmd/werf/managed_images/rm"
-	meta_repo_disable "github.com/werf/werf/v2/cmd/werf/meta_repo/disable"
+	meta_repo_detach "github.com/werf/werf/v2/cmd/werf/meta_repo/detach"
 	meta_repo_migrate "github.com/werf/werf/v2/cmd/werf/meta_repo/migrate"
 	"github.com/werf/werf/v2/cmd/werf/plan"
 	"github.com/werf/werf/v2/cmd/werf/purge"
@@ -236,7 +236,7 @@ func metaRepoCmd(ctx context.Context) *cobra.Command {
 	})
 	cmd.AddCommand(
 		meta_repo_migrate.NewCmd(ctx),
-		meta_repo_disable.NewCmd(ctx),
+		meta_repo_detach.NewCmd(ctx),
 	)
 
 	return cmd

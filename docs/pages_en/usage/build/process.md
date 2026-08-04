@@ -484,7 +484,7 @@ werf meta-repo migrate --repo registry.mycompany.org/project --meta-repo registr
 
 `migrate` copies the four metadata families into `--meta-repo` (copy-first, verified, idempotent — safe to re-run) and then records the marker in `--repo`. Add `--remove-source` to delete the originals from `--repo`, which happens only after each copy is verified present in `--meta-repo`. On a `--repo` shared by several projects since before werf started labeling these records, unlabeled legacy records of other projects may be moved too.
 
-To release the safeguard, run `werf meta-repo disable --repo registry.mycompany.org/project`. This removes only the marker; the metadata is **not** moved back, so subsequent runs without `--meta-repo` will read stale or empty metadata from `--repo`.
+To release the safeguard, run `werf meta-repo detach --repo registry.mycompany.org/project`. This removes only the marker; the metadata is **not** moved back, so subsequent runs without `--meta-repo` will read stale or empty metadata from `--repo`.
 
 ### Extra repository for quick access to the build cache
 
