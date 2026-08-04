@@ -375,3 +375,20 @@ func TestAI_deleteRejectedStagesWithLinkedTags_ReportKeepsTagDeletedBeforeFailed
 		{Type: cleanup_report.ItemTypeCustomTag, Tag: "v1.0.0"},
 	}, report.Deleted, "the deleted alias must be reported even though its metadata unregister failed; the marker must not")
 }
+
+func TestAI_deleteStageDescSet_DryRunAndRealRecordTheSameTag(t *testing.T) {
+	stageDesc := &image.StageDesc{
+		StageID: image.NewStageID("1e09fb543b4ef442ce5ed36bfeee6b27866bf1e68541db5995962b24", 1749456960043),
+		Info:    &image.Info{Tag: "1e09fb543b4ef442ce5ed36bfeee6b27866bf1e68541db5995962b24-1749456960043"},
+	}
+	stageDescSet := image.NewStageDescSet(stageDesc)
+
+	report := cleanup_report.NewReport(context.Background(), "cleanup", true, "example.com/repo", cleanup_report.NewReportOptions{})
+
+	require.NoError(t, deleteStageDescSet(context.Background(), newFakeStorageManager(), true, manager.ForEachDeleteStageOptions{}, stageDescSet, false, report))
+
+	assert.Equal(t, []cleanup_report.Item{
+		{Type: cleanup_report.ItemTypeStage, Tag: stageDesc.Info.Tag},
+	}, report.Deleted)
+	assert.Equal(t, stageDesc.StageID.String(), report.Deleted[0].Tag, "a planned deletion must name the tag a real one would report")
+}
