@@ -287,7 +287,7 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 
 		logboek.Context(ctx).LogF("Freed space: %s\n", logging.RedF("%s", humanize.Bytes(reportVolumes.SpaceReclaimed)))
 		logDeletedItems(ctx, reportVolumes.ItemsDeleted)
-		recordBackendPruneReport(options.Report, cleanup_report.ItemTypeVolume, reportVolumes)
+		recordBackendPruneReport(ctx, options.Report, cleanup_report.ItemTypeVolume, reportVolumes)
 
 		return nil
 	})
@@ -306,7 +306,7 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 
 		logboek.Context(ctx).LogF("Freed space: %s\n", logging.RedF("%s", humanize.Bytes(reportImages.SpaceReclaimed)))
 		logDeletedItems(ctx, reportImages.ItemsDeleted)
-		recordBackendPruneReport(options.Report, cleanup_report.ItemTypeImage, reportImages)
+		recordBackendPruneReport(ctx, options.Report, cleanup_report.ItemTypeImage, reportImages)
 
 		return nil
 	})
@@ -336,7 +336,7 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 
 		logboek.Context(ctx).LogF("Freed space: %s\n", logging.RedF("%s", humanize.Bytes(reportWerfContainers.SpaceReclaimed)))
 		logDeletedItems(ctx, reportWerfContainers.ItemsDeleted)
-		recordBackendPruneReport(options.Report, cleanup_report.ItemTypeContainer, reportWerfContainers)
+		recordBackendPruneReport(ctx, options.Report, cleanup_report.ItemTypeContainer, reportWerfContainers)
 
 		return nil
 	})
@@ -355,7 +355,7 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 
 		logboek.Context(ctx).LogF("Freed space: %s\n", logging.RedF("%s", humanize.Bytes(reportWerfImages.SpaceReclaimed)))
 		logDeletedItems(ctx, reportWerfImages.ItemsDeleted)
-		recordBackendPruneReport(options.Report, cleanup_report.ItemTypeImage, reportWerfImages)
+		recordBackendPruneReport(ctx, options.Report, cleanup_report.ItemTypeImage, reportWerfImages)
 
 		return nil
 	})

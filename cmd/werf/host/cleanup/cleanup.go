@@ -2,6 +2,7 @@ package cleanup
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -107,7 +108,7 @@ func runCleanup(ctx context.Context) error {
 
 	logboek.LogOptionalLn()
 
-	report, reportPath, err := common.NewHostCleanupReport(&commonCmdData, "host cleanup", *commonCmdData.DryRun)
+	report, reportPath, err := common.NewHostCleanupReport(ctx, &commonCmdData, "host cleanup", *commonCmdData.DryRun)
 	if err != nil {
 		return err
 	}
@@ -123,9 +124,7 @@ func runCleanup(ctx context.Context) error {
 		BackendStoragePath:                     commonCmdData.BackendStoragePath,
 	}
 
-	if err := host_cleaning.RunHostCleanup(ctx, commonManager.ContainerBackend(), hostCleanupOptions); err != nil {
-		return err
-	}
+	runErr := host_cleaning.RunHostCleanup(ctx, commonManager.ContainerBackend(), hostCleanupOptions)
 
-	return report.Save(reportPath)
+	return errors.Join(runErr, report.Save(ctx, reportPath))
 }

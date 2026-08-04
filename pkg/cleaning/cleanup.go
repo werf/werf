@@ -611,7 +611,7 @@ func deleteStageDescSet(ctx context.Context, storageManager manager.StorageManag
 	if dryRun {
 		for stageDesc := range stageDescSet.Iter() {
 			logboek.Context(ctx).Default().LogFWithCustomStyle(deletedStyle, "%s\n", stageDesc.StageID.String())
-			report.AddDeleted(cleanup_report.Item{Type: stageItemType, Tag: stageDesc.StageID.String()})
+			report.AddDeleted(ctx, cleanup_report.Item{Type: stageItemType, Tag: stageDesc.StageID.String()})
 		}
 		logboek.Context(ctx).LogOptionalLn()
 		return nil
@@ -629,7 +629,7 @@ func deleteStageDescSet(ctx context.Context, storageManager manager.StorageManag
 		}
 
 		logboek.Context(ctx).Default().LogFWithCustomStyle(deletedStyle, "  tag: %s\n", stageDesc.Info.Tag)
-		report.AddDeleted(cleanup_report.Item{Type: stageItemType, Tag: stageDesc.Info.Tag})
+		report.AddDeleted(ctx, cleanup_report.Item{Type: stageItemType, Tag: stageDesc.Info.Tag})
 
 		return nil
 	}
@@ -788,7 +788,7 @@ func deleteManagedImages(ctx context.Context, projectName string, storageManager
 		for _, managedImage := range managedImages {
 			logboek.Context(ctx).Default().LogFDetails("  name: %s\n", logging.ImageLogName(managedImage))
 			logboek.Context(ctx).LogOptionalLn()
-			report.AddDeleted(cleanup_report.Item{Type: cleanup_report.ItemTypeManagedImage, ImageName: managedImage})
+			report.AddDeleted(ctx, cleanup_report.Item{Type: cleanup_report.ItemTypeManagedImage, ImageName: managedImage})
 		}
 		return nil
 	}
@@ -805,7 +805,7 @@ func deleteManagedImages(ctx context.Context, projectName string, storageManager
 		}
 
 		logboek.Context(ctx).Default().LogFDetails("  name: %s\n", logging.ImageLogName(managedImage))
-		report.AddDeleted(cleanup_report.Item{Type: cleanup_report.ItemTypeManagedImage, ImageName: managedImage})
+		report.AddDeleted(ctx, cleanup_report.Item{Type: cleanup_report.ItemTypeManagedImage, ImageName: managedImage})
 
 		return nil
 	})
@@ -843,7 +843,7 @@ func deleteImageMetadata(ctx context.Context, projectName string, storageManager
 			logboek.Context(ctx).Info().LogOptionalLn()
 
 			for _, commit := range commitList {
-				report.AddDeleted(cleanup_report.Item{Type: cleanup_report.ItemTypeImageMetadata, ImageName: imageNameOrID, StageID: stageID, Commit: commit})
+				report.AddDeleted(ctx, cleanup_report.Item{Type: cleanup_report.ItemTypeImageMetadata, ImageName: imageNameOrID, StageID: stageID, Commit: commit})
 			}
 		}
 		return nil
@@ -863,7 +863,7 @@ func deleteImageMetadata(ctx context.Context, projectName string, storageManager
 		logboek.Context(ctx).Info().LogFDetails("  imageName: %s\n", imageNameOrID)
 		logboek.Context(ctx).Info().LogFDetails("  stageID: %s\n", stageID)
 		logboek.Context(ctx).Info().LogFDetails("  commit: %s\n", commit)
-		report.AddDeleted(cleanup_report.Item{Type: cleanup_report.ItemTypeImageMetadata, ImageName: imageNameOrID, StageID: stageID, Commit: commit})
+		report.AddDeleted(ctx, cleanup_report.Item{Type: cleanup_report.ItemTypeImageMetadata, ImageName: imageNameOrID, StageID: stageID, Commit: commit})
 
 		return nil
 	})
@@ -909,13 +909,13 @@ func deleteRejectedStagesWithLinkedTags(ctx context.Context, storageManager mana
 		for _, stageID := range rejectedStageIDs {
 			stageIDStr := stageID.String()
 			logboek.Context(ctx).Default().LogFWithCustomStyle(deletedStyle, "  tag: %s\n", stageIDStr)
-			report.AddDeleted(cleanup_report.Item{Type: cleanup_report.ItemTypeRejectedStage, Tag: stageIDStr})
+			report.AddDeleted(ctx, cleanup_report.Item{Type: cleanup_report.ItemTypeRejectedStage, Tag: stageIDStr})
 			for _, customTag := range customTagsByStageID[stageIDStr] {
 				logboek.Context(ctx).Default().LogFWithCustomStyle(deletedStyle, "  tag: %s\n", customTag)
-				report.AddDeleted(cleanup_report.Item{Type: cleanup_report.ItemTypeCustomTag, Tag: customTag})
+				report.AddDeleted(ctx, cleanup_report.Item{Type: cleanup_report.ItemTypeCustomTag, Tag: customTag})
 			}
 			logboek.Context(ctx).Default().LogFWithCustomStyle(deletedStyle, "  tag: %s-rejected\n", stageIDStr)
-			report.AddDeleted(cleanup_report.Item{Type: cleanup_report.ItemTypeRejectedStageMarker, Tag: stageIDStr + "-rejected"})
+			report.AddDeleted(ctx, cleanup_report.Item{Type: cleanup_report.ItemTypeRejectedStageMarker, Tag: stageIDStr + "-rejected"})
 			deleted = append(deleted, stageIDStr)
 		}
 		logboek.Context(ctx).LogOptionalLn()
@@ -940,7 +940,7 @@ func deleteRejectedStagesWithLinkedTags(ctx context.Context, storageManager mana
 			return nil
 		}
 		logboek.Context(ctx).Default().LogFWithCustomStyle(deletedStyle, "  tag: %s\n", stageIDStr)
-		report.AddDeleted(cleanup_report.Item{Type: cleanup_report.ItemTypeRejectedStage, Tag: stageIDStr})
+		report.AddDeleted(ctx, cleanup_report.Item{Type: cleanup_report.ItemTypeRejectedStage, Tag: stageIDStr})
 
 		// 2. Linked custom tags — sequential (avoids parallel-of-parallel registry pressure).
 		// Fail-fast: leave marker untouched on any failure so the next cleanup retries.
@@ -955,7 +955,7 @@ func deleteRejectedStagesWithLinkedTags(ctx context.Context, storageManager mana
 			}
 			// Recorded before the unregister attempt: the alias is already irreversibly gone, and a
 			// retry will not delete it again, so a later record would never happen.
-			report.AddDeleted(cleanup_report.Item{Type: cleanup_report.ItemTypeCustomTag, Tag: customTag})
+			report.AddDeleted(ctx, cleanup_report.Item{Type: cleanup_report.ItemTypeCustomTag, Tag: customTag})
 
 			if err := metaStorage.UnregisterStageCustomTag(ctx, customTag); err != nil {
 				if err := handleDeletionError(err); err != nil {
@@ -976,7 +976,7 @@ func deleteRejectedStagesWithLinkedTags(ctx context.Context, storageManager mana
 			return nil
 		}
 		logboek.Context(ctx).Default().LogFWithCustomStyle(deletedStyle, "  tag: %s-rejected\n", stageIDStr)
-		report.AddDeleted(cleanup_report.Item{Type: cleanup_report.ItemTypeRejectedStageMarker, Tag: stageIDStr + "-rejected"})
+		report.AddDeleted(ctx, cleanup_report.Item{Type: cleanup_report.ItemTypeRejectedStageMarker, Tag: stageIDStr + "-rejected"})
 
 		mu.Lock()
 		deleted = append(deleted, stageIDStr)
@@ -1007,7 +1007,7 @@ func (m *cleanupManager) cleanupUnusedStages(ctx context.Context) error {
 				logboek.Context(ctx).Default().LogProcess("%s (%d)", reason, stageDescSetToKeep.Cardinality()).Do(func() {
 					for stageDescToKeep := range stageDescSetToKeep.Iter() {
 						logboek.Context(ctx).Default().LogFWithCustomStyle(keptStyle, "%s\n", stageDescToKeep.Info.Tag)
-						m.report.AddKept(cleanup_report.Item{Type: cleanup_report.ItemTypeStage, Tag: stageDescToKeep.Info.Tag, Reason: reason.String()})
+						m.report.AddKept(ctx, cleanup_report.Item{Type: cleanup_report.ItemTypeStage, Tag: stageDescToKeep.Info.Tag, Reason: reason.String()})
 					}
 				})
 			}
@@ -1152,7 +1152,7 @@ func (m *cleanupManager) deleteUnusedCustomTags(ctx context.Context) error {
 			for _, customTag := range customTagListToKeep {
 				logboek.Context(ctx).Default().LogFWithCustomStyle(keptStyle, "  tag: %s\n", customTag)
 				logboek.Context(ctx).LogOptionalLn()
-				m.report.AddKept(cleanup_report.Item{Type: cleanup_report.ItemTypeCustomTag, Tag: customTag})
+				m.report.AddKept(ctx, cleanup_report.Item{Type: cleanup_report.ItemTypeCustomTag, Tag: customTag})
 			}
 		})
 	}

@@ -1,9 +1,11 @@
 package cleanup_report
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"sync"
 )
 
@@ -33,6 +35,7 @@ type Item struct {
 	StageID   string   `json:"stageID,omitempty"`
 	Commit    string   `json:"commit,omitempty"`
 	ID        string   `json:"id,omitempty"`
+	Reference string   `json:"reference,omitempty"`
 }
 
 type Report struct {
@@ -43,23 +46,30 @@ type Report struct {
 	DryRun     bool   `json:"dryRun"`
 	Repo       string `json:"repo"`
 	FinalRepo  string `json:"finalRepo,omitempty"`
+	MetaRepo   string `json:"metaRepo,omitempty"`
 	Kept       []Item `json:"kept"`
 	Deleted    []Item `json:"deleted"`
 }
 
-func NewReport(command string, dryRun bool, repo, finalRepo string) *Report {
+type NewReportOptions struct {
+	FinalRepo string
+	MetaRepo  string
+}
+
+func NewReport(_ context.Context, command string, dryRun bool, repo string, opts NewReportOptions) *Report {
 	return &Report{
 		APIVersion: APIVersion,
 		Command:    command,
 		DryRun:     dryRun,
 		Repo:       repo,
-		FinalRepo:  finalRepo,
+		FinalRepo:  opts.FinalRepo,
+		MetaRepo:   opts.MetaRepo,
 		Kept:       []Item{},
 		Deleted:    []Item{},
 	}
 }
 
-func (r *Report) AddKept(items ...Item) {
+func (r *Report) AddKept(_ context.Context, items ...Item) {
 	if r == nil {
 		return
 	}
@@ -70,7 +80,7 @@ func (r *Report) AddKept(items ...Item) {
 	r.Kept = append(r.Kept, items...)
 }
 
-func (r *Report) AddDeleted(items ...Item) {
+func (r *Report) AddDeleted(_ context.Context, items ...Item) {
 	if r == nil {
 		return
 	}
@@ -81,7 +91,7 @@ func (r *Report) AddDeleted(items ...Item) {
 	r.Deleted = append(r.Deleted, items...)
 }
 
-func (r *Report) Save(path string) error {
+func (r *Report) Save(ctx context.Context, path string) error {
 	if r == nil {
 		return nil
 	}
@@ -89,20 +99,22 @@ func (r *Report) Save(path string) error {
 	r.mux.Lock()
 	defer r.mux.Unlock()
 
-	return writeJSON(path, r)
+	return writeJSON(ctx, path, r)
 }
 
 type HostReport struct {
 	mux sync.Mutex
 
-	APIVersion     string `json:"apiVersion"`
-	Command        string `json:"command"`
-	DryRun         bool   `json:"dryRun"`
-	SpaceReclaimed uint64 `json:"spaceReclaimed"`
-	Deleted        []Item `json:"deleted"`
+	APIVersion string `json:"apiVersion"`
+	Command    string `json:"command"`
+	DryRun     bool   `json:"dryRun"`
+	// SpaceReclaimed is nil when the command frees space without measuring it, which is not
+	// the same fact as having freed nothing.
+	SpaceReclaimed *uint64 `json:"spaceReclaimed,omitempty"`
+	Deleted        []Item  `json:"deleted"`
 }
 
-func NewHostReport(command string, dryRun bool) *HostReport {
+func NewHostReport(_ context.Context, command string, dryRun bool) *HostReport {
 	return &HostReport{
 		APIVersion: APIVersion,
 		Command:    command,
@@ -111,7 +123,7 @@ func NewHostReport(command string, dryRun bool) *HostReport {
 	}
 }
 
-func (r *HostReport) AddDeleted(items ...Item) {
+func (r *HostReport) AddDeleted(_ context.Context, items ...Item) {
 	if r == nil {
 		return
 	}
@@ -122,7 +134,7 @@ func (r *HostReport) AddDeleted(items ...Item) {
 	r.Deleted = append(r.Deleted, items...)
 }
 
-func (r *HostReport) AddSpaceReclaimed(bytes uint64) {
+func (r *HostReport) AddSpaceReclaimed(_ context.Context, bytes uint64) {
 	if r == nil {
 		return
 	}
@@ -130,10 +142,13 @@ func (r *HostReport) AddSpaceReclaimed(bytes uint64) {
 	r.mux.Lock()
 	defer r.mux.Unlock()
 
-	r.SpaceReclaimed += bytes
+	if r.SpaceReclaimed == nil {
+		r.SpaceReclaimed = new(uint64)
+	}
+	*r.SpaceReclaimed += bytes
 }
 
-func (r *HostReport) Save(path string) error {
+func (r *HostReport) Save(ctx context.Context, path string) error {
 	if r == nil {
 		return nil
 	}
@@ -141,18 +156,58 @@ func (r *HostReport) Save(path string) error {
 	r.mux.Lock()
 	defer r.mux.Unlock()
 
-	return writeJSON(path, r)
+	return writeJSON(ctx, path, r)
 }
 
-func writeJSON(path string, report any) error {
+// CheckWritable fails before any destructive work when the report could not be written
+// afterwards, so a cleanup does not delete objects only to lose its record of them.
+func CheckWritable(_ context.Context, path string) error {
+	f, err := os.CreateTemp(filepath.Dir(path), filepath.Base(path)+".tmp")
+	if err != nil {
+		return fmt.Errorf("cleanup report %q is not writable: %w", path, err)
+	}
+
+	if err := f.Close(); err != nil {
+		return fmt.Errorf("close %q: %w", f.Name(), err)
+	}
+
+	if err := os.Remove(f.Name()); err != nil {
+		return fmt.Errorf("remove %q: %w", f.Name(), err)
+	}
+
+	return nil
+}
+
+// writeJSON renames a fully written sibling into place: a reader never observes a truncated
+// report, and a failure leaves the previous one intact.
+func writeJSON(_ context.Context, path string, report any) error {
 	data, err := json.MarshalIndent(report, "", "\t")
 	if err != nil {
 		return fmt.Errorf("marshal cleanup report: %w", err)
 	}
 	data = append(data, '\n')
 
-	if err := os.WriteFile(path, data, 0o644); err != nil {
-		return fmt.Errorf("write cleanup report to %q: %w", path, err)
+	f, err := os.CreateTemp(filepath.Dir(path), filepath.Base(path)+".tmp")
+	if err != nil {
+		return fmt.Errorf("create temporary file for cleanup report %q: %w", path, err)
+	}
+	defer os.Remove(f.Name())
+
+	if _, err := f.Write(data); err != nil {
+		f.Close()
+		return fmt.Errorf("write cleanup report to %q: %w", f.Name(), err)
+	}
+
+	if err := f.Close(); err != nil {
+		return fmt.Errorf("close cleanup report %q: %w", f.Name(), err)
+	}
+
+	if err := os.Chmod(f.Name(), 0o644); err != nil {
+		return fmt.Errorf("chmod cleanup report %q: %w", f.Name(), err)
+	}
+
+	if err := os.Rename(f.Name(), path); err != nil {
+		return fmt.Errorf("rename cleanup report to %q: %w", path, err)
 	}
 
 	return nil

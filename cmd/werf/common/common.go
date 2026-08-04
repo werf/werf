@@ -241,7 +241,7 @@ func GetHostCleanupReportPath(cmdData *CmdData) (string, error) {
 
 // NewCleanupReport returns a nil report when --save-cleanup-report is not set. A nil report accumulates
 // nothing and saves nothing, so callers need no further checks.
-func NewCleanupReport(cmdData *CmdData, command string, dryRun bool, storageManager *manager.StorageManager) (*cleanup_report.Report, string, error) {
+func NewCleanupReport(ctx context.Context, cmdData *CmdData, command string, dryRun bool, storageManager *manager.StorageManager) (*cleanup_report.Report, string, error) {
 	if !GetSaveCleanupReport(cmdData) {
 		return nil, "", nil
 	}
@@ -251,17 +251,31 @@ func NewCleanupReport(cmdData *CmdData, command string, dryRun bool, storageMana
 		return nil, "", err
 	}
 
+	if err := cleanup_report.CheckWritable(ctx, reportPath); err != nil {
+		return nil, "", err
+	}
+
+	repo := storageManager.GetStagesStorage().Address()
+
 	var finalRepo string
 	if finalStagesStorage := storageManager.GetFinalStagesStorage(); finalStagesStorage != nil {
 		finalRepo = finalStagesStorage.Address()
 	}
 
-	return cleanup_report.NewReport(command, dryRun, storageManager.GetStagesStorage().Address(), finalRepo), reportPath, nil
+	var metaRepo string
+	if metaAddress := storageManager.GetMetaStorage().Address(); metaAddress != repo {
+		metaRepo = metaAddress
+	}
+
+	return cleanup_report.NewReport(ctx, command, dryRun, repo, cleanup_report.NewReportOptions{
+		FinalRepo: finalRepo,
+		MetaRepo:  metaRepo,
+	}), reportPath, nil
 }
 
 // NewHostCleanupReport returns a nil report when --save-host-cleanup-report is not set. A nil report
 // accumulates nothing and saves nothing, so callers need no further checks.
-func NewHostCleanupReport(cmdData *CmdData, command string, dryRun bool) (*cleanup_report.HostReport, string, error) {
+func NewHostCleanupReport(ctx context.Context, cmdData *CmdData, command string, dryRun bool) (*cleanup_report.HostReport, string, error) {
 	if !GetSaveHostCleanupReport(cmdData) {
 		return nil, "", nil
 	}
@@ -271,7 +285,11 @@ func NewHostCleanupReport(cmdData *CmdData, command string, dryRun bool) (*clean
 		return nil, "", err
 	}
 
-	return cleanup_report.NewHostReport(command, dryRun), reportPath, nil
+	if err := cleanup_report.CheckWritable(ctx, reportPath); err != nil {
+		return nil, "", err
+	}
+
+	return cleanup_report.NewHostReport(ctx, command, dryRun), reportPath, nil
 }
 
 func resolveJSONReportPath(flagName, path, defaultPath string) (string, error) {

@@ -2,6 +2,7 @@ package cleanup
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 
@@ -243,7 +244,7 @@ func runCleanup(ctx context.Context, cmd *cobra.Command) error {
 		}
 	}
 
-	report, reportPath, err := common.NewCleanupReport(&commonCmdData, "cleanup", *commonCmdData.DryRun, storageManager)
+	report, reportPath, err := common.NewCleanupReport(ctx, &commonCmdData, "cleanup", *commonCmdData.DryRun, storageManager)
 	if err != nil {
 		return err
 	}
@@ -264,9 +265,7 @@ func runCleanup(ctx context.Context, cmd *cobra.Command) error {
 	}
 
 	logboek.LogOptionalLn()
-	if err := cleaning.Cleanup(ctx, projectName, storageManager, cleanupOptions); err != nil {
-		return err
-	}
+	runErr := cleaning.Cleanup(ctx, projectName, storageManager, cleanupOptions)
 
-	return report.Save(reportPath)
+	return errors.Join(runErr, report.Save(ctx, reportPath))
 }

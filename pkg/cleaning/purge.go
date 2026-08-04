@@ -139,7 +139,7 @@ func deleteCustomTags(ctx context.Context, storageManager manager.StorageManager
 		for _, customTag := range customTagList {
 			logboek.Context(ctx).Default().LogFWithCustomStyle(deletedStyle, "  tag: %s\n", customTag)
 			logboek.Context(ctx).Default().LogOptionalLn()
-			report.AddDeleted(cleanup_report.Item{Type: cleanup_report.ItemTypeCustomTag, Tag: customTag})
+			report.AddDeleted(ctx, cleanup_report.Item{Type: cleanup_report.ItemTypeCustomTag, Tag: customTag})
 		}
 
 		return nil
@@ -151,7 +151,7 @@ func deleteCustomTags(ctx context.Context, storageManager manager.StorageManager
 				return err
 			}
 		} else {
-			report.AddDeleted(cleanup_report.Item{Type: cleanup_report.ItemTypeCustomTag, Tag: tag})
+			report.AddDeleted(ctx, cleanup_report.Item{Type: cleanup_report.ItemTypeCustomTag, Tag: tag})
 		}
 
 		logboek.Context(ctx).Default().LogFWithCustomStyle(deletedStyle, "  tag: %s\n", tag)

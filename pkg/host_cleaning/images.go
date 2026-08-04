@@ -131,7 +131,7 @@ func imageReferencesRemove(ctx context.Context, backend container_backend.Contai
 			}
 		}
 
-		options.Report.AddDeleted(cleanup_report.Item{Type: cleanup_report.ItemTypeImage, ID: ref})
+		options.Report.AddDeleted(ctx, cleanup_report.Item{Type: cleanup_report.ItemTypeImage, ID: ref})
 	}
 
 	return nil

@@ -1,6 +1,7 @@
 package host_cleaning
 
 import (
+	"context"
 	"slices"
 
 	"github.com/werf/werf/v2/pkg/cleanup_report"
@@ -44,12 +45,12 @@ func newBackendPruneReportFromImageList(list image.ImagesList) backendPruneRepor
 	return report.Normalize()
 }
 
-func recordBackendPruneReport(hostReport *cleanup_report.HostReport, itemType cleanup_report.ItemType, report backendPruneReport) {
+func recordBackendPruneReport(ctx context.Context, hostReport *cleanup_report.HostReport, itemType cleanup_report.ItemType, report backendPruneReport) {
 	items := make([]cleanup_report.Item, 0, len(report.ItemsDeleted))
 	for _, id := range report.ItemsDeleted {
 		items = append(items, cleanup_report.Item{Type: itemType, ID: id})
 	}
 
-	hostReport.AddDeleted(items...)
-	hostReport.AddSpaceReclaimed(report.SpaceReclaimed)
+	hostReport.AddDeleted(ctx, items...)
+	hostReport.AddSpaceReclaimed(ctx, report.SpaceReclaimed)
 }

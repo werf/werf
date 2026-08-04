@@ -285,7 +285,7 @@ func TestAI_deleteRejectedStagesWithLinkedTags_ReportRecordsEachSubAction(t *tes
 	sm := newFakeStorageManager()
 	sm.stages.rejectedStageIDs = []image.StageID{*stageID}
 
-	report := cleanup_report.NewReport("cleanup", false, "example.com/repo", "")
+	report := cleanup_report.NewReport(context.Background(), "cleanup", false, "example.com/repo", cleanup_report.NewReportOptions{})
 
 	_, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, map[string][]string{stageID.String(): {"v1.0.0", "latest"}}, false, report)
 	require.NoError(t, err)
@@ -306,7 +306,7 @@ func TestAI_deleteRejectedStagesWithLinkedTags_ReportOmitsFailedSubActions(t *te
 	sm.stages.rejectedStageIDs = []image.StageID{*stageID}
 	sm.stages.deleteTagErrs["v1.0.0"] = errors.New("temporary network glitch")
 
-	report := cleanup_report.NewReport("cleanup", false, "example.com/repo", "")
+	report := cleanup_report.NewReport(context.Background(), "cleanup", false, "example.com/repo", cleanup_report.NewReportOptions{})
 
 	_, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, map[string][]string{stageID.String(): {"v1.0.0", "latest"}}, false, report)
 	require.NoError(t, err)
@@ -323,7 +323,7 @@ func TestAI_deleteRejectedStagesWithLinkedTags_ReportRecordsDryRunPlan(t *testin
 	sm := newFakeStorageManager()
 	sm.stages.rejectedStageIDs = []image.StageID{*stageID}
 
-	report := cleanup_report.NewReport("cleanup", true, "example.com/repo", "")
+	report := cleanup_report.NewReport(context.Background(), "cleanup", true, "example.com/repo", cleanup_report.NewReportOptions{})
 
 	_, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, map[string][]string{stageID.String(): {"v1.0.0"}}, true, report)
 	require.NoError(t, err)
@@ -339,7 +339,7 @@ func TestAI_deleteCustomTags_ReportSkipsFailedDeletion(t *testing.T) {
 	sm := newFakeStorageManager()
 	sm.stages.deleteTagErrs["broken"] = errors.New("temporary network glitch")
 
-	report := cleanup_report.NewReport("purge", false, "example.com/repo", "")
+	report := cleanup_report.NewReport(context.Background(), "purge", false, "example.com/repo", cleanup_report.NewReportOptions{})
 
 	require.NoError(t, deleteCustomTags(context.Background(), sm, []string{"ok", "broken"}, false, report))
 
@@ -364,7 +364,7 @@ func TestAI_deleteRejectedStagesWithLinkedTags_ReportKeepsTagDeletedBeforeFailed
 	sm.stages.rejectedStageIDs = []image.StageID{*stageID}
 	sm.meta.unregisterTagErrs["v1.0.0"] = errors.New("temporary network glitch")
 
-	report := cleanup_report.NewReport("cleanup", false, "example.com/repo", "")
+	report := cleanup_report.NewReport(context.Background(), "cleanup", false, "example.com/repo", cleanup_report.NewReportOptions{})
 
 	_, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, map[string][]string{stageID.String(): {"v1.0.0", "latest"}}, false, report)
 	require.NoError(t, err)

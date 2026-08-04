@@ -32,7 +32,7 @@ func containersRemove(ctx context.Context, backend container_backend.ContainerBa
 			}
 		}
 
-		options.Report.AddDeleted(cleanup_report.Item{Type: cleanup_report.ItemTypeContainer, ID: container.ID})
+		options.Report.AddDeleted(ctx, cleanup_report.Item{Type: cleanup_report.ItemTypeContainer, ID: container.ID})
 	}
 
 	return nil

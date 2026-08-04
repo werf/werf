@@ -95,7 +95,7 @@ var _ = Describe("LocalBackendCleaner host cleanup report", func() {
 		ctx = logging.WithLogger(ctx)
 		expectBackendCalls(ctx)
 
-		report := cleanup_report.NewHostReport("host cleanup", false)
+		report := cleanup_report.NewHostReport(context.Background(), "host cleanup", false)
 
 		Expect(cleaner.RunGC(ctx, RunGCOptions{StoragePath: t.TempDir(), Report: report})).To(Succeed())
 
@@ -104,7 +104,7 @@ var _ = Describe("LocalBackendCleaner host cleanup report", func() {
 			cleanup_report.Item{Type: cleanup_report.ItemTypeImage, ID: "img-1"},
 			cleanup_report.Item{Type: cleanup_report.ItemTypeContainer, ID: "cont-1"},
 		))
-		Expect(report.SpaceReclaimed).To(Equal(uint64(300)))
+		Expect(report.SpaceReclaimed).To(HaveValue(Equal(uint64(300))))
 	})
 
 	It("should not fail without a report", func(ctx context.Context) {
