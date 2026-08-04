@@ -52,6 +52,7 @@ Follow [Effective Go](https://go.dev/doc/effective_go) and [Go Code Review Comme
 - ALWAYS use LSP (`goToDefinition`, `findReferences`, `documentSymbol`, `hover`, `goToImplementation`, call hierarchy) to find definitions, usages, implementations, and callers. `grep` matches strings blindly: it hits comments and unrelated identifiers, and misses interface dispatch and aliased imports.
 - Use `grep` ONLY for literal text — config keys, error message strings, annotation names.
 - If your harness has a semantic code-search tool, prefer it over `grep` for intent-based questions ("how does X work"). If it does not, read the code: NEVER substitute keyword grepping for understanding.
+- A blast-radius tool that expands a diff into symbols lists every symbol in every touched file, not the impacted ones — thousands of tokens that say less than `git diff --stat` plus `lsp findReferences` on the symbols you actually changed. Reach for it on a wide or unfamiliar diff, never on a handful of files.
 
 ## Commands (MANDATORY)
 
@@ -61,7 +62,7 @@ ALWAYS use these `task` commands. NEVER use raw `go build`, `go test`, `go fmt`,
 - NEVER `go test` → ALWAYS `task test:unit`. Accepts `paths="./pkg/..."`.
 - NEVER `go test` (e2e) → ALWAYS `task test:e2e` with `paths="./pkg/..."` and `labelFilter="..."` (Ginkgo label filter) to target specific tests.
 - NEVER `go test` (integration) → ALWAYS `task test:integration`. Legacy e2e tests.
-- NEVER `go vet` → ALWAYS `task lint:golangci-lint`. golangci-lint includes vet checks. Accepts `golangciPaths="./pkg/..."`.
+- NEVER `go vet` → ALWAYS `task lint:golangci-lint`. golangci-lint includes vet checks. Accepts `golangciPaths="./pkg/..."`. That target runs only its `:go` variant, so it never lints linux/cgo-gated code (`pkg/buildah`, any `*_linux.go`) — for those use `task lint:golangci-lint:cgo`, which needs Linux.
 - NEVER `go fmt`/`gofmt` → ALWAYS `task format`. Accepts `paths="pkg/foo"` — plain directories only; the `./pkg/foo/...` wildcard the test and lint tasks take makes the formatters fail.
 - NEVER `golangci-lint` → ALWAYS `task lint:golangci-lint`. Accepts `golangciPaths="./pkg/..."`.
 - `task lint` — run all linters in parallel.
@@ -83,7 +84,7 @@ After changing Go code, run these in order — `task format` mutates files, so i
 
 NEVER assume a change compiles. While iterating, scope the slow steps (`task lint:golangci-lint golangciPaths="./pkg/foo/..."`, `task test:unit paths="./pkg/foo/..."`), then run them unscoped before handing the work over.
 
-On macOS `task build` produces a **non-CGO** binary — the Buildah backend is only built for linux/amd64 (`task build:dev:linux:amd64:cgo`), so Buildah changes cannot be compiled or exercised locally. Unit tests run anywhere. The Docker-backend entries of the e2e suites also run on macOS with Docker Desktop — `task test:e2e paths="./test/e2e/build" labelFilter="..." parallel=1`, with `WERF_TEST_K8S_DOCKER_REGISTRY` set even when the entries need no registry. Buildah entries, and any suite that needs kind, require Linux (`task test:setup:environment`).
+On macOS `task build` produces a **non-CGO** binary — the Buildah backend is only built for linux/amd64 (`task build:dev:linux:amd64:cgo`), so Buildah changes do not compile on the host. They DO compile, unit-test and lint inside a linux container running this repo's own `task` targets: `golang:<go.mod version>` plus `apt-get install libbtrfs-dev`, then `task test:unit paths="./pkg/buildah/..."` and `task lint:golangci-lint:cgo`. Move `bin/golangci-lint-*` aside first — the host binary is a darwin build and dies with `exec format error`. Establish this before reporting a Buildah check as unrunnable. Unit tests run anywhere. The Docker-backend entries of the e2e suites also run on macOS with Docker Desktop — `task test:e2e paths="./test/e2e/build" labelFilter="..." parallel=1`, with `WERF_TEST_K8S_DOCKER_REGISTRY` set even when the entries need no registry. Buildah entries, and any suite that needs kind, require Linux (`task test:setup:environment`).
 
 ## Testing (MANDATORY)
 

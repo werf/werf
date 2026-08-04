@@ -73,7 +73,11 @@ someone would argue for — "a repo-wide marker instead of a per-project one" is
 Before handing the PR over to the user, map it both ways:
 
 - every behavior-changing hunk lands on a claim in *What*, and a supporting hunk (test, doc, error wrapping, refactor) lands on the claim it serves — an unmapped hunk is scope creep or a missing claim;
-- every claim lands on code — a claim with nothing behind it is unfinished work. For a documentation change this map runs against the existing code that makes each claim true.
+- every claim lands on code — a claim with nothing behind it is unfinished work. For a documentation change this map runs against the existing code that makes each claim true;
+- the comment holds only the delta over CI — a green-run recital, a `task build`/`task test:unit` transcript, or the story of a re-run flaky job is noise, however true;
+- no sentence appears in both the description and the comment — the claim carries the `VERIFIED:`/`UNVERIFIED:` attestation, the comment carries the mechanics, and neither restates the other.
+
+Run this map after the last push, against the text as published: the rules above are easiest to break while editing an already-good description.
 
 A branch too large to walk hunk by hunk is mapped commit by commit, and the comment says so.
 

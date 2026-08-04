@@ -41,6 +41,12 @@ Types and scopes are defined in `CONTRIBUTING.md#conventions` — that file is t
 
 - Check `git status` for unrelated untracked files before staging. This worktree carries local working files (`.dev/`, scratch notes, orchestrator state), so prefer explicit paths over `git add -A` — a blanket add sweeps them in, and untracking later costs an extra commit. An orchestrator or helper commit command stages broadly — inspect `git status` BEFORE invoking it, not after.
 
+## Rebasing
+
+- Predict conflicts against the merge base, never with a two-dot diff: compare `git diff --name-only $(git merge-base HEAD origin/<base>)..origin/<base>` with the same for `..HEAD`. Plain `git diff HEAD..origin/<base>` lists every file the branch itself touched, so it always reports an overlap and the prediction is worthless.
+- Scripting a non-interactive `reword` or `fixup`: match the todo line on the sha alone. `rebase.instructionFormat` can insert a `#` before the subject, and a `sed` keyed on `pick <sha> <subject>` then silently matches nothing — the rebase reports success with nothing reworded. Dump the todo first when unsure: `GIT_SEQUENCE_EDITOR='cp "$1" /tmp/todo; false' git rebase -i --autosquash origin/<base>`.
+- Commit a correction as `fixup! <target subject>` BEFORE the rebase, so one `--autosquash` pass carries both it and any reword and the branch is rewritten once.
+
 ## Before pushing
 
 - ALWAYS check the current branch (`git branch --show-current`) — a stale local `main` or someone else's WIP branch is easy to miss.
