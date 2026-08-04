@@ -511,7 +511,7 @@ This arrangement has limits worth knowing before relying on it:
 
 `werf meta-repo detach` is not a reverse migration: it deletes the marker and leaves the metadata in `--meta-repo`.
 
-`werf purge` does not remove the marker either: it deletes the project's stages and metadata, but the marker stays in `--repo`. A later run of a re-created project without `--meta-repo` will therefore still be refused until you run `werf meta-repo detach`.
+`werf purge` removes the marker as its last step, after the project's stages and metadata are deleted. A re-created project can therefore be built without `--meta-repo` again, with no `werf meta-repo detach` needed. If the purge fails partway, the marker is left in place so that the metadata still in `--meta-repo` stays protected.
 
 ### Extra repository for quick access to the build cache
 
