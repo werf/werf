@@ -259,6 +259,7 @@ jq -r '.kept[] | select(.type == "stage") | .tag' .werf-cleanup-report.json > ke
 ```json
 {
   "apiVersion": "v1",
+  "kind": "CleanupReport",
   "command": "cleanup",
   "dryRun": true,
   "repo": "registry.mydomain.com/app",
@@ -278,7 +279,7 @@ jq -r '.kept[] | select(.type == "stage") | .tag' .werf-cleanup-report.json > ke
 }
 ```
 
-Поле `dryRun` позволяет отличить спланированную очистку от фактической. У каждого элемента есть поле `type`: `stage`, `finalStage`, `customTag`, `rejectedStage`, `rejectedStageMarker`, `imageMetadata` или `managedImage` — именно поэтому для keep-list нужно выбирать элементы `stage`, а не брать все `tag` подряд. В `deleted` попадают только реально удалённые теги — о неудавшихся удалениях сообщается предупреждениями в логе.
+Поле `kind` здесь равно `CleanupReport`, а в отчёте хоста — `HostCleanupReport`. Оно важно потому, что `werf host purge` пишет тот или другой отчёт в зависимости от `--project-name`, и оба указывают одинаковый `command`: именно по `kind` потребитель понимает, какая схема ему досталась. Поле `dryRun` позволяет отличить спланированную очистку от фактической. У каждого элемента есть поле `type`: `stage`, `finalStage`, `customTag`, `rejectedStage`, `rejectedStageMarker`, `imageMetadata` или `managedImage` — именно поэтому для keep-list нужно выбирать элементы `stage`, а не брать все `tag` подряд. В `deleted` попадают только реально удалённые теги — о неудавшихся удалениях сообщается предупреждениями в логе.
 
 `repo` — это stages storage, против которого работала очистка. `finalRepo` появляется, когда настроен final-репозиторий, а `metaRepo` — когда `--meta-repo` указывает хранилище managed-образов и метаданных не туда, куда `repo`. Адрес, из которого удалён элемент, следует из его `type`: `stage`, `rejectedStage` и `rejectedStageMarker` лежат в `repo`, `finalStage` — в `finalRepo`, `managedImage` и `imageMetadata` — в `metaRepo`. Элемент `customTag` затрагивает сразу два адреса: сам тег удаляется из `repo`, а его регистрация — из `metaRepo`, поэтому одному элементу отвечает работа в обоих.
 
@@ -293,6 +294,7 @@ jq -r '.kept[] | select(.type == "stage") | .tag' .werf-cleanup-report.json > ke
 ```json
 {
   "apiVersion": "v1",
+  "kind": "HostCleanupReport",
   "command": "host cleanup",
   "dryRun": false,
   "spaceReclaimed": 8271948800,

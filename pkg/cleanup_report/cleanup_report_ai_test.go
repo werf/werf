@@ -41,6 +41,7 @@ func TestAI_ReportJSON(t *testing.T) {
 
 	assert.JSONEq(t, `{
   "apiVersion": "v1",
+  "kind": "CleanupReport",
   "command": "cleanup",
   "dryRun": true,
   "repo": "registry.mydomain.com/myproject/werf",
@@ -82,6 +83,7 @@ func TestAI_HostReportJSON(t *testing.T) {
 
 	assert.JSONEq(t, `{
   "apiVersion": "v1",
+  "kind": "HostCleanupReport",
   "command": "host cleanup",
   "dryRun": false,
   "spaceReclaimed": 8271948800,
@@ -104,6 +106,7 @@ func TestAI_ReportEmptyListsAndOmittedFinalRepo(t *testing.T) {
 
 	assert.JSONEq(t, `{
   "apiVersion": "v1",
+  "kind": "CleanupReport",
   "command": "purge",
   "dryRun": false,
   "repo": "example.com/repo",
@@ -243,4 +246,40 @@ func TestAI_CheckWritable(t *testing.T) {
 	err = CheckWritable(ctx, filepath.Join(dir, "missing-dir", "report.json"))
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "is not writable")
+}
+
+func TestAI_KindDistinguishesTheTwoSchemas(t *testing.T) {
+	ctx := context.Background()
+	dir := t.TempDir()
+
+	// werf host purge writes one or the other depending on --project-name, and both say
+	// "host purge", so kind is the only thing a consumer can key on.
+	registryPath := filepath.Join(dir, "registry.json")
+	require.NoError(t, NewReport(ctx, "host purge", false, "example.com/repo", NewReportOptions{}).Save(ctx, registryPath))
+
+	hostPath := filepath.Join(dir, "host.json")
+	require.NoError(t, NewHostReport(ctx, "host purge", false).Save(ctx, hostPath))
+
+	registry, err := os.ReadFile(registryPath)
+	require.NoError(t, err)
+	host, err := os.ReadFile(hostPath)
+	require.NoError(t, err)
+
+	assert.JSONEq(t, `{
+  "apiVersion": "v1",
+  "kind": "CleanupReport",
+  "command": "host purge",
+  "dryRun": false,
+  "repo": "example.com/repo",
+  "kept": [],
+  "deleted": []
+}`, string(registry))
+
+	assert.JSONEq(t, `{
+  "apiVersion": "v1",
+  "kind": "HostCleanupReport",
+  "command": "host purge",
+  "dryRun": false,
+  "deleted": []
+}`, string(host))
 }

@@ -11,6 +11,13 @@ import (
 
 const APIVersion = "v1"
 
+// werf host purge writes either report depending on --project-name, and both spell the same
+// command, so the kind is what tells the two schemas apart and lets them be versioned apart.
+const (
+	KindCleanupReport     = "CleanupReport"
+	KindHostCleanupReport = "HostCleanupReport"
+)
+
 type ItemType string
 
 const (
@@ -42,6 +49,7 @@ type Report struct {
 	mux sync.Mutex
 
 	APIVersion string `json:"apiVersion"`
+	Kind       string `json:"kind"`
 	Command    string `json:"command"`
 	DryRun     bool   `json:"dryRun"`
 	Repo       string `json:"repo"`
@@ -59,6 +67,7 @@ type NewReportOptions struct {
 func NewReport(_ context.Context, command string, dryRun bool, repo string, opts NewReportOptions) *Report {
 	return &Report{
 		APIVersion: APIVersion,
+		Kind:       KindCleanupReport,
 		Command:    command,
 		DryRun:     dryRun,
 		Repo:       repo,
@@ -106,6 +115,7 @@ type HostReport struct {
 	mux sync.Mutex
 
 	APIVersion string `json:"apiVersion"`
+	Kind       string `json:"kind"`
 	Command    string `json:"command"`
 	DryRun     bool   `json:"dryRun"`
 	// SpaceReclaimed is nil when the command frees space without measuring it, which is not
@@ -117,6 +127,7 @@ type HostReport struct {
 func NewHostReport(_ context.Context, command string, dryRun bool) *HostReport {
 	return &HostReport{
 		APIVersion: APIVersion,
+		Kind:       KindHostCleanupReport,
 		Command:    command,
 		DryRun:     dryRun,
 		Deleted:    []Item{},

@@ -260,6 +260,7 @@ The report of the command above looks as follows:
 ```json
 {
   "apiVersion": "v1",
+  "kind": "CleanupReport",
   "command": "cleanup",
   "dryRun": true,
   "repo": "registry.mydomain.com/app",
@@ -279,7 +280,7 @@ The report of the command above looks as follows:
 }
 ```
 
-The `dryRun` field tells a planned cleanup from an actual one. Every item carries a `type`: `stage`, `finalStage`, `customTag`, `rejectedStage`, `rejectedStageMarker`, `imageMetadata` or `managedImage` — which is why a keep-list has to select `stage` items rather than read every `tag`. Only tags that were really deleted get into `deleted` — failed deletions are reported as warnings in the log instead.
+`kind` is `CleanupReport` here and `HostCleanupReport` for the host report. It matters because `werf host purge` writes one or the other depending on `--project-name` and both spell the same `command`, so `kind` is what a consumer keys on to know which schema it was handed. The `dryRun` field tells a planned cleanup from an actual one. Every item carries a `type`: `stage`, `finalStage`, `customTag`, `rejectedStage`, `rejectedStageMarker`, `imageMetadata` or `managedImage` — which is why a keep-list has to select `stage` items rather than read every `tag`. Only tags that were really deleted get into `deleted` — failed deletions are reported as warnings in the log instead.
 
 `repo` is the stages storage the cleanup ran against. `finalRepo` appears when a final repository is configured, and `metaRepo` when `--meta-repo` points the managed-image and image-metadata storage somewhere other than `repo`. Which address an item was deleted from follows from its `type`: `stage`, `rejectedStage` and `rejectedStageMarker` live in `repo`, `finalStage` in `finalRepo`, `managedImage` and `imageMetadata` in `metaRepo`. A `customTag` spans two — the tag itself is deleted from `repo` and its registration from `metaRepo` — so a single item can correspond to work in both.
 
@@ -294,6 +295,7 @@ The same options are supported by `werf purge`, and by `werf host purge` when it
 ```json
 {
   "apiVersion": "v1",
+  "kind": "HostCleanupReport",
   "command": "host cleanup",
   "dryRun": false,
   "spaceReclaimed": 8271948800,
