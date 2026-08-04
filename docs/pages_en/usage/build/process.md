@@ -465,7 +465,7 @@ werf build --repo registry.mycompany.org/project --meta-repo registry.mycompany.
 
 (Rejected-stage markers and the custom-tag aliases on stage images stay in `--repo` because they are tied to stage images.)
 
-Separating metadata from stages is useful when stages and metadata have different lifecycles or access patterns — for example, when the stages repository is shared between projects while metadata must remain isolated, or when metadata should live on a cheaper or more available registry. Every werf command (`build`, `cleanup`, `purge`, etc.) must be invoked with the same `--meta-repo` value.
+Separating metadata from stages is useful when the repository accumulates a large number of service tags. image-metadata records are written per image, per commit and per stage, so under active development they quickly outnumber the stage images themselves, while every werf operation that resolves a stage lists the whole tag set of `--repo` and filters it. Moving the metadata into `--meta-repo` keeps that listing proportional to the stages alone. Every werf command (`build`, `cleanup`, `purge`, etc.) must be invoked with the same `--meta-repo` value.
 
 #### Safeguard against inconsistent `--meta-repo` usage
 
@@ -490,26 +490,7 @@ Deletion is refused outright, before anything is changed, if any record to be de
 
 To release the safeguard, run `werf meta-repo detach --repo registry.mycompany.org/project`. This removes only the marker; the metadata is **not** moved back, so subsequent runs without `--meta-repo` will read stale or empty metadata from `--repo`.
 
-#### Running werf v2 and werf v3 against one `--repo`
-
-werf v2 has no `--meta-repo` and writes the image-metadata, managed images list, custom-tag metadata and last-cleanup record into `--repo`. To keep both versions working against one repository for a transition period, cleanup is run in two steps: migrate the metadata v2 has accumulated, then clean up.
-
-```shell
-werf meta-repo migrate --repo registry.mycompany.org/project --meta-repo registry.mycompany.org/project-meta --remove-source=false
-werf cleanup --repo registry.mycompany.org/project --meta-repo registry.mycompany.org/project-meta
-```
-
-This arrangement has limits worth knowing before relying on it:
-
-- `--remove-source=false` is mandatory here. werf v2 keeps reading its metadata from `--repo`, so the default behaviour of `migrate` would delete the metadata v2 depends on.
-- Only werf v3 may run `cleanup` or `purge` against the shared `--repo`. werf v2 would decide the fate of stages from a metadata view that v3 has been moving, and could delete images that are still in use.
-- werf v2 builds must be stopped, or serialized externally, around the migrate step. `migrate` works from a snapshot of the tag list, so metadata a v2 build publishes after that snapshot is missed by the cleanup that immediately follows it.
-- `--repo` keeps accumulating image-metadata records for the whole transition, and every pre-cleanup migrate re-copies the records the previous cleanup already pruned from `--meta-repo`. That is extra work proportional to the number of stale records, not data loss: cleanup re-classifies and re-deletes them.
-- Each migrate lists every tag in `--repo` and requests the manifest of every metadata candidate. On a large shared repository that is a substantial number of registry requests and can run into rate limits.
-- If `--repo` is shared with other projects and predates werf labeling these records, their unlabeled records may be copied into your `--meta-repo` as well.
-- Do not set the same custom tag (`--add-custom-tag`, `--use-custom-tag`) from both werf versions. A v3 build writes the alias into `--repo` but its metadata into `--meta-repo`, while the record v2 left in `--repo` is never removed under `--remove-source=false`. `migrate` keeps the record already in `--meta-repo` and only warns about the one in `--repo`, so a retarget made by v2 never reaches the metadata werf reads, and the following cleanup can then delete an alias that points at a live stage.
-
-`werf meta-repo detach` is not a reverse migration: it deletes the marker and leaves the metadata in `--meta-repo`.
+Running werf v2 and werf v3 against one `--repo` during a transition needs `--remove-source=false` and has its own limits — see [Migration from v2 to v3]({{ "/resources/migration_from_v2_to_v3.html" | true_relative_url }}).
 
 `werf purge` removes the marker as its last step, after the project's stages and metadata are deleted. A re-created project can therefore be built without `--meta-repo` again, with no `werf meta-repo detach` needed. If the purge fails partway, the marker is left in place so that the metadata still in `--meta-repo` stays protected.
 

@@ -31,3 +31,22 @@ Other changes:
 1. Hardcoded removal of `WERF_COMMIT_HASH`/`WERF_COMMIT_TIME_HUMAN`/`WERF_COMMIT_TIME_UNIX` from the imageSpec env-modification path is dropped. If your base image was built by a pre-fix werf version and still carries these vars, add them explicitly to `imageSpec.config.removeEnv`.
 1. The `index <sha>..<sha>` line is dropped from git patch output. Only relevant if you parse werf's raw patch output externally.
 1. The `werf synchronization` package/subsystem and public `synchronization.werf.io` dependency are gone; nothing to configure or migrate unless you ran a private synchronization server.
+
+## Running werf v2 and werf v3 against one `--repo`
+
+werf v2 has no `--meta-repo` and writes the image-metadata, managed images list, custom-tag metadata and last-cleanup record into `--repo`. To keep both versions working against one repository for a transition period, cleanup is run in two steps: migrate the metadata v2 has accumulated, then clean up.
+
+```shell
+werf meta-repo migrate --repo registry.mycompany.org/project --meta-repo registry.mycompany.org/project-meta --remove-source=false
+werf cleanup --repo registry.mycompany.org/project --meta-repo registry.mycompany.org/project-meta
+```
+
+This arrangement has limits worth knowing before relying on it:
+
+- `--remove-source=false` is mandatory here. werf v2 keeps reading its metadata from `--repo`, so the default behaviour of `migrate` would delete the metadata v2 depends on.
+- Only werf v3 may run `cleanup` or `purge` against the shared `--repo`. werf v2 would decide the fate of stages from a metadata view that v3 has been moving, and could delete images that are still in use.
+- werf v2 builds must be stopped, or serialized externally, around the migrate step. `migrate` works from a snapshot of the tag list, so metadata a v2 build publishes after that snapshot is missed by the cleanup that immediately follows it.
+- `--repo` keeps accumulating image-metadata records for the whole transition, and every pre-cleanup migrate re-copies the records the previous cleanup already pruned from `--meta-repo`. That is extra work proportional to the number of stale records, not data loss: cleanup re-classifies and re-deletes them.
+- Each migrate lists every tag in `--repo` and requests the manifest of every metadata candidate. On a large shared repository that is a substantial number of registry requests and can run into rate limits.
+- If `--repo` is shared with other projects and predates werf labeling these records, their unlabeled records may be copied into your `--meta-repo` as well.
+- Do not set the same custom tag (`--add-custom-tag`, `--use-custom-tag`) from both werf versions. A v3 build writes the alias into `--repo` but its metadata into `--meta-repo`, while the record v2 left in `--repo` is never removed under `--remove-source=false`. `migrate` keeps the record already in `--meta-repo` and only warns about the one in `--repo`, so a retarget made by v2 never reaches the metadata werf reads, and the following cleanup can then delete an alias that points at a live stage.
