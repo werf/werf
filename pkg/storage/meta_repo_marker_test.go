@@ -529,6 +529,24 @@ var _ = Describe("meta-repo marker", func() {
 			Expect(reg.has(stagesRepo + ":cleanup")).To(BeFalse())
 		})
 
+		It("lets the source custom-tag metadata win over a retargeted destination one", func(ctx SpecContext) {
+			reg.put(stagesRepo+":custom-tag-meta-tag1", map[string]string{
+				image.WerfLabel:                         proj,
+				image.WerfCustomTagMetadataStageIDLabel: "stage-b",
+				image.WerfCustomTagMetadataTag:          "tag1",
+			})
+			reg.put(metaRepo+":custom-tag-meta-tag1", map[string]string{
+				image.WerfLabel:                         proj,
+				image.WerfCustomTagMetadataStageIDLabel: "stage-a",
+				image.WerfCustomTagMetadataTag:          "tag1",
+			})
+			Expect(MigrateMetaRepo(ctx, proj, stages, meta, MigrateMetaRepoOptions{})).To(Succeed())
+			img, err := reg.TryGetRepoImage(ctx, metaRepo+":custom-tag-meta-tag1")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(img).NotTo(BeNil())
+			Expect(img.Labels[image.WerfCustomTagMetadataStageIDLabel]).To(Equal("stage-b"))
+		})
+
 		It("leaves source intact when a copy fails", func(ctx SpecContext) {
 			reg.copyErr = fmt.Errorf("boom")
 			err := MigrateMetaRepo(ctx, proj, stages, meta, MigrateMetaRepoOptions{RemoveSource: true})
