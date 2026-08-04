@@ -8,7 +8,7 @@ Remove the per-project meta-repo marker from --repo so werf no longer forces --m
 {{ header }} Syntax
 
 ```shell
-werf meta-repo disable [options]
+werf meta-repo detach [options]
 ```
 
 {{ header }} Options

@@ -91,9 +91,9 @@ werf meta-repo migrate [options]
       --platform=[]
             Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT]     
             ($WERF_PLATFORM or $DOCKER_DEFAULT_PLATFORM by default)
-      --remove-source=false
+      --remove-source=true
             Delete the original metadata records from --repo after they are verified present in     
-            --meta-repo (default $WERF_REMOVE_SOURCE)
+            --meta-repo (default $WERF_REMOVE_SOURCE or true if not specified)
       --repo=""
             Container registry storage address (default $WERF_REPO)
       --repo-container-registry=""

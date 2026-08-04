@@ -136,8 +136,8 @@ cli: &cli
 
       - title: werf meta-repo
         f:
-          - title: werf meta-repo disable
-            url: /reference/cli/werf_meta_repo_disable.html
+          - title: werf meta-repo detach
+            url: /reference/cli/werf_meta_repo_detach.html
 
           - title: werf meta-repo migrate
             url: /reference/cli/werf_meta_repo_migrate.html
