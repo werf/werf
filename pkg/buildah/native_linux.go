@@ -418,6 +418,11 @@ func (b *NativeBuildah) BuildFromDockerfile(ctx context.Context, dockerfile stri
 		return "", err
 	}
 
+	nsOpts, netPolicy, err := generateNamespaceOptionsAndNetworkPolicy(opts.NetworkType)
+	if err != nil {
+		return "", fmt.Errorf("configure Dockerfile build network: %w", err)
+	}
+
 	commonBuildOpts := b.defaultCommonBuildOptions
 	buildOpts := define.BuildOptions{
 		Isolation:               define.Isolation(b.Isolation),
@@ -426,7 +431,8 @@ func (b *NativeBuildah) BuildFromDockerfile(ctx context.Context, dockerfile stri
 		ReportWriter:            opts.LogWriter,
 		OutputFormat:            buildah.Dockerv2ImageManifest,
 		SystemContext:           sysCtx,
-		ConfigureNetwork:        define.NetworkEnabled,
+		NamespaceOptions:        nsOpts,
+		ConfigureNetwork:        netPolicy,
 		CommonBuildOpts:         &commonBuildOpts,
 		Target:                  opts.Target,
 		Platforms:               targetPlatforms,
@@ -499,7 +505,10 @@ func (b *NativeBuildah) RunCommand(ctx context.Context, container string, comman
 	}
 
 	contextDir := generateContextDir(opts.ContextDir, opts.RunMounts)
-	nsOpts, netPolicy := generateNamespaceOptionsAndNetworkPolicy(opts.NetworkType)
+	nsOpts, netPolicy, err := generateNamespaceOptionsAndNetworkPolicy(opts.NetworkType)
+	if err != nil {
+		return fmt.Errorf("configure run command network: %w", err)
+	}
 	globalMounts := generateGlobalMounts(opts.GlobalMounts)
 	runMounts := generateRunMounts(opts.RunMounts)
 	stdout, stderr, stderrBuf := generateStdoutStderr(opts.LogWriter)
@@ -1363,7 +1372,7 @@ func rlimitsToBuildahUlimits(rlimits map[int]*syscall.Rlimit) []string {
 	}
 }
 
-func generateNamespaceOptionsAndNetworkPolicy(network string) (define.NamespaceOptions, define.NetworkConfigurationPolicy) {
+func generateNamespaceOptionsAndNetworkPolicy(network string) (define.NamespaceOptions, define.NetworkConfigurationPolicy, error) {
 	var netPolicy define.NetworkConfigurationPolicy
 	nsOpts := define.NamespaceOptions{}
 
@@ -1385,10 +1394,10 @@ func generateNamespaceOptionsAndNetworkPolicy(network string) (define.NamespaceO
 			Name: string(specs.NetworkNamespace),
 		})
 	default:
-		panic(fmt.Sprintf("unexpected network type: %v", network))
+		return nil, netPolicy, fmt.Errorf("unsupported network mode %q for the native Buildah backend (supported: default, host, none)", network)
 	}
 
-	return nsOpts, netPolicy
+	return nsOpts, netPolicy, nil
 }
 
 func generateRunMounts(mounts []*instructions.Mount) []string {
