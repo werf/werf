@@ -65,6 +65,7 @@ Classify each risk as Technical, Security, UX/Product, or Operational, and repor
 - Persisted formats (stage metadata, bundles, storage records) need backward compatibility.
 - `go.mod` replaces cobra and oras with `werf/3p-*` forks — upstream documentation is not authoritative for them.
 - Build and test only via `task` commands, never raw Go tools.
+- The PR description outlives the review — werf squashes, so it becomes the commit body. Audit its claims against your findings: a safety property asserted there that a finding contradicts is itself a defect, and inline comments anchored to code lines never reach whoever reads it.
 
 ## Output
 
