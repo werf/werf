@@ -14,30 +14,37 @@ func TestMigrate(t *testing.T) {
 }
 
 var _ = Describe("migrate command", func() {
-	It("uses source and destination flags without environment defaults", func() {
-		GinkgoT().Setenv("WERF_FROM", "registry.example.com/project")
-		GinkgoT().Setenv("WERF_TO", "registry.example.com/project-meta")
+	It("scopes source and destination address env to the command", func() {
+		GinkgoT().Setenv("WERF_FROM", "generic-from")
+		GinkgoT().Setenv("WERF_TO", "generic-to")
+		GinkgoT().Setenv("WERF_META_REPO_MIGRATE_FROM", "registry.example.com/project")
+		GinkgoT().Setenv("WERF_META_REPO_MIGRATE_TO", "registry.example.com/project-meta")
 
 		cmd := NewCmd(context.Background())
 
 		fromFlag := cmd.Flags().Lookup("from")
 		Expect(fromFlag).NotTo(BeNil())
-		Expect(fromFlag.DefValue).To(BeEmpty())
+		Expect(fromFlag.DefValue).To(Equal("registry.example.com/project"))
 
 		toFlag := cmd.Flags().Lookup("to")
 		Expect(toFlag).NotTo(BeNil())
-		Expect(toFlag.DefValue).To(BeEmpty())
+		Expect(toFlag.DefValue).To(Equal("registry.example.com/project-meta"))
 
 		Expect(cmd.Flags().Lookup("repo")).To(BeNil())
 		Expect(cmd.Flags().Lookup("meta-repo")).To(BeNil())
 	})
 
-	It("exposes source registry credential flags for deletes but not the destination", func() {
+	It("exposes command-scoped source registry credential flags but not the destination", func() {
+		GinkgoT().Setenv("WERF_META_REPO_MIGRATE_FROM_QUAY_TOKEN", "tok")
+
 		cmd := NewCmd(context.Background())
 
 		Expect(cmd.Flags().Lookup("from-docker-hub-token")).NotTo(BeNil())
-		Expect(cmd.Flags().Lookup("from-quay-token")).NotTo(BeNil())
 		Expect(cmd.Flags().Lookup("from-container-registry")).NotTo(BeNil())
+
+		quay := cmd.Flags().Lookup("from-quay-token")
+		Expect(quay).NotTo(BeNil())
+		Expect(quay.DefValue).To(Equal("tok"))
 
 		Expect(cmd.Flags().Lookup("to-docker-hub-token")).To(BeNil())
 		Expect(cmd.Flags().Lookup("to-quay-token")).To(BeNil())
