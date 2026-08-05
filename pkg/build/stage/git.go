@@ -33,6 +33,10 @@ func (s *GitStage) PrepareImage(ctx context.Context, c Conveyor, cb container_ba
 	return s.BaseStage.PrepareImage(ctx, c, cb, prevBuiltImage, stageImage, nil)
 }
 
-func (s *GitStage) SelectSuitableStageDesc(ctx context.Context, _ Conveyor, stageDescSet image.StageDescSet) (*image.StageDesc, error) {
+func (s *GitStage) SelectSuitableStageDesc(ctx context.Context, c Conveyor, stageDescSet image.StageDescSet) (*image.StageDesc, error) {
+	if s.IsContentAnchor() {
+		return s.BaseStage.SelectSuitableStageDesc(ctx, c, stageDescSet)
+	}
+
 	return s.selectStageDescByExistingGitCommits(ctx, stageDescSet)
 }
