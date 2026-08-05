@@ -140,9 +140,6 @@ werf bundle plan [options]
       --kube-token-path=""
             Path to file with bearer token for authentication in Kubernetes (default                
             $WERF_KUBE_TOKEN_PATH)
-      --local-resource-validation=false
-            Do not use external json schema sources, validate against the json schemas embedded     
-            into the binary instead (default $WERF_LOCAL_RESOURCE_VALIDATION)
       --log-color-mode="auto"
             Set log color mode.
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        
