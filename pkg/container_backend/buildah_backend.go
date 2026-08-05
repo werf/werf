@@ -17,6 +17,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/containers/storage/types"
 	"github.com/google/uuid"
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
@@ -115,7 +116,7 @@ func isImageNotKnownError(err error) bool {
 		return false
 	}
 
-	return strings.Contains(strings.ToLower(err.Error()), "image not known")
+	return strings.HasSuffix(err.Error(), types.ErrImageUnknown.Error())
 }
 
 func (backend *BuildahBackend) Info(ctx context.Context) (info.Info, error) {
@@ -180,8 +181,6 @@ func (backend *BuildahBackend) createContainers(ctx context.Context, images []st
 		_, err := backend.buildah.FromCommand(ctx, containerID, resolvedImg, fromCommandOpts)
 		if err != nil && opts.TargetPlatform != "" && usedCachedImageID && isImageNotKnownError(err) {
 			logboek.Context(ctx).Debug().LogF("Cached imageID %q for %q not found locally, pulling by ref and retrying\n", resolvedImg, img)
-
-			backend.pulledImageIDs.Delete(pulledImageKey{img, opts.TargetPlatform})
 
 			pulledImageID, pullErr := backend.buildah.Pull(ctx, img, buildah.PullOpts(backend.getBuildahCommonOpts(ctx, true, nil, opts.TargetPlatform)))
 			if pullErr != nil {
