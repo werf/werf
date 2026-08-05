@@ -46,6 +46,8 @@ import (
 	managed_images_add "github.com/werf/werf/v2/cmd/werf/managed_images/add"
 	managed_images_ls "github.com/werf/werf/v2/cmd/werf/managed_images/ls"
 	managed_images_rm "github.com/werf/werf/v2/cmd/werf/managed_images/rm"
+	meta_repo_detach "github.com/werf/werf/v2/cmd/werf/meta_repo/detach"
+	meta_repo_migrate "github.com/werf/werf/v2/cmd/werf/meta_repo/migrate"
 	"github.com/werf/werf/v2/cmd/werf/plan"
 	"github.com/werf/werf/v2/cmd/werf/purge"
 	release_get "github.com/werf/werf/v2/cmd/werf/release/get"
@@ -116,6 +118,7 @@ func ConstructRootCmd(ctx context.Context) (*cobra.Command, error) {
 			Commands: []*cobra.Command{
 				configCmd(ctx),
 				managedImagesCmd(ctx),
+				metaRepoCmd(ctx),
 				hostCmd(ctx),
 				helmCmd,
 				releaseCmd(ctx),
@@ -221,6 +224,19 @@ func managedImagesCmd(ctx context.Context) *cobra.Command {
 		managed_images_add.NewCmd(ctx),
 		managed_images_ls.NewCmd(ctx),
 		managed_images_rm.NewCmd(ctx),
+	)
+
+	return cmd
+}
+
+func metaRepoCmd(ctx context.Context) *cobra.Command {
+	cmd := common.SetCommandContext(ctx, &cobra.Command{
+		Use:   "meta-repo",
+		Short: "Migrate metadata into a separate meta-repo and manage the meta-repo safeguard",
+	})
+	cmd.AddCommand(
+		meta_repo_migrate.NewCmd(ctx),
+		meta_repo_detach.NewCmd(ctx),
 	)
 
 	return cmd

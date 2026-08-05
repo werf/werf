@@ -19,6 +19,8 @@ type NewStorageManagerConfig struct {
 
 	hostPurge bool
 
+	skipMetaRepoSafeguard bool
+
 	CleanupDisabled                bool
 	GitHistoryBasedCleanupDisabled bool
 	SkipMetaCheck                  bool
@@ -27,6 +29,15 @@ type NewStorageManagerConfig struct {
 func WithHostPurge() NewStorageManagerOption {
 	return func(config *NewStorageManagerConfig) {
 		config.hostPurge = true
+	}
+}
+
+// WithSkipMetaRepoSafeguard disables meta-repo marker validation and planting.
+// Only the 'werf meta-repo' commands may use it: they legitimately operate on a
+// repo state that the safeguard would otherwise reject.
+func WithSkipMetaRepoSafeguard() NewStorageManagerOption {
+	return func(config *NewStorageManagerConfig) {
+		config.skipMetaRepoSafeguard = true
 	}
 }
 
@@ -75,9 +86,16 @@ func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfi
 		return nil, fmt.Errorf("error get final stages storage: %w", err)
 	}
 
-	metaStorage, err := GetOptionalMetaStorage(ctx, c.ContainerBackend, c.CmdData, stagesStorage)
+	metaStorage, err := GetOptionalMetaStorage(ctx, c.ContainerBackend, c.CmdData, stagesStorage, c.CleanupDisabled)
 	if err != nil {
 		return nil, fmt.Errorf("error get meta storage: %w", err)
+	}
+
+	if !c.skipMetaRepoSafeguard {
+		metaStorage, err = storage.SetupMetaRepoSafeguard(ctx, c.ProjectName, stagesStorage, metaStorage, c.CleanupDisabled)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	secondaryStagesStorageList, err := GetSecondaryStagesStorageList(ctx, stagesStorage, c.ContainerBackend, c.CmdData)

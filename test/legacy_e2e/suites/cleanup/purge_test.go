@@ -69,6 +69,9 @@ var _ = Describe("purge command", func() {
 					Expect(len(MetaCustomTagsMetadataList(ctx))).Should(BeNumerically(">", 0), "custom-tag metadata records land in meta-repo")
 					Expect(len(CustomTagsMetadataList(ctx))).Should(Equal(0), "stages-repo MUST NOT contain custom-tag metadata")
 
+					_, markerFound := MetaRepoMarker(ctx)
+					Expect(markerFound).Should(BeTrue(), "marker planted in stages-repo by the build")
+
 					utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "purge")
 
 					if SuiteData.TestImplementation != docker_registry.QuayImplementationName {
@@ -77,6 +80,9 @@ var _ = Describe("purge command", func() {
 						Expect(len(MetaImageMetadata(ctx, imageName))).Should(Equal(0), "image-metadata records purged from meta-repo")
 						Expect(len(CustomTags(ctx))).Should(Equal(0), "custom-tag alias images removed from stages-repo")
 						Expect(len(MetaCustomTagsMetadataList(ctx))).Should(Equal(0), "custom-tag metadata records purged from meta-repo")
+
+						_, markerFound := MetaRepoMarker(ctx)
+						Expect(markerFound).Should(BeFalse(), "purge MUST remove the meta-repo safeguard marker")
 					}
 				})
 			})

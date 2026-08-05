@@ -457,15 +457,36 @@ Final repositories reduce image retrieval time and network load by bringing the 
 
 ### Extra repository for service metadata
 
-By default, werf stores service metadata (image-metadata used for cleanup based on Git history, managed images list, custom-tag metadata, rejected-stage markers, cleanup records) in the main repository (`--repo`) alongside image stages. If necessary, this metadata can be stored in a separate repository via `--meta-repo`:
+By default, werf stores service metadata in the main repository (`--repo`) alongside image stages. If necessary, that metadata — image-metadata used for cleanup based on Git history, the managed images list, custom-tag metadata, and the last-cleanup record — can be stored in a separate repository via `--meta-repo`:
 
 ```shell
 werf build --repo registry.mycompany.org/project --meta-repo registry.mycompany.org/project-meta
 ```
 
-Separating metadata from stages is useful when stages and metadata have different lifecycles or access patterns — for example, when the stages repository is shared between projects while metadata must remain isolated, or when metadata should live on a cheaper or more available registry. The `werf cleanup` and `werf purge` commands must be invoked with the same `--meta-repo` value that was used during build.
+(Rejected-stage markers and the custom-tag aliases on stage images stay in `--repo` because they are tied to stage images.)
 
-> **Caution!** There is no automatic migration of existing metadata from the main repository to `--meta-repo`. Once the flag is enabled, werf reads and writes metadata only in `--meta-repo`; any metadata previously stored in `--repo` is no longer consulted and will remain there orphaned until manually removed. Enable this flag from the start of a project.
+Separating metadata from stages is useful when the repository accumulates a large number of service tags. image-metadata records are written per image, per commit and per stage, so under active development they quickly outnumber the stage images themselves, while every werf operation that resolves a stage lists the whole tag set of `--repo` and filters it. Moving the metadata into `--meta-repo` keeps that listing proportional to the stages alone. Every werf command (`build`, `cleanup`, `purge`, etc.) must be invoked with the same `--meta-repo` value.
+
+#### Safeguard against inconsistent `--meta-repo` usage
+
+To prevent metadata from splitting between the two repositories (which can make cleanup delete in-use images), werf records a per-project marker in `--repo` on the first metadata write to a `--meta-repo`. Afterwards the marker is enforced on every run:
+
+- omitting `--meta-repo`, or passing a different one, is a **hard error** — including a `--meta-repo` that resolves to the same repository as `--repo`;
+- read-only commands only validate the marker and never write it, so pull-only credentials keep working.
+
+#### Adopting `--meta-repo` on an existing project
+
+Passing `--meta-repo` to a project that already has metadata in `--repo` is allowed: new metadata goes to the meta-repo right away. The metadata already in `--repo` does not follow, though, and werf reading only `--meta-repo` cannot see it — so move it before the first `cleanup`, which would otherwise decide the fate of stages from an incomplete picture and delete images that are still in use:
+
+```shell
+werf meta-repo migrate --from registry.mycompany.org/project --to registry.mycompany.org/project-meta
+```
+
+`migrate` copies metadata from `--from` into `--to` (copy-first, verified, idempotent — safe to re-run), records the marker in `--from`, and then deletes each original from `--from` once its copy is verified present in `--to`. Pass `--remove-source=false` to keep the originals.
+
+To release the safeguard, run `werf meta-repo detach --repo registry.mycompany.org/project`. This removes only the marker; the metadata is **not** moved back, so subsequent runs without `--meta-repo` will read stale or empty metadata from `--repo`.
+
+`werf purge` removes the marker as its last step, after the project's stages and metadata are deleted. A re-created project can therefore be built without `--meta-repo` again, with no `werf meta-repo detach` needed. If the purge fails partway, the marker is left in place so that the metadata still in `--meta-repo` stays protected.
 
 ### Extra repository for quick access to the build cache
 

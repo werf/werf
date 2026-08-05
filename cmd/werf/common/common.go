@@ -849,7 +849,7 @@ func GetStagesStorage(ctx context.Context, containerBackend container_backend.Co
 }
 
 func GetOptionalFinalStagesStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData) (storage.StagesStorage, error) {
-	if *cmdData.FinalRepo.Address == "" {
+	if cmdData.FinalRepo == nil || cmdData.FinalRepo.Address == nil || *cmdData.FinalRepo.Address == "" {
 		return nil, nil
 	}
 
@@ -872,7 +872,7 @@ func GetOptionalFinalStagesStorage(ctx context.Context, containerBackend contain
 	})
 }
 
-func GetOptionalMetaStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData, stagesStorage storage.PrimaryStagesStorage) (storage.PrimaryStagesStorage, error) {
+func GetOptionalMetaStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData, stagesStorage storage.PrimaryStagesStorage, cleanupDisabled bool) (storage.PrimaryStagesStorage, error) {
 	if cmdData.MetaRepo == nil || cmdData.MetaRepo.Address == nil || *cmdData.MetaRepo.Address == "" {
 		return stagesStorage, nil
 	}
@@ -896,6 +896,7 @@ func GetOptionalMetaStorage(ctx context.Context, containerBackend container_back
 		InsecureRegistry:      *cmdData.InsecureRegistry,
 		SkipTlsVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
 		InsecureRegistryHosts: insecureRegistryHosts,
+		CleanupDisabled:       cleanupDisabled,
 		SkipMetaCheck:         true,
 	})
 }
@@ -1258,11 +1259,19 @@ func SetupScanContextNamespaceOnly(cmdData *CmdData, cmd *cobra.Command) {
 }
 
 func GetCacheStagesStorage(cmdData *CmdData) []string {
-	return append(util.PredefinedValuesByEnvNamePrefix("WERF_CACHE_REPO_"), *cmdData.CacheStagesStorage...)
+	res := util.PredefinedValuesByEnvNamePrefix("WERF_CACHE_REPO_")
+	if cmdData.CacheStagesStorage == nil {
+		return res
+	}
+	return append(res, *cmdData.CacheStagesStorage...)
 }
 
 func GetSecondaryStagesStorage(cmdData *CmdData) []string {
-	return append(util.PredefinedValuesByEnvNamePrefix("WERF_SECONDARY_REPO_"), *cmdData.SecondaryStagesStorage...)
+	res := util.PredefinedValuesByEnvNamePrefix("WERF_SECONDARY_REPO_")
+	if cmdData.SecondaryStagesStorage == nil {
+		return res
+	}
+	return append(res, *cmdData.SecondaryStagesStorage...)
 }
 
 func GetContainerRegistryMirror(ctx context.Context, cmdData *CmdData, buildahMode buildah.Mode) ([]string, error) {

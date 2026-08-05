@@ -126,3 +126,19 @@ func MetaLastCleanupRecord(ctx context.Context) *storage.CleanupRecord {
 	Expect(err).ShouldNot(HaveOccurred())
 	return rec
 }
+
+func LastCleanupRecord(ctx context.Context) *storage.CleanupRecord {
+	rec, err := SuiteData.StagesStorage.GetLastCleanupRecord(ctx, SuiteData.ProjectName)
+	Expect(err).ShouldNot(HaveOccurred())
+	return rec
+}
+
+func MetaRepoMarker(ctx context.Context) (string, bool) {
+	repo, ok := SuiteData.StagesStorage.(*storage.RepoStagesStorage)
+	Expect(ok).To(BeTrue(), "stages storage must be a repo stages storage")
+
+	addr, found, err := repo.GetMetaRepoMarker(ctx, SuiteData.ProjectName)
+	Expect(err).ShouldNot(HaveOccurred())
+
+	return addr, found
+}

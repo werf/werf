@@ -460,6 +460,82 @@ var _ = Describe("cleanup command", func() {
 						Expect(len(ImageMetadata(ctx, imageName))).Should(Equal(0), "image-metadata still not in stages-repo")
 					})
 				})
+
+				Context("meta-repo migrate", func() {
+					// The metadata has to be built into --repo while WERF_META_REPO is
+					// still unset, so SetupMetaRepo is called inside each It rather than
+					// in a BeforeEach: otherwise the build would write straight to the
+					// destination and the migration would have nothing to move.
+					populateStagesRepo := func(ctx SpecContext, implementationName string) {
+						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build", "--add-custom-tag", fmt.Sprintf(customTagValueFormat, "tag1"))
+						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "push", "--set-upstream", "origin", branchName)
+
+						// A build produces three of the four families; only a cleanup run
+						// writes the singleton cleanup record.
+						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "cleanup")
+
+						Expect(ManagedImagesCount(ctx)).Should(BeNumerically(">", 0), "managed-image records in stages-repo before migration")
+						Expect(ImageMetadata(ctx, imageName)).ShouldNot(BeEmpty(), "image-metadata records in stages-repo before migration")
+						Expect(len(CustomTagsMetadataList(ctx))).Should(Equal(1), "custom-tag metadata in stages-repo before migration")
+						Expect(LastCleanupRecord(ctx)).ShouldNot(BeNil(), "cleanup record in stages-repo before migration")
+
+						SetupMetaRepo(ctx, implementationName)
+					}
+
+					runMigrate := func(ctx SpecContext, extraArgs ...string) {
+						args := append([]string{"meta-repo", "migrate", "--from", SuiteData.StagesStorage.Address(), "--to", SuiteData.MetaStorage.Address()}, extraArgs...)
+						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, args...)
+					}
+
+					It("should move all four metadata families into the meta-repo and plant the marker", func(ctx SpecContext) {
+						populateStagesRepo(ctx, implementationName)
+
+						runMigrate(ctx)
+
+						Expect(MetaManagedImagesCount(ctx)).Should(BeNumerically(">", 0), "managed-image records moved to meta-repo")
+						Expect(MetaImageMetadata(ctx, imageName)).ShouldNot(BeEmpty(), "image-metadata records moved to meta-repo")
+						Expect(len(MetaCustomTagsMetadataList(ctx))).Should(Equal(1), "custom-tag metadata moved to meta-repo")
+						Expect(MetaLastCleanupRecord(ctx)).ShouldNot(BeNil(), "cleanup record moved to meta-repo")
+
+						addr, found := MetaRepoMarker(ctx)
+						Expect(found).To(BeTrue(), "marker planted in stages-repo")
+						Expect(addr).ShouldNot(BeEmpty(), "marker records the meta-repo address")
+
+						if SuiteData.TestImplementation != docker_registry.QuayImplementationName {
+							Expect(ManagedImagesCount(ctx)).Should(Equal(0), "managed-image records deleted from stages-repo by default")
+							Expect(ImageMetadata(ctx, imageName)).Should(BeEmpty(), "image-metadata records deleted from stages-repo by default")
+							Expect(len(CustomTagsMetadataList(ctx))).Should(Equal(0), "custom-tag metadata deleted from stages-repo by default")
+							Expect(LastCleanupRecord(ctx)).Should(BeNil(), "cleanup record deleted from stages-repo by default")
+						}
+					})
+
+					It("should keep the source records with --remove-source=false", func(ctx SpecContext) {
+						populateStagesRepo(ctx, implementationName)
+
+						runMigrate(ctx, "--remove-source=false")
+
+						Expect(MetaManagedImagesCount(ctx)).Should(BeNumerically(">", 0), "managed-image records copied to meta-repo")
+						Expect(MetaImageMetadata(ctx, imageName)).ShouldNot(BeEmpty(), "image-metadata records copied to meta-repo")
+
+						Expect(ManagedImagesCount(ctx)).Should(BeNumerically(">", 0), "managed-image records kept in stages-repo")
+						Expect(ImageMetadata(ctx, imageName)).ShouldNot(BeEmpty(), "image-metadata records kept in stages-repo")
+						Expect(len(CustomTagsMetadataList(ctx))).Should(Equal(1), "custom-tag metadata kept in stages-repo")
+						Expect(LastCleanupRecord(ctx)).ShouldNot(BeNil(), "cleanup record kept in stages-repo")
+					})
+
+					It("should preserve git-history-protected stages on a cleanup after migration", func(ctx SpecContext) {
+						populateStagesRepo(ctx, implementationName)
+
+						runMigrate(ctx)
+
+						count := StagesCount(ctx)
+						Expect(count).Should(BeNumerically(">", 0))
+
+						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "cleanup")
+
+						Expect(StagesCount(ctx)).Should(Equal(count), "stages of the pushed branch keep their git-history protection through the migration")
+					})
+				})
 			})
 		})
 	}
