@@ -1,5 +1,32 @@
 # Changelog
 
+## [3.0.0-test.1](https://github.com/werf/werf/compare/v3.0.2...v3.0.0-test.1) (2026-08-05)
+
+
+### Features
+
+* `--no-values-schema-validation`; don't break values.schema.json with service values ([#7756](https://github.com/werf/werf/issues/7756)) ([01eeb94](https://github.com/werf/werf/commit/01eeb94fd129f01ce0c72176a61e3b5ad42f4f91))
+* add support for additional patches files and disable default patches ([#7735](https://github.com/werf/werf/issues/7735)) ([01aa2e5](https://github.com/werf/werf/commit/01aa2e5c95689aaaeceff151df1b8760938be43c))
+* bump nelm version ([#7731](https://github.com/werf/werf/issues/7731)) ([ca44562](https://github.com/werf/werf/commit/ca44562abe4986a1e66914a5fde8c6e49d5d4c57))
+* embed kubeconform schemas ([#7729](https://github.com/werf/werf/issues/7729)) ([23bcaf1](https://github.com/werf/werf/commit/23bcaf185d1034a376a1a692228408f81ceeb562))
+
+
+### Bug Fixes
+
+* **build, dockerfile:** allow dockerfile outside the build context ([#7722](https://github.com/werf/werf/issues/7722)) ([a5c2011](https://github.com/werf/werf/commit/a5c2011e32b9764405ec935c811d7bf6bd3c19e1))
+* **build, stapel, git:** remove git commit ancestry check on reuse ([#7746](https://github.com/werf/werf/issues/7746)) ([544a07d](https://github.com/werf/werf/commit/544a07d58a4ddb1ad4d2cc94b135571d895a38bb))
+* **build, stapel:** make service script executable regardless of umask ([#7720](https://github.com/werf/werf/issues/7720)) ([8b67264](https://github.com/werf/werf/commit/8b67264f781b361119a9d6be0a390afec616e258)), closes [#2339](https://github.com/werf/werf/issues/2339)
+* **build:** drop empty image digest warnings from the build report ([#7717](https://github.com/werf/werf/issues/7717)) ([24babbb](https://github.com/werf/werf/commit/24babbbbb2bde473e45a1a8bd72c3ff4c64ea532)), closes [#7667](https://github.com/werf/werf/issues/7667)
+* **build:** stop re-fetching submodules the checkout already has ([#7736](https://github.com/werf/werf/issues/7736)) ([8ff0bf3](https://github.com/werf/werf/commit/8ff0bf37050bae2837111a71a34cb15365033631))
+* **build:** validate image names in werf.yaml ([#7711](https://github.com/werf/werf/issues/7711)) ([cd993db](https://github.com/werf/werf/commit/cd993dbc6144c88bf10e852fd9406dac117718e1))
+* **dev:** self-heal a stale worktree index.lock left by a killed run ([#7733](https://github.com/werf/werf/issues/7733)) ([ca0e803](https://github.com/werf/werf/commit/ca0e80365bc5ed06ebd112fdfca9ea82ad3328a3))
+* **dev:** warm a persistent dev-index so --dev stops re-reading unchanged files ([#7732](https://github.com/werf/werf/issues/7732)) ([f0b13cc](https://github.com/werf/werf/commit/f0b13cc264af219d19b04ecfcb40fa2383c94aa5))
+
+
+### Miscellaneous Chores
+
+* **release:** test release ([#7759](https://github.com/werf/werf/issues/7759)) ([c4d8079](https://github.com/werf/werf/commit/c4d80799894e5ac8f2ac6a89f99f54221bc7a3b1))
+
 ## [3.0.2](https://github.com/werf/werf/compare/v3.0.1...v3.0.2) (2026-07-30)
 
 
