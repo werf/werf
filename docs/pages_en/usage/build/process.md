@@ -481,10 +481,10 @@ The marker is a best-effort guard rather than an absolute guarantee: it is writt
 Passing `--meta-repo` to a project that already has metadata in `--repo` is allowed: new metadata goes to the meta-repo right away. The metadata already in `--repo` does not follow, though, and werf reading only `--meta-repo` cannot see it — so move it before the first `cleanup`, which would otherwise decide the fate of stages from an incomplete picture and delete images that are still in use:
 
 ```shell
-werf meta-repo migrate --repo registry.mycompany.org/project --meta-repo registry.mycompany.org/project-meta
+werf meta-repo migrate --from registry.mycompany.org/project --to registry.mycompany.org/project-meta
 ```
 
-`migrate` copies the metadata into `--meta-repo` (copy-first, verified, idempotent — safe to re-run), records the marker in `--repo`, and then deletes each original from `--repo` once its copy is verified present in `--meta-repo`. Pass `--remove-source=false` to keep the originals.
+`migrate` copies metadata from `--from` into `--to` (copy-first, verified, idempotent — safe to re-run), records the marker in `--from`, and then deletes each original from `--from` once its copy is verified present in `--to`. Pass `--remove-source=false` to keep the originals.
 
 To release the safeguard, run `werf meta-repo detach --repo registry.mycompany.org/project`. This removes only the marker; the metadata is **not** moved back, so subsequent runs without `--meta-repo` will read stale or empty metadata from `--repo`.
 

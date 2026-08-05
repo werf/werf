@@ -3,7 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Copy the project's managed-images, image-metadata-by-commit, custom-tag metadata and last-cleanup record from --repo into --meta-repo, then record the meta-repo marker in --repo so subsequent runs are forced to use the same --meta-repo. Copy is verified before any source record is removed.
+Copy the project's managed-images, image-metadata-by-commit, custom-tag metadata and last-cleanup record from --from into --to, then record the meta-repo marker in --from so subsequent runs are forced to use the same --meta-repo. Copy is verified before any source record is removed.
 
 {{ header }} Syntax
 
@@ -45,9 +45,31 @@ werf meta-repo migrate [options]
       --docker-config=""
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)
-            Command needs granted permissions to read and write images to --repo and --meta-repo
+            Command needs granted permissions to read and write images to --from and --to
       --env=""
             Use specified environment (default $WERF_ENV)
+      --from=""
+            Container registry storage address (default $WERF_FROM)
+      --from-container-registry=""
+            Choose from container registry implementation.
+            The following container registries are supported: ecr, acr, default, dockerhub, gcr,    
+            github, gitlab, harbor, quay.
+            Default $WERF_FROM_CONTAINER_REGISTRY or auto mode (detect container registry by repo   
+            address).
+      --from-docker-hub-password=""
+            from Docker Hub password (default $WERF_FROM_DOCKER_HUB_PASSWORD)
+      --from-docker-hub-token=""
+            from Docker Hub token (default $WERF_FROM_DOCKER_HUB_TOKEN)
+      --from-docker-hub-username=""
+            from Docker Hub username (default $WERF_FROM_DOCKER_HUB_USERNAME)
+      --from-github-token=""
+            from GitHub token (default $WERF_FROM_GITHUB_TOKEN)
+      --from-harbor-password=""
+            from Harbor password (default $WERF_FROM_HARBOR_PASSWORD)
+      --from-harbor-username=""
+            from Harbor username (default $WERF_FROM_HARBOR_USERNAME)
+      --from-quay-token=""
+            from quay.io token (default $WERF_FROM_QUAY_TOKEN)
       --git-work-tree=""
             Use specified git work tree dir (default $WERF_WORK_TREE or lookup for directory that   
             contains .git in the current or parent directories)
@@ -86,36 +108,12 @@ werf meta-repo migrate [options]
             Enable verbose output (default $WERF_LOG_VERBOSE).
       --loose-giterminism=false
             Loose werf giterminism mode restrictions
-      --meta-repo=""
-            Container registry storage address (default $WERF_META_REPO)
       --platform=[]
             Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT]     
             ($WERF_PLATFORM or $DOCKER_DEFAULT_PLATFORM by default)
       --remove-source=true
-            Delete the original metadata records from --repo after they are verified present in     
-            --meta-repo (default $WERF_REMOVE_SOURCE or true if not specified)
-      --repo=""
-            Container registry storage address (default $WERF_REPO)
-      --repo-container-registry=""
-            Choose repo container registry implementation.
-            The following container registries are supported: ecr, acr, default, dockerhub, gcr,    
-            github, gitlab, harbor, quay.
-            Default $WERF_REPO_CONTAINER_REGISTRY or auto mode (detect container registry by repo   
-            address).
-      --repo-docker-hub-password=""
-            repo Docker Hub password (default $WERF_REPO_DOCKER_HUB_PASSWORD)
-      --repo-docker-hub-token=""
-            repo Docker Hub token (default $WERF_REPO_DOCKER_HUB_TOKEN)
-      --repo-docker-hub-username=""
-            repo Docker Hub username (default $WERF_REPO_DOCKER_HUB_USERNAME)
-      --repo-github-token=""
-            repo GitHub token (default $WERF_REPO_GITHUB_TOKEN)
-      --repo-harbor-password=""
-            repo Harbor password (default $WERF_REPO_HARBOR_PASSWORD)
-      --repo-harbor-username=""
-            repo Harbor username (default $WERF_REPO_HARBOR_USERNAME)
-      --repo-quay-token=""
-            repo quay.io token (default $WERF_REPO_QUAY_TOKEN)
+            Delete the original metadata records from --from after they are verified present in     
+            --to (default $WERF_REMOVE_SOURCE or true if not specified)
       --skip-tls-verify-registry=false
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)
@@ -126,5 +124,7 @@ werf meta-repo migrate [options]
             Defaults to $WERF_SSH_KEY_*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}
       --tmp-dir=""
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
+      --to=""
+            Container registry storage address (default $WERF_TO)
 ```
 

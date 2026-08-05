@@ -1,1 +1,1 @@
-move existing project metadata from --repo into --meta-repo and enable the safeguard.
+move existing project metadata from --from into --to and enable the safeguard.

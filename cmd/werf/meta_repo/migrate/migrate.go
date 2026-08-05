@@ -24,8 +24,8 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:                   "migrate",
 		DisableFlagsInUseLine: true,
-		Short:                 "Move existing project metadata from --repo into --meta-repo and enable the safeguard.",
-		Long:                  "Copy the project's managed-images, image-metadata-by-commit, custom-tag metadata and last-cleanup record from --repo into --meta-repo, then record the meta-repo marker in --repo so subsequent runs are forced to use the same --meta-repo. Copy is verified before any source record is removed.",
+		Short:                 "Move existing project metadata from --from into --to and enable the safeguard.",
+		Long:                  "Copy the project's managed-images, image-metadata-by-commit, custom-tag metadata and last-cleanup record from --from into --to, then record the meta-repo marker in --from so subsequent runs are forced to use the same --meta-repo. Copy is verified before any source record is removed.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 
@@ -52,12 +52,14 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupHomeDir(&commonCmdData, cmd, common.SetupHomeDirOptions{})
 	common.SetupSSHKey(&commonCmdData, cmd)
 
-	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{})
-	common.SetupMetaRepo(&commonCmdData, cmd)
-
-	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read and write images to --repo and --meta-repo")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
+	commonCmdData.Repo = common.NewRepoData("from", common.RepoDataOptions{})
+	commonCmdData.Repo.SetupCmd(cmd)
+	commonCmdData.MetaRepo = common.NewRepoData("to", common.RepoDataOptions{OnlyAddress: true})
+	commonCmdData.MetaRepo.SetupCmd(cmd)
+
+	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read and write images to --from and --to")
 	common.SetupContainerRegistryMirror(&commonCmdData, cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)
@@ -67,7 +69,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	commonCmdData.SetupDebugTemplates(cmd)
 	commonCmdData.SetupAllowIncludesUpdate(cmd)
 
-	cmd.Flags().BoolVar(&removeSource, "remove-source", util.GetBoolEnvironmentDefaultTrue("WERF_REMOVE_SOURCE"), "Delete the original metadata records from --repo after they are verified present in --meta-repo (default $WERF_REMOVE_SOURCE or true if not specified)")
+	cmd.Flags().BoolVar(&removeSource, "remove-source", util.GetBoolEnvironmentDefaultTrue("WERF_REMOVE_SOURCE"), "Delete the original metadata records from --from after they are verified present in --to (default $WERF_REMOVE_SOURCE or true if not specified)")
 
 	return cmd
 }
@@ -128,11 +130,11 @@ func run(ctx context.Context) error {
 
 	src, ok := storageManager.GetStagesStorage().(*storage.RepoStagesStorage)
 	if !ok {
-		return fmt.Errorf("--repo must be a container registry address")
+		return fmt.Errorf("--from must be a container registry address")
 	}
 	dst, ok := storageManager.GetMetaStorage().(*storage.RepoStagesStorage)
 	if !ok || dst == src {
-		return fmt.Errorf("--meta-repo must be set to a container registry address different from --repo")
+		return fmt.Errorf("--to must be set to a container registry address different from --from")
 	}
 
 	if err := storage.MigrateMetaRepo(ctx, projectName, src, dst, storage.MigrateMetaRepoOptions{RemoveSource: removeSource}); err != nil {

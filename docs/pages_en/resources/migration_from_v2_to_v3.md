@@ -37,7 +37,7 @@ Other changes:
 werf v2 has no `--meta-repo` and writes the image-metadata, managed images list, custom-tag metadata and last-cleanup record into `--repo`. To keep both versions working against one repository for a transition period, cleanup is run in two steps: migrate the metadata v2 has accumulated, then clean up.
 
 ```shell
-werf meta-repo migrate --repo registry.mycompany.org/project --meta-repo registry.mycompany.org/project-meta --remove-source=false
+werf meta-repo migrate --from registry.mycompany.org/project --to registry.mycompany.org/project-meta --remove-source=false
 werf cleanup --repo registry.mycompany.org/project --meta-repo registry.mycompany.org/project-meta
 ```
 

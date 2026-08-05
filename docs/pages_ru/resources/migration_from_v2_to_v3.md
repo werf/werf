@@ -37,7 +37,7 @@ toc: false
 В werf v2 нет `--meta-repo`: image-metadata, список managed images, метаданные custom-тегов и запись о последней очистке записываются в `--repo`. Чтобы на время перехода обе версии продолжали работать с одним репозиторием, очистка выполняется в два шага: сначала перенос метаданных, накопленных v2, затем очистка.
 
 ```shell
-werf meta-repo migrate --repo registry.mycompany.org/project --meta-repo registry.mycompany.org/project-meta --remove-source=false
+werf meta-repo migrate --from registry.mycompany.org/project --to registry.mycompany.org/project-meta --remove-source=false
 werf cleanup --repo registry.mycompany.org/project --meta-repo registry.mycompany.org/project-meta
 ```
 
