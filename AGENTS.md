@@ -52,6 +52,7 @@ Follow [Effective Go](https://go.dev/doc/effective_go) and [Go Code Review Comme
 
 - ALWAYS use LSP (`goToDefinition`, `findReferences`, `documentSymbol`, `hover`, `goToImplementation`, call hierarchy) to find definitions, usages, implementations, and callers. `grep` matches strings blindly: it hits comments and unrelated identifiers, and misses interface dispatch and aliased imports.
 - Use `grep` ONLY for literal text — config keys, error message strings, annotation names.
+- ALWAYS use your harness's file-read and search tools instead of `cat`, `sed -n`, `head` or `grep` inside `bash`. They cap what enters the context — byte and match limits, offset windows, long-line truncation — where a shell command dumps the whole file or every hit. Reading an entire file to look at one function is the most expensive habit there is.
 - If your harness has a semantic code-search tool, prefer it over `grep` for intent-based questions ("how does X work"). If it does not, read the code: NEVER substitute keyword grepping for understanding.
 - LSP indexes the worktree, so it answers about whatever is checked out. When the code you are reading lives in a commit that is NOT checked out — reviewing an unfetched PR head, for instance — LSP and a bare `grep` both silently describe the base instead. Read the blob (`git show <ref>:<path>`) or add a worktree at that commit; a plain worktree grep that finds nothing there proves nothing.
 
@@ -85,7 +86,11 @@ After changing Go code, run these in order — `task format` mutates files, so i
 
 NEVER assume a change compiles. While iterating, scope the slow steps (`task lint:golangci-lint golangciPaths="./pkg/foo/..."`, `task test:unit paths="./pkg/foo/..."`), then run them unscoped before handing the work over.
 
-On macOS `task build` produces a **non-CGO** binary — the Buildah backend is only built for linux/amd64 (`task build:dev:linux:amd64:cgo`), so Buildah changes cannot be compiled or exercised locally. Unit tests run anywhere. The Docker-backend entries of the e2e suites also run on macOS with Docker Desktop — `task test:e2e paths="./test/e2e/build" labelFilter="..." parallel=1`, with `WERF_TEST_K8S_DOCKER_REGISTRY` set even when the entries need no registry. Buildah entries, and any suite that needs kind, require Linux (`task test:setup:environment`).
+A green `task test:unit` does NOT prove a command runs. No unit test constructs the storage manager, so a command that dereferences a flag group it never registered dies with a SIGSEGV before doing any work while the whole unit suite stays green. After adding or changing a command, execute it once — via `task test:integration`, or the binary in `./bin/` — before calling it done.
+
+`git diff --check` cannot be a whole-repo gate. The CLI reference generator emits column-aligned help text, so the generated pages under `docs/_includes/reference/cli` and `docs/pages_en/reference/cli` carry trailing whitespace on every branch. Scope the check to authored files.
+
+On macOS `task build` produces a **non-CGO** binary — the Buildah backend is only built for linux/amd64 (`task build:dev:linux:amd64:cgo`), so Buildah changes cannot be compiled or exercised locally. Unit tests run anywhere. The Docker-backend entries of the e2e suites also run on macOS with Docker Desktop — `task test:e2e paths="./test/e2e/build" labelFilter="..." parallel=1`, with `WERF_TEST_K8S_DOCKER_REGISTRY` set even when the entries need no registry. Buildah entries, and any suite that needs kind, require Linux (`task test:setup:environment`). Anything exercising registry deletion additionally needs `REGISTRY_STORAGE_DELETE_ENABLED=true` on that registry: stock `registry:2` answers every DELETE with `UNSUPPORTED: The operation is unsupported`, which reads like a werf bug.
 
 ## Testing (MANDATORY)
 
