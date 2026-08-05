@@ -232,9 +232,6 @@ werf lint [IMAGE_NAME...] [options]
             $WERF_KUBE_TOKEN_PATH)
       --kube-version=""
             Set specific Capabilities.KubeVersion (default $WERF_KUBE_VERSION)
-      --local-resource-validation=false
-            Do not use external json schema sources, validate against the json schemas embedded     
-            into the binary instead (default $WERF_LOCAL_RESOURCE_VALIDATION)
       --log-color-mode="auto"
             Set log color mode.
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        
