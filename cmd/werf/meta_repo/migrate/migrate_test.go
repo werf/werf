@@ -14,7 +14,7 @@ func TestMigrate(t *testing.T) {
 }
 
 var _ = Describe("migrate command", func() {
-	It("uses source and destination flags", func() {
+	It("uses source and destination flags without environment defaults", func() {
 		GinkgoT().Setenv("WERF_FROM", "registry.example.com/project")
 		GinkgoT().Setenv("WERF_TO", "registry.example.com/project-meta")
 
@@ -22,11 +22,11 @@ var _ = Describe("migrate command", func() {
 
 		fromFlag := cmd.Flags().Lookup("from")
 		Expect(fromFlag).NotTo(BeNil())
-		Expect(fromFlag.DefValue).To(Equal("registry.example.com/project"))
+		Expect(fromFlag.DefValue).To(BeEmpty())
 
 		toFlag := cmd.Flags().Lookup("to")
 		Expect(toFlag).NotTo(BeNil())
-		Expect(toFlag.DefValue).To(Equal("registry.example.com/project-meta"))
+		Expect(toFlag.DefValue).To(BeEmpty())
 
 		Expect(cmd.Flags().Lookup("repo")).To(BeNil())
 		Expect(cmd.Flags().Lookup("meta-repo")).To(BeNil())

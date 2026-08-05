@@ -54,10 +54,12 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
-	commonCmdData.Repo = common.NewRepoData("from", common.RepoDataOptions{})
-	commonCmdData.Repo.SetupCmd(cmd)
+	commonCmdData.Repo = common.NewRepoData("from", common.RepoDataOptions{OnlyAddress: true})
+	commonCmdData.Repo.Address = new(string)
+	cmd.Flags().StringVarP(commonCmdData.Repo.Address, "from", "", "", "Source container registry storage address")
 	commonCmdData.MetaRepo = common.NewRepoData("to", common.RepoDataOptions{OnlyAddress: true})
-	commonCmdData.MetaRepo.SetupCmd(cmd)
+	commonCmdData.MetaRepo.Address = new(string)
+	cmd.Flags().StringVarP(commonCmdData.MetaRepo.Address, "to", "", "", "Destination container registry storage address")
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read and write images to --from and --to")
 	common.SetupContainerRegistryMirror(&commonCmdData, cmd)
