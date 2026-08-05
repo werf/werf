@@ -107,6 +107,26 @@ var _ = Describe("BuildahBackend data archives", func() {
 		Expect(string(data)).To(Equal("data"))
 	})
 
+	It("applyDataArchives resolves absolute symlink destination against container root", func(ctx SpecContext) {
+		var testCtx context.Context = logging.WithLogger(ctx)
+		rootMount := GinkgoT().TempDir()
+		Expect(os.MkdirAll(filepath.Join(rootMount, "usr", "bin"), 0o755)).To(Succeed())
+		Expect(os.Symlink("/usr/bin", filepath.Join(rootMount, "bin"))).To(Succeed())
+
+		archiveReader := newTestTarArchive(map[string]string{"gotestsum": "binary"})
+		backend := &BuildahBackend{}
+
+		Expect(backend.applyDataArchives(testCtx, &containerDesc{RootMount: rootMount}, []DataArchiveSpec{{
+			Archive: archiveReader,
+			Type:    DirectoryArchive,
+			To:      "/bin",
+		}})).To(Succeed())
+
+		data, err := os.ReadFile(filepath.Join(rootMount, "usr", "bin", "gotestsum"))
+		Expect(err).ToNot(HaveOccurred())
+		Expect(string(data)).To(Equal("binary"))
+	})
+
 	It("normalizes dependency import destination for regular file into root directory", func() {
 		sourceRoot := GinkgoT().TempDir()
 		containerRoot := GinkgoT().TempDir()
