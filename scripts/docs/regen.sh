@@ -9,8 +9,16 @@ project_dir="$(dirname $source_path)/../.."
 docs_dir="$project_dir/docs"
 
 function regen() {
+  # Every WERF_* variable in the caller's environment becomes a flag default in the
+  # generated reference, so clear them all instead of the few known offenders.
+  local werf_env_args=()
+  while IFS='=' read -r name _; do
+    werf_env_args+=(-u "$name")
+  done < <(env | grep '^WERF_' || true)
+
   # regen CLI partials, pages and sidebar
-  HOME='~' DOCKER_DEFAULT_PLATFORM='' WERF_PLATFORM='' $arg_werf_bin_path docs --dir="$project_dir" --log-terminal-width=100
+  env "${werf_env_args[@]}" HOME='~' DOCKER_DEFAULT_PLATFORM='' WERF_PLATFORM='' \
+    $arg_werf_bin_path docs --dir="$project_dir" --log-terminal-width=100
 }
 
 function create_documentation_sidebar() {
