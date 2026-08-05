@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"sync/atomic"
 
 	"github.com/containers/storage/types"
@@ -66,6 +68,46 @@ var _ = Describe("BuildahBackend pulledImageIDs", func() {
 		id, ok := backend.getPulledImageID("alpine:latest", "linux/amd64")
 		Expect(ok).To(BeTrue())
 		Expect(id).To(Equal("sha256:amd64"))
+	})
+})
+
+var _ = Describe("resolveContainerRootPath", func() {
+	It("resolves an absolute symlink against the container root, not the host root", func() {
+		rootMount := GinkgoT().TempDir()
+		Expect(os.MkdirAll(filepath.Join(rootMount, "usr", "bin"), 0o755)).To(Succeed())
+		Expect(os.WriteFile(filepath.Join(rootMount, "usr", "bin", "gotestsum"), []byte("bin"), 0o755)).To(Succeed())
+		Expect(os.Symlink("/usr/bin", filepath.Join(rootMount, "bin"))).To(Succeed())
+
+		resolved, err := resolveContainerRootPath(rootMount, "/bin/gotestsum")
+		Expect(err).ToNot(HaveOccurred())
+		Expect(resolved).To(Equal(filepath.Join(rootMount, "usr", "bin", "gotestsum")))
+	})
+
+	It("resolves a relative symlink within the container root", func() {
+		rootMount := GinkgoT().TempDir()
+		Expect(os.MkdirAll(filepath.Join(rootMount, "usr", "bin"), 0o755)).To(Succeed())
+		Expect(os.Symlink("usr/bin", filepath.Join(rootMount, "bin"))).To(Succeed())
+
+		resolved, err := resolveContainerRootPath(rootMount, "/bin/tool")
+		Expect(err).ToNot(HaveOccurred())
+		Expect(resolved).To(Equal(filepath.Join(rootMount, "usr", "bin", "tool")))
+	})
+
+	It("keeps a symlink escaping the container root scoped to it", func() {
+		rootMount := GinkgoT().TempDir()
+		Expect(os.Symlink("../../../etc", filepath.Join(rootMount, "escape"))).To(Succeed())
+
+		resolved, err := resolveContainerRootPath(rootMount, "/escape/passwd")
+		Expect(err).ToNot(HaveOccurred())
+		Expect(resolved).To(Equal(filepath.Join(rootMount, "etc", "passwd")))
+	})
+
+	It("returns the joined path for a nonexistent destination", func() {
+		rootMount := GinkgoT().TempDir()
+
+		resolved, err := resolveContainerRootPath(rootMount, "/app/newfile")
+		Expect(err).ToNot(HaveOccurred())
+		Expect(resolved).To(Equal(filepath.Join(rootMount, "app", "newfile")))
 	})
 })
 
