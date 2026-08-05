@@ -1,5 +1,4 @@
 package container_registry_extensions
-package container_registry_extensions
 
 import (
 	"testing"
