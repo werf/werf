@@ -474,8 +474,6 @@ To prevent metadata from splitting between the two repositories (which can make 
 - omitting `--meta-repo`, or passing a different one, is a **hard error** — including a `--meta-repo` that resolves to the same repository as `--repo`;
 - read-only commands only validate the marker and never write it, so pull-only credentials keep working.
 
-The marker is a best-effort guard rather than an absolute guarantee: it is written with a plain read-then-write against the container registry, which offers no atomic compare-and-set. Two first runs started concurrently with different `--meta-repo` values can both find no marker and both write one. Once a marker exists, enforcement is exact.
-
 #### Adopting `--meta-repo` on an existing project
 
 Passing `--meta-repo` to a project that already has metadata in `--repo` is allowed: new metadata goes to the meta-repo right away. The metadata already in `--repo` does not follow, though, and werf reading only `--meta-repo` cannot see it — so move it before the first `cleanup`, which would otherwise decide the fate of stages from an incomplete picture and delete images that are still in use:
