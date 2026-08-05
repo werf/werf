@@ -104,6 +104,52 @@ var _ = Describe("resolveContainerRootPath", func() {
 	})
 })
 
+var _ = Describe("resolveContainerRootPathNoFollow", func() {
+	It("resolves absolute symlink parents but keeps the final component unresolved", func() {
+		rootMount := GinkgoT().TempDir()
+		Expect(os.MkdirAll(filepath.Join(rootMount, "usr", "bin"), 0o755)).To(Succeed())
+		Expect(os.Symlink("/usr/bin", filepath.Join(rootMount, "bin"))).To(Succeed())
+		Expect(os.Symlink("gotestsum-real", filepath.Join(rootMount, "usr", "bin", "gotestsum"))).To(Succeed())
+
+		resolved, err := resolveContainerRootPathNoFollow(rootMount, "/bin/gotestsum")
+		Expect(err).ToNot(HaveOccurred())
+		Expect(resolved).To(Equal(filepath.Join(rootMount, "usr", "bin", "gotestsum")))
+
+		info, err := os.Lstat(resolved)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(info.Mode() & os.ModeSymlink).ToNot(BeZero())
+	})
+
+	It("keeps a path that is itself a symlink pointing at its unresolved location", func() {
+		rootMount := GinkgoT().TempDir()
+		Expect(os.MkdirAll(filepath.Join(rootMount, "usr", "bin"), 0o755)).To(Succeed())
+		Expect(os.Symlink("/usr/bin", filepath.Join(rootMount, "bin"))).To(Succeed())
+
+		resolved, err := resolveContainerRootPathNoFollow(rootMount, "/bin")
+		Expect(err).ToNot(HaveOccurred())
+		Expect(resolved).To(Equal(filepath.Join(rootMount, "bin")))
+	})
+
+	It("normalizes a trailing slash before splitting off the final component", func() {
+		rootMount := GinkgoT().TempDir()
+		Expect(os.MkdirAll(filepath.Join(rootMount, "usr", "bin"), 0o755)).To(Succeed())
+		Expect(os.Symlink("/usr/bin", filepath.Join(rootMount, "bin"))).To(Succeed())
+
+		resolved, err := resolveContainerRootPathNoFollow(rootMount, "/bin/")
+		Expect(err).ToNot(HaveOccurred())
+		Expect(resolved).To(Equal(filepath.Join(rootMount, "bin")))
+	})
+
+	It("clamps a parent symlink escaping the container root", func() {
+		rootMount := GinkgoT().TempDir()
+		Expect(os.Symlink("../../../etc", filepath.Join(rootMount, "escape"))).To(Succeed())
+
+		resolved, err := resolveContainerRootPathNoFollow(rootMount, "/escape/passwd")
+		Expect(err).ToNot(HaveOccurred())
+		Expect(resolved).To(Equal(filepath.Join(rootMount, "etc", "passwd")))
+	})
+})
+
 var _ = Describe("platformMatches", func() {
 	DescribeTable("validates platform",
 		func(os, arch, variant, targetPlatform string, expected bool) {

@@ -222,6 +222,18 @@ func resolveContainerRootPath(rootMount, containerPath string) (string, error) {
 	return resolvedPath, nil
 }
 
+// resolveContainerRootPathNoFollow resolves the parent directories of containerPath the
+// same way, but keeps the final component unresolved, preserving lstat semantics for
+// paths that are themselves symlinks (import sources, removed paths).
+func resolveContainerRootPathNoFollow(rootMount, containerPath string) (string, error) {
+	containerPath = filepath.Clean(containerPath)
+	resolvedDir, err := resolveContainerRootPath(rootMount, filepath.Dir(containerPath))
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(resolvedDir, filepath.Base(containerPath)), nil
+}
+
 func makeScript(commands []string, verbose bool) []byte {
 	var scriptCommands []string
 	for _, c := range commands {
@@ -335,7 +347,7 @@ func (backend *BuildahBackend) CalculateDependencyImportChecksum(ctx context.Con
 		}
 	}()
 
-	fromPath, err := resolveContainerRootPath(container.RootMount, dependencyImport.FromPath)
+	fromPath, err := resolveContainerRootPathNoFollow(container.RootMount, dependencyImport.FromPath)
 	if err != nil {
 		return "", err
 	}
@@ -477,7 +489,7 @@ func (backend *BuildahBackend) applyRemoveData(ctx context.Context, container *c
 		switch spec.Type {
 		case RemoveExactPath:
 			for _, path := range spec.Paths {
-				destPath, err := resolveContainerRootPath(container.RootMount, path)
+				destPath, err := resolveContainerRootPathNoFollow(container.RootMount, path)
 				if err != nil {
 					return err
 				}
@@ -487,7 +499,7 @@ func (backend *BuildahBackend) applyRemoveData(ctx context.Context, container *c
 			}
 		case RemoveExactPathWithEmptyParentDirs:
 			for _, path := range spec.Paths {
-				destPath, err := resolveContainerRootPath(container.RootMount, path)
+				destPath, err := resolveContainerRootPathNoFollow(container.RootMount, path)
 				if err != nil {
 					return err
 				}
@@ -556,7 +568,7 @@ func (backend *BuildahBackend) applyDependenciesImports(ctx context.Context, con
 				continue
 			}
 
-			absFrom, err := resolveContainerRootPath(dep.RootMount, imp.FromPath)
+			absFrom, err := resolveContainerRootPathNoFollow(dep.RootMount, imp.FromPath)
 			if err != nil {
 				return err
 			}
