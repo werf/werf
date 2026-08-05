@@ -32,6 +32,17 @@ var _ = Describe("migrate command", func() {
 		Expect(cmd.Flags().Lookup("meta-repo")).To(BeNil())
 	})
 
+	It("exposes source registry credential flags for deletes but not the destination", func() {
+		cmd := NewCmd(context.Background())
+
+		Expect(cmd.Flags().Lookup("from-docker-hub-token")).NotTo(BeNil())
+		Expect(cmd.Flags().Lookup("from-quay-token")).NotTo(BeNil())
+		Expect(cmd.Flags().Lookup("from-container-registry")).NotTo(BeNil())
+
+		Expect(cmd.Flags().Lookup("to-docker-hub-token")).To(BeNil())
+		Expect(cmd.Flags().Lookup("to-quay-token")).To(BeNil())
+	})
+
 	It("defaults remove source to true", func() {
 		GinkgoT().Setenv("WERF_REMOVE_SOURCE", "")
 

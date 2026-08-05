@@ -50,6 +50,26 @@ werf meta-repo migrate [options]
             Use specified environment (default $WERF_ENV)
       --from=""
             Source container registry storage address
+      --from-container-registry=""
+            Choose from container registry implementation.
+            The following container registries are supported: ecr, acr, default, dockerhub, gcr,    
+            github, gitlab, harbor, quay.
+            Default $WERF_FROM_CONTAINER_REGISTRY or auto mode (detect container registry by repo   
+            address).
+      --from-docker-hub-password=""
+            from Docker Hub password (default $WERF_FROM_DOCKER_HUB_PASSWORD)
+      --from-docker-hub-token=""
+            from Docker Hub token (default $WERF_FROM_DOCKER_HUB_TOKEN)
+      --from-docker-hub-username=""
+            from Docker Hub username (default $WERF_FROM_DOCKER_HUB_USERNAME)
+      --from-github-token=""
+            from GitHub token (default $WERF_FROM_GITHUB_TOKEN)
+      --from-harbor-password=""
+            from Harbor password (default $WERF_FROM_HARBOR_PASSWORD)
+      --from-harbor-username=""
+            from Harbor username (default $WERF_FROM_HARBOR_USERNAME)
+      --from-quay-token=""
+            from quay.io token (default $WERF_FROM_QUAY_TOKEN)
       --git-work-tree=""
             Use specified git work tree dir (default $WERF_WORK_TREE or lookup for directory that   
             contains .git in the current or parent directories)

@@ -355,7 +355,7 @@ func MigrateMetaRepo(ctx context.Context, projectName string, src, dst *RepoStag
 		return err
 	}
 	if srcCanonical == dstCanonical {
-		return fmt.Errorf("--meta-repo %q resolves to the same repository as --repo %q; nothing to migrate", dst.Address(), src.Address())
+		return fmt.Errorf("--to %q resolves to the same repository as --from %q; nothing to migrate", dst.Address(), src.Address())
 	}
 
 	markerAddr, markerFound, err := src.GetMetaRepoMarker(ctx, projectName)
@@ -363,7 +363,7 @@ func MigrateMetaRepo(ctx context.Context, projectName string, src, dst *RepoStag
 		return err
 	}
 	if markerFound && markerAddr != "" && markerAddr != dstCanonical {
-		return fmt.Errorf("--repo %q already has a meta-repo safeguard for project %q pointing at %q; refusing to migrate to %q", src.Address(), projectName, markerAddr, dstCanonical)
+		return fmt.Errorf("--from %q already has a meta-repo safeguard for project %q pointing at %q; refusing to migrate to %q", src.Address(), projectName, markerAddr, dstCanonical)
 	}
 
 	records, err := src.collectMetadataRecords(ctx)

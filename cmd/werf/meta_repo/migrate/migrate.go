@@ -54,9 +54,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
-	commonCmdData.Repo = common.NewRepoData("from", common.RepoDataOptions{OnlyAddress: true})
-	commonCmdData.Repo.Address = new(string)
-	cmd.Flags().StringVarP(commonCmdData.Repo.Address, "from", "", "", "Source container registry storage address")
+	setupFromRepo(&commonCmdData, cmd)
 	commonCmdData.MetaRepo = common.NewRepoData("to", common.RepoDataOptions{OnlyAddress: true})
 	commonCmdData.MetaRepo.Address = new(string)
 	cmd.Flags().StringVarP(commonCmdData.MetaRepo.Address, "to", "", "", "Destination container registry storage address")
@@ -74,6 +72,24 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	cmd.Flags().BoolVar(&removeSource, "remove-source", util.GetBoolEnvironmentDefaultTrue("WERF_REMOVE_SOURCE"), "Delete the original metadata records from --from after they are verified present in --to (default $WERF_REMOVE_SOURCE or true if not specified)")
 
 	return cmd
+}
+
+// setupFromRepo registers --from with the full source-registry credential set
+// (removing source metadata deletes via the registry API, which needs them),
+// but keeps the address free of the generic WERF_FROM env used by other
+// commands. The credential flags carry their own WERF_FROM_* env vars.
+func setupFromRepo(cmdData *common.CmdData, cmd *cobra.Command) {
+	cmdData.Repo = common.NewRepoData("from", common.RepoDataOptions{})
+	cmdData.Repo.Address = new(string)
+	cmd.Flags().StringVarP(cmdData.Repo.Address, "from", "", "", "Source container registry storage address")
+	cmdData.Repo.SetupContainerRegistryForRepoData(cmd, "from-container-registry", []string{"WERF_FROM_CONTAINER_REGISTRY"})
+	cmdData.Repo.SetupDockerHubUsernameForRepoData(cmd, "from-docker-hub-username", []string{"WERF_FROM_DOCKER_HUB_USERNAME"})
+	cmdData.Repo.SetupDockerHubPasswordForRepoData(cmd, "from-docker-hub-password", []string{"WERF_FROM_DOCKER_HUB_PASSWORD"})
+	cmdData.Repo.SetupDockerHubTokenForRepoData(cmd, "from-docker-hub-token", []string{"WERF_FROM_DOCKER_HUB_TOKEN"})
+	cmdData.Repo.SetupGithubTokenForRepoData(cmd, "from-github-token", []string{"WERF_FROM_GITHUB_TOKEN"})
+	cmdData.Repo.SetupHarborUsernameForRepoData(cmd, "from-harbor-username", []string{"WERF_FROM_HARBOR_USERNAME"})
+	cmdData.Repo.SetupHarborPasswordForRepoData(cmd, "from-harbor-password", []string{"WERF_FROM_HARBOR_PASSWORD"})
+	cmdData.Repo.SetupQuayTokenForRepoData(cmd, "from-quay-token", []string{"WERF_FROM_QUAY_TOKEN"})
 }
 
 func run(ctx context.Context) error {
