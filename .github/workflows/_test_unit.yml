@@ -65,7 +65,7 @@ jobs:
             task --yes -p test:unit paths="$(echo ${{ inputs.packages }} | tr , ' ')" -- --coverprofile="$(openssl rand -hex 6)-coverage.out" --keep-going --skip-package '${{ inputs.excludePackages }}'
             mv *-coverage.out "$WERF_TEST_COVERAGE_DIR/"
           else
-            task --yes -p test:unit paths="$(echo ${{ inputs.packages }} | tr , ' ')" -- --keep-going --skip-package '${{ inputs.excludePackages }}'
+            task --yes -p test:unit paths="$(echo ${{ inputs.packages }} | tr , ' ')" -- --race --keep-going --skip-package '${{ inputs.excludePackages }}'
           fi
           echo loadavg: $(cat /proc/loadavg)
 
