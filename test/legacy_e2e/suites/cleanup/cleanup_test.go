@@ -482,10 +482,15 @@ var _ = Describe("cleanup command", func() {
 						SetupMetaRepo(ctx, implementationName)
 					}
 
+					runMigrate := func(ctx SpecContext, extraArgs ...string) {
+						args := append([]string{"meta-repo", "migrate", "--from", SuiteData.StagesStorage.Address(), "--to", SuiteData.MetaStorage.Address()}, extraArgs...)
+						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, args...)
+					}
+
 					It("should move all four metadata families into the meta-repo and plant the marker", func(ctx SpecContext) {
 						populateStagesRepo(ctx, implementationName)
 
-						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "meta-repo", "migrate")
+						runMigrate(ctx)
 
 						Expect(MetaManagedImagesCount(ctx)).Should(BeNumerically(">", 0), "managed-image records moved to meta-repo")
 						Expect(MetaImageMetadata(ctx, imageName)).ShouldNot(BeEmpty(), "image-metadata records moved to meta-repo")
@@ -507,7 +512,7 @@ var _ = Describe("cleanup command", func() {
 					It("should keep the source records with --remove-source=false", func(ctx SpecContext) {
 						populateStagesRepo(ctx, implementationName)
 
-						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "meta-repo", "migrate", "--remove-source=false")
+						runMigrate(ctx, "--remove-source=false")
 
 						Expect(MetaManagedImagesCount(ctx)).Should(BeNumerically(">", 0), "managed-image records copied to meta-repo")
 						Expect(MetaImageMetadata(ctx, imageName)).ShouldNot(BeEmpty(), "image-metadata records copied to meta-repo")
@@ -521,7 +526,7 @@ var _ = Describe("cleanup command", func() {
 					It("should preserve git-history-protected stages on a cleanup after migration", func(ctx SpecContext) {
 						populateStagesRepo(ctx, implementationName)
 
-						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "meta-repo", "migrate")
+						runMigrate(ctx)
 
 						count := StagesCount(ctx)
 						Expect(count).Should(BeNumerically(">", 0))
