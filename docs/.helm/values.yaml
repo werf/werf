@@ -41,5 +41,5 @@ resources:
 
 docs:
   currentRoot: v2
-  supportedRoots: [v2, v1.2]
+  supportedRoots: [v3, v2, v1.2]
   latestAliasEnabled: true
