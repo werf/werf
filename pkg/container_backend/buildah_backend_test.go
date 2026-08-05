@@ -3,7 +3,9 @@ package container_backend
 import (
 	"context"
 	"errors"
+	"fmt"
 
+	"github.com/containers/storage/types"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
@@ -94,7 +96,7 @@ var _ = Describe("BuildahBackend createContainers", func() {
 		fakeBuildah.FromCommandFunc = func(_ context.Context, _, imageRef string, _ buildah.FromCommandOpts) (string, error) {
 			switch imageRef {
 			case "sha256:stale":
-				return "", errors.New("image not known")
+				return "", fmt.Errorf("locating image with name %q: %w", imageRef, types.ErrImageUnknown)
 			case "sha256:fresh":
 				return "container-id", nil
 			default:
