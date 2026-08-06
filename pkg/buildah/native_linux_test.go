@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"strings"
+	"sync"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -31,6 +32,37 @@ var _ = Describe("buildah", func() {
 			[]string{"foo=bar", "key=value"},
 		),
 	)
+
+	Describe("generateStdoutStderr", func() {
+		It("should read stderr while it is written", func() {
+			_, stderr, stderrBuf := generateStdoutStderr(nil)
+			start := make(chan struct{})
+			var wg sync.WaitGroup
+			wg.Add(2)
+
+			go func() {
+				defer wg.Done()
+				<-start
+				for i := 0; i < 1_000; i++ {
+					if _, err := stderr.Write([]byte("stderr")); err != nil {
+						panic(err)
+					}
+				}
+			}()
+			go func() {
+				defer wg.Done()
+				<-start
+				for i := 0; i < 1_000; i++ {
+					stderrBuf.String()
+				}
+			}()
+
+			close(start)
+			wg.Wait()
+
+			Expect(stderrBuf.String()).To(HaveLen(6_000))
+		})
+	})
 
 	Describe("generateRegistriesConfig", func() {
 		It("should mark http:// mirrors as insecure", func() {
