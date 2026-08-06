@@ -182,14 +182,24 @@ func (backend *BuildahBackend) createContainers(ctx context.Context, images []st
 		if err != nil && opts.TargetPlatform != "" && usedCachedImageID && isImageNotKnownError(err) {
 			logboek.Context(ctx).Debug().LogF("Cached imageID %q for %q not found locally, pulling by ref and retrying\n", resolvedImg, img)
 
-			pulledImageID, pullErr := backend.buildah.Pull(ctx, img, buildah.PullOpts(backend.getBuildahCommonOpts(ctx, true, nil, opts.TargetPlatform)))
+			pulledImageID, pullErr := func() (string, error) {
+				mu := backend.getPullMutex(img)
+				mu.Lock()
+				defer mu.Unlock()
+
+				pulledImageID, pullErr := backend.buildah.Pull(ctx, img, buildah.PullOpts(backend.getBuildahCommonOpts(ctx, true, nil, opts.TargetPlatform)))
+				if pullErr == nil && pulledImageID != "" {
+					backend.storePulledImageID(img, opts.TargetPlatform, pulledImageID)
+				}
+
+				return pulledImageID, pullErr
+			}()
 			if pullErr != nil {
 				return nil, fmt.Errorf("unable to pull image %q after cached imageID miss: %w", img, pullErr)
 			}
 
 			resolvedImg = img
 			if pulledImageID != "" {
-				backend.storePulledImageID(img, opts.TargetPlatform, pulledImageID)
 				resolvedImg = pulledImageID
 			}
 
