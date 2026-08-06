@@ -168,6 +168,13 @@ func (stages *StagesList) AddStageID(stageID image.StageID) {
 	stages.StageIDs = append(stages.StageIDs, stageID)
 }
 
+func (stages *StagesList) Len() int {
+	stages.Mux.Lock()
+	defer stages.Mux.Unlock()
+
+	return len(stages.StageIDs)
+}
+
 type StorageManager struct {
 	parallel           bool
 	parallelTasksLimit int
@@ -297,7 +304,7 @@ func (m *StorageManager) GetFinalStageDescSet(ctx context.Context) (image.StageD
 		return nil, fmt.Errorf("error getting existing stages list of final repo %s: %w", m.FinalStagesStorage.String(), err)
 	}
 
-	logboek.Context(ctx).Debug().LogF("[%p] Got existing final stages list cache (%d stages)\n", m, len(existingStagesListCache.StageIDs))
+	logboek.Context(ctx).Debug().LogF("[%p] Got existing final stages list cache (%d stages)\n", m, existingStagesListCache.Len())
 
 	stageIDs := existingStagesListCache.GetStageIDs()
 	stageDescSet := image.NewStageDescSet()
@@ -647,7 +654,7 @@ func (m *StorageManager) CopyStageIntoFinalStorage(ctx context.Context, stageID 
 		return nil, fmt.Errorf("error getting existing stages list of final repo %s: %w", finalStagesStorage.String(), err)
 	}
 
-	logboek.Context(ctx).Debug().LogF("[%p] Got existing final stages list cache (%d stages)\n", m, len(existingStagesListCache.StageIDs))
+	logboek.Context(ctx).Debug().LogF("[%p] Got existing final stages list cache (%d stages)\n", m, existingStagesListCache.Len())
 
 	finalImageName := finalStagesStorage.ConstructStageImageName(m.ProjectName, stageID.Digest, stageID.CreationTs)
 
@@ -700,7 +707,7 @@ func (m *StorageManager) CopyStageIntoFinalStorage(ctx context.Context, stageID 
 	}
 
 	existingStagesListCache.AddStageID(stageID)
-	logboek.Context(ctx).Debug().LogF("Updated existing final stages list (%d stages)\n", len(m.FinalStagesListCache.StageIDs))
+	logboek.Context(ctx).Debug().LogF("Updated existing final stages list (%d stages)\n", existingStagesListCache.Len())
 
 	return stageDescCopy, nil
 }
