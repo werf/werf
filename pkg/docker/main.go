@@ -169,7 +169,7 @@ func newDockerCli(opts []command.CLIOption) (command.Cli, error) {
 		if err != nil {
 			return nil, err
 		}
-		return wrapAPIClientTransport(apiClient)
+		return wrapAPIClientTransport(apiClient, dockerCli.ConfigFile().HTTPHeaders), nil
 	}
 
 	if err := newCli.Initialize(clientOpts, command.WithInitializeClient(makeWrappedClient)); err != nil {
