@@ -3,6 +3,7 @@ package buildahstub
 import (
 	"context"
 	"io"
+	"sync"
 
 	"github.com/werf/werf/v2/pkg/buildah"
 	"github.com/werf/werf/v2/pkg/buildah/thirdparty"
@@ -11,11 +12,14 @@ import (
 )
 
 type BuildahStub struct {
+	callsMutex        sync.Mutex
 	FromCommandFunc   func(ctx context.Context, container, image string, opts buildah.FromCommandOpts) (string, error)
 	PullFunc          func(ctx context.Context, ref string, opts buildah.PullOpts) (string, error)
 	FromCommandImages []string
 	PullRefs          []string
 }
+
+var _ buildah.Buildah = (*BuildahStub)(nil)
 
 func (b *BuildahStub) Info(context.Context) (info.Info, error) {
 	return info.Info{}, nil
@@ -46,7 +50,10 @@ func (b *BuildahStub) RunCommand(context.Context, string, []string, buildah.RunC
 }
 
 func (b *BuildahStub) FromCommand(ctx context.Context, container, image string, opts buildah.FromCommandOpts) (string, error) {
+	b.callsMutex.Lock()
 	b.FromCommandImages = append(b.FromCommandImages, image)
+	b.callsMutex.Unlock()
+
 	if b.FromCommandFunc != nil {
 		return b.FromCommandFunc(ctx, container, image, opts)
 	}
@@ -54,7 +61,10 @@ func (b *BuildahStub) FromCommand(ctx context.Context, container, image string, 
 }
 
 func (b *BuildahStub) Pull(ctx context.Context, ref string, opts buildah.PullOpts) (string, error) {
+	b.callsMutex.Lock()
 	b.PullRefs = append(b.PullRefs, ref)
+	b.callsMutex.Unlock()
+
 	if b.PullFunc != nil {
 		return b.PullFunc(ctx, ref, opts)
 	}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync/atomic"
 
 	"github.com/containers/storage/types"
 	. "github.com/onsi/ginkgo/v2"
@@ -120,5 +121,74 @@ var _ = Describe("BuildahBackend createContainers", func() {
 		cachedID, ok := backend.getPulledImageID("registry.example.org/project/stage:tag", "linux/amd64")
 		Expect(ok).To(BeTrue())
 		Expect(cachedID).To(Equal("sha256:fresh"))
+	})
+
+	It("serializes re-pulls after cached imageID misses", func() {
+		const (
+			imageRef     = "registry.example.org/project/stage:tag"
+			platform     = "linux/amd64"
+			staleImageID = "sha256:stale"
+			freshImageID = "sha256:fresh"
+		)
+
+		firstPullStarted := make(chan struct{})
+		releaseFirstPull := make(chan struct{})
+		secondPullStarted := make(chan struct{}, 1)
+		var pullCalls atomic.Int32
+		var staleFromCalls atomic.Int32
+
+		fakeBuildah := &buildahstub.BuildahStub{}
+		fakeBuildah.FromCommandFunc = func(_ context.Context, _, imageRef string, _ buildah.FromCommandOpts) (string, error) {
+			switch imageRef {
+			case staleImageID:
+				staleFromCalls.Add(1)
+				return "", fmt.Errorf("locating image with name %q: %w", imageRef, types.ErrImageUnknown)
+			case freshImageID:
+				return "container-id", nil
+			default:
+				return "", fmt.Errorf("unexpected image ref %q", imageRef)
+			}
+		}
+		fakeBuildah.PullFunc = func(_ context.Context, ref string, _ buildah.PullOpts) (string, error) {
+			if ref != imageRef {
+				return "", fmt.Errorf("unexpected image ref %q", ref)
+			}
+
+			switch pullCalls.Add(1) {
+			case 1:
+				close(firstPullStarted)
+				<-releaseFirstPull
+			case 2:
+				secondPullStarted <- struct{}{}
+			default:
+				return "", errors.New("unexpected pull")
+			}
+
+			return freshImageID, nil
+		}
+
+		backend := NewBuildahBackend(fakeBuildah, BuildahBackendOptions{})
+		backend.storePulledImageID(imageRef, platform, staleImageID)
+
+		createContainers := func() <-chan error {
+			done := make(chan error, 1)
+			go func() {
+				_, err := backend.createContainers(context.Background(), []string{imageRef}, CommonOpts{TargetPlatform: platform})
+				done <- err
+			}()
+			return done
+		}
+
+		firstDone := createContainers()
+		Eventually(firstPullStarted).Should(BeClosed())
+
+		secondDone := createContainers()
+		Eventually(staleFromCalls.Load).Should(Equal(int32(2)))
+		Consistently(secondPullStarted).ShouldNot(Receive())
+
+		close(releaseFirstPull)
+		Eventually(firstDone).Should(Receive(Succeed()))
+		Eventually(secondDone).Should(Receive(Succeed()))
+		Expect(pullCalls.Load()).To(Equal(int32(2)))
 	})
 })
