@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.75.4](https://github.com/werf/werf/compare/v2.75.3...v2.75.4) (2026-08-06)
+
+
+### Bug Fixes
+
+* **build, buildah:** retry pull when cached image id is missing ([#7669](https://github.com/werf/werf/issues/7669)) ([9d64035](https://github.com/werf/werf/commit/9d640357576a029456d94516b64c0eda1214025a))
+* **build, buildah:** serialize concurrent base image pulls ([#7664](https://github.com/werf/werf/issues/7664)) ([6eb9144](https://github.com/werf/werf/commit/6eb9144a1f0b71b6c6df3d5ec8ba8b6d3bd14b82))
+* **build, stapel:** make service script executable regardless of umask ([#7720](https://github.com/werf/werf/issues/7720)) ([8b67264](https://github.com/werf/werf/commit/8b67264f781b361119a9d6be0a390afec616e258)), closes [#2339](https://github.com/werf/werf/issues/2339)
+* **build:** drop empty image digest warnings from the build report ([#7717](https://github.com/werf/werf/issues/7717)) ([24babbb](https://github.com/werf/werf/commit/24babbbbb2bde473e45a1a8bd72c3ff4c64ea532)), closes [#7667](https://github.com/werf/werf/issues/7667)
+* **build:** make repo-built from:scratch images readable by dive ([#7765](https://github.com/werf/werf/issues/7765)) ([54b0921](https://github.com/werf/werf/commit/54b092177796f41c5fce2944f4bf73f45e058da8))
+
 ## [2.75.3](https://github.com/werf/werf/compare/v2.75.2...v2.75.3) (2026-07-29)
 
 
