@@ -86,6 +86,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	lo.Must0(common.SetupValuesFlags(&commonCmdData, cmd))
 	lo.Must0(common.SetupSecretValuesFlags(&commonCmdData, cmd))
 	lo.Must0(common.SetupResourceValidationFlags(&commonCmdData, cmd))
+	common.SetupPatchesFlags(&commonCmdData, cmd)
 
 	common.SetupAddAnnotations(&commonCmdData, cmd)
 	common.SetupAddLabels(&commonCmdData, cmd)
@@ -261,6 +262,8 @@ func runPlan(ctx context.Context) error {
 			ForceAdoption:               commonCmdData.ForceAdoption,
 			NoInstallStandaloneCRDs:     commonCmdData.NoInstallStandaloneCRDs,
 			NoRemoveManualChanges:       commonCmdData.NoRemoveManualChanges,
+			PatchesFiles:                commonCmdData.PatchesFiles,
+			DefaultPatchesDisable:       commonCmdData.DefaultPatchesDisable,
 			ReleaseInfoAnnotations:      releaseInfoAnnotations,
 			ReleaseLabels:               releaseLabels,
 			ReleaseStorageDriver:        commonCmdData.ReleaseStorageDriver,

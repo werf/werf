@@ -127,6 +127,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	lo.Must0(common.SetupChartRepoConnectionFlags(&commonCmdData, cmd))
 	lo.Must0(common.SetupValuesFlags(&commonCmdData, cmd))
 	lo.Must0(common.SetupSecretValuesFlags(&commonCmdData, cmd))
+	lo.Must0(common.SetupNoValuesSchemaValidationFlag(&commonCmdData, cmd))
 
 	common.SetupAddAnnotations(&commonCmdData, cmd)
 	common.SetupAddLabels(&commonCmdData, cmd)
@@ -418,6 +419,7 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 		LocalKubeVersion:            commonCmdData.KubeVersion,
 		LocalLookupResourcesPaths:   commonCmdData.LocalLookupResourcesPaths,
 		NetworkParallelism:          commonCmdData.NetworkParallelism,
+		NoValuesSchemaValidation:    commonCmdData.NoValuesSchemaValidation,
 		OutputFilePath:              cmdData.RenderOutput,
 		RegistryCredentialsPath:     registryCredentialsPath,
 		ReleaseName:                 releaseName,

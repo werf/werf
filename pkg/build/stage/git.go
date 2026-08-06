@@ -34,5 +34,9 @@ func (s *GitStage) PrepareImage(ctx context.Context, c Conveyor, cb container_ba
 }
 
 func (s *GitStage) SelectSuitableStageDesc(ctx context.Context, c Conveyor, stageDescSet image.StageDescSet) (*image.StageDesc, error) {
-	return s.selectAncestorStageDescByGitMappings(ctx, c, stageDescSet)
+	if s.IsContentAnchor() {
+		return s.BaseStage.SelectSuitableStageDesc(ctx, c, stageDescSet)
+	}
+
+	return s.selectStageDescByExistingGitCommits(ctx, stageDescSet)
 }

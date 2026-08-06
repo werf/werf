@@ -15,9 +15,10 @@ If you wrote the diff you are reviewing now, say so explicitly in the report's V
 
 1. Ask the user for numbered acceptance criteria (DoD). If there are none, derive them from the PR description or the linked issue, mark them `(inferred)`, and proceed — do not stall, and do not invent criteria silently.
 2. Resolve the base first: `git fetch`, then diff against the branch the PR actually targets. werf maintains release branches (`1.2`, `2.63`, `3`, …), so `main` is the wrong base for a backport. State the resolved base in the report. For uncommitted work, review `git diff` / `git diff --cached` instead.
-3. Read every changed file. Then trace callers of the changed exported symbols whose signature or behavior changed, and of anything crossing a persistence boundary — via LSP call hierarchy and references, not grep.
-4. For 10+ changed files, split the reading by area (e.g. new files, storage/cleanup, build pipeline) across subagents if your harness has them, and synthesize the findings yourself.
-5. If the worktree holds the branch and `task` works, run `task build` and `task test:unit` — a review that never compiled the change is an opinion. NEVER run `task format`: it would rewrite the diff under review.
+3. If the PR head is not checked out, take every `file:line` from that commit's blob (`git show <head>:<path>`), never from the worktree. The worktree sits on the base, so any file the PR itself changed has different line numbers there, and a comment anchored on a worktree line number lands on the wrong line — or is rejected outright.
+4. Read every changed file. Then trace callers of the changed exported symbols whose signature or behavior changed, and of anything crossing a persistence boundary — via LSP call hierarchy and references, not grep. LSP indexes the worktree, so when the head is not checked out it answers about the base: add a worktree at the head first, or read blobs and say in the report that call tracing was limited.
+5. For 10+ changed files, split the reading by area (e.g. new files, storage/cleanup, build pipeline) across subagents if your harness has them, and synthesize the findings yourself.
+6. If the worktree holds the branch and `task` works, run `task build` and `task test:unit` — a review that never compiled the change is an opinion. NEVER run `task format`: it would rewrite the diff under review.
 
 ## Technical perspective
 
@@ -52,7 +53,7 @@ What the change does for the user — not how the code is written.
 
 Derive risks from the technical and product findings plus the diff — including compound ones, where a technical flaw produces a product gap or an operational hazard. Likelihood is Likely/Possible/Unlikely, severity is Critical/High/Medium/Low; be realistic, do not inflate. Every risk needs a concrete location.
 
-Classify each risk as Technical, Security, UX/Product, or Operational, and report risks only when they exist — an empty matrix is noise. A `go.mod` bump of `nelm`, `3p-helm`, `kubedog`, or `common-go` carries the widest blast radius here: it silently changes deploy behavior for everyone.
+Classify each risk as Technical, Security, UX/Product, or Operational, and report risks only when they exist — an empty matrix is noise. A `go.mod` bump of `nelm`, `kubedog`, or `common-go` carries the widest blast radius here: it silently changes deploy behavior for everyone.
 
 ## Gotchas
 
@@ -62,8 +63,9 @@ Classify each risk as Technical, Security, UX/Product, or Operational, and repor
 - Giterminism: any new read of uncommitted state MUST go through `giterminism_manager`.
 - `*_linux.go` / `*_others.go` pairs must stay in sync, as must the Buildah and Docker backends — and a reviewer on macOS cannot compile the Buildah side at all.
 - Persisted formats (stage metadata, bundles, storage records) need backward compatibility.
-- `go.mod` replaces cobra, buildah, oras and buildx with forks — upstream documentation is not authoritative for them.
+- `go.mod` replaces cobra and oras with `werf/3p-*` forks — upstream documentation is not authoritative for them.
 - Build and test only via `task` commands, never raw Go tools.
+- The PR description outlives the review — werf squashes, so it becomes the commit body. Audit its claims against your findings: a safety property asserted there that a finding contradicts is itself a defect, and inline comments anchored to code lines never reach whoever reads it.
 
 ## Output
 

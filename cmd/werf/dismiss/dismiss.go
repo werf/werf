@@ -109,6 +109,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	commonCmdData.SetupAllowIncludesUpdate(cmd)
 
 	lo.Must0(common.SetupKubeConnectionFlags(&commonCmdData, cmd))
+	common.SetupPatchesFlags(&commonCmdData, cmd)
 	lo.Must0(common.SetupTrackingFlags(&commonCmdData, cmd))
 
 	common.SetupDefaultDeletePropagation(&commonCmdData, cmd)
@@ -185,6 +186,8 @@ func runDismiss(ctx context.Context) error {
 		DeleteReleaseNamespace:      cmdData.WithNamespace,
 		NetworkParallelism:          commonCmdData.NetworkParallelism,
 		NoRemoveManualChanges:       commonCmdData.NoRemoveManualChanges,
+		PatchesFiles:                commonCmdData.PatchesFiles,
+		DefaultPatchesDisable:       commonCmdData.DefaultPatchesDisable,
 		ReleaseHistoryLimit:         commonCmdData.ReleaseHistoryLimit,
 		ReleaseStorageDriver:        commonCmdData.ReleaseStorageDriver,
 		ReleaseStorageSQLConnection: commonCmdData.ReleaseStorageSQLConnection,

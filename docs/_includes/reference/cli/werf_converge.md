@@ -293,9 +293,6 @@ werf converge --repo registry.mydomain.com/web --env production
       --kube-token-path=""
             Path to file with bearer token for authentication in Kubernetes (default                
             $WERF_KUBE_TOKEN_PATH)
-      --local-resource-validation=false
-            Do not use external json schema sources, validate against the json schemas embedded     
-            into the binary instead (default $WERF_LOCAL_RESOURCE_VALIDATION)
       --log-color-mode="auto"
             Set log color mode.
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        
@@ -333,6 +330,9 @@ werf converge --repo registry.mydomain.com/web --env production
             Parallelize some network operations (default $WERF_NETWORK_PARALLELISM or 30)
       --no-create-namespace=false
             Don`t create the release namespace (default $WERF_NO_CREATE_NAMESPACE)
+      --no-default-patches=false
+            Ignore patches.yaml of the top-level chart and subcharts (default                       
+            $WERF_NO_DEFAULT_PATCHES or false)
       --no-final-tracking=false
             By default disable tracking operations that have no create/update/delete resource       
             operations after them, which are most tracking operations, to speed up the release      
@@ -349,11 +349,18 @@ werf converge --repo registry.mydomain.com/web --env production
             present in the manifest (default $WERF_NO_REMOVE_MANUAL_CHANGES)
       --no-resource-validation=false
             Disable resource validation (default $WERF_NO_RESOURCE_VALIDATION)
+      --no-values-schema-validation=false
+            Disable values validation against JSON schema (default                                  
+            $WERF_NO_VALUES_SCHEMA_VALIDATION)
   -p, --parallel=true
             Run in parallel (default $WERF_PARALLEL or true)
       --parallel-tasks-limit=5
             Parallel tasks limit, set -1 to remove the limitation (default                          
             $WERF_PARALLEL_TASKS_LIMIT or 5)
+      --patches=[]
+            Additional patches files (diff patches for drift detection). Also, can be defined with  
+            $WERF_PATCHES_* (e.g. $WERF_PATCHES_1=.helm/patches_1.yaml,                             
+            $WERF_PATCHES_2=.helm/patches_2.yaml)
       --plan-lifetime=2h0m0s
             How long plan artifact is valid
       --platform=[]

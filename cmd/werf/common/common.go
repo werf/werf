@@ -864,7 +864,7 @@ func GetStagesStorage(ctx context.Context, containerBackend container_backend.Co
 }
 
 func GetOptionalFinalStagesStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData) (storage.StagesStorage, error) {
-	if *cmdData.FinalRepo.Address == "" {
+	if cmdData.FinalRepo == nil || cmdData.FinalRepo.Address == nil || *cmdData.FinalRepo.Address == "" {
 		return nil, nil
 	}
 
@@ -887,7 +887,7 @@ func GetOptionalFinalStagesStorage(ctx context.Context, containerBackend contain
 	})
 }
 
-func GetOptionalMetaStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData, stagesStorage storage.PrimaryStagesStorage) (storage.PrimaryStagesStorage, error) {
+func GetOptionalMetaStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData, stagesStorage storage.PrimaryStagesStorage, cleanupDisabled bool) (storage.PrimaryStagesStorage, error) {
 	if cmdData.MetaRepo == nil || cmdData.MetaRepo.Address == nil || *cmdData.MetaRepo.Address == "" {
 		return stagesStorage, nil
 	}
@@ -911,6 +911,7 @@ func GetOptionalMetaStorage(ctx context.Context, containerBackend container_back
 		InsecureRegistry:      *cmdData.InsecureRegistry,
 		SkipTlsVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
 		InsecureRegistryHosts: insecureRegistryHosts,
+		CleanupDisabled:       cleanupDisabled,
 		SkipMetaCheck:         true,
 	})
 }
@@ -1160,6 +1161,11 @@ Also, can be defined with $WERF_SET_STRING_* (e.g. $WERF_SET_STRING_1=key1=val1,
 	return nil
 }
 
+func SetupPatchesFlags(cmdData *CmdData, cmd *cobra.Command) {
+	cmd.Flags().StringArrayVarP(&cmdData.PatchesFiles, "patches", "", []string{}, `Additional patches files (diff patches for drift detection). Also, can be defined with $WERF_PATCHES_* (e.g. $WERF_PATCHES_1=.helm/patches_1.yaml, $WERF_PATCHES_2=.helm/patches_2.yaml)`)
+	cmd.Flags().BoolVarP(&cmdData.DefaultPatchesDisable, "no-default-patches", "", util.GetBoolEnvironmentDefaultFalse("WERF_NO_DEFAULT_PATCHES"), `Ignore patches.yaml of the top-level chart and subcharts (default $WERF_NO_DEFAULT_PATCHES or false)`)
+}
+
 func SetupSecretValuesFlags(cmdData *CmdData, cmd *cobra.Command) error {
 	SetupSecretValuesFileFlags(cmdData, cmd)
 	SetupSecretKeyFlags(cmdData, cmd)
@@ -1210,10 +1216,19 @@ func SetupResourceValidationFlags(cmdData *CmdData, cmd *cobra.Command) error {
 	}
 
 	cmd.Flags().BoolVarP(&cmdData.NoResourceValidation, "no-resource-validation", "", util.GetBoolEnvironmentDefaultFalse("WERF_NO_RESOURCE_VALIDATION"), "Disable resource validation (default $WERF_NO_RESOURCE_VALIDATION)")
-	cmd.Flags().BoolVarP(&cmdData.LocalResourceValidation, "local-resource-validation", "", util.GetBoolEnvironmentDefaultFalse("WERF_LOCAL_RESOURCE_VALIDATION"), "Do not use external json schema sources, validate against the json schemas embedded into the binary instead (default $WERF_LOCAL_RESOURCE_VALIDATION)")
 	cmd.Flags().StringArrayVarP(&cmdData.ValidationSkip, "resource-validation-skip", "", []string{}, "Skip resource validation for resources with specified attributes (can specify multiple). Format: key1=value1,key2=value2. Supported keys: group, version, kind, name, namespace. Example: kind=Deployment,name=my-app. Also, can be defined with $WERF_RESOURCE_VALIDATION_SKIP_* (e.g. $WERF_RESOURCE_VALIDATION_SKIP_1=kind=Deployment,name=my-app)")
 	cmd.Flags().StringArrayVarP(&cmdData.ValidationExtraSchemas, "resource-validation-extra-schema", "", []string{}, "Extra json schema sources to validate resources (preferred over ebedded sources). Must be a valid go template defining a http(s) URL, or an absolute path on local file system. Also, can be defined with $WERF_RESOURCE_VALIDATION_EXTRA_SCHEMA_* (eg. $WERF_RESOURCE_VALIDATION_EXTRA_SCHEMA_1='https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json')")
 	cmd.Flags().DurationVarP(&cmdData.ValidationSchemaCacheLifetime, "resource-validation-cache-lifetime", "", defaultValidationCacheLifetime, "How long local schema cache will be valid. Also can be defined by $WERF_RESOURCE_VALIDATION_CACHE_LIFETIME")
+
+	if err := SetupNoValuesSchemaValidationFlag(cmdData, cmd); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func SetupNoValuesSchemaValidationFlag(cmdData *CmdData, cmd *cobra.Command) error {
+	cmd.Flags().BoolVarP(&cmdData.NoValuesSchemaValidation, "no-values-schema-validation", "", util.GetBoolEnvironmentDefaultFalse("WERF_NO_VALUES_SCHEMA_VALIDATION"), "Disable values validation against JSON schema (default $WERF_NO_VALUES_SCHEMA_VALIDATION)")
 
 	return nil
 }
@@ -1259,11 +1274,19 @@ func SetupScanContextNamespaceOnly(cmdData *CmdData, cmd *cobra.Command) {
 }
 
 func GetCacheStagesStorage(cmdData *CmdData) []string {
-	return append(util.PredefinedValuesByEnvNamePrefix("WERF_CACHE_REPO_"), *cmdData.CacheStagesStorage...)
+	res := util.PredefinedValuesByEnvNamePrefix("WERF_CACHE_REPO_")
+	if cmdData.CacheStagesStorage == nil {
+		return res
+	}
+	return append(res, *cmdData.CacheStagesStorage...)
 }
 
 func GetSecondaryStagesStorage(cmdData *CmdData) []string {
-	return append(util.PredefinedValuesByEnvNamePrefix("WERF_SECONDARY_REPO_"), *cmdData.SecondaryStagesStorage...)
+	res := util.PredefinedValuesByEnvNamePrefix("WERF_SECONDARY_REPO_")
+	if cmdData.SecondaryStagesStorage == nil {
+		return res
+	}
+	return append(res, *cmdData.SecondaryStagesStorage...)
 }
 
 func GetContainerRegistryMirror(ctx context.Context, cmdData *CmdData, buildahMode buildah.Mode) ([]string, error) {

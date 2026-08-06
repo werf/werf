@@ -32,6 +32,7 @@ Helper commands:
 Low-level management commands:
  - [werf config]({{ "/reference/cli/werf_config_graph.html" | true_relative_url }}) — {% include /reference/cli/werf_config_graph.short.md %}.
  - [werf managed-images]({{ "/reference/cli/werf_managed_images_add.html" | true_relative_url }}) — {% include /reference/cli/werf_managed_images_add.short.md %}.
+ - [werf meta-repo]({{ "/reference/cli/werf_meta_repo_detach.html" | true_relative_url }}) — {% include /reference/cli/werf_meta_repo_detach.short.md %}.
  - [werf host]({{ "/reference/cli/werf_host_cleanup.html" | true_relative_url }}) — {% include /reference/cli/werf_host_cleanup.short.md %}.
  - [werf helm]({{ "/reference/cli/werf_helm_create.html" | true_relative_url }}) — {% include /reference/cli/werf_helm_create.short.md %}.
  - [werf release]({{ "/reference/cli/werf_release_get.html" | true_relative_url }}) — {% include /reference/cli/werf_release_get.short.md %}.
