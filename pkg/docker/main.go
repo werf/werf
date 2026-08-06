@@ -172,35 +172,13 @@ func defaultCliOptions(ctx context.Context) []command.CLIOption {
 	}
 }
 
-func applyCliOptions(c command.Cli, options []command.CLIOption) error {
-	dockerCli, ok := c.(*command.DockerCli)
-	if !ok {
-		return fmt.Errorf("expected *command.DockerCli, got %T", c)
-	}
-	for _, opt := range options {
-		if err := opt(dockerCli); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 func cliWithCustomOptions(ctx context.Context, options []command.CLIOption, f func(cli command.Cli) error) error {
-	if err := applyCliOptions(cli(ctx), options); err != nil {
-		return err
+	customCli, err := newDockerCli(append(defaultCliOptions(ctx), options...))
+	if err != nil {
+		return fmt.Errorf("create docker cli: %w", err)
 	}
 
-	err := f(cli(ctx))
-
-	if applyErr := applyCliOptions(cli(ctx), defaultCliOptions(ctx)); applyErr != nil {
-		if err != nil {
-			return err
-		} else {
-			return applyErr
-		}
-	}
-
-	return err
+	return f(customCli)
 }
 
 func NewContext(ctx context.Context) (context.Context, error) {

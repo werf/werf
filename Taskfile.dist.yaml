@@ -645,12 +645,12 @@ tasks:
       - go install github.com/dmarkham/enumer@v1.5.11
 
   sign:
-    desc: 'Sign last version tag + origin/main and push signatures. Important vars: "refs".'
+    desc: 'Sign last created version tag + origin/main and push signatures. Important vars: "refs".'
     cmds:
       - git fetch --tags -f
       - git signatures pull {{.CLI_ARGS}}
       - |
-        for ref in {{.refs | default "$(git tag --sort=v:refname | tail -n1) origin/main"}}; do
+        for ref in {{.refs | default "$(git for-each-ref --sort=-creatordate --count=1 --format='%(refname:short)' 'refs/tags/v*') origin/main"}}; do
           echo Signing $ref...
           git signatures add {{.CLI_ARGS}} $ref
           git signatures show {{.CLI_ARGS}} $ref

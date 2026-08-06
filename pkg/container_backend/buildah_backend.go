@@ -20,6 +20,7 @@ import (
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
 	"github.com/opencontainers/runtime-spec/specs-go"
+	"go.podman.io/storage"
 
 	"github.com/werf/common-go/pkg/util"
 	copyrec "github.com/werf/copy-recurse"
@@ -109,6 +110,14 @@ func platformMatches(inspect *thirdparty.BuilderInfo, targetPlatform string) boo
 	return true
 }
 
+func isImageNotKnownError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	return strings.HasSuffix(err.Error(), storage.ErrImageUnknown.Error())
+}
+
 func (backend *BuildahBackend) Info(ctx context.Context) (info.Info, error) {
 	return backend.buildah.Info(ctx)
 }
@@ -155,9 +164,11 @@ func (backend *BuildahBackend) createContainers(ctx context.Context, images []st
 		}
 
 		resolvedImg := img
+		usedCachedImageID := false
 		if opts.TargetPlatform != "" {
 			if id, ok := backend.getPulledImageID(img, opts.TargetPlatform); ok {
 				resolvedImg = id
+				usedCachedImageID = true
 			} else if inspect, err := backend.buildah.Inspect(ctx, img); err == nil && inspect != nil {
 				if !platformMatches(inspect, opts.TargetPlatform) {
 					return nil, fmt.Errorf("local image %q has platform %s/%s, but target platform is %q; pull the correct image first", img, inspect.OCIv1.OS, inspect.OCIv1.Architecture, opts.TargetPlatform)
@@ -165,7 +176,34 @@ func (backend *BuildahBackend) createContainers(ctx context.Context, images []st
 			}
 		}
 
-		_, err := backend.buildah.FromCommand(ctx, containerID, resolvedImg, buildah.FromCommandOpts(backend.getBuildahCommonOpts(ctx, true, nil, opts.TargetPlatform)))
+		fromCommandOpts := buildah.FromCommandOpts(backend.getBuildahCommonOpts(ctx, true, nil, opts.TargetPlatform))
+		_, err := backend.buildah.FromCommand(ctx, containerID, resolvedImg, fromCommandOpts)
+		if err != nil && opts.TargetPlatform != "" && usedCachedImageID && isImageNotKnownError(err) {
+			logboek.Context(ctx).Debug().LogF("Cached imageID %q for %q not found locally, pulling by ref and retrying\n", resolvedImg, img)
+
+			pulledImageID, pullErr := func() (string, error) {
+				mu := backend.getPullMutex(img)
+				mu.Lock()
+				defer mu.Unlock()
+
+				pulledImageID, pullErr := backend.buildah.Pull(ctx, img, buildah.PullOpts(backend.getBuildahCommonOpts(ctx, true, nil, opts.TargetPlatform)))
+				if pullErr == nil && pulledImageID != "" {
+					backend.storePulledImageID(img, opts.TargetPlatform, pulledImageID)
+				}
+
+				return pulledImageID, pullErr
+			}()
+			if pullErr != nil {
+				return nil, fmt.Errorf("unable to pull image %q after cached imageID miss: %w", img, pullErr)
+			}
+
+			resolvedImg = img
+			if pulledImageID != "" {
+				resolvedImg = pulledImageID
+			}
+
+			_, err = backend.buildah.FromCommand(ctx, containerID, resolvedImg, fromCommandOpts)
+		}
 		if err != nil {
 			return nil, fmt.Errorf("unable to create container using base image %q: %w", img, err)
 		}
