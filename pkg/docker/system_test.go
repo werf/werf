@@ -1,13 +1,32 @@
 package docker
 
 import (
+	"context"
 	"errors"
 
+	"github.com/docker/cli/cli/command"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("docker system", func() {
+	Describe("cliWithCustomOptions", func() {
+		It("uses a separate Docker CLI", func() {
+			ctx, err := NewContext(context.Background())
+			Expect(err).NotTo(HaveOccurred())
+
+			originalCli := cli(ctx)
+			var customCli command.Cli
+			err = cliWithCustomOptions(ctx, nil, func(c command.Cli) error {
+				customCli = c
+				return nil
+			})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(customCli).NotTo(Equal(originalCli))
+			Expect(cli(ctx)).To(Equal(originalCli))
+		})
+	})
+
 	Describe("isDaemonUnavailableErr", func() {
 		It("should return false for nil error", func() {
 			Expect(isDaemonUnavailableErr(nil)).To(BeFalse())
