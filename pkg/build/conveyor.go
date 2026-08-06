@@ -802,7 +802,7 @@ func (c *Conveyor) logOperationsSummary(ctx context.Context, collector *opstats.
 					if s.WallTime > 0 && s.TotalTime > s.WallTime {
 						parallelism = fmt.Sprintf("   ×%.1f", float64(s.TotalTime)/float64(s.WallTime))
 					}
-					logboek.Context(ctx).LogFHighlight("- %-19s %5d op   total %9.2fs   wall %9.2fs   avg %8.3fs   max %8.3fs%s\n",
+					logboek.Context(ctx).LogFHighlight("- %-28s %5d op   total %9.2fs   wall %9.2fs   avg %8.3fs   max %8.3fs%s\n",
 						s.Operation, s.Count, s.TotalTime.Seconds(), s.WallTime.Seconds(), s.AvgTime.Seconds(), s.MaxTime.Seconds(), parallelism)
 				}
 				logboek.Context(ctx).LogFHighlight("build time: %.2fs (wall must not exceed it; total may)\n", buildTime.Seconds())

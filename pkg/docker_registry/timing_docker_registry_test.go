@@ -30,7 +30,7 @@ var _ = Describe("timingDockerRegistry", func() {
 
 		summary := collector.Summary()
 		Expect(summary).To(HaveLen(1))
-		Expect(summary[0].Operation).To(Equal(opstats.OperationRegistryAPI))
+		Expect(summary[0].Operation).To(Equal(opstats.Operation("registry: Tags")))
 		Expect(summary[0].Count).To(Equal(1))
 	})
 })

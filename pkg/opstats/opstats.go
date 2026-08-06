@@ -21,7 +21,6 @@ const (
 	OperationGitPatch        Operation = "git patch"
 	OperationGitArchive      Operation = "git archive"
 	OperationGitChecksum     Operation = "git checksum"
-	OperationRegistryAPI     Operation = "registry API"
 	OperationDockerDaemon    Operation = "docker daemon API"
 	OperationStageLockWait   Operation = "stage lock wait"
 	OperationContextAddFiles Operation = "context add files"
