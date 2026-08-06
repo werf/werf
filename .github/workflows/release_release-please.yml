@@ -23,7 +23,7 @@ jobs:
         uses: googleapis/release-please-action@v5
         with:
           target-branch: ${{ github.ref_name }}
-          config-file: ${{ format('.release-please/{0}/config.json', github.ref_name) }}
+          config-file: release-please-config.json
           manifest-file: ${{ format('.release-please/{0}/manifest.json', github.ref_name) }}
           skip-github-release: true
           token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
