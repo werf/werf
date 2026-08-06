@@ -62,8 +62,11 @@ func ExpectImageIsReadable(ctx context.Context, backendMode, imageName string) {
 	for i, layer := range layers {
 		rc, err := layer.Uncompressed()
 		Expect(err).NotTo(HaveOccurred(), "expected layer %d to be readable for %s", i, imageName)
-		_, err = io.Copy(io.Discard, rc)
+		n, err := io.Copy(io.Discard, rc)
 		Expect(err).NotTo(HaveOccurred(), "expected layer %d to be fully readable for %s", i, imageName)
+		// A zero-byte layer is not a parseable tar even though go-containerregistry
+		// reads it back as gracefully empty; tools like dive fail on it with EOF.
+		Expect(n).To(BeNumerically(">", 0), "expected layer %d to be a non-empty tar archive for %s", i, imageName)
 		Expect(rc.Close()).To(Succeed())
 	}
 

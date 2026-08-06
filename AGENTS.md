@@ -58,11 +58,16 @@ Follow [Effective Go](https://go.dev/doc/effective_go) and [Go Code Review Comme
 
 ## Commands (MANDATORY)
 
-ALWAYS use these `task` commands. NEVER use raw `go build`, `go test`, `go fmt`, `go vet`, or `golangci-lint` directly. Pass extra args after `--` to forward them to the underlying command (e.g., `task test:unit -- -run TestMyFunc`).
+ALWAYS use these `task` commands. NEVER use raw `go build`, `go test`, `go fmt`, `go vet`, or `golangci-lint` directly.
+
+**`--` separator rule**: Pass `KEY=VALUE` variable assignments BEFORE `--` (they become task variables). Use `--` ONLY for flags to forward to the underlying command (ginkgo/go test). NEVER place `KEY=VALUE` after `--` — it pollutes `CLI_ARGS`, causing ginkgo to compile ALL tests instead of targeted ones.
+
+Correct: `task test:e2e paths="./test/e2e/sbom/..." labelFilter="sbom"`
+Correct: `task test:unit paths="./pkg/sbom/..." -- -focus=MyTest`
 
 - NEVER `go build` → ALWAYS `task build`. Builds binary to `./bin/`. Accepts `pkg=...`.
 - NEVER `go test` → ALWAYS `task test:unit`. Accepts `paths="./pkg/..."`.
-- NEVER `go test` (e2e) → ALWAYS `task test:e2e` with `paths="./pkg/..."` and `labelFilter="..."` (Ginkgo label filter) to target specific tests.
+- NEVER `go test` (e2e) → ALWAYS `task test:e2e` with `paths="./test/e2e/..."` and `labelFilter="..."` (Ginkgo label filter).
 - NEVER `go test` (integration) → ALWAYS `task test:integration`. Legacy e2e tests.
 - NEVER `go vet` → ALWAYS `task lint:golangci-lint`. golangci-lint includes vet checks. Accepts `golangciPaths="./pkg/..."`.
 - NEVER `go fmt`/`gofmt` → ALWAYS `task format`. Accepts `paths="pkg/foo"` — plain directories only; the `./pkg/foo/...` wildcard the test and lint tasks take makes the formatters fail.

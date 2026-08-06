@@ -2,17 +2,21 @@ package container_backend
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
+	"sync/atomic"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
+	"go.podman.io/storage"
 
 	"github.com/werf/werf/v2/pkg/buildah"
 	"github.com/werf/werf/v2/pkg/buildah/thirdparty"
 	"github.com/werf/werf/v2/pkg/container_backend/info"
 	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/test/pkg/buildahstub"
 )
 
 var _ = Describe("BuildahBackend pulledImageIDs", func() {
@@ -288,4 +292,106 @@ var _ = Describe("platformMatches", func() {
 		// (OCI default: arm64 without explicit variant is equivalent to v8)
 		Entry("target has variant, image variant empty", "linux", "arm64", "", "linux/arm64/v8", true),
 	)
+})
+
+var _ = Describe("BuildahBackend createContainers", func() {
+	It("re-pulls image by ref when cached imageID is missing locally", func() {
+		fakeBuildah := &buildahstub.BuildahStub{}
+		fakeBuildah.FromCommandFunc = func(_ context.Context, _, imageRef string, _ buildah.FromCommandOpts) (string, error) {
+			switch imageRef {
+			case "sha256:stale":
+				return "", fmt.Errorf("locating image with name %q: %w", imageRef, storage.ErrImageUnknown)
+			case "sha256:fresh":
+				return "container-id", nil
+			default:
+				return "", errors.New("unexpected image ref")
+			}
+		}
+		fakeBuildah.PullFunc = func(_ context.Context, ref string, _ buildah.PullOpts) (string, error) {
+			Expect(ref).To(Equal("registry.example.org/project/stage:tag"))
+			return "sha256:fresh", nil
+		}
+
+		backend := NewBuildahBackend(fakeBuildah, BuildahBackendOptions{})
+		backend.storePulledImageID("registry.example.org/project/stage:tag", "linux/amd64", "sha256:stale")
+
+		containers, err := backend.createContainers(context.Background(), []string{"registry.example.org/project/stage:tag"}, CommonOpts{TargetPlatform: "linux/amd64"})
+		Expect(err).ToNot(HaveOccurred())
+		Expect(containers).To(HaveLen(1))
+		Expect(fakeBuildah.FromCommandImages).To(Equal([]string{"sha256:stale", "sha256:fresh"}))
+		Expect(fakeBuildah.PullRefs).To(Equal([]string{"registry.example.org/project/stage:tag"}))
+
+		cachedID, ok := backend.getPulledImageID("registry.example.org/project/stage:tag", "linux/amd64")
+		Expect(ok).To(BeTrue())
+		Expect(cachedID).To(Equal("sha256:fresh"))
+	})
+
+	It("serializes re-pulls after cached imageID misses", func() {
+		const (
+			imageRef     = "registry.example.org/project/stage:tag"
+			platform     = "linux/amd64"
+			staleImageID = "sha256:stale"
+			freshImageID = "sha256:fresh"
+		)
+
+		firstPullStarted := make(chan struct{})
+		releaseFirstPull := make(chan struct{})
+		secondPullStarted := make(chan struct{}, 1)
+		var pullCalls atomic.Int32
+		var staleFromCalls atomic.Int32
+
+		fakeBuildah := &buildahstub.BuildahStub{}
+		fakeBuildah.FromCommandFunc = func(_ context.Context, _, imageRef string, _ buildah.FromCommandOpts) (string, error) {
+			switch imageRef {
+			case staleImageID:
+				staleFromCalls.Add(1)
+				return "", fmt.Errorf("locating image with name %q: %w", imageRef, storage.ErrImageUnknown)
+			case freshImageID:
+				return "container-id", nil
+			default:
+				return "", fmt.Errorf("unexpected image ref %q", imageRef)
+			}
+		}
+		fakeBuildah.PullFunc = func(_ context.Context, ref string, _ buildah.PullOpts) (string, error) {
+			if ref != imageRef {
+				return "", fmt.Errorf("unexpected image ref %q", ref)
+			}
+
+			switch pullCalls.Add(1) {
+			case 1:
+				close(firstPullStarted)
+				<-releaseFirstPull
+			case 2:
+				secondPullStarted <- struct{}{}
+			default:
+				return "", errors.New("unexpected pull")
+			}
+
+			return freshImageID, nil
+		}
+
+		backend := NewBuildahBackend(fakeBuildah, BuildahBackendOptions{})
+		backend.storePulledImageID(imageRef, platform, staleImageID)
+
+		createContainers := func() <-chan error {
+			done := make(chan error, 1)
+			go func() {
+				_, err := backend.createContainers(context.Background(), []string{imageRef}, CommonOpts{TargetPlatform: platform})
+				done <- err
+			}()
+			return done
+		}
+
+		firstDone := createContainers()
+		Eventually(firstPullStarted).Should(BeClosed())
+
+		secondDone := createContainers()
+		Eventually(staleFromCalls.Load).Should(Equal(int32(2)))
+		Consistently(secondPullStarted).ShouldNot(Receive())
+
+		close(releaseFirstPull)
+		Eventually(firstDone).Should(Receive(Succeed()))
+		Eventually(secondDone).Should(Receive(Succeed()))
+		Expect(pullCalls.Load()).To(Equal(int32(2)))
+	})
 })
