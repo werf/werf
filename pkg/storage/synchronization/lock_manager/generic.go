@@ -7,6 +7,7 @@ import (
 	"github.com/werf/common-go/pkg/locker"
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
+	"github.com/werf/werf/v2/pkg/opstats"
 )
 
 func NewGeneric(locker lockgate.Locker) *Generic {
@@ -19,6 +20,7 @@ type Generic struct {
 }
 
 func (manager *Generic) LockStage(ctx context.Context, projectName, digest string) (LockHandle, error) {
+	defer opstats.Observe(ctx, opstats.OperationStageLockWait)()
 	_, lock, err := manager.Locker.Acquire(genericStageLockName(projectName, digest), locker.SetupDefaultOptions(ctx, lockgate.AcquireOptions{}))
 	return LockHandle{LockgateHandle: lock, ProjectName: projectName}, err
 }

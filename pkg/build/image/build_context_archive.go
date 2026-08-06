@@ -16,6 +16,7 @@ import (
 	"github.com/werf/werf/v2/pkg/context_manager"
 	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
+	"github.com/werf/werf/v2/pkg/opstats"
 	"github.com/werf/werf/v2/pkg/path_matcher"
 )
 
@@ -69,6 +70,7 @@ func (a *BuildContextArchive) Create(ctx context.Context, opts container_backend
 
 	if len(opts.ContextAddFiles) > 0 || len(addFilesFromMem) > 0 {
 		if err := logboek.Context(ctx).Debug().LogProcess("Add contextAddFiles to build context archive %s", a.path).DoError(func() error {
+			defer opstats.Observe(ctx, opstats.OperationBuildContext)()
 			a.path, err = context_manager.AddContextAddFilesToContextArchive(ctx, &context_manager.AddContextAddFilesToContextArchiveOpts{
 				OriginalArchivePath:    a.path,
 				ProjectDir:             a.giterminismMgr.ProjectDir(),
