@@ -1,6 +1,7 @@
 package build
 
 import (
+	"encoding/json"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -30,9 +31,23 @@ var _ = Describe("ImagesReport operations summary", func() {
 
 		data, err := report.ToJsonData()
 		Expect(err).NotTo(HaveOccurred())
-		Expect(string(data)).To(ContainSubstring(`"image push"`))
-		Expect(string(data)).To(ContainSubstring(`"TotalTimeSeconds": 3`))
-		Expect(string(data)).To(ContainSubstring(`"built": 1`))
+
+		var decoded struct {
+			Operations map[string]ReportOperationRecord
+			StageCache map[string]int
+		}
+		Expect(json.Unmarshal(data, &decoded)).To(Succeed())
+
+		Expect(decoded.Operations).To(Equal(map[string]ReportOperationRecord{
+			"image push": {
+				Count:            2,
+				TotalTimeSeconds: 3,
+				WallTimeSeconds:  2,
+				AvgTimeSeconds:   1.5,
+				MaxTimeSeconds:   2,
+			},
+		}))
+		Expect(decoded.StageCache).To(Equal(map[string]int{"built": 1}))
 	})
 
 	It("omits aggregates from json when not set", func() {
