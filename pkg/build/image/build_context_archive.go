@@ -70,7 +70,7 @@ func (a *BuildContextArchive) Create(ctx context.Context, opts container_backend
 
 	if len(opts.ContextAddFiles) > 0 || len(addFilesFromMem) > 0 {
 		if err := logboek.Context(ctx).Debug().LogProcess("Add contextAddFiles to build context archive %s", a.path).DoError(func() error {
-			defer opstats.Observe(ctx, opstats.OperationBuildContext)()
+			defer opstats.Observe(ctx, opstats.OperationContextAddFiles)()
 			a.path, err = context_manager.AddContextAddFilesToContextArchive(ctx, &context_manager.AddContextAddFilesToContextArchiveOpts{
 				OriginalArchivePath:    a.path,
 				ProjectDir:             a.giterminismMgr.ProjectDir(),

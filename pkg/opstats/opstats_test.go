@@ -56,6 +56,19 @@ var _ = Describe("Collector", func() {
 		Expect(pull.TotalTime).To(Equal(3 * time.Second))
 	})
 
+	It("records at most once when the done func is called twice", func() {
+		collector := NewCollector()
+		ctx := NewContext(context.Background(), collector)
+
+		done := Observe(ctx, OperationImagePull)
+		done()
+		done()
+
+		summary := collector.Summary()
+		Expect(summary).To(HaveLen(1))
+		Expect(summary[0].Count).To(Equal(1))
+	})
+
 	It("aggregates operations concurrently and reports union wall time", func() {
 		collector := NewCollector()
 		ctx := NewContext(context.Background(), collector)

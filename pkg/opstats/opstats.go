@@ -10,21 +10,21 @@ import (
 type Operation string
 
 const (
-	OperationImagePull      Operation = "image pull"
-	OperationImagePush      Operation = "image push"
-	OperationImageBuild     Operation = "image build"
-	OperationImageInspect   Operation = "local image inspect"
-	OperationImageSaveLoad  Operation = "image save/load"
-	OperationImportChecksum Operation = "import checksum"
-	OperationGitClone       Operation = "git clone"
-	OperationGitFetch       Operation = "git fetch"
-	OperationGitPatch       Operation = "git patch"
-	OperationGitArchive     Operation = "git archive"
-	OperationGitChecksum    Operation = "git checksum"
-	OperationRegistryAPI    Operation = "registry API"
-	OperationDockerDaemon   Operation = "docker daemon API"
-	OperationStageLockWait  Operation = "stage lock wait"
-	OperationBuildContext   Operation = "build context"
+	OperationImagePull       Operation = "image pull"
+	OperationImagePush       Operation = "image push"
+	OperationImageBuild      Operation = "image build"
+	OperationImageInspect    Operation = "local image inspect"
+	OperationImageSaveLoad   Operation = "image save/load"
+	OperationImportChecksum  Operation = "import checksum"
+	OperationGitClone        Operation = "git clone"
+	OperationGitFetch        Operation = "git fetch"
+	OperationGitPatch        Operation = "git patch"
+	OperationGitArchive      Operation = "git archive"
+	OperationGitChecksum     Operation = "git checksum"
+	OperationRegistryAPI     Operation = "registry API"
+	OperationDockerDaemon    Operation = "docker daemon API"
+	OperationStageLockWait   Operation = "stage lock wait"
+	OperationContextAddFiles Operation = "context add files"
 )
 
 type Event string
@@ -50,8 +50,9 @@ func FromContext(ctx context.Context) *Collector {
 }
 
 // Observe starts measuring an operation and returns a function that records the
-// measurement into the collector bound to ctx. When no collector is bound,
-// it is a no-op. Usage: defer opstats.Observe(ctx, opstats.OperationImagePull)()
+// measurement into the collector bound to ctx. The returned function records at
+// most once, so it is safe to both call it early and defer it. When no
+// collector is bound, it is a no-op. Usage: defer opstats.Observe(ctx, opstats.OperationImagePull)()
 func Observe(ctx context.Context, op Operation) func() {
 	collector := FromContext(ctx)
 	if collector == nil {
@@ -59,8 +60,11 @@ func Observe(ctx context.Context, op Operation) func() {
 	}
 
 	start := time.Now()
+	var once sync.Once
 	return func() {
-		collector.add(op, start, time.Now())
+		once.Do(func() {
+			collector.add(op, start, time.Now())
+		})
 	}
 }
 

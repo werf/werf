@@ -1020,7 +1020,6 @@ func (backend *BuildahBackend) RefreshImageObject(ctx context.Context, img Legac
 }
 
 func (backend *BuildahBackend) PullImageFromRegistry(ctx context.Context, img LegacyImageInterface) error {
-	defer opstats.Observe(ctx, opstats.OperationImagePull)()
 	if err := backend.Pull(ctx, img.Name(), PullOpts{TargetPlatform: img.GetTargetPlatform()}); err != nil {
 		return fmt.Errorf("unable to pull image %s: %w", img.Name(), err)
 	}

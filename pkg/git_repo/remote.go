@@ -291,7 +291,8 @@ func (repo *Remote) cloneFullCore(ctx context.Context, kind mirrorKind) error {
 		return nil
 	}
 
-	defer opstats.Observe(ctx, opstats.OperationGitClone)()
+	doneClone := opstats.Observe(ctx, opstats.OperationGitClone)
+	defer doneClone()
 
 	logboek.Context(ctx).Default().LogFDetails("Clone %s\n", repo.Url)
 
@@ -323,6 +324,9 @@ func (repo *Remote) cloneFullCore(ctx context.Context, kind mirrorKind) error {
 		return err
 	}
 	if peerWon {
+		// Stop the clone observation before the fetch so git fetch is not
+		// recorded inside the git clone interval.
+		doneClone()
 		return repo.fetchOriginFullCore(ctx, kind)
 	}
 
