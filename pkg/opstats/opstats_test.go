@@ -80,9 +80,26 @@ var _ = Describe("Collector", func() {
 		Expect(summary[0].WallTime).To(BeNumerically("<", 100*time.Millisecond))
 	})
 
+	It("counts events and sorts by count", func() {
+		collector := NewCollector()
+		ctx := NewContext(context.Background(), collector)
+
+		CountEvent(ctx, EventStageBuilt)
+		CountEvent(ctx, EventStageCacheHitPrimary)
+		CountEvent(ctx, EventStageCacheHitPrimary)
+
+		events := collector.EventSummary()
+		Expect(events).To(Equal([]EventSummary{
+			{Event: EventStageCacheHitPrimary, Count: 2},
+			{Event: EventStageBuilt, Count: 1},
+		}))
+	})
+
 	It("is a no-op without collector in context", func() {
 		done := Observe(context.Background(), OperationImagePull)
 		Expect(done).NotTo(BeNil())
 		done()
+
+		CountEvent(context.Background(), EventStageBuilt)
 	})
 })

@@ -26,6 +26,14 @@ const (
 	OperationBuildContext   Operation = "build context"
 )
 
+type Event string
+
+const (
+	EventStageCacheHitPrimary   Event = "found in stages storage"
+	EventStageCacheHitSecondary Event = "copied from secondary storage"
+	EventStageBuilt             Event = "built"
+)
+
 type ctxKeyType struct{}
 
 var ctxKey ctxKeyType
@@ -54,9 +62,23 @@ func Observe(ctx context.Context, op Operation) func() {
 	}
 }
 
+// CountEvent increments the event counter in the collector bound to ctx.
+// When no collector is bound, it is a no-op.
+func CountEvent(ctx context.Context, event Event) {
+	collector := FromContext(ctx)
+	if collector == nil {
+		return
+	}
+
+	collector.mu.Lock()
+	defer collector.mu.Unlock()
+	collector.events[event]++
+}
+
 type Collector struct {
 	mu        sync.Mutex
 	intervals map[Operation][]interval
+	events    map[Event]int
 }
 
 type interval struct {
@@ -65,7 +87,10 @@ type interval struct {
 }
 
 func NewCollector() *Collector {
-	return &Collector{intervals: make(map[Operation][]interval)}
+	return &Collector{
+		intervals: make(map[Operation][]interval),
+		events:    make(map[Event]int),
+	}
 }
 
 func (c *Collector) add(op Operation, start, end time.Time) {
@@ -117,6 +142,31 @@ func (c *Collector) Summary() []OperationSummary {
 			return res[i].Operation < res[j].Operation
 		}
 		return res[i].TotalTime > res[j].TotalTime
+	})
+
+	return res
+}
+
+type EventSummary struct {
+	Event Event
+	Count int
+}
+
+// EventSummary returns per-event counters sorted by count in descending order.
+func (c *Collector) EventSummary() []EventSummary {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	res := make([]EventSummary, 0, len(c.events))
+	for event, count := range c.events {
+		res = append(res, EventSummary{Event: event, Count: count})
+	}
+
+	sort.Slice(res, func(i, j int) bool {
+		if res[i].Count == res[j].Count {
+			return res[i].Event < res[j].Event
+		}
+		return res[i].Count > res[j].Count
 	})
 
 	return res

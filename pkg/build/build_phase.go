@@ -25,6 +25,7 @@ import (
 	"github.com/werf/werf/v2/pkg/git_repo"
 	imagePkg "github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/logging"
+	"github.com/werf/werf/v2/pkg/opstats"
 	"github.com/werf/werf/v2/pkg/stapel"
 	"github.com/werf/werf/v2/pkg/storage"
 	"github.com/werf/werf/v2/pkg/storage/manager"
@@ -670,6 +671,7 @@ func (phase *BuildPhase) onImageStage(ctx context.Context, img *image.Image, stg
 	}
 
 	if foundSuitableStage {
+		opstats.CountEvent(ctx, opstats.EventStageCacheHitPrimary)
 		logboek.Context(ctx).Default().LogFHighlight("Use previously built image for %s\n", stg.LogDetailedName())
 		container_backend.LogImageInfo(ctx, stg.GetStageImage().Image, phase.getPrevNonEmptyStageImageSize(), img.ShouldLogPlatform(), phase.getLogImageNetwork(img))
 
@@ -724,6 +726,8 @@ func (phase *BuildPhase) onImageStage(ctx context.Context, img *image.Image, stg
 		if err := phase.buildStage(ctx, img, stg); err != nil {
 			return err
 		}
+
+		opstats.CountEvent(ctx, opstats.EventStageBuilt)
 
 		stg.SetMeta(&stage.StageMeta{
 			Rebuilt:             true,
@@ -844,6 +848,7 @@ ScanSecondaryStagesStorageList:
 				if err := atomicCopySuitableStageFromSecondaryStagesStorage(secondaryStageDesc, secondaryStagesStorage); err != nil {
 					return false, fmt.Errorf("unable to copy suitable stage %s from secondary stages storage %s: %w", secondaryStageDesc.StageID.String(), secondaryStagesStorage.String(), err)
 				}
+				opstats.CountEvent(ctx, opstats.EventStageCacheHitSecondary)
 				foundSuitableStage = true
 				break ScanSecondaryStagesStorageList
 			}
