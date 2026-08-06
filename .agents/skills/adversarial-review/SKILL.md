@@ -1,14 +1,13 @@
 ---
-name: agent-code-review
+name: adversarial-review
 description: >
-  Adversarial verification layer for reviewing agent-generated or otherwise untrusted
-  implementations. Use when the author of a diff, patch, commit, or test suite is an agent,
-  when a change touches tests or verification infrastructure, or when invoked as
-  /agent-code-review. Adds test falsifiability checks and check-gaming detection on top of
-  ordinary review; does not replace it.
+  Independent adversarial verification pass for a non-trivial or high-risk change. Use for a
+  fresh second opinion, when a change touches tests or verification infrastructure, or when
+  invoked as /adversarial-review. Adds test falsifiability checks and check-gaming detection
+  on top of ordinary review; does not replace it.
 ---
 
-# Agent Code Review
+# Adversarial Review
 
 Treat the change as an untrusted implementation candidate. Readable code, passing tests,
 high coverage, and the author's confidence are not evidence of correctness. Coverage
@@ -64,7 +63,7 @@ back.
 For low-risk mechanical changes with strong evidence, targeted inspection is enough. No
 line-by-line narration in either case.
 
-## Know this review's limits when you are the author
+## Independence matters
 
 If you wrote the diff you are now reviewing, this pass is necessary but not sufficient.
 Self-review — even done adversarially, even by mutating your own tests — inherits your own
