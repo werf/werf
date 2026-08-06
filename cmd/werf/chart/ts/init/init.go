@@ -44,6 +44,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	})
 
 	common.SetupDir(&commonCmdData, cmd)
+	common.SetupDenoBinaryPath(&commonCmdData, cmd)
 	common.SetupGitWorkTree(&commonCmdData, cmd)
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
 	common.SetupConfigRenderPath(&commonCmdData, cmd)
@@ -98,9 +99,12 @@ func runChartTSInit(ctx context.Context, chartDir string) error {
 		ColorMode: *commonCmdData.LogColorMode,
 	})
 
+	ctx = common.SetupDenoContext(ctx)
+
 	if err := action.ChartTSInit(ctx, action.ChartTSInitOptions{
 		ChartDirPath:      chartPath,
 		ChartName:         werfConfig.Meta.Project,
+		DenoBinaryPath:    commonCmdData.DenoBinaryPath,
 		RenderContextType: nelmcommon.TSWerfRenderContextType,
 	}); err != nil {
 		return fmt.Errorf("chart ts init: %w", err)

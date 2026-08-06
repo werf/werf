@@ -395,6 +395,8 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 		},
 	}
 
+	ctx = common.SetupDenoContext(ctx)
+
 	if err = createNewBundle(
 		ctx,
 		serviceValues,

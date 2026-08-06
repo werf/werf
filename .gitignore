@@ -18,6 +18,8 @@ cmd/werf/werf
 /stapel/*/werf-stapel-toolchain.tar
 /pkg/stapel/embed/*/*/werf-stapel-toolchain.tar.gz
 /pkg/stapel/embed/*/*/werf-stapel-toolchain.tar.sha256
+/pkg/deno/embed/*/*/deno.gz
+/pkg/deno/embed/*/*/deno.gz.*.tmp
 
 /pkg/build/builder/ansible/pylogger.h
 /pkg/build/builder/ansible/pylogger.so

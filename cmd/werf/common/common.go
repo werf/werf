@@ -22,11 +22,13 @@ import (
 	"github.com/werf/nelm/pkg/helm/pkg/chart/loader"
 	"github.com/werf/nelm/pkg/helm/pkg/engine"
 	"github.com/werf/nelm/pkg/log"
+	"github.com/werf/nelm/pkg/ts"
 	"github.com/werf/werf/v2/pkg/build"
 	"github.com/werf/werf/v2/pkg/build/stage"
 	"github.com/werf/werf/v2/pkg/buildah"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
+	"github.com/werf/werf/v2/pkg/deno"
 	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/docker_registry"
 	"github.com/werf/werf/v2/pkg/git_repo"
@@ -805,6 +807,19 @@ func SetupTSOptions(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupDenoBinaryPath(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringVarP(&cmdData.DenoBinaryPath, "deno-binary-path", "", os.Getenv("WERF_DENO_BINARY_PATH"), "Path to the Deno binary to use instead of auto-downloading (default $WERF_DENO_BINARY_PATH)")
+}
+
+// SetupDenoContext puts the embedded Deno data into ctx, so nelm can extract
+// the embedded binary lazily — only when a chart actually contains TypeScript.
+func SetupDenoContext(ctx context.Context) context.Context {
+	compressed, embedded := deno.EmbeddedDenoData()
+	if !embedded {
+		return ctx
+	}
+
+	return ts.NewContextWithTSOptions(ctx, common.TypeScriptOptions{
+		EmbeddedDenoCompressed: compressed,
+	})
 }
 
 func allStagesNames() []string {

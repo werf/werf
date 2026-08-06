@@ -376,6 +376,8 @@ func runLint(ctx context.Context, imageNameListFromArgs []string) error {
 	})
 	engine.Debug = commonCmdData.DebugTemplates
 
+	ctx = common.SetupDenoContext(ctx)
+
 	if err := action.ChartLint(ctx, action.ChartLintOptions{
 		KubeConnectionOptions:       commonCmdData.KubeConnectionOptions,
 		ChartRepoConnectionOptions:  commonCmdData.ChartRepoConnectionOptions,

@@ -243,6 +243,8 @@ func runApply(ctx context.Context) error {
 	})
 	engine.Debug = commonCmdData.DebugTemplates
 
+	ctx = common.SetupDenoContext(ctx)
+
 	if err := action.ReleaseInstall(ctx, releaseName, releaseNamespace, action.ReleaseInstallOptions{
 		KubeConnectionOptions:      commonCmdData.KubeConnectionOptions,
 		ChartRepoConnectionOptions: commonCmdData.ChartRepoConnectionOptions,

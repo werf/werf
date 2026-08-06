@@ -40,6 +40,11 @@ vars:
   buildGoTags: "{{.goTags}} embedstapel"
   buildCgoTags: "{{.cgoTags}} embedstapel"
 
+  # Deno is embedded for release binaries only: a dev build would pay a ~45 MiB download and ~42 MiB
+  # of linked blob for a runtime it can just as well fetch on demand.
+  distGoTags: "{{.buildGoTags}} embedwerfdeno"
+  distCgoTags: "{{.buildCgoTags}} embedwerfdeno"
+
 tasks:
   format:
     desc: "Run all code formatters."
@@ -55,7 +60,7 @@ tasks:
           echo "golangci-lint not installed, run: task deps:install:golangci-lint"
           exit 1
         fi
-        ./bin/golangci-lint-v2.11.4 run --build-tags="{{.buildGoTags}}" -c .golangci.yml {{.CLI_ARGS}} {{.golangciPaths | default "./cmd/... ./pkg/... ./test/..."}}
+        ./bin/golangci-lint-v2.11.4 run --build-tags="{{.distGoTags}}" -c .golangci.yml {{.CLI_ARGS}} {{.golangciPaths | default "./cmd/... ./pkg/... ./test/..."}}
     env:
       CGO_ENABLED: "0"
 
@@ -82,6 +87,7 @@ tasks:
     desc: "Run all linters."
     cmds:
       - task: stapel:embed
+      - task: deno:embed
       - task: lint:golangci-lint
 
   _build-and-lint:
@@ -107,6 +113,24 @@ tasks:
     cmds:
       - env -u GOOS -u GOARCH WERF_STAPEL_IMAGE_VERSION="$(sed -n 's/.*VERSION *= *"\(.*\)"/\1/p' pkg/stapel/stapel.go | head -1)" go run ./cmd/embed-stapel
 
+  deno:embed:
+    desc: 'Download and embed the Deno binary for one platform. Important vars: "platform".'
+    run: when_changed
+    label: 'deno:embed:{{.platform}}'
+    vars:
+      platform: '{{.platform | default (printf "%s/%s" .os .arch)}}'
+      denoVersionSource:
+        sh: printf '%s/pkg/ts/denolock/data/lock.json' "$(go list -m -f '{{`{{.Dir}}`}}' github.com/werf/nelm)"
+    sources:
+      # The pinned nelm version determines the lock, and unlike the path below it always resolves: on
+      # a cold module cache "go list -m" reports an empty Dir and that entry matches nothing.
+      - go.mod
+      - '{{.denoVersionSource}}'
+    generates:
+      - pkg/deno/embed/{{.platform}}/deno.gz
+    cmds:
+      - env -u GOOS -u GOARCH DENO_EMBED_ROOT=pkg/deno/embed DENO_EMBED_PLATFORM="{{.platform}}" go run github.com/werf/nelm/scripts/embed-deno
+
   _build:cgo:dev: &build_cgo_dev
     deps:
       - stapel:embed
@@ -123,9 +147,14 @@ tasks:
 
   _build:cgo:dist:
     <<: *build_cgo_dev
+    deps:
+      - stapel:embed
+      - task: deno:embed
+        vars:
+          platform: "{{.targetOS}}/{{.targetArch}}"
     cmds:
       - go build -o "{{.outputDir | default (printf "./dist/%s/%s-%s/bin" .version .targetOS .targetArch)}}/werf{{if (eq .targetOS "windows")}}.exe{{end}}"
-        -compiler gc -ldflags="{{.cgoLDFlags}}" -tags="{{.buildCgoTags}}" {{.extraGoBuildArgs}} {{.CLI_ARGS}} {{.pkg | default .package}}
+        -compiler gc -ldflags="{{.cgoLDFlags}}" -tags="{{.distCgoTags}}" {{.extraGoBuildArgs}} {{.CLI_ARGS}} {{.pkg | default .package}}
 
   _build:go:dev: &build_go_dev
     deps:
@@ -142,9 +171,14 @@ tasks:
 
   _build:go:dist:
     <<: *build_go_dev
+    deps:
+      - stapel:embed
+      - task: deno:embed
+        vars:
+          platform: "{{.targetOS}}/{{.targetArch}}"
     cmds:
       - go build -o "{{.outputDir | default (printf "./dist/%s/%s-%s/bin" .version .targetOS .targetArch)}}/werf{{if (eq .targetOS "windows")}}.exe{{end}}"
-        -ldflags="{{.goLDFlags}}" -tags="{{.buildGoTags}}" {{.extraGoBuildArgs}} {{.CLI_ARGS}} {{.pkg | default .package}}
+        -ldflags="{{.goLDFlags}}" -tags="{{.distGoTags}}" {{.extraGoBuildArgs}} {{.CLI_ARGS}} {{.pkg | default .package}}
 
   build:
     desc: "Build werf dev binary."
