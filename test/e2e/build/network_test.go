@@ -113,6 +113,28 @@ var _ = Describe("Network isolation build", Label("e2e", "build", "network"), fu
 			ExpectNetworkValue: "host",
 		}),
 
+		// Native Buildah rootless: guards that the network value reaches buildah's build options.
+		// native-chroot is absent on purpose — buildah forces host networking for chroot isolation,
+		// so `none` can never be honored there.
+		Entry("Dockerfile (Native Buildah rootless): Failure with --backend-network=none", Label("dockerfile"), networkTestOptions{
+			setupEnvOptions: setupEnvOptions{ContainerBackendMode: "native-rootless", WithLocalRepo: true},
+			ExpectError:     true,
+			FixturePath:     "network/dockerfile",
+			NetworkNone:     true,
+		}),
+		Entry("Dockerfile (Native Buildah rootless): Failure with network:none in werf.yaml", Label("dockerfile", "yml"), networkTestOptions{
+			setupEnvOptions: setupEnvOptions{ContainerBackendMode: "native-rootless", WithLocalRepo: true},
+			ExpectError:     true,
+			FixturePath:     "network/dockerfile_yml",
+			NetworkNone:     false,
+		}),
+		Entry("Dockerfile (Native Buildah rootless): Success without --backend-network flag", Label("dockerfile"), networkTestOptions{
+			setupEnvOptions: setupEnvOptions{ContainerBackendMode: "native-rootless", WithLocalRepo: true},
+			ExpectError:     false,
+			FixturePath:     "network/dockerfile",
+			NetworkNone:     false,
+		}),
+
 		// CLI overriding YAML
 		Entry("Stapel (Docker): CLI --backend-network=none overrides YAML network:host (should fail)", Label("stapel", "override"), networkTestOptions{
 			setupEnvOptions: setupEnvOptions{ContainerBackendMode: "docker", WithLocalRepo: false},

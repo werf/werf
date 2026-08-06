@@ -34,7 +34,7 @@ vars:
   goTags: "dfrunsecurity dfrunnetwork dfrunmount dfssh containers_image_openpgp"
   goLDFlags: "-s -w -X github.com/werf/werf/v2/pkg/werf.Version={{.version}}"
 
-  cgoTags: "{{.goTags}} osusergo exclude_graphdriver_devicemapper netgo no_devmapper static_build cni"
+  cgoTags: "{{.goTags}} osusergo exclude_graphdriver_devicemapper netgo no_devmapper static_build"
   cgoLDFlags: "{{.goLDFlags}} -linkmode external -extldflags=-static"
 
   buildGoTags: "{{.goTags}} embedstapel"

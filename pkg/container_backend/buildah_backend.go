@@ -904,13 +904,14 @@ func (backend *BuildahBackend) BuildDockerfile(ctx context.Context, dockerfileCo
 	}
 
 	return backend.buildah.BuildFromDockerfile(ctx, dockerfilePath, buildah.BuildFromDockerfileOpts{
-		CommonOpts: backend.getBuildahCommonOpts(ctx, false, nil, opts.TargetPlatform),
-		ContextDir: buildContextTmpDir,
-		BuildArgs:  buildArgs,
-		Target:     opts.Target,
-		Labels:     opts.Labels,
-		Secrets:    opts.Secrets,
-		SSH:        opts.SSH,
+		CommonOpts:  backend.getBuildahCommonOpts(ctx, false, nil, opts.TargetPlatform),
+		ContextDir:  buildContextTmpDir,
+		BuildArgs:   buildArgs,
+		Target:      opts.Target,
+		Labels:      opts.Labels,
+		Secrets:     opts.Secrets,
+		SSH:         opts.SSH,
+		NetworkType: opts.Network,
 	})
 }
 

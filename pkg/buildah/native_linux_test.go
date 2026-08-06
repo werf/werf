@@ -5,8 +5,10 @@ import (
 	"os"
 	"strings"
 
+	"github.com/containers/buildah/define"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/opencontainers/runtime-spec/specs-go"
 
 	"github.com/werf/common-go/pkg/util"
 )
@@ -31,6 +33,27 @@ var _ = Describe("buildah", func() {
 			[]string{"foo=bar", "key=value"},
 		),
 	)
+
+	DescribeTable("generateNamespaceOptionsAndNetworkPolicy",
+		func(network string, expectedPolicy define.NetworkConfigurationPolicy, expectedHost bool) {
+			nsOpts, netPolicy, err := generateNamespaceOptionsAndNetworkPolicy(network)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(netPolicy).To(Equal(expectedPolicy))
+
+			netNs := nsOpts.Find(string(specs.NetworkNamespace))
+			Expect(netNs).NotTo(BeNil())
+			Expect(netNs.Host).To(Equal(expectedHost))
+		},
+		Entry("empty network is the default network", "", define.NetworkDefault, false),
+		Entry("default network gets its own namespace", "default", define.NetworkDefault, false),
+		Entry("host network shares the host namespace", "host", define.NetworkEnabled, true),
+		Entry("none disables networking in its own namespace", "none", define.NetworkDisabled, false),
+	)
+
+	It("should reject a network mode buildah cannot honor", func() {
+		_, _, err := generateNamespaceOptionsAndNetworkPolicy("bridge")
+		Expect(err).To(MatchError(ContainSubstring(`unsupported network mode "bridge"`)))
+	})
 
 	Describe("generateRegistriesConfig", func() {
 		It("should mark http:// mirrors as insecure", func() {
