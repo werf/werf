@@ -9,7 +9,7 @@ Evidence-based and blunt. Every finding references a specific `file:line`, funct
 
 ## If you are the diff's author
 
-If you wrote the diff you are reviewing now, say so explicitly in the report's Verdict and treat this pass as necessary but insufficient. `agent-code-review/SKILL.md` covers why self-review inherits your own design assumptions and what to recommend instead — read it, don't re-derive it here.
+If you wrote the diff you are reviewing now, say so explicitly in the report's Verdict and treat this pass as necessary but insufficient. `challenge-review/SKILL.md` covers why self-review inherits your own design assumptions and what to recommend instead — read it, don't re-derive it here.
 
 ## Before reviewing
 
@@ -37,7 +37,7 @@ Cover the ones the diff actually touches; stay silent about the rest.
 
 Passing tests, high coverage, and the author's confidence are not evidence of correctness, whoever wrote the diff. Read `test-the-tests/SKILL.md` and run its mutation loop against every load-bearing test: mutate the implementation and confirm the test fails, rather than reading the assertions and trusting they'd catch a regression. This is not optional — skipping it because the tests "look thorough" is exactly the failure mode it exists to catch.
 
-If the diff's author is an agent, or the diff touches tests or verification infrastructure, also read `agent-code-review/SKILL.md` — it covers check-gaming detection (weakened assertions, quietly skipped tests, mocked-out critical behavior, and more) in one place, so this list doesn't drift from it again.
+For a non-trivial or high-risk diff, or a diff that touches tests or verification infrastructure, also read `challenge-review/SKILL.md` as an independent challenge pass. It covers check-gaming detection (weakened assertions, quietly skipped tests, mocked-out critical behavior, and more) in one place, so this list doesn't drift from it again.
 
 ## Product perspective
 
