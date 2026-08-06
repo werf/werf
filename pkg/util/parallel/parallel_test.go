@@ -294,6 +294,31 @@ var _ = DescribeTable("parallel task",
 	),
 )
 
+var _ = It("does not panic when a task writes after completion", func() {
+	output := newSpyOutput(1)
+	ctx := logboek.NewContext(context.Background(), logboek.NewLogger(output, output))
+	write := make(chan struct{})
+	written := make(chan struct{})
+
+	Expect(werf.Init(GinkgoT().TempDir(), "")).To(Succeed())
+
+	err := parallel.DoTasks(ctx, 1, parallel.DoTasksOptions{}, func(ctx context.Context, _ int) error {
+		go func() {
+			defer GinkgoRecover()
+			defer close(written)
+			<-write
+			logboek.Context(ctx).LogLn("late output")
+		}()
+
+		return errors.New("task failed")
+	})
+	Expect(err).To(MatchError("task failed"))
+
+	close(write)
+	Eventually(written).Should(BeClosed())
+	Expect(output.Lines()).NotTo(ContainElement(ContainSubstring("late output")))
+})
+
 type spyTaskFunc struct {
 	callsCount atomic.Int32 // prevent race condition
 	callback   parallel.TaskFunc

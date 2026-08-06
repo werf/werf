@@ -3,6 +3,7 @@ package parallel
 import (
 	"fmt"
 	"os"
+	"sync"
 	"sync/atomic"
 
 	"github.com/werf/werf/v2/pkg/tmp_manager"
@@ -20,6 +21,7 @@ type Worker struct {
 	readOffset  atomic.Int64
 	writeOffset atomic.Int64
 
+	mutex      sync.Mutex
 	halfClosed atomic.Bool
 
 	file *os.File
@@ -30,8 +32,11 @@ type Worker struct {
 // Write implements io.Writer.
 // It appends to file and accumulates total write offset.
 func (w *Worker) Write(p []byte) (int, error) {
+	w.mutex.Lock()
+	defer w.mutex.Unlock()
+
 	if w.halfClosed.Load() {
-		return 0, fmt.Errorf("worker is half closed but tries to write: %s", p)
+		return len(p), nil
 	}
 
 	offset, err := w.file.Write(p)
@@ -50,6 +55,9 @@ func (w *Worker) Read(p []byte) (int, error) {
 
 // HalfClose closes writing or returns error if already half-closed
 func (w *Worker) HalfClose() error {
+	w.mutex.Lock()
+	defer w.mutex.Unlock()
+
 	if w.halfClosed.Load() {
 		return fmt.Errorf("worker %d is already half closed", w.ID)
 	}
@@ -68,6 +76,9 @@ func (w *Worker) Readable() bool {
 // Close implements io.Closer closing tmp file.
 // It ensures that worker is half closed
 func (w *Worker) Close() error {
+	w.mutex.Lock()
+	defer w.mutex.Unlock()
+
 	w.halfClosed.Store(true)
 
 	if err := w.file.Close(); err != nil {
