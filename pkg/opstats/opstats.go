@@ -22,6 +22,7 @@ const (
 	OperationGitArchive     Operation = "git archive"
 	OperationGitChecksum    Operation = "git checksum"
 	OperationRegistryAPI    Operation = "registry API"
+	OperationDockerDaemon   Operation = "docker daemon API"
 	OperationStageLockWait  Operation = "stage lock wait"
 	OperationBuildContext   Operation = "build context"
 )
