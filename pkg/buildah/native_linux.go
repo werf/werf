@@ -17,6 +17,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 	"text/template"
 	"time"
@@ -1531,8 +1532,29 @@ func generateContextDir(rawContextDir string, runMounts []*instructions.Mount) s
 	return contextDir
 }
 
-func generateStdoutStderr(optionalLogWriter io.Writer) (stdout, stderr io.Writer, stderrBuf *bytes.Buffer) {
-	stderrBuf = &bytes.Buffer{}
+type lockedBuffer struct {
+	mux    sync.Mutex
+	buffer bytes.Buffer
+}
+
+var _ io.Writer = (*lockedBuffer)(nil)
+
+func (b *lockedBuffer) Write(p []byte) (int, error) {
+	b.mux.Lock()
+	defer b.mux.Unlock()
+
+	return b.buffer.Write(p)
+}
+
+func (b *lockedBuffer) String() string {
+	b.mux.Lock()
+	defer b.mux.Unlock()
+
+	return b.buffer.String()
+}
+
+func generateStdoutStderr(optionalLogWriter io.Writer) (stdout, stderr io.Writer, stderrBuf *lockedBuffer) {
+	stderrBuf = &lockedBuffer{}
 	if optionalLogWriter != nil {
 		stdout = optionalLogWriter
 		stderr = io.MultiWriter(optionalLogWriter, stderrBuf)
