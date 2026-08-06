@@ -70,6 +70,9 @@ jobs:
     uses: ./.github/workflows/_test_e2e_regular.yml
     with:
       scope: simple
+      packages: test/e2e/build
+      raceDetectorEnabled: true
+      ginkgoFocus: 'Simple build.*without repo using Docker'
     secrets: inherit
 
   e2e_complex:
