@@ -85,12 +85,12 @@ var _ = Describe("Collector", func() {
 		ctx := NewContext(context.Background(), collector)
 
 		CountEvent(ctx, EventStageBuilt)
-		CountEvent(ctx, EventStageCacheHitPrimary)
-		CountEvent(ctx, EventStageCacheHitPrimary)
+		CountEvent(ctx, EventStageCacheHitLocal)
+		CountEvent(ctx, EventStageCacheHitLocal)
 
 		events := collector.EventSummary()
 		Expect(events).To(Equal([]EventSummary{
-			{Event: EventStageCacheHitPrimary, Count: 2},
+			{Event: EventStageCacheHitLocal, Count: 2},
 			{Event: EventStageBuilt, Count: 1},
 		}))
 	})

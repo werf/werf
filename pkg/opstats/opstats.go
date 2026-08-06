@@ -30,7 +30,8 @@ const (
 type Event string
 
 const (
-	EventStageCacheHitPrimary   Event = "found in stages storage"
+	EventStageCacheHitLocal     Event = "found in local stages storage"
+	EventStageCacheHitRepo      Event = "found in repo stages storage"
 	EventStageCacheHitSecondary Event = "copied from secondary storage"
 	EventStageBuilt             Event = "built"
 )

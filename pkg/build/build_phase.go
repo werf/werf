@@ -671,7 +671,11 @@ func (phase *BuildPhase) onImageStage(ctx context.Context, img *image.Image, stg
 	}
 
 	if foundSuitableStage {
-		opstats.CountEvent(ctx, opstats.EventStageCacheHitPrimary)
+		if _, isLocal := phase.Conveyor.StorageManager.GetStagesStorage().(*storage.LocalStagesStorage); isLocal {
+			opstats.CountEvent(ctx, opstats.EventStageCacheHitLocal)
+		} else {
+			opstats.CountEvent(ctx, opstats.EventStageCacheHitRepo)
+		}
 		logboek.Context(ctx).Default().LogFHighlight("Use previously built image for %s\n", stg.LogDetailedName())
 		container_backend.LogImageInfo(ctx, stg.GetStageImage().Image, phase.getPrevNonEmptyStageImageSize(), img.ShouldLogPlatform(), phase.getLogImageNetwork(img))
 
