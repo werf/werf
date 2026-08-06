@@ -1,13 +1,13 @@
 ---
-name: adversarial-review
+name: challenge-review
 description: >
-  Independent adversarial verification pass for a non-trivial or high-risk change. Use for a
-  fresh second opinion, when a change touches tests or verification infrastructure, or when
-  invoked as /adversarial-review. Adds test falsifiability checks and check-gaming detection
-  on top of ordinary review; does not replace it.
+  Independent challenge pass for a non-trivial or high-risk change. Use for a fresh second
+  opinion, when a change touches tests or verification infrastructure, or when invoked as
+  /challenge-review. Attempts to disprove implementation claims through contract recovery,
+  test falsification, and check-gaming detection; complements ordinary review.
 ---
 
-# Adversarial Review
+# Challenge Review
 
 Treat the change as an untrusted implementation candidate. Readable code, passing tests,
 high coverage, and the author's confidence are not evidence of correctness. Coverage
