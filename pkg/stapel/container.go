@@ -12,6 +12,7 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/container_backend/thirdparty/platformutil"
 	"github.com/werf/werf/v2/pkg/docker"
+	"github.com/werf/werf/v2/pkg/opstats"
 	"github.com/werf/werf/v2/pkg/werf"
 )
 
@@ -86,6 +87,7 @@ func (c *container) CreateIfNotExist(ctx context.Context) error {
 	}
 
 	if !exist {
+		defer opstats.Observe(ctx, opstats.OperationStapelContainer)()
 		err := werf.HostLocker().WithLock(ctx, fmt.Sprintf("stapel.container.%s", c.Name), lockgate.AcquireOptions{Timeout: time.Second * 600}, func() error {
 			return logboek.Context(ctx).LogProcess("Creating container %s from image %s", c.Name, c.ImageName).DoError(func() error {
 				exist, err := docker.ContainerExist(ctx, c.Name)

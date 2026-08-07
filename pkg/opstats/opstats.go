@@ -17,6 +17,7 @@ const (
 	OperationImageInspect        Operation = "local image inspect"
 	OperationImageSaveLoad       Operation = "image save/load"
 	OperationImportChecksum      Operation = "import checksum"
+	OperationStapelContainer     Operation = "stapel container prepare"
 	OperationGitClone            Operation = "git clone"
 	OperationGitFetch            Operation = "git fetch"
 	OperationGitLsRemote         Operation = "git ls-remote"
