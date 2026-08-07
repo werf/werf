@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func TestAI_Stapel(t *testing.T) {
+func TestStapel(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Stapel Suite")
 }

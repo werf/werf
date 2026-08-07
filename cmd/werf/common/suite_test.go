@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func TestAI_CmdCommon(t *testing.T) {
+func TestCmdCommon(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Cmd Common Suite")
 }
