@@ -71,7 +71,7 @@ var _ = Describe("Collector", func() {
 		Expect(summary[0].Count).To(Equal(1))
 	})
 
-	It("extends the observation until the stream is consumed", func() {
+	It("completes the observation on EOF before Close", func() {
 		collector := NewCollector()
 		ctx := NewContext(context.Background(), collector)
 
@@ -82,11 +82,29 @@ var _ = Describe("Collector", func() {
 
 		_, err := io.Copy(io.Discard, rc)
 		Expect(err).NotTo(HaveOccurred())
-		Expect(rc.Close()).To(Succeed())
 
 		summary := collector.Summary()
 		Expect(summary).To(HaveLen(1))
 		Expect(summary[0].Operation).To(Equal(OperationImageSaveLoad))
+		Expect(summary[0].Count).To(Equal(1))
+
+		Expect(rc.Close()).To(Succeed())
+		Expect(collector.Summary()[0].Count).To(Equal(1))
+	})
+
+	It("completes the observation on Close of a partially read stream", func() {
+		collector := NewCollector()
+		ctx := NewContext(context.Background(), collector)
+
+		done := Observe(ctx, OperationImageSaveLoad)
+		rc := NewObservedReadCloser(io.NopCloser(strings.NewReader("payload")), done)
+
+		Expect(collector.Summary()).To(BeEmpty())
+
+		Expect(rc.Close()).To(Succeed())
+
+		summary := collector.Summary()
+		Expect(summary).To(HaveLen(1))
 		Expect(summary[0].Count).To(Equal(1))
 	})
 
