@@ -27,9 +27,8 @@ werf kubectl auth can-i VERB [TYPE | TYPE/NAME | NONRESOURCEURL] [options]
   # Check to see if I can list deployments in my current namespace
   kubectl auth can-i list deployments.apps
   
-  # Check to see if service account "foo" of namespace "dev" can list pods
-  # in the namespace "prod".
-  # You must be allowed to use impersonation for the global option "--as".
+  # Check to see if service account "foo" of namespace "dev" can list pods in the namespace "prod"
+  # You must be allowed to use impersonation for the global option "--as"
   kubectl auth can-i list pods --as=system:serviceaccount:dev:foo -n prod
   
   # Check to see if I can do everything in my current namespace ("*" means all)
@@ -43,6 +42,9 @@ werf kubectl auth can-i VERB [TYPE | TYPE/NAME | NONRESOURCEURL] [options]
   
   # Check to see if I can access the URL /logs/
   kubectl auth can-i get /logs/
+  
+  # Check to see if I can approve certificates.k8s.io
+  kubectl auth can-i approve certificates.k8s.io
   
   # List all allowed actions in namespace "foo"
   kubectl auth can-i --list --namespace=foo
@@ -74,6 +76,9 @@ werf kubectl auth can-i VERB [TYPE | TYPE/NAME | NONRESOURCEURL] [options]
             groups.
       --as-uid=""
             UID to impersonate for the operation.
+      --as-user-extra=[]
+            User extras to impersonate for the operation, this flag can be repeated to specify      
+            multiple values for the same key.
       --cache-dir="~/.kube/cache"
             Default cache directory
       --certificate-authority=""
@@ -99,6 +104,9 @@ werf kubectl auth can-i VERB [TYPE | TYPE/NAME | NONRESOURCEURL] [options]
       --kubeconfig=""
             Path to the kubeconfig file to use for CLI requests (default $WERF_KUBE_CONFIG, or      
             $WERF_KUBECONFIG, or $KUBECONFIG). Ignored if kubeconfig passed as base64.
+      --kuberc=""
+            Path to the kuberc file to use for preferences. This can be disabled by exporting       
+            KUBECTL_KUBERC=false feature gate or turning off the feature KUBERC=off.
       --log-flush-frequency=5s
             Maximum number of seconds between log flushes
       --match-server-version=false
@@ -108,7 +116,8 @@ werf kubectl auth can-i VERB [TYPE | TYPE/NAME | NONRESOURCEURL] [options]
       --password=""
             Password for basic authentication to the API server
       --profile="none"
-            Name of profile to capture. One of (none|cpu|heap|goroutine|threadcreate|block|mutex)
+            Name of profile to capture. One of                                                      
+            (none|cpu|heap|goroutine|threadcreate|block|mutex|trace)
       --profile-output="profile.pprof"
             Name of the file to write the profile to
       --request-timeout="0"

@@ -53,7 +53,8 @@ type ReportImageRecord struct {
 	Size              int64
 	BuildTime         string
 	Commit            string
-	Stages            []ReportStageRecord
+	Stages            []ReportStageRecord `json:"Stages,omitempty"`
+	StagesSkipped     bool                `json:"StagesSkipped,omitempty"`
 }
 
 type ReportStageRecord struct {
@@ -213,30 +214,28 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 		targetPlatforms := util.MapFuncToSlice(images, func(img *image.Image) string { return img.TargetPlatform })
 
 		for _, img := range images {
-			stageImage := img.GetLastNonEmptyStage().GetStageImage().Image
-			stageDesc := stageImage.GetFinalStageDesc()
-			if stageDesc == nil {
-				stageDesc = stageImage.GetStageDesc()
+			imageDesc := img.GetContentTagDesc()
+			var stages []ReportStageRecord
+			if !img.AnchorReused {
+				stages = getStagesReport(img, false)
 			}
-
-			stages := getStagesReport(img, false)
-
 			configType := determineConfigType(phase.Conveyor.werfConfig, img.Name)
 
 			record := ReportImageRecord{
 				WerfImageName:     img.GetName(),
-				DockerRepo:        stageDesc.Info.Repository,
-				DockerTag:         stageDesc.Info.Tag,
-				DockerImageID:     stageDesc.Info.ID,
-				DockerImageDigest: stageDesc.Info.GetDigest(),
-				DockerImageName:   stageDesc.Info.Name,
+				DockerRepo:        imageDesc.Info.Repository,
+				DockerTag:         imageDesc.Info.Tag,
+				DockerImageID:     imageDesc.Info.ID,
+				DockerImageDigest: imageDesc.Info.GetDigest(),
+				DockerImageName:   imageDesc.Info.Name,
 				TargetPlatform:    img.TargetPlatform,
 				Rebuilt:           img.GetRebuilt(),
 				Final:             img.IsFinal,
-				Size:              stageDesc.Info.Size,
+				Size:              imageDesc.Info.Size,
 				BuildTime:         fmt.Sprintf("%.2f", img.BuildDuration.Seconds()),
-				Commit:            stageDesc.Info.Labels[imagePkg.WerfProjectRepoCommitLabel],
+				Commit:            imageDesc.Info.Labels[imagePkg.WerfProjectRepoCommitLabel],
 				Stages:            stages,
+				StagesSkipped:     img.AnchorReused,
 				ConfigType:        configType,
 			}
 
@@ -266,12 +265,18 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 				}
 
 				buildDuration := 0.0
-				stages := []ReportStageRecord{}
+				allAnchorReused := len(img.Images) > 0
 				for _, pImg := range img.Images {
-					for _, stage := range getStagesReport(pImg, true) {
-						stages = append(stages, stage)
+					if !pImg.AnchorReused {
+						allAnchorReused = false
 					}
 					buildDuration += pImg.BuildDuration.Seconds()
+				}
+				var stages []ReportStageRecord
+				if !allAnchorReused {
+					for _, pImg := range img.Images {
+						stages = append(stages, getStagesReport(pImg, true)...)
+					}
 				}
 
 				record := ReportImageRecord{
@@ -288,6 +293,7 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 					BuildTime:         fmt.Sprintf("%.2f", buildDuration),
 					Commit:            stageDesc.Info.Labels[imagePkg.WerfProjectRepoCommitLabel],
 					Stages:            stages,
+					StagesSkipped:     allAnchorReused,
 				}
 				phase.ImagesReport.SetImageRecord(img.Name, record)
 			}

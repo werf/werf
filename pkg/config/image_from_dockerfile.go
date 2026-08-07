@@ -33,8 +33,8 @@ func (c *ImageFromDockerfile) validate(giterminismManager giterminism_manager.In
 	switch {
 	case !isRelativePath(c.Context):
 		return newDetailedConfigError("`context: PATH` should be relative to project directory!", nil, c.raw.doc)
-	case c.Dockerfile != "" && !isRelativePath(c.Dockerfile):
-		return newDetailedConfigError("`dockerfile: PATH` required and should be relative to context!", nil, c.raw.doc)
+	case c.Dockerfile != "" && (isAbsolutePath(c.Dockerfile) || !isRelativePath(filepath.Join(c.Context, c.Dockerfile))):
+		return newDetailedConfigError("`dockerfile: PATH` required, should be relative to context and should not go outside the project directory!", nil, c.raw.doc)
 	case !allRelativePaths(c.ContextAddFiles):
 		return newDetailedConfigError("`contextAddFiles: [PATH, ...]|PATH` each path should be relative to context!", nil, c.raw.doc)
 	case len(c.ContextAddFiles) != 0:
@@ -90,7 +90,7 @@ func (c *ImageFromDockerfile) dependsOn() DependsOn {
 	var dependsOn DependsOn
 
 	for _, dep := range c.Dependencies {
-		dependsOn.Dependencies = append(dependsOn.Dependencies, dep.ImageName)
+		dependsOn.Dependencies = append(dependsOn.Dependencies, dep.From)
 	}
 	dependsOn.Dependencies = util.UniqStrings(dependsOn.Dependencies)
 

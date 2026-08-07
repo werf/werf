@@ -5,8 +5,8 @@ import (
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/werf/kubedog/pkg/kube"
-	"github.com/werf/nelm/pkg/export/helm/release"
+	helmreleasecommon "github.com/werf/nelm/pkg/helm/pkg/release/common"
+	"github.com/werf/nelm/pkg/kube"
 	"github.com/werf/werf/v2/test/pkg/report"
 	"github.com/werf/werf/v2/test/pkg/utils"
 	"github.com/werf/werf/v2/test/pkg/werf"
@@ -37,6 +37,13 @@ var _ = Describe("Simple bundle publish/apply", Label("e2e", "bundle-publish-app
 			repoDirname = "repo0"
 			setupEnv()
 
+			// TODO: DRY kube client initialization
+			kubeConfig, err := kube.NewKubeConfig(ctx, kube.KubeConfigOptions{})
+			Expect(err).NotTo(HaveOccurred())
+
+			clientFactory, err := kube.NewClientFactory(ctx, kubeConfig)
+			Expect(err).NotTo(HaveOccurred())
+
 			By("state0: starting")
 			{
 				fixtureRelPath := "simple/state0"
@@ -57,10 +64,10 @@ var _ = Describe("Simple bundle publish/apply", Label("e2e", "bundle-publish-app
 				Expect(deployReport.Release).To(Equal(werfProject.Release(ctx)))
 				Expect(deployReport.Namespace).To(Equal(werfProject.Namespace(ctx)))
 				Expect(deployReport.Revision).To(Equal(1))
-				Expect(deployReport.Status).To(Equal(release.StatusDeployed))
+				Expect(deployReport.Status).To(Equal(helmreleasecommon.StatusDeployed))
 
 				By("state0: check deployed resources in cluster")
-				cm, err := kube.Client.CoreV1().ConfigMaps(werfProject.Namespace(ctx)).Get(ctx, "test1", metav1.GetOptions{})
+				cm, err := clientFactory.Static().CoreV1().ConfigMaps(werfProject.Namespace(ctx)).Get(ctx, "test1", metav1.GetOptions{})
 				Expect(err).NotTo(HaveOccurred())
 				Expect(cm.Data).To(Equal(map[string]string{"key1": "value1"}))
 			}
@@ -72,6 +79,13 @@ var _ = Describe("Simple bundle publish/apply", Label("e2e", "bundle-publish-app
 			By("initializing")
 			repoDirname = "repo0"
 			setupEnv()
+
+			// TODO: DRY kube client initialization
+			kubeConfig, err := kube.NewKubeConfig(ctx, kube.KubeConfigOptions{})
+			Expect(err).NotTo(HaveOccurred())
+
+			clientFactory, err := kube.NewClientFactory(ctx, kubeConfig)
+			Expect(err).NotTo(HaveOccurred())
 
 			By("state0: starting")
 			{
@@ -102,10 +116,10 @@ var _ = Describe("Simple bundle publish/apply", Label("e2e", "bundle-publish-app
 				Expect(deployReport.Release).To(Equal(werfProject.Release(ctx)))
 				Expect(deployReport.Namespace).To(Equal(werfProject.Namespace(ctx)))
 				Expect(deployReport.Revision).To(Equal(1))
-				Expect(deployReport.Status).To(Equal(release.StatusDeployed))
+				Expect(deployReport.Status).To(Equal(helmreleasecommon.StatusDeployed))
 
 				By("state0: check deployed resources in cluster")
-				cm, err := kube.Client.CoreV1().ConfigMaps(werfProject.Namespace(ctx)).Get(ctx, "test1", metav1.GetOptions{})
+				cm, err := clientFactory.Static().CoreV1().ConfigMaps(werfProject.Namespace(ctx)).Get(ctx, "test1", metav1.GetOptions{})
 				Expect(err).NotTo(HaveOccurred())
 				Expect(cm.Data).To(Equal(map[string]string{"key1": "value1"}))
 			}

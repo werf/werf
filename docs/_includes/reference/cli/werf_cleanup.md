@@ -124,8 +124,6 @@ werf cleanup [options]
             (default $WERF_GITERMINISM_CONFIG or werf-giterminism.yaml in working directory)
       --home-dir=""
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
-      --insecure-helm-dependencies=false
-            No-op
       --insecure-registry=false
             Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
       --keep-list=""
@@ -146,9 +144,6 @@ werf cleanup [options]
       --kube-context=""
             Scan for used images only in the specified kube context, scan all contexts from kube    
             config otherwise (default false or $WERF_SCAN_CONTEXT_ONLY)
-      --kube-scan-namespaces=[]
-            Kubernetes namespaces to scan for each selected context (can specify multiple). Takes   
-            precedence over --scan-context-namespace-only when set.
       --kube-token=""
             Kubernetes bearer token used for authentication (default $WERF_KUBE_TOKEN)
       --kube-token-path=""
@@ -182,6 +177,8 @@ werf cleanup [options]
             Enable verbose output (default $WERF_LOG_VERBOSE).
       --loose-giterminism=false
             Loose werf giterminism mode restrictions
+      --meta-repo=""
+            Container registry storage address (default $WERF_META_REPO)
   -p, --parallel=true
             Run in parallel (default $WERF_PARALLEL or true)
       --parallel-tasks-limit=10
@@ -216,8 +213,7 @@ werf cleanup [options]
             Scan for used images only in namespace linked with context for each available context   
             in kube-config (or only for the context specified with option --kube-context). When     
             disabled will scan all namespaces in all contexts (or only for the context specified    
-            with option --kube-context), unless --kube-scan-namespaces is set. (Default             
-            $WERF_SCAN_CONTEXT_NAMESPACE_ONLY)
+            with option --kube-context). (Default $WERF_SCAN_CONTEXT_NAMESPACE_ONLY)
       --scan-context-only=""
             Scan for used images only in the specified kube context, scan all contexts from kube    
             config otherwise (default false or $WERF_SCAN_CONTEXT_ONLY)
@@ -232,16 +228,6 @@ werf cleanup [options]
       --skip-tls-verify-registry=false
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)
-  -S, --synchronization=""
-            Address of synchronizer for multiple werf processes to work with a single repo.
-            
-            Default:
-             - $WERF_SYNCHRONIZATION, or
-             - :local if --repo is not specified, or
-             - https://synchronization.werf.io if --repo has been specified.
-            
-            The same address should be specified for all werf processes that work with a single     
-            repo. :local address allows execution of werf processes from a single host only
       --tmp-dir=""
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
       --without-kube=false

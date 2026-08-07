@@ -24,7 +24,6 @@ type Info struct {
 	OnBuild           []string            `json:"onBuild"`
 	Env               []string            `json:"env"`
 	ID                string              `json:"ID"`
-	ParentID          string              `json:"parentID"`
 	Labels            map[string]string   `json:"labels"`
 	Size              int64               `json:"size"`
 	CreatedAtUnixNano int64               `json:"createdAtUnixNano"`
@@ -68,7 +67,6 @@ func (info *Info) GetCopy() *Info {
 		OnBuild:           util.CopyArr(info.OnBuild),
 		Env:               util.CopyArr(info.Env),
 		ID:                info.ID,
-		ParentID:          info.ParentID,
 		Labels:            util.CopyMap(info.Labels),
 		Size:              info.Size,
 		CreatedAtUnixNano: info.CreatedAtUnixNano,

@@ -22,15 +22,15 @@ import (
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/logging"
 	"github.com/werf/werf/v2/pkg/storage/manager"
-	"github.com/werf/werf/v2/pkg/werf"
 )
 
 type BaseImageType string
 
 const (
 	ImageFromRegistryAsBaseImage BaseImageType = "ImageFromRegistryAsBaseImage"
-	StageAsBaseImage             BaseImageType = "StageAsBaseImage"
+	FromImage                    BaseImageType = "FromImage"
 	NoBaseImage                  BaseImageType = "NoBaseImage"
+	ScratchBaseImage             BaseImageType = "ScratchBaseImage"
 )
 
 type CommonImageOptions struct {
@@ -62,7 +62,7 @@ type ImageOptions struct {
 
 func NewImage(ctx context.Context, targetPlatform, name string, baseImageType BaseImageType, opts ImageOptions) (*Image, error) {
 	switch baseImageType {
-	case NoBaseImage, ImageFromRegistryAsBaseImage, StageAsBaseImage:
+	case NoBaseImage, ImageFromRegistryAsBaseImage, FromImage, ScratchBaseImage:
 	default:
 		panic(fmt.Sprintf("unknown opts.BaseImageType %q", baseImageType))
 	}
@@ -107,11 +107,12 @@ type Image struct {
 	StapelImageConfig       config.StapelImageInterface
 	TargetPlatform          string
 	BuildDuration           time.Duration
+	AnchorReused            bool
 
 	stages            []stage.Interface
 	stageDurations    map[stage.StageName]time.Duration
 	lastNonEmptyStage stage.Interface
-	contentDigest     string
+	contentTagDesc    *image.StageDesc
 	rebuilt           bool
 	useCustomTag      bool
 
@@ -124,13 +125,39 @@ type Image struct {
 	baseImageRepoId     string
 	baseImageRepoDigest string
 
-	baseStageImage   *stage.StageImage
-	stageAsBaseImage stage.Interface
+	baseStageImage       *stage.StageImage
+	contentTagStageImage *stage.StageImage
 
 	stagedDockerfileBaseEnv map[string]string
 
 	logImageIndex  int
 	logTotalImages int
+
+	hasWorkerID bool
+	workerID    int
+
+	// dependencyNames holds the names (same TargetPlatform) of the images this
+	// image must be fully built after: base image (fromImage), import/artifact
+	// sources, explicit `dependencies:`, and — for staged Dockerfile images —
+	// the werf-image-name of every other Dockerfile stage referenced via
+	// `FROM`/`COPY --from=`/`RUN --mount=from=`.
+	dependencyNames []string
+}
+
+// AddDependencyName registers another image (by name, same target platform)
+// that must be fully built before this image's build can start.
+func (i *Image) AddDependencyName(name string) {
+	for _, existing := range i.dependencyNames {
+		if existing == name {
+			return
+		}
+	}
+	i.dependencyNames = append(i.dependencyNames, name)
+}
+
+// GetDependencyNames returns the names of images this image directly depends on.
+func (i *Image) GetDependencyNames() []string {
+	return i.dependencyNames
 }
 
 func (i *Image) LogName() string {
@@ -146,7 +173,58 @@ func (i *Image) LogDetailedName() string {
 	if i.ShouldLogPlatform() {
 		targetPlatformForLog = i.TargetPlatform
 	}
-	return logging.ImageLogProcessName(i.Name, i.IsFinal, targetPlatformForLog, logging.WithProgress(i.logImageIndex+1, i.logTotalImages))
+
+	opts := []logging.Option{logging.WithProgress(i.logImageIndex+1, i.logTotalImages)}
+	if i.hasWorkerID {
+		opts = append(opts, logging.WithWorker(i.workerID))
+	}
+
+	return logging.ImageLogProcessName(i.Name, i.IsFinal, targetPlatformForLog, opts...)
+}
+
+// LogPlanName is like LogDetailedName but without a progress number: it is
+// meant for pre-build listings (e.g. a "concurrent build plan" preview)
+// where no build-order index is known yet, unlike LogDetailedName which is
+// used for real build-time log lines.
+func (i *Image) LogPlanName() string {
+	var targetPlatformForLog string
+	if i.ShouldLogPlatform() {
+		targetPlatformForLog = i.TargetPlatform
+	}
+	return logging.ImageLogProcessName(i.Name, i.IsFinal, targetPlatformForLog)
+}
+
+// SetBuildOrderIndex overrides the image's log progress index (see
+// LogDetailedName). ImagesTree.Calculate assigns a static index reflecting
+// each image's position in the dependency graph's topological order, which
+// is only a meaningful "build progress" indicator for the sequential build
+// path. The parallel build scheduler calls this to reassign the index to
+// reflect the image's actual position in real build-start order instead.
+func (i *Image) SetBuildOrderIndex(index int) {
+	i.logImageIndex = index
+}
+
+// GetBuildOrderIndex returns the image's current log progress index (see
+// SetBuildOrderIndex).
+func (i *Image) GetBuildOrderIndex() int {
+	return i.logImageIndex
+}
+
+// SetWorkerID annotates the image's log lines (see LogDetailedName) with
+// the parallel worker that is building it, so a jump in the build-order
+// index between consecutive log lines can be told apart from a worker
+// change (parallel.Printer prints one worker's whole output before moving
+// to the next) rather than looking like a scrambled sequence.
+func (i *Image) SetWorkerID(id int) {
+	i.hasWorkerID = true
+	i.workerID = id
+}
+
+// GetWorkerID returns the worker ID set via SetWorkerID and whether one was
+// ever set (false for images built via the sequential path, which has no
+// concept of parallel workers).
+func (i *Image) GetWorkerID() (int, bool) {
+	return i.workerID, i.hasWorkerID
 }
 
 func (i *Image) LogProcessStyle() color.Style {
@@ -166,7 +244,7 @@ func ImageLogTagStyle(isFinal bool) color.Style {
 }
 
 func (i *Image) IsBasedOnStage() bool {
-	return i.baseImageType == StageAsBaseImage
+	return i.baseImageType == FromImage
 }
 
 func (i *Image) SetStages(stages []stage.Interface) {
@@ -202,12 +280,12 @@ func (i *Image) GetLastNonEmptyStage() stage.Interface {
 	return i.lastNonEmptyStage
 }
 
-func (i *Image) SetContentDigest(digest string) {
-	i.contentDigest = digest
+func (i *Image) SetContentTagDesc(desc *image.StageDesc) {
+	i.contentTagDesc = desc
 }
 
-func (i *Image) GetContentDigest() string {
-	return i.contentDigest
+func (i *Image) GetContentTagDesc() *image.StageDesc {
+	return i.contentTagDesc
 }
 
 func (i *Image) GetStage(name stage.StageName) stage.Interface {
@@ -275,18 +353,32 @@ func isUnsupportedMediaTypeError(err error) bool {
 	return err != nil && strings.Contains(err.Error(), "unsupported MediaType")
 }
 
+func (i *Image) GetContentTagStageImage() *stage.StageImage {
+	if i.contentTagDesc == nil {
+		return nil
+	}
+	stageImage := i.Conveyor.GetOrCreateStageImage(i.contentTagDesc.Info.Name, nil, nil, i)
+	stageImage.Image.SetStageDesc(i.contentTagDesc)
+	return stageImage
+}
+
 func (i *Image) SetupBaseImage(ctx context.Context, storageManager manager.StorageManagerInterface, storageOpts manager.StorageOptions) error {
 	logboek.Context(ctx).Debug().LogF(" -- SetupBaseImage for %q\n", i.Name)
 
 	switch i.baseImageType {
-	case StageAsBaseImage:
+	case FromImage:
 		baseImg, err := i.Conveyor.FindImage(i.TargetPlatform, i.baseImageName)
 		if err != nil {
 			return fmt.Errorf("base image for %q: %w", i.Name, err)
 		}
-		i.stageAsBaseImage = baseImg.GetLastNonEmptyStage()
-		i.baseImageReference = i.stageAsBaseImage.GetStageImage().Image.Name()
-		i.baseStageImage = i.stageAsBaseImage.GetStageImage()
+
+		i.contentTagStageImage = baseImg.GetContentTagStageImage()
+		if i.contentTagStageImage == nil {
+			return fmt.Errorf("base image %q has no content tag", i.baseImageName)
+		}
+
+		i.baseImageReference = i.contentTagStageImage.Image.Name()
+		i.baseStageImage = i.contentTagStageImage
 
 	case ImageFromRegistryAsBaseImage:
 		if i.IsDockerfileImage && i.dockerfileExpanderFactory != nil {
@@ -311,67 +403,17 @@ func (i *Image) SetupBaseImage(ctx context.Context, storageManager manager.Stora
 			break
 		}
 
-		if i.IsDockerfileImage && i.DockerfileImageConfig.Staged {
-			if werf.GetStagedDockerfileVersion() == werf.StagedDockerfileV1 {
-				var info *image.Info
+	case ScratchBaseImage:
+		i.baseStageImage = i.Conveyor.GetOrCreateStageImage("scratch", nil, nil, i)
+		i.baseStageImage.Image.SetStageDesc(&image.StageDesc{
+			StageID: nil,
+			Info:    &image.Info{Name: "scratch", Env: nil},
+		})
 
-				if i.baseImageReference != "scratch" {
-					var err error
-					info, err = i.ContainerBackend.GetImageInfo(ctx, i.baseImageReference, container_backend.GetImageInfoOpts{})
-					if err != nil {
-						return fmt.Errorf("unable to get base image %q manifest: %w", i.baseImageReference, err)
-					}
-					if info == nil {
-						if err := logboek.Context(ctx).Default().LogProcess("Pulling base image %s", i.baseStageImage.Image.Name()).
-							Options(func(options types.LogProcessOptionsInterface) {
-								options.Style(style.Highlight())
-							}).
-							DoError(func() error {
-								return container_backend.PullImageFromRegistry(ctx, i.ContainerBackend, i.baseStageImage.Image)
-							}); err != nil {
-							return err
-						}
-
-						info, err = i.ContainerBackend.GetImageInfo(ctx, i.baseImageReference, container_backend.GetImageInfoOpts{})
-						if err != nil {
-							return fmt.Errorf("unable to get base image %q manifest: %w", i.baseImageReference, err)
-						}
-					}
-				} else {
-					info = &image.Info{
-						Name: i.baseImageReference,
-						Env:  nil,
-					}
-				}
-
-				i.baseStageImage.Image.SetStageDesc(&image.StageDesc{
-					StageID: nil, // this is not a stage actually, TODO
-					Info:    info,
-				})
-			}
-		}
-
-		if !i.IsDockerfileImage && i.baseImageReference == "scratch" {
-			i.baseStageImage.Image.SetStageDesc(&image.StageDesc{
-				StageID: nil,
-				Info:    &image.Info{Name: i.baseImageReference, Env: nil},
-			})
-		}
 	case NoBaseImage:
 
 	default:
 		panic(fmt.Sprintf("unknown base image type %q", i.baseImageType))
-	}
-
-	if i.IsDockerfileImage && i.DockerfileImageConfig.Staged {
-		if werf.GetStagedDockerfileVersion() == werf.StagedDockerfileV1 {
-			switch i.baseImageType {
-			case StageAsBaseImage, ImageFromRegistryAsBaseImage:
-				if err := i.ExpandDependencies(ctx, EnvToMap(i.baseStageImage.Image.GetStageDesc().Info.Env)); err != nil {
-					return err
-				}
-			}
-		}
 	}
 
 	return nil
@@ -409,10 +451,6 @@ func (i *Image) FetchBaseImage(ctx context.Context) (FetchBaseImageInfo, error) 
 
 	switch i.baseImageType {
 	case ImageFromRegistryAsBaseImage:
-		if i.baseStageImage.Image.Name() == "scratch" {
-			return FetchBaseImageInfo{}, nil
-		}
-
 		// TODO: Refactor, move manifest fetching into SetupBaseImage, only pull image in FetchBaseImage method
 
 		// Check if image exists locally and is up-to-date.
@@ -478,9 +516,12 @@ func (i *Image) FetchBaseImage(ctx context.Context) (FetchBaseImageInfo, error) 
 		}
 
 		return FetchBaseImageInfo{BaseImagePulled: true, BaseImageSource: BaseImageSourceTypeRegistry}, nil
-	case StageAsBaseImage:
-		info, err := i.StorageManager.FetchStage(ctx, i.ContainerBackend, i.stageAsBaseImage)
+	case FromImage:
+		info, err := i.StorageManager.FetchStageImage(ctx, i.ContainerBackend, i.baseImageName, i.contentTagStageImage)
 		return FetchBaseImageInfo{BaseImagePulled: info.BaseImagePulled, BaseImageSource: info.BaseImageSource}, err
+
+	case ScratchBaseImage:
+		return FetchBaseImageInfo{}, nil
 
 	case NoBaseImage:
 		return FetchBaseImageInfo{BaseImagePulled: true, BaseImageSource: BaseImageSourceTypeRepo}, nil

@@ -14,12 +14,10 @@ platform:
   - linux/amd64
   - linux/arm64
 dependencies:
-  - image: base-dockerfile
+  - from: base-dockerfile
     imports:
       - type: ImageName
         targetBuildArg: BASE_DOCKERFILE_IMAGE_NAME
-      - type: ImageID
-        targetBuildArg: BASE_DOCKERFILE_IMAGE_ID
       - type: ImageRepo
         targetBuildArg: BASE_DOCKERFILE_IMAGE_REPO
       - type: ImageTag

@@ -12,8 +12,7 @@ import (
 	"github.com/werf/common-go/pkg/locker"
 	"github.com/werf/common-go/pkg/secrets_manager"
 	"github.com/werf/lockgate/pkg/file_lock"
-	secrets_manager_legacy "github.com/werf/nelm-for-werf-helm/pkg/secrets_manager"
-	"github.com/werf/nelm/pkg/export/helm/chart/loader"
+	"github.com/werf/nelm/pkg/helm/pkg/chart/loader"
 )
 
 var (
@@ -79,10 +78,6 @@ func GetTmpDir() string {
 	return tmpDir
 }
 
-func GetStagesStorageCacheDir() string {
-	return filepath.Join(GetSharedContextDir(), "storage", "stages_storage_cache", "1")
-}
-
 // Init initialize variables, locks, secrets, etc.
 func Init(tmpDirOption, homeDirOption string) error {
 	val, ok := os.LookupEnv("WERF_TMP_DIR")
@@ -128,12 +123,11 @@ func Init(tmpDirOption, homeDirOption string) error {
 	loader.SetLocalCacheDir(GetLocalCacheDir())
 	loader.SetServiceDir(GetServiceDir())
 	secrets_manager.SetWerfHomeDir(GetHomeDir())
-	secrets_manager_legacy.WerfHomeDir = GetHomeDir()
 
 	file_lock.LegacyHashFunction = true
 
 	var err error
-	if hostLocker, err = locker.NewHostLocker(filepath.Join(GetServiceDir(), "locks")); err != nil {
+	if hostLocker, err = locker.NewHostLocker(getHostLockerDir()); err != nil {
 		return fmt.Errorf("error creating werf host file locker: %w", err)
 	}
 
@@ -143,15 +137,6 @@ func Init(tmpDirOption, homeDirOption string) error {
 
 	if err := SetWerfLastRunAt(context.Background()); err != nil {
 		return fmt.Errorf("error setting werf last run at timestamp: %w", err)
-	}
-
-	switch v := os.Getenv("WERF_STAGED_DOCKERFILE_VERSION"); v {
-	case "", "v1":
-		stagedDockerfileVersion = StagedDockerfileV1
-	case "v2":
-		stagedDockerfileVersion = StagedDockerfileV2
-	default:
-		return fmt.Errorf("unsupported WERF_STAGED_DOCKERFILE_VERSION=%q, expected v1 or v2 (recommended)", v)
 	}
 
 	return nil

@@ -17,16 +17,18 @@ import (
 	"github.com/werf/logboek/pkg/level"
 	"github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
+	"github.com/werf/nelm/pkg/action"
 	"github.com/werf/nelm/pkg/common"
-	"github.com/werf/nelm/pkg/export/helm/chart/loader"
-	"github.com/werf/nelm/pkg/export/helm/engine"
-	"github.com/werf/nelm/pkg/featgate"
+	"github.com/werf/nelm/pkg/helm/pkg/chart/loader"
+	"github.com/werf/nelm/pkg/helm/pkg/engine"
 	"github.com/werf/nelm/pkg/log"
+	"github.com/werf/nelm/pkg/ts"
 	"github.com/werf/werf/v2/pkg/build"
 	"github.com/werf/werf/v2/pkg/build/stage"
 	"github.com/werf/werf/v2/pkg/buildah"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
+	"github.com/werf/werf/v2/pkg/deno"
 	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/docker_registry"
 	"github.com/werf/werf/v2/pkg/git_repo"
@@ -60,7 +62,7 @@ const (
 
 func init() {
 	loader.NoChartLockWarning = `Cannot automatically download chart dependencies without .helm/Chart.lock or .helm/requirements.lock. Run "werf helm dependency update .helm" and commit resulting .helm/Chart.lock or .helm/requirements.lock. Committing .tgz files in .helm/charts is not required, better add "/.helm/charts/*.tgz" to the .gitignore.`
-	engine.SetTemplateErrHint(TemplateErrHint)
+	engine.TemplateErrHint = TemplateErrHint
 }
 
 type GitWorktreeNotFoundError struct{}
@@ -302,7 +304,7 @@ func SetupTemplatesAllowDNS(cmdData *CmdData, cmd *cobra.Command) {
 }
 
 func SetupReleaseStorageDriver(cmdData *CmdData, cmd *cobra.Command) {
-	cmd.Flags().StringVarP(&cmdData.ReleaseStorageDriver, "release-storage", "", util.GetFirstExistingEnvVarAsString("WERF_RELEASE_STORAGE", "HELM_DRIVER"), `How releases should be stored (default $WERF_RELEASE_STORAGE)`)
+	cmd.Flags().StringVarP(&cmdData.ReleaseStorageDriver, "release-storage", "", util.GetFirstExistingEnvVarAsString("WERF_RELEASE_STORAGE"), `How releases should be stored (default $WERF_RELEASE_STORAGE)`)
 }
 
 func SetupReleaseInfoAnnotations(cmdData *CmdData, cmd *cobra.Command) {
@@ -474,6 +476,11 @@ func SetupRepo(cmdData *CmdData, cmd *cobra.Command, opts RepoDataOptions) {
 func SetupFinalRepo(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.FinalRepo = NewRepoData("final-repo", RepoDataOptions{})
 	cmdData.FinalRepo.SetupCmd(cmd)
+}
+
+func SetupMetaRepo(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.MetaRepo = NewRepoData("meta-repo", RepoDataOptions{OnlyAddress: true, OptionalRepo: true})
+	cmdData.MetaRepo.SetupCmd(cmd)
 }
 
 func SetupReleasesHistoryMax(cmdData *CmdData, cmd *cobra.Command) {
@@ -752,10 +759,10 @@ func SetupIntrospectStage(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringArrayVarP(cmdData.StagesToIntrospect, "introspect-stage", "", []string{}, `Introspect a specific stage. The option can be used multiple times to introspect several stages.
 
 There are the following formats to use:
-* specify IMAGE_NAME/STAGE_NAME to introspect stage STAGE_NAME of either image or artifact IMAGE_NAME
+* specify IMAGE_NAME/STAGE_NAME to introspect stage STAGE_NAME of image IMAGE_NAME
 * specify STAGE_NAME or */STAGE_NAME for the introspection of all existing stages with name STAGE_NAME
 
-IMAGE_NAME is the name of an image or artifact described in werf.yaml, the nameless image specified with ~.
+IMAGE_NAME is the name of an image described in werf.yaml.
 STAGE_NAME should be one of the following: `+strings.Join(allStagesNames(), ", "))
 }
 
@@ -802,6 +809,19 @@ func SetupDenoBinaryPath(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringVarP(&cmdData.DenoBinaryPath, "deno-binary-path", "", os.Getenv("WERF_DENO_BINARY_PATH"), "Path to the Deno binary to use instead of auto-downloading (default $WERF_DENO_BINARY_PATH)")
 }
 
+// SetupDenoContext puts the embedded Deno data into ctx, so nelm can extract
+// the embedded binary lazily — only when a chart actually contains TypeScript.
+func SetupDenoContext(ctx context.Context) context.Context {
+	compressed, embedded := deno.EmbeddedDenoData()
+	if !embedded {
+		return ctx
+	}
+
+	return ts.NewContextWithTSOptions(ctx, common.TypeScriptOptions{
+		EmbeddedDenoCompressed: compressed,
+	})
+}
+
 func allStagesNames() []string {
 	var stageNames []string
 	for _, stageName := range stage.AllStages {
@@ -844,7 +864,7 @@ func GetStagesStorage(ctx context.Context, containerBackend container_backend.Co
 }
 
 func GetOptionalFinalStagesStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData) (storage.StagesStorage, error) {
-	if *cmdData.FinalRepo.Address == "" {
+	if cmdData.FinalRepo == nil || cmdData.FinalRepo.Address == nil || *cmdData.FinalRepo.Address == "" {
 		return nil, nil
 	}
 
@@ -863,6 +883,35 @@ func GetOptionalFinalStagesStorage(ctx context.Context, containerBackend contain
 		InsecureRegistry:      *cmdData.InsecureRegistry,
 		SkipTlsVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
 		InsecureRegistryHosts: insecureRegistryHosts,
+		SkipMetaCheck:         true,
+	})
+}
+
+func GetOptionalMetaStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData, stagesStorage storage.PrimaryStagesStorage, cleanupDisabled bool) (storage.PrimaryStagesStorage, error) {
+	if cmdData.MetaRepo == nil || cmdData.MetaRepo.Address == nil || *cmdData.MetaRepo.Address == "" {
+		return stagesStorage, nil
+	}
+
+	if cmdData.Repo == nil || cmdData.Repo.Address == nil || *cmdData.Repo.Address == "" {
+		return nil, fmt.Errorf("--meta-repo requires --repo to be set")
+	}
+
+	buildahMode, _, err := GetBuildahMode()
+	if err != nil {
+		return nil, fmt.Errorf("unable to determine buildah mode: %w", err)
+	}
+
+	insecureRegistryHosts, err := GetInsecureRegistryHosts(ctx, cmdData, *buildahMode)
+	if err != nil {
+		return nil, fmt.Errorf("get insecure registry hosts: %w", err)
+	}
+
+	return cmdData.MetaRepo.CreateStagesStorage(ctx, &CreateStagesStorageOptions{
+		ContainerBackend:      containerBackend,
+		InsecureRegistry:      *cmdData.InsecureRegistry,
+		SkipTlsVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
+		InsecureRegistryHosts: insecureRegistryHosts,
+		CleanupDisabled:       cleanupDisabled,
 		SkipMetaCheck:         true,
 	})
 }
@@ -1029,30 +1078,12 @@ func LogVersion() {
 	logboek.LogF("Version: %s\n", werf.Version)
 }
 
-func SetupVirtualMerge(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.VirtualMerge = new(bool)
-	cmd.Flags().BoolVarP(cmdData.VirtualMerge, "virtual-merge", "", util.GetBoolEnvironmentDefaultFalse("WERF_VIRTUAL_MERGE"), "Enable virtual/ephemeral merge commit mode when building current application state ($WERF_VIRTUAL_MERGE by default)")
-}
-
-func GetVirtualMerge(cmdData *CmdData) bool {
-	return option.PtrValueOrDefault(cmdData.VirtualMerge, false)
-}
-
 func getFlags(cmd *cobra.Command, persistent bool) *pflag.FlagSet {
 	if persistent {
 		return cmd.PersistentFlags()
 	}
 
 	return cmd.Flags()
-}
-
-// TODO(major): get rid of this, don't require Kubernetes for non-deployment related tasks
-func SetupMinimalKubeConnectionFlags(cmdData *CmdData, cmd *cobra.Command) error {
-	SetupKubeConfigBase64(cmdData, cmd)
-	SetupLegacyKubeConfigPath(cmdData, cmd)
-	SetupKubeContextCurrent(cmdData, cmd)
-
-	return nil
 }
 
 func SetupKubeConnectionFlags(cmdData *CmdData, cmd *cobra.Command) error {
@@ -1115,8 +1146,6 @@ func SetupValuesFlags(cmdData *CmdData, cmd *cobra.Command) error {
 	cmd.Flags().BoolVarP(&cmdData.DefaultValuesDisable, "disable-default-values", "", util.GetBoolEnvironmentDefaultFalse("WERF_DISABLE_DEFAULT_VALUES"), `Do not use values from the default .helm/values.yaml file (default $WERF_DISABLE_DEFAULT_VALUES or false)`)
 	cmd.Flags().StringArrayVarP(&cmdData.RootSetJSON, "set-root-json", "", []string{}, `Set new keys in arbitrary things in the global root context ("$"), where the key is the value path and the value is JSON. This is meant to be generated inside the program, so use --set-json instead, unless you REALLY know what you are doing. Can specify multiple or separate values with commas: key1=val1,key2=val2.
 Also, can be defined with $WERF_SET_ROOT_JSON_* (e.g. $WERF_SET_ROOT_JSON_1=key1=val1, $WERF_SET_ROOT_JSON_2=key2=val2)`)
-	cmd.Flags().StringArrayVarP(&cmdData.RuntimeSetJSON, "set-runtime-json", "", []string{}, `Set new keys in $.Runtime, where the key is the value path and the value is JSON. This is meant to be generated inside the program, so use --set-json instead, unless you know what you are doing. Can specify multiple or separate values with commas: key1=val1,key2=val2.
-Also, can be defined with $WERF_SET_RUNTIME_JSON_* (e.g. $WERF_SET_RUNTIME_JSON_1=key1=val1, $WERF_SET_RUNTIME_JSON_2=key2=val2)`)
 	cmd.Flags().StringArrayVarP(&cmdData.ValuesFiles, "values", "", []string{}, `Specify helm values in a YAML file or a URL (can specify multiple). Also, can be defined with $WERF_VALUES_* (e.g. $WERF_VALUES_1=.helm/values_1.yaml, $WERF_VALUES_2=.helm/values_2.yaml)`)
 	cmd.Flags().StringArrayVarP(&cmdData.ValuesSet, "set", "", []string{}, `Set helm values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2).
 Also, can be defined with $WERF_SET_* (e.g. $WERF_SET_1=key1=val1, $WERF_SET_2=key2=val2)`)
@@ -1132,13 +1161,26 @@ Also, can be defined with $WERF_SET_STRING_* (e.g. $WERF_SET_STRING_1=key1=val1,
 	return nil
 }
 
+func SetupPatchesFlags(cmdData *CmdData, cmd *cobra.Command) {
+	cmd.Flags().StringArrayVarP(&cmdData.PatchesFiles, "patches", "", []string{}, `Additional patches files (diff patches for drift detection). Also, can be defined with $WERF_PATCHES_* (e.g. $WERF_PATCHES_1=.helm/patches_1.yaml, $WERF_PATCHES_2=.helm/patches_2.yaml)`)
+	cmd.Flags().BoolVarP(&cmdData.DefaultPatchesDisable, "no-default-patches", "", util.GetBoolEnvironmentDefaultFalse("WERF_NO_DEFAULT_PATCHES"), `Ignore patches.yaml of the top-level chart and subcharts (default $WERF_NO_DEFAULT_PATCHES or false)`)
+}
+
 func SetupSecretValuesFlags(cmdData *CmdData, cmd *cobra.Command) error {
-	cmd.Flags().BoolVarP(&cmdData.DefaultSecretValuesDisable, "disable-default-secret-values", "", util.GetBoolEnvironmentDefaultFalse("WERF_DISABLE_DEFAULT_SECRET_VALUES"), `Do not use secret values from the default .helm/secret-values.yaml file (default $WERF_DISABLE_DEFAULT_SECRET_VALUES or false)`)
-	cmd.Flags().StringVarP(&cmdData.SecretKey, "secret-key", "", os.Getenv("WERF_SECRET_KEY"), "Secret key (default $WERF_SECRET_KEY)")
-	cmd.Flags().BoolVarP(&cmdData.SecretKeyIgnore, "ignore-secret-key", "", util.GetBoolEnvironmentDefaultFalse("WERF_IGNORE_SECRET_KEY"), "Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)")
-	cmd.Flags().StringArrayVarP(&cmdData.SecretValuesFiles, "secret-values", "", []string{}, `Specify helm secret values in a YAML file (can specify multiple). Also, can be defined with $WERF_SECRET_VALUES_* (e.g. $WERF_SECRET_VALUES_ENV=.helm/secret_values_test.yaml, $WERF_SECRET_VALUES_DB=.helm/secret_values_db.yaml)`)
+	SetupSecretValuesFileFlags(cmdData, cmd)
+	SetupSecretKeyFlags(cmdData, cmd)
 
 	return nil
+}
+
+func SetupSecretValuesFileFlags(cmdData *CmdData, cmd *cobra.Command) {
+	cmd.Flags().BoolVarP(&cmdData.DefaultSecretValuesDisable, "disable-default-secret-values", "", util.GetBoolEnvironmentDefaultFalse("WERF_DISABLE_DEFAULT_SECRET_VALUES"), `Do not use secret values from the default .helm/secret-values.yaml file (default $WERF_DISABLE_DEFAULT_SECRET_VALUES or false)`)
+	cmd.Flags().StringArrayVarP(&cmdData.SecretValuesFiles, "secret-values", "", []string{}, `Specify helm secret values in a YAML file (can specify multiple). Also, can be defined with $WERF_SECRET_VALUES_* (e.g. $WERF_SECRET_VALUES_ENV=.helm/secret_values_test.yaml, $WERF_SECRET_VALUES_DB=.helm/secret_values_db.yaml)`)
+}
+
+func SetupSecretKeyFlags(cmdData *CmdData, cmd *cobra.Command) {
+	cmd.Flags().StringVarP(&cmdData.SecretKey, "secret-key", "", os.Getenv("WERF_SECRET_KEY"), "Secret key (default $WERF_SECRET_KEY)")
+	cmd.Flags().BoolVarP(&cmdData.SecretKeyIgnore, "ignore-secret-key", "", util.GetBoolEnvironmentDefaultFalse("WERF_IGNORE_SECRET_KEY"), "Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)")
 }
 
 func SetupTrackingFlags(cmdData *CmdData, cmd *cobra.Command) error {
@@ -1158,21 +1200,10 @@ func SetupTrackingFlags(cmdData *CmdData, cmd *cobra.Command) error {
 		cmd.Flags().IntVarP(&cmdData.LegacyTrackTimeout, "timeout", "t", def, "Resources tracking timeout in seconds ($WERF_TIMEOUT by default)")
 	}
 
-	StubSetupHooksStatusProgressPeriod(cmdData, cmd)
-
 	return nil
 }
 
 func SetupResourceValidationFlags(cmdData *CmdData, cmd *cobra.Command) error {
-	if !featgate.FeatGateResourceValidation.Enabled() {
-		return nil
-	}
-
-	kubeVersion := os.Getenv("WERF_RESOURCE_VALIDATION_KUBE_VERSION")
-	if kubeVersion == "" {
-		kubeVersion = common.DefaultResourceValidationKubeVersion
-	}
-
 	defaultValidationCacheLifetime := common.DefaultResourceValidationCacheLifetime
 
 	if os.Getenv("WERF_RESOURCE_VALIDATION_CACHE_LIFETIME") != "" {
@@ -1184,18 +1215,20 @@ func SetupResourceValidationFlags(cmdData *CmdData, cmd *cobra.Command) error {
 		}
 	}
 
-	validationSchemas := util.PredefinedValuesByEnvNamePrefix("WERF_RESOURCE_VALIDATION_SCHEMA_")
-	if len(validationSchemas) == 0 {
-		validationSchemas = common.DefaultResourceValidationSchema
+	cmd.Flags().BoolVarP(&cmdData.NoResourceValidation, "no-resource-validation", "", util.GetBoolEnvironmentDefaultFalse("WERF_NO_RESOURCE_VALIDATION"), "Disable resource validation (default $WERF_NO_RESOURCE_VALIDATION)")
+	cmd.Flags().StringArrayVarP(&cmdData.ValidationSkip, "resource-validation-skip", "", []string{}, "Skip resource validation for resources with specified attributes (can specify multiple). Format: key1=value1,key2=value2. Supported keys: group, version, kind, name, namespace. Example: kind=Deployment,name=my-app. Also, can be defined with $WERF_RESOURCE_VALIDATION_SKIP_* (e.g. $WERF_RESOURCE_VALIDATION_SKIP_1=kind=Deployment,name=my-app)")
+	cmd.Flags().StringArrayVarP(&cmdData.ValidationExtraSchemas, "resource-validation-extra-schema", "", []string{}, "Extra json schema sources to validate resources (preferred over ebedded sources). Must be a valid go template defining a http(s) URL, or an absolute path on local file system. Also, can be defined with $WERF_RESOURCE_VALIDATION_EXTRA_SCHEMA_* (eg. $WERF_RESOURCE_VALIDATION_EXTRA_SCHEMA_1='https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json')")
+	cmd.Flags().DurationVarP(&cmdData.ValidationSchemaCacheLifetime, "resource-validation-cache-lifetime", "", defaultValidationCacheLifetime, "How long local schema cache will be valid. Also can be defined by $WERF_RESOURCE_VALIDATION_CACHE_LIFETIME")
+
+	if err := SetupNoValuesSchemaValidationFlag(cmdData, cmd); err != nil {
+		return err
 	}
 
-	cmd.Flags().BoolVarP(&cmdData.NoResourceValidation, "no-resource-validation", "", util.GetBoolEnvironmentDefaultFalse("WERF_NO_RESOURCE_VALIDATION"), "Disable resource validation (default $WERF_NO_RESOURCE_VALIDATION)")
-	cmd.Flags().BoolVarP(&cmdData.LocalResourceValidation, "local-resource-validation", "", util.GetBoolEnvironmentDefaultFalse("WERF_LOCAL_RESOURCE_VALIDATION"), "Do not use external json schema sources (default $WERF_LOCAL_RESOURCE_VALIDATION)")
-	cmd.Flags().StringVarP(&cmdData.ValidationKubeVersion, "resource-validation-kube-version", "", kubeVersion, "Kubernetes schemas version to use during resource validation. Also can be defined by $WERF_RESOURCE_VALIDATION_KUBE_VERSION")
-	cmd.Flags().StringArrayVarP(&cmdData.ValidationSkip, "resource-validation-skip", "", []string{}, "Skip resource validation for resources with specified attributes (can specify multiple). Format: key1=value1,key2=value2. Supported keys: group, version, kind, name, namespace. Example: kind=Deployment,name=my-app. Also, can be defined with $WERF_RESOURCE_VALIDATION_SKIP_* (e.g. $WERF_RESOURCE_VALIDATION_SKIP_1=kind=Deployment,name=my-app)")
-	cmd.Flags().StringArrayVarP(&cmdData.ValidationSchemas, "resource-validation-schema", "", validationSchemas, "Default json schema sources to validate resources. Must be a valid go template defining a http(s) URL, or an absolute path on local file system. Also, can be defined with $WERF_RESOURCE_VALIDATION_SCHEMA_* (eg. $WERF_RESOURCE_VALIDATION_SCHEMA_1='https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json')")
-	cmd.Flags().StringArrayVarP(&cmdData.ValidationExtraSchemas, "resource-validation-extra-schema", "", []string{}, "Extra json schema sources to validate resources (preferred over default sources). Must be a valid go template defining a http(s) URL, or an absolute path on local file system. Also, can be defined with $WERF_RESOURCE_VALIDATION_EXTRA_SCHEMA_* (eg. $WERF_RESOURCE_VALIDATION_EXTRA_SCHEMA_1='https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json')")
-	cmd.Flags().DurationVarP(&cmdData.ValidationSchemaCacheLifetime, "resource-validation-cache-lifetime", "", defaultValidationCacheLifetime, "How long local schema cache will be valid. Also can be defined by $WERF_RESOURCE_VALIDATION_CACHE_LIFETIME")
+	return nil
+}
+
+func SetupNoValuesSchemaValidationFlag(cmdData *CmdData, cmd *cobra.Command) error {
+	cmd.Flags().BoolVarP(&cmdData.NoValuesSchemaValidation, "no-values-schema-validation", "", util.GetBoolEnvironmentDefaultFalse("WERF_NO_VALUES_SCHEMA_VALIDATION"), "Disable values validation against JSON schema (default $WERF_NO_VALUES_SCHEMA_VALIDATION)")
 
 	return nil
 }
@@ -1235,41 +1268,25 @@ func SetupChartRepoInsecure(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(&cmdData.ChartRepoInsecure, "insecure-helm-dependencies", "", util.GetBoolEnvironmentDefaultFalse("WERF_INSECURE_HELM_DEPENDENCIES"), "Allow insecure oci registries to be used in the Chart.yaml dependencies configuration (default $WERF_INSECURE_HELM_DEPENDENCIES)")
 }
 
-// TODO(major): remove
-func StubSetupInsecureHelmDependencies(cmdData *CmdData, cmd *cobra.Command) {
-	cmd.Flags().BoolVar(lo.ToPtr(false), "insecure-helm-dependencies", false, "No-op")
-}
-
-// TODO(major): remove
-func StubSetupStatusProgressPeriod(cmdData *CmdData, cmd *cobra.Command) {
-	cmd.PersistentFlags().IntVarP(lo.ToPtr(0), "status-progress-period", "", 0, "No-op")
-}
-
-// TODO(major): remove
-func StubSetupHooksStatusProgressPeriod(cmdData *CmdData, cmd *cobra.Command) {
-	cmd.PersistentFlags().Int64VarP(lo.ToPtr(int64(0)), "hooks-status-progress-period", "", 0, "No-op")
-}
-
-// TODO(major): remove
-func StubSetupTrackTimeout(cmdData *CmdData, cmd *cobra.Command) {
-	cmd.Flags().IntVarP(lo.ToPtr(0), "timeout", "t", 0, "No-op")
-}
-
-func HasKubeConfig(cmdData *CmdData) bool {
-	return cmdData.LegacyKubeConfigPath != "" ||
-		cmdData.KubeConfigBase64 != "" ||
-		len(cmdData.LegacyKubeConfigPathsMergeList) > 0 ||
-		cmdData.KubeBearerTokenData != "" ||
-		cmdData.KubeBearerTokenPath != "" ||
-		cmdData.KubeAPIServerAddress != ""
+func SetupScanContextNamespaceOnly(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.ScanContextNamespaceOnly = new(bool)
+	cmd.Flags().BoolVarP(cmdData.ScanContextNamespaceOnly, "scan-context-namespace-only", "", util.GetBoolEnvironmentDefaultFalse("WERF_SCAN_CONTEXT_NAMESPACE_ONLY"), "Scan for used images only in namespace linked with context for each available context in kube-config (or only for the context specified with option --kube-context). When disabled will scan all namespaces in all contexts (or only for the context specified with option --kube-context). (Default $WERF_SCAN_CONTEXT_NAMESPACE_ONLY)")
 }
 
 func GetCacheStagesStorage(cmdData *CmdData) []string {
-	return append(util.PredefinedValuesByEnvNamePrefix("WERF_CACHE_REPO_"), *cmdData.CacheStagesStorage...)
+	res := util.PredefinedValuesByEnvNamePrefix("WERF_CACHE_REPO_")
+	if cmdData.CacheStagesStorage == nil {
+		return res
+	}
+	return append(res, *cmdData.CacheStagesStorage...)
 }
 
 func GetSecondaryStagesStorage(cmdData *CmdData) []string {
-	return append(util.PredefinedValuesByEnvNamePrefix("WERF_SECONDARY_REPO_"), *cmdData.SecondaryStagesStorage...)
+	res := util.PredefinedValuesByEnvNamePrefix("WERF_SECONDARY_REPO_")
+	if cmdData.SecondaryStagesStorage == nil {
+		return res
+	}
+	return append(res, *cmdData.SecondaryStagesStorage...)
 }
 
 func GetContainerRegistryMirror(ctx context.Context, cmdData *CmdData, buildahMode buildah.Mode) ([]string, error) {
@@ -1324,6 +1341,10 @@ func getAddCustomTag(cmdData *CmdData) []string {
 
 func GetRequireBuiltImages(cmdData *CmdData) bool {
 	return option.PtrValueOrDefault(cmdData.RequireBuiltImages, false)
+}
+
+func GetCheckBuiltImages(cmdData *CmdData) bool {
+	return option.PtrValueOrDefault(cmdData.CheckBuiltImages, false) || option.PtrValueOrDefault(cmdData.LegacyCheckBuiltImages, false)
 }
 
 func GetAddLabels(cmdData *CmdData) []string {
@@ -1558,13 +1579,10 @@ func GetNelmLogLevel(cmdData *CmdData) log.Level {
 
 func ProcessLogColorMode(cmdData *CmdData) error {
 	switch logColorMode := *cmdData.LogColorMode; logColorMode {
-	case "auto":
-	case "on":
-		logboek.Streams().EnableStyle()
-	case "off":
-		logboek.Streams().DisableStyle()
+	case log.LogColorModeAuto, log.LogColorModeOn, log.LogColorModeOff:
+		action.SetupColorLevel(action.SetupLoggingOptions{ColorMode: logColorMode})
 	default:
-		return fmt.Errorf("bad log color mode %q: on, off and auto modes are supported", logColorMode)
+		return fmt.Errorf("bad log color mode %q: %s, %s and %s modes are supported", logColorMode, log.LogColorModeOn, log.LogColorModeOff, log.LogColorModeAuto)
 	}
 
 	return nil
@@ -1758,10 +1776,4 @@ func GetOptionalRelease(cmdData *CmdData) string {
 		return "werf-stub"
 	}
 	return cmdData.Release
-}
-
-func LogKubeContext(kubeContext string) {
-	if kubeContext != "" {
-		logboek.LogF("Using kube context: %s\n", kubeContext)
-	}
 }

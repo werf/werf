@@ -5,28 +5,32 @@ author: Alexey Igrychev <alexey.igrychev@flant.com>
 directive_summary: base_image
 ---
 
-Here's a minimal `werf.yaml`. It describes an _image_ named `example` that is based on a _base image_ named `alpine`:
+Here's a minimal `werf.yaml`. It describes an _image_ named `example` that is based on a _base image_ named `alpine:latest`:
 
 ```yaml
 project: my-project
 configVersion: 1
 ---
 image: example
-from: alpine
+from: alpine:latest
 ```
 
-A _base image_ can be declared with `from` or `fromImage` directive.
+A _base image_ can be declared with the `from` directive.
 
 ## from
 
-The `from` directive specifies the base image: another image defined in werf.yaml (e.g. `backend`) or an external image with a tag or digest (e.g. `nginx:1.25`, `nginx@sha256:4c08b11ec901041edf324726b611fe88ed78a10a24710400980167d549597ffc`).
+The `from` directive specifies the base image: another image defined in `werf.yaml` (e.g. `backend`) or an external image with a tag or digest (e.g. `nginx:1.25`, `nginx@sha256:4c08b11ec901041edf324726b611fe88ed78a10a24710400980167d549597ffc`).
 
 ### Using external images
 
-When using an external image, if no tag is specified, the tag defaults to `latest`:
+When using an external image, a tag or digest is required:
 
 ```yaml
-from: <image>[:<tag>]
+from: <image>:<tag>
+```
+
+```yaml
+from: <image>@<digest>
 ```
 
 By default, the assembly process does not depend on the actual _base image_ digest in the repository, it only depends on the value of the _from_ directive.
@@ -56,7 +60,7 @@ it makes sense to store its description together with _images_ which use it as o
 This method comes in handy if the stages of the existing _stage conveyor_ are not enough for building the image. Using the image described in the same `werf.yaml` as the base image, you can essentially build your own _stage conveyor_.
 
 <a class="google-drawings" href="{{ "images/configuration/base_image2.svg" | true_relative_url }}" data-featherlight="image">
-    <img src="{{ "images/configuration/base_image2.svg" | true_relative_url }}" alt="Conveyor with fromImage stages">
+    <img src="{{ "images/configuration/base_image2.svg" | true_relative_url }}" alt="Conveyor with from stages">
 </a>
 
 ## fromCacheVersion

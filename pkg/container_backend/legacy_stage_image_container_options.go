@@ -288,7 +288,6 @@ func (co *LegacyStageImageContainerOptions) prepareCommitChanges(ctx context.Con
 	return args, nil
 }
 
-// TODO(major): remove escaping
 func escapeVolume(volume string, exactValues bool) string {
 	if exactValues {
 		return fmt.Sprintf("[%s]", quoteValue(volume))

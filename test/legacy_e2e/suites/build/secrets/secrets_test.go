@@ -60,19 +60,12 @@ var _ = Describe("build with secrets and ssh mounts", Label("integration", "buil
 
 			By(fmt.Sprintf("%s: building images", testOpts.State))
 			werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
-			if testOpts.ContainerBackendMode == "vanilla-docker" {
-				runOpts.ExtraArgs = append([]string{"stapel-shell"}, runOpts.ExtraArgs...)
-			}
 			buildOut := werfProject.Build(ctx, runOpts)
 			Expect(buildOut).To(ContainSubstring("Building stage"))
 			Expect(buildOut).NotTo(ContainSubstring("Use previously built image"))
 		},
-		Entry("with Vanilla Docker", testOptions{
-			ContainerBackendMode: "vanilla-docker",
-		}),
-		Entry("with BuildKit Docker", testOptions{
-			ContainerBackendMode: "buildkit-docker",
-			SSH:                  false,
+		Entry("with Docker", testOptions{
+			ContainerBackendMode: "docker",
 		}),
 		// Entry("with Native Buildah with rootless isolation", testOptions{
 		//	ContainerBackendMode: "native-rootless",
@@ -86,12 +79,8 @@ var _ = Describe("build with secrets and ssh mounts", Label("integration", "buil
 			WithStagedDockerfileBuilder: true,
 			SSH:                         false,
 		}),
-		Entry("with Vanilla Docker with SSH", testOptions{
-			ContainerBackendMode: "vanilla-docker",
-			SSH:                  true,
-		}),
-		Entry("with BuildKit Docker with SSH", testOptions{
-			ContainerBackendMode: "buildkit-docker",
+		Entry("with Docker with SSH", testOptions{
+			ContainerBackendMode: "docker",
 			SSH:                  true,
 		}),
 		Entry("with Native Buildah with rootless isolation with SSH", testOptions{

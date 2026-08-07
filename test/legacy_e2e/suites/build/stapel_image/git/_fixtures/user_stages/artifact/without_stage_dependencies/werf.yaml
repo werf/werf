@@ -2,17 +2,16 @@ project: none
 configVersion: 1
 ---
 image: image
-from: registry.werf.io/base/ubuntu
+from: registry.werf.io/base/ubuntu:22.04
 import:
-- image: artifact
+- from: artifact
   add: /app
   to: /app
   after: setup
 ---
 image: artifact
 final: false
-from: registry.werf.io/base/ubuntu
-disableGitAfterPatch: true
+from: registry.werf.io/base/ubuntu:22.04
 git:
 - to: /app
 shell:

@@ -49,9 +49,6 @@ entries:
                   - title: Importing from images
                     url: /usage/build/stapel/imports.html
 
-                  - title: Dockerfile instructions
-                    url: /usage/build/stapel/dockerfile.html
-
                   - title: Reducing image size and speeding up a build by mounts
                     url: /usage/build/stapel/mounts.html
 
@@ -155,6 +152,9 @@ entries:
           - title: Migration from v1.2 to v2.0
             url: /resources/migration_from_v1_2_to_v2_0.html
 
+          - title: Migration from v2 to v3
+            url: /resources/migration_from_v2_to_v3.html
+
           - title: Comparison with other tools
             url: /resources/comparison.html
 
@@ -209,9 +209,6 @@ entries:
 
                   - title: Импортирование из образов
                     url: /usage/build/stapel/imports.html
-
-                  - title: Инструкции Dockerfile
-                    url: /usage/build/stapel/dockerfile.html
 
                   - title: Ускорение сборки и уменьшение размера за счёт монтирования
                     url: /usage/build/stapel/mounts.html
@@ -315,6 +312,9 @@ entries:
 
           - title: Миграция с v1.2 на v2.0
             url: /resources/migration_from_v1_2_to_v2_0.html
+
+          - title: Миграция с v2 на v3
+            url: /resources/migration_from_v2_to_v3.html
 
           - title: Сравнение с другими решениями
             url: /resources/comparison.html

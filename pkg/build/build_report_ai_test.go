@@ -31,23 +31,6 @@ func TestAI_EnvBuildReport_RoundTripNamedImages(t *testing.T) {
 	assertReportImageRecordEqual(t, report.Images["backend"], backendRecord)
 }
 
-func TestAI_EnvBuildReport_RoundTripUnnamedImage(t *testing.T) {
-	report := NewImagesReport()
-	report.SetImageRecord("", newTestReportImageRecord("", true))
-
-	envData := report.ToEnvFileData()
-	assert.Contains(t, string(envData), "WERF_DOCKER_IMAGE_NAME=")
-
-	parsed, err := parseEnvFileBuildReport(bytes.NewReader(envData))
-	require.NoError(t, err)
-	require.NotNil(t, parsed)
-	require.Len(t, parsed.Images, 1)
-
-	unnamedRecord, ok := parsed.Images[""]
-	require.True(t, ok)
-	assertReportImageRecordEqual(t, report.Images[""], unnamedRecord)
-}
-
 func TestAI_EnvBuildReport_PreservesFinalField(t *testing.T) {
 	report := NewImagesReport()
 	report.SetImageRecord("frontend", newTestReportImageRecord("frontend", true))
@@ -104,18 +87,13 @@ func TestAI_EnvBuildReport_ValidateParsedEnv(t *testing.T) {
 }
 
 func newTestReportImageRecord(werfImageName string, final bool) ReportImageRecord {
-	suffix := werfImageName
-	if suffix == "" {
-		suffix = "unnamed"
-	}
-
 	return ReportImageRecord{
 		WerfImageName:     werfImageName,
-		DockerRepo:        "registry.example.com/" + suffix,
+		DockerRepo:        "registry.example.com/" + werfImageName,
 		DockerTag:         "v1",
-		DockerImageID:     "sha256:id-" + suffix,
-		DockerImageDigest: "sha256:digest-" + suffix,
-		DockerImageName:   "registry.example.com/" + suffix + ":v1",
+		DockerImageID:     "sha256:id-" + werfImageName,
+		DockerImageDigest: "sha256:digest-" + werfImageName,
+		DockerImageName:   "registry.example.com/" + werfImageName + ":v1",
 		Final:             final,
 	}
 }

@@ -346,6 +346,18 @@ func (m *MockLegacyContainer) EXPECT() *MockLegacyContainerMockRecorder {
 	return m.recorder
 }
 
+// AddBuildTimeEnv mocks base method.
+func (m *MockLegacyContainer) AddBuildTimeEnv(envs map[string]string) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "AddBuildTimeEnv", envs)
+}
+
+// AddBuildTimeEnv indicates an expected call of AddBuildTimeEnv.
+func (mr *MockLegacyContainerMockRecorder) AddBuildTimeEnv(envs any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddBuildTimeEnv", reflect.TypeOf((*MockLegacyContainer)(nil).AddBuildTimeEnv), envs)
+}
+
 // AddRunCommands mocks base method.
 func (m *MockLegacyContainer) AddRunCommands(commands ...string) {
 	m.ctrl.T.Helper()

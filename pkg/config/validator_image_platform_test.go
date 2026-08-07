@@ -15,7 +15,7 @@ var _ = Describe("imagePlatformValidator", func() {
 						Images:   []string{"app"},
 						Platform: []string{"linux/amd64"},
 						RawDependencies: []*rawDependency{
-							{Image: "missing-base"},
+							{From: "missing-base"},
 						},
 					},
 				},
@@ -42,7 +42,7 @@ var _ = Describe("imagePlatformValidator", func() {
 						Images:   []string{"test-dependency"},
 						Platform: []string{"linux/amd64", "linux/arm64"},
 						RawDependencies: []*rawDependency{
-							{Image: "app"},
+							{From: "app"},
 						},
 					},
 				},
@@ -52,7 +52,7 @@ var _ = Describe("imagePlatformValidator", func() {
 		)
 
 		DescribeTable("Stapel x Stapel with import cases", testImagePlatformValidator,
-			Entry("should return error when import specified with import.image field and base image is missing",
+			Entry("should return error when import specified with import.from field and base image is missing",
 				[]*rawStapelImage{
 					{
 						Images:   []string{"app"},
@@ -62,7 +62,7 @@ var _ = Describe("imagePlatformValidator", func() {
 						Images:   []string{"test-import"},
 						Platform: []string{"linux/amd64", "linux/arm64"},
 						RawImport: []*rawImport{
-							{ImageName: "app"},
+							{From: "app"},
 						},
 					},
 				},
@@ -93,7 +93,7 @@ var _ = Describe("imagePlatformValidator", func() {
 						Images:   []string{"app"},
 						Platform: []string{"linux/amd64"},
 						RawDependencies: []*rawDependency{
-							{Image: "missing-base"},
+							{From: "missing-base"},
 						},
 					},
 					{
@@ -127,7 +127,7 @@ var _ = Describe("imagePlatformValidator", func() {
 						Images:   []string{"app"},
 						Platform: []string{"linux/amd64"},
 						RawDependencies: []*rawDependency{
-							{Image: "base"},
+							{From: "base"},
 						},
 					},
 					{
@@ -147,7 +147,7 @@ var _ = Describe("imagePlatformValidator", func() {
 						Images:   []string{"app"},
 						Platform: []string{"linux/amd64"},
 						RawDependencies: []*rawDependency{
-							{Image: "base"},
+							{From: "base"},
 						},
 					},
 				},
@@ -167,7 +167,7 @@ var _ = Describe("imagePlatformValidator", func() {
 						Images:   []string{"app"},
 						Platform: []string{"linux/amd64"},
 						RawDependencies: []*rawDependency{
-							{Image: "missing-base"},
+							{From: "missing-base"},
 						},
 					},
 				},
@@ -196,7 +196,7 @@ var _ = Describe("imagePlatformValidator", func() {
 						Images:   []string{"app"},
 						Platform: []string{"linux/amd64"},
 						RawDependencies: []*rawDependency{
-							{Image: "base"},
+							{From: "base"},
 						},
 					},
 				},
@@ -216,7 +216,7 @@ var _ = Describe("imagePlatformValidator", func() {
 						Images:   []string{"app"},
 						Platform: []string{"linux/amd64"},
 						RawDependencies: []*rawDependency{
-							{Image: "missing-base"},
+							{From: "missing-base"},
 						},
 					},
 				},

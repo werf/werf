@@ -55,24 +55,34 @@ func (c *container) Create(ctx context.Context) error {
 				}
 
 				if !platforms.Only(platforms.Normalize(desiredSpec)).Match(actualSpec) {
-					if err := docker.CliPullWithRetries(ctx, "--platform", targetPlatform, c.ImageName); err != nil {
+					if err := acquireImage(ctx, c.ImageName, targetPlatform); err != nil {
 						return err
 					}
 				}
 			}
 		} else {
-			pullArgs := []string{c.ImageName}
-			if targetPlatform != "" {
-				pullArgs = append([]string{"--platform", targetPlatform}, pullArgs...)
-			}
-
-			if err := docker.CliPullWithRetries(ctx, pullArgs...); err != nil {
+			if err := acquireImage(ctx, c.ImageName, targetPlatform); err != nil {
 				return err
 			}
 		}
 
 		return docker.CliCreate(ctx, name, volume, c.ImageName)
 	})
+}
+
+func acquireImage(ctx context.Context, imageName, targetPlatform string) error {
+	if isDefaultImageRef() {
+		if _, ok := embeddedImageForPlatform(targetPlatform); ok {
+			return loadEmbeddedImage(ctx, targetPlatform)
+		}
+	}
+
+	pullArgs := []string{imageName}
+	if targetPlatform != "" {
+		pullArgs = append([]string{"--platform", targetPlatform}, pullArgs...)
+	}
+
+	return docker.CliPullWithRetries(ctx, pullArgs...)
 }
 
 func stapelImageLockName(imageName string) string {

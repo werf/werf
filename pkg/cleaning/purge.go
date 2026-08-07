@@ -48,17 +48,6 @@ func (m *purgeManager) run(ctx context.Context) error {
 		return err
 	}
 
-	if err := logboek.Context(ctx).Default().LogProcess("Deleting imports metadata").DoError(func() error {
-		importMetadataIDs, err := m.StorageManager.GetStagesStorage().GetImportMetadataIDs(ctx, m.ProjectName, storage.WithCache())
-		if err != nil {
-			return err
-		}
-
-		return m.deleteImportsMetadata(ctx, importMetadataIDs)
-	}); err != nil {
-		return err
-	}
-
 	if err := m.purgeManagedImages(ctx); err != nil {
 		return err
 	}
@@ -90,7 +79,38 @@ func (m *purgeManager) run(ctx context.Context) error {
 		}
 	}
 
-	return nil
+	return m.deleteMetaRepoMarker(ctx)
+}
+
+// deleteMetaRepoMarker runs last, so a purge that failed to delete some metadata
+// never leaves the meta-repo populated with the safeguard already gone.
+func (m *purgeManager) deleteMetaRepoMarker(ctx context.Context) error {
+	repo, ok := m.StorageManager.GetStagesStorage().(*storage.RepoStagesStorage)
+	if !ok {
+		return nil
+	}
+
+	metaRepoAddress, found, err := repo.GetMetaRepoMarker(ctx, m.ProjectName)
+	if err != nil {
+		return fmt.Errorf("unable to get meta-repo marker: %w", err)
+	}
+	if !found {
+		return nil
+	}
+
+	return logboek.Context(ctx).Default().LogProcess("Deleting meta-repo safeguard marker").DoError(func() error {
+		logboek.Context(ctx).Default().LogFWithCustomStyle(deletedStyle, "  meta-repo: %s\n", metaRepoAddress)
+
+		if m.DryRun {
+			return nil
+		}
+
+		if err := repo.RmMetaRepoMarker(ctx, m.ProjectName); err != nil {
+			return fmt.Errorf("unable to remove meta-repo marker: %w", err)
+		}
+
+		return nil
+	})
 }
 
 func (m *purgeManager) deleteStageDescSet(ctx context.Context, stageDescSet image.StageDescSet, isFinal bool) error {
@@ -106,10 +126,6 @@ func (m *purgeManager) deleteStageDescSet(ctx context.Context, stageDescSet imag
 	}
 
 	return deleteStageDescSet(ctx, m.StorageManager, m.DryRun, deleteStageOptions, stageDescSet, isFinal)
-}
-
-func (m *purgeManager) deleteImportsMetadata(ctx context.Context, importsMetadataIDs []string) error {
-	return deleteImportsMetadata(ctx, m.ProjectName, m.StorageManager, importsMetadataIDs, m.DryRun)
 }
 
 func (m *purgeManager) purgeImageMetadata(ctx context.Context) error {

@@ -1,1 +1,0 @@
-download the manifest for a named release

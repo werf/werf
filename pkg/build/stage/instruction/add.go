@@ -37,6 +37,10 @@ func (stg *Add) ExpandInstruction(c stage.Conveyor, env map[string]string) error
 	return nil
 }
 
+func (stg *Add) GetContentDependencies(ctx context.Context, c stage.Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+	return stg.GetDependencies(ctx, c, nil, nil, nil, buildContextArchive)
+}
+
 func (stg *Add) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
 	var args []string
 
@@ -44,6 +48,11 @@ func (stg *Add) GetDependencies(ctx context.Context, c stage.Conveyor, cb contai
 	args = append(args, "Dest", stg.instruction.Data.DestPath)
 	args = append(args, "Chown", stg.instruction.Data.Chown)
 	args = append(args, "Chmod", stg.instruction.Data.Chmod)
+
+	// appended only when set to keep digests of already built ADD stages intact
+	if len(stg.instruction.Data.ExcludePatterns) > 0 {
+		args = append(args, append([]string{"ExcludePatterns"}, stg.instruction.Data.ExcludePatterns...)...)
+	}
 
 	var fileGlobSrc []string
 	for _, src := range stg.instruction.Data.SourcePaths {
@@ -53,7 +62,7 @@ func (stg *Add) GetDependencies(ctx context.Context, c stage.Conveyor, cb contai
 	}
 
 	if len(fileGlobSrc) > 0 {
-		if srcChecksum, err := buildContextArchive.CalculateGlobsChecksum(ctx, fileGlobSrc, true); err != nil {
+		if srcChecksum, err := buildContextArchive.CalculateGlobsChecksum(ctx, fileGlobSrc, container_backend.CalculateGlobsChecksumOptions{CheckForArchives: true}); err != nil {
 			return "", fmt.Errorf("unable to calculate build context globs checksum: %w", err)
 		} else {
 			args = append(args, "SourcesChecksum", srcChecksum)

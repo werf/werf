@@ -19,14 +19,32 @@ werf kubectl logs [-f] [-p] (POD | TYPE/NAME) [-c CONTAINER] [options]
   # Return snapshot logs from pod nginx with only one container
   kubectl logs nginx
   
+  # Return snapshot logs from pod nginx, prefixing each line with the source pod and container name
+  kubectl logs nginx --prefix
+  
+  # Return snapshot logs from pod nginx, limiting output to 500 bytes
+  kubectl logs nginx --limit-bytes=500
+  
+  # Return snapshot logs from pod nginx, waiting up to 20 seconds for it to start running.
+  kubectl logs nginx --pod-running-timeout=20s
+  
   # Return snapshot logs from pod nginx with multi containers
   kubectl logs nginx --all-containers=true
+  
+  # Return snapshot logs from all pods in the deployment nginx
+  kubectl logs deployment/nginx --all-pods=true
   
   # Return snapshot logs from all containers in pods defined by label app=nginx
   kubectl logs -l app=nginx --all-containers=true
   
+  # Return snapshot logs from all pods defined by label app=nginx, limiting concurrent log requests to 10 pods
+  kubectl logs -l app=nginx --max-log-requests=10
+  
   # Return snapshot of previous terminated ruby container logs from pod web-1
   kubectl logs -p -c ruby web-1
+  
+  # Begin streaming the logs from pod nginx, continuing even if errors occur
+  kubectl logs nginx -f --ignore-errors=true
   
   # Begin streaming the logs of the ruby container in pod web-1
   kubectl logs -f -c ruby web-1
@@ -39,6 +57,9 @@ werf kubectl logs [-f] [-p] (POD | TYPE/NAME) [-c CONTAINER] [options]
   
   # Show all logs from pod nginx written in the last hour
   kubectl logs --since=1h nginx
+  
+  # Show all logs with timestamps from pod nginx starting from August 30, 2024, at 06:00:00 UTC
+  kubectl logs nginx --since-time=2024-08-30T06:00:00Z --timestamps=true
   
   # Show logs from a kubelet with an expired serving certificate
   kubectl logs --insecure-skip-tls-verify-backend nginx
@@ -55,6 +76,8 @@ werf kubectl logs [-f] [-p] (POD | TYPE/NAME) [-c CONTAINER] [options]
 ```shell
       --all-containers=false
             Get all containers` logs in the pod(s).
+      --all-pods=false
+            Get logs from all pod(s). Sets prefix to true.
   -c, --container=""
             Print the logs of this container
   -f, --follow=false
@@ -79,9 +102,9 @@ werf kubectl logs [-f] [-p] (POD | TYPE/NAME) [-c CONTAINER] [options]
             If true, print the logs for the previous instance of the container in a pod if it       
             exists.
   -l, --selector=""
-            Selector (label query) to filter on, supports `=`, `==`, and `!=`.(e.g. -l              
-            key1=value1,key2=value2). Matching objects must satisfy all of the specified label      
-            constraints.
+            Selector (label query) to filter on, supports `=`, `==`, `!=`, `in`, `notin`.(e.g. -l   
+            key1=value1,key2=value2,key3 in (value3)). Matching objects must satisfy all of the     
+            specified label constraints.
       --since=0s
             Only return logs newer than a relative duration like 5s, 2m, or 3h. Defaults to all     
             logs. Only one of since-time / since may be used.
@@ -106,6 +129,9 @@ werf kubectl logs [-f] [-p] (POD | TYPE/NAME) [-c CONTAINER] [options]
             groups.
       --as-uid=""
             UID to impersonate for the operation.
+      --as-user-extra=[]
+            User extras to impersonate for the operation, this flag can be repeated to specify      
+            multiple values for the same key.
       --cache-dir="~/.kube/cache"
             Default cache directory
       --certificate-authority=""
@@ -131,6 +157,9 @@ werf kubectl logs [-f] [-p] (POD | TYPE/NAME) [-c CONTAINER] [options]
       --kubeconfig=""
             Path to the kubeconfig file to use for CLI requests (default $WERF_KUBE_CONFIG, or      
             $WERF_KUBECONFIG, or $KUBECONFIG). Ignored if kubeconfig passed as base64.
+      --kuberc=""
+            Path to the kuberc file to use for preferences. This can be disabled by exporting       
+            KUBECTL_KUBERC=false feature gate or turning off the feature KUBERC=off.
       --log-flush-frequency=5s
             Maximum number of seconds between log flushes
       --match-server-version=false
@@ -140,7 +169,8 @@ werf kubectl logs [-f] [-p] (POD | TYPE/NAME) [-c CONTAINER] [options]
       --password=""
             Password for basic authentication to the API server
       --profile="none"
-            Name of profile to capture. One of (none|cpu|heap|goroutine|threadcreate|block|mutex)
+            Name of profile to capture. One of                                                      
+            (none|cpu|heap|goroutine|threadcreate|block|mutex|trace)
       --profile-output="profile.pprof"
             Name of the file to write the profile to
       --request-timeout="0"

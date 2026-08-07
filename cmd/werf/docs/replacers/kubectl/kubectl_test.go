@@ -65,6 +65,8 @@ func checkText(ann string) bool {
 	if ann != GetAlphaEventsDocs().LongMD &&
 		ann != GetKubectlDocs().LongMD &&
 		ann != GetAlphaDocs().LongMD &&
+		ann != GetAlphaKubercDocs().LongMD &&
+		ann != GetAlphaKubercSetDocs().LongMD &&
 		ann != GetAnnotateDocs().LongMD &&
 		ann != GetApiResourcesDocs().LongMD &&
 		ann != GetApiVersionsDocs().LongMD &&

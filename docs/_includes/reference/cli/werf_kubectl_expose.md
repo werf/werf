@@ -76,8 +76,8 @@ werf kubectl expose (-f FILENAME | TYPE NAME) [--port=port] [--protocol=TCP|UDP|
       --name=""
             The name for the newly created object.
   -o, --output=""
-            Output format. One of: (json, yaml, name, go-template, go-template-file, template,      
-            templatefile, jsonpath, jsonpath-as-json, jsonpath-file).
+            Output format. One of: (json, yaml, kyaml, name, go-template, go-template-file,         
+            template, templatefile, jsonpath, jsonpath-as-json, jsonpath-file).
       --override-type="merge"
             The method used to override the generated object: json, merge, or strategic.
       --overrides=""
@@ -97,8 +97,7 @@ werf kubectl expose (-f FILENAME | TYPE NAME) [--port=port] [--protocol=TCP|UDP|
             perform kubectl apply on this object in the future.
       --selector=""
             A label selector to use for this service. Only equality-based selector requirements are 
-            supported. If empty (the default) infer the selector from the replication controller or 
-            replica set.)
+            supported. If empty (the default) infer the selector from the resource being exposed.
       --session-affinity=""
             If non-empty, set the session affinity for the service to this; legal values: `None`,   
             `ClientIP`
@@ -127,6 +126,9 @@ werf kubectl expose (-f FILENAME | TYPE NAME) [--port=port] [--protocol=TCP|UDP|
             groups.
       --as-uid=""
             UID to impersonate for the operation.
+      --as-user-extra=[]
+            User extras to impersonate for the operation, this flag can be repeated to specify      
+            multiple values for the same key.
       --cache-dir="~/.kube/cache"
             Default cache directory
       --certificate-authority=""
@@ -152,6 +154,9 @@ werf kubectl expose (-f FILENAME | TYPE NAME) [--port=port] [--protocol=TCP|UDP|
       --kubeconfig=""
             Path to the kubeconfig file to use for CLI requests (default $WERF_KUBE_CONFIG, or      
             $WERF_KUBECONFIG, or $KUBECONFIG). Ignored if kubeconfig passed as base64.
+      --kuberc=""
+            Path to the kuberc file to use for preferences. This can be disabled by exporting       
+            KUBECTL_KUBERC=false feature gate or turning off the feature KUBERC=off.
       --log-flush-frequency=5s
             Maximum number of seconds between log flushes
       --match-server-version=false
@@ -161,7 +166,8 @@ werf kubectl expose (-f FILENAME | TYPE NAME) [--port=port] [--protocol=TCP|UDP|
       --password=""
             Password for basic authentication to the API server
       --profile="none"
-            Name of profile to capture. One of (none|cpu|heap|goroutine|threadcreate|block|mutex)
+            Name of profile to capture. One of                                                      
+            (none|cpu|heap|goroutine|threadcreate|block|mutex|trace)
       --profile-output="profile.pprof"
             Name of the file to write the profile to
       --request-timeout="0"

@@ -1,0 +1,1 @@
+get information about a deployed release

@@ -11,8 +11,9 @@ import (
 	. "github.com/onsi/gomega"
 	"sigs.k8s.io/yaml"
 
-	"github.com/werf/nelm/pkg/export/helm/chart"
-	"github.com/werf/nelm/pkg/export/helm/werf/helmopts"
+	nelmcommon "github.com/werf/nelm/pkg/common"
+	chartcommon "github.com/werf/nelm/pkg/helm/pkg/chart/common"
+	chart "github.com/werf/nelm/pkg/helm/pkg/chart/v2"
 	"github.com/werf/werf/v2/pkg/docker_registry"
 	"github.com/werf/werf/v2/pkg/logging"
 	bundles_registry "github.com/werf/werf/v2/pkg/ref"
@@ -44,7 +45,7 @@ var _ = Describe("Bundle copy", func() {
 						"repo": "repo",
 					},
 				},
-				Raw: []*chart.File{
+				Raw: []*chartcommon.File{
 					{
 						Name: "values.yaml",
 						Data: []byte(`
@@ -101,7 +102,7 @@ werf:
 					"repo": "repo",
 				},
 			},
-			Raw: []*chart.File{
+			Raw: []*chartcommon.File{
 				{
 					Name: "values.yaml",
 					Data: []byte(`
@@ -173,7 +174,7 @@ werf:
 					"repo": "repo",
 				},
 			},
-			Raw: []*chart.File{
+			Raw: []*chartcommon.File{
 				{
 					Name: "values.yaml",
 					Data: []byte(`
@@ -245,7 +246,7 @@ werf:
 					"repo": "repo",
 				},
 			},
-			Raw: []*chart.File{
+			Raw: []*chartcommon.File{
 				{
 					Name: "values.yaml",
 					Data: []byte(`
@@ -317,7 +318,7 @@ werf:
 					"repo": "registry.example.com/group/testproject",
 				},
 			},
-			Raw: []*chart.File{
+			Raw: []*chartcommon.File{
 				{
 					Name: "values.yaml",
 					Data: []byte(`
@@ -390,7 +391,7 @@ werf:
 					"repo": "registry.example.com/group/testproject",
 				},
 			},
-			Raw: []*chart.File{
+			Raw: []*chartcommon.File{
 				{
 					Name: "values.yaml",
 					Data: []byte(`
@@ -482,7 +483,7 @@ werf:
 					},
 				},
 			},
-			Raw: []*chart.File{
+			Raw: []*chartcommon.File{
 				{
 					Name: "values.yaml",
 					Data: []byte(`
@@ -592,8 +593,8 @@ func NewBundleArchiveStubWriter() *BundleArchiveStubWriter {
 
 func (writer *BundleArchiveStubWriter) Open() error { return nil }
 
-func (writer *BundleArchiveStubWriter) WriteChartArchive(data []byte, opts helmopts.HelmOptions) error {
-	ch, err := BytesToChart(data, opts)
+func (writer *BundleArchiveStubWriter) WriteChartArchive(data []byte, opts nelmcommon.HelmOptions) error {
+	ch, err := BytesToChart(context.Background(), data, opts)
 	if err != nil {
 		return err
 	}
@@ -620,23 +621,23 @@ func NewBundlesRegistryClientStub() *BundlesRegistryClientStub {
 	}
 }
 
-func (client *BundlesRegistryClientStub) PullChartToCache(ctx context.Context, ref *bundles_registry.Reference, opts helmopts.HelmOptions) error {
+func (client *BundlesRegistryClientStub) PullChartToCache(ctx context.Context, ref *bundles_registry.Reference, opts nelmcommon.HelmOptions) error {
 	return nil
 }
 
-func (client *BundlesRegistryClientStub) LoadChart(ctx context.Context, ref *bundles_registry.Reference, opts helmopts.HelmOptions) (*chart.Chart, error) {
+func (client *BundlesRegistryClientStub) LoadChart(ctx context.Context, ref *bundles_registry.Reference, opts nelmcommon.HelmOptions) (*chart.Chart, error) {
 	if ch, hasChart := client.StubCharts[ref.FullName()]; hasChart {
 		return ch, nil
 	}
 	return nil, fmt.Errorf("no chart found by address %s", ref.FullName())
 }
 
-func (client *BundlesRegistryClientStub) SaveChart(ctx context.Context, ch *chart.Chart, ref *bundles_registry.Reference, opts helmopts.HelmOptions) error {
+func (client *BundlesRegistryClientStub) SaveChart(ctx context.Context, ch *chart.Chart, ref *bundles_registry.Reference, opts nelmcommon.HelmOptions) error {
 	client.StubCharts[ref.FullName()] = ch
 	return nil
 }
 
-func (client *BundlesRegistryClientStub) PushChart(ctx context.Context, ref *bundles_registry.Reference, opts helmopts.HelmOptions) error {
+func (client *BundlesRegistryClientStub) PushChart(ctx context.Context, ref *bundles_registry.Reference, opts nelmcommon.HelmOptions) error {
 	return nil
 }
 
@@ -726,7 +727,7 @@ func VerifyChart(ctx context.Context, ch *chart.Chart, opts VerifyChartOptions) 
 	chValues, err := json.Marshal(ch.Values)
 	Expect(err).NotTo(HaveOccurred())
 
-	var valuesFile *chart.File
+	var valuesFile *chartcommon.File
 	for _, f := range ch.Raw {
 		if f.Name == "values.yaml" {
 			valuesFile = f

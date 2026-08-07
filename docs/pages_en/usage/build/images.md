@@ -131,24 +131,22 @@ dockerfile: Dockerfile
 
 In the example above, werf will use the Dockerfile at `docs/Dockerfile` to build the `docs` image and the Dockerfile at `service/Dockerfile` to build the `service` image.
 
+The Dockerfile may also reside outside the context, e.g. `dockerfile: ../dockerfiles/app.Dockerfile` with `context: app`, as long as its path does not go outside the project directory. Such a Dockerfile does not become a part of the build context.
+
 #### Excluding files from the build context
 
-werf honours the `.dockerignore` file. Inside the context directory it looks for `<dockerfile>.dockerignore` first and falls back to `.dockerignore`; only the first file found is used.
+werf assembles and filters the build context itself, so the resulting context does not depend on the container backend in use. The patterns are taken from the first of the following files that exists, and the remaining ones are not read at all:
 
-```yaml
-project: example
-configVersion: 1
----
-image: app
-context: app
-dockerfile: Dockerfile
-```
+1. `<dockerfile>.dockerignore`
+2. `<dockerfile>.containerignore`
+3. `.dockerignore`
+4. `.containerignore`
 
-For this configuration werf reads `app/Dockerfile.dockerignore`, or `app/.dockerignore` if the former does not exist.
+The first two are looked up next to the Dockerfile, the other two in the root of the context. Files added with `contextAddFiles` are added after the filtering, so the ignore patterns do not affect them.
 
 Excluded files are neither sent to the build context nor taken into account when calculating the image digest, so changing them does not cause a rebuild.
 
-The `.dockerignore` file is a configuration file, so by default it must be committed to Git. To use an uncommitted one, allow it with the `allowUncommittedDockerignoreFiles` directive in [werf-giterminism.yaml]({{"reference/werf_giterminism_yaml.html" | true_relative_url }}).
+The ignore file is a configuration file, so by default it must be committed to Git. To use an uncommitted one, allow it with the `allowUncommittedDockerignoreFiles` directive in `werf-giterminism.yaml` (more [about giterminism]({{"/usage/project_configuration/giterminism.html" | true_relative_url }})).
 
 #### Using build secrets
 
@@ -395,7 +393,7 @@ shell:
 image: app
 from: alpine:latest
 import:
-- image: builder
+- from: builder
   add: /app/build/app
   to: /usr/local/bin/app
   after: install
@@ -500,7 +498,7 @@ imageSpec:
       - "/var/lib/postgresql/data"
 ---
 image: app
-fromImage: base
+from: base
 git:
   add: /postgresql/data
   to: /var/lib/postgresql/data
@@ -629,7 +627,7 @@ dockerfile: base.Dockerfile
 image: app
 dockerfile: Dockerfile
 dependencies:
-- image: base
+- from: base
   imports:
   - type: ImageName
     targetBuildArg: BASE_IMAGE
@@ -655,7 +653,7 @@ shell:
 image: app
 dockerfile: Dockerfile
 dependencies:
-- image: builder
+- from: builder
   imports:
   - type: ImageName
     targetBuildArg: BUILDER_IMAGE
@@ -724,13 +722,13 @@ context: modules/controlplane/
 image: app
 dockerfile: Dockerfile
 dependencies:
-- image: auth
+- from: auth
   imports:
   - type: ImageName
     targetBuildArg: AUTH_IMAGE_NAME
   - type: ImageDigest
     targetBuildArg: AUTH_IMAGE_DIGEST
-- image: controlplane
+- from: controlplane
   imports:
   - type: ImageName
     targetBuildArg: CONTROLPLANE_IMAGE_NAME
@@ -763,7 +761,7 @@ dockerfile: Dockerfile.builder
 image: app
 dockerfile: Dockerfile.app
 dependencies:
-- image: builder
+- from: builder
   imports:
   - type: ImageName
     targetBuildArg: BUILDER_IMAGE_NAME

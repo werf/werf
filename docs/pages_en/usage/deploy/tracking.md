@@ -13,7 +13,7 @@ Resource tracking is enabled by default for all supported resource types, namely
 
 * some of the resources indirectly created by the release resources;
 
-* off-release resources referenced in the `<name>.external-dependency.werf.io/resource` annotations.
+* off-release resources referenced in the `werf.io/deploy-dependency-<name>` or `werf.io/delete-dependency-<name>` annotations.
 
 Deployment, StatefulSet, DaemonSet, Job, and Flagger Canary resources utilize *dedicated* state trackers that not only determine accurately whether the resource was deployed successfully or unsuccessfully, but also track the status of child resources, such as Pods created by Deployment.
 

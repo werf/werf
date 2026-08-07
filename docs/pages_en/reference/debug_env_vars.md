@@ -26,7 +26,6 @@ The variables below enable narrow debug channels. Channels that write to the deb
 | `WERF_DEBUG_IMPORT_SERVER` | Rsync import server traces. Requires `--log-debug` |
 | `WERF_DEBUG_STAGE_DIGEST` | Stage digest calculation arguments (the named values the digest is derived from). The resulting digest itself is logged with `--log-debug` regardless of this variable. Requires `--log-debug` |
 | `WERF_DEBUG_USER_STAGE_CHECKSUM` | User stage checksum calculation details. Requires `--log-debug` |
-| `WERF_DEBUG_IMPORT_SOURCE_CHECKSUM` | Import source checksum calculation details. Requires `--log-debug` |
 | `WERF_DEBUG_DOCKERFILE_STAGE_DEPENDENCIES` | Controls two channels: Dockerfile stage dependency calculation and per-match build context paths during context checksum calculation. Requires `--log-debug` |
 | `WERF_DEBUG_CONTAINER_RUNTIME` (deprecated alias: `WERF_CONTAINER_RUNTIME_DEBUG`) | Container backend internals: container path removal, buildah container mount/unmount, per-file checksum calculation. Requires `--log-debug` |
 | `WERF_DEBUG_BUILDAH` (deprecated alias: `WERF_BUILDAH_DEBUG`) | Buildah backend debug output |
@@ -57,24 +56,14 @@ The variables below enable narrow debug channels. Channels that write to the deb
 | Variable | Description |
 |----------|-------------|
 | `WERF_DEBUG_TEMPLATES` | boolean; same as `--debug-templates`: debug mode for Go templates |
-| `WERF_DEBUG_SECRET_VALUES` | Debug output of secret values decoding. Requires `--log-debug` |
 
 ### Deploy
 
 | Variable | Description |
 |----------|-------------|
 | `WERF_NELM_TRACE` | boolean; enable trace-level logging of the Nelm deployment engine |
-| `WERF_DEBUG_HELM_V3_EXTRA_ANNOTATIONS_AND_LABELS` (deprecated alias: `WERF_HELM_V3_EXTRA_ANNOTATIONS_AND_LABELS_DEBUG`) | Debug output of the extra annotations and labels post-renderer |
 | `WERF_SHOW_VERBOSE_DIFFS` | boolean, default `true`; same as `--show-verbose-diffs` in `werf plan`: show verbose diff lines |
 | `WERF_SHOW_VERBOSE_CRD_DIFFS` | boolean, default `false`; same as `--show-verbose-crd-diffs` in `werf plan`: show verbose CRD diff lines |
-
-### Ansible builder
-
-| Variable | Description |
-|----------|-------------|
-| `WERF_DEBUG_ANSIBLE_ARGS` | String with extra arguments passed to `ansible-playbook` |
-| `WERF_DEBUG_ANSIBLE_LIVE_PY_PATH` | Path to a file overriding the built-in `live.py` ansible callback |
-| `WERF_DEBUG_ANSIBLE_WERF_PY_PATH` | Path to a file overriding the built-in `werf.py` ansible callback |
 
 ### Process diagnostics
 

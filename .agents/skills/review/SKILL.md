@@ -53,7 +53,7 @@ What the change does for the user — not how the code is written.
 
 Derive risks from the technical and product findings plus the diff — including compound ones, where a technical flaw produces a product gap or an operational hazard. Likelihood is Likely/Possible/Unlikely, severity is Critical/High/Medium/Low; be realistic, do not inflate. Every risk needs a concrete location.
 
-Classify each risk as Technical, Security, UX/Product, or Operational, and report risks only when they exist — an empty matrix is noise. A `go.mod` bump of `nelm`, `3p-helm`, `kubedog`, or `common-go` carries the widest blast radius here: it silently changes deploy behavior for everyone.
+Classify each risk as Technical, Security, UX/Product, or Operational, and report risks only when they exist — an empty matrix is noise. A `go.mod` bump of `nelm`, `kubedog`, or `common-go` carries the widest blast radius here: it silently changes deploy behavior for everyone.
 
 ## Gotchas
 
@@ -63,7 +63,7 @@ Classify each risk as Technical, Security, UX/Product, or Operational, and repor
 - Giterminism: any new read of uncommitted state MUST go through `giterminism_manager`.
 - `*_linux.go` / `*_others.go` pairs must stay in sync, as must the Buildah and Docker backends — and a reviewer on macOS cannot compile the Buildah side at all.
 - Persisted formats (stage metadata, bundles, storage records) need backward compatibility.
-- `go.mod` replaces cobra, buildah, oras and buildx with forks — upstream documentation is not authoritative for them.
+- `go.mod` replaces cobra and oras with `werf/3p-*` forks — upstream documentation is not authoritative for them.
 - Build and test only via `task` commands, never raw Go tools.
 - The PR description outlives the review — werf squashes, so it becomes the commit body. Audit its claims against your findings: a safety property asserted there that a finding contradicts is itself a defect, and inline comments anchored to code lines never reach whoever reads it.
 

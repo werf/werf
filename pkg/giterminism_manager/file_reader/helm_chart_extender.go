@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/werf/common-go/pkg/util"
-	"github.com/werf/nelm/pkg/export/helm/werf/file"
+	nelmcommon "github.com/werf/nelm/pkg/common"
 )
 
 func (r FileReader) LocateChart(ctx context.Context, chartDir string) (string, error) {
@@ -45,6 +45,11 @@ func (r FileReader) ReadChartFile(ctx context.Context, path string) ([]byte, err
 	return data, nil
 }
 
+func (r FileReader) ChartFileExists(ctx context.Context, path string) (bool, error) {
+	relPath := r.absolutePathToProjectDirRelativePath(path)
+	return r.IsRegularFileExist(ctx, relPath)
+}
+
 func (r FileReader) readChartFile(ctx context.Context, relPath string) ([]byte, error) {
 	return r.ReadAndCheckConfigurationFile(ctx, relPath, r.giterminismConfig.UncommittedHelmFilePathMatcher().IsPathMatched,
 		func(path string) (bool, error) {
@@ -52,7 +57,7 @@ func (r FileReader) readChartFile(ctx context.Context, relPath string) ([]byte, 
 		})
 }
 
-func (r FileReader) LoadChartDir(ctx context.Context, chartDir string) ([]*file.ChartExtenderBufferedFile, error) {
+func (r FileReader) LoadChartDir(ctx context.Context, chartDir string) ([]*nelmcommon.BufferedFile, error) {
 	relDir := r.absolutePathToProjectDirRelativePath(chartDir)
 
 	files, err := r.loadChartDir(ctx, relDir)
@@ -64,8 +69,8 @@ func (r FileReader) LoadChartDir(ctx context.Context, chartDir string) ([]*file.
 }
 
 // TODO helmignore support
-func (r FileReader) loadChartDir(ctx context.Context, relDir string) ([]*file.ChartExtenderBufferedFile, error) {
-	var res []*file.ChartExtenderBufferedFile
+func (r FileReader) loadChartDir(ctx context.Context, relDir string) ([]*nelmcommon.BufferedFile, error) {
+	var res []*nelmcommon.BufferedFile
 
 	if err := r.WalkConfigurationFilesWithGlob(
 		ctx,
@@ -78,7 +83,7 @@ func (r FileReader) loadChartDir(ctx context.Context, relDir string) ([]*file.Ch
 			}
 
 			relativeToDirNotResolvedPath = filepath.ToSlash(relativeToDirNotResolvedPath)
-			res = append(res, &file.ChartExtenderBufferedFile{Name: relativeToDirNotResolvedPath, Data: data})
+			res = append(res, &nelmcommon.BufferedFile{Name: relativeToDirNotResolvedPath, Data: data})
 
 			return nil
 		},

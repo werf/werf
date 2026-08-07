@@ -3,15 +3,21 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-This command packages a chart into a versioned chart archive file. If a path is given, this will look at that path for a chart (which must contain a `Chart.yaml` file) and then package that directory.
+
+This command packages a chart into a versioned chart archive file. If a path
+is given, this will look at that path for a chart (which must contain a
+Chart.yaml file) and then package that directory.
 
 Versioned chart archives are used by Helm package repositories.
 
-To sign a chart, use the `--sign` flag. In most cases, you should also provide `--keyring path/to/secret/keys` and `--key keyname`.
-```
-$ helm package --sign ./mychart --key mykey --keyring ~/.gnupg/secring.gpg
-```
-If `--keyring` is not specified, Helm usually defaults to the public keyring unless your environment is otherwise configured.
+To sign a chart, use the '--sign' flag. In most cases, you should also
+provide '--keyring path/to/secret/keys' and '--key keyname'.
+
+  $ helm package --sign ./mychart --key mykey --keyring ~/.gnupg/secring.gpg
+
+If '--keyring' is not specified, Helm usually defaults to the public keyring
+unless your environment is otherwise configured.
+
 
 {{ header }} Syntax
 
@@ -24,19 +30,33 @@ werf helm package [CHART_PATH] [...] [flags] [options]
 ```shell
       --app-version=""
             set the appVersion on the chart to this version
+      --ca-file=""
+            verify certificates of HTTPS-enabled servers using this CA bundle
+      --cert-file=""
+            identify HTTPS client using this SSL certificate file
   -u, --dependency-update=false
             update dependencies from "Chart.yaml" to dir "charts/" before packaging
   -d, --destination="."
             location to write the chart.
+      --insecure-skip-tls-verify=false
+            skip tls certificate checks for the chart download
       --key=""
             name of the key to use when signing. Used if --sign is true
+      --key-file=""
+            identify HTTPS client using this SSL key file
       --keyring="~/.gnupg/pubring.gpg"
             location of a public keyring
       --passphrase-file=""
             location of a file which contains the passphrase for the signing key. Use "-" in order  
             to read from stdin.
+      --password=""
+            chart repository password where to locate the requested chart
+      --plain-http=false
+            use insecure HTTP connections for the chart download
       --sign=false
             use a PGP private key to sign this package
+      --username=""
+            chart repository username where to locate the requested chart
       --version=""
             set the version on the chart to this semver version
 ```
@@ -44,16 +64,6 @@ werf helm package [CHART_PATH] [...] [flags] [options]
 {{ header }} Options inherited from parent commands
 
 ```shell
-      --hooks-status-progress-period=0
-            No-op
-      --kube-config=""
-            Kubernetes config file path (default $WERF_KUBE_CONFIG, or $WERF_KUBECONFIG, or         
-            $KUBECONFIG)
-      --kube-config-base64=""
-            Kubernetes config data as base64 string (default $WERF_KUBE_CONFIG_BASE64 or            
-            $WERF_KUBECONFIG_BASE64 or $KUBECONFIG_BASE64)
-      --kube-context=""
-            Kubernetes config context (default $WERF_KUBE_CONTEXT)
       --log-color-mode="auto"
             Set log color mode.
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        
@@ -78,10 +88,5 @@ werf helm package [CHART_PATH] [...] [flags] [options]
             Specify custom log time format (default $WERF_LOG_TIME_FORMAT or RFC3339 format).
       --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
-  -n, --namespace=""
-            namespace scope for this request
-      --status-progress-period=5
-            Status progress period in seconds. Set -1 to stop showing status progress. Defaults to  
-            $WERF_STATUS_PROGRESS_PERIOD_SECONDS or 5 seconds
 ```
 

@@ -4,7 +4,7 @@ metadata:
   name: deployment-subsubchart
   annotations:
     werf.io/deploy-dependency-subchart: state=ready,kind=Deployment,name=deployment-subchart
-    sa.external-dependency.werf.io/resource: serviceaccount/default
+    werf.io/deploy-dependency-sa: state=ready,kind=ServiceAccount,version=v1,name=default
 spec:
   selector:
     matchLabels:

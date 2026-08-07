@@ -44,23 +44,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 		},
 	})
 
-	// Setup final-images-only flag.
-	{
-		name := "final-images-only"
-		deprecatedName := "images-only"
-		for _, n := range []string{name, deprecatedName} {
-			// FIXME: it should be default behavior.
-			cmd.Flags().BoolVarP(&cmdData.finalImagesOnly, n, "", false, "Show only final images")
-		}
-
-		if err := cmd.Flags().MarkHidden(deprecatedName); err != nil {
-			panic(fmt.Errorf("error marking flag hidden: %w", err))
-		}
-
-		if err := cmd.Flags().MarkDeprecated(deprecatedName, fmt.Sprintf("use --%s instead", name)); err != nil {
-			panic(fmt.Errorf("error marking flag deprecated: %w", err))
-		}
-	}
+	cmd.Flags().BoolVarP(&cmdData.finalImagesOnly, "final-images-only", "", true, "Show only final images (pass --final-images-only=false to include non-final images)")
 
 	common.SetupDir(&commonCmdData, cmd)
 	common.SetupGitWorkTree(&commonCmdData, cmd)

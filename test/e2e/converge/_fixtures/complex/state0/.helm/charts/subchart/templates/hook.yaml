@@ -6,7 +6,7 @@ metadata:
     helm.sh/hook: pre-upgrade,pre-install,post-upgrade,post-install
     helm.sh/hook-weight: "10"
     helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
-    sa.external-dependency.werf.io/resource: serviceaccount/default
+    werf.io/deploy-dependency-sa: state=ready,kind=ServiceAccount,version=v1,name=default
 spec:
   backoffLimit: 0
   template:
