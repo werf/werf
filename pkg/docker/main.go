@@ -164,7 +164,15 @@ func newDockerCli(opts []command.CLIOption) (command.Cli, error) {
 		clientOpts.LogLevel = "fatal"
 	}
 
-	if err := newCli.Initialize(clientOpts); err != nil {
+	makeWrappedClient := func(dockerCli *command.DockerCli) (client.APIClient, error) {
+		apiClient, err := command.NewAPIClientFromFlags(clientOpts, dockerCli.ConfigFile())
+		if err != nil {
+			return nil, err
+		}
+		return wrapAPIClientTransport(apiClient, dockerCli.ConfigFile().HTTPHeaders), nil
+	}
+
+	if err := newCli.Initialize(clientOpts, command.WithInitializeClient(makeWrappedClient)); err != nil {
 		return nil, err
 	}
 	return newCli, nil

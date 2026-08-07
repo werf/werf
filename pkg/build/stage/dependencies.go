@@ -17,6 +17,7 @@ import (
 	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/image"
 	imagePkg "github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/opstats"
 	"github.com/werf/werf/v2/pkg/stapel"
 	"github.com/werf/werf/v2/pkg/storage"
 	"github.com/werf/werf/v2/pkg/werf/global_warnings"
@@ -389,6 +390,10 @@ func (s *DependenciesStage) generateImportChecksum(ctx context.Context, c Convey
 		if err != nil {
 			return "", err
 		}
+
+		// After container preparation so the interval does not nest stapel
+		// container prepare inside import checksum.
+		defer opstats.Observe(ctx, opstats.OperationImportChecksum)()
 
 		importHostTmpDir := filepath.Join(s.imageTmpDir, string(s.Name()), "imports", importSourceID)
 		importContainerDir := s.containerWerfDir

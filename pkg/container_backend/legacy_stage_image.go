@@ -11,6 +11,7 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/opstats"
 	"github.com/werf/werf/v2/pkg/werf"
 )
 
@@ -73,6 +74,7 @@ func (i *LegacyStageImage) GetID() string {
 }
 
 func (i *LegacyStageImage) Build(ctx context.Context, options BuildOptions) error {
+	defer opstats.Observe(ctx, opstats.OperationImageBuild)()
 	if options.Network != "" {
 		i.container.runOptions.AddNetwork(options.Network)
 	}
