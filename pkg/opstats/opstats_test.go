@@ -2,9 +2,11 @@ package opstats
 
 import (
 	"context"
+	"errors"
 	"io"
 	"strings"
 	"sync"
+	"testing/iotest"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -102,6 +104,22 @@ var _ = Describe("Collector", func() {
 		Expect(collector.Summary()).To(BeEmpty())
 
 		Expect(rc.Close()).To(Succeed())
+
+		summary := collector.Summary()
+		Expect(summary).To(HaveLen(1))
+		Expect(summary[0].Count).To(Equal(1))
+	})
+
+	It("completes the observation on a non-EOF read error before Close", func() {
+		collector := NewCollector()
+		ctx := NewContext(context.Background(), collector)
+
+		done := Observe(ctx, OperationImageSaveLoad)
+		sentinel := errors.New("stream broken")
+		rc := NewObservedReadCloser(io.NopCloser(iotest.ErrReader(sentinel)), done)
+
+		_, err := io.Copy(io.Discard, rc)
+		Expect(err).To(MatchError(sentinel))
 
 		summary := collector.Summary()
 		Expect(summary).To(HaveLen(1))
