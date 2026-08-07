@@ -1365,12 +1365,13 @@ func (backend *BuildahBackend) PruneVolumes(_ context.Context, _ prune.Options) 
 }
 
 func (backend *BuildahBackend) SaveImageToStream(ctx context.Context, imageName string) (io.ReadCloser, error) {
-	defer opstats.Observe(ctx, opstats.OperationImageSaveLoad)()
+	done := opstats.Observe(ctx, opstats.OperationImageSaveLoad)
 	rc, err := backend.buildah.SaveImageToStream(ctx, imageName)
 	if err != nil {
+		done()
 		return nil, fmt.Errorf("unable to save image %q to stream: %w", imageName, err)
 	}
-	return rc, nil
+	return opstats.NewObservedReadCloser(rc, done), nil
 }
 
 func (backend *BuildahBackend) LoadImageFromStream(ctx context.Context, input io.Reader) (string, error) {

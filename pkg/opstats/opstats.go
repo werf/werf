@@ -2,6 +2,7 @@ package opstats
 
 import (
 	"context"
+	"io"
 	"sort"
 	"sync"
 	"time"
@@ -10,20 +11,22 @@ import (
 type Operation string
 
 const (
-	OperationImagePull       Operation = "image pull"
-	OperationImagePush       Operation = "image push"
-	OperationImageBuild      Operation = "image build"
-	OperationImageInspect    Operation = "local image inspect"
-	OperationImageSaveLoad   Operation = "image save/load"
-	OperationImportChecksum  Operation = "import checksum"
-	OperationGitClone        Operation = "git clone"
-	OperationGitFetch        Operation = "git fetch"
-	OperationGitPatch        Operation = "git patch"
-	OperationGitArchive      Operation = "git archive"
-	OperationGitChecksum     Operation = "git checksum"
-	OperationDockerDaemon    Operation = "docker daemon API"
-	OperationStageLockWait   Operation = "stage lock wait"
-	OperationContextAddFiles Operation = "context add files"
+	OperationImagePull           Operation = "image pull"
+	OperationImagePush           Operation = "image push"
+	OperationImageBuild          Operation = "image build"
+	OperationImageInspect        Operation = "local image inspect"
+	OperationImageSaveLoad       Operation = "image save/load"
+	OperationImportChecksum      Operation = "import checksum"
+	OperationGitClone            Operation = "git clone"
+	OperationGitFetch            Operation = "git fetch"
+	OperationGitLsRemote         Operation = "git ls-remote"
+	OperationGitPatch            Operation = "git patch"
+	OperationGitArchive          Operation = "git archive"
+	OperationGitChecksum         Operation = "git checksum"
+	OperationDockerDaemon        Operation = "docker daemon API"
+	OperationStageLockWait       Operation = "stage lock wait (storage)"
+	OperationStageDigestLockWait Operation = "stage lock wait (parallel tasks)"
+	OperationContextAddFiles     Operation = "context add files"
 )
 
 type Event string
@@ -78,6 +81,33 @@ func CountEvent(ctx context.Context, event Event) {
 	collector.mu.Lock()
 	defer collector.mu.Unlock()
 	collector.events[event]++
+}
+
+var _ io.ReadCloser = (*observedReadCloser)(nil)
+
+type observedReadCloser struct {
+	io.ReadCloser
+	done func()
+}
+
+func (r *observedReadCloser) Read(p []byte) (int, error) {
+	n, err := r.ReadCloser.Read(p)
+	if err != nil {
+		r.done()
+	}
+	return n, err
+}
+
+func (r *observedReadCloser) Close() error {
+	r.done()
+	return r.ReadCloser.Close()
+}
+
+// NewObservedReadCloser extends an in-flight observation over the consumption
+// of a stream: done fires on first read error (including io.EOF) or on Close,
+// whichever comes first.
+func NewObservedReadCloser(rc io.ReadCloser, done func()) io.ReadCloser {
+	return &observedReadCloser{ReadCloser: rc, done: done}
 }
 
 type Collector struct {

@@ -441,6 +441,8 @@ type ShouldBeBuiltOptions struct {
 }
 
 func (c *Conveyor) ShouldBeBuilt(ctx context.Context, opts ShouldBeBuiltOptions) ([]*ImagesReport, error) {
+	ctx, opsCollector, buildStartedAt := c.newOperationsCollector(ctx)
+
 	if err := c.determineStages(ctx); err != nil {
 		return nil, err
 	}
@@ -464,6 +466,8 @@ func (c *Conveyor) ShouldBeBuilt(ctx context.Context, opts ShouldBeBuiltOptions)
 	if err != nil {
 		c.printDeferredBuildLog(ctx, buf)
 	}
+
+	c.logOperationsSummary(ctx, opsCollector, time.Since(buildStartedAt))
 
 	reports := lo.Map(phases, func(phase Phase, _ int) *ImagesReport {
 		return phase.Report()
@@ -705,13 +709,7 @@ func (c *Conveyor) Build(ctx context.Context, opts BuildOptions) ([]*ImagesRepor
 		return nil, err
 	}
 
-	var opsCollector *opstats.Collector
-	var buildStartedAt time.Time
-	if logboek.Context(ctx).IsAcceptedLevel(level.Debug) {
-		opsCollector = opstats.NewCollector()
-		ctx = opstats.NewContext(ctx, opsCollector)
-		buildStartedAt = time.Now()
-	}
+	ctx, opsCollector, buildStartedAt := c.newOperationsCollector(ctx)
 
 	if err := c.determineStages(ctx); err != nil {
 		return nil, err
@@ -785,6 +783,15 @@ func disableUnlessDebugConveyorPhases(logProcess types.LogProcessInterface) type
 	return logProcess
 }
 
+func (c *Conveyor) newOperationsCollector(ctx context.Context) (context.Context, *opstats.Collector, time.Time) {
+	if !logboek.Context(ctx).IsAcceptedLevel(level.Debug) {
+		return ctx, nil, time.Time{}
+	}
+
+	collector := opstats.NewCollector()
+	return opstats.NewContext(ctx, collector), collector, time.Now()
+}
+
 func (c *Conveyor) logOperationsSummary(ctx context.Context, collector *opstats.Collector, buildTime time.Duration) {
 	if collector == nil {
 		return
@@ -802,7 +809,7 @@ func (c *Conveyor) logOperationsSummary(ctx context.Context, collector *opstats.
 					if s.WallTime > 0 && s.TotalTime > s.WallTime {
 						parallelism = fmt.Sprintf("   ×%.1f", float64(s.TotalTime)/float64(s.WallTime))
 					}
-					logboek.Context(ctx).LogFHighlight("- %-28s %5d op   total %9.2fs   wall %9.2fs   avg %8.3fs   max %8.3fs%s\n",
+					logboek.Context(ctx).LogFHighlight("- %-32s %5d op   total %9.2fs   wall %9.2fs   avg %8.3fs   max %8.3fs%s\n",
 						s.Operation, s.Count, s.TotalTime.Seconds(), s.WallTime.Seconds(), s.AvgTime.Seconds(), s.MaxTime.Seconds(), parallelism)
 				}
 				logboek.Context(ctx).LogFHighlight("build time: %.2fs (wall must not exceed it; total may)\n", buildTime.Seconds())

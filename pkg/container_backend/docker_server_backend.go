@@ -78,12 +78,10 @@ func (backend *DockerServerBackend) HasStapelBuildSupport() bool {
 }
 
 func (backend *DockerServerBackend) BuildStapelStage(ctx context.Context, baseImage string, opts BuildStapelStageOptions) (string, error) {
-	defer opstats.Observe(ctx, opstats.OperationImageBuild)()
 	panic("BuildStapelStage does not implemented for DockerServerBackend. Please report the bug if you've received this message.")
 }
 
 func (backend *DockerServerBackend) CalculateDependencyImportChecksum(ctx context.Context, dependencyImport DependencyImportSpec, opts CalculateDependencyImportChecksum) (string, error) {
-	defer opstats.Observe(ctx, opstats.OperationImportChecksum)()
 	panic("CalculateDependencyImportChecksum does not implemented for DockerServerBackend. Please report the bug if you've received this message.")
 }
 
@@ -481,8 +479,13 @@ func (backend *DockerServerBackend) PruneVolumes(ctx context.Context, options pr
 }
 
 func (backend *DockerServerBackend) SaveImageToStream(ctx context.Context, imageName string) (io.ReadCloser, error) {
-	defer opstats.Observe(ctx, opstats.OperationImageSaveLoad)()
-	return docker.CliImageSaveToStream(ctx, imageName)
+	done := opstats.Observe(ctx, opstats.OperationImageSaveLoad)
+	rc, err := docker.CliImageSaveToStream(ctx, imageName)
+	if err != nil {
+		done()
+		return nil, err
+	}
+	return opstats.NewObservedReadCloser(rc, done), nil
 }
 
 func (backend *DockerServerBackend) LoadImageFromStream(ctx context.Context, input io.Reader) (string, error) {

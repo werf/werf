@@ -2,6 +2,8 @@ package opstats
 
 import (
 	"context"
+	"io"
+	"strings"
 	"sync"
 	"time"
 
@@ -66,6 +68,25 @@ var _ = Describe("Collector", func() {
 
 		summary := collector.Summary()
 		Expect(summary).To(HaveLen(1))
+		Expect(summary[0].Count).To(Equal(1))
+	})
+
+	It("extends the observation until the stream is consumed", func() {
+		collector := NewCollector()
+		ctx := NewContext(context.Background(), collector)
+
+		done := Observe(ctx, OperationImageSaveLoad)
+		rc := NewObservedReadCloser(io.NopCloser(strings.NewReader("payload")), done)
+
+		Expect(collector.Summary()).To(BeEmpty())
+
+		_, err := io.Copy(io.Discard, rc)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(rc.Close()).To(Succeed())
+
+		summary := collector.Summary()
+		Expect(summary).To(HaveLen(1))
+		Expect(summary[0].Operation).To(Equal(OperationImageSaveLoad))
 		Expect(summary[0].Count).To(Equal(1))
 	})
 

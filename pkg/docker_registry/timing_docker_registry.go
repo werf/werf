@@ -4,6 +4,8 @@ import (
 	"context"
 	"io"
 
+	v1 "github.com/google/go-containerregistry/pkg/v1"
+
 	registry_api "github.com/werf/werf/v2/pkg/docker_registry/api"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/opstats"
@@ -93,4 +95,31 @@ func (r *timingDockerRegistry) PullImageArchive(ctx context.Context, archiveWrit
 func (r *timingDockerRegistry) PushManifestList(ctx context.Context, reference string, opts ManifestListOptions) error {
 	defer observeRegistry(ctx, "PushManifestList")()
 	return r.Interface.PushManifestList(ctx, reference, opts)
+}
+
+var _ GenericApiInterface = (*timingGenericApi)(nil)
+
+// timingGenericApi is the timing decorator for the shared generic registry API
+// (base-image lookups, dependency fetches) returned by API().
+type timingGenericApi struct {
+	GenericApiInterface
+}
+
+func newTimingGenericApi(api GenericApiInterface) *timingGenericApi {
+	return &timingGenericApi{GenericApiInterface: api}
+}
+
+func (r *timingGenericApi) GetRepoImage(ctx context.Context, reference string) (*image.Info, error) {
+	defer observeRegistry(ctx, "GetRepoImage")()
+	return r.GenericApiInterface.GetRepoImage(ctx, reference)
+}
+
+func (r *timingGenericApi) MutateAndPushImage(ctx context.Context, sourceReference, destinationReference string, opts ...registry_api.MutateOption) error {
+	defer observeRegistry(ctx, "MutateAndPushImage")()
+	return r.GenericApiInterface.MutateAndPushImage(ctx, sourceReference, destinationReference, opts...)
+}
+
+func (r *timingGenericApi) GetRepoImageConfigFile(ctx context.Context, reference string) (*v1.ConfigFile, error) {
+	defer observeRegistry(ctx, "GetRepoImageConfigFile")()
+	return r.GenericApiInterface.GetRepoImageConfigFile(ctx, reference)
 }

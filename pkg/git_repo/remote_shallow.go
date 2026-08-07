@@ -17,6 +17,7 @@ import (
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/common-go/pkg/util/timestamps"
 	"github.com/werf/logboek"
+	"github.com/werf/werf/v2/pkg/opstats"
 	"github.com/werf/werf/v2/pkg/true_git"
 	"github.com/werf/werf/v2/pkg/werf"
 )
@@ -272,6 +273,9 @@ func (repo *Remote) lsRemoteTag(ctx context.Context, fresh bool) (string, error)
 
 	tags, cached := lsRemoteTagsCache[cacheKey]
 	if !cached || fresh {
+		done := opstats.Observe(ctx, opstats.OperationGitLsRemote)
+		defer done()
+
 		env, cleanup, err := basicAuthEnv(repo.BasicAuth)
 		if err != nil {
 			return "", err
@@ -284,6 +288,7 @@ func (repo *Remote) lsRemoteTag(ctx context.Context, fresh bool) (string, error)
 		}
 
 		lsRemoteTagsCache[cacheKey] = tags
+		done()
 	}
 
 	tagRef, found := tags[repo.Tag]
@@ -307,6 +312,8 @@ func (repo *Remote) lsRemoteTagsCacheKey() string {
 }
 
 func (repo *Remote) shallowFetch(ctx context.Context, shallowPath, refSpec string) error {
+	defer opstats.Observe(ctx, opstats.OperationGitFetch)()
+
 	env, cleanup, err := basicAuthEnv(repo.BasicAuth)
 	if err != nil {
 		return err
