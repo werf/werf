@@ -1,6 +1,7 @@
 package host_cleaning
 
 import (
+	"github.com/werf/werf/v2/pkg/cleanup_report"
 	"github.com/werf/werf/v2/pkg/image"
 )
 
@@ -10,6 +11,8 @@ type CommonOptions struct {
 	SkipUsedImages                bool
 	RmContainersThatUseWerfImages bool
 	DryRun                        bool
+
+	Report *cleanup_report.HostReport
 }
 
 func logImageName(image image.Summary) string {

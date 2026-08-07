@@ -7,6 +7,7 @@ import (
 
 	"github.com/werf/common-go/pkg/graceful"
 	"github.com/werf/logboek"
+	"github.com/werf/werf/v2/pkg/cleanup_report"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
 	"github.com/werf/werf/v2/pkg/host_cleaning/units"
@@ -40,6 +41,8 @@ type HostCleanupOptions struct {
 
 	DryRun bool
 	Force  bool
+
+	Report *cleanup_report.HostReport
 }
 
 func getRequirementInBytes(val *units.UnitValue, defaultPercent, totalBytes uint64) uint64 {
@@ -49,23 +52,16 @@ func getRequirementInBytes(val *units.UnitValue, defaultPercent, totalBytes uint
 	return (totalBytes * defaultPercent) / 100
 }
 
-func RunAutoHostCleanup(ctx context.Context, backend container_backend.ContainerBackend, options AutoHostCleanupOptions) error {
-	if shouldRun, err := shouldRunAutoHostCleanup(ctx, backend, options); err != nil {
-		logboek.Context(ctx).Warn().LogF("WARNING: unable to check if auto host cleanup should be run: %s\n", err)
-		return nil
-	} else if !shouldRun {
-		return nil
-	}
-
-	logboek.Context(ctx).Debug().LogF("RunAutoHostCleanup forking ...\n")
-
-	var args []string
-
-	args = append(args,
+// exec.Detach passes os.Environ() to the fork, so WERF_SAVE_HOST_CLEANUP_REPORT would otherwise
+// enable the report there and write it long after the parent command exited. Pinned off like
+// --dry-run and --force, which are spelled out for the same reason.
+func autoHostCleanupArgs(options AutoHostCleanupOptions) []string {
+	args := []string{
 		"host", "cleanup",
 		fmt.Sprintf("--dry-run=%v", options.DryRun),
 		fmt.Sprintf("--force=%v", options.Force),
-	)
+		"--save-host-cleanup-report=false",
+	}
 
 	if options.AllowedBackendStorageVolumeUsage != nil {
 		args = append(args, "--allowed-backend-storage-volume-usage", options.AllowedBackendStorageVolumeUsage.String())
@@ -82,6 +78,21 @@ func RunAutoHostCleanup(ctx context.Context, backend container_backend.Container
 	if options.BackendStoragePath != nil && *options.BackendStoragePath != "" {
 		args = append(args, "--backend-storage-path", *options.BackendStoragePath)
 	}
+
+	return args
+}
+
+func RunAutoHostCleanup(ctx context.Context, backend container_backend.ContainerBackend, options AutoHostCleanupOptions) error {
+	if shouldRun, err := shouldRunAutoHostCleanup(ctx, backend, options); err != nil {
+		logboek.Context(ctx).Warn().LogF("WARNING: unable to check if auto host cleanup should be run: %s\n", err)
+		return nil
+	} else if !shouldRun {
+		return nil
+	}
+
+	logboek.Context(ctx).Debug().LogF("RunAutoHostCleanup forking ...\n")
+
+	args := autoHostCleanupArgs(options)
 
 	// We should pass tmpDir and homeDir via environment variables
 	// because background.TryLock() uses them before parsing cli options doing werf.Init().
@@ -171,6 +182,7 @@ func RunHostCleanup(ctx context.Context, backend container_backend.ContainerBack
 			StoragePath:                          *options.BackendStoragePath,
 			Force:                                options.Force,
 			DryRun:                               options.DryRun,
+			Report:                               options.Report,
 		})
 		if err != nil {
 			return fmt.Errorf("local %s backend GC failed: %w", cleaner.BackendName(), err)

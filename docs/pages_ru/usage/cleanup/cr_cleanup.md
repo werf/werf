@@ -243,6 +243,73 @@ HUB_TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username":
 
 ## Сохранение результата работы
 
+### Отчёт об очистке
+
+Опция `--save-cleanup-report` заставляет `werf cleanup` записать машиночитаемый JSON-отчёт о том, что было сохранено, а что удалено. По умолчанию отчёт пишется в `.werf-cleanup-report.json`, путь настраивается опцией `--cleanup-report-path` (расширение должно быть `.json`).
+
+После этого keep-list формируется одним вызовом `jq`:
+
+```bash
+werf cleanup --repo registry.mydomain.com/app --dry-run --save-cleanup-report
+jq -r '.kept[] | select(.type == "stage") | .tag' .werf-cleanup-report.json > keep-list.txt
+```
+
+Отчёт команды выше выглядит следующим образом:
+
+```json
+{
+  "apiVersion": "v1",
+  "kind": "CleanupReport",
+  "command": "cleanup",
+  "dryRun": true,
+  "repo": "registry.mydomain.com/app",
+  "finalRepo": "registry.mydomain.com/app-final",
+  "metaRepo": "registry.mydomain.com/app-meta",
+  "kept": [
+    { "type": "stage", "tag": "1e09fb543b4ef442ce5ed36bfeee6b27866bf1e68541db5995962b24-1749456960043", "reason": "used in Kubernetes" },
+    { "type": "stage", "tag": "8c4a1f9b2d7e5a3c6b0d9e8f7a2c1b4d3e6f5a8c9b0d1e2f3a4b5c6d-1749390012345", "reason": "git policy" },
+    { "type": "customTag", "tag": "my-custom-tag" }
+  ],
+  "deleted": [
+    { "type": "stage", "tag": "ff00112233445566778899aabbccddeeff00112233445566778899aa-1748001122334" },
+    { "type": "customTag", "tag": "review-1234" },
+    { "type": "imageMetadata", "imageName": "backend", "stageID": "ff00112233445566778899aabbccddeeff00112233445566778899aa-1748001122334", "commit": "a3f1c92e4b7d8056f1a2b3c4d5e6f7a8b9c0d1e2" },
+    { "type": "managedImage", "imageName": "frontend" }
+  ]
+}
+```
+
+Поле `kind` здесь равно `CleanupReport`, а в отчёте хоста — `HostCleanupReport`. Оно важно потому, что `werf host purge` пишет тот или другой отчёт в зависимости от `--project-name`, и оба указывают одинаковый `command`: именно по `kind` потребитель понимает, какая схема ему досталась. Поле `dryRun` позволяет отличить спланированную очистку от фактической. У каждого элемента есть поле `type`: `stage`, `finalStage`, `customTag`, `rejectedStage`, `rejectedStageMarker`, `imageMetadata` или `managedImage` — именно поэтому для keep-list нужно выбирать элементы `stage`, а не брать все `tag` подряд. В `deleted` попадают только реально удалённые теги — о неудавшихся удалениях сообщается предупреждениями в логе.
+
+`repo` — это stages storage, против которого работала очистка. `finalRepo` появляется, когда настроен final-репозиторий, а `metaRepo` — когда `--meta-repo` указывает хранилище managed-образов и метаданных не туда, куда `repo`. Адрес, из которого удалён элемент, следует из его `type`: `stage`, `rejectedStage` и `rejectedStageMarker` лежат в `repo`, `finalStage` — в `finalRepo`, `managedImage` и `imageMetadata` — в `metaRepo`. Элемент `customTag` затрагивает сразу два адреса: сам тег удаляется из `repo`, а его регистрация — из `metaRepo`, поэтому одному элементу отвечает работа в обоих.
+
+Отчёт записывается даже если очистка упала на полпути, поэтому он всегда описывает реально выполненные удаления; команда при этом завершается ненулевым кодом. Запись атомарная: прерванный запуск оставляет предыдущий отчёт целым, а не обрезанным.
+
+Эти же опции поддерживают `werf purge` и `werf host purge`, вызванный с `--project-name`.
+
+### Отчёт об очистке хоста
+
+`werf host cleanup` и `werf host purge` поддерживают опции `--save-host-cleanup-report` и `--host-cleanup-report-path` (по умолчанию `.werf-host-cleanup-report.json`). Отчёт хоста перечисляет удалённые объекты локального container backend:
+
+```json
+{
+  "apiVersion": "v1",
+  "kind": "HostCleanupReport",
+  "command": "host cleanup",
+  "dryRun": false,
+  "spaceReclaimed": 8271948800,
+  "deleted": [
+    { "type": "volume", "id": "e4f1c0a9b7d6" },
+    { "type": "image", "id": "sha256:8f7e6d5c4b3a2918f0e1d2c3b4a59687766554433221100ffeeddccbbaa9988" },
+    { "type": "container", "id": "3a9f1c0e7b2d" }
+  ]
+}
+```
+
+Очистка временных файлов, блокировок и данных git в отчёте не отражается, а `spaceReclaimed` учитывает только container backend. Поле `spaceReclaimed` отсутствует, когда команда освобождает место, но не измеряет его — так работает `werf host purge`: отсутствие поля означает «не измерено», а `0` — «измерено и равно нулю».
+
+У элемента `image` всегда есть `id` образа в container backend. Дополнительное поле `reference` появляется, когда образ был удалён по тегу, а не по id, поэтому образ с несколькими тегами даёт по элементу на тег с одним и тем же `id`.
+
 Во время выполнения команда `werf cleanup` подсвечивает теги цветом в зависимости от их статуса:
 
 + <span style="color: green;">Зеленый цвет</span> — тег сохраняется.

@@ -26,6 +26,7 @@ import (
 	"github.com/werf/werf/v2/pkg/build"
 	"github.com/werf/werf/v2/pkg/build/stage"
 	"github.com/werf/werf/v2/pkg/buildah"
+	"github.com/werf/werf/v2/pkg/cleanup_report"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/deno"
@@ -35,6 +36,7 @@ import (
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
 	"github.com/werf/werf/v2/pkg/logging"
 	"github.com/werf/werf/v2/pkg/storage"
+	"github.com/werf/werf/v2/pkg/storage/manager"
 	"github.com/werf/werf/v2/pkg/true_git"
 	"github.com/werf/werf/v2/pkg/util/option"
 	"github.com/werf/werf/v2/pkg/werf"
@@ -49,6 +51,11 @@ const (
 	DefaultSaveBuildReport     = false
 	DefaultBuildReportPathJSON = ".werf-build-report.json"
 	DefaultUseBuildReport      = false
+
+	DefaultSaveCleanupReport         = false
+	DefaultCleanupReportPathJSON     = ".werf-cleanup-report.json"
+	DefaultSaveHostCleanupReport     = false
+	DefaultHostCleanupReportPathJSON = ".werf-host-cleanup-report.json"
 
 	DefaultSaveDeployReport        = false
 	DefaultSaveRollbackReport      = false
@@ -196,6 +203,110 @@ func GetBuildReportPath(cmdData *CmdData) string {
 
 func GetUseBuildReport(cmdData *CmdData) bool {
 	return option.PtrValueOrDefault(cmdData.UseBuildReport, false)
+}
+
+func SetupSaveCleanupReport(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.SaveCleanupReport = new(bool)
+	cmd.Flags().BoolVarP(cmdData.SaveCleanupReport, "save-cleanup-report", "", util.GetBoolEnvironmentDefaultFalse("WERF_SAVE_CLEANUP_REPORT"), fmt.Sprintf("Save cleanup report (by default $WERF_SAVE_CLEANUP_REPORT or %t). Its path configured with --cleanup-report-path", DefaultSaveCleanupReport))
+}
+
+func SetupCleanupReportPath(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.CleanupReportPath = new(string)
+	cmd.Flags().StringVarP(cmdData.CleanupReportPath, "cleanup-report-path", "", os.Getenv("WERF_CLEANUP_REPORT_PATH"), fmt.Sprintf("Change cleanup report path (by default $WERF_CLEANUP_REPORT_PATH or %q if not set). Extension must be .json for JSON format. If extension not specified, then .json is used", DefaultCleanupReportPathJSON))
+}
+
+func SetupSaveHostCleanupReport(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.SaveHostCleanupReport = new(bool)
+	cmd.Flags().BoolVarP(cmdData.SaveHostCleanupReport, "save-host-cleanup-report", "", util.GetBoolEnvironmentDefaultFalse("WERF_SAVE_HOST_CLEANUP_REPORT"), fmt.Sprintf("Save host cleanup report (by default $WERF_SAVE_HOST_CLEANUP_REPORT or %t). Its path configured with --host-cleanup-report-path", DefaultSaveHostCleanupReport))
+}
+
+func SetupHostCleanupReportPath(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.HostCleanupReportPath = new(string)
+	cmd.Flags().StringVarP(cmdData.HostCleanupReportPath, "host-cleanup-report-path", "", os.Getenv("WERF_HOST_CLEANUP_REPORT_PATH"), fmt.Sprintf("Change host cleanup report path (by default $WERF_HOST_CLEANUP_REPORT_PATH or %q if not set). Extension must be .json for JSON format. If extension not specified, then .json is used", DefaultHostCleanupReportPathJSON))
+}
+
+func GetSaveCleanupReport(cmdData *CmdData) bool {
+	return option.PtrValueOrDefault(cmdData.SaveCleanupReport, false)
+}
+
+func GetSaveHostCleanupReport(cmdData *CmdData) bool {
+	return option.PtrValueOrDefault(cmdData.SaveHostCleanupReport, false)
+}
+
+func GetCleanupReportPath(cmdData *CmdData) (string, error) {
+	return resolveJSONReportPath("--cleanup-report-path", option.PtrValueOrDefault(cmdData.CleanupReportPath, ""), DefaultCleanupReportPathJSON)
+}
+
+func GetHostCleanupReportPath(cmdData *CmdData) (string, error) {
+	return resolveJSONReportPath("--host-cleanup-report-path", option.PtrValueOrDefault(cmdData.HostCleanupReportPath, ""), DefaultHostCleanupReportPathJSON)
+}
+
+// NewCleanupReport returns a nil report when --save-cleanup-report is not set. A nil report accumulates
+// nothing and saves nothing, so callers need no further checks.
+func NewCleanupReport(ctx context.Context, cmdData *CmdData, command string, dryRun bool, storageManager *manager.StorageManager) (*cleanup_report.Report, string, error) {
+	if !GetSaveCleanupReport(cmdData) {
+		return nil, "", nil
+	}
+
+	reportPath, err := GetCleanupReportPath(cmdData)
+	if err != nil {
+		return nil, "", err
+	}
+
+	if err := cleanup_report.CheckWritable(ctx, reportPath); err != nil {
+		return nil, "", err
+	}
+
+	repo := storageManager.GetStagesStorage().Address()
+
+	var finalRepo string
+	if finalStagesStorage := storageManager.GetFinalStagesStorage(); finalStagesStorage != nil {
+		finalRepo = finalStagesStorage.Address()
+	}
+
+	var metaRepo string
+	if metaAddress := storageManager.GetMetaStorage().Address(); metaAddress != repo {
+		metaRepo = metaAddress
+	}
+
+	return cleanup_report.NewReport(ctx, command, dryRun, repo, cleanup_report.NewReportOptions{
+		FinalRepo: finalRepo,
+		MetaRepo:  metaRepo,
+	}), reportPath, nil
+}
+
+// NewHostCleanupReport returns a nil report when --save-host-cleanup-report is not set. A nil report
+// accumulates nothing and saves nothing, so callers need no further checks.
+func NewHostCleanupReport(ctx context.Context, cmdData *CmdData, command string, dryRun bool) (*cleanup_report.HostReport, string, error) {
+	if !GetSaveHostCleanupReport(cmdData) {
+		return nil, "", nil
+	}
+
+	reportPath, err := GetHostCleanupReportPath(cmdData)
+	if err != nil {
+		return nil, "", err
+	}
+
+	if err := cleanup_report.CheckWritable(ctx, reportPath); err != nil {
+		return nil, "", err
+	}
+
+	return cleanup_report.NewHostReport(ctx, command, dryRun), reportPath, nil
+}
+
+func resolveJSONReportPath(flagName, path, defaultPath string) (string, error) {
+	if path == "" {
+		return defaultPath, nil
+	}
+
+	switch ext := filepath.Ext(path); ext {
+	case ".json":
+		return path, nil
+	case "":
+		return path + ".json", nil
+	default:
+		return "", fmt.Errorf("invalid %s %q: extension must be either .json or unspecified", flagName, path)
+	}
 }
 
 func GetBuildReportPathAndFormat(cmdData *CmdData) (string, build.ReportFormat, error) {

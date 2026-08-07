@@ -96,6 +96,11 @@ type CmdData struct {
 	BuildReportPath *string
 	UseBuildReport  *bool
 
+	SaveCleanupReport     *bool
+	CleanupReportPath     *string
+	SaveHostCleanupReport *bool
+	HostCleanupReportPath *string
+
 	ScanContextNamespaceOnly *bool
 
 	// Host storage cleanup options

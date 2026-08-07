@@ -2,6 +2,7 @@ package reset
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -58,6 +59,12 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupContainerRegistryMirror(&commonCmdData, cmd)
 
 	common.SetupDryRun(&commonCmdData, cmd)
+
+	common.SetupSaveCleanupReport(&commonCmdData, cmd)
+	common.SetupCleanupReportPath(&commonCmdData, cmd)
+	common.SetupSaveHostCleanupReport(&commonCmdData, cmd)
+	common.SetupHostCleanupReportPath(&commonCmdData, cmd)
+
 	cmd.Flags().BoolVarP(&cmdData.Force, "force", "", false, common.CleaningCommandsForceOptionDescription)
 
 	return cmd
@@ -85,13 +92,29 @@ func runReset(ctx context.Context) error {
 
 	projectName := *commonCmdData.ProjectName
 	if projectName == "" {
-		logboek.LogOptionalLn()
-		hostPurgeOptions := host_cleaning.HostPurgeOptions{DryRun: *commonCmdData.DryRun, RmContainersThatUseWerfImages: cmdData.Force}
-		if err := host_cleaning.HostPurge(ctx, containerBackend, hostPurgeOptions); err != nil {
+		if common.GetSaveCleanupReport(&commonCmdData) {
+			logboek.Context(ctx).Warn().LogF("--save-cleanup-report has no effect without --project-name, no registry cleanup report will be written\n")
+		}
+
+		report, reportPath, err := common.NewHostCleanupReport(ctx, &commonCmdData, "host purge", *commonCmdData.DryRun)
+		if err != nil {
 			return err
 		}
+
+		logboek.LogOptionalLn()
+		hostPurgeOptions := host_cleaning.HostPurgeOptions{DryRun: *commonCmdData.DryRun, RmContainersThatUseWerfImages: cmdData.Force, Report: report}
+		runErr := host_cleaning.HostPurge(ctx, containerBackend, hostPurgeOptions)
+
+		return errors.Join(runErr, report.Save(ctx, reportPath))
 	} else {
+		if common.GetSaveHostCleanupReport(&commonCmdData) {
+			logboek.Context(ctx).Warn().LogF("--save-host-cleanup-report has no effect with --project-name, no host cleanup report will be written\n")
+		}
+
 		if _, ok := containerBackend.(*container_backend.DockerServerBackend); !ok {
+			if common.GetSaveCleanupReport(&commonCmdData) {
+				logboek.Context(ctx).Warn().LogF("No cleanup report will be written: cleaning local storage is not implemented for the buildah backend\n")
+			}
 			logboek.Context(ctx).Warn().LogF("Skip cleaning local storage with buildah backend (not implemented)\n")
 			return nil
 		}
@@ -104,16 +127,20 @@ func runReset(ctx context.Context) error {
 			return fmt.Errorf("unable to init storage manager: %w", err)
 		}
 
+		report, reportPath, err := common.NewCleanupReport(ctx, &commonCmdData, "host purge", *commonCmdData.DryRun, storageManager)
+		if err != nil {
+			return err
+		}
+
 		purgeOptions := cleaning.PurgeOptions{
 			RmContainersThatUseWerfImages: cmdData.Force,
 			DryRun:                        *commonCmdData.DryRun,
+			Report:                        report,
 		}
 
 		logboek.LogOptionalLn()
-		if err := cleaning.Purge(ctx, projectName, storageManager, purgeOptions); err != nil {
-			return err
-		}
-	}
+		runErr := cleaning.Purge(ctx, projectName, storageManager, purgeOptions)
 
-	return nil
+		return errors.Join(runErr, report.Save(ctx, reportPath))
+	}
 }

@@ -313,6 +313,10 @@ func (m *Manager) GetProtectedStageDescSetByReason() map[*protectionReason]image
 	return m.managedStageDescSet.GetProtectedStageDescSetByReason()
 }
 
+func (m *Manager) GetFinalProtectedStageDescSetByReason() map[*protectionReason]image.StageDescSet {
+	return m.finalManagedStageDescSet.GetProtectedStageDescSetByReason()
+}
+
 func (m *Manager) GetStageDescByStageID(stageID string) *image.StageDesc {
 	return m.managedStageDescSet.GetStageDescByStageID(stageID)
 }

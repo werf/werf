@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/werf/logboek"
+	"github.com/werf/werf/v2/pkg/cleanup_report"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/tmp_manager"
 )
@@ -12,6 +13,8 @@ import (
 type HostPurgeOptions struct {
 	DryRun                        bool
 	RmContainersThatUseWerfImages bool
+
+	Report *cleanup_report.HostReport
 }
 
 func HostPurge(ctx context.Context, backend container_backend.ContainerBackend, options HostPurgeOptions) error {
@@ -22,6 +25,7 @@ func HostPurge(ctx context.Context, backend container_backend.ContainerBackend, 
 		RmForce:                       true,
 		RmContainersThatUseWerfImages: options.RmContainersThatUseWerfImages,
 		DryRun:                        options.DryRun,
+		Report:                        options.Report,
 	}
 
 	if err := logboek.Context(ctx).LogProcess("Running werf docker containers purge").DoError(func() error {
