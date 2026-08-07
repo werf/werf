@@ -2,7 +2,6 @@ package parallel_test
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -13,7 +12,7 @@ import (
 )
 
 var _ = DescribeTable(
-	"worker should return writing error if it was half-closed",
+	"worker should discard writes after half-close",
 	func(doHalfClose, doClose bool) {
 		Expect(werf.Init(GinkgoT().TempDir(), "")).To(Succeed())
 
@@ -36,8 +35,14 @@ var _ = DescribeTable(
 		}
 
 		offset, err := io.Copy(worker, reader)
-		Expect(err).To(MatchError(fmt.Errorf("worker is half closed but tries to write: %s", data)))
-		Expect(offset).To(Equal(int64(0)))
+		Expect(err).NotTo(HaveOccurred())
+		Expect(offset).To(Equal(int64(len(data))))
+
+		if doHalfClose {
+			content, err := io.ReadAll(worker)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(content).To(BeEmpty())
+		}
 	},
 	Entry(
 		"half-close explicitly",
