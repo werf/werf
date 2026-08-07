@@ -17,9 +17,14 @@ import (
 type BackendLoaderStorer interface {
 	SaveImageToStream(ctx context.Context, imageName string) (io.ReadCloser, error)
 	LoadImageFromStream(ctx context.Context, input io.Reader) (string, error)
+	EnsureImageContent(ctx context.Context, ref string, opts EnsureImageContentOpts) error
 }
 
 func MutateAndPushImage(ctx context.Context, imageName, targetPlatform string, newConfig image.SpecConfig, backend BackendLoaderStorer) (string, error) {
+	if err := backend.EnsureImageContent(ctx, imageName, EnsureImageContentOpts{TargetPlatform: targetPlatform}); err != nil {
+		return "", fmt.Errorf("ensure image %s content: %w", imageName, err)
+	}
+
 	imageStream, err := backend.SaveImageToStream(ctx, imageName)
 	if err != nil {
 		return "", fmt.Errorf("failed to save image: %w", err)

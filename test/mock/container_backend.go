@@ -137,6 +137,20 @@ func (mr *MockContainerBackendMockRecorder) Containers(ctx, opts any) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Containers", reflect.TypeOf((*MockContainerBackend)(nil).Containers), ctx, opts)
 }
 
+// EnsureImageContent mocks base method.
+func (m *MockContainerBackend) EnsureImageContent(ctx context.Context, ref string, opts container_backend.EnsureImageContentOpts) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EnsureImageContent", ctx, ref, opts)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// EnsureImageContent indicates an expected call of EnsureImageContent.
+func (mr *MockContainerBackendMockRecorder) EnsureImageContent(ctx, ref, opts any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnsureImageContent", reflect.TypeOf((*MockContainerBackend)(nil).EnsureImageContent), ctx, ref, opts)
+}
+
 // GetDefaultPlatform mocks base method.
 func (m *MockContainerBackend) GetDefaultPlatform() string {
 	m.ctrl.T.Helper()

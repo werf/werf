@@ -36,6 +36,10 @@ func (b *localMutationBackendStub) LoadImageFromStream(_ context.Context, input 
 	return "sha256:mutated", nil
 }
 
+func (b *localMutationBackendStub) EnsureImageContent(_ context.Context, _ string, _ container_backend.EnsureImageContentOpts) error {
+	return nil
+}
+
 func (b *localMutationBackendStub) Tag(ctx context.Context, ref, newRef string, opts container_backend.TagOpts) error {
 	b.tagCalls = append(b.tagCalls, [2]string{ref, newRef})
 	return nil

@@ -62,6 +62,10 @@ func (b *fakeBackendLoaderStorer) LoadImageFromStream(_ context.Context, input i
 	return "sha256:mutated", nil
 }
 
+func (b *fakeBackendLoaderStorer) EnsureImageContent(_ context.Context, _ string, _ EnsureImageContentOpts) error {
+	return nil
+}
+
 type errReadCloser struct {
 	err    error
 	closed bool
