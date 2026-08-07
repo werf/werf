@@ -25,7 +25,12 @@ type container struct {
 
 func (c *container) Create(ctx context.Context) error {
 	imageLockName := stapelImageLockName(c.ImageName)
+	doneLockWait := opstats.Observe(ctx, opstats.OperationStapelContainerLockWait)
+	defer doneLockWait()
 	return werf.HostLocker().WithLock(ctx, imageLockName, lockgate.AcquireOptions{Timeout: time.Second * 600}, func() error {
+		doneLockWait()
+		defer opstats.Observe(ctx, opstats.OperationStapelContainer)()
+
 		name := fmt.Sprintf("--name=%s", c.Name)
 		volume := fmt.Sprintf("--volume=%s", c.Volume)
 		targetPlatform := c.Platform
@@ -87,8 +92,10 @@ func (c *container) CreateIfNotExist(ctx context.Context) error {
 	}
 
 	if !exist {
-		defer opstats.Observe(ctx, opstats.OperationStapelContainer)()
+		doneLockWait := opstats.Observe(ctx, opstats.OperationStapelContainerLockWait)
+		defer doneLockWait()
 		err := werf.HostLocker().WithLock(ctx, fmt.Sprintf("stapel.container.%s", c.Name), lockgate.AcquireOptions{Timeout: time.Second * 600}, func() error {
+			doneLockWait()
 			return logboek.Context(ctx).LogProcess("Creating container %s from image %s", c.Name, c.ImageName).DoError(func() error {
 				exist, err := docker.ContainerExist(ctx, c.Name)
 				if err != nil {
