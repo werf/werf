@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestAI_BuildCloneOptions(t *testing.T) {
+func TestBuildCloneOptions(t *testing.T) {
 	t.Run("branch mapping clones single branch without tags", func(t *testing.T) {
 		opts := buildCloneOptions("https://example.com/repo.git", "main")
 		assert.True(t, opts.SingleBranch)
@@ -26,7 +26,7 @@ func TestAI_BuildCloneOptions(t *testing.T) {
 	})
 }
 
-func TestAI_BuildFetchOptions(t *testing.T) {
+func TestBuildFetchOptions(t *testing.T) {
 	t.Run("branch mapping fetches without tags", func(t *testing.T) {
 		opts := buildFetchOptions("origin", "main")
 		assert.Equal(t, git.NoTags, opts.Tags)
@@ -40,7 +40,7 @@ func TestAI_BuildFetchOptions(t *testing.T) {
 	})
 }
 
-func TestAI_SyncLocalBranches(t *testing.T) {
+func TestSyncLocalBranches(t *testing.T) {
 	tmpDir := t.TempDir()
 	rawRepo, err := git.PlainInit(tmpDir, true)
 	require.NoError(t, err)

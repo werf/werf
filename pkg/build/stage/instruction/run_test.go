@@ -13,7 +13,7 @@ import (
 	"github.com/werf/werf/v2/pkg/build/stage/instruction"
 )
 
-func parseRunCommandAI(dockerfileText string) *instructions.RunCommand {
+func parseRunCommand(dockerfileText string) *instructions.RunCommand {
 	p, err := parser.Parse(bytes.NewReader([]byte(dockerfileText)))
 	Expect(err).To(Succeed())
 
@@ -31,7 +31,7 @@ func parseRunCommandAI(dockerfileText string) *instructions.RunCommand {
 	return nil
 }
 
-func newRunStageAI(runCommand *instructions.RunCommand, dependencyStages []string) *instruction.Run {
+func newRunStage(runCommand *instructions.RunCommand, dependencyStages []string) *instruction.Run {
 	return instruction.NewRun(
 		NewDockerfileStageInstructionWithDependencyStages(runCommand, dependencyStages),
 		nil, false,
@@ -40,12 +40,12 @@ func newRunStageAI(runCommand *instructions.RunCommand, dependencyStages []strin
 	)
 }
 
-var _ = Describe("TestAI_ RUN mount from stage resolution", func() {
+var _ = Describe("RUN mount from stage resolution", func() {
 	const resolvedOsImage = "ghcr.io/werf/instruction-test:a71052baf9c6ace8171e59a2ae5ea1aede3fb89aa95d160ec354b205-1661868399091"
 
-	It("TestAI_ resolves --mount from=<stage> to the built werf stage image in the backend instruction", func(ctx SpecContext) {
-		stg := newRunStageAI(
-			parseRunCommandAI("FROM alpine AS os\nRUN --mount=type=bind,from=os,source=/apk,target=/apk true\n"),
+	It("resolves --mount from=<stage> to the built werf stage image in the backend instruction", func(ctx SpecContext) {
+		stg := newRunStage(
+			parseRunCommand("FROM alpine AS os\nRUN --mount=type=bind,from=os,source=/apk,target=/apk true\n"),
 			[]string{"os"},
 		)
 
@@ -62,9 +62,9 @@ var _ = Describe("TestAI_ RUN mount from stage resolution", func() {
 		Expect(mounts[0].From).To(Equal(resolvedOsImage))
 	})
 
-	It("TestAI_ leaves external --mount from=<image> references unchanged", func(ctx SpecContext) {
-		stg := newRunStageAI(
-			parseRunCommandAI("FROM alpine\nRUN --mount=type=bind,from=alpine:3.19,source=/etc,target=/etc true\n"),
+	It("leaves external --mount from=<image> references unchanged", func(ctx SpecContext) {
+		stg := newRunStage(
+			parseRunCommand("FROM alpine\nRUN --mount=type=bind,from=alpine:3.19,source=/etc,target=/etc true\n"),
 			nil,
 		)
 
@@ -81,8 +81,8 @@ var _ = Describe("TestAI_ RUN mount from stage resolution", func() {
 	})
 
 	digestFor := func(ctx SpecContext, resolvedImage string) string {
-		stg := newRunStageAI(
-			parseRunCommandAI("FROM alpine AS os\nRUN --mount=type=bind,from=os,source=/apk,target=/apk true\n"),
+		stg := newRunStage(
+			parseRunCommand("FROM alpine AS os\nRUN --mount=type=bind,from=os,source=/apk,target=/apk true\n"),
 			[]string{"os"},
 		)
 
@@ -99,7 +99,7 @@ var _ = Describe("TestAI_ RUN mount from stage resolution", func() {
 		return digest
 	}
 
-	It("TestAI_ digest reflects the resolved stage image and is stable for identical inputs", func(ctx SpecContext) {
+	It("has a stable digest that reflects the resolved stage image", func(ctx SpecContext) {
 		digest1 := digestFor(ctx, resolvedOsImage)
 		digest2 := digestFor(ctx, resolvedOsImage)
 		Expect(digest1).To(Equal(digest2))

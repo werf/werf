@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestAI_EnvBuildReport_RoundTripNamedImages(t *testing.T) {
+func TestEnvBuildReport_RoundTripNamedImages(t *testing.T) {
 	report := NewImagesReport()
 	report.SetImageRecord("frontend", newTestReportImageRecord("frontend", true))
 	report.SetImageRecord("backend", newTestReportImageRecord("backend", true))
@@ -31,7 +31,7 @@ func TestAI_EnvBuildReport_RoundTripNamedImages(t *testing.T) {
 	assertReportImageRecordEqual(t, report.Images["backend"], backendRecord)
 }
 
-func TestAI_EnvBuildReport_RoundTripUnnamedImage(t *testing.T) {
+func TestEnvBuildReport_RoundTripUnnamedImage(t *testing.T) {
 	report := NewImagesReport()
 	report.SetImageRecord("", newTestReportImageRecord("", true))
 
@@ -48,7 +48,7 @@ func TestAI_EnvBuildReport_RoundTripUnnamedImage(t *testing.T) {
 	assertReportImageRecordEqual(t, report.Images[""], unnamedRecord)
 }
 
-func TestAI_EnvBuildReport_PreservesFinalField(t *testing.T) {
+func TestEnvBuildReport_PreservesFinalField(t *testing.T) {
 	report := NewImagesReport()
 	report.SetImageRecord("frontend", newTestReportImageRecord("frontend", true))
 	report.SetImageRecord("backend", newTestReportImageRecord("backend", false))
@@ -63,7 +63,7 @@ func TestAI_EnvBuildReport_PreservesFinalField(t *testing.T) {
 	assert.Equal(t, false, parsed.Images["backend"].Final)
 }
 
-func TestAI_EnvBuildReport_LoadBuildReportFromFile_EnvExtension(t *testing.T) {
+func TestEnvBuildReport_LoadBuildReportFromFile_EnvExtension(t *testing.T) {
 	report := NewImagesReport()
 	report.SetImageRecord("frontend", newTestReportImageRecord("frontend", true))
 
@@ -76,7 +76,7 @@ func TestAI_EnvBuildReport_LoadBuildReportFromFile_EnvExtension(t *testing.T) {
 	require.NotNil(t, loadedReport)
 }
 
-func TestAI_EnvBuildReport_LoadBuildReportFromFile_JSONExtension(t *testing.T) {
+func TestEnvBuildReport_LoadBuildReportFromFile_JSONExtension(t *testing.T) {
 	report := NewImagesReport()
 	report.SetImageRecord("frontend", newTestReportImageRecord("frontend", true))
 
@@ -91,7 +91,7 @@ func TestAI_EnvBuildReport_LoadBuildReportFromFile_JSONExtension(t *testing.T) {
 	require.NotNil(t, loadedReport)
 }
 
-func TestAI_EnvBuildReport_ValidateParsedEnv(t *testing.T) {
+func TestEnvBuildReport_ValidateParsedEnv(t *testing.T) {
 	report := NewImagesReport()
 	report.SetImageRecord("frontend", newTestReportImageRecord("frontend", true))
 

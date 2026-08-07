@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestAI_buildRsyncdConf(t *testing.T) {
+func TestBuildRsyncdConf(t *testing.T) {
 	conf := buildRsyncdConf("873", "werf-deadbeef")
 
 	require.Contains(t, conf, "exclude = /proc /sys /dev /run /.werf")
