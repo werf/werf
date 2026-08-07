@@ -1022,6 +1022,8 @@ github.com/vishvananda/netns v0.0.5 h1:DfiHV+j8bA32MFM7bfEunvT8IAqQ/NzSJHtcmW5zd
 github.com/vishvananda/netns v0.0.5/go.mod h1:SpkAiCQRtJ6TvvxPnOSyH3BMl6unz3xZlaprSwhNNJM=
 github.com/wI2L/jsondiff v0.7.0 h1:1lH1G37GhBPqCfp/lrs91rf/2j3DktX6qYAKZkLuCQQ=
 github.com/wI2L/jsondiff v0.7.0/go.mod h1:KAEIojdQq66oJiHhDyQez2x+sRit0vIzC9KeK0yizxM=
+github.com/werf/3p-buildx v0.0.0-20260807135054-ec8211f6fecb h1:WLpozmsdzC4AvB7/FYLOIsjT4Iymn6j4J/SLmwaXXxg=
+github.com/werf/3p-buildx v0.0.0-20260807135054-ec8211f6fecb/go.mod h1:7JVma62htERKE5iy5YD1q64PKiAHUzXuhSBd4oq3I74=
 github.com/werf/3p-cobra v0.0.0-20260403075225-552c82797324 h1:aqEM5aboMpBfsILjaxxRKhGFv9rGtNcd5YzMUDyVX+U=
 github.com/werf/3p-cobra v0.0.0-20260403075225-552c82797324/go.mod h1:7C1pvHqHw5A4vrJfjNwvOdzYu0Gml16OCs2GRiTUUS4=
 github.com/werf/3p-oras v0.9.1-0.20260408144000-3b8c77eb09e8 h1:QwXLtEoLw/d1Vj2Lk0KXUZA0dOE3h1n6OgONl4S6TKU=
