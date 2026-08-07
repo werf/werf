@@ -76,7 +76,7 @@ func (r *fakeRegistry) PushImage(_ context.Context, reference string, _ *docker_
 	return r.pushErrs[reference]
 }
 
-func TestAI_GetRejectedStageIDs(t *testing.T) {
+func TestGetRejectedStageIDs(t *testing.T) {
 	digest := "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
 
 	tests := []struct {
@@ -125,7 +125,7 @@ func TestAI_GetRejectedStageIDs(t *testing.T) {
 	}
 }
 
-func TestAI_DeleteRejectedStageImage_HappyPath(t *testing.T) {
+func TestDeleteRejectedStageImage_HappyPath(t *testing.T) {
 	digest := "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
 	const ts int64 = 1700000000
 	stageRef := "registry.example/project:" + digest + "-1700000000"
@@ -139,7 +139,7 @@ func TestAI_DeleteRejectedStageImage_HappyPath(t *testing.T) {
 	assert.Equal(t, 1, r.deleteCall[stageRef])
 }
 
-func TestAI_DeleteRejectedStageImage_AlreadyGone(t *testing.T) {
+func TestDeleteRejectedStageImage_AlreadyGone(t *testing.T) {
 	digest := "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
 
 	r := newFakeRegistry()
@@ -150,7 +150,7 @@ func TestAI_DeleteRejectedStageImage_AlreadyGone(t *testing.T) {
 	assert.Empty(t, r.deleteCall, "no delete attempt when stage image absent")
 }
 
-func TestAI_DeleteRejectedStageImage_BrokenFallback(t *testing.T) {
+func TestDeleteRejectedStageImage_BrokenFallback(t *testing.T) {
 	digest := "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
 	const ts int64 = 1700000000
 	stageRef := "registry.example/project:" + digest + "-1700000000"
@@ -167,7 +167,7 @@ func TestAI_DeleteRejectedStageImage_BrokenFallback(t *testing.T) {
 	assert.Equal(t, 1, r.pushCall[stageRef], "dummy push exactly once")
 }
 
-func TestAI_DeleteRejectedStageImage_NonBrokenErrorPropagates(t *testing.T) {
+func TestDeleteRejectedStageImage_NonBrokenErrorPropagates(t *testing.T) {
 	digest := "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
 	const ts int64 = 1700000000
 	stageRef := "registry.example/project:" + digest + "-1700000000"
@@ -184,7 +184,7 @@ func TestAI_DeleteRejectedStageImage_NonBrokenErrorPropagates(t *testing.T) {
 	assert.Equal(t, 0, r.pushCall[stageRef], "must not push on non-broken errors")
 }
 
-func TestAI_DeleteRejectedStageImage_PushFallbackFails(t *testing.T) {
+func TestDeleteRejectedStageImage_PushFallbackFails(t *testing.T) {
 	digest := "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
 	const ts int64 = 1700000000
 	stageRef := "registry.example/project:" + digest + "-1700000000"
@@ -202,7 +202,7 @@ func TestAI_DeleteRejectedStageImage_PushFallbackFails(t *testing.T) {
 	assert.Contains(t, err.Error(), "MANIFEST_INVALID")
 }
 
-func TestAI_DeleteRejectedStageImage_FallbackVanishedAfterPushTreatedAsDeleted(t *testing.T) {
+func TestDeleteRejectedStageImage_FallbackVanishedAfterPushTreatedAsDeleted(t *testing.T) {
 	digest := "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
 	const ts int64 = 1700000000
 	stageRef := "registry.example/project:" + digest + "-1700000000"
@@ -220,7 +220,7 @@ func TestAI_DeleteRejectedStageImage_FallbackVanishedAfterPushTreatedAsDeleted(t
 	assert.Equal(t, 1, r.pushCall[stageRef])
 }
 
-func TestAI_DeleteRejectedStageImage_FallbackPushSucceedsRetryFails(t *testing.T) {
+func TestDeleteRejectedStageImage_FallbackPushSucceedsRetryFails(t *testing.T) {
 	digest := "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
 	const ts int64 = 1700000000
 	stageRef := "registry.example/project:" + digest + "-1700000000"
@@ -238,7 +238,7 @@ func TestAI_DeleteRejectedStageImage_FallbackPushSucceedsRetryFails(t *testing.T
 	assert.Contains(t, err.Error(), "MANIFEST_INVALID", "original delete error must be preserved")
 }
 
-func TestAI_DeleteRejectedStageImage_FallbackPushImmutableTag(t *testing.T) {
+func TestDeleteRejectedStageImage_FallbackPushImmutableTag(t *testing.T) {
 	digest := "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
 	const ts int64 = 1700000000
 	stageRef := "registry.example/project:" + digest + "-1700000000"
@@ -257,7 +257,7 @@ func TestAI_DeleteRejectedStageImage_FallbackPushImmutableTag(t *testing.T) {
 	assert.Contains(t, err.Error(), "MANIFEST_INVALID")
 }
 
-func TestAI_DeleteRejectedStageRecord_HappyPath(t *testing.T) {
+func TestDeleteRejectedStageRecord_HappyPath(t *testing.T) {
 	digest := "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
 	const ts int64 = 1700000000
 	rejectedRef := "registry.example/project:" + digest + "-1700000000-rejected"
@@ -271,7 +271,7 @@ func TestAI_DeleteRejectedStageRecord_HappyPath(t *testing.T) {
 	assert.Equal(t, 1, r.deleteCall[rejectedRef])
 }
 
-func TestAI_DeleteRejectedStageRecord_AlreadyGone(t *testing.T) {
+func TestDeleteRejectedStageRecord_AlreadyGone(t *testing.T) {
 	digest := "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
 
 	r := newFakeRegistry()
@@ -282,7 +282,7 @@ func TestAI_DeleteRejectedStageRecord_AlreadyGone(t *testing.T) {
 	assert.Empty(t, r.deleteCall, "no delete attempt when marker absent")
 }
 
-func TestAI_DeleteRejectedStageRecord_BrokenErrorPropagatesNoFallback(t *testing.T) {
+func TestDeleteRejectedStageRecord_BrokenErrorPropagatesNoFallback(t *testing.T) {
 	// Marker is a metadata record without business payload — a broken marker must
 	// surface as an error, not be silently replaced with an empty dummy.
 	digest := "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
@@ -301,7 +301,7 @@ func TestAI_DeleteRejectedStageRecord_BrokenErrorPropagatesNoFallback(t *testing
 	assert.Equal(t, 0, r.pushCall[rejectedRef], "marker delete must NOT use broken-image fallback")
 }
 
-func TestAI_DeleteStage_DoesNotTouchRejectedMarker(t *testing.T) {
+func TestDeleteStage_DoesNotTouchRejectedMarker(t *testing.T) {
 	// Regression guard: DeleteStage has a single responsibility (remove the stage
 	// image only). The rejected marker, if any, is cleaned up by the
 	// deleteRejectedStagesWithLinkedTags phase, not by DeleteStage.
@@ -325,7 +325,7 @@ func TestAI_DeleteStage_DoesNotTouchRejectedMarker(t *testing.T) {
 	assert.Equal(t, 0, r.deleteCall[rejectedRef], "marker MUST NOT be touched by DeleteStage")
 }
 
-func TestAI_DeleteStageCustomTag_HappyPath(t *testing.T) {
+func TestDeleteStageCustomTag_HappyPath(t *testing.T) {
 	tag := "latest"
 	customRef := "registry.example/project:latest"
 
@@ -339,7 +339,7 @@ func TestAI_DeleteStageCustomTag_HappyPath(t *testing.T) {
 	assert.Equal(t, 0, r.pushCall[customRef], "must not push when delete works")
 }
 
-func TestAI_DeleteStageCustomTag_Missing(t *testing.T) {
+func TestDeleteStageCustomTag_Missing(t *testing.T) {
 	r := newFakeRegistry()
 	s := &RepoStagesStorage{RepoAddress: "registry.example/project", DockerRegistry: r}
 
@@ -348,7 +348,7 @@ func TestAI_DeleteStageCustomTag_Missing(t *testing.T) {
 	assert.Empty(t, r.deleteCall, "no delete when tag absent")
 }
 
-func TestAI_DeleteStageCustomTag_BrokenErrorPropagatesNoFallback(t *testing.T) {
+func TestDeleteStageCustomTag_BrokenErrorPropagatesNoFallback(t *testing.T) {
 	// Custom tag carries data the user pushed under that tag — a broken custom
 	// tag must surface as an error, not be silently replaced with an empty dummy.
 	tag := "v1.0.0"

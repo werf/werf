@@ -85,7 +85,7 @@ func (f *fakeStorageManager) ForEachRejectedStage(ctx context.Context, stageIDs 
 	return nil
 }
 
-func TestAI_deleteRejectedStagesWithLinkedTags_NoRejected(t *testing.T) {
+func TestDeleteRejectedStagesWithLinkedTags_NoRejected(t *testing.T) {
 	sm := newFakeStorageManager()
 
 	deleted, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, nil, false)
@@ -96,7 +96,7 @@ func TestAI_deleteRejectedStagesWithLinkedTags_NoRejected(t *testing.T) {
 	assert.Empty(t, sm.stages.deletedRecords)
 }
 
-func TestAI_deleteRejectedStagesWithLinkedTags_OrderStageThenTagsThenMarker(t *testing.T) {
+func TestDeleteRejectedStagesWithLinkedTags_OrderStageThenTagsThenMarker(t *testing.T) {
 	digest := "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
 	stageID := image.NewStageID(digest, 1700000000)
 	otherStageID := image.NewStageID(digest, 1700000999)
@@ -118,7 +118,7 @@ func TestAI_deleteRejectedStagesWithLinkedTags_OrderStageThenTagsThenMarker(t *t
 	assert.Equal(t, []image.StageID{*stageID}, sm.stages.deletedRecords, "marker deleted last")
 }
 
-func TestAI_deleteRejectedStagesWithLinkedTags_DryRun(t *testing.T) {
+func TestDeleteRejectedStagesWithLinkedTags_DryRun(t *testing.T) {
 	digest := "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
 	stageID := image.NewStageID(digest, 1700000000)
 
@@ -133,7 +133,7 @@ func TestAI_deleteRejectedStagesWithLinkedTags_DryRun(t *testing.T) {
 	assert.Empty(t, sm.stages.deletedRecords, "dry run must not touch registry")
 }
 
-func TestAI_deleteRejectedStagesWithLinkedTags_PropagatesGetError(t *testing.T) {
+func TestDeleteRejectedStagesWithLinkedTags_PropagatesGetError(t *testing.T) {
 	sm := newFakeStorageManager()
 	sm.stages.rejectedErr = errors.New("registry down")
 
@@ -142,7 +142,7 @@ func TestAI_deleteRejectedStagesWithLinkedTags_PropagatesGetError(t *testing.T) 
 	assert.Contains(t, err.Error(), "unable to get rejected stage ids")
 }
 
-func TestAI_deleteRejectedStagesWithLinkedTags_StageImageNonFatalFailureKeepsMarker(t *testing.T) {
+func TestDeleteRejectedStagesWithLinkedTags_StageImageNonFatalFailureKeepsMarker(t *testing.T) {
 	digest := "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
 	stageID := image.NewStageID(digest, 1700000000)
 
@@ -159,7 +159,7 @@ func TestAI_deleteRejectedStagesWithLinkedTags_StageImageNonFatalFailureKeepsMar
 	assert.Empty(t, sm.stages.deletedRecords, "marker must remain so retry picks up this stage")
 }
 
-func TestAI_deleteRejectedStagesWithLinkedTags_StageImageFatalFailurePropagates(t *testing.T) {
+func TestDeleteRejectedStagesWithLinkedTags_StageImageFatalFailurePropagates(t *testing.T) {
 	digest := "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
 	stageID := image.NewStageID(digest, 1700000000)
 
@@ -172,7 +172,7 @@ func TestAI_deleteRejectedStagesWithLinkedTags_StageImageFatalFailurePropagates(
 	assert.Contains(t, err.Error(), "UNAUTHORIZED")
 }
 
-func TestAI_deleteRejectedStagesWithLinkedTags_CustomTagFailureKeepsMarker(t *testing.T) {
+func TestDeleteRejectedStagesWithLinkedTags_CustomTagFailureKeepsMarker(t *testing.T) {
 	digest := "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
 	stageID := image.NewStageID(digest, 1700000000)
 
@@ -189,7 +189,7 @@ func TestAI_deleteRejectedStagesWithLinkedTags_CustomTagFailureKeepsMarker(t *te
 	assert.Empty(t, sm.stages.deletedRecords, "marker MUST remain so next cleanup retries linked tags")
 }
 
-func TestAI_deleteRejectedStagesWithLinkedTags_MarkerFailureExcludesFromDeleted(t *testing.T) {
+func TestDeleteRejectedStagesWithLinkedTags_MarkerFailureExcludesFromDeleted(t *testing.T) {
 	digest := "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
 	stageID := image.NewStageID(digest, 1700000000)
 
