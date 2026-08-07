@@ -1032,6 +1032,8 @@ github.com/werf/copy-recurse v0.3.1 h1:1DXl5+CnxOP9pcvXu7qkY2hnqxUHnE5KWdydALL/Y
 github.com/werf/copy-recurse v0.3.1/go.mod h1:6Ypb+qN+hRBJgoCgEkX1vpbqcQ+8q69BQ3hi8s8Y6Qc=
 github.com/werf/kubedog v0.13.1-0.20260709123314-5d578345082f h1:A3dA97W1cJwUP9CegXunkiJ6gAhek7hyDXP89P7P8r0=
 github.com/werf/kubedog v0.13.1-0.20260709123314-5d578345082f/go.mod h1:tU8RyC5qXvJMPT2LmaNnVINWvwDHao0Ca3Bw9P8JC3E=
+github.com/werf/kubedog v0.13.1-0.20260806110242-85087f97ed99 h1:GOFrJ93iXCYV8FlDOSz3953jxRV0tNSK6/A+AiDRmuk=
+github.com/werf/kubedog v0.13.1-0.20260806110242-85087f97ed99/go.mod h1:5s5JQyn7rI+63ppk5MGPBYv6uRv0HARLD3kLN8FEFsw=
 github.com/werf/lockgate v0.2.0 h1:wntfccZmtHQuntPjrPUFA2FcKejhmteKEekQx3VsHC4=
 github.com/werf/lockgate v0.2.0/go.mod h1:h8P6tpGRZymd0bS5FlnS+AdIwO2jDlpOLy9St2tbs30=
 github.com/werf/logboek v0.7.1 h1:Ck8L7LVmj/wyrW/jk+EkkpGwdmpkOrsWAwoIgLHupc8=
@@ -1040,6 +1042,8 @@ github.com/werf/nelm v1.26.2-0.20260805091730-9d049189ce4e h1:s8rQIAEZFR0tIyc8ED
 github.com/werf/nelm v1.26.2-0.20260805091730-9d049189ce4e/go.mod h1:eI4z6u+zG3t+CLdqRvAxNjoLH/5Jq3wStjUILE4HjFc=
 github.com/werf/nelm v1.26.2-0.20260807085132-ec98995b35c2 h1:T/G27gYyAeDwK6nNL8VUocNIdNv6SG02C4z5sfzzwR4=
 github.com/werf/nelm v1.26.2-0.20260807085132-ec98995b35c2/go.mod h1:eI4z6u+zG3t+CLdqRvAxNjoLH/5Jq3wStjUILE4HjFc=
+github.com/werf/nelm v1.28.1-0.20260807104951-8b420d326cbc h1:ZpMT0WQwGPOYDxNtqOBF1AcjoEbPpgK6GBGzalaUNYc=
+github.com/werf/nelm v1.28.1-0.20260807104951-8b420d326cbc/go.mod h1:SSSDc2m6qgb0YOkWecYyXKOIkmUgIRdRumcVj74hPW4=
 github.com/x448/float16 v0.8.4 h1:qLwI1I70+NjRFUR3zs1JPUCgaCXSh3SW62uAKT1mSBM=
 github.com/x448/float16 v0.8.4/go.mod h1:14CWIYCyZA/cWjXOioeEpHeN/83MdbZDRQHoFcYsOfg=
 github.com/xanzy/ssh-agent v0.3.3 h1:+/15pJfg/RsTxqYcX6fHqOXZwwMP+2VyYWJeWM2qQFM=
