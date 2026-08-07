@@ -82,6 +82,7 @@ jobs:
     uses: ./.github/workflows/_test_e2e_regular.yml
     with:
       scope: complex
+      raceDetectorEnabled: true
     secrets: inherit
 
   e2e_extra:
