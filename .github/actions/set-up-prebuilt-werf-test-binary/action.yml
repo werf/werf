@@ -3,6 +3,9 @@ inputs:
   coverage:
     default: false
     type: string
+  raceDetectorEnabled:
+    default: false
+    type: string
 runs:
   using: composite
   steps:
@@ -33,7 +36,7 @@ runs:
         if ${{ inputs.coverage }}; then
           task --yes -p build-with-coverage
         else
-          task --yes -p build
+          task --yes -p build raceDetectorEnabled=${{ inputs.raceDetectorEnabled }}
         fi
       shell: bash
       env:

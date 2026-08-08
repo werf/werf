@@ -21,6 +21,12 @@ on:
       coverage:
         default: false
         type: string
+      raceDetectorEnabled:
+        default: false
+        type: string
+      ginkgoFocus:
+        default: ''
+        type: string
       forceSkip:
         default: false
         type: string
@@ -66,6 +72,7 @@ jobs:
         uses: ./.github/actions/set-up-prebuilt-werf-test-binary
         with:
           coverage: ${{ inputs.coverage }}
+          raceDetectorEnabled: ${{ inputs.raceDetectorEnabled }}
 
       - name: Set up git config
         uses: ./.github/actions/set-up-git-config
@@ -80,7 +87,11 @@ jobs:
         run: |
           export WERF_TEST_K8S_DOCKER_REGISTRY="localhost:$(docker inspect kind-registry --format '{{(index (index .NetworkSettings.Ports "5000/tcp") 0).HostPort}}')"
           test -n "${{ inputs.packages }}" && paths=paths="$(echo ${{ inputs.packages }} | tr , ' ')"
-          task --yes -p test:e2e:${{ inputs.scope }} $paths -- --keep-going --skip-package '${{ inputs.excludePackages }}'
+          if [ -n '${{ inputs.ginkgoFocus }}' ]; then
+            task --yes -p test:e2e:${{ inputs.scope }} $paths -- --focus='${{ inputs.ginkgoFocus }}' --keep-going --skip-package '${{ inputs.excludePackages }}'
+          else
+            task --yes -p test:e2e:${{ inputs.scope }} $paths -- --keep-going --skip-package '${{ inputs.excludePackages }}'
+          fi
           echo loadavg: $(cat /proc/loadavg)
         env:
           GOCOVERDIR: ${{ env.WERF_TEST_COVER_DIR }}
