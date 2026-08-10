@@ -271,7 +271,6 @@ The report of the command above looks as follows:
     { "type": "imageMetadata", "imageName": "backend", "stageID": "ff00112233445566778899aabbccddeeff00112233445566778899aa-1748001122334", "commit": "a3f1c92e4b7d8056f1a2b3c4d5e6f7a8b9c0d1e2" },
     { "type": "imageMetadata", "id": "8c4a1f9b2d7e5a3c", "stageID": "ff00112233445566778899aabbccddeeff00112233445566778899aa-1748001122334", "commit": "a3f1c92e4b7d8056f1a2b3c4d5e6f7a8b9c0d1e2" },
     { "type": "managedImage", "imageName": "frontend" },
-    { "type": "importMetadata", "id": "8c4a1f9b2d7e5a3c" },
     { "type": "finalStage", "tag": "c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4-1748500000000" }
   ]
 }
@@ -279,13 +278,13 @@ The report of the command above looks as follows:
 
 With `--dry-run` the report holds exactly what a real run would have deleted, without deleting it.
 
-The `type` set is **extensible**: today it is `stage`, `finalStage`, `customTag`, `rejectedStage`, `rejectedStageMarker`, `imageMetadata`, `managedImage` and `importMetadata`, and new kinds may appear. Select the types you know (`select(.type == "stage")`) rather than assume the set is closed.
+The `type` set is **extensible**: today it is `stage`, `finalStage`, `customTag`, `rejectedStage`, `rejectedStageMarker`, `imageMetadata` and `managedImage`, and new kinds may appear. Select the types you know (`select(.type == "stage")`) rather than assume the set is closed.
 
 Only objects that were really deleted get into `deleted`: a failed deletion stays a warning in the log, together with the work it cancelled.
 
 An `imageMetadata` item names its image in `imageName`. When the image is no longer described in `werf.yaml` no name is recoverable and the item carries the internal `id` instead; `werf purge` never consults `werf.yaml`, so it always uses `id`.
 
-The address is not repeated on every item: `finalStage` was deleted from `finalRepo`, every other type from `repo`.
+The address is not repeated on every item: `finalStage` was deleted from `finalRepo`, `imageMetadata` and `managedImage` from the `--meta-repo` repository when one is configured, every other type from `repo`.
 
 The order of `kept` and `deleted` is undefined — deletions run in parallel.
 

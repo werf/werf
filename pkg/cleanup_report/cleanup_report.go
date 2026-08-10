@@ -19,7 +19,6 @@ const (
 	ItemTypeRejectedStageMarker ItemType = "rejectedStageMarker"
 	ItemTypeImageMetadata       ItemType = "imageMetadata"
 	ItemTypeManagedImage        ItemType = "managedImage"
-	ItemTypeImportMetadata      ItemType = "importMetadata"
 )
 
 type Item struct {
