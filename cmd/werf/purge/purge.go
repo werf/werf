@@ -2,6 +2,7 @@ package purge
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/samber/lo"
@@ -81,6 +82,9 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupDryRun(&commonCmdData, cmd)
 
+	common.SetupSaveCleanupReport(&commonCmdData, cmd)
+	common.SetupCleanupReportPath(&commonCmdData, cmd)
+
 	commonCmdData.SetupPlatform(cmd)
 	commonCmdData.SetupDebugTemplates(cmd)
 	commonCmdData.SetupAllowIncludesUpdate(cmd)
@@ -154,10 +158,18 @@ It is worth noting that auto-cleaning is enabled by default, and manual use is u
 		storageManager.EnableParallel(int(common.GetParallelTasksLimit(&commonCmdData)))
 	}
 
+	report, reportPath, err := common.NewCleanupReport(ctx, &commonCmdData, "purge", *commonCmdData.DryRun, storageManager)
+	if err != nil {
+		return err
+	}
+
 	purgeOptions := cleaning.PurgeOptions{
 		DryRun: *commonCmdData.DryRun,
+		Report: report,
 	}
 
 	logboek.LogOptionalLn()
-	return cleaning.Purge(ctx, projectName, storageManager, purgeOptions)
+	runErr := cleaning.Purge(ctx, projectName, storageManager, purgeOptions)
+
+	return errors.Join(runErr, report.Save(ctx, reportPath))
 }
