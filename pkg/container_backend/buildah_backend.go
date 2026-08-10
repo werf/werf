@@ -546,12 +546,21 @@ func (backend *BuildahBackend) applyRemoveData(ctx context.Context, container *c
 				}
 			}
 		case RemoveExactPathWithEmptyParentDirs:
+			keepParentDirs := []string{container.RootMount}
+			for _, keepPath := range spec.KeepParentDirs {
+				resolvedKeepPath, err := resolveContainerRootPath(container.RootMount, keepPath)
+				if err != nil {
+					return err
+				}
+				keepParentDirs = append(keepParentDirs, resolvedKeepPath)
+			}
+
 			for _, path := range spec.Paths {
 				destPath, err := resolveContainerRootPathNoFollow(container.RootMount, path)
 				if err != nil {
 					return err
 				}
-				if err := removeExactPathWithEmptyParentDirs(ctx, destPath, spec.KeepParentDirs); err != nil {
+				if err := removeExactPathWithEmptyParentDirs(ctx, destPath, keepParentDirs); err != nil {
 					return fmt.Errorf("unable to remove %q: %w", path, err)
 				}
 			}

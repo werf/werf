@@ -237,6 +237,40 @@ var _ = Describe("calculateDependencyImportChecksum", func() {
 	})
 })
 
+var _ = Describe("BuildahBackend applyRemoveData", func() {
+	It("keeps a symlinked parent dir when removing the last file under it", func(ctx SpecContext) {
+		rootMount := GinkgoT().TempDir()
+		Expect(os.MkdirAll(filepath.Join(rootMount, "usr", "bin"), 0o755)).To(Succeed())
+		Expect(os.WriteFile(filepath.Join(rootMount, "usr", "bin", "last-file"), []byte("data"), 0o644)).To(Succeed())
+		Expect(os.Symlink("/usr/bin", filepath.Join(rootMount, "bin"))).To(Succeed())
+
+		backend := &BuildahBackend{}
+		Expect(backend.applyRemoveData(ctx, &containerDesc{RootMount: rootMount}, []RemoveDataSpec{{
+			Type:           RemoveExactPathWithEmptyParentDirs,
+			Paths:          []string{"/bin/last-file"},
+			KeepParentDirs: []string{"/bin"},
+		}})).To(Succeed())
+
+		Expect(filepath.Join(rootMount, "usr", "bin", "last-file")).ToNot(BeAnExistingFile())
+		Expect(filepath.Join(rootMount, "usr", "bin")).To(BeADirectory())
+	})
+
+	It("never prunes empty parent dirs above the container root", func(ctx SpecContext) {
+		rootMount := filepath.Join(GinkgoT().TempDir(), "merged")
+		Expect(os.MkdirAll(filepath.Join(rootMount, "app"), 0o755)).To(Succeed())
+		Expect(os.WriteFile(filepath.Join(rootMount, "app", "last-file"), []byte("data"), 0o644)).To(Succeed())
+
+		backend := &BuildahBackend{}
+		Expect(backend.applyRemoveData(ctx, &containerDesc{RootMount: rootMount}, []RemoveDataSpec{{
+			Type:  RemoveExactPathWithEmptyParentDirs,
+			Paths: []string{"/app/last-file"},
+		}})).To(Succeed())
+
+		Expect(filepath.Join(rootMount, "app")).ToNot(BeADirectory())
+		Expect(rootMount).To(BeADirectory())
+	})
+})
+
 var _ = Describe("platformMatches", func() {
 	DescribeTable("validates platform",
 		func(os, arch, variant, targetPlatform string, expected bool) {
