@@ -249,7 +249,7 @@ During operation, `werf cleanup` highlights tags using colors to indicate their 
 + <span style="color: green;">Green color</span> — tag is kept.
 + <span style="color: red;">Red color</span> — tag is deleted.
 
-This color coding can be useful for post-processing — for example, to analyze what would be deleted or to generate a keep-list in isolated environments.
+This color coding makes it easy to see at a glance what a run would delete. For post-processing — a keep-list, an audit — use the cleanup report described above rather than parsing colors.
 
 > The `--dry-run` option allows you to simulate the cleanup process without actually deleting anything. It’s useful for previewing which tags would be deleted or kept.
 
@@ -257,11 +257,10 @@ This color coding can be useful for post-processing — for example, to analyze 
 
 The `--save-cleanup-report` option makes `werf cleanup` write a machine-readable JSON report of what was kept and what was deleted. The report path is `.werf-cleanup-report.json` by default and is configured with `--cleanup-report-path` (the extension must be `.json`).
 
-Generating a keep-list then takes a single `jq` call:
+The report is plain JSON, so any tool can consume it — see [Generate keep-list](#generate-keep-list-from-tags-marked-to-be-kept--deleted) below:
 
 ```bash
 werf cleanup --repo registry.mydomain.com/app --dry-run --save-cleanup-report
-jq -r '.kept[] | select(.type == "stage") | .tag' .werf-cleanup-report.json > keep-list.txt
 ```
 
 The report of the command above looks as follows:
@@ -306,18 +305,18 @@ The same options are supported by `werf purge`, and by `werf host purge` when it
 
 ### Generate keep-list from tags marked to be kept / deleted
 
-You can extract tags from the output of the `werf cleanup` command as follows:
+You can extract tags from the cleanup report as follows:
 
-- list of tags marked to be kept (green color):
+- list of tags marked to be kept:
 
   ```bash
-  werf cleanup --repo registry.mydomain.com/app --dry-run | grep -a -o -P '\x1b\[32m\K[^\x1b]+' > keep-list.txt
+  jq -r '.kept[] | select(.type == "stage") | .tag' .werf-cleanup-report.json > keep-list.txt
   ```
 
-- list of tags marked to be deleted (red color):
+- list of tags marked to be deleted:
 
   ```bash
-  werf cleanup --repo registry.mydomain.com/app --dry-run | grep -a -o -P '\x1b\[31m\K[^\x1b]+' > keep-list.txt
+  jq -r '.deleted[] | select(.type == "stage") | .tag' .werf-cleanup-report.json
   ```
 
 Then, use this list with the `--keep-list` option to ensure only the specified tags are preserved during cleanup:

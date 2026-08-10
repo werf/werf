@@ -248,7 +248,7 @@ HUB_TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username":
 + <span style="color: green;">Зеленый цвет</span> — тег сохраняется.
 + <span style="color: red;">Красный цвет</span> — тег будет удалён.
 
-Такое цветовое выделение может быть полезным для последующей обработки — например, чтобы проанализировать, какие теги будут сохранены, или сформировать keep-list в изолированных окружениях.
+Цветовое выделение позволяет быстро оценить результат очистки глазами. Для последующей обработки — формирования keep-list, аудита — используйте отчёт об очистке, описанный выше, а не разбор цветов.
 
 > Опция `--dry-run` позволяет смоделировать процесс очистки без фактического удаления. Это удобно для предварительного просмотра того, какие теги будут удалены, а какие останутся.
 
@@ -256,11 +256,10 @@ HUB_TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username":
 
 Опция `--save-cleanup-report` заставляет `werf cleanup` записать машиночитаемый JSON-отчёт о том, что было сохранено и что удалено. По умолчанию отчёт пишется в `.werf-cleanup-report.json`, путь настраивается опцией `--cleanup-report-path` (расширение должно быть `.json`).
 
-После этого keep-list формируется одним вызовом `jq`:
+Отчёт — обычный JSON, поэтому обрабатывать его можно любым инструментом, см. [Генерация keep-list](#генерация-keep-list-для-сохраняемых--удаляемых-тегов) ниже:
 
 ```bash
 werf cleanup --repo registry.mydomain.com/app --dry-run --save-cleanup-report
-jq -r '.kept[] | select(.type == "stage") | .tag' .werf-cleanup-report.json > keep-list.txt
 ```
 
 Отчёт приведённой выше команды выглядит следующим образом:
@@ -305,18 +304,18 @@ jq -r '.kept[] | select(.type == "stage") | .tag' .werf-cleanup-report.json > ke
 
 ### Генерация keep-list для сохраняемых / удаляемых тегов
 
-Можно извлечь теги из вывода команды `werf cleanup` следующим образом:
+Можно извлечь теги из отчёта об очистке следующим образом:
 
-- список сохраняемых тегов (зелёный цвет):
+- список сохраняемых тегов:
 
   ```bash
-  werf cleanup --repo registry.mydomain.com/app --dry-run | grep -a -o -P '\x1b\[32m\K[^\x1b]+' > keep-list.txt
+  jq -r '.kept[] | select(.type == "stage") | .tag' .werf-cleanup-report.json > keep-list.txt
   ```
 
-- список удаляемых тегов (красный цвет):
+- список удаляемых тегов:
 
   ```bash
-  werf cleanup --repo registry.mydomain.com/app --dry-run | grep -a -o -P '\x1b\[31m\K[^\x1b]+' > keep-list.txt
+  jq -r '.deleted[] | select(.type == "stage") | .tag' .werf-cleanup-report.json
   ```
 
 Затем можно использовать этот список с опцией `--keep-list`, чтобы явно указать, какие теги следует сохранить при очистке:
