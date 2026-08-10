@@ -10,6 +10,7 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/gookit/color"
 	"github.com/rodaine/table"
+	"github.com/samber/lo"
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/kubedog/pkg/kube"
@@ -17,6 +18,7 @@ import (
 	"github.com/werf/werf/v2/pkg/cleaning/allow_list"
 	"github.com/werf/werf/v2/pkg/cleaning/git_history_based_cleanup"
 	"github.com/werf/werf/v2/pkg/cleaning/stage_manager"
+	"github.com/werf/werf/v2/pkg/cleanup_report"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/docker_registry"
 	"github.com/werf/werf/v2/pkg/image"
@@ -38,6 +40,7 @@ type CleanupOptions struct {
 	Parallel                        bool
 	ParallelTasksLimit              int64
 	KeepList                        KeepList
+	Report                          *cleanup_report.Report
 }
 
 func Cleanup(ctx context.Context, projectName string, storageManager *manager.StorageManager, options CleanupOptions) error {
@@ -50,6 +53,7 @@ func newCleanupManager(projectName string, storageManager *manager.StorageManage
 		parallel:                        options.Parallel,
 		parallelTasksLimit:              options.ParallelTasksLimit,
 		keepList:                        options.KeepList,
+		report:                          options.Report,
 		ProjectName:                     projectName,
 		StorageManager:                  storageManager,
 		ImageNameList:                   options.ImageNameList,
@@ -84,6 +88,7 @@ type cleanupManager struct {
 	parallelTasksLimit int64
 
 	keepList KeepList
+	report   *cleanup_report.Report
 }
 
 type GitRepo interface {
@@ -257,11 +262,11 @@ func (m *cleanupManager) markWhitelistStagesAsProtected() {
 }
 
 func (m *cleanupManager) purgeManagedImages(ctx context.Context) error {
-	return purgeManagedImages(ctx, m.ProjectName, m.StorageManager, m.DryRun)
+	return purgeManagedImages(ctx, m.ProjectName, m.StorageManager, m.DryRun, m.report)
 }
 
 func (m *cleanupManager) purgeImageMetadata(ctx context.Context) error {
-	return purgeImageMetadata(ctx, m.ProjectName, m.StorageManager, m.DryRun)
+	return purgeImageMetadata(ctx, m.ProjectName, m.StorageManager, m.DryRun, m.report)
 }
 
 func (m *cleanupManager) skipStageIDsThatAreUsedInKubernetes(ctx context.Context, deployedDockerImages []*DeployedDockerImage) error {
@@ -626,13 +631,19 @@ func (m *cleanupManager) deleteStages(ctx context.Context, stageDescSet image.St
 		},
 	}
 
-	return deleteStageDescSet(ctx, m.StorageManager, m.DryRun, deleteStageOptions, stageDescSet, isFinal)
+	return deleteStageDescSet(ctx, m.StorageManager, m.DryRun, deleteStageOptions, stageDescSet, isFinal, m.report)
 }
 
-func deleteStageDescSet(ctx context.Context, storageManager manager.StorageManagerInterface, dryRun bool, deleteStageOptions manager.ForEachDeleteStageOptions, stageDescSet image.StageDescSet, isFinal bool) error {
+func deleteStageDescSet(ctx context.Context, storageManager manager.StorageManagerInterface, dryRun bool, deleteStageOptions manager.ForEachDeleteStageOptions, stageDescSet image.StageDescSet, isFinal bool, report *cleanup_report.Report) error {
+	stageItemType := cleanup_report.ItemTypeStage
+	if isFinal {
+		stageItemType = cleanup_report.ItemTypeFinalStage
+	}
+
 	if dryRun {
 		for stageDesc := range stageDescSet.Iter() {
 			logboek.Context(ctx).Default().LogFWithCustomStyle(deletedStyle, "%s\n", stageDesc.StageID.String())
+			report.AddDeleted(ctx, cleanup_report.Item{Type: stageItemType, Tag: stageDesc.Info.Tag})
 		}
 		logboek.Context(ctx).LogOptionalLn()
 		return nil
@@ -650,6 +661,7 @@ func deleteStageDescSet(ctx context.Context, storageManager manager.StorageManag
 		}
 
 		logboek.Context(ctx).Default().LogFWithCustomStyle(deletedStyle, "  tag: %s\n", stageDesc.Info.Tag)
+		report.AddDeleted(ctx, cleanup_report.Item{Type: stageItemType, Tag: stageDesc.Info.Tag})
 
 		return nil
 	}
@@ -692,7 +704,7 @@ func (m *cleanupManager) cleanupImageMetadata(ctx context.Context, imageName str
 			}
 
 			if err := logProcessDoError(func() error {
-				return m.deleteImageMetadata(ctx, imageName, stageIDCommitListToDelete)
+				return m.deleteImageMetadata(ctx, imageName, stageIDCommitListToDelete, false)
 			}); err != nil {
 				return err
 			}
@@ -709,7 +721,7 @@ func (m *cleanupManager) cleanupImageMetadata(ctx context.Context, imageName str
 		}
 
 		if err := logProcessDoError(func() error {
-			return m.deleteImageMetadata(ctx, imageName, nonexistentStageIDCommitList)
+			return m.deleteImageMetadata(ctx, imageName, nonexistentStageIDCommitList, false)
 		}); err != nil {
 			return err
 		}
@@ -725,7 +737,7 @@ func (m *cleanupManager) cleanupImageMetadata(ctx context.Context, imageName str
 		}
 
 		if err := logProcessDoError(func() error {
-			return m.deleteImageMetadata(ctx, imageName, stageIDNonexistentCommitList)
+			return m.deleteImageMetadata(ctx, imageName, stageIDNonexistentCommitList, false)
 		}); err != nil {
 			return err
 		}
@@ -757,8 +769,8 @@ func (m *cleanupManager) cleanupNonexistentImageMetadata(ctx context.Context) er
 	}
 
 	return logboek.Context(ctx).Default().LogProcess("Deleting metadata for nonexistent images (%d)", counter).DoError(func() error {
-		for imageName, stageIDCommitList := range stageIDCommitListByNonexistentImage {
-			if err := m.deleteImageMetadata(ctx, imageName, stageIDCommitList); err != nil {
+		for imageMetadataID, stageIDCommitList := range stageIDCommitListByNonexistentImage {
+			if err := m.deleteImageMetadata(ctx, imageMetadataID, stageIDCommitList, true); err != nil {
 				return err
 			}
 		}
@@ -767,15 +779,15 @@ func (m *cleanupManager) cleanupNonexistentImageMetadata(ctx context.Context) er
 	})
 }
 
-func (m *cleanupManager) deleteImageMetadata(ctx context.Context, imageName string, stageIDCommitList map[string][]string) error {
-	if err := deleteImageMetadata(ctx, m.ProjectName, m.StorageManager, imageName, stageIDCommitList, m.DryRun); err != nil {
+func (m *cleanupManager) deleteImageMetadata(ctx context.Context, imageName string, stageIDCommitList map[string][]string, isMetadataID bool) error {
+	if err := deleteImageMetadata(ctx, m.ProjectName, m.StorageManager, imageName, stageIDCommitList, m.DryRun, isMetadataID, m.report); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func purgeImageMetadata(ctx context.Context, projectName string, storageManager manager.StorageManagerInterface, dryRun bool) error {
+func purgeImageMetadata(ctx context.Context, projectName string, storageManager manager.StorageManagerInterface, dryRun bool, report *cleanup_report.Report) error {
 	var imageMetadataByImageName map[string]map[string][]string
 	if err := logboek.Context(ctx).Default().LogProcess("Fetching images metadata").DoError(func() error {
 		var err error
@@ -794,7 +806,7 @@ func purgeImageMetadata(ctx context.Context, projectName string, storageManager 
 
 	return logboek.Context(ctx).Default().LogProcess("Deleting images metadata (%d)", number).DoError(func() error {
 		for imageNameID, stageIDCommitList := range imageMetadataByImageName {
-			if err := deleteImageMetadata(ctx, projectName, storageManager, imageNameID, stageIDCommitList, dryRun); err != nil {
+			if err := deleteImageMetadata(ctx, projectName, storageManager, imageNameID, stageIDCommitList, dryRun, true, report); err != nil {
 				return err
 			}
 		}
@@ -803,11 +815,12 @@ func purgeImageMetadata(ctx context.Context, projectName string, storageManager 
 	})
 }
 
-func deleteManagedImages(ctx context.Context, projectName string, storageManager manager.StorageManagerInterface, managedImages []string, dryRun bool) error {
+func deleteManagedImages(ctx context.Context, projectName string, storageManager manager.StorageManagerInterface, managedImages []string, dryRun bool, report *cleanup_report.Report) error {
 	if dryRun {
 		for _, managedImage := range managedImages {
 			logboek.Context(ctx).Default().LogFDetails("  name: %s\n", logging.ImageLogName(managedImage))
 			logboek.Context(ctx).LogOptionalLn()
+			report.AddDeleted(ctx, cleanup_report.Item{Type: cleanup_report.ItemTypeManagedImage, ImageName: managedImage})
 		}
 		return nil
 	}
@@ -824,12 +837,13 @@ func deleteManagedImages(ctx context.Context, projectName string, storageManager
 		}
 
 		logboek.Context(ctx).Default().LogFDetails("  name: %s\n", logging.ImageLogName(managedImage))
+		report.AddDeleted(ctx, cleanup_report.Item{Type: cleanup_report.ItemTypeManagedImage, ImageName: managedImage})
 
 		return nil
 	})
 }
 
-func purgeManagedImages(ctx context.Context, projectName string, storageManager manager.StorageManagerInterface, dryRun bool) error {
+func purgeManagedImages(ctx context.Context, projectName string, storageManager manager.StorageManagerInterface, dryRun bool, report *cleanup_report.Report) error {
 	var managedImages []string
 	if err := logboek.Context(ctx).Default().LogProcess("Fetching managed images").DoError(func() error {
 		var err error
@@ -840,7 +854,7 @@ func purgeManagedImages(ctx context.Context, projectName string, storageManager 
 	}
 
 	return logboek.Context(ctx).Default().LogProcess("Deleting managed images (%d)", len(managedImages)).DoError(func() error {
-		if err := deleteManagedImages(ctx, projectName, storageManager, managedImages, dryRun); err != nil {
+		if err := deleteManagedImages(ctx, projectName, storageManager, managedImages, dryRun, report); err != nil {
 			return err
 		}
 
@@ -848,7 +862,12 @@ func purgeManagedImages(ctx context.Context, projectName string, storageManager 
 	})
 }
 
-func deleteImageMetadata(ctx context.Context, projectName string, storageManager manager.StorageManagerInterface, imageNameOrID string, stageIDCommitList map[string][]string, dryRun bool) error {
+// isMetadataID reports that imageNameOrID is an internal metadata ID rather than an image name: werf cannot resolve
+// a name for metadata whose image is absent from werf.yaml, so the report carries the ID instead.
+func deleteImageMetadata(ctx context.Context, projectName string, storageManager manager.StorageManagerInterface, imageNameOrID string, stageIDCommitList map[string][]string, dryRun, isMetadataID bool, report *cleanup_report.Report) error {
+	itemImageName := lo.Ternary(isMetadataID, "", imageNameOrID)
+	itemID := lo.Ternary(isMetadataID, imageNameOrID, "")
+
 	if dryRun {
 		for stageID, commitList := range stageIDCommitList {
 			if len(commitList) == 0 {
@@ -859,6 +878,10 @@ func deleteImageMetadata(ctx context.Context, projectName string, storageManager
 			logboek.Context(ctx).Info().LogFDetails("  stageID: %s\n", stageID)
 			logboek.Context(ctx).Info().LogFDetails("  commits: %d\n", len(commitList))
 			logboek.Context(ctx).Info().LogOptionalLn()
+
+			for _, commit := range commitList {
+				report.AddDeleted(ctx, cleanup_report.Item{Type: cleanup_report.ItemTypeImageMetadata, ImageName: itemImageName, StageID: stageID, Commit: commit, ID: itemID})
+			}
 		}
 		return nil
 	}
@@ -877,13 +900,14 @@ func deleteImageMetadata(ctx context.Context, projectName string, storageManager
 		logboek.Context(ctx).Info().LogFDetails("  imageName: %s\n", imageNameOrID)
 		logboek.Context(ctx).Info().LogFDetails("  stageID: %s\n", stageID)
 		logboek.Context(ctx).Info().LogFDetails("  commit: %s\n", commit)
+		report.AddDeleted(ctx, cleanup_report.Item{Type: cleanup_report.ItemTypeImageMetadata, ImageName: itemImageName, StageID: stageID, Commit: commit, ID: itemID})
 
 		return nil
 	})
 }
 
 func (m *cleanupManager) deleteRejectedStagesWithLinkedTags(ctx context.Context) error {
-	deletedStageIDs, err := deleteRejectedStagesWithLinkedTags(ctx, m.StorageManager, m.stageManager.GetCustomTagsMetadata(), m.DryRun)
+	deletedStageIDs, err := deleteRejectedStagesWithLinkedTags(ctx, m.StorageManager, m.stageManager.GetCustomTagsMetadata(), m.DryRun, m.report)
 	if err != nil {
 		return err
 	}
@@ -906,7 +930,7 @@ func (m *cleanupManager) deleteRejectedStagesWithLinkedTags(ctx context.Context)
 	return nil
 }
 
-func deleteRejectedStagesWithLinkedTags(ctx context.Context, storageManager manager.StorageManagerInterface, customTagsByStageID map[string][]string, dryRun bool) ([]string, error) {
+func deleteRejectedStagesWithLinkedTags(ctx context.Context, storageManager manager.StorageManagerInterface, customTagsByStageID map[string][]string, dryRun bool, report *cleanup_report.Report) ([]string, error) {
 	stagesStorage := storageManager.GetStagesStorage()
 	rejectedStageIDs, err := stagesStorage.GetRejectedStageIDs(ctx, storage.WithCache())
 	if err != nil {
@@ -922,10 +946,13 @@ func deleteRejectedStagesWithLinkedTags(ctx context.Context, storageManager mana
 		for _, stageID := range rejectedStageIDs {
 			stageIDStr := stageID.String()
 			logboek.Context(ctx).Default().LogFWithCustomStyle(deletedStyle, "  tag: %s\n", stageIDStr)
+			report.AddDeleted(ctx, cleanup_report.Item{Type: cleanup_report.ItemTypeRejectedStage, Tag: stageIDStr})
 			for _, customTag := range customTagsByStageID[stageIDStr] {
 				logboek.Context(ctx).Default().LogFWithCustomStyle(deletedStyle, "  tag: %s\n", customTag)
+				report.AddDeleted(ctx, cleanup_report.Item{Type: cleanup_report.ItemTypeCustomTag, Tag: customTag})
 			}
 			logboek.Context(ctx).Default().LogFWithCustomStyle(deletedStyle, "  tag: %s-rejected\n", stageIDStr)
+			report.AddDeleted(ctx, cleanup_report.Item{Type: cleanup_report.ItemTypeRejectedStageMarker, Tag: stageIDStr + "-rejected"})
 			deleted = append(deleted, stageIDStr)
 		}
 		logboek.Context(ctx).LogOptionalLn()
@@ -950,6 +977,7 @@ func deleteRejectedStagesWithLinkedTags(ctx context.Context, storageManager mana
 			return nil
 		}
 		logboek.Context(ctx).Default().LogFWithCustomStyle(deletedStyle, "  tag: %s\n", stageIDStr)
+		report.AddDeleted(ctx, cleanup_report.Item{Type: cleanup_report.ItemTypeRejectedStage, Tag: stageIDStr})
 
 		// 2. Linked custom tags — sequential (avoids parallel-of-parallel registry pressure).
 		// Fail-fast: leave marker untouched on any failure so the next cleanup retries.
@@ -962,6 +990,7 @@ func deleteRejectedStagesWithLinkedTags(ctx context.Context, storageManager mana
 				return nil
 			}
 			logboek.Context(ctx).Default().LogFWithCustomStyle(deletedStyle, "  tag: %s\n", customTag)
+			report.AddDeleted(ctx, cleanup_report.Item{Type: cleanup_report.ItemTypeCustomTag, Tag: customTag})
 		}
 
 		// 3. Rejected marker — only after stage image and all linked custom tags are gone.
@@ -973,6 +1002,7 @@ func deleteRejectedStagesWithLinkedTags(ctx context.Context, storageManager mana
 			return nil
 		}
 		logboek.Context(ctx).Default().LogFWithCustomStyle(deletedStyle, "  tag: %s-rejected\n", stageIDStr)
+		report.AddDeleted(ctx, cleanup_report.Item{Type: cleanup_report.ItemTypeRejectedStageMarker, Tag: stageIDStr + "-rejected"})
 
 		mu.Lock()
 		deleted = append(deleted, stageIDStr)
@@ -1009,6 +1039,7 @@ func (m *cleanupManager) cleanupUnusedStages(ctx context.Context) error {
 				logboek.Context(ctx).Default().LogProcess("%s (%d)", reason, stageDescSetToKeep.Cardinality()).Do(func() {
 					for stageDescToKeep := range stageDescSetToKeep.Iter() {
 						logboek.Context(ctx).Default().LogFWithCustomStyle(keptStyle, "%s\n", stageDescToKeep.Info.Tag)
+						m.report.AddKept(ctx, cleanup_report.Item{Type: cleanup_report.ItemTypeStage, Tag: stageDescToKeep.Info.Tag, Reason: reason.String()})
 					}
 				})
 			}
@@ -1080,6 +1111,12 @@ FilterOutFinalStages:
 		m.stageManager.MarkFinalStageDescAsProtected(finalStageDesc, stage_manager.ProtectionReasonNotFoundInRepo, false)
 	}
 
+	for reason, finalStageDescSetToKeep := range m.stageManager.GetFinalProtectedStageDescSetByReason() {
+		for finalStageDescToKeep := range finalStageDescSetToKeep.Iter() {
+			m.report.AddKept(ctx, cleanup_report.Item{Type: cleanup_report.ItemTypeFinalStage, Tag: finalStageDescToKeep.Info.Tag, Reason: reason.String()})
+		}
+	}
+
 	finalStageDescSetToDelete := m.stageManager.GetFinalStageDescSet().Difference(m.stageManager.GetFinalProtectedStageDescSet())
 	if !finalStageDescSetToDelete.IsEmpty() {
 		if err := logboek.Context(ctx).Default().LogProcess("Deleting final stages tags (%d/%d)", finalStageDescSetToDelete.Cardinality(), m.stageManager.GetFinalStageDescSet().Cardinality()).DoError(func() error {
@@ -1138,14 +1175,15 @@ func (m *cleanupManager) initImportsMetadata(ctx context.Context) error {
 }
 
 func (m *cleanupManager) deleteImportsMetadata(ctx context.Context, importMetadataIDs []string) error {
-	return deleteImportsMetadata(ctx, m.ProjectName, m.StorageManager, importMetadataIDs, m.DryRun)
+	return deleteImportsMetadata(ctx, m.ProjectName, m.StorageManager, importMetadataIDs, m.DryRun, m.report)
 }
 
-func deleteImportsMetadata(ctx context.Context, projectName string, storageManager manager.StorageManagerInterface, importMetadataIDs []string, dryRun bool) error {
+func deleteImportsMetadata(ctx context.Context, projectName string, storageManager manager.StorageManagerInterface, importMetadataIDs []string, dryRun bool, report *cleanup_report.Report) error {
 	if dryRun {
 		for _, importMetadataID := range importMetadataIDs {
 			logboek.Context(ctx).Info().LogFDetails("  importMetadataID: %s\n", importMetadataID)
 			logboek.Context(ctx).Info().LogOptionalLn()
+			report.AddDeleted(ctx, cleanup_report.Item{Type: cleanup_report.ItemTypeImportMetadata, ID: importMetadataID})
 		}
 		return nil
 	}
@@ -1162,6 +1200,7 @@ func deleteImportsMetadata(ctx context.Context, projectName string, storageManag
 		}
 
 		logboek.Context(ctx).Info().LogFDetails("  importMetadataID: %s\n", importMetadataID)
+		report.AddDeleted(ctx, cleanup_report.Item{Type: cleanup_report.ItemTypeImportMetadata, ID: importMetadataID})
 
 		return nil
 	})
@@ -1288,6 +1327,7 @@ func (m *cleanupManager) deleteUnusedCustomTags(ctx context.Context) error {
 			for _, customTag := range customTagListToKeep {
 				logboek.Context(ctx).Default().LogFWithCustomStyle(keptStyle, "  tag: %s\n", customTag)
 				logboek.Context(ctx).LogOptionalLn()
+				m.report.AddKept(ctx, cleanup_report.Item{Type: cleanup_report.ItemTypeCustomTag, Tag: customTag})
 			}
 		})
 	}
@@ -1295,7 +1335,7 @@ func (m *cleanupManager) deleteUnusedCustomTags(ctx context.Context) error {
 	if len(customTagListToDelete) != 0 {
 		header := fmt.Sprintf("Deleting unused custom tags (%d/%d)", len(customTagListToDelete), numberOfCustomTags)
 		if err := logboek.Context(ctx).LogProcess(header).DoError(func() error {
-			if err := deleteCustomTags(ctx, m.StorageManager, customTagListToDelete, m.DryRun); err != nil {
+			if err := deleteCustomTags(ctx, m.StorageManager, customTagListToDelete, m.DryRun, m.report); err != nil {
 				return err
 			}
 

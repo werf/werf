@@ -241,31 +241,71 @@ HUB_TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username":
 >
 > Если эти условия не выполняются (например, из-за ограничений межпроектного доступа или недостаточной роли), используйте отдельный Project/Personal Access Token со scope `api`.
 
-## Сохранение результата работы
+## Отчёт об очистке
 
-Во время выполнения команда `werf cleanup` подсвечивает теги цветом в зависимости от их статуса:
+Опция `--save-cleanup-report` записывает машиночитаемый JSON-отчёт о том, какие объекты очистка сохранила, а какие удалила. По умолчанию отчёт пишется в `.werf-cleanup-report.json`, путь настраивается опцией `--cleanup-report-path` (расширение должно быть `.json`).
 
-+ <span style="color: green;">Зеленый цвет</span> — тег сохраняется.
-+ <span style="color: red;">Красный цвет</span> — тег будет удалён.
+Отчёт — обычный JSON, поэтому обрабатывать его можно любым инструментом, см. [Генерация keep-list](#генерация-keep-list-для-сохраняемых--удаляемых-тегов) ниже:
 
-Такое цветовое выделение может быть полезным для последующей обработки — например, чтобы проанализировать, какие теги будут сохранены, или сформировать keep-list в изолированных окружениях.
+```bash
+werf cleanup --repo registry.mydomain.com/app --final-repo registry.mydomain.com/app-final --dry-run --save-cleanup-report
+```
 
-> Опция `--dry-run` позволяет смоделировать процесс очистки без фактического удаления. Это удобно для предварительного просмотра того, какие теги будут удалены, а какие останутся.
+Отчёт приведённой выше команды выглядит следующим образом:
+
+```json
+{
+  "command": "cleanup",
+  "dryRun": true,
+  "repo": "registry.mydomain.com/app",
+  "finalRepo": "registry.mydomain.com/app-final",
+  "kept": [
+    { "type": "stage", "tag": "1e09fb543b4ef442ce5ed36bfeee6b27866bf1e68541db5995962b24-1749456960043", "reason": "used in Kubernetes" },
+    { "type": "stage", "tag": "8c4a1f9b2d7e5a3c6b0d9e8f7a2c1b4d3e6f5a8c9b0d1e2f3a4b5c6d-1749390012345", "reason": "git policy" },
+    { "type": "customTag", "tag": "my-custom-tag" }
+  ],
+  "deleted": [
+    { "type": "stage", "tag": "ff00112233445566778899aabbccddeeff00112233445566778899aa-1748001122334" },
+    { "type": "customTag", "tag": "review-1234" },
+    { "type": "imageMetadata", "imageName": "backend", "stageID": "ff00112233445566778899aabbccddeeff00112233445566778899aa-1748001122334", "commit": "a3f1c92e4b7d8056f1a2b3c4d5e6f7a8b9c0d1e2" },
+    { "type": "imageMetadata", "id": "8c4a1f9b2d7e5a3c", "stageID": "ff00112233445566778899aabbccddeeff00112233445566778899aa-1748001122334", "commit": "a3f1c92e4b7d8056f1a2b3c4d5e6f7a8b9c0d1e2" },
+    { "type": "managedImage", "imageName": "frontend" },
+    { "type": "importMetadata", "id": "8c4a1f9b2d7e5a3c" },
+    { "type": "finalStage", "tag": "c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4-1748500000000" }
+  ]
+}
+```
+
+При `--dry-run` отчёт содержит ровно то, что удалил бы реальный запуск, ничего при этом не удаляя.
+
+Набор значений `type` **расширяемый**: сейчас это `stage`, `finalStage`, `customTag`, `rejectedStage`, `rejectedStageMarker`, `imageMetadata`, `managedImage` и `importMetadata`, но могут появиться новые. Выбирайте известные вам типы (`select(.type == "stage")`), а не считайте набор закрытым.
+
+В `deleted` попадают только реально удалённые объекты: неудавшееся удаление остаётся предупреждением в логе — вместе с работой, отменённой из-за него.
+
+Элемент `imageMetadata` указывает образ в поле `imageName`. Если образа больше нет в `werf.yaml`, имя восстановить невозможно, и вместо него приходит внутренний `id`; `werf purge` не обращается к `werf.yaml`, поэтому всегда использует `id`.
+
+Адрес в элементах не дублируется: `finalStage` удалён из `finalRepo`, все остальные типы — из `repo`.
+
+Порядок `kept` и `deleted` не определён — удаления выполняются параллельно.
+
+Отчёт записывается, даже если очистка упала на середине, поэтому всегда описывает фактически произошедшие удаления; команда при этом завершается с ненулевым кодом. Частично записанный отчёт читателю не виден. Если путь недоступен для записи, команда завершится с ошибкой до первого удаления.
+
+Те же опции поддерживаются командой `werf purge`. Она удаляет всё без исключений, поэтому в её отчёте массив `kept` всегда пуст.
 
 ### Генерация keep-list для сохраняемых / удаляемых тегов
 
-Можно извлечь теги из вывода команды `werf cleanup` следующим образом:
+Можно извлечь теги из отчёта об очистке следующим образом:
 
-- список сохраняемых тегов (зелёный цвет):
+- список сохраняемых тегов:
 
   ```bash
-  werf cleanup --repo registry.mydomain.com/app --dry-run | grep -a -o -P '\x1b\[32m\K[^\x1b]+' > keep-list.txt
+  jq -r '.kept[] | select(.type == "stage") | .tag' .werf-cleanup-report.json > keep-list.txt
   ```
 
-- список удаляемых тегов (красный цвет):
+- список удаляемых тегов:
 
   ```bash
-  werf cleanup --repo registry.mydomain.com/app --dry-run | grep -a -o -P '\x1b\[31m\K[^\x1b]+' > keep-list.txt
+  jq -r '.deleted[] | select(.type == "stage") | .tag' .werf-cleanup-report.json
   ```
 
 Затем можно использовать этот список с опцией `--keep-list`, чтобы явно указать, какие теги следует сохранить при очистке:
