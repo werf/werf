@@ -315,8 +315,9 @@ werf cleanup --repo registry.mydomain.com/app --keep-list=keep-list.txt
 ```
 
 This approach is especially useful in situations where:
-- 
+
 - It is not possible to clean a shared container registry while accounting for images used across all environments.
+
 - It is not feasible to clean all container registries (e.g., a shared registry and separate ones per environment), taking into account the specifics and constraints of each environment.
 
 ## Container registry’s garbage collector
