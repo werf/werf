@@ -1,0 +1,4 @@
+giterminismConfigVersion: 1
+config:
+  dockerfile:
+    allowContextAddFiles: [app/generated.txt]

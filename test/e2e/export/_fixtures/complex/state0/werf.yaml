@@ -5,9 +5,9 @@ image: backend
 from: registry.werf.io/base/ubuntu:22.04
 ---
 image: frombackend
-fromImage: backend
+from: backend
 ---
 image: frombackend2
-fromImage: frombackend
+from: frombackend
 shell:
   install: date

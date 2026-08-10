@@ -1,4 +1,4 @@
-{{ $_ := set . "BaseImage" "alpine" }}
+{{ $_ := set . "BaseImage" "alpine:3.21" }}
 
 project: app
 configVersion: 1

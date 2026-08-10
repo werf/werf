@@ -3,6 +3,7 @@ package storage
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 
 	"github.com/google/go-containerregistry/pkg/name"
@@ -41,30 +42,95 @@ func (b *localMutationBackendStub) Tag(ctx context.Context, ref, newRef string, 
 	return nil
 }
 
-func (b *localMutationBackendStub) TagImageByName(ctx context.Context, img container_backend.LegacyImageInterface) error {
-	if img.BuiltID() != "" {
-		return b.Tag(ctx, img.BuiltID(), img.Name(), container_backend.TagOpts{})
-	}
-	return nil
-}
-
 var _ = Describe("LocalStagesStorage", func() {
-	It("retags mutated local image by its new built id", func(ctx SpecContext) {
+	It("tags the mutated local image under the destination reference", func(ctx SpecContext) {
 		logCtx := logboek.NewContext(ctx, logboek.NewLogger(io.Discard, io.Discard))
 
 		backend := &localMutationBackendStub{}
 		storage := NewLocalStagesStorage(backend)
 		stageImage := container_backend.NewLegacyStageImage(nil, "tmp-scratch-compare:stage", backend, "")
-		stageImage.SetBuiltID("sha256:before")
 
-		err := storage.MutateAndPushImage(logCtx, "tmp-scratch-compare:stage", "tmp-scratch-compare:stage", image.SpecConfig{Labels: map[string]string{"werf-stage-content-digest": "digest"}}, stageImage)
+		err := storage.MutateAndPushImage(logCtx, "tmp-scratch-compare:stage", "tmp-scratch-compare:content-tag", image.SpecConfig{Labels: map[string]string{"werf-stage-content-digest": "digest"}}, stageImage)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(backend.savedImageName).To(Equal("tmp-scratch-compare:stage"))
 		Expect(backend.loaded).To(BeTrue())
-		Expect(stageImage.BuiltID()).To(Equal("sha256:mutated"))
-		Expect(backend.tagCalls).To(Equal([][2]string{{"sha256:mutated", "tmp-scratch-compare:stage"}}))
+		Expect(backend.tagCalls).To(Equal([][2]string{{"sha256:mutated", "tmp-scratch-compare:content-tag"}}))
+	})
+
+	It("uses the native mutator when the backend supports it, bypassing save/load", func(ctx SpecContext) {
+		logCtx := logboek.NewContext(ctx, logboek.NewLogger(io.Discard, io.Discard))
+
+		backend := &nativeMutatorBackendStub{localMutationBackendStub: localMutationBackendStub{}}
+		storage := NewLocalStagesStorage(backend)
+		stageImage := container_backend.NewLegacyStageImage(nil, "tmp-scratch-compare:stage", backend, "linux/amd64")
+
+		newConfig := image.SpecConfig{Labels: map[string]string{"werf-stage-content-digest": "digest"}}
+		err := storage.MutateAndPushImage(logCtx, "tmp-scratch-compare:stage", "tmp-scratch-compare:content-tag", newConfig, stageImage)
+		Expect(err).NotTo(HaveOccurred())
+
+		Expect(backend.nativeCalls).To(Equal(1))
+		Expect(backend.nativeSrc).To(Equal("tmp-scratch-compare:stage"))
+		Expect(backend.nativeDest).To(Equal("tmp-scratch-compare:content-tag"))
+		Expect(backend.nativeConfig).To(Equal(newConfig))
+		Expect(backend.nativeTargetPlatform).To(Equal("linux/amd64"))
+
+		Expect(backend.savedImageName).To(BeEmpty())
+		Expect(backend.loaded).To(BeFalse())
+		Expect(backend.tagCalls).To(BeEmpty())
+	})
+
+	It("falls back to save/load when the native mutator declines the config", func(ctx SpecContext) {
+		logCtx := logboek.NewContext(ctx, logboek.NewLogger(io.Discard, io.Discard))
+
+		backend := &nativeMutatorBackendStub{nativeErr: container_backend.ErrNativeMutationUnsupported}
+		storage := NewLocalStagesStorage(backend)
+		stageImage := container_backend.NewLegacyStageImage(nil, "tmp-scratch-compare:stage", backend, "")
+
+		err := storage.MutateAndPushImage(logCtx, "tmp-scratch-compare:stage", "tmp-scratch-compare:content-tag", image.SpecConfig{}, stageImage)
+		Expect(err).NotTo(HaveOccurred())
+
+		Expect(backend.nativeCalls).To(Equal(1))
+		Expect(backend.savedImageName).To(Equal("tmp-scratch-compare:stage"))
+		Expect(backend.loaded).To(BeTrue())
+		Expect(backend.tagCalls).To(Equal([][2]string{{"sha256:mutated", "tmp-scratch-compare:content-tag"}}))
+	})
+
+	It("propagates a native mutator error other than unsupported", func(ctx SpecContext) {
+		logCtx := logboek.NewContext(ctx, logboek.NewLogger(io.Discard, io.Discard))
+
+		backend := &nativeMutatorBackendStub{nativeErr: fmt.Errorf("boom")}
+		storage := NewLocalStagesStorage(backend)
+		stageImage := container_backend.NewLegacyStageImage(nil, "tmp-scratch-compare:stage", backend, "")
+
+		err := storage.MutateAndPushImage(logCtx, "tmp-scratch-compare:stage", "tmp-scratch-compare:content-tag", image.SpecConfig{}, stageImage)
+		Expect(err).To(MatchError(ContainSubstring("boom")))
+
+		Expect(backend.nativeCalls).To(Equal(1))
+		Expect(backend.savedImageName).To(BeEmpty())
+		Expect(backend.loaded).To(BeFalse())
+		Expect(backend.tagCalls).To(BeEmpty())
 	})
 })
+
+type nativeMutatorBackendStub struct {
+	localMutationBackendStub
+
+	nativeCalls          int
+	nativeSrc            string
+	nativeDest           string
+	nativeConfig         image.SpecConfig
+	nativeTargetPlatform string
+	nativeErr            error
+}
+
+func (b *nativeMutatorBackendStub) MutateAndPushImageNative(_ context.Context, src, dest string, newConfig image.SpecConfig, targetPlatform string) error {
+	b.nativeCalls++
+	b.nativeSrc = src
+	b.nativeDest = dest
+	b.nativeConfig = newConfig
+	b.nativeTargetPlatform = targetPlatform
+	return b.nativeErr
+}
 
 func newTinyDockerSaveTar() []byte {
 	ref, err := name.ParseReference("example.com/test:latest")

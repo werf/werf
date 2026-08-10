@@ -40,8 +40,8 @@ werf kubectl config view [flags] [options]
       --minify=false
             Remove all information not used by current-context from the output
   -o, --output="yaml"
-            Output format. One of: (json, yaml, name, go-template, go-template-file, template,      
-            templatefile, jsonpath, jsonpath-as-json, jsonpath-file).
+            Output format. One of: (json, yaml, kyaml, name, go-template, go-template-file,         
+            template, templatefile, jsonpath, jsonpath-as-json, jsonpath-file).
       --raw=false
             Display raw byte data and sensitive data
       --show-managed-fields=false
@@ -63,6 +63,9 @@ werf kubectl config view [flags] [options]
             groups.
       --as-uid=""
             UID to impersonate for the operation.
+      --as-user-extra=[]
+            User extras to impersonate for the operation, this flag can be repeated to specify      
+            multiple values for the same key.
       --cache-dir="~/.kube/cache"
             Default cache directory
       --certificate-authority=""
@@ -87,6 +90,9 @@ werf kubectl config view [flags] [options]
             $WERF_KUBECONFIG_BASE64 or $KUBECONFIG_BASE64)
       --kubeconfig=""
             use a particular kubeconfig file
+      --kuberc=""
+            Path to the kuberc file to use for preferences. This can be disabled by exporting       
+            KUBECTL_KUBERC=false feature gate or turning off the feature KUBERC=off.
       --log-flush-frequency=5s
             Maximum number of seconds between log flushes
       --match-server-version=false
@@ -96,7 +102,8 @@ werf kubectl config view [flags] [options]
       --password=""
             Password for basic authentication to the API server
       --profile="none"
-            Name of profile to capture. One of (none|cpu|heap|goroutine|threadcreate|block|mutex)
+            Name of profile to capture. One of                                                      
+            (none|cpu|heap|goroutine|threadcreate|block|mutex|trace)
       --profile-output="profile.pprof"
             Name of the file to write the profile to
       --request-timeout="0"

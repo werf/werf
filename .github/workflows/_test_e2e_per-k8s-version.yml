@@ -15,6 +15,9 @@ on:
       coverage:
         default: false
         type: string
+      raceDetectorEnabled:
+        default: false
+        type: string
       forceSkip:
         default: false
         type: string
@@ -68,6 +71,7 @@ jobs:
         uses: ./.github/actions/set-up-prebuilt-werf-test-binary
         with:
           coverage: ${{ inputs.coverage }}
+          raceDetectorEnabled: ${{ inputs.raceDetectorEnabled }}
 
       - name: Set up git config
         uses: ./.github/actions/set-up-git-config

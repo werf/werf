@@ -1,7 +1,6 @@
 package image
 
 import (
-	"context"
 	"time"
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
@@ -37,15 +36,12 @@ type HealthConfig struct {
 	Retries     int           `json:",omitempty"`
 }
 
-type Storage interface {
-	MutateAndPushImage(ctx context.Context, src, dest string, newConfig SpecConfig) error
-}
-
-func MutateAndPushImage(ctx context.Context, storage Storage, sourceReference, destinationReference string, newConfig SpecConfig) error {
-	return storage.MutateAndPushImage(ctx, sourceReference, destinationReference, newConfig)
-}
-
 func UpdateConfigFile(updates SpecConfig, target *v1.ConfigFile) {
+	if updates.Created != "" {
+		if created, err := time.Parse(time.RFC3339, updates.Created); err == nil {
+			target.Created = v1.Time{Time: created}
+		}
+	}
 	if updates.Author != "" {
 		target.Author = updates.Author
 	}

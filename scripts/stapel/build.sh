@@ -1,16 +1,30 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
-set -e
+REGISTRY="${STAPEL_REGISTRY:-registry-write.werf.io/werf}"
+TAG="${STAPEL_TAG:-dev}"
+DOCKERFILE="${STAPEL_DOCKERFILE:-stapel/Dockerfile}"
+IMAGE="${REGISTRY}/stapel:${TAG}"
 
-REGISTRY="registry-write.werf.io/werf"
-TAG="dev"
-DOCKERFILE="stapel/Dockerfile"
+PLATFORMS="${STAPEL_PLATFORMS:-linux/amd64,linux/arm64}"
 
-build() {
-    local image=$1
-    local target=$2
-    docker build -t "${REGISTRY}/${image}:${TAG}" --target "$target" --file "$DOCKERFILE" .
-}
+BUILDER="${STAPEL_BUILDER:-werf-stapel-builder}"
 
-build stapel-base base
-build stapel final
+if ! docker buildx inspect "${BUILDER}" >/dev/null 2>&1; then
+  docker buildx create --name "${BUILDER}" --driver docker-container --use
+else
+  docker buildx use "${BUILDER}"
+fi
+
+docker buildx inspect --bootstrap >/dev/null
+
+docker buildx build \
+  --file "${DOCKERFILE}" \
+  --target final \
+  --platform "${PLATFORMS}" \
+  --tag "${IMAGE}" \
+  --push \
+  .
+
+echo "Published: ${IMAGE}"
+docker buildx imagetools inspect "${IMAGE}" | sed -n '/Platform:/p'

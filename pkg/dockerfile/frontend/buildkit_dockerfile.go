@@ -20,7 +20,7 @@ func ParseDockerfileWithBuildkit(dockerfileID string, dockerfileBytes []byte, we
 		return nil, fmt.Errorf("parsing dockerfile data: %w", err)
 	}
 
-	dockerStages, dockerMetaArgsCommands, err := instructions.Parse(p.AST)
+	dockerStages, dockerMetaArgsCommands, err := instructions.Parse(p.AST, nil)
 	if err != nil {
 		return nil, fmt.Errorf("parsing instructions tree: %w", err)
 	}

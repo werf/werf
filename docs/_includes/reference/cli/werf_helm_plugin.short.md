@@ -1,1 +1,0 @@
-install, list, or uninstall Helm plugins

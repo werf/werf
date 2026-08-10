@@ -58,8 +58,8 @@ werf kubectl replace -f FILENAME [options]
   -k, --kustomize=""
             Process a kustomization directory. This flag can`t be used together with -f or -R.
   -o, --output=""
-            Output format. One of: (json, yaml, name, go-template, go-template-file, template,      
-            templatefile, jsonpath, jsonpath-as-json, jsonpath-file).
+            Output format. One of: (json, yaml, kyaml, name, go-template, go-template-file,         
+            template, templatefile, jsonpath, jsonpath-as-json, jsonpath-file).
       --raw=""
             Raw URI to PUT to the server.  Uses the transport specified by the kubeconfig file.
   -R, --recursive=false
@@ -72,8 +72,7 @@ werf kubectl replace -f FILENAME [options]
       --show-managed-fields=false
             If true, keep the managedFields when printing objects in JSON or YAML format.
       --subresource=""
-            If specified, replace will operate on the subresource of the requested object. Must be  
-            one of [status scale]. This flag is beta and may change in the future.
+            If specified, replace will operate on the subresource of the requested object.
       --template=""
             Template string or path to template file to use when -o=go-template,                    
             -o=go-template-file. The template format is golang templates                            
@@ -82,15 +81,14 @@ werf kubectl replace -f FILENAME [options]
             The length of time to wait before giving up on a delete, zero means determine a timeout 
             from the size of the object
       --validate="strict"
-            Must be one of: strict (or true), warn, ignore (or false).
-            		"true" or "strict" will use a schema to validate the input and fail the request if    
-            invalid. It will perform server side validation if ServerSideFieldValidation is enabled 
-            on the api-server, but will fall back to less reliable client-side validation if not.
-            		"warn" will warn about unknown or duplicate fields without blocking the request if    
-            server-side field validation is enabled on the API server, and behave as "ignore"       
-            otherwise.
-            		"false" or "ignore" will not perform any schema validation, silently dropping any     
-            unknown or duplicate fields.
+            Must be one of: strict (or true), warn, ignore (or false). "true" or "strict" will use  
+            a schema to validate the input and fail the request if invalid. It will perform server  
+            side validation if ServerSideFieldValidation is enabled on the api-server, but will     
+            fall back to less reliable client-side validation if not. "warn" will warn about        
+            unknown or duplicate fields without blocking the request if server-side field           
+            validation is enabled on the API server, and behave as "ignore" otherwise. "false" or   
+            "ignore" will not perform any schema validation, silently dropping any unknown or       
+            duplicate fields.
       --wait=false
             If true, wait for resources to be gone before returning. This waits for finalizers.
 ```
@@ -106,6 +104,9 @@ werf kubectl replace -f FILENAME [options]
             groups.
       --as-uid=""
             UID to impersonate for the operation.
+      --as-user-extra=[]
+            User extras to impersonate for the operation, this flag can be repeated to specify      
+            multiple values for the same key.
       --cache-dir="~/.kube/cache"
             Default cache directory
       --certificate-authority=""
@@ -131,6 +132,9 @@ werf kubectl replace -f FILENAME [options]
       --kubeconfig=""
             Path to the kubeconfig file to use for CLI requests (default $WERF_KUBE_CONFIG, or      
             $WERF_KUBECONFIG, or $KUBECONFIG). Ignored if kubeconfig passed as base64.
+      --kuberc=""
+            Path to the kuberc file to use for preferences. This can be disabled by exporting       
+            KUBECTL_KUBERC=false feature gate or turning off the feature KUBERC=off.
       --log-flush-frequency=5s
             Maximum number of seconds between log flushes
       --match-server-version=false
@@ -140,7 +144,8 @@ werf kubectl replace -f FILENAME [options]
       --password=""
             Password for basic authentication to the API server
       --profile="none"
-            Name of profile to capture. One of (none|cpu|heap|goroutine|threadcreate|block|mutex)
+            Name of profile to capture. One of                                                      
+            (none|cpu|heap|goroutine|threadcreate|block|mutex|trace)
       --profile-output="profile.pprof"
             Name of the file to write the profile to
       --request-timeout="0"

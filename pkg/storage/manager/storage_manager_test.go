@@ -3,11 +3,13 @@ package manager
 import (
 	"context"
 	"errors"
+	"sync"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/types"
 
+	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/logging"
 )
 
@@ -71,5 +73,32 @@ var _ = Describe("RetryOnUnexpectedStagesStorageState", func() {
 
 		Expect(err).To(MatchError(context.Canceled))
 		Expect(callCount).To(Equal(1))
+	})
+
+	It("should read stage count while adding stages", func() {
+		stages := NewStagesList(nil)
+		start := make(chan struct{})
+		var wg sync.WaitGroup
+		wg.Add(2)
+
+		go func() {
+			defer wg.Done()
+			<-start
+			for i := 0; i < 1_000; i++ {
+				stages.AddStageID(*image.NewStageID("digest", int64(i)))
+			}
+		}()
+		go func() {
+			defer wg.Done()
+			<-start
+			for i := 0; i < 1_000; i++ {
+				stages.Len()
+			}
+		}()
+
+		close(start)
+		wg.Wait()
+
+		Expect(stages.Len()).To(Equal(1_000))
 	})
 })

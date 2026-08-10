@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/docker/docker/api/types"
-	"github.com/docker/go-connections/nat"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
@@ -51,7 +50,7 @@ var _ = DescribeTable("docker instructions", itBody,
 	Entry("expose", entry{
 		werfYaml: "werf_expose.yaml",
 		inspectCheck: func(inspect *types.ImageInspect) {
-			Expect(inspect.Config.ExposedPorts).Should(HaveKey(nat.Port("80/udp")))
+			Expect(inspect.Config.ExposedPorts).Should(HaveKey("80/udp"))
 		},
 	}),
 	Entry("env", entry{

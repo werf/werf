@@ -11,12 +11,12 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/werf/nelm/pkg/export/helm/werf/helmopts"
+	nelmcommon "github.com/werf/nelm/pkg/common"
 )
 
 type BundleArchiveWriter interface {
 	Open() error
-	WriteChartArchive(data []byte, opts helmopts.HelmOptions) error
+	WriteChartArchive(data []byte, opts nelmcommon.HelmOptions) error
 	WriteImageArchive(imageTag string, data []byte) error
 	Save() error
 }
@@ -96,7 +96,7 @@ func (writer *BundleArchiveFileWriter) Save() error {
 	return nil
 }
 
-func (writer *BundleArchiveFileWriter) WriteChartArchive(data []byte, opts helmopts.HelmOptions) error {
+func (writer *BundleArchiveFileWriter) WriteChartArchive(data []byte, opts nelmcommon.HelmOptions) error {
 	now := time.Now()
 	header := &tar.Header{
 		Name:       chartArchiveFileName,

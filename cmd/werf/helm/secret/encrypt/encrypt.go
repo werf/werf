@@ -13,7 +13,6 @@ import (
 	"github.com/werf/common-go/pkg/secrets_manager"
 	secret_common "github.com/werf/nelm/pkg/legacy/secret"
 	"github.com/werf/werf/v2/cmd/werf/common"
-	"github.com/werf/werf/v2/cmd/werf/docs/replacers/helm"
 	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
 	"github.com/werf/werf/v2/pkg/werf"
@@ -31,7 +30,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 		Use:                   "encrypt",
 		DisableFlagsInUseLine: true,
 		Short:                 "Encrypt data",
-		Long:                  common.GetLongCommandDescription(helm.GetHelmSecretEncryptDocs().Long),
 		Example: `  # Encrypt data in interactive mode
   $ werf helm secret encrypt
   Enter secret:
@@ -41,7 +39,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
   $ date | werf helm secret encrypt -o .helm/secret/date`,
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
-			common.DocsLongMD: helm.GetHelmSecretEncryptDocs().LongMD,
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()

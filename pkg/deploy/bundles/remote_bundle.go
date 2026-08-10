@@ -10,8 +10,8 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
-	"github.com/werf/nelm/pkg/export/helm/chart"
-	"github.com/werf/nelm/pkg/export/helm/werf/helmopts"
+	nelmcommon "github.com/werf/nelm/pkg/common"
+	chart "github.com/werf/nelm/pkg/helm/pkg/chart/v2"
 	"github.com/werf/werf/v2/pkg/docker_registry"
 	bundles_registry "github.com/werf/werf/v2/pkg/ref"
 )
@@ -32,7 +32,7 @@ func NewRemoteBundle(registryAddress *bundles_registry.RegistryAddress, bundlesR
 	}
 }
 
-func (bundle *RemoteBundle) ReadChart(ctx context.Context, opts helmopts.HelmOptions) (*chart.Chart, error) {
+func (bundle *RemoteBundle) ReadChart(ctx context.Context, opts nelmcommon.HelmOptions) (*chart.Chart, error) {
 	if err := logboek.Context(ctx).LogProcess("Pulling bundle %s", bundle.RegistryAddress.FullName()).DoError(func() error {
 		if err := bundle.BundlesRegistryClient.PullChartToCache(ctx, bundle.RegistryAddress.Reference, opts); err != nil {
 			return fmt.Errorf("unable to pull bundle %s: %w", bundle.RegistryAddress.FullName(), err)
@@ -57,7 +57,7 @@ func (bundle *RemoteBundle) ReadChart(ctx context.Context, opts helmopts.HelmOpt
 	return ch, nil
 }
 
-func (bundle *RemoteBundle) WriteChart(ctx context.Context, ch *chart.Chart, opts helmopts.HelmOptions) error {
+func (bundle *RemoteBundle) WriteChart(ctx context.Context, ch *chart.Chart, opts nelmcommon.HelmOptions) error {
 	if err := logboek.Context(ctx).LogProcess("Saving bundle %s", bundle.RegistryAddress.FullName()).DoError(func() error {
 		if err := bundle.BundlesRegistryClient.SaveChart(ctx, ch, bundle.RegistryAddress.Reference, opts); err != nil {
 			return fmt.Errorf("unable to save bundle %s to the local chart helm cache: %w", bundle.RegistryAddress.FullName(), err)

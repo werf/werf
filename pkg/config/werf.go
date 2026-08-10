@@ -3,7 +3,12 @@ package config
 import (
 	"errors"
 	"fmt"
+	"sort"
 	"strings"
+
+	"github.com/distribution/reference"
+
+	"github.com/werf/werf/v2/pkg/slug"
 )
 
 type WerfConfig struct {
@@ -72,14 +77,23 @@ func (c *WerfConfig) GetImage(imageName string) ImageInterface {
 	return nil
 }
 
+func (c *WerfConfig) validateImagesNames() error {
+	for _, image := range c.Images(false) {
+		if err := slug.ValidateImage(image.GetName()); err != nil {
+			return newDetailedConfigError(err.Error(), nil, image.rawDoc())
+		}
+	}
+
+	return nil
+}
+
 func (c *WerfConfig) validateConflictBetweenImagesNames() error {
 	imageByName := map[string]ImageInterface{}
 	for _, image := range c.Images(false) {
 		name := image.GetName()
-		if name == "" && len(c.Images(true)) > 1 {
-			return newConfigError(fmt.Sprintf("conflict between images names: a nameless image cannot be specified in the config with multiple images!\n\n%s\n", dumpConfigDoc(image.rawDoc())))
+		if name == "scratch" {
+			return newDetailedConfigError("image name \"scratch\" is reserved and cannot be used", nil, image.rawDoc())
 		}
-
 		if d, ok := imageByName[name]; ok {
 			return newConfigError(fmt.Sprintf("conflict between images names!\n\n%s%s\n", dumpConfigDoc(d.rawDoc()), dumpConfigDoc(image.rawDoc())))
 		} else {
@@ -90,11 +104,86 @@ func (c *WerfConfig) validateConflictBetweenImagesNames() error {
 	return nil
 }
 
+// hasExplicitTagOrDigest reports whether ref includes an explicit tag or digest, as opposed to
+// implicitly resolving to `:latest`. Unlike a naive strings.Contains(ref, ":") check, this
+// correctly distinguishes a tag from a registry `host:port` with no tag (e.g.
+// "registry.example.com:5000/base-image").
+func hasExplicitTagOrDigest(ref string) bool {
+	parsed, err := reference.Parse(ref)
+	if err != nil {
+		return false
+	}
+
+	switch parsed.(type) {
+	case reference.Tagged, reference.Digested:
+		return true
+	default:
+		return false
+	}
+}
+
+func (c *WerfConfig) validateExternalImageReferences() error {
+	for _, image := range c.Images(false) {
+		if !image.IsStapel() {
+			continue
+		}
+
+		from := image.GetFrom()
+		if from == "" || from == "scratch" {
+			continue
+		}
+
+		if c.GetImage(from) == nil {
+			if !hasExplicitTagOrDigest(from) {
+				return newDetailedConfigError(
+					fmt.Sprintf("external image reference %q in `from` must include a tag (`:TAG`) or digest (`@sha256:...`)", from),
+					nil, image.rawDoc(),
+				)
+			}
+		}
+
+		if stapelImage, ok := image.(StapelImageInterface); ok {
+			for _, imp := range stapelImage.ImageBaseConfig().Import {
+				if imp.From == "" {
+					continue
+				}
+				if imp.From == "scratch" {
+					return newDetailedConfigError(
+						"`from: scratch` is not allowed in imports: scratch has no filesystem to copy from",
+						imp.raw, image.rawDoc(),
+					)
+				}
+				if c.GetImage(imp.From) == nil {
+					if !hasExplicitTagOrDigest(imp.From) {
+						return newDetailedConfigError(
+							fmt.Sprintf("external image reference %q in import `from` must include a tag (`:TAG`) or digest (`@sha256:...`)", imp.From),
+							imp.raw, image.rawDoc(),
+						)
+					}
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
 func (c *WerfConfig) validateRelatedImages() error {
 	for _, image := range c.Images(false) {
-		for _, relatedImageName := range image.dependsOn().relatedImageNameList() {
-			if c.GetImage(relatedImageName) == nil {
-				return newDetailedConfigError(fmt.Sprintf("image %q not found!", relatedImageName), nil, image.rawDoc())
+		deps := image.dependsOn()
+
+		for _, importName := range deps.Imports {
+			if c.GetImage(importName) == nil && image.IsStapel() {
+				continue
+			}
+			if c.GetImage(importName) == nil {
+				return newDetailedConfigError(fmt.Sprintf("image %q not found!", importName), nil, image.rawDoc())
+			}
+		}
+
+		for _, depName := range deps.Dependencies {
+			if c.GetImage(depName) == nil {
+				return newDetailedConfigError(fmt.Sprintf("image %q not found!", depName), nil, image.rawDoc())
 			}
 		}
 	}
@@ -125,7 +214,11 @@ func (c *WerfConfig) validateImageInfiniteLoop(imageName string, imageNameStack 
 		panic(fmt.Sprintf("image %q not found but must be found", imageName))
 	}
 
-	for _, relatedImageName := range image.dependsOn().relatedImageNameList() {
+	for _, relatedImageName := range image.dependsOn().RelatedImageNameList() {
+		if c.GetImage(relatedImageName) == nil {
+			continue
+		}
+
 		if err, errImagesStack := c.validateImageInfiniteLoop(relatedImageName, imageNameStack); err != nil {
 			return err, append([]string{imageName}, errImagesStack...)
 		}
@@ -134,40 +227,37 @@ func (c *WerfConfig) validateImageInfiniteLoop(imageName string, imageNameStack 
 	return nil, nil
 }
 
-func (c *WerfConfig) GroupImagesByIndependentSets(imagesToProcess ImagesToProcess) (sets [][]ImageInterface, err error) {
+// GetImagesForProcessing returns the flat, deterministically ordered transitive
+// closure of images to process (the requested images plus everything they
+// depend on), for use by build-time image-graph construction.
+func (c *WerfConfig) GetImagesForProcessing(imagesToProcess ImagesToProcess) []ImageInterface {
 	if imagesToProcess.WithoutImages {
-		return nil, nil
+		return nil
 	}
 
 	images := c.getSpecificImages(imagesToProcess)
-	sets = [][]ImageInterface{}
-	isRelativeChecked := map[ImageInterface]bool{}
 	imageRelativesListToHandle := c.getImageRelativesInOrder(images)
 
-	for len(imageRelativesListToHandle) != 0 {
-		var currentRelatives []ImageInterface
-
-	outerLoop:
-		for image, relatives := range imageRelativesListToHandle {
-			for _, relativeImage := range relatives {
-				_, ok := isRelativeChecked[relativeImage]
-				if !ok {
-					continue outerLoop
-				}
-			}
-
-			currentRelatives = append(currentRelatives, image)
-		}
-
-		for _, relativeImage := range currentRelatives {
-			isRelativeChecked[relativeImage] = true
-			delete(imageRelativesListToHandle, relativeImage)
-		}
-
-		sets = append(sets, currentRelatives)
+	var result []ImageInterface
+	for image := range imageRelativesListToHandle {
+		result = append(result, image)
 	}
 
-	return sets, nil
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].GetName() < result[j].GetName()
+	})
+
+	return result
+}
+
+// GetImageDependsOn returns the resolved DependsOn (from/import/dependencies)
+// for the given image, i.e. only the related images that are actually part of
+// this werf config (external base images/imports are excluded). Resolution
+// also mutates image state via updateDependencies (image.SetFromExternal()
+// for a non-config from, imp.ExternalImage = true for non-config imports),
+// which mapStapelConfigToImage relies on.
+func (c *WerfConfig) GetImageDependsOn(image ImageInterface) DependsOn {
+	return c.updateDependencies(image)
 }
 
 func (c *WerfConfig) getImageRelativesInOrder(images []ImageInterface) map[ImageInterface][]ImageInterface {
@@ -180,7 +270,7 @@ func (c *WerfConfig) getImageRelativesInOrder(images []ImageInterface) map[Image
 
 		var relatives []ImageInterface
 		depends := c.updateDependencies(current)
-		for _, imageName := range depends.relatedImageNameList() {
+		for _, imageName := range depends.RelatedImageNameList() {
 			relatives = append(relatives, c.GetImage(imageName))
 		}
 		imageRelatives[current] = relatives
@@ -211,7 +301,7 @@ type DependsOn struct {
 	Dependencies []string `yaml:"dependencies,omitempty"`
 }
 
-func (d DependsOn) relatedImageNameList() []string {
+func (d DependsOn) RelatedImageNameList() []string {
 	var list []string
 
 	if d.From != "" {
@@ -246,12 +336,24 @@ func (c *WerfConfig) updateDependencies(image ImageInterface) DependsOn {
 	from := image.GetFrom()
 	if c.GetImage(from) != nil {
 		d.From = from
-	} else {
+	} else if from != "" && from != "scratch" {
 		image.SetFromExternal()
 	}
 
+	for _, importName := range curDeps.Imports {
+		if c.GetImage(importName) != nil {
+			d.Imports = append(d.Imports, importName)
+			continue
+		}
+
+		for _, imp := range image.(StapelImageInterface).ImageBaseConfig().Import {
+			if imp.From == importName {
+				imp.ExternalImage = true
+			}
+		}
+	}
+
 	d.Dependencies = curDeps.Dependencies
-	d.Imports = curDeps.Imports
 
 	return d
 }

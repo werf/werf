@@ -114,6 +114,7 @@ func SetupBackendStoragePath(cmdData *CmdData, cmd *cobra.Command) {
 	}
 
 	defaultVal := option.ValueOrDefault(os.Getenv(aliases[0].EnvName),
+		// keep backward compatibility
 		os.Getenv(aliases[1].EnvName))
 
 	cmdData.BackendStoragePath = new(string)

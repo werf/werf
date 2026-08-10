@@ -17,7 +17,7 @@ werf kubectl create rolebinding NAME --clusterrole=NAME|--role=NAME [--user=user
   # Create a role binding for user1, user2, and group1 using the admin cluster role
   kubectl create rolebinding admin --clusterrole=admin --user=user1 --user=user2 --group=group1
   
-  # Create a role binding for serviceaccount monitoring:sa-dev using the admin role
+  # Create a role binding for service account monitoring:sa-dev using the admin role
   kubectl create rolebinding admin-binding --role=admin --serviceaccount=monitoring:sa-dev
 ```
 
@@ -38,8 +38,8 @@ werf kubectl create rolebinding NAME --clusterrole=NAME|--role=NAME [--user=user
       --group=[]
             Groups to bind to the role. The flag can be repeated to add multiple groups.
   -o, --output=""
-            Output format. One of: (json, yaml, name, go-template, go-template-file, template,      
-            templatefile, jsonpath, jsonpath-as-json, jsonpath-file).
+            Output format. One of: (json, yaml, kyaml, name, go-template, go-template-file,         
+            template, templatefile, jsonpath, jsonpath-as-json, jsonpath-file).
       --role=""
             Role this RoleBinding should reference
       --save-config=false
@@ -58,15 +58,14 @@ werf kubectl create rolebinding NAME --clusterrole=NAME|--role=NAME [--user=user
       --user=[]
             Usernames to bind to the role. The flag can be repeated to add multiple users.
       --validate="strict"
-            Must be one of: strict (or true), warn, ignore (or false).
-            		"true" or "strict" will use a schema to validate the input and fail the request if    
-            invalid. It will perform server side validation if ServerSideFieldValidation is enabled 
-            on the api-server, but will fall back to less reliable client-side validation if not.
-            		"warn" will warn about unknown or duplicate fields without blocking the request if    
-            server-side field validation is enabled on the API server, and behave as "ignore"       
-            otherwise.
-            		"false" or "ignore" will not perform any schema validation, silently dropping any     
-            unknown or duplicate fields.
+            Must be one of: strict (or true), warn, ignore (or false). "true" or "strict" will use  
+            a schema to validate the input and fail the request if invalid. It will perform server  
+            side validation if ServerSideFieldValidation is enabled on the api-server, but will     
+            fall back to less reliable client-side validation if not. "warn" will warn about        
+            unknown or duplicate fields without blocking the request if server-side field           
+            validation is enabled on the API server, and behave as "ignore" otherwise. "false" or   
+            "ignore" will not perform any schema validation, silently dropping any unknown or       
+            duplicate fields.
 ```
 
 {{ header }} Options inherited from parent commands
@@ -80,6 +79,9 @@ werf kubectl create rolebinding NAME --clusterrole=NAME|--role=NAME [--user=user
             groups.
       --as-uid=""
             UID to impersonate for the operation.
+      --as-user-extra=[]
+            User extras to impersonate for the operation, this flag can be repeated to specify      
+            multiple values for the same key.
       --cache-dir="~/.kube/cache"
             Default cache directory
       --certificate-authority=""
@@ -105,6 +107,9 @@ werf kubectl create rolebinding NAME --clusterrole=NAME|--role=NAME [--user=user
       --kubeconfig=""
             Path to the kubeconfig file to use for CLI requests (default $WERF_KUBE_CONFIG, or      
             $WERF_KUBECONFIG, or $KUBECONFIG). Ignored if kubeconfig passed as base64.
+      --kuberc=""
+            Path to the kuberc file to use for preferences. This can be disabled by exporting       
+            KUBECTL_KUBERC=false feature gate or turning off the feature KUBERC=off.
       --log-flush-frequency=5s
             Maximum number of seconds between log flushes
       --match-server-version=false
@@ -114,7 +119,8 @@ werf kubectl create rolebinding NAME --clusterrole=NAME|--role=NAME [--user=user
       --password=""
             Password for basic authentication to the API server
       --profile="none"
-            Name of profile to capture. One of (none|cpu|heap|goroutine|threadcreate|block|mutex)
+            Name of profile to capture. One of                                                      
+            (none|cpu|heap|goroutine|threadcreate|block|mutex|trace)
       --profile-output="profile.pprof"
             Name of the file to write the profile to
       --request-timeout="0"

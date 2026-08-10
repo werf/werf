@@ -3,6 +3,6 @@
 
 package thirdparty
 
-import "github.com/containers/storage"
+import "go.podman.io/storage"
 
 type StoreOptions storage.StoreOptions

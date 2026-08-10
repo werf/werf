@@ -14,7 +14,7 @@ Environment is a required param for the deploy by default, because it is needed 
 {{ header }} Syntax
 
 ```shell
-werf converge [options]
+werf converge [IMAGE_NAME ...] [options]
 ```
 
 {{ header }} Examples
@@ -27,13 +27,12 @@ werf converge --repo registry.mydomain.com/web --env production
 {{ header }} Environments
 
 ```shell
-  $WERF_DEBUG_ANSIBLE_ARGS  Pass specified cli args to ansible ($ANSIBLE_ARGS)
-  $WERF_SECRET_KEY          Use specified secret key to extract secrets for the deploy. Recommended 
-                            way to set secret key in CI-system.
-                            
-                            Secret key also can be defined in files:
-                            * ~/.werf/global_secret_key (globally),
-                            * .werf_secret_key (per project)
+  $WERF_SECRET_KEY  Use specified secret key to extract secrets for the deploy. Recommended way to  
+                    set secret key in CI-system.
+                    
+                    Secret key also can be defined in files:
+                    * ~/.werf/global_secret_key (globally),
+                    * .werf_secret_key (per project)
 ```
 
 {{ header }} Options
@@ -117,7 +116,7 @@ werf converge --repo registry.mydomain.com/web --env production
             Enable debug mode for Go templates (default $WERF_DEBUG_TEMPLATES or false)
       --delete-propagation=""
             Set default delete propagation strategy (default $WERF_DELETE_PROPAGATION or            
-            Foreground).
+            Background).
       --deno-binary-path=""
             Path to the Deno binary to use instead of auto-downloading (default                     
             $WERF_DENO_BINARY_PATH)
@@ -198,8 +197,6 @@ werf converge --repo registry.mydomain.com/web --env production
             (default $WERF_GITERMINISM_CONFIG or werf-giterminism.yaml in working directory)
       --home-dir=""
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
-      --hooks-status-progress-period=0
-            No-op
       --ignore-bundle-js=false
             Do not use the existing bundle.js file. Requires TypeScript source files and Deno to    
             rebuild (default $WERF_IGNORE_BUNDLE_JS)
@@ -220,17 +217,15 @@ werf converge --repo registry.mydomain.com/web --env production
             several stages.
             
             There are the following formats to use:
-            * specify IMAGE_NAME/STAGE_NAME to introspect stage STAGE_NAME of either image or       
-            artifact IMAGE_NAME
+            * specify IMAGE_NAME/STAGE_NAME to introspect stage STAGE_NAME of image IMAGE_NAME
             * specify STAGE_NAME or */STAGE_NAME for the introspection of all existing stages with  
             name STAGE_NAME
             
-            IMAGE_NAME is the name of an image or artifact described in werf.yaml, the nameless     
-            image specified with ~.
+            IMAGE_NAME is the name of an image described in werf.yaml.
             STAGE_NAME should be one of the following: from, beforeInstall,                         
             dependenciesBeforeInstall, gitArchive, install, dependenciesAfterInstall, beforeSetup,  
             dependenciesBeforeSetup, setup, dependenciesAfterSetup, gitCache, gitLatestPatch,       
-            dockerInstructions, dockerfile, imageSpec
+            dockerfile, imageSpec
       --kube-api-server=""
             Kubernetes API server address (default $WERF_KUBE_API_SERVER)
       --kube-auth-password=""
@@ -326,6 +321,8 @@ werf converge --repo registry.mydomain.com/web --env production
             Enable verbose output (default $WERF_LOG_VERBOSE).
       --loose-giterminism=false
             Loose werf giterminism mode restrictions
+      --meta-repo=""
+            Container registry storage address (default $WERF_META_REPO)
       --namespace=""
             Use specified Kubernetes namespace (default [[ project ]]-[[ env ]] template or         
             deploy.namespace custom template from werf.yaml or $WERF_NAMESPACE)
@@ -333,6 +330,9 @@ werf converge --repo registry.mydomain.com/web --env production
             Parallelize some network operations (default $WERF_NETWORK_PARALLELISM or 30)
       --no-create-namespace=false
             Don`t create the release namespace (default $WERF_NO_CREATE_NAMESPACE)
+      --no-default-patches=false
+            Ignore patches.yaml of the top-level chart and subcharts (default                       
+            $WERF_NO_DEFAULT_PATCHES or false)
       --no-final-tracking=false
             By default disable tracking operations that have no create/update/delete resource       
             operations after them, which are most tracking operations, to speed up the release      
@@ -347,11 +347,20 @@ werf converge --repo registry.mydomain.com/web --env production
       --no-remove-manual-changes=false
             Don`t remove fields added manually to the resource in the cluster if fields aren`t      
             present in the manifest (default $WERF_NO_REMOVE_MANUAL_CHANGES)
+      --no-resource-validation=false
+            Disable resource validation (default $WERF_NO_RESOURCE_VALIDATION)
+      --no-values-schema-validation=false
+            Disable values validation against JSON schema (default                                  
+            $WERF_NO_VALUES_SCHEMA_VALIDATION)
   -p, --parallel=true
             Run in parallel (default $WERF_PARALLEL or true)
       --parallel-tasks-limit=5
             Parallel tasks limit, set -1 to remove the limitation (default                          
             $WERF_PARALLEL_TASKS_LIMIT or 5)
+      --patches=[]
+            Additional patches files (diff patches for drift detection). Also, can be defined with  
+            $WERF_PATCHES_* (e.g. $WERF_PATCHES_1=.helm/patches_1.yaml,                             
+            $WERF_PATCHES_2=.helm/patches_2.yaml)
       --plan-lifetime=2h0m0s
             How long plan artifact is valid
       --platform=[]
@@ -410,6 +419,21 @@ werf converge --repo registry.mydomain.com/web --env production
             Requires all used images to be previously built and exist in repo. Exits with error if  
             needed images are not cached and so require to run build instructions (default          
             $WERF_REQUIRE_BUILT_IMAGES)
+      --resource-validation-cache-lifetime=48h0m0s
+            How long local schema cache will be valid. Also can be defined by                       
+            $WERF_RESOURCE_VALIDATION_CACHE_LIFETIME
+      --resource-validation-extra-schema=[]
+            Extra json schema sources to validate resources (preferred over ebedded sources). Must  
+            be a valid go template defining a http(s) URL, or an absolute path on local file        
+            system. Also, can be defined with $WERF_RESOURCE_VALIDATION_EXTRA_SCHEMA_* (eg. $WERF_RE
+            SOURCE_VALIDATION_EXTRA_SCHEMA_1=`https://raw.githubusercontent.com/datreeio/CRDs-catalo
+            g/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json`)
+      --resource-validation-skip=[]
+            Skip resource validation for resources with specified attributes (can specify           
+            multiple). Format: key1=value1,key2=value2. Supported keys: group, version, kind, name, 
+            namespace. Example: kind=Deployment,name=my-app. Also, can be defined with              
+            $WERF_RESOURCE_VALIDATION_SKIP_* (e.g.                                                  
+            $WERF_RESOURCE_VALIDATION_SKIP_1=kind=Deployment,name=my-app)
       --rollback-graph-path=""
             Save rollback graph path to the specified file (by default $WERF_ROLLBACK_GRAPH_PATH).  
             Extension must be .dot or not specified. If extension not specified, then .dot is used
@@ -466,13 +490,6 @@ werf converge --repo registry.mydomain.com/web --env production
             or separate values with commas: key1=val1,key2=val2.
             Also, can be defined with $WERF_SET_ROOT_JSON_* (e.g. $WERF_SET_ROOT_JSON_1=key1=val1,  
             $WERF_SET_ROOT_JSON_2=key2=val2)
-      --set-runtime-json=[]
-            Set new keys in $.Runtime, where the key is the value path and the value is JSON. This  
-            is meant to be generated inside the program, so use --set-json instead, unless you know 
-            what you are doing. Can specify multiple or separate values with commas:                
-            key1=val1,key2=val2.
-            Also, can be defined with $WERF_SET_RUNTIME_JSON_* (e.g.                                
-            $WERF_SET_RUNTIME_JSON_1=key1=val1, $WERF_SET_RUNTIME_JSON_2=key2=val2)
       --set-string=[]
             Set STRING helm values on the command line (can specify multiple or separate values     
             with commas: key1=val1,key2=val2).
@@ -497,16 +514,6 @@ werf converge --repo registry.mydomain.com/web --env production
       --status-progress-period=5
             Status progress period in seconds. Set -1 to stop showing status progress. Defaults to  
             $WERF_STATUS_PROGRESS_PERIOD_SECONDS or 5 seconds
-  -S, --synchronization=""
-            Address of synchronizer for multiple werf processes to work with a single repo.
-            
-            Default:
-             - $WERF_SYNCHRONIZATION, or
-             - :local if --repo is not specified, or
-             - https://synchronization.werf.io if --repo has been specified.
-            
-            The same address should be specified for all werf processes that work with a single     
-            repo. :local address allows execution of werf processes from a single host only
       --templates-allow-dns=false
             Allow performing DNS requests in templating (default $WERF_TEMPLATES_ALLOW_DNS)
   -t, --timeout=0
@@ -532,9 +539,6 @@ werf converge --repo registry.mydomain.com/web --env production
             Specify helm values in a YAML file or a URL (can specify multiple). Also, can be        
             defined with $WERF_VALUES_* (e.g. $WERF_VALUES_1=.helm/values_1.yaml,                   
             $WERF_VALUES_2=.helm/values_2.yaml)
-      --virtual-merge=false
-            Enable virtual/ephemeral merge commit mode when building current application state      
-            ($WERF_VIRTUAL_MERGE by default)
       --without-images=false
             Disable building of images defined in the werf.yaml (if any) and usage of such images   
             in the .helm/templates ($WERF_WITHOUT_IMAGES or false by default — e.g. enable all      

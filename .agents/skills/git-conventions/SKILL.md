@@ -41,6 +41,12 @@ Types and scopes are defined in `CONTRIBUTING.md#conventions` — that file is t
 
 - Check `git status` for unrelated untracked files before staging. This worktree carries local working files (`.dev/`, scratch notes, orchestrator state), so prefer explicit paths over `git add -A` — a blanket add sweeps them in, and untracking later costs an extra commit. An orchestrator or helper commit command stages broadly — inspect `git status` BEFORE invoking it, not after.
 
+## Merging a branch into another
+
+- Create the branch that will carry the merge BEFORE running `git merge`, never after resolving the conflicts. Switching branches with `git checkout -b` while a merge is in progress silently discards `MERGE_HEAD` once the index is clean, and the following `git commit` records a single-parent commit: the content is merged, the ancestry is not, so every PR based on the target still sees the source's commits as unmerged and conflicts on the same files again.
+- Before pushing a merge, ALWAYS check it has two parents: `git log -1 --format=%p` must print two hashes, and `git merge-base --is-ancestor origin/<source> HEAD` must succeed. A merge message proves nothing — it is just text.
+- To repair ancestry when a reviewed merge result is already on the target, merge the source again with `-s ours` and verify `git rev-parse HEAD^{tree}` is unchanged. Re-running a plain `git merge` would resurrect what the resolution deliberately dropped.
+
 ## Before pushing
 
 - ALWAYS check the current branch (`git branch --show-current`) — a stale local `main` or someone else's WIP branch is easy to miss.

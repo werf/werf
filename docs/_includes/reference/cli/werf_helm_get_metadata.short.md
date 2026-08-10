@@ -1,1 +1,0 @@
-this command fetches metadata for a given release

@@ -31,7 +31,114 @@
 * **build, buildah:** serialize concurrent base image pulls ([#7664](https://github.com/werf/werf/issues/7664)) ([6eb9144](https://github.com/werf/werf/commit/6eb9144a1f0b71b6c6df3d5ec8ba8b6d3bd14b82))
 * **build, stapel:** make service script executable regardless of umask ([#7720](https://github.com/werf/werf/issues/7720)) ([8b67264](https://github.com/werf/werf/commit/8b67264f781b361119a9d6be0a390afec616e258)), closes [#2339](https://github.com/werf/werf/issues/2339)
 * **build:** drop empty image digest warnings from the build report ([#7717](https://github.com/werf/werf/issues/7717)) ([24babbb](https://github.com/werf/werf/commit/24babbbbb2bde473e45a1a8bd72c3ff4c64ea532)), closes [#7667](https://github.com/werf/werf/issues/7667)
-* **build:** make repo-built from:scratch images readable by dive ([#7765](https://github.com/werf/werf/issues/7765)) ([54b0921](https://github.com/werf/werf/commit/54b092177796f41c5fce2944f4bf73f45e058da8))
+* **build:** make repo-built from:scratch images readable by dive ([#7765](https://github.com/werf/werf/commit/54b092177796f41c5fce2944f4bf73f45e058da8))
+
+## [3.1.0](https://github.com/werf/werf/compare/v3.0.2...v3.1.0) (2026-08-05)
+
+
+### Features
+
+* `--no-values-schema-validation`; don't break values.schema.json with service values ([#7756](https://github.com/werf/werf/issues/7756)) ([01eeb94](https://github.com/werf/werf/commit/01eeb94fd129f01ce0c72176a61e3b5ad42f4f91))
+* add support for additional patches files and disable default patches ([#7735](https://github.com/werf/werf/issues/7735)) ([01aa2e5](https://github.com/werf/werf/commit/01aa2e5c95689aaaeceff151df1b8760938be43c))
+* **build:** add per-project meta-repo safeguard and migration ([#7739](https://github.com/werf/werf/issues/7739)) ([4f7de94](https://github.com/werf/werf/commit/4f7de9471e73996cd7676cd02b7d4fe2b3aeb7ff))
+* bump nelm version ([#7731](https://github.com/werf/werf/issues/7731)) ([ca44562](https://github.com/werf/werf/commit/ca44562abe4986a1e66914a5fde8c6e49d5d4c57))
+* embed kubeconform schemas ([#7729](https://github.com/werf/werf/issues/7729)) ([23bcaf1](https://github.com/werf/werf/commit/23bcaf185d1034a376a1a692228408f81ceeb562))
+
+
+### Bug Fixes
+
+* **build, buildah:** serialize concurrent base image pulls ([#7664](https://github.com/werf/werf/issues/7664)) ([6eb9144](https://github.com/werf/werf/commit/6eb9144a1f0b71b6c6df3d5ec8ba8b6d3bd14b82))
+* **build, dockerfile:** allow dockerfile outside the build context ([#7722](https://github.com/werf/werf/issues/7722)) ([a5c2011](https://github.com/werf/werf/commit/a5c2011e32b9764405ec935c811d7bf6bd3c19e1))
+* **build, stapel, git:** remove git commit ancestry check on reuse ([#7746](https://github.com/werf/werf/issues/7746)) ([544a07d](https://github.com/werf/werf/commit/544a07d58a4ddb1ad4d2cc94b135571d895a38bb))
+* **build, stapel:** make service script executable regardless of umask ([#7720](https://github.com/werf/werf/issues/7720)) ([8b67264](https://github.com/werf/werf/commit/8b67264f781b361119a9d6be0a390afec616e258)), closes [#2339](https://github.com/werf/werf/issues/2339)
+* **build:** drop empty image digest warnings from the build report ([#7717](https://github.com/werf/werf/issues/7717)) ([24babbb](https://github.com/werf/werf/commit/24babbbbb2bde473e45a1a8bd72c3ff4c64ea532)), closes [#7667](https://github.com/werf/werf/issues/7667)
+* **build:** reuse content anchors without git commits ([#7764](https://github.com/werf/werf/issues/7764)) ([5df466c](https://github.com/werf/werf/commit/5df466c618c91083d17ecd919c04df79b5eb7522))
+* **build:** stop re-fetching submodules the checkout already has ([#7736](https://github.com/werf/werf/issues/7736)) ([8ff0bf3](https://github.com/werf/werf/commit/8ff0bf37050bae2837111a71a34cb15365033631))
+* **build:** validate image names in werf.yaml ([#7711](https://github.com/werf/werf/issues/7711)) ([cd993db](https://github.com/werf/werf/commit/cd993dbc6144c88bf10e852fd9406dac117718e1))
+* **deploy:** optimize local validation args ([#7760](https://github.com/werf/werf/issues/7760)) ([6a4c6c4](https://github.com/werf/werf/commit/6a4c6c48f9a06d0f44a84754974848ad93cae206))
+* **dev:** self-heal a stale worktree index.lock left by a killed run ([#7733](https://github.com/werf/werf/issues/7733)) ([ca0e803](https://github.com/werf/werf/commit/ca0e80365bc5ed06ebd112fdfca9ea82ad3328a3))
+* **dev:** warm a persistent dev-index so --dev stops re-reading unchanged files ([#7732](https://github.com/werf/werf/issues/7732)) ([f0b13cc](https://github.com/werf/werf/commit/f0b13cc264af219d19b04ecfcb40fa2383c94aa5))
+
+## [3.0.2](https://github.com/werf/werf/compare/v3.0.1...v3.0.2) (2026-07-30)
+
+
+### Bug Fixes
+
+* **build:** assign per-image build-log progress index by real start order ([#7703](https://github.com/werf/werf/issues/7703)) ([7420f5f](https://github.com/werf/werf/commit/7420f5f5adee048916eb753dcd5e01d6b352e61e))
+
+## [3.0.1](https://github.com/werf/werf/compare/v3.0.0-alpha.2...v3.0.1) (2026-07-29)
+
+
+### Bug Fixes
+
+* **build, stapel, import:** build rsync without lchmod support ([#7695](https://github.com/werf/werf/issues/7695)) ([f55c669](https://github.com/werf/werf/commit/f55c66913460d4cb6b9a8735fc75d5bb8ff7a9c8))
+
+
+### Miscellaneous Chores
+
+* release 3.0.1 ([7c8239e](https://github.com/werf/werf/commit/7c8239ebbd4d99a81a0ae3343413d1989abfb0a9))
+
+## [3.0.0-alpha.2](https://github.com/werf/werf/compare/v2.75.2...v3.0.0-alpha.2) (2026-07-29)
+
+
+### Features
+
+* **deploy:** restore --no-create-namespace and --lookup-resources ([bb5f9e5](https://github.com/werf/werf/commit/bb5f9e54f5194e6fec97e083033093a3e187ca4b))
+
+
+### Bug Fixes
+
+* address v3 branch review findings from [#7686](https://github.com/werf/werf/issues/7686) ([#7692](https://github.com/werf/werf/issues/7692)) ([c34fedd](https://github.com/werf/werf/commit/c34feddad62a005d61a633809be254d32bb5b99b))
+* **build, dockerfile:** treat COPY --parents destination as a directory ([#7693](https://github.com/werf/werf/issues/7693)) ([05faec0](https://github.com/werf/werf/commit/05faec0564d9b18d38d162dc673ebce91709ba6e))
+* **build:** honor COPY --parents in staged Dockerfile build ([#7690](https://github.com/werf/werf/issues/7690)) ([c6e5df4](https://github.com/werf/werf/commit/c6e5df4cceabe16b9ba17dc332d6fad1f2096999))
+* **build:** honor COPY/ADD --exclude in staged Dockerfile build ([#7691](https://github.com/werf/werf/issues/7691)) ([1ee4aac](https://github.com/werf/werf/commit/1ee4aac13a9af6ad04eba684cef7fd9699ffa2e6))
+
+
+### Miscellaneous Chores
+
+* release 3.0.0-alpha.2 ([776c33d](https://github.com/werf/werf/commit/776c33d3d553595bca413ce0ee03cd6a5d9035c1))
+
+## [3.0.0-alpha.1](https://github.com/werf/werf/compare/v2.73.2...v3.0.0-alpha.1) (2026-07-10)
+
+
+### Features
+
+* **build, cleanup:** add --meta-repo to decouple metadata storage ([#7637](https://github.com/werf/werf/issues/7637)) ([8dd7118](https://github.com/werf/werf/commit/8dd7118037e0436b0f36364de02518dd926d6d17))
+* **build, stapel:** deprecate fromImage and import.image directives ([#7628](https://github.com/werf/werf/issues/7628)) ([b064fd5](https://github.com/werf/werf/commit/b064fd52edbef1c7e18620e78cb9c76b30cd6b10))
+* **build:** introduce content-anchor stage ([#7638](https://github.com/werf/werf/issues/7638)) ([5f269f2](https://github.com/werf/werf/commit/5f269f20a9b6a570099406c118924fd9e9fc6f59))
+* **ci-env:** auto-detect DOCKER_AUTH_CONFIG to enable --use-docker-auth-config ([#7624](https://github.com/werf/werf/issues/7624)) ([7754d6b](https://github.com/werf/werf/commit/7754d6bc68ad19add5e5ff02a3cb02c10f21d024))
+* **config list:** default --final-images-only=true, drop --images-only alias ([#7647](https://github.com/werf/werf/issues/7647)) ([edff312](https://github.com/werf/werf/commit/edff312515389d3d0cc9080223043e0b02babbad))
+* **config:** add dependencies.from directive, deprecate dependencies.image ([#7639](https://github.com/werf/werf/issues/7639)) ([5051502](https://github.com/werf/werf/commit/505150210bb98879ebbac0892dc8d5ebc3f81e57))
+* **deploy:** add `werf.io/resource-policy` annotation ([#7613](https://github.com/werf/werf/issues/7613)) ([72ae0f2](https://github.com/werf/werf/commit/72ae0f24ea745a81c61656d1c25df8dace2538f6))
+* **deploy:** enable specific images params by default for converge/plan ([#7616](https://github.com/werf/werf/issues/7616)) ([21e7159](https://github.com/werf/werf/commit/21e71590ea0644e8e9c10573aab0fd4fbc468b69))
+* **deploy:** expose `.global.env` only if `WERF_LEGACY_VALUES_GLOBAL_ENV` is set ([#7636](https://github.com/werf/werf/issues/7636)) ([41376d3](https://github.com/werf/werf/commit/41376d38a03eec81696c168536c458d63dafdd2d))
+* **deploy:** make container backend optional for converge and render ([#7625](https://github.com/werf/werf/issues/7625)) ([1230498](https://github.com/werf/werf/commit/1230498c6dfb16e8c46c76d0d0c8329d80873013))
+* **stapel, build:** embed stapel ([#7601](https://github.com/werf/werf/issues/7601)) ([82a8117](https://github.com/werf/werf/commit/82a81175bf678e749b145f2f5e468c3ee018ef75))
+
+
+### Bug Fixes
+
+* **build, stapel, git:** remove git commit ancestry check on stage reuse ([#7615](https://github.com/werf/werf/issues/7615)) ([70ee990](https://github.com/werf/werf/commit/70ee990c7d5b9eb02c806de4c1538d6d588c99d8))
+* **build:** avoid splitting UTF-8 runes across parallel worker log reads ([#7632](https://github.com/werf/werf/issues/7632)) ([14fddc6](https://github.com/werf/werf/commit/14fddc6015ca8b53eeff0f3faf21c4d2433a14dc))
+* **build:** default --final-images-only to true for consistency ([#7618](https://github.com/werf/werf/issues/7618)) ([52f4033](https://github.com/werf/werf/commit/52f403390e65cdaf24bd66a876235e79d97decd8))
+* **build:** error on ambiguous trailing slash in export/import to: path ([#7627](https://github.com/werf/werf/issues/7627)) ([0f7a4e3](https://github.com/werf/werf/commit/0f7a4e35ad0c0b27941f19d45d52911eb794677a))
+* **build:** hold back split UTF-8 across worker reads after half-close ([eda346e](https://github.com/werf/werf/commit/eda346e7f948accd8bd45560acf2ccceb2537cf2))
+* **build:** re-check content-tag before ShouldBeBuiltMode error ([cbd8e77](https://github.com/werf/werf/commit/cbd8e77dc193a5a1557b868dde6f9239361d8f5f))
+* **build:** send valid empty tar for docker from:scratch import ([#7609](https://github.com/werf/werf/issues/7609)) ([1c59585](https://github.com/werf/werf/commit/1c5958506a960167c76dede2cfa88ed130db1d12))
+* **build:** serialize content-tag resolve+publish under digest mutex ([9d307ee](https://github.com/werf/werf/commit/9d307eec623262e6e18658b55c60cc120c0a60f1))
+* **build:** stop leaking build-time env vars into final image config ([#7620](https://github.com/werf/werf/issues/7620)) ([02a8cb0](https://github.com/werf/werf/commit/02a8cb0be93641b832f782c12fb6a01aa91c3abe))
+* **build:** use jsonmessage API to parse image load response ([5fe36bc](https://github.com/werf/werf/commit/5fe36bc78ecabe6b58439eca16ca9f82869264d1))
+* **bundle:** update .Values.global.werf.images during bundle copy ([#7600](https://github.com/werf/werf/issues/7600)) ([cf2fb96](https://github.com/werf/werf/commit/cf2fb96d2de01c13d8c733589cb02262eb9521b1))
+* **deploy:** `werf.io/resource-policy` should only respect skip-delete from live ([#7623](https://github.com/werf/werf/issues/7623)) ([f261028](https://github.com/werf/werf/commit/f261028ca4b92b48ef9e26c353c0adade1e331ea))
+* **deploy:** use chartcommon.File after main merge in copy_test ([473c07e](https://github.com/werf/werf/commit/473c07ea807565559137081767341c3c5d3d43d9))
+* **host-cleanup:** GC stale host lock files on cleanup ([#7619](https://github.com/werf/werf/issues/7619)) ([1c8eb88](https://github.com/werf/werf/commit/1c8eb885b6b1a941d24ca68f3981352e9063901b))
+* **test, e2e:** pull image before local save/push in loadLocalImage helper ([3e420f7](https://github.com/werf/werf/commit/3e420f72e5d43fb9a48f22532c2ab04726b46ae5))
+* **test:** update e2e fixtures for v3 external image tag and trailing-slash rules ([9ef0cc4](https://github.com/werf/werf/commit/9ef0cc4a106b535cf6634a2c47947a56ae68ff45))
+
+
+### Miscellaneous Chores
+
+* release 3.0.0-alpha.1 ([5753958](https://github.com/werf/werf/commit/5753958be672640442d6d193c2d6365f07c9c603))
 
 ## [2.75.3](https://github.com/werf/werf/compare/v2.75.2...v2.75.3) (2026-07-29)
 

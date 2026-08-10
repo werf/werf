@@ -10,9 +10,7 @@ import (
 
 	"github.com/werf/nelm/pkg/action"
 	secret_common "github.com/werf/nelm/pkg/legacy/secret"
-	"github.com/werf/nelm/pkg/log"
 	"github.com/werf/werf/v2/cmd/werf/common"
-	"github.com/werf/werf/v2/cmd/werf/docs/replacers/helm"
 	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
 	"github.com/werf/werf/v2/pkg/werf"
@@ -30,10 +28,8 @@ func NewCmd(ctx context.Context) *cobra.Command {
 		Use:                   "encrypt [FILE_PATH]",
 		DisableFlagsInUseLine: true,
 		Short:                 "Encrypt values file data",
-		Long:                  common.GetLongCommandDescription(helm.GetHelmSecretValuesEncryptDocs().Long),
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
-			common.DocsLongMD: helm.GetHelmSecretValuesEncryptDocs().LongMD,
 		},
 		Example: `  # Encrypt and save result in file
   $ werf helm secret values encrypt test.yaml -o .helm/secret-values.yaml`,
@@ -92,7 +88,7 @@ func runSecretEncrypt(ctx context.Context, filePath string) error {
 
 	workingDir := common.GetWorkingDir(&commonCmdData)
 
-	ctx = log.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultSecretValuesFileEncryptLogLevel), log.SetupLoggingOptions{
+	ctx = action.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultSecretValuesFileEncryptLogLevel), action.SetupLoggingOptions{
 		ColorMode:      *commonCmdData.LogColorMode,
 		LogIsParseable: true,
 	})
