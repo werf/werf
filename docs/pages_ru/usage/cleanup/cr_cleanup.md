@@ -270,7 +270,6 @@ werf cleanup --repo registry.mydomain.com/app --final-repo registry.mydomain.com
     { "type": "imageMetadata", "imageName": "backend", "stageID": "ff00112233445566778899aabbccddeeff00112233445566778899aa-1748001122334", "commit": "a3f1c92e4b7d8056f1a2b3c4d5e6f7a8b9c0d1e2" },
     { "type": "imageMetadata", "id": "8c4a1f9b2d7e5a3c", "stageID": "ff00112233445566778899aabbccddeeff00112233445566778899aa-1748001122334", "commit": "a3f1c92e4b7d8056f1a2b3c4d5e6f7a8b9c0d1e2" },
     { "type": "managedImage", "imageName": "frontend" },
-    { "type": "importMetadata", "id": "8c4a1f9b2d7e5a3c" },
     { "type": "finalStage", "tag": "c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4-1748500000000" }
   ]
 }
@@ -278,13 +277,13 @@ werf cleanup --repo registry.mydomain.com/app --final-repo registry.mydomain.com
 
 При `--dry-run` отчёт содержит ровно то, что удалил бы реальный запуск, ничего при этом не удаляя.
 
-Набор значений `type` **расширяемый**: сейчас это `stage`, `finalStage`, `customTag`, `rejectedStage`, `rejectedStageMarker`, `imageMetadata`, `managedImage` и `importMetadata`, но могут появиться новые. Выбирайте известные вам типы (`select(.type == "stage")`), а не считайте набор закрытым.
+Набор значений `type` **расширяемый**: сейчас это `stage`, `finalStage`, `customTag`, `rejectedStage`, `rejectedStageMarker`, `imageMetadata` и `managedImage`, но могут появиться новые. Выбирайте известные вам типы (`select(.type == "stage")`), а не считайте набор закрытым.
 
 В `deleted` попадают только реально удалённые объекты: неудавшееся удаление остаётся предупреждением в логе — вместе с работой, отменённой из-за него.
 
 Элемент `imageMetadata` указывает образ в поле `imageName`. Если образа больше нет в `werf.yaml`, имя восстановить невозможно, и вместо него приходит внутренний `id`; `werf purge` не обращается к `werf.yaml`, поэтому всегда использует `id`.
 
-Адрес в элементах не дублируется: `finalStage` удалён из `finalRepo`, все остальные типы — из `repo`.
+Адрес в элементах не дублируется: `finalStage` удалён из `finalRepo`, `imageMetadata` и `managedImage` — из репозитория `--meta-repo`, если он настроен, все остальные типы — из `repo`.
 
 Порядок `kept` и `deleted` не определён — удаления выполняются параллельно.
 

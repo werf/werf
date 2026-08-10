@@ -31,7 +31,6 @@ func TestReportJSON(t *testing.T) {
 		Item{Type: ItemTypeRejectedStageMarker, Tag: "0bad0bad0bad0bad0bad0bad0bad0bad0bad0bad0bad0bad0bad0bad0-1747999888777"},
 		Item{Type: ItemTypeImageMetadata, ImageName: "backend", StageID: "ff00112233445566778899aabbccddeeff00112233445566778899aa-1748001122334", Commit: "a3f1c92e4b7d8056f1a2b3c4d5e6f7a8b9c0d1e2"},
 		Item{Type: ItemTypeManagedImage, ImageName: "frontend"},
-		Item{Type: ItemTypeImportMetadata, ID: "8c4a1f9b2d7e5a3c"},
 	)
 
 	path := filepath.Join(t.TempDir(), "report.json")
@@ -58,8 +57,7 @@ func TestReportJSON(t *testing.T) {
     { "type": "rejectedStage",       "tag": "0bad0bad0bad0bad0bad0bad0bad0bad0bad0bad0bad0bad0bad0bad0-1747999888777" },
     { "type": "rejectedStageMarker", "tag": "0bad0bad0bad0bad0bad0bad0bad0bad0bad0bad0bad0bad0bad0bad0-1747999888777" },
     { "type": "imageMetadata",       "imageName": "backend", "stageID": "ff00112233445566778899aabbccddeeff00112233445566778899aa-1748001122334", "commit": "a3f1c92e4b7d8056f1a2b3c4d5e6f7a8b9c0d1e2" },
-    { "type": "managedImage",        "imageName": "frontend" },
-    { "type": "importMetadata",      "id": "8c4a1f9b2d7e5a3c" }
+    { "type": "managedImage",        "imageName": "frontend" }
   ]
 }`, string(data))
 }
