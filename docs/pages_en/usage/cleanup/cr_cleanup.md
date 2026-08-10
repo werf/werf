@@ -277,32 +277,21 @@ The report of the command above looks as follows:
 }
 ```
 
-The `dryRun` field tells a planned cleanup from an actual one: a dry run reports exactly what a real run would have deleted, without deleting it.
+With `--dry-run` the report holds exactly what a real run would have deleted, without deleting it.
 
-> The `--dry-run` option allows you to simulate the cleanup process without actually deleting anything. It’s useful for previewing which tags would be deleted or kept.
+The `type` set is **extensible**: today it is `stage`, `finalStage`, `customTag`, `rejectedStage`, `rejectedStageMarker`, `imageMetadata`, `managedImage` and `importMetadata`, and new kinds may appear. Select the types you know (`select(.type == "stage")`) rather than assume the set is closed.
 
-Every item carries a `type`. The set currently in use is `stage`, `finalStage`, `customTag`, `rejectedStage`, `rejectedStageMarker`, `imageMetadata`, `managedImage` and `importMetadata`, but it is **extensible**: new object kinds may be added, so a consumer must select the types it knows (`select(.type == "stage")`) rather than assume the set is closed. This is also why a keep-list has to select `stage` items instead of reading every `tag`.
+Only objects that were really deleted get into `deleted`: a failed deletion stays a warning in the log, together with the work it cancelled.
 
-Only objects that were really deleted get into `deleted`. A deletion that failed is reported as a warning in the log and is left out of the report, together with any follow-up work it cancelled — for example, when a custom tag linked to a rejected stage cannot be deleted, the rejected marker is deliberately kept for the next cleanup to retry, and neither appears in the report.
+An `imageMetadata` item names its image in `imageName`. When the image is no longer described in `werf.yaml` no name is recoverable and the item carries the internal `id` instead; `werf purge` never consults `werf.yaml`, so it always uses `id`.
 
-An `imageMetadata` item names its image in `imageName`, except when the metadata belongs to an image that is no longer described in `werf.yaml` — werf cannot recover a name in that case, so the item carries the internal metadata identifier in `id` instead and has no `imageName`. `werf purge` deletes all metadata without consulting `werf.yaml`, so its report uses `id` throughout.
+The address is not repeated on every item: `finalStage` was deleted from `finalRepo`, every other type from `repo`.
 
-`repo` is the stages storage the cleanup ran against, and `finalRepo` appears when a final repository is configured.
+The order of `kept` and `deleted` is undefined — deletions run in parallel.
 
-The address is not repeated on every item — it follows from `type`:
+The report is written even when the cleanup fails partway, so it always describes the deletions that actually happened; the command then exits non-zero. A partially written report is never visible to a reader. If the path is not writable, the command fails before the first deletion.
 
-| `type` | repository |
-| --- | --- |
-| `finalStage` | `finalRepo` |
-| everything else | `repo` |
-
-This mapping is normative: an item with no address of its own was deleted from `repo`.
-
-The order of `kept` and `deleted` is not significant — deletions run in parallel, so the arrays are unordered and must not be compared positionally.
-
-The report is written even when the cleanup fails partway, so it always describes the deletions that actually happened; the command then exits non-zero. Writing is atomic in the sense that a reader never observes a partially written report and a failed write leaves the previous file untouched. If the report path is not writable, the command fails before deleting anything rather than deleting objects it could not record.
-
-The same options are supported by `werf purge`, and by `werf host purge` when it is called with `--project-name`. Both delete everything, so `kept` is always empty in their reports and `command` is `purge` and `host purge` respectively. `werf host cleanup` writes no report: it cleans the host's local storage and never touches the container registry.
+The same options are supported by `werf purge`. It deletes everything, so `kept` in its report is always empty.
 
 ### Generate keep-list from tags marked to be kept / deleted
 
