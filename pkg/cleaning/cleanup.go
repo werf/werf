@@ -10,6 +10,7 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/gookit/color"
 	"github.com/rodaine/table"
+	"github.com/samber/lo"
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/kubedog/pkg/kube"
@@ -703,7 +704,7 @@ func (m *cleanupManager) cleanupImageMetadata(ctx context.Context, imageName str
 			}
 
 			if err := logProcessDoError(func() error {
-				return m.deleteImageMetadata(ctx, imageName, stageIDCommitListToDelete)
+				return m.deleteImageMetadata(ctx, imageName, stageIDCommitListToDelete, false)
 			}); err != nil {
 				return err
 			}
@@ -720,7 +721,7 @@ func (m *cleanupManager) cleanupImageMetadata(ctx context.Context, imageName str
 		}
 
 		if err := logProcessDoError(func() error {
-			return m.deleteImageMetadata(ctx, imageName, nonexistentStageIDCommitList)
+			return m.deleteImageMetadata(ctx, imageName, nonexistentStageIDCommitList, false)
 		}); err != nil {
 			return err
 		}
@@ -736,7 +737,7 @@ func (m *cleanupManager) cleanupImageMetadata(ctx context.Context, imageName str
 		}
 
 		if err := logProcessDoError(func() error {
-			return m.deleteImageMetadata(ctx, imageName, stageIDNonexistentCommitList)
+			return m.deleteImageMetadata(ctx, imageName, stageIDNonexistentCommitList, false)
 		}); err != nil {
 			return err
 		}
@@ -768,8 +769,8 @@ func (m *cleanupManager) cleanupNonexistentImageMetadata(ctx context.Context) er
 	}
 
 	return logboek.Context(ctx).Default().LogProcess("Deleting metadata for nonexistent images (%d)", counter).DoError(func() error {
-		for imageName, stageIDCommitList := range stageIDCommitListByNonexistentImage {
-			if err := m.deleteImageMetadata(ctx, imageName, stageIDCommitList); err != nil {
+		for imageMetadataID, stageIDCommitList := range stageIDCommitListByNonexistentImage {
+			if err := m.deleteImageMetadata(ctx, imageMetadataID, stageIDCommitList, true); err != nil {
 				return err
 			}
 		}
@@ -778,8 +779,8 @@ func (m *cleanupManager) cleanupNonexistentImageMetadata(ctx context.Context) er
 	})
 }
 
-func (m *cleanupManager) deleteImageMetadata(ctx context.Context, imageName string, stageIDCommitList map[string][]string) error {
-	if err := deleteImageMetadata(ctx, m.ProjectName, m.StorageManager, imageName, stageIDCommitList, m.DryRun, m.report); err != nil {
+func (m *cleanupManager) deleteImageMetadata(ctx context.Context, imageName string, stageIDCommitList map[string][]string, isMetadataID bool) error {
+	if err := deleteImageMetadata(ctx, m.ProjectName, m.StorageManager, imageName, stageIDCommitList, m.DryRun, isMetadataID, m.report); err != nil {
 		return err
 	}
 
@@ -805,7 +806,7 @@ func purgeImageMetadata(ctx context.Context, projectName string, storageManager 
 
 	return logboek.Context(ctx).Default().LogProcess("Deleting images metadata (%d)", number).DoError(func() error {
 		for imageNameID, stageIDCommitList := range imageMetadataByImageName {
-			if err := deleteImageMetadata(ctx, projectName, storageManager, imageNameID, stageIDCommitList, dryRun, report); err != nil {
+			if err := deleteImageMetadata(ctx, projectName, storageManager, imageNameID, stageIDCommitList, dryRun, true, report); err != nil {
 				return err
 			}
 		}
@@ -861,7 +862,12 @@ func purgeManagedImages(ctx context.Context, projectName string, storageManager 
 	})
 }
 
-func deleteImageMetadata(ctx context.Context, projectName string, storageManager manager.StorageManagerInterface, imageNameOrID string, stageIDCommitList map[string][]string, dryRun bool, report *cleanup_report.Report) error {
+// isMetadataID reports that imageNameOrID is an internal metadata ID rather than an image name: werf cannot resolve
+// a name for metadata whose image is absent from werf.yaml, so the report carries the ID instead.
+func deleteImageMetadata(ctx context.Context, projectName string, storageManager manager.StorageManagerInterface, imageNameOrID string, stageIDCommitList map[string][]string, dryRun, isMetadataID bool, report *cleanup_report.Report) error {
+	itemImageName := lo.Ternary(isMetadataID, "", imageNameOrID)
+	itemID := lo.Ternary(isMetadataID, imageNameOrID, "")
+
 	if dryRun {
 		for stageID, commitList := range stageIDCommitList {
 			if len(commitList) == 0 {
@@ -874,7 +880,7 @@ func deleteImageMetadata(ctx context.Context, projectName string, storageManager
 			logboek.Context(ctx).Info().LogOptionalLn()
 
 			for _, commit := range commitList {
-				report.AddDeleted(ctx, cleanup_report.Item{Type: cleanup_report.ItemTypeImageMetadata, ImageName: imageNameOrID, StageID: stageID, Commit: commit})
+				report.AddDeleted(ctx, cleanup_report.Item{Type: cleanup_report.ItemTypeImageMetadata, ImageName: itemImageName, StageID: stageID, Commit: commit, ID: itemID})
 			}
 		}
 		return nil
@@ -894,7 +900,7 @@ func deleteImageMetadata(ctx context.Context, projectName string, storageManager
 		logboek.Context(ctx).Info().LogFDetails("  imageName: %s\n", imageNameOrID)
 		logboek.Context(ctx).Info().LogFDetails("  stageID: %s\n", stageID)
 		logboek.Context(ctx).Info().LogFDetails("  commit: %s\n", commit)
-		report.AddDeleted(ctx, cleanup_report.Item{Type: cleanup_report.ItemTypeImageMetadata, ImageName: imageNameOrID, StageID: stageID, Commit: commit})
+		report.AddDeleted(ctx, cleanup_report.Item{Type: cleanup_report.ItemTypeImageMetadata, ImageName: itemImageName, StageID: stageID, Commit: commit, ID: itemID})
 
 		return nil
 	})

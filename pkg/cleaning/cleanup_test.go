@@ -107,7 +107,7 @@ func (f *fakeStorageManager) ForEachRmImportMetadata(ctx context.Context, _ stri
 	return nil
 }
 
-func TestdeleteRejectedStagesWithLinkedTags_NoRejected(t *testing.T) {
+func TestDeleteRejectedStagesWithLinkedTags_NoRejected(t *testing.T) {
 	sm := newFakeStorageManager()
 
 	deleted, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, nil, false, nil)
@@ -118,7 +118,7 @@ func TestdeleteRejectedStagesWithLinkedTags_NoRejected(t *testing.T) {
 	assert.Empty(t, sm.stages.deletedRecords)
 }
 
-func TestdeleteRejectedStagesWithLinkedTags_OrderStageThenTagsThenMarker(t *testing.T) {
+func TestDeleteRejectedStagesWithLinkedTags_OrderStageThenTagsThenMarker(t *testing.T) {
 	digest := "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
 	stageID := image.NewStageID(digest, 1700000000)
 	otherStageID := image.NewStageID(digest, 1700000999)
@@ -140,7 +140,7 @@ func TestdeleteRejectedStagesWithLinkedTags_OrderStageThenTagsThenMarker(t *test
 	assert.Equal(t, []image.StageID{*stageID}, sm.stages.deletedRecords, "marker deleted last")
 }
 
-func TestdeleteRejectedStagesWithLinkedTags_DryRun(t *testing.T) {
+func TestDeleteRejectedStagesWithLinkedTags_DryRun(t *testing.T) {
 	digest := "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
 	stageID := image.NewStageID(digest, 1700000000)
 
@@ -155,7 +155,7 @@ func TestdeleteRejectedStagesWithLinkedTags_DryRun(t *testing.T) {
 	assert.Empty(t, sm.stages.deletedRecords, "dry run must not touch registry")
 }
 
-func TestdeleteRejectedStagesWithLinkedTags_PropagatesGetError(t *testing.T) {
+func TestDeleteRejectedStagesWithLinkedTags_PropagatesGetError(t *testing.T) {
 	sm := newFakeStorageManager()
 	sm.stages.rejectedErr = errors.New("registry down")
 
@@ -164,7 +164,7 @@ func TestdeleteRejectedStagesWithLinkedTags_PropagatesGetError(t *testing.T) {
 	assert.Contains(t, err.Error(), "unable to get rejected stage ids")
 }
 
-func TestdeleteRejectedStagesWithLinkedTags_StageImageNonFatalFailureKeepsMarker(t *testing.T) {
+func TestDeleteRejectedStagesWithLinkedTags_StageImageNonFatalFailureKeepsMarker(t *testing.T) {
 	digest := "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
 	stageID := image.NewStageID(digest, 1700000000)
 
@@ -181,7 +181,7 @@ func TestdeleteRejectedStagesWithLinkedTags_StageImageNonFatalFailureKeepsMarker
 	assert.Empty(t, sm.stages.deletedRecords, "marker must remain so retry picks up this stage")
 }
 
-func TestdeleteRejectedStagesWithLinkedTags_StageImageFatalFailurePropagates(t *testing.T) {
+func TestDeleteRejectedStagesWithLinkedTags_StageImageFatalFailurePropagates(t *testing.T) {
 	digest := "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
 	stageID := image.NewStageID(digest, 1700000000)
 
@@ -194,7 +194,7 @@ func TestdeleteRejectedStagesWithLinkedTags_StageImageFatalFailurePropagates(t *
 	assert.Contains(t, err.Error(), "UNAUTHORIZED")
 }
 
-func TestdeleteRejectedStagesWithLinkedTags_CustomTagFailureKeepsMarker(t *testing.T) {
+func TestDeleteRejectedStagesWithLinkedTags_CustomTagFailureKeepsMarker(t *testing.T) {
 	digest := "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
 	stageID := image.NewStageID(digest, 1700000000)
 
@@ -211,7 +211,7 @@ func TestdeleteRejectedStagesWithLinkedTags_CustomTagFailureKeepsMarker(t *testi
 	assert.Empty(t, sm.stages.deletedRecords, "marker MUST remain so next cleanup retries linked tags")
 }
 
-func TestdeleteRejectedStagesWithLinkedTags_MarkerFailureExcludesFromDeleted(t *testing.T) {
+func TestDeleteRejectedStagesWithLinkedTags_MarkerFailureExcludesFromDeleted(t *testing.T) {
 	digest := "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
 	stageID := image.NewStageID(digest, 1700000000)
 
@@ -231,7 +231,7 @@ func newTestReport() *cleanup_report.Report {
 	return cleanup_report.NewReport(context.Background(), "cleanup", false, "example.com/repo", cleanup_report.NewReportOptions{})
 }
 
-func TestdeleteRejectedStagesWithLinkedTags_ReportRecordsEachSubAction(t *testing.T) {
+func TestDeleteRejectedStagesWithLinkedTags_ReportRecordsEachSubAction(t *testing.T) {
 	stageID := image.NewStageID("deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef", 1700000000)
 
 	sm := newFakeStorageManager()
@@ -251,7 +251,7 @@ func TestdeleteRejectedStagesWithLinkedTags_ReportRecordsEachSubAction(t *testin
 	assert.Empty(t, report.Kept)
 }
 
-func TestdeleteRejectedStagesWithLinkedTags_ReportDryRunMatchesRealRun(t *testing.T) {
+func TestDeleteRejectedStagesWithLinkedTags_ReportDryRunMatchesRealRun(t *testing.T) {
 	stageID := image.NewStageID("deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef", 1700000000)
 	customTagsByStageID := map[string][]string{stageID.String(): {"v1.0.0", "latest"}}
 
@@ -271,7 +271,7 @@ func TestdeleteRejectedStagesWithLinkedTags_ReportDryRunMatchesRealRun(t *testin
 	assert.Empty(t, drySM.stages.deletedImages, "dry run must not touch the registry")
 }
 
-func TestdeleteRejectedStagesWithLinkedTags_ReportSkipsFailedCustomTagAndCanceledMarker(t *testing.T) {
+func TestDeleteRejectedStagesWithLinkedTags_ReportSkipsFailedCustomTagAndCanceledMarker(t *testing.T) {
 	stageID := image.NewStageID("deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef", 1700000000)
 
 	sm := newFakeStorageManager()
@@ -288,7 +288,7 @@ func TestdeleteRejectedStagesWithLinkedTags_ReportSkipsFailedCustomTagAndCancele
 	}, report.Deleted, "the failed custom tag, the tags after it and the canceled marker must not be reported")
 }
 
-func TestdeleteRejectedStagesWithLinkedTags_ReportSkipsFailedMarker(t *testing.T) {
+func TestDeleteRejectedStagesWithLinkedTags_ReportSkipsFailedMarker(t *testing.T) {
 	stageID := image.NewStageID("deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef", 1700000000)
 
 	sm := newFakeStorageManager()
@@ -305,7 +305,7 @@ func TestdeleteRejectedStagesWithLinkedTags_ReportSkipsFailedMarker(t *testing.T
 	}, report.Deleted, "a marker whose deletion failed must not be reported deleted")
 }
 
-func TestdeleteRejectedStagesWithLinkedTags_NilReportChangesNothing(t *testing.T) {
+func TestDeleteRejectedStagesWithLinkedTags_NilReportChangesNothing(t *testing.T) {
 	stageID := image.NewStageID("deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef", 1700000000)
 
 	withReport := newFakeStorageManager()
@@ -324,7 +324,7 @@ func TestdeleteRejectedStagesWithLinkedTags_NilReportChangesNothing(t *testing.T
 	assert.Equal(t, withReport.stages.deletedRecords, withoutReport.stages.deletedRecords)
 }
 
-func TestdeleteCustomTags_ReportRecordsOnlySucceeded(t *testing.T) {
+func TestDeleteCustomTags_ReportRecordsOnlySucceeded(t *testing.T) {
 	sm := newFakeStorageManager()
 	sm.stages.deleteTagErrs["broken"] = errors.New("temporary network glitch")
 
@@ -337,7 +337,7 @@ func TestdeleteCustomTags_ReportRecordsOnlySucceeded(t *testing.T) {
 	}, report.Deleted, "a tag logged as deleted after a failed deletion must not be reported")
 }
 
-func TestdeleteCustomTags_ReportDryRunMatchesRealRun(t *testing.T) {
+func TestDeleteCustomTags_ReportDryRunMatchesRealRun(t *testing.T) {
 	tags := []string{"one", "two"}
 
 	realReport := newTestReport()
@@ -349,7 +349,7 @@ func TestdeleteCustomTags_ReportDryRunMatchesRealRun(t *testing.T) {
 	assert.ElementsMatch(t, realReport.Deleted, dryReport.Deleted)
 }
 
-func TestdeleteImportsMetadata_ReportRecordsOnlySucceeded(t *testing.T) {
+func TestDeleteImportsMetadata_ReportRecordsOnlySucceeded(t *testing.T) {
 	sm := newFakeStorageManager()
 	sm.importMetadataErrs["broken"] = errors.New("temporary network glitch")
 
@@ -362,7 +362,7 @@ func TestdeleteImportsMetadata_ReportRecordsOnlySucceeded(t *testing.T) {
 	}, report.Deleted)
 }
 
-func TestdeleteImportsMetadata_ReportDryRunMatchesRealRun(t *testing.T) {
+func TestDeleteImportsMetadata_ReportDryRunMatchesRealRun(t *testing.T) {
 	ids := []string{"8c4a1f9b2d7e5a3c", "1e09fb543b4ef442"}
 
 	realReport := newTestReport()
@@ -372,4 +372,26 @@ func TestdeleteImportsMetadata_ReportDryRunMatchesRealRun(t *testing.T) {
 	require.NoError(t, deleteImportsMetadata(context.Background(), "myproject", newFakeStorageManager(), ids, true, dryReport))
 
 	assert.ElementsMatch(t, realReport.Deleted, dryReport.Deleted)
+}
+
+func TestDeleteImageMetadata_ReportUsesImageNameForManagedImages(t *testing.T) {
+	report := newTestReport()
+	stageIDCommitList := map[string][]string{"ff0011-1748001122334": {"a3f1c92e"}}
+
+	require.NoError(t, deleteImageMetadata(context.Background(), "myproject", newFakeStorageManager(), "backend", stageIDCommitList, true, false, report))
+
+	assert.Equal(t, []cleanup_report.Item{
+		{Type: cleanup_report.ItemTypeImageMetadata, ImageName: "backend", StageID: "ff0011-1748001122334", Commit: "a3f1c92e"},
+	}, report.Deleted)
+}
+
+func TestDeleteImageMetadata_ReportUsesIDForUnresolvableMetadata(t *testing.T) {
+	report := newTestReport()
+	stageIDCommitList := map[string][]string{"ff0011-1748001122334": {"a3f1c92e"}}
+
+	require.NoError(t, deleteImageMetadata(context.Background(), "myproject", newFakeStorageManager(), "8c4a1f9b2d7e5a3c", stageIDCommitList, true, true, report))
+
+	assert.Equal(t, []cleanup_report.Item{
+		{Type: cleanup_report.ItemTypeImageMetadata, ID: "8c4a1f9b2d7e5a3c", StageID: "ff0011-1748001122334", Commit: "a3f1c92e"},
+	}, report.Deleted)
 }

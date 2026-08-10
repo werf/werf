@@ -103,13 +103,10 @@ func CheckWritable(_ context.Context, path string) error {
 	if err != nil {
 		return fmt.Errorf("cleanup report %q is not writable: %w", path, err)
 	}
+	defer os.Remove(f.Name())
 
 	if err := f.Close(); err != nil {
 		return fmt.Errorf("close %q: %w", f.Name(), err)
-	}
-
-	if err := os.Remove(f.Name()); err != nil {
-		return fmt.Errorf("remove %q: %w", f.Name(), err)
 	}
 
 	return nil
