@@ -92,6 +92,9 @@ type CmdData struct {
 	BuildReportPath *string
 	UseBuildReport  *bool
 
+	SaveCleanupReport *bool
+	CleanupReportPath *string
+
 	VirtualMerge *bool
 
 	ScanContextNamespaceOnly *bool
