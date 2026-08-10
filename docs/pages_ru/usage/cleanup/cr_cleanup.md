@@ -283,7 +283,7 @@ werf cleanup --repo registry.mydomain.com/app --final-repo registry.mydomain.com
 
 Элемент `imageMetadata` указывает образ в поле `imageName`. Если образа больше нет в `werf.yaml`, имя восстановить невозможно, и вместо него приходит внутренний `id`; `werf purge` не обращается к `werf.yaml`, поэтому всегда использует `id`.
 
-Адрес в элементах не дублируется: `finalStage` удалён из `finalRepo`, `imageMetadata` и `managedImage` — из репозитория `--meta-repo`, если он настроен, все остальные типы — из `repo`.
+Адрес в элементах не дублируется: `finalStage` удалён из `finalRepo`, `imageMetadata` и `managedImage` — из `metaRepo`, все остальные типы — из `repo`. Поле `metaRepo` появляется только тогда, когда метаданные хранятся отдельно от стадий через `--meta-repo`; без него метаданные лежат в том же `repo`.
 
 Порядок `kept` и `deleted` не определён — удаления выполняются параллельно.
 

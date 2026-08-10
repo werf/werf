@@ -284,7 +284,7 @@ Only objects that were really deleted get into `deleted`: a failed deletion stay
 
 An `imageMetadata` item names its image in `imageName`. When the image is no longer described in `werf.yaml` no name is recoverable and the item carries the internal `id` instead; `werf purge` never consults `werf.yaml`, so it always uses `id`.
 
-The address is not repeated on every item: `finalStage` was deleted from `finalRepo`, `imageMetadata` and `managedImage` from the `--meta-repo` repository when one is configured, every other type from `repo`.
+The address is not repeated on every item: `finalStage` was deleted from `finalRepo`, `imageMetadata` and `managedImage` from `metaRepo`, every other type from `repo`. The `metaRepo` field is present only when `--meta-repo` stores the metadata apart from the stages; without it the metadata lives in `repo` too.
 
 The order of `kept` and `deleted` is undefined — deletions run in parallel.
 

@@ -272,8 +272,16 @@ func NewCleanupReport(ctx context.Context, cmdData *CmdData, command string, dry
 		finalRepo = finalStagesStorage.Address()
 	}
 
-	return cleanup_report.NewReport(ctx, command, dryRun, storageManager.GetStagesStorage().Address(), cleanup_report.NewReportOptions{
+	repo := storageManager.GetStagesStorage().Address()
+
+	var metaRepo string
+	if metaAddress := storageManager.GetMetaStorage().Address(); metaAddress != repo {
+		metaRepo = metaAddress
+	}
+
+	return cleanup_report.NewReport(ctx, command, dryRun, repo, cleanup_report.NewReportOptions{
 		FinalRepo: finalRepo,
+		MetaRepo:  metaRepo,
 	}), reportPath, nil
 }
 

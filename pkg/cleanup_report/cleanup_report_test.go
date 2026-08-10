@@ -62,7 +62,7 @@ func TestReportJSON(t *testing.T) {
 }`, string(data))
 }
 
-func TestReportHasNoEnvelopeOrMetaRepo(t *testing.T) {
+func TestReportHasNoEnvelope(t *testing.T) {
 	ctx := context.Background()
 
 	path := filepath.Join(t.TempDir(), "report.json")
@@ -71,9 +71,28 @@ func TestReportHasNoEnvelopeOrMetaRepo(t *testing.T) {
 	data, err := os.ReadFile(path)
 	require.NoError(t, err)
 
-	for _, dropped := range []string{"apiVersion", "kind", "metaRepo", "spaceReclaimed", "reference"} {
+	for _, dropped := range []string{"apiVersion", "kind", "spaceReclaimed", "reference"} {
 		assert.NotContains(t, string(data), dropped)
 	}
+}
+
+func TestReportMetaRepo(t *testing.T) {
+	ctx := context.Background()
+
+	path := filepath.Join(t.TempDir(), "report.json")
+	require.NoError(t, NewReport(ctx, "cleanup", false, "example.com/app", NewReportOptions{MetaRepo: "example.com/app-meta"}).Save(ctx, path))
+
+	data, err := os.ReadFile(path)
+	require.NoError(t, err)
+
+	assert.JSONEq(t, `{
+  "command": "cleanup",
+  "dryRun": false,
+  "repo": "example.com/app",
+  "metaRepo": "example.com/app-meta",
+  "kept": [],
+  "deleted": []
+}`, string(data))
 }
 
 func TestReportEmptyListsAndOmittedFinalRepo(t *testing.T) {

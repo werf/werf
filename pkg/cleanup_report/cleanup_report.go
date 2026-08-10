@@ -38,12 +38,14 @@ type Report struct {
 	DryRun    bool   `json:"dryRun"`
 	Repo      string `json:"repo"`
 	FinalRepo string `json:"finalRepo,omitempty"`
+	MetaRepo  string `json:"metaRepo,omitempty"`
 	Kept      []Item `json:"kept"`
 	Deleted   []Item `json:"deleted"`
 }
 
 type NewReportOptions struct {
 	FinalRepo string
+	MetaRepo  string
 }
 
 func NewReport(_ context.Context, command string, dryRun bool, repo string, opts NewReportOptions) *Report {
@@ -52,6 +54,7 @@ func NewReport(_ context.Context, command string, dryRun bool, repo string, opts
 		DryRun:    dryRun,
 		Repo:      repo,
 		FinalRepo: opts.FinalRepo,
+		MetaRepo:  opts.MetaRepo,
 		Kept:      []Item{},
 		Deleted:   []Item{},
 	}
