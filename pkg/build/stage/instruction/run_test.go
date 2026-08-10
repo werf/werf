@@ -40,10 +40,10 @@ func newRunStage(runCommand *instructions.RunCommand, dependencyStages []string)
 	)
 }
 
-var _ = Describe("Test RUN mount from stage resolution", func() {
+var _ = Describe("RUN mount from stage resolution", func() {
 	const resolvedOsImage = "ghcr.io/werf/instruction-test:a71052baf9c6ace8171e59a2ae5ea1aede3fb89aa95d160ec354b205-1661868399091"
 
-	It("Test resolves --mount from=<stage> to the built werf stage image in the backend instruction", func(ctx SpecContext) {
+	It("resolves --mount from=<stage> to the built werf stage image in the backend instruction", func(ctx SpecContext) {
 		stg := newRunStage(
 			parseRunCommand("FROM alpine AS os\nRUN --mount=type=bind,from=os,source=/apk,target=/apk true\n"),
 			[]string{"os"},
@@ -62,7 +62,7 @@ var _ = Describe("Test RUN mount from stage resolution", func() {
 		Expect(mounts[0].From).To(Equal(resolvedOsImage))
 	})
 
-	It("Test leaves external --mount from=<image> references unchanged", func(ctx SpecContext) {
+	It("leaves external --mount from=<image> references unchanged", func(ctx SpecContext) {
 		stg := newRunStage(
 			parseRunCommand("FROM alpine\nRUN --mount=type=bind,from=alpine:3.19,source=/etc,target=/etc true\n"),
 			nil,
@@ -99,7 +99,7 @@ var _ = Describe("Test RUN mount from stage resolution", func() {
 		return digest
 	}
 
-	It("Test digest reflects the resolved stage image and is stable for identical inputs", func(ctx SpecContext) {
+	It("has a stable digest that reflects the resolved stage image", func(ctx SpecContext) {
 		digest1 := digestFor(ctx, resolvedOsImage)
 		digest2 := digestFor(ctx, resolvedOsImage)
 		Expect(digest1).To(Equal(digest2))

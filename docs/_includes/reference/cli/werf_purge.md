@@ -48,6 +48,10 @@ werf purge [options]
             and to get manifests before making requests to the primary repo.
             Also, can be specified with $WERF_CACHE_REPO_* (e.g. $WERF_CACHE_REPO_1=...,            
             $WERF_CACHE_REPO_2=...)
+      --cleanup-report-path=""
+            Change cleanup report path (by default $WERF_CLEANUP_REPORT_PATH or                     
+            ".werf-cleanup-report.json" if not set). Extension must be .json for JSON format. If    
+            extension not specified, then .json is used
       --config=""
             Use custom configuration file (default $WERF_CONFIG or werf.yaml in the project         
             directory)
@@ -177,6 +181,9 @@ werf purge [options]
             repo Harbor username (default $WERF_REPO_HARBOR_USERNAME)
       --repo-quay-token=""
             repo quay.io token (default $WERF_REPO_QUAY_TOKEN)
+      --save-cleanup-report=false
+            Save cleanup report (by default $WERF_SAVE_CLEANUP_REPORT or false). Its path           
+            configured with --cleanup-report-path
       --secondary-repo=[]
             Specify one or multiple secondary read-only repos with images that will be used as a    
             cache.
