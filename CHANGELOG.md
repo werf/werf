@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.77.0](https://github.com/werf/werf/compare/v2.76.0...v2.77.0) (2026-08-10)
+
+
+### Features
+
+* **cleanup:** add registry-side cleanup report ([#7806](https://github.com/werf/werf/issues/7806)) ([8a6250b](https://github.com/werf/werf/commit/8a6250b3dbd5f4406a38fe4c42630a6244da8f14))
+
 ## [2.76.0](https://github.com/werf/werf/compare/v2.75.4...v2.76.0) (2026-08-10)
 
 
