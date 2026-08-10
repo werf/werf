@@ -283,15 +283,14 @@ The report of the command above looks as follows:
     { "type": "imageMetadata", "imageName": "backend", "stageID": "ff00112233445566778899aabbccddeeff00112233445566778899aa-1748001122334", "commit": "a3f1c92e4b7d8056f1a2b3c4d5e6f7a8b9c0d1e2" },
     { "type": "imageMetadata", "id": "8c4a1f9b2d7e5a3c", "stageID": "ff00112233445566778899aabbccddeeff00112233445566778899aa-1748001122334", "commit": "a3f1c92e4b7d8056f1a2b3c4d5e6f7a8b9c0d1e2" },
     { "type": "managedImage", "imageName": "frontend" },
-    { "type": "importMetadata", "id": "8c4a1f9b2d7e5a3c" },
-    { "type": "artifact", "tag": "sha256-a3f1c92e8b7d6054" }
+    { "type": "importMetadata", "id": "8c4a1f9b2d7e5a3c" }
   ]
 }
 ```
 
 The `dryRun` field tells a planned cleanup from an actual one: a dry run reports exactly what a real run would have deleted, without deleting it.
 
-Every item carries a `type`. The set currently in use is `stage`, `finalStage`, `customTag`, `rejectedStage`, `rejectedStageMarker`, `imageMetadata`, `managedImage`, `importMetadata` and `artifact`, but it is **extensible**: new object kinds may be added, so a consumer must select the types it knows (`select(.type == "stage")`) rather than assume the set is closed. This is also why a keep-list has to select `stage` items instead of reading every `tag`.
+Every item carries a `type`. The set currently in use is `stage`, `finalStage`, `customTag`, `rejectedStage`, `rejectedStageMarker`, `imageMetadata`, `managedImage` and `importMetadata`, but it is **extensible**: new object kinds may be added, so a consumer must select the types it knows (`select(.type == "stage")`) rather than assume the set is closed. This is also why a keep-list has to select `stage` items instead of reading every `tag`.
 
 Only objects that were really deleted get into `deleted`. A deletion that failed is reported as a warning in the log and is left out of the report, together with any follow-up work it cancelled — for example, when a custom tag linked to a rejected stage cannot be deleted, the rejected marker is deliberately kept for the next cleanup to retry, and neither appears in the report.
 

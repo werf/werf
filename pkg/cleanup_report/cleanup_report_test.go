@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestAI_ReportJSON(t *testing.T) {
+func TestReportJSON(t *testing.T) {
 	ctx := context.Background()
 
 	report := NewReport(ctx, "cleanup", true, "registry.mydomain.com/myproject/werf", NewReportOptions{FinalRepo: "registry.mydomain.com/myproject/werf-final"})
@@ -32,7 +32,6 @@ func TestAI_ReportJSON(t *testing.T) {
 		Item{Type: ItemTypeImageMetadata, ImageName: "backend", StageID: "ff00112233445566778899aabbccddeeff00112233445566778899aa-1748001122334", Commit: "a3f1c92e4b7d8056f1a2b3c4d5e6f7a8b9c0d1e2"},
 		Item{Type: ItemTypeManagedImage, ImageName: "frontend"},
 		Item{Type: ItemTypeImportMetadata, ID: "8c4a1f9b2d7e5a3c"},
-		Item{Type: ItemTypeArtifact, Tag: "fallback-a3f1c92e8b7d6054"},
 	)
 
 	path := filepath.Join(t.TempDir(), "report.json")
@@ -60,13 +59,12 @@ func TestAI_ReportJSON(t *testing.T) {
     { "type": "rejectedStageMarker", "tag": "0bad0bad0bad0bad0bad0bad0bad0bad0bad0bad0bad0bad0bad0bad0-1747999888777" },
     { "type": "imageMetadata",       "imageName": "backend", "stageID": "ff00112233445566778899aabbccddeeff00112233445566778899aa-1748001122334", "commit": "a3f1c92e4b7d8056f1a2b3c4d5e6f7a8b9c0d1e2" },
     { "type": "managedImage",        "imageName": "frontend" },
-    { "type": "importMetadata",      "id": "8c4a1f9b2d7e5a3c" },
-    { "type": "artifact",            "tag": "fallback-a3f1c92e8b7d6054" }
+    { "type": "importMetadata",      "id": "8c4a1f9b2d7e5a3c" }
   ]
 }`, string(data))
 }
 
-func TestAI_ReportHasNoEnvelopeOrMetaRepo(t *testing.T) {
+func TestReportHasNoEnvelopeOrMetaRepo(t *testing.T) {
 	ctx := context.Background()
 
 	path := filepath.Join(t.TempDir(), "report.json")
@@ -80,7 +78,7 @@ func TestAI_ReportHasNoEnvelopeOrMetaRepo(t *testing.T) {
 	}
 }
 
-func TestAI_ReportEmptyListsAndOmittedFinalRepo(t *testing.T) {
+func TestReportEmptyListsAndOmittedFinalRepo(t *testing.T) {
 	ctx := context.Background()
 
 	path := filepath.Join(t.TempDir(), "report.json")
@@ -98,7 +96,7 @@ func TestAI_ReportEmptyListsAndOmittedFinalRepo(t *testing.T) {
 }`, string(data))
 }
 
-func TestAI_NilReportIsNoOp(t *testing.T) {
+func TestNilReportIsNoOp(t *testing.T) {
 	ctx := context.Background()
 
 	var report *Report
@@ -114,7 +112,7 @@ func TestAI_NilReportIsNoOp(t *testing.T) {
 	assert.NoFileExists(t, path)
 }
 
-func TestAI_ConcurrentAdd(t *testing.T) {
+func TestConcurrentAdd(t *testing.T) {
 	ctx := context.Background()
 
 	report := NewReport(ctx, "cleanup", false, "example.com/repo", NewReportOptions{})
@@ -139,7 +137,7 @@ func TestAI_ConcurrentAdd(t *testing.T) {
 	assert.Len(t, report.Deleted, workers*perWorker)
 }
 
-func TestAI_SaveReplacesPreviousReportAtomically(t *testing.T) {
+func TestSaveReplacesPreviousReportAtomically(t *testing.T) {
 	ctx := context.Background()
 
 	dir := t.TempDir()
@@ -165,7 +163,7 @@ func TestAI_SaveReplacesPreviousReportAtomically(t *testing.T) {
 	assert.Len(t, entries, 1, "the temporary sibling must not be left behind")
 }
 
-func TestAI_SaveFailsLeavingDestinationAndNoTempBehind(t *testing.T) {
+func TestSaveFailsLeavingDestinationAndNoTempBehind(t *testing.T) {
 	ctx := context.Background()
 
 	dir := t.TempDir()
@@ -191,7 +189,7 @@ func TestAI_SaveFailsLeavingDestinationAndNoTempBehind(t *testing.T) {
 	assert.Len(t, entries, 1, "the temporary sibling must not be left behind")
 }
 
-func TestAI_CheckWritable(t *testing.T) {
+func TestCheckWritable(t *testing.T) {
 	ctx := context.Background()
 
 	dir := t.TempDir()
@@ -206,7 +204,7 @@ func TestAI_CheckWritable(t *testing.T) {
 	assert.Contains(t, err.Error(), "is not writable")
 }
 
-func TestAI_CheckWritableRejectsDirectory(t *testing.T) {
+func TestCheckWritableRejectsDirectory(t *testing.T) {
 	ctx := context.Background()
 
 	destination := filepath.Join(t.TempDir(), "report.json")

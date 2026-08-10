@@ -20,7 +20,6 @@ const (
 	ItemTypeImageMetadata       ItemType = "imageMetadata"
 	ItemTypeManagedImage        ItemType = "managedImage"
 	ItemTypeImportMetadata      ItemType = "importMetadata"
-	ItemTypeArtifact            ItemType = "artifact"
 )
 
 type Item struct {

@@ -282,15 +282,14 @@ jq -r '.kept[] | select(.type == "stage") | .tag' .werf-cleanup-report.json > ke
     { "type": "imageMetadata", "imageName": "backend", "stageID": "ff00112233445566778899aabbccddeeff00112233445566778899aa-1748001122334", "commit": "a3f1c92e4b7d8056f1a2b3c4d5e6f7a8b9c0d1e2" },
     { "type": "imageMetadata", "id": "8c4a1f9b2d7e5a3c", "stageID": "ff00112233445566778899aabbccddeeff00112233445566778899aa-1748001122334", "commit": "a3f1c92e4b7d8056f1a2b3c4d5e6f7a8b9c0d1e2" },
     { "type": "managedImage", "imageName": "frontend" },
-    { "type": "importMetadata", "id": "8c4a1f9b2d7e5a3c" },
-    { "type": "artifact", "tag": "sha256-a3f1c92e8b7d6054" }
+    { "type": "importMetadata", "id": "8c4a1f9b2d7e5a3c" }
   ]
 }
 ```
 
 Поле `dryRun` отличает запланированную очистку от фактической: при dry-run отчёт содержит ровно то, что удалил бы реальный запуск, ничего при этом не удаляя.
 
-Каждый элемент содержит поле `type`. Сейчас используются значения `stage`, `finalStage`, `customTag`, `rejectedStage`, `rejectedStageMarker`, `imageMetadata`, `managedImage`, `importMetadata` и `artifact`, но набор **расширяемый**: могут добавляться новые виды объектов, поэтому потребитель должен выбирать известные ему типы (`select(.type == "stage")`), а не считать набор закрытым. По той же причине keep-list формируется выборкой элементов `stage`, а не чтением всех `tag`.
+Каждый элемент содержит поле `type`. Сейчас используются значения `stage`, `finalStage`, `customTag`, `rejectedStage`, `rejectedStageMarker`, `imageMetadata`, `managedImage` и `importMetadata`, но набор **расширяемый**: могут добавляться новые виды объектов, поэтому потребитель должен выбирать известные ему типы (`select(.type == "stage")`), а не считать набор закрытым. По той же причине keep-list формируется выборкой элементов `stage`, а не чтением всех `tag`.
 
 В `deleted` попадают только реально удалённые объекты. Неудавшееся удаление выводится в лог как предупреждение и в отчёт не попадает — вместе с работой, которая из-за него была отменена: например, если не удалось удалить пользовательский тег, связанный с отклонённой стадией, маркер отклонения сознательно остаётся на месте для повторной попытки при следующей очистке, и ни то, ни другое в отчёте не появится.
 

@@ -14,7 +14,7 @@ func newTestStageDesc(digest string, creationTs int64) *image.StageDesc {
 	return &image.StageDesc{StageID: stageID, Info: &image.Info{Tag: stageID.String()}}
 }
 
-func TestAI_GetFinalProtectedStageDescSetByReason(t *testing.T) {
+func TestGetFinalProtectedStageDescSetByReason(t *testing.T) {
 	manager := NewManager()
 
 	finalStageDesc := newTestStageDesc("finaldigest", 1749456960043)
@@ -40,7 +40,7 @@ func TestAI_GetFinalProtectedStageDescSetByReason(t *testing.T) {
 	assert.Equal(t, []*image.StageDesc{nonFinalStageDesc}, nonFinalByReason[ProtectionReasonGitPolicy].ToSlice())
 }
 
-func TestAI_GetFinalProtectedStageDescSetByReasonEmptyWithoutProtection(t *testing.T) {
+func TestGetFinalProtectedStageDescSetByReasonEmptyWithoutProtection(t *testing.T) {
 	manager := NewManager()
 	manager.finalManagedStageDescSet = newManagedStageDescSet(image.NewStageDescSet(newTestStageDesc("finaldigest", 1749456960043)))
 
