@@ -301,7 +301,7 @@ The order of `kept` and `deleted` is not significant — deletions run in parall
 
 The report is written even when the cleanup fails partway, so it always describes the deletions that actually happened; the command then exits non-zero. Writing is atomic in the sense that a reader never observes a partially written report and a failed write leaves the previous file untouched. If the report path is not writable, the command fails before deleting anything rather than deleting objects it could not record.
 
-The same options are supported by `werf purge`, and by `werf host purge` when it is called with `--project-name`.
+The same options are supported by `werf purge`, and by `werf host purge` when it is called with `--project-name`. Both delete everything, so `kept` is always empty in their reports and `command` is `purge` and `host purge` respectively. `werf host cleanup` writes no report: it cleans the host's local storage and never touches the container registry.
 
 ### Generate keep-list from tags marked to be kept / deleted
 
