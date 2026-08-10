@@ -1,5 +1,27 @@
 # Changelog
 
+## [2.76.0](https://github.com/werf/werf/compare/v2.75.4...v2.76.0) (2026-08-10)
+
+
+### Features
+
+* add case-insensitive-condition-tracking feature gate ([#7801](https://github.com/werf/werf/issues/7801)) ([8043316](https://github.com/werf/werf/commit/8043316e0dc688d145627adb035254880fba309a))
+* **build:** show low-level operations time summary in debug mode ([#7675](https://github.com/werf/werf/issues/7675)) ([4f65aef](https://github.com/werf/werf/commit/4f65aefeafd28e5692ec4d37f7a9e9f69d65c5d3))
+* **skills:** prevent agents publishing stale claims ([f8d938a](https://github.com/werf/werf/commit/f8d938aec732b43c6509abbb972ac60c8a198814))
+* **skills:** prevent agents publishing stale claims ([#7780](https://github.com/werf/werf/issues/7780)) ([78b4ac7](https://github.com/werf/werf/commit/78b4ac78b8d621c04d8eee2d10067cf7c1813100))
+* **skills:** run challenge checks for risky reviews ([#7781](https://github.com/werf/werf/issues/7781)) ([d16b172](https://github.com/werf/werf/commit/d16b172013995186b30276788ef72a09338d35f4))
+
+
+### Bug Fixes
+
+* **build, buildah:** prevent parallel recovery failures ([#7774](https://github.com/werf/werf/issues/7774)) ([fd5758d](https://github.com/werf/werf/commit/fd5758dcfeed86ed3c2e245f4630daf68299896f))
+* **build:** avoid panicking on late worker logs ([#7785](https://github.com/werf/werf/issues/7785)) ([4a89693](https://github.com/werf/werf/commit/4a89693e2261a60c44bb7c1023f2a1b4647bbd51))
+* **ci:** stop rootless buildah CI builds failing ([#7782](https://github.com/werf/werf/issues/7782)) ([990bdab](https://github.com/werf/werf/commit/990bdabc9fa6eaad5bbf4122bdf7c001e27f1904))
+* **ci:** stop rootless buildah e2e builds failing ([#7783](https://github.com/werf/werf/issues/7783)) ([9e37b96](https://github.com/werf/werf/commit/9e37b96c4d0fbbfcabb2926bc0cb4c0faa13c59e))
+* **docker:** prevent race reports during Docker builds ([#7777](https://github.com/werf/werf/issues/7777)) ([6d6af8d](https://github.com/werf/werf/commit/6d6af8d02be5f1a58e5dc8806c7e64d5c9f150c6))
+* optimize `release get` ([8043316](https://github.com/werf/werf/commit/8043316e0dc688d145627adb035254880fba309a))
+* **release:** preserve main release version state ([#7790](https://github.com/werf/werf/issues/7790)) ([a0603b2](https://github.com/werf/werf/commit/a0603b294c829abb510f938bd7817a8314bc144c))
+
 ## [2.75.4](https://github.com/werf/werf/compare/v2.75.3...v2.75.4) (2026-08-06)
 
 
