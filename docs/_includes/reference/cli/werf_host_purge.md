@@ -24,6 +24,10 @@ werf host purge [options]
 {{ header }} Options
 
 ```shell
+      --cleanup-report-path=""
+            Change cleanup report path (by default $WERF_CLEANUP_REPORT_PATH or                     
+            ".werf-cleanup-report.json" if not set). Extension must be .json for JSON format. If    
+            extension not specified, then .json is used
       --container-registry-mirror=[]
             (Buildah-only) Use specified mirrors for docker.io
       --dev=false
@@ -79,6 +83,9 @@ werf host purge [options]
             ($WERF_PLATFORM or $DOCKER_DEFAULT_PLATFORM by default)
   -N, --project-name=""
             Set a specific project name (default $WERF_PROJECT_NAME)
+      --save-cleanup-report=false
+            Save cleanup report (by default $WERF_SAVE_CLEANUP_REPORT or false). Its path           
+            configured with --cleanup-report-path
       --skip-tls-verify-registry=false
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)

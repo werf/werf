@@ -244,6 +244,55 @@ werf uses the _GitLab container registry API_ or _Docker Registry API_ (dependin
 
 ## Saving the result of work
 
+### Cleanup report
+
+The `--save-cleanup-report` option makes `werf cleanup` write a machine-readable JSON report of what was kept and what was deleted. The report path is `.werf-cleanup-report.json` by default and is configured with `--cleanup-report-path` (the extension must be `.json`).
+
+Generating a keep-list then takes a single `jq` call:
+
+```bash
+werf cleanup --repo registry.mydomain.com/app --dry-run --save-cleanup-report
+jq -r '.kept[] | select(.type == "stage") | .tag' .werf-cleanup-report.json > keep-list.txt
+```
+
+The report of the command above looks as follows:
+
+```json
+{
+  "command": "cleanup",
+  "dryRun": true,
+  "repo": "registry.mydomain.com/app",
+  "finalRepo": "registry.mydomain.com/app-final",
+  "kept": [
+    { "type": "stage", "tag": "1e09fb543b4ef442ce5ed36bfeee6b27866bf1e68541db5995962b24-1749456960043", "reason": "used in Kubernetes" },
+    { "type": "stage", "tag": "8c4a1f9b2d7e5a3c6b0d9e8f7a2c1b4d3e6f5a8c9b0d1e2f3a4b5c6d-1749390012345", "reason": "git policy" },
+    { "type": "customTag", "tag": "my-custom-tag" }
+  ],
+  "deleted": [
+    { "type": "stage", "tag": "ff00112233445566778899aabbccddeeff00112233445566778899aa-1748001122334" },
+    { "type": "customTag", "tag": "review-1234" },
+    { "type": "imageMetadata", "imageName": "backend", "stageID": "ff00112233445566778899aabbccddeeff00112233445566778899aa-1748001122334", "commit": "a3f1c92e4b7d8056f1a2b3c4d5e6f7a8b9c0d1e2" },
+    { "type": "managedImage", "imageName": "frontend" },
+    { "type": "importMetadata", "id": "8c4a1f9b2d7e5a3c" },
+    { "type": "artifact", "tag": "sha256-a3f1c92e8b7d6054" }
+  ]
+}
+```
+
+The `dryRun` field tells a planned cleanup from an actual one: a dry run reports exactly what a real run would have deleted, without deleting it.
+
+Every item carries a `type`. The set currently in use is `stage`, `finalStage`, `customTag`, `rejectedStage`, `rejectedStageMarker`, `imageMetadata`, `managedImage`, `importMetadata` and `artifact`, but it is **extensible**: new object kinds may be added, so a consumer must select the types it knows (`select(.type == "stage")`) rather than assume the set is closed. This is also why a keep-list has to select `stage` items instead of reading every `tag`.
+
+Only objects that were really deleted get into `deleted`. A deletion that failed is reported as a warning in the log and is left out of the report, together with any follow-up work it cancelled — for example, when a custom tag linked to a rejected stage cannot be deleted, the rejected marker is deliberately kept for the next cleanup to retry, and neither appears in the report.
+
+`repo` is the stages storage the cleanup ran against, and `finalRepo` appears when a final repository is configured. Which address an item was deleted from follows from its `type`: `finalStage` items live in `finalRepo`, and every other type in `repo`.
+
+The order of `kept` and `deleted` is not significant — deletions run in parallel, so the arrays are unordered and must not be compared positionally.
+
+The report is written even when the cleanup fails partway, so it always describes the deletions that actually happened; the command then exits non-zero. Writing is atomic in the sense that a reader never observes a partially written report and a failed write leaves the previous file untouched. If the report path is not writable, the command fails before deleting anything rather than deleting objects it could not record.
+
+The same options are supported by `werf purge`, and by `werf host purge` when it is called with `--project-name`.
+
 During operation, `werf cleanup` highlights tags using colors to indicate their status:
 
 + <span style="color: green;">Green color</span> — tag is kept.
