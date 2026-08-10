@@ -456,7 +456,7 @@ require (
 
 replace (
 	github.com/deislabs/oras => github.com/werf/3p-oras v0.9.1-0.20260408144000-3b8c77eb09e8 // used by bundles, not maintained
-	github.com/docker/buildx => github.com/werf/3p-buildx v0.0.0-20260807135054-ec8211f6fecb // temporary race fix; remove after docker/buildx#4003 merges
+	github.com/docker/buildx => github.com/werf/3p-buildx v0.0.0-20260810132822-84b2b5a524c2 // temporary race fix; remove after docker/buildx#4007 merges
 	github.com/spf13/cobra => github.com/werf/3p-cobra v0.0.0-20260403075225-552c82797324 // adds EnableErrorOnUnknownSubcommand, not yet in upstream
 	oras.land/oras-go => github.com/werf/3p-oras-go v1.2.8-0.20260408140625-72dd516ce0aa // used by bundles, not maintained
 )
