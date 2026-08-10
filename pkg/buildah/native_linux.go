@@ -418,6 +418,7 @@ func (b *NativeBuildah) BuildFromDockerfile(ctx context.Context, dockerfile stri
 		return "", err
 	}
 
+	commonBuildOpts := b.defaultCommonBuildOptions
 	buildOpts := define.BuildOptions{
 		Isolation:               define.Isolation(b.Isolation),
 		Args:                    opts.BuildArgs,
@@ -426,7 +427,7 @@ func (b *NativeBuildah) BuildFromDockerfile(ctx context.Context, dockerfile stri
 		OutputFormat:            buildah.Dockerv2ImageManifest,
 		SystemContext:           sysCtx,
 		ConfigureNetwork:        define.NetworkEnabled,
-		CommonBuildOpts:         &b.defaultCommonBuildOptions,
+		CommonBuildOpts:         &commonBuildOpts,
 		Target:                  opts.Target,
 		Platforms:               targetPlatforms,
 		MaxPullPushRetries:      MaxPullPushRetries,
@@ -557,6 +558,7 @@ func (b *NativeBuildah) FromCommand(ctx context.Context, container, image string
 		return "", err
 	}
 
+	commonBuildOpts := b.defaultCommonBuildOptions
 	builder, err := buildah.NewBuilder(ctx, b.Store, buildah.BuilderOptions{
 		FromImage:           image,
 		Container:           container,
@@ -565,7 +567,7 @@ func (b *NativeBuildah) FromCommand(ctx context.Context, container, image string
 		SystemContext:       sysCtx,
 		Isolation:           define.Isolation(b.Isolation),
 		ConfigureNetwork:    define.NetworkEnabled,
-		CommonBuildOpts:     &b.defaultCommonBuildOptions,
+		CommonBuildOpts:     &commonBuildOpts,
 		Format:              buildah.Dockerv2ImageManifest,
 		MaxPullRetries:      MaxPullPushRetries,
 		PullRetryDelay:      PullPushRetryDelay,
