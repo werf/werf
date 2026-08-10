@@ -12,6 +12,9 @@ on:
       coverage:
         default: false
         type: string
+      raceDetectorEnabled:
+        default: false
+        type: string
       linuxAmd64Runner:
         default: ubuntu-22.04
         type: string
@@ -35,7 +38,7 @@ jobs:
         os:
           - ${{ inputs.linuxAmd64Runner }}
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 60
+    timeout-minutes: 120
     steps:
       - name: Install werf build dependencies
         run: sudo apt-get install -y libbtrfs-dev slirp4netns
@@ -60,6 +63,7 @@ jobs:
         uses: ./.github/actions/set-up-prebuilt-werf-test-binary
         with:
           coverage: ${{ inputs.coverage }}
+          raceDetectorEnabled: ${{ inputs.raceDetectorEnabled }}
 
       - name: Set up git config
         uses: ./.github/actions/set-up-git-config

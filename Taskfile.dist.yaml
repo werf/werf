@@ -338,6 +338,7 @@ tasks:
         vars:
           outputDir: '{{.outputDir | default "./bin"}}'
           extraGoBuildArgs: "-cover -coverpkg=./..."
+          raceDetectorEnabled: '{{.raceDetectorEnabled | default "false"}}'
 
   _test:go-test:cgo:
     cmds:

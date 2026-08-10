@@ -29,6 +29,7 @@ jobs:
     uses: ./.github/workflows/_test_e2e_per-k8s-version.yml
     with:
       scope: simple
+      raceDetectorEnabled: true
       coverage: true
     secrets: inherit
 
@@ -38,6 +39,7 @@ jobs:
     with:
       scope: complex
       timeout: 120
+      raceDetectorEnabled: true
       coverage: true
     secrets: inherit
 
@@ -46,6 +48,7 @@ jobs:
     uses: ./.github/workflows/_test_e2e_per-k8s-version.yml
     with:
       scope: extra
+      raceDetectorEnabled: true
       coverage: true
     secrets: inherit
 
@@ -56,6 +59,7 @@ jobs:
       packages: test/legacy_e2e/suites
       excludePackages: test/legacy_e2e/suites/deploy,test/legacy_e2e/suites/cleanup_after_converge,test/legacy_e2e/suites/helm/deploy_rollback,test/legacy_e2e/suites/bundles,test/legacy_e2e/suites/build/stapel_image/git,test/legacy_e2e/suites/docs
       fetchDepth: 0 # Git history as fixtures for tests.
+      raceDetectorEnabled: true
       coverage: true
     secrets: inherit
 
@@ -64,6 +68,7 @@ jobs:
     uses: ./.github/workflows/_test_integration_regular.yml
     with:
       packages: test/legacy_e2e/suites/build/stapel_image/git
+      raceDetectorEnabled: true
       coverage: true
     secrets: inherit
 
@@ -71,6 +76,7 @@ jobs:
     needs: gate
     uses: ./.github/workflows/_test_integration_per-k8s-version.yml
     with:
+      raceDetectorEnabled: true
       coverage: true
     secrets: inherit
 
@@ -78,6 +84,7 @@ jobs:
     needs: gate
     uses: ./.github/workflows/_test_integration_per-container-registry.yml
     with:
+      raceDetectorEnabled: true
       coverage: true
     secrets: inherit
 
@@ -85,6 +92,7 @@ jobs:
     needs: gate
     uses: ./.github/workflows/_test_integration_per-k8s-version-and-container-registry.yml
     with:
+      raceDetectorEnabled: true
       coverage: true
     secrets: inherit
 
