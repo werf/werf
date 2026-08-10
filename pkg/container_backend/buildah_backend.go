@@ -392,6 +392,14 @@ func (backend *BuildahBackend) CalculateDependencyImportChecksum(ctx context.Con
 		return "", err
 	}
 
+	return calculateDependencyImportChecksum(ctx, fromPath, dependencyImport)
+}
+
+// calculateDependencyImportChecksum hashes the files under fromPath (the already resolved
+// on-disk location of dependencyImport.FromPath), keying every entry by the configured
+// FromPath so the checksum does not depend on where the container root is mounted or on
+// symlink resolution of the parent directories.
+func calculateDependencyImportChecksum(ctx context.Context, fromPath string, dependencyImport DependencyImportSpec) (string, error) {
 	pathMatcher := path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{
 		BasePath:     fromPath,
 		IncludeGlobs: dependencyImport.IncludePaths,
@@ -400,7 +408,7 @@ func (backend *BuildahBackend) CalculateDependencyImportChecksum(ctx context.Con
 
 	var files []string
 
-	err = filepath.Walk(fromPath, func(path string, f os.FileInfo, err error) error {
+	err := filepath.Walk(fromPath, func(path string, f os.FileInfo, err error) error {
 		if err != nil {
 			return fmt.Errorf("error accessing %s: %w", path, err)
 		}
