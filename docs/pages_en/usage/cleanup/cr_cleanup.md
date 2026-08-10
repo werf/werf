@@ -244,6 +244,15 @@ werf uses the _GitLab container registry API_ or _Docker Registry API_ (dependin
 
 ## Saving the result of work
 
+During operation, `werf cleanup` highlights tags using colors to indicate their status:
+
++ <span style="color: green;">Green color</span> — tag is kept.
++ <span style="color: red;">Red color</span> — tag is deleted.
+
+This color coding can be useful for post-processing — for example, to analyze what would be deleted or to generate a keep-list in isolated environments.
+
+> The `--dry-run` option allows you to simulate the cleanup process without actually deleting anything. It’s useful for previewing which tags would be deleted or kept.
+
 ### Cleanup report
 
 The `--save-cleanup-report` option makes `werf cleanup` write a machine-readable JSON report of what was kept and what was deleted. The report path is `.werf-cleanup-report.json` by default and is configured with `--cleanup-report-path` (the extension must be `.json`).
@@ -272,6 +281,7 @@ The report of the command above looks as follows:
     { "type": "stage", "tag": "ff00112233445566778899aabbccddeeff00112233445566778899aa-1748001122334" },
     { "type": "customTag", "tag": "review-1234" },
     { "type": "imageMetadata", "imageName": "backend", "stageID": "ff00112233445566778899aabbccddeeff00112233445566778899aa-1748001122334", "commit": "a3f1c92e4b7d8056f1a2b3c4d5e6f7a8b9c0d1e2" },
+    { "type": "imageMetadata", "id": "8c4a1f9b2d7e5a3c", "stageID": "ff00112233445566778899aabbccddeeff00112233445566778899aa-1748001122334", "commit": "a3f1c92e4b7d8056f1a2b3c4d5e6f7a8b9c0d1e2" },
     { "type": "managedImage", "imageName": "frontend" },
     { "type": "importMetadata", "id": "8c4a1f9b2d7e5a3c" },
     { "type": "artifact", "tag": "sha256-a3f1c92e8b7d6054" }
@@ -285,6 +295,8 @@ Every item carries a `type`. The set currently in use is `stage`, `finalStage`, 
 
 Only objects that were really deleted get into `deleted`. A deletion that failed is reported as a warning in the log and is left out of the report, together with any follow-up work it cancelled — for example, when a custom tag linked to a rejected stage cannot be deleted, the rejected marker is deliberately kept for the next cleanup to retry, and neither appears in the report.
 
+An `imageMetadata` item names its image in `imageName`, except when the metadata belongs to an image that is no longer described in `werf.yaml` — werf cannot recover a name in that case, so the item carries the internal metadata identifier in `id` instead and has no `imageName`. `werf purge` deletes all metadata without consulting `werf.yaml`, so its report uses `id` throughout.
+
 `repo` is the stages storage the cleanup ran against, and `finalRepo` appears when a final repository is configured. Which address an item was deleted from follows from its `type`: `finalStage` items live in `finalRepo`, and every other type in `repo`.
 
 The order of `kept` and `deleted` is not significant — deletions run in parallel, so the arrays are unordered and must not be compared positionally.
@@ -292,15 +304,6 @@ The order of `kept` and `deleted` is not significant — deletions run in parall
 The report is written even when the cleanup fails partway, so it always describes the deletions that actually happened; the command then exits non-zero. Writing is atomic in the sense that a reader never observes a partially written report and a failed write leaves the previous file untouched. If the report path is not writable, the command fails before deleting anything rather than deleting objects it could not record.
 
 The same options are supported by `werf purge`, and by `werf host purge` when it is called with `--project-name`.
-
-During operation, `werf cleanup` highlights tags using colors to indicate their status:
-
-+ <span style="color: green;">Green color</span> — tag is kept.
-+ <span style="color: red;">Red color</span> — tag is deleted.
-
-This color coding can be useful for post-processing — for example, to analyze what would be deleted or to generate a keep-list in isolated environments.
-
-> The `--dry-run` option allows you to simulate the cleanup process without actually deleting anything. It’s useful for previewing which tags would be deleted or kept.
 
 ### Generate keep-list from tags marked to be kept / deleted
 
