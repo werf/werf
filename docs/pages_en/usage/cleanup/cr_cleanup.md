@@ -242,11 +242,7 @@ werf uses the _GitLab container registry API_ or _Docker Registry API_ (dependin
 >
 > If these conditions are not met (for example, because of cross-project restrictions or an insufficient role), use a dedicated Project/Personal Access Token with the `api` scope.
 
-## Saving the result of work
-
-> The `--dry-run` option allows you to simulate the cleanup process without actually deleting anything. It’s useful for previewing which tags would be deleted or kept.
-
-### Cleanup report
+## Cleanup report
 
 The `--save-cleanup-report` option makes `werf cleanup` write a machine-readable JSON report of what was kept and what was deleted. The report path is `.werf-cleanup-report.json` by default and is configured with `--cleanup-report-path` (the extension must be `.json`).
 
@@ -282,13 +278,24 @@ The report of the command above looks as follows:
 
 The `dryRun` field tells a planned cleanup from an actual one: a dry run reports exactly what a real run would have deleted, without deleting it.
 
+> The `--dry-run` option allows you to simulate the cleanup process without actually deleting anything. It’s useful for previewing which tags would be deleted or kept.
+
 Every item carries a `type`. The set currently in use is `stage`, `finalStage`, `customTag`, `rejectedStage`, `rejectedStageMarker`, `imageMetadata`, `managedImage` and `importMetadata`, but it is **extensible**: new object kinds may be added, so a consumer must select the types it knows (`select(.type == "stage")`) rather than assume the set is closed. This is also why a keep-list has to select `stage` items instead of reading every `tag`.
 
 Only objects that were really deleted get into `deleted`. A deletion that failed is reported as a warning in the log and is left out of the report, together with any follow-up work it cancelled — for example, when a custom tag linked to a rejected stage cannot be deleted, the rejected marker is deliberately kept for the next cleanup to retry, and neither appears in the report.
 
 An `imageMetadata` item names its image in `imageName`, except when the metadata belongs to an image that is no longer described in `werf.yaml` — werf cannot recover a name in that case, so the item carries the internal metadata identifier in `id` instead and has no `imageName`. `werf purge` deletes all metadata without consulting `werf.yaml`, so its report uses `id` throughout.
 
-`repo` is the stages storage the cleanup ran against, and `finalRepo` appears when a final repository is configured. Which address an item was deleted from follows from its `type`: `finalStage` items live in `finalRepo`, and every other type in `repo`.
+`repo` is the stages storage the cleanup ran against, and `finalRepo` appears when a final repository is configured.
+
+The address is not repeated on every item — it follows from `type`:
+
+| `type` | repository |
+| --- | --- |
+| `finalStage` | `finalRepo` |
+| everything else | `repo` |
+
+This mapping is normative: an item with no address of its own was deleted from `repo`.
 
 The order of `kept` and `deleted` is not significant — deletions run in parallel, so the arrays are unordered and must not be compared positionally.
 
