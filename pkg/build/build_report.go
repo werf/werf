@@ -18,6 +18,7 @@ import (
 	"github.com/werf/werf/v2/pkg/build/image"
 	"github.com/werf/werf/v2/pkg/config"
 	imagePkg "github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/opstats"
 	"github.com/werf/werf/v2/pkg/storage"
 	"github.com/werf/werf/v2/pkg/telemetry"
 )
@@ -72,11 +73,21 @@ type ReportStageRecord struct {
 	Commit            string
 }
 
+type ReportOperationRecord struct {
+	Count            int
+	TotalTimeSeconds float64
+	WallTimeSeconds  float64
+	AvgTimeSeconds   float64
+	MaxTimeSeconds   float64
+}
+
 type ImagesReport struct {
 	mux              sync.Mutex
 	Runtime          RuntimeInfo `json:"Runtime"`
 	Images           map[string]ReportImageRecord
 	ImagesByPlatform map[string]map[string]ReportImageRecord
+	Operations       map[string]ReportOperationRecord `json:"Operations,omitempty"`
+	StageCache       map[string]int                   `json:"StageCache,omitempty"`
 }
 
 func NewImagesReport() *ImagesReport {
@@ -90,6 +101,27 @@ func (report *ImagesReport) SetImageRecord(name string, imageRecord ReportImageR
 	report.mux.Lock()
 	defer report.mux.Unlock()
 	report.Images[name] = imageRecord
+}
+
+func (report *ImagesReport) SetOperationsSummary(operations []opstats.OperationSummary, events []opstats.EventSummary) {
+	report.mux.Lock()
+	defer report.mux.Unlock()
+
+	report.Operations = make(map[string]ReportOperationRecord, len(operations))
+	for _, s := range operations {
+		report.Operations[string(s.Operation)] = ReportOperationRecord{
+			Count:            s.Count,
+			TotalTimeSeconds: s.TotalTime.Seconds(),
+			WallTimeSeconds:  s.WallTime.Seconds(),
+			AvgTimeSeconds:   s.AvgTime.Seconds(),
+			MaxTimeSeconds:   s.MaxTime.Seconds(),
+		}
+	}
+
+	report.StageCache = make(map[string]int, len(events))
+	for _, e := range events {
+		report.StageCache[string(e.Event)] = e.Count
+	}
 }
 
 func (report *ImagesReport) SetImageByPlatformRecord(targetPlatform, name string, imageRecord ReportImageRecord) {
@@ -301,6 +333,10 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 	}
 
 	phase.ImagesReport.sendTelemetry(ctx)
+
+	if collector := opstats.FromContext(ctx); collector != nil {
+		phase.ImagesReport.SetOperationsSummary(collector.Summary(), collector.EventSummary())
+	}
 
 	if phase.ReportPath != "" {
 		var data []byte

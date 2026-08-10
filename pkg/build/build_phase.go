@@ -23,6 +23,7 @@ import (
 	"github.com/werf/werf/v2/pkg/docker_registry"
 	imagePkg "github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/logging"
+	"github.com/werf/werf/v2/pkg/opstats"
 	"github.com/werf/werf/v2/pkg/stapel"
 	"github.com/werf/werf/v2/pkg/storage"
 	"github.com/werf/werf/v2/pkg/storage/manager"
@@ -732,6 +733,7 @@ func (phase *BuildPhase) onImageStage(ctx context.Context, img *image.Image, stg
 	}
 
 	if foundSuitableStage {
+		phase.countStageCacheHit(ctx)
 		logboek.Context(ctx).Default().LogFHighlight("Use previously built image for %s\n", stg.LogDetailedName())
 		container_backend.LogImageInfo(ctx, stg.GetStageImage().Image, phase.getPrevNonEmptyStageImageSize(), img.ShouldLogPlatform(), phase.getLogImageNetwork(img))
 
@@ -888,6 +890,7 @@ ScanSecondaryStagesStorageList:
 				if err := atomicCopySuitableStageFromSecondaryStagesStorage(secondaryStageDesc, secondaryStagesStorage); err != nil {
 					return false, fmt.Errorf("unable to copy suitable stage %s from secondary stages storage %s: %w", secondaryStageDesc.StageID.String(), secondaryStagesStorage.String(), err)
 				}
+				opstats.CountEvent(ctx, opstats.EventStageCacheHitSecondary)
 				foundSuitableStage = true
 				break ScanSecondaryStagesStorageList
 			}
@@ -962,7 +965,10 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, s
 				options.Mute()
 			}
 		}).
-		Do(phase.Conveyor.GetStageDigestMutex(stg.GetDigest()).Lock)
+		Do(func() {
+			defer opstats.Observe(ctx, opstats.OperationStageDigestLockWait)()
+			phase.Conveyor.GetStageDigestMutex(stg.GetDigest()).Lock()
+		})
 
 	storageManager := phase.Conveyor.StorageManager
 	stageDescSet, err := storageManager.GetStageDescSetByDigestWithCache(ctx, stg.LogDetailedName(), stageDigest, phase.getPrevNonEmptyStageCreationTsForStage(stg))
@@ -1093,6 +1099,14 @@ func (phase *BuildPhase) emptyAnchorRebuildNote(ctx context.Context, img *image.
 	return " (no git changes; refreshing image content tag)"
 }
 
+func (phase *BuildPhase) countStageCacheHit(ctx context.Context) {
+	if _, isLocal := phase.Conveyor.StorageManager.GetStagesStorage().(*storage.LocalStagesStorage); isLocal {
+		opstats.CountEvent(ctx, opstats.EventStageCacheHitLocal)
+	} else {
+		opstats.CountEvent(ctx, opstats.EventStageCacheHitRepo)
+	}
+}
+
 func (phase *BuildPhase) buildStage(ctx context.Context, img *image.Image, stg stage.Interface) error {
 	if stg.IsBuildable() {
 		if !img.IsDockerfileImage && phase.Conveyor.UseLegacyStapelBuilder(phase.Conveyor.ContainerBackend) {
@@ -1171,6 +1185,8 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 				stg.LogDetailedName(), stg.GetDigest(), stageDesc.Info.Name,
 			)
 
+			phase.countStageCacheHit(ctx)
+
 			i := phase.Conveyor.GetOrCreateStageImage(stageDesc.Info.Name, phase.StagesIterator.GetPrevImage(img, stg), stg, img)
 			i.Image.SetStageDesc(stageDesc)
 			stg.SetStageImage(i)
@@ -1187,6 +1203,7 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 	}
 
 	// use newly built image
+	opstats.CountEvent(ctx, opstats.EventStageBuilt)
 	newStageImageName, stageCreationTs := phase.Conveyor.StorageManager.GenerateStageDescCreationTs(stg.GetDigest(), stageDescSet)
 	phase.Conveyor.UnsetStageImageByPlatform(stageImage.Image.Name(), stageImage.Image.GetTargetPlatform())
 	stageImage.Image.SetName(newStageImageName)

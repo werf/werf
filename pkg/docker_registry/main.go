@@ -43,10 +43,14 @@ func Init(ctx context.Context, insecureRegistry, skipTlsVerifyRegistry bool, reg
 }
 
 func API() GenericApiInterface {
-	if debugDockerRegistry() {
-		return NewDockerRegistryTracer(nil, generic)
+	var api GenericApiInterface = generic
+	if generic != nil {
+		api = newTimingGenericApi(generic)
 	}
-	return generic
+	if debugDockerRegistry() {
+		return NewDockerRegistryTracer(nil, api)
+	}
+	return api
 }
 
 func debugDockerRegistry() bool {

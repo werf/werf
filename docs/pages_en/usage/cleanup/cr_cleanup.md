@@ -242,31 +242,71 @@ werf uses the _GitLab container registry API_ or _Docker Registry API_ (dependin
 >
 > If these conditions are not met (for example, because of cross-project restrictions or an insufficient role), use a dedicated Project/Personal Access Token with the `api` scope.
 
-## Saving the result of work
+## Cleanup report
 
-During operation, `werf cleanup` highlights tags using colors to indicate their status:
+The `--save-cleanup-report` option makes `werf cleanup` write a machine-readable JSON report of what was kept and what was deleted. The report path is `.werf-cleanup-report.json` by default and is configured with `--cleanup-report-path` (the extension must be `.json`).
 
-+ <span style="color: green;">Green color</span> — tag is kept.
-+ <span style="color: red;">Red color</span> — tag is deleted.
+The report is plain JSON, so any tool can consume it — see [Generate keep-list](#generate-keep-list-from-tags-marked-to-be-kept--deleted) below:
 
-This color coding can be useful for post-processing — for example, to analyze what would be deleted or to generate a keep-list in isolated environments.
+```bash
+werf cleanup --repo registry.mydomain.com/app --final-repo registry.mydomain.com/app-final --dry-run --save-cleanup-report
+```
 
-> The `--dry-run` option allows you to simulate the cleanup process without actually deleting anything. It’s useful for previewing which tags would be deleted or kept.
+The report of the command above looks as follows:
+
+```json
+{
+  "command": "cleanup",
+  "dryRun": true,
+  "repo": "registry.mydomain.com/app",
+  "finalRepo": "registry.mydomain.com/app-final",
+  "kept": [
+    { "type": "stage", "tag": "1e09fb543b4ef442ce5ed36bfeee6b27866bf1e68541db5995962b24-1749456960043", "reason": "used in Kubernetes" },
+    { "type": "stage", "tag": "8c4a1f9b2d7e5a3c6b0d9e8f7a2c1b4d3e6f5a8c9b0d1e2f3a4b5c6d-1749390012345", "reason": "git policy" },
+    { "type": "customTag", "tag": "my-custom-tag" }
+  ],
+  "deleted": [
+    { "type": "stage", "tag": "ff00112233445566778899aabbccddeeff00112233445566778899aa-1748001122334" },
+    { "type": "customTag", "tag": "review-1234" },
+    { "type": "imageMetadata", "imageName": "backend", "stageID": "ff00112233445566778899aabbccddeeff00112233445566778899aa-1748001122334", "commit": "a3f1c92e4b7d8056f1a2b3c4d5e6f7a8b9c0d1e2" },
+    { "type": "imageMetadata", "id": "8c4a1f9b2d7e5a3c", "stageID": "ff00112233445566778899aabbccddeeff00112233445566778899aa-1748001122334", "commit": "a3f1c92e4b7d8056f1a2b3c4d5e6f7a8b9c0d1e2" },
+    { "type": "managedImage", "imageName": "frontend" },
+    { "type": "importMetadata", "id": "8c4a1f9b2d7e5a3c" },
+    { "type": "finalStage", "tag": "c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4-1748500000000" }
+  ]
+}
+```
+
+With `--dry-run` the report holds exactly what a real run would have deleted, without deleting it.
+
+The `type` set is **extensible**: today it is `stage`, `finalStage`, `customTag`, `rejectedStage`, `rejectedStageMarker`, `imageMetadata`, `managedImage` and `importMetadata`, and new kinds may appear. Select the types you know (`select(.type == "stage")`) rather than assume the set is closed.
+
+Only objects that were really deleted get into `deleted`: a failed deletion stays a warning in the log, together with the work it cancelled.
+
+An `imageMetadata` item names its image in `imageName`. When the image is no longer described in `werf.yaml` no name is recoverable and the item carries the internal `id` instead; `werf purge` never consults `werf.yaml`, so it always uses `id`.
+
+The address is not repeated on every item: `finalStage` was deleted from `finalRepo`, every other type from `repo`.
+
+The order of `kept` and `deleted` is undefined — deletions run in parallel.
+
+The report is written even when the cleanup fails partway, so it always describes the deletions that actually happened; the command then exits non-zero. A partially written report is never visible to a reader. If the path is not writable, the command fails before the first deletion.
+
+The same options are supported by `werf purge`. It deletes everything, so `kept` in its report is always empty.
 
 ### Generate keep-list from tags marked to be kept / deleted
 
-You can extract tags from the output of the `werf cleanup` command as follows:
+You can extract tags from the cleanup report as follows:
 
-- list of tags marked to be kept (green color):
+- list of tags marked to be kept:
 
   ```bash
-  werf cleanup --repo registry.mydomain.com/app --dry-run | grep -a -o -P '\x1b\[32m\K[^\x1b]+' > keep-list.txt
+  jq -r '.kept[] | select(.type == "stage") | .tag' .werf-cleanup-report.json > keep-list.txt
   ```
 
-- list of tags marked to be deleted (red color):
+- list of tags marked to be deleted:
 
   ```bash
-  werf cleanup --repo registry.mydomain.com/app --dry-run | grep -a -o -P '\x1b\[31m\K[^\x1b]+' > keep-list.txt
+  jq -r '.deleted[] | select(.type == "stage") | .tag' .werf-cleanup-report.json
   ```
 
 Then, use this list with the `--keep-list` option to ensure only the specified tags are preserved during cleanup:
