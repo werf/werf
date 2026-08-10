@@ -244,13 +244,6 @@ werf uses the _GitLab container registry API_ or _Docker Registry API_ (dependin
 
 ## Saving the result of work
 
-During operation, `werf cleanup` highlights tags using colors to indicate their status:
-
-+ <span style="color: green;">Green color</span> — tag is kept.
-+ <span style="color: red;">Red color</span> — tag is deleted.
-
-This color coding makes it easy to see at a glance what a run would delete. For post-processing — a keep-list, an audit — use the cleanup report described above rather than parsing colors.
-
 > The `--dry-run` option allows you to simulate the cleanup process without actually deleting anything. It’s useful for previewing which tags would be deleted or kept.
 
 ### Cleanup report
