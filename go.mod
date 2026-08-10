@@ -57,7 +57,7 @@ require (
 	github.com/werf/common-go v0.0.0-20260504183956-43da716392f7
 	github.com/werf/copy-recurse v0.3.1
 	github.com/werf/lockgate v0.2.0
-	github.com/werf/logboek v0.7.1
+	github.com/werf/logboek v0.7.2-0.20260810092153-80191977b868
 	github.com/werf/nelm v1.28.1-0.20260807104951-8b420d326cbc
 	go.opentelemetry.io/otel v1.42.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.42.0
@@ -456,6 +456,7 @@ require (
 
 replace (
 	github.com/deislabs/oras => github.com/werf/3p-oras v0.9.1-0.20260408144000-3b8c77eb09e8 // used by bundles, not maintained
+	github.com/docker/buildx => github.com/werf/3p-buildx v0.0.0-20260807135054-ec8211f6fecb // temporary race fix; remove after docker/buildx#4003 merges
 	github.com/spf13/cobra => github.com/werf/3p-cobra v0.0.0-20260403075225-552c82797324 // adds EnableErrorOnUnknownSubcommand, not yet in upstream
 	oras.land/oras-go => github.com/werf/3p-oras-go v1.2.8-0.20260408140625-72dd516ce0aa // used by bundles, not maintained
 )
