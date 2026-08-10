@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/werf/werf/v2/pkg/cleaning/stage_manager"
 	"github.com/werf/werf/v2/pkg/cleanup_report"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/storage"
@@ -63,6 +64,9 @@ type fakeStorageManager struct {
 	stages *fakePrimaryStagesStorage
 
 	importMetadataErrs map[string]error
+
+	stageDescSet      image.StageDescSet
+	finalStageDescSet image.StageDescSet
 }
 
 func newFakeStorageManager() *fakeStorageManager {
@@ -394,4 +398,41 @@ func TestDeleteImageMetadata_ReportUsesIDForUnresolvableMetadata(t *testing.T) {
 	assert.Equal(t, []cleanup_report.Item{
 		{Type: cleanup_report.ItemTypeImageMetadata, ID: "8c4a1f9b2d7e5a3c", StageID: "ff0011-1748001122334", Commit: "a3f1c92e"},
 	}, report.Deleted)
+}
+
+func (f *fakeStorageManager) GetStageDescSetWithCache(_ context.Context) (image.StageDescSet, error) {
+	return f.stageDescSet, nil
+}
+
+func (f *fakeStorageManager) GetFinalStageDescSet(_ context.Context) (image.StageDescSet, error) {
+	return f.finalStageDescSet, nil
+}
+
+func TestCleanupFinalStages_ReportRecordsKeptFinalStageWithReason(t *testing.T) {
+	ctx := context.Background()
+
+	finalStageDesc := &image.StageDesc{
+		StageID: image.NewStageID("ff0011", 1748001122334),
+		Info:    &image.Info{Tag: "ff0011-1748001122334"},
+	}
+
+	sm := newFakeStorageManager()
+	sm.finalStageDescSet = image.NewStageDescSet(finalStageDesc)
+	sm.stageDescSet = image.NewStageDescSet()
+
+	stageManager := stage_manager.NewManager()
+	require.NoError(t, stageManager.InitStageDescSet(ctx, sm))
+	require.NoError(t, stageManager.InitFinalStageDescSet(ctx, sm))
+
+	report := newTestReport()
+	m := &cleanupManager{stageManager: stageManager, StorageManager: sm, report: report}
+
+	require.NoError(t, m.cleanupFinalStages(ctx))
+
+	assert.Equal(t, []cleanup_report.Item{{
+		Type:   cleanup_report.ItemTypeFinalStage,
+		Tag:    "ff0011-1748001122334",
+		Reason: stage_manager.ProtectionReasonNotFoundInRepo.String(),
+	}}, report.Kept)
+	assert.Empty(t, report.Deleted)
 }
