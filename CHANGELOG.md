@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.77.1](https://github.com/werf/werf/compare/v2.77.0...v2.77.1) (2026-08-11)
+
+
+### Bug Fixes
+
+* **build, buildah:** stop imports failing on symlinked paths like /bin ([#7763](https://github.com/werf/werf/issues/7763)) ([f38a885](https://github.com/werf/werf/commit/f38a885d6248090bf74cd0426400886c918badf2))
+
 ## [2.77.0](https://github.com/werf/werf/compare/v2.76.0...v2.77.0) (2026-08-10)
 
 
