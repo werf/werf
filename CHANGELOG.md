@@ -10,9 +10,6 @@
 * **cleanup:** add registry-side cleanup report ([#7806](https://github.com/werf/werf/issues/7806)) ([8a6250b](https://github.com/werf/werf/commit/8a6250b3dbd5f4406a38fe4c42630a6244da8f14))
 * **cleanup:** name the --meta-repo address in the cleanup report ([c11fdfb](https://github.com/werf/werf/commit/c11fdfbd8161779d957347a76dab8e216ff9afd6))
 * **deploy:** embed deno binary into werf release binaries behind `embedwerfdeno` ([#7725](https://github.com/werf/werf/issues/7725)) ([468ba22](https://github.com/werf/werf/commit/468ba229e05e7fb104a286386da43e0051da09ed))
-* **skills:** prevent agents publishing stale claims ([f8d938a](https://github.com/werf/werf/commit/f8d938aec732b43c6509abbb972ac60c8a198814))
-* **skills:** prevent agents publishing stale claims ([#7780](https://github.com/werf/werf/issues/7780)) ([78b4ac7](https://github.com/werf/werf/commit/78b4ac78b8d621c04d8eee2d10067cf7c1813100))
-* **skills:** run challenge checks for risky reviews ([#7781](https://github.com/werf/werf/issues/7781)) ([d16b172](https://github.com/werf/werf/commit/d16b172013995186b30276788ef72a09338d35f4))
 
 
 ### Bug Fixes
@@ -22,20 +19,12 @@
 * **buildah:** prevent concurrent Dockerfile build races ([#7798](https://github.com/werf/werf/issues/7798)) ([f609194](https://github.com/werf/werf/commit/f60919448a7c93f08f5706678bd016e2806677fa))
 * **buildah:** prevent concurrent stderr access ([#7788](https://github.com/werf/werf/issues/7788)) ([fc9c375](https://github.com/werf/werf/commit/fc9c3759a8f6bf61aa98eef526d21a8315f04b1a))
 * **build:** avoid panicking on late worker logs ([#7785](https://github.com/werf/werf/issues/7785)) ([4a89693](https://github.com/werf/werf/commit/4a89693e2261a60c44bb7c1023f2a1b4647bbd51))
-* **build:** keep concurrent Dockerfile builds parallel under race fix ([#7803](https://github.com/werf/werf/issues/7803)) ([f759bec](https://github.com/werf/werf/commit/f759becbb7a5694c237ee51a20a236a7d5286b3e))
 * **build:** make repo-built from:scratch images readable by dive ([#7765](https://github.com/werf/werf/issues/7765)) ([54b0921](https://github.com/werf/werf/commit/54b092177796f41c5fce2944f4bf73f45e058da8))
-* **buildx:** restore concurrent Dockerfile builds ([#7800](https://github.com/werf/werf/issues/7800)) ([0d1c7ee](https://github.com/werf/werf/commit/0d1c7ee77b1b6f0a9ba65d6a60d2506a8e491685))
-* **ci:** stop rootless buildah CI builds failing ([#7782](https://github.com/werf/werf/issues/7782)) ([990bdab](https://github.com/werf/werf/commit/990bdabc9fa6eaad5bbf4122bdf7c001e27f1904))
-* **ci:** stop rootless buildah e2e builds failing ([#7783](https://github.com/werf/werf/issues/7783)) ([9e37b96](https://github.com/werf/werf/commit/9e37b96c4d0fbbfcabb2926bc0cb4c0faa13c59e))
 * **deploy:** prevent progress printer race during release tracking ([#7805](https://github.com/werf/werf/issues/7805)) ([1b46987](https://github.com/werf/werf/commit/1b469876339bddaefdb12d456708bc9194d35f2f))
 * **docker:** prevent race reports during Docker builds ([#7777](https://github.com/werf/werf/issues/7777)) ([6d6af8d](https://github.com/werf/werf/commit/6d6af8d02be5f1a58e5dc8806c7e64d5c9f150c6))
-* **helm:** prevent concurrent action initialization ([#7793](https://github.com/werf/werf/issues/7793)) ([d57cc9e](https://github.com/werf/werf/commit/d57cc9e7259d0e964721fcd6573eadec060a3971))
 * **helm:** prevent concurrent action initialization ([#7796](https://github.com/werf/werf/issues/7796)) ([bad9bfd](https://github.com/werf/werf/commit/bad9bfd0f8761832da5b19f241dc4cd85d12d8b4))
 * **logboek:** prevent concurrent stream races ([#7802](https://github.com/werf/werf/issues/7802)) ([f80e827](https://github.com/werf/werf/commit/f80e827577896f02d3605b3c7540d550e31f8e0a))
-* optimize `release get` ([8043316](https://github.com/werf/werf/commit/8043316e0dc688d145627adb035254880fba309a))
 * **registry:** prevent concurrent export races ([#7799](https://github.com/werf/werf/issues/7799)) ([2bf41ec](https://github.com/werf/werf/commit/2bf41ecf9af9a54576cb13465816e0de977ff1d5))
-* **release:** preserve main release version state ([#7790](https://github.com/werf/werf/issues/7790)) ([a0603b2](https://github.com/werf/werf/commit/a0603b294c829abb510f938bd7817a8314bc144c))
-* **release:** preserve v3 release version state ([#7789](https://github.com/werf/werf/issues/7789)) ([4b6564f](https://github.com/werf/werf/commit/4b6564f7ff19484151640dc631ae23bfd83b8fe3))
 * **storage:** prevent concurrent final-stage list access ([#7787](https://github.com/werf/werf/issues/7787)) ([9ab8115](https://github.com/werf/werf/commit/9ab81159f2c87abf50d1caa8d2f2bbe5cff7ca55))
 
 ## [2.76.0](https://github.com/werf/werf/compare/v2.75.4...v2.76.0) (2026-08-10)
