@@ -10,7 +10,7 @@ import (
 )
 
 func removeExactPath(ctx context.Context, path string) error {
-	_, err := os.Stat(path)
+	_, err := os.Lstat(path)
 	switch {
 	case os.IsNotExist(err):
 	case err != nil:
@@ -28,7 +28,7 @@ func removeExactPath(ctx context.Context, path string) error {
 }
 
 func removeExactPathWithEmptyParentDirs(ctx context.Context, path string, keepParentDirs []string) error {
-	_, err := os.Stat(path)
+	_, err := os.Lstat(path)
 	switch {
 	case os.IsNotExist(err):
 	case err != nil:
