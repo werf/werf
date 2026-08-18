@@ -60,7 +60,7 @@ metadata:
 
 Here, ownership `anyone` makes this Job behave a lot like a Helm hook, meaning that it will not be deleted on uninstall or when removed from the chart, and its release annotations will not be applied/validated during deploy.
 
-## Resource delete policies
+## Resource policies
 
 ### werf.io/delete-policy
 
@@ -111,6 +111,36 @@ Here, when the `myapp` Deployment is deleted, its dependents (ReplicaSets, Pods,
 
 By default, resources are deleted with the `Foreground` propagation policy.
 
+### werf.io/resource-policy
+
+The `werf.io/resource-policy` annotation protects the resource from being created, changed or deleted and is inspired by `helm.sh/resource-policy`. Allowed values:
+* `skip-create`: the resource is not created if it is absent in the cluster
+* `skip-update`: the resource is not updated if it is already present in the cluster
+* `skip-recreate`: the resource is not recreated
+* `skip-delete`: the resource is not deleted if it is removed from the chart or when the release is uninstalled
+* `keep`: a Helm-compatible alias for `skip-delete`
+
+Multiple values can be specified at once. Recreations and deletions caused by `werf.io/delete-policy` or `helm.sh/hook-delete-policy` are also skipped by `skip-recreate` and `skip-delete`.
+
+The `skip-create`, `skip-update` and `skip-recreate` values only work if the annotation is set in the chart, while `skip-delete` also works if the annotation is set on the resource in the cluster.
+
+By default, general resources have no resource policy, while the release Namespace has `skip-delete`.
+
+Example:
+
+```yaml
+# .helm/templates/example.yaml:
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: my-pvc
+  annotations:
+    werf.io/resource-policy: skip-update,skip-delete
+# ...
+```
+
+Here, the `my-pvc` PersistentVolumeClaim is created if it is absent, but it is never updated afterwards and never deleted.
+
 ### helm.sh/resource-policy
 
 The annotation `helm.sh/resource-policy: keep` forbids any resource deletion from happening. The resource can never be deleted for any reason when this annotation is present. This annotation is also respected on the resource in the cluster, even if it is not present in the chart.
@@ -129,3 +159,5 @@ metadata:
 ```
 
 Here, the `my-pvc` PersistentVolumeClaim will never be deleted for any reason.
+
+The `werf.io/resource-policy` annotation offers the same protection with more options and has precedence over this annotation.

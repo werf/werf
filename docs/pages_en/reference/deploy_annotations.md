@@ -14,6 +14,7 @@ This article contains description of annotations which control werf resource ope
  - [`werf.io/ownership`](#resource-ownership) — defines how resource deletions are handled and how release annotations are managed.
  - [`werf.io/deploy-on`](#conditional-resource-deployment) — defines when to render the resource for the deployment and on which stages should it be deployed.
  - [`werf.io/delete-policy`](#resource-delete-policy) — defines how resource deletions should be handled during resource deployment.
+ - [`werf.io/resource-policy`](#resource-policy) — protects the resource from being created, changed or deleted.
  - [`werf.io/delete-propagation`](#delete-propagation) — defines the propagation policy for resource deletions.
  - [`werf.io/delete-dependency-ANY_NAME`](#delete-dependencies) — define a dependency for the resource deletion, which will affect the order in which the resources are deleted.
  - [`werf.io/replicas-on-creation`](#replicas-on-creation) — defines number of replicas that should be set only when creating resource initially (useful for HPA).
@@ -125,6 +126,23 @@ The `werf.io/delete-policy` annotation controls resource deletions during its de
 * `failed`: the resource is deleted if its readiness check fails
 
 By default, general resources have no delete policy, while hooks have values from `helm.sh/hook-delete-policy` mapped to `werf.io/delete-policy`.
+
+## Resource policy
+
+`werf.io/resource-policy: skip-create|skip-update|skip-recreate|skip-delete|keep`
+
+The `werf.io/resource-policy` annotation protects the resource from being created, changed or deleted and is inspired by `helm.sh/resource-policy`. Allowed values:
+* `skip-create`: the resource is not created if it is absent in the cluster
+* `skip-update`: the resource is not updated if it is already present in the cluster
+* `skip-recreate`: the resource is not recreated
+* `skip-delete`: the resource is not deleted if it is removed from the chart or when the release is uninstalled
+* `keep`: a Helm-compatible alias for `skip-delete`
+
+Recreations and deletions caused by [`werf.io/delete-policy`](#resource-delete-policy) or `helm.sh/hook-delete-policy` are also skipped by `skip-recreate` and `skip-delete`.
+
+`skip-create`, `skip-update` and `skip-recreate` only work if set in the chart, while `skip-delete` also works if set on the resource in the cluster.
+
+By default, general resources have no resource policy, while the release Namespace has `skip-delete`. The value of `helm.sh/resource-policy` is mapped to `werf.io/resource-policy`, but `werf.io/resource-policy` has precedence.
 
 ## Delete propagation
 
