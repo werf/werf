@@ -60,7 +60,7 @@ metadata:
 
 Here, ownership `anyone` makes this Job behave a lot like a Helm hook, meaning that it will not be deleted on uninstall or when removed from the chart, and its release annotations will not be applied/validated during deploy.
 
-## Resource policies
+## Resource operation policies
 
 ### werf.io/delete-policy
 
@@ -113,18 +113,18 @@ By default, resources are deleted with the `Foreground` propagation policy.
 
 ### werf.io/resource-policy
 
-The `werf.io/resource-policy` annotation protects the resource from being created, changed or deleted and is inspired by `helm.sh/resource-policy`. Allowed values:
+The `werf.io/resource-policy` annotation defines which operations werf may perform on the resource — creation, update, recreation and deletion — and is inspired by `helm.sh/resource-policy`. Allowed values:
 * `skip-create`: the resource is not created if it is absent in the cluster
 * `skip-update`: the resource is not updated if it is already present in the cluster
 * `skip-recreate`: the resource is not recreated
 * `skip-delete`: the resource is not deleted if it is removed from the chart or when the release is uninstalled
 * `keep`: a Helm-compatible alias for `skip-delete`
 
-Multiple values can be specified at once. Recreations and deletions caused by `werf.io/delete-policy` or `helm.sh/hook-delete-policy` are also skipped by `skip-recreate` and `skip-delete`.
+Multiple values can be specified at once. Recreations caused by `werf.io/delete-policy` or `helm.sh/hook-delete-policy` are skipped by `skip-recreate`, and deletions caused by them are skipped by `skip-delete`.
 
 The `skip-create`, `skip-update` and `skip-recreate` values only work if the annotation is set in the chart, while `skip-delete` also works if the annotation is set on the resource in the cluster.
 
-By default, general resources have no resource policy, while the release Namespace has `skip-delete`.
+General resources have no resource policy by default. The release Namespace always has `skip-delete`, in addition to any policy set on it.
 
 Example:
 
@@ -160,4 +160,4 @@ metadata:
 
 Here, the `my-pvc` PersistentVolumeClaim will never be deleted for any reason.
 
-The `werf.io/resource-policy` annotation offers the same protection with more options and has precedence over this annotation.
+The `werf.io/resource-policy` annotation covers the same protection and adds more options, and it fully replaces this one: if both are set on the resource, `helm.sh/resource-policy` is ignored, so `werf.io/resource-policy` must list `skip-delete` (or `keep`) to keep the resource protected from deletion.
