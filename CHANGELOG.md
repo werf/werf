@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.77.2](https://github.com/werf/werf/compare/v2.77.1...v2.77.2) (2026-08-20)
+
+
+### Bug Fixes
+
+* **docs:** update shell pattern matching url ([#7813](https://github.com/werf/werf/issues/7813)) ([81cf51d](https://github.com/werf/werf/commit/81cf51d6306a8186746f541d32a48fd9e93d2440))
+
 ## [2.77.1](https://github.com/werf/werf/compare/v2.77.0...v2.77.1) (2026-08-11)
 
 
