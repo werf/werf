@@ -175,12 +175,19 @@ werf bundle render [options]
             Use specified Kubernetes namespace (default $WERF_NAMESPACE)
       --network-parallelism=30
             Parallelize some network operations (default $WERF_NETWORK_PARALLELISM or 30)
+      --no-default-patches=false
+            Ignore patches.yaml of the top-level chart and subcharts (default                       
+            $WERF_NO_DEFAULT_PATCHES or false)
       --no-values-schema-validation=false
             Disable values validation against JSON schema (default                                  
             $WERF_NO_VALUES_SCHEMA_VALIDATION)
       --output=""
             Write render output to the specified file instead of stdout ($WERF_RENDER_OUTPUT by     
             default)
+      --patches=[]
+            Additional patches files (render patches for rendered resources, diff patches for drift 
+            detection). Also, can be defined with $WERF_PATCHES_* (e.g.                             
+            $WERF_PATCHES_1=.helm/patches_1.yaml, $WERF_PATCHES_2=.helm/patches_2.yaml)
       --provenance-keyring=""
             Path to keyring containing public keys to verify chart provenance (default              
             $WERF_PROVENANCE_KEYRING)

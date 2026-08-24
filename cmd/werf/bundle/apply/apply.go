@@ -84,7 +84,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	lo.Must0(common.SetupValuesFlags(&commonCmdData, cmd))
 	lo.Must0(common.SetupSecretValuesFlags(&commonCmdData, cmd))
 	lo.Must0(common.SetupResourceValidationFlags(&commonCmdData, cmd))
-	common.SetupPatchesFlags(&commonCmdData, cmd)
+	common.SetupPatchesFlags(&commonCmdData, cmd, common.SetupPatchesFlagsOptions{})
 	lo.Must0(common.SetupTrackingFlags(&commonCmdData, cmd))
 
 	common.SetupAddAnnotations(&commonCmdData, cmd)

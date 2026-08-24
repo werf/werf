@@ -87,6 +87,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	lo.Must0(common.SetupValuesFlags(&commonCmdData, cmd))
 	lo.Must0(common.SetupSecretValuesFlags(&commonCmdData, cmd))
 	lo.Must0(common.SetupNoValuesSchemaValidationFlag(&commonCmdData, cmd))
+	common.SetupPatchesFlags(&commonCmdData, cmd, common.SetupPatchesFlagsOptions{})
 
 	common.SetupAddAnnotations(&commonCmdData, cmd)
 	common.SetupAddLabels(&commonCmdData, cmd)
@@ -226,6 +227,7 @@ func runRender(ctx context.Context) error {
 		ChartProvenanceKeyring:      commonCmdData.ChartProvenanceKeyring,
 		ChartProvenanceStrategy:     commonCmdData.ChartProvenanceStrategy,
 		ChartRepoSkipUpdate:         commonCmdData.ChartRepoSkipUpdate,
+		DefaultPatchesDisable:       commonCmdData.DefaultPatchesDisable,
 		ExtraAPIVersions:            commonCmdData.ExtraAPIVersions,
 		ExtraAnnotations:            extraAnnotations,
 		ExtraLabels:                 extraLabels,
@@ -237,6 +239,7 @@ func runRender(ctx context.Context) error {
 		NetworkParallelism:          commonCmdData.NetworkParallelism,
 		NoValuesSchemaValidation:    commonCmdData.NoValuesSchemaValidation,
 		OutputFilePath:              cmdData.RenderOutput,
+		PatchesFiles:                commonCmdData.PatchesFiles,
 		RegistryCredentialsPath:     registryCredentialsPath,
 		ReleaseName:                 releaseName,
 		ReleaseNamespace:            releaseNamespace,

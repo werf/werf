@@ -346,9 +346,9 @@ werf plan --repo registry.mydomain.com/web --env production
             Parallel tasks limit, set -1 to remove the limitation (default                          
             $WERF_PARALLEL_TASKS_LIMIT or 5)
       --patches=[]
-            Additional patches files (diff patches for drift detection). Also, can be defined with  
-            $WERF_PATCHES_* (e.g. $WERF_PATCHES_1=.helm/patches_1.yaml,                             
-            $WERF_PATCHES_2=.helm/patches_2.yaml)
+            Additional patches files (render patches for rendered resources, diff patches for drift 
+            detection). Also, can be defined with $WERF_PATCHES_* (e.g.                             
+            $WERF_PATCHES_1=.helm/patches_1.yaml, $WERF_PATCHES_2=.helm/patches_2.yaml)
       --platform=[]
             Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT]     
             ($WERF_PLATFORM or $DOCKER_DEFAULT_PLATFORM by default)

@@ -120,6 +120,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	lo.Must0(common.SetupValuesFlags(&commonCmdData, cmd))
 	lo.Must0(common.SetupSecretValuesFlags(&commonCmdData, cmd))
 	lo.Must0(common.SetupResourceValidationFlags(&commonCmdData, cmd))
+	common.SetupPatchesFlags(&commonCmdData, cmd, common.SetupPatchesFlagsOptions{})
 
 	common.SetupAddAnnotations(&commonCmdData, cmd)
 	common.SetupAddLabels(&commonCmdData, cmd)
@@ -392,6 +393,7 @@ func runLint(ctx context.Context, imageNameListFromArgs []string) error {
 		DefaultChartName:            werfConfig.Meta.Project,
 		DefaultChartVersion:         "1.0.0",
 		DefaultDeletePropagation:    commonCmdData.DefaultDeletePropagation,
+		DefaultPatchesDisable:       commonCmdData.DefaultPatchesDisable,
 		ExtraAPIVersions:            commonCmdData.ExtraAPIVersions,
 		ExtraAnnotations:            extraAnnotations,
 		ExtraLabels:                 extraLabels,
@@ -405,6 +407,7 @@ func runLint(ctx context.Context, imageNameListFromArgs []string) error {
 		NetworkParallelism:          commonCmdData.NetworkParallelism,
 		NoFinalTracking:             commonCmdData.NoFinalTracking,
 		NoRemoveManualChanges:       commonCmdData.NoRemoveManualChanges,
+		PatchesFiles:                commonCmdData.PatchesFiles,
 		RegistryCredentialsPath:     registryCredentialsPath,
 		ReleaseName:                 releaseName,
 		ReleaseNamespace:            releaseNamespace,

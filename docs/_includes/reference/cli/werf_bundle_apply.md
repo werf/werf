@@ -199,9 +199,9 @@ werf bundle apply [options]
             Disable values validation against JSON schema (default                                  
             $WERF_NO_VALUES_SCHEMA_VALIDATION)
       --patches=[]
-            Additional patches files (diff patches for drift detection). Also, can be defined with  
-            $WERF_PATCHES_* (e.g. $WERF_PATCHES_1=.helm/patches_1.yaml,                             
-            $WERF_PATCHES_2=.helm/patches_2.yaml)
+            Additional patches files (render patches for rendered resources, diff patches for drift 
+            detection). Also, can be defined with $WERF_PATCHES_* (e.g.                             
+            $WERF_PATCHES_1=.helm/patches_1.yaml, $WERF_PATCHES_2=.helm/patches_2.yaml)
       --plan-lifetime=2h0m0s
             How long plan artifact is valid
       --provenance-keyring=""
