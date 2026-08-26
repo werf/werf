@@ -1230,8 +1230,19 @@ Also, can be defined with $WERF_SET_STRING_* (e.g. $WERF_SET_STRING_1=key1=val1,
 	return nil
 }
 
-func SetupPatchesFlags(cmdData *CmdData, cmd *cobra.Command) {
-	cmd.Flags().StringArrayVarP(&cmdData.PatchesFiles, "patches", "", []string{}, `Additional patches files (diff patches for drift detection). Also, can be defined with $WERF_PATCHES_* (e.g. $WERF_PATCHES_1=.helm/patches_1.yaml, $WERF_PATCHES_2=.helm/patches_2.yaml)`)
+type SetupPatchesFlagsOptions struct {
+	// NoRender marks a command that renders nothing, so render patches have no effect.
+	NoRender bool
+}
+
+func SetupPatchesFlags(cmdData *CmdData, cmd *cobra.Command, opts SetupPatchesFlagsOptions) {
+	patchKinds := lo.Ternary(
+		opts.NoRender,
+		"diff patches for drift detection",
+		"render patches for rendered resources, diff patches for drift detection",
+	)
+
+	cmd.Flags().StringArrayVarP(&cmdData.PatchesFiles, "patches", "", []string{}, fmt.Sprintf(`Additional patches files (%s). Also, can be defined with $WERF_PATCHES_* (e.g. $WERF_PATCHES_1=.helm/patches_1.yaml, $WERF_PATCHES_2=.helm/patches_2.yaml)`, patchKinds))
 	cmd.Flags().BoolVarP(&cmdData.DefaultPatchesDisable, "no-default-patches", "", util.GetBoolEnvironmentDefaultFalse("WERF_NO_DEFAULT_PATCHES"), `Ignore patches.yaml of the top-level chart and subcharts (default $WERF_NO_DEFAULT_PATCHES or false)`)
 }
 

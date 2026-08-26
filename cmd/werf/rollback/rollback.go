@@ -77,7 +77,7 @@ werf rollback --revision 10`,
 
 	lo.Must0(common.SetupKubeConnectionFlags(&commonCmdData, cmd))
 	lo.Must0(common.SetupResourceValidationFlags(&commonCmdData, cmd))
-	common.SetupPatchesFlags(&commonCmdData, cmd)
+	common.SetupPatchesFlags(&commonCmdData, cmd, common.SetupPatchesFlagsOptions{NoRender: true})
 	lo.Must0(common.SetupTrackingFlags(&commonCmdData, cmd))
 
 	common.SetupAddAnnotations(&commonCmdData, cmd)

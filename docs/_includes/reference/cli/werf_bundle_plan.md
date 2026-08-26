@@ -189,9 +189,9 @@ werf bundle plan [options]
             Disable values validation against JSON schema (default                                  
             $WERF_NO_VALUES_SCHEMA_VALIDATION)
       --patches=[]
-            Additional patches files (diff patches for drift detection). Also, can be defined with  
-            $WERF_PATCHES_* (e.g. $WERF_PATCHES_1=.helm/patches_1.yaml,                             
-            $WERF_PATCHES_2=.helm/patches_2.yaml)
+            Additional patches files (render patches for rendered resources, diff patches for drift 
+            detection). Also, can be defined with $WERF_PATCHES_* (e.g.                             
+            $WERF_PATCHES_1=.helm/patches_1.yaml, $WERF_PATCHES_2=.helm/patches_2.yaml)
       --provenance-keyring=""
             Path to keyring containing public keys to verify chart provenance (default              
             $WERF_PROVENANCE_KEYRING)
