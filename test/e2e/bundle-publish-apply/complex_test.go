@@ -199,7 +199,7 @@ var _ = Describe("Complex bundle publish/apply", Label("e2e", "bundle-publish-ap
 
 				for _, configMapName := range []string{
 					"config-disabledchart",
-					"not-deployed-because-in-helm-ignore",
+					"not-deployed-because-in-helmignore",
 				} {
 					By("state0: ensure configmap \"" + configMapName + "\" is absent in cluster")
 					resourceShouldNotExist(kube.Client.CoreV1().ConfigMaps(werfProject.Namespace(ctx)).Get(ctx, configMapName, metav1.GetOptions{}))

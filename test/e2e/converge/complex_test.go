@@ -204,7 +204,7 @@ var _ = Describe("Complex converge", Label("e2e", "converge", "complex"), func()
 
 				for _, configMapName := range []string{
 					"config-disabledchart",
-					"not-deployed-because-in-helm-ignore",
+					"not-deployed-because-in-helmignore",
 				} {
 					By("state0: ensure configmap \"" + configMapName + "\" is absent in cluster")
 					resourceShouldNotExist(kube.Client.CoreV1().ConfigMaps(werfProject.Namespace(ctx)).Get(ctx, configMapName, metav1.GetOptions{}))
