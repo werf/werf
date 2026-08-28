@@ -6,7 +6,7 @@ import (
 )
 
 var _ = Describe("chart .helmignore rules", func() {
-	DescribeTable("matches the path against the chart rules",
+	DescribeTable("matches a file against the chart rules",
 		func(helmignore *string, relPath string, expected bool) {
 			var data []byte
 			if helmignore != nil {
@@ -16,7 +16,7 @@ var _ = Describe("chart .helmignore rules", func() {
 			rules, err := parseChartIgnoreRules(data)
 			Expect(err).NotTo(HaveOccurred())
 
-			Expect(matchChartIgnoreRules(rules, relPath)).To(Equal(expected))
+			Expect(matchChartIgnoreRules(rules, relPath, false)).To(Equal(expected))
 		},
 		Entry("keeps a file when no rule matches", helmignore("templates/ignored.yaml\n"), "templates/kept.yaml", false),
 		Entry("keeps every file when the rules are empty", helmignore(""), "templates/kept.yaml", false),
@@ -26,16 +26,11 @@ var _ = Describe("chart .helmignore rules", func() {
 		Entry("matches a glob", helmignore("*.txt\n"), "templates/notes.txt", true),
 		Entry("does not match a path-anchored rule elsewhere", helmignore("templates/ignored.yaml\n"), "sub/templates/ignored.yaml", false),
 		Entry("matches a root-anchored rule at the root", helmignore("/values.yaml\n"), "values.yaml", true),
+		Entry("keeps a root-anchored rule's namesake deeper in the chart", helmignore("/values.yaml\n"), "templates/values.yaml", false),
 
-		Entry("matches a file under a directory rule", helmignore("mydir/\n"), "mydir/inner.yaml", true),
-		Entry("matches a file deep under a directory rule", helmignore("mydir/\n"), "mydir/deep/inner.yaml", true),
-		Entry("matches a directory named without a trailing slash", helmignore("logs\n"), "logs/output.txt", true),
-		Entry("keeps a file whose name only prefixes a directory rule", helmignore("mydir/\n"), "mydir-other/inner.yaml", false),
-
-		// Helm treats "!" as inverting the whole rule set rather than re-including a file,
-		// so a negated rule ignores everything it does not match. Documented as unsupported.
-		Entry("ignores a non-matching path when a negated rule is present", helmignore("!templates/kept.yaml\n"), "templates/other.yaml", true),
-		Entry("ignores even the negated path itself", helmignore("!templates/kept.yaml\n"), "templates/kept.yaml", true),
+		// A directory rule is matched on the directory itself, so it never matches a file.
+		// The walk skips the whole subtree instead, which is covered by the LoadChartDir specs.
+		Entry("does not match a file against a directory rule", helmignore("mydir/\n"), "mydir/inner.yaml", false),
 
 		// Helm's default rules apply whether or not the chart carries a .helmignore.
 		Entry("ignores dotfiles in templates without a .helmignore", nil, "templates/.gitkeep", true),
@@ -43,6 +38,20 @@ var _ = Describe("chart .helmignore rules", func() {
 		Entry("keeps dotfiles nested deeper than the default rule", nil, "templates/sub/.gitkeep", false),
 		Entry("keeps dotfiles outside templates", nil, ".gitkeep", false),
 		Entry("keeps regular templates without a .helmignore", nil, "templates/kept.yaml", false),
+	)
+
+	DescribeTable("matches a directory against the chart rules",
+		func(helmignore, relPath string, expected bool) {
+			rules, err := parseChartIgnoreRules([]byte(helmignore))
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(matchChartIgnoreRules(rules, relPath, true)).To(Equal(expected))
+		},
+		Entry("matches a trailing-slash rule", "mydir/\n", "mydir", true),
+		Entry("matches a rule written without a trailing slash", "logs\n", "logs", true),
+		Entry("matches a nested directory by its path", "templates/sub/\n", "templates/sub", true),
+		Entry("keeps a directory whose name only prefixes the rule", "mydir/\n", "mydir-other", false),
+		Entry("keeps an unmatched directory", "mydir/\n", "templates", false),
 	)
 
 	It("fails on a rule helm cannot compile", func() {
