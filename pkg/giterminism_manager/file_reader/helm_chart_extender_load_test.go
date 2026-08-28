@@ -261,5 +261,21 @@ var _ = Describe("LoadChartDir", func() {
 				".helmignore", "Chart.yaml",
 			))
 		})
+
+		// The commit file list is flat, and a directory rule never matches a file, so only
+		// matching each parent directory of a path keeps the two modes in agreement here.
+		It("drops a whole directory matched by .helmignore", func(ctx SpecContext) {
+			chartDir := writeChart(map[string]string{
+				".helmignore":            "ignoreddir/\n",
+				"Chart.yaml":             "name: test",
+				"ignoreddir/a.yaml":      "a",
+				"ignoreddir/deep/b.yaml": "b",
+				"templates/kept.yaml":    "kept",
+			})
+
+			Expect(loadedNames(logging.WithLogger(ctx), chartDir)).To(ConsistOf(
+				".helmignore", "Chart.yaml", "templates/kept.yaml",
+			))
+		})
 	})
 })
