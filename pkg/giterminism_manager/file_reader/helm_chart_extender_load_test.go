@@ -2,6 +2,7 @@ package file_reader_test
 
 import (
 	"context"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -126,6 +127,22 @@ var _ = Describe("LoadChartDir", func() {
 		))
 	})
 
+	It("does not resolve a symlink inside an ignored directory", func(ctx SpecContext) {
+		chartDir := writeChart(map[string]string{
+			".helmignore": "ignoreddir/\n",
+			"Chart.yaml":  "name: test",
+		})
+
+		outsideTarget := filepath.Join(t.TempDir(), "outside.txt")
+		Expect(os.WriteFile(outsideTarget, []byte("outside"), 0o644)).To(Succeed())
+		Expect(os.MkdirAll(filepath.Join(chartDir, "ignoreddir"), 0o755)).To(Succeed())
+		Expect(os.Symlink(outsideTarget, filepath.Join(chartDir, "ignoreddir", "link.txt"))).To(Succeed())
+
+		Expect(loadedNames(logging.WithLogger(ctx), chartDir)).To(ConsistOf(
+			".helmignore", "Chart.yaml",
+		))
+	})
+
 	It("reports an unparsable .helmignore", func(ctx SpecContext) {
 		chartDir := writeChart(map[string]string{
 			".helmignore": "templates/**/ignored.yaml\n",
@@ -152,7 +169,22 @@ var _ = Describe("LoadChartDir", func() {
 				}).AnyTimes()
 
 			gitRepo.EXPECT().IsCommitTreeEntryExist(gomock.Any(), gomock.Any(), gomock.Any()).Return(true, nil).AnyTimes()
-			gitRepo.EXPECT().ListCommitFilesWithGlob(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
+			gitRepo.EXPECT().ListCommitFilesWithGlob(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, _, dir, _ string) ([]string, error) {
+					var list []string
+					err := filepath.WalkDir(filepath.Join(projectDir, dir), func(path string, d fs.DirEntry, err error) error {
+						if err != nil || d.IsDir() {
+							return err
+						}
+						rel, err := filepath.Rel(projectDir, path)
+						if err != nil {
+							return err
+						}
+						list = append(list, filepath.ToSlash(rel))
+						return nil
+					})
+					return list, err
+				}).AnyTimes()
 			readFromWorkTree := func(_ context.Context, _, relPath string) ([]byte, error) {
 				return os.ReadFile(filepath.Join(projectDir, relPath))
 			}

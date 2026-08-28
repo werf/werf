@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/werf/common-go/pkg/util"
@@ -86,21 +85,21 @@ func (r FileReader) loadChartDir(ctx context.Context, relDir string) ([]*nelmcom
 		"**/*",
 		r.giterminismConfig.UncommittedHelmFilePathMatcher(),
 		func(relativeToDirNotResolvedPath string, data []byte, err error) error {
-			relativeToDirNotResolvedPath = filepath.ToSlash(relativeToDirNotResolvedPath)
-
-			// An ignored file is not a part of the chart, so its git state is irrelevant:
-			// the check must precede err to let users exclude uncommitted files.
-			if matchChartIgnoreRules(rules, relativeToDirNotResolvedPath) {
-				return nil
-			}
-
 			if err != nil {
 				return err
 			}
 
-			res = append(res, &nelmcommon.BufferedFile{Name: relativeToDirNotResolvedPath, Data: data})
+			res = append(res, &nelmcommon.BufferedFile{Name: filepath.ToSlash(relativeToDirNotResolvedPath), Data: data})
 
 			return nil
+		},
+		WalkConfigurationFilesWithGlobOptions{
+			// An ignored file is not a part of the chart, so it is excluded before it gets read
+			// or checked against the giterminism config: its git state is irrelevant, and
+			// .helmignore stays usable to exclude uncommitted files.
+			SkipRelativeToDirPathFunc: func(relativeToDirPath string, isDir bool) bool {
+				return matchChartIgnoreRules(rules, relativeToDirPath, isDir)
+			},
 		},
 	); err != nil {
 		return nil, err
@@ -149,23 +148,10 @@ func parseChartIgnoreRules(data []byte) (*ignore.Rules, error) {
 	return rules, nil
 }
 
-// matchChartIgnoreRules reports whether the chart-relative file path is ignored.
-// Helm drops an ignored directory by returning filepath.SkipDir while walking, so its rules
-// match the directory itself rather than the files under it. This walk yields files only,
-// hence every ancestor directory is matched explicitly to keep the same semantics.
-func matchChartIgnoreRules(rules *ignore.Rules, relPath string) bool {
-	if rules.Ignore(relPath, chartIgnoreFileInfo{}) {
-		return true
-	}
-
-	parts := strings.Split(relPath, "/")
-	for i := 1; i < len(parts); i++ {
-		if rules.Ignore(strings.Join(parts[:i], "/"), chartIgnoreFileInfo{isDir: true}) {
-			return true
-		}
-	}
-
-	return false
+// matchChartIgnoreRules reports whether the chart-relative path is ignored. A matched directory
+// is skipped along with its whole subtree, which is how helm applies directory rules.
+func matchChartIgnoreRules(rules *ignore.Rules, relPath string, isDir bool) bool {
+	return rules.Ignore(relPath, chartIgnoreFileInfo{isDir: isDir})
 }
 
 // chartIgnoreFileInfo carries the only bit ignore.Rules reads from os.FileInfo.
