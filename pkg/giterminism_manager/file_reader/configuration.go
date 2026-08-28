@@ -128,10 +128,13 @@ func skipRelativeToDirPathWithParents(relativeToDirPath string, skipRelativeToDi
 
 // skipConfigurationPathFunc adapts a directory-relative skip predicate to the project-relative
 // paths the walk operates on, so an excluded directory is skipped along with its whole subtree.
-func (r FileReader) skipConfigurationPathFunc(dir string, skipRelativeToDirPathFunc func(relativeToDirPath string, isDir bool) bool, skipFileFunc func(ctx context.Context, r FileReader, existingRelPath string) (bool, error)) func(ctx context.Context, r FileReader, existingRelPath string) (bool, error) {
-	return func(ctx context.Context, r FileReader, existingRelPath string) (bool, error) {
-		relativeToDirPath := filepath.ToSlash(util.GetRelativeToBaseFilepath(dir, existingRelPath))
-		if relativeToDirPath != "" && relativeToDirPath != "." {
+// The predicate gets the path with the symlink parts kept, because that is the name the file has
+// inside the walked directory: matching the resolved path instead would silently stop excluding
+// anything as soon as the directory is reached through a symlink.
+func (r FileReader) skipConfigurationPathFunc(dir string, skipRelativeToDirPathFunc func(relativeToDirPath string, isDir bool) bool, skipFileFunc skipPathFunc) skipPathFunc {
+	return func(ctx context.Context, r FileReader, existingRelPath, notResolvedRelPath string) (bool, error) {
+		relativeToDirPath := filepath.ToSlash(util.GetRelativeToBaseFilepath(dir, notResolvedRelPath))
+		if relativeToDirPath != "" && relativeToDirPath != "." && !strings.HasPrefix(relativeToDirPath, "../") {
 			isDir, err := r.IsDirectoryExist(ctx, existingRelPath)
 			if err != nil {
 				return false, err
@@ -142,7 +145,7 @@ func (r FileReader) skipConfigurationPathFunc(dir string, skipRelativeToDirPathF
 			}
 		}
 
-		return skipFileFunc(ctx, r, existingRelPath)
+		return skipFileFunc(ctx, r, existingRelPath, notResolvedRelPath)
 	}
 }
 

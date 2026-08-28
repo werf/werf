@@ -46,6 +46,7 @@ var _ = Describe("LoadChartDir", func() {
 		sharedOptions.EXPECT().HeadCommit(gomock.Any()).Return("head commit").AnyTimes()
 		sharedOptions.EXPECT().Dev().Return(false).AnyTimes()
 		sharedOptions.EXPECT().LooseGiterminism().Return(true).AnyTimes()
+		gitRepo.EXPECT().GetWorkTreeDir().DoAndReturn(func() string { return projectDir }).AnyTimes()
 
 		pathMatcher.EXPECT().IsDirOrSubmodulePathMatched(gomock.Any()).Return(true).AnyTimes()
 		pathMatcher.EXPECT().IsPathMatched(gomock.Any()).Return(true).AnyTimes()
@@ -140,6 +141,46 @@ var _ = Describe("LoadChartDir", func() {
 
 		Expect(loadedNames(logging.WithLogger(ctx), chartDir)).To(ConsistOf(
 			".helmignore", "Chart.yaml",
+		))
+	})
+
+	// The rules must be matched against the chart-relative path with the symlink parts kept,
+	// the way helm names the file inside the chart, and not against the resolved path.
+	It("applies the rules when a chart subdirectory is a symlink", func(ctx SpecContext) {
+		chartDir := writeChart(map[string]string{
+			".helmignore": "templates/ignored.yaml\n",
+			"Chart.yaml":  "name: test",
+		})
+
+		sharedDir := filepath.Join(projectDir, "shared")
+		Expect(os.MkdirAll(sharedDir, 0o755)).To(Succeed())
+		Expect(os.WriteFile(filepath.Join(sharedDir, "ignored.yaml"), []byte("ignored"), 0o644)).To(Succeed())
+		Expect(os.WriteFile(filepath.Join(sharedDir, "kept.yaml"), []byte("kept"), 0o644)).To(Succeed())
+		Expect(os.Symlink(sharedDir, filepath.Join(chartDir, "templates"))).To(Succeed())
+
+		Expect(loadedNames(logging.WithLogger(ctx), chartDir)).To(ConsistOf(
+			".helmignore", "Chart.yaml", "templates/kept.yaml",
+		))
+	})
+
+	It("applies the rules when the chart directory itself is a symlink", func(ctx SpecContext) {
+		realChartDir := filepath.Join(projectDir, "charts", "mychart")
+		for relPath, data := range map[string]string{
+			".helmignore":            "templates/ignored.yaml\n",
+			"Chart.yaml":             "name: test",
+			"templates/ignored.yaml": "ignored",
+			"templates/kept.yaml":    "kept",
+		} {
+			absPath := filepath.Join(realChartDir, relPath)
+			Expect(os.MkdirAll(filepath.Dir(absPath), 0o755)).To(Succeed())
+			Expect(os.WriteFile(absPath, []byte(data), 0o644)).To(Succeed())
+		}
+
+		chartDir := filepath.Join(projectDir, ".helm")
+		Expect(os.Symlink(realChartDir, chartDir)).To(Succeed())
+
+		Expect(loadedNames(logging.WithLogger(ctx), chartDir)).To(ConsistOf(
+			".helmignore", "Chart.yaml", "templates/kept.yaml",
 		))
 	})
 
