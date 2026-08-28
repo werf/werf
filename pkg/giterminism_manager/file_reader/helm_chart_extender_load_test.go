@@ -210,18 +210,27 @@ var _ = Describe("LoadChartDir", func() {
 				}).AnyTimes()
 
 			gitRepo.EXPECT().IsCommitTreeEntryExist(gomock.Any(), gomock.Any(), gomock.Any()).Return(true, nil).AnyTimes()
+			gitRepo.EXPECT().IsCommitFileExist(gomock.Any(), gomock.Any(), gomock.Any()).Return(false, nil).AnyTimes()
+			// Mirrors (*git_repo.Base).WalkCommitFiles: it resolves the walked directory and
+			// reverse-resolves every entry back onto the not-resolved prefix, so a chart reached
+			// through a symlink still yields chart-relative names.
 			gitRepo.EXPECT().ListCommitFilesWithGlob(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 				DoAndReturn(func(_ context.Context, _, dir, _ string) ([]string, error) {
+					resolvedDir, err := filepath.EvalSymlinks(filepath.Join(projectDir, dir))
+					if err != nil {
+						return nil, err
+					}
+
 					var list []string
-					err := filepath.WalkDir(filepath.Join(projectDir, dir), func(path string, d fs.DirEntry, err error) error {
+					err = filepath.WalkDir(resolvedDir, func(path string, d fs.DirEntry, err error) error {
 						if err != nil || d.IsDir() {
 							return err
 						}
-						rel, err := filepath.Rel(projectDir, path)
+						rel, err := filepath.Rel(resolvedDir, path)
 						if err != nil {
 							return err
 						}
-						list = append(list, filepath.ToSlash(rel))
+						list = append(list, filepath.ToSlash(filepath.Join(dir, rel)))
 						return nil
 					})
 					return list, err
@@ -259,6 +268,110 @@ var _ = Describe("LoadChartDir", func() {
 
 			Expect(loadedNames(logging.WithLogger(ctx), chartDir)).To(ConsistOf(
 				".helmignore", "Chart.yaml",
+			))
+		})
+
+		It("drops a root-level file matched by a basename rule", func(ctx SpecContext) {
+			chartDir := writeChart(map[string]string{
+				".helmignore": "notes.txt\n",
+				"Chart.yaml":  "name: test",
+				"notes.txt":   "notes",
+			})
+
+			Expect(loadedNames(logging.WithLogger(ctx), chartDir)).To(ConsistOf(
+				".helmignore", "Chart.yaml",
+			))
+		})
+
+		It("drops a root-anchored rule match", func(ctx SpecContext) {
+			chartDir := writeChart(map[string]string{
+				".helmignore":         "/values.yaml\n",
+				"Chart.yaml":          "name: test",
+				"values.yaml":         "v",
+				"templates/kept.yaml": "kept",
+			})
+
+			Expect(loadedNames(logging.WithLogger(ctx), chartDir)).To(ConsistOf(
+				".helmignore", "Chart.yaml", "templates/kept.yaml",
+			))
+		})
+
+		It("applies helm default rules", func(ctx SpecContext) {
+			chartDir := writeChart(map[string]string{
+				"Chart.yaml":          "name: test",
+				"templates/.gitkeep":  "",
+				"templates/kept.yaml": "kept",
+			})
+
+			Expect(loadedNames(logging.WithLogger(ctx), chartDir)).To(ConsistOf(
+				"Chart.yaml", "templates/kept.yaml",
+			))
+		})
+
+		// .helmignore decides what is excluded before the giterminism check runs, so it must
+		// itself be read through giterminism: the committed rules win over the worktree copy.
+		It("reads .helmignore from the commit, not the worktree", func(ctx SpecContext) {
+			chartDir := writeChart(map[string]string{
+				".helmignore":              "templates/worktree-only.yaml\n",
+				"Chart.yaml":               "name: test",
+				"templates/committed.yaml": "committed",
+			})
+
+			gitRepo.EXPECT().ReadCommitFile(gomock.Any(), gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, _, relPath string) ([]byte, error) {
+					if filepath.Base(relPath) == ".helmignore" {
+						return []byte("templates/committed.yaml\n"), nil
+					}
+					return os.ReadFile(filepath.Join(projectDir, relPath))
+				}).AnyTimes()
+
+			Expect(loadedNames(logging.WithLogger(ctx), chartDir)).To(ConsistOf(
+				".helmignore", "Chart.yaml",
+			))
+		})
+
+		It("finds a .helmignore that exists only in the commit", func(ctx SpecContext) {
+			chartDir := writeChart(map[string]string{
+				"Chart.yaml":             "name: test",
+				"templates/ignored.yaml": "ignored",
+				"templates/kept.yaml":    "kept",
+			})
+
+			gitRepo.EXPECT().IsCommitFileExist(gomock.Any(), gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, _, relPath string) (bool, error) {
+					return filepath.Base(relPath) == ".helmignore", nil
+				}).AnyTimes()
+			gitRepo.EXPECT().ReadCommitFile(gomock.Any(), gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, _, relPath string) ([]byte, error) {
+					if filepath.Base(relPath) == ".helmignore" {
+						return []byte("templates/ignored.yaml\n"), nil
+					}
+					return os.ReadFile(filepath.Join(projectDir, relPath))
+				}).AnyTimes()
+
+			Expect(loadedNames(logging.WithLogger(ctx), chartDir)).To(ConsistOf(
+				"Chart.yaml", "templates/kept.yaml",
+			))
+		})
+
+		It("applies the rules when the chart directory itself is a symlink", func(ctx SpecContext) {
+			realChartDir := filepath.Join(projectDir, "charts", "mychart")
+			for relPath, data := range map[string]string{
+				".helmignore":            "templates/ignored.yaml\n",
+				"Chart.yaml":             "name: test",
+				"templates/ignored.yaml": "ignored",
+				"templates/kept.yaml":    "kept",
+			} {
+				absPath := filepath.Join(realChartDir, relPath)
+				Expect(os.MkdirAll(filepath.Dir(absPath), 0o755)).To(Succeed())
+				Expect(os.WriteFile(absPath, []byte(data), 0o644)).To(Succeed())
+			}
+
+			chartDir := filepath.Join(projectDir, ".helm")
+			Expect(os.Symlink(realChartDir, chartDir)).To(Succeed())
+
+			Expect(loadedNames(logging.WithLogger(ctx), chartDir)).To(ConsistOf(
+				".helmignore", "Chart.yaml", "templates/kept.yaml",
 			))
 		})
 
