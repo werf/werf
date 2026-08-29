@@ -3,6 +3,7 @@ package file_reader
 import (
 	"context"
 	"errors"
+	"fmt"
 	"path/filepath"
 	"strings"
 
@@ -137,7 +138,7 @@ func (r FileReader) skipConfigurationPathFunc(dir string, skipRelativeToDirPathF
 		if relativeToDirPath != "" && relativeToDirPath != "." && !strings.HasPrefix(relativeToDirPath, "../") {
 			isDir, err := r.IsDirectoryExist(ctx, existingRelPath)
 			if err != nil {
-				return false, err
+				return false, fmt.Errorf("check %q is a directory: %w", filepath.ToSlash(existingRelPath), err)
 			}
 
 			if skipRelativeToDirPathFunc(relativeToDirPath, isDir) {
