@@ -1,8 +1,6 @@
 package container_backend
 
 import (
-	"context"
-	"fmt"
 	"sync"
 
 	"github.com/werf/werf/v2/pkg/image"
@@ -32,19 +30,6 @@ func (i *legacyBaseImage) Name() string {
 
 func (i *legacyBaseImage) SetName(name string) {
 	i.name = name
-}
-
-func (i *legacyBaseImage) MustResetInfo(ctx context.Context) error {
-	if info, err := i.ContainerBackend.GetImageInfo(ctx, i.Name(), GetImageInfoOpts{}); err != nil {
-		return fmt.Errorf("unable to get info for image %s: %w", i.Name(), err)
-	} else {
-		i.SetInfo(info)
-	}
-
-	if i.info == nil {
-		panic(fmt.Sprintf("runtime error: info must be set for image %q", i.name))
-	}
-	return nil
 }
 
 func (i *legacyBaseImage) GetInfo() *image.Info {
