@@ -128,6 +128,33 @@ var _ = Describe("LoadChartDir", func() {
 		))
 	})
 
+	// A vendored subchart arrives through the root chart walk, so the root rule set is the only
+	// one that applies to it. Verified against helm 3.20.1: `helm package` on the same layout
+	// drops charts/sub/notes.txt by the root rule, keeps charts/sub/templates/kept.yaml despite
+	// the subchart's own .helmignore, and keeps charts/sub/templates/.gitkeep.
+	It("applies only the root rules to a vendored subchart, the way helm does", func(ctx SpecContext) {
+		chartDir := writeChart(map[string]string{
+			".helmignore":                    "notes.txt\n",
+			"Chart.yaml":                     "name: test",
+			"notes.txt":                      "root notes",
+			"templates/kept.yaml":            "kept",
+			"charts/sub/.helmignore":         "templates/kept.yaml\n",
+			"charts/sub/Chart.yaml":          "name: sub",
+			"charts/sub/notes.txt":           "sub notes",
+			"charts/sub/templates/.gitkeep":  "",
+			"charts/sub/templates/kept.yaml": "sub kept",
+		})
+
+		Expect(loadedNames(logging.WithLogger(ctx), chartDir)).To(ConsistOf(
+			// the root basename rule reaches into the subchart
+			".helmignore", "Chart.yaml", "templates/kept.yaml",
+			// the subchart's own .helmignore is not applied and stays an ordinary chart file
+			"charts/sub/.helmignore", "charts/sub/Chart.yaml", "charts/sub/templates/kept.yaml",
+			// the default templates/.?* rule is path-structural and does not reach this deep
+			"charts/sub/templates/.gitkeep",
+		))
+	})
+
 	It("does not resolve a symlink inside an ignored directory", func(ctx SpecContext) {
 		chartDir := writeChart(map[string]string{
 			".helmignore": "ignoreddir/\n",
