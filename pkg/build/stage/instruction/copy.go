@@ -35,12 +35,16 @@ func (stg *Copy) ExpandInstruction(c stage.Conveyor, env map[string]string) erro
 
 	if stg.instruction.Data.From != "" {
 		if ds := stg.instruction.GetDependencyByStageRef(stg.instruction.Data.From); ds != nil {
-			depStageImageName := c.GetImageNameForLastImageStage(stg.TargetPlatform(), ds.GetWerfImageName())
+			depStageImageName := c.GetImageContentTagName(stg.TargetPlatform(), ds.GetWerfImageName())
 			stg.backendInstruction.From = depStageImageName
 		}
 	}
 
 	return nil
+}
+
+func (stg *Copy) GetContentDependencies(ctx context.Context, c stage.Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+	return stg.GetDependencies(ctx, c, nil, nil, nil, buildContextArchive)
 }
 
 func (stg *Copy) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
@@ -53,8 +57,16 @@ func (stg *Copy) GetDependencies(ctx context.Context, c stage.Conveyor, cb conta
 	args = append(args, "Chmod", stg.instruction.Data.Chmod)
 	args = append(args, "ExpandedFrom", stg.backendInstruction.From)
 
+	// appended only when set to keep digests of already built COPY stages intact
+	if stg.instruction.Data.Parents {
+		args = append(args, "Parents", "true")
+	}
+	if len(stg.instruction.Data.ExcludePatterns) > 0 {
+		args = append(args, append([]string{"ExcludePatterns"}, stg.instruction.Data.ExcludePatterns...)...)
+	}
+
 	if stg.UsesBuildContext() {
-		if srcChecksum, err := buildContextArchive.CalculateGlobsChecksum(ctx, stg.instruction.Data.SourcePaths, false); err != nil {
+		if srcChecksum, err := buildContextArchive.CalculateGlobsChecksum(ctx, stg.instruction.Data.SourcePaths, container_backend.CalculateGlobsChecksumOptions{IncludeMatchedPaths: stg.instruction.Data.Parents}); err != nil {
 			return "", fmt.Errorf("unable to calculate build context globs checksum: %w", err)
 		} else {
 			args = append(args, "SourcesChecksum", srcChecksum)

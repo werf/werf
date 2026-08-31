@@ -39,11 +39,15 @@ func (stg *Run) ExpandInstruction(c stage.Conveyor, env map[string]string) error
 			continue
 		}
 		if ds := stg.instruction.GetDependencyByStageRef(mnt.From); ds != nil {
-			mnt.From = c.GetImageNameForLastImageStage(stg.TargetPlatform(), ds.GetWerfImageName())
+			mnt.From = c.GetImageContentTagName(stg.TargetPlatform(), ds.GetWerfImageName())
 		}
 	}
 
 	return nil
+}
+
+func (stg *Run) GetContentDependencies(ctx context.Context, c stage.Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+	return stg.GetDependencies(ctx, c, nil, nil, nil, buildContextArchive)
 }
 
 func (stg *Run) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {

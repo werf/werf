@@ -16,7 +16,7 @@ const (
 	schemaYaml = `type: object
 required:
   - giterminismConfigVersion
-additionalProperties: {}
+additionalProperties: false
 properties:
   giterminismConfigVersion:
     oneOf:
@@ -30,16 +30,18 @@ properties:
     $ref: '#/definitions/Config'
   helm:
     $ref: '#/definitions/Helm'
+  includes:
+    $ref: '#/definitions/Includes'
 definitions:
   CLI:
     type: object
-    additionalProperties: {}
+    additionalProperties: false
     properties:
       allowCustomTags:
         type: boolean
   Config:
     type: object
-    additionalProperties: {}
+    additionalProperties: false
     properties:
       allowUncommitted:
         type: boolean
@@ -49,13 +51,15 @@ definitions:
           type: string
       goTemplateRendering:
         $ref: '#/definitions/ConfigGoTemplateRendering'
+      secrets:
+        $ref: '#/definitions/ConfigSecrets'
       stapel:
         $ref: '#/definitions/ConfigStapel'
       dockerfile:
         $ref: '#/definitions/ConfigDockerfile'
   ConfigGoTemplateRendering:
     type: object
-    additionalProperties: {}
+    additionalProperties: false
     properties:
       allowEnvVariables:
         type: array
@@ -65,9 +69,25 @@ definitions:
         type: array
         items:
           type: string
+  ConfigSecrets:
+    type: object
+    additionalProperties: false
+    properties:
+      allowEnvVariables:
+        type: array
+        items:
+          type: string
+      allowFiles:
+        type: array
+        items:
+          type: string
+      allowValueIds:
+        type: array
+        items:
+          type: string
   ConfigStapel:
     type: object
-    additionalProperties: {}
+    additionalProperties: false
     properties:
       allowFromLatest:
         type: boolean
@@ -77,13 +97,13 @@ definitions:
         $ref: '#/definitions/ConfigStapelMount'
   ConfigStapelGit:
     type: object
-    additionalProperties: {}
+    additionalProperties: false
     properties:
       allowBranch:
         type: boolean
   ConfigStapelMount:
     type: object
-    additionalProperties: {}
+    additionalProperties: false
     properties:
       allowBuildDir:
         type: boolean
@@ -93,7 +113,7 @@ definitions:
           type: string
   ConfigDockerfile:
     type: object
-    additionalProperties: {}
+    additionalProperties: false
     properties:
       allowUncommitted:
         type: array
@@ -109,12 +129,18 @@ definitions:
           type: string
   Helm:
     type: object
-    additionalProperties: {}
+    additionalProperties: false
     properties:
       allowUncommittedFiles:
         type: array
         items:
           type: string
+  Includes:
+    type: object
+    additionalProperties: false
+    properties:
+      allowIncludesUpdate:
+        type: boolean
 `
 )
 

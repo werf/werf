@@ -61,7 +61,7 @@ var _ = Describe("managed images", func() {
 
 			When("werf images have been built", func() {
 				BeforeEach(func(ctx SpecContext) {
-					utils.RunSucceedCommand(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "build")
+					utils.RunSucceedCommand(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "build", "--final-images-only=false")
 				})
 
 				It("ls should return managed image", func(ctx SpecContext) {

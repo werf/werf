@@ -1,7 +1,6 @@
 package basic_test
 
 import (
-	"strings"
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -46,11 +45,7 @@ var (
 )
 
 func setupEnv(opts setupEnvOptions) {
-	if opts.ContainerBackendMode == "docker" || strings.HasSuffix(opts.ContainerBackendMode, "-docker") {
-		SuiteData.Stubs.SetEnv("WERF_BUILDAH_MODE", "docker")
-	} else {
-		SuiteData.Stubs.SetEnv("WERF_BUILDAH_MODE", opts.ContainerBackendMode)
-	}
+	SuiteData.Stubs.SetEnv("WERF_BUILDAH_MODE", opts.ContainerBackendMode)
 
 	if opts.WithLocalRepo {
 		SuiteData.Stubs.SetEnv(
@@ -59,12 +54,6 @@ func setupEnv(opts setupEnvOptions) {
 		)
 	} else {
 		SuiteData.Stubs.UnsetEnv("WERF_REPO")
-	}
-
-	if opts.ContainerBackendMode == "buildkit-docker" {
-		SuiteData.Stubs.SetEnv("DOCKER_BUILDKIT", "1")
-	} else {
-		SuiteData.Stubs.UnsetEnv("DOCKER_BUILDKIT")
 	}
 
 	if opts.WithLocalRepo {

@@ -5,24 +5,23 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"crypto/md5"
 	"errors"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"runtime"
-	"sort"
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
-	"github.com/containers/storage/types"
 	securejoin "github.com/cyphar/filepath-securejoin"
 	"github.com/google/uuid"
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
 	"github.com/opencontainers/runtime-spec/specs-go"
+	"go.podman.io/storage"
 
 	"github.com/werf/common-go/pkg/util"
 	copyrec "github.com/werf/copy-recurse"
@@ -118,7 +117,7 @@ func isImageNotKnownError(err error) bool {
 		return false
 	}
 
-	return strings.HasSuffix(err.Error(), types.ErrImageUnknown.Error())
+	return strings.HasSuffix(err.Error(), storage.ErrImageUnknown.Error())
 }
 
 func (backend *BuildahBackend) Info(ctx context.Context) (info.Info, error) {
@@ -343,142 +342,25 @@ func (backend *BuildahBackend) applyCommands(ctx context.Context, container *con
 		mounts = append(mounts, m...)
 	}
 
+	mergedEnvs := make(map[string]string, len(opts.Envs)+len(opts.BuildTimeEnvs))
+	for k, v := range opts.Envs {
+		mergedEnvs[k] = v
+	}
+	for k, v := range opts.BuildTimeEnvs {
+		mergedEnvs[k] = v
+	}
+
 	if err := backend.buildah.RunCommand(ctx, container.Name, []string{"sh", destScriptPath}, buildah.RunCommandOpts{
 		CommonOpts:   backend.getBuildahCommonOpts(ctx, false, nil, opts.TargetPlatform),
 		User:         "0:0",
 		WorkingDir:   "/",
 		GlobalMounts: mounts,
-		Envs:         makeBuildahEnvs(opts.Envs),
+		Envs:         makeBuildahEnvs(mergedEnvs),
 	}); err != nil {
 		return fmt.Errorf("unable to run commands script: %w", err)
 	}
 
 	return nil
-}
-
-func (backend *BuildahBackend) CalculateDependencyImportChecksum(ctx context.Context, dependencyImport DependencyImportSpec, opts CalculateDependencyImportChecksum) (string, error) {
-	defer opstats.Observe(ctx, opstats.OperationImportChecksum)()
-	// TODO(2.0): Take into account empty dirs
-
-	var container *containerDesc
-	if c, err := backend.createContainers(ctx, []string{dependencyImport.ImageName}, CommonOpts(opts)); err != nil {
-		return "", err
-	} else {
-		container = c[0]
-	}
-	defer func() {
-		if err := backend.removeContainers(ctx, []*containerDesc{container}, CommonOpts(opts)); err != nil {
-			logboek.Context(ctx).Error().LogF("ERROR: unable to remove temporal dependency container %q: %s\n", container.Name, err)
-		}
-	}()
-
-	if Debug() {
-		logboek.Context(ctx).Debug().LogF("Mounting dependency container %s\n", container.Name)
-	}
-	if err := backend.mountContainers(ctx, []*containerDesc{container}, CommonOpts(opts)); err != nil {
-		return "", fmt.Errorf("unable to mount build container %s: %w", container.Name, err)
-	}
-	defer func() {
-		if Debug() {
-			logboek.Context(ctx).Debug().LogF("Unmounting build container %s\n", container.Name)
-		}
-		if err := backend.unmountContainers(ctx, []*containerDesc{container}, CommonOpts(opts)); err != nil {
-			logboek.Context(ctx).Error().LogF("ERROR: unable to unmount containers: %s\n", err)
-		}
-	}()
-
-	fromPath, err := resolveContainerRootPathNoFollow(container.RootMount, dependencyImport.FromPath)
-	if err != nil {
-		return "", err
-	}
-
-	return calculateDependencyImportChecksum(ctx, fromPath, dependencyImport)
-}
-
-// calculateDependencyImportChecksum hashes the files under fromPath (the already resolved
-// on-disk location of dependencyImport.FromPath), keying every entry by the configured
-// FromPath so the checksum does not depend on where the container root is mounted or on
-// symlink resolution of the parent directories.
-func calculateDependencyImportChecksum(ctx context.Context, fromPath string, dependencyImport DependencyImportSpec) (string, error) {
-	pathMatcher := path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{
-		BasePath:     fromPath,
-		IncludeGlobs: dependencyImport.IncludePaths,
-		ExcludeGlobs: dependencyImport.ExcludePaths,
-	})
-
-	var files []string
-
-	err := filepath.Walk(fromPath, func(path string, f os.FileInfo, err error) error {
-		if err != nil {
-			return fmt.Errorf("error accessing %s: %w", path, err)
-		}
-
-		if !pathMatcher.IsDirOrSubmodulePathMatched(path) {
-			if f.IsDir() {
-				return filepath.SkipDir
-			} else {
-				return nil
-			}
-		}
-
-		if f.IsDir() {
-			return nil
-		}
-
-		if pathMatcher.IsPathMatched(path) {
-			files = append(files, path)
-		}
-		return nil
-	})
-	if err != nil {
-		return "", err
-	}
-
-	hash := md5.New()
-	sort.Strings(files)
-
-	for _, path := range files {
-		if Debug() {
-			logboek.Context(ctx).Debug().LogF("Calculating checksum of container file %s\n", path)
-		}
-
-		fileInfo, err := os.Lstat(path)
-		if err != nil {
-			return "", fmt.Errorf("unable to get file info %q: %w", path, err)
-		}
-
-		fileHash := md5.New()
-		if fileInfo.Mode()&os.ModeSymlink != 0 {
-			link, err := os.Readlink(path)
-			if err != nil {
-				return "", fmt.Errorf("unable to read symlink %q: %w", path, err)
-			}
-			if _, err := io.Copy(fileHash, strings.NewReader(link)); err != nil {
-				return "", fmt.Errorf("error calculating hash for symlink %q: %w", path, err)
-			}
-		} else {
-			if err := func() error {
-				f, err := os.Open(path)
-				if err != nil {
-					return fmt.Errorf("unable to open file %q: %w", path, err)
-				}
-				defer f.Close()
-
-				if _, err := io.Copy(fileHash, f); err != nil {
-					return fmt.Errorf("error calculating hash for file %q: %w", path, err)
-				}
-				return nil
-			}(); err != nil {
-				return "", err
-			}
-		}
-
-		if _, err := fmt.Fprintf(hash, "%x  %s\n", fileHash.Sum(nil), filepath.Join("/", dependencyImport.FromPath, util.GetRelativeToBaseFilepath(fromPath, path))); err != nil {
-			return "", fmt.Errorf("error calculating file %q checksum: %w", path, err)
-		}
-	}
-
-	return fmt.Sprintf("%x", hash.Sum(nil)), nil
 }
 
 func (backend *BuildahBackend) applyDataArchives(ctx context.Context, container *containerDesc, dataArchives []DataArchiveSpec) error {
@@ -897,18 +779,12 @@ func (backend *BuildahBackend) GetImageInfo(ctx context.Context, ref string, opt
 		}
 	}
 
-	// TODO: remove this legacy logic in v3.
-	parentID := string(inspect.Docker.Parent)
-	if parentID == "" {
-		if id, ok := inspect.Docker.Config.Labels[image.WerfBaseImageIDLabel]; ok { // built with werf
-			parentID = id
-		}
-	}
-
 	var repository, tag, repoDigest string
 	if !strings.HasPrefix(ref, "sha256:") {
 		repository, tag = image.ParseRepositoryAndTag(ref)
-		list, err := backend.buildah.Images(ctx, buildah.ImagesOptions{Names: []string{ref}})
+		list, err := backend.buildah.Images(ctx, buildah.ImagesOptions{
+			Filters: []util.Pair[string, string]{util.NewPair("reference", ref)},
+		})
 		if err != nil {
 			return nil, fmt.Errorf("error getting buildah info for image %q: %w", ref, err)
 		}
@@ -932,7 +808,6 @@ func (backend *BuildahBackend) GetImageInfo(ctx context.Context, ref string, opt
 		OnBuild:           inspect.Docker.Config.OnBuild,
 		Env:               inspect.Docker.Config.Env,
 		ID:                imageID,
-		ParentID:          parentID,
 		Size:              inspect.Docker.Size,
 		Volumes:           inspect.Docker.Config.Volumes,
 	}, nil
@@ -1047,21 +922,31 @@ func (backend *BuildahBackend) BuildDockerfile(ctx context.Context, dockerfileCo
 		return "", fmt.Errorf("unable to extract build context: %w", err)
 	}
 
-	dockerfile, err := tmp_manager.TempFile("*.Dockerfile")
+	dockerfileDir, err := tmp_manager.TempDir("dockerfile-*")
 	if err != nil {
-		return "", fmt.Errorf("error creating temporary dockerfile: %w", err)
-	}
-
-	if _, err := dockerfile.Write(dockerfileContent); err != nil {
-		return "", fmt.Errorf("error writing temporary dockerfile: %w", err)
+		return "", fmt.Errorf("error creating temporary dockerfile dir: %w", err)
 	}
 	defer func() {
-		if err := os.Remove(dockerfile.Name()); err != nil {
-			logboek.Context(ctx).Error().LogF("ERROR: unable to remove temporary dockerfile %s: %s\n", dockerfile.Name(), err)
+		if err := os.RemoveAll(dockerfileDir); err != nil {
+			logboek.Context(ctx).Error().LogF("ERROR: unable to remove temporary dockerfile dir %s: %s\n", dockerfileDir, err)
 		}
 	}()
 
-	return backend.buildah.BuildFromDockerfile(ctx, dockerfile.Name(), buildah.BuildFromDockerfileOpts{
+	dockerfilePath := filepath.Join(dockerfileDir, "Dockerfile")
+	if err := os.WriteFile(dockerfilePath, dockerfileContent, 0o600); err != nil {
+		return "", fmt.Errorf("error writing temporary dockerfile %s: %w", dockerfilePath, err)
+	}
+
+	// buildah reads the ignore file next to the dockerfile and only falls back to the ignore
+	// files of the context when there is none. The build context has already been filtered by
+	// werf, so a fallback would apply the patterns a second time and undo contextAddFiles and
+	// the ignore file selection made by werf.
+	ignorePath := dockerfilePath + ".dockerignore"
+	if err := os.WriteFile(ignorePath, []byte("# the build context is already filtered by werf\n"), 0o600); err != nil {
+		return "", fmt.Errorf("error writing temporary dockerignore %s: %w", ignorePath, err)
+	}
+
+	return backend.buildah.BuildFromDockerfile(ctx, dockerfilePath, buildah.BuildFromDockerfileOpts{
 		CommonOpts: backend.getBuildahCommonOpts(ctx, false, nil, opts.TargetPlatform),
 		ContextDir: buildContextTmpDir,
 		BuildArgs:  buildArgs,
@@ -1401,6 +1286,47 @@ func (backend *BuildahBackend) Rm(ctx context.Context, name string, opts RmOpts)
 	return backend.buildah.Rm(ctx, name, buildah.RmOpts{})
 }
 
+// MutateAndPushImageNative applies newConfig to src via a native buildah build+commit
+// (create container from src, mutate its config, commit to dest), without the
+// save-to-tar/load-from-tar roundtrip used by MutateAndPushImage. It implements the
+// NativeConfigMutator interface used by storage.LocalStagesStorage.
+func (backend *BuildahBackend) MutateAndPushImageNative(ctx context.Context, src, dest string, newConfig image.SpecConfig, targetPlatform string) error {
+	containerID := uuid.New().String()
+
+	if _, err := backend.buildah.FromCommand(ctx, containerID, src, buildah.FromCommandOpts(backend.getBuildahCommonOpts(ctx, true, nil, targetPlatform))); err != nil {
+		return fmt.Errorf("unable to create container from image %q: %w", src, err)
+	}
+	defer func() {
+		if err := backend.buildah.Rm(ctx, containerID, buildah.RmOpts{}); err != nil {
+			logboek.Context(ctx).Error().LogF("ERROR: unable to remove temporary mutation container %q: %s\n", containerID, err)
+		}
+	}()
+
+	if err := backend.buildah.MutateConfig(ctx, containerID, newConfig, backend.getBuildahCommonOpts(ctx, true, nil, targetPlatform)); err != nil {
+		return fmt.Errorf("unable to mutate config for container %q: %w", containerID, err)
+	}
+
+	var created *time.Time
+	if newConfig.Created != "" {
+		parsed, err := time.Parse(time.RFC3339, newConfig.Created)
+		if err != nil {
+			return fmt.Errorf("unable to parse created timestamp %q: %w", newConfig.Created, err)
+		}
+		created = &parsed
+	}
+
+	if _, err := backend.buildah.CommitMutation(ctx, containerID, buildah.CommitOpts{
+		CommonOpts:   backend.getBuildahCommonOpts(ctx, true, nil, targetPlatform),
+		Image:        dest,
+		ClearHistory: newConfig.ClearHistory,
+		Created:      created,
+	}); err != nil {
+		return fmt.Errorf("unable to commit mutated container %q as %q: %w", containerID, dest, err)
+	}
+
+	return nil
+}
+
 func (backend *BuildahBackend) PostManifest(ctx context.Context, ref string, opts PostManifestOpts) error {
 	containerID := uuid.New().String()
 	_, err := backend.buildah.FromCommand(ctx, containerID, "", buildah.FromCommandOpts(backend.getBuildahCommonOpts(ctx, true, nil, opts.TargetPlatform)))
@@ -1417,8 +1343,6 @@ func (backend *BuildahBackend) PostManifest(ctx context.Context, ref string, opt
 	}
 	return nil
 }
-
-func (backend *BuildahBackend) ClaimTargetPlatforms(ctx context.Context, targetPlatforms []string) {}
 
 func (backend *BuildahBackend) PruneImages(ctx context.Context, options prune.Options) (prune.Report, error) {
 	report, err := backend.buildah.PruneImages(ctx, buildah.PruneImagesOptions{

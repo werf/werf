@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/werf/common-go/pkg/graceful"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
@@ -49,8 +50,6 @@ func getRequirementInBytes(val *units.UnitValue, defaultPercent, totalBytes uint
 }
 
 func RunAutoHostCleanup(ctx context.Context, backend container_backend.ContainerBackend, options AutoHostCleanupOptions) error {
-	ctx = context.WithoutCancel(ctx)
-
 	if shouldRun, err := shouldRunAutoHostCleanup(ctx, backend, options); err != nil {
 		logboek.Context(ctx).Warn().LogF("WARNING: unable to check if auto host cleanup should be run: %s\n", err)
 		return nil
@@ -104,6 +103,19 @@ func RunHostCleanup(ctx context.Context, backend container_backend.ContainerBack
 			return nil
 		} else if err != nil {
 			return fmt.Errorf("tmp files GC failed: %w", err)
+		}
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	if err := logboek.Context(ctx).LogProcess("Running GC for locks").DoError(func() error {
+		if options.DryRun {
+			return nil
+		}
+		if err := werf.GCHostLockerDir(); err != nil {
+			// non-fatal: lock GC failures must not block the rest of host cleanup
+			logboek.Context(ctx).Warn().LogF("WARNING: host locks GC failed: %s\n", err)
 		}
 		return nil
 	}); err != nil {
@@ -168,6 +180,9 @@ func RunHostCleanup(ctx context.Context, backend container_backend.ContainerBack
 }
 
 func shouldRunAutoHostCleanup(ctx context.Context, backend container_backend.ContainerBackend, options AutoHostCleanupOptions) (bool, error) {
+	if graceful.IsTerminating(ctx) {
+		return false, nil
+	}
 	// host cleanup is not supported for certain project
 	if options.ProjectName != nil && *options.ProjectName != "" {
 		return false, nil
@@ -176,6 +191,14 @@ func shouldRunAutoHostCleanup(ctx context.Context, backend container_backend.Con
 	shouldRun, err := tmp_manager.ShouldRunAutoGC()
 	if err != nil {
 		return false, fmt.Errorf("failed to check tmp manager GC: %w", err)
+	}
+	if shouldRun {
+		return true, nil
+	}
+
+	shouldRun, err = werf.ShouldRunHostLocksGC()
+	if err != nil {
+		return false, fmt.Errorf("failed to check host locks GC: %w", err)
 	}
 	if shouldRun {
 		return true, nil

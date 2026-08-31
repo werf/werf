@@ -57,6 +57,8 @@ type LegacyContainer interface {
 	RunOptions() LegacyContainerOptions
 	CommitChangeOptions() LegacyContainerOptions
 	ServiceCommitChangeOptions() LegacyContainerOptions
+
+	AddBuildTimeEnv(envs map[string]string)
 }
 
 type LegacyBuilderContainer interface {

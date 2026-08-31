@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/werf/logboek"
-	"github.com/werf/nelm/pkg/export/helm/registry"
+	"github.com/werf/nelm/pkg/helm/pkg/registry"
 	bundles_registry "github.com/werf/werf/v2/pkg/deploy/bundles/registry"
 	"github.com/werf/werf/v2/pkg/docker"
 )

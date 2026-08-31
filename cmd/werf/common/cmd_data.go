@@ -41,19 +41,23 @@ type CmdData struct {
 	WithoutImages   *bool
 	Repo            *RepoData
 	FinalRepo       *RepoData
+	MetaRepo        *RepoData
 
 	SecondaryStagesStorage *[]string
 	CacheStagesStorage     *[]string
 
-	CheckBuiltImages       *bool
-	LegacyCheckBuiltImages *bool // TODO(major): remove
+	CheckBuiltImages *bool
+	// LegacyCheckBuiltImages backs the hidden `-Z`/`--require-built-images` alias kept for
+	// backward compatibility with werf 1.2, where this flag had different semantics than the
+	// current `--require-built-images` (see RequireBuiltImages). Combined with CheckBuiltImages
+	// in GetCheckBuiltImages so either flag enables the check.
+	LegacyCheckBuiltImages *bool
 	RequireBuiltImages     *bool
 	StubTags               *bool
 
 	AddCustomTag *[]string
 	UseCustomTag *string
 
-	Synchronization    *string
 	BackendNetwork     *string
 	Parallel           *bool
 	ParallelTasksLimit *int64
@@ -95,10 +99,7 @@ type CmdData struct {
 	SaveCleanupReport *bool
 	CleanupReportPath *string
 
-	VirtualMerge *bool
-
 	ScanContextNamespaceOnly *bool
-	KubeScanNamespaces       *[]string
 
 	// Host storage cleanup options
 	DisableAutoHostCleanup                 *bool
@@ -110,8 +111,7 @@ type CmdData struct {
 
 	Platform *[]string
 
-	SkipImageSpecStage *bool
-	IncludesLsFilter   *string
+	IncludesLsFilter *string
 
 	CreateIncludesLockFile bool
 	AllowIncludesUpdate    bool
@@ -141,6 +141,8 @@ type CmdData struct {
 	NoInstallStandaloneCRDs          bool
 	NoRemoveManualChanges            bool
 	NoShowNotes                      bool
+	PatchesFiles                     []string
+	DefaultPatchesDisable            bool
 	NoCreateNamespace                bool
 	Release                          string
 	ReleaseHistoryLimit              int
@@ -219,13 +221,6 @@ func (cmdData *CmdData) SetupHelmCompatibleChart(cmd *cobra.Command, defaultEnab
 
 func (cmdData *CmdData) SetupRenameChart(cmd *cobra.Command) {
 	cmd.Flags().StringVarP(&cmdData.RenameChart, "rename-chart", "", os.Getenv("WERF_RENAME_CHART"), `Force setting of chart name in the Chart.yaml of the published chart to the specified value (can be set by the $WERF_RENAME_CHART, no rename by default, could not be used together with the '--helm-compatible-chart' option).`)
-}
-
-// TODO: remove this legacy logic in v3.
-func (cmdData *CmdData) SetupSkipImageSpecStage(cmd *cobra.Command) {
-	cmdData.SkipImageSpecStage = new(bool)
-	cmd.Flags().BoolVarP(cmdData.SkipImageSpecStage, "skip-image-spec-stage", "", util.GetBoolEnvironmentDefaultFalse("WERF_SKIP_IMAGE_SPEC_STAGE"), `Force skipping "imageSpec" build stage (default $WERF_SKIP_IMAGE_SPEC_STAGE or false)`)
-	cmd.Flags().MarkHidden("skip-image-spec-stage")
 }
 
 func (cmdData *CmdData) SetupCreateIncludesLockFile() {
@@ -396,11 +391,11 @@ func (cmdData *CmdData) processFlags() error {
 	cmdData.ValuesSetString = append(util.PredefinedValuesByEnvNamePrefix("WERF_SET_STRING_"), cmdData.ValuesSetString...)
 	cmdData.ValuesSetFile = append(util.PredefinedValuesByEnvNamePrefix("WERF_SET_FILE_"), cmdData.ValuesSetFile...)
 	cmdData.RootSetJSON = append(util.PredefinedValuesByEnvNamePrefix("WERF_SET_ROOT_JSON_"), cmdData.RootSetJSON...)
-	cmdData.RuntimeSetJSON = append(util.PredefinedValuesByEnvNamePrefix("WERF_SET_RUNTIME_JSON_"), cmdData.RuntimeSetJSON...)
 	cmdData.ValuesSetJSON = append(util.PredefinedValuesByEnvNamePrefix("WERF_SET_JSON_"), cmdData.ValuesSetJSON...)
 	cmdData.ValuesSetLiteral = append(util.PredefinedValuesByEnvNamePrefix("WERF_SET_LITERAL_"), cmdData.ValuesSetLiteral...)
 	cmdData.ValuesFiles = append(util.PredefinedValuesByEnvNamePrefix("WERF_VALUES_"), cmdData.ValuesFiles...)
 	cmdData.SecretValuesFiles = append(util.PredefinedValuesByEnvNamePrefix("WERF_SECRET_VALUES_"), cmdData.SecretValuesFiles...)
+	cmdData.PatchesFiles = append(util.PredefinedValuesByEnvNamePrefix("WERF_PATCHES_"), cmdData.PatchesFiles...)
 	cmdData.ValidationSkip = append(util.PredefinedValuesByEnvNamePrefix("WERF_RESOURCE_VALIDATION_SKIP_"), cmdData.ValidationSkip...)
 	cmdData.ValidationExtraSchemas = append(util.PredefinedValuesByEnvNamePrefix("WERF_RESOURCE_VALIDATION_EXTRA_SCHEMA_"), cmdData.ValidationExtraSchemas...)
 	cmdData.ExtraAPIVersions = append(util.PredefinedValuesByEnvNamePrefix("WERF_EXTRA_APIVERSIONS_"), cmdData.ExtraAPIVersions...)

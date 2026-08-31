@@ -51,14 +51,14 @@ werf kubectl diff -f FILENAME [options]
             Include resources that would be deleted by pruning. Can be used with -l and default     
             shows all resources would be pruned
       --prune-allowlist=[]
-            Overwrite the default whitelist with <group/version/kind> for --prune
+            Overwrite the default allowlist with <group/version/kind> for --prune
   -R, --recursive=false
             Process the directory used in -f, --filename recursively. Useful when you want to       
             manage related manifests organized within the same directory.
   -l, --selector=""
-            Selector (label query) to filter on, supports `=`, `==`, and `!=`.(e.g. -l              
-            key1=value1,key2=value2). Matching objects must satisfy all of the specified label      
-            constraints.
+            Selector (label query) to filter on, supports `=`, `==`, `!=`, `in`, `notin`.(e.g. -l   
+            key1=value1,key2=value2,key3 in (value3)). Matching objects must satisfy all of the     
+            specified label constraints.
       --server-side=false
             If true, apply runs in the server instead of the client.
       --show-managed-fields=false
@@ -76,6 +76,9 @@ werf kubectl diff -f FILENAME [options]
             groups.
       --as-uid=""
             UID to impersonate for the operation.
+      --as-user-extra=[]
+            User extras to impersonate for the operation, this flag can be repeated to specify      
+            multiple values for the same key.
       --cache-dir="~/.kube/cache"
             Default cache directory
       --certificate-authority=""
@@ -101,6 +104,9 @@ werf kubectl diff -f FILENAME [options]
       --kubeconfig=""
             Path to the kubeconfig file to use for CLI requests (default $WERF_KUBE_CONFIG, or      
             $WERF_KUBECONFIG, or $KUBECONFIG). Ignored if kubeconfig passed as base64.
+      --kuberc=""
+            Path to the kuberc file to use for preferences. This can be disabled by exporting       
+            KUBECTL_KUBERC=false feature gate or turning off the feature KUBERC=off.
       --log-flush-frequency=5s
             Maximum number of seconds between log flushes
       --match-server-version=false
@@ -110,7 +116,8 @@ werf kubectl diff -f FILENAME [options]
       --password=""
             Password for basic authentication to the API server
       --profile="none"
-            Name of profile to capture. One of (none|cpu|heap|goroutine|threadcreate|block|mutex)
+            Name of profile to capture. One of                                                      
+            (none|cpu|heap|goroutine|threadcreate|block|mutex|trace)
       --profile-output="profile.pprof"
             Name of the file to write the profile to
       --request-timeout="0"

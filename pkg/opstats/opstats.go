@@ -16,7 +16,6 @@ const (
 	OperationImageBuild              Operation = "image build"
 	OperationImageInspect            Operation = "local image inspect"
 	OperationImageSaveLoad           Operation = "image save/load"
-	OperationImportChecksum          Operation = "import checksum"
 	OperationStapelContainer         Operation = "stapel container prepare"
 	OperationStapelContainerLockWait Operation = "stapel container lock wait"
 	OperationGitClone                Operation = "git clone"
@@ -25,8 +24,6 @@ const (
 	OperationGitPatch                Operation = "git patch"
 	OperationGitArchive              Operation = "git archive"
 	OperationGitChecksum             Operation = "git checksum"
-	OperationDockerDaemon            Operation = "docker daemon API"
-	OperationStageLockWait           Operation = "stage lock wait (storage)"
 	OperationStageDigestLockWait     Operation = "stage lock wait (parallel tasks)"
 	OperationContextAddFiles         Operation = "context add files"
 )

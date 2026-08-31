@@ -99,6 +99,14 @@ func (b *BuildahStub) Config(context.Context, string, buildah.ConfigOpts) error 
 	return nil
 }
 
+func (b *BuildahStub) MutateConfig(context.Context, string, image.SpecConfig, buildah.CommonOpts) error {
+	return nil
+}
+
+func (b *BuildahStub) CommitMutation(context.Context, string, buildah.CommitOpts) (string, error) {
+	return "", nil
+}
+
 func (b *BuildahStub) Copy(context.Context, string, string, []string, string, buildah.CopyOpts) error {
 	return nil
 }

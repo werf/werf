@@ -6,8 +6,9 @@ import (
 	"path/filepath"
 
 	"github.com/werf/logboek"
-	"github.com/werf/nelm/pkg/export/helm/chart/loader"
-	"github.com/werf/nelm/pkg/export/helm/werf/helmopts"
+	nelmcommon "github.com/werf/nelm/pkg/common"
+	"github.com/werf/nelm/pkg/helm/pkg/chart/loader"
+	v2chart "github.com/werf/nelm/pkg/helm/pkg/chart/v2"
 	"github.com/werf/werf/v2/pkg/deploy/bundles/registry"
 	"github.com/werf/werf/v2/pkg/ref"
 )
@@ -15,7 +16,7 @@ import (
 type PublishOptions struct {
 	HelmCompatibleChart bool
 	RenameChart         string
-	HelmOptions         helmopts.HelmOptions
+	HelmOptions         nelmcommon.HelmOptions
 }
 
 func Publish(ctx context.Context, bundleDir, bundleRef string, bundlesRegistryClient *registry.Client, opts PublishOptions) error {
@@ -30,16 +31,22 @@ func Publish(ctx context.Context, bundleDir, bundleRef string, bundlesRegistryCl
 			return err
 		}
 
-		ch, err := loader.Load(path, opts.HelmOptions)
+		loadCtx := nelmcommon.ContextWithHelmOptions(ctx, opts.HelmOptions)
+		ch, err := loader.Load(loadCtx, path)
 		if err != nil {
 			return fmt.Errorf("error loading chart %q: %w", path, err)
 		}
 
-		if nameOverwrite := GetChartNameOverwrite(r.Repo, opts.RenameChart, opts.HelmCompatibleChart); nameOverwrite != nil {
-			ch.Metadata.Name = *nameOverwrite
+		v2ch, ok := ch.(*v2chart.Chart)
+		if !ok {
+			return fmt.Errorf("unsupported chart type %T", ch)
 		}
 
-		if err := bundlesRegistryClient.SaveChart(ctx, ch, r, opts.HelmOptions); err != nil {
+		if nameOverwrite := GetChartNameOverwrite(r.Repo, opts.RenameChart, opts.HelmCompatibleChart); nameOverwrite != nil {
+			v2ch.Metadata.Name = *nameOverwrite
+		}
+
+		if err := bundlesRegistryClient.SaveChart(ctx, v2ch, r, opts.HelmOptions); err != nil {
 			return fmt.Errorf("unable to save bundle to the local chart helm cache: %w", err)
 		}
 		return nil

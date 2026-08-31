@@ -6,9 +6,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/docker/docker/api/types"
+	dockercontainer "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/errdefs"
-	"github.com/docker/docker/runconfig/opts"
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
@@ -26,6 +25,7 @@ type LegacyStageImageContainer struct {
 	commitChangeOptions        *LegacyStageImageContainerOptions
 	serviceCommitChangeOptions *LegacyStageImageContainerOptions
 	inheritedCommitOptions     *LegacyStageImageContainerOptions
+	buildTimeEnv               map[string]string
 }
 
 func newLegacyStageImageContainer(img *LegacyStageImage) *LegacyStageImageContainer {
@@ -35,6 +35,7 @@ func newLegacyStageImageContainer(img *LegacyStageImage) *LegacyStageImageContai
 	c.runOptions = newLegacyStageContainerOptions()
 	c.commitChangeOptions = newLegacyStageContainerOptions()
 	c.serviceCommitChangeOptions = newLegacyStageContainerOptions()
+	c.buildTimeEnv = make(map[string]string)
 	return c
 }
 
@@ -70,6 +71,12 @@ func (c *LegacyStageImageContainer) ServiceCommitChangeOptions() LegacyContainer
 	return c.serviceCommitChangeOptions
 }
 
+func (c *LegacyStageImageContainer) AddBuildTimeEnv(envs map[string]string) {
+	for k, v := range envs {
+		c.buildTimeEnv[k] = v
+	}
+}
+
 func (c *LegacyStageImageContainer) prepareRunArgs(ctx context.Context) ([]string, error) {
 	var args []string
 	args = append(args, fmt.Sprintf("--name=%s", c.name))
@@ -88,19 +95,35 @@ func (c *LegacyStageImageContainer) prepareRunArgs(ctx context.Context) ([]strin
 		return nil, err
 	}
 
-	setColumnsEnv := fmt.Sprintf("--env=COLUMNS=%d", logboek.Context(ctx).Streams().ContentWidth())
-	runArgs = append(runArgs, setColumnsEnv)
-
 	args = append(args, runArgs...)
 	args = append(args, c.imageRef(c.image.fromImage))
 	args = append(args, "-ec")
-	args = append(args, c.prepareRunCommand())
+	args = append(args, c.prepareRunCommand(ctx))
 
 	return args, nil
 }
 
-func (c *LegacyStageImageContainer) prepareRunCommand() string {
-	return ShelloutPack(strings.Join(c.prepareRunCommands(), " && "))
+func shellSingleQuote(v string) string {
+	return "'" + strings.ReplaceAll(v, "'", `'\''`) + "'"
+}
+
+func (c *LegacyStageImageContainer) prepareBuildTimeEnvExports(ctx context.Context) []string {
+	envs := make(map[string]string, len(c.buildTimeEnv)+1)
+	for k, v := range c.buildTimeEnv {
+		envs[k] = v
+	}
+	envs["COLUMNS"] = fmt.Sprintf("%d", logboek.Context(ctx).Streams().ContentWidth())
+
+	var exports []string
+	for _, k := range sortStrings(getKeys(envs)) {
+		exports = append(exports, fmt.Sprintf("export %s=%s", k, shellSingleQuote(envs[k])))
+	}
+	return exports
+}
+
+func (c *LegacyStageImageContainer) prepareRunCommand(ctx context.Context) string {
+	commands := append(c.prepareBuildTimeEnvExports(ctx), c.prepareRunCommands()...)
+	return ShelloutPack(strings.Join(commands, " && "))
 }
 
 func (c *LegacyStageImageContainer) prepareRunCommands() []string {
@@ -271,7 +294,7 @@ func (c *LegacyStageImageContainer) prepareInheritedCommitOptions(ctx context.Co
 		inheritedOptions.Workdir = "/"
 	}
 
-	fromImageEnv := opts.ConvertKVStringsToMap(fromImageInspect.Config.Env)
+	fromImageEnv := convertKVStringsToMap(fromImageInspect.Config.Env)
 	for _, k := range []string{"LANG", "LC_ALL"} {
 		if val, hasKey := fromImageEnv[k]; hasKey {
 			inheritedOptions.Env[k] = val
@@ -303,7 +326,7 @@ func (c *LegacyStageImageContainer) run(ctx context.Context) error {
 	err = docker.CliRun_LiveOutput(ctx, runArgs...)
 	UnregisterRunningContainer(c.name)
 	if err != nil {
-		return fmt.Errorf("container run failed: %w", CliErrorByCode(err))
+		return fmt.Errorf("container run failed: %w", err)
 	}
 	return nil
 }
@@ -361,7 +384,7 @@ func (c *LegacyStageImageContainer) commit(ctx context.Context) (string, error) 
 		return "", err
 	}
 
-	commitOptions := types.ContainerCommitOptions{Changes: commitChanges}
+	commitOptions := dockercontainer.CommitOptions{Changes: commitChanges}
 	id, err := docker.ContainerCommit(ctx, c.name, commitOptions)
 	if err != nil {
 		return "", err
@@ -373,7 +396,7 @@ func (c *LegacyStageImageContainer) commit(ctx context.Context) (string, error) 
 func (c *LegacyStageImageContainer) rm(ctx context.Context) error {
 	_ = c.image.ContainerBackend.(*DockerServerBackend)
 
-	err := docker.ContainerRemove(ctx, c.name, types.ContainerRemoveOptions{RemoveVolumes: true, Force: true})
+	err := docker.ContainerRemove(ctx, c.name, dockercontainer.RemoveOptions{RemoveVolumes: true, Force: true})
 	if err != nil {
 		if errdefs.IsNotFound(err) || errdefs.IsConflict(err) {
 			return nil
@@ -382,4 +405,13 @@ func (c *LegacyStageImageContainer) rm(ctx context.Context) error {
 		return fmt.Errorf("unable to remove container %s: %w", c.name, err)
 	}
 	return nil
+}
+
+func convertKVStringsToMap(values []string) map[string]string {
+	result := make(map[string]string, len(values))
+	for _, value := range values {
+		k, v, _ := strings.Cut(value, "=")
+		result[k] = v
+	}
+	return result
 }

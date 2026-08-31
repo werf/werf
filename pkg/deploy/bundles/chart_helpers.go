@@ -10,19 +10,19 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/werf/logboek"
-	"github.com/werf/nelm/pkg/export/helm/chart"
-	"github.com/werf/nelm/pkg/export/helm/chart/loader"
-	"github.com/werf/nelm/pkg/export/helm/chartutil"
-	"github.com/werf/nelm/pkg/export/helm/werf/helmopts"
+	nelmcommon "github.com/werf/nelm/pkg/common"
+	"github.com/werf/nelm/pkg/helm/pkg/chart/loader"
+	chart "github.com/werf/nelm/pkg/helm/pkg/chart/v2"
+	chartv2util "github.com/werf/nelm/pkg/helm/pkg/chart/v2/util"
 )
 
 func ChartToBytes(ch *chart.Chart) ([]byte, error) {
 	chartBytes := bytes.NewBuffer(nil)
 	zipper := gzip.NewWriter(chartBytes)
-	chartutil.SetGzipWriterMeta(zipper)
+	chartv2util.SetGzipWriterMeta(zipper)
 	twriter := tar.NewWriter(zipper)
 
-	if err := chartutil.SaveIntoTar(twriter, ch, chartutil.SaveIntoTarOptions{}); err != nil {
+	if err := chartv2util.SaveIntoTar(twriter, ch, chartv2util.SaveIntoTarOptions{}); err != nil {
 		return nil, fmt.Errorf("unable to save chart to tar: %w", err)
 	}
 
@@ -37,9 +37,20 @@ func ChartToBytes(ch *chart.Chart) ([]byte, error) {
 	return chartBytes.Bytes(), nil
 }
 
-func BytesToChart(data []byte, opts helmopts.HelmOptions) (*chart.Chart, error) {
+func BytesToChart(ctx context.Context, data []byte, opts nelmcommon.HelmOptions) (*chart.Chart, error) {
 	dataReader := bytes.NewBuffer(data)
-	return loader.LoadArchive(dataReader, opts)
+
+	ch, err := loader.LoadArchive(nelmcommon.ContextWithHelmOptions(ctx, opts), dataReader)
+	if err != nil {
+		return nil, err
+	}
+
+	v2ch, ok := ch.(*chart.Chart)
+	if !ok {
+		return nil, fmt.Errorf("unsupported chart type %T", ch)
+	}
+
+	return v2ch, nil
 }
 
 func SaveChartValues(ctx context.Context, ch *chart.Chart) error {
@@ -50,7 +61,7 @@ func SaveChartValues(ctx context.Context, ch *chart.Chart) error {
 	logboek.Context(ctx).Debug().LogF("Values after change (%v):\n%s\n---\n", err, valuesRaw)
 
 	for _, f := range ch.Raw {
-		if f.Name == chartutil.ValuesfileName {
+		if f.Name == chartv2util.ValuesfileName {
 			f.Data = valuesRaw
 			break
 		}

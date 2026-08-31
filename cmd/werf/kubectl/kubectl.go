@@ -103,6 +103,7 @@ func prePreRun(ctx context.Context) error {
 
 func setupKubeconfig(ctx context.Context) error {
 	var kubeConfigPath string
+
 	if commonCmdData.KubeConfigBase64 != "" {
 		var err error
 		kubeConfigPath, err = tmp_manager.CreateKubeConfigFromBase64(ctx, strings.NewReader(commonCmdData.KubeConfigBase64))
@@ -110,10 +111,10 @@ func setupKubeconfig(ctx context.Context) error {
 			return fmt.Errorf("unable to create kubeconfig from base64: %w", err)
 		}
 		*configFlags.KubeConfig = ""
-	}
-
-	if kubeConfigEnv := common.GetFirstExistingKubeConfigEnvVar(); kubeConfigEnv != "" && *configFlags.KubeConfig == "" {
-		kubeConfigPath = kubeConfigEnv
+	} else {
+		if kubeConfigEnv := common.GetFirstExistingKubeConfigEnvVar(); kubeConfigEnv != "" && *configFlags.KubeConfig == "" {
+			kubeConfigPath = kubeConfigEnv
+		}
 	}
 
 	if kubeConfigPath != "" {

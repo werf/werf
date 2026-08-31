@@ -59,8 +59,8 @@ werf kubectl set resources (-f FILENAME | TYPE NAME)  ([--limits=LIMITS & --requ
       --local=false
             If true, set resources will NOT contact api-server but run locally.
   -o, --output=""
-            Output format. One of: (json, yaml, name, go-template, go-template-file, template,      
-            templatefile, jsonpath, jsonpath-as-json, jsonpath-file).
+            Output format. One of: (json, yaml, kyaml, name, go-template, go-template-file,         
+            template, templatefile, jsonpath, jsonpath-as-json, jsonpath-file).
   -R, --recursive=false
             Process the directory used in -f, --filename recursively. Useful when you want to       
             manage related manifests organized within the same directory.
@@ -69,9 +69,9 @@ werf kubectl set resources (-f FILENAME | TYPE NAME)  ([--limits=LIMITS & --requ
             `cpu=100m,memory=256Mi`.  Note that server side components may assign requests          
             depending on the server configuration, such as limit ranges.
   -l, --selector=""
-            Selector (label query) to filter on, supports `=`, `==`, and `!=`.(e.g. -l              
-            key1=value1,key2=value2). Matching objects must satisfy all of the specified label      
-            constraints.
+            Selector (label query) to filter on, supports `=`, `==`, `!=`, `in`, `notin`.(e.g. -l   
+            key1=value1,key2=value2,key3 in (value3)). Matching objects must satisfy all of the     
+            specified label constraints.
       --show-managed-fields=false
             If true, keep the managedFields when printing objects in JSON or YAML format.
       --template=""
@@ -91,6 +91,9 @@ werf kubectl set resources (-f FILENAME | TYPE NAME)  ([--limits=LIMITS & --requ
             groups.
       --as-uid=""
             UID to impersonate for the operation.
+      --as-user-extra=[]
+            User extras to impersonate for the operation, this flag can be repeated to specify      
+            multiple values for the same key.
       --cache-dir="~/.kube/cache"
             Default cache directory
       --certificate-authority=""
@@ -116,6 +119,9 @@ werf kubectl set resources (-f FILENAME | TYPE NAME)  ([--limits=LIMITS & --requ
       --kubeconfig=""
             Path to the kubeconfig file to use for CLI requests (default $WERF_KUBE_CONFIG, or      
             $WERF_KUBECONFIG, or $KUBECONFIG). Ignored if kubeconfig passed as base64.
+      --kuberc=""
+            Path to the kuberc file to use for preferences. This can be disabled by exporting       
+            KUBECTL_KUBERC=false feature gate or turning off the feature KUBERC=off.
       --log-flush-frequency=5s
             Maximum number of seconds between log flushes
       --match-server-version=false
@@ -125,7 +131,8 @@ werf kubectl set resources (-f FILENAME | TYPE NAME)  ([--limits=LIMITS & --requ
       --password=""
             Password for basic authentication to the API server
       --profile="none"
-            Name of profile to capture. One of (none|cpu|heap|goroutine|threadcreate|block|mutex)
+            Name of profile to capture. One of                                                      
+            (none|cpu|heap|goroutine|threadcreate|block|mutex|trace)
       --profile-output="profile.pprof"
             Name of the file to write the profile to
       --request-timeout="0"

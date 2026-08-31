@@ -7,7 +7,6 @@ import (
 	"path"
 	"path/filepath"
 	"sort"
-	"strconv"
 	"strings"
 
 	"github.com/werf/common-go/pkg/util"
@@ -35,27 +34,10 @@ const (
 	DependenciesAfterSetup    StageName = "dependenciesAfterSetup"
 	GitCache                  StageName = "gitCache"
 	GitLatestPatch            StageName = "gitLatestPatch"
-	DockerInstructions        StageName = "dockerInstructions"
 
 	Dockerfile StageName = "dockerfile"
 	ImageSpec  StageName = "imageSpec"
 )
-
-// TODO(compatibility): remove in v3
-func GetLegacyCompatibleStageName(name StageName) string {
-	switch name {
-	case DependenciesBeforeInstall:
-		return "importsBeforeInstall"
-	case DependenciesAfterInstall:
-		return "importsAfterInstall"
-	case DependenciesBeforeSetup:
-		return "importsBeforeSetup"
-	case DependenciesAfterSetup:
-		return "importsAfterSetup"
-	default:
-		return string(name)
-	}
-}
 
 var AllStages = []StageName{
 	From,
@@ -70,7 +52,6 @@ var AllStages = []StageName{
 	DependenciesAfterSetup,
 	GitCache,
 	GitLatestPatch,
-	DockerInstructions,
 
 	Dockerfile,
 	ImageSpec,
@@ -86,25 +67,6 @@ type BaseStageOptions struct {
 	ContainerWerfDir  string
 	ProjectName       string
 	Network           string
-}
-
-const disableGitCommitAncestryCheckEnv = "WERF_DISABLE_GIT_COMMIT_ANCESTRY_CHECK"
-
-func isGitCommitAncestryCheckDisabled() bool {
-	v, hasKey := os.LookupEnv(disableGitCommitAncestryCheckEnv)
-	if !hasKey {
-		return false
-	}
-	if v == "" {
-		return false
-	}
-
-	disabled, err := strconv.ParseBool(v)
-	if err != nil {
-		return false
-	}
-
-	return disabled
 }
 
 func NewBaseStage(name StageName, options *BaseStageOptions) *BaseStage {
@@ -137,6 +99,15 @@ type BaseStage struct {
 	projectName      string
 	network          string
 	meta             *StageMeta
+	isContentAnchor  bool
+}
+
+func (s *BaseStage) IsContentAnchor() bool {
+	return s.isContentAnchor
+}
+
+func (s *BaseStage) SetContentAnchor(v bool) {
+	s.isContentAnchor = v
 }
 
 type StageMeta struct {
@@ -209,6 +180,10 @@ func (s *BaseStage) GetNextStageDependencies(_ context.Context, _ Conveyor) (str
 	return "", nil
 }
 
+func (s *BaseStage) GetContentDependencies(ctx context.Context, c Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+	panic("method must be implemented!")
+}
+
 func (s *BaseStage) getNextStageGitDependencies(ctx context.Context, c Conveyor) (string, error) {
 	var args []string
 	for _, gitMapping := range s.gitMappings {
@@ -256,73 +231,31 @@ func selectStageDescByOldestCreationTs(ctx context.Context, stageDescSet image.S
 	return nil, nil
 }
 
-func (s *BaseStage) selectAncestorStageDescByGitMappings(ctx context.Context, c Conveyor, stageDescSet image.StageDescSet) (*image.StageDesc, error) {
-	var currentCommitsByIndex []string
-	for _, gitMapping := range s.gitMappings {
-		currentCommitInfo, err := gitMapping.GetLatestCommitInfo(ctx, c)
-		if err != nil {
-			return nil, fmt.Errorf("error getting latest commit of git mapping %s: %w", gitMapping.Name, err)
-		}
-
-		var currentCommit string
-		if currentCommitInfo.VirtualMerge {
-			currentCommit = currentCommitInfo.VirtualMergeFromCommit
-		} else {
-			currentCommit = currentCommitInfo.Commit
-		}
-
-		currentCommitsByIndex = append(currentCommitsByIndex, currentCommit)
-	}
-
-	disableAncestryCheck := isGitCommitAncestryCheckDisabled()
-	if disableAncestryCheck {
-		logboek.Context(ctx).Debug().LogF("Git commit ancestry check is disabled by %s\n", disableGitCommitAncestryCheckEnv)
-	}
-
+// selectStageDescByExistingGitCommits reuses the oldest cached stage whose recorded commit is
+// still reachable in the repo. The commit is not required to be an ancestor of the current one:
+// patches are built from that commit, so it only has to exist.
+func (s *BaseStage) selectStageDescByExistingGitCommits(ctx context.Context, stageDescSet image.StageDescSet) (*image.StageDesc, error) {
 ScanImages:
 	for _, stageDesc := range sortStageDescSetByOldestCreationTs(stageDescSet) {
-		for i, gitMapping := range s.gitMappings {
-			currentCommit := currentCommitsByIndex[i]
-
+		for _, gitMapping := range s.gitMappings {
 			imageCommitInfo, err := gitMapping.GetBuiltImageCommitInfo(stageDesc.Info.Labels)
 			if err != nil {
 				logboek.Context(ctx).Warn().LogF("Ignoring stage %s: unable to get image commit info for git repo %s: %s\n", stageDesc.Info.Name, gitMapping.GitRepo().String(), err)
 				continue ScanImages
 			}
 
-			var commitToCheckAncestry string
-			if imageCommitInfo.VirtualMerge {
-				commitToCheckAncestry = imageCommitInfo.VirtualMergeFromCommit
-			} else {
-				commitToCheckAncestry = imageCommitInfo.Commit
-			}
-
-			exist, err := gitMapping.GitRepo().IsCommitExists(ctx, commitToCheckAncestry)
+			exist, err := gitMapping.GitRepo().IsCommitExists(ctx, imageCommitInfo.Commit)
 			if err != nil {
-				return nil, fmt.Errorf("error checking if commit %s exists: %w", commitToCheckAncestry, err)
+				return nil, fmt.Errorf("error checking if commit %s exists: %w", imageCommitInfo.Commit, err)
 			}
 
 			if !exist {
-				logboek.Context(ctx).Info().LogF("Skipping stage %s: commit %s does not exist in repo %s\n", stageDesc.Info.Name, commitToCheckAncestry, gitMapping.GitRepo().String())
-				continue ScanImages
-			}
-
-			if disableAncestryCheck {
-				continue
-			}
-
-			isOurAncestor, err := gitMapping.GitRepo().IsAncestor(ctx, commitToCheckAncestry, currentCommit)
-			if err != nil {
-				return nil, fmt.Errorf("error checking commits ancestry %s<-%s: %w", commitToCheckAncestry, currentCommit, err)
-			}
-
-			if !isOurAncestor {
-				logboek.Context(ctx).Info().LogF("Skipping stage %s: commit %s is not an ancestor of %s in repo %s\n", stageDesc.Info.Name, commitToCheckAncestry, currentCommit, gitMapping.GitRepo().String())
+				logboek.Context(ctx).Info().LogF("Skipping stage %s: commit %s does not exist in repo %s\n", stageDesc.Info.Name, imageCommitInfo.Commit, gitMapping.GitRepo().String())
 				continue ScanImages
 			}
 		}
 
-		logboek.Context(ctx).Info().LogF("Using stage %s (ancestor)\n", stageDesc.Info.Name)
+		logboek.Context(ctx).Info().LogF("Using stage %s\n", stageDesc.Info.Name)
 
 		return stageDesc, nil
 	}

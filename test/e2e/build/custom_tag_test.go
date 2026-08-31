@@ -69,11 +69,11 @@ var _ = Describe("Custom tag build", Label("e2e", "build", "simple"), func() {
 			}
 		},
 		Entry(
-			"with repo, vanilla-docker, select multiplatform image, "+
+			"with repo, docker, select multiplatform image, "+
 				"and add the custom tag for multiplatform image",
 			customTagTestOptions{
 				setupEnvOptions: setupEnvOptions{
-					ContainerBackendMode:        "vanilla-docker",
+					ContainerBackendMode:        "docker",
 					WithLocalRepo:               true,
 					WithStagedDockerfileBuilder: false,
 				},
@@ -89,11 +89,11 @@ var _ = Describe("Custom tag build", Label("e2e", "build", "simple"), func() {
 			},
 		),
 		Entry(
-			"with repo, vanilla-docker, doesn't select any image, "+
+			"with repo, docker, doesn't select any image, "+
 				"but add custom tag for multiplatform image and one single platform final image",
 			customTagTestOptions{
 				setupEnvOptions: setupEnvOptions{
-					ContainerBackendMode:        "vanilla-docker",
+					ContainerBackendMode:        "docker",
 					WithLocalRepo:               true,
 					WithStagedDockerfileBuilder: false,
 				},
@@ -108,11 +108,11 @@ var _ = Describe("Custom tag build", Label("e2e", "build", "simple"), func() {
 			},
 		),
 		Entry(
-			"with repo and final repo, vanilla-docker, select multiplatform image, "+
+			"with repo and final repo, docker, select multiplatform image, "+
 				"and add the custom tag pushed to the final repo",
 			customTagTestOptions{
 				setupEnvOptions: setupEnvOptions{
-					ContainerBackendMode:        "vanilla-docker",
+					ContainerBackendMode:        "docker",
 					WithLocalRepo:               true,
 					WithFinalRepo:               true,
 					WithStagedDockerfileBuilder: false,

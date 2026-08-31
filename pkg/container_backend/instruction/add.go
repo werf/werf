@@ -37,6 +37,7 @@ func (i *Add) Apply(ctx context.Context, containerName string, drv buildah.Build
 		ContextDir: contextDir,
 		Chown:      i.Chown,
 		Chmod:      i.Chmod,
+		Ignores:    contextRelativeExcludes(i.SourcePaths, i.ExcludePatterns),
 	}); err != nil {
 		return fmt.Errorf("error adding %v to %s for container %s: %w", i.SourcePaths, i.DestPath, containerName, err)
 	}

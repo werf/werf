@@ -62,7 +62,6 @@ func collectPaths() ([]string, []string, error) {
 		newGCPath(filepath.Join(getCreatedTmpDirs(), kubeConfigsServiceDir), 0),
 		newGCPath(filepath.Join(getCreatedTmpDirs(), werfConfigRendersServiceDir), 0),
 		newGCPath(filepath.Join(getCreatedTmpDirs(), contextArchivesDir), 0),
-		newGCPath(getContextTmpDir(), 0), // TODO: backward compatible cleaning (will be dropped in v3)
 	}
 
 	dirSlices := make([][]string, 0, len(gcPathList))

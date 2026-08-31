@@ -67,17 +67,15 @@ var _ = Describe("cleanup command", func() {
 				SuiteData.Stubs.SetEnv("ARTIFACT_CACHE_VERSION", artifactCacheVersion2)
 			})
 
-			It("should keep both by import checksum", func(ctx SpecContext) {
+			It("should keep both by import source", func(ctx SpecContext) {
 				SuiteData.Stubs.SetEnv("ARTIFACT_DATA", artifactData1)
 				runCommand(ctx, "converge")
 
 				Expect(StagesCount(ctx)).Should(Equal(expectedStageCountAfterFirstBuild + 2))
-				Expect(len(ImportMetadataIDs(ctx))).Should(Equal(2))
 
 				runCommand(ctx, "cleanup")
 
 				Expect(StagesCount(ctx)).Should(Equal(expectedStageCountAfterFirstBuild + 2))
-				Expect(len(ImportMetadataIDs(ctx))).Should(Equal(2))
 			})
 
 			It("should keep one", func(ctx SpecContext) {
@@ -85,12 +83,10 @@ var _ = Describe("cleanup command", func() {
 				runCommand(ctx, "converge")
 
 				Expect(StagesCount(ctx)).Should(Equal(expectedStageCountAfterFirstBuild + 3))
-				Expect(len(ImportMetadataIDs(ctx))).Should(Equal(2))
 
 				runCommand(ctx, "cleanup")
 
 				Expect(StagesCount(ctx)).Should(Equal(expectedStageCountAfterFirstBuild))
-				Expect(len(ImportMetadataIDs(ctx))).Should(Equal(1))
 			})
 		})
 	})

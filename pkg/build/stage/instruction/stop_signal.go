@@ -35,6 +35,10 @@ func (stg *StopSignal) ExpandInstruction(c stage.Conveyor, env map[string]string
 	return nil
 }
 
+func (stg *StopSignal) GetContentDependencies(ctx context.Context, c stage.Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+	return stg.GetDependencies(ctx, c, nil, nil, nil, buildContextArchive)
+}
+
 func (stg *StopSignal) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
 	var args []string
 

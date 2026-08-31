@@ -54,7 +54,3 @@ var _ = BeforeEach(func(ctx SpecContext) {
 func StagesCount(ctx context.Context) int {
 	return utils.StagesCount(ctx, SuiteData.StagesStorage)
 }
-
-func ImportMetadataIDs(ctx context.Context) []string {
-	return utils.ImportMetadataIDs(ctx, SuiteData.StagesStorage)
-}

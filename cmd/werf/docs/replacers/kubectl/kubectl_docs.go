@@ -37,6 +37,22 @@ func GetAlphaDocs() structs.DocsStruct {
 	return docs
 }
 
+func GetAlphaKubercDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Manage kuberc configuration."
+
+	return docs
+}
+
+func GetAlphaKubercSetDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Set kuberc configuration values."
+
+	return docs
+}
+
 func GetAnnotateDocs() structs.DocsStruct {
 	var docs structs.DocsStruct
 

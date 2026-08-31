@@ -2,7 +2,7 @@ project: none
 configVersion: 1
 ---
 
-image: ~
+image: test
 dockerfile: Dockerfile
 contextAddFiles:
   - test/dir/nestedDir

@@ -6,6 +6,9 @@ on:
       coverage:
         default: false
         type: string
+      raceDetectorEnabled:
+        default: false
+        type: string
       linuxAmd64Runner:
         default: ubuntu-22.04
         type: string
@@ -35,7 +38,7 @@ jobs:
           - harbor
           - quay
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 60
+    timeout-minutes: 120
     env:
       WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_ACR: 1
       WERF_TEST_ACR_PASSWORD: ${{ secrets.WERF_TEST_ACR_PASSWORD }}
@@ -95,6 +98,7 @@ jobs:
         uses: ./.github/actions/set-up-prebuilt-werf-test-binary
         with:
           coverage: ${{ inputs.coverage }}
+          raceDetectorEnabled: ${{ inputs.raceDetectorEnabled }}
 
       - if: matrix.cr == 'acr'
         name: Login to ACR

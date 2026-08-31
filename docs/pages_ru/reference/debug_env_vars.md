@@ -26,7 +26,6 @@ werf поддерживает набор переменных окружения
 | `WERF_DEBUG_IMPORT_SERVER` | Трейсы rsync-сервера импортов. Требует `--log-debug` |
 | `WERF_DEBUG_STAGE_DIGEST` | Аргументы расчёта digest'а стадии (именованные значения, из которых он вычисляется). Сам итоговый digest логируется при `--log-debug` независимо от этой переменной. Требует `--log-debug` |
 | `WERF_DEBUG_USER_STAGE_CHECKSUM` | Детали расчёта контрольной суммы пользовательских стадий. Требует `--log-debug` |
-| `WERF_DEBUG_IMPORT_SOURCE_CHECKSUM` | Детали расчёта контрольной суммы источников импорта. Требует `--log-debug` |
 | `WERF_DEBUG_DOCKERFILE_STAGE_DEPENDENCIES` | Управляет двумя каналами: расчёт зависимостей стадий Dockerfile и перечисление совпавших путей build-контекста при расчёте его контрольной суммы. Требует `--log-debug` |
 | `WERF_DEBUG_CONTAINER_RUNTIME` (устаревший синоним: `WERF_CONTAINER_RUNTIME_DEBUG`) | Внутренности сборочного бэкенда: удаление путей в контейнере, mount/unmount buildah-контейнеров, пофайловый расчёт контрольных сумм. Требует `--log-debug` |
 | `WERF_DEBUG_BUILDAH` (устаревший синоним: `WERF_BUILDAH_DEBUG`) | Отладочный вывод бэкенда Buildah |
@@ -57,24 +56,14 @@ werf поддерживает набор переменных окружения
 | Переменная | Описание |
 |------------|----------|
 | `WERF_DEBUG_TEMPLATES` | boolean; то же, что `--debug-templates`: debug-режим Go-шаблонов |
-| `WERF_DEBUG_SECRET_VALUES` | Отладочный вывод декодирования секретных значений. Требует `--log-debug` |
 
 ### Деплой
 
 | Переменная | Описание |
 |------------|----------|
 | `WERF_NELM_TRACE` | boolean; включает trace-уровень логирования движка деплоя Nelm |
-| `WERF_DEBUG_HELM_V3_EXTRA_ANNOTATIONS_AND_LABELS` (устаревший синоним: `WERF_HELM_V3_EXTRA_ANNOTATIONS_AND_LABELS_DEBUG`) | Отладочный вывод post-renderer'а дополнительных аннотаций и лейблов |
 | `WERF_SHOW_VERBOSE_DIFFS` | boolean, по умолчанию `true`; то же, что `--show-verbose-diffs` в `werf plan`: подробные строки диффов |
 | `WERF_SHOW_VERBOSE_CRD_DIFFS` | boolean, по умолчанию `false`; то же, что `--show-verbose-crd-diffs` в `werf plan`: подробные строки диффов CRD |
-
-### Сборщик Ansible
-
-| Переменная | Описание |
-|------------|----------|
-| `WERF_DEBUG_ANSIBLE_ARGS` | Строка с дополнительными аргументами для `ansible-playbook` |
-| `WERF_DEBUG_ANSIBLE_LIVE_PY_PATH` | Путь к файлу, заменяющему встроенный ansible-колбэк `live.py` |
-| `WERF_DEBUG_ANSIBLE_WERF_PY_PATH` | Путь к файлу, заменяющему встроенный ansible-колбэк `werf.py` |
 
 ### Диагностика процесса
 

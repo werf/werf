@@ -3,6 +3,7 @@ package builder
 import (
 	"context"
 	"fmt"
+	"os"
 	"path"
 	"path/filepath"
 	"strings"
@@ -19,6 +20,11 @@ import (
 )
 
 const scriptFileName = "script.sh"
+
+type Extra struct {
+	ContainerWerfPath string
+	TmpPath           string
+}
 
 type Shell struct {
 	config      *config.Shell
@@ -188,7 +194,7 @@ func (b *Shell) configFieldValue(fieldName string) interface{} {
 func (b *Shell) stageHostTmpDir(userStageName string) (string, error) {
 	p := filepath.Join(b.extra.TmpPath, fmt.Sprintf("shell-%s", userStageName))
 
-	if err := mkdirP(p); err != nil {
+	if err := os.MkdirAll(p, os.FileMode(0o775)); err != nil {
 		return "", err
 	}
 

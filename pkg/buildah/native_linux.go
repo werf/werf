@@ -17,6 +17,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 	"text/template"
 	"time"
@@ -28,22 +29,22 @@ import (
 	"github.com/containers/buildah/imagebuildah"
 	"github.com/containers/buildah/pkg/parse"
 	"github.com/containers/buildah/pkg/sshagent"
-	"github.com/containers/common/libimage"
-	"github.com/containers/image/v5/manifest"
-	imgstor "github.com/containers/image/v5/storage"
-	storageTransport "github.com/containers/image/v5/storage"
-	"github.com/containers/image/v5/transports/alltransports"
-	"github.com/containers/image/v5/types"
-	imgtypes "github.com/containers/image/v5/types"
-	"github.com/containers/storage"
-	"github.com/containers/storage/drivers/overlay"
-	"github.com/containers/storage/pkg/homedir"
-	"github.com/containers/storage/pkg/reexec"
-	"github.com/containers/storage/pkg/unshare"
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/samber/lo"
 	"github.com/sirupsen/logrus"
+	"go.podman.io/common/libimage"
+	"go.podman.io/image/v5/manifest"
+	imgstor "go.podman.io/image/v5/storage"
+	storageTransport "go.podman.io/image/v5/storage"
+	"go.podman.io/image/v5/transports/alltransports"
+	"go.podman.io/image/v5/types"
+	imgtypes "go.podman.io/image/v5/types"
+	"go.podman.io/storage"
+	"go.podman.io/storage/drivers/overlay"
+	"go.podman.io/storage/pkg/homedir"
+	"go.podman.io/storage/pkg/reexec"
+	"go.podman.io/storage/pkg/unshare"
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v2/pkg/buildah/thirdparty"
@@ -417,6 +418,7 @@ func (b *NativeBuildah) BuildFromDockerfile(ctx context.Context, dockerfile stri
 		return "", err
 	}
 
+	commonBuildOpts := b.defaultCommonBuildOptions
 	buildOpts := define.BuildOptions{
 		Isolation:               define.Isolation(b.Isolation),
 		Args:                    opts.BuildArgs,
@@ -425,7 +427,7 @@ func (b *NativeBuildah) BuildFromDockerfile(ctx context.Context, dockerfile stri
 		OutputFormat:            buildah.Dockerv2ImageManifest,
 		SystemContext:           sysCtx,
 		ConfigureNetwork:        define.NetworkEnabled,
-		CommonBuildOpts:         &b.defaultCommonBuildOptions,
+		CommonBuildOpts:         &commonBuildOpts,
 		Target:                  opts.Target,
 		Platforms:               targetPlatforms,
 		MaxPullPushRetries:      MaxPullPushRetries,
@@ -556,6 +558,7 @@ func (b *NativeBuildah) FromCommand(ctx context.Context, container, image string
 		return "", err
 	}
 
+	commonBuildOpts := b.defaultCommonBuildOptions
 	builder, err := buildah.NewBuilder(ctx, b.Store, buildah.BuilderOptions{
 		FromImage:           image,
 		Container:           container,
@@ -564,7 +567,7 @@ func (b *NativeBuildah) FromCommand(ctx context.Context, container, image string
 		SystemContext:       sysCtx,
 		Isolation:           define.Isolation(b.Isolation),
 		ConfigureNetwork:    define.NetworkEnabled,
-		CommonBuildOpts:     &b.defaultCommonBuildOptions,
+		CommonBuildOpts:     &commonBuildOpts,
 		Format:              buildah.Dockerv2ImageManifest,
 		MaxPullRetries:      MaxPullPushRetries,
 		PullRetryDelay:      PullPushRetryDelay,
@@ -686,6 +689,17 @@ func (b *NativeBuildah) PruneImages(ctx context.Context, opts PruneImagesOptions
 }
 
 func (b *NativeBuildah) Commit(ctx context.Context, container string, opts CommitOpts) (string, error) {
+	// Switching "build with registry" from Docker to Buildah causes Buildah's history error:
+	// "internal error: history lists 1 non-empty layers, but we have 7 layers on disk".
+	// To prevent the error we disable the history for regular build commits.
+	return b.commit(ctx, container, opts, true)
+}
+
+func (b *NativeBuildah) CommitMutation(ctx context.Context, container string, opts CommitOpts) (string, error) {
+	return b.commit(ctx, container, opts, !opts.ClearHistory)
+}
+
+func (b *NativeBuildah) commit(ctx context.Context, container string, opts CommitOpts, omitHistory bool) (string, error) {
 	builder, err := b.openContainerBuilder(ctx, container)
 	if err != nil {
 		return "", fmt.Errorf("unable to open container %q builder: %w", container, err)
@@ -709,10 +723,8 @@ func (b *NativeBuildah) Commit(ctx context.Context, container string, opts Commi
 	}
 
 	imgID, _, _, err := builder.Commit(ctx, imageRef, buildah.CommitOptions{
-		// Switching "build with registry" from Docker to Buildah causes Buildah's history error:
-		// "internal error: history lists 1 non-empty layers, but we have 7 layers on disk".
-		// To prevent the error we disable the history.
-		OmitHistory:           true,
+		OmitHistory:           omitHistory,
+		HistoryTimestamp:      opts.Created,
 		PreferredManifestType: buildah.Dockerv2ImageManifest,
 		SignaturePolicyPath:   b.SignaturePolicyPath,
 		ReportWriter:          opts.LogWriter,
@@ -828,6 +840,106 @@ func (b *NativeBuildah) Config(ctx context.Context, container string, opts Confi
 	return builder.Save()
 }
 
+// MutateConfig applies newConfig to container using full-replace semantics matching
+// image.UpdateConfigFile: Labels/Env/Volumes are always fully replaced with the resolved final
+// values (not merged additively), and Clear* flags reset fields to their zero value.
+func (b *NativeBuildah) MutateConfig(ctx context.Context, container string, newConfig image.SpecConfig, opts CommonOpts) error {
+	builder, err := b.openContainerBuilder(ctx, container)
+	if err != nil {
+		return fmt.Errorf("unable to open container %q builder: %w", container, err)
+	}
+
+	if newConfig.Author != "" {
+		builder.SetMaintainer(newConfig.Author)
+	}
+
+	// Labels/Volumes/ExposedPorts are replaced only when non-nil, matching UpdateConfigFile:
+	// a nil value keeps the base image's values (an additive content-tag mutation passes nil).
+	if newConfig.Labels != nil {
+		builder.ClearLabels()
+		for key, value := range newConfig.Labels {
+			builder.SetLabel(key, value)
+		}
+	}
+
+	builder.ClearEnv()
+	for _, entry := range newConfig.Env {
+		key, value, ok := strings.Cut(entry, "=")
+		if !ok {
+			continue
+		}
+		builder.SetEnv(key, value)
+	}
+
+	if newConfig.Volumes != nil {
+		builder.ClearVolumes()
+		for volume := range newConfig.Volumes {
+			builder.AddVolume(volume)
+		}
+	}
+
+	if newConfig.ExposedPorts != nil {
+		builder.ClearPorts()
+		for expose := range newConfig.ExposedPorts {
+			builder.SetPort(expose)
+		}
+	}
+
+	if newConfig.ClearUser {
+		builder.SetUser("")
+	}
+	if newConfig.User != "" {
+		builder.SetUser(newConfig.User)
+	}
+
+	if newConfig.ClearCmd {
+		builder.SetCmd(nil)
+	}
+	if len(newConfig.Cmd) > 0 {
+		builder.SetCmd(newConfig.Cmd)
+	}
+
+	if newConfig.ClearEntrypoint {
+		builder.SetEntrypoint(nil)
+	}
+	if len(newConfig.Entrypoint) > 0 {
+		builder.SetEntrypoint(newConfig.Entrypoint)
+	}
+
+	if newConfig.ClearWorkingDir {
+		builder.SetWorkDir("")
+	}
+	if newConfig.WorkingDir != "" {
+		builder.SetWorkDir(newConfig.WorkingDir)
+	}
+
+	if newConfig.StopSignal != "" {
+		builder.SetStopSignal(newConfig.StopSignal)
+	}
+
+	if newConfig.HealthConfig != nil {
+		builder.SetHealthcheck(&docker.HealthConfig{
+			Test:        newConfig.HealthConfig.Test,
+			Interval:    newConfig.HealthConfig.Interval,
+			Timeout:     newConfig.HealthConfig.Timeout,
+			StartPeriod: newConfig.HealthConfig.StartPeriod,
+			Retries:     newConfig.HealthConfig.Retries,
+		})
+	}
+
+	if opts.TargetPlatform != "" {
+		os, arch, variant, err := parse.Platform(opts.TargetPlatform)
+		if err != nil {
+			return fmt.Errorf("unable to parse platform %q: %w", opts.TargetPlatform, err)
+		}
+		builder.SetOS(os)
+		builder.SetArchitecture(arch)
+		builder.SetVariant(variant)
+	}
+
+	return builder.Save()
+}
+
 func (b *NativeBuildah) Copy(ctx context.Context, container, contextDir string, src []string, dst string, opts CopyOpts) error {
 	builder, err := b.openContainerBuilder(ctx, container)
 	if err != nil {
@@ -836,12 +948,24 @@ func (b *NativeBuildah) Copy(ctx context.Context, container, contextDir string, 
 
 	var absSrc []string
 	for _, s := range src {
+		// filepath.Join cleans away the "/./" pivot point which --parents relies on
+		if prefix, suffix, found := strings.Cut(s, "/./"); found && opts.Parents {
+			absSrc = append(absSrc, filepath.Join(contextDir, prefix)+"/./"+filepath.Clean(suffix))
+			continue
+		}
 		absSrc = append(absSrc, filepath.Join(contextDir, s))
+	}
+
+	// with --parents the source path is kept under the destination, so the destination is always
+	// a directory: without the trailing separator buildah copies a single file source onto it
+	if opts.Parents && !strings.HasSuffix(dst, string(filepath.Separator)) {
+		dst += string(filepath.Separator)
 	}
 
 	if err := builder.Add(dst, false, buildah.AddAndCopyOptions{
 		Chown:             opts.Chown,
 		Chmod:             opts.Chmod,
+		Parents:           opts.Parents,
 		PreserveOwnership: false,
 		ContextDir:        contextDir,
 		Excludes:          opts.Ignores,
@@ -971,8 +1095,7 @@ func (b *NativeBuildah) Images(ctx context.Context, opts ImagesOptions) (image.I
 	listOpts := &libimage.ListImagesOptions{
 		Filters: mapBackendOldFiltersToBuildahImageFilters(opts.Filters),
 	}
-
-	images, err := runtime.ListImages(ctx, opts.Names, listOpts)
+	images, err := runtime.ListImages(ctx, listOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -1189,11 +1312,10 @@ func NewNativeStoreOptions(rootlessUID int, driver StorageDriver) (*thirdparty.S
 	}
 
 	return &thirdparty.StoreOptions{
-		RunRoot:             runRoot,
-		GraphRoot:           graphRoot,
-		RootlessStoragePath: rootlessStoragePath,
-		GraphDriverName:     string(driver),
-		GraphDriverOptions:  graphDriverOptions,
+		RunRoot:            runRoot,
+		GraphRoot:          graphRoot,
+		GraphDriverName:    string(driver),
+		GraphDriverOptions: graphDriverOptions,
 	}, nil
 }
 
@@ -1412,8 +1534,29 @@ func generateContextDir(rawContextDir string, runMounts []*instructions.Mount) s
 	return contextDir
 }
 
-func generateStdoutStderr(optionalLogWriter io.Writer) (stdout, stderr io.Writer, stderrBuf *bytes.Buffer) {
-	stderrBuf = &bytes.Buffer{}
+type lockedBuffer struct {
+	mux    sync.Mutex
+	buffer bytes.Buffer
+}
+
+var _ io.Writer = (*lockedBuffer)(nil)
+
+func (b *lockedBuffer) Write(p []byte) (int, error) {
+	b.mux.Lock()
+	defer b.mux.Unlock()
+
+	return b.buffer.Write(p)
+}
+
+func (b *lockedBuffer) String() string {
+	b.mux.Lock()
+	defer b.mux.Unlock()
+
+	return b.buffer.String()
+}
+
+func generateStdoutStderr(optionalLogWriter io.Writer) (stdout, stderr io.Writer, stderrBuf *lockedBuffer) {
+	stderrBuf = &lockedBuffer{}
 	if optionalLogWriter != nil {
 		stdout = optionalLogWriter
 		stderr = io.MultiWriter(optionalLogWriter, stderrBuf)
