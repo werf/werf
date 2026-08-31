@@ -205,14 +205,6 @@ func (i *LegacyStageImage) introspectBefore(ctx context.Context) error {
 	return nil
 }
 
-func (i *LegacyStageImage) MustResetInfo(ctx context.Context) error {
-	if i.buildImage != nil {
-		return i.buildImage.MustResetInfo(ctx)
-	} else {
-		return i.legacyBaseImage.MustResetInfo(ctx)
-	}
-}
-
 func (i *LegacyStageImage) GetInfo() *image.Info {
 	if i.buildImage != nil {
 		return i.buildImage.GetInfo()

@@ -16,6 +16,7 @@ import (
 	"sync"
 	"time"
 
+	securejoin "github.com/cyphar/filepath-securejoin"
 	"github.com/google/uuid"
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
@@ -248,6 +249,29 @@ func (backend *BuildahBackend) unmountContainers(ctx context.Context, containers
 	return nil
 }
 
+// resolveContainerRootPath resolves containerPath inside the mounted container root,
+// following symlinks relative to rootMount instead of the host root: a naive
+// filepath.Join would resolve absolute symlinks like /bin -> /usr/bin against the host.
+func resolveContainerRootPath(rootMount, containerPath string) (string, error) {
+	resolvedPath, err := securejoin.SecureJoin(rootMount, containerPath)
+	if err != nil {
+		return "", fmt.Errorf("resolve path %q in container root %q: %w", containerPath, rootMount, err)
+	}
+	return resolvedPath, nil
+}
+
+// resolveContainerRootPathNoFollow resolves the parent directories of containerPath the
+// same way, but keeps the final component unresolved, preserving lstat semantics for
+// paths that are themselves symlinks (import sources, removed paths).
+func resolveContainerRootPathNoFollow(rootMount, containerPath string) (string, error) {
+	containerPath = filepath.Clean(containerPath)
+	resolvedDir, err := resolveContainerRootPath(rootMount, filepath.Dir(containerPath))
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(resolvedDir, filepath.Base(containerPath)), nil
+}
+
 func makeScript(commands []string, verbose bool) []byte {
 	var scriptCommands []string
 	for _, c := range commands {
@@ -341,7 +365,10 @@ func (backend *BuildahBackend) applyCommands(ctx context.Context, container *con
 
 func (backend *BuildahBackend) applyDataArchives(ctx context.Context, container *containerDesc, dataArchives []DataArchiveSpec) error {
 	for _, archive := range dataArchives {
-		destPath := filepath.Join(container.RootMount, archive.To)
+		destPath, err := resolveContainerRootPath(container.RootMount, archive.To)
+		if err != nil {
+			return err
+		}
 
 		var extractDestPath string
 		switch archive.Type {
@@ -392,21 +419,39 @@ func (backend *BuildahBackend) applyRemoveData(ctx context.Context, container *c
 		switch spec.Type {
 		case RemoveExactPath:
 			for _, path := range spec.Paths {
-				destPath := filepath.Join(container.RootMount, path)
+				destPath, err := resolveContainerRootPathNoFollow(container.RootMount, path)
+				if err != nil {
+					return err
+				}
 				if err := removeExactPath(ctx, destPath); err != nil {
 					return fmt.Errorf("unable to remove %q: %w", path, err)
 				}
 			}
 		case RemoveExactPathWithEmptyParentDirs:
+			keepParentDirs := []string{container.RootMount}
+			for _, keepPath := range spec.KeepParentDirs {
+				resolvedKeepPath, err := resolveContainerRootPath(container.RootMount, keepPath)
+				if err != nil {
+					return err
+				}
+				keepParentDirs = append(keepParentDirs, resolvedKeepPath)
+			}
+
 			for _, path := range spec.Paths {
-				destPath := filepath.Join(container.RootMount, path)
-				if err := removeExactPathWithEmptyParentDirs(ctx, destPath, spec.KeepParentDirs); err != nil {
+				destPath, err := resolveContainerRootPathNoFollow(container.RootMount, path)
+				if err != nil {
+					return err
+				}
+				if err := removeExactPathWithEmptyParentDirs(ctx, destPath, keepParentDirs); err != nil {
 					return fmt.Errorf("unable to remove %q: %w", path, err)
 				}
 			}
 		case RemoveInsidePath:
 			for _, path := range spec.Paths {
-				destPath := filepath.Join(container.RootMount, path)
+				destPath, err := resolveContainerRootPath(container.RootMount, path)
+				if err != nil {
+					return err
+				}
 				if err := removeInsidePath(ctx, destPath); err != nil {
 					return fmt.Errorf("unable to remove %q: %w", path, err)
 				}
@@ -462,9 +507,15 @@ func (backend *BuildahBackend) applyDependenciesImports(ctx context.Context, con
 				continue
 			}
 
-			absFrom := filepath.Join(dep.RootMount, imp.FromPath)
-			absTo := filepath.Join(container.RootMount, imp.ToPath)
-			if absTo, err = normalizeDependencyImportDestination(container.RootMount, absFrom, absTo); err != nil {
+			absFrom, err := resolveContainerRootPathNoFollow(dep.RootMount, imp.FromPath)
+			if err != nil {
+				return err
+			}
+			absTo, err := resolveContainerRootPath(container.RootMount, imp.ToPath)
+			if err != nil {
+				return err
+			}
+			if absTo, err = normalizeDependencyImportDestination(absFrom, absTo); err != nil {
 				return fmt.Errorf("normalize destination path for dependency import from %q to %q: %w", imp.FromPath, imp.ToPath, err)
 			}
 
@@ -528,12 +579,7 @@ func dependencyImportParallelism() int {
 	return n
 }
 
-func normalizeDependencyImportDestination(rootMount, absFrom, absTo string) (string, error) {
-	absTo, err := resolveDestSymlinkUnderRoot(rootMount, absTo)
-	if err != nil {
-		return "", err
-	}
-
+func normalizeDependencyImportDestination(absFrom, absTo string) (string, error) {
 	fileInfo, err := os.Lstat(absFrom)
 	if err != nil {
 		return "", fmt.Errorf("lstat source path %q: %w", absFrom, err)
@@ -558,54 +604,6 @@ func normalizeDependencyImportDestination(rootMount, absFrom, absTo string) (str
 	default:
 		return absTo, nil
 	}
-}
-
-// resolveDestSymlinkUnderRoot resolves absTo when it is a symlink to a
-// directory, re-anchoring a relative symlink target under rootMount instead of
-// the host filesystem root. This keeps directory imports into a symlinked
-// destination (e.g. /bin -> usr/bin) writing into the real target directory
-// inside the container mount rather than escaping to the host working
-// directory.
-func resolveDestSymlinkUnderRoot(rootMount, absTo string) (string, error) {
-	linkInfo, err := os.Lstat(absTo)
-	if errors.Is(err, os.ErrNotExist) {
-		return absTo, nil
-	} else if err != nil {
-		return "", fmt.Errorf("lstat destination path %q: %w", absTo, err)
-	}
-
-	if linkInfo.Mode()&os.ModeSymlink == 0 {
-		return absTo, nil
-	}
-
-	derefInfo, err := os.Stat(absTo)
-	if errors.Is(err, os.ErrNotExist) {
-		return absTo, nil
-	} else if err != nil {
-		return "", fmt.Errorf("stat destination path %q: %w", absTo, err)
-	}
-	if !derefInfo.IsDir() {
-		return absTo, nil
-	}
-
-	target, err := os.Readlink(absTo)
-	if err != nil {
-		return "", fmt.Errorf("readlink destination path %q: %w", absTo, err)
-	}
-
-	var resolved string
-	if filepath.IsAbs(target) {
-		resolved = filepath.Join(rootMount, target)
-	} else {
-		resolved = filepath.Join(filepath.Dir(absTo), target)
-	}
-
-	rel, err := filepath.Rel(rootMount, resolved)
-	if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
-		return "", fmt.Errorf("resolved destination %q escapes root mount %q", resolved, rootMount)
-	}
-
-	return resolved, nil
 }
 
 func (backend *BuildahBackend) BuildDockerfileStage(ctx context.Context, baseImage string, opts BuildDockerfileStageOptions, instructions ...InstructionInterface) (string, error) {
@@ -1133,7 +1131,11 @@ func getUID(userNameOrUID, fsRoot string) (*uint32, error) {
 	var uid *uint32
 	if userNameOrUID != "" {
 		if parsed, err := strconv.ParseUint(userNameOrUID, 10, 32); errors.Is(err, strconv.ErrSyntax) {
-			result, err := getUIDFromUserName(userNameOrUID, filepath.Join(fsRoot, "etc", "passwd"))
+			etcPasswdPath, err := resolveContainerRootPath(fsRoot, "etc/passwd")
+			if err != nil {
+				return nil, err
+			}
+			result, err := getUIDFromUserName(userNameOrUID, etcPasswdPath)
 			if err != nil {
 				return nil, fmt.Errorf("error getting UID from user name: %w", err)
 			}
@@ -1153,7 +1155,11 @@ func getGID(groupNameOrGID, fsRoot string) (*uint32, error) {
 	var gid *uint32
 	if groupNameOrGID != "" {
 		if parsed, err := strconv.ParseUint(groupNameOrGID, 10, 32); errors.Is(err, strconv.ErrSyntax) {
-			result, err := getGIDFromGroupName(groupNameOrGID, filepath.Join(fsRoot, "etc", "group"))
+			etcGroupPath, err := resolveContainerRootPath(fsRoot, "etc/group")
+			if err != nil {
+				return nil, err
+			}
+			result, err := getGIDFromGroupName(groupNameOrGID, etcGroupPath)
 			if err != nil {
 				return nil, fmt.Errorf("error getting GID from group name: %w", err)
 			}

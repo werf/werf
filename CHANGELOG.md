@@ -10,6 +10,7 @@
 * **cleanup:** add registry-side cleanup report ([#7806](https://github.com/werf/werf/issues/7806)) ([8a6250b](https://github.com/werf/werf/commit/8a6250b3dbd5f4406a38fe4c42630a6244da8f14))
 * **cleanup:** name the --meta-repo address in the cleanup report ([c11fdfb](https://github.com/werf/werf/commit/c11fdfbd8161779d957347a76dab8e216ff9afd6))
 * **deploy:** embed deno binary into werf release binaries behind `embedwerfdeno` ([#7725](https://github.com/werf/werf/issues/7725)) ([468ba22](https://github.com/werf/werf/commit/468ba229e05e7fb104a286386da43e0051da09ed))
+## [2.77.1](https://github.com/werf/werf/compare/v2.77.0...v2.77.1) (2026-08-11)
 
 
 ### Bug Fixes
@@ -26,6 +27,14 @@
 * **logboek:** prevent concurrent stream races ([#7802](https://github.com/werf/werf/issues/7802)) ([f80e827](https://github.com/werf/werf/commit/f80e827577896f02d3605b3c7540d550e31f8e0a))
 * **registry:** prevent concurrent export races ([#7799](https://github.com/werf/werf/issues/7799)) ([2bf41ec](https://github.com/werf/werf/commit/2bf41ecf9af9a54576cb13465816e0de977ff1d5))
 * **storage:** prevent concurrent final-stage list access ([#7787](https://github.com/werf/werf/issues/7787)) ([9ab8115](https://github.com/werf/werf/commit/9ab81159f2c87abf50d1caa8d2f2bbe5cff7ca55))
+* **build, buildah:** stop imports failing on symlinked paths like /bin ([#7763](https://github.com/werf/werf/issues/7763)) ([f38a885](https://github.com/werf/werf/commit/f38a885d6248090bf74cd0426400886c918badf2))
+
+## [2.77.0](https://github.com/werf/werf/compare/v2.76.0...v2.77.0) (2026-08-10)
+
+
+### Features
+
+* **cleanup:** add registry-side cleanup report ([#7806](https://github.com/werf/werf/issues/7806)) ([8a6250b](https://github.com/werf/werf/commit/8a6250b3dbd5f4406a38fe4c42630a6244da8f14))
 
 ## [2.76.0](https://github.com/werf/werf/compare/v2.75.4...v2.76.0) (2026-08-10)
 

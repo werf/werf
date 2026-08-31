@@ -107,6 +107,26 @@ var _ = Describe("BuildahBackend data archives", func() {
 		Expect(string(data)).To(Equal("data"))
 	})
 
+	It("applyDataArchives resolves absolute symlink destination against container root", func(ctx SpecContext) {
+		var testCtx context.Context = logging.WithLogger(ctx)
+		rootMount := GinkgoT().TempDir()
+		Expect(os.MkdirAll(filepath.Join(rootMount, "usr", "bin"), 0o755)).To(Succeed())
+		Expect(os.Symlink("/usr/bin", filepath.Join(rootMount, "bin"))).To(Succeed())
+
+		archiveReader := newTestTarArchive(map[string]string{"gotestsum": "binary"})
+		backend := &BuildahBackend{}
+
+		Expect(backend.applyDataArchives(testCtx, &containerDesc{RootMount: rootMount}, []DataArchiveSpec{{
+			Archive: archiveReader,
+			Type:    DirectoryArchive,
+			To:      "/bin",
+		}})).To(Succeed())
+
+		data, err := os.ReadFile(filepath.Join(rootMount, "usr", "bin", "gotestsum"))
+		Expect(err).ToNot(HaveOccurred())
+		Expect(string(data)).To(Equal("binary"))
+	})
+
 	It("normalizes dependency import destination for regular file into root directory", func() {
 		sourceRoot := GinkgoT().TempDir()
 		containerRoot := GinkgoT().TempDir()
@@ -116,7 +136,7 @@ var _ = Describe("BuildahBackend data archives", func() {
 		require.NoError(GinkgoT(), os.WriteFile(filepath.Join(containerRoot, "sentinel"), []byte("keep\n"), 0o644))
 
 		absFrom := filepath.Join(sourceRoot, "src", "webhook")
-		absTo, err := normalizeDependencyImportDestination(containerRoot, absFrom, containerRoot)
+		absTo, err := normalizeDependencyImportDestination(absFrom, containerRoot)
 		require.NoError(GinkgoT(), err)
 		assert.Equal(GinkgoT(), filepath.Join(containerRoot, "webhook"), absTo)
 
@@ -147,7 +167,7 @@ var _ = Describe("BuildahBackend data archives", func() {
 
 		absFrom := filepath.Join(sourceRoot, "src", "webhook")
 		explicitTarget := filepath.Join(containerRoot, "webhook")
-		absTo, err := normalizeDependencyImportDestination(containerRoot, absFrom, explicitTarget)
+		absTo, err := normalizeDependencyImportDestination(absFrom, explicitTarget)
 		require.NoError(GinkgoT(), err)
 		assert.Equal(GinkgoT(), explicitTarget, absTo)
 
@@ -178,7 +198,7 @@ var _ = Describe("BuildahBackend data archives", func() {
 		require.NoError(GinkgoT(), os.WriteFile(filepath.Join(containerRoot, "sentinel"), []byte("keep\n"), 0o644))
 
 		absFrom := filepath.Join(sourceRoot, "src", "webhook-link")
-		absTo, err := normalizeDependencyImportDestination(containerRoot, absFrom, containerRoot)
+		absTo, err := normalizeDependencyImportDestination(absFrom, containerRoot)
 		require.NoError(GinkgoT(), err)
 		assert.Equal(GinkgoT(), filepath.Join(containerRoot, "webhook-link"), absTo)
 
@@ -210,7 +230,7 @@ var _ = Describe("BuildahBackend data archives", func() {
 
 		absFrom := filepath.Join(sourceRoot, "src", "webhook-link")
 		explicitTarget := filepath.Join(containerRoot, "webhook-link")
-		absTo, err := normalizeDependencyImportDestination(containerRoot, absFrom, explicitTarget)
+		absTo, err := normalizeDependencyImportDestination(absFrom, explicitTarget)
 		require.NoError(GinkgoT(), err)
 		assert.Equal(GinkgoT(), explicitTarget, absTo)
 

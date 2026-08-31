@@ -24,6 +24,7 @@ type LegacyStageImageContainer struct {
 	runOptions                 *LegacyStageImageContainerOptions
 	commitChangeOptions        *LegacyStageImageContainerOptions
 	serviceCommitChangeOptions *LegacyStageImageContainerOptions
+	inheritedCommitOptions     *LegacyStageImageContainerOptions
 	buildTimeEnv               map[string]string
 }
 
@@ -241,7 +242,7 @@ func (c *LegacyStageImageContainer) prepareIntrospectOptions(ctx context.Context
 }
 
 func (c *LegacyStageImageContainer) prepareCommitChanges(ctx context.Context, opts LegacyCommitChangeOptions) ([]string, error) {
-	commitOptions, err := c.prepareCommitOptions(ctx)
+	commitOptions, err := c.prepareCommitOptions()
 	if err != nil {
 		return nil, err
 	}
@@ -253,32 +254,29 @@ func (c *LegacyStageImageContainer) prepareCommitChanges(ctx context.Context, op
 	return commitChanges, nil
 }
 
-func (c *LegacyStageImageContainer) prepareCommitOptions(ctx context.Context) (*LegacyStageImageContainerOptions, error) {
-	inheritedCommitOptions, err := c.prepareInheritedCommitOptions(ctx)
-	if err != nil {
-		return nil, err
+func (c *LegacyStageImageContainer) prepareCommitOptions() (*LegacyStageImageContainerOptions, error) {
+	if c.inheritedCommitOptions == nil {
+		return nil, fmt.Errorf("commit options inherited from the base image are not prepared for image %s", c.image.name)
 	}
 
-	commitOptions := inheritedCommitOptions.merge(c.serviceCommitChangeOptions.merge(c.commitChangeOptions))
+	commitOptions := c.inheritedCommitOptions.merge(c.serviceCommitChangeOptions.merge(c.commitChangeOptions))
 	return commitOptions, nil
 }
 
-func (c *LegacyStageImageContainer) prepareInheritedCommitOptions(ctx context.Context) (*LegacyStageImageContainerOptions, error) {
+// prepareInheritedCommitOptions reads the config of the base image to restore in the committed image
+// what running the build container overrides. It must be called while the container has not been
+// committed yet: the base image is guaranteed to be available locally only until then.
+func (c *LegacyStageImageContainer) prepareInheritedCommitOptions(ctx context.Context, fromImageRef string) (*LegacyStageImageContainerOptions, error) {
 	inheritedOptions := newLegacyStageContainerOptions()
-
-	if c.image.fromImage == nil {
-		panic(fmt.Sprintf("runtime error: FromImage should be (%s)", c.image.name))
-	}
-
-	if err := c.image.fromImage.MustResetInfo(ctx); err != nil {
-		return nil, fmt.Errorf("unable to reset info for image %s: %w", c.image.fromImage.Name(), err)
-	}
 
 	dockerServerBackend := c.image.ContainerBackend.(*DockerServerBackend)
 
-	fromImageInspect, err := dockerServerBackend.GetImageInspect(ctx, c.image.fromImage.Name())
+	fromImageInspect, err := dockerServerBackend.GetImageInspect(ctx, fromImageRef)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get image inspect: %w", err)
+	}
+	if fromImageInspect == nil {
+		return nil, fmt.Errorf("image %s is not available locally", fromImageRef)
 	}
 
 	if len(fromImageInspect.Config.Cmd) != 0 {
@@ -308,6 +306,16 @@ func (c *LegacyStageImageContainer) prepareInheritedCommitOptions(ctx context.Co
 
 func (c *LegacyStageImageContainer) run(ctx context.Context) error {
 	_ = c.image.ContainerBackend.(*DockerServerBackend)
+
+	if c.image.fromImage == nil {
+		panic(fmt.Sprintf("runtime error: FromImage should be (%s)", c.image.name))
+	}
+
+	inheritedCommitOptions, err := c.prepareInheritedCommitOptions(ctx, c.imageRef(c.image.fromImage))
+	if err != nil {
+		return err
+	}
+	c.inheritedCommitOptions = inheritedCommitOptions
 
 	runArgs, err := c.prepareRunArgs(ctx)
 	if err != nil {

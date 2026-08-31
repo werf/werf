@@ -292,7 +292,7 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 	}
 
 	// Step 2. Prune werf dangling images
-	err = logboek.Context(ctx).LogBlock("Prune werf dangling images created more than 1 hour ago").DoError(func() error {
+	err = logboek.Context(ctx).LogBlock("Prune werf dangling images created more than %s ago", danglingImagesRetentionPeriod).DoError(func() error {
 		reportImages, err := cleaner.pruneImages(ctx, options)
 		if handleError(ctx, err) != nil {
 			return err
@@ -377,6 +377,23 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 	return nil
 }
 
+// measureReclaimedSpace gets the actual disk state, calculates the factual
+// freed space relative to vuBefore and returns this volume along with the new state.
+func (cleaner *LocalBackendCleaner) measureReclaimedSpace(ctx context.Context, storagePath string, vuBefore volumeutils.VolumeUsage) (uint64, volumeutils.VolumeUsage, error) {
+	vuAfter, err := cleaner.volumeutilsGetVolumeUsageByPath(ctx, storagePath)
+	if err != nil {
+		return 0, volumeutils.VolumeUsage{}, fmt.Errorf("error getting volume usage by path %q: %w", storagePath, err)
+	}
+
+	spaceReclaimed := uint64(math.Max(float64(vuBefore.UsedBytes)-float64(vuAfter.UsedBytes), 0))
+
+	return spaceReclaimed, vuAfter, nil
+}
+
+// danglingImagesRetentionPeriod keeps a dangling image out of the prune for a while: in Stapel mode
+// werf relies on such an image between committing a stage container and tagging the built image.
+const danglingImagesRetentionPeriod = "15m"
+
 // pruneImages removes werf dangling images
 func (cleaner *LocalBackendCleaner) pruneImages(ctx context.Context, options RunGCOptions) (cleanupReport, error) {
 	filters := filter.FilterList{
@@ -384,9 +401,8 @@ func (cleaner *LocalBackendCleaner) pruneImages(ctx context.Context, options Run
 		filter.DanglingTrue,
 		// 2. From all dangling images select only werf's dangling images.
 		filter.NewFilter("label", image.WerfLabel),
-		// 3. From werf's dangling images select only images which were created more than 15 minutes ago.
-		// Explanation: in Stapel mode werf relies on a "dangling" image for some time before tagging its image.
-		filter.NewFilter("until", "15m"),
+		// 3. From werf's dangling images select only images which are old enough.
+		filter.NewFilter("until", danglingImagesRetentionPeriod),
 
 		// Both backends support filters listed above:
 		// Docker: https://github.com/moby/moby/blob/25.0/daemon/containerd/image_prune.go#L22

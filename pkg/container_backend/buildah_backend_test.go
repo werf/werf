@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
+	"path/filepath"
 	"sync/atomic"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -269,6 +271,126 @@ var _ = Describe("BuildahBackend.MutateAndPushImageNative", func() {
 		Expect(stub.mutateConfigCalls).To(Equal(0))
 		Expect(stub.commitMutationCalls).To(Equal(0))
 		Expect(stub.rmCalls).To(BeEmpty())
+	})
+})
+
+var _ = Describe("resolveContainerRootPath", func() {
+	It("resolves an absolute symlink against the container root, not the host root", func() {
+		rootMount := GinkgoT().TempDir()
+		Expect(os.MkdirAll(filepath.Join(rootMount, "usr", "bin"), 0o755)).To(Succeed())
+		Expect(os.WriteFile(filepath.Join(rootMount, "usr", "bin", "gotestsum"), []byte("bin"), 0o755)).To(Succeed())
+		Expect(os.Symlink("/usr/bin", filepath.Join(rootMount, "bin"))).To(Succeed())
+
+		resolved, err := resolveContainerRootPath(rootMount, "/bin/gotestsum")
+		Expect(err).ToNot(HaveOccurred())
+		Expect(resolved).To(Equal(filepath.Join(rootMount, "usr", "bin", "gotestsum")))
+	})
+
+	It("resolves a relative symlink within the container root", func() {
+		rootMount := GinkgoT().TempDir()
+		Expect(os.MkdirAll(filepath.Join(rootMount, "usr", "bin"), 0o755)).To(Succeed())
+		Expect(os.Symlink("usr/bin", filepath.Join(rootMount, "bin"))).To(Succeed())
+
+		resolved, err := resolveContainerRootPath(rootMount, "/bin/tool")
+		Expect(err).ToNot(HaveOccurred())
+		Expect(resolved).To(Equal(filepath.Join(rootMount, "usr", "bin", "tool")))
+	})
+
+	It("keeps a symlink escaping the container root scoped to it", func() {
+		rootMount := GinkgoT().TempDir()
+		Expect(os.Symlink("../../../etc", filepath.Join(rootMount, "escape"))).To(Succeed())
+
+		resolved, err := resolveContainerRootPath(rootMount, "/escape/passwd")
+		Expect(err).ToNot(HaveOccurred())
+		Expect(resolved).To(Equal(filepath.Join(rootMount, "etc", "passwd")))
+	})
+
+	It("returns the joined path for a nonexistent destination", func() {
+		rootMount := GinkgoT().TempDir()
+
+		resolved, err := resolveContainerRootPath(rootMount, "/app/newfile")
+		Expect(err).ToNot(HaveOccurred())
+		Expect(resolved).To(Equal(filepath.Join(rootMount, "app", "newfile")))
+	})
+})
+
+var _ = Describe("resolveContainerRootPathNoFollow", func() {
+	It("resolves absolute symlink parents but keeps the final component unresolved", func() {
+		rootMount := GinkgoT().TempDir()
+		Expect(os.MkdirAll(filepath.Join(rootMount, "usr", "bin"), 0o755)).To(Succeed())
+		Expect(os.Symlink("/usr/bin", filepath.Join(rootMount, "bin"))).To(Succeed())
+		Expect(os.Symlink("gotestsum-real", filepath.Join(rootMount, "usr", "bin", "gotestsum"))).To(Succeed())
+
+		resolved, err := resolveContainerRootPathNoFollow(rootMount, "/bin/gotestsum")
+		Expect(err).ToNot(HaveOccurred())
+		Expect(resolved).To(Equal(filepath.Join(rootMount, "usr", "bin", "gotestsum")))
+
+		info, err := os.Lstat(resolved)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(info.Mode() & os.ModeSymlink).ToNot(BeZero())
+	})
+
+	It("keeps a path that is itself a symlink pointing at its unresolved location", func() {
+		rootMount := GinkgoT().TempDir()
+		Expect(os.MkdirAll(filepath.Join(rootMount, "usr", "bin"), 0o755)).To(Succeed())
+		Expect(os.Symlink("/usr/bin", filepath.Join(rootMount, "bin"))).To(Succeed())
+
+		resolved, err := resolveContainerRootPathNoFollow(rootMount, "/bin")
+		Expect(err).ToNot(HaveOccurred())
+		Expect(resolved).To(Equal(filepath.Join(rootMount, "bin")))
+	})
+
+	It("normalizes a trailing slash before splitting off the final component", func() {
+		rootMount := GinkgoT().TempDir()
+		Expect(os.MkdirAll(filepath.Join(rootMount, "usr", "bin"), 0o755)).To(Succeed())
+		Expect(os.Symlink("/usr/bin", filepath.Join(rootMount, "bin"))).To(Succeed())
+
+		resolved, err := resolveContainerRootPathNoFollow(rootMount, "/bin/")
+		Expect(err).ToNot(HaveOccurred())
+		Expect(resolved).To(Equal(filepath.Join(rootMount, "bin")))
+	})
+
+	It("clamps a parent symlink escaping the container root", func() {
+		rootMount := GinkgoT().TempDir()
+		Expect(os.Symlink("../../../etc", filepath.Join(rootMount, "escape"))).To(Succeed())
+
+		resolved, err := resolveContainerRootPathNoFollow(rootMount, "/escape/passwd")
+		Expect(err).ToNot(HaveOccurred())
+		Expect(resolved).To(Equal(filepath.Join(rootMount, "etc", "passwd")))
+	})
+})
+
+var _ = Describe("BuildahBackend applyRemoveData", func() {
+	It("keeps a symlinked parent dir when removing the last file under it", func(ctx SpecContext) {
+		rootMount := GinkgoT().TempDir()
+		Expect(os.MkdirAll(filepath.Join(rootMount, "usr", "bin"), 0o755)).To(Succeed())
+		Expect(os.WriteFile(filepath.Join(rootMount, "usr", "bin", "last-file"), []byte("data"), 0o644)).To(Succeed())
+		Expect(os.Symlink("/usr/bin", filepath.Join(rootMount, "bin"))).To(Succeed())
+
+		backend := &BuildahBackend{}
+		Expect(backend.applyRemoveData(ctx, &containerDesc{RootMount: rootMount}, []RemoveDataSpec{{
+			Type:           RemoveExactPathWithEmptyParentDirs,
+			Paths:          []string{"/bin/last-file"},
+			KeepParentDirs: []string{"/bin"},
+		}})).To(Succeed())
+
+		Expect(filepath.Join(rootMount, "usr", "bin", "last-file")).ToNot(BeAnExistingFile())
+		Expect(filepath.Join(rootMount, "usr", "bin")).To(BeADirectory())
+	})
+
+	It("never prunes empty parent dirs above the container root", func(ctx SpecContext) {
+		rootMount := filepath.Join(GinkgoT().TempDir(), "merged")
+		Expect(os.MkdirAll(filepath.Join(rootMount, "app"), 0o755)).To(Succeed())
+		Expect(os.WriteFile(filepath.Join(rootMount, "app", "last-file"), []byte("data"), 0o644)).To(Succeed())
+
+		backend := &BuildahBackend{}
+		Expect(backend.applyRemoveData(ctx, &containerDesc{RootMount: rootMount}, []RemoveDataSpec{{
+			Type:  RemoveExactPathWithEmptyParentDirs,
+			Paths: []string{"/app/last-file"},
+		}})).To(Succeed())
+
+		Expect(filepath.Join(rootMount, "app")).ToNot(BeADirectory())
+		Expect(rootMount).To(BeADirectory())
 	})
 })
 

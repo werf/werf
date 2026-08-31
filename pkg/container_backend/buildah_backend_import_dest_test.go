@@ -18,7 +18,9 @@ var _ = Describe("BuildahBackend dependency import destination resolution", func
 		src := GinkgoT().TempDir()
 		require.NoError(GinkgoT(), os.WriteFile(filepath.Join(src, "myapp"), []byte("hello"), 0o755))
 
-		absTo, err := normalizeDependencyImportDestination(root, src, filepath.Join(root, "bin"))
+		dest, err := resolveContainerRootPath(root, "bin")
+		Expect(err).ToNot(HaveOccurred())
+		absTo, err := normalizeDependencyImportDestination(src, dest)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(absTo).To(Equal(filepath.Join(root, "usr", "bin")))
 	})
@@ -32,7 +34,9 @@ var _ = Describe("BuildahBackend dependency import destination resolution", func
 		srcFile := filepath.Join(srcDir, "myapp")
 		require.NoError(GinkgoT(), os.WriteFile(srcFile, []byte("hello"), 0o755))
 
-		absTo, err := normalizeDependencyImportDestination(root, srcFile, filepath.Join(root, "bin"))
+		dest, err := resolveContainerRootPath(root, "bin")
+		Expect(err).ToNot(HaveOccurred())
+		absTo, err := normalizeDependencyImportDestination(srcFile, dest)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(absTo).To(Equal(filepath.Join(root, "usr", "bin", "myapp")))
 	})
@@ -45,7 +49,9 @@ var _ = Describe("BuildahBackend dependency import destination resolution", func
 		src := GinkgoT().TempDir()
 		require.NoError(GinkgoT(), os.WriteFile(filepath.Join(src, "myapp"), []byte("hello"), 0o755))
 
-		absTo, err := normalizeDependencyImportDestination(root, src, filepath.Join(root, "bin"))
+		dest, err := resolveContainerRootPath(root, "bin")
+		Expect(err).ToNot(HaveOccurred())
+		absTo, err := normalizeDependencyImportDestination(src, dest)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(absTo).To(Equal(filepath.Join(root, "usr", "bin")))
 	})
@@ -57,21 +63,22 @@ var _ = Describe("BuildahBackend dependency import destination resolution", func
 		src := GinkgoT().TempDir()
 		require.NoError(GinkgoT(), os.WriteFile(filepath.Join(src, "myapp"), []byte("hello"), 0o755))
 
-		dest := filepath.Join(root, "opt")
-		absTo, err := normalizeDependencyImportDestination(root, src, dest)
+		dest, err := resolveContainerRootPath(root, "opt")
+		Expect(err).ToNot(HaveOccurred())
+		absTo, err := normalizeDependencyImportDestination(src, dest)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(absTo).To(Equal(dest))
 	})
 
-	It("rejects a destination symlink that escapes the root mount", func() {
+	It("contains a destination symlink that would escape the root mount", func() {
 		base := GinkgoT().TempDir()
 		root := filepath.Join(base, "root")
 		require.NoError(GinkgoT(), os.MkdirAll(filepath.Join(base, "outside"), 0o755))
 		require.NoError(GinkgoT(), os.MkdirAll(root, 0o755))
 		require.NoError(GinkgoT(), os.Symlink("../outside", filepath.Join(root, "bin")))
 
-		_, err := resolveDestSymlinkUnderRoot(root, filepath.Join(root, "bin"))
-		Expect(err).To(HaveOccurred())
-		Expect(err.Error()).To(ContainSubstring("escapes root mount"))
+		absTo, err := resolveContainerRootPath(root, "bin")
+		Expect(err).ToNot(HaveOccurred())
+		Expect(absTo).To(Equal(filepath.Join(root, "outside")))
 	})
 })
