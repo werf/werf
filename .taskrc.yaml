@@ -1,0 +1,4 @@
+remote:
+  trusted-hosts:
+    - raw.githubusercontent.com
+    - github.com
