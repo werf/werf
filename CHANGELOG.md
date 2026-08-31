@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.77.2](https://github.com/werf/werf/compare/v2.77.1...v2.77.2) (2026-08-31)
+
+
+### Bug Fixes
+
+* **build, stapel:** stop panicking when the base image is gone at commit ([#7819](https://github.com/werf/werf/issues/7819)) ([17f71c5](https://github.com/werf/werf/commit/17f71c55c417567a3b3346c87f88bbd0d284bc01))
+* **build:** ignore a cache repo pointing at the primary repo ([#7820](https://github.com/werf/werf/issues/7820)) ([d02c20c](https://github.com/werf/werf/commit/d02c20cd32cc6613f5fc3ae03d394c2813c7e0a2))
+* **docs:** update shell pattern matching url ([#7813](https://github.com/werf/werf/issues/7813)) ([81cf51d](https://github.com/werf/werf/commit/81cf51d6306a8186746f541d32a48fd9e93d2440))
+* **host-cleanup:** report the real retention of pruned dangling images ([#7822](https://github.com/werf/werf/issues/7822)) ([958f84c](https://github.com/werf/werf/commit/958f84cd002367fef96df7b0a0cd2ab88f478bde))
+
 ## [2.77.1](https://github.com/werf/werf/compare/v2.77.0...v2.77.1) (2026-08-11)
 
 
