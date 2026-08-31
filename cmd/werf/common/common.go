@@ -928,7 +928,7 @@ func GetOptionalFinalStagesStorage(ctx context.Context, containerBackend contain
 	})
 }
 
-func GetCacheStagesStorageList(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData) ([]storage.StagesStorage, error) {
+func GetCacheStagesStorageList(ctx context.Context, stagesStorage storage.StagesStorage, containerBackend container_backend.ContainerBackend, cmdData *CmdData) ([]storage.StagesStorage, error) {
 	var res []storage.StagesStorage
 
 	buildahMode, _, err := GetBuildahMode()
@@ -942,6 +942,11 @@ func GetCacheStagesStorageList(ctx context.Context, containerBackend container_b
 	}
 
 	for _, address := range GetCacheStagesStorage(cmdData) {
+		if address == stagesStorage.Address() {
+			logboek.Context(ctx).Warn().LogF("WARNING: Ignoring cache repo %s: same address as the primary repo.\n", address)
+			continue
+		}
+
 		repoData := NewRepoData("cache-repo", RepoDataOptions{OnlyAddress: true})
 		repoData.Address = &address
 
