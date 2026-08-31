@@ -405,9 +405,8 @@ func (f *FileManager) LoadChartDir(ctx context.Context, dir string) ([]*file.Cha
 	return chartDir, nil
 }
 
-// readChartIgnoreRules resolves the .helmignore of the effective chart tree. The local file wins,
-// and the includes are only consulted when the chart has no local one, which keeps the documented
-// precedence of local project files over imported ones.
+// The includes are only consulted when the chart has no local .helmignore, which keeps the
+// documented precedence of local project files over imported ones.
 func (f *FileManager) readChartIgnoreRules(ctx context.Context, chartLocalAbsPath, normDir string) (file_reader.ChartIgnoreRules, error) {
 	var fallbackData []byte
 	if len(f.includes) > 0 {
