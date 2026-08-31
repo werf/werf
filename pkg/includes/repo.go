@@ -13,6 +13,8 @@ import (
 	"github.com/werf/werf/v2/pkg/git_repo"
 )
 
+//go:generate mockgen -source repo.go -package mock -destination ../../test/mock/includes_repo.go
+
 type GitRepository interface {
 	PlainOpen() (*git.Repository, error)
 	GetName() string
