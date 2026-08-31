@@ -1172,6 +1172,12 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 	stageImage.Image.SetName(newStageImageName)
 	phase.Conveyor.SetStageImage(stageImage)
 
+	// Hold the image against host cleanup of a concurrent werf process for as long as this build runs:
+	// the stage is going to be used as the base image of the next stage.
+	if err := phase.Conveyor.StorageManager.LockStageImage(ctx, newStageImageName); err != nil {
+		return fmt.Errorf("unable to lock stage %s image %s: %w", stg.LogDetailedName(), newStageImageName, err)
+	}
+
 	if err := logboek.Context(ctx).Default().LogProcess("Store stage into %s", phase.Conveyor.StorageManager.GetStagesStorage().String()).DoError(func() error {
 		if stg.IsMutable() {
 			prevBuiltImage := phase.StagesIterator.GetPrevBuiltImage(img, stg)
