@@ -294,7 +294,7 @@ ansible:
 
 The function `.Files.Glob` allows getting project files with a glob and working with their content. 
 
-The function supports [shell pattern matching](https://www.gnu.org/software/findutils/manual/html_node/find_html/Shell-Pattern-Matching.html) and `**`. The function results can be merged with the [merge](https://github.com/Masterminds/sprig/blob/master/docs/dicts.md#merge-mustmerge) sprig function (e.g., {% raw %}`{{ $filesDict := merge (.Files.Glob "glob1") (.Files.Glob "glob2")`{% endraw %}).
+The function supports [shell pattern matching](https://www.gnu.org/software/findutils/manual/html_node/Shell-Pattern-Matching.html) and `**`. The function results can be merged with the [merge](https://github.com/Masterminds/sprig/blob/master/docs/dicts.md#merge-mustmerge) sprig function (e.g., {% raw %}`{{ $filesDict := merge (.Files.Glob "glob1") (.Files.Glob "glob2")`{% endraw %}).
 
 __Syntax__:
 {% raw %}

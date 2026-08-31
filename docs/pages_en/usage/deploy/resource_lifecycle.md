@@ -60,7 +60,7 @@ metadata:
 
 Here, ownership `anyone` makes this Job behave a lot like a Helm hook, meaning that it will not be deleted on uninstall or when removed from the chart, and its release annotations will not be applied/validated during deploy.
 
-## Resource delete policies
+## Resource operation policies
 
 ### werf.io/delete-policy
 
@@ -111,7 +111,37 @@ Here, when the `myapp` Deployment is deleted, its dependents (ReplicaSets, Pods,
 
 By default, resources are deleted with the `Foreground` propagation policy.
 
+### werf.io/resource-policy
+
+The `werf.io/resource-policy` annotation restricts which operations werf is allowed to perform on the resource during deploy. Allowed values:
+* `skip-create`: never create the resource, deploy it only if it already exists in the cluster
+* `skip-update`: never update the resource after it has been created
+* `skip-recreate`: never recreate the resource — it is left as is, even if an immutable field changed
+* `skip-delete`: never delete the resource, neither when it is removed from the chart, nor on release uninstall
+* `keep`: alias for `skip-delete`, compatible with `helm.sh/resource-policy: keep`
+
+Multiple values can be specified at once. These policies take precedence over anything else that would recreate or delete the resource, including `werf.io/delete-policy`. Unlike the other values, `skip-delete` is also respected when set on the resource in the cluster, not only in the chart.
+
+By default no resource policy is set, except for the release Namespace, which is always protected from deletion.
+
+Example:
+
+```yaml
+# .helm/templates/example.yaml:
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: my-pvc
+  annotations:
+    werf.io/resource-policy: skip-update,skip-delete
+# ...
+```
+
+Here, the `my-pvc` PersistentVolumeClaim is created if it is absent, but it is never updated afterwards and never deleted.
+
 ### helm.sh/resource-policy
+
+Supported for Helm compatibility. Prefer `werf.io/resource-policy`: it covers the same case and more, and if both are set, `helm.sh/resource-policy` is ignored entirely.
 
 The annotation `helm.sh/resource-policy: keep` forbids any resource deletion from happening. The resource can never be deleted for any reason when this annotation is present. This annotation is also respected on the resource in the cluster, even if it is not present in the chart.
 
