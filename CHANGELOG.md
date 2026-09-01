@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.3.1](https://github.com/werf/werf/compare/v3.3.0...v3.3.1) (2026-09-01)
+
+
+### Bug Fixes
+
+* **host-cleanup:** report freed space measured from the actual disk state ([296c839](https://github.com/werf/werf/commit/296c8391941b14c73d9230d6984d32944a490fc2))
+
 ## [3.3.0](https://github.com/werf/werf/compare/v3.2.0...v3.3.0) (2026-08-31)
 
 
