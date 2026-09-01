@@ -38,11 +38,11 @@ groups:
   - name: "2"
     channels:
       - name: alpha
-        version: 2.77.1
+        version: 2.77.2
       - name: beta
-        version: 2.76.0
+        version: 2.77.1
       - name: ea
-        version: 2.75.3
+        version: 2.76.0
       - name: stable
         version: 2.75.3
       - name: rock-solid
@@ -50,4 +50,4 @@ groups:
   - name: "3"
     channels:
       - name: dev
-        version: 3.2.0
+        version: 3.3.0
