@@ -927,6 +927,7 @@ func (phase *BuildPhase) fetchBaseImageForStage(ctx context.Context, img *image.
 func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, stg stage.Interface) (bool, cleanup.Func, error) {
 	var opts calculateDigestOptions
 	opts.TargetPlatform = img.TargetPlatform
+	opts.BuildCacheVersion = imagePkg.BuildCacheVersion
 
 	var stageDependencies string
 	var prevNonEmptyStage stage.Interface
@@ -997,7 +998,10 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, s
 			panic(fmt.Sprintf("expected stage %q content digest label to be set!", stg.Name()))
 		}
 	} else {
-		stageContentSig, err = calculateDigest(ctx, fmt.Sprintf("%s-content", stg.Name()), "", stg, phase.Conveyor, calculateDigestOptions{TargetPlatform: img.TargetPlatform})
+		stageContentSig, err = calculateDigest(ctx, fmt.Sprintf("%s-content", stg.Name()), "", stg, phase.Conveyor, calculateDigestOptions{
+			TargetPlatform:    img.TargetPlatform,
+			BuildCacheVersion: imagePkg.BuildCacheVersion,
+		})
 		if err != nil {
 			return false, phase.Conveyor.GetStageDigestMutex(stg.GetDigest()).Unlock, fmt.Errorf("unable to calculate stage %s content digest: %w", stg.Name(), err)
 		}
@@ -1281,17 +1285,18 @@ func introspectStage(ctx context.Context, s stage.Interface) error {
 }
 
 type calculateDigestOptions struct {
-	TargetPlatform string
-	BaseImage      string
+	TargetPlatform    string
+	BuildCacheVersion string
+	BaseImage         string
 	// Anchor switches calculateDigest to the anchor path:
-	// Sha3_224(TargetPlatform, HolisticInputs...).
+	// Sha3_224(BuildCacheVersion, TargetPlatform, HolisticInputs...).
 	Anchor         bool
 	HolisticInputs []string
 }
 
 func calculateDigest(ctx context.Context, stageName, stageDependencies string, prevNonEmptyStage stage.Interface, conveyor *Conveyor, opts calculateDigestOptions) (string, error) {
 	if opts.Anchor {
-		args := []string{opts.TargetPlatform}
+		args := []string{opts.BuildCacheVersion, opts.TargetPlatform}
 		for _, s := range opts.HolisticInputs {
 			if s == "" {
 				continue
@@ -1315,7 +1320,7 @@ func calculateDigest(ctx context.Context, stageName, stageDependencies string, p
 		checksumArgsNames = append(checksumArgsNames, "TargetPlatform")
 	}
 
-	checksumArgs = append(checksumArgs, imagePkg.BuildCacheVersion, stageName, stageDependencies)
+	checksumArgs = append(checksumArgs, opts.BuildCacheVersion, stageName, stageDependencies)
 	checksumArgsNames = append(checksumArgsNames,
 		"BuildCacheVersion",
 		"StageName",

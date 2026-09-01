@@ -10,11 +10,15 @@ import (
 // anchorDigest is a thin wrapper that exercises the anchor branch of
 // calculateDigest: pass HolisticInputs, get the platform-scoped hash.
 func anchorDigest(targetPlatform string, deps []string) string {
-	d, err := calculateDigest(context.Background(), "anchor", "", nil, nil, calculateDigestOptions{
+	return anchorDigestWithOptions(calculateDigestOptions{
 		TargetPlatform: targetPlatform,
 		Anchor:         true,
 		HolisticInputs: deps,
 	})
+}
+
+func anchorDigestWithOptions(opts calculateDigestOptions) string {
+	d, err := calculateDigest(context.Background(), "anchor", "", nil, nil, opts)
 	if err != nil {
 		panic(err)
 	}
@@ -57,6 +61,21 @@ var _ = Describe("anchor holistic digest", func() {
 	It("changes when a contributing stage changes", func() {
 		Expect(anchorDigest(targetPlatform, []string{"from-digest", "git-archive-v1"})).
 			NotTo(Equal(anchorDigest(targetPlatform, []string{"from-digest", "git-archive-v2"})))
+	})
+
+	It("changes when the explicitly supplied build cache version changes", func() {
+		base := calculateDigestOptions{
+			TargetPlatform:    targetPlatform,
+			BuildCacheVersion: "cache-v1",
+			Anchor:            true,
+			HolisticInputs:    []string{"from-digest"},
+		}
+
+		Expect(anchorDigestWithOptions(base)).To(Equal(anchorDigestWithOptions(base)))
+
+		changed := base
+		changed.BuildCacheVersion = "cache-v2"
+		Expect(anchorDigestWithOptions(changed)).NotTo(Equal(anchorDigestWithOptions(base)))
 	})
 
 	It("changes when the target platform changes", func() {
