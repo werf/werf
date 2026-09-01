@@ -1,50 +1,124 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!--
+  Sync Impact Report
+  Version: 1.0.0 → 1.1.0 (MINOR — initialize werf-specific governance from
+  delivery-kit Spec Kit changes and add project boundaries, dependency rules,
+  and quality gates)
+  Modified principles:
+    - Template placeholders → I. Simplicity Over Abstraction
+    - Template placeholders → II. Go Idiomatic Code
+    - Template placeholders → III. Minimal Public Surface
+    - Template placeholders → IV. Test-Before-Merge
+    - Template placeholders → V. Conventional Commits
+  Added sections:
+    - Code Boundaries
+    - Dependency Rules
+    - Build & Quality Gates
+  Removed sections: none
+  Templates requiring updates:
+    - ✅ .specify/templates/constitution-template.md
+    - ✅ .specify/templates/plan-template.md
+    - ✅ .specify/templates/tasks-template.md
+    - ✅ .specify/templates/checklist-template.md
+    - ✅ .specify/templates/spec-template.md (reviewed; no update required)
+  Follow-up TODOs: none
+-->
+# werf Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Simplicity Over Abstraction
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+Prefer simple, direct solutions over abstract or extensible designs. Prefer a small
+amount of duplication over complex abstractions. Minimize interfaces, generics, and
+embedding. Prefer functions over methods where practical, and prefer straightforward
+data structures over types with unnecessary behavior. Complexity MUST be justified by
+a concrete current requirement.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### II. Go Idiomatic Code
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+Follow Effective Go and Go Code Review Comments. All public functions and methods MUST
+accept `context.Context` as the first parameter, and all public arguments are required.
+Optional public arguments MUST use a `<FunctionName>Options` struct. Errors MUST be
+wrapped with action-oriented context using `fmt.Errorf("doing something: %w", err)`.
+Use guard clauses and early returns. Interface implementations MUST have compile-time
+checks. Avoid `iota`, named returns, dot imports, and `this`/`self` receiver names.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### III. Minimal Public Surface
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+Keep implementation details private or internal whenever possible. Validate input early
+and keep APIs minimal. Constructors MUST NOT perform network or filesystem operations
+or other resource-intensive work. Comments MUST be limited to non-obvious public APIs
+or genuinely non-obvious logic.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+### IV. Test-Before-Merge
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+Tests MUST be placed alongside the source they verify. New Go tests MUST use Ginkgo and
+Gomega and follow existing werf test conventions. Mocks MUST be generated with the
+project mock task rather than written by hand. A change MUST pass the applicable build,
+formatting, lint, and test gates before merge; changes to CLI commands MUST include a
+runtime smoke check in addition to unit tests.
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+### V. Conventional Commits
+
+Commits MUST use the Conventional Commits format `type(scope): subject` and follow the
+repository's contribution conventions, including a subject of no more than 72
+characters. Branches and pull requests MUST follow the repository's documented werf
+conventions. Contributions MUST preserve the project's DCO/sign-off requirements.
+
+## Code Boundaries
+
+| Layer | Path | Purpose |
+|-------|------|---------|
+| **CLI commands** | `cmd/werf/` | Cobra command tree and thin wiring layer |
+| **Libraries** | `pkg/...` | Domain business logic and reusable components |
+| **E2E tests** | `test/e2e/` | Ginkgo end-to-end test suites |
+| **Legacy tests** | `test/legacy_e2e/` | Legacy integration tests |
+| **Shared test helpers** | `test/pkg/` | Reusable test utilities and fixtures |
+
+CLI packages MUST avoid owning business logic that belongs in `pkg/`. Packages under
+`pkg/` MUST NOT depend on `cmd/` packages.
+
+## Dependency Rules
+
+- Internal packages under `pkg/` MAY import other `pkg/` subpackages when the dependency
+  reflects a real domain relationship.
+- `cmd/werf/` MAY import `pkg/` subpackages but MUST NOT be imported by `pkg/`.
+- External dependencies MUST be managed through `go.mod`; adding one MUST be flagged
+  for review before adoption.
+- Forked dependencies MUST remain documented by the relevant `go.mod` `replace`
+  directives and MUST NOT be silently replaced with upstream modules.
+
+## Build & Quality Gates
+
+Use project tasks instead of raw Go tooling:
+
+- Formatting: `task format`.
+- Build: `task build`.
+- Lint: install the linter once with `task deps:install:golangci-lint`, then run
+  `task lint` or the scoped lint task.
+- Unit tests: `task test:unit`, preferably scoped while iterating.
+- E2E tests: run `task test:e2e` with both `paths` and `labelFilter`; prepare the
+  environment with `task test:setup:environment` when required by the platform or
+  suite, and clean it with `task test:cleanup:environment` afterward.
+- Integration tests: `task test:integration` after the required environment setup.
+- Mocks: `task mock:generate`; verify them with `task mock:check`.
+- CLI help changes: regenerate documentation with `task doc:gen`.
+
+For Go changes, the final verification sequence MUST be `task format`, `task build`,
+`task lint`, and `task test:unit`, followed by the applicable E2E/integration checks.
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+This constitution supersedes conflicting project practices. Amendments MUST be made in
+a pull request, include a Sync Impact Report, explain the semantic-version bump, and
+update all affected Spec Kit templates and runtime guidance. Reviewers MUST verify
+compliance with this constitution and require a documented justification for any
+exception. `AGENTS.md`, `CODESTYLE.md`, and `CONTRIBUTING.md` provide operational
+rules and MUST remain consistent with this document.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+The constitution uses semantic versioning: MAJOR for incompatible governance changes,
+MINOR for new or materially expanded principles or sections, and PATCH for clarifying
+or non-semantic edits. The ratification date records adoption of this constitution;
+the last amended date records the latest approved amendment.
+
+**Version**: 1.1.0 | **Ratified**: 2026-09-01 | **Last Amended**: 2026-09-01

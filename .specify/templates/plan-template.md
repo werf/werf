@@ -4,7 +4,8 @@
 
 **Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
 
-**Note**: This template is filled in by the `/speckit-plan` command; its definition describes the execution workflow.
+**Note**: This template is filled in by the `/speckit-plan` command. See
+`.specify/templates/plan-template.md` for the execution workflow.
 
 ## Summary
 
@@ -12,29 +13,28 @@
 
 ## Technical Context
 
-<!--
-  ACTION REQUIRED: Replace the content in this section with the technical details
-  for the project. The structure here is presented in advisory capacity to guide
-  the iteration process.
--->
+**Language/Version**: Go 1.25.5 (toolchain Go 1.25.8)
 
-**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]
+**Primary Dependencies**:
+- Container building: `containers/buildah`, `containers/storage`, `containers/image`
+- Kubernetes deployment: `werf/nelm`, `werf/kubedog`, Helm chart primitives
+- Kubernetes client: `k8s.io/client-go`, `k8s.io/api`, `k8s.io/apimachinery`
+- Container registry: `google/go-containerregistry`, `aws/aws-sdk-go-v2`
+- Utilities: `samber/lo`, `werf/common-go`, `go-git/go-git`, `docker/docker`
 
-**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]
+**Storage**: OCI container registries, local Git repositories, and Buildah container storage
 
-**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
+**Testing**: Ginkgo + Gomega for Go tests; project task-based unit, integration, and E2E suites
 
-**Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]
+**Target Platform**: Linux and supported developer platforms; Kubernetes clusters where applicable
 
-**Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
+**Project Type**: CLI tool (Go binary via `cmd/werf/main.go`)
 
-**Project Type**: [e.g., library/cli/web-service/mobile-app/compiler/desktop-app or NEEDS CLARIFICATION]
+**Performance Goals**: Efficient image builds, registry operations, deployment tracking, and stage caching
 
-**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]
+**Constraints**: Self-contained CLI; Git, Helm, Kubernetes, and OCI-compatible workflows; platform-specific Buildah limitations MUST be documented
 
-**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]
-
-**Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
+**Scale/Scope**: Single CLI binary with commands across build, deploy, cleanup, SBOM, configuration, and auxiliary domains
 
 ## Constitution Check
 
@@ -48,60 +48,26 @@
 
 ```text
 specs/[###-feature]/
-├── plan.md              # This file (/speckit-plan command output)
-├── research.md          # Phase 0 output (/speckit-plan command)
-├── data-model.md        # Phase 1 output (/speckit-plan command)
-├── quickstart.md        # Phase 1 output (/speckit-plan command)
-├── contracts/           # Phase 1 output (/speckit-plan command)
-└── tasks.md             # Phase 2 output (/speckit-tasks command - NOT created by /speckit-plan)
+├── plan.md
+├── research.md
+├── data-model.md
+├── quickstart.md
+├── contracts/
+└── tasks.md
 ```
 
 ### Source Code (repository root)
-<!--
-  ACTION REQUIRED: Replace the placeholder tree below with the concrete layout
-  for this feature. Delete unused options and expand the chosen structure with
-  real paths (e.g., apps/admin, packages/something). The delivered plan must
-  not include Option labels.
--->
 
 ```text
-# [REMOVE IF UNUSED] Option 1: Single project (DEFAULT)
-src/
-├── models/
-├── services/
-├── cli/
-└── lib/
-
-tests/
-├── contract/
-├── integration/
-└── unit/
-
-# [REMOVE IF UNUSED] Option 2: Web application (when "frontend" + "backend" detected)
-backend/
-├── src/
-│   ├── models/
-│   ├── services/
-│   └── api/
-└── tests/
-
-frontend/
-├── src/
-│   ├── components/
-│   ├── pages/
-│   └── services/
-└── tests/
-
-# [REMOVE IF UNUSED] Option 3: Mobile + API (when "iOS/Android" detected)
-api/
-└── [same as backend above]
-
-ios/ or android/
-└── [platform-specific structure: feature modules, UI flows, platform tests]
+cmd/werf/       # CLI entry point and command wiring
+pkg/            # Domain business logic and reusable components
+test/e2e/       # Ginkgo end-to-end suites
+test/legacy_e2e/ # Legacy integration suites
+test/pkg/       # Shared test helpers and fixtures
 ```
 
-**Structure Decision**: [Document the selected structure and reference the real
-directories captured above]
+**Structure Decision**: Keep command wiring in `cmd/werf/<domain>/` and implementation
+in the relevant `pkg/<domain>/` package. Place unit tests alongside source files.
 
 ## Complexity Tracking
 
@@ -109,5 +75,4 @@ directories captured above]
 
 | Violation | Why Needed | Simpler Alternative Rejected Because |
 |-----------|------------|-------------------------------------|
-| [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
-| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |
+| [violation] | [current need] | [reason] |
