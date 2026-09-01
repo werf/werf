@@ -280,9 +280,12 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 			return err
 		}
 
-		vu.UsedBytes -= reportVolumes.SpaceReclaimed
+		var spaceReclaimed uint64
+		if spaceReclaimed, vu, err = cleaner.measureReclaimedSpace(ctx, options.StoragePath, vu); err != nil {
+			return err
+		}
 
-		logboek.Context(ctx).LogF("Freed space: %s\n", logging.RedF("%s", humanize.Bytes(reportVolumes.SpaceReclaimed)))
+		logboek.Context(ctx).LogF("Freed space: %s\n", logging.RedF("%s", humanize.Bytes(spaceReclaimed)))
 		logDeletedItems(ctx, reportVolumes.ItemsDeleted)
 
 		return nil
@@ -298,9 +301,12 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 			return err
 		}
 
-		vu.UsedBytes -= reportImages.SpaceReclaimed
+		var spaceReclaimed uint64
+		if spaceReclaimed, vu, err = cleaner.measureReclaimedSpace(ctx, options.StoragePath, vu); err != nil {
+			return err
+		}
 
-		logboek.Context(ctx).LogF("Freed space: %s\n", logging.RedF("%s", humanize.Bytes(reportImages.SpaceReclaimed)))
+		logboek.Context(ctx).LogF("Freed space: %s\n", logging.RedF("%s", humanize.Bytes(spaceReclaimed)))
 		logDeletedItems(ctx, reportImages.ItemsDeleted)
 
 		return nil
@@ -327,9 +333,12 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 			return err
 		}
 
-		vu.UsedBytes -= reportWerfContainers.SpaceReclaimed
+		var spaceReclaimed uint64
+		if spaceReclaimed, vu, err = cleaner.measureReclaimedSpace(ctx, options.StoragePath, vu); err != nil {
+			return err
+		}
 
-		logboek.Context(ctx).LogF("Freed space: %s\n", logging.RedF("%s", humanize.Bytes(reportWerfContainers.SpaceReclaimed)))
+		logboek.Context(ctx).LogF("Freed space: %s\n", logging.RedF("%s", humanize.Bytes(spaceReclaimed)))
 		logDeletedItems(ctx, reportWerfContainers.ItemsDeleted)
 
 		return nil
@@ -345,9 +354,12 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 			return err
 		}
 
-		vu.UsedBytes -= reportWerfImages.SpaceReclaimed
+		var spaceReclaimed uint64
+		if spaceReclaimed, vu, err = cleaner.measureReclaimedSpace(ctx, options.StoragePath, vu); err != nil {
+			return err
+		}
 
-		logboek.Context(ctx).LogF("Freed space: %s\n", logging.RedF("%s", humanize.Bytes(reportWerfImages.SpaceReclaimed)))
+		logboek.Context(ctx).LogF("Freed space: %s\n", logging.RedF("%s", humanize.Bytes(spaceReclaimed)))
 		logDeletedItems(ctx, reportWerfImages.ItemsDeleted)
 
 		return nil
