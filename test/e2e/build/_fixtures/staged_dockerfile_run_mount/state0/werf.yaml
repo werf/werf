@@ -1,0 +1,7 @@
+project: werf-test-e2e-build-staged-dockerfile-run-mount
+configVersion: 1
+
+---
+image: app
+dockerfile: Dockerfile
+staged: true

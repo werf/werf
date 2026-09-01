@@ -3,6 +3,7 @@ package contback
 import (
 	"context"
 	"encoding/json"
+	"strings"
 
 	. "github.com/onsi/gomega"
 
@@ -60,6 +61,20 @@ func (r *NativeBuildahBackend) Pull(ctx context.Context, image string) {
 	args := r.CommonCliArgs
 	args = append(args, "pull", "--tls-verify=false", image)
 	utils.RunSucceedCommand(ctx, "/", "buildah", args...)
+}
+
+// RmiByRepoRef removes every local image tagged under repoRef from the containers storage.
+func (r *NativeBuildahBackend) RmiByRepoRef(ctx context.Context, repoRef string) {
+	listArgs := append(append([]string{}, r.CommonCliArgs...), "images", "--format", "{{.Name}}:{{.Tag}}")
+	output := utils.SucceedCommandOutputString(ctx, "/", "buildah", listArgs...)
+
+	for _, ref := range strings.Fields(output) {
+		if !strings.HasPrefix(ref, repoRef+":") {
+			continue
+		}
+		rmiArgs := append(append([]string{}, r.CommonCliArgs...), "rmi", "--force", ref)
+		utils.RunSucceedCommand(ctx, "/", "buildah", rmiArgs...)
+	}
 }
 
 func (r *NativeBuildahBackend) GetImageInspect(ctx context.Context, image string) DockerImageInspect {

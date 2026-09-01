@@ -20,6 +20,8 @@ type Run struct {
 	SSH     string
 }
 
+var _ container_backend.MountsInterface = (*Run)(nil)
+
 func NewRun(i instructions.RunCommand, envs, secrets []string, ssh string) *Run {
 	return &Run{RunCommand: i, Envs: envs, Secrets: secrets, SSH: ssh}
 }
