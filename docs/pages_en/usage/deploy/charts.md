@@ -123,7 +123,7 @@ Here:
 
 - `LICENSE` — the chart license;
 
-- `.helmignore` — a list of files in the chart directory not to be included in the chart when publishing.
+- `.helmignore` — a list of files in the chart directory not to be included in the chart. The rules apply whenever the chart is read, including `werf render`, `werf converge`, `werf plan` and `werf lint`. Helm's own default rules apply as well, so dotfiles directly under `templates/` (for example `templates/.gitkeep`) are excluded even when the chart has no `.helmignore`.
 
 ## Including additional charts
 
