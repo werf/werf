@@ -1,4 +1,5 @@
 installed:
+- brownfield
 - bug
 - wiki
 settings:
@@ -21,4 +22,13 @@ hooks:
     priority: 10
     prompt: Record what this implementation taught into the project wiki?
     description: Capture implementation learnings into the wiki after implementation
+    condition: null
+  after_init:
+  - extension: brownfield
+    command: speckit.brownfield.scan
+    enabled: true
+    optional: true
+    priority: 10
+    prompt: Scan this existing project to customize spec-kit configuration?
+    description: Auto-scan project after spec-kit init to detect tech stack and conventions
     condition: null
