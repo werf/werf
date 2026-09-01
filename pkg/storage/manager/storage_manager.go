@@ -194,7 +194,8 @@ type StorageManager struct {
 	SecondaryStagesStorageList []storage.StagesStorage
 
 	// These will be released automatically when current process exits
-	SharedHostImagesLocks []lockgate.LockHandle
+	SharedHostImagesLocks   []lockgate.LockHandle
+	sharedHostImagesLocksMu sync.Mutex
 
 	FinalStagesListCacheMux sync.Mutex
 	FinalStagesListCache    *StagesList
@@ -380,9 +381,15 @@ func (m *StorageManager) LockStageImage(ctx context.Context, imageName string) e
 		return fmt.Errorf("error locking %q shared lock: %w", imageLockName, err)
 	}
 
-	m.SharedHostImagesLocks = append(m.SharedHostImagesLocks, l)
+	m.addSharedHostImageLock(l)
 
 	return nil
+}
+
+func (m *StorageManager) addSharedHostImageLock(lock lockgate.LockHandle) {
+	m.sharedHostImagesLocksMu.Lock()
+	defer m.sharedHostImagesLocksMu.Unlock()
+	m.SharedHostImagesLocks = append(m.SharedHostImagesLocks, lock)
 }
 
 func doFetchStage(ctx context.Context, projectName string, stagesStorage storage.StagesStorage, stageID image.StageID, img container_backend.LegacyImageInterface) error {
