@@ -188,6 +188,30 @@ var _ = Describe("LoadChartDir", func() {
 		))
 	})
 
+	It("names .helmignore as the reason when it excludes every chart file", func(ctx SpecContext) {
+		writeLocalChart(map[string]string{
+			".helmignore": "*\n",
+			"Chart.yaml":  "name: local",
+		})
+
+		_, err := newFileManager().LoadChartDir(logging.WithLogger(ctx), ".helm")
+		Expect(err).To(MatchError(ContainSubstring("every file is excluded by .helmignore")))
+	})
+
+	It("reports a missing chart directory as not found rather than excluded", func(ctx SpecContext) {
+		_, err := newFileManager().LoadChartDir(logging.WithLogger(ctx), ".helm")
+		Expect(err).To(MatchError(ContainSubstring("not found in the project git repository or includes")))
+	})
+
+	// An existing but empty directory has nothing to exclude, so blaming .helmignore there would
+	// send the user looking for a rule that does not exist.
+	It("reports an empty chart directory as not found rather than excluded", func(ctx SpecContext) {
+		Expect(os.MkdirAll(filepath.Join(projectDir, ".helm"), 0o755)).To(Succeed())
+
+		_, err := newFileManager().LoadChartDir(logging.WithLogger(ctx), ".helm")
+		Expect(err).To(MatchError(ContainSubstring("not found in the project git repository or includes")))
+	})
+
 	It("applies helm's default rules to imported files", func(ctx SpecContext) {
 		writeLocalChart(map[string]string{"Chart.yaml": "name: local"})
 		include := newInclude(map[string]string{

@@ -56,11 +56,11 @@ var _ = Describe("chart .helmignore rules", func() {
 	)
 
 	DescribeTable("matches a file from a flat list, where no directory can be pruned by the walk",
-		func(helmignore, relPath string, expected bool) {
+		func(ctx SpecContext, helmignore, relPath string, expected bool) {
 			rules, err := parseChartIgnoreRules([]byte(helmignore))
 			Expect(err).NotTo(HaveOccurred())
 
-			Expect(rules.IsFileIgnored(relPath)).To(Equal(expected))
+			Expect(rules.IsFileIgnored(ctx, relPath)).To(Equal(expected))
 		},
 		Entry("matches the file itself", "templates/ignored.yaml\n", "templates/ignored.yaml", true),
 		Entry("matches a file under a directory rule", "mydir/\n", "mydir/inner.yaml", true),
@@ -69,6 +69,11 @@ var _ = Describe("chart .helmignore rules", func() {
 		Entry("keeps a file whose directory only prefixes the rule", "mydir/\n", "mydir-other/inner.yaml", false),
 		Entry("keeps an unmatched file", "mydir/\n", "templates/kept.yaml", false),
 	)
+
+	// The zero value is reachable through the exported API, where a nil rule set used to panic.
+	It("excludes nothing when the rule set is the zero value", func(ctx SpecContext) {
+		Expect(ChartIgnoreRules{}.IsFileIgnored(ctx, "templates/kept.yaml")).To(BeFalse())
+	})
 
 	It("reads the basename from the file info, so a basename rule keeps working if helm starts using it", func() {
 		Expect(chartIgnoreFileInfo{path: "templates/sub/ignored.yaml"}.Name()).To(Equal("ignored.yaml"))

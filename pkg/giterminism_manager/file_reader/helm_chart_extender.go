@@ -137,7 +137,9 @@ func (r FileReader) loadChartDir(ctx context.Context, relDir string, rules Chart
 	return res, nil
 }
 
-// ChartIgnoreRules is the .helmignore rule set applied to a chart directory.
+// ChartIgnoreRules is the .helmignore rule set applied to a chart directory. Its zero value
+// excludes nothing, which is what a chart without a .helmignore needs before helm's own defaults
+// are added on top.
 type ChartIgnoreRules struct {
 	rules *ignore.Rules
 }
@@ -145,7 +147,7 @@ type ChartIgnoreRules struct {
 // IsFileIgnored reports whether a chart-relative file path is excluded, either by a rule matching
 // the file itself or by a rule matching one of its parent directories. Unlike a filesystem walk, a
 // flat file list cannot have a directory pruned, so the parents have to be checked explicitly.
-func (r ChartIgnoreRules) IsFileIgnored(relPath string) bool {
+func (r ChartIgnoreRules) IsFileIgnored(ctx context.Context, relPath string) bool {
 	return skipRelativeToDirPathWithParents(filepath.ToSlash(relPath), func(path string, isDir bool) bool {
 		return matchChartIgnoreRules(r.rules, path, isDir)
 	})
@@ -206,6 +208,10 @@ func parseChartIgnoreRules(data []byte) (ChartIgnoreRules, error) {
 // matchChartIgnoreRules reports whether the chart-relative path is ignored. A matched directory
 // is skipped along with its whole subtree, which is how helm applies directory rules.
 func matchChartIgnoreRules(rules *ignore.Rules, relPath string, isDir bool) bool {
+	if rules == nil {
+		return false
+	}
+
 	return rules.Ignore(relPath, chartIgnoreFileInfo{path: relPath, isDir: isDir})
 }
 

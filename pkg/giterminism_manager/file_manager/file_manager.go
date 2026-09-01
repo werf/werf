@@ -384,7 +384,7 @@ func (f *FileManager) LoadChartDir(ctx context.Context, dir string) ([]*nelmcomm
 			}
 
 			relToChartPath := strings.TrimPrefix(normToPath, normDir+"/")
-			if rules.IsFileIgnored(relToChartPath) {
+			if rules.IsFileIgnored(ctx, relToChartPath) {
 				logboek.Context(ctx).Debug().LogF("--- %s excluded by %s \n", normToPath, ignore.HelmIgnore)
 				processed[normToPath] = false
 				return nil
@@ -410,10 +410,40 @@ func (f *FileManager) LoadChartDir(ctx context.Context, dir string) ([]*nelmcomm
 	}
 
 	if len(chartDir) == 0 {
+		excluded, err := f.chartHadExcludedFiles(ctx, chartLocalAbsPath, readFromLocalFs, processed)
+		if err != nil {
+			return nil, err
+		}
+
+		if excluded {
+			return nil, fmt.Errorf("the directory %q has no chart files left: every file is excluded by %s", dir, ignore.HelmIgnore)
+		}
+
 		return nil, fmt.Errorf("load chart dir error: the directory %q not found in the project git repository or includes", dir)
 	}
 
 	return chartDir, nil
+}
+
+// chartHadExcludedFiles reports whether the empty result is the work of .helmignore rather than an
+// absent or empty chart directory. It reloads the local directory with no rules, which only happens
+// on the error path, because blaming .helmignore for a chart that never had files would send the
+// user looking for a rule that does not exist.
+func (f *FileManager) chartHadExcludedFiles(ctx context.Context, chartLocalAbsPath string, readFromLocalFs bool, processed map[string]bool) (bool, error) {
+	if len(processed) > 0 {
+		return true, nil
+	}
+
+	if !readFromLocalFs {
+		return false, nil
+	}
+
+	unfiltered, err := f.fileReader.LoadChartDirWithIgnoreRules(ctx, chartLocalAbsPath, file_reader.ChartIgnoreRules{})
+	if err != nil {
+		return false, fmt.Errorf("unable to load chart directory: %w", err)
+	}
+
+	return len(unfiltered) > 0, nil
 }
 
 // The includes are only consulted when the chart has no local .helmignore, which keeps the
