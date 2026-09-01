@@ -10,6 +10,7 @@ import (
 	"sync/atomic"
 
 	"github.com/containers/storage/types"
+	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
@@ -392,5 +393,91 @@ var _ = Describe("BuildahBackend createContainers", func() {
 		Eventually(firstDone).Should(Receive(Succeed()))
 		Eventually(secondDone).Should(Receive(Succeed()))
 		Expect(pullCalls.Load()).To(Equal(int32(2)))
+	})
+})
+
+type stubMountsInstruction struct {
+	mounts []*instructions.Mount
+}
+
+func (i *stubMountsInstruction) Name() string { return "RUN" }
+
+func (i *stubMountsInstruction) Apply(_ context.Context, _ string, _ buildah.Buildah, _ buildah.CommonOpts, _ BuildContextArchiver) error {
+	return nil
+}
+
+func (i *stubMountsInstruction) UsesBuildContext() bool { return false }
+
+func (i *stubMountsInstruction) GetMounts() []*instructions.Mount { return i.mounts }
+
+var _ = Describe("BuildahBackend ensureRunMountImages", func() {
+	const (
+		imageRef = "registry.example.org/project/stage:tag"
+		platform = "linux/amd64"
+	)
+
+	newRunInstruction := func(from string) *stubMountsInstruction {
+		return &stubMountsInstruction{mounts: []*instructions.Mount{
+			{Type: instructions.MountTypeBind, From: from, Target: "/mnt"},
+			{Type: instructions.MountTypeTmpfs, Target: "/tmp"},
+		}}
+	}
+
+	It("pulls the run mount from-image missing in local storage", func() {
+		fakeBuildah := &buildahstub.BuildahStub{}
+		fakeBuildah.PullFunc = func(_ context.Context, ref string, _ buildah.PullOpts) (string, error) {
+			Expect(ref).To(Equal(imageRef))
+			return "sha256:fresh", nil
+		}
+
+		backend := NewBuildahBackend(fakeBuildah, BuildahBackendOptions{})
+
+		err := backend.ensureRunMountImages(context.Background(), []InstructionInterface{newRunInstruction(imageRef)}, CommonOpts{TargetPlatform: platform})
+		Expect(err).ToNot(HaveOccurred())
+		Expect(fakeBuildah.InspectRefs).To(Equal([]string{imageRef}))
+		Expect(fakeBuildah.PullRefs).To(Equal([]string{imageRef}))
+
+		cachedID, ok := backend.getPulledImageID(imageRef, platform)
+		Expect(ok).To(BeTrue())
+		Expect(cachedID).To(Equal("sha256:fresh"))
+	})
+
+	It("does not pull when the from-image is already in local storage", func() {
+		fakeBuildah := &buildahstub.BuildahStub{}
+		fakeBuildah.InspectFunc = func(_ context.Context, _ string) (*thirdparty.BuilderInfo, error) {
+			return &thirdparty.BuilderInfo{OCIv1: v1.Image{Platform: v1.Platform{OS: "linux", Architecture: "amd64"}}}, nil
+		}
+
+		backend := NewBuildahBackend(fakeBuildah, BuildahBackendOptions{})
+
+		err := backend.ensureRunMountImages(context.Background(), []InstructionInterface{newRunInstruction(imageRef)}, CommonOpts{TargetPlatform: platform})
+		Expect(err).ToNot(HaveOccurred())
+		Expect(fakeBuildah.PullRefs).To(BeEmpty())
+	})
+
+	It("fails when the pull fails", func() {
+		fakeBuildah := &buildahstub.BuildahStub{}
+		fakeBuildah.PullFunc = func(_ context.Context, _ string, _ buildah.PullOpts) (string, error) {
+			return "", errors.New("no such host")
+		}
+
+		backend := NewBuildahBackend(fakeBuildah, BuildahBackendOptions{})
+
+		err := backend.ensureRunMountImages(context.Background(), []InstructionInterface{newRunInstruction(imageRef)}, CommonOpts{TargetPlatform: platform})
+		Expect(err).To(MatchError(ContainSubstring("unable to pull image")))
+	})
+
+	It("skips instructions without mounts and mounts without from", func() {
+		fakeBuildah := &buildahstub.BuildahStub{}
+		backend := NewBuildahBackend(fakeBuildah, BuildahBackendOptions{})
+
+		instrs := []InstructionInterface{
+			&stubMountsInstruction{mounts: []*instructions.Mount{{Type: instructions.MountTypeBind, Target: "/ctx"}}},
+		}
+
+		err := backend.ensureRunMountImages(context.Background(), instrs, CommonOpts{TargetPlatform: platform})
+		Expect(err).ToNot(HaveOccurred())
+		Expect(fakeBuildah.InspectRefs).To(BeEmpty())
+		Expect(fakeBuildah.PullRefs).To(BeEmpty())
 	})
 })
