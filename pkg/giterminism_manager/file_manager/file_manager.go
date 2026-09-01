@@ -370,6 +370,9 @@ func (f *FileManager) LoadChartDir(ctx context.Context, dir string) ([]*nelmcomm
 		}
 	}
 
+	defaultRules := file_reader.DefaultChartIgnoreRules()
+	var excludedByUserRules bool
+
 	logboek.Context(ctx).Debug().LogF("Try to read additional files from includes\n")
 
 	for _, include := range f.includes {
@@ -386,6 +389,9 @@ func (f *FileManager) LoadChartDir(ctx context.Context, dir string) ([]*nelmcomm
 			relToChartPath := strings.TrimPrefix(normToPath, normDir+"/")
 			if rules.IsFileIgnored(ctx, relToChartPath) {
 				logboek.Context(ctx).Debug().LogF("--- %s excluded by %s \n", normToPath, ignore.HelmIgnore)
+				if !defaultRules.IsFileIgnored(ctx, relToChartPath) {
+					excludedByUserRules = true
+				}
 				processed[normToPath] = false
 				return nil
 			}
@@ -410,7 +416,7 @@ func (f *FileManager) LoadChartDir(ctx context.Context, dir string) ([]*nelmcomm
 	}
 
 	if len(chartDir) == 0 {
-		excluded, err := f.chartHadExcludedFiles(ctx, chartLocalAbsPath, readFromLocalFs, processed)
+		excluded, err := f.chartHadExcludedFiles(ctx, chartLocalAbsPath, readFromLocalFs, excludedByUserRules)
 		if err != nil {
 			return nil, err
 		}
@@ -429,8 +435,8 @@ func (f *FileManager) LoadChartDir(ctx context.Context, dir string) ([]*nelmcomm
 // absent or empty chart directory. It reloads the local directory on the error path only, with
 // helm's defaults still in place: those apply even without a .helmignore, so counting them as
 // exclusions would send the user looking for a rule that does not exist.
-func (f *FileManager) chartHadExcludedFiles(ctx context.Context, chartLocalAbsPath string, readFromLocalFs bool, processed map[string]bool) (bool, error) {
-	if len(processed) > 0 {
+func (f *FileManager) chartHadExcludedFiles(ctx context.Context, chartLocalAbsPath string, readFromLocalFs, excludedByUserRules bool) (bool, error) {
+	if excludedByUserRules {
 		return true, nil
 	}
 

@@ -220,6 +220,23 @@ var _ = Describe("LoadChartDir", func() {
 		Expect(err).To(MatchError(ContainSubstring("not found in the project git repository or includes")))
 	})
 
+	It("reports an included chart emptied by helm's defaults as not found rather than excluded", func(ctx SpecContext) {
+		include := newInclude(map[string]string{"templates/.gitkeep": ""})
+
+		_, err := newFileManager(include).LoadChartDir(logging.WithLogger(ctx), ".helm")
+		Expect(err).To(MatchError(ContainSubstring("not found in the project git repository or includes")))
+	})
+
+	It("names .helmignore as the reason when an included rule excludes every chart file", func(ctx SpecContext) {
+		include := newInclude(map[string]string{
+			".helmignore": "*\n",
+			"Chart.yaml":  "name: included",
+		})
+
+		_, err := newFileManager(include).LoadChartDir(logging.WithLogger(ctx), ".helm")
+		Expect(err).To(MatchError(ContainSubstring("every file is excluded by .helmignore")))
+	})
+
 	It("applies helm's default rules to imported files", func(ctx SpecContext) {
 		writeLocalChart(map[string]string{"Chart.yaml": "name: local"})
 		include := newInclude(map[string]string{
