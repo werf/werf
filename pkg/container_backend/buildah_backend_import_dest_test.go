@@ -70,7 +70,12 @@ var _ = Describe("BuildahBackend dependency import destination resolution", func
 		Expect(absTo).To(Equal(dest))
 	})
 
-	It("contains a destination symlink that would escape the root mount", func() {
+	// A symlink pointing above the container root is resolved the way the kernel would
+	// resolve it inside the container: the leading ".." is clamped at the root, so
+	// /bin -> ../outside lands on /outside of that same container. Resolution must not
+	// reach the host filesystem, and it must not be rejected either — such a layout is
+	// legal inside an image.
+	It("resolves a destination symlink pointing above the root against the root itself", func() {
 		base := GinkgoT().TempDir()
 		root := filepath.Join(base, "root")
 		require.NoError(GinkgoT(), os.MkdirAll(filepath.Join(base, "outside"), 0o755))
@@ -80,5 +85,7 @@ var _ = Describe("BuildahBackend dependency import destination resolution", func
 		absTo, err := resolveContainerRootPath(root, "bin")
 		Expect(err).ToNot(HaveOccurred())
 		Expect(absTo).To(Equal(filepath.Join(root, "outside")))
+		Expect(absTo).To(HavePrefix(root + string(filepath.Separator)))
+		Expect(absTo).ToNot(Equal(filepath.Join(base, "outside")))
 	})
 })
