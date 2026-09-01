@@ -434,7 +434,7 @@ var _ = Describe("BuildahBackend ensureRunMountImages", func() {
 
 		err := backend.ensureRunMountImages(context.Background(), []InstructionInterface{newRunInstruction(imageRef)}, CommonOpts{TargetPlatform: platform})
 		Expect(err).ToNot(HaveOccurred())
-		Expect(fakeBuildah.InspectRefs).To(Equal([]string{imageRef}))
+		Expect(fakeBuildah.InspectRefs).To(Equal([]string{imageRef, imageRef}))
 		Expect(fakeBuildah.PullRefs).To(Equal([]string{imageRef}))
 
 		cachedID, ok := backend.getPulledImageID(imageRef, platform)
@@ -453,6 +453,69 @@ var _ = Describe("BuildahBackend ensureRunMountImages", func() {
 		err := backend.ensureRunMountImages(context.Background(), []InstructionInterface{newRunInstruction(imageRef)}, CommonOpts{TargetPlatform: platform})
 		Expect(err).ToNot(HaveOccurred())
 		Expect(fakeBuildah.PullRefs).To(BeEmpty())
+	})
+
+	It("fails without pulling when the local from-image platform mismatches the target platform", func() {
+		fakeBuildah := &buildahstub.BuildahStub{}
+		fakeBuildah.InspectFunc = func(_ context.Context, _ string) (*thirdparty.BuilderInfo, error) {
+			return &thirdparty.BuilderInfo{OCIv1: v1.Image{Platform: v1.Platform{OS: "linux", Architecture: "arm64"}}}, nil
+		}
+
+		backend := NewBuildahBackend(fakeBuildah, BuildahBackendOptions{})
+
+		err := backend.ensureRunMountImages(context.Background(), []InstructionInterface{newRunInstruction(imageRef)}, CommonOpts{TargetPlatform: platform})
+		Expect(err).To(MatchError(ContainSubstring("but target platform is")))
+		Expect(fakeBuildah.PullRefs).To(BeEmpty())
+	})
+
+	It("does not pull again when a concurrent caller already pulled the image", func() {
+		var pulled atomic.Bool
+		var inspectCalls atomic.Int32
+		firstPullStarted := make(chan struct{})
+		releaseFirstPull := make(chan struct{})
+		var pullCalls atomic.Int32
+
+		fakeBuildah := &buildahstub.BuildahStub{}
+		fakeBuildah.InspectFunc = func(_ context.Context, _ string) (*thirdparty.BuilderInfo, error) {
+			inspectCalls.Add(1)
+			if pulled.Load() {
+				return &thirdparty.BuilderInfo{OCIv1: v1.Image{Platform: v1.Platform{OS: "linux", Architecture: "amd64"}}}, nil
+			}
+			return nil, nil
+		}
+		fakeBuildah.PullFunc = func(_ context.Context, ref string, _ buildah.PullOpts) (string, error) {
+			if ref != imageRef {
+				return "", fmt.Errorf("unexpected image ref %q", ref)
+			}
+			if pullCalls.Add(1) > 1 {
+				return "", errors.New("unexpected second pull")
+			}
+			close(firstPullStarted)
+			<-releaseFirstPull
+			pulled.Store(true)
+			return "sha256:fresh", nil
+		}
+
+		backend := NewBuildahBackend(fakeBuildah, BuildahBackendOptions{})
+
+		ensure := func() <-chan error {
+			done := make(chan error, 1)
+			go func() {
+				done <- backend.ensureImageLocally(context.Background(), imageRef, CommonOpts{TargetPlatform: platform})
+			}()
+			return done
+		}
+
+		firstDone := ensure()
+		Eventually(firstPullStarted).Should(BeClosed())
+
+		secondDone := ensure()
+		Eventually(inspectCalls.Load).Should(BeNumerically(">=", 3))
+
+		close(releaseFirstPull)
+		Eventually(firstDone).Should(Receive(Succeed()))
+		Eventually(secondDone).Should(Receive(Succeed()))
+		Expect(pullCalls.Load()).To(Equal(int32(1)))
 	})
 
 	It("fails when the pull fails", func() {

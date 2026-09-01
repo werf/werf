@@ -727,15 +727,22 @@ func normalizeDependencyImportDestination(absFrom, absTo string) (string, error)
 // ensureImageLocally makes ref resolvable by buildah operations that only look up
 // the local containers storage (e.g. RUN --mount from=image resolution).
 func (backend *BuildahBackend) ensureImageLocally(ctx context.Context, ref string, opts CommonOpts) error {
-	inspect, err := backend.buildah.Inspect(ctx, ref)
-	if err != nil {
-		return fmt.Errorf("unable to inspect image %q: %w", ref, err)
-	}
-	if inspect != nil {
-		if opts.TargetPlatform != "" && !platformMatches(inspect, opts.TargetPlatform) {
-			return fmt.Errorf("local image %q has platform %s/%s, but target platform is %q; pull the correct image first", ref, inspect.OCIv1.OS, inspect.OCIv1.Architecture, opts.TargetPlatform)
+	checkLocal := func() (bool, error) {
+		inspect, err := backend.buildah.Inspect(ctx, ref)
+		if err != nil {
+			return false, fmt.Errorf("unable to inspect image %q: %w", ref, err)
 		}
-		return nil
+		if inspect == nil {
+			return false, nil
+		}
+		if opts.TargetPlatform != "" && !platformMatches(inspect, opts.TargetPlatform) {
+			return false, fmt.Errorf("local image %q has platform %s/%s, but target platform is %q; pull the correct image first", ref, inspect.OCIv1.OS, inspect.OCIv1.Architecture, opts.TargetPlatform)
+		}
+		return true, nil
+	}
+
+	if found, err := checkLocal(); err != nil || found {
+		return err
 	}
 
 	logboek.Context(ctx).Debug().LogF("Image %q not found locally, pulling\n", ref)
@@ -743,6 +750,11 @@ func (backend *BuildahBackend) ensureImageLocally(ctx context.Context, ref strin
 	mu := backend.getPullMutex(ref)
 	mu.Lock()
 	defer mu.Unlock()
+
+	// A concurrent caller holding the lock may have pulled the image already.
+	if found, err := checkLocal(); err != nil || found {
+		return err
+	}
 
 	imageID, err := backend.buildah.Pull(ctx, ref, buildah.PullOpts(backend.getBuildahCommonOpts(ctx, true, nil, opts.TargetPlatform)))
 	if err != nil {
