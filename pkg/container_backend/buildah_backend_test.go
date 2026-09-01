@@ -397,12 +397,16 @@ var _ = Describe("BuildahBackend createContainers", func() {
 })
 
 type stubMountsInstruction struct {
-	mounts []*instructions.Mount
+	mounts    []*instructions.Mount
+	applyFunc func() error
 }
 
 func (i *stubMountsInstruction) Name() string { return "RUN" }
 
 func (i *stubMountsInstruction) Apply(_ context.Context, _ string, _ buildah.Buildah, _ buildah.CommonOpts, _ BuildContextArchiver) error {
+	if i.applyFunc != nil {
+		return i.applyFunc()
+	}
 	return nil
 }
 
@@ -542,5 +546,30 @@ var _ = Describe("BuildahBackend ensureRunMountImages", func() {
 		Expect(err).ToNot(HaveOccurred())
 		Expect(fakeBuildah.InspectRefs).To(BeEmpty())
 		Expect(fakeBuildah.PullRefs).To(BeEmpty())
+	})
+
+	It("BuildDockerfileStage pulls the missing run mount image before applying instructions", func() {
+		var events []string
+
+		fakeBuildah := &buildahstub.BuildahStub{}
+		fakeBuildah.PullFunc = func(_ context.Context, ref string, _ buildah.PullOpts) (string, error) {
+			Expect(ref).To(Equal(imageRef))
+			events = append(events, "pull")
+			return "sha256:fresh", nil
+		}
+
+		instr := newRunInstruction(imageRef)
+		instr.applyFunc = func() error {
+			events = append(events, "apply")
+			return nil
+		}
+
+		backend := NewBuildahBackend(fakeBuildah, BuildahBackendOptions{})
+
+		_, err := backend.BuildDockerfileStage(context.Background(), "base-image:tag", BuildDockerfileStageOptions{
+			CommonOpts: CommonOpts{TargetPlatform: platform},
+		}, instr)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(events).To(Equal([]string{"pull", "apply"}))
 	})
 })
