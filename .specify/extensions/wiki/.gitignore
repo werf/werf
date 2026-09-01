@@ -1,0 +1,6 @@
+# Local config overrides (never commit credentials or machine-local settings)
+*.local.yml
+
+# OS noise
+.DS_Store
+Thumbs.db

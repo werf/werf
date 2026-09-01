@@ -1,0 +1,73 @@
+schema_version: "1.0"
+
+extension:
+  id: wiki
+  name: "LLM Wiki"
+  version: "1.0.0"
+  description: "LLM-maintained compounding project wiki: source ingestion, cited answers, and consistency linting"
+  category: "docs"
+  effect: "read-write"
+  author: formin
+  repository: https://github.com/formin/spec-kit-wiki
+  license: MIT
+  homepage: https://github.com/formin/spec-kit-wiki
+
+requires:
+  speckit_version: ">=0.2.0"
+
+provides:
+  commands:
+    - name: speckit.wiki.init
+      file: commands/speckit.wiki.init.md
+      description: "Create the project wiki skeleton (schema, index, source registry) — the three-layer LLM Wiki structure"
+    - name: speckit.wiki.ingest
+      file: commands/speckit.wiki.ingest.md
+      description: "Ingest a source (feature artifacts, file, or URL) and update the related wiki pages with citations"
+    - name: speckit.wiki.query
+      file: commands/speckit.wiki.query.md
+      description: "Answer a question from the wiki with page and source citations; flag coverage gaps"
+    - name: speckit.wiki.lint
+      file: commands/speckit.wiki.lint.md
+      description: "Health-check the wiki: contradictions, orphan pages, stale claims, broken links, index drift"
+    - name: speckit.wiki.status
+      file: commands/speckit.wiki.status.md
+      description: "Compact wiki snapshot: counts, freshness, open lint issues, and one recommended next action"
+
+  config:
+    - name: "wiki-config.yml"
+      template: "config-template.yml"
+      description: "Wiki location, ingest caps, query slices, lint policy, page types"
+      required: false
+
+hooks:
+  after_plan:
+    command: speckit.wiki.ingest
+    optional: true
+    prompt: "Ingest this feature's research and plan decisions into the project wiki?"
+    description: "Compound the feature's verified research into the wiki after planning"
+  after_implement:
+    command: speckit.wiki.ingest
+    optional: true
+    prompt: "Record what this implementation taught into the project wiki?"
+    description: "Capture implementation learnings into the wiki after implementation"
+
+tags:
+  - "wiki"
+  - "knowledge-base"
+  - "docs"
+  - "memory"
+  - "context-management"
+
+defaults:
+  state:
+    directory: wiki
+  ingest:
+    max_pages_per_ingest: 12
+    page_max_words: 600
+    require_citations: true
+  query:
+    pages_slice: 8
+    context_tokens: 4000
+  lint:
+    stale_after_days: 90
+    auto_fix: index-and-links
