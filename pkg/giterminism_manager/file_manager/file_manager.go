@@ -426,9 +426,9 @@ func (f *FileManager) LoadChartDir(ctx context.Context, dir string) ([]*nelmcomm
 }
 
 // chartHadExcludedFiles reports whether the empty result is the work of .helmignore rather than an
-// absent or empty chart directory. It reloads the local directory with no rules, which only happens
-// on the error path, because blaming .helmignore for a chart that never had files would send the
-// user looking for a rule that does not exist.
+// absent or empty chart directory. It reloads the local directory on the error path only, with
+// helm's defaults still in place: those apply even without a .helmignore, so counting them as
+// exclusions would send the user looking for a rule that does not exist.
 func (f *FileManager) chartHadExcludedFiles(ctx context.Context, chartLocalAbsPath string, readFromLocalFs bool, processed map[string]bool) (bool, error) {
 	if len(processed) > 0 {
 		return true, nil
@@ -438,7 +438,7 @@ func (f *FileManager) chartHadExcludedFiles(ctx context.Context, chartLocalAbsPa
 		return false, nil
 	}
 
-	unfiltered, err := f.fileReader.LoadChartDirWithIgnoreRules(ctx, chartLocalAbsPath, file_reader.ChartIgnoreRules{})
+	unfiltered, err := f.fileReader.LoadChartDirWithIgnoreRules(ctx, chartLocalAbsPath, file_reader.DefaultChartIgnoreRules())
 	if err != nil {
 		return false, fmt.Errorf("unable to load chart directory: %w", err)
 	}

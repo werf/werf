@@ -189,20 +189,32 @@ func (r FileReader) readChartIgnoreRules(ctx context.Context, relDir string, opt
 	return rules, nil
 }
 
+// DefaultChartIgnoreRules is the rule set helm applies to a chart that has no .helmignore at all.
+func DefaultChartIgnoreRules() ChartIgnoreRules {
+	return newChartIgnoreRules(ignore.Empty())
+}
+
+// newChartIgnoreRules is the only place helm's defaults are added, so a rule set built from a
+// parsed .helmignore and one built without a file cannot drift apart.
+func newChartIgnoreRules(rules *ignore.Rules) ChartIgnoreRules {
+	rules.AddDefaults()
+
+	return ChartIgnoreRules{rules: rules}
+}
+
 // parseChartIgnoreRules builds the rule set for a chart directory, where nil data means
 // the chart has no .helmignore. Helm applies its default rules either way.
 func parseChartIgnoreRules(data []byte) (ChartIgnoreRules, error) {
-	rules := ignore.Empty()
-	if data != nil {
-		var err error
-		rules, err = ignore.Parse(bytes.NewReader(data))
-		if err != nil {
-			return ChartIgnoreRules{}, err
-		}
+	if data == nil {
+		return DefaultChartIgnoreRules(), nil
 	}
-	rules.AddDefaults()
 
-	return ChartIgnoreRules{rules: rules}, nil
+	rules, err := ignore.Parse(bytes.NewReader(data))
+	if err != nil {
+		return ChartIgnoreRules{}, err
+	}
+
+	return newChartIgnoreRules(rules), nil
 }
 
 // matchChartIgnoreRules reports whether the chart-relative path is ignored. A matched directory

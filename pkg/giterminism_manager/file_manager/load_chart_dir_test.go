@@ -212,6 +212,14 @@ var _ = Describe("LoadChartDir", func() {
 		Expect(err).To(MatchError(ContainSubstring("not found in the project git repository or includes")))
 	})
 
+	// Helm's own defaults empty this chart, so there is no .helmignore to send the user looking for.
+	It("reports a chart emptied by helm's defaults as not found rather than excluded", func(ctx SpecContext) {
+		writeLocalChart(map[string]string{"templates/.gitkeep": ""})
+
+		_, err := newFileManager().LoadChartDir(logging.WithLogger(ctx), ".helm")
+		Expect(err).To(MatchError(ContainSubstring("not found in the project git repository or includes")))
+	})
+
 	It("applies helm's default rules to imported files", func(ctx SpecContext) {
 		writeLocalChart(map[string]string{"Chart.yaml": "name: local"})
 		include := newInclude(map[string]string{
