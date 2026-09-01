@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.3.2](https://github.com/werf/werf/compare/v3.3.1...v3.3.2) (2026-09-01)
+
+
+### Bug Fixes
+
+* **deploy:** apply .helmignore to symlinked chart paths ([75c3c7d](https://github.com/werf/werf/commit/75c3c7dbdc4a563f758029cecee394e261892321))
+* **deploy:** apply .helmignore to the files imported from includes ([8f92120](https://github.com/werf/werf/commit/8f92120b8af17d7b8c1683589fa6cf03ee265798))
+* **deploy:** apply .helmignore when reading the chart ([f3f721b](https://github.com/werf/werf/commit/f3f721b79514fc5946c77bf2d1e6002ee7e76240))
+* **deploy:** exclude .helmignore paths before reading them ([3b6eb7c](https://github.com/werf/werf/commit/3b6eb7cb5410110e4047b32cea9519723becef2d))
+* **deploy:** wrap the directory check error in the chart walk ([21e90d6](https://github.com/werf/werf/commit/21e90d62eb4e7c7e01d9dae6e60c2403def1d2aa))
+* **giterminism:** name .helmignore as the reason a chart has no files ([ba77f53](https://github.com/werf/werf/commit/ba77f532aa1acf1ac577899a844d3de388579374))
+* **giterminism:** report the .helmignore exclusion where commands can see it ([f9e58fd](https://github.com/werf/werf/commit/f9e58fd8269f7798d9a25911f7b629ea0c203572))
+
 ## [3.3.1](https://github.com/werf/werf/compare/v3.3.0...v3.3.1) (2026-09-01)
 
 
