@@ -1,5 +1,22 @@
 # Changelog
 
+## [3.3.0](https://github.com/werf/werf/compare/v3.2.0...v3.3.0) (2026-08-31)
+
+
+### Features
+
+* **deploy,secrets:** write authenticated secret values ([#7818](https://github.com/werf/werf/issues/7818)) ([b48d43d](https://github.com/werf/werf/commit/b48d43dcdd20189dc2a9431081e1d05b2139147c))
+* **deploy:** add renderPatches support ([#7815](https://github.com/werf/werf/issues/7815)) ([d9e614f](https://github.com/werf/werf/commit/d9e614f25815a822580d132399c1c5495387cd75))
+
+
+### Bug Fixes
+
+* **build, buildah:** stop imports failing on symlinked paths like /bin ([#7763](https://github.com/werf/werf/issues/7763)) ([f38a885](https://github.com/werf/werf/commit/f38a885d6248090bf74cd0426400886c918badf2))
+* **build, stapel:** stop panicking when the base image is gone at commit ([#7819](https://github.com/werf/werf/issues/7819)) ([17f71c5](https://github.com/werf/werf/commit/17f71c55c417567a3b3346c87f88bbd0d284bc01))
+* **build:** ignore a cache repo pointing at the primary repo ([#7820](https://github.com/werf/werf/issues/7820)) ([d02c20c](https://github.com/werf/werf/commit/d02c20cd32cc6613f5fc3ae03d394c2813c7e0a2))
+* **docs:** update shell pattern matching url ([#7813](https://github.com/werf/werf/issues/7813)) ([81cf51d](https://github.com/werf/werf/commit/81cf51d6306a8186746f541d32a48fd9e93d2440))
+* **host-cleanup:** report the real retention of pruned dangling images ([#7822](https://github.com/werf/werf/issues/7822)) ([958f84c](https://github.com/werf/werf/commit/958f84cd002367fef96df7b0a0cd2ab88f478bde))
+
 ## [3.2.0](https://github.com/werf/werf/compare/v3.1.0...v3.2.0) (2026-08-10)
 
 
