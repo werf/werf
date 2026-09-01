@@ -5,15 +5,18 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	imagePkg "github.com/werf/werf/v2/pkg/image"
 )
 
 // anchorDigest is a thin wrapper that exercises the anchor branch of
 // calculateDigest: pass HolisticInputs, get the platform-scoped hash.
 func anchorDigest(targetPlatform string, deps []string) string {
 	return anchorDigestWithOptions(calculateDigestOptions{
-		TargetPlatform: targetPlatform,
-		Anchor:         true,
-		HolisticInputs: deps,
+		BuildCacheVersion: imagePkg.BuildCacheVersion,
+		TargetPlatform:    targetPlatform,
+		Anchor:            true,
+		HolisticInputs:    deps,
 	})
 }
 
@@ -67,6 +70,21 @@ var _ = Describe("anchor holistic digest", func() {
 		base := calculateDigestOptions{
 			TargetPlatform:    targetPlatform,
 			BuildCacheVersion: "cache-v1",
+			Anchor:            true,
+			HolisticInputs:    []string{"from-digest"},
+		}
+
+		Expect(anchorDigestWithOptions(base)).To(Equal(anchorDigestWithOptions(base)))
+
+		changed := base
+		changed.BuildCacheVersion = "cache-v2"
+		Expect(anchorDigestWithOptions(changed)).NotTo(Equal(anchorDigestWithOptions(base)))
+	})
+
+	It("changes when the build cache version changes", func() {
+		base := calculateDigestOptions{
+			BuildCacheVersion: "cache-v1",
+			TargetPlatform:    targetPlatform,
 			Anchor:            true,
 			HolisticInputs:    []string{"from-digest"},
 		}
