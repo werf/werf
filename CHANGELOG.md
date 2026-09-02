@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.3.2](https://github.com/werf/werf/compare/v3.3.1...v3.3.2) (2026-09-02)
+
+
+### Bug Fixes
+
+* **build:** include build cache version in anchor digest ([#7827](https://github.com/werf/werf/issues/7827)) ([566b7b9](https://github.com/werf/werf/commit/566b7b999f92ec5c95c40397e2d261c78b3e2fd0))
+* **bundle:** drop the publisher's release channel from published bundles ([#7831](https://github.com/werf/werf/issues/7831)) ([890977a](https://github.com/werf/werf/commit/890977a4b082352cc687be9c41ff65ef2b6fe903))
+
 ## [3.3.1](https://github.com/werf/werf/compare/v3.3.0...v3.3.1) (2026-09-01)
 
 
