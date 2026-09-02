@@ -87,7 +87,7 @@ werf bundle publish --repo example.org/bundles/bundle2
 
 The `.helmignore` file in the chart root can include filename filters that prevent files or directories from being added to the chart. The rules apply whenever the chart is read, not only when it is published. The rules format is the same as [in .gitignore](https://git-scm.com/docs/gitignore) except for the following:
 
-- `**` is not supported: a rule containing it aborts the command with `double-star (**) syntax is not supported`;
+- `**` is not supported;
 
 - `!` at the beginning of a line is not supported;
 
