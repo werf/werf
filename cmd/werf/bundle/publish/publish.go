@@ -310,9 +310,12 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 		return fmt.Errorf("get user extra annotations: %w", err)
 	} else {
 		for key, value := range annos {
+			if key == "werf.io/release-channel" {
+				continue
+			}
+
 			if strings.HasPrefix(key, "project.werf.io/") ||
-				strings.Contains(key, "ci.werf.io/") ||
-				key == "werf.io/release-channel" {
+				strings.Contains(key, "ci.werf.io/") {
 				serviceAnnotations[key] = value
 			} else {
 				extraAnnotations[key] = value
