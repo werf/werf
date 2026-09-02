@@ -310,8 +310,6 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 		return fmt.Errorf("get user extra annotations: %w", err)
 	} else {
 		for key, value := range annos {
-			// The release channel of the werf that publishes the bundle says nothing about
-			// the werf that applies it, so it must not be baked into the bundle.
 			if key == "werf.io/release-channel" {
 				continue
 			}
