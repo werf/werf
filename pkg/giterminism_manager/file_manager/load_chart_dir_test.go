@@ -222,11 +222,12 @@ var _ = Describe("LoadChartDir", func() {
 		Expect(err).NotTo(MatchError(ContainSubstring("the chart has a .helmignore")))
 	})
 
-	It("reports an included chart emptied by helm's defaults as not found rather than excluded", func(ctx SpecContext) {
+	It("reports an included chart emptied by helm's defaults without hinting at .helmignore", func(ctx SpecContext) {
 		include := newInclude(map[string]string{"templates/.gitkeep": ""})
 
 		_, err := newFileManager(include).LoadChartDir(logging.WithLogger(ctx), ".helm")
 		Expect(err).To(MatchError(ContainSubstring("not found in the project git repository or includes")))
+		Expect(err).NotTo(MatchError(ContainSubstring("the chart has a .helmignore")))
 	})
 
 	// The chart can be delivered entirely through an include, and its .helmignore is then the one in
