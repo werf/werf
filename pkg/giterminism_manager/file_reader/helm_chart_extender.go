@@ -194,11 +194,6 @@ func (r FileReader) readChartIgnoreRules(ctx context.Context, relDir string, opt
 	return rules, nil
 }
 
-// DefaultChartIgnoreRules is the rule set helm applies to a chart that has no .helmignore at all.
-func DefaultChartIgnoreRules() ChartIgnoreRules {
-	return newChartIgnoreRules(ignore.Empty(), false)
-}
-
 // newChartIgnoreRules is the only place helm's defaults are added, so a rule set built from a
 // parsed .helmignore and one built without a file cannot drift apart.
 func newChartIgnoreRules(rules *ignore.Rules, hasIgnoreFile bool) ChartIgnoreRules {

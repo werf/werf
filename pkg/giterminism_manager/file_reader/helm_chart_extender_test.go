@@ -100,7 +100,9 @@ var _ = Describe("ChartIgnoreRules presence", func() {
 		Expect(rules.HasIgnoreFile()).To(BeFalse())
 	})
 
-	It("reports helm's default rule set as having no .helmignore", func() {
-		Expect(DefaultChartIgnoreRules().HasIgnoreFile()).To(BeFalse())
+	It("reports a fallback with no content as present when one was found", func() {
+		rules, err := parseChartIgnoreRules(nil, true)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(rules.HasIgnoreFile()).To(BeTrue())
 	})
 })
