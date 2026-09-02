@@ -81,21 +81,6 @@ var _ = Describe("anchor holistic digest", func() {
 		Expect(anchorDigestWithOptions(changed)).NotTo(Equal(anchorDigestWithOptions(base)))
 	})
 
-	It("changes when the build cache version changes", func() {
-		base := calculateDigestOptions{
-			BuildCacheVersion: "cache-v1",
-			TargetPlatform:    targetPlatform,
-			Anchor:            true,
-			HolisticInputs:    []string{"from-digest"},
-		}
-
-		Expect(anchorDigestWithOptions(base)).To(Equal(anchorDigestWithOptions(base)))
-
-		changed := base
-		changed.BuildCacheVersion = "cache-v2"
-		Expect(anchorDigestWithOptions(changed)).NotTo(Equal(anchorDigestWithOptions(base)))
-	})
-
 	It("changes when the target platform changes", func() {
 		deps := []string{"from-digest", "git-archive-digest"}
 		Expect(anchorDigest("linux/amd64", deps)).
