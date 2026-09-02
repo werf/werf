@@ -370,9 +370,6 @@ func (f *FileManager) LoadChartDir(ctx context.Context, dir string) ([]*nelmcomm
 		}
 	}
 
-	defaultRules := file_reader.DefaultChartIgnoreRules()
-	var excludedByUserRules bool
-
 	logboek.Context(ctx).Debug().LogF("Try to read additional files from includes\n")
 
 	for _, include := range f.includes {
@@ -389,9 +386,6 @@ func (f *FileManager) LoadChartDir(ctx context.Context, dir string) ([]*nelmcomm
 			relToChartPath := strings.TrimPrefix(normToPath, normDir+"/")
 			if rules.IsFileIgnored(ctx, relToChartPath) {
 				logboek.Context(ctx).Debug().LogF("--- %s excluded by %s \n", normToPath, ignore.HelmIgnore)
-				if !defaultRules.IsFileIgnored(ctx, relToChartPath) {
-					excludedByUserRules = true
-				}
 				processed[normToPath] = false
 				return nil
 			}
@@ -416,13 +410,8 @@ func (f *FileManager) LoadChartDir(ctx context.Context, dir string) ([]*nelmcomm
 	}
 
 	if len(chartDir) == 0 {
-		excluded, err := f.chartHadExcludedFiles(ctx, chartLocalAbsPath, readFromLocalFs, excludedByUserRules)
-		if err != nil {
-			return nil, err
-		}
-
-		if excluded {
-			return nil, fmt.Errorf("the directory %q has no chart files left: every file is excluded by %s", dir, ignore.HelmIgnore)
+		if rules.HasIgnoreFile() {
+			return nil, fmt.Errorf("load chart dir error: the directory %q not found in the project git repository or includes; the chart has a %s, check whether its rules exclude every file", dir, ignore.HelmIgnore)
 		}
 
 		return nil, fmt.Errorf("load chart dir error: the directory %q not found in the project git repository or includes", dir)
@@ -431,40 +420,22 @@ func (f *FileManager) LoadChartDir(ctx context.Context, dir string) ([]*nelmcomm
 	return chartDir, nil
 }
 
-// chartHadExcludedFiles reports whether the empty result is the work of .helmignore rather than an
-// absent or empty chart directory. It reloads the local directory on the error path only, with
-// helm's defaults still in place: those apply even without a .helmignore, so counting them as
-// exclusions would send the user looking for a rule that does not exist.
-func (f *FileManager) chartHadExcludedFiles(ctx context.Context, chartLocalAbsPath string, readFromLocalFs, excludedByUserRules bool) (bool, error) {
-	if excludedByUserRules {
-		return true, nil
-	}
-
-	if !readFromLocalFs {
-		return false, nil
-	}
-
-	unfiltered, err := f.fileReader.LoadChartDirWithIgnoreRules(ctx, chartLocalAbsPath, file_reader.DefaultChartIgnoreRules())
-	if err != nil {
-		return false, fmt.Errorf("unable to load chart directory: %w", err)
-	}
-
-	return len(unfiltered) > 0, nil
-}
-
 // The includes are only consulted when the chart has no local .helmignore, which keeps the
 // documented precedence of local project files over imported ones.
 func (f *FileManager) readChartIgnoreRules(ctx context.Context, chartLocalAbsPath, normDir string) (file_reader.ChartIgnoreRules, error) {
 	var fallbackData []byte
+	var fallbackExists bool
 	if len(f.includes) > 0 {
 		data, err := f.tryReadFromIncludes(ctx, path.Join(normDir, ignore.HelmIgnore))
 		if err == nil {
 			fallbackData = data
+			fallbackExists = true
 		}
 	}
 
 	rules, err := f.fileReader.ReadChartIgnoreRules(ctx, chartLocalAbsPath, file_reader.ReadChartIgnoreRulesOptions{
-		FallbackData: fallbackData,
+		FallbackData:   fallbackData,
+		FallbackExists: fallbackExists,
 	})
 	if err != nil {
 		return file_reader.ChartIgnoreRules{}, fmt.Errorf("unable to read chart ignore rules: %w", err)

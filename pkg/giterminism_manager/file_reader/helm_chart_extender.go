@@ -36,15 +36,6 @@ func (r FileReader) locateChart(ctx context.Context, chartDir string) (string, e
 	}
 
 	if len(files) == 0 {
-		exist, err := r.IsDirectoryExist(ctx, relDir)
-		if err != nil {
-			return "", fmt.Errorf("check %q is a directory: %w", filepath.ToSlash(relDir), err)
-		}
-
-		if exist {
-			return "", fmt.Errorf("the directory %q has no chart files left: every file is excluded by %s", filepath.ToSlash(relDir), ignore.HelmIgnore)
-		}
-
 		return "", fmt.Errorf("the directory %q not found in the project git repository", relDir)
 	}
 
@@ -141,7 +132,15 @@ func (r FileReader) loadChartDir(ctx context.Context, relDir string, rules Chart
 // excludes nothing, which is what a chart without a .helmignore needs before helm's own defaults
 // are added on top.
 type ChartIgnoreRules struct {
-	rules *ignore.Rules
+	rules         *ignore.Rules
+	hasIgnoreFile bool
+}
+
+// HasIgnoreFile reports whether the rules came from an actual .helmignore — the chart's own or one
+// supplied by the caller — rather than from helm's defaults alone. An empty .helmignore still
+// counts as one, so this cannot be inferred from the rule set itself.
+func (r ChartIgnoreRules) HasIgnoreFile() bool {
+	return r.hasIgnoreFile
 }
 
 // IsFileIgnored reports whether a chart-relative file path is excluded, either by a rule matching
@@ -156,6 +155,9 @@ func (r ChartIgnoreRules) IsFileIgnored(ctx context.Context, relPath string) boo
 type ReadChartIgnoreRulesOptions struct {
 	// FallbackData is the .helmignore content to use when the chart directory has no local one.
 	FallbackData []byte
+	// FallbackExists tells that the fallback came from an actual .helmignore. It is separate from
+	// FallbackData because an empty .helmignore yields no data while still being present.
+	FallbackExists bool
 }
 
 // ReadChartIgnoreRules resolves the .helmignore rule set of a chart directory. The local file wins
@@ -174,14 +176,17 @@ func (r FileReader) readChartIgnoreRules(ctx context.Context, relDir string, opt
 	}
 
 	data := opts.FallbackData
+	hasIgnoreFile := opts.FallbackExists
 	if exist {
+		hasIgnoreFile = true
+
 		data, err = r.readChartFile(ctx, relPath)
 		if err != nil {
 			return ChartIgnoreRules{}, fmt.Errorf("read %q: %w", filepath.ToSlash(relPath), err)
 		}
 	}
 
-	rules, err := parseChartIgnoreRules(data)
+	rules, err := parseChartIgnoreRules(data, hasIgnoreFile)
 	if err != nil {
 		return ChartIgnoreRules{}, fmt.Errorf("parse %q: %w", filepath.ToSlash(relPath), err)
 	}
@@ -191,22 +196,23 @@ func (r FileReader) readChartIgnoreRules(ctx context.Context, relDir string, opt
 
 // DefaultChartIgnoreRules is the rule set helm applies to a chart that has no .helmignore at all.
 func DefaultChartIgnoreRules() ChartIgnoreRules {
-	return newChartIgnoreRules(ignore.Empty())
+	return newChartIgnoreRules(ignore.Empty(), false)
 }
 
 // newChartIgnoreRules is the only place helm's defaults are added, so a rule set built from a
 // parsed .helmignore and one built without a file cannot drift apart.
-func newChartIgnoreRules(rules *ignore.Rules) ChartIgnoreRules {
+func newChartIgnoreRules(rules *ignore.Rules, hasIgnoreFile bool) ChartIgnoreRules {
 	rules.AddDefaults()
 
-	return ChartIgnoreRules{rules: rules}
+	return ChartIgnoreRules{rules: rules, hasIgnoreFile: hasIgnoreFile}
 }
 
-// parseChartIgnoreRules builds the rule set for a chart directory, where nil data means
-// the chart has no .helmignore. Helm applies its default rules either way.
-func parseChartIgnoreRules(data []byte) (ChartIgnoreRules, error) {
+// parseChartIgnoreRules builds the rule set for a chart directory, where nil data means no
+// .helmignore content was found. Helm applies its default rules either way. Presence is passed in
+// rather than derived from the data, because an empty .helmignore is still a .helmignore.
+func parseChartIgnoreRules(data []byte, hasIgnoreFile bool) (ChartIgnoreRules, error) {
 	if data == nil {
-		return DefaultChartIgnoreRules(), nil
+		return newChartIgnoreRules(ignore.Empty(), hasIgnoreFile), nil
 	}
 
 	rules, err := ignore.Parse(bytes.NewReader(data))
@@ -214,7 +220,7 @@ func parseChartIgnoreRules(data []byte) (ChartIgnoreRules, error) {
 		return ChartIgnoreRules{}, err
 	}
 
-	return newChartIgnoreRules(rules), nil
+	return newChartIgnoreRules(rules, hasIgnoreFile), nil
 }
 
 // matchChartIgnoreRules reports whether the chart-relative path is ignored. A matched directory

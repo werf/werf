@@ -221,23 +221,23 @@ var _ = Describe("LoadChartDir", func() {
 		Expect(err).To(MatchError(ContainSubstring("double-star")))
 	})
 
-	DescribeTable("reports why the chart directory has no files",
-		func(ctx SpecContext, files map[string]string, expectedMessage string) {
+	// LocateChart reports one thing, the same way helm does: a chart with nothing in it is a chart
+	// that is not there. Why it ended up empty belongs to LoadChartDir, which is what nelm calls.
+	DescribeTable("reports a chart directory with no files as not found",
+		func(ctx SpecContext, files map[string]string) {
 			chartDir := filepath.Join(projectDir, ".helm")
 			if len(files) > 0 {
 				chartDir = writeChart(files)
 			}
 
 			_, err := reader.LocateChart(logging.WithLogger(ctx), chartDir)
-			Expect(err).To(MatchError(ContainSubstring(expectedMessage)))
+			Expect(err).To(MatchError(ContainSubstring("not found in the project git repository")))
 		},
-		Entry("names .helmignore when it excludes every file",
+		Entry("when .helmignore excludes every file",
 			map[string]string{".helmignore": "*\n", "Chart.yaml": "name: test"},
-			"every file is excluded by .helmignore",
 		),
-		Entry("reports a missing directory when the chart is absent",
+		Entry("when the chart is absent",
 			map[string]string{},
-			"not found in the project git repository",
 		),
 	)
 

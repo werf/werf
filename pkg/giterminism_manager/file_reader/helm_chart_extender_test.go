@@ -14,7 +14,7 @@ var _ = Describe("chart .helmignore rules", func() {
 				data = []byte(*helmignore)
 			}
 
-			rules, err := parseChartIgnoreRules(data)
+			rules, err := parseChartIgnoreRules(data, data != nil)
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(matchChartIgnoreRules(rules.rules, relPath, false)).To(Equal(expected))
@@ -43,7 +43,7 @@ var _ = Describe("chart .helmignore rules", func() {
 
 	DescribeTable("matches a directory against the chart rules",
 		func(helmignore, relPath string, expected bool) {
-			rules, err := parseChartIgnoreRules([]byte(helmignore))
+			rules, err := parseChartIgnoreRules([]byte(helmignore), true)
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(matchChartIgnoreRules(rules.rules, relPath, true)).To(Equal(expected))
@@ -57,7 +57,7 @@ var _ = Describe("chart .helmignore rules", func() {
 
 	DescribeTable("matches a file from a flat list, where no directory can be pruned by the walk",
 		func(ctx SpecContext, helmignore, relPath string, expected bool) {
-			rules, err := parseChartIgnoreRules([]byte(helmignore))
+			rules, err := parseChartIgnoreRules([]byte(helmignore), true)
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(rules.IsFileIgnored(ctx, relPath)).To(Equal(expected))
@@ -80,7 +80,27 @@ var _ = Describe("chart .helmignore rules", func() {
 	})
 
 	It("fails on a rule helm cannot compile", func() {
-		_, err := parseChartIgnoreRules([]byte("templates/**/ignored.yaml\n"))
+		_, err := parseChartIgnoreRules([]byte("templates/**/ignored.yaml\n"), true)
 		Expect(err).To(MatchError(ContainSubstring("double-star")))
+	})
+})
+
+var _ = Describe("ChartIgnoreRules presence", func() {
+	// An empty .helmignore excludes nothing yet is still a .helmignore, so presence has to be
+	// carried alongside the rules instead of being inferred from them.
+	It("reports an empty .helmignore as present", func() {
+		rules, err := parseChartIgnoreRules([]byte(""), true)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(rules.HasIgnoreFile()).To(BeTrue())
+	})
+
+	It("reports a chart without a .helmignore as having none", func() {
+		rules, err := parseChartIgnoreRules(nil, false)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(rules.HasIgnoreFile()).To(BeFalse())
+	})
+
+	It("reports helm's default rule set as having no .helmignore", func() {
+		Expect(DefaultChartIgnoreRules().HasIgnoreFile()).To(BeFalse())
 	})
 })

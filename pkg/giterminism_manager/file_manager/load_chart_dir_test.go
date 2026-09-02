@@ -188,14 +188,15 @@ var _ = Describe("LoadChartDir", func() {
 		))
 	})
 
-	It("names .helmignore as the reason when it excludes every chart file", func(ctx SpecContext) {
+	It("hints at .helmignore when the chart has one and nothing is left", func(ctx SpecContext) {
 		writeLocalChart(map[string]string{
 			".helmignore": "*\n",
 			"Chart.yaml":  "name: local",
 		})
 
 		_, err := newFileManager().LoadChartDir(logging.WithLogger(ctx), ".helm")
-		Expect(err).To(MatchError(ContainSubstring("every file is excluded by .helmignore")))
+		Expect(err).To(MatchError(ContainSubstring("not found in the project git repository or includes")))
+		Expect(err).To(MatchError(ContainSubstring("the chart has a .helmignore")))
 	})
 
 	It("reports a missing chart directory as not found rather than excluded", func(ctx SpecContext) {
@@ -213,11 +214,12 @@ var _ = Describe("LoadChartDir", func() {
 	})
 
 	// Helm's own defaults empty this chart, so there is no .helmignore to send the user looking for.
-	It("reports a chart emptied by helm's defaults as not found rather than excluded", func(ctx SpecContext) {
+	It("reports a chart emptied by helm's defaults without hinting at .helmignore", func(ctx SpecContext) {
 		writeLocalChart(map[string]string{"templates/.gitkeep": ""})
 
 		_, err := newFileManager().LoadChartDir(logging.WithLogger(ctx), ".helm")
 		Expect(err).To(MatchError(ContainSubstring("not found in the project git repository or includes")))
+		Expect(err).NotTo(MatchError(ContainSubstring("the chart has a .helmignore")))
 	})
 
 	It("reports an included chart emptied by helm's defaults as not found rather than excluded", func(ctx SpecContext) {
@@ -227,14 +229,17 @@ var _ = Describe("LoadChartDir", func() {
 		Expect(err).To(MatchError(ContainSubstring("not found in the project git repository or includes")))
 	})
 
-	It("names .helmignore as the reason when an included rule excludes every chart file", func(ctx SpecContext) {
+	// The chart can be delivered entirely through an include, and its .helmignore is then the one in
+	// force, so the hint has to key off the effective file rather than the local one.
+	It("hints at .helmignore when the only one comes from an include", func(ctx SpecContext) {
 		include := newInclude(map[string]string{
 			".helmignore": "*\n",
 			"Chart.yaml":  "name: included",
 		})
 
 		_, err := newFileManager(include).LoadChartDir(logging.WithLogger(ctx), ".helm")
-		Expect(err).To(MatchError(ContainSubstring("every file is excluded by .helmignore")))
+		Expect(err).To(MatchError(ContainSubstring("not found in the project git repository or includes")))
+		Expect(err).To(MatchError(ContainSubstring("the chart has a .helmignore")))
 	})
 
 	It("applies helm's default rules to imported files", func(ctx SpecContext) {
