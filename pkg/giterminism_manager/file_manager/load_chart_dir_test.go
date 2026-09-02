@@ -230,8 +230,6 @@ var _ = Describe("LoadChartDir", func() {
 		Expect(err).NotTo(MatchError(ContainSubstring("the chart has a .helmignore")))
 	})
 
-	// The chart can be delivered entirely through an include, and its .helmignore is then the one in
-	// force, so the hint has to key off the effective file rather than the local one.
 	It("hints at .helmignore when the only one comes from an include", func(ctx SpecContext) {
 		include := newInclude(map[string]string{
 			".helmignore": "*\n",

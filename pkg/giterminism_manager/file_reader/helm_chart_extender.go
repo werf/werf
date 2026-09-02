@@ -137,8 +137,8 @@ type ChartIgnoreRules struct {
 }
 
 // HasIgnoreFile reports whether the rules came from an actual .helmignore — the chart's own or one
-// supplied by the caller — rather than from helm's defaults alone. An empty .helmignore still
-// counts as one, so this cannot be inferred from the rule set itself.
+// supplied by the caller — rather than from helm's defaults alone. An empty .helmignore counts as
+// one, so this cannot be inferred from the rule set.
 func (r ChartIgnoreRules) HasIgnoreFile() bool {
 	return r.hasIgnoreFile
 }
@@ -155,8 +155,8 @@ func (r ChartIgnoreRules) IsFileIgnored(ctx context.Context, relPath string) boo
 type ReadChartIgnoreRulesOptions struct {
 	// FallbackData is the .helmignore content to use when the chart directory has no local one.
 	FallbackData []byte
-	// FallbackExists tells that the fallback came from an actual .helmignore. It is separate from
-	// FallbackData because an empty .helmignore yields no data while still being present.
+	// FallbackExists is separate from FallbackData because an empty .helmignore yields no data
+	// while still being present.
 	FallbackExists bool
 }
 
@@ -202,9 +202,6 @@ func newChartIgnoreRules(rules *ignore.Rules, hasIgnoreFile bool) ChartIgnoreRul
 	return ChartIgnoreRules{rules: rules, hasIgnoreFile: hasIgnoreFile}
 }
 
-// parseChartIgnoreRules builds the rule set for a chart directory, where nil data means no
-// .helmignore content was found. Helm applies its default rules either way. Presence is passed in
-// rather than derived from the data, because an empty .helmignore is still a .helmignore.
 func parseChartIgnoreRules(data []byte, hasIgnoreFile bool) (ChartIgnoreRules, error) {
 	if data == nil {
 		return newChartIgnoreRules(ignore.Empty(), hasIgnoreFile), nil

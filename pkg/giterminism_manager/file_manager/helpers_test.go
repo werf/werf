@@ -8,8 +8,7 @@ import (
 )
 
 type fakeSharedOptions struct {
-	projectDir string
-	// localGitRepo stays nil in loose mode, where nothing reaches for git.
+	projectDir          string
 	localGitRepo        git_repo.GitRepo
 	enforcedGiterminism bool
 }
@@ -22,8 +21,6 @@ func (o fakeSharedOptions) LooseGiterminism() bool              { return !o.enfo
 func (o fakeSharedOptions) Dev() bool                           { return false }
 
 type fakeGiterminismConfig struct {
-	// uncommittedHelmFilesRejected makes helm files come from the commit instead of the worktree,
-	// which is what enforced giterminism does for a chart without an uncommitted-files exception.
 	uncommittedHelmFilesRejected bool
 }
 

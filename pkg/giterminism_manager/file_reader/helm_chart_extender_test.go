@@ -86,8 +86,6 @@ var _ = Describe("chart .helmignore rules", func() {
 })
 
 var _ = Describe("ChartIgnoreRules presence", func() {
-	// An empty .helmignore excludes nothing yet is still a .helmignore, so presence has to be
-	// carried alongside the rules instead of being inferred from them.
 	It("reports an empty .helmignore as present", func() {
 		rules, err := parseChartIgnoreRules([]byte(""), true)
 		Expect(err).NotTo(HaveOccurred())

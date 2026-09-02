@@ -20,20 +20,16 @@ import (
 	"github.com/werf/werf/v2/test/mock"
 )
 
-// FileManager assembles the chart from the local source and the includes, and under enforced
-// giterminism the local half arrives as a flat commit listing rather than a filesystem walk. That
-// path has its own filtering, so it needs its own coverage.
 var _ = Describe("LoadChartDir under enforced giterminism", func() {
 	t := GinkgoT()
 
 	const includeCommit = "include commit"
 
 	var (
-		projectDir string
-		reader     file_reader.FileReader
-		gitRepo    *mock.MockGitRepo
-		repo       *mock.MockGitRepository
-		// commitOnlyFiles are served by the commit listing without existing in the worktree.
+		projectDir      string
+		reader          file_reader.FileReader
+		gitRepo         *mock.MockGitRepo
+		repo            *mock.MockGitRepository
 		commitOnlyFiles map[string]string
 		includeFiles    map[string]string
 		readPaths       map[string]bool
@@ -91,8 +87,6 @@ var _ = Describe("LoadChartDir under enforced giterminism", func() {
 				return relPath, nil
 			}).AnyTimes()
 
-		// The commit listing is the union of the worktree and the commit-only files, so a file
-		// deleted from the worktree still reaches the filter the way a real commit would.
 		gitRepo.EXPECT().ListCommitFilesWithGlob(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(func(_ context.Context, _, dir, _ string) ([]string, error) {
 				var list []string
@@ -171,8 +165,6 @@ var _ = Describe("LoadChartDir under enforced giterminism", func() {
 		return names, nil
 	}
 
-	// The regression guard for the diagnostic: an excluded file must not be demanded as a commit,
-	// which is what the removed error-path re-read with helm's defaults used to do.
 	It("blames .helmignore rather than the uncommitted file it excludes", func(ctx SpecContext) {
 		writeLocalChart(map[string]string{
 			".helmignore":                "*\n",
@@ -209,15 +201,11 @@ var _ = Describe("LoadChartDir under enforced giterminism", func() {
 		Expect(contents).To(HaveKeyWithValue("templates/shared.yaml", "local"))
 	})
 
-	// A directory rule cannot match a file path, so the flat commit listing needs the parent
-	// directories checked explicitly — and the excluded file must never be read.
 	It("excludes a commit-only file matched by a directory rule without reading it", func(ctx SpecContext) {
 		writeLocalChart(map[string]string{
 			".helmignore": "secrets/\n",
 			"Chart.yaml":  "name: local",
 		})
-		// The directories exist in the worktree; only the files are commit-only, which is what a
-		// file deleted from the worktree but still present in the commit looks like.
 		Expect(os.MkdirAll(filepath.Join(projectDir, ".helm", "secrets"), 0o755)).To(Succeed())
 		Expect(os.MkdirAll(filepath.Join(projectDir, ".helm", "templates"), 0o755)).To(Succeed())
 		commitOnlyFiles[".helm/secrets/token.yaml"] = "secret"
