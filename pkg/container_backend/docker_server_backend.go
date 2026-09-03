@@ -86,7 +86,7 @@ func (backend *DockerServerBackend) CalculateDependencyImportChecksum(ctx contex
 }
 
 func (backend *DockerServerBackend) BuildDockerfile(ctx context.Context, _ []byte, opts BuildDockerfileOpts) (string, error) {
-	defer opstats.Observe(ctx, opstats.OperationImageBuild)()
+	defer opstats.Observe(ctx, opstats.OperationStageBuild)()
 	switch {
 	case opts.BuildContextArchive == nil:
 		panic(fmt.Sprintf("BuildContextArchive can't be nil: %+v", opts))
@@ -200,7 +200,7 @@ func parseImageIDFromMetadata(path string) (string, error) {
 }
 
 func (backend *DockerServerBackend) BuildDockerfileStage(ctx context.Context, baseImage string, opts BuildDockerfileStageOptions, instructions ...InstructionInterface) (string, error) {
-	defer opstats.Observe(ctx, opstats.OperationImageBuild)()
+	defer opstats.Observe(ctx, opstats.OperationStageBuild)()
 	logboek.Context(ctx).Error().LogF("Staged build of Dockerfile is not available for Docker Server backend.\n")
 	logboek.Context(ctx).Error().LogF("Please either:\n")
 	logboek.Context(ctx).Error().LogF(" * switch to Buildah backend;\n")

@@ -74,7 +74,7 @@ func (i *LegacyStageImage) GetID() string {
 }
 
 func (i *LegacyStageImage) Build(ctx context.Context, options BuildOptions) error {
-	defer opstats.Observe(ctx, opstats.OperationImageBuild)()
+	defer opstats.Observe(ctx, opstats.OperationStageBuild)()
 	if options.Network != "" {
 		i.container.runOptions.AddNetwork(options.Network)
 	}
