@@ -41,6 +41,10 @@ werf render [IMAGE_NAME...] [options]
             Allow use includes latest versions (default $WERF_ALLOW_INCLUDES_UPDATE or false)
       --backend-network=""
             Network mode for the build containers ($WERF_BACKEND_NETWORK or nothing by default)
+      --build-report-operations=false
+            Collect low-level operations statistics: add Operations and StageCache sections to the  
+            build report and print operations summary after the build (by default                   
+            $WERF_BUILD_REPORT_OPERATIONS or false). Also enabled by --log-debug
       --build-report-path=""
             Change build report path and format (by default $WERF_BUILD_REPORT_PATH or              
             ".werf-build-report.json" if not set). Extension must be either .json for JSON format   
