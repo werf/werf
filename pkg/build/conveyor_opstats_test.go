@@ -3,6 +3,7 @@ package build
 import (
 	"context"
 	"io"
+	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -22,16 +23,23 @@ var _ = Describe("Conveyor operations collector gate", func() {
 	DescribeTable("newOperationsCollector",
 		func(acceptedLevel level.Level, forceEnabled, expectCollector bool) {
 			c := &Conveyor{}
-			ctx, collector, _ := c.newOperationsCollector(newCtx(acceptedLevel), forceEnabled)
+			before := time.Now()
+			ctx, collector, buildStartedAt := c.newOperationsCollector(newCtx(acceptedLevel), forceEnabled)
+			after := time.Now()
 
 			if !expectCollector {
 				Expect(collector).To(BeNil())
 				Expect(opstats.FromContext(ctx)).To(BeNil())
+				Expect(buildStartedAt).To(Equal(time.Time{}))
 				return
 			}
 
 			Expect(collector).NotTo(BeNil())
 			Expect(opstats.FromContext(ctx)).To(BeIdenticalTo(collector))
+			Expect(buildStartedAt).To(SatisfyAll(
+				BeTemporally(">=", before),
+				BeTemporally("<=", after),
+			))
 		},
 		Entry("disabled without debug logging and without the flag", level.Default, false, false),
 		Entry("enabled by the flag without debug logging", level.Default, true, true),
