@@ -605,11 +605,11 @@ The JSON report contains detailed information about the build:
 
 * **ImagesByPlatform** — per-platform breakdown for multiarch builds. This field is populated only when the `WERF_ENABLE_REPORT_BY_PLATFORM=1` environment variable is set. The record structure is the same as in `Images`, but the data is grouped by image name and platform.
 
-* **Operations** — aggregated timings of low-level build operations (image pull/push/build, registry API calls, git operations, stage lock waits and so on). Populated only when debug logging is enabled (`--log-debug`). For each operation: the number of calls (`Count`), summed duration across parallel workers (`TotalTimeSeconds`), wall-clock duration as the union of possibly overlapping intervals (`WallTimeSeconds`), average (`AvgTimeSeconds`) and maximum (`MaxTimeSeconds`) durations.
+* **Operations** — aggregated timings of low-level build operations (stage build, image pull/push, registry API calls, git operations, stage lock waits and so on). Populated only when the `--build-report-operations` flag (`$WERF_BUILD_REPORT_OPERATIONS`) is set or debug logging is enabled (`--log-debug`). For each operation: the number of calls (`Count`), summed duration across parallel workers (`TotalTimeSeconds`), wall-clock duration as the union of possibly overlapping intervals (`WallTimeSeconds`), average (`AvgTimeSeconds`) and maximum (`MaxTimeSeconds`) durations.
 
-* **StageCache** — per-source counters of how stages were satisfied during the build: found in the local or repo stages storage, copied from a secondary storage, or built. Populated only when debug logging is enabled (`--log-debug`).
+* **StageCache** — per-source counters of how stages were satisfied during the build: found in the local or repo stages storage, copied from a secondary storage, or built. Populated only when the `--build-report-operations` flag (`$WERF_BUILD_REPORT_OPERATIONS`) is set or debug logging is enabled (`--log-debug`).
 
-Example report in JSON format:
+Example report in JSON format (the `Operations` and `StageCache` sections are present because the report was generated with `--build-report-operations`):
 
 ```json
 {
@@ -626,10 +626,10 @@ Example report in JSON format:
       "DockerImageID": "sha256:9b3a32dfe5a4aa46d96547e3f8e678626f96741776d78656ea72cab7117612bf",
       "DockerImageDigest": "sha256:54f564edebb6e0699dc0e43de4165488f86fbc76b0c89d88311d7cc06ae397f5",
       "DockerImageName": "localhost:5000/demo-app:079dfdd3f51a800c269cdfdd5e4febfcc1676b2c0d533f520255961c-1752501317353",
-      "Rebuilt": false,
+      "Rebuilt": true,
       "Final": true,
       "Size": 20960980,
-      "BuildTime": "0.00",
+      "BuildTime": "4.08",
       "Commit": "9d1bb68ca2f4e8b0e2b6e5f5a3c7d1e4f2a0b3c9",
       "Stages": [
         {
@@ -642,8 +642,8 @@ Example report in JSON format:
           "Size": 20960798,
           "SourceType": "",
           "BaseImagePulled": false,
-          "Rebuilt": false,
-          "BuildTime": "0.00",
+          "Rebuilt": true,
+          "BuildTime": "3.42",
           "Commit": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2"
         },
         {
@@ -656,14 +656,54 @@ Example report in JSON format:
           "Size": 20960980,
           "SourceType": "",
           "BaseImagePulled": false,
-          "Rebuilt": false,
-          "BuildTime": "0.00",
+          "Rebuilt": true,
+          "BuildTime": "0.46",
           "Commit": "9d1bb68ca2f4e8b0e2b6e5f5a3c7d1e4f2a0b3c9"
         }
       ]
     }
   },
-  "ImagesByPlatform": {}
+  "ImagesByPlatform": {},
+  "Operations": {
+    "docker daemon API": {
+      "Count": 31,
+      "TotalTimeSeconds": 0.61870432,
+      "WallTimeSeconds": 0.549330501,
+      "AvgTimeSeconds": 0.019958204,
+      "MaxTimeSeconds": 0.112832542
+    },
+    "local image inspect": {
+      "Count": 5,
+      "TotalTimeSeconds": 0.110243333,
+      "WallTimeSeconds": 0.110243333,
+      "AvgTimeSeconds": 0.022048667,
+      "MaxTimeSeconds": 0.048555458
+    },
+    "registry: GetRepoImage": {
+      "Count": 1,
+      "TotalTimeSeconds": 2.905423333,
+      "WallTimeSeconds": 2.905423333,
+      "AvgTimeSeconds": 2.905423333,
+      "MaxTimeSeconds": 2.905423333
+    },
+    "stage build": {
+      "Count": 2,
+      "TotalTimeSeconds": 0.831474958,
+      "WallTimeSeconds": 0.831474958,
+      "AvgTimeSeconds": 0.415737479,
+      "MaxTimeSeconds": 0.421835292
+    },
+    "stage lock wait (storage)": {
+      "Count": 2,
+      "TotalTimeSeconds": 0.001153668,
+      "WallTimeSeconds": 0.001153668,
+      "AvgTimeSeconds": 0.000576834,
+      "MaxTimeSeconds": 0.000661667
+    }
+  },
+  "StageCache": {
+    "built": 2
+  }
 }
 ```
 

@@ -46,9 +46,10 @@ const (
 	StubRepoAddress                        = "stub/repository"
 	StubTag                                = "TAG"
 
-	DefaultSaveBuildReport     = false
-	DefaultBuildReportPathJSON = ".werf-build-report.json"
-	DefaultUseBuildReport      = false
+	DefaultSaveBuildReport       = false
+	DefaultBuildReportPathJSON   = ".werf-build-report.json"
+	DefaultUseBuildReport        = false
+	DefaultBuildReportOperations = false
 
 	DefaultSaveCleanupReport     = false
 	DefaultCleanupReportPathJSON = ".werf-cleanup-report.json"
@@ -189,6 +190,11 @@ func SetupUseBuildReport(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(cmdData.UseBuildReport, "use-build-report", "", util.GetBoolEnvironmentDefaultFalse("WERF_USE_BUILD_REPORT"), fmt.Sprintf("Use build report, previously saved with --save-build-report (by default $WERF_USE_BUILD_REPORT or %t). Its path and format configured with --build-report-path", DefaultUseBuildReport))
 }
 
+func SetupBuildReportOperations(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.BuildReportOperations = new(bool)
+	cmd.Flags().BoolVarP(cmdData.BuildReportOperations, "build-report-operations", "", util.GetBoolEnvironmentDefaultFalse("WERF_BUILD_REPORT_OPERATIONS"), fmt.Sprintf("Collect low-level operations statistics: add Operations and StageCache sections to the build report and print operations summary after the build (by default $WERF_BUILD_REPORT_OPERATIONS or %t). Also enabled by --log-debug", DefaultBuildReportOperations))
+}
+
 func GetSaveBuildReport(cmdData *CmdData) bool {
 	return option.PtrValueOrDefault(cmdData.SaveBuildReport, false)
 }
@@ -199,6 +205,10 @@ func GetBuildReportPath(cmdData *CmdData) string {
 
 func GetUseBuildReport(cmdData *CmdData) bool {
 	return option.PtrValueOrDefault(cmdData.UseBuildReport, false)
+}
+
+func GetBuildReportOperations(cmdData *CmdData) bool {
+	return option.PtrValueOrDefault(cmdData.BuildReportOperations, false)
 }
 
 func GetBuildReportPathAndFormat(cmdData *CmdData) (string, build.ReportFormat, error) {

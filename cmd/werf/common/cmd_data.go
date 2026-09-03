@@ -88,9 +88,10 @@ type CmdData struct {
 	LogProjectDir    *bool
 	LogTerminalWidth *int64
 
-	SaveBuildReport *bool
-	BuildReportPath *string
-	UseBuildReport  *bool
+	SaveBuildReport       *bool
+	BuildReportPath       *string
+	UseBuildReport        *bool
+	BuildReportOperations *bool
 
 	SaveCleanupReport *bool
 	CleanupReportPath *string
