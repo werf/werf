@@ -1,0 +1,15 @@
+{
+  "version": "0.14.3",
+  "integration_state_schema": 1,
+  "installed_integrations": [
+    "claude"
+  ],
+  "integration_settings": {
+    "claude": {
+      "script": "py",
+      "invoke_separator": "-"
+    }
+  },
+  "integration": "claude",
+  "default_integration": "claude"
+}

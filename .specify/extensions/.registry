@@ -1,0 +1,74 @@
+{
+  "schema_version": "1.0",
+  "extensions": {
+    "bug": {
+      "version": "1.0.0",
+      "source": "local",
+      "manifest_hash": "sha256:1d0da5458f3c18ff08cf1602d88cecc33fad07068208951fb7128090cfa90c90",
+      "enabled": true,
+      "priority": 10,
+      "registered_commands": {
+        "claude": [
+          "speckit.bug.assess",
+          "speckit.bug.fix",
+          "speckit.bug.test"
+        ]
+      },
+      "registered_skills": [],
+      "installed_at": "2026-09-01T09:58:35.732167+00:00"
+    },
+    "wiki": {
+      "version": "1.0.0",
+      "source": "local",
+      "manifest_hash": "sha256:0b4b9b3b306ccd3cbf9094d93cada6f5b10cafcc79e330867356cda0a53e137a",
+      "enabled": true,
+      "priority": 10,
+      "registered_commands": {
+        "claude": [
+          "speckit.wiki.init",
+          "speckit.wiki.ingest",
+          "speckit.wiki.query",
+          "speckit.wiki.lint",
+          "speckit.wiki.status"
+        ]
+      },
+      "registered_skills": [],
+      "installed_at": "2026-09-01T10:00:08.668533+00:00"
+    },
+    "brownfield": {
+      "version": "1.0.0",
+      "source": "local",
+      "manifest_hash": "sha256:671babc47c752bf18868d0aeeef66f0fc4f37c6cf52622cfa07e8715fb5ac4a6",
+      "enabled": true,
+      "priority": 10,
+      "registered_commands": {
+        "claude": [
+          "speckit.brownfield.scan",
+          "speckit.brownfield.bootstrap",
+          "speckit.brownfield.validate",
+          "speckit.brownfield.migrate"
+        ]
+      },
+      "registered_skills": [],
+      "installed_at": "2026-09-01T11:41:26.834613+00:00"
+    },
+    "assess": {
+      "version": "1.0.0",
+      "source": "local",
+      "manifest_hash": "sha256:6eba1ffbc264c7aa43e31b34303a8312ddad5b979772d2785c808179b402d9f2",
+      "enabled": true,
+      "priority": 10,
+      "registered_commands": {
+        "claude": [
+          "speckit.assess.intake",
+          "speckit.assess.research",
+          "speckit.assess.define",
+          "speckit.assess.shape",
+          "speckit.assess.decide"
+        ]
+      },
+      "registered_skills": [],
+      "installed_at": "2026-09-04T08:48:39.744360+00:00"
+    }
+  }
+}

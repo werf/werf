@@ -1,0 +1,42 @@
+schema_version: "1.0"
+
+extension:
+  id: brownfield
+  name: "Brownfield Bootstrap"
+  version: "1.0.0"
+  description: "Bootstrap spec-kit for existing codebases — auto-discover architecture and adopt SDD incrementally"
+  author: "Quratulain-bilal"
+  repository: "https://github.com/Quratulain-bilal/spec-kit-brownfield"
+  license: "MIT"
+
+requires:
+  speckit_version: ">=0.4.0"
+
+provides:
+  commands:
+    - name: speckit.brownfield.scan
+      file: commands/speckit.brownfield.scan.md
+      description: "Auto-discover project structure, tech stack, frameworks, and architecture patterns"
+    - name: speckit.brownfield.bootstrap
+      file: commands/speckit.brownfield.bootstrap.md
+      description: "Generate spec-kit configuration tailored to the existing codebase"
+    - name: speckit.brownfield.validate
+      file: commands/speckit.brownfield.validate.md
+      description: "Verify bootstrap output matches actual project structure and conventions"
+    - name: speckit.brownfield.migrate
+      file: commands/speckit.brownfield.migrate.md
+      description: "Incrementally adopt SDD for existing features with reverse-engineered specs"
+
+hooks:
+  after_init:
+    command: speckit.brownfield.scan
+    optional: true
+    prompt: "Scan this existing project to customize spec-kit configuration?"
+    description: "Auto-scan project after spec-kit init to detect tech stack and conventions"
+
+tags:
+  - "brownfield"
+  - "bootstrap"
+  - "existing-project"
+  - "migration"
+  - "onboarding"
