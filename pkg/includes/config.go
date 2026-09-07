@@ -1,6 +1,7 @@
 package includes
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"os"
@@ -292,12 +293,17 @@ func (i *includeLockConf) getCommit(r *git.Repository) (*object.Commit, error) {
 }
 
 func writeLockConfig(inputConfs lockConfig, configAbsPath string) error {
-	outData, err := yaml.Marshal(inputConfs)
-	if err != nil {
+	var outData bytes.Buffer
+	encoder := yaml.NewEncoder(&outData)
+	encoder.SetIndent(2)
+	if err := encoder.Encode(inputConfs); err != nil {
 		return fmt.Errorf("marshal new lock config: %w", err)
 	}
+	if err := encoder.Close(); err != nil {
+		return fmt.Errorf("close lock config encoder: %w", err)
+	}
 
-	if err := os.WriteFile(configAbsPath, outData, os.ModePerm); err != nil {
+	if err := os.WriteFile(configAbsPath, outData.Bytes(), os.ModePerm); err != nil {
 		return fmt.Errorf("write new lock config: %w", err)
 	}
 
