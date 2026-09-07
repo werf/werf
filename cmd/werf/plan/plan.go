@@ -136,6 +136,7 @@ werf plan --repo registry.mydomain.com/web --env production`,
 
 	common.SetupSaveBuildReport(&commonCmdData, cmd)
 	common.SetupBuildReportPath(&commonCmdData, cmd)
+	common.SetupBuildReportOperations(&commonCmdData, cmd)
 	common.SetupUseBuildReport(&commonCmdData, cmd)
 
 	common.SetupUseCustomTag(&commonCmdData, cmd)

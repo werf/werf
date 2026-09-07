@@ -789,7 +789,7 @@ func (backend *BuildahBackend) ensureRunMountImages(ctx context.Context, instrs 
 }
 
 func (backend *BuildahBackend) BuildDockerfileStage(ctx context.Context, baseImage string, opts BuildDockerfileStageOptions, instructions ...InstructionInterface) (string, error) {
-	defer opstats.Observe(ctx, opstats.OperationImageBuild)()
+	defer opstats.Observe(ctx, opstats.OperationStageBuild)()
 
 	if err := backend.ensureRunMountImages(ctx, instructions, opts.CommonOpts); err != nil {
 		return "", err
@@ -844,7 +844,7 @@ func (backend *BuildahBackend) BuildDockerfileStage(ctx context.Context, baseIma
 }
 
 func (backend *BuildahBackend) BuildStapelStage(ctx context.Context, baseImage string, opts BuildStapelStageOptions) (string, error) {
-	defer opstats.Observe(ctx, opstats.OperationImageBuild)()
+	defer opstats.Observe(ctx, opstats.OperationStageBuild)()
 	commonOpts := CommonOpts{TargetPlatform: opts.TargetPlatform}
 
 	var container *containerDesc
@@ -1101,7 +1101,7 @@ func (backend *BuildahBackend) TagImageByName(ctx context.Context, img LegacyIma
 }
 
 func (backend *BuildahBackend) BuildDockerfile(ctx context.Context, dockerfileContent []byte, opts BuildDockerfileOpts) (string, error) {
-	defer opstats.Observe(ctx, opstats.OperationImageBuild)()
+	defer opstats.Observe(ctx, opstats.OperationStageBuild)()
 	buildArgs := make(map[string]string)
 	for _, argStr := range opts.BuildArgs {
 		argParts := strings.SplitN(argStr, "=", 2)

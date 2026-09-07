@@ -144,6 +144,9 @@ entries:
           - title: werf images
             url: /reference/werf_images.html
 
+          - title: Debug environment variables
+            url: /reference/debug_env_vars.html
+
           - title: Command line interface
             f: "#!*cli"
 
@@ -304,6 +307,9 @@ entries:
 
           - title: Образы werf
             url: /reference/werf_images.html
+
+          - title: Переменные окружения для отладки
+            url: /reference/debug_env_vars.html
 
           - title: Интерфейс командной строки
             f: "#!*cli"

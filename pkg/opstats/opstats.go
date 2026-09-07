@@ -13,7 +13,7 @@ type Operation string
 const (
 	OperationImagePull               Operation = "image pull"
 	OperationImagePush               Operation = "image push"
-	OperationImageBuild              Operation = "image build"
+	OperationStageBuild              Operation = "stage build"
 	OperationImageInspect            Operation = "local image inspect"
 	OperationImageSaveLoad           Operation = "image save/load"
 	OperationImportChecksum          Operation = "import checksum"

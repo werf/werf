@@ -605,11 +605,11 @@ JSON-отчёт содержит расширенную информацию о 
 
 * **ImagesByPlatform** — разрез по платформам для multiarch-сборок. Поле включается только если установлена переменная окружения `WERF_ENABLE_REPORT_BY_PLATFORM=1`. Структура записей та же, что и у `Images`, но данные сгруппированы по имени образа и платформе.
 
-* **Operations** — агрегированные тайминги низкоуровневых операций сборки (pull/push/сборка образов, запросы к registry, git-операции, ожидание блокировок стадий и т.д.). Поле заполняется только при включённом отладочном логировании (`--log-debug`). Для каждой операции: количество вызовов (`Count`), суммарная длительность по всем параллельным воркерам (`TotalTimeSeconds`), длительность по настенным часам как объединение возможно пересекающихся интервалов (`WallTimeSeconds`), средняя (`AvgTimeSeconds`) и максимальная (`MaxTimeSeconds`) длительности.
+* **Operations** — агрегированные тайминги низкоуровневых операций сборки (сборка стадий, pull/push образов, запросы к registry, git-операции, ожидание блокировок стадий и т.д.). Поле заполняется только при установленном флаге `--build-report-operations` (`$WERF_BUILD_REPORT_OPERATIONS`) или при включённом отладочном логировании (`--log-debug`). Для каждой операции: количество вызовов (`Count`), суммарная длительность по всем параллельным воркерам (`TotalTimeSeconds`), реальная длительность с учётом параллельного выполнения — объединение возможно пересекающихся интервалов (`WallTimeSeconds`), средняя (`AvgTimeSeconds`) и максимальная (`MaxTimeSeconds`) длительности.
 
-* **StageCache** — счётчики того, как стадии были получены при сборке, по источникам: найдены в локальном хранилище или в repo, скопированы из secondary-хранилища или собраны. Поле заполняется только при включённом отладочном логировании (`--log-debug`).
+* **StageCache** — счётчики того, как стадии были получены при сборке, по источникам: найдены в локальном хранилище или в repo, скопированы из secondary-хранилища или собраны. Поле заполняется только при установленном флаге `--build-report-operations` (`$WERF_BUILD_REPORT_OPERATIONS`) или при включённом отладочном логировании (`--log-debug`).
 
-Пример отчёта в формате JSON:
+Пример отчёта в формате JSON (секции `Operations` и `StageCache` присутствуют, потому что отчёт сгенерирован с флагом `--build-report-operations`):
 
 ```json
 {
@@ -626,10 +626,10 @@ JSON-отчёт содержит расширенную информацию о 
       "DockerImageID": "sha256:9b3a32dfe5a4aa46d96547e3f8e678626f96741776d78656ea72cab7117612bf",
       "DockerImageDigest": "sha256:54f564edebb6e0699dc0e43de4165488f86fbc76b0c89d88311d7cc06ae397f5",
       "DockerImageName": "localhost:5000/demo-app:079dfdd3f51a800c269cdfdd5e4febfcc1676b2c0d533f520255961c-1752501317353",
-      "Rebuilt": false,
+      "Rebuilt": true,
       "Final": true,
       "Size": 20960980,
-      "BuildTime": "0.00",
+      "BuildTime": "4.08",
       "Commit": "9d1bb68ca2f4e8b0e2b6e5f5a3c7d1e4f2a0b3c9",
       "Stages": [
         {
@@ -642,8 +642,8 @@ JSON-отчёт содержит расширенную информацию о 
           "Size": 20960798,
           "SourceType": "",
           "BaseImagePulled": false,
-          "Rebuilt": false,
-          "BuildTime": "0.00",
+          "Rebuilt": true,
+          "BuildTime": "3.42",
           "Commit": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2"
         },
         {
@@ -656,14 +656,54 @@ JSON-отчёт содержит расширенную информацию о 
           "Size": 20960980,
           "SourceType": "",
           "BaseImagePulled": false,
-          "Rebuilt": false,
-          "BuildTime": "0.00",
+          "Rebuilt": true,
+          "BuildTime": "0.46",
           "Commit": "9d1bb68ca2f4e8b0e2b6e5f5a3c7d1e4f2a0b3c9"
         }
       ]
     }
   },
-  "ImagesByPlatform": {}
+  "ImagesByPlatform": {},
+  "Operations": {
+    "docker daemon API": {
+      "Count": 31,
+      "TotalTimeSeconds": 0.61870432,
+      "WallTimeSeconds": 0.549330501,
+      "AvgTimeSeconds": 0.019958204,
+      "MaxTimeSeconds": 0.112832542
+    },
+    "local image inspect": {
+      "Count": 5,
+      "TotalTimeSeconds": 0.110243333,
+      "WallTimeSeconds": 0.110243333,
+      "AvgTimeSeconds": 0.022048667,
+      "MaxTimeSeconds": 0.048555458
+    },
+    "registry: GetRepoImage": {
+      "Count": 1,
+      "TotalTimeSeconds": 2.905423333,
+      "WallTimeSeconds": 2.905423333,
+      "AvgTimeSeconds": 2.905423333,
+      "MaxTimeSeconds": 2.905423333
+    },
+    "stage build": {
+      "Count": 2,
+      "TotalTimeSeconds": 0.831474958,
+      "WallTimeSeconds": 0.831474958,
+      "AvgTimeSeconds": 0.415737479,
+      "MaxTimeSeconds": 0.421835292
+    },
+    "stage lock wait (storage)": {
+      "Count": 2,
+      "TotalTimeSeconds": 0.001153668,
+      "WallTimeSeconds": 0.001153668,
+      "AvgTimeSeconds": 0.000576834,
+      "MaxTimeSeconds": 0.000661667
+    }
+  },
+  "StageCache": {
+    "built": 2
+  }
 }
 ```
 

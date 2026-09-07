@@ -96,6 +96,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupSaveBuildReport(&commonCmdData, cmd)
 	common.SetupBuildReportPath(&commonCmdData, cmd)
+	common.SetupBuildReportOperations(&commonCmdData, cmd)
 
 	common.SetupAddCustomTag(&commonCmdData, cmd)
 	common.SetupVirtualMerge(&commonCmdData, cmd)

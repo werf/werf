@@ -84,6 +84,10 @@ werf plan --repo registry.mydomain.com/web --env production
             Use specified path to the local backend (Docker or Buildah) storage to check backend    
             storage volume usage while performing garbage collection of local backend images        
             (detect local backend storage path by default or use $WERF_BACKEND_STORAGE_PATH)
+      --build-report-operations=false
+            Collect low-level operations statistics: add Operations and StageCache sections to the  
+            build report and print operations summary after the build (by default                   
+            $WERF_BUILD_REPORT_OPERATIONS or false). Also enabled by --log-debug
       --build-report-path=""
             Change build report path and format (by default $WERF_BUILD_REPORT_PATH or              
             ".werf-build-report.json" if not set). Extension must be either .json for JSON format   
