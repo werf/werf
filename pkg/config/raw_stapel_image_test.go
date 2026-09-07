@@ -1,6 +1,8 @@
 package config
 
 import (
+	"bytes"
+	"context"
 	"errors"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -8,6 +10,8 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/werf/common-go/pkg/util"
+	"github.com/werf/logboek"
+	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
 
 var _ = Describe("rawStapelImage", func() {
@@ -266,6 +270,30 @@ var _ = Describe("rawStapelImage", func() {
 			},
 		),
 	)
+
+	It("registers deprecation warning for image dependency", func() {
+		rawYaml, err := yaml.Marshal(map[string]interface{}{
+			"image": "image1",
+			"from":  "alpine",
+			"dependencies": []map[string]interface{}{{
+				"image":  "image2",
+				"before": "install",
+			}},
+		})
+		Expect(err).To(Succeed())
+
+		doc := &doc{Content: rawYaml}
+		rawStapelImage := &rawStapelImage{doc: doc}
+		Expect(yaml.UnmarshalStrict(doc.Content, rawStapelImage)).To(Succeed())
+
+		_, err = rawStapelImage.toStapelImageDirective(giterminismManager, "image1")
+		Expect(err).To(Succeed())
+
+		var output bytes.Buffer
+		ctx := logboek.NewContext(context.Background(), logboek.NewLogger(&output, &output))
+		global_warnings.PrintGlobalWarnings(ctx)
+		Expect(output.String()).To(ContainSubstring("The `dependencies[].image` directive is deprecated and will be removed in v3. Please use `dependencies[].from` instead."))
+	})
 
 	DescribeTable("unmarshal and convert to directive fail with configError",
 		func(yamlMap map[string]interface{}) {
