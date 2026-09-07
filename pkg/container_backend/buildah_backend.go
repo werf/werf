@@ -724,8 +724,77 @@ func normalizeDependencyImportDestination(absFrom, absTo string) (string, error)
 	}
 }
 
+// ensureImageLocally makes ref resolvable by buildah operations that only look up
+// the local containers storage (e.g. RUN --mount from=image resolution).
+func (backend *BuildahBackend) ensureImageLocally(ctx context.Context, ref string, opts CommonOpts) error {
+	checkLocal := func() (bool, error) {
+		inspect, err := backend.buildah.Inspect(ctx, ref)
+		if err != nil {
+			return false, fmt.Errorf("unable to inspect image %q: %w", ref, err)
+		}
+		if inspect == nil {
+			return false, nil
+		}
+		if opts.TargetPlatform != "" && !platformMatches(inspect, opts.TargetPlatform) {
+			return false, fmt.Errorf("local image %q has platform %s/%s, but target platform is %q; pull the correct image first", ref, inspect.OCIv1.OS, inspect.OCIv1.Architecture, opts.TargetPlatform)
+		}
+		return true, nil
+	}
+
+	if found, err := checkLocal(); err != nil || found {
+		return err
+	}
+
+	logboek.Context(ctx).Debug().LogF("Image %q not found locally, pulling\n", ref)
+
+	mu := backend.getPullMutex(ref)
+	mu.Lock()
+	defer mu.Unlock()
+
+	// A concurrent caller holding the lock may have pulled the image already.
+	if found, err := checkLocal(); err != nil || found {
+		return err
+	}
+
+	imageID, err := backend.buildah.Pull(ctx, ref, buildah.PullOpts(backend.getBuildahCommonOpts(ctx, true, nil, opts.TargetPlatform)))
+	if err != nil {
+		return fmt.Errorf("unable to pull image %q: %w", ref, err)
+	}
+	if opts.TargetPlatform != "" && imageID != "" {
+		backend.storePulledImageID(ref, opts.TargetPlatform, imageID)
+	}
+
+	return nil
+}
+
+func (backend *BuildahBackend) ensureRunMountImages(ctx context.Context, instrs []InstructionInterface, opts CommonOpts) error {
+	for _, instr := range instrs {
+		mounter, ok := instr.(MountsInterface)
+		if !ok {
+			continue
+		}
+
+		for _, mount := range mounter.GetMounts() {
+			if mount.From == "" {
+				continue
+			}
+
+			if err := backend.ensureImageLocally(ctx, mount.From, opts); err != nil {
+				return fmt.Errorf("unable to ensure local image for run mount %q: %w", mount.From, err)
+			}
+		}
+	}
+
+	return nil
+}
+
 func (backend *BuildahBackend) BuildDockerfileStage(ctx context.Context, baseImage string, opts BuildDockerfileStageOptions, instructions ...InstructionInterface) (string, error) {
 	defer opstats.Observe(ctx, opstats.OperationImageBuild)()
+
+	if err := backend.ensureRunMountImages(ctx, instructions, opts.CommonOpts); err != nil {
+		return "", err
+	}
+
 	var container *containerDesc
 	if c, err := backend.createContainers(ctx, []string{baseImage}, opts.CommonOpts); err != nil {
 		return "", err
