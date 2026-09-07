@@ -90,6 +90,67 @@ var _ = Describe("FromStage", func() {
 			}),
 	)
 
+	Describe("external base image identity", func() {
+		const (
+			golangRef     = "registry.example.com/factory@sha256:1111111111111111111111111111111111111111111111111111111111111111"
+			distrolessRef = "registry.example.com/factory@sha256:2222222222222222222222222222222222222222222222222222222222222222"
+		)
+
+		newExternalFromStage := func(ref string) *FromStage {
+			imageBaseConfig := &config.StapelImageBase{From: ref}
+			imageBaseConfig.SetFromExternal()
+			return GenerateFromStage(imageBaseConfig, "", "", &BaseStageOptions{})
+		}
+
+		newConveyor := func() Conveyor {
+			return NewConveyorStubForDependencies(NewGiterminismManagerStub(NewLocalGitRepoStub("9d8059842b6fde712c58315ca0ab4713d90761c0"), NewGiterminismInspectorStub()), make([]*TestDependency, 0))
+		}
+
+		newBaseStageImage := func(ctrl *gomock.Controller, ref string) *StageImage {
+			legacyImage := mock.NewMockLegacyImageInterface(ctrl)
+			legacyImage.EXPECT().Name().Return(ref).AnyTimes()
+			return NewStageImage(NewContainerBackendStub(), ref, legacyImage)
+		}
+
+		It("gives different stage digests to from stages with different external bases", func(ctx SpecContext) {
+			ctrl := gomock.NewController(GinkgoT())
+			conveyor := newConveyor()
+
+			golangDigest, err := newExternalFromStage(golangRef).GetDependencies(ctx, conveyor, nil, newBaseStageImage(ctrl, golangRef), nil, nil)
+			Expect(err).To(Succeed())
+
+			distrolessDigest, err := newExternalFromStage(distrolessRef).GetDependencies(ctx, conveyor, nil, newBaseStageImage(ctrl, distrolessRef), nil, nil)
+			Expect(err).To(Succeed())
+
+			Expect(golangDigest).NotTo(Equal(distrolessDigest))
+		})
+
+		It("gives different content digests to from stages with different external bases", func(ctx SpecContext) {
+			conveyor := newConveyor()
+
+			golangDigest, err := newExternalFromStage(golangRef).GetContentDependencies(ctx, conveyor, nil)
+			Expect(err).To(Succeed())
+
+			distrolessDigest, err := newExternalFromStage(distrolessRef).GetContentDependencies(ctx, conveyor, nil)
+			Expect(err).To(Succeed())
+
+			Expect(golangDigest).NotTo(Equal(distrolessDigest),
+				"content-anchor input must not match a from stage built from a different external base image")
+		})
+
+		It("gives equal content digests to from stages with the same external base", func(ctx SpecContext) {
+			conveyor := newConveyor()
+
+			digestOne, err := newExternalFromStage(golangRef).GetContentDependencies(ctx, conveyor, nil)
+			Expect(err).To(Succeed())
+
+			digestTwo, err := newExternalFromStage(golangRef).GetContentDependencies(ctx, conveyor, nil)
+			Expect(err).To(Succeed())
+
+			Expect(digestOne).To(Equal(digestTwo))
+		})
+	})
+
 	Describe("scratch semantics", func() {
 		It("marks scratch from stage as mutable and not buildable", func() {
 			stage := GenerateFromStage(&config.StapelImageBase{From: "scratch"}, "", "", &BaseStageOptions{})
