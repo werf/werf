@@ -108,6 +108,33 @@ var _ = Describe("rawImageFromDockerfile", func() {
 			}},
 		),
 		Entry(
+			"with from dependency",
+			map[string]interface{}{
+				"image":      "image1",
+				"dockerfile": "Dockerfile",
+				"dependencies": []map[string]interface{}{{
+					"from": "image2",
+				}},
+			},
+			[]*Dependency{{
+				ImageName: "image2",
+			}},
+		),
+		Entry(
+			"with from taking precedence over image dependency",
+			map[string]interface{}{
+				"image":      "image1",
+				"dockerfile": "Dockerfile",
+				"dependencies": []map[string]interface{}{{
+					"image": "image2",
+					"from":  "image3",
+				}},
+			},
+			[]*Dependency{{
+				ImageName: "image3",
+			}},
+		),
+		Entry(
 			"with ImageTag dependency",
 			map[string]interface{}{
 				"image":      "image1",

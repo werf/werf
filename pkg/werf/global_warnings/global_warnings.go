@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os/exec"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/Masterminds/semver"
@@ -56,6 +57,10 @@ func PrintGlobalWarnings(ctx context.Context) {
 func GlobalDeprecationWarningLn(ctx context.Context, line string) {
 	globalDeprecationWarningMessages = append(globalDeprecationWarningMessages, line)
 	printGlobalWarningLn(ctx, "DEPRECATION WARNING! "+line)
+}
+
+func GlobalDeprecationWarnings(ctx context.Context) []string {
+	return slices.Clone(globalDeprecationWarningMessages)
 }
 
 func GlobalWarningLn(ctx context.Context, line string) {

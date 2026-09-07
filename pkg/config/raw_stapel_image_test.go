@@ -1,6 +1,7 @@
 package config
 
 import (
+	"context"
 	"errors"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -8,6 +9,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/werf/common-go/pkg/util"
+	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
 
 var _ = Describe("rawStapelImage", func() {
@@ -109,6 +111,37 @@ var _ = Describe("rawStapelImage", func() {
 			},
 			[]*Dependency{{
 				ImageName: "image2",
+				Before:    "install",
+			}},
+		),
+		Entry(
+			"with from dependency",
+			map[string]interface{}{
+				"image": "image1",
+				"from":  "alpine",
+				"dependencies": []map[string]interface{}{{
+					"from":   "image2",
+					"before": "install",
+				}},
+			},
+			[]*Dependency{{
+				ImageName: "image2",
+				Before:    "install",
+			}},
+		),
+		Entry(
+			"with from taking precedence over image dependency",
+			map[string]interface{}{
+				"image": "image1",
+				"from":  "alpine",
+				"dependencies": []map[string]interface{}{{
+					"image":  "image2",
+					"from":   "image3",
+					"before": "install",
+				}},
+			},
+			[]*Dependency{{
+				ImageName: "image3",
 				Before:    "install",
 			}},
 		),
@@ -234,6 +267,36 @@ var _ = Describe("rawStapelImage", func() {
 				},
 			},
 		),
+	)
+
+	DescribeTable("dependency image deprecation warning",
+		func(dependency map[string]interface{}, expectedWarnings int) {
+			rawYaml, err := yaml.Marshal(map[string]interface{}{
+				"image":        "image1",
+				"from":         "alpine",
+				"dependencies": []map[string]interface{}{dependency},
+			})
+			Expect(err).To(Succeed())
+
+			doc := &doc{Content: rawYaml}
+			rawStapelImage := &rawStapelImage{doc: doc}
+			Expect(yaml.UnmarshalStrict(doc.Content, rawStapelImage)).To(Succeed())
+
+			ctx := context.Background()
+			warningsBefore := global_warnings.GlobalDeprecationWarnings(ctx)
+
+			_, err = rawStapelImage.toStapelImageDirective(giterminismManager, "image1")
+			Expect(err).To(Succeed())
+
+			newWarnings := global_warnings.GlobalDeprecationWarnings(ctx)[len(warningsBefore):]
+			Expect(newWarnings).To(HaveLen(expectedWarnings))
+			for _, warning := range newWarnings {
+				Expect(warning).To(Equal("The `dependencies[].image` directive is deprecated and will be removed in v3. Please use `dependencies[].from` instead."))
+			}
+		},
+		Entry("registered for image", map[string]interface{}{"image": "image2", "before": "install"}, 1),
+		Entry("not registered for from", map[string]interface{}{"from": "image2", "before": "install"}, 0),
+		Entry("not registered for from with image", map[string]interface{}{"image": "image2", "from": "image3", "before": "install"}, 0),
 	)
 
 	DescribeTable("unmarshal and convert to directive fail with configError",
