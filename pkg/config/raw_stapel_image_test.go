@@ -113,6 +113,37 @@ var _ = Describe("rawStapelImage", func() {
 			}},
 		),
 		Entry(
+			"with from dependency",
+			map[string]interface{}{
+				"image": "image1",
+				"from":  "alpine",
+				"dependencies": []map[string]interface{}{{
+					"from":   "image2",
+					"before": "install",
+				}},
+			},
+			[]*Dependency{{
+				ImageName: "image2",
+				Before:    "install",
+			}},
+		),
+		Entry(
+			"with from taking precedence over image dependency",
+			map[string]interface{}{
+				"image": "image1",
+				"from":  "alpine",
+				"dependencies": []map[string]interface{}{{
+					"image":  "image2",
+					"from":   "image3",
+					"before": "install",
+				}},
+			},
+			[]*Dependency{{
+				ImageName: "image3",
+				Before:    "install",
+			}},
+		),
+		Entry(
 			"with ImageTag dependency",
 			map[string]interface{}{
 				"image": "image1",

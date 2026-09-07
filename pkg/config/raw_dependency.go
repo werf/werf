@@ -1,5 +1,11 @@
 package config
 
+import (
+	"context"
+
+	"github.com/werf/werf/v2/pkg/werf/global_warnings"
+)
+
 type dependencyImageType string
 
 var (
@@ -10,6 +16,7 @@ var (
 
 type rawDependency struct {
 	Image   string                 `yaml:"image,omitempty"`
+	From    string                 `yaml:"from,omitempty"`
 	Before  string                 `yaml:"before,omitempty"`
 	After   string                 `yaml:"after,omitempty"`
 	Imports []*rawDependencyImport `yaml:"imports,omitempty"`
@@ -56,8 +63,16 @@ func (d *rawDependency) UnmarshalYAML(unmarshal func(interface{}) error) error {
 }
 
 func (d *rawDependency) toDirective() (*Dependency, error) {
+	imageName := d.From
+	if imageName == "" {
+		imageName = d.Image
+		if d.Image != "" {
+			global_warnings.GlobalDeprecationWarningLn(context.Background(), "The `dependencies[].image` directive is deprecated and will be removed in v3. Please use `dependencies[].from` instead.")
+		}
+	}
+
 	dependency := &Dependency{
-		ImageName: d.Image,
+		ImageName: imageName,
 		Before:    d.Before,
 		After:     d.After,
 		raw:       d,
