@@ -141,7 +141,7 @@ func (backend *BuildahBackend) getBuildahCommonOpts(ctx context.Context, suppres
 	if !suppressLog {
 		if logWriterOverride != nil {
 			opts.LogWriter = logWriterOverride
-		} else {
+		} else if logboek.Context(ctx).Default().IsAccepted() {
 			opts.LogWriter = logboek.Context(ctx).OutStream()
 		}
 	}

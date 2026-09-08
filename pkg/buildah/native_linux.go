@@ -454,19 +454,13 @@ func (b *NativeBuildah) BuildFromDockerfile(ctx context.Context, dockerfile stri
 		buildOpts.NoCache = true
 	}
 
-	errLog := &bytes.Buffer{}
-	if opts.LogWriter != nil {
-		buildOpts.Out = opts.LogWriter
-		buildOpts.Err = io.MultiWriter(opts.LogWriter, errLog)
-	} else {
-		buildOpts.Err = errLog
-	}
-
+	var stderrBuf *bytes.Buffer
+	buildOpts.Out, buildOpts.Err, stderrBuf = generateStdoutStderr(opts.LogWriter)
 	buildOpts.ContextDirectory = opts.ContextDir
 
 	imageId, _, err := imagebuildah.BuildDockerfiles(ctx, b.Store, buildOpts, dockerfile)
 	if err != nil {
-		return "", fmt.Errorf("unable to build Dockerfile %q:\n%s\n%w", dockerfile, errLog.String(), err)
+		return "", wrapStderrError(fmt.Sprintf("unable to build Dockerfile %q", dockerfile), stderrBuf, err)
 	}
 
 	return imageId, nil
@@ -544,7 +538,7 @@ func (b *NativeBuildah) RunCommand(ctx context.Context, container string, comman
 	}
 
 	if err := builder.Run(command, runOpts); err != nil {
-		return fmt.Errorf("RunCommand failed:\n%s\n%w", stderrBuf.String(), err)
+		return wrapStderrError("RunCommand failed", stderrBuf, err)
 	}
 
 	return nil
@@ -1412,16 +1406,25 @@ func generateContextDir(rawContextDir string, runMounts []*instructions.Mount) s
 	return contextDir
 }
 
-func generateStdoutStderr(optionalLogWriter io.Writer) (stdout, stderr io.Writer, stderrBuf *bytes.Buffer) {
-	stderrBuf = &bytes.Buffer{}
+// Stderr is captured into the buffer only when nothing else receives it, so the
+// returned errors do not repeat output already streamed to the log. The caller
+// passes nil when nothing would be shown, so stdout is dropped instead of leaking
+// to the process stdout as buildah does for a nil writer.
+func generateStdoutStderr(optionalLogWriter io.Writer) (io.Writer, io.Writer, *bytes.Buffer) {
+	stderrBuf := &bytes.Buffer{}
 	if optionalLogWriter != nil {
-		stdout = optionalLogWriter
-		stderr = io.MultiWriter(optionalLogWriter, stderrBuf)
-	} else {
-		stderr = stderrBuf
+		return optionalLogWriter, optionalLogWriter, stderrBuf
 	}
 
-	return stdout, stderr, stderrBuf
+	return io.Discard, stderrBuf, stderrBuf
+}
+
+func wrapStderrError(msg string, stderrBuf *bytes.Buffer, err error) error {
+	if stderrBuf.Len() == 0 {
+		return fmt.Errorf("%s: %w", msg, err)
+	}
+
+	return fmt.Errorf("%s:\n%s\n%w", msg, stderrBuf.String(), err)
 }
 
 func prependShellToCommand(prependShell bool, shell, command []string, builder *buildah.Builder) []string {
