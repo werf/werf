@@ -3,6 +3,7 @@ package container_backend
 import (
 	"context"
 	"fmt"
+	"path"
 	"strings"
 
 	"github.com/docker/docker/api/types"
@@ -91,17 +92,15 @@ func (c *LegacyStageImageContainer) prepareRunArgs(ctx context.Context) ([]strin
 	runArgs = append(runArgs, setColumnsEnv)
 
 	args = append(args, runArgs...)
-	args = append(args, c.prepareRunCommandArgs()...)
+	// Drain the script before eval, then give build commands EOF on stdin.
+	args = append(args, "-i", c.imageRef(c.image.fromImage), "-ec",
+		fmt.Sprintf(`eval "$(%s)" < /dev/null`, path.Join(stapel.CONTAINER_MOUNT_ROOT, "stapel/embedded/bin/cat")))
 
 	return args, nil
 }
 
 func (c *LegacyStageImageContainer) prepareRunCommand() string {
 	return strings.Join(c.prepareRunCommands(), " && ")
-}
-
-func (c *LegacyStageImageContainer) prepareRunCommandArgs() []string {
-	return []string{"-i", c.imageRef(c.image.fromImage), "-se"}
 }
 
 func (c *LegacyStageImageContainer) prepareRunCommands() []string {
@@ -297,7 +296,7 @@ func (c *LegacyStageImageContainer) run(ctx context.Context) error {
 	}
 
 	RegisterRunningContainer(c.name, ctx)
-	err = docker.CliRunWithInput_LiveOutput(ctx, strings.NewReader(c.prepareRunCommand()), runArgs...)
+	err = docker.CliRunWithInput_LiveOutput(ctx, c.prepareRunCommand(), runArgs...)
 	UnregisterRunningContainer(c.name)
 	if err != nil {
 		return fmt.Errorf("container run failed: %w", CliErrorByCode(err))

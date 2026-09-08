@@ -2,6 +2,7 @@ package docker
 
 import (
 	"io"
+	"strings"
 
 	"github.com/docker/cli/cli/command"
 	"github.com/docker/cli/cli/command/container"
@@ -75,8 +76,8 @@ func CliRun_LiveOutput(ctx context.Context, args ...string) error {
 	return doCliRun(ctx, cli(ctx), args...)
 }
 
-func CliRunWithInput_LiveOutput(ctx context.Context, input io.Reader, args ...string) error {
-	return cliWithCustomOptions(ctx, []command.CLIOption{command.WithInputStream(io.NopCloser(input))}, func(c command.Cli) error {
+func CliRunWithInput_LiveOutput(ctx context.Context, input string, args ...string) error {
+	return cliWithCustomOptions(ctx, []command.CLIOption{command.WithInputStream(io.NopCloser(strings.NewReader(input)))}, func(c command.Cli) error {
 		return doCliRun(ctx, c, args...)
 	})
 }
