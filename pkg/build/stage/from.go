@@ -63,7 +63,7 @@ func (s *FromStage) IsMutable() bool {
 	return s.fromScratch
 }
 
-func (s *FromStage) GetDependencies(_ context.Context, c Conveyor, _ container_backend.ContainerBackend, prevImage, _ *StageImage, _ container_backend.BuildContextArchiver) (string, error) {
+func (s *FromStage) GetDependencies(_ context.Context, c Conveyor, _ container_backend.ContainerBackend, _, _ *StageImage, _ container_backend.BuildContextArchiver) (string, error) {
 	var args []string
 
 	if s.imageCacheVersion != "" {
@@ -87,12 +87,9 @@ func (s *FromStage) GetDependencies(_ context.Context, c Conveyor, _ container_b
 	} else if s.fromImageName != "" && !s.fromExternal {
 		args = append(args, c.GetImageContentTagStageID(s.targetPlatform, s.fromImageName))
 	} else if s.fromExternal {
-		// GetContentDependencies has no prevImage, so an external base must be appended here:
-		// otherwise every image with an external base contributes the same empty argument list
-		// to the content anchor and such images reuse each other's builds.
+		// The reference is the base identity werf promises for an external image: a mutable tag
+		// is followed only with fromLatest, which adds the resolved repo id above.
 		args = append(args, s.fromImageName)
-	} else if prevImage != nil {
-		args = append(args, prevImage.Image.Name())
 	}
 
 	return util.Sha256Hash(args...), nil

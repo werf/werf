@@ -6,25 +6,16 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"go.uber.org/mock/gomock"
 
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	imagePkg "github.com/werf/werf/v2/pkg/image"
-	"github.com/werf/werf/v2/test/mock"
 )
 
 var _ = Describe("FromStage", func() {
 	DescribeTable("GetDependencies()",
 		func(ctx SpecContext, data testDataFrom) {
-			ctrl := gomock.NewController(GinkgoT())
-
 			conveyor := NewConveyorStubForDependencies(NewGiterminismManagerStub(NewLocalGitRepoStub("9d8059842b6fde712c58315ca0ab4713d90761c0"), NewGiterminismInspectorStub()), make([]*TestDependency, 0))
-
-			legacyImage := mock.NewMockLegacyImageInterface(ctrl)
-			containerBackend := NewContainerBackendStub()
-
-			prevImage := NewStageImage(containerBackend, "base-image", legacyImage)
 
 			fromStage := &FromStage{
 				fromImageName:         data.FromImageName,
@@ -36,13 +27,7 @@ var _ = Describe("FromStage", func() {
 				BaseStage:             NewBaseStage(From, &BaseStageOptions{}),
 			}
 
-			if fromStage.fromScratch || fromStage.fromImageName != "" {
-				// do nothing
-			} else {
-				legacyImage.EXPECT().Name().Return(data.PrevImageImageName)
-			}
-
-			digest, err := fromStage.GetDependencies(ctx, conveyor, nil, prevImage, nil, nil)
+			digest, err := fromStage.GetDependencies(ctx, conveyor, nil, nil, nil, nil)
 			Expect(err).To(Succeed())
 
 			Expect(digest).To(Equal(data.ExpectedDigest),
@@ -58,27 +43,26 @@ var _ = Describe("FromStage", func() {
 			testDataFrom{
 				ImageCacheVersion: "image-cache-version",
 
-				ExpectedDigest: "62cc7cbbeb4189a01f9071091675d14e56faffbb1cd910e7e26858546028ef8f",
+				ExpectedDigest: "52a335b26821a21ae8a47eb3a36a1ab5f388dd44dd1ab369c0578c173d88a752",
 			}),
 
 		Entry("should calculate from stage digest with fromCacheVersion param",
 			testDataFrom{
 				FromCacheVersion: "from-cache-version",
 
-				ExpectedDigest: "30a820396785223b2734a036e91697e727e16c01cd30fe64cbb04d81fbc6c1ae",
+				ExpectedDigest: "e6bb62452421c2e2ca95e9c5c88abf9aa5ccef94073de4aa4c84ba442f5da449",
 			}),
 
 		Entry("should calculate from stage digest with baseImageRepoIdOrNone param",
 			testDataFrom{
 				BaseImageRepoIdOrNone: "base-image-repo-id-or-none",
 
-				ExpectedDigest: "29e4de9b8f38c28e4fffb47f5a22f2c8ac76986cffd81133d5180586ebf85adf",
+				ExpectedDigest: "3d805b3dc9b36b26bb95a7723399b2767548d080e31af2148f69130f70a0b66f",
 			}),
 
 		Entry("should calculate from stage digest with fromImageName param",
 			testDataFrom{
-				FromImageName:      "from-image-or-artifact-image-name",
-				PrevImageImageName: "prev-image-image-name",
+				FromImageName: "from-image-or-artifact-image-name",
 
 				ExpectedDigest: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
 			}),
@@ -223,7 +207,6 @@ type testDataFrom struct {
 	FromScratch           bool
 
 	ImageContentDigest string
-	PrevImageImageName string
 
 	ExpectedDigest string
 }
