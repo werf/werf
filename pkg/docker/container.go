@@ -75,6 +75,12 @@ func CliRun_LiveOutput(ctx context.Context, args ...string) error {
 	return doCliRun(ctx, cli(ctx), args...)
 }
 
+func CliRunWithInput_LiveOutput(ctx context.Context, input io.Reader, args ...string) error {
+	return cliWithCustomOptions(ctx, []command.CLIOption{command.WithInputStream(io.NopCloser(input))}, func(c command.Cli) error {
+		return doCliRun(ctx, c, args...)
+	})
+}
+
 func CliRun_RecordedOutput(ctx context.Context, args ...string) (string, error) {
 	return callCliWithRecordedOutput(ctx, func(c command.Cli) error {
 		return doCliRun(ctx, c, args...)

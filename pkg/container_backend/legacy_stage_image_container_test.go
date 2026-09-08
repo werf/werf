@@ -1,9 +1,27 @@
 package container_backend
 
 import (
+	"strings"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
+
+var _ = Describe("LegacyStageImageContainer run arguments", func() {
+	It("streams large commands through standard input", func() {
+		baseImage := NewLegacyStageImage(nil, "base", nil, "")
+		stageImage := NewLegacyStageImage(baseImage, "stage", nil, "")
+		stageImage.container.AddRunCommands(strings.Repeat("echo import\n", 300_000))
+
+		args := stageImage.container.prepareRunCommandArgs()
+
+		Expect(args).To(ContainElement("-i"))
+		Expect(args).To(ContainElement("-se"))
+		for _, arg := range args {
+			Expect(arg).NotTo(ContainSubstring("echo import"))
+		}
+	})
+})
 
 var _ = Describe("LegacyStageImageContainer imageRef", func() {
 	const (
