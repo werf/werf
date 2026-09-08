@@ -28,6 +28,7 @@ var _ = Describe("FromStage", func() {
 
 			fromStage := &FromStage{
 				fromImageName:         data.FromImageName,
+				fromExternal:          data.FromExternal,
 				baseImageRepoIdOrNone: data.BaseImageRepoIdOrNone,
 				fromCacheVersion:      data.FromCacheVersion,
 				imageCacheVersion:     data.ImageCacheVersion,
@@ -82,6 +83,16 @@ var _ = Describe("FromStage", func() {
 				ExpectedDigest: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
 			}),
 
+		// The expected digest is what the pre-fix code produced when the build phase passed the
+		// external base as prevImage, so this entry pins stage digests across the change.
+		Entry("should calculate from stage digest for external base image",
+			testDataFrom{
+				FromImageName: externalBaseRef,
+				FromExternal:  true,
+
+				ExpectedDigest: externalBaseDigest,
+			}),
+
 		Entry("should calculate from stage digest for scratch base image",
 			testDataFrom{
 				FromScratch: true,
@@ -91,11 +102,6 @@ var _ = Describe("FromStage", func() {
 	)
 
 	Describe("external base image identity", func() {
-		const (
-			golangRef     = "registry.example.com/factory@sha256:1111111111111111111111111111111111111111111111111111111111111111"
-			distrolessRef = "registry.example.com/factory@sha256:2222222222222222222222222222222222222222222222222222222222222222"
-		)
-
 		newExternalFromStage := func(ref string) *FromStage {
 			imageBaseConfig := &config.StapelImageBase{From: ref}
 			imageBaseConfig.SetFromExternal()
@@ -106,48 +112,25 @@ var _ = Describe("FromStage", func() {
 			return NewConveyorStubForDependencies(NewGiterminismManagerStub(NewLocalGitRepoStub("9d8059842b6fde712c58315ca0ab4713d90761c0"), NewGiterminismInspectorStub()), make([]*TestDependency, 0))
 		}
 
-		newBaseStageImage := func(ctrl *gomock.Controller, ref string) *StageImage {
-			legacyImage := mock.NewMockLegacyImageInterface(ctrl)
-			legacyImage.EXPECT().Name().Return(ref).AnyTimes()
-			return NewStageImage(NewContainerBackendStub(), ref, legacyImage)
-		}
-
-		It("gives different stage digests to from stages with different external bases", func(ctx SpecContext) {
-			ctrl := gomock.NewController(GinkgoT())
-			conveyor := newConveyor()
-
-			golangDigest, err := newExternalFromStage(golangRef).GetDependencies(ctx, conveyor, nil, newBaseStageImage(ctrl, golangRef), nil, nil)
+		It("gives the content digest the same value as the stage digest", func(ctx SpecContext) {
+			digest, err := newExternalFromStage(externalBaseRef).GetContentDependencies(ctx, newConveyor(), nil)
 			Expect(err).To(Succeed())
 
-			distrolessDigest, err := newExternalFromStage(distrolessRef).GetDependencies(ctx, conveyor, nil, newBaseStageImage(ctrl, distrolessRef), nil, nil)
-			Expect(err).To(Succeed())
-
-			Expect(golangDigest).NotTo(Equal(distrolessDigest))
+			Expect(digest).To(Equal(externalBaseDigest),
+				"content-anchor input must carry the external base the same way the stage digest does")
 		})
 
 		It("gives different content digests to from stages with different external bases", func(ctx SpecContext) {
 			conveyor := newConveyor()
 
-			golangDigest, err := newExternalFromStage(golangRef).GetContentDependencies(ctx, conveyor, nil)
+			digestOne, err := newExternalFromStage(externalBaseRef).GetContentDependencies(ctx, conveyor, nil)
 			Expect(err).To(Succeed())
 
-			distrolessDigest, err := newExternalFromStage(distrolessRef).GetContentDependencies(ctx, conveyor, nil)
+			digestTwo, err := newExternalFromStage("registry.example.com/factory@sha256:2222222222222222222222222222222222222222222222222222222222222222").GetContentDependencies(ctx, conveyor, nil)
 			Expect(err).To(Succeed())
 
-			Expect(golangDigest).NotTo(Equal(distrolessDigest),
+			Expect(digestOne).NotTo(Equal(digestTwo),
 				"content-anchor input must not match a from stage built from a different external base image")
-		})
-
-		It("gives equal content digests to from stages with the same external base", func(ctx SpecContext) {
-			conveyor := newConveyor()
-
-			digestOne, err := newExternalFromStage(golangRef).GetContentDependencies(ctx, conveyor, nil)
-			Expect(err).To(Succeed())
-
-			digestTwo, err := newExternalFromStage(golangRef).GetContentDependencies(ctx, conveyor, nil)
-			Expect(err).To(Succeed())
-
-			Expect(digestOne).To(Equal(digestTwo))
 		})
 	})
 
@@ -226,8 +209,14 @@ var _ = Describe("FromStage", func() {
 	})
 })
 
+const (
+	externalBaseRef    = "registry.example.com/factory@sha256:1111111111111111111111111111111111111111111111111111111111111111"
+	externalBaseDigest = "7148bcbd6a0899be6c6185bbc660dc857bcc9b55866c78189401dca5f9588a3e"
+)
+
 type testDataFrom struct {
 	FromImageName         string
+	FromExternal          bool
 	BaseImageRepoIdOrNone string
 	FromCacheVersion      string
 	ImageCacheVersion     string

@@ -114,4 +114,38 @@ var _ = Describe("Content tag reuse", Label("e2e", "build", "content-tag"), func
 		Expect(buildOut).To(ContainSubstring("Copy suitable stage from secondary :local"))
 		Expect(buildOut).NotTo(ContainSubstring("Building stage app/"))
 	})
+
+	It("does not reuse the content tag across images with different external base images", func(ctx SpecContext) {
+		By("initializing")
+		setupEnv(setupEnvOptions{})
+
+		repoDirName := "repo0"
+		fixtureRelPath := "content_tag/external_bases/state0"
+
+		By("preparing test repo")
+		SuiteData.InitTestRepo(ctx, repoDirName, fixtureRelPath)
+		werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirName))
+
+		By("[1, :local] building the ubuntu-based image from scratch")
+		buildOut := werfProject.Build(ctx, &werf.BuildOptions{
+			CommonOptions: werf.CommonOptions{ExtraArgs: []string{"on-ubuntu"}},
+		})
+		Expect(buildOut).To(ContainSubstring("Building stage on-ubuntu/from"))
+		Expect(buildOut).To(ContainSubstring("Building stage on-ubuntu/setup"))
+
+		By("[2, :local] building the alpine-based image with the same instructions must not reuse the ubuntu-based one")
+		buildOut = werfProject.Build(ctx, &werf.BuildOptions{
+			CommonOptions: werf.CommonOptions{ExtraArgs: []string{"on-alpine"}},
+		})
+		Expect(buildOut).NotTo(ContainSubstring("Use previously built image for on-alpine by content-based tag"))
+		Expect(buildOut).To(ContainSubstring("Building stage on-alpine/from"))
+		Expect(buildOut).To(ContainSubstring("Building stage on-alpine/setup"))
+
+		By("[3, :local] rebuilding both images reuses each by its own content-based tag")
+		buildOut = werfProject.Build(ctx, &werf.BuildOptions{})
+		Expect(buildOut).To(ContainSubstring("Use previously built image for on-ubuntu by content-based tag"))
+		Expect(buildOut).To(ContainSubstring("Use previously built image for on-alpine by content-based tag"))
+		Expect(buildOut).NotTo(ContainSubstring("Building stage on-ubuntu/"))
+		Expect(buildOut).NotTo(ContainSubstring("Building stage on-alpine/"))
+	})
 })

@@ -86,7 +86,7 @@ func (s *FromStage) GetDependencies(_ context.Context, c Conveyor, _ container_b
 		args = append(args, "scratch")
 	} else if s.fromImageName != "" && !s.fromExternal {
 		args = append(args, c.GetImageContentTagStageID(s.targetPlatform, s.fromImageName))
-	} else if s.fromImageName != "" {
+	} else if s.fromExternal {
 		// GetContentDependencies has no prevImage, so an external base must be appended here:
 		// otherwise every image with an external base contributes the same empty argument list
 		// to the content anchor and such images reuse each other's builds.

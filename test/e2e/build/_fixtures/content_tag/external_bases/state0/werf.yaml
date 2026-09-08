@@ -1,0 +1,26 @@
+project: werf-test-e2e-build-content-tag
+configVersion: 1
+
+---
+image: on-ubuntu
+from: registry.werf.io/base/ubuntu:22.04
+git:
+  - add: /file
+    to: /file
+shell:
+  install:
+    - "echo install > /install.txt"
+  setup:
+    - "echo setup > /setup.txt"
+
+---
+image: on-alpine
+from: registry.werf.io/base/alpine:3.21
+git:
+  - add: /file
+    to: /file
+shell:
+  install:
+    - "echo install > /install.txt"
+  setup:
+    - "echo setup > /setup.txt"
