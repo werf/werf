@@ -78,8 +78,6 @@ Correct: `task test:unit paths="./pkg/sbom/..." -- -focus=MyTest`
 - `task mock:check` — verify generated mocks are up to date (runs `go generate -run mockgen` and diffs).
 - `task doc:gen` — regenerate CLI reference docs. ALWAYS run after changing command descriptions, flags, or help text in Go source. It renders each flag's default from the CURRENT environment, so run it with the `WERF_*` variables unset and review the diff for flags you never touched — one exported `WERF_*` rewrites that flag's documented default across every command page.
 
-`format` and `lint*` come from a remote taskfile ([werf/common-ci](https://github.com/werf/common-ci)), so they need `TASK_X_REMOTE_TASKFILES=1` and network access.
-
 ## Verifying changes (MANDATORY)
 
 After changing Go code, run these in order — `task format` mutates files, so it goes first:
