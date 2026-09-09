@@ -23,6 +23,9 @@ var _ = Describe("WerfConfig", func() {
 				NewImageStub("a", DependsOn{}),
 				NewImageStub("b", DependsOn{}),
 			}, Succeed()),
+			Entry("related image absent from the configuration", []ImageInterface{
+				NewImageStub("a", DependsOn{From: "external-base", Imports: []string{"not-declared"}}),
+			}, Succeed()),
 			Entry("linear chain a -> b -> c", []ImageInterface{
 				NewImageStub("a", DependsOn{From: "b"}),
 				NewImageStub("b", DependsOn{Imports: []string{"c"}}),
