@@ -3,9 +3,9 @@ package container_backend
 import (
 	"context"
 	"fmt"
-	"path"
 	"strings"
 
+	"github.com/alessio/shellescape"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/errdefs"
 	"github.com/docker/docker/runconfig/opts"
@@ -92,11 +92,22 @@ func (c *LegacyStageImageContainer) prepareRunArgs(ctx context.Context) ([]strin
 	runArgs = append(runArgs, setColumnsEnv)
 
 	args = append(args, runArgs...)
-	// Drain the script before eval, then give build commands EOF on stdin.
-	args = append(args, "-i", c.imageRef(c.image.fromImage), "-ec",
-		fmt.Sprintf(`eval "$(%s)" < /dev/null`, path.Join(stapel.CONTAINER_MOUNT_ROOT, "stapel/embedded/bin/cat")))
+	args = append(args, c.prepareRunCommandArgs()...)
 
 	return args, nil
+}
+
+func (c *LegacyStageImageContainer) prepareRunCommandArgs() []string {
+	// The assignment reads the script to EOF, so a reader failure aborts before eval
+	// and build commands find stdin already drained. The redirect only makes that explicit.
+	return []string{
+		"-i", c.imageRef(c.image.fromImage), "-ec",
+		fmt.Sprintf(`script=$(%s); eval "$script" < /dev/null`, stapel.CatBinPath()),
+	}
+}
+
+func (c *LegacyStageImageContainer) prepareDebugRunCommand(runArgs []string) string {
+	return fmt.Sprintf("printf '%%s' %s | docker run %s", shellescape.Quote(c.prepareRunCommand()), shellescape.QuoteCommand(runArgs))
 }
 
 func (c *LegacyStageImageContainer) prepareRunCommand() string {
