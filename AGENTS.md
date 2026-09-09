@@ -87,11 +87,13 @@ After changing Go code, run these in order — `task format` mutates files, so i
 
 NEVER assume a change compiles. While iterating, scope the slow steps (`task lint:golangci-lint golangciPaths="./pkg/foo/..."`, `task test:unit paths="./pkg/foo/..."`), then run them unscoped before handing the work over.
 
+A failure in a package the diff does not touch is usually a host-environment flake, not your change: re-run that suite alone before investigating it.
+
 A green `task test:unit` does NOT prove a command runs. No unit test constructs the storage manager, so a command that dereferences a flag group it never registered dies with a SIGSEGV before doing any work while the whole unit suite stays green. After adding or changing a command, execute it once — via `task test:integration`, or the binary in `./bin/` — before calling it done.
 
 `git diff --check` cannot be a whole-repo gate. The CLI reference generator emits column-aligned help text, so the generated pages under `docs/_includes/reference/cli` and `docs/pages_en/reference/cli` carry trailing whitespace on every branch. Scope the check to authored files.
 
-On macOS `task build` produces a **non-CGO** binary — the Buildah backend is only built for linux/amd64 (`task build:dev:linux:amd64:cgo`), so Buildah changes cannot be compiled or exercised locally. Unit tests run anywhere; e2e and integration tests need Linux with Docker and kind (`task test:setup:environment`). Anything exercising registry deletion additionally needs `REGISTRY_STORAGE_DELETE_ENABLED=true` on that registry: stock `registry:2` answers every DELETE with `UNSUPPORTED: The operation is unsupported`, which reads like a werf bug.
+On macOS `task build` produces a **non-CGO** binary — the Buildah backend is only built for linux/amd64 (`task build:dev:linux:amd64:cgo`), so Buildah changes cannot be compiled or exercised locally. Unit tests run anywhere. e2e and integration suites need Docker plus a reachable registry in `WERF_TEST_K8S_DOCKER_REGISTRY`; `task test:setup:environment` provisions kind and that registry and writes `.env`, but any local registry works — the docker-backend specs run on macOS, only the Buildah-mode entries need Linux. Anything exercising registry deletion additionally needs `REGISTRY_STORAGE_DELETE_ENABLED=true` on that registry: stock `registry:2` answers every DELETE with `UNSUPPORTED: The operation is unsupported`, which reads like a werf bug.
 
 ## Testing (MANDATORY)
 
