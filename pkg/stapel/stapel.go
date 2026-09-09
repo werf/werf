@@ -96,8 +96,8 @@ func TrueBinPath() string {
 	return embeddedBinPath("true")
 }
 
-func Base64BinPath() string {
-	return embeddedBinPath("base64")
+func CatBinPath() string {
+	return embeddedBinPath("cat")
 }
 
 func LsBinPath() string {

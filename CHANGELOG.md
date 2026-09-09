@@ -19,6 +19,11 @@
 ### Bug Fixes
 
 * **build, buildah:** stop imports failing on symlinked paths like /bin ([#7763](https://github.com/werf/werf/issues/7763)) ([f38a885](https://github.com/werf/werf/commit/f38a885d6248090bf74cd0426400886c918badf2))
+## [2.77.2](https://github.com/werf/werf/compare/v2.77.1...v2.77.2) (2026-08-31)
+
+
+### Bug Fixes
+
 * **build, stapel:** stop panicking when the base image is gone at commit ([#7819](https://github.com/werf/werf/issues/7819)) ([17f71c5](https://github.com/werf/werf/commit/17f71c55c417567a3b3346c87f88bbd0d284bc01))
 * **build:** ignore a cache repo pointing at the primary repo ([#7820](https://github.com/werf/werf/issues/7820)) ([d02c20c](https://github.com/werf/werf/commit/d02c20cd32cc6613f5fc3ae03d394c2813c7e0a2))
 * **docs:** update shell pattern matching url ([#7813](https://github.com/werf/werf/issues/7813)) ([81cf51d](https://github.com/werf/werf/commit/81cf51d6306a8186746f541d32a48fd9e93d2440))

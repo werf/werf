@@ -73,7 +73,7 @@ func (i *LegacyStageImage) GetID() string {
 }
 
 func (i *LegacyStageImage) Build(ctx context.Context, options BuildOptions) error {
-	defer opstats.Observe(ctx, opstats.OperationImageBuild)()
+	defer opstats.Observe(ctx, opstats.OperationStageBuild)()
 	if options.Network != "" {
 		i.container.runOptions.AddNetwork(options.Network)
 	}
@@ -113,11 +113,7 @@ func (i *LegacyStageImage) Build(ctx context.Context, options BuildOptions) erro
 			return err
 		}
 
-		fmt.Printf("Docker run command:\ndocker run %s\n", strings.Join(runArgs, " "))
-
-		if len(i.container.prepareAllRunCommands()) != 0 {
-			fmt.Printf("Decoded command:\n%s\n", strings.Join(i.container.prepareAllRunCommands(), " && "))
-		}
+		fmt.Printf("Docker run command (stage script piped to stdin):\n%s\n", i.container.prepareDebugRunCommand(ctx, runArgs))
 	}
 
 	if containerRunErr := i.container.run(ctx); containerRunErr != nil {

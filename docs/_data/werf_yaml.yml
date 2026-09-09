@@ -367,8 +367,8 @@ sections:
           - name: image
             value: "string"
             description:
-              en: "Dependency image name, which should be built before building current image (DEPRECATED)"
-              ru: "Имя зависимого образа, который должен быть собран до сборки текущего образа (DEPRECATED)"
+              en: "Dependency image name, which should be built before building current image (DEPRECATED, use from)"
+              ru: "Имя зависимого образа, который должен быть собран до сборки текущего образа (DEPRECATED, используйте from)"
           - name: imports
             description:
               en: "Define target build args to import image information into current image (optional)"
@@ -859,8 +859,8 @@ sections:
           - name: image
             value: "string"
             description:
-              en: "Dependency image name, which should be built before building current image (DEPRECATED)"
-              ru: "Имя зависимого образа, который должен быть собран до сборки текущего образа (DEPRECATED)"
+              en: "Dependency image name, which should be built before building current image (DEPRECATED, use from)"
+              ru: "Имя зависимого образа, который должен быть собран до сборки текущего образа (DEPRECATED, используйте from)"
           - name: before
             value: "string"
             description:

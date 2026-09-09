@@ -192,8 +192,9 @@ func (c *WerfConfig) validateRelatedImages() error {
 }
 
 func (c *WerfConfig) validateInfiniteLoopBetweenRelatedImages() error {
+	acyclic := map[string]struct{}{}
 	for _, image := range c.Images(false) {
-		if err, errImageStack := c.validateImageInfiniteLoop(image.GetName(), []string{}); err != nil {
+		if err, errImageStack := c.validateImageInfiniteLoop(image.GetName(), []string{}, acyclic); err != nil {
 			return fmt.Errorf("%w: %s", err, strings.Join(errImageStack, " -> "))
 		}
 	}
@@ -201,7 +202,15 @@ func (c *WerfConfig) validateInfiniteLoopBetweenRelatedImages() error {
 	return nil
 }
 
-func (c *WerfConfig) validateImageInfiniteLoop(imageName string, imageNameStack []string) (error, []string) {
+// validateImageInfiniteLoop walks the image dependency graph depth-first. The acyclic argument holds
+// images whose whole dependency subgraph was already walked without finding a loop: a loop through such
+// an image would have been reported by that walk, so it is safe to skip. Without it the walk enumerates
+// every path, which is exponential on diamond-shaped graphs.
+func (c *WerfConfig) validateImageInfiniteLoop(imageName string, imageNameStack []string, acyclic map[string]struct{}) (error, []string) {
+	if _, ok := acyclic[imageName]; ok {
+		return nil, nil
+	}
+
 	for _, stackImageName := range imageNameStack {
 		if stackImageName == imageName {
 			return errors.New("infinite loop detected"), []string{imageName}
@@ -219,10 +228,12 @@ func (c *WerfConfig) validateImageInfiniteLoop(imageName string, imageNameStack 
 			continue
 		}
 
-		if err, errImagesStack := c.validateImageInfiniteLoop(relatedImageName, imageNameStack); err != nil {
+		if err, errImagesStack := c.validateImageInfiniteLoop(relatedImageName, imageNameStack, acyclic); err != nil {
 			return err, append([]string{imageName}, errImagesStack...)
 		}
 	}
+
+	acyclic[imageName] = struct{}{}
 
 	return nil, nil
 }

@@ -41,8 +41,9 @@ type BuildOptions struct {
 	ImageBuildOptions container_backend.BuildOptions
 	IntrospectOptions
 
-	ReportPath   string
-	ReportFormat ReportFormat
+	ReportPath       string
+	ReportFormat     ReportFormat
+	ReportOperations bool
 
 	SkipImageMetadataPublication bool
 	SkipAddManagedImagesRecords  bool
