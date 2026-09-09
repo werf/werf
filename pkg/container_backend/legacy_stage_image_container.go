@@ -98,11 +98,12 @@ func (c *LegacyStageImageContainer) prepareRunArgs(ctx context.Context) ([]strin
 }
 
 func (c *LegacyStageImageContainer) prepareRunCommandArgs() []string {
-	// The assignment reads the script to EOF, so a reader failure aborts before eval
-	// and build commands find stdin already drained. The redirect only makes that explicit.
+	// The assignment reads the script to EOF with Bash alone, so it needs no binary from the
+	// base or the stapel image, a reader failure aborts before eval, and build commands find
+	// stdin already drained. The redirect only makes that explicit.
 	return []string{
 		"-i", c.imageRef(c.image.fromImage), "-ec",
-		fmt.Sprintf(`script=$(%s); eval "$script" < /dev/null`, stapel.CatBinPath()),
+		`script=$(</dev/stdin); eval "$script" < /dev/null`,
 	}
 }
 

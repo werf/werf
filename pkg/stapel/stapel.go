@@ -118,10 +118,6 @@ func TrueBinPath() string {
 	return embeddedBinPath("true")
 }
 
-func CatBinPath() string {
-	return embeddedBinPath("cat")
-}
-
 func LsBinPath() string {
 	return embeddedBinPath("ls")
 }
