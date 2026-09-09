@@ -51,5 +51,6 @@ var _ = Describe("prepareWerfConfig image names", func() {
 		Entry("plain", "app"),
 		Entry("hierarchical", "modules/api"),
 		Entry("underscores and case", "Dockerfile_base_image"),
+		Entry("plus signs", "libstdc++"),
 	)
 })

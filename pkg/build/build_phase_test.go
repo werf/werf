@@ -10,6 +10,13 @@ import (
 )
 
 var _ = Describe("BuildPhase", func() {
+	DescribeTable("image environment variable names", func(werfImageName, imageName, expectedImageEnv, expectedPrefix string) {
+		Expect(GenerateImageEnv(werfImageName, imageName)).To(Equal(expectedImageEnv))
+		Expect(imageEnvPrefix(werfImageName)).To(Equal(expectedPrefix))
+	},
+		Entry("plus signs", "libstdc++", "registry.example.com/libstdc++:v1", "WERF_LIBSTDC___DOCKER_IMAGE_NAME=registry.example.com/libstdc++:v1", "WERF_LIBSTDC___"),
+	)
+
 	Describe("stage digest mutex lifecycle", func() {
 		var (
 			digestMutex *sync.Mutex
