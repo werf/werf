@@ -10,6 +10,24 @@ import (
 )
 
 var _ = Describe("StorageManager shared host image locks", func() {
+	It("appends under the lock", func(ctx SpecContext) {
+		m := &StorageManager{}
+		m.sharedHostImagesLocksMu.Lock()
+
+		appended := make(chan struct{})
+		go func() {
+			defer GinkgoRecover()
+			m.addSharedHostImageLock(lockgate.LockHandle{})
+			close(appended)
+		}()
+
+		Consistently(appended, "100ms").ShouldNot(BeClosed())
+		m.sharedHostImagesLocksMu.Unlock()
+
+		Eventually(appended).Should(BeClosed())
+		Expect(m.SharedHostImagesLocks).To(HaveLen(1))
+	})
+
 	It("keeps every lock taken by concurrent image builds", func() {
 		const goroutines = 50
 
