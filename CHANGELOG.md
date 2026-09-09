@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.78.1](https://github.com/werf/werf/compare/v2.78.0...v2.78.1) (2026-09-09)
+
+
+### Bug Fixes
+
+* **build, stapel:** stop tying stage builds to the stapel image cat ([#7851](https://github.com/werf/werf/issues/7851)) ([f96eba3](https://github.com/werf/werf/commit/f96eba34f2c35c1fd2aa999ae26c1b38261904e3))
+
 ## [2.78.0](https://github.com/werf/werf/compare/v2.77.2...v2.78.0) (2026-09-09)
 
 
