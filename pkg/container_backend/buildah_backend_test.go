@@ -1,10 +1,12 @@
 package container_backend
 
 import (
+	"bytes"
 	"context"
 	"crypto/md5"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"sync/atomic"
@@ -15,10 +17,36 @@ import (
 	. "github.com/onsi/gomega"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 
+	"github.com/werf/logboek"
+	"github.com/werf/logboek/pkg/level"
 	"github.com/werf/werf/v2/pkg/buildah"
 	"github.com/werf/werf/v2/pkg/buildah/thirdparty"
 	"github.com/werf/werf/v2/test/pkg/buildahstub"
 )
+
+var _ = Describe("BuildahBackend getBuildahCommonOpts", func() {
+	newCtx := func(lvl level.Level) context.Context {
+		logger := logboek.NewLogger(io.Discard, io.Discard)
+		logger.SetAcceptedLevel(lvl)
+		return logboek.NewContext(context.Background(), logger)
+	}
+
+	It("passes the log stream when the default level is shown", func() {
+		opts := (&BuildahBackend{}).getBuildahCommonOpts(newCtx(level.Default), false, nil, "")
+		Expect(opts.LogWriter).NotTo(BeNil())
+	})
+
+	It("passes no log writer under --log-quiet so stderr reaches the error", func() {
+		opts := (&BuildahBackend{}).getBuildahCommonOpts(newCtx(level.Error), false, nil, "")
+		Expect(opts.LogWriter).To(BeNil())
+	})
+
+	It("keeps an explicit override regardless of level", func() {
+		override := &bytes.Buffer{}
+		opts := (&BuildahBackend{}).getBuildahCommonOpts(newCtx(level.Error), false, override, "")
+		Expect(opts.LogWriter).To(BeIdenticalTo(override))
+	})
+})
 
 var _ = Describe("BuildahBackend pulledImageIDs", func() {
 	var backend *BuildahBackend
