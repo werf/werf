@@ -27,7 +27,7 @@ var _ = Describe("Legacy stage command transport", func() {
 		commands := []string{strings.Repeat(": import-padding\n", 200_000) + ":", "printf complete"}
 		container.AddRunCommands(commands...)
 
-		Expect(container.prepareRunCommand(ctx)).To(HaveSuffix(strings.Join(commands, " && ")))
+		Expect(container.prepareRunCommand(ctx)).To(Equal(strings.Join(append(container.prepareBuildTimeEnvExports(ctx), commands...), " && ")))
 		args := container.prepareRunCommandArgs()
 		Expect(args[:3]).To(Equal([]string{"-i", "base", "-ec"}))
 		for _, arg := range args {
@@ -65,6 +65,7 @@ var _ = Describe("Legacy stage command transport", func() {
 		cmd := exec.CommandContext(ctx, "bash", "-c", "docker() { printf '%s\\n' \"$@\"; cat; }\n"+container.prepareDebugRunCommand(ctx, args))
 		output, err := cmd.CombinedOutput()
 		Expect(err).NotTo(HaveOccurred(), string(output))
-		Expect(string(output)).To(Equal("run\n" + strings.Join(args, "\n") + "\n" + container.prepareRunCommand(ctx)))
+		expectedScript := strings.Join(append(container.prepareBuildTimeEnvExports(ctx), script), " && ")
+		Expect(string(output)).To(Equal("run\n" + strings.Join(args, "\n") + "\n" + expectedScript))
 	})
 })
