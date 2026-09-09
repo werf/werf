@@ -2,11 +2,11 @@ package container_backend
 
 import (
 	"context"
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"strings"
 
+	"github.com/alessio/shellescape"
 	"github.com/docker/cli/cli"
 	dockercontainer "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/errdefs"
@@ -99,9 +99,7 @@ func (c *LegacyStageImageContainer) prepareRunArgs(ctx context.Context) ([]strin
 	}
 
 	args = append(args, runArgs...)
-	args = append(args, c.imageRef(c.image.fromImage))
-	args = append(args, "-ec")
-	args = append(args, c.prepareRunCommand(ctx))
+	args = append(args, c.prepareRunCommandArgs()...)
 
 	return args, nil
 }
@@ -124,9 +122,23 @@ func (c *LegacyStageImageContainer) prepareBuildTimeEnvExports(ctx context.Conte
 	return exports
 }
 
+func (c *LegacyStageImageContainer) prepareRunCommandArgs() []string {
+	// The assignment reads the script to EOF with Bash alone, so it needs no binary from the
+	// base or the stapel image, a reader failure aborts before eval, and build commands find
+	// stdin already drained. The redirect only makes that explicit.
+	return []string{
+		"-i", c.imageRef(c.image.fromImage), "-ec",
+		`script=$(</dev/stdin); eval "$script" < /dev/null`,
+	}
+}
+
+func (c *LegacyStageImageContainer) prepareDebugRunCommand(ctx context.Context, runArgs []string) string {
+	return fmt.Sprintf("printf '%%s' %s | docker run %s", shellescape.Quote(c.prepareRunCommand(ctx)), shellescape.QuoteCommand(runArgs))
+}
+
 func (c *LegacyStageImageContainer) prepareRunCommand(ctx context.Context) string {
 	commands := append(c.prepareBuildTimeEnvExports(ctx), c.prepareRunCommands()...)
-	return ShelloutPack(strings.Join(commands, " && "))
+	return strings.Join(commands, " && ")
 }
 
 func (c *LegacyStageImageContainer) prepareRunCommands() []string {
@@ -149,10 +161,6 @@ func (c *LegacyStageImageContainer) prepareAllRunCommands() []string {
 	commands = append(commands, c.runCommands...)
 
 	return commands
-}
-
-func ShelloutPack(command string) string {
-	return fmt.Sprintf("eval $(echo %s | %s --decode)", base64.StdEncoding.EncodeToString([]byte(command)), stapel.Base64BinPath())
 }
 
 func (c *LegacyStageImageContainer) imageRef(img *LegacyStageImage) string {
@@ -326,7 +334,7 @@ func (c *LegacyStageImageContainer) run(ctx context.Context) error {
 	}
 
 	RegisterRunningContainer(c.name, ctx)
-	err = docker.CliRun_LiveOutput(ctx, runArgs...)
+	err = docker.CliRunWithInput_LiveOutput(ctx, c.prepareRunCommand(ctx), runArgs...)
 	UnregisterRunningContainer(c.name)
 	if err != nil {
 		return fmt.Errorf("container run failed: %w", namedContainerExitErr(err))

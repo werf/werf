@@ -89,11 +89,17 @@ After changing Go code, run these in order — `task format` mutates files, so i
 
 NEVER assume a change compiles. While iterating, scope the slow steps (`task lint:golangci-lint golangciPaths="./pkg/foo/..."`, `task test:unit paths="./pkg/foo/..."`), then run them unscoped before handing the work over.
 
+A failure in a package the diff does not touch is usually a host-environment flake, not your change: re-run that suite alone before investigating it.
+
 A green `task test:unit` does NOT prove a command runs. No unit test constructs the storage manager, so a command that dereferences a flag group it never registered dies with a SIGSEGV before doing any work while the whole unit suite stays green. After adding or changing a command, execute it once — via `task test:integration`, or the binary in `./bin/` — before calling it done.
 
 `git diff --check` cannot be a whole-repo gate. The CLI reference generator emits column-aligned help text, so the generated pages under `docs/_includes/reference/cli` and `docs/pages_en/reference/cli` carry trailing whitespace on every branch. Scope the check to authored files.
 
-On macOS `task build` produces a **non-CGO** binary — the Buildah backend is only built for linux/amd64 (`task build:dev:linux:amd64:cgo`), so Buildah changes cannot be compiled or exercised locally. Unit tests run anywhere. The Docker-backend entries of the e2e suites also run on macOS with Docker Desktop — `task test:e2e paths="./test/e2e/build" labelFilter="..." parallel=1`, with `WERF_TEST_K8S_DOCKER_REGISTRY` set even when the entries need no registry. Buildah entries, and any suite that needs kind, require Linux (`task test:setup:environment`). Anything exercising registry deletion additionally needs `REGISTRY_STORAGE_DELETE_ENABLED=true` on that registry: stock `registry:2` answers every DELETE with `UNSUPPORTED: The operation is unsupported`, which reads like a werf bug.
+On macOS `task build` produces a **non-CGO** binary and skips every `//go:build linux` file, so a Buildah change compiles there without ever being typechecked — `task build:dev:linux:amd64:go` is what typechecks it. `task build:dev:linux:amd64:cgo` does not run on macOS at all (`runtime/cgo`: `setresgid`/`setresuid` undeclared), so the CGO Buildah binary cannot be produced locally and Buildah runtime behavior cannot be exercised there.
+
+No local check sees a `//go:build linux` **test** file: `task build`, `task lint` and `task test:unit` all stay green while one does not compile, and `task build:dev:linux:amd64:go` does not build tests either. Typecheck them with `GOOS=linux GOARCH=amd64 task test:unit paths="./pkg/foo/..."` — it compiles the linux test binary, then fails with `exec format error`, which means compilation passed. To also execute them, run `go test` with the `goTags` from `Taskfile.dist.yaml` inside a linux container, mounting the repo and `$HOME/go/pkg/mod`.
+
+Unit tests otherwise run anywhere. e2e and integration suites need Docker plus a reachable registry in `WERF_TEST_K8S_DOCKER_REGISTRY` — set it even for entries that need no registry, or the suite refuses to start — and run best one at a time (`task test:e2e paths="./test/e2e/build" labelFilter="..." parallel=1`); `task test:setup:environment` provisions kind and that registry and writes `.env`, but any local registry works — the docker-backend specs run on macOS, only the Buildah-mode entries need Linux. Anything exercising registry deletion additionally needs `REGISTRY_STORAGE_DELETE_ENABLED=true` on that registry: stock `registry:2` answers every DELETE with `UNSUPPORTED: The operation is unsupported`, which reads like a werf bug.
 
 ## Testing (MANDATORY)
 

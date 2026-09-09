@@ -1,7 +1,11 @@
 package buildah
 
 import (
+	"bytes"
 	"context"
+	"errors"
+	"fmt"
+	"io"
 	"os"
 	"strings"
 	"sync"
@@ -735,6 +739,30 @@ location = "dropin-mirror.example.com"
 			result, err := GetRegistryMirrorsFromConfig(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 			Expect(result).To(ContainElement("https://dropin-mirror.example.com"))
+		})
+	})
+
+	Describe("stderr handling", func() {
+		It("should stream stderr to the log writer without keeping a copy for the error", func() {
+			logWriter := &bytes.Buffer{}
+			stdout, stderr, stderrBuf := generateStdoutStderr(logWriter)
+			fmt.Fprint(stdout, "out\n")
+			fmt.Fprint(stderr, "MARKER-STDERR-LINE\n")
+
+			Expect(logWriter.String()).To(Equal("out\nMARKER-STDERR-LINE\n"))
+			Expect(stderrBuf.String()).To(BeEmpty())
+
+			err := wrapStderrError("RunCommand failed", stderrBuf, errors.New("exit status 1"))
+			Expect(err.Error()).To(Equal("RunCommand failed: exit status 1"))
+		})
+
+		It("should keep stderr for the error and drop stdout when there is no log writer", func() {
+			stdout, stderr, stderrBuf := generateStdoutStderr(nil)
+			Expect(stdout).To(Equal(io.Discard))
+			fmt.Fprint(stderr, "MARKER-STDERR-LINE\n")
+
+			err := wrapStderrError("RunCommand failed", stderrBuf, errors.New("exit status 1"))
+			Expect(err.Error()).To(Equal("RunCommand failed:\nMARKER-STDERR-LINE\n\nexit status 1"))
 		})
 	})
 })

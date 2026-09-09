@@ -70,3 +70,25 @@ func NewGitRepoArchiveStub() *GitRepoArchiveStub {
 func (archive *GitRepoArchiveStub) GetFilePath() string {
 	return "no-such-file"
 }
+
+type ImageStub struct {
+	ImageInterface
+
+	name string
+	deps DependsOn
+}
+
+func NewImageStub(name string, dependsOn DependsOn) *ImageStub {
+	return &ImageStub{
+		name: name,
+		deps: dependsOn,
+	}
+}
+
+func (image *ImageStub) GetName() string {
+	return image.name
+}
+
+func (image *ImageStub) dependsOn() DependsOn {
+	return image.deps
+}
