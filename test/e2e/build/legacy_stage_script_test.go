@@ -1,9 +1,11 @@
 package e2e_build_test
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
+	"github.com/docker/cli/cli"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
@@ -19,14 +21,14 @@ import (
 const (
 	legacyStageScriptBaseImage = "registry.werf.io/base/ubuntu:22.04"
 
-	// The build must fail without werf reporting the container exit code verbatim.
+	// The build must fail, whatever exit code the shell reports for the script.
 	legacyStageScriptAnyExitCode = -1
 )
 
 var _ = Describe("Legacy stage script", Label("e2e", "build", "legacy-stage-script"), func() {
 	It("builds a werf.yaml with many imports", func(ctx SpecContext) {
-		setupEnv(setupEnvOptions{ContainerBackendMode: "vanilla-docker", WithLocalRepo: true})
-		contRuntime, err := contback.NewContainerBackend("vanilla-docker")
+		setupEnv(setupEnvOptions{ContainerBackendMode: "docker", WithLocalRepo: true})
+		contRuntime, err := contback.NewContainerBackend("docker")
 		if err == contback.ErrRuntimeUnavailable {
 			Skip(err.Error())
 		} else if err != nil {
@@ -67,11 +69,14 @@ var _ = Describe("Legacy stage script", Label("e2e", "build", "legacy-stage-scri
 				}
 			})
 			if exitCode != 0 {
-				Expect(err).To(HaveOccurred())
-				Expect(stage.BuiltID()).To(BeEmpty())
-				if exitCode != legacyStageScriptAnyExitCode {
-					Expect(err.Error()).To(ContainSubstring(fmt.Sprintf("Code: %d", exitCode)))
+				var statusErr cli.StatusError
+				Expect(errors.As(err, &statusErr)).To(BeTrue(), fmt.Sprintf("%v", err))
+				if exitCode == legacyStageScriptAnyExitCode {
+					Expect(statusErr.StatusCode).NotTo(BeZero())
+				} else {
+					Expect(statusErr.StatusCode).To(Equal(exitCode))
 				}
+				Expect(stage.BuiltID()).To(BeEmpty())
 				return
 			}
 			Expect(err).NotTo(HaveOccurred())
