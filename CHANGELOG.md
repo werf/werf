@@ -1,5 +1,21 @@
 # Changelog
 
+## [3.4.0](https://github.com/werf/werf/compare/v3.3.1...v3.4.0) (2026-09-09)
+
+
+### Features
+
+* **build, buildah:** require netavark instead of CNI and slirp4netns ([#7730](https://github.com/werf/werf/issues/7730)) ([ada9973](https://github.com/werf/werf/commit/ada9973e348a91a1de994379897b8ef64c3f8656))
+
+
+### Bug Fixes
+
+* **build, stapel:** stop build reuse across different external bases ([#7838](https://github.com/werf/werf/issues/7838)) ([74f007b](https://github.com/werf/werf/commit/74f007bb21e0ffd3f710365151785ef6b2f9367b))
+* **build:** accept image names containing plus signs ([#7848](https://github.com/werf/werf/issues/7848)) ([a4898d3](https://github.com/werf/werf/commit/a4898d3176dbcd64baf0a37ac42c9fc9b1149f65))
+* **build:** include build cache version in anchor digest ([#7827](https://github.com/werf/werf/issues/7827)) ([566b7b9](https://github.com/werf/werf/commit/566b7b999f92ec5c95c40397e2d261c78b3e2fd0))
+* **bundle:** drop the publisher's release channel from published bundles ([#7831](https://github.com/werf/werf/issues/7831)) ([890977a](https://github.com/werf/werf/commit/890977a4b082352cc687be9c41ff65ef2b6fe903))
+* **giterminism:** use two-space indentation in includes lock files ([#7840](https://github.com/werf/werf/issues/7840)) ([53991cc](https://github.com/werf/werf/commit/53991ccded4d6c6825c63d8e64bd2ad20d246092))
+
 ## [3.3.1](https://github.com/werf/werf/compare/v3.3.0...v3.3.1) (2026-09-01)
 
 
