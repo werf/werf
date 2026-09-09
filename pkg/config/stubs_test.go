@@ -89,10 +89,6 @@ func (image *ImageStub) GetName() string {
 	return image.name
 }
 
-func (image *ImageStub) IsFinal() bool {
-	return true
-}
-
 func (image *ImageStub) dependsOn() DependsOn {
 	return image.deps
 }

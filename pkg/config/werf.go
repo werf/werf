@@ -113,9 +113,10 @@ func (c *WerfConfig) validateInfiniteLoopBetweenRelatedImages() error {
 	return nil
 }
 
-// acyclic holds images whose whole dependency subgraph was already walked without finding a loop:
-// a loop through such an image would have been reported by that walk, so it is safe to skip.
-// Without it the walk enumerates every path, which is exponential on diamond-shaped graphs.
+// validateImageInfiniteLoop walks the image dependency graph depth-first. The acyclic argument holds
+// images whose whole dependency subgraph was already walked without finding a loop: a loop through such
+// an image would have been reported by that walk, so it is safe to skip. Without it the walk enumerates
+// every path, which is exponential on diamond-shaped graphs.
 func (c *WerfConfig) validateImageInfiniteLoop(imageName string, imageNameStack []string, acyclic map[string]struct{}) (error, []string) {
 	if _, ok := acyclic[imageName]; ok {
 		return nil, nil
