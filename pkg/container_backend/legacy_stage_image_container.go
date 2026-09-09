@@ -2,10 +2,10 @@ package container_backend
 
 import (
 	"context"
-	"encoding/base64"
 	"fmt"
 	"strings"
 
+	"github.com/alessio/shellescape"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/errdefs"
 	"github.com/docker/docker/runconfig/opts"
@@ -92,15 +92,26 @@ func (c *LegacyStageImageContainer) prepareRunArgs(ctx context.Context) ([]strin
 	runArgs = append(runArgs, setColumnsEnv)
 
 	args = append(args, runArgs...)
-	args = append(args, c.imageRef(c.image.fromImage))
-	args = append(args, "-ec")
-	args = append(args, c.prepareRunCommand())
+	args = append(args, c.prepareRunCommandArgs()...)
 
 	return args, nil
 }
 
+func (c *LegacyStageImageContainer) prepareRunCommandArgs() []string {
+	// The assignment reads the script to EOF, so a reader failure aborts before eval
+	// and build commands find stdin already drained. The redirect only makes that explicit.
+	return []string{
+		"-i", c.imageRef(c.image.fromImage), "-ec",
+		fmt.Sprintf(`script=$(%s); eval "$script" < /dev/null`, stapel.CatBinPath()),
+	}
+}
+
+func (c *LegacyStageImageContainer) prepareDebugRunCommand(runArgs []string) string {
+	return fmt.Sprintf("printf '%%s' %s | docker run %s", shellescape.Quote(c.prepareRunCommand()), shellescape.QuoteCommand(runArgs))
+}
+
 func (c *LegacyStageImageContainer) prepareRunCommand() string {
-	return ShelloutPack(strings.Join(c.prepareRunCommands(), " && "))
+	return strings.Join(c.prepareRunCommands(), " && ")
 }
 
 func (c *LegacyStageImageContainer) prepareRunCommands() []string {
@@ -123,10 +134,6 @@ func (c *LegacyStageImageContainer) prepareAllRunCommands() []string {
 	commands = append(commands, c.runCommands...)
 
 	return commands
-}
-
-func ShelloutPack(command string) string {
-	return fmt.Sprintf("eval $(echo %s | %s --decode)", base64.StdEncoding.EncodeToString([]byte(command)), stapel.Base64BinPath())
 }
 
 func (c *LegacyStageImageContainer) imageRef(img *LegacyStageImage) string {
@@ -300,7 +307,7 @@ func (c *LegacyStageImageContainer) run(ctx context.Context) error {
 	}
 
 	RegisterRunningContainer(c.name, ctx)
-	err = docker.CliRun_LiveOutput(ctx, runArgs...)
+	err = docker.CliRunWithInput_LiveOutput(ctx, c.prepareRunCommand(), runArgs...)
 	UnregisterRunningContainer(c.name)
 	if err != nil {
 		return fmt.Errorf("container run failed: %w", CliErrorByCode(err))
