@@ -19,11 +19,6 @@
 ### Bug Fixes
 
 * **build, buildah:** stop imports failing on symlinked paths like /bin ([#7763](https://github.com/werf/werf/issues/7763)) ([f38a885](https://github.com/werf/werf/commit/f38a885d6248090bf74cd0426400886c918badf2))
-## [2.77.2](https://github.com/werf/werf/compare/v2.77.1...v2.77.2) (2026-08-31)
-
-
-### Bug Fixes
-
 * **build, stapel:** stop panicking when the base image is gone at commit ([#7819](https://github.com/werf/werf/issues/7819)) ([17f71c5](https://github.com/werf/werf/commit/17f71c55c417567a3b3346c87f88bbd0d284bc01))
 * **build:** ignore a cache repo pointing at the primary repo ([#7820](https://github.com/werf/werf/issues/7820)) ([d02c20c](https://github.com/werf/werf/commit/d02c20cd32cc6613f5fc3ae03d394c2813c7e0a2))
 * **docs:** update shell pattern matching url ([#7813](https://github.com/werf/werf/issues/7813)) ([81cf51d](https://github.com/werf/werf/commit/81cf51d6306a8186746f541d32a48fd9e93d2440))
@@ -39,6 +34,17 @@
 * **cleanup:** add registry-side cleanup report ([#7806](https://github.com/werf/werf/issues/7806)) ([8a6250b](https://github.com/werf/werf/commit/8a6250b3dbd5f4406a38fe4c42630a6244da8f14))
 * **cleanup:** name the --meta-repo address in the cleanup report ([c11fdfb](https://github.com/werf/werf/commit/c11fdfbd8161779d957347a76dab8e216ff9afd6))
 * **deploy:** embed deno binary into werf release binaries behind `embedwerfdeno` ([#7725](https://github.com/werf/werf/issues/7725)) ([468ba22](https://github.com/werf/werf/commit/468ba229e05e7fb104a286386da43e0051da09ed))
+
+## [2.77.2](https://github.com/werf/werf/compare/v2.77.1...v2.77.2) (2026-08-31)
+
+
+### Bug Fixes
+
+* **build, stapel:** stop panicking when the base image is gone at commit ([#7819](https://github.com/werf/werf/issues/7819)) ([17f71c5](https://github.com/werf/werf/commit/17f71c55c417567a3b3346c87f88bbd0d284bc01))
+* **build:** ignore a cache repo pointing at the primary repo ([#7820](https://github.com/werf/werf/issues/7820)) ([d02c20c](https://github.com/werf/werf/commit/d02c20cd32cc6613f5fc3ae03d394c2813c7e0a2))
+* **docs:** update shell pattern matching url ([#7813](https://github.com/werf/werf/issues/7813)) ([81cf51d](https://github.com/werf/werf/commit/81cf51d6306a8186746f541d32a48fd9e93d2440))
+* **host-cleanup:** report the real retention of pruned dangling images ([#7822](https://github.com/werf/werf/issues/7822)) ([958f84c](https://github.com/werf/werf/commit/958f84cd002367fef96df7b0a0cd2ab88f478bde))
+
 ## [2.77.1](https://github.com/werf/werf/compare/v2.77.0...v2.77.1) (2026-08-11)
 
 
