@@ -644,7 +644,7 @@ The envfile report contains a subset of image fields as environment variables. F
 * `WERF_<IMAGE>_WERF_IMAGE_NAME` — original image name in werf
 * `WERF_<IMAGE>_FINAL` — whether the image is [final or intermediate]({{ "/usage/build/images.html#using-intermediate-and-final-images" | true_relative_url }}) (`true`/`false`). Final images are available in Helm chart values, can be tagged with custom tags, published to the final repository, and exported. Intermediate images (`final: false`) are used only as build dependencies
 
-Where `<IMAGE>` is the uppercased image name with `/`, `-`, `.` replaced by `_`.
+Where `<IMAGE>` is the uppercased image name with `/`, `-`, `.`, `+` replaced by `_`.
 
 Example report in envfile format:
 

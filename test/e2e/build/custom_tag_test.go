@@ -10,6 +10,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/samber/lo"
 
+	"github.com/werf/werf/v2/pkg/slug"
 	"github.com/werf/werf/v2/test/pkg/report"
 	"github.com/werf/werf/v2/test/pkg/suite_init"
 	"github.com/werf/werf/v2/test/pkg/werf"
@@ -23,6 +24,46 @@ type customTagTestOptions struct {
 }
 
 var _ = Describe("Custom tag build", Label("e2e", "build", "simple"), func() {
+	Describe("custom tag image name substitutions", func() {
+		const imageName = "libstdc++"
+
+		BeforeEach(func(ctx SpecContext) {
+			setupEnv(setupEnvOptions{
+				ContainerBackendMode:        "docker",
+				WithLocalRepo:               true,
+				WithStagedDockerfileBuilder: false,
+			})
+			SuiteData.InitTestRepo(ctx, "repo-plus", "custom_tag/state_plus")
+		})
+
+		It("rejects the image name in a custom tag", func(ctx SpecContext) {
+			werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath("repo-plus"))
+
+			buildOut := werfProject.Build(ctx, &werf.BuildOptions{CommonOptions: werf.CommonOptions{
+				ShouldFail: true,
+				ExtraArgs:  []string{"--add-custom-tag=%image%"},
+			}})
+
+			Expect(buildOut).To(ContainSubstring(`invalid custom tag "%image%"`))
+			Expect(buildOut).To(ContainSubstring(`"libstdc++" is not a valid docker tag`))
+		})
+
+		It("publishes a tag with the slugged image name", func(ctx SpecContext) {
+			werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath("repo-plus"))
+			reportProject := report.NewProjectWithReport(werfProject)
+
+			buildOut, _ := reportProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath("report-plus.json"), &werf.WithReportOptions{
+				CommonOptions: werf.CommonOptions{
+					ExtraArgs: []string{"--add-custom-tag=%image_slug%"},
+				},
+			})
+
+			expectedTag := slug.Slug(imageName)
+			Expect(buildOut).To(ContainSubstring("Adding custom tags"))
+			Expect(buildOut).To(ContainSubstring(os.Getenv("WERF_REPO") + ":" + expectedTag))
+		})
+	})
+
 	DescribeTable("should build images with custom tags",
 		func(ctx SpecContext, opts customTagTestOptions) {
 			By("initializing")
