@@ -2,6 +2,7 @@ package container_backend
 
 import (
 	"errors"
+	"os"
 	"os/exec"
 	"strings"
 
@@ -30,15 +31,27 @@ var _ = Describe("Legacy stage command transport", func() {
 		Expect(container.prepareRunCommand(ctx)).To(Equal(strings.Join(append(container.prepareBuildTimeEnvExports(ctx), commands...), " && ")))
 		args := container.prepareRunCommandArgs()
 		Expect(args[:3]).To(Equal([]string{"-i", "base", "-ec"}))
+		Expect(args[3]).NotTo(ContainSubstring(stapel.CONTAINER_MOUNT_ROOT), "the script loader must not depend on a binary of the pinned stapel image")
 		for _, arg := range args {
 			Expect(len(arg)).To(BeNumerically("<", 128*1024))
 			Expect(arg).NotTo(ContainSubstring("import-padding"))
 		}
 	})
 
+	It("loads the script with no executable available", func(ctx SpecContext) {
+		args := container.prepareRunCommandArgs()
+		cmd := exec.CommandContext(ctx, "bash", args[2], args[3])
+		cmd.Env = append(os.Environ(), "PATH=")
+		cmd.Stdin = strings.NewReader("printf complete")
+
+		output, err := cmd.CombinedOutput()
+		Expect(err).NotTo(HaveOccurred(), string(output))
+		Expect(string(output)).To(Equal("complete"))
+	})
+
 	DescribeTable("propagates script reader failures before evaluation", func(ctx SpecContext, reader string, exitCode int) {
 		args := container.prepareRunCommandArgs()
-		loader := strings.ReplaceAll(args[3], stapel.CatBinPath(), reader)
+		loader := strings.ReplaceAll(args[3], "</dev/stdin", reader)
 		cmd := exec.CommandContext(ctx, "bash", args[2], loader)
 		cmd.Stdin = strings.NewReader("cat > /dev/null; printf complete")
 		output, err := cmd.Output()
