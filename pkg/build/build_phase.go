@@ -88,12 +88,16 @@ type BuildPhase struct {
 }
 
 func GenerateImageEnv(werfImageName, imageName string) string {
-	formattedName := strings.ToUpper(werfImageName)
-	for _, l := range []string{"/", "-", "."} {
-		formattedName = strings.ReplaceAll(formattedName, l, "_")
+	return fmt.Sprintf("WERF_%s_DOCKER_IMAGE_NAME=%s", normalizeImageEnvName(werfImageName), imageName)
+}
+
+func normalizeImageEnvName(werfImageName string) string {
+	normalizedName := strings.ToUpper(werfImageName)
+	for _, character := range []string{"/", "-", ".", "+"} {
+		normalizedName = strings.ReplaceAll(normalizedName, character, "_")
 	}
 
-	return fmt.Sprintf("WERF_%s_DOCKER_IMAGE_NAME=%s", formattedName, imageName)
+	return normalizedName
 }
 
 func (phase *BuildPhase) Name() string {

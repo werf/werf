@@ -173,12 +173,7 @@ func imageEnvPrefix(werfImageName string) string {
 		return "WERF_"
 	}
 
-	normalizedName := strings.ToUpper(werfImageName)
-	for _, l := range []string{"/", "-", "."} {
-		normalizedName = strings.ReplaceAll(normalizedName, l, "_")
-	}
-
-	return fmt.Sprintf("WERF_%s_", normalizedName)
+	return fmt.Sprintf("WERF_%s_", normalizeImageEnvName(werfImageName))
 }
 
 func (report *ImagesReport) sendTelemetry(ctx context.Context) {
