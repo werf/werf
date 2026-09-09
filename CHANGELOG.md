@@ -35,6 +35,25 @@
 * **cleanup:** name the --meta-repo address in the cleanup report ([c11fdfb](https://github.com/werf/werf/commit/c11fdfbd8161779d957347a76dab8e216ff9afd6))
 * **deploy:** embed deno binary into werf release binaries behind `embedwerfdeno` ([#7725](https://github.com/werf/werf/issues/7725)) ([468ba22](https://github.com/werf/werf/commit/468ba229e05e7fb104a286386da43e0051da09ed))
 
+## [2.78.0](https://github.com/werf/werf/compare/v2.77.2...v2.78.0) (2026-09-09)
+
+
+### Features
+
+* **build:** collect operations statistics without debug logging ([#7833](https://github.com/werf/werf/issues/7833)) ([7c2bf94](https://github.com/werf/werf/commit/7c2bf9473fe6779105004fc337aea1d25a28b304))
+* **build:** support from in image dependencies ([#7837](https://github.com/werf/werf/issues/7837)) ([c5e7925](https://github.com/werf/werf/commit/c5e7925266012d771585ece6662a772e2877cad3))
+
+
+### Bug Fixes
+
+* **build, buildah:** stop "image not known" error in RUN --mount builds ([#7823](https://github.com/werf/werf/issues/7823)) ([7f4c727](https://github.com/werf/werf/commit/7f4c727411eb639fc005873509ad967805620963))
+* **build, buildah:** stop repeating stage output in the final build error ([#7836](https://github.com/werf/werf/issues/7836)) ([15f4c28](https://github.com/werf/werf/commit/15f4c28b948a586ab9d557ef412fa9d59c036d53))
+* **build, stapel:** stop builds failing with many imports ([#7845](https://github.com/werf/werf/issues/7845)) ([2c16409](https://github.com/werf/werf/commit/2c164090d83e46af2d69d503dd1b36c52b9f3007))
+* **build:** stop losing host image locks taken by parallel image builds ([#7826](https://github.com/werf/werf/issues/7826)) ([05e3a94](https://github.com/werf/werf/commit/05e3a94e816119addf73b7ddfa779bf18b81d4bd))
+* **config:** stop werf.yaml loading taking minutes on large image graphs ([#7841](https://github.com/werf/werf/issues/7841)) ([edc44b8](https://github.com/werf/werf/commit/edc44b879693dd68ede063e2cc4d0e0d951af1af))
+* **deploy:** optimize plan building for large releases ([#7839](https://github.com/werf/werf/issues/7839)) ([9202175](https://github.com/werf/werf/commit/920217575fed056e43e04e6d5388efa06f46109e))
+* **deploy:** restore network parallelism when building resource infos ([#7834](https://github.com/werf/werf/issues/7834)) ([f9196d5](https://github.com/werf/werf/commit/f9196d5d6bacb4e837340277505d2e1196410475))
+
 ## [2.77.2](https://github.com/werf/werf/compare/v2.77.1...v2.77.2) (2026-08-31)
 
 
