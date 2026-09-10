@@ -665,12 +665,26 @@ Example report in JSON format (the `Operations` and `StageCache` sections are pr
   },
   "ImagesByPlatform": {},
   "Operations": {
+    "config render": {
+      "Count": 1,
+      "TotalTimeSeconds": 0.213458291,
+      "WallTimeSeconds": 0.213458291,
+      "AvgTimeSeconds": 0.213458291,
+      "MaxTimeSeconds": 0.213458291
+    },
     "docker daemon API": {
       "Count": 31,
       "TotalTimeSeconds": 0.61870432,
       "WallTimeSeconds": 0.549330501,
       "AvgTimeSeconds": 0.019958204,
       "MaxTimeSeconds": 0.112832542
+    },
+    "giterminism init": {
+      "Count": 1,
+      "TotalTimeSeconds": 0.122435459,
+      "WallTimeSeconds": 0.122435459,
+      "AvgTimeSeconds": 0.122435459,
+      "MaxTimeSeconds": 0.122435459
     },
     "local image inspect": {
       "Count": 5,
