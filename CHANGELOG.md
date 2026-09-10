@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.78.2](https://github.com/werf/werf/compare/v2.78.1...v2.78.2) (2026-09-10)
+
+
+### Bug Fixes
+
+* **build, buildah:** stop re-compressing parent layers on stage push ([#7854](https://github.com/werf/werf/issues/7854)) ([9837b10](https://github.com/werf/werf/commit/9837b10a920086ea353d1b112160cffe093ba286))
+
 ## [2.78.1](https://github.com/werf/werf/compare/v2.78.0...v2.78.1) (2026-09-09)
 
 
