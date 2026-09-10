@@ -142,6 +142,8 @@ func NewCmd(ctx context.Context) *cobra.Command {
 }
 
 func runCopy(ctx context.Context, cmdData copyCmdData) error {
+	ctx, logOperationsSummaryFn := common.InitOperationsStatistics(ctx, &commonCmdData)
+	defer logOperationsSummaryFn()
 	commonManager, ctx, err := common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
 		Cmd:                         &commonCmdData,
 		InitWerf:                    true,

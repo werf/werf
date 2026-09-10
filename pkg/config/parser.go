@@ -24,6 +24,7 @@ import (
 	"github.com/werf/nelm/pkg/export/helm/engine"
 	"github.com/werf/werf/v2/pkg/file_manager"
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
+	"github.com/werf/werf/v2/pkg/opstats"
 	"github.com/werf/werf/v2/pkg/slug"
 	"github.com/werf/werf/v2/pkg/tmp_manager"
 )
@@ -79,6 +80,7 @@ func renderSpecificImages(werfConfig *WerfConfig, imageNameList []string) error 
 }
 
 func GetWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfConfigTemplatesDirRelPath, customWerfConfigRenderPath string, giterminismManager giterminism_manager.Interface, opts WerfConfigOptions) (string, *WerfConfig, error) {
+	defer opstats.Observe(ctx, opstats.OperationConfigRender)()
 	var path string
 	var config *WerfConfig
 	err := logboek.Context(ctx).Info().LogProcess("Render werf config").DoError(func() error {

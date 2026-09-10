@@ -29,6 +29,8 @@ const (
 	OperationStageLockWait           Operation = "stage lock wait (storage)"
 	OperationStageDigestLockWait     Operation = "stage lock wait (parallel tasks)"
 	OperationContextAddFiles         Operation = "context add files"
+	OperationConfigRender            Operation = "config render"
+	OperationGiterminismInit         Operation = "giterminism init"
 )
 
 type Event string
