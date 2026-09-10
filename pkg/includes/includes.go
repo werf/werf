@@ -32,6 +32,16 @@ type Include struct {
 	objects map[string]string
 }
 
+// NewInclude builds an include from a repository, a commit hash and a map of destination path to
+// the original path the file has in that repository.
+func NewInclude(repo GitRepository, commitHash string, objects map[string]string) *Include {
+	return &Include{
+		repo:       repo,
+		commitHash: commitHash,
+		objects:    objects,
+	}
+}
+
 func GetWerfIncludesConfigRelPath() string {
 	return defaultIncludesConfigFileName
 }
@@ -161,11 +171,7 @@ func GetIncludes(ctx context.Context, cfg Config, lockInfo *LockInfo, remoteRepo
 					return fmt.Errorf("no files matched for include %s with ref %s", inc.Git, ref)
 				}
 
-				include := &Include{
-					repo:       r.repo,
-					commitHash: commit.Hash.String(),
-					objects:    matchedMap,
-				}
+				include := NewInclude(r.repo, commit.Hash.String(), matchedMap)
 
 				includes = append(includes, include)
 

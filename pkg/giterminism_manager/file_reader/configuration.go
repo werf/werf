@@ -3,32 +3,47 @@ package file_reader
 import (
 	"context"
 	"errors"
+	"fmt"
 	"path/filepath"
+	"strings"
+
+	"github.com/samber/lo"
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/path_matcher"
 )
 
+type WalkConfigurationFilesWithGlobOptions struct {
+	// SkipRelativeToDirPathFunc excludes a path before it is read or checked against the
+	// giterminism config, and excludes a directory along with its whole subtree.
+	SkipRelativeToDirPathFunc func(relativeToDirPath string, isDir bool) bool
+}
+
 // WalkConfigurationFilesWithGlob reads the configuration files taking into account the giterminism config.
 // The result paths are relative to the passed directory, the method does reverse resolving for symlinks.
-func (r FileReader) WalkConfigurationFilesWithGlob(ctx context.Context, dir, glob string, acceptedFilePathMatcher path_matcher.PathMatcher, handleFileFunc func(relativeToDirNotResolvedPath string, data []byte, err error) error) (err error) {
+func (r FileReader) WalkConfigurationFilesWithGlob(ctx context.Context, dir, glob string, acceptedFilePathMatcher path_matcher.PathMatcher, handleFileFunc func(relativeToDirNotResolvedPath string, data []byte, err error) error, opts WalkConfigurationFilesWithGlobOptions) (err error) {
 	logboek.Context(ctx).Debug().
 		LogBlock("WalkConfigurationFilesWithGlob %q %q", dir, glob).
 		Options(applyDebugToLogboek).
 		Do(func() {
-			err = r.walkConfigurationFilesWithGlob(ctx, dir, glob, acceptedFilePathMatcher, handleFileFunc)
+			err = r.walkConfigurationFilesWithGlob(ctx, dir, glob, acceptedFilePathMatcher, handleFileFunc, opts)
 
 			if debug() {
 				logboek.Context(ctx).Debug().LogF("err: %q\n", err)
 			}
 		})
 
-	return
+	return err
 }
 
-func (r FileReader) walkConfigurationFilesWithGlob(ctx context.Context, dir, glob string, acceptedFilePathMatcher path_matcher.PathMatcher, handleFileFunc func(relativeToDirNotResolvedPath string, data []byte, err error) error) (err error) {
-	relToDirFilePathListFromFS, err := r.ListFilesWithGlob(ctx, dir, glob, r.SkipFileFunc(acceptedFilePathMatcher))
+func (r FileReader) walkConfigurationFilesWithGlob(ctx context.Context, dir, glob string, acceptedFilePathMatcher path_matcher.PathMatcher, handleFileFunc func(relativeToDirNotResolvedPath string, data []byte, err error) error, opts WalkConfigurationFilesWithGlobOptions) (err error) {
+	skipFileFunc := r.SkipFileFunc(acceptedFilePathMatcher)
+	if opts.SkipRelativeToDirPathFunc != nil {
+		skipFileFunc = r.skipConfigurationPathFunc(dir, opts.SkipRelativeToDirPathFunc, skipFileFunc)
+	}
+
+	relToDirFilePathListFromFS, err := r.ListFilesWithGlob(ctx, dir, glob, skipFileFunc)
 	if err != nil {
 		return err
 	}
@@ -53,6 +68,14 @@ func (r FileReader) walkConfigurationFilesWithGlob(ctx context.Context, dir, glo
 	}
 
 	relToDirPathList := util.AddNewStringsToStringArray(relToDirFilePathListFromFS, relToDirFilePathListFromCommit...)
+
+	// The commit file list is flat and does not go through skipFileFunc, so it is filtered
+	// separately, and an excluded directory has to be recognized through its children.
+	if opts.SkipRelativeToDirPathFunc != nil {
+		relToDirPathList = lo.Reject(relToDirPathList, func(relToDirPath string, _ int) bool {
+			return skipRelativeToDirPathWithParents(filepath.ToSlash(relToDirPath), opts.SkipRelativeToDirPathFunc)
+		})
+	}
 
 	var relPathListWithUncommittedFiles []string
 	var relPathListWithUntrackedFiles []string
@@ -85,6 +108,46 @@ func (r FileReader) walkConfigurationFilesWithGlob(ctx context.Context, dir, glo
 	}
 
 	return nil
+}
+
+// skipRelativeToDirPathWithParents applies the skip predicate to a file path and to each of its
+// parent directories, which is how a directory exclusion reaches the files under it in a flat list.
+func skipRelativeToDirPathWithParents(relativeToDirPath string, skipRelativeToDirPathFunc func(relativeToDirPath string, isDir bool) bool) bool {
+	if skipRelativeToDirPathFunc(relativeToDirPath, false) {
+		return true
+	}
+
+	parts := strings.Split(relativeToDirPath, "/")
+	for i := 1; i < len(parts); i++ {
+		if skipRelativeToDirPathFunc(strings.Join(parts[:i], "/"), true) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// skipConfigurationPathFunc adapts a directory-relative skip predicate to the project-relative
+// paths the walk operates on, so an excluded directory is skipped along with its whole subtree.
+// The predicate gets the path with the symlink parts kept, because that is the name the file has
+// inside the walked directory: matching the resolved path instead would silently stop excluding
+// anything as soon as the directory is reached through a symlink.
+func (r FileReader) skipConfigurationPathFunc(dir string, skipRelativeToDirPathFunc func(relativeToDirPath string, isDir bool) bool, skipFileFunc skipPathFunc) skipPathFunc {
+	return func(ctx context.Context, r FileReader, existingRelPath, notResolvedRelPath string) (bool, error) {
+		relativeToDirPath := filepath.ToSlash(util.GetRelativeToBaseFilepath(dir, notResolvedRelPath))
+		if relativeToDirPath != "" && relativeToDirPath != "." && !strings.HasPrefix(relativeToDirPath, "../") {
+			isDir, err := r.IsDirectoryExist(ctx, existingRelPath)
+			if err != nil {
+				return false, fmt.Errorf("check %q is a directory: %w", filepath.ToSlash(existingRelPath), err)
+			}
+
+			if skipRelativeToDirPathFunc(relativeToDirPath, isDir) {
+				return true, nil
+			}
+		}
+
+		return skipFileFunc(ctx, r, existingRelPath, notResolvedRelPath)
+	}
 }
 
 // ReadAndCheckConfigurationFile does CheckConfigurationFileExistenceAndAcceptance and ReadConfigurationFile.

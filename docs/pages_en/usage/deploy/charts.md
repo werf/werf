@@ -123,7 +123,7 @@ Here:
 
 - `LICENSE` — the chart license;
 
-- `.helmignore` — a list of files in the chart directory not to be included in the chart when publishing.
+- `.helmignore` — a list of files in the chart directory not to be included in the chart. Helm's default rules apply as well, so dotfiles directly under `templates/` are excluded even without a `.helmignore`.
 
 ## Including additional charts
 
