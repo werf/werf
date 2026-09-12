@@ -605,7 +605,7 @@ The JSON report contains detailed information about the build:
 
 * **ImagesByPlatform** — per-platform breakdown for multiarch builds. This field is populated only when the `WERF_ENABLE_REPORT_BY_PLATFORM=1` environment variable is set. The record structure is the same as in `Images`, but the data is grouped by image name and platform.
 
-* **Operations** — aggregated timings of low-level build operations (stage build, image pull/push, registry API calls, git operations, stage lock waits and so on). Populated only when the `--build-report-operations` flag (`$WERF_BUILD_REPORT_OPERATIONS`) is set or debug logging is enabled (`--log-debug`). For each operation: the number of calls (`Count`), summed duration across parallel workers (`TotalTimeSeconds`), wall-clock duration as the union of possibly overlapping intervals (`WallTimeSeconds`), average (`AvgTimeSeconds`) and maximum (`MaxTimeSeconds`) durations.
+* **Operations** — aggregated timings of low-level operations collected for the whole command run (stage build, image pull/push, registry API calls, git operations, werf config render, giterminism initialization, stage lock waits and so on). Populated only when the `--build-report-operations` flag (`$WERF_BUILD_REPORT_OPERATIONS`) is set or debug logging is enabled (`--log-debug`). For each operation: the number of calls (`Count`), summed duration across parallel workers (`TotalTimeSeconds`), wall-clock duration as the union of possibly overlapping intervals (`WallTimeSeconds`), average (`AvgTimeSeconds`) and maximum (`MaxTimeSeconds`) durations.
 
 * **StageCache** — per-source counters of how stages were satisfied during the build: found in the local or repo stages storage, copied from a secondary storage, or built. Populated only when the `--build-report-operations` flag (`$WERF_BUILD_REPORT_OPERATIONS`) is set or debug logging is enabled (`--log-debug`).
 
@@ -665,12 +665,26 @@ Example report in JSON format (the `Operations` and `StageCache` sections are pr
   },
   "ImagesByPlatform": {},
   "Operations": {
+    "config render": {
+      "Count": 1,
+      "TotalTimeSeconds": 0.213458291,
+      "WallTimeSeconds": 0.213458291,
+      "AvgTimeSeconds": 0.213458291,
+      "MaxTimeSeconds": 0.213458291
+    },
     "docker daemon API": {
       "Count": 31,
       "TotalTimeSeconds": 0.61870432,
       "WallTimeSeconds": 0.549330501,
       "AvgTimeSeconds": 0.019958204,
       "MaxTimeSeconds": 0.112832542
+    },
+    "giterminism init": {
+      "Count": 1,
+      "TotalTimeSeconds": 0.122435459,
+      "WallTimeSeconds": 0.122435459,
+      "AvgTimeSeconds": 0.122435459,
+      "MaxTimeSeconds": 0.122435459
     },
     "local image inspect": {
       "Count": 5,
