@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.78.3](https://github.com/werf/werf/compare/v2.78.2...v2.78.3) (2026-09-12)
+
+
+### Bug Fixes
+
+* **deploy:** report the inaccessible events feed through the nelm logger ([#7857](https://github.com/werf/werf/issues/7857)) ([8faf82a](https://github.com/werf/werf/commit/8faf82a0198ef3e463ba2e6756f74ccb156f4448))
+
 ## [2.78.2](https://github.com/werf/werf/compare/v2.78.1...v2.78.2) (2026-09-10)
 
 
