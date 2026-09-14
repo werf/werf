@@ -1,0 +1,20 @@
+{%- assign schema_url = site.site_urls.en | append: site.canonical_url_prefix | append: "/schemas/" | append: include.schema -%}
+## JSON Schema
+
+The format of `{{ include.file }}` is published as a JSON Schema at [{{ schema_url }}]({{ schema_url }}). Editors that support JSON Schema for YAML use it for completion, hover documentation and validation.
+
+In VS Code with the [YAML extension](https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml), add to `.vscode/settings.json`:
+
+```json
+{
+  "yaml.schemas": {
+    "{{ schema_url }}": [{{ include.file_match }}]
+  }
+}
+```
+
+Alternatively, point to the schema from the file itself:
+
+```yaml
+# yaml-language-server: $schema={{ schema_url }}
+```
