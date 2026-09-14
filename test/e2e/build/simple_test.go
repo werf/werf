@@ -1,11 +1,14 @@
 package e2e_build_test
 
 import (
+	"strings"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	"github.com/werf/werf/v2/test/pkg/contback"
 	"github.com/werf/werf/v2/test/pkg/report"
+	"github.com/werf/werf/v2/test/pkg/utils"
 	"github.com/werf/werf/v2/test/pkg/werf"
 )
 
@@ -40,6 +43,10 @@ var _ = Describe("Simple build", Label("e2e", "build", "simple"), func() {
 				buildOut, buildReport := reportProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), nil)
 				Expect(buildOut).To(ContainSubstring("Building stage"))
 				Expect(buildOut).NotTo(ContainSubstring("Use previously built image"))
+
+				By("state0: checking build report runtime")
+				versionOut, _ := utils.RunCommandWithOptions(ctx, "", SuiteData.WerfBinPath, []string{"version"}, utils.RunCommandOptions{ShouldSucceed: true, NoStderr: true})
+				Expect(buildReport.Runtime.WerfVersion).To(Equal(strings.TrimSpace(string(versionOut))))
 
 				By("state0: rebuilding same images")
 				Expect(werfProject.Build(ctx, nil)).To(And(
