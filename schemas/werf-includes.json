@@ -1,0 +1,95 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "werf-includes.yaml",
+  "description": "werf includes configuration: remote git repositories whose files are imported into the project configuration. Resolved commits are pinned in werf-includes.lock.\nhttps://werf.io/docs/v2/reference/werf_includes_yaml.html",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["includes"],
+  "properties": {
+    "includes": {
+      "description": "Configuration of remote git repositories for import.",
+      "type": "array",
+      "items": { "$ref": "#/definitions/include" }
+    }
+  },
+  "definitions": {
+    "include": {
+      "description": "A remote repository to import files from. Exactly one of `branch`, `tag` or `commit` must be set.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["git", "add", "to"],
+      "properties": {
+        "git": {
+          "description": "The address of the remote repository.\nhttps://werf.io/docs/v2/usage/build/stapel/git.html#working-with-remote-repositories",
+          "type": "string",
+          "minLength": 1
+        },
+        "basicAuth": {
+          "description": "Basic authentication for the remote repository.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["username", "password"],
+          "properties": {
+            "username": {
+              "description": "Username.",
+              "type": "string",
+              "minLength": 1
+            },
+            "password": {
+              "description": "Password source. Exactly one of `env`, `src` or `value` must be set.",
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "env": { "description": "Environment variable name.", "type": "string" },
+                "src": { "description": "File path.", "type": "string" },
+                "value": { "description": "Custom string value.", "type": "string" }
+              },
+              "oneOf": [
+                { "required": ["env"] },
+                { "required": ["src"] },
+                { "required": ["value"] }
+              ]
+            }
+          }
+        },
+        "branch": {
+          "description": "The name of the branch to import files from. Incompatible with `tag` and `commit`.",
+          "type": "string"
+        },
+        "tag": {
+          "description": "The name of the tag to import files from. Incompatible with `branch` and `commit`.",
+          "type": "string"
+        },
+        "commit": {
+          "description": "The commit hash to import files from. Incompatible with `branch` and `tag`.",
+          "type": "string"
+        },
+        "add": {
+          "description": "The directory in the remote repository to import files from. An absolute path relative to the repository root.",
+          "type": "string",
+          "pattern": "^/"
+        },
+        "to": {
+          "description": "The directory in the local repository to import files to. An absolute path relative to the repository root.",
+          "type": "string",
+          "pattern": "^/"
+        },
+        "includePaths": {
+          "description": "Globs of files in the remote repository to import, relative to `add`. All files are imported when omitted.",
+          "type": "array",
+          "items": { "type": "string", "pattern": "^[^/]" }
+        },
+        "excludePaths": {
+          "description": "Globs of files in the remote repository to exclude from import, relative to `add`.",
+          "type": "array",
+          "items": { "type": "string", "pattern": "^[^/]" }
+        }
+      },
+      "oneOf": [
+        { "required": ["branch"] },
+        { "required": ["tag"] },
+        { "required": ["commit"] }
+      ]
+    }
+  }
+}
