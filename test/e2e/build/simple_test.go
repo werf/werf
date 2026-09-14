@@ -45,7 +45,8 @@ var _ = Describe("Simple build", Label("e2e", "build", "simple"), func() {
 				Expect(buildOut).NotTo(ContainSubstring("Use previously built image"))
 
 				By("state0: checking build report runtime")
-				versionOut, _ := utils.RunCommandWithOptions(ctx, "", SuiteData.WerfBinPath, []string{"version"}, utils.RunCommandOptions{ShouldSucceed: true, NoStderr: true})
+				versionOut, err := utils.RunCommandWithOptions(ctx, "", SuiteData.WerfBinPath, []string{"version"}, utils.RunCommandOptions{ShouldSucceed: true, NoStderr: true})
+				Expect(err).NotTo(HaveOccurred())
 				Expect(buildReport.Runtime.WerfVersion).To(Equal(strings.TrimSpace(string(versionOut))))
 
 				By("state0: rebuilding same images")
