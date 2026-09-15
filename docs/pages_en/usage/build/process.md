@@ -580,6 +580,7 @@ The `--save-build-report` flag is supported by all commands that perform a build
 The JSON report contains detailed information about the build:
 
 * **Runtime** — build runtime information:
+  * werf version that produced the report (`WerfVersion`)
   * Selected container backend (`Backend`: `docker` or `buildah`)
   * Whether werf is running inside a container (`InContainer`).
 
@@ -614,6 +615,7 @@ Example report in JSON format (the `Operations` and `StageCache` sections are pr
 ```json
 {
   "Runtime": {
+    "WerfVersion": "v2.76.0",
     "Backend": "docker",
     "InContainer": false
   },
