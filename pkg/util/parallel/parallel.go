@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
+	"sync/atomic"
 
 	"golang.org/x/sync/errgroup"
 
@@ -33,7 +35,7 @@ func DoTasks(ctx context.Context, numberOfTasks int, options DoTasksOptions, tas
 
 	numberOfWorkers, numberOfTasksPerWorker := calculateTasksDistribution(numberOfTasks, options.MaxNumberOfWorkers)
 
-	return runWorkers(ctx, numberOfWorkers, options, func(workerCtx context.Context, worker *Worker) error {
+	return runWorkers(ctx, numberOfWorkers, options, taskFunc, func(workerCtx context.Context, worker *Worker, runTask func(taskId int) error) error {
 		for workerTaskId := 0; workerTaskId < numberOfTasksPerWorker[worker.ID]; workerTaskId++ {
 			select {
 			case <-workerCtx.Done():
@@ -43,7 +45,7 @@ func DoTasks(ctx context.Context, numberOfTasks int, options DoTasksOptions, tas
 				taskId := calculateTaskId(numberOfTasks, numberOfWorkers, worker.ID, workerTaskId)
 				logboek.Context(ctx).Debug().LogF("parallel: running worker %d with ctx %p for task %d/%d (%d)\n", worker.ID, workerCtx, workerTaskId, numberOfTasksPerWorker[worker.ID], numberOfTasks)
 
-				if err := taskFunc(workerCtx, taskId); err != nil {
+				if err := runTask(taskId); err != nil {
 					return NewWorkerError(worker.ID, err)
 				}
 			}
@@ -74,7 +76,7 @@ func DoTasksDynamic(ctx context.Context, options DoTasksOptions, next NextTaskFu
 
 	logboek.Context(ctx).Debug().LogF("parallel: initializing dynamic scheduler with %d workers\n", numberOfWorkers)
 
-	return runWorkers(ctx, numberOfWorkers, options, func(workerCtx context.Context, worker *Worker) error {
+	return runWorkers(ctx, numberOfWorkers, options, taskFunc, func(workerCtx context.Context, worker *Worker, runTask func(taskId int) error) error {
 		for {
 			select {
 			case <-workerCtx.Done():
@@ -93,19 +95,23 @@ func DoTasksDynamic(ctx context.Context, options DoTasksOptions, next NextTaskFu
 
 			logboek.Context(ctx).Debug().LogF("parallel: running worker %d with ctx %p for task %d\n", worker.ID, workerCtx, taskId)
 
-			if err := taskFunc(workerCtx, taskId); err != nil {
+			if err := runTask(taskId); err != nil {
 				return NewWorkerError(worker.ID, err)
 			}
 		}
 	})
 }
 
-func runWorkers(ctx context.Context, numberOfWorkers int, options DoTasksOptions, workerLoop func(workerCtx context.Context, worker *Worker) error) error {
+// runWorkers hands each workerLoop a runTask that binds the task's output to
+// its own TaskOutput and registers it with the Printer, so the loops only
+// decide WHICH task to run next.
+func runWorkers(ctx context.Context, numberOfWorkers int, options DoTasksOptions, taskFunc TaskFunc, workerLoop func(workerCtx context.Context, worker *Worker, runTask func(taskId int) error) error) error {
 	groupParentCtx, cancelGroupParentCtx := context.WithCancel(ctx)
 	defer cancelGroupParentCtx()
 
 	g, groupCtx := errgroup.WithContext(groupParentCtx)
 
+	printer := NewPrinter()
 	workers := make([]*Worker, 0, numberOfWorkers)
 	workerCtxs := make([]context.Context, 0, numberOfWorkers)
 
@@ -123,16 +129,14 @@ func runWorkers(ctx context.Context, numberOfWorkers int, options DoTasksOptions
 	// All workers and their contexts are created before any goroutine starts,
 	// so an initialization failure returns with nothing spawned.
 	for i := 0; i < numberOfWorkers; i++ {
-		worker, err := NewWorker(i)
-		if err != nil {
-			return fmt.Errorf("failed to create worker %d: %w", i, err)
-		}
+		worker := NewWorker(i)
 		workers = append(workers, worker)
 
 		taskIDCtx := context.WithValue(groupCtx, CtxBackgroundTaskIDKey, worker.ID)
 		workerCtx := logboek.NewContext(taskIDCtx, logging.NewSubLogger(taskIDCtx, worker, worker))
 
 		if options.InitDockerCLIForEachWorker {
+			var err error
 			if workerCtx, err = docker.NewContext(workerCtx); err != nil {
 				return err
 			}
@@ -141,21 +145,58 @@ func runWorkers(ctx context.Context, numberOfWorkers int, options DoTasksOptions
 		workerCtxs = append(workerCtxs, workerCtx)
 	}
 
+	var runningWorkers atomic.Int32
+	runningWorkers.Store(int32(numberOfWorkers))
+	if numberOfWorkers == 0 {
+		printer.Close()
+	}
+
+	// A worker may only look for its first task once the previous worker has
+	// started (or given up on) its own: the initial burst of tasks then starts
+	// in worker order, which makes the printing order and the start-order
+	// indices deterministic instead of depending on goroutine scheduling.
+	firstTaskStarted := make([]chan struct{}, numberOfWorkers)
+	for i := range firstTaskStarted {
+		firstTaskStarted[i] = make(chan struct{})
+	}
+
 	for i, worker := range workers {
 		workerCtx := workerCtxs[i]
 
 		g.Go(func() error {
+			var releaseOnce sync.Once
+			release := func() { releaseOnce.Do(func() { close(firstTaskStarted[i]) }) }
+
 			defer func() {
-				if err := worker.HalfClose(); err != nil {
-					logboek.Context(ctx).Warn().LogF("parallel: failed to half-close worker %d: %s\n", worker.ID, err)
+				release()
+				worker.endTask()
+				if runningWorkers.Add(-1) == 0 {
+					printer.Close()
 				}
 			}()
 
-			return workerLoop(workerCtx, worker)
+			if i > 0 {
+				select {
+				case <-firstTaskStarted[i-1]:
+				case <-workerCtx.Done():
+					return workerCtx.Err()
+				}
+			}
+
+			return workerLoop(workerCtx, worker, func(taskId int) error {
+				out, err := worker.beginTask()
+				if err != nil {
+					return fmt.Errorf("begin task %d: %w", taskId, err)
+				}
+				defer out.HalfClose()
+
+				startOrder := printer.Enqueue(out)
+				release()
+
+				return taskFunc(context.WithValue(workerCtx, CtxTaskStartOrderKey, startOrder), taskId)
+			})
 		})
 	}
-
-	printer := NewPrinter(workers)
 
 	g.Go(func() error {
 		return printer.Print(groupCtx)
@@ -164,24 +205,16 @@ func runWorkers(ctx context.Context, numberOfWorkers int, options DoTasksOptions
 	if err := g.Wait(); err != nil {
 		// There are two cases how to continue printing:
 		// 1. Receiving the system signal (SIGINT / SIGTERM). We detect it by checking "context canceled" error.
-		// 	- We continue to print starting from 'foreground' worker through the rest workers without any changes.
-		// 2. Getting an error from a worker. We detect it by checking non "context canceled" error.
-		//	- If 'foreground' worker IS NOT THE SAME worker which returned the error,
-		//	  we move errored worker to the end of the printing queue (to highlight the error to the user)
-		//    and we continue to print starting from 'foreground' through the rest workers.
-		//  - If 'foreground' worker IS THE SAME worker which returned the error,
-		// 	  we continue to print starting from 'foreground' (errored) worker,
-		//    and we discard logs from the rest workers.
+		// 	- We continue to print the queue as is.
+		// 2. Getting an error from a task. We detect it by checking non "context canceled" error.
+		//	- The failed task is moved to the end of the printing queue (to highlight the error to the user),
+		//	  unless it is the one being printed right now — then the tasks queued behind it are discarded.
 
 		if !isCanceledErr(err) {
 			var workerErr *WorkerError
 
 			if errors.As(err, &workerErr) {
-				if printer.Cur() != workerErr.ID {
-					printer.Swap(printer.Max(), workerErr.ID) // move filed worker to the end of the printing queue
-				} else {
-					printer.SetMax(printer.Cur()) // discard logs from the rest workers
-				}
+				printer.FailFast(workers[workerErr.ID].Output())
 			}
 		}
 

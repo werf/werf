@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"runtime"
+	"slices"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -63,7 +65,8 @@ var _ = DescribeTable("parallel task",
 		HaveExactElements([]string{}),
 	),
 	Entry(
-		"should print log concurrently while long task execution",
+		"should print log concurrently while long task execution, one block per task in start order: "+
+			"[0 {worker 0}, 2 {worker 1}, 1 {worker 0, started while 2 was still running}, 3 {worker 1}]",
 		time.Duration(0),
 		4,
 		parallel.DoTasksOptions{
@@ -92,24 +95,25 @@ var _ = DescribeTable("parallel task",
 		Or(
 			HaveExactElements([]string{
 				"one\n",
-				"two\n",
 				"\nthree\nfour\n",
-				"five\n",
+				"\ntwo\n",
+				"\nfive\n",
 			}),
 			HaveExactElements([]string{
 				"one\n",
-				"two\n", "\nthree\n",
+				"\nthree\n",
 				"four\n",
-				"five\n",
+				"\ntwo\n",
+				"\nfive\n",
 			}),
 		),
 	),
 	Entry(
 		"should handle error from one of workers (fail fast), "+
 			"stop execution via context cancellation for other workers, "+
-			"move failed background worker in the end of the printing queue (highlighted), "+
-			"resume printing logs starting from non-failed foreground worker up to the last worker in the printing queue: "+
-			"[0 {non-failed,foreground,paused,resumed}, 3, 2, 1 {failed,background,highlighted}]",
+			"move failed background task to the end of the printing queue (highlighted), "+
+			"resume printing logs starting from non-failed foreground task through the rest in start order: "+
+			"[0 {non-failed,foreground,paused,resumed}, 2, 3, 1 {failed,background,highlighted}]",
 		time.Duration(0),
 		4,
 		parallel.DoTasksOptions{
@@ -144,15 +148,15 @@ var _ = DescribeTable("parallel task",
 		Or(
 			HaveExactElements([]string{
 				"workers[0], task[0]: is a foreground non-failed worker (1/2)\nworkers[0], task[0]: is a foreground non-failed worker (2/2)\n",
-				"\nworkers[3], task[3]: is a background non-failed worker (1/1)\n",
 				"\nworkers[2], task[2]: is a background non-failed worker (1/1)\n",
+				"\nworkers[3], task[3]: is a background non-failed worker (1/1)\n",
 				"\nworkers[1], task[1]: is a background failed worker (1/1)\n",
 			}),
 			HaveExactElements([]string{
 				"workers[0], task[0]: is a foreground non-failed worker (1/2)\n",
 				"workers[0], task[0]: is a foreground non-failed worker (2/2)\n",
-				"\nworkers[3], task[3]: is a background non-failed worker (1/1)\n",
 				"\nworkers[2], task[2]: is a background non-failed worker (1/1)\n",
+				"\nworkers[3], task[3]: is a background non-failed worker (1/1)\n",
 				"\nworkers[1], task[1]: is a background failed worker (1/1)\n",
 			}),
 		),
@@ -340,6 +344,7 @@ func (s *spyTaskFunc) Count() int {
 }
 
 type spyOutput struct {
+	mu            sync.Mutex
 	buf           *bytes.Buffer
 	trackedWrites []string
 }
@@ -352,10 +357,23 @@ func newSpyOutput(trackedCap int) *spyOutput {
 }
 
 func (s *spyOutput) Write(p []byte) (n int, err error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	s.trackedWrites = append(s.trackedWrites, string(p))
 	return s.buf.Write(p)
 }
 
 func (s *spyOutput) Lines() []string {
-	return s.trackedWrites
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	return slices.Clone(s.trackedWrites)
+}
+
+func (s *spyOutput) String() string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	return s.buf.String()
 }

@@ -61,7 +61,7 @@ func (p *recordingPhase) Report() *ImagesReport { return nil }
 // fast a -> b -> c chain. It asserts b/c build right after their real
 // dependency finishes instead of waiting for the unrelated slow image.
 func TestDoImagesInParallel_DependentImageDoesNotWaitForUnrelatedSlowImage(t *testing.T) {
-	require.NoError(t, werf.Init(t.TempDir(), "")) // tmp_manager (used by parallel.NewWorker) requires werf init
+	require.NoError(t, werf.Init(t.TempDir(), "")) // tmp_manager (used by parallel.NewTaskOutput) requires werf init
 
 	newImg := func(name string) *image.Image {
 		img := &image.Image{Name: name, TargetPlatform: "linux/amd64"}
