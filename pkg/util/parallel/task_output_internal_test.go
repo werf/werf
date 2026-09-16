@@ -113,3 +113,28 @@ var _ = Describe("TaskOutput descriptor lifecycle", func() {
 		expectClosed(reader, "reader")
 	})
 })
+
+var _ = DescribeTable("TaskOutput.HalfClose leaves the output on a line boundary",
+	func(writes []string, expected string) {
+		Expect(werf.Init(GinkgoT().TempDir(), "")).To(Succeed())
+
+		out, err := NewTaskOutput(0, 0)
+		Expect(err).To(Succeed())
+		defer func() {
+			Expect(out.Cleanup()).To(Succeed())
+		}()
+
+		for _, w := range writes {
+			_, err = out.Write([]byte(w))
+			Expect(err).To(Succeed())
+		}
+		Expect(out.HalfClose()).To(Succeed())
+
+		content, err := io.ReadAll(out)
+		Expect(err).To(Succeed())
+		Expect(string(content)).To(Equal(expected))
+	},
+	Entry("nothing written stays empty", nil, ""),
+	Entry("a terminated line is left alone", []string{"a\n"}, "a\n"),
+	Entry("a line written after the logger was flushed, right before half-close, is terminated", []string{"a\n", "late"}, "a\nlate\n"),
+)

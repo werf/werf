@@ -121,7 +121,9 @@ var _ = Describe("TaskOutput.Read UTF-8 boundary safety", func() {
 			Expect(readErr).To(Or(Succeed(), MatchError(io.EOF)))
 		}
 
-		Expect(result.String()).To(Equal("└"))
+		// HalfClose terminates the unfinished line; the rune itself must
+		// arrive intact in front of that newline.
+		Expect(result.String()).To(Equal("└\n"))
 
 		Expect(out.Cleanup()).To(Succeed())
 	})

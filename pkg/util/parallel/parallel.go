@@ -12,7 +12,6 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/werf/logboek"
-	"github.com/werf/logboek/pkg/types"
 	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/logging"
 )
@@ -204,11 +203,17 @@ func runWorkers(ctx context.Context, numberOfWorkers int, options DoTasksOptions
 
 				taskCtx := context.WithValue(workerCtx, CtxTaskStartOrderKey, startOrder)
 				taskLogger := logging.NewSubLogger(taskCtx, out, out)
+				// Cloning subtracts the indentation again; the template already
+				// paid it once, so the task logger gets the template's width back.
+				taskLogger.Streams().SetWidth(logboek.Context(workerCtx).Streams().Width())
 				taskCtx = logboek.NewContext(taskCtx, taskLogger)
 				worker.bindTaskStreams(taskLogger.OutStream(), taskLogger.ErrStream())
 
 				defer func() {
-					terminateTaskOutput(taskLogger, out)
+					// logboek holds an incomplete line back until the next write;
+					// LogF("") is that write, so the line reaches the buffer before
+					// HalfClose terminates it.
+					taskLogger.LogF("")
 					if err := worker.endTask(); err != nil {
 						logboek.Context(ctx).Warn().LogF("parallel: failed to half-close task %d output: %s\n", taskId, err)
 					}
@@ -245,18 +250,6 @@ func runWorkers(ctx context.Context, numberOfWorkers int, options DoTasksOptions
 	}
 
 	return nil
-}
-
-// terminateTaskOutput makes the task's block end on a line boundary: it
-// flushes a line the logger is still holding back (logboek caches an
-// incomplete line until the next write, and there is no next write in this
-// task) and terminates it, so the printer never glues the next block onto
-// this task's last line.
-func terminateTaskOutput(taskLogger types.LoggerInterface, out *TaskOutput) {
-	taskLogger.LogF("")
-	if !out.endsOnLineBoundary() {
-		taskLogger.LogLn()
-	}
 }
 
 func calculateTaskId(tasksNumber, workersNumber, workerInd, workerTaskId int) int {

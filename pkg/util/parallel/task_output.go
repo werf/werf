@@ -48,15 +48,6 @@ func (o *TaskOutput) Write(p []byte) (int, error) {
 	return n, err
 }
 
-// endsOnLineBoundary reports whether the next write would start a new line:
-// nothing was written yet, or the last byte was a newline.
-func (o *TaskOutput) endsOnLineBoundary() bool {
-	o.mutex.Lock()
-	defer o.mutex.Unlock()
-
-	return o.writeOffset == 0 || o.lastByte == '\n'
-}
-
 // Read implements io.Reader.
 // It resumes reading from "total read offset" and reads until EOF, where EOF is handled with os.File.
 //
@@ -151,6 +142,11 @@ func utf8SequenceLen(c byte) int {
 
 // HalfClose stops accepting writes and releases the writer descriptor;
 // later writes are silently dropped. Calling it again is a no-op.
+//
+// If the last byte written is not a newline, one is appended first, under
+// the same lock that stops further writes: the block always ends on a line
+// boundary, however late the last write came in, so the printer can never
+// glue the next block onto it.
 func (o *TaskOutput) HalfClose() error {
 	o.mutex.Lock()
 	defer o.mutex.Unlock()
@@ -159,13 +155,25 @@ func (o *TaskOutput) HalfClose() error {
 		return nil
 	}
 
-	err := o.writer.Close()
-	o.writer = nil
-	if err != nil {
-		return fmt.Errorf("close task output writer %q: %w", o.path, err)
+	var errs []error
+	if o.writeOffset > 0 && o.lastByte != '\n' {
+		n, err := o.writer.Write([]byte{'\n'})
+		o.writeOffset += int64(n)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("terminate task output %q: %w", o.path, err))
+		}
 	}
 
-	return o.releaseDrainedReader()
+	if err := o.writer.Close(); err != nil {
+		errs = append(errs, fmt.Errorf("close task output writer %q: %w", o.path, err))
+	}
+	o.writer = nil
+
+	if err := o.releaseDrainedReader(); err != nil {
+		errs = append(errs, err)
+	}
+
+	return errors.Join(errs...)
 }
 
 // Readable returns true while there is (or may still come) something to read.

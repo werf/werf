@@ -119,3 +119,31 @@ var _ = Describe("worker-level stream relay", func() {
 		Entry("stderr", func(worker *Worker) io.Writer { return worker.ErrStream() }),
 	)
 })
+
+var _ = It("task loggers keep the width a directly derived sub-logger would have had", func() {
+	// Task loggers are cloned from a per-worker template that was itself
+	// cloned from the caller's logger; each clone subtracts the caller's
+	// indentation from the width, so without correction a task logger would
+	// wrap two indents early.
+	Expect(werf.Init(GinkgoT().TempDir(), "")).To(Succeed())
+
+	sink := &lockedBuffer{}
+	parent := logboek.NewLogger(sink, sink)
+	parent.Streams().SetWidth(80)
+	ctx := logboek.NewContext(context.Background(), parent)
+
+	var taskWidth int
+	parent.Streams().DoWithIndent(func() {
+		expected := parent.Streams().ContentWidth()
+		Expect(expected).To(BeNumerically("<", 80), "the indent must actually cost width for this test to mean anything")
+
+		err := runWorkers(ctx, 1, DoTasksOptions{}, func(ctx context.Context, taskId int) error {
+			taskWidth = logboek.Context(ctx).Streams().Width()
+			return nil
+		}, func(workerCtx context.Context, worker *Worker, runTask func(taskId int) error) error {
+			return runTask(0)
+		})
+		Expect(err).To(Succeed())
+		Expect(taskWidth).To(Equal(expected))
+	})
+})
