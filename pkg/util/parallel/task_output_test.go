@@ -27,7 +27,7 @@ var _ = DescribeTable(
 		reader := bytes.NewReader(data)
 
 		if doHalfClose {
-			out.HalfClose()
+			Expect(out.HalfClose()).To(Succeed())
 		}
 
 		if doClose {

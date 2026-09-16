@@ -212,7 +212,7 @@ var _ = Describe("DoTasksDynamic", func() {
 
 		err := parallel.DoTasksDynamic(ctx, parallel.DoTasksOptions{MaxNumberOfWorkers: 3}, next, func(ctx context.Context, taskId int) error {
 			mu.Lock()
-			startOrder[taskId] = ctx.Value(parallel.CtxTaskStartOrderKey).(int)
+			startOrder[taskId] = parallel.TaskStartOrder(ctx)
 			mu.Unlock()
 
 			switch taskId {

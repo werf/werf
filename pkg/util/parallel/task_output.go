@@ -1,10 +1,10 @@
 package parallel
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"sync"
-	"sync/atomic"
 	"unicode/utf8"
 
 	"github.com/werf/werf/v2/pkg/tmp_manager"
@@ -13,18 +13,20 @@ import (
 // TaskOutput buffers the log of a single task in a temp file so it can be
 // written by the task and read by the Printer concurrently.
 //
-// To be concurrently safe, writer and reader rely on the same file object:
-// - the writer appends data only;
-// - the reader reads already appended data (or nothing).
-// Because of that, no race condition happens while accessing file data.
+// The writer appends only and the reader reads already appended data (or
+// nothing), so they never race on file content. The writer descriptor is
+// closed at HalfClose and the reader descriptor is opened on first Read and
+// closed once everything is drained: a finished task waiting to be printed
+// holds no descriptor, which keeps the count of open files bounded by the
+// number of workers rather than the number of tasks.
 type TaskOutput struct {
-	readOffset  atomic.Int64
-	writeOffset atomic.Int64
+	mutex sync.Mutex
 
-	mutex      sync.Mutex
-	halfClosed atomic.Bool
-
-	file *os.File
+	path        string
+	writer      *os.File // nil once half-closed
+	reader      *os.File // open only while being drained
+	readOffset  int64
+	writeOffset int64
 }
 
 // Write implements io.Writer.
@@ -33,17 +35,16 @@ func (o *TaskOutput) Write(p []byte) (int, error) {
 	o.mutex.Lock()
 	defer o.mutex.Unlock()
 
-	if o.halfClosed.Load() {
+	if o.writer == nil {
 		return len(p), nil
 	}
 
-	offset, err := o.file.Write(p)
-	o.writeOffset.Add(int64(offset))
-	return offset, err
+	n, err := o.writer.Write(p)
+	o.writeOffset += int64(n)
+	return n, err
 }
 
 // Read implements io.Reader.
-// It reads a file and accumulates total read offset.
 // It resumes reading from "total read offset" and reads until EOF, where EOF is handled with os.File.
 //
 // A trailing incomplete UTF-8 sequence is held back and returned on the next
@@ -54,10 +55,20 @@ func (o *TaskOutput) Write(p []byte) (int, error) {
 // logger converts each half independently into a replacement character,
 // producing visible mojibake in the terminal.
 func (o *TaskOutput) Read(p []byte) (int, error) {
-	readOffset := o.readOffset.Load()
-	n, err := o.file.ReadAt(p, readOffset)
+	o.mutex.Lock()
+	defer o.mutex.Unlock()
 
-	atEnd := o.halfClosed.Load() && readOffset+int64(n) >= o.writeOffset.Load()
+	if o.reader == nil {
+		reader, err := os.Open(o.path)
+		if err != nil {
+			return 0, fmt.Errorf("open task output for reading: %w", err)
+		}
+		o.reader = reader
+	}
+
+	n, err := o.reader.ReadAt(p, o.readOffset)
+
+	atEnd := o.writer == nil && o.readOffset+int64(n) >= o.writeOffset
 	if !atEnd {
 		if complete := completeUTF8Len(p[:n]); complete > 0 && complete < n {
 			n = complete
@@ -65,7 +76,15 @@ func (o *TaskOutput) Read(p []byte) (int, error) {
 		}
 	}
 
-	o.readOffset.Add(int64(n))
+	o.readOffset += int64(n)
+
+	if atEnd {
+		if closeErr := o.reader.Close(); closeErr != nil {
+			err = errors.Join(err, fmt.Errorf("close task output reader: %w", closeErr))
+		}
+		o.reader = nil
+	}
+
 	return n, err
 }
 
@@ -104,45 +123,65 @@ func utf8SequenceLen(c byte) int {
 	}
 }
 
-// HalfClose stops accepting writes; later writes are silently dropped.
-// Calling it on an already half-closed output is a no-op.
-func (o *TaskOutput) HalfClose() {
+// HalfClose stops accepting writes and releases the writer descriptor;
+// later writes are silently dropped. Calling it again is a no-op.
+func (o *TaskOutput) HalfClose() error {
 	o.mutex.Lock()
 	defer o.mutex.Unlock()
 
-	o.halfClosed.Store(true)
+	if o.writer == nil {
+		return nil
+	}
+
+	err := o.writer.Close()
+	o.writer = nil
+	if err != nil {
+		return fmt.Errorf("close task output writer %q: %w", o.path, err)
+	}
+	return nil
 }
 
 // Readable returns true while there is (or may still come) something to read.
 func (o *TaskOutput) Readable() bool {
-	if !o.halfClosed.Load() {
-		return true
-	}
-	return o.readOffset.Load() < o.writeOffset.Load()
-}
-
-// Close implements io.Closer closing tmp file.
-// It ensures that the output is half closed.
-func (o *TaskOutput) Close() error {
 	o.mutex.Lock()
 	defer o.mutex.Unlock()
 
-	o.halfClosed.Store(true)
+	return o.writer != nil || o.readOffset < o.writeOffset
+}
 
-	if err := o.file.Close(); err != nil {
-		return fmt.Errorf("close tmp file %q: %w", o.file.Name(), err)
+// Close implements io.Closer: it half-closes the output and releases the
+// reader descriptor if a drain was interrupted.
+func (o *TaskOutput) Close() error {
+	if err := o.HalfClose(); err != nil {
+		return err
+	}
+
+	o.mutex.Lock()
+	defer o.mutex.Unlock()
+
+	if o.reader == nil {
+		return nil
+	}
+
+	err := o.reader.Close()
+	o.reader = nil
+	if err != nil {
+		return fmt.Errorf("close task output reader %q: %w", o.path, err)
 	}
 	return nil
 }
 
 // Cleanup removes tmp file
 func (o *TaskOutput) Cleanup() error {
-	if !o.halfClosed.Load() {
-		return fmt.Errorf("task output %q is not half closed yet", o.file.Name())
+	o.mutex.Lock()
+	defer o.mutex.Unlock()
+
+	if o.writer != nil {
+		return fmt.Errorf("task output %q is not half closed yet", o.path)
 	}
 
-	if err := os.Remove(o.file.Name()); err != nil {
-		return fmt.Errorf("remove tmp file %q: %w", o.file.Name(), err)
+	if err := os.Remove(o.path); err != nil {
+		return fmt.Errorf("remove tmp file %q: %w", o.path, err)
 	}
 	return nil
 }
@@ -154,6 +193,7 @@ func NewTaskOutput(workerID, taskSeq int) (*TaskOutput, error) {
 	}
 
 	return &TaskOutput{
-		file: file,
+		path:   file.Name(),
+		writer: file,
 	}, nil
 }

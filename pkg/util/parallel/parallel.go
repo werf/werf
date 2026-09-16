@@ -102,9 +102,11 @@ func DoTasksDynamic(ctx context.Context, options DoTasksOptions, next NextTaskFu
 	})
 }
 
-// runWorkers hands each workerLoop a runTask that binds the task's output to
+// runWorkers hands each workerLoop a runTask that binds the task's logger to
 // its own TaskOutput and registers it with the Printer, so the loops only
-// decide WHICH task to run next.
+// decide WHICH task to run next. The worker context carries the worker ID
+// and, when requested, a docker cli whose output follows the worker's
+// current task (see Worker).
 func runWorkers(ctx context.Context, numberOfWorkers int, options DoTasksOptions, taskFunc TaskFunc, workerLoop func(workerCtx context.Context, worker *Worker, runTask func(taskId int) error) error) error {
 	groupParentCtx, cancelGroupParentCtx := context.WithCancel(ctx)
 	defer cancelGroupParentCtx()
@@ -169,7 +171,9 @@ func runWorkers(ctx context.Context, numberOfWorkers int, options DoTasksOptions
 
 			defer func() {
 				release()
-				worker.endTask()
+				if err := worker.endTask(); err != nil {
+					logboek.Context(ctx).Warn().LogF("parallel: failed to half-close worker %d output: %s\n", worker.ID, err)
+				}
 				if runningWorkers.Add(-1) == 0 {
 					printer.Close()
 				}
@@ -188,12 +192,19 @@ func runWorkers(ctx context.Context, numberOfWorkers int, options DoTasksOptions
 				if err != nil {
 					return fmt.Errorf("begin task %d: %w", taskId, err)
 				}
-				defer out.HalfClose()
+				defer func() {
+					if err := out.HalfClose(); err != nil {
+						logboek.Context(ctx).Warn().LogF("parallel: failed to half-close task %d output: %s\n", taskId, err)
+					}
+				}()
 
 				startOrder := printer.Enqueue(out)
 				release()
 
-				return taskFunc(context.WithValue(workerCtx, CtxTaskStartOrderKey, startOrder), taskId)
+				taskCtx := context.WithValue(workerCtx, CtxTaskStartOrderKey, startOrder)
+				taskCtx = logboek.NewContext(taskCtx, logging.NewSubLogger(taskCtx, out, out))
+
+				return taskFunc(taskCtx, taskId)
 			})
 		})
 	}

@@ -323,6 +323,43 @@ var _ = It("does not panic when a task writes after completion", func() {
 	Expect(output.Lines()).NotTo(ContainElement(ContainSubstring("late output")))
 })
 
+var _ = It("drops a finished task's late output instead of leaking it into the next task's block on the same worker", func() {
+	output := newSpyOutput(4)
+	ctx := logboek.NewContext(context.Background(), logboek.NewLogger(output, output))
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	bStarted := make(chan struct{})
+	lateWritten := make(chan struct{})
+
+	Expect(werf.Init(GinkgoT().TempDir(), "")).To(Succeed())
+
+	err := parallel.DoTasks(ctx, 2, parallel.DoTasksOptions{MaxNumberOfWorkers: 1}, func(ctx context.Context, taskId int) error {
+		switch taskId {
+		case 0:
+			logboek.Context(ctx).LogLn("a")
+			go func() {
+				defer GinkgoRecover()
+				defer close(lateWritten)
+				<-bStarted
+				logboek.Context(ctx).LogLn("late output from task A")
+			}()
+			return nil
+		case 1:
+			logboek.Context(ctx).LogLn("b-start")
+			close(bStarted)
+			<-lateWritten
+			logboek.Context(ctx).LogLn("b-end")
+			return nil
+		default:
+			return fmt.Errorf("unexpected task %d", taskId)
+		}
+	})
+	Expect(err).To(Succeed())
+
+	Expect(output.String()).To(Equal("a\n\nb-start\nb-end\n"))
+})
+
 type spyTaskFunc struct {
 	callsCount atomic.Int32 // prevent race condition
 	callback   parallel.TaskFunc

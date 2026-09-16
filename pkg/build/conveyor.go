@@ -851,7 +851,7 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 		MaxNumberOfWorkers:         numberOfWorkers,
 	}, scheduler.next, func(ctx context.Context, taskId int) error {
 		taskImage := nodes[taskId]
-		taskImage.SetBuildOrderIndex(ctx.Value(parallel.CtxTaskStartOrderKey).(int))
+		taskImage.SetBuildOrderIndex(parallel.TaskStartOrder(ctx))
 		if workerID, ok := ctx.Value(parallel.CtxBackgroundTaskIDKey).(int); ok {
 			taskImage.SetWorkerID(workerID)
 		}

@@ -52,7 +52,7 @@ var _ = Describe("TaskOutput.Read UTF-8 boundary safety", func() {
 		_, err = sink.Write(readBuf[:n])
 		Expect(err).To(Succeed())
 
-		out.HalfClose()
+		Expect(out.HalfClose()).To(Succeed())
 
 		for out.Readable() {
 			n, readErr = out.Read(readBuf)
@@ -82,7 +82,7 @@ var _ = Describe("TaskOutput.Read UTF-8 boundary safety", func() {
 		line := strings.Repeat("a", 1019) + "│ └ done\n"
 		_, err = out.Write([]byte(line))
 		Expect(err).To(Succeed())
-		out.HalfClose()
+		Expect(out.HalfClose()).To(Succeed())
 
 		sink := &runeSplittingWriter{}
 		readBuf := make([]byte, 1024)
@@ -109,7 +109,7 @@ var _ = Describe("TaskOutput.Read UTF-8 boundary safety", func() {
 
 		_, err = out.Write([]byte("└"))
 		Expect(err).To(Succeed())
-		out.HalfClose()
+		Expect(out.HalfClose()).To(Succeed())
 
 		var result bytes.Buffer
 		readBuf := make([]byte, 2)

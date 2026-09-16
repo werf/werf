@@ -7,11 +7,14 @@ import (
 	"sync"
 )
 
-// Worker is the io.Writer a worker's sub-logger is bound to for the whole
-// run. It forwards every write to the TaskOutput of the task the worker is
-// running right now, so the logger and the docker cli attached to the
-// worker context are created once while each task still gets its own
-// buffer. Outside a task, writes are dropped.
+// Worker owns the TaskOutputs of the tasks it ran and is the io.Writer the
+// worker-level docker cli is bound to: the cli is created once per worker
+// (a client per task would leak a connection pool per task), and it only
+// writes synchronously from inside the task that invoked it, so forwarding
+// to the current TaskOutput is exact. Task loggers do NOT go through here —
+// each is bound to its own TaskOutput, so a goroutine that outlives its
+// task and keeps logging through the old context is dropped instead of
+// leaking into the next task's block. Outside a task, writes are dropped.
 type Worker struct {
 	ID int
 
@@ -61,10 +64,13 @@ func (w *Worker) beginTask() (*TaskOutput, error) {
 }
 
 // endTask stops accepting output of the current task.
-func (w *Worker) endTask() {
-	if out := w.Output(); out != nil {
-		out.HalfClose()
+func (w *Worker) endTask() error {
+	out := w.Output()
+	if out == nil {
+		return nil
 	}
+
+	return out.HalfClose()
 }
 
 // Close closes the tmp files of every task the worker ran.
