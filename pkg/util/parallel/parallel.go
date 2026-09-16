@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -11,6 +12,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/werf/logboek"
+	"github.com/werf/logboek/pkg/types"
 	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/logging"
 )
@@ -129,12 +131,17 @@ func runWorkers(ctx context.Context, numberOfWorkers int, options DoTasksOptions
 	}()
 
 	// All workers and their contexts are created before any goroutine starts,
-	// so an initialization failure returns with nothing spawned.
+	// so an initialization failure returns with nothing spawned. The worker
+	// context carries a template logger that nothing ever writes to: task
+	// loggers are cloned from it, because cloning reads the parent's stream
+	// state and the caller's logger is being written to by the printer for
+	// the whole run.
 	for i := 0; i < numberOfWorkers; i++ {
 		worker := NewWorker(i)
 		workers = append(workers, worker)
 
 		workerCtx := context.WithValue(groupCtx, CtxBackgroundTaskIDKey, worker.ID)
+		workerCtx = logboek.NewContext(workerCtx, logging.NewSubLogger(workerCtx, io.Discard, io.Discard))
 
 		if options.InitDockerCLIForEachWorker {
 			var err error
@@ -153,9 +160,9 @@ func runWorkers(ctx context.Context, numberOfWorkers int, options DoTasksOptions
 	}
 
 	// A worker may only look for its first task once the previous worker has
-	// started (or given up on) its own: the initial burst of tasks then starts
-	// in worker order, which makes the printing order and the start-order
-	// indices deterministic instead of depending on goroutine scheduling.
+	// started (or given up on) its own, so the first task of each worker is
+	// enqueued in worker order rather than in goroutine-scheduling order.
+	// Everything after a worker's first task is ordered by real start time.
 	firstTaskStarted := make([]chan struct{}, numberOfWorkers)
 	for i := range firstTaskStarted {
 		firstTaskStarted[i] = make(chan struct{})
@@ -191,11 +198,6 @@ func runWorkers(ctx context.Context, numberOfWorkers int, options DoTasksOptions
 				if err != nil {
 					return fmt.Errorf("begin task %d: %w", taskId, err)
 				}
-				defer func() {
-					if err := worker.endTask(); err != nil {
-						logboek.Context(ctx).Warn().LogF("parallel: failed to half-close task %d output: %s\n", taskId, err)
-					}
-				}()
 
 				startOrder := printer.Enqueue(out)
 				release()
@@ -204,6 +206,13 @@ func runWorkers(ctx context.Context, numberOfWorkers int, options DoTasksOptions
 				taskLogger := logging.NewSubLogger(taskCtx, out, out)
 				taskCtx = logboek.NewContext(taskCtx, taskLogger)
 				worker.bindTaskStreams(taskLogger.OutStream(), taskLogger.ErrStream())
+
+				defer func() {
+					terminateTaskOutput(taskLogger, out)
+					if err := worker.endTask(); err != nil {
+						logboek.Context(ctx).Warn().LogF("parallel: failed to half-close task %d output: %s\n", taskId, err)
+					}
+				}()
 
 				return taskFunc(taskCtx, taskId)
 			})
@@ -236,6 +245,18 @@ func runWorkers(ctx context.Context, numberOfWorkers int, options DoTasksOptions
 	}
 
 	return nil
+}
+
+// terminateTaskOutput makes the task's block end on a line boundary: it
+// flushes a line the logger is still holding back (logboek caches an
+// incomplete line until the next write, and there is no next write in this
+// task) and terminates it, so the printer never glues the next block onto
+// this task's last line.
+func terminateTaskOutput(taskLogger types.LoggerInterface, out *TaskOutput) {
+	taskLogger.LogF("")
+	if !out.endsOnLineBoundary() {
+		taskLogger.LogLn()
+	}
 }
 
 func calculateTaskId(tasksNumber, workersNumber, workerInd, workerTaskId int) int {

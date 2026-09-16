@@ -27,6 +27,7 @@ type TaskOutput struct {
 	reader      *os.File // open only while being drained
 	readOffset  int64
 	writeOffset int64
+	lastByte    byte
 }
 
 // Write implements io.Writer.
@@ -41,7 +42,19 @@ func (o *TaskOutput) Write(p []byte) (int, error) {
 
 	n, err := o.writer.Write(p)
 	o.writeOffset += int64(n)
+	if n > 0 {
+		o.lastByte = p[n-1]
+	}
 	return n, err
+}
+
+// endsOnLineBoundary reports whether the next write would start a new line:
+// nothing was written yet, or the last byte was a newline.
+func (o *TaskOutput) endsOnLineBoundary() bool {
+	o.mutex.Lock()
+	defer o.mutex.Unlock()
+
+	return o.writeOffset == 0 || o.lastByte == '\n'
 }
 
 // Read implements io.Reader.

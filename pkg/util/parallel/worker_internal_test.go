@@ -80,4 +80,42 @@ var _ = Describe("worker-level stream relay", func() {
 		Expect(found).To(BeTrue())
 		Expect(aBlock).To(ContainSubstring("A partial"), "an unterminated line the cli left in A is rendered inside A's own block (logboek flushes it with the block end), never in B")
 	})
+
+	DescribeTable("terminates a line the cli left unfinished at the end of a task, outside any log block",
+		func(pick func(worker *Worker) io.Writer) {
+			Expect(werf.Init(GinkgoT().TempDir(), "")).To(Succeed())
+
+			sink := &lockedBuffer{}
+			ctx := logboek.NewContext(context.Background(), logboek.NewLogger(sink, sink))
+
+			var cli io.Writer
+			taskFunc := func(ctx context.Context, taskId int) error {
+				switch taskId {
+				case 0:
+					_, err := cli.Write([]byte("A partial"))
+					return err
+				case 1:
+					_, err := cli.Write([]byte("B line\n"))
+					return err
+				default:
+					return fmt.Errorf("unexpected task %d", taskId)
+				}
+			}
+
+			err := runWorkers(ctx, 1, DoTasksOptions{}, taskFunc, func(workerCtx context.Context, worker *Worker, runTask func(taskId int) error) error {
+				cli = pick(worker)
+				for taskId := 0; taskId < 2; taskId++ {
+					if err := runTask(taskId); err != nil {
+						return err
+					}
+				}
+				return nil
+			})
+			Expect(err).To(Succeed())
+
+			Expect(sink.String()).To(Equal("A partial\n\nB line\n"), "the unfinished line is emitted with A, on its own line, and B starts fresh")
+		},
+		Entry("stdout", func(worker *Worker) io.Writer { return worker.OutStream() }),
+		Entry("stderr", func(worker *Worker) io.Writer { return worker.ErrStream() }),
+	)
 })
