@@ -105,8 +105,8 @@ func DoTasksDynamic(ctx context.Context, options DoTasksOptions, next NextTaskFu
 // runWorkers hands each workerLoop a runTask that binds the task's logger to
 // its own TaskOutput and registers it with the Printer, so the loops only
 // decide WHICH task to run next. The worker context carries the worker ID
-// and, when requested, a docker cli whose output follows the worker's
-// current task (see Worker).
+// and, when requested, a docker cli whose output is relayed to the logger
+// of the worker's current task (see Worker).
 func runWorkers(ctx context.Context, numberOfWorkers int, options DoTasksOptions, taskFunc TaskFunc, workerLoop func(workerCtx context.Context, worker *Worker, runTask func(taskId int) error) error) error {
 	groupParentCtx, cancelGroupParentCtx := context.WithCancel(ctx)
 	defer cancelGroupParentCtx()
@@ -134,12 +134,11 @@ func runWorkers(ctx context.Context, numberOfWorkers int, options DoTasksOptions
 		worker := NewWorker(i)
 		workers = append(workers, worker)
 
-		taskIDCtx := context.WithValue(groupCtx, CtxBackgroundTaskIDKey, worker.ID)
-		workerCtx := logboek.NewContext(taskIDCtx, logging.NewSubLogger(taskIDCtx, worker, worker))
+		workerCtx := context.WithValue(groupCtx, CtxBackgroundTaskIDKey, worker.ID)
 
 		if options.InitDockerCLIForEachWorker {
 			var err error
-			if workerCtx, err = docker.NewContext(workerCtx); err != nil {
+			if workerCtx, err = docker.NewContextWithStreams(workerCtx, worker.OutStream(), worker.ErrStream()); err != nil {
 				return err
 			}
 		}
@@ -193,7 +192,7 @@ func runWorkers(ctx context.Context, numberOfWorkers int, options DoTasksOptions
 					return fmt.Errorf("begin task %d: %w", taskId, err)
 				}
 				defer func() {
-					if err := out.HalfClose(); err != nil {
+					if err := worker.endTask(); err != nil {
 						logboek.Context(ctx).Warn().LogF("parallel: failed to half-close task %d output: %s\n", taskId, err)
 					}
 				}()
@@ -202,7 +201,9 @@ func runWorkers(ctx context.Context, numberOfWorkers int, options DoTasksOptions
 				release()
 
 				taskCtx := context.WithValue(workerCtx, CtxTaskStartOrderKey, startOrder)
-				taskCtx = logboek.NewContext(taskCtx, logging.NewSubLogger(taskCtx, out, out))
+				taskLogger := logging.NewSubLogger(taskCtx, out, out)
+				taskCtx = logboek.NewContext(taskCtx, taskLogger)
+				worker.bindTaskStreams(taskLogger.OutStream(), taskLogger.ErrStream())
 
 				return taskFunc(taskCtx, taskId)
 			})

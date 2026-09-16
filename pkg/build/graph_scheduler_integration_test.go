@@ -10,24 +10,32 @@ import (
 
 	"github.com/werf/werf/v2/pkg/build/image"
 	"github.com/werf/werf/v2/pkg/build/stage"
+	"github.com/werf/werf/v2/pkg/util/parallel"
 	"github.com/werf/werf/v2/pkg/werf"
 )
 
 // recordingPhase is a minimal Phase implementation that records, for each
 // image it processes, the image's name (after an optional artificial delay)
-// into a shared, mutex-protected order slice. It lets a test observe the
-// actual build ORDER produced by Conveyor.doImages/doImagesInParallel without
-// needing a real container backend.
+// into a shared, mutex-protected order slice, and the start-order position
+// the parallel printer assigned to the image's task. It lets a test observe
+// the actual build ORDER produced by Conveyor.doImages/doImagesInParallel
+// without needing a real container backend.
 type recordingPhase struct {
-	mu     *sync.Mutex
-	order  *[]string
-	delays map[string]time.Duration
+	mu          *sync.Mutex
+	order       *[]string
+	startOrders map[string]int
+	delays      map[string]time.Duration
 }
 
 func (p *recordingPhase) Name() string                       { return "recording" }
 func (p *recordingPhase) BeforeImages(context.Context) error { return nil }
 func (p *recordingPhase) AfterImages(context.Context) error  { return nil }
-func (p *recordingPhase) BeforeImageStages(context.Context, *image.Image) (func(), error) {
+func (p *recordingPhase) BeforeImageStages(ctx context.Context, img *image.Image) (func(), error) {
+	if p.startOrders != nil {
+		p.mu.Lock()
+		p.startOrders[img.Name] = parallel.TaskStartOrder(ctx)
+		p.mu.Unlock()
+	}
 	return nil, nil
 }
 
@@ -199,8 +207,9 @@ func TestDoImagesInParallel_AssignsBuildOrderIndexByRealDequeueNotStaticTopology
 	var mu sync.Mutex
 	var order []string
 	phase := &recordingPhase{
-		mu:    &mu,
-		order: &order,
+		mu:          &mu,
+		order:       &order,
+		startOrders: map[string]int{},
 		delays: map[string]time.Duration{
 			"slow": 10 * time.Millisecond,
 			"a":    10 * time.Millisecond,
@@ -225,6 +234,12 @@ func TestDoImagesInParallel_AssignsBuildOrderIndexByRealDequeueNotStaticTopology
 			t.Fatalf("build-order index %d assigned to both %q and %q", idx, other, img.Name)
 		}
 		seen[idx] = img.Name
+
+		// The printer emits image blocks in the order their tasks were
+		// enqueued, so the log index must be that very position — any other
+		// numbering source can drift from what the log shows.
+		require.Equal(t, phase.startOrders[img.Name], idx,
+			"image %q log index must be the parallel printer's start-order position", img.Name)
 	}
 
 	require.Less(t, a.GetBuildOrderIndex(), b.GetBuildOrderIndex(), "a must be assigned a build-order index before its dependent b")

@@ -78,14 +78,27 @@ func (o *TaskOutput) Read(p []byte) (int, error) {
 
 	o.readOffset += int64(n)
 
-	if atEnd {
-		if closeErr := o.reader.Close(); closeErr != nil {
-			err = errors.Join(err, fmt.Errorf("close task output reader: %w", closeErr))
-		}
-		o.reader = nil
+	if closeErr := o.releaseDrainedReader(); closeErr != nil {
+		err = errors.Join(err, closeErr)
 	}
 
 	return n, err
+}
+
+// releaseDrainedReader closes the reader once nothing more can come: the
+// writer is gone and every byte has been read. Whichever of Read or
+// HalfClose completes the drain triggers it. Caller holds o.mutex.
+func (o *TaskOutput) releaseDrainedReader() error {
+	if o.reader == nil || o.writer != nil || o.readOffset < o.writeOffset {
+		return nil
+	}
+
+	err := o.reader.Close()
+	o.reader = nil
+	if err != nil {
+		return fmt.Errorf("close task output reader %q: %w", o.path, err)
+	}
+	return nil
 }
 
 // completeUTF8Len returns the length of the longest prefix of b that does not
@@ -138,7 +151,8 @@ func (o *TaskOutput) HalfClose() error {
 	if err != nil {
 		return fmt.Errorf("close task output writer %q: %w", o.path, err)
 	}
-	return nil
+
+	return o.releaseDrainedReader()
 }
 
 // Readable returns true while there is (or may still come) something to read.

@@ -5,42 +5,56 @@ import (
 	"fmt"
 	"io"
 	"sync"
+
+	"github.com/samber/lo"
 )
 
-// Worker owns the TaskOutputs of the tasks it ran and is the io.Writer the
-// worker-level docker cli is bound to: the cli is created once per worker
-// (a client per task would leak a connection pool per task), and it only
-// writes synchronously from inside the task that invoked it, so forwarding
-// to the current TaskOutput is exact. Task loggers do NOT go through here —
-// each is bound to its own TaskOutput, so a goroutine that outlives its
-// task and keeps logging through the old context is dropped instead of
-// leaking into the next task's block. Outside a task, writes are dropped.
+// Worker owns the TaskOutputs of the tasks it ran and relays the output of
+// the worker-level docker cli to the logger of the task running right now.
+// The cli is created once per worker (a client per task would leak a
+// connection pool per task) and writes only synchronously from inside the
+// task that invoked it, so relaying to the current task's logger streams is
+// exact and its output gets the same indentation and block boundaries as
+// the task's own log lines. Outside a task, relayed writes are dropped.
 type Worker struct {
 	ID int
 
 	mu      sync.Mutex
 	current *TaskOutput
 	outputs []*TaskOutput
+	taskOut io.Writer
+	taskErr io.Writer
 }
-
-var _ io.Writer = (*Worker)(nil)
 
 func NewWorker(id int) *Worker {
 	return &Worker{ID: id}
 }
 
-// Write implements io.Writer.
-func (w *Worker) Write(p []byte) (int, error) {
-	out := w.Output()
-	if out == nil {
+// OutStream and ErrStream are what the worker's docker cli is bound to.
+func (w *Worker) OutStream() io.Writer { return streamRelay{worker: w, err: false} }
+func (w *Worker) ErrStream() io.Writer { return streamRelay{worker: w, err: true} }
+
+type streamRelay struct {
+	worker *Worker
+	err    bool
+}
+
+var _ io.Writer = streamRelay{}
+
+func (r streamRelay) Write(p []byte) (int, error) {
+	r.worker.mu.Lock()
+	target := lo.Ternary(r.err, r.worker.taskErr, r.worker.taskOut)
+	r.worker.mu.Unlock()
+
+	if target == nil {
 		return len(p), nil
 	}
 
-	return out.Write(p)
+	return target.Write(p)
 }
 
-// Output returns the TaskOutput the worker writes to right now, nil outside
-// a task.
+// Output returns the TaskOutput of the task the worker runs right now, nil
+// outside a task.
 func (w *Worker) Output() *TaskOutput {
 	w.mu.Lock()
 	defer w.mu.Unlock()
@@ -48,7 +62,7 @@ func (w *Worker) Output() *TaskOutput {
 	return w.current
 }
 
-// beginTask switches writes to a fresh buffer for the task about to run.
+// beginTask creates the buffer for the task about to run.
 func (w *Worker) beginTask() (*TaskOutput, error) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
@@ -63,9 +77,24 @@ func (w *Worker) beginTask() (*TaskOutput, error) {
 	return out, nil
 }
 
-// endTask stops accepting output of the current task.
+// bindTaskStreams points the docker cli relay at the task logger's streams.
+func (w *Worker) bindTaskStreams(outStream, errStream io.Writer) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	w.taskOut = outStream
+	w.taskErr = errStream
+}
+
+// endTask detaches the docker cli relay and stops accepting output of the
+// current task.
 func (w *Worker) endTask() error {
-	out := w.Output()
+	w.mu.Lock()
+	w.taskOut = nil
+	w.taskErr = nil
+	out := w.current
+	w.mu.Unlock()
+
 	if out == nil {
 		return nil
 	}
