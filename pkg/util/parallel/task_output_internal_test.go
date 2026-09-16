@@ -149,37 +149,50 @@ var _ = It("TaskOutput.HalfClose keeps the line boundary against a writer racing
 	Expect(werf.Init(GinkgoT().TempDir(), "")).To(Succeed())
 
 	for i := 0; i < 200; i++ {
-		out, err := NewTaskOutput(0, i)
-		Expect(err).To(Succeed())
-
-		stop := make(chan struct{})
-		done := make(chan struct{})
-		go func() {
-			defer GinkgoRecover()
-			defer close(done)
-			for {
-				select {
-				case <-stop:
-					return
-				default:
-					_, err := out.Write([]byte("x"))
-					Expect(err).To(Succeed())
-				}
-			}
-		}()
-
-		_, err = out.Write([]byte("a"))
-		Expect(err).To(Succeed())
-		runtime.Gosched()
-		Expect(out.HalfClose()).To(Succeed())
-
-		close(stop)
-		<-done
-
-		content, err := io.ReadAll(out)
-		Expect(err).To(Succeed())
-		Expect(string(content)).To(HaveSuffix("\n"), "iteration %d: a write slipped in between the terminator and the close", i)
-		Expect(strings.Count(string(content), "\n")).To(Equal(1), "iteration %d: exactly one terminator", i)
-		Expect(out.Cleanup()).To(Succeed())
+		halfCloseAgainstRacingWriter(i)
 	}
 })
+
+// halfCloseAgainstRacingWriter is one iteration of the race above; the
+// writer goroutine is joined and the buffer released in defers, so a failed
+// assertion does not leave a goroutine writing into a file nobody removes.
+func halfCloseAgainstRacingWriter(iteration int) {
+	GinkgoHelper()
+
+	out, err := NewTaskOutput(0, iteration)
+	Expect(err).To(Succeed())
+	defer func() {
+		Expect(out.Close()).To(Succeed())
+		Expect(out.Cleanup()).To(Succeed())
+	}()
+
+	stop := make(chan struct{})
+	done := make(chan struct{})
+	go func() {
+		defer GinkgoRecover()
+		defer close(done)
+		for {
+			select {
+			case <-stop:
+				return
+			default:
+				_, err := out.Write([]byte("x"))
+				Expect(err).To(Succeed())
+			}
+		}
+	}()
+	defer func() {
+		close(stop)
+		<-done
+	}()
+
+	_, err = out.Write([]byte("a"))
+	Expect(err).To(Succeed())
+	runtime.Gosched()
+	Expect(out.HalfClose()).To(Succeed())
+
+	content, err := io.ReadAll(out)
+	Expect(err).To(Succeed())
+	Expect(string(content)).To(HaveSuffix("\n"), "iteration %d: a write slipped in between the terminator and the close", iteration)
+	Expect(strings.Count(string(content), "\n")).To(Equal(1), "iteration %d: exactly one terminator", iteration)
+}
