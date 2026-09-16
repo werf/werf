@@ -3,6 +3,8 @@ package parallel
 import (
 	"io"
 	"os"
+	"runtime"
+	"strings"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -138,3 +140,46 @@ var _ = DescribeTable("TaskOutput.HalfClose leaves the output on a line boundary
 	Entry("a terminated line is left alone", []string{"a\n"}, "a\n"),
 	Entry("a line written after the logger was flushed, right before half-close, is terminated", []string{"a\n", "late"}, "a\nlate\n"),
 )
+
+var _ = It("TaskOutput.HalfClose keeps the line boundary against a writer racing with it", func() {
+	// Terminating the last line and stopping writes must happen in one
+	// critical section: a write that lands between the two would follow the
+	// terminator and leave the block unfinished again. A goroutine hammering
+	// Write while HalfClose runs would slip into any gap in that section.
+	Expect(werf.Init(GinkgoT().TempDir(), "")).To(Succeed())
+
+	for i := 0; i < 200; i++ {
+		out, err := NewTaskOutput(0, i)
+		Expect(err).To(Succeed())
+
+		stop := make(chan struct{})
+		done := make(chan struct{})
+		go func() {
+			defer GinkgoRecover()
+			defer close(done)
+			for {
+				select {
+				case <-stop:
+					return
+				default:
+					_, err := out.Write([]byte("x"))
+					Expect(err).To(Succeed())
+				}
+			}
+		}()
+
+		_, err = out.Write([]byte("a"))
+		Expect(err).To(Succeed())
+		runtime.Gosched()
+		Expect(out.HalfClose()).To(Succeed())
+
+		close(stop)
+		<-done
+
+		content, err := io.ReadAll(out)
+		Expect(err).To(Succeed())
+		Expect(string(content)).To(HaveSuffix("\n"), "iteration %d: a write slipped in between the terminator and the close", i)
+		Expect(strings.Count(string(content), "\n")).To(Equal(1), "iteration %d: exactly one terminator", i)
+		Expect(out.Cleanup()).To(Succeed())
+	}
+})
