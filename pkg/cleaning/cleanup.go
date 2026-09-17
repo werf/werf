@@ -1098,17 +1098,14 @@ outerLoop:
 }
 
 func (m *cleanupManager) cleanupFinalStages(ctx context.Context) error {
-	// Skip stages from the final repo that are not exist in the repo.
-	// Note: we cannot make difference between repo and final because they have different stage descriptions.
 FilterOutFinalStages:
 	for finalStageDesc := range m.stageManager.GetFinalStageDescSet().Iter() {
 		for stageDesc := range m.stageManager.GetStageDescSet().Iter() {
 			if stageDesc.StageID.IsEqual(*finalStageDesc.StageID) {
+				m.stageManager.MarkFinalStageDescAsProtected(finalStageDesc, stage_manager.ProtectionReasonFoundInRepo, false)
 				continue FilterOutFinalStages
 			}
 		}
-
-		m.stageManager.MarkFinalStageDescAsProtected(finalStageDesc, stage_manager.ProtectionReasonNotFoundInRepo, false)
 	}
 
 	for reason, finalStageDescSetToKeep := range m.stageManager.GetFinalProtectedStageDescSetByReason() {

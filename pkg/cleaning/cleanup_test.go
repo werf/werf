@@ -3,9 +3,12 @@ package cleaning
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 	"testing"
 
+	"github.com/onsi/ginkgo/v2"
+	"github.com/onsi/gomega"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -65,8 +68,9 @@ type fakeStorageManager struct {
 
 	importMetadataErrs map[string]error
 
-	stageDescSet      image.StageDescSet
-	finalStageDescSet image.StageDescSet
+	stageDescSet       image.StageDescSet
+	finalStageDescSet  image.StageDescSet
+	deletedFinalStages []*image.StageDesc
 }
 
 func newFakeStorageManager() *fakeStorageManager {
@@ -408,31 +412,63 @@ func (f *fakeStorageManager) GetFinalStageDescSet(_ context.Context) (image.Stag
 	return f.finalStageDescSet, nil
 }
 
-func TestCleanupFinalStages_ReportRecordsKeptFinalStageWithReason(t *testing.T) {
-	ctx := context.Background()
-
-	finalStageDesc := &image.StageDesc{
-		StageID: image.NewStageID("ff0011", 1748001122334),
-		Info:    &image.Info{Tag: "ff0011-1748001122334"},
-	}
-
-	sm := newFakeStorageManager()
-	sm.finalStageDescSet = image.NewStageDescSet(finalStageDesc)
-	sm.stageDescSet = image.NewStageDescSet()
-
-	stageManager := stage_manager.NewManager()
-	require.NoError(t, stageManager.InitStageDescSet(ctx, sm))
-	require.NoError(t, stageManager.InitFinalStageDescSet(ctx, sm))
-
-	report := newTestReport()
-	m := &cleanupManager{stageManager: stageManager, StorageManager: sm, report: report}
-
-	require.NoError(t, m.cleanupFinalStages(ctx))
-
-	assert.Equal(t, []cleanup_report.Item{{
-		Type:   cleanup_report.ItemTypeFinalStage,
-		Tag:    "ff0011-1748001122334",
-		Reason: stage_manager.ProtectionReasonNotFoundInRepo.String(),
-	}}, report.Kept)
-	assert.Empty(t, report.Deleted)
+func TestCleanup(t *testing.T) {
+	gomega.RegisterFailHandler(ginkgo.Fail)
+	ginkgo.RunSpecs(t, "Cleanup Suite")
 }
+
+var _ = ginkgo.Describe("Cleanup final stages", func() {
+	for _, dryRun := range []bool{false, true} {
+		ginkgo.Context(fmt.Sprintf("dry-run=%t", dryRun), func() {
+			ginkgo.DescribeTable("selects final stages by surviving primary stage IDs and Kubernetes protection",
+				func(finalStageID, primaryStageID *image.StageID, deployed bool, reason string) {
+					ctx := context.Background()
+					finalStageDesc := newTestStageDesc("example.com/final", finalStageID)
+					storageManager := newFakeStorageManager()
+					storageManager.finalStageDescSet = image.NewStageDescSet(finalStageDesc)
+					storageManager.stageDescSet = image.NewStageDescSet()
+					if primaryStageID != nil {
+						storageManager.stageDescSet.Add(newTestStageDesc("example.com/primary", primaryStageID))
+					}
+
+					stageManager := stage_manager.NewManager()
+					gomega.Expect(stageManager.InitStageDescSet(ctx, storageManager)).To(gomega.Succeed())
+					gomega.Expect(stageManager.InitFinalStageDescSet(ctx, storageManager)).To(gomega.Succeed())
+					if deployed {
+						stageManager.MarkFinalStageDescAsProtected(finalStageDesc, stage_manager.ProtectionReasonKubernetesBasedPolicy, false)
+					}
+
+					report := cleanup_report.NewReport(ctx, "cleanup", dryRun, "example.com/primary", cleanup_report.NewReportOptions{})
+					cleanup := &cleanupManager{stageManager: stageManager, StorageManager: storageManager, report: report, DryRun: dryRun}
+					gomega.Expect(cleanup.cleanupFinalStages(ctx)).To(gomega.Succeed())
+
+					if reason != "" {
+						gomega.Expect(report.Kept).To(gomega.Equal([]cleanup_report.Item{{
+							Type: cleanup_report.ItemTypeFinalStage, Tag: finalStageID.String(), Reason: reason,
+						}}))
+						gomega.Expect(report.Deleted).To(gomega.BeEmpty())
+						gomega.Expect(storageManager.deletedFinalStages).To(gomega.BeEmpty())
+						return
+					}
+
+					gomega.Expect(report.Kept).To(gomega.BeEmpty())
+					gomega.Expect(report.Deleted).To(gomega.Equal([]cleanup_report.Item{{
+						Type: cleanup_report.ItemTypeFinalStage, Tag: finalStageID.String(),
+					}}))
+					if dryRun {
+						gomega.Expect(storageManager.deletedFinalStages).To(gomega.BeEmpty())
+					} else {
+						gomega.Expect(storageManager.deletedFinalStages).To(gomega.ConsistOf(finalStageDesc))
+					}
+				},
+				ginkgo.Entry("keeps a matching stage ID across different repositories", image.NewStageID("ff0011", 1748001122334), image.NewStageID("ff0011", 1748001122334), false, "found in repo"),
+				ginkgo.Entry("deletes an orphan", image.NewStageID("ff0011", 1748001122334), (*image.StageID)(nil), false, ""),
+				ginkgo.Entry("does not match a different creation timestamp", image.NewStageID("ff0011", 1748001122334), image.NewStageID("ff0011", 1748001122335), false, ""),
+				ginkgo.Entry("does not match a different digest", image.NewStageID("ff0011", 1748001122334), image.NewStageID("ff0022", 1748001122334), false, ""),
+				ginkgo.Entry("keeps a matching multiplatform stage ID", image.NewStageID("ff0011", 0), image.NewStageID("ff0011", 0), false, "found in repo"),
+				ginkgo.Entry("keeps a Kubernetes-protected orphan", image.NewStageID("ff0011", 1748001122334), (*image.StageID)(nil), true, "used in Kubernetes"),
+				ginkgo.Entry("preserves the Kubernetes reason for a paired stage", image.NewStageID("ff0011", 1748001122334), image.NewStageID("ff0011", 1748001122334), true, "used in Kubernetes"),
+			)
+		})
+	}
+})

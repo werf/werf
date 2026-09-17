@@ -42,7 +42,7 @@ var (
 	ProtectionReasonDependencySource            = newProtectionReason("dependency source")
 	ProtectionReasonAncestor                    = newProtectionReason("ancestor")
 	ProtectionReasonImageIndexPlatform          = newProtectionReason("image index platform")
-	ProtectionReasonNotFoundInRepo              = newProtectionReason("not found in repo")
+	ProtectionReasonFoundInRepo                 = newProtectionReason("found in repo")
 	ProtectionReasonKeepList                    = newProtectionReason("keep list")
 )
 
