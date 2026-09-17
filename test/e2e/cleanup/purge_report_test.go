@@ -10,7 +10,6 @@ import (
 	"github.com/onsi/gomega"
 	"github.com/samber/lo"
 
-	"github.com/werf/werf/v2/test/pkg/utils"
 	"github.com/werf/werf/v2/test/pkg/werf"
 )
 
@@ -77,8 +76,6 @@ var _ = ginkgo.Describe("Cleanup report", ginkgo.Label("e2e", "cleanup", "simple
 			SuiteData.Stubs.SetEnv("WERF_SKIP_TLS_VERIFY_REGISTRY", "1")
 			SuiteData.InitTestRepo(ctx, "repo0", "final_repo")
 			repoPath := SuiteData.GetTestRepoPath("repo0")
-			utils.RunSucceedCommand(ctx, repoPath, "git", "remote", "add", "origin", repoPath)
-			utils.RunSucceedCommand(ctx, repoPath, "git", "fetch", "origin")
 			werfProject := werf.NewProject(SuiteData.WerfBinPath, repoPath)
 			primaryRepo := SuiteData.K8sDockerRegistryRepo
 			finalRepo := primaryRepo + "-final"

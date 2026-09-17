@@ -1098,13 +1098,9 @@ outerLoop:
 }
 
 func (m *cleanupManager) cleanupFinalStages(ctx context.Context) error {
-FilterOutFinalStages:
 	for finalStageDesc := range m.stageManager.GetFinalStageDescSet().Iter() {
-		for stageDesc := range m.stageManager.GetStageDescSet().Iter() {
-			if stageDesc.StageID.IsEqual(*finalStageDesc.StageID) {
-				m.stageManager.MarkFinalStageDescAsProtected(finalStageDesc, stage_manager.ProtectionReasonFoundInRepo, false)
-				continue FilterOutFinalStages
-			}
+		if m.stageManager.ContainsStageDescByStageID(finalStageDesc.StageID.String()) {
+			m.stageManager.MarkFinalStageDescAsProtected(finalStageDesc, stage_manager.ProtectionReasonFoundInRepo, false)
 		}
 	}
 
