@@ -28,6 +28,7 @@ type TaskOutput struct {
 	readOffset  int64
 	writeOffset int64
 	lastByte    byte
+	removed     bool
 }
 
 // Write implements io.Writer.
@@ -206,10 +207,17 @@ func (o *TaskOutput) Close() error {
 	return nil
 }
 
-// Cleanup removes tmp file
+// Cleanup removes the tmp file. The Printer calls it as soon as the output
+// is drained, so the disk holds only what is not printed yet; the final
+// sweep in runWorkers calls it again for whatever the Printer never reached,
+// and a second call is a no-op.
 func (o *TaskOutput) Cleanup() error {
 	o.mutex.Lock()
 	defer o.mutex.Unlock()
+
+	if o.removed {
+		return nil
+	}
 
 	if o.writer != nil {
 		return fmt.Errorf("task output %q is not half closed yet", o.path)
@@ -218,6 +226,7 @@ func (o *TaskOutput) Cleanup() error {
 	if err := os.Remove(o.path); err != nil {
 		return fmt.Errorf("remove tmp file %q: %w", o.path, err)
 	}
+	o.removed = true
 	return nil
 }
 

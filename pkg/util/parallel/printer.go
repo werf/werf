@@ -20,7 +20,8 @@ import (
 // Because the head of the queue is always the oldest running task, the live
 // log never goes quiet while something is still building — as soon as the
 // head finishes, the next task in start order takes over, already partially
-// buffered.
+// buffered. A task's temp file is removed right after its block is printed,
+// so the disk holds only output that is still waiting to be printed.
 type Printer struct {
 	mu     sync.Mutex
 	queue  []*TaskOutput
@@ -97,6 +98,10 @@ func (p *Printer) Print(ctx context.Context) error {
 		p.mu.Lock()
 		p.cursor++
 		p.mu.Unlock()
+
+		if err := out.Cleanup(); err != nil {
+			logboek.Context(ctx).Warn().LogF("parallel: failed to remove printed task output: %s\n", err)
+		}
 	}
 }
 

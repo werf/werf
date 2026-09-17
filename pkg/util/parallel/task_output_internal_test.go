@@ -114,6 +114,21 @@ var _ = Describe("TaskOutput descriptor lifecycle", func() {
 		Expect(out.reader).To(BeNil(), "reader must not outlive a task whose output was fully read before it finished")
 		expectClosed(reader, "reader")
 	})
+
+	It("removes the file once and treats a second Cleanup as a no-op", func() {
+		// The Printer removes a printed file early; the final sweep in
+		// runWorkers must be able to call Cleanup on it again without error.
+		out, err := NewTaskOutput(0, 3)
+		Expect(err).To(Succeed())
+
+		Expect(out.Cleanup()).To(MatchError(ContainSubstring("not half closed yet")))
+		Expect(out.HalfClose()).To(Succeed())
+
+		Expect(out.Cleanup()).To(Succeed())
+		_, err = os.Stat(out.path)
+		Expect(err).To(MatchError(os.ErrNotExist))
+		Expect(out.Cleanup()).To(Succeed())
+	})
 })
 
 var _ = DescribeTable("TaskOutput.HalfClose leaves the output on a line boundary",
