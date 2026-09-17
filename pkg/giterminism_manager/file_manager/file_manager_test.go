@@ -1,6 +1,7 @@
 package filemanager_test
 
 import (
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -27,7 +28,7 @@ var _ = ginkgo.Describe("LoadChartDir", func() {
 			}
 			if destination == "/" {
 				for _, name := range []string{"werf-includes.yaml", "werf-includes.lock"} {
-					data, err := manager.ReadChartFile(ctx, filepath.Join(projectDir, name))
+					data, err := os.ReadFile(filepath.Join(projectDir, name))
 					gomega.Expect(err).NotTo(gomega.HaveOccurred())
 					expected[name] = string(data)
 				}
