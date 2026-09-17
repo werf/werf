@@ -29,100 +29,102 @@ func (w *runeSplittingWriter) Write(p []byte) (int, error) {
 	return len(p), nil
 }
 
-var _ = Describe("Worker.Read UTF-8 boundary safety", func() {
-	It("never splits a multi-byte rune across two reads while the worker is still writing", func() {
+var _ = Describe("TaskOutput.Read UTF-8 boundary safety", func() {
+	It("never splits a multi-byte rune across two reads while the task is still writing", func() {
 		Expect(werf.Init(GinkgoT().TempDir(), "")).To(Succeed())
 
-		worker, err := parallel.NewWorker(1)
+		out, err := parallel.NewTaskOutput(1, 0)
 		Expect(err).To(Succeed())
 
 		// Padding chosen so the 1024-byte read boundary lands in the middle
 		// of the "│" character's 3-byte UTF-8 encoding (E2 94 82), matching
 		// the reported failure mode.
 		line := strings.Repeat("a", 1019) + "│ └ done\n"
-		_, err = worker.Write([]byte(line))
+		_, err = out.Write([]byte(line))
 		Expect(err).To(Succeed())
 
-		// Read while the worker is still open (not half-closed), so the
+		// Read while the output is still open (not half-closed), so the
 		// boundary-holdback logic under test is actually exercised.
-		out := &runeSplittingWriter{}
+		sink := &runeSplittingWriter{}
 		readBuf := make([]byte, 1024) // matches printer.go's read-buffer size
-		n, readErr := worker.Read(readBuf)
+		n, readErr := out.Read(readBuf)
 		Expect(readErr).To(Succeed())
-		_, err = out.Write(readBuf[:n])
+		_, err = sink.Write(readBuf[:n])
 		Expect(err).To(Succeed())
 
-		Expect(worker.HalfClose()).To(Succeed())
+		Expect(out.HalfClose()).To(Succeed())
 
-		for worker.Readable() {
-			n, readErr = worker.Read(readBuf)
+		for out.Readable() {
+			n, readErr = out.Read(readBuf)
 			if n > 0 {
-				_, err = out.Write(readBuf[:n])
+				_, err = sink.Write(readBuf[:n])
 				Expect(err).To(Succeed())
 			}
 			Expect(readErr).To(Or(Succeed(), MatchError(io.EOF)))
 		}
 
-		Expect(out.buf.String()).To(Equal(line))
-		Expect(out.buf.String()).NotTo(ContainSubstring("\uFFFD"))
+		Expect(sink.buf.String()).To(Equal(line))
+		Expect(sink.buf.String()).NotTo(ContainSubstring("\uFFFD"))
 
-		Expect(worker.Cleanup()).To(Succeed())
+		Expect(out.Cleanup()).To(Succeed())
 	})
 
-	It("never splits a multi-byte rune across two reads even when the worker half-closed before printing started", func() {
+	It("never splits a multi-byte rune across two reads even when the task half-closed before printing started", func() {
 		Expect(werf.Init(GinkgoT().TempDir(), "")).To(Succeed())
 
-		worker, err := parallel.NewWorker(3)
+		out, err := parallel.NewTaskOutput(3, 0)
 		Expect(err).To(Succeed())
 
 		// Same boundary alignment as the previous test, but this time the
-		// worker is half-closed BEFORE any read happens - matching the
+		// output is half-closed BEFORE any read happens - matching the
 		// real-world case of a fast task finishing before the printer starts
 		// draining its temp file.
 		line := strings.Repeat("a", 1019) + "│ └ done\n"
-		_, err = worker.Write([]byte(line))
+		_, err = out.Write([]byte(line))
 		Expect(err).To(Succeed())
-		Expect(worker.HalfClose()).To(Succeed())
+		Expect(out.HalfClose()).To(Succeed())
 
-		out := &runeSplittingWriter{}
+		sink := &runeSplittingWriter{}
 		readBuf := make([]byte, 1024)
-		for worker.Readable() {
-			n, readErr := worker.Read(readBuf)
+		for out.Readable() {
+			n, readErr := out.Read(readBuf)
 			if n > 0 {
-				_, err = out.Write(readBuf[:n])
+				_, err = sink.Write(readBuf[:n])
 				Expect(err).To(Succeed())
 			}
 			Expect(readErr).To(Or(Succeed(), MatchError(io.EOF)))
 		}
 
-		Expect(out.buf.String()).To(Equal(line))
-		Expect(out.buf.String()).NotTo(ContainSubstring("\uFFFD"))
+		Expect(sink.buf.String()).To(Equal(line))
+		Expect(sink.buf.String()).NotTo(ContainSubstring("\uFFFD"))
 
-		Expect(worker.Cleanup()).To(Succeed())
+		Expect(out.Cleanup()).To(Succeed())
 	})
 
-	It("flushes a trailing incomplete rune once the worker is half-closed, without hanging", func() {
+	It("flushes a trailing incomplete rune once the task is half-closed, without hanging", func() {
 		Expect(werf.Init(GinkgoT().TempDir(), "")).To(Succeed())
 
-		worker, err := parallel.NewWorker(2)
+		out, err := parallel.NewTaskOutput(2, 0)
 		Expect(err).To(Succeed())
 
-		_, err = worker.Write([]byte("└"))
+		_, err = out.Write([]byte("└"))
 		Expect(err).To(Succeed())
-		Expect(worker.HalfClose()).To(Succeed())
+		Expect(out.HalfClose()).To(Succeed())
 
 		var result bytes.Buffer
 		readBuf := make([]byte, 2)
-		for worker.Readable() {
-			n, readErr := worker.Read(readBuf)
+		for out.Readable() {
+			n, readErr := out.Read(readBuf)
 			if n > 0 {
 				result.Write(readBuf[:n])
 			}
 			Expect(readErr).To(Or(Succeed(), MatchError(io.EOF)))
 		}
 
-		Expect(result.String()).To(Equal("└"))
+		// HalfClose terminates the unfinished line; the rune itself must
+		// arrive intact in front of that newline.
+		Expect(result.String()).To(Equal("└\n"))
 
-		Expect(worker.Cleanup()).To(Succeed())
+		Expect(out.Cleanup()).To(Succeed())
 	})
 })

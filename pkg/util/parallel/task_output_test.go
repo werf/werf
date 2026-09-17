@@ -12,34 +12,34 @@ import (
 )
 
 var _ = DescribeTable(
-	"worker should discard writes after half-close",
+	"task output should discard writes after half-close",
 	func(doHalfClose, doClose bool) {
 		Expect(werf.Init(GinkgoT().TempDir(), "")).To(Succeed())
 
-		worker, err := parallel.NewWorker(1)
+		out, err := parallel.NewTaskOutput(1, 0)
 		Expect(err).To(Succeed())
 
 		defer func() {
-			Expect(worker.Cleanup()).To(Succeed())
+			Expect(out.Cleanup()).To(Succeed())
 		}()
 
 		data := []byte("hello")
 		reader := bytes.NewReader(data)
 
 		if doHalfClose {
-			Expect(worker.HalfClose()).To(Succeed())
+			Expect(out.HalfClose()).To(Succeed())
 		}
 
 		if doClose {
-			Expect(worker.Close()).To(Succeed()) // half-close implicitly
+			Expect(out.Close()).To(Succeed()) // half-close implicitly
 		}
 
-		offset, err := io.Copy(worker, reader)
+		offset, err := io.Copy(out, reader)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(offset).To(Equal(int64(len(data))))
 
 		if doHalfClose {
-			content, err := io.ReadAll(worker)
+			content, err := io.ReadAll(out)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(content).To(BeEmpty())
 		}
