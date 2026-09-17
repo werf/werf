@@ -121,7 +121,7 @@ var _ = ginkgo.Describe("Cleanup report", ginkgo.Label("e2e", "cleanup", "simple
 
 			if removePrimaryBeforeCleanup {
 				ginkgo.By("removing the primary counterpart before cleanup")
-				gomega.Expect(crane.Delete(primaryImage, registryOptions...)).To(gomega.Succeed())
+				gomega.Expect(crane.Delete(primaryRepo+"@"+primaryDigest, registryOptions...)).To(gomega.Succeed())
 			}
 
 			for _, dryRun := range []bool{true, false} {
