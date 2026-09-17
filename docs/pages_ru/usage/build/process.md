@@ -580,6 +580,7 @@ werf build --save-build-report --build-report-path .werf-build-report.env --repo
 JSON-отчёт содержит расширенную информацию о сборке:
 
 * **Runtime** — информация об окружении сборки:
+  * Версия werf, сформировавшая отчёт (`WerfVersion`)
   * Используемый контейнерный бэкенд (`Backend`: `docker` или `buildah`)
   * Флаг запуска werf внутри контейнера (`InContainer`).
 
@@ -614,6 +615,7 @@ JSON-отчёт содержит расширенную информацию о 
 ```json
 {
   "Runtime": {
+    "WerfVersion": "v2.76.0",
     "Backend": "docker",
     "InContainer": false
   },

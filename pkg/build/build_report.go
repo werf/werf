@@ -36,6 +36,7 @@ const (
 )
 
 type RuntimeInfo struct {
+	WerfVersion string `json:"WerfVersion"`
 	Backend     string `json:"Backend"`
 	InContainer bool   `json:"InContainer"`
 }
