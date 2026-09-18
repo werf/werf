@@ -2,13 +2,17 @@ package common
 
 import (
 	"context"
+	"io"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 
+	"github.com/werf/logboek"
+	"github.com/werf/logboek/pkg/level"
 	"github.com/werf/werf/v2/pkg/config"
+	"github.com/werf/werf/v2/pkg/opstats"
 )
 
 var _ = Describe("build report operations option", func() {
@@ -54,4 +58,32 @@ var _ = Describe("build report operations option", func() {
 		Entry("enabled", true),
 		Entry("disabled", false),
 	)
+
+	Describe("InitOperationsStatistics", func() {
+		newCtx := func(acceptedLevel level.Level) context.Context {
+			logger := logboek.NewLogger(io.Discard, io.Discard)
+			logger.SetAcceptedLevel(acceptedLevel)
+			return logboek.NewContext(context.Background(), logger)
+		}
+
+		It("does not install a collector when disabled", func() {
+			cmdData := &CmdData{BuildReportOperations: lo.ToPtr(false)}
+			ctx, finish := InitOperationsStatistics(newCtx(level.Default), cmdData)
+			Expect(opstats.FromContext(ctx)).To(BeNil())
+			Expect(finish).NotTo(BeNil())
+		})
+
+		It("installs a command-scoped collector when the flag is set", func() {
+			cmdData := &CmdData{BuildReportOperations: lo.ToPtr(true)}
+			ctx, finish := InitOperationsStatistics(newCtx(level.Default), cmdData)
+			Expect(opstats.FromContext(ctx)).NotTo(BeNil())
+			Expect(finish).NotTo(BeNil())
+		})
+
+		It("installs a collector under debug logging without the flag", func() {
+			cmdData := &CmdData{BuildReportOperations: lo.ToPtr(false)}
+			ctx, _ := InitOperationsStatistics(newCtx(level.Debug), cmdData)
+			Expect(opstats.FromContext(ctx)).NotTo(BeNil())
+		})
+	})
 })

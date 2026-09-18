@@ -33,6 +33,7 @@ import (
 	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
 	"github.com/werf/werf/v2/pkg/logging"
+	"github.com/werf/werf/v2/pkg/opstats"
 	"github.com/werf/werf/v2/pkg/storage"
 	"github.com/werf/werf/v2/pkg/storage/manager"
 	"github.com/werf/werf/v2/pkg/true_git"
@@ -192,7 +193,7 @@ func SetupUseBuildReport(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupBuildReportOperations(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.BuildReportOperations = new(bool)
-	cmd.Flags().BoolVarP(cmdData.BuildReportOperations, "build-report-operations", "", util.GetBoolEnvironmentDefaultFalse("WERF_BUILD_REPORT_OPERATIONS"), fmt.Sprintf("Collect low-level operations statistics: add Operations and StageCache sections to the build report and print operations summary after the build (by default $WERF_BUILD_REPORT_OPERATIONS or %t). Also enabled by --log-debug", DefaultBuildReportOperations))
+	cmd.Flags().BoolVarP(cmdData.BuildReportOperations, "build-report-operations", "", util.GetBoolEnvironmentDefaultFalse("WERF_BUILD_REPORT_OPERATIONS"), fmt.Sprintf("Collect low-level operations statistics for the whole command run: add Operations and StageCache sections to the build report and print operations summary before the command exits (by default $WERF_BUILD_REPORT_OPERATIONS or %t). Also enabled by --log-debug", DefaultBuildReportOperations))
 }
 
 func GetSaveBuildReport(cmdData *CmdData) bool {
@@ -1463,6 +1464,7 @@ func GetIntrospectOptions(cmdData *CmdData, werfConfig *config.WerfConfig) (buil
 }
 
 func GetGiterminismManager(ctx context.Context, cmdData *CmdData) (*giterminism_manager.Manager, error) {
+	defer opstats.Observe(ctx, opstats.OperationGiterminismInit)()
 	printGlobalWarningIfDevInCI(ctx, cmdData)
 	manager := new(giterminism_manager.Manager)
 	if err := logboek.Context(ctx).Info().LogProcess("Initialize giterminism manager").

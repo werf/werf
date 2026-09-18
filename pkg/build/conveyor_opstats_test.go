@@ -46,4 +46,17 @@ var _ = Describe("Conveyor operations collector gate", func() {
 		Entry("enabled by debug logging without the flag", level.Debug, false, true),
 		Entry("enabled by both", level.Debug, true, true),
 	)
+
+	It("reuses a command-scoped collector instead of creating its own", func() {
+		c := &Conveyor{}
+		commandCollector := opstats.NewCollector()
+		ctxIn := opstats.NewContext(newCtx(level.Debug), commandCollector)
+
+		ctx, collector, buildStartedAt := c.newOperationsCollector(ctxIn, true)
+
+		Expect(collector).To(BeNil())
+		Expect(buildStartedAt).To(Equal(time.Time{}))
+		Expect(ctx).To(BeIdenticalTo(ctxIn))
+		Expect(opstats.FromContext(ctx)).To(BeIdenticalTo(commandCollector))
+	})
 })

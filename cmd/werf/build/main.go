@@ -128,6 +128,9 @@ func NewCmd(ctx context.Context) *cobra.Command {
 }
 
 func runMain(ctx context.Context, imageNameListFromArgs []string) error {
+	ctx, logOperationsSummaryFn := common.InitOperationsStatistics(ctx, &commonCmdData)
+	defer logOperationsSummaryFn()
+
 	global_warnings.PostponeMultiwerfNotUpToDateWarning(ctx)
 	commonManager, ctx, err := common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
 		Cmd:                &commonCmdData,
