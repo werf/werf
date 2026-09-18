@@ -477,7 +477,7 @@ func run(
 	})
 	engine.SetDebug(commonCmdData.DebugTemplates)
 
-	if err := action.ReleaseInstall(ctx, releaseName, releaseNamespace, action.ReleaseInstallOptions{
+	if _, err := action.ReleaseInstall(ctx, releaseName, releaseNamespace, action.ReleaseInstallOptions{
 		KubeConnectionOptions:      commonCmdData.KubeConnectionOptions,
 		ChartRepoConnectionOptions: commonCmdData.ChartRepoConnectionOptions,
 		ValuesOptions:              commonCmdData.ValuesOptions,
