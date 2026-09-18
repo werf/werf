@@ -2,11 +2,12 @@ package docker_registry
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
+	"sync/atomic"
 
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/name"
@@ -33,7 +34,7 @@ var (
 
 type gitLabRegistry struct {
 	*defaultImplementation
-	deleteRepoImageFunc func(ctx context.Context, repoImage *image.Info) error
+	deleteRepoImageFunc atomic.Value
 }
 
 type gitLabRegistryOptions struct {
@@ -52,8 +53,42 @@ func newGitLabRegistry(options gitLabRegistryOptions) (*gitLabRegistry, error) {
 }
 
 func (r *gitLabRegistry) DeleteRepoImage(ctx context.Context, repoImage *image.Info) error {
-	if r.deleteRepoImageFunc != nil {
-		return r.deleteRepoImageFunc(ctx, repoImage)
+	if !isReferencedByTag(repoImage) {
+		return r.defaultImplementation.DeleteRepoImage(ctx, repoImage)
+	}
+
+	if deleteFunc := r.deleteRepoImageFunc.Load(); deleteFunc != nil {
+		return deleteFunc.(func(context.Context, *image.Info) error)(ctx, repoImage)
+	}
+
+	var deleteFuncErr error
+	for _, deleteFunc := range []func(ctx context.Context, repoImage *image.Info) error{
+		r.deleteRepoImageManifestTagWithFullScope,
+		r.deleteRepoImageManifestTagWithUniversalScope,
+	} {
+		if err := deleteFunc(ctx, repoImage); err != nil {
+			reference := strings.Join([]string{repoImage.Repository, repoImage.Tag}, ":")
+			var transportErr *transport.Error
+			if !errors.As(err, &transportErr) {
+				return err
+			}
+			if transportErr.StatusCode == http.StatusNotFound || transportErr.StatusCode == http.StatusMethodNotAllowed || gitLabRegistryErrorHasCode(transportErr, transport.DigestInvalidErrorCode) {
+				logboek.Context(ctx).Debug().LogF("DEBUG: %s: %s", reference, err)
+				break
+			} else if gitLabRegistryErrorHasCode(transportErr, transport.UnauthorizedErrorCode) {
+				logboek.Context(ctx).Debug().LogF("DEBUG: %s: %s", reference, err)
+				if deleteFuncErr != nil {
+					return err
+				}
+				deleteFuncErr = err
+				continue
+			}
+
+			return err
+		}
+
+		r.deleteRepoImageFunc.Store(deleteFunc)
+		return nil
 	}
 
 	// DELETE /v2/<name>/tags/reference/<reference> method is available since the v2.8.0-gitlab
@@ -64,10 +99,14 @@ func (r *gitLabRegistry) DeleteRepoImage(ctx context.Context, repoImage *image.I
 	} {
 		if err := deleteFunc(ctx, repoImage); err != nil {
 			reference := strings.Join([]string{repoImage.Repository, repoImage.Tag}, ":")
-			if strings.Contains(err.Error(), "404 Not Found") {
+			var transportErr *transport.Error
+			if !errors.As(err, &transportErr) {
+				return err
+			}
+			if transportErr.StatusCode == http.StatusNotFound {
 				logboek.Context(ctx).Debug().LogF("DEBUG: %s: %s", reference, err)
 				break
-			} else if strings.Contains(err.Error(), "UNAUTHORIZED") {
+			} else if gitLabRegistryErrorHasCode(transportErr, transport.UnauthorizedErrorCode) {
 				logboek.Context(ctx).Debug().LogF("DEBUG: %s: %s", reference, err)
 				continue
 			}
@@ -75,7 +114,7 @@ func (r *gitLabRegistry) DeleteRepoImage(ctx context.Context, repoImage *image.I
 			return err
 		}
 
-		r.deleteRepoImageFunc = deleteFunc
+		r.deleteRepoImageFunc.Store(deleteFunc)
 		return nil
 	}
 
@@ -85,7 +124,8 @@ func (r *gitLabRegistry) DeleteRepoImage(ctx context.Context, repoImage *image.I
 	} {
 		if err := deleteFunc(ctx, repoImage); err != nil {
 			reference := strings.Join([]string{repoImage.Repository, repoImage.Tag}, ":")
-			if strings.Contains(err.Error(), "UNAUTHORIZED") {
+			var transportErr *transport.Error
+			if errors.As(err, &transportErr) && gitLabRegistryErrorHasCode(transportErr, transport.UnauthorizedErrorCode) {
 				logboek.Context(ctx).Debug().LogF("DEBUG: %s: %s", reference, err)
 				continue
 			}
@@ -93,7 +133,7 @@ func (r *gitLabRegistry) DeleteRepoImage(ctx context.Context, repoImage *image.I
 			return err
 		}
 
-		r.deleteRepoImageFunc = deleteFunc
+		r.deleteRepoImageFunc.Store(deleteFunc)
 		return nil
 	}
 
@@ -102,8 +142,18 @@ func (r *gitLabRegistry) DeleteRepoImage(ctx context.Context, repoImage *image.I
 		return err
 	}
 
-	r.deleteRepoImageFunc = r.defaultImplementation.DeleteRepoImage
+	r.deleteRepoImageFunc.Store(r.defaultImplementation.DeleteRepoImage)
 	return nil
+}
+
+func (r *gitLabRegistry) deleteRepoImageManifestTagWithFullScope(_ context.Context, repoImage *image.Info) error {
+	reference := strings.Join([]string{repoImage.Repository, repoImage.Tag}, ":")
+	return r.customDeleteRepoImage("/v2/%s/manifests/%s", reference, fullScopeFunc)
+}
+
+func (r *gitLabRegistry) deleteRepoImageManifestTagWithUniversalScope(_ context.Context, repoImage *image.Info) error {
+	reference := strings.Join([]string{repoImage.Repository, repoImage.Tag}, ":")
+	return r.customDeleteRepoImage("/v2/%s/manifests/%s", reference, universalScopeFunc)
 }
 
 func (r *gitLabRegistry) deleteRepoImageTagWithUniversalScope(_ context.Context, repoImage *image.Info) error {
@@ -170,12 +220,23 @@ func (r *gitLabRegistry) customDeleteRepoImage(endpointFormat, reference string,
 	case http.StatusOK, http.StatusAccepted:
 		return nil
 	default:
-		b, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			return err
+		err := transport.CheckError(resp, http.StatusOK, http.StatusAccepted)
+		var transportErr *transport.Error
+		if resp.StatusCode == http.StatusNotFound && errors.As(err, &transportErr) &&
+			(gitLabRegistryErrorHasCode(transportErr, transport.ManifestUnknownErrorCode) || gitLabRegistryErrorHasCode(transportErr, transport.NameUnknownErrorCode)) {
+			return nil
 		}
-		return fmt.Errorf("unrecognized status code during DELETE: %v; %v", resp.Status, string(b))
+		return fmt.Errorf("DELETE %s: %w", u.Path, err)
 	}
+}
+
+func gitLabRegistryErrorHasCode(err *transport.Error, code transport.ErrorCode) bool {
+	for _, diagnostic := range err.Errors {
+		if diagnostic.Code == code {
+			return true
+		}
+	}
+	return false
 }
 
 func (r *gitLabRegistry) String() string {
