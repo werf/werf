@@ -1,5 +1,22 @@
 # Changelog
 
+## [2.79.0](https://github.com/werf/werf/compare/v2.78.2...v2.79.0) (2026-09-18)
+
+
+### Features
+
+* **build:** include werf version in the build report ([#7859](https://github.com/werf/werf/issues/7859)) ([851eb02](https://github.com/werf/werf/commit/851eb025fb18c4a7cd3134f3d92e7b9b64b5f80b))
+* **deploy:** return rendered resources from ReleaseInstall ([#7869](https://github.com/werf/werf/issues/7869)) ([9a6146b](https://github.com/werf/werf/commit/9a6146b87470c98a34669e8ceb7847da7cc87228))
+
+
+### Bug Fixes
+
+* **cleanup:** avoid slow tag deletion in GitLab registries ([#7866](https://github.com/werf/werf/issues/7866)) ([cdb0a19](https://github.com/werf/werf/commit/cdb0a19413c64515860e029a9d0a30e67f0f8c84))
+* **cleanup:** preserve retained final images ([#7867](https://github.com/werf/werf/issues/7867)) ([72162e5](https://github.com/werf/werf/commit/72162e50c524acd21bd8bf39755bbf14df6e9e90))
+* **deploy:** prevent panic when release deletion fails ([#7861](https://github.com/werf/werf/issues/7861)) ([1015652](https://github.com/werf/werf/commit/1015652012c2715406da43cb562207c2be0c4805))
+* **deploy:** render included charts at the project root ([#7865](https://github.com/werf/werf/issues/7865)) ([83605cc](https://github.com/werf/werf/commit/83605cc0e23a3e92bde28dfac678459157f19e6d))
+* **deploy:** report the inaccessible events feed through the nelm logger ([#7857](https://github.com/werf/werf/issues/7857)) ([8faf82a](https://github.com/werf/werf/commit/8faf82a0198ef3e463ba2e6756f74ccb156f4448))
+
 ## [2.78.2](https://github.com/werf/werf/compare/v2.78.1...v2.78.2) (2026-09-10)
 
 
