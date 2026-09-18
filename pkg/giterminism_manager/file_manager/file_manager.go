@@ -348,11 +348,16 @@ func (f *FileManager) LoadChartDir(ctx context.Context, dir string) ([]*file.Cha
 
 	logboek.Context(ctx).Debug().LogF("Try to read additional files from includes\n")
 
+	normDir := filepath.ToSlash(filepath.Clean(dir))
+	dirPrefix := normDir + "/"
+	if normDir == "." {
+		dirPrefix = ""
+	}
+
 	for _, include := range f.includes {
 		err := include.WalkObjects(func(toPath, _ string) error {
 			normToPath := filepath.ToSlash(toPath)
-			normDir := filepath.ToSlash(dir)
-			if !strings.HasPrefix(normToPath, normDir+"/") && normToPath != normDir {
+			if !strings.HasPrefix(normToPath, dirPrefix) && normToPath != normDir {
 				return nil
 			}
 
@@ -368,7 +373,7 @@ func (f *FileManager) LoadChartDir(ctx context.Context, dir string) ([]*file.Cha
 			logboek.Context(ctx).Debug().LogF("--- %s read from includes \n", normToPath)
 
 			chartDir = append(chartDir, &file.ChartExtenderBufferedFile{
-				Name: strings.TrimPrefix(normToPath, normDir+"/"),
+				Name: strings.TrimPrefix(normToPath, dirPrefix),
 				Data: data,
 			})
 			processed[normToPath] = false
