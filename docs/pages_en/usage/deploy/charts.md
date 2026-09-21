@@ -125,6 +125,14 @@ Here:
 
 - `.helmignore` — a list of files in the chart directory not to be included in the chart. Helm's default rules apply as well, so dotfiles directly under `templates/` are excluded even without a `.helmignore`.
 
+Which `.helmignore` filters a dependent chart depends on how the chart is included:
+
+- a chart in the `charts` directory is loaded as a part of the parent chart, so the `.helmignore` of the parent chart filters it, while its own `.helmignore` has no effect;
+
+- a chart included with `dependencies[].repository: file://` is loaded as a separate chart, so its own `.helmignore` filters it, while the rules of the parent chart do not apply;
+
+- a chart from an OCI/HTTP repository arrives packaged, already filtered by its own `.helmignore` at packaging time.
+
 ## Including additional charts
 
 ### Including dependent local charts
