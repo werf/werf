@@ -68,6 +68,11 @@ type NextTaskFunc func(ctx context.Context) (taskId int, ok bool, err error)
 //
 // options.MaxNumberOfWorkers <= 0 means a single worker (the task count is
 // unknown upfront), unlike DoTasks where it means one worker per task.
+//
+// `next` must be worker-agnostic: any worker must be able to take any
+// runnable task. Workers claim their first task in ID order, so a `next`
+// that reserves a task for a specific worker can block the worker that is
+// holding the rest of them up.
 func DoTasksDynamic(ctx context.Context, options DoTasksOptions, next NextTaskFunc, taskFunc TaskFunc) error {
 	numberOfWorkers := options.MaxNumberOfWorkers
 	if numberOfWorkers <= 0 {
