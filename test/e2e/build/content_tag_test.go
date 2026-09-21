@@ -11,7 +11,7 @@ import (
 	"github.com/werf/werf/v2/test/pkg/werf"
 )
 
-var _ = Describe("Content tag reuse", Label("e2e", "build", "content-tag"), func() {
+var _ = Describe("Content tag reuse", Label("e2e", "build", "content-tag", suite_init.LabelNeedsRegistry), func() {
 	It("reuses the content tag across local builds, repo and final storages", func(ctx SpecContext) {
 		By("initializing")
 		setupEnv(setupEnvOptions{})

@@ -121,9 +121,6 @@ func setupOptionalLocalContainerRegistry(ctx context.Context, synchronizedSuiteC
 	implementationNameForWerf := "default"
 
 	registryAddress := TestRegistry()
-	if registryAddress == "" {
-		Expect(registryAddress).NotTo(BeEmpty(), "WERF_TEST_K8S_DOCKER_REGISTRY must be set")
-	}
 
 	implData := &containerRegistryImplementationData{
 		RegistryAddress:        registryAddress,

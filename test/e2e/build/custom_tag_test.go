@@ -27,7 +27,7 @@ func (opts customTagTestOptions) env() setupEnvOptions {
 	return opts.setupEnvOptions
 }
 
-var _ = Describe("Custom tag build", Label("e2e", "build", "simple"), func() {
+var _ = Describe("Custom tag build", Label("e2e", "build", "simple", suite_init.LabelNeedsRegistry), func() {
 	Describe("custom tag image name substitutions", func() {
 		const imageName = "libstdc++"
 

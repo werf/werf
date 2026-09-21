@@ -25,6 +25,7 @@ const (
 
 var testSuiteEntrypointFunc = suite_init.MakeTestSuiteEntrypointFunc("Cleanup suite", suite_init.TestSuiteEntrypointFuncOptions{
 	RequiredSuiteTools: []string{"git", "docker"},
+	SuiteLabels:        []string{suite_init.LabelNeedsRegistry},
 })
 
 func TestSuite(t *testing.T) {
