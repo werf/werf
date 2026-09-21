@@ -89,6 +89,10 @@ var _ = Describe("build and mutate image spec", Label("integration", "build", "m
 
 						Expect(imgCfg.StopSignal).Should(Equal("SIGINT"))
 
+						Expect(imgCfg.Healthcheck).ShouldNot(BeNil())
+						Expect(imgCfg.Healthcheck.Test).Should(Equal([]string{"curl -f http://localhost/ || exit 1"}))
+						Expect(imgCfg.Healthcheck.Retries).Should(Equal(3))
+
 					case "clean-test":
 
 						Expect(inspectOfImage.Author).Should(Equal("globalAuthor"))
