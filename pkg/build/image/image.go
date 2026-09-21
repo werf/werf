@@ -14,6 +14,7 @@ import (
 	"github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
 	"github.com/werf/werf/v2/pkg/build/stage"
+	stage_instruction "github.com/werf/werf/v2/pkg/build/stage/instruction"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/docker_registry"
@@ -380,6 +381,8 @@ func (i *Image) SetupBaseImage(ctx context.Context, storageManager manager.Stora
 		i.baseImageReference = i.contentTagStageImage.Image.Name()
 		i.baseStageImage = i.contentTagStageImage
 
+		i.adoptResolvedBaseImageReference()
+
 	case ImageFromRegistryAsBaseImage:
 		if i.IsDockerfileImage && i.dockerfileExpanderFactory != nil {
 			dependenciesArgs := stage.ResolveDependenciesArgs(i.TargetPlatform, i.DockerfileImageConfig.Dependencies, i.Conveyor)
@@ -426,6 +429,22 @@ func (i *Image) GetBaseStageImage() *stage.StageImage {
 
 func (i *Image) GetBaseImageReference() string {
 	return i.baseImageReference
+}
+
+// adoptResolvedBaseImageReference hands the base reference resolved for an internal base
+// to the FROM stage, which is built before the reference exists and would otherwise keep
+// hashing an empty one: two images differing only in their base would share a digest.
+func (i *Image) adoptResolvedBaseImageReference() {
+	if len(i.stages) == 0 {
+		return
+	}
+
+	fromStage, ok := i.stages[0].(*stage_instruction.From)
+	if !ok {
+		return
+	}
+
+	fromStage.BaseImageReference = i.baseImageReference
 }
 
 func (i *Image) GetBaseImageRepoDigest() string {
