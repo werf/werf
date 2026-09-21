@@ -36,7 +36,7 @@ func (b *lockedBuffer) String() string {
 // this drives the real runWorkers wiring and writes through that stream the
 // way the cli would, from inside two consecutive tasks on one worker.
 var _ = Describe("worker-level stream relay", func() {
-	It("formats relayed output with the current task's logger and drops what a finished task left behind", func() {
+	It("formats relayed output with the current task's logger and keeps it inside that task's block", func() {
 		Expect(werf.Init(GinkgoT().TempDir(), "")).To(Succeed())
 
 		sink := &lockedBuffer{}

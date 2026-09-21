@@ -25,6 +25,12 @@ type recordingPhase struct {
 	order       *[]string
 	startOrders map[string]int
 	delays      map[string]time.Duration
+
+	// hold[name] is waited on before the image is recorded as finished and
+	// release[name] is closed once it has been, so "X finishes after Y" is a
+	// fact of the run instead of a wall-clock margin that CPU load can eat.
+	hold    map[string]chan struct{}
+	release map[string]chan struct{}
 }
 
 func (p *recordingPhase) Name() string                       { return "recording" }
@@ -44,12 +50,26 @@ func (p *recordingPhase) OnImageStage(context.Context, *image.Image, stage.Inter
 }
 
 func (p *recordingPhase) AfterImageStages(ctx context.Context, img *image.Image) error {
+	if ch, ok := p.hold[img.Name]; ok {
+		select {
+		case <-ch:
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
+
 	if d := p.delays[img.Name]; d > 0 {
 		time.Sleep(d)
 	}
+
 	p.mu.Lock()
 	*p.order = append(*p.order, img.Name)
 	p.mu.Unlock()
+
+	if ch, ok := p.release[img.Name]; ok {
+		close(ch)
+	}
+
 	return nil
 }
 
@@ -103,15 +123,17 @@ func TestDoImagesInParallel_DependentImageDoesNotWaitForUnrelatedSlowImage(t *te
 
 	var mu sync.Mutex
 	var order []string
+	cFinished := make(chan struct{})
 	phase := &recordingPhase{
 		mu:    &mu,
 		order: &order,
 		delays: map[string]time.Duration{
-			"slow": 150 * time.Millisecond,
-			"a":    10 * time.Millisecond,
-			"b":    10 * time.Millisecond,
-			"c":    10 * time.Millisecond,
+			"a": 10 * time.Millisecond,
+			"b": 10 * time.Millisecond,
+			"c": 10 * time.Millisecond,
 		},
+		hold:    map[string]chan struct{}{"slow": cFinished},
+		release: map[string]chan struct{}{"c": cFinished},
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -134,10 +156,11 @@ func TestDoImagesInParallel_DependentImageDoesNotWaitForUnrelatedSlowImage(t *te
 	require.Less(t, indexOf("a"), indexOf("b"), "b must build after a")
 	require.Less(t, indexOf("b"), indexOf("c"), "c must build after b")
 
-	// The core regression check: b/c must not be gated behind the unrelated,
-	// slower "slow" image just because a graph-scheduling bug reintroduced a
-	// wave/level barrier. With a 150ms artificial delay on "slow" and only
-	// 10ms on a/b/c, both b and c finish well before "slow" does.
+	// The core regression check: b/c must not be gated behind the unrelated
+	// "slow" image just because a graph-scheduling bug reintroduced a
+	// wave/level barrier. "slow" is held until "c" has finished, so under a
+	// level barrier the whole run deadlocks into the context timeout instead
+	// of racing a timing margin.
 	require.Less(t, indexOf("c"), indexOf("slow"),
 		"dependent chain a->b->c must not wait for unrelated image \"slow\"; observed order=%v", order)
 }
@@ -235,9 +258,11 @@ func TestDoImagesInParallel_AssignsBuildOrderIndexByRealDequeueNotStaticTopology
 		}
 		seen[idx] = img.Name
 
-		// The printer emits image blocks in the order their tasks were
-		// enqueued, so the log index must be that very position — any other
-		// numbering source can drift from what the log shows.
+		// Wiring check only: the printer's start-order position is what ends
+		// up in the log index. That the position itself matches the order the
+		// blocks are printed in is proven in pkg/util/parallel; here the two
+		// sides agree by construction, so this cannot catch a numbering that
+		// merely happens to coincide.
 		require.Equal(t, phase.startOrders[img.Name], idx,
 			"image %q log index must be the parallel printer's start-order position", img.Name)
 	}
@@ -293,15 +318,16 @@ func TestDoImagesInParallel_AnnotatesEachImageWithARealWorkerID(t *testing.T) {
 
 	var mu sync.Mutex
 	var order []string
+	w2Finished := make(chan struct{})
 	phase := &recordingPhase{
 		mu:    &mu,
 		order: &order,
-		delays: map[string]time.Duration{
-			"w1": 20 * time.Millisecond,
-			"w2": 20 * time.Millisecond,
-			"w3": 20 * time.Millisecond,
-			"w4": 20 * time.Millisecond,
-		},
+		// Worker 0 is parked in "w1" until "w2" — the only other runnable
+		// image, necessarily on worker 1 — has finished, so both workers are
+		// used by construction and not because the scheduler happened to
+		// interleave them before worker 0 drained the whole queue.
+		hold:    map[string]chan struct{}{"w1": w2Finished},
+		release: map[string]chan struct{}{"w2": w2Finished},
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
