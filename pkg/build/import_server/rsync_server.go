@@ -168,7 +168,9 @@ func (srv *RsyncServer) GetCopyCommand(ctx context.Context, importConfig *config
 	if importConfig.Owner != "" || importConfig.Group != "" {
 		rsyncChownOption = fmt.Sprintf("--chown=%s:%s", importConfig.Owner, importConfig.Group)
 	}
-	rsyncCommand := fmt.Sprintf("RSYNC_PASSWORD='%s' %s --archive --links --inplace --xattrs --keep-dirlinks %s", srv.AuthPassword, stapel.RsyncBinPath(), rsyncChownOption)
+	// --ignore-times disables the size+mtime quick check: a destination file that
+	// happens to match the imported one in both would otherwise be left untouched.
+	rsyncCommand := fmt.Sprintf("RSYNC_PASSWORD='%s' %s --archive --links --inplace --ignore-times --xattrs --keep-dirlinks %s", srv.AuthPassword, stapel.RsyncBinPath(), rsyncChownOption)
 	rsyncCommand += PrepareRsyncFilters(importConfig.Add, importConfig.IncludePaths, importConfig.ExcludePaths)
 
 	rsyncCommand += fmt.Sprintf(" %s$IMPORT_PATH_TRAILING_SLASH_OPTIONAL %s", rsyncImportPathSpec, importConfig.To)

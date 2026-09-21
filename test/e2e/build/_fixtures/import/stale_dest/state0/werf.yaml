@@ -1,0 +1,23 @@
+project: werf-test-e2e-build-import-stale-dest
+configVersion: 1
+
+---
+image: source
+from: registry.werf.io/base/ubuntu:22.04
+shell:
+  setup:
+    - echo "fresh" > /myapp
+    - touch -d @1000000000 /myapp
+
+---
+image: target
+from: registry.werf.io/base/ubuntu:22.04
+import:
+  - from: source
+    add: /myapp
+    to: /myapp
+    after: install
+shell:
+  beforeInstall:
+    - echo "stale" > /myapp
+    - touch -d @1000000000 /myapp

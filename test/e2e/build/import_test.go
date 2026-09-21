@@ -76,4 +76,50 @@ var _ = Describe("Import", Label("e2e", "build", "import", "simple"), func() {
 			WithStagedDockerfileBuilder: true,
 		}}),
 	)
+
+	DescribeTable("should overwrite a destination file matching the imported one in size and mtime",
+		func(ctx SpecContext, testOpts importTestOptions) {
+			By("initializing")
+			setupEnv(testOpts.setupEnvOptions)
+			contRuntime, err := contback.NewContainerBackend(testOpts.ContainerBackendMode)
+			if err == contback.ErrRuntimeUnavailable {
+				Skip(err.Error())
+			} else if err != nil {
+				Fail(err.Error())
+			}
+
+			By("building")
+			repoDirname := "repo0"
+			fixtureRelPath := "import/stale_dest/state0"
+			buildReportName := "report0.json"
+
+			SuiteData.InitTestRepo(ctx, repoDirname, fixtureRelPath)
+
+			werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
+			reportProject := report.NewProjectWithReport(werfProject)
+			_, buildReport := reportProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), nil)
+
+			By("checking the pre-existing file was replaced by the imported one")
+			contRuntime.ExpectCmdsToSucceed(
+				ctx,
+				buildReport.Images["target"].DockerImageName,
+				"echo 'fresh' | diff /myapp -",
+			)
+		},
+		Entry("Vanilla Docker", importTestOptions{setupEnvOptions{
+			ContainerBackendMode:        "vanilla-docker",
+			WithLocalRepo:               true,
+			WithStagedDockerfileBuilder: false,
+		}}),
+		Entry("Native Buildah rootless", importTestOptions{setupEnvOptions{
+			ContainerBackendMode:        "native-rootless",
+			WithLocalRepo:               true,
+			WithStagedDockerfileBuilder: false,
+		}}),
+		Entry("Native Buildah chroot", importTestOptions{setupEnvOptions{
+			ContainerBackendMode:        "native-chroot",
+			WithLocalRepo:               true,
+			WithStagedDockerfileBuilder: true,
+		}}),
+	)
 })
