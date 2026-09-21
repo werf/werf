@@ -1,8 +1,8 @@
 module github.com/werf/werf/v2
 
-go 1.25.5
+go 1.26.0
 
-toolchain go1.25.8
+toolchain go1.26.8
 
 require (
 	github.com/Masterminds/goutils v1.1.1
