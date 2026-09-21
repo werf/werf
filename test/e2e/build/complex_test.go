@@ -1,7 +1,6 @@
 package e2e_build_test
 
 import (
-	"errors"
 	"fmt"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -10,24 +9,14 @@ import (
 	"github.com/werf/werf/v2/test/pkg/contback"
 	"github.com/werf/werf/v2/test/pkg/report"
 	"github.com/werf/werf/v2/test/pkg/thirdparty/contruntime/manifest"
-	"github.com/werf/werf/v2/test/pkg/werf"
 )
-
-type complexTestOptions struct {
-	setupEnvOptions
-}
 
 var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
 	DescribeTable("should succeed and produce expected image",
-		func(ctx SpecContext, testOpts complexTestOptions) {
+		func(ctx SpecContext, testOpts setupEnvOptions) {
 			By("initializing")
-			setupEnv(testOpts.setupEnvOptions)
-			contRuntime, err := contback.NewContainerBackend(testOpts.ContainerBackendMode)
-			if errors.Is(err, contback.ErrRuntimeUnavailable) {
-				Skip(err.Error())
-			} else if err != nil {
-				Fail(err.Error())
-			}
+			setupEnv(testOpts)
+			contRuntime := contback.NewContainerBackend(testOpts.ContainerBackendMode)
 
 			By("state0: starting")
 			{
@@ -39,7 +28,7 @@ var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
 				SuiteData.InitTestRepo(ctx, repoDirname, fixtureRelPath)
 
 				By("state0: building images")
-				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
+				werfProject := newWerfProject(repoDirname)
 				reportProject := report.NewProjectWithReport(werfProject)
 				buildOut, buildReport := reportProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), nil)
 				Expect(buildOut).To(ContainSubstring("Building stage"))
@@ -105,7 +94,7 @@ var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
 				SuiteData.UpdateTestRepo(ctx, repoDirname, fixtureRelPath)
 
 				By("state1: building images")
-				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
+				werfProject := newWerfProject(repoDirname)
 				reportProject := report.NewProjectWithReport(werfProject)
 				buildOut, buildReport := reportProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), nil)
 				Expect(buildOut).To(ContainSubstring("Building stage"))
@@ -142,37 +131,37 @@ var _ = Describe("Complex build", Label("e2e", "build", "complex"), func() {
 				contRuntime.ExpectCmdsToSucceed(ctx, buildReport.Images["stapel-shell"].DockerImageName, "test -f /app/README.md", "stat -c %u:%g /app/README.md | diff <(echo 1050:1051) -", "grep -qF 'https://cloud.google.com/sdk/' /app/README.md", "test -f /app/static/index.html", "stat -c %u:%g /app/static/index.html | diff <(echo 1050:1051) -", "grep -qF '<title>Hello, world</title>' /app/static/index.html", "! test -e /app/static/style.css", "test -f /app/app.go", "stat -c %u:%g /app/app.go | diff <(echo 1050:1051) -", "grep -qF 'package hello' /app/app.go", "! test -e /app/static/script.js", "test -f /triggered-stages", "stat -c %u:%g /triggered-stages | diff <(echo 0:0) -", "echo 'beforeInstall\ninstall\nbeforeSetup\nsetup' | diff /triggered-stages -", "! test -e /tmp_dir/file", "test -f /basedir/file", "stat -c %u:%g /basedir/file | diff <(echo 0:0) -", "echo 'content' | diff /basedir/file -", "test -f /basedir-imported/file", "stat -c %u:%g /basedir-imported/file | diff <(echo 1060:1061) -", "echo 'content' | diff /basedir-imported/file -")
 			}
 		},
-		Entry("without repo using Docker", complexTestOptions{setupEnvOptions{
+		backendEntry("without repo using Docker", setupEnvOptions{
 			ContainerBackendMode:        "docker",
 			WithLocalRepo:               false,
 			WithStagedDockerfileBuilder: false,
-		}}),
-		Entry("with local repo using Docker", complexTestOptions{setupEnvOptions{
+		}),
+		backendEntry("with local repo using Docker", setupEnvOptions{
 			ContainerBackendMode:        "docker",
 			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: false,
-		}}),
-		Entry("with local repo using Native Buildah with rootless isolation", complexTestOptions{setupEnvOptions{
+		}),
+		backendEntry("with local repo using Native Buildah with rootless isolation", setupEnvOptions{
 			ContainerBackendMode:        "native-rootless",
 			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: false,
-		}}),
-		Entry("with local repo using Native Buildah with chroot isolation", complexTestOptions{setupEnvOptions{
+		}),
+		backendEntry("with local repo using Native Buildah with chroot isolation", setupEnvOptions{
 			ContainerBackendMode:        "native-chroot",
 			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: false,
-		}}),
+		}),
 		// TODO(1.3): after Full Dockerfile Builder removed and Staged Dockerfile Builder enabled by default this test no longer needed
-		Entry("with local repo using Native Buildah and Staged Dockerfile builder with rootless isolation", complexTestOptions{setupEnvOptions{
+		backendEntry("with local repo using Native Buildah and Staged Dockerfile builder with rootless isolation", setupEnvOptions{
 			ContainerBackendMode:        "native-rootless",
 			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: true,
-		}}),
+		}),
 		// TODO(1.3): after Full Dockerfile Builder removed and Staged Dockerfile Builder enabled by default this test no longer needed
-		Entry("with local repo using Native Buildah and Staged Dockerfile builder with chroot isolation", complexTestOptions{setupEnvOptions{
+		backendEntry("with local repo using Native Buildah and Staged Dockerfile builder with chroot isolation", setupEnvOptions{
 			ContainerBackendMode:        "native-chroot",
 			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: true,
-		}}),
+		}),
 	)
 })

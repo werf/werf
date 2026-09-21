@@ -16,9 +16,7 @@ import (
 
 var testSuiteEntrypointFunc = suite_init.MakeTestSuiteEntrypointFunc("Cleanup after converge suite", suite_init.TestSuiteEntrypointFuncOptions{
 	RequiredSuiteTools: []string{"git", "docker"},
-	RequiredSuiteEnvs: []string{
-		"WERF_TEST_K8S_DOCKER_REGISTRY",
-	},
+	SuiteLabels:        []string{suite_init.LabelNeedsRegistry, suite_init.LabelNeedsKube},
 })
 
 func TestSuite(t *testing.T) {

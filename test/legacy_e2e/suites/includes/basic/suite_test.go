@@ -20,9 +20,6 @@ func TestSuite(t *testing.T) {
 	requiredTools := []string{"docker", "git"}
 	suite_init.MakeTestSuiteEntrypointFunc("Build/mutate suite", suite_init.TestSuiteEntrypointFuncOptions{
 		RequiredSuiteTools: requiredTools,
-		RequiredSuiteEnvs: []string{
-			"WERF_TEST_K8S_DOCKER_REGISTRY",
-		},
 	})(t)
 }
 

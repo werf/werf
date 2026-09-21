@@ -11,14 +11,13 @@ PLATFORMS="${STAPEL_PLATFORMS:-linux/amd64,linux/arm64}"
 BUILDER="${STAPEL_BUILDER:-werf-stapel-builder}"
 
 if ! docker buildx inspect "${BUILDER}" >/dev/null 2>&1; then
-  docker buildx create --name "${BUILDER}" --driver docker-container --use
-else
-  docker buildx use "${BUILDER}"
+  docker buildx create --name "${BUILDER}" --driver docker-container
 fi
 
-docker buildx inspect --bootstrap >/dev/null
+docker buildx inspect --bootstrap "${BUILDER}" >/dev/null
 
 docker buildx build \
+  --builder "${BUILDER}" \
   --file "${DOCKERFILE}" \
   --target final \
   --platform "${PLATFORMS}" \

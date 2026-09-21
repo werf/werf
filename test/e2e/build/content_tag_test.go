@@ -2,16 +2,16 @@ package e2e_build_test
 
 import (
 	"fmt"
-	"os"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	"github.com/werf/werf/v2/test/pkg/suite_init"
 	"github.com/werf/werf/v2/test/pkg/utils"
 	"github.com/werf/werf/v2/test/pkg/werf"
 )
 
-var _ = Describe("Content tag reuse", Label("e2e", "build", "content-tag"), func() {
+var _ = Describe("Content tag reuse", Label("e2e", "build", "content-tag", suite_init.LabelNeedsRegistry), func() {
 	It("reuses the content tag across local builds, repo and final storages", func(ctx SpecContext) {
 		By("initializing")
 		setupEnv(setupEnvOptions{})
@@ -21,10 +21,10 @@ var _ = Describe("Content tag reuse", Label("e2e", "build", "content-tag"), func
 
 		By("preparing test repo")
 		SuiteData.InitTestRepo(ctx, repoDirName, fixtureRelPath)
-		werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirName))
+		werfProject := newWerfProject(repoDirName)
 
-		repoAddr := fmt.Sprintf("%s/%s-%s", os.Getenv("WERF_TEST_K8S_DOCKER_REGISTRY"), SuiteData.ProjectName, utils.GetRandomString(6))
-		finalRepoAddr := fmt.Sprintf("%s/%s-%s-final", os.Getenv("WERF_TEST_K8S_DOCKER_REGISTRY"), SuiteData.ProjectName, utils.GetRandomString(6))
+		repoAddr := suite_init.TestRepo(fmt.Sprintf("%s-%s", SuiteData.ProjectName, utils.GetRandomString(6)))
+		finalRepoAddr := suite_init.TestRepo(fmt.Sprintf("%s-%s-final", SuiteData.ProjectName, utils.GetRandomString(6)))
 
 		By("[1, :local] building all stages from scratch")
 		buildOut := werfProject.Build(ctx, &werf.BuildOptions{})
@@ -83,9 +83,9 @@ var _ = Describe("Content tag reuse", Label("e2e", "build", "content-tag"), func
 
 		By("preparing test repo")
 		SuiteData.InitTestRepo(ctx, repoDirName, fixtureRelPath)
-		werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirName))
+		werfProject := newWerfProject(repoDirName)
 
-		repoAddr := fmt.Sprintf("%s/%s-%s", os.Getenv("WERF_TEST_K8S_DOCKER_REGISTRY"), SuiteData.ProjectName, utils.GetRandomString(6))
+		repoAddr := suite_init.TestRepo(fmt.Sprintf("%s-%s", SuiteData.ProjectName, utils.GetRandomString(6)))
 
 		By("[1, :local] building all stages from scratch")
 		buildOut := werfProject.Build(ctx, &werf.BuildOptions{})
@@ -124,7 +124,7 @@ var _ = Describe("Content tag reuse", Label("e2e", "build", "content-tag"), func
 
 		By("preparing test repo")
 		SuiteData.InitTestRepo(ctx, repoDirName, fixtureRelPath)
-		werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirName))
+		werfProject := newWerfProject(repoDirName)
 
 		By("[1, :local] building the ubuntu-based image from scratch")
 		buildOut := werfProject.Build(ctx, &werf.BuildOptions{

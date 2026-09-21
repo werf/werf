@@ -1,7 +1,6 @@
 package e2e_compose_test
 
 import (
-	"runtime"
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -11,12 +10,8 @@ import (
 )
 
 func TestSuite(t *testing.T) {
-	requiredTools := []string{"docker", "git"}
-	if runtime.GOOS == "linux" {
-		requiredTools = append(requiredTools, "buildah")
-	}
-	suite_init.MakeTestSuiteEntrypointFunc("E2E Build suite", suite_init.TestSuiteEntrypointFuncOptions{
-		RequiredSuiteTools: requiredTools,
+	suite_init.MakeTestSuiteEntrypointFunc("E2E compose suite", suite_init.TestSuiteEntrypointFuncOptions{
+		RequiredSuiteTools: []string{"docker", "git"},
 	})(t)
 }
 

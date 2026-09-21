@@ -1,7 +1,10 @@
 package e2e_build_test
 
 import (
+	. "github.com/onsi/ginkgo/v2"
+
 	"github.com/werf/werf/v2/test/pkg/suite_init"
+	"github.com/werf/werf/v2/test/pkg/werf"
 )
 
 type setupEnvOptions struct {
@@ -10,6 +13,36 @@ type setupEnvOptions struct {
 	WithFinalRepo               bool
 	WithStagedDockerfileBuilder bool
 	State                       string
+}
+
+func (opts setupEnvOptions) env() setupEnvOptions {
+	return opts
+}
+
+// envCarrier is implemented by every per-table options struct, so that a single
+// entry constructor can label entries by the resources they need.
+type envCarrier interface {
+	env() setupEnvOptions
+}
+
+// backendEntry is Entry labeled with the external resources its backend and
+// storage need.
+func backendEntry(description string, opts envCarrier, args ...interface{}) TableEntry {
+	return Entry(description, append([]interface{}{opts, entryLabels(opts.env())}, args...)...)
+}
+
+func entryLabels(opts setupEnvOptions) Labels {
+	labels := Labels{opts.ContainerBackendMode}
+
+	if opts.ContainerBackendMode != "docker" {
+		labels = append(labels, suite_init.LabelNeedsBuildah)
+	}
+
+	if opts.WithLocalRepo || opts.WithFinalRepo {
+		labels = append(labels, suite_init.LabelNeedsRegistry)
+	}
+
+	return labels
 }
 
 func setupEnv(opts setupEnvOptions) {
@@ -48,4 +81,8 @@ func setupEnv(opts setupEnvOptions) {
 	}
 
 	SuiteData.Stubs.SetEnv("ENV_SECRET", "WERF_BUILD_SECRET")
+}
+
+func newWerfProject(repoDirname string) *werf.Project {
+	return werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
 }

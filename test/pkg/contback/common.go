@@ -4,7 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os/exec"
 	"runtime"
+
+	. "github.com/onsi/ginkgo/v2"
 
 	"github.com/werf/werf/v2/pkg/buildah"
 	bdTypes "github.com/werf/werf/v2/pkg/buildah/thirdparty"
@@ -13,23 +16,45 @@ import (
 
 var ErrRuntimeUnavailable = errors.New("requested runtime unavailable")
 
-func NewContainerBackend(mode string) (ContainerBackend, error) {
+// NewContainerBackend skips the current spec when the requested backend is not
+// available on this host.
+func NewContainerBackend(mode string) ContainerBackend {
 	switch mode {
 	case "docker":
-		return NewDockerBackend(), nil
+		return NewDockerBackend()
 	case "native-rootless":
-		if runtime.GOOS != "linux" {
-			return nil, ErrRuntimeUnavailable
-		}
-		return NewNativeBuildahBackend(bdTypes.IsolationOCIRootless, buildah.DefaultStorageDriver), nil
+		SkipIfUnavailable(mode)
+		return NewNativeBuildahBackend(bdTypes.IsolationOCIRootless, buildah.DefaultStorageDriver)
 	case "native-chroot":
-		if runtime.GOOS != "linux" {
-			return nil, ErrRuntimeUnavailable
-		}
-		return NewNativeBuildahBackend(bdTypes.IsolationChroot, buildah.DefaultStorageDriver), nil
+		SkipIfUnavailable(mode)
+		return NewNativeBuildahBackend(bdTypes.IsolationChroot, buildah.DefaultStorageDriver)
 	default:
 		panic(fmt.Sprintf("unexpected buildah mode: %s", mode))
 	}
+}
+
+// SkipIfUnavailable skips the current spec when the backend it needs is not
+// available on this host, for specs that never touch the backend directly.
+func SkipIfUnavailable(mode string) {
+	switch mode {
+	case "docker":
+	case "native-rootless", "native-chroot", "auto", "default":
+		if !buildahAvailable() {
+			Skip(ErrRuntimeUnavailable.Error())
+		}
+	default:
+		panic(fmt.Sprintf("unexpected buildah mode: %s", mode))
+	}
+}
+
+func buildahAvailable() bool {
+	if runtime.GOOS != "linux" {
+		return false
+	}
+
+	_, err := exec.LookPath("buildah")
+
+	return err == nil
 }
 
 type ContainerBackend interface {

@@ -23,7 +23,11 @@ type customTagTestOptions struct {
 	ExpectedCustomTags []string
 }
 
-var _ = Describe("Custom tag build", Label("e2e", "build", "simple"), func() {
+func (opts customTagTestOptions) env() setupEnvOptions {
+	return opts.setupEnvOptions
+}
+
+var _ = Describe("Custom tag build", Label("e2e", "build", "simple", suite_init.LabelNeedsRegistry), func() {
 	Describe("custom tag image name substitutions", func() {
 		const imageName = "libstdc++"
 
@@ -37,7 +41,7 @@ var _ = Describe("Custom tag build", Label("e2e", "build", "simple"), func() {
 		})
 
 		It("rejects the image name in a custom tag", func(ctx SpecContext) {
-			werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath("repo-plus"))
+			werfProject := newWerfProject("repo-plus")
 
 			buildOut := werfProject.Build(ctx, &werf.BuildOptions{CommonOptions: werf.CommonOptions{
 				ShouldFail: true,
@@ -49,7 +53,7 @@ var _ = Describe("Custom tag build", Label("e2e", "build", "simple"), func() {
 		})
 
 		It("publishes a tag with the slugged image name", func(ctx SpecContext) {
-			werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath("repo-plus"))
+			werfProject := newWerfProject("repo-plus")
 			reportProject := report.NewProjectWithReport(werfProject)
 
 			buildOut, _ := reportProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath("report-plus.json"), &werf.WithReportOptions{
@@ -88,7 +92,7 @@ var _ = Describe("Custom tag build", Label("e2e", "build", "simple"), func() {
 			SuiteData.InitTestRepo(ctx, repoDirname, fixtureRelPath)
 
 			By("state0: building images")
-			werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
+			werfProject := newWerfProject(repoDirname)
 			reportProject := report.NewProjectWithReport(werfProject)
 
 			customTags := lo.Map(opts.CustomTags, func(t string, _ int) string {
@@ -109,7 +113,7 @@ var _ = Describe("Custom tag build", Label("e2e", "build", "simple"), func() {
 				Expect(buildOut).To(ContainSubstring(expectedCustomTag))
 			}
 		},
-		Entry(
+		backendEntry(
 			"with repo, docker, select multiplatform image, "+
 				"and add the custom tag for multiplatform image",
 			customTagTestOptions{
@@ -129,7 +133,7 @@ var _ = Describe("Custom tag build", Label("e2e", "build", "simple"), func() {
 				},
 			},
 		),
-		Entry(
+		backendEntry(
 			"with repo, docker, doesn't select any image, "+
 				"but add custom tag for multiplatform image and one single platform final image",
 			customTagTestOptions{
@@ -148,7 +152,7 @@ var _ = Describe("Custom tag build", Label("e2e", "build", "simple"), func() {
 				},
 			},
 		),
-		Entry(
+		backendEntry(
 			"with repo and final repo, docker, select multiplatform image, "+
 				"and add the custom tag pushed to the final repo",
 			customTagTestOptions{

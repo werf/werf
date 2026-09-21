@@ -2,17 +2,32 @@ package suite_init
 
 import (
 	"fmt"
+	"os"
 
-	"github.com/werf/werf/v2/test/pkg/utils"
+	. "github.com/onsi/ginkgo/v2"
 )
 
 const (
 	TestK8sDockerRegistryEnv = "WERF_TEST_K8S_DOCKER_REGISTRY"
 )
 
-// TestRegistry returns registry address in form localhost:port
+// Labels naming the external resources a spec cannot run without, so that a run
+// can be narrowed to what the host actually provides.
+const (
+	LabelNeedsRegistry = "needs-registry"
+	LabelNeedsKube     = "needs-kube"
+	LabelNeedsBuildah  = "needs-buildah"
+)
+
+// TestRegistry returns registry address in form localhost:port, skipping the
+// current spec when no test registry is configured.
 func TestRegistry() string {
-	return utils.GetRequiredEnv(TestK8sDockerRegistryEnv)
+	registry := os.Getenv(TestK8sDockerRegistryEnv)
+	if registry == "" {
+		Skip(fmt.Sprintf("%s is not set", TestK8sDockerRegistryEnv))
+	}
+
+	return registry
 }
 
 // TestRepo returns full werf repo: localhost:port/project
