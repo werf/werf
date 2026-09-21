@@ -51,6 +51,20 @@
 * **cleanup:** name the --meta-repo address in the cleanup report ([c11fdfb](https://github.com/werf/werf/commit/c11fdfbd8161779d957347a76dab8e216ff9afd6))
 * **deploy:** embed deno binary into werf release binaries behind `embedwerfdeno` ([#7725](https://github.com/werf/werf/issues/7725)) ([468ba22](https://github.com/werf/werf/commit/468ba229e05e7fb104a286386da43e0051da09ed))
 
+## [2.78.2](https://github.com/werf/werf/compare/v2.78.1...v2.78.2) (2026-09-10)
+
+
+### Bug Fixes
+
+* **build, buildah:** stop re-compressing parent layers on stage push ([#7854](https://github.com/werf/werf/issues/7854)) ([9837b10](https://github.com/werf/werf/commit/9837b10a920086ea353d1b112160cffe093ba286))
+
+## [2.78.1](https://github.com/werf/werf/compare/v2.78.0...v2.78.1) (2026-09-09)
+
+
+### Bug Fixes
+
+* **build, stapel:** stop tying stage builds to the stapel image cat ([#7851](https://github.com/werf/werf/issues/7851)) ([f96eba3](https://github.com/werf/werf/commit/f96eba34f2c35c1fd2aa999ae26c1b38261904e3))
+
 ## [2.78.0](https://github.com/werf/werf/compare/v2.77.2...v2.78.0) (2026-09-09)
 
 

@@ -119,6 +119,7 @@ func (phase *BuildPhase) BeforeImages(ctx context.Context) error {
 	werfInContainer := os.Getenv("WERF_CONTAINERIZED") == "yes"
 
 	phase.ImagesReport.Runtime = RuntimeInfo{
+		WerfVersion: werf.Version,
 		Backend:     backend,
 		InContainer: werfInContainer,
 	}

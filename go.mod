@@ -58,7 +58,7 @@ require (
 	github.com/werf/copy-recurse v0.3.1
 	github.com/werf/lockgate v0.2.0
 	github.com/werf/logboek v0.7.2-0.20260810092153-80191977b868
-	github.com/werf/nelm v1.28.1-0.20260831170651-16e45e2e628b
+	github.com/werf/nelm v1.31.1-0.20260921121116-3d5b49b5a814
 	go.opentelemetry.io/otel v1.42.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.42.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.42.0
@@ -194,7 +194,7 @@ require (
 	github.com/transparency-dev/merkle v0.0.2 // indirect
 	github.com/valyala/fastjson v1.6.4 // indirect
 	github.com/vektah/gqlparser/v2 v2.5.30 // indirect
-	github.com/werf/kubedog v0.13.1-0.20260807153813-e8f61a4bc90a // indirect
+	github.com/werf/kubedog v0.13.1-0.20260915153156-438ef109f804 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/xhit/go-str2duration/v2 v2.1.0 // indirect
 	github.com/yannh/kubeconform v0.7.0 // indirect
@@ -457,6 +457,7 @@ require (
 replace (
 	github.com/deislabs/oras => github.com/werf/3p-oras v0.9.1-0.20260408144000-3b8c77eb09e8 // used by bundles, not maintained
 	github.com/docker/buildx => github.com/werf/3p-buildx v0.0.0-20260810132822-84b2b5a524c2 // temporary race fix; remove after docker/buildx#4007 merges
+	github.com/mattn/go-sqlite3 => github.com/mattn/go-sqlite3 v1.14.22 // v2.0.1+incompatible is a mistagged 2019 release bundling SQLite 3.30.1; the image blob-info cache needs sqlite_schema (SQLite >= 3.33)
 	github.com/spf13/cobra => github.com/werf/3p-cobra v0.0.0-20260403075225-552c82797324 // adds EnableErrorOnUnknownSubcommand, not yet in upstream
 	oras.land/oras-go => github.com/werf/3p-oras-go v1.2.8-0.20260408140625-72dd516ce0aa // used by bundles, not maintained
 )
