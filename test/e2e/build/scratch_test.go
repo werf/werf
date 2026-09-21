@@ -8,24 +8,14 @@ import (
 	"github.com/werf/werf/v2/test/pkg/contback"
 	"github.com/werf/werf/v2/test/pkg/report"
 	"github.com/werf/werf/v2/test/pkg/utils"
-	"github.com/werf/werf/v2/test/pkg/werf"
 )
-
-type scratchTestOptions struct {
-	setupEnvOptions
-}
 
 var _ = Describe("Scratch stapel build", Label("e2e", "build", "scratch", "simple"), func() {
 	DescribeTable("should build scratch stapel image",
-		func(ctx SpecContext, testOpts scratchTestOptions) {
+		func(ctx SpecContext, testOpts setupEnvOptions) {
 			By("initializing")
-			setupEnv(testOpts.setupEnvOptions)
-			_, err := contback.NewContainerBackend(testOpts.ContainerBackendMode)
-			if err == contback.ErrRuntimeUnavailable {
-				Skip(err.Error())
-			} else if err != nil {
-				Fail(err.Error())
-			}
+			setupEnv(testOpts)
+			contback.SkipIfUnavailable(testOpts.ContainerBackendMode)
 
 			repoDirname := "repo0"
 			fixtureRelPath := "scratch/state0"
@@ -35,7 +25,7 @@ var _ = Describe("Scratch stapel build", Label("e2e", "build", "scratch", "simpl
 			SuiteData.InitTestRepo(ctx, repoDirname, fixtureRelPath)
 
 			By("building image")
-			werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
+			werfProject := newWerfProject(repoDirname)
 			reportProject := report.NewProjectWithReport(werfProject)
 			buildOut, buildReport := reportProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), nil)
 			Expect(buildOut).To(ContainSubstring("Building stage"))
@@ -51,25 +41,25 @@ var _ = Describe("Scratch stapel build", Label("e2e", "build", "scratch", "simpl
 				image.WerfProjectRepoCommitLabel,
 			)
 		},
-		Entry("without repo using Docker", scratchTestOptions{setupEnvOptions{
+		backendEntry("without repo using Docker", setupEnvOptions{
 			ContainerBackendMode:        "docker",
 			WithLocalRepo:               false,
 			WithStagedDockerfileBuilder: false,
-		}}),
-		Entry("with local repo using Docker", scratchTestOptions{setupEnvOptions{
+		}),
+		backendEntry("with local repo using Docker", setupEnvOptions{
 			ContainerBackendMode:        "docker",
 			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: false,
-		}}),
-		Entry("using Native Buildah with chroot isolation", scratchTestOptions{setupEnvOptions{
+		}),
+		backendEntry("using Native Buildah with chroot isolation", setupEnvOptions{
 			ContainerBackendMode:        "native-chroot",
 			WithLocalRepo:               false,
 			WithStagedDockerfileBuilder: false,
-		}}),
-		Entry("using Native Buildah with chroot isolation and local repo", scratchTestOptions{setupEnvOptions{
+		}),
+		backendEntry("using Native Buildah with chroot isolation and local repo", setupEnvOptions{
 			ContainerBackendMode:        "native-chroot",
 			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: false,
-		}}),
+		}),
 	)
 })

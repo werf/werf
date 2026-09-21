@@ -1,17 +1,14 @@
 package e2e_build_test
 
 import (
-	"errors"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	"github.com/werf/werf/v2/test/pkg/contback"
 	"github.com/werf/werf/v2/test/pkg/report"
-	"github.com/werf/werf/v2/test/pkg/werf"
 )
 
-var _ = Describe("Staged dockerfile COPY flags", Label("e2e", "build", "copy-flags"), func() {
+var _ = Describe("Staged dockerfile COPY flags", Label("e2e", "build", "copy-flags"), entryLabels(setupEnvOptions{ContainerBackendMode: "native-rootless", WithLocalRepo: true, WithStagedDockerfileBuilder: true}), func() {
 	It("keeps source paths under the destination with --parents and drops --exclude matches", func(ctx SpecContext) {
 		By("initializing")
 		setupEnv(setupEnvOptions{
@@ -19,18 +16,13 @@ var _ = Describe("Staged dockerfile COPY flags", Label("e2e", "build", "copy-fla
 			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: true,
 		})
-		contRuntime, err := contback.NewContainerBackend("native-rootless")
-		if errors.Is(err, contback.ErrRuntimeUnavailable) {
-			Skip(err.Error())
-		} else if err != nil {
-			Fail(err.Error())
-		}
+		contRuntime := contback.NewContainerBackend("native-rootless")
 
 		By("preparing test repo")
 		SuiteData.InitTestRepo(ctx, "repo0", "copy_flags")
 
 		By("building image")
-		werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath("repo0"))
+		werfProject := newWerfProject("repo0")
 		reportProject := report.NewProjectWithReport(werfProject)
 		buildOut, buildReport := reportProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath("report0.json"), nil)
 		Expect(buildOut).To(ContainSubstring("Building stage"))

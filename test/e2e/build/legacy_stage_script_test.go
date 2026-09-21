@@ -25,18 +25,13 @@ const (
 	legacyStageScriptAnyExitCode = -1
 )
 
-var _ = Describe("Legacy stage script", Label("e2e", "build", "legacy-stage-script"), func() {
+var _ = Describe("Legacy stage script", Label("e2e", "build", "legacy-stage-script"), entryLabels(setupEnvOptions{ContainerBackendMode: "docker", WithLocalRepo: true}), func() {
 	It("builds a werf.yaml with many imports", func(ctx SpecContext) {
 		setupEnv(setupEnvOptions{ContainerBackendMode: "docker", WithLocalRepo: true})
-		contRuntime, err := contback.NewContainerBackend("docker")
-		if err == contback.ErrRuntimeUnavailable {
-			Skip(err.Error())
-		} else if err != nil {
-			Fail(err.Error())
-		}
+		contRuntime := contback.NewContainerBackend("docker")
 
 		SuiteData.InitTestRepo(ctx, "repo0", "legacy-stage-script/state0")
-		werfProject := werftest.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath("repo0"))
+		werfProject := newWerfProject("repo0")
 		_, buildReport := report.NewProjectWithReport(werfProject).BuildWithReport(ctx, SuiteData.GetBuildReportPath("report.json"), &werftest.WithReportOptions{
 			CommonOptions: werftest.CommonOptions{ExtraArgs: []string{"--platform=linux/amd64"}},
 		})

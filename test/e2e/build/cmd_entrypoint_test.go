@@ -12,30 +12,21 @@ import (
 	"github.com/werf/werf/v2/test/pkg/werf"
 )
 
-type cmdEntrypointTestOptions struct {
-	setupEnvOptions
-}
-
 var _ = Describe("CMD and ENTRYPOINT combinations", Label("e2e", "build", "extra"), func() {
-	checkFunc := func(ctx SpecContext, testOpts cmdEntrypointTestOptions, imageName string, expectedEntrypoint, expectedCmd strslice.StrSlice) {
+	checkFunc := func(ctx SpecContext, testOpts setupEnvOptions, imageName string, expectedEntrypoint, expectedCmd strslice.StrSlice) {
 		repoDirname := "repo"
 		fixtureRelPath := "cmd_entrypoint"
 		buildReportName := fmt.Sprintf("report-%s.json", imageName)
 
 		By("initializing")
-		setupEnv(testOpts.setupEnvOptions)
-		contRuntime, err := contback.NewContainerBackend(testOpts.ContainerBackendMode)
-		if err == contback.ErrRuntimeUnavailable {
-			Skip(err.Error())
-		} else if err != nil {
-			Fail(err.Error())
-		}
+		setupEnv(testOpts)
+		contRuntime := contback.NewContainerBackend(testOpts.ContainerBackendMode)
 
 		By("preparing test repo")
 		SuiteData.InitTestRepo(ctx, repoDirname, fixtureRelPath)
 
 		By("building images")
-		werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
+		werfProject := newWerfProject(repoDirname)
 		reportProject := report.NewProjectWithReport(werfProject)
 		buildOut, buildReport := reportProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), &werf.WithReportOptions{CommonOptions: werf.CommonOptions{
 			ExtraArgs: []string{imageName},
@@ -91,30 +82,27 @@ var _ = Describe("CMD and ENTRYPOINT combinations", Label("e2e", "build", "extra
 	}
 
 	for _, backend := range backends {
-		// Prevent closure over loop variable.
-		backend = backend
-
-		Describe(fmt.Sprintf("dockerfile with %s backend", backend.name), func() {
+		Describe(fmt.Sprintf("dockerfile with %s backend", backend.name), entryLabels(backend.options), func() {
 			DescribeTable("should produce expected image configurations", checkFunc,
-				Entry("Shell form ENTRYPOINT", cmdEntrypointTestOptions{setupEnvOptions: backend.options}, "dockerfile_shell_entrypoint", strslice.StrSlice{"/bin/sh", "-c", "echo \"ENTRYPOINT (shell)\""}, nil),
-				Entry("Exec form ENTRYPOINT", cmdEntrypointTestOptions{setupEnvOptions: backend.options}, "dockerfile_exec_entrypoint", strslice.StrSlice{"echo \"ENTRYPOINT (exec)\""}, nil),
-				Entry("Shell form CMD", cmdEntrypointTestOptions{setupEnvOptions: backend.options}, "dockerfile_shell_cmd", nil, strslice.StrSlice{"/bin/sh", "-c", "echo \"CMD (shell)\""}),
-				Entry("Exec form CMD", cmdEntrypointTestOptions{setupEnvOptions: backend.options}, "dockerfile_exec_cmd", nil, strslice.StrSlice{"echo \"CMD (exec)\""}),
-				Entry("No CMD, No ENTRYPOINT", cmdEntrypointTestOptions{setupEnvOptions: backend.options}, "dockerfile_no_cmd_no_entrypoint", nil, nil),
-				Entry("Shell form ENTRYPOINT, reset CMD", cmdEntrypointTestOptions{setupEnvOptions: backend.options}, "dockerfile_entrypoint_reset_cmd", strslice.StrSlice{"/bin/sh", "-c", "echo \"ENTRYPOINT (shell)\""}, nil),
-				Entry("Shell form ENTRYPOINT, Shell form CMD", cmdEntrypointTestOptions{setupEnvOptions: backend.options}, "dockerfile_entrypoint_cmd", strslice.StrSlice{"/bin/sh", "-c", "echo \"ENTRYPOINT (shell)\""}, strslice.StrSlice{"/bin/sh", "-c", "echo \"CMD (shell)\""}),
-				Entry("Base image CMD", cmdEntrypointTestOptions{setupEnvOptions: backend.options}, "dockerfile_base_image_cmd", nil, strslice.StrSlice{"/bin/sh", "-c", "echo \"CMD (shell, base image)\""}),
+				Entry("Shell form ENTRYPOINT", backend.options, "dockerfile_shell_entrypoint", strslice.StrSlice{"/bin/sh", "-c", "echo \"ENTRYPOINT (shell)\""}, nil),
+				Entry("Exec form ENTRYPOINT", backend.options, "dockerfile_exec_entrypoint", strslice.StrSlice{"echo \"ENTRYPOINT (exec)\""}, nil),
+				Entry("Shell form CMD", backend.options, "dockerfile_shell_cmd", nil, strslice.StrSlice{"/bin/sh", "-c", "echo \"CMD (shell)\""}),
+				Entry("Exec form CMD", backend.options, "dockerfile_exec_cmd", nil, strslice.StrSlice{"echo \"CMD (exec)\""}),
+				Entry("No CMD, No ENTRYPOINT", backend.options, "dockerfile_no_cmd_no_entrypoint", nil, nil),
+				Entry("Shell form ENTRYPOINT, reset CMD", backend.options, "dockerfile_entrypoint_reset_cmd", strslice.StrSlice{"/bin/sh", "-c", "echo \"ENTRYPOINT (shell)\""}, nil),
+				Entry("Shell form ENTRYPOINT, Shell form CMD", backend.options, "dockerfile_entrypoint_cmd", strslice.StrSlice{"/bin/sh", "-c", "echo \"ENTRYPOINT (shell)\""}, strslice.StrSlice{"/bin/sh", "-c", "echo \"CMD (shell)\""}),
+				Entry("Base image CMD", backend.options, "dockerfile_base_image_cmd", nil, strslice.StrSlice{"/bin/sh", "-c", "echo \"CMD (shell, base image)\""}),
 			)
 
 			if backend.name == "native-rootless" {
 				// Dockerfile SHELL instruction is ignored by pure Buildah.
 				// rel https://github.com/containers/buildah/issues/2959.
 				DescribeTable("should produce expected image configurations", checkFunc,
-					Entry("Custom shell", cmdEntrypointTestOptions{setupEnvOptions: backend.options}, "dockerfile_custom_shell_exec_cmd_and_entrypoint", strslice.StrSlice{"/bin/sh", "-c", "echo \"ENTRYPOINT (shell)\""}, strslice.StrSlice{"/bin/sh", "-c", "echo \"CMD (shell)\""}),
+					Entry("Custom shell", backend.options, "dockerfile_custom_shell_exec_cmd_and_entrypoint", strslice.StrSlice{"/bin/sh", "-c", "echo \"ENTRYPOINT (shell)\""}, strslice.StrSlice{"/bin/sh", "-c", "echo \"CMD (shell)\""}),
 				)
 			} else {
 				DescribeTable("should produce expected image configurations", checkFunc,
-					Entry("Custom shell", cmdEntrypointTestOptions{setupEnvOptions: backend.options}, "dockerfile_custom_shell_exec_cmd_and_entrypoint", strslice.StrSlice{"/bin/bash", "-c", "echo \"ENTRYPOINT (shell)\""}, strslice.StrSlice{"/bin/bash", "-c", "echo \"CMD (shell)\""}),
+					Entry("Custom shell", backend.options, "dockerfile_custom_shell_exec_cmd_and_entrypoint", strslice.StrSlice{"/bin/bash", "-c", "echo \"ENTRYPOINT (shell)\""}, strslice.StrSlice{"/bin/bash", "-c", "echo \"CMD (shell)\""}),
 				)
 			}
 		})

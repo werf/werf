@@ -21,7 +21,7 @@ var _ = Describe("Content tag reuse", Label("e2e", "build", "content-tag"), func
 
 		By("preparing test repo")
 		SuiteData.InitTestRepo(ctx, repoDirName, fixtureRelPath)
-		werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirName))
+		werfProject := newWerfProject(repoDirName)
 
 		repoAddr := suite_init.TestRepo(fmt.Sprintf("%s-%s", SuiteData.ProjectName, utils.GetRandomString(6)))
 		finalRepoAddr := suite_init.TestRepo(fmt.Sprintf("%s-%s-final", SuiteData.ProjectName, utils.GetRandomString(6)))
@@ -83,7 +83,7 @@ var _ = Describe("Content tag reuse", Label("e2e", "build", "content-tag"), func
 
 		By("preparing test repo")
 		SuiteData.InitTestRepo(ctx, repoDirName, fixtureRelPath)
-		werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirName))
+		werfProject := newWerfProject(repoDirName)
 
 		repoAddr := suite_init.TestRepo(fmt.Sprintf("%s-%s", SuiteData.ProjectName, utils.GetRandomString(6)))
 
@@ -124,7 +124,7 @@ var _ = Describe("Content tag reuse", Label("e2e", "build", "content-tag"), func
 
 		By("preparing test repo")
 		SuiteData.InitTestRepo(ctx, repoDirName, fixtureRelPath)
-		werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirName))
+		werfProject := newWerfProject(repoDirName)
 
 		By("[1, :local] building the ubuntu-based image from scratch")
 		buildOut := werfProject.Build(ctx, &werf.BuildOptions{

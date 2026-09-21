@@ -5,24 +5,14 @@ import (
 
 	"github.com/werf/werf/v2/test/pkg/contback"
 	"github.com/werf/werf/v2/test/pkg/report"
-	"github.com/werf/werf/v2/test/pkg/werf"
 )
-
-type importTestOptions struct {
-	setupEnvOptions
-}
 
 var _ = Describe("Import", Label("e2e", "build", "import", "simple"), func() {
 	DescribeTable("should resolve relative symlink destination",
-		func(ctx SpecContext, testOpts importTestOptions) {
+		func(ctx SpecContext, testOpts setupEnvOptions) {
 			By("initializing")
-			setupEnv(testOpts.setupEnvOptions)
-			contRuntime, err := contback.NewContainerBackend(testOpts.ContainerBackendMode)
-			if err == contback.ErrRuntimeUnavailable {
-				Skip(err.Error())
-			} else if err != nil {
-				Fail(err.Error())
-			}
+			setupEnv(testOpts)
+			contRuntime := contback.NewContainerBackend(testOpts.ContainerBackendMode)
 
 			By("building")
 			repoDirname := "repo0"
@@ -31,7 +21,7 @@ var _ = Describe("Import", Label("e2e", "build", "import", "simple"), func() {
 
 			SuiteData.InitTestRepo(ctx, repoDirname, fixtureRelPath)
 
-			werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
+			werfProject := newWerfProject(repoDirname)
 			reportProject := report.NewProjectWithReport(werfProject)
 			_, buildReport := reportProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), nil)
 
@@ -45,20 +35,20 @@ var _ = Describe("Import", Label("e2e", "build", "import", "simple"), func() {
 				"test -f /bin/myapp",
 			)
 		},
-		Entry("Docker", importTestOptions{setupEnvOptions{
+		backendEntry("Docker", setupEnvOptions{
 			ContainerBackendMode:        "docker",
 			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: false,
-		}}),
-		Entry("Native Buildah rootless", importTestOptions{setupEnvOptions{
+		}),
+		backendEntry("Native Buildah rootless", setupEnvOptions{
 			ContainerBackendMode:        "native-rootless",
 			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: false,
-		}}),
-		Entry("Native Buildah chroot", importTestOptions{setupEnvOptions{
+		}),
+		backendEntry("Native Buildah chroot", setupEnvOptions{
 			ContainerBackendMode:        "native-chroot",
 			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: true,
-		}}),
+		}),
 	)
 })

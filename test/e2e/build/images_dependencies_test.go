@@ -3,7 +3,6 @@ package e2e_build_test
 import (
 	"context"
 	"fmt"
-	"runtime"
 	"strings"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -12,6 +11,7 @@ import (
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/werf"
 	"github.com/werf/werf/v2/test/pkg/contback"
+	"github.com/werf/werf/v2/test/pkg/suite_init"
 	"github.com/werf/werf/v2/test/pkg/utils"
 	"github.com/werf/werf/v2/test/pkg/utils/liveexec"
 )
@@ -93,10 +93,8 @@ var _ = Describe("Images dependencies", Label("e2e", "build", "extra"), func() {
 		})
 	})
 	When("dockerfile image uses COPY --from stage and external image", func() {
-		It("should build staged dockerfile with COPY --from correctly", func(ctx SpecContext) {
-			if runtime.GOOS != "linux" {
-				Skip(contback.ErrRuntimeUnavailable.Error())
-			}
+		It("should build staged dockerfile with COPY --from correctly", Label(suite_init.LabelNeedsBuildah), func(ctx SpecContext) {
+			contback.SkipIfUnavailable("auto")
 
 			SuiteData.CommitProjectWorktree(
 				ctx,
