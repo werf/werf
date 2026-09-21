@@ -211,8 +211,11 @@ var _ = Describe("DoTasksDynamic", func() {
 		}
 
 		err := parallel.DoTasksDynamic(ctx, parallel.DoTasksOptions{MaxNumberOfWorkers: 3}, next, func(ctx context.Context, taskId int) error {
+			order, ok := parallel.TaskStartOrder(ctx)
+			Expect(ok).To(BeTrue(), "a task context always carries its start order")
+
 			mu.Lock()
-			startOrder[taskId] = parallel.TaskStartOrder(ctx)
+			startOrder[taskId] = order
 			mu.Unlock()
 
 			switch taskId {

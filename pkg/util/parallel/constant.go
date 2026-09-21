@@ -12,13 +12,10 @@ const (
 )
 
 // TaskStartOrder returns the task's start-order position from a context
-// passed to a TaskFunc. Use it, not the task ID, for "N/Total" progress
-// labels: tasks are printed in start order, so any other numbering comes
-// out scattered in the log.
-func TaskStartOrder(ctx context.Context) int {
+// passed to a TaskFunc, and whether ctx belongs to a parallel task at all.
+// Use it, not the task ID, for "N/Total" progress labels: tasks are printed
+// in start order, so any other numbering comes out scattered in the log.
+func TaskStartOrder(ctx context.Context) (int, bool) {
 	order, ok := ctx.Value(CtxTaskStartOrderKey).(int)
-	if !ok {
-		panic("context does not belong to a parallel task")
-	}
-	return order
+	return order, ok
 }

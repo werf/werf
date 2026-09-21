@@ -39,7 +39,8 @@ func (p *recordingPhase) AfterImages(context.Context) error  { return nil }
 func (p *recordingPhase) BeforeImageStages(ctx context.Context, img *image.Image) (func(), error) {
 	if p.startOrders != nil {
 		p.mu.Lock()
-		p.startOrders[img.Name] = parallel.TaskStartOrder(ctx)
+		order, _ := parallel.TaskStartOrder(ctx)
+		p.startOrders[img.Name] = order
 		p.mu.Unlock()
 	}
 	return nil, nil

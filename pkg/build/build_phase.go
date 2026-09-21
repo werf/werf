@@ -191,7 +191,12 @@ func (phase *BuildPhase) AfterImages(ctx context.Context) error {
 				}
 			}
 		} else {
-			img := image.NewMultiplatformImage(name, images, parallel.TaskStartOrder(ctx), len(imagesPairs))
+			logIndex, ok := parallel.TaskStartOrder(ctx)
+			if !ok {
+				logIndex = taskId
+			}
+
+			img := image.NewMultiplatformImage(name, images, logIndex, len(imagesPairs))
 			phase.Conveyor.imagesTree.SetMultiplatformImage(img)
 
 			// TODO: Separate LocalStagesStorage and RepoStagesStorage interfaces, local should not include metadata publishing methods at all
