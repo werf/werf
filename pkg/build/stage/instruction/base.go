@@ -3,6 +3,7 @@ package instruction
 import (
 	"context"
 	"fmt"
+	"maps"
 
 	"github.com/werf/werf/v2/pkg/build/stage"
 	"github.com/werf/werf/v2/pkg/config"
@@ -88,13 +89,25 @@ func (stg *Base[T, BT]) expandBaseEnv(baseEnv map[string]string) error {
 }
 
 func (stg *Base[T, BT]) GetExpandedEnv(c stage.Conveyor) map[string]string {
+	return stg.expandedEnvWithDependenciesArgs(stage.ResolveDependenciesArgs(stg.TargetPlatform(), stg.dependencies, c))
+}
+
+// GetExpandedEnvForContent is the environment a content digest is derived from:
+// the environment the instruction itself declares, with dependency build args
+// resolved to stable placeholders. It never reads the environment of the built
+// base image, which is only known once the base image exists — the content of a
+// base image reaches the digest through the anchor digest of that image instead.
+func (stg *Base[T, BT]) GetExpandedEnvForContent() map[string]string {
 	env := make(map[string]string)
-	for k, v := range stg.expandedEnv {
-		env[k] = v
-	}
-	for k, v := range stage.ResolveDependenciesArgs(stg.TargetPlatform(), stg.dependencies, c) {
-		env[k] = v
-	}
+	maps.Copy(env, stg.instruction.Env)
+	maps.Copy(env, stage.ResolveDependenciesArgsForContent(stg.dependencies))
+	return env
+}
+
+func (stg *Base[T, BT]) expandedEnvWithDependenciesArgs(dependenciesArgs map[string]string) map[string]string {
+	env := make(map[string]string)
+	maps.Copy(env, stg.expandedEnv)
+	maps.Copy(env, dependenciesArgs)
 	return env
 }
 

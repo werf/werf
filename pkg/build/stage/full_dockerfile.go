@@ -299,8 +299,18 @@ func (s *FullDockerfileStage) FetchDependencies(_ context.Context, _ Conveyor, _
 }
 
 func (s *FullDockerfileStage) GetDependencies(ctx context.Context, c Conveyor, _ container_backend.ContainerBackend, _, _ *StageImage, _ container_backend.BuildContextArchiver) (string, error) {
-	resolvedDependenciesArgsHash := ResolveDependenciesArgs(s.targetPlatform, s.dependencies, c)
+	return s.dependenciesDigest(ctx, c, ResolveDependenciesArgs(s.targetPlatform, s.dependencies, c))
+}
 
+// GetContentDependencies resolves dependency build args to stable placeholders
+// instead of the built image names, tags and registry digests of the dependency
+// images: their content is folded into the anchor digest as a dependency input,
+// and those values change on every rebuild of the dependency image.
+func (s *FullDockerfileStage) GetContentDependencies(ctx context.Context, c Conveyor, _ container_backend.BuildContextArchiver) (string, error) {
+	return s.dependenciesDigest(ctx, c, ResolveDependenciesArgsForContent(s.dependencies))
+}
+
+func (s *FullDockerfileStage) dependenciesDigest(ctx context.Context, c Conveyor, resolvedDependenciesArgsHash map[string]string) (string, error) {
 	var resolvedDockerMetaArgsHash map[string]string
 	{
 		metaArgs, err := s.resolveDockerMetaArgs(resolvedDependenciesArgsHash)
@@ -392,10 +402,6 @@ func (s *FullDockerfileStage) GetDependencies(ctx context.Context, c Conveyor, _
 	}
 
 	return util.Sha256Hash(dependencies...), nil
-}
-
-func (s *FullDockerfileStage) GetContentDependencies(ctx context.Context, c Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
-	return s.GetDependencies(ctx, c, nil, nil, nil, buildContextArchive)
 }
 
 func (s *FullDockerfileStage) MutateImage(_ context.Context, _ ImageMutatorPusher, _, _ *StageImage) error {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -126,11 +127,94 @@ func (phase *BuildPhase) BeforeImages(ctx context.Context) error {
 
 	telemetry.GetTelemetryWerfIO().BuildStarted(ctx, len(imagesPairs), backend, werfInContainer)
 
+	if err := phase.calculateAnchorDigests(ctx); err != nil {
+		return fmt.Errorf("unable to calculate content-based digests: %w", err)
+	}
+
 	return nil
 }
 
-func collectHolisticInputs(ctx context.Context, img *image.Image, conveyor stage.Conveyor, buildContextArchive container_backend.BuildContextArchiver) ([]string, error) {
+// calculateAnchorDigests computes the content anchor digest of every image
+// before anything is built, in dependency order. The digest of an image folds
+// in the anchor digests of the images it depends on, so it identifies the whole
+// content of the image including everything it is built from, and it is derived
+// from configuration and git content only — never from a built image's stage ID,
+// name or registry digest, which change whenever a dependency is rebuilt.
+func (phase *BuildPhase) calculateAnchorDigests(ctx context.Context) error {
+	graph := phase.Conveyor.imagesTree.GetImagesGraph()
+	if graph == nil {
+		return nil
+	}
+
+	for _, img := range graph.Nodes() {
+		stages := img.GetStages()
+		if len(stages) == 0 {
+			continue
+		}
+		anchor := stages[len(stages)-1]
+		if !anchor.IsContentAnchor() {
+			continue
+		}
+
+		var buildContextArchive container_backend.BuildContextArchiver
+		if img.UsesBuildContext() {
+			archive, err := img.GetOrCreateBuildContextArchive(ctx)
+			if err != nil {
+				return fmt.Errorf("image %q: %w", img.Name, err)
+			}
+			buildContextArchive = archive
+		}
+
+		holisticInputs, err := collectHolisticInputs(ctx, img, graph.Dependencies(img), phase.Conveyor, buildContextArchive)
+		if buildContextArchive != nil {
+			// The archive itself is kept for the build, only its extracted copy is
+			// dropped: an image reused by its anchor never extracts it again.
+			buildContextArchive.CleanupExtractedDir(ctx)
+		}
+		if err != nil {
+			return fmt.Errorf("image %q: %w", img.Name, err)
+		}
+
+		digest, err := calculateDigest(ctx, string(anchor.Name()), "", nil, phase.Conveyor, calculateDigestOptions{
+			TargetPlatform:    img.TargetPlatform,
+			BuildCacheVersion: imagePkg.BuildCacheVersion,
+			Anchor:            true,
+			HolisticInputs:    holisticInputs,
+		})
+		if err != nil {
+			return fmt.Errorf("image %q: %w", img.Name, err)
+		}
+		img.SetAnchorDigest(digest)
+	}
+
+	return nil
+}
+
+func collectHolisticInputs(ctx context.Context, img *image.Image, dependencies []*image.Image, conveyor stage.Conveyor, buildContextArchive container_backend.BuildContextArchiver) ([]string, error) {
 	var inputs []string
+
+	dependencyInputs := make([]string, 0, len(dependencies))
+	for _, dep := range dependencies {
+		anchorDigest := dep.GetAnchorDigest()
+		if anchorDigest == "" {
+			return nil, fmt.Errorf("dependency image %q has no content-based digest", dep.Name)
+		}
+		dependencyInputs = append(dependencyInputs, fmt.Sprintf("dependency:%s:%s", dep.Name, anchorDigest))
+	}
+
+	// Instructions of a staged Dockerfile image reference dependency images
+	// through build args, which are still unexpanded here: the args themselves
+	// have to reach the digest, or changing the import type of a dependency
+	// would leave the digest untouched while changing what FROM resolves to.
+	if img.IsDockerfileImage && img.DockerfileImageConfig != nil {
+		for arg, value := range stage.ResolveDependenciesArgsForContent(img.DockerfileImageConfig.Dependencies) {
+			dependencyInputs = append(dependencyInputs, fmt.Sprintf("dependencyArg:%s:%s", arg, value))
+		}
+	}
+
+	sort.Strings(dependencyInputs)
+	inputs = append(inputs, dependencyInputs...)
+
 	for _, stg := range img.GetStages() {
 		deps, err := stg.GetContentDependencies(ctx, conveyor, buildContextArchive)
 		if err != nil {
@@ -452,6 +536,15 @@ func (phase *BuildPhase) ImageProcessingShouldBeStopped(_ context.Context, _ *im
 func (phase *BuildPhase) BeforeImageStages(ctx context.Context, img *image.Image) (deferFn func(), err error) {
 	phase.StagesIterator = NewStagesIterator(phase.Conveyor)
 
+	// The content anchor is resolved before the base image is set up: a reused
+	// image is not built, so its base image is never needed.
+	if err := phase.resolveContentAnchor(ctx, img); err != nil {
+		return nil, err
+	}
+	if img.GetContentTagDesc() != nil {
+		return nil, nil
+	}
+
 	if err := img.SetupBaseImage(ctx, phase.Conveyor.StorageManager, manager.StorageOptions{
 		ContainerBackend: phase.Conveyor.ContainerBackend,
 		DockerRegistry:   docker_registry.API(),
@@ -460,36 +553,28 @@ func (phase *BuildPhase) BeforeImageStages(ctx context.Context, img *image.Image
 	}
 
 	if img.UsesBuildContext() {
-		phase.buildContextArchive = image.NewBuildContextArchive(phase.Conveyor.giterminismManager, img.TmpDir)
-		if err := phase.buildContextArchive.Create(ctx, container_backend.BuildContextArchiveCreateOptions{
-			DockerfileRelToContextPath: img.DockerfileImageConfig.Dockerfile,
-			ContextGitSubDir:           img.DockerfileImageConfig.Context,
-			ContextAddFiles:            img.DockerfileImageConfig.ContextAddFiles,
-		}); err != nil {
-			return nil, fmt.Errorf("unable to create build context archive: %w", err)
+		buildContextArchive, err := img.GetOrCreateBuildContextArchive(ctx)
+		if err != nil {
+			return nil, err
 		}
+		phase.buildContextArchive = buildContextArchive
 
 		deferFn = func() {
-			phase.buildContextArchive.CleanupExtractedDir(ctx)
+			buildContextArchive.CleanupExtractedDir(ctx)
 		}
 	}
 
+	return deferFn, nil
+}
+
+func (phase *BuildPhase) resolveContentAnchor(ctx context.Context, img *image.Image) error {
 	stages := img.GetStages()
 	if len(stages) == 0 {
-		return deferFn, nil
+		return nil
 	}
 	anchor := stages[len(stages)-1]
 	if !anchor.IsContentAnchor() {
-		return deferFn, nil
-	}
-
-	if img.IsDockerfileImage && img.DockerfileImageConfig.Staged {
-		// The anchor's digest must reflect expanded dependencies (e.g. COPY --from=<dependency>)
-		// the same way the normal per-stage loop computes it in onImageStage, otherwise this
-		// pre-check digest never matches and the content-tag short-circuit never triggers.
-		if err := anchor.ExpandDependencies(ctx, phase.Conveyor, img.GetStagedDockerfileBaseEnv()); err != nil {
-			return deferFn, fmt.Errorf("unable to expand dependencies for stage %s: %w", anchor.LogDetailedName(), err)
-		}
+		return nil
 	}
 
 	foundInPrimary, unlockFn, err := phase.calculateStage(ctx, img, anchor)
@@ -501,14 +586,14 @@ func (phase *BuildPhase) BeforeImageStages(ctx context.Context, img *image.Image
 		unlockFn()
 	}
 	if err != nil {
-		return deferFn, fmt.Errorf("resolve image content tag: %w", err)
+		return fmt.Errorf("resolve image content tag: %w", err)
 	}
 
 	foundSuitable := foundInPrimary
 	if !foundSuitable {
 		foundInSecondary, err := phase.findAndFetchStageFromSecondaryStagesStorage(ctx, img, anchor)
 		if err != nil {
-			return deferFn, fmt.Errorf("resolve image content tag from secondary stages storage: %w", err)
+			return fmt.Errorf("resolve image content tag from secondary stages storage: %w", err)
 		}
 		foundSuitable = foundInSecondary
 	}
@@ -516,7 +601,7 @@ func (phase *BuildPhase) BeforeImageStages(ctx context.Context, img *image.Image
 	if foundSuitable {
 		stageDesc := anchor.GetStageImage().Image.GetStageDesc()
 		if stageDesc == nil {
-			return deferFn, fmt.Errorf("image content tag for image %q resolved without stage descriptor", img.GetName())
+			return fmt.Errorf("image content tag for image %q resolved without stage descriptor", img.GetName())
 		}
 		img.SetContentTagDesc(stageDesc)
 		img.AnchorReused = true
@@ -536,7 +621,7 @@ func (phase *BuildPhase) BeforeImageStages(ctx context.Context, img *image.Image
 		logboek.Context(ctx).Warn().LogLn()
 	}
 
-	return deferFn, nil
+	return nil
 }
 
 func (phase *BuildPhase) AfterImageStages(ctx context.Context, img *image.Image) error {
@@ -943,12 +1028,12 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, s
 	var stageDependencies string
 	var prevNonEmptyStage stage.Interface
 	if stg.IsContentAnchor() {
-		holisticInputs, err := collectHolisticInputs(ctx, img, phase.Conveyor, phase.buildContextArchive)
-		if err != nil {
-			return false, nil, err
+		// The anchor digest is computed once for the whole build, before anything
+		// is built (see calculateAnchorDigests): recomputing it here would mix in
+		// instruction data that the build itself has already expanded in place.
+		if img.GetAnchorDigest() == "" {
+			return false, nil, fmt.Errorf("content-based digest of image %q is not calculated", img.GetName())
 		}
-		opts.Anchor = true
-		opts.HolisticInputs = holisticInputs
 	} else {
 		// FIXME(stapel-to-buildah): store StageImage-s everywhere in stage and build pkgs
 		deps, err := stg.GetDependencies(ctx, phase.Conveyor, phase.Conveyor.ContainerBackend, phase.StagesIterator.GetPrevImage(img, stg), phase.StagesIterator.GetPrevBuiltImage(img, stg), phase.buildContextArchive)
@@ -965,9 +1050,13 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, s
 		}
 	}
 
-	stageDigest, err := calculateDigest(ctx, string(stg.Name()), stageDependencies, prevNonEmptyStage, phase.Conveyor, opts)
-	if err != nil {
-		return false, nil, err
+	stageDigest := img.GetAnchorDigest()
+	if !stg.IsContentAnchor() {
+		var err error
+		stageDigest, err = calculateDigest(ctx, string(stg.Name()), stageDependencies, prevNonEmptyStage, phase.Conveyor, opts)
+		if err != nil {
+			return false, nil, err
+		}
 	}
 	stg.SetDigest(stageDigest)
 

@@ -110,6 +110,9 @@ type Image struct {
 	BuildDuration           time.Duration
 	AnchorReused            bool
 
+	anchorDigest        string
+	buildContextArchive *BuildContextArchive
+
 	stages            []stage.Interface
 	stageDurations    map[stage.StageName]time.Duration
 	lastNonEmptyStage stage.Interface
@@ -279,6 +282,32 @@ func (i *Image) SetLastNonEmptyStage(stg stage.Interface) {
 
 func (i *Image) GetLastNonEmptyStage() stage.Interface {
 	return i.lastNonEmptyStage
+}
+
+func (i *Image) SetAnchorDigest(digest string) {
+	i.anchorDigest = digest
+}
+
+func (i *Image) GetAnchorDigest() string {
+	return i.anchorDigest
+}
+
+func (i *Image) GetOrCreateBuildContextArchive(ctx context.Context) (*BuildContextArchive, error) {
+	if i.buildContextArchive != nil {
+		return i.buildContextArchive, nil
+	}
+
+	archive := NewBuildContextArchive(i.GiterminismManager, i.TmpDir)
+	if err := archive.Create(ctx, container_backend.BuildContextArchiveCreateOptions{
+		DockerfileRelToContextPath: i.DockerfileImageConfig.Dockerfile,
+		ContextGitSubDir:           i.DockerfileImageConfig.Context,
+		ContextAddFiles:            i.DockerfileImageConfig.ContextAddFiles,
+	}); err != nil {
+		return nil, fmt.Errorf("unable to create build context archive: %w", err)
+	}
+	i.buildContextArchive = archive
+
+	return archive, nil
 }
 
 func (i *Image) SetContentTagDesc(desc *image.StageDesc) {
