@@ -283,8 +283,29 @@ func (phase *BuildPhase) anchorExistsInStagesStorage(ctx context.Context, img *i
 	if err != nil {
 		return false, fmt.Errorf("unable to select suitable stage by content-based digest %s: %w", img.GetAnchorDigest(), err)
 	}
+	if stageDesc != nil {
+		return true, nil
+	}
 
-	return stageDesc != nil, nil
+	// resolveContentAnchor falls back to the secondary stages storages and copies
+	// what it finds into the primary one, so an anchor available there reuses the
+	// image just as one in the primary storage does.
+	for _, secondaryStagesStorage := range storageManager.GetSecondaryStagesStorageList() {
+		secondaryStageDescSet, err := storageManager.GetStageDescSetByDigestFromStagesStorageWithCache(ctx, anchor.LogDetailedName(), img.GetAnchorDigest(), 0, secondaryStagesStorage)
+		if err != nil {
+			return false, fmt.Errorf("unable to get stages by content-based digest %s from secondary stages storage %s: %w", img.GetAnchorDigest(), secondaryStagesStorage.String(), err)
+		}
+
+		secondaryStageDesc, err := storageManager.SelectSuitableStageDesc(ctx, phase.Conveyor, anchor, secondaryStageDescSet)
+		if err != nil {
+			return false, fmt.Errorf("unable to select suitable stage by content-based digest %s in secondary stages storage %s: %w", img.GetAnchorDigest(), secondaryStagesStorage.String(), err)
+		}
+		if secondaryStageDesc != nil {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
 
 func (phase *BuildPhase) isRequestedImage(img *image.Image) bool {

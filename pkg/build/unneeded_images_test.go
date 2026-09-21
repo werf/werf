@@ -2,25 +2,26 @@ package build
 
 import (
 	"context"
-	"testing"
+	"fmt"
 
-	"github.com/stretchr/testify/require"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 
 	"github.com/werf/werf/v2/pkg/build/image"
+	"github.com/werf/werf/v2/pkg/build/stage"
 	"github.com/werf/werf/v2/pkg/config"
+	imagePkg "github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/storage"
+	"github.com/werf/werf/v2/pkg/storage/manager"
 )
 
-func newTestImage(t *testing.T, name string, isFinal bool, dependencyNames ...string) *image.Image {
-	t.Helper()
-
-	return newTestImageForPlatform(t, "linux/amd64", name, isFinal, dependencyNames...)
+func newTestImage(name string, isFinal bool, dependencyNames ...string) *image.Image {
+	return newTestImageForPlatform("linux/amd64", name, isFinal, dependencyNames...)
 }
 
-func newTestImageForPlatform(t *testing.T, targetPlatform, name string, isFinal bool, dependencyNames ...string) *image.Image {
-	t.Helper()
-
+func newTestImageForPlatform(targetPlatform, name string, isFinal bool, dependencyNames ...string) *image.Image {
 	img, err := image.NewImage(context.Background(), targetPlatform, name, image.NoBaseImage, image.ImageOptions{IsFinal: isFinal})
-	require.NoError(t, err)
+	Expect(err).NotTo(HaveOccurred())
 	for _, depName := range dependencyNames {
 		img.AddDependencyName(depName)
 	}
@@ -28,153 +29,292 @@ func newTestImageForPlatform(t *testing.T, targetPlatform, name string, isFinal 
 	return img
 }
 
-func TestMarkUnneededImages(t *testing.T) {
-	nothingRequested := func(*image.Image) bool { return false }
+func newTestImagesGraph(images ...*image.Image) *image.ImagesGraph {
+	graph, err := image.BuildImagesGraph(images)
+	Expect(err).NotTo(HaveOccurred())
 
-	t.Run("non-final image is skipped when every dependent is reused by its anchor", func(t *testing.T) {
-		base := newTestImage(t, "base", false)
-		app := newTestImage(t, "app", true, "base")
-
-		graph, err := image.BuildImagesGraph([]*image.Image{base, app})
-		require.NoError(t, err)
-
-		markUnneededImages(graph, map[*image.Image]bool{base: false, app: true}, nothingRequested)
-
-		require.True(t, base.Skipped)
-		require.False(t, app.Skipped)
-	})
-
-	t.Run("non-final image is built when a dependent has to be built", func(t *testing.T) {
-		base := newTestImage(t, "base", false)
-		app := newTestImage(t, "app", true, "base")
-		other := newTestImage(t, "other", true, "base")
-
-		graph, err := image.BuildImagesGraph([]*image.Image{base, app, other})
-		require.NoError(t, err)
-
-		markUnneededImages(graph, map[*image.Image]bool{base: false, app: true, other: false}, nothingRequested)
-
-		require.False(t, base.Skipped)
-	})
-
-	t.Run("non-final image available by its own anchor is not skipped", func(t *testing.T) {
-		base := newTestImage(t, "base", false)
-		app := newTestImage(t, "app", true, "base")
-
-		graph, err := image.BuildImagesGraph([]*image.Image{base, app})
-		require.NoError(t, err)
-
-		markUnneededImages(graph, map[*image.Image]bool{base: true, app: true}, nothingRequested)
-
-		require.False(t, base.Skipped)
-	})
-
-	t.Run("explicitly requested image is never skipped", func(t *testing.T) {
-		base := newTestImage(t, "base", false)
-		app := newTestImage(t, "app", true, "base")
-
-		graph, err := image.BuildImagesGraph([]*image.Image{base, app})
-		require.NoError(t, err)
-
-		markUnneededImages(graph, map[*image.Image]bool{base: false, app: true}, func(img *image.Image) bool {
-			return img.Name == "base"
-		})
-
-		require.False(t, base.Skipped)
-	})
-
-	t.Run("final image is never skipped", func(t *testing.T) {
-		base := newTestImage(t, "base", true)
-		app := newTestImage(t, "app", true, "base")
-
-		graph, err := image.BuildImagesGraph([]*image.Image{base, app})
-		require.NoError(t, err)
-
-		markUnneededImages(graph, map[*image.Image]bool{base: false, app: true}, nothingRequested)
-
-		require.False(t, base.Skipped)
-	})
-
-	t.Run("skipping propagates down a chain of non-final images", func(t *testing.T) {
-		root := newTestImage(t, "root", false)
-		middle := newTestImage(t, "middle", false, "root")
-		app := newTestImage(t, "app", true, "middle")
-
-		graph, err := image.BuildImagesGraph([]*image.Image{root, middle, app})
-		require.NoError(t, err)
-
-		markUnneededImages(graph, map[*image.Image]bool{root: false, middle: false, app: true}, nothingRequested)
-
-		require.True(t, middle.Skipped)
-		require.True(t, root.Skipped, "a dependency of a skipped image is not needed either")
-	})
-
-	t.Run("image is not skipped on one platform only", func(t *testing.T) {
-		baseAmd := newTestImageForPlatform(t, "linux/amd64", "base", false)
-		appAmd := newTestImageForPlatform(t, "linux/amd64", "app", true, "base")
-		baseArm := newTestImageForPlatform(t, "linux/arm64", "base", false)
-		appArm := newTestImageForPlatform(t, "linux/arm64", "app", true, "base")
-
-		graph, err := image.BuildImagesGraph([]*image.Image{baseAmd, appAmd, baseArm, appArm})
-		require.NoError(t, err)
-
-		markUnneededImages(graph, map[*image.Image]bool{
-			baseAmd: false, appAmd: true,
-			baseArm: false, appArm: false,
-		}, nothingRequested)
-
-		require.False(t, baseAmd.Skipped)
-		require.False(t, baseArm.Skipped)
-	})
+	return graph
 }
 
-func TestIsRequestedImage(t *testing.T) {
-	newPhase := func(requestedNames []string, targets ...IntrospectTarget) *BuildPhase {
-		return &BuildPhase{
-			BuildPhaseOptions: BuildPhaseOptions{
-				BuildOptions: BuildOptions{IntrospectOptions: IntrospectOptions{Targets: targets}},
-			},
-			BasePhase: BasePhase{Conveyor: &Conveyor{imagesTree: image.NewImagesTree(nil, image.ImagesTreeOptions{
+func newTestBuildPhase(storageManager manager.StorageManagerInterface, requestedNames []string, introspectTargets ...IntrospectTarget) *BuildPhase {
+	return &BuildPhase{
+		BuildPhaseOptions: BuildPhaseOptions{
+			BuildOptions: BuildOptions{IntrospectOptions: IntrospectOptions{Targets: introspectTargets}},
+		},
+		BasePhase: BasePhase{Conveyor: &Conveyor{
+			StorageManager: storageManager,
+			imagesTree: image.NewImagesTree(nil, image.ImagesTreeOptions{
 				ImagesToProcess: config.ImagesToProcess{ImageNameList: requestedNames},
-			})}},
-		}
+			}),
+		}},
+	}
+}
+
+type unneededImagesScenario struct {
+	graph         *image.ImagesGraph
+	anchorExists  map[*image.Image]bool
+	isRequested   func(img *image.Image) bool
+	expectSkipped map[*image.Image]bool
+}
+
+func nothingRequested(*image.Image) bool { return false }
+
+var _ = Describe("markUnneededImages", func() {
+	DescribeTable("deciding which images no image being built needs",
+		func(setup func() unneededImagesScenario) {
+			scenario := setup()
+
+			markUnneededImages(scenario.graph, scenario.anchorExists, scenario.isRequested)
+
+			for img, expected := range scenario.expectSkipped {
+				Expect(img.Skipped).To(Equal(expected), fmt.Sprintf("image %s (%s)", img.Name, img.TargetPlatform))
+			}
+		},
+		Entry("non-final image is skipped when every dependent is reused by its anchor", func() unneededImagesScenario {
+			base := newTestImage("base", false)
+			app := newTestImage("app", true, "base")
+
+			return unneededImagesScenario{
+				graph:         newTestImagesGraph(base, app),
+				anchorExists:  map[*image.Image]bool{base: false, app: true},
+				isRequested:   nothingRequested,
+				expectSkipped: map[*image.Image]bool{base: true, app: false},
+			}
+		}),
+		Entry("non-final image is built when a dependent has to be built", func() unneededImagesScenario {
+			base := newTestImage("base", false)
+			app := newTestImage("app", true, "base")
+			other := newTestImage("other", true, "base")
+
+			return unneededImagesScenario{
+				graph:         newTestImagesGraph(base, app, other),
+				anchorExists:  map[*image.Image]bool{base: false, app: true, other: false},
+				isRequested:   nothingRequested,
+				expectSkipped: map[*image.Image]bool{base: false},
+			}
+		}),
+		Entry("non-final image available by its own anchor is not skipped", func() unneededImagesScenario {
+			base := newTestImage("base", false)
+			app := newTestImage("app", true, "base")
+
+			return unneededImagesScenario{
+				graph:         newTestImagesGraph(base, app),
+				anchorExists:  map[*image.Image]bool{base: true, app: true},
+				isRequested:   nothingRequested,
+				expectSkipped: map[*image.Image]bool{base: false},
+			}
+		}),
+		Entry("explicitly requested image is never skipped", func() unneededImagesScenario {
+			base := newTestImage("base", false)
+			app := newTestImage("app", true, "base")
+
+			return unneededImagesScenario{
+				graph:         newTestImagesGraph(base, app),
+				anchorExists:  map[*image.Image]bool{base: false, app: true},
+				isRequested:   func(img *image.Image) bool { return img.Name == "base" },
+				expectSkipped: map[*image.Image]bool{base: false},
+			}
+		}),
+		Entry("final image is never skipped", func() unneededImagesScenario {
+			base := newTestImage("base", true)
+			app := newTestImage("app", true, "base")
+
+			return unneededImagesScenario{
+				graph:         newTestImagesGraph(base, app),
+				anchorExists:  map[*image.Image]bool{base: false, app: true},
+				isRequested:   nothingRequested,
+				expectSkipped: map[*image.Image]bool{base: false},
+			}
+		}),
+		Entry("skipping propagates down a chain of non-final images", func() unneededImagesScenario {
+			root := newTestImage("root", false)
+			middle := newTestImage("middle", false, "root")
+			app := newTestImage("app", true, "middle")
+
+			return unneededImagesScenario{
+				graph:         newTestImagesGraph(root, middle, app),
+				anchorExists:  map[*image.Image]bool{root: false, middle: false, app: true},
+				isRequested:   nothingRequested,
+				expectSkipped: map[*image.Image]bool{middle: true, root: true},
+			}
+		}),
+		// Nodes are decided in topological order, so root is looked at while
+		// middle is still marked skipped: keeping root only takes effect on a
+		// later pass over the graph.
+		Entry("nothing is skipped in a chain whose anchors are all absent", func() unneededImagesScenario {
+			base := newTestImage("base", false)
+			middle := newTestImage("middle", false, "base")
+			app := newTestImage("app", true, "middle")
+
+			return unneededImagesScenario{
+				graph:         newTestImagesGraph(base, middle, app),
+				anchorExists:  map[*image.Image]bool{base: false, middle: false, app: false},
+				isRequested:   nothingRequested,
+				expectSkipped: map[*image.Image]bool{base: false, middle: false, app: false},
+			}
+		}),
+		Entry("image is not skipped on one platform only", func() unneededImagesScenario {
+			baseAmd := newTestImageForPlatform("linux/amd64", "base", false)
+			appAmd := newTestImageForPlatform("linux/amd64", "app", true, "base")
+			baseArm := newTestImageForPlatform("linux/arm64", "base", false)
+			appArm := newTestImageForPlatform("linux/arm64", "app", true, "base")
+
+			return unneededImagesScenario{
+				graph: newTestImagesGraph(baseAmd, appAmd, baseArm, appArm),
+				anchorExists: map[*image.Image]bool{
+					baseAmd: false, appAmd: true,
+					baseArm: false, appArm: false,
+				},
+				isRequested:   nothingRequested,
+				expectSkipped: map[*image.Image]bool{baseAmd: false, baseArm: false},
+			}
+		}),
+		// The anchor of the middle image is present for one platform only, so it
+		// has to be built for the other one — together with the image it is
+		// built from.
+		Entry("chain with per-platform anchors", func() unneededImagesScenario {
+			baseAmd := newTestImageForPlatform("linux/amd64", "base", false)
+			baseArm := newTestImageForPlatform("linux/arm64", "base", false)
+			middleAmd := newTestImageForPlatform("linux/amd64", "middle", false, "base")
+			middleArm := newTestImageForPlatform("linux/arm64", "middle", false, "base")
+			appAmd := newTestImageForPlatform("linux/amd64", "app", true, "middle")
+			appArm := newTestImageForPlatform("linux/arm64", "app", true, "middle")
+
+			return unneededImagesScenario{
+				graph: newTestImagesGraph(baseAmd, middleAmd, appAmd, baseArm, middleArm, appArm),
+				anchorExists: map[*image.Image]bool{
+					baseAmd: false, baseArm: false,
+					middleAmd: false, middleArm: true,
+					appAmd: true, appArm: true,
+				},
+				isRequested:   nothingRequested,
+				expectSkipped: map[*image.Image]bool{middleAmd: false, middleArm: false, baseAmd: false, baseArm: false},
+			}
+		}),
+	)
+
+	It("skips nothing when every image name is requested, as with --final-images-only=false", func() {
+		base := newTestImage("base", false)
+		app := newTestImage("app", true, "base")
+		phase := newTestBuildPhase(nil, []string{"base", "app"})
+
+		markUnneededImages(newTestImagesGraph(base, app), map[*image.Image]bool{base: false, app: true}, phase.isRequestedImage)
+
+		Expect(base.Skipped).To(BeFalse())
+		Expect(app.Skipped).To(BeFalse())
+	})
+})
+
+var _ = Describe("BuildPhase.isRequestedImage", func() {
+	var img *image.Image
+
+	BeforeEach(func() {
+		img = newTestImage("base", false)
+	})
+
+	It("is false when nothing is requested", func() {
+		Expect(newTestBuildPhase(nil, nil).isRequestedImage(img)).To(BeFalse())
+	})
+
+	It("is true for an image named on the command line", func() {
+		Expect(newTestBuildPhase(nil, []string{"base"}).isRequestedImage(img)).To(BeTrue())
+	})
+
+	It("is false for another image named on the command line", func() {
+		Expect(newTestBuildPhase(nil, []string{"other"}).isRequestedImage(img)).To(BeFalse())
+	})
+
+	It("is true for an image whose stage is introspected", func() {
+		Expect(newTestBuildPhase(nil, nil, IntrospectTarget{ImageName: "base", StageName: "install"}).isRequestedImage(img)).To(BeTrue())
+	})
+
+	It("is true when every image is introspected", func() {
+		Expect(newTestBuildPhase(nil, nil, IntrospectTarget{ImageName: "*", StageName: "install"}).isRequestedImage(img)).To(BeTrue())
+	})
+
+	It("is false when another image is introspected", func() {
+		Expect(newTestBuildPhase(nil, nil, IntrospectTarget{ImageName: "other", StageName: "install"}).isRequestedImage(img)).To(BeFalse())
+	})
+})
+
+var _ manager.StorageManagerInterface = (*anchorLookupStorageManager)(nil)
+
+type anchorLookupStorageManager struct {
+	manager.StorageManagerInterface
+	secondaryStagesStorage storage.StagesStorage
+	inPrimary              imagePkg.StageDescSet
+	inSecondary            imagePkg.StageDescSet
+}
+
+func (m *anchorLookupStorageManager) GetStageDescSetByDigestWithCache(_ context.Context, _, _ string, _ int64) (imagePkg.StageDescSet, error) {
+	return m.inPrimary, nil
+}
+
+func (m *anchorLookupStorageManager) GetSecondaryStagesStorageList() []storage.StagesStorage {
+	return []storage.StagesStorage{m.secondaryStagesStorage}
+}
+
+func (m *anchorLookupStorageManager) GetStageDescSetByDigestFromStagesStorageWithCache(_ context.Context, _, _ string, _ int64, stagesStorage storage.StagesStorage) (imagePkg.StageDescSet, error) {
+	if stagesStorage == m.secondaryStagesStorage {
+		return m.inSecondary, nil
 	}
 
-	img := newTestImage(t, "base", false)
-
-	require.False(t, newPhase(nil).isRequestedImage(img))
-	require.True(t, newPhase([]string{"base"}).isRequestedImage(img),
-		"an image named on the command line has to be built")
-	require.False(t, newPhase([]string{"other"}).isRequestedImage(img))
-	require.True(t, newPhase(nil, IntrospectTarget{ImageName: "base", StageName: "install"}).isRequestedImage(img),
-		"an image whose stage is introspected has to be built")
-	require.True(t, newPhase(nil, IntrospectTarget{ImageName: "*", StageName: "install"}).isRequestedImage(img))
-	require.False(t, newPhase(nil, IntrospectTarget{ImageName: "other", StageName: "install"}).isRequestedImage(img))
+	return m.inPrimary, nil
 }
 
-func TestMarkUnneededImages_ChainWithPerPlatformAnchors(t *testing.T) {
-	nothingRequested := func(*image.Image) bool { return false }
+func (m *anchorLookupStorageManager) SelectSuitableStageDesc(_ context.Context, _ stage.Conveyor, _ stage.Interface, stageDescSet imagePkg.StageDescSet) (*imagePkg.StageDesc, error) {
+	for stageDesc := range stageDescSet.Iter() {
+		return stageDesc, nil
+	}
 
-	// The anchor of the middle image is present for one platform only, so it has
-	// to be built for the other one — together with the image it is built from.
-	baseAmd := newTestImageForPlatform(t, "linux/amd64", "base", false)
-	baseArm := newTestImageForPlatform(t, "linux/arm64", "base", false)
-	middleAmd := newTestImageForPlatform(t, "linux/amd64", "middle", false, "base")
-	middleArm := newTestImageForPlatform(t, "linux/arm64", "middle", false, "base")
-	appAmd := newTestImageForPlatform(t, "linux/amd64", "app", true, "middle")
-	appArm := newTestImageForPlatform(t, "linux/arm64", "app", true, "middle")
+	return nil, nil
+}
 
-	graph, err := image.BuildImagesGraph([]*image.Image{baseAmd, middleAmd, appAmd, baseArm, middleArm, appArm})
-	require.NoError(t, err)
+var _ = Describe("BuildPhase.anchorExistsInStagesStorage", func() {
+	newAnchoredImage := func() *image.Image {
+		img := newTestImage("base", false)
+		img.SetAnchorDigest("anchor-digest")
+		img.SetStages([]stage.Interface{stage.NewBaseStage(stage.ImageSpec, &stage.BaseStageOptions{ImageName: "base"})})
 
-	markUnneededImages(graph, map[*image.Image]bool{
-		baseAmd: false, baseArm: false,
-		middleAmd: false, middleArm: true,
-		appAmd: true, appArm: true,
-	}, nothingRequested)
+		return img
+	}
 
-	require.False(t, middleAmd.Skipped, "the anchor of middle is absent for this platform, so it is built")
-	require.False(t, middleArm.Skipped, "an image name is skipped for all of its platforms or for none")
-	require.False(t, baseAmd.Skipped, "middle is built on this platform and needs base")
-	require.False(t, baseArm.Skipped)
+	anchorStageDesc := &imagePkg.StageDesc{
+		StageID: imagePkg.NewStageID("anchor-digest", 1),
+		Info:    &imagePkg.Info{Name: "repo:anchor"},
+	}
+
+	DescribeTable("looking the content anchor up",
+		func(inPrimary, inSecondary imagePkg.StageDescSet, expected bool) {
+			phase := newTestBuildPhase(&anchorLookupStorageManager{
+				secondaryStagesStorage: &fakeStagesStorage{},
+				inPrimary:              inPrimary,
+				inSecondary:            inSecondary,
+			}, nil)
+
+			exists, err := phase.anchorExistsInStagesStorage(context.Background(), newAnchoredImage())
+
+			Expect(err).NotTo(HaveOccurred())
+			Expect(exists).To(Equal(expected))
+		},
+		Entry("found in the primary stages storage", imagePkg.NewStageDescSet(anchorStageDesc), imagePkg.NewStageDescSet(), true),
+		Entry("found in a secondary stages storage only", imagePkg.NewStageDescSet(), imagePkg.NewStageDescSet(anchorStageDesc), true),
+		Entry("found nowhere", imagePkg.NewStageDescSet(), imagePkg.NewStageDescSet(), false),
+	)
+
+	It("is false for an image without a content anchor digest", func() {
+		img := newAnchoredImage()
+		img.SetAnchorDigest("")
+
+		exists, err := newTestBuildPhase(nil, nil).anchorExistsInStagesStorage(context.Background(), img)
+
+		Expect(err).NotTo(HaveOccurred())
+		Expect(exists).To(BeFalse())
+	})
+})
+
+var _ storage.StagesStorage = (*fakeStagesStorage)(nil)
+
+type fakeStagesStorage struct {
+	storage.StagesStorage
 }
