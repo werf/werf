@@ -109,10 +109,13 @@ var _ = Describe("LoadChartDir", func() {
 			"ignoreddir/a.yaml":      "a",
 			"ignoreddir/deep/b.yaml": "b",
 			"templates/kept.yaml":    "kept",
+			// a rule with a trailing slash applies to directories only, so a file of that
+			// name stays in the chart, the way helm keeps it
+			"templates/ignoreddir": "kept",
 		})
 
 		Expect(loadedNames(logging.WithLogger(ctx), chartDir)).To(ConsistOf(
-			".helmignore", "Chart.yaml", "templates/kept.yaml",
+			".helmignore", "Chart.yaml", "templates/kept.yaml", "templates/ignoreddir",
 		))
 	})
 
@@ -165,6 +168,22 @@ var _ = Describe("LoadChartDir", func() {
 		Expect(os.WriteFile(outsideTarget, []byte("outside"), 0o644)).To(Succeed())
 		Expect(os.MkdirAll(filepath.Join(chartDir, "ignoreddir"), 0o755)).To(Succeed())
 		Expect(os.Symlink(outsideTarget, filepath.Join(chartDir, "ignoreddir", "link.txt"))).To(Succeed())
+
+		Expect(loadedNames(logging.WithLogger(ctx), chartDir)).To(ConsistOf(
+			".helmignore", "Chart.yaml",
+		))
+	})
+
+	// Matching the rules before the path is resolved is what makes a symlink werf cannot follow
+	// excludable at all: resolving it is exactly what fails, so the rules have to decide first.
+	It("excludes a symlink loop matched by .helmignore without resolving it", func(ctx SpecContext) {
+		chartDir := writeChart(map[string]string{
+			".helmignore": "loop*\n",
+			"Chart.yaml":  "name: test",
+		})
+
+		Expect(os.Symlink("loop2", filepath.Join(chartDir, "loop"))).To(Succeed())
+		Expect(os.Symlink("loop", filepath.Join(chartDir, "loop2"))).To(Succeed())
 
 		Expect(loadedNames(logging.WithLogger(ctx), chartDir)).To(ConsistOf(
 			".helmignore", "Chart.yaml",

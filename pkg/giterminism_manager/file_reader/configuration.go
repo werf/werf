@@ -136,18 +136,37 @@ func (r FileReader) skipConfigurationPathFunc(dir string, skipRelativeToDirPathF
 	return func(ctx context.Context, r FileReader, existingRelPath, notResolvedRelPath string) (bool, error) {
 		relativeToDirPath := filepath.ToSlash(util.GetRelativeToBaseFilepath(dir, notResolvedRelPath))
 		if relativeToDirPath != "" && relativeToDirPath != "." && !strings.HasPrefix(relativeToDirPath, "../") {
-			isDir, err := r.IsDirectoryExist(ctx, existingRelPath)
+			skip, err := r.skipRelativeToDirPath(ctx, existingRelPath, relativeToDirPath, skipRelativeToDirPathFunc)
 			if err != nil {
-				return false, fmt.Errorf("check %q is a directory: %w", filepath.ToSlash(existingRelPath), err)
+				return false, err
 			}
 
-			if skipRelativeToDirPathFunc(relativeToDirPath, isDir) {
+			if skip {
 				return true, nil
 			}
 		}
 
 		return skipFileFunc(ctx, r, existingRelPath, notResolvedRelPath)
 	}
+}
+
+// skipRelativeToDirPath asks the predicate without resolving the path, and resolves it only when
+// the answer depends on whether the path is a directory, which is the case for a rule that applies
+// to directories only. Resolving is what fails on a symlink werf cannot follow, so a path must
+// never be resolved just to find out that it is excluded.
+func (r FileReader) skipRelativeToDirPath(ctx context.Context, existingRelPath, relativeToDirPath string, skipRelativeToDirPathFunc func(relativeToDirPath string, isDir bool) bool) (bool, error) {
+	skipAsFile := skipRelativeToDirPathFunc(relativeToDirPath, false)
+	skipAsDir := skipRelativeToDirPathFunc(relativeToDirPath, true)
+	if skipAsFile == skipAsDir {
+		return skipAsFile, nil
+	}
+
+	isDir, err := r.IsDirectoryExist(ctx, existingRelPath)
+	if err != nil {
+		return false, fmt.Errorf("check %q is a directory: %w", filepath.ToSlash(existingRelPath), err)
+	}
+
+	return lo.Ternary(isDir, skipAsDir, skipAsFile), nil
 }
 
 // ReadAndCheckConfigurationFile does CheckConfigurationFileExistenceAndAcceptance and ReadConfigurationFile.
