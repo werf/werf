@@ -244,6 +244,68 @@ var _ = Describe("DoTasksDynamic", func() {
 		Expect(startOrder).To(Equal(map[int]int{taskA: 0, taskB: 1, taskC: 2}))
 	})
 
+	It("leaves the printing queue in start order when the error comes from next() and not from a task", func() {
+		// Worker 1 finishes its task successfully and only then fails while
+		// asking for the next one. No block is to blame for that error, so
+		// none may be pulled out of the queue: the blocks must still read
+		// a, b, c. Worker 0 holds the head of the queue for the whole run, so
+		// the printer is still parked on it when the error arrives.
+		sink := newSpyOutput(8)
+		ctx := logboek.NewContext(context.Background(), logboek.NewLogger(sink, sink))
+		ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		defer cancel()
+
+		var mu sync.Mutex
+		given := map[int]bool{}
+		cStarted := make(chan struct{})
+
+		next := func(ctx context.Context) (int, bool, error) {
+			workerID := ctx.Value(parallel.CtxBackgroundTaskIDKey).(int)
+
+			mu.Lock()
+			first := !given[workerID]
+			given[workerID] = true
+			mu.Unlock()
+
+			if first {
+				return workerID, true, nil
+			}
+
+			if workerID == 1 {
+				select {
+				case <-cStarted:
+					return 0, false, errors.New("scheduler failed")
+				case <-ctx.Done():
+					return 0, false, ctx.Err()
+				}
+			}
+
+			<-ctx.Done()
+			return 0, false, ctx.Err()
+		}
+
+		err := parallel.DoTasksDynamic(ctx, parallel.DoTasksOptions{MaxNumberOfWorkers: 3}, next, func(ctx context.Context, taskId int) error {
+			switch taskId {
+			case 0:
+				logboek.Context(ctx).LogLn("a")
+				<-ctx.Done()
+				return nil
+			case 1:
+				logboek.Context(ctx).LogLn("b")
+				return nil
+			case 2:
+				logboek.Context(ctx).LogLn("c")
+				close(cStarted)
+				return nil
+			default:
+				return fmt.Errorf("unexpected task %d", taskId)
+			}
+		})
+
+		Expect(err).To(MatchError(ContainSubstring("scheduler failed")))
+		Expect(sink.String()).To(Equal("a\n\nb\n\nc\n"))
+	})
+
 	It("runs tasks sequentially on a single worker when MaxNumberOfWorkers is not positive", func() {
 		const total = 4
 

@@ -56,8 +56,13 @@ func (p *Printer) Close() {
 // being printed yet moves to the end, so its error is the last thing the
 // user sees; a failed task that is being printed right now truncates the
 // queue behind it — the tasks queued after it were canceled and their
-// partial output is noise.
+// partial output is noise. A nil output means no task failed, and the queue
+// is left as is.
 func (p *Printer) FailFast(failed *TaskOutput) {
+	if failed == nil {
+		return
+	}
+
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
@@ -105,7 +110,7 @@ func (p *Printer) Print(ctx context.Context) error {
 	}
 }
 
-func (p *Printer) head() (out *TaskOutput, ok, done bool) {
+func (p *Printer) head() (*TaskOutput, bool, bool) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 

@@ -15,12 +15,15 @@ import (
 // connection pool per task) and writes only synchronously from inside the
 // task that invoked it, so relaying to the current task's logger streams is
 // exact and its output gets the same indentation and block boundaries as
-// the task's own log lines. Outside a task, relayed writes are dropped.
+// the task's own log lines. Between tasks relayed writes are dropped; a
+// write from a goroutine that outlived its task lands in the block of
+// whatever task the worker runs at that moment.
 type Worker struct {
 	ID int
 
 	mu      sync.Mutex
 	current *TaskOutput
+	failed  *TaskOutput
 	outputs []*TaskOutput
 	taskOut io.Writer
 	taskErr io.Writer
@@ -53,16 +56,24 @@ func (r streamRelay) Write(p []byte) (int, error) {
 	return target.Write(p)
 }
 
-// Output returns the TaskOutput of the task the worker runs right now, nil
-// outside a task.
-func (w *Worker) Output() *TaskOutput {
+// failTask records the output of a task that returned an error, so the
+// printer can highlight exactly that block. An error raised outside a task
+// (picking the next one, allocating its buffer) leaves it unset, and the
+// printing queue is then left alone.
+func (w *Worker) failTask(out *TaskOutput) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 
-	return w.current
+	w.failed = out
 }
 
-// beginTask creates the buffer for the task about to run.
+func (w *Worker) failedOutput() *TaskOutput {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	return w.failed
+}
+
 func (w *Worker) beginTask() (*TaskOutput, error) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
@@ -77,7 +88,6 @@ func (w *Worker) beginTask() (*TaskOutput, error) {
 	return out, nil
 }
 
-// bindTaskStreams points the docker cli relay at the task logger's streams.
 func (w *Worker) bindTaskStreams(outStream, errStream io.Writer) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
@@ -93,6 +103,7 @@ func (w *Worker) endTask() error {
 	w.taskOut = nil
 	w.taskErr = nil
 	out := w.current
+	w.current = nil
 	w.mu.Unlock()
 
 	if out == nil {

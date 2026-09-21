@@ -43,7 +43,7 @@ var _ = It("Printer removes a task's temp file as soon as its block is printed, 
 				case <-time.After(10 * time.Millisecond):
 				}
 			}
-			_, err := os.Stat(w.Output().path)
+			_, err := os.Stat(w.outputs[1].path)
 			Expect(err).To(Succeed(), "B's own file must still be there while B runs")
 			return nil
 		default:

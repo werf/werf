@@ -219,7 +219,12 @@ func runWorkers(ctx context.Context, numberOfWorkers int, options DoTasksOptions
 					}
 				}()
 
-				return taskFunc(taskCtx, taskId)
+				if err := taskFunc(taskCtx, taskId); err != nil {
+					worker.failTask(out)
+					return err
+				}
+
+				return nil
 			})
 		})
 	}
@@ -235,12 +240,13 @@ func runWorkers(ctx context.Context, numberOfWorkers int, options DoTasksOptions
 		// 2. Getting an error from a task. We detect it by checking non "context canceled" error.
 		//	- The failed task is moved to the end of the printing queue (to highlight the error to the user),
 		//	  unless it is the one being printed right now — then the tasks queued behind it are discarded.
+		//    An error raised outside a task leaves the queue as is: no block is to blame for it.
 
 		if !isCanceledErr(err) {
 			var workerErr *WorkerError
 
 			if errors.As(err, &workerErr) {
-				printer.FailFast(workers[workerErr.ID].Output())
+				printer.FailFast(workers[workerErr.ID].failedOutput())
 			}
 		}
 
