@@ -109,6 +109,11 @@ type Image struct {
 	TargetPlatform          string
 	BuildDuration           time.Duration
 	AnchorReused            bool
+	// Skipped marks an image that no image being built needs: it is not final,
+	// was not requested explicitly, and every image depending on it is reused
+	// by its content anchor. Such an image is not processed at all and has no
+	// content tag desc.
+	Skipped bool
 
 	anchorDigest        string
 	buildContextArchive *BuildContextArchive

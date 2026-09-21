@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -131,6 +132,10 @@ func (phase *BuildPhase) BeforeImages(ctx context.Context) error {
 		return fmt.Errorf("unable to calculate content-based digests: %w", err)
 	}
 
+	if err := phase.skipUnneededImages(ctx); err != nil {
+		return fmt.Errorf("unable to determine images to skip: %w", err)
+	}
+
 	return nil
 }
 
@@ -188,6 +193,108 @@ func (phase *BuildPhase) calculateAnchorDigests(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (phase *BuildPhase) skipUnneededImages(ctx context.Context) error {
+	graph := phase.Conveyor.imagesTree.GetImagesGraph()
+	if graph == nil {
+		return nil
+	}
+
+	nodes := graph.Nodes()
+
+	anchorExists := make(map[*image.Image]bool, len(nodes))
+	for _, img := range nodes {
+		exists, err := phase.anchorExistsInStagesStorage(ctx, img)
+		if err != nil {
+			return fmt.Errorf("image %q: %w", img.Name, err)
+		}
+		anchorExists[img] = exists
+	}
+
+	markUnneededImages(graph, anchorExists, phase.isRequestedImage)
+
+	return nil
+}
+
+// markUnneededImages marks every non-final image that would have to be built
+// while no image being built needs it: one whose own content anchor is gone
+// from the storage and whose dependents are all reused by their own content
+// anchor. An image that is still available by its content anchor is processed
+// normally — reusing it costs nothing and keeps it in the build report.
+//
+// An image name is decided for all of its platforms at once: the build report
+// and the multiplatform image assembly expect every platform of an image name
+// to be processed.
+func markUnneededImages(graph *image.ImagesGraph, anchorExists map[*image.Image]bool, isRequested func(img *image.Image) bool) {
+	nodes := graph.Nodes()
+
+	skipped := make(map[string]bool, len(nodes))
+	for _, img := range nodes {
+		if img.IsFinal || len(graph.Dependents(img)) == 0 || anchorExists[img] || isRequested(img) {
+			skipped[img.Name] = false
+			continue
+		}
+		if _, decided := skipped[img.Name]; !decided {
+			skipped[img.Name] = true
+		}
+	}
+
+	// Dropping an image leaves the images it is built from unneeded in turn, and
+	// a dependent of one platform may be decided after a dependency of another,
+	// so keep resolving until the decisions stop changing.
+	for changed := true; changed; {
+		changed = false
+		for _, img := range nodes {
+			if !skipped[img.Name] {
+				continue
+			}
+			for _, dependent := range graph.Dependents(img) {
+				if skipped[dependent.Name] || anchorExists[dependent] {
+					continue
+				}
+				skipped[img.Name] = false
+				changed = true
+				break
+			}
+		}
+	}
+
+	for _, img := range nodes {
+		img.Skipped = skipped[img.Name]
+	}
+}
+
+func (phase *BuildPhase) anchorExistsInStagesStorage(ctx context.Context, img *image.Image) (bool, error) {
+	if img.GetAnchorDigest() == "" {
+		return false, nil
+	}
+
+	stages := img.GetStages()
+	anchor := stages[len(stages)-1]
+
+	storageManager := phase.Conveyor.StorageManager
+	stageDescSet, err := storageManager.GetStageDescSetByDigestWithCache(ctx, anchor.LogDetailedName(), img.GetAnchorDigest(), 0)
+	if err != nil {
+		return false, fmt.Errorf("unable to get stages by content-based digest %s: %w", img.GetAnchorDigest(), err)
+	}
+
+	stageDesc, err := storageManager.SelectSuitableStageDesc(ctx, phase.Conveyor, anchor, stageDescSet)
+	if err != nil {
+		return false, fmt.Errorf("unable to select suitable stage by content-based digest %s: %w", img.GetAnchorDigest(), err)
+	}
+
+	return stageDesc != nil, nil
+}
+
+func (phase *BuildPhase) isRequestedImage(img *image.Image) bool {
+	if slices.Contains(phase.Conveyor.imagesTree.ImagesToProcess.ImageNameList, img.Name) {
+		return true
+	}
+
+	return slices.ContainsFunc(phase.IntrospectOptions.Targets, func(target IntrospectTarget) bool {
+		return target.ImageName == "*" || target.ImageName == img.Name
+	})
 }
 
 func collectHolisticInputs(ctx context.Context, img *image.Image, dependencies []*image.Image, conveyor stage.Conveyor, buildContextArchive container_backend.BuildContextArchiver) ([]string, error) {
@@ -537,7 +644,8 @@ func (phase *BuildPhase) BeforeImageStages(ctx context.Context, img *image.Image
 	phase.StagesIterator = NewStagesIterator(phase.Conveyor)
 
 	// The content anchor is resolved before the base image is set up: a reused
-	// image is not built, so its base image is never needed.
+	// image is not built, so its base image is never needed — and it may not even
+	// exist, when nothing being built needs it (see markUnneededImages).
 	if err := phase.resolveContentAnchor(ctx, img); err != nil {
 		return nil, err
 	}

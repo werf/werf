@@ -825,6 +825,9 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 				for levelId, level := range graph.Levels() {
 					logboek.Context(ctx).LogFHighlight("Level #%d:\n", levelId)
 					for _, img := range level {
+						if img.Skipped {
+							continue
+						}
 						logboek.Context(ctx).LogLnHighlight("-", img.LogPlanName())
 					}
 					logboek.Context(ctx).LogOptionalLn()
@@ -891,6 +894,9 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 			}).
 			Do(func() {
 				for _, img := range byBuildOrder {
+					if img.Skipped {
+						continue
+					}
 					logboek.Context(ctx).LogLnHighlight("-", fmt.Sprintf("%s (%.2f seconds)", img.LogDetailedName(), img.BuildDuration.Seconds()))
 				}
 			})
@@ -900,6 +906,11 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 }
 
 func (c *Conveyor) doImage(ctx context.Context, img *image.Image, phases []Phase) error {
+	if img.Skipped {
+		logboek.Context(ctx).Default().LogFDetails("Skipping image %s: no image being built needs it\n", img.LogName())
+		return nil
+	}
+
 	start := time.Now()
 
 	err := logboek.Context(ctx).LogProcess(img.LogDetailedName()).

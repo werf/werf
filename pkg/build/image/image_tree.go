@@ -184,6 +184,9 @@ func (tree *ImagesTree) GetImagesByName(onlyFinal bool, opts ...GetImagesByNameO
 		if onlyFinal && !img.IsFinal {
 			continue
 		}
+		if img.Skipped {
+			continue
+		}
 		if config.compareWithImagesList {
 			if _, ok := config.exportImageNameList[img.Name]; !ok {
 				continue
