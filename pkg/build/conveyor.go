@@ -11,7 +11,6 @@ import (
 	"sort"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/opencontainers/go-digest"
@@ -840,20 +839,21 @@ func (c *Conveyor) doImagesInParallel(ctx context.Context, phases []Phase, logIm
 
 	scheduler := newGraphScheduler(graph)
 
-	// buildOrder assigns each image its build-time log progress index in the
-	// order it is actually handed out for building, instead of the static
-	// topological position ImagesTree.Calculate assigned it — the two can
-	// diverge arbitrarily under concurrent, dependency-driven scheduling, and
-	// only the former is a meaningful "N/Total" progress indicator to a user
-	// watching the log.
-	var buildOrder atomic.Int64
-
+	// Each image takes its build-time log progress index from the order it is
+	// actually handed out for building, instead of the static topological
+	// position ImagesTree.Calculate assigned it — the two can diverge
+	// arbitrarily under concurrent, dependency-driven scheduling, and only
+	// the former is a meaningful "N/Total" progress indicator to a user
+	// watching the log. That order is also the order the parallel printer
+	// emits the per-image blocks in, so the numbers come out ascending.
 	if err := parallel.DoTasksDynamic(ctx, parallel.DoTasksOptions{
 		InitDockerCLIForEachWorker: true,
 		MaxNumberOfWorkers:         numberOfWorkers,
 	}, scheduler.next, func(ctx context.Context, taskId int) error {
 		taskImage := nodes[taskId]
-		taskImage.SetBuildOrderIndex(int(buildOrder.Add(1)) - 1)
+		if startOrder, ok := parallel.TaskStartOrder(ctx); ok {
+			taskImage.SetBuildOrderIndex(startOrder)
+		}
 		if workerID, ok := ctx.Value(parallel.CtxBackgroundTaskIDKey).(int); ok {
 			taskImage.SetWorkerID(workerID)
 		}
