@@ -14,6 +14,9 @@ import (
 type TestSuiteEntrypointFuncOptions struct {
 	RequiredSuiteTools []string
 	RequiredSuiteEnvs  []string
+	// SuiteLabels are applied to every spec of the suite, so that a run can be
+	// narrowed to the external resources it has available.
+	SuiteLabels []string
 }
 
 func MakeTestSuiteEntrypointFunc(description string, opts TestSuiteEntrypointFuncOptions) func(t *testing.T) {
@@ -24,6 +27,6 @@ func MakeTestSuiteEntrypointFunc(description string, opts TestSuiteEntrypointFun
 		}
 
 		RegisterFailHandler(Fail)
-		RunSpecs(t, description)
+		RunSpecs(t, description, Label(opts.SuiteLabels...))
 	}
 }

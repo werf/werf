@@ -12,9 +12,7 @@ import (
 func TestSuite(t *testing.T) {
 	suite_init.MakeTestSuiteEntrypointFunc("E2E cleanup suite", suite_init.TestSuiteEntrypointFuncOptions{
 		RequiredSuiteTools: []string{"docker", "git"},
-		RequiredSuiteEnvs: []string{
-			suite_init.TestK8sDockerRegistryEnv,
-		},
+		SuiteLabels:        []string{suite_init.LabelNeedsRegistry},
 	})(t)
 }
 

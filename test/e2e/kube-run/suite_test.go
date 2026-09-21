@@ -9,9 +9,7 @@ import (
 func TestSuite(t *testing.T) {
 	suite_init.MakeTestSuiteEntrypointFunc("E2E kube-run suite", suite_init.TestSuiteEntrypointFuncOptions{
 		RequiredSuiteTools: []string{"docker", "git"},
-		RequiredSuiteEnvs: []string{
-			"WERF_TEST_K8S_DOCKER_REGISTRY",
-		},
+		SuiteLabels:        []string{suite_init.LabelNeedsRegistry, suite_init.LabelNeedsKube},
 	})(t)
 }
 

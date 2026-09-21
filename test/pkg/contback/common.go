@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os/exec"
 	"runtime"
 
 	"github.com/werf/werf/v2/pkg/buildah"
@@ -18,18 +19,28 @@ func NewContainerBackend(mode string) (ContainerBackend, error) {
 	case "docker":
 		return NewDockerBackend(), nil
 	case "native-rootless":
-		if runtime.GOOS != "linux" {
+		if !buildahAvailable() {
 			return nil, ErrRuntimeUnavailable
 		}
 		return NewNativeBuildahBackend(bdTypes.IsolationOCIRootless, buildah.DefaultStorageDriver), nil
 	case "native-chroot":
-		if runtime.GOOS != "linux" {
+		if !buildahAvailable() {
 			return nil, ErrRuntimeUnavailable
 		}
 		return NewNativeBuildahBackend(bdTypes.IsolationChroot, buildah.DefaultStorageDriver), nil
 	default:
 		panic(fmt.Sprintf("unexpected buildah mode: %s", mode))
 	}
+}
+
+func buildahAvailable() bool {
+	if runtime.GOOS != "linux" {
+		return false
+	}
+
+	_, err := exec.LookPath("buildah")
+
+	return err == nil
 }
 
 type ContainerBackend interface {
