@@ -568,7 +568,7 @@ func (r FileReader) ListFilesByGlob(ctx context.Context, dir, glob string) ([]st
 		return nil, err
 	}
 
-	relToDirFilePathListFromCommit, err := r.ListCommitFilesWithGlob(ctx, dir, glob)
+	relToDirFilePathListFromCommit, err := r.ListCommitFilesWithGlob(ctx, dir, glob, ListCommitFilesWithGlobOptions{})
 	if err != nil {
 		return nil, err
 	}

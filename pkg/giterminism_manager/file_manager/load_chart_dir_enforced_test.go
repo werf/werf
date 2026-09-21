@@ -87,8 +87,8 @@ var _ = Describe("LoadChartDir under enforced giterminism", func() {
 				return relPath, nil
 			}).AnyTimes()
 
-		gitRepo.EXPECT().ListCommitFilesWithGlob(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-			DoAndReturn(func(_ context.Context, _, dir, _ string) ([]string, error) {
+		gitRepo.EXPECT().ListCommitFilesWithGlob(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+			DoAndReturn(func(_ context.Context, _, dir, _ string, _ git_repo.ListCommitFilesWithGlobOptions) ([]string, error) {
 				var list []string
 				root := filepath.Join(projectDir, dir)
 				if _, err := os.Stat(root); err == nil {

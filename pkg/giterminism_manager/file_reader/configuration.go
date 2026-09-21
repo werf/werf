@@ -62,7 +62,9 @@ func (r FileReader) walkConfigurationFilesWithGlob(ctx context.Context, dir, glo
 		return nil
 	}
 
-	relToDirFilePathListFromCommit, err := r.ListCommitFilesWithGlob(ctx, dir, glob)
+	relToDirFilePathListFromCommit, err := r.ListCommitFilesWithGlob(ctx, dir, glob, ListCommitFilesWithGlobOptions{
+		SkipRelativeToDirPathFunc: opts.SkipRelativeToDirPathFunc,
+	})
 	if err != nil {
 		return err
 	}

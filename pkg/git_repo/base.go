@@ -980,6 +980,10 @@ func (repo *Base) IsAnyCommitTreeEntriesMatched(ctx context.Context, commit, pat
 }
 
 func (repo *Base) WalkCommitFiles(ctx context.Context, commit, dir string, pathMatcher path_matcher.PathMatcher, fileFunc func(notResolvedPath string) error) error {
+	return repo.walkCommitFiles(ctx, commit, dir, pathMatcher, fileFunc, nil)
+}
+
+func (repo *Base) walkCommitFiles(ctx context.Context, commit, dir string, pathMatcher path_matcher.PathMatcher, fileFunc func(notResolvedPath string) error, skipSymlinkPathFunc func(notResolvedPath string) bool) error {
 	if !pathMatcher.IsDirOrSubmodulePathMatched(dir) {
 		return nil
 	}
@@ -1022,13 +1026,17 @@ func (repo *Base) WalkCommitFiles(ctx context.Context, commit, dir string, pathM
 		}
 
 		if lsTreeEntry.Mode == filemode.Symlink {
+			if skipSymlinkPathFunc != nil && skipSymlinkPathFunc(notResolvedPath) {
+				return nil
+			}
+
 			isDir, err := repo.IsCommitDirectoryExist(ctx, commit, notResolvedPath)
 			if err != nil {
 				return err
 			}
 
 			if isDir {
-				err := repo.WalkCommitFiles(ctx, commit, notResolvedPath, pathMatcher, fileFunc)
+				err := repo.walkCommitFiles(ctx, commit, notResolvedPath, pathMatcher, fileFunc, skipSymlinkPathFunc)
 				if err != nil {
 					return err
 				}
@@ -1049,7 +1057,7 @@ func (repo *Base) WalkCommitFiles(ctx context.Context, commit, dir string, pathM
 
 // ListCommitFilesWithGlob returns the list of files by the glob, follows symlinks.
 // The result paths are relative to the passed directory, the method does reverse resolving for symlinks.
-func (repo *Base) ListCommitFilesWithGlob(ctx context.Context, commit, dir, glob string) (files []string, err error) {
+func (repo *Base) ListCommitFilesWithGlob(ctx context.Context, commit, dir, glob string, opts ListCommitFilesWithGlobOptions) (files []string, err error) {
 	var prefixWithoutPatterns string
 	prefixWithoutPatterns, glob = util.GlobPrefixWithoutPatterns(glob)
 	dirOrFileWithGlobPrefix := filepath.Join(dir, prefixWithoutPatterns)
@@ -1084,7 +1092,7 @@ func (repo *Base) ListCommitFilesWithGlob(ctx context.Context, commit, dir, glob
 		return result, nil
 	}
 
-	if err := repo.WalkCommitFiles(ctx, commit, dirOrFileWithGlobPrefix, pathMatcher, fileFunc); err != nil {
+	if err := repo.walkCommitFiles(ctx, commit, dirOrFileWithGlobPrefix, pathMatcher, fileFunc, opts.SkipSymlinkPathFunc); err != nil {
 		return nil, err
 	}
 

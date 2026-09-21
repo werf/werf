@@ -78,7 +78,7 @@ type GitRepo interface {
 	IsCommitTreeEntryExist(ctx context.Context, commit, relPath string) (bool, error)
 	IsEmpty(ctx context.Context) (bool, error)
 	LatestBranchCommit(ctx context.Context, branch string) (string, error)
-	ListCommitFilesWithGlob(ctx context.Context, commit, dir, glob string) ([]string, error)
+	ListCommitFilesWithGlob(ctx context.Context, commit, dir, glob string, opts ListCommitFilesWithGlobOptions) ([]string, error)
 	ReadCommitFile(ctx context.Context, commit, path string) ([]byte, error)
 	ReadCommitTreeEntryContent(ctx context.Context, commit, relPath string) ([]byte, error)
 	ResolveAndCheckCommitFilePath(ctx context.Context, commit, path string, checkSymlinkTargetFunc func(resolvedPath string) error) (string, error)
@@ -92,6 +92,13 @@ type GitRepo interface {
 
 type FetchOptions struct {
 	Unshallow bool
+}
+
+type ListCommitFilesWithGlobOptions struct {
+	// SkipSymlinkPathFunc excludes a symlink before it is resolved, which lets a caller list a
+	// directory holding a symlink it discards anyway even when that symlink cannot be followed.
+	// The excluded path is not returned and, were it a directory, is not descended into.
+	SkipSymlinkPathFunc func(notResolvedPath string) bool
 }
 
 type gitRepo interface {

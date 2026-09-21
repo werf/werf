@@ -278,8 +278,8 @@ var _ = Describe("LoadChartDir", func() {
 			// Mirrors (*git_repo.Base).WalkCommitFiles: it resolves the walked directory and
 			// reverse-resolves every entry back onto the not-resolved prefix, so a chart reached
 			// through a symlink still yields chart-relative names.
-			gitRepo.EXPECT().ListCommitFilesWithGlob(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-				DoAndReturn(func(_ context.Context, _, dir, _ string) ([]string, error) {
+			gitRepo.EXPECT().ListCommitFilesWithGlob(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, _, dir, _ string, _ git_repo.ListCommitFilesWithGlobOptions) ([]string, error) {
 					resolvedDir, err := filepath.EvalSymlinks(filepath.Join(projectDir, dir))
 					if err != nil {
 						return nil, err

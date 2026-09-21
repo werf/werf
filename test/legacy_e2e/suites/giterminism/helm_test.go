@@ -271,6 +271,25 @@ metadata:
 							relativeToProjectDir(".helm/templates/template1.yaml"): getLinkTo(relativeToProjectDir(".helm/templates/template1.yaml"), relativeToProjectDir("dir/.helm/templates/template1.yaml")),
 						},
 					}))
+
+				// Matching the rules before the path is resolved is what makes a symlink werf cannot
+				// follow excludable at all: resolving it is exactly what fails, so the rules have to
+				// decide first.
+				It("excludes a symlink loop matched by .helmignore without resolving it", func(ctx SpecContext) {
+					helmignoreRelPath := relativeToProjectDir(".helm/.helmignore")
+					fileCreateOrAppend(helmignoreRelPath, "loop*\n")
+					gitAddAndCommit(ctx, helmignoreRelPath)
+
+					symlinkBody(ctx, symlinkEntry{
+						skipOnWindows: true,
+						addFiles:      []string{relativeToProjectDir(".helm/templates/template1.yaml")},
+						commitFiles:   []string{relativeToProjectDir(".helm/templates/template1.yaml")},
+						addAndCommitSymlinks: map[string]string{
+							relativeToProjectDir(".helm/loop"):  "loop2",
+							relativeToProjectDir(".helm/loop2"): "loop",
+						},
+					})
+				})
 			})
 		}
 
