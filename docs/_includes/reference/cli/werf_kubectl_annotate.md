@@ -45,9 +45,10 @@ werf kubectl annotate [--overwrite] (-f FILENAME | TYPE NAME) KEY_1=VAL_1 ... KE
 
 ```shell
       --all=false
-            Select all resources, in the namespace of the specified resource types.
+            Select all resources in the namespace of the specified resource types
   -A, --all-namespaces=false
-            If true, check the specified action in all namespaces.
+            If present, list the requested object(s) across all namespaces. Namespace in current    
+            context is ignored even if specified with --namespace.
       --allow-missing-template-keys=true
             If true, ignore any errors in templates when a field or map key is missing in the       
             template. Only applies to golang and jsonpath output formats.
@@ -62,9 +63,9 @@ werf kubectl annotate [--overwrite] (-f FILENAME | TYPE NAME) KEY_1=VAL_1 ... KE
             --field-selector key1=value1,key2=value2). The server only supports a limited number of 
             field queries per type.
   -f, --filename=[]
-            Filename, directory, or URL to files identifying the resource to update the annotation
+            identifying the resource.
   -k, --kustomize=""
-            Process the kustomization directory. This flag can`t be used together with -f or -R.
+            Process a kustomization directory. This flag can`t be used together with -f or -R.
       --list=false
             If true, display the annotations for a given resource.
       --local=false
@@ -75,16 +76,15 @@ werf kubectl annotate [--overwrite] (-f FILENAME | TYPE NAME) KEY_1=VAL_1 ... KE
       --overwrite=false
             If true, allow annotations to be overwritten, otherwise reject annotation updates that  
             overwrite existing annotations.
-  -R, --recursive=false
+  -R, --recursive=true
             Process the directory used in -f, --filename recursively. Useful when you want to       
             manage related manifests organized within the same directory.
       --resource-version=""
             If non-empty, the annotation update will only succeed if this is the current            
             resource-version for the object. Only valid when specifying a single resource.
   -l, --selector=""
-            Selector (label query) to filter on, supports `=`, `==`, `!=`, `in`, `notin`.(e.g. -l   
-            key1=value1,key2=value2,key3 in (value3)). Matching objects must satisfy all of the     
-            specified label constraints.
+            Selector (label query) to filter on, supports `=`, `==`, and `!=`.(e.g. -l              
+            key1=value1,key2=value2)
       --show-managed-fields=false
             If true, keep the managedFields when printing objects in JSON or YAML format.
       --template=""
@@ -148,6 +148,8 @@ werf kubectl annotate [--overwrite] (-f FILENAME | TYPE NAME) KEY_1=VAL_1 ... KE
             (none|cpu|heap|goroutine|threadcreate|block|mutex|trace)
       --profile-output="profile.pprof"
             Name of the file to write the profile to
+      --proxy-url=""
+            Proxy URL to use for requests to the API server
       --request-timeout="0"
             The length of time to wait before giving up on a single server request. Non-zero values 
             should contain a corresponding time unit (e.g. 1s, 2m, 3h). A value of zero means don`t 

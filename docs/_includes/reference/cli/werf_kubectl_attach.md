@@ -36,6 +36,8 @@ werf kubectl attach (POD | TYPE/NAME) -c CONTAINER [options]
             Container name. If omitted, use the kubectl.kubernetes.io/default-container annotation  
             for selecting the container to be attached or the first container in the pod will be    
             chosen
+      --detach-keys="ctrl-p,ctrl-q"
+            Override the key sequence for detaching a container
       --pod-running-timeout=1m0s
             The length of time (like 5s, 2m, or 3h, higher than zero) to wait until at least one    
             pod is running
@@ -102,6 +104,8 @@ werf kubectl attach (POD | TYPE/NAME) -c CONTAINER [options]
             (none|cpu|heap|goroutine|threadcreate|block|mutex|trace)
       --profile-output="profile.pprof"
             Name of the file to write the profile to
+      --proxy-url=""
+            Proxy URL to use for requests to the API server
       --request-timeout="0"
             The length of time to wait before giving up on a single server request. Non-zero values 
             should contain a corresponding time unit (e.g. 1s, 2m, 3h). A value of zero means don`t 

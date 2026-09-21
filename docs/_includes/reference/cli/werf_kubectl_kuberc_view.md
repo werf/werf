@@ -10,20 +10,20 @@ You can use `--output jsonpath={...}` to extract specific values using a jsonpat
 {{ header }} Syntax
 
 ```shell
-werf kubectl alpha kuberc view [options]
+werf kubectl kuberc view [options]
 ```
 
 {{ header }} Examples
 
 ```shell
   # View kuberc configuration in YAML format (default)
-  kubectl alpha kuberc view
+  kubectl kuberc view
   
   # View kuberc configuration in JSON format
-  kubectl alpha kuberc view --output json
+  kubectl kuberc view --output json
   
   # View a specific kuberc file
-  kubectl alpha kuberc view --kuberc /path/to/kuberc
+  kubectl kuberc view --kuberc /path/to/kuberc
 ```
 
 {{ header }} Options
@@ -98,6 +98,8 @@ werf kubectl alpha kuberc view [options]
             (none|cpu|heap|goroutine|threadcreate|block|mutex|trace)
       --profile-output="profile.pprof"
             Name of the file to write the profile to
+      --proxy-url=""
+            Proxy URL to use for requests to the API server
       --request-timeout="0"
             The length of time to wait before giving up on a single server request. Non-zero values 
             should contain a corresponding time unit (e.g. 1s, 2m, 3h). A value of zero means don`t 

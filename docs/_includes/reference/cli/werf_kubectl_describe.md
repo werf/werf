@@ -58,7 +58,8 @@ werf kubectl describe (-f FILENAME | TYPE [NAME_PREFIX | -l label] | TYPE/NAME) 
             key1=value1,key2=value2,key3 in (value3)). Matching objects must satisfy all of the     
             specified label constraints.
       --show-events=true
-            If true, display events related to the described object.
+            If true, display events related to the described object. Defaults to true for a single  
+            object, false for multiple objects and prefix matching.
 ```
 
 {{ header }} Options inherited from parent commands
@@ -116,6 +117,8 @@ werf kubectl describe (-f FILENAME | TYPE [NAME_PREFIX | -l label] | TYPE/NAME) 
             (none|cpu|heap|goroutine|threadcreate|block|mutex|trace)
       --profile-output="profile.pprof"
             Name of the file to write the profile to
+      --proxy-url=""
+            Proxy URL to use for requests to the API server
       --request-timeout="0"
             The length of time to wait before giving up on a single server request. Non-zero values 
             should contain a corresponding time unit (e.g. 1s, 2m, 3h). A value of zero means don`t 

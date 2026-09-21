@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/alessio/shellescape"
+	"al.essio.dev/pkg/shellescape"
 	"github.com/docker/cli/cli"
 	dockercontainer "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/errdefs"

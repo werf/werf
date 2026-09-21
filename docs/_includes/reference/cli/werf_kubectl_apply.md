@@ -58,7 +58,7 @@ werf kubectl apply (-f FILENAME | -k DIRECTORY) [options]
       --field-manager="kubectl-client-side-apply"
             Name of the manager used to track field ownership.
   -f, --filename=[]
-            The files that contain the configurations to apply.
+            The files, directories or URLs that contain the configurations to apply.
       --force=false
             If true, immediately remove resources from API and bypass graceful deletion. Note that  
             immediate deletion of some resources may result in inconsistency or data loss and       
@@ -174,6 +174,8 @@ werf kubectl apply (-f FILENAME | -k DIRECTORY) [options]
             (none|cpu|heap|goroutine|threadcreate|block|mutex|trace)
       --profile-output="profile.pprof"
             Name of the file to write the profile to
+      --proxy-url=""
+            Proxy URL to use for requests to the API server
       --request-timeout="0"
             The length of time to wait before giving up on a single server request. Non-zero values 
             should contain a corresponding time unit (e.g. 1s, 2m, 3h). A value of zero means don`t 

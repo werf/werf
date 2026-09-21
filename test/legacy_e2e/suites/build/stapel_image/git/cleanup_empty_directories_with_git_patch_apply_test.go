@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/alessio/shellescape"
+	"al.essio.dev/pkg/shellescape"
 	. "github.com/onsi/ginkgo/v2"
 
 	"github.com/werf/werf/v2/test/pkg/utils"

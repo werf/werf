@@ -3,6 +3,6 @@
 
 package thirdparty
 
-import "github.com/containers/buildah"
+import "go.podman.io/buildah"
 
 type BuilderInfo buildah.BuilderInfo

@@ -28,6 +28,9 @@ werf kubectl explain TYPE [--recursive=FALSE|TRUE] [--api-version=api-version-gr
   # Get all the fields in the resource
   kubectl explain pods --recursive
   
+  # Get fields in the resource up to a specific recursive depth
+  kubectl explain pods --recursive --max-depth=2
+  
   # Get the explanation for deployment in supported api versions
   kubectl explain deployments --api-version=apps/v1
   
@@ -43,10 +46,13 @@ werf kubectl explain TYPE [--recursive=FALSE|TRUE] [--api-version=api-version-gr
 ```shell
       --api-version=""
             Get different explanations for particular API version (API group/version)
+      --max-depth=0
+            Maximum recursion depth when printing nested fields with --recursive. 0 means no limit. 
+            Requires --recursive when greater than 0.
   -o, --output="plaintext"
             Format in which to render the schema (plaintext, plaintext-openapiv2)
-      --recursive=false
-            Print the fields of fields (Currently only 1 level deep)
+  -R, --recursive=false
+            Print the fields of fields. Use --max-depth to cap the recursion depth.
 ```
 
 {{ header }} Options inherited from parent commands
@@ -104,6 +110,8 @@ werf kubectl explain TYPE [--recursive=FALSE|TRUE] [--api-version=api-version-gr
             (none|cpu|heap|goroutine|threadcreate|block|mutex|trace)
       --profile-output="profile.pprof"
             Name of the file to write the profile to
+      --proxy-url=""
+            Proxy URL to use for requests to the API server
       --request-timeout="0"
             The length of time to wait before giving up on a single server request. Non-zero values 
             should contain a corresponding time unit (e.g. 1s, 2m, 3h). A value of zero means don`t 

@@ -63,6 +63,8 @@ werf kubectl diff -f FILENAME [options]
             If true, apply runs in the server instead of the client.
       --show-managed-fields=false
             If true, include managed fields in the diff.
+      --show-secrets=false
+            If true, do not mask secret values in the diff.
 ```
 
 {{ header }} Options inherited from parent commands
@@ -120,6 +122,8 @@ werf kubectl diff -f FILENAME [options]
             (none|cpu|heap|goroutine|threadcreate|block|mutex|trace)
       --profile-output="profile.pprof"
             Name of the file to write the profile to
+      --proxy-url=""
+            Proxy URL to use for requests to the API server
       --request-timeout="0"
             The length of time to wait before giving up on a single server request. Non-zero values 
             should contain a corresponding time unit (e.g. 1s, 2m, 3h). A value of zero means don`t 
