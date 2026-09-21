@@ -41,8 +41,9 @@ type BuildOptions struct {
 	ImageBuildOptions container_backend.BuildOptions
 	IntrospectOptions
 
-	ReportPath   string
-	ReportFormat ReportFormat
+	ReportPath       string
+	ReportFormat     ReportFormat
+	ReportOperations bool
 
 	SkipImageMetadataPublication bool
 	SkipAddManagedImagesRecords  bool
@@ -87,12 +88,16 @@ type BuildPhase struct {
 }
 
 func GenerateImageEnv(werfImageName, imageName string) string {
-	formattedName := strings.ToUpper(werfImageName)
-	for _, l := range []string{"/", "-", "."} {
-		formattedName = strings.ReplaceAll(formattedName, l, "_")
+	return fmt.Sprintf("WERF_%s_DOCKER_IMAGE_NAME=%s", normalizeImageEnvName(werfImageName), imageName)
+}
+
+func normalizeImageEnvName(werfImageName string) string {
+	normalizedName := strings.ToUpper(werfImageName)
+	for _, character := range []string{"/", "-", ".", "+"} {
+		normalizedName = strings.ReplaceAll(normalizedName, character, "_")
 	}
 
-	return fmt.Sprintf("WERF_%s_DOCKER_IMAGE_NAME=%s", formattedName, imageName)
+	return normalizedName
 }
 
 func (phase *BuildPhase) Name() string {
@@ -114,6 +119,7 @@ func (phase *BuildPhase) BeforeImages(ctx context.Context) error {
 	werfInContainer := os.Getenv("WERF_CONTAINERIZED") == "yes"
 
 	phase.ImagesReport.Runtime = RuntimeInfo{
+		WerfVersion: werf.Version,
 		Backend:     backend,
 		InContainer: werfInContainer,
 	}
@@ -927,6 +933,7 @@ func (phase *BuildPhase) fetchBaseImageForStage(ctx context.Context, img *image.
 func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, stg stage.Interface) (bool, cleanup.Func, error) {
 	var opts calculateDigestOptions
 	opts.TargetPlatform = img.TargetPlatform
+	opts.BuildCacheVersion = imagePkg.BuildCacheVersion
 
 	var stageDependencies string
 	var prevNonEmptyStage stage.Interface
@@ -997,7 +1004,10 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, s
 			panic(fmt.Sprintf("expected stage %q content digest label to be set!", stg.Name()))
 		}
 	} else {
-		stageContentSig, err = calculateDigest(ctx, fmt.Sprintf("%s-content", stg.Name()), "", stg, phase.Conveyor, calculateDigestOptions{TargetPlatform: img.TargetPlatform})
+		stageContentSig, err = calculateDigest(ctx, fmt.Sprintf("%s-content", stg.Name()), "", stg, phase.Conveyor, calculateDigestOptions{
+			TargetPlatform:    img.TargetPlatform,
+			BuildCacheVersion: imagePkg.BuildCacheVersion,
+		})
 		if err != nil {
 			return false, phase.Conveyor.GetStageDigestMutex(stg.GetDigest()).Unlock, fmt.Errorf("unable to calculate stage %s content digest: %w", stg.Name(), err)
 		}
@@ -1281,17 +1291,18 @@ func introspectStage(ctx context.Context, s stage.Interface) error {
 }
 
 type calculateDigestOptions struct {
-	TargetPlatform string
-	BaseImage      string
+	TargetPlatform    string
+	BuildCacheVersion string
+	BaseImage         string
 	// Anchor switches calculateDigest to the anchor path:
-	// Sha3_224(TargetPlatform, HolisticInputs...).
+	// Sha3_224(BuildCacheVersion, TargetPlatform, HolisticInputs...).
 	Anchor         bool
 	HolisticInputs []string
 }
 
 func calculateDigest(ctx context.Context, stageName, stageDependencies string, prevNonEmptyStage stage.Interface, conveyor *Conveyor, opts calculateDigestOptions) (string, error) {
 	if opts.Anchor {
-		args := []string{opts.TargetPlatform}
+		args := []string{opts.BuildCacheVersion, opts.TargetPlatform}
 		for _, s := range opts.HolisticInputs {
 			if s == "" {
 				continue
@@ -1315,7 +1326,7 @@ func calculateDigest(ctx context.Context, stageName, stageDependencies string, p
 		checksumArgsNames = append(checksumArgsNames, "TargetPlatform")
 	}
 
-	checksumArgs = append(checksumArgs, imagePkg.BuildCacheVersion, stageName, stageDependencies)
+	checksumArgs = append(checksumArgs, opts.BuildCacheVersion, stageName, stageDependencies)
 	checksumArgsNames = append(checksumArgsNames,
 		"BuildCacheVersion",
 		"StageName",

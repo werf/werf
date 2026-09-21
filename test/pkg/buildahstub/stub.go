@@ -15,8 +15,10 @@ type BuildahStub struct {
 	callsMutex        sync.Mutex
 	FromCommandFunc   func(ctx context.Context, container, image string, opts buildah.FromCommandOpts) (string, error)
 	PullFunc          func(ctx context.Context, ref string, opts buildah.PullOpts) (string, error)
+	InspectFunc       func(ctx context.Context, ref string) (*thirdparty.BuilderInfo, error)
 	FromCommandImages []string
 	PullRefs          []string
+	InspectRefs       []string
 }
 
 var _ buildah.Buildah = (*BuildahStub)(nil)
@@ -71,7 +73,14 @@ func (b *BuildahStub) Pull(ctx context.Context, ref string, opts buildah.PullOpt
 	return "", nil
 }
 
-func (b *BuildahStub) Inspect(context.Context, string) (*thirdparty.BuilderInfo, error) {
+func (b *BuildahStub) Inspect(ctx context.Context, ref string) (*thirdparty.BuilderInfo, error) {
+	b.callsMutex.Lock()
+	b.InspectRefs = append(b.InspectRefs, ref)
+	b.callsMutex.Unlock()
+
+	if b.InspectFunc != nil {
+		return b.InspectFunc(ctx, ref)
+	}
 	return nil, nil
 }
 

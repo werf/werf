@@ -59,6 +59,13 @@ func (r *pushImageRegistryStub) MutateAndPushImage(ctx context.Context, _, desti
 }
 
 var _ = Describe("RepoStagesStorage", func() {
+	DescribeTable("managed image name encoding", func(imageName, encodedName string) {
+		Expect(slugImageName(imageName)).To(Equal(encodedName))
+		Expect(unslugImageName(encodedName)).To(Equal(imageName))
+	},
+		Entry("plus signs", "libstdc++", "libstdc__plus____plus__"),
+	)
+
 	It("pushes a manifest-only image to the registry in PostManifest", func(ctx SpecContext) {
 		registry := &pushImageRegistryStub{}
 		storage := &RepoStagesStorage{DockerRegistry: registry}

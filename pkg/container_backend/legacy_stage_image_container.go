@@ -2,12 +2,15 @@ package container_backend
 
 import (
 	"context"
-	"encoding/base64"
+	"errors"
 	"fmt"
 	"strings"
 
+	"al.essio.dev/pkg/shellescape"
+	"github.com/docker/cli/cli"
 	dockercontainer "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/errdefs"
+	"github.com/samber/lo"
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
@@ -96,9 +99,7 @@ func (c *LegacyStageImageContainer) prepareRunArgs(ctx context.Context) ([]strin
 	}
 
 	args = append(args, runArgs...)
-	args = append(args, c.imageRef(c.image.fromImage))
-	args = append(args, "-ec")
-	args = append(args, c.prepareRunCommand(ctx))
+	args = append(args, c.prepareRunCommandArgs()...)
 
 	return args, nil
 }
@@ -121,9 +122,23 @@ func (c *LegacyStageImageContainer) prepareBuildTimeEnvExports(ctx context.Conte
 	return exports
 }
 
+func (c *LegacyStageImageContainer) prepareRunCommandArgs() []string {
+	// The assignment reads the script to EOF with Bash alone, so it needs no binary from the
+	// base or the stapel image, a reader failure aborts before eval, and build commands find
+	// stdin already drained. The redirect only makes that explicit.
+	return []string{
+		"-i", c.imageRef(c.image.fromImage), "-ec",
+		`script=$(</dev/stdin); eval "$script" < /dev/null`,
+	}
+}
+
+func (c *LegacyStageImageContainer) prepareDebugRunCommand(ctx context.Context, runArgs []string) string {
+	return fmt.Sprintf("printf '%%s' %s | docker run %s", shellescape.Quote(c.prepareRunCommand(ctx)), shellescape.QuoteCommand(runArgs))
+}
+
 func (c *LegacyStageImageContainer) prepareRunCommand(ctx context.Context) string {
 	commands := append(c.prepareBuildTimeEnvExports(ctx), c.prepareRunCommands()...)
-	return ShelloutPack(strings.Join(commands, " && "))
+	return strings.Join(commands, " && ")
 }
 
 func (c *LegacyStageImageContainer) prepareRunCommands() []string {
@@ -146,10 +161,6 @@ func (c *LegacyStageImageContainer) prepareAllRunCommands() []string {
 	commands = append(commands, c.runCommands...)
 
 	return commands
-}
-
-func ShelloutPack(command string) string {
-	return fmt.Sprintf("eval $(echo %s | %s --decode)", base64.StdEncoding.EncodeToString([]byte(command)), stapel.Base64BinPath())
 }
 
 func (c *LegacyStageImageContainer) imageRef(img *LegacyStageImage) string {
@@ -323,12 +334,32 @@ func (c *LegacyStageImageContainer) run(ctx context.Context) error {
 	}
 
 	RegisterRunningContainer(c.name, ctx)
-	err = docker.CliRun_LiveOutput(ctx, runArgs...)
+	err = docker.CliRunWithInput_LiveOutput(ctx, c.prepareRunCommand(ctx), runArgs...)
 	UnregisterRunningContainer(c.name)
 	if err != nil {
-		return fmt.Errorf("container run failed: %w", err)
+		return fmt.Errorf("container run failed: %w", namedContainerExitErr(err))
 	}
 	return nil
+}
+
+func containerExitCode(err error) (int, bool) {
+	var statusErr cli.StatusError
+	if !errors.As(err, &statusErr) {
+		return 0, false
+	}
+
+	return statusErr.StatusCode, true
+}
+
+// docker/cli reports a non-zero container exit as a cli.StatusError with an empty message, so the
+// code has to be spelled out for the user. The empty verb keeps the error chain without a separator.
+func namedContainerExitErr(err error) error {
+	code, ok := containerExitCode(err)
+	if !ok || err.Error() != "" {
+		return err
+	}
+
+	return fmt.Errorf("exit code %d%w", code, err)
 }
 
 func (c *LegacyStageImageContainer) introspect(ctx context.Context) error {
@@ -340,7 +371,7 @@ func (c *LegacyStageImageContainer) introspect(ctx context.Context) error {
 	}
 
 	if err := docker.CliRun_LiveOutput(ctx, runArgs...); err != nil {
-		if !strings.Contains(err.Error(), "Code: ") || IsStartContainerErr(err) {
+		if _, ok := containerExitCode(err); !ok || IsStartContainerErr(err) {
 			return err
 		}
 	}
@@ -357,7 +388,7 @@ func (c *LegacyStageImageContainer) introspectBefore(ctx context.Context) error 
 	}
 
 	if err := docker.CliRun_LiveOutput(ctx, runArgs...); err != nil {
-		if !strings.Contains(err.Error(), "Code: ") || IsStartContainerErr(err) {
+		if _, ok := containerExitCode(err); !ok || IsStartContainerErr(err) {
 			return err
 		}
 	}
@@ -367,13 +398,9 @@ func (c *LegacyStageImageContainer) introspectBefore(ctx context.Context) error 
 
 // https://docs.docker.com/engine/reference/run/#exit-status
 func IsStartContainerErr(err error) bool {
-	for _, code := range []string{"125", "126", "127"} {
-		if strings.HasPrefix(err.Error(), fmt.Sprintf("Code: %s", code)) {
-			return true
-		}
-	}
+	code, ok := containerExitCode(err)
 
-	return false
+	return ok && lo.Contains([]int{125, 126, 127}, code)
 }
 
 func (c *LegacyStageImageContainer) commit(ctx context.Context) (string, error) {

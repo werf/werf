@@ -9,7 +9,6 @@ import (
 
 	"github.com/go-task/task/v3"
 	"github.com/go-task/task/v3/args"
-	"github.com/go-task/task/v3/taskfile/ast"
 )
 
 const (
@@ -95,7 +94,7 @@ func (t *Task) Execute(ctx context.Context) error {
 		return err
 	}
 	_, v := args.Parse(t.Vars...)
-	if err := e.Run(ctx, &ast.Call{
+	if err := e.Run(ctx, &task.Call{
 		Task: t.TaskName,
 		Vars: v,
 	}); err != nil {

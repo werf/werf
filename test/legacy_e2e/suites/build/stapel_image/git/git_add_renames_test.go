@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"github.com/alessio/shellescape"
+	"al.essio.dev/pkg/shellescape"
 	. "github.com/onsi/ginkgo/v2"
 	"gopkg.in/yaml.v3"
 

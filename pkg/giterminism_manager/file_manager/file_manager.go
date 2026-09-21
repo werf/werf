@@ -343,7 +343,11 @@ func (f *FileManager) ReadChartFile(ctx context.Context, filePath string) ([]byt
 // include has to be filtered too, and a file excluded here must not come back from an include.
 func (f *FileManager) LoadChartDir(ctx context.Context, dir string) ([]*nelmcommon.BufferedFile, error) {
 	chartLocalAbsPath := getDirAbsPath(dir, f.customProjectDir)
-	normDir := filepath.ToSlash(dir)
+	normDir := filepath.ToSlash(filepath.Clean(dir))
+	dirPrefix := normDir + "/"
+	if normDir == "." {
+		dirPrefix = ""
+	}
 	processed := make(map[string]bool)
 
 	var chartDir []*nelmcommon.BufferedFile
@@ -375,7 +379,7 @@ func (f *FileManager) LoadChartDir(ctx context.Context, dir string) ([]*nelmcomm
 	for _, include := range f.includes {
 		err := include.WalkObjects(func(toPath, _ string) error {
 			normToPath := filepath.ToSlash(toPath)
-			if !strings.HasPrefix(normToPath, normDir+"/") && normToPath != normDir {
+			if !strings.HasPrefix(normToPath, dirPrefix) && normToPath != normDir {
 				return nil
 			}
 
@@ -383,7 +387,7 @@ func (f *FileManager) LoadChartDir(ctx context.Context, dir string) ([]*nelmcomm
 				return nil
 			}
 
-			relToChartPath := strings.TrimPrefix(normToPath, normDir+"/")
+			relToChartPath := strings.TrimPrefix(normToPath, dirPrefix)
 			if rules.IsFileIgnored(ctx, relToChartPath) {
 				logboek.Context(ctx).Debug().LogF("--- %s excluded by %s \n", normToPath, ignore.HelmIgnore)
 				processed[normToPath] = false

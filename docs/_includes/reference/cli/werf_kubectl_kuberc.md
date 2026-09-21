@@ -8,20 +8,20 @@ Manage kuberc configuration.
 {{ header }} Syntax
 
 ```shell
-werf kubectl alpha kuberc SUBCOMMAND
+werf kubectl kuberc SUBCOMMAND
 ```
 
 {{ header }} Examples
 
 ```shell
   # View the current kuberc configuration
-  kubectl alpha kuberc view
+  kubectl kuberc view
   
   # Set a default value for a command flag
-  kubectl alpha kuberc set --section defaults --command get --option output=wide
+  kubectl kuberc set --section defaults --command get --option output=wide
   
   # Create an alias for a command
-  kubectl alpha kuberc set --section aliases --name getn --command get --prependarg nodes --option output=wide
+  kubectl kuberc set --section aliases --name getn --command get --prependarg nodes --option output=wide
 ```
 
 {{ header }} Options inherited from parent commands
@@ -79,6 +79,8 @@ werf kubectl alpha kuberc SUBCOMMAND
             (none|cpu|heap|goroutine|threadcreate|block|mutex|trace)
       --profile-output="profile.pprof"
             Name of the file to write the profile to
+      --proxy-url=""
+            Proxy URL to use for requests to the API server
       --request-timeout="0"
             The length of time to wait before giving up on a single server request. Non-zero values 
             should contain a corresponding time unit (e.g. 1s, 2m, 3h). A value of zero means don`t 

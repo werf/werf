@@ -1,7 +1,6 @@
 package e2e_export_test
 
 import (
-	"runtime"
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -11,15 +10,9 @@ import (
 )
 
 func TestExport(t *testing.T) {
-	requiredTools := []string{"docker", "git"}
-	if runtime.GOOS == "linux" {
-		requiredTools = append(requiredTools, "buildah")
-	}
 	suite_init.MakeTestSuiteEntrypointFunc("E2E Export suite", suite_init.TestSuiteEntrypointFuncOptions{
-		RequiredSuiteTools: requiredTools,
-		RequiredSuiteEnvs: []string{
-			"WERF_TEST_K8S_DOCKER_REGISTRY",
-		},
+		RequiredSuiteTools: []string{"docker", "git"},
+		SuiteLabels:        []string{suite_init.LabelNeedsRegistry},
 	})(t)
 }
 

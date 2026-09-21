@@ -2,16 +2,16 @@ package e2e_build_test
 
 import (
 	"fmt"
-	"os"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	"github.com/werf/werf/v2/test/pkg/suite_init"
 	"github.com/werf/werf/v2/test/pkg/utils"
 	"github.com/werf/werf/v2/test/pkg/werf"
 )
 
-var _ = Describe("Content tag reuse", Label("e2e", "build", "content-tag"), func() {
+var _ = Describe("Content tag reuse", Label("e2e", "build", "content-tag", suite_init.LabelNeedsRegistry), func() {
 	It("reuses the content tag across local builds, repo and final storages", func(ctx SpecContext) {
 		By("initializing")
 		setupEnv(setupEnvOptions{})
@@ -21,10 +21,10 @@ var _ = Describe("Content tag reuse", Label("e2e", "build", "content-tag"), func
 
 		By("preparing test repo")
 		SuiteData.InitTestRepo(ctx, repoDirName, fixtureRelPath)
-		werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirName))
+		werfProject := newWerfProject(repoDirName)
 
-		repoAddr := fmt.Sprintf("%s/%s-%s", os.Getenv("WERF_TEST_K8S_DOCKER_REGISTRY"), SuiteData.ProjectName, utils.GetRandomString(6))
-		finalRepoAddr := fmt.Sprintf("%s/%s-%s-final", os.Getenv("WERF_TEST_K8S_DOCKER_REGISTRY"), SuiteData.ProjectName, utils.GetRandomString(6))
+		repoAddr := suite_init.TestRepo(fmt.Sprintf("%s-%s", SuiteData.ProjectName, utils.GetRandomString(6)))
+		finalRepoAddr := suite_init.TestRepo(fmt.Sprintf("%s-%s-final", SuiteData.ProjectName, utils.GetRandomString(6)))
 
 		By("[1, :local] building all stages from scratch")
 		buildOut := werfProject.Build(ctx, &werf.BuildOptions{})
@@ -83,9 +83,9 @@ var _ = Describe("Content tag reuse", Label("e2e", "build", "content-tag"), func
 
 		By("preparing test repo")
 		SuiteData.InitTestRepo(ctx, repoDirName, fixtureRelPath)
-		werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirName))
+		werfProject := newWerfProject(repoDirName)
 
-		repoAddr := fmt.Sprintf("%s/%s-%s", os.Getenv("WERF_TEST_K8S_DOCKER_REGISTRY"), SuiteData.ProjectName, utils.GetRandomString(6))
+		repoAddr := suite_init.TestRepo(fmt.Sprintf("%s-%s", SuiteData.ProjectName, utils.GetRandomString(6)))
 
 		By("[1, :local] building all stages from scratch")
 		buildOut := werfProject.Build(ctx, &werf.BuildOptions{})
@@ -113,5 +113,39 @@ var _ = Describe("Content tag reuse", Label("e2e", "build", "content-tag"), func
 		})
 		Expect(buildOut).To(ContainSubstring("Copy suitable stage from secondary :local"))
 		Expect(buildOut).NotTo(ContainSubstring("Building stage app/"))
+	})
+
+	It("does not reuse the content tag across images with different external base images", func(ctx SpecContext) {
+		By("initializing")
+		setupEnv(setupEnvOptions{})
+
+		repoDirName := "repo0"
+		fixtureRelPath := "content_tag/external_bases/state0"
+
+		By("preparing test repo")
+		SuiteData.InitTestRepo(ctx, repoDirName, fixtureRelPath)
+		werfProject := newWerfProject(repoDirName)
+
+		By("[1, :local] building the ubuntu-based image from scratch")
+		buildOut := werfProject.Build(ctx, &werf.BuildOptions{
+			CommonOptions: werf.CommonOptions{ExtraArgs: []string{"on-ubuntu"}},
+		})
+		Expect(buildOut).To(ContainSubstring("Building stage on-ubuntu/from"))
+		Expect(buildOut).To(ContainSubstring("Building stage on-ubuntu/setup"))
+
+		By("[2, :local] building the alpine-based image with the same instructions must not reuse the ubuntu-based one")
+		buildOut = werfProject.Build(ctx, &werf.BuildOptions{
+			CommonOptions: werf.CommonOptions{ExtraArgs: []string{"on-alpine"}},
+		})
+		Expect(buildOut).NotTo(ContainSubstring("Use previously built image for on-alpine by content-based tag"))
+		Expect(buildOut).To(ContainSubstring("Building stage on-alpine/from"))
+		Expect(buildOut).To(ContainSubstring("Building stage on-alpine/setup"))
+
+		By("[3, :local] rebuilding both images reuses each by its own content-based tag")
+		buildOut = werfProject.Build(ctx, &werf.BuildOptions{})
+		Expect(buildOut).To(ContainSubstring("Use previously built image for on-ubuntu by content-based tag"))
+		Expect(buildOut).To(ContainSubstring("Use previously built image for on-alpine by content-based tag"))
+		Expect(buildOut).NotTo(ContainSubstring("Building stage on-ubuntu/"))
+		Expect(buildOut).NotTo(ContainSubstring("Building stage on-alpine/"))
 	})
 })

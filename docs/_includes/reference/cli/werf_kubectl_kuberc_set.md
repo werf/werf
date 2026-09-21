@@ -8,31 +8,36 @@ Set kuberc configuration values.
 {{ header }} Syntax
 
 ```shell
-werf kubectl alpha kuberc set --section (defaults|aliases) --command COMMAND [options]
+werf kubectl kuberc set --section (defaults|aliases) --command COMMAND [options]
 ```
 
 {{ header }} Examples
 
 ```shell
   # Set default output format for 'get' command
-  kubectl alpha kuberc set --section defaults --command get --option output=wide
+  kubectl kuberc set --section defaults --command get --option output=wide
   
   # Set default output format for a subcommand
-  kubectl alpha kuberc set --section defaults --command "set env" --option output=yaml
+  kubectl kuberc set --section defaults --command "set env" --option output=yaml
   
   # Create an alias 'getn' for 'get' command with prepended 'nodes' resource
-  kubectl alpha kuberc set --section aliases --name getn --command get --prependarg nodes --option output=wide
+  kubectl kuberc set --section aliases --name getn --command get --prependarg nodes --option output=wide
   
   # Create an alias 'runx' for 'run' command with appended arguments
-  kubectl alpha kuberc set --section aliases --name runx --command run --option image=nginx --appendarg "--" --appendarg custom-arg1
+  kubectl kuberc set --section aliases --name runx --command run --option image=nginx --appendarg "--" --appendarg custom-arg1
   
   # Overwrite an existing default
-  kubectl alpha kuberc set --section defaults --command get --option output=json --overwrite
+  kubectl kuberc set --section defaults --command get --option output=json --overwrite
+  
+  # Set the credential plugin policy and allowlist
+  kubectl kuberc set --section credentialplugin --policy Allowlist --allowlist-entry command=cloud-credential-helper
 ```
 
 {{ header }} Options
 
 ```shell
+      --allowlist-entry=[]
+            Allowlist entry the form field=value (can be specified multiple times)
       --appendarg=[]
             Argument to append to the command (can be specified multiple times, for aliases only)
       --command=""
@@ -46,10 +51,13 @@ werf kubectl alpha kuberc set --section (defaults|aliases) --command COMMAND [op
             Flag option in the form flag=value (can be specified multiple times)
       --overwrite=false
             Allow overwriting existing entries
+      --policy=""
+            Plugin policy to use for exec credential plugins, must be one of `AllowAll`, `DenyAll`  
+            or `Allowlist`
       --prependarg=[]
             Argument to prepend to the command (can be specified multiple times, for aliases only)
       --section=""
-            Section to modify: `defaults` or `aliases`
+            Section to modify: `defaults`, `aliases`, or `credentialplugin`
 ```
 
 {{ header }} Options inherited from parent commands
@@ -104,6 +112,8 @@ werf kubectl alpha kuberc set --section (defaults|aliases) --command COMMAND [op
             (none|cpu|heap|goroutine|threadcreate|block|mutex|trace)
       --profile-output="profile.pprof"
             Name of the file to write the profile to
+      --proxy-url=""
+            Proxy URL to use for requests to the API server
       --request-timeout="0"
             The length of time to wait before giving up on a single server request. Non-zero values 
             should contain a corresponding time unit (e.g. 1s, 2m, 3h). A value of zero means don`t 

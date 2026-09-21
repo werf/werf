@@ -19,9 +19,7 @@ var (
 
 var testSuiteEntrypointFunc = suite_init.MakeTestSuiteEntrypointFunc("Ansible suite", suite_init.TestSuiteEntrypointFuncOptions{
 	RequiredSuiteTools: []string{"docker"},
-	RequiredSuiteEnvs: []string{
-		"WERF_TEST_K8S_DOCKER_REGISTRY",
-	},
+	SuiteLabels:        []string{suite_init.LabelNeedsRegistry},
 })
 
 func TestSuite(t *testing.T) {

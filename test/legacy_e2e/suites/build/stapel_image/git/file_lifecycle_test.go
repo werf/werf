@@ -10,7 +10,7 @@ import (
 	"runtime"
 	"strconv"
 
-	"github.com/alessio/shellescape"
+	"al.essio.dev/pkg/shellescape"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 

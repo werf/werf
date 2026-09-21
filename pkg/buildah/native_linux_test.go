@@ -1,13 +1,19 @@
 package buildah
 
 import (
+	"bytes"
 	"context"
+	"errors"
+	"fmt"
+	"io"
 	"os"
 	"strings"
 	"sync"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/opencontainers/runtime-spec/specs-go"
+	"go.podman.io/buildah/define"
 
 	"github.com/werf/common-go/pkg/util"
 )
@@ -62,6 +68,27 @@ var _ = Describe("buildah", func() {
 
 			Expect(stderrBuf.String()).To(HaveLen(6_000))
 		})
+	})
+
+	DescribeTable("generateNamespaceOptionsAndNetworkPolicy",
+		func(network string, expectedPolicy define.NetworkConfigurationPolicy, expectedHost bool) {
+			nsOpts, netPolicy, err := generateNamespaceOptionsAndNetworkPolicy(network)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(netPolicy).To(Equal(expectedPolicy))
+
+			netNs := nsOpts.Find(string(specs.NetworkNamespace))
+			Expect(netNs).NotTo(BeNil())
+			Expect(netNs.Host).To(Equal(expectedHost))
+		},
+		Entry("empty network is the default network", "", define.NetworkDefault, false),
+		Entry("default network gets its own namespace", "default", define.NetworkDefault, false),
+		Entry("host network shares the host namespace", "host", define.NetworkEnabled, true),
+		Entry("none disables networking in its own namespace", "none", define.NetworkDisabled, false),
+	)
+
+	It("should reject a network mode buildah cannot honor", func() {
+		_, _, err := generateNamespaceOptionsAndNetworkPolicy("bridge")
+		Expect(err).To(MatchError(ContainSubstring(`unsupported network mode "bridge"`)))
 	})
 
 	Describe("generateRegistriesConfig", func() {
@@ -712,6 +739,30 @@ location = "dropin-mirror.example.com"
 			result, err := GetRegistryMirrorsFromConfig(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 			Expect(result).To(ContainElement("https://dropin-mirror.example.com"))
+		})
+	})
+
+	Describe("stderr handling", func() {
+		It("should stream stderr to the log writer without keeping a copy for the error", func() {
+			logWriter := &bytes.Buffer{}
+			stdout, stderr, stderrBuf := generateStdoutStderr(logWriter)
+			fmt.Fprint(stdout, "out\n")
+			fmt.Fprint(stderr, "MARKER-STDERR-LINE\n")
+
+			Expect(logWriter.String()).To(Equal("out\nMARKER-STDERR-LINE\n"))
+			Expect(stderrBuf.String()).To(BeEmpty())
+
+			err := wrapStderrError("RunCommand failed", stderrBuf, errors.New("exit status 1"))
+			Expect(err.Error()).To(Equal("RunCommand failed: exit status 1"))
+		})
+
+		It("should keep stderr for the error and drop stdout when there is no log writer", func() {
+			stdout, stderr, stderrBuf := generateStdoutStderr(nil)
+			Expect(stdout).To(Equal(io.Discard))
+			fmt.Fprint(stderr, "MARKER-STDERR-LINE\n")
+
+			err := wrapStderrError("RunCommand failed", stderrBuf, errors.New("exit status 1"))
+			Expect(err.Error()).To(Equal("RunCommand failed:\nMARKER-STDERR-LINE\n\nexit status 1"))
 		})
 	})
 })

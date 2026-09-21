@@ -114,6 +114,7 @@ jobs:
       - name: Update GitHub releases based on trdl_channels.yaml
         env:
           GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+          LATEST_MAJOR: "2"
         run: |
           check_release_exists() {
             local version=$1
@@ -126,11 +127,16 @@ jobs:
             gh release view "$tag" --json name | jq -r '.name'
           }
 
+          get_latest_release_tag() {
+            gh api 'repos/werf/werf/releases/latest' --jq '.tag_name'
+          }
+
           process_releases() {
             echo "Processing releases based on trdl_channels.yaml..."
 
             declare -A VERSION_CHANNELS
             declare -A GROUP_VERSIONS
+            latest_release_tag=$(get_latest_release_tag)
 
             current_group=""
             while IFS= read -r line; do
@@ -159,20 +165,28 @@ jobs:
                 channels="${VERSION_CHANNELS[$key]}"
                 expected_title="$tag [$channels]"
                 current_title=$(get_release_name "$tag")
+                expected_is_latest=false
+                if [[ $group == "$LATEST_MAJOR" && $channels == *stable* ]]; then
+                  expected_is_latest=true
+                fi
+                current_is_latest=false
+                if [[ $tag == "$latest_release_tag" ]]; then
+                  current_is_latest=true
+                fi
 
-                if [[ "$current_title" != "$expected_title" ]]; then
-                  if [[ $group == "2" && $channels == *stable* ]]; then
+                if [[ "$current_title" != "$expected_title" || "$current_is_latest" != "$expected_is_latest" ]]; then
+                  if [[ $expected_is_latest == true ]]; then
                     echo "Updating $tag (group $group): stable, latest"
                     gh release edit "$tag" --title "$expected_title" --latest --prerelease=false || true
                   elif [[ $channels == *rock-solid* ]]; then
-                    echo "Updating $tag (group $group): rock-solid, just title"
-                    gh release edit "$tag" --title "$expected_title" --prerelease=false || true
+                    echo "Updating $tag (group $group): rock-solid, not latest"
+                    gh release edit "$tag" --title "$expected_title" --latest=false --prerelease=false || true
                   else
-                    echo "Updating $tag (group $group): prerelease, channels=$channels"
-                    gh release edit "$tag" --title "$expected_title" --prerelease || true
+                    echo "Updating $tag (group $group): prerelease, not latest, channels=$channels"
+                    gh release edit "$tag" --title "$expected_title" --latest=false --prerelease || true
                   fi
                 else
-                  echo "$tag (group $group) already has correct title: $current_title"
+                  echo "$tag (group $group) already has correct title and latest status"
                 fi
               else
                 echo "Release $tag (group $group) not found, skipping..."
@@ -180,14 +194,14 @@ jobs:
             done
 
             echo "Checking for releases with outdated channel markers..."
-            gh release list --json name | jq -r '.[] | select(.name | test("\\[[a-zA-Z,-]+\\]")) | .name' | while read -r full_name; do
+            gh release list --limit 100 --json name | jq -r '.[] | select(.name | test("\\[[a-zA-Z,-]+\\]")) | .name' | while read -r full_name; do
               tag="${full_name%% *}"
               version="${tag#v}"
 
               [[ -n "${GROUP_VERSIONS[$version]}" ]] && continue
 
               echo "Resetting $tag to plain version title (no channels in config)"
-              gh release edit "$tag" --title "$tag" --prerelease=false || true
+              gh release edit "$tag" --title "$tag" --latest=false --prerelease=false || true
             done
           }
 

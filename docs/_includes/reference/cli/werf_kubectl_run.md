@@ -62,6 +62,8 @@ werf kubectl run NAME --image=image [--env="key=value"] [--port=port] [--dry-run
       --command=false
             If true and extra arguments are present, use them as the `command` field in the         
             container, rather than the `args` field which is the default.
+      --detach-keys="ctrl-p,ctrl-q"
+            Override the key sequence for detaching a container.
       --dry-run="none"
             Must be "none", "server", or "client". If client strategy, only print the object that   
             would be sent, without sending it. If server strategy, submit server-side request       
@@ -72,8 +74,6 @@ werf kubectl run NAME --image=image [--env="key=value"] [--port=port] [--dry-run
             If true, create a ClusterIP service associated with the pod.  Requires `--port`.
       --field-manager="kubectl-run"
             Name of the manager used to track field ownership.
-  -f, --filename=[]
-            to use to replace the resource.
       --force=false
             If true, immediately remove resources from API and bypass graceful deletion. Note that  
             immediate deletion of some resources may result in inconsistency or data loss and       
@@ -196,6 +196,8 @@ werf kubectl run NAME --image=image [--env="key=value"] [--port=port] [--dry-run
             (none|cpu|heap|goroutine|threadcreate|block|mutex|trace)
       --profile-output="profile.pprof"
             Name of the file to write the profile to
+      --proxy-url=""
+            Proxy URL to use for requests to the API server
       --request-timeout="0"
             The length of time to wait before giving up on a single server request. Non-zero values 
             should contain a corresponding time unit (e.g. 1s, 2m, 3h). A value of zero means don`t 

@@ -1,0 +1,26 @@
+project: werf-test-e2e-build-legacy-stage-script
+configVersion: 1
+---
+image: source
+from: registry.werf.io/base/ubuntu:22.04
+shell:
+  setup:
+    - printf payload > /payload
+---
+image: target
+from: registry.werf.io/base/ubuntu:22.04
+# The import count must keep the generated stage script above the 128 KiB
+# single-argument limit. At the current size of RsyncServer.GetCopyCommand the
+# threshold is ~194 imports.
+import:
+{{- range $i := until 256 }}
+  - from: source
+    add: /payload
+    to: /imports/{{ $i }}
+    after: install
+{{- end }}
+shell:
+  setup:
+    - cat > /tmp/eaten
+    - test ! -s /tmp/eaten
+    - touch /stage-complete

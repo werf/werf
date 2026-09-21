@@ -91,8 +91,9 @@ werf kubectl debug (POD | TYPE[[.VERSION].GROUP]/NAME) [ -- COMMAND [args...] ] 
       --keep-startup=false
             If true, keep the original startup probes.(This flag only works when used with          
             `--copy-to`)
-      --profile="legacy"
-            Options are "legacy", "general", "baseline", "netadmin", "restricted" or "sysadmin".
+      --profile="general"
+            Options are "general", "baseline", "restricted", "netadmin" or "sysadmin". Defaults to  
+            "general"
   -q, --quiet=false
             If true, suppress informational messages.
       --replace=false
@@ -164,6 +165,8 @@ werf kubectl debug (POD | TYPE[[.VERSION].GROUP]/NAME) [ -- COMMAND [args...] ] 
             Password for basic authentication to the API server
       --profile-output="profile.pprof"
             Name of the file to write the profile to
+      --proxy-url=""
+            Proxy URL to use for requests to the API server
       --request-timeout="0"
             The length of time to wait before giving up on a single server request. Non-zero values 
             should contain a corresponding time unit (e.g. 1s, 2m, 3h). A value of zero means don`t 

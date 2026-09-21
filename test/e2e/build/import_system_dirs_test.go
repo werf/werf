@@ -12,7 +12,6 @@ import (
 
 	"github.com/werf/werf/v2/test/pkg/contback"
 	"github.com/werf/werf/v2/test/pkg/report"
-	"github.com/werf/werf/v2/test/pkg/werf"
 )
 
 var _ = Describe("Import system dirs", Label("e2e", "build", "import", "system-dirs"), func() {
@@ -20,12 +19,7 @@ var _ = Describe("Import system dirs", Label("e2e", "build", "import", "system-d
 		func(ctx SpecContext, testOpts setupEnvOptions) {
 			By("initializing")
 			setupEnv(testOpts)
-			_, err := contback.NewContainerBackend(testOpts.ContainerBackendMode)
-			if err == contback.ErrRuntimeUnavailable {
-				Skip(err.Error())
-			} else if err != nil {
-				Fail(err.Error())
-			}
+			contback.SkipIfUnavailable(testOpts.ContainerBackendMode)
 
 			By("building")
 			repoDirname := "repo0"
@@ -34,7 +28,7 @@ var _ = Describe("Import system dirs", Label("e2e", "build", "import", "system-d
 
 			SuiteData.InitTestRepo(ctx, repoDirname, fixtureRelPath)
 
-			werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
+			werfProject := newWerfProject(repoDirname)
 			reportProject := report.NewProjectWithReport(werfProject)
 			_, buildReport := reportProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), nil)
 
@@ -42,17 +36,17 @@ var _ = Describe("Import system dirs", Label("e2e", "build", "import", "system-d
 			imageName := buildReport.Images["destination"].DockerImageName
 			checkImageFilesystem(imageName)
 		},
-		Entry("Docker", setupEnvOptions{
+		backendEntry("Docker", setupEnvOptions{
 			ContainerBackendMode:        "docker",
 			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: false,
 		}),
-		Entry("Native Buildah rootless", setupEnvOptions{
+		backendEntry("Native Buildah rootless", setupEnvOptions{
 			ContainerBackendMode:        "native-rootless",
 			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: false,
 		}),
-		Entry("Native Buildah chroot", setupEnvOptions{
+		backendEntry("Native Buildah chroot", setupEnvOptions{
 			ContainerBackendMode:        "native-chroot",
 			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: true,

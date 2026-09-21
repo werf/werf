@@ -28,12 +28,7 @@ var _ = Describe("build with secrets and ssh mounts", Label("integration", "buil
 	DescribeTable("should succeed",
 		func(ctx SpecContext, testOpts testOptions) {
 			setupEnv(testOpts)
-			_, err := contback.NewContainerBackend(testOpts.ContainerBackendMode)
-			if err == contback.ErrRuntimeUnavailable {
-				Skip(err.Error())
-			} else if err != nil {
-				Fail(err.Error())
-			}
+			contback.SkipIfUnavailable(testOpts.ContainerBackendMode)
 
 			runOpts := &werf.BuildOptions{}
 			repoDirname := "repo0"
@@ -42,6 +37,7 @@ var _ = Describe("build with secrets and ssh mounts", Label("integration", "buil
 			if testOpts.SSH {
 				By(fmt.Sprintf("%s: generating sekret key for ssh agent", testOpts.State))
 				fixtureRelPath = "build_with_ssh"
+				var err error
 				keyFile, err = generateSSHKey(fmt.Sprintf("id_rsa_werf_test_%s", utils.GetRandomString(5)), 2048)
 				Expect(err).NotTo(HaveOccurred())
 				runOpts.ExtraArgs = append(runOpts.ExtraArgs, "--ssh-key", keyFile)
@@ -52,8 +48,6 @@ var _ = Describe("build with secrets and ssh mounts", Label("integration", "buil
 					utils.DeleteFile(keyFile)
 				}
 			}()
-
-			Expect(err).NotTo(HaveOccurred())
 
 			By(fmt.Sprintf("%s: preparing test repo", testOpts.State))
 			SuiteData.InitTestRepo(ctx, repoDirname, fixtureRelPath)

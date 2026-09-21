@@ -42,6 +42,14 @@ werf kubectl wait ([-f FILENAME] | resource.group/resource.name | resource.group
   # Wait for the pod "busybox1" to be deleted, with a timeout of 60s, after having issued the "delete" command
   kubectl delete pod/busybox1
   kubectl wait --for=delete pod/busybox1 --timeout=60s
+  
+  # Wait for pod "busybox1" to be created AND reach the "Ready" status condition
+  kubectl wait --for=condition=Ready --for=create pod/busybox1
+  
+  # Wait for pod "busybox1" to reach the "Ready" status OR for its containers to report a "False" readiness state
+  until kubectl wait pod/busybox1 --for=condition=Ready --timeout=1s 2>/dev/null || \
+  kubectl wait pod/busybox1 --for=condition=ContainersReady=False --timeout=1s 2>/dev/null; \
+  do echo "Checking conditions..."; sleep 1; done
 ```
 
 {{ header }} Options
@@ -61,12 +69,13 @@ werf kubectl wait ([-f FILENAME] | resource.group/resource.name | resource.group
             field queries per type.
   -f, --filename=[]
             identifying the resource.
-      --for=""
+      --for=[]
             The condition to wait on:                                                               
             [create|delete|condition=condition-name[=condition-value]|jsonpath=`{JSONPath           
             expression}`=[JSONPath value]]. The default condition-value is true. Condition values   
             are compared after Unicode simple case folding, which is a more general form of         
-            case-insensitivity.
+            case-insensitivity. Multiple conditions are supported and AND`ed to each other in a     
+            sequential order. If --for=create is passed, it is always waited first.
       --local=false
             If true, annotation will NOT contact api-server but run locally.
   -o, --output=""
@@ -144,6 +153,8 @@ werf kubectl wait ([-f FILENAME] | resource.group/resource.name | resource.group
             (none|cpu|heap|goroutine|threadcreate|block|mutex|trace)
       --profile-output="profile.pprof"
             Name of the file to write the profile to
+      --proxy-url=""
+            Proxy URL to use for requests to the API server
       --request-timeout="0"
             The length of time to wait before giving up on a single server request. Non-zero values 
             should contain a corresponding time unit (e.g. 1s, 2m, 3h). A value of zero means don`t 

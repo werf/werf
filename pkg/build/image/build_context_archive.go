@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"sort"
 
-	"github.com/containers/buildah/copier"
+	"go.podman.io/buildah/copier"
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
