@@ -6,9 +6,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	helmreleasecommon "github.com/werf/nelm/pkg/helm/pkg/release/common"
-	"github.com/werf/nelm/pkg/kube"
 	"github.com/werf/werf/v2/test/pkg/report"
-	"github.com/werf/werf/v2/test/pkg/utils"
 	"github.com/werf/werf/v2/test/pkg/werf"
 )
 
@@ -17,17 +15,9 @@ var _ = Describe("Simple bundle publish/apply", Label("e2e", "bundle-publish-app
 	var werfProject *werf.Project
 
 	AfterEach(func(ctx SpecContext) {
-		utils.RunSucceedCommand(ctx, SuiteData.GetTestRepoPath(repoDirname), SuiteData.WerfBinPath, "dismiss", "--release", werfProject.Release(ctx), "--namespace", werfProject.Namespace(ctx), "--with-namespace")
-
-		werfProject.KubeCtl(ctx, &werf.KubeCtlOptions{
-			werf.CommonOptions{
-				ExtraArgs: []string{
-					"delete",
-					"namespace",
-					"--ignore-not-found",
-					werfProject.Namespace(ctx),
-				},
-			},
+		werfProject.DismissAndDeleteNamespace(ctx, &werf.DismissOptions{
+			Release:   werfProject.Release(ctx),
+			Namespace: werfProject.Namespace(ctx),
 		})
 	})
 
@@ -37,12 +27,7 @@ var _ = Describe("Simple bundle publish/apply", Label("e2e", "bundle-publish-app
 			repoDirname = "repo0"
 			setupEnv()
 
-			// TODO: DRY kube client initialization
-			kubeConfig, err := kube.NewKubeConfig(ctx, kube.KubeConfigOptions{})
-			Expect(err).NotTo(HaveOccurred())
-
-			clientFactory, err := kube.NewClientFactory(ctx, kubeConfig)
-			Expect(err).NotTo(HaveOccurred())
+			clientFactory := werf.NewKubeClientFactory(ctx)
 
 			By("state0: starting")
 			{
@@ -80,12 +65,7 @@ var _ = Describe("Simple bundle publish/apply", Label("e2e", "bundle-publish-app
 			repoDirname = "repo0"
 			setupEnv()
 
-			// TODO: DRY kube client initialization
-			kubeConfig, err := kube.NewKubeConfig(ctx, kube.KubeConfigOptions{})
-			Expect(err).NotTo(HaveOccurred())
-
-			clientFactory, err := kube.NewClientFactory(ctx, kubeConfig)
-			Expect(err).NotTo(HaveOccurred())
+			clientFactory := werf.NewKubeClientFactory(ctx)
 
 			By("state0: starting")
 			{
