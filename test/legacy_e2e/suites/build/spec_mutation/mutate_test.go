@@ -67,12 +67,12 @@ var _ = Describe("build and mutate image spec", Label("integration", "build", "m
 						Expect(imgCfg.Volumes).Should(HaveKey("/second/test/volume"))
 						Expect(imgCfg.Volumes).ShouldNot(HaveKey("/home/remove/me"))
 
-						Expect(imgCfg.Cmd).Should(ContainElement("/bin/sh"))
-						Expect(imgCfg.Entrypoint).Should(ContainElement("test"))
+						Expect([]string(imgCfg.Cmd)).Should(Equal([]string{"/bin/sh", "-c", "echo cmd"}))
+						Expect([]string(imgCfg.Entrypoint)).Should(Equal([]string{"command", "param1", "param2"}))
 
 						Expect(imgCfg.Labels).Should(HaveKey("maintainer"))
 						Expect(imgCfg.Labels).Should(HaveKey("save"))
-						Expect(imgCfg.Labels).Should(HaveKey("test"))
+						Expect(imgCfg.Labels).Should(HaveKeyWithValue("test", "test_value"))
 						Expect(imgCfg.Labels).Should(HaveKey("werf"))
 						Expect(imgCfg.Labels).Should(HaveKey("global_label"))
 						Expect(imgCfg.Labels).Should(HaveKey("werf.io/parent-stage-id"))
@@ -88,6 +88,10 @@ var _ = Describe("build and mutate image spec", Label("integration", "build", "m
 						Expect(imgCfg.WorkingDir).Should(Equal("/test/work"))
 
 						Expect(imgCfg.StopSignal).Should(Equal("SIGINT"))
+
+						Expect(imgCfg.Healthcheck).ShouldNot(BeNil())
+						Expect(imgCfg.Healthcheck.Test).Should(Equal([]string{"curl -f http://localhost/ || exit 1"}))
+						Expect(imgCfg.Healthcheck.Retries).Should(Equal(3))
 
 					case "clean-test":
 
