@@ -267,8 +267,10 @@ func (o *TaskOutput) Close() error {
 
 // Cleanup removes the tmp file. The Printer calls it as soon as the output
 // is drained, so the disk holds only what is not printed yet; the final
-// sweep in runWorkers calls it again for whatever the Printer never reached,
-// and a second call is a no-op.
+// sweep in runWorkers calls it again for whatever the Printer never reached.
+// A call after a successful removal is a no-op, while a removal that failed
+// is retried by the sweep: the Printer only warns about it, so giving up
+// after the first failure would leak the file for the rest of the run.
 func (o *TaskOutput) Cleanup() error {
 	o.mutex.Lock()
 	defer o.mutex.Unlock()
@@ -280,15 +282,13 @@ func (o *TaskOutput) Cleanup() error {
 	if !o.halfClosed {
 		return fmt.Errorf("task output of worker %d task %d is not half closed yet", o.workerID, o.taskSeq)
 	}
+	if o.path != "" {
+		if err := os.Remove(o.path); err != nil && !errors.Is(err, os.ErrNotExist) {
+			return fmt.Errorf("remove tmp file %q: %w", o.path, err)
+		}
+	}
+
 	o.removed = true
-
-	if o.path == "" {
-		return nil
-	}
-
-	if err := os.Remove(o.path); err != nil {
-		return fmt.Errorf("remove tmp file %q: %w", o.path, err)
-	}
 	return nil
 }
 

@@ -3,6 +3,7 @@ package parallel
 import (
 	"io"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 
@@ -148,6 +149,33 @@ var _ = Describe("TaskOutput descriptor lifecycle", func() {
 		_, err = os.Stat(out.path)
 		Expect(err).To(MatchError(os.ErrNotExist))
 		Expect(out.Cleanup()).To(Succeed())
+	})
+
+	It("retries a removal that failed instead of leaking the file", func() {
+		// The Printer only warns when the early removal fails, so a Cleanup
+		// that gave up after one failure would leave the file behind for the
+		// rest of the run: the final sweep would find it already "removed".
+		if os.Geteuid() == 0 {
+			Skip("root ignores directory permissions")
+		}
+
+		out := NewTaskOutput(0, 4)
+		_, err := out.Write([]byte("something, so that there is a file to remove\n"))
+		Expect(err).To(Succeed())
+		Expect(out.HalfClose()).To(Succeed())
+
+		dir := filepath.Dir(out.path)
+		Expect(os.Chmod(dir, 0o555)).To(Succeed())
+		defer func() {
+			Expect(os.Chmod(dir, 0o755)).To(Succeed())
+		}()
+
+		Expect(out.Cleanup()).To(MatchError(ContainSubstring("remove tmp file")))
+		Expect(os.Stat(out.path)).Error().To(Succeed())
+
+		Expect(os.Chmod(dir, 0o755)).To(Succeed())
+		Expect(out.Cleanup()).To(Succeed())
+		Expect(os.Stat(out.path)).Error().To(MatchError(os.ErrNotExist))
 	})
 })
 
