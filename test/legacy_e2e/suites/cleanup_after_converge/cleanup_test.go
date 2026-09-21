@@ -2,12 +2,11 @@ package cleanup_with_k8s_test
 
 import (
 	"context"
-	"fmt"
-	"os"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	"github.com/werf/werf/v2/test/pkg/suite_init"
 	"github.com/werf/werf/v2/test/pkg/utils"
 )
 
@@ -21,7 +20,7 @@ var _ = Describe("cleanup command", func() {
 	)
 
 	setImageCredentialsEnv := func() {
-		SuiteData.Stubs.SetEnv("WERF_SET_IMAGE_CREDENTIALS_REGISTRY", fmt.Sprintf("imageCredentials.registry=%s", os.Getenv("WERF_TEST_K8S_DOCKER_REGISTRY")))
+		SuiteData.Stubs.SetEnv("WERF_SET_IMAGE_CREDENTIALS_REGISTRY", "imageCredentials.registry="+suite_init.TestRegistry())
 	}
 
 	setupProject := func(ctx context.Context) {
