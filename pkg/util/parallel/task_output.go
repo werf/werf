@@ -92,7 +92,9 @@ func (o *TaskOutput) Write(p []byte) (int, error) {
 // fixed-size read can land its boundary in the middle of a multi-byte rune
 // (e.g. a box-drawing character used for log prefixes), and the downstream
 // logger converts each half independently into a replacement character,
-// producing visible mojibake in the terminal.
+// producing visible mojibake in the terminal. A read that finds nothing but
+// such a fragment returns io.EOF, so the reader comes back for it once the
+// rest has been written.
 func (o *TaskOutput) Read(p []byte) (int, error) {
 	o.mutex.Lock()
 
@@ -125,9 +127,22 @@ func (o *TaskOutput) Read(p []byte) (int, error) {
 
 	atEnd := o.halfClosed && o.readOffset+int64(n) >= o.writeOffset
 	if !atEnd {
-		if complete := completeUTF8Len(p[:n]); complete > 0 && complete < n {
+		complete := completeUTF8Len(p[:n])
+		if complete == 0 && n == len(p) {
+			// p cannot hold a whole rune, so the fragment has to go through
+			// or the drain never advances.
+			complete = n
+		}
+		if complete < n {
 			n = complete
-			err = nil
+			// A read left with nothing but the fragment reports EOF: that
+			// parks the printer until more is written, where 0 and no error
+			// would spin it.
+			if n == 0 {
+				err = io.EOF
+			} else {
+				err = nil
+			}
 		}
 	}
 
