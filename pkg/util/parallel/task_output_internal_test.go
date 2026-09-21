@@ -25,14 +25,35 @@ var _ = Describe("TaskOutput descriptor lifecycle", func() {
 		Expect(werf.Init(GinkgoT().TempDir(), "")).To(Succeed())
 	})
 
-	It("holds no descriptor between finishing and being drained, and none after the drain", func() {
-		out, err := NewTaskOutput(0, 0)
-		Expect(err).To(Succeed())
+	It("touches the disk only once something is written", func() {
+		// Most tasks of a cleanup run log nothing at all; a file per such
+		// task would put one inode per task in the tmp dir for as long as
+		// the queue head holds them back.
+		out := NewTaskOutput(0, 0)
 		defer func() {
 			Expect(out.Cleanup()).To(Succeed())
 		}()
 
-		_, err = out.Write([]byte("hello\n"))
+		Expect(out.path).To(BeEmpty())
+		Expect(out.Readable()).To(BeTrue(), "the task is still running, output may still come")
+
+		n, err := out.Read(make([]byte, 8))
+		Expect(n).To(BeZero())
+		Expect(err).To(MatchError(io.EOF))
+		Expect(out.path).To(BeEmpty(), "reading an output nothing was written to must not create one either")
+
+		Expect(out.HalfClose()).To(Succeed())
+		Expect(out.Readable()).To(BeFalse())
+		Expect(out.path).To(BeEmpty())
+	})
+
+	It("holds no descriptor between finishing and being drained, and none after the drain", func() {
+		out := NewTaskOutput(0, 0)
+		defer func() {
+			Expect(out.Cleanup()).To(Succeed())
+		}()
+
+		_, err := out.Write([]byte("hello\n"))
 		Expect(err).To(Succeed())
 		writer := out.writer
 		Expect(writer).NotTo(BeNil())
@@ -59,13 +80,12 @@ var _ = Describe("TaskOutput descriptor lifecycle", func() {
 	})
 
 	It("keeps the reader open while the task is still writing and releases it with the last read", func() {
-		out, err := NewTaskOutput(0, 1)
-		Expect(err).To(Succeed())
+		out := NewTaskOutput(0, 1)
 		defer func() {
 			Expect(out.Cleanup()).To(Succeed())
 		}()
 
-		_, err = out.Write([]byte("first\n"))
+		_, err := out.Write([]byte("first\n"))
 		Expect(err).To(Succeed())
 
 		buf := make([]byte, 64)
@@ -93,13 +113,12 @@ var _ = Describe("TaskOutput descriptor lifecycle", func() {
 		// before the task returns; Readable() then flips to false at HalfClose
 		// and no further Read happens, so HalfClose itself has to let go of
 		// the reader.
-		out, err := NewTaskOutput(0, 2)
-		Expect(err).To(Succeed())
+		out := NewTaskOutput(0, 2)
 		defer func() {
 			Expect(out.Cleanup()).To(Succeed())
 		}()
 
-		_, err = out.Write([]byte("all of it\n"))
+		_, err := out.Write([]byte("all of it\n"))
 		Expect(err).To(Succeed())
 
 		buf := make([]byte, 64)
@@ -118,7 +137,8 @@ var _ = Describe("TaskOutput descriptor lifecycle", func() {
 	It("removes the file once and treats a second Cleanup as a no-op", func() {
 		// The Printer removes a printed file early; the final sweep in
 		// runWorkers must be able to call Cleanup on it again without error.
-		out, err := NewTaskOutput(0, 3)
+		out := NewTaskOutput(0, 3)
+		_, err := out.Write([]byte("something, so that there is a file to remove\n"))
 		Expect(err).To(Succeed())
 
 		Expect(out.Cleanup()).To(MatchError(ContainSubstring("not half closed yet")))
@@ -135,12 +155,12 @@ var _ = DescribeTable("TaskOutput.HalfClose leaves the output on a line boundary
 	func(writes []string, expected string) {
 		Expect(werf.Init(GinkgoT().TempDir(), "")).To(Succeed())
 
-		out, err := NewTaskOutput(0, 0)
-		Expect(err).To(Succeed())
+		out := NewTaskOutput(0, 0)
 		defer func() {
 			Expect(out.Cleanup()).To(Succeed())
 		}()
 
+		var err error
 		for _, w := range writes {
 			_, err = out.Write([]byte(w))
 			Expect(err).To(Succeed())
@@ -174,8 +194,7 @@ var _ = It("TaskOutput.HalfClose keeps the line boundary against a writer racing
 func halfCloseAgainstRacingWriter(iteration int) {
 	GinkgoHelper()
 
-	out, err := NewTaskOutput(0, iteration)
-	Expect(err).To(Succeed())
+	out := NewTaskOutput(0, iteration)
 	defer func() {
 		Expect(out.Close()).To(Succeed())
 		Expect(out.Cleanup()).To(Succeed())
@@ -201,7 +220,7 @@ func halfCloseAgainstRacingWriter(iteration int) {
 		<-done
 	}()
 
-	_, err = out.Write([]byte("a"))
+	_, err := out.Write([]byte("a"))
 	Expect(err).To(Succeed())
 	runtime.Gosched()
 	Expect(out.HalfClose()).To(Succeed())

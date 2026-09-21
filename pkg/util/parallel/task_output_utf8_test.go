@@ -33,14 +33,13 @@ var _ = Describe("TaskOutput.Read UTF-8 boundary safety", func() {
 	It("never splits a multi-byte rune across two reads while the task is still writing", func() {
 		Expect(werf.Init(GinkgoT().TempDir(), "")).To(Succeed())
 
-		out, err := parallel.NewTaskOutput(1, 0)
-		Expect(err).To(Succeed())
+		out := parallel.NewTaskOutput(1, 0)
 
 		// Padding chosen so the 1024-byte read boundary lands in the middle
 		// of the "│" character's 3-byte UTF-8 encoding (E2 94 82), matching
 		// the reported failure mode.
 		line := strings.Repeat("a", 1019) + "│ └ done\n"
-		_, err = out.Write([]byte(line))
+		_, err := out.Write([]byte(line))
 		Expect(err).To(Succeed())
 
 		// Read while the output is still open (not half-closed), so the
@@ -72,15 +71,14 @@ var _ = Describe("TaskOutput.Read UTF-8 boundary safety", func() {
 	It("never splits a multi-byte rune across two reads even when the task half-closed before printing started", func() {
 		Expect(werf.Init(GinkgoT().TempDir(), "")).To(Succeed())
 
-		out, err := parallel.NewTaskOutput(3, 0)
-		Expect(err).To(Succeed())
+		out := parallel.NewTaskOutput(3, 0)
 
 		// Same boundary alignment as the previous test, but this time the
 		// output is half-closed BEFORE any read happens - matching the
 		// real-world case of a fast task finishing before the printer starts
 		// draining its temp file.
 		line := strings.Repeat("a", 1019) + "│ └ done\n"
-		_, err = out.Write([]byte(line))
+		_, err := out.Write([]byte(line))
 		Expect(err).To(Succeed())
 		Expect(out.HalfClose()).To(Succeed())
 
@@ -104,10 +102,9 @@ var _ = Describe("TaskOutput.Read UTF-8 boundary safety", func() {
 	It("flushes a trailing incomplete rune once the task is half-closed, without hanging", func() {
 		Expect(werf.Init(GinkgoT().TempDir(), "")).To(Succeed())
 
-		out, err := parallel.NewTaskOutput(2, 0)
-		Expect(err).To(Succeed())
+		out := parallel.NewTaskOutput(2, 0)
 
-		_, err = out.Write([]byte("└"))
+		_, err := out.Write([]byte("└"))
 		Expect(err).To(Succeed())
 		Expect(out.HalfClose()).To(Succeed())
 

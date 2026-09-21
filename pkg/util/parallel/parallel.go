@@ -3,7 +3,6 @@ package parallel
 import (
 	"context"
 	"errors"
-	"fmt"
 	"io"
 	"strings"
 	"sync"
@@ -193,10 +192,7 @@ func runWorkers(ctx context.Context, numberOfWorkers int, options DoTasksOptions
 			}
 
 			return workerLoop(workerCtx, worker, func(taskId int) error {
-				out, err := worker.beginTask()
-				if err != nil {
-					return fmt.Errorf("begin task %d: %w", taskId, err)
-				}
+				out := worker.beginTask()
 
 				startOrder := printer.Enqueue(out)
 				release()

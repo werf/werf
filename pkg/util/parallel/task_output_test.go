@@ -16,8 +16,7 @@ var _ = DescribeTable(
 	func(doHalfClose, doClose bool) {
 		Expect(werf.Init(GinkgoT().TempDir(), "")).To(Succeed())
 
-		out, err := parallel.NewTaskOutput(1, 0)
-		Expect(err).To(Succeed())
+		out := parallel.NewTaskOutput(1, 0)
 
 		defer func() {
 			Expect(out.Cleanup()).To(Succeed())

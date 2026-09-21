@@ -14,17 +14,31 @@ import (
 // TaskOutput buffers the log of a single task in a temp file so it can be
 // written by the task and read by the Printer concurrently.
 //
+// The file is created by the first write, so a task that logs nothing never
+// touches the disk: most tasks of a cleanup run are silent, and a buffer per
+// task allocated up front would put an inode per task in the tmp dir for as
+// long as the printing queue holds them back.
+//
 // The writer appends only and the reader reads already appended data (or
 // nothing), so they never race on file content. The writer descriptor is
 // closed at HalfClose and the reader descriptor is opened on first Read and
 // closed once everything is drained: a finished task waiting to be printed
 // holds no descriptor, which keeps the count of open files bounded by the
 // number of workers rather than the number of tasks.
+//
+// Any number of goroutines may write; only one may read, and Close may not
+// run while a Read is in flight (the Printer is the sole reader and is
+// stopped before the outputs are closed).
 type TaskOutput struct {
 	mutex sync.Mutex
 
+	workerID int
+	taskSeq  int
+
 	path        string
-	writer      *os.File // nil once half-closed
+	writer      *os.File // nil until the first write and once half-closed
+	createErr   error
+	halfClosed  bool
 	reader      *os.File // open only while being drained
 	reading     bool
 	readOffset  int64
@@ -35,12 +49,30 @@ type TaskOutput struct {
 
 // Write implements io.Writer.
 // It appends to file and accumulates total write offset.
+//
+// Failing to create the buffer costs the task's log, not the task: logboek
+// discards whatever a log write returns, so the error is kept for HalfClose
+// to report instead.
 func (o *TaskOutput) Write(p []byte) (int, error) {
+	if len(p) == 0 {
+		return 0, nil
+	}
+
 	o.mutex.Lock()
 	defer o.mutex.Unlock()
 
-	if o.writer == nil {
+	if o.halfClosed || o.createErr != nil {
 		return len(p), nil
+	}
+
+	if o.writer == nil {
+		file, err := tmp_manager.TempFile(fmt.Sprintf("parallel-worker-%d-%d-%d-*.log", os.Getpid(), o.workerID, o.taskSeq))
+		if err != nil {
+			o.createErr = fmt.Errorf("create temp file for worker %d task %d: %w", o.workerID, o.taskSeq, err)
+			return len(p), nil
+		}
+		o.path = file.Name()
+		o.writer = file
 	}
 
 	n, err := o.writer.Write(p)
@@ -64,7 +96,7 @@ func (o *TaskOutput) Write(p []byte) (int, error) {
 func (o *TaskOutput) Read(p []byte) (int, error) {
 	o.mutex.Lock()
 
-	if o.writer == nil && o.readOffset >= o.writeOffset {
+	if o.path == "" || (o.halfClosed && o.readOffset >= o.writeOffset) {
 		o.mutex.Unlock()
 		return 0, io.EOF
 	}
@@ -91,7 +123,7 @@ func (o *TaskOutput) Read(p []byte) (int, error) {
 	defer o.mutex.Unlock()
 	o.reading = false
 
-	atEnd := o.writer == nil && o.readOffset+int64(n) >= o.writeOffset
+	atEnd := o.halfClosed && o.readOffset+int64(n) >= o.writeOffset
 	if !atEnd {
 		if complete := completeUTF8Len(p[:n]); complete > 0 && complete < n {
 			n = complete
@@ -112,7 +144,7 @@ func (o *TaskOutput) Read(p []byte) (int, error) {
 // writer is gone and every byte has been read. Whichever of Read or
 // HalfClose completes the drain triggers it. Caller holds o.mutex.
 func (o *TaskOutput) releaseDrainedReader() error {
-	if o.reader == nil || o.reading || o.writer != nil || o.readOffset < o.writeOffset {
+	if o.reader == nil || o.reading || !o.halfClosed || o.readOffset < o.writeOffset {
 		return nil
 	}
 
@@ -160,7 +192,8 @@ func utf8SequenceLen(c byte) int {
 }
 
 // HalfClose stops accepting writes and releases the writer descriptor;
-// later writes are silently dropped. Calling it again is a no-op.
+// later writes are silently dropped. Calling it again is a no-op. It reports
+// a buffer that could not be created, and with it the loss of the task's log.
 //
 // If the last byte written is not a newline, one is appended first, under
 // the same lock that stops further writes: the block always ends on a line
@@ -170,23 +203,30 @@ func (o *TaskOutput) HalfClose() error {
 	o.mutex.Lock()
 	defer o.mutex.Unlock()
 
-	if o.writer == nil {
+	if o.halfClosed {
 		return nil
 	}
+	o.halfClosed = true
 
 	var errs []error
-	if o.writeOffset > 0 && o.lastByte != '\n' {
-		n, err := o.writer.Write([]byte{'\n'})
-		o.writeOffset += int64(n)
-		if err != nil {
-			errs = append(errs, fmt.Errorf("terminate task output %q: %w", o.path, err))
-		}
+	if o.createErr != nil {
+		errs = append(errs, o.createErr)
 	}
 
-	if err := o.writer.Close(); err != nil {
-		errs = append(errs, fmt.Errorf("close task output writer %q: %w", o.path, err))
+	if o.writer != nil {
+		if o.writeOffset > 0 && o.lastByte != '\n' {
+			n, err := o.writer.Write([]byte{'\n'})
+			o.writeOffset += int64(n)
+			if err != nil {
+				errs = append(errs, fmt.Errorf("terminate task output %q: %w", o.path, err))
+			}
+		}
+
+		if err := o.writer.Close(); err != nil {
+			errs = append(errs, fmt.Errorf("close task output writer %q: %w", o.path, err))
+		}
+		o.writer = nil
 	}
-	o.writer = nil
 
 	if err := o.releaseDrainedReader(); err != nil {
 		errs = append(errs, err)
@@ -200,7 +240,7 @@ func (o *TaskOutput) Readable() bool {
 	o.mutex.Lock()
 	defer o.mutex.Unlock()
 
-	return o.writer != nil || o.readOffset < o.writeOffset
+	return !o.halfClosed || o.readOffset < o.writeOffset
 }
 
 // Close implements io.Closer: it half-closes the output and releases the
@@ -237,25 +277,21 @@ func (o *TaskOutput) Cleanup() error {
 		return nil
 	}
 
-	if o.writer != nil {
-		return fmt.Errorf("task output %q is not half closed yet", o.path)
+	if !o.halfClosed {
+		return fmt.Errorf("task output of worker %d task %d is not half closed yet", o.workerID, o.taskSeq)
+	}
+	o.removed = true
+
+	if o.path == "" {
+		return nil
 	}
 
 	if err := os.Remove(o.path); err != nil {
 		return fmt.Errorf("remove tmp file %q: %w", o.path, err)
 	}
-	o.removed = true
 	return nil
 }
 
-func NewTaskOutput(workerID, taskSeq int) (*TaskOutput, error) {
-	file, err := tmp_manager.TempFile(fmt.Sprintf("parallel-worker-%d-%d-%d-*.log", os.Getpid(), workerID, taskSeq))
-	if err != nil {
-		return nil, fmt.Errorf("create temp file for worker %d task %d: %w", workerID, taskSeq, err)
-	}
-
-	return &TaskOutput{
-		path:   file.Name(),
-		writer: file,
-	}, nil
+func NewTaskOutput(workerID, taskSeq int) *TaskOutput {
+	return &TaskOutput{workerID: workerID, taskSeq: taskSeq}
 }

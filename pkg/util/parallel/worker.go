@@ -58,8 +58,8 @@ func (r streamRelay) Write(p []byte) (int, error) {
 
 // failTask records the output of a task that returned an error, so the
 // printer can highlight exactly that block. An error raised outside a task
-// (picking the next one, allocating its buffer) leaves it unset, and the
-// printing queue is then left alone.
+// (picking the next one) leaves it unset, and the printing queue is then
+// left alone.
 func (w *Worker) failTask(out *TaskOutput) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
@@ -74,18 +74,14 @@ func (w *Worker) failedOutput() *TaskOutput {
 	return w.failed
 }
 
-func (w *Worker) beginTask() (*TaskOutput, error) {
+func (w *Worker) beginTask() *TaskOutput {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 
-	out, err := NewTaskOutput(w.ID, len(w.outputs))
-	if err != nil {
-		return nil, err
-	}
-
+	out := NewTaskOutput(w.ID, len(w.outputs))
 	w.current = out
 	w.outputs = append(w.outputs, out)
-	return out, nil
+	return out
 }
 
 func (w *Worker) bindTaskStreams(outStream, errStream io.Writer) {
