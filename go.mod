@@ -63,10 +63,10 @@ require (
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.46.0
 	go.opentelemetry.io/otel/sdk v1.46.0
 	go.opentelemetry.io/otel/trace v1.46.0
-	go.podman.io/buildah v1.45.1
-	go.podman.io/common v0.69.2
-	go.podman.io/image/v5 v5.41.2
-	go.podman.io/storage v1.64.1
+	go.podman.io/buildah v1.44.1
+	go.podman.io/common v0.68.1
+	go.podman.io/image/v5 v5.40.0
+	go.podman.io/storage v1.63.0
 	go.uber.org/mock v0.6.0
 	golang.org/x/crypto v0.57.0
 	golang.org/x/net v0.59.0
@@ -456,8 +456,6 @@ require (
 	github.com/ulikunitz/xz v0.5.16 // indirect
 	github.com/vbatts/tar-split v0.12.3 // indirect
 	github.com/vbauerster/mpb/v8 v8.14.0 // indirect
-	github.com/vishvananda/netlink v1.3.1 // indirect
-	github.com/vishvananda/netns v0.0.5 // indirect
 	github.com/wI2L/jsondiff v0.7.0 // indirect
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
