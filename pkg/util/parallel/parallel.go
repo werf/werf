@@ -176,7 +176,9 @@ func runWorkers(ctx context.Context, numberOfWorkers int, options DoTasksOptions
 			defer func() {
 				release()
 				if err := worker.endTask(); err != nil {
-					logboek.Context(ctx).Warn().LogF("parallel: failed to half-close worker %d output: %s\n", worker.ID, err)
+					// Only the log is affected: a buffer that could not be
+					// created or closed costs the task's output, not the task.
+					logboek.Context(ctx).Warn().LogF("parallel: log of the last task of worker %d is incomplete: %s\n", worker.ID, err)
 				}
 				if runningWorkers.Add(-1) == 0 {
 					printer.Close()
@@ -211,7 +213,7 @@ func runWorkers(ctx context.Context, numberOfWorkers int, options DoTasksOptions
 					// HalfClose terminates it.
 					taskLogger.LogF("")
 					if err := worker.endTask(); err != nil {
-						logboek.Context(ctx).Warn().LogF("parallel: failed to half-close task %d output: %s\n", taskId, err)
+						logboek.Context(ctx).Warn().LogF("parallel: log of task %d is incomplete, the task itself is unaffected: %s\n", taskId, err)
 					}
 				}()
 

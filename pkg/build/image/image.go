@@ -211,10 +211,10 @@ func (i *Image) GetBuildOrderIndex() int {
 }
 
 // SetWorkerID annotates the image's log lines (see LogDetailedName) with
-// the parallel worker that is building it, so a jump in the build-order
-// index between consecutive log lines can be told apart from a worker
-// change (parallel.Printer prints one worker's whole output before moving
-// to the next) rather than looking like a scrambled sequence.
+// the parallel worker that is building it, so the log tells which images
+// shared a worker and thus were built one after another. The blocks
+// themselves come out in build-order index order, whichever worker built
+// them (see parallel.Printer).
 func (i *Image) SetWorkerID(id int) {
 	i.hasWorkerID = true
 	i.workerID = id
