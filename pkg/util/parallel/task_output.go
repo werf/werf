@@ -3,6 +3,7 @@ package parallel
 import (
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"sync"
 	"unicode/utf8"
@@ -25,6 +26,7 @@ type TaskOutput struct {
 	path        string
 	writer      *os.File // nil once half-closed
 	reader      *os.File // open only while being drained
+	reading     bool
 	readOffset  int64
 	writeOffset int64
 	lastByte    byte
@@ -61,17 +63,33 @@ func (o *TaskOutput) Write(p []byte) (int, error) {
 // producing visible mojibake in the terminal.
 func (o *TaskOutput) Read(p []byte) (int, error) {
 	o.mutex.Lock()
-	defer o.mutex.Unlock()
+
+	if o.writer == nil && o.readOffset >= o.writeOffset {
+		o.mutex.Unlock()
+		return 0, io.EOF
+	}
 
 	if o.reader == nil {
 		reader, err := os.Open(o.path)
 		if err != nil {
+			o.mutex.Unlock()
 			return 0, fmt.Errorf("open task output for reading: %w", err)
 		}
 		o.reader = reader
 	}
 
-	n, err := o.reader.ReadAt(p, o.readOffset)
+	// The read itself runs unlocked so the task keeps logging while the
+	// printer waits on the disk; o.reading holds the descriptor open until
+	// it is done.
+	reader, readOffset := o.reader, o.readOffset
+	o.reading = true
+	o.mutex.Unlock()
+
+	n, err := reader.ReadAt(p, readOffset)
+
+	o.mutex.Lock()
+	defer o.mutex.Unlock()
+	o.reading = false
 
 	atEnd := o.writer == nil && o.readOffset+int64(n) >= o.writeOffset
 	if !atEnd {
@@ -94,7 +112,7 @@ func (o *TaskOutput) Read(p []byte) (int, error) {
 // writer is gone and every byte has been read. Whichever of Read or
 // HalfClose completes the drain triggers it. Caller holds o.mutex.
 func (o *TaskOutput) releaseDrainedReader() error {
-	if o.reader == nil || o.writer != nil || o.readOffset < o.writeOffset {
+	if o.reader == nil || o.reading || o.writer != nil || o.readOffset < o.writeOffset {
 		return nil
 	}
 
