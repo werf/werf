@@ -51,13 +51,8 @@ var _ = Describe("Scratch stapel build", Label("e2e", "build", "scratch", "simpl
 			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: false,
 		}),
-		backendEntry("using Native Buildah with chroot isolation", setupEnvOptions{
-			ContainerBackendMode:        "native-chroot",
-			WithLocalRepo:               false,
-			WithStagedDockerfileBuilder: false,
-		}),
-		backendEntry("using Native Buildah with chroot isolation and local repo", setupEnvOptions{
-			ContainerBackendMode:        "native-chroot",
+		backendEntry("with local repo using Native Buildah with rootless isolation", setupEnvOptions{
+			ContainerBackendMode:        "native-rootless",
 			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: false,
 		}),

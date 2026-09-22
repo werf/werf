@@ -34,10 +34,8 @@ func TestSuite(t *testing.T) {
 
 var SuiteData struct {
 	suite_init.SuiteData
-	TestImplementation string
-	StagesStorage      storage.PrimaryStagesStorage
-	MetaStorage        storage.PrimaryStagesStorage
-	ContainerRegistry  docker_registry.Interface
+	StagesStorage storage.PrimaryStagesStorage
+	MetaStorage   storage.PrimaryStagesStorage
 }
 
 var (
@@ -46,37 +44,18 @@ var (
 	_ = SuiteData.SetupWerfBinary(suite_init.NewWerfBinaryData(SuiteData.SynchronizedSuiteCallbacksData))
 	_ = SuiteData.SetupProjectName(suite_init.NewProjectNameData(SuiteData.StubsData))
 	_ = SuiteData.SetupTmp(suite_init.NewTmpDirData())
-	_ = SuiteData.SetupContainerRegistryPerImplementation(suite_init.NewContainerRegistryPerImplementationData(SuiteData.SynchronizedSuiteCallbacksData, true))
+	_ = SuiteData.SetupK8sDockerRegistry(suite_init.NewK8sDockerRegistryData(SuiteData.ProjectNameData, SuiteData.StubsData))
 )
 
-func perImplementationBeforeEach(implementationName string) func(ctx SpecContext) {
-	return func(ctx SpecContext) {
-		Expect(werf.Init(SuiteData.TmpDir, "")).To(Succeed())
+var _ = BeforeEach(func(ctx SpecContext) {
+	Expect(werf.Init(SuiteData.TmpDir, "")).To(Succeed())
+	SuiteData.StagesStorage = utils.NewStagesStorage(ctx, SuiteData.K8sDockerRegistryRepo, "default", docker_registry.DockerRegistryOptions{})
+})
 
-		werfImplementationName := SuiteData.ContainerRegistryPerImplementation[implementationName].WerfImplementationName
+func SetupMetaRepo(ctx context.Context) {
+	metaRepo := fmt.Sprintf("%s-meta", SuiteData.K8sDockerRegistryRepo)
 
-		repo := fmt.Sprintf("%s/%s", SuiteData.ContainerRegistryPerImplementation[implementationName].RegistryAddress, SuiteData.ProjectName)
-		InitStagesStorage(ctx, repo, werfImplementationName, SuiteData.ContainerRegistryPerImplementation[implementationName].RegistryOptions)
-		SuiteData.SetupRepo(ctx, repo, implementationName, SuiteData.StubsData)
-		SuiteData.TestImplementation = implementationName
-
-		containerRegistry, err := docker_registry.NewDockerRegistry(ctx, repo, werfImplementationName, docker_registry.DockerRegistryOptions{})
-		Expect(err).ShouldNot(HaveOccurred())
-
-		SuiteData.ContainerRegistry = containerRegistry
-	}
-}
-
-func InitStagesStorage(ctx context.Context, stagesStorageAddress, implementationName string, dockerRegistryOptions docker_registry.DockerRegistryOptions) {
-	SuiteData.StagesStorage = utils.NewStagesStorage(ctx, stagesStorageAddress, implementationName, dockerRegistryOptions)
-}
-
-func SetupMetaRepo(ctx context.Context, implementationName string) {
-	werfImplementationName := SuiteData.ContainerRegistryPerImplementation[implementationName].WerfImplementationName
-
-	metaRepo := fmt.Sprintf("%s/%s-meta", SuiteData.ContainerRegistryPerImplementation[implementationName].RegistryAddress, SuiteData.ProjectName)
-
-	SuiteData.MetaStorage = utils.NewStagesStorage(ctx, metaRepo, werfImplementationName, SuiteData.ContainerRegistryPerImplementation[implementationName].RegistryOptions)
+	SuiteData.MetaStorage = utils.NewStagesStorage(ctx, metaRepo, "default", docker_registry.DockerRegistryOptions{})
 	SuiteData.Stubs.SetEnv("WERF_META_REPO", metaRepo)
 }
 
@@ -101,7 +80,10 @@ func MetaImageMetadata(ctx context.Context, imageName string) map[string][]strin
 }
 
 func CustomTags(ctx context.Context) []string {
-	tags, err := SuiteData.ContainerRegistry.Tags(ctx, SuiteData.StagesStorage.String())
+	repo, ok := SuiteData.StagesStorage.(*storage.RepoStagesStorage)
+	Expect(ok).To(BeTrue(), "stages storage must be a repo stages storage")
+
+	tags, err := repo.DockerRegistry.Tags(ctx, SuiteData.StagesStorage.String())
 	Expect(err).ShouldNot(HaveOccurred())
 
 	var result []string
