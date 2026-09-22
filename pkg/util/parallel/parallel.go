@@ -18,6 +18,7 @@ import (
 type DoTasksOptions struct {
 	InitDockerCLIForEachWorker bool
 	MaxNumberOfWorkers         int
+	OnTaskEnqueued             func(taskID, startOrder int)
 }
 
 type TaskFunc func(ctx context.Context, taskId int) error
@@ -201,7 +202,11 @@ func runWorkers(ctx context.Context, numberOfWorkers int, options DoTasksOptions
 			return workerLoop(workerCtx, worker, func(taskId int) error {
 				out := worker.beginTask()
 
-				startOrder := printer.Enqueue(out)
+				startOrder := printer.EnqueueWithCallback(out, func(startOrder int) {
+					if options.OnTaskEnqueued != nil {
+						options.OnTaskEnqueued(taskId, startOrder)
+					}
+				})
 				release()
 
 				taskCtx := context.WithValue(workerCtx, CtxTaskStartOrderKey, startOrder)

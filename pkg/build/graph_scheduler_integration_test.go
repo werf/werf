@@ -13,8 +13,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/werf/logboek"
+	"github.com/werf/logboek/pkg/level"
 	"github.com/werf/werf/v2/pkg/build/image"
 	"github.com/werf/werf/v2/pkg/build/stage"
+	imagePkg "github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/util/parallel"
 	"github.com/werf/werf/v2/pkg/werf"
 )
@@ -30,6 +32,7 @@ type recordingPhase struct {
 	order       *[]string
 	startOrders map[string]int
 	delays      map[string]time.Duration
+	reuse       map[string]bool
 
 	// hold[name] is waited on before the image is recorded as finished and
 	// release[name] is closed once it has been, so "X finishes after Y" is a
@@ -42,6 +45,10 @@ func (p *recordingPhase) Name() string                       { return "recording
 func (p *recordingPhase) BeforeImages(context.Context) error { return nil }
 func (p *recordingPhase) AfterImages(context.Context) error  { return nil }
 func (p *recordingPhase) BeforeImageStages(ctx context.Context, img *image.Image) (func(), error) {
+	if p.reuse[img.Name] {
+		img.AnchorReused = true
+		img.SetContentTagDesc(&imagePkg.StageDesc{})
+	}
 	if p.startOrders != nil {
 		p.mu.Lock()
 		order, _ := parallel.TaskStartOrder(ctx)
@@ -87,7 +94,7 @@ func (p *recordingPhase) Clone() Phase          { return p }
 func (p *recordingPhase) Report() *ImagesReport { return nil }
 
 var _ = Describe("Build output", func() {
-	DescribeTable("shows skipped images and excludes them from progress", func(parallelBuild bool, skippedLog string, skippedMentions int) {
+	DescribeTable("controls skipped-image visibility", func(parallelBuild bool, acceptedLevel level.Level, skippedLog string, skippedMentions int) {
 		Expect(werf.Init(GinkgoT().TempDir(), "")).To(Succeed())
 
 		base := &image.Image{Name: "base", TargetPlatform: "linux/amd64", Skipped: true}
@@ -114,7 +121,9 @@ var _ = Describe("Build output", func() {
 		var order []string
 		phase := &recordingPhase{mu: &mu, order: &order}
 		var output bytes.Buffer
-		ctx := logboek.NewContext(context.Background(), logboek.NewLogger(&output, &output))
+		logger := logboek.NewLogger(&output, &output)
+		logger.SetAcceptedLevel(acceptedLevel)
+		ctx := logboek.NewContext(context.Background(), logger)
 
 		Expect(conveyor.doImages(ctx, []Phase{phase}, true)).To(Succeed())
 
@@ -123,8 +132,55 @@ var _ = Describe("Build output", func() {
 		Expect(logOutput).To(ContainSubstring("(1/1) image app [linux/amd64]"), logOutput)
 		Expect(order).To(Equal([]string{"app"}))
 	},
-		Entry("concurrent build", true, "image base [linux/amd64] (skipped: no image being built needs it)", 2),
-		Entry("sequential build", false, "Skipping image base: no image being built needs it", 1),
+		Entry("concurrent build", true, level.Default, "image base [linux/amd64] (skipped: no image being built needs it)", 0),
+		Entry("sequential build", false, level.Default, "Skipping image base: no image being built needs it", 0),
+		Entry("concurrent build in verbose", true, level.Info, "image base [linux/amd64] (skipped: no image being built needs it)", 2),
+		Entry("sequential build in verbose", false, level.Info, "Skipping image base: no image being built needs it", 1),
+	)
+
+	DescribeTable("controls reused non-final image visibility",
+		func(acceptedLevel level.Level, anchorReused bool, baseMentions int, baseProgress, appProgress string) {
+			Expect(werf.Init(GinkgoT().TempDir(), "")).To(Succeed())
+
+			base := &image.Image{Name: "base", TargetPlatform: "linux/amd64", AnchorReused: anchorReused}
+			base.ForceTargetPlatformLogging = true
+			app := &image.Image{Name: "app", TargetPlatform: "linux/amd64", IsFinal: true, Requested: true}
+			app.ForceTargetPlatformLogging = true
+			app.AddDependencyName("base")
+
+			graph, err := image.BuildImagesGraph([]*image.Image{base, app})
+			Expect(err).NotTo(HaveOccurred())
+
+			tree := &image.ImagesTree{}
+			tree.SetImagesGraphForTests(graph)
+			conveyor := &Conveyor{
+				ConveyorOptions:  ConveyorOptions{Parallel: true, ParallelTasksLimit: -1},
+				imagesTree:       tree,
+				stageImages:      make(map[string]*stage.StageImage),
+				serviceRWMutex:   map[string]*sync.RWMutex{},
+				stageDigestMutex: map[string]*sync.Mutex{},
+			}
+
+			var mu sync.Mutex
+			var order []string
+			phase := &recordingPhase{mu: &mu, order: &order, reuse: map[string]bool{"base": anchorReused}}
+			var output bytes.Buffer
+			logger := logboek.NewLogger(&output, &output)
+			logger.SetAcceptedLevel(acceptedLevel)
+			ctx := logboek.NewContext(context.Background(), logger)
+
+			Expect(conveyor.doImages(ctx, []Phase{phase}, true)).To(Succeed())
+
+			logOutput := output.String()
+			Expect(strings.Count(logOutput, "image base [linux/amd64]")).To(Equal(baseMentions), logOutput)
+			if baseProgress != "" {
+				Expect(logOutput).To(ContainSubstring(baseProgress), logOutput)
+			}
+			Expect(logOutput).To(ContainSubstring(appProgress), logOutput)
+		},
+		Entry("hides a reused image by default", level.Default, true, 0, "", "(1/1) image app [linux/amd64]"),
+		Entry("shows a reused image in verbose", level.Info, true, 4, "(1/2) image base [linux/amd64]", "(2/2) image app [linux/amd64]"),
+		Entry("shows an image that must be built", level.Default, false, 4, "(1/2) image base [linux/amd64]", "(2/2) image app [linux/amd64]"),
 	)
 })
 

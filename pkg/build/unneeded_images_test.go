@@ -3,6 +3,7 @@ package build
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -42,7 +43,10 @@ func newTestBuildPhase(storageManager manager.StorageManagerInterface, requested
 			BuildOptions: BuildOptions{IntrospectOptions: IntrospectOptions{Targets: introspectTargets}},
 		},
 		BasePhase: BasePhase{Conveyor: &Conveyor{
-			StorageManager: storageManager,
+			StorageManager:   storageManager,
+			stageImages:      make(map[string]*stage.StageImage),
+			serviceRWMutex:   make(map[string]*sync.RWMutex),
+			stageDigestMutex: make(map[string]*sync.Mutex),
 			imagesTree: image.NewImagesTree(nil, image.ImagesTreeOptions{
 				ImagesToProcess: config.ImagesToProcess{ImageNameList: requestedNames},
 			}),
@@ -275,46 +279,39 @@ func (m *anchorLookupStorageManager) SelectSuitableStageDesc(_ context.Context, 
 	return nil, nil
 }
 
-var _ = Describe("BuildPhase.anchorExistsInStagesStorage", func() {
-	newAnchoredImage := func() *image.Image {
-		img := newTestImage("base", false)
-		img.SetAnchorDigest("anchor-digest")
-		img.SetStages([]stage.Interface{stage.NewBaseStage(stage.ImageSpec, &stage.BaseStageOptions{ImageName: "base"})})
+var _ = Describe("BuildPhase content-anchor pre-resolution", func() {
+	It("resolves available anchors before deciding which images are needed", func() {
+		base := newTestImage("base", false)
+		base.SetAnchorDigest("base-anchor")
+		baseAnchor := stage.NewBaseStage(stage.ImageSpec, &stage.BaseStageOptions{ImageName: "base"})
+		baseAnchor.SetContentAnchor(true)
+		base.SetStages([]stage.Interface{baseAnchor})
+		app := newTestImage("app", true, "base")
+		app.SetAnchorDigest("app-anchor")
+		appAnchor := stage.NewBaseStage(stage.ImageSpec, &stage.BaseStageOptions{ImageName: "app"})
+		appAnchor.SetContentAnchor(true)
+		app.SetStages([]stage.Interface{appAnchor})
 
-		return img
-	}
+		phase := newTestBuildPhase(&anchorLookupStorageManager{
+			secondaryStagesStorage: &fakeStagesStorage{},
+			inPrimary: imagePkg.NewStageDescSet(&imagePkg.StageDesc{
+				StageID: imagePkg.NewStageID("anchor", 1),
+				Info: &imagePkg.Info{
+					Name:   "repo:anchor",
+					Labels: map[string]string{imagePkg.WerfStageContentDigestLabel: "content"},
+				},
+			}),
+		}, []string{"app"})
+		phase.Conveyor.imagesTree.SetImagesGraphForTests(newTestImagesGraph(base, app))
 
-	anchorStageDesc := &imagePkg.StageDesc{
-		StageID: imagePkg.NewStageID("anchor-digest", 1),
-		Info:    &imagePkg.Info{Name: "repo:anchor"},
-	}
+		Expect(phase.resolveAvailableContentAnchors(context.Background())).To(Succeed())
+		phase.skipUnneededImages()
 
-	DescribeTable("looking the content anchor up",
-		func(inPrimary, inSecondary imagePkg.StageDescSet, expected bool) {
-			phase := newTestBuildPhase(&anchorLookupStorageManager{
-				secondaryStagesStorage: &fakeStagesStorage{},
-				inPrimary:              inPrimary,
-				inSecondary:            inSecondary,
-			}, nil)
-
-			exists, err := phase.anchorExistsInStagesStorage(context.Background(), newAnchoredImage())
-
-			Expect(err).NotTo(HaveOccurred())
-			Expect(exists).To(Equal(expected))
-		},
-		Entry("found in the primary stages storage", imagePkg.NewStageDescSet(anchorStageDesc), imagePkg.NewStageDescSet(), true),
-		Entry("found in a secondary stages storage only", imagePkg.NewStageDescSet(), imagePkg.NewStageDescSet(anchorStageDesc), true),
-		Entry("found nowhere", imagePkg.NewStageDescSet(), imagePkg.NewStageDescSet(), false),
-	)
-
-	It("is false for an image without a content anchor digest", func() {
-		img := newAnchoredImage()
-		img.SetAnchorDigest("")
-
-		exists, err := newTestBuildPhase(nil, nil).anchorExistsInStagesStorage(context.Background(), img)
-
-		Expect(err).NotTo(HaveOccurred())
-		Expect(exists).To(BeFalse())
+		Expect(base.AnchorReused).To(BeTrue())
+		Expect(base.GetContentTagDesc()).NotTo(BeNil())
+		Expect(base.Requested).To(BeFalse())
+		Expect(app.AnchorReused).To(BeTrue())
+		Expect(app.Requested).To(BeTrue())
 	})
 })
 
