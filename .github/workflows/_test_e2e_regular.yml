@@ -6,6 +6,8 @@ on:
       scope:
         required: true
         type: string
+      labelFilter:
+        type: string
       packages:
         description: Comma-separated package paths to test
         type: string
@@ -21,9 +23,15 @@ on:
       coverage:
         default: false
         type: string
+      raceDetectorEnabled:
+        default: false
+        type: string
       forceSkip:
         default: false
         type: string
+      timeout:
+        default: 60
+        type: number
 
 defaults:
   run:
@@ -38,7 +46,7 @@ jobs:
   _:
     if: inputs.forceSkip == 'false'
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: ${{ inputs.timeout }}
     steps:
       - name: Install system dependencies
         # slirp4netns is not used by werf itself: the e2e helpers drive the system buildah CLI,
@@ -70,6 +78,7 @@ jobs:
         uses: ./.github/actions/set-up-prebuilt-werf-test-binary
         with:
           coverage: ${{ inputs.coverage }}
+          raceDetectorEnabled: ${{ inputs.raceDetectorEnabled }}
 
       - name: Set up git config
         uses: ./.github/actions/set-up-git-config
@@ -84,7 +93,7 @@ jobs:
         run: |
           export WERF_TEST_K8S_DOCKER_REGISTRY="localhost:$(docker inspect kind-registry --format '{{(index (index .NetworkSettings.Ports "5000/tcp") 0).HostPort}}')"
           test -n "${{ inputs.packages }}" && paths=paths="$(echo ${{ inputs.packages }} | tr , ' ')"
-          task --yes -p test:e2e:${{ inputs.scope }} $paths -- --keep-going --skip-package '${{ inputs.excludePackages }}'
+          task --yes -p test:e2e:${{ inputs.scope }} $paths labelFilter="${{ inputs.labelFilter }}" -- --keep-going --skip-package '${{ inputs.excludePackages }}'
           echo loadavg: $(cat /proc/loadavg)
         env:
           GOCOVERDIR: ${{ env.WERF_TEST_COVER_DIR }}
