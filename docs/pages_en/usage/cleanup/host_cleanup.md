@@ -7,6 +7,12 @@ permalink: usage/cleanup/host_cleanup.html
 
 Host cleanup removes irrelevant data and reduces cache size **automatically** as part of the basic werf command invocation and **for all projects** at once. If necessary, the cleanup can be performed manually using the [**werf host cleanup**]({{"reference/cli/werf_host_cleanup.html" | true_relative_url }}) command.
 
+## Notification about a recent automatic cleanup
+
+Automatic host cleanup runs in background, so its output is not visible. If the last background cleanup freed any space, the next suitable werf command reports it: how long ago the cleanup ran, how many local images werf explicitly removed and how much space was freed in total. Commands with machine-readable output preserve the report for a later command that can display it. The report is shown only once per cleanup run.
+
+If the cleanup was unable to bring the storage volume usage down to the allowed level, the report is shown as a warning instead: recently built images may keep being removed on subsequent runs until disk space is freed on the host or the allowed level is raised.
+
 ## Changing build backend (Docker or Buildah) storage directory
 
 The `--backend-storage-path` parameter (or the `WERF_BACKEND_STORAGE_PATH` environment variable) allows you to explicitly specify the backend storage directory in case werf fails to detect it automatically.

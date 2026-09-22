@@ -7,6 +7,7 @@ import (
 
 	"github.com/werf/common-go/pkg/graceful"
 	"github.com/werf/logboek"
+	"github.com/werf/werf/v2/pkg/background"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
 	"github.com/werf/werf/v2/pkg/host_cleaning/units"
@@ -151,7 +152,9 @@ func RunHostCleanup(ctx context.Context, backend container_backend.ContainerBack
 		return err
 	}
 
-	return logboek.Context(ctx).Default().LogProcess("Running GC for local %s backend", cleaner.BackendName()).DoError(func() error {
+	var gcReport RunGCReport
+
+	if err := logboek.Context(ctx).Default().LogProcess("Running GC for local %s backend", cleaner.BackendName()).DoError(func() error {
 		backendStoragePath, err := cleaner.backendStoragePath(ctx, *options.BackendStoragePath)
 		if err != nil {
 			return fmt.Errorf("error getting backend storage path: %w", err)
@@ -165,7 +168,7 @@ func RunHostCleanup(ctx context.Context, backend container_backend.ContainerBack
 		allowedBackendStorageVolumeUsageBytes := getRequirementInBytes(options.AllowedBackendStorageVolumeUsage, DefaultAllowedBackendStorageVolumeUsagePercentage, vuBackend.TotalBytes)
 		allowedBackendStorageVolumeUsageMarginBytes := getRequirementInBytes(options.AllowedBackendStorageVolumeUsageMargin, DefaultAllowedBackendStorageVolumeUsageMarginPercentage, vuBackend.TotalBytes)
 
-		err = cleaner.RunGC(ctx, RunGCOptions{
+		gcReport, err = cleaner.RunGC(ctx, RunGCOptions{
 			AllowedStorageVolumeUsageBytes:       allowedBackendStorageVolumeUsageBytes,
 			AllowedStorageVolumeUsageMarginBytes: allowedBackendStorageVolumeUsageMarginBytes,
 			StoragePath:                          *options.BackendStoragePath,
@@ -176,7 +179,18 @@ func RunHostCleanup(ctx context.Context, backend container_backend.ContainerBack
 			return fmt.Errorf("local %s backend GC failed: %w", cleaner.BackendName(), err)
 		}
 		return nil
-	})
+	}); err != nil {
+		return err
+	}
+
+	// The background cleanup output is invisible to the user, so leave a notice about it for the next werf run.
+	if background.IsBackgroundModeEnabled() && !options.DryRun {
+		if err := writeAutoCleanupNotice(werf.GetServiceDir(), cleaner.BackendName(), gcReport); err != nil {
+			logboek.Context(ctx).Warn().LogF("WARNING: unable to save auto host cleanup notice: %s\n", err)
+		}
+	}
+
+	return nil
 }
 
 func shouldRunAutoHostCleanup(ctx context.Context, backend container_backend.ContainerBackend, options AutoHostCleanupOptions) (bool, error) {
