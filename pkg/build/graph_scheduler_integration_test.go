@@ -1,13 +1,18 @@
 package build
 
 import (
+	"bytes"
 	"context"
+	"strings"
 	"sync"
 	"testing"
 	"time"
 
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/require"
 
+	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/build/image"
 	"github.com/werf/werf/v2/pkg/build/stage"
 	"github.com/werf/werf/v2/pkg/util/parallel"
@@ -80,6 +85,48 @@ func (p *recordingPhase) ImageProcessingShouldBeStopped(context.Context, *image.
 
 func (p *recordingPhase) Clone() Phase          { return p }
 func (p *recordingPhase) Report() *ImagesReport { return nil }
+
+var _ = Describe("Build output", func() {
+	DescribeTable("shows skipped images and excludes them from progress", func(parallelBuild bool, skippedLog string, skippedMentions int) {
+		Expect(werf.Init(GinkgoT().TempDir(), "")).To(Succeed())
+
+		base := &image.Image{Name: "base", TargetPlatform: "linux/amd64", Skipped: true}
+		base.ForceTargetPlatformLogging = true
+		app := &image.Image{Name: "app", TargetPlatform: "linux/amd64", IsFinal: true}
+		app.ForceTargetPlatformLogging = true
+		app.AddDependencyName("base")
+
+		graph, err := image.BuildImagesGraph([]*image.Image{base, app})
+		Expect(err).NotTo(HaveOccurred())
+
+		tree := &image.ImagesTree{}
+		tree.SetImagesGraphForTests(graph)
+
+		conveyor := &Conveyor{
+			ConveyorOptions:  ConveyorOptions{Parallel: parallelBuild, ParallelTasksLimit: -1},
+			imagesTree:       tree,
+			stageImages:      make(map[string]*stage.StageImage),
+			serviceRWMutex:   map[string]*sync.RWMutex{},
+			stageDigestMutex: map[string]*sync.Mutex{},
+		}
+
+		var mu sync.Mutex
+		var order []string
+		phase := &recordingPhase{mu: &mu, order: &order}
+		var output bytes.Buffer
+		ctx := logboek.NewContext(context.Background(), logboek.NewLogger(&output, &output))
+
+		Expect(conveyor.doImages(ctx, []Phase{phase}, true)).To(Succeed())
+
+		logOutput := output.String()
+		Expect(strings.Count(logOutput, skippedLog)).To(Equal(skippedMentions), logOutput)
+		Expect(logOutput).To(ContainSubstring("(1/1) image app [linux/amd64]"), logOutput)
+		Expect(order).To(Equal([]string{"app"}))
+	},
+		Entry("concurrent build", true, "image base [linux/amd64] (skipped: no image being built needs it)", 2),
+		Entry("sequential build", false, "Skipping image base: no image being built needs it", 1),
+	)
+})
 
 // TestDoImagesInParallel_DependentImageDoesNotWaitForUnrelatedSlowImage is
 // the end-to-end regression test for replacing wave/level scheduling with a
