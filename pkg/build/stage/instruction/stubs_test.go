@@ -84,6 +84,13 @@ func (buildContext *BuildContextStub) CalculateGlobsChecksum(ctx context.Context
 	var args []string
 
 	for _, p := range globs {
+		if p == "." {
+			for _, f := range buildContext.Files {
+				args = append(args, string(f.Data))
+			}
+			continue
+		}
+
 		for _, f := range buildContext.Files {
 			if f.Name == p {
 				args = append(args, string(f.Data))

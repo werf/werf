@@ -108,7 +108,7 @@ var _ = Describe("ContentDigest", func() {
 	})
 
 	Describe("Inter-image Context Digest Propagation", func() {
-		It("FromStage content digest changes when referenced image content digest changes", func() {
+		It("FromStage content digest identifies the referenced image by name, not by its built stage", func() {
 			conveyor1 := NewConveyorStub(
 				NewGiterminismManagerStub(NewLocalGitRepoStub(commitH), NewGiterminismInspectorStub()),
 				map[string]string{"base-image": "repo:stage-id-v1"},
@@ -121,13 +121,13 @@ var _ = Describe("ContentDigest", func() {
 			)
 			opts := &BaseStageOptions{TargetPlatform: "linux/amd64"}
 			s := &FromStage{fromImageName: "base-image", BaseStage: NewBaseStage(From, opts)}
+			other := &FromStage{fromImageName: "other-base-image", BaseStage: NewBaseStage(From, opts)}
 			r1, p1 := getContentDigestOrPanic(ctx, s, conveyor1)
 			r2, p2 := getContentDigestOrPanic(ctx, s, conveyor2)
-			if p1 || p2 {
-				Succeed()
-				return
-			}
-			Expect(r1).NotTo(Equal(r2))
+			r3, p3 := getContentDigestOrPanic(ctx, other, conveyor1)
+			Expect(p1 || p2 || p3).To(BeFalse(), "content digest of a from stage must not depend on a conveyor lookup")
+			Expect(r1).To(Equal(r2), "a rebuild of the referenced image must not change the content digest")
+			Expect(r1).NotTo(Equal(r3))
 		})
 	})
 })

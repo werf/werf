@@ -38,10 +38,19 @@ func (stg *Add) ExpandInstruction(c stage.Conveyor, env map[string]string) error
 }
 
 func (stg *Add) GetContentDependencies(ctx context.Context, c stage.Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
-	return stg.GetDependencies(ctx, c, nil, nil, nil, buildContextArchive)
+	sourcePaths, err := stg.contentSourcePaths(c, stg.instruction.Data.SourcePaths)
+	if err != nil {
+		return "", err
+	}
+
+	return stg.getDependencies(ctx, buildContextArchive, sourcePaths)
 }
 
 func (stg *Add) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+	return stg.getDependencies(ctx, buildContextArchive, stg.instruction.Data.SourcePaths)
+}
+
+func (stg *Add) getDependencies(ctx context.Context, buildContextArchive container_backend.BuildContextArchiver, checksumSourcePaths []string) (string, error) {
 	var args []string
 
 	args = append(args, append([]string{"Sources"}, stg.instruction.Data.SourcePaths...)...)
@@ -55,7 +64,7 @@ func (stg *Add) GetDependencies(ctx context.Context, c stage.Conveyor, cb contai
 	}
 
 	var fileGlobSrc []string
-	for _, src := range stg.instruction.Data.SourcePaths {
+	for _, src := range checksumSourcePaths {
 		if !strings.HasPrefix(src, "http://") && !strings.HasPrefix(src, "https://") {
 			fileGlobSrc = append(fileGlobSrc, src)
 		}

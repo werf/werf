@@ -32,7 +32,7 @@ FROM base_with_cmd AS inherited_cmd
 		})
 		require.NoError(t, err)
 
-		images, err := mapDockerfileToImages(ctx, d, &config.Meta{}, &config.ImageFromDockerfile{Name: target, Target: target, Staged: true}, "linux/amd64", false, CommonImageOptions{})
+		images, err := mapDockerfileToImages(ctx, d, &config.Meta{}, &config.ImageFromDockerfile{Name: target, Target: target, Staged: true}, "linux/amd64", false, false, CommonImageOptions{})
 		require.NoError(t, err)
 
 		var targetImage *Image

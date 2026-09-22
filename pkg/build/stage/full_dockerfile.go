@@ -270,13 +270,18 @@ func toArgsArray(argsHashes ...map[string]string) []string {
 }
 
 func shlexProcessWord(value string, argsArray []string) (string, error) {
+	resolvedValue, _, err := shlexProcessWordWithUnmatched(value, argsArray)
+	return resolvedValue, err
+}
+
+func shlexProcessWordWithUnmatched(value string, argsArray []string) (string, bool, error) {
 	shlex := shell.NewLex(parser.DefaultEscapeToken)
-	resolvedValue, _, err := shlex.ProcessWord(value, shell.EnvsFromSlice(argsArray))
+	resolvedValue, unmatched, err := shlex.ProcessWord(value, shell.EnvsFromSlice(argsArray))
 	if err != nil {
-		return "", err
+		return "", false, err
 	}
 
-	return resolvedValue, nil
+	return resolvedValue, len(unmatched) > 0, nil
 }
 
 func NewContextChecksum(dockerignorePathMatcher path_matcher.PathMatcher) *ContextChecksum {
@@ -299,8 +304,18 @@ func (s *FullDockerfileStage) FetchDependencies(_ context.Context, _ Conveyor, _
 }
 
 func (s *FullDockerfileStage) GetDependencies(ctx context.Context, c Conveyor, _ container_backend.ContainerBackend, _, _ *StageImage, _ container_backend.BuildContextArchiver) (string, error) {
-	resolvedDependenciesArgsHash := ResolveDependenciesArgs(s.targetPlatform, s.dependencies, c)
+	return s.dependenciesDigest(ctx, c, ResolveDependenciesArgs(s.targetPlatform, s.dependencies, c))
+}
 
+// GetContentDependencies resolves dependency build args to stable placeholders
+// instead of the built image names, tags and registry digests of the dependency
+// images: their content is folded into the anchor digest as a dependency input,
+// and those values change on every rebuild of the dependency image.
+func (s *FullDockerfileStage) GetContentDependencies(ctx context.Context, c Conveyor, _ container_backend.BuildContextArchiver) (string, error) {
+	return s.dependenciesDigest(ctx, c, ResolveDependenciesArgsForContent(s.dependencies))
+}
+
+func (s *FullDockerfileStage) dependenciesDigest(ctx context.Context, c Conveyor, resolvedDependenciesArgsHash map[string]string) (string, error) {
 	var resolvedDockerMetaArgsHash map[string]string
 	{
 		metaArgs, err := s.resolveDockerMetaArgs(resolvedDependenciesArgsHash)
@@ -392,10 +407,6 @@ func (s *FullDockerfileStage) GetDependencies(ctx context.Context, c Conveyor, _
 	}
 
 	return util.Sha256Hash(dependencies...), nil
-}
-
-func (s *FullDockerfileStage) GetContentDependencies(ctx context.Context, c Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
-	return s.GetDependencies(ctx, c, nil, nil, nil, buildContextArchive)
 }
 
 func (s *FullDockerfileStage) MutateImage(_ context.Context, _ ImageMutatorPusher, _, _ *StageImage) error {
@@ -493,9 +504,24 @@ func (s *FullDockerfileStage) dockerfileInstructionDependencies(ctx context.Cont
 	resolveSourcesFunc := func(sources []string) ([]string, error) {
 		var resolvedSources []string
 		for _, source := range sources {
-			resolvedSource, err := resolveValueFunc(source)
+			if isBaseImageOnbuildInstruction {
+				resolvedSources = append(resolvedSources, source)
+				continue
+			}
+
+			var argsArray []string
+			if isOnbuildInstruction {
+				argsArray = toArgsArray(s.DockerStageEnvs(dockerStageID))
+			} else {
+				argsArray = toArgsArray(s.DockerStageArgsHash(dockerStageID), s.DockerStageEnvs(dockerStageID))
+			}
+
+			resolvedSource, unmatched, err := shlexProcessWordWithUnmatched(source, argsArray)
 			if err != nil {
 				return nil, err
+			}
+			if unmatched {
+				return []string{"."}, nil
 			}
 
 			resolvedSources = append(resolvedSources, resolvedSource)
