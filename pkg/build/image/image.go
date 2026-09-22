@@ -216,6 +216,11 @@ func (i *Image) SetBuildOrderIndex(index int) {
 	i.logImageIndex = index
 }
 
+// SetBuildTotalImages excludes images omitted after anchor resolution from log progress.
+func (i *Image) SetBuildTotalImages(total int) {
+	i.logTotalImages = total
+}
+
 // GetBuildOrderIndex returns the image's current log progress index (see
 // SetBuildOrderIndex).
 func (i *Image) GetBuildOrderIndex() int {
