@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/werf/common-go/pkg/util"
+	"github.com/werf/logboek"
 	nelmcommon "github.com/werf/nelm/pkg/common"
 	"github.com/werf/nelm/pkg/helm/pkg/ignore"
 )
@@ -108,7 +109,12 @@ func (r FileReader) loadChartDir(ctx context.Context, relDir string, rules Chart
 			// or checked against the giterminism config: its git state is irrelevant, and
 			// .helmignore stays usable to exclude uncommitted files.
 			SkipRelativeToDirPathFunc: func(relativeToDirPath string, isDir bool) bool {
-				return matchChartIgnoreRules(rules.rules, relativeToDirPath, isDir)
+				skip := matchChartIgnoreRules(rules.rules, relativeToDirPath, isDir)
+				if skip {
+					logboek.Context(ctx).Debug().LogF("--- %s excluded by %s\n", relativeToDirPath, ignore.HelmIgnore)
+				}
+
+				return skip
 			},
 		},
 	); err != nil {
