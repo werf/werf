@@ -4,7 +4,8 @@ on:
   workflow_call:
     inputs:
       scope:
-        required: true
+        type: string
+      labelFilter:
         type: string
       packages:
         description: Comma-separated package paths to test
@@ -90,7 +91,9 @@ jobs:
         run: |
           export WERF_TEST_K8S_DOCKER_REGISTRY="localhost:$(docker inspect kind-registry --format '{{(index (index .NetworkSettings.Ports "5000/tcp") 0).HostPort}}')"
           test -n "${{ inputs.packages }}" && paths=paths="$(echo ${{ inputs.packages }} | tr , ' ')"
-          task --yes -p test:e2e:${{ inputs.scope }} $paths kubeVersion=${{ matrix.kubeVersion }} -- --keep-going --skip-package '${{ inputs.excludePackages }}'
+          taskName=test:e2e
+          test -n "${{ inputs.scope }}" && taskName="$taskName:${{ inputs.scope }}"
+          task --yes -p "$taskName" $paths kubeVersion=${{ matrix.kubeVersion }} labelFilter="${{ inputs.labelFilter }}" -- --keep-going --skip-package '${{ inputs.excludePackages }}'
           echo loadavg: $(cat /proc/loadavg)
         env:
           GOCOVERDIR: ${{ env.WERF_TEST_COVER_DIR }}
