@@ -69,6 +69,10 @@ func (r *NativeBuildahBackend) RmiByRepoRef(ctx context.Context, repoRef string)
 	output := utils.SucceedCommandOutputString(ctx, "/", "buildah", listArgs...)
 
 	for _, ref := range strings.Fields(output) {
+		if !strings.HasPrefix(ref, repoRef+":") {
+			continue
+		}
+
 		rmiArgs := append(append([]string{}, r.CommonCliArgs...), "rmi", "--force", ref)
 		utils.RunSucceedCommand(ctx, "/", "buildah", rmiArgs...)
 	}
