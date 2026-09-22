@@ -89,10 +89,10 @@ func RunAutoHostCleanup(ctx context.Context, backend container_backend.Container
 	var envs []string
 
 	if options.TmpDir != nil && *options.TmpDir != "" {
-		envs = append(envs, fmt.Sprintf("WERF_TMP_DIR=%v", options.TmpDir))
+		envs = append(envs, fmt.Sprintf("WERF_TMP_DIR=%s", *options.TmpDir))
 	}
 	if options.HomeDir != nil && *options.HomeDir != "" {
-		envs = append(envs, fmt.Sprintf("WERF_HOME=%v", options.HomeDir))
+		envs = append(envs, fmt.Sprintf("WERF_HOME=%s", *options.HomeDir))
 	}
 
 	return exec.Detach(ctx, args, envs)
