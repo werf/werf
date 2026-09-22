@@ -19,7 +19,7 @@ werf is a CNCF Sandbox CLI tool to implement full-cycle CI/CD to Kubernetes. wer
 
 - NEVER add comments unless they document a non-obvious public API or explain genuinely non-obvious logic. NEVER add comments that restate what the code does, repeat the field/function name, describe obvious error handling, or act as section separators. When in doubt, don't comment.
 - ALWAYS use `task` commands for build/test/lint/format — NEVER raw `go build`, `go test`, `go vet`, `go fmt`, or `golangci-lint` directly.
-- ALWAYS read the matching skill in `.agents/skills/` BEFORE the action it governs and follow it verbatim: `git-conventions/SKILL.md` before naming a branch or writing a commit message, `pull-request/SKILL.md` before creating or updating a PR (title, description, draft by default), `review/SKILL.md` before reviewing code, `test-the-tests/SKILL.md` before considering a new or changed test done, `challenge-review/SKILL.md` in addition to `review/SKILL.md` when the diff is non-trivial or high-risk, or touches tests or verification infrastructure, `session-retro/SKILL.md` when wrapping up a session or asked to reflect on it. These files are the source of truth and are NOT duplicated here.
+- ALWAYS read the matching skill in `.agents/skills/` BEFORE the action it governs and follow it verbatim (resolve that path from `git rev-parse --show-toplevel`, not from the working directory — a session started outside a checkout reads nothing and silently skips the rule): `git-conventions/SKILL.md` before naming a branch or writing a commit message, `pull-request/SKILL.md` before creating or updating a PR (title, description, draft by default), `review/SKILL.md` before reviewing code, `test-the-tests/SKILL.md` before considering a new or changed test done, `challenge-review/SKILL.md` in addition to `review/SKILL.md` when the diff is non-trivial or high-risk, or touches tests or verification infrastructure, `session-retro/SKILL.md` when wrapping up a session or asked to reflect on it. These files are the source of truth and are NOT duplicated here.
 - ALWAYS verify, don't assume — check the actual state before making changes. Before concluding that a check cannot run here, establish it: whether a runtime is actually missing, and whether a remote host is available.
 - ALWAYS start with the simplest possible solution. If it works, stop. Add complexity only when justified by a concrete, current requirement — NEVER for hypothetical future needs.
 - NEVER leave TODOs, stubs, or partial implementations.
@@ -78,6 +78,8 @@ Correct: `task test:unit paths="./pkg/sbom/..." -- -focus=MyTest`
 - `task mock:check` — verify generated mocks are up to date (runs `go generate -run mockgen` and diffs).
 - `task doc:gen` — regenerate CLI reference docs. ALWAYS run after changing command descriptions, flags, or help text in Go source. It renders each flag's default from the CURRENT environment, so run it with the `WERF_*` variables unset and review the diff for flags you never touched — one exported `WERF_*` rewrites that flag's documented default across every command page.
 
+Releases are built inside the image pinned in `trdl.yaml`, built from `scripts/werf-builder/Dockerfile`. Raising the `go`/`toolchain` directive in `go.mod` therefore means rebuilding that image and repinning `trdl.yaml` with the new tag and digest — otherwise the release build downloads a toolchain over the network and the pinned digest stops meaning anything. `task verify:builder:go-version` checks the two agree and runs as part of `task lint`. That image is `linux/amd64` only and its warm-up step builds werf for five platforms: it needs roughly 20 GB of free disk and does not build on a Mac under emulation.
+
 ## Verifying changes (MANDATORY)
 
 After changing Go code, run these in order — `task format` mutates files, so it goes first:
@@ -90,6 +92,8 @@ After changing Go code, run these in order — `task format` mutates files, so i
 NEVER assume a change compiles. While iterating, scope the slow steps (`task lint:golangci-lint golangciPaths="./pkg/foo/..."`, `task test:unit paths="./pkg/foo/..."`), then run them unscoped before handing the work over.
 
 A failure in a package the diff does not touch is usually a host-environment flake, not your change: re-run that suite alone before investigating it.
+
+Wait for PR checks with a single blocking `gh pr checks <number> --watch`, never a `sleep`-and-poll loop: a run takes tens of minutes and every poll is another turn that re-reads the whole context.
 
 A green `task test:unit` does NOT prove a command runs. No unit test constructs the storage manager, so a command that dereferences a flag group it never registered dies with a SIGSEGV before doing any work while the whole unit suite stays green. After adding or changing a command, execute it once — via `task test:integration`, or the binary in `./bin/` — before calling it done.
 
@@ -127,4 +131,4 @@ When a mistake was caused by a rule missing from AGENTS.md or CODESTYLE.md, prop
 
 `nelm`, `kubedog`, and `common-go` are ordinary versioned dependencies: fixing something inside them means a PR in that repository plus a version bump here — NEVER a local patch.
 
-`go.mod` also has a `replace` block pointing several dependencies at forks: `spf13/cobra` → `werf/3p-cobra`, `deislabs/oras` → `werf/3p-oras`, `oras.land/oras-go` → `werf/3p-oras-go`. ALWAYS check that block before trusting upstream documentation for these libraries.
+`go.mod` also has a `replace` block pointing several dependencies at forks: `spf13/cobra` → `werf/3p-cobra`, `deislabs/oras` → `werf/3p-oras`, `oras.land/oras-go` → `werf/3p-oras-go`, `docker/buildx` → `werf/3p-buildx`, plus a downgrade pin for `mattn/go-sqlite3`. Buildah is NOT among them: it comes straight from `go.podman.io/buildah`, the path the project moved to in v1.44. ALWAYS check that block before trusting upstream documentation for these libraries.

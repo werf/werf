@@ -89,6 +89,7 @@ tasks:
       - task: stapel:embed
       - task: deno:embed
       - task: lint:golangci-lint
+      - task: verify:builder:go-version
 
   _build-and-lint:
     deps:
@@ -494,6 +495,19 @@ tasks:
       - echo "WERF_TEST_K8S_DOCKER_REGISTRY=localhost:{{.registryPort}}" >> .env
       - echo "Environment file '.env' generated."
       - echo "Run 'export $(xargs < .env)' to start working with tests or the environment."
+
+  verify:builder:go-version:
+    desc: "Verify that the release builder image is pinned to the Go version go.mod asks for."
+    cmds:
+      - |
+        want=$(awk '/^toolchain go/ {sub(/^go/, "", $2); print $2}' go.mod)
+        got=$(awk -F'[:@]' '/^FROM golang:/ {print $2}' scripts/werf-builder/Dockerfile | sed 's/-.*//')
+        if [ "$want" != "$got" ]; then
+          echo "go.mod asks for go$want, scripts/werf-builder/Dockerfile pins go$got." >&2
+          echo "Rebuild the builder image and repin trdl.yaml, or the release build downloads a toolchain over the network." >&2
+          exit 1
+        fi
+        echo "builder image pins go$got, matching go.mod"
 
   verify:binaries:dist:all:
     desc: 'Verify that the distributable binaries are built and have correct platform/arch. Important vars: "version".'
