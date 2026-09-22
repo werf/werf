@@ -1,0 +1,232 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "werf-giterminism.yaml",
+  "description": "werf giterminism configuration. Every directive loosens a giterminism restriction; without the file all restrictions are enforced.\nhttps://werf.io/docs/latest/reference/werf_giterminism_yaml.html",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "giterminismConfigVersion"
+  ],
+  "properties": {
+    "giterminismConfigVersion": {
+      "description": "Config syntax version. It should always be 1 for now.",
+      "oneOf": [
+        {
+          "type": "number",
+          "enum": [
+            1
+          ]
+        },
+        {
+          "type": "string",
+          "enum": [
+            "1"
+          ]
+        }
+      ]
+    },
+    "cli": {
+      "$ref": "#/definitions/CLI"
+    },
+    "config": {
+      "$ref": "#/definitions/Config"
+    },
+    "helm": {
+      "$ref": "#/definitions/Helm"
+    },
+    "includes": {
+      "$ref": "#/definitions/Includes"
+    }
+  },
+  "definitions": {
+    "CLI": {
+      "description": "The rules of loosening giterminism for the CLI.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "allowCustomTags": {
+          "description": "Allow the use of the --use-custom-tag option.",
+          "type": "boolean"
+        }
+      }
+    },
+    "Config": {
+      "description": "The rules of loosening giterminism for the werf configuration file (werf.yaml).",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "allowUncommitted": {
+          "description": "Read the configuration file from the project directory despite the state in the git repository and .gitignore rules.",
+          "type": "boolean"
+        },
+        "allowUncommittedTemplates": {
+          "description": "Globs of configuration file templates (.werf/**/*.tmpl) to read from the project directory despite the state in the git repository and .gitignore rules.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "goTemplateRendering": {
+          "$ref": "#/definitions/ConfigGoTemplateRendering"
+        },
+        "secrets": {
+          "$ref": "#/definitions/ConfigSecrets"
+        },
+        "stapel": {
+          "$ref": "#/definitions/ConfigStapel"
+        },
+        "dockerfile": {
+          "$ref": "#/definitions/ConfigDockerfile"
+        }
+      }
+    },
+    "ConfigGoTemplateRendering": {
+      "description": "The rules for the Go-template functions.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "allowEnvVariables": {
+          "description": "Environment variables allowed in the env function: exact names or /REGEXP/.\nhttps://werf.io/docs/latest/usage/project_configuration/giterminism.html#env",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "allowUncommittedFiles": {
+          "description": "Globs of files to read from the project directory in .Files.Exists, .Files.Get, .Files.Glob and .Files.IsDir despite the state in the git repository and .gitignore rules.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "ConfigSecrets": {
+      "description": "The rules for using secret values in the build.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "allowEnvVariables": {
+          "description": "Environment variables allowed as secrets.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "allowFiles": {
+          "description": "Globs of file paths allowed as secrets.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "allowValueIds": {
+          "description": "Identifiers of arbitrary secret values allowed in the build.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "ConfigStapel": {
+      "description": "The rules for Stapel images.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "allowFromLatest": {
+          "description": "Allow the use of the fromLatest directive.\nhttps://werf.io/docs/latest/usage/project_configuration/giterminism.html#fromlatest",
+          "type": "boolean"
+        },
+        "git": {
+          "$ref": "#/definitions/ConfigStapelGit"
+        },
+        "mount": {
+          "$ref": "#/definitions/ConfigStapelMount"
+        }
+      }
+    },
+    "ConfigStapelGit": {
+      "description": "The rules for the git directive.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "allowBranch": {
+          "description": "Allow the use of the branch directive for remote repositories.\nhttps://werf.io/docs/latest/usage/project_configuration/giterminism.html#branch",
+          "type": "boolean"
+        }
+      }
+    },
+    "ConfigStapelMount": {
+      "description": "The rules for the mount directive.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "allowBuildDir": {
+          "description": "Allow the use of the build_dir mount ({ from: build_dir, ... }).\nhttps://werf.io/docs/latest/usage/project_configuration/giterminism.html#build_dir",
+          "type": "boolean"
+        },
+        "allowFromPaths": {
+          "description": "Globs of host paths allowed in fromPath mounts ({ fromPath: <path>, ... }).\nhttps://werf.io/docs/latest/usage/project_configuration/giterminism.html#frompath",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "ConfigDockerfile": {
+      "description": "The rules for Dockerfile images.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "allowUncommitted": {
+          "description": "Globs of Dockerfiles to read from the project directory despite the state in the git repository and .gitignore rules.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "allowUncommittedDockerignoreFiles": {
+          "description": "Globs of .dockerignore and .containerignore files to read from the project directory despite the state in the git repository and .gitignore rules.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "allowContextAddFiles": {
+          "description": "Files or directories from the project directory allowed in the contextAddFiles directive.\nhttps://werf.io/docs/latest/usage/project_configuration/giterminism.html#contextaddfiles",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "Helm": {
+      "description": "The rules of loosening giterminism for the helm files (.helm).",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "allowUncommittedFiles": {
+          "description": "Globs of helm files to read from the project directory despite the state in the git repository and .gitignore rules.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "Includes": {
+      "description": "The rules of loosening giterminism for the configuration includes.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "allowIncludesUpdate": {
+          "description": "Allow using current commits for tags and branches of remote repositories without checking them against the lock file.",
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}
