@@ -78,6 +78,15 @@ git:
   stageDependencies:
     beforeSetup:
     - '**/*'
+- add: /schemas
+  to: /app/docs/schemas
+  owner: jekyll
+  group: jekyll
+  includePaths:
+    - "*.json"
+  stageDependencies:
+    beforeSetup:
+    - '**/*'
 ---
 image: web
 from: nginx:stable-alpine

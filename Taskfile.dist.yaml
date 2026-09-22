@@ -60,7 +60,7 @@ tasks:
           echo "golangci-lint not installed, run: task deps:install:golangci-lint"
           exit 1
         fi
-        ./bin/golangci-lint-v2.11.4 run --build-tags="{{.distGoTags}}" -c .golangci.yml {{.CLI_ARGS}} {{.golangciPaths | default "./cmd/... ./pkg/... ./test/..."}}
+        ./bin/golangci-lint-v2.11.4 run --build-tags="{{.distGoTags}}" -c .golangci.yml {{.CLI_ARGS}} {{.golangciPaths | default "./cmd/... ./pkg/... ./schemas/... ./test/..."}}
     env:
       CGO_ENABLED: "0"
 
@@ -72,7 +72,7 @@ tasks:
           echo "golangci-lint not installed, run: task deps:install:golangci-lint"
           exit 1
         fi
-        ./bin/golangci-lint-v2.11.4 run --build-tags="{{.cgoTags}}" -c .golangci.yml {{.CLI_ARGS}} {{.golangciPaths | default "./cmd/... ./pkg/... ./test/..."}}
+        ./bin/golangci-lint-v2.11.4 run --build-tags="{{.cgoTags}}" -c .golangci.yml {{.CLI_ARGS}} {{.golangciPaths | default "./cmd/... ./pkg/... ./schemas/... ./test/..."}}
     env:
       CGO_ENABLED: "1"
 
@@ -89,6 +89,7 @@ tasks:
       - task: stapel:embed
       - task: deno:embed
       - task: lint:golangci-lint
+      - task: verify:builder:go-version
 
   _build-and-lint:
     deps:
@@ -394,6 +395,11 @@ tasks:
 
   test:ginkgo: &test_ginkgo
     desc: 'Run raw "ginkgo". Important vars: "paths".'
+    preconditions:
+      - sh: |
+          expected_version="$(awk '$1 == "github.com/onsi/ginkgo/v2" && $2 ~ /^v[0-9]/ { print $2; exit }' go.mod)"
+          test -n "$expected_version" && test "v$(ginkgo version 2>/dev/null | awk '{print $3}')" = "$expected_version"
+        msg: 'Ginkgo CLI version must match go.mod; run "task deps:install:ginkgo".'
     cmds:
       - task: _test:ginkgo:{{.mode}}
         vars:
@@ -406,7 +412,7 @@ tasks:
     cmds:
       - task: test:ginkgo
         vars:
-          paths: '{{.paths | default "./pkg ./cmd"}}'
+          paths: '{{.paths | default "./pkg ./cmd ./schemas"}}'
           parallel: "{{.parallel}}"
 
   test:integration:
@@ -494,6 +500,19 @@ tasks:
       - echo "WERF_TEST_K8S_DOCKER_REGISTRY=localhost:{{.registryPort}}" >> .env
       - echo "Environment file '.env' generated."
       - echo "Run 'export $(xargs < .env)' to start working with tests or the environment."
+
+  verify:builder:go-version:
+    desc: "Verify that the release builder image is pinned to the Go version go.mod asks for."
+    cmds:
+      - |
+        want=$(awk '/^toolchain go/ {sub(/^go/, "", $2); print $2}' go.mod)
+        got=$(awk -F'[:@]' '/^FROM golang:/ {print $2}' scripts/werf-builder/Dockerfile | sed 's/-.*//')
+        if [ "$want" != "$got" ]; then
+          echo "go.mod asks for go$want, scripts/werf-builder/Dockerfile pins go$got." >&2
+          echo "Rebuild the builder image and repin trdl.yaml, or the release build downloads a toolchain over the network." >&2
+          exit 1
+        fi
+        echo "builder image pins go$got, matching go.mod"
 
   verify:binaries:dist:all:
     desc: 'Verify that the distributable binaries are built and have correct platform/arch. Important vars: "version".'

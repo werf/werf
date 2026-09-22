@@ -60,12 +60,33 @@ type DependenciesStage struct {
 }
 
 func (s *DependenciesStage) GetDependencies(ctx context.Context, c Conveyor, _ container_backend.ContainerBackend, _, _ *StageImage, _ container_backend.BuildContextArchiver) (string, error) {
+	return s.dependenciesDigest(func(importElm *config.Import) string {
+		return getSourceImageID(c, s.targetPlatform, importElm)
+	}, func(dep *config.Dependency) string {
+		return c.GetImageContentTagStageID(s.targetPlatform, dep.From)
+	}), nil
+}
+
+// GetContentDependencies identifies source and dependency images by their config
+// names instead of their built stage IDs: the content of those images is folded
+// into the anchor digest as a dependency input, and a stage ID changes on every
+// rebuild of the referenced image.
+func (s *DependenciesStage) GetContentDependencies(_ context.Context, _ Conveyor, _ container_backend.BuildContextArchiver) (string, error) {
+	return s.dependenciesDigest(func(importElm *config.Import) string {
+		if importElm.ExternalImage {
+			return externalSourceImageID(importElm)
+		}
+		return getSourceImageName(importElm)
+	}, func(dep *config.Dependency) string {
+		return dep.From
+	}), nil
+}
+
+func (s *DependenciesStage) dependenciesDigest(importSourceID func(importElm *config.Import) string, dependencyID func(dep *config.Dependency) string) string {
 	var args []string
 
 	for _, elm := range s.imports {
-		sourceID := getSourceImageID(c, s.targetPlatform, elm)
-
-		args = append(args, sourceID)
+		args = append(args, importSourceID(elm))
 		args = append(args, elm.Add)
 		args = append(args, elm.To)
 		args = append(args, elm.Group, elm.Owner)
@@ -74,17 +95,13 @@ func (s *DependenciesStage) GetDependencies(ctx context.Context, c Conveyor, _ c
 	}
 
 	for _, dep := range s.dependencies {
-		args = append(args, "Dependency", c.GetImageContentTagStageID(s.targetPlatform, dep.From))
+		args = append(args, "Dependency", dependencyID(dep))
 		for _, imp := range dep.Imports {
 			args = append(args, "DependencyImport", getDependencyImportID(imp))
 		}
 	}
 
-	return util.Sha256Hash(args...), nil
-}
-
-func (s *DependenciesStage) GetContentDependencies(ctx context.Context, c Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
-	return s.GetDependencies(ctx, c, nil, nil, nil, buildContextArchive)
+	return util.Sha256Hash(args...)
 }
 
 func (s *DependenciesStage) prepareImageWithLegacyStapelBuilder(ctx context.Context, c Conveyor, cr container_backend.ContainerBackend, _, stageImage *StageImage) error {
@@ -230,7 +247,7 @@ func getImportID(importElm *config.Import) string {
 
 func getSourceStageID(c Conveyor, targetPlatform string, importElm *config.Import) string {
 	if importElm.ExternalImage {
-		return fmt.Sprintf("%s:%s", image.WerfImportSourceExternalImagePrefix, importElm.From)
+		return externalSourceImageID(importElm)
 	}
 
 	return c.GetImageContentTagStageID(targetPlatform, getSourceImageName(importElm))
@@ -238,10 +255,14 @@ func getSourceStageID(c Conveyor, targetPlatform string, importElm *config.Impor
 
 func getSourceImageID(c Conveyor, targetPlatform string, importElm *config.Import) string {
 	if importElm.ExternalImage {
-		return fmt.Sprintf("%s:%s", image.WerfImportSourceExternalImagePrefix, importElm.From)
+		return externalSourceImageID(importElm)
 	}
 
 	return c.GetImageContentTagStageID(targetPlatform, getSourceImageName(importElm))
+}
+
+func externalSourceImageID(importElm *config.Import) string {
+	return fmt.Sprintf("%s:%s", image.WerfImportSourceExternalImagePrefix, importElm.From)
 }
 
 func getSourceImageName(importElm *config.Import) string {

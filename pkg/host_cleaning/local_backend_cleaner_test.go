@@ -507,7 +507,7 @@ var _ = Describe("LocalBackendCleaner", func() {
 			ctx = logging.WithLogger(ctx)
 
 			options := RunGCOptions{
-				AllowedStorageVolumeUsageBytes:       0,
+				AllowedStorageVolumeUsageBytes:       100,
 				AllowedStorageVolumeUsageMarginBytes: 0,
 				StoragePath:                          t.TempDir(),
 				Force:                                true,
@@ -564,8 +564,15 @@ var _ = Describe("LocalBackendCleaner", func() {
 				}).Return(nil),
 			)
 
-			err := cleaner.RunGC(ctx, options)
+			report, err := cleaner.RunGC(ctx, options)
 			Expect(err).To(Succeed())
+			Expect(report).To(Equal(RunGCReport{
+				ImagesDeleted: 1,
+				UsedBytes:     500,
+				TotalBytes:    1000,
+				AllowedBytes:  options.AllowedStorageVolumeUsageBytes,
+				StoragePath:   options.StoragePath,
+			}))
 		})
 	})
 })

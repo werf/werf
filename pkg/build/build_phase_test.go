@@ -72,9 +72,13 @@ var _ = Describe("BuildPhase", func() {
 				Expect(err).To(HaveOccurred())
 
 				done := make(chan struct{})
+				// The buggy variant leaves the mutex locked on purpose, so this
+				// goroutine blocks; it takes the mutex through a local of its
+				// own, because the variable is reassigned for the next spec.
+				mutex := digestMutex
 				go func() {
-					digestMutex.Lock()
-					digestMutex.Unlock()
+					mutex.Lock()
+					mutex.Unlock()
 					close(done)
 				}()
 
@@ -82,6 +86,8 @@ var _ = Describe("BuildPhase", func() {
 					Eventually(done, 3*time.Second).Should(BeClosed())
 				} else {
 					Consistently(done, 500*time.Millisecond).ShouldNot(BeClosed())
+					mutex.Unlock()
+					Eventually(done, 3*time.Second).Should(BeClosed())
 				}
 			},
 			Entry("buggy: cleanupFunc not called on error path leaks mutex", onImageStageVariant{

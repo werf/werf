@@ -165,10 +165,14 @@ func apiCli(ctx context.Context) client.APIClient {
 }
 
 func defaultCliOptions(ctx context.Context) []command.CLIOption {
+	return cliOptionsWithStreams(logboek.Context(ctx).OutStream(), logboek.Context(ctx).ErrStream())
+}
+
+func cliOptionsWithStreams(outStream, errStream io.Writer) []command.CLIOption {
 	return []command.CLIOption{
 		command.WithInputStream(os.Stdin),
-		command.WithOutputStream(logboek.Context(ctx).OutStream()),
-		command.WithErrorStream(logboek.Context(ctx).ErrStream()),
+		command.WithOutputStream(outStream),
+		command.WithErrorStream(errStream),
 	}
 }
 
@@ -181,8 +185,17 @@ func cliWithCustomOptions(ctx context.Context, options []command.CLIOption, f fu
 	return f(customCli)
 }
 
+// NewContext binds a docker cli and api client to ctx; the cli writes to the
+// logger streams of ctx as they are at this moment.
 func NewContext(ctx context.Context) (context.Context, error) {
-	c, err := newDockerCli(defaultCliOptions(ctx))
+	return NewContextWithStreams(ctx, logboek.Context(ctx).OutStream(), logboek.Context(ctx).ErrStream())
+}
+
+// NewContextWithStreams is NewContext with explicit cli output streams, for
+// callers whose logger changes over the lifetime of the cli and who route
+// its output through a writer of their own.
+func NewContextWithStreams(ctx context.Context, outStream, errStream io.Writer) (context.Context, error) {
+	c, err := newDockerCli(cliOptionsWithStreams(outStream, errStream))
 	if err != nil {
 		return nil, fmt.Errorf("unable to create docker cli: %w", err)
 	}

@@ -211,8 +211,8 @@ The workflow is the same as with remote repositories.
 includes:
   - git: /local/repo
     branch: main
-    add: local-dev
+    add: /local-dev
     to: /
     includePaths:
-      - /.helm
+      - .helm
 ```

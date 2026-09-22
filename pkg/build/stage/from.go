@@ -64,6 +64,25 @@ func (s *FromStage) IsMutable() bool {
 }
 
 func (s *FromStage) GetDependencies(_ context.Context, c Conveyor, _ container_backend.ContainerBackend, _, _ *StageImage, _ container_backend.BuildContextArchiver) (string, error) {
+	var baseImageID string
+	if s.fromImageName != "" && !s.fromExternal && !s.fromScratch {
+		baseImageID = c.GetImageContentTagStageID(s.targetPlatform, s.fromImageName)
+	}
+	return s.dependencies(baseImageID), nil
+}
+
+// GetContentDependencies identifies the base image by its config name instead of
+// its built stage ID: the base image's own content is folded into the anchor
+// digest as a dependency input, and the stage ID changes on every rebuild.
+func (s *FromStage) GetContentDependencies(_ context.Context, _ Conveyor, _ container_backend.BuildContextArchiver) (string, error) {
+	var baseImageID string
+	if s.fromImageName != "" && !s.fromExternal && !s.fromScratch {
+		baseImageID = s.fromImageName
+	}
+	return s.dependencies(baseImageID), nil
+}
+
+func (s *FromStage) dependencies(baseImageID string) string {
 	var args []string
 
 	if s.imageCacheVersion != "" {
@@ -85,18 +104,14 @@ func (s *FromStage) GetDependencies(_ context.Context, c Conveyor, _ container_b
 	if s.fromScratch {
 		args = append(args, "scratch")
 	} else if s.fromImageName != "" && !s.fromExternal {
-		args = append(args, c.GetImageContentTagStageID(s.targetPlatform, s.fromImageName))
+		args = append(args, baseImageID)
 	} else if s.fromExternal {
 		// The reference is the base identity werf promises for an external image: a mutable tag
 		// is followed only with fromLatest, which adds the resolved repo id above.
 		args = append(args, s.fromImageName)
 	}
 
-	return util.Sha256Hash(args...), nil
-}
-
-func (s *FromStage) GetContentDependencies(ctx context.Context, c Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
-	return s.GetDependencies(ctx, c, nil, nil, nil, buildContextArchive)
+	return util.Sha256Hash(args...)
 }
 
 func (s *FromStage) PrepareImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, _ container_backend.BuildContextArchiver) error {

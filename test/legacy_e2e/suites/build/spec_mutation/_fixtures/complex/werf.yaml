@@ -35,7 +35,7 @@ imageSpec:
       - /^APP_.*/
       - REMOVE
     labels:
-      test: yes
+      test: test_value
     removeLabels:
       - pleaseremove
       - /^remove.*/
@@ -45,8 +45,12 @@ imageSpec:
     user: testuser
     cmd:
       - /bin/sh
+      - -c
+      - "echo cmd"
     entrypoint:
-      - test
+      - command
+      - param1
+      - param2
     workingDir: /test/work
     stopSignal: SIGINT
     healthcheck:

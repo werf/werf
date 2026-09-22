@@ -34,6 +34,11 @@ func (e *shlexExpander) ProcessWordWithMap(word string, env map[string]string) (
 	return result, nil
 }
 
+func (e *shlexExpander) ProcessWordWithMatches(word string, env map[string]string) (string, map[string]struct{}, map[string]struct{}, error) {
+	result, err := e.lex.ProcessWordWithMatches(word, mapEnvGetter(env))
+	return result.Result, result.Matched, result.Unmatched, err
+}
+
 func (e *shlexExpander) ProcessWordsWithMap(word string, env map[string]string) ([]string, error) {
 	return e.lex.ProcessWords(word, mapEnvGetter(env))
 }

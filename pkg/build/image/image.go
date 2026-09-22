@@ -14,6 +14,7 @@ import (
 	"github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
 	"github.com/werf/werf/v2/pkg/build/stage"
+	stage_instruction "github.com/werf/werf/v2/pkg/build/stage/instruction"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/docker_registry"
@@ -48,10 +49,11 @@ type CommonImageOptions struct {
 
 type ImageOptions struct {
 	CommonImageOptions
-	IsFinal               bool
-	DockerfileImageConfig *config.ImageFromDockerfile
-	StapelImageConfig     config.StapelImageInterface
-	IsDockerfileImage     bool
+	IsFinal                          bool
+	DockerfileImageConfig            *config.ImageFromDockerfile
+	StapelImageConfig                config.StapelImageInterface
+	IsDockerfileImage                bool
+	RequiresResolvedDependencyInputs bool
 
 	BaseImageReference        string
 	BaseImageName             string
@@ -72,13 +74,14 @@ func NewImage(ctx context.Context, targetPlatform, name string, baseImageType Ba
 	}
 
 	i := &Image{
-		Name:                  name,
-		CommonImageOptions:    opts.CommonImageOptions,
-		IsFinal:               opts.IsFinal,
-		IsDockerfileImage:     opts.IsDockerfileImage,
-		DockerfileImageConfig: opts.DockerfileImageConfig,
-		StapelImageConfig:     opts.StapelImageConfig,
-		TargetPlatform:        targetPlatform,
+		Name:                             name,
+		CommonImageOptions:               opts.CommonImageOptions,
+		IsFinal:                          opts.IsFinal,
+		IsDockerfileImage:                opts.IsDockerfileImage,
+		DockerfileImageConfig:            opts.DockerfileImageConfig,
+		StapelImageConfig:                opts.StapelImageConfig,
+		RequiresResolvedDependencyInputs: opts.RequiresResolvedDependencyInputs,
+		TargetPlatform:                   targetPlatform,
 
 		baseImageType:             baseImageType,
 		baseImageReference:        opts.BaseImageReference,
@@ -99,15 +102,24 @@ func NewImage(ctx context.Context, targetPlatform, name string, baseImageType Ba
 type Image struct {
 	CommonImageOptions
 
-	IsFinal                 bool
-	IsDockerfileImage       bool
-	IsDockerfileTargetStage bool
-	Name                    string
-	DockerfileImageConfig   *config.ImageFromDockerfile
-	StapelImageConfig       config.StapelImageInterface
-	TargetPlatform          string
-	BuildDuration           time.Duration
-	AnchorReused            bool
+	IsFinal                          bool
+	IsDockerfileImage                bool
+	IsDockerfileTargetStage          bool
+	Name                             string
+	DockerfileImageConfig            *config.ImageFromDockerfile
+	StapelImageConfig                config.StapelImageInterface
+	RequiresResolvedDependencyInputs bool
+	TargetPlatform                   string
+	BuildDuration                    time.Duration
+	AnchorReused                     bool
+	// Skipped marks an image that no image being built needs: it is not final,
+	// was not requested explicitly, and every image depending on it is reused
+	// by its content anchor. Such an image is not processed at all and has no
+	// content tag desc.
+	Skipped bool
+
+	anchorDigest        string
+	buildContextArchive *BuildContextArchive
 
 	stages            []stage.Interface
 	stageDurations    map[stage.StageName]time.Duration
@@ -204,6 +216,11 @@ func (i *Image) SetBuildOrderIndex(index int) {
 	i.logImageIndex = index
 }
 
+// SetBuildTotalImages excludes images omitted after anchor resolution from log progress.
+func (i *Image) SetBuildTotalImages(total int) {
+	i.logTotalImages = total
+}
+
 // GetBuildOrderIndex returns the image's current log progress index (see
 // SetBuildOrderIndex).
 func (i *Image) GetBuildOrderIndex() int {
@@ -211,10 +228,10 @@ func (i *Image) GetBuildOrderIndex() int {
 }
 
 // SetWorkerID annotates the image's log lines (see LogDetailedName) with
-// the parallel worker that is building it, so a jump in the build-order
-// index between consecutive log lines can be told apart from a worker
-// change (parallel.Printer prints one worker's whole output before moving
-// to the next) rather than looking like a scrambled sequence.
+// the parallel worker that is building it, so the log tells which images
+// shared a worker and thus were built one after another. The blocks
+// themselves come out in build-order index order, whichever worker built
+// them (see parallel.Printer).
 func (i *Image) SetWorkerID(id int) {
 	i.hasWorkerID = true
 	i.workerID = id
@@ -278,6 +295,32 @@ func (i *Image) SetLastNonEmptyStage(stg stage.Interface) {
 
 func (i *Image) GetLastNonEmptyStage() stage.Interface {
 	return i.lastNonEmptyStage
+}
+
+func (i *Image) SetAnchorDigest(digest string) {
+	i.anchorDigest = digest
+}
+
+func (i *Image) GetAnchorDigest() string {
+	return i.anchorDigest
+}
+
+func (i *Image) GetOrCreateBuildContextArchive(ctx context.Context) (*BuildContextArchive, error) {
+	if i.buildContextArchive != nil {
+		return i.buildContextArchive, nil
+	}
+
+	archive := NewBuildContextArchive(i.GiterminismManager, i.TmpDir)
+	if err := archive.Create(ctx, container_backend.BuildContextArchiveCreateOptions{
+		DockerfileRelToContextPath: i.DockerfileImageConfig.Dockerfile,
+		ContextGitSubDir:           i.DockerfileImageConfig.Context,
+		ContextAddFiles:            i.DockerfileImageConfig.ContextAddFiles,
+	}); err != nil {
+		return nil, fmt.Errorf("unable to create build context archive: %w", err)
+	}
+	i.buildContextArchive = archive
+
+	return archive, nil
 }
 
 func (i *Image) SetContentTagDesc(desc *image.StageDesc) {
@@ -380,6 +423,8 @@ func (i *Image) SetupBaseImage(ctx context.Context, storageManager manager.Stora
 		i.baseImageReference = i.contentTagStageImage.Image.Name()
 		i.baseStageImage = i.contentTagStageImage
 
+		i.adoptResolvedBaseImageReference()
+
 	case ImageFromRegistryAsBaseImage:
 		if i.IsDockerfileImage && i.dockerfileExpanderFactory != nil {
 			dependenciesArgs := stage.ResolveDependenciesArgs(i.TargetPlatform, i.DockerfileImageConfig.Dependencies, i.Conveyor)
@@ -426,6 +471,26 @@ func (i *Image) GetBaseStageImage() *stage.StageImage {
 
 func (i *Image) GetBaseImageReference() string {
 	return i.baseImageReference
+}
+
+func (i *Image) GetBaseImageName() string {
+	return i.baseImageName
+}
+
+// adoptResolvedBaseImageReference hands the base reference resolved for an internal base
+// to the FROM stage, which is built before the reference exists and would otherwise keep
+// hashing an empty one: two images differing only in their base would share a digest.
+func (i *Image) adoptResolvedBaseImageReference() {
+	if len(i.stages) == 0 {
+		return
+	}
+
+	fromStage, ok := i.stages[0].(*stage_instruction.From)
+	if !ok {
+		return
+	}
+
+	fromStage.BaseImageReference = i.baseImageReference
 }
 
 func (i *Image) GetBaseImageRepoDigest() string {

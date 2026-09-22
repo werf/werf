@@ -10,6 +10,7 @@ import (
 
 	. "github.com/onsi/gomega"
 
+	"github.com/werf/nelm/pkg/kube"
 	iutils "github.com/werf/werf/v2/test/pkg/utils"
 )
 
@@ -90,6 +91,42 @@ func (p *Project) KubeRun(ctx context.Context, opts *KubeRunOptions) string {
 	}
 
 	return p.RunCommand(ctx, args, opts.CommonOptions)
+}
+
+// DismissAndDeleteNamespace tears a release down the way every deploy suite has to:
+// werf dismiss can leave the namespace behind when the release is already gone.
+func (p *Project) DismissAndDeleteNamespace(ctx context.Context, opts *DismissOptions) {
+	if opts == nil {
+		opts = &DismissOptions{}
+	}
+
+	args := []string{"dismiss"}
+	if opts.Release != "" {
+		args = append(args, "--release", opts.Release)
+	}
+	if opts.Namespace != "" {
+		args = append(args, "--namespace", opts.Namespace)
+	}
+	args = append(args, "--with-namespace")
+	args = append(args, opts.ExtraArgs...)
+
+	p.RunCommand(ctx, args, opts.CommonOptions)
+
+	p.KubeCtl(ctx, &KubeCtlOptions{
+		CommonOptions: CommonOptions{
+			ExtraArgs: []string{"delete", "namespace", "--ignore-not-found", p.Namespace(ctx)},
+		},
+	})
+}
+
+func NewKubeClientFactory(ctx context.Context) *kube.ClientFactory {
+	kubeConfig, err := kube.NewKubeConfig(ctx, kube.KubeConfigOptions{})
+	Expect(err).NotTo(HaveOccurred())
+
+	clientFactory, err := kube.NewClientFactory(ctx, kubeConfig)
+	Expect(err).NotTo(HaveOccurred())
+
+	return clientFactory
 }
 
 func (p *Project) KubeCtl(ctx context.Context, opts *KubeCtlOptions) string {

@@ -7,6 +7,7 @@ import (
 
 	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
+	"github.com/werf/werf/v2/pkg/path_matcher"
 )
 
 type GiterminismManagerStub struct {
@@ -29,6 +30,10 @@ func (manager *GiterminismManagerStub) LocalGitRepo() git_repo.GitRepo {
 	return manager.localGitRepo
 }
 
+func (manager *GiterminismManagerStub) Inspector() giterminism_manager.Inspector {
+	return &giterminismInspectorStub{}
+}
+
 func (manager *GiterminismManagerStub) Dev() bool {
 	return false
 }
@@ -37,6 +42,58 @@ func (manager *GiterminismManagerStub) HeadCommit(ctx context.Context) string {
 	commit, err := manager.localGitRepo.HeadCommitHash(ctx)
 	Expect(err).To(Succeed())
 	return commit
+}
+
+type giterminismInspectorStub struct{}
+
+var _ giterminism_manager.Inspector = (*giterminismInspectorStub)(nil)
+
+func (inspector *giterminismInspectorStub) InspectCustomTags() error {
+	return nil
+}
+
+func (inspector *giterminismInspectorStub) InspectConfigGoTemplateRenderingEnv(ctx context.Context, envName string) error {
+	return nil
+}
+
+func (inspector *giterminismInspectorStub) InspectConfigStapelFromLatest() error {
+	return nil
+}
+
+func (inspector *giterminismInspectorStub) InspectConfigStapelGitBranch() error {
+	return nil
+}
+
+func (inspector *giterminismInspectorStub) InspectConfigStapelMountBuildDir() error {
+	return nil
+}
+
+func (inspector *giterminismInspectorStub) InspectConfigStapelMountFromPath(fromPath string) error {
+	return nil
+}
+
+func (inspector *giterminismInspectorStub) InspectConfigDockerfileContextAddFile(relPath string) error {
+	return nil
+}
+
+func (inspector *giterminismInspectorStub) InspectBuildContextFiles(ctx context.Context, matcher path_matcher.PathMatcher) error {
+	return nil
+}
+
+func (inspector *giterminismInspectorStub) InspectConfigSecretEnvAccepted(secret string) error {
+	return nil
+}
+
+func (inspector *giterminismInspectorStub) InspectConfigSecretSrcAccepted(secret string) error {
+	return nil
+}
+
+func (inspector *giterminismInspectorStub) InspectConfigSecretValueAccepted(secret string) error {
+	return nil
+}
+
+func (inspector *giterminismInspectorStub) InspectIncludesAllowUpdate() error {
+	return nil
 }
 
 type LocalGitRepoStub struct {

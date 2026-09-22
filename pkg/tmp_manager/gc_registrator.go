@@ -22,7 +22,12 @@ func newGCRegistrator() *gcRegistrator {
 }
 
 func (r *gcRegistrator) registerAll(_ context.Context) error {
-	for _, item := range r.pathQueue {
+	r.mutex.Lock()
+	pathQueue := r.pathQueue
+	r.pathQueue = nil
+	r.mutex.Unlock()
+
+	for _, item := range pathQueue {
 		if err := registerPath(item.A, item.B); err != nil {
 			return err
 		}

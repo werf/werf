@@ -7,6 +7,7 @@ on:
       - "Taskfile.dist.yaml"
       - "cmd/werf/**"
       - "docs/**"
+      - "schemas/**"
       - "scripts/**"
       - "test/legacy_e2e/suites/docs/**"
       - "README.md"

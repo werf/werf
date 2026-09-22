@@ -2,6 +2,7 @@ package e2e_build_test
 
 import (
 	"fmt"
+	"slices"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -9,51 +10,40 @@ import (
 	"github.com/werf/werf/v2/test/pkg/contback"
 	"github.com/werf/werf/v2/test/pkg/report"
 	"github.com/werf/werf/v2/test/pkg/thirdparty/contruntime/strslice"
-	"github.com/werf/werf/v2/test/pkg/werf"
 )
 
 var _ = Describe("CMD and ENTRYPOINT combinations", Label("e2e", "build", "extra"), func() {
-	checkFunc := func(ctx SpecContext, testOpts setupEnvOptions, imageName string, expectedEntrypoint, expectedCmd strslice.StrSlice) {
-		repoDirname := "repo"
-		fixtureRelPath := "cmd_entrypoint"
-		buildReportName := fmt.Sprintf("report-%s.json", imageName)
+	type expectation struct {
+		imageName  string
+		entrypoint strslice.StrSlice
+		cmd        strslice.StrSlice
+	}
 
-		By("initializing")
-		setupEnv(testOpts)
-		contRuntime := contback.NewContainerBackend(testOpts.ContainerBackendMode)
+	commonExpectations := []expectation{
+		{"dockerfile_shell_entrypoint", strslice.StrSlice{"/bin/sh", "-c", "echo \"ENTRYPOINT (shell)\""}, nil},
+		{"dockerfile_exec_entrypoint", strslice.StrSlice{"echo \"ENTRYPOINT (exec)\""}, nil},
+		{"dockerfile_shell_cmd", nil, strslice.StrSlice{"/bin/sh", "-c", "echo \"CMD (shell)\""}},
+		{"dockerfile_exec_cmd", nil, strslice.StrSlice{"echo \"CMD (exec)\""}},
+		{"dockerfile_no_cmd_no_entrypoint", nil, nil},
+		{"dockerfile_entrypoint_reset_cmd", strslice.StrSlice{"/bin/sh", "-c", "echo \"ENTRYPOINT (shell)\""}, nil},
+		{"dockerfile_entrypoint_cmd", strslice.StrSlice{"/bin/sh", "-c", "echo \"ENTRYPOINT (shell)\""}, strslice.StrSlice{"/bin/sh", "-c", "echo \"CMD (shell)\""}},
+		{"dockerfile_base_image_cmd", nil, strslice.StrSlice{"/bin/sh", "-c", "echo \"CMD (shell, base image)\""}},
+	}
 
-		By("preparing test repo")
-		SuiteData.InitTestRepo(ctx, repoDirname, fixtureRelPath)
-
-		By("building images")
-		werfProject := newWerfProject(repoDirname)
-		reportProject := report.NewProjectWithReport(werfProject)
-		buildOut, buildReport := reportProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), &werf.WithReportOptions{CommonOptions: werf.CommonOptions{
-			ExtraArgs: []string{imageName},
-		}})
-		Expect(buildOut).To(ContainSubstring("Building stage"))
-
-		By("getting built images metadata")
-		inspectOfImage := contRuntime.GetImageInspect(ctx, buildReport.Images[imageName].DockerImageName)
-		imgCfg := inspectOfImage.Config
-
-		By("checking image metadata")
-		if expectedEntrypoint == nil {
-			Expect(imgCfg.Entrypoint == nil || len(imgCfg.Entrypoint) == 0).To(BeTrue(), "Expected Entrypoint to be nil or empty")
-		} else {
-			Expect(imgCfg.Entrypoint).To(Equal(expectedEntrypoint))
-		}
-
-		if expectedCmd == nil {
-			Expect(imgCfg.Cmd == nil || len(imgCfg.Cmd) == 0).To(BeTrue(), "Expected Cmd to be nil or empty")
-		} else {
-			Expect(imgCfg.Cmd).To(Equal(expectedCmd))
+	// Pure Buildah ignores the Dockerfile SHELL instruction, so the custom shell
+	// never reaches the image config: https://github.com/containers/buildah/issues/2959.
+	customShellExpectation := func(shell string) expectation {
+		return expectation{
+			imageName:  "dockerfile_custom_shell_exec_cmd_and_entrypoint",
+			entrypoint: strslice.StrSlice{shell, "-c", "echo \"ENTRYPOINT (shell)\""},
+			cmd:        strslice.StrSlice{shell, "-c", "echo \"CMD (shell)\""},
 		}
 	}
 
 	backends := []struct {
-		name    string
-		options setupEnvOptions
+		name         string
+		options      setupEnvOptions
+		expectations []expectation
 	}{
 		{
 			name: "docker",
@@ -62,6 +52,7 @@ var _ = Describe("CMD and ENTRYPOINT combinations", Label("e2e", "build", "extra
 				WithLocalRepo:               false,
 				WithStagedDockerfileBuilder: false,
 			},
+			expectations: slices.Concat(commonExpectations, []expectation{customShellExpectation("/bin/bash")}),
 		},
 		{
 			name: "native-rootless",
@@ -70,6 +61,7 @@ var _ = Describe("CMD and ENTRYPOINT combinations", Label("e2e", "build", "extra
 				WithLocalRepo:               true,
 				WithStagedDockerfileBuilder: false,
 			},
+			expectations: slices.Concat(commonExpectations, []expectation{customShellExpectation("/bin/sh")}),
 		},
 		{
 			name: "native-rootless-staged",
@@ -78,32 +70,45 @@ var _ = Describe("CMD and ENTRYPOINT combinations", Label("e2e", "build", "extra
 				WithLocalRepo:               true,
 				WithStagedDockerfileBuilder: true,
 			},
+			expectations: slices.Concat(commonExpectations, []expectation{customShellExpectation("/bin/bash")}),
 		},
 	}
 
 	for _, backend := range backends {
-		Describe(fmt.Sprintf("dockerfile with %s backend", backend.name), entryLabels(backend.options), func() {
-			DescribeTable("should produce expected image configurations", checkFunc,
-				Entry("Shell form ENTRYPOINT", backend.options, "dockerfile_shell_entrypoint", strslice.StrSlice{"/bin/sh", "-c", "echo \"ENTRYPOINT (shell)\""}, nil),
-				Entry("Exec form ENTRYPOINT", backend.options, "dockerfile_exec_entrypoint", strslice.StrSlice{"echo \"ENTRYPOINT (exec)\""}, nil),
-				Entry("Shell form CMD", backend.options, "dockerfile_shell_cmd", nil, strslice.StrSlice{"/bin/sh", "-c", "echo \"CMD (shell)\""}),
-				Entry("Exec form CMD", backend.options, "dockerfile_exec_cmd", nil, strslice.StrSlice{"echo \"CMD (exec)\""}),
-				Entry("No CMD, No ENTRYPOINT", backend.options, "dockerfile_no_cmd_no_entrypoint", nil, nil),
-				Entry("Shell form ENTRYPOINT, reset CMD", backend.options, "dockerfile_entrypoint_reset_cmd", strslice.StrSlice{"/bin/sh", "-c", "echo \"ENTRYPOINT (shell)\""}, nil),
-				Entry("Shell form ENTRYPOINT, Shell form CMD", backend.options, "dockerfile_entrypoint_cmd", strslice.StrSlice{"/bin/sh", "-c", "echo \"ENTRYPOINT (shell)\""}, strslice.StrSlice{"/bin/sh", "-c", "echo \"CMD (shell)\""}),
-				Entry("Base image CMD", backend.options, "dockerfile_base_image_cmd", nil, strslice.StrSlice{"/bin/sh", "-c", "echo \"CMD (shell, base image)\""}),
-			)
+		It(fmt.Sprintf("should produce expected image configurations with %s backend", backend.name), entryLabels(backend.options), func(ctx SpecContext) {
+			repoDirname := "repo"
 
-			if backend.name == "native-rootless" {
-				// Dockerfile SHELL instruction is ignored by pure Buildah.
-				// rel https://github.com/containers/buildah/issues/2959.
-				DescribeTable("should produce expected image configurations", checkFunc,
-					Entry("Custom shell", backend.options, "dockerfile_custom_shell_exec_cmd_and_entrypoint", strslice.StrSlice{"/bin/sh", "-c", "echo \"ENTRYPOINT (shell)\""}, strslice.StrSlice{"/bin/sh", "-c", "echo \"CMD (shell)\""}),
-				)
-			} else {
-				DescribeTable("should produce expected image configurations", checkFunc,
-					Entry("Custom shell", backend.options, "dockerfile_custom_shell_exec_cmd_and_entrypoint", strslice.StrSlice{"/bin/bash", "-c", "echo \"ENTRYPOINT (shell)\""}, strslice.StrSlice{"/bin/bash", "-c", "echo \"CMD (shell)\""}),
-				)
+			By("initializing")
+			setupEnv(backend.options)
+			contRuntime := contback.NewContainerBackend(backend.options.ContainerBackendMode)
+
+			By("preparing test repo")
+			SuiteData.InitTestRepo(ctx, repoDirname, "cmd_entrypoint")
+
+			By("building images")
+			reportProject := report.NewProjectWithReport(newWerfProject(repoDirname))
+			buildOut, buildReport := reportProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath("report.json"), nil)
+			Expect(buildOut).To(ContainSubstring("Building stage"))
+
+			for _, e := range backend.expectations {
+				By(fmt.Sprintf("checking metadata of %s", e.imageName))
+
+				builtImage, found := buildReport.Images[e.imageName]
+				Expect(found).To(BeTrue(), "%s is missing from the build report", e.imageName)
+
+				imgCfg := contRuntime.GetImageInspect(ctx, builtImage.DockerImageName).Config
+
+				if e.entrypoint == nil {
+					Expect(imgCfg.Entrypoint).To(BeEmpty(), "%s: expected an empty Entrypoint", e.imageName)
+				} else {
+					Expect(imgCfg.Entrypoint).To(Equal(e.entrypoint), "%s: unexpected Entrypoint", e.imageName)
+				}
+
+				if e.cmd == nil {
+					Expect(imgCfg.Cmd).To(BeEmpty(), "%s: expected an empty Cmd", e.imageName)
+				} else {
+					Expect(imgCfg.Cmd).To(Equal(e.cmd), "%s: unexpected Cmd", e.imageName)
+				}
 			}
 		})
 	}

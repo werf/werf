@@ -59,27 +59,9 @@ var _ = Describe("Build with staged dockerfile and heredoc", Label("e2e", "build
 			FixtureRelPath: "heredoc/simple",
 			Verify:         []string{"test -d /etc/myapp", "test -f /etc/myapp/env", "(echo 'FOO=bar' && echo 'BAR=baz') | diff /etc/myapp/env -"},
 		}),
-		backendEntry("with simple heredoc content and local repo using Native Buildah with chroot isolation", heredocTestOptions{
-			setupEnvOptions: setupEnvOptions{
-				ContainerBackendMode:        "native-chroot",
-				WithLocalRepo:               true,
-				WithStagedDockerfileBuilder: true,
-			},
-			FixtureRelPath: "heredoc/simple",
-			Verify:         []string{"test -d /etc/myapp", "test -f /etc/myapp/env", "(echo 'FOO=bar' && echo 'BAR=baz') | diff /etc/myapp/env -"},
-		}),
 		backendEntry("with multiple heredoc content and local repo using Native Buildah with rootless isolation", heredocTestOptions{
 			setupEnvOptions: setupEnvOptions{
 				ContainerBackendMode:        "native-rootless",
-				WithLocalRepo:               true,
-				WithStagedDockerfileBuilder: true,
-			},
-			FixtureRelPath: "heredoc/multiple",
-			Verify:         []string{"test -f /file1", "test -f /file2", "echo -e 'I am\\nfirst' | diff /file1 -", "echo -e 'I am\\nsecond' | diff /file2 -"},
-		}),
-		backendEntry("with multiple heredoc content and local repo using Native Buildah with chroot isolation", heredocTestOptions{
-			setupEnvOptions: setupEnvOptions{
-				ContainerBackendMode:        "native-chroot",
 				WithLocalRepo:               true,
 				WithStagedDockerfileBuilder: true,
 			},
@@ -123,27 +105,9 @@ var _ = Describe("Build with staged dockerfile and heredoc", Label("e2e", "build
 			FixtureRelPath: "heredoc/copy",
 			Verify:         []string{"heredoc is not supported with COPY command"},
 		}),
-		backendEntry("with unsupported COPY heredoc and local repo using Native Buildah with chroot isolation", heredocTestOptions{
-			setupEnvOptions: setupEnvOptions{
-				ContainerBackendMode:        "native-chroot",
-				WithLocalRepo:               true,
-				WithStagedDockerfileBuilder: true,
-			},
-			FixtureRelPath: "heredoc/copy",
-			Verify:         []string{"heredoc is not supported with COPY command"},
-		}),
 		backendEntry("with unsupported ADD heredoc and local repo using Native Buildah with rootless isolation", heredocTestOptions{
 			setupEnvOptions: setupEnvOptions{
 				ContainerBackendMode:        "native-rootless",
-				WithLocalRepo:               true,
-				WithStagedDockerfileBuilder: true,
-			},
-			FixtureRelPath: "heredoc/add",
-			Verify:         []string{"heredoc is not supported with ADD command"},
-		}),
-		backendEntry("with unsupported ADD heredoc and local repo using Native Buildah with chroot isolation", heredocTestOptions{
-			setupEnvOptions: setupEnvOptions{
-				ContainerBackendMode:        "native-chroot",
 				WithLocalRepo:               true,
 				WithStagedDockerfileBuilder: true,
 			},

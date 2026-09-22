@@ -13,8 +13,10 @@ import (
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v2/pkg/container_backend/stage_builder"
 	"github.com/werf/werf/v2/pkg/dockerfile/frontend"
+	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/logging"
+	"github.com/werf/werf/v2/pkg/path_matcher"
 )
 
 func testDockerfileToDockerStages(dockerfileData []byte) ([]instructions.Stage, []instructions.ArgCommand) {
@@ -263,6 +265,25 @@ RUN echo hello
 		})
 	})
 
+	When("COPY source depends on inherited base image ENV", func() {
+		It("checksums the whole context until the source can be resolved", func(ctx SpecContext) {
+			dockerfile := []byte(`
+FROM alpine AS base
+ENV SRC=payload
+FROM base
+COPY $SRC/file /payload
+`)
+			dockerStages, dockerMetaArgs := testDockerfileToDockerStages(dockerfile)
+			stage := newTestFullDockerfileStage(dockerfile, "", nil, dockerStages, dockerMetaArgs, nil, "")
+			stage.dockerignorePathMatcher = path_matcher.NewTruePathMatcher()
+			gitRepo := &pathMatchingGitRepoStub{LocalGitRepoStub: NewLocalGitRepoStub("commit"), path: "payload"}
+			conveyor := NewConveyorStubForDependencies(NewGiterminismManagerStub(gitRepo, NewGiterminismInspectorStub()), nil)
+
+			_, err := stage.GetContentDependencies(ctx, conveyor, nil)
+			Expect(err).To(Succeed())
+		})
+	})
+
 	When("Dockerfile uses run with mount from another stage", func() {
 		It("should change dockerfile stage digest when base stage context has changed", func(ctx context.Context) {
 			dockerfile := []byte(`
@@ -311,6 +332,16 @@ RUN --mount=type=bind,from=build,source=/usr/local/test_project/dist,target=/usr
 		})
 	})
 })
+
+type pathMatchingGitRepoStub struct {
+	*LocalGitRepoStub
+	path string
+}
+
+func (repo *pathMatchingGitRepoStub) GetOrCreateChecksum(ctx context.Context, opts git_repo.ChecksumOptions) (string, error) {
+	Expect(opts.LsTreeOptions.PathMatcher.IsPathMatched(repo.path)).To(BeTrue())
+	return repo.LocalGitRepoStub.GetOrCreateChecksum(ctx, opts)
+}
 
 type TestDockerfileDependencies struct {
 	DockerfileData []byte

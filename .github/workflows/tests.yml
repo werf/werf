@@ -39,6 +39,7 @@ jobs:
               - '.github/**'
               - 'cmd/werf/**'
               - 'pkg/**'
+              - 'schemas/**'
               - 'scripts/**'
               - 'test/**'
 

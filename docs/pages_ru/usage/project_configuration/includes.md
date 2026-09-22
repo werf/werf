@@ -208,8 +208,8 @@ spec:
 includes:
   - git: /local/repo
     branch: main
-    add: local-dev
+    add: /local-dev
     to: /
     includePaths:
-      - /.helm
+      - .helm
 ```

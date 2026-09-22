@@ -3,6 +3,7 @@ package instruction
 import (
 	"context"
 	"fmt"
+	"maps"
 
 	"github.com/werf/werf/v2/pkg/build/stage"
 	"github.com/werf/werf/v2/pkg/config"
@@ -88,13 +89,70 @@ func (stg *Base[T, BT]) expandBaseEnv(baseEnv map[string]string) error {
 }
 
 func (stg *Base[T, BT]) GetExpandedEnv(c stage.Conveyor) map[string]string {
+	return stg.expandedEnvWithDependenciesArgs(stage.ResolveDependenciesArgs(stg.TargetPlatform(), stg.dependencies, c))
+}
+
+// GetExpandedEnvForContent is the environment a content digest is derived from:
+// the environment the instruction itself declares, with dependency build args
+// resolved to stable placeholders. It never reads the environment of the built
+// base image, which is only known once the base image exists — the content of a
+// base image reaches the digest through the anchor digest of that image instead.
+func (stg *Base[T, BT]) GetExpandedEnvForContent() map[string]string {
 	env := make(map[string]string)
-	for k, v := range stg.expandedEnv {
-		env[k] = v
+	maps.Copy(env, stg.instruction.Env)
+	maps.Copy(env, stage.ResolveDependenciesArgsForContent(stg.dependencies))
+	return env
+}
+
+func (stg *Base[T, BT]) contentSourcePaths(c stage.Conveyor, sourcePaths []string) ([]string, error) {
+	if stg.instruction.ExpanderFactory == nil {
+		return sourcePaths, nil
 	}
-	for k, v := range stage.ResolveDependenciesArgs(stg.TargetPlatform(), stg.dependencies, c) {
-		env[k] = v
+
+	dependencyArgs := stage.ResolveDependenciesArgsForContent(stg.dependencies)
+	env := make(map[string]string)
+	maps.Copy(env, stg.instruction.Env)
+	maps.Copy(env, dependencyArgs)
+	expander := stg.instruction.ExpanderFactory.GetExpander(dockerfile.ExpandOptions{SkipUnsetEnv: true})
+
+	resolvedSourcePaths := make([]string, 0, len(sourcePaths))
+	for _, sourcePath := range sourcePaths {
+		resolvedSourcePath, matched, unmatched, err := expander.ProcessWordWithMatches(sourcePath, env)
+		if err != nil {
+			return nil, fmt.Errorf("expand content source %q: %w", sourcePath, err)
+		}
+		if len(unmatched) > 0 {
+			return []string{"."}, nil
+		}
+
+		for key := range matched {
+			if _, ok := dependencyArgs[key]; !ok {
+				continue
+			}
+
+			actualEnv := make(map[string]string)
+			maps.Copy(actualEnv, stg.instruction.Env)
+			maps.Copy(actualEnv, stage.ResolveDependenciesArgs(stg.TargetPlatform(), stg.dependencies, c))
+			resolvedSourcePath, _, unmatched, err = expander.ProcessWordWithMatches(sourcePath, actualEnv)
+			if err != nil {
+				return nil, fmt.Errorf("expand content source %q: %w", sourcePath, err)
+			}
+			if len(unmatched) > 0 {
+				return []string{"."}, nil
+			}
+			break
+		}
+
+		resolvedSourcePaths = append(resolvedSourcePaths, resolvedSourcePath)
 	}
+
+	return resolvedSourcePaths, nil
+}
+
+func (stg *Base[T, BT]) expandedEnvWithDependenciesArgs(dependenciesArgs map[string]string) map[string]string {
+	env := make(map[string]string)
+	maps.Copy(env, stg.expandedEnv)
+	maps.Copy(env, dependenciesArgs)
 	return env
 }
 

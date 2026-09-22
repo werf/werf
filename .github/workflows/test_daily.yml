@@ -24,30 +24,42 @@ jobs:
     with:
       coverage: true
 
-  e2e_simple_per-k8s-version:
+  e2e_simple:
     needs: gate
-    uses: ./.github/workflows/_test_e2e_per-k8s-version.yml
+    uses: ./.github/workflows/_test_e2e_regular.yml
     with:
       scope: simple
+      labelFilter: "simple && !needs-kube"
       raceDetectorEnabled: true
       coverage: true
     secrets: inherit
 
-  e2e_complex_per-k8s-version:
+  e2e_complex:
     needs: gate
-    uses: ./.github/workflows/_test_e2e_per-k8s-version.yml
+    uses: ./.github/workflows/_test_e2e_regular.yml
     with:
       scope: complex
+      labelFilter: "complex && !needs-kube"
       timeout: 120
       raceDetectorEnabled: true
       coverage: true
     secrets: inherit
 
-  e2e_extra_per-k8s-version:
+  e2e_extra:
+    needs: gate
+    uses: ./.github/workflows/_test_e2e_regular.yml
+    with:
+      scope: extra
+      labelFilter: "!complex && !simple && !needs-kube"
+      raceDetectorEnabled: true
+      coverage: true
+    secrets: inherit
+
+  e2e_per-k8s:
     needs: gate
     uses: ./.github/workflows/_test_e2e_per-k8s-version.yml
     with:
-      scope: extra
+      labelFilter: needs-kube
       raceDetectorEnabled: true
       coverage: true
     secrets: inherit
@@ -83,17 +95,6 @@ jobs:
   integration_per-cr:
     needs: gate
     uses: ./.github/workflows/_test_integration_per-container-registry.yml
-    with:
-      raceDetectorEnabled: true
-      coverage: true
-    secrets: inherit
-
-  integration_per-k8s-and-cr:
-    needs: gate
-    uses: ./.github/workflows/_test_integration_per-k8s-version-and-container-registry.yml
-    with:
-      raceDetectorEnabled: true
-      coverage: true
     secrets: inherit
 
   coverage_report:
@@ -104,10 +105,10 @@ jobs:
       - integration_git
       - integration_per-k8s
       - integration_per-cr
-      - integration_per-k8s-and-cr
-      - e2e_simple_per-k8s-version
-      - e2e_complex_per-k8s-version
-      - e2e_extra_per-k8s-version
+      - e2e_simple
+      - e2e_complex
+      - e2e_extra
+      - e2e_per-k8s
     secrets: inherit
 
   notify:

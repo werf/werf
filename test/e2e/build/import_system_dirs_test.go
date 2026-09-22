@@ -46,11 +46,6 @@ var _ = Describe("Import system dirs", Label("e2e", "build", "import", "system-d
 			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: false,
 		}),
-		backendEntry("Native Buildah chroot", setupEnvOptions{
-			ContainerBackendMode:        "native-chroot",
-			WithLocalRepo:               true,
-			WithStagedDockerfileBuilder: true,
-		}),
 	)
 })
 

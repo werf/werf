@@ -12,9 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	helmreleasecommon "github.com/werf/nelm/pkg/helm/pkg/release/common"
-	"github.com/werf/nelm/pkg/kube"
 	"github.com/werf/werf/v2/test/pkg/report"
-	"github.com/werf/werf/v2/test/pkg/utils"
 	"github.com/werf/werf/v2/test/pkg/werf"
 )
 
@@ -28,24 +26,7 @@ var _ = Describe("Complex converge", Label("e2e", "converge", "complex"), func()
 	}
 
 	AfterEach(func(ctx SpecContext) {
-		utils.RunSucceedCommand(
-			ctx,
-			SuiteData.GetTestRepoPath(repoDirname),
-			SuiteData.WerfBinPath,
-			"dismiss",
-			"--with-namespace",
-		)
-
-		werfProject.KubeCtl(ctx, &werf.KubeCtlOptions{
-			werf.CommonOptions{
-				ExtraArgs: []string{
-					"delete",
-					"namespace",
-					"--ignore-not-found",
-					werfProject.Namespace(ctx),
-				},
-			},
-		})
+		werfProject.DismissAndDeleteNamespace(ctx, nil)
 	})
 
 	It("should complete and deploy expected resources",
@@ -54,12 +35,7 @@ var _ = Describe("Complex converge", Label("e2e", "converge", "complex"), func()
 			repoDirname = "repo0"
 			setupEnv()
 
-			// TODO: DRY kube client initialization
-			kubeConfig, err := kube.NewKubeConfig(ctx, kube.KubeConfigOptions{})
-			Expect(err).NotTo(HaveOccurred())
-
-			clientFactory, err := kube.NewClientFactory(ctx, kubeConfig)
-			Expect(err).NotTo(HaveOccurred())
+			clientFactory := werf.NewKubeClientFactory(ctx)
 
 			By("state0: starting")
 			{

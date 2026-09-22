@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -11,6 +12,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/util/parallel"
 	"github.com/werf/werf/v2/pkg/werf"
 )
@@ -151,6 +153,160 @@ var _ = Describe("DoTasksDynamic", func() {
 
 		Expect(err).To(Succeed())
 		Expect(called).To(BeFalse())
+	})
+
+	It("streams a running task's output while another worker idles waiting for a dependent task", func() {
+		// Worker 0 gets the short task A and then blocks in next() until the
+		// long task B on worker 1 completes, because C depends on B. B does
+		// not finish until it sees its own first line reach the sink — with
+		// output printed per worker rather than per task, the printer would
+		// stay on the idle worker 0, B's line would never be flushed and the
+		// run would deadlock until the context deadline. Worker 2 never gets
+		// a task at all and must not leave a hole in the start order.
+		const (
+			taskA = 0
+			taskB = 1
+			taskC = 2
+		)
+
+		sink := newSpyOutput(8)
+		ctx := logboek.NewContext(context.Background(), logboek.NewLogger(sink, sink))
+		ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		defer cancel()
+
+		var mu sync.Mutex
+		var aGiven, bGiven, cGiven bool
+		bDone := make(chan struct{})
+		startOrder := map[int]int{}
+
+		next := func(ctx context.Context) (int, bool, error) {
+			workerID := ctx.Value(parallel.CtxBackgroundTaskIDKey).(int)
+
+			mu.Lock()
+			switch {
+			case workerID == 0 && !aGiven:
+				aGiven = true
+				mu.Unlock()
+				return taskA, true, nil
+			case workerID == 1 && !bGiven:
+				bGiven = true
+				mu.Unlock()
+				return taskB, true, nil
+			}
+			mu.Unlock()
+
+			select {
+			case <-bDone:
+			case <-ctx.Done():
+				return 0, false, ctx.Err()
+			}
+
+			mu.Lock()
+			defer mu.Unlock()
+			if cGiven {
+				return 0, false, nil
+			}
+			cGiven = true
+			return taskC, true, nil
+		}
+
+		err := parallel.DoTasksDynamic(ctx, parallel.DoTasksOptions{MaxNumberOfWorkers: 3}, next, func(ctx context.Context, taskId int) error {
+			order, ok := parallel.TaskStartOrder(ctx)
+			Expect(ok).To(BeTrue(), "a task context always carries its start order")
+
+			mu.Lock()
+			startOrder[taskId] = order
+			mu.Unlock()
+
+			switch taskId {
+			case taskA:
+				logboek.Context(ctx).LogLn("a")
+				return nil
+			case taskB:
+				defer close(bDone)
+				logboek.Context(ctx).LogLn("b-start")
+				for !strings.Contains(sink.String(), "b-start") {
+					select {
+					case <-ctx.Done():
+						return fmt.Errorf("task B: its first line never reached the sink while it was running: %w", ctx.Err())
+					case <-time.After(10 * time.Millisecond):
+					}
+				}
+				logboek.Context(ctx).LogLn("b-end")
+				return nil
+			case taskC:
+				logboek.Context(ctx).LogLn("c")
+				return nil
+			default:
+				return fmt.Errorf("unexpected task %d", taskId)
+			}
+		})
+
+		Expect(err).To(Succeed())
+		Expect(sink.String()).To(Equal("a\n\nb-start\nb-end\n\nc\n"))
+		Expect(startOrder).To(Equal(map[int]int{taskA: 0, taskB: 1, taskC: 2}))
+	})
+
+	It("leaves the printing queue in start order when the error comes from next() and not from a task", func() {
+		// Worker 1 finishes its task successfully and only then fails while
+		// asking for the next one. No block is to blame for that error, so
+		// none may be pulled out of the queue: the blocks must still read
+		// a, b, c. Worker 0 holds the head of the queue for the whole run, so
+		// the printer is still parked on it when the error arrives.
+		sink := newSpyOutput(8)
+		ctx := logboek.NewContext(context.Background(), logboek.NewLogger(sink, sink))
+		ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		defer cancel()
+
+		var mu sync.Mutex
+		given := map[int]bool{}
+		cStarted := make(chan struct{})
+
+		next := func(ctx context.Context) (int, bool, error) {
+			workerID := ctx.Value(parallel.CtxBackgroundTaskIDKey).(int)
+
+			mu.Lock()
+			first := !given[workerID]
+			given[workerID] = true
+			mu.Unlock()
+
+			if first {
+				return workerID, true, nil
+			}
+
+			if workerID == 1 {
+				select {
+				case <-cStarted:
+					return 0, false, errors.New("scheduler failed")
+				case <-ctx.Done():
+					return 0, false, ctx.Err()
+				}
+			}
+
+			<-ctx.Done()
+			return 0, false, ctx.Err()
+		}
+
+		err := parallel.DoTasksDynamic(ctx, parallel.DoTasksOptions{MaxNumberOfWorkers: 3}, next, func(ctx context.Context, taskId int) error {
+			switch taskId {
+			case 0:
+				logboek.Context(ctx).LogLn("a")
+				<-ctx.Done()
+				return nil
+			case 1:
+				logboek.Context(ctx).LogLn("b")
+				return nil
+			case 2:
+				logboek.Context(ctx).LogLn("c")
+				close(cStarted)
+				return nil
+			default:
+				return fmt.Errorf("unexpected task %d", taskId)
+			}
+		})
+
+		Expect(err).To(MatchError(ContainSubstring("scheduler failed")))
+		Expect(sink.String()).To(Equal("a\n\nb\n\nc\n"))
 	})
 
 	It("runs tasks sequentially on a single worker when MaxNumberOfWorkers is not positive", func() {

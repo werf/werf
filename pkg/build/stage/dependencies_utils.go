@@ -42,6 +42,23 @@ func ResolveDependenciesArgs(targetPlatform string, dependencies []*config.Depen
 	return resolved
 }
 
+// ResolveDependenciesArgsForContent resolves dependency build args to stable
+// placeholders derived from the dependency image name, for use in content
+// digests. The real values (ResolveDependenciesArgs) carry the built image
+// name, tag and registry digest, all of which change on every rebuild of the
+// dependency image.
+func ResolveDependenciesArgsForContent(dependencies []*config.Dependency) map[string]string {
+	resolved := make(map[string]string)
+
+	for _, dep := range dependencies {
+		for _, imp := range dep.Imports {
+			resolved[imp.TargetBuildArg] = fmt.Sprintf("werf-dependency-%s-%s", dep.From, imp.Type)
+		}
+	}
+
+	return resolved
+}
+
 func dependencyLabelKey(depStageID string) string {
 	return fmt.Sprintf("%s%s", image.WerfDependencySourceStageIDLabelPrefix, util.Sha256Hash(depStageID))
 }

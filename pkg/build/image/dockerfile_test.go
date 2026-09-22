@@ -31,7 +31,7 @@ RUN --mount=from=base,target=/mnt echo hi
 	})
 	require.NoError(t, err)
 
-	images, err := mapDockerfileToImages(context.Background(), d, &config.Meta{}, &config.ImageFromDockerfile{Name: "app", Target: "final"}, "linux/amd64", false, CommonImageOptions{})
+	images, err := mapDockerfileToImages(context.Background(), d, &config.Meta{}, &config.ImageFromDockerfile{Name: "app", Target: "final"}, "linux/amd64", false, false, CommonImageOptions{})
 	require.NoError(t, err)
 
 	byName := map[string]*Image{}

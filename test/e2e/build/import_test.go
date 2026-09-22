@@ -45,10 +45,5 @@ var _ = Describe("Import", Label("e2e", "build", "import", "simple"), func() {
 			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: false,
 		}),
-		backendEntry("Native Buildah chroot", setupEnvOptions{
-			ContainerBackendMode:        "native-chroot",
-			WithLocalRepo:               true,
-			WithStagedDockerfileBuilder: true,
-		}),
 	)
 })

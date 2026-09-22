@@ -585,7 +585,7 @@ sections:
                     description:
                       en: "Environment variable"
                       ru: "Переменная окружения"
-                  - name: file
+                  - name: src
                     value: "string"
                     description:
                       en: "File path"
