@@ -12,6 +12,7 @@ import (
 var _ = Describe("host purge command", func() {
 	BeforeEach(func(ctx SpecContext) {
 		Expect(werf.Init(SuiteData.TmpDir, "")).To(Succeed())
+		SuiteData.Stubs.UnsetEnv("WERF_REPO")
 
 		SuiteData.StagesStorage = utils.NewStagesStorage(ctx, ":local", "default", docker_registry.DockerRegistryOptions{})
 
