@@ -25,17 +25,12 @@ func (r FileReader) LocateChart(ctx context.Context, chartDir string) (string, e
 func (r FileReader) locateChart(ctx context.Context, chartDir string) (string, error) {
 	relDir := r.absolutePathToProjectDirRelativePath(chartDir)
 
-	rules, err := r.readChartIgnoreRules(ctx, relDir, ReadChartIgnoreRulesOptions{})
+	exist, err := r.IsDirectoryExist(ctx, relDir)
 	if err != nil {
 		return "", err
 	}
 
-	files, err := r.loadChartDir(ctx, relDir, rules)
-	if err != nil {
-		return "", err
-	}
-
-	if len(files) == 0 {
+	if !exist {
 		return "", fmt.Errorf("the directory %q not found in the project git repository", relDir)
 	}
 
