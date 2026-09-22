@@ -394,6 +394,11 @@ tasks:
 
   test:ginkgo: &test_ginkgo
     desc: 'Run raw "ginkgo". Important vars: "paths".'
+    preconditions:
+      - sh: |
+          expected_version="$(awk '$1 == "github.com/onsi/ginkgo/v2" && $2 ~ /^v[0-9]/ { print $2; exit }' go.mod)"
+          test -n "$expected_version" && test "v$(ginkgo version 2>/dev/null | awk '{print $3}')" = "$expected_version"
+        msg: 'Ginkgo CLI version must match go.mod; run "task deps:install:ginkgo".'
     cmds:
       - task: _test:ginkgo:{{.mode}}
         vars:
