@@ -2,6 +2,7 @@ package filemanager
 
 import (
 	"context"
+	"errors"
 	"os"
 	"path/filepath"
 
@@ -251,5 +252,33 @@ var _ = Describe("LoadChartDir", func() {
 		Expect(loadedNames(logging.WithLogger(ctx), newFileManager(include))).To(ConsistOf(
 			"Chart.yaml", "templates/kept.yaml",
 		))
+	})
+
+	// An unreadable .helmignore must not reach the rule set as "the chart has no rules": the
+	// chart would then be loaded unfiltered on any path that does not read that file again.
+	Describe("readChartIgnoreRules", func() {
+		chartAbsPath := func() string { return filepath.Join(projectDir, ".helm") }
+
+		It("reports an unreadable .helmignore of an include instead of treating it as absent", func(ctx SpecContext) {
+			const mountPath = ".helm/.helmignore"
+			repo.EXPECT().ReadCommitFile(gomock.Any(), commitHash, mountPath).
+				Return(nil, errors.New("blob unreadable")).AnyTimes()
+			include := includes.NewInclude(repo, commitHash, map[string]string{mountPath: mountPath})
+
+			_, err := newFileManager(include).readChartIgnoreRules(logging.WithLogger(ctx), chartAbsPath(), ".helm")
+			Expect(err).To(MatchError(ContainSubstring("blob unreadable")))
+			Expect(err).To(MatchError(ContainSubstring(".helm/.helmignore")))
+		})
+
+		It("takes the .helmignore of a later include when an earlier one does not carry it", func(ctx SpecContext) {
+			withoutIgnore := newInclude(map[string]string{"Chart.yaml": "name: imported"})
+			withIgnore := newInclude(map[string]string{".helmignore": "templates/imported.yaml\n"})
+
+			rules, err := newFileManager(withoutIgnore, withIgnore).
+				readChartIgnoreRules(logging.WithLogger(ctx), chartAbsPath(), ".helm")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(rules.HasIgnoreFile()).To(BeTrue())
+			Expect(rules.IsFileIgnored(ctx, "templates/imported.yaml")).To(BeTrue())
+		})
 	})
 })

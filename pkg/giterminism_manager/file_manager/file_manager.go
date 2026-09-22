@@ -428,14 +428,24 @@ func (f *FileManager) LoadChartDir(ctx context.Context, dir string) ([]*nelmcomm
 // The includes are only consulted when the chart has no local .helmignore, which keeps the
 // documented precedence of local project files over imported ones.
 func (f *FileManager) readChartIgnoreRules(ctx context.Context, chartLocalAbsPath, normDir string) (file_reader.ChartIgnoreRules, error) {
+	relPath := path.Join(normDir, ignore.HelmIgnore)
+
 	var fallbackData []byte
 	var fallbackExists bool
-	if len(f.includes) > 0 {
-		data, err := f.tryReadFromIncludes(ctx, path.Join(normDir, ignore.HelmIgnore))
-		if err == nil {
-			fallbackData = data
-			fallbackExists = true
+	for _, include := range f.includes {
+		data, err := include.GetFile(ctx, relPath)
+		if err != nil {
+			if errors.Is(err, includes.ErrFileNotFound) {
+				continue
+			}
+
+			return file_reader.ChartIgnoreRules{}, fmt.Errorf("read %q from include %q: %w", relPath, include.GetName(), err)
 		}
+
+		fallbackData = data
+		fallbackExists = true
+
+		break
 	}
 
 	rules, err := f.fileReader.ReadChartIgnoreRules(ctx, chartLocalAbsPath, file_reader.ReadChartIgnoreRulesOptions{
