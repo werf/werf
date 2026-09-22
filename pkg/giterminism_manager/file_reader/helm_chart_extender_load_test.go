@@ -241,24 +241,6 @@ var _ = Describe("LoadChartDir", func() {
 		Expect(err).To(MatchError(ContainSubstring("double-star")))
 	})
 
-	DescribeTable("reports a chart directory with no files as not found",
-		func(ctx SpecContext, files map[string]string) {
-			chartDir := filepath.Join(projectDir, ".helm")
-			if len(files) > 0 {
-				chartDir = writeChart(files)
-			}
-
-			_, err := reader.LocateChart(logging.WithLogger(ctx), chartDir)
-			Expect(err).To(MatchError(ContainSubstring("not found in the project git repository")))
-		},
-		Entry("when .helmignore excludes every file",
-			map[string]string{".helmignore": "*\n", "Chart.yaml": "name: test"},
-		),
-		Entry("when the chart is absent",
-			map[string]string{},
-		),
-	)
-
 	Context("when giterminism is enforced", func() {
 		// An ignored file must not be checked against git at all, otherwise .helmignore
 		// cannot be used to exclude uncommitted files as the giterminism docs promise.

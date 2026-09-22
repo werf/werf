@@ -104,11 +104,11 @@ var _ = Describe("LoadChartDir", func() {
 		files, err := newFileManager(include).LoadChartDir(logging.WithLogger(ctx), ".helm")
 		Expect(err).NotTo(HaveOccurred())
 
+		contents := map[string]string{}
 		for _, f := range files {
-			if f.Name == "templates/local.yaml" {
-				Expect(string(f.Data)).To(Equal("local wins"))
-			}
+			contents[f.Name] = string(f.Data)
 		}
+		Expect(contents).To(HaveKeyWithValue("templates/local.yaml", "local wins"))
 	})
 
 	It("drops an imported file matched by the local .helmignore", func(ctx SpecContext) {
