@@ -39,6 +39,7 @@ Types and scopes are defined in `CONTRIBUTING.md#conventions` — that file is t
 
 ## Before staging
 
+- Re-check `git branch --show-current` immediately before EVERY commit, not just before the push. Worktrees here are long-lived and shared: another session can repoint the one you are standing in, and the first sign is your commit sitting on top of someone else's work, where undoing it means `git reset --keep` in a tree you do not own.
 - Check `git status` for unrelated untracked files before staging. This worktree carries local working files (`.dev/`, scratch notes, orchestrator state), so prefer explicit paths over `git add -A` — a blanket add sweeps them in, and untracking later costs an extra commit. An orchestrator or helper commit command stages broadly — inspect `git status` BEFORE invoking it, not after.
 
 ## Merging a branch into another
