@@ -30,6 +30,7 @@ var _ = Describe("container registry implementation", func() {
 					DeferCleanup(func(ctx SpecContext) {
 						By("deleting the repository")
 						Expect(registry.DeleteRepo(ctx, repo)).To(Succeed())
+						Expect(registry.TryGetRepoImage(ctx, repo+":kept")).To(BeNil())
 					})
 				}
 
