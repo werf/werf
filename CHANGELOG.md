@@ -1,5 +1,34 @@
 # Changelog
 
+## [3.5.0](https://github.com/werf/werf/compare/v3.4.0...v3.5.0) (2026-09-22)
+
+
+### Features
+
+* **build:** hide no-op secondary images by default ([#7894](https://github.com/werf/werf/issues/7894)) ([63371e3](https://github.com/werf/werf/commit/63371e3fdb102524f36c21f93fa2229e903e498e))
+* **build:** include werf version in the build report ([#7859](https://github.com/werf/werf/issues/7859)) ([851eb02](https://github.com/werf/werf/commit/851eb025fb18c4a7cd3134f3d92e7b9b64b5f80b))
+* **cleanup:** report recent automatic host cleanup ([81cf86f](https://github.com/werf/werf/commit/81cf86ff6a2d8112e0bf486403f959ae71d9d1d9))
+* **deploy:** return rendered resources from ReleaseInstall ([#7869](https://github.com/werf/werf/issues/7869)) ([9a6146b](https://github.com/werf/werf/commit/9a6146b87470c98a34669e8ceb7847da7cc87228))
+* **dev:** publish JSON Schemas for werf configuration files ([#7860](https://github.com/werf/werf/issues/7860)) ([25bfb25](https://github.com/werf/werf/commit/25bfb25d61f08a4dd42ed4e6a639b56b81864929))
+
+
+### Bug Fixes
+
+* **build, buildah:** stop re-compressing parent layers on stage push ([#7854](https://github.com/werf/werf/issues/7854)) ([9837b10](https://github.com/werf/werf/commit/9837b10a920086ea353d1b112160cffe093ba286))
+* **build, cleanup:** keep the parallel log streaming and its progress numbers in order ([#7863](https://github.com/werf/werf/issues/7863)) ([35bb659](https://github.com/werf/werf/commit/35bb6599fb6cbd8188b449164342de6c7d6314a7))
+* **build, stages:** reuse an image whose dependencies are gone from the registry ([#7876](https://github.com/werf/werf/issues/7876)) ([5ef3a11](https://github.com/werf/werf/commit/5ef3a11a994fdb161f40516b123459b157a1fa02))
+* **build:** keep staged dockerfile targets apart by their base image ([#7874](https://github.com/werf/werf/issues/7874)) ([349d55f](https://github.com/werf/werf/commit/349d55f7ce46d847ba934342020c89304c5337cb))
+* **build:** show skipped images in build output ([#7882](https://github.com/werf/werf/issues/7882)) ([145b39d](https://github.com/werf/werf/commit/145b39db98eb57880ef475f13b3afe2e18d84b9c))
+* **build:** synchronize legacy image metadata ([#7892](https://github.com/werf/werf/issues/7892)) ([d82cd44](https://github.com/werf/werf/commit/d82cd44815cb812771e353c231abb6d390c6c673))
+* **ci:** restore origin/3 daily coverage ([#7890](https://github.com/werf/werf/issues/7890)) ([867e10d](https://github.com/werf/werf/commit/867e10ddbd7a571dbcad6432e4a9bd5b9b1c6428))
+* **cleanup:** avoid slow tag deletion in GitLab registries ([#7866](https://github.com/werf/werf/issues/7866)) ([cdb0a19](https://github.com/werf/werf/commit/cdb0a19413c64515860e029a9d0a30e67f0f8c84))
+* **cleanup:** preserve retained final images ([#7867](https://github.com/werf/werf/issues/7867)) ([72162e5](https://github.com/werf/werf/commit/72162e50c524acd21bd8bf39755bbf14df6e9e90))
+* **cleanup:** register each temporary path with the GC once ([#7875](https://github.com/werf/werf/issues/7875)) ([c49c9ae](https://github.com/werf/werf/commit/c49c9ae77591efe874132eacf472322c1af0ab5e))
+* **deploy:** prevent panic when release deletion fails ([#7861](https://github.com/werf/werf/issues/7861)) ([1015652](https://github.com/werf/werf/commit/1015652012c2715406da43cb562207c2be0c4805))
+* **deploy:** render included charts at the project root ([#7865](https://github.com/werf/werf/issues/7865)) ([83605cc](https://github.com/werf/werf/commit/83605cc0e23a3e92bde28dfac678459157f19e6d))
+* **deploy:** report the inaccessible events feed through the nelm logger ([#7857](https://github.com/werf/werf/issues/7857)) ([8faf82a](https://github.com/werf/werf/commit/8faf82a0198ef3e463ba2e6756f74ccb156f4448))
+* **registry:** delete Harbor repositories through v2 API ([#7891](https://github.com/werf/werf/issues/7891)) ([2f47707](https://github.com/werf/werf/commit/2f47707934818132f558b725ae50ad488a9b462f))
+
 ## [3.4.0](https://github.com/werf/werf/compare/v3.3.1...v3.4.0) (2026-09-09)
 
 
