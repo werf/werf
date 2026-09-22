@@ -270,6 +270,19 @@ var _ = Describe("LoadChartDir", func() {
 			Expect(err).To(MatchError(ContainSubstring(".helm/.helmignore")))
 		})
 
+		It("does not read the .helmignore of an include when the chart has a local one", func(ctx SpecContext) {
+			writeLocalChart(map[string]string{".helmignore": "templates/local.yaml\n"})
+
+			const mountPath = ".helm/.helmignore"
+			repo.EXPECT().ReadCommitFile(gomock.Any(), commitHash, mountPath).
+				Return(nil, errors.New("blob unreadable")).AnyTimes()
+			include := includes.NewInclude(repo, commitHash, map[string]string{mountPath: mountPath})
+
+			rules, err := newFileManager(include).readChartIgnoreRules(logging.WithLogger(ctx), chartAbsPath(), ".helm")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(rules.IsFileIgnored(ctx, "templates/local.yaml")).To(BeTrue())
+		})
+
 		It("takes the .helmignore of a later include when an earlier one does not carry it", func(ctx SpecContext) {
 			withoutIgnore := newInclude(map[string]string{"Chart.yaml": "name: imported"})
 			withIgnore := newInclude(map[string]string{".helmignore": "templates/imported.yaml\n"})

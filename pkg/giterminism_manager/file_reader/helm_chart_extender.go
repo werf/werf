@@ -148,11 +148,11 @@ func (r ChartIgnoreRules) IsFileIgnored(ctx context.Context, relPath string) boo
 }
 
 type ReadChartIgnoreRulesOptions struct {
-	// FallbackData is the .helmignore content to use when the chart directory has no local one.
-	FallbackData []byte
-	// FallbackExists is separate from FallbackData because an empty .helmignore yields no data
-	// while still being present.
-	FallbackExists bool
+	// FallbackFunc supplies the .helmignore to use when the chart directory has no local one. It
+	// is called only then, so a fallback that cannot be read does not fail a chart that never
+	// needed it. exists is separate from data because an empty .helmignore yields no data while
+	// still being present.
+	FallbackFunc func(ctx context.Context) (data []byte, exists bool, err error)
 }
 
 // ReadChartIgnoreRules resolves the .helmignore rule set of a chart directory. The local file wins
@@ -170,14 +170,20 @@ func (r FileReader) readChartIgnoreRules(ctx context.Context, relDir string, opt
 		return ChartIgnoreRules{}, fmt.Errorf("check %q existence: %w", filepath.ToSlash(relPath), err)
 	}
 
-	data := opts.FallbackData
-	hasIgnoreFile := opts.FallbackExists
-	if exist {
+	var data []byte
+	var hasIgnoreFile bool
+	switch {
+	case exist:
 		hasIgnoreFile = true
 
 		data, err = r.readChartFile(ctx, relPath)
 		if err != nil {
 			return ChartIgnoreRules{}, fmt.Errorf("read %q: %w", filepath.ToSlash(relPath), err)
+		}
+	case opts.FallbackFunc != nil:
+		data, hasIgnoreFile, err = opts.FallbackFunc(ctx)
+		if err != nil {
+			return ChartIgnoreRules{}, err
 		}
 	}
 

@@ -430,27 +430,23 @@ func (f *FileManager) LoadChartDir(ctx context.Context, dir string) ([]*nelmcomm
 func (f *FileManager) readChartIgnoreRules(ctx context.Context, chartLocalAbsPath, normDir string) (file_reader.ChartIgnoreRules, error) {
 	relPath := path.Join(normDir, ignore.HelmIgnore)
 
-	var fallbackData []byte
-	var fallbackExists bool
-	for _, include := range f.includes {
-		data, err := include.GetFile(ctx, relPath)
-		if err != nil {
-			if errors.Is(err, includes.ErrFileNotFound) {
-				continue
+	rules, err := f.fileReader.ReadChartIgnoreRules(ctx, chartLocalAbsPath, file_reader.ReadChartIgnoreRulesOptions{
+		FallbackFunc: func(ctx context.Context) ([]byte, bool, error) {
+			for _, include := range f.includes {
+				data, err := include.GetFile(ctx, relPath)
+				if err != nil {
+					if errors.Is(err, includes.ErrFileNotFound) {
+						continue
+					}
+
+					return nil, false, fmt.Errorf("read %q from include %q: %w", relPath, include.GetName(), err)
+				}
+
+				return data, true, nil
 			}
 
-			return file_reader.ChartIgnoreRules{}, fmt.Errorf("read %q from include %q: %w", relPath, include.GetName(), err)
-		}
-
-		fallbackData = data
-		fallbackExists = true
-
-		break
-	}
-
-	rules, err := f.fileReader.ReadChartIgnoreRules(ctx, chartLocalAbsPath, file_reader.ReadChartIgnoreRulesOptions{
-		FallbackData:   fallbackData,
-		FallbackExists: fallbackExists,
+			return nil, false, nil
+		},
 	})
 	if err != nil {
 		return file_reader.ChartIgnoreRules{}, fmt.Errorf("unable to read chart ignore rules: %w", err)
