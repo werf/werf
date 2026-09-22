@@ -1,9 +1,9 @@
 package build
 
 import (
+	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"os"
 	"slices"
 	"sort"
@@ -222,11 +222,14 @@ func (phase *BuildPhase) resolveAvailableContentAnchors(ctx context.Context) err
 			continue
 		}
 
-		resolveCtx := logboek.NewContext(ctx, logboek.Context(ctx).NewSubLogger(io.Discard, io.Discard))
+		var outBuf, errBuf bytes.Buffer
+		resolveCtx := logboek.NewContext(ctx, logboek.Context(ctx).NewSubLogger(&outBuf, &errBuf))
 		phase.StagesIterator = NewStagesIterator(phase.Conveyor)
 		if err := phase.resolveContentAnchor(resolveCtx, img, false); err != nil {
 			return fmt.Errorf("image %q: %w", img.Name, err)
 		}
+		img.ContentAnchorOutLog = bytes.Clone(outBuf.Bytes())
+		img.ContentAnchorErrLog = bytes.Clone(errBuf.Bytes())
 	}
 
 	return nil
@@ -680,6 +683,12 @@ func (phase *BuildPhase) BeforeImageStages(ctx context.Context, img *image.Image
 	phase.StagesIterator = NewStagesIterator(phase.Conveyor)
 
 	if stageDesc := img.GetContentTagDesc(); stageDesc != nil {
+		if _, err := logboek.Context(ctx).OutStream().Write(img.ContentAnchorOutLog); err != nil {
+			return nil, fmt.Errorf("write content anchor stdout log: %w", err)
+		}
+		if _, err := logboek.Context(ctx).ErrStream().Write(img.ContentAnchorErrLog); err != nil {
+			return nil, fmt.Errorf("write content anchor stderr log: %w", err)
+		}
 		phase.logContentAnchorReuse(ctx, img, stageDesc)
 		return nil, nil
 	}

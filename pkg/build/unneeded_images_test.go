@@ -1,6 +1,7 @@
 package build
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"sync"
@@ -8,6 +9,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/build/image"
 	"github.com/werf/werf/v2/pkg/build/stage"
 	"github.com/werf/werf/v2/pkg/config"
@@ -280,6 +282,29 @@ func (m *anchorLookupStorageManager) SelectSuitableStageDesc(_ context.Context, 
 }
 
 var _ = Describe("BuildPhase content-anchor pre-resolution", func() {
+	It("replays captured output through its original stream", func() {
+		img := newTestImage("app", true)
+		img.ForceTargetPlatformLogging = true
+		img.SetContentTagDesc(&imagePkg.StageDesc{Info: &imagePkg.Info{
+			Name:   "repo:anchor",
+			Labels: map[string]string{},
+		}})
+		img.ContentAnchorOutLog = []byte("anchor stdout\n")
+		img.ContentAnchorErrLog = []byte("anchor stderr\n")
+
+		phase := newTestBuildPhase(nil, nil)
+		img.Conveyor = phase.Conveyor
+		var stdout, stderr bytes.Buffer
+		ctx := logboek.NewContext(context.Background(), logboek.NewLogger(&stdout, &stderr))
+		_, err := phase.BeforeImageStages(ctx, img)
+
+		Expect(err).NotTo(HaveOccurred())
+		Expect(stdout.String()).To(ContainSubstring("anchor stdout"))
+		Expect(stdout.String()).NotTo(ContainSubstring("anchor stderr"))
+		Expect(stderr.String()).To(ContainSubstring("anchor stderr"))
+		Expect(stderr.String()).NotTo(ContainSubstring("anchor stdout"))
+	})
+
 	It("resolves available anchors before deciding which images are needed", func() {
 		base := newTestImage("base", false)
 		base.SetAnchorDigest("base-anchor")

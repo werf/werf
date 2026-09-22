@@ -112,6 +112,8 @@ type Image struct {
 	TargetPlatform                   string
 	BuildDuration                    time.Duration
 	AnchorReused                     bool
+	ContentAnchorOutLog              []byte
+	ContentAnchorErrLog              []byte
 	Requested                        bool
 	// Skipped marks an image that no image being built needs: it is not final,
 	// was not requested explicitly, and every image depending on it is reused
