@@ -36,11 +36,21 @@ func NewPrinter() *Printer {
 // Enqueue appends a started task to the printing queue and returns its
 // start-order index.
 func (p *Printer) Enqueue(out *TaskOutput) int {
+	return p.EnqueueWithCallback(out, nil)
+}
+
+// EnqueueWithCallback appends a started task to the printing queue. The
+// callback runs under the queue lock, in printing order.
+func (p *Printer) EnqueueWithCallback(out *TaskOutput, onEnqueued func(startOrder int)) int {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
 	p.queue = append(p.queue, out)
-	return len(p.queue) - 1
+	startOrder := len(p.queue) - 1
+	if onEnqueued != nil {
+		onEnqueued(startOrder)
+	}
+	return startOrder
 }
 
 // Close tells the Printer no more tasks will be enqueued, so Print returns

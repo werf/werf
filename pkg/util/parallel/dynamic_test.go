@@ -178,6 +178,7 @@ var _ = Describe("DoTasksDynamic", func() {
 		var aGiven, bGiven, cGiven bool
 		bDone := make(chan struct{})
 		startOrder := map[int]int{}
+		var enqueued []int
 
 		next := func(ctx context.Context) (int, bool, error) {
 			workerID := ctx.Value(parallel.CtxBackgroundTaskIDKey).(int)
@@ -210,7 +211,13 @@ var _ = Describe("DoTasksDynamic", func() {
 			return taskC, true, nil
 		}
 
-		err := parallel.DoTasksDynamic(ctx, parallel.DoTasksOptions{MaxNumberOfWorkers: 3}, next, func(ctx context.Context, taskId int) error {
+		err := parallel.DoTasksDynamic(ctx, parallel.DoTasksOptions{
+			MaxNumberOfWorkers: 3,
+			OnTaskEnqueued: func(taskID, startOrder int) {
+				Expect(startOrder).To(Equal(len(enqueued)))
+				enqueued = append(enqueued, taskID)
+			},
+		}, next, func(ctx context.Context, taskId int) error {
 			order, ok := parallel.TaskStartOrder(ctx)
 			Expect(ok).To(BeTrue(), "a task context always carries its start order")
 
@@ -245,6 +252,7 @@ var _ = Describe("DoTasksDynamic", func() {
 		Expect(err).To(Succeed())
 		Expect(sink.String()).To(Equal("a\n\nb-start\nb-end\n\nc\n"))
 		Expect(startOrder).To(Equal(map[int]int{taskA: 0, taskB: 1, taskC: 2}))
+		Expect(enqueued).To(Equal([]int{taskA, taskB, taskC}))
 	})
 
 	It("leaves the printing queue in start order when the error comes from next() and not from a task", func() {
