@@ -33,14 +33,20 @@ func (i *legacyBaseImage) SetName(name string) {
 }
 
 func (i *legacyBaseImage) GetInfo() *image.Info {
+	i.mu.RLock()
+	defer i.mu.RUnlock()
 	return i.info
 }
 
 func (i *legacyBaseImage) SetInfo(info *image.Info) {
+	i.mu.Lock()
+	defer i.mu.Unlock()
 	i.info = info
 }
 
 func (i *legacyBaseImage) UnsetInfo() {
+	i.mu.Lock()
+	defer i.mu.Unlock()
 	i.info = nil
 }
 
@@ -48,7 +54,7 @@ func (i *legacyBaseImage) SetStageDesc(stageDesc *image.StageDesc) {
 	i.mu.Lock()
 	defer i.mu.Unlock()
 	i.stageDesc = stageDesc
-	i.SetInfo(stageDesc.Info)
+	i.info = stageDesc.Info
 }
 
 func (i *legacyBaseImage) GetStageDesc() *image.StageDesc {
@@ -66,5 +72,5 @@ func (i *legacyBaseImage) GetFinalStageDesc() *image.StageDesc {
 }
 
 func (i *legacyBaseImage) IsExistsLocally() bool {
-	return i.info != nil
+	return i.GetInfo() != nil
 }

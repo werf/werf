@@ -66,18 +66,18 @@ var _ = Describe("cleanup command", func() {
 				SuiteData.Stubs.SetEnv("ARTIFACT_CACHE_VERSION", artifactCacheVersion2)
 			})
 
-			It("should keep both by import source", func(ctx SpecContext) {
+			It("should delete replaced stages when imported content is unchanged", func(ctx SpecContext) {
 				SuiteData.Stubs.SetEnv("ARTIFACT_DATA", artifactData1)
 				runCommand(ctx, "converge")
 
-				Expect(StagesCount(ctx)).Should(Equal(expectedStageCountAfterFirstBuild + 2))
+				Expect(StagesCount(ctx)).Should(Equal(expectedStageCountAfterFirstBuild + 3))
 
 				runCommand(ctx, "cleanup")
 
-				Expect(StagesCount(ctx)).Should(Equal(expectedStageCountAfterFirstBuild + 2))
+				Expect(StagesCount(ctx)).Should(Equal(expectedStageCountAfterFirstBuild))
 			})
 
-			It("should keep one", func(ctx SpecContext) {
+			It("should delete replaced stages when imported content changes", func(ctx SpecContext) {
 				SuiteData.Stubs.SetEnv("ARTIFACT_DATA", artifactData2)
 				runCommand(ctx, "converge")
 

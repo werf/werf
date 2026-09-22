@@ -112,6 +112,9 @@ type Image struct {
 	TargetPlatform                   string
 	BuildDuration                    time.Duration
 	AnchorReused                     bool
+	ContentAnchorOutLog              []byte
+	ContentAnchorErrLog              []byte
+	Requested                        bool
 	// Skipped marks an image that no image being built needs: it is not final,
 	// was not requested explicitly, and every image depending on it is reused
 	// by its content anchor. Such an image is not processed at all and has no
@@ -511,6 +514,18 @@ func debugStagesStorage() bool {
 	return os.Getenv("WERF_DEBUG_STAGES_STORAGE") == "1"
 }
 
+func (i *Image) setBaseStageImageInfo(info *image.Info) {
+	stageDesc := i.baseStageImage.Image.GetStageDesc()
+	if stageDesc == nil {
+		stageDesc = &image.StageDesc{}
+	} else {
+		stageDescCopy := *stageDesc
+		stageDesc = &stageDescCopy
+	}
+	stageDesc.Info = info
+	i.baseStageImage.Image.SetStageDesc(stageDesc)
+}
+
 func (i *Image) FetchBaseImage(ctx context.Context) (FetchBaseImageInfo, error) {
 	logboek.Context(ctx).Debug().LogF(" -- FetchBaseImage for %q\n", i.Name)
 
@@ -527,15 +542,7 @@ func (i *Image) FetchBaseImage(ctx context.Context) (FetchBaseImageInfo, error) 
 			}
 
 			// TODO: do not use container_backend.LegacyStageImage for base image
-			// TODO: It might be a stage as base image (passed as dependency), and the absence of StageID in the description will lead to breaking the logic.
-			if i.baseStageImage.Image.GetStageDesc() != nil {
-				i.baseStageImage.Image.GetStageDesc().Info = info
-			} else {
-				i.baseStageImage.Image.SetStageDesc(&image.StageDesc{
-					StageID: nil, // this is not a stage actually, TODO
-					Info:    info,
-				})
-			}
+			i.setBaseStageImageInfo(info)
 
 			err = i.setupBaseImageRepoDigest(ctx, i.baseStageImage.Image.Name())
 			if (i.baseImageRepoDigest != "" && i.baseImageRepoDigest == info.RepoDigest) || (err != nil && !isUnsupportedMediaTypeError(err)) {
@@ -570,15 +577,7 @@ func (i *Image) FetchBaseImage(ctx context.Context) (FetchBaseImageInfo, error) 
 			return FetchBaseImageInfo{}, fmt.Errorf("unable to inspect local image %s after successful pull: image is not exist", i.baseStageImage.Image.Name())
 		}
 
-		// TODO: It might be a stage as base image (passed as dependency), and the absence of StageID in the description will lead to breaking the logic.
-		if i.baseStageImage.Image.GetStageDesc() != nil {
-			i.baseStageImage.Image.GetStageDesc().Info = info
-		} else {
-			i.baseStageImage.Image.SetStageDesc(&image.StageDesc{
-				StageID: nil, // this is not a stage actually, TODO
-				Info:    info,
-			})
-		}
+		i.setBaseStageImageInfo(info)
 
 		return FetchBaseImageInfo{BaseImagePulled: true, BaseImageSource: BaseImageSourceTypeRegistry}, nil
 	case FromImage:

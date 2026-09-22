@@ -1,6 +1,7 @@
 package build
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"os"
@@ -133,9 +134,11 @@ func (phase *BuildPhase) BeforeImages(ctx context.Context) error {
 		return fmt.Errorf("unable to calculate content-based digests: %w", err)
 	}
 
-	if err := phase.skipUnneededImages(ctx); err != nil {
-		return fmt.Errorf("unable to determine images to skip: %w", err)
+	if err := phase.resolveAvailableContentAnchors(ctx); err != nil {
+		return fmt.Errorf("unable to resolve available content anchors: %w", err)
 	}
+
+	phase.skipUnneededImages()
 
 	return nil
 }
@@ -207,26 +210,44 @@ func (phase *BuildPhase) calculateAnchorDigest(ctx context.Context, img *image.I
 	return nil
 }
 
-func (phase *BuildPhase) skipUnneededImages(ctx context.Context) error {
+func (phase *BuildPhase) resolveAvailableContentAnchors(ctx context.Context) error {
 	graph := phase.Conveyor.imagesTree.GetImagesGraph()
 	if graph == nil {
 		return nil
 	}
 
-	nodes := graph.Nodes()
+	for _, img := range graph.Nodes() {
+		img.Requested = phase.isRequestedImage(img)
+		if img.GetAnchorDigest() == "" {
+			continue
+		}
 
-	anchorExists := make(map[*image.Image]bool, len(nodes))
-	for _, img := range nodes {
-		exists, err := phase.anchorExistsInStagesStorage(ctx, img)
-		if err != nil {
+		var outBuf, errBuf bytes.Buffer
+		resolveCtx := logboek.NewContext(ctx, logboek.Context(ctx).NewSubLogger(&outBuf, &errBuf))
+		phase.StagesIterator = NewStagesIterator(phase.Conveyor)
+		if err := phase.resolveContentAnchor(resolveCtx, img, false); err != nil {
 			return fmt.Errorf("image %q: %w", img.Name, err)
 		}
-		anchorExists[img] = exists
+		img.ContentAnchorOutLog = bytes.Clone(outBuf.Bytes())
+		img.ContentAnchorErrLog = bytes.Clone(errBuf.Bytes())
+	}
+
+	return nil
+}
+
+func (phase *BuildPhase) skipUnneededImages() {
+	graph := phase.Conveyor.imagesTree.GetImagesGraph()
+	if graph == nil {
+		return
+	}
+
+	nodes := graph.Nodes()
+	anchorExists := make(map[*image.Image]bool, len(nodes))
+	for _, img := range nodes {
+		anchorExists[img] = img.AnchorReused
 	}
 
 	markUnneededImages(graph, anchorExists, phase.isRequestedImage)
-
-	return nil
 }
 
 // markUnneededImages marks every non-final image that would have to be built
@@ -275,49 +296,6 @@ func markUnneededImages(graph *image.ImagesGraph, anchorExists map[*image.Image]
 	for _, img := range nodes {
 		img.Skipped = skipped[img.Name]
 	}
-}
-
-func (phase *BuildPhase) anchorExistsInStagesStorage(ctx context.Context, img *image.Image) (bool, error) {
-	if img.GetAnchorDigest() == "" {
-		return false, nil
-	}
-
-	stages := img.GetStages()
-	anchor := stages[len(stages)-1]
-
-	storageManager := phase.Conveyor.StorageManager
-	stageDescSet, err := storageManager.GetStageDescSetByDigestWithCache(ctx, anchor.LogDetailedName(), img.GetAnchorDigest(), 0)
-	if err != nil {
-		return false, fmt.Errorf("unable to get stages by content-based digest %s: %w", img.GetAnchorDigest(), err)
-	}
-
-	stageDesc, err := storageManager.SelectSuitableStageDesc(ctx, phase.Conveyor, anchor, stageDescSet)
-	if err != nil {
-		return false, fmt.Errorf("unable to select suitable stage by content-based digest %s: %w", img.GetAnchorDigest(), err)
-	}
-	if stageDesc != nil {
-		return true, nil
-	}
-
-	// resolveContentAnchor falls back to the secondary stages storages and copies
-	// what it finds into the primary one, so an anchor available there reuses the
-	// image just as one in the primary storage does.
-	for _, secondaryStagesStorage := range storageManager.GetSecondaryStagesStorageList() {
-		secondaryStageDescSet, err := storageManager.GetStageDescSetByDigestFromStagesStorageWithCache(ctx, anchor.LogDetailedName(), img.GetAnchorDigest(), 0, secondaryStagesStorage)
-		if err != nil {
-			return false, fmt.Errorf("unable to get stages by content-based digest %s from secondary stages storage %s: %w", img.GetAnchorDigest(), secondaryStagesStorage.String(), err)
-		}
-
-		secondaryStageDesc, err := storageManager.SelectSuitableStageDesc(ctx, phase.Conveyor, anchor, secondaryStageDescSet)
-		if err != nil {
-			return false, fmt.Errorf("unable to select suitable stage by content-based digest %s in secondary stages storage %s: %w", img.GetAnchorDigest(), secondaryStagesStorage.String(), err)
-		}
-		if secondaryStageDesc != nil {
-			return true, nil
-		}
-	}
-
-	return false, nil
 }
 
 func (phase *BuildPhase) isRequestedImage(img *image.Image) bool {
@@ -704,10 +682,21 @@ func (phase *BuildPhase) ImageProcessingShouldBeStopped(_ context.Context, _ *im
 func (phase *BuildPhase) BeforeImageStages(ctx context.Context, img *image.Image) (deferFn func(), err error) {
 	phase.StagesIterator = NewStagesIterator(phase.Conveyor)
 
+	if stageDesc := img.GetContentTagDesc(); stageDesc != nil {
+		if _, err := logboek.Context(ctx).OutStream().Write(img.ContentAnchorOutLog); err != nil {
+			return nil, fmt.Errorf("write content anchor stdout log: %w", err)
+		}
+		if _, err := logboek.Context(ctx).ErrStream().Write(img.ContentAnchorErrLog); err != nil {
+			return nil, fmt.Errorf("write content anchor stderr log: %w", err)
+		}
+		phase.logContentAnchorReuse(ctx, img, stageDesc)
+		return nil, nil
+	}
+
 	// The content anchor is resolved before the base image is set up: a reused
 	// image is not built, so its base image is never needed — and it may not even
 	// exist, when nothing being built needs it (see markUnneededImages).
-	if err := phase.resolveContentAnchor(ctx, img); err != nil {
+	if err := phase.resolveContentAnchor(ctx, img, true); err != nil {
 		return nil, err
 	}
 	if img.GetContentTagDesc() != nil {
@@ -736,7 +725,7 @@ func (phase *BuildPhase) BeforeImageStages(ctx context.Context, img *image.Image
 	return deferFn, nil
 }
 
-func (phase *BuildPhase) resolveContentAnchor(ctx context.Context, img *image.Image) error {
+func (phase *BuildPhase) resolveContentAnchor(ctx context.Context, img *image.Image, logResult bool) error {
 	stages := img.GetStages()
 	if len(stages) == 0 {
 		return nil
@@ -787,20 +776,24 @@ func (phase *BuildPhase) resolveContentAnchor(ctx context.Context, img *image.Im
 		// conveyor.doImage short-circuits when GetContentTagDesc() != nil, so
 		// intermediate OnImageStage/AfterImageStages calls are skipped entirely.
 
-		if foundInPrimary {
-			var platform string
-			if img.ShouldLogPlatform() {
-				platform = img.TargetPlatform
-			}
-			logboek.Context(ctx).Default().LogFHighlight("Use previously built image for %s by content-based tag\n", img.LogName())
-			container_backend.LogImageInfoByStageDesc(ctx, stageDesc, platform)
+		if foundInPrimary && logResult {
+			phase.logContentAnchorReuse(ctx, img, stageDesc)
 		}
-	} else if phase.ShouldBeBuiltMode {
+	} else if phase.ShouldBeBuiltMode && logResult {
 		logboek.Context(ctx).Warn().LogFHighlight("Content-based digest %s for image %s not found\n", anchor.GetDigest(), img.LogName())
 		logboek.Context(ctx).Warn().LogLn()
 	}
 
 	return nil
+}
+
+func (phase *BuildPhase) logContentAnchorReuse(ctx context.Context, img *image.Image, stageDesc *imagePkg.StageDesc) {
+	var platform string
+	if img.ShouldLogPlatform() {
+		platform = img.TargetPlatform
+	}
+	logboek.Context(ctx).Default().LogFHighlight("Use previously built image for %s by content-based tag\n", img.LogName())
+	container_backend.LogImageInfoByStageDesc(ctx, stageDesc, platform)
 }
 
 func (phase *BuildPhase) AfterImageStages(ctx context.Context, img *image.Image) error {
