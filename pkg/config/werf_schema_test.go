@@ -32,6 +32,48 @@ var _ = Describe("werf.yaml JSON schema", func() {
 		}
 	})
 
+	DescribeTable("accepts a document the parser accepts",
+		func(document string) {
+			Expect(parseWerfDocument(document)).To(Succeed())
+			Expect(schema.Validate(yamlDocument(document))).To(Succeed())
+		},
+		Entry("bare numbers and booleans where werf reads strings", `
+image: app
+from: alpine:3.20
+cacheVersion: 1
+fromCacheVersion: 2
+shell:
+  installCacheVersion: 3
+imageSpec:
+  config:
+    env: {PORT: 8080, DEBUG: true}
+    labels: {version: 1}
+    expose: [8080, 443]
+    user: 1000
+`),
+		Entry("numeric owner and group in git and import", `
+image: app
+from: alpine:3.20
+git:
+- to: /app
+  owner: 1000
+  group: 1000
+import:
+- from: builder
+  before: install
+  add: /bin/app
+  owner: 0
+  group: 0
+`),
+		Entry("numeric appVersion", `
+configVersion: 1
+project: app
+deploy:
+  helmChartConfig:
+    appVersion: 1.2
+`),
+	)
+
 	DescribeTable("accepts a document",
 		func(document string) {
 			Expect(schema.Validate(yamlDocument(document))).To(Succeed())

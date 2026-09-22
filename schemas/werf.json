@@ -88,10 +88,26 @@
         "type": "string"
       }
     },
-    "stringMap": {
+    "scalarArray": {
+      "description": "Items are read as strings; a bare number or boolean is accepted as its literal text.",
+      "type": "array",
+      "items": {
+        "type": [
+          "string",
+          "number",
+          "boolean"
+        ]
+      }
+    },
+    "scalarMap": {
+      "description": "Values are read as strings; a bare number or boolean is accepted as its literal text.",
       "type": "object",
       "additionalProperties": {
-        "type": "string"
+        "type": [
+          "string",
+          "number",
+          "boolean"
+        ]
       }
     },
     "platform": {
@@ -355,19 +371,23 @@
         },
         "labels": {
           "description": "Labels to add.",
-          "$ref": "#/definitions/stringMap"
+          "$ref": "#/definitions/scalarMap"
         },
         "env": {
           "description": "Environment variables to add.\nhttps://docs.docker.com/engine/reference/builder/#env",
-          "$ref": "#/definitions/stringMap"
+          "$ref": "#/definitions/scalarMap"
         },
         "expose": {
           "description": "Exposed ports.\nhttps://docs.docker.com/engine/reference/builder/#expose",
-          "$ref": "#/definitions/stringArray"
+          "$ref": "#/definitions/scalarArray"
         },
         "user": {
           "description": "Set USER.\nhttps://docs.docker.com/engine/reference/builder/#user",
-          "type": "string"
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ]
         },
         "cmd": {
           "description": "Set CMD.\nhttps://docs.docker.com/engine/reference/builder/#cmd",
@@ -468,7 +488,7 @@
             },
             "labels": {
               "description": "Labels to add.",
-              "$ref": "#/definitions/stringMap"
+              "$ref": "#/definitions/scalarMap"
             }
           }
         }
@@ -556,7 +576,11 @@
               "properties": {
                 "appVersion": {
                   "description": "Override appVersion in Chart.yaml.",
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "number",
+                    "boolean"
+                  ]
                 }
               }
             },

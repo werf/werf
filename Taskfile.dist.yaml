@@ -60,7 +60,7 @@ tasks:
           echo "golangci-lint not installed, run: task deps:install:golangci-lint"
           exit 1
         fi
-        ./bin/golangci-lint-v2.11.4 run --build-tags="{{.distGoTags}}" -c .golangci.yml {{.CLI_ARGS}} {{.golangciPaths | default "./cmd/... ./pkg/... ./test/..."}}
+        ./bin/golangci-lint-v2.11.4 run --build-tags="{{.distGoTags}}" -c .golangci.yml {{.CLI_ARGS}} {{.golangciPaths | default "./cmd/... ./pkg/... ./schemas/... ./test/..."}}
     env:
       CGO_ENABLED: "0"
 
@@ -72,7 +72,7 @@ tasks:
           echo "golangci-lint not installed, run: task deps:install:golangci-lint"
           exit 1
         fi
-        ./bin/golangci-lint-v2.11.4 run --build-tags="{{.cgoTags}}" -c .golangci.yml {{.CLI_ARGS}} {{.golangciPaths | default "./cmd/... ./pkg/... ./test/..."}}
+        ./bin/golangci-lint-v2.11.4 run --build-tags="{{.cgoTags}}" -c .golangci.yml {{.CLI_ARGS}} {{.golangciPaths | default "./cmd/... ./pkg/... ./schemas/... ./test/..."}}
     env:
       CGO_ENABLED: "1"
 
@@ -406,7 +406,7 @@ tasks:
     cmds:
       - task: test:ginkgo
         vars:
-          paths: '{{.paths | default "./pkg ./cmd"}}'
+          paths: '{{.paths | default "./pkg ./cmd ./schemas"}}'
           parallel: "{{.parallel}}"
 
   test:integration:
