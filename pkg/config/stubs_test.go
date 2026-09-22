@@ -31,7 +31,7 @@ func (manager *GiterminismManagerStub) LocalGitRepo() git_repo.GitRepo {
 }
 
 func (manager *GiterminismManagerStub) Inspector() giterminism_manager.Inspector {
-	return &GiterminismInspectorStub{}
+	return &giterminismInspectorStub{}
 }
 
 func (manager *GiterminismManagerStub) Dev() bool {
@@ -44,55 +44,55 @@ func (manager *GiterminismManagerStub) HeadCommit(ctx context.Context) string {
 	return commit
 }
 
-type GiterminismInspectorStub struct{}
+type giterminismInspectorStub struct{}
 
-var _ giterminism_manager.Inspector = (*GiterminismInspectorStub)(nil)
+var _ giterminism_manager.Inspector = (*giterminismInspectorStub)(nil)
 
-func (inspector *GiterminismInspectorStub) InspectCustomTags() error {
+func (inspector *giterminismInspectorStub) InspectCustomTags() error {
 	return nil
 }
 
-func (inspector *GiterminismInspectorStub) InspectConfigGoTemplateRenderingEnv(ctx context.Context, envName string) error {
+func (inspector *giterminismInspectorStub) InspectConfigGoTemplateRenderingEnv(ctx context.Context, envName string) error {
 	return nil
 }
 
-func (inspector *GiterminismInspectorStub) InspectConfigStapelFromLatest() error {
+func (inspector *giterminismInspectorStub) InspectConfigStapelFromLatest() error {
 	return nil
 }
 
-func (inspector *GiterminismInspectorStub) InspectConfigStapelGitBranch() error {
+func (inspector *giterminismInspectorStub) InspectConfigStapelGitBranch() error {
 	return nil
 }
 
-func (inspector *GiterminismInspectorStub) InspectConfigStapelMountBuildDir() error {
+func (inspector *giterminismInspectorStub) InspectConfigStapelMountBuildDir() error {
 	return nil
 }
 
-func (inspector *GiterminismInspectorStub) InspectConfigStapelMountFromPath(fromPath string) error {
+func (inspector *giterminismInspectorStub) InspectConfigStapelMountFromPath(fromPath string) error {
 	return nil
 }
 
-func (inspector *GiterminismInspectorStub) InspectConfigDockerfileContextAddFile(relPath string) error {
+func (inspector *giterminismInspectorStub) InspectConfigDockerfileContextAddFile(relPath string) error {
 	return nil
 }
 
-func (inspector *GiterminismInspectorStub) InspectBuildContextFiles(ctx context.Context, matcher path_matcher.PathMatcher) error {
+func (inspector *giterminismInspectorStub) InspectBuildContextFiles(ctx context.Context, matcher path_matcher.PathMatcher) error {
 	return nil
 }
 
-func (inspector *GiterminismInspectorStub) InspectConfigSecretEnvAccepted(secret string) error {
+func (inspector *giterminismInspectorStub) InspectConfigSecretEnvAccepted(secret string) error {
 	return nil
 }
 
-func (inspector *GiterminismInspectorStub) InspectConfigSecretSrcAccepted(secret string) error {
+func (inspector *giterminismInspectorStub) InspectConfigSecretSrcAccepted(secret string) error {
 	return nil
 }
 
-func (inspector *GiterminismInspectorStub) InspectConfigSecretValueAccepted(secret string) error {
+func (inspector *giterminismInspectorStub) InspectConfigSecretValueAccepted(secret string) error {
 	return nil
 }
 
-func (inspector *GiterminismInspectorStub) InspectIncludesAllowUpdate() error {
+func (inspector *giterminismInspectorStub) InspectIncludesAllowUpdate() error {
 	return nil
 }
 
