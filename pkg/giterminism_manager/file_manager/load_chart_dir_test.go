@@ -111,6 +111,22 @@ var _ = Describe("LoadChartDir", func() {
 		Expect(contents).To(HaveKeyWithValue("templates/local.yaml", "local wins"))
 	})
 
+	It("takes a path from the first include that delivers it", func(ctx SpecContext) {
+		writeLocalChart(map[string]string{"Chart.yaml": "name: local"})
+		first := newInclude(map[string]string{"templates/shared.yaml": "from first"})
+		second := newInclude(map[string]string{"templates/shared.yaml": "from second"})
+
+		files, err := newFileManager(first, second).LoadChartDir(logging.WithLogger(ctx), ".helm")
+		Expect(err).NotTo(HaveOccurred())
+
+		contents := map[string]string{}
+		for _, f := range files {
+			contents[f.Name] = string(f.Data)
+		}
+		Expect(files).To(HaveLen(2))
+		Expect(contents).To(HaveKeyWithValue("templates/shared.yaml", "from first"))
+	})
+
 	It("drops an imported file matched by the local .helmignore", func(ctx SpecContext) {
 		writeLocalChart(map[string]string{
 			".helmignore": "templates/imported.yaml\n",
