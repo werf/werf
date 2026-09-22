@@ -130,7 +130,9 @@ func (r FileReader) walkFilesWithPathMatcher(ctx context.Context, relDir string,
 
 	absDirPath := r.projectRelativePathToAbsolutePath(resolvedDir)
 	return r.fileSystem.Walk(absDirPath, func(path string, f os.FileInfo, err error) error {
-		if err != nil {
+		// The walk reports a directory it could not list together with its entry, so the skip
+		// predicates get to exclude it first: an excluded directory does not have to be readable.
+		if err != nil && (f == nil || !f.IsDir()) {
 			return err
 		}
 
@@ -143,9 +145,9 @@ func (r FileReader) walkFilesWithPathMatcher(ctx context.Context, relDir string,
 			},
 			skipFileFunc,
 		} {
-			shouldSkip, err := shouldSkipFileFunc(ctx, r, resolvedRelPath, notResolvedRelPath)
-			if err != nil {
-				return err
+			shouldSkip, skipErr := shouldSkipFileFunc(ctx, r, resolvedRelPath, notResolvedRelPath)
+			if skipErr != nil {
+				return skipErr
 			}
 
 			if shouldSkip {
@@ -155,6 +157,10 @@ func (r FileReader) walkFilesWithPathMatcher(ctx context.Context, relDir string,
 					return nil
 				}
 			}
+		}
+
+		if err != nil {
+			return err
 		}
 
 		if f.IsDir() {

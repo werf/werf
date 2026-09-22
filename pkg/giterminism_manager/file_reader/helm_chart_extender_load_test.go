@@ -120,6 +120,29 @@ var _ = Describe("LoadChartDir", func() {
 		))
 	})
 
+	// filepath.Walk hands a directory it could not list to the callback together with the
+	// error, so the rules have to be asked before the error is honored, the way helm does.
+	It("does not read a directory matched by .helmignore", func(ctx SpecContext) {
+		if os.Geteuid() == 0 {
+			Skip("root reads a mode 000 directory")
+		}
+
+		chartDir := writeChart(map[string]string{
+			".helmignore":         "private\n",
+			"Chart.yaml":          "name: test",
+			"private/secret.yaml": "secret",
+			"templates/kept.yaml": "kept",
+		})
+
+		privateDir := filepath.Join(chartDir, "private")
+		Expect(os.Chmod(privateDir, 0o000)).To(Succeed())
+		DeferCleanup(os.Chmod, privateDir, os.FileMode(0o755))
+
+		Expect(loadedNames(logging.WithLogger(ctx), chartDir)).To(ConsistOf(
+			".helmignore", "Chart.yaml", "templates/kept.yaml",
+		))
+	})
+
 	It("drops the dotfiles under templates without a .helmignore", func(ctx SpecContext) {
 		chartDir := writeChart(map[string]string{
 			"Chart.yaml":          "name: test",
