@@ -414,7 +414,7 @@ func (f *FileManager) LoadChartDir(ctx context.Context, dir string) ([]*nelmcomm
 	}
 
 	if len(chartDir) == 0 {
-		err := fmt.Errorf("load chart dir error: the directory %q not found in the project git repository or includes", dir)
+		err := fmt.Errorf("load chart dir error: no chart files found in %q in the project git repository or includes", dir)
 		if rules.HasIgnoreFile() {
 			return nil, fmt.Errorf("%w; the chart has a %s, check whether its rules exclude every file", err, ignore.HelmIgnore)
 		}

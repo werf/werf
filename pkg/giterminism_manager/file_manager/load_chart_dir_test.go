@@ -196,22 +196,22 @@ var _ = Describe("LoadChartDir", func() {
 		})
 
 		_, err := newFileManager().LoadChartDir(logging.WithLogger(ctx), ".helm")
-		Expect(err).To(MatchError(ContainSubstring("not found in the project git repository or includes")))
+		Expect(err).To(MatchError(ContainSubstring("no chart files found in \".helm\" in the project git repository or includes")))
 		Expect(err).To(MatchError(ContainSubstring("the chart has a .helmignore")))
 	})
 
-	It("reports a missing chart directory as not found rather than excluded", func(ctx SpecContext) {
+	It("reports a missing chart directory as having no chart files", func(ctx SpecContext) {
 		_, err := newFileManager().LoadChartDir(logging.WithLogger(ctx), ".helm")
-		Expect(err).To(MatchError(ContainSubstring("not found in the project git repository or includes")))
+		Expect(err).To(MatchError(ContainSubstring("no chart files found in \".helm\" in the project git repository or includes")))
 	})
 
 	// An existing but empty directory has nothing to exclude, so blaming .helmignore there would
 	// send the user looking for a rule that does not exist.
-	It("reports an empty chart directory as not found rather than excluded", func(ctx SpecContext) {
+	It("reports an empty chart directory as having no chart files", func(ctx SpecContext) {
 		Expect(os.MkdirAll(filepath.Join(projectDir, ".helm"), 0o755)).To(Succeed())
 
 		_, err := newFileManager().LoadChartDir(logging.WithLogger(ctx), ".helm")
-		Expect(err).To(MatchError(ContainSubstring("not found in the project git repository or includes")))
+		Expect(err).To(MatchError(ContainSubstring("no chart files found in \".helm\" in the project git repository or includes")))
 	})
 
 	// Helm's own defaults empty this chart, so there is no .helmignore to send the user looking for.
@@ -219,7 +219,7 @@ var _ = Describe("LoadChartDir", func() {
 		writeLocalChart(map[string]string{"templates/.gitkeep": ""})
 
 		_, err := newFileManager().LoadChartDir(logging.WithLogger(ctx), ".helm")
-		Expect(err).To(MatchError(ContainSubstring("not found in the project git repository or includes")))
+		Expect(err).To(MatchError(ContainSubstring("no chart files found in \".helm\" in the project git repository or includes")))
 		Expect(err).NotTo(MatchError(ContainSubstring("the chart has a .helmignore")))
 	})
 
@@ -227,7 +227,7 @@ var _ = Describe("LoadChartDir", func() {
 		include := newInclude(map[string]string{"templates/.gitkeep": ""})
 
 		_, err := newFileManager(include).LoadChartDir(logging.WithLogger(ctx), ".helm")
-		Expect(err).To(MatchError(ContainSubstring("not found in the project git repository or includes")))
+		Expect(err).To(MatchError(ContainSubstring("no chart files found in \".helm\" in the project git repository or includes")))
 		Expect(err).NotTo(MatchError(ContainSubstring("the chart has a .helmignore")))
 	})
 
@@ -238,7 +238,7 @@ var _ = Describe("LoadChartDir", func() {
 		})
 
 		_, err := newFileManager(include).LoadChartDir(logging.WithLogger(ctx), ".helm")
-		Expect(err).To(MatchError(ContainSubstring("not found in the project git repository or includes")))
+		Expect(err).To(MatchError(ContainSubstring("no chart files found in \".helm\" in the project git repository or includes")))
 		Expect(err).To(MatchError(ContainSubstring("the chart has a .helmignore")))
 	})
 
