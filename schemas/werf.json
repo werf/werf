@@ -359,7 +359,7 @@
         },
         "removeVolumes": {
           "description": "List of volumes to remove.",
-          "$ref": "#/definitions/stringArray"
+          "$ref": "#/definitions/scalarArray"
         },
         "removeEnv": {
           "description": "List of environment variables to remove. Each item is an exact name or `/REGEXP/`.",
@@ -370,7 +370,7 @@
         },
         "volumes": {
           "description": "List of volumes to add.\nhttps://docs.docker.com/engine/reference/builder/#volume",
-          "$ref": "#/definitions/stringArray"
+          "$ref": "#/definitions/scalarArray"
         },
         "labels": {
           "description": "Labels to add.",
@@ -406,7 +406,11 @@
         },
         "stopSignal": {
           "description": "Set STOPSIGNAL.\nhttps://docs.docker.com/engine/reference/builder/#stopsignal",
-          "type": "string"
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ]
         },
         "healthcheck": {
           "description": "Healthcheck configuration. Intervals are in seconds.\nhttps://docs.docker.com/engine/reference/builder/#healthcheck",
@@ -537,7 +541,10 @@
         },
         "project": {
           "description": "Unique project name. Lower-case letters, digits and dashes; must not start or end with a dash.",
-          "type": "string",
+          "type": [
+            "string",
+            "number"
+          ],
           "minLength": 1
         },
         "build": {

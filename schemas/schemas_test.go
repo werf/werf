@@ -2,6 +2,7 @@ package schemas
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -24,6 +25,40 @@ var _ = Describe("published schemas", func() {
 		for _, path := range paths {
 			_, err := jsonschema.NewCompiler().Compile(path)
 			Expect(err).NotTo(HaveOccurred(), path)
+		}
+	})
+
+	It("reject unknown properties in every declared object", func() {
+		paths, err := filepath.Glob("*.json")
+		Expect(err).NotTo(HaveOccurred())
+
+		for _, path := range paths {
+			data, err := os.ReadFile(path)
+			Expect(err).NotTo(HaveOccurred())
+
+			var schema any
+			Expect(json.Unmarshal(data, &schema)).To(Succeed())
+
+			var nonStrictObjects []string
+			var walk func(any, string)
+			walk = func(value any, pointer string) {
+				switch value := value.(type) {
+				case map[string]any:
+					if value["type"] == "object" && value["properties"] != nil && value["additionalProperties"] != false && pointer != "/definitions/dependencyBase" {
+						nonStrictObjects = append(nonStrictObjects, pointer)
+					}
+					for key, child := range value {
+						walk(child, pointer+"/"+key)
+					}
+				case []any:
+					for index, child := range value {
+						walk(child, fmt.Sprintf("%s/%d", pointer, index))
+					}
+				}
+			}
+			walk(schema, "")
+
+			Expect(nonStrictObjects).To(BeEmpty(), path)
 		}
 	})
 

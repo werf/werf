@@ -52,6 +52,9 @@ imageSpec:
     user: 1000
     cmd: [sleep, 3600]
     entrypoint: [/bin/retry, 5]
+    volumes: [8080]
+    removeVolumes: [8080]
+    stopSignal: 9
     healthcheck:
       test: [CMD, curl, --retry, 3, http://localhost/]
 `),
@@ -59,6 +62,9 @@ imageSpec:
 image: app
 from: alpine:3.20
 git:
+- url: https://github.com/werf/werf.git
+  branch: 3
+  to: /werf-branch
 - url: https://github.com/werf/werf.git
   tag: 2
   to: /werf
@@ -90,9 +96,9 @@ import:
   owner: 0
   group: 0
 `),
-		Entry("numeric appVersion", `
+		Entry("numeric project and appVersion", `
 configVersion: 1
-project: app
+project: 123
 deploy:
   helmChartConfig:
     appVersion: 1.2
@@ -292,8 +298,9 @@ imageSpec:
 `),
 	)
 
-	DescribeTable("rejects a document",
+	DescribeTable("rejects a document the parser rejects",
 		func(document string) {
+			Expect(parseWerfDocument(document)).NotTo(Succeed())
 			Expect(schema.Validate(yamlDocument(document))).NotTo(Succeed())
 		},
 		Entry("meta without project", `
@@ -351,13 +358,6 @@ cleanup:
 `),
 		Entry("document that is neither meta nor image", `
 from: alpine
-`),
-		Entry("dockerfile image without image name", `
-dockerfile: Dockerfile
-`),
-		Entry("dockerfile image with empty image list", `
-image: []
-dockerfile: Dockerfile
 `),
 		Entry("dockerfile image with stapel directive", `
 image: app
@@ -456,27 +456,6 @@ image: app
 from: alpine
 git:
 - add: /src
-`),
-		Entry("git mapping password with two sources", `
-image: app
-from: alpine
-git:
-- url: https://example.com/repo.git
-  to: /app
-  basicAuth:
-    password:
-      env: A
-      value: b
-`),
-		Entry("git mapping password with empty source", `
-image: app
-from: alpine
-git:
-- url: https://example.com/repo.git
-  to: /app
-  basicAuth:
-    password:
-      env: ""
 `),
 		Entry("stage dependencies for unknown stage", `
 image: app
@@ -591,6 +570,41 @@ build:
   imageSpec:
     config:
       cmd: [run]
+`),
+	)
+
+	DescribeTable("rejects a useless document the parser silently ignores",
+		func(document string) {
+			Expect(parseWerfDocument(document)).To(Succeed())
+			Expect(schema.Validate(yamlDocument(document))).NotTo(Succeed())
+		},
+		Entry("dockerfile image without image name", `
+dockerfile: Dockerfile
+`),
+		Entry("dockerfile image with empty image list", `
+image: []
+dockerfile: Dockerfile
+`),
+		Entry("git mapping password with two sources", `
+image: app
+from: alpine
+git:
+- url: https://example.com/repo.git
+  to: /app
+  basicAuth:
+    password:
+      env: A
+      value: b
+`),
+		Entry("git mapping password with empty source", `
+image: app
+from: alpine
+git:
+- url: https://example.com/repo.git
+  to: /app
+  basicAuth:
+    password:
+      env: ""
 `),
 	)
 })

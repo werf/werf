@@ -72,13 +72,15 @@ func parseWerfDocument(data string) error {
 		}
 		_, err := image.toImageFromDockerfileDirectives(giterminismManager)
 		return err
-	default:
+	case isImageDoc(raw):
 		image := &rawStapelImage{doc: document}
 		if err := yamlv2.UnmarshalStrict(document.Content, image); err != nil {
 			return err
 		}
 		_, err := image.toStapelImageDirectives(giterminismManager)
 		return err
+	default:
+		return errors.New("cannot recognize config section type")
 	}
 }
 
