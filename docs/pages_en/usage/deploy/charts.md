@@ -135,7 +135,7 @@ The `.helmignore` file in the chart root can include filename filters that preve
 
 - `.helmignore` does not exclude itself by default;
 
-- Helm's default rule `templates/.?*` always applies, so dotfiles directly under `templates/` are excluded even without a `.helmignore`.
+- Helm's default rule `templates/.?*` always applies, so files and directories starting with a dot directly under `templates/` are excluded even without a `.helmignore`, a directory along with its contents.
 
 Which `.helmignore` filters a dependent chart depends on how the chart is included:
 
