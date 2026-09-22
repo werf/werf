@@ -49,10 +49,11 @@ type CommonImageOptions struct {
 
 type ImageOptions struct {
 	CommonImageOptions
-	IsFinal               bool
-	DockerfileImageConfig *config.ImageFromDockerfile
-	StapelImageConfig     config.StapelImageInterface
-	IsDockerfileImage     bool
+	IsFinal                          bool
+	DockerfileImageConfig            *config.ImageFromDockerfile
+	StapelImageConfig                config.StapelImageInterface
+	IsDockerfileImage                bool
+	RequiresResolvedDependencyInputs bool
 
 	BaseImageReference        string
 	BaseImageName             string
@@ -73,13 +74,14 @@ func NewImage(ctx context.Context, targetPlatform, name string, baseImageType Ba
 	}
 
 	i := &Image{
-		Name:                  name,
-		CommonImageOptions:    opts.CommonImageOptions,
-		IsFinal:               opts.IsFinal,
-		IsDockerfileImage:     opts.IsDockerfileImage,
-		DockerfileImageConfig: opts.DockerfileImageConfig,
-		StapelImageConfig:     opts.StapelImageConfig,
-		TargetPlatform:        targetPlatform,
+		Name:                             name,
+		CommonImageOptions:               opts.CommonImageOptions,
+		IsFinal:                          opts.IsFinal,
+		IsDockerfileImage:                opts.IsDockerfileImage,
+		DockerfileImageConfig:            opts.DockerfileImageConfig,
+		StapelImageConfig:                opts.StapelImageConfig,
+		RequiresResolvedDependencyInputs: opts.RequiresResolvedDependencyInputs,
+		TargetPlatform:                   targetPlatform,
 
 		baseImageType:             baseImageType,
 		baseImageReference:        opts.BaseImageReference,
@@ -100,15 +102,16 @@ func NewImage(ctx context.Context, targetPlatform, name string, baseImageType Ba
 type Image struct {
 	CommonImageOptions
 
-	IsFinal                 bool
-	IsDockerfileImage       bool
-	IsDockerfileTargetStage bool
-	Name                    string
-	DockerfileImageConfig   *config.ImageFromDockerfile
-	StapelImageConfig       config.StapelImageInterface
-	TargetPlatform          string
-	BuildDuration           time.Duration
-	AnchorReused            bool
+	IsFinal                          bool
+	IsDockerfileImage                bool
+	IsDockerfileTargetStage          bool
+	Name                             string
+	DockerfileImageConfig            *config.ImageFromDockerfile
+	StapelImageConfig                config.StapelImageInterface
+	RequiresResolvedDependencyInputs bool
+	TargetPlatform                   string
+	BuildDuration                    time.Duration
+	AnchorReused                     bool
 	// Skipped marks an image that no image being built needs: it is not final,
 	// was not requested explicitly, and every image depending on it is reused
 	// by its content anchor. Such an image is not processed at all and has no
@@ -463,6 +466,10 @@ func (i *Image) GetBaseStageImage() *stage.StageImage {
 
 func (i *Image) GetBaseImageReference() string {
 	return i.baseImageReference
+}
+
+func (i *Image) GetBaseImageName() string {
+	return i.baseImageName
 }
 
 // adoptResolvedBaseImageReference hands the base reference resolved for an internal base

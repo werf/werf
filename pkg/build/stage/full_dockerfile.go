@@ -270,13 +270,18 @@ func toArgsArray(argsHashes ...map[string]string) []string {
 }
 
 func shlexProcessWord(value string, argsArray []string) (string, error) {
+	resolvedValue, _, err := shlexProcessWordWithUnmatched(value, argsArray)
+	return resolvedValue, err
+}
+
+func shlexProcessWordWithUnmatched(value string, argsArray []string) (string, bool, error) {
 	shlex := shell.NewLex(parser.DefaultEscapeToken)
-	resolvedValue, _, err := shlex.ProcessWord(value, shell.EnvsFromSlice(argsArray))
+	resolvedValue, unmatched, err := shlex.ProcessWord(value, shell.EnvsFromSlice(argsArray))
 	if err != nil {
-		return "", err
+		return "", false, err
 	}
 
-	return resolvedValue, nil
+	return resolvedValue, len(unmatched) > 0, nil
 }
 
 func NewContextChecksum(dockerignorePathMatcher path_matcher.PathMatcher) *ContextChecksum {
@@ -499,9 +504,24 @@ func (s *FullDockerfileStage) dockerfileInstructionDependencies(ctx context.Cont
 	resolveSourcesFunc := func(sources []string) ([]string, error) {
 		var resolvedSources []string
 		for _, source := range sources {
-			resolvedSource, err := resolveValueFunc(source)
+			if isBaseImageOnbuildInstruction {
+				resolvedSources = append(resolvedSources, source)
+				continue
+			}
+
+			var argsArray []string
+			if isOnbuildInstruction {
+				argsArray = toArgsArray(s.DockerStageEnvs(dockerStageID))
+			} else {
+				argsArray = toArgsArray(s.DockerStageArgsHash(dockerStageID), s.DockerStageEnvs(dockerStageID))
+			}
+
+			resolvedSource, unmatched, err := shlexProcessWordWithUnmatched(source, argsArray)
 			if err != nil {
 				return nil, err
+			}
+			if unmatched {
+				return []string{"."}, nil
 			}
 
 			resolvedSources = append(resolvedSources, resolvedSource)

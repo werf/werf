@@ -138,9 +138,6 @@ var _ = Describe("markUnneededImages", func() {
 				expectSkipped: map[*image.Image]bool{middle: true, root: true},
 			}
 		}),
-		// Nodes are decided in topological order, so root is looked at while
-		// middle is still marked skipped: keeping root only takes effect on a
-		// later pass over the graph.
 		Entry("nothing is skipped in a chain whose anchors are all absent", func() unneededImagesScenario {
 			base := newTestImage("base", false)
 			middle := newTestImage("middle", false, "base")
@@ -169,9 +166,6 @@ var _ = Describe("markUnneededImages", func() {
 				expectSkipped: map[*image.Image]bool{baseAmd: false, baseArm: false},
 			}
 		}),
-		// The anchor of the middle image is present for one platform only, so it
-		// has to be built for the other one — together with the image it is
-		// built from.
 		Entry("chain with per-platform anchors", func() unneededImagesScenario {
 			baseAmd := newTestImageForPlatform("linux/amd64", "base", false)
 			baseArm := newTestImageForPlatform("linux/arm64", "base", false)
@@ -201,6 +195,17 @@ var _ = Describe("markUnneededImages", func() {
 		markUnneededImages(newTestImagesGraph(base, app), map[*image.Image]bool{base: false, app: true}, phase.isRequestedImage)
 
 		Expect(base.Skipped).To(BeFalse())
+		Expect(app.Skipped).To(BeFalse())
+	})
+
+	It("skips a missing internal staged subimage when the requested configured image is reused", func() {
+		internal := newTestImage("app/stage/build", false)
+		app := newTestImage("app", true, "app/stage/build")
+		phase := newTestBuildPhase(nil, []string{"app"})
+
+		markUnneededImages(newTestImagesGraph(internal, app), map[*image.Image]bool{internal: false, app: true}, phase.isRequestedImage)
+
+		Expect(internal.Skipped).To(BeTrue())
 		Expect(app.Skipped).To(BeFalse())
 	})
 })

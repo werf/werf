@@ -104,6 +104,51 @@ func (stg *Base[T, BT]) GetExpandedEnvForContent() map[string]string {
 	return env
 }
 
+func (stg *Base[T, BT]) contentSourcePaths(c stage.Conveyor, sourcePaths []string) ([]string, error) {
+	if stg.instruction.ExpanderFactory == nil {
+		return sourcePaths, nil
+	}
+
+	dependencyArgs := stage.ResolveDependenciesArgsForContent(stg.dependencies)
+	env := make(map[string]string)
+	maps.Copy(env, stg.instruction.Env)
+	maps.Copy(env, dependencyArgs)
+	expander := stg.instruction.ExpanderFactory.GetExpander(dockerfile.ExpandOptions{SkipUnsetEnv: true})
+
+	resolvedSourcePaths := make([]string, 0, len(sourcePaths))
+	for _, sourcePath := range sourcePaths {
+		resolvedSourcePath, matched, unmatched, err := expander.ProcessWordWithMatches(sourcePath, env)
+		if err != nil {
+			return nil, fmt.Errorf("expand content source %q: %w", sourcePath, err)
+		}
+		if len(unmatched) > 0 {
+			return []string{"."}, nil
+		}
+
+		for key := range matched {
+			if _, ok := dependencyArgs[key]; !ok {
+				continue
+			}
+
+			actualEnv := make(map[string]string)
+			maps.Copy(actualEnv, stg.instruction.Env)
+			maps.Copy(actualEnv, stage.ResolveDependenciesArgs(stg.TargetPlatform(), stg.dependencies, c))
+			resolvedSourcePath, _, unmatched, err = expander.ProcessWordWithMatches(sourcePath, actualEnv)
+			if err != nil {
+				return nil, fmt.Errorf("expand content source %q: %w", sourcePath, err)
+			}
+			if len(unmatched) > 0 {
+				return []string{"."}, nil
+			}
+			break
+		}
+
+		resolvedSourcePaths = append(resolvedSourcePaths, resolvedSourcePath)
+	}
+
+	return resolvedSourcePaths, nil
+}
+
 func (stg *Base[T, BT]) expandedEnvWithDependenciesArgs(dependenciesArgs map[string]string) map[string]string {
 	env := make(map[string]string)
 	maps.Copy(env, stg.expandedEnv)

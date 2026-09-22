@@ -29,6 +29,7 @@ type ExpanderFactory interface {
 
 type Expander interface {
 	ProcessWordWithMap(word string, env map[string]string) (string, error)
+	ProcessWordWithMatches(word string, env map[string]string) (string, map[string]struct{}, map[string]struct{}, error)
 	ProcessWordsWithMap(word string, env map[string]string) ([]string, error)
 }
 
