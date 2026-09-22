@@ -348,7 +348,7 @@ func (f *FileManager) LoadChartDir(ctx context.Context, dir string) ([]*nelmcomm
 	if normDir == "." {
 		dirPrefix = ""
 	}
-	processed := make(map[string]bool)
+	processed := make(map[string]struct{})
 
 	var chartDir []*nelmcommon.BufferedFile
 
@@ -370,7 +370,7 @@ func (f *FileManager) LoadChartDir(ctx context.Context, dir string) ([]*nelmcomm
 		for _, file := range chartDir {
 			processedPath := filepath.ToSlash(filepath.Join(dir, file.Name))
 			logboek.Context(ctx).Debug().LogF("--- %s read from filesystem \n", processedPath)
-			processed[processedPath] = true
+			processed[processedPath] = struct{}{}
 		}
 	}
 
@@ -390,7 +390,7 @@ func (f *FileManager) LoadChartDir(ctx context.Context, dir string) ([]*nelmcomm
 			relToChartPath := strings.TrimPrefix(normToPath, dirPrefix)
 			if rules.IsFileIgnored(ctx, relToChartPath) {
 				logboek.Context(ctx).Debug().LogF("--- %s excluded by %s \n", normToPath, ignore.HelmIgnore)
-				processed[normToPath] = true
+				processed[normToPath] = struct{}{}
 				return nil
 			}
 
@@ -405,7 +405,7 @@ func (f *FileManager) LoadChartDir(ctx context.Context, dir string) ([]*nelmcomm
 				Name: relToChartPath,
 				Data: data,
 			})
-			processed[normToPath] = false
+			processed[normToPath] = struct{}{}
 			return nil
 		})
 		if err != nil {
