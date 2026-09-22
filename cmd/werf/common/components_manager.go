@@ -5,11 +5,13 @@ import (
 	"fmt"
 
 	"github.com/werf/logboek"
+	"github.com/werf/werf/v2/pkg/background"
 	"github.com/werf/werf/v2/pkg/buildah"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
+	"github.com/werf/werf/v2/pkg/host_cleaning"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/logging"
 	"github.com/werf/werf/v2/pkg/ssh_agent"
@@ -68,6 +70,10 @@ func InitCommonComponents(ctx context.Context, opts InitCommonComponentsOptions)
 		} else if ok {
 			global_warnings.GlobalWarningLn(ctx, warning)
 		}
+
+		if !background.IsBackgroundModeEnabled() {
+			notifyAboutAutoHostCleanup(ctx)
+		}
 	}
 
 	if opts.InitProcessContainerBackend || opts.InitDockerRegistry {
@@ -114,6 +120,25 @@ func InitCommonComponents(ctx context.Context, opts InitCommonComponentsOptions)
 	}
 
 	return cmanager, ctx, nil
+}
+
+func notifyAboutAutoHostCleanup(ctx context.Context) {
+	// Commands with machine-readable output suppress warnings to keep it clean, so keep the notice
+	// stored until a command which can show it runs.
+	if global_warnings.SuppressGlobalWarnings {
+		return
+	}
+
+	message, needsAttention, err := host_cleaning.PopAutoCleanupNotice(ctx, werf.GetServiceDir())
+	switch {
+	case err != nil:
+		logboek.Context(ctx).Debug().LogF("Unable to read auto host cleanup notice: %s\n", err)
+	case message == "":
+	case needsAttention:
+		global_warnings.GlobalWarningLn(ctx, message)
+	default:
+		logboek.Context(ctx).Default().LogLn(message)
+	}
 }
 
 // InitContainerBackendComponents initializes buildah mode, docker config, registry mirrors,
