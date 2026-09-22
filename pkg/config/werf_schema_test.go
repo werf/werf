@@ -50,6 +50,31 @@ imageSpec:
     labels: {version: 1}
     expose: [8080, 443]
     user: 1000
+    cmd: [sleep, 3600]
+    entrypoint: [/bin/retry, 5]
+    healthcheck:
+      test: [CMD, curl, --retry, 3, http://localhost/]
+`),
+		Entry("numeric git refs", `
+image: app
+from: alpine:3.20
+git:
+- url: https://github.com/werf/werf.git
+  tag: 2
+  to: /werf
+- url: https://github.com/werf/werf.git
+  commit: 1234567
+  to: /werf-commit
+`),
+		Entry("numeric branch in cleanup policy", `
+configVersion: 1
+project: app
+cleanup:
+  keepPolicies:
+  - references:
+      branch: 3
+  - references:
+      tag: 1.2
 `),
 		Entry("numeric owner and group in git and import", `
 image: app

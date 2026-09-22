@@ -47,6 +47,13 @@ includes:
   add: /
   to: /vendor/werf
 `),
+		Entry("include pinned to a numeric branch", `
+includes:
+- git: https://github.com/werf/werf
+  branch: 1.2
+  add: /
+  to: /vendor/werf
+`),
 		Entry("include pinned to a commit with password from file", `
 includes:
 - git: https://github.com/werf/werf

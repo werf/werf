@@ -138,7 +138,10 @@
     },
     "regexpOrString": {
       "description": "Exact value, or a regular expression enclosed in slashes: `/REGEXP/`.",
-      "type": "string",
+      "type": [
+        "string",
+        "number"
+      ],
       "minLength": 1
     },
     "secret": {
@@ -391,11 +394,11 @@
         },
         "cmd": {
           "description": "Set CMD.\nhttps://docs.docker.com/engine/reference/builder/#cmd",
-          "$ref": "#/definitions/stringArray"
+          "$ref": "#/definitions/scalarArray"
         },
         "entrypoint": {
           "description": "Set ENTRYPOINT.\nhttps://docs.docker.com/engine/reference/builder/#entrypoint",
-          "$ref": "#/definitions/stringArray"
+          "$ref": "#/definitions/scalarArray"
         },
         "workingDir": {
           "description": "Set WORKDIR.\nhttps://docs.docker.com/engine/reference/builder/#workdir",
@@ -412,7 +415,7 @@
           "properties": {
             "test": {
               "description": "Command to run, in exec form, for example [\"CMD\", \"curl\", \"-f\", \"http://localhost/\"].",
-              "$ref": "#/definitions/stringArray"
+              "$ref": "#/definitions/scalarArray"
             },
             "interval": {
               "description": "Seconds between checks.",
@@ -890,15 +893,24 @@
         },
         "branch": {
           "description": "The branch name. Remote repositories only.",
-          "type": "string"
+          "type": [
+            "string",
+            "number"
+          ]
         },
         "commit": {
           "description": "The commit. Remote repositories only.",
-          "type": "string"
+          "type": [
+            "string",
+            "number"
+          ]
         },
         "tag": {
           "description": "The tag name. Remote repositories only.",
-          "type": "string"
+          "type": [
+            "string",
+            "number"
+          ]
         },
         "add": {
           "description": "A source path in the repository.\nhttps://werf.io/docs/latest/usage/build/stapel/git.html#copying-directories",

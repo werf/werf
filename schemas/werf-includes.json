@@ -89,17 +89,26 @@
         },
         "branch": {
           "description": "The name of the branch to import files from. Incompatible with `tag` and `commit`.",
-          "type": "string",
+          "type": [
+            "string",
+            "number"
+          ],
           "minLength": 1
         },
         "tag": {
           "description": "The name of the tag to import files from. Incompatible with `branch` and `commit`.",
-          "type": "string",
+          "type": [
+            "string",
+            "number"
+          ],
           "minLength": 1
         },
         "commit": {
           "description": "The commit hash to import files from. Incompatible with `branch` and `tag`.",
-          "type": "string",
+          "type": [
+            "string",
+            "number"
+          ],
           "minLength": 1
         },
         "add": {
