@@ -88,12 +88,7 @@ func (r FileReader) LoadChartDir(ctx context.Context, chartDir string) ([]*nelmc
 func (r FileReader) LoadChartDirWithIgnoreRules(ctx context.Context, chartDir string, rules ChartIgnoreRules) ([]*nelmcommon.BufferedFile, error) {
 	relDir := r.absolutePathToProjectDirRelativePath(chartDir)
 
-	files, err := r.loadChartDir(ctx, relDir, rules)
-	if err != nil {
-		return nil, fmt.Errorf("unable to load chart directory: %w", err)
-	}
-
-	return files, nil
+	return r.loadChartDir(ctx, relDir, rules)
 }
 
 func (r FileReader) loadChartDir(ctx context.Context, relDir string, rules ChartIgnoreRules) ([]*nelmcommon.BufferedFile, error) {
