@@ -123,7 +123,19 @@ Here:
 
 - `LICENSE` — the chart license;
 
-- `.helmignore` — a list of files in the chart directory not to be included in the chart. Helm's default rules apply as well, so dotfiles directly under `templates/` are excluded even without a `.helmignore`. The rule syntax is described in [Bundles and charts]({{ "/usage/distribute/bundles.html#excluding-files-or-directories-from-the-chart" | true_relative_url }}).
+- `.helmignore` — a list of files in the chart directory not to be included in the chart, see below.
+
+### Excluding files or directories from the chart
+
+The `.helmignore` file in the chart root can include filename filters that prevent files or directories from being added to the chart. The rules format is the same as [in .gitignore](https://git-scm.com/docs/gitignore) except for the following:
+
+- `**` is not supported and raises an error;
+
+- `!` at the beginning of a line works differently than in `.gitignore`: it excludes everything that does not match the pattern — don't use it;
+
+- `.helmignore` does not exclude itself by default;
+
+- Helm's default rule `templates/.?*` always applies, so dotfiles directly under `templates/` are excluded even without a `.helmignore`.
 
 Which `.helmignore` filters a dependent chart depends on how the chart is included:
 
