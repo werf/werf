@@ -123,7 +123,7 @@ Here:
 
 - `LICENSE` — the chart license;
 
-- `.helmignore` — a list of files in the chart directory not to be included in the chart. Helm's default rules apply as well, so dotfiles directly under `templates/` are excluded even without a `.helmignore`. The rule syntax is described in [Bundles and charts]({{ "/usage/distribute/bundles.html" | true_relative_url }}).
+- `.helmignore` — a list of files in the chart directory not to be included in the chart. Helm's default rules apply as well, so dotfiles directly under `templates/` are excluded even without a `.helmignore`. The rule syntax is described in [Bundles and charts]({{ "/usage/distribute/bundles.html#excluding-files-or-directories-from-the-chart-being-published" | true_relative_url }}).
 
 Which `.helmignore` filters a dependent chart depends on how the chart is included:
 
