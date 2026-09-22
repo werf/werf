@@ -70,11 +70,11 @@ var _ = Describe("cleanup command", func() {
 				SuiteData.Stubs.SetEnv("ARTIFACT_DATA", artifactData1)
 				runCommand(ctx, "converge")
 
-				Expect(StagesCount(ctx)).Should(Equal(expectedStageCountAfterFirstBuild + 2))
+				Expect(StagesCount(ctx)).Should(Equal(expectedStageCountAfterFirstBuild + 3))
 
 				runCommand(ctx, "cleanup")
 
-				Expect(StagesCount(ctx)).Should(Equal(expectedStageCountAfterFirstBuild + 2))
+				Expect(StagesCount(ctx)).Should(Equal(expectedStageCountAfterFirstBuild + 3))
 			})
 
 			It("should keep one", func(ctx SpecContext) {
