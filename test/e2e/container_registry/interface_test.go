@@ -26,6 +26,13 @@ var _ = Describe("container registry implementation", func() {
 				registry, err := docker_registry.NewDockerRegistry(ctx, repo, implData.WerfImplementationName, implData.RegistryOptions)
 				Expect(err).ShouldNot(HaveOccurred())
 
+				if implData.WerfImplementationName != docker_registry.DefaultImplementationName {
+					DeferCleanup(func(ctx SpecContext) {
+						By("deleting the repository")
+						Expect(registry.DeleteRepo(ctx, repo)).To(Succeed())
+					})
+				}
+
 				By("pushing two images")
 				Expect(registry.PushImage(ctx, repo+":kept", &docker_registry.PushImageOptions{
 					Labels: map[string]string{labelName: "kept"},
