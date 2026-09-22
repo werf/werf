@@ -31,7 +31,7 @@ func (r FileReader) locateChart(ctx context.Context, chartDir string) (string, e
 	}
 
 	if !exist {
-		return "", fmt.Errorf("the directory %q not found in the project git repository", relDir)
+		return "", fmt.Errorf("chart directory %q not found", relDir)
 	}
 
 	return chartDir, nil
