@@ -105,8 +105,9 @@ deploy:
 `),
 	)
 
-	DescribeTable("accepts a document",
+	DescribeTable("accepts a document with every directive",
 		func(document string) {
+			Expect(parseWerfDocument(document)).To(Succeed())
 			Expect(schema.Validate(yamlDocument(document))).To(Succeed())
 		},
 		Entry("meta with every section", `
@@ -229,9 +230,9 @@ git:
     setup: "*.env"
 - url: https://github.com/werf/werf.git
   basicAuth:
-    username: bot
+    username: 12345
     password:
-      env: GIT_PASSWORD
+      value: 1234
   branch: main
   add: /cmd
   to: /werf
@@ -278,6 +279,8 @@ dependencies:
     targetEnv: BUILDER_DIGEST
 secrets:
 - env: NPM_TOKEN
+- id: 123
+  value: 456
 imageSpec:
   config:
     cmd: [/usr/local/bin/app]
@@ -457,6 +460,28 @@ from: alpine
 git:
 - add: /src
 `),
+		Entry("remote git mapping with branch and tag", `
+image: app
+from: alpine
+git:
+- url: https://example.com/repo.git
+  branch: main
+  tag: v1
+  to: /app
+`),
+		Entry("git mapping with relative source", `
+image: app
+from: alpine
+git:
+- add: src
+  to: /app
+`),
+		Entry("git mapping with relative destination", `
+image: app
+from: alpine
+git:
+- to: app
+`),
 		Entry("stage dependencies for unknown stage", `
 image: app
 from: alpine
@@ -492,6 +517,13 @@ from: alpine
 mount:
 - fromPath: ""
   to: /tmp
+`),
+		Entry("mount with relative destination", `
+image: app
+from: alpine
+mount:
+- from: tmp_dir
+  to: tmp
 `),
 		Entry("import without add", `
 image: app
@@ -532,6 +564,23 @@ import:
   before: install
   add: /app
 `),
+		Entry("import with relative source", `
+image: app
+from: alpine
+import:
+- from: builder
+  before: install
+  add: app
+`),
+		Entry("import with relative destination", `
+image: app
+from: alpine
+import:
+- from: builder
+  before: install
+  add: /app
+  to: app
+`),
 		Entry("stapel dependency with empty image", `
 image: app
 from: alpine
@@ -554,6 +603,25 @@ dependencies:
   imports:
   - type: ImageName
     targetBuildArg: BUILDER
+`),
+		Entry("dockerfile dependency import with empty targetBuildArg", `
+image: app
+dockerfile: Dockerfile
+dependencies:
+- from: builder
+  imports:
+  - type: ImageName
+    targetBuildArg: ""
+`),
+		Entry("stapel dependency import with empty targetEnv", `
+image: app
+from: alpine
+dependencies:
+- from: builder
+  after: install
+  imports:
+  - type: ImageName
+    targetEnv: ""
 `),
 		Entry("imageSpec with unknown config directive", `
 image: app

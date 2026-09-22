@@ -151,7 +151,11 @@
       "properties": {
         "id": {
           "description": "Secret unique identifier. Defaults to the environment variable name for `env` and to the file base name for `src`; mandatory for `value`.",
-          "type": "string"
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ]
         },
         "env": {
           "description": "A secret from an environment variable.",
@@ -165,7 +169,11 @@
         },
         "value": {
           "description": "Custom string value. Requires `id`.",
-          "type": "string",
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
           "minLength": 1
         }
       },
@@ -254,7 +262,8 @@
                   },
                   "targetBuildArg": {
                     "description": "Name of the build argument which will contain the specified type of information about the image.",
-                    "type": "string"
+                    "type": "string",
+                    "minLength": 1
                   }
                 }
               }
@@ -299,7 +308,8 @@
                   },
                   "targetEnv": {
                     "description": "Name of the environment variable which will contain the specified type of information about the image.",
-                    "type": "string"
+                    "type": "string",
+                    "minLength": 1
                   }
                 }
               }
@@ -855,7 +865,11 @@
           "properties": {
             "username": {
               "description": "Username.",
-              "type": "string"
+              "type": [
+                "string",
+                "number",
+                "boolean"
+              ]
             },
             "password": {
               "description": "Password source. Exactly one of `env`, `src` or `value` must be set.",
@@ -874,7 +888,11 @@
                 },
                 "value": {
                   "description": "Custom string value.",
-                  "type": "string",
+                  "type": [
+                    "string",
+                    "number",
+                    "boolean"
+                  ],
                   "minLength": 1
                 }
               },
@@ -922,11 +940,13 @@
         "add": {
           "description": "A source path in the repository.\nhttps://werf.io/docs/latest/usage/build/stapel/git.html#copying-directories",
           "type": "string",
+          "pattern": "^/",
           "default": "/"
         },
         "to": {
           "description": "A destination absolute path in the image.\nhttps://werf.io/docs/latest/usage/build/stapel/git.html#copying-directories",
-          "type": "string"
+          "type": "string",
+          "pattern": "^/"
         },
         "owner": {
           "description": "The name or UID of the owner.\nhttps://werf.io/docs/latest/usage/build/stapel/git.html#changing-the-owner",
@@ -982,6 +1002,28 @@
         ],
         "basicAuth": [
           "url"
+        ]
+      },
+      "not": {
+        "anyOf": [
+          {
+            "required": [
+              "branch",
+              "tag"
+            ]
+          },
+          {
+            "required": [
+              "branch",
+              "commit"
+            ]
+          },
+          {
+            "required": [
+              "tag",
+              "commit"
+            ]
+          }
         ]
       }
     },
@@ -1066,7 +1108,8 @@
         },
         "to": {
           "description": "Absolute path in the image.",
-          "type": "string"
+          "type": "string",
+          "pattern": "^/"
         }
       },
       "oneOf": [
@@ -1111,11 +1154,13 @@
         },
         "add": {
           "description": "The absolute file or directory path in the source image to copy.",
-          "type": "string"
+          "type": "string",
+          "pattern": "^/"
         },
         "to": {
           "description": "The absolute path in the destination image. Defaults to `add`.",
-          "type": "string"
+          "type": "string",
+          "pattern": "^/"
         },
         "owner": {
           "description": "The name or UID of the owner.",
