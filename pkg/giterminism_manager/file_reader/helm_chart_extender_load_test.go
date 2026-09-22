@@ -143,6 +143,21 @@ var _ = Describe("LoadChartDir", func() {
 		))
 	})
 
+	// A leading ! is not a gitignore exception: helm keeps only what the pattern matches and
+	// drops everything else, directories included, so templates/ is pruned along with its files.
+	It("keeps only what a leading ! pattern matches, the way helm does", func(ctx SpecContext) {
+		chartDir := writeChart(map[string]string{
+			".helmignore":         "!*.yaml\n",
+			"Chart.yaml":          "name: test",
+			"values.yaml":         "a: 1",
+			"templates/kept.yaml": "kept",
+		})
+
+		Expect(loadedNames(logging.WithLogger(ctx), chartDir)).To(ConsistOf(
+			"Chart.yaml", "values.yaml",
+		))
+	})
+
 	It("drops the dotfiles under templates without a .helmignore", func(ctx SpecContext) {
 		chartDir := writeChart(map[string]string{
 			"Chart.yaml":          "name: test",
@@ -468,6 +483,21 @@ var _ = Describe("LoadChartDir", func() {
 
 			Expect(loadedNames(logging.WithLogger(ctx), chartDir)).To(ConsistOf(
 				".helmignore", "Chart.yaml", "templates/kept.yaml",
+			))
+		})
+
+		// In the flat commit list templates/kept.yaml matches !*.yaml as a file, so only the
+		// parent directory check reproduces the walk pruning templates/.
+		It("keeps only what a leading ! pattern matches, the way helm does", func(ctx SpecContext) {
+			chartDir := writeChart(map[string]string{
+				".helmignore":         "!*.yaml\n",
+				"Chart.yaml":          "name: test",
+				"values.yaml":         "a: 1",
+				"templates/kept.yaml": "kept",
+			})
+
+			Expect(loadedNames(logging.WithLogger(ctx), chartDir)).To(ConsistOf(
+				"Chart.yaml", "values.yaml",
 			))
 		})
 
