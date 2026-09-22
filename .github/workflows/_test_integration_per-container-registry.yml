@@ -3,12 +3,6 @@ name: xxxxx(internal)
 on:
   workflow_call:
     inputs:
-      coverage:
-        default: false
-        type: string
-      raceDetectorEnabled:
-        default: false
-        type: string
       linuxAmd64Runner:
         default: ubuntu-22.04
         type: string
@@ -18,8 +12,6 @@ defaults:
     shell: bash
 
 env:
-  DEBIAN_FRONTEND: "noninteractive"
-  WERF_TEST_K8S_DOCKER_REGISTRY_INSECURE: "false"
   TASK_X_REMOTE_TASKFILES: 1
 
 jobs:
@@ -75,9 +67,6 @@ jobs:
       WERF_TEST_QUAY_TOKEN: ${{ secrets.WERF_TEST_QUAY_TOKEN }}
       WERF_TEST_QUAY_USERNAME: ${{ secrets.WERF_TEST_QUAY_USERNAME }}
     steps:
-      - name: Install werf build dependencies
-        run: sudo apt-get install -y libbtrfs-dev
-
       - name: Checkout code
         uses: actions/checkout@v6
 
@@ -91,12 +80,6 @@ jobs:
         uses: go-task/setup-task@v2
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Set up prebuilt werf test binary
-        uses: ./.github/actions/set-up-prebuilt-werf-test-binary
-        with:
-          coverage: ${{ inputs.coverage }}
-          raceDetectorEnabled: ${{ inputs.raceDetectorEnabled }}
 
       - if: matrix.cr == 'acr'
         name: Login to ACR
@@ -112,31 +95,13 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
 
-      - name: Set up git config
-        uses: ./.github/actions/set-up-git-config
-
       - name: Install ginkgo
         run: task --yes -p deps:install:ginkgo
-
-      - name: Setup environment
-        run: task --yes test:setup:environment
 
       - name: Check container registry creds
         run: ./scripts/ci/integration_tests_registries_login.sh ${{ matrix.cr }}
 
       - name: Test
         run: |
-          export WERF_TEST_K8S_DOCKER_REGISTRY="localhost:$(docker inspect kind-registry --format '{{(index (index .NetworkSettings.Ports "5000/tcp") 0).HostPort}}')"
           task --yes -p test:e2e paths="test/e2e/container_registry" -- --focus="\[${{ matrix.cr }}\]" --flake-attempts=3 --keep-going
           echo loadavg: $(cat /proc/loadavg)
-        env:
-          GOCOVERDIR: ${{ env.WERF_TEST_COVER_DIR }}
-
-      - name: Upload coverage artifact
-        uses: ./.github/actions/upload-coverage-artifact
-        with:
-          coverage: ${{ inputs.coverage }}
-
-      - name: Cleanup environment
-        if: always()
-        run: task --yes test:cleanup:environment

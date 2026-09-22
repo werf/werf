@@ -83,9 +83,6 @@ jobs:
   integration_per-cr:
     needs: gate
     uses: ./.github/workflows/_test_integration_per-container-registry.yml
-    with:
-      raceDetectorEnabled: true
-      coverage: true
     secrets: inherit
 
   coverage_report:
