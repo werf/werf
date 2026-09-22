@@ -471,6 +471,33 @@ var _ = Describe("LoadChartDir", func() {
 			))
 		})
 
+		// With every chart file committed and unchanged, the filesystem walk contributes nothing
+		// and the commit list is the only source, so what the commit symlink skip drops is gone.
+		Context("when the chart is committed with no local changes", func() {
+			BeforeEach(func() {
+				pathMatcher.EXPECT().IsDirOrSubmodulePathMatched(gomock.Any()).Return(false).AnyTimes()
+				gitRepo.EXPECT().StatusPathList(gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
+			})
+
+			// A directory rule must not drop a symlink to a file that merely carries the same
+			// name: the skip cannot tell the two apart without resolving, so it drops the symlink
+			// only when the rules exclude it both as a file and as a directory.
+			It("keeps a symlink to a file whose name only a directory rule matches", func(ctx SpecContext) {
+				chartDir := writeChart(map[string]string{
+					".helmignore":           "link/\n",
+					"Chart.yaml":            "name: test",
+					"templates/kept.yaml":   "kept",
+					"templates/target.yaml": "target",
+				})
+
+				Expect(os.Symlink("target.yaml", filepath.Join(chartDir, "templates", "link"))).To(Succeed())
+
+				Expect(loadedNames(logging.WithLogger(ctx), chartDir)).To(ConsistOf(
+					".helmignore", "Chart.yaml", "templates/kept.yaml", "templates/target.yaml", "templates/link",
+				))
+			})
+		})
+
 		// The commit walk resolves every symlink it does not skip, so a directory rule has to
 		// reach the symlinks under it before that, or a loop inside an ignored directory fails
 		// the chart in this mode alone.

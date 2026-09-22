@@ -291,6 +291,23 @@ metadata:
 					})
 				})
 
+				// The symlink is the only way the target reaches the render, so the spec fails
+				// when the commit walk drops a symlink a directory rule merely shares a name with.
+				It("keeps a committed symlink to a file whose name only a directory rule matches", func(ctx SpecContext) {
+					helmignoreRelPath := relativeToProjectDir(".helm/.helmignore")
+					fileCreateOrAppend(helmignoreRelPath, "link/\n")
+					gitAddAndCommit(ctx, helmignoreRelPath)
+
+					symlinkBody(ctx, symlinkEntry{
+						skipOnWindows: true,
+						addFiles:      []string{relativeToProjectDir(".helm/target.yaml")},
+						commitFiles:   []string{relativeToProjectDir(".helm/target.yaml")},
+						addAndCommitSymlinks: map[string]string{
+							relativeToProjectDir(".helm/templates/link"): "../target.yaml",
+						},
+					})
+				})
+
 				It("excludes a symlink loop inside a directory matched by .helmignore without resolving it", func(ctx SpecContext) {
 					helmignoreRelPath := relativeToProjectDir(".helm/.helmignore")
 					fileCreateOrAppend(helmignoreRelPath, "ignoreddir/\n")
