@@ -308,6 +308,26 @@ metadata:
 					})
 				})
 
+				// The commit walk descends into a symlinked directory recursively, and the skip
+				// predicate has to travel with it, or a loop below the symlink is resolved and
+				// fails the chart although a rule excludes it.
+				It("excludes a symlink loop below a symlinked chart directory without resolving it", func(ctx SpecContext) {
+					helmignoreRelPath := relativeToProjectDir(".helm/.helmignore")
+					fileCreateOrAppend(helmignoreRelPath, "templates/loop*\n")
+					gitAddAndCommit(ctx, helmignoreRelPath)
+
+					symlinkBody(ctx, symlinkEntry{
+						skipOnWindows: true,
+						addFiles:      []string{relativeToProjectDir("shared/template1.yaml")},
+						commitFiles:   []string{relativeToProjectDir("shared/template1.yaml")},
+						addAndCommitSymlinks: map[string]string{
+							relativeToProjectDir(".helm/templates"): getLinkTo(relativeToProjectDir(".helm/templates"), relativeToProjectDir("shared")),
+							relativeToProjectDir("shared/loop"):     "loop2",
+							relativeToProjectDir("shared/loop2"):    "loop",
+						},
+					})
+				})
+
 				It("excludes a symlink loop inside a directory matched by .helmignore without resolving it", func(ctx SpecContext) {
 					helmignoreRelPath := relativeToProjectDir(".helm/.helmignore")
 					fileCreateOrAppend(helmignoreRelPath, "ignoreddir/\n")
