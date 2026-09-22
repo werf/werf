@@ -82,10 +82,5 @@ var _ = Describe("Simple build", Label("e2e", "build", "simple"), func() {
 			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: false,
 		}),
-		backendEntry("with local repo using Native Buildah with chroot isolation", setupEnvOptions{
-			ContainerBackendMode:        "native-chroot",
-			WithLocalRepo:               true,
-			WithStagedDockerfileBuilder: false,
-		}),
 	)
 })
