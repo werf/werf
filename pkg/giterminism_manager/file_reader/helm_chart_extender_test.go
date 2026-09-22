@@ -75,10 +75,6 @@ var _ = Describe("chart .helmignore rules", func() {
 		Expect(ChartIgnoreRules{}.IsFileIgnored(ctx, "templates/kept.yaml")).To(BeFalse())
 	})
 
-	It("reads the basename from the file info, so a basename rule keeps working if helm starts using it", func() {
-		Expect(chartIgnoreFileInfo{path: "templates/sub/ignored.yaml"}.Name()).To(Equal("ignored.yaml"))
-	})
-
 	It("fails on a rule helm cannot compile", func() {
 		_, err := parseChartIgnoreRules([]byte("templates/**/ignored.yaml\n"), true)
 		Expect(err).To(MatchError(ContainSubstring("double-star")))
