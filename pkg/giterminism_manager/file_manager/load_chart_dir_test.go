@@ -173,6 +173,21 @@ var _ = Describe("LoadChartDir", func() {
 		))
 	})
 
+	// The rules are resolved once for the effective chart tree, so with no local .helmignore
+	// the one an include delivers filters the local files too.
+	It("applies the .helmignore delivered by the include to the local files", func(ctx SpecContext) {
+		writeLocalChart(map[string]string{
+			"Chart.yaml":           "name: local",
+			"templates/local.yaml": "local",
+			"templates/kept.yaml":  "kept",
+		})
+		include := newInclude(map[string]string{".helmignore": "templates/local.yaml\n"})
+
+		Expect(loadedNames(logging.WithLogger(ctx), newFileManager(include))).To(ConsistOf(
+			".helmignore", "Chart.yaml", "templates/kept.yaml",
+		))
+	})
+
 	It("prefers the local .helmignore over the one from an include", func(ctx SpecContext) {
 		writeLocalChart(map[string]string{
 			".helmignore": "templates/local-rule.yaml\n",
