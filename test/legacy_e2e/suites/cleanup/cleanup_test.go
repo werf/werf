@@ -9,536 +9,516 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/werf/v2/pkg/docker_registry"
-	"github.com/werf/werf/v2/test/pkg/suite_init"
 	"github.com/werf/werf/v2/test/pkg/utils"
 )
 
 const branchName = "test_branch"
 
 var _ = Describe("cleanup command", func() {
-	for _, iName := range suite_init.ContainerRegistryImplementationListToCheck(true) {
-		implementationName := iName
+	Describe("default", func() {
+		BeforeEach(func(ctx SpecContext) {
+			SuiteData.Stubs.SetEnv("WERF_LOOSE_GITERMINISM", "1") // FIXME
+			utils.CopyIn(utils.FixturePath("cleanup"), SuiteData.TestDirPath)
+			cleanupBeforeEachBase(ctx)
+		})
 
-		Context("["+implementationName+"]", func() {
-			BeforeEach(perImplementationBeforeEach(implementationName))
+		It("should work properly with non-existent/empty repo", func(ctx SpecContext) {
+			utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "cleanup")
+		})
 
-			Describe("default", func() {
-				BeforeEach(func(ctx SpecContext) {
-					SuiteData.Stubs.SetEnv("WERF_LOOSE_GITERMINISM", "1") // FIXME
-					utils.CopyIn(utils.FixturePath("cleanup"), SuiteData.TestDirPath)
-					cleanupBeforeEachBase(ctx)
-				})
+		It("should not remove unused stages that was built within 2 hours", func(ctx SpecContext) {
+			utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
 
-				It("should work properly with non-existent/empty repo", func(ctx SpecContext) {
-					utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "cleanup")
-				})
+			utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "push", "--set-upstream", "origin", branchName)
 
-				It("should not remove unused stages that was built within 2 hours", func(ctx SpecContext) {
-					utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
+			countAfterFirstBuild := StagesCount(ctx)
+			Expect(countAfterFirstBuild).Should(Equal(4))
 
-					utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "push", "--set-upstream", "origin", branchName)
+			utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "commit", "--allow-empty", "-m", "test")
 
-					countAfterFirstBuild := StagesCount(ctx)
-					Expect(countAfterFirstBuild).Should(Equal(4))
+			SuiteData.Stubs.SetEnv("FROM_CACHE_VERSION", "REBUILD")
 
-					utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "commit", "--allow-empty", "-m", "test")
+			utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
 
-					SuiteData.Stubs.SetEnv("FROM_CACHE_VERSION", "REBUILD")
+			countAfterSecondBuild := StagesCount(ctx)
+			Expect(countAfterSecondBuild).Should(Equal(8))
 
-					utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
+			utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "cleanup")
 
-					countAfterSecondBuild := StagesCount(ctx)
-					if SuiteData.TestImplementation != docker_registry.QuayImplementationName {
-						Expect(countAfterSecondBuild).Should(Equal(8))
-					}
+			Expect(StagesCount(ctx)).Should(Equal(countAfterSecondBuild))
+		})
+	})
 
-					utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "cleanup")
+	Describe("git history based policy", func() {
+		BeforeEach(func(ctx SpecContext) {
+			SuiteData.Stubs.SetEnv("WERF_LOOSE_GITERMINISM", "1") // FIXME
+			utils.CopyIn(utils.FixturePath("git_history_based_policy"), SuiteData.TestDirPath)
+			cleanupBeforeEachBase(ctx)
+		})
 
-					if SuiteData.TestImplementation != docker_registry.QuayImplementationName {
-						Expect(StagesCount(ctx)).Should(Equal(countAfterSecondBuild))
-					}
-				})
+		It("should remove unused stages", func(ctx SpecContext) {
+			utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
+
+			utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "push", "--set-upstream", "origin", branchName)
+
+			countAfterFirstBuild := StagesCount(ctx)
+			Expect(countAfterFirstBuild).Should(Equal(4))
+
+			utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "commit", "--allow-empty", "-m", "test")
+
+			SuiteData.Stubs.SetEnv("FROM_CACHE_VERSION", "REBUILD")
+
+			utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
+
+			countAfterSecondBuild := StagesCount(ctx)
+
+			utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "cleanup")
+
+			Expect(StagesCount(ctx)).Should(Equal(countAfterSecondBuild - countAfterFirstBuild))
+		})
+
+		It("should not remove used stages", func(ctx SpecContext) {
+			utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
+
+			utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "push", "--set-upstream", "origin", branchName)
+
+			count := StagesCount(ctx)
+			Expect(count).Should(Equal(4))
+
+			utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "cleanup")
+
+			Expect(StagesCount(ctx)).Should(Equal(count))
+		})
+
+		Context("image metadata", func() {
+			It("should work only with remote references", func(ctx SpecContext) {
+				SuiteData.Stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "1")
+
+				utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "checkout", "-b", "test")
+
+				utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "push", "--set-upstream", "origin", "test")
+
+				utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
+
+				gitHistoryBasedCleanupCheck(ctx, imageName, 1, 1)
+
+				utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "push", "origin", "--delete", "test")
+
+				gitHistoryBasedCleanupCheck(ctx, imageName, 1, 0)
 			})
 
-			Describe("git history based policy", func() {
-				BeforeEach(func(ctx SpecContext) {
-					SuiteData.Stubs.SetEnv("WERF_LOOSE_GITERMINISM", "1") // FIXME
-					utils.CopyIn(utils.FixturePath("git_history_based_policy"), SuiteData.TestDirPath)
-					cleanupBeforeEachBase(ctx)
-				})
+			It("should remove image from untracked branch", func(ctx SpecContext) {
+				SuiteData.Stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "1")
 
-				It("should remove unused stages", func(ctx SpecContext) {
+				utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "checkout", "-b", "some_branch")
+
+				utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "push", "--set-upstream", "origin", "some_branch")
+
+				utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
+
+				gitHistoryBasedCleanupCheck(ctx, imageName, 1, 0)
+			})
+
+			It("should keep several images that are related to one commit regardless of the keep policies (imagesPerReference.last=1)", func(ctx SpecContext) {
+				SuiteData.Stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "9")
+
+				utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "checkout", "-b", "test")
+
+				utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "push", "--set-upstream", "origin", "test")
+
+				SuiteData.Stubs.SetEnv("FROM_CACHE_VERSION", "1")
+				utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
+
+				SuiteData.Stubs.SetEnv("FROM_CACHE_VERSION", "2")
+				utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
+
+				gitHistoryBasedCleanupCheck(ctx, imageName, 2, 2)
+			})
+
+			Context("keep policies", func() {
+				It("should remove image by imagesPerReference.last", func(ctx SpecContext) {
+					SuiteData.Stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "2")
+
+					utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "checkout", "-b", "test")
+
+					utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "push", "--set-upstream", "origin", "test")
+
 					utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
 
-					utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "push", "--set-upstream", "origin", branchName)
+					gitHistoryBasedCleanupCheck(ctx, imageName, 1, 0)
+				})
 
-					countAfterFirstBuild := StagesCount(ctx)
-					Expect(countAfterFirstBuild).Should(Equal(4))
+				It("should remove image by imagesPerReference.in", func(ctx SpecContext) {
+					SuiteData.Stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "3")
 
-					utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "commit", "--allow-empty", "-m", "test")
+					setLastCommitCommitterWhen(ctx, time.Now().Add(-(25 * time.Hour)))
 
-					SuiteData.Stubs.SetEnv("FROM_CACHE_VERSION", "REBUILD")
+					utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "checkout", "-b", "test")
+
+					utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "push", "--set-upstream", "origin", "test")
 
 					utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
 
-					countAfterSecondBuild := StagesCount(ctx)
+					gitHistoryBasedCleanupCheck(ctx, imageName, 1, 0)
 
-					utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "cleanup")
+					setLastCommitCommitterWhen(ctx, time.Now().Add(-(23 * time.Hour)))
 
-					if SuiteData.TestImplementation != docker_registry.QuayImplementationName {
-						Expect(StagesCount(ctx)).Should(Equal(countAfterSecondBuild - countAfterFirstBuild))
-					}
-				})
+					utils.RunSucceedCommand(
+						ctx,
+						SuiteData.TestDirPath,
+						"git",
+						"push", "--force",
+					)
 
-				It("should not remove used stages", func(ctx SpecContext) {
 					utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
 
-					utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "push", "--set-upstream", "origin", branchName)
-
-					count := StagesCount(ctx)
-					Expect(count).Should(Equal(4))
-
-					utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "cleanup")
-
-					Expect(StagesCount(ctx)).Should(Equal(count))
+					gitHistoryBasedCleanupCheck(ctx, imageName, 1, 1)
 				})
 
-				Context("image metadata", func() {
-					It("should work only with remote references", func(ctx SpecContext) {
-						SuiteData.Stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "1")
+				It("should remove image by references.limit.in", func(ctx SpecContext) {
+					SuiteData.Stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "4")
 
-						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "checkout", "-b", "test")
+					setLastCommitCommitterWhen(ctx, time.Now().Add(-(13 * time.Hour)))
 
-						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "push", "--set-upstream", "origin", "test")
+					utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "checkout", "-b", "test")
 
-						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
+					utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "push", "--set-upstream", "origin", "test")
 
-						gitHistoryBasedCleanupCheck(ctx, imageName, 1, 1)
+					utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
 
-						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "push", "origin", "--delete", "test")
+					gitHistoryBasedCleanupCheck(ctx, imageName, 1, 0)
 
-						gitHistoryBasedCleanupCheck(ctx, imageName, 1, 0)
-					})
+					setLastCommitCommitterWhen(ctx, time.Now().Add(-(11 * time.Hour)))
 
-					It("should remove image from untracked branch", func(ctx SpecContext) {
-						SuiteData.Stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "1")
+					utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "push", "--set-upstream", "--force")
 
-						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "checkout", "-b", "some_branch")
+					utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
 
-						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "push", "--set-upstream", "origin", "some_branch")
+					gitHistoryBasedCleanupCheck(ctx, imageName, 1, 1)
+				})
 
-						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
+				Context("references.limit.*", func() {
+					const (
+						ref1 = "test1"
+						ref2 = "test2"
+						ref3 = "test3"
+					)
 
-						gitHistoryBasedCleanupCheck(ctx, imageName, 1, 0)
-					})
+					var (
+						stageID1 string
+						stageID2 string
+						stageID3 string
+					)
 
-					It("should keep several images that are related to one commit regardless of the keep policies (imagesPerReference.last=1)", func(ctx SpecContext) {
-						SuiteData.Stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "9")
+					BeforeEach(func(ctx SpecContext) {
+						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "checkout", "-b", ref1)
 
-						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "checkout", "-b", "test")
+						setLastCommitCommitterWhen(ctx, time.Now().Add(-(13 * time.Hour)))
 
-						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "push", "--set-upstream", "origin", "test")
+						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "push", "--set-upstream", "origin", ref1)
 
 						SuiteData.Stubs.SetEnv("FROM_CACHE_VERSION", "1")
 						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
 
+						stageID1 = resultStageID(ctx, imageName)
+						_ = stageID1
+
+						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "checkout", "-b", ref2)
+
+						setLastCommitCommitterWhen(ctx, time.Now().Add(-(11 * time.Hour)))
+
+						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "push", "--set-upstream", "origin", ref2)
+
 						SuiteData.Stubs.SetEnv("FROM_CACHE_VERSION", "2")
 						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
 
-						gitHistoryBasedCleanupCheck(ctx, imageName, 2, 2)
+						stageID2 = resultStageID(ctx, imageName)
+
+						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "checkout", "-b", ref3)
+
+						setLastCommitCommitterWhen(ctx, time.Now())
+
+						SuiteData.Stubs.SetEnv("FROM_CACHE_VERSION", "3")
+						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
+
+						stageID3 = resultStageID(ctx, imageName)
+
+						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "push", "--set-upstream", "origin", ref3)
 					})
 
-					Context("keep policies", func() {
-						It("should remove image by imagesPerReference.last", func(ctx SpecContext) {
-							SuiteData.Stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "2")
-
-							utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "checkout", "-b", "test")
-
-							utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "push", "--set-upstream", "origin", "test")
-
-							utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
-
-							gitHistoryBasedCleanupCheck(ctx, imageName, 1, 0)
-						})
-
-						It("should remove image by imagesPerReference.in", func(ctx SpecContext) {
-							SuiteData.Stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "3")
-
-							setLastCommitCommitterWhen(ctx, time.Now().Add(-(25 * time.Hour)))
-
-							utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "checkout", "-b", "test")
-
-							utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "push", "--set-upstream", "origin", "test")
-
-							utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
-
-							gitHistoryBasedCleanupCheck(ctx, imageName, 1, 0)
-
-							setLastCommitCommitterWhen(ctx, time.Now().Add(-(23 * time.Hour)))
-
-							utils.RunSucceedCommand(
-								ctx,
-								SuiteData.TestDirPath,
-								"git",
-								"push", "--force",
-							)
-
-							utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
-
-							gitHistoryBasedCleanupCheck(ctx, imageName, 1, 1)
-						})
-
-						It("should remove image by references.limit.in", func(ctx SpecContext) {
-							SuiteData.Stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "4")
-
-							setLastCommitCommitterWhen(ctx, time.Now().Add(-(13 * time.Hour)))
-
-							utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "checkout", "-b", "test")
-
-							utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "push", "--set-upstream", "origin", "test")
-
-							utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
-
-							gitHistoryBasedCleanupCheck(ctx, imageName, 1, 0)
-
-							setLastCommitCommitterWhen(ctx, time.Now().Add(-(11 * time.Hour)))
-
-							utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "push", "--set-upstream", "--force")
-
-							utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
-
-							gitHistoryBasedCleanupCheck(ctx, imageName, 1, 1)
-						})
-
-						Context("references.limit.*", func() {
-							const (
-								ref1 = "test1"
-								ref2 = "test2"
-								ref3 = "test3"
-							)
-
-							var (
-								stageID1 string
-								stageID2 string
-								stageID3 string
-							)
-
-							BeforeEach(func(ctx SpecContext) {
-								utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "checkout", "-b", ref1)
-
-								setLastCommitCommitterWhen(ctx, time.Now().Add(-(13 * time.Hour)))
-
-								utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "push", "--set-upstream", "origin", ref1)
-
-								SuiteData.Stubs.SetEnv("FROM_CACHE_VERSION", "1")
-								utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
-
-								stageID1 = resultStageID(ctx, imageName)
-								_ = stageID1
-
-								utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "checkout", "-b", ref2)
-
-								setLastCommitCommitterWhen(ctx, time.Now().Add(-(11 * time.Hour)))
-
-								utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "push", "--set-upstream", "origin", ref2)
-
-								SuiteData.Stubs.SetEnv("FROM_CACHE_VERSION", "2")
-								utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
-
-								stageID2 = resultStageID(ctx, imageName)
-
-								utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "checkout", "-b", ref3)
-
-								setLastCommitCommitterWhen(ctx, time.Now())
-
-								SuiteData.Stubs.SetEnv("FROM_CACHE_VERSION", "3")
-								utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
-
-								stageID3 = resultStageID(ctx, imageName)
-
-								utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "push", "--set-upstream", "origin", ref3)
-							})
-
-							It("should remove image by references.limit.in OR references.limit.last", func(ctx SpecContext) {
-								SuiteData.Stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "5")
-								gitHistoryBasedCleanupCheck(ctx, imageName, 3, 2, func(imageMetadata map[string][]string) {
-									Expect(imageMetadata).Should(HaveKey(stageID2))
-									Expect(imageMetadata).Should(HaveKey(stageID3))
-								})
-							})
-
-							It("should remove image by references.limit.in AND references.limit.last", func(ctx SpecContext) {
-								SuiteData.Stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "6")
-								gitHistoryBasedCleanupCheck(ctx, imageName, 3, 1, func(imageMetadata map[string][]string) {
-									Expect(imageMetadata).Should(HaveKey(stageID3))
-								})
-							})
-						})
-
-						Context("imagesPerReference.*", func() {
-							var (
-								stageID1 string
-								stageID2 string
-								stageID3 string
-							)
-
-							BeforeEach(func(ctx SpecContext) {
-								utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "checkout", "-b", "test")
-
-								setLastCommitCommitterWhen(ctx, time.Now().Add(-(13 * time.Hour)))
-
-								SuiteData.Stubs.SetEnv("FROM_CACHE_VERSION", "1")
-								utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
-
-								stageID1 = resultStageID(ctx, imageName)
-								_ = stageID1
-
-								utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "commit", "--allow-empty", "-m", "+")
-
-								setLastCommitCommitterWhen(ctx, time.Now().Add(-(11 * time.Hour)))
-
-								SuiteData.Stubs.SetEnv("FROM_CACHE_VERSION", "2")
-								utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
-
-								stageID2 = resultStageID(ctx, imageName)
-
-								utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "commit", "--allow-empty", "-m", "+")
-
-								utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "push", "--set-upstream", "origin", "test")
-
-								SuiteData.Stubs.SetEnv("FROM_CACHE_VERSION", "3")
-								utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
-
-								stageID3 = resultStageID(ctx, imageName)
-							})
-
-							It("should remove image by imagesPerReference.in OR imagesPerReference.last", func(ctx SpecContext) {
-								SuiteData.Stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "7")
-								gitHistoryBasedCleanupCheck(ctx, imageName, 3, 2, func(imageMetadata map[string][]string) {
-									Expect(imageMetadata).Should(HaveKey(stageID2))
-									Expect(imageMetadata).Should(HaveKey(stageID3))
-								})
-							})
-
-							It("should remove image by imagesPerReference.in AND imagesPerReference.last", func(ctx SpecContext) {
-								SuiteData.Stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "8")
-								gitHistoryBasedCleanupCheck(ctx, imageName, 3, 1, func(imageMetadata map[string][]string) {
-									Expect(imageMetadata).Should(HaveKey(stageID3))
-								})
-							})
+					It("should remove image by references.limit.in OR references.limit.last", func(ctx SpecContext) {
+						SuiteData.Stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "5")
+						gitHistoryBasedCleanupCheck(ctx, imageName, 3, 2, func(imageMetadata map[string][]string) {
+							Expect(imageMetadata).Should(HaveKey(stageID2))
+							Expect(imageMetadata).Should(HaveKey(stageID3))
 						})
 					})
 
-					Context("images metadata cleanup", func() {
-						When("one content digest", func() {
-							metaImagesCheckFunc := func(ctx context.Context, before, after int, afterExtraChecks ...func(commits []string)) {
-								imageMetadata := ImageMetadata(ctx, imageName)
-								for _, commitList := range imageMetadata {
-									Expect(commitList).Should(HaveLen(before))
-								}
-
-								gitHistoryBasedCleanupCheck(ctx, imageName, 1, 1, func(imageMetadata map[string][]string) {
-									for _, commitList := range imageMetadata {
-										Expect(commitList).Should(HaveLen(after))
-
-										for _, check := range afterExtraChecks {
-											check(commitList)
-										}
-									}
-								})
-							}
-
-							It("should keep image metadata only for the latest commit (one branch)", func(ctx SpecContext) {
-								for i := 0; i < 3; i++ {
-									utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "commit", "--allow-empty", "-m", "+")
-
-									utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
-								}
-
-								utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "push", "--set-upstream", "origin", branchName)
-
-								metaImagesCheckFunc(ctx, 3, 1, func(commits []string) {
-									Expect(commits).Should(ContainElement(utils.GetHeadCommit(ctx, SuiteData.TestDirPath)))
-								})
-							})
-
-							It("should keep all image metadata (several branches)", func(ctx SpecContext) {
-								for i := 0; i < 3; i++ {
-									utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "commit", "--allow-empty", "-m", "+")
-
-									utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
-
-									branch := fmt.Sprintf("test_%d", i)
-									utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "checkout", "-b", branch)
-
-									utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "push", "--set-upstream", "origin", branch)
-								}
-
-								metaImagesCheckFunc(ctx, 3, 3)
-							})
+					It("should remove image by references.limit.in AND references.limit.last", func(ctx SpecContext) {
+						SuiteData.Stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "6")
+						gitHistoryBasedCleanupCheck(ctx, imageName, 3, 1, func(imageMetadata map[string][]string) {
+							Expect(imageMetadata).Should(HaveKey(stageID3))
 						})
 					})
 				})
 
-				Context("custom tags", func() {
-					It("should remove custom tag associated with the deleted stage", func(ctx SpecContext) {
-						customTag1 := "tag1"
-						customTag2 := "tag2"
+				Context("imagesPerReference.*", func() {
+					var (
+						stageID1 string
+						stageID2 string
+						stageID3 string
+					)
 
-						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build", "--add-custom-tag", fmt.Sprintf(customTagValueFormat, customTag1))
-
-						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "push", "--set-upstream", "origin", branchName)
-
-						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "commit", "--allow-empty", "-m", "test")
-
-						SuiteData.Stubs.SetEnv("FROM_CACHE_VERSION", "REBUILD")
-
-						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build", "--add-custom-tag", fmt.Sprintf(customTagValueFormat, customTag2))
-
-						customTags := CustomTags(ctx)
-						Expect(customTags).Should(ContainElement(fmt.Sprintf(customTagValueFormat, customTag1)))
-						Expect(customTags).Should(ContainElement(fmt.Sprintf(customTagValueFormat, customTag2)))
-						Expect(len(CustomTagsMetadataList(ctx))).Should(Equal(2))
-
-						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "cleanup")
-
-						customTags = CustomTags(ctx)
-						Expect(customTags).Should(ContainElement(fmt.Sprintf(customTagValueFormat, customTag1)))
-						Expect(customTags).ShouldNot(ContainElement(fmt.Sprintf(customTagValueFormat, customTag2)))
-						Expect(len(CustomTagsMetadataList(ctx))).Should(Equal(1))
-					})
-				})
-
-				Context("with --meta-repo", func() {
 					BeforeEach(func(ctx SpecContext) {
-						SetupMetaRepo(ctx, implementationName)
+						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "checkout", "-b", "test")
+
+						setLastCommitCommitterWhen(ctx, time.Now().Add(-(13 * time.Hour)))
+
+						SuiteData.Stubs.SetEnv("FROM_CACHE_VERSION", "1")
+						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
+
+						stageID1 = resultStageID(ctx, imageName)
+						_ = stageID1
+
+						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "commit", "--allow-empty", "-m", "+")
+
+						setLastCommitCommitterWhen(ctx, time.Now().Add(-(11 * time.Hour)))
+
+						SuiteData.Stubs.SetEnv("FROM_CACHE_VERSION", "2")
+						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
+
+						stageID2 = resultStageID(ctx, imageName)
+
+						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "commit", "--allow-empty", "-m", "+")
+
+						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "push", "--set-upstream", "origin", "test")
+
+						SuiteData.Stubs.SetEnv("FROM_CACHE_VERSION", "3")
+						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
+
+						stageID3 = resultStageID(ctx, imageName)
 					})
 
-					It("should route managed-image, image-metadata and custom-tag metadata to meta-repo and delete them from meta-repo on cleanup", func(ctx SpecContext) {
-						customTag1 := "tag1"
-						customTag2 := "tag2"
+					It("should remove image by imagesPerReference.in OR imagesPerReference.last", func(ctx SpecContext) {
+						SuiteData.Stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "7")
+						gitHistoryBasedCleanupCheck(ctx, imageName, 3, 2, func(imageMetadata map[string][]string) {
+							Expect(imageMetadata).Should(HaveKey(stageID2))
+							Expect(imageMetadata).Should(HaveKey(stageID3))
+						})
+					})
 
-						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build", "--add-custom-tag", fmt.Sprintf(customTagValueFormat, customTag1))
-
-						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "push", "--set-upstream", "origin", branchName)
-
-						Expect(MetaManagedImagesCount(ctx)).Should(BeNumerically(">", 0), "managed-image records live in meta-repo")
-						Expect(ManagedImagesCount(ctx)).Should(Equal(0), "managed-image records MUST NOT be written to stages-repo")
-						Expect(MetaImageMetadata(ctx, imageName)).ShouldNot(BeEmpty(), "image-metadata records live in meta-repo")
-						Expect(ImageMetadata(ctx, imageName)).Should(BeEmpty(), "image-metadata records MUST NOT be written to stages-repo")
-						Expect(len(MetaCustomTagsMetadataList(ctx))).Should(Equal(1), "custom-tag metadata records live in meta-repo")
-						Expect(len(CustomTagsMetadataList(ctx))).Should(Equal(0), "custom-tag metadata MUST NOT be written to stages-repo")
-						Expect(CustomTags(ctx)).Should(ContainElement(fmt.Sprintf(customTagValueFormat, customTag1)), "custom-tag alias image stays in stages-repo")
-
-						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "commit", "--allow-empty", "-m", "test")
-
-						SuiteData.Stubs.SetEnv("FROM_CACHE_VERSION", "REBUILD")
-
-						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build", "--add-custom-tag", fmt.Sprintf(customTagValueFormat, customTag2))
-
-						Expect(len(MetaCustomTagsMetadataList(ctx))).Should(Equal(2))
-
-						metaImageMetadataBeforeCleanup := MetaImageMetadata(ctx, imageName)
-						Expect(len(metaImageMetadataBeforeCleanup)).Should(BeNumerically(">=", 2), "image-metadata for both built stageIDs present in meta-repo before cleanup")
-
-						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "cleanup")
-
-						customTags := CustomTags(ctx)
-						Expect(customTags).Should(ContainElement(fmt.Sprintf(customTagValueFormat, customTag1)))
-						Expect(customTags).ShouldNot(ContainElement(fmt.Sprintf(customTagValueFormat, customTag2)), "stale custom-tag alias deleted from stages-repo")
-						Expect(len(MetaCustomTagsMetadataList(ctx))).Should(Equal(1), "stale custom-tag metadata deleted from meta-repo")
-						Expect(len(CustomTagsMetadataList(ctx))).Should(Equal(0), "stages-repo still holds no metadata records")
-						Expect(MetaLastCleanupRecord(ctx)).ShouldNot(BeNil(), "last-cleanup record written to meta-repo")
-						Expect(MetaManagedImagesCount(ctx)).Should(BeNumerically(">", 0), "active managed-image records remain in meta-repo after cleanup")
-						Expect(ManagedImagesCount(ctx)).Should(Equal(0), "managed-image records still not in stages-repo")
-						if SuiteData.TestImplementation != docker_registry.QuayImplementationName {
-							metaImageMetadataAfterCleanup := MetaImageMetadata(ctx, imageName)
-							Expect(len(metaImageMetadataAfterCleanup)).Should(BeNumerically("<", len(metaImageMetadataBeforeCleanup)), "cleanup MUST delete stale image-metadata records from meta-repo")
-							Expect(len(metaImageMetadataAfterCleanup)).Should(BeNumerically(">=", 1), "image-metadata for the active stageID MUST remain in meta-repo")
-						}
-						Expect(len(ImageMetadata(ctx, imageName))).Should(Equal(0), "image-metadata still not in stages-repo")
+					It("should remove image by imagesPerReference.in AND imagesPerReference.last", func(ctx SpecContext) {
+						SuiteData.Stubs.SetEnv("CLEANUP_POLICY_SET_NUMBER", "8")
+						gitHistoryBasedCleanupCheck(ctx, imageName, 3, 1, func(imageMetadata map[string][]string) {
+							Expect(imageMetadata).Should(HaveKey(stageID3))
+						})
 					})
 				})
+			})
 
-				Context("meta-repo migrate", func() {
-					// The metadata has to be built into --repo while WERF_META_REPO is
-					// still unset, so SetupMetaRepo is called inside each It rather than
-					// in a BeforeEach: otherwise the build would write straight to the
-					// destination and the migration would have nothing to move.
-					populateStagesRepo := func(ctx SpecContext, implementationName string) {
-						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build", "--add-custom-tag", fmt.Sprintf(customTagValueFormat, "tag1"))
+			Context("images metadata cleanup", func() {
+				When("one content digest", func() {
+					metaImagesCheckFunc := func(ctx context.Context, before, after int, afterExtraChecks ...func(commits []string)) {
+						imageMetadata := ImageMetadata(ctx, imageName)
+						for _, commitList := range imageMetadata {
+							Expect(commitList).Should(HaveLen(before))
+						}
+
+						gitHistoryBasedCleanupCheck(ctx, imageName, 1, 1, func(imageMetadata map[string][]string) {
+							for _, commitList := range imageMetadata {
+								Expect(commitList).Should(HaveLen(after))
+
+								for _, check := range afterExtraChecks {
+									check(commitList)
+								}
+							}
+						})
+					}
+
+					It("should keep image metadata only for the latest commit (one branch)", func(ctx SpecContext) {
+						for i := 0; i < 3; i++ {
+							utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "commit", "--allow-empty", "-m", "+")
+
+							utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
+						}
+
 						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "push", "--set-upstream", "origin", branchName)
 
-						// A build produces three of the four families; only a cleanup run
-						// writes the singleton cleanup record.
-						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "cleanup")
+						metaImagesCheckFunc(ctx, 3, 1, func(commits []string) {
+							Expect(commits).Should(ContainElement(utils.GetHeadCommit(ctx, SuiteData.TestDirPath)))
+						})
+					})
 
-						Expect(ManagedImagesCount(ctx)).Should(BeNumerically(">", 0), "managed-image records in stages-repo before migration")
-						Expect(ImageMetadata(ctx, imageName)).ShouldNot(BeEmpty(), "image-metadata records in stages-repo before migration")
-						Expect(len(CustomTagsMetadataList(ctx))).Should(Equal(1), "custom-tag metadata in stages-repo before migration")
-						Expect(LastCleanupRecord(ctx)).ShouldNot(BeNil(), "cleanup record in stages-repo before migration")
+					It("should keep all image metadata (several branches)", func(ctx SpecContext) {
+						for i := 0; i < 3; i++ {
+							utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "commit", "--allow-empty", "-m", "+")
 
-						SetupMetaRepo(ctx, implementationName)
-					}
+							utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
 
-					runMigrate := func(ctx SpecContext, extraArgs ...string) {
-						args := append([]string{"meta-repo", "migrate", "--from", SuiteData.StagesStorage.Address(), "--to", SuiteData.MetaStorage.Address()}, extraArgs...)
-						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, args...)
-					}
+							branch := fmt.Sprintf("test_%d", i)
+							utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "checkout", "-b", branch)
 
-					It("should move all four metadata families into the meta-repo and plant the marker", func(ctx SpecContext) {
-						populateStagesRepo(ctx, implementationName)
-
-						runMigrate(ctx)
-
-						Expect(MetaManagedImagesCount(ctx)).Should(BeNumerically(">", 0), "managed-image records moved to meta-repo")
-						Expect(MetaImageMetadata(ctx, imageName)).ShouldNot(BeEmpty(), "image-metadata records moved to meta-repo")
-						Expect(len(MetaCustomTagsMetadataList(ctx))).Should(Equal(1), "custom-tag metadata moved to meta-repo")
-						Expect(MetaLastCleanupRecord(ctx)).ShouldNot(BeNil(), "cleanup record moved to meta-repo")
-
-						addr, found := MetaRepoMarker(ctx)
-						Expect(found).To(BeTrue(), "marker planted in stages-repo")
-						Expect(addr).ShouldNot(BeEmpty(), "marker records the meta-repo address")
-
-						if SuiteData.TestImplementation != docker_registry.QuayImplementationName {
-							Expect(ManagedImagesCount(ctx)).Should(Equal(0), "managed-image records deleted from stages-repo by default")
-							Expect(ImageMetadata(ctx, imageName)).Should(BeEmpty(), "image-metadata records deleted from stages-repo by default")
-							Expect(len(CustomTagsMetadataList(ctx))).Should(Equal(0), "custom-tag metadata deleted from stages-repo by default")
-							Expect(LastCleanupRecord(ctx)).Should(BeNil(), "cleanup record deleted from stages-repo by default")
+							utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "push", "--set-upstream", "origin", branch)
 						}
-					})
 
-					It("should keep the source records with --remove-source=false", func(ctx SpecContext) {
-						populateStagesRepo(ctx, implementationName)
-
-						runMigrate(ctx, "--remove-source=false")
-
-						Expect(MetaManagedImagesCount(ctx)).Should(BeNumerically(">", 0), "managed-image records copied to meta-repo")
-						Expect(MetaImageMetadata(ctx, imageName)).ShouldNot(BeEmpty(), "image-metadata records copied to meta-repo")
-
-						Expect(ManagedImagesCount(ctx)).Should(BeNumerically(">", 0), "managed-image records kept in stages-repo")
-						Expect(ImageMetadata(ctx, imageName)).ShouldNot(BeEmpty(), "image-metadata records kept in stages-repo")
-						Expect(len(CustomTagsMetadataList(ctx))).Should(Equal(1), "custom-tag metadata kept in stages-repo")
-						Expect(LastCleanupRecord(ctx)).ShouldNot(BeNil(), "cleanup record kept in stages-repo")
-					})
-
-					It("should preserve git-history-protected stages on a cleanup after migration", func(ctx SpecContext) {
-						populateStagesRepo(ctx, implementationName)
-
-						runMigrate(ctx)
-
-						count := StagesCount(ctx)
-						Expect(count).Should(BeNumerically(">", 0))
-
-						utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "cleanup")
-
-						Expect(StagesCount(ctx)).Should(Equal(count), "stages of the pushed branch keep their git-history protection through the migration")
+						metaImagesCheckFunc(ctx, 3, 3)
 					})
 				})
 			})
 		})
-	}
+
+		Context("custom tags", func() {
+			It("should remove custom tag associated with the deleted stage", func(ctx SpecContext) {
+				customTag1 := "tag1"
+				customTag2 := "tag2"
+
+				utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build", "--add-custom-tag", fmt.Sprintf(customTagValueFormat, customTag1))
+
+				utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "push", "--set-upstream", "origin", branchName)
+
+				utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "commit", "--allow-empty", "-m", "test")
+
+				SuiteData.Stubs.SetEnv("FROM_CACHE_VERSION", "REBUILD")
+
+				utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build", "--add-custom-tag", fmt.Sprintf(customTagValueFormat, customTag2))
+
+				customTags := CustomTags(ctx)
+				Expect(customTags).Should(ContainElement(fmt.Sprintf(customTagValueFormat, customTag1)))
+				Expect(customTags).Should(ContainElement(fmt.Sprintf(customTagValueFormat, customTag2)))
+				Expect(len(CustomTagsMetadataList(ctx))).Should(Equal(2))
+
+				utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "cleanup")
+
+				customTags = CustomTags(ctx)
+				Expect(customTags).Should(ContainElement(fmt.Sprintf(customTagValueFormat, customTag1)))
+				Expect(customTags).ShouldNot(ContainElement(fmt.Sprintf(customTagValueFormat, customTag2)))
+				Expect(len(CustomTagsMetadataList(ctx))).Should(Equal(1))
+			})
+		})
+
+		Context("with --meta-repo", func() {
+			BeforeEach(func(ctx SpecContext) {
+				SetupMetaRepo(ctx)
+			})
+
+			It("should route managed-image, image-metadata and custom-tag metadata to meta-repo and delete them from meta-repo on cleanup", func(ctx SpecContext) {
+				customTag1 := "tag1"
+				customTag2 := "tag2"
+
+				utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build", "--add-custom-tag", fmt.Sprintf(customTagValueFormat, customTag1))
+
+				utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "push", "--set-upstream", "origin", branchName)
+
+				Expect(MetaManagedImagesCount(ctx)).Should(BeNumerically(">", 0), "managed-image records live in meta-repo")
+				Expect(ManagedImagesCount(ctx)).Should(Equal(0), "managed-image records MUST NOT be written to stages-repo")
+				Expect(MetaImageMetadata(ctx, imageName)).ShouldNot(BeEmpty(), "image-metadata records live in meta-repo")
+				Expect(ImageMetadata(ctx, imageName)).Should(BeEmpty(), "image-metadata records MUST NOT be written to stages-repo")
+				Expect(len(MetaCustomTagsMetadataList(ctx))).Should(Equal(1), "custom-tag metadata records live in meta-repo")
+				Expect(len(CustomTagsMetadataList(ctx))).Should(Equal(0), "custom-tag metadata MUST NOT be written to stages-repo")
+				Expect(CustomTags(ctx)).Should(ContainElement(fmt.Sprintf(customTagValueFormat, customTag1)), "custom-tag alias image stays in stages-repo")
+
+				utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "commit", "--allow-empty", "-m", "test")
+
+				SuiteData.Stubs.SetEnv("FROM_CACHE_VERSION", "REBUILD")
+
+				utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build", "--add-custom-tag", fmt.Sprintf(customTagValueFormat, customTag2))
+
+				Expect(len(MetaCustomTagsMetadataList(ctx))).Should(Equal(2))
+
+				metaImageMetadataBeforeCleanup := MetaImageMetadata(ctx, imageName)
+				Expect(len(metaImageMetadataBeforeCleanup)).Should(BeNumerically(">=", 2), "image-metadata for both built stageIDs present in meta-repo before cleanup")
+
+				utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "cleanup")
+
+				customTags := CustomTags(ctx)
+				Expect(customTags).Should(ContainElement(fmt.Sprintf(customTagValueFormat, customTag1)))
+				Expect(customTags).ShouldNot(ContainElement(fmt.Sprintf(customTagValueFormat, customTag2)), "stale custom-tag alias deleted from stages-repo")
+				Expect(len(MetaCustomTagsMetadataList(ctx))).Should(Equal(1), "stale custom-tag metadata deleted from meta-repo")
+				Expect(len(CustomTagsMetadataList(ctx))).Should(Equal(0), "stages-repo still holds no metadata records")
+				Expect(MetaLastCleanupRecord(ctx)).ShouldNot(BeNil(), "last-cleanup record written to meta-repo")
+				Expect(MetaManagedImagesCount(ctx)).Should(BeNumerically(">", 0), "active managed-image records remain in meta-repo after cleanup")
+				Expect(ManagedImagesCount(ctx)).Should(Equal(0), "managed-image records still not in stages-repo")
+				metaImageMetadataAfterCleanup := MetaImageMetadata(ctx, imageName)
+				Expect(len(metaImageMetadataAfterCleanup)).Should(BeNumerically("<", len(metaImageMetadataBeforeCleanup)), "cleanup MUST delete stale image-metadata records from meta-repo")
+				Expect(len(metaImageMetadataAfterCleanup)).Should(BeNumerically(">=", 1), "image-metadata for the active stageID MUST remain in meta-repo")
+				Expect(len(ImageMetadata(ctx, imageName))).Should(Equal(0), "image-metadata still not in stages-repo")
+			})
+		})
+
+		Context("meta-repo migrate", func() {
+			// The metadata has to be built into --repo while WERF_META_REPO is
+			// still unset, so SetupMetaRepo is called inside each It rather than
+			// in a BeforeEach: otherwise the build would write straight to the
+			// destination and the migration would have nothing to move.
+			populateStagesRepo := func(ctx SpecContext) {
+				utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build", "--add-custom-tag", fmt.Sprintf(customTagValueFormat, "tag1"))
+				utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, "git", "push", "--set-upstream", "origin", branchName)
+
+				// A build produces three of the four families; only a cleanup run
+				// writes the singleton cleanup record.
+				utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "cleanup")
+
+				Expect(ManagedImagesCount(ctx)).Should(BeNumerically(">", 0), "managed-image records in stages-repo before migration")
+				Expect(ImageMetadata(ctx, imageName)).ShouldNot(BeEmpty(), "image-metadata records in stages-repo before migration")
+				Expect(len(CustomTagsMetadataList(ctx))).Should(Equal(1), "custom-tag metadata in stages-repo before migration")
+				Expect(LastCleanupRecord(ctx)).ShouldNot(BeNil(), "cleanup record in stages-repo before migration")
+
+				SetupMetaRepo(ctx)
+			}
+
+			runMigrate := func(ctx SpecContext, extraArgs ...string) {
+				args := append([]string{"meta-repo", "migrate", "--from", SuiteData.StagesStorage.Address(), "--to", SuiteData.MetaStorage.Address()}, extraArgs...)
+				utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, args...)
+			}
+
+			It("should move all four metadata families into the meta-repo and plant the marker", func(ctx SpecContext) {
+				populateStagesRepo(ctx)
+
+				runMigrate(ctx)
+
+				Expect(MetaManagedImagesCount(ctx)).Should(BeNumerically(">", 0), "managed-image records moved to meta-repo")
+				Expect(MetaImageMetadata(ctx, imageName)).ShouldNot(BeEmpty(), "image-metadata records moved to meta-repo")
+				Expect(len(MetaCustomTagsMetadataList(ctx))).Should(Equal(1), "custom-tag metadata moved to meta-repo")
+				Expect(MetaLastCleanupRecord(ctx)).ShouldNot(BeNil(), "cleanup record moved to meta-repo")
+
+				addr, found := MetaRepoMarker(ctx)
+				Expect(found).To(BeTrue(), "marker planted in stages-repo")
+				Expect(addr).ShouldNot(BeEmpty(), "marker records the meta-repo address")
+
+				Expect(ManagedImagesCount(ctx)).Should(Equal(0), "managed-image records deleted from stages-repo by default")
+				Expect(ImageMetadata(ctx, imageName)).Should(BeEmpty(), "image-metadata records deleted from stages-repo by default")
+				Expect(len(CustomTagsMetadataList(ctx))).Should(Equal(0), "custom-tag metadata deleted from stages-repo by default")
+				Expect(LastCleanupRecord(ctx)).Should(BeNil(), "cleanup record deleted from stages-repo by default")
+			})
+
+			It("should keep the source records with --remove-source=false", func(ctx SpecContext) {
+				populateStagesRepo(ctx)
+
+				runMigrate(ctx, "--remove-source=false")
+
+				Expect(MetaManagedImagesCount(ctx)).Should(BeNumerically(">", 0), "managed-image records copied to meta-repo")
+				Expect(MetaImageMetadata(ctx, imageName)).ShouldNot(BeEmpty(), "image-metadata records copied to meta-repo")
+
+				Expect(ManagedImagesCount(ctx)).Should(BeNumerically(">", 0), "managed-image records kept in stages-repo")
+				Expect(ImageMetadata(ctx, imageName)).ShouldNot(BeEmpty(), "image-metadata records kept in stages-repo")
+				Expect(len(CustomTagsMetadataList(ctx))).Should(Equal(1), "custom-tag metadata kept in stages-repo")
+				Expect(LastCleanupRecord(ctx)).ShouldNot(BeNil(), "cleanup record kept in stages-repo")
+			})
+
+			It("should preserve git-history-protected stages on a cleanup after migration", func(ctx SpecContext) {
+				populateStagesRepo(ctx)
+
+				runMigrate(ctx)
+
+				count := StagesCount(ctx)
+				Expect(count).Should(BeNumerically(">", 0))
+
+				utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "cleanup")
+
+				Expect(StagesCount(ctx)).Should(Equal(count), "stages of the pushed branch keep their git-history protection through the migration")
+			})
+		})
+	})
 })
 
 func resultStageID(ctx context.Context, imageName string) string {
@@ -572,13 +552,11 @@ func gitHistoryBasedCleanupCheck(ctx context.Context, imageName string, expected
 
 	utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "cleanup")
 
-	if SuiteData.TestImplementation != docker_registry.QuayImplementationName {
-		imageMetadata := ImageMetadata(ctx, imageName)
-		Expect(imageMetadata).Should(HaveLen(expectedNumberOfMetadataTagsAfter))
+	imageMetadata := ImageMetadata(ctx, imageName)
+	Expect(imageMetadata).Should(HaveLen(expectedNumberOfMetadataTagsAfter))
 
-		for _, check := range afterCleanupChecks {
-			check(imageMetadata)
-		}
+	for _, check := range afterCleanupChecks {
+		check(imageMetadata)
 	}
 }
 
