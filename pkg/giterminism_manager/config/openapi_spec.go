@@ -16,7 +16,7 @@ import (
 
 func openAPISchema() *spec.Schema {
 	schema := &spec.Schema{}
-	if err := json.Unmarshal(schemas.GiterminismConfig, schema); err != nil {
+	if err := json.Unmarshal([]byte(schemas.GiterminismConfig), schema); err != nil {
 		panic(fmt.Sprint("unexpected error: ", err))
 	}
 

@@ -1,1160 +1,1234 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "title": "werf.yaml",
-    "description": "werf configuration file. The file consists of several YAML documents separated by `---`: exactly one meta section (identified by `configVersion`) and any number of image sections (identified by `dockerfile` or `image`).\nhttps://werf.io/docs/v2/reference/werf_yaml.html",
-    "type": "object",
-    "oneOf": [
-        {
-            "$ref": "#/definitions/meta"
-        },
-        {
-            "$ref": "#/definitions/dockerfileImage"
-        },
-        {
-            "$ref": "#/definitions/stapelImage"
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "werf.yaml",
+  "description": "werf configuration file. The file consists of several YAML documents separated by `---`: exactly one meta section (identified by `configVersion`) and any number of image sections (identified by `dockerfile` or `image`).\nhttps://werf.io/docs/latest/reference/werf_yaml.html",
+  "type": "object",
+  "allOf": [
+    {
+      "if": {
+        "required": [
+          "configVersion"
+        ]
+      },
+      "then": {
+        "$ref": "#/definitions/meta"
+      }
+    },
+    {
+      "if": {
+        "required": [
+          "dockerfile"
+        ]
+      },
+      "then": {
+        "$ref": "#/definitions/dockerfileImage"
+      }
+    },
+    {
+      "if": {
+        "required": [
+          "image"
+        ],
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "configVersion"
+              ]
+            },
+            {
+              "required": [
+                "dockerfile"
+              ]
+            }
+          ]
         }
-    ],
-    "definitions": {
-        "stringOrStringArray": {
-            "oneOf": [
-                {
-                    "type": "string"
-                },
-                {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                }
-            ]
+      },
+      "then": {
+        "$ref": "#/definitions/stapelImage"
+      }
+    },
+    {
+      "anyOf": [
+        {
+          "required": [
+            "configVersion"
+          ]
         },
-        "stringArray": {
-            "type": "array",
-            "items": {
-                "type": "string"
-            }
+        {
+          "required": [
+            "dockerfile"
+          ]
         },
-        "stringMap": {
-            "type": "object",
-            "additionalProperties": {
-                "type": "string"
-            }
+        {
+          "required": [
+            "image"
+          ]
+        }
+      ]
+    }
+  ],
+  "definitions": {
+    "stringOrStringArray": {
+      "oneOf": [
+        {
+          "type": "string"
         },
-        "platform": {
-            "description": "List of target platforms (for example ['linux/amd64', 'linux/arm64', 'linux/arm/v8']).",
-            "type": "array",
-            "items": {
-                "type": "string"
-            }
-        },
-        "cacheVersion": {
-            "description": "Cache version. Change it to invalidate the build cache.",
-            "type": [
-                "string",
-                "number"
-            ]
-        },
-        "stageName": {
-            "type": "string",
-            "enum": [
-                "install",
-                "setup"
-            ]
-        },
-        "duration": {
-            "description": "Go duration string, for example `30m`, `24h`, `168h`.",
-            "type": "string",
-            "pattern": "^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$"
-        },
-        "regexpOrString": {
-            "description": "Exact value, or a regular expression enclosed in slashes: `/REGEXP/`.",
+        {
+          "type": "array",
+          "items": {
             "type": "string"
+          }
+        }
+      ]
+    },
+    "stringArray": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "stringMap": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "platform": {
+      "description": "List of target platforms (for example ['linux/amd64', 'linux/arm64', 'linux/arm/v8']).",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "cacheVersion": {
+      "description": "Cache version. Change it to invalidate the build cache.",
+      "type": [
+        "string",
+        "number"
+      ]
+    },
+    "stageName": {
+      "type": "string",
+      "enum": [
+        "install",
+        "setup"
+      ]
+    },
+    "duration": {
+      "description": "Go duration string, for example `30m`, `24h`, `168h`.",
+      "type": "string",
+      "pattern": "^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$"
+    },
+    "regexpOrString": {
+      "description": "Exact value, or a regular expression enclosed in slashes: `/REGEXP/`.",
+      "type": "string",
+      "minLength": 1
+    },
+    "secret": {
+      "description": "Build secret. Exactly one of `env`, `src` or `value` must be set.\nhttps://werf.io/docs/latest/usage/build/images.html#using-build-secrets",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "description": "Secret unique identifier. Defaults to the environment variable name for `env` and to the file base name for `src`; mandatory for `value`.",
+          "type": "string"
         },
-        "secret": {
-            "description": "Build secret. Exactly one of `env`, `src` or `value` must be set.\nhttps://werf.io/docs/v2/usage/build/images.html#using-build-secrets",
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-                "id": {
-                    "description": "Secret unique identifier. Defaults to the environment variable name for `env` and to the file base name for `src`; mandatory for `value`.",
+        "env": {
+          "description": "A secret from an environment variable.",
+          "type": "string",
+          "minLength": 1
+        },
+        "src": {
+          "description": "A secret from a file at the given path.",
+          "type": "string",
+          "minLength": 1
+        },
+        "value": {
+          "description": "Custom string value. Requires `id`.",
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "oneOf": [
+        {
+          "required": [
+            "env"
+          ]
+        },
+        {
+          "required": [
+            "src"
+          ]
+        },
+        {
+          "required": [
+            "value",
+            "id"
+          ]
+        }
+      ]
+    },
+    "dependencyImportType": {
+      "description": "Type of image info to import.",
+      "type": "string",
+      "enum": [
+        "ImageName",
+        "ImageTag",
+        "ImageRepo",
+        "ImageDigest"
+      ]
+    },
+    "dependencyBase": {
+      "type": "object",
+      "properties": {
+        "from": {
+          "description": "Dependency image name, which should be built before building current image.",
+          "type": "string",
+          "minLength": 1
+        },
+        "image": {
+          "description": "DEPRECATED. Use `from` instead. Dependency image name, which should be built before building current image.",
+          "deprecationMessage": "Use `from` instead.",
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "oneOf": [
+        {
+          "required": [
+            "from"
+          ]
+        },
+        {
+          "required": [
+            "image"
+          ]
+        }
+      ]
+    },
+    "dockerfileDependency": {
+      "description": "Dependency image whose info is passed into the Dockerfile build via build args.",
+      "allOf": [
+        {
+          "$ref": "#/definitions/dependencyBase"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "from": true,
+            "image": true,
+            "imports": {
+              "description": "Target build args to import image information into current image.",
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "type",
+                  "targetBuildArg"
+                ],
+                "properties": {
+                  "type": {
+                    "$ref": "#/definitions/dependencyImportType"
+                  },
+                  "targetBuildArg": {
+                    "description": "Name of the build argument which will contain the specified type of information about the image.",
                     "type": "string"
-                },
-                "env": {
-                    "description": "A secret from an environment variable.",
-                    "type": "string"
-                },
-                "src": {
-                    "description": "A secret from a file at the given path.",
-                    "type": "string"
-                },
-                "value": {
-                    "description": "Custom string value. Requires `id`.",
-                    "type": "string"
+                  }
                 }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "stapelDependency": {
+      "description": "Dependency image whose info is passed into the Stapel build via environment variables. Exactly one of `before` or `after` must be set.",
+      "allOf": [
+        {
+          "$ref": "#/definitions/dependencyBase"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "from": true,
+            "image": true,
+            "before": {
+              "description": "The stage before which image info should be imported. Target env variables are available at user stages after it.",
+              "$ref": "#/definitions/stageName"
             },
-            "oneOf": [
-                {
-                    "required": [
-                        "env"
-                    ]
-                },
-                {
-                    "required": [
-                        "src"
-                    ]
-                },
-                {
-                    "required": [
-                        "value",
-                        "id"
-                    ]
-                }
-            ]
-        },
-        "dependencyImportType": {
-            "description": "Type of image info to import.",
-            "type": "string",
-            "enum": [
-                "ImageName",
-                "ImageTag",
-                "ImageRepo",
-                "ImageDigest"
-            ]
-        },
-        "dependencyBase": {
-            "type": "object",
-            "properties": {
-                "from": {
-                    "description": "Dependency image name, which should be built before building current image.",
-                    "type": "string"
-                },
-                "image": {
-                    "description": "DEPRECATED. Use `from` instead. Dependency image name, which should be built before building current image.",
-                    "deprecationMessage": "Use `from` instead.",
-                    "type": "string"
-                }
+            "after": {
+              "description": "The stage after which image info should be imported. Target env variables are available at user stages after it.",
+              "$ref": "#/definitions/stageName"
             },
-            "oneOf": [
-                {
-                    "required": [
-                        "from"
-                    ]
-                },
-                {
-                    "required": [
-                        "image"
-                    ]
+            "imports": {
+              "description": "Target environment variables to import image information into current image.",
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "type",
+                  "targetEnv"
+                ],
+                "properties": {
+                  "type": {
+                    "$ref": "#/definitions/dependencyImportType"
+                  },
+                  "targetEnv": {
+                    "description": "Name of the environment variable which will contain the specified type of information about the image.",
+                    "type": "string"
+                  }
                 }
-            ]
+              }
+            }
+          },
+          "oneOf": [
+            {
+              "required": [
+                "before"
+              ]
+            },
+            {
+              "required": [
+                "after"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "imageSpecConfig": {
+      "description": "Image configuration according to the OCI specification.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "keepEssentialWerfLabels": {
+          "description": "Do not remove werf labels necessary for normal operation.",
+          "type": "boolean"
         },
-        "dockerfileDependency": {
-            "description": "Dependency image whose info is passed into the Dockerfile build via build args.",
-            "allOf": [
-                {
-                    "$ref": "#/definitions/dependencyBase"
-                },
-                {
+        "clearWerfLabels": {
+          "description": "DEPRECATED. No longer has any effect.",
+          "deprecationMessage": "No longer has any effect.",
+          "type": "boolean"
+        },
+        "clearCmd": {
+          "description": "Remove CMD.",
+          "type": "boolean"
+        },
+        "clearEntrypoint": {
+          "description": "Remove ENTRYPOINT.",
+          "type": "boolean"
+        },
+        "clearUser": {
+          "description": "Remove USER.",
+          "type": "boolean"
+        },
+        "clearWorkingDir": {
+          "description": "Remove WORKDIR.",
+          "type": "boolean"
+        },
+        "removeLabels": {
+          "description": "List of labels to remove. Each item is an exact name or `/REGEXP/`.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/regexpOrString"
+          }
+        },
+        "removeVolumes": {
+          "description": "List of volumes to remove.",
+          "$ref": "#/definitions/stringArray"
+        },
+        "removeEnv": {
+          "description": "List of environment variables to remove. Each item is an exact name or `/REGEXP/`.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/regexpOrString"
+          }
+        },
+        "volumes": {
+          "description": "List of volumes to add.\nhttps://docs.docker.com/engine/reference/builder/#volume",
+          "$ref": "#/definitions/stringArray"
+        },
+        "labels": {
+          "description": "Labels to add.",
+          "$ref": "#/definitions/stringMap"
+        },
+        "env": {
+          "description": "Environment variables to add.\nhttps://docs.docker.com/engine/reference/builder/#env",
+          "$ref": "#/definitions/stringMap"
+        },
+        "expose": {
+          "description": "Exposed ports.\nhttps://docs.docker.com/engine/reference/builder/#expose",
+          "$ref": "#/definitions/stringArray"
+        },
+        "user": {
+          "description": "Set USER.\nhttps://docs.docker.com/engine/reference/builder/#user",
+          "type": "string"
+        },
+        "cmd": {
+          "description": "Set CMD.\nhttps://docs.docker.com/engine/reference/builder/#cmd",
+          "$ref": "#/definitions/stringArray"
+        },
+        "entrypoint": {
+          "description": "Set ENTRYPOINT.\nhttps://docs.docker.com/engine/reference/builder/#entrypoint",
+          "$ref": "#/definitions/stringArray"
+        },
+        "workingDir": {
+          "description": "Set WORKDIR.\nhttps://docs.docker.com/engine/reference/builder/#workdir",
+          "type": "string"
+        },
+        "stopSignal": {
+          "description": "Set STOPSIGNAL.\nhttps://docs.docker.com/engine/reference/builder/#stopsignal",
+          "type": "string"
+        },
+        "healthcheck": {
+          "description": "Healthcheck configuration. Intervals are in seconds.\nhttps://docs.docker.com/engine/reference/builder/#healthcheck",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "test": {
+              "description": "Command to run, in exec form, for example [\"CMD\", \"curl\", \"-f\", \"http://localhost/\"].",
+              "$ref": "#/definitions/stringArray"
+            },
+            "interval": {
+              "description": "Seconds between checks.",
+              "type": "integer"
+            },
+            "timeout": {
+              "description": "Seconds a single check may take.",
+              "type": "integer"
+            },
+            "startperiod": {
+              "description": "UNDOCUMENTED. Seconds to wait after the container starts before running the first check.",
+              "type": "integer"
+            },
+            "retries": {
+              "description": "Consecutive failures needed to report unhealthy.",
+              "type": "integer"
+            }
+          }
+        }
+      }
+    },
+    "imageSpec": {
+      "description": "Image configuration according to the OCI specification.\nhttps://werf.io/docs/latest/usage/build/images.html#changing-image-configuration-spec",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "author": {
+          "description": "Author of the image.",
+          "type": "string"
+        },
+        "clearHistory": {
+          "description": "Remove all image build history.",
+          "type": "boolean"
+        },
+        "config": {
+          "$ref": "#/definitions/imageSpecConfig"
+        }
+      }
+    },
+    "imageSpecGlobal": {
+      "description": "Global image configuration options according to the OCI specification, applied to all final images.\nhttps://werf.io/docs/latest/usage/build/images.html#changing-image-configuration-spec",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "author": {
+          "description": "Author of the image.",
+          "type": "string"
+        },
+        "clearHistory": {
+          "description": "Remove all image build history.",
+          "type": "boolean"
+        },
+        "config": {
+          "description": "Common image configuration.",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "keepEssentialWerfLabels": {
+              "description": "Do not remove werf labels necessary for normal operation.",
+              "type": "boolean"
+            },
+            "clearWerfLabels": {
+              "description": "DEPRECATED. No longer has any effect.",
+              "deprecationMessage": "No longer has any effect.",
+              "type": "boolean"
+            },
+            "removeLabels": {
+              "description": "List of labels to remove. Each item is an exact name or `/REGEXP/`.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/regexpOrString"
+              }
+            },
+            "labels": {
+              "description": "Labels to add.",
+              "$ref": "#/definitions/stringMap"
+            }
+          }
+        }
+      }
+    },
+    "cleanupLimit": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "last": {
+          "description": "Select the last n references. -1 means no limit.",
+          "type": "integer",
+          "default": -1
+        },
+        "in": {
+          "description": "Select git tags created during the period, or git branches active during the period.",
+          "$ref": "#/definitions/duration"
+        },
+        "operator": {
+          "description": "Whether both `last` and `in` must hold, or any of them.",
+          "type": "string",
+          "enum": [
+            "And",
+            "Or"
+          ],
+          "default": "And"
+        }
+      }
+    },
+    "meta": {
+      "description": "Meta section: project-wide settings. Exactly one per werf.yaml.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "configVersion",
+        "project"
+      ],
+      "properties": {
+        "configVersion": {
+          "description": "Config syntax version. It should always be 1 for now.",
+          "type": "integer",
+          "const": 1
+        },
+        "project": {
+          "description": "Unique project name. Lower-case letters, digits and dashes; must not start or end with a dash.",
+          "type": "string",
+          "minLength": 1
+        },
+        "build": {
+          "description": "Common build settings.",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "cacheVersion": {
+              "$ref": "#/definitions/cacheVersion"
+            },
+            "platform": {
+              "description": "Common list of target platforms for all images (for example ['linux/amd64', 'linux/arm64', 'linux/arm/v8']).",
+              "$ref": "#/definitions/platform"
+            },
+            "staged": {
+              "description": "Enable layer-by-layer caching of Dockerfile instructions in container registry globally for all images.",
+              "type": "boolean"
+            },
+            "imageSpec": {
+              "$ref": "#/definitions/imageSpecGlobal"
+            }
+          }
+        },
+        "deploy": {
+          "description": "Settings for deployment.",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "helmChartDir": {
+              "description": "Path to the helm chart directory of the project.",
+              "type": "string",
+              "minLength": 1,
+              "default": ".helm"
+            },
+            "helmChartConfig": {
+              "description": "Override Chart.yaml configuration.",
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "appVersion": {
+                  "description": "Override appVersion in Chart.yaml.",
+                  "type": "string"
+                }
+              }
+            },
+            "helmRelease": {
+              "description": "Release name template.",
+              "type": "string",
+              "minLength": 1,
+              "default": "[[ project ]]-[[ env ]]"
+            },
+            "helmReleaseSlug": {
+              "description": "Release name slugification.",
+              "type": "boolean",
+              "default": true
+            },
+            "namespace": {
+              "description": "Kubernetes namespace template.",
+              "type": "string",
+              "minLength": 1,
+              "default": "[[ project ]]-[[ env ]]"
+            },
+            "namespaceSlug": {
+              "description": "Kubernetes namespace slugification.",
+              "type": "boolean",
+              "default": true
+            }
+          }
+        },
+        "cleanup": {
+          "description": "Settings for cleaning up irrelevant images.\nhttps://werf.io/docs/latest/usage/cleanup/cr_cleanup.html",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "disable": {
+              "description": "Disable cleanup entirely. This prevents meta images from being published to the container registry.",
+              "type": "boolean"
+            },
+            "disableKubernetesBasedPolicy": {
+              "description": "Disable the policy that keeps images deployed in Kubernetes.",
+              "type": "boolean"
+            },
+            "disableGitHistoryBasedPolicy": {
+              "description": "Disable the policy that keeps images according to user-defined `keepPolicies` based on the git history.",
+              "type": "boolean"
+            },
+            "disableBuiltWithinLastNHoursPolicy": {
+              "description": "Disable the policy that keeps images built within the last `keepImagesBuiltWithinLastNHours` hours.",
+              "type": "boolean"
+            },
+            "keepImagesBuiltWithinLastNHours": {
+              "description": "The minimum number of hours that must elapse since the image is built before it can be removed.",
+              "type": "integer",
+              "minimum": 0,
+              "default": 2
+            },
+            "keepPolicies": {
+              "description": "Set of policies to select relevant image versions using the git history.",
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "references"
+                ],
+                "properties": {
+                  "references": {
+                    "description": "References to perform scanning on. Exactly one of `branch` or `tag` must be set.",
                     "type": "object",
                     "additionalProperties": false,
                     "properties": {
-                        "from": true,
-                        "image": true,
-                        "imports": {
-                            "description": "Target build args to import image information into current image.",
-                            "type": "array",
-                            "items": {
-                                "type": "object",
-                                "additionalProperties": false,
-                                "required": [
-                                    "type",
-                                    "targetBuildArg"
-                                ],
-                                "properties": {
-                                    "type": {
-                                        "$ref": "#/definitions/dependencyImportType"
-                                    },
-                                    "targetBuildArg": {
-                                        "description": "Name of the build argument which will contain the specified type of information about the image.",
-                                        "type": "string"
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            ]
-        },
-        "stapelDependency": {
-            "description": "Dependency image whose info is passed into the Stapel build via environment variables. Exactly one of `before` or `after` must be set.",
-            "allOf": [
-                {
-                    "$ref": "#/definitions/dependencyBase"
-                },
-                {
-                    "type": "object",
-                    "additionalProperties": false,
-                    "properties": {
-                        "from": true,
-                        "image": true,
-                        "before": {
-                            "description": "The stage before which image info should be imported. Target env variables are available at user stages after it.",
-                            "$ref": "#/definitions/stageName"
-                        },
-                        "after": {
-                            "description": "The stage after which image info should be imported. Target env variables are available at user stages after it.",
-                            "$ref": "#/definitions/stageName"
-                        },
-                        "imports": {
-                            "description": "Target environment variables to import image information into current image.",
-                            "type": "array",
-                            "items": {
-                                "type": "object",
-                                "additionalProperties": false,
-                                "required": [
-                                    "type",
-                                    "targetEnv"
-                                ],
-                                "properties": {
-                                    "type": {
-                                        "$ref": "#/definitions/dependencyImportType"
-                                    },
-                                    "targetEnv": {
-                                        "description": "Name of the environment variable which will contain the specified type of information about the image.",
-                                        "type": "string"
-                                    }
-                                }
-                            }
-                        }
+                      "branch": {
+                        "description": "One or more git origin branches: an exact name or `/REGEXP/`.",
+                        "$ref": "#/definitions/regexpOrString"
+                      },
+                      "tag": {
+                        "description": "One or more git origin tags: an exact name or `/REGEXP/`.",
+                        "$ref": "#/definitions/regexpOrString"
+                      },
+                      "limit": {
+                        "description": "Rules to limit references by the date the git tag was created or the activity in the git branch.",
+                        "$ref": "#/definitions/cleanupLimit"
+                      }
                     },
                     "oneOf": [
-                        {
-                            "required": [
-                                "before"
-                            ]
-                        },
-                        {
-                            "required": [
-                                "after"
-                            ]
-                        }
+                      {
+                        "required": [
+                          "branch"
+                        ]
+                      },
+                      {
+                        "required": [
+                          "tag"
+                        ]
+                      }
                     ]
+                  },
+                  "imagesPerReference": {
+                    "description": "The limit on the number of image versions for each reference contained in the set.",
+                    "$ref": "#/definitions/cleanupLimit"
+                  }
                 }
-            ]
-        },
-        "imageSpecConfig": {
-            "description": "Image configuration according to the OCI specification.",
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-                "keepEssentialWerfLabels": {
-                    "description": "Do not remove werf labels necessary for normal operation.",
-                    "type": "boolean"
-                },
-                "clearWerfLabels": {
-                    "description": "DEPRECATED. No longer has any effect.",
-                    "deprecationMessage": "No longer has any effect.",
-                    "type": "boolean"
-                },
-                "clearCmd": {
-                    "description": "Remove CMD.",
-                    "type": "boolean"
-                },
-                "clearEntrypoint": {
-                    "description": "Remove ENTRYPOINT.",
-                    "type": "boolean"
-                },
-                "clearUser": {
-                    "description": "Remove USER.",
-                    "type": "boolean"
-                },
-                "clearWorkingDir": {
-                    "description": "Remove WORKDIR.",
-                    "type": "boolean"
-                },
-                "removeLabels": {
-                    "description": "List of labels to remove. Each item is an exact name or `/REGEXP/`.",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/regexpOrString"
-                    }
-                },
-                "removeVolumes": {
-                    "description": "List of volumes to remove.",
-                    "$ref": "#/definitions/stringArray"
-                },
-                "removeEnv": {
-                    "description": "List of environment variables to remove. Each item is an exact name or `/REGEXP/`.",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/regexpOrString"
-                    }
-                },
-                "volumes": {
-                    "description": "List of volumes to add.\nhttps://docs.docker.com/engine/reference/builder/#volume",
-                    "$ref": "#/definitions/stringArray"
-                },
-                "labels": {
-                    "description": "Labels to add.",
-                    "$ref": "#/definitions/stringMap"
-                },
-                "env": {
-                    "description": "Environment variables to add.\nhttps://docs.docker.com/engine/reference/builder/#env",
-                    "$ref": "#/definitions/stringMap"
-                },
-                "expose": {
-                    "description": "Exposed ports.\nhttps://docs.docker.com/engine/reference/builder/#expose",
-                    "$ref": "#/definitions/stringArray"
-                },
-                "user": {
-                    "description": "Set USER.\nhttps://docs.docker.com/engine/reference/builder/#user",
-                    "type": "string"
-                },
-                "cmd": {
-                    "description": "Set CMD.\nhttps://docs.docker.com/engine/reference/builder/#cmd",
-                    "$ref": "#/definitions/stringArray"
-                },
-                "entrypoint": {
-                    "description": "Set ENTRYPOINT.\nhttps://docs.docker.com/engine/reference/builder/#entrypoint",
-                    "$ref": "#/definitions/stringArray"
-                },
-                "workingDir": {
-                    "description": "Set WORKDIR.\nhttps://docs.docker.com/engine/reference/builder/#workdir",
-                    "type": "string"
-                },
-                "stopSignal": {
-                    "description": "Set STOPSIGNAL.\nhttps://docs.docker.com/engine/reference/builder/#stopsignal",
-                    "type": "string"
-                },
-                "healthcheck": {
-                    "description": "Healthcheck configuration. Intervals are in seconds.\nhttps://docs.docker.com/engine/reference/builder/#healthcheck",
-                    "type": "object",
-                    "additionalProperties": false,
-                    "properties": {
-                        "test": {
-                            "description": "Command to run, in exec form, for example [\"CMD\", \"curl\", \"-f\", \"http://localhost/\"].",
-                            "$ref": "#/definitions/stringArray"
-                        },
-                        "interval": {
-                            "description": "Seconds between checks.",
-                            "type": "integer"
-                        },
-                        "timeout": {
-                            "description": "Seconds a single check may take.",
-                            "type": "integer"
-                        },
-                        "startperiod": {
-                            "description": "UNDOCUMENTED. Seconds to wait after the container starts before running the first check.",
-                            "type": "integer"
-                        },
-                        "retries": {
-                            "description": "Consecutive failures needed to report unhealthy.",
-                            "type": "integer"
-                        }
-                    }
-                }
+              }
             }
+          }
         },
-        "imageSpec": {
-            "description": "Image configuration according to the OCI specification.\nhttps://werf.io/docs/v2/usage/build/images.html#changing-image-configuration-spec",
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-                "author": {
-                    "description": "Author of the image.",
-                    "type": "string"
-                },
-                "clearHistory": {
-                    "description": "Remove all image build history.",
-                    "type": "boolean"
-                },
-                "config": {
-                    "$ref": "#/definitions/imageSpecConfig"
-                }
+        "gitWorktree": {
+          "description": "Configure how werf handles the git worktree of the project.",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "forceShallowClone": {
+              "description": "Force werf to use shallow clone despite restrictions.",
+              "type": "boolean",
+              "default": false
+            },
+            "allowUnshallow": {
+              "description": "Allow werf to automatically convert the project shallow git clone to a full one during the build process when needed.",
+              "type": "boolean",
+              "default": true
+            },
+            "allowFetchOriginBranchesAndTags": {
+              "description": "Allow werf to synchronize git branches and tags with remote origin during the cleanup process when needed.",
+              "type": "boolean",
+              "default": true
             }
+          }
+        }
+      }
+    },
+    "imageName": {
+      "description": "One or more unique names for the image.",
+      "oneOf": [
+        {
+          "type": "string",
+          "minLength": 1
         },
-        "imageSpecGlobal": {
-            "description": "Global image configuration options according to the OCI specification, applied to all final images.\nhttps://werf.io/docs/v2/usage/build/images.html#changing-image-configuration-spec",
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-                "author": {
-                    "description": "Author of the image.",
-                    "type": "string"
-                },
-                "clearHistory": {
-                    "description": "Remove all image build history.",
-                    "type": "boolean"
-                },
-                "config": {
-                    "description": "Common image configuration.",
-                    "type": "object",
-                    "additionalProperties": false,
-                    "properties": {
-                        "keepEssentialWerfLabels": {
-                            "description": "Do not remove werf labels necessary for normal operation.",
-                            "type": "boolean"
-                        },
-                        "clearWerfLabels": {
-                            "description": "DEPRECATED. No longer has any effect.",
-                            "deprecationMessage": "No longer has any effect.",
-                            "type": "boolean"
-                        },
-                        "removeLabels": {
-                            "description": "List of labels to remove. Each item is an exact name or `/REGEXP/`.",
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/regexpOrString"
-                            }
-                        },
-                        "labels": {
-                            "description": "Labels to add.",
-                            "$ref": "#/definitions/stringMap"
-                        }
-                    }
-                }
-            }
-        },
-        "cleanupLimit": {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-                "last": {
-                    "description": "Select the last n references. -1 means no limit.",
-                    "type": "integer",
-                    "default": -1
-                },
-                "in": {
-                    "description": "Select git tags created during the period, or git branches active during the period.",
-                    "$ref": "#/definitions/duration"
-                },
-                "operator": {
-                    "description": "Whether both `last` and `in` must hold, or any of them.",
-                    "type": "string",
-                    "enum": [
-                        "And",
-                        "Or"
-                    ],
-                    "default": "And"
-                }
-            }
-        },
-        "meta": {
-            "description": "Meta section: project-wide settings. Exactly one per werf.yaml.",
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-                "configVersion",
-                "project"
-            ],
-            "properties": {
-                "configVersion": {
-                    "description": "Config syntax version. It should always be 1 for now.",
-                    "type": "integer",
-                    "const": 1
-                },
-                "project": {
-                    "description": "Unique project name. Lower-case letters, digits and dashes; must not start or end with a dash.",
-                    "type": "string",
-                    "minLength": 1
-                },
-                "build": {
-                    "description": "Common build settings.",
-                    "type": "object",
-                    "additionalProperties": false,
-                    "properties": {
-                        "cacheVersion": {
-                            "$ref": "#/definitions/cacheVersion"
-                        },
-                        "platform": {
-                            "description": "Common list of target platforms for all images (for example ['linux/amd64', 'linux/arm64', 'linux/arm/v8']).",
-                            "$ref": "#/definitions/platform"
-                        },
-                        "staged": {
-                            "description": "Enable layer-by-layer caching of Dockerfile instructions in container registry globally for all images.",
-                            "type": "boolean"
-                        },
-                        "imageSpec": {
-                            "$ref": "#/definitions/imageSpecGlobal"
-                        }
-                    }
-                },
-                "deploy": {
-                    "description": "Settings for deployment.",
-                    "type": "object",
-                    "additionalProperties": false,
-                    "properties": {
-                        "helmChartDir": {
-                            "description": "Path to the helm chart directory of the project.",
-                            "type": "string",
-                            "minLength": 1,
-                            "default": ".helm"
-                        },
-                        "helmChartConfig": {
-                            "description": "Override Chart.yaml configuration.",
-                            "type": "object",
-                            "additionalProperties": false,
-                            "properties": {
-                                "appVersion": {
-                                    "description": "Override appVersion in Chart.yaml.",
-                                    "type": "string"
-                                }
-                            }
-                        },
-                        "helmRelease": {
-                            "description": "Release name template.",
-                            "type": "string",
-                            "minLength": 1,
-                            "default": "[[ project ]]-[[ env ]]"
-                        },
-                        "helmReleaseSlug": {
-                            "description": "Release name slugification.",
-                            "type": "boolean",
-                            "default": true
-                        },
-                        "namespace": {
-                            "description": "Kubernetes namespace template.",
-                            "type": "string",
-                            "minLength": 1,
-                            "default": "[[ project ]]-[[ env ]]"
-                        },
-                        "namespaceSlug": {
-                            "description": "Kubernetes namespace slugification.",
-                            "type": "boolean",
-                            "default": true
-                        }
-                    }
-                },
-                "cleanup": {
-                    "description": "Settings for cleaning up irrelevant images.\nhttps://werf.io/docs/v2/usage/cleanup/cr_cleanup.html",
-                    "type": "object",
-                    "additionalProperties": false,
-                    "properties": {
-                        "disable": {
-                            "description": "Disable cleanup entirely. This prevents meta images from being published to the container registry.",
-                            "type": "boolean"
-                        },
-                        "disableKubernetesBasedPolicy": {
-                            "description": "Disable the policy that keeps images deployed in Kubernetes.",
-                            "type": "boolean"
-                        },
-                        "disableGitHistoryBasedPolicy": {
-                            "description": "Disable the policy that keeps images according to user-defined `keepPolicies` based on the git history.",
-                            "type": "boolean"
-                        },
-                        "disableBuiltWithinLastNHoursPolicy": {
-                            "description": "Disable the policy that keeps images built within the last `keepImagesBuiltWithinLastNHours` hours.",
-                            "type": "boolean"
-                        },
-                        "keepImagesBuiltWithinLastNHours": {
-                            "description": "The minimum number of hours that must elapse since the image is built before it can be removed.",
-                            "type": "integer",
-                            "minimum": 0,
-                            "default": 2
-                        },
-                        "keepPolicies": {
-                            "description": "Set of policies to select relevant image versions using the git history.",
-                            "type": "array",
-                            "items": {
-                                "type": "object",
-                                "additionalProperties": false,
-                                "required": [
-                                    "references"
-                                ],
-                                "properties": {
-                                    "references": {
-                                        "description": "References to perform scanning on. Exactly one of `branch` or `tag` must be set.",
-                                        "type": "object",
-                                        "additionalProperties": false,
-                                        "properties": {
-                                            "branch": {
-                                                "description": "One or more git origin branches: an exact name or `/REGEXP/`.",
-                                                "$ref": "#/definitions/regexpOrString"
-                                            },
-                                            "tag": {
-                                                "description": "One or more git origin tags: an exact name or `/REGEXP/`.",
-                                                "$ref": "#/definitions/regexpOrString"
-                                            },
-                                            "limit": {
-                                                "description": "Rules to limit references by the date the git tag was created or the activity in the git branch.",
-                                                "$ref": "#/definitions/cleanupLimit"
-                                            }
-                                        },
-                                        "oneOf": [
-                                            {
-                                                "required": [
-                                                    "branch"
-                                                ]
-                                            },
-                                            {
-                                                "required": [
-                                                    "tag"
-                                                ]
-                                            }
-                                        ]
-                                    },
-                                    "imagesPerReference": {
-                                        "description": "The limit on the number of image versions for each reference contained in the set.",
-                                        "$ref": "#/definitions/cleanupLimit"
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-                "gitWorktree": {
-                    "description": "Configure how werf handles the git worktree of the project.",
-                    "type": "object",
-                    "additionalProperties": false,
-                    "properties": {
-                        "forceShallowClone": {
-                            "description": "Force werf to use shallow clone despite restrictions.",
-                            "type": "boolean",
-                            "default": false
-                        },
-                        "allowUnshallow": {
-                            "description": "Allow werf to automatically convert the project shallow git clone to a full one during the build process when needed.",
-                            "type": "boolean",
-                            "default": true
-                        },
-                        "allowFetchOriginBranchesAndTags": {
-                            "description": "Allow werf to synchronize git branches and tags with remote origin during the cleanup process when needed.",
-                            "type": "boolean",
-                            "default": true
-                        }
-                    }
-                }
-            }
-        },
-        "imageName": {
-            "description": "One or more unique names for the image.",
-            "oneOf": [
-                {
-                    "type": "string",
-                    "minLength": 1
-                },
-                {
-                    "type": "array",
-                    "minItems": 1,
-                    "items": {
-                        "type": "string",
-                        "minLength": 1
-                    }
-                }
-            ]
+        {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ]
+    },
+    "final": {
+      "description": "Mark the image as final. Intermediate images (`final: false`) are not published to the final repo and are not available in Helm templates.\nhttps://werf.io/docs/latest/usage/build/images.html#using-intermediate-and-final-images",
+      "type": "boolean",
+      "default": true
+    },
+    "dockerfileImage": {
+      "description": "Dockerfile image section: builds an image from a Dockerfile. Define as many as you need.\nhttps://werf.io/docs/latest/usage/build/images.html",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "image",
+        "dockerfile"
+      ],
+      "properties": {
+        "image": {
+          "$ref": "#/definitions/imageName"
         },
         "final": {
-            "description": "Mark the image as final. Intermediate images (`final: false`) are not published to the final repo and are not available in Helm templates.\nhttps://werf.io/docs/v2/usage/build/images.html#using-intermediate-and-final-images",
-            "type": "boolean",
-            "default": true
+          "$ref": "#/definitions/final"
         },
-        "dockerfileImage": {
-            "description": "Dockerfile image section: builds an image from a Dockerfile. Define as many as you need.\nhttps://werf.io/docs/v2/usage/build/images.html",
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-                "image",
-                "dockerfile"
-            ],
-            "properties": {
-                "image": {
-                    "$ref": "#/definitions/imageName"
-                },
-                "final": {
-                    "$ref": "#/definitions/final"
-                },
-                "dockerfile": {
-                    "description": "Dockerfile path relative to the context path.",
-                    "type": "string"
-                },
-                "staged": {
-                    "description": "Enable layer-by-layer caching of Dockerfile instructions in container registry.",
-                    "type": "boolean"
-                },
-                "cacheVersion": {
-                    "$ref": "#/definitions/cacheVersion"
-                },
-                "context": {
-                    "description": "Build context path inside the project directory.",
-                    "type": "string"
-                },
-                "contextAddFiles": {
-                    "description": "Untracked files and directories to add to the build context. Paths are relative to the context path.",
-                    "$ref": "#/definitions/stringOrStringArray"
-                },
-                "contextAddFile": {
-                    "description": "UNDOCUMENTED. Alias of `contextAddFiles`; the two cannot be used together.",
-                    "$ref": "#/definitions/stringOrStringArray"
-                },
-                "platform": {
-                    "description": "List of target platforms for this image (for example ['linux/amd64', 'linux/arm64', 'linux/arm/v8']).",
-                    "$ref": "#/definitions/platform"
-                },
-                "target": {
-                    "description": "Specific Dockerfile stage (the last one by default, similar to `docker build --target`).",
-                    "type": "string"
-                },
-                "args": {
-                    "description": "Values for ARG Dockerfile instructions (similar to `docker build --build-arg`).",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": [
-                            "string",
-                            "number",
-                            "boolean"
-                        ]
-                    }
-                },
-                "addHost": {
-                    "description": "Custom host-to-IP mapping (host:ip), similar to `docker build --add-host`.",
-                    "$ref": "#/definitions/stringOrStringArray"
-                },
-                "network": {
-                    "description": "The networking mode for the RUN instructions during build (similar to `docker build --network`).",
-                    "type": "string"
-                },
-                "ssh": {
-                    "description": "DEPRECATED. SSH agent socket or keys for the build (similar to `docker build --ssh`).\nhttps://werf.io/docs/v2/usage/build/images.html#using-build-secrets",
-                    "deprecationMessage": "Use `secrets` instead.",
-                    "type": "string"
-                },
-                "secrets": {
-                    "description": "Secrets used in the image build.\nhttps://werf.io/docs/v2/usage/build/images.html#using-build-secrets",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/secret"
-                    }
-                },
-                "dependencies": {
-                    "description": "Dependency images for the current image.",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/dockerfileDependency"
-                    }
-                },
-                "imageSpec": {
-                    "$ref": "#/definitions/imageSpec"
-                }
-            }
+        "dockerfile": {
+          "description": "Dockerfile path relative to the context path.",
+          "type": "string"
         },
-        "gitMapping": {
-            "description": "Adds source files from a git repository: the project repository (local, no `url`) or a remote one (`url`).\nhttps://werf.io/docs/v2/usage/build/stapel/git.html",
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-                "to"
-            ],
-            "properties": {
-                "url": {
-                    "description": "The address of the remote repository. Omit to use the project repository.\nhttps://werf.io/docs/v2/usage/build/stapel/git.html#working-with-remote-repositories",
-                    "type": "string"
-                },
-                "basicAuth": {
-                    "description": "Basic authentication for the remote repository.",
-                    "type": "object",
-                    "additionalProperties": false,
-                    "properties": {
-                        "username": {
-                            "description": "Username.",
-                            "type": "string"
-                        },
-                        "password": {
-                            "description": "Password source. Exactly one of `env`, `src` or `value` must be set.",
-                            "type": "object",
-                            "additionalProperties": false,
-                            "properties": {
-                                "env": {
-                                    "description": "Environment variable name.",
-                                    "type": "string"
-                                },
-                                "src": {
-                                    "description": "File path.",
-                                    "type": "string"
-                                },
-                                "value": {
-                                    "description": "Custom string value.",
-                                    "type": "string"
-                                }
-                            },
-                            "oneOf": [
-                                {
-                                    "required": [
-                                        "env"
-                                    ]
-                                },
-                                {
-                                    "required": [
-                                        "src"
-                                    ]
-                                },
-                                {
-                                    "required": [
-                                        "value"
-                                    ]
-                                }
-                            ]
-                        }
-                    }
-                },
-                "branch": {
-                    "description": "The branch name. Remote repositories only.",
-                    "type": "string"
-                },
-                "commit": {
-                    "description": "The commit. Remote repositories only.",
-                    "type": "string"
-                },
-                "tag": {
-                    "description": "The tag name. Remote repositories only.",
-                    "type": "string"
-                },
-                "add": {
-                    "description": "A source path in the repository.\nhttps://werf.io/docs/v2/usage/build/stapel/git.html#copying-directories",
-                    "type": "string",
-                    "default": "/"
-                },
-                "to": {
-                    "description": "A destination absolute path in the image.\nhttps://werf.io/docs/v2/usage/build/stapel/git.html#copying-directories",
-                    "type": "string"
-                },
-                "owner": {
-                    "description": "The name or UID of the owner.\nhttps://werf.io/docs/v2/usage/build/stapel/git.html#changing-the-owner",
-                    "type": [
-                        "string",
-                        "integer"
-                    ]
-                },
-                "group": {
-                    "description": "The name or GID of the owner's group.\nhttps://werf.io/docs/v2/usage/build/stapel/git.html#changing-the-owner",
-                    "type": [
-                        "string",
-                        "integer"
-                    ]
-                },
-                "includePaths": {
-                    "description": "Globs for including, relative to `add`.\nhttps://werf.io/docs/v2/usage/build/stapel/git.html#using-filters",
-                    "$ref": "#/definitions/stringOrStringArray"
-                },
-                "excludePaths": {
-                    "description": "Globs for excluding, relative to `add`.\nhttps://werf.io/docs/v2/usage/build/stapel/git.html#using-filters",
-                    "$ref": "#/definitions/stringOrStringArray"
-                },
-                "stageDependencies": {
-                    "description": "Re-run assembly instructions of a stage when the matching files change in the git repository.\nhttps://werf.io/docs/v2/usage/build/stapel/instructions.html#dependency-on-changes-in-the-git-repo",
-                    "type": "object",
-                    "additionalProperties": false,
-                    "properties": {
-                        "install": {
-                            "description": "Globs for the install stage.",
-                            "$ref": "#/definitions/stringOrStringArray"
-                        },
-                        "beforeSetup": {
-                            "description": "Globs for the beforeSetup stage.",
-                            "$ref": "#/definitions/stringOrStringArray"
-                        },
-                        "setup": {
-                            "description": "Globs for the setup stage.",
-                            "$ref": "#/definitions/stringOrStringArray"
-                        }
-                    }
-                }
+        "staged": {
+          "description": "Enable layer-by-layer caching of Dockerfile instructions in container registry.",
+          "type": "boolean"
+        },
+        "cacheVersion": {
+          "$ref": "#/definitions/cacheVersion"
+        },
+        "context": {
+          "description": "Build context path inside the project directory.",
+          "type": "string"
+        },
+        "contextAddFiles": {
+          "description": "Untracked files and directories to add to the build context. Paths are relative to the context path.",
+          "$ref": "#/definitions/stringOrStringArray"
+        },
+        "contextAddFile": {
+          "description": "UNDOCUMENTED. Alias of `contextAddFiles`; the two cannot be used together.",
+          "$ref": "#/definitions/stringOrStringArray"
+        },
+        "platform": {
+          "description": "List of target platforms for this image (for example ['linux/amd64', 'linux/arm64', 'linux/arm/v8']).",
+          "$ref": "#/definitions/platform"
+        },
+        "target": {
+          "description": "Specific Dockerfile stage (the last one by default, similar to `docker build --target`).",
+          "type": "string"
+        },
+        "args": {
+          "description": "Values for ARG Dockerfile instructions (similar to `docker build --build-arg`).",
+          "type": "object",
+          "additionalProperties": {
+            "type": [
+              "string",
+              "number",
+              "boolean"
+            ]
+          }
+        },
+        "addHost": {
+          "description": "Custom host-to-IP mapping (host:ip), similar to `docker build --add-host`.",
+          "$ref": "#/definitions/stringOrStringArray"
+        },
+        "network": {
+          "description": "The networking mode for the RUN instructions during build (similar to `docker build --network`).",
+          "type": "string"
+        },
+        "ssh": {
+          "description": "DEPRECATED. SSH agent socket or keys for the build (similar to `docker build --ssh`).\nhttps://werf.io/docs/latest/usage/build/images.html#using-build-secrets",
+          "deprecationMessage": "Use `secrets` instead.",
+          "type": "string"
+        },
+        "secrets": {
+          "description": "Secrets used in the image build.\nhttps://werf.io/docs/latest/usage/build/images.html#using-build-secrets",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/secret"
+          }
+        },
+        "dependencies": {
+          "description": "Dependency images for the current image.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/dockerfileDependency"
+          }
+        },
+        "imageSpec": {
+          "$ref": "#/definitions/imageSpec"
+        }
+      },
+      "not": {
+        "required": [
+          "contextAddFile",
+          "contextAddFiles"
+        ]
+      }
+    },
+    "gitMapping": {
+      "description": "Adds source files from a git repository: the project repository (local, no `url`) or a remote one (`url`).\nhttps://werf.io/docs/latest/usage/build/stapel/git.html",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "to"
+      ],
+      "properties": {
+        "url": {
+          "description": "The address of the remote repository. Omit to use the project repository.\nhttps://werf.io/docs/latest/usage/build/stapel/git.html#working-with-remote-repositories",
+          "type": "string"
+        },
+        "basicAuth": {
+          "description": "Basic authentication for the remote repository.",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "username": {
+              "description": "Username.",
+              "type": "string"
             },
-            "dependencies": {
-                "branch": [
-                    "url"
-                ],
-                "tag": [
-                    "url"
-                ],
-                "commit": [
-                    "url"
-                ],
-                "basicAuth": [
-                    "url"
-                ]
+            "password": {
+              "description": "Password source. Exactly one of `env`, `src` or `value` must be set.",
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "env": {
+                  "description": "Environment variable name.",
+                  "type": "string",
+                  "minLength": 1
+                },
+                "src": {
+                  "description": "File path.",
+                  "type": "string",
+                  "minLength": 1
+                },
+                "value": {
+                  "description": "Custom string value.",
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "oneOf": [
+                {
+                  "required": [
+                    "env"
+                  ]
+                },
+                {
+                  "required": [
+                    "src"
+                  ]
+                },
+                {
+                  "required": [
+                    "value"
+                  ]
+                }
+              ]
             }
+          }
+        },
+        "branch": {
+          "description": "The branch name. Remote repositories only.",
+          "type": "string"
+        },
+        "commit": {
+          "description": "The commit. Remote repositories only.",
+          "type": "string"
+        },
+        "tag": {
+          "description": "The tag name. Remote repositories only.",
+          "type": "string"
+        },
+        "add": {
+          "description": "A source path in the repository.\nhttps://werf.io/docs/latest/usage/build/stapel/git.html#copying-directories",
+          "type": "string",
+          "default": "/"
+        },
+        "to": {
+          "description": "A destination absolute path in the image.\nhttps://werf.io/docs/latest/usage/build/stapel/git.html#copying-directories",
+          "type": "string"
+        },
+        "owner": {
+          "description": "The name or UID of the owner.\nhttps://werf.io/docs/latest/usage/build/stapel/git.html#changing-the-owner",
+          "type": [
+            "string",
+            "integer"
+          ]
+        },
+        "group": {
+          "description": "The name or GID of the owner's group.\nhttps://werf.io/docs/latest/usage/build/stapel/git.html#changing-the-owner",
+          "type": [
+            "string",
+            "integer"
+          ]
+        },
+        "includePaths": {
+          "description": "Globs for including, relative to `add`.\nhttps://werf.io/docs/latest/usage/build/stapel/git.html#using-filters",
+          "$ref": "#/definitions/stringOrStringArray"
+        },
+        "excludePaths": {
+          "description": "Globs for excluding, relative to `add`.\nhttps://werf.io/docs/latest/usage/build/stapel/git.html#using-filters",
+          "$ref": "#/definitions/stringOrStringArray"
+        },
+        "stageDependencies": {
+          "description": "Re-run assembly instructions of a stage when the matching files change in the git repository.\nhttps://werf.io/docs/latest/usage/build/stapel/instructions.html#dependency-on-changes-in-the-git-repo",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "install": {
+              "description": "Globs for the install stage.",
+              "$ref": "#/definitions/stringOrStringArray"
+            },
+            "beforeSetup": {
+              "description": "Globs for the beforeSetup stage.",
+              "$ref": "#/definitions/stringOrStringArray"
+            },
+            "setup": {
+              "description": "Globs for the setup stage.",
+              "$ref": "#/definitions/stringOrStringArray"
+            }
+          }
+        }
+      },
+      "dependencies": {
+        "branch": [
+          "url"
+        ],
+        "tag": [
+          "url"
+        ],
+        "commit": [
+          "url"
+        ],
+        "basicAuth": [
+          "url"
+        ]
+      }
+    },
+    "shell": {
+      "description": "Shell assembly instructions, grouped by user stage.\nhttps://werf.io/docs/latest/usage/build/stapel/instructions.html#shell",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "beforeInstall": {
+          "description": "Commands for the beforeInstall stage.",
+          "$ref": "#/definitions/stringOrStringArray"
+        },
+        "install": {
+          "description": "Commands for the install stage.",
+          "$ref": "#/definitions/stringOrStringArray"
+        },
+        "beforeSetup": {
+          "description": "Commands for the beforeSetup stage.",
+          "$ref": "#/definitions/stringOrStringArray"
+        },
+        "setup": {
+          "description": "Commands for the setup stage.",
+          "$ref": "#/definitions/stringOrStringArray"
+        },
+        "cacheVersion": {
+          "description": "Common cache version for all user stages.\nhttps://werf.io/docs/latest/usage/build/stapel/instructions.html#dependency-on-the-cacheversion",
+          "type": [
+            "string",
+            "number"
+          ]
+        },
+        "beforeInstallCacheVersion": {
+          "description": "Cache version for the beforeInstall stage.",
+          "type": [
+            "string",
+            "number"
+          ]
+        },
+        "installCacheVersion": {
+          "description": "Cache version for the install stage.",
+          "type": [
+            "string",
+            "number"
+          ]
+        },
+        "beforeSetupCacheVersion": {
+          "description": "Cache version for the beforeSetup stage.",
+          "type": [
+            "string",
+            "number"
+          ]
+        },
+        "setupCacheVersion": {
+          "description": "Cache version for the setup stage.",
+          "type": [
+            "string",
+            "number"
+          ]
+        }
+      }
+    },
+    "mount": {
+      "description": "Mount point. Set either `from` (a werf service directory) or `fromPath` (an arbitrary host path).\nhttps://werf.io/docs/latest/usage/build/stapel/mounts.html",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "to"
+      ],
+      "properties": {
+        "from": {
+          "description": "Service directory: `tmp_dir` lives for one build, `build_dir` persists between builds of the project.",
+          "type": "string",
+          "enum": [
+            "tmp_dir",
+            "build_dir"
+          ]
+        },
+        "fromPath": {
+          "description": "Absolute or relative path to an arbitrary file or directory on the host.",
+          "type": "string",
+          "minLength": 1
+        },
+        "to": {
+          "description": "Absolute path in the image.",
+          "type": "string"
+        }
+      },
+      "oneOf": [
+        {
+          "required": [
+            "from"
+          ]
+        },
+        {
+          "required": [
+            "fromPath"
+          ]
+        }
+      ]
+    },
+    "import": {
+      "description": "Copies files from another image at a user stage boundary. Exactly one of `before` or `after` must be set.\nhttps://werf.io/docs/latest/usage/build/stapel/imports.html",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "add"
+      ],
+      "properties": {
+        "from": {
+          "description": "The source image: another image from werf.yaml (e.g. `backend`) or an external image with a tag/digest (e.g. `nginx:1.25`, `nginx@sha256:...`).",
+          "type": "string",
+          "minLength": 1
+        },
+        "image": {
+          "description": "DEPRECATED. Use `from` instead. The source image name.",
+          "deprecationMessage": "Use `from` instead.",
+          "type": "string",
+          "minLength": 1
+        },
+        "before": {
+          "description": "The stage before which to import files.",
+          "$ref": "#/definitions/stageName"
+        },
+        "after": {
+          "description": "The stage after which to import files.",
+          "$ref": "#/definitions/stageName"
+        },
+        "add": {
+          "description": "The absolute file or directory path in the source image to copy.",
+          "type": "string"
+        },
+        "to": {
+          "description": "The absolute path in the destination image. Defaults to `add`.",
+          "type": "string"
+        },
+        "owner": {
+          "description": "The name or UID of the owner.",
+          "type": [
+            "string",
+            "integer"
+          ]
+        },
+        "group": {
+          "description": "The name or GID of the owner's group.",
+          "type": [
+            "string",
+            "integer"
+          ]
+        },
+        "includePaths": {
+          "description": "Globs for including, relative to `add`.",
+          "$ref": "#/definitions/stringOrStringArray"
+        },
+        "excludePaths": {
+          "description": "Globs for excluding, relative to `add`.",
+          "$ref": "#/definitions/stringOrStringArray"
+        }
+      },
+      "allOf": [
+        {
+          "oneOf": [
+            {
+              "required": [
+                "from"
+              ]
+            },
+            {
+              "required": [
+                "image"
+              ]
+            }
+          ]
+        },
+        {
+          "oneOf": [
+            {
+              "required": [
+                "before"
+              ]
+            },
+            {
+              "required": [
+                "after"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "stapelImage": {
+      "description": "Stapel image section: builds an image with werf's own assembly instructions. Define as many as you need.\nhttps://werf.io/docs/latest/usage/build/stapel/base.html",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "image"
+      ],
+      "properties": {
+        "image": {
+          "$ref": "#/definitions/imageName"
+        },
+        "final": {
+          "$ref": "#/definitions/final"
+        },
+        "cacheVersion": {
+          "$ref": "#/definitions/cacheVersion"
+        },
+        "platform": {
+          "description": "List of target platforms for this image (for example ['linux/amd64', 'linux/arm64', 'linux/arm/v8']).",
+          "$ref": "#/definitions/platform"
+        },
+        "from": {
+          "description": "The base image: another image from werf.yaml (e.g. `backend`), an external image with a tag/digest (e.g. `nginx:1.25`, `nginx@sha256:...`), or `scratch`.\nhttps://werf.io/docs/latest/usage/build/stapel/base.html#from",
+          "type": "string",
+          "minLength": 1
+        },
+        "fromImage": {
+          "description": "DEPRECATED. Use `from` instead. The base image name.",
+          "deprecationMessage": "Use `from` instead.",
+          "type": "string",
+          "minLength": 1
+        },
+        "fromLatest": {
+          "description": "Use the actual base image without caching. Not compatible with `from: scratch`.\nhttps://werf.io/docs/latest/usage/build/stapel/base.html#from",
+          "type": "boolean"
+        },
+        "fromCacheVersion": {
+          "description": "Cache version of the base image stage.\nhttps://werf.io/docs/latest/usage/build/stapel/base.html#fromcacheversion",
+          "type": [
+            "string",
+            "number"
+          ]
+        },
+        "git": {
+          "description": "Set of directives to add source files from git repositories (both the project repository and any other).\nhttps://werf.io/docs/latest/usage/build/stapel/git.html",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/gitMapping"
+          }
         },
         "shell": {
-            "description": "Shell assembly instructions, grouped by user stage.\nhttps://werf.io/docs/v2/usage/build/stapel/instructions.html#shell",
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-                "beforeInstall": {
-                    "description": "Commands for the beforeInstall stage.",
-                    "$ref": "#/definitions/stringOrStringArray"
-                },
-                "install": {
-                    "description": "Commands for the install stage.",
-                    "$ref": "#/definitions/stringOrStringArray"
-                },
-                "beforeSetup": {
-                    "description": "Commands for the beforeSetup stage.",
-                    "$ref": "#/definitions/stringOrStringArray"
-                },
-                "setup": {
-                    "description": "Commands for the setup stage.",
-                    "$ref": "#/definitions/stringOrStringArray"
-                },
-                "cacheVersion": {
-                    "description": "Common cache version for all user stages.\nhttps://werf.io/docs/v2/usage/build/stapel/instructions.html#dependency-on-the-cacheversion",
-                    "type": [
-                        "string",
-                        "number"
-                    ]
-                },
-                "beforeInstallCacheVersion": {
-                    "description": "Cache version for the beforeInstall stage.",
-                    "type": [
-                        "string",
-                        "number"
-                    ]
-                },
-                "installCacheVersion": {
-                    "description": "Cache version for the install stage.",
-                    "type": [
-                        "string",
-                        "number"
-                    ]
-                },
-                "beforeSetupCacheVersion": {
-                    "description": "Cache version for the beforeSetup stage.",
-                    "type": [
-                        "string",
-                        "number"
-                    ]
-                },
-                "setupCacheVersion": {
-                    "description": "Cache version for the setup stage.",
-                    "type": [
-                        "string",
-                        "number"
-                    ]
-                }
-            }
+          "$ref": "#/definitions/shell"
         },
         "mount": {
-            "description": "Mount point. Set either `from` (a werf service directory) or `fromPath` (an arbitrary host path).\nhttps://werf.io/docs/v2/usage/build/stapel/mounts.html",
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-                "to"
-            ],
-            "properties": {
-                "from": {
-                    "description": "Service directory: `tmp_dir` lives for one build, `build_dir` persists between builds of the project.",
-                    "type": "string",
-                    "enum": [
-                        "tmp_dir",
-                        "build_dir"
-                    ]
-                },
-                "fromPath": {
-                    "description": "Absolute or relative path to an arbitrary file or directory on the host.",
-                    "type": "string"
-                },
-                "to": {
-                    "description": "Absolute path in the image.",
-                    "type": "string"
-                }
-            },
-            "oneOf": [
-                {
-                    "required": [
-                        "from"
-                    ]
-                },
-                {
-                    "required": [
-                        "fromPath"
-                    ]
-                }
-            ]
+          "description": "Mount points.\nhttps://werf.io/docs/latest/usage/build/stapel/mounts.html",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/mount"
+          }
         },
         "import": {
-            "description": "Copies files from another image at a user stage boundary. Exactly one of `before` or `after` must be set.\nhttps://werf.io/docs/v2/usage/build/stapel/imports.html",
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-                "add"
-            ],
-            "properties": {
-                "from": {
-                    "description": "The source image: another image from werf.yaml (e.g. `backend`) or an external image with a tag/digest (e.g. `nginx:1.25`, `nginx@sha256:...`).",
-                    "type": "string"
-                },
-                "image": {
-                    "description": "DEPRECATED. Use `from` instead. The source image name.",
-                    "deprecationMessage": "Use `from` instead.",
-                    "type": "string"
-                },
-                "before": {
-                    "description": "The stage before which to import files.",
-                    "$ref": "#/definitions/stageName"
-                },
-                "after": {
-                    "description": "The stage after which to import files.",
-                    "$ref": "#/definitions/stageName"
-                },
-                "add": {
-                    "description": "The absolute file or directory path in the source image to copy.",
-                    "type": "string"
-                },
-                "to": {
-                    "description": "The absolute path in the destination image. Defaults to `add`.",
-                    "type": "string"
-                },
-                "owner": {
-                    "description": "The name or UID of the owner.",
-                    "type": [
-                        "string",
-                        "integer"
-                    ]
-                },
-                "group": {
-                    "description": "The name or GID of the owner's group.",
-                    "type": [
-                        "string",
-                        "integer"
-                    ]
-                },
-                "includePaths": {
-                    "description": "Globs for including, relative to `add`.",
-                    "$ref": "#/definitions/stringOrStringArray"
-                },
-                "excludePaths": {
-                    "description": "Globs for excluding, relative to `add`.",
-                    "$ref": "#/definitions/stringOrStringArray"
-                }
-            },
-            "allOf": [
-                {
-                    "oneOf": [
-                        {
-                            "required": [
-                                "from"
-                            ]
-                        },
-                        {
-                            "required": [
-                                "image"
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "oneOf": [
-                        {
-                            "required": [
-                                "before"
-                            ]
-                        },
-                        {
-                            "required": [
-                                "after"
-                            ]
-                        }
-                    ]
-                }
-            ]
+          "description": "Imports from other images.\nhttps://werf.io/docs/latest/usage/build/stapel/imports.html",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/import"
+          }
         },
-        "stapelImage": {
-            "description": "Stapel image section: builds an image with werf's own assembly instructions. Define as many as you need.\nhttps://werf.io/docs/v2/usage/build/stapel/base.html",
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-                "image"
-            ],
-            "properties": {
-                "image": {
-                    "$ref": "#/definitions/imageName"
-                },
-                "final": {
-                    "$ref": "#/definitions/final"
-                },
-                "cacheVersion": {
-                    "$ref": "#/definitions/cacheVersion"
-                },
-                "platform": {
-                    "description": "List of target platforms for this image (for example ['linux/amd64', 'linux/arm64', 'linux/arm/v8']).",
-                    "$ref": "#/definitions/platform"
-                },
-                "from": {
-                    "description": "The base image: another image from werf.yaml (e.g. `backend`), an external image with a tag/digest (e.g. `nginx:1.25`, `nginx@sha256:...`), or `scratch`.\nhttps://werf.io/docs/v2/usage/build/stapel/base.html#from",
-                    "type": "string"
-                },
-                "fromImage": {
-                    "description": "DEPRECATED. Use `from` instead. The base image name.",
-                    "deprecationMessage": "Use `from` instead.",
-                    "type": "string"
-                },
-                "fromLatest": {
-                    "description": "Use the actual base image without caching. Not compatible with `from: scratch`.\nhttps://werf.io/docs/v2/usage/build/stapel/base.html#from",
-                    "type": "boolean"
-                },
-                "fromCacheVersion": {
-                    "description": "Cache version of the base image stage.\nhttps://werf.io/docs/v2/usage/build/stapel/base.html#fromcacheversion",
-                    "type": [
-                        "string",
-                        "number"
-                    ]
-                },
-                "git": {
-                    "description": "Set of directives to add source files from git repositories (both the project repository and any other).\nhttps://werf.io/docs/v2/usage/build/stapel/git.html",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/gitMapping"
-                    }
-                },
-                "shell": {
-                    "$ref": "#/definitions/shell"
-                },
-                "mount": {
-                    "description": "Mount points.\nhttps://werf.io/docs/v2/usage/build/stapel/mounts.html",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/mount"
-                    }
-                },
-                "import": {
-                    "description": "Imports from other images.\nhttps://werf.io/docs/v2/usage/build/stapel/imports.html",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/import"
-                    }
-                },
-                "dependencies": {
-                    "description": "Dependency images for the current image.",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/stapelDependency"
-                    }
-                },
-                "network": {
-                    "description": "The networking mode for the assembly containers.",
-                    "type": "string"
-                },
-                "secrets": {
-                    "description": "Secrets used in the image build.\nhttps://werf.io/docs/v2/usage/build/stapel/instructions.html#using-build-secrets",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/secret"
-                    }
-                },
-                "imageSpec": {
-                    "$ref": "#/definitions/imageSpec"
-                }
-            },
-            "oneOf": [
-                {
-                    "required": [
-                        "from"
-                    ]
-                },
-                {
-                    "required": [
-                        "fromImage"
-                    ]
-                }
-            ]
+        "dependencies": {
+          "description": "Dependency images for the current image.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/stapelDependency"
+          }
+        },
+        "network": {
+          "description": "The networking mode for the assembly containers.",
+          "type": "string"
+        },
+        "secrets": {
+          "description": "Secrets used in the image build.\nhttps://werf.io/docs/latest/usage/build/stapel/instructions.html#using-build-secrets",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/secret"
+          }
+        },
+        "imageSpec": {
+          "$ref": "#/definitions/imageSpec"
         }
+      },
+      "oneOf": [
+        {
+          "required": [
+            "from"
+          ]
+        },
+        {
+          "required": [
+            "fromImage"
+          ]
+        }
+      ]
     }
+  }
 }

@@ -103,6 +103,13 @@ includes:
   add: /
   to: /
 `),
+		Entry("include with empty branch", `
+includes:
+- git: https://github.com/werf/werf
+  branch: ""
+  add: /
+  to: /
+`),
 		Entry("relative add", `
 includes:
 - git: https://github.com/werf/werf
@@ -143,6 +150,17 @@ includes:
     password:
       env: GIT_PASSWORD
       value: secret
+  branch: main
+  add: /
+  to: /
+`),
+		Entry("basicAuth password with empty source", `
+includes:
+- git: https://github.com/werf/werf
+  basicAuth:
+    username: bot
+    password:
+      env: ""
   branch: main
   add: /
   to: /

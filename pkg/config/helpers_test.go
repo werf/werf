@@ -52,7 +52,13 @@ func nonTemplatedWerfYamlFixtures(root string) []string {
 		if err != nil {
 			return err
 		}
-		if entry.IsDir() || entry.Name() != "werf.yaml" {
+		if entry.IsDir() {
+			if strings.HasPrefix(entry.Name(), ".") && path != root {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if entry.Name() != "werf.yaml" {
 			return nil
 		}
 

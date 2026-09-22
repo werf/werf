@@ -16,9 +16,9 @@ var _ = Describe("werf.yaml JSON schema", func() {
 		schema = compileWerfSchema()
 	})
 
-	It("accepts every non-templated werf.yaml fixture in the repository", func() {
-		fixtures := nonTemplatedWerfYamlFixtures("../../test")
-		Expect(fixtures).NotTo(BeEmpty())
+	It("accepts every non-templated werf.yaml in the repository", func() {
+		fixtures := nonTemplatedWerfYamlFixtures("../..")
+		Expect(fixtures).To(ContainElement("../../stapel/werf.yaml"))
 
 		for _, path := range fixtures {
 			data, err := os.ReadFile(path)
@@ -264,6 +264,14 @@ cleanup:
       branch: main
       tag: /v.*/
 `),
+		Entry("cleanup keep policy with empty branch", `
+configVersion: 1
+project: app
+cleanup:
+  keepPolicies:
+  - references:
+      branch: ""
+`),
 		Entry("cleanup limit with unknown operator", `
 configVersion: 1
 project: app
@@ -289,6 +297,12 @@ image: app
 dockerfile: Dockerfile
 shell:
   install: ls
+`),
+		Entry("dockerfile image with both contextAddFile and contextAddFiles", `
+image: app
+dockerfile: Dockerfile
+contextAddFile: [a]
+contextAddFiles: [b]
 `),
 		Entry("dockerfile dependency with before", `
 image: app
@@ -327,6 +341,26 @@ image: app
 dockerfile: Dockerfile
 secrets:
 - value: secret
+`),
+		Entry("secret with empty env", `
+image: app
+dockerfile: Dockerfile
+secrets:
+- env: ""
+`),
+		Entry("dockerfile dependency with empty from", `
+image: app
+dockerfile: Dockerfile
+dependencies:
+- from: ""
+`),
+		Entry("stapel image with empty from", `
+image: app
+from: ""
+`),
+		Entry("stapel image with empty fromImage", `
+image: app
+fromImage: ""
 `),
 		Entry("stapel image without from", `
 image: app
@@ -367,6 +401,16 @@ git:
       env: A
       value: b
 `),
+		Entry("git mapping password with empty source", `
+image: app
+from: alpine
+git:
+- url: https://example.com/repo.git
+  to: /app
+  basicAuth:
+    password:
+      env: ""
+`),
 		Entry("stage dependencies for unknown stage", `
 image: app
 from: alpine
@@ -394,6 +438,13 @@ from: alpine
 mount:
 - from: tmp_dir
   fromPath: /tmp
+  to: /tmp
+`),
+		Entry("mount with empty fromPath", `
+image: app
+from: alpine
+mount:
+- fromPath: ""
   to: /tmp
 `),
 		Entry("import without add", `
@@ -426,6 +477,21 @@ import:
 - from: builder
   before: beforeInstall
   add: /app
+`),
+		Entry("import with empty from", `
+image: app
+from: alpine
+import:
+- from: ""
+  before: install
+  add: /app
+`),
+		Entry("stapel dependency with empty image", `
+image: app
+from: alpine
+dependencies:
+- image: ""
+  after: install
 `),
 		Entry("stapel dependency without stage", `
 image: app

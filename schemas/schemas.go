@@ -8,4 +8,4 @@ package schemas
 import _ "embed"
 
 //go:embed werf-giterminism.json
-var GiterminismConfig []byte
+var GiterminismConfig string
