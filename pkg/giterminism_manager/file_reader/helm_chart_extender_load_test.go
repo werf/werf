@@ -2,6 +2,7 @@ package file_reader_test
 
 import (
 	"context"
+	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -277,9 +278,10 @@ var _ = Describe("LoadChartDir", func() {
 			gitRepo.EXPECT().IsCommitFileExist(gomock.Any(), gomock.Any(), gomock.Any()).Return(false, nil).AnyTimes()
 			// Mirrors (*git_repo.Base).WalkCommitFiles: it resolves the walked directory and
 			// reverse-resolves every entry back onto the not-resolved prefix, so a chart reached
-			// through a symlink still yields chart-relative names.
+			// through a symlink still yields chart-relative names. A symlink entry is resolved
+			// unless the skip function drops it first, the way the real walk does.
 			gitRepo.EXPECT().ListCommitFilesWithGlob(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-				DoAndReturn(func(_ context.Context, _, dir, _ string, _ git_repo.ListCommitFilesWithGlobOptions) ([]string, error) {
+				DoAndReturn(func(_ context.Context, _, dir, _ string, opts git_repo.ListCommitFilesWithGlobOptions) ([]string, error) {
 					resolvedDir, err := filepath.EvalSymlinks(filepath.Join(projectDir, dir))
 					if err != nil {
 						return nil, err
@@ -294,7 +296,16 @@ var _ = Describe("LoadChartDir", func() {
 						if err != nil {
 							return err
 						}
-						list = append(list, filepath.ToSlash(filepath.Join(dir, rel)))
+						notResolvedPath := filepath.ToSlash(filepath.Join(dir, rel))
+						if d.Type()&fs.ModeSymlink != 0 {
+							if opts.SkipSymlinkPathFunc != nil && opts.SkipSymlinkPathFunc(notResolvedPath) {
+								return nil
+							}
+							if _, err := filepath.EvalSymlinks(path); err != nil {
+								return fmt.Errorf("unable to resolve commit file %q: %w", notResolvedPath, err)
+							}
+						}
+						list = append(list, notResolvedPath)
 						return nil
 					})
 					return list, err
@@ -449,6 +460,25 @@ var _ = Describe("LoadChartDir", func() {
 				"ignoreddir/deep/b.yaml": "b",
 				"templates/kept.yaml":    "kept",
 			})
+
+			Expect(loadedNames(logging.WithLogger(ctx), chartDir)).To(ConsistOf(
+				".helmignore", "Chart.yaml", "templates/kept.yaml",
+			))
+		})
+
+		// The commit walk resolves every symlink it does not skip, so a directory rule has to
+		// reach the symlinks under it before that, or a loop inside an ignored directory fails
+		// the chart in this mode alone.
+		It("does not resolve a symlink loop inside an ignored directory", func(ctx SpecContext) {
+			chartDir := writeChart(map[string]string{
+				".helmignore":         "ignoreddir/\n",
+				"Chart.yaml":          "name: test",
+				"templates/kept.yaml": "kept",
+			})
+
+			Expect(os.MkdirAll(filepath.Join(chartDir, "ignoreddir"), 0o755)).To(Succeed())
+			Expect(os.Symlink("loop2", filepath.Join(chartDir, "ignoreddir", "loop"))).To(Succeed())
+			Expect(os.Symlink("loop", filepath.Join(chartDir, "ignoreddir", "loop2"))).To(Succeed())
 
 			Expect(loadedNames(logging.WithLogger(ctx), chartDir)).To(ConsistOf(
 				".helmignore", "Chart.yaml", "templates/kept.yaml",

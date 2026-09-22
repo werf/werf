@@ -119,6 +119,10 @@ func skipRelativeToDirPathWithParents(relativeToDirPath string, skipRelativeToDi
 		return true
 	}
 
+	return skipRelativeToDirParentPath(relativeToDirPath, skipRelativeToDirPathFunc)
+}
+
+func skipRelativeToDirParentPath(relativeToDirPath string, skipRelativeToDirPathFunc func(relativeToDirPath string, isDir bool) bool) bool {
 	parts := strings.Split(relativeToDirPath, "/")
 	for i := 1; i < len(parts); i++ {
 		if skipRelativeToDirPathFunc(strings.Join(parts[:i], "/"), true) {

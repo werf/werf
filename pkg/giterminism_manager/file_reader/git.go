@@ -182,7 +182,8 @@ func (r FileReader) listCommitFilesWithGlob(ctx context.Context, dir, pattern st
 // skipCommitSymlinkPathFunc adapts a directory-relative skip predicate to the work-tree-relative
 // paths the commit walk operates on. The predicate is asked for both values of isDir and the
 // symlink is dropped only when they agree, because telling a directory from a file requires
-// resolving the symlink, which is what the walk is being kept from doing.
+// resolving the symlink, which is what the walk is being kept from doing. The parent directories
+// are checked too, so a directory rule keeps the walk from resolving the symlinks under it.
 func (r FileReader) skipCommitSymlinkPathFunc(dir string, skipRelativeToDirPathFunc func(relativeToDirPath string, isDir bool) bool) func(notResolvedPath string) bool {
 	if skipRelativeToDirPathFunc == nil {
 		return nil
@@ -191,7 +192,11 @@ func (r FileReader) skipCommitSymlinkPathFunc(dir string, skipRelativeToDirPathF
 	return func(notResolvedPath string) bool {
 		relativeToDirPath := filepath.ToSlash(r.workTreeRelativePathToDirRelativePath(dir, notResolvedPath))
 
-		return skipRelativeToDirPathFunc(relativeToDirPath, false) && skipRelativeToDirPathFunc(relativeToDirPath, true)
+		if skipRelativeToDirPathFunc(relativeToDirPath, false) && skipRelativeToDirPathFunc(relativeToDirPath, true) {
+			return true
+		}
+
+		return skipRelativeToDirParentPath(relativeToDirPath, skipRelativeToDirPathFunc)
 	}
 }
 

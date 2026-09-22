@@ -290,6 +290,22 @@ metadata:
 						},
 					})
 				})
+
+				It("excludes a symlink loop inside a directory matched by .helmignore without resolving it", func(ctx SpecContext) {
+					helmignoreRelPath := relativeToProjectDir(".helm/.helmignore")
+					fileCreateOrAppend(helmignoreRelPath, "ignoreddir/\n")
+					gitAddAndCommit(ctx, helmignoreRelPath)
+
+					symlinkBody(ctx, symlinkEntry{
+						skipOnWindows: true,
+						addFiles:      []string{relativeToProjectDir(".helm/templates/template1.yaml")},
+						commitFiles:   []string{relativeToProjectDir(".helm/templates/template1.yaml")},
+						addAndCommitSymlinks: map[string]string{
+							relativeToProjectDir(".helm/ignoreddir/loop"):  "loop2",
+							relativeToProjectDir(".helm/ignoreddir/loop2"): "loop",
+						},
+					})
+				})
 			})
 		}
 
