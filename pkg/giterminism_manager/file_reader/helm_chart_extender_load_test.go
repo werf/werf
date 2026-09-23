@@ -143,6 +143,28 @@ var _ = Describe("LoadChartDir", func() {
 		))
 	})
 
+	// The readdir error is only deferred past the skip predicates, not dropped: a directory that
+	// is part of the chart and cannot be listed still fails the load instead of a partial chart.
+	It("fails on an unreadable directory no rule excludes", func(ctx SpecContext) {
+		if os.Geteuid() == 0 {
+			Skip("root reads a mode 000 directory")
+		}
+
+		chartDir := writeChart(map[string]string{
+			".helmignore":         "unrelated\n",
+			"Chart.yaml":          "name: test",
+			"private/secret.yaml": "secret",
+			"templates/kept.yaml": "kept",
+		})
+
+		privateDir := filepath.Join(chartDir, "private")
+		Expect(os.Chmod(privateDir, 0o000)).To(Succeed())
+		DeferCleanup(os.Chmod, privateDir, os.FileMode(0o755))
+
+		_, err := reader.LoadChartDir(logging.WithLogger(ctx), chartDir)
+		Expect(err).To(MatchError(ContainSubstring("permission denied")))
+	})
+
 	// A leading ! is not a gitignore exception: helm keeps only what the pattern matches and
 	// drops everything else, directories included, so templates/ is pruned along with its files.
 	It("keeps only what a leading ! pattern matches, the way helm does", func(ctx SpecContext) {
