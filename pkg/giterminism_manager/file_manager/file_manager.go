@@ -389,7 +389,7 @@ func (f *FileManager) LoadChartDir(ctx context.Context, dir string) ([]*nelmcomm
 
 			relToChartPath := strings.TrimPrefix(normToPath, dirPrefix)
 			if rules.IsFileIgnored(ctx, relToChartPath) {
-				logboek.Context(ctx).Debug().LogF("--- %s excluded by %s\n", normToPath, ignore.HelmIgnore)
+				logboek.Context(ctx).Debug().LogF("--- %s excluded by %s\n", relToChartPath, ignore.HelmIgnore)
 				return nil
 			}
 
