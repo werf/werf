@@ -900,7 +900,7 @@ func (storage *RepoStagesStorage) PostMultiplatformImage(ctx context.Context, pr
 
 func (storage *RepoStagesStorage) CopyFromStorage(ctx context.Context, src StagesStorage, projectName string, stageID image.StageID, opts CopyFromStorageOptions) (*image.StageDesc, error) {
 	desc, err := storage.GetStageDesc(ctx, projectName, stageID)
-	if err != nil && !IsErrStageNotFound(err) {
+	if err != nil && !IsErrStageUnavailable(err) {
 		return nil, fmt.Errorf("unable to get stage %s description: %w", stageID, err)
 	}
 	if desc != nil {

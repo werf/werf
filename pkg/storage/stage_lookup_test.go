@@ -45,6 +45,24 @@ var _ = ginkgo.Describe("stage lookup", func() {
 		gomega.Expect(desc).To(gomega.BeNil())
 	})
 
+	ginkgo.It("replaces a destination whose manifest references missing blobs", func(ctx ginkgo.SpecContext) {
+		registry := &stageLookupRegistry{markerRegistry: newMarkerRegistry()}
+		source := &RepoStagesStorage{RepoAddress: "registry.example/source", DockerRegistry: registry}
+		destination := &RepoStagesStorage{RepoAddress: "registry.example/destination", DockerRegistry: registry}
+		stageID := image.NewStageID("digest", 1)
+		sourceRef := source.ConstructStageImageName("project", stageID.Digest, stageID.CreationTs)
+		destinationRef := destination.ConstructStageImageName("project", stageID.Digest, stageID.CreationTs)
+		registry.put(sourceRef, nil)
+		registry.put(destinationRef, nil)
+		registry.brokenImage = registry.images[destinationRef]
+
+		desc, err := destination.CopyFromStorage(ctx, source, "project", *stageID, CopyFromStorageOptions{})
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		gomega.Expect(desc).NotTo(gomega.BeNil())
+		gomega.Expect(desc.Info.Name).To(gomega.Equal(destinationRef))
+		gomega.Expect(desc.Info).NotTo(gomega.BeIdenticalTo(registry.brokenImage))
+	})
+
 	ginkgo.DescribeTable("copies a missing destination without hiding other failures",
 		func(ctx ginkgo.SpecContext, existing, rejected bool, copyErr, expected error) {
 			registry := &stageLookupRegistry{markerRegistry: newMarkerRegistry()}

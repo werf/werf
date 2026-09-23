@@ -25,6 +25,7 @@ var _ docker_registry.Interface = (*stageLookupRegistry)(nil)
 
 type stageLookupRegistry struct {
 	*markerRegistry
+	brokenImage *image.Info
 }
 
 func (r *stageLookupRegistry) GetRepoImage(ctx context.Context, reference string) (*image.Info, error) {
@@ -34,6 +35,9 @@ func (r *stageLookupRegistry) GetRepoImage(ctx context.Context, reference string
 	}
 	if info == nil {
 		return nil, fmt.Errorf("%s: %s", transport.ManifestUnknownErrorCode, reference)
+	}
+	if info == r.brokenImage {
+		return nil, fmt.Errorf("%s: %s", transport.BlobUnknownErrorCode, reference)
 	}
 	return info, nil
 }
