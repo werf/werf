@@ -2,6 +2,7 @@ package build
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -40,12 +41,6 @@ func TestAnchorSelector_HonoursParentTsToggle(t *testing.T) {
 }
 
 var _ = Describe("Content anchor inputs", func() {
-	newImage := func(name string, baseImageType buildImage.BaseImageType, opts buildImage.ImageOptions) *buildImage.Image {
-		img, err := buildImage.NewImage(context.Background(), "linux/amd64", name, baseImageType, opts)
-		Expect(err).To(Succeed())
-		return img
-	}
-
 	It("defers anchors that need resolved dependency values", func() {
 		img := newImage("app", buildImage.NoBaseImage, buildImage.ImageOptions{RequiresResolvedDependencyInputs: true})
 		Expect(canCalculateAnchorDigest(img, nil)).To(BeFalse())
@@ -76,6 +71,27 @@ var _ = Describe("Content anchor inputs", func() {
 		dep.SetAnchorDigest("")
 		_, err = collectHolisticInputs(ctx, img, []*buildImage.Image{dep}, nil, nil, false)
 		Expect(err).To(MatchError(ContainSubstring("no content-based digest")))
+	})
+
+	It("folds per-stage content dependencies into the consumer", func(ctx SpecContext) {
+		img := newImage("app", buildImage.NoBaseImage, buildImage.ImageOptions{IsFinal: true})
+		install := newContentDependenciesStub(stage.Install, "install-deps")
+		setup := newContentDependenciesStub(stage.Setup, "setup-deps")
+		img.SetStages([]stage.Interface{install, setup, newContentDependenciesStub(stage.GitCache, "")})
+
+		inputs, err := collectHolisticInputs(ctx, img, nil, nil, nil, false)
+		Expect(err).To(Succeed())
+		Expect(inputs).To(ContainElements("install:install-deps", "setup:setup-deps"))
+		Expect(inputs).NotTo(ContainElement(ContainSubstring("gitCache")))
+
+		setup.deps = "setup-deps-changed"
+		changed, err := collectHolisticInputs(ctx, img, nil, nil, nil, false)
+		Expect(err).To(Succeed())
+		Expect(changed).NotTo(Equal(inputs))
+
+		setup.err = errors.New("content deps failure")
+		_, err = collectHolisticInputs(ctx, img, nil, nil, nil, false)
+		Expect(err).To(MatchError(ContainSubstring(`stage "setup" GetContentDependencies: content deps failure`)))
 	})
 
 	It("folds Dockerfile dependency import types into the consumer", func(ctx SpecContext) {
