@@ -3,14 +3,14 @@ package cleaning
 import (
 	"context"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/ginkgo/v2"
+	"github.com/onsi/gomega"
 
 	"github.com/werf/werf/v2/cmd/werf/common"
 )
 
-var _ = Describe("kubernetes namespaces scan", func() {
-	DescribeTable("GetKubernetesNamespacesByContext",
+var _ = ginkgo.Describe("kubernetes namespaces scan", func() {
+	ginkgo.DescribeTable("GetKubernetesNamespacesByContext",
 		func(scanContextNamespaceOnly bool, kubeScanNamespaces []string, expectedNamespacesByContext map[string][]string) {
 			cmdData := &common.CmdData{
 				ScanContextNamespaceOnly: &scanContextNamespaceOnly,
@@ -21,27 +21,27 @@ var _ = Describe("kubernetes namespaces scan", func() {
 				{ContextName: "inClusterContext", ContextNamespace: "runner-ns"},
 			}
 
-			Expect(GetKubernetesNamespacesByContext(cmdData, contextClients)).To(Equal(expectedNamespacesByContext))
+			gomega.Expect(GetKubernetesNamespacesByContext(cmdData, contextClients)).To(gomega.Equal(expectedNamespacesByContext))
 		},
-		Entry("scans all namespaces by default",
+		ginkgo.Entry("scans all namespaces by default",
 			false, nil,
 			map[string][]string{"dev": nil, "inClusterContext": nil},
 		),
-		Entry("scans context namespace only when enabled",
+		ginkgo.Entry("scans context namespace only when enabled",
 			true, nil,
 			map[string][]string{"dev": {"dev-ns"}, "inClusterContext": {"runner-ns"}},
 		),
-		Entry("explicit namespaces are used for every context",
+		ginkgo.Entry("explicit namespaces are used for every context",
 			false, []string{"ns-a", "ns-b"},
 			map[string][]string{"dev": {"ns-a", "ns-b"}, "inClusterContext": {"ns-a", "ns-b"}},
 		),
-		Entry("explicit namespaces take precedence over context namespace only",
+		ginkgo.Entry("explicit namespaces take precedence over context namespace only",
 			true, []string{"ns-a", "ns-b"},
 			map[string][]string{"dev": {"ns-a", "ns-b"}, "inClusterContext": {"ns-a", "ns-b"}},
 		),
 	)
 
-	It("unions deployed images of every scanned namespace of every context", func() {
+	ginkgo.It("unions deployed images of every scanned namespace of every context", func() {
 		devContextClient := newFakeContextClient("dev", "dev-ns", map[string][]string{
 			"ns-a": {"registry/app:a"},
 			"ns-b": {"registry/app:b"},
@@ -60,16 +60,16 @@ var _ = Describe("kubernetes namespaces scan", func() {
 		}
 
 		deployedImages, err := manager.deployedDockerImages(context.Background())
-		Expect(err).To(Succeed())
+		gomega.Expect(err).To(gomega.Succeed())
 
 		var names []string
 		for _, deployedImage := range deployedImages {
 			names = append(names, deployedImage.Name)
 		}
-		Expect(names).To(ConsistOf("registry/app:a", "registry/app:b", "registry/app:prod-a"))
+		gomega.Expect(names).To(gomega.ConsistOf("registry/app:a", "registry/app:b", "registry/app:prod-a"))
 	})
 
-	It("fails instead of skipping a namespace that cannot be scanned", func() {
+	ginkgo.It("fails instead of skipping a namespace that cannot be scanned", func() {
 		contextClient := newFakeContextClient("dev", "dev-ns", map[string][]string{
 			"ns-a": {"registry/app:a"},
 			"ns-b": {"registry/app:b"},
@@ -82,7 +82,7 @@ var _ = Describe("kubernetes namespaces scan", func() {
 		}
 
 		deployedImages, err := manager.deployedDockerImages(context.Background())
-		Expect(err).To(MatchError(ContainSubstring(`pods is forbidden in namespace "ns-b"`)))
-		Expect(deployedImages).To(BeNil())
+		gomega.Expect(err).To(gomega.MatchError(gomega.ContainSubstring(`pods is forbidden in namespace "ns-b"`)))
+		gomega.Expect(deployedImages).To(gomega.BeNil())
 	})
 })

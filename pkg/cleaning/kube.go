@@ -367,7 +367,6 @@ func GetKubernetesNamespacesByContext(cmdData *common.CmdData, contextClients []
 		case *cmdData.ScanContextNamespaceOnly && contextClient.ContextNamespace != "":
 			res[contextClient.ContextName] = []string{contextClient.ContextNamespace}
 		default:
-			// nil - cluster scope, therefore all namespaces
 			res[contextClient.ContextName] = nil
 		}
 	}
