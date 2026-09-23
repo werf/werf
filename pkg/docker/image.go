@@ -22,6 +22,7 @@ import (
 	"github.com/docker/cli/cli/command"
 	"github.com/docker/docker/api/types/filters"
 	dockerImage "github.com/docker/docker/api/types/image"
+	"github.com/docker/docker/api/types/versions"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/moby/buildkit/exporter/containerimage/exptypes"
@@ -231,6 +232,13 @@ func doCliPush(ctx context.Context, c command.Cli, args ...string) error {
 }
 
 const cliPushMaxAttempts uint8 = 10
+
+const pushPlatformAPIVersion = "1.46"
+
+// SupportsPushPlatform reports whether the daemon accepts the --platform flag of docker push.
+func SupportsPushPlatform(ctx context.Context) bool {
+	return versions.GreaterThanOrEqualTo(cli(ctx).CurrentVersion(), pushPlatformAPIVersion)
+}
 
 func doCliPushWithRetries(ctx context.Context, c command.Cli, args ...string) error {
 	var attempt uint8
