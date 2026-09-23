@@ -39,9 +39,9 @@ var _ = ginkgo.Describe("Release lifecycle", ginkgo.Label("e2e", "converge", "si
 			SuiteData.InitTestRepo(ctx, repoDirname, "simple/state0")
 			werfProject = werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
 
-			listArgs := []string{"release", "list", "--namespace", werfProject.Namespace(ctx), "--output-format", "json", "--log-quiet"}
+			listArgs := []string{"release", "list", "--namespace", werfProject.Namespace(ctx), "--output-format", "json", "--log-quiet", "--log-color-mode=off"}
 			releaseArgs := func(args ...string) []string {
-				return append(args, "--release", werfProject.Release(ctx), "--namespace", werfProject.Namespace(ctx), "--output-format", "json", "--log-quiet")
+				return append(args, "--release", werfProject.Release(ctx), "--namespace", werfProject.Namespace(ctx), "--output-format", "json", "--log-quiet", "--log-color-mode=off")
 			}
 
 			ginkgo.By("state0: execute converge")
