@@ -2,6 +2,7 @@ package filemanager_test
 
 import (
 	"context"
+	"os"
 	"path/filepath"
 
 	"github.com/onsi/ginkgo/v2"
@@ -77,6 +78,41 @@ func newChartFileManager(ctx context.Context, destination string, localOverride 
 	newManager(true)
 	commitChartRepo(ctx, appDir)
 	return newManager(false).FileManager, projectDir, includedFiles
+}
+
+// newCommittedChartFileManager commits the files and symlinks into a fresh repository and opens it
+// under the default, enforced giterminism, so the chart is read through the real commit walk.
+func newCommittedChartFileManager(ctx context.Context, files, symlinks map[string]string) *filemanager.FileManager {
+	tmpDir := ginkgo.GinkgoT().TempDir()
+	gomega.Expect(werf.Init(tmpDir, ginkgo.GinkgoT().TempDir())).To(gomega.Succeed())
+	gomega.Expect(true_git.Init(ctx, true_git.Options{})).To(gomega.Succeed())
+	gitDataManager, err := gitdata.GetHostGitDataManager(ctx)
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+	gomega.Expect(git_repo.Init(gitDataManager)).To(gomega.Succeed())
+
+	projectDir := filepath.Join(tmpDir, "app")
+	utils.MkdirAll(projectDir)
+	utils.RunSucceedCommand(ctx, projectDir, "git", "init", "--initial-branch=main")
+	utils.RunSucceedCommand(ctx, projectDir, "git", "config", "user.name", "Test")
+	utils.RunSucceedCommand(ctx, projectDir, "git", "config", "user.email", "test@example.com")
+	utils.RunSucceedCommand(ctx, projectDir, "git", "config", "commit.gpgsign", "false")
+
+	for name, data := range files {
+		utils.WriteFile(filepath.Join(projectDir, name), []byte(data))
+	}
+	for link, target := range symlinks {
+		linkPath := filepath.Join(projectDir, link)
+		utils.MkdirAll(filepath.Dir(linkPath))
+		gomega.Expect(os.Symlink(target, linkPath)).To(gomega.Succeed())
+	}
+	commitChartRepo(ctx, projectDir)
+
+	repo, err := git_repo.OpenLocalRepo(ctx, "app", projectDir, git_repo.OpenLocalRepoOptions{})
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+	manager, err := giterminism_manager.NewManager(ctx, "", projectDir, repo, utils.GetHeadCommit(ctx, projectDir), giterminism_manager.NewManagerOptions{})
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+
+	return manager.FileManager
 }
 
 func commitChartRepo(ctx context.Context, repoDir string) {
