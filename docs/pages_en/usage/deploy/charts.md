@@ -123,7 +123,29 @@ Here:
 
 - `LICENSE` — the chart license;
 
-- `.helmignore` — a list of files in the chart directory not to be included in the chart when publishing.
+- `.helmignore` — a list of files in the chart directory not to be included in the chart, see below.
+
+### Excluding files or directories from the chart
+
+The `.helmignore` file in the chart root can include filename filters that prevent files or directories from being added to the chart. The rules format is the same as [in .gitignore](https://git-scm.com/docs/gitignore) except for the following:
+
+- `**` is not supported and raises an error;
+
+- `!` at the beginning of a line works differently than in `.gitignore`: it excludes everything that does not match the pattern — don't use it;
+
+- `.helmignore` does not exclude itself by default;
+
+- Helm's default rule `templates/.?*` always applies, so files and directories starting with a dot directly under `templates/` are excluded even without a `.helmignore`, a directory along with its contents;
+
+- files delivered into the chart through werf includes are filtered by the same rules. A `.helmignore` delivered by an include applies only when the chart has no `.helmignore` of its own, and then it filters the local files of the chart as well.
+
+Which `.helmignore` filters a dependent chart depends on how the chart is included:
+
+- a chart in the `charts` directory is loaded as a part of the parent chart, so the `.helmignore` of the parent chart filters it, while its own `.helmignore` has no effect;
+
+- a chart included with `dependencies[].repository: file://` is loaded as a separate chart, so its own `.helmignore` filters it, while the rules of the parent chart do not apply;
+
+- a chart from an OCI/HTTP repository arrives packaged, already filtered by its own `.helmignore` at packaging time.
 
 ## Including additional charts
 

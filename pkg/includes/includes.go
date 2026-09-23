@@ -2,6 +2,7 @@ package includes
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/go-git/go-git/v5/plumbing"
@@ -30,6 +31,14 @@ type Include struct {
 	// e.g. /path/to/file.txt (desired mount path) -> /path/to/remote/file.txt (original path in remote repo)
 	// This is used to read the file from the remote repository
 	objects map[string]string
+}
+
+func NewInclude(repo GitRepository, commitHash string, objects map[string]string) *Include {
+	return &Include{
+		repo:       repo,
+		commitHash: commitHash,
+		objects:    objects,
+	}
 }
 
 func GetWerfIncludesConfigRelPath() string {
@@ -161,11 +170,7 @@ func GetIncludes(ctx context.Context, cfg Config, lockInfo *LockInfo, remoteRepo
 					return fmt.Errorf("no files matched for include %s with ref %s", inc.Git, ref)
 				}
 
-				include := &Include{
-					repo:       r.repo,
-					commitHash: commit.Hash.String(),
-					objects:    matchedMap,
-				}
+				include := NewInclude(r.repo, commit.Hash.String(), matchedMap)
 
 				includes = append(includes, include)
 
@@ -201,10 +206,14 @@ func (i *Include) WalkObjects(fn func(toPath, origPath string) error) error {
 	return nil
 }
 
+// ErrFileNotFound lets a caller that has a fallback for a missing file tell it apart from a
+// file that is there but unreadable.
+var ErrFileNotFound = errors.New("file not found in include")
+
 func (i *Include) GetFile(ctx context.Context, relPath string) ([]byte, error) {
 	filePath, ok := i.objects[relPath]
 	if !ok {
-		return nil, fmt.Errorf("file not found in include: %s", relPath)
+		return nil, fmt.Errorf("%w: %s", ErrFileNotFound, relPath)
 	}
 
 	data, err := i.repo.ReadCommitFile(ctx, i.commitHash, filePath)

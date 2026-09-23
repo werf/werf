@@ -2,6 +2,7 @@ package filemanager_test
 
 import (
 	"context"
+	"os"
 	"path/filepath"
 
 	"github.com/onsi/ginkgo/v2"
@@ -79,7 +80,117 @@ func newChartFileManager(ctx context.Context, destination string, localOverride 
 	return newManager(false).FileManager, projectDir, includedFiles
 }
 
+// newCommittedChartFileManager commits the files and symlinks into a fresh repository and opens it
+// under the default, enforced giterminism, so the chart is read through the real commit walk.
+func newCommittedChartFileManager(ctx context.Context, files, symlinks map[string]string) *filemanager.FileManager {
+	tmpDir := ginkgo.GinkgoT().TempDir()
+	gomega.Expect(werf.Init(tmpDir, ginkgo.GinkgoT().TempDir())).To(gomega.Succeed())
+	gomega.Expect(true_git.Init(ctx, true_git.Options{})).To(gomega.Succeed())
+	gitDataManager, err := gitdata.GetHostGitDataManager(ctx)
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+	gomega.Expect(git_repo.Init(gitDataManager)).To(gomega.Succeed())
+
+	projectDir := filepath.Join(tmpDir, "app")
+	utils.MkdirAll(projectDir)
+	utils.RunSucceedCommand(ctx, projectDir, "git", "init", "--initial-branch=main")
+	utils.RunSucceedCommand(ctx, projectDir, "git", "config", "user.name", "Test")
+	utils.RunSucceedCommand(ctx, projectDir, "git", "config", "user.email", "test@example.com")
+	utils.RunSucceedCommand(ctx, projectDir, "git", "config", "commit.gpgsign", "false")
+
+	for name, data := range files {
+		utils.WriteFile(filepath.Join(projectDir, name), []byte(data))
+	}
+	for link, target := range symlinks {
+		linkPath := filepath.Join(projectDir, link)
+		utils.MkdirAll(filepath.Dir(linkPath))
+		gomega.Expect(os.Symlink(target, linkPath)).To(gomega.Succeed())
+	}
+	commitChartRepo(ctx, projectDir)
+
+	repo, err := git_repo.OpenLocalRepo(ctx, "app", projectDir, git_repo.OpenLocalRepoOptions{})
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+	manager, err := giterminism_manager.NewManager(ctx, "", projectDir, repo, utils.GetHeadCommit(ctx, projectDir), giterminism_manager.NewManagerOptions{})
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+
+	return manager.FileManager
+}
+
 func commitChartRepo(ctx context.Context, repoDir string) {
 	utils.RunSucceedCommand(ctx, repoDir, "git", "add", ".")
 	utils.RunSucceedCommand(ctx, repoDir, "git", "commit", "-m", "test chart")
+}
+
+func newFileURLChartFileManager(ctx context.Context, withIncludes bool) *filemanager.FileManager {
+	tmpDir := ginkgo.GinkgoT().TempDir()
+	gomega.Expect(werf.Init(tmpDir, ginkgo.GinkgoT().TempDir())).To(gomega.Succeed())
+	gomega.Expect(true_git.Init(ctx, true_git.Options{})).To(gomega.Succeed())
+	gitDataManager, err := gitdata.GetHostGitDataManager(ctx)
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+	gomega.Expect(git_repo.Init(gitDataManager)).To(gomega.Succeed())
+
+	sourceDir := filepath.Join(tmpDir, "common")
+	appDir := filepath.Join(tmpDir, "app")
+	projectDir := filepath.Join(appDir, "ci")
+	repoDirs := []string{appDir}
+	if withIncludes {
+		repoDirs = append(repoDirs, sourceDir)
+	}
+	for _, repoDir := range repoDirs {
+		utils.MkdirAll(repoDir)
+		utils.RunSucceedCommand(ctx, repoDir, "git", "init", "--initial-branch=main")
+		utils.RunSucceedCommand(ctx, repoDir, "git", "config", "user.name", "Test")
+		utils.RunSucceedCommand(ctx, repoDir, "git", "config", "user.email", "test@example.com")
+		utils.RunSucceedCommand(ctx, repoDir, "git", "config", "commit.gpgsign", "false")
+	}
+
+	projectFiles := map[string]string{
+		".helm/.helmignore":                      "root-dropped.yaml\nsubchart-kept.yaml\n",
+		".helm/Chart.yaml":                       "apiVersion: v2\nname: root\nversion: 0.1.0\ndependencies:\n- name: sub\n  version: 0.1.0\n  repository: file://../sub-chart\n",
+		".helm/Chart.lock":                       "dependencies:\n- name: sub\n  version: 0.1.0\n  repository: file://../sub-chart\n",
+		".helm/templates/root-kept.yaml":         "root kept",
+		".helm/templates/root-dropped.yaml":      "root dropped",
+		"sub-chart/.helmignore":                  "notes.txt\ndropped-by-dep.txt\n",
+		"sub-chart/Chart.yaml":                   "apiVersion: v2\nname: sub\nversion: 0.1.0\n",
+		"sub-chart/templates/subchart-kept.yaml": "subchart kept",
+		"sub-chart/notes.txt":                    "subchart dropped",
+	}
+	for name, data := range projectFiles {
+		utils.WriteFile(filepath.Join(projectDir, name), []byte(data))
+	}
+
+	newManager := func(createLock bool) *filemanager.FileManager {
+		repo, err := git_repo.OpenLocalRepo(ctx, "app", appDir, git_repo.OpenLocalRepoOptions{})
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		manager, err := giterminism_manager.NewManager(ctx, "", projectDir, repo, utils.GetHeadCommit(ctx, appDir), giterminism_manager.NewManagerOptions{CreateIncludesLockFile: createLock})
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		return manager.FileManager
+	}
+
+	if !withIncludes {
+		commitChartRepo(ctx, appDir)
+		return newManager(false)
+	}
+
+	includedFiles := map[string]string{
+		"templates/from-include.yaml": "subchart from include",
+		"dropped-by-dep.txt":          "subchart include dropped",
+	}
+	for name, data := range includedFiles {
+		utils.WriteFile(filepath.Join(sourceDir, "dep-extra", name), []byte(data))
+	}
+	commitChartRepo(ctx, sourceDir)
+
+	configData, err := yaml.Marshal(map[string]interface{}{
+		"apiVersion": "werf/includes/v1beta1",
+		"includes": []map[string]string{
+			{"git": sourceDir, "branch": "main", "add": "/dep-extra", "to": "/sub-chart"},
+		},
+	})
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+	utils.WriteFile(filepath.Join(projectDir, "werf-includes.yaml"), configData)
+	commitChartRepo(ctx, appDir)
+
+	newManager(true)
+	commitChartRepo(ctx, appDir)
+	return newManager(false)
 }

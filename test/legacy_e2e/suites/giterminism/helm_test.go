@@ -271,6 +271,78 @@ metadata:
 							relativeToProjectDir(".helm/templates/template1.yaml"): getLinkTo(relativeToProjectDir(".helm/templates/template1.yaml"), relativeToProjectDir("dir/.helm/templates/template1.yaml")),
 						},
 					}))
+
+				// Matching the rules before the path is resolved is what makes a symlink werf cannot
+				// follow excludable at all: resolving it is exactly what fails, so the rules have to
+				// decide first.
+				It("excludes a symlink loop matched by .helmignore without resolving it", func(ctx SpecContext) {
+					helmignoreRelPath := relativeToProjectDir(".helm/.helmignore")
+					fileCreateOrAppend(helmignoreRelPath, "loop*\n")
+					gitAddAndCommit(ctx, helmignoreRelPath)
+
+					symlinkBody(ctx, symlinkEntry{
+						skipOnWindows: true,
+						addFiles:      []string{relativeToProjectDir(".helm/templates/template1.yaml")},
+						commitFiles:   []string{relativeToProjectDir(".helm/templates/template1.yaml")},
+						addAndCommitSymlinks: map[string]string{
+							relativeToProjectDir(".helm/loop"):  "loop2",
+							relativeToProjectDir(".helm/loop2"): "loop",
+						},
+					})
+				})
+
+				// The symlink is the only way the target reaches the render, so the spec fails
+				// when the commit walk drops a symlink a directory rule merely shares a name with.
+				It("keeps a committed symlink to a file whose name only a directory rule matches", func(ctx SpecContext) {
+					helmignoreRelPath := relativeToProjectDir(".helm/.helmignore")
+					fileCreateOrAppend(helmignoreRelPath, "link/\n")
+					gitAddAndCommit(ctx, helmignoreRelPath)
+
+					symlinkBody(ctx, symlinkEntry{
+						skipOnWindows: true,
+						addFiles:      []string{relativeToProjectDir(".helm/target.yaml")},
+						commitFiles:   []string{relativeToProjectDir(".helm/target.yaml")},
+						addAndCommitSymlinks: map[string]string{
+							relativeToProjectDir(".helm/templates/link"): "../target.yaml",
+						},
+					})
+				})
+
+				// The commit walk descends into a symlinked directory recursively, and the skip
+				// predicate has to travel with it, or a loop below the symlink is resolved and
+				// fails the chart although a rule excludes it.
+				It("excludes a symlink loop below a symlinked chart directory without resolving it", func(ctx SpecContext) {
+					helmignoreRelPath := relativeToProjectDir(".helm/.helmignore")
+					fileCreateOrAppend(helmignoreRelPath, "templates/loop*\n")
+					gitAddAndCommit(ctx, helmignoreRelPath)
+
+					symlinkBody(ctx, symlinkEntry{
+						skipOnWindows: true,
+						addFiles:      []string{relativeToProjectDir("shared/template1.yaml")},
+						commitFiles:   []string{relativeToProjectDir("shared/template1.yaml")},
+						addAndCommitSymlinks: map[string]string{
+							relativeToProjectDir(".helm/templates"): getLinkTo(relativeToProjectDir(".helm/templates"), relativeToProjectDir("shared")),
+							relativeToProjectDir("shared/loop"):     "loop2",
+							relativeToProjectDir("shared/loop2"):    "loop",
+						},
+					})
+				})
+
+				It("excludes a symlink loop inside a directory matched by .helmignore without resolving it", func(ctx SpecContext) {
+					helmignoreRelPath := relativeToProjectDir(".helm/.helmignore")
+					fileCreateOrAppend(helmignoreRelPath, "ignoreddir/\n")
+					gitAddAndCommit(ctx, helmignoreRelPath)
+
+					symlinkBody(ctx, symlinkEntry{
+						skipOnWindows: true,
+						addFiles:      []string{relativeToProjectDir(".helm/templates/template1.yaml")},
+						commitFiles:   []string{relativeToProjectDir(".helm/templates/template1.yaml")},
+						addAndCommitSymlinks: map[string]string{
+							relativeToProjectDir(".helm/ignoreddir/loop"):  "loop2",
+							relativeToProjectDir(".helm/ignoreddir/loop2"): "loop",
+						},
+					})
+				})
 			})
 		}
 

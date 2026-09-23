@@ -138,12 +138,18 @@ func (r FileReader) ResolveAndCheckCommitFilePath(ctx context.Context, relPath s
 	return r.sharedOptions.LocalGitRepo().ResolveAndCheckCommitFilePath(ctx, r.sharedOptions.HeadCommit(ctx), r.projectDirRelativePathToWorkTreeRelativePath(relPath), checkSymlinkTargetFunc)
 }
 
-func (r FileReader) ListCommitFilesWithGlob(ctx context.Context, dir, pattern string) (files []string, err error) {
+type ListCommitFilesWithGlobOptions struct {
+	// SkipRelativeToDirPathFunc excludes a path before the commit walk resolves it, so a symlink
+	// the caller excludes anyway does not have to be resolvable.
+	SkipRelativeToDirPathFunc func(relativeToDirPath string, isDir bool) bool
+}
+
+func (r FileReader) ListCommitFilesWithGlob(ctx context.Context, dir, pattern string, opts ListCommitFilesWithGlobOptions) (files []string, err error) {
 	logboek.Context(ctx).Debug().
 		LogBlock("ListCommitFilesWithGlob %q %q", dir, pattern).
 		Options(applyDebugToLogboek).
 		Do(func() {
-			files, err = r.listCommitFilesWithGlob(ctx, dir, pattern)
+			files, err = r.listCommitFilesWithGlob(ctx, dir, pattern, opts)
 
 			if debug() {
 				var logFiles string
@@ -157,20 +163,45 @@ func (r FileReader) ListCommitFilesWithGlob(ctx context.Context, dir, pattern st
 	return
 }
 
-func (r FileReader) listCommitFilesWithGlob(ctx context.Context, dir, pattern string) ([]string, error) {
-	list, err := r.sharedOptions.LocalGitRepo().ListCommitFilesWithGlob(ctx, r.sharedOptions.HeadCommit(ctx), r.projectDirRelativePathToWorkTreeRelativePath(dir), pattern)
+func (r FileReader) listCommitFilesWithGlob(ctx context.Context, dir, pattern string, opts ListCommitFilesWithGlobOptions) ([]string, error) {
+	list, err := r.sharedOptions.LocalGitRepo().ListCommitFilesWithGlob(ctx, r.sharedOptions.HeadCommit(ctx), r.projectDirRelativePathToWorkTreeRelativePath(dir), pattern, git_repo.ListCommitFilesWithGlobOptions{
+		SkipSymlinkPathFunc: r.skipCommitSymlinkPathFunc(dir, opts.SkipRelativeToDirPathFunc),
+	})
 	if err != nil {
 		return nil, err
 	}
 
 	var result []string
 	for _, path := range list {
-		relativeToGitProjectDirPath := r.gitRelativePathToProjectDirRelativePath(path)
-		relativeToDirPath := util.GetRelativeToBaseFilepath(dir, relativeToGitProjectDirPath)
-		result = append(result, relativeToDirPath)
+		result = append(result, r.workTreeRelativePathToDirRelativePath(dir, path))
 	}
 
 	return result, nil
+}
+
+// skipCommitSymlinkPathFunc adapts a directory-relative skip predicate to the work-tree-relative
+// paths the commit walk operates on. The predicate is asked for both values of isDir and the
+// symlink is dropped only when they agree, because telling a directory from a file requires
+// resolving the symlink, which is what the walk is being kept from doing. The parent directories
+// are checked too, so a directory rule keeps the walk from resolving the symlinks under it.
+func (r FileReader) skipCommitSymlinkPathFunc(dir string, skipRelativeToDirPathFunc func(relativeToDirPath string, isDir bool) bool) func(notResolvedPath string) bool {
+	if skipRelativeToDirPathFunc == nil {
+		return nil
+	}
+
+	return func(notResolvedPath string) bool {
+		relativeToDirPath := filepath.ToSlash(r.workTreeRelativePathToDirRelativePath(dir, notResolvedPath))
+
+		if skipRelativeToDirPathFunc(relativeToDirPath, false) && skipRelativeToDirPathFunc(relativeToDirPath, true) {
+			return true
+		}
+
+		return skipRelativeToDirParentPath(relativeToDirPath, skipRelativeToDirPathFunc)
+	}
+}
+
+func (r FileReader) workTreeRelativePathToDirRelativePath(dir, relToWorkTreePath string) string {
+	return util.GetRelativeToBaseFilepath(dir, r.gitRelativePathToProjectDirRelativePath(relToWorkTreePath))
 }
 
 func (r FileReader) ReadCommitFile(ctx context.Context, relPath string) ([]byte, error) {
