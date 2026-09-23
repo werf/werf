@@ -415,6 +415,16 @@ tasks:
           paths: '{{.paths | default "./pkg ./cmd ./schemas"}}'
           parallel: "{{.parallel}}"
 
+  test:unit:embedded:
+    desc: "Test embedded Stapel and Deno assets."
+    deps:
+      - stapel:embed
+      - deno:embed
+    cmds:
+      - go test -ldflags="{{.goLDFlags}}" -tags="{{.distGoTags}}" ./pkg/stapel ./pkg/deno
+    env:
+      CGO_ENABLED: "0"
+
   test:integration:
     desc: 'Run integration tests. Important vars: "paths".'
     cmds:
