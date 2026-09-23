@@ -38,6 +38,18 @@ var _ = Describe("WerfConfig", func() {
 				NewImageStub("a", DependsOn{From: "b"}),
 				NewImageStub("b", DependsOn{From: "a"}),
 			}, MatchError("infinite loop detected: a -> b -> a")),
+			Entry("real stapel from cycle a -> b -> a", []ImageInterface{
+				&StapelImage{StapelImageBase: &StapelImageBase{Name: "a", From: "b"}},
+				&StapelImage{StapelImageBase: &StapelImageBase{Name: "b", From: "a"}},
+			}, MatchError("infinite loop detected: a -> b -> a")),
+			Entry("real stapel mixed from and import cycle", []ImageInterface{
+				&StapelImage{StapelImageBase: &StapelImageBase{Name: "a", From: "b"}},
+				&StapelImage{StapelImageBase: &StapelImageBase{Name: "b", Import: []*Import{{From: "a"}}}},
+			}, MatchError("infinite loop detected: a -> b -> a")),
+			Entry("real stapel external base ends a dependency chain", []ImageInterface{
+				&StapelImage{StapelImageBase: &StapelImageBase{Name: "a", From: "b"}},
+				&StapelImage{StapelImageBase: &StapelImageBase{Name: "b", From: "ubuntu:22.04"}},
+			}, Succeed()),
 			Entry("loop through import a -> b -> c -> a", []ImageInterface{
 				NewImageStub("a", DependsOn{Imports: []string{"b"}}),
 				NewImageStub("b", DependsOn{Imports: []string{"c"}}),
