@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.79.1](https://github.com/werf/werf/compare/v2.79.0...v2.79.1) (2026-09-23)
+
+
+### Bug Fixes
+
+* **build:** synchronize legacy image metadata ([#7892](https://github.com/werf/werf/issues/7892)) ([d82cd44](https://github.com/werf/werf/commit/d82cd44815cb812771e353c231abb6d390c6c673))
+* **registry:** delete Harbor repositories through v2 API ([#7891](https://github.com/werf/werf/issues/7891)) ([2f47707](https://github.com/werf/werf/commit/2f47707934818132f558b725ae50ad488a9b462f))
+
 ## [2.79.0](https://github.com/werf/werf/compare/v2.78.2...v2.79.0) (2026-09-18)
 
 
