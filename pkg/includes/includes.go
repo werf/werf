@@ -33,8 +33,6 @@ type Include struct {
 	objects map[string]string
 }
 
-// NewInclude builds an include from a repository, a commit hash and a map of destination path to
-// the original path the file has in that repository.
 func NewInclude(repo GitRepository, commitHash string, objects map[string]string) *Include {
 	return &Include{
 		repo:       repo,
