@@ -101,6 +101,7 @@ type CmdData struct {
 	CleanupReportPath *string
 
 	ScanContextNamespaceOnly *bool
+	KubeScanNamespaces       *[]string
 
 	// Host storage cleanup options
 	DisableAutoHostCleanup                 *bool

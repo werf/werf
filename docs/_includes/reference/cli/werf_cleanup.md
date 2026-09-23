@@ -148,6 +148,11 @@ werf cleanup [options]
       --kube-context=""
             Scan for used images only in the specified kube context, scan all contexts from kube    
             config otherwise (default false or $WERF_SCAN_CONTEXT_ONLY)
+      --kube-scan-namespaces=[]
+            Kubernetes namespaces to scan for used images for each selected context (can specify    
+            multiple). Takes precedence over --scan-context-namespace-only when set.
+            Also, can be specified with $WERF_KUBE_SCAN_NAMESPACES_* (e.g.                          
+            $WERF_KUBE_SCAN_NAMESPACES_1=..., $WERF_KUBE_SCAN_NAMESPACES_2=...)
       --kube-token=""
             Kubernetes bearer token used for authentication (default $WERF_KUBE_TOKEN)
       --kube-token-path=""
@@ -220,7 +225,8 @@ werf cleanup [options]
             Scan for used images only in namespace linked with context for each available context   
             in kube-config (or only for the context specified with option --kube-context). When     
             disabled will scan all namespaces in all contexts (or only for the context specified    
-            with option --kube-context). (Default $WERF_SCAN_CONTEXT_NAMESPACE_ONLY)
+            with option --kube-context), unless --kube-scan-namespaces is set. (Default             
+            $WERF_SCAN_CONTEXT_NAMESPACE_ONLY)
       --scan-context-only=""
             Scan for used images only in the specified kube context, scan all contexts from kube    
             config otherwise (default false or $WERF_SCAN_CONTEXT_ONLY)

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"k8s.io/client-go/kubernetes"
@@ -355,19 +356,24 @@ func GetKubernetesContextClients(configPath, configDataBase64 string, configPath
 	return res, nil
 }
 
-func GetKubernetesNamespaceRestrictionByContext(cmdData *common.CmdData, contextClients []*ContextClient) map[string]string {
-	res := map[string]string{}
+func GetKubernetesNamespacesByContext(cmdData *common.CmdData, contextClients []*ContextClient) map[string][]string {
+	scanNamespaces := common.GetKubeScanNamespaces(cmdData)
+
+	res := map[string][]string{}
 	for _, contextClient := range contextClients {
-		if *cmdData.ScanContextNamespaceOnly {
-			res[contextClient.ContextName] = contextClient.ContextNamespace
-		} else {
-			// "" - cluster scope, therefore all namespaces
-			res[contextClient.ContextName] = ""
+		switch {
+		case len(scanNamespaces) > 0:
+			res[contextClient.ContextName] = slices.Clone(scanNamespaces)
+		case *cmdData.ScanContextNamespaceOnly && contextClient.ContextNamespace != "":
+			res[contextClient.ContextName] = []string{contextClient.ContextNamespace}
+		default:
+			// nil - cluster scope, therefore all namespaces
+			res[contextClient.ContextName] = nil
 		}
 	}
 
-	for contextName, restrictionNamespace := range res {
-		logboek.Debug().LogF("GetKubernetesNamespaceRestrictionByContext -- context %q restriction namespace %q\n", contextName, restrictionNamespace)
+	for contextName, namespaces := range res {
+		logboek.Debug().LogF("GetKubernetesNamespacesByContext -- context %q namespaces %v\n", contextName, namespaces)
 	}
 
 	return res
