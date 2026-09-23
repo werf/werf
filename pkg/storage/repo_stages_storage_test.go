@@ -59,6 +59,15 @@ func (r *pushImageRegistryStub) MutateAndPushImage(ctx context.Context, _, desti
 }
 
 var _ = Describe("RepoStagesStorage", func() {
+	It("publishes image metadata without listing registry tags", func(ctx SpecContext) {
+		registry := &metadataPushRegistry{pushImageRegistryStub: &pushImageRegistryStub{}}
+		storage := &RepoStagesStorage{RepoAddress: "registry.example/project", DockerRegistry: registry}
+
+		Expect(storage.PutImageMetadata(ctx, "project", "app", "commit", "stage")).To(Succeed())
+		Expect(registry.pushedRef).To(Equal(makeRepoImageMetadataName(storage.RepoAddress, "app", "commit", "stage")))
+		Expect(registry.pushedOpts.Labels).To(HaveKeyWithValue(image.WerfLabel, "project"))
+	})
+
 	DescribeTable("managed image name encoding", func(imageName, encodedName string) {
 		Expect(slugImageName(imageName)).To(Equal(encodedName))
 		Expect(unslugImageName(encodedName)).To(Equal(imageName))

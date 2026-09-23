@@ -11,6 +11,16 @@ import (
 	"github.com/werf/werf/v2/pkg/image"
 )
 
+var _ docker_registry.Interface = (*metadataPushRegistry)(nil)
+
+type metadataPushRegistry struct {
+	*pushImageRegistryStub
+}
+
+func (r *metadataPushRegistry) Tags(_ context.Context, _ string, _ ...docker_registry.Option) ([]string, error) {
+	return nil, fmt.Errorf("tag listing must not be needed to publish metadata")
+}
+
 var _ docker_registry.Interface = (*stageLookupRegistry)(nil)
 
 type stageLookupRegistry struct {
