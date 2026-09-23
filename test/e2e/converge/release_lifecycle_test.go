@@ -99,7 +99,7 @@ var _ = ginkgo.Describe("Release lifecycle", ginkgo.Label("e2e", "converge", "si
 			var planExitErr *exec.ExitError
 			gomega.Expect(errors.As(planErr, &planExitErr)).To(gomega.BeTrue(), "expected werf plan to exit with a non-zero status, got: %v", planErr)
 			gomega.Expect(planExitErr.ExitCode()).To(gomega.Equal(2))
-			gomega.Expect(string(planOut)).To(gomega.ContainSubstring("value2"))
+			gomega.Expect(string(planOut)).To(gomega.And(gomega.ContainSubstring("value1"), gomega.ContainSubstring("value2")))
 
 			ginkgo.By("plan: check cluster is left untouched")
 			gomega.Expect(clusterConfigMapData(ctx, clientFactory, werfProject)).To(gomega.Equal(map[string]string{"key1": "value1"}))

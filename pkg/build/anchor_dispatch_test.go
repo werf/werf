@@ -87,7 +87,8 @@ var _ = Describe("Content anchor inputs", func() {
 		setup.deps = "setup-deps-changed"
 		changed, err := collectHolisticInputs(ctx, img, nil, nil, nil, false)
 		Expect(err).To(Succeed())
-		Expect(changed).NotTo(Equal(inputs))
+		Expect(changed).To(ContainElements("install:install-deps", "setup:setup-deps-changed"))
+		Expect(changed).NotTo(ContainElement("setup:setup-deps"))
 
 		setup.err = errors.New("content deps failure")
 		_, err = collectHolisticInputs(ctx, img, nil, nil, nil, false)
