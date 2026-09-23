@@ -7,6 +7,10 @@ toc: false
 ## Breaking changes in v3.0
 
 Key changes:
+1. The Ansible builder (`ansible:` in a stapel image) is removed. Rewrite these build steps using the Shell builder before upgrading.
+1. The stapel `docker:` directive is removed. Move its image configuration to `imageSpec.config`, translating the fields to that directive's format rather than only renaming the key.
+1. `.Values.global.env` is no longer supplied automatically. Use `.Values.global.werf.env` in the main chart and its dependencies, or temporarily set `WERF_LEGACY_VALUES_GLOBAL_ENV=1`. A template reading the old key can render an empty value without an error; inspect `werf plan` before deploying with v3.
+1. Deployment commands no longer read the legacy `HELM_*` environment variables. Replace them with the `WERF_*` variables documented in command help. In particular, replace `HELM_DRIVER` with `WERF_RELEASE_STORAGE` before upgrading: otherwise werf uses its default release storage instead of the one selected by `HELM_DRIVER`.
 1. Command `werf build` (and other build-triggering commands) now default `--final-images-only` to `true`, consistent with `converge`, `render`, `export`, `plan`, `lint`, and `bundle publish`. Pass `--final-images-only=false` to also build orphan non-final images not referenced by any final image.
 1. Command `werf config list` now defaults `--final-images-only` to `true` and drops the deprecated `--images-only` alias. Pass `--final-images-only=false` to restore the old output.
 1. The `artifact` image directive is no longer supported. Use `image` with `final: false` instead.
