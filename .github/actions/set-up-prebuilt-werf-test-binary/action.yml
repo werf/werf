@@ -39,5 +39,3 @@ runs:
           task --yes -p build raceDetectorEnabled=${{ inputs.raceDetectorEnabled }}
         fi
       shell: bash
-      env:
-        TASK_X_REMOTE_TASKFILES: 1
