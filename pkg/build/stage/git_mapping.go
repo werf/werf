@@ -653,11 +653,25 @@ func (gm *GitMapping) baseApplyArchiveCommand(ctx context.Context, commit string
 	return commands, err
 }
 
-func (gm *GitMapping) StageDependenciesChecksum(ctx context.Context, c Conveyor, stageName StageName) (string, error) {
-	depsPaths := gm.StagesDependencies[stageName]
-	if len(depsPaths) == 0 {
-		depsPaths = []string{"**/*"}
+func (gm *GitMapping) stageDependenciesPaths(stageName StageName) []string {
+	if paths, declared := gm.StagesDependencies[stageName]; declared {
+		return paths
 	}
+
+	for _, name := range []StageName{Setup, BeforeSetup, Install} {
+		if name == stageName {
+			break
+		}
+		if _, declared := gm.StagesDependencies[name]; declared {
+			return nil
+		}
+	}
+
+	return []string{"**/*"}
+}
+
+func (gm *GitMapping) StageDependenciesChecksum(ctx context.Context, c Conveyor, stageName StageName) (string, error) {
+	depsPaths := gm.stageDependenciesPaths(stageName)
 
 	commitInfo, err := gm.GetLatestCommitInfo(ctx, c)
 	if err != nil {

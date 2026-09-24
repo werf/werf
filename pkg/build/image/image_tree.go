@@ -450,6 +450,11 @@ func stageDependenciesToMap(sd *config.StageDependencies) map[stage.StageName][]
 		stage.BeforeSetup: sd.BeforeSetup,
 		stage.Setup:       sd.Setup,
 	}
+	for name, paths := range result {
+		if paths == nil {
+			delete(result, name)
+		}
+	}
 
 	return result
 }
