@@ -227,6 +227,35 @@ var _ = Describe("rawStapelImage", func() {
 		),
 	)
 
+	DescribeTable("git mapping lfs flag",
+		func(gitMapping map[string]interface{}, expectedLfs bool) {
+			rawYaml, err := yaml.Marshal(map[string]interface{}{
+				"image": "image1",
+				"from":  "alpine",
+				"git":   []map[string]interface{}{gitMapping},
+			})
+			Expect(err).To(Succeed())
+
+			doc := &doc{Content: rawYaml}
+			rawStapelImage := &rawStapelImage{doc: doc}
+			Expect(yaml.UnmarshalStrict(doc.Content, rawStapelImage)).To(Succeed())
+
+			stapelImage, err := rawStapelImage.toStapelImageDirective(giterminismManager, "image1")
+			Expect(err).To(Succeed())
+
+			if _, isRemote := gitMapping["url"]; isRemote {
+				Expect(stapelImage.Git.Remote).To(HaveLen(1))
+				Expect(stapelImage.Git.Remote[0].Lfs).To(Equal(expectedLfs))
+			} else {
+				Expect(stapelImage.Git.Local).To(HaveLen(1))
+				Expect(stapelImage.Git.Local[0].Lfs).To(Equal(expectedLfs))
+			}
+		},
+		Entry("local mapping defaults to plain git", map[string]interface{}{"add": "/assets", "to": "/app/assets"}, false),
+		Entry("local mapping with lfs enabled", map[string]interface{}{"add": "/assets", "to": "/app/assets", "lfs": true}, true),
+		Entry("remote mapping with lfs enabled", map[string]interface{}{"url": "https://example.com/repo.git", "commit": "9d8059842b6fde712c58315ca0ab4713d90761c0", "to": "/app", "lfs": true}, true),
+	)
+
 	DescribeTable("unmarshal and convert to directive fail with configError",
 		func(yamlMap map[string]interface{}) {
 			if len(yamlMap) == 0 {

@@ -92,7 +92,9 @@
 // git_worktrees/<v>/{local,remote}/<name> with last_access_at inside; for
 // local, <name> is sha256 of the repository's absolute path. The full-mirror
 // worktree dir is the unsuffixed remote/<repoID> so that werf 2.74.x reuses
-// it; the shallow-mirror worktree dir keeps the .shallow suffix. Changing the
+// it; the shallow-mirror worktree dir keeps the .shallow suffix, and archives
+// made with Git LFS content use a sibling with the .lfs suffix (see
+// true_git.archiveWorkTreeCacheDir). Changing the
 // naming scheme does not break old versions but orphans their entries: cache
 // misses plus garbage until LRU.
 //

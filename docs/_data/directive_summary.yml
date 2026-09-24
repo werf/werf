@@ -42,6 +42,7 @@ en:
             - <path or glob relative to path in add>
             excludePaths:
             - <path or glob relative to path in add>
+            lfs: <bool>
             stageDependencies:
               install:
               - <path or glob relative to path in add>
@@ -64,6 +65,7 @@ en:
             - <path or glob relative to path in add>
             excludePaths:
             - <path or glob relative to path in add>
+            lfs: <bool>
             stageDependencies:
               install:
               - <path or glob relative to path in add>

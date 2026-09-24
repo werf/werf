@@ -20,6 +20,18 @@ var _ = Describe("GitMapping", func() {
 		gitMapping = stage.NewGitMapping()
 	})
 
+	It("changes paramshash only when lfs is enabled", func() {
+		gitMapping.SetGitRepo(NewGitRepoStub("own", true, "irrelevant-commit-id"))
+		gitMapping.Add = "assets"
+		gitMapping.To = "/app/assets"
+
+		plain := gitMapping.GetParamshash()
+		Expect(gitMapping.GetParamshash()).To(Equal(plain))
+
+		gitMapping.Lfs = true
+		Expect(gitMapping.GetParamshash()).NotTo(Equal(plain))
+	})
+
 	DescribeTable("getting built image commit info from labels",
 		func(commitLabel string) {
 			gitRepo := NewGitRepoStub("own", true, "irrelevant-commit-id")

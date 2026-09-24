@@ -2,6 +2,7 @@ package config
 
 type GitLocalExport struct {
 	*GitExportBase
+	Lfs bool
 
 	raw *rawGit
 }

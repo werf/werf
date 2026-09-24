@@ -970,6 +970,11 @@
           "description": "Globs for excluding, relative to `add`.\nhttps://werf.io/docs/latest/usage/build/stapel/git.html#using-filters",
           "$ref": "#/definitions/stringOrStringArray"
         },
+        "lfs": {
+          "description": "Fetch Git LFS objects and add their content instead of the pointer files. Requires the `git-lfs` binary on the host.\nhttps://werf.io/docs/latest/usage/build/stapel/git.html#git-lfs",
+          "type": "boolean",
+          "default": false
+        },
         "stageDependencies": {
           "description": "Re-run assembly instructions of a stage when the matching files change in the git repository.\nhttps://werf.io/docs/latest/usage/build/stapel/instructions.html#dependency-on-changes-in-the-git-repo",
           "type": "object",

@@ -38,6 +38,7 @@ type GitMapping struct {
 	Group              string
 	IncludePaths       []string
 	ExcludePaths       []string
+	Lfs                bool
 	StagesDependencies map[StageName][]string
 
 	ContainerPatchesDir  string
@@ -118,6 +119,7 @@ func (gm *GitMapping) makeArchiveOptions(ctx context.Context, commit string) (*g
 		FileRenames: fileRenames,
 		Owner:       gm.Owner,
 		Group:       gm.Group,
+		Lfs:         gm.Lfs,
 	}, nil
 }
 
@@ -772,6 +774,11 @@ func (gm *GitMapping) GetParamshash() string {
 	parts = append(parts, gm.Tag)
 	parts = append(parts, ":::")
 	parts = append(parts, gm.Commit)
+
+	// Appended only when enabled so that digests of existing non-LFS mappings stay unchanged.
+	if gm.Lfs {
+		parts = append(parts, ":::", "lfs")
+	}
 
 	for _, part := range parts {
 		_, err = hash.Write([]byte(part))

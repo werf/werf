@@ -419,6 +419,7 @@ func baseGitMappingInit(local *config.GitLocalExport, imageName string, conveyor
 	gitMapping.IncludePaths = local.IncludePaths
 	gitMapping.Owner = local.Owner
 	gitMapping.Group = local.Group
+	gitMapping.Lfs = local.Lfs
 	gitMapping.StagesDependencies = stageDependencies
 
 	return gitMapping

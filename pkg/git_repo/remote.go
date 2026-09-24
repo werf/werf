@@ -647,6 +647,16 @@ func (repo *Remote) GetOrCreateChangedPaths(ctx context.Context, fromCommit, toC
 }
 
 func (repo *Remote) GetOrCreateArchive(ctx context.Context, opts ArchiveOptions) (Archive, error) {
+	if opts.Lfs {
+		env, cleanup, err := basicAuthEnv(repo.BasicAuth)
+		if err != nil {
+			return nil, err
+		}
+		defer cleanup()
+
+		opts.LfsEnv = env
+	}
+
 	return repo.getOrCreateArchive(ctx, repo.GetClonePath(), repo.GetClonePath(), repo.getRepoID(), repo.getWorkTreeCacheDir(repo.getRepoID()), opts)
 }
 

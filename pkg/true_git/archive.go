@@ -27,6 +27,8 @@ type ArchiveOptions struct {
 	FileRenames map[string]string // Files to rename during archiving. Git repo relative paths of original files as keys, new filenames (without base path) as values.
 	Owner       string
 	Group       string
+	Lfs         bool     // Fetch Git LFS objects and archive their content instead of the pointer files.
+	LfsEnv      []string // Extra git env (credentials) for the LFS fetch. Not part of ID; never log it.
 }
 
 // TODO: 1.3 add git mapping type (dir, file, ...) to gitArchive stage digest
@@ -37,26 +39,43 @@ func (opts ArchiveOptions) ID() string {
 		renamedNewFileNames = append(renamedNewFileNames, renamedNewFileName)
 	}
 
-	return util.Sha256Hash(
-		append(
-			append(renamedOldFilePaths, renamedNewFileNames...),
-			opts.Commit,
-			opts.PathScope,
-			opts.PathMatcher.ID(),
-		)...,
+	parts := append(
+		append(renamedOldFilePaths, renamedNewFileNames...),
+		opts.Commit,
+		opts.PathScope,
+		opts.PathMatcher.ID(),
 	)
+
+	// Appended only when enabled so that IDs of existing non-LFS archives stay unchanged.
+	if opts.Lfs {
+		parts = append(parts, "lfs")
+	}
+
+	return util.Sha256Hash(parts...)
 }
 
 func ArchiveWithSubmodules(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir string, opts ArchiveOptions) error {
+	workTreeCacheDir = archiveWorkTreeCacheDir(workTreeCacheDir, opts)
 	return withWorkTreeCacheLock(ctx, workTreeCacheDir, func() error {
 		return writeArchive(ctx, out, gitDir, workTreeCacheDir, true, opts)
 	})
 }
 
 func Archive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir string, opts ArchiveOptions) error {
+	workTreeCacheDir = archiveWorkTreeCacheDir(workTreeCacheDir, opts)
 	return withWorkTreeCacheLock(ctx, workTreeCacheDir, func() error {
 		return writeArchive(ctx, out, gitDir, workTreeCacheDir, false, opts)
 	})
+}
+
+// archiveWorkTreeCacheDir keeps LFS archives on their own worktree: `git lfs pull` replaces
+// pointer files in place, and a shared worktree reused for the same commit would leak that
+// content into archives made without Lfs.
+func archiveWorkTreeCacheDir(workTreeCacheDir string, opts ArchiveOptions) string {
+	if opts.Lfs {
+		return lfsWorkTreeCacheDir(workTreeCacheDir)
+	}
+	return workTreeCacheDir
 }
 
 func debugArchive() bool {
@@ -79,6 +98,14 @@ func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir s
 	workTreeDir, err := prepareWorkTree(ctx, gitDir, workTreeCacheDir, opts.Commit, withSubmodules)
 	if err != nil {
 		return fmt.Errorf("cannot prepare work tree in cache %s for commit %s: %w", workTreeCacheDir, opts.Commit, err)
+	}
+
+	if opts.Lfs {
+		if err := logboek.Context(ctx).Info().LogProcess("Pull Git LFS objects for commit %s", opts.Commit).DoError(func() error {
+			return pullLfsObjects(ctx, workTreeDir, opts.PathScope, opts.LfsEnv)
+		}); err != nil {
+			return fmt.Errorf("unable to pull Git LFS objects for commit %s: %w", opts.Commit, err)
+		}
 	}
 
 	repository, err := GitOpenWithCustomWorktreeDir(gitDir, workTreeDir)
@@ -173,6 +200,16 @@ func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir s
 
 		switch gitFileMode {
 		case filemode.Regular, filemode.Executable, filemode.Deprecated:
+			if opts.Lfs {
+				isPointer, err := isLfsPointerFile(absFilepath, info.Size())
+				if err != nil {
+					return err
+				}
+				if isPointer {
+					return fmt.Errorf("file %q is still a Git LFS pointer after `git lfs pull`: the object is missing on the LFS server, or the file is not covered by the repository LFS attributes (exclude it with excludePaths)", lsTreeEntry.FullFilepath)
+				}
+			}
+
 			header := &tar.Header{
 				Format:     tar.FormatGNU,
 				Name:       tarEntryName,
