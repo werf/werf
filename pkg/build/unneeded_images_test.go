@@ -252,12 +252,18 @@ var _ manager.StorageManagerInterface = (*anchorLookupStorageManager)(nil)
 
 type anchorLookupStorageManager struct {
 	manager.StorageManagerInterface
+	primaryStagesStorage   storage.PrimaryStagesStorage
 	secondaryStagesStorage storage.StagesStorage
 	inPrimary              imagePkg.StageDescSet
 	inSecondary            imagePkg.StageDescSet
+	cachedPrimaryLookups   int
+	cachedSecondaryLookups int
+	primaryLookups         int
+	secondaryLookups       int
 }
 
 func (m *anchorLookupStorageManager) GetStageDescSetByDigestWithCache(_ context.Context, _, _ string, _ int64) (imagePkg.StageDescSet, error) {
+	m.primaryLookups++
 	return m.inPrimary, nil
 }
 
@@ -267,9 +273,11 @@ func (m *anchorLookupStorageManager) GetSecondaryStagesStorageList() []storage.S
 
 func (m *anchorLookupStorageManager) GetStageDescSetByDigestFromStagesStorageWithCache(_ context.Context, _, _ string, _ int64, stagesStorage storage.StagesStorage) (imagePkg.StageDescSet, error) {
 	if stagesStorage == m.secondaryStagesStorage {
+		m.secondaryLookups++
 		return m.inSecondary, nil
 	}
 
+	m.primaryLookups++
 	return m.inPrimary, nil
 }
 
@@ -318,6 +326,7 @@ var _ = Describe("BuildPhase content-anchor pre-resolution", func() {
 		app.SetStages([]stage.Interface{appAnchor})
 
 		phase := newTestBuildPhase(&anchorLookupStorageManager{
+			primaryStagesStorage:   &anchorPrimaryStagesStorage{},
 			secondaryStagesStorage: &fakeStagesStorage{},
 			inPrimary: imagePkg.NewStageDescSet(&imagePkg.StageDesc{
 				StageID: imagePkg.NewStageID("anchor", 1),

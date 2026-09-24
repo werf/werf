@@ -89,6 +89,7 @@ type BuildPhase struct {
 	ImagesReport   *ImagesReport
 
 	buildContextArchive container_backend.BuildContextArchiver
+	anchorPrepass       bool
 }
 
 func GenerateImageEnv(werfImageName, imageName string) string {
@@ -216,6 +217,8 @@ func (phase *BuildPhase) resolveAvailableContentAnchors(ctx context.Context) err
 		return nil
 	}
 
+	prepass := *phase
+	prepass.anchorPrepass = true
 	for _, img := range graph.Nodes() {
 		img.Requested = phase.isRequestedImage(img)
 		if img.GetAnchorDigest() == "" {
@@ -224,8 +227,8 @@ func (phase *BuildPhase) resolveAvailableContentAnchors(ctx context.Context) err
 
 		var outBuf, errBuf bytes.Buffer
 		resolveCtx := logboek.NewContext(ctx, logboek.Context(ctx).NewSubLogger(&outBuf, &errBuf))
-		phase.StagesIterator = NewStagesIterator(phase.Conveyor)
-		if err := phase.resolveContentAnchor(resolveCtx, img, false); err != nil {
+		prepass.StagesIterator = NewStagesIterator(phase.Conveyor)
+		if err := prepass.resolveContentAnchor(resolveCtx, img, false); err != nil {
 			return fmt.Errorf("image %q: %w", img.Name, err)
 		}
 		img.ContentAnchorOutLog = bytes.Clone(outBuf.Bytes())
@@ -1148,7 +1151,13 @@ func (phase *BuildPhase) findAndFetchStageFromSecondaryStagesStorage(ctx context
 
 ScanSecondaryStagesStorageList:
 	for _, secondaryStagesStorage := range storageManager.GetSecondaryStagesStorageList() {
-		secondaryStages, err := storageManager.GetStageDescSetByDigestFromStagesStorageWithCache(ctx, stg.LogDetailedName(), stg.GetDigest(), phase.getPrevNonEmptyStageCreationTsForStage(stg), secondaryStagesStorage)
+		var secondaryStages imagePkg.StageDescSet
+		var err error
+		if phase.anchorPrepass {
+			secondaryStages, err = storageManager.GetStageDescSetByDigestFromStagesStorageCached(ctx, stg.LogDetailedName(), stg.GetDigest(), phase.getPrevNonEmptyStageCreationTsForStage(stg), secondaryStagesStorage)
+		} else {
+			secondaryStages, err = storageManager.GetStageDescSetByDigestFromStagesStorageWithCache(ctx, stg.LogDetailedName(), stg.GetDigest(), phase.getPrevNonEmptyStageCreationTsForStage(stg), secondaryStagesStorage)
+		}
 		if err != nil {
 			return false, err
 		} else {
@@ -1244,7 +1253,13 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, s
 		})
 
 	storageManager := phase.Conveyor.StorageManager
-	stageDescSet, err := storageManager.GetStageDescSetByDigestWithCache(ctx, stg.LogDetailedName(), stageDigest, phase.getPrevNonEmptyStageCreationTsForStage(stg))
+	var stageDescSet imagePkg.StageDescSet
+	var err error
+	if phase.anchorPrepass {
+		stageDescSet, err = storageManager.GetStageDescSetByDigestFromStagesStorageCached(ctx, stg.LogDetailedName(), stageDigest, phase.getPrevNonEmptyStageCreationTsForStage(stg), storageManager.GetStagesStorage())
+	} else {
+		stageDescSet, err = storageManager.GetStageDescSetByDigestWithCache(ctx, stg.LogDetailedName(), stageDigest, phase.getPrevNonEmptyStageCreationTsForStage(stg))
+	}
 	if err != nil {
 		return false, phase.Conveyor.GetStageDigestMutex(stg.GetDigest()).Unlock, err
 	}
