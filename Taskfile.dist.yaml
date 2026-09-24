@@ -511,6 +511,11 @@ tasks:
       - echo "Environment file '.env' generated."
       - echo "Run 'export $(xargs < .env)' to start working with tests or the environment."
 
+  verify:release-pr-selection:
+    desc: "Verify release tagging selects only merged release PRs for its branch."
+    cmds:
+      - python3 scripts/check-release-pr-selection.py
+
   verify:builder:go-version:
     desc: "Verify that the release builder image is pinned to the Go version go.mod asks for."
     cmds:
@@ -564,8 +569,14 @@ tasks:
   doc:
     desc: "Run all docs generators, formatters and linters."
     cmds:
+      - task: doc:check-source-links
       - task: doc:gen
       - task: doc:check-broken-links
+
+  doc:check-source-links:
+    desc: "Verify documentation Source links select the matching branch."
+    cmds:
+      - node scripts/docs/check_editme_links.js
 
   doc:gen:
     desc: "Regenerate docs."
