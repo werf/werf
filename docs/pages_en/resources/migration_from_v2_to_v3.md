@@ -110,8 +110,6 @@ imageSpec:
 
 See [Changing image configuration spec]({{ "/usage/build/images.html#changing-image-configuration-spec" | true_relative_url }}) for the full set of fields.
 
-**Old base images containing `WERF_COMMIT_*`.** Older werf builds could persist `WERF_COMMIT_HASH`, `WERF_COMMIT_TIME_HUMAN` and `WERF_COMMIT_TIME_UNIX` from the build container in the image configuration. That leak is fixed: werf now passes those variables only while running build commands. However, they can still be inherited from an old base image. imageSpec no longer removes them automatically when modifying env; if your base image contains them, add them to `imageSpec.config.removeEnv`.
-
 ### File imports
 
 **Import caching now depends on the source image**, rather than checksums of the selected files as it did by default in v2. Changing the source image can rebuild the importing image even if the copied files are unchanged. `includePaths`/`excludePaths` still select which files to copy, but no longer isolate the cache from other source-image changes. If those rebuilds are expensive, put the imported output in a separate, narrowly scoped image.
