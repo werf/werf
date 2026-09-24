@@ -147,6 +147,23 @@ var _ = Describe("Git LFS", func() {
 			Expect(err).To(MatchError(ContainSubstring("git lfs pull command failed")))
 		})
 
+		It("fails when git-lfs is not installed", func(ctx SpecContext) {
+			// A PATH holding only git: LookPath must not find git-lfs anywhere, while the
+			// worktree preparation before the pull still runs.
+			binDir := GinkgoT().TempDir()
+			Expect(os.Symlink(lo.Must(exec.LookPath("git")), filepath.Join(binDir, "git"))).To(Succeed())
+			setEnvForSpec("PATH", binDir)
+
+			var buf bytes.Buffer
+			err := Archive(ctx, &buf, filepath.Join(cloneDir, ".git"), workTreeCacheDir, ArchiveOptions{
+				Commit:      utils.GetHeadCommit(ctx, cloneDir),
+				PathScope:   "assets",
+				PathMatcher: path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{BasePath: "assets"}),
+				Lfs:         true,
+			})
+			Expect(err).To(MatchError(ContainSubstring("git-lfs is not installed")))
+		})
+
 		It("fails when a pointer file is left behind by a successful pull", func(ctx SpecContext) {
 			// Without the LFS attribute git-lfs no longer treats big.bin as its file, so the pull
 			// succeeds and leaves the pointer blob in place.
