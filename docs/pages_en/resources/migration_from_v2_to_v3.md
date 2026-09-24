@@ -167,7 +167,23 @@ The omitted `beforeSetup` gets `[]`: it precedes the last declared stage, `setup
 
 `[]` disables only the direct Git-file dependency. Changes to preceding stages, base images, commands and other inputs can still trigger a rebuild. Masks do not create stages without instructions; `beforeInstall` is not part of this mechanism.
 
-A non-empty `stageDependencies` entry for a stage with no build instructions now causes an **error instead of a warning**. Correct the stage name, add the missing instructions, or remove the unused entry. See [Dependency on changes in the Git repo]({{ "/usage/build/stapel/instructions.html#dependency-on-changes-in-the-git-repo" | true_relative_url }}).
+A non-empty `stageDependencies` entry for a stage with no build instructions now causes an **error instead of a warning**. For example, this fragment fails validation when building:
+
+```yaml
+git:
+  - add: /
+    to: /app
+    stageDependencies:
+      install:
+        - "src/**/*"
+shell:
+  setup:
+    - cd /app && sh src/build.sh
+```
+
+Dependencies are declared for `install`, but only `setup` has commands. If the `src` files are inputs to those commands, move the masks from `stageDependencies.install` to `stageDependencies.setup`. If an `install` stage is intended, add `shell.install` instructions; if the dependency is unnecessary, remove it.
+
+See [Dependency on changes in the Git repo]({{ "/usage/build/stapel/instructions.html#dependency-on-changes-in-the-git-repo" | true_relative_url }}).
 
 ### Validation of werf-giterminism.yaml
 
