@@ -287,14 +287,7 @@ func (backend *DockerServerBackend) Tag(ctx context.Context, ref, newRef string,
 
 func (backend *DockerServerBackend) Push(ctx context.Context, ref string, opts PushOpts) error {
 	defer opstats.Observe(ctx, opstats.OperationImagePush)()
-
-	var args []string
-	if opts.TargetPlatform != "" && docker.SupportsPushPlatform(ctx) {
-		args = append(args, "--platform", opts.TargetPlatform)
-	}
-	args = append(args, ref)
-
-	return docker.CliPushWithRetries(ctx, args...)
+	return docker.PushImage(ctx, ref, docker.PushImageOptions{TargetPlatform: opts.TargetPlatform})
 }
 
 func (backend *DockerServerBackend) Pull(ctx context.Context, ref string, opts PullOpts) error {
