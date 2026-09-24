@@ -55,15 +55,27 @@ func (opts ArchiveOptions) ID() string {
 }
 
 func ArchiveWithSubmodules(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir string, opts ArchiveOptions) error {
+	workTreeCacheDir = archiveWorkTreeCacheDir(workTreeCacheDir, opts)
 	return withWorkTreeCacheLock(ctx, workTreeCacheDir, func() error {
 		return writeArchive(ctx, out, gitDir, workTreeCacheDir, true, opts)
 	})
 }
 
 func Archive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir string, opts ArchiveOptions) error {
+	workTreeCacheDir = archiveWorkTreeCacheDir(workTreeCacheDir, opts)
 	return withWorkTreeCacheLock(ctx, workTreeCacheDir, func() error {
 		return writeArchive(ctx, out, gitDir, workTreeCacheDir, false, opts)
 	})
+}
+
+// archiveWorkTreeCacheDir keeps LFS archives on their own worktree: `git lfs pull` replaces
+// pointer files in place, and a shared worktree reused for the same commit would leak that
+// content into archives made without Lfs.
+func archiveWorkTreeCacheDir(workTreeCacheDir string, opts ArchiveOptions) string {
+	if opts.Lfs {
+		return lfsWorkTreeCacheDir(workTreeCacheDir)
+	}
+	return workTreeCacheDir
 }
 
 func debugArchive() bool {
@@ -194,7 +206,7 @@ func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir s
 					return err
 				}
 				if isPointer {
-					return fmt.Errorf("file %q is still a Git LFS pointer after `git lfs pull`: the object is missing on the LFS server or excluded by the repository LFS config", lsTreeEntry.FullFilepath)
+					return fmt.Errorf("file %q is still a Git LFS pointer after `git lfs pull`: the object is missing on the LFS server, or the file is not covered by the repository LFS attributes (exclude it with excludePaths)", lsTreeEntry.FullFilepath)
 				}
 			}
 

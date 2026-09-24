@@ -5,7 +5,7 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strings"
+	"os/exec"
 )
 
 // Pointer files are below 1024 bytes by the Git LFS spec, so larger files are never read.
@@ -16,11 +16,19 @@ var lfsPointerVersionPrefixes = [][]byte{
 	[]byte("version https://hawser.github.com/spec/"),
 }
 
+func lfsWorkTreeCacheDir(workTreeCacheDir string) string {
+	return workTreeCacheDir + ".lfs"
+}
+
 // pullLfsObjects fetches the LFS objects referenced by the checked out commit of workTreeDir and
 // replaces the pointer files with their content. The filter config is passed explicitly because
 // without it (`git lfs install` never run on the host) `git lfs pull` skips the checkout and
 // exits 0; host-level lfs.fetchexclude is cleared for the same reason.
 func pullLfsObjects(ctx context.Context, workTreeDir, pathScope string, env []string) error {
+	if _, err := exec.LookPath("git-lfs"); err != nil {
+		return fmt.Errorf("git-lfs is not installed: %w", err)
+	}
+
 	args := []string{
 		"-c", "filter.lfs.smudge=git-lfs smudge -- %f",
 		"-c", "filter.lfs.process=git-lfs filter-process",
@@ -32,11 +40,9 @@ func pullLfsObjects(ctx context.Context, workTreeDir, pathScope string, env []st
 		args = append(args, "--include", pathScope)
 	}
 
+	env = append([]string{"GIT_TERMINAL_PROMPT=0"}, env...)
 	pullCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: workTreeDir, Env: env}, args...)
 	if err := pullCmd.Run(ctx); err != nil {
-		if strings.Contains(pullCmd.ErrBuf.String(), "is not a git command") {
-			return fmt.Errorf("git-lfs is not installed: %w", err)
-		}
 		return fmt.Errorf("git lfs pull command failed: %w", err)
 	}
 

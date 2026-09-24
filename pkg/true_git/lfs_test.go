@@ -88,9 +88,11 @@ var _ = Describe("Git LFS", func() {
 
 			gitInitRepo(ctx, originDir)
 			utils.MkdirAll(filepath.Join(originDir, "assets"))
+			utils.MkdirAll(filepath.Join(originDir, "other"))
 			Expect(os.WriteFile(filepath.Join(originDir, ".gitattributes"), []byte("*.bin filter=lfs diff=lfs merge=lfs -text\n"), 0o644)).To(Succeed())
 			Expect(os.WriteFile(filepath.Join(originDir, "assets", "big.bin"), []byte(objectContent), 0o644)).To(Succeed())
 			Expect(os.WriteFile(filepath.Join(originDir, "assets", "plain.txt"), []byte("plain\n"), 0o644)).To(Succeed())
+			Expect(os.WriteFile(filepath.Join(originDir, "other", "outside.bin"), []byte("OUTSIDE-ADD-CONTENT"), 0o644)).To(Succeed())
 			gitSucceed(ctx, originDir, append(lfsFilterOpts, "add", ".")...)
 			gitSucceed(ctx, originDir, append(lfsFilterOpts, "commit", "-m", "lfs content")...)
 
@@ -112,6 +114,24 @@ var _ = Describe("Git LFS", func() {
 			files := archive(ctx, true)
 			Expect(files["plain.txt"]).To(Equal("plain\n"))
 			Expect(files["big.bin"]).To(Equal(objectContent))
+		})
+
+		It("keeps pointer files in a non-lfs archive of the same commit made after an lfs one", func(ctx SpecContext) {
+			Expect(archive(ctx, true)["big.bin"]).To(Equal(objectContent))
+			Expect(isLfsPointer([]byte(archive(ctx, false)["big.bin"]))).To(BeTrue())
+		})
+
+		It("ignores lfs.fetchexclude of the host git config", func(ctx SpecContext) {
+			gitSucceed(ctx, cloneDir, "config", "lfs.fetchexclude", "assets")
+			Expect(archive(ctx, true)["big.bin"]).To(Equal(objectContent))
+		})
+
+		It("fetches only the objects under the add path", func(ctx SpecContext) {
+			Expect(archive(ctx, true)["big.bin"]).To(Equal(objectContent))
+
+			outside, err := os.ReadFile(filepath.Join(lfsWorkTreeCacheDir(workTreeCacheDir), "worktree", "other", "outside.bin"))
+			Expect(err).To(Succeed())
+			Expect(isLfsPointer(outside)).To(BeTrue())
 		})
 
 		It("fails when an object cannot be fetched", func(ctx SpecContext) {
