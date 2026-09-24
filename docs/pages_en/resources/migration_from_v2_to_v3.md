@@ -176,16 +176,32 @@ Text and binary files now use the same update mechanism: copying the required ve
 
 The `werf synchronization` subsystem and the public `synchronization.werf.io` dependency are also removed. There is nothing to migrate; if you ran a private synchronization server, werf v3 no longer needs it.
 
-### Buildah: host requirements and networking
+### Buildah
 
-The native Buildah backend switched from CNI/slirp4netns to netavark/pasta. Prepare the hosts before upgrading:
+The native Buildah backend switched from CNI/slirp4netns to netavark/pasta. Before upgrading, prepare the environment according to how you run werf.
+
+#### Official werf image
+
+Update the **werf container image to v3**, not just the binary inside it. The image already includes `netavark`; you do not need to install it separately on the runner host to run werf in that container.
+
+The official Ubuntu werf images are now based on Ubuntu 24.04. Rebuild and check any images you derive from them.
+
+For rootless builds that configure a network, also check that `pasta` is available inside the container under the conditions below; having `netavark` alone is not enough. If it is missing, add it to your derived image.
+
+#### Your own installation or image
+
+If you install werf directly on a host or use your own container image, make sure the dependencies are available **where werf runs**:
 
 | Component | Where it is required |
 |---|---|
-| `netavark` | On every host using the Buildah backend, including chroot without network-using instructions. Backend initialization fails without it. |
+| `netavark` | Wherever the Buildah backend runs, including chroot without network-using instructions. Backend initialization fails without it. |
 | `pasta` from the `passt` package | For rootless builds that configure a network. It is not invoked with `network: host`, `network: none`, or chroot mode. |
 
-`netavark` must be in one of `/usr/local/libexec/podman`, `/usr/local/lib/podman`, `/usr/libexec/podman`, `/usr/lib/podman` — `$PATH` is not searched. `pasta` is found in these directories or via `$PATH`. The official Ubuntu werf images are now based on Ubuntu 24.04.
+`netavark` must be in one of `/usr/local/libexec/podman`, `/usr/local/lib/podman`, `/usr/libexec/podman`, `/usr/lib/podman` — `$PATH` is not searched. `pasta` is found in these directories or via `$PATH`.
+
+#### Network setting changes
+
+These changes apply both inside and outside the official image.
 
 **Check network settings.** Native Buildah now honors `network:` and `--backend-network` for non-staged Dockerfile builds; they used to be silently ignored. Only `default`, `host` and `none` are supported: `bridge` and Docker network names now cause an error.
 
