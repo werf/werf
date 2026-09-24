@@ -11,7 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 
-	helmreleasecommon "github.com/werf/nelm/pkg/helm/pkg/release/common"
+	helmreleasecommon "github.com/werf/nelm/v2/pkg/helm/pkg/release/common"
 	"github.com/werf/werf/v2/test/pkg/report"
 	"github.com/werf/werf/v2/test/pkg/werf"
 )

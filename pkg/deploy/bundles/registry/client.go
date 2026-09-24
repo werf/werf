@@ -33,9 +33,9 @@ import (
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/pkg/errors"
 
-	nelmcommon "github.com/werf/nelm/pkg/common"
-	chart "github.com/werf/nelm/pkg/helm/pkg/chart/v2"
-	"github.com/werf/nelm/pkg/helm/pkg/helmpath"
+	nelmcommon "github.com/werf/nelm/v2/pkg/common"
+	chart "github.com/werf/nelm/v2/pkg/helm/pkg/chart/v2"
+	"github.com/werf/nelm/v2/pkg/helm/pkg/helmpath"
 	"github.com/werf/werf/v2/pkg/ref"
 )
 

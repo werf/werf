@@ -26,7 +26,7 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
-	"github.com/werf/nelm/pkg/kube"
+	"github.com/werf/nelm/v2/pkg/kube"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/build"
 	"github.com/werf/werf/v2/pkg/config"

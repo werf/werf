@@ -8,8 +8,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/werf/nelm/pkg/action"
-	secret_common "github.com/werf/nelm/pkg/legacy/secret"
+	"github.com/werf/nelm/v2/pkg/action"
+	secret_common "github.com/werf/nelm/v2/pkg/legacy/secret"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/git_repo/gitdata"

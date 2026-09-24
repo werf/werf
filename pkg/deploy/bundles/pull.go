@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/werf/logboek"
-	nelmcommon "github.com/werf/nelm/pkg/common"
-	chartv2util "github.com/werf/nelm/pkg/helm/pkg/chart/v2/util"
+	nelmcommon "github.com/werf/nelm/v2/pkg/common"
+	chartv2util "github.com/werf/nelm/v2/pkg/helm/pkg/chart/v2/util"
 	"github.com/werf/werf/v2/pkg/deploy/bundles/registry"
 	"github.com/werf/werf/v2/pkg/ref"
 )

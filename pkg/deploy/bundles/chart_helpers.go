@@ -10,10 +10,10 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/werf/logboek"
-	nelmcommon "github.com/werf/nelm/pkg/common"
-	"github.com/werf/nelm/pkg/helm/pkg/chart/loader"
-	chart "github.com/werf/nelm/pkg/helm/pkg/chart/v2"
-	chartv2util "github.com/werf/nelm/pkg/helm/pkg/chart/v2/util"
+	nelmcommon "github.com/werf/nelm/v2/pkg/common"
+	"github.com/werf/nelm/v2/pkg/helm/pkg/chart/loader"
+	chart "github.com/werf/nelm/v2/pkg/helm/pkg/chart/v2"
+	chartv2util "github.com/werf/nelm/v2/pkg/helm/pkg/chart/v2/util"
 )
 
 func ChartToBytes(ch *chart.Chart) ([]byte, error) {

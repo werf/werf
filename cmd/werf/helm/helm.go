@@ -9,9 +9,9 @@ import (
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 
-	"github.com/werf/nelm/pkg/action"
-	helmcmd "github.com/werf/nelm/pkg/helm/pkg/cmd"
-	"github.com/werf/nelm/pkg/log"
+	"github.com/werf/nelm/v2/pkg/action"
+	helmcmd "github.com/werf/nelm/v2/pkg/helm/pkg/cmd"
+	"github.com/werf/nelm/v2/pkg/log"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	helm_secret_decrypt "github.com/werf/werf/v2/cmd/werf/helm/secret/decrypt"
 	helm_secret_encrypt "github.com/werf/werf/v2/cmd/werf/helm/secret/encrypt"

@@ -5,8 +5,8 @@ import (
 	"github.com/onsi/gomega"
 	"github.com/samber/lo"
 
-	nelmcommon "github.com/werf/nelm/pkg/common"
-	"github.com/werf/nelm/pkg/helm/pkg/chart/loader"
+	nelmcommon "github.com/werf/nelm/v2/pkg/common"
+	"github.com/werf/nelm/v2/pkg/helm/pkg/chart/loader"
 	filemanager "github.com/werf/werf/v2/pkg/giterminism_manager/file_manager"
 )
 

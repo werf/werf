@@ -5,7 +5,7 @@ import (
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	helmreleasecommon "github.com/werf/nelm/pkg/helm/pkg/release/common"
+	helmreleasecommon "github.com/werf/nelm/v2/pkg/helm/pkg/release/common"
 	"github.com/werf/werf/v2/test/pkg/report"
 	"github.com/werf/werf/v2/test/pkg/werf"
 )

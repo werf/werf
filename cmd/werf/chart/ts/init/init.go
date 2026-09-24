@@ -7,8 +7,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/werf/nelm/pkg/action"
-	nelmcommon "github.com/werf/nelm/pkg/common"
+	"github.com/werf/nelm/v2/pkg/action"
+	nelmcommon "github.com/werf/nelm/v2/pkg/common"
 	"github.com/werf/werf/v2/cmd/werf/common"
 	"github.com/werf/werf/v2/pkg/true_git"
 )

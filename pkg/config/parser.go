@@ -21,7 +21,7 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
-	"github.com/werf/nelm/pkg/helm/pkg/engine"
+	"github.com/werf/nelm/v2/pkg/helm/pkg/engine"
 	"github.com/werf/werf/v2/pkg/file_manager"
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
 	"github.com/werf/werf/v2/pkg/slug"

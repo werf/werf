@@ -10,8 +10,8 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
-	nelmcommon "github.com/werf/nelm/pkg/common"
-	"github.com/werf/nelm/pkg/helm/pkg/ignore"
+	nelmcommon "github.com/werf/nelm/v2/pkg/common"
+	"github.com/werf/nelm/v2/pkg/helm/pkg/ignore"
 )
 
 func (r FileReader) LocateChart(ctx context.Context, chartDir string) (string, error) {
