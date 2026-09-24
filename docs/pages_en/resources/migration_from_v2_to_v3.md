@@ -192,9 +192,58 @@ Limitations and compatibility:
 - CNI support is compiled out and cannot be restored. You can restore slirp4netns on an individual host via `CONTAINERS_CONF_OVERRIDE`: `default_rootless_network_cmd="slirp4netns"` in the `[network]` section.
 - This is **not a migration of the system Podman/Buildah configuration**: werf neither reads nor rewrites `${graphroot}/defaultNetworkBackend`. If it contains `cni`, that value remains and continues to affect a system CLI sharing the same graphroot.
 
+### Registry cleanup after upgrading
+
+**Old images are not deleted merely by upgrading werf**, but `cleanup` v3 can remove v2 images under the retention policies. Their version does not give them separate protection. Keep the tags needed for rollback in a `--keep-list` file, one stage tag per line. Do not rely only on Kubernetes protection: a rollback image may no longer be referenced by any scanned resource.
+
+Before the first real cleanup, check that rollback images are not listed for deletion. Use the same repositories, keep-list and Kubernetes access that the scheduled job will use:
+
+```shell
+werf cleanup --repo registry.example.com/app --dry-run --keep-list keep-list.txt
+```
+
+If configured, also pass the same `--final-repo` and `--meta-repo` as in the build. Ensure the scan covers the clusters and namespaces using these images; `--without-kube` disables Kubernetes protection. Do not use `werf purge` to remove only v2 images: it deletes the project's images without cleanup's retention policies.
+
+**A separate `--meta-repo` is optional.** Without it, metadata stays in `--repo`; upgrading alone does not require moving it. If you choose a separate metadata repository for an existing project:
+
+1. Pause scheduled cleanup and old v2 jobs that write to the same repository during the transition.
+1. From the project directory, migrate its existing metadata **before the first cleanup with `--meta-repo`**:
+
+   ```shell
+   werf meta-repo migrate --from registry.example.com/app --to registry.example.com/app-meta
+   ```
+
+1. Use the same `--meta-repo registry.example.com/app-meta` in all subsequent v3 commands, including build, cleanup and purge. The images stay in `--repo`; only metadata moves. By default, migration removes the originals after verifying the copies; `--remove-source=false` keeps them.
+1. Recheck cleanup with `--dry-run` and the new `--meta-repo` before resuming the v3 cleanup job. Do not resume v2 cleanup against the migrated repository: it cannot see the current metadata in the new location.
+
+**Adding `--meta-repo` alone does not migrate old metadata.** New writes go to the separate repository, while cleanup no longer sees the metadata left in `--repo`. It can therefore delete images that should have been retained. The safeguard checks that subsequent commands use the same metadata address, **not that migration is complete**. `meta-repo detach` only removes the safeguard; it does not move metadata back.
+
+See [Container registry cleanup]({{ "/usage/cleanup/cr_cleanup.html" | true_relative_url }}) and [a separate metadata repository]({{ "/usage/build/process.html" | true_relative_url }}) for the full workflow.
+
 ## Deployment
 
 **Check `werf plan` before the first `werf converge`:** changes to values and file exclusion rules can affect manifests without a warning.
+
+### Replacing removed werf helm commands
+
+Deployment and release-inspection commands under `werf helm` are removed. For werf projects, use the dedicated commands:
+
+| Before — v2 | After — v3 |
+|---|---|
+| `werf helm install` / `werf helm upgrade` | `werf converge` to install or update the project |
+| `werf helm template` | `werf render` |
+| `werf helm lint` | `werf lint` |
+| `werf helm list` | `werf release list` |
+| `werf helm get …` / `werf helm status` | `werf release get --release NAME --namespace NAMESPACE` |
+| `werf helm history NAME` | `werf release history --release NAME --namespace NAMESPACE` |
+| `werf helm rollback NAME REVISION` | `werf rollback --release NAME --namespace NAMESPACE --revision REVISION` |
+| `werf helm uninstall NAME` | `werf dismiss --release NAME --namespace NAMESPACE` |
+| `werf helm test` | Use the standalone `helm test` command; werf has no replacement command. |
+| `werf helm plugin` | Manage and run plugins with Helm CLI directly; werf no longer loads Helm plugins. |
+
+These are **workflow replacements, not drop-in aliases**. `converge`, `render` and `lint` use the werf project rather than Helm's positional `RELEASE CHART` arguments. Check the new command's `--help`, pass the intended release and namespace explicitly, and adapt scripts that parse output. For example, `release get --print-values` includes computed values in its structured output; it does not reproduce `helm get values` output. For standalone Helm chart workflows, use the Helm CLI directly.
+
+`werf helm secret` and chart-management commands such as `werf helm dependency` remain available; the whole `werf helm` group has not been removed.
 
 ### Values and environment variables
 

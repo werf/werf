@@ -192,9 +192,58 @@ werf config list --final-images-only=false
 - Поддержка CNI исключена при компиляции и не может быть восстановлена. slirp4netns можно вернуть на отдельном хосте через `CONTAINERS_CONF_OVERRIDE`: `default_rootless_network_cmd="slirp4netns"` в секции `[network]`.
 - Это **не миграция конфигурации системного Podman/Buildah**: werf не читает и не перезаписывает `${graphroot}/defaultNetworkBackend`. Если там записано `cni`, значение сохраняется и продолжает влиять на системный CLI, использующий тот же graphroot.
 
+### Очистка registry после перехода
+
+**Само обновление werf не удаляет старые образы**, но `cleanup` v3 может удалить образы v2 по политикам сохранения. Версия не даёт им отдельной защиты. Сохраните нужные для отката теги в файле `--keep-list`, по одному тегу стадии на строку. Не полагайтесь только на защиту Kubernetes: на образ для отката уже может не ссылаться ни один сканируемый ресурс.
+
+Перед первой настоящей очисткой проверьте, что образы для отката не попали в список удаляемых. Используйте те же репозитории, keep-list и доступ к Kubernetes, которые будут у периодического задания:
+
+```shell
+werf cleanup --repo registry.example.com/app --dry-run --keep-list keep-list.txt
+```
+
+Если настроены `--final-repo` и `--meta-repo`, передайте те же значения, что и при сборке. Убедитесь, что сканирование охватывает кластеры и namespaces, использующие эти образы; `--without-kube` отключает защиту Kubernetes. Не используйте `werf purge` для удаления только образов v2: он удаляет образы проекта без политик сохранения cleanup.
+
+**Отдельный `--meta-repo` необязателен.** Без него метаданные остаются в `--repo`; само обновление не требует их переноса. Если выносите метаданные существующего проекта в отдельный репозиторий:
+
+1. На время перехода приостановите периодическую очистку и старые задания v2, пишущие в тот же репозиторий.
+1. Из каталога проекта перенесите накопленные метаданные **до первой очистки с `--meta-repo`**:
+
+   ```shell
+   werf meta-repo migrate --from registry.example.com/app --to registry.example.com/app-meta
+   ```
+
+1. Во всех последующих командах v3, включая сборку, cleanup и purge, используйте одинаковый `--meta-repo registry.example.com/app-meta`. Сами образы остаются в `--repo`; переносятся только метаданные. По умолчанию оригиналы удаляются после проверки копий; `--remove-source=false` сохраняет их.
+1. Повторно проверьте cleanup с `--dry-run` и новым `--meta-repo`, затем возобновите задание очистки на v3. Не возвращайте cleanup v2 на мигрированный репозиторий: он не видит актуальные метаданные в новом месте.
+
+**Добавление `--meta-repo` само по себе не переносит старые метаданные.** Новые записи идут в отдельный репозиторий, а оставшиеся в `--repo` метаданные cleanup больше не видит. Поэтому он может удалить образы, которые следовало сохранить. Защитный маркер проверяет одинаковый адрес метаданных в последующих командах, **а не завершённость миграции**. `meta-repo detach` только снимает защиту и не переносит метаданные обратно.
+
+Подробнее — [очистка container registry]({{ "/usage/cleanup/cr_cleanup.html" | true_relative_url }}) и [отдельный репозиторий метаданных]({{ "/usage/build/process.html" | true_relative_url }}).
+
 ## Деплой
 
 **Перед первым `werf converge` проверьте `werf plan`:** изменения values и правил исключения файлов могут повлиять на манифесты без предупреждения.
+
+### Замена удалённых команд werf helm
+
+Команды деплоя и просмотра релизов внутри `werf helm` удалены. Для проектов werf используйте отдельные команды:
+
+| Было — v2 | Стало — v3 |
+|---|---|
+| `werf helm install` / `werf helm upgrade` | `werf converge` для установки или обновления проекта |
+| `werf helm template` | `werf render` |
+| `werf helm lint` | `werf lint` |
+| `werf helm list` | `werf release list` |
+| `werf helm get …` / `werf helm status` | `werf release get --release NAME --namespace NAMESPACE` |
+| `werf helm history NAME` | `werf release history --release NAME --namespace NAMESPACE` |
+| `werf helm rollback NAME REVISION` | `werf rollback --release NAME --namespace NAMESPACE --revision REVISION` |
+| `werf helm uninstall NAME` | `werf dismiss --release NAME --namespace NAMESPACE` |
+| `werf helm test` | Используйте отдельную команду `helm test`; замены внутри werf нет. |
+| `werf helm plugin` | Управляйте плагинами и запускайте их через Helm CLI напрямую; werf больше не загружает Helm-плагины. |
+
+Это **замены рабочих сценариев, а не точные алиасы**. `converge`, `render` и `lint` работают с проектом werf, а не с позиционными аргументами Helm `RELEASE CHART`. Проверьте `--help` новой команды, явно задайте нужные release и namespace и адаптируйте скрипты разбора вывода. Например, `release get --print-values` включает вычисленные values в структурированный вывод, а не повторяет вывод `helm get values`. Для работы с отдельными Helm-чартами используйте Helm CLI напрямую.
+
+`werf helm secret` и команды работы с чартами, например `werf helm dependency`, сохраняются; вся группа `werf helm` не удалена.
 
 ### Values и переменные окружения
 
