@@ -52,28 +52,214 @@ Names are now checked when loading the configuration. Latin letters, digits, `_`
 
 ### One `from` key for image references
 
-Base images and imports use `from` for both internal and external images. The reference itself determines which kind it is — a separate directive for internal images is no longer needed:
+Base images and imports use `from` for both internal and external images. An image name from `werf.yaml`, such as `base`, refers to an internal image; a reference with a tag or digest, such as `alpine:3.20`, refers to an external image.
 
-- `from: base` refers to the image named `base` in `werf.yaml`.
-- `from: ubuntu:24.04` or a reference with `@sha256:...` refers to an external image.
+Each block below is a standalone `werf.yaml`. Every referenced project image is declared in the same example.
 
-Replace the old keys, including references in `dependencies`:
+#### Stapel base image
 
-| Where | Before — v2 | After — v3 |
-|---|---|---|
-| Stapel base image | `fromImage: base` | `from: base` |
-| An `import` entry | `image: builder` | `from: builder` |
-| A `dependencies` entry | `image: backend` | `from: backend` |
+The `app` image inherits from the `base` image declared above it. Replace `fromImage: base` with `from: base`:
 
-All three old keys **still work**, but emit a deprecation warning. Specifying both the old and new key is an error.
+<table>
+<thead><tr><th scope="col">Before — v2</th><th scope="col">After — v3</th></tr></thead>
+<tbody><tr>
+<td markdown="1">
 
-An **external reference** in a base `from:` or `import.from` now requires an explicit tag or digest. For example, the previously implicit `:latest` must be written explicitly:
+```yaml
+configVersion: 1
+project: migration-base
+---
+image: base
+from: alpine:3.20
+shell:
+  install:
+    - echo base > /base-marker
+---
+image: app
+fromImage: base
+shell:
+  setup:
+    - cat /base-marker
+```
 
-| Before — v2 | After — v3 |
-|---|---|
-| `from: ubuntu` | `from: ubuntu:latest` |
+</td>
+<td markdown="1">
 
-Instead of `:latest`, you can specify the required tag (`:TAG`) or digest (`@sha256:...`). Internal image names from `werf.yaml` do not need a tag.
+```yaml
+configVersion: 1
+project: migration-base
+---
+image: base
+from: alpine:3.20
+shell:
+  install:
+    - echo base > /base-marker
+---
+image: app
+from: base
+shell:
+  setup:
+    - cat /base-marker
+```
+
+</td>
+</tr></tbody>
+</table>
+
+#### Importing files from another image
+
+The `builder` image creates a file, and `app` copies it before the `setup` stage. Replace `import.image` with `import.from`; also remove `stage`, because v3 imports from the completed source image:
+
+<table>
+<thead><tr><th scope="col">Before — v2</th><th scope="col">After — v3</th></tr></thead>
+<tbody><tr>
+<td markdown="1">
+
+```yaml
+configVersion: 1
+project: migration-import
+---
+image: builder
+from: alpine:3.20
+shell:
+  setup:
+    - mkdir -p /out
+    - echo hello > /out/message.txt
+---
+image: app
+from: alpine:3.20
+import:
+  - image: builder
+    stage: setup
+    add: /out/message.txt
+    to: /message.txt
+    before: setup
+shell:
+  setup:
+    - cat /message.txt
+```
+
+</td>
+<td markdown="1">
+
+```yaml
+configVersion: 1
+project: migration-import
+---
+image: builder
+from: alpine:3.20
+shell:
+  setup:
+    - mkdir -p /out
+    - echo hello > /out/message.txt
+---
+image: app
+from: alpine:3.20
+import:
+  - from: builder
+    add: /out/message.txt
+    to: /message.txt
+    before: setup
+shell:
+  setup:
+    - cat /message.txt
+```
+
+</td>
+</tr></tbody>
+</table>
+
+#### Image dependency
+
+The `app` image receives the name of the built `backend` image in the `BACKEND_IMAGE` variable. Replace `dependencies.image` with `dependencies.from`; the nested `imports` block passes image information rather than copying files:
+
+<table>
+<thead><tr><th scope="col">Before — v2</th><th scope="col">After — v3</th></tr></thead>
+<tbody><tr>
+<td markdown="1">
+
+```yaml
+configVersion: 1
+project: migration-dependencies
+---
+image: backend
+from: alpine:3.20
+---
+image: app
+from: alpine:3.20
+dependencies:
+  - image: backend
+    before: setup
+    imports:
+      - type: ImageName
+        targetEnv: BACKEND_IMAGE
+shell:
+  setup:
+    - echo "$BACKEND_IMAGE" > /backend-image.txt
+```
+
+</td>
+<td markdown="1">
+
+```yaml
+configVersion: 1
+project: migration-dependencies
+---
+image: backend
+from: alpine:3.20
+---
+image: app
+from: alpine:3.20
+dependencies:
+  - from: backend
+    before: setup
+    imports:
+      - type: ImageName
+        targetEnv: BACKEND_IMAGE
+shell:
+  setup:
+    - echo "$BACKEND_IMAGE" > /backend-image.txt
+```
+
+</td>
+</tr></tbody>
+</table>
+
+The `fromImage`, `import.image` and `dependencies.image` keys **still work** in v3, but emit a deprecation warning. Specifying both the old and new key is an error. Unlike these keys, `import.stage` is removed.
+
+#### External image with an explicit tag
+
+An **external reference** in a base `from` or `import.from` requires an explicit tag or digest. For example, replace the implicit `:latest` with an explicit tag:
+
+<table>
+<thead><tr><th scope="col">Before — v2</th><th scope="col">After — v3</th></tr></thead>
+<tbody><tr>
+<td markdown="1">
+
+```yaml
+configVersion: 1
+project: migration-external
+---
+image: app
+from: ubuntu
+```
+
+</td>
+<td markdown="1">
+
+```yaml
+configVersion: 1
+project: migration-external
+---
+image: app
+from: ubuntu:latest
+```
+
+</td>
+</tr></tbody>
+</table>
+
+Instead of `:latest`, specify the required tag (`:TAG`) or digest (`@sha256:...`). Internal image names from `werf.yaml` do not need a tag.
 
 ### Builders and image configuration
 

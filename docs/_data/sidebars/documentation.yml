@@ -781,7 +781,7 @@ entries:
           - title: Cheat sheet
             url: /resources/cheat_sheet.html
 
-          - title: Migration from v1.2 to v2.0
+          - title: Migration from v1.2 to v2
             url: /resources/migration_from_v1_2_to_v2_0.html
 
           - title: Migration from v2 to v3
@@ -945,7 +945,7 @@ entries:
           - title: Шпаргалка
             url: /resources/cheat_sheet.html
 
-          - title: Миграция с v1.2 на v2.0
+          - title: Миграция с v1.2 на v2
             url: /resources/migration_from_v1_2_to_v2_0.html
 
           - title: Миграция с v2 на v3

@@ -1,5 +1,5 @@
 ---
-title: Миграция с v1.2 на v2.0
+title: Миграция с v1.2 на v2
 permalink: resources/migration_from_v1_2_to_v2_0.html
 toc: false
 ---
