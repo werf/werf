@@ -1365,7 +1365,21 @@ func SetupChartRepoInsecure(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupScanContextNamespaceOnly(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.ScanContextNamespaceOnly = new(bool)
-	cmd.Flags().BoolVarP(cmdData.ScanContextNamespaceOnly, "scan-context-namespace-only", "", util.GetBoolEnvironmentDefaultFalse("WERF_SCAN_CONTEXT_NAMESPACE_ONLY"), "Scan for used images only in namespace linked with context for each available context in kube-config (or only for the context specified with option --kube-context). When disabled will scan all namespaces in all contexts (or only for the context specified with option --kube-context). (Default $WERF_SCAN_CONTEXT_NAMESPACE_ONLY)")
+	cmd.Flags().BoolVarP(cmdData.ScanContextNamespaceOnly, "scan-context-namespace-only", "", util.GetBoolEnvironmentDefaultFalse("WERF_SCAN_CONTEXT_NAMESPACE_ONLY"), "Scan for used images only in namespace linked with context for each available context in kube-config (or only for the context specified with option --kube-context). When disabled will scan all namespaces in all contexts (or only for the context specified with option --kube-context), unless --kube-scan-namespaces is set. (Default $WERF_SCAN_CONTEXT_NAMESPACE_ONLY)")
+}
+
+func SetupKubeScanNamespaces(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.KubeScanNamespaces = new([]string)
+	cmd.Flags().StringArrayVarP(cmdData.KubeScanNamespaces, "kube-scan-namespaces", "", []string{}, `Kubernetes namespaces to scan for used images for each selected context (can specify multiple). Takes precedence over --scan-context-namespace-only when set.
+Also, can be specified with $WERF_KUBE_SCAN_NAMESPACES_* (e.g. $WERF_KUBE_SCAN_NAMESPACES_1=..., $WERF_KUBE_SCAN_NAMESPACES_2=...)`)
+}
+
+func GetKubeScanNamespaces(cmdData *CmdData) []string {
+	res := util.PredefinedValuesByEnvNamePrefix("WERF_KUBE_SCAN_NAMESPACES_")
+	if cmdData.KubeScanNamespaces == nil {
+		return res
+	}
+	return append(res, *cmdData.KubeScanNamespaces...)
 }
 
 func GetCacheStagesStorage(cmdData *CmdData) []string {
