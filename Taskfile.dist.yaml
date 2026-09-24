@@ -112,7 +112,7 @@ tasks:
       - pkg/stapel/embed/linux/arm64/werf-stapel-toolchain.tar.gz
       - pkg/stapel/embed/linux/arm64/werf-stapel-toolchain.tar.sha256
     cmds:
-      - env -u GOOS -u GOARCH WERF_STAPEL_IMAGE_VERSION="$(sed -n 's/.*VERSION *= *"\(.*\)"/\1/p' pkg/stapel/stapel.go | head -1)" go run ./cmd/embed-stapel
+      - env -u GOOS -u GOARCH -u WERF_STAPEL_IMAGE_NAME WERF_STAPEL_IMAGE_VERSION="$(sed -n 's/.*VERSION *= *"\(.*\)"/\1/p' pkg/stapel/stapel.go | head -1)" go run ./cmd/embed-stapel
 
   deno:embed:
     desc: 'Download and embed the Deno binary for one platform. Important vars: "platform".'
@@ -414,6 +414,16 @@ tasks:
         vars:
           paths: '{{.paths | default "./pkg ./cmd ./schemas"}}'
           parallel: "{{.parallel}}"
+
+  test:unit:embedded:
+    desc: "Test embedded Stapel and Deno assets."
+    deps:
+      - stapel:embed
+      - deno:embed
+    cmds:
+      - go test -ldflags="{{.goLDFlags}}" -tags="{{.distGoTags}}" ./pkg/stapel ./pkg/deno
+    env:
+      CGO_ENABLED: "0"
 
   test:integration:
     desc: 'Run integration tests. Important vars: "paths".'

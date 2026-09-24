@@ -69,6 +69,9 @@ jobs:
           fi
           echo loadavg: $(cat /proc/loadavg)
 
+      - name: Test embedded assets
+        run: task --yes test:unit:embedded
+
       - name: Upload coverage artifact
         uses: ./.github/actions/upload-coverage-artifact
         with:
