@@ -9,6 +9,7 @@ import (
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 
+	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/nelm/pkg/action"
 	"github.com/werf/werf/v2/cmd/werf/common"
 )
@@ -72,7 +73,11 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupLogOptions(&commonCmdData, cmd)
 
 	cmd.Flags().StringVarP(&cmdData.OutputFormat, "output-format", "", cmp.Or(os.Getenv("WERF_OUTPUT_FORMAT"), action.DefaultReleaseHistoryOutputFormat), "Output format. Options: table, yaml, json (default $WERF_OUTPUT_FORMAT or \""+action.DefaultReleaseHistoryOutputFormat+"\")")
-	cmd.Flags().IntVarP(&cmdData.RevisionsLimit, "revisions-limit", "", 0, "Maximum number of revisions to show. 0 means no limit (default $WERF_RELEASE_HISTORY_REVISIONS_LIMIT or 0)")
+	revisionsLimit, err := util.GetIntEnvVar("WERF_RELEASE_HISTORY_REVISIONS_LIMIT")
+	if err != nil {
+		panic(fmt.Sprintf("bad WERF_RELEASE_HISTORY_REVISIONS_LIMIT value: %s", err))
+	}
+	cmd.Flags().IntVarP(&cmdData.RevisionsLimit, "revisions-limit", "", int(lo.FromPtr(revisionsLimit)), "Maximum number of revisions to show. 0 means no limit (default $WERF_RELEASE_HISTORY_REVISIONS_LIMIT or 0)")
 
 	return cmd
 }

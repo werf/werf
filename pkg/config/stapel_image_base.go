@@ -61,7 +61,7 @@ func (c *StapelImageBase) SetFromExternal() {
 }
 
 func (c *StapelImageBase) dependsOn() DependsOn {
-	var dependsOn DependsOn
+	dependsOn := DependsOn{From: c.From}
 
 	for _, imp := range c.Import {
 		if imp.From != "" && !imp.ExternalImage {

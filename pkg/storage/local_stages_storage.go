@@ -145,7 +145,7 @@ func (storage *LocalStagesStorage) GetStageDesc(ctx context.Context, projectName
 			Info:    info,
 		}, nil
 	}
-	return nil, nil
+	return nil, ErrStageNotFound
 }
 
 func (storage *LocalStagesStorage) ExportStage(ctx context.Context, stageDesc *image.StageDesc, destinationReference string, mutateConfigFunc func(config v1.Config) (v1.Config, error)) error {
