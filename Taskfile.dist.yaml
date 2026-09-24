@@ -429,6 +429,7 @@ tasks:
   doc:
     desc: "Run all docs generators, formatters and linters."
     cmds:
+      - task: doc:check-source-links
       - task: doc:gen
       - task: doc:check-broken-links
 
