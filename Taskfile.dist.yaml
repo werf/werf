@@ -429,8 +429,19 @@ tasks:
   doc:
     desc: "Run all docs generators, formatters and linters."
     cmds:
+      - task: doc:check-source-links
       - task: doc:gen
       - task: doc:check-broken-links
+
+  verify:release-pr-selection:
+    desc: "Verify release tagging selects only merged release PRs for its branch."
+    cmds:
+      - python3 scripts/check-release-pr-selection.py
+
+  doc:check-source-links:
+    desc: "Verify documentation Source links select the matching branch."
+    cmds:
+      - node scripts/docs/check_editme_links.js
 
   doc:gen:
     desc: "Regenerate docs."
