@@ -3,9 +3,19 @@ title: Migration from v2 to v3
 permalink: resources/migration_from_v2_to_v3.html
 ---
 
-The v3 changes are grouped by where you configure them: `werf.yaml`, build and CI, and deployment. Removed features require changes before upgrading; deprecated keys still work with a warning.
+First check compatibility with v2, then the changes to building, deployment and registry cleanup. Removed features require changes before upgrading; deprecated keys still work with a warning.
 
-## Build configuration — werf.yaml
+## Compatibility with v2
+
+Running both versions or rolling back to v2 depends on shared configuration, secrets and registry state, not just the binaries:
+
+- **Configuration.** After adopting v3 settings, do not assume the same `werf.yaml` will work in v2. Keep a v2-compatible configuration revision for rollback — see [building changes](#building).
+- **Secrets.** v3 reads old secrets, but an old client cannot read new v3 writes. Upgrade all readers before the first rewrite; switching the binary back to v2 does not restore the old format — see [encrypted secrets](#encrypted-secret-values).
+- **Registry.** A shared `--repo` means shared images, even with a separate `--meta-repo`. Stop old jobs before moving metadata, and protect rollback images from cleanup. Do not resume v2 cleanup against that repository after the move — see [registry cleanup](#registry-cleanup).
+
+## Building
+
+**Expect a full rebuild of images after moving to v3. Account for it when planning the upgrade.**
 
 ### Images instead of artifacts
 
@@ -132,10 +142,6 @@ A non-empty `stageDependencies` entry for a stage with no build instructions now
 
 Fix unknown or misspelled keys in `werf-giterminism.yaml`: strict schema validation no longer lets them be silently ignored.
 
-## Build and CI
-
-**Expect a full rebuild of images after moving to v3. Account for it when planning the upgrade.**
-
 ### Which images are built and listed
 
 `werf build` and other build-triggering commands now default to `--final-images-only=true`, as `converge`, `render`, `export`, `plan`, `lint` and `bundle publish` already did. Orphan non-final images that no final image references are no longer built by default.
@@ -162,7 +168,7 @@ Check configurations that **narrow `git.stageDependencies` and modify source fil
 
 Text and binary files now use the same update mechanism: copying the required versions from Git. This avoids text-patch application errors, but no longer detects conflicts with changes made by build commands.
 
-### Removed CI settings
+### Removed build settings
 
 | Removed | What to change |
 |---|---|
@@ -191,34 +197,6 @@ Limitations and compatibility:
 - In `native-chroot`, Buildah forces host networking, so `network: none` does not provide isolation.
 - CNI support is compiled out and cannot be restored. You can restore slirp4netns on an individual host via `CONTAINERS_CONF_OVERRIDE`: `default_rootless_network_cmd="slirp4netns"` in the `[network]` section.
 - This is **not a migration of the system Podman/Buildah configuration**: werf neither reads nor rewrites `${graphroot}/defaultNetworkBackend`. If it contains `cni`, that value remains and continues to affect a system CLI sharing the same graphroot.
-
-### Registry cleanup after upgrading
-
-**Old images are not deleted merely by upgrading werf**, but `cleanup` v3 can remove v2 images under the retention policies. Their version does not give them separate protection. Keep the tags needed for rollback in a `--keep-list` file, one stage tag per line. Do not rely only on Kubernetes protection: a rollback image may no longer be referenced by any scanned resource.
-
-Before the first real cleanup, check that rollback images are not listed for deletion. Use the same repositories, keep-list and Kubernetes access that the scheduled job will use:
-
-```shell
-werf cleanup --repo registry.example.com/app --dry-run --keep-list keep-list.txt
-```
-
-If configured, also pass the same `--final-repo` and `--meta-repo` as in the build. Ensure the scan covers the clusters and namespaces using these images; `--without-kube` disables Kubernetes protection. Do not use `werf purge` to remove only v2 images: it deletes the project's images without cleanup's retention policies.
-
-**A separate `--meta-repo` is optional.** Without it, metadata stays in `--repo`; upgrading alone does not require moving it. If you choose a separate metadata repository for an existing project:
-
-1. Pause scheduled cleanup and old v2 jobs that write to the same repository during the transition.
-1. From the project directory, migrate its existing metadata **before the first cleanup with `--meta-repo`**:
-
-   ```shell
-   werf meta-repo migrate --from registry.example.com/app --to registry.example.com/app-meta
-   ```
-
-1. Use the same `--meta-repo registry.example.com/app-meta` in all subsequent v3 commands, including build, cleanup and purge. The images stay in `--repo`; only metadata moves. By default, migration removes the originals after verifying the copies; `--remove-source=false` keeps them.
-1. Recheck cleanup with `--dry-run` and the new `--meta-repo` before resuming the v3 cleanup job. Do not resume v2 cleanup against the migrated repository: it cannot see the current metadata in the new location.
-
-**Adding `--meta-repo` alone does not migrate old metadata.** New writes go to the separate repository, while cleanup no longer sees the metadata left in `--repo`. It can therefore delete images that should have been retained. The safeguard checks that subsequent commands use the same metadata address, **not that migration is complete**. `meta-repo detach` only removes the safeguard; it does not move metadata back.
-
-See [Container registry cleanup]({{ "/usage/cleanup/cr_cleanup.html" | true_relative_url }}) and [a separate metadata repository]({{ "/usage/build/process.html" | true_relative_url }}) for the full workflow.
 
 ## Deployment
 
@@ -293,3 +271,31 @@ Additional considerations:
 - Whole secret files use format 2; values in `secret-values.yaml` use format 3. Automatic format detection prevents a whole secret from being interpreted as YAML metadata.
 - Old encrypted scalars remain strings. To restore a number, boolean, timestamp or another type, re-enter the value with `werf helm secret values edit`.
 - **Comments on encrypted values are kept as cleartext. Do not put secrets in them.**
+
+## Registry cleanup
+
+**Old images are not deleted merely by upgrading werf**, but `cleanup` v3 can remove v2 images under the retention policies. Their version does not give them separate protection. Keep the tags needed for rollback in a `--keep-list` file, one stage tag per line. Do not rely only on Kubernetes protection: a rollback image may no longer be referenced by any scanned resource.
+
+Before the first real cleanup, check that rollback images are not listed for deletion. Use the same repositories, keep-list and Kubernetes access that the scheduled job will use:
+
+```shell
+werf cleanup --repo registry.example.com/app --dry-run --keep-list keep-list.txt
+```
+
+If configured, also pass the same `--final-repo` and `--meta-repo` as in the build. Ensure the scan covers the clusters and namespaces using these images; `--without-kube` disables Kubernetes protection. Do not use `werf purge` to remove only v2 images: it deletes the project's images without cleanup's retention policies.
+
+**A separate `--meta-repo` is optional.** Without it, metadata stays in `--repo`; upgrading alone does not require moving it. If you choose a separate metadata repository for an existing project:
+
+1. Pause scheduled cleanup and old v2 jobs that write to the same repository during the transition.
+1. From the project directory, migrate its existing metadata **before the first cleanup with `--meta-repo`**:
+
+   ```shell
+   werf meta-repo migrate --from registry.example.com/app --to registry.example.com/app-meta
+   ```
+
+1. Use the same `--meta-repo registry.example.com/app-meta` in all subsequent v3 commands, including build, cleanup and purge. The images stay in `--repo`; only metadata moves. By default, migration removes the originals after verifying the copies; `--remove-source=false` keeps them.
+1. Recheck cleanup with `--dry-run` and the new `--meta-repo` before resuming the v3 cleanup job. Do not resume v2 cleanup against the migrated repository: it cannot see the current metadata in the new location.
+
+**Adding `--meta-repo` alone does not migrate old metadata.** New writes go to the separate repository, while cleanup no longer sees the metadata left in `--repo`. It can therefore delete images that should have been retained. The safeguard checks that subsequent commands use the same metadata address, **not that migration is complete**. `meta-repo detach` only removes the safeguard; it does not move metadata back.
+
+See [Container registry cleanup]({{ "/usage/cleanup/cr_cleanup.html" | true_relative_url }}) and [a separate metadata repository]({{ "/usage/build/process.html" | true_relative_url }}) for the full workflow.
