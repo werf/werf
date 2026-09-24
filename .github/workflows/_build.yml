@@ -39,5 +39,3 @@ jobs:
 
       - name: Build ${{ matrix.osPlatform }}
         run: task --yes -p ${{ matrix.osPlatform }}
-        env:
-          TASK_X_REMOTE_TASKFILES: 1

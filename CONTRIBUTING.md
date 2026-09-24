@@ -46,11 +46,6 @@ You can also check the existing [issues](https://github.com/werf/werf/issues), [
    - [Docker](https://docs.docker.com/get-docker/)
    - [ginkgo](https://onsi.github.io/ginkgo/#installing-ginkgo) (testing framework required to run tests)
    - [go-task](https://taskfile.dev/installation/) (build tool to run common workflows)
-     - Before using Taskfile, set the environment variable:  
-         ```shell
-         export TASK_X_REMOTE_TASKFILES=1
-         ```
-         (Add this to your shell configuration file, e.g., `.bashrc` or `.zshrc`, for persistence.)
      - To skip confirmation prompts when running tasks, use the `--yes` flag:  
          ```shell
          task --yes taskname

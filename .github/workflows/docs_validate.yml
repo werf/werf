@@ -27,7 +27,6 @@ concurrency:
 env:
   DEBIAN_FRONTEND: "noninteractive"
   GOPATH: ${{ github.workspace }}/go
-  TASK_X_REMOTE_TASKFILES: 1
 
 jobs:
   doc_unit:
