@@ -3,8 +3,10 @@ package storage
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
+	"slices"
 
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/google/go-containerregistry/pkg/v1/empty"
@@ -12,6 +14,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/image"
@@ -43,6 +46,70 @@ func (b *localMutationBackendStub) Tag(ctx context.Context, ref, newRef string, 
 }
 
 var _ = Describe("LocalStagesStorage", func() {
+	Describe("GetStagesIDs", func() {
+		stageTag := fmt.Sprintf("%056d-1700000000000", 1)
+		secondStageTag := fmt.Sprintf("%056d-1700000000000", 2)
+		invalidStageTag := fmt.Sprintf("%056d-invalidtime00", 3)
+
+		DescribeTable("filters project labels locally without changing tags",
+			func(ctx SpecContext, projectName string, labels map[string]string, tags, expectedTags []string) {
+				originalTags := slices.Clone(tags)
+				backend := &localImageListBackendStub{images: image.ImagesList{{
+					ID: "selected", Labels: labels, RepoTags: tags,
+				}}}
+				stages, err := NewLocalStagesStorage(backend).GetStagesIDs(ctx, projectName)
+				Expect(err).NotTo(HaveOccurred())
+				actualTags := make([]string, 0, len(stages))
+				for _, stage := range stages {
+					actualTags = append(actualTags, stage.String())
+				}
+				Expect(actualTags).To(ConsistOf(expectedTags))
+				Expect(backend.options.Filters).To(Equal([]util.Pair[string, string]{util.NewPair("reference", projectName)}))
+				Expect(backend.images[0].RepoTags).To(Equal(originalTags))
+			},
+			Entry("matching label", "project", map[string]string{image.WerfLabel: "project"}, []string{"project:" + stageTag}, []string{stageTag}),
+			Entry("different label", "project", map[string]string{image.WerfLabel: "other"}, []string{"project:" + stageTag}, []string{}),
+			Entry("prefix is not a match", "project", map[string]string{image.WerfLabel: "project-other"}, []string{"project:" + stageTag}, []string{}),
+			Entry("missing label", "project", map[string]string{}, []string{"project:" + stageTag}, []string{}),
+			Entry("nil labels", "project", map[string]string(nil), []string{"project:" + stageTag}, []string{}),
+			Entry("absent label is not an empty value", "", map[string]string{}, []string{"project:" + stageTag}, []string{}),
+			Entry("explicit empty label", "", map[string]string{image.WerfLabel: ""}, []string{"project:" + stageTag}, []string{stageTag}),
+			Entry("all returned stage tags and aliases", "project", map[string]string{image.WerfLabel: "project"}, []string{"project:" + stageTag, "project:alias", "other:" + secondStageTag}, []string{stageTag, secondStageTag}),
+			Entry("tagless image", "project", map[string]string{image.WerfLabel: "project"}, []string{}, []string{}),
+			Entry("foreign malformed tag is excluded before parsing", "project", map[string]string{image.WerfLabel: "other"}, []string{"project:" + invalidStageTag}, []string{}),
+		)
+
+		It("keeps all matching images in a mixed response", func(ctx SpecContext) {
+			backend := &localImageListBackendStub{images: image.ImagesList{
+				{Labels: map[string]string{image.WerfLabel: "project"}, RepoTags: []string{"project:" + stageTag}},
+				{Labels: map[string]string{image.WerfLabel: "other"}, RepoTags: []string{"project:" + invalidStageTag}},
+				{RepoTags: []string{"project:" + invalidStageTag}},
+				{Labels: map[string]string{image.WerfLabel: "project"}, RepoTags: []string{"project:" + secondStageTag}},
+			}}
+			stages, err := NewLocalStagesStorage(backend).GetStagesIDs(ctx, "project")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(stages).To(HaveLen(2))
+			Expect(stages[0].String()).To(Equal(stageTag))
+			Expect(stages[1].String()).To(Equal(secondStageTag))
+		})
+
+		It("propagates image listing errors", func(ctx SpecContext) {
+			listErr := errors.New("list failed")
+			backend := &localImageListBackendStub{err: listErr}
+			_, err := NewLocalStagesStorage(backend).GetStagesIDs(ctx, "project")
+			Expect(err).To(MatchError("unable to list images: list failed"))
+			Expect(errors.Is(err, listErr)).To(BeTrue())
+		})
+
+		It("preserves conversion errors for matching images", func(ctx SpecContext) {
+			backend := &localImageListBackendStub{images: image.ImagesList{{
+				Labels: map[string]string{image.WerfLabel: "project"}, RepoTags: []string{"project:" + invalidStageTag},
+			}}}
+			_, err := NewLocalStagesStorage(backend).GetStagesIDs(ctx, "project")
+			Expect(err).To(MatchError(ContainSubstring("creation timestamp")))
+		})
+	})
+
 	It("tags the mutated local image under the destination reference", func(ctx SpecContext) {
 		logCtx := logboek.NewContext(ctx, logboek.NewLogger(io.Discard, io.Discard))
 
