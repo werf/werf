@@ -8,6 +8,8 @@ import (
 	buildImage "github.com/werf/werf/v2/pkg/build/image"
 	"github.com/werf/werf/v2/pkg/build/stage"
 	"github.com/werf/werf/v2/pkg/container_backend"
+	imagePkg "github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/storage"
 )
 
 func newImage(name string, baseImageType buildImage.BaseImageType, opts buildImage.ImageOptions) *buildImage.Image {
@@ -30,4 +32,24 @@ func newContentDependenciesStub(name stage.StageName, deps string) *contentDepen
 
 func (s *contentDependenciesStub) GetContentDependencies(_ context.Context, _ stage.Conveyor, _ container_backend.BuildContextArchiver) (string, error) {
 	return s.deps, s.err
+}
+
+var _ storage.PrimaryStagesStorage = (*anchorPrimaryStagesStorage)(nil)
+
+type anchorPrimaryStagesStorage struct {
+	storage.PrimaryStagesStorage
+}
+
+func (m *anchorLookupStorageManager) GetStagesStorage() storage.PrimaryStagesStorage {
+	return m.primaryStagesStorage
+}
+
+func (m *anchorLookupStorageManager) GetStageDescSetByDigestFromStagesStorageCached(_ context.Context, _, _ string, _ int64, stagesStorage storage.StagesStorage) (imagePkg.StageDescSet, error) {
+	if stagesStorage == m.secondaryStagesStorage {
+		m.cachedSecondaryLookups++
+		return m.inSecondary, nil
+	}
+
+	m.cachedPrimaryLookups++
+	return m.inPrimary, nil
 }
