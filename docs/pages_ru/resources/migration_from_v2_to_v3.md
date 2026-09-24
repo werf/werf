@@ -52,26 +52,212 @@ final: false
 
 ### Единый from для ссылок на образы
 
-Базовые образы и imports используют `from` и для внутренних, и для внешних образов. Тип ссылки определяется её записью — отдельная директива для внутренних образов больше не нужна:
+Базовые образы и imports используют `from` и для внутренних, и для внешних образов. Имя образа из `werf.yaml`, например `base`, обозначает внутренний образ; ссылка с тегом или digest, например `alpine:3.20`, — внешний.
 
-- `from: base` — образ с именем `base` из `werf.yaml`.
-- `from: ubuntu:24.04` или ссылка с `@sha256:...` — внешний образ.
+Ниже каждый блок — самостоятельный `werf.yaml`. Все образы, на которые ссылается конфигурация, объявлены в том же примере.
 
-Замените старые ключи, в том числе для ссылок в `dependencies`:
+#### Базовый образ stapel
 
-| Где | Было — v2 | Стало — v3 |
-|---|---|---|
-| Базовый образ stapel | `fromImage: base` | `from: base` |
-| Элемент `import` | `image: builder` | `from: builder` |
-| Элемент `dependencies` | `image: backend` | `from: backend` |
+Образ `app` наследует образ `base`, объявленный выше. Замените `fromImage: base` на `from: base`:
 
-Все три старых ключа **по-прежнему работают**, но выводят предупреждение об устаревании. Указание одновременно старого и нового ключа — ошибка.
+<table>
+<thead><tr><th scope="col">Было — v2</th><th scope="col">Стало — v3</th></tr></thead>
+<tbody><tr>
+<td markdown="1">
 
-**Внешняя ссылка** в базовом `from:` или `import.from` теперь требует явного тега или digest. Например, прежнее неявное `:latest` нужно записать явно:
+```yaml
+configVersion: 1
+project: migration-base
+---
+image: base
+from: alpine:3.20
+shell:
+  install:
+    - echo base > /base-marker
+---
+image: app
+fromImage: base
+shell:
+  setup:
+    - cat /base-marker
+```
 
-| Было — v2 | Стало — v3 |
-|---|---|
-| `from: ubuntu` | `from: ubuntu:latest` |
+</td>
+<td markdown="1">
+
+```yaml
+configVersion: 1
+project: migration-base
+---
+image: base
+from: alpine:3.20
+shell:
+  install:
+    - echo base > /base-marker
+---
+image: app
+from: base
+shell:
+  setup:
+    - cat /base-marker
+```
+
+</td>
+</tr></tbody>
+</table>
+
+#### Импорт файлов из другого образа
+
+Образ `builder` создаёт файл, а `app` копирует его до стадии `setup`. Замените `import.image` на `import.from`; также удалите `stage`, поскольку в v3 импортируется готовый образ-источник:
+
+<table>
+<thead><tr><th scope="col">Было — v2</th><th scope="col">Стало — v3</th></tr></thead>
+<tbody><tr>
+<td markdown="1">
+
+```yaml
+configVersion: 1
+project: migration-import
+---
+image: builder
+from: alpine:3.20
+shell:
+  setup:
+    - mkdir -p /out
+    - echo hello > /out/message.txt
+---
+image: app
+from: alpine:3.20
+import:
+  - image: builder
+    stage: setup
+    add: /out/message.txt
+    to: /message.txt
+    before: setup
+shell:
+  setup:
+    - cat /message.txt
+```
+
+</td>
+<td markdown="1">
+
+```yaml
+configVersion: 1
+project: migration-import
+---
+image: builder
+from: alpine:3.20
+shell:
+  setup:
+    - mkdir -p /out
+    - echo hello > /out/message.txt
+---
+image: app
+from: alpine:3.20
+import:
+  - from: builder
+    add: /out/message.txt
+    to: /message.txt
+    before: setup
+shell:
+  setup:
+    - cat /message.txt
+```
+
+</td>
+</tr></tbody>
+</table>
+
+#### Зависимость от образа
+
+Образ `app` получает имя собранного образа `backend` в переменную `BACKEND_IMAGE`. Замените `dependencies.image` на `dependencies.from`; вложенный блок `imports` передаёт информацию об образе, а не копирует файлы:
+
+<table>
+<thead><tr><th scope="col">Было — v2</th><th scope="col">Стало — v3</th></tr></thead>
+<tbody><tr>
+<td markdown="1">
+
+```yaml
+configVersion: 1
+project: migration-dependencies
+---
+image: backend
+from: alpine:3.20
+---
+image: app
+from: alpine:3.20
+dependencies:
+  - image: backend
+    before: setup
+    imports:
+      - type: ImageName
+        targetEnv: BACKEND_IMAGE
+shell:
+  setup:
+    - echo "$BACKEND_IMAGE" > /backend-image.txt
+```
+
+</td>
+<td markdown="1">
+
+```yaml
+configVersion: 1
+project: migration-dependencies
+---
+image: backend
+from: alpine:3.20
+---
+image: app
+from: alpine:3.20
+dependencies:
+  - from: backend
+    before: setup
+    imports:
+      - type: ImageName
+        targetEnv: BACKEND_IMAGE
+shell:
+  setup:
+    - echo "$BACKEND_IMAGE" > /backend-image.txt
+```
+
+</td>
+</tr></tbody>
+</table>
+
+Ключи `fromImage`, `import.image` и `dependencies.image` **по-прежнему работают** в v3, но выводят предупреждение об устаревании. Указание одновременно старого и нового ключа — ошибка. В отличие от этих ключей, `import.stage` удалён.
+
+#### Внешний образ с явным тегом
+
+**Внешняя ссылка** в базовом `from` или `import.from` требует явного тега или digest. Например, замените неявное `:latest` на явное:
+
+<table>
+<thead><tr><th scope="col">Было — v2</th><th scope="col">Стало — v3</th></tr></thead>
+<tbody><tr>
+<td markdown="1">
+
+```yaml
+configVersion: 1
+project: migration-external
+---
+image: app
+from: ubuntu
+```
+
+</td>
+<td markdown="1">
+
+```yaml
+configVersion: 1
+project: migration-external
+---
+image: app
+from: ubuntu:latest
+```
+
+</td>
+</tr></tbody>
+</table>
 
 Вместо `:latest` можно указать нужный тег (`:TAG`) или digest (`@sha256:...`). Внутренним именам образов из `werf.yaml` тег не нужен.
 
