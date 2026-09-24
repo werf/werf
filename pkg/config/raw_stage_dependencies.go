@@ -30,19 +30,19 @@ func (c *rawStageDependencies) UnmarshalYAML(unmarshal func(interface{}) error) 
 func (c *rawStageDependencies) toDirective() (stageDependencies *StageDependencies, err error) {
 	stageDependencies = &StageDependencies{}
 
-	if install, err := InterfaceToStringArray(c.Install, c, c.rawGit.rawStapelImage.doc); err != nil {
+	if install, err := c.stagePathsToDirective(c.Install); err != nil {
 		return nil, err
 	} else {
 		stageDependencies.Install = install
 	}
 
-	if beforeSetup, err := InterfaceToStringArray(c.BeforeSetup, c, c.rawGit.rawStapelImage.doc); err != nil {
+	if beforeSetup, err := c.stagePathsToDirective(c.BeforeSetup); err != nil {
 		return nil, err
 	} else {
 		stageDependencies.BeforeSetup = beforeSetup
 	}
 
-	if setup, err := InterfaceToStringArray(c.Setup, c, c.rawGit.rawStapelImage.doc); err != nil {
+	if setup, err := c.stagePathsToDirective(c.Setup); err != nil {
 		return nil, err
 	} else {
 		stageDependencies.Setup = setup
@@ -55,6 +55,19 @@ func (c *rawStageDependencies) toDirective() (stageDependencies *StageDependenci
 	}
 
 	return stageDependencies, nil
+}
+
+func (c *rawStageDependencies) stagePathsToDirective(stagePaths interface{}) ([]string, error) {
+	if stagePaths == nil {
+		return nil, nil
+	}
+
+	paths, err := InterfaceToStringArray(stagePaths, c, c.rawGit.rawStapelImage.doc)
+	if err != nil {
+		return nil, err
+	}
+
+	return append([]string{}, paths...), nil
 }
 
 func (c *rawStageDependencies) validateDirective(stageDependencies *StageDependencies) error {

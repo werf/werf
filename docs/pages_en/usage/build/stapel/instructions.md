@@ -372,7 +372,7 @@ The _install_, _beforeSetup_, and _setup_ user stages also depend on changes in 
 This stage is depicted as of the _Calculation digest phase_
 ![git files actualized on specific stage]({{ "images/build/git_mapping_updated_on_stage.png" | true_relative_url }})
 
-By default, werf monitors all files (`**/*`), so any source change triggers a rebuild of user stages that have shell commands. You can narrow this down using the `git.stageDependencies` parameter to specify exactly which files trigger rebuilds. It has the following syntax:
+The `git.stageDependencies` parameter specifies exactly which file changes trigger a rebuild of the user stages. It has the following syntax:
 
 ```yaml
 git:
@@ -393,7 +393,7 @@ The `git.stageDependencies` parameter has 3 keys: `install`, `beforeSetup`, and 
 
 For each _user stage_, werf creates a list of matching files and calculates a checksum based on the attributes and contents of each file. This checksum is a part of the _stage digest_. Thus, the digest changes in response to any changes in the repository, such as getting new file attributes, changing file contents, adding or deleting a new matching file, etc.
 
-The `git.stageDependencies` masks work jointly with the `git.includePaths` and `git.excludePaths` masks. Only files that match the `includePaths` filter and the `stageDependencies` masks are considered eligible. And vice versa: only files that do not match the `excludePaths` filter and the `stageDependencies` masks are considered suitable by werf.
+The `git.stageDependencies` masks work jointly with the `git.includePaths` and `git.excludePaths` filters: both of them constrain the set of files a mask can match. A file is a dependency of a _user stage_ if it matches one of the `stageDependencies` masks of that stage, matches the `includePaths` filter (when it is set), and does not match the `excludePaths` filter. Exclusion only subtracts files: `excludePaths` never adds a file to a _user stage_.
 
 The `stageDependencies` masks work in the same fashion as the `includePaths` and `excludePaths` filters. The mask defines a file and path template and may contain the following glob patterns:
 
@@ -442,7 +442,69 @@ shell:
   - echo "setup stage"
 ```
 
-The _git mapping configuration_ in the above `werf.yaml` instructs werf to transfer the contents of the `/src` directory of the local Git repository to the `/app` directory of the image. During the first build, files will be cached at the _gitArchive_ stage, and assembly instructions for _install_ and _beforeSetup_ will be executed. During the builds triggered by the subsequent commits which leave the contents of the `/src` directory unchanged, werf will not run the assembly instructions. Changes in the `/src` directory due to some commit will also result in changes in the checksums of the files matching the mask. This will cause werf to apply the git patch and rebuild any existing stages starting with _beforeSetup_, namely _beforeSetup_ and _setup_. The git patch will be applied once during the _beforeSetup_ stage.
+The _git mapping configuration_ in the above `werf.yaml` instructs werf to transfer the contents of the `/src` directory of the local Git repository to the `/app` directory of the image. During the first build, files will be cached at the _gitArchive_ stage, and assembly instructions for _install_, _beforeSetup_ and _setup_ will be executed. During the builds triggered by the subsequent commits which leave the contents of the `/src` directory unchanged, werf will not run the assembly instructions. Changes in the `/src` directory due to some commit will also result in changes in the checksums of the files matching the mask. This will cause werf to apply the git patch and rebuild any existing stages starting with _beforeSetup_, namely _beforeSetup_ and _setup_. The git patch will be applied once during the _beforeSetup_ stage.
+
+### Masks of the stages that are not set
+
+werf derives the masks of the stages that are not set from the stages that are set. The stages are always ordered by the build order — _install_ → _beforeSetup_ → _setup_ — regardless of the order of the keys in `werf.yaml`, and the derivation is performed separately for each _git mapping_:
+
+- a stage with explicitly set masks uses exactly those masks;
+- an explicitly set empty list (`[]`) means no direct dependency on the files of the Git repository, and it still counts as declaring the stage;
+- a stage that is not set **before** the last explicitly declared stage gets `[]`;
+- a stage that is not set **after** the last explicitly declared stage gets `**/*`;
+- if `stageDependencies` is omitted entirely or set to `{}`, all three stages get `**/*`.
+
+The resulting masks for the typical configurations are the following:
+
+| `stageDependencies` in `werf.yaml` | _install_ | _beforeSetup_ | _setup_ |
+| --- | --- | --- | --- |
+| omitted, or `stageDependencies: {}` | `**/*` | `**/*` | `**/*` |
+| `beforeSetup: ["src/**/*"]` | `[]` | `src/**/*` | `**/*` |
+| `install: ["package.json", "package-lock.json"]` and `setup: ["src/**/*"]` | `package.json`, `package-lock.json` | `[]` | `src/**/*` |
+| `install: ["package-lock.json"]` | `package-lock.json` | `**/*` | `**/*` |
+| `beforeSetup: []` | `[]` | `[]` | `**/*` |
+| `setup: []` | `[]` | `[]` | `[]` |
+
+For example, with all other build inputs unchanged, in the configuration below the _install_ stage is rebuilt only when `package-lock.json` changes, while _beforeSetup_ and _setup_, which follow the last declared stage, are rebuilt on any change of the added source code:
+
+```yaml
+image: app
+from: alpine:3.20
+git:
+- add: /
+  to: /app
+  stageDependencies:
+    install:
+    - package-lock.json
+shell:
+  install: ["echo install"]
+  beforeSetup: ["echo beforeSetup"]
+  setup: ["echo setup"]
+```
+
+Declare all three stages to leave nothing to the derived masks:
+
+```yaml
+image: app
+from: alpine:3.20
+git:
+- add: /
+  to: /app
+  stageDependencies:
+    install:
+    - package-lock.json
+    beforeSetup: []
+    setup:
+    - "src/**/*"
+shell:
+  install: ["echo install"]
+  beforeSetup: ["echo beforeSetup"]
+  setup: ["echo setup"]
+```
+
+An empty list disables only the direct dependency of the stage on the files of the Git repository. The dependency on the previous stages, on the base image, on the assembly instructions and on the other inputs is not affected: when an earlier stage is rebuilt, the subsequent ones are rebuilt as well.
+
+The masks do not create stages: a _user stage_ without assembly instructions is not created regardless of its masks, and a non-empty set of masks for a stage without assembly instructions remains a configuration error. The _beforeInstall_ stage has no key in `stageDependencies` and never depends on the files of the Git repository directly.
 
 ## Dependency on the CacheVersion
 

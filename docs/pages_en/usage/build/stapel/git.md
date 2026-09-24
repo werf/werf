@@ -37,7 +37,7 @@ The _git mapping_ configuration for a local repository has the following paramet
 - `group` — the name or gid of the owner’s group;
 - `excludePaths` — a set of masks to exclude files or directories during recursive copying. Paths in masks must be specified relative to add;
 - `includePaths` — a set of masks to include files or directories during recursive copying. Paths in masks must be specified relative to add;
-- `stageDependencies` — a set of masks that control which file changes trigger rebuilds of the user stages. By default (when not specified), werf uses `**/*`, so any source file change causes a rebuild of stages that have shell commands. Specify explicit paths to narrow down what triggers a rebuild. Reviewed in detail in the [Running assembly instructions]({{ "usage/build/stapel/instructions.html" | true_relative_url }}) reference.
+- `stageDependencies` — a set of masks that control which file changes trigger rebuilds of the user stages. The masks are set per stage (`install`, `beforeSetup`, `setup`) and are derived separately for each _git mapping_: a stage that is not set before the last explicitly declared stage gets no direct dependency on the files of the Git repository (`[]`), a stage that is not set after it gets `**/*`, and when `stageDependencies` is omitted entirely or set to `{}`, all three stages get `**/*`. Reviewed in detail in the [Running assembly instructions]({{ "usage/build/stapel/instructions.html#masks-of-the-stages-that-are-not-set" | true_relative_url }}) reference.
 
 The _git mapping_ configuration for a remote repository has some additional parameters:
 - `url` — the address of the remote repository;
