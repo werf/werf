@@ -115,9 +115,11 @@ func NewObservedReadCloser(rc io.ReadCloser, done func()) io.ReadCloser {
 }
 
 type Collector struct {
-	mu        sync.Mutex
-	intervals map[Operation][]interval
-	events    map[Event]int
+	mu            sync.Mutex
+	intervals     map[Operation][]interval
+	events        map[Event]int
+	flushedOps    map[Operation]int
+	flushedEvents map[Event]int
 }
 
 type interval struct {
@@ -155,8 +157,37 @@ func (c *Collector) Summary() []OperationSummary {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	res := make([]OperationSummary, 0, len(c.intervals))
+	return summarizeOperations(c.intervals, nil)
+}
+
+// FlushSummary returns the same stats as Summary but only for the intervals
+// recorded since the previous flush, and advances the flush mark. The build
+// report uses it so that a report covers only the build that wrote it even
+// when the collector spans the whole command (e.g. across --follow iterations).
+func (c *Collector) FlushSummary() []OperationSummary {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	res := summarizeOperations(c.intervals, c.flushedOps)
+
+	if c.flushedOps == nil {
+		c.flushedOps = make(map[Operation]int)
+	}
 	for op, intervals := range c.intervals {
+		c.flushedOps[op] = len(intervals)
+	}
+
+	return res
+}
+
+func summarizeOperations(intervalsByOp map[Operation][]interval, skipByOp map[Operation]int) []OperationSummary {
+	res := make([]OperationSummary, 0, len(intervalsByOp))
+	for op, intervals := range intervalsByOp {
+		intervals = intervals[skipByOp[op]:]
+		if len(intervals) == 0 {
+			continue
+		}
+
 		var total, max time.Duration
 		for _, iv := range intervals {
 			d := iv.end.Sub(iv.start)
@@ -196,8 +227,34 @@ func (c *Collector) EventSummary() []EventSummary {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	res := make([]EventSummary, 0, len(c.events))
+	return summarizeEvents(c.events, nil)
+}
+
+// FlushEventSummary returns the counters accumulated since the previous flush
+// and advances the flush mark, mirroring FlushSummary.
+func (c *Collector) FlushEventSummary() []EventSummary {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	res := summarizeEvents(c.events, c.flushedEvents)
+
+	if c.flushedEvents == nil {
+		c.flushedEvents = make(map[Event]int)
+	}
 	for event, count := range c.events {
+		c.flushedEvents[event] = count
+	}
+
+	return res
+}
+
+func summarizeEvents(counts, skipCounts map[Event]int) []EventSummary {
+	res := make([]EventSummary, 0, len(counts))
+	for event, count := range counts {
+		count -= skipCounts[event]
+		if count == 0 {
+			continue
+		}
 		res = append(res, EventSummary{Event: event, Count: count})
 	}
 

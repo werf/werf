@@ -329,7 +329,7 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 	phase.ImagesReport.sendTelemetry(ctx)
 
 	if collector := opstats.FromContext(ctx); collector != nil {
-		phase.ImagesReport.SetOperationsSummary(collector.Summary(), collector.EventSummary())
+		phase.ImagesReport.SetOperationsSummary(collector.FlushSummary(), collector.FlushEventSummary())
 	}
 
 	if phase.ReportPath != "" {

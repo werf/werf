@@ -469,7 +469,7 @@ func (c *Conveyor) ShouldBeBuilt(ctx context.Context, opts ShouldBeBuiltOptions)
 		c.printDeferredBuildLog(ctx, buf)
 	}
 
-	c.logOperationsSummary(ctx, opsCollector, time.Since(buildStartedAt))
+	opstats.LogSummary(ctx, opsCollector, "build time", time.Since(buildStartedAt))
 
 	reports := lo.Map(phases, func(phase Phase, _ int) *ImagesReport {
 		return phase.Report()
@@ -730,7 +730,7 @@ func (c *Conveyor) Build(ctx context.Context, opts BuildOptions) ([]*ImagesRepor
 		c.printDeferredBuildLog(ctx, buf)
 	}
 
-	c.logOperationsSummary(ctx, opsCollector, time.Since(buildStartedAt))
+	opstats.LogSummary(ctx, opsCollector, "build time", time.Since(buildStartedAt))
 
 	reports := lo.Map(phases, func(phase Phase, _ int) *ImagesReport {
 		return phase.Report()
@@ -799,10 +799,6 @@ func (c *Conveyor) newOperationsCollector(ctx context.Context, forceEnabled bool
 
 	collector := opstats.NewCollector()
 	return opstats.NewContext(ctx, collector), collector, time.Now()
-}
-
-func (c *Conveyor) logOperationsSummary(ctx context.Context, collector *opstats.Collector, buildTime time.Duration) {
-	opstats.LogSummary(ctx, collector, "build time", buildTime)
 }
 
 func (c *Conveyor) runPhases(ctx context.Context, phases []Phase, logImages bool) error {
