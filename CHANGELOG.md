@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.79.2](https://github.com/werf/werf/compare/v2.79.1...v2.79.2) (2026-09-24)
+
+
+### Bug Fixes
+
+* **cleanup:** stop import metadata cleanup leaking goroutines ([#7864](https://github.com/werf/werf/issues/7864)) ([5b7332f](https://github.com/werf/werf/commit/5b7332f09b36f20f30f5f336ec11ec03b7ec7113)), closes [#7862](https://github.com/werf/werf/issues/7862)
+* **release:** relabel only merged releases of the current branch ([6e73257](https://github.com/werf/werf/commit/6e73257ac346b3203ff8b13a014b3e9213c33b62))
+
 ## [2.79.1](https://github.com/werf/werf/compare/v2.79.0...v2.79.1) (2026-09-23)
 
 
