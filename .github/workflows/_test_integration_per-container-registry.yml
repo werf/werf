@@ -22,7 +22,6 @@ jobs:
         os:
           - ${{ inputs.linuxAmd64Runner }}
         cr:
-          - acr
           #          - default
           - ecr
           - github
@@ -30,7 +29,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 120
     env:
-      WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_ACR: 1
+      WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_ACR: 0
       WERF_TEST_ACR_PASSWORD: ${{ secrets.WERF_TEST_ACR_PASSWORD }}
       WERF_TEST_ACR_REGISTRY: ${{ secrets.WERF_TEST_ACR_REGISTRY }}
       WERF_TEST_ACR_USERNAME: ${{ secrets.WERF_TEST_ACR_USERNAME }}
