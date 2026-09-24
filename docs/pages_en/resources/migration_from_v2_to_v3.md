@@ -11,14 +11,18 @@ The v3 changes are grouped by where you configure them: `werf.yaml`, build and C
 
 The `artifact` directive is removed. Replace it with `image` and `final: false`:
 
-**Before — v2:**
+<table>
+<thead><tr><th scope="col">Before — v2</th><th scope="col">After — v3</th></tr></thead>
+<tbody><tr>
+<td markdown="1">
 
 ```yaml
 artifact: builder
 from: ubuntu:22.04
 ```
 
-**After — v3:**
+</td>
+<td markdown="1">
 
 ```yaml
 image: builder
@@ -26,13 +30,24 @@ from: ubuntu:22.04
 final: false
 ```
 
+</td>
+</tr></tbody>
+</table>
+
+### Image names
+
 Nameless stapel images (`image: ~`) are no longer supported — give every image a name.
 
 Names are now checked when loading the configuration. Latin letters, digits, `_`, `.`, `-` and `+` are allowed, with optional `/`-separated segments. Each segment must start with a letter or digit and end with a letter, digit or `+`. `modules/controller` is valid; an empty name, whitespace, `/api`, `api-` and `modules//controller` cause a configuration error. Check names produced by Go templates as well.
 
-### Image references
+### One `from` key for image references
 
-Use the unified `from` key for internal references:
+Base images and imports use `from` for both internal and external images. The reference itself determines which kind it is — a separate directive for internal images is no longer needed:
+
+- `from: base` refers to the image named `base` in `werf.yaml`.
+- `from: ubuntu:24.04` or a reference with `@sha256:...` refers to an external image.
+
+Replace the old keys, including references in `dependencies`:
 
 | Where | Before — v2 | After — v3 |
 |---|---|---|
@@ -56,7 +71,10 @@ Instead of `:latest`, you can specify the required tag (`:TAG`) or digest (`@sha
 
 **The `docker:` directive is removed.** Move its settings to `imageSpec.config`, translating field names and formats. For example, for a stapel image fragment:
 
-**Before — v2:**
+<table>
+<thead><tr><th scope="col">Before — v2</th><th scope="col">After — v3</th></tr></thead>
+<tbody><tr>
+<td markdown="1">
 
 ```yaml
 docker:
@@ -65,7 +83,8 @@ docker:
     APP_ENV: production
 ```
 
-**After — v3:**
+</td>
+<td markdown="1">
 
 ```yaml
 imageSpec:
@@ -75,16 +94,47 @@ imageSpec:
       APP_ENV: production
 ```
 
+</td>
+</tr></tbody>
+</table>
+
 See [Changing image configuration spec]({{ "/usage/build/images.html#changing-image-configuration-spec" | true_relative_url }}) for the full set of fields.
 
-`WERF_COMMIT_HASH`, `WERF_COMMIT_TIME_HUMAN` and `WERF_COMMIT_TIME_UNIX` are no longer forcibly removed when modifying env through imageSpec. If an old base image still carries them, add them explicitly to `imageSpec.config.removeEnv`.
+**Old base images containing `WERF_COMMIT_*`.** Older werf builds could persist `WERF_COMMIT_HASH`, `WERF_COMMIT_TIME_HUMAN` and `WERF_COMMIT_TIME_UNIX` from the build container in the image configuration. That leak is fixed: werf now passes those variables only while running build commands. However, they can still be inherited from an old base image. imageSpec no longer removes them automatically when modifying env; if your base image contains them, add them to `imageSpec.config.removeEnv`.
 
-### Paths and giterminism
+### File imports
 
-- Remove the trailing slash from export/import `to:` paths: `to: /usr/sbin/` → `to: /usr/sbin`. The root path `to: /` is exempt. What used to produce a warning now causes the build to fail.
-- Fix unknown or misspelled keys in `werf-giterminism.yaml`: strict schema validation no longer lets them be silently ignored.
+**Import caching now depends on the source image**, rather than checksums of the selected files as it did by default in v2. Changing the source image can rebuild the importing image even if the copied files are unchanged. `includePaths`/`excludePaths` still select which files to copy, but no longer isolate the cache from other source-image changes. If those rebuilds are expensive, put the imported output in a separate, narrowly scoped image.
+
+**`import.stage` is removed.** Imports use the completed source image, not a selected intermediate stage. If you need an intermediate result, make it a separate image. `before`/`after` still control when the import runs in the **destination** image.
+
+**A trailing slash in export/import `to:` is now an error**, except for the root path `to: /`. Previously werf stripped it with a warning, although users could expect it to mean “copy into this directory”. Check the intended destination before changing `to: /usr/sbin/` to `to: /usr/sbin`:
+
+- If `add` is a directory, its contents are merged into `to`.
+- If `add` is a file, it is copied into `to` when `to` is an existing directory; otherwise `to` is the file's destination path. To avoid depending on whether the containing directory exists, specify the full filename, for example `to: /etc/app/config.yaml`, and ensure that path is not a directory.
+
+See [Destination path rules]({{ "/usage/build/stapel/imports.html#destination-path-rules" | true_relative_url }}) for details.
+
+### Git dependencies of build stages
+
+The default for `git.stageDependencies` has changed **for each of `install`, `beforeSetup` and `setup`**:
+
+| Setting | Before — v2 | After — v3 |
+|---|---|---|
+| No masks, or an empty list | Git file changes did not invalidate the stage through `stageDependencies`. | Equivalent to `**/*`: all files in the git mapping are tracked, respecting `includePaths`/`excludePaths`. |
+| Explicit masks | Only matching files affected the stage checksum. | The same: use masks to narrow the dependencies of expensive stages. |
+
+**The default is safer:** changes to source files rerun build commands instead of requiring manual dependency configuration. Builds may run more often. If you specify masks, include every file that affects the stage's result; an empty list no longer disables file tracking.
+
+A non-empty `stageDependencies` entry for a stage with no build instructions now causes an **error instead of a warning**. Correct the stage name, add the missing instructions, or remove the unused entry. See [Dependency on changes in the Git repo]({{ "/usage/build/stapel/instructions.html#dependency-on-changes-in-the-git-repo" | true_relative_url }}).
+
+### Validation of werf-giterminism.yaml
+
+Fix unknown or misspelled keys in `werf-giterminism.yaml`: strict schema validation no longer lets them be silently ignored.
 
 ## Build and CI
+
+**Expect a full rebuild of images after moving to v3. Account for it when planning the upgrade.**
 
 ### Which images are built and listed
 
@@ -101,11 +151,16 @@ werf config list --final-images-only=false
 
 ### Cache and git patches
 
-- **Expect a one-time full rebuild after upgrading.** `WERF_STAGED_DOCKERFILE_VERSION=v1` is no longer supported: staged Dockerfile always uses the v2 code path. Together with the digest-calculation fixes in this release, this invalidates pre-v3 stage caches.
-- **Git stages are reused without checking commit ancestry.** The cached commit no longer has to be an ancestor of the current one. `WERF_DISABLE_GIT_COMMIT_ANCESTRY_CHECK` is removed.
-- **Git patches can overwrite changes made by build commands.** The legacy stapel builder no longer uses `git apply`: a file modified by an earlier `install`/`beforeSetup`/`setup` command is silently overwritten instead of producing a conflict error.
-- If external tools parse werf's raw git patch output, account for the removed `index <sha>..<sha>` line.
-- If integrations use the `werf.io/base-image-id` label or `Info.ParentID` field, update them: both are removed. Cleanup now tracks ancestry using only `werf.io/parent-stage-id`.
+**Git stages are reused without checking commit ancestry.** The cached commit no longer has to be an ancestor of the current one. `WERF_DISABLE_GIT_COMMIT_ANCESTRY_CHECK` is removed.
+
+**Updating files from Git in legacy Stapel.** With the default `git.stageDependencies`, source changes rerun the build commands: no additional action is needed for this change. Updates affect files inside the image, not your Git working tree.
+
+Check configurations that **narrow `git.stageDependencies` and modify source files in build commands**. If Git changes such a file but the processing stage is reused from cache, the file is replaced with its Git version, losing the command's changes. Previously a conflict could stop the build; now it can succeed with unexpected image contents.
+
+- Include the files that trigger processing in the corresponding stage's `git.stageDependencies`, or write generated output separately from the source files.
+- Test a rebuild after changing such a file, not just a clean build.
+
+Text and binary files now use the same update mechanism: copying the required versions from Git. This avoids text-patch application errors, but no longer detects conflicts with changes made by build commands.
 
 ### Removed CI settings
 
@@ -113,6 +168,7 @@ werf config list --final-images-only=false
 |---|---|
 | `--synchronization` / `-S`, `WERF_SYNCHRONIZATION` | Remove them from commands and the environment. There is no replacement: stage tags are content-addressable, so a distributed lock manager is no longer needed. |
 | `--virtual-merge`, `WERF_VIRTUAL_MERGE` | Remove them from commands and the environment. Virtual merge functionality is removed. |
+| `WERF_STAGED_DOCKERFILE_VERSION=v1` | Remove the setting: staged Dockerfile always uses the v2 code path. |
 
 The `werf synchronization` subsystem and the public `synchronization.werf.io` dependency are also removed. There is nothing to migrate; if you ran a private synchronization server, werf v3 no longer needs it.
 
