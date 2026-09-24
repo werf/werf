@@ -474,81 +474,66 @@ var _ = ginkgo.Describe("Cleanup final stages", func() {
 	}
 })
 
-func newCleanupManagerForImportsMetadataTest(ctx context.Context, t *testing.T, protectedStageDescs ...*image.StageDesc) (*cleanupManager, *fakeStorageManager) {
-	sm := newFakeStorageManager()
-	sm.stageDescSet = image.NewStageDescSet(protectedStageDescs...)
+var _ = ginkgo.Describe("Cleanup unused imports metadata", func() {
+	ginkgo.BeforeEach(func() {
+		ginkgo.GinkgoT().Setenv("WERF_EXPERIMENTAL_IMPORT_BY_SOURCE_IMAGE_TAG", "false")
+	})
 
-	stageManager := stage_manager.NewManager()
-	require.NoError(t, stageManager.InitStageDescSet(ctx, sm))
-	for _, stageDesc := range protectedStageDescs {
-		stageManager.MarkStageDescAsProtected(stageDesc, stage_manager.ProtectionReasonImportSource, false)
-	}
+	ginkgo.It("keeps protected imports and deletes unprotected imports", func() {
+		ctx := context.Background()
 
-	report := newTestReport()
-	m := &cleanupManager{
-		stageManager:   stageManager,
-		StorageManager: sm,
-		ProjectName:    "myproject",
-		report:         report,
-	}
-
-	return m, sm
-}
-
-func TestDeleteUnusedImportsMetadata_SkipsProtectedKeepsUnprotected(t *testing.T) {
-	ctx := context.Background()
-
-	protectedStageDesc := &image.StageDesc{
-		StageID: image.NewStageID("protected", 1),
-		Info:    &image.Info{Tag: "protected-tag"},
-	}
-	unprotectedStageID := image.NewStageID("unprotected", 2)
-
-	m, _ := newCleanupManagerForImportsMetadataTest(ctx, t, protectedStageDesc)
-	m.sourceStageIDImportIDs = map[string][]string{
-		protectedStageDesc.StageID.String(): {"kept-import"},
-		unprotectedStageID.String():         {"deleted-import"},
-	}
-
-	require.NoError(t, m.deleteUnusedImportsMetadata(ctx))
-
-	assert.Equal(t, []cleanup_report.Item{
-		{Type: cleanup_report.ItemTypeImportMetadata, ID: "deleted-import"},
-	}, m.report.Deleted)
-}
-
-func TestDeleteUnusedImportsMetadata_NoGoroutineLeak(t *testing.T) {
-	ctx := context.Background()
-
-	// Every source stage below is protected, so each outer-loop iteration matches
-	// and exits as soon as it finds itself among many protected stages, mimicking
-	// the abandoned-Iter() pattern described in the report: the match is very
-	// unlikely to be the last element the set delivers, so completing the match
-	// without draining the rest is what leaks the underlying Iter() goroutine.
-	const stageCount = 200
-
-	protectedStageDescs := make([]*image.StageDesc, 0, stageCount)
-	for i := 0; i < stageCount; i++ {
-		protectedStageDescs = append(protectedStageDescs, &image.StageDesc{
-			StageID: image.NewStageID("protected", int64(i)),
+		protectedStageDesc := &image.StageDesc{
+			StageID: image.NewStageID("protected", 1),
 			Info:    &image.Info{Tag: "protected-tag"},
-		})
-	}
+		}
+		unprotectedStageID := image.NewStageID("unprotected", 2)
 
-	m, _ := newCleanupManagerForImportsMetadataTest(ctx, t, protectedStageDescs...)
+		m := newCleanupManagerForImportsMetadataTest(ctx, protectedStageDesc)
+		m.sourceStageIDImportIDs = map[string][]string{
+			protectedStageDesc.StageID.String(): {"kept-import"},
+			unprotectedStageID.String():         {"deleted-import"},
+		}
 
-	sourceStageIDImportIDs := make(map[string][]string, stageCount)
-	for _, stageDesc := range protectedStageDescs {
-		sourceStageIDImportIDs[stageDesc.StageID.String()] = []string{stageDesc.StageID.String() + "-import"}
-	}
-	m.sourceStageIDImportIDs = sourceStageIDImportIDs
+		gomega.Expect(m.deleteUnusedImportsMetadata(ctx)).To(gomega.Succeed())
 
-	before := runtime.NumGoroutine()
+		gomega.Expect(m.report.Deleted).To(gomega.Equal([]cleanup_report.Item{
+			{Type: cleanup_report.ItemTypeImportMetadata, ID: "deleted-import"},
+		}))
+	})
 
-	require.NoError(t, m.deleteUnusedImportsMetadata(ctx))
+	ginkgo.It("does not leak goroutines when skipping protected stages", func() {
+		ctx := context.Background()
 
-	runtime.Gosched()
-	after := runtime.NumGoroutine()
+		// Every source stage below is protected, so each outer-loop iteration matches
+		// and exits as soon as it finds itself among many protected stages, mimicking
+		// the abandoned-Iter() pattern described in the report: the match is very
+		// unlikely to be the last element the set delivers, so completing the match
+		// without draining the rest is what leaks the underlying Iter() goroutine.
+		const stageCount = 200
 
-	assert.LessOrEqual(t, after, before+5, "deleteUnusedImportsMetadata must not leak a goroutine per skipped-early scan of the protected stage set")
-}
+		protectedStageDescs := make([]*image.StageDesc, 0, stageCount)
+		for i := 0; i < stageCount; i++ {
+			protectedStageDescs = append(protectedStageDescs, &image.StageDesc{
+				StageID: image.NewStageID("protected", int64(i)),
+				Info:    &image.Info{Tag: "protected-tag"},
+			})
+		}
+
+		m := newCleanupManagerForImportsMetadataTest(ctx, protectedStageDescs...)
+
+		sourceStageIDImportIDs := make(map[string][]string, stageCount)
+		for _, stageDesc := range protectedStageDescs {
+			sourceStageIDImportIDs[stageDesc.StageID.String()] = []string{stageDesc.StageID.String() + "-import"}
+		}
+		m.sourceStageIDImportIDs = sourceStageIDImportIDs
+
+		before := runtime.NumGoroutine()
+
+		gomega.Expect(m.deleteUnusedImportsMetadata(ctx)).To(gomega.Succeed())
+
+		runtime.Gosched()
+		after := runtime.NumGoroutine()
+
+		gomega.Expect(after).To(gomega.BeNumerically("<=", before+5), "deleteUnusedImportsMetadata must not leak a goroutine per skipped-early scan of the protected stage set")
+	})
+})
