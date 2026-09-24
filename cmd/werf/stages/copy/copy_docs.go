@@ -1,6 +1,6 @@
 package copy
 
-import "github.com/werf/werf/v2/cmd/werf/docs/structs"
+import "github.com/werf/werf/v3/cmd/werf/docs/structs"
 
 func GetCopyDocs() structs.DocsStruct {
 	var docs structs.DocsStruct

@@ -11,8 +11,8 @@ import (
 	"golang.org/x/sync/singleflight"
 
 	"github.com/werf/logboek"
-	registry_api "github.com/werf/werf/v2/pkg/docker_registry/api"
-	"github.com/werf/werf/v2/pkg/image"
+	registry_api "github.com/werf/werf/v3/pkg/docker_registry/api"
+	"github.com/werf/werf/v3/pkg/image"
 )
 
 const (

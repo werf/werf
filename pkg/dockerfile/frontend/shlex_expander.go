@@ -5,7 +5,7 @@ import (
 
 	"github.com/moby/buildkit/frontend/dockerfile/shell"
 
-	"github.com/werf/werf/v2/pkg/dockerfile"
+	"github.com/werf/werf/v3/pkg/dockerfile"
 )
 
 type ShlexExpanderFactory struct {

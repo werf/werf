@@ -8,7 +8,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/werf/werf/v2/pkg/container_backend"
+	"github.com/werf/werf/v3/pkg/container_backend"
 )
 
 func newBuildContextArchive(t *testing.T, dirName string) *BuildContextArchive {

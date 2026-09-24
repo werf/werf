@@ -5,7 +5,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/samber/lo"
 
-	"github.com/werf/werf/v2/pkg/host_cleaning/units"
+	"github.com/werf/werf/v3/pkg/host_cleaning/units"
 )
 
 var _ = Describe("HostCleanup", func() {

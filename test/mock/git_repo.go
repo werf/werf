@@ -14,11 +14,11 @@ import (
 	reflect "reflect"
 	time "time"
 
-	git_repo "github.com/werf/werf/v2/pkg/git_repo"
-	repo_handle "github.com/werf/werf/v2/pkg/git_repo/repo_handle"
-	path_matcher "github.com/werf/werf/v2/pkg/path_matcher"
-	true_git "github.com/werf/werf/v2/pkg/true_git"
-	ls_tree "github.com/werf/werf/v2/pkg/true_git/ls_tree"
+	git_repo "github.com/werf/werf/v3/pkg/git_repo"
+	repo_handle "github.com/werf/werf/v3/pkg/git_repo/repo_handle"
+	path_matcher "github.com/werf/werf/v3/pkg/path_matcher"
+	true_git "github.com/werf/werf/v3/pkg/true_git"
+	ls_tree "github.com/werf/werf/v3/pkg/true_git/ls_tree"
 	gomock "go.uber.org/mock/gomock"
 )
 

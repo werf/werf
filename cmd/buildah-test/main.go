@@ -10,8 +10,8 @@ import (
 
 	"github.com/opencontainers/runtime-spec/specs-go"
 
-	"github.com/werf/werf/v2/pkg/buildah"
-	"github.com/werf/werf/v2/pkg/werf"
+	"github.com/werf/werf/v3/pkg/buildah"
+	"github.com/werf/werf/v3/pkg/werf"
 )
 
 var errUsage = errors.New(`

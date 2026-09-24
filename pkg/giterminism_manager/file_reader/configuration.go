@@ -11,7 +11,7 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/path_matcher"
+	"github.com/werf/werf/v3/pkg/path_matcher"
 )
 
 type WalkConfigurationFilesWithGlobOptions struct {

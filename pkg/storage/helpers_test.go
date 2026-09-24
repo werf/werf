@@ -6,9 +6,9 @@ import (
 
 	"github.com/google/go-containerregistry/pkg/v1/remote/transport"
 
-	"github.com/werf/werf/v2/pkg/container_backend"
-	"github.com/werf/werf/v2/pkg/docker_registry"
-	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v3/pkg/container_backend"
+	"github.com/werf/werf/v3/pkg/docker_registry"
+	"github.com/werf/werf/v3/pkg/image"
 )
 
 var _ docker_registry.Interface = (*metadataPushRegistry)(nil)

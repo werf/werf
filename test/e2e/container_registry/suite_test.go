@@ -3,7 +3,7 @@ package e2e_container_registry_test
 import (
 	"testing"
 
-	"github.com/werf/werf/v2/test/pkg/suite_init"
+	"github.com/werf/werf/v3/test/pkg/suite_init"
 )
 
 func TestSuite(t *testing.T) {

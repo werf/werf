@@ -9,7 +9,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/prashantv/gostub"
 
-	"github.com/werf/werf/v2/pkg/werf"
+	"github.com/werf/werf/v3/pkg/werf"
 )
 
 var _ = Describe("docker config dir", func() {

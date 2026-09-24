@@ -3,7 +3,7 @@ package import_server
 import (
 	"context"
 
-	"github.com/werf/werf/v2/pkg/config"
+	"github.com/werf/werf/v3/pkg/config"
 )
 
 type ImportServer interface {

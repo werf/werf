@@ -4,7 +4,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/werf/v2/pkg/git_repo"
+	"github.com/werf/werf/v3/pkg/git_repo"
 )
 
 type entry struct {

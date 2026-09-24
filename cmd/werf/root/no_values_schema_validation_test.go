@@ -6,14 +6,14 @@ import (
 
 	"github.com/spf13/cobra"
 
-	bundle_apply "github.com/werf/werf/v2/cmd/werf/bundle/apply"
-	bundle_plan "github.com/werf/werf/v2/cmd/werf/bundle/plan"
-	bundle_render "github.com/werf/werf/v2/cmd/werf/bundle/render"
-	"github.com/werf/werf/v2/cmd/werf/converge"
-	"github.com/werf/werf/v2/cmd/werf/lint"
-	"github.com/werf/werf/v2/cmd/werf/plan"
-	"github.com/werf/werf/v2/cmd/werf/render"
-	"github.com/werf/werf/v2/cmd/werf/rollback"
+	bundle_apply "github.com/werf/werf/v3/cmd/werf/bundle/apply"
+	bundle_plan "github.com/werf/werf/v3/cmd/werf/bundle/plan"
+	bundle_render "github.com/werf/werf/v3/cmd/werf/bundle/render"
+	"github.com/werf/werf/v3/cmd/werf/converge"
+	"github.com/werf/werf/v3/cmd/werf/lint"
+	"github.com/werf/werf/v3/cmd/werf/plan"
+	"github.com/werf/werf/v3/cmd/werf/render"
+	"github.com/werf/werf/v3/cmd/werf/rollback"
 )
 
 func TestNoValuesSchemaValidationFlagOnAllRenderingCommands(t *testing.T) {

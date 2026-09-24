@@ -5,11 +5,11 @@ import (
 	"fmt"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/cleaning/stage_manager"
-	"github.com/werf/werf/v2/pkg/cleanup_report"
-	"github.com/werf/werf/v2/pkg/image"
-	"github.com/werf/werf/v2/pkg/storage"
-	"github.com/werf/werf/v2/pkg/storage/manager"
+	"github.com/werf/werf/v3/pkg/cleaning/stage_manager"
+	"github.com/werf/werf/v3/pkg/cleanup_report"
+	"github.com/werf/werf/v3/pkg/image"
+	"github.com/werf/werf/v3/pkg/storage"
+	"github.com/werf/werf/v3/pkg/storage/manager"
 )
 
 type PurgeOptions struct {

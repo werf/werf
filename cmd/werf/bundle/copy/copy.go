@@ -10,12 +10,12 @@ import (
 	"github.com/werf/logboek"
 	nelmcommon "github.com/werf/nelm/v2/pkg/common"
 	helm "github.com/werf/nelm/v2/pkg/helm/pkg/cmd"
-	"github.com/werf/werf/v2/cmd/werf/common"
-	"github.com/werf/werf/v2/pkg/deploy/bundles"
-	"github.com/werf/werf/v2/pkg/docker_registry"
-	"github.com/werf/werf/v2/pkg/ref"
-	"github.com/werf/werf/v2/pkg/tmp_manager"
-	"github.com/werf/werf/v2/pkg/werf/global_warnings"
+	"github.com/werf/werf/v3/cmd/werf/common"
+	"github.com/werf/werf/v3/pkg/deploy/bundles"
+	"github.com/werf/werf/v3/pkg/docker_registry"
+	"github.com/werf/werf/v3/pkg/ref"
+	"github.com/werf/werf/v3/pkg/tmp_manager"
+	"github.com/werf/werf/v3/pkg/werf/global_warnings"
 )
 
 var cmdData struct {

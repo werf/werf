@@ -14,17 +14,17 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/cleaning/allow_list"
-	"github.com/werf/werf/v2/pkg/cleaning/git_history_based_cleanup"
-	"github.com/werf/werf/v2/pkg/cleaning/stage_manager"
-	"github.com/werf/werf/v2/pkg/cleanup_report"
-	"github.com/werf/werf/v2/pkg/config"
-	"github.com/werf/werf/v2/pkg/docker_registry"
-	"github.com/werf/werf/v2/pkg/image"
-	"github.com/werf/werf/v2/pkg/logging"
-	"github.com/werf/werf/v2/pkg/storage"
-	"github.com/werf/werf/v2/pkg/storage/manager"
-	"github.com/werf/werf/v2/pkg/util/parallel"
+	"github.com/werf/werf/v3/pkg/cleaning/allow_list"
+	"github.com/werf/werf/v3/pkg/cleaning/git_history_based_cleanup"
+	"github.com/werf/werf/v3/pkg/cleaning/stage_manager"
+	"github.com/werf/werf/v3/pkg/cleanup_report"
+	"github.com/werf/werf/v3/pkg/config"
+	"github.com/werf/werf/v3/pkg/docker_registry"
+	"github.com/werf/werf/v3/pkg/image"
+	"github.com/werf/werf/v3/pkg/logging"
+	"github.com/werf/werf/v3/pkg/storage"
+	"github.com/werf/werf/v3/pkg/storage/manager"
+	"github.com/werf/werf/v3/pkg/util/parallel"
 )
 
 type CleanupOptions struct {

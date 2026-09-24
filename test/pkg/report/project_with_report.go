@@ -8,8 +8,8 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/werf/nelm/v2/pkg/action"
-	"github.com/werf/werf/v2/pkg/build"
-	werftest "github.com/werf/werf/v2/test/pkg/werf"
+	"github.com/werf/werf/v3/pkg/build"
+	werftest "github.com/werf/werf/v3/test/pkg/werf"
 )
 
 type Project struct {

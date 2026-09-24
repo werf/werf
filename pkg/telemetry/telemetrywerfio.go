@@ -17,7 +17,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/werf/common-go/pkg/util"
-	"github.com/werf/werf/v2/pkg/werf"
+	"github.com/werf/werf/v3/pkg/werf"
 )
 
 const (

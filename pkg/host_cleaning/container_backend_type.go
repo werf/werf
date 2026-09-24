@@ -1,6 +1,6 @@
 package host_cleaning
 
-import "github.com/werf/werf/v2/pkg/container_backend"
+import "github.com/werf/werf/v3/pkg/container_backend"
 
 //go:generate enumer -type=containerBackendType -trimprefix=containerBackend
 

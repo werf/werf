@@ -9,9 +9,9 @@ import (
 	"al.essio.dev/pkg/shellescape"
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/werf/v2/pkg/docker"
-	"github.com/werf/werf/v2/pkg/stapel"
-	"github.com/werf/werf/v2/test/pkg/utils"
+	"github.com/werf/werf/v3/pkg/docker"
+	"github.com/werf/werf/v3/pkg/stapel"
+	"github.com/werf/werf/v3/test/pkg/utils"
 )
 
 func init() {

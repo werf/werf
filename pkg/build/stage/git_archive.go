@@ -6,8 +6,8 @@ import (
 	"sort"
 
 	"github.com/werf/common-go/pkg/util"
-	"github.com/werf/werf/v2/pkg/container_backend"
-	"github.com/werf/werf/v2/pkg/git_repo"
+	"github.com/werf/werf/v3/pkg/container_backend"
+	"github.com/werf/werf/v3/pkg/git_repo"
 )
 
 type NewGitArchiveStageOptions struct {

@@ -10,8 +10,8 @@ import (
 	"github.com/docker/docker/pkg/stringid"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/image"
-	"github.com/werf/werf/v2/pkg/ssh_agent"
+	"github.com/werf/werf/v3/pkg/image"
+	"github.com/werf/werf/v3/pkg/ssh_agent"
 )
 
 const (

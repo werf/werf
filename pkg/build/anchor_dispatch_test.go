@@ -9,10 +9,10 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/require"
 
-	buildImage "github.com/werf/werf/v2/pkg/build/image"
-	"github.com/werf/werf/v2/pkg/build/stage"
-	"github.com/werf/werf/v2/pkg/config"
-	imagePkg "github.com/werf/werf/v2/pkg/image"
+	buildImage "github.com/werf/werf/v3/pkg/build/image"
+	"github.com/werf/werf/v3/pkg/build/stage"
+	"github.com/werf/werf/v3/pkg/config"
+	imagePkg "github.com/werf/werf/v3/pkg/image"
 )
 
 type anchorStub struct {

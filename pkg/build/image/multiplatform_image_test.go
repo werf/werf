@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/werf/common-go/pkg/util"
-	common_image "github.com/werf/werf/v2/pkg/image"
+	common_image "github.com/werf/werf/v3/pkg/image"
 )
 
 func newTestImage(t *testing.T, targetPlatform, name string) *Image {

@@ -4,7 +4,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/werf/v2/pkg/ref"
+	"github.com/werf/werf/v3/pkg/ref"
 )
 
 var _ = Describe("Bundle addr", func() {

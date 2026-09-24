@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v3/pkg/image"
 )
 
 const DefaultImplementationName = "default"

@@ -8,7 +8,7 @@ import (
 	"github.com/samber/lo"
 
 	nelmcommon "github.com/werf/nelm/v2/pkg/common"
-	"github.com/werf/werf/v2/pkg/logging"
+	"github.com/werf/werf/v3/pkg/logging"
 )
 
 // The commit walk resolves every symlink it does not skip, so these specs need a real repository:

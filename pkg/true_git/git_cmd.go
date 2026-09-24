@@ -10,7 +10,7 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
-	werfExec "github.com/werf/werf/v2/pkg/werf/exec"
+	werfExec "github.com/werf/werf/v3/pkg/werf/exec"
 )
 
 func NewGitCmd(ctx context.Context, opts *GitCmdOptions, cliArgs ...string) GitCmd {

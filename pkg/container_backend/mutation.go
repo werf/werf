@@ -14,8 +14,8 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/mutate"
 	"github.com/google/go-containerregistry/pkg/v1/tarball"
 
-	"github.com/werf/werf/v2/pkg/image"
-	"github.com/werf/werf/v2/pkg/tmp_manager"
+	"github.com/werf/werf/v3/pkg/image"
+	"github.com/werf/werf/v3/pkg/tmp_manager"
 )
 
 type BackendLoaderStorer interface {

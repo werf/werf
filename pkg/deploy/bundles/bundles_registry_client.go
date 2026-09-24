@@ -5,7 +5,7 @@ import (
 
 	nelmcommon "github.com/werf/nelm/v2/pkg/common"
 	chart "github.com/werf/nelm/v2/pkg/helm/pkg/chart/v2"
-	bundles_registry "github.com/werf/werf/v2/pkg/ref"
+	bundles_registry "github.com/werf/werf/v3/pkg/ref"
 )
 
 type BundlesRegistryClient interface {

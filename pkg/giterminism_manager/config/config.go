@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/werf/common-go/pkg/util"
-	"github.com/werf/werf/v2/pkg/path_matcher"
+	"github.com/werf/werf/v3/pkg/path_matcher"
 )
 
 func NewConfig(ctx context.Context, fileReader fileReader, configRelPath string) (c Config, err error) {

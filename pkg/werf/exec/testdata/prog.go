@@ -8,9 +8,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/werf/werf/v2/pkg/background"
-	"github.com/werf/werf/v2/pkg/werf"
-	"github.com/werf/werf/v2/pkg/werf/exec"
+	"github.com/werf/werf/v3/pkg/background"
+	"github.com/werf/werf/v3/pkg/werf"
+	"github.com/werf/werf/v3/pkg/werf/exec"
 )
 
 func main() {

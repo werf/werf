@@ -8,7 +8,7 @@ import (
 	"sync"
 	"unicode/utf8"
 
-	"github.com/werf/werf/v2/pkg/tmp_manager"
+	"github.com/werf/werf/v3/pkg/tmp_manager"
 )
 
 // TaskOutput buffers the log of a single task in a temp file so it can be

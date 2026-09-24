@@ -25,10 +25,10 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/types"
 
 	"github.com/werf/logboek"
-	registry_api "github.com/werf/werf/v2/pkg/docker_registry/api"
-	"github.com/werf/werf/v2/pkg/docker_registry/container_registry_extensions"
-	"github.com/werf/werf/v2/pkg/image"
-	"github.com/werf/werf/v2/pkg/werf"
+	registry_api "github.com/werf/werf/v3/pkg/docker_registry/api"
+	"github.com/werf/werf/v3/pkg/docker_registry/container_registry_extensions"
+	"github.com/werf/werf/v3/pkg/image"
+	"github.com/werf/werf/v3/pkg/werf"
 )
 
 type api struct {

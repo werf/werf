@@ -3,7 +3,7 @@ package storage
 import (
 	"context"
 
-	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v3/pkg/image"
 )
 
 type PrimaryStagesStorage interface {

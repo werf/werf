@@ -10,8 +10,8 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/nelm/v2/pkg/common"
-	"github.com/werf/werf/v2/pkg/host_cleaning/units"
-	"github.com/werf/werf/v2/pkg/util/option"
+	"github.com/werf/werf/v3/pkg/host_cleaning/units"
+	"github.com/werf/werf/v3/pkg/util/option"
 )
 
 type CmdData struct {

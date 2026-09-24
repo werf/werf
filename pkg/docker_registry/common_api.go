@@ -14,8 +14,8 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/remote/transport"
 
 	"github.com/werf/logboek"
-	transport2 "github.com/werf/werf/v2/pkg/docker_registry/transport"
-	"github.com/werf/werf/v2/pkg/werf"
+	transport2 "github.com/werf/werf/v3/pkg/docker_registry/transport"
+	"github.com/werf/werf/v3/pkg/werf"
 )
 
 type apiError struct {

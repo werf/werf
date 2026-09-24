@@ -12,8 +12,8 @@ import (
 	flag "github.com/spf13/pflag"
 
 	"github.com/werf/common-go/pkg/util"
-	"github.com/werf/werf/v2/pkg/git_repo"
-	"github.com/werf/werf/v2/pkg/telemetry"
+	"github.com/werf/werf/v3/pkg/git_repo"
+	"github.com/werf/werf/v3/pkg/telemetry"
 )
 
 var telemetryIgnoreCommands = []string{

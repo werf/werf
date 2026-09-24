@@ -1,7 +1,7 @@
 package prune
 
 import (
-	"github.com/werf/werf/v2/pkg/container_backend/filter"
+	"github.com/werf/werf/v3/pkg/container_backend/filter"
 )
 
 type Options struct {

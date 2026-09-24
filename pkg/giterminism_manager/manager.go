@@ -5,12 +5,12 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/git_repo"
-	"github.com/werf/werf/v2/pkg/giterminism_manager/config"
-	"github.com/werf/werf/v2/pkg/giterminism_manager/errors"
-	filemanager "github.com/werf/werf/v2/pkg/giterminism_manager/file_manager"
-	"github.com/werf/werf/v2/pkg/giterminism_manager/file_reader"
-	"github.com/werf/werf/v2/pkg/giterminism_manager/inspector"
+	"github.com/werf/werf/v3/pkg/git_repo"
+	"github.com/werf/werf/v3/pkg/giterminism_manager/config"
+	"github.com/werf/werf/v3/pkg/giterminism_manager/errors"
+	filemanager "github.com/werf/werf/v3/pkg/giterminism_manager/file_manager"
+	"github.com/werf/werf/v3/pkg/giterminism_manager/file_reader"
+	"github.com/werf/werf/v3/pkg/giterminism_manager/inspector"
 )
 
 type NewManagerOptions struct {

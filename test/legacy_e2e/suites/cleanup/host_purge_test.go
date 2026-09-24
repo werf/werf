@@ -4,9 +4,9 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/werf/v2/pkg/docker_registry"
-	"github.com/werf/werf/v2/pkg/werf"
-	"github.com/werf/werf/v2/test/pkg/utils"
+	"github.com/werf/werf/v3/pkg/docker_registry"
+	"github.com/werf/werf/v3/pkg/werf"
+	"github.com/werf/werf/v3/test/pkg/utils"
 )
 
 var _ = Describe("host purge command", func() {

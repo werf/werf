@@ -7,8 +7,8 @@ import (
 	"github.com/werf/logboek"
 	nelmcommon "github.com/werf/nelm/v2/pkg/common"
 	chartv2util "github.com/werf/nelm/v2/pkg/helm/pkg/chart/v2/util"
-	"github.com/werf/werf/v2/pkg/deploy/bundles/registry"
-	"github.com/werf/werf/v2/pkg/ref"
+	"github.com/werf/werf/v3/pkg/deploy/bundles/registry"
+	"github.com/werf/werf/v3/pkg/ref"
 )
 
 func Pull(ctx context.Context, bundleRef, destDir string, bundlesRegistryClient *registry.Client, opts nelmcommon.HelmOptions) error {

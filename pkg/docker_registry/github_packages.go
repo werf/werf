@@ -10,7 +10,7 @@ import (
 
 	"github.com/google/go-containerregistry/pkg/name"
 
-	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v3/pkg/image"
 )
 
 const (

@@ -10,8 +10,8 @@ import (
 
 	"github.com/containerd/containerd/platforms"
 
-	"github.com/werf/werf/v2/pkg/container_backend/thirdparty/platformutil"
-	"github.com/werf/werf/v2/pkg/docker"
+	"github.com/werf/werf/v3/pkg/container_backend/thirdparty/platformutil"
+	"github.com/werf/werf/v3/pkg/docker"
 )
 
 type embeddedImage struct {

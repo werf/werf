@@ -9,13 +9,13 @@ import (
 	"github.com/onsi/gomega"
 	"gopkg.in/yaml.v3"
 
-	"github.com/werf/werf/v2/pkg/git_repo"
-	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
-	"github.com/werf/werf/v2/pkg/giterminism_manager"
-	filemanager "github.com/werf/werf/v2/pkg/giterminism_manager/file_manager"
-	"github.com/werf/werf/v2/pkg/true_git"
-	"github.com/werf/werf/v2/pkg/werf"
-	"github.com/werf/werf/v2/test/pkg/utils"
+	"github.com/werf/werf/v3/pkg/git_repo"
+	"github.com/werf/werf/v3/pkg/git_repo/gitdata"
+	"github.com/werf/werf/v3/pkg/giterminism_manager"
+	filemanager "github.com/werf/werf/v3/pkg/giterminism_manager/file_manager"
+	"github.com/werf/werf/v3/pkg/true_git"
+	"github.com/werf/werf/v3/pkg/werf"
+	"github.com/werf/werf/v3/test/pkg/utils"
 )
 
 func newChartFileManager(ctx context.Context, destination string, localOverride bool) (*filemanager.FileManager, string, map[string]string) {

@@ -5,7 +5,7 @@ import (
 
 	"go.podman.io/storage/types"
 
-	"github.com/werf/werf/v2/pkg/log_sanitize"
+	"github.com/werf/werf/v3/pkg/log_sanitize"
 )
 
 var (

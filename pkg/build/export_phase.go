@@ -12,10 +12,10 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
-	build_image "github.com/werf/werf/v2/pkg/build/image"
-	"github.com/werf/werf/v2/pkg/image"
-	"github.com/werf/werf/v2/pkg/storage"
-	"github.com/werf/werf/v2/pkg/util/parallel"
+	build_image "github.com/werf/werf/v3/pkg/build/image"
+	"github.com/werf/werf/v3/pkg/image"
+	"github.com/werf/werf/v3/pkg/storage"
+	"github.com/werf/werf/v3/pkg/util/parallel"
 )
 
 type Exporter struct {

@@ -10,7 +10,7 @@ import (
 
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/level"
-	"github.com/werf/werf/v2/pkg/opstats"
+	"github.com/werf/werf/v3/pkg/opstats"
 )
 
 var _ = Describe("Conveyor operations collector gate", func() {
