@@ -9,10 +9,10 @@ import (
 
 	"github.com/samber/lo"
 
-	"github.com/werf/werf/v2/pkg/logging"
-	utilExec "github.com/werf/werf/v2/pkg/util/exec"
-	"github.com/werf/werf/v2/pkg/util/option"
-	"github.com/werf/werf/v2/pkg/werf"
+	"github.com/werf/werf/v3/pkg/logging"
+	utilExec "github.com/werf/werf/v3/pkg/util/exec"
+	"github.com/werf/werf/v3/pkg/util/option"
+	"github.com/werf/werf/v3/pkg/werf"
 )
 
 // Detach executes werf binary in new detached process.

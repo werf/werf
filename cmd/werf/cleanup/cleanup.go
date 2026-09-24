@@ -9,14 +9,13 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/werf/common-go/pkg/util"
-	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/cmd/werf/common"
-	"github.com/werf/werf/v2/pkg/cleaning"
-	"github.com/werf/werf/v2/pkg/git_repo"
-	"github.com/werf/werf/v2/pkg/tmp_manager"
-	"github.com/werf/werf/v2/pkg/true_git"
-	"github.com/werf/werf/v2/pkg/werf/global_warnings"
+	"github.com/werf/werf/v3/cmd/werf/common"
+	"github.com/werf/werf/v3/pkg/cleaning"
+	"github.com/werf/werf/v3/pkg/git_repo"
+	"github.com/werf/werf/v3/pkg/tmp_manager"
+	"github.com/werf/werf/v3/pkg/true_git"
+	"github.com/werf/werf/v3/pkg/werf/global_warnings"
 )
 
 var commonCmdData common.CmdData
@@ -73,11 +72,11 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{OptionalRepo: false})
 	common.SetupFinalRepo(&commonCmdData, cmd)
+	common.SetupMetaRepo(&commonCmdData, cmd)
 	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultCleanupParallelTasksLimit)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and delete images from the specified repo")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
-	common.StubSetupInsecureHelmDependencies(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 	common.SetupContainerRegistryMirror(&commonCmdData, cmd)
 
@@ -91,7 +90,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupLogOptions(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 
-	common.SetupSynchronization(&commonCmdData, cmd)
 	common.SetupWithoutKube(&commonCmdData, cmd)
 	common.SetupKeepStagesBuiltWithinLastNHours(&commonCmdData, cmd)
 
@@ -151,11 +149,6 @@ func runCleanup(ctx context.Context, cmd *cobra.Command) error {
 			logboek.Context(ctx).Error().LogF("Auto host cleanup failed: %s\n", err)
 		}
 	}()
-
-	common.SetupOndemandKubeInitializer(cmdData.ScanContextOnly, commonCmdData.LegacyKubeConfigPath, commonCmdData.KubeConfigBase64, commonCmdData.LegacyKubeConfigPathsMergeList, commonCmdData.KubeBearerTokenData, commonCmdData.KubeBearerTokenPath)
-	if err := common.GetOndemandKubeInitializer().Init(ctx); err != nil {
-		return err
-	}
 
 	giterminismManager, err := common.GetGiterminismManager(ctx, &commonCmdData)
 	if err != nil {
@@ -217,16 +210,16 @@ func runCleanup(ctx context.Context, cmd *cobra.Command) error {
 		storageManager.EnableParallel(int(common.GetParallelTasksLimit(&commonCmdData)))
 	}
 
-	imagesNames, err := common.GetManagedImagesNames(ctx, projectName, storageManager.StagesStorage, werfConfig)
+	imagesNames, err := common.GetManagedImagesNames(ctx, projectName, storageManager.GetMetaStorage(), werfConfig)
 	if err != nil {
 		return err
 	}
 	logboek.Debug().LogF("Managed images names: %v\n", imagesNames)
 
-	var kubernetesContextClients []*kube.ContextClient
+	var kubernetesContextClients []*cleaning.ContextClient
 	var kubernetesNamespacesByContext map[string][]string
 	if !(*commonCmdData.WithoutKube || werfConfig.Meta.Cleanup.DisableKubernetesBasedPolicy) {
-		kubernetesContextClients, err = common.GetKubernetesContextClients(
+		kubernetesContextClients, err = cleaning.GetKubernetesContextClients(
 			commonCmdData.LegacyKubeConfigPath,
 			commonCmdData.KubeConfigBase64,
 			commonCmdData.LegacyKubeConfigPathsMergeList,
@@ -242,7 +235,7 @@ func runCleanup(ctx context.Context, cmd *cobra.Command) error {
 		}
 	}
 
-	kubernetesNamespacesByContext = common.GetKubernetesNamespacesByContext(&commonCmdData, kubernetesContextClients)
+	kubernetesNamespacesByContext = cleaning.GetKubernetesNamespacesByContext(&commonCmdData, kubernetesContextClients)
 
 	keepList := cleaning.NewKeepListWithSize(0)
 

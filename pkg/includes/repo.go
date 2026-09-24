@@ -10,8 +10,10 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/git_repo"
+	"github.com/werf/werf/v3/pkg/git_repo"
 )
+
+//go:generate mockgen -source repo.go -package mock -destination ../../test/mock/includes_repo.go
 
 type GitRepository interface {
 	PlainOpen() (*git.Repository, error)

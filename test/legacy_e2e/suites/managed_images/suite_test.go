@@ -3,10 +3,12 @@ package managed_images_test
 import (
 	"testing"
 
-	"github.com/werf/werf/v2/test/pkg/suite_init"
+	"github.com/werf/werf/v3/test/pkg/suite_init"
 )
 
-var testSuiteEntrypointFunc = suite_init.MakeTestSuiteEntrypointFunc("Managed Images suite", suite_init.TestSuiteEntrypointFuncOptions{})
+var testSuiteEntrypointFunc = suite_init.MakeTestSuiteEntrypointFunc("Managed Images suite", suite_init.TestSuiteEntrypointFuncOptions{
+	SuiteLabels: []string{suite_init.LabelNeedsRegistry},
+})
 
 func TestSuite(t *testing.T) {
 	testSuiteEntrypointFunc(t)
@@ -22,5 +24,5 @@ var (
 	_ = SuiteData.SetupWerfBinary(suite_init.NewWerfBinaryData(SuiteData.SynchronizedSuiteCallbacksData))
 	_ = SuiteData.SetupProjectName(suite_init.NewProjectNameData(SuiteData.StubsData))
 	_ = SuiteData.SetupTmp(suite_init.NewTmpDirData())
-	_ = SuiteData.SetupContainerRegistryPerImplementation(suite_init.NewContainerRegistryPerImplementationData(SuiteData.SynchronizedSuiteCallbacksData, true))
+	_ = SuiteData.SetupK8sDockerRegistry(suite_init.NewK8sDockerRegistryData(SuiteData.ProjectNameData, SuiteData.StubsData))
 )

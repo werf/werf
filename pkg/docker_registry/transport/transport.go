@@ -7,7 +7,7 @@ import (
 	"github.com/cenkalti/backoff/v5"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/util/parallel"
+	"github.com/werf/werf/v3/pkg/util/parallel"
 )
 
 type transport struct {

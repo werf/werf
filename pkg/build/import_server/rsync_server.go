@@ -14,10 +14,10 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/config"
-	"github.com/werf/werf/v2/pkg/docker"
-	"github.com/werf/werf/v2/pkg/image"
-	"github.com/werf/werf/v2/pkg/stapel"
+	"github.com/werf/werf/v3/pkg/config"
+	"github.com/werf/werf/v3/pkg/docker"
+	"github.com/werf/werf/v3/pkg/image"
+	"github.com/werf/werf/v3/pkg/stapel"
 )
 
 func debugImportServer() bool {
@@ -178,7 +178,7 @@ func (srv *RsyncServer) GetCopyCommand(ctx context.Context, importConfig *config
 	command := strings.Join(args, " && ")
 
 	if debugImportServer() {
-		logboek.Context(ctx).Debug().LogF("Rsync server copy commands for import: artifact=%q image=%q add=%s to=%s includePaths=%v excludePaths=%v: %q\n", importConfig.ArtifactName, importConfig.ImageName, importConfig.Add, importConfig.To, importConfig.IncludePaths, importConfig.ExcludePaths, command)
+		logboek.Context(ctx).Debug().LogF("Rsync server copy commands for import: image=%q add=%s to=%s includePaths=%v excludePaths=%v: %q\n", importConfig.From, importConfig.Add, importConfig.To, importConfig.IncludePaths, importConfig.ExcludePaths, command)
 	}
 
 	return command

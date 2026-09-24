@@ -17,9 +17,9 @@ import (
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/common-go/pkg/util/timestamps"
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/opstats"
-	"github.com/werf/werf/v2/pkg/true_git"
-	"github.com/werf/werf/v2/pkg/werf"
+	"github.com/werf/werf/v3/pkg/opstats"
+	"github.com/werf/werf/v3/pkg/true_git"
+	"github.com/werf/werf/v3/pkg/werf"
 )
 
 var fullLengthCommitSHARegexp = regexp.MustCompile(`^[0-9a-fA-F]{40}$`)

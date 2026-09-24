@@ -9,7 +9,7 @@ permalink: usage/deploy/typescript.html
 
 In addition to [Helm templates]({{ "/usage/deploy/templates.html" | true_relative_url }}), werf can generate Kubernetes manifests with TypeScript. Helm templates and TypeScript templates can coexist in the same chart — resulting manifests are merged into a single multi-doc YAML document.
 
-TypeScript templates work out of the box: deploying a chart that contains a `ts/` directory requires no additional tools or configuration — werf automatically downloads the Deno TypeScript runtime and renders the TypeScript templates.
+TypeScript templates work out of the box: deploying a chart that contains a `ts/` directory requires no additional tools or configuration — the Deno TypeScript runtime is shipped inside werf itself and renders the TypeScript templates.
 
 ### Why TypeScript
 
@@ -24,7 +24,7 @@ Helm's templating language works well for simple cases but becomes hard to maint
 - Almost any third-party TypeScript/JavaScript library can be used, for example [kubernetes-models](https://github.com/tommy351/kubernetes-models-ts), [cdk8s](https://cdk8s.io/) or any other library from npm/Deno ecosystems.
 - Testing — test your code using common TypeScript libraries and tooling.
 - No extra host requirements — to deploy a TS chart all you need is werf. No need to install Node, Deno, npm, npm modules or anything else. We handle all of this for you, just do a `werf converge`.
-- Isolated environments — npm modules are bundled into the chart by default, and the Deno runtime can be provided by the host system, so no network calls will be done during the deployment, except to the Kubernetes itself.
+- Isolated environments — npm modules are bundled into the chart by default, and the Deno runtime is shipped inside werf, so no network calls will be done during the deployment, except to the Kubernetes itself.
 - Security — code runs in an isolated Deno sandbox with no access to the network, environment variables, or process execution. Filesystem access is limited to reading chart files.
 
 ## Quick start
@@ -106,13 +106,13 @@ werf render --dev
 
 ## How to deploy a chart with TypeScript templates
 
-Simply run `werf converge`: the Deno binary will be downloaded into the cache and TypeScript templates will be rendered and deployed.
+Simply run `werf converge`: the Deno binary will be unpacked from werf into the cache and TypeScript templates will be rendered and deployed.
 
 > **Note**: According to [giterminism policies]({{ "/usage/project_configuration/giterminism.html" | true_relative_url }}), all changed files must be committed.
 
 ## Deploying into isolated environments
 
-For the isolated environments, where Deno cannot be downloaded automatically:
+Deno runtime is shipped inside werf, so an isolated environment only requires the chart itself to be self-contained:
 
 1. Publish the chart:
    ```shell
@@ -120,11 +120,11 @@ For the isolated environments, where Deno cannot be downloaded automatically:
    ```
    All npm modules will be minified and bundled inside, so that the chart can be installed even without Internet access.
 
-2. On the target machine with an isolated environment (no network access), download Deno manually and run:
+2. On the target machine with an isolated environment (no network access), run:
    ```shell
-   werf bundle apply --repo example.org/mycompany/myapp --deno-binary-path /usr/local/bin/deno
+   werf bundle apply --repo example.org/mycompany/myapp
    ```
-   Where `/usr/local/bin/deno` is the path to the local Deno binary. TypeScript templates will be rendered and deployed using pre-compiled files from the chart bundle.
+   TypeScript templates will be rendered and deployed using pre-compiled files from the chart bundle.
 
 ## SDK API overview
 

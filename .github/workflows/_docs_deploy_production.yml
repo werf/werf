@@ -47,6 +47,10 @@ jobs:
           fi
 
           case "$github_ref_value" in
+            3|v3|v3.*)
+              docs_ref_value="v3"
+              release_name="werfio-v3-production"
+              ;;
             2|v2|v2.*)
               docs_ref_value="v2"
               release_name="werfio-v2-production"
@@ -56,8 +60,8 @@ jobs:
               release_name="werfio-v1-dot-2-production"
               ;;
             main|latest)
-              docs_ref_value="v2"
-              release_name="werfio-v2-production"
+              docs_ref_value="v3"
+              release_name="werfio-v3-production"
               ;;
             *)
               echo "Unsupported docs production ref: $github_ref_value" >&2

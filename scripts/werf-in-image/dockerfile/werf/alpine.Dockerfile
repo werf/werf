@@ -2,7 +2,7 @@ FROM alpine:3.18
 ARG TARGETARCH
 ARG USERS="build build1001"
 
-RUN apk add --no-cache fuse-overlayfs git shadow-uidmap libcap git-lfs curl gnupg nano jq bash make ca-certificates openssh-client iproute2-ss busybox-extras tzdata
+RUN apk add --no-cache fuse-overlayfs netavark git shadow-uidmap libcap git-lfs curl gnupg nano jq bash make ca-certificates openssh-client iproute2-ss busybox-extras tzdata
 
 RUN curl -sSLO https://github.com/mikefarah/yq/releases/latest/download/yq_linux_${TARGETARCH} && \
     mv yq_linux_${TARGETARCH} /usr/local/bin/yq && \

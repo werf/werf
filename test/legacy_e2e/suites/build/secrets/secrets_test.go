@@ -12,9 +12,9 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/werf/v2/test/pkg/contback"
-	"github.com/werf/werf/v2/test/pkg/utils"
-	"github.com/werf/werf/v2/test/pkg/werf"
+	"github.com/werf/werf/v3/test/pkg/contback"
+	"github.com/werf/werf/v3/test/pkg/utils"
+	"github.com/werf/werf/v3/test/pkg/werf"
 )
 
 type testOptions struct {
@@ -28,12 +28,7 @@ var _ = Describe("build with secrets and ssh mounts", Label("integration", "buil
 	DescribeTable("should succeed",
 		func(ctx SpecContext, testOpts testOptions) {
 			setupEnv(testOpts)
-			_, err := contback.NewContainerBackend(testOpts.ContainerBackendMode)
-			if err == contback.ErrRuntimeUnavailable {
-				Skip(err.Error())
-			} else if err != nil {
-				Fail(err.Error())
-			}
+			contback.SkipIfUnavailable(testOpts.ContainerBackendMode)
 
 			runOpts := &werf.BuildOptions{}
 			repoDirname := "repo0"
@@ -42,6 +37,7 @@ var _ = Describe("build with secrets and ssh mounts", Label("integration", "buil
 			if testOpts.SSH {
 				By(fmt.Sprintf("%s: generating sekret key for ssh agent", testOpts.State))
 				fixtureRelPath = "build_with_ssh"
+				var err error
 				keyFile, err = generateSSHKey(fmt.Sprintf("id_rsa_werf_test_%s", utils.GetRandomString(5)), 2048)
 				Expect(err).NotTo(HaveOccurred())
 				runOpts.ExtraArgs = append(runOpts.ExtraArgs, "--ssh-key", keyFile)
@@ -53,26 +49,17 @@ var _ = Describe("build with secrets and ssh mounts", Label("integration", "buil
 				}
 			}()
 
-			Expect(err).NotTo(HaveOccurred())
-
 			By(fmt.Sprintf("%s: preparing test repo", testOpts.State))
 			SuiteData.InitTestRepo(ctx, repoDirname, fixtureRelPath)
 
 			By(fmt.Sprintf("%s: building images", testOpts.State))
 			werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
-			if testOpts.ContainerBackendMode == "vanilla-docker" {
-				runOpts.ExtraArgs = append([]string{"stapel-shell"}, runOpts.ExtraArgs...)
-			}
 			buildOut := werfProject.Build(ctx, runOpts)
 			Expect(buildOut).To(ContainSubstring("Building stage"))
 			Expect(buildOut).NotTo(ContainSubstring("Use previously built image"))
 		},
-		Entry("with Vanilla Docker", testOptions{
-			ContainerBackendMode: "vanilla-docker",
-		}),
-		Entry("with BuildKit Docker", testOptions{
-			ContainerBackendMode: "buildkit-docker",
-			SSH:                  false,
+		Entry("with Docker", testOptions{
+			ContainerBackendMode: "docker",
 		}),
 		// Entry("with Native Buildah with rootless isolation", testOptions{
 		//	ContainerBackendMode: "native-rootless",
@@ -86,12 +73,8 @@ var _ = Describe("build with secrets and ssh mounts", Label("integration", "buil
 			WithStagedDockerfileBuilder: true,
 			SSH:                         false,
 		}),
-		Entry("with Vanilla Docker with SSH", testOptions{
-			ContainerBackendMode: "vanilla-docker",
-			SSH:                  true,
-		}),
-		Entry("with BuildKit Docker with SSH", testOptions{
-			ContainerBackendMode: "buildkit-docker",
+		Entry("with Docker with SSH", testOptions{
+			ContainerBackendMode: "docker",
 			SSH:                  true,
 		}),
 		Entry("with Native Buildah with rootless isolation with SSH", testOptions{

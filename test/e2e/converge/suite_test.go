@@ -4,19 +4,15 @@ import (
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 
-	"github.com/werf/kubedog/pkg/kube"
-	"github.com/werf/werf/v2/test/pkg/suite_init"
-	"github.com/werf/werf/v2/test/pkg/utils"
+	"github.com/werf/werf/v3/test/pkg/suite_init"
+	"github.com/werf/werf/v3/test/pkg/utils"
 )
 
 func TestSuite(t *testing.T) {
 	suite_init.MakeTestSuiteEntrypointFunc("E2E converge suite", suite_init.TestSuiteEntrypointFuncOptions{
 		RequiredSuiteTools: []string{"docker", "git"},
-		RequiredSuiteEnvs: []string{
-			"WERF_TEST_K8S_DOCKER_REGISTRY",
-		},
+		SuiteLabels:        []string{suite_init.LabelNeedsRegistry, suite_init.LabelNeedsKube},
 	})(t)
 }
 
@@ -31,9 +27,7 @@ var (
 
 	_ = SuiteData.SetupK8sDockerRegistry(suite_init.NewK8sDockerRegistryData(SuiteData.ProjectNameData, SuiteData.StubsData))
 
-	_ = BeforeEach(func() {
-		Expect(kube.Init(kube.InitOptions{})).To(Succeed())
-	})
+	_ = BeforeEach(func() {})
 
 	_ = AfterEach(func(ctx SpecContext) {
 		utils.RunSucceedCommand(ctx, "", SuiteData.WerfBinPath, "host", "purge", "--force", "--project-name", SuiteData.ProjectName)

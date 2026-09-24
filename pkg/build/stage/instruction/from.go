@@ -6,11 +6,11 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/build/stage"
-	"github.com/werf/werf/v2/pkg/config"
-	"github.com/werf/werf/v2/pkg/container_backend"
-	"github.com/werf/werf/v2/pkg/docker_registry"
-	"github.com/werf/werf/v2/pkg/dockerfile"
+	"github.com/werf/werf/v3/pkg/build/stage"
+	"github.com/werf/werf/v3/pkg/config"
+	"github.com/werf/werf/v3/pkg/container_backend"
+	"github.com/werf/werf/v3/pkg/docker_registry"
+	"github.com/werf/werf/v3/pkg/dockerfile"
 )
 
 type From struct {
@@ -79,6 +79,10 @@ func (s *From) PreRun(ctx context.Context, _ stage.Conveyor) error {
 		logboek.Context(ctx).LogFDetails("   digest: %s\n", s.BaseImageRepoDigest)
 	}
 	return nil
+}
+
+func (s *From) GetContentDependencies(ctx context.Context, c stage.Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+	return s.GetDependencies(ctx, c, nil, nil, nil, buildContextArchive)
 }
 
 func (s *From) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {

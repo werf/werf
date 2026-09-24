@@ -1,15 +1,15 @@
 package e2e_converge_test
 
 import (
-	"os"
-	"strings"
-
 	"github.com/werf/common-go/pkg/util"
+	"github.com/werf/werf/v3/test/pkg/suite_init"
 )
 
 func setupEnv() {
-	SuiteData.Stubs.SetEnv("WERF_REPO", strings.Join([]string{os.Getenv("WERF_TEST_K8S_DOCKER_REGISTRY"), SuiteData.ProjectName}, "/"))
+	SuiteData.Stubs.SetEnv("WERF_REPO", suite_init.TestRepo(SuiteData.ProjectName))
 	SuiteData.Stubs.SetEnv("WERF_ENV", "test")
+	// Skip external kubeconform schema fetch to avoid CI flakes from raw.githubusercontent.com rate limits.
+	SuiteData.Stubs.SetEnv("WERF_LOCAL_RESOURCE_VALIDATION", "1")
 
 	if util.GetBoolEnvironmentDefaultFalse("WERF_TEST_K8S_DOCKER_REGISTRY_INSECURE") {
 		SuiteData.Stubs.SetEnv("WERF_INSECURE_REGISTRY", "1")

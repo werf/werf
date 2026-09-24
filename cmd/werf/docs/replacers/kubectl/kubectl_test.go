@@ -10,7 +10,7 @@ import (
 	"k8s.io/kubectl/pkg/cmd"
 	"k8s.io/kubectl/pkg/cmd/plugin"
 
-	"github.com/werf/werf/v2/cmd/werf/common"
+	"github.com/werf/werf/v3/cmd/werf/common"
 )
 
 var (
@@ -65,6 +65,8 @@ func checkText(ann string) bool {
 	if ann != GetAlphaEventsDocs().LongMD &&
 		ann != GetKubectlDocs().LongMD &&
 		ann != GetAlphaDocs().LongMD &&
+		ann != GetAlphaKubercDocs().LongMD &&
+		ann != GetAlphaKubercSetDocs().LongMD &&
 		ann != GetAnnotateDocs().LongMD &&
 		ann != GetApiResourcesDocs().LongMD &&
 		ann != GetApiVersionsDocs().LongMD &&

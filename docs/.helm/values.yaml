@@ -40,6 +40,6 @@ resources:
       production: 50M
 
 docs:
-  currentRoot: v2
-  supportedRoots: [v2, v1.2]
+  currentRoot: v3
+  supportedRoots: [v3, v2, v1.2]
   latestAliasEnabled: true

@@ -8,11 +8,10 @@ import (
 	"strings"
 
 	"github.com/werf/common-go/pkg/util"
-	"github.com/werf/werf/v2/pkg/config"
-	"github.com/werf/werf/v2/pkg/container_backend"
-	imagePkg "github.com/werf/werf/v2/pkg/image"
-	"github.com/werf/werf/v2/pkg/stapel"
-	"github.com/werf/werf/v2/pkg/util/option"
+	"github.com/werf/werf/v3/pkg/config"
+	"github.com/werf/werf/v3/pkg/container_backend"
+	imagePkg "github.com/werf/werf/v3/pkg/image"
+	"github.com/werf/werf/v3/pkg/stapel"
 )
 
 func GenerateFromStage(imageBaseConfig *config.StapelImageBase, baseImageRepoId, imageCacheVersion string, baseStageOptions *BaseStageOptions) *FromStage {
@@ -21,11 +20,11 @@ func GenerateFromStage(imageBaseConfig *config.StapelImageBase, baseImageRepoId,
 		baseImageRepoIdOrNone = baseImageRepoId
 	}
 
-	fromImageOrArtifactImageName := option.ValueOrDefault(imageBaseConfig.From, imageBaseConfig.FromArtifactName)
+	fromImageName := imageBaseConfig.From
 
 	s := &FromStage{}
 	s.fromCacheVersion = imageBaseConfig.FromCacheVersion
-	s.fromImageOrArtifactImageName = fromImageOrArtifactImageName
+	s.fromImageName = fromImageName
 	s.baseImageRepoIdOrNone = baseImageRepoIdOrNone
 	s.BaseStage = NewBaseStage(From, baseStageOptions)
 	s.imageCacheVersion = imageCacheVersion
@@ -37,11 +36,11 @@ func GenerateFromStage(imageBaseConfig *config.StapelImageBase, baseImageRepoId,
 type FromStage struct {
 	*BaseStage
 
-	baseImageRepoIdOrNone        string
-	fromCacheVersion             string
-	fromImageOrArtifactImageName string
-	fromExternal                 bool
-	fromScratch                  bool
+	baseImageRepoIdOrNone string
+	fromCacheVersion      string
+	fromImageName         string
+	fromExternal          bool
+	fromScratch           bool
 
 	imageCacheVersion string
 }
@@ -64,7 +63,26 @@ func (s *FromStage) IsMutable() bool {
 	return s.fromScratch
 }
 
-func (s *FromStage) GetDependencies(_ context.Context, c Conveyor, _ container_backend.ContainerBackend, prevImage, _ *StageImage, _ container_backend.BuildContextArchiver) (string, error) {
+func (s *FromStage) GetDependencies(_ context.Context, c Conveyor, _ container_backend.ContainerBackend, _, _ *StageImage, _ container_backend.BuildContextArchiver) (string, error) {
+	var baseImageID string
+	if s.fromImageName != "" && !s.fromExternal && !s.fromScratch {
+		baseImageID = c.GetImageContentTagStageID(s.targetPlatform, s.fromImageName)
+	}
+	return s.dependencies(baseImageID), nil
+}
+
+// GetContentDependencies identifies the base image by its config name instead of
+// its built stage ID: the base image's own content is folded into the anchor
+// digest as a dependency input, and the stage ID changes on every rebuild.
+func (s *FromStage) GetContentDependencies(_ context.Context, _ Conveyor, _ container_backend.BuildContextArchiver) (string, error) {
+	var baseImageID string
+	if s.fromImageName != "" && !s.fromExternal && !s.fromScratch {
+		baseImageID = s.fromImageName
+	}
+	return s.dependencies(baseImageID), nil
+}
+
+func (s *FromStage) dependencies(baseImageID string) string {
 	var args []string
 
 	if s.imageCacheVersion != "" {
@@ -85,13 +103,15 @@ func (s *FromStage) GetDependencies(_ context.Context, c Conveyor, _ container_b
 
 	if s.fromScratch {
 		args = append(args, "scratch")
-	} else if s.fromImageOrArtifactImageName != "" && !s.fromExternal {
-		args = append(args, c.GetImageContentDigest(s.targetPlatform, s.fromImageOrArtifactImageName))
-	} else {
-		args = append(args, prevImage.Image.Name())
+	} else if s.fromImageName != "" && !s.fromExternal {
+		args = append(args, baseImageID)
+	} else if s.fromExternal {
+		// The reference is the base identity werf promises for an external image: a mutable tag
+		// is followed only with fromLatest, which adds the resolved repo id above.
+		args = append(args, s.fromImageName)
 	}
 
-	return util.Sha256Hash(args...), nil
+	return util.Sha256Hash(args...)
 }
 
 func (s *FromStage) PrepareImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage, _ container_backend.BuildContextArchiver) error {

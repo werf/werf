@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/werf/common-go/pkg/util"
-	"github.com/werf/werf/v2/pkg/container_backend"
+	"github.com/werf/werf/v3/pkg/container_backend"
 )
 
 const patchSizeStep = 1024 * 1024
@@ -72,6 +72,12 @@ func (s *GitCacheStage) gitMappingsPatchSize(ctx context.Context, c Conveyor, pr
 	}
 
 	return size, nil
+}
+
+// GetContentDependencies returns empty: all git file content is already
+// checksummed by GitArchiveStage.GetContentDependencies.
+func (s *GitCacheStage) GetContentDependencies(ctx context.Context, c Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+	return "", nil
 }
 
 func (s *GitCacheStage) GetNextStageDependencies(ctx context.Context, c Conveyor) (string, error) {

@@ -83,15 +83,9 @@ cd ../bundle2
 werf bundle publish --repo example.org/bundles/bundle2
 ```
 
-## Excluding files or directories from the chart being published
+## Excluding files or directories from the chart
 
-The `.helmignore` file in the chart root can include filename filters that prevent files or directories from being added to the chart when it is published. The rules format is the same as [in .gitignore](https://git-scm.com/docs/gitignore) except for the following:
-
-- `**` is not supported;
-
-- `!` at the beginning of a line is not supported;
-
-- `.helmignore` does not exclude itself by default.
+The `.helmignore` file of the chart filters the published chart the same way it filters any chart werf reads, see [Excluding files or directories from the chart]({{ "/usage/deploy/charts.html#excluding-files-or-directories-from-the-chart" | true_relative_url }}).
 
 Also, the `--disable-default-values` flag for the `werf bundle publish` command excludes the `values.yaml` file from the chart being published.
 

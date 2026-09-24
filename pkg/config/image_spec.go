@@ -8,7 +8,7 @@ type ImageSpec struct {
 	Author                  string            `yaml:"author,omitempty"`
 	ClearHistory            bool              `yaml:"clearHistory,omitempty"`
 	KeepEssentialWerfLabels bool              `yaml:"keepEssentialWerfLabels,omitempty"`
-	ClearWerfLabels         bool              `yaml:"clearWerfLabels,omitempty"` // TODO: remove in v3.
+	ClearWerfLabels         bool              `yaml:"clearWerfLabels,omitempty"` // Deprecated: no longer has any effect.
 	RemoveLabels            []string          `yaml:"removeLabels,omitempty"`
 	RemoveVolumes           []string          `yaml:"removeVolumes,omitempty"`
 	RemoveEnv               []string          `yaml:"removeEnv,omitempty"`

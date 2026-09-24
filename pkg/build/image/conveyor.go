@@ -3,8 +3,8 @@ package image
 import (
 	"sync"
 
-	"github.com/werf/werf/v2/pkg/build/stage"
-	"github.com/werf/werf/v2/pkg/git_repo"
+	"github.com/werf/werf/v3/pkg/build/stage"
+	"github.com/werf/werf/v3/pkg/git_repo"
 )
 
 type Conveyor interface {
@@ -30,6 +30,4 @@ type Conveyor interface {
 
 	SetRemoteGitRepo(key string, repo *git_repo.Remote)
 	GetRemoteGitRepo(key string) *git_repo.Remote
-
-	SkipImageSpecStage() bool
 }

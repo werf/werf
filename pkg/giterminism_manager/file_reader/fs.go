@@ -10,13 +10,16 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
-	giterminismErrors "github.com/werf/werf/v2/pkg/giterminism_manager/errors"
-	"github.com/werf/werf/v2/pkg/path_matcher"
+	giterminismErrors "github.com/werf/werf/v3/pkg/giterminism_manager/errors"
+	"github.com/werf/werf/v3/pkg/path_matcher"
 )
 
 type (
 	matchPathFunc func(path string) bool
 	testFileFunc  func(file string) (bool, error)
+	// skipPathFunc gets both the resolved path, which the giterminism checks operate on, and the
+	// path with the symlink parts kept, which is how the file is named inside the walked directory.
+	skipPathFunc func(ctx context.Context, r FileReader, existingRelPath, notResolvedRelPath string) (bool, error)
 )
 
 func (r FileReader) projectRelativePathToAbsolutePath(relPath string) string {
@@ -29,7 +32,7 @@ func (r FileReader) absolutePathToProjectDirRelativePath(absPath string) string 
 
 // ListFilesWithGlob returns the list of files by the glob, follows symlinks.
 // The result paths are relative to the passed directory, the method does reverse resolving for symlinks.
-func (r FileReader) ListFilesWithGlob(ctx context.Context, relDir, glob string, skipFileFunc func(ctx context.Context, r FileReader, existingRelPath string) (bool, error)) (files []string, err error) {
+func (r FileReader) ListFilesWithGlob(ctx context.Context, relDir, glob string, skipFileFunc skipPathFunc) (files []string, err error) {
 	logboek.Context(ctx).Debug().
 		LogBlock("ListFilesWithGlob %q %q", relDir, glob).
 		Options(applyDebugToLogboek).
@@ -48,7 +51,7 @@ func (r FileReader) ListFilesWithGlob(ctx context.Context, relDir, glob string, 
 	return
 }
 
-func (r FileReader) listFilesWithGlob(ctx context.Context, relDir, glob string, skipFileFunc func(ctx context.Context, r FileReader, existingRelPath string) (bool, error)) ([]string, error) {
+func (r FileReader) listFilesWithGlob(ctx context.Context, relDir, glob string, skipFileFunc skipPathFunc) ([]string, error) {
 	var prefixWithoutPatterns string
 	prefixWithoutPatterns, glob = util.GlobPrefixWithoutPatterns(glob)
 	relDirOrFileWithGlobPart := filepath.Join(relDir, prefixWithoutPatterns)
@@ -77,7 +80,7 @@ func (r FileReader) listFilesWithGlob(ctx context.Context, relDir, glob string, 
 	}
 
 	if isRegularFile {
-		skip, err := skipFileFunc(ctx, r, relDirOrFileWithGlobPart)
+		skip, err := skipFileFunc(ctx, r, relDirOrFileWithGlobPart, relDirOrFileWithGlobPart)
 		if err != nil {
 			return nil, err
 		}
@@ -97,7 +100,7 @@ func (r FileReader) listFilesWithGlob(ctx context.Context, relDir, glob string, 
 	return result, err
 }
 
-func (r FileReader) walkFilesWithPathMatcher(ctx context.Context, relDir string, pathMatcher path_matcher.PathMatcher, skipFileFunc func(ctx context.Context, r FileReader, existingRelPath string) (bool, error), fileFunc testFileFunc) error {
+func (r FileReader) walkFilesWithPathMatcher(ctx context.Context, relDir string, pathMatcher path_matcher.PathMatcher, skipFileFunc skipPathFunc, fileFunc testFileFunc) error {
 	if !pathMatcher.IsDirOrSubmodulePathMatched(relDir) {
 		return nil
 	}
@@ -111,7 +114,7 @@ func (r FileReader) walkFilesWithPathMatcher(ctx context.Context, relDir string,
 		return nil
 	}
 
-	skipDir, err := skipFileFunc(ctx, r, relDir)
+	skipDir, err := skipFileFunc(ctx, r, relDir, relDir)
 	if err != nil {
 		return err
 	}
@@ -127,25 +130,24 @@ func (r FileReader) walkFilesWithPathMatcher(ctx context.Context, relDir string,
 
 	absDirPath := r.projectRelativePathToAbsolutePath(resolvedDir)
 	return r.fileSystem.Walk(absDirPath, func(path string, f os.FileInfo, err error) error {
-		if err != nil {
+		// The walk reports a directory it could not list together with its entry, so the skip
+		// predicates get to exclude it first: an excluded directory does not have to be readable.
+		if err != nil && (f == nil || !f.IsDir()) {
 			return err
 		}
 
 		resolvedRelPath := r.absolutePathToProjectDirRelativePath(path)
 		notResolvedRelPath := strings.Replace(resolvedRelPath, resolvedDir, relDir, 1)
-		for _, shouldSkipFileFunc := range []func(context.Context, FileReader, string, string) (bool, error){
+		for _, shouldSkipFileFunc := range []skipPathFunc{
 			// check requires not resolved parts in path to correctly process symlinks
 			func(_ context.Context, _ FileReader, resolvedRelPath, notResolvedRelPath string) (bool, error) {
 				return !pathMatcher.IsDirOrSubmodulePathMatched(notResolvedRelPath), nil
 			},
-			// skip check expects file path
-			func(ctx context.Context, r FileReader, resolvedRelPath, notResolvedRelPath string) (bool, error) {
-				return skipFileFunc(ctx, r, resolvedRelPath)
-			},
+			skipFileFunc,
 		} {
-			shouldSkip, err := shouldSkipFileFunc(ctx, r, resolvedRelPath, notResolvedRelPath)
-			if err != nil {
-				return err
+			shouldSkip, skipErr := shouldSkipFileFunc(ctx, r, resolvedRelPath, notResolvedRelPath)
+			if skipErr != nil {
+				return skipErr
 			}
 
 			if shouldSkip {
@@ -155,6 +157,10 @@ func (r FileReader) walkFilesWithPathMatcher(ctx context.Context, relDir string,
 					return nil
 				}
 			}
+		}
+
+		if err != nil {
+			return err
 		}
 
 		if f.IsDir() {
@@ -198,8 +204,8 @@ func (r FileReader) walkFilesWithPathMatcher(ctx context.Context, relDir string,
 	})
 }
 
-func (r FileReader) SkipFileFunc(acceptedFilePathMatcher path_matcher.PathMatcher) func(ctx context.Context, r FileReader, existingRelPath string) (bool, error) {
-	return func(ctx context.Context, r FileReader, existingRelPath string) (skip bool, err error) {
+func (r FileReader) SkipFileFunc(acceptedFilePathMatcher path_matcher.PathMatcher) skipPathFunc {
+	return func(ctx context.Context, r FileReader, existingRelPath, notResolvedRelPath string) (skip bool, err error) {
 		logboek.Context(ctx).Debug().
 			LogBlock("SkipFile %q", existingRelPath).
 			Options(applyDebugToLogboek).
@@ -568,7 +574,7 @@ func (r FileReader) ListFilesByGlob(ctx context.Context, dir, glob string) ([]st
 		return nil, err
 	}
 
-	relToDirFilePathListFromCommit, err := r.ListCommitFilesWithGlob(ctx, dir, glob)
+	relToDirFilePathListFromCommit, err := r.ListCommitFilesWithGlob(ctx, dir, glob, ListCommitFilesWithGlobOptions{})
 	if err != nil {
 		return nil, err
 	}

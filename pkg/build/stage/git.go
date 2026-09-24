@@ -3,8 +3,8 @@ package stage
 import (
 	"context"
 
-	"github.com/werf/werf/v2/pkg/container_backend"
-	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v3/pkg/container_backend"
+	"github.com/werf/werf/v3/pkg/image"
 )
 
 func newGitStage(name StageName, baseStageOptions *BaseStageOptions) *GitStage {
@@ -34,5 +34,9 @@ func (s *GitStage) PrepareImage(ctx context.Context, c Conveyor, cb container_ba
 }
 
 func (s *GitStage) SelectSuitableStageDesc(ctx context.Context, c Conveyor, stageDescSet image.StageDescSet) (*image.StageDesc, error) {
-	return s.selectAncestorStageDescByGitMappings(ctx, c, stageDescSet)
+	if s.IsContentAnchor() {
+		return s.BaseStage.SelectSuitableStageDesc(ctx, c, stageDescSet)
+	}
+
+	return s.selectStageDescByExistingGitCommits(ctx, stageDescSet)
 }

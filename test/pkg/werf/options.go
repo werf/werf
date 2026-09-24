@@ -55,3 +55,9 @@ type StagesCopyOptions struct {
 type KubeCtlOptions struct {
 	CommonOptions
 }
+
+type DismissOptions struct {
+	CommonOptions
+	Release   string
+	Namespace string
+}

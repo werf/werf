@@ -7,8 +7,8 @@ import (
 
 	"github.com/Masterminds/sprig/v3"
 
-	"github.com/werf/werf/v2/pkg/config"
-	"github.com/werf/werf/v2/pkg/slug"
+	"github.com/werf/werf/v3/pkg/config"
+	"github.com/werf/werf/v3/pkg/slug"
 )
 
 func GetHelmRelease(releaseOption, environmentOption, namespace string, werfConfig *config.WerfConfig) (string, error) {

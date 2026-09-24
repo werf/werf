@@ -13,7 +13,7 @@ permalink: usage/deploy/tracking.html
 
 * некоторых ресурсов, опосредованно создаваемых ресурсами релиза;
 
-* ресурсов вне релиза, указанных в аннотациях `<name>.external-dependency.werf.io/resource`.
+* ресурсов вне релиза, указанных в аннотациях `werf.io/deploy-dependency-<name>` или `werf.io/delete-dependency-<name>`.
 
 Для ресурсов Deployment, StatefulSet, DaemonSet, Job и Flagger Canary задействуются *специальные* отслеживатели состояния, которые не только точно определяют, удачно или неудачно ресурс был развернут, но и отслеживают состояние дочерних ресурсов, таких как Pod'ы, создаваемые Deployment'ом.
 

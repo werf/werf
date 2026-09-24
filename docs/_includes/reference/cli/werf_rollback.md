@@ -48,7 +48,7 @@ werf rollback --revision 10
             in working directory)
       --delete-propagation=""
             Set default delete propagation strategy (default $WERF_DELETE_PROPAGATION or            
-            Foreground).
+            Background).
       --dev=false
             Enable development mode (default $WERF_DEV).
             The mode allows working with project files without doing redundant commits during       
@@ -76,8 +76,6 @@ werf rollback --revision 10
             (default $WERF_GITERMINISM_CONFIG or werf-giterminism.yaml in working directory)
       --home-dir=""
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
-      --hooks-status-progress-period=0
-            No-op
       --kube-api-server=""
             Kubernetes API server address (default $WERF_KUBE_API_SERVER)
       --kube-auth-password=""
@@ -178,6 +176,9 @@ werf rollback --revision 10
             deploy.namespace custom template from werf.yaml or $WERF_NAMESPACE)
       --network-parallelism=30
             Parallelize some network operations (default $WERF_NETWORK_PARALLELISM or 30)
+      --no-default-patches=false
+            Ignore patches.yaml of the top-level chart and subcharts (default                       
+            $WERF_NO_DEFAULT_PATCHES or false)
       --no-final-tracking=false
             By default disable tracking operations that have no create/update/delete resource       
             operations after them, which are most tracking operations, to speed up the release      
@@ -189,6 +190,15 @@ werf rollback --revision 10
       --no-remove-manual-changes=false
             Don`t remove fields added manually to the resource in the cluster if fields aren`t      
             present in the manifest (default $WERF_NO_REMOVE_MANUAL_CHANGES)
+      --no-resource-validation=false
+            Disable resource validation (default $WERF_NO_RESOURCE_VALIDATION)
+      --no-values-schema-validation=false
+            Disable values validation against JSON schema (default                                  
+            $WERF_NO_VALUES_SCHEMA_VALIDATION)
+      --patches=[]
+            Additional patches files (diff patches for drift detection). Also, can be defined with  
+            $WERF_PATCHES_* (e.g. $WERF_PATCHES_1=.helm/patches_1.yaml,                             
+            $WERF_PATCHES_2=.helm/patches_2.yaml)
       --release=""
             Use specified Helm release name (default [[ project ]]-[[ env ]] template or            
             deploy.helmRelease custom template from werf.yaml or $WERF_RELEASE)
@@ -208,6 +218,21 @@ werf rollback --revision 10
             $WERF_RELEASE_STORAGE_SQL_CONNECTION)
       --releases-history-max=5
             Max releases to keep in release storage ($WERF_RELEASES_HISTORY_MAX or 5 by default)
+      --resource-validation-cache-lifetime=48h0m0s
+            How long local schema cache will be valid. Also can be defined by                       
+            $WERF_RESOURCE_VALIDATION_CACHE_LIFETIME
+      --resource-validation-extra-schema=[]
+            Extra json schema sources to validate resources (preferred over ebedded sources). Must  
+            be a valid go template defining a http(s) URL, or an absolute path on local file        
+            system. Also, can be defined with $WERF_RESOURCE_VALIDATION_EXTRA_SCHEMA_* (eg. $WERF_RE
+            SOURCE_VALIDATION_EXTRA_SCHEMA_1=`https://raw.githubusercontent.com/datreeio/CRDs-catalo
+            g/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json`)
+      --resource-validation-skip=[]
+            Skip resource validation for resources with specified attributes (can specify           
+            multiple). Format: key1=value1,key2=value2. Supported keys: group, version, kind, name, 
+            namespace. Example: kind=Deployment,name=my-app. Also, can be defined with              
+            $WERF_RESOURCE_VALIDATION_SKIP_* (e.g.                                                  
+            $WERF_RESOURCE_VALIDATION_SKIP_1=kind=Deployment,name=my-app)
       --revision=0
             Revision number to rollback to (if not specified, rolls back to previous revision)
       --rollback-graph-path=""

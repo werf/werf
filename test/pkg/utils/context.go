@@ -5,8 +5,8 @@ import (
 
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/werf/v2/pkg/docker"
-	"github.com/werf/werf/v2/pkg/logging"
+	"github.com/werf/werf/v3/pkg/docker"
+	"github.com/werf/werf/v3/pkg/logging"
 )
 
 func WithDependencies(ctx context.Context) context.Context {

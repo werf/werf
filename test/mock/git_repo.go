@@ -14,11 +14,11 @@ import (
 	reflect "reflect"
 	time "time"
 
-	git_repo "github.com/werf/werf/v2/pkg/git_repo"
-	repo_handle "github.com/werf/werf/v2/pkg/git_repo/repo_handle"
-	path_matcher "github.com/werf/werf/v2/pkg/path_matcher"
-	true_git "github.com/werf/werf/v2/pkg/true_git"
-	ls_tree "github.com/werf/werf/v2/pkg/true_git/ls_tree"
+	git_repo "github.com/werf/werf/v3/pkg/git_repo"
+	repo_handle "github.com/werf/werf/v3/pkg/git_repo/repo_handle"
+	path_matcher "github.com/werf/werf/v3/pkg/path_matcher"
+	true_git "github.com/werf/werf/v3/pkg/true_git"
+	ls_tree "github.com/werf/werf/v3/pkg/true_git/ls_tree"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -388,18 +388,18 @@ func (mr *MockGitRepoMockRecorder) LatestBranchCommit(ctx, branch any) *gomock.C
 }
 
 // ListCommitFilesWithGlob mocks base method.
-func (m *MockGitRepo) ListCommitFilesWithGlob(ctx context.Context, commit, dir, glob string) ([]string, error) {
+func (m *MockGitRepo) ListCommitFilesWithGlob(ctx context.Context, commit, dir, glob string, opts git_repo.ListCommitFilesWithGlobOptions) ([]string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListCommitFilesWithGlob", ctx, commit, dir, glob)
+	ret := m.ctrl.Call(m, "ListCommitFilesWithGlob", ctx, commit, dir, glob, opts)
 	ret0, _ := ret[0].([]string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ListCommitFilesWithGlob indicates an expected call of ListCommitFilesWithGlob.
-func (mr *MockGitRepoMockRecorder) ListCommitFilesWithGlob(ctx, commit, dir, glob any) *gomock.Call {
+func (mr *MockGitRepoMockRecorder) ListCommitFilesWithGlob(ctx, commit, dir, glob, opts any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListCommitFilesWithGlob", reflect.TypeOf((*MockGitRepo)(nil).ListCommitFilesWithGlob), ctx, commit, dir, glob)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListCommitFilesWithGlob", reflect.TypeOf((*MockGitRepo)(nil).ListCommitFilesWithGlob), ctx, commit, dir, glob, opts)
 }
 
 // ReadCommitFile mocks base method.
@@ -943,18 +943,18 @@ func (mr *MockgitRepoMockRecorder) LatestBranchCommit(ctx, branch any) *gomock.C
 }
 
 // ListCommitFilesWithGlob mocks base method.
-func (m *MockgitRepo) ListCommitFilesWithGlob(ctx context.Context, commit, dir, glob string) ([]string, error) {
+func (m *MockgitRepo) ListCommitFilesWithGlob(ctx context.Context, commit, dir, glob string, opts git_repo.ListCommitFilesWithGlobOptions) ([]string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListCommitFilesWithGlob", ctx, commit, dir, glob)
+	ret := m.ctrl.Call(m, "ListCommitFilesWithGlob", ctx, commit, dir, glob, opts)
 	ret0, _ := ret[0].([]string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ListCommitFilesWithGlob indicates an expected call of ListCommitFilesWithGlob.
-func (mr *MockgitRepoMockRecorder) ListCommitFilesWithGlob(ctx, commit, dir, glob any) *gomock.Call {
+func (mr *MockgitRepoMockRecorder) ListCommitFilesWithGlob(ctx, commit, dir, glob, opts any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListCommitFilesWithGlob", reflect.TypeOf((*MockgitRepo)(nil).ListCommitFilesWithGlob), ctx, commit, dir, glob)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListCommitFilesWithGlob", reflect.TypeOf((*MockgitRepo)(nil).ListCommitFilesWithGlob), ctx, commit, dir, glob, opts)
 }
 
 // ReadCommitFile mocks base method.

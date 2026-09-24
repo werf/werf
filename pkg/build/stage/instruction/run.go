@@ -8,11 +8,11 @@ import (
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 
 	"github.com/werf/common-go/pkg/util"
-	"github.com/werf/werf/v2/pkg/build/stage"
-	"github.com/werf/werf/v2/pkg/config"
-	"github.com/werf/werf/v2/pkg/container_backend"
-	backend_instruction "github.com/werf/werf/v2/pkg/container_backend/instruction"
-	"github.com/werf/werf/v2/pkg/dockerfile"
+	"github.com/werf/werf/v3/pkg/build/stage"
+	"github.com/werf/werf/v3/pkg/config"
+	"github.com/werf/werf/v3/pkg/container_backend"
+	backend_instruction "github.com/werf/werf/v3/pkg/container_backend/instruction"
+	"github.com/werf/werf/v3/pkg/dockerfile"
 )
 
 type Run struct {
@@ -39,21 +39,29 @@ func (stg *Run) ExpandInstruction(c stage.Conveyor, env map[string]string) error
 			continue
 		}
 		if ds := stg.instruction.GetDependencyByStageRef(mnt.From); ds != nil {
-			mnt.From = c.GetImageNameForLastImageStage(stg.TargetPlatform(), ds.GetWerfImageName())
+			mnt.From = c.GetImageContentTagName(stg.TargetPlatform(), ds.GetWerfImageName())
 		}
 	}
 
 	return nil
 }
 
+func (stg *Run) GetContentDependencies(ctx context.Context, c stage.Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+	return stg.dependenciesDigest(ctx, EnvToSortedArr(stg.GetExpandedEnvForContent()), buildContextArchive)
+}
+
 func (stg *Run) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+	return stg.dependenciesDigest(ctx, EnvToSortedArr(stg.GetExpandedEnv(c)), buildContextArchive)
+}
+
+func (stg *Run) dependenciesDigest(ctx context.Context, env []string, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
 	var args []string
 
 	network := instructions.GetNetwork(stg.instruction.Data)
 	security := instructions.GetSecurity(stg.instruction.Data)
 	mounts := instructions.GetMounts(stg.instruction.Data)
 
-	args = append(args, append([]string{"Env"}, EnvToSortedArr(stg.GetExpandedEnv(c))...)...)
+	args = append(args, append([]string{"Env"}, env...)...)
 	args = append(args, append([]string{"Command"}, stg.instruction.Data.CmdLine...)...)
 	args = append(args, "PrependShell", fmt.Sprintf("%v", stg.instruction.Data.PrependShell))
 	args = append(args, "Network", network)

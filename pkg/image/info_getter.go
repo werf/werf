@@ -33,10 +33,6 @@ func NewInfoGetter(imageName, ref, digest string, opts InfoGetterOptions) *InfoG
 	}
 }
 
-func (d *InfoGetter) IsNameless() bool {
-	return d.WerfImageName == ""
-}
-
 func (d *InfoGetter) GetWerfImageName() string {
 	return d.WerfImageName
 }

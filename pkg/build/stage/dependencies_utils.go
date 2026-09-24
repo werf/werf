@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/werf/common-go/pkg/util"
-	"github.com/werf/werf/v2/pkg/config"
-	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v3/pkg/config"
+	"github.com/werf/werf/v3/pkg/image"
 )
 
 func GetDependenciesArgsKeys(dependencies []*config.Dependency) (res []string) {
@@ -21,9 +21,8 @@ func ResolveDependenciesArgs(targetPlatform string, dependencies []*config.Depen
 	resolved := make(map[string]string)
 
 	for _, dep := range dependencies {
-		depImageName := c.GetImageNameForLastImageStage(targetPlatform, dep.ImageName)
-		depImageID := c.GetImageIDForLastImageStage(targetPlatform, dep.ImageName)
-		depImageDigest := c.GetImageDigestForLastImageStage(targetPlatform, dep.ImageName)
+		depImageName := c.GetImageContentTagName(targetPlatform, dep.From)
+		depImageDigest := c.GetImageContentTagDigest(targetPlatform, dep.From)
 		depImageRepo, depImageTag := image.ParseRepositoryAndTag(depImageName)
 
 		for _, imp := range dep.Imports {
@@ -34,11 +33,26 @@ func ResolveDependenciesArgs(targetPlatform string, dependencies []*config.Depen
 				resolved[imp.TargetBuildArg] = depImageTag
 			case config.ImageNameImport:
 				resolved[imp.TargetBuildArg] = depImageName
-			case config.ImageIDImport:
-				resolved[imp.TargetBuildArg] = depImageID
 			case config.ImageDigestImport:
 				resolved[imp.TargetBuildArg] = depImageDigest
 			}
+		}
+	}
+
+	return resolved
+}
+
+// ResolveDependenciesArgsForContent resolves dependency build args to stable
+// placeholders derived from the dependency image name, for use in content
+// digests. The real values (ResolveDependenciesArgs) carry the built image
+// name, tag and registry digest, all of which change on every rebuild of the
+// dependency image.
+func ResolveDependenciesArgsForContent(dependencies []*config.Dependency) map[string]string {
+	resolved := make(map[string]string)
+
+	for _, dep := range dependencies {
+		for _, imp := range dep.Imports {
+			resolved[imp.TargetBuildArg] = fmt.Sprintf("werf-dependency-%s-%s", dep.From, imp.Type)
 		}
 	}
 

@@ -6,9 +6,9 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/container_backend/info"
-	"github.com/werf/werf/v2/pkg/container_backend/prune"
-	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v3/pkg/container_backend/info"
+	"github.com/werf/werf/v3/pkg/container_backend/prune"
+	"github.com/werf/werf/v3/pkg/image"
 )
 
 type CommonOpts struct {
@@ -16,11 +16,10 @@ type CommonOpts struct {
 }
 
 type (
-	TagOpts                           CommonOpts
-	PushOpts                          CommonOpts
-	PullOpts                          CommonOpts
-	GetImageInfoOpts                  CommonOpts
-	CalculateDependencyImportChecksum CommonOpts
+	TagOpts          CommonOpts
+	PushOpts         CommonOpts
+	PullOpts         CommonOpts
+	GetImageInfoOpts CommonOpts
 )
 
 type RmOpts struct {
@@ -92,7 +91,6 @@ type ContainerBackend interface {
 	BuildDockerfile(ctx context.Context, dockerfile []byte, opts BuildDockerfileOpts) (string, error)
 	BuildDockerfileStage(ctx context.Context, baseImage string, opts BuildDockerfileStageOptions, instructions ...InstructionInterface) (string, error)
 	BuildStapelStage(ctx context.Context, baseImage string, opts BuildStapelStageOptions) (string, error)
-	CalculateDependencyImportChecksum(ctx context.Context, dependencyImport DependencyImportSpec, opts CalculateDependencyImportChecksum) (string, error)
 
 	HasStapelBuildSupport() bool
 	GetDefaultPlatform() string
@@ -100,8 +98,6 @@ type ContainerBackend interface {
 
 	Images(ctx context.Context, opts ImagesOptions) (image.ImagesList, error)
 	Containers(ctx context.Context, opts ContainersOptions) (image.ContainerList, error)
-
-	ClaimTargetPlatforms(ctx context.Context, targetPlatforms []string)
 
 	// PruneImages removes all dangling images
 	PruneImages(ctx context.Context, options prune.Options) (prune.Report, error)

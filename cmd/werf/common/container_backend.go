@@ -8,11 +8,11 @@ import (
 	"strings"
 
 	"github.com/werf/common-go/pkg/util"
-	"github.com/werf/werf/v2/pkg/buildah"
-	"github.com/werf/werf/v2/pkg/buildah/thirdparty"
-	"github.com/werf/werf/v2/pkg/container_backend"
-	"github.com/werf/werf/v2/pkg/docker"
-	"github.com/werf/werf/v2/pkg/werf"
+	"github.com/werf/werf/v3/pkg/buildah"
+	"github.com/werf/werf/v3/pkg/buildah/thirdparty"
+	"github.com/werf/werf/v3/pkg/container_backend"
+	"github.com/werf/werf/v3/pkg/docker"
+	"github.com/werf/werf/v3/pkg/werf"
 )
 
 func ContainerBackendProcessStartupHook() (bool, error) {
@@ -153,8 +153,15 @@ func InitProcessDocker(ctx context.Context, cmdData *CmdData) (context.Context, 
 		return ctx, nil
 	}
 
+	var defaultPlatform string
+	if platforms := cmdData.GetPlatform(); len(platforms) == 1 {
+		defaultPlatform = platforms[0]
+	}
+
 	opts := docker.InitOptions{
 		DockerConfigDir: *cmdData.DockerConfig,
+		DefaultPlatform: defaultPlatform,
+		ClaimPlatforms:  cmdData.GetPlatform(),
 		Verbose:         *cmdData.LogVerbose,
 		Debug:           *cmdData.LogDebug,
 	}

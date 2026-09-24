@@ -3,8 +3,7 @@ package config
 import (
 	"context"
 
-	"github.com/werf/werf/v2/pkg/util/option"
-	"github.com/werf/werf/v2/pkg/werf/global_warnings"
+	"github.com/werf/werf/v3/pkg/werf/global_warnings"
 )
 
 type dependencyImageType string
@@ -16,8 +15,8 @@ var (
 )
 
 type rawDependency struct {
-	Image   string                 `yaml:"image,omitempty"`
 	From    string                 `yaml:"from,omitempty"`
+	Image   string                 `yaml:"image,omitempty"` // Deprecated: use `from` instead.
 	Before  string                 `yaml:"before,omitempty"`
 	After   string                 `yaml:"after,omitempty"`
 	Imports []*rawDependencyImport `yaml:"imports,omitempty"`
@@ -56,6 +55,14 @@ func (d *rawDependency) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		return err
 	}
 
+	if d.Image != "" {
+		if d.From != "" {
+			return newDetailedConfigError("specify only `from: NAME` or deprecated `image: NAME` for dependency, not both!", d, d.doc())
+		}
+		global_warnings.GlobalDeprecationWarningLn(context.Background(), "`image: NAME` for dependency is deprecated and will be removed in a future version, use `from: NAME` instead.")
+		d.From = d.Image
+	}
+
 	if err := checkOverflow(d.UnsupportedAttributes, d, d.doc()); err != nil {
 		return err
 	}
@@ -64,15 +71,11 @@ func (d *rawDependency) UnmarshalYAML(unmarshal func(interface{}) error) error {
 }
 
 func (d *rawDependency) toDirective() (*Dependency, error) {
-	if d.From == "" && d.Image != "" {
-		global_warnings.GlobalDeprecationWarningLn(context.Background(), "The `dependencies[].image` directive is deprecated and will be removed in v3. Please use `dependencies[].from` instead.")
-	}
-
 	dependency := &Dependency{
-		ImageName: d.imageName(),
-		Before:    d.Before,
-		After:     d.After,
-		raw:       d,
+		From:   d.From,
+		Before: d.Before,
+		After:  d.After,
+		raw:    d,
 	}
 
 	for _, rawDepImport := range d.Imports {
@@ -89,10 +92,6 @@ func (d *rawDependency) toDirective() (*Dependency, error) {
 	}
 
 	return dependency, nil
-}
-
-func (d *rawDependency) imageName() string {
-	return option.ValueOrDefault(d.From, d.Image)
 }
 
 func (d *rawDependency) imageType() dependencyImageType {

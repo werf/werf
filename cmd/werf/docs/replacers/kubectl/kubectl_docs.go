@@ -6,7 +6,7 @@ import (
 
 	"k8s.io/client-go/tools/clientcmd"
 
-	"github.com/werf/werf/v2/cmd/werf/docs/structs"
+	"github.com/werf/werf/v3/cmd/werf/docs/structs"
 )
 
 func GetKubectlDocs() structs.DocsStruct {
@@ -33,6 +33,22 @@ func GetAlphaDocs() structs.DocsStruct {
 	var docs structs.DocsStruct
 
 	docs.LongMD = "These commands correspond to alpha features that are not enabled in Kubernetes clusters by default."
+
+	return docs
+}
+
+func GetAlphaKubercDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Manage kuberc configuration."
+
+	return docs
+}
+
+func GetAlphaKubercSetDocs() structs.DocsStruct {
+	var docs structs.DocsStruct
+
+	docs.LongMD = "Set kuberc configuration values."
 
 	return docs
 }

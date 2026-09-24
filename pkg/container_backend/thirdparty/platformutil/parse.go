@@ -55,27 +55,6 @@ func Dedupe(in []specs.Platform) []specs.Platform {
 	return out
 }
 
-func FormatInGroups(gg ...[]specs.Platform) []string {
-	m := map[string]struct{}{}
-	out := make([]string, 0, len(gg))
-	for i, g := range gg {
-		for _, p := range g {
-			p := platforms.Normalize(p)
-			key := platforms.Format(p)
-			if _, ok := m[key]; ok {
-				continue
-			}
-			m[key] = struct{}{}
-			v := platforms.Format(p)
-			if i == 0 {
-				v += "*"
-			}
-			out = append(out, v)
-		}
-	}
-	return out
-}
-
 func Format(in []specs.Platform) []string {
 	if len(in) == 0 {
 		return nil

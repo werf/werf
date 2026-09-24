@@ -7,12 +7,10 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/werf/nelm/pkg/action"
-	nelmcommon "github.com/werf/nelm/pkg/common"
-	"github.com/werf/nelm/pkg/export/helm/werf/file"
-	"github.com/werf/nelm/pkg/log"
-	"github.com/werf/werf/v2/cmd/werf/common"
-	"github.com/werf/werf/v2/pkg/true_git"
+	"github.com/werf/nelm/v2/pkg/action"
+	nelmcommon "github.com/werf/nelm/v2/pkg/common"
+	"github.com/werf/werf/v3/cmd/werf/common"
+	"github.com/werf/werf/v3/pkg/true_git"
 )
 
 var commonCmdData common.CmdData
@@ -46,6 +44,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	})
 
 	common.SetupDir(&commonCmdData, cmd)
+	common.SetupDenoBinaryPath(&commonCmdData, cmd)
 	common.SetupGitWorkTree(&commonCmdData, cmd)
 	common.SetupConfigTemplatesDir(&commonCmdData, cmd)
 	common.SetupConfigRenderPath(&commonCmdData, cmd)
@@ -82,7 +81,7 @@ func runChartTSInit(ctx context.Context, chartDir string) error {
 		return err
 	}
 
-	file.SetChartFileReader(giterminismManager.FileManager)
+	nelmcommon.ChartFileReader = giterminismManager.FileManager
 
 	werfConfigPath, werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
 	if err != nil {
@@ -96,13 +95,16 @@ func runChartTSInit(ctx context.Context, chartDir string) error {
 
 	chartPath := filepath.Join(giterminismManager.ProjectDir(), relChartPath)
 
-	ctx = log.SetupLogging(ctx, common.GetNelmLogLevel(&commonCmdData), log.SetupLoggingOptions{
+	ctx = action.SetupLogging(ctx, common.GetNelmLogLevel(&commonCmdData), action.SetupLoggingOptions{
 		ColorMode: *commonCmdData.LogColorMode,
 	})
+
+	ctx = common.SetupDenoContext(ctx)
 
 	if err := action.ChartTSInit(ctx, action.ChartTSInitOptions{
 		ChartDirPath:      chartPath,
 		ChartName:         werfConfig.Meta.Project,
+		DenoBinaryPath:    commonCmdData.DenoBinaryPath,
 		RenderContextType: nelmcommon.TSWerfRenderContextType,
 	}); err != nil {
 		return fmt.Errorf("chart ts init: %w", err)

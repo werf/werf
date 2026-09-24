@@ -8,10 +8,10 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/werf/common-go/pkg/util"
-	"github.com/werf/werf/v2/pkg/container_backend"
-	"github.com/werf/werf/v2/pkg/host_cleaning"
-	"github.com/werf/werf/v2/pkg/host_cleaning/units"
-	"github.com/werf/werf/v2/pkg/util/option"
+	"github.com/werf/werf/v3/pkg/container_backend"
+	"github.com/werf/werf/v3/pkg/host_cleaning"
+	"github.com/werf/werf/v3/pkg/host_cleaning/units"
+	"github.com/werf/werf/v3/pkg/util/option"
 )
 
 func RunAutoHostCleanup(ctx context.Context, cmdData *CmdData, containerBackend container_backend.ContainerBackend) error {
@@ -114,6 +114,7 @@ func SetupBackendStoragePath(cmdData *CmdData, cmd *cobra.Command) {
 	}
 
 	defaultVal := option.ValueOrDefault(os.Getenv(aliases[0].EnvName),
+		// keep backward compatibility
 		os.Getenv(aliases[1].EnvName))
 
 	cmdData.BackendStoragePath = new(string)

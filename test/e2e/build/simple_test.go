@@ -6,27 +6,17 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/werf/v2/test/pkg/contback"
-	"github.com/werf/werf/v2/test/pkg/report"
-	"github.com/werf/werf/v2/test/pkg/utils"
-	"github.com/werf/werf/v2/test/pkg/werf"
+	"github.com/werf/werf/v3/test/pkg/contback"
+	"github.com/werf/werf/v3/test/pkg/report"
+	"github.com/werf/werf/v3/test/pkg/utils"
 )
-
-type simpleTestOptions struct {
-	setupEnvOptions
-}
 
 var _ = Describe("Simple build", Label("e2e", "build", "simple"), func() {
 	DescribeTable("should succeed and produce expected image",
-		func(ctx SpecContext, testOpts simpleTestOptions) {
+		func(ctx SpecContext, testOpts setupEnvOptions) {
 			By("initializing")
-			setupEnv(testOpts.setupEnvOptions)
-			contRuntime, err := contback.NewContainerBackend(testOpts.ContainerBackendMode)
-			if err == contback.ErrRuntimeUnavailable {
-				Skip(err.Error())
-			} else if err != nil {
-				Fail(err.Error())
-			}
+			setupEnv(testOpts)
+			contRuntime := contback.NewContainerBackend(testOpts.ContainerBackendMode)
 
 			By("state0: starting")
 			{
@@ -38,7 +28,7 @@ var _ = Describe("Simple build", Label("e2e", "build", "simple"), func() {
 				SuiteData.InitTestRepo(ctx, repoDirname, fixtureRelPath)
 
 				By("state0: building images")
-				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
+				werfProject := newWerfProject(repoDirname)
 				reportProject := report.NewProjectWithReport(werfProject)
 				buildOut, buildReport := reportProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), nil)
 				Expect(buildOut).To(ContainSubstring("Building stage"))
@@ -77,35 +67,20 @@ var _ = Describe("Simple build", Label("e2e", "build", "simple"), func() {
 				)
 			}
 		},
-		Entry("without repo using Vanilla Docker", simpleTestOptions{setupEnvOptions{
-			ContainerBackendMode:        "vanilla-docker",
+		backendEntry("without repo using Docker", setupEnvOptions{
+			ContainerBackendMode:        "docker",
 			WithLocalRepo:               false,
 			WithStagedDockerfileBuilder: false,
-		}}),
-		Entry("with local repo using Vanilla Docker", simpleTestOptions{setupEnvOptions{
-			ContainerBackendMode:        "vanilla-docker",
+		}),
+		backendEntry("with local repo using Docker", setupEnvOptions{
+			ContainerBackendMode:        "docker",
 			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: false,
-		}}),
-		Entry("without repo using BuildKit Docker", simpleTestOptions{setupEnvOptions{
-			ContainerBackendMode:        "buildkit-docker",
-			WithLocalRepo:               false,
-			WithStagedDockerfileBuilder: false,
-		}}),
-		Entry("with local repo using BuildKit Docker", simpleTestOptions{setupEnvOptions{
-			ContainerBackendMode:        "buildkit-docker",
-			WithLocalRepo:               true,
-			WithStagedDockerfileBuilder: false,
-		}}),
-		Entry("with local repo using Native Buildah with rootless isolation", simpleTestOptions{setupEnvOptions{
+		}),
+		backendEntry("with local repo using Native Buildah with rootless isolation", setupEnvOptions{
 			ContainerBackendMode:        "native-rootless",
 			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: false,
-		}}),
-		Entry("with local repo using Native Buildah with chroot isolation", simpleTestOptions{setupEnvOptions{
-			ContainerBackendMode:        "native-chroot",
-			WithLocalRepo:               true,
-			WithStagedDockerfileBuilder: false,
-		}}),
+		}),
 	)
 })

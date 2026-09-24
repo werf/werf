@@ -1,10 +1,10 @@
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 ENV DEBIAN_FRONTEND="noninteractive"
 ARG TARGETARCH
 ARG USERS="build build1001"
 
 RUN apt-get -y update && \
-    apt-get -y install fuse-overlayfs git uidmap libcap2-bin git-lfs curl gnupg nano jq bash make ca-certificates openssh-client iproute2 telnet iputils-ping dnsutils tzdata && \
+    apt-get -y install fuse-overlayfs netavark git uidmap libcap2-bin git-lfs curl gnupg nano jq bash make ca-certificates openssh-client iproute2 telnet iputils-ping dnsutils tzdata && \
     rm -rf /var/cache/apt/* /var/lib/apt/lists/* /var/log/*
 
 RUN curl -sSLO https://github.com/mikefarah/yq/releases/latest/download/yq_linux_${TARGETARCH} && \
@@ -22,7 +22,9 @@ RUN setcap cap_setuid+ep /usr/bin/newuidmap && \
     setcap cap_setgid+ep /usr/bin/newgidmap && \
     chmod u-s,g-s /usr/bin/newuidmap /usr/bin/newgidmap
 
-RUN for u in $USERS; do \
+# Remove the stock ubuntu user (UID 1000) so build/build1001 keep UIDs 1000/1001
+RUN userdel -r ubuntu && \
+    for u in $USERS; do \
     useradd -m $u && \
     mkdir -p /home/$u/.local/share/containers /home/$u/.werf && \
     chown -R $u:$u /home/$u && \

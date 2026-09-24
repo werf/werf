@@ -11,17 +11,19 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/werf/common-go/pkg/util"
-	"github.com/werf/werf/v2/pkg/container_backend/stage_builder"
-	"github.com/werf/werf/v2/pkg/dockerfile/frontend"
-	"github.com/werf/werf/v2/pkg/image"
-	"github.com/werf/werf/v2/pkg/logging"
+	"github.com/werf/werf/v3/pkg/container_backend/stage_builder"
+	"github.com/werf/werf/v3/pkg/dockerfile/frontend"
+	"github.com/werf/werf/v3/pkg/git_repo"
+	"github.com/werf/werf/v3/pkg/image"
+	"github.com/werf/werf/v3/pkg/logging"
+	"github.com/werf/werf/v3/pkg/path_matcher"
 )
 
 func testDockerfileToDockerStages(dockerfileData []byte) ([]instructions.Stage, []instructions.ArgCommand) {
 	p, err := parser.Parse(bytes.NewReader(dockerfileData))
 	Expect(err).To(Succeed())
 
-	dockerStages, dockerMetaArgs, err := instructions.Parse(p.AST)
+	dockerStages, dockerMetaArgs, err := instructions.Parse(p.AST, nil)
 	Expect(err).To(Succeed())
 
 	frontend.ResolveDockerStagesFromValue(dockerStages)
@@ -110,7 +112,6 @@ RUN echo hello
 
 							DockerImageRepo: "ONE_REPO",
 							DockerImageTag:  "796e905d0cc975e718b3f8b3ea0199ea4d52668ecc12c4dbf85a136d-1638863657513",
-							DockerImageID:   "sha256:d19deb06171086017db6aade408ce29592e7490f3b98d4da228ef6c771ddc6d5",
 						},
 					},
 				},
@@ -125,88 +126,21 @@ FROM alpine:latest
 ARG IMAGE_ONE_NAME
 ARG IMAGE_ONE_REPO
 ARG IMAGE_ONE_TAG
-ARG IMAGE_ONE_ID
 
 RUN echo hello
-RUN echo {"name": "${IMAGE_ONE_NAME}", "repo": "${IMAGE_ONE_REPO}", "tag": "${IMAGE_ONE_TAG}", "id": "${IMAGE_ONE_ID}"} >> images.json
+RUN echo {"name": "${IMAGE_ONE_NAME}", "repo": "${IMAGE_ONE_REPO}", "tag": "${IMAGE_ONE_TAG}"} >> images.json
 `),
 				TestDependencies: &TestDependencies{
-					ExpectedDigest: "b55701cfd33c5931e001e4d8ab24628df571afc7b7f647ca4083dab75aafff4d",
+					ExpectedDigest: "6ab9de52e1aa389b7e0f684b052c8047dc6c1e01709e1daacc305e4c23211941",
 					Dependencies: []*TestDependency{
 						{
 							ImageName:               "one",
 							TargetBuildArgImageName: "IMAGE_ONE_NAME",
 							TargetBuildArgImageRepo: "IMAGE_ONE_REPO",
 							TargetBuildArgImageTag:  "IMAGE_ONE_TAG",
-							TargetBuildArgImageID:   "IMAGE_ONE_ID",
 
 							DockerImageRepo: "ONE_REPO",
 							DockerImageTag:  "796e905d0cc975e718b3f8b3ea0199ea4d52668ecc12c4dbf85a136d-1638863657513",
-							DockerImageID:   "sha256:d19deb06171086017db6aade408ce29592e7490f3b98d4da228ef6c771ddc6d5",
-						},
-					},
-				},
-			},
-		),
-
-		Entry("should change dockerfile stage digest when dependant image name changed",
-			TestDockerfileDependencies{
-				DockerfileData: []byte(`
-FROM alpine:latest
-
-ARG IMAGE_ONE_NAME
-ARG IMAGE_ONE_REPO
-ARG IMAGE_ONE_TAG
-ARG IMAGE_ONE_ID
-
-RUN echo hello
-RUN echo {"name": "${IMAGE_ONE_NAME}", "repo": "${IMAGE_ONE_REPO}", "tag": "${IMAGE_ONE_TAG}", "id": "${IMAGE_ONE_ID}"} >> images.json
-`),
-				TestDependencies: &TestDependencies{
-					ExpectedDigest: "dac644aa25871d0d902581d9c2a901ef753267082adedc19a3bee23a18cfca17",
-					Dependencies: []*TestDependency{
-						{
-							ImageName:               "one",
-							TargetBuildArgImageName: "IMAGE_ONE_NAME",
-							TargetBuildArgImageRepo: "IMAGE_ONE_REPO",
-							TargetBuildArgImageTag:  "IMAGE_ONE_TAG",
-							TargetBuildArgImageID:   "IMAGE_ONE_ID",
-
-							DockerImageRepo: "ONE_REPO",
-							DockerImageTag:  "b7aebf280be3fbb7d207d3b659bfc1a49338441ea933c1eac5766a5f-1638863693022",
-							DockerImageID:   "sha256:d19deb06171086017db6aade408ce29592e7490f3b98d4da228ef6c771ddc6d5",
-						},
-					},
-				},
-			},
-		),
-
-		Entry("should change dockerfile stage digest when dependant image id changed",
-			TestDockerfileDependencies{
-				DockerfileData: []byte(`
-FROM alpine:latest
-
-ARG IMAGE_ONE_NAME
-ARG IMAGE_ONE_REPO
-ARG IMAGE_ONE_TAG
-ARG IMAGE_ONE_ID
-
-RUN echo hello
-RUN echo {"name": "${IMAGE_ONE_NAME}", "repo": "${IMAGE_ONE_REPO}", "tag": "${IMAGE_ONE_TAG}", "id": "${IMAGE_ONE_ID}"} >> images.json
-`),
-				TestDependencies: &TestDependencies{
-					ExpectedDigest: "914969761b92ec6a4a6eee5ad33c32c2d2c27b0b15fe4abf4f26c30755378ed4",
-					Dependencies: []*TestDependency{
-						{
-							ImageName:               "one",
-							TargetBuildArgImageName: "IMAGE_ONE_NAME",
-							TargetBuildArgImageRepo: "IMAGE_ONE_REPO",
-							TargetBuildArgImageTag:  "IMAGE_ONE_TAG",
-							TargetBuildArgImageID:   "IMAGE_ONE_ID",
-
-							DockerImageRepo: "ONE_REPO",
-							DockerImageTag:  "b7aebf280be3fbb7d207d3b659bfc1a49338441ea933c1eac5766a5f-1638863693022",
-							DockerImageID:   "sha256:44b14c266507626ec1e3f1eb22fcbd9b935595ead56800f77110fc4e1e95689c",
 						},
 					},
 				},
@@ -243,7 +177,6 @@ RUN echo hello
 
 							DockerImageRepo: "ubuntu",
 							DockerImageTag:  "latest",
-							DockerImageID:   "sha256:d13c942271d66cb0954c3ba93e143cd253421fe0772b8bed32c4c0077a546d4d",
 						},
 					},
 				},
@@ -267,7 +200,6 @@ RUN echo hello
 
 							DockerImageRepo: "centos",
 							DockerImageTag:  "latest",
-							DockerImageID:   "sha256:5d0da3dc976460b72c77d94c8a1ad043720b0416bfc16c52c45d4847e53fadb6",
 						},
 					},
 				},
@@ -333,6 +265,25 @@ RUN echo hello
 		})
 	})
 
+	When("COPY source depends on inherited base image ENV", func() {
+		It("checksums the whole context until the source can be resolved", func(ctx SpecContext) {
+			dockerfile := []byte(`
+FROM alpine AS base
+ENV SRC=payload
+FROM base
+COPY $SRC/file /payload
+`)
+			dockerStages, dockerMetaArgs := testDockerfileToDockerStages(dockerfile)
+			stage := newTestFullDockerfileStage(dockerfile, "", nil, dockerStages, dockerMetaArgs, nil, "")
+			stage.dockerignorePathMatcher = path_matcher.NewTruePathMatcher()
+			gitRepo := &pathMatchingGitRepoStub{LocalGitRepoStub: NewLocalGitRepoStub("commit"), path: "payload"}
+			conveyor := NewConveyorStubForDependencies(NewGiterminismManagerStub(gitRepo, NewGiterminismInspectorStub()), nil)
+
+			_, err := stage.GetContentDependencies(ctx, conveyor, nil)
+			Expect(err).To(Succeed())
+		})
+	})
+
 	When("Dockerfile uses run with mount from another stage", func() {
 		It("should change dockerfile stage digest when base stage context has changed", func(ctx context.Context) {
 			dockerfile := []byte(`
@@ -381,6 +332,16 @@ RUN --mount=type=bind,from=build,source=/usr/local/test_project/dist,target=/usr
 		})
 	})
 })
+
+type pathMatchingGitRepoStub struct {
+	*LocalGitRepoStub
+	path string
+}
+
+func (repo *pathMatchingGitRepoStub) GetOrCreateChecksum(ctx context.Context, opts git_repo.ChecksumOptions) (string, error) {
+	Expect(opts.LsTreeOptions.PathMatcher.IsPathMatched(repo.path)).To(BeTrue())
+	return repo.LocalGitRepoStub.GetOrCreateChecksum(ctx, opts)
+}
 
 type TestDockerfileDependencies struct {
 	DockerfileData []byte

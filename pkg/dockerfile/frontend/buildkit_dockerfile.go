@@ -10,8 +10,8 @@ import (
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
 
 	"github.com/werf/common-go/pkg/util"
-	"github.com/werf/werf/v2/pkg/container_backend/thirdparty/platformutil"
-	"github.com/werf/werf/v2/pkg/dockerfile"
+	"github.com/werf/werf/v3/pkg/container_backend/thirdparty/platformutil"
+	"github.com/werf/werf/v3/pkg/dockerfile"
 )
 
 func ParseDockerfileWithBuildkit(dockerfileID string, dockerfileBytes []byte, werfImageName string, opts dockerfile.DockerfileOptions) (*dockerfile.Dockerfile, error) {
@@ -20,7 +20,7 @@ func ParseDockerfileWithBuildkit(dockerfileID string, dockerfileBytes []byte, we
 		return nil, fmt.Errorf("parsing dockerfile data: %w", err)
 	}
 
-	dockerStages, dockerMetaArgsCommands, err := instructions.Parse(p.AST)
+	dockerStages, dockerMetaArgsCommands, err := instructions.Parse(p.AST, nil)
 	if err != nil {
 		return nil, fmt.Errorf("parsing instructions tree: %w", err)
 	}

@@ -3,9 +3,9 @@ package giterminism_manager
 import (
 	"context"
 
-	"github.com/werf/nelm/pkg/export/helm/werf/file"
-	"github.com/werf/werf/v2/pkg/git_repo"
-	"github.com/werf/werf/v2/pkg/path_matcher"
+	nelmcommon "github.com/werf/nelm/v2/pkg/common"
+	"github.com/werf/werf/v3/pkg/git_repo"
+	"github.com/werf/werf/v3/pkg/path_matcher"
 )
 
 type Interface interface {
@@ -35,7 +35,7 @@ type FileReader interface {
 	ReadIncludesConfig(ctx context.Context, relPath string) ([]byte, error)
 	ReadIncludesLockFile(ctx context.Context, relPath string) (data []byte, err error)
 
-	file.ChartFileReaderInterface
+	nelmcommon.ChartFileReaderer
 }
 
 type Inspector interface {

@@ -14,8 +14,8 @@ import (
 	"github.com/samber/lo"
 
 	"github.com/werf/common-go/pkg/util"
-	"github.com/werf/werf/v2/pkg/path_matcher"
-	werfExec "github.com/werf/werf/v2/pkg/werf/exec"
+	"github.com/werf/werf/v3/pkg/path_matcher"
+	werfExec "github.com/werf/werf/v3/pkg/werf/exec"
 )
 
 type PatchOptions struct {

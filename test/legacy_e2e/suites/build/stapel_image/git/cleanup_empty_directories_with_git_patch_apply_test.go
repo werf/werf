@@ -7,11 +7,11 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/alessio/shellescape"
+	"al.essio.dev/pkg/shellescape"
 	. "github.com/onsi/ginkgo/v2"
 
-	"github.com/werf/werf/v2/test/pkg/utils"
-	utilsDocker "github.com/werf/werf/v2/test/pkg/utils/docker"
+	"github.com/werf/werf/v3/test/pkg/utils"
+	utilsDocker "github.com/werf/werf/v3/test/pkg/utils/docker"
 )
 
 var _ = Describe("cleanup empty directories with git patch apply", func() {
@@ -108,10 +108,10 @@ var _ = Describe("cleanup empty directories with git patch apply", func() {
 			shouldBeDeleted: []string{"dir/sub_dir"},
 			shouldBeSkipped: []string{"dir"},
 		}),
-		Entry("should remove empty directories (dir/dir_created_by_user)", removingEmptyDirectoriesEntry{
+		Entry("should not remove directories recreated by user stage (dir/dir_created_by_user)", removingEmptyDirectoriesEntry{
 			dirToAdd:        "dir/dir_created_by_user",
-			shouldBeDeleted: []string{"dir/dir_created_by_user", "dir"},
-			shouldBeSkipped: []string{},
+			shouldBeDeleted: []string{},
+			shouldBeSkipped: []string{"dir/dir_created_by_user", "dir"},
 		}),
 	)
 })

@@ -19,8 +19,8 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
-	secret_common "github.com/werf/nelm/pkg/legacy/secret"
-	"github.com/werf/werf/v2/pkg/werf"
+	secret_common "github.com/werf/nelm/v2/pkg/legacy/secret"
+	"github.com/werf/werf/v3/pkg/werf"
 )
 
 const (

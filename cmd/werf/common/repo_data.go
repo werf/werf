@@ -8,9 +8,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/werf/werf/v2/pkg/container_backend"
-	"github.com/werf/werf/v2/pkg/docker_registry"
-	"github.com/werf/werf/v2/pkg/storage"
+	"github.com/werf/werf/v3/pkg/container_backend"
+	"github.com/werf/werf/v3/pkg/docker_registry"
+	"github.com/werf/werf/v3/pkg/storage"
 )
 
 func CreateDockerRegistry(ctx context.Context, addr string, insecureRegistry, skipTlsVerifyRegistry bool, insecureRegistryHosts []string) (docker_registry.Interface, error) {
@@ -173,40 +173,6 @@ func (repoData *RepoData) SetupCmd(cmd *cobra.Command) {
 	repoData.SetupHarborUsernameForRepoData(cmd, makeOpt("harbor-username"), []string{makeEnvVar("HARBOR_USERNAME")})
 	repoData.SetupHarborPasswordForRepoData(cmd, makeOpt("harbor-password"), []string{makeEnvVar("HARBOR_PASSWORD")})
 	repoData.SetupQuayTokenForRepoData(cmd, makeOpt("quay-token"), []string{makeEnvVar("QUAY_TOKEN")})
-}
-
-func MergeRepoData(ctx context.Context, repoDataArr ...*RepoData) *RepoData {
-	res := &RepoData{}
-
-	for _, repoData := range repoDataArr {
-		if res.GetContainerRegistry(ctx) == "" {
-			value := repoData.GetContainerRegistry(ctx)
-			res.ContainerRegistry = &value
-		}
-		if res.DockerHubUsername == nil || *res.DockerHubUsername == "" {
-			res.DockerHubUsername = repoData.DockerHubUsername
-		}
-		if res.DockerHubPassword == nil || *res.DockerHubPassword == "" {
-			res.DockerHubPassword = repoData.DockerHubPassword
-		}
-		if res.DockerHubToken == nil || *res.DockerHubToken == "" {
-			res.DockerHubToken = repoData.DockerHubToken
-		}
-		if res.GitHubToken == nil || *res.GitHubToken == "" {
-			res.GitHubToken = repoData.GitHubToken
-		}
-		if res.HarborUsername == nil || *res.HarborUsername == "" {
-			res.HarborUsername = repoData.HarborUsername
-		}
-		if res.HarborPassword == nil || *res.HarborPassword == "" {
-			res.HarborPassword = repoData.HarborPassword
-		}
-		if res.QuayToken == nil || *res.QuayToken == "" {
-			res.QuayToken = repoData.QuayToken
-		}
-	}
-
-	return res
 }
 
 func (repoData *RepoData) SetupAddressForRepoData(cmd *cobra.Command, paramName string, paramEnvNames []string) {

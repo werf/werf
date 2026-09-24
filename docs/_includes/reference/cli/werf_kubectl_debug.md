@@ -62,6 +62,9 @@ werf kubectl debug (POD | TYPE[[.VERSION].GROUP]/NAME) [ -- COMMAND [args...] ] 
             Container name to use for debug container.
       --copy-to=""
             Create a copy of the target Pod with this name.
+      --custom=""
+            Path to a JSON or YAML file containing a partial container spec to customize built-in   
+            debug profiles.
       --env=[]
             Environment variables to set in the container.
   -f, --filename=[]
@@ -71,9 +74,26 @@ werf kubectl debug (POD | TYPE[[.VERSION].GROUP]/NAME) [ -- COMMAND [args...] ] 
       --image-pull-policy=""
             The image pull policy for the container. If left empty, this value will not be          
             specified by the client and defaulted by the server.
-      --profile="legacy"
-            Debugging profile. Options are "legacy", "general", "baseline", "netadmin", or          
-            "restricted".
+      --keep-annotations=false
+            If true, keep the original pod annotations.(This flag only works when used with         
+            `--copy-to`)
+      --keep-init-containers=true
+            Run the init containers for the pod. Defaults to true.(This flag only works when used   
+            with `--copy-to`)
+      --keep-labels=false
+            If true, keep the original pod labels.(This flag only works when used with `--copy-to`)
+      --keep-liveness=false
+            If true, keep the original pod liveness probes.(This flag only works when used with     
+            `--copy-to`)
+      --keep-readiness=false
+            If true, keep the original pod readiness probes.(This flag only works when used with    
+            `--copy-to`)
+      --keep-startup=false
+            If true, keep the original startup probes.(This flag only works when used with          
+            `--copy-to`)
+      --profile="general"
+            Options are "general", "baseline", "restricted", "netadmin" or "sysadmin". Defaults to  
+            "general"
   -q, --quiet=false
             If true, suppress informational messages.
       --replace=false
@@ -104,6 +124,9 @@ werf kubectl debug (POD | TYPE[[.VERSION].GROUP]/NAME) [ -- COMMAND [args...] ] 
             groups.
       --as-uid=""
             UID to impersonate for the operation.
+      --as-user-extra=[]
+            User extras to impersonate for the operation, this flag can be repeated to specify      
+            multiple values for the same key.
       --cache-dir="~/.kube/cache"
             Default cache directory
       --certificate-authority=""
@@ -129,6 +152,9 @@ werf kubectl debug (POD | TYPE[[.VERSION].GROUP]/NAME) [ -- COMMAND [args...] ] 
       --kubeconfig=""
             Path to the kubeconfig file to use for CLI requests (default $WERF_KUBE_CONFIG, or      
             $WERF_KUBECONFIG, or $KUBECONFIG). Ignored if kubeconfig passed as base64.
+      --kuberc=""
+            Path to the kuberc file to use for preferences. This can be disabled by exporting       
+            KUBECTL_KUBERC=false feature gate or turning off the feature KUBERC=off.
       --log-flush-frequency=5s
             Maximum number of seconds between log flushes
       --match-server-version=false
@@ -139,6 +165,8 @@ werf kubectl debug (POD | TYPE[[.VERSION].GROUP]/NAME) [ -- COMMAND [args...] ] 
             Password for basic authentication to the API server
       --profile-output="profile.pprof"
             Name of the file to write the profile to
+      --proxy-url=""
+            Proxy URL to use for requests to the API server
       --request-timeout="0"
             The length of time to wait before giving up on a single server request. Non-zero values 
             should contain a corresponding time unit (e.g. 1s, 2m, 3h). A value of zero means don`t 

@@ -8,14 +8,12 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/werf/nelm/pkg/action"
-	secret_common "github.com/werf/nelm/pkg/legacy/secret"
-	"github.com/werf/nelm/pkg/log"
-	"github.com/werf/werf/v2/cmd/werf/common"
-	"github.com/werf/werf/v2/cmd/werf/docs/replacers/helm"
-	"github.com/werf/werf/v2/pkg/git_repo"
-	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
-	"github.com/werf/werf/v2/pkg/werf"
+	"github.com/werf/nelm/v2/pkg/action"
+	secret_common "github.com/werf/nelm/v2/pkg/legacy/secret"
+	"github.com/werf/werf/v3/cmd/werf/common"
+	"github.com/werf/werf/v3/pkg/git_repo"
+	"github.com/werf/werf/v3/pkg/git_repo/gitdata"
+	"github.com/werf/werf/v3/pkg/werf"
 )
 
 var cmdData struct {
@@ -30,12 +28,10 @@ func NewCmd(ctx context.Context) *cobra.Command {
 		Use:                   "encrypt [FILE_PATH]",
 		DisableFlagsInUseLine: true,
 		Short:                 "Encrypt file data",
-		Long:                  common.GetLongCommandDescription(helm.GetHelmSecretFileEncryptDocs().Long),
 		Example: `  # Encrypt and save result in file
   $ werf helm secret file encrypt tls.crt -o .helm/secret/tls.crt`,
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
-			common.DocsLongMD: helm.GetHelmSecretFileEncryptDocs().LongMD,
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
@@ -92,7 +88,7 @@ func runSecretEncrypt(ctx context.Context, filePath string) error {
 
 	workingDir := common.GetWorkingDir(&commonCmdData)
 
-	ctx = log.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultSecretFileEncryptLogLevel), log.SetupLoggingOptions{
+	ctx = action.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultSecretFileEncryptLogLevel), action.SetupLoggingOptions{
 		ColorMode:      *commonCmdData.LogColorMode,
 		LogIsParseable: true,
 	})

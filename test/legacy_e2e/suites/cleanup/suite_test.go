@@ -9,11 +9,11 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/werf/v2/pkg/docker_registry"
-	"github.com/werf/werf/v2/pkg/storage"
-	"github.com/werf/werf/v2/pkg/werf"
-	"github.com/werf/werf/v2/test/pkg/suite_init"
-	"github.com/werf/werf/v2/test/pkg/utils"
+	"github.com/werf/werf/v3/pkg/docker_registry"
+	"github.com/werf/werf/v3/pkg/storage"
+	"github.com/werf/werf/v3/pkg/werf"
+	"github.com/werf/werf/v3/test/pkg/suite_init"
+	"github.com/werf/werf/v3/test/pkg/utils"
 )
 
 const (
@@ -25,6 +25,7 @@ const (
 
 var testSuiteEntrypointFunc = suite_init.MakeTestSuiteEntrypointFunc("Cleanup suite", suite_init.TestSuiteEntrypointFuncOptions{
 	RequiredSuiteTools: []string{"git", "docker"},
+	SuiteLabels:        []string{suite_init.LabelNeedsRegistry},
 })
 
 func TestSuite(t *testing.T) {
@@ -33,9 +34,8 @@ func TestSuite(t *testing.T) {
 
 var SuiteData struct {
 	suite_init.SuiteData
-	TestImplementation string
-	StagesStorage      storage.PrimaryStagesStorage
-	ContainerRegistry  docker_registry.Interface
+	StagesStorage storage.PrimaryStagesStorage
+	MetaStorage   storage.PrimaryStagesStorage
 }
 
 var (
@@ -44,29 +44,19 @@ var (
 	_ = SuiteData.SetupWerfBinary(suite_init.NewWerfBinaryData(SuiteData.SynchronizedSuiteCallbacksData))
 	_ = SuiteData.SetupProjectName(suite_init.NewProjectNameData(SuiteData.StubsData))
 	_ = SuiteData.SetupTmp(suite_init.NewTmpDirData())
-	_ = SuiteData.SetupContainerRegistryPerImplementation(suite_init.NewContainerRegistryPerImplementationData(SuiteData.SynchronizedSuiteCallbacksData, true))
+	_ = SuiteData.SetupK8sDockerRegistry(suite_init.NewK8sDockerRegistryData(SuiteData.ProjectNameData, SuiteData.StubsData))
 )
 
-func perImplementationBeforeEach(implementationName string) func(ctx SpecContext) {
-	return func(ctx SpecContext) {
-		Expect(werf.Init(SuiteData.TmpDir, "")).To(Succeed())
+var _ = BeforeEach(func(ctx SpecContext) {
+	Expect(werf.Init(SuiteData.TmpDir, "")).To(Succeed())
+	SuiteData.StagesStorage = utils.NewStagesStorage(ctx, SuiteData.K8sDockerRegistryRepo, "default", docker_registry.DockerRegistryOptions{})
+})
 
-		werfImplementationName := SuiteData.ContainerRegistryPerImplementation[implementationName].WerfImplementationName
+func SetupMetaRepo(ctx context.Context) {
+	metaRepo := fmt.Sprintf("%s-meta", SuiteData.K8sDockerRegistryRepo)
 
-		repo := fmt.Sprintf("%s/%s", SuiteData.ContainerRegistryPerImplementation[implementationName].RegistryAddress, SuiteData.ProjectName)
-		InitStagesStorage(ctx, repo, werfImplementationName, SuiteData.ContainerRegistryPerImplementation[implementationName].RegistryOptions)
-		SuiteData.SetupRepo(ctx, repo, implementationName, SuiteData.StubsData)
-		SuiteData.TestImplementation = implementationName
-
-		containerRegistry, err := docker_registry.NewDockerRegistry(ctx, repo, werfImplementationName, docker_registry.DockerRegistryOptions{})
-		Expect(err).ShouldNot(HaveOccurred())
-
-		SuiteData.ContainerRegistry = containerRegistry
-	}
-}
-
-func InitStagesStorage(ctx context.Context, stagesStorageAddress, implementationName string, dockerRegistryOptions docker_registry.DockerRegistryOptions) {
-	SuiteData.StagesStorage = utils.NewStagesStorage(ctx, stagesStorageAddress, implementationName, dockerRegistryOptions)
+	SuiteData.MetaStorage = utils.NewStagesStorage(ctx, metaRepo, "default", docker_registry.DockerRegistryOptions{})
+	SuiteData.Stubs.SetEnv("WERF_META_REPO", metaRepo)
 }
 
 func StagesCount(ctx context.Context) int {
@@ -77,16 +67,23 @@ func ManagedImagesCount(ctx context.Context) int {
 	return utils.ManagedImagesCount(ctx, SuiteData.StagesStorage)
 }
 
+func MetaManagedImagesCount(ctx context.Context) int {
+	return utils.ManagedImagesCount(ctx, SuiteData.MetaStorage)
+}
+
 func ImageMetadata(ctx context.Context, imageName string) map[string][]string {
 	return utils.ImageMetadata(ctx, SuiteData.StagesStorage, imageName)
 }
 
-func ImportMetadataIDs(ctx context.Context) []string {
-	return utils.ImportMetadataIDs(ctx, SuiteData.StagesStorage)
+func MetaImageMetadata(ctx context.Context, imageName string) map[string][]string {
+	return utils.ImageMetadata(ctx, SuiteData.MetaStorage, imageName)
 }
 
 func CustomTags(ctx context.Context) []string {
-	tags, err := SuiteData.ContainerRegistry.Tags(ctx, SuiteData.StagesStorage.String())
+	repo, ok := SuiteData.StagesStorage.(*storage.RepoStagesStorage)
+	Expect(ok).To(BeTrue(), "stages storage must be a repo stages storage")
+
+	tags, err := repo.DockerRegistry.Tags(ctx, SuiteData.StagesStorage.String())
 	Expect(err).ShouldNot(HaveOccurred())
 
 	var result []string
@@ -101,4 +98,30 @@ func CustomTags(ctx context.Context) []string {
 
 func CustomTagsMetadataList(ctx context.Context) []*storage.CustomTagMetadata {
 	return utils.CustomTagsMetadataList(ctx, SuiteData.StagesStorage)
+}
+
+func MetaCustomTagsMetadataList(ctx context.Context) []*storage.CustomTagMetadata {
+	return utils.CustomTagsMetadataList(ctx, SuiteData.MetaStorage)
+}
+
+func MetaLastCleanupRecord(ctx context.Context) *storage.CleanupRecord {
+	rec, err := SuiteData.MetaStorage.GetLastCleanupRecord(ctx, SuiteData.ProjectName)
+	Expect(err).ShouldNot(HaveOccurred())
+	return rec
+}
+
+func LastCleanupRecord(ctx context.Context) *storage.CleanupRecord {
+	rec, err := SuiteData.StagesStorage.GetLastCleanupRecord(ctx, SuiteData.ProjectName)
+	Expect(err).ShouldNot(HaveOccurred())
+	return rec
+}
+
+func MetaRepoMarker(ctx context.Context) (string, bool) {
+	repo, ok := SuiteData.StagesStorage.(*storage.RepoStagesStorage)
+	Expect(ok).To(BeTrue(), "stages storage must be a repo stages storage")
+
+	addr, found, err := repo.GetMetaRepoMarker(ctx, SuiteData.ProjectName)
+	Expect(err).ShouldNot(HaveOccurred())
+
+	return addr, found
 }

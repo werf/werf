@@ -8,14 +8,9 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/werf/v2/test/pkg/contback"
-	"github.com/werf/werf/v2/test/pkg/suite_init"
-	"github.com/werf/werf/v2/test/pkg/werf"
+	"github.com/werf/werf/v3/test/pkg/contback"
+	"github.com/werf/werf/v3/test/pkg/suite_init"
 )
-
-type stagedDockerfileRunMountTestOptions struct {
-	setupEnvOptions
-}
 
 var _ = Describe("Staged Dockerfile build with RUN --mount from stage", Label("e2e", "build", "staged_dockerfile_run_mount"), func() {
 	It("removes only tags from the requested repository", func(ctx SpecContext) {
@@ -46,15 +41,10 @@ var _ = Describe("Staged Dockerfile build with RUN --mount from stage", Label("e
 	})
 
 	DescribeTable("should pull the mount source stage missing in the local containers storage",
-		func(ctx SpecContext, testOpts stagedDockerfileRunMountTestOptions) {
+		func(ctx SpecContext, testOpts setupEnvOptions) {
 			By("initializing")
-			setupEnv(testOpts.setupEnvOptions)
-			contRuntime, err := contback.NewContainerBackend(testOpts.ContainerBackendMode)
-			if err == contback.ErrRuntimeUnavailable {
-				Skip(err.Error())
-			} else if err != nil {
-				Fail(err.Error())
-			}
+			setupEnv(testOpts)
+			contRuntime := contback.NewContainerBackend(testOpts.ContainerBackendMode)
 			buildahRuntime, ok := contRuntime.(*contback.NativeBuildahBackend)
 			Expect(ok).To(BeTrue(), "test requires the native buildah backend")
 
@@ -62,7 +52,7 @@ var _ = Describe("Staged Dockerfile build with RUN --mount from stage", Label("e
 
 			By("state0: preparing test repo")
 			SuiteData.InitTestRepo(ctx, repoDirname, "staged_dockerfile_run_mount/state0")
-			werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
+			werfProject := newWerfProject(repoDirname)
 
 			By("state0: building images")
 			Expect(werfProject.Build(ctx, nil)).To(ContainSubstring("Building stage"))
@@ -78,13 +68,13 @@ var _ = Describe("Staged Dockerfile build with RUN --mount from stage", Label("e
 			Expect(buildOut).To(ContainSubstring("Use previously built image"))
 			Expect(buildOut).To(ContainSubstring("Building stage"))
 		},
-		Entry("with local repo using Native Buildah with rootless isolation", stagedDockerfileRunMountTestOptions{setupEnvOptions{
+		backendEntry("with local repo using Native Buildah with rootless isolation", setupEnvOptions{
 			ContainerBackendMode: "native-rootless",
 			WithLocalRepo:        true,
-		}}),
-		Entry("with local repo using Native Buildah with chroot isolation", stagedDockerfileRunMountTestOptions{setupEnvOptions{
+		}),
+		backendEntry("with local repo using Native Buildah with chroot isolation", setupEnvOptions{
 			ContainerBackendMode: "native-chroot",
 			WithLocalRepo:        true,
-		}}),
+		}),
 	)
 })

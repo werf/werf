@@ -15,7 +15,7 @@ import (
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
 
-	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v3/pkg/image"
 )
 
 var _ = ginkgo.DescribeTable("GitLab tag deletion", func(modernStatus int, modernBody string, legacyStatus int, expectedPaths []string, expectedError string) {

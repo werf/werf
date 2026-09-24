@@ -8,12 +8,12 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/cmd/werf/common"
-	"github.com/werf/werf/v2/pkg/host_cleaning"
-	"github.com/werf/werf/v2/pkg/tmp_manager"
-	"github.com/werf/werf/v2/pkg/true_git"
-	"github.com/werf/werf/v2/pkg/werf"
-	"github.com/werf/werf/v2/pkg/werf/global_warnings"
+	"github.com/werf/werf/v3/cmd/werf/common"
+	"github.com/werf/werf/v3/pkg/host_cleaning"
+	"github.com/werf/werf/v3/pkg/tmp_manager"
+	"github.com/werf/werf/v3/pkg/true_git"
+	"github.com/werf/werf/v3/pkg/werf"
+	"github.com/werf/werf/v3/pkg/werf/global_warnings"
 )
 
 var commonCmdData common.CmdData

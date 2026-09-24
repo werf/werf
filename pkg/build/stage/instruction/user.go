@@ -6,11 +6,11 @@ import (
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 
 	"github.com/werf/common-go/pkg/util"
-	"github.com/werf/werf/v2/pkg/build/stage"
-	"github.com/werf/werf/v2/pkg/config"
-	"github.com/werf/werf/v2/pkg/container_backend"
-	backend_instruction "github.com/werf/werf/v2/pkg/container_backend/instruction"
-	"github.com/werf/werf/v2/pkg/dockerfile"
+	"github.com/werf/werf/v3/pkg/build/stage"
+	"github.com/werf/werf/v3/pkg/config"
+	"github.com/werf/werf/v3/pkg/container_backend"
+	backend_instruction "github.com/werf/werf/v3/pkg/container_backend/instruction"
+	"github.com/werf/werf/v3/pkg/dockerfile"
 )
 
 type User struct {
@@ -33,6 +33,10 @@ func (stg *User) ExpandInstruction(c stage.Conveyor, env map[string]string) erro
 	stg.backendInstruction.UserCommand = *stg.instruction.Data
 
 	return nil
+}
+
+func (stg *User) GetContentDependencies(ctx context.Context, c stage.Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+	return stg.GetDependencies(ctx, c, nil, nil, nil, buildContextArchive)
 }
 
 func (stg *User) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {

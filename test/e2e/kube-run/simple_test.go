@@ -1,16 +1,15 @@
 package e2e_kube_run_test
 
 import (
-	"os"
-	"strings"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	"github.com/werf/common-go/pkg/util"
-	"github.com/werf/werf/v2/test/pkg/report"
-	"github.com/werf/werf/v2/test/pkg/werf"
+	"github.com/werf/werf/v3/test/pkg/report"
+	"github.com/werf/werf/v3/test/pkg/suite_init"
+	"github.com/werf/werf/v3/test/pkg/werf"
 )
 
 var _ = Describe("Simple kube-run", Label("e2e", "kube-run", "simple"), func() {
@@ -212,7 +211,7 @@ var _ = Describe("Simple kube-run", Label("e2e", "kube-run", "simple"), func() {
 })
 
 func setupEnv() {
-	SuiteData.Stubs.SetEnv("WERF_REPO", strings.Join([]string{os.Getenv("WERF_TEST_K8S_DOCKER_REGISTRY"), SuiteData.ProjectName}, "/"))
+	SuiteData.Stubs.SetEnv("WERF_REPO", suite_init.TestRepo(SuiteData.ProjectName))
 
 	if util.GetBoolEnvironmentDefaultFalse("WERF_TEST_K8S_DOCKER_REGISTRY_INSECURE") {
 		SuiteData.Stubs.SetEnv("WERF_INSECURE_REGISTRY", "1")

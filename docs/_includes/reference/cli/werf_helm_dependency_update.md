@@ -3,13 +3,19 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Update the on-disk dependencies to mirror `Chart.yaml`.
 
-This command verifies that the required charts, as expressed in `Chart.yaml`, are present in `charts/` and are at an acceptable version. It will pull down the latest charts that satisfy the dependencies, and clean up old dependencies.
+Update the on-disk dependencies to mirror Chart.yaml.
 
-On successful update, this will generate a lock file that can be used to rebuild the dependencies to an exact version.
+This command verifies that the required charts, as expressed in 'Chart.yaml',
+are present in 'charts/' and are at an acceptable version. It will pull down
+the latest charts that satisfy the dependencies, and clean up old dependencies.
 
-Dependencies are not required to be represented in `Chart.yaml`. For that reason, an update command will not remove charts unless they are (a) present in the `Chart.yaml` file, but (b) at the wrong version.
+On successful update, this will generate a lock file that can be used to
+rebuild the dependencies to an exact version.
+
+Dependencies are not required to be represented in 'Chart.yaml'. For that
+reason, an update command will not remove charts unless they are (a) present
+in the Chart.yaml file, but (b) at the wrong version.
 
 
 {{ header }} Syntax
@@ -21,10 +27,24 @@ werf helm dependency update CHART [flags] [options]
 {{ header }} Options
 
 ```shell
+      --ca-file=""
+            verify certificates of HTTPS-enabled servers using this CA bundle
+      --cert-file=""
+            identify HTTPS client using this SSL certificate file
+      --insecure-skip-tls-verify=false
+            skip tls certificate checks for the chart download
+      --key-file=""
+            identify HTTPS client using this SSL key file
       --keyring="~/.gnupg/pubring.gpg"
             keyring containing public keys
+      --password=""
+            chart repository password where to locate the requested chart
+      --plain-http=false
+            use insecure HTTP connections for the chart download
       --skip-refresh=false
             do not refresh the local repository cache
+      --username=""
+            chart repository username where to locate the requested chart
       --verify=false
             verify the packages against signatures
 ```
@@ -32,16 +52,6 @@ werf helm dependency update CHART [flags] [options]
 {{ header }} Options inherited from parent commands
 
 ```shell
-      --hooks-status-progress-period=0
-            No-op
-      --kube-config=""
-            Kubernetes config file path (default $WERF_KUBE_CONFIG, or $WERF_KUBECONFIG, or         
-            $KUBECONFIG)
-      --kube-config-base64=""
-            Kubernetes config data as base64 string (default $WERF_KUBE_CONFIG_BASE64 or            
-            $WERF_KUBECONFIG_BASE64 or $KUBECONFIG_BASE64)
-      --kube-context=""
-            Kubernetes config context (default $WERF_KUBE_CONTEXT)
       --log-color-mode="auto"
             Set log color mode.
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        
@@ -66,10 +76,5 @@ werf helm dependency update CHART [flags] [options]
             Specify custom log time format (default $WERF_LOG_TIME_FORMAT or RFC3339 format).
       --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
-  -n, --namespace=""
-            namespace scope for this request
-      --status-progress-period=5
-            Status progress period in seconds. Set -1 to stop showing status progress. Defaults to  
-            $WERF_STATUS_PROGRESS_PERIOD_SECONDS or 5 seconds
 ```
 

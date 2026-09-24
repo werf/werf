@@ -5,10 +5,10 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/werf/v2/pkg/build/stage"
-	"github.com/werf/werf/v2/pkg/build/stage/instruction"
-	"github.com/werf/werf/v2/pkg/dockerfile"
-	"github.com/werf/werf/v2/pkg/dockerfile/frontend"
+	"github.com/werf/werf/v3/pkg/build/stage"
+	"github.com/werf/werf/v3/pkg/build/stage/instruction"
+	"github.com/werf/werf/v3/pkg/dockerfile"
+	"github.com/werf/werf/v3/pkg/dockerfile/frontend"
 )
 
 type expandTestEntry struct {
@@ -20,7 +20,7 @@ var _ = DescribeTable("backend instruction sync after env expansion",
 	func(ctx SpecContext, entry expandTestEntry) {
 		conveyor := stage.NewConveyorStub(
 			stage.NewGiterminismManagerStub(stage.NewLocalGitRepoStub("test"), stage.NewGiterminismInspectorStub()),
-			nil, nil, nil,
+			nil, nil,
 		)
 		Expect(entry.stg.ExpandDependencies(ctx, conveyor, map[string]string{"TEST_VAR": "resolved"})).To(Succeed())
 		entry.compare()
@@ -148,7 +148,7 @@ var _ = DescribeTable("backend instruction contains expanded values after env ex
 	func(ctx SpecContext, entry negativeTestEntry) {
 		conveyor := stage.NewConveyorStub(
 			stage.NewGiterminismManagerStub(stage.NewLocalGitRepoStub("test"), stage.NewGiterminismInspectorStub()),
-			nil, nil, nil,
+			nil, nil,
 		)
 		Expect(entry.stg.ExpandDependencies(ctx, conveyor, map[string]string{"TEST_VAR": "resolved"})).To(Succeed())
 		entry.verify()

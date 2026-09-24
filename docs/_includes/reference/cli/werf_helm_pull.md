@@ -3,13 +3,20 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
+
 Retrieve a package from a package repository, and download it locally.
 
-This is useful for fetching packages to inspect, modify, or repackage. It can also be used to perform cryptographic verification of a chart without installing the chart.
+This is useful for fetching packages to inspect, modify, or repackage. It can
+also be used to perform cryptographic verification of a chart without installing
+the chart.
 
-There are options for unpacking the chart after download. This will create a directory for the chart and uncompress into that directory.
+There are options for unpacking the chart after download. This will create a
+directory for the chart and uncompress into that directory.
 
-If the `--verify` flag is specified, the requested chart **must** have a provenance file, and **must** pass the verification process. Failure in any part of this will result in an error, and the chart will not be saved locally.
+If the --verify flag is specified, the requested chart MUST have a provenance
+file, and MUST pass the verification process. Failure in any part of this will
+result in an error, and the chart will not be saved locally.
+
 
 {{ header }} Syntax
 
@@ -64,16 +71,6 @@ werf helm pull [chart URL | repo/chartname] [...] [flags] [options]
 {{ header }} Options inherited from parent commands
 
 ```shell
-      --hooks-status-progress-period=0
-            No-op
-      --kube-config=""
-            Kubernetes config file path (default $WERF_KUBE_CONFIG, or $WERF_KUBECONFIG, or         
-            $KUBECONFIG)
-      --kube-config-base64=""
-            Kubernetes config data as base64 string (default $WERF_KUBE_CONFIG_BASE64 or            
-            $WERF_KUBECONFIG_BASE64 or $KUBECONFIG_BASE64)
-      --kube-context=""
-            Kubernetes config context (default $WERF_KUBE_CONTEXT)
       --log-color-mode="auto"
             Set log color mode.
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        
@@ -98,10 +95,5 @@ werf helm pull [chart URL | repo/chartname] [...] [flags] [options]
             Specify custom log time format (default $WERF_LOG_TIME_FORMAT or RFC3339 format).
       --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
-  -n, --namespace=""
-            namespace scope for this request
-      --status-progress-period=5
-            Status progress period in seconds. Set -1 to stop showing status progress. Defaults to  
-            $WERF_STATUS_PROGRESS_PERIOD_SECONDS or 5 seconds
 ```
 

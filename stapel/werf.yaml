@@ -1,0 +1,10 @@
+project: stapel
+configVersion: 1
+build:
+  platform:
+    - linux/amd64
+    - linux/arm64
+
+---
+image: stapel
+dockerfile: Dockerfile

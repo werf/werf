@@ -8,9 +8,12 @@ import (
 	"io"
 	"os"
 	"strings"
+	"sync"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/opencontainers/runtime-spec/specs-go"
+	"go.podman.io/buildah/define"
 
 	"github.com/werf/common-go/pkg/util"
 )
@@ -35,6 +38,58 @@ var _ = Describe("buildah", func() {
 			[]string{"foo=bar", "key=value"},
 		),
 	)
+
+	Describe("generateStdoutStderr", func() {
+		It("should read stderr while it is written", func() {
+			_, stderr, stderrBuf := generateStdoutStderr(nil)
+			start := make(chan struct{})
+			var wg sync.WaitGroup
+			wg.Add(2)
+
+			go func() {
+				defer wg.Done()
+				<-start
+				for i := 0; i < 1_000; i++ {
+					if _, err := stderr.Write([]byte("stderr")); err != nil {
+						panic(err)
+					}
+				}
+			}()
+			go func() {
+				defer wg.Done()
+				<-start
+				for i := 0; i < 1_000; i++ {
+					stderrBuf.String()
+				}
+			}()
+
+			close(start)
+			wg.Wait()
+
+			Expect(stderrBuf.String()).To(HaveLen(6_000))
+		})
+	})
+
+	DescribeTable("generateNamespaceOptionsAndNetworkPolicy",
+		func(network string, expectedPolicy define.NetworkConfigurationPolicy, expectedHost bool) {
+			nsOpts, netPolicy, err := generateNamespaceOptionsAndNetworkPolicy(network)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(netPolicy).To(Equal(expectedPolicy))
+
+			netNs := nsOpts.Find(string(specs.NetworkNamespace))
+			Expect(netNs).NotTo(BeNil())
+			Expect(netNs.Host).To(Equal(expectedHost))
+		},
+		Entry("empty network is the default network", "", define.NetworkDefault, false),
+		Entry("default network gets its own namespace", "default", define.NetworkDefault, false),
+		Entry("host network shares the host namespace", "host", define.NetworkEnabled, true),
+		Entry("none disables networking in its own namespace", "none", define.NetworkDisabled, false),
+	)
+
+	It("should reject a network mode buildah cannot honor", func() {
+		_, _, err := generateNamespaceOptionsAndNetworkPolicy("bridge")
+		Expect(err).To(MatchError(ContainSubstring(`unsupported network mode "bridge"`)))
+	})
 
 	Describe("generateRegistriesConfig", func() {
 		It("should mark http:// mirrors as insecure", func() {
@@ -695,7 +750,7 @@ location = "dropin-mirror.example.com"
 			fmt.Fprint(stderr, "MARKER-STDERR-LINE\n")
 
 			Expect(logWriter.String()).To(Equal("out\nMARKER-STDERR-LINE\n"))
-			Expect(stderrBuf.Len()).To(BeZero())
+			Expect(stderrBuf.String()).To(BeEmpty())
 
 			err := wrapStderrError("RunCommand failed", stderrBuf, errors.New("exit status 1"))
 			Expect(err.Error()).To(Equal("RunCommand failed: exit status 1"))

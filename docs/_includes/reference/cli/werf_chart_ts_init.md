@@ -23,6 +23,9 @@ werf chart ts init [PATH] [options]
       --config-templates-dir=""
             Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf   
             in working directory)
+      --deno-binary-path=""
+            Path to the Deno binary to use instead of auto-downloading (default                     
+            $WERF_DENO_BINARY_PATH)
       --dev=false
             Enable development mode (default $WERF_DEV).
             The mode allows working with project files without doing redundant commits during       

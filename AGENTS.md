@@ -19,7 +19,7 @@ werf is a CNCF Sandbox CLI tool to implement full-cycle CI/CD to Kubernetes. wer
 
 - NEVER add comments unless they document a non-obvious public API or explain genuinely non-obvious logic. NEVER add comments that restate what the code does, repeat the field/function name, describe obvious error handling, or act as section separators. When in doubt, don't comment.
 - ALWAYS use `task` commands for build/test/lint/format — NEVER raw `go build`, `go test`, `go vet`, `go fmt`, or `golangci-lint` directly.
-- ALWAYS read the matching skill in `.agents/skills/` BEFORE the action it governs and follow it verbatim: `git-conventions/SKILL.md` before naming a branch or writing a commit message, `pull-request/SKILL.md` before creating or updating a PR (title, description, draft by default), `review/SKILL.md` before reviewing code, `test-the-tests/SKILL.md` before considering a new or changed test done, `challenge-review/SKILL.md` in addition to `review/SKILL.md` when the diff is non-trivial or high-risk, or touches tests or verification infrastructure, `session-retro/SKILL.md` when wrapping up a session or asked to reflect on it. These files are the source of truth and are NOT duplicated here.
+- ALWAYS read the matching skill in `.agents/skills/` BEFORE the action it governs and follow it verbatim (resolve that path from `git rev-parse --show-toplevel`, not from the working directory — a session started outside a checkout reads nothing and silently skips the rule): `git-conventions/SKILL.md` before naming a branch or writing a commit message, `pull-request/SKILL.md` before creating or updating a PR (title, description, draft by default), `review/SKILL.md` before reviewing code, `test-the-tests/SKILL.md` before considering a new or changed test done, `challenge-review/SKILL.md` in addition to `review/SKILL.md` when the diff is non-trivial or high-risk, or touches tests or verification infrastructure, `session-retro/SKILL.md` when wrapping up a session or asked to reflect on it. These files are the source of truth and are NOT duplicated here.
 - ALWAYS verify, don't assume — check the actual state before making changes. Before concluding that a check cannot run here, establish it: whether a runtime is actually missing, and whether a remote host is available.
 - ALWAYS start with the simplest possible solution. If it works, stop. Add complexity only when justified by a concrete, current requirement — NEVER for hypothetical future needs.
 - NEVER leave TODOs, stubs, or partial implementations.
@@ -29,6 +29,9 @@ werf is a CNCF Sandbox CLI tool to implement full-cycle CI/CD to Kubernetes. wer
 - When removing content, ALWAYS clean up orphaned structural elements (comment separators, section headers, blank-line groups) that no longer serve a purpose.
 - When renaming a type, function, or constant, ALWAYS rename all related local variables, parameters, and error messages that reference the old name. A rename is not complete until grep for the old name returns zero hits in affected packages.
 - When removing a feature that has documentation in multiple languages (e.g. `pages_en/`, `pages_ru/`), ALWAYS apply the same removal to ALL language versions. NEVER assume English-only cleanup is sufficient.
+- NEVER trust LSP/gopls diagnostics from unrelated files as proof of build failure. The ONLY source of truth for compilation is `task build`. LSP often reports false errors due to stale cache or incomplete workspace indexing.
+- NEVER cite a count or a command's success as evidence unless a failure would have looked different — validate the check against a known-positive case first. A mis-typed `grep -c` pattern and a genuinely absent condition both yield `0`, and `… | grep x || echo clean` always prints `clean`, because a pipeline reports only its last command's status. A broken check reads exactly like a passing one.
+- If you encounter errors in files OUTSIDE your task scope — STOP and report to the orchestrator. NEVER fix them yourself. Unsolicited fixes to unrelated files cause scope creep and may introduce regressions.
 - If a package has a doc.go, ALWAYS read it before changing that package or the on-disk data it owns — invariants and compatibility contracts live there (e.g. pkg/git_repo/gitdata owns the shared $WERF_HOME/local_cache).
 
 ## Code style (MANDATORY)
@@ -51,6 +54,7 @@ Follow [Effective Go](https://go.dev/doc/effective_go) and [Go Code Review Comme
 - Use `grep` ONLY for literal text — config keys, error message strings, annotation names.
 - ALWAYS use your harness's file-read and search tools instead of `cat`, `sed -n`, `head` or `grep` inside `bash`. They cap what enters the context — byte and match limits, offset windows, long-line truncation — where a shell command dumps the whole file or every hit. Reading an entire file to look at one function is the most expensive habit there is.
 - If your harness has a semantic code-search tool, prefer it over `grep` for intent-based questions ("how does X work"). If it does not, read the code: NEVER substitute keyword grepping for understanding.
+- LSP indexes the worktree, so it answers about whatever is checked out. When the code you are reading lives in a commit that is NOT checked out — reviewing an unfetched PR head, for instance — LSP and a bare `grep` both silently describe the base instead. Read the blob (`git show <ref>:<path>`) or add a worktree at that commit; a plain worktree grep that finds nothing there proves nothing.
 
 ## Commands (MANDATORY)
 
@@ -72,9 +76,9 @@ Correct: `task test:unit paths="./pkg/sbom/..." -- -focus=MyTest`
 - `task enum:generate` — run enum generators.
 - `task mock:generate` — run mock generators.
 - `task mock:check` — verify generated mocks are up to date (runs `go generate -run mockgen` and diffs).
-- `task doc:gen` — regenerate CLI reference docs. ALWAYS run after changing command descriptions, flags, or help text in Go source.
+- `task doc:gen` — regenerate CLI reference docs. ALWAYS run after changing command descriptions, flags, or help text in Go source. It renders each flag's default from the CURRENT environment, so run it with the `WERF_*` variables unset and review the diff for flags you never touched — one exported `WERF_*` rewrites that flag's documented default across every command page.
 
-`format` and `lint*` come from a remote taskfile ([werf/common-ci](https://github.com/werf/common-ci)), so they need `TASK_X_REMOTE_TASKFILES=1` and network access.
+Releases are built inside the image pinned in `trdl.yaml`, built from `scripts/werf-builder/Dockerfile`. Raising the `go`/`toolchain` directive in `go.mod` therefore means rebuilding that image and repinning `trdl.yaml` with the new tag and digest — otherwise the release build downloads a toolchain over the network and the pinned digest stops meaning anything. `task verify:builder:go-version` checks the two agree and runs as part of `task lint`. That image is `linux/amd64` only and its warm-up step builds werf for five platforms: it needs roughly 20 GB of free disk and does not build on a Mac under emulation.
 
 ## Verifying changes (MANDATORY)
 
@@ -89,6 +93,8 @@ NEVER assume a change compiles. While iterating, scope the slow steps (`task lin
 
 A failure in a package the diff does not touch is usually a host-environment flake, not your change: re-run that suite alone before investigating it.
 
+Wait for PR checks with a single blocking `gh pr checks <number> --watch`, never a `sleep`-and-poll loop: a run takes tens of minutes and every poll is another turn that re-reads the whole context.
+
 A green `task test:unit` does NOT prove a command runs. No unit test constructs the storage manager, so a command that dereferences a flag group it never registered dies with a SIGSEGV before doing any work while the whole unit suite stays green. After adding or changing a command, execute it once — via `task test:integration`, or the binary in `./bin/` — before calling it done.
 
 `git diff --check` cannot be a whole-repo gate. The CLI reference generator emits column-aligned help text, so the generated pages under `docs/_includes/reference/cli` and `docs/pages_en/reference/cli` carry trailing whitespace on every branch. Scope the check to authored files.
@@ -97,7 +103,7 @@ On macOS `task build` produces a **non-CGO** binary and skips every `//go:build 
 
 No local check sees a `//go:build linux` **test** file: `task build`, `task lint` and `task test:unit` all stay green while one does not compile, and `task build:dev:linux:amd64:go` does not build tests either. Typecheck them with `GOOS=linux GOARCH=amd64 task test:unit paths="./pkg/foo/..."` — it compiles the linux test binary, then fails with `exec format error`, which means compilation passed. To also execute them, run `go test` with the `goTags` from `Taskfile.dist.yaml` inside a linux container, mounting the repo and `$HOME/go/pkg/mod`.
 
-Unit tests otherwise run anywhere. e2e and integration suites need Docker plus a reachable registry in `WERF_TEST_K8S_DOCKER_REGISTRY`; `task test:setup:environment` provisions kind and that registry and writes `.env`, but any local registry works — the docker-backend specs run on macOS, only the Buildah-mode entries need Linux. Anything exercising registry deletion additionally needs `REGISTRY_STORAGE_DELETE_ENABLED=true` on that registry: stock `registry:2` answers every DELETE with `UNSUPPORTED: The operation is unsupported`, which reads like a werf bug.
+Unit tests otherwise run anywhere. e2e and integration suites need Docker plus a reachable registry in `WERF_TEST_K8S_DOCKER_REGISTRY` — set it even for entries that need no registry, or the suite refuses to start — and run best one at a time (`task test:e2e paths="./test/e2e/build" labelFilter="..." parallel=1`); `task test:setup:environment` provisions kind and that registry and writes `.env`, but any local registry works — the docker-backend specs run on macOS, only the Buildah-mode entries need Linux. Anything exercising registry deletion additionally needs `REGISTRY_STORAGE_DELETE_ENABLED=true` on that registry: stock `registry:2` answers every DELETE with `UNSUPPORTED: The operation is unsupported`, which reads like a werf bug.
 
 ## Testing (MANDATORY)
 
@@ -120,10 +126,9 @@ When a mistake was caused by a rule missing from AGENTS.md or CODESTYLE.md, prop
 ## Related repositories
 
 - [werf/nelm](https://github.com/werf/nelm) — Deployment engine used by werf. Go-based Kubernetes deployment tool that manages Helm charts.
-- [werf/3p-helm](https://github.com/werf/3p-helm) — Helm fork. Provides chart loading, rendering, and release primitives. Changes to Helm internals go here, not in werf.
 - [werf/kubedog](https://github.com/werf/kubedog) — Kubernetes resource tracking library.
 - [werf/common-go](https://github.com/werf/common-go) — Shared Go libraries (secrets, CLI utilities, locking).
 
-`nelm`, `3p-helm`, `kubedog`, and `common-go` are ordinary versioned dependencies: fixing something inside them means a PR in that repository plus a version bump here — NEVER a local patch.
+`nelm`, `kubedog`, and `common-go` are ordinary versioned dependencies: fixing something inside them means a PR in that repository plus a version bump here — NEVER a local patch.
 
-`go.mod` also has a `replace` block pointing several dependencies at forks, including `spf13/cobra` → `andremueller/cobra` and `containers/buildah`, `deislabs/oras`, `docker/buildx` → `werf/3p-*`. ALWAYS check that block before trusting upstream documentation for these libraries.
+`go.mod` also has a `replace` block pointing several dependencies at forks: `spf13/cobra` → `werf/3p-cobra`, `deislabs/oras` → `werf/3p-oras`, `oras.land/oras-go` → `werf/3p-oras-go`, `docker/buildx` → `werf/3p-buildx`, plus a downgrade pin for `mattn/go-sqlite3`. Buildah is NOT among them: it comes straight from `go.podman.io/buildah`, the path the project moved to in v1.44. ALWAYS check that block before trusting upstream documentation for these libraries.

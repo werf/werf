@@ -12,7 +12,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	werfExec "github.com/werf/werf/v2/pkg/werf/exec"
+	werfExec "github.com/werf/werf/v3/pkg/werf/exec"
 )
 
 var _ = DescribeTable("cancel",

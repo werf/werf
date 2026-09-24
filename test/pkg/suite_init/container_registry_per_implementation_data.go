@@ -8,8 +8,8 @@ import (
 
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/werf/v2/pkg/docker_registry"
-	"github.com/werf/werf/v2/test/pkg/utils"
+	"github.com/werf/werf/v3/pkg/docker_registry"
+	"github.com/werf/werf/v3/test/pkg/utils"
 )
 
 const LocalRegistryImplementationName = ":local_container_registry"
@@ -121,9 +121,6 @@ func setupOptionalLocalContainerRegistry(ctx context.Context, synchronizedSuiteC
 	implementationNameForWerf := "default"
 
 	registryAddress := TestRegistry()
-	if registryAddress == "" {
-		Expect(registryAddress).NotTo(BeEmpty(), "WERF_TEST_K8S_DOCKER_REGISTRY must be set")
-	}
 
 	implData := &containerRegistryImplementationData{
 		RegistryAddress:        registryAddress,

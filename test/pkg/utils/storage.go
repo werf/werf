@@ -5,10 +5,10 @@ import (
 
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/werf/v2/pkg/container_backend"
-	"github.com/werf/werf/v2/pkg/docker_registry"
-	"github.com/werf/werf/v2/pkg/storage"
-	"github.com/werf/werf/v2/pkg/werf"
+	"github.com/werf/werf/v3/pkg/container_backend"
+	"github.com/werf/werf/v3/pkg/docker_registry"
+	"github.com/werf/werf/v3/pkg/storage"
+	"github.com/werf/werf/v3/pkg/werf"
 )
 
 func NewStagesStorage(ctx context.Context, stagesStorageAddress, implementationName string, dockerRegistryOptions docker_registry.DockerRegistryOptions) storage.PrimaryStagesStorage {
@@ -57,15 +57,4 @@ func ImageMetadata(ctx context.Context, stagesStorage storage.StagesStorage, ima
 	imageMetadataByImageName, _, err := stagesStorage.GetAllAndGroupImageMetadataByImageName(WithDependencies(ctx), ProjectName(), []string{imageName})
 	Expect(err).ShouldNot(HaveOccurred())
 	return imageMetadataByImageName[imageName]
-}
-
-func ImportMetadataIDs(ctx context.Context, stagesStorage storage.StagesStorage) []string {
-	ids, err := stagesStorage.GetImportMetadataIDs(WithDependencies(ctx), ProjectName())
-	Expect(err).ShouldNot(HaveOccurred())
-	return ids
-}
-
-func RmImportMetadata(ctx context.Context, stagesStorage storage.StagesStorage, importSourceID string) {
-	err := stagesStorage.RmImportMetadata(WithDependencies(ctx), ProjectName(), importSourceID)
-	Expect(err).ShouldNot(HaveOccurred())
 }

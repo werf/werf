@@ -11,9 +11,9 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/cmd/werf/common"
-	"github.com/werf/werf/v2/pkg/tmp_manager"
-	"github.com/werf/werf/v2/pkg/true_git"
+	"github.com/werf/werf/v3/cmd/werf/common"
+	"github.com/werf/werf/v3/pkg/tmp_manager"
+	"github.com/werf/werf/v3/pkg/true_git"
 )
 
 const (

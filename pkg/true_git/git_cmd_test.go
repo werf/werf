@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/werf/v2/test/pkg/utils"
+	"github.com/werf/werf/v3/test/pkg/utils"
 )
 
 var _ = Describe("Git command", func() {
@@ -21,7 +21,7 @@ var _ = Describe("Git command", func() {
 
 		utils.RunSucceedCommand(ctx, gitRepoPath, "git", "checkout", "-b", "main")
 
-		utils.RunSucceedCommand(ctx, gitRepoPath, "git", "commit", "--allow-empty", "-m", "Initial commit")
+		gitCommitSucceed(ctx, gitRepoPath, "--allow-empty", "-m", "Initial commit")
 
 		Expect(Init(ctx, Options{})).Should(Succeed())
 	})

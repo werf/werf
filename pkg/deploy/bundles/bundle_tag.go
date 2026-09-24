@@ -8,7 +8,7 @@ import (
 	"github.com/Masterminds/semver"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/slug"
+	"github.com/werf/werf/v3/pkg/slug"
 )
 
 func BundleTagToChartVersion(ctx context.Context, tag string, now time.Time) (*semver.Version, error) {

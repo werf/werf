@@ -8,7 +8,7 @@ import (
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 
-	"github.com/werf/werf/v2/pkg/config"
+	"github.com/werf/werf/v3/pkg/config"
 )
 
 var _ = Describe("build report operations option", func() {

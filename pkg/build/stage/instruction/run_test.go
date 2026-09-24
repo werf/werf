@@ -9,15 +9,16 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/werf/v2/pkg/build/stage"
-	"github.com/werf/werf/v2/pkg/build/stage/instruction"
+	"github.com/werf/werf/v3/pkg/build/stage"
+	"github.com/werf/werf/v3/pkg/build/stage/instruction"
+	"github.com/werf/werf/v3/pkg/dockerfile"
 )
 
 func parseRunCommand(dockerfileText string) *instructions.RunCommand {
 	p, err := parser.Parse(bytes.NewReader([]byte(dockerfileText)))
 	Expect(err).To(Succeed())
 
-	dockerStages, _, err := instructions.Parse(p.AST)
+	dockerStages, _, err := instructions.Parse(p.AST, nil)
 	Expect(err).To(Succeed())
 	Expect(dockerStages).NotTo(BeEmpty())
 
@@ -52,7 +53,7 @@ var _ = Describe("RUN mount from stage resolution", func() {
 		conveyor := stage.NewConveyorStub(
 			stage.NewGiterminismManagerStub(stage.NewLocalGitRepoStub("test"), stage.NewGiterminismInspectorStub()),
 			map[string]string{"/stage/os": resolvedOsImage},
-			nil, nil,
+			nil,
 		)
 
 		Expect(stg.ExpandDependencies(ctx, conveyor, map[string]string{})).To(Succeed())
@@ -70,7 +71,7 @@ var _ = Describe("RUN mount from stage resolution", func() {
 
 		conveyor := stage.NewConveyorStub(
 			stage.NewGiterminismManagerStub(stage.NewLocalGitRepoStub("test"), stage.NewGiterminismInspectorStub()),
-			nil, nil, nil,
+			nil, nil,
 		)
 
 		Expect(stg.ExpandDependencies(ctx, conveyor, map[string]string{})).To(Succeed())
@@ -89,7 +90,7 @@ var _ = Describe("RUN mount from stage resolution", func() {
 		conveyor := stage.NewConveyorStub(
 			stage.NewGiterminismManagerStub(stage.NewLocalGitRepoStub("test"), stage.NewGiterminismInspectorStub()),
 			map[string]string{"/stage/os": resolvedImage},
-			nil, nil,
+			nil,
 		)
 
 		Expect(stg.ExpandDependencies(ctx, conveyor, map[string]string{})).To(Succeed())
@@ -107,5 +108,23 @@ var _ = Describe("RUN mount from stage resolution", func() {
 		changedDigest := digestFor(ctx, "ghcr.io/werf/instruction-test:4930d562bfbee9c931413c826137d49eff6a2e7d39519c1c9488a747-1655913653892")
 		fmt.Printf("digest: %s, changedDigest: %s\n", digest1, changedDigest)
 		Expect(changedDigest).NotTo(Equal(digest1))
+	})
+})
+
+var _ = Describe("RUN content digest", func() {
+	newRunStageWithEnv := func(env map[string]string) *instruction.Run {
+		runCommand := parseRunCommand("FROM alpine\nRUN echo \"$VERSION\" > /value\n")
+		i := dockerfile.NewDockerfileStageInstruction(runCommand, dockerfile.DockerfileStageInstructionOptions{Env: env})
+		return instruction.NewRun(i, nil, false, &stage.BaseStageOptions{ImageName: "example-image", ProjectName: "example-project"}, nil, "")
+	}
+
+	It("follows the environment the instruction declares, before dependencies are expanded", func(ctx SpecContext) {
+		one, err := newRunStageWithEnv(map[string]string{"VERSION": "one"}).GetContentDependencies(ctx, nil, nil)
+		Expect(err).To(Succeed())
+
+		two, err := newRunStageWithEnv(map[string]string{"VERSION": "two"}).GetContentDependencies(ctx, nil, nil)
+		Expect(err).To(Succeed())
+
+		Expect(two).NotTo(Equal(one), "a changed build argument must reach the content digest")
 	})
 })

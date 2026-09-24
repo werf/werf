@@ -3,6 +3,7 @@ package builder
 import (
 	"context"
 	"fmt"
+	"os"
 	"path"
 	"path/filepath"
 	"strings"
@@ -11,14 +12,19 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/build/secrets"
-	"github.com/werf/werf/v2/pkg/config"
-	"github.com/werf/werf/v2/pkg/container_backend"
-	"github.com/werf/werf/v2/pkg/container_backend/stage_builder"
-	"github.com/werf/werf/v2/pkg/stapel"
+	"github.com/werf/werf/v3/pkg/build/secrets"
+	"github.com/werf/werf/v3/pkg/config"
+	"github.com/werf/werf/v3/pkg/container_backend"
+	"github.com/werf/werf/v3/pkg/container_backend/stage_builder"
+	"github.com/werf/werf/v3/pkg/stapel"
 )
 
 const scriptFileName = "script.sh"
+
+type Extra struct {
+	ContainerWerfPath string
+	TmpPath           string
+}
 
 type Shell struct {
 	config      *config.Shell
@@ -188,7 +194,7 @@ func (b *Shell) configFieldValue(fieldName string) interface{} {
 func (b *Shell) stageHostTmpDir(userStageName string) (string, error) {
 	p := filepath.Join(b.extra.TmpPath, fmt.Sprintf("shell-%s", userStageName))
 
-	if err := mkdirP(p); err != nil {
+	if err := os.MkdirAll(p, os.FileMode(0o775)); err != nil {
 		return "", err
 	}
 

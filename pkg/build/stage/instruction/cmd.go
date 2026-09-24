@@ -7,11 +7,11 @@ import (
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 
 	"github.com/werf/common-go/pkg/util"
-	"github.com/werf/werf/v2/pkg/build/stage"
-	"github.com/werf/werf/v2/pkg/config"
-	"github.com/werf/werf/v2/pkg/container_backend"
-	backend_instruction "github.com/werf/werf/v2/pkg/container_backend/instruction"
-	"github.com/werf/werf/v2/pkg/dockerfile"
+	"github.com/werf/werf/v3/pkg/build/stage"
+	"github.com/werf/werf/v3/pkg/config"
+	"github.com/werf/werf/v3/pkg/container_backend"
+	backend_instruction "github.com/werf/werf/v3/pkg/container_backend/instruction"
+	"github.com/werf/werf/v3/pkg/dockerfile"
 )
 
 type Cmd struct {
@@ -20,6 +20,10 @@ type Cmd struct {
 
 func NewCmd(i *dockerfile.DockerfileStageInstruction[*instructions.CmdCommand], dependencies []*config.Dependency, hasPrevStage bool, opts *stage.BaseStageOptions) *Cmd {
 	return &Cmd{Base: NewBase(i, backend_instruction.NewCmd(*i.Data), dependencies, hasPrevStage, opts)}
+}
+
+func (stg *Cmd) GetContentDependencies(ctx context.Context, c stage.Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+	return stg.GetDependencies(ctx, c, nil, nil, nil, buildContextArchive)
 }
 
 func (stg *Cmd) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {

@@ -3,7 +3,7 @@ package stage_manager
 import (
 	"sync"
 
-	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v3/pkg/image"
 )
 
 type managedStageDescSet struct {

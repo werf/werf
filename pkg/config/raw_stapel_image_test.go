@@ -1,7 +1,6 @@
 package config
 
 import (
-	"context"
 	"errors"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -9,7 +8,6 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/werf/common-go/pkg/util"
-	"github.com/werf/werf/v2/pkg/werf/global_warnings"
 )
 
 var _ = Describe("rawStapelImage", func() {
@@ -63,7 +61,6 @@ var _ = Describe("rawStapelImage", func() {
 					platform:     []string{},
 					final:        true,
 				},
-				Docker: nil,
 			},
 		),
 	)
@@ -88,7 +85,7 @@ var _ = Describe("rawStapelImage", func() {
 			Expect(err).To(Succeed())
 
 			for i, expectedDep := range expected {
-				Expect(expectedDep.ImageName).To(Equal(stapelImage.Dependencies[i].ImageName))
+				Expect(expectedDep.From).To(Equal(stapelImage.Dependencies[i].From))
 				Expect(expectedDep.After).To(Equal(stapelImage.Dependencies[i].After))
 				Expect(expectedDep.Before).To(Equal(stapelImage.Dependencies[i].Before))
 
@@ -110,39 +107,8 @@ var _ = Describe("rawStapelImage", func() {
 				}},
 			},
 			[]*Dependency{{
-				ImageName: "image2",
-				Before:    "install",
-			}},
-		),
-		Entry(
-			"with from dependency",
-			map[string]interface{}{
-				"image": "image1",
-				"from":  "alpine",
-				"dependencies": []map[string]interface{}{{
-					"from":   "image2",
-					"before": "install",
-				}},
-			},
-			[]*Dependency{{
-				ImageName: "image2",
-				Before:    "install",
-			}},
-		),
-		Entry(
-			"with from taking precedence over image dependency",
-			map[string]interface{}{
-				"image": "image1",
-				"from":  "alpine",
-				"dependencies": []map[string]interface{}{{
-					"image":  "image2",
-					"from":   "image3",
-					"before": "install",
-				}},
-			},
-			[]*Dependency{{
-				ImageName: "image3",
-				Before:    "install",
+				From:   "image2",
+				Before: "install",
 			}},
 		),
 		Entry(
@@ -160,8 +126,8 @@ var _ = Describe("rawStapelImage", func() {
 				}},
 			},
 			[]*Dependency{{
-				ImageName: "image2",
-				Before:    "install",
+				From:   "image2",
+				Before: "install",
 				Imports: []*DependencyImport{{
 					Type:      ImageTagImport,
 					TargetEnv: "IMAGE_TAG",
@@ -205,10 +171,6 @@ var _ = Describe("rawStapelImage", func() {
 								"targetEnv": "IMAGE_NAME_2",
 							},
 							{
-								"type":      string(ImageIDImport),
-								"targetEnv": "IMAGE_ID_2",
-							},
-							{
 								"type":      string(ImageDigestImport),
 								"targetEnv": "IMAGE_DIGEST_2",
 							},
@@ -222,12 +184,12 @@ var _ = Describe("rawStapelImage", func() {
 			},
 			[]*Dependency{
 				{
-					ImageName: "image2",
-					Before:    "install",
+					From:   "image2",
+					Before: "install",
 				},
 				{
-					ImageName: "image3",
-					After:     "install",
+					From:  "image3",
+					After: "install",
 					Imports: []*DependencyImport{
 						{
 							Type:      ImageTagImport,
@@ -240,8 +202,8 @@ var _ = Describe("rawStapelImage", func() {
 					},
 				},
 				{
-					ImageName: "image4",
-					After:     "setup",
+					From:  "image4",
+					After: "setup",
 					Imports: []*DependencyImport{
 						{
 							Type:      ImageTagImport,
@@ -250,10 +212,6 @@ var _ = Describe("rawStapelImage", func() {
 						{
 							Type:      ImageNameImport,
 							TargetEnv: "IMAGE_NAME_2",
-						},
-						{
-							Type:      ImageIDImport,
-							TargetEnv: "IMAGE_ID_2",
 						},
 						{
 							Type:      ImageDigestImport,
@@ -267,36 +225,6 @@ var _ = Describe("rawStapelImage", func() {
 				},
 			},
 		),
-	)
-
-	DescribeTable("dependency image deprecation warning",
-		func(dependency map[string]interface{}, expectedWarnings int) {
-			rawYaml, err := yaml.Marshal(map[string]interface{}{
-				"image":        "image1",
-				"from":         "alpine",
-				"dependencies": []map[string]interface{}{dependency},
-			})
-			Expect(err).To(Succeed())
-
-			doc := &doc{Content: rawYaml}
-			rawStapelImage := &rawStapelImage{doc: doc}
-			Expect(yaml.UnmarshalStrict(doc.Content, rawStapelImage)).To(Succeed())
-
-			ctx := context.Background()
-			warningsBefore := global_warnings.GlobalDeprecationWarnings(ctx)
-
-			_, err = rawStapelImage.toStapelImageDirective(giterminismManager, "image1")
-			Expect(err).To(Succeed())
-
-			newWarnings := global_warnings.GlobalDeprecationWarnings(ctx)[len(warningsBefore):]
-			Expect(newWarnings).To(HaveLen(expectedWarnings))
-			for _, warning := range newWarnings {
-				Expect(warning).To(Equal("The `dependencies[].image` directive is deprecated and will be removed in v3. Please use `dependencies[].from` instead."))
-			}
-		},
-		Entry("registered for image", map[string]interface{}{"image": "image2", "before": "install"}, 1),
-		Entry("not registered for from", map[string]interface{}{"from": "image2", "before": "install"}, 0),
-		Entry("not registered for from with image", map[string]interface{}{"image": "image2", "from": "image3", "before": "install"}, 0),
 	)
 
 	DescribeTable("unmarshal and convert to directive fail with configError",

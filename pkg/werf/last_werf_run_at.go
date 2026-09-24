@@ -59,14 +59,3 @@ func SetWerfFirstRunAt(ctx context.Context) error {
 	}
 	return nil
 }
-
-func GetWerfFirstRunAt(ctx context.Context) (time.Time, error) {
-	path := getWerfFirstRunAtPath()
-	if _, lock, err := HostLocker().AcquireLock(ctx, path, lockgate.AcquireOptions{OnWaitFunc: func(lockName string, doWait func() error) error { return doWait() }}); err != nil {
-		return time.Time{}, fmt.Errorf("error locking path %q: %w", path, err)
-	} else {
-		defer HostLocker().ReleaseLock(lock)
-	}
-
-	return timestamps.ReadTimestampFile(path)
-}

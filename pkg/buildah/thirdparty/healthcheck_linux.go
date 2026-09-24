@@ -3,6 +3,6 @@
 
 package thirdparty
 
-import "github.com/containers/buildah/docker"
+import "go.podman.io/buildah/docker"
 
 type BuildahHealthConfig docker.HealthConfig

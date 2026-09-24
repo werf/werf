@@ -5,7 +5,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/types"
 
-	"github.com/werf/werf/v2/pkg/config"
+	"github.com/werf/werf/v3/pkg/config"
 )
 
 var _ = Describe("ExportBase", func() {

@@ -3,16 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Regenerate Secret files with new Secret key.
-
-Old key should be specified in the `$WERF_OLD_SECRET_KEY`.
-
-New key should reside either in the `$WERF_SECRET_KEY` or `.werf_secret_key file`.
-
-Command will extract data with the old key, generate new Secret data and rewrite files:
-* standard raw Secret files in the `.helm/secret folder`;
-* standard Secret Values YAML file `.helm/secret-values.yaml`;
-* additional Secret Values YAML files specified with `EXTRA_SECRET_VALUES_FILE_PATH` params.
+Regenerate secret files with new secret key
 
 {{ header }} Syntax
 
@@ -99,25 +90,5 @@ werf helm secret rotate-secret-key [EXTRA_SECRET_VALUES_FILE_PATH...] [options]
             Loose werf giterminism mode restrictions
       --tmp-dir=""
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
-```
-
-{{ header }} Options inherited from parent commands
-
-```shell
-      --hooks-status-progress-period=0
-            No-op
-      --kube-config=""
-            Kubernetes config file path (default $WERF_KUBE_CONFIG, or $WERF_KUBECONFIG, or         
-            $KUBECONFIG)
-      --kube-config-base64=""
-            Kubernetes config data as base64 string (default $WERF_KUBE_CONFIG_BASE64 or            
-            $WERF_KUBECONFIG_BASE64 or $KUBECONFIG_BASE64)
-      --kube-context=""
-            Kubernetes config context (default $WERF_KUBE_CONTEXT)
-  -n, --namespace=""
-            namespace scope for this request
-      --status-progress-period=5
-            Status progress period in seconds. Set -1 to stop showing status progress. Defaults to  
-            $WERF_STATUS_PROGRESS_PERIOD_SECONDS or 5 seconds
 ```
 

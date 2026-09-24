@@ -3,15 +3,23 @@ package true_git
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
 	"github.com/Masterminds/semver"
+)
 
-	"github.com/werf/common-go/pkg/util"
+const (
+	devIndexFileName     = "dev_index"
+	devIndexBaseFileName = "dev_index_base"
 )
 
 type SyncSourceWorktreeWithServiceBranchOptions struct {
@@ -41,7 +49,7 @@ func SyncSourceWorktreeWithServiceBranch(ctx context.Context, gitDir, sourceWork
 			return fmt.Errorf("unable to remove %s: %w", currentCommitPath, err)
 		}
 
-		resultCommit, err = syncWorktreeWithServiceWorktreeBranch(ctx, sourceWorktreeDir, serviceWorktreeDir, commit, opts.ServiceBranch, opts.GlobExcludeList)
+		resultCommit, err = syncWorktreeWithServiceWorktreeBranch(ctx, sourceWorktreeDir, serviceWorktreeDir, worktreeCacheDir, commit, opts.ServiceBranch, opts.GlobExcludeList)
 		if err != nil {
 			return fmt.Errorf("unable to sync worktree with service branch %q: %w", opts.ServiceBranch, err)
 		}
@@ -54,7 +62,7 @@ func SyncSourceWorktreeWithServiceBranch(ctx context.Context, gitDir, sourceWork
 	return resultCommit, nil
 }
 
-func syncWorktreeWithServiceWorktreeBranch(ctx context.Context, sourceWorktreeDir, serviceWorktreeDir, sourceCommit, branchName string, globExcludeList []string) (string, error) {
+func syncWorktreeWithServiceWorktreeBranch(ctx context.Context, sourceWorktreeDir, serviceWorktreeDir, worktreeCacheDir, sourceCommit, branchName string, globExcludeList []string) (string, error) {
 	if err := prepareAndCheckoutServiceBranch(ctx, serviceWorktreeDir, sourceCommit, branchName); err != nil {
 		return "", fmt.Errorf("unable to get or prepare service branch head commit: %w", err)
 	}
@@ -64,30 +72,311 @@ func syncWorktreeWithServiceWorktreeBranch(ctx context.Context, sourceWorktreeDi
 		return "", fmt.Errorf("unable to get service worktree commit SHA: %w", err)
 	}
 
-	revertedChangesExist, err := revertExcludedChangesInServiceWorktreeIndex(ctx, sourceWorktreeDir, serviceWorktreeDir, sourceCommit, serviceBranchHeadCommit, globExcludeList)
+	conversionSignature, err := computeConversionConfigSignature(ctx, sourceWorktreeDir, serviceWorktreeDir)
 	if err != nil {
-		return "", fmt.Errorf("unable to revert excluded changes in service worktree index: %w", err)
+		return "", fmt.Errorf("unable to compute conversion config signature: %w", err)
 	}
 
-	newChangesExist, err := checkNewChangesInSourceWorktreeDir(ctx, sourceWorktreeDir, serviceWorktreeDir, globExcludeList)
+	treeSHA, seeded, err := prepareDevIndexAndWriteTree(ctx, sourceWorktreeDir, serviceWorktreeDir, worktreeCacheDir, sourceCommit, serviceBranchHeadCommit, conversionSignature, globExcludeList)
 	if err != nil {
-		return "", fmt.Errorf("unable to check new changes in source worktree: %w", err)
+		// A reused (warm) index may be corrupt or left inconsistent by an interrupted run; discard
+		// it and rebuild once from a clean read-tree seed. When the attempt already ran from a
+		// fresh seed the failure is deterministic (broken clean filter, disk full, ...), so retrying
+		// would only double a potentially multi-minute run — surface it instead.
+		if seeded {
+			return "", fmt.Errorf("unable to prepare dev-index: %w", err)
+		}
+		if rmErr := removeDevIndexFiles(worktreeCacheDir); rmErr != nil {
+			return "", fmt.Errorf("unable to discard dev-index after failure (%v): %w", err, rmErr)
+		}
+		treeSHA, _, err = prepareDevIndexAndWriteTree(ctx, sourceWorktreeDir, serviceWorktreeDir, worktreeCacheDir, sourceCommit, serviceBranchHeadCommit, conversionSignature, globExcludeList)
+		if err != nil {
+			return "", fmt.Errorf("unable to rebuild dev-index after failure: %w", err)
+		}
 	}
 
-	if !revertedChangesExist && !newChangesExist {
+	serviceBranchHeadTree, err := resolveTreeSHA(ctx, serviceWorktreeDir, serviceBranchHeadCommit)
+	if err != nil {
+		return "", fmt.Errorf("unable to resolve service branch head tree: %w", err)
+	}
+
+	if treeSHA == serviceBranchHeadTree {
+		if err := writeDevIndexBase(worktreeCacheDir, serviceBranchHeadCommit, conversionSignature); err != nil {
+			return "", fmt.Errorf("unable to write dev-index base marker: %w", err)
+		}
 		return serviceBranchHeadCommit, nil
 	}
 
-	if err = addNewChangesInServiceWorktreeDir(ctx, sourceWorktreeDir, serviceWorktreeDir, globExcludeList); err != nil {
-		return "", fmt.Errorf("unable to add new changes in service worktree: %w", err)
-	}
-
-	newCommit, err := commitNewChangesInServiceBranch(ctx, serviceWorktreeDir, branchName)
+	newCommit, err := commitTreeToServiceBranch(ctx, serviceWorktreeDir, branchName, treeSHA, serviceBranchHeadCommit)
 	if err != nil {
 		return "", fmt.Errorf("unable to commit new changes in service branch: %w", err)
 	}
 
+	if err := writeDevIndexBase(worktreeCacheDir, newCommit, conversionSignature); err != nil {
+		return "", fmt.Errorf("unable to write dev-index base marker: %w", err)
+	}
+
 	return newCommit, nil
+}
+
+func devIndexFilePath(worktreeCacheDir string) string {
+	return filepath.Join(worktreeCacheDir, devIndexFileName)
+}
+
+func devIndexBaseFilePath(worktreeCacheDir string) string {
+	return filepath.Join(worktreeCacheDir, devIndexBaseFileName)
+}
+
+func removeDevIndexFiles(worktreeCacheDir string) error {
+	// Also drop a stale <dev_index>.lock: git leaves it behind when a command through the
+	// dev-index is SIGKILLed (werf's WaitDelay escalates SIGTERM to SIGKILL after 5m), and every
+	// later read-tree/add/write-tree would then fail to lock. Safe to remove here because the
+	// whole flow runs under withWorkTreeCacheLock, so no live git legitimately holds it.
+	for _, path := range []string{
+		devIndexFilePath(worktreeCacheDir),
+		devIndexFilePath(worktreeCacheDir) + ".lock",
+		devIndexBaseFilePath(worktreeCacheDir),
+	} {
+		if err := os.RemoveAll(path); err != nil {
+			return fmt.Errorf("unable to remove %s: %w", path, err)
+		}
+	}
+	return nil
+}
+
+func devIndexBaseSignature(serviceBranchHeadCommit, conversionSignature string) string {
+	sum := sha256.Sum256([]byte(serviceBranchHeadCommit + "\n" + conversionSignature))
+	return hex.EncodeToString(sum[:])
+}
+
+func writeDevIndexBase(worktreeCacheDir, serviceBranchHeadCommit, conversionSignature string) error {
+	sig := devIndexBaseSignature(serviceBranchHeadCommit, conversionSignature)
+	return os.WriteFile(devIndexBaseFilePath(worktreeCacheDir), []byte(sig+"\n"), 0o644)
+}
+
+func devIndexBaseMatches(worktreeCacheDir, expected string) bool {
+	data, err := os.ReadFile(devIndexBaseFilePath(worktreeCacheDir))
+	if err != nil {
+		return false
+	}
+	return strings.TrimSpace(string(data)) == expected
+}
+
+// prepareDevIndexAndWriteTree captures the source worktree into the persistent dev-index and
+// returns the resulting tree SHA. The index is (re)seeded from serviceBranchHeadCommit only when
+// its base marker is absent/mismatched (e.g. the service-branch head moved or the add-time
+// conversion config changed), so unchanged files keep matching the source worktree's stat cache
+// and are not re-read or re-hashed.
+func prepareDevIndexAndWriteTree(ctx context.Context, sourceWorktreeDir, serviceWorktreeDir, worktreeCacheDir, sourceCommit, serviceBranchHeadCommit, conversionSignature string, globExcludeList []string) (string, bool, error) {
+	devIndexFile := devIndexFilePath(worktreeCacheDir)
+	expectedBase := devIndexBaseSignature(serviceBranchHeadCommit, conversionSignature)
+
+	// Always drop a stale <dev_index>.lock up front: a SIGKILLed run (werf escalates SIGTERM to
+	// SIGKILL after WaitDelay) leaves it behind, and it would otherwise wedge even the cold seed
+	// (read-tree) path where the retry-with-rebuild does not run. Safe under withWorkTreeCacheLock.
+	if err := os.RemoveAll(devIndexFile + ".lock"); err != nil {
+		return "", false, fmt.Errorf("unable to remove stale dev-index lock: %w", err)
+	}
+
+	seeded := true
+	if _, err := os.Stat(devIndexFile); err == nil && devIndexBaseMatches(worktreeCacheDir, expectedBase) {
+		seeded = false
+	}
+	if seeded {
+		if err := seedDevIndex(ctx, serviceWorktreeDir, devIndexFile, serviceBranchHeadCommit); err != nil {
+			return "", seeded, fmt.Errorf("unable to seed dev-index from %s: %w", serviceBranchHeadCommit, err)
+		}
+	}
+
+	if err := revertExcludedChangesInDevIndex(ctx, serviceWorktreeDir, devIndexFile, sourceCommit, serviceBranchHeadCommit, globExcludeList); err != nil {
+		return "", seeded, fmt.Errorf("unable to revert excluded changes in dev-index: %w", err)
+	}
+
+	if err := runGitAddCmd(ctx, sourceWorktreeDir, serviceWorktreeDir, devIndexFile, globExcludeList); err != nil {
+		return "", seeded, fmt.Errorf("unable to add source worktree changes to dev-index: %w", err)
+	}
+
+	treeSHA, err := writeDevIndexTree(ctx, serviceWorktreeDir, devIndexFile)
+	if err != nil {
+		return "", seeded, fmt.Errorf("unable to write tree from dev-index: %w", err)
+	}
+
+	return treeSHA, seeded, nil
+}
+
+func seedDevIndex(ctx context.Context, serviceWorktreeDir, devIndexFile, serviceBranchHeadCommit string) error {
+	readTreeCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: serviceWorktreeDir, Env: []string{"GIT_INDEX_FILE=" + devIndexFile}}, "read-tree", serviceBranchHeadCommit)
+	if err := readTreeCmd.Run(ctx); err != nil {
+		return fmt.Errorf("git read-tree command failed: %w", err)
+	}
+	return nil
+}
+
+func writeDevIndexTree(ctx context.Context, serviceWorktreeDir, devIndexFile string) (string, error) {
+	writeTreeCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: serviceWorktreeDir, Env: []string{"GIT_INDEX_FILE=" + devIndexFile}}, "write-tree")
+	if err := writeTreeCmd.Run(ctx); err != nil {
+		return "", fmt.Errorf("git write-tree command failed: %w", err)
+	}
+	return strings.TrimSpace(writeTreeCmd.OutBuf.String()), nil
+}
+
+func resolveTreeSHA(ctx context.Context, serviceWorktreeDir, commit string) (string, error) {
+	revParseCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: serviceWorktreeDir}, "rev-parse", commit+"^{tree}")
+	if err := revParseCmd.Run(ctx); err != nil {
+		return "", fmt.Errorf("git rev-parse tree command failed: %w", err)
+	}
+	return strings.TrimSpace(revParseCmd.OutBuf.String()), nil
+}
+
+// computeConversionConfigSignature captures everything that affects how `git add` converts working
+// tree content into blobs, so a change forces a full reseed instead of silently keeping stale blobs
+// for files whose own content and stat did not change. Config-dependent inputs (filter.*, the
+// global/system attributes locations) are read from serviceWorktreeDir — the same git config
+// context the real `git add` runs in — so a worktree-specific config change cannot slip past the
+// signature; the attribute FILES are enumerated from sourceWorktreeDir, where the working tree and
+// its .gitattributes actually live.
+func computeConversionConfigSignature(ctx context.Context, sourceWorktreeDir, serviceWorktreeDir string) (string, error) {
+	h := sha256.New()
+
+	filterConfig, err := gitConfigFilterValues(ctx, serviceWorktreeDir)
+	if err != nil {
+		return "", err
+	}
+	fmt.Fprintf(h, "filter-config\x00%s\x00", filterConfig)
+
+	attrFiles, err := worktreeGitattributesFiles(ctx, sourceWorktreeDir)
+	if err != nil {
+		return "", err
+	}
+	for _, rel := range attrFiles {
+		content, err := os.ReadFile(filepath.Join(sourceWorktreeDir, rel))
+		if err != nil {
+			if errors.Is(err, os.ErrNotExist) {
+				continue
+			}
+			return "", fmt.Errorf("unable to read %s: %w", rel, err)
+		}
+		fmt.Fprintf(h, "attr\x00%s\x00", rel)
+		h.Write(content)
+	}
+
+	for _, extra := range extraAttributesFilePaths(ctx, sourceWorktreeDir, serviceWorktreeDir) {
+		content, err := os.ReadFile(extra)
+		if err != nil {
+			if errors.Is(err, os.ErrNotExist) {
+				continue
+			}
+			return "", fmt.Errorf("unable to read %s: %w", extra, err)
+		}
+		fmt.Fprintf(h, "extra-attr\x00%s\x00", extra)
+		h.Write(content)
+	}
+
+	return hex.EncodeToString(h.Sum(nil)), nil
+}
+
+func gitConfigFilterValues(ctx context.Context, repoDir string) (string, error) {
+	configCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: repoDir}, "config", "--get-regexp", "^filter\\.")
+	if err := configCmd.Run(ctx); err != nil {
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) && exitErr.ExitCode() == 1 {
+			return "", nil
+		}
+		return "", fmt.Errorf("git config command failed: %w", err)
+	}
+	return configCmd.OutBuf.String(), nil
+}
+
+// worktreeGitattributesFiles lists every .gitattributes in the worktree, tracked AND untracked:
+// git add applies attributes from an untracked .gitattributes too, so a signature keyed only on
+// index-tracked files would miss `git lfs track`-style changes and leave a stale blob in the warm
+// index. --exclude-standard is deliberately NOT passed: a gitignored .gitattributes still governs
+// conversion of non-ignored files.
+// ponytail: omitting --exclude-standard makes --others walk fully-ignored trees (node_modules,
+// build output) on every sync; readdir/lstat-only (no content reads, so #4754 stays fixed), but
+// revisit with a smarter enumeration if a repo with a huge ignored tree reports latency here.
+func worktreeGitattributesFiles(ctx context.Context, sourceWorktreeDir string) ([]string, error) {
+	lsCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: sourceWorktreeDir}, "ls-files", "-z", "--cached", "--others", "--", ".gitattributes", ":(glob)**/.gitattributes")
+	if err := lsCmd.Run(ctx); err != nil {
+		return nil, fmt.Errorf("git ls-files command failed: %w", err)
+	}
+	seen := make(map[string]struct{})
+	var files []string
+	for _, p := range strings.Split(lsCmd.OutBuf.String(), "\x00") {
+		if p == "" {
+			continue
+		}
+		if _, ok := seen[p]; ok {
+			continue
+		}
+		seen[p] = struct{}{}
+		files = append(files, p)
+	}
+	sort.Strings(files)
+	return files, nil
+}
+
+func extraAttributesFilePaths(ctx context.Context, sourceWorktreeDir, serviceWorktreeDir string) []string {
+	var paths []string
+
+	gitPathCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: sourceWorktreeDir}, "rev-parse", "--git-path", "info/attributes")
+	if err := gitPathCmd.Run(ctx); err == nil {
+		if p := strings.TrimSpace(gitPathCmd.OutBuf.String()); p != "" {
+			if !filepath.IsAbs(p) {
+				p = filepath.Join(sourceWorktreeDir, p)
+			}
+			paths = append(paths, p)
+		}
+	}
+
+	return append(paths, globalAndSystemAttributesFilePaths(ctx, serviceWorktreeDir)...)
+}
+
+// globalAndSystemAttributesFilePaths returns the per-user and system-wide gitattributes files that
+// git consults during `git add`, resolved in the same config context as the real add. git 2.43+
+// exposes their locations via `git var` (honoring GIT_ATTR_NOSYSTEM and the compiled-in/runtime
+// prefix); on older git the system path is undiscoverable, so fall back to core.attributesFile /
+// the XDG default for the per-user file only.
+func globalAndSystemAttributesFilePaths(ctx context.Context, repoDir string) []string {
+	if !gitVersion.LessThan(semver.MustParse("2.43.0")) {
+		var paths []string
+		for _, v := range []string{"GIT_ATTR_SYSTEM", "GIT_ATTR_GLOBAL"} {
+			varCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: repoDir}, "var", v)
+			if err := varCmd.Run(ctx); err == nil {
+				if p := strings.TrimSpace(varCmd.OutBuf.String()); p != "" {
+					paths = append(paths, p)
+				}
+			}
+		}
+		return paths
+	}
+
+	attrFileCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: repoDir}, "config", "--get", "core.attributesFile")
+	if err := attrFileCmd.Run(ctx); err == nil {
+		if p := strings.TrimSpace(attrFileCmd.OutBuf.String()); p != "" {
+			return []string{expandTilde(p)}
+		}
+	}
+	// ponytail: on git <2.43 the system gitattributes path is undiscoverable, so it is not
+	// hashed — an extremely rare, unmanaged file; revisit only if reported.
+	if xdg := os.Getenv("XDG_CONFIG_HOME"); xdg != "" {
+		return []string{filepath.Join(xdg, "git", "attributes")}
+	}
+	if home, err := os.UserHomeDir(); err == nil {
+		return []string{filepath.Join(home, ".config", "git", "attributes")}
+	}
+	return nil
+}
+
+func expandTilde(path string) string {
+	// ponytail: only ~ and ~/ are expanded; git's ~user/ form is left as-is (rare, and a
+	// stable literal still yields a stable signature — over-hashing at worst, never a miss).
+	if path == "~" || strings.HasPrefix(path, "~/") {
+		if home, err := os.UserHomeDir(); err == nil {
+			return filepath.Join(home, strings.TrimPrefix(path[1:], "/"))
+		}
+	}
+	return path
 }
 
 func prepareAndCheckoutServiceBranch(ctx context.Context, serviceWorktreeDir, sourceCommit, branchName string) error {
@@ -130,9 +419,9 @@ func prepareAndCheckoutServiceBranch(ctx context.Context, serviceWorktreeDir, so
 	return nil
 }
 
-func revertExcludedChangesInServiceWorktreeIndex(ctx context.Context, sourceWorktreeDir, serviceWorktreeDir, sourceCommit, serviceBranchHeadCommit string, globExcludeList []string) (bool, error) {
+func revertExcludedChangesInDevIndex(ctx context.Context, serviceWorktreeDir, devIndexFile, sourceCommit, serviceBranchHeadCommit string, globExcludeList []string) error {
 	if len(globExcludeList) == 0 || serviceBranchHeadCommit == sourceCommit {
-		return false, nil
+		return nil
 	}
 
 	gitDiffArgs := []string{
@@ -147,45 +436,27 @@ func revertExcludedChangesInServiceWorktreeIndex(ctx context.Context, sourceWork
 
 	diffCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: serviceWorktreeDir}, gitDiffArgs...)
 	if err := diffCmd.Run(ctx); err != nil {
-		return false, fmt.Errorf("git diff command failed: %w", err)
+		return fmt.Errorf("git diff command failed: %w", err)
 	}
 
 	if diffCmd.OutBuf.Len() == 0 {
-		return false, nil
+		return nil
 	}
 
-	applyCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: serviceWorktreeDir}, "apply", "--binary", "--index")
+	applyCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: serviceWorktreeDir, Env: []string{"GIT_INDEX_FILE=" + devIndexFile}}, "apply", "--binary", "--cached")
 	applyCmd.Stdin = diffCmd.OutBuf
 	if err := applyCmd.Run(ctx); err != nil {
-		return false, fmt.Errorf("git apply command failed: %w", err)
+		return fmt.Errorf("git apply command failed: %w", err)
 	}
 
-	return true, nil
+	return nil
 }
 
-func checkNewChangesInSourceWorktreeDir(ctx context.Context, sourceWorktreeDir, serviceWorktreeDir string, globExcludeList []string) (bool, error) {
-	output, err := runGitAddCmd(ctx, sourceWorktreeDir, serviceWorktreeDir, globExcludeList, true)
-	if err != nil {
-		return false, err
-	}
-
-	return len(output.Bytes()) != 0, nil
-}
-
-func addNewChangesInServiceWorktreeDir(ctx context.Context, sourceWorktreeDir, serviceWorktreeDir string, globExcludeList []string) error {
-	_, err := runGitAddCmd(ctx, sourceWorktreeDir, serviceWorktreeDir, globExcludeList, false)
-	return err
-}
-
-func runGitAddCmd(ctx context.Context, sourceWorktreeDir, serviceWorktreeDir string, globExcludeList []string, dryRun bool) (*util.GoroutineSafeBuffer, error) {
+func runGitAddCmd(ctx context.Context, sourceWorktreeDir, serviceWorktreeDir, devIndexFile string, globExcludeList []string) error {
 	gitAddArgs := []string{
 		"--work-tree",
 		sourceWorktreeDir,
 		"add",
-	}
-
-	if dryRun {
-		gitAddArgs = append(gitAddArgs, "--dry-run", "--ignore-missing")
 	}
 
 	var pathSpecList []string
@@ -205,29 +476,35 @@ func runGitAddCmd(ctx context.Context, sourceWorktreeDir, serviceWorktreeDir str
 		pathSpecFileBuf = bytes.NewBufferString(strings.Join(pathSpecList, "\000"))
 	}
 
-	addCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: serviceWorktreeDir}, gitAddArgs...)
+	addCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: serviceWorktreeDir, Env: []string{"GIT_INDEX_FILE=" + devIndexFile}}, gitAddArgs...)
 	if pathSpecFileBuf != nil {
 		addCmd.Stdin = pathSpecFileBuf
 	}
 	if err := addCmd.Run(ctx); err != nil {
-		return nil, err
+		return err
 	}
 
-	return addCmd.OutBuf, nil
+	return nil
 }
 
-func commitNewChangesInServiceBranch(ctx context.Context, serviceWorktreeDir, branchName string) (string, error) {
-	commitCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: serviceWorktreeDir}, "-c", "user.email=werf@werf.io", "-c", "user.name=werf", "commit", "--no-verify", "-m", time.Now().String())
-	if err := commitCmd.Run(ctx); err != nil {
-		return "", fmt.Errorf("git commit command failed: %w", err)
+// commitTreeToServiceBranch creates the service commit with plumbing (commit-tree + update-ref)
+// rather than `git commit`: `git commit` would refresh the index against the service worktree,
+// poisoning the source-worktree stat cache the dev-index relies on, and could run repo hooks.
+func commitTreeToServiceBranch(ctx context.Context, serviceWorktreeDir, branchName, treeSHA, parentCommit string) (string, error) {
+	commitTreeCmd := NewGitCmd(
+		ctx, &GitCmdOptions{RepoDir: serviceWorktreeDir},
+		"-c", "user.email=werf@werf.io", "-c", "user.name=werf",
+		"commit-tree", treeSHA, "-p", parentCommit, "-m", time.Now().String(),
+	)
+	if err := commitTreeCmd.Run(ctx); err != nil {
+		return "", fmt.Errorf("git commit-tree command failed: %w", err)
 	}
+	serviceNewCommit := strings.TrimSpace(commitTreeCmd.OutBuf.String())
 
-	revParseCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: serviceWorktreeDir}, "rev-parse", branchName)
-	if err := revParseCmd.Run(ctx); err != nil {
-		return "", fmt.Errorf("git rev parse branch command failed: %w", err)
+	updateRefCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: serviceWorktreeDir}, "update-ref", "refs/heads/"+branchName, serviceNewCommit)
+	if err := updateRefCmd.Run(ctx); err != nil {
+		return "", fmt.Errorf("git update-ref command failed: %w", err)
 	}
-
-	serviceNewCommit := strings.TrimSpace(revParseCmd.OutBuf.String())
 
 	checkoutCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: serviceWorktreeDir}, "checkout", "--force", "--detach", serviceNewCommit)
 	if err := checkoutCmd.Run(ctx); err != nil {

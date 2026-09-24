@@ -39,6 +39,7 @@ func (r FileReader) readConfigTemplateFiles(ctx context.Context, customDirRelPat
 		func(relativeToDirNotResolvedPath string, data []byte, err error) error {
 			return tmplFunc(filepath.ToSlash(relativeToDirNotResolvedPath), data, err)
 		},
+		WalkConfigurationFilesWithGlobOptions{},
 	)
 }
 

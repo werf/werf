@@ -3,20 +3,15 @@ package volumeutils
 import (
 	"context"
 	"fmt"
-	"math"
 	"os"
 	"path/filepath"
 
-	"github.com/werf/werf/v2/pkg/third_party/minio/disk"
+	"github.com/werf/werf/v3/pkg/third_party/minio/disk"
 )
 
 type VolumeUsage struct {
 	UsedBytes  uint64
 	TotalBytes uint64
-}
-
-func (vu VolumeUsage) PercentageToBytes(percentage float64) uint64 {
-	return uint64(math.Round(float64(vu.TotalBytes) * (percentage / 100.0)))
 }
 
 func (vu VolumeUsage) BytesToPercentage(bytes uint64) float64 {

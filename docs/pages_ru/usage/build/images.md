@@ -131,24 +131,22 @@ dockerfile: Dockerfile
 
 Для образа `docs` будет использоваться Dockerfile по пути `docs/Dockerfile`, а для `service` — `service/Dockerfile`.
 
+Dockerfile может находиться и за пределами контекста, например `dockerfile: ../dockerfiles/app.Dockerfile` при `context: app`, — главное, чтобы путь не выходил за пределы директории проекта. Такой Dockerfile не попадает в сборочный контекст.
+
 #### Исключение файлов из сборочного контекста
 
-werf учитывает файл `.dockerignore`. В директории контекста сначала ищется `<dockerfile>.dockerignore`, затем `.dockerignore`; используется только первый найденный файл.
+werf формирует и фильтрует сборочный контекст сам, поэтому итоговый контекст не зависит от используемого сборочного бэкенда. Паттерны берутся из первого существующего файла из списка, остальные не читаются вовсе:
 
-```yaml
-project: example
-configVersion: 1
----
-image: app
-context: app
-dockerfile: Dockerfile
-```
+1. `<dockerfile>.dockerignore`
+2. `<dockerfile>.containerignore`
+3. `.dockerignore`
+4. `.containerignore`
 
-Для такой конфигурации werf прочитает `app/Dockerfile.dockerignore`, а если его нет — `app/.dockerignore`.
+Первые два ищутся рядом с Dockerfile, остальные — в корне контекста. Файлы, добавленные через `contextAddFiles`, добавляются после фильтрации, поэтому ignore-паттерны на них не влияют.
 
 Исключённые файлы не попадают в сборочный контекст и не учитываются при расчёте дайджеста образа, поэтому их изменение не приводит к пересборке.
 
-Файл `.dockerignore` является конфигурационным, поэтому по умолчанию должен быть закоммичен в Git. Чтобы использовать незакоммиченный файл, разрешите его директивой `allowUncommittedDockerignoreFiles` в [werf-giterminism.yaml]({{ "reference/werf_giterminism_yaml.html" | true_relative_url }}).
+Ignore-файл является конфигурационным, поэтому по умолчанию должен быть закоммичен в Git. Чтобы использовать незакоммиченный файл, разрешите его директивой `allowUncommittedDockerignoreFiles` в `werf-giterminism.yaml` (подробнее [про гитерминизм]({{ "/usage/project_configuration/giterminism.html" | true_relative_url }})).
 
 #### Использование сборочных секретов
 
@@ -393,7 +391,7 @@ shell:
 image: app
 from: alpine:latest
 import:
-- image: builder
+- from: builder
   add: /app/build/app
   to: /usr/local/bin/app
   after: install
@@ -498,7 +496,7 @@ imageSpec:
       - "/var/lib/postgresql/data"
 ---
 image: app
-fromImage: base
+from: base
 git:
   add: /postgresql/data
   to: /var/lib/postgresql/data
@@ -627,7 +625,7 @@ dockerfile: base.Dockerfile
 image: app
 dockerfile: Dockerfile
 dependencies:
-- image: base
+- from: base
   imports:
   - type: ImageName
     targetBuildArg: BASE_IMAGE
@@ -653,7 +651,7 @@ shell:
 image: app
 dockerfile: Dockerfile
 dependencies:
-- image: builder
+- from: builder
   imports:
   - type: ImageName
     targetBuildArg: BUILDER_IMAGE
@@ -722,13 +720,13 @@ context: modules/controlplane/
 image: app
 dockerfile: Dockerfile
 dependencies:
-- image: auth
+- from: auth
   imports:
   - type: ImageName
     targetBuildArg: AUTH_IMAGE_NAME
   - type: ImageDigest
     targetBuildArg: AUTH_IMAGE_DIGEST
-- image: controlplane
+- from: controlplane
   imports:
   - type: ImageName
     targetBuildArg: CONTROLPLANE_IMAGE_NAME
@@ -761,7 +759,7 @@ dockerfile: Dockerfile.builder
 image: app
 dockerfile: Dockerfile.app
 dependencies:
-- image: builder
+- from: builder
   imports:
   - type: ImageName
     targetBuildArg: BUILDER_IMAGE_NAME

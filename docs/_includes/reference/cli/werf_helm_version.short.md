@@ -1,1 +1,1 @@
-print the client version information
+print the helm version information

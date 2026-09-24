@@ -2,10 +2,10 @@ package e2e_stages_copy_test
 
 import (
 	"fmt"
-	"os"
 	"strconv"
 
-	"github.com/werf/werf/v2/test/pkg/utils"
+	"github.com/werf/werf/v3/test/pkg/suite_init"
+	"github.com/werf/werf/v3/test/pkg/utils"
 )
 
 const (
@@ -26,8 +26,8 @@ func setupEnv() {
 
 	SuiteData.Stubs.UnsetEnv("WERF_REPO")
 
-	SuiteData.WerfFromAddr = fmt.Sprintf("%s/%s-%s", os.Getenv("WERF_TEST_K8S_DOCKER_REGISTRY"), SuiteData.ProjectName, utils.GetRandomString(6))
-	SuiteData.WerfToAddr = fmt.Sprintf("%s/%s-%s", os.Getenv("WERF_TEST_K8S_DOCKER_REGISTRY"), SuiteData.ProjectName, utils.GetRandomString(6))
+	SuiteData.WerfFromAddr = suite_init.TestRepo(fmt.Sprintf("%s-%s", SuiteData.ProjectName, utils.GetRandomString(6)))
+	SuiteData.WerfToAddr = suite_init.TestRepo(fmt.Sprintf("%s-%s", SuiteData.ProjectName, utils.GetRandomString(6)))
 
 	SuiteData.WerfArchiveAddr = archiveAddr
 }

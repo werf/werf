@@ -1,1 +1,0 @@
-download extended information of a named release

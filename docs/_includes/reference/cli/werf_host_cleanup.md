@@ -8,6 +8,7 @@ Cleanup old unused werf cache and data of all projects on host machine.
 The data include:
 * Lost Docker containers and images from interrupted builds.
 * Old service tmp dirs, which werf creates during every `build`, `converge` and other commands.
+* Stale host lock files, no longer held by any werf process.
 * Local cache:
   * remote Git clones cache;
   * Git worktree cache.

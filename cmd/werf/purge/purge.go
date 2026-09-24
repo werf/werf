@@ -5,15 +5,14 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/cmd/werf/common"
-	"github.com/werf/werf/v2/pkg/cleaning"
-	"github.com/werf/werf/v2/pkg/tmp_manager"
-	"github.com/werf/werf/v2/pkg/true_git"
-	"github.com/werf/werf/v2/pkg/werf/global_warnings"
+	"github.com/werf/werf/v3/cmd/werf/common"
+	"github.com/werf/werf/v3/pkg/cleaning"
+	"github.com/werf/werf/v3/pkg/tmp_manager"
+	"github.com/werf/werf/v3/pkg/true_git"
+	"github.com/werf/werf/v3/pkg/werf/global_warnings"
 )
 
 var commonCmdData common.CmdData
@@ -60,18 +59,16 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{})
 	common.SetupFinalRepo(&commonCmdData, cmd)
+	common.SetupMetaRepo(&commonCmdData, cmd)
 	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultCleanupParallelTasksLimit)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to delete images from the specified repo")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
-	common.StubSetupInsecureHelmDependencies(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 	common.SetupContainerRegistryMirror(&commonCmdData, cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
-
-	common.SetupSynchronization(&commonCmdData, cmd)
 
 	common.SetupDisableAutoHostCleanup(&commonCmdData, cmd)
 	common.SetupAllowedBackendStorageVolumeUsage(&commonCmdData, cmd)
@@ -89,8 +86,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	commonCmdData.SetupDebugTemplates(cmd)
 	commonCmdData.SetupAllowIncludesUpdate(cmd)
 
-	lo.Must0(common.SetupMinimalKubeConnectionFlags(&commonCmdData, cmd))
-
 	return cmd
 }
 
@@ -100,13 +95,12 @@ func runPurge(ctx context.Context) error {
 		InitTrueGitWithOptions: &common.InitTrueGitOptions{
 			Options: true_git.Options{LiveGitOutput: *commonCmdData.LogDebug},
 		},
-		InitDockerRegistry:           true,
-		InitProcessContainerBackend:  true,
-		InitWerf:                     true,
-		InitGitDataManager:           true,
-		InitManifestCache:            true,
-		InitLRUImagesCache:           true,
-		SetupOndemandKubeInitializer: true,
+		InitDockerRegistry:          true,
+		InitProcessContainerBackend: true,
+		InitWerf:                    true,
+		InitGitDataManager:          true,
+		InitManifestCache:           true,
+		InitLRUImagesCache:          true,
 	})
 	if err != nil {
 		return fmt.Errorf("component init error: %w", err)

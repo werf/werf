@@ -10,9 +10,8 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/werf/v2/test/pkg/contback"
-	"github.com/werf/werf/v2/test/pkg/report"
-	"github.com/werf/werf/v2/test/pkg/werf"
+	"github.com/werf/werf/v3/test/pkg/contback"
+	"github.com/werf/werf/v3/test/pkg/report"
 )
 
 var _ = Describe("Import system dirs", Label("e2e", "build", "import", "system-dirs"), func() {
@@ -20,12 +19,7 @@ var _ = Describe("Import system dirs", Label("e2e", "build", "import", "system-d
 		func(ctx SpecContext, testOpts setupEnvOptions) {
 			By("initializing")
 			setupEnv(testOpts)
-			_, err := contback.NewContainerBackend(testOpts.ContainerBackendMode)
-			if err == contback.ErrRuntimeUnavailable {
-				Skip(err.Error())
-			} else if err != nil {
-				Fail(err.Error())
-			}
+			contback.SkipIfUnavailable(testOpts.ContainerBackendMode)
 
 			By("building")
 			repoDirname := "repo0"
@@ -34,7 +28,7 @@ var _ = Describe("Import system dirs", Label("e2e", "build", "import", "system-d
 
 			SuiteData.InitTestRepo(ctx, repoDirname, fixtureRelPath)
 
-			werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
+			werfProject := newWerfProject(repoDirname)
 			reportProject := report.NewProjectWithReport(werfProject)
 			_, buildReport := reportProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), nil)
 
@@ -42,25 +36,15 @@ var _ = Describe("Import system dirs", Label("e2e", "build", "import", "system-d
 			imageName := buildReport.Images["destination"].DockerImageName
 			checkImageFilesystem(imageName)
 		},
-		Entry("Vanilla Docker", setupEnvOptions{
-			ContainerBackendMode:        "vanilla-docker",
+		backendEntry("Docker", setupEnvOptions{
+			ContainerBackendMode:        "docker",
 			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: false,
 		}),
-		Entry("BuildKit Docker", setupEnvOptions{
-			ContainerBackendMode:        "buildkit-docker",
-			WithLocalRepo:               true,
-			WithStagedDockerfileBuilder: false,
-		}),
-		Entry("Native Buildah rootless", setupEnvOptions{
+		backendEntry("Native Buildah rootless", setupEnvOptions{
 			ContainerBackendMode:        "native-rootless",
 			WithLocalRepo:               true,
 			WithStagedDockerfileBuilder: false,
-		}),
-		Entry("Native Buildah chroot", setupEnvOptions{
-			ContainerBackendMode:        "native-chroot",
-			WithLocalRepo:               true,
-			WithStagedDockerfileBuilder: true,
 		}),
 	)
 })

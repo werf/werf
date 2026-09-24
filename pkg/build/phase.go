@@ -3,8 +3,8 @@ package build
 import (
 	"context"
 
-	"github.com/werf/werf/v2/pkg/build/image"
-	"github.com/werf/werf/v2/pkg/build/stage"
+	"github.com/werf/werf/v3/pkg/build/image"
+	"github.com/werf/werf/v3/pkg/build/stage"
 )
 
 type Phase interface {

@@ -3,7 +3,7 @@ configVersion: 1
 
 ---
 image: source
-from: alpine
+from: alpine:latest
 shell:
   install:
   - echo "werf-test-scratch-import" > /etc/werf-test-scratch-import

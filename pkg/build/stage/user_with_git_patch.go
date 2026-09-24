@@ -3,9 +3,9 @@ package stage
 import (
 	"context"
 
-	"github.com/werf/werf/v2/pkg/build/builder"
-	"github.com/werf/werf/v2/pkg/container_backend"
-	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v3/pkg/build/builder"
+	"github.com/werf/werf/v3/pkg/container_backend"
+	"github.com/werf/werf/v3/pkg/image"
 )
 
 func newUserWithGitPatchStage(builder builder.Builder, name StageName, gitPatchStageOptions *NewGitPatchStageOptions, baseStageOptions *BaseStageOptions) *UserWithGitPatchStage {
@@ -28,6 +28,13 @@ func (s *UserWithGitPatchStage) SelectSuitableStageDesc(ctx context.Context, c C
 	}
 
 	return s.BaseStage.SelectSuitableStageDesc(ctx, c, stageDescSet)
+}
+
+// GetContentDependencies returns only the builder checksum (shell commands from werf.yaml)
+// without StageDependenciesChecksum. Git file checksums are already fully accounted for
+// by GitArchiveStage.GetContentDependencies, which checksums all files.
+func (s *UserWithGitPatchStage) GetContentDependencies(ctx context.Context, c Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+	return s.getBuilderChecksum(ctx), nil
 }
 
 func (s *UserWithGitPatchStage) GetNextStageDependencies(ctx context.Context, c Conveyor) (string, error) {

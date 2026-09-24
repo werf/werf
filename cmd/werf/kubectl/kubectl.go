@@ -14,9 +14,9 @@ import (
 	"k8s.io/kubectl/pkg/cmd/util"
 
 	util2 "github.com/werf/common-go/pkg/util"
-	"github.com/werf/werf/v2/cmd/werf/common"
-	"github.com/werf/werf/v2/pkg/tmp_manager"
-	"github.com/werf/werf/v2/pkg/werf"
+	"github.com/werf/werf/v3/cmd/werf/common"
+	"github.com/werf/werf/v3/pkg/tmp_manager"
+	"github.com/werf/werf/v3/pkg/werf"
 )
 
 var (
@@ -103,6 +103,7 @@ func prePreRun(ctx context.Context) error {
 
 func setupKubeconfig(ctx context.Context) error {
 	var kubeConfigPath string
+
 	if commonCmdData.KubeConfigBase64 != "" {
 		var err error
 		kubeConfigPath, err = tmp_manager.CreateKubeConfigFromBase64(ctx, strings.NewReader(commonCmdData.KubeConfigBase64))
@@ -110,10 +111,10 @@ func setupKubeconfig(ctx context.Context) error {
 			return fmt.Errorf("unable to create kubeconfig from base64: %w", err)
 		}
 		*configFlags.KubeConfig = ""
-	}
-
-	if kubeConfigEnv := common.GetFirstExistingKubeConfigEnvVar(); kubeConfigEnv != "" && *configFlags.KubeConfig == "" {
-		kubeConfigPath = kubeConfigEnv
+	} else {
+		if kubeConfigEnv := common.GetFirstExistingKubeConfigEnvVar(); kubeConfigEnv != "" && *configFlags.KubeConfig == "" {
+			kubeConfigPath = kubeConfigEnv
+		}
 	}
 
 	if kubeConfigPath != "" {

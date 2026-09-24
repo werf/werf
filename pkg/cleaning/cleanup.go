@@ -13,27 +13,26 @@ import (
 	"github.com/samber/lo"
 
 	"github.com/werf/common-go/pkg/util"
-	"github.com/werf/kubedog/pkg/kube"
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/cleaning/allow_list"
-	"github.com/werf/werf/v2/pkg/cleaning/git_history_based_cleanup"
-	"github.com/werf/werf/v2/pkg/cleaning/stage_manager"
-	"github.com/werf/werf/v2/pkg/cleanup_report"
-	"github.com/werf/werf/v2/pkg/config"
-	"github.com/werf/werf/v2/pkg/docker_registry"
-	"github.com/werf/werf/v2/pkg/image"
-	"github.com/werf/werf/v2/pkg/logging"
-	"github.com/werf/werf/v2/pkg/storage"
-	"github.com/werf/werf/v2/pkg/storage/manager"
-	"github.com/werf/werf/v2/pkg/util/parallel"
+	"github.com/werf/werf/v3/pkg/cleaning/allow_list"
+	"github.com/werf/werf/v3/pkg/cleaning/git_history_based_cleanup"
+	"github.com/werf/werf/v3/pkg/cleaning/stage_manager"
+	"github.com/werf/werf/v3/pkg/cleanup_report"
+	"github.com/werf/werf/v3/pkg/config"
+	"github.com/werf/werf/v3/pkg/docker_registry"
+	"github.com/werf/werf/v3/pkg/image"
+	"github.com/werf/werf/v3/pkg/logging"
+	"github.com/werf/werf/v3/pkg/storage"
+	"github.com/werf/werf/v3/pkg/storage/manager"
+	"github.com/werf/werf/v3/pkg/util/parallel"
 )
 
 type CleanupOptions struct {
 	ImageNameList                   []string
 	LocalGit                        GitRepo
-	KubernetesContextClients        []*kube.ContextClient
+	KubernetesContextClients        []*ContextClient
 	KubernetesNamespacesByContext   map[string][]string
-	WithoutKube                     bool // TODO: remove this legacy logic in v3.
+	WithoutKube                     bool
 	ConfigMetaCleanup               config.MetaCleanup
 	KeepStagesBuiltWithinLastNHours *uint64
 	DryRun                          bool
@@ -70,14 +69,11 @@ func newCleanupManager(projectName string, storageManager *manager.StorageManage
 type cleanupManager struct {
 	stageManager stage_manager.Manager
 
-	checksumSourceStageIDs map[string][]string
-	sourceStageIDImportIDs map[string][]string
-
 	ProjectName                     string
 	StorageManager                  manager.StorageManagerInterface
 	ImageNameList                   []string
 	LocalGit                        GitRepo
-	KubernetesContextClients        []*kube.ContextClient
+	KubernetesContextClients        []*ContextClient
 	KubernetesNamespacesByContext   map[string][]string
 	WithoutKube                     bool
 	ConfigMetaCleanup               config.MetaCleanup
@@ -237,7 +233,7 @@ func (m *cleanupManager) run(ctx context.Context) error {
 	}
 
 	if err := logboek.Context(ctx).LogProcess("Push last cleanup info to meta image").DoError(func() error {
-		err := m.StorageManager.GetStagesStorage().PostLastCleanupRecord(ctx, m.ProjectName)
+		err := m.StorageManager.GetMetaStorage().PostLastCleanupRecord(ctx, m.ProjectName)
 		if err != nil {
 			logboek.Context(ctx).Warn().LogF("WARNING: cleanup metadata update failed: %s\n", err)
 		}
@@ -402,15 +398,13 @@ AppendNewImages:
 func (m *cleanupManager) deployedDockerImages(ctx context.Context) ([]*DeployedDockerImage, error) {
 	var deployedDockerImages []*DeployedDockerImage
 
-	scanNamespace := func(contextClient *kube.ContextClient, namespace string) error {
-		var processName string
-		if namespace == "" {
-			processName = fmt.Sprintf("Getting deployed docker images (context %s)", contextClient.ContextName)
-		} else {
+	scanNamespace := func(contextClient *ContextClient, namespace string) error {
+		processName := fmt.Sprintf("Getting deployed docker images (context %s)", contextClient.ContextName)
+		if namespace != "" {
 			processName = fmt.Sprintf("Getting deployed docker images (context %s, namespace %s)", contextClient.ContextName, namespace)
 		}
 
-		if err := logboek.Context(ctx).LogProcessInline(processName).
+		return logboek.Context(ctx).LogProcessInline(processName).
 			DoError(func() error {
 				contextDeployedImages, err := allow_list.DeployedDockerImages(ctx, contextClient.Client, namespace)
 				if err != nil {
@@ -420,11 +414,7 @@ func (m *cleanupManager) deployedDockerImages(ctx context.Context) ([]*DeployedD
 				deployedDockerImages = AppendContextDeployedDockerImages(deployedDockerImages, contextClient.ContextName, contextDeployedImages)
 
 				return nil
-			}); err != nil {
-			return err
-		}
-
-		return nil
+			})
 	}
 
 	for _, contextClient := range m.KubernetesContextClients {
@@ -472,11 +462,15 @@ func (m *cleanupManager) gitHistoryBasedCleanup(ctx context.Context) error {
 	}, func(ctx context.Context, taskId int) error {
 		pair := imagePairs[taskId]
 		imageName, stageIDCommitList := pair.Unpair()
+		logIndex, ok := parallel.TaskStartOrder(ctx)
+		if !ok {
+			logIndex = taskId
+		}
 		var reachedStageIDs []string
 		var hitStageIDCommitList map[string][]string
 		// TODO(multiarch): iterate target platforms
 
-		header := logging.ImageLogProcessName(imageName, false, "", logging.WithProgress(taskId+1, len(imagePairs)))
+		header := logging.ImageLogProcessName(imageName, false, "", logging.WithProgress(logIndex+1, len(imagePairs)))
 		if err := logboek.Context(ctx).LogProcess(header).DoError(func() error {
 			if logboek.Context(ctx).Streams().Width() > 120 {
 				m.printStageIDCommitListTable(ctx, imageName)
@@ -791,7 +785,7 @@ func purgeImageMetadata(ctx context.Context, projectName string, storageManager 
 	var imageMetadataByImageName map[string]map[string][]string
 	if err := logboek.Context(ctx).Default().LogProcess("Fetching images metadata").DoError(func() error {
 		var err error
-		_, imageMetadataByImageName, err = storageManager.GetStagesStorage().GetAllAndGroupImageMetadataByImageName(ctx, projectName, []string{}, storage.WithCache())
+		_, imageMetadataByImageName, err = storageManager.GetMetaStorage().GetAllAndGroupImageMetadataByImageName(ctx, projectName, []string{}, storage.WithCache())
 		return err
 	}); err != nil {
 		return err
@@ -847,7 +841,7 @@ func purgeManagedImages(ctx context.Context, projectName string, storageManager 
 	var managedImages []string
 	if err := logboek.Context(ctx).Default().LogProcess("Fetching managed images").DoError(func() error {
 		var err error
-		managedImages, err = storageManager.GetStagesStorage().GetManagedImages(ctx, projectName, storage.WithCache())
+		managedImages, err = storageManager.GetMetaStorage().GetManagedImages(ctx, projectName, storage.WithCache())
 		return err
 	}); err != nil {
 		return err
@@ -981,12 +975,20 @@ func deleteRejectedStagesWithLinkedTags(ctx context.Context, storageManager mana
 
 		// 2. Linked custom tags — sequential (avoids parallel-of-parallel registry pressure).
 		// Fail-fast: leave marker untouched on any failure so the next cleanup retries.
+		metaStorage := storageManager.GetMetaStorage()
 		for _, customTag := range customTagsByStageID[stageIDStr] {
 			if err := stagesStorage.DeleteStageCustomTag(ctx, customTag); err != nil {
 				if err := handleDeletionError(err); err != nil {
 					return err
 				}
 				logboek.Context(ctx).Warn().LogF("WARNING: Custom tag %s linked to rejected stage %s deletion failed: %s; marker kept for retry\n", customTag, stageIDStr, err)
+				return nil
+			}
+			if err := metaStorage.UnregisterStageCustomTag(ctx, customTag); err != nil {
+				if err := handleDeletionError(err); err != nil {
+					return err
+				}
+				logboek.Context(ctx).Warn().LogF("WARNING: Custom tag %s metadata unregister for rejected stage %s failed: %s; marker kept for retry\n", customTag, stageIDStr, err)
 				return nil
 			}
 			logboek.Context(ctx).Default().LogFWithCustomStyle(deletedStyle, "  tag: %s\n", customTag)
@@ -1015,12 +1017,6 @@ func deleteRejectedStagesWithLinkedTags(ctx context.Context, storageManager mana
 }
 
 func (m *cleanupManager) cleanupUnusedStages(ctx context.Context) error {
-	if err := logboek.Context(ctx).Default().LogProcess("Fetching imports metadata").DoError(func() error {
-		return m.initImportsMetadata(ctx)
-	}); err != nil {
-		return fmt.Errorf("unable to init imports metadata: %w", err)
-	}
-
 	// skip kept stages and their relatives.
 	{
 		logboek.Context(ctx).Default().LogProcess("Processing relative stages for saved stages").Do(func() {
@@ -1061,42 +1057,6 @@ func (m *cleanupManager) cleanupUnusedStages(ctx context.Context) error {
 		return fmt.Errorf("unable to cleanup custom tags metadata: %w", err)
 	}
 
-	if err := m.deleteUnusedImportsMetadata(ctx); err != nil {
-		return fmt.Errorf("unable to cleanup imports metadata: %w", err)
-	}
-
-	return nil
-}
-
-func (m *cleanupManager) deleteUnusedImportsMetadata(ctx context.Context) error {
-	if util.GetBoolEnvironmentDefaultFalse("WERF_EXPERIMENTAL_IMPORT_BY_SOURCE_IMAGE_TAG") || len(m.sourceStageIDImportIDs) == 0 {
-		return nil
-	}
-
-	protectedStageDescSet := m.stageManager.GetProtectedStageDescSet()
-	protectedStageIDs := make(map[string]struct{}, protectedStageDescSet.Cardinality())
-	for _, protectedStageDesc := range protectedStageDescSet.ToSlice() {
-		protectedStageIDs[protectedStageDesc.StageID.String()] = struct{}{}
-	}
-
-	var importMetadataIDsToDelete []string
-	for sourceStageID, importMetadataIDs := range m.sourceStageIDImportIDs {
-		// Skip existent/protected stages.
-		if _, ok := protectedStageIDs[sourceStageID]; ok {
-			continue
-		}
-
-		importMetadataIDsToDelete = append(importMetadataIDsToDelete, importMetadataIDs...)
-	}
-
-	if len(importMetadataIDsToDelete) != 0 {
-		if err := logboek.Context(ctx).Default().LogProcess("Cleaning imports metadata (%d)", len(importMetadataIDsToDelete)).DoError(func() error {
-			return m.deleteImportsMetadata(ctx, importMetadataIDsToDelete)
-		}); err != nil {
-			return err
-		}
-	}
-
 	return nil
 }
 
@@ -1127,81 +1087,6 @@ func (m *cleanupManager) cleanupFinalStages(ctx context.Context) error {
 	return nil
 }
 
-func (m *cleanupManager) initImportsMetadata(ctx context.Context) error {
-	if util.GetBoolEnvironmentDefaultFalse("WERF_EXPERIMENTAL_IMPORT_BY_SOURCE_IMAGE_TAG") {
-		return nil
-	}
-
-	m.checksumSourceStageIDs = map[string][]string{}
-	m.sourceStageIDImportIDs = map[string][]string{}
-
-	importMetadataIDs, err := m.StorageManager.GetStagesStorage().GetImportMetadataIDs(ctx, m.ProjectName, storage.WithCache())
-	if err != nil {
-		return err
-	}
-
-	var mutex sync.Mutex
-	return m.StorageManager.ForEachGetImportMetadata(ctx, m.ProjectName, importMetadataIDs, func(ctx context.Context, metadataID string, metadata *storage.ImportMetadata, err error) error {
-		if storage.IsErrImportMetadataNotFound(err) || storage.IsErrBrokenImage(err) {
-			if err := logboek.Context(ctx).Warn().LogProcess("Deleting invalid import metadata %s", metadataID).
-				DoError(func() error {
-					return m.deleteImportsMetadata(ctx, []string{metadataID})
-				}); err != nil {
-				return fmt.Errorf("unable to delete import metadata %s: %w", metadataID, err)
-			}
-
-			return nil
-		}
-		if err != nil {
-			return err
-		}
-
-		mutex.Lock()
-		defer mutex.Unlock()
-
-		importSourceID := metadata.ImportSourceID
-		sourceStageID := metadata.SourceStageID
-		checksum := metadata.Checksum
-
-		m.checksumSourceStageIDs[checksum] = append(m.checksumSourceStageIDs[checksum], sourceStageID)
-		m.sourceStageIDImportIDs[sourceStageID] = append(m.sourceStageIDImportIDs[sourceStageID], importSourceID)
-
-		return nil
-	})
-}
-
-func (m *cleanupManager) deleteImportsMetadata(ctx context.Context, importMetadataIDs []string) error {
-	return deleteImportsMetadata(ctx, m.ProjectName, m.StorageManager, importMetadataIDs, m.DryRun, m.report)
-}
-
-func deleteImportsMetadata(ctx context.Context, projectName string, storageManager manager.StorageManagerInterface, importMetadataIDs []string, dryRun bool, report *cleanup_report.Report) error {
-	if dryRun {
-		for _, importMetadataID := range importMetadataIDs {
-			logboek.Context(ctx).Info().LogFDetails("  importMetadataID: %s\n", importMetadataID)
-			logboek.Context(ctx).Info().LogOptionalLn()
-			report.AddDeleted(ctx, cleanup_report.Item{Type: cleanup_report.ItemTypeImportMetadata, ID: importMetadataID})
-		}
-		return nil
-	}
-
-	return storageManager.ForEachRmImportMetadata(ctx, projectName, importMetadataIDs, func(ctx context.Context, importMetadataID string, err error) error {
-		if err != nil {
-			if err := handleDeletionError(err); err != nil {
-				return err
-			}
-
-			logboek.Context(ctx).Warn().LogF("WARNING: Import metadata ID %s deletion failed: %s\n", importMetadataID, err)
-
-			return nil
-		}
-
-		logboek.Context(ctx).Info().LogFDetails("  importMetadataID: %s\n", importMetadataID)
-		report.AddDeleted(ctx, cleanup_report.Item{Type: cleanup_report.ItemTypeImportMetadata, ID: importMetadataID})
-
-		return nil
-	})
-}
-
 func (m *cleanupManager) protectRelativeStageDescSetByStageDesc(targetStageDesc *image.StageDesc, withImportOrDependencySources bool, handledStageDescSet image.StageDescSet) {
 	targetStageDescSet := image.NewStageDescSet()
 	if targetStageDesc.Info.IsIndex {
@@ -1224,7 +1109,6 @@ func (m *cleanupManager) protectRelativeStageDescSetByStageDesc(targetStageDesc 
 	} else {
 		targetStageDescSet.Add(targetStageDesc)
 	}
-	stageDescSet := m.stageManager.GetStageDescSet()
 	currentStageDescSet := targetStageDescSet
 	for !currentStageDescSet.IsEmpty() {
 		for _, currentStageDesc := range currentStageDescSet.ToSlice() {
@@ -1237,21 +1121,30 @@ func (m *cleanupManager) protectRelativeStageDescSetByStageDesc(targetStageDesc 
 				handledStageDescSet.Add(currentStageDesc)
 			}
 
+			// Import or Dependency source checking.
 			if withImportOrDependencySources {
-				m.protectImportAndDependencySources(currentStageDesc, currentStageDescSet)
+				for label, value := range currentStageDesc.Info.Labels {
+					if strings.HasPrefix(label, image.WerfImportSourceStageIDLabelPrefix) {
+						if strings.HasPrefix(value, image.WerfImportSourceExternalImagePrefix) {
+							continue
+						}
+						sourceStageDesc := m.stageManager.GetStageDescByStageID(value)
+						if sourceStageDesc != nil {
+							currentStageDescSet.Add(sourceStageDesc)
+							m.stageManager.MarkStageDescAsProtected(sourceStageDesc, stage_manager.ProtectionReasonImportSource, false)
+						}
+					} else if strings.HasPrefix(label, image.WerfDependencySourceStageIDLabelPrefix) {
+						sourceStageDesc := m.stageManager.GetStageDescByStageID(value)
+						if sourceStageDesc != nil {
+							currentStageDescSet.Add(sourceStageDesc)
+							m.stageManager.MarkStageDescAsProtected(sourceStageDesc, stage_manager.ProtectionReasonDependencySource, false)
+						}
+					}
+				}
 			}
 
 			// Parent stage checking.
 			{
-				// TODO: remove this legacy check in v3.
-				for stageDesc := range stageDescSet.Iter() {
-					if currentStageDesc.Info.ParentID == stageDesc.Info.ID {
-						currentStageDescSet.Add(stageDesc)
-						m.stageManager.MarkStageDescAsProtected(stageDesc, stage_manager.ProtectionReasonAncestor, false)
-						break
-					}
-				}
-
 				parentStageDesc := m.stageManager.GetStageDescByStageID(currentStageDesc.Info.Labels[image.WerfParentStageID])
 				if parentStageDesc != nil {
 					m.stageManager.MarkStageDescAsProtected(parentStageDesc, stage_manager.ProtectionReasonAncestor, false)
@@ -1260,43 +1153,6 @@ func (m *cleanupManager) protectRelativeStageDescSetByStageDesc(targetStageDesc 
 			}
 		}
 	}
-}
-
-func (m *cleanupManager) protectImportAndDependencySources(stageDesc *image.StageDesc, currentStageDescSet image.StageDescSet) {
-	for label, value := range stageDesc.Info.Labels {
-		if strings.HasPrefix(label, image.WerfImportSourceStageIDLabelPrefix) || strings.HasPrefix(label, image.WerfImportChecksumLabelPrefix) {
-			for _, sourceStageID := range m.resolveImportSourceStageIDs(label, value) {
-				if strings.HasPrefix(sourceStageID, image.WerfImportSourceExternalImagePrefix) {
-					continue
-				}
-				if sourceStageDesc := m.stageManager.GetStageDescByStageID(sourceStageID); sourceStageDesc != nil {
-					currentStageDescSet.Add(sourceStageDesc)
-					m.stageManager.MarkStageDescAsProtected(sourceStageDesc, stage_manager.ProtectionReasonImportSource, false)
-				}
-			}
-		}
-
-		if strings.HasPrefix(label, image.WerfDependencySourceStageIDLabelPrefix) {
-			if sourceStageDesc := m.stageManager.GetStageDescByStageID(value); sourceStageDesc != nil {
-				currentStageDescSet.Add(sourceStageDesc)
-				m.stageManager.MarkStageDescAsProtected(sourceStageDesc, stage_manager.ProtectionReasonDependencySource, false)
-			}
-		}
-	}
-}
-
-func (m *cleanupManager) resolveImportSourceStageIDs(label, value string) []string {
-	if util.GetBoolEnvironmentDefaultFalse("WERF_EXPERIMENTAL_IMPORT_BY_SOURCE_IMAGE_TAG") {
-		if strings.HasPrefix(label, image.WerfImportSourceStageIDLabelPrefix) {
-			return []string{value}
-		}
-		return nil
-	}
-
-	if strings.HasPrefix(label, image.WerfImportChecksumLabelPrefix) {
-		return m.checksumSourceStageIDs[value]
-	}
-	return nil
 }
 
 func (m *cleanupManager) deleteUnusedCustomTags(ctx context.Context) error {

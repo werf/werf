@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/werf/logboek"
-	"github.com/werf/nelm/pkg/export/helm/registry"
-	bundles_registry "github.com/werf/werf/v2/pkg/deploy/bundles/registry"
-	"github.com/werf/werf/v2/pkg/docker"
+	"github.com/werf/nelm/v2/pkg/helm/pkg/registry"
+	bundles_registry "github.com/werf/werf/v3/pkg/deploy/bundles/registry"
+	"github.com/werf/werf/v3/pkg/docker"
 )
 
 func NewHelmRegistryClient(ctx context.Context, dockerConfig string, insecureHelmDependencies bool) (*registry.Client, error) {

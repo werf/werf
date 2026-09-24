@@ -16,7 +16,7 @@ import (
 	"github.com/werf/common-go/pkg/util/timestamps"
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/werf"
+	"github.com/werf/werf/v3/pkg/werf"
 )
 
 var ErrInvalidDotGit = errors.New("invalid file format: expected gitdir record")
@@ -208,6 +208,26 @@ func prepareWorkTree(ctx context.Context, repoDir, workTreeCacheDir, commit stri
 	return workTreeDir, nil
 }
 
+func removeStaleIndexLock(ctx context.Context, workTreeDir string) error {
+	gitPathCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: workTreeDir}, "rev-parse", "--git-path", "index.lock")
+	if err := gitPathCmd.Run(ctx); err != nil {
+		return fmt.Errorf("git rev-parse git-path command failed: %w", err)
+	}
+
+	lockPath := strings.TrimSpace(gitPathCmd.OutBuf.String())
+	if lockPath == "" {
+		return nil
+	}
+	if !filepath.IsAbs(lockPath) {
+		lockPath = filepath.Join(workTreeDir, lockPath)
+	}
+
+	if err := os.RemoveAll(lockPath); err != nil {
+		return fmt.Errorf("unable to remove stale index lock %s: %w", lockPath, err)
+	}
+	return nil
+}
+
 func verifyWorkTreeConsistency(ctx context.Context, repoDir, workTreeDir string) (bool, error) {
 	dotGitFilePath := filepath.Join(workTreeDir, ".git")
 
@@ -271,6 +291,14 @@ func switchWorkTree(ctx context.Context, repoDir, workTreeDir, commit string, wi
 	case err != nil:
 		return fmt.Errorf("error accessing %s: %w", workTreeDir, err)
 	default:
+		// A SIGKILLed git (werf escalates SIGTERM to SIGKILL after WaitDelay) can leave a stale
+		// index.lock in the cached worktree, which would fail every subsequent checkout/reset.
+		// Drop it before reusing the worktree; safe because the whole flow runs under
+		// withWorkTreeCacheLock, so no live git legitimately holds it.
+		if err = removeStaleIndexLock(ctx, workTreeDir); err != nil {
+			return err
+		}
+
 		checkoutCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: workTreeDir}, "checkout", "--force", "--detach", commit)
 		if err = checkoutCmd.Run(ctx); err != nil {
 			return fmt.Errorf("git checkout command failed: %w", err)

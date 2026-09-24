@@ -9,11 +9,11 @@ import (
 	. "github.com/onsi/gomega"
 	"gopkg.in/yaml.v3"
 
-	"github.com/werf/werf/v2/pkg/includes"
-	"github.com/werf/werf/v2/test/pkg/contback"
-	"github.com/werf/werf/v2/test/pkg/report"
-	"github.com/werf/werf/v2/test/pkg/utils"
-	"github.com/werf/werf/v2/test/pkg/werf"
+	"github.com/werf/werf/v3/pkg/includes"
+	"github.com/werf/werf/v3/test/pkg/contback"
+	"github.com/werf/werf/v3/test/pkg/report"
+	"github.com/werf/werf/v3/test/pkg/utils"
+	"github.com/werf/werf/v3/test/pkg/werf"
 )
 
 type simpleTestOptions struct {
@@ -41,12 +41,7 @@ var _ = Describe("build and mutate image spec", Label("integration", "build", "m
 		func(ctx SpecContext, testOpts simpleTestOptions) {
 			By("initializing")
 			setupEnv(testOpts.setupEnvOptions)
-			_, err := contback.NewContainerBackend(testOpts.ContainerBackendMode)
-			if err == contback.ErrRuntimeUnavailable {
-				Skip(err.Error())
-			} else if err != nil {
-				Fail(err.Error())
-			}
+			contback.SkipIfUnavailable(testOpts.ContainerBackendMode)
 
 			By("prepearing repos")
 			{
@@ -130,8 +125,8 @@ var _ = Describe("build and mutate image spec", Label("integration", "build", "m
 				}
 			}
 		},
-		Entry("without local repo using BuildKit Docker", simpleTestOptions{setupEnvOptions{
-			ContainerBackendMode: "buildkit-docker",
+		Entry("without local repo using Docker", simpleTestOptions{setupEnvOptions{
+			ContainerBackendMode: "docker",
 		}}),
 	)
 })

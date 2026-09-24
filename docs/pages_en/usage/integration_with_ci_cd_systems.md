@@ -21,7 +21,7 @@ werf provides a ready-made integrations for GitLab CI/CD and GitHub Actions. By 
 
 By default, `werf ci-env` copies the current Docker config directory (from `~/.docker` or the path specified by `--docker-config`/`WERF_DOCKER_CONFIG`) to a temporary directory and exports the `DOCKER_CONFIG` environment variable pointing to it. This isolates CI job's Docker operations from the host configuration.
 
-The `--use-docker-auth-config` flag (or `WERF_USE_DOCKER_AUTH_CONFIG=1`) changes this behavior: instead of copying an existing Docker config, it creates a fresh one from the `DOCKER_AUTH_CONFIG` environment variable. This is useful when:
+If the `DOCKER_AUTH_CONFIG` environment variable is set, `werf ci-env` automatically uses it instead: it creates a fresh Docker config from its contents rather than copying an existing one. This is useful when:
 
 - The CI runner doesn't have a persistent Docker config (e.g., ephemeral runners).
 - Registry credentials are injected via `DOCKER_AUTH_CONFIG` (common in GitLab CI/CD).
@@ -33,7 +33,9 @@ The `DOCKER_AUTH_CONFIG` value must be a valid JSON string in Docker config form
 {"auths": {"registry.example.com": {"auth": "base64-encoded-user:password"}}}
 ```
 
-If `--use-docker-auth-config` is enabled but `DOCKER_AUTH_CONFIG` is not set, `werf ci-env` will exit with an error.
+You can also control this behavior explicitly with the `--use-docker-auth-config`/`--use-docker-auth-config=false` flag (or `WERF_USE_DOCKER_AUTH_CONFIG`). An explicit value always takes precedence over the auto-detection: e.g., pass `--use-docker-auth-config=false` to force copying the existing Docker config even when `DOCKER_AUTH_CONFIG` is set.
+
+If `--use-docker-auth-config` is explicitly enabled but `DOCKER_AUTH_CONFIG` is not set, `werf ci-env` will exit with an error.
 
 > After creating the temporary config, if `--login-to-registry` is enabled (the default), `werf ci-env` additionally logs in to the CI container registry, adding credentials to the temporary config.
 

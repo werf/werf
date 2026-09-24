@@ -5,7 +5,7 @@ import (
 
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 
-	"github.com/werf/werf/v2/pkg/buildah"
+	"github.com/werf/werf/v3/pkg/buildah"
 )
 
 type InstructionInterface interface {

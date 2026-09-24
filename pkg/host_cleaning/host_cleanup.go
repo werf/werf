@@ -5,14 +5,16 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/werf/common-go/pkg/graceful"
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/container_backend"
-	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
-	"github.com/werf/werf/v2/pkg/host_cleaning/units"
-	"github.com/werf/werf/v2/pkg/tmp_manager"
-	"github.com/werf/werf/v2/pkg/volumeutils"
-	"github.com/werf/werf/v2/pkg/werf"
-	"github.com/werf/werf/v2/pkg/werf/exec"
+	"github.com/werf/werf/v3/pkg/background"
+	"github.com/werf/werf/v3/pkg/container_backend"
+	"github.com/werf/werf/v3/pkg/git_repo/gitdata"
+	"github.com/werf/werf/v3/pkg/host_cleaning/units"
+	"github.com/werf/werf/v3/pkg/tmp_manager"
+	"github.com/werf/werf/v3/pkg/volumeutils"
+	"github.com/werf/werf/v3/pkg/werf"
+	"github.com/werf/werf/v3/pkg/werf/exec"
 )
 
 const (
@@ -49,8 +51,6 @@ func getRequirementInBytes(val *units.UnitValue, defaultPercent, totalBytes uint
 }
 
 func RunAutoHostCleanup(ctx context.Context, backend container_backend.ContainerBackend, options AutoHostCleanupOptions) error {
-	ctx = context.WithoutCancel(ctx)
-
 	if shouldRun, err := shouldRunAutoHostCleanup(ctx, backend, options); err != nil {
 		logboek.Context(ctx).Warn().LogF("WARNING: unable to check if auto host cleanup should be run: %s\n", err)
 		return nil
@@ -89,10 +89,10 @@ func RunAutoHostCleanup(ctx context.Context, backend container_backend.Container
 	var envs []string
 
 	if options.TmpDir != nil && *options.TmpDir != "" {
-		envs = append(envs, fmt.Sprintf("WERF_TMP_DIR=%v", options.TmpDir))
+		envs = append(envs, fmt.Sprintf("WERF_TMP_DIR=%s", *options.TmpDir))
 	}
 	if options.HomeDir != nil && *options.HomeDir != "" {
-		envs = append(envs, fmt.Sprintf("WERF_HOME=%v", options.HomeDir))
+		envs = append(envs, fmt.Sprintf("WERF_HOME=%s", *options.HomeDir))
 	}
 
 	return exec.Detach(ctx, args, envs)
@@ -104,6 +104,19 @@ func RunHostCleanup(ctx context.Context, backend container_backend.ContainerBack
 			return nil
 		} else if err != nil {
 			return fmt.Errorf("tmp files GC failed: %w", err)
+		}
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	if err := logboek.Context(ctx).LogProcess("Running GC for locks").DoError(func() error {
+		if options.DryRun {
+			return nil
+		}
+		if err := werf.GCHostLockerDir(); err != nil {
+			// non-fatal: lock GC failures must not block the rest of host cleanup
+			logboek.Context(ctx).Warn().LogF("WARNING: host locks GC failed: %s\n", err)
 		}
 		return nil
 	}); err != nil {
@@ -139,7 +152,9 @@ func RunHostCleanup(ctx context.Context, backend container_backend.ContainerBack
 		return err
 	}
 
-	return logboek.Context(ctx).Default().LogProcess("Running GC for local %s backend", cleaner.BackendName()).DoError(func() error {
+	var gcReport RunGCReport
+
+	if err := logboek.Context(ctx).Default().LogProcess("Running GC for local %s backend", cleaner.BackendName()).DoError(func() error {
 		backendStoragePath, err := cleaner.backendStoragePath(ctx, *options.BackendStoragePath)
 		if err != nil {
 			return fmt.Errorf("error getting backend storage path: %w", err)
@@ -153,7 +168,7 @@ func RunHostCleanup(ctx context.Context, backend container_backend.ContainerBack
 		allowedBackendStorageVolumeUsageBytes := getRequirementInBytes(options.AllowedBackendStorageVolumeUsage, DefaultAllowedBackendStorageVolumeUsagePercentage, vuBackend.TotalBytes)
 		allowedBackendStorageVolumeUsageMarginBytes := getRequirementInBytes(options.AllowedBackendStorageVolumeUsageMargin, DefaultAllowedBackendStorageVolumeUsageMarginPercentage, vuBackend.TotalBytes)
 
-		err = cleaner.RunGC(ctx, RunGCOptions{
+		gcReport, err = cleaner.RunGC(ctx, RunGCOptions{
 			AllowedStorageVolumeUsageBytes:       allowedBackendStorageVolumeUsageBytes,
 			AllowedStorageVolumeUsageMarginBytes: allowedBackendStorageVolumeUsageMarginBytes,
 			StoragePath:                          *options.BackendStoragePath,
@@ -164,10 +179,24 @@ func RunHostCleanup(ctx context.Context, backend container_backend.ContainerBack
 			return fmt.Errorf("local %s backend GC failed: %w", cleaner.BackendName(), err)
 		}
 		return nil
-	})
+	}); err != nil {
+		return err
+	}
+
+	// The background cleanup output is invisible to the user, so leave a notice about it for the next werf run.
+	if background.IsBackgroundModeEnabled() && !options.DryRun {
+		if err := writeAutoCleanupNotice(werf.GetServiceDir(), cleaner.BackendName(), gcReport); err != nil {
+			logboek.Context(ctx).Warn().LogF("WARNING: unable to save auto host cleanup notice: %s\n", err)
+		}
+	}
+
+	return nil
 }
 
 func shouldRunAutoHostCleanup(ctx context.Context, backend container_backend.ContainerBackend, options AutoHostCleanupOptions) (bool, error) {
+	if graceful.IsTerminating(ctx) {
+		return false, nil
+	}
 	// host cleanup is not supported for certain project
 	if options.ProjectName != nil && *options.ProjectName != "" {
 		return false, nil
@@ -176,6 +205,14 @@ func shouldRunAutoHostCleanup(ctx context.Context, backend container_backend.Con
 	shouldRun, err := tmp_manager.ShouldRunAutoGC()
 	if err != nil {
 		return false, fmt.Errorf("failed to check tmp manager GC: %w", err)
+	}
+	if shouldRun {
+		return true, nil
+	}
+
+	shouldRun, err = werf.ShouldRunHostLocksGC()
+	if err != nil {
+		return false, fmt.Errorf("failed to check host locks GC: %w", err)
 	}
 	if shouldRun {
 		return true, nil

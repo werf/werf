@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/werf/werf/v2/pkg/docker_registry"
-	"github.com/werf/werf/v2/pkg/werf/global_warnings"
+	"github.com/werf/werf/v3/pkg/docker_registry"
+	"github.com/werf/werf/v3/pkg/werf/global_warnings"
 )
 
 const (

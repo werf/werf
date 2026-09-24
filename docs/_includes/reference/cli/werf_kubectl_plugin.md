@@ -15,6 +15,16 @@ The easiest way to discover and install plugins is via the kubernetes sub-projec
 werf kubectl plugin [flags]
 ```
 
+{{ header }} Examples
+
+```shell
+  # List all available plugins
+  kubectl plugin list
+  
+  # List only binary names of available plugins without paths
+  kubectl plugin list --name-only
+```
+
 {{ header }} Options inherited from parent commands
 
 ```shell
@@ -26,6 +36,9 @@ werf kubectl plugin [flags]
             groups.
       --as-uid=""
             UID to impersonate for the operation.
+      --as-user-extra=[]
+            User extras to impersonate for the operation, this flag can be repeated to specify      
+            multiple values for the same key.
       --cache-dir="~/.kube/cache"
             Default cache directory
       --certificate-authority=""
@@ -51,6 +64,9 @@ werf kubectl plugin [flags]
       --kubeconfig=""
             Path to the kubeconfig file to use for CLI requests (default $WERF_KUBE_CONFIG, or      
             $WERF_KUBECONFIG, or $KUBECONFIG). Ignored if kubeconfig passed as base64.
+      --kuberc=""
+            Path to the kuberc file to use for preferences. This can be disabled by exporting       
+            KUBECTL_KUBERC=false feature gate or turning off the feature KUBERC=off.
       --log-flush-frequency=5s
             Maximum number of seconds between log flushes
       --match-server-version=false
@@ -60,9 +76,12 @@ werf kubectl plugin [flags]
       --password=""
             Password for basic authentication to the API server
       --profile="none"
-            Name of profile to capture. One of (none|cpu|heap|goroutine|threadcreate|block|mutex)
+            Name of profile to capture. One of                                                      
+            (none|cpu|heap|goroutine|threadcreate|block|mutex|trace)
       --profile-output="profile.pprof"
             Name of the file to write the profile to
+      --proxy-url=""
+            Proxy URL to use for requests to the API server
       --request-timeout="0"
             The length of time to wait before giving up on a single server request. Non-zero values 
             should contain a corresponding time unit (e.g. 1s, 2m, 3h). A value of zero means don`t 

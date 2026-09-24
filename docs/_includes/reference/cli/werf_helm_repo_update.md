@@ -3,13 +3,14 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Update gets the latest information about charts from the respective chart repositories. Information is cached locally, where it is used by commands like `helm search`.
 
-You can optionally specify a list of repositories you want to update:
-```
-$ helm repo update <repo_name> ...
-```
-To update all the repositories, use `helm repo update`.
+Update gets the latest information about charts from the respective chart repositories.
+Information is cached locally, where it is used by commands like 'helm search'.
+
+You can optionally specify a list of repositories you want to update.
+	$ helm repo update <repo_name> ...
+To update all the repositories, use 'helm repo update'.
+
 
 {{ header }} Syntax
 
@@ -20,23 +21,13 @@ werf helm repo update [REPO1 [REPO2 ...]] [flags] [options]
 {{ header }} Options
 
 ```shell
-      --fail-on-repo-update-fail=false
-            update fails if any of the repository updates fail
+      --timeout=2m0s
+            time to wait for the index file download to complete
 ```
 
 {{ header }} Options inherited from parent commands
 
 ```shell
-      --hooks-status-progress-period=0
-            No-op
-      --kube-config=""
-            Kubernetes config file path (default $WERF_KUBE_CONFIG, or $WERF_KUBECONFIG, or         
-            $KUBECONFIG)
-      --kube-config-base64=""
-            Kubernetes config data as base64 string (default $WERF_KUBE_CONFIG_BASE64 or            
-            $WERF_KUBECONFIG_BASE64 or $KUBECONFIG_BASE64)
-      --kube-context=""
-            Kubernetes config context (default $WERF_KUBE_CONTEXT)
       --log-color-mode="auto"
             Set log color mode.
             Supported on, off and auto (based on the stdout’s file descriptor referring to a        
@@ -61,10 +52,5 @@ werf helm repo update [REPO1 [REPO2 ...]] [flags] [options]
             Specify custom log time format (default $WERF_LOG_TIME_FORMAT or RFC3339 format).
       --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
-  -n, --namespace=""
-            namespace scope for this request
-      --status-progress-period=5
-            Status progress period in seconds. Set -1 to stop showing status progress. Defaults to  
-            $WERF_STATUS_PROGRESS_PERIOD_SECONDS or 5 seconds
 ```
 

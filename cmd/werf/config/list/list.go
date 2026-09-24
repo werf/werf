@@ -7,11 +7,11 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/cmd/werf/common"
-	"github.com/werf/werf/v2/pkg/config"
-	"github.com/werf/werf/v2/pkg/tmp_manager"
-	"github.com/werf/werf/v2/pkg/true_git"
-	"github.com/werf/werf/v2/pkg/werf/global_warnings"
+	"github.com/werf/werf/v3/cmd/werf/common"
+	"github.com/werf/werf/v3/pkg/config"
+	"github.com/werf/werf/v3/pkg/tmp_manager"
+	"github.com/werf/werf/v3/pkg/true_git"
+	"github.com/werf/werf/v3/pkg/werf/global_warnings"
 )
 
 var (
@@ -44,23 +44,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 		},
 	})
 
-	// Setup final-images-only flag.
-	{
-		name := "final-images-only"
-		deprecatedName := "images-only"
-		for _, n := range []string{name, deprecatedName} {
-			// FIXME: it should be default behavior.
-			cmd.Flags().BoolVarP(&cmdData.finalImagesOnly, n, "", false, "Show only final images")
-		}
-
-		if err := cmd.Flags().MarkHidden(deprecatedName); err != nil {
-			panic(fmt.Errorf("error marking flag hidden: %w", err))
-		}
-
-		if err := cmd.Flags().MarkDeprecated(deprecatedName, fmt.Sprintf("use --%s instead", name)); err != nil {
-			panic(fmt.Errorf("error marking flag deprecated: %w", err))
-		}
-	}
+	cmd.Flags().BoolVarP(&cmdData.finalImagesOnly, "final-images-only", "", true, "Show only final images (pass --final-images-only=false to include non-final images)")
 
 	common.SetupDir(&commonCmdData, cmd)
 	common.SetupGitWorkTree(&commonCmdData, cmd)

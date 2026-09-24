@@ -12,7 +12,7 @@ To avoid this, the Docker community suggests installing tools, building, and rem
 RUN “download-source && cmd && cmd2 && remove-source”
 ```
 
-> You can do the same in werf — just specify the relevant instructions for some _user stage_. Below is an example of specifying the _shell assembly instructions_ for the _install stage_ (you can do so for the _ansible_ builder as well):
+> You can do the same in werf — just specify the relevant instructions for some _user stage_. Below is an example of specifying the _shell assembly instructions_ for the _install stage_:
 ```yaml
 shell:
   install:
@@ -56,7 +56,6 @@ werf offers the same approach.
 Importing _resources_ from the _images_ must be described in the `import` directive in the _destination image_ in the _image_ config section. `import` is an array of records, where each record must contain the following:
 
 - `from: <image name>`: _source image_; the name of the image copy files from. Both imports from images of the current project and from external images in the format `image_name:tag` or `image_name@digest` are supported.
-- `stage: <stage name>`: _source image stage_; the stage of the _source_image_ to copy files from.
 - `add: <absolute path>`: _source path_; the absolute path to the file or directory in the _source image_ to copy from.
 - `to: <absolute path>`: _destination path_; the absolute path in the _destination image_. If absent, the _destination path_ defaults to the  _source path_ (as specified by the `add` directive).
 - `before: <install || setup>` or `after: <install || setup>`: _destination image stage_; the stage to import files. Currently, only _install_ and _setup_ stages are supported.
@@ -80,3 +79,18 @@ You can also specify an owner and a group for the imported resources, `owner: <o
 This behavior is similar to the one used when adding code from Git repositories, and you can read more about it in the [git directive section]({{ "usage/build/stapel/git.html" | true_relative_url }}).
 
 > Note that the path of imported resources and the path specified in _git mappings_ must not overlap.
+
+### Destination path rules
+
+What ends up at the _destination path_ depends on whether the _source path_ is a directory or a file.
+
+If `add` is a **directory**, its contents are merged into `to`. Files already present in `to` are kept, and files with the same name are overwritten. This is why several imports may target the same directory.
+
+If `add` is a **file**, the outcome depends on the _destination image_:
+
+- if `to` does not exist, the file is created at exactly that path — `add: /app/config.yaml` with `to: /etc/app.yaml` produces `/etc/app.yaml`;
+- if `to` already exists as a directory, the file is placed inside it — the same import with `to: /etc` produces `/etc/config.yaml`.
+
+werf creates only the parent directory of `to`, so whether `to` itself exists is decided by the _destination image_ — pin the full file path when the difference matters.
+
+A trailing slash in `to` (anything other than `to: /`) is a configuration error and fails the build: write `to: /usr/sbin`, not `to: /usr/sbin/`.

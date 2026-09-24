@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"runtime"
 	"sync"
 	"testing"
 
@@ -13,11 +12,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/werf/werf/v2/pkg/cleaning/stage_manager"
-	"github.com/werf/werf/v2/pkg/cleanup_report"
-	"github.com/werf/werf/v2/pkg/image"
-	"github.com/werf/werf/v2/pkg/storage"
-	"github.com/werf/werf/v2/pkg/storage/manager"
+	"github.com/werf/werf/v3/pkg/cleaning/stage_manager"
+	"github.com/werf/werf/v3/pkg/cleanup_report"
+	"github.com/werf/werf/v3/pkg/image"
+	"github.com/werf/werf/v3/pkg/storage"
+	"github.com/werf/werf/v3/pkg/storage/manager"
 )
 
 type fakePrimaryStagesStorage struct {
@@ -28,13 +27,15 @@ type fakePrimaryStagesStorage struct {
 	rejectedStageIDs []image.StageID
 	rejectedErr      error
 
-	deleteImageErrs  map[string]error
-	deleteRecordErrs map[string]error
-	deleteTagErrs    map[string]error
+	deleteImageErrs   map[string]error
+	deleteRecordErrs  map[string]error
+	deleteTagErrs     map[string]error
+	unregisterTagErrs map[string]error
 
-	deletedImages  []image.StageID
-	deletedRecords []image.StageID
-	deletedTags    []string
+	deletedImages    []image.StageID
+	deletedRecords   []image.StageID
+	deletedTags      []string
+	unregisteredTags []string
 }
 
 func (f *fakePrimaryStagesStorage) GetRejectedStageIDs(_ context.Context, _ ...storage.Option) ([]image.StageID, error) {
@@ -62,12 +63,18 @@ func (f *fakePrimaryStagesStorage) DeleteStageCustomTag(_ context.Context, tag s
 	return f.deleteTagErrs[tag]
 }
 
+func (f *fakePrimaryStagesStorage) UnregisterStageCustomTag(_ context.Context, tag string) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.unregisteredTags = append(f.unregisteredTags, tag)
+	return f.unregisterTagErrs[tag]
+}
+
 type fakeStorageManager struct {
 	manager.StorageManagerInterface
 
 	stages *fakePrimaryStagesStorage
-
-	importMetadataErrs map[string]error
+	meta   *fakePrimaryStagesStorage
 
 	stageDescSet       image.StageDescSet
 	finalStageDescSet  image.StageDescSet
@@ -75,18 +82,35 @@ type fakeStorageManager struct {
 }
 
 func newFakeStorageManager() *fakeStorageManager {
+	sm := &fakeStorageManager{
+		stages: newFakePrimaryStagesStorage(),
+	}
+	sm.meta = sm.stages
+	return sm
+}
+
+func newFakeStorageManagerWithSplitStorages() *fakeStorageManager {
 	return &fakeStorageManager{
-		stages: &fakePrimaryStagesStorage{
-			deleteImageErrs:  map[string]error{},
-			deleteRecordErrs: map[string]error{},
-			deleteTagErrs:    map[string]error{},
-		},
-		importMetadataErrs: map[string]error{},
+		stages: newFakePrimaryStagesStorage(),
+		meta:   newFakePrimaryStagesStorage(),
+	}
+}
+
+func newFakePrimaryStagesStorage() *fakePrimaryStagesStorage {
+	return &fakePrimaryStagesStorage{
+		deleteImageErrs:   map[string]error{},
+		deleteRecordErrs:  map[string]error{},
+		deleteTagErrs:     map[string]error{},
+		unregisterTagErrs: map[string]error{},
 	}
 }
 
 func (f *fakeStorageManager) GetStagesStorage() storage.PrimaryStagesStorage {
 	return f.stages
+}
+
+func (f *fakeStorageManager) GetMetaStorage() storage.PrimaryStagesStorage {
+	return f.meta
 }
 
 func (f *fakeStorageManager) ForEachRejectedStage(ctx context.Context, stageIDs []image.StageID, cb func(ctx context.Context, stageID image.StageID) error) error {
@@ -101,15 +125,6 @@ func (f *fakeStorageManager) ForEachRejectedStage(ctx context.Context, stageIDs 
 func (f *fakeStorageManager) ForEachDeleteStageCustomTag(ctx context.Context, tags []string, cb func(ctx context.Context, tag string, err error) error) error {
 	for _, tag := range tags {
 		if err := cb(ctx, tag, f.stages.deleteTagErrs[tag]); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (f *fakeStorageManager) ForEachRmImportMetadata(ctx context.Context, _ string, ids []string, cb func(ctx context.Context, id string, err error) error) error {
-	for _, id := range ids {
-		if err := cb(ctx, id, f.importMetadataErrs[id]); err != nil {
 			return err
 		}
 	}
@@ -218,6 +233,41 @@ func TestDeleteRejectedStagesWithLinkedTags_CustomTagFailureKeepsMarker(t *testi
 	assert.Equal(t, []image.StageID{*stageID}, sm.stages.deletedImages, "stage image already deleted")
 	assert.Equal(t, []string{"v1.0.0"}, sm.stages.deletedTags, "fail-fast on first custom tag failure; 'latest' not attempted")
 	assert.Empty(t, sm.stages.deletedRecords, "marker MUST remain so next cleanup retries linked tags")
+}
+
+func TestDeleteRejectedStagesWithLinkedTags_RoutesUnregisterToMetaStorage(t *testing.T) {
+	digest := "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
+	stageID := image.NewStageID(digest, 1700000000)
+
+	sm := newFakeStorageManagerWithSplitStorages()
+	sm.stages.rejectedStageIDs = []image.StageID{*stageID}
+
+	deleted, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, map[string][]string{stageID.String(): {"v1.0.0", "latest"}}, false, nil)
+	require.NoError(t, err)
+
+	assert.Equal(t, []string{stageID.String()}, deleted)
+	assert.Equal(t, []string{"v1.0.0", "latest"}, sm.stages.deletedTags, "alias custom tags deleted from stages storage")
+	assert.Equal(t, []string{"v1.0.0", "latest"}, sm.meta.unregisteredTags, "custom-tag metadata records unregistered from meta storage")
+	assert.Empty(t, sm.meta.deletedTags, "meta storage MUST NOT receive alias image deletes")
+	assert.Empty(t, sm.stages.unregisteredTags, "stages storage MUST NOT receive metadata unregister calls")
+	assert.Equal(t, []image.StageID{*stageID}, sm.stages.deletedRecords, "marker deleted on stages after both alias and metadata cleanup succeeded")
+}
+
+func TestDeleteRejectedStagesWithLinkedTags_UnregisterFailureKeepsMarker(t *testing.T) {
+	digest := "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
+	stageID := image.NewStageID(digest, 1700000000)
+
+	sm := newFakeStorageManagerWithSplitStorages()
+	sm.stages.rejectedStageIDs = []image.StageID{*stageID}
+	sm.meta.unregisterTagErrs["v1.0.0"] = errors.New("temporary network glitch")
+
+	deleted, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, map[string][]string{stageID.String(): {"v1.0.0", "latest"}}, false, nil)
+	require.NoError(t, err)
+
+	assert.Empty(t, deleted, "stage with failed metadata unregister must NOT be reported deleted")
+	assert.Equal(t, []string{"v1.0.0"}, sm.stages.deletedTags, "alias for v1.0.0 already deleted before unregister failed")
+	assert.Equal(t, []string{"v1.0.0"}, sm.meta.unregisteredTags, "fail-fast on first metadata unregister failure; latest not attempted")
+	assert.Empty(t, sm.stages.deletedRecords, "marker MUST remain so next cleanup retries orphan metadata")
 }
 
 func TestDeleteRejectedStagesWithLinkedTags_MarkerFailureExcludesFromDeleted(t *testing.T) {
@@ -358,31 +408,6 @@ func TestDeleteCustomTags_ReportDryRunMatchesRealRun(t *testing.T) {
 	assert.ElementsMatch(t, realReport.Deleted, dryReport.Deleted)
 }
 
-func TestDeleteImportsMetadata_ReportRecordsOnlySucceeded(t *testing.T) {
-	sm := newFakeStorageManager()
-	sm.importMetadataErrs["broken"] = errors.New("temporary network glitch")
-
-	report := newTestReport()
-
-	require.NoError(t, deleteImportsMetadata(context.Background(), "myproject", sm, []string{"8c4a1f9b2d7e5a3c", "broken"}, false, report))
-
-	assert.Equal(t, []cleanup_report.Item{
-		{Type: cleanup_report.ItemTypeImportMetadata, ID: "8c4a1f9b2d7e5a3c"},
-	}, report.Deleted)
-}
-
-func TestDeleteImportsMetadata_ReportDryRunMatchesRealRun(t *testing.T) {
-	ids := []string{"8c4a1f9b2d7e5a3c", "1e09fb543b4ef442"}
-
-	realReport := newTestReport()
-	require.NoError(t, deleteImportsMetadata(context.Background(), "myproject", newFakeStorageManager(), ids, false, realReport))
-
-	dryReport := newTestReport()
-	require.NoError(t, deleteImportsMetadata(context.Background(), "myproject", newFakeStorageManager(), ids, true, dryReport))
-
-	assert.ElementsMatch(t, realReport.Deleted, dryReport.Deleted)
-}
-
 func TestDeleteImageMetadata_ReportUsesImageNameForManagedImages(t *testing.T) {
 	report := newTestReport()
 	stageIDCommitList := map[string][]string{"ff0011-1748001122334": {"a3f1c92e"}}
@@ -472,68 +497,4 @@ var _ = ginkgo.Describe("Cleanup final stages", func() {
 			)
 		})
 	}
-})
-
-var _ = ginkgo.Describe("Cleanup unused imports metadata", func() {
-	ginkgo.BeforeEach(func() {
-		ginkgo.GinkgoT().Setenv("WERF_EXPERIMENTAL_IMPORT_BY_SOURCE_IMAGE_TAG", "false")
-	})
-
-	ginkgo.It("keeps protected imports and deletes unprotected imports", func() {
-		ctx := context.Background()
-
-		protectedStageDesc := &image.StageDesc{
-			StageID: image.NewStageID("protected", 1),
-			Info:    &image.Info{Tag: "protected-tag"},
-		}
-		unprotectedStageID := image.NewStageID("unprotected", 2)
-
-		m := newCleanupManagerForImportsMetadataTest(ctx, protectedStageDesc)
-		m.sourceStageIDImportIDs = map[string][]string{
-			protectedStageDesc.StageID.String(): {"kept-import"},
-			unprotectedStageID.String():         {"deleted-import"},
-		}
-
-		gomega.Expect(m.deleteUnusedImportsMetadata(ctx)).To(gomega.Succeed())
-
-		gomega.Expect(m.report.Deleted).To(gomega.Equal([]cleanup_report.Item{
-			{Type: cleanup_report.ItemTypeImportMetadata, ID: "deleted-import"},
-		}))
-	})
-
-	ginkgo.It("does not leak goroutines when skipping protected stages", func() {
-		ctx := context.Background()
-
-		// Every source stage below is protected, so each outer-loop iteration matches
-		// and exits as soon as it finds itself among many protected stages, mimicking
-		// the abandoned-Iter() pattern described in the report: the match is very
-		// unlikely to be the last element the set delivers, so completing the match
-		// without draining the rest is what leaks the underlying Iter() goroutine.
-		const stageCount = 200
-
-		protectedStageDescs := make([]*image.StageDesc, 0, stageCount)
-		for i := 0; i < stageCount; i++ {
-			protectedStageDescs = append(protectedStageDescs, &image.StageDesc{
-				StageID: image.NewStageID("protected", int64(i)),
-				Info:    &image.Info{Tag: "protected-tag"},
-			})
-		}
-
-		m := newCleanupManagerForImportsMetadataTest(ctx, protectedStageDescs...)
-
-		sourceStageIDImportIDs := make(map[string][]string, stageCount)
-		for _, stageDesc := range protectedStageDescs {
-			sourceStageIDImportIDs[stageDesc.StageID.String()] = []string{stageDesc.StageID.String() + "-import"}
-		}
-		m.sourceStageIDImportIDs = sourceStageIDImportIDs
-
-		before := runtime.NumGoroutine()
-
-		gomega.Expect(m.deleteUnusedImportsMetadata(ctx)).To(gomega.Succeed())
-
-		runtime.Gosched()
-		after := runtime.NumGoroutine()
-
-		gomega.Expect(after).To(gomega.BeNumerically("<=", before+5), "deleteUnusedImportsMetadata must not leak a goroutine per skipped-early scan of the protected stage set")
-	})
 })

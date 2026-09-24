@@ -16,13 +16,11 @@ const (
 
 	DocsLongMD string = "docsLongMD"
 
-	WerfDebugAnsibleArgs Env = "WERF_DEBUG_ANSIBLE_ARGS"
-	WerfSecretKey        Env = "WERF_SECRET_KEY"
-	WerfOldSecretKey     Env = "WERF_OLD_SECRET_KEY"
+	WerfSecretKey    Env = "WERF_SECRET_KEY"
+	WerfOldSecretKey Env = "WERF_OLD_SECRET_KEY"
 )
 
 var envDescription = map[Env]string{
-	WerfDebugAnsibleArgs: "Pass specified cli args to ansible ($ANSIBLE_ARGS)",
 	WerfSecretKey: `Use specified secret key to extract secrets for the deploy. Recommended way to set secret key in CI-system.
 
 Secret key also can be defined in files:

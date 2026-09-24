@@ -3,7 +3,7 @@ package bundles
 import (
 	"fmt"
 
-	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v3/pkg/image"
 )
 
 func updateGlobalWerfValues(values map[string]interface{}, newRepo string, newImageRefs map[string]string) error {

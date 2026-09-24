@@ -18,7 +18,7 @@ shell:
     - mkdir -p /usr/bin
     - ln -s usr/bin /bin
 import:
-  - image: source
+  - from: source
     add: /src/bin
     to: /bin
     after: install

@@ -7,14 +7,16 @@ import (
 	"os"
 	"strings"
 
+	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/mutate"
+	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/google/go-containerregistry/pkg/v1/tarball"
 	. "github.com/onsi/gomega"
 )
 
 func ExpectFileContentInImage(ctx context.Context, backendMode, imageName, filePath, expectedContent string) {
-	img, cleanup := loadLocalImage(ctx, backendMode, imageName)
+	img, cleanup := loadImage(ctx, backendMode, imageName)
 	defer cleanup()
 	rc := mutate.Extract(img)
 	defer rc.Close()
@@ -47,7 +49,7 @@ func ExpectFileContentInImage(ctx context.Context, backendMode, imageName, fileP
 // guards against malformed images (e.g. a broken `from: scratch` base layer)
 // that Docker can still list/tag but that tools like `dive` fail to read.
 func ExpectImageIsReadable(ctx context.Context, backendMode, imageName string) {
-	img, cleanup := loadLocalImage(ctx, backendMode, imageName)
+	img, cleanup := loadImage(ctx, backendMode, imageName)
 	defer cleanup()
 
 	_, err := img.ConfigFile()
@@ -77,7 +79,7 @@ func ExpectImageIsReadable(ctx context.Context, backendMode, imageName string) {
 }
 
 func ExpectImageHasNonEmptyLabels(ctx context.Context, backendMode, imageName string, labelKeys ...string) {
-	img, cleanup := loadLocalImage(ctx, backendMode, imageName)
+	img, cleanup := loadImage(ctx, backendMode, imageName)
 	defer cleanup()
 	config, err := img.ConfigFile()
 	Expect(err).NotTo(HaveOccurred())
@@ -91,7 +93,17 @@ func ExpectImageHasNonEmptyLabels(ctx context.Context, backendMode, imageName st
 	}
 }
 
-func loadLocalImage(ctx context.Context, backendMode, imageName string) (v1.Image, func()) {
+func loadImage(ctx context.Context, backendMode, imageName string) (v1.Image, func()) {
+	// An image built into a repo is authoritative in that registry only: the local
+	// store may hold a name whose content was never materialized, which `docker
+	// image inspect` still reports as present while `docker save` writes a tar
+	// missing every blob.
+	if ref, err := name.ParseReference(imageName, name.Insecure); err == nil && ref.Context().RegistryStr() != name.DefaultRegistry {
+		img, err := remote.Image(ref)
+		Expect(err).NotTo(HaveOccurred(), "expected image %s to be readable from its registry", imageName)
+		return img, func() {}
+	}
+
 	tempFile, err := os.CreateTemp("", "werf-e2e-image-*.tar")
 	Expect(err).NotTo(HaveOccurred())
 
@@ -102,6 +114,7 @@ func loadLocalImage(ctx context.Context, backendMode, imageName string) (v1.Imag
 	case "docker", "vanilla-docker", "buildkit-docker":
 		RunSucceedCommand(ctx, "/", "docker", "save", "-o", tempTarPath, imageName)
 	case "native-rootless", "native-chroot":
+		RunSucceedCommand(ctx, "/", "buildah", "pull", "--tls-verify=false", imageName)
 		RunSucceedCommand(ctx, "/", "buildah", "push", "--tls-verify=false", "--format", "docker", imageName, "docker-archive:"+tempTarPath)
 	default:
 		Expect(false).To(BeTrue(), "unsupported backend mode: %s", backendMode)

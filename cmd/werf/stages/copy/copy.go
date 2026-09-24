@@ -8,18 +8,18 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/cmd/werf/common"
-	"github.com/werf/werf/v2/pkg/build"
-	"github.com/werf/werf/v2/pkg/build/stages"
-	"github.com/werf/werf/v2/pkg/config"
-	"github.com/werf/werf/v2/pkg/container_backend"
-	"github.com/werf/werf/v2/pkg/docker_registry"
-	"github.com/werf/werf/v2/pkg/giterminism_manager"
-	"github.com/werf/werf/v2/pkg/ref"
-	"github.com/werf/werf/v2/pkg/storage/manager"
-	"github.com/werf/werf/v2/pkg/tmp_manager"
-	"github.com/werf/werf/v2/pkg/true_git"
-	"github.com/werf/werf/v2/pkg/werf/global_warnings"
+	"github.com/werf/werf/v3/cmd/werf/common"
+	"github.com/werf/werf/v3/pkg/build"
+	"github.com/werf/werf/v3/pkg/build/stages"
+	"github.com/werf/werf/v3/pkg/config"
+	"github.com/werf/werf/v3/pkg/container_backend"
+	"github.com/werf/werf/v3/pkg/docker_registry"
+	"github.com/werf/werf/v3/pkg/giterminism_manager"
+	"github.com/werf/werf/v3/pkg/ref"
+	"github.com/werf/werf/v3/pkg/storage/manager"
+	"github.com/werf/werf/v3/pkg/tmp_manager"
+	"github.com/werf/werf/v3/pkg/true_git"
+	"github.com/werf/werf/v3/pkg/werf/global_warnings"
 )
 
 type copyCmdData struct {
@@ -103,6 +103,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupSecondaryStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupFinalRepo(&commonCmdData, cmd)
+	common.SetupMetaRepo(&commonCmdData, cmd)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified repos")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
@@ -118,8 +119,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupBuildReportOperations(&commonCmdData, cmd)
 	common.SetupUseBuildReport(&commonCmdData, cmd)
 
-	common.SetupSynchronization(&commonCmdData, cmd)
-
 	common.SetupLogOptions(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 
@@ -131,7 +130,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	commonCmdData.SetupFinalImagesOnly(cmd, false)
 	commonCmdData.SetupAllowIncludesUpdate(cmd)
 
-	commonCmdData.SetupSkipImageSpecStage(cmd)
 	commonCmdData.SetupDebugTemplates(cmd)
 
 	commonCmdData.SetupPlatform(cmd)
@@ -263,7 +261,7 @@ func initConveyorComponents(ctx context.Context, werfConfig *config.WerfConfig, 
 		return nil, build.BuildOptions{}, fmt.Errorf("unable to get conveyor options: %w", err)
 	}
 
-	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, giterminismManager.ProjectDir(), projectTmpDir, containerBackend, storageManager, storageManager.StorageLockManager, conveyorOptions)
+	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, giterminismManager.ProjectDir(), projectTmpDir, containerBackend, storageManager, conveyorOptions)
 
 	return conveyorWithRetry, buildOptions, nil
 }

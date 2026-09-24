@@ -12,7 +12,7 @@ import (
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/werf"
+	"github.com/werf/werf/v3/pkg/werf"
 )
 
 const LRUImagesCacheVersion = "1"

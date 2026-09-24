@@ -2,13 +2,12 @@ package cleanup_with_k8s_test
 
 import (
 	"context"
-	"fmt"
-	"os"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/werf/v2/test/pkg/utils"
+	"github.com/werf/werf/v3/test/pkg/suite_init"
+	"github.com/werf/werf/v3/test/pkg/utils"
 )
 
 var _ = Describe("cleanup command", func() {
@@ -21,7 +20,7 @@ var _ = Describe("cleanup command", func() {
 	)
 
 	setImageCredentialsEnv := func() {
-		SuiteData.Stubs.SetEnv("WERF_SET_IMAGE_CREDENTIALS_REGISTRY", fmt.Sprintf("imageCredentials.registry=%s", os.Getenv("WERF_TEST_K8S_DOCKER_REGISTRY")))
+		SuiteData.Stubs.SetEnv("WERF_SET_IMAGE_CREDENTIALS_REGISTRY", "imageCredentials.registry="+suite_init.TestRegistry())
 	}
 
 	setupProject := func(ctx context.Context) {
@@ -67,30 +66,26 @@ var _ = Describe("cleanup command", func() {
 				SuiteData.Stubs.SetEnv("ARTIFACT_CACHE_VERSION", artifactCacheVersion2)
 			})
 
-			It("should keep both by import checksum", func(ctx SpecContext) {
+			It("should delete replaced stages when imported content is unchanged", func(ctx SpecContext) {
 				SuiteData.Stubs.SetEnv("ARTIFACT_DATA", artifactData1)
 				runCommand(ctx, "converge")
 
-				Expect(StagesCount(ctx)).Should(Equal(expectedStageCountAfterFirstBuild + 2))
-				Expect(len(ImportMetadataIDs(ctx))).Should(Equal(2))
-
-				runCommand(ctx, "cleanup")
-
-				Expect(StagesCount(ctx)).Should(Equal(expectedStageCountAfterFirstBuild + 2))
-				Expect(len(ImportMetadataIDs(ctx))).Should(Equal(2))
-			})
-
-			It("should keep one", func(ctx SpecContext) {
-				SuiteData.Stubs.SetEnv("ARTIFACT_DATA", artifactData2)
-				runCommand(ctx, "converge")
-
 				Expect(StagesCount(ctx)).Should(Equal(expectedStageCountAfterFirstBuild + 3))
-				Expect(len(ImportMetadataIDs(ctx))).Should(Equal(2))
 
 				runCommand(ctx, "cleanup")
 
 				Expect(StagesCount(ctx)).Should(Equal(expectedStageCountAfterFirstBuild))
-				Expect(len(ImportMetadataIDs(ctx))).Should(Equal(1))
+			})
+
+			It("should delete replaced stages when imported content changes", func(ctx SpecContext) {
+				SuiteData.Stubs.SetEnv("ARTIFACT_DATA", artifactData2)
+				runCommand(ctx, "converge")
+
+				Expect(StagesCount(ctx)).Should(Equal(expectedStageCountAfterFirstBuild + 3))
+
+				runCommand(ctx, "cleanup")
+
+				Expect(StagesCount(ctx)).Should(Equal(expectedStageCountAfterFirstBuild))
 			})
 		})
 	})

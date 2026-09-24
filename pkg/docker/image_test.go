@@ -9,7 +9,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/werf/v2/pkg/container_backend/filter"
+	"github.com/werf/werf/v3/pkg/container_backend/filter"
 )
 
 var _ = Describe("docker images", func() {
@@ -34,18 +34,6 @@ var _ = Describe("docker images", func() {
 			),
 		),
 	)
-	DescribeTable("parseIDDigestFromImageLoadResponseBody() should work",
-		func(body []byte, digest string) {
-			Expect(parseIDDigestFromImageLoadResponseBody(body)).To(Equal(digest))
-		},
-		Entry(
-			"with registry.2 image",
-			[]byte(`{"stream":"Loaded image ID: sha256:dff4d2bea666c3cdf6c24b6da06118a8a4f1658b1def9e50c55a1eb0c77eeaba\n"}
-`),
-			"dff4d2bea666c3cdf6c24b6da06118a8a4f1658b1def9e50c55a1eb0c77eeaba",
-		),
-	)
-
 	// emptyTarArchive provides the rootfs body sent to the Docker Engine import
 	// API for `from: scratch` images. A malformed/empty body was the root cause
 	// of unreadable scratch images on Linux, so the body must be a valid tar.

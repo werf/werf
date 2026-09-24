@@ -9,23 +9,28 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 	"github.com/opencontainers/runtime-spec/specs-go"
 
 	"github.com/werf/common-go/pkg/util"
-	"github.com/werf/werf/v2/pkg/buildah/thirdparty"
-	"github.com/werf/werf/v2/pkg/container_backend/filter"
-	"github.com/werf/werf/v2/pkg/container_backend/info"
-	"github.com/werf/werf/v2/pkg/image"
-	"github.com/werf/werf/v2/pkg/werf"
+	"github.com/werf/werf/v3/pkg/buildah/thirdparty"
+	"github.com/werf/werf/v3/pkg/container_backend/filter"
+	"github.com/werf/werf/v3/pkg/container_backend/info"
+	"github.com/werf/werf/v3/pkg/image"
+	"github.com/werf/werf/v3/pkg/werf"
 )
 
 const (
 	DefaultShmSize          = "65536k"
 	DefaultContainersConfig = `
 [network]
-default_rootless_network_cmd="slirp4netns"
+# Pin the network backend and the rootless network command explicitly so behavior does not
+# depend on host config or upstream defaults (buildah maps an empty rootless network cmd to
+# its legacy default, not to pasta)
+network_backend="netavark"
+default_rootless_network_cmd="pasta"
 [engine]
 # Prefer runc over crun since old versions of crun (including one shipped in Ubuntu 22.04) cause
 # "unknown version specified" error
@@ -54,12 +59,13 @@ type CommonOpts struct {
 type BuildFromDockerfileOpts struct {
 	CommonOpts
 
-	ContextDir string
-	BuildArgs  map[string]string
-	Target     string
-	Labels     []string
-	Secrets    []string
-	SSH        string
+	ContextDir  string
+	BuildArgs   map[string]string
+	Target      string
+	Labels      []string
+	Secrets     []string
+	SSH         string
+	NetworkType string
 }
 
 type RunMount struct {
@@ -99,6 +105,15 @@ type CommitOpts struct {
 	CommonOpts
 
 	Image string
+
+	// ClearHistory and Created are only honored by CommitMutation, not by Commit.
+
+	// ClearHistory, when true, omits the base image's layer history from the committed image.
+	ClearHistory bool
+
+	// Created overrides the "created" timestamp recorded on the committed image.
+	// When nil, the commit time is used.
+	Created *time.Time
 }
 
 type PruneImagesOptions struct {
@@ -141,6 +156,7 @@ type CopyOpts struct {
 
 	Chown   string
 	Chmod   string
+	Parents bool
 	Ignores []string
 }
 
@@ -155,7 +171,6 @@ type AddOpts struct {
 
 type ImagesOptions struct {
 	CommitOpts
-	Names   []string
 	Filters []util.Pair[string, string]
 }
 
@@ -192,6 +207,14 @@ type Buildah interface {
 	Umount(ctx context.Context, container string, opts UmountOpts) error
 	Commit(ctx context.Context, container string, opts CommitOpts) (string, error)
 	Config(ctx context.Context, container string, opts ConfigOpts) error
+	// MutateConfig applies a full-replace image config mutation (as described by newConfig) to
+	// container, mirroring image.UpdateConfigFile semantics. Unlike Config, it does not merge
+	// individual fields additively: Labels/Env/Volumes are always fully replaced with the final
+	// resolved values, and Clear* flags reset the corresponding field to its zero value.
+	MutateConfig(ctx context.Context, container string, newConfig image.SpecConfig, opts CommonOpts) error
+	// CommitMutation commits container the same way as Commit, but honors opts.ClearHistory and
+	// opts.Created instead of always omitting history. Intended for use after MutateConfig.
+	CommitMutation(ctx context.Context, container string, opts CommitOpts) (string, error)
 	Copy(ctx context.Context, container, contextDir string, src []string, dst string, opts CopyOpts) error
 	Add(ctx context.Context, container string, src []string, dst string, opts AddOpts) error
 	Images(ctx context.Context, opts ImagesOptions) (image.ImagesList, error)

@@ -14,7 +14,7 @@ from: registry.werf.io/base/ubuntu:22.04
 # threshold is ~194 imports.
 import:
 {{- range $i := until 256 }}
-  - image: source
+  - from: source
     add: /payload
     to: /imports/{{ $i }}
     after: install

@@ -6,8 +6,8 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 
-	"github.com/werf/werf/v2/test/pkg/suite_init"
-	"github.com/werf/werf/v2/test/pkg/utils"
+	"github.com/werf/werf/v3/test/pkg/suite_init"
+	"github.com/werf/werf/v3/test/pkg/utils"
 )
 
 const gitCacheSizeStep = 1024 * 1024

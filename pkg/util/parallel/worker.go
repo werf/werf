@@ -1,112 +1,138 @@
 package parallel
 
 import (
+	"errors"
 	"fmt"
-	"os"
+	"io"
 	"sync"
-	"sync/atomic"
 
-	"github.com/werf/werf/v2/pkg/tmp_manager"
+	"github.com/samber/lo"
 )
 
-// Worker
-// This is a worker for concurrent writing and reading logs.
-// It uses *os.File under the hood.
-//
-// To be concurrently safe, writer and reader rely on the same file object:
-// - the writer appends data only;
-// - the reader reads already appended data (or nothing).
-// Because of that, no race condition happens while accessing file data.
+// Worker owns the TaskOutputs of the tasks it ran and relays the output of
+// the worker-level docker cli to the logger of the task running right now.
+// The cli is created once per worker (a client per task would leak a
+// connection pool per task) and writes only synchronously from inside the
+// task that invoked it, so relaying to the current task's logger streams is
+// exact and its output gets the same indentation and block boundaries as
+// the task's own log lines. Between tasks relayed writes are dropped; a
+// write from a goroutine that outlived its task lands in the block of
+// whatever task the worker runs at that moment.
 type Worker struct {
-	readOffset  atomic.Int64
-	writeOffset atomic.Int64
-
-	mutex      sync.Mutex
-	halfClosed atomic.Bool
-
-	file *os.File
-
 	ID int
+
+	mu      sync.Mutex
+	current *TaskOutput
+	failed  *TaskOutput
+	outputs []*TaskOutput
+	taskOut io.Writer
+	taskErr io.Writer
 }
 
-// Write implements io.Writer.
-// It appends to file and accumulates total write offset.
-func (w *Worker) Write(p []byte) (int, error) {
-	w.mutex.Lock()
-	defer w.mutex.Unlock()
+func NewWorker(id int) *Worker {
+	return &Worker{ID: id}
+}
 
-	if w.halfClosed.Load() {
+// OutStream and ErrStream are what the worker's docker cli is bound to.
+func (w *Worker) OutStream() io.Writer { return streamRelay{worker: w, err: false} }
+func (w *Worker) ErrStream() io.Writer { return streamRelay{worker: w, err: true} }
+
+type streamRelay struct {
+	worker *Worker
+	err    bool
+}
+
+var _ io.Writer = streamRelay{}
+
+func (r streamRelay) Write(p []byte) (int, error) {
+	r.worker.mu.Lock()
+	target := lo.Ternary(r.err, r.worker.taskErr, r.worker.taskOut)
+	r.worker.mu.Unlock()
+
+	if target == nil {
 		return len(p), nil
 	}
 
-	offset, err := w.file.Write(p)
-	w.writeOffset.Add(int64(offset))
-	return offset, err
+	return target.Write(p)
 }
 
-// Read implements io.Reader.
-// It reads a file and accumulates total read offset.
-// It resumes reading from "total read offset" and reads until EOF, where EOF is handled with os.File.
-func (w *Worker) Read(p []byte) (int, error) {
-	offset, err := w.file.ReadAt(p, w.readOffset.Load())
-	w.readOffset.Add(int64(offset))
-	return offset, err
+// failTask records the output of a task that returned an error, so the
+// printer can highlight exactly that block. An error raised outside a task
+// (picking the next one) leaves it unset, and the printing queue is then
+// left alone.
+func (w *Worker) failTask(out *TaskOutput) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	w.failed = out
 }
 
-// HalfClose closes writing or returns error if already half-closed
-func (w *Worker) HalfClose() error {
-	w.mutex.Lock()
-	defer w.mutex.Unlock()
+func (w *Worker) failedOutput() *TaskOutput {
+	w.mu.Lock()
+	defer w.mu.Unlock()
 
-	if w.halfClosed.Load() {
-		return fmt.Errorf("worker %d is already half closed", w.ID)
+	return w.failed
+}
+
+func (w *Worker) beginTask() *TaskOutput {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	out := NewTaskOutput(w.ID, len(w.outputs))
+	w.current = out
+	w.outputs = append(w.outputs, out)
+	return out
+}
+
+func (w *Worker) bindTaskStreams(outStream, errStream io.Writer) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	w.taskOut = outStream
+	w.taskErr = errStream
+}
+
+// endTask detaches the docker cli relay and stops accepting output of the
+// current task.
+func (w *Worker) endTask() error {
+	w.mu.Lock()
+	w.taskOut = nil
+	w.taskErr = nil
+	out := w.current
+	w.current = nil
+	w.mu.Unlock()
+
+	if out == nil {
+		return nil
 	}
-	w.halfClosed.Store(true)
-	return nil
+
+	return out.HalfClose()
 }
 
-// Readable returns true if worker is readable
-func (w *Worker) Readable() bool {
-	if !w.halfClosed.Load() {
-		return true
-	}
-	return w.readOffset.Load() < w.writeOffset.Load()
-}
-
-// Close implements io.Closer closing tmp file.
-// It ensures that worker is half closed
+// Close closes the tmp files of every task the worker ran.
 func (w *Worker) Close() error {
-	w.mutex.Lock()
-	defer w.mutex.Unlock()
+	w.mu.Lock()
+	defer w.mu.Unlock()
 
-	w.halfClosed.Store(true)
-
-	if err := w.file.Close(); err != nil {
-		return fmt.Errorf("failed to close tmp file for worker %d: %w", w.ID, err)
+	var errs []error
+	for _, out := range w.outputs {
+		if err := out.Close(); err != nil {
+			errs = append(errs, fmt.Errorf("worker %d: %w", w.ID, err))
+		}
 	}
-	return nil
+	return errors.Join(errs...)
 }
 
-// Cleanup removes tmp file
+// Cleanup removes the tmp files of every task the worker ran.
 func (w *Worker) Cleanup() error {
-	if !w.halfClosed.Load() {
-		return fmt.Errorf("worker %d is not half closed yet", w.ID)
-	}
+	w.mu.Lock()
+	defer w.mu.Unlock()
 
-	if err := os.Remove(w.file.Name()); err != nil {
-		return fmt.Errorf("failed to remove tmp file for worker %d: %w", w.ID, err)
+	var errs []error
+	for _, out := range w.outputs {
+		if err := out.Cleanup(); err != nil {
+			errs = append(errs, fmt.Errorf("worker %d: %w", w.ID, err))
+		}
 	}
-	return nil
-}
-
-func NewWorker(id int) (*Worker, error) {
-	file, err := tmp_manager.TempFile(fmt.Sprintf("parallel-worker-%d-%d-*.log", os.Getpid(), id))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create temp file for worker %d: %w", id, err)
-	}
-
-	return &Worker{
-		ID:   id,
-		file: file,
-	}, nil
+	return errors.Join(errs...)
 }

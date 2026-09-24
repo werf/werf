@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/werf/common-go/pkg/util"
-	"github.com/werf/werf/v2/pkg/container_backend"
+	"github.com/werf/werf/v3/pkg/container_backend"
 )
 
 func NewGitLatestPatchStage(gitPatchStageOptions *NewGitPatchStageOptions, baseStageOptions *BaseStageOptions) *GitLatestPatchStage {
@@ -18,7 +18,17 @@ type GitLatestPatchStage struct {
 	*GitPatchStage
 }
 
+// IsEmpty for a content anchor is always false: even when the git patch is
+// empty, the stage must still publish under the image content tag, so it
+// goes through the normal build+push path (buildStage adds a UI note).
 func (s *GitLatestPatchStage) IsEmpty(ctx context.Context, c Conveyor, prevBuiltImage *StageImage) (bool, error) {
+	if s.IsContentAnchor() {
+		return false, nil
+	}
+	return s.IsGitPatchEmpty(ctx, c, prevBuiltImage)
+}
+
+func (s *GitLatestPatchStage) IsGitPatchEmpty(ctx context.Context, c Conveyor, prevBuiltImage *StageImage) (bool, error) {
 	if empty, err := s.GitPatchStage.IsEmpty(ctx, c, prevBuiltImage); err != nil {
 		return false, err
 	} else if empty {
@@ -62,6 +72,12 @@ func (s *GitLatestPatchStage) GetDependencies(ctx context.Context, c Conveyor, c
 	}
 
 	return util.Sha256Hash(args...), nil
+}
+
+// GetContentDependencies returns empty: all git file content is already
+// checksummed by GitArchiveStage.GetContentDependencies.
+func (s *GitLatestPatchStage) GetContentDependencies(ctx context.Context, c Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+	return "", nil
 }
 
 func (s *GitLatestPatchStage) GetNextStageDependencies(ctx context.Context, c Conveyor) (string, error) {

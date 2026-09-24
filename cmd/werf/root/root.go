@@ -4,70 +4,69 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"path/filepath"
 	"runtime"
 	"strconv"
 	"time"
 
 	"github.com/spf13/cobra"
 
-	"github.com/werf/werf/v2/cmd/werf/build"
-	bundle_apply "github.com/werf/werf/v2/cmd/werf/bundle/apply"
-	bundle_copy "github.com/werf/werf/v2/cmd/werf/bundle/copy"
-	bundle_plan "github.com/werf/werf/v2/cmd/werf/bundle/plan"
-	bundle_publish "github.com/werf/werf/v2/cmd/werf/bundle/publish"
-	bundle_render "github.com/werf/werf/v2/cmd/werf/bundle/render"
-	chart_ts_build "github.com/werf/werf/v2/cmd/werf/chart/ts/build"
-	chart_ts_init "github.com/werf/werf/v2/cmd/werf/chart/ts/init"
-	"github.com/werf/werf/v2/cmd/werf/ci_env"
-	"github.com/werf/werf/v2/cmd/werf/cleanup"
-	"github.com/werf/werf/v2/cmd/werf/common"
-	"github.com/werf/werf/v2/cmd/werf/common/templates"
-	"github.com/werf/werf/v2/cmd/werf/completion"
-	"github.com/werf/werf/v2/cmd/werf/compose"
-	config_graph "github.com/werf/werf/v2/cmd/werf/config/graph"
-	config_list "github.com/werf/werf/v2/cmd/werf/config/list"
-	config_render "github.com/werf/werf/v2/cmd/werf/config/render"
-	"github.com/werf/werf/v2/cmd/werf/converge"
-	cr_login "github.com/werf/werf/v2/cmd/werf/cr/login"
-	cr_logout "github.com/werf/werf/v2/cmd/werf/cr/logout"
-	"github.com/werf/werf/v2/cmd/werf/dismiss"
-	"github.com/werf/werf/v2/cmd/werf/docs"
-	kubectl2 "github.com/werf/werf/v2/cmd/werf/docs/replacers/kubectl"
-	"github.com/werf/werf/v2/cmd/werf/export"
-	"github.com/werf/werf/v2/cmd/werf/helm"
-	host_cleanup "github.com/werf/werf/v2/cmd/werf/host/cleanup"
-	host_purge "github.com/werf/werf/v2/cmd/werf/host/purge"
-	includes_getfile "github.com/werf/werf/v2/cmd/werf/includes/get-file"
-	includes_lsfiles "github.com/werf/werf/v2/cmd/werf/includes/ls-files"
-	includes_update "github.com/werf/werf/v2/cmd/werf/includes/update"
-	"github.com/werf/werf/v2/cmd/werf/kube_run"
-	"github.com/werf/werf/v2/cmd/werf/kubectl"
-	"github.com/werf/werf/v2/cmd/werf/lint"
-	managed_images_add "github.com/werf/werf/v2/cmd/werf/managed_images/add"
-	managed_images_ls "github.com/werf/werf/v2/cmd/werf/managed_images/ls"
-	managed_images_rm "github.com/werf/werf/v2/cmd/werf/managed_images/rm"
-	"github.com/werf/werf/v2/cmd/werf/plan"
-	"github.com/werf/werf/v2/cmd/werf/purge"
-	"github.com/werf/werf/v2/cmd/werf/render"
-	"github.com/werf/werf/v2/cmd/werf/rollback"
-	"github.com/werf/werf/v2/cmd/werf/run"
-	"github.com/werf/werf/v2/cmd/werf/slugify"
-	stage_image "github.com/werf/werf/v2/cmd/werf/stage/image"
-	stages_copy "github.com/werf/werf/v2/cmd/werf/stages/copy"
-	"github.com/werf/werf/v2/cmd/werf/synchronization"
-	"github.com/werf/werf/v2/cmd/werf/version"
-	"github.com/werf/werf/v2/pkg/telemetry"
+	"github.com/werf/werf/v3/cmd/werf/build"
+	bundle_apply "github.com/werf/werf/v3/cmd/werf/bundle/apply"
+	bundle_copy "github.com/werf/werf/v3/cmd/werf/bundle/copy"
+	bundle_plan "github.com/werf/werf/v3/cmd/werf/bundle/plan"
+	bundle_publish "github.com/werf/werf/v3/cmd/werf/bundle/publish"
+	bundle_render "github.com/werf/werf/v3/cmd/werf/bundle/render"
+	chart_ts_build "github.com/werf/werf/v3/cmd/werf/chart/ts/build"
+	chart_ts_init "github.com/werf/werf/v3/cmd/werf/chart/ts/init"
+	"github.com/werf/werf/v3/cmd/werf/ci_env"
+	"github.com/werf/werf/v3/cmd/werf/cleanup"
+	"github.com/werf/werf/v3/cmd/werf/common"
+	"github.com/werf/werf/v3/cmd/werf/common/templates"
+	"github.com/werf/werf/v3/cmd/werf/completion"
+	"github.com/werf/werf/v3/cmd/werf/compose"
+	config_graph "github.com/werf/werf/v3/cmd/werf/config/graph"
+	config_list "github.com/werf/werf/v3/cmd/werf/config/list"
+	config_render "github.com/werf/werf/v3/cmd/werf/config/render"
+	"github.com/werf/werf/v3/cmd/werf/converge"
+	cr_login "github.com/werf/werf/v3/cmd/werf/cr/login"
+	cr_logout "github.com/werf/werf/v3/cmd/werf/cr/logout"
+	"github.com/werf/werf/v3/cmd/werf/dismiss"
+	"github.com/werf/werf/v3/cmd/werf/docs"
+	kubectl2 "github.com/werf/werf/v3/cmd/werf/docs/replacers/kubectl"
+	"github.com/werf/werf/v3/cmd/werf/export"
+	"github.com/werf/werf/v3/cmd/werf/helm"
+	host_cleanup "github.com/werf/werf/v3/cmd/werf/host/cleanup"
+	host_purge "github.com/werf/werf/v3/cmd/werf/host/purge"
+	includes_getfile "github.com/werf/werf/v3/cmd/werf/includes/get-file"
+	includes_lsfiles "github.com/werf/werf/v3/cmd/werf/includes/ls-files"
+	includes_update "github.com/werf/werf/v3/cmd/werf/includes/update"
+	"github.com/werf/werf/v3/cmd/werf/kube_run"
+	"github.com/werf/werf/v3/cmd/werf/kubectl"
+	"github.com/werf/werf/v3/cmd/werf/lint"
+	managed_images_add "github.com/werf/werf/v3/cmd/werf/managed_images/add"
+	managed_images_ls "github.com/werf/werf/v3/cmd/werf/managed_images/ls"
+	managed_images_rm "github.com/werf/werf/v3/cmd/werf/managed_images/rm"
+	meta_repo_detach "github.com/werf/werf/v3/cmd/werf/meta_repo/detach"
+	meta_repo_migrate "github.com/werf/werf/v3/cmd/werf/meta_repo/migrate"
+	"github.com/werf/werf/v3/cmd/werf/plan"
+	"github.com/werf/werf/v3/cmd/werf/purge"
+	release_get "github.com/werf/werf/v3/cmd/werf/release/get"
+	release_history "github.com/werf/werf/v3/cmd/werf/release/history"
+	release_list "github.com/werf/werf/v3/cmd/werf/release/list"
+	"github.com/werf/werf/v3/cmd/werf/render"
+	"github.com/werf/werf/v3/cmd/werf/rollback"
+	"github.com/werf/werf/v3/cmd/werf/run"
+	"github.com/werf/werf/v3/cmd/werf/slugify"
+	stage_image "github.com/werf/werf/v3/cmd/werf/stage/image"
+	stages_copy "github.com/werf/werf/v3/cmd/werf/stages/copy"
+	"github.com/werf/werf/v3/cmd/werf/version"
+	"github.com/werf/werf/v3/pkg/telemetry"
 )
 
 func ConstructRootCmd(ctx context.Context) (*cobra.Command, error) {
 	helmCmd, err := helm.NewCmd(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("unable to init helm commands: %w", err)
-	}
-
-	if filepath.Base(os.Args[0]) == "helm" || helm.IsHelm3Mode() {
-		return helmCmd, nil
 	}
 
 	rootCmd := common.SetCommandContext(ctx, &cobra.Command{
@@ -119,8 +118,10 @@ func ConstructRootCmd(ctx context.Context) (*cobra.Command, error) {
 			Commands: []*cobra.Command{
 				configCmd(ctx),
 				managedImagesCmd(ctx),
+				metaRepoCmd(ctx),
 				hostCmd(ctx),
 				helmCmd,
+				releaseCmd(ctx),
 				crCmd(ctx),
 				kubectl2.ReplaceKubectlDocs(kubectl.NewCmd(ctx)),
 			},
@@ -128,7 +129,6 @@ func ConstructRootCmd(ctx context.Context) (*cobra.Command, error) {
 		{
 			Message: "Other commands",
 			Commands: []*cobra.Command{
-				synchronization.NewCmd(ctx),
 				completion.NewCmd(ctx, rootCmd),
 				version.NewCmd(ctx),
 				docs.NewCmd(ctx, groups),
@@ -187,6 +187,20 @@ func bundleCmd(ctx context.Context) *cobra.Command {
 	return cmd
 }
 
+func releaseCmd(ctx context.Context) *cobra.Command {
+	cmd := common.SetCommandContext(ctx, &cobra.Command{
+		Use:   "release",
+		Short: "Work with releases",
+	})
+	cmd.AddCommand(
+		release_get.NewCmd(ctx),
+		release_history.NewCmd(ctx),
+		release_list.NewCmd(ctx),
+	)
+
+	return cmd
+}
+
 func configCmd(ctx context.Context) *cobra.Command {
 	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:   "config",
@@ -210,6 +224,19 @@ func managedImagesCmd(ctx context.Context) *cobra.Command {
 		managed_images_add.NewCmd(ctx),
 		managed_images_ls.NewCmd(ctx),
 		managed_images_rm.NewCmd(ctx),
+	)
+
+	return cmd
+}
+
+func metaRepoCmd(ctx context.Context) *cobra.Command {
+	cmd := common.SetCommandContext(ctx, &cobra.Command{
+		Use:   "meta-repo",
+		Short: "Migrate metadata into a separate meta-repo and manage the meta-repo safeguard",
+	})
+	cmd.AddCommand(
+		meta_repo_migrate.NewCmd(ctx),
+		meta_repo_detach.NewCmd(ctx),
 	)
 
 	return cmd

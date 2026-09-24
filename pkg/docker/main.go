@@ -11,7 +11,6 @@ import (
 	"github.com/docker/cli/cli/command"
 	cliconfig "github.com/docker/cli/cli/config"
 	"github.com/docker/cli/cli/flags"
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/tlsconfig"
 	"github.com/spf13/cobra"
@@ -24,15 +23,16 @@ var (
 	liveCliOutputEnabled bool
 	isDebug              bool
 	defaultCLI           command.Cli
+	defaultAPIClient     client.APIClient
 	defaultPlatform      string
 	runtimePlatform      string
-	useBuildx            bool
 
 	DockerConfigDir string
 )
 
 const (
 	ctxDockerCliKey = "docker_cli"
+	ctxAPIClientKey = "docker_api_client"
 )
 
 func IsEnabled() bool {
@@ -61,29 +61,20 @@ func Init(ctx context.Context, opts InitOptions) error {
 		return err
 	}
 
+	defaultAPIClient, err = client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		return err
+	}
+
 	spec := platforms.DefaultSpec()
 	spec.OS = defaultCLI.ServerInfo().OSType
 	runtimePlatform = platforms.Format(spec)
-	claimPlatforms := opts.ClaimPlatforms
 
 	if opts.DefaultPlatform != "" {
 		defaultPlatform = opts.DefaultPlatform
 		os.Setenv("DOCKER_DEFAULT_PLATFORM", opts.DefaultPlatform)
-		claimPlatforms = append(claimPlatforms, opts.DefaultPlatform)
 	} else {
 		defaultPlatform = runtimePlatform
-	}
-
-	for _, claimPlatform := range claimPlatforms {
-		if claimPlatform != runtimePlatform {
-			useBuildx = true
-			break
-		}
-	}
-
-	useBuildx = true // use buildKit by default
-	if v := os.Getenv("DOCKER_BUILDKIT"); v == "0" || v == "false" {
-		useBuildx = false
 	}
 
 	return nil
@@ -105,33 +96,12 @@ func InitDockerConfig(opts InitOptions) error {
 	return nil
 }
 
-func ClaimTargetPlatforms(claimPlatforms []string) {
-	if defaultPlatform != "" {
-		claimPlatforms = append(claimPlatforms, defaultPlatform)
-	}
-	for _, claimPlatform := range claimPlatforms {
-		if claimPlatform != runtimePlatform {
-			useBuildx = true
-			break
-		}
-	}
-}
-
 func GetDefaultPlatform() string {
 	return defaultPlatform
 }
 
 func GetRuntimePlatform() string {
 	return runtimePlatform
-}
-
-func ServerVersion(ctx context.Context) (*types.Version, error) {
-	version, err := cli(ctx).Client().ServerVersion(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return &version, nil
 }
 
 func newDockerCli(opts []command.CLIOption) (command.Cli, error) {
@@ -164,15 +134,7 @@ func newDockerCli(opts []command.CLIOption) (command.Cli, error) {
 		clientOpts.LogLevel = "fatal"
 	}
 
-	makeWrappedClient := func(dockerCli *command.DockerCli) (client.APIClient, error) {
-		apiClient, err := command.NewAPIClientFromFlags(clientOpts, dockerCli.ConfigFile())
-		if err != nil {
-			return nil, err
-		}
-		return wrapAPIClientTransport(apiClient, dockerCli.ConfigFile().HTTPHeaders), nil
-	}
-
-	if err := newCli.Initialize(clientOpts, command.WithInitializeClient(makeWrappedClient)); err != nil {
+	if err := newCli.Initialize(clientOpts); err != nil {
 		return nil, err
 	}
 	return newCli, nil
@@ -191,15 +153,26 @@ func cli(ctx context.Context) command.Cli {
 }
 
 func apiCli(ctx context.Context) client.APIClient {
-	return cli(ctx).Client()
+	apiClientInterf := ctx.Value(ctxAPIClientKey)
+	switch {
+	case apiClientInterf != nil:
+		return apiClientInterf.(client.APIClient)
+	case ctx == context.Background():
+		return defaultAPIClient
+	default:
+		return defaultAPIClient
+	}
 }
 
 func defaultCliOptions(ctx context.Context) []command.CLIOption {
+	return cliOptionsWithStreams(logboek.Context(ctx).OutStream(), logboek.Context(ctx).ErrStream())
+}
+
+func cliOptionsWithStreams(outStream, errStream io.Writer) []command.CLIOption {
 	return []command.CLIOption{
 		command.WithInputStream(os.Stdin),
-		command.WithOutputStream(logboek.Context(ctx).OutStream()),
-		command.WithErrorStream(logboek.Context(ctx).ErrStream()),
-		command.WithContentTrust(false),
+		command.WithOutputStream(outStream),
+		command.WithErrorStream(errStream),
 	}
 }
 
@@ -212,13 +185,28 @@ func cliWithCustomOptions(ctx context.Context, options []command.CLIOption, f fu
 	return f(customCli)
 }
 
+// NewContext binds a docker cli and api client to ctx; the cli writes to the
+// logger streams of ctx as they are at this moment.
 func NewContext(ctx context.Context) (context.Context, error) {
-	c, err := newDockerCli(defaultCliOptions(ctx))
+	return NewContextWithStreams(ctx, logboek.Context(ctx).OutStream(), logboek.Context(ctx).ErrStream())
+}
+
+// NewContextWithStreams is NewContext with explicit cli output streams, for
+// callers whose logger changes over the lifetime of the cli and who route
+// its output through a writer of their own.
+func NewContextWithStreams(ctx context.Context, outStream, errStream io.Writer) (context.Context, error) {
+	c, err := newDockerCli(cliOptionsWithStreams(outStream, errStream))
 	if err != nil {
 		return nil, fmt.Errorf("unable to create docker cli: %w", err)
 	}
 
+	apiClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		return nil, fmt.Errorf("unable to create docker api client: %w", err)
+	}
+
 	newCtx := context.WithValue(ctx, ctxDockerCliKey, c)
+	newCtx = context.WithValue(newCtx, ctxAPIClientKey, apiClient)
 	return newCtx, nil
 }
 

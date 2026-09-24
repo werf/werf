@@ -83,6 +83,9 @@ werf dismiss [options]
             (Buildah-only) Use specified mirrors for docker.io
       --debug-templates=false
             Enable debug mode for Go templates (default $WERF_DEBUG_TEMPLATES or false)
+      --delete-propagation=""
+            Set default delete propagation strategy (default $WERF_DELETE_PROPAGATION or            
+            Background).
       --deploy-report-path=""
             Change deploy report path and format (by default $WERF_DEPLOY_REPORT_PATH or            
             ".werf-deploy-report.json" if not set). Extension must be .json for JSON format. If     
@@ -139,10 +142,6 @@ werf dismiss [options]
             (default $WERF_GITERMINISM_CONFIG or werf-giterminism.yaml in working directory)
       --home-dir=""
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
-      --hooks-status-progress-period=0
-            No-op
-      --insecure-helm-dependencies=false
-            No-op
       --insecure-registry=false
             Use plain HTTP requests when accessing a registry (default $WERF_INSECURE_REGISTRY)
       --kube-api-server=""
@@ -240,11 +239,16 @@ werf dismiss [options]
             Enable verbose output (default $WERF_LOG_VERBOSE).
       --loose-giterminism=false
             Loose werf giterminism mode restrictions
+      --meta-repo=""
+            Container registry storage address (default $WERF_META_REPO)
       --namespace=""
             Use specified Kubernetes namespace (default [[ project ]]-[[ env ]] template or         
             deploy.namespace custom template from werf.yaml or $WERF_NAMESPACE)
       --network-parallelism=30
             Parallelize some network operations (default $WERF_NETWORK_PARALLELISM or 30)
+      --no-default-patches=false
+            Ignore patches.yaml of the top-level chart and subcharts (default                       
+            $WERF_NO_DEFAULT_PATCHES or false)
       --no-final-tracking=false
             By default disable tracking operations that have no create/update/delete resource       
             operations after them, which are most tracking operations, to speed up the release      
@@ -254,6 +258,10 @@ werf dismiss [options]
       --no-remove-manual-changes=false
             Don`t remove fields added manually to the resource in the cluster if fields aren`t      
             present in the manifest (default $WERF_NO_REMOVE_MANUAL_CHANGES)
+      --patches=[]
+            Additional patches files (diff patches for drift detection). Also, can be defined with  
+            $WERF_PATCHES_* (e.g. $WERF_PATCHES_1=.helm/patches_1.yaml,                             
+            $WERF_PATCHES_2=.helm/patches_2.yaml)
       --platform=[]
             Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT]     
             ($WERF_PLATFORM or $DOCKER_DEFAULT_PLATFORM by default)
@@ -289,6 +297,9 @@ werf dismiss [options]
             repo Harbor username (default $WERF_REPO_HARBOR_USERNAME)
       --repo-quay-token=""
             repo quay.io token (default $WERF_REPO_QUAY_TOKEN)
+      --save-uninstall-report=false
+            Save uninstall report (by default $WERF_SAVE_UNINSTALL_REPORT or false). Its path and   
+            format configured with --uninstall-report-path
       --secondary-repo=[]
             Specify one or multiple secondary read-only repos with images that will be used as a    
             cache.
@@ -303,27 +314,22 @@ werf dismiss [options]
       --status-progress-period=5
             Status progress period in seconds. Set -1 to stop showing status progress. Defaults to  
             $WERF_STATUS_PROGRESS_PERIOD_SECONDS or 5 seconds
-  -S, --synchronization=""
-            Address of synchronizer for multiple werf processes to work with a single repo.
-            
-            Default:
-             - $WERF_SYNCHRONIZATION, or
-             - :local if --repo is not specified, or
-             - https://synchronization.werf.io if --repo has been specified.
-            
-            The same address should be specified for all werf processes that work with a single     
-            repo. :local address allows execution of werf processes from a single host only
   -t, --timeout=0
             Resources tracking timeout in seconds ($WERF_TIMEOUT by default)
       --tmp-dir=""
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
+      --uninstall-graph-path=""
+            Save uninstall graph path to the specified file (by default                             
+            $WERF_UNINSTALL_GRAPH_PATH). Extension must be .dot or not specified. If extension not  
+            specified, then .dot is used
+      --uninstall-report-path=""
+            Change uninstall report path and format (by default $WERF_UNINSTALL_REPORT_PATH or      
+            ".werf-uninstall-report.json" if not set). Extension must be .json for JSON format. If  
+            extension not specified, then .json is used
       --use-deploy-report=false
             Use deploy report, previously saved with --save-deploy-report (by default               
             $WERF_USE_DEPLOY_REPORT or false). Its path and format configured with                  
             --deploy-report-path
-      --with-hooks=true
-            Delete Helm Release hooks getting from existing revisions (default $WERF_WITH_HOOKS or  
-            true)
       --with-namespace=false
             Delete Kubernetes Namespace after purging Helm Release (default $WERF_WITH_NAMESPACE)
 ```

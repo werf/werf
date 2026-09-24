@@ -8,11 +8,11 @@ import (
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 
 	"github.com/werf/common-go/pkg/util"
-	"github.com/werf/werf/v2/pkg/build/stage"
-	"github.com/werf/werf/v2/pkg/config"
-	"github.com/werf/werf/v2/pkg/container_backend"
-	backend_instruction "github.com/werf/werf/v2/pkg/container_backend/instruction"
-	"github.com/werf/werf/v2/pkg/dockerfile"
+	"github.com/werf/werf/v3/pkg/build/stage"
+	"github.com/werf/werf/v3/pkg/config"
+	"github.com/werf/werf/v3/pkg/container_backend"
+	backend_instruction "github.com/werf/werf/v3/pkg/container_backend/instruction"
+	"github.com/werf/werf/v3/pkg/dockerfile"
 )
 
 type Add struct {
@@ -37,7 +37,20 @@ func (stg *Add) ExpandInstruction(c stage.Conveyor, env map[string]string) error
 	return nil
 }
 
+func (stg *Add) GetContentDependencies(ctx context.Context, c stage.Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+	sourcePaths, err := stg.contentSourcePaths(c, stg.instruction.Data.SourcePaths)
+	if err != nil {
+		return "", err
+	}
+
+	return stg.getDependencies(ctx, buildContextArchive, sourcePaths)
+}
+
 func (stg *Add) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+	return stg.getDependencies(ctx, buildContextArchive, stg.instruction.Data.SourcePaths)
+}
+
+func (stg *Add) getDependencies(ctx context.Context, buildContextArchive container_backend.BuildContextArchiver, checksumSourcePaths []string) (string, error) {
 	var args []string
 
 	args = append(args, append([]string{"Sources"}, stg.instruction.Data.SourcePaths...)...)
@@ -45,15 +58,20 @@ func (stg *Add) GetDependencies(ctx context.Context, c stage.Conveyor, cb contai
 	args = append(args, "Chown", stg.instruction.Data.Chown)
 	args = append(args, "Chmod", stg.instruction.Data.Chmod)
 
+	// appended only when set to keep digests of already built ADD stages intact
+	if len(stg.instruction.Data.ExcludePatterns) > 0 {
+		args = append(args, append([]string{"ExcludePatterns"}, stg.instruction.Data.ExcludePatterns...)...)
+	}
+
 	var fileGlobSrc []string
-	for _, src := range stg.instruction.Data.SourcePaths {
+	for _, src := range checksumSourcePaths {
 		if !strings.HasPrefix(src, "http://") && !strings.HasPrefix(src, "https://") {
 			fileGlobSrc = append(fileGlobSrc, src)
 		}
 	}
 
 	if len(fileGlobSrc) > 0 {
-		if srcChecksum, err := buildContextArchive.CalculateGlobsChecksum(ctx, fileGlobSrc, true); err != nil {
+		if srcChecksum, err := buildContextArchive.CalculateGlobsChecksum(ctx, fileGlobSrc, container_backend.CalculateGlobsChecksumOptions{CheckForArchives: true}); err != nil {
 			return "", fmt.Errorf("unable to calculate build context globs checksum: %w", err)
 		} else {
 			args = append(args, "SourcesChecksum", srcChecksum)

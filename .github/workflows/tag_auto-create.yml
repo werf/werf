@@ -7,6 +7,7 @@ on:
       - "[0-9]+.[0-9]+.[0-9]+*"
       - "[0-9]+.[0-9]+"
       - "[0-9]+"
+      - "!3"
     paths:
       - CHANGELOG.md
   repository_dispatch:
@@ -24,18 +25,20 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
-      - name: Relabel closed release PR
+      - name: Relabel merged release PR
         env:
           GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+          RELEASE_BRANCH: ${{ github.ref_name }}
         run: |
-          PR_NUMBER=$(gh pr list --state closed --label "autorelease: pending" --limit 1 --json number -q '.[0].number')
-          gh pr edit $PR_NUMBER --remove-label "autorelease: pending"
-          gh pr edit $PR_NUMBER --add-label "autorelease: tagged"
+          PR_NUMBER=$(gh pr list --state merged --base "$RELEASE_BRANCH" --label "autorelease: pending" --limit 1 --json number -q '.[0].number // empty')
+          if [[ -n "$PR_NUMBER" ]]; then
+            gh pr edit "$PR_NUMBER" --remove-label "autorelease: pending" --add-label "autorelease: tagged"
+          fi
 
       - name: Get version from CHANGELOG.md
         id: get_version
         run: |
-          VERSION=$(grep -m1 '^#\+ \[[0-9]\+\.[0-9]\+\.[0-9]\+\]' CHANGELOG.md | sed -E 's/^#+ \[([0-9]+\.[0-9]+\.[0-9]+)\].*/\1/')
+          VERSION=$(grep -m1 -E '^#+ \[[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?\]' CHANGELOG.md | sed -E 's/^#+ \[([0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?)\].*/\1/')
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Create tag via GitHub API

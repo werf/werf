@@ -16,7 +16,7 @@ Use `kubectl api-resources` for a complete list of supported resources.
 {{ header }} Syntax
 
 ```shell
-werf kubectl explain TYPE [--recursive=FALSE|TRUE] [--api-version=api-version-group] [--output=plaintext|plaintext-openapiv2] [options]
+werf kubectl explain TYPE [--recursive=FALSE|TRUE] [--api-version=api-version-group] [-o|--output=plaintext|plaintext-openapiv2] [options]
 ```
 
 {{ header }} Examples
@@ -27,6 +27,9 @@ werf kubectl explain TYPE [--recursive=FALSE|TRUE] [--api-version=api-version-gr
   
   # Get all the fields in the resource
   kubectl explain pods --recursive
+  
+  # Get fields in the resource up to a specific recursive depth
+  kubectl explain pods --recursive --max-depth=2
   
   # Get the explanation for deployment in supported api versions
   kubectl explain deployments --api-version=apps/v1
@@ -42,13 +45,14 @@ werf kubectl explain TYPE [--recursive=FALSE|TRUE] [--api-version=api-version-gr
 
 ```shell
       --api-version=""
-            Use given api-version (group/version) of the resource.
-      --output="plaintext"
-            Format in which to render the schema. Valid values are: (plaintext,                     
-            plaintext-openapiv2).
-      --recursive=false
-            When true, print the name of all the fields recursively. Otherwise, print the available 
-            fields with their description.
+            Get different explanations for particular API version (API group/version)
+      --max-depth=0
+            Maximum recursion depth when printing nested fields with --recursive. 0 means no limit. 
+            Requires --recursive when greater than 0.
+  -o, --output="plaintext"
+            Format in which to render the schema (plaintext, plaintext-openapiv2)
+  -R, --recursive=false
+            Print the fields of fields. Use --max-depth to cap the recursion depth.
 ```
 
 {{ header }} Options inherited from parent commands
@@ -62,6 +66,9 @@ werf kubectl explain TYPE [--recursive=FALSE|TRUE] [--api-version=api-version-gr
             groups.
       --as-uid=""
             UID to impersonate for the operation.
+      --as-user-extra=[]
+            User extras to impersonate for the operation, this flag can be repeated to specify      
+            multiple values for the same key.
       --cache-dir="~/.kube/cache"
             Default cache directory
       --certificate-authority=""
@@ -87,6 +94,9 @@ werf kubectl explain TYPE [--recursive=FALSE|TRUE] [--api-version=api-version-gr
       --kubeconfig=""
             Path to the kubeconfig file to use for CLI requests (default $WERF_KUBE_CONFIG, or      
             $WERF_KUBECONFIG, or $KUBECONFIG). Ignored if kubeconfig passed as base64.
+      --kuberc=""
+            Path to the kuberc file to use for preferences. This can be disabled by exporting       
+            KUBECTL_KUBERC=false feature gate or turning off the feature KUBERC=off.
       --log-flush-frequency=5s
             Maximum number of seconds between log flushes
       --match-server-version=false
@@ -96,9 +106,12 @@ werf kubectl explain TYPE [--recursive=FALSE|TRUE] [--api-version=api-version-gr
       --password=""
             Password for basic authentication to the API server
       --profile="none"
-            Name of profile to capture. One of (none|cpu|heap|goroutine|threadcreate|block|mutex)
+            Name of profile to capture. One of                                                      
+            (none|cpu|heap|goroutine|threadcreate|block|mutex|trace)
       --profile-output="profile.pprof"
             Name of the file to write the profile to
+      --proxy-url=""
+            Proxy URL to use for requests to the API server
       --request-timeout="0"
             The length of time to wait before giving up on a single server request. Non-zero values 
             should contain a corresponding time unit (e.g. 1s, 2m, 3h). A value of zero means don`t 

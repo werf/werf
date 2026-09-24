@@ -9,7 +9,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/werf/v2/pkg/stapel"
+	"github.com/werf/werf/v3/pkg/stapel"
 )
 
 var _ = Describe("Legacy stage command transport", func() {
@@ -24,11 +24,11 @@ var _ = Describe("Legacy stage command transport", func() {
 		})
 	})
 
-	It("keeps large scripts intact and outside argv", func() {
+	It("keeps large scripts intact and outside argv", func(ctx SpecContext) {
 		commands := []string{strings.Repeat(": import-padding\n", 200_000) + ":", "printf complete"}
 		container.AddRunCommands(commands...)
 
-		Expect(container.prepareRunCommand()).To(Equal(strings.Join(commands, " && ")))
+		Expect(container.prepareRunCommand(ctx)).To(Equal(strings.Join(append(container.prepareBuildTimeEnvExports(ctx), commands...), " && ")))
 		args := container.prepareRunCommandArgs()
 		Expect(args[:3]).To(Equal([]string{"-i", "base", "-ec"}))
 		Expect(args[3]).NotTo(ContainSubstring(stapel.CONTAINER_MOUNT_ROOT), "the script loader must not depend on a binary of the pinned stapel image")
@@ -75,9 +75,10 @@ var _ = Describe("Legacy stage command transport", func() {
 		script := "printf '%s\\n' '$HOME' \"a'b\"; $(not-a-host-command)\n"
 		container.AddRunCommands(script)
 		args := []string{"-i", "--env=VALUE=spaces 'quotes' $HOME", "base", "-ec", "reader; eval"}
-		cmd := exec.CommandContext(ctx, "bash", "-c", "docker() { printf '%s\\n' \"$@\"; cat; }\n"+container.prepareDebugRunCommand(args))
+		cmd := exec.CommandContext(ctx, "bash", "-c", "docker() { printf '%s\\n' \"$@\"; cat; }\n"+container.prepareDebugRunCommand(ctx, args))
 		output, err := cmd.CombinedOutput()
 		Expect(err).NotTo(HaveOccurred(), string(output))
-		Expect(string(output)).To(Equal("run\n" + strings.Join(args, "\n") + "\n" + script))
+		expectedScript := strings.Join(append(container.prepareBuildTimeEnvExports(ctx), script), " && ")
+		Expect(string(output)).To(Equal("run\n" + strings.Join(args, "\n") + "\n" + expectedScript))
 	})
 })

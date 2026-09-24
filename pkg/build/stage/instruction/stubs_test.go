@@ -5,10 +5,10 @@ import (
 	"strings"
 
 	"github.com/werf/common-go/pkg/util"
-	"github.com/werf/werf/v2/pkg/build/stage"
-	"github.com/werf/werf/v2/pkg/container_backend"
-	"github.com/werf/werf/v2/pkg/container_backend/stage_builder"
-	"github.com/werf/werf/v2/pkg/dockerfile"
+	"github.com/werf/werf/v3/pkg/build/stage"
+	"github.com/werf/werf/v3/pkg/container_backend"
+	"github.com/werf/werf/v3/pkg/container_backend/stage_builder"
+	"github.com/werf/werf/v3/pkg/dockerfile"
 )
 
 func NewDockerfileStageInstructionWithDependencyStages[T dockerfile.InstructionDataInterface](data T, dependencyStages []string) *dockerfile.DockerfileStageInstruction[T] {
@@ -32,15 +32,14 @@ type TestData struct {
 }
 
 type TestDataOptions struct {
-	Files                                                                                       []*FileData
-	LastStageImageNameByWerfImage, LastStageImageIDByWerfImage, LastStageImageDigestByWerfImage map[string]string
+	Files                                                          []*FileData
+	LastStageImageNameByWerfImage, LastStageImageDigestByWerfImage map[string]string
 }
 
 func NewTestData(stg stage.Interface, expectedDigest string, opts TestDataOptions) *TestData {
 	conveyor := stage.NewConveyorStub(
 		stage.NewGiterminismManagerStub(stage.NewLocalGitRepoStub("9d8059842b6fde712c58315ca0ab4713d90761c0"), stage.NewGiterminismInspectorStub()),
 		opts.LastStageImageNameByWerfImage,
-		opts.LastStageImageIDByWerfImage,
 		opts.LastStageImageDigestByWerfImage,
 	)
 	containerBackend := stage.NewContainerBackendStub()
@@ -81,10 +80,17 @@ func NewBuildContextStub(files []*FileData) *BuildContextStub {
 	return &BuildContextStub{Files: files}
 }
 
-func (buildContext *BuildContextStub) CalculateGlobsChecksum(ctx context.Context, globs []string, checkForArchive bool) (string, error) {
+func (buildContext *BuildContextStub) CalculateGlobsChecksum(ctx context.Context, globs []string, opts container_backend.CalculateGlobsChecksumOptions) (string, error) {
 	var args []string
 
 	for _, p := range globs {
+		if p == "." {
+			for _, f := range buildContext.Files {
+				args = append(args, string(f.Data))
+			}
+			continue
+		}
+
 		for _, f := range buildContext.Files {
 			if f.Name == p {
 				args = append(args, string(f.Data))

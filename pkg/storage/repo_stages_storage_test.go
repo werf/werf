@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"errors"
 
 	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
@@ -9,10 +10,10 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/werf/v2/pkg/container_backend"
-	"github.com/werf/werf/v2/pkg/docker_registry"
-	registry_api "github.com/werf/werf/v2/pkg/docker_registry/api"
-	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v3/pkg/container_backend"
+	"github.com/werf/werf/v3/pkg/docker_registry"
+	registry_api "github.com/werf/werf/v3/pkg/docker_registry/api"
+	"github.com/werf/werf/v3/pkg/image"
 )
 
 type pushImageRegistryStub struct {
@@ -59,6 +60,50 @@ func (r *pushImageRegistryStub) MutateAndPushImage(ctx context.Context, _, desti
 }
 
 var _ = Describe("RepoStagesStorage", func() {
+	It("publishes image metadata without listing registry tags", func(ctx SpecContext) {
+		registry := &metadataPushRegistry{pushImageRegistryStub: &pushImageRegistryStub{}}
+		storage := &RepoStagesStorage{RepoAddress: "registry.example/project", DockerRegistry: registry}
+
+		Expect(storage.PutImageMetadata(ctx, "project", "app", "commit", "stage")).To(Succeed())
+		Expect(registry.pushedRef).To(Equal(makeRepoImageMetadataName(storage.RepoAddress, "app", "commit", "stage")))
+		Expect(registry.pushedOpts.Labels).To(HaveKeyWithValue(image.WerfLabel, "project"))
+	})
+
+	DescribeTable("managed image name encoding", func(imageName, encodedName string) {
+		Expect(slugImageName(imageName)).To(Equal(encodedName))
+		Expect(unslugImageName(encodedName)).To(Equal(imageName))
+	},
+		Entry("plus signs", "libstdc++", "libstdc__plus____plus__"),
+	)
+
+	DescribeTable("custom tag check against the content-based tag",
+		func(ctx SpecContext, customTagInfo *image.Info, registryErr error, expectedErr string) {
+			registry := newFakeRegistry()
+			const customTagRef = "registry.example/project:v1.0.0"
+			registry.tryGetInfo[customTagRef] = customTagInfo
+			if registryErr != nil {
+				registry.tryGetErr[customTagRef] = registryErr
+			}
+			storage := &RepoStagesStorage{RepoAddress: "registry.example/project", DockerRegistry: registry}
+			stageDesc := &image.StageDesc{
+				StageID: image.NewStageID("deadbeef", 1700000000),
+				Info:    &image.Info{ID: "sha256:content"},
+			}
+
+			err := storage.CheckStageCustomTag(ctx, stageDesc, "v1.0.0")
+			if expectedErr == "" {
+				Expect(err).NotTo(HaveOccurred())
+				return
+			}
+			Expect(err).To(MatchError(ContainSubstring(expectedErr)))
+		},
+		Entry("same image ID passes", &image.Info{ID: "sha256:content"}, nil, ""),
+		Entry("stale custom tag is rejected", &image.Info{ID: "sha256:stale"}, nil,
+			`custom tag "v1.0.0" image must be the same as associated content-based tag "deadbeef-1700000000" image`),
+		Entry("missing custom tag is rejected", nil, nil, `custom tag "v1.0.0" not found`),
+		Entry("registry failure propagates", nil, errors.New("registry unavailable"), "registry unavailable"),
+	)
+
 	It("pushes a manifest-only image to the registry in PostManifest", func(ctx SpecContext) {
 		registry := &pushImageRegistryStub{}
 		storage := &RepoStagesStorage{DockerRegistry: registry}

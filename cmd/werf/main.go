@@ -10,13 +10,12 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/werf/common-go/pkg/graceful"
-	"github.com/werf/nelm/pkg/action"
-	"github.com/werf/nelm/pkg/export/helm/cmd/helm"
-	"github.com/werf/werf/v2/cmd/werf/common"
-	"github.com/werf/werf/v2/cmd/werf/root"
-	"github.com/werf/werf/v2/pkg/background"
-	"github.com/werf/werf/v2/pkg/logging"
-	"github.com/werf/werf/v2/pkg/process_exterminator"
+	"github.com/werf/nelm/v2/pkg/action"
+	"github.com/werf/werf/v3/cmd/werf/common"
+	"github.com/werf/werf/v3/cmd/werf/root"
+	"github.com/werf/werf/v3/pkg/background"
+	"github.com/werf/werf/v3/pkg/logging"
+	"github.com/werf/werf/v3/pkg/process_exterminator"
 )
 
 func main() {
@@ -68,11 +67,7 @@ func main() {
 	}
 
 	if err := rootCmd.ExecuteContext(ctx); err != nil {
-		if helm.IsPluginError(err) {
-			common.ShutdownTelemetry(ctx, helm.PluginErrorCode(err))
-			graceful.Terminate(ctx, err, helm.PluginErrorCode(err))
-			return
-		} else if errors.Is(err, action.ErrChangesPlanned) {
+		if errors.Is(err, action.ErrChangesPlanned) {
 			common.ShutdownTelemetry(ctx, 2)
 			graceful.Terminate(ctx, action.ErrChangesPlanned, 2)
 			return

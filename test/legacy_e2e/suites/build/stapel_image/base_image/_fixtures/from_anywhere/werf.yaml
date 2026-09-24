@@ -3,13 +3,14 @@ configVersion: 1
 
 ---
 image: FromExternalImage
-from: registry.werf.io/base/alpine
+from: registry.werf.io/base/alpine:latest
 ---
 image: FromImage
 from: FromExternalImage
 ---
-artifact: FromImageAlias
-fromImage: FromImage
+image: FromImageAlias
+final: false
+from: FromImage
 ---
-image: FromArtifact
-fromArtifact: FromImageAlias
+image: FromAnother
+from: FromImageAlias

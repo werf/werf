@@ -6,8 +6,8 @@ import (
 
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 
-	"github.com/werf/werf/v2/pkg/buildah"
-	"github.com/werf/werf/v2/pkg/container_backend"
+	"github.com/werf/werf/v3/pkg/buildah"
+	"github.com/werf/werf/v3/pkg/container_backend"
 )
 
 type Copy struct {
@@ -46,6 +46,8 @@ func (i *Copy) Apply(ctx context.Context, containerName string, drv buildah.Buil
 		CommonOpts: drvOpts,
 		Chown:      i.Chown,
 		Chmod:      i.Chmod,
+		Parents:    i.Parents,
+		Ignores:    contextRelativeExcludes(i.SourcePaths, i.ExcludePatterns),
 	}); err != nil {
 		return fmt.Errorf("error copying %v to %s for container %s: %w", i.SourcePaths, i.DestPath, containerName, err)
 	}

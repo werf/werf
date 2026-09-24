@@ -10,8 +10,8 @@ import (
 	"github.com/docker/docker/pkg/stringid"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/image"
-	"github.com/werf/werf/v2/pkg/ssh_agent"
+	"github.com/werf/werf/v3/pkg/image"
+	"github.com/werf/werf/v3/pkg/ssh_agent"
 )
 
 const (
@@ -54,6 +54,22 @@ func LogImageInfo(ctx context.Context, img LegacyImageInterface, prevStageImageS
 	}
 
 	logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "network", network)
+}
+
+func LogImageInfoByStageDesc(ctx context.Context, stageDesc *image.StageDesc, platform string) {
+	LogImageName(ctx, stageDesc.Info.Name)
+
+	logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "id", stringid.TruncateID(stageDesc.Info.ID))
+	logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "created", stageDesc.Info.GetCreatedAt())
+	logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "size", byteCountBinary(stageDesc.Info.Size))
+
+	if commit, ok := stageDesc.Info.Labels[image.WerfProjectRepoCommitLabel]; ok && commit != "" {
+		logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "commit", commit)
+	}
+
+	if platform != "" {
+		logboek.Context(ctx).Default().LogFDetails(logImageInfoFormat, "platform", platform)
+	}
 }
 
 func LogMultiplatformImageInfo(ctx context.Context, platforms []string) {

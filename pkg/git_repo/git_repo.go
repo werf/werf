@@ -6,11 +6,11 @@ import (
 	"time"
 
 	"github.com/werf/common-go/pkg/util"
-	"github.com/werf/werf/v2/pkg/git_repo/repo_handle"
-	"github.com/werf/werf/v2/pkg/path_matcher"
-	"github.com/werf/werf/v2/pkg/true_git"
-	"github.com/werf/werf/v2/pkg/true_git/ls_tree"
-	"github.com/werf/werf/v2/pkg/werf"
+	"github.com/werf/werf/v3/pkg/git_repo/repo_handle"
+	"github.com/werf/werf/v3/pkg/path_matcher"
+	"github.com/werf/werf/v3/pkg/true_git"
+	"github.com/werf/werf/v3/pkg/true_git/ls_tree"
+	"github.com/werf/werf/v3/pkg/werf"
 )
 
 // Before changing: read the local_cache contract in the package doc of pkg/git_repo/gitdata.
@@ -78,7 +78,7 @@ type GitRepo interface {
 	IsCommitTreeEntryExist(ctx context.Context, commit, relPath string) (bool, error)
 	IsEmpty(ctx context.Context) (bool, error)
 	LatestBranchCommit(ctx context.Context, branch string) (string, error)
-	ListCommitFilesWithGlob(ctx context.Context, commit, dir, glob string) ([]string, error)
+	ListCommitFilesWithGlob(ctx context.Context, commit, dir, glob string, opts ListCommitFilesWithGlobOptions) ([]string, error)
 	ReadCommitFile(ctx context.Context, commit, path string) ([]byte, error)
 	ReadCommitTreeEntryContent(ctx context.Context, commit, relPath string) ([]byte, error)
 	ResolveAndCheckCommitFilePath(ctx context.Context, commit, path string, checkSymlinkTargetFunc func(resolvedPath string) error) (string, error)
@@ -92,6 +92,13 @@ type GitRepo interface {
 
 type FetchOptions struct {
 	Unshallow bool
+}
+
+type ListCommitFilesWithGlobOptions struct {
+	// SkipSymlinkPathFunc excludes a symlink before it is resolved, which lets a caller list a
+	// directory holding a symlink it discards anyway even when that symlink cannot be followed.
+	// The excluded path is not returned and, were it a directory, is not descended into.
+	SkipSymlinkPathFunc func(notResolvedPath string) bool
 }
 
 type gitRepo interface {

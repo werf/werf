@@ -1,0 +1,451 @@
+package build
+
+import (
+	"bytes"
+	"context"
+	"strings"
+	"sync"
+	"testing"
+	"time"
+
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+	"github.com/stretchr/testify/require"
+
+	"github.com/werf/logboek"
+	"github.com/werf/logboek/pkg/level"
+	"github.com/werf/werf/v3/pkg/build/image"
+	"github.com/werf/werf/v3/pkg/build/stage"
+	imagePkg "github.com/werf/werf/v3/pkg/image"
+	"github.com/werf/werf/v3/pkg/util/parallel"
+	"github.com/werf/werf/v3/pkg/werf"
+)
+
+// recordingPhase is a minimal Phase implementation that records, for each
+// image it processes, the image's name (after an optional artificial delay)
+// into a shared, mutex-protected order slice, and the start-order position
+// the parallel printer assigned to the image's task. It lets a test observe
+// the actual build ORDER produced by Conveyor.doImages/doImagesInParallel
+// without needing a real container backend.
+type recordingPhase struct {
+	mu          *sync.Mutex
+	order       *[]string
+	startOrders map[string]int
+	delays      map[string]time.Duration
+	reuse       map[string]bool
+
+	// hold[name] is waited on before the image is recorded as finished and
+	// release[name] is closed once it has been, so "X finishes after Y" is a
+	// fact of the run instead of a wall-clock margin that CPU load can eat.
+	hold    map[string]chan struct{}
+	release map[string]chan struct{}
+}
+
+func (p *recordingPhase) Name() string                       { return "recording" }
+func (p *recordingPhase) BeforeImages(context.Context) error { return nil }
+func (p *recordingPhase) AfterImages(context.Context) error  { return nil }
+func (p *recordingPhase) BeforeImageStages(ctx context.Context, img *image.Image) (func(), error) {
+	if p.reuse[img.Name] {
+		img.AnchorReused = true
+		img.SetContentTagDesc(&imagePkg.StageDesc{})
+	}
+	if p.startOrders != nil {
+		p.mu.Lock()
+		order, _ := parallel.TaskStartOrder(ctx)
+		p.startOrders[img.Name] = order
+		p.mu.Unlock()
+	}
+	return nil, nil
+}
+
+func (p *recordingPhase) OnImageStage(context.Context, *image.Image, stage.Interface) error {
+	return nil
+}
+
+func (p *recordingPhase) AfterImageStages(ctx context.Context, img *image.Image) error {
+	if ch, ok := p.hold[img.Name]; ok {
+		select {
+		case <-ch:
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
+
+	if d := p.delays[img.Name]; d > 0 {
+		time.Sleep(d)
+	}
+
+	p.mu.Lock()
+	*p.order = append(*p.order, img.Name)
+	p.mu.Unlock()
+
+	if ch, ok := p.release[img.Name]; ok {
+		close(ch)
+	}
+
+	return nil
+}
+
+func (p *recordingPhase) ImageProcessingShouldBeStopped(context.Context, *image.Image) bool {
+	return false
+}
+
+func (p *recordingPhase) Clone() Phase          { return p }
+func (p *recordingPhase) Report() *ImagesReport { return nil }
+
+var _ = Describe("Build output", func() {
+	DescribeTable("controls skipped-image visibility", func(parallelBuild bool, acceptedLevel level.Level, skippedLog string, skippedMentions int) {
+		Expect(werf.Init(GinkgoT().TempDir(), "")).To(Succeed())
+
+		base := &image.Image{Name: "base", TargetPlatform: "linux/amd64", Skipped: true}
+		base.ForceTargetPlatformLogging = true
+		app := &image.Image{Name: "app", TargetPlatform: "linux/amd64", IsFinal: true}
+		app.ForceTargetPlatformLogging = true
+		app.AddDependencyName("base")
+
+		graph, err := image.BuildImagesGraph([]*image.Image{base, app})
+		Expect(err).NotTo(HaveOccurred())
+
+		tree := &image.ImagesTree{}
+		tree.SetImagesGraphForTests(graph)
+
+		conveyor := &Conveyor{
+			ConveyorOptions:  ConveyorOptions{Parallel: parallelBuild, ParallelTasksLimit: -1},
+			imagesTree:       tree,
+			stageImages:      make(map[string]*stage.StageImage),
+			serviceRWMutex:   map[string]*sync.RWMutex{},
+			stageDigestMutex: map[string]*sync.Mutex{},
+		}
+
+		var mu sync.Mutex
+		var order []string
+		phase := &recordingPhase{mu: &mu, order: &order}
+		var output bytes.Buffer
+		logger := logboek.NewLogger(&output, &output)
+		logger.SetAcceptedLevel(acceptedLevel)
+		ctx := logboek.NewContext(context.Background(), logger)
+
+		Expect(conveyor.doImages(ctx, []Phase{phase}, true)).To(Succeed())
+
+		logOutput := output.String()
+		Expect(strings.Count(logOutput, skippedLog)).To(Equal(skippedMentions), logOutput)
+		Expect(logOutput).To(ContainSubstring("(1/1) image app [linux/amd64]"), logOutput)
+		Expect(order).To(Equal([]string{"app"}))
+	},
+		Entry("concurrent build", true, level.Default, "image base [linux/amd64] (skipped: no image being built needs it)", 0),
+		Entry("sequential build", false, level.Default, "Skipping image base: no image being built needs it", 0),
+		Entry("concurrent build in verbose", true, level.Info, "image base [linux/amd64] (skipped: no image being built needs it)", 2),
+		Entry("sequential build in verbose", false, level.Info, "Skipping image base: no image being built needs it", 1),
+	)
+
+	DescribeTable("controls reused non-final image visibility",
+		func(acceptedLevel level.Level, anchorReused bool, baseMentions int, baseProgress, appProgress string) {
+			Expect(werf.Init(GinkgoT().TempDir(), "")).To(Succeed())
+
+			base := &image.Image{Name: "base", TargetPlatform: "linux/amd64", AnchorReused: anchorReused}
+			base.ForceTargetPlatformLogging = true
+			app := &image.Image{Name: "app", TargetPlatform: "linux/amd64", IsFinal: true, Requested: true}
+			app.ForceTargetPlatformLogging = true
+			app.AddDependencyName("base")
+
+			graph, err := image.BuildImagesGraph([]*image.Image{base, app})
+			Expect(err).NotTo(HaveOccurred())
+
+			tree := &image.ImagesTree{}
+			tree.SetImagesGraphForTests(graph)
+			conveyor := &Conveyor{
+				ConveyorOptions:  ConveyorOptions{Parallel: true, ParallelTasksLimit: -1},
+				imagesTree:       tree,
+				stageImages:      make(map[string]*stage.StageImage),
+				serviceRWMutex:   map[string]*sync.RWMutex{},
+				stageDigestMutex: map[string]*sync.Mutex{},
+			}
+
+			var mu sync.Mutex
+			var order []string
+			phase := &recordingPhase{mu: &mu, order: &order, reuse: map[string]bool{"base": anchorReused}}
+			var output bytes.Buffer
+			logger := logboek.NewLogger(&output, &output)
+			logger.SetAcceptedLevel(acceptedLevel)
+			ctx := logboek.NewContext(context.Background(), logger)
+
+			Expect(conveyor.doImages(ctx, []Phase{phase}, true)).To(Succeed())
+
+			logOutput := output.String()
+			Expect(strings.Count(logOutput, "image base [linux/amd64]")).To(Equal(baseMentions), logOutput)
+			if baseProgress != "" {
+				Expect(logOutput).To(ContainSubstring(baseProgress), logOutput)
+			}
+			Expect(logOutput).To(ContainSubstring(appProgress), logOutput)
+		},
+		Entry("hides a reused image by default", level.Default, true, 0, "", "(1/1) image app [linux/amd64]"),
+		Entry("shows a reused image in verbose", level.Info, true, 4, "(1/2) image base [linux/amd64]", "(2/2) image app [linux/amd64]"),
+		Entry("shows an image that must be built", level.Default, false, 4, "(1/2) image base [linux/amd64]", "(2/2) image app [linux/amd64]"),
+	)
+})
+
+// TestDoImagesInParallel_DependentImageDoesNotWaitForUnrelatedSlowImage is
+// the end-to-end regression test for replacing wave/level scheduling with a
+// real dependency graph: it drives the ACTUAL Conveyor.doImages /
+// doImagesInParallel wiring (scheduler construction, parallel.DoTasksDynamic,
+// scheduler.complete) rather than calling graphScheduler.next/.complete
+// directly, over a hand-built graph with an independent slow image and a
+// fast a -> b -> c chain. It asserts b/c build right after their real
+// dependency finishes instead of waiting for the unrelated slow image.
+func TestDoImagesInParallel_DependentImageDoesNotWaitForUnrelatedSlowImage(t *testing.T) {
+	require.NoError(t, werf.Init(t.TempDir(), "")) // tmp_manager (used by parallel.NewTaskOutput) requires werf init
+
+	newImg := func(name string) *image.Image {
+		img := &image.Image{Name: name, TargetPlatform: "linux/amd64"}
+		img.ForceTargetPlatformLogging = true
+		return img
+	}
+
+	slow := newImg("slow")
+	a := newImg("a")
+	b := newImg("b")
+	c := newImg("c")
+	b.AddDependencyName("a")
+	c.AddDependencyName("b")
+
+	graph, err := image.BuildImagesGraph([]*image.Image{slow, a, b, c})
+	require.NoError(t, err)
+
+	tree := &image.ImagesTree{}
+	tree.SetImagesGraphForTests(graph)
+
+	conveyor := &Conveyor{
+		ConveyorOptions: ConveyorOptions{
+			Parallel:           true,
+			ParallelTasksLimit: -1,
+		},
+		imagesTree:       tree,
+		stageImages:      make(map[string]*stage.StageImage),
+		serviceRWMutex:   map[string]*sync.RWMutex{},
+		stageDigestMutex: map[string]*sync.Mutex{},
+	}
+
+	var mu sync.Mutex
+	var order []string
+	cFinished := make(chan struct{})
+	phase := &recordingPhase{
+		mu:    &mu,
+		order: &order,
+		delays: map[string]time.Duration{
+			"a": 10 * time.Millisecond,
+			"b": 10 * time.Millisecond,
+			"c": 10 * time.Millisecond,
+		},
+		hold:    map[string]chan struct{}{"slow": cFinished},
+		release: map[string]chan struct{}{"c": cFinished},
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	require.NoError(t, conveyor.doImages(ctx, []Phase{phase}, false))
+
+	indexOf := func(name string) int {
+		mu.Lock()
+		defer mu.Unlock()
+		for i, n := range order {
+			if n == name {
+				return i
+			}
+		}
+		t.Fatalf("image %q never completed; order=%v", name, order)
+		return -1
+	}
+
+	require.Less(t, indexOf("a"), indexOf("b"), "b must build after a")
+	require.Less(t, indexOf("b"), indexOf("c"), "c must build after b")
+
+	// The core regression check: b/c must not be gated behind the unrelated
+	// "slow" image just because a graph-scheduling bug reintroduced a
+	// wave/level barrier. "slow" is held until "c" has finished, so under a
+	// level barrier the whole run deadlocks into the context timeout instead
+	// of racing a timing margin.
+	require.Less(t, indexOf("c"), indexOf("slow"),
+		"dependent chain a->b->c must not wait for unrelated image \"slow\"; observed order=%v", order)
+}
+
+// TestDoImagesInParallel_AssignsBuildOrderIndexByRealDequeueNotStaticTopology
+// is the regression test for the build-log progress-numbering fix: images
+// used to get their log progress index assigned once, statically, from their
+// position in the dependency graph's topological order (ImagesTree.Calculate)
+// — a position with no relation to the real, concurrent, dependency-driven
+// order images actually start building in, producing confusingly
+// out-of-order "(N/Total)" numbers in the build log. doImagesInParallel must
+// instead assign each image's index at the moment it is actually dequeued for
+// building.
+//
+// The graph is built with "slow" listed LAST (images passed to
+// BuildImagesGraph as [a, b, c, slow]), which — because "slow" has no
+// dependencies and is a DFS leaf reachable only after a/b/c in that input
+// order — places it LAST (index 3) in the graph's static topological order
+// (graph.Nodes()). If build-order numbering regressed back to that static
+// position, "slow" would get index 3. But "slow" has no dependencies, so the
+// real scheduler makes it ready to build from the very start, alongside "a"
+// — it must get an early real build-order index (0 or 1), not the late
+// static one. This is what actually distinguishes "assigned by real dequeue
+// order" from "assigned by static topological position": a graph where a
+// dependency-free image's real-time readiness and its topological-sort
+// position disagree.
+//
+// The a < b < c assertion is a separate, always-true invariant (the shared
+// build-order counter only increases, and graphScheduler guarantees b/c
+// can't be dequeued before a/b's build has fully completed) kept here as a
+// basic sanity check, not the core regression signal — a purely topological
+// assignment would also happen to satisfy it for a simple chain.
+func TestDoImagesInParallel_AssignsBuildOrderIndexByRealDequeueNotStaticTopology(t *testing.T) {
+	require.NoError(t, werf.Init(t.TempDir(), ""))
+
+	newImg := func(name string) *image.Image {
+		img := &image.Image{Name: name, TargetPlatform: "linux/amd64"}
+		img.ForceTargetPlatformLogging = true
+		return img
+	}
+
+	slow := newImg("slow")
+	a := newImg("a")
+	b := newImg("b")
+	c := newImg("c")
+	b.AddDependencyName("a")
+	c.AddDependencyName("b")
+
+	// "slow" listed last on purpose — see the doc comment above.
+	graph, err := image.BuildImagesGraph([]*image.Image{a, b, c, slow})
+	require.NoError(t, err)
+
+	tree := &image.ImagesTree{}
+	tree.SetImagesGraphForTests(graph)
+
+	conveyor := &Conveyor{
+		ConveyorOptions: ConveyorOptions{
+			Parallel:           true,
+			ParallelTasksLimit: -1,
+		},
+		imagesTree:       tree,
+		stageImages:      make(map[string]*stage.StageImage),
+		serviceRWMutex:   map[string]*sync.RWMutex{},
+		stageDigestMutex: map[string]*sync.Mutex{},
+	}
+
+	var mu sync.Mutex
+	var order []string
+	phase := &recordingPhase{
+		mu:          &mu,
+		order:       &order,
+		startOrders: map[string]int{},
+		delays: map[string]time.Duration{
+			"slow": 10 * time.Millisecond,
+			"a":    10 * time.Millisecond,
+			"b":    10 * time.Millisecond,
+			"c":    10 * time.Millisecond,
+		},
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	require.NoError(t, conveyor.doImages(ctx, []Phase{phase}, false))
+
+	images := []*image.Image{slow, a, b, c}
+	seen := make(map[int]string, len(images))
+	for _, img := range images {
+		idx := img.GetBuildOrderIndex()
+		require.GreaterOrEqual(t, idx, 0)
+		require.Less(t, idx, len(images))
+
+		if other, dup := seen[idx]; dup {
+			t.Fatalf("build-order index %d assigned to both %q and %q", idx, other, img.Name)
+		}
+		seen[idx] = img.Name
+
+		// Wiring check only: the printer's start-order position is what ends
+		// up in the log index. That the position itself matches the order the
+		// blocks are printed in is proven in pkg/util/parallel; here the two
+		// sides agree by construction, so this cannot catch a numbering that
+		// merely happens to coincide.
+		require.Equal(t, phase.startOrders[img.Name], idx,
+			"image %q log index must be the parallel printer's start-order position", img.Name)
+	}
+
+	require.Less(t, a.GetBuildOrderIndex(), b.GetBuildOrderIndex(), "a must be assigned a build-order index before its dependent b")
+	require.Less(t, b.GetBuildOrderIndex(), c.GetBuildOrderIndex(), "b must be assigned a build-order index before its dependent c")
+
+	// The core regression signal: "slow" has no dependencies and is ready to
+	// build from the very start (same as "a"), so it must get an early
+	// build-order index. Under the old, reverted-to bug (static topological
+	// index), "slow" would instead get index 3 — the last position, because
+	// it was listed last in the input passed to BuildImagesGraph above.
+	require.LessOrEqual(t, slow.GetBuildOrderIndex(), 1,
+		"\"slow\" has no dependencies and must be dequeued near the start (index 0 or 1), not assigned the static topological tail position (3) it would get under the old bug; got %d", slow.GetBuildOrderIndex())
+}
+
+// TestDoImagesInParallel_AnnotatesEachImageWithARealWorkerID is the
+// end-to-end test for the worker-ID log annotation: it exercises the real
+// path — parallel.DoTasksDynamic stashing the worker ID into the task
+// context, Conveyor.doImagesInParallel reading it back out via
+// ctx.Value(parallel.CtxBackgroundTaskIDKey) and calling
+// Image.SetWorkerID — rather than only unit-testing the string formatting
+// in isolation (pkg/logging/image_ai_test.go). With 4 independent images
+// and exactly 2 workers, both worker IDs must actually get used (not just
+// a default/zero value), and every image must end up with a worker ID set.
+func TestDoImagesInParallel_AnnotatesEachImageWithARealWorkerID(t *testing.T) {
+	require.NoError(t, werf.Init(t.TempDir(), ""))
+
+	newImg := func(name string) *image.Image {
+		img := &image.Image{Name: name, TargetPlatform: "linux/amd64"}
+		img.ForceTargetPlatformLogging = true
+		return img
+	}
+
+	images := []*image.Image{newImg("w1"), newImg("w2"), newImg("w3"), newImg("w4")}
+
+	graph, err := image.BuildImagesGraph([]*image.Image{images[0], images[1], images[2], images[3]})
+	require.NoError(t, err)
+
+	tree := &image.ImagesTree{}
+	tree.SetImagesGraphForTests(graph)
+
+	conveyor := &Conveyor{
+		ConveyorOptions: ConveyorOptions{
+			Parallel:           true,
+			ParallelTasksLimit: 2,
+		},
+		imagesTree:       tree,
+		stageImages:      make(map[string]*stage.StageImage),
+		serviceRWMutex:   map[string]*sync.RWMutex{},
+		stageDigestMutex: map[string]*sync.Mutex{},
+	}
+
+	var mu sync.Mutex
+	var order []string
+	w2Finished := make(chan struct{})
+	phase := &recordingPhase{
+		mu:    &mu,
+		order: &order,
+		// Worker 0 is parked in "w1" until "w2" — the only other runnable
+		// image, necessarily on worker 1 — has finished, so both workers are
+		// used by construction and not because the scheduler happened to
+		// interleave them before worker 0 drained the whole queue.
+		hold:    map[string]chan struct{}{"w1": w2Finished},
+		release: map[string]chan struct{}{"w2": w2Finished},
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	require.NoError(t, conveyor.doImages(ctx, []Phase{phase}, false))
+
+	seenWorkers := map[int]bool{}
+	for _, img := range images {
+		workerID, ok := img.GetWorkerID()
+		require.True(t, ok, "image %q must have a worker ID set by the real doImagesInParallel path", img.Name)
+		require.True(t, workerID == 0 || workerID == 1, "worker ID for %q must be 0 or 1 (ParallelTasksLimit=2), got %d", img.Name, workerID)
+		seenWorkers[workerID] = true
+	}
+
+	require.Len(t, seenWorkers, 2, "both workers must actually have been used across 4 images with ParallelTasksLimit=2, not just one")
+}

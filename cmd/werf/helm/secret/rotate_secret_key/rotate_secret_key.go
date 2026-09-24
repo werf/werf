@@ -9,12 +9,10 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/werf/logboek"
-	"github.com/werf/nelm/pkg/action"
-	"github.com/werf/nelm/pkg/log"
-	"github.com/werf/werf/v2/cmd/werf/common"
-	"github.com/werf/werf/v2/cmd/werf/docs/replacers/helm"
-	"github.com/werf/werf/v2/pkg/tmp_manager"
-	"github.com/werf/werf/v2/pkg/true_git"
+	"github.com/werf/nelm/v2/pkg/action"
+	"github.com/werf/werf/v3/cmd/werf/common"
+	"github.com/werf/werf/v3/pkg/tmp_manager"
+	"github.com/werf/werf/v3/pkg/true_git"
 )
 
 var commonCmdData common.CmdData
@@ -25,10 +23,8 @@ func NewCmd(ctx context.Context) *cobra.Command {
 		Use:                   "rotate-secret-key [EXTRA_SECRET_VALUES_FILE_PATH...]",
 		DisableFlagsInUseLine: true,
 		Short:                 "Regenerate secret files with new secret key",
-		Long:                  common.GetLongCommandDescription(helm.GetHelmSecretRotateSecretKeyDocs().Long),
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey, common.WerfOldSecretKey),
-			common.DocsLongMD: helm.GetHelmSecretRotateSecretKeyDocs().LongMD,
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
@@ -102,7 +98,7 @@ func runRotateSecretKey(
 
 	chartPath := filepath.Join(giterminismManager.ProjectDir(), relChartPath)
 
-	ctx = log.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultSecretKeyRotateLogLevel), log.SetupLoggingOptions{
+	ctx = action.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultSecretKeyRotateLogLevel), action.SetupLoggingOptions{
 		ColorMode: *commonCmdData.LogColorMode,
 	})
 

@@ -1,6 +1,6 @@
 package inspector
 
-import "github.com/werf/werf/v2/pkg/giterminism_manager/errors"
+import "github.com/werf/werf/v3/pkg/giterminism_manager/errors"
 
 func (i Inspector) InspectCustomTags() error {
 	if i.sharedOptions.LooseGiterminism() {

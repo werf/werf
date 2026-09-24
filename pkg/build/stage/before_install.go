@@ -3,9 +3,9 @@ package stage
 import (
 	"context"
 
-	"github.com/werf/werf/v2/pkg/build/builder"
-	"github.com/werf/werf/v2/pkg/config"
-	"github.com/werf/werf/v2/pkg/container_backend"
+	"github.com/werf/werf/v3/pkg/build/builder"
+	"github.com/werf/werf/v3/pkg/config"
+	"github.com/werf/werf/v3/pkg/container_backend"
 )
 
 func GenerateBeforeInstallStage(ctx context.Context, imageBaseConfig *config.StapelImageBase, baseStageOptions *BaseStageOptions) *BeforeInstallStage {
@@ -25,6 +25,10 @@ func newBeforeInstallStage(builder builder.Builder, baseStageOptions *BaseStageO
 
 type BeforeInstallStage struct {
 	*UserStage
+}
+
+func (s *BeforeInstallStage) GetContentDependencies(ctx context.Context, c Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+	return s.getBuilderChecksum(ctx), nil
 }
 
 func (s *BeforeInstallStage) GetDependencies(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {

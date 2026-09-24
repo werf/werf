@@ -11,11 +11,10 @@ import (
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 
 	"github.com/werf/common-go/pkg/util"
-	"github.com/werf/werf/v2/pkg/container_backend/thirdparty/platformutil"
-	"github.com/werf/werf/v2/test/pkg/contback"
-	"github.com/werf/werf/v2/test/pkg/report"
-	"github.com/werf/werf/v2/test/pkg/suite_init"
-	"github.com/werf/werf/v2/test/pkg/werf"
+	"github.com/werf/werf/v3/pkg/container_backend/thirdparty/platformutil"
+	"github.com/werf/werf/v3/test/pkg/contback"
+	"github.com/werf/werf/v3/test/pkg/report"
+	"github.com/werf/werf/v3/test/pkg/suite_init"
 )
 
 type multiarchTestOptions struct {
@@ -29,6 +28,10 @@ type multiarchTestOptions struct {
 	ExpectedStapelImageInfo           expectedImageInfo
 	ExpectedStagedDockerfileImageInfo expectedImageInfo
 	ExpectedDockerfileImageInfo       expectedImageInfo
+}
+
+func (opts multiarchTestOptions) env() setupEnvOptions {
+	return opts.setupEnvOptions
 }
 
 type expectedImageInfo struct {
@@ -45,12 +48,7 @@ var _ = Describe("Multiarch build", Label("e2e", "build", "multiarch", "simple")
 			}
 			Expect(SuiteData.WerfRepo).NotTo(BeEmpty())
 
-			contBack, err := contback.NewContainerBackend(testOpts.ContainerBackendMode)
-			if err == contback.ErrRuntimeUnavailable {
-				Skip(err.Error())
-			} else if err != nil {
-				Fail(err.Error())
-			}
+			contBack := contback.NewContainerBackend(testOpts.ContainerBackendMode)
 
 			repoDirname := "repo0"
 			fixtureRelPath := "multiarch/state0"
@@ -90,7 +88,7 @@ var _ = Describe("Multiarch build", Label("e2e", "build", "multiarch", "simple")
 			SuiteData.Stubs.SetEnv("WERF_ENABLE_REPORT_BY_PLATFORM", "1")
 
 			By("building images")
-			werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
+			werfProject := newWerfProject(repoDirname)
 			reportProject := report.NewProjectWithReport(werfProject)
 			_, buildReport := reportProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath(buildReportName), nil)
 
@@ -137,7 +135,7 @@ var _ = Describe("Multiarch build", Label("e2e", "build", "multiarch", "simple")
 			}
 		},
 
-		Entry("Buildah backend, build arbitrary platforms, all builders available", multiarchTestOptions{
+		backendEntry("Buildah backend, build arbitrary platforms, all builders available", multiarchTestOptions{
 			setupEnvOptions: setupEnvOptions{
 				WithLocalRepo:        true,
 				ContainerBackendMode: "native-chroot",
@@ -170,10 +168,10 @@ var _ = Describe("Multiarch build", Label("e2e", "build", "multiarch", "simple")
 			},
 		}),
 
-		Entry("Docker backend, docker can build stapel image only for linux/amd64 platform", multiarchTestOptions{
+		backendEntry("Docker backend, docker can build stapel image only for linux/amd64 platform", multiarchTestOptions{
 			setupEnvOptions: setupEnvOptions{
 				WithLocalRepo:        true,
-				ContainerBackendMode: "vanilla-docker",
+				ContainerBackendMode: "docker",
 			},
 			Platforms:         []string{"linux/amd64"},
 			EnableStapelImage: true,
@@ -186,10 +184,10 @@ var _ = Describe("Multiarch build", Label("e2e", "build", "multiarch", "simple")
 			},
 		}),
 
-		Entry("Docker backend, build arbitrary platforms, only non-staged dockerfile builder available", multiarchTestOptions{
+		backendEntry("Docker backend, build arbitrary platforms, only non-staged dockerfile builder available", multiarchTestOptions{
 			setupEnvOptions: setupEnvOptions{
 				WithLocalRepo:        true,
-				ContainerBackendMode: "vanilla-docker",
+				ContainerBackendMode: "docker",
 			},
 			Platforms:             []string{"linux/arm64", "linux/amd64"},
 			EnableDockerfileImage: true,

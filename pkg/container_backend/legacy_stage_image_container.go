@@ -2,19 +2,21 @@ package container_backend
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
-	"github.com/alessio/shellescape"
-	"github.com/docker/docker/api/types"
+	"al.essio.dev/pkg/shellescape"
+	"github.com/docker/cli/cli"
+	dockercontainer "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/errdefs"
-	"github.com/docker/docker/runconfig/opts"
+	"github.com/samber/lo"
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/docker"
-	"github.com/werf/werf/v2/pkg/image"
-	"github.com/werf/werf/v2/pkg/stapel"
+	"github.com/werf/werf/v3/pkg/docker"
+	"github.com/werf/werf/v3/pkg/image"
+	"github.com/werf/werf/v3/pkg/stapel"
 )
 
 type LegacyStageImageContainer struct {
@@ -26,6 +28,7 @@ type LegacyStageImageContainer struct {
 	commitChangeOptions        *LegacyStageImageContainerOptions
 	serviceCommitChangeOptions *LegacyStageImageContainerOptions
 	inheritedCommitOptions     *LegacyStageImageContainerOptions
+	buildTimeEnv               map[string]string
 }
 
 func newLegacyStageImageContainer(img *LegacyStageImage) *LegacyStageImageContainer {
@@ -35,6 +38,7 @@ func newLegacyStageImageContainer(img *LegacyStageImage) *LegacyStageImageContai
 	c.runOptions = newLegacyStageContainerOptions()
 	c.commitChangeOptions = newLegacyStageContainerOptions()
 	c.serviceCommitChangeOptions = newLegacyStageContainerOptions()
+	c.buildTimeEnv = make(map[string]string)
 	return c
 }
 
@@ -70,6 +74,12 @@ func (c *LegacyStageImageContainer) ServiceCommitChangeOptions() LegacyContainer
 	return c.serviceCommitChangeOptions
 }
 
+func (c *LegacyStageImageContainer) AddBuildTimeEnv(envs map[string]string) {
+	for k, v := range envs {
+		c.buildTimeEnv[k] = v
+	}
+}
+
 func (c *LegacyStageImageContainer) prepareRunArgs(ctx context.Context) ([]string, error) {
 	var args []string
 	args = append(args, fmt.Sprintf("--name=%s", c.name))
@@ -88,13 +98,28 @@ func (c *LegacyStageImageContainer) prepareRunArgs(ctx context.Context) ([]strin
 		return nil, err
 	}
 
-	setColumnsEnv := fmt.Sprintf("--env=COLUMNS=%d", logboek.Context(ctx).Streams().ContentWidth())
-	runArgs = append(runArgs, setColumnsEnv)
-
 	args = append(args, runArgs...)
 	args = append(args, c.prepareRunCommandArgs()...)
 
 	return args, nil
+}
+
+func shellSingleQuote(v string) string {
+	return "'" + strings.ReplaceAll(v, "'", `'\''`) + "'"
+}
+
+func (c *LegacyStageImageContainer) prepareBuildTimeEnvExports(ctx context.Context) []string {
+	envs := make(map[string]string, len(c.buildTimeEnv)+1)
+	for k, v := range c.buildTimeEnv {
+		envs[k] = v
+	}
+	envs["COLUMNS"] = fmt.Sprintf("%d", logboek.Context(ctx).Streams().ContentWidth())
+
+	var exports []string
+	for _, k := range sortStrings(getKeys(envs)) {
+		exports = append(exports, fmt.Sprintf("export %s=%s", k, shellSingleQuote(envs[k])))
+	}
+	return exports
 }
 
 func (c *LegacyStageImageContainer) prepareRunCommandArgs() []string {
@@ -107,12 +132,13 @@ func (c *LegacyStageImageContainer) prepareRunCommandArgs() []string {
 	}
 }
 
-func (c *LegacyStageImageContainer) prepareDebugRunCommand(runArgs []string) string {
-	return fmt.Sprintf("printf '%%s' %s | docker run %s", shellescape.Quote(c.prepareRunCommand()), shellescape.QuoteCommand(runArgs))
+func (c *LegacyStageImageContainer) prepareDebugRunCommand(ctx context.Context, runArgs []string) string {
+	return fmt.Sprintf("printf '%%s' %s | docker run %s", shellescape.Quote(c.prepareRunCommand(ctx)), shellescape.QuoteCommand(runArgs))
 }
 
-func (c *LegacyStageImageContainer) prepareRunCommand() string {
-	return strings.Join(c.prepareRunCommands(), " && ")
+func (c *LegacyStageImageContainer) prepareRunCommand(ctx context.Context) string {
+	commands := append(c.prepareBuildTimeEnvExports(ctx), c.prepareRunCommands()...)
+	return strings.Join(commands, " && ")
 }
 
 func (c *LegacyStageImageContainer) prepareRunCommands() []string {
@@ -279,7 +305,7 @@ func (c *LegacyStageImageContainer) prepareInheritedCommitOptions(ctx context.Co
 		inheritedOptions.Workdir = "/"
 	}
 
-	fromImageEnv := opts.ConvertKVStringsToMap(fromImageInspect.Config.Env)
+	fromImageEnv := convertKVStringsToMap(fromImageInspect.Config.Env)
 	for _, k := range []string{"LANG", "LC_ALL"} {
 		if val, hasKey := fromImageEnv[k]; hasKey {
 			inheritedOptions.Env[k] = val
@@ -308,12 +334,32 @@ func (c *LegacyStageImageContainer) run(ctx context.Context) error {
 	}
 
 	RegisterRunningContainer(c.name, ctx)
-	err = docker.CliRunWithInput_LiveOutput(ctx, c.prepareRunCommand(), runArgs...)
+	err = docker.CliRunWithInput_LiveOutput(ctx, c.prepareRunCommand(ctx), runArgs...)
 	UnregisterRunningContainer(c.name)
 	if err != nil {
-		return fmt.Errorf("container run failed: %w", CliErrorByCode(err))
+		return fmt.Errorf("container run failed: %w", namedContainerExitErr(err))
 	}
 	return nil
+}
+
+func containerExitCode(err error) (int, bool) {
+	var statusErr cli.StatusError
+	if !errors.As(err, &statusErr) {
+		return 0, false
+	}
+
+	return statusErr.StatusCode, true
+}
+
+// docker/cli reports a non-zero container exit as a cli.StatusError with an empty message, so the
+// code has to be spelled out for the user. The empty verb keeps the error chain without a separator.
+func namedContainerExitErr(err error) error {
+	code, ok := containerExitCode(err)
+	if !ok || err.Error() != "" {
+		return err
+	}
+
+	return fmt.Errorf("exit code %d%w", code, err)
 }
 
 func (c *LegacyStageImageContainer) introspect(ctx context.Context) error {
@@ -325,7 +371,7 @@ func (c *LegacyStageImageContainer) introspect(ctx context.Context) error {
 	}
 
 	if err := docker.CliRun_LiveOutput(ctx, runArgs...); err != nil {
-		if !strings.Contains(err.Error(), "Code: ") || IsStartContainerErr(err) {
+		if _, ok := containerExitCode(err); !ok || IsStartContainerErr(err) {
 			return err
 		}
 	}
@@ -342,7 +388,7 @@ func (c *LegacyStageImageContainer) introspectBefore(ctx context.Context) error 
 	}
 
 	if err := docker.CliRun_LiveOutput(ctx, runArgs...); err != nil {
-		if !strings.Contains(err.Error(), "Code: ") || IsStartContainerErr(err) {
+		if _, ok := containerExitCode(err); !ok || IsStartContainerErr(err) {
 			return err
 		}
 	}
@@ -352,13 +398,9 @@ func (c *LegacyStageImageContainer) introspectBefore(ctx context.Context) error 
 
 // https://docs.docker.com/engine/reference/run/#exit-status
 func IsStartContainerErr(err error) bool {
-	for _, code := range []string{"125", "126", "127"} {
-		if strings.HasPrefix(err.Error(), fmt.Sprintf("Code: %s", code)) {
-			return true
-		}
-	}
+	code, ok := containerExitCode(err)
 
-	return false
+	return ok && lo.Contains([]int{125, 126, 127}, code)
 }
 
 func (c *LegacyStageImageContainer) commit(ctx context.Context) (string, error) {
@@ -369,7 +411,7 @@ func (c *LegacyStageImageContainer) commit(ctx context.Context) (string, error) 
 		return "", err
 	}
 
-	commitOptions := types.ContainerCommitOptions{Changes: commitChanges}
+	commitOptions := dockercontainer.CommitOptions{Changes: commitChanges}
 	id, err := docker.ContainerCommit(ctx, c.name, commitOptions)
 	if err != nil {
 		return "", err
@@ -381,7 +423,7 @@ func (c *LegacyStageImageContainer) commit(ctx context.Context) (string, error) 
 func (c *LegacyStageImageContainer) rm(ctx context.Context) error {
 	_ = c.image.ContainerBackend.(*DockerServerBackend)
 
-	err := docker.ContainerRemove(ctx, c.name, types.ContainerRemoveOptions{RemoveVolumes: true, Force: true})
+	err := docker.ContainerRemove(ctx, c.name, dockercontainer.RemoveOptions{RemoveVolumes: true, Force: true})
 	if err != nil {
 		if errdefs.IsNotFound(err) || errdefs.IsConflict(err) {
 			return nil
@@ -390,4 +432,13 @@ func (c *LegacyStageImageContainer) rm(ctx context.Context) error {
 		return fmt.Errorf("unable to remove container %s: %w", c.name, err)
 	}
 	return nil
+}
+
+func convertKVStringsToMap(values []string) map[string]string {
+	result := make(map[string]string, len(values))
+	for _, value := range values {
+		k, v, _ := strings.Cut(value, "=")
+		result[k] = v
+	}
+	return result
 }

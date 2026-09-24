@@ -5,12 +5,12 @@ package buildah
 import (
 	"reflect"
 
-	"github.com/containers/image/v5/pkg/blobinfocache"
-	"github.com/containers/image/v5/pkg/blobinfocache/memory"
-	imgtypes "github.com/containers/image/v5/types"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/opencontainers/go-digest"
+	"go.podman.io/image/v5/pkg/blobinfocache"
+	"go.podman.io/image/v5/pkg/blobinfocache/memory"
+	imgtypes "go.podman.io/image/v5/types"
 )
 
 var _ = Describe("blob info cache", func() {

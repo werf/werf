@@ -23,6 +23,9 @@ var _ = Describe("WerfConfig", func() {
 				NewImageStub("a", DependsOn{}),
 				NewImageStub("b", DependsOn{}),
 			}, Succeed()),
+			Entry("related image absent from the configuration", []ImageInterface{
+				NewImageStub("a", DependsOn{From: "external-base", Imports: []string{"not-declared"}}),
+			}, Succeed()),
 			Entry("linear chain a -> b -> c", []ImageInterface{
 				NewImageStub("a", DependsOn{From: "b"}),
 				NewImageStub("b", DependsOn{Imports: []string{"c"}}),
@@ -35,6 +38,18 @@ var _ = Describe("WerfConfig", func() {
 				NewImageStub("a", DependsOn{From: "b"}),
 				NewImageStub("b", DependsOn{From: "a"}),
 			}, MatchError("infinite loop detected: a -> b -> a")),
+			Entry("real stapel from cycle a -> b -> a", []ImageInterface{
+				&StapelImage{StapelImageBase: &StapelImageBase{Name: "a", From: "b"}},
+				&StapelImage{StapelImageBase: &StapelImageBase{Name: "b", From: "a"}},
+			}, MatchError("infinite loop detected: a -> b -> a")),
+			Entry("real stapel mixed from and import cycle", []ImageInterface{
+				&StapelImage{StapelImageBase: &StapelImageBase{Name: "a", From: "b"}},
+				&StapelImage{StapelImageBase: &StapelImageBase{Name: "b", Import: []*Import{{From: "a"}}}},
+			}, MatchError("infinite loop detected: a -> b -> a")),
+			Entry("real stapel external base ends a dependency chain", []ImageInterface{
+				&StapelImage{StapelImageBase: &StapelImageBase{Name: "a", From: "b"}},
+				&StapelImage{StapelImageBase: &StapelImageBase{Name: "b", From: "ubuntu:22.04"}},
+			}, Succeed()),
 			Entry("loop through import a -> b -> c -> a", []ImageInterface{
 				NewImageStub("a", DependsOn{Imports: []string{"b"}}),
 				NewImageStub("b", DependsOn{Imports: []string{"c"}}),
@@ -106,3 +121,14 @@ func diamondDAGColumn(fromLayer, toLayer, i int) string {
 	}
 	return strings.Join(names, " -> ")
 }
+
+var _ = DescribeTable("hasExplicitTagOrDigest", func(ref string, expected bool) {
+	Expect(hasExplicitTagOrDigest(ref)).To(Equal(expected))
+},
+	Entry("bare name", "ubuntu", false),
+	Entry("name with tag", "ubuntu:20.04", true),
+	Entry("name with digest", "ubuntu@sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", true),
+	Entry("registry host:port with no tag", "registry.example.com:5000/base-image", false),
+	Entry("registry host:port with tag", "registry.example.com:5000/base-image:latest", true),
+	Entry("invalid reference", "", false),
+)

@@ -6,13 +6,12 @@ import (
 	"os"
 	"strings"
 
-	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/docker"
-	"github.com/werf/werf/v2/pkg/image"
-	"github.com/werf/werf/v2/pkg/opstats"
-	"github.com/werf/werf/v2/pkg/werf"
+	"github.com/werf/werf/v3/pkg/docker"
+	"github.com/werf/werf/v3/pkg/image"
+	"github.com/werf/werf/v3/pkg/opstats"
+	"github.com/werf/werf/v3/pkg/werf"
 )
 
 type LegacyStageImage struct {
@@ -79,12 +78,11 @@ func (i *LegacyStageImage) Build(ctx context.Context, options BuildOptions) erro
 		i.container.runOptions.AddNetwork(options.Network)
 	}
 
-	experimentalStapelArm := util.GetBoolEnvironmentDefaultFalse("WERF_EXPERIMENTAL_STAPEL_ARM")
 	targetPlatform := i.GetTargetPlatform()
 	defaultPlatform := i.ContainerBackend.GetDefaultPlatform()
 
 	if targetPlatform == defaultPlatform && defaultPlatform != "linux/amd64" {
-		if !(experimentalStapelArm && isArm64Platform(defaultPlatform)) {
+		if !isArm64Platform(defaultPlatform) {
 			logboek.Context(ctx).Error().LogF("Detected your default build platform as %s.\n", defaultPlatform)
 			logboek.Context(ctx).Error().LogF("Building of stapel-type images using Docker-Server backend for platforms other than linux/amd64 is not supported.\n")
 			logboek.Context(ctx).Error().LogF("Please either:\n * confirm emulation of linux/amd64 by explicitly setting --platform=linux/amd64 param;\n * or use Dockerfile-type image instead.\n")
@@ -94,7 +92,7 @@ func (i *LegacyStageImage) Build(ctx context.Context, options BuildOptions) erro
 	}
 
 	if targetPlatform != "" && targetPlatform != "linux/amd64" {
-		if !(experimentalStapelArm && isArm64Platform(targetPlatform)) {
+		if !isArm64Platform(targetPlatform) {
 			logboek.Context(ctx).Error().LogF("Building of stapel-type images using Docker-Server backend for platforms other than linux/amd64 is not supported.\n")
 			logboek.Context(ctx).Error().LogF("Please either:\n * use Buildah backend to build stapel-type images for arbitrary platforms;\n * or use Dockerfile-type images with any backend.\n")
 			logboek.Context(ctx).Error().LogLn()
@@ -115,7 +113,7 @@ func (i *LegacyStageImage) Build(ctx context.Context, options BuildOptions) erro
 			return err
 		}
 
-		fmt.Printf("Docker run command (stage script piped to stdin):\n%s\n", i.container.prepareDebugRunCommand(runArgs))
+		fmt.Printf("Docker run command (stage script piped to stdin):\n%s\n", i.container.prepareDebugRunCommand(ctx, runArgs))
 	}
 
 	if containerRunErr := i.container.run(ctx); containerRunErr != nil {

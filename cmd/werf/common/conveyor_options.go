@@ -9,22 +9,18 @@ import (
 
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/level"
-	"github.com/werf/werf/v2/pkg/build"
-	"github.com/werf/werf/v2/pkg/build/stage"
-	"github.com/werf/werf/v2/pkg/config"
-	"github.com/werf/werf/v2/pkg/container_backend"
-	"github.com/werf/werf/v2/pkg/container_backend/thirdparty/platformutil"
-	"github.com/werf/werf/v2/pkg/giterminism_manager"
-	"github.com/werf/werf/v2/pkg/image"
-	"github.com/werf/werf/v2/pkg/slug"
-	"github.com/werf/werf/v2/pkg/storage"
+	"github.com/werf/werf/v3/pkg/build"
+	"github.com/werf/werf/v3/pkg/config"
+	"github.com/werf/werf/v3/pkg/container_backend"
+	"github.com/werf/werf/v3/pkg/container_backend/thirdparty/platformutil"
+	"github.com/werf/werf/v3/pkg/giterminism_manager"
+	"github.com/werf/werf/v3/pkg/image"
+	"github.com/werf/werf/v3/pkg/slug"
+	"github.com/werf/werf/v3/pkg/storage"
 )
 
 func GetConveyorOptions(ctx context.Context, commonCmdData *CmdData, imagesToProcess config.ImagesToProcess) (build.ConveyorOptions, error) {
 	conveyorOptions := build.ConveyorOptions{
-		LocalGitRepoVirtualMergeOptions: stage.VirtualMergeOptions{
-			VirtualMerge: GetVirtualMerge(commonCmdData),
-		},
 		ImagesToProcess: imagesToProcess,
 	}
 
@@ -37,9 +33,6 @@ func GetConveyorOptions(ctx context.Context, commonCmdData *CmdData, imagesToPro
 	}
 
 	conveyorOptions.DeferBuildLog = GetDeferredBuildLog(ctx, commonCmdData)
-	if commonCmdData.SkipImageSpecStage != nil {
-		conveyorOptions.SkipImageSpecStage = *commonCmdData.SkipImageSpecStage
-	}
 
 	useBuildReport := GetUseBuildReport(commonCmdData)
 	buildReportPath := GetBuildReportPath(commonCmdData)

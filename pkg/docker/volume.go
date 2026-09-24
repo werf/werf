@@ -4,7 +4,7 @@ import (
 	"github.com/docker/docker/api/types/filters"
 	"golang.org/x/net/context"
 
-	"github.com/werf/werf/v2/pkg/container_backend/prune"
+	"github.com/werf/werf/v3/pkg/container_backend/prune"
 )
 
 func VolumeRm(ctx context.Context, volumeName string, force bool) error {

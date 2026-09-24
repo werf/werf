@@ -8,8 +8,8 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/werf/lockgate"
-	"github.com/werf/werf/v2/pkg/true_git"
-	"github.com/werf/werf/v2/pkg/werf"
+	"github.com/werf/werf/v3/pkg/true_git"
+	"github.com/werf/werf/v3/pkg/werf"
 )
 
 func TestGitRepoSuite(t *testing.T) {

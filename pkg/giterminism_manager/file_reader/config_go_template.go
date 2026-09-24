@@ -24,6 +24,7 @@ func (r FileReader) ConfigGoTemplateFilesGlob(ctx context.Context, glob string) 
 
 			return nil
 		},
+		WalkConfigurationFilesWithGlobOptions{},
 	); err != nil {
 		return nil, err
 	}

@@ -8,6 +8,7 @@ on:
       - "1.2"
     paths:
       - docs/**
+      - schemas/**
   repository_dispatch:
     types: ["docs:deploy:latest"]
   workflow_dispatch:

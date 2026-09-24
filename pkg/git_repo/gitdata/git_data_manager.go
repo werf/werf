@@ -13,9 +13,9 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/lockgate"
-	"github.com/werf/werf/v2/pkg/git_repo"
-	"github.com/werf/werf/v2/pkg/true_git"
-	"github.com/werf/werf/v2/pkg/werf"
+	"github.com/werf/werf/v3/pkg/git_repo"
+	"github.com/werf/werf/v3/pkg/true_git"
+	"github.com/werf/werf/v3/pkg/werf"
 )
 
 // Before changing: read the local_cache contract in the package doc of pkg/git_repo/gitdata.

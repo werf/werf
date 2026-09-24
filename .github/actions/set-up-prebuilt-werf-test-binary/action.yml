@@ -3,6 +3,9 @@ inputs:
   coverage:
     default: false
     type: string
+  raceDetectorEnabled:
+    default: false
+    type: string
 runs:
   using: composite
   steps:
@@ -31,9 +34,9 @@ runs:
     - name: Build werf test binary
       run: |
         if ${{ inputs.coverage }}; then
-          task --yes -p build-with-coverage
+          task --yes -p build-with-coverage raceDetectorEnabled=${{ inputs.raceDetectorEnabled }}
         else
-          task --yes -p build
+          task --yes -p build raceDetectorEnabled=${{ inputs.raceDetectorEnabled }}
         fi
       shell: bash
       env:

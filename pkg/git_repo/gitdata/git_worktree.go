@@ -10,7 +10,7 @@ import (
 
 	"github.com/werf/common-go/pkg/util/timestamps"
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/volumeutils"
+	"github.com/werf/werf/v3/pkg/volumeutils"
 )
 
 type GitWorktreeDesc struct {

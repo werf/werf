@@ -12,7 +12,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/git_repo/repo_handle"
+	"github.com/werf/werf/v3/pkg/git_repo/repo_handle"
 )
 
 type Result struct {
@@ -212,6 +212,7 @@ func (r *Result) Checksum(ctx context.Context) string {
 
 	_ = r.lsTreeEntriesWalk(func(lsTreeEntry *LsTreeEntry) error {
 		h.Write([]byte(lsTreeEntry.Hash.String()))
+		h.Write([]byte(lsTreeEntry.Mode.String()))
 
 		logFilepath := lsTreeEntry.FullFilepath
 		if logFilepath == "" {
@@ -219,7 +220,7 @@ func (r *Result) Checksum(ctx context.Context) string {
 		}
 
 		if debug() {
-			logboek.Context(ctx).Debug().LogF("Entry was added: %s -> %s\n", logFilepath, lsTreeEntry.Hash.String())
+			logboek.Context(ctx).Debug().LogF("Entry was added: %s -> %s %s\n", logFilepath, lsTreeEntry.Mode.String(), lsTreeEntry.Hash.String())
 		}
 
 		return nil

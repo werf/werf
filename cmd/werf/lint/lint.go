@@ -13,23 +13,22 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
-	"github.com/werf/nelm/pkg/action"
-	"github.com/werf/nelm/pkg/export/helm/chart"
-	"github.com/werf/nelm/pkg/export/helm/engine"
-	"github.com/werf/nelm/pkg/export/helm/werf/file"
-	"github.com/werf/nelm/pkg/log"
-	"github.com/werf/werf/v2/cmd/werf/common"
-	"github.com/werf/werf/v2/pkg/build"
-	"github.com/werf/werf/v2/pkg/config"
-	"github.com/werf/werf/v2/pkg/config/deploy_params"
-	"github.com/werf/werf/v2/pkg/deploy/helm/chart_extender/helpers"
-	"github.com/werf/werf/v2/pkg/docker"
-	"github.com/werf/werf/v2/pkg/image"
-	"github.com/werf/werf/v2/pkg/storage"
-	"github.com/werf/werf/v2/pkg/tmp_manager"
-	"github.com/werf/werf/v2/pkg/true_git"
-	"github.com/werf/werf/v2/pkg/werf"
-	"github.com/werf/werf/v2/pkg/werf/global_warnings"
+	"github.com/werf/nelm/v2/pkg/action"
+	nelmcommon "github.com/werf/nelm/v2/pkg/common"
+	chart "github.com/werf/nelm/v2/pkg/helm/pkg/chart/v2"
+	"github.com/werf/nelm/v2/pkg/helm/pkg/engine"
+	"github.com/werf/werf/v3/cmd/werf/common"
+	"github.com/werf/werf/v3/pkg/build"
+	"github.com/werf/werf/v3/pkg/config"
+	"github.com/werf/werf/v3/pkg/config/deploy_params"
+	"github.com/werf/werf/v3/pkg/deploy"
+	"github.com/werf/werf/v3/pkg/docker"
+	"github.com/werf/werf/v3/pkg/image"
+	"github.com/werf/werf/v3/pkg/storage"
+	"github.com/werf/werf/v3/pkg/tmp_manager"
+	"github.com/werf/werf/v3/pkg/true_git"
+	"github.com/werf/werf/v3/pkg/werf"
+	"github.com/werf/werf/v3/pkg/werf/global_warnings"
 )
 
 var cmdData struct {
@@ -46,7 +45,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 		Long:                  common.GetLongCommandDescription(GetLintDocs().Long),
 		DisableFlagsInUseLine: true,
 		Annotations: map[string]string{
-			common.CmdEnvAnno: common.EnvsDescription(common.WerfDebugAnsibleArgs, common.WerfSecretKey),
+			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
 			common.DocsLongMD: GetLintDocs().LongMD,
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -90,9 +89,8 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{OptionalRepo: true})
 	common.SetupFinalRepo(&commonCmdData, cmd)
+	common.SetupMetaRepo(&commonCmdData, cmd)
 	common.SetupStubTags(&commonCmdData, cmd)
-
-	common.SetupSynchronization(&commonCmdData, cmd)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified repo and to pull base images")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
@@ -108,7 +106,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupUseBuildReport(&commonCmdData, cmd)
 
 	common.SetupUseCustomTag(&commonCmdData, cmd)
-	common.SetupVirtualMerge(&commonCmdData, cmd)
 
 	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultBuildParallelTasksLimit)
 
@@ -116,7 +113,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	commonCmdData.SetupPlatform(cmd)
 	commonCmdData.SetupBackendNetwork(cmd)
 
-	commonCmdData.SetupSkipImageSpecStage(cmd)
 	commonCmdData.SetupDebugTemplates(cmd)
 	commonCmdData.SetupAllowIncludesUpdate(cmd)
 
@@ -125,6 +121,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	lo.Must0(common.SetupValuesFlags(&commonCmdData, cmd))
 	lo.Must0(common.SetupSecretValuesFlags(&commonCmdData, cmd))
 	lo.Must0(common.SetupResourceValidationFlags(&commonCmdData, cmd))
+	common.SetupPatchesFlags(&commonCmdData, cmd, common.SetupPatchesFlagsOptions{})
 
 	common.SetupAddAnnotations(&commonCmdData, cmd)
 	common.SetupAddLabels(&commonCmdData, cmd)
@@ -155,8 +152,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 }
 
 func runLint(ctx context.Context, imageNameListFromArgs []string) error {
-	global_warnings.PostponeMultiwerfNotUpToDateWarning(ctx)
-
 	commonManager, ctx, err := common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
 		Cmd: &commonCmdData,
 		InitTrueGitWithOptions: &common.InitTrueGitOptions{
@@ -231,11 +226,6 @@ func runLint(ctx context.Context, imageNameListFromArgs []string) error {
 			return err
 		}
 
-		common.SetupOndemandKubeInitializer(commonCmdData.KubeContextCurrent, commonCmdData.LegacyKubeConfigPath, commonCmdData.KubeConfigBase64, commonCmdData.LegacyKubeConfigPathsMergeList, commonCmdData.KubeBearerTokenData, commonCmdData.KubeBearerTokenPath)
-		if err := common.GetOndemandKubeInitializer().Init(ctx); err != nil {
-			return err
-		}
-
 		useCustomTagFunc, err := common.GetUseCustomTagFunc(&commonCmdData, giterminismManager, imagesToProcess)
 		if err != nil {
 			return err
@@ -259,7 +249,7 @@ func runLint(ctx context.Context, imageNameListFromArgs []string) error {
 			return err
 		}
 
-		conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, giterminismManager.ProjectDir(), projectTmpDir, containerBackend, storageManager, storageManager.StorageLockManager, conveyorOptions)
+		conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, giterminismManager.ProjectDir(), projectTmpDir, containerBackend, storageManager, conveyorOptions)
 		defer conveyorWithRetry.Terminate()
 
 		if err := conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {
@@ -366,7 +356,7 @@ func runLint(ctx context.Context, imageNameListFromArgs []string) error {
 	}
 	registryCredentialsPath := docker.GetDockerConfigCredentialsFile(*commonCmdData.DockerConfig)
 
-	serviceValues, err := helpers.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, imagesInfoGetters, helpers.ServiceValuesOptions{
+	serviceValues, err := deploy.GetServiceValues(ctx, werfConfig.Meta.Project, imagesRepository, imagesInfoGetters, deploy.ServiceValuesOptions{
 		Namespace:                releaseNamespace,
 		Env:                      commonCmdData.Environment,
 		IsStub:                   isStub,
@@ -381,12 +371,14 @@ func runLint(ctx context.Context, imageNameListFromArgs []string) error {
 		return fmt.Errorf("get service values: %w", err)
 	}
 
-	file.SetChartFileReader(giterminismManager.FileManager)
+	nelmcommon.ChartFileReader = giterminismManager.FileManager
 
-	ctx = log.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultChartLintLogLevel), log.SetupLoggingOptions{
+	ctx = action.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultChartLintLogLevel), action.SetupLoggingOptions{
 		ColorMode: *commonCmdData.LogColorMode,
 	})
-	engine.SetDebug(commonCmdData.DebugTemplates)
+	engine.Debug = commonCmdData.DebugTemplates
+
+	ctx = common.SetupDenoContext(ctx)
 
 	if err := action.ChartLint(ctx, action.ChartLintOptions{
 		KubeConnectionOptions:       commonCmdData.KubeConnectionOptions,
@@ -394,7 +386,7 @@ func runLint(ctx context.Context, imageNameListFromArgs []string) error {
 		ValuesOptions:               commonCmdData.ValuesOptions,
 		SecretValuesOptions:         commonCmdData.SecretValuesOptions,
 		ChartAppVersion:             common.GetHelmChartConfigAppVersion(werfConfig),
-		ChartDirPath:                relChartPath,
+		Chart:                       relChartPath,
 		ChartProvenanceKeyring:      commonCmdData.ChartProvenanceKeyring,
 		ChartProvenanceStrategy:     commonCmdData.ChartProvenanceStrategy,
 		ChartRepoSkipUpdate:         commonCmdData.ChartRepoSkipUpdate,
@@ -402,6 +394,7 @@ func runLint(ctx context.Context, imageNameListFromArgs []string) error {
 		DefaultChartName:            werfConfig.Meta.Project,
 		DefaultChartVersion:         "1.0.0",
 		DefaultDeletePropagation:    commonCmdData.DefaultDeletePropagation,
+		DefaultPatchesDisable:       commonCmdData.DefaultPatchesDisable,
 		ExtraAPIVersions:            commonCmdData.ExtraAPIVersions,
 		ExtraAnnotations:            extraAnnotations,
 		ExtraLabels:                 extraLabels,
@@ -415,6 +408,7 @@ func runLint(ctx context.Context, imageNameListFromArgs []string) error {
 		NetworkParallelism:          commonCmdData.NetworkParallelism,
 		NoFinalTracking:             commonCmdData.NoFinalTracking,
 		NoRemoveManualChanges:       commonCmdData.NoRemoveManualChanges,
+		PatchesFiles:                commonCmdData.PatchesFiles,
 		RegistryCredentialsPath:     registryCredentialsPath,
 		ReleaseName:                 releaseName,
 		ReleaseNamespace:            releaseNamespace,
