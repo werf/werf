@@ -202,28 +202,9 @@ werf build --final-images-only=false
 werf config list --final-images-only=false
 ```
 
-### Cache and git patches
+### Synchronization server
 
-**Git stages are reused without checking commit ancestry.** The cached commit no longer has to be an ancestor of the current one. `WERF_DISABLE_GIT_COMMIT_ANCESTRY_CHECK` is removed.
-
-**Updating files from Git in Stapel.** With the default `git.stageDependencies`, source changes rerun the build commands: no additional action is needed for this change. Updates affect files inside the image, not your Git working tree.
-
-**If build commands modify files added from Git, check: do those commands rerun when the source files change?** With default settings, they do. If you configured `git.stageDependencies` manually, make sure the necessary files are included in the corresponding stage's dependencies. Otherwise, updating a file from Git can erase the result of its processing. Previously a conflict could stop the build; now it can succeed with unexpected image contents.
-
-- Where possible, write generated output separately from the source files.
-- Test a rebuild after changing such a file, not just a clean build.
-
-Text and binary files now use the same update mechanism: copying the required versions from Git. This avoids text-patch application errors, but no longer detects conflicts with changes made by build commands.
-
-### Removed build settings
-
-| Removed | What to change |
-|---|---|
-| `--synchronization` / `-S`, `WERF_SYNCHRONIZATION` | Remove them from commands and the environment. There is no replacement: stage tags are content-addressable, so a distributed lock manager is no longer needed. |
-| `--virtual-merge`, `WERF_VIRTUAL_MERGE` | Remove them from commands and the environment. Virtual merge functionality is removed. |
-| `WERF_STAGED_DOCKERFILE_VERSION=v1` | Remove the setting: staged Dockerfile always uses the v2 code path. |
-
-The `werf synchronization` subsystem and the public `synchronization.werf.io` dependency are also removed. There is nothing to migrate; if you ran a private synchronization server, werf v3 no longer needs it.
+werf v3 no longer uses a synchronization server, including the public `synchronization.werf.io`. If you ran your own server, v3 no longer needs it. Shut it down only after upgrading all clients that use it; remaining v2 clients may still need it.
 
 ### Buildah
 
