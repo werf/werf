@@ -40,7 +40,7 @@ Use the unified `from` key for internal references:
 | An `import` entry | `image: builder` | `from: builder` |
 | A `dependencies` entry | `image: backend` | `from: backend` |
 
-The old keys are **not removed**, but deprecated. `fromImage` and `import.image` emit a warning; specifying both the old and new key is an error. `dependencies.image` also continues to work, but prefer `dependencies.from` in new configurations.
+All three old keys **still work**, but emit a deprecation warning. Specifying both the old and new key is an error.
 
 An **external reference** in a base `from:` or `import.from` now requires an explicit tag or digest. For example, the previously implicit `:latest` must be written explicitly:
 
@@ -75,7 +75,7 @@ imageSpec:
       APP_ENV: production
 ```
 
-See [Image specification configuration]({{ "/usage/build/images.html" | true_relative_url }}) for the full set of fields.
+See [Changing image configuration spec]({{ "/usage/build/images.html#changing-image-configuration-spec" | true_relative_url }}) for the full set of fields.
 
 `WERF_COMMIT_HASH`, `WERF_COMMIT_TIME_HUMAN` and `WERF_COMMIT_TIME_UNIX` are no longer forcibly removed when modifying env through imageSpec. If an old base image still carries them, add them explicitly to `imageSpec.config.removeEnv`.
 
@@ -157,7 +157,7 @@ Without replacing `HELM_DRIVER`, werf uses its default release storage rather th
 
 - Even without `.helmignore`, Helm's default rules exclude dot-prefixed files and directories directly under `templates/`. Directories are excluded with their contents.
 - `**` now causes an error, although it previously had no effect.
-- Do not use a leading `!` as in `.gitignore`: it does not undo earlier exclusions, but excludes everything that does not match the pattern, usually leaving the chart empty.
+- A leading `!` previously had no effect. It now excludes everything that does not match the pattern, usually leaving the chart empty. Do not use it to undo earlier exclusions as in `.gitignore`.
 
 Rules for dependent charts vary by how the chart is included — see [Charts and dependencies]({{ "/usage/deploy/charts.html#excluding-files-or-directories-from-the-chart" | true_relative_url }}).
 
@@ -179,10 +179,11 @@ The v1.2 `AllowMissedSecretKeyMode` compatibility mode is removed. However, `bun
 | Before — v2 | After — v3 |
 |---|---|
 | Secrets in AES-CBC format | Existing values remain readable; new writes use the new format. |
-| The original YAML type of an encrypted value was not recorded | Newly encrypted YAML values retain their type and style; damaged ciphertext and incorrect keys are detected. |
+| The original YAML type of an encrypted value was not recorded | Newly encrypted YAML values retain their type and style. |
 
 Additional considerations:
 
+- The new format detects damaged ciphertext and incorrect keys.
 - Whole secret-file ciphertext can still be used as a value in `secret-values.yaml`.
 - Whole secret files use format 2; values in `secret-values.yaml` use format 3. Automatic format detection prevents a whole secret from being interpreted as YAML metadata.
 - Old encrypted scalars remain strings. To restore a number, boolean, timestamp or another type, re-enter the value with `werf helm secret values edit`.
