@@ -165,7 +165,7 @@ func (c *Collector) Summary() []OperationSummary {
 // build report uses the pending/commit pair so that a report covers only the
 // build that wrote it (e.g. across --follow iterations) and a failed report
 // write does not lose the pending observations.
-func (c *Collector) PendingSummary() []OperationSummary {
+func (c *Collector) PendingSummary(ctx context.Context) []OperationSummary {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -224,7 +224,7 @@ func (c *Collector) EventSummary() []EventSummary {
 
 // PendingEventSummary returns the counters accumulated since the last
 // CommitFlush without advancing the flush mark, mirroring PendingSummary.
-func (c *Collector) PendingEventSummary() []EventSummary {
+func (c *Collector) PendingEventSummary(ctx context.Context) []EventSummary {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -234,7 +234,7 @@ func (c *Collector) PendingEventSummary() []EventSummary {
 // CommitFlush advances the flush mark past everything recorded so far, so the
 // next Pending* calls return only later observations. Call it after the report
 // consuming the pending summaries has been successfully delivered.
-func (c *Collector) CommitFlush() {
+func (c *Collector) CommitFlush(ctx context.Context) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 

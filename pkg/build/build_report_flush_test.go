@@ -47,7 +47,7 @@ var _ = Describe("createBuildReport operations flush", func() {
 		Expect(decoded.Operations[string(opstats.OperationStageBuild)].Count).To(Equal(2))
 		Expect(decoded.StageCache[string(opstats.EventStageBuilt)]).To(Equal(2))
 
-		Expect(collector.PendingSummary()).To(BeEmpty())
-		Expect(collector.PendingEventSummary()).To(BeEmpty())
+		Expect(collector.PendingSummary(ctx)).To(BeEmpty())
+		Expect(collector.PendingEventSummary(ctx)).To(BeEmpty())
 	})
 })

@@ -330,7 +330,7 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 
 	collector := opstats.FromContext(ctx)
 	if collector != nil {
-		phase.ImagesReport.SetOperationsSummary(collector.PendingSummary(), collector.PendingEventSummary())
+		phase.ImagesReport.SetOperationsSummary(collector.PendingSummary(ctx), collector.PendingEventSummary(ctx))
 	}
 
 	if phase.ReportPath != "" {
@@ -355,7 +355,7 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 	}
 
 	if collector != nil {
-		collector.CommitFlush()
+		collector.CommitFlush(ctx)
 	}
 
 	return nil
