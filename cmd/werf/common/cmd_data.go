@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/werf/common-go/pkg/util"
-	"github.com/werf/nelm/pkg/common"
+	"github.com/werf/nelm/v2/pkg/common"
 	"github.com/werf/werf/v2/pkg/host_cleaning/units"
 	"github.com/werf/werf/v2/pkg/util/option"
 )

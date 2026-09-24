@@ -7,8 +7,8 @@ import (
 	"io"
 
 	"github.com/werf/logboek"
-	nelmcommon "github.com/werf/nelm/pkg/common"
-	chart "github.com/werf/nelm/pkg/helm/pkg/chart/v2"
+	nelmcommon "github.com/werf/nelm/v2/pkg/common"
+	chart "github.com/werf/nelm/v2/pkg/helm/pkg/chart/v2"
 	"github.com/werf/werf/v2/pkg/image"
 )
 

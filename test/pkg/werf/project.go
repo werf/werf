@@ -10,7 +10,7 @@ import (
 
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/nelm/pkg/kube"
+	"github.com/werf/nelm/v2/pkg/kube"
 	iutils "github.com/werf/werf/v2/test/pkg/utils"
 )
 

@@ -12,7 +12,7 @@ import (
 	"github.com/werf/common-go/pkg/locker"
 	"github.com/werf/common-go/pkg/secrets_manager"
 	"github.com/werf/lockgate/pkg/file_lock"
-	"github.com/werf/nelm/pkg/helm/pkg/chart/loader"
+	"github.com/werf/nelm/v2/pkg/helm/pkg/chart/loader"
 )
 
 var (

@@ -11,7 +11,7 @@ import (
 
 	"github.com/google/uuid"
 
-	nelmcommon "github.com/werf/nelm/pkg/common"
+	nelmcommon "github.com/werf/nelm/v2/pkg/common"
 )
 
 type BundleArchiveWriter interface {
