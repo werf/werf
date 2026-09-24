@@ -224,6 +224,7 @@ git:
   excludePaths: [docs, "*.md"]
   owner: 1000
   group: app
+  lfs: true
   stageDependencies:
     install: package.json
     beforeSetup: [config/**]

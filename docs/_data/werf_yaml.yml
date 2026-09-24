@@ -661,6 +661,13 @@ sections:
             detailsArticle:
               en: "/usage/build/stapel/git.html#using-filters"
               ru: "/usage/build/stapel/git.html#использование-фильтров"
+          - name: lfs
+            value: "bool"
+            description:
+              en: "Fetch Git LFS objects and add their content instead of the pointer files (default: false)"
+              ru: "Загружать объекты Git LFS и добавлять их содержимое вместо pointer-файлов (по умолчанию: false)"
+            detailsArticle:
+              all: "/usage/build/stapel/git.html#git-lfs"
           - name: stageDependencies
             description:
               en: "The organization of restarting assembly instructions when defined changes occur in the git repository"

@@ -389,7 +389,9 @@ func (repo *Base) getOrCreateArchive(ctx context.Context, repoPath, gitDir, repo
 func (repo *Base) CreateArchive(ctx context.Context, repoPath, gitDir, repoID, workTreeCacheDir string, opts ArchiveOptions) (archive Archive, err error) {
 	defer opstats.Observe(ctx, opstats.OperationGitArchive)()
 	logboek.Context(ctx).Debug().LogProcess("Creating archive").Do(func() {
-		logboek.Context(ctx).Debug().LogFDetails("repository: %s\noptions: %+v\n", repo.Name, opts)
+		optsToLog := opts
+		optsToLog.LfsEnv = nil
+		logboek.Context(ctx).Debug().LogFDetails("repository: %s\noptions: %+v\n", repo.Name, optsToLog)
 		logboek.Context(ctx).Debug().LogOptionalLn()
 		archive, err = repo.createArchive(ctx, repoPath, gitDir, repoID, workTreeCacheDir, opts)
 	})

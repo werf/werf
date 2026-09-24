@@ -15,6 +15,7 @@ type rawGit struct {
 	Branch               string                         `yaml:"branch,omitempty"`
 	Tag                  string                         `yaml:"tag,omitempty"`
 	Commit               string                         `yaml:"commit,omitempty"`
+	Lfs                  bool                           `yaml:"lfs,omitempty"`
 	RawStageDependencies *rawStageDependencies          `yaml:"stageDependencies,omitempty"`
 
 	rawStapelImage *rawStapelImage `yaml:"-"` // parent
@@ -108,6 +109,7 @@ func (c *rawGit) toGitLocalExportDirective() (gitLocalExport *GitLocalExport, er
 		}
 	}
 
+	gitLocalExport.Lfs = c.Lfs
 	gitLocalExport.raw = c
 
 	if err := c.validateGitLocalExportDirective(gitLocalExport); err != nil {

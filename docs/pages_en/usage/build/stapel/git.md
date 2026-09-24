@@ -37,6 +37,7 @@ The _git mapping_ configuration for a local repository has the following paramet
 - `group` — the name or gid of the owner’s group;
 - `excludePaths` — a set of masks to exclude files or directories during recursive copying. Paths in masks must be specified relative to add;
 - `includePaths` — a set of masks to include files or directories during recursive copying. Paths in masks must be specified relative to add;
+- `lfs` — fetch [Git LFS](https://git-lfs.com/) objects and add their content instead of the pointer files. Disabled by default. Reviewed in detail in the [Git LFS](#git-lfs) section;
 - `stageDependencies` — a set of masks that control which file changes trigger rebuilds of the user stages. By default (when not specified), werf uses `**/*`, so any source file change causes a rebuild of stages that have shell commands. Specify explicit paths to narrow down what triggers a rebuild. Reviewed in detail in the [Running assembly instructions]({{ "usage/build/stapel/instructions.html" | true_relative_url }}) reference.
 
 The _git mapping_ configuration for a remote repository has some additional parameters:
@@ -223,6 +224,23 @@ git:
 - add: /assets
   to: /app/assets
 ```
+
+### Git LFS
+
+Files tracked by [Git LFS](https://git-lfs.com/) are stored in the repository as small pointer files, and by default werf adds these pointer files to the image as they are. Set `lfs: true` to make werf fetch the LFS objects and add their real content instead:
+
+```yaml
+git:
+- add: /assets
+  to: /app/assets
+  lfs: true
+```
+
+The parameter works for both the project repository and remote repositories. The `git-lfs` binary must be installed on the build host: werf runs `git lfs pull` for the commit being added, restricted to the `add` path, before archiving the files. The host `lfs.fetchexclude` setting is ignored so that the result does not depend on the local git configuration. If any file within the _git mapping_ is still a pointer after the pull (for example, the object is missing on the LFS server), the build fails.
+
+For remote repositories werf passes the `basicAuth` credentials to `git-lfs`. LFS objects inside submodules are not fetched.
+
+Since `lfs` changes the content added to the image, enabling or disabling it rebuilds the _git stages_ of the image.
 
 ## Working with remote repositories
 
