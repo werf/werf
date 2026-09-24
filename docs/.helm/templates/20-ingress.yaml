@@ -1,8 +1,8 @@
 {{- $refs := list $.Values.global.github_ref }}
 {{- if eq $.Values.werf.env "test" }}
 {{- $currentRef := splitList "/" $.Values.global.github_ref | last }}
-{{- if eq $currentRef "main" }}
-{{- $refs = concat $refs (list "v2") }}
+{{- if or (eq $currentRef "main") (eq $currentRef "3") }}
+{{- $refs = concat $refs (list "v3") }}
 {{- else if eq $currentRef "2" }}
 {{- $refs = concat $refs (list "v2") }}
 {{- else if eq $currentRef "1.2" }}
@@ -13,7 +13,9 @@
 {{- range $_, $ref := $refs }}
 
 {{- $version := splitList "/" $ref | last }}
-{{- if hasPrefix "v2" $version }}
+{{- if hasPrefix "v3" $version }}
+{{- $version = "v3" }}
+{{- else if hasPrefix "v2" $version }}
 {{- $version = "v2" }}
 {{- else if hasPrefix "v1.2" $version }}
 {{- $version = "v1.2" }}

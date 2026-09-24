@@ -3,7 +3,7 @@ name: tests:all
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [main, "2"]
   workflow_dispatch:
   repository_dispatch:
     types: ["tests:all"]
