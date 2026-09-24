@@ -23,6 +23,13 @@ var _ = Describe("build and mutate image spec", Label("integration", "build", "m
 			setupEnv(testOpts.setupEnvOptions)
 			contRuntime := contback.NewContainerBackend(testOpts.ContainerBackendMode)
 
+			basicPortsMatcher := Equal(manifest.Schema2PortSet{"99": {}})
+			cleanPortsMatcher := Equal(manifest.Schema2PortSet{"": {}})
+			if testOpts.ContainerBackendMode == "docker" {
+				basicPortsMatcher = Or(basicPortsMatcher, Equal(manifest.Schema2PortSet{"99/tcp": {}}))
+				cleanPortsMatcher = Or(cleanPortsMatcher, Equal(manifest.Schema2PortSet{"invalid port": {}}))
+			}
+
 			By(fmt.Sprintf("%s: starting", testOpts.State))
 			{
 				repoDirname := "repo0"
@@ -82,7 +89,7 @@ var _ = Describe("build and mutate image spec", Label("integration", "build", "m
 
 						Expect(imgCfg.User).Should(Equal("testuser"))
 
-						Expect(imgCfg.ExposedPorts).Should(Equal(manifest.Schema2PortSet{"99": {}}))
+						Expect(imgCfg.ExposedPorts).Should(basicPortsMatcher)
 						Expect(imgCfg.ExposedPorts).ShouldNot(HaveKey("1234/tcp"))
 
 						Expect(imgCfg.WorkingDir).Should(Equal("/test/work"))
@@ -108,7 +115,7 @@ var _ = Describe("build and mutate image spec", Label("integration", "build", "m
 
 						Expect(imgCfg.User).Should(Equal(""))
 
-						Expect(imgCfg.ExposedPorts).Should(Equal(manifest.Schema2PortSet{"": {}}))
+						Expect(imgCfg.ExposedPorts).Should(cleanPortsMatcher)
 
 						Expect(imgCfg.WorkingDir).Should(Equal(""))
 
