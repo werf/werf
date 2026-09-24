@@ -125,14 +125,47 @@ See [Destination path rules]({{ "/usage/build/stapel/imports.html#destination-pa
 
 ### Git dependencies of build stages
 
-The default for `git.stageDependencies` has changed **for each of `install`, `beforeSetup` and `setup`**:
+`git.stageDependencies` determines which Git file changes trigger stage rebuilds. In v3, **an omitted setting and an explicit empty list can mean different things**:
 
 | Setting | Before — v2 | After — v3 |
 |---|---|---|
-| No masks, or an empty list | Git file changes did not invalidate the stage through `stageDependencies`. | Equivalent to `**/*`: all files in the git mapping are tracked, respecting `includePaths`/`excludePaths`. |
-| Explicit masks | Only matching files affected the stage checksum. | The same: use masks to narrow the dependencies of expensive stages. |
+| The entire block is absent or `{}` | Stages have no direct Git-file dependency. | All three stages get `**/*`: all files in the git mapping are tracked, respecting `includePaths`/`excludePaths`. |
+| Explicit stage masks | Matching files are tracked. | The same behavior. |
+| An explicit `[]` for a stage | No direct Git-file dependency. | The same behavior; the stage counts as explicitly declared. |
 
-**The default is safer:** changes to source files rerun build commands instead of requiring manual dependency configuration. Builds may run more often. If you specify masks, include every file that affects the stage's result; an empty list no longer disables file tracking.
+In a partially filled block, omitted stages **before the last explicitly declared stage** get `[]`, and those **after it** get `**/*`. The order is always `install` → `beforeSetup` → `setup`, regardless of YAML key order. The rule applies independently to each git mapping. In v2, every omitted stage had no Git-file dependency regardless of its position: the new `**/*` defaults after the last declared stage can cause additional rebuilds.
+
+For example, only `beforeSetup` is declared:
+
+```yaml
+git:
+  - add: /
+    to: /app
+    stageDependencies:
+      beforeSetup:
+        - "src/**/*"
+```
+
+`install` gets `[]`, `beforeSetup` gets `src/**/*`, and `setup` gets `**/*`. Changing a file outside `src` therefore does not by itself trigger `install` or `beforeSetup`, but triggers `setup` if it has instructions.
+
+If `install` and `setup` are declared:
+
+```yaml
+git:
+  - add: /
+    to: /app
+    stageDependencies:
+      install:
+        - package-lock.json
+      setup:
+        - "src/**/*"
+```
+
+The omitted `beforeSetup` gets `[]`: it precedes the last declared stage, `setup`. An empty list also establishes that boundary: with only `beforeSetup: []`, both `install` and `beforeSetup` have empty masks, while `setup` gets `**/*`.
+
+**The default is safer:** without dependency configuration, source changes rerun build commands. Builds may run more often. To keep a stage free of direct Git-file dependencies, specify `[]`; to always track all mapped files, specify `["**/*"]`. If you specify masks, include every file that affects the stage's result.
+
+`[]` disables only the direct Git-file dependency. Changes to preceding stages, base images, commands and other inputs can still trigger a rebuild. Masks do not create stages without instructions; `beforeInstall` is not part of this mechanism.
 
 A non-empty `stageDependencies` entry for a stage with no build instructions now causes an **error instead of a warning**. Correct the stage name, add the missing instructions, or remove the unused entry. See [Dependency on changes in the Git repo]({{ "/usage/build/stapel/instructions.html#dependency-on-changes-in-the-git-repo" | true_relative_url }}).
 
@@ -159,9 +192,9 @@ werf config list --final-images-only=false
 
 **Updating files from Git in Stapel.** With the default `git.stageDependencies`, source changes rerun the build commands: no additional action is needed for this change. Updates affect files inside the image, not your Git working tree.
 
-Check configurations that **narrow `git.stageDependencies` and modify source files in build commands**. If Git changes such a file but the processing stage is reused from cache, the file is replaced with its Git version, losing the command's changes. Previously a conflict could stop the build; now it can succeed with unexpected image contents.
+**If build commands modify files added from Git, check: do those commands rerun when the source files change?** With default settings, they do. If you configured `git.stageDependencies` manually, make sure the necessary files are included in the corresponding stage's dependencies. Otherwise, updating a file from Git can erase the result of its processing. Previously a conflict could stop the build; now it can succeed with unexpected image contents.
 
-- Include the files that trigger processing in the corresponding stage's `git.stageDependencies`, or write generated output separately from the source files.
+- Where possible, write generated output separately from the source files.
 - Test a rebuild after changing such a file, not just a clean build.
 
 Text and binary files now use the same update mechanism: copying the required versions from Git. This avoids text-patch application errors, but no longer detects conflicts with changes made by build commands.
