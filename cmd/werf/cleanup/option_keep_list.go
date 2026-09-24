@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 	"go.podman.io/image/v5/docker/reference"
 
-	"github.com/werf/werf/v2/pkg/cleaning"
+	"github.com/werf/werf/v3/pkg/cleaning"
 )
 
 func setupKeeplist(cmdData *cmdDataType, cmd *cobra.Command) {

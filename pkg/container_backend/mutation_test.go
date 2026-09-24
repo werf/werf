@@ -16,8 +16,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	werfimage "github.com/werf/werf/v2/pkg/image"
-	"github.com/werf/werf/v2/pkg/werf"
+	werfimage "github.com/werf/werf/v3/pkg/image"
+	"github.com/werf/werf/v3/pkg/werf"
 )
 
 type fakeBackendLoaderStorer struct {

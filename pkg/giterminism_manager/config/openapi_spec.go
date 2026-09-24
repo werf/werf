@@ -11,7 +11,7 @@ import (
 	"github.com/go-openapi/validate/post"
 	"sigs.k8s.io/yaml"
 
-	"github.com/werf/werf/v2/schemas"
+	"github.com/werf/werf/v3/schemas"
 )
 
 func openAPISchema() *spec.Schema {

@@ -22,13 +22,13 @@ import (
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/container_backend/info"
-	"github.com/werf/werf/v2/pkg/container_backend/prune"
-	"github.com/werf/werf/v2/pkg/docker"
-	"github.com/werf/werf/v2/pkg/image"
-	"github.com/werf/werf/v2/pkg/opstats"
-	"github.com/werf/werf/v2/pkg/ssh_agent"
-	"github.com/werf/werf/v2/pkg/tmp_manager"
+	"github.com/werf/werf/v3/pkg/container_backend/info"
+	"github.com/werf/werf/v3/pkg/container_backend/prune"
+	"github.com/werf/werf/v3/pkg/docker"
+	"github.com/werf/werf/v3/pkg/image"
+	"github.com/werf/werf/v3/pkg/opstats"
+	"github.com/werf/werf/v3/pkg/ssh_agent"
+	"github.com/werf/werf/v3/pkg/tmp_manager"
 )
 
 var (

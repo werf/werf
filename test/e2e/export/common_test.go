@@ -1,7 +1,7 @@
 package e2e_export_test
 
 import (
-	"github.com/werf/werf/v2/test/pkg/suite_init"
+	"github.com/werf/werf/v3/test/pkg/suite_init"
 )
 
 type commonTestOptions struct {

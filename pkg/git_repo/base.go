@@ -19,12 +19,12 @@ import (
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/types"
-	"github.com/werf/werf/v2/pkg/git_repo/repo_handle"
-	"github.com/werf/werf/v2/pkg/opstats"
-	"github.com/werf/werf/v2/pkg/path_matcher"
-	"github.com/werf/werf/v2/pkg/true_git"
-	"github.com/werf/werf/v2/pkg/true_git/ls_tree"
-	"github.com/werf/werf/v2/pkg/werf"
+	"github.com/werf/werf/v3/pkg/git_repo/repo_handle"
+	"github.com/werf/werf/v3/pkg/opstats"
+	"github.com/werf/werf/v3/pkg/path_matcher"
+	"github.com/werf/werf/v3/pkg/true_git"
+	"github.com/werf/werf/v3/pkg/true_git/ls_tree"
+	"github.com/werf/werf/v3/pkg/werf"
 )
 
 type Base struct {

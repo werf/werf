@@ -14,15 +14,15 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/build/secrets"
-	"github.com/werf/werf/v2/pkg/build/stage"
-	stage_instruction "github.com/werf/werf/v2/pkg/build/stage/instruction"
-	"github.com/werf/werf/v2/pkg/config"
-	"github.com/werf/werf/v2/pkg/dockerfile"
-	"github.com/werf/werf/v2/pkg/dockerfile/frontend"
-	"github.com/werf/werf/v2/pkg/giterminism_manager"
-	"github.com/werf/werf/v2/pkg/path_matcher"
-	"github.com/werf/werf/v2/pkg/util/option"
+	"github.com/werf/werf/v3/pkg/build/secrets"
+	"github.com/werf/werf/v3/pkg/build/stage"
+	stage_instruction "github.com/werf/werf/v3/pkg/build/stage/instruction"
+	"github.com/werf/werf/v3/pkg/config"
+	"github.com/werf/werf/v3/pkg/dockerfile"
+	"github.com/werf/werf/v3/pkg/dockerfile/frontend"
+	"github.com/werf/werf/v3/pkg/giterminism_manager"
+	"github.com/werf/werf/v3/pkg/path_matcher"
+	"github.com/werf/werf/v3/pkg/util/option"
 )
 
 func MapDockerfileConfigToImages(ctx context.Context, metaConfig *config.Meta, dockerfileImageConfig *config.ImageFromDockerfile, targetPlatform string, useCustomTag bool, opts CommonImageOptions) ([]*Image, error) {

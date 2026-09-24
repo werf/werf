@@ -8,8 +8,8 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/git_repo"
-	"github.com/werf/werf/v2/pkg/path_matcher"
+	"github.com/werf/werf/v3/pkg/git_repo"
+	"github.com/werf/werf/v3/pkg/path_matcher"
 )
 
 func (r FileReader) projectDirRelativePathToWorkTreeRelativePath(relPath string) string {

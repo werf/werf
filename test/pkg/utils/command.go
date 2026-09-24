@@ -15,7 +15,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	werfExec "github.com/werf/werf/v2/pkg/werf/exec"
+	werfExec "github.com/werf/werf/v3/pkg/werf/exec"
 )
 
 func RunCommand(ctx context.Context, dir, command string, args ...string) ([]byte, error) {

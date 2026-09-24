@@ -3,8 +3,8 @@ package host_cleaning
 import (
 	"slices"
 
-	"github.com/werf/werf/v2/pkg/container_backend/prune"
-	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v3/pkg/container_backend/prune"
+	"github.com/werf/werf/v3/pkg/image"
 )
 
 type cleanupReport prune.Report

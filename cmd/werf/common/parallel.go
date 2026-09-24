@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/werf/common-go/pkg/util"
-	"github.com/werf/werf/v2/pkg/util/option"
+	"github.com/werf/werf/v3/pkg/util/option"
 )
 
 const DefaultBuildParallelTasksLimit = 5

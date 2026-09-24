@@ -10,9 +10,9 @@ import (
 
 	"github.com/werf/logboek"
 	"github.com/werf/nelm/v2/pkg/action"
-	"github.com/werf/werf/v2/cmd/werf/common"
-	"github.com/werf/werf/v2/pkg/tmp_manager"
-	"github.com/werf/werf/v2/pkg/true_git"
+	"github.com/werf/werf/v3/cmd/werf/common"
+	"github.com/werf/werf/v3/pkg/tmp_manager"
+	"github.com/werf/werf/v3/pkg/true_git"
 )
 
 var commonCmdData common.CmdData

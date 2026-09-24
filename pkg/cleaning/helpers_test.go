@@ -10,8 +10,8 @@ import (
 	"k8s.io/client-go/kubernetes/fake"
 	k8stesting "k8s.io/client-go/testing"
 
-	"github.com/werf/werf/v2/pkg/image"
-	"github.com/werf/werf/v2/pkg/storage/manager"
+	"github.com/werf/werf/v3/pkg/image"
+	"github.com/werf/werf/v3/pkg/storage/manager"
 )
 
 var _ manager.StorageManagerInterface = (*fakeStorageManager)(nil)

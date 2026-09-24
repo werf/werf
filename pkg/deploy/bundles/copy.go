@@ -4,8 +4,8 @@ import (
 	"context"
 
 	nelmcommon "github.com/werf/nelm/v2/pkg/common"
-	"github.com/werf/werf/v2/pkg/docker_registry"
-	"github.com/werf/werf/v2/pkg/ref"
+	"github.com/werf/werf/v3/pkg/docker_registry"
+	"github.com/werf/werf/v3/pkg/ref"
 )
 
 type CopyOptions struct {

@@ -5,11 +5,11 @@ import (
 
 	"github.com/onsi/gomega"
 
-	buildImage "github.com/werf/werf/v2/pkg/build/image"
-	"github.com/werf/werf/v2/pkg/build/stage"
-	"github.com/werf/werf/v2/pkg/container_backend"
-	imagePkg "github.com/werf/werf/v2/pkg/image"
-	"github.com/werf/werf/v2/pkg/storage"
+	buildImage "github.com/werf/werf/v3/pkg/build/image"
+	"github.com/werf/werf/v3/pkg/build/stage"
+	"github.com/werf/werf/v3/pkg/container_backend"
+	imagePkg "github.com/werf/werf/v3/pkg/image"
+	"github.com/werf/werf/v3/pkg/storage"
 )
 
 func newImage(name string, baseImageType buildImage.BaseImageType, opts buildImage.ImageOptions) *buildImage.Image {

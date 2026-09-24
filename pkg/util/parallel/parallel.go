@@ -11,8 +11,8 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/docker"
-	"github.com/werf/werf/v2/pkg/logging"
+	"github.com/werf/werf/v3/pkg/docker"
+	"github.com/werf/werf/v3/pkg/logging"
 )
 
 type DoTasksOptions struct {

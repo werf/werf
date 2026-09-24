@@ -10,8 +10,8 @@ import (
 	"al.essio.dev/pkg/shellescape"
 	. "github.com/onsi/ginkgo/v2"
 
-	"github.com/werf/werf/v2/test/pkg/utils"
-	utilsDocker "github.com/werf/werf/v2/test/pkg/utils/docker"
+	"github.com/werf/werf/v3/test/pkg/utils"
+	utilsDocker "github.com/werf/werf/v3/test/pkg/utils/docker"
 )
 
 var _ = Describe("cleanup empty directories with git patch apply", func() {

@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/werf/werf/v2/pkg/buildah"
+	"github.com/werf/werf/v3/pkg/buildah"
 )
 
 func TestGetContainerRegistryMirror_MergesWerfEnvMirrorsBeforeBuildahConfigMirrors(t *testing.T) {

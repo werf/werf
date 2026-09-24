@@ -9,7 +9,7 @@ import (
 
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/werf/v2/test/pkg/utils"
+	"github.com/werf/werf/v3/test/pkg/utils"
 )
 
 func CommonBeforeEach(ctx context.Context) {

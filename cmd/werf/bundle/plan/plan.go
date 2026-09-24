@@ -18,12 +18,12 @@ import (
 	"github.com/werf/nelm/v2/pkg/action"
 	nelmcommon "github.com/werf/nelm/v2/pkg/common"
 	"github.com/werf/nelm/v2/pkg/helm/pkg/engine"
-	"github.com/werf/werf/v2/cmd/werf/common"
-	"github.com/werf/werf/v2/pkg/deploy"
-	"github.com/werf/werf/v2/pkg/deploy/bundles"
-	"github.com/werf/werf/v2/pkg/docker"
-	"github.com/werf/werf/v2/pkg/werf"
-	"github.com/werf/werf/v2/pkg/werf/global_warnings"
+	"github.com/werf/werf/v3/cmd/werf/common"
+	"github.com/werf/werf/v3/pkg/deploy"
+	"github.com/werf/werf/v3/pkg/deploy/bundles"
+	"github.com/werf/werf/v3/pkg/docker"
+	"github.com/werf/werf/v3/pkg/werf"
+	"github.com/werf/werf/v3/pkg/werf/global_warnings"
 )
 
 var cmdData struct {

@@ -13,8 +13,8 @@ import (
 	context "context"
 	reflect "reflect"
 
-	container_backend "github.com/werf/werf/v2/pkg/container_backend"
-	image "github.com/werf/werf/v2/pkg/image"
+	container_backend "github.com/werf/werf/v3/pkg/container_backend"
+	image "github.com/werf/werf/v3/pkg/image"
 	gomock "go.uber.org/mock/gomock"
 )
 

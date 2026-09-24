@@ -8,8 +8,8 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/werf/v2/test/pkg/contback"
-	"github.com/werf/werf/v2/test/pkg/suite_init"
+	"github.com/werf/werf/v3/test/pkg/contback"
+	"github.com/werf/werf/v3/test/pkg/suite_init"
 )
 
 var _ = Describe("Staged Dockerfile build with RUN --mount from stage", Label("e2e", "build", "staged_dockerfile_run_mount"), func() {

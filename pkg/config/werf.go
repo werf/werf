@@ -8,7 +8,7 @@ import (
 
 	"github.com/distribution/reference"
 
-	"github.com/werf/werf/v2/pkg/slug"
+	"github.com/werf/werf/v3/pkg/slug"
 )
 
 type WerfConfig struct {

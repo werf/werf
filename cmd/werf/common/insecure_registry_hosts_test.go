@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/werf/werf/v2/pkg/buildah"
+	"github.com/werf/werf/v3/pkg/buildah"
 )
 
 func TestGetInsecureRegistryHosts_SkipWhenInsecureRegistryEnabled(t *testing.T) {

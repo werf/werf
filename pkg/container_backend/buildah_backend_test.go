@@ -18,11 +18,11 @@ import (
 
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/level"
-	"github.com/werf/werf/v2/pkg/buildah"
-	"github.com/werf/werf/v2/pkg/buildah/thirdparty"
-	"github.com/werf/werf/v2/pkg/container_backend/info"
-	"github.com/werf/werf/v2/pkg/image"
-	"github.com/werf/werf/v2/test/pkg/buildahstub"
+	"github.com/werf/werf/v3/pkg/buildah"
+	"github.com/werf/werf/v3/pkg/buildah/thirdparty"
+	"github.com/werf/werf/v3/pkg/container_backend/info"
+	"github.com/werf/werf/v3/pkg/image"
+	"github.com/werf/werf/v3/test/pkg/buildahstub"
 )
 
 var _ = Describe("BuildahBackend getBuildahCommonOpts", func() {

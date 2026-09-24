@@ -8,9 +8,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/werf/werf/v2/pkg/container_backend"
-	"github.com/werf/werf/v2/pkg/docker_registry"
-	"github.com/werf/werf/v2/pkg/storage"
+	"github.com/werf/werf/v3/pkg/container_backend"
+	"github.com/werf/werf/v3/pkg/docker_registry"
+	"github.com/werf/werf/v3/pkg/storage"
 )
 
 func CreateDockerRegistry(ctx context.Context, addr string, insecureRegistry, skipTlsVerifyRegistry bool, insecureRegistryHosts []string) (docker_registry.Interface, error) {

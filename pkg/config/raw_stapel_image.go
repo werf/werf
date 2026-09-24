@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/werf/werf/v2/pkg/giterminism_manager"
-	"github.com/werf/werf/v2/pkg/util/option"
-	"github.com/werf/werf/v2/pkg/werf/global_warnings"
+	"github.com/werf/werf/v3/pkg/giterminism_manager"
+	"github.com/werf/werf/v3/pkg/util/option"
+	"github.com/werf/werf/v3/pkg/werf/global_warnings"
 )
 
 type rawStapelImage struct {

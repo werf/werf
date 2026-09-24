@@ -10,7 +10,7 @@ import (
 	"github.com/onsi/gomega"
 	"github.com/samber/lo"
 
-	"github.com/werf/werf/v2/test/pkg/werf"
+	"github.com/werf/werf/v3/test/pkg/werf"
 )
 
 type reportItem struct {

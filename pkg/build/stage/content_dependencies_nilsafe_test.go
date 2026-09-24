@@ -7,7 +7,7 @@ import (
 	"github.com/onsi/gomega"
 	"github.com/stretchr/testify/require"
 
-	"github.com/werf/werf/v2/pkg/config"
+	"github.com/werf/werf/v3/pkg/config"
 )
 
 func TestGetContentDependencies_NoPanicOnNilDelegation(t *testing.T) {

@@ -22,10 +22,10 @@ import (
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/nelm/v2/pkg/helm/pkg/engine"
-	"github.com/werf/werf/v2/pkg/file_manager"
-	"github.com/werf/werf/v2/pkg/giterminism_manager"
-	"github.com/werf/werf/v2/pkg/slug"
-	"github.com/werf/werf/v2/pkg/tmp_manager"
+	"github.com/werf/werf/v3/pkg/file_manager"
+	"github.com/werf/werf/v3/pkg/giterminism_manager"
+	"github.com/werf/werf/v3/pkg/slug"
+	"github.com/werf/werf/v3/pkg/tmp_manager"
 )
 
 type WerfConfigOptions struct {

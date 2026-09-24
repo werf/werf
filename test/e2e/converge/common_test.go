@@ -2,7 +2,7 @@ package e2e_converge_test
 
 import (
 	"github.com/werf/common-go/pkg/util"
-	"github.com/werf/werf/v2/test/pkg/suite_init"
+	"github.com/werf/werf/v3/test/pkg/suite_init"
 )
 
 func setupEnv() {

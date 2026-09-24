@@ -1,4 +1,4 @@
-module github.com/werf/werf/v2
+module github.com/werf/werf/v3
 
 go 1.26.3
 

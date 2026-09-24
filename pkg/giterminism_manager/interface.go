@@ -4,8 +4,8 @@ import (
 	"context"
 
 	nelmcommon "github.com/werf/nelm/v2/pkg/common"
-	"github.com/werf/werf/v2/pkg/git_repo"
-	"github.com/werf/werf/v2/pkg/path_matcher"
+	"github.com/werf/werf/v3/pkg/git_repo"
+	"github.com/werf/werf/v3/pkg/path_matcher"
 )
 
 type Interface interface {

@@ -1,6 +1,6 @@
 package storage
 
-import "github.com/werf/werf/v2/pkg/image"
+import "github.com/werf/werf/v3/pkg/image"
 
 type CustomTagMetadata struct {
 	StageID string

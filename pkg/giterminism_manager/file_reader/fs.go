@@ -10,8 +10,8 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
-	giterminismErrors "github.com/werf/werf/v2/pkg/giterminism_manager/errors"
-	"github.com/werf/werf/v2/pkg/path_matcher"
+	giterminismErrors "github.com/werf/werf/v3/pkg/giterminism_manager/errors"
+	"github.com/werf/werf/v3/pkg/path_matcher"
 )
 
 type (

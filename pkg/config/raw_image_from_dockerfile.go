@@ -3,8 +3,8 @@ package config
 import (
 	"fmt"
 
-	"github.com/werf/werf/v2/pkg/giterminism_manager"
-	"github.com/werf/werf/v2/pkg/util/option"
+	"github.com/werf/werf/v3/pkg/giterminism_manager"
+	"github.com/werf/werf/v3/pkg/util/option"
 )
 
 type rawImageFromDockerfile struct {

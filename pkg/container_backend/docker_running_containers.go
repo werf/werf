@@ -7,7 +7,7 @@ import (
 	dockercontainer "github.com/docker/docker/api/types/container"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/docker"
+	"github.com/werf/werf/v3/pkg/docker"
 )
 
 var (

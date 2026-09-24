@@ -6,8 +6,8 @@ import (
 	"io"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/build"
-	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v3/pkg/build"
+	"github.com/werf/werf/v3/pkg/image"
 )
 
 const (

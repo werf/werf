@@ -13,7 +13,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/git_repo"
+	"github.com/werf/werf/v3/pkg/git_repo"
 )
 
 type Config struct {

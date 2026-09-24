@@ -7,9 +7,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/werf/common-go/pkg/util"
-	"github.com/werf/werf/v2/pkg/config"
-	"github.com/werf/werf/v2/pkg/dockerfile"
-	"github.com/werf/werf/v2/pkg/dockerfile/frontend"
+	"github.com/werf/werf/v3/pkg/config"
+	"github.com/werf/werf/v3/pkg/dockerfile"
+	"github.com/werf/werf/v3/pkg/dockerfile/frontend"
 )
 
 func TestAdoptResolvedBaseImageReference_TargetsWithoutOwnInstructionsStayDistinct(t *testing.T) {

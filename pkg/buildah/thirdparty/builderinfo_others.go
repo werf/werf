@@ -9,7 +9,7 @@ import (
 
 //
 // BuilderInfo is copied from github.com/containers/buildah
-// to provide crossplatform types definitions in the github.com/werf/werf/v2/pkg/buildah package.
+// to provide crossplatform types definitions in the github.com/werf/werf/v3/pkg/buildah package.
 //
 
 // BuilderInfo are used as objects to display container information

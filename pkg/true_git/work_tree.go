@@ -16,7 +16,7 @@ import (
 	"github.com/werf/common-go/pkg/util/timestamps"
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/werf"
+	"github.com/werf/werf/v3/pkg/werf"
 )
 
 var ErrInvalidDotGit = errors.New("invalid file format: expected gitdir record")

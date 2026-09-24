@@ -1,8 +1,8 @@
 package config
 
 import (
-	"github.com/werf/werf/v2/pkg/git_repo"
-	"github.com/werf/werf/v2/pkg/giterminism_manager"
+	"github.com/werf/werf/v3/pkg/git_repo"
+	"github.com/werf/werf/v3/pkg/giterminism_manager"
 )
 
 type GitRemoteExport struct {

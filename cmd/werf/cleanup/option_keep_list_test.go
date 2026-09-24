@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/types"
 
-	"github.com/werf/werf/v2/pkg/cleaning"
+	"github.com/werf/werf/v3/pkg/cleaning"
 )
 
 var _ = Describe("keep list", func() {

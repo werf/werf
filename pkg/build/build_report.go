@@ -15,12 +15,12 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/build/image"
-	"github.com/werf/werf/v2/pkg/config"
-	imagePkg "github.com/werf/werf/v2/pkg/image"
-	"github.com/werf/werf/v2/pkg/opstats"
-	"github.com/werf/werf/v2/pkg/storage"
-	"github.com/werf/werf/v2/pkg/telemetry"
+	"github.com/werf/werf/v3/pkg/build/image"
+	"github.com/werf/werf/v3/pkg/config"
+	imagePkg "github.com/werf/werf/v3/pkg/image"
+	"github.com/werf/werf/v3/pkg/opstats"
+	"github.com/werf/werf/v3/pkg/storage"
+	"github.com/werf/werf/v3/pkg/telemetry"
 )
 
 type ReportFormat string

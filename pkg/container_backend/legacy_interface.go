@@ -3,7 +3,7 @@ package container_backend
 import (
 	"context"
 
-	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v3/pkg/image"
 )
 
 //go:generate mockgen -source legacy_interface.go -package mock -destination ../../test/mock/legacy_interface.go

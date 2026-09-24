@@ -8,10 +8,10 @@ import (
 	"strings"
 
 	"github.com/werf/common-go/pkg/util"
-	"github.com/werf/werf/v2/pkg/config"
-	"github.com/werf/werf/v2/pkg/container_backend"
-	imagePkg "github.com/werf/werf/v2/pkg/image"
-	"github.com/werf/werf/v2/pkg/stapel"
+	"github.com/werf/werf/v3/pkg/config"
+	"github.com/werf/werf/v3/pkg/container_backend"
+	imagePkg "github.com/werf/werf/v3/pkg/image"
+	"github.com/werf/werf/v3/pkg/stapel"
 )
 
 func GenerateFromStage(imageBaseConfig *config.StapelImageBase, baseImageRepoId, imageCacheVersion string, baseStageOptions *BaseStageOptions) *FromStage {

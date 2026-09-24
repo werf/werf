@@ -6,7 +6,7 @@ import (
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
 
-	"github.com/werf/werf/v2/cmd/werf/common"
+	"github.com/werf/werf/v3/cmd/werf/common"
 )
 
 var _ = ginkgo.Describe("kubernetes namespaces scan", func() {

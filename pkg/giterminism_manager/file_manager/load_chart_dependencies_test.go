@@ -7,7 +7,7 @@ import (
 
 	nelmcommon "github.com/werf/nelm/v2/pkg/common"
 	"github.com/werf/nelm/v2/pkg/helm/pkg/chart/loader"
-	filemanager "github.com/werf/werf/v2/pkg/giterminism_manager/file_manager"
+	filemanager "github.com/werf/werf/v3/pkg/giterminism_manager/file_manager"
 )
 
 var _ = ginkgo.Describe("LoadChartDir as the chart loader for a file:// dependency", func() {

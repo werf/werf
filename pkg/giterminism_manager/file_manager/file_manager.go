@@ -14,9 +14,9 @@ import (
 	"github.com/werf/logboek"
 	nelmcommon "github.com/werf/nelm/v2/pkg/common"
 	"github.com/werf/nelm/v2/pkg/helm/pkg/ignore"
-	"github.com/werf/werf/v2/pkg/giterminism_manager/file_reader"
-	"github.com/werf/werf/v2/pkg/giterminism_manager/inspector"
-	"github.com/werf/werf/v2/pkg/includes"
+	"github.com/werf/werf/v3/pkg/giterminism_manager/file_reader"
+	"github.com/werf/werf/v3/pkg/giterminism_manager/inspector"
+	"github.com/werf/werf/v3/pkg/includes"
 )
 
 type FileReader interface {

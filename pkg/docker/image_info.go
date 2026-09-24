@@ -5,7 +5,7 @@ import (
 
 	dockerImage "github.com/docker/docker/api/types/image"
 
-	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v3/pkg/image"
 )
 
 func NewInfoFromInspect(ref string, inspect *dockerImage.InspectResponse) *image.Info {

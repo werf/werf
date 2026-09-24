@@ -6,9 +6,9 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/build/builder"
-	"github.com/werf/werf/v2/pkg/config"
-	"github.com/werf/werf/v2/pkg/ssh_agent"
+	"github.com/werf/werf/v3/pkg/build/builder"
+	"github.com/werf/werf/v3/pkg/config"
+	"github.com/werf/werf/v3/pkg/ssh_agent"
 )
 
 func getBuilder(imageBaseConfig *config.StapelImageBase, baseStageOptions *BaseStageOptions) builder.Builder {

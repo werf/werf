@@ -8,7 +8,7 @@ import (
 
 	"github.com/go-git/go-git/v5"
 
-	"github.com/werf/werf/v2/test/pkg/utils/liveexec"
+	"github.com/werf/werf/v3/test/pkg/utils/liveexec"
 )
 
 func SetGitRepoState(ctx context.Context, workTreeDir, repoDir, commitMessage string) error {

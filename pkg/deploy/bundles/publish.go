@@ -9,8 +9,8 @@ import (
 	nelmcommon "github.com/werf/nelm/v2/pkg/common"
 	"github.com/werf/nelm/v2/pkg/helm/pkg/chart/loader"
 	v2chart "github.com/werf/nelm/v2/pkg/helm/pkg/chart/v2"
-	"github.com/werf/werf/v2/pkg/deploy/bundles/registry"
-	"github.com/werf/werf/v2/pkg/ref"
+	"github.com/werf/werf/v3/pkg/deploy/bundles/registry"
+	"github.com/werf/werf/v3/pkg/ref"
 )
 
 type PublishOptions struct {

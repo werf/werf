@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/container_backend"
-	"github.com/werf/werf/v2/pkg/tmp_manager"
+	"github.com/werf/werf/v3/pkg/container_backend"
+	"github.com/werf/werf/v3/pkg/tmp_manager"
 )
 
 type HostPurgeOptions struct {

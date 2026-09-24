@@ -30,8 +30,8 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/container_backend/filter"
-	"github.com/werf/werf/v2/pkg/container_backend/prune"
+	"github.com/werf/werf/v3/pkg/container_backend/filter"
+	"github.com/werf/werf/v3/pkg/container_backend/prune"
 )
 
 type CreateImageOptions struct {

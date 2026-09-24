@@ -1,7 +1,7 @@
 package dismiss
 
 import (
-	"github.com/werf/werf/v2/cmd/werf/docs/structs"
+	"github.com/werf/werf/v3/cmd/werf/docs/structs"
 )
 
 func GetDismissDocs() structs.DocsStruct {

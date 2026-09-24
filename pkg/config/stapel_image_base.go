@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/werf/common-go/pkg/util"
-	"github.com/werf/werf/v2/pkg/giterminism_manager"
+	"github.com/werf/werf/v3/pkg/giterminism_manager"
 )
 
 type StapelImageBase struct {

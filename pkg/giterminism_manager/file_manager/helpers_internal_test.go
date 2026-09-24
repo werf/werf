@@ -3,8 +3,8 @@ package filemanager
 import (
 	"context"
 
-	"github.com/werf/werf/v2/pkg/git_repo"
-	"github.com/werf/werf/v2/pkg/path_matcher"
+	"github.com/werf/werf/v3/pkg/git_repo"
+	"github.com/werf/werf/v3/pkg/path_matcher"
 )
 
 type fakeSharedOptions struct {

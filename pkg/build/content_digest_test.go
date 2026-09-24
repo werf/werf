@@ -6,7 +6,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	imagePkg "github.com/werf/werf/v2/pkg/image"
+	imagePkg "github.com/werf/werf/v3/pkg/image"
 )
 
 // anchorDigest is a thin wrapper that exercises the anchor branch of

@@ -10,8 +10,8 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/types"
 
-	"github.com/werf/werf/v2/test/pkg/utils"
-	"github.com/werf/werf/v2/test/pkg/utils/docker"
+	"github.com/werf/werf/v3/test/pkg/utils"
+	"github.com/werf/werf/v3/test/pkg/utils/docker"
 )
 
 const gitLatestPatchNoChangesNote = "Building stage image/gitLatestPatch (no git changes; refreshing image content tag)"

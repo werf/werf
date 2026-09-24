@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/werf/werf/v2/pkg/build/image"
+	"github.com/werf/werf/v3/pkg/build/image"
 )
 
 // graphScheduler drives image builds over an image.ImagesGraph dynamically:

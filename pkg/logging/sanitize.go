@@ -4,7 +4,7 @@ import (
 	"io"
 	"regexp"
 
-	"github.com/werf/werf/v2/pkg/log_sanitize"
+	"github.com/werf/werf/v3/pkg/log_sanitize"
 )
 
 type SanitizeWriter struct {

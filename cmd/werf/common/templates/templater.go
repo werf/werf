@@ -14,8 +14,8 @@ import (
 
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/types"
-	"github.com/werf/werf/v2/cmd/werf/common"
-	"github.com/werf/werf/v2/pkg/werf"
+	"github.com/werf/werf/v3/cmd/werf/common"
+	"github.com/werf/werf/v3/pkg/werf"
 )
 
 type FlagExposer interface {

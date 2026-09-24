@@ -9,9 +9,9 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 
-	"github.com/werf/werf/v2/pkg/buildah"
-	bdTypes "github.com/werf/werf/v2/pkg/buildah/thirdparty"
-	"github.com/werf/werf/v2/test/pkg/thirdparty/contruntime/manifest"
+	"github.com/werf/werf/v3/pkg/buildah"
+	bdTypes "github.com/werf/werf/v3/pkg/buildah/thirdparty"
+	"github.com/werf/werf/v3/test/pkg/thirdparty/contruntime/manifest"
 )
 
 var ErrRuntimeUnavailable = errors.New("requested runtime unavailable")

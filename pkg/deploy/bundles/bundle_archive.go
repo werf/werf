@@ -9,7 +9,7 @@ import (
 	"github.com/werf/logboek"
 	nelmcommon "github.com/werf/nelm/v2/pkg/common"
 	chart "github.com/werf/nelm/v2/pkg/helm/pkg/chart/v2"
-	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v3/pkg/image"
 )
 
 const (

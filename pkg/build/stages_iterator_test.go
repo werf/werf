@@ -5,8 +5,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	build_image "github.com/werf/werf/v2/pkg/build/image"
-	"github.com/werf/werf/v2/pkg/build/stage"
+	build_image "github.com/werf/werf/v3/pkg/build/image"
+	"github.com/werf/werf/v3/pkg/build/stage"
 )
 
 type hasPrevStub struct {

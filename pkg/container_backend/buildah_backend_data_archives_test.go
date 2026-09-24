@@ -17,8 +17,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	copyrec "github.com/werf/copy-recurse"
-	"github.com/werf/werf/v2/pkg/logging"
-	"github.com/werf/werf/v2/pkg/werf"
+	"github.com/werf/werf/v3/pkg/logging"
+	"github.com/werf/werf/v3/pkg/werf"
 )
 
 var _ = Describe("BuildahBackend data archives", func() {

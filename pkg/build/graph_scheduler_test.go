@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/werf/werf/v2/pkg/build/image"
+	"github.com/werf/werf/v3/pkg/build/image"
 )
 
 func drainReadyNames(s *graphScheduler, nodes []*image.Image) map[string]bool {

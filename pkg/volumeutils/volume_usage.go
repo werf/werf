@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/werf/werf/v2/pkg/third_party/minio/disk"
+	"github.com/werf/werf/v3/pkg/third_party/minio/disk"
 )
 
 type VolumeUsage struct {

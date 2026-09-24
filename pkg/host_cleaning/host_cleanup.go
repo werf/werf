@@ -7,14 +7,14 @@ import (
 
 	"github.com/werf/common-go/pkg/graceful"
 	"github.com/werf/logboek"
-	"github.com/werf/werf/v2/pkg/background"
-	"github.com/werf/werf/v2/pkg/container_backend"
-	"github.com/werf/werf/v2/pkg/git_repo/gitdata"
-	"github.com/werf/werf/v2/pkg/host_cleaning/units"
-	"github.com/werf/werf/v2/pkg/tmp_manager"
-	"github.com/werf/werf/v2/pkg/volumeutils"
-	"github.com/werf/werf/v2/pkg/werf"
-	"github.com/werf/werf/v2/pkg/werf/exec"
+	"github.com/werf/werf/v3/pkg/background"
+	"github.com/werf/werf/v3/pkg/container_backend"
+	"github.com/werf/werf/v3/pkg/git_repo/gitdata"
+	"github.com/werf/werf/v3/pkg/host_cleaning/units"
+	"github.com/werf/werf/v3/pkg/tmp_manager"
+	"github.com/werf/werf/v3/pkg/volumeutils"
+	"github.com/werf/werf/v3/pkg/werf"
+	"github.com/werf/werf/v3/pkg/werf/exec"
 )
 
 const (

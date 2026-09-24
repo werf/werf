@@ -7,8 +7,8 @@ import (
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 
 	"github.com/werf/logboek"
-	registry_api "github.com/werf/werf/v2/pkg/docker_registry/api"
-	"github.com/werf/werf/v2/pkg/image"
+	registry_api "github.com/werf/werf/v3/pkg/docker_registry/api"
+	"github.com/werf/werf/v3/pkg/image"
 )
 
 type DockerRegistryTracer struct {
