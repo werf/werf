@@ -7,8 +7,8 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("Collector flush", func() {
-	It("returns only what was recorded since the previous flush", func() {
+var _ = Describe("Collector pending/commit flush", func() {
+	It("returns only what was recorded since the last commit", func() {
 		c := NewCollector()
 		base := time.Now()
 
@@ -16,15 +16,14 @@ var _ = Describe("Collector flush", func() {
 		c.add(OperationImagePull, base, base.Add(2*time.Second))
 		c.events[EventStageBuilt] = 2
 
-		first := c.FlushSummary()
-		Expect(first).To(HaveLen(2))
-		Expect(c.FlushEventSummary()).To(Equal([]EventSummary{{Event: EventStageBuilt, Count: 2}}))
+		Expect(c.PendingSummary()).To(HaveLen(2))
+		Expect(c.PendingEventSummary()).To(Equal([]EventSummary{{Event: EventStageBuilt, Count: 2}}))
+		c.CommitFlush()
 
 		c.add(OperationStageBuild, base.Add(3*time.Second), base.Add(5*time.Second))
 		c.events[EventStageBuilt] = 3
 
-		second := c.FlushSummary()
-		Expect(second).To(Equal([]OperationSummary{{
+		Expect(c.PendingSummary()).To(Equal([]OperationSummary{{
 			Operation: OperationStageBuild,
 			Count:     1,
 			TotalTime: 2 * time.Second,
@@ -32,18 +31,34 @@ var _ = Describe("Collector flush", func() {
 			AvgTime:   2 * time.Second,
 			MaxTime:   2 * time.Second,
 		}}))
-		Expect(c.FlushEventSummary()).To(Equal([]EventSummary{{Event: EventStageBuilt, Count: 1}}))
+		Expect(c.PendingEventSummary()).To(Equal([]EventSummary{{Event: EventStageBuilt, Count: 1}}))
+		c.CommitFlush()
 
-		Expect(c.FlushSummary()).To(BeEmpty())
-		Expect(c.FlushEventSummary()).To(BeEmpty())
+		Expect(c.PendingSummary()).To(BeEmpty())
+		Expect(c.PendingEventSummary()).To(BeEmpty())
 	})
 
-	It("keeps Summary cumulative regardless of flushes", func() {
+	It("retains pending observations until the flush is committed", func() {
 		c := NewCollector()
 		base := time.Now()
 
 		c.add(OperationStageBuild, base, base.Add(time.Second))
-		c.FlushSummary()
+		c.events[EventStageBuilt] = 1
+
+		Expect(c.PendingSummary()).To(HaveLen(1))
+		Expect(c.PendingSummary()).To(HaveLen(1))
+		Expect(c.PendingEventSummary()).To(HaveLen(1))
+
+		c.add(OperationImagePull, base.Add(time.Second), base.Add(2*time.Second))
+		Expect(c.PendingSummary()).To(HaveLen(2))
+	})
+
+	It("keeps Summary cumulative regardless of commits", func() {
+		c := NewCollector()
+		base := time.Now()
+
+		c.add(OperationStageBuild, base, base.Add(time.Second))
+		c.CommitFlush()
 		c.add(OperationStageBuild, base.Add(2*time.Second), base.Add(3*time.Second))
 
 		summary := c.Summary()

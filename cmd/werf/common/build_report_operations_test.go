@@ -110,5 +110,17 @@ var _ = Describe("build report operations option", func() {
 
 			Expect(out.String()).To(ContainSubstring("command time:"))
 		})
+
+		It("keeps the summary suppressed when the command started quiet", func() {
+			var out bytes.Buffer
+			cmdData := &CmdData{BuildReportOperations: lo.ToPtr(true)}
+			ctx, finish := InitOperationsStatistics(newCtx(level.Error, &out), cmdData)
+
+			opstats.Observe(ctx, opstats.OperationConfigRender)()
+			logboek.Context(ctx).SetAcceptedLevel(level.Default)
+			finish()
+
+			Expect(out.String()).To(BeEmpty())
+		})
 	})
 })

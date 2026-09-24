@@ -160,24 +160,16 @@ func (c *Collector) Summary() []OperationSummary {
 	return summarizeOperations(c.intervals, nil)
 }
 
-// FlushSummary returns the same stats as Summary but only for the intervals
-// recorded since the previous flush, and advances the flush mark. The build
-// report uses it so that a report covers only the build that wrote it even
-// when the collector spans the whole command (e.g. across --follow iterations).
-func (c *Collector) FlushSummary() []OperationSummary {
+// PendingSummary returns the same stats as Summary but only for the intervals
+// recorded since the last CommitFlush, without advancing the flush mark. The
+// build report uses the pending/commit pair so that a report covers only the
+// build that wrote it (e.g. across --follow iterations) and a failed report
+// write does not lose the pending observations.
+func (c *Collector) PendingSummary() []OperationSummary {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	res := summarizeOperations(c.intervals, c.flushedOps)
-
-	if c.flushedOps == nil {
-		c.flushedOps = make(map[Operation]int)
-	}
-	for op, intervals := range c.intervals {
-		c.flushedOps[op] = len(intervals)
-	}
-
-	return res
+	return summarizeOperations(c.intervals, c.flushedOps)
 }
 
 func summarizeOperations(intervalsByOp map[Operation][]interval, skipByOp map[Operation]int) []OperationSummary {
@@ -230,13 +222,28 @@ func (c *Collector) EventSummary() []EventSummary {
 	return summarizeEvents(c.events, nil)
 }
 
-// FlushEventSummary returns the counters accumulated since the previous flush
-// and advances the flush mark, mirroring FlushSummary.
-func (c *Collector) FlushEventSummary() []EventSummary {
+// PendingEventSummary returns the counters accumulated since the last
+// CommitFlush without advancing the flush mark, mirroring PendingSummary.
+func (c *Collector) PendingEventSummary() []EventSummary {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	res := summarizeEvents(c.events, c.flushedEvents)
+	return summarizeEvents(c.events, c.flushedEvents)
+}
+
+// CommitFlush advances the flush mark past everything recorded so far, so the
+// next Pending* calls return only later observations. Call it after the report
+// consuming the pending summaries has been successfully delivered.
+func (c *Collector) CommitFlush() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if c.flushedOps == nil {
+		c.flushedOps = make(map[Operation]int)
+	}
+	for op, intervals := range c.intervals {
+		c.flushedOps[op] = len(intervals)
+	}
 
 	if c.flushedEvents == nil {
 		c.flushedEvents = make(map[Event]int)
@@ -244,8 +251,6 @@ func (c *Collector) FlushEventSummary() []EventSummary {
 	for event, count := range c.events {
 		c.flushedEvents[event] = count
 	}
-
-	return res
 }
 
 func summarizeEvents(counts, skipCounts map[Event]int) []EventSummary {

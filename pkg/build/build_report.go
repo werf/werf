@@ -328,8 +328,9 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 
 	phase.ImagesReport.sendTelemetry(ctx)
 
-	if collector := opstats.FromContext(ctx); collector != nil {
-		phase.ImagesReport.SetOperationsSummary(collector.FlushSummary(), collector.FlushEventSummary())
+	collector := opstats.FromContext(ctx)
+	if collector != nil {
+		phase.ImagesReport.SetOperationsSummary(collector.PendingSummary(), collector.PendingEventSummary())
 	}
 
 	if phase.ReportPath != "" {
@@ -351,6 +352,10 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 		if err := os.WriteFile(phase.ReportPath, data, 0o644); err != nil {
 			return fmt.Errorf("unable to write report to %s: %w", phase.ReportPath, err)
 		}
+	}
+
+	if collector != nil {
+		collector.CommitFlush()
 	}
 
 	return nil
