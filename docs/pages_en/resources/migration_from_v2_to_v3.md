@@ -157,7 +157,7 @@ werf config list --final-images-only=false
 
 **Git stages are reused without checking commit ancestry.** The cached commit no longer has to be an ancestor of the current one. `WERF_DISABLE_GIT_COMMIT_ANCESTRY_CHECK` is removed.
 
-**Updating files from Git in legacy Stapel.** With the default `git.stageDependencies`, source changes rerun the build commands: no additional action is needed for this change. Updates affect files inside the image, not your Git working tree.
+**Updating files from Git in Stapel.** With the default `git.stageDependencies`, source changes rerun the build commands: no additional action is needed for this change. Updates affect files inside the image, not your Git working tree.
 
 Check configurations that **narrow `git.stageDependencies` and modify source files in build commands**. If Git changes such a file but the processing stage is reused from cache, the file is replaced with its Git version, losing the command's changes. Previously a conflict could stop the build; now it can succeed with unexpected image contents.
 
