@@ -7,21 +7,21 @@ First check compatibility with v2, then the changes to building, deployment and 
 
 ## Default behavior changes
 
-The comparison below uses the default settings in v2.79.1 and v3.6.0. If you enabled experimental features in v2, some changes already apply to your environment. Changes introduced within v3 are marked with their version.
+If you enabled experimental features in v2, some changes already apply to your environment. Versions are specified only where behavior changed within v3.
 
 These changes affect existing projects even without configuration edits:
-
-**Before the first `werf plan`, check [sensitive data redaction](#sensitive-data-in-diffs): the previous annotation no longer hides the entire resource.** This is especially important for shared CI logs.
 
 ### Building and caching
 
 | Where | Before — v2 | After — v3 | What to check or how to restore the previous behavior |
 |---|---|---|---|
 | Building and listing images | `build` builds and `config list` lists non-final images too. | Final images are selected by default; builds also include their required dependencies. | `--final-images-only=false`; [details](#which-images-are-built-and-listed). |
-| Git dependencies of stages | No direct Git-file dependency without `stageDependencies`. | All mapped files are tracked without explicit configuration. | Check masks; `[]` behaves differently before v3.6.0 — [details](#git-dependencies-of-build-stages). |
+| Git file changes | Without `stageDependencies`, file changes alone do not rerun Shell commands. | Without `stageDependencies`, changing any file added from Git triggers a rebuild from the first configured Shell stage (`install`, `beforeSetup` or `setup`) onward. Conceptually, this is like `COPY` before `RUN` in a Dockerfile. | Configure `stageDependencies` if not every file should trigger a rebuild; `[]` behaves differently before v3.6.0 — [details](#git-dependencies-of-build-stages). |
 | Import cache | Depends on selected files. | Depends on the source image. | Additional rebuilds are possible; [details](#file-imports). |
 
 ### Deployment and bundles
+
+**Before the first `werf plan`, check [sensitive data redaction](#sensitive-data-in-diffs): the previous annotation no longer hides the entire resource.** This is especially important for shared CI logs.
 
 | Where | Before — v2 | After — v3 | What to check or how to restore the previous behavior |
 |---|---|---|---|
