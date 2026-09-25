@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"sync"
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/samber/lo"
@@ -32,6 +33,9 @@ func IsImageDeletionFailedDueToUsingByContainerErr(err error) bool {
 
 type LocalStagesStorage struct {
 	ContainerBackend container_backend.ContainerBackend
+
+	imagesCacheMutex sync.Mutex
+	imagesCache      map[string]image.ImagesList
 }
 
 func NewLocalStagesStorage(containerBackend container_backend.ContainerBackend) *LocalStagesStorage {
@@ -109,13 +113,42 @@ func (storage *LocalStagesStorage) GetStagesIDs(ctx context.Context, projectName
 	return images.ConvertToStages()
 }
 
-func (storage *LocalStagesStorage) GetStagesIDsByDigest(ctx context.Context, projectName, digest string, parentStageCreationTs int64, _ ...Option) ([]image.StageID, error) {
-	imagesOpts := container_backend.ImagesOptions{}
-	imagesOpts.Filters = append(imagesOpts.Filters, util.NewPair("reference", fmt.Sprintf(FilterReferenceLocalStageByDigestFormat, projectName, digest)))
+func (storage *LocalStagesStorage) GetStagesIDsByDigest(ctx context.Context, projectName, digest string, parentStageCreationTs int64, opts ...Option) ([]image.StageID, error) {
+	withCache := makeOptions(opts...).withCache
+	reference := fmt.Sprintf(FilterReferenceLocalStageByDigestFormat, projectName, digest)
+	var images image.ImagesList
+	var cached bool
+	if withCache {
+		storage.imagesCacheMutex.Lock()
+		defer storage.imagesCacheMutex.Unlock()
+		images, cached = storage.imagesCache[projectName]
+		reference = fmt.Sprintf(LocalStage_ImageRepoFormat, projectName)
+	}
 
-	images, err := storage.ContainerBackend.Images(ctx, imagesOpts)
-	if err != nil {
-		return nil, fmt.Errorf("unable to get docker images: %w", err)
+	if !cached {
+		var err error
+		images, err = storage.ContainerBackend.Images(ctx, container_backend.ImagesOptions{
+			Filters: []util.Pair[string, string]{util.NewPair("reference", reference)},
+		})
+		if err != nil {
+			return nil, fmt.Errorf("unable to get docker images: %w", err)
+		}
+		if withCache {
+			if storage.imagesCache == nil {
+				storage.imagesCache = make(map[string]image.ImagesList)
+			}
+			storage.imagesCache[projectName] = images
+		}
+	}
+
+	if withCache {
+		prefix := projectName + ":" + digest
+		images = lo.FilterMap(images, func(summary image.Summary, _ int) (image.Summary, bool) {
+			summary.RepoTags = lo.Filter(summary.RepoTags, func(tag string, _ int) bool {
+				return strings.HasPrefix(tag, prefix)
+			})
+			return summary, len(summary.RepoTags) > 0
+		})
 	}
 
 	stagesIDs, err := images.ConvertToStages()
