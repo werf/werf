@@ -31,8 +31,8 @@ This article contains description of annotations which control werf resource ope
  - [`werf.io/show-logs-only-for-number-of-replicas`](#show-logs-only-for-number-of-replicas) — enable logging only for the specified number of replicas of the resource.
  - [`werf.io/show-logs-only-for-containers`](#show-logs-only-for-containers) — enable logging only for specified containers of the resource.
  - [`werf.io/show-service-messages`](#show-service-messages) — enable additional logging of Kubernetes related service messages for resource.
- - [`werf.io/sensitive`](#mark-resource-as-sensitive) — mark the resource as sensitive, so werf will not show diffs for this resource in `werf plan`.
- - [`werf.io/sensitive-paths`](#mark-fields-of-a-resource-as-sensitive) — mark the fields of a resource as sensitive, so werf will not show diffs for this resource in `werf plan`.
+ - [`werf.io/sensitive`](#mark-resource-as-sensitive) — redact the resource's `data.*` and `stringData.*` values in `werf plan` diffs.
+ - [`werf.io/sensitive-paths`](#mark-fields-of-a-resource-as-sensitive) — specify JSONPath expressions for fields whose values must be redacted in `werf plan` diffs.
 
 More info about chart templates and other stuff is available in the [helm chapter]({{ "usage/deploy/overview.html" | true_relative_url }}).
 
@@ -290,12 +290,20 @@ Set to `"true"` to enable additional real-time debugging info (including Kuberne
 `"werf.io/sensitive-paths": "JSONPath,JSONPath,..."`
 
 Example: \
-`"werf.io/sensitive-paths": "$.spec.template.spec.containers[*].env[*].value,$.data.*"`
+`"werf.io/sensitive-paths": "$.spec.template.spec.containers[*].env[*].value,$.data.*,$.stringData.*"`
 
-Don't show diffs for resource fields that match specified JSONPath expressions. Overrides the behavior of `werf.io/sensitive`.
+Redact values of fields matching the specified JSONPath expressions in diffs. A value is replaced with its length (or entry count) and hash, so changes to a hidden value remain visible. Fields outside the selected paths remain visible. A path selecting an entire object or list hides its contents as a whole.
+
+A non-empty path list takes precedence over `werf.io/sensitive`, including `"false"`, and **replaces**, rather than extends, the default paths. To keep Secret data redacted when adding custom paths, include `$.data.*` and `$.stringData.*`, as in the example. An empty or whitespace-only string does not override anything: `werf.io/sensitive` or the default behavior applies.
+
+**Check paths before printing diffs to shared logs.** Sensitive values outside the specified paths remain visible; `--show-sensitive-diffs` or `WERF_SHOW_SENSITIVE_DIFFS=true` disables value redaction in `werf plan` and `werf bundle plan` diffs.
 
 ## Mark resource as sensitive
 
 `"werf.io/sensitive": "true"|"false"`
 
-Set to `"true"` to mark the resource as sensitive, so werf will not show diffs for this resource in `werf plan`. By default, werf shows diffs for all resources, except Secrets.
+When set to `"true"`, werf redacts only `data.*` and `stringData.*` values in diffs, not the entire resource. Values are replaced with their length (or entry count) and hash; metadata, key names and other fields remain visible. This behavior is enabled by default for `v1/Secret` and disabled for other resources.
+
+Setting it to `"false"` disables this automatic redaction, including for Secrets. A non-empty `werf.io/sensitive-paths` list takes precedence over either value of this annotation.
+
+**For sensitive data in other fields, such as `spec.token`, `werf.io/sensitive: "true"` alone is not enough.** Specify them explicitly with [`werf.io/sensitive-paths`](#mark-fields-of-a-resource-as-sensitive), for example `"$.spec.token"`. These annotations control only diff redaction, not encryption of resources or secret files.
