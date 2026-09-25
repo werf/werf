@@ -64,8 +64,36 @@ var _ = ginkgo.Describe("Local stage lookup cache", func() {
 		ginkgo.Entry("another project with the same digest is excluded", image.ImagesList{
 			{RepoTags: []string{"other:" + cachedTagA}},
 		}, []string{}),
+		ginkgo.Entry("Buildah local reference", image.ImagesList{
+			{RepoTags: []string{"localhost/project:" + cachedTagA}},
+		}, []string{cachedTagA}),
+		ginkgo.Entry("Buildah aliases remain scoped to project and digest", image.ImagesList{
+			{RepoTags: []string{"localhost/project:" + cachedTagA, "localhost/project:" + cachedTagB, "localhost/other:" + cachedTagA2}},
+		}, []string{cachedTagA}),
+		ginkgo.Entry("another Buildah project is excluded", image.ImagesList{
+			{RepoTags: []string{"localhost/other:" + cachedTagA}},
+		}, []string{}),
+		ginkgo.Entry("another registry is excluded", image.ImagesList{
+			{RepoTags: []string{"registry.example/project:" + cachedTagA}},
+		}, []string{}),
+		ginkgo.Entry("a nested namespace is excluded", image.ImagesList{
+			{RepoTags: []string{"localhost/other/project:" + cachedTagA}},
+		}, []string{}),
 		ginkgo.Entry("empty snapshot", image.ImagesList{}, []string{}),
 	)
+
+	ginkgo.It("preserves fresh lookup results for short Buildah references", func(ctx ginkgo.SpecContext) {
+		backend := &localImageListBackendStub{images: image.ImagesList{
+			{RepoTags: []string{"localhost/project:" + cachedTagA}},
+		}}
+		storage := NewLocalStagesStorage(backend)
+		fresh, err := storage.GetStagesIDsByDigest(ctx, "project", cachedDigestA, 0)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		gomega.Expect(stageStrings(fresh)).To(gomega.ConsistOf(cachedTagA))
+		cached, err := storage.GetStagesIDsByDigest(ctx, "project", cachedDigestA, 0, WithCache())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		gomega.Expect(stageStrings(cached)).To(gomega.Equal(stageStrings(fresh)))
+	})
 
 	ginkgo.It("reports conversion errors of matching malformed tags", func(ctx ginkgo.SpecContext) {
 		backend := &localImageListBackendStub{images: image.ImagesList{{RepoTags: []string{"project:" + brokenTagA}}}}

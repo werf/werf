@@ -145,7 +145,7 @@ func (storage *LocalStagesStorage) GetStagesIDsByDigest(ctx context.Context, pro
 		prefix := projectName + ":" + digest
 		images = lo.FilterMap(images, func(summary image.Summary, _ int) (image.Summary, bool) {
 			summary.RepoTags = lo.Filter(summary.RepoTags, func(tag string, _ int) bool {
-				return strings.HasPrefix(tag, prefix)
+				return strings.HasPrefix(strings.TrimPrefix(tag, "localhost/"), prefix)
 			})
 			return summary, len(summary.RepoTags) > 0
 		})
