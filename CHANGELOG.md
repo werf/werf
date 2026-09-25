@@ -1,5 +1,33 @@
 # Changelog
 
+## [3.6.0](https://github.com/werf/werf/compare/v3.5.0...v3.6.0) (2026-09-25)
+
+
+### Features
+
+* **cleanup:** scan several kubernetes namespaces for used images ([59efb22](https://github.com/werf/werf/commit/59efb22c87f05b86b0cbdcaeb7e9e862788d1f7d))
+
+
+### Bug Fixes
+
+* **build, ci:** preserve embedded image tags and test embedded assets ([#7898](https://github.com/werf/werf/issues/7898)) ([86eb31b](https://github.com/werf/werf/commit/86eb31b68be08ddfb1f046e4c2c40a0f8088d54e))
+* **build, deploy:** fix stage reuse and release history regressions ([#7897](https://github.com/werf/werf/issues/7897)) ([2411186](https://github.com/werf/werf/commit/24111869737f4a64c1e506a95f1aff5e555032a7))
+* **build:** avoid panics on missing or rejected stages ([bbb08ad](https://github.com/werf/werf/commit/bbb08adf43c3ec5aedc9d556739a7122b6c84d16))
+* **build:** avoid redundant registry listings when publishing metadata ([8d5fb5a](https://github.com/werf/werf/commit/8d5fb5a33f5afc8bae5e07879303d49babce0a3d))
+* **build:** avoid slow startup on image cache misses ([1ba2e9f](https://github.com/werf/werf/commit/1ba2e9ff02be840589174060b94eeec6dedd6257))
+* **build:** avoid slow startup on image cache misses ([#7903](https://github.com/werf/werf/issues/7903)) ([905c0a5](https://github.com/werf/werf/commit/905c0a5731e469ced1e0b35a0dd03ebda459ca5d))
+* **build:** honor empty and partial git stage dependencies ([5a83a7a](https://github.com/werf/werf/commit/5a83a7a1cf9eedf3e07f49ff0cd890bbaea22041))
+* **build:** honor empty and partial git stage dependencies ([#7906](https://github.com/werf/werf/issues/7906)) ([dc9f5f6](https://github.com/werf/werf/commit/dc9f5f6e60bef14109ae7c84c035f7a5c6b722ba))
+* **build:** keep embedded stapel tags independent of runtime overrides ([8194eed](https://github.com/werf/werf/commit/8194eed2dc07f433d896e2355c15112e3655e3cf))
+* **build:** repair broken destination stages during registry copies ([dfa8b3e](https://github.com/werf/werf/commit/dfa8b3e46298ec7e71ebccbd94f633683aaa91da))
+* **build:** validate internal base image cycles when reading config ([d57b2fc](https://github.com/werf/werf/commit/d57b2fccd34c9e0da7d92d68971c98c5b8a5d785))
+* **cleanup:** restore explicit namespace selection for Kubernetes scans ([#7900](https://github.com/werf/werf/issues/7900)) ([2532c65](https://github.com/werf/werf/commit/2532c6514e508fcf5b47b6a2bd3cd40fd2ea36ea))
+* **cleanup:** stop import metadata cleanup leaking goroutines ([#7864](https://github.com/werf/werf/issues/7864)) ([5b7332f](https://github.com/werf/werf/commit/5b7332f09b36f20f30f5f336ec11ec03b7ec7113)), closes [#7862](https://github.com/werf/werf/issues/7862)
+* **deploy:** apply .helmignore when reading the chart ([#7830](https://github.com/werf/werf/issues/7830)) ([faf0672](https://github.com/werf/werf/commit/faf0672559893878c047656ed0753a35cff2487c))
+* **deploy:** honor the release history limit environment variable ([76a3c51](https://github.com/werf/werf/commit/76a3c5184319f3292ac5a08f628fccbbb883bb8d))
+* **host-cleanup:** speed up project stage discovery ([#7907](https://github.com/werf/werf/issues/7907)) ([b6c4a38](https://github.com/werf/werf/commit/b6c4a38e5d4c41977c60702b497e3cf3c56485a9))
+* **release:** relabel only merged releases of the current branch ([12c5004](https://github.com/werf/werf/commit/12c500418d6e21206388491aa7e058dd3c965506))
+
 ## [3.5.0](https://github.com/werf/werf/compare/v3.4.0...v3.5.0) (2026-09-22)
 
 
