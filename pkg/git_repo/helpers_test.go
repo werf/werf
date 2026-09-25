@@ -1,13 +1,30 @@
 package git_repo
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
 
+	"github.com/onsi/ginkgo/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/werf/werf/v3/test/pkg/utils"
 )
+
+func newChecksumTestRepo(ctx context.Context) string {
+	dir := ginkgo.GinkgoT().TempDir()
+	utils.RunSucceedCommand(ctx, dir, "git", "-c", "init.defaultBranch=main", "init")
+	utils.RunSucceedCommand(ctx, dir, "git", "config", "user.name", "Test")
+	utils.RunSucceedCommand(ctx, dir, "git", "config", "user.email", "test@example.com")
+	return dir
+}
+
+func commitChecksumTestRepo(ctx context.Context, dir string) {
+	utils.RunSucceedCommand(ctx, dir, "git", "add", ".")
+	utils.RunSucceedCommand(ctx, dir, "git", "-c", "commit.gpgsign=false", "-c", "user.name=Test", "-c", "user.email=test@example.com", "commit", "-m", "fixture")
+}
 
 func TestBasicAuthCredentialsHelper(t *testing.T) {
 	t.Run("nil config", func(t *testing.T) {
