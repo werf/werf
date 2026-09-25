@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.6.1](https://github.com/werf/werf/compare/v3.6.0...v3.6.1) (2026-09-25)
+
+
+### Bug Fixes
+
+* **build:** ship missing networking helpers in official images ([#7925](https://github.com/werf/werf/issues/7925)) ([7f1fded](https://github.com/werf/werf/commit/7f1fded10112dae77ea906334367910866cb963c))
+
 ## [3.6.0](https://github.com/werf/werf/compare/v3.5.0...v3.6.0) (2026-09-25)
 
 
