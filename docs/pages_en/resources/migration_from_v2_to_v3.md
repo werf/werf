@@ -5,6 +5,29 @@ permalink: resources/migration_from_v2_to_v3.html
 
 First check compatibility with v2, then the changes to building, deployment and registry cleanup. Removed features require changes before upgrading; deprecated keys still work with a warning.
 
+## Default behavior changes
+
+The comparison below uses the default settings in v2.79.1 and v3.6.0. If you enabled experimental features in v2, some changes already apply to your environment. Changes introduced within v3 are marked with their version.
+
+These changes affect existing projects even without configuration edits:
+
+| Where | Before — v2 | After — v3 | What to check or how to restore the previous behavior |
+|---|---|---|---|
+| Building and listing images | `build` builds and `config list` lists non-final images too. | Final images are selected by default; builds also include their required dependencies. | `--final-images-only=false`; [details](#which-images-are-built-and-listed). |
+| Git dependencies of stages | No direct Git-file dependency without `stageDependencies`. | All mapped files are tracked without explicit configuration. | Check masks; `[]` behaves differently before v3.6.0 — [details](#git-dependencies-of-build-stages). |
+| Import cache | Depends on selected files. | Depends on the source image. | Additional rebuilds are possible; [details](#file-imports). |
+| Resource validation | Schema validation is off without an experimental flag. | Enabled. | Fix manifests or configure exceptions; [details](#resource-and-values-validation). |
+| `patches.yaml` | Not applied automatically. | Files from the main chart and dependent charts are applied automatically. | Check their contents; disable with `--no-default-patches`; [details](#automatic-patches-and-null). |
+| `null` in manifests | Preserved without an experimental cleanup flag. | Fields and list entries whose value is `null` are removed. | Check CRDs and intentional `null` values; [details](#automatic-patches-and-null). |
+| Sensitive data in diffs | `Secret` resources and resources annotated with `werf.io/sensitive: "true"` are hidden except for identifying fields. | Only `data.*` and `stringData.*` are hidden by default. | Set sensitive paths **before running `plan`**; [details](#sensitive-data-in-diffs). |
+| Credentials in `ci-env` | `DOCKER_AUTH_CONFIG` requires explicit opt-in. | A non-empty variable is selected automatically unless the choice is explicit. | `--use-docker-auth-config=false`; [details](#registry-credentials). |
+| Service values | `.Values.global.env` is populated automatically. | `.Values.global.werf.env` is populated automatically; the old key is no longer populated. | Temporary compatibility: `WERF_LEGACY_VALUES_GLOBAL_ENV=1`; [details](#values-and-environment-variables). |
+| Release storage | `HELM_DRIVER` is honored if `WERF_RELEASE_STORAGE` is not set. | `WERF_RELEASE_STORAGE` is used; without it, the default storage applies. | Transfer the variable's value; [details](#values-and-environment-variables). |
+| Published chart name | `--helm-compatible-chart=false`. | `--helm-compatible-chart=true`. | Pass `false` if you need the previous name; [details](#charts-and-bundles). |
+| `.helmignore` | Does not filter files when werf reads the chart. | **Since v3.6.0**, filters files, including Helm's default rules. | Check exclusions before deploying; [details](#charts-and-bundles). |
+
+Removed features and deprecated keys are covered separately below: replacing them is not the same as restoring previous defaults.
+
 ## Compatibility with v2
 
 Running both versions or rolling back to v2 depends on shared configuration, secrets and registry state, not just the binaries:
@@ -263,6 +286,10 @@ Instead of `:latest`, specify the required tag (`:TAG`) or digest (`@sha256:...`
 
 ### Builders and image configuration
 
+**The legacy Docker builder is no longer available.** BuildKit was already the default in v2, but `DOCKER_BUILDKIT=0` or `false` allowed opting back into the old builder. In v3, this variable does not restore that mode: check your Dockerfiles and environment with BuildKit.
+
+`WERF_STAGED_DOCKERFILE_VERSION=v1` no longer selects the old staged Dockerfile implementation. Together with cache calculation changes, this requires a rebuild after moving from v2.
+
 **The Ansible builder is removed.** Rewrite `ansible:` steps using the Shell builder; renaming the key is not enough.
 
 **The `docker:` directive is removed.** Move its settings to `imageSpec.config`, translating field names and formats. For example, for a stapel image fragment:
@@ -311,7 +338,9 @@ See [Destination path rules]({{ "/usage/build/stapel/imports.html#destination-pa
 
 ### Git dependencies of build stages
 
-`git.stageDependencies` determines which Git file changes trigger stage rebuilds. In v3, **an omitted setting and an explicit empty list can mean different things**:
+`git.stageDependencies` determines which Git file changes trigger stage rebuilds. **The rules below apply starting with v3.6.0.** In v3.5.0 and earlier v3 versions, both an omitted stage setting and an explicit `[]` are replaced with `**/*`: an empty list does not disable the direct Git-file dependency there. Upgrade to v3.6.0 or later to use `[]` and the partially filled block rules below.
+
+Starting with v3.6.0, **an omitted setting and an explicit empty list can mean different things**:
 
 | Setting | Before — v2 | After — v3 |
 |---|---|---|
@@ -430,7 +459,27 @@ Limitations and compatibility:
 
 ## Deployment
 
-**Check `werf plan` before the first `werf converge`:** changes to values and file exclusion rules can affect manifests without a warning.
+**Before the first `werf plan`, check [sensitive data redaction](#sensitive-data-in-diffs)**, especially if other users can read your CI logs. Then review the plan before the first `werf converge`: changes to values, patches and file exclusion rules can affect manifests without a warning.
+
+### Sensitive data in diffs
+
+By default in v2, only identifying fields remained visible for `Secret` resources and any resource annotated with `werf.io/sensitive: "true"`: `apiVersion`, `kind`, `metadata.name` and `metadata.namespace`. In v3, only values at `data.*` and `stringData.*` are automatically hidden. Other fields, including metadata and secret key names, may be visible; hidden values are replaced with length and hash information.
+
+**The `werf.io/sensitive: "true"` annotation no longer guarantees redaction of an entire arbitrary resource.** If sensitive data is stored in fields such as `spec`, specify its JSONPath expressions with `werf.io/sensitive-paths`, for example `"$.spec.token"`. This annotation replaces the default path list rather than extending it: include `$.data.*` and `$.stringData.*` as well if you need to keep Secret data redacted. Check this before printing diffs to shared logs. This is independent of the encrypted file format: encrypting `secret-values.yaml` does not define redaction rules for fields in rendered resources.
+
+### Resource and values validation
+
+**Kubernetes resource schema validation is enabled by default.** In v2, it required an experimental flag. Manifests that previously passed may now be rejected before they are applied. Fix the resource or schema; use `--resource-validation-extra-schema` for additional schemas. The old `--local-resource-validation`, `--resource-validation-kube-version` and `--resource-validation-schema` flags are removed.
+
+If you need an exception, use `--resource-validation-skip`; disable all resource validation with `--no-resource-validation`. Do not disable validation for every resource just to accommodate one unsupported type.
+
+**`values.schema.json` validation already existed in v2, but error handling is stricter.** Previously, an error about forbidden service values could turn the entire validation result into a warning, including errors in user values. Now werf retries validation without service values and fails if user values do not match the schema. Fix the values or schema; temporarily disable this check with `--no-values-schema-validation`.
+
+### Automatic patches and null
+
+**`patches.yaml` from the main chart and its dependencies is now read automatically.** An existing file with this name that served another purpose may change manifests or cause an error. Check it before deploying. Disable automatic loading with `--no-default-patches` or `WERF_NO_DEFAULT_PATCHES=true`.
+
+**Fields and list entries whose value is `null` are now removed recursively.** In v2, this required an experimental flag. An absent field and an explicit `null` are not always equivalent for Kubernetes and CRDs, so check resources that intentionally use `null`. There is no switch to restore the previous behavior.
 
 ### Replacing removed werf helm commands
 
@@ -453,6 +502,10 @@ These are **workflow replacements, not drop-in aliases**. `converge`, `render` a
 
 `werf helm secret` and chart-management commands such as `werf helm dependency` remain available; the whole `werf helm` group has not been removed.
 
+### Uninstalling a release
+
+`werf dismiss` now always uses the new uninstall implementation, which v2 enabled with `WERF_EXPERIMENT_NEW_DISMISS`. The old implementation selector and `--with-hooks` flag are removed. Do not carry that flag into v3 scripts: check release and hook removal in a test environment. Deleting the namespace still requires `--with-namespace`.
+
 ### Values and environment variables
 
 | Where | Before — v2 | After — v3 |
@@ -466,7 +519,7 @@ Without replacing `HELM_DRIVER`, werf uses its default release storage rather th
 
 ### Charts and bundles
 
-**`.helmignore` now applies when reading the chart.** Excluded files disappear from the rendered manifests and the published bundle **without a warning**.
+**Starting with v3.6.0, `.helmignore` applies when reading the chart.** In v3.5.0 and earlier v3 versions, werf's own chart loader did not apply it. Excluded files disappear from the rendered manifests and the published bundle **without a warning**.
 
 - Even without `.helmignore`, Helm's default rules exclude dot-prefixed files and directories directly under `templates/`. Directories are excluded with their contents.
 - `**` now causes an error, although it previously had no effect.
@@ -501,6 +554,41 @@ Additional considerations:
 - Whole secret files use format 2; values in `secret-values.yaml` use format 3. Automatic format detection prevents a whole secret from being interpreted as YAML metadata.
 - Old encrypted scalars remain strings. To restore a number, boolean, timestamp or another type, re-enter the value with `werf helm secret values edit`.
 - **Comments on encrypted values are kept as cleartext. Do not put secrets in them.**
+
+## CI and scripts
+
+### Registry credentials
+
+`werf ci-env` now automatically uses a non-empty `DOCKER_AUTH_CONFIG` if neither `--use-docker-auth-config` nor `WERF_USE_DOCKER_AUTH_CONFIG` is set. In v2, this required explicit opt-in.
+
+With this choice, the Docker config is created from `DOCKER_AUTH_CONFIG` **instead of copying the existing config**, not merged with it. Credentials and credential helpers from the previous config may no longer be used. Restore the previous choice with `--use-docker-auth-config=false` or `WERF_USE_DOCKER_AUTH_CONFIG=false`.
+
+### Plan exit codes
+
+With `--exit-code` enabled, `werf plan` and `werf bundle plan` now always distinguish resource changes from release-only updates. In v2, the extended set of codes required an experimental flag.
+
+| Code | Meaning |
+|---|---|
+| `0` | No changes. |
+| `1` | An error. |
+| `2` | Resource changes are planned. |
+| `3` | Resources do not change, but the release needs to be installed or updated. |
+
+Update CI if it only accepts `0` and `2`. Code `3` is not an error, but is not a reason to automatically skip applying the plan either. Without `--exit-code`, a successful plan does not start returning `2` or `3`.
+
+### Build report format
+
+When reusing a completed image, the JSON build report may now contain `StagesSkipped: true` without a `Stages` field. In v2, `Stages` was present, although it could be `null`. Parsers must tolerate the missing field and not treat it as an error or as an indication that the image is not ready.
+
+### Removed flags and modes
+
+Check scripts that pass old options: a removed flag causes an argument parsing error even if it previously did nothing.
+
+- `--virtual-merge` / `WERF_VIRTUAL_MERGE`, `--skip-image-spec-stage` / `WERF_SKIP_IMAGE_SPEC_STAGE`, `--set-runtime-json` and `--show-verbose-diffs` are removed.
+- `--synchronization` / `-S` / `WERF_SYNCHRONIZATION` and the `werf synchronization` command group are removed — see [Synchronization server](#synchronization-server).
+- Helm mode via `WERF_HELM3_MODE` and invoking the werf binary under the name `helm` are removed; use supported werf commands or the standalone Helm CLI.
+- Positional image names in `converge` and `plan` now take effect without `WERF_CONVERGE_ENABLE_IMAGES_PARAMS`. Check that stray arguments have not become image selectors; selecting images does not by itself limit which Kubernetes resources are deployed.
+- `cleanup --kube-scan-namespaces`, available in v2.79.1, was absent in v3.5.0 but is available again starting with v3.6.0. If your script uses it, upgrade to v3.6.0 or later rather than dropping the namespace restriction without checking access permissions and image protection.
 
 ## Registry cleanup
 
