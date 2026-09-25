@@ -1,14 +1,19 @@
 package common
 
 import (
+	"bytes"
 	"context"
+	"io"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 
+	"github.com/werf/logboek"
+	"github.com/werf/logboek/pkg/level"
 	"github.com/werf/werf/v2/pkg/config"
+	"github.com/werf/werf/v2/pkg/opstats"
 )
 
 var _ = Describe("build report operations option", func() {
@@ -54,4 +59,68 @@ var _ = Describe("build report operations option", func() {
 		Entry("enabled", true),
 		Entry("disabled", false),
 	)
+
+	Describe("InitOperationsStatistics", func() {
+		newCtx := func(acceptedLevel level.Level, out io.Writer) context.Context {
+			logger := logboek.NewLogger(out, out)
+			logger.SetAcceptedLevel(acceptedLevel)
+			return logboek.NewContext(context.Background(), logger)
+		}
+
+		It("does not install a collector when disabled", func() {
+			cmdData := &CmdData{BuildReportOperations: lo.ToPtr(false)}
+			ctx, finish := InitOperationsStatistics(newCtx(level.Default, io.Discard), cmdData)
+			Expect(opstats.FromContext(ctx)).To(BeNil())
+			Expect(finish).NotTo(BeNil())
+		})
+
+		It("installs a command-scoped collector when the flag is set", func() {
+			cmdData := &CmdData{BuildReportOperations: lo.ToPtr(true)}
+			ctx, _ := InitOperationsStatistics(newCtx(level.Default, io.Discard), cmdData)
+			Expect(opstats.FromContext(ctx)).NotTo(BeNil())
+		})
+
+		It("installs a collector under debug logging without the flag", func() {
+			cmdData := &CmdData{BuildReportOperations: lo.ToPtr(false)}
+			ctx, _ := InitOperationsStatistics(newCtx(level.Debug, io.Discard), cmdData)
+			Expect(opstats.FromContext(ctx)).NotTo(BeNil())
+		})
+
+		It("prints the summary with the command time label on finish", func() {
+			var out bytes.Buffer
+			cmdData := &CmdData{BuildReportOperations: lo.ToPtr(true)}
+			ctx, finish := InitOperationsStatistics(newCtx(level.Default, &out), cmdData)
+
+			opstats.Observe(ctx, opstats.OperationConfigRender)()
+			finish()
+
+			Expect(out.String()).To(ContainSubstring("Operations summary"))
+			Expect(out.String()).To(ContainSubstring("config render"))
+			Expect(out.String()).To(ContainSubstring("command time:"))
+		})
+
+		It("prints the summary even when the accepted log level was lowered after installation", func() {
+			var out bytes.Buffer
+			cmdData := &CmdData{BuildReportOperations: lo.ToPtr(true)}
+			ctx, finish := InitOperationsStatistics(newCtx(level.Default, &out), cmdData)
+
+			opstats.Observe(ctx, opstats.OperationConfigRender)()
+			logboek.Context(ctx).SetAcceptedLevel(level.Error)
+			finish()
+
+			Expect(out.String()).To(ContainSubstring("command time:"))
+		})
+
+		It("keeps the summary suppressed when the command started quiet", func() {
+			var out bytes.Buffer
+			cmdData := &CmdData{BuildReportOperations: lo.ToPtr(true)}
+			ctx, finish := InitOperationsStatistics(newCtx(level.Error, &out), cmdData)
+
+			opstats.Observe(ctx, opstats.OperationConfigRender)()
+			logboek.Context(ctx).SetAcceptedLevel(level.Default)
+			finish()
+
+			Expect(out.String()).To(BeEmpty())
+		})
+	})
 })
