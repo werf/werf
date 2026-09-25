@@ -11,20 +11,39 @@ The comparison below uses the default settings in v2.79.1 and v3.6.0. If you ena
 
 These changes affect existing projects even without configuration edits:
 
+**Before the first `werf plan`, check [sensitive data redaction](#sensitive-data-in-diffs): the previous annotation no longer hides the entire resource.** This is especially important for shared CI logs.
+
+### Building and caching
+
 | Where | Before — v2 | After — v3 | What to check or how to restore the previous behavior |
 |---|---|---|---|
 | Building and listing images | `build` builds and `config list` lists non-final images too. | Final images are selected by default; builds also include their required dependencies. | `--final-images-only=false`; [details](#which-images-are-built-and-listed). |
 | Git dependencies of stages | No direct Git-file dependency without `stageDependencies`. | All mapped files are tracked without explicit configuration. | Check masks; `[]` behaves differently before v3.6.0 — [details](#git-dependencies-of-build-stages). |
 | Import cache | Depends on selected files. | Depends on the source image. | Additional rebuilds are possible; [details](#file-imports). |
+
+### Deployment and bundles
+
+| Where | Before — v2 | After — v3 | What to check or how to restore the previous behavior |
+|---|---|---|---|
 | Resource validation | Schema validation is off without an experimental flag. | Enabled. | Fix manifests or configure exceptions; [details](#resource-and-values-validation). |
 | `patches.yaml` | Not applied automatically. | Files from the main chart and dependent charts are applied automatically. | Check their contents; disable with `--no-default-patches`; [details](#automatic-patches-and-null). |
 | `null` in manifests | Preserved without an experimental cleanup flag. | Fields and list entries whose value is `null` are removed. | Check CRDs and intentional `null` values; [details](#automatic-patches-and-null). |
 | Sensitive data in diffs | `Secret` resources and resources annotated with `werf.io/sensitive: "true"` are hidden except for identifying fields. | Only `data.*` and `stringData.*` are hidden by default. | Set sensitive paths **before running `plan`**; [details](#sensitive-data-in-diffs). |
-| Credentials in `ci-env` | `DOCKER_AUTH_CONFIG` requires explicit opt-in. | A non-empty variable is selected automatically unless the choice is explicit. | `--use-docker-auth-config=false`; [details](#registry-credentials). |
 | Service values | `.Values.global.env` is populated automatically. | `.Values.global.werf.env` is populated automatically; the old key is no longer populated. | Temporary compatibility: `WERF_LEGACY_VALUES_GLOBAL_ENV=1`; [details](#values-and-environment-variables). |
 | Release storage | `HELM_DRIVER` is honored if `WERF_RELEASE_STORAGE` is not set. | `WERF_RELEASE_STORAGE` is used; without it, the default storage applies. | Transfer the variable's value; [details](#values-and-environment-variables). |
 | Published chart name | `--helm-compatible-chart=false`. | `--helm-compatible-chart=true`. | Pass `false` if you need the previous name; [details](#charts-and-bundles). |
 | `.helmignore` | Does not filter files when werf reads the chart. | **Since v3.6.0**, filters files, including Helm's default rules. | Check exclusions before deploying; [details](#charts-and-bundles). |
+
+### CI and automation
+
+| Where | Before — v2 | After — v3 | What to check or how to restore the previous behavior |
+|---|---|---|---|
+| Credentials in `ci-env` | `DOCKER_AUTH_CONFIG` requires explicit opt-in. | A non-empty variable is selected automatically unless the choice is explicit. | `--use-docker-auth-config=false`; [details](#registry-credentials). |
+
+**Separately — CI contract changes, not new defaults:**
+
+- With `--exit-code` enabled, code `3` means a release-only update — see [Plan exit codes](#plan-exit-codes).
+- When reusing an image, the JSON build report may contain `StagesSkipped: true` without `Stages` — see [Build report format](#build-report-format).
 
 Removed features and deprecated keys are covered separately below: replacing them is not the same as restoring previous defaults.
 
