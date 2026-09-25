@@ -16,7 +16,7 @@ These changes affect existing projects even without configuration edits:
 | Where | Before — v2 | After — v3 | What to check or how to restore the previous behavior |
 |---|---|---|---|
 | Building and listing images | `build` builds and `config list` lists non-final images too. | Final images are selected by default; builds also include their required dependencies. | `--final-images-only=false`; [details](#which-images-are-built-and-listed). |
-| Git file changes in Stapel | Without `stageDependencies`, file changes alone do not rerun Shell commands. | Without `stageDependencies`, changing any file added from Git triggers a rebuild from the first configured Shell stage (`install`, `beforeSetup` or `setup`) onward. Conceptually, this is like `COPY` before `RUN` in a Dockerfile. | Configure `stageDependencies` if not every file should trigger a rebuild; `[]` behaves differently before v3.6.0 — [details](#git-dependencies-of-build-stages). |
+| Git file changes in Stapel | Without `stageDependencies`, file changes alone do not rerun Shell commands. | Without `stageDependencies`, changing any file added from Git triggers a rebuild from the first configured Shell stage (`install`, `beforeSetup` or `setup`) onward. Conceptually, this is like `COPY` before `RUN` in a Dockerfile. | Configure `stageDependencies` if not every file should trigger a rebuild — [details](#git-dependencies-of-build-stages). |
 | File import cache in Stapel | Depends on selected files. | Depends on the source image. | Additional rebuilds are possible; [details](#file-imports). |
 
 ### Deployment and bundles
