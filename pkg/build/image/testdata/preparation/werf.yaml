@@ -1,0 +1,10 @@
+configVersion: 1
+project: preparation
+gitWorktree:
+  allowUnshallow: true
+---
+image: [app, other]
+from: scratch
+git:
+- add: /
+  to: /src

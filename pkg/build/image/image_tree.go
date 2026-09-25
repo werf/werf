@@ -18,6 +18,7 @@ import (
 	"github.com/werf/werf/v3/pkg/git_repo"
 	"github.com/werf/werf/v3/pkg/giterminism_manager"
 	"github.com/werf/werf/v3/pkg/logging"
+	"github.com/werf/werf/v3/pkg/util/parallel"
 )
 
 type ImagesTree struct {
@@ -35,7 +36,8 @@ type ImagesTree struct {
 type ImagesTreeOptions struct {
 	CommonImageOptions
 
-	ImagesToProcess config.ImagesToProcess
+	ImagesToProcess     config.ImagesToProcess
+	RemoteGitTasksLimit int
 }
 
 func NewImagesTree(werfConfig *config.WerfConfig, opts ImagesTreeOptions) *ImagesTree {
@@ -61,7 +63,14 @@ func (tree *ImagesTree) Calculate(ctx context.Context) error {
 		commonTargetPlatforms = []string{tree.ContainerBackend.GetDefaultPlatform()}
 	}
 
+	if err := tree.prepareRemoteGitRepos(ctx, imagesToProcess); err != nil {
+		return err
+	}
+
 	commonImageOpts := tree.CommonImageOptions
+	commonImageOpts.prepareLocalGitRepo = sync.OnceValue(func() error {
+		return prepareLocalGitRepo(ctx, tree.werfConfig.Meta, tree.GiterminismManager.LocalGitRepo())
+	})
 
 	var allImages []*Image
 
@@ -148,6 +157,47 @@ func (tree *ImagesTree) Calculate(ctx context.Context) error {
 	return nil
 }
 
+func (tree *ImagesTree) prepareRemoteGitRepos(ctx context.Context, images []config.ImageInterface) error {
+	if tree.RemoteGitTasksLimit <= 1 {
+		return nil
+	}
+
+	var remotes []*config.GitRemote
+	seenMirrors := make(map[string]bool)
+	seenNames := make(map[string]bool)
+	for _, imageConfig := range images {
+		stapelConfig, ok := imageConfig.(config.StapelImageInterface)
+		if !ok {
+			continue
+		}
+		for _, remote := range stapelConfig.ImageBaseConfig().Git.Remote {
+			if seenNames[remote.Name] || tree.Conveyor.GetRemoteGitRepo(remote.RepoCacheKey) != nil {
+				continue
+			}
+			repo, err := git_repo.OpenRemoteRepo(remote.Name, remote.Url, remote.BasicAuth)
+			if err != nil {
+				return fmt.Errorf("open remote git repo %s: %w", remote.Name, err)
+			}
+			// Before fetching, GetClonePath identifies the shared full mirror, including URL aliases.
+			mirrorPath := repo.GetClonePath()
+			if seenMirrors[mirrorPath] {
+				continue
+			}
+			seenMirrors[mirrorPath] = true
+			seenNames[remote.Name] = true
+			remotes = append(remotes, remote)
+		}
+	}
+	if len(remotes) == 0 {
+		return nil
+	}
+
+	return parallel.DoTasks(ctx, len(remotes), parallel.DoTasksOptions{MaxNumberOfWorkers: tree.RemoteGitTasksLimit}, func(ctx context.Context, taskID int) error {
+		_, err := prepareRemoteGitRepo(ctx, remotes[taskID], tree.Conveyor)
+		return err
+	})
+}
+
 type GetImagesByNameOption func(*getImagesByNameConfig)
 
 type getImagesByNameConfig struct {
@@ -227,7 +277,7 @@ func (tree *ImagesTree) GetImagesNames() (res []string) {
 	for _, img := range tree.images {
 		res = util.UniqAppendString(res, img.Name)
 	}
-	return
+	return res
 }
 
 func (tree *ImagesTree) GetImages() []*Image {

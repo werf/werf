@@ -1,0 +1,26 @@
+configVersion: 1
+project: remote-preparation
+---
+image: [app, other]
+from: scratch
+git:
+- url: %[1]s/one.git
+  commit: %[2]s
+  add: /
+  to: /one
+- url: %[1]s/two.git
+  commit: %[2]s
+  add: /
+  to: /two
+- url: %[1]s/three.git
+  commit: %[2]s
+  add: /
+  to: /three
+---
+image: excluded
+from: scratch
+git:
+- url: %[1]s/excluded.git
+  commit: %[2]s
+  add: /
+  to: /excluded
