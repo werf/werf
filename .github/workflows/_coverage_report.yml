@@ -28,5 +28,6 @@ jobs:
         with:
           token: ${{secrets.QLTY_COVERAGE_TOKEN}}
           files: coverage/coverage-*/*.out
+          strip-prefix: github.com/werf/werf/v3/
           validate: false
           skip-errors: false
