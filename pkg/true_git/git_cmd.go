@@ -32,8 +32,8 @@ func NewGitCmd(ctx context.Context, opts *GitCmdOptions, cliArgs ...string) GitC
 
 	gitCmd.Dir = opts.RepoDir
 
-	if len(opts.Env) > 0 {
-		gitCmd.Cmd.Env = append(os.Environ(), opts.Env...)
+	if len(sshMultiplexingEnv) > 0 || len(opts.Env) > 0 {
+		gitCmd.Cmd.Env = append(append(os.Environ(), sshMultiplexingEnv...), opts.Env...)
 	}
 
 	stdoutBuffs := []io.Writer{gitCmd.OutBuf, gitCmd.OutErrBuf}
