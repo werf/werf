@@ -419,13 +419,14 @@ func walkSubmodule(ctx context.Context, parentModuleDir, parentWorktreeModuleDir
 
 // submoduleNameUnsafe rejects a repo-controlled name that cannot be carried safely by a
 // `-c submodule.<name>.url` option: `=` ends the config key early, so the rest of the name becomes
-// part of the URL value git uses, and a `.`/`..`/empty path component moves the store path the name
-// is joined into outside modules/. A plain `/` is allowed: git itself defaults a submodule's name to
-// its path, and stores it under the same nested modules/<name> layout the name is joined into here.
-// The fixed `submodule.` prefix keeps such a name out of unrelated config keys. .gitmodules is
-// repo-controlled and `git config -f` does not reject these itself.
+// part of the URL value git uses, and a `.`/`..`/empty path component makes the store path the name
+// is joined into resolve somewhere other than the name reads, with `..` climbing out of modules/
+// entirely. A plain `/` is allowed: git itself defaults a submodule's name to its path, and stores it
+// under the same nested modules/<name> layout the name is joined into here. The fixed `submodule.`
+// prefix keeps such a name out of unrelated config keys. .gitmodules is repo-controlled and
+// `git config -f` does not reject these itself.
 func submoduleNameUnsafe(name string) bool {
-	if name == "" || strings.ContainsAny(name, "=\n\\") {
+	if strings.ContainsAny(name, "=\n\\") {
 		return true
 	}
 	for _, component := range strings.Split(name, "/") {

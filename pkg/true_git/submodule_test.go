@@ -94,8 +94,8 @@ var _ = Describe("submoduleNameUnsafe", func() {
 		Entry("backslash moves the store path on windows", "a\\b", true),
 		Entry("single dot resolves to the store parent", ".", true),
 		Entry("double dot escapes the store", "..", true),
-		Entry("a dot component escapes the nested store path", "foo/./bar", true),
-		Entry("a double-dot component escapes the nested store path", "foo/../bar", true),
+		Entry("a dot component makes the store path resolve elsewhere", "foo/./bar", true),
+		Entry("a double-dot component climbs out of the nested store path", "foo/../bar", true),
 		Entry("a leading double-dot component escapes the store", "../evil", true),
 		Entry("a trailing double-dot component escapes the store", "foo/..", true),
 		Entry("an empty component from a doubled slash", "a//b", true),
@@ -724,9 +724,10 @@ var _ = Describe("submodule local object store reuse", func() {
 		})
 
 		// A `/` in the name is legitimate — git itself produces one for a nested path — but the name is
-		// joined into the store path, so a `.`/`..`/empty component of it would move that path out of
-		// modules/ and point the override at a directory the superproject never populated.
-		DescribeTable("blocks on a committed submodule name whose path components escape the store",
+		// joined into the store path, so a `.`/`..`/empty component of it makes that path resolve
+		// somewhere other than the name reads and point the override at a directory the superproject
+		// never populated.
+		DescribeTable("blocks on a committed submodule name whose path components move the store path",
 			func(ctx SpecContext, name string, gitIgnoresName bool) {
 				subRemote := filepath.Join(baseDir, "sub-remote")
 				gitInitRepoWithFile(ctx, subRemote, "file.txt", "hello")
