@@ -150,18 +150,54 @@ func (phase *BuildPhase) calculateAnchorDigests(ctx context.Context) error {
 		return nil
 	}
 
-	for _, img := range graph.Nodes() {
+	nodes := graph.Nodes()
+	calculate := func(ctx context.Context, img *image.Image) error {
 		dependencies := graph.Dependencies(img)
 		if !canCalculateAnchorDigest(img, dependencies) {
-			continue
+			return nil
 		}
 
-		if err := phase.calculateAnchorDigest(ctx, img, dependencies, false); err != nil {
-			return err
-		}
+		return phase.calculateAnchorDigest(ctx, img, dependencies, false)
 	}
 
-	return nil
+	workers := phase.prepassWorkers(len(nodes))
+	if workers <= 1 {
+		for _, img := range nodes {
+			if err := calculate(ctx, img); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}
+
+	scheduler := newGraphScheduler(graph)
+
+	return parallel.DoTasksDynamic(ctx, parallel.DoTasksOptions{MaxNumberOfWorkers: workers}, scheduler.next, func(ctx context.Context, taskID int) error {
+		img := nodes[taskID]
+		if err := calculate(ctx, img); err != nil {
+			return err
+		}
+		scheduler.complete(img)
+
+		return nil
+	})
+}
+
+// prepassWorkers keeps the anchor prepass sequential unless the build itself is
+// parallel, so a build that a user asked to run one image at a time does not
+// start talking to the storage concurrently.
+func (phase *BuildPhase) prepassWorkers(numberOfTasks int) int {
+	if !phase.Conveyor.Parallel || numberOfTasks <= 1 {
+		return 1
+	}
+
+	workers := int(phase.Conveyor.ParallelTasksLimit)
+	if workers <= 0 || workers > numberOfTasks {
+		workers = numberOfTasks
+	}
+
+	return workers
 }
 
 func canCalculateAnchorDigest(img *image.Image, dependencies []*image.Image) bool {
@@ -217,25 +253,42 @@ func (phase *BuildPhase) resolveAvailableContentAnchors(ctx context.Context) err
 		return nil
 	}
 
-	prepass := *phase
-	prepass.anchorPrepass = true
-	for _, img := range graph.Nodes() {
+	nodes := graph.Nodes()
+	resolve := func(ctx context.Context, img *image.Image) error {
 		img.Requested = phase.isRequestedImage(img)
 		if img.GetAnchorDigest() == "" {
-			continue
+			return nil
 		}
+
+		prepass := *phase
+		prepass.anchorPrepass = true
+		prepass.StagesIterator = NewStagesIterator(phase.Conveyor)
 
 		var outBuf, errBuf bytes.Buffer
 		resolveCtx := logboek.NewContext(ctx, logboek.Context(ctx).NewSubLogger(&outBuf, &errBuf))
-		prepass.StagesIterator = NewStagesIterator(phase.Conveyor)
 		if err := prepass.resolveContentAnchor(resolveCtx, img, false); err != nil {
 			return fmt.Errorf("image %q: %w", img.Name, err)
 		}
 		img.ContentAnchorOutLog = bytes.Clone(outBuf.Bytes())
 		img.ContentAnchorErrLog = bytes.Clone(errBuf.Bytes())
+
+		return nil
 	}
 
-	return nil
+	workers := phase.prepassWorkers(len(nodes))
+	if workers <= 1 {
+		for _, img := range nodes {
+			if err := resolve(ctx, img); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}
+
+	return parallel.DoTasks(ctx, len(nodes), parallel.DoTasksOptions{MaxNumberOfWorkers: workers}, func(ctx context.Context, taskID int) error {
+		return resolve(ctx, nodes[taskID])
+	})
 }
 
 func (phase *BuildPhase) skipUnneededImages() {
