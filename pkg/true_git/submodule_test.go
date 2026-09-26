@@ -2,6 +2,7 @@ package true_git
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -90,11 +91,21 @@ var _ = Describe("submoduleNameUnsafe", func() {
 		},
 		Entry("equals sign ends the config key early", "a=b", true),
 		Entry("newline splits the config key", "a\nb", true),
-		Entry("slash moves the store path", "a/b", true),
 		Entry("backslash moves the store path on windows", "a\\b", true),
 		Entry("single dot resolves to the store parent", ".", true),
 		Entry("double dot escapes the store", "..", true),
+		Entry("a dot component escapes the nested store path", "foo/./bar", true),
+		Entry("a double-dot component escapes the nested store path", "foo/../bar", true),
+		Entry("a leading double-dot component escapes the store", "../evil", true),
+		Entry("a trailing double-dot component escapes the store", "foo/..", true),
+		Entry("an empty component from a doubled slash", "a//b", true),
+		Entry("an empty trailing component", "a/", true),
+		Entry("an empty leading component is an absolute path", "/a", true),
+		Entry("an empty name", "", true),
 		Entry("plain name", "sub", false),
+		// git names a submodule after its path by default, and stores it under the same nested
+		// modules/<name> layout the name is joined into here.
+		Entry("a nested path name git itself produces", "third_party/libnvidia-container", false),
 		Entry("dash, underscore and dot inside are fine", "my-sub_2.0", false),
 		Entry("a dot-prefixed name is not a dot component", ".sub", false),
 		Entry("a name ending in a dot is not a dot component", "sub.", false),
@@ -156,6 +167,32 @@ var _ = Describe("submodule local object store reuse", func() {
 		Expect(updateSubmodules(ctx, superGitDir, workTreeDir)).To(Succeed())
 
 		expectFileContent(filepath.Join(workTreeDir, "sub", "file.txt"), "hello")
+	})
+
+	// `git submodule add <url> third_party/sub` names the submodule after its path, and git stores it
+	// at modules/third_party/sub. Such a name is what most real superprojects carry, so it must not
+	// cost them reuse.
+	It("checks a submodule named after a nested path out from the local store", func(ctx SpecContext) {
+		subRemote := filepath.Join(baseDir, "sub-remote")
+		gitInitRepoWithFile(ctx, subRemote, "file.txt", "hello")
+
+		gitInitRepo(ctx, superRepo)
+		gitAddSubmoduleSucceed(ctx, superRepo, subRemote, "third_party/sub")
+		gitSucceed(ctx, superRepo, "commit", "-m", "add submodule")
+
+		name := gitSucceedTrimmed(ctx, superRepo, "config", "-f", ".gitmodules", "--name-only", "--get-regexp", `\.path$`)
+		Expect(name).To(Equal("submodule.third_party/sub.path"), "the spec is only meaningful while git names the submodule after its nested path")
+		Expect(filepath.Join(superGitDir, "modules", "third_party", "sub")).To(BeADirectory())
+
+		// No remote left to fall back to: the checkout can only come from the local store.
+		Expect(os.RemoveAll(subRemote)).To(Succeed())
+
+		addWorkTree(ctx, headSHA(ctx, superRepo))
+
+		Expect(syncSubmodules(ctx, superGitDir, workTreeDir)).To(Succeed())
+		Expect(updateSubmodules(ctx, superGitDir, workTreeDir)).To(Succeed())
+
+		expectFileContent(filepath.Join(workTreeDir, "third_party", "sub", "file.txt"), "hello")
 	})
 
 	It("checks a nested submodule out from the local store when every remote is gone", func(ctx SpecContext) {
@@ -685,6 +722,48 @@ var _ = Describe("submodule local object store reuse", func() {
 			Expect(updateSubmodules(ctx, superGitDir, workTreeDir)).To(Succeed())
 			expectFileContent(filepath.Join(workTreeDir, "sub", "file.txt"), "hello")
 		})
+
+		// A `/` in the name is legitimate — git itself produces one for a nested path — but the name is
+		// joined into the store path, so a `.`/`..`/empty component of it would move that path out of
+		// modules/ and point the override at a directory the superproject never populated.
+		DescribeTable("blocks on a committed submodule name whose path components escape the store",
+			func(ctx SpecContext, name string, gitIgnoresName bool) {
+				subRemote := filepath.Join(baseDir, "sub-remote")
+				gitInitRepoWithFile(ctx, subRemote, "file.txt", "hello")
+
+				gitInitRepo(ctx, superRepo)
+				gitAddSubmoduleSucceed(ctx, superRepo, subRemote, "sub")
+				gitSucceed(ctx, superRepo, "commit", "-m", "add submodule")
+
+				// git offers no way to commit such a name, so write .gitmodules directly. The store the
+				// legitimate `submodule add` produced stays in place, so nothing else can block reuse.
+				gitmodules := "[submodule \"" + name + "\"]\n\tpath = sub\n\turl = " + subRemote + "\n"
+				Expect(os.WriteFile(filepath.Join(superRepo, ".gitmodules"), []byte(gitmodules), 0o644)).To(Succeed())
+				gitSucceed(ctx, superRepo, "add", ".gitmodules")
+				gitSucceed(ctx, superRepo, "commit", "-m", "rename the submodule to a hostile name")
+
+				expectReuseBlocked(ctx, superRepo, fmt.Sprintf("unsupported submodule name %q", name))
+
+				allowFileTransport()
+				addWorkTree(ctx, headSHA(ctx, superRepo))
+				Expect(syncSubmodules(ctx, superGitDir, workTreeDir)).To(Succeed())
+				// git carries its own guard against a `..` name (CVE-2018-11235) and ignores such an entry
+				// outright, leaving the submodule without a URL; werf's blocker is what keeps the store path
+				// out of a -c option before that. A `.` component git accepts, so there the plain remote
+				// update must still complete.
+				if gitIgnoresName {
+					err := updateSubmodules(ctx, superGitDir, workTreeDir)
+					Expect(err).To(HaveOccurred())
+					Expect(err.Error()).To(ContainSubstring("ignoring suspicious submodule name: " + name))
+					return
+				}
+				Expect(updateSubmodules(ctx, superGitDir, workTreeDir)).To(Succeed())
+				expectFileContent(filepath.Join(workTreeDir, "sub", "file.txt"), "hello")
+			},
+			Entry("a double-dot component climbs back out of modules/", "foo/../bar", true),
+			Entry("a leading double-dot component escapes the store outright", "../evil", true),
+			Entry("a dot component still resolves elsewhere than the name reads", "foo/./bar", false),
+		)
 	})
 
 	// .gitmodules is committed content git validates in no way. Both of these must be ignored the
