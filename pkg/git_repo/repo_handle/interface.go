@@ -38,6 +38,12 @@ func NewHandle(repository *git.Repository) (Handle, error) {
 	return newHandleWithSubmodules(repository, &sync.Mutex{})
 }
 
+// NewHandleWithoutSubmodules reads objects without a worktree. The caller must
+// verify that the commit being read has no submodules.
+func NewHandleWithoutSubmodules(repository *git.Repository) Handle {
+	return newHandle(repository, &sync.Mutex{})
+}
+
 func newHandleWithSubmodules(repository *git.Repository, mutex *sync.Mutex) (Handle, error) {
 	h := newHandle(repository, mutex)
 

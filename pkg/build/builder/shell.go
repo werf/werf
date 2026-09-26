@@ -6,7 +6,9 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"slices"
 	"strings"
+	"sync"
 
 	"gopkg.in/oleiade/reflections.v1"
 
@@ -27,14 +29,23 @@ type Extra struct {
 }
 
 type Shell struct {
-	config      *config.Shell
-	extra       *Extra
-	secrets     []config.Secret
-	sshAuthSock string
+	config         *config.Shell
+	extra          *Extra
+	secrets        []config.Secret
+	sshAuthSock    string
+	checksumMutex  sync.Mutex
+	stageChecksums map[string]string
 }
 
+// NewShellBuilder snapshots commands and cache versions so execution and cached
+// checksums cannot diverge when the caller changes its configuration.
 func NewShellBuilder(config *config.Shell, extra *Extra, secrets []config.Secret, sshAuthSock string) *Shell {
-	return &Shell{config: config, extra: extra, secrets: secrets, sshAuthSock: sshAuthSock}
+	shellConfig := *config
+	shellConfig.BeforeInstall = slices.Clone(config.BeforeInstall)
+	shellConfig.Install = slices.Clone(config.Install)
+	shellConfig.BeforeSetup = slices.Clone(config.BeforeSetup)
+	shellConfig.Setup = slices.Clone(config.Setup)
+	return &Shell{config: &shellConfig, extra: extra, secrets: secrets, sshAuthSock: sshAuthSock}
 }
 
 func (b *Shell) IsBeforeInstallEmpty(ctx context.Context) bool {
@@ -120,6 +131,20 @@ func (b *Shell) stage(cr container_backend.ContainerBackend, stageBuilder stage_
 }
 
 func (b *Shell) stageChecksum(ctx context.Context, userStageName string) string {
+	b.checksumMutex.Lock()
+	defer b.checksumMutex.Unlock()
+	if checksum, ok := b.stageChecksums[userStageName]; ok {
+		return checksum
+	}
+	checksum := b.calculateStageChecksum(ctx, userStageName)
+	if b.stageChecksums == nil {
+		b.stageChecksums = make(map[string]string)
+	}
+	b.stageChecksums[userStageName] = checksum
+	return checksum
+}
+
+func (b *Shell) calculateStageChecksum(ctx context.Context, userStageName string) string {
 	var checksumArgs []string
 
 	checksumArgs = append(checksumArgs, b.stageCommands(userStageName)...)

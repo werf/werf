@@ -35,6 +35,8 @@ const (
 )
 
 type CommonImageOptions struct {
+	prepareLocalGitRepo func() error
+
 	Conveyor           Conveyor
 	GiterminismManager *giterminism_manager.Manager
 	ContainerBackend   container_backend.ContainerBackend
