@@ -55,16 +55,23 @@ func (r *DockerRegistryWithCache) Tags(ctx context.Context, reference string, op
 func (r *DockerRegistryWithCache) tryLoadTagsFromCache(cachedTagsID string, opts ...Option) ([]string, bool) {
 	o := makeOptions(opts...)
 	value, ok := r.cachedTagsMap.Load(cachedTagsID)
-	if !ok || !o.cachedTags {
+	if !ok {
 		return nil, false
 	}
 
-	tagsList, err := castTagsList(value)
+	entry, err := castTagsEntry(value)
 	if err != nil {
 		return nil, false
 	}
 
-	return tagsList, true
+	if o.cachedTags {
+		return entry.tags, true
+	}
+	if o.tagsMaxAge > 0 && time.Since(entry.updatedAt) <= o.tagsMaxAge {
+		return entry.tags, true
+	}
+
+	return nil, false
 }
 
 func (r *DockerRegistryWithCache) getTagsListFromRegistry(ctx context.Context, reference string, opts ...Option) ([]string, error) {
@@ -94,8 +101,17 @@ func (r *DockerRegistryWithCache) getTagsListFromRegistry(ctx context.Context, r
 		return nil, err
 	}
 
-	r.cachedTagsMap.Store(cachedTagsID, newTagsList)
+	r.storeTagsToCache(cachedTagsID, newTagsList)
 	return newTagsList, nil
+}
+
+func (r *DockerRegistryWithCache) storeTagsToCache(cachedTagsID string, tags []string) {
+	r.cachedTagsMap.Store(cachedTagsID, tagsCacheEntry{tags: tags, updatedAt: time.Now()})
+}
+
+type tagsCacheEntry struct {
+	tags      []string
+	updatedAt time.Time
 }
 
 func castTagsList(tagsList interface{}) ([]string, error) {
@@ -104,6 +120,15 @@ func castTagsList(tagsList interface{}) ([]string, error) {
 		return v, nil
 	default:
 		return nil, fmt.Errorf("unexpected type %T for tags", v)
+	}
+}
+
+func castTagsEntry(value interface{}) (tagsCacheEntry, error) {
+	switch v := value.(type) {
+	case tagsCacheEntry:
+		return v, nil
+	default:
+		return tagsCacheEntry{}, fmt.Errorf("unexpected type %T for tags cache entry", v)
 	}
 }
 
@@ -186,7 +211,7 @@ func (r *DockerRegistryWithCache) startBackgroundCacheUpdater(ctx context.Contex
 								return err
 							}
 
-							r.cachedTagsMap.Store(repo, tags)
+							r.storeTagsToCache(repo, tags)
 							logboek.Context(ctx).Debug().LogF("Updated tag cache for %q\n", repo)
 							return nil
 						}); err != nil {

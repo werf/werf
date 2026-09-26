@@ -28,7 +28,26 @@ import (
 
 var ErrUnexpectedStagesStorageState = errors.New("unexpected stages storage state")
 
-const maxRetryAttemptsOnUnexpectedStagesStorageState = 4
+const (
+	maxRetryAttemptsOnUnexpectedStagesStorageState = 4
+
+	stagesTagListMaxAgeEnvVar  = "WERF_STAGES_TAG_LIST_MAX_AGE"
+	stagesTagListMaxAgeDefault = 1 * time.Minute
+)
+
+func getStagesTagListMaxAge() time.Duration {
+	value := strings.TrimSpace(os.Getenv(stagesTagListMaxAgeEnvVar))
+	if value == "" {
+		return stagesTagListMaxAgeDefault
+	}
+
+	parsed, err := time.ParseDuration(value)
+	if err != nil || parsed < 0 {
+		return stagesTagListMaxAgeDefault
+	}
+
+	return parsed
+}
 
 func IsErrUnexpectedStagesStorageState(err error) bool {
 	if err != nil {
@@ -780,7 +799,11 @@ func (m *StorageManager) GetStageDescSetByDigestFromStagesStorageWithCache(ctx c
 		return cachedStageDescSet, nil
 	}
 
-	return m.getStageDescSetByDigestFromStagesStorage(ctx, stageName, stageDigest, parentStageCreationTs, stagesStorage)
+	// A cache miss here almost always means the stage simply is not built yet. Re-listing the
+	// whole repo on every miss serializes into the dominant cost of large builds, so a recent
+	// listing is accepted instead: a stage pushed by a concurrent process within that window is
+	// still caught by the fresh check after the stage is built.
+	return m.getStageDescSetByDigestFromStagesStorage(ctx, stageName, stageDigest, parentStageCreationTs, stagesStorage, storage.WithCacheMaxAge(getStagesTagListMaxAge()))
 }
 
 func (m *StorageManager) GetStageDescSetByDigestFromStagesStorage(ctx context.Context, stageName, stageDigest string, parentStageCreationTs int64, stagesStorage storage.StagesStorage) (image.StageDescSet, error) {
