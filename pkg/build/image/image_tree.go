@@ -9,6 +9,7 @@ import (
 	"slices"
 	"sort"
 	"sync"
+	"sync/atomic"
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
@@ -162,39 +163,49 @@ func (tree *ImagesTree) prepareRemoteGitRepos(ctx context.Context, images []conf
 		return nil
 	}
 
-	var remotes []*config.GitRemote
-	seenMirrors := make(map[string]bool)
-	seenNames := make(map[string]bool)
+	var mirrors [][]*config.GitRemote
+	mirrorIndexes := make(map[string]int)
+	seenKeys := make(map[string]bool)
 	for _, imageConfig := range images {
 		stapelConfig, ok := imageConfig.(config.StapelImageInterface)
 		if !ok {
 			continue
 		}
 		for _, remote := range stapelConfig.ImageBaseConfig().Git.Remote {
-			if seenNames[remote.Name] || tree.Conveyor.GetRemoteGitRepo(remote.RepoCacheKey) != nil {
+			if seenKeys[remote.RepoCacheKey] || tree.Conveyor.GetRemoteGitRepo(remote.RepoCacheKey) != nil {
 				continue
 			}
+			seenKeys[remote.RepoCacheKey] = true
 			repo, err := git_repo.OpenRemoteRepo(remote.Name, remote.Url, remote.BasicAuth)
 			if err != nil {
 				return fmt.Errorf("open remote git repo %s: %w", remote.Name, err)
 			}
 			// Before fetching, GetClonePath identifies the shared full mirror, including URL aliases.
 			mirrorPath := repo.GetClonePath()
-			if seenMirrors[mirrorPath] {
-				continue
+			index, ok := mirrorIndexes[mirrorPath]
+			if !ok {
+				index = len(mirrors)
+				mirrorIndexes[mirrorPath] = index
+				mirrors = append(mirrors, nil)
 			}
-			seenMirrors[mirrorPath] = true
-			seenNames[remote.Name] = true
-			remotes = append(remotes, remote)
+			mirrors[index] = append(mirrors[index], remote)
 		}
 	}
-	if len(remotes) == 0 {
+	if len(mirrors) == 0 {
 		return nil
 	}
 
-	return parallel.DoTasks(ctx, len(remotes), parallel.DoTasksOptions{MaxNumberOfWorkers: tree.RemoteGitTasksLimit}, func(ctx context.Context, taskID int) error {
-		_, err := prepareRemoteGitRepo(ctx, remotes[taskID], tree.Conveyor)
-		return err
+	var nextMirror atomic.Int64
+	return parallel.DoTasksDynamic(ctx, parallel.DoTasksOptions{MaxNumberOfWorkers: tree.RemoteGitTasksLimit}, func(context.Context) (int, bool, error) {
+		taskID := int(nextMirror.Add(1)) - 1
+		return taskID, taskID < len(mirrors), nil
+	}, func(ctx context.Context, taskID int) error {
+		for _, remote := range mirrors[taskID] {
+			if _, err := prepareRemoteGitRepo(ctx, remote, tree.Conveyor); err != nil {
+				return err
+			}
+		}
+		return nil
 	})
 }
 

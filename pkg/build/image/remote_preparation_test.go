@@ -72,7 +72,7 @@ var _ = ginkgo.Describe("Remote Git preparation", func() {
 		gomega.Expect(remotePreparationInputs(ctx, serial)).To(gomega.Equal(parallelInputs))
 	})
 
-	ginkgo.DescribeTable("prepares one ref per storage mirror and resolves both refs", func(ctx ginkgo.SpecContext, alias bool) {
+	ginkgo.DescribeTable("prepares every ref of a storage mirror and resolves them", func(ctx ginkgo.SpecContext, alias bool) {
 		tree := newRemotePreparationTree(ctx, func(backend http.Handler) http.Handler { return backend })
 		app := tree.werfConfig.GetImage("app").(config.StapelImageInterface).ImageBaseConfig()
 		original := app.Git.Remote[0]
@@ -93,7 +93,7 @@ var _ = ginkgo.Describe("Remote Git preparation", func() {
 		app.Git.Remote = append(app.Git.Remote, &otherRef)
 		gomega.Expect(tree.prepareRemoteGitRepos(ctx, tree.werfConfig.GetImagesForProcessing(tree.ImagesToProcess))).To(gomega.Succeed())
 		gomega.Expect(tree.Conveyor.GetRemoteGitRepo(original.RepoCacheKey)).NotTo(gomega.BeNil())
-		gomega.Expect(tree.Conveyor.GetRemoteGitRepo(otherRef.RepoCacheKey)).To(gomega.BeNil())
+		gomega.Expect(tree.Conveyor.GetRemoteGitRepo(otherRef.RepoCacheKey)).NotTo(gomega.BeNil())
 		gomega.Expect(tree.Calculate(ctx)).To(gomega.Succeed())
 		for _, image := range tree.GetImages() {
 			if image.Name != "app" {
