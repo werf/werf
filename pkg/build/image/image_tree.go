@@ -180,7 +180,8 @@ func (tree *ImagesTree) prepareRemoteGitRepos(ctx context.Context, images []conf
 			if err != nil {
 				return fmt.Errorf("open remote git repo %s: %w", remote.Name, err)
 			}
-			// Before fetching, GetClonePath identifies the shared full mirror, including URL aliases.
+			// Before fetching, GetClonePath identifies the shared full mirror, including
+			// URLs that differ only in credentials.
 			mirrorPath := repo.GetClonePath()
 			index, ok := mirrorIndexes[mirrorPath]
 			if !ok {

@@ -1,7 +1,6 @@
 package repo_handle
 
 import (
-	"context"
 	"fmt"
 	"sync"
 
@@ -41,7 +40,7 @@ func NewHandle(repository *git.Repository) (Handle, error) {
 
 // NewHandleWithoutSubmodules reads objects without a worktree. The caller must
 // verify that the commit being read has no submodules.
-func NewHandleWithoutSubmodules(_ context.Context, repository *git.Repository) Handle {
+func NewHandleWithoutSubmodules(repository *git.Repository) Handle {
 	return newHandle(repository, &sync.Mutex{})
 }
 

@@ -725,7 +725,7 @@ func (repo *Remote) initRepoHandleBackedByWorkTree(ctx context.Context, commit s
 		return nil, err
 	}
 	if !hasSubmodules {
-		return repo_handle.NewHandleWithoutSubmodules(ctx, repository), nil
+		return repo_handle.NewHandleWithoutSubmodules(repository), nil
 	}
 
 	var repoHandle repo_handle.Handle
