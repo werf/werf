@@ -45,6 +45,9 @@ func (m *anchorLookupStorageManager) GetStagesStorage() storage.PrimaryStagesSto
 }
 
 func (m *anchorLookupStorageManager) GetStageDescSetByDigestFromStagesStorageCached(_ context.Context, _, _ string, _ int64, stagesStorage storage.StagesStorage) (imagePkg.StageDescSet, error) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
 	if stagesStorage == m.secondaryStagesStorage {
 		m.cachedSecondaryLookups++
 		return m.inSecondary, nil
