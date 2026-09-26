@@ -53,4 +53,17 @@ var _ = Describe("Ssh multiplexing", func() {
 		cmd := NewGitCmd(ctx, &GitCmdOptions{Env: []string{"GIT_SSH_COMMAND=ssh -i /tmp/key"}}, "version")
 		Expect(gitSSHCommand(cmd)).To(Equal("ssh -i /tmp/key"))
 	})
+
+	It("gives up when the expanded socket path would be too long for a unix socket", func(ctx SpecContext) {
+		// Long enough that the expanded socket path does not fit, short enough
+		// that the unexpanded one does.
+		dir := filepath.Join("/tmp", strings.Repeat("d", sshControlPathLimit-len("/tmp/")-len("/werf-ssh/s-%C")))
+		Expect(os.MkdirAll(dir, 0o700)).To(Succeed())
+		DeferCleanup(func() { Expect(os.RemoveAll(dir)).To(Succeed()) })
+		GinkgoT().Setenv("TMPDIR", dir)
+
+		Expect(Init(ctx, Options{})).To(Succeed())
+
+		Expect(gitSSHCommand(NewGitCmd(ctx, nil, "version"))).To(BeEmpty())
+	})
 })

@@ -13,9 +13,11 @@ import (
 const (
 	sshControlPersist = "60s"
 
-	// A unix socket path is limited to 104 bytes on macOS and 108 on Linux; ssh
-	// expands %C to 40 hexadecimal characters.
+	// A unix socket path is limited to 104 bytes on macOS and 108 on Linux, and
+	// the limit here is checked against the expanded path, because ssh expands
+	// %C to 40 hexadecimal characters.
 	sshControlPathLimit = 100
+	sshControlHashLen   = 40
 )
 
 var sshMultiplexingEnv []string
@@ -31,7 +33,7 @@ func setupSSHMultiplexing() []string {
 
 	dir := filepath.Join(os.TempDir(), "werf-ssh")
 	controlPath := filepath.Join(dir, "s-%C")
-	if len(controlPath) > sshControlPathLimit {
+	if len(controlPath)-len("%C")+sshControlHashLen > sshControlPathLimit {
 		return nil
 	}
 
