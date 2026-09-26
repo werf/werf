@@ -1255,10 +1255,15 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, s
 	storageManager := phase.Conveyor.StorageManager
 	var stageDescSet imagePkg.StageDescSet
 	var err error
-	if phase.anchorPrepass {
+	switch {
+	case phase.anchorPrepass:
 		stageDescSet, err = storageManager.GetStageDescSetByDigestFromStagesStorageCached(ctx, stg.LogDetailedName(), stageDigest, phase.getPrevNonEmptyStageCreationTsForStage(stg), storageManager.GetStagesStorage())
-	} else {
+	case phase.ShouldBeBuiltMode:
+		// A stale miss here would fail the build instead of reporting an existing stage, so the
+		// lookup must stay strictly fresh.
 		stageDescSet, err = storageManager.GetStageDescSetByDigestWithCache(ctx, stg.LogDetailedName(), stageDigest, phase.getPrevNonEmptyStageCreationTsForStage(stg))
+	default:
+		stageDescSet, err = storageManager.GetStageDescSetByDigestWithRecentCache(ctx, stg.LogDetailedName(), stageDigest, phase.getPrevNonEmptyStageCreationTsForStage(stg))
 	}
 	if err != nil {
 		return false, phase.Conveyor.GetStageDigestMutex(stg.GetDigest()).Unlock, err
