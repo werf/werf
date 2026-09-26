@@ -40,13 +40,18 @@ func (e shallowUserError) Unwrap() error {
 
 var (
 	lsRemoteTagsCacheMu sync.Mutex
-	lsRemoteTagsCache   = map[string]map[string]true_git.RemoteTagRef{}
+	lsRemoteTagsCache   = map[string]*remoteTagsCacheEntry{}
 )
+
+type remoteTagsCacheEntry struct {
+	mu   sync.Mutex
+	tags map[string]true_git.RemoteTagRef
+}
 
 func resetLsRemoteTagsCache() {
 	lsRemoteTagsCacheMu.Lock()
 	defer lsRemoteTagsCacheMu.Unlock()
-	lsRemoteTagsCache = map[string]map[string]true_git.RemoteTagRef{}
+	lsRemoteTagsCache = map[string]*remoteTagsCacheEntry{}
 }
 
 func (repo *Remote) cloneAndFetchShallow(ctx context.Context) error {
@@ -266,13 +271,20 @@ func (repo *Remote) localTagCommit(shallowPath string) (string, error) {
 // `git ls-remote --tags` call, batched to at most one network call per werf
 // process per URL (unless fresh is requested).
 func (repo *Remote) lsRemoteTag(ctx context.Context, fresh bool) (string, error) {
-	lsRemoteTagsCacheMu.Lock()
-	defer lsRemoteTagsCacheMu.Unlock()
-
 	cacheKey := repo.lsRemoteTagsCacheKey()
+	lsRemoteTagsCacheMu.Lock()
+	entry, cached := lsRemoteTagsCache[cacheKey]
+	if !cached {
+		entry = &remoteTagsCacheEntry{}
+		lsRemoteTagsCache[cacheKey] = entry
+	}
+	lsRemoteTagsCacheMu.Unlock()
 
-	tags, cached := lsRemoteTagsCache[cacheKey]
-	if !cached || fresh {
+	entry.mu.Lock()
+	defer entry.mu.Unlock()
+
+	tags := entry.tags
+	if tags == nil || fresh {
 		done := opstats.Observe(ctx, opstats.OperationGitLsRemote)
 		defer done()
 
@@ -287,7 +299,7 @@ func (repo *Remote) lsRemoteTag(ctx context.Context, fresh bool) (string, error)
 			return "", fmt.Errorf("cannot list remote tags of repo %q: %w", repo.String(), err)
 		}
 
-		lsRemoteTagsCache[cacheKey] = tags
+		entry.tags = tags
 		done()
 	}
 

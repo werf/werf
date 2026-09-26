@@ -3,7 +3,13 @@ package image
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"net/http/cgi"
+	"net/http/httptest"
+	"os"
+	"os/exec"
 	"path/filepath"
+	"sync"
 
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
@@ -150,4 +156,96 @@ func changedChecksums(ctx context.Context, projectDir string, edits map[string]s
 	}
 
 	return changed
+}
+
+var _ Conveyor = (*preparationTestConveyor)(nil)
+
+type preparationTestConveyor struct {
+	Conveyor
+	remoteMutex sync.Mutex
+	remotes     map[string]*git_repo.Remote
+}
+
+func (c *preparationTestConveyor) GetForcedTargetPlatforms() []string { return nil }
+func (c *preparationTestConveyor) GetTargetPlatforms() ([]string, error) {
+	return []string{"linux/amd64", "linux/arm64"}, nil
+}
+
+func (c *preparationTestConveyor) GetImageTargetPlatforms(string) ([]string, error) {
+	return nil, nil
+}
+
+func (c *preparationTestConveyor) GetRemoteGitRepo(key string) *git_repo.Remote {
+	c.remoteMutex.Lock()
+	defer c.remoteMutex.Unlock()
+	return c.remotes[key]
+}
+
+func (c *preparationTestConveyor) SetRemoteGitRepo(key string, repo *git_repo.Remote) {
+	c.remoteMutex.Lock()
+	defer c.remoteMutex.Unlock()
+	if c.remotes == nil {
+		c.remotes = make(map[string]*git_repo.Remote)
+	}
+	c.remotes[key] = repo
+}
+
+func newRemotePreparationTree(ctx context.Context, wrap func(http.Handler) http.Handler) *ImagesTree {
+	origin := newProjectRepo(ctx, map[string]string{"data": "remote data"})
+	firstCommit := utils.GetHeadCommit(ctx, origin)
+	commitFiles(ctx, origin, map[string]string{"data": "updated remote data"})
+	root := ginkgo.GinkgoT().TempDir()
+	for _, name := range []string{"one", "two", "three"} {
+		utils.RunSucceedCommand(ctx, origin, "git", "clone", "--bare", origin, filepath.Join(root, name+".git"))
+	}
+	git, err := exec.LookPath("git")
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+	backend := &cgi.Handler{Path: git, Args: []string{"http-backend"}, Env: []string{"GIT_PROJECT_ROOT=" + root, "GIT_HTTP_EXPORT_ALL=1"}}
+
+	server := httptest.NewServer(wrap(backend))
+	ginkgo.DeferCleanup(server.Close)
+	data, err := os.ReadFile("testdata/remote-preparation/werf.yaml.tmpl")
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+	commitFiles(ctx, origin, map[string]string{"werf.yaml": fmt.Sprintf(string(data), server.URL, firstCommit)})
+	_, _, opts := stapelImageConfig(ctx, origin)
+	_, cfg, err := config.GetWerfConfig(ctx, "", "", "", opts.GiterminismManager, config.WerfConfigOptions{})
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+	opts.Conveyor = &preparationTestConveyor{}
+	selected, err := config.NewImagesToProcess(cfg, []string{"app", "other"}, false, false)
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+	return NewImagesTree(cfg, ImagesTreeOptions{CommonImageOptions: opts, ImagesToProcess: selected, RemoteGitTasksLimit: 2})
+}
+
+func remotePreparationInputs(ctx context.Context, tree *ImagesTree) map[string][]string {
+	inputs := make(map[string][]string)
+	for _, image := range tree.GetImages() {
+		gitStage := image.GetStage(stage.GitArchive)
+		gomega.Expect(gitStage).NotTo(gomega.BeNil())
+		mappings := gitStage.GetGitMappings()
+		gomega.Expect(mappings).To(gomega.HaveLen(3))
+		key := image.Name + "/" + image.TargetPlatform
+		var values []string
+		for _, mapping := range mappings {
+			commit, err := mapping.GetLatestCommitInfo(ctx, tree.Conveyor)
+			gomega.Expect(err).NotTo(gomega.HaveOccurred())
+			values = append(values, mapping.To+":"+commit.Commit+":"+mapping.GetParamshash())
+		}
+		content, err := gitStage.GetContentDependencies(ctx, tree.Conveyor, nil)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		inputs[key] = append(values, content)
+	}
+	gomega.Expect(inputs).To(gomega.HaveLen(4))
+	for _, key := range []string{"app/linux/amd64", "app/linux/arm64", "other/linux/amd64", "other/linux/arm64"} {
+		gomega.Expect(inputs).To(gomega.HaveKey(key))
+	}
+	return inputs
+}
+
+func useRemotePreparationBranches(tree *ImagesTree) {
+	for _, image := range tree.werfConfig.GetImagesForProcessing(tree.ImagesToProcess) {
+		for _, remote := range image.(config.StapelImageInterface).ImageBaseConfig().Git.Remote {
+			remote.Commit = ""
+			remote.Branch = "main"
+		}
+	}
 }
