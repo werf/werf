@@ -97,6 +97,47 @@ var _ = Describe("Work tree helpers", func() {
 		})
 	})
 
+	When("a cached worktree is broken beyond git's own checks", func() {
+		var mainWtDir, workTreeCacheDir string
+
+		BeforeEach(func(ctx SpecContext) {
+			mainWtDir = filepath.Join(SuiteData.TestDirPath, "main-wt")
+			workTreeCacheDir = filepath.Join(SuiteData.TestDirPath, "wt-cache")
+
+			Expect(os.MkdirAll(mainWtDir, os.ModePerm)).To(Succeed())
+			utils.RunSucceedCommand(ctx, mainWtDir, "git", "-c", "init.defaultBranch=main", "init")
+			utils.RunSucceedCommand(ctx, mainWtDir, "git", "checkout", "-b", "main")
+			gitCommitSucceed(ctx, mainWtDir, "--allow-empty", "-m", "Initial commit")
+		})
+
+		It("rebuilds the cached worktree from scratch and switches it to the commit", func(ctx SpecContext) {
+			firstCommit := getHeadCommit(ctx, mainWtDir)
+
+			workTreeDir, err := prepareWorkTree(ctx, mainWtDir, workTreeCacheDir, firstCommit, false)
+			Expect(err).To(Succeed())
+
+			gitCommitSucceed(ctx, mainWtDir, "--allow-empty", "-m", "Second commit")
+			secondCommit := getHeadCommit(ctx, mainWtDir)
+			Expect(secondCommit).NotTo(Equal(firstCommit))
+
+			indexPath := strings.TrimSpace(utils.SucceedCommandOutputString(ctx, workTreeDir, "git", "rev-parse", "--git-path", "index"))
+			if !filepath.IsAbs(indexPath) {
+				indexPath = filepath.Join(workTreeDir, indexPath)
+			}
+			Expect(os.WriteFile(indexPath, []byte("garbage"), 0o644)).To(Succeed())
+
+			consistent, err := verifyWorkTreeConsistency(ctx, mainWtDir, workTreeDir)
+			Expect(err).To(Succeed())
+			Expect(consistent).To(BeTrue())
+			Expect(switchWorkTree(ctx, mainWtDir, workTreeDir, secondCommit, false)).NotTo(Succeed())
+
+			healedWorkTreeDir, err := prepareWorkTree(ctx, mainWtDir, workTreeCacheDir, secondCommit, false)
+			Expect(err).To(Succeed())
+			Expect(healedWorkTreeDir).To(Equal(workTreeDir))
+			Expect(getHeadCommit(ctx, workTreeDir)).To(Equal(secondCommit))
+		})
+	})
+
 	Describe("verifyWorkTreeConsistency", func() {
 		var mainWtDir, sideWtDir string
 		BeforeEach(func(ctx SpecContext) {

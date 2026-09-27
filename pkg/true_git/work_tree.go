@@ -188,17 +188,48 @@ func prepareWorkTree(ctx context.Context, repoDir, workTreeCacheDir, commit stri
 
 	// Switch worktree state to the desired commit.
 	// If worktree already exists — it will be used as a cache.
-	logProcessMsg := fmt.Sprintf("Switch work tree %s to commit %s", workTreeDir, commit)
-	if err := logboek.Context(ctx).Info().LogProcess(logProcessMsg).DoError(func() error {
-		logboek.Context(ctx).Info().LogFDetails("Work tree dir: %s\n", workTreeDir)
-		logboek.Context(ctx).Info().LogFDetails("Commit: %s\n", commit)
-		if currentCommit != "" {
-			logboek.Context(ctx).Info().LogFDetails("Current commit: %s\n", currentCommit)
+	reusingCachedWorkTree := true
+	if _, err := os.Stat(workTreeDir); os.IsNotExist(err) {
+		reusingCachedWorkTree = false
+	} else if err != nil {
+		return "", fmt.Errorf("error accessing %s: %w", workTreeDir, err)
+	}
+
+	switchOnce := func() error {
+		logProcessMsg := fmt.Sprintf("Switch work tree %s to commit %s", workTreeDir, commit)
+		return logboek.Context(ctx).Info().LogProcess(logProcessMsg).DoError(func() error {
+			logboek.Context(ctx).Info().LogFDetails("Work tree dir: %s\n", workTreeDir)
+			logboek.Context(ctx).Info().LogFDetails("Commit: %s\n", commit)
+			if currentCommit != "" {
+				logboek.Context(ctx).Info().LogFDetails("Current commit: %s\n", currentCommit)
+			}
+
+			return switchWorkTree(ctx, repoDir, workTreeDir, commit, withSubmodules)
+		})
+	}
+
+	if err := switchOnce(); err != nil {
+		if !reusingCachedWorkTree {
+			return "", fmt.Errorf("unable to switch work tree %s to commit %s: %w", workTreeDir, commit, err)
 		}
 
-		return switchWorkTree(ctx, repoDir, workTreeDir, commit, withSubmodules)
-	}); err != nil {
-		return "", fmt.Errorf("unable to switch work tree %s to commit %s: %w", workTreeDir, commit, err)
+		// A cached worktree can be broken in ways the registration and consistency checks above do
+		// not detect (e.g. a submodule store torn by a killed process). Such a worktree would fail
+		// every subsequent build on this host, so rebuild it from scratch once instead of failing.
+		// Context cancellation cannot get here: a git command on a canceled context panics through
+		// the graceful machinery, so an interrupted build does not wipe a healthy cache.
+		logboek.Context(ctx).Warn().LogF("WARNING: Work tree dir %q of repo %s is broken, rebuilding it from scratch: %s\n", workTreeDir, repoDir, err)
+
+		if err := os.RemoveAll(currentCommitPath); err != nil {
+			return "", fmt.Errorf("unable to remove %s: %w", currentCommitPath, err)
+		}
+		if err := os.RemoveAll(workTreeDir); err != nil {
+			return "", fmt.Errorf("unable to remove broken work tree dir %s: %w", workTreeDir, err)
+		}
+
+		if err := switchOnce(); err != nil {
+			return "", fmt.Errorf("unable to switch rebuilt work tree %s to commit %s: %w", workTreeDir, commit, err)
+		}
 	}
 
 	if err := ioutil.WriteFile(currentCommitPath, []byte(commit+"\n"), 0o644); err != nil {
