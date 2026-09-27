@@ -28,7 +28,26 @@ import (
 
 var ErrUnexpectedStagesStorageState = errors.New("unexpected stages storage state")
 
-const maxRetryAttemptsOnUnexpectedStagesStorageState = 4
+const (
+	maxRetryAttemptsOnUnexpectedStagesStorageState = 4
+
+	stagesTagListMaxAgeEnvVar  = "WERF_STAGES_TAG_LIST_MAX_AGE"
+	stagesTagListMaxAgeDefault = 1 * time.Minute
+)
+
+func getStagesTagListMaxAge() time.Duration {
+	value := strings.TrimSpace(os.Getenv(stagesTagListMaxAgeEnvVar))
+	if value == "" {
+		return stagesTagListMaxAgeDefault
+	}
+
+	parsed, err := time.ParseDuration(value)
+	if err != nil || parsed < 0 {
+		return stagesTagListMaxAgeDefault
+	}
+
+	return parsed
+}
 
 func IsErrUnexpectedStagesStorageState(err error) bool {
 	if err != nil {
@@ -65,6 +84,7 @@ type StorageManagerInterface interface {
 	LockStageImage(ctx context.Context, imageName string) error
 	GetStageDescSetByDigest(ctx context.Context, stageName, stageDigest string, parentStageCreationTs int64) (image.StageDescSet, error)
 	GetStageDescSetByDigestWithCache(ctx context.Context, stageName, stageDigest string, parentStageCreationTs int64) (image.StageDescSet, error)
+	GetStageDescSetByDigestWithRecentCache(ctx context.Context, stageName, stageDigest string, parentStageCreationTs int64) (image.StageDescSet, error)
 	GetStageDescSetByDigestFromStagesStorage(ctx context.Context, stageName, stageDigest string, parentStageCreationTs int64, stagesStorage storage.StagesStorage) (image.StageDescSet, error)
 	GetStageDescSetByDigestFromStagesStorageWithCache(ctx context.Context, stageName, stageDigest string, parentStageCreationTs int64, stagesStorage storage.StagesStorage) (image.StageDescSet, error)
 	GetStageDescSetByDigestFromStagesStorageCached(ctx context.Context, stageName, stageDigest string, parentStageCreationTs int64, stagesStorage storage.StagesStorage) (image.StageDescSet, error)
@@ -781,6 +801,26 @@ func (m *StorageManager) GetStageDescSetByDigestFromStagesStorageWithCache(ctx c
 	}
 
 	return m.getStageDescSetByDigestFromStagesStorage(ctx, stageName, stageDigest, parentStageCreationTs, stagesStorage)
+}
+
+// GetStageDescSetByDigestWithRecentCache is GetStageDescSetByDigestWithCache with a relaxed miss
+// fallback: it accepts a tags listing fetched recently instead of requiring a fresh one. A cache
+// miss almost always means the stage simply is not built yet, and re-listing the whole repo on
+// every miss serializes into the dominant cost of large builds. Only callers that reconcile
+// against a fresh listing after building a stage may use it: a stage pushed by a concurrent
+// process within the window is caught by that check, so a stale miss costs at most one duplicated
+// stage build.
+func (m *StorageManager) GetStageDescSetByDigestWithRecentCache(ctx context.Context, stageName, stageDigest string, parentStageCreationTs int64) (image.StageDescSet, error) {
+	cachedStageDescSet, err := m.GetStageDescSetByDigestFromStagesStorageCached(ctx, stageName, stageDigest, parentStageCreationTs, m.StagesStorage)
+	if err != nil {
+		return nil, err
+	}
+
+	if !cachedStageDescSet.IsEmpty() {
+		return cachedStageDescSet, nil
+	}
+
+	return m.getStageDescSetByDigestFromStagesStorage(ctx, stageName, stageDigest, parentStageCreationTs, m.StagesStorage, storage.WithCacheMaxAge(getStagesTagListMaxAge()))
 }
 
 func (m *StorageManager) GetStageDescSetByDigestFromStagesStorage(ctx context.Context, stageName, stageDigest string, parentStageCreationTs int64, stagesStorage storage.StagesStorage) (image.StageDescSet, error) {
