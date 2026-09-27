@@ -108,8 +108,13 @@ var _ = Describe("submoduleNameUnsafe", func() {
 		Entry("a nested path name git itself produces", "third_party/libnvidia-container", false),
 		Entry("dash, underscore and dot inside are fine", "my-sub_2.0", false),
 		Entry("a dot-prefixed name is not a dot component", ".sub", false),
-		Entry("a name ending in a dot is not a dot component", "sub.", false),
-		Entry("three dots are not a dot component", "...", false),
+		// NTFS resolves `lib`, `lib.` and `lib ` to the same directory, so trailing-dot and
+		// trailing-space components would let two names share one module store on Windows.
+		Entry("a name ending in a dot is an NTFS alias", "sub.", true),
+		Entry("a name ending in a space is an NTFS alias", "sub ", true),
+		Entry("a nested component ending in a dot is an NTFS alias", "third_party/lib.", true),
+		Entry("a nested component ending in a space is an NTFS alias", "third_party/lib ", true),
+		Entry("three dots are an NTFS alias for two dots", "...", true),
 	)
 })
 

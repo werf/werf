@@ -422,15 +422,18 @@ func walkSubmodule(ctx context.Context, parentModuleDir, parentWorktreeModuleDir
 // part of the URL value git uses, and a `.`/`..`/empty path component makes the store path the name
 // is joined into resolve somewhere other than the name reads, with `..` climbing out of modules/
 // entirely. A plain `/` is allowed: git itself defaults a submodule's name to its path, and stores it
-// under the same nested modules/<name> layout the name is joined into here. The fixed `submodule.`
-// prefix keeps such a name out of unrelated config keys. .gitmodules is repo-controlled and
-// `git config -f` does not reject these itself.
+// under the same nested modules/<name> layout the name is joined into here. A component with a
+// trailing dot or space is rejected too: NTFS resolves `lib`, `lib.` and `lib ` to the same
+// directory, so two such names would silently share one module store on Windows. The fixed
+// `submodule.` prefix keeps such a name out of unrelated config keys. .gitmodules is
+// repo-controlled and `git config -f` does not reject these itself.
 func submoduleNameUnsafe(name string) bool {
 	if strings.ContainsAny(name, "=\n\\") {
 		return true
 	}
 	for _, component := range strings.Split(name, "/") {
-		if component == "" || component == "." || component == ".." {
+		if component == "" || component == "." || component == ".." ||
+			strings.HasSuffix(component, ".") || strings.HasSuffix(component, " ") {
 			return true
 		}
 	}
