@@ -209,15 +209,15 @@ func prepareWorkTree(ctx context.Context, repoDir, workTreeCacheDir, commit stri
 	}
 
 	if err := switchOnce(); err != nil {
-		if !reusingCachedWorkTree {
+		if !reusingCachedWorkTree || ctx.Err() != nil {
 			return "", fmt.Errorf("unable to switch work tree %s to commit %s: %w", workTreeDir, commit, err)
 		}
 
 		// A cached worktree can be broken in ways the registration and consistency checks above do
 		// not detect (e.g. a submodule store torn by a killed process). Such a worktree would fail
 		// every subsequent build on this host, so rebuild it from scratch once instead of failing.
-		// Context cancellation cannot get here: a git command on a canceled context panics through
-		// the graceful machinery, so an interrupted build does not wipe a healthy cache.
+		// The ctx.Err() guard above keeps cancellation (Ctrl-C or a failed sibling parallel task)
+		// from wiping a healthy cache: a canceled git command fails without the worktree being broken.
 		logboek.Context(ctx).Warn().LogF("WARNING: Work tree dir %q of repo %s is broken, rebuilding it from scratch: %s\n", workTreeDir, repoDir, err)
 
 		if err := os.RemoveAll(currentCommitPath); err != nil {
