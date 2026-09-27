@@ -809,7 +809,9 @@ func (m *StorageManager) GetStageDescSetByDigestFromStagesStorageWithCache(ctx c
 // every miss serializes into the dominant cost of large builds. Only callers that reconcile
 // against a fresh listing after building a stage may use it: a stage pushed by a concurrent
 // process within the window is caught by that check, so a stale miss costs at most one duplicated
-// stage build.
+// stage build. A stale miss served from secondary storage instead copies the stage without such
+// reconciliation, which can leave a duplicate digest tag in primary storage; duplicates are
+// harmless and converge because stage selection picks between them deterministically.
 func (m *StorageManager) GetStageDescSetByDigestWithRecentCache(ctx context.Context, stageName, stageDigest string, parentStageCreationTs int64) (image.StageDescSet, error) {
 	cachedStageDescSet, err := m.GetStageDescSetByDigestFromStagesStorageCached(ctx, stageName, stageDigest, parentStageCreationTs, m.StagesStorage)
 	if err != nil {
