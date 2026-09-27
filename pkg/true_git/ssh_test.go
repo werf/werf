@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -25,6 +26,7 @@ var _ = Describe("Ssh multiplexing", func() {
 		GinkgoT().Setenv("GIT_SSH", "")
 		GinkgoT().Setenv("GIT_CONFIG_GLOBAL", filepath.Join(shortTempDir(), "gitconfig"))
 		GinkgoT().Setenv("GIT_CONFIG_SYSTEM", filepath.Join(shortTempDir(), "gitconfig"))
+		DeferCleanup(CleanupSSHMultiplexing)
 	})
 
 	It("reuses one connection per host", func(ctx SpecContext) {
@@ -109,6 +111,49 @@ var _ = Describe("Ssh multiplexing", func() {
 			Expect(os.MkdirAll(filepath.Join(dir, "probe.tmp"), 0o700)).To(Succeed())
 		}, false),
 	)
+
+	It("reclaims its control directory on cleanup", func(ctx SpecContext) {
+		GinkgoT().Setenv("TMPDIR", shortTempDir())
+		Expect(Init(ctx, Options{})).To(Succeed())
+
+		dir := controlDir(gitSSHCommand(NewGitCmd(ctx, nil, "version")))
+		Expect(dir).To(BeADirectory())
+
+		CleanupSSHMultiplexing()
+		Expect(dir).NotTo(BeADirectory())
+		Expect(gitSSHCommand(NewGitCmd(ctx, nil, "version"))).To(BeEmpty())
+	})
+
+	It("sweeps control directories abandoned by dead processes", func(ctx SpecContext) {
+		tmpDir := shortTempDir()
+		GinkgoT().Setenv("TMPDIR", tmpDir)
+
+		stale := filepath.Join(tmpDir, "werf-ssh-stale")
+		Expect(os.MkdirAll(stale, 0o700)).To(Succeed())
+		old := time.Now().Add(-2 * time.Hour)
+		Expect(os.Chtimes(stale, old, old)).To(Succeed())
+
+		fresh := filepath.Join(tmpDir, "werf-ssh-fresh")
+		Expect(os.MkdirAll(fresh, 0o700)).To(Succeed())
+
+		Expect(Init(ctx, Options{})).To(Succeed())
+
+		Expect(stale).NotTo(BeADirectory())
+		Expect(fresh).To(BeADirectory())
+	})
+
+	It("stays off when the ssh binary does not understand multiplexing", func(ctx SpecContext) {
+		GinkgoT().Setenv("TMPDIR", shortTempDir())
+
+		binDir := shortTempDir()
+		fakeSSH := filepath.Join(binDir, "ssh")
+		Expect(os.WriteFile(fakeSSH, []byte("#!/bin/sh\nexit 1\n"), 0o755)).To(Succeed())
+		GinkgoT().Setenv("PATH", binDir+string(os.PathListSeparator)+os.Getenv("PATH"))
+
+		Expect(Init(ctx, Options{})).To(Succeed())
+
+		Expect(gitSSHCommand(NewGitCmd(ctx, nil, "version"))).To(BeEmpty())
+	})
 
 	It("gives up when no directory can hold the socket", func(ctx SpecContext) {
 		path := filepath.Join(shortTempDir(), "file")

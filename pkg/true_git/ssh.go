@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
+	"time"
 )
 
 // Every git request over ssh pays a full handshake, which dominates the cost of
@@ -26,6 +28,7 @@ const (
 
 var (
 	sshMultiplexingEnv []string
+	sshControlDir      string
 	sshFallbackDir     = "/tmp"
 )
 
@@ -36,12 +39,24 @@ func setupSSHMultiplexing(ctx context.Context) []string {
 
 	// git gives GIT_SSH_COMMAND precedence over core.sshCommand, so setting it
 	// would silently discard the ssh command, identity or proxy a user
-	// configured for this repository.
+	// configured in the environment, the global or system config, or the
+	// repository the process runs in. A repository named with --dir is read
+	// like any other repository werf fetches into: its local config is not
+	// consulted here.
 	if os.Getenv("GIT_SSH_COMMAND") != "" || os.Getenv("GIT_SSH") != "" || configuredSSHCommand(ctx) != "" {
 		return nil
 	}
 
 	for _, base := range []string{os.TempDir(), sshFallbackDir} {
+		removeStaleSSHControlDirs(base)
+
+		// The control path is interpolated into a command git hands to the
+		// shell, so a base directory with shell-active characters cannot be
+		// carried safely.
+		if strings.ContainsAny(base, "\"$`\\") {
+			continue
+		}
+
 		// The directory is private to this werf process: a predictable one is
 		// a socket another user can pre-create and answer on, and a shared one
 		// hands the ssh connection of one build, authenticated with its own
@@ -57,10 +72,67 @@ func setupSSHMultiplexing(ctx context.Context) []string {
 			continue
 		}
 
+		if !sshSupportsMultiplexing(ctx, controlPath) {
+			os.RemoveAll(dir)
+			return nil
+		}
+
+		sshControlDir = dir
 		return []string{fmt.Sprintf(`GIT_SSH_COMMAND=ssh -o ControlMaster=auto -o ControlPath="%s" -o ControlPersist=%s`, controlPath, sshControlPersist)}
 	}
 
 	return nil
+}
+
+// CleanupSSHMultiplexing removes the control directory of this process. The
+// multiplexing master survives it for up to ControlPersist and exits on its
+// own; only the directory needs reclaiming.
+func CleanupSSHMultiplexing() {
+	if sshControlDir == "" {
+		return
+	}
+
+	os.RemoveAll(sshControlDir)
+	sshControlDir = ""
+	sshMultiplexingEnv = nil
+}
+
+// A crashed or killed werf process leaves its control directory behind, so
+// each start sweeps directories old enough that their master (bounded by
+// ControlPersist) is certainly gone.
+func removeStaleSSHControlDirs(base string) {
+	entries, err := os.ReadDir(base)
+	if err != nil {
+		return
+	}
+
+	for _, entry := range entries {
+		if !entry.IsDir() || !strings.HasPrefix(entry.Name(), "werf-ssh-") {
+			continue
+		}
+
+		info, err := entry.Info()
+		if err != nil || time.Since(info.ModTime()) < time.Hour {
+			continue
+		}
+
+		os.RemoveAll(filepath.Join(base, entry.Name()))
+	}
+}
+
+// A non-OpenSSH ssh binary fails outright on unknown -o options, taking every
+// git command down with it, so multiplexing is only enabled once the binary
+// accepts them. -G resolves the configuration without connecting.
+func sshSupportsMultiplexing(ctx context.Context, controlPath string) bool {
+	cmd := exec.CommandContext(ctx, "ssh", "-G",
+		"-o", "ControlMaster=auto",
+		"-o", fmt.Sprintf("ControlPath=%s", controlPath),
+		"-o", fmt.Sprintf("ControlPersist=%s", sshControlPersist),
+		"localhost")
+	cmd.Stdout = nil
+	cmd.Stderr = nil
+
+	return cmd.Run() == nil
 }
 
 func configuredSSHCommand(ctx context.Context) string {

@@ -16,6 +16,7 @@ import (
 	"github.com/werf/werf/v3/pkg/background"
 	"github.com/werf/werf/v3/pkg/logging"
 	"github.com/werf/werf/v3/pkg/process_exterminator"
+	"github.com/werf/werf/v3/pkg/true_git"
 )
 
 func main() {
@@ -90,6 +91,8 @@ func main() {
 }
 
 func onShutdown(_ context.Context, desc graceful.TerminationDescriptor) {
+	true_git.CleanupSSHMultiplexing()
+
 	if desc.Signal() != nil {
 		logging.Default(fmt.Sprintf("Signal: %s", desc.Signal()))
 		os.Exit(desc.ExitCode())
