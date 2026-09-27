@@ -159,7 +159,9 @@ var _ = Describe("Work tree helpers", func() {
 			secondCommit := getHeadCommit(ctx, mainWtDir)
 
 			terminationCtx := graceful.WithTermination(ctx)
+			helperDone := make(chan struct{})
 			go func() {
+				defer close(helperDone)
 				for i := 0; i < 600; i++ {
 					if _, err := os.Stat(hookStartedPath); err == nil {
 						break
@@ -168,10 +170,11 @@ var _ = Describe("Work tree helpers", func() {
 				}
 				graceful.Terminate(terminationCtx, fmt.Errorf("sibling task failed"), 1)
 				<-terminationCtx.Done()
-				_ = os.WriteFile(hookProceedPath, []byte("go"), 0o644)
+				Expect(os.WriteFile(hookProceedPath, []byte("go"), 0o644)).To(Succeed())
 			}()
 
 			_, err = prepareWorkTree(terminationCtx, mainWtDir, workTreeCacheDir, secondCommit, false)
+			Eventually(helperDone, "35s").Should(BeClosed())
 			Expect(err).NotTo(Succeed())
 			Expect(hookStartedPath).To(BeAnExistingFile(), "cancellation must have happened mid-switch")
 
