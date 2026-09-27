@@ -4,7 +4,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -122,24 +121,6 @@ var _ = Describe("Ssh multiplexing", func() {
 		CleanupSSHMultiplexing()
 		Expect(dir).NotTo(BeADirectory())
 		Expect(gitSSHCommand(NewGitCmd(ctx, nil, "version"))).To(BeEmpty())
-	})
-
-	It("sweeps control directories abandoned by dead processes", func(ctx SpecContext) {
-		tmpDir := shortTempDir()
-		GinkgoT().Setenv("TMPDIR", tmpDir)
-
-		stale := filepath.Join(tmpDir, "werf-ssh-stale")
-		Expect(os.MkdirAll(stale, 0o700)).To(Succeed())
-		old := time.Now().Add(-2 * time.Hour)
-		Expect(os.Chtimes(stale, old, old)).To(Succeed())
-
-		fresh := filepath.Join(tmpDir, "werf-ssh-fresh")
-		Expect(os.MkdirAll(fresh, 0o700)).To(Succeed())
-
-		Expect(Init(ctx, Options{})).To(Succeed())
-
-		Expect(stale).NotTo(BeADirectory())
-		Expect(fresh).To(BeADirectory())
 	})
 
 	It("stays off when the ssh binary does not understand multiplexing", func(ctx SpecContext) {

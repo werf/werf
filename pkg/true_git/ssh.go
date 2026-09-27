@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-	"time"
 )
 
 // Every git request over ssh pays a full handshake, which dominates the cost of
@@ -48,8 +47,6 @@ func setupSSHMultiplexing(ctx context.Context) []string {
 	}
 
 	for _, base := range []string{os.TempDir(), sshFallbackDir} {
-		removeStaleSSHControlDirs(base)
-
 		// The control path is interpolated into a command git hands to the
 		// shell, so a base directory with shell-active characters cannot be
 		// carried safely.
@@ -85,8 +82,10 @@ func setupSSHMultiplexing(ctx context.Context) []string {
 }
 
 // CleanupSSHMultiplexing removes the control directory of this process. The
-// multiplexing master survives it for up to ControlPersist and exits on its
-// own; only the directory needs reclaiming.
+// multiplexing master survives it for up to ControlPersist after its last
+// client and exits on its own; only the directory needs reclaiming. A killed
+// process leaves its directory behind: any liveness heuristic cheap enough to
+// run on start risks deleting the socket of a build that is still running.
 func CleanupSSHMultiplexing() {
 	if sshControlDir == "" {
 		return
@@ -97,38 +96,17 @@ func CleanupSSHMultiplexing() {
 	sshMultiplexingEnv = nil
 }
 
-// A crashed or killed werf process leaves its control directory behind, so
-// each start sweeps directories old enough that their master (bounded by
-// ControlPersist) is certainly gone.
-func removeStaleSSHControlDirs(base string) {
-	entries, err := os.ReadDir(base)
-	if err != nil {
-		return
-	}
-
-	for _, entry := range entries {
-		if !entry.IsDir() || !strings.HasPrefix(entry.Name(), "werf-ssh-") {
-			continue
-		}
-
-		info, err := entry.Info()
-		if err != nil || time.Since(info.ModTime()) < time.Hour {
-			continue
-		}
-
-		os.RemoveAll(filepath.Join(base, entry.Name()))
-	}
-}
-
 // A non-OpenSSH ssh binary fails outright on unknown -o options, taking every
 // git command down with it, so multiplexing is only enabled once the binary
-// accepts them. -G resolves the configuration without connecting.
+// accepts them. -G resolves the configuration without connecting, and
+// -F /dev/null keeps the probe independent of user and system configuration,
+// where directives like CanonicalizeHostname could make it resolve names.
 func sshSupportsMultiplexing(ctx context.Context, controlPath string) bool {
-	cmd := exec.CommandContext(ctx, "ssh", "-G",
+	cmd := exec.CommandContext(ctx, "ssh", "-G", "-F", "/dev/null",
 		"-o", "ControlMaster=auto",
 		"-o", fmt.Sprintf("ControlPath=%s", controlPath),
 		"-o", fmt.Sprintf("ControlPersist=%s", sshControlPersist),
-		"localhost")
+		"werf-probe")
 	cmd.Stdout = nil
 	cmd.Stderr = nil
 
