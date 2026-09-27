@@ -315,8 +315,12 @@ var _ = Describe("Remote shallow mirror", func() {
 			Expect(shallowRepo.CloneAndFetch(ctx)).To(Succeed())
 			_, err := shallowRepo.initRepoHandleBackedByWorkTree(ctx, v1Commit)
 			Expect(err).NotTo(HaveOccurred())
-			shallowPath := shallowRepo.GetClonePath()
+			shallowPath, err := filepath.EvalSymlinks(shallowRepo.GetClonePath())
+			Expect(err).NotTo(HaveOccurred())
 			shallowWorktreePath := shallowRepo.getWorkTreeCacheDir(shallowRepo.getRepoID())
+			Expect(true_git.WithWorkTree(ctx, shallowPath, shallowWorktreePath, v1Commit, true_git.WithWorkTreeOptions{}, func(worktree string) error {
+				return os.WriteFile(filepath.Join(worktree, "sentinel"), []byte("kept"), 0o644)
+			})).To(Succeed())
 
 			gitmodulesPath := filepath.Join(sourceDir, ".gitmodules")
 			Expect(os.WriteFile(gitmodulesPath, []byte("[submodule \"sub\"]\n\tpath = sub\n\turl = ../sub\n"), 0o644)).To(Succeed())
@@ -335,6 +339,11 @@ var _ = Describe("Remote shallow mirror", func() {
 			Expect(shallowWorktreePath).To(BeADirectory())
 			_, err = shallowRepo.initRepoHandleBackedByWorkTree(ctx, v1Commit)
 			Expect(err).NotTo(HaveOccurred())
+			Expect(true_git.WithWorkTree(ctx, shallowPath, shallowWorktreePath, v1Commit, true_git.WithWorkTreeOptions{}, func(worktree string) error {
+				Expect(utils.GetHeadCommit(ctx, worktree)).To(Equal(v1Commit))
+				Expect(filepath.Join(worktree, "sentinel")).To(BeARegularFile())
+				return nil
+			})).To(Succeed())
 
 			v1TagCommit, err := shallowRepo.TagCommit(ctx, "v1")
 			Expect(err).NotTo(HaveOccurred())

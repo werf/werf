@@ -182,31 +182,43 @@ func hasStageInstructions(imageBaseConfig *config.StapelImageBase, stageName sta
 	return false
 }
 
+func prepareRemoteGitRepo(ctx context.Context, remoteGitMappingConfig *config.GitRemote, conveyor Conveyor) (*git_repo.Remote, error) {
+	remoteGitRepo := conveyor.GetRemoteGitRepo(remoteGitMappingConfig.RepoCacheKey)
+	if remoteGitRepo != nil {
+		return remoteGitRepo, nil
+	}
+
+	remoteGitRepo, err := git_repo.OpenRemoteRepo(remoteGitMappingConfig.Name, remoteGitMappingConfig.Url, remoteGitMappingConfig.BasicAuth)
+	if err != nil {
+		return nil, fmt.Errorf("open remote git repo %s: %w", remoteGitMappingConfig.Name, err)
+	}
+	remoteGitRepo.Branch = remoteGitMappingConfig.Branch
+	remoteGitRepo.Tag = remoteGitMappingConfig.Tag
+	remoteGitRepo.Commit = remoteGitMappingConfig.Commit
+
+	if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Refreshing %s repository", remoteGitMappingConfig.Name)).
+		DoError(func() error {
+			return remoteGitRepo.CloneAndFetch(ctx)
+		}); err != nil {
+		return nil, fmt.Errorf("refresh remote git repo %s: %w", remoteGitMappingConfig.Name, err)
+	}
+
+	conveyor.SetRemoteGitRepo(remoteGitMappingConfig.RepoCacheKey, remoteGitRepo)
+	return remoteGitRepo, nil
+}
+
 func generateGitMappings(ctx context.Context, metaConfig *config.Meta, imageBaseConfig *config.StapelImageBase, opts CommonImageOptions) ([]*stage.GitMapping, error) {
 	var gitMappings []*stage.GitMapping
 
 	if len(imageBaseConfig.Git.Local) != 0 {
-		localGitRepo := opts.GiterminismManager.LocalGitRepo()
-
-		if !metaConfig.GitWorktree.GetForceShallowClone() {
-			isShallowClone, err := localGitRepo.IsShallowClone(ctx)
-			if err != nil {
-				return nil, fmt.Errorf("check shallow clone failed: %w", err)
+		prepare := opts.prepareLocalGitRepo
+		if prepare == nil {
+			prepare = func() error {
+				return prepareLocalGitRepo(ctx, metaConfig, opts.GiterminismManager.LocalGitRepo())
 			}
-
-			if isShallowClone {
-				if metaConfig.GitWorktree.GetAllowUnshallow() {
-					if err := localGitRepo.Unshallow(ctx); err != nil {
-						return nil, fmt.Errorf("unable to fetch local git repo: %w", err)
-					}
-				} else {
-					logboek.Context(ctx).Warn().LogLn("The usage of shallow git clone may break reproducibility and slow down incremental rebuilds.")
-					logboek.Context(ctx).Warn().LogLn("It is recommended to enable automatic unshallow of the git worktree with gitWorktree.allowUnshallow=true werf.yaml directive")
-					logboek.Context(ctx).Warn().LogLn("If you still want to use shallow clone, then add gitWorktree.forceShallowClone=true werf.yaml directive.")
-
-					return nil, fmt.Errorf("shallow git clone is not allowed")
-				}
-			}
+		}
+		if err := prepare(); err != nil {
+			return nil, err
 		}
 
 		for _, localGitMappingConfig := range imageBaseConfig.Git.Local {
@@ -219,25 +231,9 @@ func generateGitMappings(ctx context.Context, metaConfig *config.Meta, imageBase
 	}
 
 	for _, remoteGitMappingConfig := range imageBaseConfig.Git.Remote {
-		remoteGitRepo := opts.Conveyor.GetRemoteGitRepo(remoteGitMappingConfig.RepoCacheKey)
-		if remoteGitRepo == nil {
-			var err error
-			remoteGitRepo, err = git_repo.OpenRemoteRepo(remoteGitMappingConfig.Name, remoteGitMappingConfig.Url, remoteGitMappingConfig.BasicAuth)
-			if err != nil {
-				return nil, fmt.Errorf("unable to open remote git repo %s by url %s: %w", remoteGitMappingConfig.Name, remoteGitMappingConfig.Url, err)
-			}
-			remoteGitRepo.Branch = remoteGitMappingConfig.Branch
-			remoteGitRepo.Tag = remoteGitMappingConfig.Tag
-			remoteGitRepo.Commit = remoteGitMappingConfig.Commit
-
-			if err := logboek.Context(ctx).Info().LogProcess(fmt.Sprintf("Refreshing %s repository", remoteGitMappingConfig.Name)).
-				DoError(func() error {
-					return remoteGitRepo.CloneAndFetch(ctx)
-				}); err != nil {
-				return nil, err
-			}
-
-			opts.Conveyor.SetRemoteGitRepo(remoteGitMappingConfig.RepoCacheKey, remoteGitRepo)
+		remoteGitRepo, err := prepareRemoteGitRepo(ctx, remoteGitMappingConfig, opts.Conveyor)
+		if err != nil {
+			return nil, err
 		}
 
 		gitMapping, err := gitRemoteArtifactInit(ctx, remoteGitMappingConfig, remoteGitRepo, imageBaseConfig.Name, opts.Conveyor, opts.ContainerWerfDir, opts.TmpDir)
@@ -266,4 +262,27 @@ func generateGitMappings(ctx context.Context, metaConfig *config.Meta, imageBase
 	}
 
 	return res, nil
+}
+
+func prepareLocalGitRepo(ctx context.Context, metaConfig *config.Meta, localGitRepo git_repo.GitRepo) error {
+	if metaConfig.GitWorktree.GetForceShallowClone() {
+		return nil
+	}
+	isShallowClone, err := localGitRepo.IsShallowClone(ctx)
+	if err != nil {
+		return fmt.Errorf("check shallow clone failed: %w", err)
+	}
+	if !isShallowClone {
+		return nil
+	}
+	if !metaConfig.GitWorktree.GetAllowUnshallow() {
+		logboek.Context(ctx).Warn().LogLn("The usage of shallow git clone may break reproducibility and slow down incremental rebuilds.")
+		logboek.Context(ctx).Warn().LogLn("It is recommended to enable automatic unshallow of the git worktree with gitWorktree.allowUnshallow=true werf.yaml directive")
+		logboek.Context(ctx).Warn().LogLn("If you still want to use shallow clone, then add gitWorktree.forceShallowClone=true werf.yaml directive.")
+		return fmt.Errorf("shallow git clone is not allowed")
+	}
+	if err := localGitRepo.Unshallow(ctx); err != nil {
+		return fmt.Errorf("unable to fetch local git repo: %w", err)
+	}
+	return nil
 }
