@@ -260,6 +260,106 @@ var _ = ginkgo.Describe("build context streaming", func() {
 	})
 })
 
+var _ = ginkgo.Describe("build context archive content caching", func() {
+	ginkgo.DescribeTable("recreates the cached context archive only when the context contents change",
+		func(ctx ginkgo.SpecContext, mutate func(ctx context.Context, projectDir string), reused bool, verify func(entries []tarEntry)) {
+			projectDir := newContentCachingRepo(ctx)
+
+			beforePath, before := cachedArchive(ctx, projectDir)
+			beforeEntries := tarFileEntries(beforePath)
+
+			mutate(ctx, projectDir)
+
+			afterPath, after := cachedArchive(ctx, projectDir)
+			afterEntries := tarFileEntries(afterPath)
+
+			gomega.Expect(os.SameFile(before, after)).To(gomega.Equal(reused),
+				"the cached archive must be reused only when the context contents are unchanged")
+			if reused {
+				gomega.Expect(afterEntries).To(gomega.Equal(beforeEntries))
+			} else {
+				gomega.Expect(afterEntries).NotTo(gomega.Equal(beforeEntries))
+			}
+			verify(afterEntries)
+		},
+		ginkgo.Entry("a commit outside the context", func(ctx context.Context, projectDir string) {
+			commitFiles(ctx, projectDir, map[string]string{"outside.txt": "changed\n"})
+		}, true, func(entries []tarEntry) {
+			gomega.Expect(lastEntryContents(entries)).NotTo(gomega.HaveKey("outside.txt"))
+		}),
+		ginkgo.Entry("a commit of a dockerignored file", func(ctx context.Context, projectDir string) {
+			commitFiles(ctx, projectDir, map[string]string{"app/ignored.txt": "changed\n"})
+		}, true, func(entries []tarEntry) {
+			gomega.Expect(lastEntryContents(entries)).NotTo(gomega.HaveKey("ignored.txt"))
+		}),
+		ginkgo.Entry("equivalent ignore rules", func(ctx context.Context, projectDir string) {
+			commitFiles(ctx, projectDir, map[string]string{"app/.dockerignore": ".dockerignore\nignored.txt\nmissing.txt\n"})
+		}, true, func(entries []tarEntry) {
+			gomega.Expect(lastEntryContents(entries)).NotTo(gomega.HaveKey(".dockerignore"))
+		}),
+		ginkgo.Entry("a commit changing included contents", func(ctx context.Context, projectDir string) {
+			commitFiles(ctx, projectDir, map[string]string{"app/included.txt": "changed\n"})
+		}, false, func(entries []tarEntry) {
+			gomega.Expect(lastEntryContents(entries)).To(gomega.HaveKeyWithValue("included.txt", "changed\n"))
+		}),
+		ginkgo.Entry("a commit changing an included file mode", func(ctx context.Context, projectDir string) {
+			utils.RunSucceedCommand(ctx, projectDir, "chmod", "+x", "app/included.txt")
+			commitFiles(ctx, projectDir, nil)
+		}, false, func(entries []tarEntry) {
+			gomega.Expect(entryNamed(entries, "included.txt").Mode & 0o777).To(gomega.Equal(int64(0o755)))
+		}),
+		ginkgo.Entry("a commit renaming an included file", func(ctx context.Context, projectDir string) {
+			utils.RunSucceedCommand(ctx, projectDir, "git", "mv", "app/included.txt", "app/renamed.txt")
+			commitFiles(ctx, projectDir, nil)
+		}, false, func(entries []tarEntry) {
+			gomega.Expect(lastEntryContents(entries)).To(gomega.SatisfyAll(
+				gomega.HaveKeyWithValue("renamed.txt", "included\n"),
+				gomega.Not(gomega.HaveKey("included.txt")),
+			))
+		}),
+		ginkgo.Entry("a commit repointing a tracked symlink", func(ctx context.Context, projectDir string) {
+			utils.RunSucceedCommand(ctx, projectDir, "ln", "-sf", "ignored.txt", "app/link.txt")
+			commitFiles(ctx, projectDir, nil)
+		}, false, func(entries []tarEntry) {
+			gomega.Expect(entryNamed(entries, "link.txt").Linkname).To(gomega.Equal("ignored.txt"))
+		}),
+	)
+
+	ginkgo.It("returns to the original cached archive once the original contents are restored", func(ctx ginkgo.SpecContext) {
+		projectDir := newContentCachingRepo(ctx)
+
+		originalPath, original := cachedArchive(ctx, projectDir)
+		originalEntries := tarFileEntries(originalPath)
+
+		commitFiles(ctx, projectDir, map[string]string{"app/included.txt": "changed\n"})
+		_, changed := cachedArchive(ctx, projectDir)
+		gomega.Expect(os.SameFile(original, changed)).To(gomega.BeFalse())
+
+		commitFiles(ctx, projectDir, map[string]string{"app/included.txt": "included\n"})
+		restoredPath, restored := cachedArchive(ctx, projectDir)
+
+		gomega.Expect(os.SameFile(original, restored)).To(gomega.BeTrue(), "restored contents must hit the original cached archive")
+		gomega.Expect(tarFileEntries(restoredPath)).To(gomega.Equal(originalEntries))
+	})
+
+	ginkgo.It("keeps the cached archive while an allowed uncommitted dockerfile changes the stream", func(ctx ginkgo.SpecContext) {
+		projectDir := newContentCachingRepo(ctx)
+		commitFiles(ctx, projectDir, map[string]string{
+			"werf-giterminism.yaml": giterminismDockerfileConfig(map[string][]string{"allowUncommitted": {"app/Dockerfile"}}),
+		})
+
+		_, before := cachedArchive(ctx, projectDir)
+
+		utils.WriteFile(filepath.Join(projectDir, "app/Dockerfile"), []byte("FROM scratch\n# uncommitted\n"))
+		archive := dockerfileContextArchives(ctx, projectDir, projectImageName)[0]
+		after, err := os.Stat(archive.path)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+
+		gomega.Expect(os.SameFile(before, after)).To(gomega.BeTrue(), "an uncommitted dockerfile must not invalidate the cached context archive")
+		gomega.Expect(lastEntryContents(openedContextEntries(ctx, archive))).To(gomega.HaveKeyWithValue("Dockerfile", "FROM scratch\n# uncommitted\n"))
+	})
+})
+
 func newBuildContextArchive(t *testing.T, dirName string) *BuildContextArchive {
 	t.Helper()
 

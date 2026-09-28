@@ -7,8 +7,10 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"maps"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 
 	"github.com/go-git/go-git/v5/plumbing/filemode"
@@ -21,16 +23,26 @@ import (
 )
 
 type ArchiveOptions struct {
-	Commit      string
-	PathScope   string // Determines the directory that will get into the result (similar to <pathspec> in the git commands).
-	PathMatcher path_matcher.PathMatcher
-	FileRenames map[string]string // Files to rename during archiving. Git repo relative paths of original files as keys, new filenames (without base path) as values.
-	Owner       string
-	Group       string
+	// ContentChecksum replaces commit and matcher identity with the checksum of their AllFiles ls-tree result.
+	ContentChecksum string
+	Commit          string
+	PathScope       string // Determines the directory that will get into the result (similar to <pathspec> in the git commands).
+	PathMatcher     path_matcher.PathMatcher
+	FileRenames     map[string]string // Files to rename during archiving. Git repo relative paths of original files as keys, new filenames (without base path) as values.
+	Owner           string
+	Group           string
 }
 
 // TODO: 1.3 add git mapping type (dir, file, ...) to gitArchive stage digest
 func (opts ArchiveOptions) ID() string {
+	if opts.ContentChecksum != "" {
+		args := []string{"dockerfile-context-v1", opts.ContentChecksum, opts.PathScope, opts.Owner, opts.Group}
+		for _, path := range slices.Sorted(maps.Keys(opts.FileRenames)) {
+			args = append(args, path, opts.FileRenames[path])
+		}
+		return util.Sha256Hash(args...)
+	}
+
 	var renamedOldFilePaths, renamedNewFileNames []string
 	for renamedOldFilePath, renamedNewFileName := range opts.FileRenames {
 		renamedOldFilePaths = append(renamedOldFilePaths, renamedOldFilePath)

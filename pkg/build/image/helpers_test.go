@@ -30,6 +30,40 @@ import (
 	"github.com/werf/werf/v3/test/pkg/utils"
 )
 
+func newContentCachingRepo(ctx context.Context) string {
+	projectDir := newProjectRepo(ctx, dockerfileProjectFiles("\nimage: "+projectImageName+"\ncontext: app\ndockerfile: Dockerfile\n",
+		map[string]string{
+			"app/Dockerfile":    "FROM scratch\nCOPY included.txt /\n",
+			"app/included.txt":  "included\n",
+			"app/ignored.txt":   "ignored\n",
+			"app/.dockerignore": ".dockerignore\nignored.txt\n",
+			"outside.txt":       "outside\n",
+		}))
+	utils.RunSucceedCommand(ctx, projectDir, "ln", "-s", "included.txt", "app/link.txt")
+	commitFiles(ctx, projectDir, nil)
+
+	return projectDir
+}
+
+func cachedArchive(ctx context.Context, projectDir string) (string, os.FileInfo) {
+	path := dockerfileContextArchives(ctx, projectDir, projectImageName)[0].path
+	info, err := os.Stat(path)
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+
+	return path, info
+}
+
+func entryNamed(entries []tarEntry, name string) tarEntry {
+	for _, entry := range entries {
+		if entry.Name == name {
+			return entry
+		}
+	}
+	ginkgo.Fail("no tar entry named " + name)
+
+	return tarEntry{}
+}
+
 func newProjectRepo(ctx context.Context, files map[string]string) string {
 	tmpDir := ginkgo.GinkgoT().TempDir()
 	homeDir := ginkgo.GinkgoT().TempDir()

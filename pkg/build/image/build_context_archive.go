@@ -55,14 +55,27 @@ func (a *BuildContextArchive) Create(ctx context.Context, opts container_backend
 	}
 	defer werf.HostLocker().ReleaseLock(lock)
 
-	archive, err := a.giterminismMgr.LocalGitRepo().GetOrCreateArchive(ctx, git_repo.ArchiveOptions{
+	archiveOptions := git_repo.ArchiveOptions{
 		PathScope: contextPathRelativeToGitWorkTree,
 		PathMatcher: path_matcher.NewMultiPathMatcher(path_matcher.NewPathMatcher(
 			path_matcher.PathMatcherOptions{BasePath: contextPathRelativeToGitWorkTree}),
 			dockerIgnorePathMatcher,
 		),
 		Commit: a.giterminismMgr.HeadCommit(ctx),
+	}
+	archiveOptions.ContentChecksum, err = a.giterminismMgr.LocalGitRepo().GetOrCreateChecksum(ctx, git_repo.ChecksumOptions{
+		Commit: archiveOptions.Commit,
+		LsTreeOptions: git_repo.LsTreeOptions{
+			PathScope:   archiveOptions.PathScope,
+			PathMatcher: archiveOptions.PathMatcher,
+			AllFiles:    true,
+		},
 	})
+	if err != nil {
+		return fmt.Errorf("calculate build context checksum: %w", err)
+	}
+
+	archive, err := a.giterminismMgr.LocalGitRepo().GetOrCreateArchive(ctx, archiveOptions)
 	if err != nil {
 		return fmt.Errorf("unable to get or create archive: %w", err)
 	}
