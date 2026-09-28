@@ -52,6 +52,12 @@ seen fail.
   of externally observable behavior.
 - **Coverage number, not falsifiability.** A line being executed says nothing about whether
   a wrong value on that line would be caught.
+- **It proves the lab, not production wiring.** A probe on a bare context "proved" that
+  cancellation panics past a branch — but production wraps commands in
+  `graceful.WithTermination`, where `Terminate` returns normally and the branch executes.
+  Before concluding "X cannot reach this code", rebuild the exact wiring production uses
+  (context construction, env, entry point); a conclusion drawn from simplified wiring
+  describes the probe, not the system.
 - **An extended test quietly drops what the old one proved.** Adding cases to a fixture can
   remove the conflict that made an earlier property observable. After editing an existing
   test, re-run the mutations the previous version caught, not only the new ones.
