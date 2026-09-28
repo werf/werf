@@ -211,6 +211,8 @@ func (r *Result) Checksum(ctx context.Context) string {
 	h := sha256.New()
 
 	_ = r.lsTreeEntriesWalk(func(lsTreeEntry *LsTreeEntry) error {
+		h.Write([]byte(filepath.ToSlash(lsTreeEntry.FullFilepath)))
+		h.Write([]byte{0})
 		h.Write([]byte(lsTreeEntry.Hash.String()))
 		h.Write([]byte(lsTreeEntry.Mode.String()))
 
