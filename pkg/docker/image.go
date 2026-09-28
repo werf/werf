@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
 	"slices"
 	"strings"
 	"time"
@@ -303,6 +302,7 @@ func CliBuild_LiveOutputWithCustomIn(ctx context.Context, rc io.ReadCloser, cliO
 		NetworkMode:            cliOpts.Network,
 		ExtraHosts:             cliOpts.ExtraHosts,
 		ProvenanceResponseMode: string(confutil.MetadataProvenanceModeDisabled),
+		Attests:                buildflags.Attests{{Type: "provenance", Disabled: true}},
 	}
 
 	if len(cliOpts.BuildArgs) > 0 {
@@ -336,18 +336,6 @@ func CliBuild_LiveOutputWithCustomIn(ctx context.Context, rc io.ReadCloser, cliO
 		}
 		buildOpts.Secrets = secrets
 	}
-
-	// TODO: properly handle index manifests instead of disabling provenance.
-	// Provenance attestations create index manifests that werf cannot handle correctly.
-	prevNoAttest, hadNoAttest := os.LookupEnv("BUILDX_NO_DEFAULT_ATTESTATIONS")
-	os.Setenv("BUILDX_NO_DEFAULT_ATTESTATIONS", "1")
-	defer func() {
-		if hadNoAttest {
-			os.Setenv("BUILDX_NO_DEFAULT_ATTESTATIONS", prevNoAttest)
-		} else {
-			os.Unsetenv("BUILDX_NO_DEFAULT_ATTESTATIONS")
-		}
-	}()
 
 	progressMode := progressui.PlainMode
 	if liveCliOutputEnabled {
