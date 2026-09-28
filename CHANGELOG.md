@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.80.0](https://github.com/werf/werf/compare/v2.79.2...v2.80.0) (2026-09-25)
+
+
+### Features
+
+* **build:** collect operations statistics for the whole command run ([#7856](https://github.com/werf/werf/issues/7856)) ([51c0d31](https://github.com/werf/werf/commit/51c0d31ea28e48c0b8553a531579859b835e9ae0))
+
 ## [2.79.2](https://github.com/werf/werf/compare/v2.79.1...v2.79.2) (2026-09-24)
 
 
