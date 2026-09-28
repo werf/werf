@@ -46,19 +46,22 @@ func setupSSHMultiplexing(ctx context.Context) []string {
 		return nil
 	}
 
-	hashCommand := "sha256sum"
-	if _, err := exec.LookPath(hashCommand); err != nil {
-		if _, err := exec.LookPath("shasum"); err != nil {
-			return nil
+	var hashCommand string
+	for _, command := range []string{"sha256sum", "openssl dgst -sha256 -r", "shasum -a 256"} {
+		if _, err := exec.LookPath(strings.Fields(command)[0]); err == nil {
+			hashCommand = command
+			break
 		}
-		hashCommand = "shasum -a 256"
+	}
+	if hashCommand == "" {
+		return nil
 	}
 
 	for _, base := range []string{os.TempDir(), sshFallbackDir} {
 		// The control path is interpolated into a command git hands to the
-		// shell, so a base directory with shell-active characters cannot be
-		// carried safely.
-		if strings.ContainsAny(base, "\"$`\\") {
+		// shell and then expanded by ssh, so shell-active characters and ssh
+		// tokens cannot be carried safely.
+		if !filepath.IsAbs(base) || strings.ContainsAny(base, "\"'$`\\%") {
 			continue
 		}
 
@@ -80,33 +83,28 @@ func setupSSHMultiplexing(ctx context.Context) []string {
 		// Git appends the remote command last. Exclude it so repositories using
 		// the same alias share a connection, but hash the original alias and
 		// options: OpenSSH's %C loses aliases with distinct authentication keys.
-		script := fmt.Sprintf(`hash=$(
+		command := fmt.Sprintf(`ssh -o ControlMaster=auto -o ControlPersist=%s -o ControlPath="$(
+hash=$(
 	while [ "$#" -gt 1 ]; do
 		printf '%%s\000' "$1"
 		shift
 	done | %s
-) || exec ssh "$@"
+) || { printf none; exit; }
 hash=${hash%%%% *}
 case "$hash" in
-	''|*[!0-9a-f]*) exec ssh "$@" ;;
+	(''|*[!0-9a-f]*) printf none; exit ;;
 esac
-[ "${#hash}" = 64 ] || exec ssh "$@"
-hash=$(printf '%%.40s' "$hash")
-exec ssh -o ControlMaster=auto -o ControlPath="%s$hash" -o ControlPersist=%s "$@"
-`, hashCommand, controlPath, sshControlPersist)
-		wrapper := filepath.Join(dir, "ssh")
-		if err := os.WriteFile(wrapper, []byte(script), 0o600); err != nil {
-			os.RemoveAll(dir)
-			continue
-		}
+[ "${#hash}" = 64 ] || { printf none; exit; }
+printf '%%s%%.40s' '%s' "$hash"
+)"`, sshControlPersist, hashCommand, controlPath)
 
-		if !sshSupportsMultiplexing(ctx, wrapper) {
+		if !sshSupportsMultiplexing(ctx, command, controlPath) {
 			os.RemoveAll(dir)
 			return nil
 		}
 
 		sshControlDir = dir
-		return []string{fmt.Sprintf(`GIT_SSH_COMMAND=sh "%s"`, wrapper)}
+		return []string{"GIT_SSH_COMMAND=" + command}
 	}
 
 	return nil
@@ -132,12 +130,10 @@ func CleanupSSHMultiplexing() {
 // accepts them. -G resolves the configuration without connecting, and
 // -F /dev/null keeps the probe independent of user and system configuration,
 // where directives like CanonicalizeHostname could make it resolve names.
-func sshSupportsMultiplexing(ctx context.Context, wrapper string) bool {
-	cmd := exec.CommandContext(ctx, "sh", wrapper, "-G", "-F", "/dev/null", "werf-probe", "true")
-	cmd.Stdout = nil
-	cmd.Stderr = nil
-
-	return cmd.Run() == nil
+func sshSupportsMultiplexing(ctx context.Context, command, controlPath string) bool {
+	cmd := exec.CommandContext(ctx, "/bin/sh", "-c", command+` "$@"`, "ssh", "-G", "-F", "/dev/null", "werf-probe", "true")
+	output, err := cmd.Output()
+	return err == nil && strings.Contains("\n"+string(output), "\ncontrolpath "+controlPath)
 }
 
 func configuredSSHCommand(ctx context.Context) string {
