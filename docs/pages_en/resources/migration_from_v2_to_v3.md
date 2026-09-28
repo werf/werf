@@ -32,7 +32,7 @@ These changes affect existing projects even without configuration edits:
 | Service values | `.Values.global.env` is populated automatically. | `.Values.global.werf.env` is populated automatically; the old key is no longer populated. | Temporary compatibility: `WERF_LEGACY_VALUES_GLOBAL_ENV=1`; [details](#values-and-environment-variables). |
 | Release storage | `HELM_DRIVER` is honored if `WERF_RELEASE_STORAGE` is not set. | `WERF_RELEASE_STORAGE` is used; without it, the default storage applies. | Transfer the variable's value; [details](#values-and-environment-variables). |
 | Published chart name | `--helm-compatible-chart=false`. | `--helm-compatible-chart=true`. | Pass `false` if you need the previous name; [details](#charts-and-bundles). |
-| `.helmignore` | Does not filter files when werf reads the chart. | **Since v3.6.0**, filters files, including Helm's default rules. | Check exclusions before deploying; [details](#charts-and-bundles). |
+| `.helmignore` | Does not filter files when werf reads the chart. | Filters files, including Helm's default rules. | Check exclusions before deploying; [details](#charts-and-bundles). |
 
 ### CI and automation
 
@@ -158,9 +158,9 @@ See [Destination path rules]({{ "/usage/build/stapel/imports.html#destination-pa
 
 ### Git dependencies of build stages
 
-For Stapel with Git mappings: `git.stageDependencies` determines which Git file changes trigger Shell-stage rebuilds. **The rules below apply starting with v3.6.0.** In v3.5.0 and earlier v3 versions, both an omitted stage setting and an explicit `[]` are replaced with `**/*`: an empty list does not disable the direct Git-file dependency there. Upgrade to v3.6.0 or later to use `[]` and the partially filled block rules below.
+For Stapel with Git mappings: `git.stageDependencies` determines which Git file changes trigger Shell-stage rebuilds.
 
-Starting with v3.6.0, **an omitted setting and an explicit empty list can mean different things**:
+In v3, **an omitted setting and an explicit empty list can mean different things**:
 
 | Setting | Before — v2 | After — v3 |
 |---|---|---|
@@ -339,7 +339,7 @@ Without replacing `HELM_DRIVER`, werf uses its default release storage rather th
 
 ### Charts and bundles
 
-**Starting with v3.6.0, `.helmignore` applies when reading the chart.** In v3.5.0 and earlier v3 versions, werf's own chart loader did not apply it. Excluded files disappear from the rendered manifests and the published bundle **without a warning**.
+**In v3, `.helmignore` applies when reading the chart.** Excluded files disappear from the rendered manifests and the published bundle **without a warning**.
 
 - Even without `.helmignore`, Helm's default rules exclude dot-prefixed files and directories directly under `templates/`. Directories are excluded with their contents.
 - `**` now causes an error, although it previously had no effect.
@@ -408,7 +408,6 @@ Check scripts that pass old options: a removed flag causes an argument parsing e
 - `--synchronization` / `-S` / `WERF_SYNCHRONIZATION` and the `werf synchronization` command group are removed — see [Synchronization server](#synchronization-server).
 - Helm mode via `WERF_HELM3_MODE` and invoking the werf binary under the name `helm` are removed; use supported werf commands or the standalone Helm CLI.
 - Positional image names in `converge` and `plan` now take effect without `WERF_CONVERGE_ENABLE_IMAGES_PARAMS`. Check that stray arguments have not become image selectors; selecting images does not by itself limit which Kubernetes resources are deployed.
-- `cleanup --kube-scan-namespaces`, available in v2.79.1, was absent in v3.5.0 but is available again starting with v3.6.0. If your script uses it, upgrade to v3.6.0 or later rather than dropping the namespace restriction without checking access permissions and image protection.
 
 ## Registry cleanup
 
