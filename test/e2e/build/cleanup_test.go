@@ -1,6 +1,7 @@
 package e2e_build_test
 
 import (
+	"context"
 	"slices"
 	"time"
 
@@ -43,7 +44,9 @@ var _ = ginkgo.Describe("Test image cleanup", ginkgo.Label("e2e", "build", "extr
 			utils.RunSucceedCommand(ctx, "", backend, append(slices.Concat(commonArgs, inspectArgs), ref)...)
 		}
 
-		gomega.Expect(contback.CleanupProject(ctx, SuiteData.ProjectName, contback.CleanupProjectOptions{})).To(gomega.Succeed())
+		cleanupCtx, cancelCleanup := context.WithTimeout(ctx, 2*time.Minute)
+		defer cancelCleanup()
+		gomega.Expect(contback.CleanupProject(cleanupCtx, SuiteData.ProjectName, contback.CleanupProjectOptions{})).To(gomega.Succeed())
 		for _, ref := range []string{imageRef, registryRef} {
 			_, err := utils.RunCommand(ctx, "", backend, append(slices.Concat(commonArgs, inspectArgs), ref)...)
 			gomega.Expect(err).To(gomega.HaveOccurred())
