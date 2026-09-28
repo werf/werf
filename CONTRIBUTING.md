@@ -101,8 +101,10 @@ On Linux, the test executable is re-executed as a cleanup worker before Ginkgo
 starts, with a JSON request in `_WERF_TEST_CLEANUP_PROJECT`. The worker opens the
 native storage once for listing, removal and verification. Non-root callers use
 `buildah unshare`; the parent owns its process group and kills it on cancellation.
-An absent Docker CLI or unavailable Buildah CLI is skipped. An installed runtime
-that fails to list or remove images is an error, not a successful cleanup.
+Docker cleanup is skipped only when its CLI is absent from PATH. Buildah cleanup
+is skipped outside Linux or when its CLI is absent from PATH. An installed runtime
+that fails to initialize rootless execution, list images or remove them is an
+error, not a successful cleanup.
 
 This cleanup does not delete remote registry data, shared base images, BuildKit
 cache, or shared werf caches. In particular, project build-dir mounts under
