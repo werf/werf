@@ -31,11 +31,15 @@ func CleanupProject(ctx context.Context, projectName string, opts CleanupProject
 
 	var cleanupErrors []error
 	repos := append(slices.Clone(opts.Repositories), os.Getenv("WERF_REPO"), os.Getenv("WERF_FINAL_REPO"))
-	if err := cleanupProjectImages(ctx, "docker", nil, projectName, repos, func(ctx context.Context, ref string) error {
-		_, err := cleanupCommand(ctx, "docker", []string{"rmi", "--no-prune", ref})
-		return err
-	}); err != nil {
-		cleanupErrors = append(cleanupErrors, err)
+	if _, err := exec.LookPath("docker"); err == nil {
+		if err := cleanupDockerProjectImages(ctx, projectName, repos, func(ctx context.Context, ref string) error {
+			_, err := cleanupCommand(ctx, "docker", []string{"rmi", "--no-prune", ref})
+			return err
+		}); err != nil {
+			cleanupErrors = append(cleanupErrors, err)
+		}
+	} else if !errors.Is(err, exec.ErrNotFound) {
+		cleanupErrors = append(cleanupErrors, fmt.Errorf("locate docker CLI: %w", err))
 	}
 	if buildahAvailable() {
 		if err := cleanupBuildahProject(ctx, projectName, repos); err != nil {
@@ -45,26 +49,21 @@ func CleanupProject(ctx context.Context, projectName string, opts CleanupProject
 	return errors.Join(cleanupErrors...)
 }
 
-func cleanupProjectImages(ctx context.Context, backend string, commonArgs []string, projectName string, repos []string, removeImage func(context.Context, string) error) error {
+func cleanupDockerProjectImages(ctx context.Context, projectName string, repos []string, removeImage func(context.Context, string) error) error {
 	list := func() ([]string, error) {
-		args := append(slices.Clone(commonArgs), "images", "--filter", "label=werf="+projectName, "--all")
-		if backend == "docker" {
-			args = append(args, "--no-trunc", "--digests", "--format", "{{json .}}")
-		} else {
-			args = append(args, "--json")
-		}
-		output, err := cleanupCommand(ctx, backend, args)
+		args := []string{"images", "--filter", "label=werf=" + projectName, "--all", "--no-trunc", "--digests", "--format", "{{json .}}"}
+		output, err := cleanupCommand(ctx, "docker", args)
 		if err != nil {
 			return nil, err
 		}
-		images, err := parseCleanupImages(backend, output)
+		images, err := parseDockerCleanupImages(output)
 		if err != nil {
 			return nil, err
 		}
 		return projectImageReferences(images, projectName, repos), nil
 	}
 
-	return cleanupImageReferences(ctx, backend, list, removeImage)
+	return cleanupImageReferences(ctx, "docker", list, removeImage)
 }
 
 func cleanupImageReferences(ctx context.Context, backend string, list func() ([]string, error), removeImage func(context.Context, string) error) error {
@@ -104,15 +103,8 @@ func cleanupCommand(ctx context.Context, backend string, args []string) ([]byte,
 	return output, nil
 }
 
-func parseCleanupImages(backend string, output []byte) ([]cleanupImage, error) {
+func parseDockerCleanupImages(output []byte) ([]cleanupImage, error) {
 	var images []cleanupImage
-	if backend == "buildah" {
-		if err := json.Unmarshal(output, &images); err != nil {
-			return nil, fmt.Errorf("decode buildah images: %w", err)
-		}
-		return images, nil
-	}
-
 	scanner := bufio.NewScanner(strings.NewReader(string(output)))
 	for scanner.Scan() {
 		var row struct {

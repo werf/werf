@@ -2,6 +2,7 @@ package e2e_compose_test
 
 import (
 	"fmt"
+	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -17,6 +18,7 @@ const (
 
 type simpleTestOptions struct {
 	ExtraArgs        []string
+	ComposeOptions   string
 	State            string
 	StateDescription string
 	Repo             string
@@ -35,9 +37,14 @@ var _ = Describe("Complex compose", Label("e2e", "compose", "complex"), func() {
 
 				By(fmt.Sprintf("%s: %s", opts.State, opts.StateDescription))
 				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
+				DeferCleanup(func(cleanupCtx SpecContext) {
+					werfProject.Compose(cleanupCtx, &werf.BuildOptions{CommonOptions: werf.CommonOptions{
+						ExtraArgs: []string{commandDown, "--docker-compose-options", opts.ComposeOptions},
+					}})
+				}, NodeTimeout(time.Minute))
 				composeOut := werfProject.Compose(ctx, &werf.BuildOptions{
 					CommonOptions: werf.CommonOptions{
-						ExtraArgs: append([]string{commandUp}, opts.ExtraArgs...),
+						ExtraArgs: append([]string{commandUp, "--docker-compose-options", opts.ComposeOptions}, opts.ExtraArgs...),
 					},
 				})
 				Expect(composeOut).To(ContainSubstring("Building stage"))
@@ -58,8 +65,8 @@ var _ = Describe("Complex compose", Label("e2e", "compose", "complex"), func() {
 			Repo:             "repo0-compose",
 		}),
 		Entry("with multiple compose files", simpleTestOptions{
+			ComposeOptions: "-f docker-compose.yaml -f docker-compose-b.yaml",
 			ExtraArgs: []string{
-				"--docker-compose-options", "-f docker-compose.yaml -f docker-compose-b.yaml",
 				"--docker-compose-command-options", "--always-recreate-deps",
 			},
 			State:            "state1",
@@ -92,9 +99,14 @@ var _ = Describe("Complex compose", Label("e2e", "compose", "complex"), func() {
 				Expect(buildOut).NotTo(ContainSubstring("Use previously built image"))
 
 				By(fmt.Sprintf("%s: %s", opts.State, opts.StateDescription))
+				DeferCleanup(func(cleanupCtx SpecContext) {
+					args := []string{commandDown, "--docker-compose-options", opts.ComposeOptions}
+					args = append(args, "--use-build-report", "--build-report-path", SuiteData.GetBuildReportPath(buildReportName))
+					werfProject.Compose(cleanupCtx, &werf.BuildOptions{CommonOptions: werf.CommonOptions{ExtraArgs: args}})
+				}, NodeTimeout(time.Minute))
 				_ = werfProject.Compose(ctx, &werf.BuildOptions{
 					CommonOptions: werf.CommonOptions{
-						ExtraArgs: append([]string{commandUp}, opts.ExtraArgs...),
+						ExtraArgs: append([]string{commandUp, "--docker-compose-options", opts.ComposeOptions}, opts.ExtraArgs...),
 					},
 				})
 
@@ -114,8 +126,8 @@ var _ = Describe("Complex compose", Label("e2e", "compose", "complex"), func() {
 			Repo:             "repo0-compose-report",
 		}),
 		Entry("with multiple compose files with build report using", simpleTestOptions{
+			ComposeOptions: "-f docker-compose.yaml -f docker-compose-b.yaml",
 			ExtraArgs: []string{
-				"--docker-compose-options", "-f docker-compose.yaml -f docker-compose-b.yaml",
 				"--docker-compose-command-options", "--always-recreate-deps",
 			},
 			State:            "state1",
