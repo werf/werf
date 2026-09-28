@@ -2,6 +2,7 @@ package true_git
 
 import (
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -28,17 +29,59 @@ var _ = Describe("Ssh multiplexing", func() {
 		DeferCleanup(CleanupSSHMultiplexing)
 	})
 
-	It("reuses one connection per host", func(ctx SpecContext) {
+	It("creates a private connection directory", func(ctx SpecContext) {
 		GinkgoT().Setenv("TMPDIR", shortTempDir())
 		Expect(Init(ctx, Options{})).To(Succeed())
 
 		command := gitSSHCommand(NewGitCmd(ctx, nil, "version"))
-		Expect(command).To(ContainSubstring("ControlMaster=auto"))
+		Expect(command).To(HavePrefix(`sh "`))
 		Expect(controlDir(command)).To(HavePrefix(filepath.Join(os.TempDir(), "werf-ssh-")))
 
 		info, err := os.Stat(controlDir(command))
 		Expect(err).NotTo(HaveOccurred())
 		Expect(info.Mode().Perm()).To(Equal(os.FileMode(0o700)))
+	})
+
+	It("separates aliases with different keys while reusing connections across repositories", func(ctx SpecContext) {
+		GinkgoT().Setenv("TMPDIR", shortTempDir())
+		Expect(Init(ctx, Options{})).To(Succeed())
+		command := gitSSHCommand(NewGitCmd(ctx, nil, "version"))
+		Expect(command).NotTo(BeEmpty())
+
+		config := filepath.Join(shortTempDir(), "config")
+		longAlias := strings.Repeat("long", 60)
+		Expect(os.WriteFile(config, []byte("Host first "+longAlias+"\n HostName github.com\n User git\n IdentityFile /first-key\nHost second\n HostName github.com\n User git\n IdentityFile /second-key\n"), 0o600)).To(Succeed())
+
+		var sockets []string
+		for _, connection := range []struct {
+			alias, repo, key, port string
+		}{
+			{"first", "one", "/first-key", "22"},
+			{"second", "one", "/second-key", "22"},
+			{"first", "two", "/first-key", "22"},
+			{longAlias, "one", "/first-key", "22"},
+			{"first", "one", "/first-key", "2222"},
+		} {
+			cmd := exec.CommandContext(ctx, "sh", "-c", command+` "$@"`, "ssh", "-G", "-F", config, "-p", connection.port, connection.alias, "git-upload-pack '"+connection.repo+"'")
+			output, err := cmd.Output()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(string(output)).To(ContainSubstring("identityfile " + connection.key + "\n"))
+			Expect(string(output)).To(ContainSubstring("controlmaster auto\n"))
+			Expect(string(output)).To(ContainSubstring("controlpersist 60\n"))
+			var socket string
+			for _, line := range strings.Split(string(output), "\n") {
+				if value, ok := strings.CutPrefix(line, "controlpath "); ok {
+					socket = value
+				}
+			}
+			Expect(socket).NotTo(BeEmpty())
+			Expect(len(socket) + len(".") + 16).To(BeNumerically("<=", sshControlPathLimit))
+			sockets = append(sockets, socket)
+		}
+		Expect(sockets[0]).NotTo(Equal(sockets[1]))
+		Expect(sockets[0]).To(Equal(sockets[2]))
+		Expect(sockets[0]).NotTo(Equal(sockets[3]))
+		Expect(sockets[0]).NotTo(Equal(sockets[4]))
 	})
 
 	It("gives every werf process its own socket", func(ctx SpecContext) {
@@ -56,7 +99,7 @@ var _ = Describe("Ssh multiplexing", func() {
 		setup()
 		Expect(Init(ctx, Options{})).To(Succeed())
 
-		Expect(gitSSHCommand(NewGitCmd(ctx, nil, "version"))).NotTo(ContainSubstring("ControlMaster"))
+		Expect(gitSSHCommand(NewGitCmd(ctx, nil, "version"))).To(BeEmpty())
 	},
 		Entry("GIT_SSH_COMMAND", func() { GinkgoT().Setenv("GIT_SSH_COMMAND", "ssh -i /tmp/key") }),
 		Entry("GIT_SSH", func() { GinkgoT().Setenv("GIT_SSH", "ssh -i /tmp/key") }),
@@ -136,6 +179,28 @@ var _ = Describe("Ssh multiplexing", func() {
 		Expect(gitSSHCommand(NewGitCmd(ctx, nil, "version"))).To(BeEmpty())
 	})
 
+	DescribeTable("uses plain ssh when hashing fails", func(ctx SpecContext, hashScript string) {
+		GinkgoT().Setenv("TMPDIR", shortTempDir())
+		binDir := shortTempDir()
+		Expect(os.WriteFile(filepath.Join(binDir, "sha256sum"), []byte("#!/bin/sh\n"+hashScript), 0o755)).To(Succeed())
+		GinkgoT().Setenv("PATH", binDir+string(os.PathListSeparator)+os.Getenv("PATH"))
+		Expect(Init(ctx, Options{})).To(Succeed())
+
+		command := gitSSHCommand(NewGitCmd(ctx, nil, "version"))
+		Expect(command).NotTo(BeEmpty())
+		cmd := exec.CommandContext(ctx, "sh", "-c", command+` "$@"`, "ssh", "-G", "-F", os.DevNull, "werf-probe", "true")
+		output, err := cmd.Output()
+		Expect(err).NotTo(HaveOccurred())
+		Expect(string(output)).To(ContainSubstring("hostname werf-probe\n"))
+		Expect(string(output)).To(ContainSubstring("controlmaster false\n"))
+		Expect(string(output)).NotTo(ContainSubstring("controlpath "))
+	},
+		Entry("failed command", "printf '%064d\\n' 0\nexit 1\n"),
+		Entry("empty digest", "exit 0\n"),
+		Entry("non-hex digest", "printf '%064d\\n' 0 | tr 0 z\n"),
+		Entry("short digest", "printf 'abcd\\n'\n"),
+	)
+
 	It("gives up when no directory can hold the socket", func(ctx SpecContext) {
 		path := filepath.Join(shortTempDir(), "file")
 		Expect(os.WriteFile(path, nil, 0o600)).To(Succeed())
@@ -150,7 +215,7 @@ var _ = Describe("Ssh multiplexing", func() {
 })
 
 func controlDir(sshCommand string) string {
-	_, path, _ := strings.Cut(sshCommand, `ControlPath="`)
+	_, path, _ := strings.Cut(sshCommand, `sh "`)
 	path, _, _ = strings.Cut(path, `"`)
 
 	return filepath.Dir(path)
