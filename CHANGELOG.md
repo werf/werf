@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.80.1](https://github.com/werf/werf/compare/v2.80.0...v2.80.1) (2026-09-28)
+
+
+### Bug Fixes
+
+* **ci:** support werf 3 in v2 documentation builds ([#7948](https://github.com/werf/werf/issues/7948)) ([9b89dfb](https://github.com/werf/werf/commit/9b89dfb8b072c4084143de0b8ef6959a36aba567))
+
 ## [2.80.0](https://github.com/werf/werf/compare/v2.79.2...v2.80.0) (2026-09-25)
 
 
