@@ -1,5 +1,20 @@
 # Changelog
 
+## [3.6.1](https://github.com/werf/werf/compare/v3.6.0...v3.6.1) (2026-09-27)
+
+
+### Bug Fixes
+
+* **build, git:** reuse one ssh connection for git requests ([#7930](https://github.com/werf/werf/issues/7930)) ([6bf8313](https://github.com/werf/werf/commit/6bf8313121c1df70f26c2a6d51507b8ea70a12b3))
+* **build:** resolve content anchors concurrently in parallel builds ([#7931](https://github.com/werf/werf/issues/7931)) ([39f664f](https://github.com/werf/werf/commit/39f664ffdbf9154f4424c5cf42bd2f75c3053c4f))
+* **build:** ship missing networking helpers in official images ([#7925](https://github.com/werf/werf/issues/7925)) ([7f1fded](https://github.com/werf/werf/commit/7f1fded10112dae77ea906334367910866cb963c))
+* **build:** speed up build preparation before workers start ([#7928](https://github.com/werf/werf/issues/7928)) ([7a188c2](https://github.com/werf/werf/commit/7a188c2897bc6778ceed0290f99141ca45aea072))
+* **build:** stop per-digest local image scans before image workers start ([#7929](https://github.com/werf/werf/issues/7929)) ([20d74b6](https://github.com/werf/werf/commit/20d74b624a0f062b0668418d09012f4f78b788e2))
+* **git:** keep a healthy cached worktree on canceled builds ([#7935](https://github.com/werf/werf/issues/7935)) ([ad187a4](https://github.com/werf/werf/commit/ad187a492c487dee18f6e1646985df89d5be3d31))
+* **git:** keep local submodule reuse for nested submodule names ([#7933](https://github.com/werf/werf/issues/7933)) ([196df14](https://github.com/werf/werf/commit/196df14db49a7d52b181ef83cdaa80b3ef48faff))
+* **git:** rebuild a broken cached worktree instead of failing ([#7932](https://github.com/werf/werf/issues/7932)) ([c89fdb6](https://github.com/werf/werf/commit/c89fdb68af6a137d37053afc8c327266ada66a07))
+* **storage:** reuse recent tags listings for stage lookups on cache misses ([#7934](https://github.com/werf/werf/issues/7934)) ([d3d0c41](https://github.com/werf/werf/commit/d3d0c41fa515ebd2c234d90bf87aa832186fcfd0))
+
 ## [3.6.0](https://github.com/werf/werf/compare/v3.5.0...v3.6.0) (2026-09-25)
 
 
