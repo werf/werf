@@ -28,7 +28,12 @@ jobs:
           ref: ${{ github.event_name == 'workflow_dispatch' && github.ref || github.event.pull_request.base.ref }}
 
       - name: Install werf
-        uses: werf/actions/install@v2
+        uses: werf/trdl/actions/setup-app@v0.13.0
+        with:
+          preset: werf
+          group: "3"
+          channel: dev
+          force: false
 
       - name: Dismiss preview
         run: |
