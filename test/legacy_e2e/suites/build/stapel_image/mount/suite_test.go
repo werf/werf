@@ -23,4 +23,5 @@ var (
 	_ = SuiteData.SetupProjectName(suite_init.NewProjectNameData(SuiteData.StubsData))
 	_ = SuiteData.SetupTmp(suite_init.NewTmpDirData())
 	_ = SuiteData.SetupWerfInit(suite_init.NewWerfInitData(SuiteData.TmpDirData))
+	_ = SuiteData.SetupProjectCleanup()
 )
