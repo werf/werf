@@ -129,11 +129,7 @@ func (c *WerfConfig) validateExternalImageReferences() error {
 		}
 
 		from := image.GetFrom()
-		if from == "" || from == "scratch" {
-			continue
-		}
-
-		if c.GetImage(from) == nil {
+		if from != "" && from != "scratch" && c.GetImage(from) == nil {
 			if !hasExplicitTagOrDigest(from) {
 				return newDetailedConfigError(
 					fmt.Sprintf("external image reference %q in `from` must include a tag (`:TAG`) or digest (`@sha256:...`)", from),
