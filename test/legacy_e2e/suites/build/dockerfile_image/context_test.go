@@ -28,10 +28,6 @@ var _ = Describe("context", func() {
 		utils.RunSucceedCommand(ctx, SuiteData.WerfRepoWorktreeDir, "git", "checkout", "-b", "integration-context-test", "v1.0.10")
 	})
 
-	AfterEach(func(ctx SpecContext) {
-		utils.RunSucceedCommand(ctx, SuiteData.WerfRepoWorktreeDir, SuiteData.WerfBinPath, "host", "purge", "--force")
-	})
-
 	type entry struct {
 		prepareFixturesFunc func(ctx SpecContext)
 		expectedDigest      string

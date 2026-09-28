@@ -9,10 +9,6 @@ import (
 	"github.com/werf/werf/v3/test/pkg/utils/docker"
 )
 
-var _ = AfterEach(func(ctx SpecContext) {
-	utils.RunSucceedCommand(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), SuiteData.WerfBinPath, "host", "purge", "--force")
-})
-
 type entry struct {
 	fixturePath                       string
 	expectedFirstBuildOutputMatchers  []types.GomegaMatcher
