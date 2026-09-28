@@ -67,8 +67,6 @@ func (s *GitArchiveStage) GetContentDependencies(ctx context.Context, c Conveyor
 			}
 		}
 
-		args = append(args, gitMapping.GetParamshash())
-
 		commitInfo, err := gitMapping.GetLatestCommitInfo(ctx, c)
 		if err != nil {
 			return "", fmt.Errorf("unable to get latest commit info for %s: %w", gitMapping.GetFullName(), err)
@@ -86,7 +84,7 @@ func (s *GitArchiveStage) GetContentDependencies(ctx context.Context, c Conveyor
 			return "", fmt.Errorf("unable to get checksum for git mapping %s: %w", gitMapping.GetFullName(), err)
 		}
 
-		args = append(args, checksum)
+		args = append(args, util.Sha256Hash(gitMapping.GetParamshash(), checksum))
 	}
 
 	sort.Strings(args)
