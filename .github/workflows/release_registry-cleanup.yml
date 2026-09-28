@@ -28,9 +28,12 @@ jobs:
           fetch-depth: 0
 
       - name: Install werf
-        uses: werf/actions/install@v2
+        uses: werf/trdl/actions/setup-app@v0.13.0
         with:
-          channel: alpha
+          preset: werf
+          group: "3"
+          channel: dev
+          force: false
 
       - name: Cleanup
         run: |
