@@ -160,9 +160,9 @@ func (backend *DockerServerBackend) BuildDockerfile(ctx context.Context, dockerf
 		fmt.Printf("[DOCKER BUILD] docker build %+v\n", buildOpts)
 	}
 
-	contextReader, err := os.Open(opts.BuildContextArchive.Path())
+	contextReader, err := opts.BuildContextArchive.Open(ctx)
 	if err != nil {
-		return "", fmt.Errorf("unable to open context archive %q: %w", opts.BuildContextArchive.Path(), err)
+		return "", fmt.Errorf("open build context: %w", err)
 	}
 	defer contextReader.Close()
 

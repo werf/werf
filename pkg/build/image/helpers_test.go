@@ -1,14 +1,18 @@
 package image
 
 import (
+	"archive/tar"
 	"context"
 	"fmt"
+	"io"
+	"io/fs"
 	"net/http"
 	"net/http/cgi"
 	"net/http/httptest"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"sync"
 
 	"github.com/onsi/ginkgo/v2"
@@ -16,6 +20,8 @@ import (
 
 	"github.com/werf/werf/v3/pkg/build/stage"
 	"github.com/werf/werf/v3/pkg/config"
+	"github.com/werf/werf/v3/pkg/container_backend"
+	"github.com/werf/werf/v3/pkg/context_manager"
 	"github.com/werf/werf/v3/pkg/git_repo"
 	"github.com/werf/werf/v3/pkg/git_repo/gitdata"
 	"github.com/werf/werf/v3/pkg/giterminism_manager"
@@ -156,6 +162,216 @@ func changedChecksums(ctx context.Context, projectDir string, edits map[string]s
 	}
 
 	return changed
+}
+
+const contextStreamingBlobSize = 1 << 20
+
+func contextStreamingProjectFiles() map[string]string {
+	files := map[string]string{"blob.bin": strings.Repeat("x", contextStreamingBlobSize)}
+	var imageBlocks []string
+	for _, name := range []string{"one", "two", "three"} {
+		files[name+".Dockerfile"] = fmt.Sprintf("FROM scratch\nCOPY blob.bin /blob-%s\n", name)
+		imageBlocks = append(imageBlocks, fmt.Sprintf("\nimage: %s\ndockerfile: %s.Dockerfile\n", name, name))
+	}
+
+	return dockerfileProjectFiles(strings.Join(imageBlocks, "---"), files)
+}
+
+func dockerfileProjectFiles(imageBlocks string, files map[string]string) map[string]string {
+	projectFiles := map[string]string{"werf.yaml": "project: context-streaming\nconfigVersion: 1\n---" + imageBlocks}
+	for name, data := range files {
+		projectFiles[name] = data
+	}
+
+	return projectFiles
+}
+
+func giterminismDockerfileConfig(allowances map[string][]string) string {
+	config := "giterminismConfigVersion: \"1\"\nconfig:\n  dockerfile:\n"
+	for key, paths := range allowances {
+		config += fmt.Sprintf("    %s: [%s]\n", key, strings.Join(paths, ", "))
+	}
+
+	return config
+}
+
+func giterminismManagerOf(ctx context.Context, projectDir string) *giterminism_manager.Manager {
+	repo, err := git_repo.OpenLocalRepo(ctx, "own", projectDir, git_repo.OpenLocalRepoOptions{})
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+
+	manager, err := giterminism_manager.NewManager(ctx, "werf-giterminism.yaml", projectDir, repo, utils.GetHeadCommit(ctx, projectDir), giterminism_manager.NewManagerOptions{})
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+
+	return manager
+}
+
+func dockerfileContextArchives(ctx context.Context, projectDir string, imageNames ...string) []*BuildContextArchive {
+	giterminismManager := giterminismManagerOf(ctx, projectDir)
+
+	_, werfConfig, err := config.GetWerfConfig(ctx, "", "", "", giterminismManager, config.WerfConfigOptions{})
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+
+	conveyorTmpDir := filepath.Join(werf.GetTmpDir(), "conveyor")
+
+	var archives []*BuildContextArchive
+	for _, imageName := range imageNames {
+		imageConfig, ok := werfConfig.GetImage(imageName).(*config.ImageFromDockerfile)
+		gomega.Expect(ok).To(gomega.BeTrue(), "image %q must be a dockerfile image", imageName)
+
+		archive := NewBuildContextArchive(giterminismManager, filepath.Join(conveyorTmpDir, "image", imageName))
+		gomega.Expect(archive.Create(ctx, container_backend.BuildContextArchiveCreateOptions{
+			DockerfileRelToContextPath: imageConfig.Dockerfile,
+			ContextGitSubDir:           imageConfig.Context,
+			ContextAddFiles:            imageConfig.ContextAddFiles,
+		})).To(gomega.Succeed())
+
+		archives = append(archives, archive)
+	}
+
+	return archives
+}
+
+func uniqueFileBytes(root string) (int64, error) {
+	var counted []os.FileInfo
+	var total int64
+
+	if err := filepath.WalkDir(root, func(path string, entry fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if entry.IsDir() || !entry.Type().IsRegular() {
+			return nil
+		}
+		info, err := entry.Info()
+		if err != nil {
+			return fmt.Errorf("stat %q: %w", path, err)
+		}
+		// ponytail: O(n²) SameFile scan, fine for the few dozen files of a test tree
+		for _, seen := range counted {
+			if os.SameFile(seen, info) {
+				return nil
+			}
+		}
+		counted = append(counted, info)
+		total += info.Size()
+		return nil
+	}); err != nil {
+		return 0, fmt.Errorf("walk %q: %w", root, err)
+	}
+
+	return total, nil
+}
+
+func filesMatching(root, pattern string) ([]string, error) {
+	var matched []string
+
+	if err := filepath.WalkDir(root, func(path string, entry fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if entry.IsDir() {
+			return nil
+		}
+		ok, err := filepath.Match(pattern, entry.Name())
+		if err != nil {
+			return fmt.Errorf("match %q: %w", pattern, err)
+		}
+		if ok {
+			matched = append(matched, path)
+		}
+		return nil
+	}); err != nil {
+		return nil, fmt.Errorf("walk %q: %w", root, err)
+	}
+
+	return matched, nil
+}
+
+type tarEntry struct {
+	tar.Header
+	Content string
+}
+
+func tarEntries(reader io.Reader) []tarEntry {
+	var entries []tarEntry
+	tarReader := tar.NewReader(reader)
+	for {
+		header, err := tarReader.Next()
+		if err == io.EOF {
+			return entries
+		}
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+
+		content, err := io.ReadAll(tarReader)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+
+		entries = append(entries, tarEntry{Header: *header, Content: string(content)})
+	}
+}
+
+func tarFileEntries(path string) []tarEntry {
+	file, err := os.Open(path)
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+	defer file.Close()
+
+	return tarEntries(file)
+}
+
+func openedContextEntries(ctx context.Context, archive *BuildContextArchive) []tarEntry {
+	reader, err := archive.Open(ctx)
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+	defer reader.Close()
+
+	return tarEntries(reader)
+}
+
+func lastEntryContents(entries []tarEntry) map[string]string {
+	contents := map[string]string{}
+	for _, entry := range entries {
+		contents[entry.Name] = entry.Content
+	}
+
+	return contents
+}
+
+func materializedContextArchive(ctx context.Context, archive *BuildContextArchive, projectDir, contextGitSubDir string) string {
+	path, err := context_manager.AddContextAddFilesToContextArchive(ctx, &context_manager.AddContextAddFilesToContextArchiveOpts{
+		OriginalArchivePath:    archive.path,
+		ProjectDir:             projectDir,
+		ContextDir:             contextGitSubDir,
+		ContextAddFilesFromMem: archive.contextAddFilesFromMem,
+	})
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+
+	return path
+}
+
+func dirEntries(root string) map[string]string {
+	entries := map[string]string{}
+
+	gomega.Expect(filepath.WalkDir(root, func(path string, entry fs.DirEntry, err error) error {
+		if err != nil || entry.IsDir() {
+			return err
+		}
+		relPath, err := filepath.Rel(root, path)
+		if err != nil {
+			return err
+		}
+		if entry.Type()&fs.ModeSymlink != 0 {
+			target, err := os.Readlink(path)
+			entries[relPath] = "symlink:" + target
+			return err
+		}
+		info, err := entry.Info()
+		if err != nil {
+			return err
+		}
+		data, err := os.ReadFile(path)
+		entries[relPath] = fmt.Sprintf("%04o:%s", info.Mode().Perm(), data)
+		return err
+	})).To(gomega.Succeed())
+
+	return entries
 }
 
 var _ Conveyor = (*preparationTestConveyor)(nil)

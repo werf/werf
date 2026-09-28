@@ -1,10 +1,14 @@
 package container_backend
 
-import "context"
+import (
+	"context"
+	"io"
+)
 
 type BuildContextArchiver interface {
 	Create(ctx context.Context, opts BuildContextArchiveCreateOptions) error
 	Path() string
+	Open(ctx context.Context) (io.ReadCloser, error)
 	ExtractOrGetExtractedDir(ctx context.Context) (string, error)
 	CalculatePathsChecksum(ctx context.Context, paths []string) (string, error)
 	CalculateGlobsChecksum(ctx context.Context, globs []string, opts CalculateGlobsChecksumOptions) (string, error)
