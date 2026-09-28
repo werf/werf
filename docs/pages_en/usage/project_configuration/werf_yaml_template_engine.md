@@ -58,7 +58,7 @@ The `.Env` variable allows organizing configuration for several environments (te
 {% raw %}
 ```yaml
 image: app
-from: ubuntu
+from: ubuntu:latest
 git:
 - add: /
   to: /app
@@ -97,13 +97,13 @@ configVersion: 1
 ---
 
 image: app1
-from: alpine
+from: alpine:latest
 shell:
   beforeInstall:
 {{- include "(component) ruby" . }}
 ---
 image: app2
-from: alpine
+from: alpine:latest
 shell:
   beforeInstall:
 {{- include "(component) ruby" . }}
@@ -254,7 +254,7 @@ configVersion: 1
 ---
 
 image: app
-from: alpine
+from: alpine:latest
 shell:
   setup:
   - |
@@ -288,7 +288,7 @@ configVersion: 1
 ---
 
 image: app
-from: alpine
+from: alpine:latest
 shell:
   install: mkdir /app
   setup:
@@ -387,7 +387,7 @@ _Template files_ and the werf configuration file define a common context:
 {% raw %}
 ```yaml
 {{ $_ := set . "RubyVersion" "2.3.4" }}
-{{ $_ := set . "BaseImage" "alpine" }}
+{{ $_ := set . "BaseImage" "alpine:latest" }}
 
 project: my-project
 configVersion: 1
