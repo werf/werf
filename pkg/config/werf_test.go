@@ -9,9 +9,38 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/types"
 	"github.com/samber/lo"
+	"gopkg.in/yaml.v3"
 )
 
 var _ = Describe("WerfConfig", func() {
+	Describe("import validation independent of base image", func() {
+		for _, from := range []string{"scratch", "alpine:3.20", "source"} {
+			Context(fmt.Sprintf("base %q", from), func() {
+				DescribeTable("validates import references", func(importFrom string, expectedErr types.GomegaMatcher) {
+					var rawImages []*rawStapelImage
+					for _, content := range []string{
+						fmt.Sprintf("image: app\nfrom: %q\nimport:\n- from: %q\n  after: install\n  add: /src\n  to: /app\n", from, importFrom),
+						"image: source\nfrom: scratch\n",
+					} {
+						document := &doc{Content: []byte(content)}
+						rawImage := &rawStapelImage{doc: document}
+						Expect(yaml.Unmarshal(document.Content, rawImage)).To(Succeed())
+						rawImages = append(rawImages, rawImage)
+					}
+
+					_, err := prepareWerfConfig(newTestGiterminismManager(), rawImages, nil, &Meta{ConfigVersion: 1, Project: "test"})
+					Expect(err).To(expectedErr)
+				},
+					Entry("rejects an untagged external image", "alpine", MatchError(ContainSubstring("external image reference \"alpine\" in import `from` must include a tag"))),
+					Entry("rejects scratch", "scratch", MatchError(ContainSubstring("`from: scratch` is not allowed in imports"))),
+					Entry("accepts a tagged external image", "alpine:3.20", Succeed()),
+					Entry("accepts a digested external image", "alpine@sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", Succeed()),
+					Entry("accepts an internal image", "source", Succeed()),
+				)
+			})
+		}
+	})
+
 	Describe("validateInfiniteLoopBetweenRelatedImages", func() {
 		DescribeTable("detects loops and accepts acyclic graphs",
 			func(ctx SpecContext, images []ImageInterface, expectedErr types.GomegaMatcher) {
