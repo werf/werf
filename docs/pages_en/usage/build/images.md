@@ -443,7 +443,7 @@ project: test
 configVersion: 1
 ---
 image: frontend_image
-from: alpine:latest
+from: alpine:3.21
 imageSpec:
   author: "Frontend Maintainer <frontend@example.com>"
   clearHistory: true
@@ -524,7 +524,7 @@ project: test
 configVersion: 1
 ---
 image: frontend_image
-from: alpine:latest
+from: alpine:3.21
 imageSpec:
   config:
     entrypoint:

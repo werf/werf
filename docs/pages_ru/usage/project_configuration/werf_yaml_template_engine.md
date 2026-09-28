@@ -58,7 +58,7 @@ werf не поддерживает функцию `expandenv` и имеет св
 {% raw %}
 ```yaml
 image: app
-from: ubuntu:latest
+from: ubuntu:22.04
 git:
 - add: /
   to: /app
@@ -97,13 +97,13 @@ configVersion: 1
 ---
 
 image: app1
-from: alpine:latest
+from: alpine:3.21
 shell:
   beforeInstall:
 {{- include "(component) ruby" . }}
 ---
 image: app2
-from: alpine:latest
+from: alpine:3.21
 shell:
   beforeInstall:
 {{- include "(component) ruby" . }}
@@ -254,7 +254,7 @@ configVersion: 1
 ---
 
 image: app
-from: alpine:latest
+from: alpine:3.21
 shell:
 setup:
 - |
@@ -288,7 +288,7 @@ configVersion: 1
 ---
 
 image: app
-from: alpine:latest
+from: alpine:3.21
 shell:
   install: mkdir /app
   setup:
@@ -387,7 +387,7 @@ _Файлы шаблонов_ могут храниться в зарезерв�
 {% raw %}
 ```yaml
 {{ $_ := set . "RubyVersion" "2.3.4" }}
-{{ $_ := set . "BaseImage" "alpine:latest" }}
+{{ $_ := set . "BaseImage" "alpine:3.21" }}
 
 project: my-project
 configVersion: 1
