@@ -641,7 +641,7 @@ project: example
 configVersion: 1
 ---
 image: builder
-from: golang
+from: golang:1.23rc1-alpine3.20
 git:
 - add: /
   to: /app
