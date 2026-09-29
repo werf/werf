@@ -79,7 +79,7 @@ func updateSubmodules(ctx context.Context, repoDir, workTreeDir string) error {
 			// Reuse rests on where git keeps submodule git dirs and on -c reaching nested updates,
 			// neither of which git promises. Anything unanticipated there must cost a slower build,
 			// not a broken one, so fall back to the plain remote update this has always been.
-			if len(localURLOpts) == 0 {
+			if len(localURLOpts) == 0 || ctx.Err() != nil {
 				return fmt.Errorf("submodule update command failed: %w", err)
 			}
 			logboek.Context(ctx).Warn().LogF("WARNING: unable to check out submodules from the local object store (%s), retrying from their remotes, which may request credentials.\n", err)

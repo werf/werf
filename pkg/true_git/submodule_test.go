@@ -394,6 +394,58 @@ var _ = Describe("submodule local object store reuse", func() {
 		Expect(servedFrom).To(Equal(subRemote))
 	})
 
+	It("keeps the work tree submodule git dirs when the context is canceled mid-update", func(ctx SpecContext) {
+		filter := newBlockingGitFilter(baseDir, "block-smudge")
+		globalConfigPath := filepath.Join(baseDir, "global.gitconfig")
+		Expect(os.WriteFile(globalConfigPath, fmt.Appendf(nil, "[filter \"block\"]\n\tsmudge = %s\n", filter.command), 0o644)).To(Succeed())
+		setEnvForSpec("GIT_CONFIG_GLOBAL", globalConfigPath)
+
+		subRemote := filepath.Join(baseDir, "sub-remote")
+		gitInitRepoWithFile(ctx, subRemote, ".gitattributes", "blocked.txt filter=block\n")
+		Expect(os.WriteFile(filepath.Join(subRemote, "blocked.txt"), []byte("first"), 0o644)).To(Succeed())
+		gitSucceed(ctx, subRemote, "add", ".")
+		gitSucceed(ctx, subRemote, "commit", "-m", "blocked")
+
+		gitInitRepo(ctx, superRepo)
+		gitAddSubmoduleSucceed(ctx, superRepo, subRemote, "sub")
+		gitSucceed(ctx, superRepo, "commit", "-m", "add submodule")
+
+		addWorkTree(ctx, headSHA(ctx, superRepo))
+		Expect(syncSubmodules(ctx, superGitDir, workTreeDir)).To(Succeed())
+		Expect(updateSubmodules(ctx, superGitDir, workTreeDir)).To(Succeed())
+
+		worktreeGitDir, _, err := resolveWorkTreeGitDirs(ctx, workTreeDir)
+		Expect(err).ToNot(HaveOccurred())
+		worktreeModuleDir := filepath.Join(worktreeGitDir, "modules", "sub")
+		firstSubSHA := gitSucceedTrimmed(ctx, filepath.Join(workTreeDir, "sub"), "rev-parse", "HEAD")
+
+		Expect(os.WriteFile(filepath.Join(subRemote, "blocked.txt"), []byte("second"), 0o644)).To(Succeed())
+		gitSucceed(ctx, subRemote, "commit", "-am", "second")
+		gitUpdateSubmodulesSucceed(ctx, superRepo, "--remote", "sub")
+		gitSucceed(ctx, superRepo, "commit", "-am", "bump submodule")
+		secondSHA := headSHA(ctx, superRepo)
+		gitUpdateSubmodulesSucceed(ctx, superRepo, "--init")
+
+		gitSucceed(ctx, workTreeDir, "checkout", "--force", "--detach", secondSHA)
+		Expect(syncSubmodules(ctx, superGitDir, workTreeDir)).To(Succeed())
+
+		overrides, blockers, err := submoduleLocalURLOverrides(ctx, workTreeDir)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(blockers).To(BeEmpty())
+		Expect(overrides).ToNot(BeEmpty())
+
+		filter.arm()
+		terminationCtx, helperDone := filter.terminateWhenBlocked(ctx)
+
+		err = updateSubmodules(terminationCtx, superGitDir, workTreeDir)
+		Eventually(helperDone, "35s").Should(BeClosed())
+		Expect(err).To(HaveOccurred())
+		Expect(filter.startedPath).To(BeAnExistingFile(), "cancellation must have happened mid-update")
+
+		Expect(worktreeModuleDir).To(BeADirectory())
+		Expect(gitSucceedTrimmed(ctx, worktreeModuleDir, "cat-file", "blob", firstSubSHA+":blocked.txt")).To(Equal("first"))
+	})
+
 	// Determining whether reuse applies is itself an optimization: when the probe cannot even run,
 	// the build must get slower, not fail.
 	It("falls back to the remotes when the local store cannot be inspected at all", func(ctx SpecContext) {

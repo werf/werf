@@ -628,6 +628,41 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 		})
 	})
 
+	When("the context is canceled while the warm dev-index is being updated", func() {
+		syncOptions := SyncSourceWorktreeWithServiceBranchOptions{ServiceBranch: "_werf-dev"}
+
+		It("keeps the dev-index and its base marker", func(ctx context.Context) {
+			ctx = logging.WithLogger(ctx)
+
+			// The filter must already be configured for the warm run: adding it afterwards would
+			// change the conversion signature and force a reseed, which takes the other branch.
+			filter := newBlockingGitFilter(SuiteData.TestDirPath, "block-clean")
+			utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "config", "filter.block.clean", filter.command)
+			utils.WriteFile(filepath.Join(sourceWorkTreeDir, ".gitattributes"), []byte("blocked.txt filter=block\n"))
+			utils.WriteFile(filepath.Join(sourceWorkTreeDir, "blocked.txt"), []byte("first"))
+
+			_, err := SyncSourceWorktreeWithServiceBranch(ctx, gitDir, sourceWorkTreeDir, workTreeCacheDir, sourceHeadCommit, syncOptions)
+			Expect(err).Should(Succeed())
+
+			warmIndex, err := os.ReadFile(devIndexFilePath(workTreeCacheDir))
+			Expect(err).Should(Succeed())
+			warmBase, err := os.ReadFile(devIndexBaseFilePath(workTreeCacheDir))
+			Expect(err).Should(Succeed())
+
+			utils.WriteFile(filepath.Join(sourceWorkTreeDir, "blocked.txt"), []byte("second"))
+			filter.arm()
+			terminationCtx, helperDone := filter.terminateWhenBlocked(ctx)
+
+			_, err = SyncSourceWorktreeWithServiceBranch(terminationCtx, gitDir, sourceWorkTreeDir, workTreeCacheDir, sourceHeadCommit, syncOptions)
+			Eventually(helperDone, "35s").Should(BeClosed())
+			Expect(err).Should(HaveOccurred())
+			Expect(filter.startedPath).To(BeAnExistingFile(), "cancellation must have happened mid-add")
+
+			Expect(os.ReadFile(devIndexFilePath(workTreeCacheDir))).Should(Equal(warmIndex))
+			Expect(os.ReadFile(devIndexBaseFilePath(workTreeCacheDir))).Should(Equal(warmBase))
+		})
+	})
+
 	When("a failing repository pre-commit hook is installed", func() {
 		syncOptions := SyncSourceWorktreeWithServiceBranchOptions{ServiceBranch: "_werf-dev"}
 
