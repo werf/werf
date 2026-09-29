@@ -102,7 +102,12 @@ converge:
         fetch-depth: 0
 
     - name: Install werf
-      uses: werf/actions/install@v2
+      uses: werf/trdl/actions/setup-app@v0.13.0
+      with:
+        preset: werf
+        group: "3"
+        channel: dev
+        force: false
 
     - name: Run script
       run: |
@@ -114,6 +119,8 @@ converge:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
 {% endraw %}
+
+> werf v3 is currently published in the `dev` channel of group `3`. Adjust `channel` when you switch to another release channel.
 
 > You can find the complete set of configurations (`.github/workflows/*.yml`) for the ready-to-use workflows in the [Getting started](https://werf.io/getting_started/?usage=ci&ci=githubActions) configurator
 > by selecting _CI/CD_ as your usage scenario and _GitHub Actions_ as your CI/CD system.

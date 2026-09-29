@@ -44,6 +44,7 @@ These changes affect existing projects even without configuration edits:
 
 - With `--exit-code` enabled, code `3` means a release-only update — see [Plan exit codes](#plan-exit-codes).
 - When reusing an image, the JSON build report may contain `StagesSkipped: true` without `Stages` — see [Build report format](#build-report-format).
+- The JSON deploy report identifies its format with `apiVersion` instead of `version` — see [Deploy report format](#deploy-report-format).
 
 ## Compatibility with v2
 
@@ -67,6 +68,8 @@ final: false
 ```
 
 Keep the other image settings unchanged.
+
+**Required for Stapel using `disableGitAfterPatch`:** remove the directive from `werf.yaml`; it is no longer supported, and an unknown key is a configuration error. v2 suggested it for keeping artifact behavior when replacing `artifact` with `image`. There is no equivalent switch in v3. Use `git.stageDependencies` to control which changes rerun build instructions, but this does not disable updates to the Git files themselves — see [Git dependencies of build stages](#git-dependencies-of-build-stages).
 
 ### Image names
 
@@ -399,6 +402,12 @@ Update CI if it only accepts `0` and `2`. Code `3` is not an error, but is not a
 If your scripts read the JSON build report:
 
 When reusing a completed image, the JSON build report may now contain `StagesSkipped: true` without a `Stages` field. In v2, `Stages` was present, although it could be `null`. Parsers must tolerate the missing field and not treat it as an error or as an indication that the image is not ready.
+
+### Deploy report format
+
+If your scripts read the JSON report saved by `--save-deploy-report`, `--save-rollback-report` or `--save-uninstall-report`:
+
+The format identifier changed: the `"version": 3` number is replaced with the `"apiVersion": "v3"` string, and `version` is gone. The other fields — `release`, `namespace`, `revision`, `status`, `completedOperations`, `canceledOperations`, `failedOperations` — are unchanged. Update scripts that read or validate `version` to check `apiVersion == "v3"` instead.
 
 ### Removed flags and modes
 

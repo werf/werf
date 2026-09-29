@@ -44,6 +44,7 @@ permalink: resources/migration_from_v2_to_v3.html
 
 - При включённом `--exit-code` код `3` означает обновление только релиза — [коды завершения plan](#коды-завершения-plan).
 - При переиспользовании образа JSON build report может содержать `StagesSkipped: true` без `Stages` — [формат build report](#формат-build-report).
+- JSON deploy report обозначает формат полем `apiVersion` вместо `version` — [формат deploy report](#формат-deploy-report).
 
 ## Совместимость с v2
 
@@ -67,6 +68,8 @@ final: false
 ```
 
 Остальные настройки образа сохраняются.
+
+**Для Stapel с `disableGitAfterPatch` — обязательно.** Удалите директиву из `werf.yaml`: она больше не поддерживается, а неизвестный ключ — ошибка конфигурации. В v2 её предлагалось использовать, чтобы сохранить поведение artifact при замене `artifact` на `image`. В v3 эквивалентного переключателя нет. Чтобы ограничить, какие изменения запускают сборочные инструкции заново, используйте `git.stageDependencies`, но это не отключает обновление самих Git-файлов — [подробнее](#зависимости-стадий-от-git).
 
 ### Имена образов
 
@@ -399,6 +402,12 @@ werf bundle publish --helm-compatible-chart=false
 Если ваши скрипты читают JSON build report:
 
 При переиспользовании готового образа JSON build report теперь может содержать `StagesSkipped: true` без поля `Stages`. В v2 поле `Stages` присутствовало, хотя могло быть `null`. Парсер должен допускать отсутствие этого поля и не считать его ошибкой или признаком того, что образ не готов.
+
+### Формат deploy report
+
+Если ваши скрипты читают JSON-отчёт, сохраняемый флагами `--save-deploy-report`, `--save-rollback-report` или `--save-uninstall-report`:
+
+Изменился идентификатор формата: числовое поле `"version": 3` заменено строковым `"apiVersion": "v3"`, поля `version` больше нет. Остальные поля — `release`, `namespace`, `revision`, `status`, `completedOperations`, `canceledOperations`, `failedOperations` — не изменились. Обновите скрипты, читающие или проверяющие `version`: вместо него проверяйте `apiVersion == "v3"`.
 
 ### Удалённые флаги и режимы
 
