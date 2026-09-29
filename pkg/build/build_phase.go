@@ -803,6 +803,14 @@ func (phase *BuildPhase) resolveContentAnchor(ctx context.Context, img *image.Im
 		}
 	}
 
+	// Reusing the content anchor short-circuits conveyor.doImage, so a stage
+	// requested for introspection would never be processed.
+	if slices.ContainsFunc(stages, func(stg stage.Interface) bool {
+		return phase.IntrospectOptions.ImageStageShouldBeIntrospected(img.GetName(), string(stg.Name()))
+	}) {
+		return nil
+	}
+
 	foundInPrimary, unlockFn, err := phase.calculateStage(ctx, img, anchor)
 	// Release the digest mutex inline. Holding it would deadlock: if we miss and
 	// middles run, the anchor is re-entered via OnImageStage -> calculateStage,

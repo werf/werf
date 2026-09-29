@@ -92,6 +92,65 @@ func (i *exportLegacyImageStub) GetStageDesc() *imagePkg.StageDesc {
 	return i.stageDesc
 }
 
+type introspectPipelineRecord struct {
+	processedStages []string
+	introspected    []string
+}
+
+var _ container_backend.LegacyImageInterface = (*introspectImageStub)(nil)
+
+type introspectImageStub struct {
+	container_backend.LegacyImageInterface
+	name      string
+	stageDesc *imagePkg.StageDesc
+	record    *introspectPipelineRecord
+}
+
+func (i *introspectImageStub) Name() string              { return i.name }
+func (i *introspectImageStub) GetTargetPlatform() string { return "linux/amd64" }
+
+func (i *introspectImageStub) SetStageDesc(desc *imagePkg.StageDesc) { i.stageDesc = desc }
+func (i *introspectImageStub) GetStageDesc() *imagePkg.StageDesc     { return i.stageDesc }
+
+func (i *introspectImageStub) Introspect(_ context.Context) error {
+	i.record.introspected = append(i.record.introspected, i.name)
+	return nil
+}
+
+var _ stage.Interface = (*introspectStageStub)(nil)
+
+type introspectStageStub struct {
+	*stage.BaseStage
+	record *introspectPipelineRecord
+}
+
+func newIntrospectStageStub(name stage.StageName, imageName string, isContentAnchor bool, record *introspectPipelineRecord) *introspectStageStub {
+	base := stage.NewBaseStage(name, &stage.BaseStageOptions{ImageName: imageName})
+	base.SetContentAnchor(isContentAnchor)
+	return &introspectStageStub{BaseStage: base, record: record}
+}
+
+func (s *introspectStageStub) HasPrevStage() bool { return false }
+
+func (s *introspectStageStub) GetDependencies(_ context.Context, _ stage.Conveyor, _ container_backend.ContainerBackend, _, _ *stage.StageImage, _ container_backend.BuildContextArchiver) (string, error) {
+	return "", nil
+}
+
+func (s *introspectStageStub) IsEmpty(_ context.Context, _ stage.Conveyor, _ *stage.StageImage) (bool, error) {
+	s.record.processedStages = append(s.record.processedStages, string(s.Name()))
+	return false, nil
+}
+
+func newIntrospectStageDesc(name string) *imagePkg.StageDesc {
+	return &imagePkg.StageDesc{
+		StageID: imagePkg.NewStageID("digest", 1),
+		Info: &imagePkg.Info{
+			Name:   name,
+			Labels: map[string]string{imagePkg.WerfStageContentDigestLabel: "content"},
+		},
+	}
+}
+
 func (m *anchorLookupStorageManager) GetStageDescSetByDigestFromStagesStorageCached(_ context.Context, _, _ string, _ int64, stagesStorage storage.StagesStorage) (imagePkg.StageDescSet, error) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
