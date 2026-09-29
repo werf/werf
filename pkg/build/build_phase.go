@@ -576,10 +576,12 @@ func (phase *BuildPhase) publishFinalImage(ctx context.Context, name string, img
 		return fmt.Errorf("content tag desc not set for image %q", name)
 	}
 
+	stages := img.GetStages()
 	desc, err := phase.Conveyor.StorageManager.CopyStageIntoFinalStorage(
 		ctx, *contentTagDesc.StageID,
 		phase.Conveyor.StorageManager.GetFinalStagesStorage(),
 		manager.CopyStageIntoStorageOptions{
+			FetchStage:        stages[len(stages)-1],
 			ContainerBackend:  phase.Conveyor.ContainerBackend,
 			ShouldBeBuiltMode: phase.ShouldBeBuiltMode,
 			LogDetailedName:   img.LogDetailedName(),
