@@ -40,6 +40,7 @@ type api struct {
 
 	httpTransport         http.RoundTripper
 	insecureHttpTransport http.RoundTripper
+	bearerTokens          *bearerTokenCache
 }
 
 type apiOptions struct {
@@ -79,6 +80,7 @@ func newAPI(options apiOptions) *api {
 		insecureRegistryCIDRs: insecureCIDRs,
 		httpTransport:         newHttpTransport(options.SkipTlsVerifyRegistry),
 		insecureHttpTransport: newHttpTransport(true),
+		bearerTokens:          newBearerTokenCache(),
 	}
 }
 
@@ -323,7 +325,7 @@ func (api *api) deleteImageByTag(ctx context.Context, reference string) error {
 		return fmt.Errorf("parsing tag reference %q: %w", reference, err)
 	}
 
-	if err := remote.Delete(r, api.defaultRemoteOptions(ctx)...); err != nil {
+	if err := remote.Delete(r, api.defaultRemoteOptions(ctx, reference)...); err != nil {
 		return fmt.Errorf("deleting tag %q: %w", r, err)
 	}
 
@@ -490,30 +492,30 @@ func (api *api) parseReferenceOptions() []name.Option {
 	return options
 }
 
-func (api *api) defaultRemoteOptions(ctx context.Context) []remote.Option {
+func (api *api) defaultRemoteOptions(ctx context.Context, reference string) []remote.Option {
 	return []remote.Option{
 		remote.WithContext(ctx),
 		remote.WithAuthFromKeychain(authn.DefaultKeychain),
-		remote.WithTransport(api.httpTransport),
+		remote.WithTransport(newBearerTokenTransport(api.httpTransport, api.bearerTokens, api.extractRegistryHost(reference), api.SkipTlsVerifyRegistry)),
 		remote.WithUserAgent(werf.UserAgent),
 	}
 }
 
 func (api *api) defaultRemoteOptionsForHost(ctx context.Context, reference string) []remote.Option {
 	if api.InsecureRegistry || api.SkipTlsVerifyRegistry {
-		return api.defaultRemoteOptions(ctx)
+		return api.defaultRemoteOptions(ctx, reference)
 	}
 
 	if api.shouldUseInsecureRegistry(reference) {
 		return []remote.Option{
 			remote.WithContext(ctx),
 			remote.WithAuthFromKeychain(authn.DefaultKeychain),
-			remote.WithTransport(api.insecureHttpTransport),
+			remote.WithTransport(newBearerTokenTransport(api.insecureHttpTransport, api.bearerTokens, api.extractRegistryHost(reference), true)),
 			remote.WithUserAgent(werf.UserAgent),
 		}
 	}
 
-	return api.defaultRemoteOptions(ctx)
+	return api.defaultRemoteOptions(ctx, reference)
 }
 
 func (api *api) shouldUseInsecureRegistry(reference string) bool {

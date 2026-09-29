@@ -188,6 +188,8 @@ werf plan --repo registry.mydomain.com/web --env production`,
 }
 
 func runMain(ctx context.Context, imageNameListFromArgs []string) error {
+	ctx, logOperationsSummaryFn := common.InitOperationsStatistics(ctx, &commonCmdData)
+	defer logOperationsSummaryFn()
 	commonManager, ctx, err := common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
 		Cmd: &commonCmdData,
 		InitTrueGitWithOptions: &common.InitTrueGitOptions{
