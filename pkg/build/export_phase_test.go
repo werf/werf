@@ -9,6 +9,7 @@ import (
 	buildImage "github.com/werf/werf/v3/pkg/build/image"
 	"github.com/werf/werf/v3/pkg/build/stage"
 	imagePkg "github.com/werf/werf/v3/pkg/image"
+	"github.com/werf/werf/v3/pkg/werf"
 )
 
 var _ = ginkgo.Describe("Exporter", func() {
@@ -22,6 +23,7 @@ var _ = ginkgo.Describe("Exporter", func() {
 	)
 
 	ginkgo.BeforeEach(func() {
+		gomega.Expect(werf.Init(ginkgo.GinkgoT().TempDir(), "")).To(gomega.Succeed())
 		img = newImage("app", buildImage.NoBaseImage, buildImage.ImageOptions{IsFinal: true})
 		primaryDesc = &imagePkg.StageDesc{
 			StageID: imagePkg.NewStageID("anchor-digest", 42),

@@ -22,6 +22,8 @@ var _ = ginkgo.Describe("Export with a final repo", ginkgo.Label("e2e", "export"
 		func(ctx ginkgo.SpecContext, backendMode string, local bool) {
 			contback.SkipIfUnavailable(backendMode)
 			setupEnv()
+			SuiteData.Stubs.SetEnv("WERF_INSECURE_REGISTRY", "1")
+			SuiteData.Stubs.SetEnv("WERF_SKIP_TLS_VERIFY_REGISTRY", "1")
 			SuiteData.Stubs.SetEnv("WERF_BUILDAH_MODE", backendMode)
 			if local {
 				SuiteData.Stubs.SetEnv("WERF_REPO", ":local")
