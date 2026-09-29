@@ -2,12 +2,9 @@ package git_repo
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"strings"
 	"sync"
 	"time"
 
@@ -21,7 +18,6 @@ import (
 	"github.com/werf/werf/v3/pkg/path_matcher"
 	"github.com/werf/werf/v3/pkg/telemetry"
 	"github.com/werf/werf/v3/pkg/true_git"
-	"github.com/werf/werf/v3/pkg/true_git/ls_tree"
 	"github.com/werf/werf/v3/pkg/true_git/status"
 	"github.com/werf/werf/v3/pkg/werf"
 )
@@ -38,6 +34,9 @@ type Local struct {
 
 	statusResult *status.Result
 	mutex        sync.Mutex
+
+	dockerfileContextChecksums sync.Map
+	dockerfileContextMutex     sync.Map
 }
 
 type OpenLocalRepoOptions struct {
@@ -299,97 +298,6 @@ func (repo *Local) GetOrCreateChecksum(ctx context.Context, opts ChecksumOptions
 	})
 
 	return
-}
-
-// GetDockerfileContextChecksum returns an empty checksum when checkout conversions cannot be ruled out.
-func (repo *Local) GetDockerfileContextChecksum(ctx context.Context, opts ChecksumOptions) (string, error) {
-	fallback := func(reason string) (string, error) {
-		if err := ctx.Err(); err != nil {
-			return "", err
-		}
-		logboek.Context(ctx).Debug().LogF("Use commit-based Dockerfile context cache: %s\n", reason)
-		return "", nil
-	}
-
-	repository, err := repo.PlainOpen()
-	if err != nil {
-		return "", fmt.Errorf("open repository for context checksum: %w", err)
-	}
-	commitHash, err := newHash(opts.Commit)
-	if err != nil {
-		return "", fmt.Errorf("parse context commit: %w", err)
-	}
-	commit, err := repository.CommitObject(commitHash)
-	if err != nil {
-		return "", fmt.Errorf("read context commit: %w", err)
-	}
-	hasSubmodules, err := HasSubmodulesInCommit(commit)
-	if err != nil {
-		return "", fmt.Errorf("check context submodules: %w", err)
-	}
-	if hasSubmodules {
-		return fallback("submodule checkout settings require separate validation")
-	}
-	if os.Getenv("GIT_ATTR_SOURCE") != "" {
-		return fallback("Git attribute source is overridden")
-	}
-
-	configCmd := true_git.NewGitCmd(ctx, &true_git.GitCmdOptions{RepoDir: repo.WorkTreeDir},
-		"config", "--name-only", "--get-regexp", `^(includeif\.|extensions\.worktreeconfig$|core\.symlinks$|attr\.tree$)`)
-	if err := configCmd.Run(ctx); err != nil {
-		var exitErr *exec.ExitError
-		if !errors.As(err, &exitErr) || exitErr.ExitCode() != 1 || configCmd.OutBuf.String() != "" || configCmd.ErrBuf.String() != "" {
-			return fallback(fmt.Sprintf("check Git configuration: %s", err))
-		}
-	}
-	if configCmd.OutBuf.String() != "" || configCmd.ErrBuf.String() != "" {
-		return fallback("checkout configuration may differ between worktrees")
-	}
-
-	opts.AllFiles = true
-	result, err := repo.lsTreeResult(ctx, opts.Commit, opts.LsTreeOptions)
-	if err != nil {
-		return "", fmt.Errorf("list context files: %w", err)
-	}
-	var paths []string
-	selected := make(map[string]bool)
-	if err := result.Walk(func(entry *ls_tree.LsTreeEntry) error {
-		path := filepath.ToSlash(entry.FullFilepath)
-		paths = append(paths, path)
-		selected[path] = true
-		return nil
-	}); err != nil {
-		return "", fmt.Errorf("collect context paths: %w", err)
-	}
-	if len(paths) == 0 {
-		return "", nil
-	}
-
-	attrCmd := true_git.NewGitCmd(ctx, &true_git.GitCmdOptions{RepoDir: repo.WorkTreeDir},
-		"check-attr", "--source="+opts.Commit, "--all", "-z", "--stdin")
-	attrCmd.Stdin = strings.NewReader(strings.Join(paths, "\x00") + "\x00")
-	if err := attrCmd.Run(ctx); err != nil {
-		return fallback(fmt.Sprintf("check Git attributes: %s", err))
-	}
-	if attrCmd.ErrBuf.String() != "" {
-		return fallback("Git reported warnings while checking attributes")
-	}
-
-	fields := strings.Split(attrCmd.OutBuf.String(), "\x00")
-	if fields[len(fields)-1] != "" || (len(fields)-1)%3 != 0 {
-		return fallback("invalid Git attribute response")
-	}
-	for i := 0; i < len(fields)-1; i += 3 {
-		if !selected[fields[i]] || fields[i+1] == "" {
-			return fallback("unexpected Git attribute response")
-		}
-		switch fields[i+1] {
-		case "filter", "text", "eol", "crlf", "ident", "working-tree-encoding":
-			return fallback(fmt.Sprintf("checkout attribute %q applies to %q", fields[i+1], fields[i]))
-		}
-	}
-
-	return result.Checksum(ctx), nil
 }
 
 func (repo *Local) IsCommitExists(ctx context.Context, commit string) (bool, error) {

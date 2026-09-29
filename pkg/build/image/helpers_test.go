@@ -32,22 +32,46 @@ import (
 )
 
 func requireGitAttributeSource(ctx context.Context, projectDir string) {
-	cmd := true_git.NewGitCmd(ctx, &true_git.GitCmdOptions{RepoDir: projectDir}, "check-attr", "--source=HEAD", "--all", "--", "app/included.txt")
-	err := cmd.Run(ctx)
-	var exitErr *exec.ExitError
-	if errors.As(err, &exitErr) && exitErr.ExitCode() == 129 {
-		ginkgo.Skip("requires Git check-attr --source support")
+	for _, args := range [][]string{
+		{"check-attr", "--source=HEAD", "--all", "--", "app/included.txt"},
+		{"var", "GIT_ATTR_SYSTEM"},
+		{"var", "GIT_ATTR_GLOBAL"},
+	} {
+		cmd := true_git.NewGitCmd(ctx, &true_git.GitCmdOptions{RepoDir: projectDir}, args...)
+		err := cmd.Run(ctx)
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) && exitErr.ExitCode() == 129 {
+			ginkgo.Skip("requires Git attribute input discovery: git " + strings.Join(args, " "))
+		}
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 	}
-	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+}
+
+// The attribute query only runs for repositories with a configured filter driver, so tests about
+// that query must bring their own driver instead of depending on the host's global Git LFS setup.
+func configureProbeFilter(ctx context.Context, projectDir string) {
+	utils.RunSucceedCommand(ctx, projectDir, "git", "config", "filter.probe.smudge", "cat")
 }
 
 func interceptGitCheckAttributes(response string) {
+	interceptGitSubcommand("check-attr", response)
+}
+
+func interceptGitSubcommand(subcommand, response string) {
 	git, err := exec.LookPath("git")
 	gomega.Expect(err).NotTo(gomega.HaveOccurred())
 	dir := ginkgo.GinkgoT().TempDir()
-	script := fmt.Sprintf("#!/bin/sh\nfor arg do\n  if [ \"$arg\" = check-attr ]; then\n%s\n  fi\ndone\nexec %q \"$@\"\n", response, git)
+	script := fmt.Sprintf("#!/bin/sh\nfor arg do\n  if [ \"$arg\" = %s ]; then\n%s\n  fi\ndone\nexec %q \"$@\"\n", subcommand, response, git)
 	gomega.Expect(os.WriteFile(filepath.Join(dir, "git"), []byte(script), 0o755)).To(gomega.Succeed())
 	ginkgo.GinkgoT().Setenv("PATH", dir+string(os.PathListSeparator)+os.Getenv("PATH"))
+}
+
+func taintCachedContextAfterReset(command string) string {
+	git, err := exec.LookPath("git")
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+	marker := filepath.Join(ginkgo.GinkgoT().TempDir(), "worktree")
+	interceptGitSubcommand("reset", fmt.Sprintf("real_git=%q\n\"$real_git\" \"$@\" || exit $?\n%s\npwd > %q\n\"$real_git\" rev-parse --git-path index > %q\ncp \"$(\"$real_git\" rev-parse --git-path index)\" %q || exit $?\nexit 0", git, command, marker, marker+".indexpath", marker+".index"))
+	return marker
 }
 
 func newContentCachingRepo(ctx context.Context) string {
@@ -66,7 +90,11 @@ func newContentCachingRepo(ctx context.Context) string {
 }
 
 func cachedArchive(ctx context.Context, projectDir string) (string, os.FileInfo) {
-	path := dockerfileContextArchives(ctx, projectDir, projectImageName)[0].path
+	return cachedArchiveOf(ctx, giterminismManagerOf(ctx, projectDir))
+}
+
+func cachedArchiveOf(ctx context.Context, giterminismManager *giterminism_manager.Manager) (string, os.FileInfo) {
+	path := contextArchivesFor(ctx, giterminismManager, projectImageName)[0].path
 	info, err := os.Stat(path)
 	gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
@@ -260,8 +288,10 @@ func giterminismManagerOf(ctx context.Context, projectDir string) *giterminism_m
 }
 
 func dockerfileContextArchives(ctx context.Context, projectDir string, imageNames ...string) []*BuildContextArchive {
-	giterminismManager := giterminismManagerOf(ctx, projectDir)
+	return contextArchivesFor(ctx, giterminismManagerOf(ctx, projectDir), imageNames...)
+}
 
+func contextArchivesFor(ctx context.Context, giterminismManager *giterminism_manager.Manager, imageNames ...string) []*BuildContextArchive {
 	_, werfConfig, err := config.GetWerfConfig(ctx, "", "", "", giterminismManager, config.WerfConfigOptions{})
 	gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
