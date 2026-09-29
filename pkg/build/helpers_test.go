@@ -3,6 +3,7 @@ package build
 import (
 	"context"
 
+	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/onsi/gomega"
 
 	buildImage "github.com/werf/werf/v3/pkg/build/image"
@@ -10,6 +11,7 @@ import (
 	"github.com/werf/werf/v3/pkg/container_backend"
 	imagePkg "github.com/werf/werf/v3/pkg/image"
 	"github.com/werf/werf/v3/pkg/storage"
+	"github.com/werf/werf/v3/pkg/storage/manager"
 )
 
 func newImage(name string, baseImageType buildImage.BaseImageType, opts buildImage.ImageOptions) *buildImage.Image {
@@ -42,6 +44,52 @@ type anchorPrimaryStagesStorage struct {
 
 func (m *anchorLookupStorageManager) GetStagesStorage() storage.PrimaryStagesStorage {
 	return m.primaryStagesStorage
+}
+
+var _ storage.PrimaryStagesStorage = (*exportStagesStorageStub)(nil)
+
+type exportStagesStorageStub struct {
+	storage.PrimaryStagesStorage
+	exported map[string]*imagePkg.StageDesc
+}
+
+func (s *exportStagesStorageStub) ExportStage(_ context.Context, stageDesc *imagePkg.StageDesc, destinationReference string, _ func(config v1.Config) (v1.Config, error)) error {
+	s.exported[destinationReference] = stageDesc
+	return nil
+}
+
+var _ manager.StorageManagerInterface = (*exportStorageManager)(nil)
+
+type exportStorageManager struct {
+	manager.StorageManagerInterface
+	stagesStorage      storage.PrimaryStagesStorage
+	finalStagesStorage storage.StagesStorage
+	finalStageDesc     *imagePkg.StageDesc
+	copyOptions        manager.CopyStageIntoStorageOptions
+}
+
+func (m *exportStorageManager) GetStagesStorage() storage.PrimaryStagesStorage {
+	return m.stagesStorage
+}
+
+func (m *exportStorageManager) GetFinalStagesStorage() storage.StagesStorage {
+	return m.finalStagesStorage
+}
+
+func (m *exportStorageManager) CopyStageIntoFinalStorage(_ context.Context, _ imagePkg.StageID, _ storage.StagesStorage, opts manager.CopyStageIntoStorageOptions) (*imagePkg.StageDesc, error) {
+	m.copyOptions = opts
+	return m.finalStageDesc, nil
+}
+
+var _ container_backend.LegacyImageInterface = (*exportLegacyImageStub)(nil)
+
+type exportLegacyImageStub struct {
+	container_backend.LegacyImageInterface
+	stageDesc *imagePkg.StageDesc
+}
+
+func (i *exportLegacyImageStub) GetStageDesc() *imagePkg.StageDesc {
+	return i.stageDesc
 }
 
 func (m *anchorLookupStorageManager) GetStageDescSetByDigestFromStagesStorageCached(_ context.Context, _, _ string, _ int64, stagesStorage storage.StagesStorage) (imagePkg.StageDescSet, error) {

@@ -219,7 +219,8 @@ func (e *Exporter) exportImage(ctx context.Context, img *build_image.Image) erro
 				tag := tagFunc(img.GetName(), img.GetStageID())
 				if err := logboek.Context(ctx).Default().LogProcess("tag %s", tag).
 					DoError(func() error {
-						stageDesc := img.GetLastNonEmptyStage().GetStageImage().Image.GetStageDesc()
+						stages := img.GetStages()
+						stageDesc := stages[len(stages)-1].GetStageImage().Image.GetStageDesc()
 						if err := e.Conveyor.StorageManager.GetStagesStorage().ExportStage(ctx, stageDesc, tag, e.MutateConfigFunc); err != nil {
 							return err
 						}

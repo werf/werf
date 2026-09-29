@@ -347,7 +347,7 @@ func (i *Image) GetStage(name stage.StageName) stage.Interface {
 }
 
 func (i *Image) GetStageID() string {
-	return i.GetLastNonEmptyStage().GetStageImage().Image.GetStageDesc().Info.Tag
+	return i.GetContentTagDesc().Info.Tag
 }
 
 func (i *Image) UsesBuildContext() bool {
