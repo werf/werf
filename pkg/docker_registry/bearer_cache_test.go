@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -20,6 +21,12 @@ import (
 )
 
 var _ = Describe("registry bearer reuse", func() {
+	BeforeEach(func() {
+		configDir := GinkgoT().TempDir()
+		Expect(os.WriteFile(filepath.Join(configDir, "config.json"), []byte(`{"auths":{}}`), 0o600)).To(Succeed())
+		GinkgoT().Setenv("DOCKER_CONFIG", configDir)
+	})
+
 	It("reuses a valid token across repeated API tag reads", func() {
 		fixture := newBearerRegistryFixture()
 		DeferCleanup(fixture.server.Close)
@@ -44,11 +51,11 @@ var _ = Describe("registry bearer reuse", func() {
 		DeferCleanup(fixture.server.Close)
 		fixture.tokenReply = func(w http.ResponseWriter, _ *http.Request, _ int64) {
 			w.Header().Set("Content-Type", "application/json")
+			issuedAt := time.Now().Add(-28 * time.Second).Format(time.RFC3339Nano)
 			if explicitLifetime {
-				fmt.Fprint(w, `{"token":"fixture-token","expires_in":8}`)
+				fmt.Fprintf(w, `{"token":"fixture-token","expires_in":60,"issued_at":%q}`, issuedAt)
 				return
 			}
-			issuedAt := time.Now().Add(-52 * time.Second).Format(time.RFC3339Nano)
 			fmt.Fprintf(w, `{"token":"fixture-token","issued_at":%q}`, issuedAt)
 		}
 		registry := newAPI(apiOptions{InsecureRegistry: true})
@@ -63,8 +70,8 @@ var _ = Describe("registry bearer reuse", func() {
 			return fixture.exchanges.Load(), err
 		}, 6*time.Second, 100*time.Millisecond).Should(Equal(int64(2)))
 	},
-		Entry("explicit eight-second lifetime", true),
-		Entry("default 60-second lifetime shortened by issued_at", false),
+		Entry("explicit 60-second lifetime near the refresh margin", true),
+		Entry("default 60-second lifetime near the refresh margin", false),
 	)
 
 	It("coalesces concurrent token-only exchanges", func() {
@@ -76,17 +83,25 @@ var _ = Describe("registry bearer reuse", func() {
 		}
 		registry := newAPI(apiOptions{InsecureRegistry: true})
 		reference := strings.TrimPrefix(fixture.server.URL, "http://") + "/repo"
+		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+		DeferCleanup(cancel)
 		var workers sync.WaitGroup
 		results := make(chan error, 12)
 		for range 12 {
 			workers.Add(1)
 			go func() {
 				defer workers.Done()
-				_, err := registry.Tags(context.Background(), reference)
+				_, err := registry.Tags(ctx, reference)
 				results <- err
 			}()
 		}
-		workers.Wait()
+		done := make(chan struct{})
+		go func() { workers.Wait(); close(done) }()
+		select {
+		case <-done:
+		case <-ctx.Done():
+			Fail("concurrent tag reads did not finish")
+		}
 		close(results)
 		for err := range results {
 			Expect(err).NotTo(HaveOccurred())
@@ -173,16 +188,27 @@ var _ = Describe("registry bearer reuse", func() {
 		_, err := registry.Tags(context.Background(), reference)
 		Expect(err).NotTo(HaveOccurred())
 		rejecting.Store(true)
+		lateCtx, cancelLate := context.WithCancel(context.Background())
+		DeferCleanup(cancelLate)
 		lateResult := make(chan error, 1)
 		go func() {
-			_, err := registry.Tags(context.Background(), reference)
+			_, err := registry.Tags(lateCtx, reference)
 			lateResult <- err
 		}()
-		<-oldArrived
+		select {
+		case <-oldArrived:
+		case <-time.After(3 * time.Second):
+			Fail("old-token request did not reach the registry")
+		}
 		_, err = registry.Tags(context.Background(), reference)
 		Expect(err).NotTo(HaveOccurred())
 		releaseOnce.Do(func() { close(releaseOld) })
-		Expect(<-lateResult).NotTo(HaveOccurred())
+		select {
+		case err := <-lateResult:
+			Expect(err).NotTo(HaveOccurred())
+		case <-time.After(3 * time.Second):
+			Fail("delayed old-token request did not finish")
+		}
 		_, err = registry.Tags(context.Background(), reference)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(fixture.exchanges.Load()).To(Equal(int64(2)))
@@ -204,6 +230,54 @@ var _ = Describe("registry bearer reuse", func() {
 		Expect(first.exchanges.Load()).To(Equal(int64(2)))
 		Expect(second.exchanges.Load()).To(Equal(int64(0)))
 	})
+
+	DescribeTable("matches only equivalent registry authorities on bearer rejection", func(resourceURL string, expectedExchanges int64) {
+		var exchanges atomic.Int64
+		challenge := `Bearer realm="https://auth.example.test/token",service="fixture"`
+		inner := bearerRoundTripperFunc(func(req *http.Request) (*http.Response, error) {
+			resp := &http.Response{Request: req, Body: io.NopCloser(strings.NewReader("")), Header: make(http.Header)}
+			switch req.URL.Path {
+			case "/token":
+				exchanges.Add(1)
+				resp.StatusCode = http.StatusOK
+				resp.Body = io.NopCloser(strings.NewReader(`{"token":"fixture-token","expires_in":300}`))
+			case "/v2/", "/v2/repo/tags/list":
+				resp.StatusCode = http.StatusUnauthorized
+				resp.Header.Set("WWW-Authenticate", challenge)
+			default:
+				resp.StatusCode = http.StatusNotFound
+			}
+			return resp, nil
+		})
+		transport := newBearerTokenTransport(inner, newBearerTokenCache(), "registry.example.test", false)
+		ping, err := http.NewRequest(http.MethodGet, "https://registry.example.test/v2/", nil)
+		Expect(err).NotTo(HaveOccurred())
+		pingResponse, err := transport.RoundTrip(ping)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(pingResponse.Body.Close()).To(Succeed())
+		tokenRequest, err := http.NewRequest(http.MethodGet, "https://auth.example.test/token?service=fixture&scope=repository%3Arepo%3Apull", nil)
+		Expect(err).NotTo(HaveOccurred())
+		for range 2 {
+			resp, err := transport.RoundTrip(tokenRequest)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(resp.Body.Close()).To(Succeed())
+		}
+		Expect(exchanges.Load()).To(Equal(int64(1)))
+		resourceRequest, err := http.NewRequest(http.MethodGet, resourceURL, nil)
+		Expect(err).NotTo(HaveOccurred())
+		resourceRequest.Header.Set("Authorization", "Bearer fixture-token")
+		resourceResponse, err := transport.RoundTrip(resourceRequest)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(resourceResponse.Body.Close()).To(Succeed())
+		resp, err := transport.RoundTrip(tokenRequest)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(resp.Body.Close()).To(Succeed())
+		Expect(exchanges.Load()).To(Equal(expectedExchanges))
+	},
+		Entry("default HTTPS port", "https://registry.example.test:443/v2/repo/tags/list", int64(2)),
+		Entry("different HTTPS port", "https://registry.example.test:444/v2/repo/tags/list", int64(1)),
+		Entry("different scheme", "http://registry.example.test:443/v2/repo/tags/list", int64(1)),
+	)
 
 	It("separates credentials changed for the same registry and scope", func() {
 		fixture := newBearerRegistryFixture()
@@ -374,14 +448,24 @@ var _ = Describe("registry bearer reuse", func() {
 		registry := newAPI(apiOptions{InsecureRegistry: true})
 		reference := strings.TrimPrefix(fixture.server.URL, "http://") + "/repo"
 		ctx, cancel := context.WithCancel(context.Background())
+		DeferCleanup(cancel)
 		result := make(chan error, 1)
 		go func() {
 			_, err := registry.Tags(ctx, reference)
 			result <- err
 		}()
-		<-started
+		select {
+		case <-started:
+		case <-time.After(3 * time.Second):
+			Fail("canceled token exchange did not start")
+		}
 		cancel()
-		Expect(<-result).To(HaveOccurred())
+		select {
+		case err := <-result:
+			Expect(err).To(HaveOccurred())
+		case <-time.After(3 * time.Second):
+			Fail("canceled token exchange did not finish")
+		}
 		_, err := registry.Tags(context.Background(), reference)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(fixture.exchanges.Load()).To(Equal(int64(2)))
@@ -408,7 +492,9 @@ var _ = Describe("registry bearer reuse", func() {
 		pingResponse, err := transport.RoundTrip(ping)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(pingResponse.Body.Close()).To(Succeed())
-		tokenRequest, err := http.NewRequest(http.MethodGet, fixture.server.URL+"/token?scope="+url.QueryEscape("repository:repo:pull")+"&service=fixture", nil)
+		leaderCtx, cancelLeader := context.WithCancel(context.Background())
+		DeferCleanup(cancelLeader)
+		tokenRequest, err := http.NewRequestWithContext(leaderCtx, http.MethodGet, fixture.server.URL+"/token?scope="+url.QueryEscape("repository:repo:pull")+"&service=fixture", nil)
 		Expect(err).NotTo(HaveOccurred())
 		leader := make(chan error, 1)
 		go func() {
@@ -424,6 +510,7 @@ var _ = Describe("registry bearer reuse", func() {
 			Fail("leader did not start the token exchange")
 		}
 		waiterCtx, cancelWaiter := context.WithCancel(context.Background())
+		DeferCleanup(cancelWaiter)
 		observed := &observedDoneContext{Context: waiterCtx, entered: make(chan struct{})}
 		waiter := make(chan error, 1)
 		go func() {
@@ -448,7 +535,12 @@ var _ = Describe("registry bearer reuse", func() {
 			Fail("canceled waiter did not finish while the leader was blocked")
 		}
 		releaseOnce.Do(func() { close(release) })
-		Expect(<-leader).NotTo(HaveOccurred())
+		select {
+		case err := <-leader:
+			Expect(err).NotTo(HaveOccurred())
+		case <-time.After(3 * time.Second):
+			Fail("leader did not finish after token response was released")
+		}
 		resp, err := transport.RoundTrip(tokenRequest.Clone(context.Background()))
 		Expect(err).NotTo(HaveOccurred())
 		Expect(resp.Body.Close()).To(Succeed())
@@ -476,6 +568,8 @@ var _ = Describe("registry bearer reuse", func() {
 		DeferCleanup(fixture.server.Close)
 		registry := newAPI(apiOptions{InsecureRegistry: true})
 		base := strings.TrimPrefix(fixture.server.URL, "http://") + "/repo"
+		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+		DeferCleanup(cancel)
 		var workers sync.WaitGroup
 		results := make(chan error, 4)
 		for _, tag := range []string{"image-a", "image-b", "image-c", "index"} {
@@ -488,13 +582,19 @@ var _ = Describe("registry bearer reuse", func() {
 					return
 				}
 				if tag == "index" {
-					results <- registry.writeToRemote(context.Background(), ref, empty.Index)
+					results <- registry.writeToRemote(ctx, ref, empty.Index)
 					return
 				}
-				results <- registry.writeToRemote(context.Background(), ref, empty.Image)
+				results <- registry.writeToRemote(ctx, ref, empty.Image)
 			}(tag)
 		}
-		workers.Wait()
+		done := make(chan struct{})
+		go func() { workers.Wait(); close(done) }()
+		select {
+		case <-done:
+		case <-ctx.Done():
+			Fail("concurrent pushes did not finish")
+		}
 		close(results)
 		for err := range results {
 			Expect(err).NotTo(HaveOccurred())
@@ -506,17 +606,34 @@ var _ = Describe("registry bearer reuse", func() {
 	})
 
 	It("uses the same cache through tag and direct tag delete paths", func() {
-		fixture := newWritableBearerRegistryFixture()
+		fixture := newWritableBearerRegistryFixtureWithTLS(true)
 		DeferCleanup(fixture.server.Close)
-		registry := newAPI(apiOptions{InsecureRegistry: true})
-		base := strings.TrimPrefix(fixture.server.URL, "http://") + "/repo"
-		ref, err := name.NewTag(base+":source", name.Insecure)
+		var scopes sync.Map
+		fixture.tokenReply = func(w http.ResponseWriter, r *http.Request, _ int64) {
+			scopes.Store(r.URL.Query().Get("scope"), true)
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"token":"fixture-token","expires_in":300}`)
+		}
+		host := strings.TrimPrefix(fixture.server.URL, "https://")
+		registry := newAPI(apiOptions{InsecureRegistryHosts: []string{host}})
+		registry.httpTransport = fixture.server.Client().Transport
+		base := host + "/repo"
+		ref, err := name.NewTag(base + ":source")
 		Expect(err).NotTo(HaveOccurred())
 		Expect(registry.writeToRemote(context.Background(), ref, empty.Image)).To(Succeed())
-		Expect(registry.tagImage(context.Background(), ref.String(), "copy")).To(Succeed())
+		Expect(fixture.exchanges.Load()).To(Equal(int64(1)))
+		for _, tag := range []string{"copy-a", "copy-b"} {
+			Expect(registry.tagImage(context.Background(), ref.String(), tag)).To(Succeed())
+		}
 		tags, err := registry.Tags(context.Background(), base)
 		Expect(err).NotTo(HaveOccurred())
-		Expect(tags).To(ConsistOf("source", "copy"))
-		Expect(registry.deleteImageByTag(context.Background(), base+":copy")).To(Succeed())
+		Expect(tags).To(ConsistOf("source", "copy-a", "copy-b"))
+		for _, tag := range []string{"copy-a", "copy-b"} {
+			Expect(registry.deleteImageByTag(context.Background(), base+":"+tag)).To(Succeed())
+		}
+		Expect(fixture.exchanges.Load()).To(Equal(int64(3)))
+		_, pull := scopes.Load("repository:repo:pull")
+		_, push := scopes.Load("repository:repo:push,pull")
+		Expect(pull && push).To(BeTrue())
 	})
 })

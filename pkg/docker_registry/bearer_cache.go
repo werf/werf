@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/json"
+	"fmt"
 	"io"
 	"math"
 	"net/http"
 	"net/url"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -19,7 +19,7 @@ import (
 const (
 	bearerTokenCapacity     = 128
 	bearerTokenBodyLimit    = 64 << 10
-	bearerTokenExpiryMargin = 5 * time.Second
+	bearerTokenExpiryMargin = 30 * time.Second
 )
 
 type bearerTokenEntry struct {
@@ -76,7 +76,7 @@ func (t *bearerTokenTransport) RoundTrip(req *http.Request) (*http.Response, err
 	if err != nil {
 		return resp, err
 	}
-	if req.URL.Host != t.target {
+	if !t.isRegistryRequest(req) {
 		return resp, nil
 	}
 
@@ -105,6 +105,30 @@ func (t *bearerTokenTransport) RoundTrip(req *http.Request) (*http.Response, err
 		}
 	}
 	return resp, nil
+}
+
+func (t *bearerTokenTransport) isRegistryRequest(req *http.Request) bool {
+	t.mu.Lock()
+	scheme := t.scheme
+	t.mu.Unlock()
+	if scheme != "" && req.URL.Scheme != scheme {
+		return false
+	}
+	registry := &url.URL{Scheme: req.URL.Scheme, Host: t.target}
+	return strings.EqualFold(req.URL.Hostname(), registry.Hostname()) && registryPort(req.URL) == registryPort(registry)
+}
+
+func registryPort(u *url.URL) string {
+	if port := u.Port(); port != "" {
+		return port
+	}
+	if u.Scheme == "http" {
+		return "80"
+	}
+	if u.Scheme == "https" {
+		return "443"
+	}
+	return ""
 }
 
 func (t *bearerTokenTransport) isTokenRequest(req *http.Request) bool {
@@ -160,7 +184,7 @@ func (t *bearerTokenTransport) tokenRoundTrip(req *http.Request) (*http.Response
 		if entry, ok := t.cache.entries[key]; ok {
 			if time.Now().Add(bearerTokenExpiryMargin).Before(entry.expiry) {
 				t.cache.mu.Unlock()
-				return bearerTokenResponse(req, entry.token), nil
+				return bearerTokenResponse(req, entry.token)
 			}
 			delete(t.cache.entries, key)
 		}
@@ -195,8 +219,13 @@ func (t *bearerTokenTransport) tokenRoundTrip(req *http.Request) (*http.Response
 	}
 }
 
-func bearerTokenResponse(req *http.Request, token string) *http.Response {
-	body := []byte(`{"token":` + strconv.Quote(token) + `}`)
+func bearerTokenResponse(req *http.Request, token string) (*http.Response, error) {
+	body, err := json.Marshal(struct {
+		Token string `json:"token"`
+	}{Token: token})
+	if err != nil {
+		return nil, fmt.Errorf("marshal cached bearer response: %w", err)
+	}
 	return &http.Response{
 		StatusCode:    http.StatusOK,
 		Status:        "200 OK",
@@ -207,7 +236,7 @@ func bearerTokenResponse(req *http.Request, token string) *http.Response {
 		Body:          io.NopCloser(bytes.NewReader(body)),
 		ContentLength: int64(len(body)),
 		Request:       req,
-	}
+	}, nil
 }
 
 func (c *bearerTokenCache) store(key [32]byte, entry bearerTokenEntry) {
@@ -247,9 +276,13 @@ type bearerResponseBody struct {
 	io.Closer
 }
 
+var _ io.ReadCloser = bearerResponseBody{}
+
 type bearerResponseReadError struct {
 	err error
 }
+
+var _ io.Reader = bearerResponseReadError{}
 
 func (r bearerResponseReadError) Read([]byte) (int, error) {
 	return 0, r.err

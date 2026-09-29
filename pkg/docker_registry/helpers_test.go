@@ -80,7 +80,11 @@ func newBearerRegistryFixtureWithTLS(useTLS bool) *bearerRegistryFixture {
 }
 
 func newWritableBearerRegistryFixture() *bearerRegistryFixture {
-	fixture := newBearerRegistryFixture()
+	return newWritableBearerRegistryFixtureWithTLS(false)
+}
+
+func newWritableBearerRegistryFixtureWithTLS(useTLS bool) *bearerRegistryFixture {
+	fixture := newBearerRegistryFixtureWithTLS(useTLS)
 	fixture.backend = registry.New()
 	return fixture
 }
@@ -133,4 +137,12 @@ var _ context.Context = (*observedDoneContext)(nil)
 func (ctx *observedDoneContext) Done() <-chan struct{} {
 	ctx.once.Do(func() { close(ctx.entered) })
 	return ctx.Context.Done()
+}
+
+type bearerRoundTripperFunc func(*http.Request) (*http.Response, error)
+
+var _ http.RoundTripper = bearerRoundTripperFunc(nil)
+
+func (roundTrip bearerRoundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) {
+	return roundTrip(req)
 }
