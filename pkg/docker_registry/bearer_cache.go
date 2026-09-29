@@ -48,10 +48,10 @@ type bearerTokenTransport struct {
 	target string
 	policy bool
 
-	mu             sync.Mutex
-	realm          *url.URL
-	scheme         string
-	oauthAttempted bool
+	mu            sync.Mutex
+	realm         *url.URL
+	scheme        string
+	cacheDisabled bool
 }
 
 var _ http.RoundTripper = (*bearerTokenTransport)(nil)
@@ -64,7 +64,7 @@ func (t *bearerTokenTransport) RoundTrip(req *http.Request) (*http.Response, err
 	if req.Method == http.MethodPost {
 		t.mu.Lock()
 		if t.realm != nil && req.URL.Scheme == t.realm.Scheme && req.URL.Host == t.realm.Host && req.URL.Path == t.realm.Path {
-			t.oauthAttempted = true
+			t.cacheDisabled = true
 		}
 		t.mu.Unlock()
 	}
@@ -77,6 +77,17 @@ func (t *bearerTokenTransport) RoundTrip(req *http.Request) (*http.Response, err
 		return resp, err
 	}
 	if !t.isRegistryRequest(req) {
+		if resp.StatusCode == http.StatusUnauthorized {
+			for _, challenge := range authchallenge.ResponseChallenges(resp) {
+				if strings.EqualFold(challenge.Scheme, "bearer") {
+					// Redirected hosts exchange tokens through this transport too, but their rejections cannot invalidate the origin's cache.
+					t.mu.Lock()
+					t.cacheDisabled = true
+					t.mu.Unlock()
+					break
+				}
+			}
+		}
 		return resp, nil
 	}
 
@@ -137,9 +148,9 @@ func (t *bearerTokenTransport) isTokenRequest(req *http.Request) bool {
 	}
 	t.mu.Lock()
 	realm := t.realm
-	oauthAttempted := t.oauthAttempted
+	cacheDisabled := t.cacheDisabled
 	t.mu.Unlock()
-	if realm == nil || oauthAttempted || req.URL.Scheme != realm.Scheme || req.URL.Host != realm.Host || req.URL.Path != realm.Path {
+	if realm == nil || cacheDisabled || req.URL.Scheme != realm.Scheme || req.URL.Host != realm.Host || req.URL.Path != realm.Path {
 		return false
 	}
 	for key, values := range realm.Query() {

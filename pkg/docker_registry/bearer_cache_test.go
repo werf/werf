@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -232,6 +234,49 @@ var _ = Describe("registry bearer reuse", func() {
 		Expect(second.exchanges.Load()).To(Equal(int64(0)))
 	})
 
+	It("refreshes rejected tokens after a redirect to a registry sharing the realm", func() {
+		fixture := newBearerRegistryFixture()
+		DeferCleanup(fixture.server.Close)
+		fixture.realmURL = strings.Replace(fixture.server.URL, "127.0.0.1", "localhost", 1) + "/token"
+		fixture.tokenReply = func(w http.ResponseWriter, _ *http.Request, count int64) {
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprintf(w, `{"token":"fixture-token-%d","expires_in":300}`, count)
+		}
+		fixture.authorize = func(r *http.Request) bool {
+			return strings.HasPrefix(r.Header.Get("Authorization"), "Bearer fixture-token-")
+		}
+		var rejectedThrough atomic.Int64
+		mirror := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			token, err := strconv.ParseInt(strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer fixture-token-"), 10, 64)
+			if err != nil || token <= rejectedThrough.Load() {
+				w.Header().Set("WWW-Authenticate", fmt.Sprintf(`Bearer realm="%s",service="fixture",scope="repository:mirror/repo:pull"`, fixture.realmURL))
+				w.WriteHeader(http.StatusUnauthorized)
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"name":"repo","tags":["latest"]}`)
+		}))
+		DeferCleanup(mirror.Close)
+		mirrorURL := strings.Replace(mirror.URL, "127.0.0.1", "localhost", 1)
+		fixture.backend = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			http.Redirect(w, r, mirrorURL+"/v2/repo/tags/list", http.StatusTemporaryRedirect)
+		})
+		registry := newAPI(apiOptions{InsecureRegistry: true})
+		reference := strings.TrimPrefix(fixture.server.URL, "http://") + "/repo"
+		for range 2 {
+			tags, err := registry.Tags(context.Background(), reference)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(tags).To(Equal([]string{"latest"}))
+		}
+		rejectedThrough.Store(fixture.exchanges.Load())
+		for range 2 {
+			tags, err := registry.Tags(context.Background(), reference)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(tags).To(Equal([]string{"latest"}))
+		}
+		Expect(fixture.exchanges.Load()).To(BeNumerically(">", rejectedThrough.Load()))
+	})
+
 	DescribeTable("matches only equivalent registry authorities on bearer rejection", func(resourceURL string, expectedExchanges int64) {
 		var exchanges atomic.Int64
 		challenge := `Bearer realm="https://auth.example.test/token",service="fixture"`
@@ -250,7 +295,8 @@ var _ = Describe("registry bearer reuse", func() {
 			}
 			return resp, nil
 		})
-		transport := newBearerTokenTransport(inner, newBearerTokenCache(), "registry.example.test", false)
+		cache := newBearerTokenCache()
+		transport := newBearerTokenTransport(inner, cache, "registry.example.test", false)
 		ping, err := http.NewRequest(http.MethodGet, "https://registry.example.test/v2/", nil)
 		Expect(err).NotTo(HaveOccurred())
 		pingResponse, err := transport.RoundTrip(ping)
@@ -270,6 +316,10 @@ var _ = Describe("registry bearer reuse", func() {
 		resourceResponse, err := transport.RoundTrip(resourceRequest)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(resourceResponse.Body.Close()).To(Succeed())
+		transport = newBearerTokenTransport(inner, cache, "registry.example.test", false)
+		pingResponse, err = transport.RoundTrip(ping)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(pingResponse.Body.Close()).To(Succeed())
 		resp, err := transport.RoundTrip(tokenRequest)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(resp.Body.Close()).To(Succeed())
