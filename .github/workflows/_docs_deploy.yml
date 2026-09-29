@@ -57,12 +57,17 @@ jobs:
           EOF
 
       - name: Install werf
-        uses: werf/actions/install@v2
+        uses: werf/trdl/actions/setup-app@v0.13.0
+        with:
+          preset: werf
+          group: "3"
+          channel: dev
+          force: false
 
       - name: Deploy
         run: |
           . $(werf ci-env github --as-file)
-          werf converge --virtual-merge=false
+          werf converge
         env:
           WERF_NAMESPACE: werfio-${{ inputs.env }}
           WERF_DIR: docs

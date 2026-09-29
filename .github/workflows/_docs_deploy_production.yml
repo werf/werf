@@ -75,7 +75,12 @@ jobs:
           EOF
 
       - name: Install werf
-        uses: werf/actions/install@v2
+        uses: werf/trdl/actions/setup-app@v0.13.0
+        with:
+          preset: werf
+          group: "3"
+          channel: dev
+          force: false
 
       - name: Authenticate in Seguro
         id: vault

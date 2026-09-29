@@ -34,12 +34,17 @@ jobs:
           ref: main
 
       - name: Install werf
-        uses: werf/actions/install@v2
+        uses: werf/trdl/actions/setup-app@v0.13.0
+        with:
+          preset: werf
+          group: "3"
+          channel: dev
+          force: false
 
       - name: Deploy v3 docs to test
         run: |
           . $(werf ci-env github --as-file)
-          werf converge --virtual-merge=false
+          werf converge
         env:
           WERF_NAMESPACE: werfio-test
           WERF_DIR: docs
@@ -64,12 +69,17 @@ jobs:
           ref: "2"
 
       - name: Install werf
-        uses: werf/actions/install@v2
+        uses: werf/trdl/actions/setup-app@v0.13.0
+        with:
+          preset: werf
+          group: "3"
+          channel: dev
+          force: false
 
       - name: Deploy v2 docs to test
         run: |
           . $(werf ci-env github --as-file)
-          werf converge --virtual-merge=false
+          werf converge
         env:
           WERF_NAMESPACE: werfio-test
           WERF_DIR: docs
@@ -94,12 +104,17 @@ jobs:
           ref: "1.2"
 
       - name: Install werf
-        uses: werf/actions/install@v2
+        uses: werf/trdl/actions/setup-app@v0.13.0
+        with:
+          preset: werf
+          group: "3"
+          channel: dev
+          force: false
 
       - name: Deploy v1.2 docs to test
         run: |
           . $(werf ci-env github --as-file)
-          werf converge --virtual-merge=false
+          werf converge
         env:
           WERF_NAMESPACE: werfio-test
           WERF_DIR: docs
@@ -124,12 +139,17 @@ jobs:
           ref: main
 
       - name: Install werf
-        uses: werf/actions/install@v2
+        uses: werf/trdl/actions/setup-app@v0.13.0
+        with:
+          preset: werf
+          group: "3"
+          channel: dev
+          force: false
 
       - name: Deploy latest docs to test
         run: |
           . $(werf ci-env github --as-file)
-          werf converge --virtual-merge=false
+          werf converge
         env:
           WERF_NAMESPACE: werfio-test
           WERF_DIR: docs

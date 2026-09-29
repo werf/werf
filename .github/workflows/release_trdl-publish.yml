@@ -59,9 +59,12 @@ jobs:
           fetch-depth: 0
 
       - name: Install werf
-        uses: werf/actions/install@v2
+        uses: werf/trdl/actions/setup-app@v0.13.0
         with:
-          channel: alpha
+          preset: werf
+          group: "3"
+          channel: dev
+          force: false
       - if: matrix.dest-registry == 'registry-write.werf.io'
         name: Login to werf registry
         uses: docker/login-action@v4
