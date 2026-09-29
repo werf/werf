@@ -1688,6 +1688,16 @@ func GetNelmLogLevel(cmdData *CmdData) log.Level {
 	}
 }
 
+// GetNelmLogLevelOverride returns an empty level when no verbosity override is enabled,
+// allowing callers to choose a command-specific default.
+func GetNelmLogLevelOverride(ctx context.Context, cmdData *CmdData) log.Level {
+	if *cmdData.LogDebug || *cmdData.LogQuiet || *cmdData.LogVerbose || util.GetBoolEnvironmentDefaultFalse("WERF_NELM_TRACE") {
+		return GetNelmLogLevel(cmdData)
+	}
+
+	return ""
+}
+
 func ProcessLogColorMode(cmdData *CmdData) error {
 	switch logColorMode := *cmdData.LogColorMode; logColorMode {
 	case log.LogColorModeAuto, log.LogColorModeOn, log.LogColorModeOff:

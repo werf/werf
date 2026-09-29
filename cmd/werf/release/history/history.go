@@ -47,7 +47,10 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 			releaseNamespace := common.GetNamespace(&commonCmdData)
 
-			ctx = action.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevel(&commonCmdData), action.DefaultReleaseHistoryLogLevel), action.SetupLoggingOptions{ColorMode: lo.FromPtr(commonCmdData.LogColorMode)})
+			ctx = action.SetupLogging(ctx, cmp.Or(common.GetNelmLogLevelOverride(ctx, &commonCmdData), action.DefaultReleaseHistoryLogLevel), action.SetupLoggingOptions{
+				ColorMode:      lo.FromPtr(commonCmdData.LogColorMode),
+				LogIsParseable: true,
+			})
 
 			if _, err := action.ReleaseHistory(ctx, releaseName, releaseNamespace, action.ReleaseHistoryOptions{
 				KubeConnectionOptions:       commonCmdData.KubeConnectionOptions,

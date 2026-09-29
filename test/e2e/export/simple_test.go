@@ -88,11 +88,30 @@ var _ = Describe("Simple export", Label("e2e", "export", "simple"), func() {
 					checkImageConfigFunc = commonCheckImageConfigFunc
 				}
 
-				if len(opts.Platforms) > 0 {
-					checkIndexManifest(imageName, checkIndexManifestFunc, checkImageConfigFunc)
-				} else {
-					checkImageManifest(imageName, checkImageConfigFunc)
+				checkExported := func(reference string) {
+					if len(opts.Platforms) > 0 {
+						checkIndexManifest(reference, checkIndexManifestFunc, checkImageConfigFunc)
+					} else {
+						checkImageManifest(reference, checkImageConfigFunc)
+					}
 				}
+				checkExported(imageName)
+
+				By("running export again for the unchanged project")
+				reexportImageName := suite_init.TestRepo(fmt.Sprintf("werf-export-%s", utils.GetRandomString(10)))
+				reexportOut := werfProject.Export(ctx, &werf.ExportOptions{
+					CommonOptions: werf.CommonOptions{
+						ExtraArgs: getExportArgs(reexportImageName, commonTestOptions{
+							Platforms:    opts.Platforms,
+							CustomLabels: opts.CustomLabels,
+						}),
+					},
+				})
+				Expect(reexportOut).To(ContainSubstring("by content-based tag"))
+				Expect(reexportOut).To(ContainSubstring("Exporting image"))
+
+				By("checking result of the repeated export")
+				checkExported(reexportImageName)
 			}
 		},
 		Entry("base", simpleTestOptions{
