@@ -232,6 +232,10 @@ func (m *cleanupManager) run(ctx context.Context) error {
 		}
 	}
 
+	if m.DryRun {
+		return nil
+	}
+
 	if err := logboek.Context(ctx).LogProcess("Push last cleanup info to meta image").DoError(func() error {
 		err := m.StorageManager.GetMetaStorage().PostLastCleanupRecord(ctx, m.ProjectName)
 		if err != nil {

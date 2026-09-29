@@ -11,6 +11,7 @@ import (
 	k8stesting "k8s.io/client-go/testing"
 
 	"github.com/werf/werf/v3/pkg/image"
+	"github.com/werf/werf/v3/pkg/storage"
 	"github.com/werf/werf/v3/pkg/storage/manager"
 )
 
@@ -64,5 +65,38 @@ func (f *fakeStorageManager) ForEachDeleteFinalStage(ctx context.Context, _ mana
 			return err
 		}
 	}
+	return nil
+}
+
+func (f *fakeStorageManager) ForEachDeleteStage(ctx context.Context, _ manager.ForEachDeleteStageOptions, stages image.StageDescSet, onDelete func(context.Context, *image.StageDesc, error) error) error {
+	for stage := range stages.Iter() {
+		f.deletedStages = append(f.deletedStages, stage)
+		if err := onDelete(ctx, stage, nil); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (f *fakeStorageManager) ForEachGetStageCustomTagMetadata(_ context.Context, _ []string, _ func(context.Context, string, *storage.CustomTagMetadata, error) error) error {
+	return nil
+}
+
+func (f *fakeStorageManager) GetFinalStagesStorage() storage.StagesStorage {
+	return nil
+}
+
+func (f *fakePrimaryStagesStorage) GetAllAndGroupImageMetadataByImageName(_ context.Context, _ string, _ []string, _ ...storage.Option) (map[string]map[string][]string, map[string]map[string][]string, error) {
+	return nil, nil, nil
+}
+
+func (f *fakePrimaryStagesStorage) GetStageCustomTagMetadataIDs(_ context.Context, _ ...storage.Option) ([]string, error) {
+	return nil, nil
+}
+
+func (f *fakePrimaryStagesStorage) PostLastCleanupRecord(_ context.Context, projectName string) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.lastCleanupRecords = append(f.lastCleanupRecords, projectName)
 	return nil
 }
