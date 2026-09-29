@@ -228,7 +228,7 @@ You can use the following options (or their respective environment variables) to
 
 ### GitHub Packages
 
-When organizing CI/CD pipelines in GitHub Actions, we recommend using [our set of actions](https://github.com/werf/actions) to solve most of the challenges for you.
+When organizing CI/CD pipelines in GitHub Actions, install werf as shown in [Integration with CI/CD systems]({{ "usage/integration_with_ci_cd_systems.html" | true_relative_url }}) and run `werf cleanup` as a regular step. The [werf/actions](https://github.com/werf/actions) set installs werf 2 and is not suitable for werf 3.
 
 werf uses the _GitHub API_ to delete tags, so you need to set the _token_ with the appropriate scopes (`read:packages`, `delete:packages`) to clean up the container registry.
 
