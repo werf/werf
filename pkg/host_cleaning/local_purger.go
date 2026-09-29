@@ -28,9 +28,14 @@ func newLocalPurger(backend container_backend.ContainerBackend) *localPurger {
 }
 
 func (purger *localPurger) FlushContainers(ctx context.Context, options CommonOptions) error {
-	containers, err := werfContainersByContainersOptions(ctx, purger.backend, buildContainersOptions(image.ContainerFilter{
-		Name: image.AssemblingContainerNamePrefix,
-	}))
+	// Keep volume owners until PurgeStapelFiles, after build/import containers
+	// sharing their volumes through --volumes-from have been removed.
+	var filters []image.ContainerFilter
+	if purger.backendType != containerBackendDocker || options.DryRun {
+		filters = append(filters, image.ContainerFilter{Name: image.AssemblingContainerNamePrefix})
+	}
+
+	containers, err := werfContainersByContainersOptions(ctx, purger.backend, buildContainersOptions(filters...))
 	if err != nil {
 		return err
 	}

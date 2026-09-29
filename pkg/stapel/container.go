@@ -131,31 +131,3 @@ func (c *container) CreateIfNotExist(ctx context.Context) error {
 
 	return nil
 }
-
-func (c *container) RmIfExist(ctx context.Context) error {
-	exist, err := docker.ContainerExist(ctx, c.Name)
-	if err != nil {
-		return err
-	}
-
-	if exist {
-		inspect, err := docker.ContainerInspect(ctx, c.Name)
-		if err != nil {
-			return err
-		}
-
-		if err := docker.CliRm(ctx, c.Name); err != nil {
-			return err
-		}
-
-		for _, m := range inspect.Mounts {
-			if m.Type == "volume" {
-				if err := docker.VolumeRm(ctx, m.Name, true); err != nil {
-					return err
-				}
-			}
-		}
-	}
-
-	return nil
-}

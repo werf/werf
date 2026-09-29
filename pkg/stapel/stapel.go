@@ -8,6 +8,12 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/containerd/containerd/platforms"
+	dockercontainer "github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/client"
+
+	"github.com/werf/werf/v3/pkg/container_backend/thirdparty/platformutil"
 	"github.com/werf/werf/v3/pkg/docker"
 	"github.com/werf/werf/v3/pkg/image"
 )
@@ -16,6 +22,8 @@ const (
 	VERSION              = "0.7.2"
 	IMAGE                = "registry.werf.io/werf/stapel"
 	CONTAINER_MOUNT_ROOT = "/.werf"
+
+	containerVolumeDestination = CONTAINER_MOUNT_ROOT + "/stapel"
 )
 
 func getVersion() string {
@@ -42,16 +50,20 @@ func ImageName() string {
 	return fmt.Sprintf("%s:%s", getImage(), getVersion())
 }
 
-func getContainer(targetPlatform string) container {
-	containerNameSuffix := getVersion()
+func containerName(version, targetPlatform string) string {
+	suffix := version
 	if targetPlatform != "" {
-		containerNameSuffix = fmt.Sprintf("%s_%s", containerNameSuffix, strings.ReplaceAll(targetPlatform, "/", "_"))
+		suffix = fmt.Sprintf("%s_%s", suffix, strings.ReplaceAll(targetPlatform, "/", "_"))
 	}
 
+	return fmt.Sprintf("%s%s", image.AssemblingContainerNamePrefix, suffix)
+}
+
+func getContainer(targetPlatform string) container {
 	return container{
-		Name:      fmt.Sprintf("%s%s", image.AssemblingContainerNamePrefix, containerNameSuffix),
+		Name:      containerName(getVersion(), targetPlatform),
 		ImageName: ImageName(),
-		Volume:    path.Join(CONTAINER_MOUNT_ROOT, "stapel"),
+		Volume:    containerVolumeDestination,
 		Platform:  targetPlatform,
 	}
 }
@@ -66,14 +78,95 @@ func GetOrCreateContainer(ctx context.Context, targetPlatform string) (string, e
 	}
 }
 
+func isContainerNameOfVersion(name, version string) bool {
+	base := containerName(version, "")
+	if name == base {
+		return true
+	}
+
+	// Custom versions may contain underscores, so match the full version prefix.
+	suffix, ok := strings.CutPrefix(name, base+"_")
+	if !ok {
+		return false
+	}
+
+	spec, err := platformutil.ParsePlatform(strings.ReplaceAll(suffix, "_", "/"))
+	if err != nil {
+		return false
+	}
+
+	return containerName(version, platforms.Format(spec)) == name
+}
+
 func Purge(ctx context.Context) error {
-	container := getContainer("")
-	if err := container.RmIfExist(ctx); err != nil {
-		return err
+	containers, err := docker.Containers(ctx, dockercontainer.ListOptions{
+		All:     true,
+		Filters: filters.NewArgs(filters.Arg("name", image.AssemblingContainerNamePrefix)),
+	})
+	if err != nil {
+		return fmt.Errorf("list stapel containers: %w", err)
+	}
+
+	for _, c := range containers {
+		if err := rmContainerWithVolumes(ctx, c.ID); err != nil {
+			return err
+		}
 	}
 
 	if err := rmiIfExist(ctx); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func rmContainerWithVolumes(ctx context.Context, id string) error {
+	inspect, err := docker.ContainerInspect(ctx, id)
+	if err != nil {
+		if client.IsErrNotFound(err) {
+			return nil
+		}
+		return fmt.Errorf("inspect container %s: %w", id, err)
+	}
+
+	if inspect.Config == nil {
+		return nil
+	}
+
+	version, ok := strings.CutPrefix(inspect.Config.Image, getImage()+":")
+	if !ok || version == "" {
+		return nil
+	}
+
+	if !isContainerNameOfVersion(strings.TrimPrefix(inspect.Name, "/"), version) {
+		return nil
+	}
+
+	var volumeNames []string
+	for _, m := range inspect.Mounts {
+		if m.Type == "volume" && m.Destination == containerVolumeDestination {
+			volumeNames = append(volumeNames, m.Name)
+		}
+	}
+
+	if len(volumeNames) == 0 {
+		return nil
+	}
+
+	if err := docker.ContainerRemove(ctx, id, dockercontainer.RemoveOptions{}); err != nil {
+		if client.IsErrNotFound(err) {
+			return nil
+		}
+		return fmt.Errorf("remove container %s: %w", id, err)
+	}
+
+	for _, name := range volumeNames {
+		if err := docker.VolumeRm(ctx, name, false); err != nil {
+			if client.IsErrNotFound(err) {
+				continue
+			}
+			return fmt.Errorf("remove volume %s: %w", name, err)
+		}
 	}
 
 	return nil
