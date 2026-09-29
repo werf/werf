@@ -14,6 +14,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
+	"github.com/samber/lo"
 	"go.podman.io/storage"
 
 	"github.com/werf/logboek"
@@ -456,7 +457,7 @@ var _ = Describe("BuildahBackend GetImageInfo", func() {
 			fakeBuildah.InspectFunc = func(_ context.Context, _ string) (*thirdparty.BuilderInfo, error) {
 				inspect := &thirdparty.BuilderInfo{FromImageID: fromImageID}
 				inspect.Docker.ID = legacyDockerID
-				inspect.Docker.Config = &thirdparty.Config{}
+				inspect.Docker.Config = lo.ToPtr(lo.FromPtr(inspect.Docker.Config))
 				return inspect, nil
 			}
 
@@ -484,7 +485,7 @@ var _ = Describe("BuildahBackend GetImageInfo", func() {
 		fakeBuildah.InspectFunc = func(_ context.Context, ref string) (*thirdparty.BuilderInfo, error) {
 			Expect(ref).To(Equal("sha256:" + storageID))
 			inspect := &thirdparty.BuilderInfo{FromImageID: storageID}
-			inspect.Docker.Config = &thirdparty.Config{}
+			inspect.Docker.Config = lo.ToPtr(lo.FromPtr(inspect.Docker.Config))
 			return inspect, nil
 		}
 
