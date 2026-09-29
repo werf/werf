@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.80.1](https://github.com/werf/werf/compare/v2.80.0...v2.80.1) (2026-09-29)
+
+
+### Bug Fixes
+
+* **build:** reduce repeated registry token requests ([#7955](https://github.com/werf/werf/issues/7955)) ([08dd45b](https://github.com/werf/werf/commit/08dd45b36bc3bae719663a1e4aa70009443ad0de))
+
 ## [2.80.0](https://github.com/werf/werf/compare/v2.79.2...v2.80.0) (2026-09-25)
 
 
