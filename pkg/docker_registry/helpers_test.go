@@ -11,6 +11,9 @@ import (
 	"sync/atomic"
 
 	"github.com/google/go-containerregistry/pkg/registry"
+	"github.com/onsi/ginkgo/v2"
+	"github.com/onsi/gomega"
+	"golang.org/x/sync/singleflight"
 )
 
 type bearerRegistryFixture struct {
@@ -145,4 +148,87 @@ var _ http.RoundTripper = bearerRoundTripperFunc(nil)
 
 func (roundTrip bearerRoundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) {
 	return roundTrip(req)
+}
+
+var _ Interface = (*listingRegistryStub)(nil)
+
+type listingRegistryStub struct {
+	Interface
+
+	mu       sync.Mutex
+	tags     []string
+	calls    int
+	started  chan struct{}
+	release  chan struct{}
+	failWith error
+}
+
+func newListingRegistryStub(tags ...string) *listingRegistryStub {
+	return &listingRegistryStub{tags: tags}
+}
+
+func (r *listingRegistryStub) Tags(_ context.Context, _ string, _ ...Option) ([]string, error) {
+	r.mu.Lock()
+	r.calls++
+	started, release := r.started, r.release
+	r.mu.Unlock()
+
+	if started != nil {
+		close(started)
+		<-release
+	}
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if r.failWith != nil {
+		return nil, r.failWith
+	}
+	return append([]string(nil), r.tags...), nil
+}
+
+func (r *listingRegistryStub) parseReferenceParts(reference string) (referenceParts, error) {
+	return (&api{}).parseReferenceParts(reference)
+}
+
+func (r *listingRegistryStub) setTags(tags ...string) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.tags = tags
+}
+
+func (r *listingRegistryStub) callCount() int {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return r.calls
+}
+
+func newCachedRegistryStub(inner Interface) *DockerRegistryWithCache {
+	return &DockerRegistryWithCache{
+		Interface:          inner,
+		cachedTagsMap:      &sync.Map{},
+		listTagsQueryGroup: &singleflight.Group{},
+	}
+}
+
+func cachedEntry(r *DockerRegistryWithCache, cachedTagsID string) tagsCacheEntry {
+	value, ok := r.cachedTagsMap.Load(cachedTagsID)
+	gomega.Expect(ok).To(gomega.BeTrue())
+	entry, err := castTagsEntry(value)
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+	return entry
+}
+
+func startBlockedListing(ctx context.Context, r *DockerRegistryWithCache, inner *listingRegistryStub, reference string) (chan []string, func()) {
+	inner.started, inner.release = make(chan struct{}), make(chan struct{})
+
+	listedTags := make(chan []string, 1)
+	go func() {
+		defer ginkgo.GinkgoRecover()
+		tags, err := r.Tags(ctx, reference)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		listedTags <- tags
+	}()
+
+	gomega.Eventually(inner.started).Should(gomega.BeClosed())
+	return listedTags, func() { close(inner.release) }
 }
