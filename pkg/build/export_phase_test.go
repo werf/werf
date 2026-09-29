@@ -9,6 +9,7 @@ import (
 	buildImage "github.com/werf/werf/v3/pkg/build/image"
 	"github.com/werf/werf/v3/pkg/build/stage"
 	imagePkg "github.com/werf/werf/v3/pkg/image"
+	"github.com/werf/werf/v3/pkg/storage"
 	"github.com/werf/werf/v3/pkg/werf"
 )
 
@@ -41,9 +42,9 @@ var _ = ginkgo.Describe("Exporter", func() {
 		gomega.Expect(img.GetLastNonEmptyStage()).To(gomega.BeNil())
 
 		storageManager = &exportStorageManager{
-			stagesStorage:      &exportStagesStorageStub{exported: map[string]*imagePkg.StageDesc{}},
+			stagesStorage:      newExportStagesStorageStub(storage.LocalStorageAddress),
 			finalStageDesc:     finalDesc,
-			finalStagesStorage: &exportStagesStorageStub{},
+			finalStagesStorage: newExportStagesStorageStub("registry.example.com/project/final"),
 		}
 		phase = newTestBuildPhase(storageManager, []string{"app"})
 		phase.Conveyor.imagesTree.SetImagesGraphForTests(newTestImagesGraph(img))
@@ -75,4 +76,86 @@ var _ = ginkgo.Describe("Exporter", func() {
 		gomega.Expect(img.GetContentTagDesc()).To(gomega.BeIdenticalTo(finalDesc))
 		gomega.Expect(anchor.GetStageImage().Image.GetStageDesc()).To(gomega.BeIdenticalTo(primaryDesc))
 	})
+})
+
+var _ = ginkgo.Describe("Exporter.RunFromReport", func() {
+	const (
+		primaryRepo = "registry.example.com/project"
+		finalRepo   = "registry.example.com/project/final"
+		stageTag    = "9d3a6a4a1c8f4b2e8c1d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b-1700000000000"
+	)
+
+	ginkgo.BeforeEach(func() {
+		gomega.Expect(werf.Init(ginkgo.GinkgoT().TempDir(), "")).To(gomega.Succeed())
+	})
+
+	ginkgo.DescribeTable("validates local reports without a repository digest",
+		func(ctx ginkgo.SpecContext, imageID string, valid bool) {
+			record := newTestReportImageRecord("frontend", true)
+			record.DockerImageID = imageID
+			record.DockerImageDigest = ""
+
+			report, err := LoadBuildReportFromFile(ctx, writeBuildReport(record))
+			if !valid {
+				gomega.Expect(err).To(gomega.MatchError(gomega.ContainSubstring(`image "frontend" has empty DockerImageID`)))
+				return
+			}
+			gomega.Expect(err).NotTo(gomega.HaveOccurred())
+			gomega.Expect(report.Images["frontend"].DockerImageID).To(gomega.Equal(imageID))
+		},
+		ginkgo.Entry("requires an image ID", "", false),
+		ginkgo.Entry("does not require a repository digest", "sha256:5f1993108ca9000000000000000000000000000000000000000000000000000000", true),
+	)
+
+	ginkgo.DescribeTable("picks the storage that actually holds the reported image",
+		func(ctx ginkgo.SpecContext, primaryAddress, finalAddress, recordRepo string, expectExportedFromFinalRepo bool) {
+			primaryStagesStorage := newExportStagesStorageStub(primaryAddress)
+			finalStagesStorage := newExportStagesStorageStub(finalAddress)
+
+			storageManager := &exportStorageManager{stagesStorage: primaryStagesStorage}
+			if finalAddress != "" {
+				storageManager.finalStagesStorage = finalStagesStorage
+			}
+
+			reportPath := writeBuildReport(ReportImageRecord{
+				WerfImageName:     "app",
+				DockerRepo:        recordRepo,
+				DockerTag:         stageTag,
+				DockerImageID:     "sha256:imageid",
+				DockerImageDigest: "sha256:digest",
+				DockerImageName:   fmt.Sprintf("%s:%s", recordRepo, stageTag),
+				TargetPlatform:    "linux/amd64",
+				Final:             true,
+			})
+
+			exporter := NewExporter(newTestBuildPhase(storageManager, []string{"app"}).Conveyor, ExportOptions{
+				ExportImageNameList: []string{"app"},
+				ExportTagFuncList: []imagePkg.ExportTagFunc{
+					func(name, stageID string) string { return fmt.Sprintf("registry/%s:%s", name, stageID) },
+				},
+			})
+
+			gomega.Expect(exporter.RunFromReport(ctx, reportPath)).To(gomega.Succeed())
+
+			exportedFrom, notExportedFrom := finalStagesStorage, primaryStagesStorage
+			if !expectExportedFromFinalRepo {
+				exportedFrom, notExportedFrom = primaryStagesStorage, finalStagesStorage
+			}
+
+			gomega.Expect(notExportedFrom.exported).To(gomega.BeEmpty())
+			gomega.Expect(exportedFrom.exported).To(gomega.HaveKey(fmt.Sprintf("registry/app:%s", stageTag)))
+			gomega.Expect(exportedFrom.exported[fmt.Sprintf("registry/app:%s", stageTag)].Info.Name).
+				To(gomega.Equal(fmt.Sprintf("%s:%s", recordRepo, stageTag)))
+		},
+		ginkgo.Entry("local primary storage with a record published to the final repo",
+			storage.LocalStorageAddress, finalRepo, finalRepo, true),
+		ginkgo.Entry("remote primary storage with a record published to the final repo",
+			primaryRepo, finalRepo, finalRepo, true),
+		ginkgo.Entry("final repo address spelled differently than in the record",
+			storage.LocalStorageAddress, "docker.io/library/app-final", "index.docker.io/library/app-final", true),
+		ginkgo.Entry("remote primary storage with a record left in the primary repo",
+			primaryRepo, finalRepo, primaryRepo, false),
+		ginkgo.Entry("no final repo configured",
+			primaryRepo, "", primaryRepo, false),
+	)
 })

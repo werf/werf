@@ -11,6 +11,7 @@ import (
 
 	"github.com/werf/werf/v3/pkg/image"
 	"github.com/werf/werf/v3/test/pkg/contback"
+	"github.com/werf/werf/v3/test/pkg/report"
 	"github.com/werf/werf/v3/test/pkg/suite_init"
 	"github.com/werf/werf/v3/test/pkg/utils"
 	"github.com/werf/werf/v3/test/pkg/utils/docker"
@@ -85,5 +86,58 @@ var _ = ginkgo.Describe("Export with a final repo", ginkgo.Label("e2e", "export"
 		ginkgo.Entry("remote primary with Docker", "docker", false),
 		ginkgo.Entry("local primary with Docker", "docker", true),
 		ginkgo.Entry("local primary with Native Buildah", ginkgo.Label(suite_init.LabelNeedsBuildah), "native-rootless", true),
+	)
+
+	ginkgo.DescribeTable("exports from a build report without the local final-repo alias",
+		func(ctx ginkgo.SpecContext, backendMode string) {
+			contback.SkipIfUnavailable(backendMode)
+			setupEnv()
+			SuiteData.Stubs.SetEnv("WERF_INSECURE_REGISTRY", "1")
+			SuiteData.Stubs.SetEnv("WERF_SKIP_TLS_VERIFY_REGISTRY", "1")
+			SuiteData.Stubs.SetEnv("WERF_BUILDAH_MODE", backendMode)
+			SuiteData.Stubs.SetEnv("WERF_REPO", ":local")
+
+			finalRepo := suite_init.TestRepo(fmt.Sprintf("werf-export-final-%s", utils.GetRandomString(10)))
+			SuiteData.Stubs.SetEnv("WERF_FINAL_REPO", finalRepo)
+			SuiteData.InitTestRepo(ctx, "repo", "simple")
+			werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath("repo"))
+			exportRepo := suite_init.TestRepo(fmt.Sprintf("werf-export-%s", utils.GetRandomString(10)))
+
+			ginkgo.By("building with a saved build report")
+			buildReportPath := SuiteData.GetBuildReportPath(fmt.Sprintf("final-repo-report-%s.json", utils.GetRandomString(5)))
+			_, buildReport := report.NewProjectWithReport(werfProject).BuildWithReport(ctx, buildReportPath, nil)
+
+			record, found := buildReport.Images["alpine"]
+			gomega.Expect(found).To(gomega.BeTrue(), "build report must contain the alpine image")
+			gomega.Expect(record.DockerRepo).To(gomega.Equal(finalRepo), "report of a final image must point at the final repo")
+			gomega.Expect(record.DockerImageName).To(gomega.HavePrefix(finalRepo + ":"))
+
+			if backendMode == "docker" {
+				ginkgo.By("removing only the local final-repo alias, leaving the primary image cached")
+				gomega.Expect(docker.CliRmi(ctx, record.DockerImageName)).To(gomega.Succeed())
+			}
+
+			exportOut := werfProject.Export(ctx, &werf.ExportOptions{
+				CommonOptions: werf.CommonOptions{
+					ExtraArgs: getExportArgs(exportRepo+":from-report", commonTestOptions{BuildReportPath: buildReportPath}),
+				},
+			})
+			gomega.Expect(exportOut).To(gomega.ContainSubstring("Exporting image"))
+
+			ginkgo.By("checking the exported image matches the published final-repo image")
+			gomega.Expect(imageDiffIDs(ctx, exportRepo+":from-report")).To(gomega.Equal(imageDiffIDs(ctx, record.DockerImageName)))
+
+			reference, err := name.ParseReference(exportRepo + ":from-report")
+			gomega.Expect(err).NotTo(gomega.HaveOccurred())
+			exported, err := remote.Image(reference, remote.WithContext(ctx))
+			gomega.Expect(err).NotTo(gomega.HaveOccurred())
+			config, err := exported.ConfigFile()
+			gomega.Expect(err).NotTo(gomega.HaveOccurred())
+			for label := range config.Config.Labels {
+				gomega.Expect(strings.HasPrefix(label, image.WerfLabelPrefix)).To(gomega.BeFalse(), "service label %s must be stripped", label)
+			}
+		},
+		ginkgo.Entry("with Docker", "docker"),
+		ginkgo.Entry("with Native Buildah", ginkgo.Label(suite_init.LabelNeedsBuildah), "native-rootless"),
 	)
 })
