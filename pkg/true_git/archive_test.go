@@ -9,6 +9,11 @@ import (
 )
 
 var _ = ginkgo.Describe("content-based archive identity", func() {
+	ginkgo.It("does not reuse keys written before checkout safety checks", func() {
+		opts := ArchiveOptions{ContentChecksum: "content-a", PathScope: "app"}
+		gomega.Expect(opts.ID()).NotTo(gomega.Equal(util.Sha256Hash("dockerfile-context-v1", opts.ContentChecksum, opts.PathScope, opts.Owner, opts.Group)))
+	})
+
 	ginkgo.It("keeps the legacy identity when content checksums are not requested", func() {
 		opts := ArchiveOptions{Commit: "commit-a", PathScope: "app", PathMatcher: path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{})}
 		gomega.Expect(opts.ID()).To(gomega.Equal(util.Sha256Hash(opts.Commit, opts.PathScope, opts.PathMatcher.ID())))

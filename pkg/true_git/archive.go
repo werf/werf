@@ -36,7 +36,7 @@ type ArchiveOptions struct {
 // TODO: 1.3 add git mapping type (dir, file, ...) to gitArchive stage digest
 func (opts ArchiveOptions) ID() string {
 	if opts.ContentChecksum != "" {
-		args := []string{"dockerfile-context-v1", opts.ContentChecksum, opts.PathScope, opts.Owner, opts.Group}
+		args := []string{"dockerfile-context-v2", opts.ContentChecksum, opts.PathScope, opts.Owner, opts.Group}
 		for _, path := range slices.Sorted(maps.Keys(opts.FileRenames)) {
 			args = append(args, path, opts.FileRenames[path])
 		}

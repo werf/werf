@@ -63,16 +63,18 @@ func (a *BuildContextArchive) Create(ctx context.Context, opts container_backend
 		),
 		Commit: a.giterminismMgr.HeadCommit(ctx),
 	}
-	archiveOptions.ContentChecksum, err = a.giterminismMgr.LocalGitRepo().GetOrCreateChecksum(ctx, git_repo.ChecksumOptions{
-		Commit: archiveOptions.Commit,
-		LsTreeOptions: git_repo.LsTreeOptions{
-			PathScope:   archiveOptions.PathScope,
-			PathMatcher: archiveOptions.PathMatcher,
-			AllFiles:    true,
-		},
-	})
-	if err != nil {
-		return fmt.Errorf("calculate build context checksum: %w", err)
+	if repo, ok := a.giterminismMgr.LocalGitRepo().(*git_repo.Local); ok {
+		archiveOptions.ContentChecksum, err = repo.GetDockerfileContextChecksum(ctx, git_repo.ChecksumOptions{
+			Commit: archiveOptions.Commit,
+			LsTreeOptions: git_repo.LsTreeOptions{
+				PathScope:   archiveOptions.PathScope,
+				PathMatcher: archiveOptions.PathMatcher,
+				AllFiles:    true,
+			},
+		})
+		if err != nil {
+			return fmt.Errorf("calculate build context checksum: %w", err)
+		}
 	}
 
 	archive, err := a.giterminismMgr.LocalGitRepo().GetOrCreateArchive(ctx, archiveOptions)

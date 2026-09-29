@@ -3,6 +3,7 @@ package image
 import (
 	"archive/tar"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"io/fs"
@@ -29,6 +30,25 @@ import (
 	"github.com/werf/werf/v3/pkg/werf"
 	"github.com/werf/werf/v3/test/pkg/utils"
 )
+
+func requireGitAttributeSource(ctx context.Context, projectDir string) {
+	cmd := true_git.NewGitCmd(ctx, &true_git.GitCmdOptions{RepoDir: projectDir}, "check-attr", "--source=HEAD", "--all", "--", "app/included.txt")
+	err := cmd.Run(ctx)
+	var exitErr *exec.ExitError
+	if errors.As(err, &exitErr) && exitErr.ExitCode() == 129 {
+		ginkgo.Skip("requires Git check-attr --source support")
+	}
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+}
+
+func interceptGitCheckAttributes(response string) {
+	git, err := exec.LookPath("git")
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+	dir := ginkgo.GinkgoT().TempDir()
+	script := fmt.Sprintf("#!/bin/sh\nfor arg do\n  if [ \"$arg\" = check-attr ]; then\n%s\n  fi\ndone\nexec %q \"$@\"\n", response, git)
+	gomega.Expect(os.WriteFile(filepath.Join(dir, "git"), []byte(script), 0o755)).To(gomega.Succeed())
+	ginkgo.GinkgoT().Setenv("PATH", dir+string(os.PathListSeparator)+os.Getenv("PATH"))
+}
 
 func newContentCachingRepo(ctx context.Context) string {
 	projectDir := newProjectRepo(ctx, dockerfileProjectFiles("\nimage: "+projectImageName+"\ncontext: app\ndockerfile: Dockerfile\n",
