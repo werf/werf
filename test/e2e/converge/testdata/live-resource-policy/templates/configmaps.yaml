@@ -1,0 +1,11 @@
+{{- if not .Values.removeResources }}
+{{- range list "helm-keep" "werf-keep" "werf-skip-delete" "unprotected" }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ . }}
+data:
+  retained: original
+{{- end }}
+{{- end }}
