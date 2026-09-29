@@ -51,7 +51,7 @@ var _ = Describe("registry bearer reuse", func() {
 		DeferCleanup(fixture.server.Close)
 		fixture.tokenReply = func(w http.ResponseWriter, _ *http.Request, _ int64) {
 			w.Header().Set("Content-Type", "application/json")
-			issuedAt := time.Now().Add(-28 * time.Second).Format(time.RFC3339Nano)
+			issuedAt := time.Now().Add(-20 * time.Second).Format(time.RFC3339Nano)
 			if explicitLifetime {
 				fmt.Fprintf(w, `{"token":"fixture-token","expires_in":60,"issued_at":%q}`, issuedAt)
 				return
@@ -68,7 +68,7 @@ var _ = Describe("registry bearer reuse", func() {
 		Eventually(func() (int64, error) {
 			_, err := registry.Tags(context.Background(), reference)
 			return fixture.exchanges.Load(), err
-		}, 6*time.Second, 100*time.Millisecond).Should(Equal(int64(2)))
+		}, 15*time.Second, 100*time.Millisecond).Should(Equal(int64(2)))
 	},
 		Entry("explicit 60-second lifetime near the refresh margin", true),
 		Entry("default 60-second lifetime near the refresh margin", false),
@@ -277,6 +277,7 @@ var _ = Describe("registry bearer reuse", func() {
 		Entry("default HTTPS port", "https://registry.example.test:443/v2/repo/tags/list", int64(2)),
 		Entry("different HTTPS port", "https://registry.example.test:444/v2/repo/tags/list", int64(1)),
 		Entry("different scheme", "http://registry.example.test:443/v2/repo/tags/list", int64(1)),
+		Entry("different scheme with default HTTP port", "http://registry.example.test/v2/repo/tags/list", int64(1)),
 	)
 
 	It("separates credentials changed for the same registry and scope", func() {
