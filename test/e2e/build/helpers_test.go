@@ -1,6 +1,9 @@
 package e2e_build_test
 
-import "fmt"
+import (
+	"fmt"
+	"path"
+)
 
 type gitOwnershipTestOptions struct {
 	setupEnvOptions
@@ -28,11 +31,18 @@ func gitOwnershipChecks(ownerGroup, fileContent string, extraPaths ...string) []
 		`test "0:0" = "$(stat -c %u:%g /sentinel)"`,
 	}
 
-	for _, path := range extraPaths {
+	for _, extraPath := range extraPaths {
 		checks = append(checks,
-			fmt.Sprintf("test -e %s", path),
-			fmt.Sprintf("test %q = \"$(stat -c %%u:%%g %s)\"", ownerGroup, path),
+			fmt.Sprintf("test -e %s", extraPath),
+			fmt.Sprintf("test %q = \"$(stat -c %%u:%%g %s)\"", ownerGroup, extraPath),
 		)
+
+		for dir := path.Dir(extraPath); dir != "/app" && dir != "/"; dir = path.Dir(dir) {
+			checks = append(checks,
+				fmt.Sprintf("test -d %s", dir),
+				fmt.Sprintf("test %q = \"$(stat -c %%u:%%g %s)\"", ownerGroup, dir),
+			)
+		}
 	}
 
 	return checks

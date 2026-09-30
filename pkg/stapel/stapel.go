@@ -200,7 +200,7 @@ func InstallBinPath() string {
 	return embeddedBinPath("install")
 }
 
-func ChownBinPath(_ context.Context) string {
+func ChownBinPath() string {
 	return embeddedBinPath("chown")
 }
 
