@@ -20,6 +20,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
+	"github.com/opencontainers/go-digest"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"go.podman.io/storage"
 
@@ -863,8 +864,10 @@ func (backend *BuildahBackend) GetImageInfo(ctx context.Context, ref string, opt
 	}
 
 	imageID := ""
-	if inspect.Docker.ID != "" {
-		imageID = fmt.Sprintf("sha256:%x", inspect.Docker.ID)
+	if inspect.FromImageID != "" {
+		// FromImageID is the authoritative local image ID from the container storage,
+		// an unprefixed hex digest; inspect.Docker.ID is empty for OCI images.
+		imageID = digest.NewDigestFromEncoded(digest.SHA256, strings.TrimPrefix(inspect.FromImageID, "sha256:")).String()
 	}
 
 	return &image.Info{

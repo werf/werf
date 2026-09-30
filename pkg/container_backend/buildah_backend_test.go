@@ -14,6 +14,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
+	"github.com/samber/lo"
 	"go.podman.io/storage"
 
 	"github.com/werf/logboek"
@@ -442,6 +443,68 @@ var _ = Describe("platformMatches", func() {
 		// (OCI default: arm64 without explicit variant is equivalent to v8)
 		Entry("target has variant, image variant empty", "linux", "arm64", "", "linux/arm64/v8", true),
 	)
+})
+
+var _ = Describe("BuildahBackend GetImageInfo", func() {
+	const (
+		imageRef  = "registry.example.org/project/stage:tag"
+		storageID = "5f1993108ca9f0e3b1a5bd4e1b6f2c7d8e9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c"
+	)
+
+	DescribeTable("derives the image ID from the container storage image ID",
+		func(fromImageID, legacyDockerID, expectedID string) {
+			fakeBuildah := &buildahstub.BuildahStub{}
+			fakeBuildah.InspectFunc = func(_ context.Context, _ string) (*thirdparty.BuilderInfo, error) {
+				inspect := &thirdparty.BuilderInfo{FromImageID: fromImageID}
+				inspect.Docker.ID = legacyDockerID
+				inspect.Docker.Config = lo.ToPtr(lo.FromPtr(inspect.Docker.Config))
+				return inspect, nil
+			}
+
+			info, err := NewBuildahBackend(fakeBuildah, BuildahBackendOptions{}).
+				GetImageInfo(context.Background(), imageRef, GetImageInfoOpts{})
+			Expect(err).ToNot(HaveOccurred())
+			Expect(info).ToNot(BeNil())
+			Expect(info.ID).To(Equal(expectedID))
+			Expect(info.Name).To(Equal(imageRef))
+		},
+		Entry("unprefixed storage ID, no legacy Docker ID",
+			storageID, "", "sha256:"+storageID),
+		Entry("already prefixed storage ID is not prefixed twice",
+			"sha256:"+storageID, "", "sha256:"+storageID),
+		Entry("legacy Docker ID does not win over the storage ID",
+			storageID, "0123456789abcdef", "sha256:"+storageID),
+		Entry("no storage ID leaves the image ID empty",
+			"", "", ""),
+	)
+
+	It("keeps the derived image ID when inspecting by the cached platform image ID", func() {
+		const platform = "linux/amd64"
+
+		fakeBuildah := &buildahstub.BuildahStub{}
+		fakeBuildah.InspectFunc = func(_ context.Context, ref string) (*thirdparty.BuilderInfo, error) {
+			Expect(ref).To(Equal("sha256:" + storageID))
+			inspect := &thirdparty.BuilderInfo{FromImageID: storageID}
+			inspect.Docker.Config = lo.ToPtr(lo.FromPtr(inspect.Docker.Config))
+			return inspect, nil
+		}
+
+		backend := NewBuildahBackend(fakeBuildah, BuildahBackendOptions{})
+		backend.storePulledImageID(imageRef, platform, "sha256:"+storageID)
+
+		info, err := backend.GetImageInfo(context.Background(), imageRef, GetImageInfoOpts{TargetPlatform: platform})
+		Expect(err).ToNot(HaveOccurred())
+		Expect(info).ToNot(BeNil())
+		Expect(info.ID).To(Equal("sha256:" + storageID))
+		Expect(fakeBuildah.InspectRefs).To(Equal([]string{"sha256:" + storageID}))
+	})
+
+	It("returns no info for an image missing in local storage", func() {
+		info, err := NewBuildahBackend(&buildahstub.BuildahStub{}, BuildahBackendOptions{}).
+			GetImageInfo(context.Background(), imageRef, GetImageInfoOpts{})
+		Expect(err).ToNot(HaveOccurred())
+		Expect(info).To(BeNil())
+	})
 })
 
 var _ = Describe("BuildahBackend createContainers", func() {

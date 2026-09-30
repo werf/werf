@@ -5,8 +5,9 @@ import (
 )
 
 type commonTestOptions struct {
-	Platforms    []string
-	CustomLabels []string
+	Platforms       []string
+	CustomLabels    []string
+	BuildReportPath string
 }
 
 func setupEnv() {
@@ -27,6 +28,9 @@ func getExportArgs(imageName string, opts commonTestOptions) []string {
 		for _, label := range opts.CustomLabels {
 			exportArgs = append(exportArgs, "--add-label", label)
 		}
+	}
+	if opts.BuildReportPath != "" {
+		exportArgs = append(exportArgs, "--use-build-report", "--build-report-path", opts.BuildReportPath)
 	}
 
 	return exportArgs

@@ -154,6 +154,17 @@ func (e *Exporter) exportImageFromReportRecord(ctx context.Context, record Repor
 				stageDesc.Info.IsIndex = true
 			}
 
+			var stagesStorage storage.StagesStorage = e.Conveyor.StorageManager.GetStagesStorage()
+			if finalStagesStorage := e.Conveyor.StorageManager.GetFinalStagesStorage(); finalStagesStorage != nil {
+				// A final image is published to the final repo, and the report record points
+				// there, so the primary storage (local, in particular) has nothing to export.
+				recordRepo, recordErr := storage.CanonicalRepoAddress(record.DockerRepo)
+				finalRepo, finalErr := storage.CanonicalRepoAddress(finalStagesStorage.Address())
+				if recordErr == nil && finalErr == nil && recordRepo == finalRepo {
+					stagesStorage = finalStagesStorage
+				}
+			}
+
 			for _, tagFunc := range e.ExportTagFuncList {
 				stageID, err := extractStageIDFromReport(record)
 				if err != nil {
@@ -163,7 +174,7 @@ func (e *Exporter) exportImageFromReportRecord(ctx context.Context, record Repor
 				tag := tagFunc(record.WerfImageName, stageID)
 				if err := logboek.Context(ctx).Default().LogProcess("tag %s", tag).
 					DoError(func() error {
-						if err := e.Conveyor.StorageManager.GetStagesStorage().ExportStage(ctx, stageDesc, tag, e.MutateConfigFunc); err != nil {
+						if err := stagesStorage.ExportStage(ctx, stageDesc, tag, e.MutateConfigFunc); err != nil {
 							return fmt.Errorf("unable to export stage %s: %w", stageDesc.StageID.String(), err)
 						}
 

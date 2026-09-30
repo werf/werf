@@ -2,8 +2,11 @@ package build
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
+	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
 
 	buildImage "github.com/werf/werf/v3/pkg/build/image"
@@ -18,6 +21,21 @@ func newImage(name string, baseImageType buildImage.BaseImageType, opts buildIma
 	img, err := buildImage.NewImage(context.Background(), "linux/amd64", name, baseImageType, opts)
 	gomega.Expect(err).To(gomega.Succeed())
 	return img
+}
+
+func writeBuildReport(records ...ReportImageRecord) string {
+	report := NewImagesReport()
+	for _, record := range records {
+		report.SetImageRecord(record.WerfImageName, record)
+	}
+
+	data, err := report.ToJsonData()
+	gomega.Expect(err).To(gomega.Succeed())
+
+	path := filepath.Join(ginkgo.GinkgoT().TempDir(), "report.json")
+	gomega.Expect(os.WriteFile(path, data, 0o644)).To(gomega.Succeed())
+
+	return path
 }
 
 type contentDependenciesStub struct {
@@ -50,7 +68,16 @@ var _ storage.PrimaryStagesStorage = (*exportStagesStorageStub)(nil)
 
 type exportStagesStorageStub struct {
 	storage.PrimaryStagesStorage
+	address  string
 	exported map[string]*imagePkg.StageDesc
+}
+
+func newExportStagesStorageStub(address string) *exportStagesStorageStub {
+	return &exportStagesStorageStub{address: address, exported: map[string]*imagePkg.StageDesc{}}
+}
+
+func (s *exportStagesStorageStub) Address() string {
+	return s.address
 }
 
 func (s *exportStagesStorageStub) ExportStage(_ context.Context, stageDesc *imagePkg.StageDesc, destinationReference string, _ func(config v1.Config) (v1.Config, error)) error {
