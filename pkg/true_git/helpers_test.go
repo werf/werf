@@ -2,15 +2,63 @@ package true_git
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	"github.com/werf/common-go/pkg/graceful"
 	"github.com/werf/werf/v3/test/pkg/utils"
 )
+
+type blockingGitFilter struct {
+	command     string
+	armPath     string
+	startedPath string
+	proceedPath string
+}
+
+func newBlockingGitFilter(dir, name string) blockingGitFilter {
+	filter := blockingGitFilter{
+		command:     filepath.Join(dir, name+".sh"),
+		armPath:     filepath.Join(dir, name+"-arm"),
+		startedPath: filepath.Join(dir, name+"-started"),
+		proceedPath: filepath.Join(dir, name+"-proceed"),
+	}
+	script := fmt.Sprintf(
+		"#!/bin/sh\nif [ -f %q ]; then\n\ttouch %q\n\tfor i in $(seq 1 600); do [ -f %q ] && break; sleep 0.05; done\nfi\ncat\n",
+		filter.armPath, filter.startedPath, filter.proceedPath,
+	)
+	Expect(os.WriteFile(filter.command, []byte(script), 0o755)).To(Succeed())
+	return filter
+}
+
+func (f blockingGitFilter) arm() {
+	Expect(os.WriteFile(f.armPath, []byte("arm"), 0o644)).To(Succeed())
+}
+
+func (f blockingGitFilter) terminateWhenBlocked(ctx context.Context) (context.Context, chan struct{}) {
+	terminationCtx := graceful.WithTermination(ctx)
+	done := make(chan struct{})
+	go func() {
+		defer GinkgoRecover()
+		defer close(done)
+		for i := 0; i < 600; i++ {
+			if _, err := os.Stat(f.startedPath); err == nil {
+				break
+			}
+			time.Sleep(50 * time.Millisecond)
+		}
+		graceful.Terminate(terminationCtx, fmt.Errorf("sibling task failed"), 1)
+		<-terminationCtx.Done()
+		Expect(os.WriteFile(f.proceedPath, []byte("go"), 0o644)).To(Succeed())
+	}()
+	return terminationCtx, done
+}
 
 // gitCommitSucceed pins identity and disables signing so commits do not depend on ambient
 // global git config: a developer's commit.gpgsign needs a working gpg-agent, which

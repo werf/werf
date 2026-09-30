@@ -83,7 +83,7 @@ func syncWorktreeWithServiceWorktreeBranch(ctx context.Context, sourceWorktreeDi
 		// it and rebuild once from a clean read-tree seed. When the attempt already ran from a
 		// fresh seed the failure is deterministic (broken clean filter, disk full, ...), so retrying
 		// would only double a potentially multi-minute run — surface it instead.
-		if seeded {
+		if seeded || ctx.Err() != nil {
 			return "", fmt.Errorf("unable to prepare dev-index: %w", err)
 		}
 		if rmErr := removeDevIndexFiles(worktreeCacheDir); rmErr != nil {
