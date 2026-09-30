@@ -1,9 +1,15 @@
 package docker_registry
 
 import (
+	"context"
+	"strings"
+
 	"github.com/google/go-containerregistry/pkg/name"
+	"github.com/google/go-containerregistry/pkg/v1/types"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"github.com/werf/werf/v3/pkg/docker_registry/container_registry_extensions"
 )
 
 type ParseReferencePartsEntry struct {
@@ -89,3 +95,20 @@ var _ = Describe("api.isInsecureHost", func() {
 		Expect(apiWithFlag.isInsecureHost("any-registry.com")).To(BeTrue())
 	})
 })
+
+var _ = DescribeTable("api.PushImage manifest format", func(opts *PushImageOptions, expected types.MediaType) {
+	fixture := newWritableBearerRegistryFixture()
+	DeferCleanup(fixture.server.Close)
+	registry := newAPI(apiOptions{InsecureRegistry: true})
+	ref := strings.TrimPrefix(fixture.server.URL, "http://") + "/repo:tag"
+
+	Expect(registry.PushImage(context.Background(), ref, opts)).To(Succeed())
+
+	desc, _, err := registry.getImageDesc(context.Background(), ref)
+	Expect(err).NotTo(HaveOccurred())
+	Expect(desc.MediaType).To(Equal(expected))
+},
+	Entry("defaults to the Docker format", &PushImageOptions{}, types.DockerManifestSchema2),
+	Entry("defaults to the Docker format without options", nil, types.DockerManifestSchema2),
+	Entry("honors the OCI format", &PushImageOptions{ManifestFormat: container_registry_extensions.ManifestFormatOCI}, types.OCIManifestSchema1),
+)

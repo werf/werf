@@ -46,9 +46,6 @@ var _ = Describe("manifest-only image", func() {
 		Expect(cfg.Config.Labels).To(Equal(map[string]string{"werf": "test"}))
 	})
 
-	// containers/image validates layer media types against the manifest media type, so an image
-	// mixing the two formats is unusable: buildah fails with "unsupported MIME type for
-	// compression" on it and on every stage built from it.
 	DescribeTable("keeps manifest, config and layer media types within one format",
 		func(format ManifestFormat, manifestMediaType, configMediaType, layerMediaType types.MediaType) {
 			img := NewManifestOnlyImage(map[string]string{"werf": "test"}, format)

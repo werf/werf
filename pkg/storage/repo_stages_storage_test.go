@@ -71,9 +71,6 @@ var _ = Describe("RepoStagesStorage", func() {
 		Expect(registry.pushedOpts.ManifestFormat).To(BeEmpty(), "service records stay in the default format")
 	})
 
-	// The scratch stage is the base of every stage built on top of it, and a build backend that
-	// keeps parent layer descriptors as they are propagates its layer media type into an OCI
-	// manifest. A Docker-typed layer there makes buildah reject the descendants.
 	It("publishes the scratch stage manifest in the OCI format", func(ctx SpecContext) {
 		registry := &metadataPushRegistry{pushImageRegistryStub: &pushImageRegistryStub{}}
 		storage := &RepoStagesStorage{RepoAddress: "registry.example/project", DockerRegistry: registry}
