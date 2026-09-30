@@ -6,6 +6,7 @@ import (
 	"io"
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
+	"github.com/google/go-containerregistry/pkg/v1/types"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
@@ -15,7 +16,7 @@ import (
 // consumers like dive with EOF, so the layer must always be a valid, non-empty tar archive.
 var _ = Describe("manifest-only image", func() {
 	It("has a single valid empty tar layer with a matching diffID", func() {
-		img := NewManifestOnlyImage(map[string]string{"werf": "test"})
+		img := NewManifestOnlyImage(map[string]string{"werf": "test"}, ManifestFormatDocker)
 
 		layers, err := img.Layers()
 		Expect(err).NotTo(HaveOccurred())
@@ -44,4 +45,26 @@ var _ = Describe("manifest-only image", func() {
 		Expect(cfg.RootFS.DiffIDs).To(Equal([]v1.Hash{expectedDiffID}))
 		Expect(cfg.Config.Labels).To(Equal(map[string]string{"werf": "test"}))
 	})
+
+	// containers/image validates layer media types against the manifest media type, so an image
+	// mixing the two formats is unusable: buildah fails with "unsupported MIME type for
+	// compression" on it and on every stage built from it.
+	DescribeTable("keeps manifest, config and layer media types within one format",
+		func(format ManifestFormat, manifestMediaType, configMediaType, layerMediaType types.MediaType) {
+			img := NewManifestOnlyImage(map[string]string{"werf": "test"}, format)
+
+			manifest, err := img.Manifest()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(manifest.MediaType).To(Equal(manifestMediaType))
+			Expect(manifest.Config.MediaType).To(Equal(configMediaType))
+			Expect(manifest.Layers).To(HaveLen(1))
+			Expect(manifest.Layers[0].MediaType).To(Equal(layerMediaType))
+
+			mediaType, err := img.MediaType()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(mediaType).To(Equal(manifestMediaType))
+		},
+		Entry("docker", ManifestFormatDocker, types.DockerManifestSchema2, types.DockerConfigJSON, types.DockerLayer),
+		Entry("oci", ManifestFormatOCI, types.OCIManifestSchema1, types.OCIConfigJSON, types.OCILayer),
+	)
 })
