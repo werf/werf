@@ -12,6 +12,8 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v5"
+	"github.com/containerd/containerd/platforms"
+	cerrdefs "github.com/containerd/errdefs"
 	"github.com/docker/buildx/commands"
 	_ "github.com/docker/buildx/driver/docker"
 	_ "github.com/docker/buildx/driver/docker-container"
@@ -19,12 +21,11 @@ import (
 	"github.com/docker/buildx/util/confutil"
 	"github.com/docker/buildx/util/progress"
 	"github.com/docker/cli/cli/command"
-	"github.com/docker/docker/api/types/filters"
-	dockerImage "github.com/docker/docker/api/types/image"
-	"github.com/docker/docker/client"
-	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/moby/buildkit/exporter/containerimage/exptypes"
 	"github.com/moby/buildkit/util/progress/progressui"
+	dockerImage "github.com/moby/moby/api/types/image"
+	"github.com/moby/moby/api/types/jsonstream"
+	"github.com/moby/moby/client"
 	"github.com/samber/lo"
 	"golang.org/x/net/context"
 
@@ -39,7 +40,7 @@ type CreateImageOptions struct {
 }
 
 func CreateImage(ctx context.Context, ref string, opts CreateImageOptions) error {
-	var importOpts dockerImage.ImportOptions
+	var importOpts client.ImageImportOptions
 	if len(opts.Labels) > 0 {
 		changeOption := "LABEL"
 		for _, label := range opts.Labels {
@@ -48,7 +49,11 @@ func CreateImage(ctx context.Context, ref string, opts CreateImageOptions) error
 		importOpts.Changes = append(importOpts.Changes, changeOption)
 	}
 	if opts.TargetPlatform != "" {
-		importOpts.Platform = opts.TargetPlatform
+		platform, err := platforms.Parse(opts.TargetPlatform)
+		if err != nil {
+			return fmt.Errorf("parse target platform %q: %w", opts.TargetPlatform, err)
+		}
+		importOpts.Platform = platform
 	}
 
 	// The Docker daemon reads the request body as the rootfs tar when fromSrc is "-".
@@ -62,7 +67,7 @@ func CreateImage(ctx context.Context, ref string, opts CreateImageOptions) error
 		return fmt.Errorf("unable to build empty rootfs tar for image %q: %w", ref, err)
 	}
 
-	resp, err := apiCli(ctx).ImageImport(ctx, dockerImage.ImportSource{Source: emptyTar, SourceName: "-"}, ref, importOpts)
+	resp, err := apiCli(ctx).ImageImport(ctx, client.ImageImportSource{Source: emptyTar, SourceName: "-"}, ref, importOpts)
 	if err != nil {
 		return fmt.Errorf("unable to import image %q: %w", ref, err)
 	}
@@ -88,18 +93,18 @@ func emptyTarArchive() (io.Reader, error) {
 	return &buf, nil
 }
 
-func Images(ctx context.Context, options dockerImage.ListOptions) ([]dockerImage.Summary, error) {
-	images, err := apiCli(ctx).ImageList(ctx, options)
+func Images(ctx context.Context, options client.ImageListOptions) ([]dockerImage.Summary, error) {
+	result, err := apiCli(ctx).ImageList(ctx, options)
 	if err != nil {
 		return nil, err
 	}
 
-	return images, nil
+	return result.Items, nil
 }
 
 func ImageExist(ctx context.Context, ref string) (bool, error) {
 	if _, err := ImageInspect(ctx, ref); err != nil {
-		if client.IsErrNotFound(err) {
+		if cerrdefs.IsNotFound(err) {
 			return false, nil
 		}
 		return false, err
@@ -108,12 +113,12 @@ func ImageExist(ctx context.Context, ref string) (bool, error) {
 }
 
 func ImageInspect(ctx context.Context, ref string) (*dockerImage.InspectResponse, error) {
-	inspect, _, err := apiCli(ctx).ImageInspectWithRaw(ctx, ref)
+	result, err := apiCli(ctx).ImageInspect(ctx, ref)
 	if err != nil {
 		return nil, err
 	}
 
-	return &inspect, nil
+	return &result.InspectResponse, nil
 }
 
 type (
@@ -124,24 +129,27 @@ type (
 // ImagesPrune containers using opts.Filters.
 // List of accepted filters is there https://github.com/moby/moby/blob/25.0/daemon/containerd/image_prune.go#L22
 func ImagesPrune(ctx context.Context, opts ImagesPruneOptions) (ImagesPruneReport, error) {
-	report, err := apiCli(ctx).ImagesPrune(ctx, mapBackendFiltersToImagesPruneFilters(opts.Filters))
+	result, err := apiCli(ctx).ImagePrune(ctx, client.ImagePruneOptions{
+		Filters: mapBackendFiltersToImagesPruneFilters(opts.Filters),
+	})
 	if err != nil {
 		return ImagesPruneReport{}, err
 	}
-	itemsDeleted := lo.Map(report.ImagesDeleted, func(item dockerImage.DeleteResponse, _ int) string {
+	itemsDeleted := lo.Map(result.Report.ImagesDeleted, func(item dockerImage.DeleteResponse, _ int) string {
 		return item.Deleted
 	})
 	return ImagesPruneReport{
 		ItemsDeleted:   itemsDeleted,
-		SpaceReclaimed: report.SpaceReclaimed,
+		SpaceReclaimed: result.Report.SpaceReclaimed,
 	}, err
 }
 
-func mapBackendFiltersToImagesPruneFilters(list filter.FilterList) filters.Args {
-	args := lo.Map(list, func(filter filter.Filter, _ int) filters.KeyValuePair {
-		return filters.Arg(filter.First, filter.Second)
-	})
-	return filters.NewArgs(args...)
+func mapBackendFiltersToImagesPruneFilters(list filter.FilterList) client.Filters {
+	filters := make(client.Filters, len(list))
+	for _, item := range list {
+		filters.Add(item.First, item.Second)
+	}
+	return filters
 }
 
 func doCliPull(ctx context.Context, c command.Cli, args ...string) error {
@@ -376,11 +384,14 @@ func CliLoadFromStream(ctx context.Context, input io.Reader) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("load failed: %w", err)
 	}
-	defer loadResponse.Body.Close()
+	defer loadResponse.Close()
 
-	decoder := json.NewDecoder(loadResponse.Body)
+	decoder := json.NewDecoder(loadResponse)
 	for {
-		var msg jsonmessage.JSONMessage
+		var msg struct {
+			jsonstream.Message
+			ErrorMessage string `json:"error,omitempty"`
+		}
 		if err := decoder.Decode(&msg); err != nil {
 			if errors.Is(err, io.EOF) {
 				break

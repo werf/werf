@@ -37,6 +37,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/mitchellh/copystructure v1.2.0
 	github.com/moby/buildkit v0.33.0
+	github.com/moby/moby/api v1.56.0
 	github.com/moby/moby/client v0.6.0
 	github.com/moby/patternmatcher v0.6.1
 	github.com/onsi/ginkgo/v2 v2.33.0
@@ -197,7 +198,6 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/hashstructure/v2 v2.0.2 // indirect
 	github.com/moby/go-archive v0.2.0 // indirect
-	github.com/moby/moby/api v1.56.0 // indirect
 	github.com/moby/policy-helpers v0.0.0-20260901104222-dd6c5499c491 // indirect
 	github.com/moby/swarmkit/v2 v2.1.1 // indirect
 	github.com/moby/sys/atomicwriter v0.1.0 // indirect
@@ -314,7 +314,7 @@ require (
 	github.com/compose-spec/compose-go/v2 v2.14.0 // indirect
 	github.com/containerd/console v1.0.5 // indirect
 	github.com/containerd/continuity v0.5.0 // indirect
-	github.com/containerd/errdefs v1.0.0 // indirect
+	github.com/containerd/errdefs v1.0.0
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/containerd/stargz-snapshotter/estargz v0.18.2 // indirect
 	github.com/containerd/ttrpc v1.2.9 // indirect

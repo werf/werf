@@ -1,14 +1,15 @@
 package docker
 
 import (
-	"github.com/docker/docker/api/types/filters"
+	"github.com/moby/moby/client"
 	"golang.org/x/net/context"
 
 	"github.com/werf/werf/v3/pkg/container_backend/prune"
 )
 
 func VolumeRm(ctx context.Context, volumeName string, force bool) error {
-	return apiCli(ctx).VolumeRemove(ctx, volumeName, force)
+	_, err := apiCli(ctx).VolumeRemove(ctx, volumeName, client.VolumeRemoveOptions{Force: force})
+	return err
 }
 
 type (
@@ -17,12 +18,12 @@ type (
 )
 
 func VolumesPrune(ctx context.Context, _ VolumesPruneOptions) (VolumesPruneReport, error) {
-	report, err := apiCli(ctx).VolumesPrune(ctx, filters.NewArgs())
+	result, err := apiCli(ctx).VolumePrune(ctx, client.VolumePruneOptions{})
 	if err != nil {
 		return VolumesPruneReport{}, err
 	}
 	return VolumesPruneReport{
-		ItemsDeleted:   report.VolumesDeleted,
-		SpaceReclaimed: report.SpaceReclaimed,
+		ItemsDeleted:   result.Report.VolumesDeleted,
+		SpaceReclaimed: result.Report.SpaceReclaimed,
 	}, err
 }

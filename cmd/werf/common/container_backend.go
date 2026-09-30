@@ -150,6 +150,9 @@ func InitProcessContainerBackend(ctx context.Context, cmdData *CmdData, registry
 
 func InitProcessDocker(ctx context.Context, cmdData *CmdData) (context.Context, error) {
 	if docker.IsContext(ctx) {
+		if err := docker.CheckConnection(ctx, docker.CheckConnectionOptions{AllowDaemonUnavailable: true}); err != nil {
+			return ctx, err
+		}
 		return ctx, nil
 	}
 
@@ -174,7 +177,9 @@ func InitProcessDocker(ctx context.Context, cmdData *CmdData) (context.Context, 
 	if err != nil {
 		return ctx, fmt.Errorf("unable to init context for docker: %w", err)
 	}
-	ctx = ctxWithDockerCli
+	if err := docker.CheckConnection(ctxWithDockerCli, docker.CheckConnectionOptions{AllowDaemonUnavailable: true}); err != nil {
+		return ctx, err
+	}
 
-	return ctx, nil
+	return ctxWithDockerCli, nil
 }

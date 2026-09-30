@@ -16,7 +16,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/docker/docker/api/types/container"
+	"github.com/moby/moby/api/types/container"
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
 

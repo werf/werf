@@ -2,22 +2,49 @@ package docker
 
 import (
 	"context"
-	"net"
+	"fmt"
 	"strings"
 
-	"github.com/docker/docker/api/types/system"
-	dockerclient "github.com/docker/docker/client"
+	"github.com/moby/moby/api/types/system"
+	"github.com/moby/moby/client"
+	"github.com/moby/moby/client/pkg/versions"
 )
 
+type CheckConnectionOptions struct {
+	AllowDaemonUnavailable bool
+}
+
+func CheckConnection(ctx context.Context, opts CheckConnectionOptions) error {
+	ping, err := apiCli(ctx).Ping(ctx, client.PingOptions{NegotiateAPIVersion: true})
+	if err != nil {
+		if opts.AllowDaemonUnavailable && ctx.Err() == nil && isDaemonUnavailableErr(err) {
+			return nil
+		}
+		return fmt.Errorf("check Docker daemon API: %w", err)
+	}
+	if ping.APIVersion == "" {
+		return fmt.Errorf("Docker daemon did not report an API version; minimum supported API version is %s", client.MinAPIVersion)
+	}
+	if versions.LessThan(ping.APIVersion, client.MinAPIVersion) {
+		return fmt.Errorf("Docker daemon API version %s is unsupported: minimum supported API version is %s", ping.APIVersion, client.MinAPIVersion)
+	}
+	return nil
+}
+
 func Info(ctx context.Context) (system.Info, error) {
-	return apiCli(ctx).Info(ctx)
+	result, err := apiCli(ctx).Info(ctx, client.InfoOptions{})
+	if err != nil {
+		return system.Info{}, err
+	}
+
+	return result.Info, nil
 }
 
 func isDaemonUnavailableErr(err error) bool {
 	if err == nil {
 		return false
 	}
-	if dockerclient.IsErrConnectionFailed(err) {
+	if client.IsErrConnectionFailed(err) {
 		return true
 	}
 
@@ -37,13 +64,13 @@ func isDaemonUnavailableErr(err error) bool {
 }
 
 func getDaemonInfo(ctx context.Context) (*system.Info, error) {
-	var info system.Info
+	var result client.SystemInfoResult
 	var err error
 
 	if IsContext(ctx) {
-		info, err = apiCli(ctx).Info(ctx)
+		result, err = apiCli(ctx).Info(ctx, client.InfoOptions{})
 	} else if IsEnabled() && defaultAPIClient != nil {
-		info, err = defaultAPIClient.Info(ctx)
+		result, err = defaultAPIClient.Info(ctx, client.InfoOptions{})
 	} else {
 		return nil, nil
 	}
@@ -55,7 +82,7 @@ func getDaemonInfo(ctx context.Context) (*system.Info, error) {
 		return nil, err
 	}
 
-	return &info, nil
+	return &result.Info, nil
 }
 
 func GetRegistryMirrors(ctx context.Context) ([]string, error) {
@@ -89,7 +116,7 @@ func GetInsecureRegistries(ctx context.Context) ([]string, error) {
 		}
 
 		for _, cidr := range info.RegistryConfig.InsecureRegistryCIDRs {
-			cidrStr := (*net.IPNet)(cidr).String()
+			cidrStr := cidr.String()
 			if !seen[cidrStr] {
 				seen[cidrStr] = true
 				result = append(result, cidrStr)

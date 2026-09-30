@@ -3,7 +3,7 @@ package docker
 import (
 	"strings"
 
-	dockerImage "github.com/docker/docker/api/types/image"
+	dockerImage "github.com/moby/moby/api/types/image"
 
 	"github.com/werf/werf/v3/pkg/image"
 )

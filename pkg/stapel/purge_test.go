@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	dockercontainer "github.com/docker/docker/api/types/container"
+	dockercontainer "github.com/moby/moby/api/types/container"
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
 
@@ -112,8 +112,9 @@ var _ = ginkgo.Describe("stapel purge", func() {
 		daemon := &fakedockerd.Daemon{
 			Containers: []dockercontainer.InspectResponse{
 				{
-					ContainerJSONBase: &dockercontainer.ContainerJSONBase{ID: "no-config", Name: "/" + containerName(getVersion(), "")},
-					Mounts:            []dockercontainer.MountPoint{stapelVolumeMount("vol-no-config")},
+					ID:     "no-config",
+					Name:   "/" + containerName(getVersion(), ""),
+					Mounts: []dockercontainer.MountPoint{stapelVolumeMount("vol-no-config")},
 				},
 			},
 		}

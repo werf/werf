@@ -7,7 +7,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/docker/docker/pkg/stringid"
+	"github.com/moby/moby/client/pkg/stringid"
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v3/pkg/image"
