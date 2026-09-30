@@ -293,6 +293,8 @@ func (storage *RepoStagesStorage) RejectStage(ctx context.Context, projectName, 
 		return fmt.Errorf("unable to push rejected stage image record %s: %w", rejectedImageName, err)
 	}
 
+	docker_registry.AddCachedTag(ctx, storage.DockerRegistry, rejectedImageName)
+
 	logboek.Context(ctx).Info().LogF("Rejected stage by digest %s creation timestamp %d\n", digest, creationTs)
 	return nil
 }
@@ -437,7 +439,13 @@ func (storage *RepoStagesStorage) CheckStageCustomTag(ctx context.Context, stage
 }
 
 func (storage *RepoStagesStorage) AddStageCustomTag(ctx context.Context, stageDesc *image.StageDesc, tag string) error {
-	return storage.DockerRegistry.TagRepoImage(ctx, stageDesc.Info, tag)
+	if err := storage.DockerRegistry.TagRepoImage(ctx, stageDesc.Info, tag); err != nil {
+		return fmt.Errorf("unable to tag repo image %s as %q: %w", stageDesc.Info.Name, tag, err)
+	}
+
+	docker_registry.AddCachedTag(ctx, storage.DockerRegistry, strings.Join([]string{stageDesc.Info.Repository, tag}, ":"))
+
+	return nil
 }
 
 func (storage *RepoStagesStorage) DeleteStageCustomTag(ctx context.Context, tag string) error {
@@ -469,6 +477,8 @@ func (storage *RepoStagesStorage) addStageCustomTagMetadata(ctx context.Context,
 	if err := storage.DockerRegistry.PushImage(ctx, fullImageName, opts); err != nil {
 		return fmt.Errorf("unable to push image %s: %w", fullImageName, err)
 	}
+
+	docker_registry.AddCachedTag(ctx, storage.DockerRegistry, fullImageName)
 
 	return nil
 }
@@ -557,6 +567,8 @@ func (storage *RepoStagesStorage) AddManagedImage(ctx context.Context, projectNa
 	if err := storage.DockerRegistry.PushImage(ctx, fullImageName, opts); err != nil {
 		return fmt.Errorf("unable to push image %s: %w", fullImageName, err)
 	}
+
+	docker_registry.AddCachedTag(ctx, storage.DockerRegistry, fullImageName)
 
 	return nil
 }
@@ -674,6 +686,9 @@ func (storage *RepoStagesStorage) PutImageMetadata(ctx context.Context, projectN
 
 		return fmt.Errorf("unable to push image %s: %w", fullImageName, err)
 	}
+
+	docker_registry.AddCachedTag(ctx, storage.DockerRegistry, fullImageName)
+
 	logboek.Context(ctx).Info().LogF("Put image %s commit %s stage ID %s\n", imageNameOrManagedImageName, commit, stageID)
 
 	return nil
@@ -1026,6 +1041,8 @@ func (storage *RepoStagesStorage) PostLastCleanupRecord(ctx context.Context, pro
 		return fmt.Errorf("unable to push image %s: %w", fullImageName, err)
 	}
 
+	docker_registry.AddCachedTag(ctx, storage.DockerRegistry, fullImageName)
+
 	logboek.Context(ctx).Info().LogF("-- Posted new cleanup record for project %s\n", projectName)
 
 	return nil
@@ -1048,6 +1065,8 @@ func (storage *RepoStagesStorage) PostManifest(ctx context.Context, ref string, 
 	if err := storage.DockerRegistry.PushImage(ctx, ref, &docker_registry.PushImageOptions{Labels: labels}); err != nil {
 		return fmt.Errorf("push manifest image %s: %w", ref, err)
 	}
+
+	docker_registry.AddCachedTag(ctx, storage.DockerRegistry, ref)
 
 	return nil
 }
