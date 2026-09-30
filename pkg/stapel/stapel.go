@@ -9,9 +9,8 @@ import (
 	"strings"
 
 	"github.com/containerd/containerd/platforms"
-	dockercontainer "github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/filters"
-	"github.com/docker/docker/client"
+	cerrdefs "github.com/containerd/errdefs"
+	"github.com/moby/moby/client"
 
 	"github.com/werf/werf/v3/pkg/container_backend/thirdparty/platformutil"
 	"github.com/werf/werf/v3/pkg/docker"
@@ -99,9 +98,9 @@ func isContainerNameOfVersion(name, version string) bool {
 }
 
 func Purge(ctx context.Context) error {
-	containers, err := docker.Containers(ctx, dockercontainer.ListOptions{
+	containers, err := docker.Containers(ctx, client.ContainerListOptions{
 		All:     true,
-		Filters: filters.NewArgs(filters.Arg("name", image.AssemblingContainerNamePrefix)),
+		Filters: make(client.Filters).Add("name", image.AssemblingContainerNamePrefix),
 	})
 	if err != nil {
 		return fmt.Errorf("list stapel containers: %w", err)
@@ -123,7 +122,7 @@ func Purge(ctx context.Context) error {
 func rmContainerWithVolumes(ctx context.Context, id string) error {
 	inspect, err := docker.ContainerInspect(ctx, id)
 	if err != nil {
-		if client.IsErrNotFound(err) {
+		if cerrdefs.IsNotFound(err) {
 			return nil
 		}
 		return fmt.Errorf("inspect container %s: %w", id, err)
@@ -153,8 +152,8 @@ func rmContainerWithVolumes(ctx context.Context, id string) error {
 		return nil
 	}
 
-	if err := docker.ContainerRemove(ctx, id, dockercontainer.RemoveOptions{}); err != nil {
-		if client.IsErrNotFound(err) {
+	if err := docker.ContainerRemove(ctx, id, client.ContainerRemoveOptions{}); err != nil {
+		if cerrdefs.IsNotFound(err) {
 			return nil
 		}
 		return fmt.Errorf("remove container %s: %w", id, err)
@@ -162,7 +161,7 @@ func rmContainerWithVolumes(ctx context.Context, id string) error {
 
 	for _, name := range volumeNames {
 		if err := docker.VolumeRm(ctx, name, false); err != nil {
-			if client.IsErrNotFound(err) {
+			if cerrdefs.IsNotFound(err) {
 				continue
 			}
 			return fmt.Errorf("remove volume %s: %w", name, err)

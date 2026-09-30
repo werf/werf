@@ -11,12 +11,12 @@ import (
 	"time"
 
 	"github.com/containerd/containerd/platforms"
-	dockercontainer "github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/filters"
-	dockerImage "github.com/docker/docker/api/types/image"
-	"github.com/docker/docker/client"
-	"github.com/docker/go-connections/nat"
+	cerrdefs "github.com/containerd/errdefs"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
+	dockercontainer "github.com/moby/moby/api/types/container"
+	dockerImage "github.com/moby/moby/api/types/image"
+	"github.com/moby/moby/api/types/network"
+	"github.com/moby/moby/client"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 
 	"github.com/werf/common-go/pkg/util"
@@ -191,7 +191,7 @@ func (backend *DockerServerBackend) BuildDockerfileStage(ctx context.Context, ba
 func (backend *DockerServerBackend) GetImageInfo(ctx context.Context, ref string, opts GetImageInfoOpts) (*image.Info, error) {
 	defer opstats.Observe(ctx, opstats.OperationImageInspect)()
 	inspect, err := docker.ImageInspect(ctx, ref)
-	if client.IsErrNotFound(err) {
+	if cerrdefs.IsNotFound(err) {
 		return nil, nil
 	} else if err != nil {
 		return nil, fmt.Errorf("unable to inspect docker image: %w", err)
@@ -202,7 +202,7 @@ func (backend *DockerServerBackend) GetImageInfo(ctx context.Context, ref string
 // GetImageInspect only available for DockerServerBackend
 func (backend *DockerServerBackend) GetImageInspect(ctx context.Context, ref string) (*dockerImage.InspectResponse, error) {
 	inspect, err := docker.ImageInspect(ctx, ref)
-	if client.IsErrNotFound(err) {
+	if cerrdefs.IsNotFound(err) {
 		return nil, nil
 	}
 	return inspect, err
@@ -313,7 +313,7 @@ func (backend *DockerServerBackend) Rmi(ctx context.Context, ref string, opts Rm
 }
 
 func (backend *DockerServerBackend) Rm(ctx context.Context, ref string, opts RmOpts) error {
-	err := docker.ContainerRemove(ctx, ref, dockercontainer.RemoveOptions{Force: opts.Force})
+	err := docker.ContainerRemove(ctx, ref, client.ContainerRemoveOptions{Force: opts.Force})
 	switch {
 	case docker.IsErrContainerPaused(err):
 		return errors.Join(ErrCannotRemovePausedContainer, err)
@@ -369,11 +369,11 @@ func (backend *DockerServerBackend) RemoveHostDirs(ctx context.Context, mountDir
 }
 
 func (backend *DockerServerBackend) Images(ctx context.Context, opts ImagesOptions) (image.ImagesList, error) {
-	filterSet := filters.NewArgs()
+	filterSet := make(client.Filters)
 	for _, item := range opts.Filters {
 		filterSet.Add(item.First, item.Second)
 	}
-	images, err := docker.Images(ctx, dockerImage.ListOptions{Filters: filterSet})
+	images, err := docker.Images(ctx, client.ImageListOptions{Filters: filterSet})
 	if err != nil {
 		return nil, fmt.Errorf("unable to get docker images: %w", err)
 	}
@@ -393,7 +393,7 @@ func (backend *DockerServerBackend) Images(ctx context.Context, opts ImagesOptio
 }
 
 func (backend *DockerServerBackend) Containers(ctx context.Context, opts ContainersOptions) (image.ContainerList, error) {
-	filterSet := filters.NewArgs()
+	filterSet := make(client.Filters)
 	for _, filter := range opts.Filters {
 		if filter.ID != "" {
 			filterSet.Add("id", filter.ID)
@@ -406,7 +406,7 @@ func (backend *DockerServerBackend) Containers(ctx context.Context, opts Contain
 		}
 	}
 
-	containersOptions := dockercontainer.ListOptions{}
+	containersOptions := client.ContainerListOptions{}
 	containersOptions.All = true
 	containersOptions.Filters = filterSet
 
@@ -483,6 +483,11 @@ func (backend *DockerServerBackend) MutateAndPushImageNative(ctx context.Context
 		return ErrNativeMutationUnsupported
 	}
 
+	exposedPorts, err := toPortSet(newConfig.ExposedPorts)
+	if err != nil {
+		return fmt.Errorf("unable to parse exposed ports of image %q: %w", dest, err)
+	}
+
 	containerConfig := &dockercontainer.Config{
 		Image:        src,
 		User:         newConfig.User,
@@ -493,13 +498,14 @@ func (backend *DockerServerBackend) MutateAndPushImageNative(ctx context.Context
 		Volumes:      newConfig.Volumes,
 		WorkingDir:   newConfig.WorkingDir,
 		StopSignal:   newConfig.StopSignal,
-		ExposedPorts: toPortSet(newConfig.ExposedPorts),
+		ExposedPorts: exposedPorts,
 		// Shell and OnBuild are not part of image.SpecConfig and are never mutated by werf; carry
 		// over the base image's values explicitly since docker commit only preserves what's set on
 		// containerConfig, unlike the tarball-based mutation path which starts from the base config.
 		Shell:   baseConfig.Config.Shell,
 		OnBuild: baseConfig.Config.OnBuild,
 	}
+
 	if newConfig.HealthConfig != nil {
 		containerConfig.Healthcheck = &dockercontainer.HealthConfig{
 			Test:        newConfig.HealthConfig.Test,
@@ -524,7 +530,7 @@ func (backend *DockerServerBackend) MutateAndPushImageNative(ctx context.Context
 		return fmt.Errorf("unable to create container from image %q: %w", src, err)
 	}
 	defer func() {
-		if err := docker.ContainerRemove(ctx, containerID, dockercontainer.RemoveOptions{Force: true}); err != nil {
+		if err := docker.ContainerRemove(ctx, containerID, client.ContainerRemoveOptions{Force: true}); err != nil {
 			logboek.Context(ctx).Error().LogF("ERROR: unable to remove temporary mutation container %q: %s\n", containerID, err)
 		}
 	}()
@@ -536,7 +542,8 @@ func (backend *DockerServerBackend) MutateAndPushImageNative(ctx context.Context
 		author = baseConfig.Author
 	}
 
-	if _, err := docker.ContainerCommit(ctx, containerID, dockercontainer.CommitOptions{
+	if _, err := docker.ContainerCommit(ctx, containerID, client.ContainerCommitOptions{
+		NoPause:   true,
 		Reference: dest,
 		Author:    author,
 		Config:    containerConfig,
@@ -547,15 +554,19 @@ func (backend *DockerServerBackend) MutateAndPushImageNative(ctx context.Context
 	return nil
 }
 
-func toPortSet(ports map[string]struct{}) nat.PortSet {
+func toPortSet(ports map[string]struct{}) (network.PortSet, error) {
 	if len(ports) == 0 {
-		return nil
+		return nil, nil
 	}
-	set := make(nat.PortSet, len(ports))
+	set := make(network.PortSet, len(ports))
 	for port := range ports {
-		set[nat.Port(port)] = struct{}{}
+		parsed, err := network.ParsePort(port)
+		if err != nil {
+			return nil, fmt.Errorf("parse port %q: %w", port, err)
+		}
+		set[parsed] = struct{}{}
 	}
-	return set
+	return set, nil
 }
 
 func (backend *DockerServerBackend) GetImageConfigFile(ctx context.Context, imageName string) (*v1.ConfigFile, error) {
@@ -608,7 +619,7 @@ func (backend *DockerServerBackend) GetImageConfigFile(ctx context.Context, imag
 		if len(ic.ExposedPorts) > 0 {
 			cfg.Config.ExposedPorts = make(map[string]struct{}, len(ic.ExposedPorts))
 			for k := range ic.ExposedPorts {
-				cfg.Config.ExposedPorts[string(k)] = struct{}{}
+				cfg.Config.ExposedPorts[k] = struct{}{}
 			}
 		}
 	}

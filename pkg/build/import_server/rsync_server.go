@@ -123,7 +123,7 @@ func RunRsyncServer(ctx context.Context, dockerImageName, tmpDir, targetPlatform
 		if inspect.NetworkSettings == nil {
 			return nil, fmt.Errorf("unable to get import server container %s ip address: no network settings available in inspect", srv.DockerContainerName)
 		}
-		srv.IPAddress = inspect.NetworkSettings.Networks["bridge"].IPAddress
+		srv.IPAddress = inspect.NetworkSettings.Networks["bridge"].IPAddress.String()
 	}
 
 	return srv, nil

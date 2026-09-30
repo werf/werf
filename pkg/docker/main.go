@@ -4,20 +4,16 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"net"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/containerd/containerd/platforms"
 	"github.com/docker/cli/cli/command"
 	cliconfig "github.com/docker/cli/cli/config"
 	"github.com/docker/cli/cli/flags"
-	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/tlsconfig"
-	mobyclient "github.com/moby/moby/client"
+	"github.com/moby/moby/client"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 
@@ -66,10 +62,7 @@ func Init(ctx context.Context, opts InitOptions) error {
 		return err
 	}
 
-	defaultAPIClient, err = newAPIClient(defaultCLI)
-	if err != nil {
-		return err
-	}
+	defaultAPIClient = defaultCLI.Client()
 
 	spec := platforms.DefaultSpec()
 	spec.OS = defaultCLI.ServerInfo().OSType
@@ -125,11 +118,17 @@ func newDockerCli(opts []command.CLIOption) (command.Cli, error) {
 	clientOpts.TLS = os.Getenv("DOCKER_TLS") != ""
 	clientOpts.TLSVerify = os.Getenv("DOCKER_TLS_VERIFY") != ""
 
-	if clientOpts.TLSVerify {
+	legacyTLS := os.Getenv(client.EnvOverrideCertPath) != "" && strings.HasPrefix(os.Getenv(client.EnvOverrideHost), "tcp://")
+	if clientOpts.TLSVerify || legacyTLS {
+		clientOpts.TLS = true
 		clientOpts.TLSOptions = &tlsconfig.Options{
-			CAFile:   filepath.Join(dockerCertPath, flags.DefaultCaFile),
-			CertFile: filepath.Join(dockerCertPath, flags.DefaultCertFile),
-			KeyFile:  filepath.Join(dockerCertPath, flags.DefaultKeyFile),
+			CAFile:             filepath.Join(dockerCertPath, flags.DefaultCaFile),
+			CertFile:           filepath.Join(dockerCertPath, flags.DefaultCertFile),
+			KeyFile:            filepath.Join(dockerCertPath, flags.DefaultKeyFile),
+			InsecureSkipVerify: !clientOpts.TLSVerify,
+		}
+		if !clientOpts.TLSVerify {
+			clientOpts.TLSOptions.CAFile = ""
 		}
 	}
 
@@ -139,38 +138,12 @@ func newDockerCli(opts []command.CLIOption) (command.Cli, error) {
 		clientOpts.LogLevel = "fatal"
 	}
 
-	if err := newCli.Initialize(clientOpts, command.WithInitializeClient(func(c *command.DockerCli) (mobyclient.APIClient, error) {
+	if err := newCli.Initialize(clientOpts, command.WithInitializeClient(func(c *command.DockerCli) (client.APIClient, error) {
 		return command.NewAPIClientFromFlags(clientOpts, c.ConfigFile())
 	})); err != nil {
 		return nil, err
 	}
 	return newCli, nil
-}
-
-func newAPIClient(c command.Cli) (client.APIClient, error) {
-	// Preserve proxy and TLS environment handling for existing direct connections.
-	if c.CurrentContext() == command.DefaultContextName && !strings.HasPrefix(os.Getenv(client.EnvOverrideHost), "ssh://") {
-		return client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
-	}
-
-	cliClient := c.Client()
-	dial := cliClient.Dialer()
-	return client.NewClientWithOpts(
-		client.WithHost(cliClient.DaemonHost()),
-		// The CLI dialer handles SSH and TLS, so this transport must not add TLS or a proxy.
-		client.WithHTTPClient(&http.Client{
-			Transport: &http.Transport{
-				MaxIdleConns:    6,
-				IdleConnTimeout: 30 * time.Second,
-				DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
-					return dial(ctx)
-				},
-			},
-			CheckRedirect: client.CheckRedirect,
-		}),
-		client.WithVersionFromEnv(),
-		client.WithAPIVersionNegotiation(),
-	)
 }
 
 func cli(ctx context.Context) command.Cli {
@@ -233,13 +206,8 @@ func NewContextWithStreams(ctx context.Context, outStream, errStream io.Writer) 
 		return nil, fmt.Errorf("unable to create docker cli: %w", err)
 	}
 
-	apiClient, err := newAPIClient(c)
-	if err != nil {
-		return nil, fmt.Errorf("unable to create docker api client: %w", err)
-	}
-
 	newCtx := context.WithValue(ctx, ctxDockerCliKey, c)
-	newCtx = context.WithValue(newCtx, ctxAPIClientKey, apiClient)
+	newCtx = context.WithValue(newCtx, ctxAPIClientKey, c.Client())
 	return newCtx, nil
 }
 

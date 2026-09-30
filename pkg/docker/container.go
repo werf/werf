@@ -1,25 +1,32 @@
 package docker
 
 import (
+	"fmt"
 	"io"
 	"strings"
 
+	cerrdefs "github.com/containerd/errdefs"
 	"github.com/docker/cli/cli/command"
-	"github.com/docker/docker/api/types"
-	dockercontainer "github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/network"
-	"github.com/docker/docker/client"
+	dockercontainer "github.com/moby/moby/api/types/container"
+	"github.com/moby/moby/api/types/network"
+	"github.com/moby/moby/client"
+	"github.com/moby/moby/client/pkg/versions"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"golang.org/x/net/context"
 )
 
-func Containers(ctx context.Context, options dockercontainer.ListOptions) ([]types.Container, error) {
-	return apiCli(ctx).ContainerList(ctx, options)
+func Containers(ctx context.Context, options client.ContainerListOptions) ([]dockercontainer.Summary, error) {
+	result, err := apiCli(ctx).ContainerList(ctx, options)
+	if err != nil {
+		return nil, err
+	}
+
+	return result.Items, nil
 }
 
 func ContainerExist(ctx context.Context, ref string) (bool, error) {
 	if _, err := ContainerInspect(ctx, ref); err != nil {
-		if client.IsErrNotFound(err) {
+		if cerrdefs.IsNotFound(err) {
 			return false, nil
 		}
 		return false, err
@@ -27,16 +34,40 @@ func ContainerExist(ctx context.Context, ref string) (bool, error) {
 	return true, nil
 }
 
-func ContainerAttach(ctx context.Context, ref string, options dockercontainer.AttachOptions) (types.HijackedResponse, error) {
-	return apiCli(ctx).ContainerAttach(ctx, ref, options)
+func ContainerAttach(ctx context.Context, ref string, options client.ContainerAttachOptions) (client.HijackedResponse, error) {
+	result, err := apiCli(ctx).ContainerAttach(ctx, ref, options)
+	if err != nil {
+		return client.HijackedResponse{}, err
+	}
+
+	return result.HijackedResponse, nil
 }
 
-func ContainerInspect(ctx context.Context, ref string) (types.ContainerJSON, error) {
-	return apiCli(ctx).ContainerInspect(ctx, ref)
+func ContainerInspect(ctx context.Context, ref string) (dockercontainer.InspectResponse, error) {
+	result, err := apiCli(ctx).ContainerInspect(ctx, ref, client.ContainerInspectOptions{})
+	if err != nil {
+		return dockercontainer.InspectResponse{}, err
+	}
+
+	return result.Container, nil
 }
 
 func ContainerCreate(ctx context.Context, config *dockercontainer.Config, platform *ocispec.Platform, name string) (string, error) {
-	response, err := apiCli(ctx).ContainerCreate(ctx, config, nil, &network.NetworkingConfig{}, platform, name)
+	api := apiCli(ctx)
+	version := api.ClientVersion()
+	if platform != nil && versions.LessThan(version, "1.41") {
+		return "", fmt.Errorf("%q requires API version 1.41, but the Docker daemon API version is %s", "specify container image platform", version)
+	}
+	if config != nil && config.Healthcheck != nil && config.Healthcheck.StartInterval != 0 && versions.LessThan(version, "1.44") {
+		return "", fmt.Errorf("%q requires API version 1.44, but the Docker daemon API version is %s", "specify health-check start interval", version)
+	}
+
+	response, err := api.ContainerCreate(ctx, client.ContainerCreateOptions{
+		Config:           config,
+		NetworkingConfig: &network.NetworkingConfig{},
+		Platform:         platform,
+		Name:             name,
+	})
 	if err != nil {
 		return "", err
 	}
@@ -44,7 +75,7 @@ func ContainerCreate(ctx context.Context, config *dockercontainer.Config, platfo
 	return response.ID, nil
 }
 
-func ContainerCommit(ctx context.Context, ref string, commitOptions dockercontainer.CommitOptions) (string, error) {
+func ContainerCommit(ctx context.Context, ref string, commitOptions client.ContainerCommitOptions) (string, error) {
 	response, err := apiCli(ctx).ContainerCommit(ctx, ref, commitOptions)
 	if err != nil {
 		return "", err
@@ -53,8 +84,9 @@ func ContainerCommit(ctx context.Context, ref string, commitOptions dockercontai
 	return response.ID, nil
 }
 
-func ContainerRemove(ctx context.Context, ref string, options dockercontainer.RemoveOptions) error {
-	return apiCli(ctx).ContainerRemove(ctx, ref, options)
+func ContainerRemove(ctx context.Context, ref string, options client.ContainerRemoveOptions) error {
+	_, err := apiCli(ctx).ContainerRemove(ctx, ref, options)
+	return err
 }
 
 func doCliCreate(ctx context.Context, c command.Cli, args ...string) error {

@@ -13,7 +13,7 @@ func IsErrContainerPaused(err error) bool {
 		return false
 	}
 	cause := errors.Cause(err)
-	if !strings.HasPrefix(cause.Error(), "cannot remove container") {
+	if !strings.Contains(cause.Error(), "cannot remove container") {
 		return false
 	}
 	return strings.HasSuffix(cause.Error(), "container is paused and must be unpaused first")
@@ -26,7 +26,7 @@ func IsErrContainerRunning(err error) bool {
 		return false
 	}
 	cause := errors.Cause(err)
-	if !strings.HasPrefix(cause.Error(), "cannot remove container") {
+	if !strings.Contains(cause.Error(), "cannot remove container") {
 		return false
 	}
 	return strings.HasSuffix(cause.Error(), "container is running: stop the container before removing or force remove")

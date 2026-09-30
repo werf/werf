@@ -2,22 +2,26 @@ package docker
 
 import (
 	"context"
-	"net"
 	"strings"
 
-	"github.com/docker/docker/api/types/system"
-	dockerclient "github.com/docker/docker/client"
+	"github.com/moby/moby/api/types/system"
+	"github.com/moby/moby/client"
 )
 
 func Info(ctx context.Context) (system.Info, error) {
-	return apiCli(ctx).Info(ctx)
+	result, err := apiCli(ctx).Info(ctx, client.InfoOptions{})
+	if err != nil {
+		return system.Info{}, err
+	}
+
+	return result.Info, nil
 }
 
 func isDaemonUnavailableErr(err error) bool {
 	if err == nil {
 		return false
 	}
-	if dockerclient.IsErrConnectionFailed(err) {
+	if client.IsErrConnectionFailed(err) {
 		return true
 	}
 
@@ -37,13 +41,13 @@ func isDaemonUnavailableErr(err error) bool {
 }
 
 func getDaemonInfo(ctx context.Context) (*system.Info, error) {
-	var info system.Info
+	var result client.SystemInfoResult
 	var err error
 
 	if IsContext(ctx) {
-		info, err = apiCli(ctx).Info(ctx)
+		result, err = apiCli(ctx).Info(ctx, client.InfoOptions{})
 	} else if IsEnabled() && defaultAPIClient != nil {
-		info, err = defaultAPIClient.Info(ctx)
+		result, err = defaultAPIClient.Info(ctx, client.InfoOptions{})
 	} else {
 		return nil, nil
 	}
@@ -55,7 +59,7 @@ func getDaemonInfo(ctx context.Context) (*system.Info, error) {
 		return nil, err
 	}
 
-	return &info, nil
+	return &result.Info, nil
 }
 
 func GetRegistryMirrors(ctx context.Context) ([]string, error) {
@@ -89,7 +93,7 @@ func GetInsecureRegistries(ctx context.Context) ([]string, error) {
 		}
 
 		for _, cidr := range info.RegistryConfig.InsecureRegistryCIDRs {
-			cidrStr := (*net.IPNet)(cidr).String()
+			cidrStr := cidr.String()
 			if !seen[cidrStr] {
 				seen[cidrStr] = true
 				result = append(result, cidrStr)

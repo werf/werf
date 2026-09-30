@@ -1,7 +1,7 @@
 package stapel
 
 import (
-	dockercontainer "github.com/docker/docker/api/types/container"
+	dockercontainer "github.com/moby/moby/api/types/container"
 )
 
 func stapelVolumeMount(volumeName string) dockercontainer.MountPoint {
@@ -18,11 +18,9 @@ func stapelVolumeMount(volumeName string) dockercontainer.MountPoint {
 // of Config as soon as the tag is moved to another image.
 func fakeContainer(id, name, imageRef string, mounts ...dockercontainer.MountPoint) dockercontainer.InspectResponse {
 	return dockercontainer.InspectResponse{
-		ContainerJSONBase: &dockercontainer.ContainerJSONBase{
-			ID:    id,
-			Name:  "/" + name,
-			Image: "sha256:" + id,
-		},
+		ID:     id,
+		Name:   "/" + name,
+		Image:  "sha256:" + id,
 		Mounts: mounts,
 		Config: &dockercontainer.Config{Image: imageRef},
 	}
