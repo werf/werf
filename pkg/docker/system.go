@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -116,10 +118,11 @@ func Info(ctx context.Context) (system.Info, error) {
 }
 
 func isDaemonUnavailableErr(err error) bool {
-	if err == nil {
+	if !client.IsErrConnectionFailed(err) {
 		return false
 	}
-	if client.IsErrConnectionFailed(err) {
+
+	if errors.Is(err, os.ErrNotExist) {
 		return true
 	}
 
@@ -128,7 +131,6 @@ func isDaemonUnavailableErr(err error) bool {
 		"Cannot connect to the Docker daemon",
 		"connect: no such file or directory",
 		"connect: connection refused",
-		"dial unix",
 	} {
 		if strings.Contains(msg, substr) {
 			return true
@@ -150,7 +152,31 @@ func getDaemonInfo(ctx context.Context) (*system.Info, error) {
 	}
 
 	var result client.SystemInfoResult
+	var unsupported bool
 	timedOut, err := callDaemon(ctx, func(callCtx context.Context) error {
+		cached, ok := checkedDaemons.Load(api)
+		if !ok {
+			// Check the advertised version without negotiation: Moby rejects old versions
+			// during negotiation, but ignores that error when constructing the /info URL.
+			ping, err := api.Ping(callCtx, client.PingOptions{})
+			if err != nil {
+				return err
+			}
+			if ping.APIVersion != "" {
+				major, minor, found := strings.Cut(ping.APIVersion, ".")
+				majorVersion, majorErr := strconv.Atoi(major)
+				minorVersion, minorErr := strconv.Atoi(minor)
+				if !found || majorErr != nil || minorErr != nil || majorVersion < 0 || minorVersion < 0 {
+					return fmt.Errorf("invalid Docker daemon API version %q", ping.APIVersion)
+				}
+				checkedDaemons.Store(api, ping.APIVersion)
+				cached = ping.APIVersion
+			}
+		}
+		if cached != nil && versions.LessThan(cached.(string), client.MinAPIVersion) {
+			unsupported = true
+			return callCtx.Err()
+		}
 		var err error
 		result, err = api.Info(callCtx, client.InfoOptions{})
 		return err
@@ -159,10 +185,13 @@ func getDaemonInfo(ctx context.Context) (*system.Info, error) {
 		return nil, nil
 	}
 	if err != nil {
-		if isDaemonUnavailableErr(err) {
+		if ctx.Err() == nil && isDaemonUnavailableErr(err) {
 			return nil, nil
 		}
 		return nil, err
+	}
+	if unsupported {
+		return nil, nil
 	}
 
 	return &result.Info, nil
