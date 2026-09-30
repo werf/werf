@@ -1,17 +1,19 @@
 package docker
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
 	"time"
 
+	cerrdefs "github.com/containerd/errdefs"
 	"github.com/docker/cli/cli/command"
 	"github.com/docker/cli/cli/command/commands"
 	"github.com/docker/cli/cli/flags"
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/client"
+	"github.com/moby/moby/api/types/image"
 	mobyclient "github.com/moby/moby/client"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -21,7 +23,7 @@ import (
 
 var (
 	cli       *command.DockerCli
-	apiClient *client.Client
+	apiClient mobyclient.APIClient
 )
 
 func init() {
@@ -61,15 +63,11 @@ func initCli() error {
 
 func initApiClient() error {
 	ctx := context.Background()
-	serverVersion, err := cli.Client().ServerVersion(ctx, mobyclient.ServerVersionOptions{})
-	if err != nil {
+	if _, err := cli.Client().ServerVersion(ctx, mobyclient.ServerVersionOptions{}); err != nil {
 		return err
 	}
 
-	apiClient, err = client.NewClientWithOpts(client.WithVersion(serverVersion.APIVersion))
-	if err != nil {
-		return err
-	}
+	apiClient = cli.Client()
 
 	return nil
 }
@@ -83,7 +81,7 @@ func ImageRemoveIfExists(ctx context.Context, imageName string) {
 func IsImageExist(ctx context.Context, imageName string) bool {
 	_, err := imageInspect(ctx, imageName)
 	if err != nil {
-		if client.IsErrNotFound(err) {
+		if cerrdefs.IsNotFound(err) {
 			return false
 		}
 
@@ -94,14 +92,21 @@ func IsImageExist(ctx context.Context, imageName string) bool {
 }
 
 func ImageParent(ctx context.Context, imageName string) string {
-	return ImageInspect(ctx, imageName).Parent
+	var raw bytes.Buffer
+	_, err := apiClient.ImageInspect(ctx, imageName, mobyclient.ImageInspectWithRawResponse(&raw))
+	Expect(err).ShouldNot(HaveOccurred())
+	var inspect struct {
+		Parent string
+	}
+	Expect(json.Unmarshal(raw.Bytes(), &inspect)).To(Succeed())
+	return inspect.Parent
 }
 
 func ImageID(ctx context.Context, imageName string) string {
 	return ImageInspect(ctx, imageName).ID
 }
 
-func ImageInspect(ctx context.Context, imageName string) *types.ImageInspect {
+func ImageInspect(ctx context.Context, imageName string) *image.InspectResponse {
 	inspect, err := imageInspect(ctx, imageName)
 	Expect(err).ShouldNot(HaveOccurred())
 	return inspect
@@ -189,11 +194,11 @@ tryPull:
 	return err
 }
 
-func imageInspect(ctx context.Context, ref string) (*types.ImageInspect, error) {
-	inspect, _, err := apiClient.ImageInspectWithRaw(ctx, ref)
+func imageInspect(ctx context.Context, ref string) (*image.InspectResponse, error) {
+	result, err := apiClient.ImageInspect(ctx, ref)
 	if err != nil {
 		return nil, err
 	}
 
-	return &inspect, nil
+	return &result.InspectResponse, nil
 }

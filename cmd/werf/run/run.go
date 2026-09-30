@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/docker/cli/cli"
-	dockercontainer "github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/pkg/stdcopy"
+	"github.com/moby/moby/api/pkg/stdcopy"
+	"github.com/moby/moby/client"
 	"github.com/spf13/cobra"
 
 	"github.com/werf/common-go/pkg/graceful"
@@ -284,7 +284,7 @@ func runMain(ctx context.Context) error {
 				time.Sleep(500 * time.Millisecond)
 				fmt.Printf("Attaching to container %s ...\n", containerName)
 
-				resp, err := docker.ContainerAttach(ctx, containerName, dockercontainer.AttachOptions{
+				resp, err := docker.ContainerAttach(ctx, containerName, client.ContainerAttachOptions{
 					Stream: true,
 					Stdout: true,
 					Stderr: true,

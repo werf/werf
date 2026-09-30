@@ -7,9 +7,9 @@ import (
 	"strings"
 
 	"al.essio.dev/pkg/shellescape"
+	cerrdefs "github.com/containerd/errdefs"
 	"github.com/docker/cli/cli"
-	dockercontainer "github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/errdefs"
+	"github.com/moby/moby/client"
 	"github.com/samber/lo"
 
 	"github.com/werf/common-go/pkg/util"
@@ -411,7 +411,7 @@ func (c *LegacyStageImageContainer) commit(ctx context.Context) (string, error) 
 		return "", err
 	}
 
-	commitOptions := dockercontainer.CommitOptions{Changes: commitChanges}
+	commitOptions := client.ContainerCommitOptions{Changes: commitChanges, NoPause: true}
 	id, err := docker.ContainerCommit(ctx, c.name, commitOptions)
 	if err != nil {
 		return "", err
@@ -423,9 +423,9 @@ func (c *LegacyStageImageContainer) commit(ctx context.Context) (string, error) 
 func (c *LegacyStageImageContainer) rm(ctx context.Context) error {
 	_ = c.image.ContainerBackend.(*DockerServerBackend)
 
-	err := docker.ContainerRemove(ctx, c.name, dockercontainer.RemoveOptions{RemoveVolumes: true, Force: true})
+	err := docker.ContainerRemove(ctx, c.name, client.ContainerRemoveOptions{RemoveVolumes: true, Force: true})
 	if err != nil {
-		if errdefs.IsNotFound(err) || errdefs.IsConflict(err) {
+		if cerrdefs.IsNotFound(err) || cerrdefs.IsConflict(err) {
 			return nil
 		}
 

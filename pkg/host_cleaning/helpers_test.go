@@ -3,7 +3,7 @@ package host_cleaning
 import (
 	"slices"
 
-	dockercontainer "github.com/docker/docker/api/types/container"
+	dockercontainer "github.com/moby/moby/api/types/container"
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
 	"go.uber.org/mock/gomock"
@@ -41,11 +41,9 @@ func newTestDockerServerBackend() *container_backend.DockerServerBackend {
 
 func stapelFixtureContainer(id, version, platformSuffix, volumeName string) dockercontainer.InspectResponse {
 	return dockercontainer.InspectResponse{
-		ContainerJSONBase: &dockercontainer.ContainerJSONBase{
-			ID:    id,
-			Name:  "/" + image.AssemblingContainerNamePrefix + version + platformSuffix,
-			Image: "sha256:" + id,
-		},
+		ID:    id,
+		Name:  "/" + image.AssemblingContainerNamePrefix + version + platformSuffix,
+		Image: "sha256:" + id,
 		Mounts: []dockercontainer.MountPoint{
 			{Type: "volume", Name: volumeName, Destination: "/.werf/stapel"},
 		},
@@ -55,7 +53,9 @@ func stapelFixtureContainer(id, version, platformSuffix, volumeName string) dock
 
 func consumerFixtureContainer(id, name, volumeName string) dockercontainer.InspectResponse {
 	return dockercontainer.InspectResponse{
-		ContainerJSONBase: &dockercontainer.ContainerJSONBase{ID: id, Name: "/" + name, Image: "sha256:" + id},
+		ID:    id,
+		Name:  "/" + name,
+		Image: "sha256:" + id,
 		Mounts: []dockercontainer.MountPoint{
 			{Type: "volume", Name: volumeName, Destination: "/.werf/stapel"},
 		},
