@@ -51,5 +51,5 @@ The user can disable automatic cleanup of outdated host data using the `--disabl
 ```shell
 # /etc/cron.d/werf-host-cleanup
 SHELL=/bin/bash
-*/30 * * * * gitlab-runner source ~/.profile ; source $(trdl use werf 3 dev) ; werf host cleanup
+*/30 * * * * gitlab-runner source ~/.profile ; source $(trdl use werf 3 stable) ; werf host cleanup
 ```

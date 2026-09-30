@@ -5,8 +5,6 @@ keywords: dockerfile, инструкции docker, образы werf, конте
 tags: [docker, образы, dockerfile, сборка, конфигурация, секреты, ssh, многоархитектурная]
 ---
 
-<!-- прим. для перевода: на основе https://werf.io/docs/v2/reference/werf_yaml.html#image-section -->
-
 ## Добавление образов
 
 Для сборки c werf необходимо добавить описание образов в `werf.yaml` проекта. Каждый образ добавляется директивой `image` с указанием имени образа:
@@ -30,8 +28,6 @@ image: database
 Далее для каждого образа в `werf.yaml` необходимо определить сборочные инструкции [с помощью Dockerfile](#dockerfile) или [stapel](#stapel).
 
 ### Dockerfile
-
-<!-- прим. для перевода: на основе https://werf.io/docs/v2/reference/werf_yaml.html#dockerfile-builder -->
 
 #### Написание Dockerfile-инструкций
 

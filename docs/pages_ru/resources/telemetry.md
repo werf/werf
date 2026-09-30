@@ -21,7 +21,7 @@ permalink: resources/telemetry.html
   "attributes": {
     "arch": "amd64",
     "os": "linux",
-    "version": "dev",
+    "version": "v3.6.1",
     "ci": true,
     "ciName": "gitlab",
     "extra": {}
@@ -51,7 +51,7 @@ permalink: resources/telemetry.html
   "attributes": {
     "arch": "amd64",
     "os": "linux",
-    "version": "dev",
+    "version": "v3.6.1",
     "ci": true,
     "ciName": "gitlab",
     "extra": {}
@@ -77,7 +77,7 @@ permalink: resources/telemetry.html
   "attributes": {
     "arch": "arm64",
     "os": "darwin",
-    "version": "2.60.2",
+    "version": "v3.6.1",
     "ci": false,
     "extra": {}
   },
@@ -103,7 +103,7 @@ permalink: resources/telemetry.html
   "attributes": {
     "arch": "arm64",
     "os": "darwin",
-    "version": "2.60.2",
+    "version": "v3.6.1",
     "ci": false,
     "extra": {}
   },
@@ -129,7 +129,7 @@ permalink: resources/telemetry.html
   "attributes": {
     "arch": "arm64",
     "os": "darwin",
-    "version": "2.60.2",
+    "version": "v3.6.1",
     "ci": false,
     "extra": {}
   },
@@ -156,7 +156,7 @@ permalink: resources/telemetry.html
   "attributes": {
     "arch": "arm64",
     "os": "darwin",
-    "version": "2.60.2",
+    "version": "v3.6.1",
     "ci": false,
     "extra": {}
   },

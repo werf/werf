@@ -1,6 +1,6 @@
 ## Аутентификация в container registry
 
-Перед работой с образами необходимо аутентифицироваться в container registry. Сделать это можно командой [werf cr login](https://werf.io/docs/v2/reference/cli/werf_cr_login.html):
+Перед работой с образами необходимо аутентифицироваться в container registry. Сделать это можно командой [werf cr login]({{ "/reference/cli/werf_cr_login.html" | true_relative_url }}):
 
 ```shell
 werf cr login <registry url>
@@ -19,4 +19,4 @@ werf cr login -u username -p token registry.example.com
 werf cr login --insecure-registry registry.example.com
 ```
 
-> В случае использования команды [ci-env](https://ru.werf.io/docs/v2/reference/cli/werf_ci_env.html) с поддерживаемыми CI/CD-системами аутентификация во встроенные container registry выполняется в рамках команды, поэтому использование команды [werf cr login](https://werf.io/docs/v2/reference/cli/werf_cr_login.html) в этом случае не требуется.
+> В случае использования команды [ci-env]({{ "/reference/cli/werf_ci_env.html" | true_relative_url }}) с поддерживаемыми CI/CD-системами аутентификация во встроенные container registry выполняется в рамках команды, поэтому использование команды [werf cr login]({{ "/reference/cli/werf_cr_login.html" | true_relative_url }}) в этом случае не требуется.

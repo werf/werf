@@ -105,7 +105,7 @@ converge:
       with:
         preset: werf
         group: "3"
-        channel: dev
+        channel: stable
         force: false
 
     - name: Run script
@@ -118,8 +118,6 @@ converge:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
 {% endraw %}
-
-> werf v3 сейчас публикуется в канале `dev` группы `3`. При переходе на другой канал обновления измените значение `channel`.
 
 > Полный набор конфигураций (`.github/workflows/*.yml`) для готовых рабочих процессов можно найти в конфигураторе «[Быстрый старт](https://werf.io/getting_started/?usage=ci&ci=githubActions)»,
 > выбрав в нём _CI/CD_ как сценарий использования и _GitHub Actions_ — как CI/CD-систему.
