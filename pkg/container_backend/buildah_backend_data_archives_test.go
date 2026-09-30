@@ -26,6 +26,12 @@ var _ = Describe("BuildahBackend data archives", func() {
 		Expect(werf.Init(GinkgoT().TempDir(), "")).To(Succeed())
 	})
 
+	It("parentDirsWithin lists ancestors created implicitly by a patch archive", func() {
+		Expect(parentDirsWithin("/app", "/app/nested/deeper/new-file")).To(Equal([]string{"/app/nested", "/app/nested/deeper"}))
+		Expect(parentDirsWithin("/app", "/app/file")).To(BeEmpty())
+		Expect(parentDirsWithin("/app", "/other/file")).To(BeEmpty())
+	})
+
 	It("extractTarWithChown applies ownership to extracted archive entries", func() {
 		dstDir := GinkgoT().TempDir()
 		preExistingDir := filepath.Join(dstDir, "preexisting")
