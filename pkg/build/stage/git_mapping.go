@@ -11,6 +11,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -396,6 +397,15 @@ getPathsLoop:
 	return commands, nil
 }
 
+func parentDirs(name string) []string {
+	var dirs []string
+	for dir := path.Dir(name); dir != "." && dir != "/"; dir = path.Dir(dir) {
+		dirs = append(dirs, dir)
+	}
+	slices.Reverse(dirs)
+	return dirs
+}
+
 func quoteShellArg(arg string) string {
 	if len(arg) == 0 {
 		return "''"
@@ -429,6 +439,17 @@ func (gm *GitMapping) applyArchiveCommand(archiveFile *ContainerFileDescriptor, 
 	defer archive.Close()
 
 	var paths strings.Builder
+	written := make(map[string]bool)
+	writePath := func(name string) {
+		fullPath := path.Join(unpackArchiveDirectory, name)
+		if written[fullPath] {
+			return
+		}
+		written[fullPath] = true
+		paths.WriteString(fullPath)
+		paths.WriteByte(0)
+	}
+
 	reader := tar.NewReader(archive)
 	for {
 		header, err := reader.Next()
@@ -442,8 +463,10 @@ func (gm *GitMapping) applyArchiveCommand(archiveFile *ContainerFileDescriptor, 
 		if path.IsAbs(name) || name == ".." || strings.HasPrefix(name, "../") {
 			return nil, fmt.Errorf("git archive entry %q is not a local path", header.Name)
 		}
-		paths.WriteString(path.Join(unpackArchiveDirectory, header.Name))
-		paths.WriteByte(0)
+		for _, parent := range parentDirs(name) {
+			writePath(parent)
+		}
+		writePath(name)
 	}
 
 	if err := os.MkdirAll(gm.ScriptsDir, os.ModePerm); err != nil {
