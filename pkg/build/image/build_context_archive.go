@@ -21,8 +21,12 @@ import (
 	"github.com/werf/werf/v3/pkg/giterminism_manager"
 	"github.com/werf/werf/v3/pkg/opstats"
 	"github.com/werf/werf/v3/pkg/path_matcher"
+	"github.com/werf/werf/v3/pkg/tmp_manager"
 	"github.com/werf/werf/v3/pkg/werf"
 )
+
+// createContextPinDir is a variable so that tests can put the pin on another filesystem.
+var createContextPinDir = tmp_manager.CreateContextPinDir
 
 var _ container_backend.BuildContextArchiver = (*BuildContextArchive)(nil)
 
@@ -98,10 +102,7 @@ func (a *BuildContextArchive) Create(ctx context.Context, opts container_backend
 	}
 
 	if len(opts.ContextAddFiles) == 0 {
-		if err := os.MkdirAll(a.extractionRootTmpDir, os.ModePerm); err != nil {
-			return fmt.Errorf("create context archive root: %w", err)
-		}
-		dir, err := os.MkdirTemp(a.extractionRootTmpDir, "context-archive")
+		dir, err := createContextPinDir(ctx)
 		if err != nil {
 			return fmt.Errorf("create context archive directory: %w", err)
 		}
