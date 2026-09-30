@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 
+	"github.com/werf/logboek"
 	"github.com/werf/werf/v3/pkg/buildah"
 	"github.com/werf/werf/v3/pkg/container_backend"
 )
@@ -26,7 +26,6 @@ func (i *Copy) UsesBuildContext() bool {
 
 func (i *Copy) Apply(ctx context.Context, containerName string, drv buildah.Buildah, drvOpts buildah.CommonOpts, buildContextArchive container_backend.BuildContextArchiver) error {
 	var contextDir string
-	var sourceContainer string
 	if i.UsesBuildContext() {
 		var err error
 		contextDir, err = buildContextArchive.ExtractOrGetExtractedDir(ctx)
@@ -35,19 +34,23 @@ func (i *Copy) Apply(ctx context.Context, containerName string, drv buildah.Buil
 		}
 	} else {
 		container, err := drv.FromCommand(ctx, "", i.From, buildah.FromCommandOpts{})
-		if err != nil {
-			createErr := fmt.Errorf("unable to create container from image %q: %w", i.From, err)
-			if container != "" {
-				return errors.Join(createErr, cleanupCopySource(ctx, drv, container, false))
-			}
-			return createErr
+		mounted := false
+		if container != "" {
+			defer func() {
+				if cleanupErr := cleanupCopySource(ctx, drv, container, mounted); cleanupErr != nil {
+					logboek.Context(ctx).Error().LogF("ERROR: cleanup COPY --from=%q source container %q: %s\n", i.From, container, cleanupErr)
+				}
+			}()
 		}
-		sourceContainer = container
+		if err != nil {
+			return fmt.Errorf("unable to create container from image %q: %w", i.From, err)
+		}
 
 		contextDir, err = drv.Mount(ctx, container, buildah.MountOpts{})
 		if err != nil {
-			return errors.Join(fmt.Errorf("unable to mount container %q: %w", container, err), cleanupCopySource(ctx, drv, container, false))
+			return fmt.Errorf("unable to mount container %q: %w", container, err)
 		}
+		mounted = true
 	}
 
 	copyErr := drv.Copy(ctx, containerName, contextDir, i.SourcePaths, i.DestPath, buildah.CopyOpts{
@@ -61,15 +64,11 @@ func (i *Copy) Apply(ctx context.Context, containerName string, drv buildah.Buil
 		copyErr = fmt.Errorf("error copying %v to %s for container %s: %w", i.SourcePaths, i.DestPath, containerName, copyErr)
 	}
 
-	if sourceContainer != "" {
-		return errors.Join(copyErr, cleanupCopySource(ctx, drv, sourceContainer, true))
-	}
 	return copyErr
 }
 
 func cleanupCopySource(ctx context.Context, drv buildah.Buildah, container string, mounted bool) error {
-	cleanupCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), time.Minute)
-	defer cancel()
+	cleanupCtx := context.WithoutCancel(ctx)
 	var cleanupErrors []error
 	if mounted {
 		if err := drv.Umount(cleanupCtx, container, buildah.UmountOpts{}); err != nil {
