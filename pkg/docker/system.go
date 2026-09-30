@@ -4,10 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"os"
 	"strconv"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/moby/moby/api/types/system"
@@ -117,20 +119,33 @@ func Info(ctx context.Context) (system.Info, error) {
 	return result.Info, nil
 }
 
+// Winsock uses 10061, not Go's synthetic syscall.ECONNREFUSED value on Windows.
+// Its localized diagnostic survives Moby's normalization, so match the errno.
+const errWSAEConnRefused = syscall.Errno(10061)
+
 func isDaemonUnavailableErr(err error) bool {
 	if !client.IsErrConnectionFailed(err) {
 		return false
 	}
 
-	if errors.Is(err, os.ErrNotExist) {
+	var dnsErr *net.DNSError
+	if errors.Is(err, os.ErrNotExist) || errors.Is(err, errWSAEConnRefused) || errors.As(err, &dnsErr) {
 		return true
 	}
 
 	msg := err.Error()
+	if strings.Contains(msg, "ssh: connect to host ") {
+		for _, cause := range []string{"Connection refused", "Network is unreachable", "No route to host", "Operation timed out", "Connection timed out"} {
+			if strings.Contains(msg, cause) {
+				return true
+			}
+		}
+	}
 	for _, substr := range []string{
 		"Cannot connect to the Docker daemon",
 		"connect: no such file or directory",
 		"connect: connection refused",
+		"ssh: Could not resolve hostname ",
 	} {
 		if strings.Contains(msg, substr) {
 			return true
@@ -164,9 +179,9 @@ func getDaemonInfo(ctx context.Context) (*system.Info, error) {
 			}
 			if ping.APIVersion != "" {
 				major, minor, found := strings.Cut(ping.APIVersion, ".")
-				majorVersion, majorErr := strconv.Atoi(major)
-				minorVersion, minorErr := strconv.Atoi(minor)
-				if !found || majorErr != nil || minorErr != nil || majorVersion < 0 || minorVersion < 0 {
+				_, majorErr := strconv.ParseUint(major, 10, 32)
+				_, minorErr := strconv.ParseUint(minor, 10, 32)
+				if !found || majorErr != nil || minorErr != nil {
 					return fmt.Errorf("invalid Docker daemon API version %q", ping.APIVersion)
 				}
 				checkedDaemons.Store(api, ping.APIVersion)

@@ -231,16 +231,21 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 
 	logboek.LogOptionalLn()
 
-	stagesStorage, err := common.GetStagesStorage(ctx, containerBackend, &commonCmdData, common.GetStagesStorageOpts{
-		CleanupDisabled:                werfConfig.Meta.Cleanup.DisableCleanup,
-		GitHistoryBasedCleanupDisabled: werfConfig.Meta.Cleanup.DisableGitHistoryBasedPolicy,
-	})
+	bundleRepo, err := commonCmdData.Repo.GetAddress()
 	if err != nil {
 		return err
 	}
-	finalStagesStorage, err := common.GetOptionalFinalStagesStorage(ctx, containerBackend, &commonCmdData)
-	if err != nil {
+	if err := common.ValidateRepoContainerRegistry(commonCmdData.Repo.GetContainerRegistry(ctx)); err != nil {
 		return err
+	}
+	if *commonCmdData.FinalRepo.Address != "" {
+		if err := common.ValidateRepoContainerRegistry(commonCmdData.FinalRepo.GetContainerRegistry(ctx)); err != nil {
+			return err
+		}
+		bundleRepo, err = commonCmdData.FinalRepo.GetAddress()
+		if err != nil {
+			return err
+		}
 	}
 
 	var imagesInfoGetters []*image.InfoGetter
@@ -435,13 +440,6 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 		opts,
 	); err != nil {
 		return fmt.Errorf("create bundle: %w", err)
-	}
-
-	var bundleRepo string
-	if finalStagesStorage != nil {
-		bundleRepo = finalStagesStorage.Address()
-	} else {
-		bundleRepo = stagesStorage.Address()
 	}
 
 	opts.ChartLoadOpts.ChartType = nelmcommon.LegacyChartTypeBundle

@@ -7,8 +7,10 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"sync/atomic"
+	"syscall"
 	"time"
 
 	"github.com/docker/cli/cli/command"
@@ -284,12 +286,116 @@ var _ = Describe("optional daemon settings", func() {
 		Expect(errors.Is(err, context.DeadlineExceeded)).To(BeTrue(), "error: %v", err)
 	})
 
-	It("rejects malformed advertised versions", func() {
+	DescribeTable("rejects malformed advertised versions", func(version string) {
 		ctx := daemonSettingsContext(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("API-Version", "1.invalid")
+			w.Header().Set("API-Version", version)
 		}))
 		_, err := GetRegistryMirrors(ctx)
 		Expect(err).To(MatchError(ContainSubstring("invalid Docker daemon API version")))
+	},
+		Entry("non-numeric minor", "1.invalid"),
+		Entry("signed minor", "1.+39"),
+		Entry("signed major", "+1.39"),
+		Entry("negative major", "-0.39"),
+		Entry("negative minor", "1.-39"),
+		Entry("hexadecimal major", "0x1.39"),
+		Entry("underscored minor", "1.3_9"),
+		Entry("no minor", "1"),
+		Entry("empty minor", "1."),
+	)
+
+	DescribeTable("uses well-formed advertised versions", func(version string, expectedMirrors []string) {
+		ctx := daemonSettingsContext(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			defer GinkgoRecover()
+			w.Header().Set("API-Version", version)
+			if r.Method == http.MethodHead {
+				return
+			}
+			_, err := w.Write([]byte(`{"RegistryConfig":{"Mirrors":["https://mirror.example"]}}`))
+			Expect(err).NotTo(HaveOccurred())
+		}))
+		mirrors, err := GetRegistryMirrors(ctx)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(mirrors).To(Equal(expectedMirrors))
+	},
+		Entry("an old API is skipped", "1.39", []string(nil)),
+		Entry("a supported API is used", "1.40", []string{"https://mirror.example"}),
+	)
+
+	DescribeTable("does not swallow caller cancellation once the daemon API version is cached", func(version string) {
+		ctx := daemonSettingsContext(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			defer GinkgoRecover()
+			w.Header().Set("API-Version", version)
+			if r.Method == http.MethodHead {
+				return
+			}
+			_, err := w.Write([]byte(`{"RegistryConfig":{"Mirrors":["https://mirror.example"]}}`))
+			Expect(err).NotTo(HaveOccurred())
+		}))
+		_, err := GetRegistryMirrors(ctx)
+		Expect(err).NotTo(HaveOccurred())
+
+		canceledCtx, cancel := context.WithCancel(ctx)
+		cancel()
+		_, err = GetRegistryMirrors(canceledCtx)
+		Expect(errors.Is(err, context.Canceled)).To(BeTrue(), "error: %v", err)
+	},
+		Entry("an old API", "1.39"),
+		Entry("a supported API", "1.40"),
+	)
+
+	// wsaeConnRefused is Winsock's WSAECONNREFUSED, which a Windows client gets from a Docker
+	// TCP endpoint whose port refuses connections:
+	// https://learn.microsoft.com/en-us/windows/win32/winsock/windows-sockets-error-codes-2
+	const wsaeConnRefusedFixture = syscall.Errno(10061)
+
+	DescribeTable("classifies transport failures", func(transportErr error, daemonUnavailable bool) {
+		ctx := daemonTransportContext(transportErr)
+		mirrors, err := GetRegistryMirrors(ctx)
+		if !daemonUnavailable {
+			Expect(err).To(HaveOccurred())
+			return
+		}
+		Expect(err).NotTo(HaveOccurred())
+		Expect(mirrors).To(BeNil())
+	},
+		Entry("a refused TCP connection", &net.OpError{Op: "dial", Net: "tcp", Err: os.NewSyscallError("connect", syscall.ECONNREFUSED)}, true),
+		Entry("a refused TCP connection on Windows", &net.OpError{Op: "dial", Net: "tcp", Err: os.NewSyscallError("connectex", wsaeConnRefusedFixture)}, true),
+		Entry("a missing Unix socket", &net.OpError{Op: "dial", Net: "unix", Err: os.NewSyscallError("connect", syscall.ENOENT)}, true),
+		Entry("an unresolvable daemon host", &net.OpError{Op: "dial", Net: "tcp", Err: &net.DNSError{Err: "no such host", Name: "docker.example", IsNotFound: true}}, true),
+		Entry("a Unix socket which denies access", &net.OpError{Op: "dial", Net: "unix", Err: os.NewSyscallError("connect", syscall.EACCES)}, false),
+		Entry("a denied SSH authentication", errors.New("command [ssh docker system dial-stdio] has exited with exit status 255: stderr=Permission denied (publickey)."), false),
+	)
+
+	DescribeTable("classifies SSH connection helper failures", func(diagnostic string, daemonUnavailable bool) {
+		mirrors, err := GetRegistryMirrors(sshDaemonContext(diagnostic))
+		if !daemonUnavailable {
+			Expect(err).To(HaveOccurred())
+			return
+		}
+		Expect(err).NotTo(HaveOccurred())
+		Expect(mirrors).To(BeNil())
+	},
+		Entry("a refused SSH connection", "ssh: connect to host docker.example port 22: Connection refused", true),
+		Entry("an unreachable SSH network", "ssh: connect to host docker.example port 22: Network is unreachable", true),
+		Entry("an unroutable SSH host", "ssh: connect to host docker.example port 22: No route to host", true),
+		Entry("a timed out SSH connection", "ssh: connect to host docker.example port 22: Operation timed out", true),
+		Entry("an unresolvable SSH host", "ssh: Could not resolve hostname docker.example: nodename nor servname provided, or not known", true),
+		Entry("a denied SSH authentication", "docker.example: Permission denied (publickey).", false),
+		Entry("a denied SSH socket connection", "ssh: connect to host docker.example port 22: Permission denied", false),
+		Entry("a remote host without the docker CLI", "bash: line 1: docker: command not found", false),
+	)
+
+	It("propagates a plaintext request to a TLS daemon", func() {
+		server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+		DeferCleanup(server.Close)
+		api, err := client.New(client.WithHost("tcp://" + server.Listener.Addr().String()))
+		Expect(err).NotTo(HaveOccurred())
+		DeferCleanup(api.Close)
+		ctx := context.WithValue(context.Background(), ctxDockerCliKey, true)
+		ctx = context.WithValue(ctx, ctxAPIClientKey, api)
+		_, err = GetRegistryMirrors(ctx)
+		Expect(err).To(MatchError(ContainSubstring("Client sent an HTTP request to an HTTPS server")))
 	})
 
 	It("propagates TLS failures", func() {

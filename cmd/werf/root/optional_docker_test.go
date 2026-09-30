@@ -106,6 +106,39 @@ var _ = ginkgo.Describe("optional Docker backend", func() {
 				})
 			}
 
+			if command == "bundle publish" {
+				ginkgo.It("publishes a chart-only bundle into the authenticated final repo", func() {
+					dir := dockerProject(false)
+					server, authenticated := authenticatedRegistry(dir)
+					before := authenticated.Load()
+					host := "unix://" + filepath.Join(ginkgo.GinkgoT().TempDir(), "absent.sock")
+					stdout, stderr, code := dockerCommand(dir, host, "bundle", "publish",
+						"--repo", "127.0.0.1:1/unreachable",
+						"--final-repo", strings.TrimPrefix(server.URL, "http://")+"/bundle",
+						"--insecure-registry")
+					gomega.Expect(code).To(gomega.BeZero(), "stdout: %s\nstderr: %s", stdout, stderr)
+					gomega.Expect(authenticated.Load()).To(gomega.BeNumerically(">", before))
+				})
+
+				ginkgo.It("requires a repo for a chart-only bundle", func() {
+					host := "unix://" + filepath.Join(ginkgo.GinkgoT().TempDir(), "absent.sock")
+					_, stderr, code := dockerCommand(dockerProject(false), host, "bundle", "publish")
+					gomega.Expect(code).To(gomega.Equal(1))
+					gomega.Expect(stderr).To(gomega.ContainSubstring("--repo=ADDRESS param required"))
+				})
+
+				ginkgo.DescribeTable("rejects an unsupported container registry of a chart-only bundle repo", func(flag string) {
+					host := "unix://" + filepath.Join(ginkgo.GinkgoT().TempDir(), "absent.sock")
+					_, stderr, code := dockerCommand(dockerProject(false), host, "bundle", "publish",
+						"--repo", "example.com/images", "--final-repo", "example.com/bundle", flag, "bogus")
+					gomega.Expect(code).To(gomega.Equal(1))
+					gomega.Expect(stderr).To(gomega.ContainSubstring(`container registry "bogus" is not supported`))
+				},
+					ginkgo.Entry("primary repo", "--repo-container-registry"),
+					ginkgo.Entry("final repo", "--final-repo-container-registry"),
+				)
+			}
+
 			ginkgo.DescribeTable("image paths retain the daemon gate", func(mute bool) {
 				host, requests := settingsDaemon("1.39", 200, 200)
 				expected := "minimum supported API version is 1.40"

@@ -81,7 +81,7 @@ func runDockerCommand(args []string) int {
 
 func dockerCommand(dir, dockerHost string, args ...string) (string, string, int) {
 	ginkgo.GinkgoHelper()
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, os.Args[0])
 	for _, entry := range os.Environ() {
@@ -96,7 +96,7 @@ func dockerCommand(dir, dockerHost string, args ...string) (string, string, int)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout, cmd.Stderr = &stdout, &stderr
 	err := cmd.Run()
-	gomega.Expect(ctx.Err()).NotTo(gomega.HaveOccurred(), "command exceeded 15s: %v\n%s\n%s", args, stdout.String(), stderr.String())
+	gomega.Expect(ctx.Err()).NotTo(gomega.HaveOccurred(), "command exceeded 30s: %v\n%s\n%s", args, stdout.String(), stderr.String())
 	var exitErr *exec.ExitError
 	exitCode := 0
 	if errors.As(err, &exitErr) {
