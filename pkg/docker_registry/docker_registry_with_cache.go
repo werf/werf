@@ -15,6 +15,7 @@ import (
 	"github.com/werf/logboek"
 	registry_api "github.com/werf/werf/v3/pkg/docker_registry/api"
 	"github.com/werf/werf/v3/pkg/image"
+	"github.com/werf/werf/v3/pkg/opstats"
 )
 
 const (
@@ -133,6 +134,7 @@ func (r *DockerRegistryWithCache) tryLoadTagsFromCache(cachedTagsID string, opts
 func (r *DockerRegistryWithCache) getTagsListFromRegistry(ctx context.Context, reference string, opts ...Option) ([]string, error) {
 	cachedTagsID := r.mustGetCachedTagsID(reference)
 	if tags, ok := r.tryLoadTagsFromCache(cachedTagsID, opts...); ok {
+		opstats.CountEvent(ctx, opstats.EventRegistryTagsCacheHit)
 		return tags, nil
 	}
 
@@ -145,13 +147,14 @@ func (r *DockerRegistryWithCache) getTagsListFromRegistry(ctx context.Context, r
 		if err != nil {
 			return nil, err
 		}
+		logboek.Context(ctx).Debug().LogF("Listed %d tags for repo %s (%.2f seconds)\n", len(tags), reference, time.Since(startedAt).Seconds())
 		// Storing inside the singleflight call keeps a listing from dropping tags published while
 		// it was in flight, for the cache and for every waiter alike.
 		return r.storeTagsToCache(cachedTagsID, tags, startedAt), nil
 	})
 
 	if shared {
-		logboek.Context(ctx).Debug().LogF("Query list tags for %q was reused\n", cachedTagsID)
+		opstats.CountEvent(ctx, opstats.EventRegistryTagsSharedResult)
 	}
 
 	if err != nil {

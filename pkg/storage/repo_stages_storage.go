@@ -942,12 +942,10 @@ func (storage *RepoStagesStorage) FilterStageDescSetAndProcessRelatedData(_ cont
 }
 
 func (storage *RepoStagesStorage) Tags(ctx context.Context, reference string, opts ...docker_registry.Option) ([]string, error) {
-	startedAt := time.Now()
 	tags, err := storage.DockerRegistry.Tags(ctx, reference, opts...)
 	if err != nil {
 		return nil, err
 	}
-	logboek.Context(ctx).Debug().LogF("Listed %d tags for repo %s (%.2f seconds)\n", len(tags), reference, time.Since(startedAt).Seconds())
 
 	if !storage.skipMetaCheck {
 		if err := storage.checkMeta(ctx, tags, opts...); err != nil {

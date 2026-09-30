@@ -69,6 +69,7 @@ func (tree *ImagesTree) Calculate(ctx context.Context) error {
 	}
 
 	commonImageOpts := tree.CommonImageOptions
+	commonImageOpts.loggedGitCommits = make(map[[2]string]struct{})
 	commonImageOpts.prepareLocalGitRepo = sync.OnceValue(func() error {
 		return prepareLocalGitRepo(ctx, tree.werfConfig.Meta, tree.GiterminismManager.LocalGitRepo())
 	})
@@ -341,7 +342,7 @@ func (tree *ImagesTree) GetMultiplatformImages() []*MultiplatformImage {
 	return tree.multiplatformImages
 }
 
-func filterAndLogGitMappings(ctx context.Context, gitMappings []*stage.GitMapping, conveyor Conveyor) ([]*stage.GitMapping, error) {
+func filterAndLogGitMappings(ctx context.Context, gitMappings []*stage.GitMapping, opts CommonImageOptions) ([]*stage.GitMapping, error) {
 	var res []*stage.GitMapping
 
 	for ind, gitMapping := range gitMappings {
@@ -403,12 +404,25 @@ func filterAndLogGitMappings(ctx context.Context, gitMappings []*stage.GitMappin
 
 			logboek.Context(ctx).Info().LogLn()
 
-			commitInfo, err := gitMapping.GetLatestCommitInfo(ctx, conveyor)
+			commitInfo, err := gitMapping.GetLatestCommitInfo(ctx, opts.Conveyor)
 			if err != nil {
 				return fmt.Errorf("unable to get commit of repo %q: %w", gitMapping.GitRepo().GetName(), err)
 			}
 
-			logboek.Context(ctx).Info().LogFDetails("Commit %s will be used\n", commitInfo.Commit)
+			repo := gitMapping.GitRepo()
+			var repoID string
+			if remote, ok := repo.(*git_repo.Remote); ok {
+				repoID = remote.Url
+			} else {
+				repoID = repo.GetWorkTreeDir()
+			}
+			key := [2]string{repoID, commitInfo.Commit}
+			if _, logged := opts.loggedGitCommits[key]; !logged {
+				logboek.Context(ctx).Info().LogFDetails("Commit %s will be used for %s repository\n", commitInfo.Commit, repo.GetName())
+				if opts.loggedGitCommits != nil {
+					opts.loggedGitCommits[key] = struct{}{}
+				}
+			}
 
 			res = append(res, gitMapping)
 

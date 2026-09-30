@@ -33,10 +33,12 @@ const (
 type Event string
 
 const (
-	EventStageCacheHitLocal     Event = "found in local stages storage"
-	EventStageCacheHitRepo      Event = "found in repo stages storage"
-	EventStageCacheHitSecondary Event = "copied from secondary storage"
-	EventStageBuilt             Event = "built"
+	EventStageCacheHitLocal       Event = "found in local stages storage"
+	EventStageCacheHitRepo        Event = "found in repo stages storage"
+	EventStageCacheHitSecondary   Event = "copied from secondary storage"
+	EventStageBuilt               Event = "built"
+	EventRegistryTagsCacheHit     Event = "registry tags cache hit"
+	EventRegistryTagsSharedResult Event = "registry tags shared result"
 )
 
 type ctxKeyType struct{}

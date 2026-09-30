@@ -202,7 +202,9 @@ func (s *BaseStage) getNextStageGitDependencies(ctx context.Context, c Conveyor)
 		}
 	}
 
-	logboek.Context(ctx).Debug().LogF("Stage %q next stage dependencies: %#v\n", s.LogName(), args)
+	if len(args) > 0 {
+		logboek.Context(ctx).Debug().LogF("Stage %q next stage dependencies: %#v\n", s.LogName(), args)
+	}
 	sort.Strings(args)
 
 	return util.Sha256Hash(args...), nil
