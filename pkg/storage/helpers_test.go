@@ -3,14 +3,77 @@ package storage
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"sync"
+	"sync/atomic"
 
+	"github.com/google/go-containerregistry/pkg/name"
+	"github.com/google/go-containerregistry/pkg/registry"
+	"github.com/google/go-containerregistry/pkg/v1/random"
+	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/google/go-containerregistry/pkg/v1/remote/transport"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 
 	"github.com/werf/werf/v3/pkg/container_backend"
 	"github.com/werf/werf/v3/pkg/docker_registry"
 	"github.com/werf/werf/v3/pkg/image"
 )
+
+const tagCacheStageDigest = "2222222222222222222222222222222222222222222222222222222c"
+
+var _ container_backend.ContainerBackend = (*pushStageBackendStub)(nil)
+
+type pushStageBackendStub struct {
+	container_backend.ContainerBackend
+
+	pushErr error
+}
+
+func (b *pushStageBackendStub) Push(_ context.Context, _ string, _ container_backend.PushOpts) error {
+	return b.pushErr
+}
+
+// newTagCacheRepoStagesStorage returns a stages storage backed by an in-memory registry, plus the
+// number of tags listings it served.
+func newTagCacheRepoStagesStorage(ctx context.Context, backend container_backend.ContainerBackend) (*RepoStagesStorage, *atomic.Int32) {
+	var tagsListRequests atomic.Int32
+
+	registryHandler := registry.New()
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		if strings.HasSuffix(request.URL.Path, "/tags/list") {
+			tagsListRequests.Add(1)
+		}
+		registryHandler.ServeHTTP(writer, request)
+	}))
+	DeferCleanup(server.Close)
+
+	repoAddress := strings.TrimPrefix(server.URL, "http://") + "/project/werf"
+	dockerRegistry, err := docker_registry.NewDockerRegistry(ctx, repoAddress, docker_registry.DefaultImplementationName, docker_registry.DockerRegistryOptions{InsecureRegistry: true})
+	Expect(err).NotTo(HaveOccurred())
+
+	return NewRepoStagesStorage(&NewRepoStagesStorageOptions{
+		RepoAddress:      repoAddress,
+		DockerRegistry:   dockerRegistry,
+		ContainerBackend: backend,
+	}), &tagsListRequests
+}
+
+func cachedStageIDs(ctx context.Context, storage *RepoStagesStorage) []string {
+	stageIDs, err := storage.GetStagesIDsByDigest(ctx, "", tagCacheStageDigest, 0, WithCache())
+	Expect(err).NotTo(HaveOccurred())
+	return stageStrings(stageIDs)
+}
+
+func pushRandomImage(reference string) {
+	ref, err := name.ParseReference(reference, name.Insecure)
+	Expect(err).NotTo(HaveOccurred())
+	img, err := random.Image(1, 1)
+	Expect(err).NotTo(HaveOccurred())
+	Expect(remote.Write(ref, img)).To(Succeed())
+}
 
 var _ docker_registry.Interface = (*metadataPushRegistry)(nil)
 

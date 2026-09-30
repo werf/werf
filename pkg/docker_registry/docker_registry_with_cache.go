@@ -3,7 +3,9 @@ package docker_registry
 import (
 	"context"
 	"fmt"
+	"maps"
 	"os"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -28,8 +30,60 @@ const (
 type DockerRegistryWithCache struct {
 	Interface
 	cachedTagsMap *sync.Map
-
+	// cacheWriteMu serializes the load-modify-store sequences on cachedTagsMap. Entries stay
+	// immutable, so readers need no lock.
+	cacheWriteMu       sync.Mutex
 	listTagsQueryGroup *singleflight.Group
+}
+
+// AddCachedTag records a tag published to the registry outside the registry client, so that the
+// next cached tags lookup sees it. It only updates an already cached listing, never creates one,
+// and never refreshes its freshness timestamp.
+func AddCachedTag(ctx context.Context, registry Interface, reference string) {
+	r, ok := registry.(*DockerRegistryWithCache)
+	if !ok {
+		return
+	}
+
+	referenceParts, err := r.parseReferenceParts(reference)
+	if err != nil {
+		panic(fmt.Sprintf("unexpected reference %q: %s", reference, err))
+	}
+	if referenceParts.tag == "" {
+		panic(fmt.Sprintf("unexpected reference %q: tag required", reference))
+	}
+	cachedTagsID := strings.Join([]string{referenceParts.registry, referenceParts.repository}, "/")
+
+	r.cacheWriteMu.Lock()
+	defer r.cacheWriteMu.Unlock()
+
+	value, ok := r.cachedTagsMap.Load(cachedTagsID)
+	if !ok {
+		return
+	}
+
+	entry, err := castTagsEntry(value)
+	if err != nil {
+		return
+	}
+
+	tags := entry.tags
+	if !slices.Contains(tags, referenceParts.tag) {
+		tags = append(slices.Clone(tags), referenceParts.tag)
+	}
+
+	pushedTags := maps.Clone(entry.pushedTags)
+	if pushedTags == nil {
+		pushedTags = map[string]time.Time{}
+	}
+	// Recorded even when the tag is already listed: a listing in flight may have snapshotted the
+	// repo without it.
+	pushedTags[referenceParts.tag] = time.Now()
+
+	// updatedAt is left untouched: the listing itself is no fresher than it was.
+	r.cachedTagsMap.Store(cachedTagsID, tagsCacheEntry{tags: tags, updatedAt: entry.updatedAt, pushedTags: pushedTags})
+
+	logboek.Context(ctx).Debug().LogF("Added published tag %q to the tags cache of %q\n", referenceParts.tag, cachedTagsID)
 }
 
 func newDockerRegistryWithCache(ctx context.Context, dockerRegistry Interface) *DockerRegistryWithCache {
@@ -84,8 +138,14 @@ func (r *DockerRegistryWithCache) getTagsListFromRegistry(ctx context.Context, r
 	// This is useful when multiple goroutines try to fetch tags for the same reference at the same time.
 	// Will perform only one call to the registry and share the result among all goroutines.
 	newTagsResp, err, shared := r.listTagsQueryGroup.Do(cachedTagsID, func() (interface{}, error) {
+		startedAt := time.Now()
 		tags, err := r.Interface.Tags(ctx, reference, opts...)
-		return tags, err
+		if err != nil {
+			return nil, err
+		}
+		// Storing inside the singleflight call keeps a listing from dropping tags published while
+		// it was in flight, for the cache and for every waiter alike.
+		return r.storeTagsToCache(cachedTagsID, tags, startedAt), nil
 	})
 
 	if shared {
@@ -101,17 +161,41 @@ func (r *DockerRegistryWithCache) getTagsListFromRegistry(ctx context.Context, r
 		return nil, err
 	}
 
-	r.storeTagsToCache(cachedTagsID, newTagsList)
 	return newTagsList, nil
 }
 
-func (r *DockerRegistryWithCache) storeTagsToCache(cachedTagsID string, tags []string) {
-	r.cachedTagsMap.Store(cachedTagsID, tagsCacheEntry{tags: tags, updatedAt: time.Now()})
+func (r *DockerRegistryWithCache) storeTagsToCache(cachedTagsID string, tags []string, listingStartedAt time.Time) []string {
+	r.cacheWriteMu.Lock()
+	defer r.cacheWriteMu.Unlock()
+
+	pushedTags := map[string]time.Time{}
+	if value, ok := r.cachedTagsMap.Load(cachedTagsID); ok {
+		if entry, err := castTagsEntry(value); err == nil && len(entry.pushedTags) > 0 {
+			cloned := false
+			for tag, pushedAt := range entry.pushedTags {
+				// A listing started after the publication is authoritative and drops the tag,
+				// so an externally deleted tag cannot stay cached forever.
+				if !pushedAt.After(listingStartedAt) || slices.Contains(tags, tag) {
+					continue
+				}
+				if !cloned {
+					tags, cloned = slices.Clone(tags), true
+				}
+				tags = append(tags, tag)
+				pushedTags[tag] = pushedAt
+			}
+		}
+	}
+
+	r.cachedTagsMap.Store(cachedTagsID, tagsCacheEntry{tags: tags, updatedAt: time.Now(), pushedTags: pushedTags})
+	return tags
 }
 
 type tagsCacheEntry struct {
 	tags      []string
 	updatedAt time.Time
+	// pushedTags holds tags published locally but not yet confirmed by a registry listing.
+	pushedTags map[string]time.Time
 }
 
 func castTagsList(tagsList interface{}) ([]string, error) {
@@ -205,13 +289,11 @@ func (r *DockerRegistryWithCache) startBackgroundCacheUpdater(ctx context.Contex
 							ctxWithTimeout, cancel := context.WithTimeout(ctx, timeout)
 							defer cancel()
 
-							tags, err := r.Tags(ctxWithTimeout, repo)
-							if err != nil {
+							if _, err := r.Tags(ctxWithTimeout, repo); err != nil {
 								logboek.Context(ctx).Debug().LogF("Failed to update tag cache for %q: %s\n", repo, err)
 								return err
 							}
 
-							r.storeTagsToCache(repo, tags)
 							logboek.Context(ctx).Debug().LogF("Updated tag cache for %q\n", repo)
 							return nil
 						}); err != nil {
