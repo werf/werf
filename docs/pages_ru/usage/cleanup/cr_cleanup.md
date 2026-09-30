@@ -227,7 +227,7 @@ HUB_TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username":
 
 ### GitHub Packages
 
-При организации CI/CD в GitHub Actions устанавливайте werf так, как показано в разделе [Интеграция с CI/CD-системами]({{ "usage/integration_with_ci_cd_systems.html" | true_relative_url }}), и запускайте `werf cleanup` обычным шагом. Набор [werf/actions](https://github.com/werf/actions) устанавливает werf 2 и для werf 3 не подходит.
+При организации CI/CD в GitHub Actions устанавливайте werf так, как показано в разделе [Интеграция с CI/CD-системами]({{ "usage/integration_with_ci_cd_systems.html" | true_relative_url }}), и запускайте `werf cleanup` обычным шагом.
 
 При удалении тегов werf использует _GitHub API_, поэтому при очистке container registry необходимо определить _token_ с `read:packages` и `delete:packages` scopes.
 

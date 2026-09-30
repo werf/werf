@@ -5,8 +5,6 @@ keywords: dockerfile, docker instructions, werf images, build context, build sec
 tags: [docker, images, dockerfile, build, config, secrets, ssh, multi-arch]
 ---
 
-<!-- reference: https://werf.io/docs/v2/reference/werf_yaml.html#image-section -->
-
 ## Adding images
 
 To build images with werf, you have to add a description of each image to the `werf.yaml` file of the project. The image description starts with the `image` directive specifying the image name:
@@ -30,8 +28,6 @@ image: database
 Next, for each image in `werf.yaml`, you have to define the build instructions using [Dockerfile](#dockerfile) or [Stapel](#stapel).
 
 ### Dockerfile
-
-<!-- reference: https://werf.io/docs/v2/reference/werf_yaml.html#dockerfile-builder -->
 
 #### Writing Dockerfile instructions
 

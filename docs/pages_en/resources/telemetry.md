@@ -21,7 +21,7 @@ Below are examples of the data werf transmits:
   "attributes": {
     "arch": "amd64",
     "os": "linux",
-    "version": "dev",
+    "version": "v3.6.1",
     "ci": true,
     "ciName": "gitlab",
     "extra": {}
@@ -51,7 +51,7 @@ Below are examples of the data werf transmits:
   "attributes": {
     "arch": "amd64",
     "os": "linux",
-    "version": "dev",
+    "version": "v3.6.1",
     "ci": true,
     "ciName": "gitlab",
     "extra": {}
@@ -77,7 +77,7 @@ Example of build started event:
   "attributes": {
     "arch": "arm64",
     "os": "darwin",
-    "version": "2.60.2",
+    "version": "v3.6.1",
     "ci": false,
     "extra": {}
   },
@@ -103,7 +103,7 @@ Example of build finished event:
   "attributes": {
     "arch": "arm64",
     "os": "darwin",
-    "version": "2.60.2",
+    "version": "v3.6.1",
     "ci": false,
     "extra": {}
   },
@@ -129,7 +129,7 @@ Example of image build finished event:
   "attributes": {
     "arch": "arm64",
     "os": "darwin",
-    "version": "2.60.2",
+    "version": "v3.6.1",
     "ci": false,
     "extra": {}
   },
@@ -156,7 +156,7 @@ Example of stage build finished event:
   "attributes": {
     "arch": "arm64",
     "os": "darwin",
-    "version": "2.60.2",
+    "version": "v3.6.1",
     "ci": false,
     "extra": {}
   },

@@ -9,8 +9,6 @@ tags: [build, docker, buildah, ssh, cache, registry, multi-arch, stapel]
 
 ## Tagging images
 
-<!-- reference https://werf.io/docs/v2/internals/stages_and_storage.html#stage-naming -->
-
 The tagging of werf images is performed automatically as part of the build process. werf uses an optimal tagging scheme based on the contents of the image, thus preventing unnecessary rebuilds and application wait times during deployment.
 
 <div class="details">
@@ -69,8 +67,6 @@ werf build --repo REPO --add-custom-tag "%image%-latest"
 > **NOTE:** When you use the options listed above, werf still creates the **additional alias tags** that reference the automatic hash tags. It is not possible to completely disable auto-tagging.
 
 ## Layer-by-layer image caching
-
-<!-- reference https://werf.io/docs/v2/internals/stages_and_storage.html#storage -->
 
 Layer-by-layer image caching is essential part of the werf build process. werf saves and reuses the build cache in the container registry.
 
@@ -152,8 +148,6 @@ from: alpine:3.14
 ```
 
 ## Parallelism and image assembly order
-
-<!-- reference: https://werf.io/docs/v2/internals/build_process.html#parallel-build -->
 
 All the images described in `werf.yaml` are built in parallel on the same build host. Each image starts building as soon as all the images it depends on have been built — an image never waits for unrelated images.
 
@@ -565,7 +559,7 @@ Example report in JSON format (the `Operations` and `StageCache` sections are pr
 ```json
 {
   "Runtime": {
-    "WerfVersion": "v2.76.0",
+    "WerfVersion": "v3.6.1",
     "Backend": "docker",
     "InContainer": false
   },

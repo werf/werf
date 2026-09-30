@@ -9,15 +9,15 @@ The [release process]({{ site.url }}/about/release_channels.html) for werf inclu
 
 The images follow the naming convention:
 
-- `registry.werf.io/werf/werf:<group>` (e.g., `registry.werf.io/werf/werf:2`);
-- `registry.werf.io/werf/werf:<group>-<channel>` (e.g., `registry.werf.io/werf/werf:2-stable`);
-- `registry.werf.io/werf/werf:<group>-<channel>-<os>` (e.g., `registry.werf.io/werf/werf:2-stable-alpine`);
-- `registry.werf.io/werf/werf:<version>` (e.g., `registry.werf.io/werf/werf:2.16.2`);
-- `registry.werf.io/werf/werf:<version>-<os>` (e.g., `registry.werf.io/werf/werf:2.16.2-alpine`).
+- `registry.werf.io/werf/werf:<group>` (e.g., `registry.werf.io/werf/werf:3`);
+- `registry.werf.io/werf/werf:<group>-<channel>` (e.g., `registry.werf.io/werf/werf:3-stable`);
+- `registry.werf.io/werf/werf:<group>-<channel>-<os>` (e.g., `registry.werf.io/werf/werf:3-stable-alpine`);
+- `registry.werf.io/werf/werf:<version>` (e.g., `registry.werf.io/werf/werf:3.6.1`);
+- `registry.werf.io/werf/werf:<version>-<os>` (e.g., `registry.werf.io/werf/werf:3.6.1-alpine`).
 
 Where:
 
-- `<group>`: version group, such as `1.2` or `2` (default);
+- `<group>`: version group; use `3`;
 - `<channel>`: release channel, such as `alpha`, `beta`, `ea`, `stable` (default), or `rock-solid`;
 - `<os>`: operating system, such as `alpine` (default), `ubuntu`, or `fedora`;
-- `<version>`: version (e.g., `2.16.2`). If the release version includes `+fix` (e.g., `2.16.2+fix1`), it will be converted to `2.16.2.fix1` version.
+- `<version>`: version (e.g., `3.6.1`). If the release version includes `+fix` (e.g., `3.6.1+fix1`), it will be converted to `3.6.1.fix1` version.

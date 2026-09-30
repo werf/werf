@@ -9,15 +9,15 @@ permalink: reference/werf_images.html
 
 Поддерживаются образы, публикуемые по следующему принципу:
 
-- `registry.werf.io/werf/werf:<group>` (например, `registry.werf.io/werf/werf:2`);
-- `registry.werf.io/werf/werf:<group>-<channel>` (например, `registry.werf.io/werf/werf:2-stable`);
-- `registry.werf.io/werf/werf:<group>-<channel>-<os>` (например, `registry.werf.io/werf/werf:2-stable-alpine`);
-- `registry.werf.io/werf/werf:<version>` (например, `registry.werf.io/werf/werf:2.16.2`);
-- `registry.werf.io/werf/werf:<version>-<os>` (например, `registry.werf.io/werf/werf:2.16.2-alpine`).
+- `registry.werf.io/werf/werf:<group>` (например, `registry.werf.io/werf/werf:3`);
+- `registry.werf.io/werf/werf:<group>-<channel>` (например, `registry.werf.io/werf/werf:3-stable`);
+- `registry.werf.io/werf/werf:<group>-<channel>-<os>` (например, `registry.werf.io/werf/werf:3-stable-alpine`);
+- `registry.werf.io/werf/werf:<version>` (например, `registry.werf.io/werf/werf:3.6.1`);
+- `registry.werf.io/werf/werf:<version>-<os>` (например, `registry.werf.io/werf/werf:3.6.1-alpine`).
 
 Где:
 
-- `<group>`: группа `1.2` или `2` (по умолчанию);
+- `<group>`: группа версий; используйте `3`;
 - `<channel>`: канал выпуска `alpha`, `beta`, `ea`, `stable` (по умолчанию) или `rock-solid`;
 - `<os>`: операционная система `alpine` (по умолчанию), `ubuntu` или `fedora`.
-- `<version>`: версия (например, `2.16.2`). Если версия релиза содержит `+fix` (например, `2.16.2+fix1`), то версия будет приведена к `2.16.2.fix1`.
+- `<version>`: версия (например, `3.6.1`). Если версия релиза содержит `+fix` (например, `3.6.1+fix1`), то версия будет приведена к `3.6.1.fix1`.

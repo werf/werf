@@ -10,7 +10,7 @@ For small changes, such as few lines bugfixes or documentation improvements, fee
 
 For easy first issues, check the [good first issue](https://github.com/werf/werf/issues?q=is%3Aissue%20state%3Aopen%20label%3A%22good%20first%20issue%22) tag.
 
-You can also check the existing [issues](https://github.com/werf/werf/issues), [discussion threads](https://github.com/werf/werf/discussions), and [documentation](https://werf.io/docs/v2/) — there may already be a discussion or solution on your topic. If not, choose the appropriate way to address the issue on [the new issue form](https://github.com/werf/werf/issues/new/choose).
+You can also check the existing [issues](https://github.com/werf/werf/issues), [discussion threads](https://github.com/werf/werf/discussions), and [documentation](https://werf.io/docs/v3/) — there may already be a discussion or solution on your topic. If not, choose the appropriate way to address the issue on [the new issue form](https://github.com/werf/werf/issues/new/choose).
 
 ## Contributing code
 
