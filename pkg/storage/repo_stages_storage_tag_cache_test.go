@@ -60,6 +60,24 @@ var _ = ginkgo.Describe("RepoStagesStorage published stage tags", func() {
 		gomega.Expect(tagsListRequests.Load()).To(gomega.Equal(int32(1)))
 	})
 
+	ginkgo.It("makes a rejected stage visible to cached lookups without another tags listing", func(ctx ginkgo.SpecContext) {
+		storage, tagsListRequests := newTagCacheRepoStagesStorage(ctx, &pushStageBackendStub{})
+		stageID := image.NewStageID(tagCacheStageDigest, 1700000000)
+		stageImageName := storage.ConstructStageImageName("", stageID.Digest, stageID.CreationTs)
+		pushRandomImage(stageImageName)
+
+		stageIDs, err := storage.GetStagesIDsByDigest(ctx, "", tagCacheStageDigest, 0)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		gomega.Expect(stageStrings(stageIDs)).To(gomega.Equal([]string{stageID.String()}))
+		gomega.Expect(tagsListRequests.Load()).To(gomega.Equal(int32(1)))
+
+		gomega.Expect(storage.RejectStage(ctx, "", stageID.Digest, stageID.CreationTs)).To(gomega.Succeed())
+
+		_, err = storage.GetStageDesc(ctx, "", *stageID)
+		gomega.Expect(err).To(gomega.MatchError(ErrStageRejected))
+		gomega.Expect(tagsListRequests.Load()).To(gomega.Equal(int32(1)))
+	})
+
 	ginkgo.It("does not make a mutated stage visible when the mutation fails", func(ctx ginkgo.SpecContext) {
 		storage, _ := newTagCacheRepoStagesStorage(ctx, &pushStageBackendStub{})
 		destinationReference := storage.ConstructStageImageName("", tagCacheStageDigest, 1700000000)

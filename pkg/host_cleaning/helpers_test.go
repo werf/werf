@@ -51,11 +51,15 @@ func stapelFixtureContainer(id, version, platformSuffix, volumeName string) dock
 	}
 }
 
+// consumerFixtureContainer is a running werf container that keeps the stapel
+// volume in use through --volumes-from, the way a leftover build or import
+// container does.
 func consumerFixtureContainer(id, name, volumeName string) dockercontainer.InspectResponse {
 	return dockercontainer.InspectResponse{
 		ID:    id,
 		Name:  "/" + name,
 		Image: "sha256:" + id,
+		State: &dockercontainer.State{Running: true},
 		Mounts: []dockercontainer.MountPoint{
 			{Type: "volume", Name: volumeName, Destination: "/.werf/stapel"},
 		},

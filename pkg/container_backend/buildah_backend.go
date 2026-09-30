@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -1475,7 +1476,21 @@ func lchownIfSet(path string, uid, gid *uint32) error {
 	return nil
 }
 
+// parentDirsWithin returns the ancestors of path located strictly inside root,
+// outermost first. Incremental patch archives carry no tar.TypeDir entries, so
+// directories created implicitly while extracting a file have to be chowned too.
+func parentDirsWithin(root, path string) []string {
+	var dirs []string
+	for dir := filepath.Dir(path); strings.HasPrefix(dir, root+string(filepath.Separator)); dir = filepath.Dir(dir) {
+		dirs = append(dirs, dir)
+	}
+	slices.Reverse(dirs)
+	return dirs
+}
+
 func extractTarWithChown(tarFileReader io.Reader, dstDir string, uid, gid *uint32) error {
+	dstDir = filepath.Clean(dstDir)
+
 	if err := os.MkdirAll(dstDir, os.ModePerm); err != nil {
 		return fmt.Errorf("create dir %q: %w", dstDir, err)
 	}
@@ -1483,6 +1498,8 @@ func extractTarWithChown(tarFileReader io.Reader, dstDir string, uid, gid *uint3
 	if err := lchownIfSet(dstDir, uid, gid); err != nil {
 		return err
 	}
+
+	chownedDirs := make(map[string]bool)
 
 	tarReader := tar.NewReader(tarFileReader)
 	for {
@@ -1531,6 +1548,17 @@ func extractTarWithChown(tarFileReader io.Reader, dstDir string, uid, gid *uint3
 			}
 		default:
 			return fmt.Errorf("tar entry %q has unexpected type %d", hdr.Name, hdr.Typeflag)
+		}
+
+		for _, dir := range parentDirsWithin(dstDir, entryPath) {
+			if chownedDirs[dir] {
+				continue
+			}
+			chownedDirs[dir] = true
+
+			if err := lchownIfSet(dir, uid, gid); err != nil {
+				return err
+			}
 		}
 
 		if err := lchownIfSet(entryPath, uid, gid); err != nil {

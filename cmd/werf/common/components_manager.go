@@ -38,6 +38,8 @@ type InitCommonComponentsOptions struct {
 	InitDockerRegistry bool
 	// Initialize Container Backend
 	InitProcessContainerBackend bool
+	// Require a working Docker daemon: set by commands which build or run containers
+	RequireDockerDaemon bool
 	// Initialize werf
 	InitWerf bool
 	// Initialize CommonGitDataManager
@@ -77,7 +79,11 @@ func InitCommonComponents(ctx context.Context, opts InitCommonComponentsOptions)
 	}
 
 	if opts.InitProcessContainerBackend || opts.InitDockerRegistry {
-		newCtx, err := cmanager.InitContainerBackendComponents(ctx, opts.Cmd, opts.InitDockerRegistry, opts.InitProcessContainerBackend)
+		newCtx, err := cmanager.InitContainerBackendComponents(ctx, opts.Cmd, InitContainerBackendComponentsOptions{
+			InitDockerRegistry:          opts.InitDockerRegistry,
+			InitProcessContainerBackend: opts.InitProcessContainerBackend,
+			RequireDockerDaemon:         opts.RequireDockerDaemon,
+		})
 		if err != nil {
 			return nil, ctx, err
 		}
@@ -141,10 +147,20 @@ func notifyAboutAutoHostCleanup(ctx context.Context) {
 	}
 }
 
+type InitContainerBackendComponentsOptions struct {
+	InitDockerRegistry          bool
+	InitProcessContainerBackend bool
+	// RequireDockerDaemon tolerates a daemon which is not running at all and rejects only one which
+	// is too old or does not answer; set by commands which build or run containers.
+	RequireDockerDaemon bool
+}
+
 // InitContainerBackendComponents initializes buildah mode, docker config, registry mirrors,
 // docker registry and/or container backend, storing results on m. Safe to call multiple times;
-// each initXxx section only runs the parts requested by initDockerRegistry/initProcessContainerBackend.
-func (m *ComponentsManager) InitContainerBackendComponents(ctx context.Context, cmd *CmdData, initDockerRegistry, initProcessContainerBackend bool) (context.Context, error) {
+// each initXxx section only runs the parts requested by the options.
+// RequireDockerDaemon makes an unreachable-for-werf Docker daemon (too old API, no answer) fail the
+// init instead of failing later in the first Engine API call.
+func (m *ComponentsManager) InitContainerBackendComponents(ctx context.Context, cmd *CmdData, opts InitContainerBackendComponentsOptions) (context.Context, error) {
 	buildahMode, _, err := GetBuildahMode()
 	if err != nil {
 		return ctx, fmt.Errorf("unable to determine buildah mode: %w", err)
@@ -157,8 +173,8 @@ func (m *ComponentsManager) InitContainerBackendComponents(ctx context.Context, 
 		return ctx, fmt.Errorf("init docker config: %w", err)
 	}
 
-	if initProcessContainerBackend && m.buildahMode == buildah.ModeDisabled {
-		newCtx, err := InitProcessDocker(ctx, cmd)
+	if opts.InitProcessContainerBackend && m.buildahMode == buildah.ModeDisabled {
+		newCtx, err := InitProcessDocker(ctx, cmd, InitProcessDockerOptions{RequireDaemon: opts.RequireDockerDaemon})
 		if err != nil {
 			return ctx, fmt.Errorf("unable to init docker: %w", err)
 		}
@@ -171,14 +187,14 @@ func (m *ComponentsManager) InitContainerBackendComponents(ctx context.Context, 
 	}
 	m.registryMirrors = &rm
 
-	if initDockerRegistry {
+	if opts.InitDockerRegistry {
 		if err := DockerRegistryInit(ctx, cmd, *m.registryMirrors, m.buildahMode); err != nil {
 			return ctx, fmt.Errorf("docker registry initialization error: %w", err)
 		}
 	}
 
-	if initProcessContainerBackend {
-		cb, newCtx, err := InitProcessContainerBackend(ctx, cmd, *m.registryMirrors)
+	if opts.InitProcessContainerBackend {
+		cb, newCtx, err := InitProcessContainerBackend(ctx, cmd, *m.registryMirrors, InitProcessDockerOptions{RequireDaemon: opts.RequireDockerDaemon})
 		if err != nil {
 			return ctx, fmt.Errorf("container backend initialization error: %w", err)
 		}
@@ -189,15 +205,26 @@ func (m *ComponentsManager) InitContainerBackendComponents(ctx context.Context, 
 	return ctx, nil
 }
 
+type EnsureContainerBackendOptions struct {
+	InitDockerRegistry bool
+	// RequireDockerDaemon tolerates a daemon which is not running at all and rejects only one which
+	// is too old or does not answer; set by callers which build or run containers.
+	RequireDockerDaemon bool
+}
+
 // EnsureContainerBackend lazily initializes the container backend (and, optionally, the docker
 // registry) on first call and reuses it on subsequent calls. Intended for commands where the
 // backend is only required conditionally (e.g. project has images to build).
-func (m *ComponentsManager) EnsureContainerBackend(ctx context.Context, cmd *CmdData, initDockerRegistry bool) (container_backend.ContainerBackend, context.Context, error) {
+func (m *ComponentsManager) EnsureContainerBackend(ctx context.Context, cmd *CmdData, opts EnsureContainerBackendOptions) (container_backend.ContainerBackend, context.Context, error) {
 	if m.containerBackend != nil {
 		return m.containerBackend, ctx, nil
 	}
 
-	newCtx, err := m.InitContainerBackendComponents(ctx, cmd, initDockerRegistry, true)
+	newCtx, err := m.InitContainerBackendComponents(ctx, cmd, InitContainerBackendComponentsOptions{
+		InitDockerRegistry:          opts.InitDockerRegistry,
+		InitProcessContainerBackend: true,
+		RequireDockerDaemon:         opts.RequireDockerDaemon,
+	})
 	if err != nil {
 		return nil, ctx, err
 	}

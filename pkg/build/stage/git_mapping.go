@@ -11,6 +11,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -385,7 +386,7 @@ getPathsLoop:
 		return nil, err
 	}
 
-	applyArchiveCommands, err := gm.applyArchiveCommand(ctx, archiveFile, archiveType)
+	applyArchiveCommands, err := gm.applyArchiveCommand(archiveFile, archiveType)
 	if err != nil {
 		return nil, err
 	}
@@ -394,6 +395,15 @@ getPathsLoop:
 	commands = append(commands, rmEmptyChangedDirsCommands...)
 
 	return commands, nil
+}
+
+func parentDirs(name string) []string {
+	var dirs []string
+	for dir := path.Dir(name); dir != "." && dir != "/"; dir = path.Dir(dir) {
+		dirs = append(dirs, dir)
+	}
+	slices.Reverse(dirs)
+	return dirs
 }
 
 func quoteShellArg(arg string) string {
@@ -409,7 +419,7 @@ func quoteShellArg(arg string) string {
 	return arg
 }
 
-func (gm *GitMapping) applyArchiveCommand(ctx context.Context, archiveFile *ContainerFileDescriptor, archiveType git_repo.ArchiveType) ([]string, error) {
+func (gm *GitMapping) applyArchiveCommand(archiveFile *ContainerFileDescriptor, archiveType git_repo.ArchiveType) ([]string, error) {
 	var unpackArchiveDirectory string
 	commands := make([]string, 0)
 
@@ -429,6 +439,17 @@ func (gm *GitMapping) applyArchiveCommand(ctx context.Context, archiveFile *Cont
 	defer archive.Close()
 
 	var paths strings.Builder
+	written := make(map[string]bool)
+	writePath := func(name string) {
+		fullPath := path.Join(unpackArchiveDirectory, name)
+		if written[fullPath] {
+			return
+		}
+		written[fullPath] = true
+		paths.WriteString(fullPath)
+		paths.WriteByte(0)
+	}
+
 	reader := tar.NewReader(archive)
 	for {
 		header, err := reader.Next()
@@ -442,8 +463,10 @@ func (gm *GitMapping) applyArchiveCommand(ctx context.Context, archiveFile *Cont
 		if path.IsAbs(name) || name == ".." || strings.HasPrefix(name, "../") {
 			return nil, fmt.Errorf("git archive entry %q is not a local path", header.Name)
 		}
-		paths.WriteString(path.Join(unpackArchiveDirectory, header.Name))
-		paths.WriteByte(0)
+		for _, parent := range parentDirs(name) {
+			writePath(parent)
+		}
+		writePath(name)
 	}
 
 	if err := os.MkdirAll(gm.ScriptsDir, os.ModePerm); err != nil {
@@ -491,7 +514,7 @@ func (gm *GitMapping) applyArchiveCommand(ctx context.Context, archiveFile *Cont
 		"%s --null --no-run-if-empty --arg-file=%s %s --no-dereference -- %s",
 		stapel.XargsBinPath(),
 		quoteShellArg(path.Join(gm.ContainerScriptsDir, filepath.Base(pathsFile.Name()))),
-		stapel.ChownBinPath(ctx),
+		stapel.ChownBinPath(),
 		quoteShellArg(owner+":"+group),
 	))
 
@@ -700,7 +723,7 @@ func (gm *GitMapping) baseApplyArchiveCommand(ctx context.Context, commit string
 		return nil, err
 	}
 
-	commands, err := gm.applyArchiveCommand(ctx, archiveFile, archiveType)
+	commands, err := gm.applyArchiveCommand(archiveFile, archiveType)
 	if err != nil {
 		return nil, err
 	}

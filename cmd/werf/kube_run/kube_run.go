@@ -241,6 +241,7 @@ func runMain(ctx context.Context) error {
 		},
 		InitDockerRegistry:          true,
 		InitProcessContainerBackend: true,
+		RequireDockerDaemon:         true,
 		InitWerf:                    true,
 		InitGitDataManager:          true,
 		InitManifestCache:           true,

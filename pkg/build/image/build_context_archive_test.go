@@ -40,6 +40,16 @@ var _ = ginkgo.Describe("build context streaming", func() {
 			"three contexts over the same commit must not add a full context copy each")
 	})
 
+	ginkgo.It("pins the cached context next to the archive cache instead of the temp dir", func(ctx ginkgo.SpecContext) {
+		projectDir := newProjectRepo(ctx, contextStreamingProjectFiles())
+
+		archive := dockerfileContextArchives(ctx, projectDir, "one")[0]
+
+		gomega.Expect(archive.path).To(gomega.HavePrefix(werf.GetServiceDir()+string(os.PathSeparator)),
+			"the pin must share a filesystem with the archive cache, otherwise os.Link fails with EXDEV")
+		gomega.Expect(archive.path).NotTo(gomega.HavePrefix(werf.GetTmpDir() + string(os.PathSeparator)))
+	})
+
 	ginkgo.It("falls back to one materialized overlay when hard links are unavailable", func(ctx ginkgo.SpecContext) {
 		dir, err := os.MkdirTemp("/dev/shm", "werf-context-test-")
 		if os.IsNotExist(err) || os.IsPermission(err) {
@@ -52,7 +62,10 @@ var _ = ginkgo.Describe("build context streaming", func() {
 		if err := os.Link(filepath.Join(projectDir, "one.Dockerfile"), filepath.Join(dir, "probe")); err == nil {
 			ginkgo.Skip("/dev/shm supports hard links from the project filesystem")
 		}
-		archive := NewBuildContextArchive(giterminismManagerOf(ctx, projectDir), dir)
+		originalPinDirFunc := createContextPinDir
+		createContextPinDir = func(context.Context) (string, error) { return os.MkdirTemp(dir, "pin") }
+		ginkgo.DeferCleanup(func() { createContextPinDir = originalPinDirFunc })
+		archive := NewBuildContextArchive(giterminismManagerOf(ctx, projectDir), ginkgo.GinkgoT().TempDir())
 		gomega.Expect(archive.Create(ctx, container_backend.BuildContextArchiveCreateOptions{
 			DockerfileRelToContextPath: "one.Dockerfile",
 		})).To(gomega.Succeed())

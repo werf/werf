@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+
+	"github.com/werf/logboek"
 )
 
 // Every git request over ssh pays a full handshake, which dominates the cost of
@@ -54,6 +56,7 @@ func setupSSHMultiplexing(ctx context.Context) []string {
 		}
 	}
 	if hashCommand == "" {
+		logboek.Context(ctx).Warn().LogF("WARNING: ssh connection multiplexing is disabled: none of sha256sum, openssl or shasum was found in PATH.\nEvery git request over ssh pays a full handshake; install one of them to let werf reuse connections.\n")
 		return nil
 	}
 

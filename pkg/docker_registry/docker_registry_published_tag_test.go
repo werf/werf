@@ -100,10 +100,18 @@ var _ = ginkgo.Describe("AddCachedTag", func() {
 		gomega.Expect(func() { AddCachedTag(ctx, newListingRegistryStub(), repo+":stage-b") }).NotTo(gomega.Panic())
 	})
 
-	ginkgo.It("panics on a reference without a parsable tag", func(ctx ginkgo.SpecContext) {
-		r := newCachedRegistryStub(newListingRegistryStub())
+	ginkgo.It("leaves the cache untouched for a reference without a parsable tag", func(ctx ginkgo.SpecContext) {
+		r := newCachedRegistryStub(newListingRegistryStub("stage-a"))
 
-		gomega.Expect(func() { AddCachedTag(ctx, r, "not a valid reference!") }).To(gomega.Panic())
+		_, err := r.Tags(ctx, repo)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+
+		gomega.Expect(func() { AddCachedTag(ctx, r, "not a valid reference!") }).NotTo(gomega.Panic())
+		gomega.Expect(func() {
+			AddCachedTag(ctx, r, repo+"@sha256:0000000000000000000000000000000000000000000000000000000000000000")
+		}).NotTo(gomega.Panic())
+
+		gomega.Expect(cachedEntry(r, repo).tags).To(gomega.ConsistOf("stage-a"))
 	})
 })
 

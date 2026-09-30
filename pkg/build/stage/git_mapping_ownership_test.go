@@ -2,7 +2,6 @@ package stage
 
 import (
 	"archive/tar"
-	"context"
 	"os"
 	"path/filepath"
 	"strings"
@@ -36,7 +35,7 @@ var _ = ginkgo.Describe("Git archive mapping ownership", func() {
 			mapping.Owner, mapping.Group, mapping.To = owner, group, destination
 			mapping.ScriptsDir = filepath.Join(dir, "scripts")
 			mapping.ContainerScriptsDir = "/scripts"
-			commands, err := mapping.applyArchiveCommand(context.Background(), &ContainerFileDescriptor{FilePath: archivePath, ContainerFilePath: "/archives/shared.tar"}, archiveType)
+			commands, err := mapping.applyArchiveCommand(&ContainerFileDescriptor{FilePath: archivePath, ContainerFilePath: "/archives/shared.tar"}, archiveType)
 			gomega.Expect(err).NotTo(gomega.HaveOccurred())
 			gomega.Expect(commands).To(gomega.HaveLen(3))
 			gomega.Expect(commands[1]).To(gomega.ContainSubstring("--no-same-owner"))
@@ -62,4 +61,38 @@ var _ = ginkgo.Describe("Git archive mapping ownership", func() {
 		ginkgo.Entry("named credentials resolved inside the image", "app", "staff", "app:staff", git_repo.DirectoryArchive, "/app"),
 		ginkgo.Entry("single-file mapping uses its destination parent", "1001", "1002", "1001:1002", git_repo.FileArchive, "/app/renamed"),
 	)
+
+	ginkgo.It("covers parent directories missing from a patch archive", func() {
+		dir := ginkgo.GinkgoT().TempDir()
+		archivePath := filepath.Join(dir, "patch.tar")
+		file, err := os.Create(archivePath)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		writer := tar.NewWriter(file)
+		for _, header := range []*tar.Header{
+			{Name: "nested/deeper/new-file", Mode: 0o644},
+			{Name: "nested/another-file", Mode: 0o644},
+		} {
+			gomega.Expect(writer.WriteHeader(header)).To(gomega.Succeed())
+		}
+		gomega.Expect(writer.Close()).To(gomega.Succeed())
+		gomega.Expect(file.Close()).To(gomega.Succeed())
+		mapping := NewGitMapping()
+		mapping.Owner, mapping.Group, mapping.To = "1001", "1002", "/app"
+		mapping.ScriptsDir = filepath.Join(dir, "scripts")
+		mapping.ContainerScriptsDir = "/scripts"
+		_, err = mapping.applyArchiveCommand(&ContainerFileDescriptor{FilePath: archivePath, ContainerFilePath: "/archives/patch.tar"}, git_repo.DirectoryArchive)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		files, err := os.ReadDir(mapping.ScriptsDir)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		gomega.Expect(files).To(gomega.HaveLen(1))
+		paths, err := os.ReadFile(filepath.Join(mapping.ScriptsDir, files[0].Name()))
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		gomega.Expect(strings.Split(string(paths), "\x00")).To(gomega.Equal([]string{
+			"/app/nested",
+			"/app/nested/deeper",
+			"/app/nested/deeper/new-file",
+			"/app/nested/another-file",
+			"",
+		}))
+	})
 })

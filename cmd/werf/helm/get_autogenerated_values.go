@@ -123,6 +123,7 @@ func runGetServiceValues(ctx context.Context, imageNameListFromArgs []string) er
 		},
 		InitDockerRegistry:          true,
 		InitProcessContainerBackend: true,
+		RequireDockerDaemon:         true,
 		InitWerf:                    true,
 		InitGitDataManager:          true,
 		InitManifestCache:           true,

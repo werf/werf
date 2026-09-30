@@ -232,7 +232,7 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 		isStub = true
 		stubImageNameList = append(stubImageNameList, imagesToProcess.FinalImageNameList...)
 	default:
-		containerBackend, newCtx, err := commonManager.EnsureContainerBackend(ctx, &commonCmdData, false)
+		containerBackend, newCtx, err := commonManager.EnsureContainerBackend(ctx, &commonCmdData, common.EnsureContainerBackendOptions{RequireDockerDaemon: true})
 		if err != nil {
 			return fmt.Errorf("container backend initialization error: %w", err)
 		}

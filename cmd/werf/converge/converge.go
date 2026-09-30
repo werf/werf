@@ -293,7 +293,7 @@ func run(
 		if !imagesToProcess.WithoutImages {
 			logboek.LogOptionalLn()
 
-			containerBackend, newCtx, err := commonManager.EnsureContainerBackend(ctx, &commonCmdData, true)
+			containerBackend, newCtx, err := commonManager.EnsureContainerBackend(ctx, &commonCmdData, common.EnsureContainerBackendOptions{InitDockerRegistry: true, RequireDockerDaemon: true})
 			if err != nil {
 				return ctx, fmt.Errorf("container backend initialization error: %w", err)
 			}

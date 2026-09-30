@@ -52,6 +52,7 @@ type bearerTokenTransport struct {
 	realm         *url.URL
 	scheme        string
 	cacheDisabled bool
+	foreignScopes map[string]struct{}
 }
 
 var _ http.RoundTripper = (*bearerTokenTransport)(nil)
@@ -80,11 +81,11 @@ func (t *bearerTokenTransport) RoundTrip(req *http.Request) (*http.Response, err
 		if resp.StatusCode == http.StatusUnauthorized {
 			for _, challenge := range authchallenge.ResponseChallenges(resp) {
 				if strings.EqualFold(challenge.Scheme, "bearer") {
-					// Redirected hosts exchange tokens through this transport too, but their rejections cannot invalidate the origin's cache.
-					t.mu.Lock()
-					t.cacheDisabled = true
-					t.mu.Unlock()
-					break
+					// A redirected host exchanges its own token through this transport, and that
+					// token must never be reused: only its scopes stop being cached, the
+					// registry's own ones keep working. Every bearer challenge is excluded,
+					// since go-containerregistry picks the first one carrying a realm.
+					t.excludeScopesFromCache(challenge.Parameters["scope"])
 				}
 			}
 		}
@@ -142,6 +143,46 @@ func registryPort(u *url.URL) string {
 	return ""
 }
 
+// scopeEntries splits every raw scope value into single scopes: go-containerregistry sends one
+// scope query parameter per entry of its scope list, and an entry copied from a challenge may
+// itself hold several space-delimited scopes.
+func scopeEntries(values []string) []string {
+	var entries []string
+	for _, value := range values {
+		entries = append(entries, strings.Fields(value)...)
+	}
+	if len(entries) == 0 {
+		entries = []string{""}
+	}
+	return entries
+}
+
+func (t *bearerTokenTransport) excludeScopesFromCache(scope string) {
+	entries := scopeEntries([]string{scope})
+
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	if t.foreignScopes == nil {
+		t.foreignScopes = make(map[string]struct{})
+	}
+	for _, entry := range entries {
+		t.foreignScopes[entry] = struct{}{}
+	}
+}
+
+func (t *bearerTokenTransport) hasForeignScope(values []string) bool {
+	entries := scopeEntries(values)
+
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	for _, entry := range entries {
+		if _, ok := t.foreignScopes[entry]; ok {
+			return true
+		}
+	}
+	return false
+}
+
 func (t *bearerTokenTransport) isTokenRequest(req *http.Request) bool {
 	if req.Method != http.MethodGet {
 		return false
@@ -151,6 +192,9 @@ func (t *bearerTokenTransport) isTokenRequest(req *http.Request) bool {
 	cacheDisabled := t.cacheDisabled
 	t.mu.Unlock()
 	if realm == nil || cacheDisabled || req.URL.Scheme != realm.Scheme || req.URL.Host != realm.Host || req.URL.Path != realm.Path {
+		return false
+	}
+	if t.hasForeignScope(req.URL.Query()["scope"]) {
 		return false
 	}
 	for key, values := range realm.Query() {

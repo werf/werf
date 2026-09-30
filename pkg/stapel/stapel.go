@@ -2,6 +2,7 @@ package stapel
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -106,17 +107,21 @@ func Purge(ctx context.Context) error {
 		return fmt.Errorf("list stapel containers: %w", err)
 	}
 
+	// A failed removal must not hide the remaining ones: report every failure and
+	// leave the host with as little stapel garbage as the daemon allows.
+	var errs []error
+
 	for _, c := range containers {
 		if err := rmContainerWithVolumes(ctx, c.ID); err != nil {
-			return err
+			errs = append(errs, err)
 		}
 	}
 
 	if err := rmiIfExist(ctx); err != nil {
-		return err
+		errs = append(errs, err)
 	}
 
-	return nil
+	return errors.Join(errs...)
 }
 
 func rmContainerWithVolumes(ctx context.Context, id string) error {
@@ -141,15 +146,28 @@ func rmContainerWithVolumes(ctx context.Context, id string) error {
 		return nil
 	}
 
-	var volumeNames []string
+	// Only one mount can sit at the stapel mount point.
+	var volumeName string
 	for _, m := range inspect.Mounts {
 		if m.Type == "volume" && m.Destination == containerVolumeDestination {
-			volumeNames = append(volumeNames, m.Name)
+			volumeName = m.Name
+			break
 		}
 	}
 
-	if len(volumeNames) == 0 {
-		return nil
+	// The container is the only record of its volume name: Purge finds volumes
+	// through the mounts of the containers it owns, and nothing prunes volumes
+	// afterwards. Removing the container while another one still holds the volume
+	// would orphan the volume for good, so keep the container as the anchor and
+	// let a later purge take both.
+	if volumeName != "" {
+		holders, err := volumeHolders(ctx, volumeName, id)
+		if err != nil {
+			return err
+		}
+		if len(holders) > 0 {
+			return fmt.Errorf("keep container %s: volume %s is in use by %s", id, volumeName, strings.Join(holders, ", "))
+		}
 	}
 
 	if err := docker.ContainerRemove(ctx, id, client.ContainerRemoveOptions{}); err != nil {
@@ -159,16 +177,37 @@ func rmContainerWithVolumes(ctx context.Context, id string) error {
 		return fmt.Errorf("remove container %s: %w", id, err)
 	}
 
-	for _, name := range volumeNames {
-		if err := docker.VolumeRm(ctx, name, false); err != nil {
-			if cerrdefs.IsNotFound(err) {
-				continue
-			}
-			return fmt.Errorf("remove volume %s: %w", name, err)
-		}
+	if volumeName == "" {
+		return nil
+	}
+
+	// A conflict here is a container that appeared after the check above.
+	if err := docker.VolumeRm(ctx, volumeName, false); err != nil && !cerrdefs.IsNotFound(err) {
+		return fmt.Errorf("remove volume %s: %w", volumeName, err)
 	}
 
 	return nil
+}
+
+// volumeHolders returns the ids of the containers other than exceptID that
+// reference the volume.
+func volumeHolders(ctx context.Context, volumeName, exceptID string) ([]string, error) {
+	containers, err := docker.Containers(ctx, client.ContainerListOptions{
+		All:     true,
+		Filters: make(client.Filters).Add("volume", volumeName),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("list containers using volume %s: %w", volumeName, err)
+	}
+
+	var holders []string
+	for _, c := range containers {
+		if c.ID != exceptID {
+			holders = append(holders, c.ID)
+		}
+	}
+
+	return holders, nil
 }
 
 func rmiIfExist(ctx context.Context) error {
@@ -200,7 +239,7 @@ func InstallBinPath() string {
 	return embeddedBinPath("install")
 }
 
-func ChownBinPath(_ context.Context) string {
+func ChownBinPath() string {
 	return embeddedBinPath("chown")
 }
 

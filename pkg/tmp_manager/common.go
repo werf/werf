@@ -3,6 +3,7 @@ package tmp_manager
 import (
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/werf/werf/v3/pkg/werf"
 )
@@ -13,6 +14,11 @@ const (
 	kubeConfigsServiceDir       = "kubeconfigs"
 	werfConfigRendersServiceDir = "werf_config_renders"
 	contextArchivesDir          = "context"
+	contextPinsServiceDir       = "context_pins"
+
+	// contextPinMaxAge is the age past which an unregistered context pin dir is considered orphaned:
+	// a build that takes longer than that loses its pin.
+	contextPinMaxAge = time.Hour * 24
 )
 
 var (
@@ -22,6 +28,7 @@ var (
 	dockerConfigDirPrefix  = commonPrefix + "docker-config-"
 	kubeConfigDirPrefix    = commonPrefix + "kubeconfig-"
 	werfConfigRenderPrefix = commonPrefix + "config-render-"
+	contextPinDirPrefix    = commonPrefix + "context-pin-"
 )
 
 func getServiceTmpDir() string {
