@@ -41,6 +41,12 @@ const (
 	EventRegistryTagsSharedResult Event = "registry tags shared result"
 )
 
+// IsRegistryEvent reports whether the event counts registry API requests rather
+// than stages; the build report and the console summary keep the two apart.
+func IsRegistryEvent(ctx context.Context, event Event) bool {
+	return event == EventRegistryTagsCacheHit || event == EventRegistryTagsSharedResult
+}
+
 type ctxKeyType struct{}
 
 var ctxKey ctxKeyType
