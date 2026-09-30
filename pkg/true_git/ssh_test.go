@@ -1,6 +1,7 @@
 package true_git
 
 import (
+	"bytes"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -8,6 +9,9 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"github.com/werf/logboek"
+	"github.com/werf/logboek/pkg/level"
 )
 
 var _ = Describe("Ssh multiplexing", func() {
@@ -248,7 +252,12 @@ var _ = Describe("Ssh multiplexing", func() {
 		Expect(gitSSHCommand(NewGitCmd(ctx, nil, "version"))).To(BeEmpty())
 	})
 
-	DescribeTable("uses an available SHA-256 implementation", func(ctx SpecContext, available, expected []string) {
+	DescribeTable("uses an available SHA-256 implementation", func(specCtx SpecContext, available, expected []string) {
+		var log bytes.Buffer
+		logger := logboek.NewLogger(&log, &log)
+		logger.SetAcceptedLevel(level.Default)
+		ctx := logboek.NewContext(specCtx, logger)
+
 		GinkgoT().Setenv("TMPDIR", shortTempDir())
 		binDir := shortTempDir()
 		for _, name := range []string{"git", "ssh", "sh"} {
@@ -267,9 +276,11 @@ var _ = Describe("Ssh multiplexing", func() {
 		command := gitSSHCommand(NewGitCmd(ctx, nil, "version"))
 		if len(expected) == 0 {
 			Expect(command).To(BeEmpty())
+			Expect(log.String()).To(ContainSubstring("sha256sum, openssl or shasum"))
 			return
 		}
 		Expect(command).NotTo(BeEmpty())
+		Expect(log.String()).NotTo(ContainSubstring("sha256sum, openssl or shasum"))
 		cmd := exec.CommandContext(ctx, "/bin/sh", "-c", command+` "$@"`, "ssh", "-G", "-F", os.DevNull, "werf-probe", "true")
 		output, err := cmd.Output()
 		Expect(err).NotTo(HaveOccurred())
