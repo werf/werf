@@ -330,7 +330,7 @@ annotations:
 
 `external=true` always treats the dependency as an external resource. With the default `external=auto`, a dependency that matches no release resource is also treated as external, so a mistyped selector waits for a cluster resource instead of failing. To order deletion after an external resource is gone, use `werf.io/delete-dependency-<name>` with `state=absent`.
 
-See [Waiting for non-release (external) resources]({{ "/usage/deploy/deployment_order.html" | true_relative_url }}) and [Resource dependencies]({{ "/reference/deploy_annotations.html#resource-dependencies" | true_relative_url }}).
+See [Waiting for non-release (external) resources]({{ "/usage/deploy/deployment_order.html#waiting-for-non-release-external-resources-werf-only" | true_relative_url }}) and [Resource dependencies]({{ "/reference/deploy_annotations.html#resource-dependencies" | true_relative_url }}).
 
 ### Resource deletion and recreation
 
