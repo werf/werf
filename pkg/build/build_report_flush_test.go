@@ -2,8 +2,6 @@ package build
 
 import (
 	"context"
-	"encoding/json"
-	"os"
 	"path/filepath"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -19,35 +17,47 @@ var _ = Describe("createBuildReport operations flush", func() {
 
 		opstats.Observe(ctx, opstats.OperationStageBuild)()
 		opstats.CountEvent(ctx, opstats.EventStageBuilt)
+		opstats.CountEvent(ctx, opstats.EventRegistryTagsCacheHit)
 
-		failPhase := NewBuildPhase(nil, BuildPhaseOptions{BuildOptions: BuildOptions{
-			ReportPath:   filepath.Join(GinkgoT().TempDir(), "missing-dir", "report.json"),
-			ReportFormat: ReportJSON,
-		}})
+		failPhase := newReportPhase(filepath.Join(GinkgoT().TempDir(), "missing-dir", "report.json"))
 		Expect(createBuildReport(ctx, failPhase, nil)).To(HaveOccurred())
 
 		opstats.Observe(ctx, opstats.OperationStageBuild)()
 		opstats.CountEvent(ctx, opstats.EventStageBuilt)
+		opstats.CountEvent(ctx, opstats.EventRegistryTagsCacheHit)
 
 		reportPath := filepath.Join(GinkgoT().TempDir(), "report.json")
-		okPhase := NewBuildPhase(nil, BuildPhaseOptions{BuildOptions: BuildOptions{
-			ReportPath:   reportPath,
-			ReportFormat: ReportJSON,
-		}})
-		Expect(createBuildReport(ctx, okPhase, nil)).To(Succeed())
+		Expect(createBuildReport(ctx, newReportPhase(reportPath), nil)).To(Succeed())
 
-		data, err := os.ReadFile(reportPath)
-		Expect(err).NotTo(HaveOccurred())
-
-		var decoded struct {
-			Operations map[string]ReportOperationRecord
-			StageCache map[string]int
-		}
-		Expect(json.Unmarshal(data, &decoded)).To(Succeed())
+		decoded := readOperationsReport(reportPath)
 		Expect(decoded.Operations[string(opstats.OperationStageBuild)].Count).To(Equal(2))
-		Expect(decoded.StageCache[string(opstats.EventStageBuilt)]).To(Equal(2))
+		Expect(decoded.StageCache).To(Equal(map[string]int{string(opstats.EventStageBuilt): 2}))
+		Expect(decoded.RegistryCache).To(Equal(map[string]int{string(opstats.EventRegistryTagsCacheHit): 2}))
 
 		Expect(collector.PendingSummary(ctx)).To(BeEmpty())
 		Expect(collector.PendingEventSummary(ctx)).To(BeEmpty())
+	})
+
+	It("reports only the counters recorded since the previous report", func() {
+		collector := opstats.NewCollector()
+		ctx := opstats.NewContext(context.Background(), collector)
+
+		opstats.CountEvent(ctx, opstats.EventStageBuilt)
+		opstats.CountEvent(ctx, opstats.EventRegistryTagsCacheHit)
+		Expect(createBuildReport(ctx, newReportPhase(filepath.Join(GinkgoT().TempDir(), "first.json")), nil)).To(Succeed())
+
+		opstats.CountEvent(ctx, opstats.EventRegistryTagsSharedResult)
+		secondPath := filepath.Join(GinkgoT().TempDir(), "second.json")
+		Expect(createBuildReport(ctx, newReportPhase(secondPath), nil)).To(Succeed())
+
+		decoded := readOperationsReport(secondPath)
+		Expect(decoded.StageCache).To(BeEmpty())
+		Expect(decoded.RegistryCache).To(Equal(map[string]int{string(opstats.EventRegistryTagsSharedResult): 1}))
+
+		Expect(collector.EventSummary()).To(ConsistOf(
+			opstats.EventSummary{Event: opstats.EventStageBuilt, Count: 1},
+			opstats.EventSummary{Event: opstats.EventRegistryTagsCacheHit, Count: 1},
+			opstats.EventSummary{Event: opstats.EventRegistryTagsSharedResult, Count: 1},
+		))
 	})
 })

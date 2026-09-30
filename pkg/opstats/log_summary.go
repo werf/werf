@@ -5,13 +5,15 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/samber/lo"
+
 	"github.com/werf/logboek"
 	stylePkg "github.com/werf/logboek/pkg/style"
 	"github.com/werf/logboek/pkg/types"
 )
 
-// LogSummary prints the operations and stage cache summary blocks. The timeLabel names the
-// elapsed scope (e.g. "build time", "command time"). No-op when the collector is nil.
+// LogSummary prints the operations, stage cache and registry cache summary blocks. The timeLabel
+// names the elapsed scope (e.g. "build time", "command time"). No-op when the collector is nil.
 func LogSummary(ctx context.Context, collector *Collector, timeLabel string, elapsed time.Duration) {
 	if collector == nil {
 		return
@@ -36,12 +38,19 @@ func LogSummary(ctx context.Context, collector *Collector, timeLabel string, ela
 			})
 	}
 
-	events := collector.EventSummary()
+	registryEvents, stageEvents := lo.FilterReject(collector.EventSummary(), func(e EventSummary, _ int) bool {
+		return IsRegistryEvent(ctx, e.Event)
+	})
+	logEventsBlock(ctx, "Stage cache summary", "stage(s)", stageEvents)
+	logEventsBlock(ctx, "Registry cache summary", "request(s)", registryEvents)
+}
+
+func logEventsBlock(ctx context.Context, title, unit string, events []EventSummary) {
 	if len(events) == 0 {
 		return
 	}
 
-	logboek.Context(ctx).LogBlock("Stage cache summary").
+	logboek.Context(ctx).LogBlock(title).
 		Options(func(options types.LogBlockOptionsInterface) {
 			options.Style(stylePkg.Highlight())
 		}).
@@ -49,10 +58,8 @@ func LogSummary(ctx context.Context, collector *Collector, timeLabel string, ela
 			var total int
 			for _, e := range events {
 				total += e.Count
+				logboek.Context(ctx).LogFHighlight("- %-30s %5d %s\n", e.Event, e.Count, unit)
 			}
-			for _, e := range events {
-				logboek.Context(ctx).LogFHighlight("- %-30s %5d stage(s)\n", e.Event, e.Count)
-			}
-			logboek.Context(ctx).LogFHighlight("total: %d stage(s)\n", total)
+			logboek.Context(ctx).LogFHighlight("total: %d %s\n", total, unit)
 		})
 }

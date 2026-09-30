@@ -552,9 +552,11 @@ The JSON report contains detailed information about the build:
 
 * **Operations** — aggregated timings of low-level operations collected for the whole command run (stage build, image pull/push, registry API calls, git operations, werf config render, giterminism initialization, stage lock waits and so on). Populated only when the `--build-report-operations` flag (`$WERF_BUILD_REPORT_OPERATIONS`) is set or debug logging is enabled (`--log-debug`). For each operation: the number of calls (`Count`), summed duration across parallel workers (`TotalTimeSeconds`), wall-clock duration as the union of possibly overlapping intervals (`WallTimeSeconds`), average (`AvgTimeSeconds`) and maximum (`MaxTimeSeconds`) durations. The console summary covers the whole command run, while a saved report covers the operations recorded since the previous report of the same command: with `--follow` each report includes everything since the previous one — the polling between builds and failed retry attempts included.
 
-* **StageCache** — per-source counters of how stages were satisfied during the build: found in the local or repo stages storage, copied from a secondary storage, or built. Populated only when the `--build-report-operations` flag (`$WERF_BUILD_REPORT_OPERATIONS`) is set or debug logging is enabled (`--log-debug`).
+* **StageCache** — per-source counters of how stages were satisfied during the build, counted in stages: found in the local or repo stages storage, copied from a secondary storage, or built. Populated only when the `--build-report-operations` flag (`$WERF_BUILD_REPORT_OPERATIONS`) is set or debug logging is enabled (`--log-debug`).
 
-Example report in JSON format (the `Operations` and `StageCache` sections are present because the report was generated with `--build-report-operations`):
+* **RegistryCache** — counters of tag-list requests using a cached or shared result: `registry tags cache hit` (the listing came from the in-memory tags cache) and `registry tags shared result` (the result was shared by concurrent requests for the same repository). A shared result is counted for every caller, including the one that initiated the registry request, so this is not a count of avoided network requests. These counters are kept apart from `StageCache` because they count requests, not stages. Populated only when the `--build-report-operations` flag (`$WERF_BUILD_REPORT_OPERATIONS`) is set or debug logging is enabled (`--log-debug`), and omitted when no such request was recorded. Both cache sections follow the same rules as `Operations`: the console summary covers the whole command run, while a saved report covers only the interval since the previous report of the same command.
+
+Example report in JSON format (the `Operations`, `StageCache` and `RegistryCache` sections are present because the report was generated with `--build-report-operations`):
 
 ```json
 {
@@ -663,6 +665,10 @@ Example report in JSON format (the `Operations` and `StageCache` sections are pr
   },
   "StageCache": {
     "built": 2
+  },
+  "RegistryCache": {
+    "registry tags cache hit": 3,
+    "registry tags shared result": 1
   }
 }
 ```
