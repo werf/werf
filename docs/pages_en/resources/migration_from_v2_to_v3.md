@@ -382,7 +382,7 @@ The old `.Values.global.env` key can render as an empty value without an error. 
 
 Without replacing `HELM_DRIVER`, werf uses its default release storage rather than the storage previously selected by that variable.
 
-**Helm's path variables are no longer read.** `HELM_CACHE_HOME`, `HELM_CONFIG_HOME` and `HELM_DATA_HOME` are ignored: the chart repository list and the chart cache are located via `XDG_CONFIG_HOME` and `XDG_CACHE_HOME`, by default `~/.config/helm` and `~/.cache/helm` on Linux. Repositories added in v2 under a custom `HELM_CONFIG_HOME` are not visible to `werf helm repo` and `werf helm dependency` until they are added again or `XDG_CONFIG_HOME` points to the same directory.
+**Helm's path variables are no longer read.** `HELM_CACHE_HOME`, `HELM_CONFIG_HOME` and `HELM_DATA_HOME` are ignored: the chart repository list and the chart cache are located via `XDG_CONFIG_HOME` and `XDG_CACHE_HOME`, by default `~/.config/helm` and `~/.cache/helm` on Linux. These XDG variables specify parent directories: for example, with `XDG_CONFIG_HOME=/custom/config`, werf reads `/custom/config/helm/repositories.yaml`, not `/custom/config/repositories.yaml`. To reuse repositories added in v2 under a custom `HELM_CONFIG_HOME`, copy their `repositories.yaml` into the new `helm` directory, or add the repositories again. Setting `XDG_CONFIG_HOME` to the old `HELM_CONFIG_HOME` alone does not preserve the location.
 
 ### Charts and bundles
 

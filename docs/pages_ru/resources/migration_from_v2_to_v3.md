@@ -382,7 +382,7 @@ annotations:
 
 Без замены `HELM_DRIVER` werf использует хранилище релизов по умолчанию, а не ранее указанное этой переменной.
 
-**Переменные путей Helm больше не читаются.** `HELM_CACHE_HOME`, `HELM_CONFIG_HOME` и `HELM_DATA_HOME` игнорируются: список репозиториев чартов и кеш чартов ищутся через `XDG_CONFIG_HOME` и `XDG_CACHE_HOME`, по умолчанию `~/.config/helm` и `~/.cache/helm` в Linux. Репозитории, добавленные в v2 при нестандартном `HELM_CONFIG_HOME`, не видны `werf helm repo` и `werf helm dependency`, пока их не добавят заново или `XDG_CONFIG_HOME` не укажет на тот же каталог.
+**Переменные путей Helm больше не читаются.** `HELM_CACHE_HOME`, `HELM_CONFIG_HOME` и `HELM_DATA_HOME` игнорируются: список репозиториев чартов и кеш чартов ищутся через `XDG_CONFIG_HOME` и `XDG_CACHE_HOME`, по умолчанию `~/.config/helm` и `~/.cache/helm` в Linux. Эти переменные XDG задают родительские каталоги: например, при `XDG_CONFIG_HOME=/custom/config` werf читает `/custom/config/helm/repositories.yaml`, а не `/custom/config/repositories.yaml`. Чтобы использовать репозитории, добавленные в v2 при нестандартном `HELM_CONFIG_HOME`, скопируйте их `repositories.yaml` в новый каталог `helm` или добавьте репозитории заново. Одного присваивания `XDG_CONFIG_HOME` прежнего значения `HELM_CONFIG_HOME` недостаточно для сохранения пути.
 
 ### Чарты и бандлы
 
