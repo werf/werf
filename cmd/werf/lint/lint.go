@@ -161,6 +161,7 @@ func runLint(ctx context.Context, imageNameListFromArgs []string) error {
 			Options: true_git.Options{LiveGitOutput: *commonCmdData.LogDebug},
 		},
 		InitProcessContainerBackend: true,
+		RequireDockerDaemon:         true,
 		InitWerf:                    true,
 		InitGitDataManager:          true,
 		InitManifestCache:           true,

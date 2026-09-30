@@ -134,6 +134,7 @@ func runMain(ctx context.Context, imageNameListFromArgs []string) error {
 		},
 		InitDockerRegistry:          true,
 		InitProcessContainerBackend: true,
+		RequireDockerDaemon:         true,
 		InitSSHAgent:                true,
 	})
 	if err != nil {

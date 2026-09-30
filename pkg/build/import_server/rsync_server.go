@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	dockercontainer "github.com/moby/moby/api/types/container"
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v3/pkg/config"
@@ -120,13 +121,31 @@ func RunRsyncServer(ctx context.Context, dockerImageName, tmpDir, targetPlatform
 	if inspect, err := docker.ContainerInspect(ctx, srv.DockerContainerName); err != nil {
 		return nil, fmt.Errorf("unable to inspect import server container %s: %w", srv.DockerContainerName, err)
 	} else {
-		if inspect.NetworkSettings == nil {
-			return nil, fmt.Errorf("unable to get import server container %s ip address: no network settings available in inspect", srv.DockerContainerName)
+		ipAddress, err := bridgeNetworkIPAddress(inspect.NetworkSettings)
+		if err != nil {
+			return nil, fmt.Errorf("unable to get import server container %s ip address: %w", srv.DockerContainerName, err)
 		}
-		srv.IPAddress = inspect.NetworkSettings.Networks["bridge"].IPAddress.String()
+		srv.IPAddress = ipAddress
 	}
 
 	return srv, nil
+}
+
+func bridgeNetworkIPAddress(settings *dockercontainer.NetworkSettings) (string, error) {
+	if settings == nil {
+		return "", fmt.Errorf("no network settings available in inspect")
+	}
+
+	bridge, ok := settings.Networks["bridge"]
+	if !ok || bridge == nil {
+		return "", fmt.Errorf("container is not attached to the bridge network")
+	}
+
+	if !bridge.IPAddress.IsValid() {
+		return "", fmt.Errorf("bridge network reports no ip address")
+	}
+
+	return bridge.IPAddress.String(), nil
 }
 
 func (srv *RsyncServer) Shutdown(ctx context.Context) error {

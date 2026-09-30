@@ -14,7 +14,7 @@ import (
 	"github.com/werf/werf/v3/pkg/docker"
 )
 
-var _ = ginkgo.DescribeTable("InitProcessDocker checks the daemon API before using it", func(apiVersion, expectedError string, alreadyBound bool) {
+var _ = ginkgo.DescribeTable("InitProcessDocker checks the daemon API only when the command needs the daemon", func(apiVersion, expectedError string, alreadyBound, requireDaemon bool) {
 	oldDockerConfigDir, oldCLIConfigDir := docker.DockerConfigDir, cliconfig.Dir()
 	ginkgo.DeferCleanup(func() {
 		docker.DockerConfigDir = oldDockerConfigDir
@@ -62,7 +62,7 @@ var _ = ginkgo.DescribeTable("InitProcessDocker checks the daemon API before usi
 	if apiVersion == "unavailable" {
 		server.Close()
 	}
-	boundCtx, err := InitProcessDocker(ctx, cmdData)
+	boundCtx, err := InitProcessDocker(ctx, cmdData, InitProcessDockerOptions{RequireDaemon: requireDaemon})
 	if apiVersion != "unavailable" {
 		gomega.Expect(pings.Load()).NotTo(gomega.BeZero())
 	}
@@ -76,10 +76,13 @@ var _ = ginkgo.DescribeTable("InitProcessDocker checks the daemon API before usi
 	gomega.Expect(err).NotTo(gomega.HaveOccurred())
 	gomega.Expect(docker.IsContext(boundCtx)).To(gomega.BeTrue())
 },
-	ginkgo.Entry("supported API version", "1.40", "", false),
-	ginkgo.Entry("unsupported API version", "1.39", "minimum supported API version is 1.40", false),
-	ginkgo.Entry("missing API version header", "", "did not report an API version", false),
-	ginkgo.Entry("already bound context cannot bypass the guard", "1.39", "minimum supported API version is 1.40", true),
-	ginkgo.Entry("unavailable daemon remains optional", "unavailable", "", false),
-	ginkgo.Entry("unavailable daemon remains optional for bound context", "unavailable", "", true),
+	ginkgo.Entry("supported API version", "1.40", "", false, true),
+	ginkgo.Entry("unsupported API version", "1.39", "minimum supported API version is 1.40", false, true),
+	ginkgo.Entry("unsupported API version is tolerated by registry-only commands", "1.39", "", false, false),
+	ginkgo.Entry("missing API version header", "", "did not report an API version", false, true),
+	ginkgo.Entry("missing API version header is tolerated by registry-only commands", "", "", false, false),
+	ginkgo.Entry("already bound context cannot bypass the guard", "1.39", "minimum supported API version is 1.40", true, true),
+	ginkgo.Entry("already bound context is tolerated by registry-only commands", "1.39", "", true, false),
+	ginkgo.Entry("unavailable daemon remains optional", "unavailable", "", false, true),
+	ginkgo.Entry("unavailable daemon remains optional for bound context", "unavailable", "", true, true),
 )

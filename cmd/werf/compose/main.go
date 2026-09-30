@@ -370,6 +370,7 @@ func runMain(ctx context.Context, dockerComposeCmdName string, cmdData composeCm
 		},
 		InitDockerRegistry:          true,
 		InitProcessContainerBackend: true,
+		RequireDockerDaemon:         true,
 		InitWerf:                    true,
 		InitGitDataManager:          true,
 		InitManifestCache:           true,
