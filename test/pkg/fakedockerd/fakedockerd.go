@@ -145,7 +145,7 @@ func (d *Daemon) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (d *Daemon) listContainers(w http.ResponseWriter, rawFilters string) {
-	nameFilters, err := parseNameFilters(rawFilters)
+	filters, err := parseContainerFilters(rawFilters)
 	if err != nil {
 		d.writeError(w, http.StatusNotImplemented, fmt.Sprintf("fake daemon: %s", err))
 		return
@@ -160,10 +160,19 @@ func (d *Daemon) listContainers(w http.ResponseWriter, rawFilters string) {
 			continue
 		}
 
-		matches := len(nameFilters) == 0 || slices.ContainsFunc(nameFilters, func(f string) bool {
+		matchesName := len(filters["name"]) == 0 || slices.ContainsFunc(filters["name"], func(f string) bool {
 			return strings.Contains(c.Name, f)
 		})
-		if !matches {
+		if !matchesName {
+			continue
+		}
+
+		matchesVolume := len(filters["volume"]) == 0 || slices.ContainsFunc(filters["volume"], func(f string) bool {
+			return slices.ContainsFunc(c.Mounts, func(m container.MountPoint) bool {
+				return m.Type == "volume" && m.Name == f
+			})
+		})
+		if !matchesVolume {
 			continue
 		}
 
@@ -173,9 +182,10 @@ func (d *Daemon) listContainers(w http.ResponseWriter, rawFilters string) {
 	d.writeJSON(w, http.StatusOK, summaries)
 }
 
-// Values of the same filter key are OR-ed by the daemon; a key other than name
-// is rejected instead of silently widening the result.
-func parseNameFilters(rawFilters string) ([]string, error) {
+// Values of the same filter key are OR-ed by the daemon, different keys are
+// AND-ed; an unsupported key is rejected instead of silently widening the
+// result.
+func parseContainerFilters(rawFilters string) (map[string][]string, error) {
 	if rawFilters == "" {
 		return nil, nil
 	}
@@ -190,19 +200,19 @@ func parseNameFilters(rawFilters string) ([]string, error) {
 		return nil, fmt.Errorf("parse filters %q: %w", query, err)
 	}
 
-	var names []string
+	filters := make(map[string][]string, len(parsed))
 	for key, values := range parsed {
-		if key != "name" {
+		if key != "name" && key != "volume" {
 			return nil, fmt.Errorf("unsupported container filter %q", key)
 		}
 		for value, enabled := range values {
 			if enabled {
-				names = append(names, value)
+				filters[key] = append(filters[key], value)
 			}
 		}
 	}
 
-	return names, nil
+	return filters, nil
 }
 
 func (d *Daemon) createContainer(w http.ResponseWriter) {

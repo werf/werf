@@ -75,7 +75,7 @@ var _ = ginkgo.Describe("stapel purge", func() {
 			nil,
 			nil,
 		),
-		ginkgo.Entry("container without an actual volume at the stapel mount point",
+		ginkgo.Entry("container of its own without an actual volume at the stapel mount point",
 			[]dockercontainer.InspectResponse{
 				fakeContainer("no-mounts", containerName(getVersion(), "linux/amd64"), ImageName()),
 				fakeContainer("wrong-destination", containerName(getVersion(), "linux/arm64"), ImageName(),
@@ -85,7 +85,7 @@ var _ = ginkgo.Describe("stapel purge", func() {
 					dockercontainer.MountPoint{Type: "bind", Name: "vol-bind", Destination: containerVolumeDestination},
 				),
 			},
-			nil,
+			[]string{"no-mounts", "wrong-destination", "bind-mount"},
 			nil,
 		),
 	)
@@ -126,22 +126,44 @@ var _ = ginkgo.Describe("stapel purge", func() {
 		gomega.Expect(daemon.RemovedVolumes(ctx)).To(gomega.BeEmpty())
 	})
 
-	ginkgo.It("keeps the volumes of a container that could not be removed", func() {
+	ginkgo.It("keeps a container that could not be removed, and its volume", func() {
 		ctx := context.Background()
 		daemon := &fakedockerd.Daemon{
 			Containers: []dockercontainer.InspectResponse{
-				fakeContainer("running", containerName(getVersion(), ""), ImageName(), stapelVolumeMount("vol-running")),
+				fakeContainer("stuck", containerName(getVersion(), ""), ImageName(), stapelVolumeMount("vol-stuck")),
 			},
-			ContainerRemoveStatus: map[string]int{"running": http.StatusConflict},
+			ContainerRemoveStatus: map[string]int{"stuck": http.StatusConflict},
 		}
 		dockerCtx := fakedockerd.NewContext(ctx, daemon)
 
-		gomega.Expect(Purge(dockerCtx)).To(gomega.MatchError(gomega.ContainSubstring("remove container running")))
+		gomega.Expect(Purge(dockerCtx)).To(gomega.MatchError(gomega.ContainSubstring("remove container stuck")))
 
+		gomega.Expect(daemon.RemovedContainers(ctx)).To(gomega.BeEmpty())
 		gomega.Expect(daemon.RemovedVolumes(ctx)).To(gomega.BeEmpty())
 	})
 
-	ginkgo.It("reports a stapel volume still held by a container werf does not own", func() {
+	ginkgo.It("removes the remaining stapel containers after a failure and reports every failure", func() {
+		ctx := context.Background()
+		daemon := &fakedockerd.Daemon{
+			Containers: []dockercontainer.InspectResponse{
+				fakeContainer("stuck-container", containerName(getVersion(), "linux/amd64"), ImageName(), stapelVolumeMount("vol-stuck-container")),
+				fakeContainer("stuck-volume", containerName(getVersion(), "linux/arm64"), ImageName(), stapelVolumeMount("vol-stuck-volume")),
+				fakeContainer("last", containerName(getVersion(), "linux/arm/v7"), ImageName(), stapelVolumeMount("vol-last")),
+			},
+			ContainerRemoveStatus: map[string]int{"stuck-container": http.StatusConflict},
+			VolumeRemoveStatus:    map[string]int{"vol-stuck-volume": http.StatusConflict},
+		}
+		dockerCtx := fakedockerd.NewContext(ctx, daemon)
+
+		err := Purge(dockerCtx)
+
+		gomega.Expect(err).To(gomega.MatchError(gomega.ContainSubstring("remove container stuck-container")))
+		gomega.Expect(err).To(gomega.MatchError(gomega.ContainSubstring("remove volume vol-stuck-volume")))
+		gomega.Expect(daemon.RemovedContainers(ctx)).To(gomega.ConsistOf("stuck-volume", "last"))
+		gomega.Expect(daemon.RemovedVolumes(ctx)).To(gomega.ConsistOf("vol-last"))
+	})
+
+	ginkgo.It("keeps a stapel container whose volume another container holds, and purges both once the holder is gone", func() {
 		ctx := context.Background()
 		daemon := &fakedockerd.Daemon{
 			Containers: []dockercontainer.InspectResponse{
@@ -151,10 +173,18 @@ var _ = ginkgo.Describe("stapel purge", func() {
 		}
 		dockerCtx := fakedockerd.NewContext(ctx, daemon)
 
-		gomega.Expect(Purge(dockerCtx)).To(gomega.MatchError(gomega.ContainSubstring("remove volume vol-shared")))
+		gomega.Expect(Purge(dockerCtx)).To(gomega.MatchError(gomega.ContainSubstring("keep container stapel: volume vol-shared is in use by foreign")))
+
+		gomega.Expect(daemon.RemovedContainers(ctx)).To(gomega.BeEmpty())
+		gomega.Expect(daemon.RemovedVolumes(ctx)).To(gomega.BeEmpty())
+
+		// The owner of the foreign container takes it down between the two purges.
+		daemon.Containers = daemon.Containers[:1]
+
+		gomega.Expect(Purge(dockerCtx)).To(gomega.Succeed())
 
 		gomega.Expect(daemon.RemovedContainers(ctx)).To(gomega.ConsistOf("stapel"))
-		gomega.Expect(daemon.RemovedVolumes(ctx)).To(gomega.BeEmpty())
+		gomega.Expect(daemon.RemovedVolumes(ctx)).To(gomega.ConsistOf("vol-shared"))
 	})
 
 	ginkgo.DescribeTable("tolerates objects that disappeared concurrently",
