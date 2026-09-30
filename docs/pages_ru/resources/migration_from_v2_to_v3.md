@@ -311,12 +311,9 @@ werf v3 больше не использует сервер синхрониза
 
 ### Аннотации внешних зависимостей
 
-**Обязательно, если вы ожидаете ресурсы вне релиза:** аннотации `<name>.external-dependency.werf.io/resource` и `<name>.external-dependency.werf.io/namespace` больше не поддерживаются. werf выводит предупреждение и не ждёт ресурс. Замените их на `werf.io/deploy-dependency-<name>`, указав `kind`, `version`, `name` и, для ресурса с группой, `group`:
+**Обязательно, если вы ожидаете ресурсы вне релиза:** аннотации `<name>.external-dependency.werf.io/resource` и `<name>.external-dependency.werf.io/namespace` больше не поддерживаются. werf выводит предупреждение и не ждёт ресурс. Замените их на `werf.io/deploy-dependency-<name>`, указав `kind`, `version`, `name` и, для ресурса с группой, `group`.
 
-<table>
-<thead><tr><th scope="col">Было — v2</th><th scope="col">Стало — v3</th></tr></thead>
-<tbody><tr>
-<td markdown="1">
+Было — v2:
 
 ```yaml
 annotations:
@@ -324,17 +321,12 @@ annotations:
   secret.external-dependency.werf.io/namespace: vault
 ```
 
-</td>
-<td markdown="1">
+Стало — v3:
 
 ```yaml
 annotations:
   werf.io/deploy-dependency-secret: state=ready,kind=Secret,version=v1,name=my-vault-secret,namespace=vault,external=true
 ```
-
-</td>
-</tr></tbody>
-</table>
 
 `external=true` всегда считает зависимость внешним ресурсом. При значении по умолчанию `external=auto` зависимость, не совпавшая ни с одним ресурсом релиза, тоже считается внешней, поэтому опечатка в селекторе приводит к ожиданию ресурса в кластере, а не к ошибке. Чтобы удалять ресурс только после исчезновения внешнего, используйте `werf.io/delete-dependency-<name>` со `state=absent`.
 

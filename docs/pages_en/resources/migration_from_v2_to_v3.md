@@ -311,12 +311,9 @@ If you need an exception, use `--resource-validation-skip`; disable all resource
 
 ### External dependency annotations
 
-**Required if you wait for resources outside the release:** the `<name>.external-dependency.werf.io/resource` and `<name>.external-dependency.werf.io/namespace` annotations are no longer supported. werf prints a warning and does not wait for the resource. Replace them with `werf.io/deploy-dependency-<name>`, specifying `kind`, `version`, `name` and, for a group resource, `group`:
+**Required if you wait for resources outside the release:** the `<name>.external-dependency.werf.io/resource` and `<name>.external-dependency.werf.io/namespace` annotations are no longer supported. werf prints a warning and does not wait for the resource. Replace them with `werf.io/deploy-dependency-<name>`, specifying `kind`, `version`, `name` and, for a group resource, `group`.
 
-<table>
-<thead><tr><th scope="col">Before — v2</th><th scope="col">After — v3</th></tr></thead>
-<tbody><tr>
-<td markdown="1">
+Before — v2:
 
 ```yaml
 annotations:
@@ -324,17 +321,12 @@ annotations:
   secret.external-dependency.werf.io/namespace: vault
 ```
 
-</td>
-<td markdown="1">
+After — v3:
 
 ```yaml
 annotations:
   werf.io/deploy-dependency-secret: state=ready,kind=Secret,version=v1,name=my-vault-secret,namespace=vault,external=true
 ```
-
-</td>
-</tr></tbody>
-</table>
 
 `external=true` always treats the dependency as an external resource. With the default `external=auto`, a dependency that matches no release resource is also treated as external, so a mistyped selector waits for a cluster resource instead of failing. To order deletion after an external resource is gone, use `werf.io/delete-dependency-<name>` with `state=absent`.
 
