@@ -100,3 +100,80 @@ func (f *fakePrimaryStagesStorage) PostLastCleanupRecord(_ context.Context, proj
 	f.lastCleanupRecords = append(f.lastCleanupRecords, projectName)
 	return nil
 }
+
+var (
+	_ manager.StorageManagerInterface = (*snapshotStorageManager)(nil)
+	_ storage.PrimaryStagesStorage    = (*snapshotMetaStorage)(nil)
+)
+
+type snapshotStorageManager struct {
+	*fakeStorageManager
+	metaSnapshot    *snapshotMetaStorage
+	final           storage.StagesStorage
+	publish         bool
+	published       bool
+	primarySnapshot image.StageDescSet
+	finalErr        error
+	events          []string
+	metadataNames   []string
+}
+
+type snapshotMetaStorage struct {
+	*fakePrimaryStagesStorage
+	manager *snapshotStorageManager
+	shared  bool
+}
+
+func newSnapshotStorageManager(splitMeta bool) *snapshotStorageManager {
+	m := &snapshotStorageManager{fakeStorageManager: newFakeStorageManager(), publish: true}
+	m.metaSnapshot = &snapshotMetaStorage{fakePrimaryStagesStorage: newFakePrimaryStagesStorage(), manager: m, shared: !splitMeta}
+	m.final = m.metaSnapshot
+	return m
+}
+
+func (m *snapshotStorageManager) GetMetaStorage() storage.PrimaryStagesStorage { return m.metaSnapshot }
+func (m *snapshotStorageManager) GetFinalStagesStorage() storage.StagesStorage { return m.final }
+
+func (m *snapshotStorageManager) snapshotPrimary() image.StageDescSet {
+	if m.primarySnapshot == nil {
+		m.primarySnapshot = image.NewStageDescSet()
+		if m.published {
+			m.primarySnapshot.Add(newTestStageDesc("primary", image.NewStageID("new-stage", 1)))
+		}
+	}
+	return m.primarySnapshot
+}
+
+func (m *snapshotStorageManager) GetStageDescSetWithCache(context.Context) (image.StageDescSet, error) {
+	m.events = append(m.events, "primary")
+	return m.snapshotPrimary(), nil
+}
+
+func (m *snapshotStorageManager) GetFinalStageDescSet(context.Context) (image.StageDescSet, error) {
+	m.events = append(m.events, "final")
+	if m.finalErr != nil {
+		return nil, m.finalErr
+	}
+	m.published = m.publish
+	return image.NewStageDescSet(newTestStageDesc("final", image.NewStageID("new-stage", 1))), nil
+}
+
+func (s *snapshotMetaStorage) GetManagedImages(context.Context, string, ...storage.Option) ([]string, error) {
+	s.manager.events = append(s.manager.events, "managed")
+	if s.shared {
+		s.manager.snapshotPrimary()
+	}
+	return []string{"shared", "published", "shared"}, nil
+}
+
+func (s *snapshotMetaStorage) GetAllAndGroupImageMetadataByImageName(_ context.Context, _ string, names []string, _ ...storage.Option) (map[string]map[string][]string, map[string]map[string][]string, error) {
+	s.manager.metadataNames = append([]string(nil), names...)
+	return nil, nil, nil
+}
+
+func (s *snapshotMetaStorage) Address() string { return "final" }
+func (s *snapshotMetaStorage) String() string  { return "final" }
+
+func (f *fakePrimaryStagesStorage) GetManagedImages(context.Context, string, ...storage.Option) ([]string, error) {
+	return nil, nil
+}

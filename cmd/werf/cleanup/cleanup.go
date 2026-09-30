@@ -210,12 +210,6 @@ func runCleanup(ctx context.Context, cmd *cobra.Command) error {
 		storageManager.EnableParallel(int(common.GetParallelTasksLimit(&commonCmdData)))
 	}
 
-	imagesNames, err := common.GetManagedImagesNames(ctx, projectName, storageManager.GetMetaStorage(), werfConfig)
-	if err != nil {
-		return err
-	}
-	logboek.Debug().LogF("Managed images names: %v\n", imagesNames)
-
 	var kubernetesContextClients []*cleaning.ContextClient
 	var kubernetesNamespacesByContext map[string][]string
 	if !(*commonCmdData.WithoutKube || werfConfig.Meta.Cleanup.DisableKubernetesBasedPolicy) {
@@ -251,7 +245,7 @@ func runCleanup(ctx context.Context, cmd *cobra.Command) error {
 	}
 
 	cleanupOptions := cleaning.CleanupOptions{
-		ImageNameList:                   imagesNames,
+		ImageNameList:                   werfConfig.GetImageNameList(false),
 		LocalGit:                        giterminismManager.LocalGitRepo().(*git_repo.Local),
 		KubernetesContextClients:        kubernetesContextClients,
 		KubernetesNamespacesByContext:   kubernetesNamespacesByContext,
