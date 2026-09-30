@@ -201,6 +201,10 @@ func InstallBinPath() string {
 	return embeddedBinPath("install")
 }
 
+func ChownBinPath(_ context.Context) string {
+	return embeddedBinPath("chown")
+}
+
 func XargsBinPath() string {
 	return embeddedBinPath("xargs")
 }
