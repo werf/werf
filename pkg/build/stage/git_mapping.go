@@ -385,7 +385,7 @@ getPathsLoop:
 		return nil, err
 	}
 
-	applyArchiveCommands, err := gm.applyArchiveCommand(ctx, archiveFile, archiveType)
+	applyArchiveCommands, err := gm.applyArchiveCommand(archiveFile, archiveType)
 	if err != nil {
 		return nil, err
 	}
@@ -409,7 +409,7 @@ func quoteShellArg(arg string) string {
 	return arg
 }
 
-func (gm *GitMapping) applyArchiveCommand(ctx context.Context, archiveFile *ContainerFileDescriptor, archiveType git_repo.ArchiveType) ([]string, error) {
+func (gm *GitMapping) applyArchiveCommand(archiveFile *ContainerFileDescriptor, archiveType git_repo.ArchiveType) ([]string, error) {
 	var unpackArchiveDirectory string
 	commands := make([]string, 0)
 
@@ -491,7 +491,7 @@ func (gm *GitMapping) applyArchiveCommand(ctx context.Context, archiveFile *Cont
 		"%s --null --no-run-if-empty --arg-file=%s %s --no-dereference -- %s",
 		stapel.XargsBinPath(),
 		quoteShellArg(path.Join(gm.ContainerScriptsDir, filepath.Base(pathsFile.Name()))),
-		stapel.ChownBinPath(ctx),
+		stapel.ChownBinPath(),
 		quoteShellArg(owner+":"+group),
 	))
 
@@ -700,7 +700,7 @@ func (gm *GitMapping) baseApplyArchiveCommand(ctx context.Context, commit string
 		return nil, err
 	}
 
-	commands, err := gm.applyArchiveCommand(ctx, archiveFile, archiveType)
+	commands, err := gm.applyArchiveCommand(archiveFile, archiveType)
 	if err != nil {
 		return nil, err
 	}

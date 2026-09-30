@@ -2,7 +2,6 @@ package stage
 
 import (
 	"archive/tar"
-	"context"
 	"os"
 	"path/filepath"
 	"strings"
@@ -36,7 +35,7 @@ var _ = ginkgo.Describe("Git archive mapping ownership", func() {
 			mapping.Owner, mapping.Group, mapping.To = owner, group, destination
 			mapping.ScriptsDir = filepath.Join(dir, "scripts")
 			mapping.ContainerScriptsDir = "/scripts"
-			commands, err := mapping.applyArchiveCommand(context.Background(), &ContainerFileDescriptor{FilePath: archivePath, ContainerFilePath: "/archives/shared.tar"}, archiveType)
+			commands, err := mapping.applyArchiveCommand(&ContainerFileDescriptor{FilePath: archivePath, ContainerFilePath: "/archives/shared.tar"}, archiveType)
 			gomega.Expect(err).NotTo(gomega.HaveOccurred())
 			gomega.Expect(commands).To(gomega.HaveLen(3))
 			gomega.Expect(commands[1]).To(gomega.ContainSubstring("--no-same-owner"))
