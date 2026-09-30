@@ -293,7 +293,7 @@ var _ = ginkgo.DescribeTable("GitLab deletion authentication", func(allowWildcar
 		gomega.Expect(err).To(gomega.MatchError(gomega.ContainSubstring("UNAUTHORIZED")))
 	}
 	gomega.Expect(requests).To(gomega.Equal(expectedRequests))
-	gomega.Expect(scopes).To(gomega.HaveLen(len(expectedRequests)))
+	gomega.Expect(scopes).To(gomega.HaveLen(2))
 	gomega.Expect(scopes[0]).To(gomega.And(gomega.ContainSubstring("push"), gomega.ContainSubstring("pull"), gomega.ContainSubstring("delete")))
 	gomega.Expect(scopes[1:]).To(gomega.HaveEach("repository:project/image:*"))
 },

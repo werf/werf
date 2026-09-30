@@ -193,7 +193,7 @@ func (r *gitLabRegistry) customDeleteRepoImage(endpointFormat, reference string,
 	}
 
 	scope := scopeFunc(ref)
-	tr, err := transport.New(ref.Context().Registry, auth, r.api.httpTransport, scope)
+	tr, err := transport.New(ref.Context().Registry, auth, newBearerTokenTransport(r.api.httpTransport, r.api.bearerTokens, ref.Context().RegistryStr(), r.api.SkipTlsVerifyRegistry), scope)
 	if err != nil {
 		return err
 	}

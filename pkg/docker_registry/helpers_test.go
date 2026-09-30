@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -148,6 +149,55 @@ var _ http.RoundTripper = bearerRoundTripperFunc(nil)
 
 func (roundTrip bearerRoundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) {
 	return roundTrip(req)
+}
+
+// newForeignChallengeTransport returns a bearer transport talking to a registry that answers every
+// request with its own bearer challenge, while any other host answers with foreignScope's
+// challenge, plus the number of token exchanges served.
+func newForeignChallengeTransport(registryHost, registryScope, foreignScope string) (*bearerTokenTransport, *atomic.Int64) {
+	return newForeignChallengesTransport(registryHost, registryScope, bearerChallenge(foreignScope))
+}
+
+func bearerChallenge(scope string) string {
+	return fmt.Sprintf(`Bearer realm="https://auth.example.test/token",service="fixture",scope=%q`, scope)
+}
+
+// newForeignChallengesTransport is newForeignChallengeTransport with the foreign host answering
+// with several WWW-Authenticate challenges, given verbatim.
+func newForeignChallengesTransport(registryHost, registryScope string, foreignChallenges ...string) (*bearerTokenTransport, *atomic.Int64) {
+	var exchanges atomic.Int64
+	inner := bearerRoundTripperFunc(func(req *http.Request) (*http.Response, error) {
+		resp := &http.Response{Request: req, Body: io.NopCloser(strings.NewReader("")), Header: make(http.Header)}
+		switch {
+		case req.URL.Path == "/token":
+			exchanges.Add(1)
+			resp.StatusCode = http.StatusOK
+			resp.Body = io.NopCloser(strings.NewReader(`{"token":"fixture-token","expires_in":300}`))
+		case req.URL.Host == registryHost:
+			resp.StatusCode = http.StatusUnauthorized
+			resp.Header.Set("WWW-Authenticate", bearerChallenge(registryScope))
+		default:
+			resp.StatusCode = http.StatusUnauthorized
+			for _, challenge := range foreignChallenges {
+				resp.Header.Add("WWW-Authenticate", challenge)
+			}
+		}
+		return resp, nil
+	})
+
+	return newBearerTokenTransport(inner, newBearerTokenCache(), registryHost, false), &exchanges
+}
+
+func bearerTokenURL(scope string) string {
+	return "https://auth.example.test/token?service=fixture&scope=" + url.QueryEscape(scope)
+}
+
+func roundTripBearerGet(transport http.RoundTripper, requestURL string) {
+	req, err := http.NewRequest(http.MethodGet, requestURL, nil)
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+	resp, err := transport.RoundTrip(req)
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+	gomega.Expect(resp.Body.Close()).To(gomega.Succeed())
 }
 
 var _ Interface = (*listingRegistryStub)(nil)

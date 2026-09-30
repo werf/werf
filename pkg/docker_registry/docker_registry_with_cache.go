@@ -38,7 +38,7 @@ type DockerRegistryWithCache struct {
 
 // AddCachedTag records a tag published to the registry outside the registry client, so that the
 // next cached tags lookup sees it. It only updates an already cached listing, never creates one,
-// and never refreshes its freshness timestamp.
+// and never refreshes its freshness timestamp. A reference that is not a tagged one is ignored.
 func AddCachedTag(ctx context.Context, registry Interface, reference string) {
 	r, ok := registry.(*DockerRegistryWithCache)
 	if !ok {
@@ -47,10 +47,12 @@ func AddCachedTag(ctx context.Context, registry Interface, reference string) {
 
 	referenceParts, err := r.parseReferenceParts(reference)
 	if err != nil {
-		panic(fmt.Sprintf("unexpected reference %q: %s", reference, err))
+		logboek.Context(ctx).Debug().LogF("Not adding published reference %q to the tags cache: %s\n", reference, err)
+		return
 	}
-	if referenceParts.tag == "" {
-		panic(fmt.Sprintf("unexpected reference %q: tag required", reference))
+	if referenceParts.tag == "" || referenceParts.digest != "" {
+		logboek.Context(ctx).Debug().LogF("Not adding published reference %q to the tags cache: not a tagged reference\n", reference)
+		return
 	}
 	cachedTagsID := strings.Join([]string{referenceParts.registry, referenceParts.repository}, "/")
 

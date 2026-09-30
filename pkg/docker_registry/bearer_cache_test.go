@@ -274,7 +274,109 @@ var _ = Describe("registry bearer reuse", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(tags).To(Equal([]string{"latest"}))
 		}
-		Expect(fixture.exchanges.Load()).To(BeNumerically(">", rejectedThrough.Load()))
+		Expect(fixture.exchanges.Load()).To(Equal(rejectedThrough.Load() + 2))
+	})
+
+	It("keeps caching the registry's own tokens when a redirected host rejects one", func() {
+		const registryHost = "registry.example.test"
+		const registryScope = "repository:repo:pull"
+		const mirrorScope = "repository:mirror/repo:pull"
+		transport, exchanges := newForeignChallengeTransport(registryHost, registryScope, mirrorScope)
+
+		roundTripBearerGet(transport, "https://"+registryHost+"/v2/")
+		roundTripBearerGet(transport, bearerTokenURL(registryScope))
+		Expect(exchanges.Load()).To(Equal(int64(1)))
+
+		roundTripBearerGet(transport, "https://mirror.example.test/v2/repo/tags/list")
+
+		roundTripBearerGet(transport, bearerTokenURL(registryScope))
+		Expect(exchanges.Load()).To(Equal(int64(1)))
+
+		for i := range 2 {
+			roundTripBearerGet(transport, bearerTokenURL(mirrorScope))
+			Expect(exchanges.Load()).To(Equal(int64(2 + i)))
+		}
+	})
+
+	It("keeps caching the registry's own tokens when a redirected host demands several scopes", func() {
+		const registryHost = "registry.example.test"
+		const registryScope = "repository:repo:pull"
+		const mirrorScopes = "repository:mirror/repo:pull repository:mirror/other:pull"
+		transport, exchanges := newForeignChallengeTransport(registryHost, registryScope, mirrorScopes)
+
+		roundTripBearerGet(transport, "https://"+registryHost+"/v2/")
+		roundTripBearerGet(transport, bearerTokenURL(registryScope))
+		Expect(exchanges.Load()).To(Equal(int64(1)))
+
+		roundTripBearerGet(transport, "https://mirror.example.test/v2/repo/tags/list")
+
+		// go-containerregistry sends the challenge's scope value as a single scope query parameter.
+		for i := range 2 {
+			roundTripBearerGet(transport, bearerTokenURL(mirrorScopes))
+			Expect(exchanges.Load()).To(Equal(int64(2 + i)))
+		}
+
+		roundTripBearerGet(transport, bearerTokenURL(registryScope))
+		Expect(exchanges.Load()).To(Equal(int64(3)))
+	})
+
+	It("keeps caching the registry's own tokens when a redirected host sends a realmless challenge first", func() {
+		const registryHost = "registry.example.test"
+		const registryScope = "repository:repo:pull"
+		const decoyScope = "repository:decoy:pull"
+		const mirrorScope = "repository:mirror/repo:pull"
+		// go-containerregistry exchanges through the first bearer challenge carrying a realm.
+		transport, exchanges := newForeignChallengesTransport(registryHost, registryScope,
+			fmt.Sprintf(`Bearer service="fixture",scope=%q`, decoyScope),
+			bearerChallenge(mirrorScope),
+		)
+
+		roundTripBearerGet(transport, "https://"+registryHost+"/v2/")
+		roundTripBearerGet(transport, bearerTokenURL(registryScope))
+		Expect(exchanges.Load()).To(Equal(int64(1)))
+
+		roundTripBearerGet(transport, "https://mirror.example.test/v2/repo/tags/list")
+
+		for i := range 2 {
+			roundTripBearerGet(transport, bearerTokenURL(mirrorScope))
+			Expect(exchanges.Load()).To(Equal(int64(2 + i)))
+		}
+
+		roundTripBearerGet(transport, bearerTokenURL(registryScope))
+		Expect(exchanges.Load()).To(Equal(int64(3)))
+	})
+
+	It("serves parallel rejections and token requests", func() {
+		const registryHost = "registry.example.test"
+		const registryScope = "repository:repo:pull"
+		const mirrorScope = "repository:mirror/repo:pull"
+		transport, exchanges := newForeignChallengeTransport(registryHost, registryScope, mirrorScope)
+
+		roundTripBearerGet(transport, "https://"+registryHost+"/v2/")
+		roundTripBearerGet(transport, "https://mirror.example.test/v2/repo/tags/list")
+
+		var wg sync.WaitGroup
+		for i := range 16 {
+			wg.Add(2)
+			go func() {
+				defer GinkgoRecover()
+				defer wg.Done()
+				roundTripBearerGet(transport, fmt.Sprintf("https://mirror%d.example.test/v2/repo/tags/list", i))
+			}()
+			go func() {
+				defer GinkgoRecover()
+				defer wg.Done()
+				roundTripBearerGet(transport, bearerTokenURL(mirrorScope))
+			}()
+		}
+		wg.Wait()
+
+		Expect(exchanges.Load()).To(Equal(int64(16)))
+
+		for range 2 {
+			roundTripBearerGet(transport, bearerTokenURL(registryScope))
+		}
+		Expect(exchanges.Load()).To(Equal(int64(17)))
 	})
 
 	DescribeTable("matches only equivalent registry authorities on bearer rejection", func(resourceURL string, expectedExchanges int64) {
