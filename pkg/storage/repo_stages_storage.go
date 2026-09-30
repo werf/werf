@@ -1189,10 +1189,8 @@ func (storage *RepoStagesStorage) PostManifest(ctx context.Context, ref string, 
 		labels[parts[0]] = parts[1]
 	}
 
-	// The scratch stage image is the base of every stage built on top of it. Its layer media type
-	// must match the manifest media type the build backend produces for descendants: a Docker layer
-	// under an OCI manifest, which is what the docker backend with the containerd image store
-	// assembles, is rejected by every containers/image consumer.
+	// The scratch stage is the base of its descendants, and the docker backend with the containerd
+	// image store keeps its layer descriptor under the OCI manifests it assembles for them.
 	if err := storage.DockerRegistry.PushImage(ctx, ref, &docker_registry.PushImageOptions{
 		Labels:         labels,
 		ManifestFormat: container_registry_extensions.ManifestFormatOCI,
