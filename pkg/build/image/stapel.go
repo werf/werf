@@ -129,8 +129,6 @@ func initStages(ctx context.Context, image *Image, metaConfig *config.Meta, stap
 	}
 
 	if len(gitMappings) != 0 {
-		logboek.Context(ctx).Info().LogLnDetails("Using git stages")
-
 		for _, s := range stages {
 			s.SetGitMappings(gitMappings)
 		}

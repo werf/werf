@@ -1304,16 +1304,21 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, s
 	}
 	stg.SetDigest(stageDigest)
 
-	logboek.Context(ctx).Info().LogProcessInline("Lock parallel conveyor tasks by stage digest %s", stg.LogDetailedName()).
-		Options(func(options types.LogProcessInlineOptionsInterface) {
-			if !phase.Conveyor.Parallel {
-				options.Mute()
-			}
-		}).
-		Do(func() {
-			defer opstats.Observe(ctx, opstats.OperationStageDigestLockWait)()
-			phase.Conveyor.GetStageDigestMutex(stg.GetDigest()).Lock()
-		})
+	func() {
+		defer opstats.Observe(ctx, opstats.OperationStageDigestLockWait)()
+		stageMutex := phase.Conveyor.GetStageDigestMutex(stg.GetDigest())
+		if stageMutex.TryLock() {
+			return
+		}
+
+		logboek.Context(ctx).Info().LogProcessInline("Waiting for parallel conveyor task using stage %s", stg.LogDetailedName()).
+			Options(func(options types.LogProcessInlineOptionsInterface) {
+				if !phase.Conveyor.Parallel {
+					options.Mute()
+				}
+			}).
+			Do(stageMutex.Lock)
+	}()
 
 	storageManager := phase.Conveyor.StorageManager
 	var stageDescSet imagePkg.StageDescSet

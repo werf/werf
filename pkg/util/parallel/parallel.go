@@ -40,11 +40,10 @@ func DoTasks(ctx context.Context, numberOfTasks int, options DoTasksOptions, tas
 		for workerTaskId := 0; workerTaskId < numberOfTasksPerWorker[worker.ID]; workerTaskId++ {
 			select {
 			case <-workerCtx.Done():
-				logboek.Context(ctx).Debug().LogF("parallel: canceling worker %d with ctx %p for task %d/%d (%d)\n", worker.ID, workerCtx, workerTaskId, numberOfTasksPerWorker[worker.ID], numberOfTasks)
+				logboek.Context(ctx).Debug().LogF("parallel: canceling worker %d for task %d/%d (%d)\n", worker.ID, workerTaskId, numberOfTasksPerWorker[worker.ID], numberOfTasks)
 				return workerCtx.Err()
 			default:
 				taskId := calculateTaskId(numberOfTasks, numberOfWorkers, worker.ID, workerTaskId)
-				logboek.Context(ctx).Debug().LogF("parallel: running worker %d with ctx %p for task %d/%d (%d)\n", worker.ID, workerCtx, workerTaskId, numberOfTasksPerWorker[worker.ID], numberOfTasks)
 
 				if err := runTask(taskId); err != nil {
 					return NewWorkerError(worker.ID, err)
@@ -86,7 +85,7 @@ func DoTasksDynamic(ctx context.Context, options DoTasksOptions, next NextTaskFu
 		for {
 			select {
 			case <-workerCtx.Done():
-				logboek.Context(ctx).Debug().LogF("parallel: canceling worker %d with ctx %p\n", worker.ID, workerCtx)
+				logboek.Context(ctx).Debug().LogF("parallel: canceling worker %d\n", worker.ID)
 				return workerCtx.Err()
 			default:
 			}
@@ -98,8 +97,6 @@ func DoTasksDynamic(ctx context.Context, options DoTasksOptions, next NextTaskFu
 			if !ok {
 				return nil
 			}
-
-			logboek.Context(ctx).Debug().LogF("parallel: running worker %d with ctx %p for task %d\n", worker.ID, workerCtx, taskId)
 
 			if err := runTask(taskId); err != nil {
 				return NewWorkerError(worker.ID, err)
