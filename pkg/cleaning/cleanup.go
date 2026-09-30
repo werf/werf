@@ -3,6 +3,7 @@ package cleaning
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -28,6 +29,7 @@ import (
 )
 
 type CleanupOptions struct {
+	// ImageNameList contains configured names; published names are discovered during cleanup.
 	ImageNameList                   []string
 	LocalGit                        GitRepo
 	KubernetesContextClients        []*ContextClient
@@ -93,18 +95,27 @@ type GitRepo interface {
 }
 
 func (m *cleanupManager) init(ctx context.Context) error {
-	if err := logboek.Context(ctx).Info().LogProcess("Fetching manifests").DoError(func() error {
-		return m.stageManager.InitStageDescSet(ctx, m.StorageManager)
-	}); err != nil {
-		return err
-	}
-
 	if m.StorageManager.GetFinalStagesStorage() != nil {
 		if err := logboek.Context(ctx).Info().LogProcess("Fetching final repo manifests").DoError(func() error {
 			return m.stageManager.InitFinalStageDescSet(ctx, m.StorageManager)
 		}); err != nil {
 			return err
 		}
+	}
+
+	// This listing also primes the metadata/primary tag cache, so final must be captured first.
+	publishedNames, err := m.StorageManager.GetMetaStorage().GetManagedImages(ctx, m.ProjectName)
+	if err != nil {
+		return fmt.Errorf("get managed images for project %q: %w", m.ProjectName, err)
+	}
+	m.ImageNameList = util.UniqStrings(append(publishedNames, m.ImageNameList...))
+	sort.Strings(m.ImageNameList)
+	logboek.Context(ctx).Debug().LogF("Managed images names: %v\n", m.ImageNameList)
+
+	if err := logboek.Context(ctx).Info().LogProcess("Fetching manifests").DoError(func() error {
+		return m.stageManager.InitStageDescSet(ctx, m.StorageManager)
+	}); err != nil {
+		return err
 	}
 
 	if err := logboek.Context(ctx).Info().LogProcess("Fetching metadata").DoError(func() error {

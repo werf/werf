@@ -1,0 +1,35 @@
+project: werf-test-e2e-build-git-ownership
+configVersion: 1
+
+{{- define "base" }}
+from: registry.werf.io/base/ubuntu:22.04
+shell:
+  beforeInstall:
+  - "mkdir -p /outside /app"
+  - "echo outside > /outside/target"
+  - "chown 3001:3002 /outside/target"
+  - "echo base > /app/base-file"
+  - "chown 4001:4002 /app/base-file"
+  install:
+  - "echo installed > /sentinel"
+{{- end }}
+
+---
+image: img-default
+{{ include "base" . }}
+git:
+- add: /app-src
+  to: /app
+  stageDependencies:
+    install: []
+
+---
+image: img-owned
+{{ include "base" . }}
+git:
+- add: /app-src
+  to: /app
+  stageDependencies:
+    install: []
+  owner: 1001
+  group: 1002
