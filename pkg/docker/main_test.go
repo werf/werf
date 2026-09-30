@@ -141,11 +141,54 @@ var _ = ginkgo.Describe("Docker API connection", func() {
 		ginkgo.Entry("NewContextWithStreams", false),
 	)
 
-	ginkgo.DescribeTable("preserves container creation API requirements", func(apiVersion string, startInterval time.Duration, expectedError string) {
-		var creates atomic.Int32
+	ginkgo.DescribeTable("handles an unavailable daemon without hiding cancellation", func(allowUnavailable, canceled, create bool) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("API-Version", "1.47")
+			w.Header().Set("OSType", "linux")
+		}))
+		ginkgo.DeferCleanup(server.Close)
+		ginkgo.GinkgoT().Setenv("DOCKER_HOST", "tcp://"+server.Listener.Addr().String())
+		gomega.Expect(InitDockerConfig(InitOptions{DockerConfigDir: ginkgo.GinkgoT().TempDir()})).To(gomega.Succeed())
+		bound, err := NewContextWithStreams(context.Background(), io.Discard, io.Discard)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		ginkgo.DeferCleanup(apiCli(bound).Close)
+		ctx, cancel := context.WithCancel(bound)
+		defer cancel()
+		server.Close()
+		if canceled {
+			cancel()
+		}
+		if create {
+			_, err = ContainerCreate(ctx, &dockercontainer.Config{Image: "source"}, &ocispec.Platform{OS: "linux", Architecture: "amd64"}, "target")
+		} else {
+			err = CheckConnection(ctx, CheckConnectionOptions{AllowDaemonUnavailable: allowUnavailable})
+		}
+		if allowUnavailable && !canceled && !create {
+			gomega.Expect(err).NotTo(gomega.HaveOccurred())
+			return
+		}
+		gomega.Expect(err).To(gomega.HaveOccurred())
+		if canceled {
+			gomega.Expect(errors.Is(err, context.Canceled)).To(gomega.BeTrue())
+		} else {
+			gomega.Expect(err.Error()).To(gomega.ContainSubstring("check Docker daemon API"))
+		}
+	},
+		ginkgo.Entry("strict connection check", false, false, false),
+		ginkgo.Entry("optional connection check", true, false, false),
+		ginkgo.Entry("optional check still returns cancellation", true, true, false),
+		ginkgo.Entry("container creation remains strict", false, false, true),
+	)
+
+	ginkgo.DescribeTable("preserves container creation API requirements", func(apiVersion string, startInterval time.Duration, expectedError string, failedInit bool) {
+		var creates, pings atomic.Int32
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			defer ginkgo.GinkgoRecover()
 			if r.URL.Path == "/_ping" {
+				if failedInit && pings.Add(1) <= 2 {
+					http.Error(w, "temporarily unavailable", http.StatusServiceUnavailable)
+					return
+				}
 				w.Header().Set("API-Version", apiVersion)
 				w.Header().Set("OSType", "linux")
 				return
@@ -179,10 +222,13 @@ var _ = ginkgo.Describe("Docker API connection", func() {
 		gomega.Expect(id).To(gomega.Equal("created"))
 		gomega.Expect(creates.Load()).To(gomega.Equal(int32(1)))
 	},
-		ginkgo.Entry("rejects platform on API 1.40", "1.40", time.Duration(0), `"specify container image platform" requires API version 1.41`),
-		ginkgo.Entry("allows platform on API 1.41", "1.41", time.Duration(0), ""),
-		ginkgo.Entry("rejects start interval on API 1.43", "1.43", time.Second, `"specify health-check start interval" requires API version 1.44`),
-		ginkgo.Entry("allows start interval on API 1.44", "1.44", time.Second, ""),
+		ginkgo.Entry("rejects platform on API 1.40", "1.40", time.Duration(0), `"specify container image platform" requires API version 1.41`, false),
+		ginkgo.Entry("allows platform on API 1.41", "1.41", time.Duration(0), "", false),
+		ginkgo.Entry("rejects start interval on API 1.43", "1.43", time.Second, `"specify health-check start interval" requires API version 1.44`, false),
+		ginkgo.Entry("allows start interval on API 1.44", "1.44", time.Second, "", false),
+		ginkgo.Entry("renegotiates platform after failed init", "1.40", time.Duration(0), `"specify container image platform" requires API version 1.41`, true),
+		ginkgo.Entry("renegotiates healthcheck after failed init", "1.43", time.Second, `"specify health-check start interval" requires API version 1.44`, true),
+		ginkgo.Entry("recovers supported daemon after failed init", "1.41", time.Duration(0), "", true),
 	)
 
 	ginkgo.DescribeTable("preserves image load stream responses", func(response, expectedID, expectedError string) {
@@ -312,7 +358,7 @@ var _ = ginkgo.Describe("Docker API connection", func() {
 		ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 		defer cancel()
 		if apiVersion == "1.39" {
-			_, err := api.Ping(ctx, client.PingOptions{NegotiateAPIVersion: true, ForceNegotiate: true})
+			err := CheckConnection(ctx, CheckConnectionOptions{})
 			gomega.Expect(err).To(gomega.HaveOccurred())
 			gomega.Expect(err.Error()).To(gomega.ContainSubstring("minimum supported API version is 1.40"))
 			return
@@ -345,7 +391,7 @@ var _ = ginkgo.Describe("Docker API connection", func() {
 		ginkgo.Entry("rejects TLS hostname mismatch in NewContextWithStreams", "wrong-host", true, false, "1.47"),
 		ginkgo.Entry("minimum Docker API in Init", "stored", false, true, "1.40"),
 		ginkgo.Entry("minimum Docker API in NewContextWithStreams", "stored", false, false, "1.40"),
-		ginkgo.Entry("unsupported Docker API in Init", "stored", false, true, "1.39"),
-		ginkgo.Entry("unsupported Docker API in NewContextWithStreams", "stored", false, false, "1.39"),
+		ginkgo.Entry("connection check rejects unsupported API after Init", "stored", false, true, "1.39"),
+		ginkgo.Entry("connection check rejects unsupported API after NewContextWithStreams", "stored", false, false, "1.39"),
 	)
 })

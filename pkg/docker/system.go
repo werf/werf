@@ -2,11 +2,34 @@ package docker
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/moby/moby/api/types/system"
 	"github.com/moby/moby/client"
+	"github.com/moby/moby/client/pkg/versions"
 )
+
+type CheckConnectionOptions struct {
+	AllowDaemonUnavailable bool
+}
+
+func CheckConnection(ctx context.Context, opts CheckConnectionOptions) error {
+	ping, err := apiCli(ctx).Ping(ctx, client.PingOptions{NegotiateAPIVersion: true})
+	if err != nil {
+		if opts.AllowDaemonUnavailable && ctx.Err() == nil && isDaemonUnavailableErr(err) {
+			return nil
+		}
+		return fmt.Errorf("check Docker daemon API: %w", err)
+	}
+	if ping.APIVersion == "" {
+		return fmt.Errorf("Docker daemon did not report an API version; minimum supported API version is %s", client.MinAPIVersion)
+	}
+	if versions.LessThan(ping.APIVersion, client.MinAPIVersion) {
+		return fmt.Errorf("Docker daemon API version %s is unsupported: minimum supported API version is %s", ping.APIVersion, client.MinAPIVersion)
+	}
+	return nil
+}
 
 func Info(ctx context.Context) (system.Info, error) {
 	result, err := apiCli(ctx).Info(ctx, client.InfoOptions{})

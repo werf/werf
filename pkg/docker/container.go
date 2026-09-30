@@ -53,6 +53,9 @@ func ContainerInspect(ctx context.Context, ref string) (dockercontainer.InspectR
 }
 
 func ContainerCreate(ctx context.Context, config *dockercontainer.Config, platform *ocispec.Platform, name string) (string, error) {
+	if err := CheckConnection(ctx, CheckConnectionOptions{}); err != nil {
+		return "", err
+	}
 	api := apiCli(ctx)
 	version := api.ClientVersion()
 	if platform != nil && versions.LessThan(version, "1.41") {
