@@ -6,6 +6,7 @@ package fakedockerd
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -47,11 +48,17 @@ func NewContext(ctx context.Context, daemon *Daemon) context.Context {
 // A volume exists for the daemon when one of Containers mounts it, and is in
 // use as long as one of those containers has not been removed — the reference
 // counting that makes `docker volume rm` fail with 409 on a real daemon.
+// A fixture container with State.Running set cannot be removed without force,
+// the same 409 the real daemon answers with.
 // Containers created over the API (the cleanup service container of the docker
 // backend) are served, but never recorded as removed: the recorded mutations
 // are the ones performed on the fixtures.
 type Daemon struct {
 	Containers []container.InspectResponse
+
+	// AnonymousVolumes are the volume names the daemon reports as anonymous, the
+	// only ones a container removal with v=1 takes down with the container.
+	AnonymousVolumes []string
 
 	// ContainerInspectStatus, ContainerRemoveStatus and VolumeRemoveStatus make
 	// the daemon answer an inspect/removal of the given container id or volume
@@ -136,9 +143,9 @@ func (d *Daemon) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case r.Method == http.MethodGet && containerInspectPath.MatchString(path):
 		d.inspectContainer(w, containerInspectPath.FindStringSubmatch(path)[1])
 	case r.Method == http.MethodDelete && containerRemovePath.MatchString(path):
-		d.removeContainer(w, containerRemovePath.FindStringSubmatch(path)[1])
+		d.removeContainer(w, containerRemovePath.FindStringSubmatch(path)[1], r.URL.Query())
 	case r.Method == http.MethodDelete && volumeRemovePath.MatchString(path):
-		d.removeVolume(w, volumeRemovePath.FindStringSubmatch(path)[1])
+		d.removeVolume(w, volumeRemovePath.FindStringSubmatch(path)[1], r.URL.Query())
 	default:
 		d.writeError(w, http.StatusNotImplemented, fmt.Sprintf("fake daemon: unexpected request %s %s", r.Method, path))
 	}
@@ -261,22 +268,55 @@ func (d *Daemon) inspectContainer(w http.ResponseWriter, ref string) {
 	d.writeError(w, http.StatusNotFound, fmt.Sprintf("No such container: %s", ref))
 }
 
-func (d *Daemon) removeContainer(w http.ResponseWriter, id string) {
+func (d *Daemon) removeContainer(w http.ResponseWriter, id string, query url.Values) {
+	if query.Get("link") == "1" {
+		d.writeError(w, http.StatusNotImplemented, "fake daemon: link removal is not modeled")
+		return
+	}
+
 	if status, ok := d.ContainerRemoveStatus[id]; ok {
 		d.writeError(w, status, fmt.Sprintf("cannot remove container %q", id))
 		return
 	}
 
 	d.mu.Lock()
-	if slices.ContainsFunc(d.Containers, func(c container.InspectResponse) bool { return c.ID == id }) {
-		d.removedContainers = append(d.removedContainers, id)
+	defer d.mu.Unlock()
+
+	index := slices.IndexFunc(d.Containers, func(c container.InspectResponse) bool { return c.ID == id })
+	if index == -1 {
+		w.WriteHeader(http.StatusNoContent)
+		return
 	}
-	d.mu.Unlock()
+
+	c := d.Containers[index]
+
+	// The message is the one pkg/docker/errors.go recognizes as "container is running".
+	if c.State != nil && c.State.Running && query.Get("force") != "1" {
+		d.writeError(w, http.StatusConflict, fmt.Sprintf("cannot remove container %q: container is running: stop the container before removing or force remove", id))
+		return
+	}
+
+	d.removedContainers = append(d.removedContainers, id)
+
+	// v removes the anonymous volumes of the container only: named volumes outlive
+	// their container, and a volume another container still mounts stays either way.
+	if query.Get("v") == "1" {
+		for _, m := range c.Mounts {
+			if m.Type == "volume" && slices.Contains(d.AnonymousVolumes, m.Name) {
+				_ = d.removeVolumeLocked(m.Name)
+			}
+		}
+	}
 
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (d *Daemon) removeVolume(w http.ResponseWriter, name string) {
+var (
+	errVolumeInUse  = errors.New("volume is in use")
+	errNoSuchVolume = errors.New("no such volume")
+)
+
+func (d *Daemon) removeVolume(w http.ResponseWriter, name string, query url.Values) {
 	if status, ok := d.VolumeRemoveStatus[name]; ok {
 		d.writeError(w, status, fmt.Sprintf("cannot remove volume %q", name))
 		return
@@ -285,6 +325,23 @@ func (d *Daemon) removeVolume(w http.ResponseWriter, name string) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
+	err := d.removeVolumeLocked(name)
+	switch {
+	case err == nil:
+		w.WriteHeader(http.StatusNoContent)
+	case errors.Is(err, errVolumeInUse):
+		d.writeError(w, http.StatusConflict, err.Error())
+	case query.Get("force") == "1":
+		// force makes the daemon ignore a volume that is already gone, nothing else.
+		w.WriteHeader(http.StatusNoContent)
+	default:
+		d.writeError(w, http.StatusNotFound, err.Error())
+	}
+}
+
+// removeVolumeLocked removes the volume if it exists and no container that
+// mounts it is left. d.mu must be held.
+func (d *Daemon) removeVolumeLocked(name string) error {
 	var exists bool
 	for _, c := range d.Containers {
 		if !slices.ContainsFunc(c.Mounts, func(m container.MountPoint) bool { return m.Type == "volume" && m.Name == name }) {
@@ -293,19 +350,17 @@ func (d *Daemon) removeVolume(w http.ResponseWriter, name string) {
 
 		exists = true
 		if !slices.Contains(d.removedContainers, c.ID) {
-			d.writeError(w, http.StatusConflict, fmt.Sprintf("remove %s: volume is in use - [%s]", name, c.ID))
-			return
+			return fmt.Errorf("remove %s: %w - [%s]", name, errVolumeInUse, c.ID)
 		}
 	}
 
 	if !exists || slices.Contains(d.removedVolumes, name) {
-		d.writeError(w, http.StatusNotFound, fmt.Sprintf("get %s: no such volume", name))
-		return
+		return fmt.Errorf("get %s: %w", name, errNoSuchVolume)
 	}
 
 	d.removedVolumes = append(d.removedVolumes, name)
 
-	w.WriteHeader(http.StatusNoContent)
+	return nil
 }
 
 func (d *Daemon) writeJSON(w http.ResponseWriter, status int, body any) {

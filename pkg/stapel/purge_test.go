@@ -126,6 +126,37 @@ var _ = ginkgo.Describe("stapel purge", func() {
 		gomega.Expect(daemon.RemovedVolumes(ctx)).To(gomega.BeEmpty())
 	})
 
+	ginkgo.It("keeps the anonymous volumes of its own container that are not the stapel volume", func() {
+		ctx := context.Background()
+		daemon := &fakedockerd.Daemon{
+			Containers: []dockercontainer.InspectResponse{
+				fakeContainer("extra", containerName(getVersion(), "linux/amd64"), ImageName(),
+					stapelVolumeMount("vol-stapel"),
+					dockercontainer.MountPoint{Type: "volume", Name: "vol-userdata", Destination: "/data"},
+				),
+			},
+			AnonymousVolumes: []string{"vol-userdata"},
+		}
+		dockerCtx := fakedockerd.NewContext(ctx, daemon)
+
+		gomega.Expect(Purge(dockerCtx)).To(gomega.Succeed())
+
+		gomega.Expect(daemon.RemovedVolumes(ctx)).To(gomega.ConsistOf("vol-stapel"))
+	})
+
+	ginkgo.It("keeps a running container and its volume", func() {
+		ctx := context.Background()
+		running := fakeContainer("running", containerName(getVersion(), ""), ImageName(), stapelVolumeMount("vol-running"))
+		running.State = &dockercontainer.State{Running: true}
+		daemon := &fakedockerd.Daemon{Containers: []dockercontainer.InspectResponse{running}}
+		dockerCtx := fakedockerd.NewContext(ctx, daemon)
+
+		gomega.Expect(Purge(dockerCtx)).To(gomega.MatchError(gomega.ContainSubstring("container is running")))
+
+		gomega.Expect(daemon.RemovedContainers(ctx)).To(gomega.BeEmpty())
+		gomega.Expect(daemon.RemovedVolumes(ctx)).To(gomega.BeEmpty())
+	})
+
 	ginkgo.It("keeps a container that could not be removed, and its volume", func() {
 		ctx := context.Background()
 		daemon := &fakedockerd.Daemon{

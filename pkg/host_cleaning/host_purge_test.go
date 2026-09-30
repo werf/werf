@@ -29,19 +29,25 @@ var _ = ginkgo.Describe("HostPurge", func() {
 			To(gomega.BeNumerically("<", indexOfRequest(requests, "DELETE /volumes/vol-old")))
 	})
 
-	ginkgo.It("keeps the volumes werf does not own", func() {
+	ginkgo.It("does not remove volumes through container deletion", func() {
 		ctx := context.Background()
 		initWerfHomeDirs()
 		containers := purgeFixture()
 		containers[0].Mounts = append(containers[0].Mounts, dockercontainer.MountPoint{
 			Type: "volume", Name: "vol-userdata", Destination: "/data",
 		})
-		daemon := &fakedockerd.Daemon{Containers: containers}
+		containers[2].Mounts = append(containers[2].Mounts, dockercontainer.MountPoint{
+			Type: "volume", Name: "vol-buildcache", Destination: "/cache",
+		})
+		daemon := &fakedockerd.Daemon{
+			Containers:       containers,
+			AnonymousVolumes: []string{"vol-userdata", "vol-buildcache"},
+		}
 		dockerCtx := fakedockerd.NewContext(ctx, daemon)
 
 		gomega.Expect(HostPurge(dockerCtx, newTestDockerServerBackend(), HostPurgeOptions{})).To(gomega.Succeed())
 
-		gomega.Expect(daemon.RemovedVolumes(ctx)).NotTo(gomega.ContainElement("vol-userdata"))
+		gomega.Expect(daemon.RemovedVolumes(ctx)).To(gomega.ConsistOf("vol-current", "vol-old"))
 	})
 
 	ginkgo.It("mutates nothing in dry run mode", func() {
