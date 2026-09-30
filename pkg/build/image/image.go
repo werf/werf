@@ -36,6 +36,7 @@ const (
 
 type CommonImageOptions struct {
 	prepareLocalGitRepo func() error
+	loggedGitCommits    map[[2]string]struct{}
 
 	Conveyor           Conveyor
 	GiterminismManager *giterminism_manager.Manager

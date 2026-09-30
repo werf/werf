@@ -241,25 +241,7 @@ func generateGitMappings(ctx context.Context, metaConfig *config.Meta, imageBase
 		gitMappings = append(gitMappings, gitMapping)
 	}
 
-	var res []*stage.GitMapping
-
-	if len(gitMappings) != 0 {
-		err := logboek.Context(ctx).Info().LogProcess("Initializing git mappings").DoError(func() error {
-			resGitMappings, err := filterAndLogGitMappings(ctx, gitMappings, opts.Conveyor)
-			if err != nil {
-				return err
-			}
-
-			res = resGitMappings
-
-			return nil
-		})
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return res, nil
+	return filterAndLogGitMappings(ctx, gitMappings, opts)
 }
 
 func prepareLocalGitRepo(ctx context.Context, metaConfig *config.Meta, localGitRepo git_repo.GitRepo) error {
