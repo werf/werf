@@ -194,12 +194,21 @@ func (e *Exporter) exportMultiplatformImage(ctx context.Context, img *build_imag
 			options.Style(style.Highlight())
 		}).
 		DoError(func() error {
+			stageDesc := img.GetStageDesc()
+			var stagesStorage storage.StagesStorage = e.Conveyor.StorageManager.GetStagesStorage()
+			if finalStageDesc := img.GetFinalStageDesc(); finalStageDesc != nil {
+				// A final image is published to the final repo, so the primary storage
+				// (local, or already cleaned up, in particular) has nothing to export.
+				if finalStagesStorage := e.Conveyor.StorageManager.GetFinalStagesStorage(); finalStagesStorage != nil {
+					stageDesc, stagesStorage = finalStageDesc, finalStagesStorage
+				}
+			}
+
 			for _, tagFunc := range e.ExportTagFuncList {
 				tag := tagFunc(img.Name, img.GetStageID().String())
 				if err := logboek.Context(ctx).Default().LogProcess("tag %s", tag).
 					DoError(func() error {
-						stageDesc := img.GetStageDesc()
-						if err := e.Conveyor.StorageManager.GetStagesStorage().ExportStage(ctx, stageDesc, tag, e.MutateConfigFunc); err != nil {
+						if err := stagesStorage.ExportStage(ctx, stageDesc, tag, e.MutateConfigFunc); err != nil {
 							return fmt.Errorf("unable to export stage %s: %w", stageDesc.StageID.String(), err)
 						}
 

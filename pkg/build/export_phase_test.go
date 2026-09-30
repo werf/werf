@@ -78,6 +78,73 @@ var _ = ginkgo.Describe("Exporter", func() {
 	})
 })
 
+var _ = ginkgo.Describe("Exporter.Run for a multiplatform image", func() {
+	ginkgo.BeforeEach(func() {
+		gomega.Expect(werf.Init(ginkgo.GinkgoT().TempDir(), "")).To(gomega.Succeed())
+	})
+
+	ginkgo.DescribeTable("picks the storage that actually holds the multiplatform image",
+		func(ctx ginkgo.SpecContext, withFinalRepo, publishedToFinalRepo bool) {
+			primaryStagesStorage := newExportStagesStorageStub("registry.example.com/project")
+			finalStagesStorage := newExportStagesStorageStub("registry.example.com/project/final")
+
+			storageManager := &exportStorageManager{stagesStorage: primaryStagesStorage}
+			if withFinalRepo {
+				storageManager.finalStagesStorage = finalStagesStorage
+			}
+
+			primaryDesc := &imagePkg.StageDesc{
+				StageID: imagePkg.NewStageID("index-digest", 0),
+				Info:    &imagePkg.Info{Name: "registry.example.com/project:index-digest", IsIndex: true},
+			}
+			finalDesc := primaryDesc.GetCopy()
+			finalDesc.Info.Name = "registry.example.com/project/final:index-digest"
+
+			images := []*buildImage.Image{
+				newTestImageForPlatform("linux/amd64", "app", true),
+				newTestImageForPlatform("linux/arm64", "app", true),
+			}
+			for _, img := range images {
+				img.SetContentTagDesc(&imagePkg.StageDesc{
+					StageID: imagePkg.NewStageID(img.TargetPlatform, 42),
+					Info:    &imagePkg.Info{Name: "registry.example.com/project:" + img.TargetPlatform},
+				})
+			}
+
+			multiplatformImg := buildImage.NewMultiplatformImage("app", images, 0, 1)
+			multiplatformImg.SetStageDesc(primaryDesc)
+			if publishedToFinalRepo {
+				multiplatformImg.SetFinalStageDesc(finalDesc)
+			}
+
+			phase := newTestBuildPhase(storageManager, []string{"app"})
+			phase.Conveyor.imagesTree.SetImagesGraphForTests(newTestImagesGraph(images...))
+			phase.Conveyor.imagesTree.SetMultiplatformImage(multiplatformImg)
+
+			exporter := NewExporter(phase.Conveyor, ExportOptions{
+				ExportImageNameList: []string{"app"},
+				ExportTagFuncList: []imagePkg.ExportTagFunc{
+					func(name, stageID string) string { return fmt.Sprintf("registry/%s:%s", name, stageID) },
+				},
+			})
+
+			gomega.Expect(exporter.Run(ctx)).To(gomega.Succeed())
+
+			exportedFrom, notExportedFrom, expectedDesc := finalStagesStorage, primaryStagesStorage, finalDesc
+			if !publishedToFinalRepo {
+				exportedFrom, notExportedFrom, expectedDesc = primaryStagesStorage, finalStagesStorage, primaryDesc
+			}
+
+			gomega.Expect(notExportedFrom.exported).To(gomega.BeEmpty())
+			gomega.Expect(exportedFrom.exported).To(gomega.HaveKeyWithValue(
+				fmt.Sprintf("registry/app:%s", multiplatformImg.GetStageID().String()), expectedDesc))
+		},
+		ginkgo.Entry("image published to the final repo", true, true),
+		ginkgo.Entry("final repo configured, image not published there", true, false),
+		ginkgo.Entry("no final repo configured", false, false),
+	)
+})
+
 var _ = ginkgo.Describe("Exporter.RunFromReport", func() {
 	const (
 		primaryRepo = "registry.example.com/project"
