@@ -154,6 +154,7 @@ func run(ctx context.Context, imageNameListFromArgs, tagTemplateList []string, e
 		},
 		InitDockerRegistry:          true,
 		InitProcessContainerBackend: true,
+		RequireDockerDaemon:         true,
 		InitWerf:                    true,
 		InitGitDataManager:          true,
 		InitManifestCache:           true,

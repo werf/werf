@@ -70,6 +70,7 @@ func runReset(ctx context.Context) error {
 		InitGitDataManager:          true,
 		InitManifestCache:           true,
 		InitProcessContainerBackend: true,
+		RequireDockerDaemon:         true,
 	})
 	if err != nil {
 		return fmt.Errorf("component init error: %w", err)

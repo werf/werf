@@ -93,7 +93,7 @@ func wrapContainerBackend(containerBackend container_backend.ContainerBackend) c
 	return containerBackend
 }
 
-func InitProcessContainerBackend(ctx context.Context, cmdData *CmdData, registryMirrors []string) (container_backend.ContainerBackend, context.Context, error) {
+func InitProcessContainerBackend(ctx context.Context, cmdData *CmdData, registryMirrors []string, opts InitProcessDockerOptions) (container_backend.ContainerBackend, context.Context, error) {
 	buildahMode, buildahIsolation, err := GetBuildahMode()
 	if err != nil {
 		return nil, ctx, fmt.Errorf("unable to determine buildah mode: %w", err)
@@ -139,7 +139,7 @@ func InitProcessContainerBackend(ctx context.Context, cmdData *CmdData, registry
 		return wrapContainerBackend(container_backend.NewBuildahBackend(b, container_backend.BuildahBackendOptions{TmpDir: filepath.Join(werf.GetServiceDir(), "tmp", "buildah")})), ctx, nil
 	}
 
-	newCtx, err := InitProcessDocker(ctx, cmdData)
+	newCtx, err := InitProcessDocker(ctx, cmdData, opts)
 	if err != nil {
 		return nil, ctx, fmt.Errorf("unable to init process docker for docker-server container backend: %w", err)
 	}
@@ -148,10 +148,21 @@ func InitProcessContainerBackend(ctx context.Context, cmdData *CmdData, registry
 	return wrapContainerBackend(container_backend.NewDockerServerBackend(werf.HostLocker().Locker())), ctx, nil
 }
 
-func InitProcessDocker(ctx context.Context, cmdData *CmdData) (context.Context, error) {
+// InitProcessDockerOptions.RequireDaemon tells whether the command actually talks to the Docker
+// daemon. Commands which only work with a container registry keep working against a daemon which
+// is too old or not running at all; for the rest an unsupported daemon is reported right away
+// instead of deep inside the first Engine API call. A daemon which is not running at all is
+// tolerated even then: it is only rejected once a command really needs it.
+type InitProcessDockerOptions struct {
+	RequireDaemon bool
+}
+
+func InitProcessDocker(ctx context.Context, cmdData *CmdData, opts InitProcessDockerOptions) (context.Context, error) {
 	if docker.IsContext(ctx) {
-		if err := docker.CheckConnection(ctx, docker.CheckConnectionOptions{AllowDaemonUnavailable: true}); err != nil {
-			return ctx, err
+		if opts.RequireDaemon {
+			if err := docker.CheckConnection(ctx, docker.CheckConnectionOptions{AllowDaemonUnavailable: true}); err != nil {
+				return ctx, err
+			}
 		}
 		return ctx, nil
 	}
@@ -161,7 +172,7 @@ func InitProcessDocker(ctx context.Context, cmdData *CmdData) (context.Context, 
 		defaultPlatform = platforms[0]
 	}
 
-	opts := docker.InitOptions{
+	initOpts := docker.InitOptions{
 		DockerConfigDir: *cmdData.DockerConfig,
 		DefaultPlatform: defaultPlatform,
 		ClaimPlatforms:  cmdData.GetPlatform(),
@@ -169,7 +180,7 @@ func InitProcessDocker(ctx context.Context, cmdData *CmdData) (context.Context, 
 		Debug:           *cmdData.LogDebug,
 	}
 
-	if err := docker.Init(ctx, opts); err != nil {
+	if err := docker.Init(ctx, initOpts); err != nil {
 		return ctx, fmt.Errorf("unable to init docker: %w", err)
 	}
 
@@ -177,8 +188,10 @@ func InitProcessDocker(ctx context.Context, cmdData *CmdData) (context.Context, 
 	if err != nil {
 		return ctx, fmt.Errorf("unable to init context for docker: %w", err)
 	}
-	if err := docker.CheckConnection(ctxWithDockerCli, docker.CheckConnectionOptions{AllowDaemonUnavailable: true}); err != nil {
-		return ctx, err
+	if opts.RequireDaemon {
+		if err := docker.CheckConnection(ctxWithDockerCli, docker.CheckConnectionOptions{AllowDaemonUnavailable: true}); err != nil {
+			return ctx, err
+		}
 	}
 
 	return ctxWithDockerCli, nil

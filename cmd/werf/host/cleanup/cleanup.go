@@ -88,6 +88,7 @@ func runCleanup(ctx context.Context) error {
 			Options: true_git.Options{LiveGitOutput: *commonCmdData.LogDebug},
 		},
 		InitProcessContainerBackend: true,
+		RequireDockerDaemon:         true,
 		InitGitDataManager:          true,
 		InitManifestCache:           true,
 		InitLRUImagesCache:          true,

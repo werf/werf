@@ -148,6 +148,7 @@ func runCopy(ctx context.Context, cmdData copyCmdData) error {
 		InitGitDataManager:          true,
 		InitDockerRegistry:          true,
 		InitProcessContainerBackend: true,
+		RequireDockerDaemon:         true,
 		InitManifestCache:           true,
 		InitLRUImagesCache:          true,
 		InitTrueGitWithOptions: &common.InitTrueGitOptions{

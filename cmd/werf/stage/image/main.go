@@ -96,6 +96,7 @@ func run(ctx context.Context, imageName string) error {
 		},
 		InitDockerRegistry:          true,
 		InitProcessContainerBackend: true,
+		RequireDockerDaemon:         true,
 		InitWerf:                    true,
 		InitGitDataManager:          true,
 		InitManifestCache:           true,
