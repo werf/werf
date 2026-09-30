@@ -2,6 +2,7 @@ package build
 
 import (
 	"context"
+	"encoding/json"
 	"os"
 	"path/filepath"
 
@@ -36,6 +37,28 @@ func writeBuildReport(records ...ReportImageRecord) string {
 	gomega.Expect(os.WriteFile(path, data, 0o644)).To(gomega.Succeed())
 
 	return path
+}
+
+func newReportPhase(reportPath string) *BuildPhase {
+	return NewBuildPhase(nil, BuildPhaseOptions{BuildOptions: BuildOptions{ReportPath: reportPath, ReportFormat: ReportJSON}})
+}
+
+type operationsReport struct {
+	Operations    map[string]ReportOperationRecord
+	StageCache    map[string]int
+	RegistryCache map[string]int
+}
+
+func decodeOperationsReport(data []byte) operationsReport {
+	var decoded operationsReport
+	gomega.Expect(json.Unmarshal(data, &decoded)).To(gomega.Succeed())
+	return decoded
+}
+
+func readOperationsReport(path string) operationsReport {
+	data, err := os.ReadFile(path)
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+	return decodeOperationsReport(data)
 }
 
 type contentDependenciesStub struct {
