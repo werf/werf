@@ -57,7 +57,7 @@ func Init(ctx context.Context, opts InitOptions) error {
 	isDebug = os.Getenv("WERF_DEBUG_DOCKER") == "1"
 	liveCliOutputEnabled = opts.Verbose || opts.Debug
 
-	defaultCLI, err = newDockerCli(defaultCliOptions(ctx))
+	defaultCLI, err = newDockerCli(ctx, defaultCliOptions(ctx))
 	if err != nil {
 		return err
 	}
@@ -102,8 +102,8 @@ func GetRuntimePlatform() string {
 	return runtimePlatform
 }
 
-func newDockerCli(opts []command.CLIOption) (command.Cli, error) {
-	newCli, err := command.NewDockerCli(opts...)
+func newDockerCli(ctx context.Context, opts []command.CLIOption) (command.Cli, error) {
+	newCli, err := command.NewDockerCli(append(opts, command.WithBaseContext(ctx))...)
 	if err != nil {
 		return nil, err
 	}
@@ -183,7 +183,7 @@ func cliOptionsWithStreams(outStream, errStream io.Writer) []command.CLIOption {
 }
 
 func cliWithCustomOptions(ctx context.Context, options []command.CLIOption, f func(cli command.Cli) error) error {
-	customCli, err := newDockerCli(append(defaultCliOptions(ctx), options...))
+	customCli, err := newDockerCli(ctx, append(defaultCliOptions(ctx), options...))
 	if err != nil {
 		return fmt.Errorf("create docker cli: %w", err)
 	}
@@ -201,7 +201,7 @@ func NewContext(ctx context.Context) (context.Context, error) {
 // callers whose logger changes over the lifetime of the cli and who route
 // its output through a writer of their own.
 func NewContextWithStreams(ctx context.Context, outStream, errStream io.Writer) (context.Context, error) {
-	c, err := newDockerCli(cliOptionsWithStreams(outStream, errStream))
+	c, err := newDockerCli(ctx, cliOptionsWithStreams(outStream, errStream))
 	if err != nil {
 		return nil, fmt.Errorf("unable to create docker cli: %w", err)
 	}

@@ -50,12 +50,79 @@ var _ = ginkgo.Describe("Docker API connection", func() {
 		configDir := ginkgo.GinkgoT().TempDir()
 		ginkgo.GinkgoT().Setenv("DOCKER_CERT_PATH", configDir)
 		gomega.Expect(InitDockerConfig(InitOptions{DockerConfigDir: configDir})).To(gomega.Succeed())
-		c, err := newDockerCli(cliOptionsWithStreams(io.Discard, io.Discard))
+		c, err := newDockerCli(context.Background(), cliOptionsWithStreams(io.Discard, io.Discard))
 		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 		api := c.Client()
 		ginkgo.DeferCleanup(api.Close)
 		gomega.Expect(api.DaemonHost()).To(gomega.Equal(client.DefaultDockerHost))
 	})
+
+	ginkgo.DescribeTable("honors cancellation during CLI initialization", func(mode string, canceledBefore bool) {
+		started := make(chan struct{}, 1)
+		var requests atomic.Int32
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			requests.Add(1)
+			select {
+			case started <- struct{}{}:
+			default:
+			}
+			<-r.Context().Done()
+		}))
+		ginkgo.DeferCleanup(server.Close)
+		ginkgo.GinkgoT().Setenv("DOCKER_HOST", "tcp://"+server.Listener.Addr().String())
+		configDir := ginkgo.GinkgoT().TempDir()
+		gomega.Expect(InitDockerConfig(InitOptions{DockerConfigDir: configDir})).To(gomega.Succeed())
+		ctx, cancel := context.WithCancel(context.Background())
+		ginkgo.DeferCleanup(cancel)
+		if canceledBefore {
+			cancel()
+		}
+		done := make(chan struct{})
+		var err error
+		var api client.APIClient
+		go func() {
+			defer close(done)
+			switch mode {
+			case "global":
+				err = Init(ctx, InitOptions{DockerConfigDir: configDir})
+				api = defaultAPIClient
+			case "worker":
+				var bound context.Context
+				bound, err = NewContextWithStreams(ctx, io.Discard, io.Discard)
+				if err == nil {
+					api = apiCli(bound)
+				}
+			case "custom":
+				err = cliWithCustomOptions(ctx, cliOptionsWithStreams(io.Discard, io.Discard), func(c command.Cli) error {
+					api = c.Client()
+					return nil
+				})
+			}
+		}()
+		ginkgo.DeferCleanup(func() {
+			cancel()
+			gomega.Eventually(done, 4*time.Second).Should(gomega.BeClosed())
+			if api != nil {
+				gomega.Expect(api.Close()).To(gomega.Succeed())
+			}
+		})
+		if !canceledBefore {
+			gomega.Eventually(started, time.Second).Should(gomega.Receive())
+			cancel()
+		}
+		gomega.Eventually(done, time.Second).Should(gomega.BeClosed())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		if canceledBefore {
+			gomega.Expect(requests.Load()).To(gomega.BeZero())
+		}
+	},
+		ginkgo.Entry("Init already canceled", "global", true),
+		ginkgo.Entry("Init cancels in-flight ping", "global", false),
+		ginkgo.Entry("worker already canceled", "worker", true),
+		ginkgo.Entry("worker cancels in-flight ping", "worker", false),
+		ginkgo.Entry("custom CLI already canceled", "custom", true),
+		ginkgo.Entry("custom CLI cancels in-flight ping", "custom", false),
+	)
 
 	ginkgo.DescribeTable("returns an error for a missing context", func(global bool) {
 		configDir := ginkgo.GinkgoT().TempDir()
