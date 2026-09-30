@@ -62,6 +62,11 @@ func collectPaths() ([]string, []string, error) {
 		newGCPath(filepath.Join(getCreatedTmpDirs(), kubeConfigsServiceDir), 0),
 		newGCPath(filepath.Join(getCreatedTmpDirs(), werfConfigRendersServiceDir), 0),
 		newGCPath(filepath.Join(getCreatedTmpDirs(), contextArchivesDir), 0),
+		newGCPath(filepath.Join(getCreatedTmpDirs(), contextPinsServiceDir), 0),
+		// A pin dir of a process killed before it delegated the cleanup is never registered, and its
+		// hard link keeps the git archive inode alive after the gitdata LRU evicted the archive. A pin
+		// lives for a single build, so anything older than the threshold is orphaned.
+		newGCPath(filepath.Join(getServiceTmpDir(), contextPinsServiceDir), contextPinMaxAge),
 	}
 
 	dirSlices := make([][]string, 0, len(gcPathList))
