@@ -143,3 +143,12 @@ func (backend *localImageListBackendStub) Images(_ context.Context, options cont
 	backend.options = options
 	return backend.images, backend.err
 }
+
+var _ docker_registry.Interface = (*synchronizationCompetingRegistry)(nil)
+
+type synchronizationCompetingRegistry struct{ docker_registry.Interface }
+
+func (registry *synchronizationCompetingRegistry) PushImage(ctx context.Context, reference string, opts *docker_registry.PushImageOptions) error {
+	replacement := &docker_registry.PushImageOptions{Labels: map[string]string{image.WerfLabel: opts.Labels[image.WerfLabel], synchronizationMarkerFingerprintLabel: strings.Repeat("b", 64)}}
+	return registry.Interface.PushImage(ctx, reference, replacement)
+}
