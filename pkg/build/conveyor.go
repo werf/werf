@@ -34,6 +34,7 @@ import (
 	"github.com/werf/werf/v3/pkg/opstats"
 	"github.com/werf/werf/v3/pkg/storage"
 	"github.com/werf/werf/v3/pkg/storage/manager"
+	"github.com/werf/werf/v3/pkg/storage/synchronization/lock_manager"
 	"github.com/werf/werf/v3/pkg/telemetry"
 	"github.com/werf/werf/v3/pkg/util/parallel"
 )
@@ -60,7 +61,8 @@ type Conveyor struct {
 
 	ContainerBackend container_backend.ContainerBackend
 
-	StorageManager manager.StorageManagerInterface
+	StorageLockManager lock_manager.Interface
+	StorageManager     manager.StorageManagerInterface
 
 	onTerminateFuncs []ConveyorCleanupFunc
 	importServers    map[string]import_server.ImportServer
@@ -88,7 +90,7 @@ type ConveyorOptions struct {
 	BuildReportPath    string
 }
 
-func NewConveyor(werfConfig *config.WerfConfig, giterminismManager giterminism_manager.Interface, projectDir, baseTmpDir string, containerBackend container_backend.ContainerBackend, storageManager manager.StorageManagerInterface, opts ConveyorOptions) *Conveyor {
+func NewConveyor(werfConfig *config.WerfConfig, giterminismManager giterminism_manager.Interface, projectDir, baseTmpDir string, containerBackend container_backend.ContainerBackend, storageManager manager.StorageManagerInterface, storageLockManager lock_manager.Interface, opts ConveyorOptions) *Conveyor {
 	c := &Conveyor{
 		werfConfig: werfConfig,
 
@@ -105,8 +107,9 @@ func NewConveyor(werfConfig *config.WerfConfig, giterminismManager giterminism_m
 		tmpDir:                 filepath.Join(baseTmpDir, util.GenerateConsistentRandomString(10)),
 		importServers:          make(map[string]import_server.ImportServer),
 
-		ContainerBackend: containerBackend,
-		StorageManager:   storageManager,
+		ContainerBackend:   containerBackend,
+		StorageLockManager: storageLockManager,
+		StorageManager:     storageManager,
 
 		ConveyorOptions: opts,
 
@@ -564,7 +567,7 @@ func (c *Conveyor) GetExportedImages() (res []*image.Image) {
 		}
 		res = append(res, img)
 	}
-	return
+	return res
 }
 
 func (c *Conveyor) GetImagesEnvArray() []string {

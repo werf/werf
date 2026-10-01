@@ -46,6 +46,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupGiterminismConfigPath(&commonCmdData, cmd)
 	common.SetupEnvironment(&commonCmdData, cmd)
 
+	common.SetupSynchronization(&commonCmdData, cmd)
 	common.SetupGiterminismOptions(&commonCmdData, cmd)
 
 	common.SetupTmpDir(&commonCmdData, cmd, common.SetupTmpDirOptions{})

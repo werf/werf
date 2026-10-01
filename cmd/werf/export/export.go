@@ -121,6 +121,11 @@ func NewExportCmd(ctx context.Context) *cobra.Command {
 	common.SetupLogOptions(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 
+	common.SetupSynchronization(&commonCmdData, cmd)
+	common.SetupKubeConfigBase64(&commonCmdData, cmd)
+	common.SetupLegacyKubeConfigPath(&commonCmdData, cmd)
+	common.SetupKubeContextCurrent(&commonCmdData, cmd)
+
 	commonCmdData.SetupPlatform(cmd)
 	commonCmdData.SetupBackendNetwork(cmd)
 	commonCmdData.SetupDebugTemplates(cmd)
@@ -224,7 +229,7 @@ func run(ctx context.Context, imageNameListFromArgs, tagTemplateList []string, e
 		return err
 	}
 
-	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, giterminismManager.ProjectDir(), projectTmpDir, containerBackend, storageManager, conveyorOptions)
+	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, giterminismManager.ProjectDir(), projectTmpDir, containerBackend, storageManager, storageManager.StorageLockManager, conveyorOptions)
 	defer conveyorWithRetry.Terminate()
 
 	return conveyorWithRetry.WithRetryBlock(ctx, func(c *build.Conveyor) error {

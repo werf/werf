@@ -133,6 +133,14 @@ func (r *DockerRegistryWithCache) tryLoadTagsFromCache(cachedTagsID string, opts
 
 func (r *DockerRegistryWithCache) getTagsListFromRegistry(ctx context.Context, reference string, opts ...Option) ([]string, error) {
 	cachedTagsID := r.mustGetCachedTagsID(reference)
+	if makeOptions(opts...).freshTags {
+		startedAt := time.Now()
+		tags, err := r.Interface.Tags(ctx, reference, opts...)
+		if err != nil {
+			return nil, fmt.Errorf("fetch fresh tags for repo %q: %w", reference, err)
+		}
+		return r.storeTagsToCache(cachedTagsID, tags, startedAt), nil
+	}
 	if tags, ok := r.tryLoadTagsFromCache(cachedTagsID, opts...); ok {
 		opstats.CountEvent(ctx, opstats.EventRegistryTagsCacheHit)
 		return tags, nil

@@ -150,6 +150,11 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupLogOptions(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 
+	common.SetupSynchronization(&commonCmdData, cmd)
+	common.SetupKubeConfigBase64(&commonCmdData, cmd)
+	common.SetupLegacyKubeConfigPath(&commonCmdData, cmd)
+	common.SetupKubeContextCurrent(&commonCmdData, cmd)
+
 	common.SetupDryRun(&commonCmdData, cmd)
 
 	commonCmdData.SetupPlatform(cmd)
@@ -358,7 +363,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 		return err
 	}
 
-	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, giterminismManager.ProjectDir(), projectTmpDir, containerBackend, storageManager, conveyorOptions)
+	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, giterminismManager.ProjectDir(), projectTmpDir, containerBackend, storageManager, storageManager.StorageLockManager, conveyorOptions)
 	defer conveyorWithRetry.Terminate()
 
 	var dockerImageName string

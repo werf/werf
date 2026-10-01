@@ -18,6 +18,7 @@ import (
 
 var telemetryIgnoreCommands = []string{
 	"werf version",
+	"werf synchronization",
 	"werf completion",
 }
 

@@ -119,6 +119,8 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupBuildReportOperations(&commonCmdData, cmd)
 	common.SetupUseBuildReport(&commonCmdData, cmd)
 
+	common.SetupSynchronization(&commonCmdData, cmd)
+
 	common.SetupLogOptions(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 
@@ -264,7 +266,7 @@ func initConveyorComponents(ctx context.Context, werfConfig *config.WerfConfig, 
 		return nil, build.BuildOptions{}, fmt.Errorf("unable to get conveyor options: %w", err)
 	}
 
-	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, giterminismManager.ProjectDir(), projectTmpDir, containerBackend, storageManager, conveyorOptions)
+	conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, giterminismManager.ProjectDir(), projectTmpDir, containerBackend, storageManager, storageManager.StorageLockManager, conveyorOptions)
 
 	return conveyorWithRetry, buildOptions, nil
 }

@@ -245,7 +245,7 @@ werf config list --final-images-only=false
 
 ### Сервер синхронизации
 
-werf v3 больше не использует сервер синхронизации, включая публичный `synchronization.werf.io`. Если вы запускали собственный сервер, для v3 он больше не нужен. Отключайте его только после перехода всех клиентов, которые им пользуются; оставшимся клиентам v2 он ещё может быть нужен.
+werf v3 сохраняет синхронизацию публикации собираемых образов. Продолжайте использовать общий сервер синхронизации для всех сборщиков, работающих с одним репозиторием. Флаг `--synchronization` / `-S`, переменная `WERF_SYNCHRONIZATION` и команда `werf synchronization` поддерживаются. Для сборок с registry по умолчанию используется публичный сервис `synchronization.werf.io`, для локальных сборок — файловые блокировки.
 
 ### Buildah
 
@@ -459,7 +459,6 @@ werf bundle publish --helm-compatible-chart=false
 
 - Удалены `--virtual-merge` / `WERF_VIRTUAL_MERGE`, `--skip-image-spec-stage` / `WERF_SKIP_IMAGE_SPEC_STAGE`, `--set-runtime-json` и `--show-verbose-diffs`.
 - `--force-adoption` удалён из `werf render` и `werf bundle render`, где он ни на что не влиял. В остальных командах деплоя флаг остаётся.
-- Удалены `--synchronization` / `-S` / `WERF_SYNCHRONIZATION` и группа `werf synchronization` — см. [сервер синхронизации](#сервер-синхронизации).
 - Удалён Helm-режим через `WERF_HELM3_MODE` и запуск бинаря werf под именем `helm`; используйте поддерживаемые команды werf или отдельный Helm CLI.
 - Позиционные имена образов у `converge` и `plan` теперь учитываются без `WERF_CONVERGE_ENABLE_IMAGES_PARAMS`. Проверьте, что случайные аргументы не стали выбирать образы; выбор образов сам по себе не ограничивает набор Kubernetes-ресурсов деплоя.
 

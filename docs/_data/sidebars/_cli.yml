@@ -616,6 +616,9 @@ cli: &cli
 
   - title: Other commands
     f:
+      - title: werf synchronization
+        url: /reference/cli/werf_synchronization.html
+
       - title: werf completion
         url: /reference/cli/werf_completion.html
 

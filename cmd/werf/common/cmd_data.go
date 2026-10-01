@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 
 	"github.com/werf/common-go/pkg/util"
@@ -58,6 +59,7 @@ type CmdData struct {
 	AddCustomTag *[]string
 	UseCustomTag *string
 
+	Synchronization    *string
 	BackendNetwork     *string
 	Parallel           *bool
 	ParallelTasksLimit *int64
@@ -311,7 +313,7 @@ func (cmdData *CmdData) validateHostCleanupFlags() error {
 }
 
 func (cmdData *CmdData) mapLegacyFlags() error {
-	cmdData.KubeConnectionOptions.KubeConfigPaths = append([]string{cmdData.LegacyKubeConfigPath}, cmdData.LegacyKubeConfigPathsMergeList...)
+	cmdData.KubeConnectionOptions.KubeConfigPaths = lo.Compact(append([]string{cmdData.LegacyKubeConfigPath}, cmdData.LegacyKubeConfigPathsMergeList...))
 	cmdData.TrackingOptions.NoProgressTablePrint = cmdData.LegacyProgressTablePrintInterval == -1
 	cmdData.TrackingOptions.ProgressTablePrintInterval = time.Duration(cmdData.LegacyProgressTablePrintInterval) * time.Second
 	cmdData.TrackingOptions.TrackCreationTimeout = time.Duration(cmdData.LegacyTrackTimeout) * time.Second

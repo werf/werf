@@ -282,3 +282,25 @@ func startBlockedListing(ctx context.Context, r *DockerRegistryWithCache, inner 
 	gomega.Eventually(inner.started).Should(gomega.BeClosed())
 	return listedTags, func() { close(inner.release) }
 }
+
+type snapshotListingRegistry struct {
+	Interface
+	calls   atomic.Int32
+	started chan struct{}
+	release chan struct{}
+}
+
+var _ Interface = (*snapshotListingRegistry)(nil)
+
+func (r *snapshotListingRegistry) Tags(_ context.Context, _ string, _ ...Option) ([]string, error) {
+	if r.calls.Add(1) == 1 {
+		close(r.started)
+		<-r.release
+		return []string{"before"}, nil
+	}
+	return []string{"before", "winner"}, nil
+}
+
+func (r *snapshotListingRegistry) parseReferenceParts(reference string) (referenceParts, error) {
+	return (&api{}).parseReferenceParts(reference)
+}
