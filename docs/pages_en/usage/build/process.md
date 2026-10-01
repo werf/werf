@@ -86,7 +86,7 @@ The image building algorithm in werf is different:
 1. If the next layer to be built is already present in the container registry, it will not be built or downloaded.
 2. If the next layer to be built is not in the container registry, the previous layer is downloaded (the base layer for building the current one).
 3. The new layer is built on the local machine and published to the container registry.
-4. At publishing time, werf automatically resolves conflicts between builders from different hosts that try to publish the same layer. This ensures that only one layer is published, and all other builders are required to reuse that layer. ([The built-in sync service](#synchronizing-builders) makes this possible).
+4. At publishing time, werf automatically resolves conflicts between builders from different hosts that try to publish the same layer. Under a shared synchronization backend and a valid lock lease, a builder rechecks the registry and reuses an already published suitable layer. ([The built-in sync service](#synchronizing-builders) makes this possible).
 5. The process continues until all the layers of the image are built.
 
 The algorithm of stage selection in werf works as follows:
@@ -501,7 +501,7 @@ You can clean up a caching repository by deleting it entirely without any risks.
 
 <!-- reference https://werf.io/docs/v2/advanced/synchronization.html -->
 
-To ensure consistency among parallel builders and to guarantee the reproducibility of images and intermediate layers, werf handles the synchronization of the builders. By default, the public synchronization service at [https://synchronization.werf.io/](https://synchronization.werf.io/) is used and no extra user interaction is required.
+To coordinate publication of stages and content anchors, werf synchronizes parallel builders. By default, the public synchronization service at [https://synchronization.werf.io/](https://synchronization.werf.io/) is used and no extra user interaction is required.
 
 <div class="details">
 <a href="javascript:void(0)" class="details__summary">How the synchronization service works</a>
@@ -509,7 +509,9 @@ To ensure consistency among parallel builders and to guarantee the reproducibili
 
 The synchronization service is a werf component that is designed to coordinate multiple werf processes. It acts as a _lock manager_. The locks are required to correctly publish new images to the container registry and to implement the build algorithm described in ["Layer-by-layer image caching"](#layer-by-layer-image-caching).
 
-The data sent to the sync service are anonymized and are hash sums of the tags published in the container registry.
+The synchronization service receives the shared client ID, project name and stage digest used to identify each lock. Registry credentials and image contents are not part of the lock requests.
+
+All builders sharing a repository must use the same synchronization backend and project name. Failure to acquire a lock stops publication. As in v2, lease-based locking does not provide registry-side fencing during a prolonged network partition or an in-memory server restart.
 
 A synchronization service can be:
 1. An HTTP synchronization server implemented in the `werf synchronization` command.
