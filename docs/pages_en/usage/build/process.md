@@ -531,6 +531,8 @@ The synchronization server can be run with the `werf synchronization` command. I
 werf synchronization --host 0.0.0.0 --port 55581
 ```
 
+By default, the HTTP server stores locks in process memory. Separate server processes do not share locks, even when given the same directory options; restarting the server loses its locks. Use `werf synchronization --kubernetes` to store locks in ConfigMaps in the fixed `werf-synchronization` namespace. The `--local`, `--local-lock-manager-base-dir`, `--local-stages-storage-cache-base-dir`, `--kubernetes-namespace-prefix` and `--ttl` options remain accepted for compatibility but have no effect.
+
 — This server only supports HTTP mode. To use HTTPS, you have to configure additional SSL termination by third-party tools (e.g., via the Kubernetes Ingress).
 
 Then, for all werf commands that use the `--repo` parameter, the `--synchronization=http[s]://DOMAIN` parameter must be specified as well, for example:

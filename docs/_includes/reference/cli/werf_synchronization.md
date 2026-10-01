@@ -3,7 +3,8 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Run synchronization server
+Run synchronization server. By default locks are stored in process memory and are lost on restart.  
+Use --kubernetes to store locks in ConfigMaps in the werf-synchronization namespace.
 
 {{ header }} Syntax
 
@@ -97,20 +98,19 @@ werf synchronization [options]
             Path to file with bearer token for authentication in Kubernetes (default                
             $WERF_KUBE_TOKEN_PATH)
       --kubernetes=false
-            Use kubernetes lock-manager stages-storage-cache (default $WERF_KUBERNETES)
+            Store locks in Kubernetes ConfigMaps in the werf-synchronization namespace (default     
+            $WERF_KUBERNETES)
       --kubernetes-namespace-prefix=""
-            Use specified prefix for namespaces created for lock-manager and stages-storage-cache   
-            (defaults to `werf-synchronization-` when --kubernetes option is used or                
-            $WERF_KUBERNETES_NAMESPACE_PREFIX)
+            Compatibility flag; ignored. The Kubernetes namespace is always werf-synchronization    
+            (default $WERF_KUBERNETES_NAMESPACE_PREFIX)
       --local=true
-            Use file lock-manager and file stages-storage-cache (true by default or $WERF_LOCAL)
+            Compatibility flag; ignored. Without --kubernetes, locks are stored in process memory   
+            (default $WERF_LOCAL or true)
       --local-lock-manager-base-dir=""
-            Use specified directory as base for file lock-manager                                   
-            (~/.werf/synchronization_server/lock_manager by default or                              
+            Compatibility flag; ignored. No lock files are written (default                         
             $WERF_LOCAL_LOCK_MANAGER_BASE_DIR)
       --local-stages-storage-cache-base-dir=""
-            Use specified directory as base for file stages-storage-cache                           
-            (~/.werf/synchronization_server/stages_storage_cache by default or                      
+            Compatibility flag; ignored. No stages-storage cache directory is used (default         
             $WERF_LOCAL_STAGES_STORAGE_CACHE_BASE_DIR)
       --log-color-mode="auto"
             Set log color mode.
@@ -146,6 +146,6 @@ werf synchronization [options]
       --tmp-dir=""
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
       --ttl=""
-            Time to live for lock-manager locks and stages-storage-cache records (default $WERF_TTL)
+            Compatibility flag; ignored. Does not configure lock leases (default $WERF_TTL)
 ```
 

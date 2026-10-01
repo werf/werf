@@ -40,7 +40,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:                   "synchronization",
 		Short:                 "Run synchronization server",
-		Long:                  common.GetLongCommandDescription(`Run synchronization server`),
+		Long:                  common.GetLongCommandDescription(`Run synchronization server. By default locks are stored in process memory and are lost on restart. Use --kubernetes to store locks in ConfigMaps in the werf-synchronization namespace.`),
 		DisableFlagsInUseLine: true,
 		Annotations:           map[string]string{},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -64,14 +64,14 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 
-	cmd.Flags().BoolVarP(&cmdData.Local, "local", "", util.GetBoolEnvironmentDefaultTrue("WERF_LOCAL"), "Use file lock-manager and file stages-storage-cache (true by default or $WERF_LOCAL)")
-	cmd.Flags().StringVarP(&cmdData.LocalLockManagerBaseDir, "local-lock-manager-base-dir", "", os.Getenv("WERF_LOCAL_LOCK_MANAGER_BASE_DIR"), "Use specified directory as base for file lock-manager (~/.werf/synchronization_server/lock_manager by default or $WERF_LOCAL_LOCK_MANAGER_BASE_DIR)")
-	cmd.Flags().StringVarP(&cmdData.LocalStagesStorageCacheBaseDir, "local-stages-storage-cache-base-dir", "", os.Getenv("WERF_LOCAL_STAGES_STORAGE_CACHE_BASE_DIR"), "Use specified directory as base for file stages-storage-cache (~/.werf/synchronization_server/stages_storage_cache by default or $WERF_LOCAL_STAGES_STORAGE_CACHE_BASE_DIR)")
+	cmd.Flags().BoolVarP(&cmdData.Local, "local", "", util.GetBoolEnvironmentDefaultTrue("WERF_LOCAL"), "Compatibility flag; ignored. Without --kubernetes, locks are stored in process memory (default $WERF_LOCAL or true)")
+	cmd.Flags().StringVarP(&cmdData.LocalLockManagerBaseDir, "local-lock-manager-base-dir", "", os.Getenv("WERF_LOCAL_LOCK_MANAGER_BASE_DIR"), "Compatibility flag; ignored. No lock files are written (default $WERF_LOCAL_LOCK_MANAGER_BASE_DIR)")
+	cmd.Flags().StringVarP(&cmdData.LocalStagesStorageCacheBaseDir, "local-stages-storage-cache-base-dir", "", os.Getenv("WERF_LOCAL_STAGES_STORAGE_CACHE_BASE_DIR"), "Compatibility flag; ignored. No stages-storage cache directory is used (default $WERF_LOCAL_STAGES_STORAGE_CACHE_BASE_DIR)")
 
-	cmd.Flags().BoolVarP(&cmdData.Kubernetes, "kubernetes", "", util.GetBoolEnvironmentDefaultFalse("WERF_KUBERNETES"), "Use kubernetes lock-manager stages-storage-cache (default $WERF_KUBERNETES)")
-	cmd.Flags().StringVarP(&cmdData.KubernetesNamespacePrefix, "kubernetes-namespace-prefix", "", os.Getenv("WERF_KUBERNETES_NAMESPACE_PREFIX"), "Use specified prefix for namespaces created for lock-manager and stages-storage-cache (defaults to 'werf-synchronization-' when --kubernetes option is used or $WERF_KUBERNETES_NAMESPACE_PREFIX)")
+	cmd.Flags().BoolVarP(&cmdData.Kubernetes, "kubernetes", "", util.GetBoolEnvironmentDefaultFalse("WERF_KUBERNETES"), "Store locks in Kubernetes ConfigMaps in the werf-synchronization namespace (default $WERF_KUBERNETES)")
+	cmd.Flags().StringVarP(&cmdData.KubernetesNamespacePrefix, "kubernetes-namespace-prefix", "", os.Getenv("WERF_KUBERNETES_NAMESPACE_PREFIX"), "Compatibility flag; ignored. The Kubernetes namespace is always werf-synchronization (default $WERF_KUBERNETES_NAMESPACE_PREFIX)")
 
-	cmd.Flags().StringVarP(&cmdData.TTL, "ttl", "", os.Getenv("WERF_TTL"), "Time to live for lock-manager locks and stages-storage-cache records (default $WERF_TTL)")
+	cmd.Flags().StringVarP(&cmdData.TTL, "ttl", "", os.Getenv("WERF_TTL"), "Compatibility flag; ignored. Does not configure lock leases (default $WERF_TTL)")
 	cmd.Flags().StringVarP(&cmdData.Host, "host", "", os.Getenv("WERF_HOST"), "Bind synchronization server to the specified host (default localhost or $WERF_HOST)")
 	cmd.Flags().StringVarP(&cmdData.Port, "port", "", os.Getenv("WERF_PORT"), "Bind synchronization server to the specified port (default 55581 or $WERF_PORT)")
 

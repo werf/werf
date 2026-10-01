@@ -532,6 +532,8 @@ werf build --repo registry.mycompany.org/project --cache-repo localhost:5000/pro
 werf synchronization --host 0.0.0.0 --port 55581
 ```
 
+По умолчанию HTTP-сервер хранит блокировки в памяти процесса. Разные процессы сервера не разделяют блокировки, даже если указаны одинаковые каталоги; при перезапуске блокировки теряются. Для хранения блокировок в ConfigMap фиксированного namespace `werf-synchronization` используйте `werf synchronization --kubernetes`. Опции `--local`, `--local-lock-manager-base-dir`, `--local-stages-storage-cache-base-dir`, `--kubernetes-namespace-prefix` и `--ttl` принимаются для совместимости, но не влияют на работу сервера.
+
 — данный сервер поддерживает только работу в режиме HTTP, для использования HTTPS необходима настройка дополнительной SSL-терминации сторонними средствами (например через Ingress в Kubernetes).
 
 Далее во всех командах werf, которые используют параметр `--repo` дополнительно указывается параметр `--synchronization=http[s]://DOMAIN`, например:
