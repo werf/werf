@@ -7,6 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/werf/werf/v3/pkg/docker_registry"
+	"github.com/werf/werf/v3/pkg/docker_registry/container_registry_extensions"
 	"github.com/werf/werf/v3/test/pkg/suite_init"
 )
 
@@ -70,6 +71,15 @@ var _ = Describe("container registry implementation", func() {
 				imgKept, err := registry.GetRepoImage(ctx, repo+":kept")
 				Expect(err).ShouldNot(HaveOccurred())
 				Expect(imgKept.Labels).To(HaveKeyWithValue(labelName, "kept"))
+
+				By("accepting the OCI format the scratch stage is published in")
+				Expect(registry.PushImage(ctx, repo+":oci", &docker_registry.PushImageOptions{
+					Labels:         map[string]string{labelName: "oci"},
+					ManifestFormat: container_registry_extensions.ManifestFormatOCI,
+				})).To(Succeed())
+				imgOCI, err := registry.GetRepoImage(ctx, repo+":oci")
+				Expect(err).ShouldNot(HaveOccurred())
+				Expect(imgOCI.Labels).To(HaveKeyWithValue(labelName, "oci"))
 			})
 		})
 	}
