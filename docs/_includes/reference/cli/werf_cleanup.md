@@ -249,6 +249,12 @@ werf cleanup [options]
              - :local if --repo is not specified, or
              - https://synchronization.werf.io if --repo has been specified.
             
+            Without an explicit value, an unavailable public server (DNS, network, timeout, or HTTP 
+            5xx) causes a warning and the build continues without publication locks. An explicit    
+            value, including the public server address, is strict. The first publication with an    
+            explicit value records a repository marker requiring the same value for subsequent      
+            commands.
+            
             The same address should be specified for all werf processes that work with a single     
             repo. :local address allows execution of werf processes from a single host only
       --tmp-dir=""
