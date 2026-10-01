@@ -119,6 +119,11 @@ func mutateImage(ctx context.Context, image v1.Image, dest name.Reference, isDes
 			return nil, nil, err
 		}
 
+		// empty.Image carries the Docker media types, so rebuilding on top of it would put the
+		// original layers under a manifest of a different format, which containers/image rejects.
+		image = mutate.MediaType(image, manifest.MediaType)
+		image = mutate.ConfigMediaType(image, manifest.Config.MediaType)
+
 		// preserve manifest annotations
 		image = mutate.Annotations(image, manifest.Annotations).(v1.Image)
 	}
