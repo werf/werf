@@ -105,7 +105,17 @@ func cleanupBuildahProjectInNamespace(ctx context.Context, request cleanupProjec
 	}
 	removeImage := func(ctx context.Context, ref string) error {
 		_, removeErrors := imageRuntime.RemoveImages(ctx, []string{ref}, &libimage.RemoveImagesOptions{NoPrune: true})
-		return errors.Join(removeErrors...)
+		err := errors.Join(removeErrors...)
+		onlyInUseErrors := err != nil
+		for _, removeErr := range removeErrors {
+			if removeErr != nil && !errors.Is(removeErr, storage.ErrImageUsedByContainer) {
+				onlyInUseErrors = false
+			}
+		}
+		if onlyInUseErrors {
+			return errors.Join(errCleanupImageInUse, err)
+		}
+		return err
 	}
 	return cleanupImageReferences(ctx, "buildah", list, removeImage)
 }

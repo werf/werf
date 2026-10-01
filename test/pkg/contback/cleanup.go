@@ -11,6 +11,7 @@ import (
 	"path"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/distribution/reference"
 )
@@ -19,6 +20,8 @@ type cleanupImage struct {
 	ID    string   `json:"id"`
 	Names []string `json:"names"`
 }
+
+var errCleanupImageInUse = errors.New("test image is still in use")
 
 type CleanupProjectOptions struct {
 	Repositories []string
@@ -73,8 +76,12 @@ func cleanupImageReferences(ctx context.Context, backend string, list func() ([]
 	}
 	for pass := 0; len(refs) > 0; pass++ {
 		var cleanupErrors []error
+		onlyInUseErrors := true
 		for _, ref := range refs {
 			if err := removeImage(ctx, ref); err != nil {
+				if !errors.Is(err, errCleanupImageInUse) {
+					onlyInUseErrors = false
+				}
 				cleanupErrors = append(cleanupErrors, fmt.Errorf("remove %s test image %q: %w", backend, ref, err))
 			}
 		}
@@ -86,7 +93,16 @@ func cleanupImageReferences(ctx context.Context, backend string, list func() ([]
 		if len(remaining) == 0 {
 			return nil
 		}
-		if slices.Equal(refs, remaining) || pass >= 100 {
+		cleanupErr := errors.Join(cleanupErrors...)
+		if slices.Equal(refs, remaining) && onlyInUseErrors && errors.Is(cleanupErr, errCleanupImageInUse) && pass < 100 {
+			timer := time.NewTimer(time.Second)
+			select {
+			case <-ctx.Done():
+				timer.Stop()
+				return errors.Join(cleanupErr, fmt.Errorf("wait for %s test images to be released: %w", backend, ctx.Err()))
+			case <-timer.C:
+			}
+		} else if slices.Equal(refs, remaining) || pass >= 100 {
 			cleanupErrors = append(cleanupErrors, fmt.Errorf("%s test images remain: %s", backend, strings.Join(remaining, ", ")))
 			return errors.Join(cleanupErrors...)
 		}
