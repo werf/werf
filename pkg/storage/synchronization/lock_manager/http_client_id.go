@@ -123,17 +123,17 @@ func performPost(ctx context.Context, client *http.Client, url string, request, 
 	}
 
 	defer resp.Body.Close()
-	respBodyData, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return classifySynchronizationRequestError(ctx, fmt.Errorf("error reading response of %q request: %w", url, err))
-	}
-
-	if resp.StatusCode != 200 {
-		err := fmt.Errorf("got bad response %s by url %q request:\n%s", resp.Status, url, string(respBodyData))
+	if resp.StatusCode != http.StatusOK {
+		err := fmt.Errorf("got bad response %s by url %q request", resp.Status, url)
 		if resp.StatusCode >= 500 && resp.StatusCode <= 599 {
 			return &synchronizationUnavailableError{err: err}
 		}
 		return err
+	}
+
+	respBodyData, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return classifySynchronizationRequestError(ctx, fmt.Errorf("error reading response of %q request: %w", url, err))
 	}
 
 	if err := json.Unmarshal(respBodyData, response); err != nil {

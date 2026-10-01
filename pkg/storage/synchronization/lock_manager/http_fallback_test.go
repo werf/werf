@@ -108,6 +108,23 @@ var _ = ginkgo.Describe("HTTP synchronization fallback", func() {
 		gomega.Expect(errors.As(err, &unavailable)).To(gomega.BeFalse())
 	})
 
+	ginkgo.It("keeps authentication failures strict even when their body stalls", func(ctx ginkgo.SpecContext) {
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusUnauthorized)
+			w.(http.Flusher).Flush()
+			select {
+			case <-r.Context().Done():
+			case <-time.After(200 * time.Millisecond):
+			}
+		}))
+		defer srv.Close()
+		err := performPost(ctx, &http.Client{Timeout: 20 * time.Millisecond}, srv.URL, struct{}{}, &struct{}{})
+		gomega.Expect(err).To(gomega.HaveOccurred())
+		var unavailable *synchronizationUnavailableError
+		gomega.Expect(errors.As(err, &unavailable)).To(gomega.BeFalse())
+		gomega.Expect(err.Error()).To(gomega.ContainSubstring("401 Unauthorized"))
+	})
+
 	ginkgo.It("retains real handles and shares sticky fallback across managers", func(ctx ginkgo.SpecContext) {
 		var outage atomic.Bool
 		var acquisitions, releases atomic.Int32
