@@ -417,6 +417,7 @@ func dependencyArgsReachContent(stages []instructions.Stage, dependencyArgKeys [
 
 func createDockerIgnorePathMatcher(ctx context.Context, giterminismMgr giterminism_manager.Manager, contextGitSubDir, dockerfileRelToContextPath string) (path_matcher.PathMatcher, error) {
 	var dockerIgnorePatterns []string
+	var dockerIgnorePath string
 	for _, dockerIgnoreRelToContextPath := range []string{
 		dockerfileRelToContextPath + ".dockerignore",
 		dockerfileRelToContextPath + ".containerignore",
@@ -441,14 +442,23 @@ func createDockerIgnorePathMatcher(ctx context.Context, giterminismMgr gitermini
 			return nil, fmt.Errorf("unable to read %q file: %w", dockerIgnoreRelToContextPath, err)
 		}
 
+		dockerIgnorePath = relDockerIgnorePath
 		break
 	}
 
 	contextRelToGitPath := filepath.Join(giterminismMgr.RelativeToGitProjectDir(), contextGitSubDir)
 
+	ignoreMatcher, err := path_matcher.NewDockerfileIgnorePathMatcher(ctx, dockerIgnorePatterns)
+	if err != nil {
+		return nil, fmt.Errorf("read ignore file %q: %w", dockerIgnorePath, err)
+	}
+	var matchers []path_matcher.PathMatcher
+	if dockerIgnorePatterns != nil {
+		matchers = append(matchers, ignoreMatcher)
+	}
 	dockerIgnorePathMatcher := path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{
-		BasePath:             contextRelToGitPath,
-		DockerignorePatterns: dockerIgnorePatterns,
+		BasePath: contextRelToGitPath,
+		Matchers: matchers,
 	})
 
 	dockerfileRelToGitPath := filepath.Join(contextRelToGitPath, dockerfileRelToContextPath)
@@ -458,9 +468,13 @@ func createDockerIgnorePathMatcher(ctx context.Context, giterminismMgr gitermini
 
 		exceptionRule := "!" + dockerfileRelToContextPath
 		dockerIgnorePatterns = append(dockerIgnorePatterns, exceptionRule)
+		ignoreMatcher, err = path_matcher.NewDockerfileIgnorePathMatcher(ctx, dockerIgnorePatterns)
+		if err != nil {
+			return nil, fmt.Errorf("include Dockerfile %q in build context: %w", dockerfileRelToContextPath, err)
+		}
 		dockerIgnorePathMatcher = path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{
-			BasePath:             contextRelToGitPath,
-			DockerignorePatterns: dockerIgnorePatterns,
+			BasePath: contextRelToGitPath,
+			Matchers: []path_matcher.PathMatcher{ignoreMatcher},
 		})
 	}
 
