@@ -110,6 +110,9 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 
 	common.SetupSynchronization(&commonCmdData, cmd)
+	common.SetupKubeConfigBase64(&commonCmdData, cmd)
+	common.SetupLegacyKubeConfigPath(&commonCmdData, cmd)
+	common.SetupKubeContextCurrent(&commonCmdData, cmd)
 	common.SetupDenoBinaryPath(&commonCmdData, cmd)
 
 	common.SetupSaveBuildReport(&commonCmdData, cmd)

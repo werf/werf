@@ -319,6 +319,9 @@ func newCmd(ctx context.Context, composeCmdName string, options *newCmdOptions) 
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 
 	common.SetupSynchronization(&commonCmdData, cmd)
+	common.SetupKubeConfigBase64(&commonCmdData, cmd)
+	common.SetupLegacyKubeConfigPath(&commonCmdData, cmd)
+	common.SetupKubeContextCurrent(&commonCmdData, cmd)
 
 	common.SetupDryRun(&commonCmdData, cmd)
 
