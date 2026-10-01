@@ -22,6 +22,7 @@ const (
 var (
 	_ Synchronization = (*lock_manager.LocalSynchronization)(nil)
 	_ Synchronization = (*lock_manager.HttpSynchronization)(nil)
+	_ Synchronization = (*lock_manager.KubernetesSynchronization)(nil)
 )
 
 type Synchronization interface {
@@ -45,9 +46,10 @@ The same address should be specified for all werf processes that work with a sin
 
 func GetSynchronization(ctx context.Context, cmdData *CmdData, projectName string, stagesStorage storage.StagesStorage) (Synchronization, error) {
 	params := lock_manager.SynchronizationParams{
-		ProjectName:   projectName,
-		ServerAddress: *cmdData.Synchronization,
-		StagesStorage: stagesStorage,
+		ProjectName:           projectName,
+		ServerAddress:         *cmdData.Synchronization,
+		StagesStorage:         stagesStorage,
+		KubeConnectionOptions: cmdData.KubeConnectionOptions,
 	}
 	if params.ServerAddress != "" && !protocolIsLocal(params.ServerAddress) && protocolIsLocal(params.StagesStorage.Address()) {
 		return nil, fmt.Errorf("--synchronization (or WERF_SYNCHRONIZATION) is set to %q but --repo (or WERF_REPO) is not specified: --repo is required when using a non-local synchronization server", params.ServerAddress)
@@ -58,11 +60,11 @@ func GetSynchronization(ctx context.Context, cmdData *CmdData, projectName strin
 	} else if protocolIsLocal(params.ServerAddress) {
 		return lock_manager.NewLocalSynchronization(ctx, params)
 	} else if protocolIsKube(params.ServerAddress) {
-		return nil, fmt.Errorf("--synchronization=kubernetes:// no longer supported")
+		return lock_manager.NewKubernetesSynchronization(ctx, params)
 	} else if protocolIsHttpOrHttps(params.ServerAddress) {
 		return lock_manager.NewHttpSynchronization(ctx, params)
 	} else {
-		return nil, fmt.Errorf("only --synchronization=%s or --synchronization=http[s]://HOST:PORT/CLIENT_ID is supported, got %q", storage.LocalStorageAddress, *cmdData.Synchronization)
+		return nil, fmt.Errorf("only --synchronization=%s or --synchronization=kubernetes://NAMESPACE[:CONTEXT][@CONFIG] or --synchronization=http[s]://HOST:PORT/CLIENT_ID is supported, got %q", storage.LocalStorageAddress, *cmdData.Synchronization)
 	}
 }
 

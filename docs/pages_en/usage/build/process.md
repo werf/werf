@@ -538,6 +538,10 @@ werf build --repo registry.mydomain.org/repo --synchronization https://synchroni
 werf converge --repo registry.mydomain.org/repo --synchronization https://synchronization.domain.org
 ```
 
+#### Kubernetes synchronization
+
+Use Kubernetes ConfigMap locks directly with `--synchronization=kubernetes://NAMESPACE[:CONTEXT][@CONFIG_PATH]`. An embedded kubeconfig is also supported: `kubernetes://NAMESPACE@base64:BASE64_CONFIG_DATA`. All builders must use the same cluster and namespace. The client needs permission to create the namespace and to read, create and update its ConfigMaps.
+
 #### Local synchronization
 
 Local synchronization is enabled by the `--synchronization=:local` option. The local _lock manager_ uses file locks provided by the operating system.

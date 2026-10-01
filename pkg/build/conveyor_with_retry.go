@@ -30,7 +30,7 @@ func NewConveyorWithRetryWrapper(werfConfig *config.WerfConfig, giterminismManag
 		BaseTmpDir:         baseTmpDir,
 		ContainerBackend:   containerBackend,
 		StorageManager:     storageManager,
-		StorageLockManager: storageLockManager, // TODO: refactor
+		StorageLockManager: storageLockManager,
 		ConveyorOptions:    opts,
 	}
 }

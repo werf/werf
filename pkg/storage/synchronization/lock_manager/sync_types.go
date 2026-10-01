@@ -5,14 +5,17 @@ import (
 	"fmt"
 
 	"github.com/werf/logboek"
+	"github.com/werf/nelm/v2/pkg/common"
+	"github.com/werf/nelm/v2/pkg/kube"
 	"github.com/werf/werf/v3/pkg/storage"
 	"github.com/werf/werf/v3/pkg/werf"
 )
 
 type SynchronizationParams struct {
-	ProjectName   string
-	ServerAddress string
-	StagesStorage storage.StagesStorage
+	ProjectName           string
+	ServerAddress         string
+	StagesStorage         storage.StagesStorage
+	KubeConnectionOptions common.KubeConnectionOptions
 }
 
 type LocalSynchronization struct {
@@ -98,4 +101,49 @@ func checkRepoSyncServer(ctx context.Context, projectName, serverAddress string,
 	}
 
 	return repoSyncServer, nil
+}
+
+type KubernetesSynchronization struct {
+	namespace             string
+	kubeConnectionOptions common.KubeConnectionOptions
+}
+
+func NewKubernetesSynchronization(ctx context.Context, params SynchronizationParams) (*KubernetesSynchronization, error) {
+	serverAddress := params.ServerAddress
+	if ForceSyncServerRepo == "true" {
+		var err error
+		serverAddress, err = checkRepoSyncServer(ctx, params.ProjectName, serverAddress, params.StagesStorage)
+		if err != nil {
+			return nil, err
+		}
+	}
+	kubeParams, err := ParseKubernetesParams(serverAddress)
+	if err != nil {
+		return nil, fmt.Errorf("parse synchronization address: %w", err)
+	}
+	opts := params.KubeConnectionOptions
+	if kubeParams.ConfigContext != "" {
+		opts.KubeContextCurrent = kubeParams.ConfigContext
+	}
+	if kubeParams.ConfigPath != "" {
+		opts.KubeConfigPaths = []string{kubeParams.ConfigPath}
+		opts.KubeConfigBase64 = ""
+	}
+	if kubeParams.ConfigDataBase64 != "" {
+		opts.KubeConfigBase64 = kubeParams.ConfigDataBase64
+		opts.KubeConfigPaths = nil
+	}
+	return &KubernetesSynchronization{namespace: kubeParams.Namespace, kubeConnectionOptions: opts}, nil
+}
+
+func (s *KubernetesSynchronization) GetStorageLockManager(ctx context.Context) (Interface, error) {
+	config, err := kube.NewKubeConfig(ctx, kube.KubeConfigOptions{KubeConnectionOptions: s.kubeConnectionOptions, KubeContextNamespace: s.namespace})
+	if err != nil {
+		return nil, fmt.Errorf("load synchronization kube config: %w", err)
+	}
+	clients, err := kube.NewClientFactory(ctx, config)
+	if err != nil {
+		return nil, fmt.Errorf("create synchronization kubernetes clients: %w", err)
+	}
+	return NewKubernetes(ctx, s.namespace, clients.Static(), clients.Dynamic(), func(projectName string) string { return fmt.Sprintf("werf-%s", projectName) }), nil
 }

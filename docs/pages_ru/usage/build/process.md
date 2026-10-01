@@ -539,6 +539,10 @@ werf build --repo registry.mydomain.org/repo --synchronization https://synchroni
 werf converge --repo registry.mydomain.org/repo --synchronization https://synchronization.domain.org
 ```
 
+#### Синхронизация через Kubernetes
+
+Для блокировок непосредственно через ConfigMap используйте `--synchronization=kubernetes://NAMESPACE[:CONTEXT][@CONFIG_PATH]`. Поддерживается встроенный kubeconfig: `kubernetes://NAMESPACE@base64:BASE64_CONFIG_DATA`. Все сборщики должны использовать общий кластер и namespace. Клиенту нужны права на создание namespace, чтение, создание и обновление его ConfigMap.
+
 #### Локальная синхронизация
 
 Включается опцией `--synchronization=:local`. Локальный _менеджер блокировок_ использует файловые блокировки, предоставляемые операционной системой.
