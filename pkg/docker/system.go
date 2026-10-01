@@ -119,17 +119,31 @@ func Info(ctx context.Context) (system.Info, error) {
 	return result.Info, nil
 }
 
-// Winsock uses 10061, not Go's synthetic syscall.ECONNREFUSED value on Windows.
-// Its localized diagnostic survives Moby's normalization, so match the errno.
-const errWSAEConnRefused = syscall.Errno(10061)
+// Native Winsock errors differ from Go's synthetic syscall constants on Windows.
+// Their localized diagnostics survive Moby's normalization, so match the errno.
+const (
+	errWSAENetDown     = syscall.Errno(10050)
+	errWSAENetUnreach  = syscall.Errno(10051)
+	errWSAEConnRefused = syscall.Errno(10061)
+	errWSAEHostDown    = syscall.Errno(10064)
+	errWSAEHostUnreach = syscall.Errno(10065)
+)
 
 func isDaemonUnavailableErr(err error) bool {
 	if !client.IsErrConnectionFailed(err) {
 		return false
 	}
 
+	for _, unavailableErr := range []error{
+		os.ErrNotExist, syscall.ENETDOWN, syscall.ENETUNREACH, syscall.EHOSTDOWN, syscall.EHOSTUNREACH,
+		errWSAENetDown, errWSAENetUnreach, errWSAEConnRefused, errWSAEHostDown, errWSAEHostUnreach,
+	} {
+		if errors.Is(err, unavailableErr) {
+			return true
+		}
+	}
 	var dnsErr *net.DNSError
-	if errors.Is(err, os.ErrNotExist) || errors.Is(err, errWSAEConnRefused) || errors.As(err, &dnsErr) {
+	if errors.As(err, &dnsErr) {
 		return true
 	}
 
