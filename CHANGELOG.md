@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.80.2](https://github.com/werf/werf/compare/v2.80.1...v2.80.2) (2026-10-01)
+
+
+### Bug Fixes
+
+* **build:** report invalid .dockerignore patterns without panicking ([#7993](https://github.com/werf/werf/issues/7993)) ([1e6268e](https://github.com/werf/werf/commit/1e6268e27f972819db54f89a2c8b268ef89d9438))
+* **deploy:** recreate StatefulSet and other custom-validated kinds on immutable field change ([#7990](https://github.com/werf/werf/issues/7990)) ([1a7e9b3](https://github.com/werf/werf/commit/1a7e9b3061859ea29f45cdd736b553fba866e1c0))
+
 ## [2.80.1](https://github.com/werf/werf/compare/v2.80.0...v2.80.1) (2026-09-29)
 
 
