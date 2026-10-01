@@ -58,6 +58,7 @@ type CmdData struct {
 	AddCustomTag *[]string
 	UseCustomTag *string
 
+	Synchronization    *string
 	BackendNetwork     *string
 	Parallel           *bool
 	ParallelTasksLimit *int64

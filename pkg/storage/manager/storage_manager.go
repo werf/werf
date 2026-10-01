@@ -22,6 +22,7 @@ import (
 	"github.com/werf/werf/v3/pkg/image"
 	"github.com/werf/werf/v3/pkg/storage"
 	"github.com/werf/werf/v3/pkg/storage/lrumeta"
+	"github.com/werf/werf/v3/pkg/storage/synchronization/lock_manager"
 	"github.com/werf/werf/v3/pkg/util/parallel"
 	"github.com/werf/werf/v3/pkg/werf"
 )
@@ -201,6 +202,8 @@ type StorageManager struct {
 	parallelTasksLimit int
 
 	ProjectName string
+
+	StorageLockManager lock_manager.Interface
 
 	StagesStorage              storage.PrimaryStagesStorage
 	MetaStorage                storage.PrimaryStagesStorage

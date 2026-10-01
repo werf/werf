@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
@@ -20,8 +21,9 @@ func debugImageSpec() bool {
 }
 
 const (
-	LocalStorageAddress    = ":local"
-	NamelessImageRecordTag = "__nameless__"
+	LocalStorageAddress             = ":local"
+	DefaultKubernetesStorageAddress = "kubernetes://werf-synchronization"
+	NamelessImageRecordTag          = "__nameless__"
 )
 
 var (
@@ -99,6 +101,10 @@ type StagesStorage interface {
 	IsImageMetadataExist(ctx context.Context, projectName, imageNameOrManagedImageName, commit, stageID string, opts ...Option) (bool, error)
 	GetAllAndGroupImageMetadataByImageName(ctx context.Context, projectName string, imageNameOrManagedImageList []string, opts ...Option) (map[string]map[string][]string, map[string]map[string][]string, error)
 
+	GetClientIDRecords(ctx context.Context, projectName string, opts ...Option) ([]*ClientIDRecord, error)
+	PostClientIDRecord(ctx context.Context, projectName string, rec *ClientIDRecord) error
+	GetSyncServerRecords(ctx context.Context, projectName string, opts ...Option) ([]*SyncServerRecord, error)
+	PostSyncServerRecord(ctx context.Context, projectName string, rec *SyncServerRecord) error
 	PostMultiplatformImage(ctx context.Context, projectName, tag string, allPlatformsImages []*image.Info, platforms []string) error
 	FilterStageDescSetAndProcessRelatedData(ctx context.Context, stageDescSet image.StageDescSet, options FilterStagesAndProcessRelatedDataOptions) (image.StageDescSet, error)
 	GetLastCleanupRecord(ctx context.Context, projectName string, opts ...Option) (*CleanupRecord, error)
@@ -108,12 +114,26 @@ type StagesStorage interface {
 	Address() string
 }
 
+type ClientIDRecord struct {
+	ClientID          string
+	TimestampMillisec int64
+}
+
+func (rec *ClientIDRecord) String() string {
+	return fmt.Sprintf("clientID:%s tsMillisec:%d", rec.ClientID, rec.TimestampMillisec)
+}
+
 type ImageMetadata struct {
 	ContentDigest string
 }
 
 type CopyFromStorageOptions struct {
 	IsMultiplatformImage bool
+}
+
+type SyncServerRecord struct {
+	Server            string
+	TimestampMillisec int64
 }
 
 type CleanupRecord struct {

@@ -8,13 +8,14 @@ import (
 	"github.com/werf/werf/v3/pkg/container_backend"
 	"github.com/werf/werf/v3/pkg/giterminism_manager"
 	"github.com/werf/werf/v3/pkg/storage/manager"
+	"github.com/werf/werf/v3/pkg/storage/synchronization/lock_manager"
 )
 
 var _ = ginkgo.DescribeTable("Remote preparation limit", func(parallel bool, limit int64, expected int) {
 	conveyor := NewConveyor(
 		&config.WerfConfig{Meta: &config.Meta{Project: "preparation"}},
 		&giterminism_manager.Manager{}, ".", ginkgo.GinkgoT().TempDir(),
-		&container_backend.DockerServerBackend{}, &manager.StorageManager{},
+		&container_backend.DockerServerBackend{}, &manager.StorageManager{}, &lock_manager.Generic{},
 		ConveyorOptions{Parallel: parallel, ParallelTasksLimit: limit},
 	)
 	gomega.Expect(conveyor.imagesTree.RemoteGitTasksLimit).To(gomega.Equal(expected))

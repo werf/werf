@@ -87,6 +87,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{})
 	common.SetupFinalRepo(&commonCmdData, cmd)
 	common.SetupMetaRepo(&commonCmdData, cmd)
+	common.SetupSynchronization(&commonCmdData, cmd)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "")
 

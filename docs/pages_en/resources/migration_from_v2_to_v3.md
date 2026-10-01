@@ -245,7 +245,7 @@ werf config list --final-images-only=false
 
 ### Synchronization server
 
-werf v3 no longer uses a synchronization server, including the public `synchronization.werf.io`. If you ran your own server, v3 no longer needs it. Shut it down only after upgrading all clients that use it; remaining v2 clients may still need it.
+werf v3 retains synchronization for publishing stages and content anchors. Continue using the same synchronization server for all builders that share a repository. The `--synchronization` / `-S` flag, `WERF_SYNCHRONIZATION`, and `werf synchronization` command remain supported. Registry builds use the public `synchronization.werf.io` service by default; local builds use local file locks.
 
 ### Buildah
 
@@ -459,7 +459,6 @@ Check scripts that pass old options: a removed flag causes an argument parsing e
 
 - `--virtual-merge` / `WERF_VIRTUAL_MERGE`, `--skip-image-spec-stage` / `WERF_SKIP_IMAGE_SPEC_STAGE`, `--set-runtime-json` and `--show-verbose-diffs` are removed.
 - `--force-adoption` is removed from `werf render` and `werf bundle render`, where it had no effect. Other deploy commands keep it.
-- `--synchronization` / `-S` / `WERF_SYNCHRONIZATION` and the `werf synchronization` command group are removed — see [Synchronization server](#synchronization-server).
 - Helm mode via `WERF_HELM3_MODE` and invoking the werf binary under the name `helm` are removed; use supported werf commands or the standalone Helm CLI.
 - Positional image names in `converge` and `plan` now take effect without `WERF_CONVERGE_ENABLE_IMAGES_PARAMS`. Check that stray arguments have not become image selectors; selecting images does not by itself limit which Kubernetes resources are deployed.
 

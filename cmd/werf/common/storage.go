@@ -70,11 +70,22 @@ func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfi
 		}
 	}
 
+	synchronization, err := GetSynchronization(ctx, c.CmdData, c.ProjectName, stagesStorage)
+	if err != nil {
+		return nil, fmt.Errorf("error get synchronization: %w", err)
+	}
+
+	storageLockManager, err := synchronization.GetStorageLockManager(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("error get storage lock manager: %w", err)
+	}
+
 	if c.hostPurge {
 		return &manager.StorageManager{
 			ProjectName:                c.ProjectName,
 			StagesStorage:              stagesStorage,
 			MetaStorage:                stagesStorage,
+			StorageLockManager:         storageLockManager,
 			FinalStagesStorage:         nil,
 			CacheStagesStorageList:     nil,
 			SecondaryStagesStorageList: nil,
@@ -107,7 +118,8 @@ func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfi
 		return nil, fmt.Errorf("error get chache storage list: %w", err)
 	}
 	return &manager.StorageManager{
-		ProjectName: c.ProjectName,
+		ProjectName:        c.ProjectName,
+		StorageLockManager: storageLockManager,
 
 		StagesStorage:              stagesStorage,
 		MetaStorage:                metaStorage,
