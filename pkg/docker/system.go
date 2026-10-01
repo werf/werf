@@ -4,8 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
+	"os"
+	"strconv"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/moby/moby/api/types/system"
@@ -115,20 +119,47 @@ func Info(ctx context.Context) (system.Info, error) {
 	return result.Info, nil
 }
 
+// Native Winsock errors differ from Go's synthetic syscall constants on Windows.
+// Their localized diagnostics survive Moby's normalization, so match the errno.
+const (
+	errWSAENetDown     = syscall.Errno(10050)
+	errWSAENetUnreach  = syscall.Errno(10051)
+	errWSAEConnRefused = syscall.Errno(10061)
+	errWSAEHostDown    = syscall.Errno(10064)
+	errWSAEHostUnreach = syscall.Errno(10065)
+)
+
 func isDaemonUnavailableErr(err error) bool {
-	if err == nil {
+	if !client.IsErrConnectionFailed(err) {
 		return false
 	}
-	if client.IsErrConnectionFailed(err) {
+
+	for _, unavailableErr := range []error{
+		os.ErrNotExist, syscall.ENETDOWN, syscall.ENETUNREACH, syscall.EHOSTDOWN, syscall.EHOSTUNREACH,
+		errWSAENetDown, errWSAENetUnreach, errWSAEConnRefused, errWSAEHostDown, errWSAEHostUnreach,
+	} {
+		if errors.Is(err, unavailableErr) {
+			return true
+		}
+	}
+	var dnsErr *net.DNSError
+	if errors.As(err, &dnsErr) {
 		return true
 	}
 
 	msg := err.Error()
+	if strings.Contains(msg, "ssh: connect to host ") {
+		for _, cause := range []string{"Connection refused", "Network is unreachable", "Network is down", "No route to host", "Host is down", "Operation timed out", "Connection timed out"} {
+			if strings.Contains(msg, cause) {
+				return true
+			}
+		}
+	}
 	for _, substr := range []string{
 		"Cannot connect to the Docker daemon",
 		"connect: no such file or directory",
 		"connect: connection refused",
-		"dial unix",
+		"ssh: Could not resolve hostname ",
 	} {
 		if strings.Contains(msg, substr) {
 			return true
@@ -150,7 +181,31 @@ func getDaemonInfo(ctx context.Context) (*system.Info, error) {
 	}
 
 	var result client.SystemInfoResult
+	var unsupported bool
 	timedOut, err := callDaemon(ctx, func(callCtx context.Context) error {
+		cached, ok := checkedDaemons.Load(api)
+		if !ok {
+			// Check the advertised version without negotiation: Moby rejects old versions
+			// during negotiation, but ignores that error when constructing the /info URL.
+			ping, err := api.Ping(callCtx, client.PingOptions{})
+			if err != nil {
+				return err
+			}
+			if ping.APIVersion != "" {
+				major, minor, found := strings.Cut(ping.APIVersion, ".")
+				_, majorErr := strconv.ParseUint(major, 10, 32)
+				_, minorErr := strconv.ParseUint(minor, 10, 32)
+				if !found || majorErr != nil || minorErr != nil {
+					return fmt.Errorf("invalid Docker daemon API version %q", ping.APIVersion)
+				}
+				checkedDaemons.Store(api, ping.APIVersion)
+				cached = ping.APIVersion
+			}
+		}
+		if cached != nil && versions.LessThan(cached.(string), client.MinAPIVersion) {
+			unsupported = true
+			return callCtx.Err()
+		}
 		var err error
 		result, err = api.Info(callCtx, client.InfoOptions{})
 		return err
@@ -159,10 +214,13 @@ func getDaemonInfo(ctx context.Context) (*system.Info, error) {
 		return nil, nil
 	}
 	if err != nil {
-		if isDaemonUnavailableErr(err) {
+		if ctx.Err() == nil && isDaemonUnavailableErr(err) {
 			return nil, nil
 		}
 		return nil, err
+	}
+	if unsupported {
+		return nil, nil
 	}
 
 	return &result.Info, nil
