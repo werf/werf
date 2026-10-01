@@ -6,12 +6,14 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"net/url"
 	"os"
 	"strings"
 	"sync"
 
 	"github.com/spf13/cobra"
 
+	"github.com/werf/logboek"
 	"github.com/werf/werf/v3/pkg/storage"
 	"github.com/werf/werf/v3/pkg/storage/synchronization/lock_manager"
 	"github.com/werf/werf/v3/pkg/storage/synchronization/server"
@@ -73,6 +75,10 @@ func GetSynchronization(ctx context.Context, cmdData *CmdData, projectName strin
 		}
 	}
 
+	if params.ServerAddress != "" {
+		logboek.Context(ctx).LogF("Using sync server: %s\n", synchronizationAddressForLog(params.ServerAddress))
+	}
+
 	var synchronization Synchronization
 	var err error
 	switch {
@@ -94,6 +100,27 @@ func GetSynchronization(ctx context.Context, cmdData *CmdData, projectName strin
 		return synchronization, nil
 	}
 	return &markerSynchronization{Synchronization: synchronization, store: markerStore, projectName: projectName, address: params.ServerAddress}, nil
+}
+
+func synchronizationAddressForLog(address string) string {
+	if protocolIsKube(address) {
+		if prefix, _, found := strings.Cut(address, "@base64:"); found {
+			return prefix + "@base64:[REDACTED]"
+		}
+		return address
+	}
+	if protocolIsLocal(address) {
+		return address
+	}
+	parsed, err := url.Parse(address)
+	if err != nil || !protocolIsHttpOrHttps(address) {
+		return "[invalid address]"
+	}
+	parsed.User = nil
+	parsed.RawQuery = ""
+	parsed.ForceQuery = false
+	parsed.Fragment = ""
+	return parsed.String()
 }
 
 func protocolIsKube(address string) bool {

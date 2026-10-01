@@ -1,6 +1,7 @@
 package common
 
 import (
+	"bytes"
 	"errors"
 	"net/http"
 	"os"
@@ -9,12 +10,23 @@ import (
 	gomega "github.com/onsi/gomega"
 	"github.com/spf13/cobra"
 
+	"github.com/werf/logboek"
 	"github.com/werf/werf/v3/pkg/storage"
 	"github.com/werf/werf/v3/pkg/storage/synchronization/lock_manager"
 	"github.com/werf/werf/v3/pkg/storage/synchronization/server"
 )
 
 var _ = ginkgo.Describe("repository synchronization policy", func() {
+	ginkgo.DescribeTable("redacts credentials from the selected synchronization address", func(address, expected string) {
+		gomega.Expect(synchronizationAddressForLog(address)).To(gomega.Equal(expected))
+	},
+		ginkgo.Entry("plain HTTP", "https://sync.example/path", "https://sync.example/path"),
+		ginkgo.Entry("HTTP credentials", "https://user:password@sync.example/path?token=secret#secret", "https://sync.example/path"),
+		ginkgo.Entry("embedded kubeconfig", "kubernetes://namespace:context@base64:secret", "kubernetes://namespace:context@base64:[REDACTED]"),
+		ginkgo.Entry("kubeconfig path", "kubernetes://namespace@/config", "kubernetes://namespace@/config"),
+		ginkgo.Entry("local", ":local", ":local"),
+		ginkgo.Entry("invalid", "https://user:secret@%invalid", "[invalid address]"))
+
 	ginkgo.It("pins the first publication through the configured HTTP manager", func(ctx ginkgo.SpecContext) {
 		address := synchronizationTestServer()
 		store := synchronizationTestStorage(ctx)
@@ -61,7 +73,14 @@ var _ = ginkgo.Describe("repository synchronization policy", func() {
 		original := http.DefaultTransport
 		http.DefaultTransport = &synchronizationDNSFailureTransport{next: original}
 		ginkgo.DeferCleanup(func() { http.DefaultTransport = original })
-		synchronization, err := GetSynchronization(ctx, data, "project", store)
+		var output bytes.Buffer
+		ctxLog := logboek.NewContext(ctx, logboek.NewLogger(&output, &output))
+		synchronization, err := GetSynchronization(ctxLog, data, "project", store)
+		if source == "implicit" {
+			gomega.Expect(output.String()).NotTo(gomega.ContainSubstring("Using sync server:"))
+		} else {
+			gomega.Expect(output.String()).To(gomega.ContainSubstring("Using sync server: " + server.DefaultAddress))
+		}
 		if err == nil {
 			manager, managerErr := synchronization.GetStorageLockManager(ctx)
 			gomega.Expect(managerErr).NotTo(gomega.HaveOccurred())
