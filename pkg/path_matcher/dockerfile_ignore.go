@@ -1,6 +1,7 @@
 package path_matcher
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strings"
@@ -10,16 +11,29 @@ import (
 	"github.com/werf/common-go/pkg/util"
 )
 
-func newDockerfileIgnorePathMatcher(dockerignorePatterns []string) dockerfileIgnorePathMatcher {
+func NewDockerfileIgnorePathMatcher(ctx context.Context, dockerignorePatterns []string) (PathMatcher, error) {
+	for _, pattern := range dockerignorePatterns {
+		m, err := patternmatcher.New([]string{pattern})
+		if err != nil {
+			return nil, fmt.Errorf("parse ignore pattern %q: %w", pattern, err)
+		}
+		// Moby compiles patterns lazily; force compilation of exclusion patterns too.
+		if _, err := m.MatchesUsingParentResult(".", m.Exclusions()); err != nil {
+			return nil, fmt.Errorf("compile ignore pattern %q: %w", pattern, err)
+		}
+	}
+
 	m, err := patternmatcher.New(dockerignorePatterns)
 	if err != nil {
-		panic(err)
+		return nil, fmt.Errorf("create ignore matcher: %w", err)
 	}
 
 	return dockerfileIgnorePathMatcher{
 		patternMatcher: m,
-	}
+	}, nil
 }
+
+var _ PathMatcher = dockerfileIgnorePathMatcher{}
 
 type dockerfileIgnorePathMatcher struct {
 	patternMatcher *patternmatcher.PatternMatcher
