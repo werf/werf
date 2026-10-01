@@ -11,8 +11,6 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/werf/werf/v3/test/pkg/report"
-	"github.com/werf/werf/v3/test/pkg/suite_init"
-	"github.com/werf/werf/v3/test/pkg/utils"
 	"github.com/werf/werf/v3/test/pkg/werf"
 )
 
@@ -35,7 +33,7 @@ var _ = Describe("Simple export", Label("e2e", "export", "simple"), func() {
 
 				By("running export")
 				werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
-				imageName := suite_init.TestRepo(fmt.Sprintf("werf-export-%s", utils.GetRandomString(10)))
+				imageName := newRandomExportRepo()
 				exportArgs := getExportArgs(imageName, commonTestOptions{
 					Platforms:    opts.Platforms,
 					CustomLabels: opts.CustomLabels,
@@ -98,7 +96,7 @@ var _ = Describe("Simple export", Label("e2e", "export", "simple"), func() {
 				checkExported(imageName)
 
 				By("running export again for the unchanged project")
-				reexportImageName := suite_init.TestRepo(fmt.Sprintf("werf-export-%s", utils.GetRandomString(10)))
+				reexportImageName := newRandomExportRepo()
 				reexportOut := werfProject.Export(ctx, &werf.ExportOptions{
 					CommonOptions: werf.CommonOptions{
 						ExtraArgs: getExportArgs(reexportImageName, commonTestOptions{
@@ -159,7 +157,7 @@ var _ = Describe("Simple export", Label("e2e", "export", "simple"), func() {
 				Expect(buildOut).NotTo(ContainSubstring("Use previously built image"))
 
 				By("running export with build report")
-				imageName := suite_init.TestRepo(fmt.Sprintf("werf-export-%s", utils.GetRandomString(10)))
+				imageName := newRandomExportRepo()
 				exportArgs := getExportArgs(imageName, commonTestOptions{
 					Platforms:    opts.Platforms,
 					CustomLabels: opts.CustomLabels,
