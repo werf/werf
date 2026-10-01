@@ -38,6 +38,9 @@ var _ = Describe("Complex converge", Label("e2e", "converge", "complex"), func()
 				imageTemplate := `werf-export-%image%`
 				tag := utils.GetRandomString(10)
 				imageName := fmt.Sprintf("%s:%s", suite_init.TestRepo(imageTemplate), tag)
+				for _, exportedImage := range opts.ImageNames {
+					newExportRepo("werf-export-" + exportedImage)
+				}
 
 				exportArgs := getExportArgs(imageName, commonTestOptions{
 					Platforms: opts.Platforms,
