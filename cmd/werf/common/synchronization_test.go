@@ -95,6 +95,7 @@ var _ = ginkgo.Describe("repository synchronization policy", func() {
 	ginkgo.DescribeTable("rejects missing or mismatching configuration before contacting synchronization", func(ctx ginkgo.SpecContext, address string) {
 		store := synchronizationTestStorage(ctx)
 		gomega.Expect(store.PutSynchronizationMarker(ctx, "project", synchronizationFingerprint(":local"))).To(gomega.Succeed())
+		gomega.Expect(store.PostClientIDRecord(ctx, "project", &storage.ClientIDRecord{ClientID: "existing", TimestampMillisec: 1})).To(gomega.Succeed())
 		_, err := GetSynchronization(ctx, &CmdData{Synchronization: &address}, "project", store)
 		gomega.Expect(err).To(gomega.HaveOccurred())
 		gomega.Expect(err.Error()).To(gomega.ContainSubstring("synchronization"))
