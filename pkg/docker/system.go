@@ -149,7 +149,7 @@ func isDaemonUnavailableErr(err error) bool {
 
 	msg := err.Error()
 	if strings.Contains(msg, "ssh: connect to host ") {
-		for _, cause := range []string{"Connection refused", "Network is unreachable", "No route to host", "Operation timed out", "Connection timed out"} {
+		for _, cause := range []string{"Connection refused", "Network is unreachable", "Network is down", "No route to host", "Host is down", "Operation timed out", "Connection timed out"} {
 			if strings.Contains(msg, cause) {
 				return true
 			}

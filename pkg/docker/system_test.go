@@ -386,6 +386,8 @@ var _ = Describe("optional daemon settings", func() {
 	},
 		Entry("a refused SSH connection", "ssh: connect to host docker.example port 22: Connection refused", true),
 		Entry("an unreachable SSH network", "ssh: connect to host docker.example port 22: Network is unreachable", true),
+		Entry("a down SSH network", "ssh: connect to host docker.example port 22: Network is down", true),
+		Entry("a down SSH host", "ssh: connect to host docker.example port 22: Host is down", true),
 		Entry("an unroutable SSH host", "ssh: connect to host docker.example port 22: No route to host", true),
 		Entry("a timed out SSH connection", "ssh: connect to host docker.example port 22: Operation timed out", true),
 		Entry("an unresolvable SSH host", "ssh: Could not resolve hostname docker.example: nodename nor servname provided, or not known", true),
