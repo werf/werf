@@ -100,6 +100,7 @@ var _ = ginkgo.Describe("Synchronization client identity", func() {
 			gomega.Expect(repo.records).To(gomega.BeEmpty())
 		},
 		ginkgo.Entry("HTTP failure", http.StatusServiceUnavailable, "unavailable"),
+		ginkgo.Entry("HTTP failure with valid JSON", http.StatusServiceUnavailable, `{"clientID":"must-not-publish"}`),
 		ginkgo.Entry("malformed JSON", http.StatusOK, "not json"),
 	)
 })

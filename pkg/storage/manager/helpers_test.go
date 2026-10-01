@@ -6,8 +6,10 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"sync/atomic"
 
+	"github.com/google/go-containerregistry/pkg/registry"
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
 
@@ -51,4 +53,31 @@ func newTagsListStorageManager(tagsListStatus int) (*StorageManager, *atomic.Int
 			DockerRegistry: dockerRegistry,
 		}),
 	}, &tagsListRequests
+}
+
+func newBlockedTagsStorageManager(ctx context.Context) (*StorageManager, <-chan struct{}, func()) {
+	listingStarted, release := make(chan struct{}), make(chan struct{})
+	var releaseOnce sync.Once
+	releaseListing := func() { releaseOnce.Do(func() { close(release) }) }
+	var listings atomic.Int32
+	backend := registry.New()
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		defer ginkgo.GinkgoRecover()
+		if strings.HasSuffix(request.URL.Path, "/tags/list") && listings.Add(1) == 1 {
+			close(listingStarted)
+			<-release
+			_, err := fmt.Fprint(writer, `{"name":"project/werf","tags":[]}`)
+			gomega.Expect(err).To(gomega.Succeed())
+			return
+		}
+		backend.ServeHTTP(writer, request)
+	}))
+	ginkgo.DeferCleanup(server.Close)
+	repoAddress := strings.TrimPrefix(server.URL, "http://") + "/project/werf"
+	dockerRegistry, err := docker_registry.NewDockerRegistry(ctx, repoAddress, docker_registry.DefaultImplementationName, docker_registry.DockerRegistryOptions{InsecureRegistry: true})
+	gomega.Expect(err).To(gomega.Succeed())
+	return &StorageManager{
+		ProjectName:   "test-project",
+		StagesStorage: storage.NewRepoStagesStorage(&storage.NewRepoStagesStorageOptions{RepoAddress: repoAddress, DockerRegistry: dockerRegistry}),
+	}, listingStarted, releaseListing
 }
