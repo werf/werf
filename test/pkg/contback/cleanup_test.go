@@ -17,6 +17,51 @@ func TestCleanup(t *testing.T) {
 }
 
 var _ = ginkgo.Describe("Project image cleanup", func() {
+	ginkgo.It("does not retry an unrelated removal error alongside a busy image", func() {
+		attempts := 0
+		permanentErr := errors.New("permission denied")
+		err := cleanupImageReferences(context.Background(), "buildah", func() ([]string, error) {
+			return []string{"busy", "inaccessible"}, nil
+		}, func(_ context.Context, ref string) error {
+			attempts++
+			if ref == "busy" {
+				return errCleanupImageInUse
+			}
+			return permanentErr
+		})
+		gomega.Expect(errors.Is(err, permanentErr)).To(gomega.BeTrue())
+		gomega.Expect(attempts).To(gomega.Equal(2))
+	})
+	ginkgo.It("waits for a concurrent build to release an image without force", func() {
+		remaining := []string{"owned"}
+		attempts := 0
+		err := cleanupImageReferences(context.Background(), "buildah", func() ([]string, error) {
+			return remaining, nil
+		}, func(context.Context, string) error {
+			attempts++
+			if attempts == 1 {
+				return errCleanupImageInUse
+			}
+			remaining = nil
+			return nil
+		})
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		gomega.Expect(remaining).To(gomega.BeEmpty())
+		gomega.Expect(attempts).To(gomega.Equal(2))
+	})
+	ginkgo.It("stops waiting on cancellation and reports the retained image", func() {
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		err := cleanupImageReferences(ctx, "buildah", func() ([]string, error) {
+			return []string{"owned"}, nil
+		}, func(context.Context, string) error {
+			cancel()
+			return errCleanupImageInUse
+		})
+		gomega.Expect(errors.Is(err, context.Canceled)).To(gomega.BeTrue())
+		gomega.Expect(errors.Is(err, errCleanupImageInUse)).To(gomega.BeTrue())
+		gomega.Expect(err.Error()).To(gomega.ContainSubstring("owned"))
+	})
 	ginkgo.It("rescans after deleting a dependent child image", func() {
 		dir := ginkgo.GinkgoT().TempDir()
 		script, err := os.ReadFile("testdata/cleanup-backend.sh")
