@@ -12,6 +12,7 @@ import (
 )
 
 type SynchronizationParams struct {
+	AllowFallback         bool
 	ProjectName           string
 	ServerAddress         string
 	StagesStorage         storage.StagesStorage
@@ -43,11 +44,16 @@ func (s *LocalSynchronization) GetStorageLockManager(_ context.Context) (Interfa
 type HttpSynchronization struct {
 	address  string
 	clientId string
+	fallback *httpFallbackState
 }
 
 func NewHttpSynchronization(ctx context.Context, params SynchronizationParams) (*HttpSynchronization, error) {
 	var clientID string
 	var err error
+	var fallback *httpFallbackState
+	if params.AllowFallback {
+		fallback = &httpFallbackState{}
+	}
 	serverAddress := params.ServerAddress
 	if err := logboek.Info().LogProcess("Getting client id for the http synchronization server").
 		DoError(func() error {
@@ -61,6 +67,9 @@ func NewHttpSynchronization(ctx context.Context, params SynchronizationParams) (
 
 			clientID, err = GetHttpClientID(ctx, params.ProjectName, serverAddress, params.StagesStorage)
 			if err != nil {
+				if fallback != nil && fallback.disable(ctx, err) {
+					return nil
+				}
 				return fmt.Errorf("unable to get client id for the http synchronization server: %w", err)
 			}
 
@@ -74,11 +83,12 @@ func NewHttpSynchronization(ctx context.Context, params SynchronizationParams) (
 	return &HttpSynchronization{
 		address:  serverAddress,
 		clientId: clientID,
+		fallback: fallback,
 	}, nil
 }
 
 func (s *HttpSynchronization) GetStorageLockManager(ctx context.Context) (Interface, error) {
-	return NewHttp(ctx, s.address, s.clientId)
+	return newHTTPManager(ctx, s.address, s.clientId, s.fallback), nil
 }
 
 func checkRepoSyncServer(ctx context.Context, projectName, serverAddress string, stagesStorage storage.StagesStorage) (string, error) {

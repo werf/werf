@@ -12,6 +12,7 @@ type Interface interface {
 }
 
 type LockHandle struct {
+	skipped        bool
 	ProjectName    string              `json:"projectName"`
 	LockgateHandle lockgate.LockHandle `json:"lockgateHandle"`
 }

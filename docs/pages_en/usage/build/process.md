@@ -86,7 +86,7 @@ The image building algorithm in werf is different:
 1. If the next layer to be built is already present in the container registry, it will not be built or downloaded.
 2. If the next layer to be built is not in the container registry, the previous layer is downloaded (the base layer for building the current one).
 3. The new layer is built on the local machine and published to the container registry.
-4. At publishing time, werf automatically resolves conflicts between builders from different hosts that try to publish the same layer. Under a shared synchronization backend and a valid lock lease, a builder rechecks the registry and reuses an already published suitable layer. ([The built-in sync service](#synchronizing-builders) makes this possible).
+4. At publishing time, builders using a shared synchronization backend and valid lock leases resolve conflicts by rechecking the registry and reusing an already published suitable layer. The default public service uses a [best-effort policy](#synchronizing-builders): publication can continue without locks when that service is unavailable.
 5. The process continues until all the layers of the image are built.
 
 The algorithm of stage selection in werf works as follows:
@@ -501,17 +501,27 @@ You can clean up a caching repository by deleting it entirely without any risks.
 
 <!-- reference https://werf.io/docs/v2/advanced/synchronization.html -->
 
-To coordinate publication of built images, werf synchronizes parallel builders. By default, the public synchronization service at [https://synchronization.werf.io/](https://synchronization.werf.io/) is used and no extra user interaction is required.
+To coordinate publication of built images, werf synchronizes parallel builders. Registry builds use the public service at [https://synchronization.werf.io/](https://synchronization.werf.io/) by default. This default is **best effort**: availability of CI takes priority over coordination when the public service cannot be reached.
+
+If client registration or acquisition of a new lock fails because of a DNS or network error, a request timeout, or an HTTP 5xx response, werf warns and continues without acquiring new locks for the rest of the command, including internal build retries. Recovery of the service does not switch that command back to synchronized publication. Registry errors, TLS validation failures, authentication errors, invalid responses, and command cancellation do not enable fallback. Each HTTP request to the synchronization service has a 10-second timeout; waiting for another publisher to release a lock does not itself enable fallback. Already acquired locks retain their normal renewal, release, and loss-of-lease handling.
+
+An outage does not by itself mean an incorrect build. A race requires competing publication for the same build inputs; duplicate publications do not necessarily differ in contents. If the build outputs differ, a later retry can select different contents. A single publisher, or builders reusing an already published suitable image from the primary repository, do not encounter this publication race. Fresh registry checks remain enabled, but they cannot guarantee a single winner without coordination. A publisher bypassing locks can also race with one that still holds a valid lock.
+
+Explicitly set `--synchronization` or `WERF_SYNCHRONIZATION` to require strict synchronization, even when choosing the public service. An empty value keeps the automatic default. All publishers of a shared repository must use the same backend and project name. Failure to acquire a lock from an explicitly configured backend stops publication.
+
+The first publication with an explicitly configured backend records a per-project safeguard marker in the primary repository. The marker requires the same explicit synchronization setting in subsequent commands; forgetting the setting or selecting a different backend is an error. It stores a fingerprint of the setting, not credentials. This is a **best-effort configuration safeguard**: it cannot stop a builder that started before the marker appeared, or an older client that does not understand it. Kubernetes clients must still be configured to use the same cluster; matching context or configuration path names alone do not establish that.
+
+Stop all publishers before enabling the safeguard or changing the backend. Changing or removing the policy also requires removing its marker from the primary registry while publishers are stopped, then configuring every writer consistently before restarting them. The marker is not moved into a separate meta-repo.
 
 <div class="details">
 <a href="javascript:void(0)" class="details__summary">How the synchronization service works</a>
 <div class="details__content" markdown="1">
 
-The synchronization service is a werf component that is designed to coordinate multiple werf processes. It acts as a _lock manager_. The locks are required to correctly publish new images to the container registry and to implement the build algorithm described in ["Layer-by-layer image caching"](#layer-by-layer-image-caching).
+The synchronization service coordinates multiple werf processes as a _lock manager_. Its locks serialize the existence check and publication of new images, allowing a waiting publisher to reuse a suitable image instead of publishing another one.
 
 The synchronization service receives the shared client ID, project name and stage digest used to identify each lock. Registry credentials and image contents are not part of the lock requests.
 
-All builders sharing a repository must use the same synchronization backend and project name. Failure to acquire a lock stops publication. As in v2, lease-based locking does not provide registry-side fencing during a prolonged network partition or an in-memory server restart.
+As in v2, lease-based locking does not provide registry-side fencing during a prolonged network partition or an in-memory server restart. The best-effort fallback covers registration and new lock acquisition, not confirmed loss of an already acquired lease.
 
 A synchronization service can be:
 1. An HTTP synchronization server implemented in the `werf synchronization` command.

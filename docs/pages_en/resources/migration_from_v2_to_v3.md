@@ -245,7 +245,15 @@ werf config list --final-images-only=false
 
 ### Synchronization server
 
-werf v3 retains synchronization for publishing built images. Continue using the same synchronization server for all builders that share a repository. The `--synchronization` / `-S` flag, `WERF_SYNCHRONIZATION`, and `werf synchronization` command remain supported. Registry builds use the public `synchronization.werf.io` service by default; local builds use local file locks.
+werf v3 retains synchronization for publishing built images. The `--synchronization` / `-S` flag, `WERF_SYNCHRONIZATION`, and `werf synchronization` command remain supported. Local builds continue to use local file locks.
+
+For registry builds without an explicitly configured synchronization server, werf uses the public `synchronization.werf.io` service on a **best-effort** basis. If client registration or acquisition of a new lock fails because of a DNS or network error, a request timeout, or an HTTP 5xx response, werf warns and continues without acquiring new locks for the rest of the command. An outage of the public service therefore does not by itself stop publication. Errors from the registry, TLS validation, authentication, invalid responses, and command cancellation are not grounds for this fallback. Existing lock leases retain their normal lifecycle and loss-of-lease handling.
+
+Continuing without synchronization does not by itself mean the build is incorrect. A race requires concurrent publication for the same build inputs. Duplicate publications do not necessarily contain different files; when the build outputs differ, a later retry can select different contents. This race does not occur with a single publisher, or when all builders reuse an already published suitable image from the primary repository. Best effort does not guarantee a single shared result during an outage.
+
+To keep synchronization strict, explicitly set `--synchronization` or `WERF_SYNCHRONIZATION` for **every publisher of the repository**, using the same backend. This also applies when explicitly selecting the public service. An explicitly configured backend never falls back to publishing without locks. For CI that must not depend on the public service, use your own HTTP server or Kubernetes synchronization.
+
+On the first publication using an explicitly configured backend, werf stores a per-project safeguard marker in the primary repository. Subsequent commands reject a missing or different synchronization setting. Like the meta-repo safeguard, this is a best-effort configuration check, not an atomic switch of all running builders. Stop all publishers before enabling or changing the policy, and update every writer: older clients do not enforce the marker. See [Synchronizing builders]({{ "/usage/build/process.html#synchronizing-builders" | true_relative_url }}) for the full configuration and limitations.
 
 ### Buildah
 

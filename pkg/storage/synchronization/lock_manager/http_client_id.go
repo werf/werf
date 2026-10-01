@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"time"
 
@@ -30,7 +30,7 @@ func GetHttpClientID(ctx context.Context, projectName, serverAddress string, sta
 
 	// Create new clientID and post it to storage.
 	{
-		clientID, err := newClientID(serverAddress, &http.Client{})
+		clientID, err := newClientID(ctx, serverAddress, &http.Client{Timeout: synchronizationRequestTimeout})
 		if err != nil {
 			return "", err
 		}
@@ -46,7 +46,11 @@ func GetHttpClientID(ctx context.Context, projectName, serverAddress string, sta
 
 	// Retry getting clientID to account for the possibility that another process created it before.
 	{
-		time.Sleep(2 * time.Second)
+		select {
+		case <-ctx.Done():
+			return "", ctx.Err()
+		case <-time.After(2 * time.Second):
+		}
 
 		clientID, err := getClientIDFromStorage(ctx, projectName, stagesStorage)
 		if err != nil {
@@ -87,39 +91,49 @@ func selectOldestClientIDRecord(records []*storage.ClientIDRecord) *storage.Clie
 	return foundRec
 }
 
-func newClientID(url string, httpClient *http.Client) (string, error) {
+func newClientID(ctx context.Context, url string, httpClient *http.Client) (string, error) {
 	request := server.NewClientIDRequest{}
 	response := server.NewClientIDResponse{}
-	if err := performPost(httpClient, fmt.Sprintf("%s/%s", url, "new-client-id"), request, &response); err != nil {
+	if err := performPost(ctx, httpClient, fmt.Sprintf("%s/%s", url, "new-client-id"), request, &response); err != nil {
 		return "", err
 	}
-	return response.ClientID, response.Err.Error
+	if response.Err.Error != nil {
+		return "", response.Err.Error
+	}
+	if response.ClientID == "" {
+		return "", fmt.Errorf("synchronization server returned an empty client ID")
+	}
+	return response.ClientID, nil
 }
 
-func performPost(client *http.Client, url string, request, response interface{}) error {
+func performPost(ctx context.Context, client *http.Client, url string, request, response interface{}) error {
 	reqBodyData, err := json.Marshal(request)
 	if err != nil {
 		return fmt.Errorf("unable to marshal request data: %w", err)
 	}
 
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(reqBodyData))
+	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(reqBodyData))
 	if err != nil {
 		return fmt.Errorf("unable to create POST request for %q: %w", url, err)
 	}
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return fmt.Errorf("error requesting url %q: %w", url, err)
+		return classifySynchronizationRequestError(ctx, fmt.Errorf("error requesting url %q: %w", url, err))
 	}
 
 	defer resp.Body.Close()
-	respBodyData, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return fmt.Errorf("error reading response of %q request: %w", url, err)
+	if resp.StatusCode != http.StatusOK {
+		err := fmt.Errorf("got bad response %s by url %q request", resp.Status, url)
+		if resp.StatusCode >= 500 && resp.StatusCode <= 599 {
+			return &synchronizationUnavailableError{err: err}
+		}
+		return err
 	}
 
-	if resp.StatusCode != 200 {
-		return fmt.Errorf("got bad response %s by url %q request:\n%s", resp.Status, url, string(respBodyData))
+	respBodyData, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return classifySynchronizationRequestError(ctx, fmt.Errorf("error reading response of %q request: %w", url, err))
 	}
 
 	if err := json.Unmarshal(respBodyData, response); err != nil {
