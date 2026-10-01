@@ -15,6 +15,26 @@ import (
 )
 
 var _ = ginkgo.Describe("repository synchronization policy", func() {
+	ginkgo.It("pins the first publication through the configured HTTP manager", func(ctx ginkgo.SpecContext) {
+		address := synchronizationTestServer()
+		store := synchronizationTestStorage(ctx)
+		gomega.Expect(store.PostClientIDRecord(ctx, "project", &storage.ClientIDRecord{ClientID: "client", TimestampMillisec: 1})).To(gomega.Succeed())
+		synchronization, err := GetSynchronization(ctx, &CmdData{Synchronization: &address}, "project", store)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		manager, err := synchronization.GetStorageLockManager(ctx)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		_, found, err := store.GetSynchronizationMarker(ctx, "project")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		gomega.Expect(found).To(gomega.BeFalse())
+		handle, err := manager.LockStage(ctx, "project", "stage")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		defer func() { gomega.Expect(manager.Unlock(ctx, handle)).To(gomega.Succeed()) }()
+		fingerprint, found, err := store.GetSynchronizationMarker(ctx, "project")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		gomega.Expect(found).To(gomega.BeTrue())
+		gomega.Expect(fingerprint).To(gomega.Equal(synchronizationFingerprint(address)))
+	})
+
 	ginkgo.DescribeTable("only permits fallback when the public endpoint was implicit", func(ctx ginkgo.SpecContext, source string, existingID bool) {
 		previousEnv, present := os.LookupEnv("WERF_SYNCHRONIZATION")
 		ginkgo.DeferCleanup(func() {

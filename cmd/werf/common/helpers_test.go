@@ -11,6 +11,8 @@ import (
 	ginkgo "github.com/onsi/ginkgo/v2"
 	gomega "github.com/onsi/gomega"
 
+	"github.com/werf/lockgate/pkg/distributed_locker"
+	"github.com/werf/lockgate/pkg/distributed_locker/optimistic_locking_store"
 	"github.com/werf/werf/v3/pkg/docker_registry"
 	"github.com/werf/werf/v3/pkg/image"
 	"github.com/werf/werf/v3/pkg/storage"
@@ -80,4 +82,11 @@ func (transport *synchronizationDNSFailureTransport) RoundTrip(request *http.Req
 		return nil, &net.DNSError{Err: "no such host", Name: request.URL.Hostname(), IsNotFound: true}
 	}
 	return transport.next.RoundTrip(request)
+}
+
+func synchronizationTestServer() string {
+	backend := distributed_locker.NewOptimisticLockingStorageBasedBackend(optimistic_locking_store.NewInMemoryStore())
+	server := httptest.NewServer(http.StripPrefix("/client/locker", distributed_locker.NewHttpBackendHandler(backend)))
+	ginkgo.DeferCleanup(server.Close)
+	return server.URL
 }
