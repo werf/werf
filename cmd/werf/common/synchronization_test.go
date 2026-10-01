@@ -27,6 +27,20 @@ var _ = ginkgo.Describe("repository synchronization policy", func() {
 		ginkgo.Entry("local", ":local", ":local"),
 		ginkgo.Entry("invalid", "https://user:secret@%invalid", "[invalid address]"))
 
+	ginkgo.It("redacts credentials in the configured synchronization log", func(ctx ginkgo.SpecContext) {
+		store := synchronizationTestStorage(ctx)
+		gomega.Expect(store.PostClientIDRecord(ctx, "project", &storage.ClientIDRecord{ClientID: "client", TimestampMillisec: 1})).To(gomega.Succeed())
+		address := "https://sync-user:sync-password@sync.example/path?token=sync-token#sync-fragment"
+		var output bytes.Buffer
+		ctxLog := logboek.NewContext(ctx, logboek.NewLogger(&output, &output))
+		_, err := GetSynchronization(ctxLog, &CmdData{Synchronization: &address}, "project", store)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		gomega.Expect(output.String()).To(gomega.ContainSubstring("Using sync server: https://sync.example/path\n"))
+		for _, secret := range []string{"sync-user", "sync-password", "sync-token", "sync-fragment"} {
+			gomega.Expect(output.String()).NotTo(gomega.ContainSubstring(secret))
+		}
+	})
+
 	ginkgo.It("pins the first publication through the configured HTTP manager", func(ctx ginkgo.SpecContext) {
 		address := synchronizationTestServer()
 		store := synchronizationTestStorage(ctx)
