@@ -1,11 +1,10 @@
 package path_matcher
 
 type PathMatcherOptions struct {
-	BasePath             string
-	IncludeGlobs         []string
-	ExcludeGlobs         []string
-	DockerignorePatterns []string
-	Matchers             []PathMatcher
+	BasePath     string
+	IncludeGlobs []string
+	ExcludeGlobs []string
+	Matchers     []PathMatcher
 }
 
 func NewPathMatcher(options PathMatcherOptions) PathMatcher {
@@ -17,10 +16,6 @@ func NewPathMatcher(options PathMatcherOptions) PathMatcher {
 
 	if len(options.ExcludeGlobs) != 0 {
 		matchers = append(matchers, newExcludePathMatcher(options.ExcludeGlobs))
-	}
-
-	if options.DockerignorePatterns != nil {
-		matchers = append(matchers, newDockerfileIgnorePathMatcher(options.DockerignorePatterns))
 	}
 
 	if len(options.Matchers) != 0 {
