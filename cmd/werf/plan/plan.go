@@ -21,7 +21,6 @@ import (
 	"github.com/werf/werf/v3/pkg/build"
 	"github.com/werf/werf/v3/pkg/config"
 	"github.com/werf/werf/v3/pkg/config/deploy_params"
-	"github.com/werf/werf/v3/pkg/container_backend"
 	"github.com/werf/werf/v3/pkg/deploy"
 	"github.com/werf/werf/v3/pkg/docker"
 	"github.com/werf/werf/v3/pkg/giterminism_manager"
@@ -195,17 +194,18 @@ func runMain(ctx context.Context, imageNameListFromArgs []string) error {
 		InitTrueGitWithOptions: &common.InitTrueGitOptions{
 			Options: true_git.Options{LiveGitOutput: *commonCmdData.LogDebug},
 		},
-		InitDockerRegistry:          true,
-		InitProcessContainerBackend: true,
-		RequireDockerDaemon:         true,
-		InitWerf:                    true,
-		InitGitDataManager:          true,
-		InitManifestCache:           true,
-		InitLRUImagesCache:          true,
-		InitSSHAgent:                true,
+		InitWerf:           true,
+		InitGitDataManager: true,
+		InitManifestCache:  true,
+		InitLRUImagesCache: true,
+		InitSSHAgent:       true,
 	})
 	if err != nil {
 		return fmt.Errorf("component init error: %w", err)
+	}
+
+	if err := docker.InitDockerConfig(docker.InitOptions{DockerConfigDir: *commonCmdData.DockerConfig}); err != nil {
+		return fmt.Errorf("init docker config: %w", err)
 	}
 
 	defer func() {
@@ -214,11 +214,11 @@ func runMain(ctx context.Context, imageNameListFromArgs []string) error {
 		}
 	}()
 
-	containerBackend := commonManager.ContainerBackend()
-
 	defer func() {
-		if err := common.RunAutoHostCleanup(ctx, &commonCmdData, containerBackend); err != nil {
-			logboek.Context(ctx).Error().LogF("Auto host cleanup failed: %s\n", err)
+		if containerBackend, ok := commonManager.TryContainerBackend(); ok {
+			if err := common.RunAutoHostCleanup(ctx, &commonCmdData, containerBackend); err != nil {
+				logboek.Context(ctx).Error().LogF("Auto host cleanup failed: %s\n", err)
+			}
 		}
 	}()
 
@@ -236,22 +236,26 @@ func runMain(ctx context.Context, imageNameListFromArgs []string) error {
 	if *commonCmdData.Follow {
 		logboek.LogOptionalLn()
 		return common.FollowGitHead(ctx, &commonCmdData, func(
-			ctx context.Context,
+			_ context.Context,
 			headCommitGiterminismManager *giterminism_manager.Manager,
 		) error {
-			return run(ctx, containerBackend, headCommitGiterminismManager, imageNameListFromArgs)
+			newCtx, err := run(ctx, commonManager, headCommitGiterminismManager, imageNameListFromArgs)
+			ctx = newCtx
+			return err
 		})
 	} else {
-		return run(ctx, containerBackend, giterminismManager, imageNameListFromArgs)
+		newCtx, err := run(ctx, commonManager, giterminismManager, imageNameListFromArgs)
+		ctx = newCtx
+		return err
 	}
 }
 
 func run(
 	ctx context.Context,
-	containerBackend container_backend.ContainerBackend,
+	commonManager *common.ComponentsManager,
 	giterminismManager *giterminism_manager.Manager,
 	imageNameListFromArgs []string,
-) error {
+) (context.Context, error) {
 	if cmdData.ShowPlanArtifactPath != "" {
 		if err := action.ReleasePlanShow(ctx, action.ReleasePlanShowOptions{
 			ResourceDiffOptions: nelmcommon.ResourceDiffOptions{
@@ -264,32 +268,32 @@ func run(
 			SecretKey:        commonCmdData.SecretKey,
 			SecretWorkDir:    commonCmdData.SecretWorkDir,
 		}); err != nil {
-			return fmt.Errorf("release plan show: %w", err)
+			return ctx, fmt.Errorf("release plan show: %w", err)
 		}
 
-		return nil
+		return ctx, nil
 	}
 
 	werfConfigPath, werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
 	if err != nil {
-		return fmt.Errorf("unable to load werf config: %w", err)
+		return ctx, fmt.Errorf("unable to load werf config: %w", err)
 	}
 
 	imagesToProcess, err := config.NewImagesToProcess(werfConfig, imageNameListFromArgs, *commonCmdData.FinalImagesOnly, *commonCmdData.WithoutImages)
 	if err != nil {
-		return err
+		return ctx, err
 	}
 
 	projectName := werfConfig.Meta.Project
 
 	projectTmpDir, err := tmp_manager.CreateProjectDir(ctx)
 	if err != nil {
-		return fmt.Errorf("getting project tmp dir failed: %w", err)
+		return ctx, fmt.Errorf("getting project tmp dir failed: %w", err)
 	}
 
 	buildOptions, err := common.GetBuildOptions(ctx, &commonCmdData, werfConfig, imagesToProcess)
 	if err != nil {
-		return err
+		return ctx, err
 	}
 
 	var imagesInfoGetters []*image.InfoGetter
@@ -299,7 +303,7 @@ func run(
 
 	addr, err := commonCmdData.Repo.GetAddress()
 	if err != nil {
-		return err
+		return ctx, err
 	}
 
 	switch {
@@ -309,11 +313,17 @@ func run(
 		isStub = true
 		stubImageNameList = append(stubImageNameList, imagesToProcess.FinalImageNameList...)
 	default:
+		containerBackend, newCtx, err := commonManager.EnsureContainerBackend(ctx, &commonCmdData, common.EnsureContainerBackendOptions{InitDockerRegistry: true, RequireDockerDaemon: true})
+		if err != nil {
+			return ctx, fmt.Errorf("container backend initialization error: %w", err)
+		}
+		ctx = newCtx
+
 		logboek.LogOptionalLn()
 
 		useCustomTagFunc, err := common.GetUseCustomTagFunc(&commonCmdData, giterminismManager, imagesToProcess)
 		if err != nil {
-			return err
+			return ctx, err
 		}
 
 		storageManager, err := common.NewStorageManager(ctx, &common.NewStorageManagerConfig{
@@ -324,14 +334,14 @@ func run(
 			GitHistoryBasedCleanupDisabled: werfConfig.Meta.Cleanup.DisableGitHistoryBasedPolicy,
 		})
 		if err != nil {
-			return fmt.Errorf("unable to init storage manager: %w", err)
+			return ctx, fmt.Errorf("unable to init storage manager: %w", err)
 		}
 
 		imagesRepository = storageManager.GetServiceValuesRepo()
 
 		conveyorOptions, err := common.GetConveyorOptionsWithParallel(ctx, &commonCmdData, imagesToProcess, buildOptions)
 		if err != nil {
-			return err
+			return ctx, err
 		}
 
 		conveyorWithRetry := build.NewConveyorWithRetryWrapper(werfConfig, giterminismManager, giterminismManager.ProjectDir(), projectTmpDir, containerBackend, storageManager, conveyorOptions)
@@ -369,7 +379,7 @@ func run(
 
 			return nil
 		}); err != nil {
-			return err
+			return ctx, err
 		}
 
 		logboek.LogOptionalLn()
@@ -381,7 +391,7 @@ func run(
 		giterminismManager,
 	)
 	if err != nil {
-		return fmt.Errorf("get relative helm chart directory: %w", err)
+		return ctx, fmt.Errorf("get relative helm chart directory: %w", err)
 	}
 
 	releaseNamespace, err := deploy_params.GetKubernetesNamespace(
@@ -390,7 +400,7 @@ func run(
 		werfConfig,
 	)
 	if err != nil {
-		return fmt.Errorf("get kubernetes namespace: %w", err)
+		return ctx, fmt.Errorf("get kubernetes namespace: %w", err)
 	}
 
 	releaseName, err := deploy_params.GetHelmRelease(
@@ -400,13 +410,13 @@ func run(
 		werfConfig,
 	)
 	if err != nil {
-		return fmt.Errorf("get helm release: %w", err)
+		return ctx, fmt.Errorf("get helm release: %w", err)
 	}
 
 	serviceAnnotations := map[string]string{}
 	extraAnnotations := map[string]string{}
 	if annos, err := common.GetUserExtraAnnotations(&commonCmdData); err != nil {
-		return fmt.Errorf("get user extra annotations: %w", err)
+		return ctx, fmt.Errorf("get user extra annotations: %w", err)
 	} else {
 		for key, value := range annos {
 			if strings.HasPrefix(key, "project.werf.io/") ||
@@ -428,17 +438,17 @@ func run(
 
 	extraLabels, err := common.GetUserExtraLabels(&commonCmdData)
 	if err != nil {
-		return fmt.Errorf("get user extra labels: %w", err)
+		return ctx, fmt.Errorf("get user extra labels: %w", err)
 	}
 
 	headHash, err := giterminismManager.LocalGitRepo().HeadCommitHash(ctx)
 	if err != nil {
-		return fmt.Errorf("get HEAD commit hash: %w", err)
+		return ctx, fmt.Errorf("get HEAD commit hash: %w", err)
 	}
 
 	headTime, err := giterminismManager.LocalGitRepo().HeadCommitTime(ctx)
 	if err != nil {
-		return fmt.Errorf("get HEAD commit time: %w", err)
+		return ctx, fmt.Errorf("get HEAD commit time: %w", err)
 	}
 
 	registryCredentialsPath := docker.GetDockerConfigCredentialsFile(*commonCmdData.DockerConfig)
@@ -455,12 +465,12 @@ func run(
 		CommitDate:               headTime,
 	})
 	if err != nil {
-		return fmt.Errorf("get service values: %w", err)
+		return ctx, fmt.Errorf("get service values: %w", err)
 	}
 
 	releaseLabels, err := common.GetReleaseLabels(&commonCmdData)
 	if err != nil {
-		return fmt.Errorf("get release labels: %w", err)
+		return ctx, fmt.Errorf("get release labels: %w", err)
 	}
 
 	nelmcommon.ChartFileReader = giterminismManager.FileManager
@@ -520,8 +530,8 @@ func run(
 		IgnoreBundleJS: commonCmdData.IgnoreBundleJS,
 		DenoBinaryPath: commonCmdData.DenoBinaryPath,
 	}); err != nil {
-		return fmt.Errorf("release plan install: %w", err)
+		return ctx, fmt.Errorf("release plan install: %w", err)
 	}
 
-	return nil
+	return ctx, nil
 }

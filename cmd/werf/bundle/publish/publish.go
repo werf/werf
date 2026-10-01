@@ -33,6 +33,7 @@ import (
 	"github.com/werf/werf/v3/cmd/werf/common"
 	"github.com/werf/werf/v3/pkg/build"
 	"github.com/werf/werf/v3/pkg/config"
+	"github.com/werf/werf/v3/pkg/container_backend"
 	"github.com/werf/werf/v3/pkg/deploy"
 	"github.com/werf/werf/v3/pkg/deploy/bundles"
 	"github.com/werf/werf/v3/pkg/image"
@@ -163,27 +164,25 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 		InitTrueGitWithOptions: &common.InitTrueGitOptions{
 			Options: true_git.Options{LiveGitOutput: *commonCmdData.LogDebug},
 		},
-		InitDockerRegistry:          true,
-		InitProcessContainerBackend: true,
-		RequireDockerDaemon:         true,
-		InitWerf:                    true,
-		InitGitDataManager:          true,
-		InitManifestCache:           true,
-		InitLRUImagesCache:          true,
-		InitSSHAgent:                true,
+		InitDockerRegistry: true,
+		InitWerf:           true,
+		InitGitDataManager: true,
+		InitManifestCache:  true,
+		InitLRUImagesCache: true,
+		InitSSHAgent:       true,
 	})
 	if err != nil {
 		return fmt.Errorf("component init error: %w", err)
 	}
 
-	containerBackend := commonManager.ContainerBackend()
-
 	defer func() {
 		if err := tmp_manager.DelegateCleanup(ctx); err != nil {
 			logboek.Context(ctx).Warn().LogF("Temporary files cleanup preparation failed: %s\n", err)
 		}
-		if err := common.RunAutoHostCleanup(ctx, &commonCmdData, containerBackend); err != nil {
-			logboek.Context(ctx).Error().LogF("Auto host cleanup failed: %s\n", err)
+		if containerBackend, ok := commonManager.TryContainerBackend(); ok {
+			if err := common.RunAutoHostCleanup(ctx, &commonCmdData, containerBackend); err != nil {
+				logboek.Context(ctx).Error().LogF("Auto host cleanup failed: %s\n", err)
+			}
 		}
 	}()
 
@@ -208,6 +207,16 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 		return err
 	}
 
+	var containerBackend container_backend.ContainerBackend
+	if !imagesToProcess.WithoutImages {
+		var newCtx context.Context
+		containerBackend, newCtx, err = commonManager.EnsureContainerBackend(ctx, &commonCmdData, common.EnsureContainerBackendOptions{InitDockerRegistry: true, RequireDockerDaemon: true})
+		if err != nil {
+			return fmt.Errorf("container backend initialization error: %w", err)
+		}
+		ctx = newCtx
+	}
+
 	projectName := werfConfig.Meta.Project
 
 	projectTmpDir, err := tmp_manager.CreateProjectDir(ctx)
@@ -222,16 +231,21 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 
 	logboek.LogOptionalLn()
 
-	stagesStorage, err := common.GetStagesStorage(ctx, containerBackend, &commonCmdData, common.GetStagesStorageOpts{
-		CleanupDisabled:                werfConfig.Meta.Cleanup.DisableCleanup,
-		GitHistoryBasedCleanupDisabled: werfConfig.Meta.Cleanup.DisableGitHistoryBasedPolicy,
-	})
+	bundleRepo, err := commonCmdData.Repo.GetAddress()
 	if err != nil {
 		return err
 	}
-	finalStagesStorage, err := common.GetOptionalFinalStagesStorage(ctx, containerBackend, &commonCmdData)
-	if err != nil {
+	if err := common.ValidateRepoContainerRegistry(commonCmdData.Repo.GetContainerRegistry(ctx)); err != nil {
 		return err
+	}
+	if *commonCmdData.FinalRepo.Address != "" {
+		if err := common.ValidateRepoContainerRegistry(commonCmdData.FinalRepo.GetContainerRegistry(ctx)); err != nil {
+			return err
+		}
+		bundleRepo, err = commonCmdData.FinalRepo.GetAddress()
+		if err != nil {
+			return err
+		}
 	}
 
 	var imagesInfoGetters []*image.InfoGetter
@@ -426,13 +440,6 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 		opts,
 	); err != nil {
 		return fmt.Errorf("create bundle: %w", err)
-	}
-
-	var bundleRepo string
-	if finalStagesStorage != nil {
-		bundleRepo = finalStagesStorage.Address()
-	} else {
-		bundleRepo = stagesStorage.Address()
 	}
 
 	opts.ChartLoadOpts.ChartType = nelmcommon.LegacyChartTypeBundle

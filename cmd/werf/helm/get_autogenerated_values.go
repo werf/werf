@@ -121,17 +121,18 @@ func runGetServiceValues(ctx context.Context, imageNameListFromArgs []string) er
 		InitTrueGitWithOptions: &common.InitTrueGitOptions{
 			Options: true_git.Options{LiveGitOutput: *commonCmdData.LogDebug},
 		},
-		InitDockerRegistry:          true,
-		InitProcessContainerBackend: true,
-		RequireDockerDaemon:         true,
-		InitWerf:                    true,
-		InitGitDataManager:          true,
-		InitManifestCache:           true,
-		InitLRUImagesCache:          true,
-		InitSSHAgent:                true,
+		InitWerf:           true,
+		InitGitDataManager: true,
+		InitManifestCache:  true,
+		InitLRUImagesCache: true,
+		InitSSHAgent:       true,
 	})
 	if err != nil {
 		return fmt.Errorf("component init error: %w", err)
+	}
+
+	if err := docker.InitDockerConfig(docker.InitOptions{DockerConfigDir: *commonCmdData.DockerConfig}); err != nil {
+		return fmt.Errorf("init docker config: %w", err)
 	}
 
 	defer func() {
@@ -139,8 +140,6 @@ func runGetServiceValues(ctx context.Context, imageNameListFromArgs []string) er
 			logboek.Context(ctx).Warn().LogF("Temporary files cleanup preparation failed: %s\n", err)
 		}
 	}()
-
-	containerBackend := commonManager.ContainerBackend()
 
 	defer func() {
 		commonManager.TerminateSSHAgent()
@@ -194,6 +193,11 @@ func runGetServiceValues(ctx context.Context, imageNameListFromArgs []string) er
 		isStub = true
 		stubImageNameList = append(stubImageNameList, imagesToProcess.FinalImageNameList...)
 	default:
+		containerBackend, newCtx, err := commonManager.EnsureContainerBackend(ctx, &commonCmdData, common.EnsureContainerBackendOptions{RequireDockerDaemon: true})
+		if err != nil {
+			return fmt.Errorf("container backend initialization error: %w", err)
+		}
+		ctx = newCtx
 		if err := common.DockerRegistryInit(ctx, &commonCmdData, commonManager.RegistryMirrors(), commonManager.BuildahMode()); err != nil {
 			return err
 		}
