@@ -110,8 +110,6 @@ func prepareWorkTree(ctx context.Context, repoDir, workTreeCacheDir, commit stri
 		}
 
 		isWorkTreeRegistered := false
-		isWorkTreePrunable := false
-		var dirToPrune, pruneReason string
 
 		workTreeList, err := GetWorkTreeList(ctx, repoDir)
 		if err != nil {
@@ -121,20 +119,6 @@ func prepareWorkTree(ctx context.Context, repoDir, workTreeCacheDir, commit stri
 		for _, workTreeDesc := range workTreeList {
 			if filepath.ToSlash(workTreeDesc.Path) == filepath.ToSlash(resolvedWorkTreeDir) {
 				isWorkTreeRegistered = true
-			}
-			if workTreeDesc.Prunable {
-				isWorkTreePrunable = true
-				dirToPrune = workTreeDesc.Path
-				pruneReason = workTreeDesc.PruneReason
-			}
-		}
-
-		if isWorkTreePrunable {
-			logboek.Context(ctx).Default().LogFDetails("Detected prunable worktree %s due to %s\n", dirToPrune, pruneReason)
-			logboek.Context(ctx).Default().LogF("Removing invalidated work tree dir %q of repo %s\n", dirToPrune, repoDir)
-			err := RemoveWorkTree(ctx, repoDir, dirToPrune)
-			if err != nil {
-				return "", fmt.Errorf("unable to remove worktree %q: %w", dirToPrune, err)
 			}
 		}
 
@@ -433,9 +417,4 @@ func GetWorkTreeList(ctx context.Context, repoDir string) ([]WorktreeDescriptor,
 	}
 
 	return res, nil
-}
-
-func RemoveWorkTree(ctx context.Context, repoDir, workTreeDir string) error {
-	removeCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: repoDir}, "worktree", "remove", workTreeDir)
-	return removeCmd.Run(ctx)
 }

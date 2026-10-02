@@ -68,6 +68,36 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 		Expect(commit).Should(Equal(sourceHeadCommit))
 	})
 
+	When("the service branch is held by a worktree whose directory no longer exists", func() {
+		BeforeEach(func(ctx SpecContext) {
+			staleWtDir := filepath.Join(SuiteData.TestDirPath, "stale-home", "worktree")
+			utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "worktree", "add", "-b", defaultOptions.ServiceBranch, staleWtDir, sourceHeadCommit)
+			Expect(os.RemoveAll(filepath.Dir(staleWtDir))).To(Succeed())
+
+			list, err := GetWorkTreeList(ctx, gitDir)
+			Expect(err).Should(Succeed())
+			Expect(list).Should(ContainElement(SatisfyAll(
+				HaveField("Branch", "refs/heads/"+defaultOptions.ServiceBranch),
+				HaveField("Prunable", BeTrue()),
+			)))
+		})
+
+		It("syncs without touching the stale worktree registration", func(ctx context.Context) {
+			ctx = logging.WithLogger(ctx)
+
+			utils.WriteFile(filepath.Join(sourceWorkTreeDir, "file"), []byte("content"))
+
+			commit, err := SyncSourceWorktreeWithServiceBranch(ctx, gitDir, sourceWorkTreeDir, workTreeCacheDir, sourceHeadCommit, defaultOptions)
+			Expect(err).Should(Succeed())
+			Expect(commit).ShouldNot(Equal(sourceHeadCommit))
+			Expect(utils.SucceedCommandOutputString(ctx, sourceWorkTreeDir, "git", "rev-parse", defaultOptions.ServiceBranch)).Should(Equal(commit + "\n"))
+
+			list, err := GetWorkTreeList(ctx, gitDir)
+			Expect(err).Should(Succeed())
+			Expect(list).Should(ContainElement(HaveField("Prunable", BeTrue())))
+		})
+	})
+
 	When("tracked changes", func() {
 		const trackedFileRelPath = "tracked_file"
 		var trackedFilePath string
@@ -302,7 +332,7 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 				)
 				Expect(err).Should(Succeed())
 
-				utils.RunSucceedCommand(ctx, filepath.Join(workTreeCacheDir, "worktree"), "git", "merge-base", "--is-ancestor", "main", "HEAD")
+				utils.RunSucceedCommand(ctx, filepath.Join(workTreeCacheDir, "worktree"), "git", "merge-base", "--is-ancestor", "main", defaultOptions.ServiceBranch)
 			})
 
 			It("staged and synced, then committed and synced: service branch contains last main branch commit", func(ctx context.Context) {
@@ -333,7 +363,7 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 				)
 				Expect(err).Should(Succeed())
 
-				utils.RunSucceedCommand(ctx, filepath.Join(workTreeCacheDir, "worktree"), "git", "merge-base", "--is-ancestor", "main", "HEAD")
+				utils.RunSucceedCommand(ctx, filepath.Join(workTreeCacheDir, "worktree"), "git", "merge-base", "--is-ancestor", "main", defaultOptions.ServiceBranch)
 			})
 
 			It("try to trigger a merge conflict: merge conflict not happening", func(ctx context.Context) {

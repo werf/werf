@@ -183,6 +183,54 @@ var _ = Describe("Work tree helpers", func() {
 		})
 	})
 
+	When("the repository has a foreign worktree git reports as prunable", func() {
+		var mainWtDir, workTreeCacheDir, foreignWtDir string
+
+		BeforeEach(func(ctx SpecContext) {
+			mainWtDir = filepath.Join(SuiteData.TestDirPath, "main-wt")
+			workTreeCacheDir = filepath.Join(SuiteData.TestDirPath, "wt-cache")
+			foreignWtDir = filepath.Join(SuiteData.TestDirPath, "foreign-wt")
+
+			Expect(os.MkdirAll(mainWtDir, os.ModePerm)).To(Succeed())
+			utils.RunSucceedCommand(ctx, mainWtDir, "git", "-c", "init.defaultBranch=main", "init")
+			utils.RunSucceedCommand(ctx, mainWtDir, "git", "checkout", "-b", "main")
+			gitCommitSucceed(ctx, mainWtDir, "--allow-empty", "-m", "Initial commit")
+			utils.RunSucceedCommand(ctx, mainWtDir, "git", "worktree", "add", "--detach", foreignWtDir)
+
+			_, err := prepareWorkTree(ctx, mainWtDir, workTreeCacheDir, getHeadCommit(ctx, mainWtDir), false)
+			Expect(err).To(Succeed())
+		})
+
+		DescribeTable("keeps the foreign worktree registered",
+			func(ctx SpecContext, makePrunable, restore func(dir string)) {
+				makePrunable(foreignWtDir)
+				defer restore(foreignWtDir)
+
+				list, err := GetWorkTreeList(ctx, mainWtDir)
+				Expect(err).To(Succeed())
+				Expect(list).To(ContainElement(SatisfyAll(
+					HaveField("Path", foreignWtDir),
+					HaveField("Prunable", BeTrue()),
+				)), "precondition: git must report the foreign worktree as prunable")
+
+				_, err = prepareWorkTree(ctx, mainWtDir, workTreeCacheDir, getHeadCommit(ctx, mainWtDir), false)
+				Expect(err).To(Succeed())
+
+				list, err = GetWorkTreeList(ctx, mainWtDir)
+				Expect(err).To(Succeed())
+				Expect(list).To(ContainElement(HaveField("Path", foreignWtDir)))
+			},
+			Entry("when its directory was deleted", func(dir string) {
+				Expect(os.RemoveAll(dir)).To(Succeed())
+			}, func(string) {}),
+			Entry("when its directory is inaccessible", func(dir string) {
+				Expect(os.Chmod(dir, 0o000)).To(Succeed())
+			}, func(dir string) {
+				Expect(os.Chmod(dir, 0o755)).To(Succeed())
+			}),
+		)
+	})
+
 	Describe("verifyWorkTreeConsistency", func() {
 		var mainWtDir, sideWtDir string
 		BeforeEach(func(ctx SpecContext) {

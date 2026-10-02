@@ -379,22 +379,28 @@ func expandTilde(path string) string {
 	return path
 }
 
+// prepareAndCheckoutServiceBranch never checks the service branch itself out: the service
+// worktree always stays in detached HEAD and the branch ref is advanced with update-ref. A
+// checked-out branch is exclusive to one worktree, so a stale registration of another service
+// worktree (another WERF_HOME, a wiped cache) holding the branch would make checkout fail.
 func prepareAndCheckoutServiceBranch(ctx context.Context, serviceWorktreeDir, sourceCommit, branchName string) error {
+	branchRef := "refs/heads/" + branchName
+
 	branchListCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: serviceWorktreeDir}, "branch", "--list", branchName)
 	if err := branchListCmd.Run(ctx); err != nil {
 		return fmt.Errorf("git branch list command failed: %w", err)
 	}
 
 	if branchListCmd.OutBuf.Len() == 0 {
-		checkoutCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: serviceWorktreeDir}, "checkout", "-b", branchName, sourceCommit)
-		if err := checkoutCmd.Run(ctx); err != nil {
-			return fmt.Errorf("git checkout command failed: %w", err)
+		updateRefCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: serviceWorktreeDir}, "update-ref", branchRef, sourceCommit)
+		if err := updateRefCmd.Run(ctx); err != nil {
+			return fmt.Errorf("git update-ref command failed: %w", err)
 		}
 
 		return nil
 	}
 
-	checkoutCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: serviceWorktreeDir}, "checkout", branchName)
+	checkoutCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: serviceWorktreeDir}, "checkout", "--detach", branchRef)
 	if err := checkoutCmd.Run(ctx); err != nil {
 		return fmt.Errorf("git checkout command failed: %w", err)
 	}
@@ -414,6 +420,11 @@ func prepareAndCheckoutServiceBranch(ctx context.Context, serviceWorktreeDir, so
 	)
 	if err = mergeCmd.Run(ctx); err != nil {
 		return fmt.Errorf("git merge of source commit %q into service branch %q failed: %w\nNOTE: To continue you can remove the service branch %q with \"git branch -D %s\", but we would also ask you to report this issue to https://github.com/werf/werf/issues", sourceCommit, branchName, err, branchName, branchName)
+	}
+
+	updateRefCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: serviceWorktreeDir}, "update-ref", branchRef, "HEAD")
+	if err := updateRefCmd.Run(ctx); err != nil {
+		return fmt.Errorf("git update-ref command failed: %w", err)
 	}
 
 	return nil
