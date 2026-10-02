@@ -1,8 +1,16 @@
 package e2e_container_registry_test
 
 import (
+	"context"
+	"crypto/tls"
 	"fmt"
+	"net/http"
 
+	"github.com/google/go-containerregistry/pkg/authn"
+	"github.com/google/go-containerregistry/pkg/name"
+	v1 "github.com/google/go-containerregistry/pkg/v1"
+	"github.com/google/go-containerregistry/pkg/v1/remote"
+	"github.com/google/go-containerregistry/pkg/v1/types"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
@@ -80,7 +88,41 @@ var _ = Describe("container registry implementation", func() {
 				imgOCI, err := registry.GetRepoImage(ctx, repo+":oci")
 				Expect(err).ShouldNot(HaveOccurred())
 				Expect(imgOCI.Labels).To(HaveKeyWithValue(labelName, "oci"))
+
+				manifest := getManifest(ctx, repo+":oci", implData.RegistryOptions)
+				Expect(manifest.MediaType).To(Equal(types.OCIManifestSchema1))
+				Expect(manifest.Config.MediaType).To(Equal(types.OCIConfigJSON))
+				Expect(manifest.Layers).To(HaveLen(1))
+				Expect(manifest.Layers[0].MediaType).To(Equal(types.OCILayer))
 			})
 		})
 	}
 })
+
+func getManifest(ctx context.Context, reference string, registryOptions docker_registry.DockerRegistryOptions) *v1.Manifest {
+	GinkgoHelper()
+
+	nameOptions := []name.Option{name.WeakValidation}
+	if registryOptions.InsecureRegistry {
+		nameOptions = append(nameOptions, name.Insecure)
+	}
+	ref, err := name.ParseReference(reference, nameOptions...)
+	Expect(err).ShouldNot(HaveOccurred())
+
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: registryOptions.SkipTlsVerifyRegistry}
+	desc, err := remote.Get(ref,
+		remote.WithContext(ctx),
+		remote.WithAuthFromKeychain(authn.DefaultKeychain),
+		remote.WithTransport(transport),
+	)
+	Expect(err).ShouldNot(HaveOccurred())
+
+	img, err := desc.Image()
+	Expect(err).ShouldNot(HaveOccurred())
+
+	manifest, err := img.Manifest()
+	Expect(err).ShouldNot(HaveOccurred())
+
+	return manifest
+}
