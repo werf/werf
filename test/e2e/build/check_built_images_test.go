@@ -1,9 +1,14 @@
 package e2e_build_test
 
 import (
+	"errors"
+	"os/exec"
+	"slices"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	"github.com/werf/werf/v3/test/pkg/utils"
 	"github.com/werf/werf/v3/test/pkg/werf"
 )
 
@@ -41,12 +46,10 @@ var _ = Describe("Check built images", Label("e2e", "build", "simple"), entryLab
 
 			By("state0: checking built images against an empty repo")
 			setCheckEnv()
-			checkOut := werfProject.Build(ctx, &werf.BuildOptions{
-				CommonOptions: werf.CommonOptions{
-					ShouldFail: true,
-					ExtraArgs:  opts.Args,
-				},
-			})
+			checkOutBytes, checkErr := utils.RunCommandWithOptions(ctx, werfProject.GitRepoPath, werfProject.WerfBinPath, slices.Concat([]string{"build"}, opts.Args), utils.RunCommandOptions{})
+			var checkExitErr *exec.ExitError
+			Expect(errors.As(checkErr, &checkExitErr)).To(BeTrue(), "expected werf build to exit with a non-zero status, got: %v", checkErr)
+			checkOut := string(checkOutBytes)
 			Expect(checkOut).To(ContainSubstring("stages required"))
 			Expect(checkOut).NotTo(ContainSubstring("Building stage"))
 
