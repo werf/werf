@@ -3,10 +3,7 @@ package e2e_cleanup_test
 import (
 	"testing"
 
-	. "github.com/onsi/ginkgo/v2"
-
 	"github.com/werf/werf/v3/test/pkg/suite_init"
-	"github.com/werf/werf/v3/test/pkg/utils"
 )
 
 func TestSuite(t *testing.T) {
@@ -28,7 +25,5 @@ var (
 	_ = SuiteData.SetupTmp(suite_init.NewTmpDirData())
 	_ = SuiteData.SetupK8sDockerRegistry(suite_init.NewK8sDockerRegistryData(SuiteData.ProjectNameData, SuiteData.StubsData))
 
-	_ = AfterEach(func(ctx SpecContext) {
-		utils.RunSucceedCommand(ctx, "", SuiteData.WerfBinPath, "host", "purge", "--force", "--project-name", SuiteData.ProjectName)
-	})
+	_ = SuiteData.SetupProjectCleanup()
 )

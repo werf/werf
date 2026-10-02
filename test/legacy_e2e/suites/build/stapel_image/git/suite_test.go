@@ -4,8 +4,6 @@ import (
 	"context"
 	"testing"
 
-	. "github.com/onsi/ginkgo/v2"
-
 	"github.com/werf/werf/v3/test/pkg/suite_init"
 	"github.com/werf/werf/v3/test/pkg/utils"
 )
@@ -22,10 +20,6 @@ func TestSuite(t *testing.T) {
 
 var SuiteData suite_init.SuiteData
 
-var _ = AfterEach(func(ctx SpecContext) {
-	utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "host", "purge", "--force")
-})
-
 var (
 	_ = SuiteData.SetupStubs(suite_init.NewStubsData())
 	_ = SuiteData.SetupSynchronizedSuiteCallbacks(suite_init.NewSynchronizedSuiteCallbacksData())
@@ -33,6 +27,7 @@ var (
 	_ = SuiteData.SetupProjectName(suite_init.NewProjectNameData(SuiteData.StubsData))
 	_ = SuiteData.SetupTmp(suite_init.NewTmpDirData())
 	_ = SuiteData.SetupWerfInit(suite_init.NewWerfInitData(SuiteData.TmpDirData))
+	_ = SuiteData.SetupProjectCleanup()
 )
 
 func commonBeforeEach(ctx context.Context, fixturePath string) {

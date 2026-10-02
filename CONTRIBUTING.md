@@ -83,6 +83,40 @@ You can also check the existing [issues](https://github.com/werf/werf/issues), [
 7. Commit your changes. See [Conventions](#conventions) for the commit message format. The commit must be signed off (`--signoff`) as an acknowledgment of the [DCO](https://developercertificate.org/).
 8. Push and open a pull request.
 
+### Test resource cleanup
+
+Image-building suites register `SuiteData.SetupProjectCleanup()` after their
+project, stubs and temporary-directory setup. It defers local Docker and available
+Buildah image cleanup until content-check containers have been removed, while the
+test environment and temporary directory still exist. Cleanup has its own bounded
+Ginkgo context; failures to remove selected references fail the spec.
+
+Selection requires the exact `werf` project label and a project repository,
+`WERF_REPO`, `WERF_FINAL_REPO`, or a repository explicitly recorded in
+`SuiteData.CleanupRepositories`. Suites using command-line repository overrides
+must record those exact repositories. Foreign aliases are retained; removal does
+not force-delete containers or prune unselected image ancestors.
+
+On Linux, the test executable is re-executed as a cleanup worker before Ginkgo
+starts, with a JSON request in `_WERF_TEST_CLEANUP_PROJECT`. The worker opens the
+native storage once for listing, removal and verification. Non-root callers use
+`buildah unshare`; the parent owns its process group and kills it on cancellation.
+Docker cleanup is skipped only when its CLI is absent from PATH. Buildah cleanup
+is skipped outside Linux or when its CLI is absent from PATH. An installed runtime
+that fails to initialize rootless execution, list images or remove them is an
+error, not a successful cleanup.
+
+This cleanup does not delete remote registry data, shared base images, BuildKit
+cache, or shared werf caches. In particular, project build-dir mounts under
+`$WERF_HOME/shared_context/mounts/projects/<project>` and manifest cache under
+`$WERF_HOME/local_cache/manifests` are not removed by this helper. They require
+separate retention and ownership handling on persistent runners.
+Runner shutdown or SIGKILL can prevent all test and
+workflow cleanup from running. Persistent-runner operators must separately manage
+cache retention and reconcile abandoned job environments only after confirming
+their owning jobs have finished. Do not run global image or volume prune alongside
+active tests on a shared host.
+
 
 ## Conventions
 

@@ -1,7 +1,10 @@
 package e2e_export_test
 
 import (
+	"fmt"
+
 	"github.com/werf/werf/v3/test/pkg/suite_init"
+	"github.com/werf/werf/v3/test/pkg/utils"
 )
 
 type commonTestOptions struct {
@@ -12,6 +15,18 @@ type commonTestOptions struct {
 
 func setupEnv() {
 	SuiteData.Stubs.SetEnv("WERF_REPO", suite_init.TestRepo(SuiteData.ProjectName))
+}
+
+// newExportRepo returns a fresh export repository and registers it so that the
+// local tag werf creates during export is covered by project cleanup.
+func newExportRepo(name string) string {
+	repo := suite_init.TestRepo(name)
+	SuiteData.CleanupRepositories = append(SuiteData.CleanupRepositories, repo)
+	return repo
+}
+
+func newRandomExportRepo() string {
+	return newExportRepo(fmt.Sprintf("werf-export-%s", utils.GetRandomString(10)))
 }
 
 func getExportArgs(imageName string, opts commonTestOptions) []string {

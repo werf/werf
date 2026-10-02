@@ -4,8 +4,6 @@ import (
 	"context"
 	"testing"
 
-	. "github.com/onsi/ginkgo/v2"
-
 	"github.com/werf/werf/v3/test/pkg/suite_init"
 	"github.com/werf/werf/v3/test/pkg/utils"
 )
@@ -35,7 +33,5 @@ var (
 		SuiteData.TempFiles = append([]string{}, utils.CreateTmpFileInHome("secret_file_in_home", "secret"))
 	})
 
-	_ = AfterEach(func(ctx SpecContext) {
-		utils.RunSucceedCommand(ctx, "", SuiteData.WerfBinPath, "host", "purge", "--force", "--project-name", SuiteData.ProjectName)
-	})
+	_ = SuiteData.SetupProjectCleanup()
 )
