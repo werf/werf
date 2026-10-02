@@ -437,6 +437,8 @@ func (api *api) CopyImage(ctx context.Context, sourceReference, destinationRefer
 
 type PushImageOptions struct {
 	Labels map[string]string
+	// ManifestFormat defaults to container_registry_extensions.ManifestFormatDocker.
+	ManifestFormat container_registry_extensions.ManifestFormat
 }
 
 func (api *api) PushImage(ctx context.Context, reference string, opts *PushImageOptions) error {
@@ -452,10 +454,14 @@ func (api *api) pushImage(ctx context.Context, reference string, opts *PushImage
 	}
 
 	labels := map[string]string{}
+	format := container_registry_extensions.ManifestFormatDocker
 	if opts != nil {
 		labels = opts.Labels
+		if opts.ManifestFormat != "" {
+			format = opts.ManifestFormat
+		}
 	}
-	img := container_registry_extensions.NewManifestOnlyImage(labels)
+	img := container_registry_extensions.NewManifestOnlyImage(labels, format)
 
 	if err := api.writeToRemote(ctx, ref, img); err != nil {
 		return fmt.Errorf("write to the remote %s have failed: %w", ref.String(), err)

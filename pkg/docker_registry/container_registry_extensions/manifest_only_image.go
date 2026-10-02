@@ -10,13 +10,46 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/types"
 )
 
+// ManifestFormat selects the media types of the pushed image. Manifest, config and layer media
+// types must belong to the same format: containers/image validates layer media types against the
+// manifest format and rejects an image that mixes them, which breaks every buildah-based consumer
+// of the image and of the stages built on top of it.
+type ManifestFormat string
+
+const (
+	ManifestFormatDocker ManifestFormat = "docker"
+	ManifestFormatOCI    ManifestFormat = "oci"
+)
+
+func (format ManifestFormat) manifestMediaType() types.MediaType {
+	if format == ManifestFormatOCI {
+		return types.OCIManifestSchema1
+	}
+	return types.DockerManifestSchema2
+}
+
+func (format ManifestFormat) configMediaType() types.MediaType {
+	if format == ManifestFormatOCI {
+		return types.OCIConfigJSON
+	}
+	return types.DockerConfigJSON
+}
+
+func (format ManifestFormat) emptyLayer() *uncompressedLayer {
+	if format == ManifestFormatOCI {
+		return ociEmptyUncompressedLayer
+	}
+	return dockerEmptyUncompressedLayer
+}
+
 type manifestOnlyImage struct {
 	CreatedAt time.Time
 	Labels    map[string]string
+	Format    ManifestFormat
 }
 
-func NewManifestOnlyImage(labels map[string]string) v1.Image {
-	img, err := newManifestOnlyImage(labels)
+func NewManifestOnlyImage(labels map[string]string, format ManifestFormat) v1.Image {
+	img, err := newManifestOnlyImage(labels, format)
 	if err != nil {
 		panic(fmt.Sprintf("unable to create new ManifestOnlyImage: %s", err))
 	}
@@ -24,12 +57,13 @@ func NewManifestOnlyImage(labels map[string]string) v1.Image {
 	return img
 }
 
-func newManifestOnlyImage(labels map[string]string) (v1.Image, error) {
+func newManifestOnlyImage(labels map[string]string, format ManifestFormat) (v1.Image, error) {
 	t := time.Now()
 
 	img, err := partial.UncompressedToImage(manifestOnlyImage{
 		CreatedAt: t,
 		Labels:    labels,
+		Format:    format,
 	})
 	if err != nil {
 		return nil, err
@@ -56,12 +90,17 @@ func newManifestOnlyImage(labels map[string]string) (v1.Image, error) {
 		return nil, err
 	}
 
+	// partial.UncompressedToImage hardcodes the Docker schema2 manifest and config media types
+	// regardless of MediaType() below, so they have to be set explicitly.
+	img = mutate.MediaType(img, format.manifestMediaType())
+	img = mutate.ConfigMediaType(img, format.configMediaType())
+
 	return img, nil
 }
 
 // MediaType implements partial.UncompressedImageCore.
 func (i manifestOnlyImage) MediaType() (types.MediaType, error) {
-	return types.DockerManifestSchema2, nil
+	return i.Format.manifestMediaType(), nil
 }
 
 // RawConfigFile implements partial.UncompressedImageCore.
@@ -78,11 +117,11 @@ func (i manifestOnlyImage) ConfigFile() (*v1.ConfigFile, error) {
 		},
 		RootFS: v1.RootFS{
 			Type:    "layers",
-			DiffIDs: []v1.Hash{EmptyUncompressedLayer.diffID},
+			DiffIDs: []v1.Hash{i.Format.emptyLayer().diffID},
 		},
 	}, nil
 }
 
 func (i manifestOnlyImage) LayerByDiffID(h v1.Hash) (partial.UncompressedLayer, error) {
-	return EmptyUncompressedLayer, nil
+	return i.Format.emptyLayer(), nil
 }

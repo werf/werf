@@ -13,6 +13,7 @@ import (
 	"github.com/werf/werf/v3/pkg/container_backend"
 	"github.com/werf/werf/v3/pkg/docker_registry"
 	registry_api "github.com/werf/werf/v3/pkg/docker_registry/api"
+	"github.com/werf/werf/v3/pkg/docker_registry/container_registry_extensions"
 	"github.com/werf/werf/v3/pkg/image"
 )
 
@@ -67,6 +68,18 @@ var _ = Describe("RepoStagesStorage", func() {
 		Expect(storage.PutImageMetadata(ctx, "project", "app", "commit", "stage")).To(Succeed())
 		Expect(registry.pushedRef).To(Equal(makeRepoImageMetadataName(storage.RepoAddress, "app", "commit", "stage")))
 		Expect(registry.pushedOpts.Labels).To(HaveKeyWithValue(image.WerfLabel, "project"))
+		Expect(registry.pushedOpts.ManifestFormat).To(BeEmpty(), "service records stay in the default format")
+	})
+
+	It("publishes the scratch stage manifest in the OCI format", func(ctx SpecContext) {
+		registry := &metadataPushRegistry{pushImageRegistryStub: &pushImageRegistryStub{}}
+		storage := &RepoStagesStorage{RepoAddress: "registry.example/project", DockerRegistry: registry}
+
+		ref := "registry.example/project:digest-1700000000"
+		Expect(storage.PostManifest(ctx, ref, container_backend.PostManifestOpts{Labels: []string{"werf=project"}})).To(Succeed())
+		Expect(registry.pushedRef).To(Equal(ref))
+		Expect(registry.pushedOpts.Labels).To(HaveKeyWithValue("werf", "project"))
+		Expect(registry.pushedOpts.ManifestFormat).To(Equal(container_registry_extensions.ManifestFormatOCI))
 	})
 
 	DescribeTable("managed image name encoding", func(imageName, encodedName string) {
