@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.80.3](https://github.com/werf/werf/compare/v2.80.2...v2.80.3) (2026-10-02)
+
+
+### Bug Fixes
+
+* **build:** honor --check-built-images and --require-built-images flags ([#7996](https://github.com/werf/werf/issues/7996)) ([9bec3e6](https://github.com/werf/werf/commit/9bec3e6109b62268d11a35cd0399373d095c4f25))
+
 ## [2.80.2](https://github.com/werf/werf/compare/v2.80.1...v2.80.2) (2026-10-01)
 
 
