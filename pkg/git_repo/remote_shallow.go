@@ -284,6 +284,18 @@ func (repo *Remote) lsRemoteTag(ctx context.Context, fresh bool) (string, error)
 	defer entry.mu.Unlock()
 
 	tags := entry.tags
+	// A ready tag dictionary answers the lookup even when it lacks repo.Tag: the
+	// listing itself is the cached value. An explicit fresh request skips the
+	// cache whatever it holds, which is a bypass and never a miss.
+	outcome := opstats.CacheOutcomeHit
+	switch {
+	case fresh:
+		outcome = opstats.CacheOutcomeBypass
+	case tags == nil:
+		outcome = opstats.CacheOutcomeMiss
+	}
+	defer opstats.CountCacheLookup(ctx, opstats.OperationGitLsRemote, opstats.CacheLayerMemory, outcome, false)
+
 	if tags == nil || fresh {
 		done := opstats.Observe(ctx, opstats.OperationGitLsRemote)
 		defer done()
