@@ -39,7 +39,7 @@ func (r *timingDockerRegistry) DeleteRepo(ctx context.Context, reference string)
 }
 
 func (r *timingDockerRegistry) Tags(ctx context.Context, reference string, opts ...Option) ([]string, error) {
-	defer observeRegistry(ctx, "tags list")()
+	defer opstats.Observe(ctx, opstats.OperationRegistryTagsList)()
 	return r.Interface.Tags(ctx, reference, opts...)
 }
 

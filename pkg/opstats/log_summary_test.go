@@ -27,6 +27,38 @@ var _ = ginkgo.Describe("LogSummary", func() {
 		gomega.Expect(output).NotTo(gomega.ContainSubstring("command time"))
 	})
 
+	ginkgo.It("keeps every column aligned for the longest operation name werf emits", func() {
+		collector := NewCollector()
+		// 31 characters, the longest label any Observe call site produces.
+		collector.add(Operation("registry: image mutate and push"), base, base.Add(2*time.Second))
+		collector.add(OperationGitClone, base, base.Add(time.Second))
+
+		output := logSummaryOutput(collector)
+
+		gomega.Expect(output).To(gomega.ContainSubstring(
+			"operation                            count       sum     union       avg       max\n"))
+		gomega.Expect(output).To(gomega.ContainSubstring(
+			"registry: image mutate and push          1     2.00s     2.00s     2.00s     2.00s\n"))
+		gomega.Expect(output).To(gomega.ContainSubstring(
+			"git: clone                               1     1.00s     1.00s     1.00s     1.00s\n"))
+	})
+
+	ginkgo.It("keeps the cache table aligned with the operations table, undefined hit rate included", func() {
+		collector := NewCollector()
+		ctx := NewContext(context.Background(), collector)
+		for range 3 {
+			CountCacheLookup(ctx, Operation("registry: image mutate and push"), CacheOutcomeBypass, false)
+		}
+
+		output := logSummaryOutput(collector)
+
+		gomega.Expect(output).To(gomega.ContainSubstring(
+			"operation                       lookups    hit   miss bypass shared   hit%\n"))
+		// The undefined mark is one rune, and fmt pads by runes, so it needs no padding of its own.
+		gomega.Expect(output).To(gomega.ContainSubstring(
+			"registry: image mutate and push       3      0      0      3      0      —\n"))
+	})
+
 	ginkgo.It("omits the parallelism column for sequential calls", func() {
 		collector := NewCollector()
 		collector.add(OperationRegistryTagsList, base, base.Add(time.Second))
@@ -74,7 +106,7 @@ var _ = ginkgo.Describe("LogSummary", func() {
 	)
 
 	ginkgo.DescribeTable("renders the stages line",
-		func(events map[Event]int, expected []string, forbidden []string) {
+		func(events map[Event]int, expected, forbidden []string) {
 			collector := NewCollector()
 			ctx := NewContext(context.Background(), collector)
 			for event, count := range events {

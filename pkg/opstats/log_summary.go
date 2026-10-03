@@ -3,7 +3,6 @@ package opstats
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/werf/logboek"
@@ -14,7 +13,7 @@ import (
 // Column widths of both tables. The operation column is shared so that the two
 // tables line up with each other.
 const (
-	opColumnFormat    = "%-30s"
+	opColumnFormat    = "%-32s"
 	timeColumnFormat  = "%10s"
 	countColumnFormat = "%7s"
 )
@@ -74,9 +73,6 @@ func logCacheTable(ctx context.Context, summary []CacheSummary) {
 	})
 }
 
-// logStagesLine prints how the build satisfied its stages. It is printed only
-// when stage events were recorded, so that a command doing no stage work shows
-// no line rather than an invented zero.
 func logStagesLine(ctx context.Context, events []EventSummary) {
 	var reused, built int
 	var observed bool
@@ -90,6 +86,7 @@ func logStagesLine(ctx context.Context, events []EventSummary) {
 			observed = true
 		}
 	}
+	// A command that did no stage work shows no line rather than an invented zero.
 	if !observed {
 		return
 	}
@@ -97,13 +94,11 @@ func logStagesLine(ctx context.Context, events []EventSummary) {
 	logboek.Context(ctx).LogFHighlight("Stages: %d reused, %d built\n", reused, built)
 }
 
-// hitRate is the share of cache-answerable lookups that the cache answered.
-// Bypasses never consulted the cache, so with no hits and no misses the rate is
-// undefined rather than zero. The result is pre-padded because the undefined
-// mark is wider in bytes than in columns.
 func hitRate(s CacheSummary) string {
+	// Bypasses never consulted the cache, so with no hits and no misses the rate is
+	// undefined rather than zero.
 	if s.Hit+s.Miss == 0 {
-		return strings.Repeat(" ", 6) + "—"
+		return "—"
 	}
 	return fmt.Sprintf("%.0f%%", 100*float64(s.Hit)/float64(s.Hit+s.Miss))
 }

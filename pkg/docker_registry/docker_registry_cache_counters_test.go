@@ -3,70 +3,14 @@ package docker_registry
 import (
 	"context"
 	"errors"
-	"runtime"
-	"strings"
 	"sync"
+	"time"
 
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
 
 	"github.com/werf/werf/v3/pkg/opstats"
 )
-
-// collectingContext binds a fresh collector to ctx and returns both.
-func collectingContext(ctx context.Context) (context.Context, *opstats.Collector) {
-	collector := opstats.NewCollector()
-	return opstats.NewContext(ctx, collector), collector
-}
-
-func tagsListCounters(collector *opstats.Collector, ctx context.Context) opstats.CacheSummary {
-	summary := collector.CacheSummary(ctx)
-	gomega.Expect(summary).To(gomega.HaveLen(1))
-	gomega.Expect(summary[0].Operation).To(gomega.Equal(opstats.OperationRegistryTagsList))
-	return summary[0]
-}
-
-// admittingRegistryStub lets the test hold the first (leader) listing in flight until every
-// other caller is actually blocked inside singleflight, so that joiners are admitted by a
-// barrier on observed state instead of by waiting for a sleep to elapse.
-type admittingRegistryStub struct {
-	Interface
-
-	tags     []string
-	admitted chan struct{}
-
-	mu    sync.Mutex
-	calls int
-}
-
-var _ Interface = (*admittingRegistryStub)(nil)
-
-func (r *admittingRegistryStub) Tags(_ context.Context, _ string, _ ...Option) ([]string, error) {
-	r.mu.Lock()
-	r.calls++
-	r.mu.Unlock()
-
-	<-r.admitted
-
-	return append([]string(nil), r.tags...), nil
-}
-
-func (r *admittingRegistryStub) parseReferenceParts(reference string) (referenceParts, error) {
-	return (&api{}).parseReferenceParts(reference)
-}
-
-func (r *admittingRegistryStub) callCount() int {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	return r.calls
-}
-
-// callersInSingleflight counts the goroutines currently inside singleflight.Group.Do: the one
-// running the shared call plus everyone waiting for its result.
-func callersInSingleflight() int {
-	buf := make([]byte, 1<<20)
-	return strings.Count(string(buf[:runtime.Stack(buf, true)]), "singleflight.(*Group).Do(")
-}
 
 var _ = ginkgo.Describe("registry tags cache counters", func() {
 	const repo = "example.org/project"
@@ -159,27 +103,41 @@ var _ = ginkgo.Describe("registry tags cache counters", func() {
 		const joiners = 4
 
 		ctx, collector := collectingContext(specCtx)
-		inner := &admittingRegistryStub{tags: []string{"stage-a"}, admitted: make(chan struct{})}
+		inner := newAdmittingRegistryStub("stage-a")
 		r := newCachedRegistryStub(inner)
 
+		done := make(chan struct{})
 		var wg sync.WaitGroup
+		ginkgo.DeferCleanup(func() {
+			inner.release()
+			gomega.Eventually(done, 30*time.Second).Should(gomega.BeClosed())
+		})
+
 		for range joiners + 1 {
 			wg.Add(1)
 			go func() {
-				defer ginkgo.GinkgoRecover()
+				// wg.Done is deferred first so that it runs after GinkgoRecover, and the spec
+				// never ends while a caller is still unwinding.
 				defer wg.Done()
+				defer ginkgo.GinkgoRecover()
 				tags, err := r.Tags(ctx, repo)
 				gomega.Expect(err).NotTo(gomega.HaveOccurred())
 				gomega.Expect(tags).To(gomega.Equal([]string{"stage-a"}))
 			}()
 		}
-		// Release the shared listing only once every joiner is waiting for it.
-		gomega.Eventually(callersInSingleflight).Should(gomega.Equal(joiners + 1))
-		close(inner.admitted)
-		wg.Wait()
+		go func() {
+			wg.Wait()
+			close(done)
+		}()
 
-		// One registry request for all of them: anything else means a joiner was not admitted
-		// while the leader was still in flight.
+		// Admit the listing only once it has started and every joiner has registered with
+		// singleflight: a joiner that merely entered Do could still start a second listing.
+		gomega.Eventually(func() bool {
+			return inner.callCount() == 1 && joinersWaitingForTagsList() == joiners
+		}).Should(gomega.BeTrue())
+		inner.release()
+		gomega.Eventually(done, 30*time.Second).Should(gomega.BeClosed())
+
 		gomega.Expect(inner.callCount()).To(gomega.Equal(1))
 		gomega.Expect(tagsListCounters(collector, ctx)).To(gomega.Equal(opstats.CacheSummary{
 			Operation: opstats.OperationRegistryTagsList,
@@ -203,5 +161,34 @@ var _ = ginkgo.Describe("registry tags cache counters", func() {
 			Miss:      1,
 			Bypass:    1,
 		}))
+	})
+})
+
+var _ = ginkgo.Describe("the barrier admitting a shared tags listing", func() {
+	const dump = `goroutine 21 [chan receive]:
+github.com/werf/werf/v3/pkg/docker_registry.(*admittingRegistryStub).Tags(0xc0001)
+golang.org/x/sync/singleflight.(*Group).doCall(0xc0002)
+golang.org/x/sync/singleflight.(*Group).Do(0xc0002)
+github.com/werf/werf/v3/pkg/docker_registry.(*DockerRegistryWithCache).getTagsListFromRegistry(0xc0003)
+
+goroutine 22 [semacquire]:
+sync.runtime_SemacquireWaitGroup(0xc0004)
+sync.(*WaitGroup).Wait(0xc0002)
+golang.org/x/sync/singleflight.(*Group).Do(0xc0002)
+github.com/werf/werf/v3/pkg/docker_registry.(*DockerRegistryWithCache).getTagsListFromRegistry(0xc0003)
+
+goroutine 23 [runnable]:
+github.com/werf/werf/v3/pkg/docker_registry.(*DockerRegistryWithCache).getTagsListFromRegistry(0xc0003)
+
+goroutine 24 [semacquire]:
+sync.(*WaitGroup).Wait(0xc0005)
+github.com/werf/werf/v3/pkg/docker_registry_test.somethingElse(0xc0006)
+`
+
+	ginkgo.It("counts only the callers already registered as waiters of the listing", func() {
+		gomega.Expect(goroutinesWithFrames(dump,
+			"(*DockerRegistryWithCache).getTagsListFromRegistry(",
+			"singleflight.(*Group).Do(",
+			"sync.(*WaitGroup).Wait(")).To(gomega.Equal(1))
 	})
 })

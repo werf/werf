@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"sync"
+	"time"
 
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
@@ -100,30 +101,58 @@ var _ = ginkgo.Describe("Local stage lookup cache counters", func() {
 	)
 
 	ginkgo.It("counts a lookup that waited for the snapshot as an ordinary hit, never as shared", func(specCtx ginkgo.SpecContext) {
-		const waiters = 4
+		const waiters = 3
 
 		ctx, collector := collectingContext(specCtx)
-		backend := &localImageListBackendStub{images: image.ImagesList{{RepoTags: []string{"project:" + cachedTagA}}}}
+		entered, release := make(chan struct{}), make(chan struct{})
+		var releaseOnce sync.Once
+		releaseListing := func() { releaseOnce.Do(func() { close(release) }) }
+		backend := &localImageListBackendStub{
+			images:   image.ImagesList{{RepoTags: []string{"project:" + cachedTagA}}},
+			onImages: func() { close(entered); <-release },
+		}
 		storage := NewLocalStagesStorage(backend)
 
+		done := make(chan struct{})
 		var wg sync.WaitGroup
+		ginkgo.DeferCleanup(func() {
+			releaseListing()
+			gomega.Eventually(done, 30*time.Second).Should(gomega.BeClosed())
+		})
+
+		lookup := func() {
+			// wg.Done is deferred first so that it runs after GinkgoRecover, and the spec never
+			// ends while a caller is still unwinding.
+			defer wg.Done()
+			defer ginkgo.GinkgoRecover()
+			_, err := storage.GetStagesIDsByDigest(ctx, "project", cachedDigestA, 0, WithCache())
+			gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		}
+
+		wg.Add(1)
+		go lookup()
+		gomega.Eventually(entered).Should(gomega.BeClosed())
 		for range waiters {
 			wg.Add(1)
-			go func() {
-				defer ginkgo.GinkgoRecover()
-				defer wg.Done()
-				_, err := storage.GetStagesIDsByDigest(ctx, "project", cachedDigestA, 0, WithCache())
-				gomega.Expect(err).NotTo(gomega.HaveOccurred())
-			}()
+			go lookup()
 		}
-		wg.Wait()
+		go func() {
+			wg.Wait()
+			close(done)
+		}()
+
+		// Let the listing finish only once every other caller is actually blocked on the cache
+		// mutex, so that they can only be answered from the snapshot it stores.
+		gomega.Eventually(goroutinesWaitingForImagesCache).Should(gomega.Equal(waiters))
+		releaseListing()
+		gomega.Eventually(done, 30*time.Second).Should(gomega.BeClosed())
 
 		// This storage has no singleflight: whoever listed the project is a miss, and every
 		// other caller found a ready snapshot behind the mutex, which is a plain hit.
-		gomega.Expect(backend.calls).To(gomega.Equal(1))
+		gomega.Expect(backend.callCount()).To(gomega.Equal(1))
 		gomega.Expect(collector.CacheSummary(ctx)).To(gomega.Equal([]opstats.CacheSummary{{
 			Operation: opstats.OperationDockerImageList,
-			Hit:       waiters - 1,
+			Hit:       waiters,
 			Miss:      1,
 		}}))
 	})

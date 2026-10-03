@@ -1103,7 +1103,7 @@ func (b *NativeBuildah) NewSessionTmpDir() (string, error) {
 }
 
 func (b *NativeBuildah) Images(ctx context.Context, opts ImagesOptions) (image.ImagesList, error) {
-	defer opstats.Observe(ctx, "buildah: image list")()
+	defer opstats.Observe(ctx, opstats.OperationBuildahImageList)()
 	sysCtx, err := b.getSystemContext(opts.TargetPlatform)
 	if err != nil {
 		return nil, err

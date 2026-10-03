@@ -95,7 +95,7 @@ func emptyTarArchive() (io.Reader, error) {
 }
 
 func Images(ctx context.Context, options client.ImageListOptions) ([]dockerImage.Summary, error) {
-	defer opstats.Observe(ctx, "docker: image list")()
+	defer opstats.Observe(ctx, opstats.OperationDockerImageList)()
 
 	result, err := apiCli(ctx).ImageList(ctx, options)
 	if err != nil {

@@ -80,7 +80,7 @@ func (manager *Kubernetes) LockStage(
 	ctx context.Context,
 	projectName, digest string,
 ) (LockHandle, error) {
-	defer opstats.Observe(ctx, "sync: lock acquire")()
+	defer opstats.Observe(ctx, opstats.OperationStageLockWait)()
 	if locker, err := manager.getLockerForProject(ctx, projectName); err != nil {
 		return LockHandle{}, err
 	} else {
