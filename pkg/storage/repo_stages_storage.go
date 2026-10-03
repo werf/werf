@@ -18,6 +18,7 @@ import (
 	"github.com/werf/werf/v3/pkg/docker_registry"
 	"github.com/werf/werf/v3/pkg/docker_registry/api"
 	"github.com/werf/werf/v3/pkg/image"
+	"github.com/werf/werf/v3/pkg/opstats"
 	"github.com/werf/werf/v3/pkg/slug"
 )
 
@@ -405,6 +406,7 @@ func (storage *RepoStagesStorage) GetStageDesc(ctx context.Context, projectName 
 		return nil, ErrStageNotFound
 	}
 	if docker_registry.IsBrokenImageError(err) {
+		opstats.CountEvent(ctx, opstats.EventStageBroken)
 		return nil, ErrBrokenImage
 	}
 	if err != nil {
@@ -641,6 +643,7 @@ func (storage *RepoStagesStorage) GetManagedImages(ctx context.Context, projectN
 func (storage *RepoStagesStorage) FetchImage(ctx context.Context, img container_backend.LegacyImageInterface) error {
 	if err := container_backend.PullImageFromRegistry(ctx, storage.ContainerBackend, img); err != nil {
 		if strings.HasSuffix(err.Error(), "unknown blob") {
+			opstats.CountEvent(ctx, opstats.EventStageBroken)
 			return ErrBrokenImage
 		}
 		return err
@@ -1215,6 +1218,7 @@ func (storage *RepoStagesStorage) MutateAndPushImage(ctx context.Context, src, d
 		return config, nil
 	})); err != nil {
 		if docker_registry.IsBrokenImageError(err) {
+			opstats.CountEvent(ctx, opstats.EventStageBroken)
 			return ErrBrokenImage
 		}
 
