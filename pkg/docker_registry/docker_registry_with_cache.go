@@ -132,8 +132,18 @@ func (r *DockerRegistryWithCache) tryLoadTagsFromCache(cachedTagsID string, opts
 }
 
 func (r *DockerRegistryWithCache) getTagsListFromRegistry(ctx context.Context, reference string, opts ...Option) ([]string, error) {
+	// The cache lookup is classified at the decision points below and recorded once, together
+	// with the shared flag, when the call returns: an error or a cancellation later on does not
+	// change how the cache answered, and the outcome never gets split from its shared flag
+	// across two reports.
+	outcome, sharedLookup := opstats.CacheOutcomeMiss, false
+	defer func() {
+		opstats.CountCacheLookup(ctx, opstats.OperationRegistryTagsList, outcome, sharedLookup)
+	}()
+
 	cachedTagsID := r.mustGetCachedTagsID(reference)
 	if makeOptions(opts...).freshTags {
+		outcome = opstats.CacheOutcomeBypass
 		startedAt := time.Now()
 		tags, err := r.Interface.Tags(ctx, reference, opts...)
 		if err != nil {
@@ -142,6 +152,7 @@ func (r *DockerRegistryWithCache) getTagsListFromRegistry(ctx context.Context, r
 		return r.storeTagsToCache(cachedTagsID, tags, startedAt), nil
 	}
 	if tags, ok := r.tryLoadTagsFromCache(cachedTagsID, opts...); ok {
+		outcome = opstats.CacheOutcomeHit
 		opstats.CountEvent(ctx, opstats.EventRegistryTagsCacheHit)
 		return tags, nil
 	}
@@ -149,7 +160,11 @@ func (r *DockerRegistryWithCache) getTagsListFromRegistry(ctx context.Context, r
 	// Use singleflight to avoid multiple concurrent calls to the registry for the same reference
 	// This is useful when multiple goroutines try to fetch tags for the same reference at the same time.
 	// Will perform only one call to the registry and share the result among all goroutines.
+	leader := false
 	newTagsResp, err, shared := r.listTagsQueryGroup.Do(cachedTagsID, func() (interface{}, error) {
+		// Only the caller that actually starts the registry request runs this callback; every
+		// other caller joined an in-flight one.
+		leader = true
 		startedAt := time.Now()
 		tags, err := r.Interface.Tags(ctx, reference, opts...)
 		if err != nil {
@@ -161,6 +176,10 @@ func (r *DockerRegistryWithCache) getTagsListFromRegistry(ctx context.Context, r
 		return r.storeTagsToCache(cachedTagsID, tags, startedAt), nil
 	})
 
+	sharedLookup = !leader
+
+	// The legacy event counts the leader as well; it is kept as is for report compatibility and
+	// deliberately not reused for the shared cache counter.
 	if shared {
 		opstats.CountEvent(ctx, opstats.EventRegistryTagsSharedResult)
 	}

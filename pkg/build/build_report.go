@@ -82,14 +82,26 @@ type ReportOperationRecord struct {
 	MaxTimeSeconds   float64
 }
 
+// ReportCacheOperationRecord counts the completed calls through one caching
+// layer. Lookups is the sum of the three outcomes; the hit rate is derivable
+// from Hit and Miss and is therefore not serialized.
+type ReportCacheOperationRecord struct {
+	Lookups int
+	Hit     int
+	Miss    int
+	Bypass  int
+	Shared  int
+}
+
 type ImagesReport struct {
 	mux              sync.Mutex
 	Runtime          RuntimeInfo `json:"Runtime"`
 	Images           map[string]ReportImageRecord
 	ImagesByPlatform map[string]map[string]ReportImageRecord
-	Operations       map[string]ReportOperationRecord `json:"Operations,omitempty"`
-	StageCache       map[string]int                   `json:"StageCache,omitempty"`
-	RegistryCache    map[string]int                   `json:"RegistryCache,omitempty"`
+	Operations       map[string]ReportOperationRecord      `json:"Operations,omitempty"`
+	CacheOperations  map[string]ReportCacheOperationRecord `json:"CacheOperations,omitempty"`
+	StageCache       map[string]int                        `json:"StageCache,omitempty"`
+	RegistryCache    map[string]int                        `json:"RegistryCache,omitempty"`
 }
 
 func NewImagesReport() *ImagesReport {
@@ -128,6 +140,25 @@ func (report *ImagesReport) SetOperationsSummary(ctx context.Context, operations
 			continue
 		}
 		report.StageCache[string(e.Event)] = e.Count
+	}
+}
+
+// SetCacheOperationsSummary fills the CacheOperations section from the cache
+// counters of the collector. It is additive to SetOperationsSummary: the legacy
+// StageCache/RegistryCache event sections keep their existing meaning.
+func (report *ImagesReport) SetCacheOperationsSummary(ctx context.Context, cache []opstats.CacheSummary) {
+	report.mux.Lock()
+	defer report.mux.Unlock()
+
+	report.CacheOperations = make(map[string]ReportCacheOperationRecord, len(cache))
+	for _, s := range cache {
+		report.CacheOperations[string(s.Operation)] = ReportCacheOperationRecord{
+			Lookups: s.Hit + s.Miss + s.Bypass,
+			Hit:     s.Hit,
+			Miss:    s.Miss,
+			Bypass:  s.Bypass,
+			Shared:  s.Shared,
+		}
 	}
 }
 
@@ -339,6 +370,7 @@ func createBuildReport(ctx context.Context, phase *BuildPhase, imagePairs []util
 	collector := opstats.FromContext(ctx)
 	if collector != nil {
 		phase.ImagesReport.SetOperationsSummary(ctx, collector.PendingSummary(ctx), collector.PendingEventSummary(ctx))
+		phase.ImagesReport.SetCacheOperationsSummary(ctx, collector.PendingCacheSummary(ctx))
 	}
 
 	if phase.ReportPath != "" {

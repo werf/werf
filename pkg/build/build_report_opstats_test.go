@@ -77,3 +77,42 @@ var _ = Describe("ImagesReport operations summary", func() {
 		Expect(string(data)).NotTo(ContainSubstring("RegistryCache"))
 	})
 })
+
+var _ = Describe("ImagesReport cache operations summary", func() {
+	ctx := context.Background()
+
+	It("serializes the cache counters next to the legacy cache event sections", func() {
+		report := NewImagesReport()
+		report.SetOperationsSummary(ctx, nil, []opstats.EventSummary{
+			{Event: opstats.EventRegistryTagsCacheHit, Count: 3},
+			{Event: opstats.EventStageBuilt, Count: 1},
+		})
+		report.SetCacheOperationsSummary(ctx, []opstats.CacheSummary{
+			{Operation: opstats.OperationRegistryTagsList, Hit: 3, Miss: 2, Bypass: 1, Shared: 1},
+			{Operation: opstats.OperationDockerImageList, Bypass: 4},
+		})
+
+		data, err := report.ToJsonData()
+		Expect(err).NotTo(HaveOccurred())
+
+		decoded := decodeOperationsReport(data)
+		Expect(decoded.CacheOperations).To(Equal(map[string]ReportCacheOperationRecord{
+			"registry: tags list": {Lookups: 6, Hit: 3, Miss: 2, Bypass: 1, Shared: 1},
+			"docker: image list":  {Lookups: 4, Bypass: 4},
+		}))
+		// The legacy sections keep their existing names and meanings.
+		Expect(decoded.StageCache).To(Equal(map[string]int{"built": 1}))
+		Expect(decoded.RegistryCache).To(Equal(map[string]int{"registry tags cache hit": 3}))
+		// A redundant hit rate is derivable and not serialized.
+		Expect(string(data)).NotTo(ContainSubstring("HitPercent"))
+	})
+
+	It("omits the cache section when no lookup was recorded", func() {
+		report := NewImagesReport()
+		report.SetCacheOperationsSummary(ctx, nil)
+
+		data, err := report.ToJsonData()
+		Expect(err).NotTo(HaveOccurred())
+		Expect(string(data)).NotTo(ContainSubstring("CacheOperations"))
+	})
+})

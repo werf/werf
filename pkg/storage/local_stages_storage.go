@@ -16,6 +16,7 @@ import (
 	"github.com/werf/werf/v3/pkg/docker_registry"
 	"github.com/werf/werf/v3/pkg/docker_registry/api"
 	"github.com/werf/werf/v3/pkg/image"
+	"github.com/werf/werf/v3/pkg/opstats"
 )
 
 const (
@@ -113,8 +114,29 @@ func (storage *LocalStagesStorage) GetStagesIDs(ctx context.Context, projectName
 	return images.ConvertToStages()
 }
 
+func localImagesCacheOperation(backend container_backend.ContainerBackend) opstats.Operation {
+	if backend == nil {
+		return ""
+	}
+	switch backend.String() {
+	case "buildah-backend":
+		return opstats.OperationBuildahImageList
+	case "docker-server-backend":
+		return opstats.OperationDockerImageList
+	default:
+		return ""
+	}
+}
+
 func (storage *LocalStagesStorage) GetStagesIDsByDigest(ctx context.Context, projectName, digest string, parentStageCreationTs int64, opts ...Option) ([]image.StageID, error) {
 	withCache := makeOptions(opts...).withCache
+	// This storage has no singleflight, so waiting for the coarse mutex is not sharing a request:
+	// a snapshot found after the wait is an ordinary hit and shared stays zero.
+	outcome := opstats.CacheOutcomeBypass
+	defer func() {
+		opstats.CountCacheLookup(ctx, localImagesCacheOperation(storage.ContainerBackend), outcome, false)
+	}()
+
 	reference := fmt.Sprintf(FilterReferenceLocalStageByDigestFormat, projectName, digest)
 	var images image.ImagesList
 	var cached bool
@@ -123,6 +145,7 @@ func (storage *LocalStagesStorage) GetStagesIDsByDigest(ctx context.Context, pro
 		defer storage.imagesCacheMutex.Unlock()
 		images, cached = storage.imagesCache[projectName]
 		reference = fmt.Sprintf(LocalStage_ImageRepoFormat, projectName)
+		outcome = lo.Ternary(cached, opstats.CacheOutcomeHit, opstats.CacheOutcomeMiss)
 	}
 
 	if !cached {

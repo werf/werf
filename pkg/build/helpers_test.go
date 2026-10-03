@@ -53,9 +53,10 @@ func newReportPhase(reportPath string) *BuildPhase {
 }
 
 type operationsReport struct {
-	Operations    map[string]ReportOperationRecord
-	StageCache    map[string]int
-	RegistryCache map[string]int
+	Operations      map[string]ReportOperationRecord
+	CacheOperations map[string]ReportCacheOperationRecord
+	StageCache      map[string]int
+	RegistryCache   map[string]int
 }
 
 func decodeOperationsReport(data []byte) operationsReport {

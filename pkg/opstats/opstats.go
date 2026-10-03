@@ -3,6 +3,7 @@ package opstats
 import (
 	"context"
 	"io"
+	"maps"
 	"sort"
 	"sync"
 	"time"
@@ -18,16 +19,38 @@ const (
 	OperationImageSaveLoad           Operation = "image save/load"
 	OperationStapelContainer         Operation = "stapel container prepare"
 	OperationStapelContainerLockWait Operation = "stapel container lock wait"
-	OperationGitClone                Operation = "git clone"
-	OperationGitFetch                Operation = "git fetch"
-	OperationGitLsRemote             Operation = "git ls-remote"
-	OperationGitPatch                Operation = "git patch"
-	OperationGitArchive              Operation = "git archive"
-	OperationGitChecksum             Operation = "git checksum"
+	OperationGitClone                Operation = "git: clone"
+	OperationGitFetch                Operation = "git: fetch"
+	OperationGitLsRemote             Operation = "git: ls-remote"
+	OperationGitPatch                Operation = "git: patch"
+	OperationGitArchive              Operation = "git: archive"
+	OperationGitChecksum             Operation = "git: checksum"
 	OperationStageDigestLockWait     Operation = "stage lock wait (parallel tasks)"
 	OperationContextAddFiles         Operation = "context add files"
 	OperationConfigRender            Operation = "config render"
 	OperationGiterminismInit         Operation = "giterminism init"
+
+	// OperationStageLockWait measures acquiring a stage lock in the storage lock manager,
+	// not holding or releasing it.
+	OperationStageLockWait Operation = "sync: lock acquire"
+
+	// Operations of the caching layers counted by CountCacheLookup.
+	OperationRegistryTagsList Operation = "registry: tags list"
+	OperationDockerImageList  Operation = "docker: image list"
+	OperationBuildahImageList Operation = "buildah: image list"
+)
+
+// CacheOutcome classifies a single completed call through a caching layer.
+// Exactly one outcome is recorded per call.
+type CacheOutcome string
+
+const (
+	// CacheOutcomeHit is a usable cached result, including a cached empty one.
+	CacheOutcomeHit CacheOutcome = "hit"
+	// CacheOutcomeMiss is a lookup the cache could not satisfy, so the underlying call ran.
+	CacheOutcomeMiss CacheOutcome = "miss"
+	// CacheOutcomeBypass is a call that asked for a fresh result and never consulted the cache.
+	CacheOutcomeBypass CacheOutcome = "bypass"
 )
 
 type Event string
@@ -108,23 +131,70 @@ func (r *observedReadCloser) Read(p []byte) (int, error) {
 }
 
 func (r *observedReadCloser) Close() error {
-	r.done()
+	defer r.done()
 	return r.ReadCloser.Close()
 }
 
 // NewObservedReadCloser extends an in-flight observation over the consumption
-// of a stream: done fires on first read error (including io.EOF) or on Close,
-// whichever comes first.
+// of a stream: done fires on first read error (including io.EOF) or once Close
+// has completed, whichever comes first.
 func NewObservedReadCloser(rc io.ReadCloser, done func()) io.ReadCloser {
 	return &observedReadCloser{ReadCloser: rc, done: done}
+}
+
+// CountCacheLookup records one completed call through a caching layer: how the
+// cache answered it and whether the call joined an already in-flight request
+// instead of starting one. Call it exactly once per call, when the layer call
+// returns, so that an outcome and its shared flag never end up in different
+// reports. A hit answers from the cache without any request to join, so it is
+// never shared. No-op when no collector is bound to ctx or when the operation
+// is empty, which is how an unrecognized backend avoids an invented row.
+func CountCacheLookup(ctx context.Context, op Operation, outcome CacheOutcome, shared bool) {
+	collector := FromContext(ctx)
+	if collector == nil || op == "" {
+		return
+	}
+
+	collector.mu.Lock()
+	defer collector.mu.Unlock()
+
+	counters := collector.cacheCounts[op]
+	switch outcome {
+	case CacheOutcomeHit:
+		counters.hit++
+		shared = false
+	case CacheOutcomeMiss:
+		counters.miss++
+	case CacheOutcomeBypass:
+		counters.bypass++
+	default:
+		return
+	}
+	if shared {
+		counters.shared++
+	}
+	collector.cacheCounts[op] = counters
 }
 
 type Collector struct {
 	mu            sync.Mutex
 	intervals     map[Operation][]interval
 	events        map[Event]int
+	cacheCounts   map[Operation]cacheCounters
 	flushedOps    map[Operation]int
 	flushedEvents map[Event]int
+	flushedCache  map[Operation]cacheCounters
+	// pendingCache is the cache-counter checkpoint captured by the last
+	// PendingCacheSummary; CommitFlush advances to it and not to whatever has been
+	// counted since, so observations made while the report was written survive.
+	pendingCache map[Operation]cacheCounters
+}
+
+type cacheCounters struct {
+	hit    int
+	miss   int
+	bypass int
+	shared int
 }
 
 type interval struct {
@@ -134,8 +204,9 @@ type interval struct {
 
 func NewCollector() *Collector {
 	return &Collector{
-		intervals: make(map[Operation][]interval),
-		events:    make(map[Event]int),
+		intervals:   make(map[Operation][]interval),
+		events:      make(map[Event]int),
+		cacheCounts: make(map[Operation]cacheCounters),
 	}
 }
 
@@ -236,12 +307,76 @@ func (c *Collector) PendingEventSummary(ctx context.Context) []EventSummary {
 	return summarizeEvents(c.events, c.flushedEvents)
 }
 
+type CacheSummary struct {
+	Operation Operation
+	Hit       int
+	Miss      int
+	Bypass    int
+	Shared    int
+}
+
+func (s CacheSummary) lookups() int {
+	return s.Hit + s.Miss + s.Bypass
+}
+
+// CacheSummary returns per-operation cache counters sorted by total lookups in
+// descending order. Only operations that actually received a lookup appear.
+func (c *Collector) CacheSummary(ctx context.Context) []CacheSummary {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	return summarizeCache(c.cacheCounts, nil)
+}
+
+// PendingCacheSummary returns the cache counters accumulated since the last
+// CommitFlush and records the exact checkpoint that CommitFlush will advance to.
+func (c *Collector) PendingCacheSummary(ctx context.Context) []CacheSummary {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	c.pendingCache = make(map[Operation]cacheCounters, len(c.cacheCounts))
+	maps.Copy(c.pendingCache, c.cacheCounts)
+
+	return summarizeCache(c.cacheCounts, c.flushedCache)
+}
+
+func summarizeCache(counts, skipCounts map[Operation]cacheCounters) []CacheSummary {
+	res := make([]CacheSummary, 0, len(counts))
+	for op, counters := range counts {
+		skip := skipCounts[op]
+		s := CacheSummary{
+			Operation: op,
+			Hit:       counters.hit - skip.hit,
+			Miss:      counters.miss - skip.miss,
+			Bypass:    counters.bypass - skip.bypass,
+			Shared:    counters.shared - skip.shared,
+		}
+		if s.lookups() == 0 {
+			continue
+		}
+		res = append(res, s)
+	}
+
+	sort.Slice(res, func(i, j int) bool {
+		if res[i].lookups() == res[j].lookups() {
+			return res[i].Operation < res[j].Operation
+		}
+		return res[i].lookups() > res[j].lookups()
+	})
+
+	return res
+}
+
 // CommitFlush advances the flush mark past everything recorded so far, so the
 // next Pending* calls return only later observations. Call it after the report
 // consuming the pending summaries has been successfully delivered.
 func (c *Collector) CommitFlush(ctx context.Context) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+
+	if c.pendingCache != nil {
+		c.flushedCache, c.pendingCache = c.pendingCache, nil
+	}
 
 	if c.flushedOps == nil {
 		c.flushedOps = make(map[Operation]int)

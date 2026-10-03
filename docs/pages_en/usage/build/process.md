@@ -610,13 +610,15 @@ The JSON report contains detailed information about the build:
 
 * **ImagesByPlatform** — per-platform breakdown for multiarch builds. This field is populated only when the `WERF_ENABLE_REPORT_BY_PLATFORM=1` environment variable is set. The record structure is the same as in `Images`, but the data is grouped by image name and platform.
 
-* **Operations** — aggregated timings of low-level operations collected for the whole command run (stage build, image pull/push, registry API calls, git operations, werf config render, giterminism initialization, stage lock waits and so on). Populated only when the `--build-report-operations` flag (`$WERF_BUILD_REPORT_OPERATIONS`) is set or debug logging is enabled (`--log-debug`). For each operation: the number of calls (`Count`), summed duration across parallel workers (`TotalTimeSeconds`), wall-clock duration as the union of possibly overlapping intervals (`WallTimeSeconds`), average (`AvgTimeSeconds`) and maximum (`MaxTimeSeconds`) durations. The console summary covers the whole command run, while a saved report covers the operations recorded since the previous report of the same command: with `--follow` each report includes everything since the previous one — the polling between builds and failed retry attempts included.
+* **Operations** — aggregated timings of low-level operations collected for the whole command run (backend image builds and inspections, registry API calls, git operations, lock acquisitions and so on). Populated only when the `--build-report-operations` flag (`$WERF_BUILD_REPORT_OPERATIONS`) is set or debug logging is enabled (`--log-debug`). Operation keys are named `subsystem: operation`, for example `registry: tags list`, `docker: image build` or `git: clone`; they name backend calls, not individual HTTP requests. For each operation: the number of calls (`Count`), summed duration across parallel workers (`TotalTimeSeconds`), wall-clock duration as the union of possibly overlapping intervals (`WallTimeSeconds`), average (`AvgTimeSeconds`) and maximum (`MaxTimeSeconds`) durations. The console summary covers the whole command run, while a saved report covers the operations recorded since the previous report of the same command: with `--follow` each report includes everything since the previous one — the polling between builds and failed retry attempts included.
+
+* **CacheOperations** — per-layer counters of how the caches answered the lookups that went through them, keyed by the same operation names as `Operations`. Every completed call through a caching layer is classified exactly once: `Hit` (a usable cached result, an empty one included), `Miss` (the cache could not answer, so the underlying call ran) or `Bypass` (the caller asked for a fresh result and never consulted the cache). `Lookups` is their sum. `Shared` counts the calls that joined an already in-flight request instead of starting one, and is therefore included in `Miss` or `Bypass`; the local image list has no such joining, so its `Shared` is always `0`. The hit rate is `Hit / (Hit + Miss)` and is not serialized separately. A caching layer that received no lookup has no record at all rather than a row of zeros. Populated under the same conditions as `Operations`, and a saved report covers only the lookups recorded since the previous report of the same command.
 
 * **StageCache** — per-source counters of how stages were satisfied during the build, counted in stages: found in the local or repo stages storage, copied from a secondary storage, or built. Populated only when the `--build-report-operations` flag (`$WERF_BUILD_REPORT_OPERATIONS`) is set or debug logging is enabled (`--log-debug`).
 
-* **RegistryCache** — counters of tag-list requests using a cached or shared result: `registry tags cache hit` (the listing came from the in-memory tags cache) and `registry tags shared result` (the result was shared by concurrent requests for the same repository). A shared result is counted for every caller, including the one that initiated the registry request, so this is not a count of avoided network requests. These counters are kept apart from `StageCache` because they count requests, not stages. Populated only when the `--build-report-operations` flag (`$WERF_BUILD_REPORT_OPERATIONS`) is set or debug logging is enabled (`--log-debug`), and omitted when no such request was recorded. Both cache sections follow the same rules as `Operations`: the console summary covers the whole command run, while a saved report covers only the interval since the previous report of the same command.
+* **RegistryCache** — counters of tag-list requests using a cached or shared result: `registry tags cache hit` (the listing came from the in-memory tags cache) and `registry tags shared result` (the result was shared by concurrent requests for the same repository). A shared result is counted for every caller, including the one that initiated the registry request, so this is not a count of avoided network requests. These counters are kept apart from `StageCache` because they count requests, not stages. They are kept for compatibility and are superseded by `CacheOperations`, which classifies every lookup instead of counting two particular situations. Populated only when the `--build-report-operations` flag (`$WERF_BUILD_REPORT_OPERATIONS`) is set or debug logging is enabled (`--log-debug`), and omitted when no such request was recorded. Both cache sections follow the same rules as `Operations`: the console summary covers the whole command run, while a saved report covers only the interval since the previous report of the same command.
 
-Example report in JSON format (the `Operations`, `StageCache` and `RegistryCache` sections are present because the report was generated with `--build-report-operations`):
+Example report in JSON format (the `Operations`, `CacheOperations`, `StageCache` and `RegistryCache` sections are present because the report was generated with `--build-report-operations`). The operation names and the figures below are illustrative:
 
 ```json
 {
@@ -673,54 +675,56 @@ Example report in JSON format (the `Operations`, `StageCache` and `RegistryCache
   },
   "ImagesByPlatform": {},
   "Operations": {
-    "config render": {
-      "Count": 1,
-      "TotalTimeSeconds": 0.213458291,
-      "WallTimeSeconds": 0.213458291,
-      "AvgTimeSeconds": 0.213458291,
-      "MaxTimeSeconds": 0.213458291
-    },
-    "docker daemon API": {
-      "Count": 31,
-      "TotalTimeSeconds": 0.61870432,
-      "WallTimeSeconds": 0.549330501,
-      "AvgTimeSeconds": 0.019958204,
-      "MaxTimeSeconds": 0.112832542
-    },
-    "giterminism init": {
-      "Count": 1,
-      "TotalTimeSeconds": 0.122435459,
-      "WallTimeSeconds": 0.122435459,
-      "AvgTimeSeconds": 0.122435459,
-      "MaxTimeSeconds": 0.122435459
-    },
-    "local image inspect": {
-      "Count": 5,
-      "TotalTimeSeconds": 0.110243333,
-      "WallTimeSeconds": 0.110243333,
-      "AvgTimeSeconds": 0.022048667,
-      "MaxTimeSeconds": 0.048555458
-    },
-    "registry: GetRepoImage": {
-      "Count": 1,
+    "registry: tags list": {
+      "Count": 12,
       "TotalTimeSeconds": 2.905423333,
-      "WallTimeSeconds": 2.905423333,
-      "AvgTimeSeconds": 2.905423333,
-      "MaxTimeSeconds": 2.905423333
+      "WallTimeSeconds": 1.482110292,
+      "AvgTimeSeconds": 0.242118611,
+      "MaxTimeSeconds": 0.931204125
     },
-    "stage build": {
+    "docker: image build": {
       "Count": 2,
       "TotalTimeSeconds": 0.831474958,
       "WallTimeSeconds": 0.831474958,
       "AvgTimeSeconds": 0.415737479,
       "MaxTimeSeconds": 0.421835292
     },
-    "stage lock wait (storage)": {
+    "docker: image list": {
+      "Count": 5,
+      "TotalTimeSeconds": 0.110243333,
+      "WallTimeSeconds": 0.110243333,
+      "AvgTimeSeconds": 0.022048667,
+      "MaxTimeSeconds": 0.048555458
+    },
+    "git: clone": {
+      "Count": 1,
+      "TotalTimeSeconds": 0.213458291,
+      "WallTimeSeconds": 0.213458291,
+      "AvgTimeSeconds": 0.213458291,
+      "MaxTimeSeconds": 0.213458291
+    },
+    "sync: lock acquire": {
       "Count": 2,
       "TotalTimeSeconds": 0.001153668,
       "WallTimeSeconds": 0.001153668,
       "AvgTimeSeconds": 0.000576834,
       "MaxTimeSeconds": 0.000661667
+    }
+  },
+  "CacheOperations": {
+    "registry: tags list": {
+      "Lookups": 12,
+      "Hit": 9,
+      "Miss": 3,
+      "Bypass": 0,
+      "Shared": 2
+    },
+    "docker: image list": {
+      "Lookups": 5,
+      "Hit": 4,
+      "Miss": 1,
+      "Bypass": 0,
+      "Shared": 0
     }
   },
   "StageCache": {
