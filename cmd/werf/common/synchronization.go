@@ -53,25 +53,40 @@ func GetSynchronization(ctx context.Context, cmdData *CmdData, projectName strin
 		StagesStorage:         stagesStorage,
 		KubeConnectionOptions: cmdData.KubeConnectionOptions,
 	}
-	if params.ServerAddress != "" && !protocolIsLocal(params.ServerAddress) && protocolIsLocal(params.StagesStorage.Address()) {
-		return nil, fmt.Errorf("--synchronization (or WERF_SYNCHRONIZATION) is set but --repo (or WERF_REPO) is not specified: --repo is required when using a non-local synchronization server")
+	if err := ValidateSynchronizationParams(params.ServerAddress, params.StagesStorage.Address()); err != nil {
+		return nil, err
 	}
 
 	if params.ServerAddress != "" {
 		logboek.Context(ctx).LogF("Using sync server: %s\n", synchronizationAddressForLog(params.ServerAddress))
 	}
 
-	if params.ServerAddress == "" {
+	switch {
+	case params.ServerAddress == "":
 		return initDefault(ctx, params)
-	} else if protocolIsLocal(params.ServerAddress) {
+	case protocolIsLocal(params.ServerAddress):
 		return lock_manager.NewLocalSynchronization(ctx, params)
-	} else if protocolIsKube(params.ServerAddress) {
+	case protocolIsKube(params.ServerAddress):
 		return lock_manager.NewKubernetesSynchronization(ctx, params)
-	} else if protocolIsHttpOrHttps(params.ServerAddress) {
+	default:
 		return lock_manager.NewHttpSynchronization(ctx, params)
-	} else {
-		return nil, fmt.Errorf("unsupported synchronization address; use :local, kubernetes://NAMESPACE[:CONTEXT][@CONFIG], or http[s]://HOST:PORT")
 	}
+}
+
+// ValidateSynchronizationParams checks the configured synchronization address
+// against the stages storage without contacting any server, so that read-only
+// commands can reject a bad address without registering anything in the repo.
+func ValidateSynchronizationParams(serverAddress, stagesStorageAddress string) error {
+	if serverAddress == "" {
+		return nil
+	}
+	if !protocolIsLocal(serverAddress) && protocolIsLocal(stagesStorageAddress) {
+		return fmt.Errorf("--synchronization (or WERF_SYNCHRONIZATION) is set but --repo (or WERF_REPO) is not specified: --repo is required when using a non-local synchronization server")
+	}
+	if !protocolIsLocal(serverAddress) && !protocolIsKube(serverAddress) && !protocolIsHttpOrHttps(serverAddress) {
+		return fmt.Errorf("unsupported synchronization address; use :local, kubernetes://NAMESPACE[:CONTEXT][@CONFIG], or http[s]://HOST:PORT")
+	}
+	return nil
 }
 
 func synchronizationAddressForLog(address string) string {

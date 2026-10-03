@@ -97,7 +97,7 @@ The algorithm of stage selection in werf works as follows:
 
 If you run a build with storing images in the repository, werf will first check if the required stages exist in the local repository and copy the suitable stages from there, so that no rebuilding of those stages is necessary.
 
-Each stages storage is listed once per command, and that listing serves every stage lookup of the build, including the ones that find nothing. There is no expiry: a stage published by another builder after the listing is instead picked up by the fresh recheck that every publication performs under the stage lock (step 4 above), so a stale miss costs at most one duplicated stage build and never a duplicated published layer.
+Stage lookups are served by a per-command listing of each stages storage rather than by a fresh request per lookup, including the lookups that find nothing. The listing of the main repository is refreshed by the fresh recheck that every publication performs under the stage lock (step 4 above); the listings of secondary and cache repositories keep the snapshot taken when the command started. So a stage published by another builder after the listing costs at most one duplicated stage build and never a duplicated published layer.
 
 </div>
 </div>
@@ -153,12 +153,13 @@ from: alpine:3.14
 
 `werf build --check-built-images` (aliases: `--require-built-images`, `-Z`, `$WERF_CHECK_BUILT_IMAGES`), and `--require-built-images` on the commands that process images without building them, check that every image the project needs is already published, and exit with `stages required` otherwise.
 
-The check is read-only and looks at the main repository only:
+The check is read-only, and stage discovery is limited to the main repository:
 
 - a stage found in a `--secondary-repo` is **not** promoted into the main repository, and secondary repositories are not listed at all — so a project whose stages only exist in a secondary repository fails the check until a regular build copies them over;
-- nothing is published: no stage, no manifest list for a multi-platform image, no custom tag, no managed-image record and no Git metadata. Custom tags are verified to exist instead of being created.
+- nothing is published: no stage, no manifest list for a multi-platform image, no custom tag, no managed-image record and no Git metadata. Custom tags are verified to exist instead of being created. The check also skips synchronization setup, which would otherwise register a client-id record in the repository, and takes host-local locks instead — nothing is published, so there is nothing to synchronize with other hosts;
+- the configured output is still validated, read-only: with a `--final-repo`, the final image is required to exist there and is not copied into it, so the check never reports an image as available at an address that does not have it.
 
-Unlike a regular build, the check does not reuse the per-command listing described above: it lists the repository freshly, so that a stage published while the check runs is reported as built rather than missing.
+Unlike a regular build, the check never trusts a negative result of the per-command listing: when the listing shows no stage for a digest, the main repository is listed afresh, so that a stage published while the check runs is reported as built rather than missing. A stage already present in the listing is used as is.
 
 ## Parallelism and image assembly order
 

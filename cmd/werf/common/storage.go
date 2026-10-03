@@ -7,6 +7,9 @@ import (
 	"github.com/werf/werf/v3/pkg/container_backend"
 	"github.com/werf/werf/v3/pkg/storage"
 	"github.com/werf/werf/v3/pkg/storage/manager"
+	"github.com/werf/werf/v3/pkg/storage/synchronization/lock_manager"
+	"github.com/werf/werf/v3/pkg/util/option"
+	"github.com/werf/werf/v3/pkg/werf"
 )
 
 type NewStorageManagerOption func(*NewStorageManagerConfig)
@@ -45,6 +48,36 @@ func NewStorageManager(ctx context.Context, c *NewStorageManagerConfig) (*manage
 	return NewStorageManagerWithOptions(ctx, c)
 }
 
+// getStorageLockManager initializes synchronization for the storage manager.
+// Synchronization init writes to the primary repo (it registers a client-id
+// record there), so commands that only check for already built images get
+// host-local locks instead: they publish nothing, so there is nothing to
+// synchronize with other hosts. The configured synchronization address is still
+// validated, just without contacting any server.
+func getStorageLockManager(ctx context.Context, c *NewStorageManagerConfig, stagesStorage storage.PrimaryStagesStorage) (lock_manager.Interface, error) {
+	if IsImagesReadOnly(c.CmdData) {
+		var syncAddress string
+		if c.CmdData != nil {
+			syncAddress = option.PtrValueOrDefault(c.CmdData.Synchronization, "")
+		}
+		if err := ValidateSynchronizationParams(syncAddress, stagesStorage.Address()); err != nil {
+			return nil, err
+		}
+		return lock_manager.NewGeneric(werf.HostLocker().Locker()), nil
+	}
+
+	synchronization, err := GetSynchronization(ctx, c.CmdData, c.ProjectName, stagesStorage)
+	if err != nil {
+		return nil, fmt.Errorf("error get synchronization: %w", err)
+	}
+
+	storageLockManager, err := synchronization.GetStorageLockManager(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("error get storage lock manager: %w", err)
+	}
+	return storageLockManager, nil
+}
+
 func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfig, opts ...NewStorageManagerOption) (*manager.StorageManager, error) {
 	for _, opt := range opts {
 		opt(c)
@@ -70,14 +103,9 @@ func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfi
 		}
 	}
 
-	synchronization, err := GetSynchronization(ctx, c.CmdData, c.ProjectName, stagesStorage)
+	storageLockManager, err := getStorageLockManager(ctx, c, stagesStorage)
 	if err != nil {
-		return nil, fmt.Errorf("error get synchronization: %w", err)
-	}
-
-	storageLockManager, err := synchronization.GetStorageLockManager(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("error get storage lock manager: %w", err)
+		return nil, err
 	}
 
 	if c.hostPurge {
