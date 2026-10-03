@@ -64,6 +64,7 @@ var _ = ginkgo.Describe("registry tags page size", func() {
 		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 		gomega.Expect(tags).To(gomega.Equal([]string{"latest"}))
 		gomega.Expect(fixture.requestedPageSizes()).To(gomega.Equal([]string{expectedPageSize}))
+		gomega.Expect(fixture.httpRequests.Load()).To(gomega.BeNumerically(">", 0))
 	},
 		ginkgo.Entry("an empty value", "", "1000000"),
 		ginkgo.Entry("a smaller page size", "200000", "200000"),
@@ -72,7 +73,7 @@ var _ = ginkgo.Describe("registry tags page size", func() {
 		ginkgo.Entry("a padded value", "  200000  ", "200000"),
 	)
 
-	ginkgo.DescribeTable("rejects an invalid page size in the environment before listing anything", func(configured string) {
+	ginkgo.DescribeTable("rejects an invalid page size in the environment before making any HTTP request", func(configured string) {
 		ginkgo.GinkgoT().Setenv(tagsPageSizeEnv, configured)
 		fixture := newTagsPageSizeFixture("latest")
 		ginkgo.DeferCleanup(fixture.server.Close)
@@ -80,6 +81,7 @@ var _ = ginkgo.Describe("registry tags page size", func() {
 		_, err := newTagsPageSizeAPI(fixture).Tags(context.Background(), "registry.example.test/repo")
 		gomega.Expect(err).To(gomega.MatchError(gomega.ContainSubstring(tagsPageSizeEnv)))
 		gomega.Expect(fixture.requestedPageSizes()).To(gomega.BeEmpty())
+		gomega.Expect(fixture.httpRequests.Load()).To(gomega.BeZero())
 	},
 		ginkgo.Entry("a negative page size", "-1"),
 		ginkgo.Entry("a non-integer page size", "many"),

@@ -96,7 +96,8 @@ func newWritableBearerRegistryFixtureWithTLS(useTLS bool) *bearerRegistryFixture
 }
 
 type tagsPageSizeFixture struct {
-	server *httptest.Server
+	server       *httptest.Server
+	httpRequests atomic.Int64
 
 	mu      sync.Mutex
 	queries []url.Values
@@ -119,6 +120,7 @@ func newTagsPageSizeFixture(tags ...string) *tagsPageSizeFixture {
 	fixture := &tagsPageSizeFixture{tags: tags}
 	fixture.server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer ginkgo.GinkgoRecover()
+		fixture.httpRequests.Add(1)
 
 		if r.URL.Path == "/v2/" {
 			w.WriteHeader(http.StatusOK)
