@@ -95,17 +95,25 @@ var _ = Describe("ImagesReport cache operations summary", func() {
 			{Event: opstats.EventStageBuilt, Count: 1},
 		})
 		report.SetCacheOperationsSummary(ctx, []opstats.CacheSummary{
-			{Operation: opstats.OperationRegistryTagsList, Hit: 3, Miss: 2, Bypass: 1, Shared: 1},
-			{Operation: opstats.OperationDockerImageList, Bypass: 4},
+			{Operation: opstats.OperationGitPatch, Layer: opstats.CacheLayerMemory, Hit: 3, Miss: 2, Bypass: 1, Shared: 1},
+			{Operation: opstats.OperationGitPatch, Layer: opstats.CacheLayerDisk, Hit: 1, Miss: 1},
+			{Operation: opstats.OperationDockerImageList, Layer: opstats.CacheLayerMemory, Bypass: 4},
 		})
 
 		data, err := report.ToJsonData()
 		Expect(err).NotTo(HaveOccurred())
 
 		decoded := decodeOperationsReport(data)
-		Expect(decoded.CacheOperations).To(Equal(map[string]ReportCacheOperationRecord{
-			"registry: tags list": {Lookups: 6, Hit: 3, Miss: 2, Bypass: 1, Shared: 1},
-			"docker: image list":  {Lookups: 4, Bypass: 4},
+		// The layers of one operation are nested under the same operation key, so the
+		// key stays the one Operations uses while each real layer keeps its own row.
+		Expect(decoded.CacheOperations).To(Equal(map[string]map[string]ReportCacheOperationRecord{
+			"git: patch": {
+				"memory": {Lookups: 6, Hit: 3, Miss: 2, Bypass: 1, Shared: 1},
+				"disk":   {Lookups: 2, Hit: 1, Miss: 1},
+			},
+			"docker: image list": {
+				"memory": {Lookups: 4, Bypass: 4},
+			},
 		}))
 		// The legacy sections keep their existing names and meanings.
 		Expect(decoded.StageCache).To(Equal(map[string]int{"built": 1}))

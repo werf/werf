@@ -40,6 +40,28 @@ const (
 	OperationBuildahImageList Operation = "buildah: image list"
 )
 
+// CacheLayer names the actual caching layer a lookup went through. The enum is
+// closed: one row per real layer, so an unrecognized value records nothing
+// rather than inventing a layer that does not exist.
+type CacheLayer string
+
+const (
+	CacheLayerMemory CacheLayer = "memory"
+	CacheLayerDisk   CacheLayer = "disk"
+)
+
+// order places the layers in the order a lookup descends through them, memory
+// before disk, and reports whether the layer is one of the known ones.
+func (l CacheLayer) order() (int, bool) {
+	switch l {
+	case CacheLayerMemory:
+		return 0, true
+	case CacheLayerDisk:
+		return 1, true
+	}
+	return 0, false
+}
+
 // CacheOutcome classifies a single completed call through a caching layer.
 // Exactly one outcome is recorded per call.
 type CacheOutcome string
@@ -169,18 +191,26 @@ func NewObservedReadCloser(rc io.ReadCloser, done func()) io.ReadCloser {
 // instead of starting one. Call it exactly once per call, when the layer call
 // returns, so that an outcome and its shared flag never end up in different
 // reports. A hit answers from the cache without any request to join, so it is
-// never shared. No-op when no collector is bound to ctx or when the operation
-// is empty, which is how an unrecognized backend avoids an invented row.
-func CountCacheLookup(ctx context.Context, op Operation, outcome CacheOutcome, shared bool) {
+// never shared. Each layer of a multi-layer cache counts its own lookup: a
+// memory hit leaves the disk row untouched, while a memory miss answered from
+// disk is one lookup on each of the two layers and not two lookups overall.
+// No-op when no collector is bound to ctx, when the operation is empty, which
+// is how an unrecognized backend avoids an invented row, or when the layer is
+// not one of the known ones.
+func CountCacheLookup(ctx context.Context, op Operation, layer CacheLayer, outcome CacheOutcome, shared bool) {
 	collector := FromContext(ctx)
 	if collector == nil || op == "" {
+		return
+	}
+	if _, known := layer.order(); !known {
 		return
 	}
 
 	collector.mu.Lock()
 	defer collector.mu.Unlock()
 
-	counters := collector.cacheCounts[op]
+	key := cacheKey{Operation: op, Layer: layer}
+	counters := collector.cacheCounts[key]
 	switch outcome {
 	case CacheOutcomeHit:
 		counters.hit++
@@ -195,21 +225,31 @@ func CountCacheLookup(ctx context.Context, op Operation, outcome CacheOutcome, s
 	if shared {
 		counters.shared++
 	}
-	collector.cacheCounts[op] = counters
+	collector.cacheCounts[key] = counters
+}
+
+// cacheKey identifies one row of the cache summary. The operation and the layer
+// stay separate fields so that neither can be confused with the other through
+// an encoded separator.
+type cacheKey struct {
+	Operation Operation
+	Layer     CacheLayer
 }
 
 type Collector struct {
 	mu            sync.Mutex
 	intervals     map[Operation][]interval
 	events        map[Event]int
-	cacheCounts   map[Operation]cacheCounters
+	cacheCounts   map[cacheKey]cacheCounters
 	flushedOps    map[Operation]int
 	flushedEvents map[Event]int
-	flushedCache  map[Operation]cacheCounters
+	flushedCache  map[cacheKey]cacheCounters
 	// pendingCache is the cache-counter checkpoint captured by the last
 	// PendingCacheSummary; CommitFlush advances to it and not to whatever has been
 	// counted since, so observations made while the report was written survive.
-	pendingCache map[Operation]cacheCounters
+	// It is keyed per layer too, so flushing one layer never drops the deltas of
+	// another layer of the same operation.
+	pendingCache map[cacheKey]cacheCounters
 }
 
 type cacheCounters struct {
@@ -228,7 +268,7 @@ func NewCollector() *Collector {
 	return &Collector{
 		intervals:   make(map[Operation][]interval),
 		events:      make(map[Event]int),
-		cacheCounts: make(map[Operation]cacheCounters),
+		cacheCounts: make(map[cacheKey]cacheCounters),
 	}
 }
 
@@ -331,6 +371,7 @@ func (c *Collector) PendingEventSummary(ctx context.Context) []EventSummary {
 
 type CacheSummary struct {
 	Operation Operation
+	Layer     CacheLayer
 	Hit       int
 	Miss      int
 	Bypass    int
@@ -341,8 +382,10 @@ func (s CacheSummary) lookups() int {
 	return s.Hit + s.Miss + s.Bypass
 }
 
-// CacheSummary returns per-operation cache counters sorted by total lookups in
-// descending order. Only operations that actually received a lookup appear.
+// CacheSummary returns the cache counters of every operation and layer that
+// actually received a lookup, sorted by operation and then by layer in lookup
+// order, so that the layers of one operation stay together and read as the
+// progression of a single lookup.
 func (c *Collector) CacheSummary(ctx context.Context) []CacheSummary {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -356,18 +399,19 @@ func (c *Collector) PendingCacheSummary(ctx context.Context) []CacheSummary {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	c.pendingCache = make(map[Operation]cacheCounters, len(c.cacheCounts))
+	c.pendingCache = make(map[cacheKey]cacheCounters, len(c.cacheCounts))
 	maps.Copy(c.pendingCache, c.cacheCounts)
 
 	return summarizeCache(c.cacheCounts, c.flushedCache)
 }
 
-func summarizeCache(counts, skipCounts map[Operation]cacheCounters) []CacheSummary {
+func summarizeCache(counts, skipCounts map[cacheKey]cacheCounters) []CacheSummary {
 	res := make([]CacheSummary, 0, len(counts))
-	for op, counters := range counts {
-		skip := skipCounts[op]
+	for key, counters := range counts {
+		skip := skipCounts[key]
 		s := CacheSummary{
-			Operation: op,
+			Operation: key.Operation,
+			Layer:     key.Layer,
 			Hit:       counters.hit - skip.hit,
 			Miss:      counters.miss - skip.miss,
 			Bypass:    counters.bypass - skip.bypass,
@@ -380,10 +424,12 @@ func summarizeCache(counts, skipCounts map[Operation]cacheCounters) []CacheSumma
 	}
 
 	sort.Slice(res, func(i, j int) bool {
-		if res[i].lookups() == res[j].lookups() {
+		if res[i].Operation != res[j].Operation {
 			return res[i].Operation < res[j].Operation
 		}
-		return res[i].lookups() > res[j].lookups()
+		li, _ := res[i].Layer.order()
+		lj, _ := res[j].Layer.order()
+		return li < lj
 	})
 
 	return res

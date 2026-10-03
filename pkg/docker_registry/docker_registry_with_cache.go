@@ -138,7 +138,7 @@ func (r *DockerRegistryWithCache) getTagsListFromRegistry(ctx context.Context, r
 	// across two reports.
 	outcome, sharedLookup := opstats.CacheOutcomeMiss, false
 	defer func() {
-		opstats.CountCacheLookup(ctx, opstats.OperationRegistryTagsList, outcome, sharedLookup)
+		opstats.CountCacheLookup(ctx, opstats.OperationRegistryTagsList, opstats.CacheLayerMemory, outcome, sharedLookup)
 	}()
 
 	cachedTagsID := r.mustGetCachedTagsID(reference)

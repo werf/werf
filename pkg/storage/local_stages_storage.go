@@ -134,7 +134,7 @@ func (storage *LocalStagesStorage) GetStagesIDsByDigest(ctx context.Context, pro
 	// a snapshot found after the wait is an ordinary hit and shared stays zero.
 	outcome := opstats.CacheOutcomeBypass
 	defer func() {
-		opstats.CountCacheLookup(ctx, localImagesCacheOperation(storage.ContainerBackend), outcome, false)
+		opstats.CountCacheLookup(ctx, localImagesCacheOperation(storage.ContainerBackend), opstats.CacheLayerMemory, outcome, false)
 	}()
 
 	reference := fmt.Sprintf(FilterReferenceLocalStageByDigestFormat, projectName, digest)

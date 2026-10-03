@@ -83,8 +83,8 @@ type ReportOperationRecord struct {
 }
 
 // ReportCacheOperationRecord counts the completed calls through one caching
-// layer. Lookups is the sum of the three outcomes; the hit rate is derivable
-// from Hit and Miss and is therefore not serialized.
+// layer of one operation. Lookups is the sum of the three outcomes; the hit
+// rate is derivable from Hit and Miss and is therefore not serialized.
 type ReportCacheOperationRecord struct {
 	Lookups int
 	Hit     int
@@ -98,11 +98,11 @@ type ImagesReport struct {
 	Runtime          RuntimeInfo `json:"Runtime"`
 	Images           map[string]ReportImageRecord
 	ImagesByPlatform map[string]map[string]ReportImageRecord
-	Operations       map[string]ReportOperationRecord      `json:"Operations,omitempty"`
-	CacheOperations  map[string]ReportCacheOperationRecord `json:"CacheOperations,omitempty"`
-	StageCache       map[string]int                        `json:"StageCache,omitempty"`
-	RegistryCache    map[string]int                        `json:"RegistryCache,omitempty"`
-	Recovery         map[string]int                        `json:"Recovery,omitempty"`
+	Operations       map[string]ReportOperationRecord                 `json:"Operations,omitempty"`
+	CacheOperations  map[string]map[string]ReportCacheOperationRecord `json:"CacheOperations,omitempty"`
+	StageCache       map[string]int                                   `json:"StageCache,omitempty"`
+	RegistryCache    map[string]int                                   `json:"RegistryCache,omitempty"`
+	Recovery         map[string]int                                   `json:"Recovery,omitempty"`
 }
 
 func NewImagesReport() *ImagesReport {
@@ -149,15 +149,21 @@ func (report *ImagesReport) SetOperationsSummary(ctx context.Context, operations
 }
 
 // SetCacheOperationsSummary fills the CacheOperations section from the cache
-// counters of the collector. It is additive to SetOperationsSummary: the legacy
+// counters of the collector, keyed by operation and then by the caching layer
+// the lookup went through. It is additive to SetOperationsSummary: the legacy
 // StageCache/RegistryCache event sections keep their existing meaning.
 func (report *ImagesReport) SetCacheOperationsSummary(ctx context.Context, cache []opstats.CacheSummary) {
 	report.mux.Lock()
 	defer report.mux.Unlock()
 
-	report.CacheOperations = make(map[string]ReportCacheOperationRecord, len(cache))
+	report.CacheOperations = make(map[string]map[string]ReportCacheOperationRecord, len(cache))
 	for _, s := range cache {
-		report.CacheOperations[string(s.Operation)] = ReportCacheOperationRecord{
+		layers := report.CacheOperations[string(s.Operation)]
+		if layers == nil {
+			layers = make(map[string]ReportCacheOperationRecord, 1)
+			report.CacheOperations[string(s.Operation)] = layers
+		}
+		layers[string(s.Layer)] = ReportCacheOperationRecord{
 			Lookups: s.Hit + s.Miss + s.Bypass,
 			Hit:     s.Hit,
 			Miss:    s.Miss,

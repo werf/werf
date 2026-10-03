@@ -43,20 +43,55 @@ var _ = ginkgo.Describe("LogSummary", func() {
 			"git: clone                               1     1.00s     1.00s     1.00s     1.00s\n"))
 	})
 
-	ginkgo.It("keeps the cache table aligned with the operations table, undefined hit rate included", func() {
+	ginkgo.It("keeps the cache table columns aligned for the longest known cache operation, undefined hit rate included", func() {
 		collector := NewCollector()
 		ctx := NewContext(context.Background(), collector)
+		// 23 characters, the longest label a lookup call site produces, and it fits the
+		// 24-character column of the cache table.
 		for range 3 {
-			CountCacheLookup(ctx, Operation("registry: image mutate and push"), CacheOutcomeBypass, false)
+			CountCacheLookup(ctx, Operation("registry: image try get"), CacheLayerDisk, CacheOutcomeBypass, false)
 		}
 
 		output := logSummaryOutput(collector)
 
 		gomega.Expect(output).To(gomega.ContainSubstring(
-			"operation                       lookups    hit   miss bypass shared   hit%\n"))
+			"operation                cache  lookups   hit  miss bypass shared   hit%\n"))
 		// The undefined mark is one rune, and fmt pads by runes, so it needs no padding of its own.
 		gomega.Expect(output).To(gomega.ContainSubstring(
-			"registry: image mutate and push       3      0      0      3      0      —\n"))
+			"registry: image try get  disk         3     0     0      3      0      —\n"))
+		for _, width := range summaryLineWidths(output) {
+			gomega.Expect(width).To(gomega.BeNumerically("<=", 74))
+		}
+	})
+
+	ginkgo.It("shows the layers of one operation in lookup order, memory first", func() {
+		collector := NewCollector()
+		ctx := NewContext(context.Background(), collector)
+		CountCacheLookup(ctx, Operation("registry: image try get"), CacheLayerDisk, CacheOutcomeMiss, false)
+		CountCacheLookup(ctx, Operation("registry: image try get"), CacheLayerMemory, CacheOutcomeHit, false)
+		CountCacheLookup(ctx, Operation("registry: image try get"), CacheLayerMemory, CacheOutcomeHit, false)
+		CountCacheLookup(ctx, Operation("registry: image try get"), CacheLayerMemory, CacheOutcomeHit, false)
+		CountCacheLookup(ctx, Operation("registry: image try get"), CacheLayerMemory, CacheOutcomeMiss, false)
+
+		gomega.Expect(logSummaryOutput(collector)).To(gomega.ContainSubstring(
+			"registry: image try get  memory       4     3     1      0      0    75%\n" +
+				"│ registry: image try get  disk         1     0     1      0      0     0%\n"))
+	})
+
+	ginkgo.It("widens the cache row for seven-digit counters instead of clipping them", func() {
+		collector := NewCollector()
+		collector.cacheCounts[cacheKey{Operation: OperationRegistryTagsList, Layer: CacheLayerMemory}] = cacheCounters{
+			hit: 1000000, miss: 1000000, bypass: 1000000, shared: 1000000,
+		}
+
+		output := logSummaryOutput(collector)
+
+		gomega.Expect(output).To(gomega.ContainSubstring(
+			"registry: tags list      memory 3000000 1000000 1000000 1000000 1000000    50%\n"))
+		// The widest counters werf can realistically print still fit a standard terminal.
+		for _, width := range summaryLineWidths(output) {
+			gomega.Expect(width).To(gomega.BeNumerically("<=", 80))
+		}
 	})
 
 	ginkgo.It("omits the parallelism column for sequential calls", func() {
@@ -69,16 +104,16 @@ var _ = ginkgo.Describe("LogSummary", func() {
 	ginkgo.It("renders the cache table with its three legend lines", func() {
 		collector := NewCollector()
 		ctx := NewContext(context.Background(), collector)
-		CountCacheLookup(ctx, OperationRegistryTagsList, CacheOutcomeHit, false)
-		CountCacheLookup(ctx, OperationRegistryTagsList, CacheOutcomeMiss, false)
-		CountCacheLookup(ctx, OperationRegistryTagsList, CacheOutcomeMiss, true)
-		CountCacheLookup(ctx, OperationRegistryTagsList, CacheOutcomeBypass, false)
+		CountCacheLookup(ctx, OperationRegistryTagsList, CacheLayerMemory, CacheOutcomeHit, false)
+		CountCacheLookup(ctx, OperationRegistryTagsList, CacheLayerMemory, CacheOutcomeMiss, false)
+		CountCacheLookup(ctx, OperationRegistryTagsList, CacheLayerMemory, CacheOutcomeMiss, true)
+		CountCacheLookup(ctx, OperationRegistryTagsList, CacheLayerMemory, CacheOutcomeBypass, false)
 
 		output := logSummaryOutput(collector)
 
 		gomega.Expect(output).To(gomega.MatchRegexp(`Cache summary`))
-		gomega.Expect(output).To(gomega.MatchRegexp(`operation\s+lookups\s+hit\s+miss\s+bypass\s+shared\s+hit%`))
-		gomega.Expect(output).To(gomega.MatchRegexp(`registry: tags list\s+4\s+1\s+2\s+1\s+1\s+33%`))
+		gomega.Expect(output).To(gomega.MatchRegexp(`operation\s+cache\s+lookups\s+hit\s+miss\s+bypass\s+shared\s+hit%`))
+		gomega.Expect(output).To(gomega.MatchRegexp(`registry: tags list\s+memory\s+4\s+1\s+2\s+1\s+1\s+33%`))
 		gomega.Expect(output).To(gomega.ContainSubstring("lookups = hit + miss + bypass\n"))
 		gomega.Expect(output).To(gomega.ContainSubstring("hit% = hit / (hit + miss); bypass excluded\n"))
 		gomega.Expect(output).To(gomega.ContainSubstring("shared: calls joining an in-flight request; included in miss or bypass\n"))
@@ -89,16 +124,16 @@ var _ = ginkgo.Describe("LogSummary", func() {
 			collector := NewCollector()
 			ctx := NewContext(context.Background(), collector)
 			for range hit {
-				CountCacheLookup(ctx, OperationDockerImageList, CacheOutcomeHit, false)
+				CountCacheLookup(ctx, OperationDockerImageList, CacheLayerMemory, CacheOutcomeHit, false)
 			}
 			for range miss {
-				CountCacheLookup(ctx, OperationDockerImageList, CacheOutcomeMiss, false)
+				CountCacheLookup(ctx, OperationDockerImageList, CacheLayerMemory, CacheOutcomeMiss, false)
 			}
 			for range bypass {
-				CountCacheLookup(ctx, OperationDockerImageList, CacheOutcomeBypass, false)
+				CountCacheLookup(ctx, OperationDockerImageList, CacheLayerMemory, CacheOutcomeBypass, false)
 			}
 
-			gomega.Expect(logSummaryOutput(collector)).To(gomega.MatchRegexp(`docker: image list\s+\d+\s+\d+\s+\d+\s+\d+\s+0\s+` + expected))
+			gomega.Expect(logSummaryOutput(collector)).To(gomega.MatchRegexp(`docker: image list\s+memory\s+\d+\s+\d+\s+\d+\s+\d+\s+0\s+` + expected))
 		},
 		ginkgo.Entry("as zero when the cache answered nothing it was asked", 0, 2, 0, `0%`),
 		ginkgo.Entry("as a share of the lookups that consulted the cache", 1, 3, 0, `25%`),

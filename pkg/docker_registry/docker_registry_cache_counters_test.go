@@ -24,6 +24,7 @@ var _ = ginkgo.Describe("registry tags cache counters", func() {
 
 		gomega.Expect(tagsListCounters(collector, ctx)).To(gomega.Equal(opstats.CacheSummary{
 			Operation: opstats.OperationRegistryTagsList,
+			Layer:     opstats.CacheLayerMemory,
 			Bypass:    1,
 		}))
 	})
@@ -37,6 +38,7 @@ var _ = ginkgo.Describe("registry tags cache counters", func() {
 
 		gomega.Expect(tagsListCounters(collector, ctx)).To(gomega.Equal(opstats.CacheSummary{
 			Operation: opstats.OperationRegistryTagsList,
+			Layer:     opstats.CacheLayerMemory,
 			Miss:      1,
 		}))
 	})
@@ -56,6 +58,7 @@ var _ = ginkgo.Describe("registry tags cache counters", func() {
 
 			gomega.Expect(tagsListCounters(collector, ctx)).To(gomega.Equal(opstats.CacheSummary{
 				Operation: opstats.OperationRegistryTagsList,
+				Layer:     opstats.CacheLayerMemory,
 				Hit:       1,
 				Miss:      1,
 			}))
@@ -77,6 +80,7 @@ var _ = ginkgo.Describe("registry tags cache counters", func() {
 
 		gomega.Expect(tagsListCounters(collector, ctx)).To(gomega.Equal(opstats.CacheSummary{
 			Operation: opstats.OperationRegistryTagsList,
+			Layer:     opstats.CacheLayerMemory,
 			Miss:      1,
 		}))
 	})
@@ -95,6 +99,7 @@ var _ = ginkgo.Describe("registry tags cache counters", func() {
 
 		gomega.Expect(tagsListCounters(collector, ctx)).To(gomega.Equal(opstats.CacheSummary{
 			Operation: opstats.OperationRegistryTagsList,
+			Layer:     opstats.CacheLayerMemory,
 			Miss:      1,
 		}))
 	})
@@ -141,6 +146,7 @@ var _ = ginkgo.Describe("registry tags cache counters", func() {
 		gomega.Expect(inner.callCount()).To(gomega.Equal(1))
 		gomega.Expect(tagsListCounters(collector, ctx)).To(gomega.Equal(opstats.CacheSummary{
 			Operation: opstats.OperationRegistryTagsList,
+			Layer:     opstats.CacheLayerMemory,
 			Miss:      joiners + 1,
 			Shared:    joiners,
 		}))
@@ -158,6 +164,7 @@ var _ = ginkgo.Describe("registry tags cache counters", func() {
 
 		gomega.Expect(tagsListCounters(collector, ctx)).To(gomega.Equal(opstats.CacheSummary{
 			Operation: opstats.OperationRegistryTagsList,
+			Layer:     opstats.CacheLayerMemory,
 			Miss:      1,
 			Bypass:    1,
 		}))

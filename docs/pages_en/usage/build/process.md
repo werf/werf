@@ -612,7 +612,7 @@ The JSON report contains detailed information about the build:
 
 * **Operations** — aggregated timings of low-level operations collected for the whole command run (backend image builds and inspections, registry API calls, git operations, lock acquisitions and so on). Populated only when the `--build-report-operations` flag (`$WERF_BUILD_REPORT_OPERATIONS`) is set or debug logging is enabled (`--log-debug`). Operation keys are named `subsystem: operation`, for example `registry: tags list`, `docker: image build` or `git: clone`; they name backend calls, not individual HTTP requests. For each operation: the number of calls (`Count`), summed duration across parallel workers (`TotalTimeSeconds`), wall-clock duration as the union of possibly overlapping intervals (`WallTimeSeconds`), average (`AvgTimeSeconds`) and maximum (`MaxTimeSeconds`) durations. `Operations` counts the calls that actually reached the backend: the timer sits inside the caching layer, so a lookup answered from a cache adds no call here. Some recorded calls internally make another recorded call — a Buildah image pull inspects the image it has just pulled — so the rows may overlap and nest; do not add them up into the duration of the command. The console summary covers the whole command run, while a saved report covers the operations recorded since the previous report of the same command: with `--follow` each report includes everything since the previous one — the polling between builds and failed retry attempts included.
 
-* **CacheOperations** — per-layer counters of how the caches answered the lookups that went through them, keyed by the same operation names as `Operations`. Every call through a caching layer is classified exactly once and recorded when it completes: `Hit` (a usable cached result, an empty one included), `Miss` (the cache had no usable result — which does not by itself mean the underlying call ran, as a shared or canceled lookup may never reach the backend) or `Bypass` (the caller asked for a fresh result and never consulted the cache). `Lookups` is their sum. `Shared` counts the calls that joined an already in-flight request instead of starting one, and is therefore included in `Miss` or `Bypass`; the local image list has no such joining, so its `Shared` is always `0`. The hit rate is `Hit / (Hit + Miss)` and is not serialized separately. A caching layer that received no lookup has no record at all rather than a row of zeros. Populated under the same conditions as `Operations`, and a saved report covers only the lookups recorded since the previous report of the same command.
+* **CacheOperations** — per-layer counters of how the caches answered the lookups that went through them, keyed by the same operation names as `Operations` and then by the caching layer the lookup reached (`memory` or `disk`). Every call through a caching layer is classified exactly once and recorded when it completes: `Hit` (a usable cached result, an empty one included), `Miss` (the cache had no usable result — which does not by itself mean the underlying call ran, as a shared or canceled lookup may never reach the backend) or `Bypass` (the caller asked for a fresh result and never consulted the cache). `Lookups` is their sum. A layered cache counts one lookup per layer the call actually reached: a result found in memory leaves the `disk` record of that operation untouched, while a memory miss answered from disk is one lookup on each of the two layers. The records of one operation therefore must not be added up into the number of requests the application made — each of them describes its own layer. `Shared` counts the calls that joined an already in-flight request instead of starting one, and is therefore included in `Miss` or `Bypass`; the local image list has no such joining, so its `Shared` is always `0`. The hit rate is `Hit / (Hit + Miss)` per layer and is not serialized separately. A caching layer that received no lookup has no record at all rather than a row of zeros. Populated under the same conditions as `Operations`, and a saved report covers only the lookups recorded since the previous report of the same command.
 
 * **StageCache** — per-source counters of how stages were satisfied during the build, counted in stages: found in the local or repo stages storage, copied from a secondary storage, built, or `discarded`. A run that answered every image from the content-based fast path works with no stage at all, so the section and the console `Stages:` line are omitted rather than reporting zeros. `discarded` counts stages that were built locally and then thrown away because another builder had already published a suitable stage by the time this one finished: such a stage is also counted as found in the stages storage, so `discarded` is a subset of the reused stages and not an additional outcome. It says nothing about the published stage being broken or about old images being removed. Populated only when the `--build-report-operations` flag (`$WERF_BUILD_REPORT_OPERATIONS`) is set or debug logging is enabled (`--log-debug`).
 
@@ -705,6 +705,13 @@ Example report in JSON format (the `Operations`, `CacheOperations`, `StageCache`
       "AvgTimeSeconds": 0.213458291,
       "MaxTimeSeconds": 0.213458291
     },
+    "git: patch": {
+      "Count": 1,
+      "TotalTimeSeconds": 0.042113250,
+      "WallTimeSeconds": 0.042113250,
+      "AvgTimeSeconds": 0.042113250,
+      "MaxTimeSeconds": 0.042113250
+    },
     "sync: lock acquire": {
       "Count": 2,
       "TotalTimeSeconds": 0.001153668,
@@ -715,18 +722,38 @@ Example report in JSON format (the `Operations`, `CacheOperations`, `StageCache`
   },
   "CacheOperations": {
     "registry: tags list": {
-      "Lookups": 12,
-      "Hit": 9,
-      "Miss": 3,
-      "Bypass": 0,
-      "Shared": 1
+      "memory": {
+        "Lookups": 12,
+        "Hit": 9,
+        "Miss": 3,
+        "Bypass": 0,
+        "Shared": 1
+      }
+    },
+    "git: patch": {
+      "memory": {
+        "Lookups": 3,
+        "Hit": 2,
+        "Miss": 1,
+        "Bypass": 0,
+        "Shared": 0
+      },
+      "disk": {
+        "Lookups": 1,
+        "Hit": 0,
+        "Miss": 1,
+        "Bypass": 0,
+        "Shared": 0
+      }
     },
     "docker: image list": {
-      "Lookups": 5,
-      "Hit": 4,
-      "Miss": 1,
-      "Bypass": 0,
-      "Shared": 0
+      "memory": {
+        "Lookups": 5,
+        "Hit": 4,
+        "Miss": 1,
+        "Bypass": 0,
+        "Shared": 0
+      }
     }
   },
   "StageCache": {

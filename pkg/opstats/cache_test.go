@@ -14,16 +14,17 @@ var _ = Describe("Collector cache counters", func() {
 		ctx := NewContext(context.Background(), collector)
 
 		for range 5 {
-			CountCacheLookup(ctx, OperationRegistryTagsList, CacheOutcomeHit, false)
+			CountCacheLookup(ctx, OperationRegistryTagsList, CacheLayerMemory, CacheOutcomeHit, false)
 		}
 		for range 3 {
-			CountCacheLookup(ctx, OperationRegistryTagsList, CacheOutcomeMiss, true)
+			CountCacheLookup(ctx, OperationRegistryTagsList, CacheLayerMemory, CacheOutcomeMiss, true)
 		}
-		CountCacheLookup(ctx, OperationRegistryTagsList, CacheOutcomeBypass, false)
+		CountCacheLookup(ctx, OperationRegistryTagsList, CacheLayerMemory, CacheOutcomeBypass, false)
 
 		summary := collector.CacheSummary(ctx)
 		Expect(summary).To(Equal([]CacheSummary{{
 			Operation: OperationRegistryTagsList,
+			Layer:     CacheLayerMemory,
 			Hit:       5,
 			Miss:      3,
 			Bypass:    1,
@@ -36,10 +37,11 @@ var _ = Describe("Collector cache counters", func() {
 		collector := NewCollector()
 		ctx := NewContext(context.Background(), collector)
 
-		CountCacheLookup(ctx, OperationRegistryTagsList, CacheOutcomeHit, true)
+		CountCacheLookup(ctx, OperationRegistryTagsList, CacheLayerMemory, CacheOutcomeHit, true)
 
 		Expect(collector.CacheSummary(ctx)).To(Equal([]CacheSummary{{
 			Operation: OperationRegistryTagsList,
+			Layer:     CacheLayerMemory,
 			Hit:       1,
 		}}))
 	})
@@ -48,31 +50,67 @@ var _ = Describe("Collector cache counters", func() {
 		collector := NewCollector()
 		ctx := NewContext(context.Background(), collector)
 
-		CountCacheLookup(ctx, OperationDockerImageList, CacheOutcomeBypass, false)
+		CountCacheLookup(ctx, OperationDockerImageList, CacheLayerMemory, CacheOutcomeBypass, false)
 
 		Expect(collector.CacheSummary(ctx)).To(Equal([]CacheSummary{{
 			Operation: OperationDockerImageList,
+			Layer:     CacheLayerMemory,
 			Bypass:    1,
 		}}))
 	})
 
-	It("sorts rows by lookups and records nothing for an unnamed operation", func() {
+	It("groups the layers of an operation together and records nothing for an unnamed operation", func() {
 		collector := NewCollector()
 		ctx := NewContext(context.Background(), collector)
 
-		CountCacheLookup(ctx, OperationDockerImageList, CacheOutcomeHit, false)
-		CountCacheLookup(ctx, OperationRegistryTagsList, CacheOutcomeHit, false)
-		CountCacheLookup(ctx, OperationRegistryTagsList, CacheOutcomeMiss, false)
-		CountCacheLookup(ctx, "", CacheOutcomeHit, false)
+		CountCacheLookup(ctx, OperationDockerImageList, CacheLayerMemory, CacheOutcomeHit, false)
+		CountCacheLookup(ctx, OperationGitPatch, CacheLayerDisk, CacheOutcomeHit, false)
+		CountCacheLookup(ctx, OperationGitPatch, CacheLayerMemory, CacheOutcomeMiss, false)
+		CountCacheLookup(ctx, "", CacheLayerMemory, CacheOutcomeHit, false)
 
+		// Rows are ordered by operation and then in the order a lookup descends through
+		// the layers, so memory comes before disk and not in lexical order.
 		Expect(collector.CacheSummary(ctx)).To(Equal([]CacheSummary{
-			{Operation: OperationRegistryTagsList, Hit: 1, Miss: 1},
-			{Operation: OperationDockerImageList, Hit: 1},
+			{Operation: OperationDockerImageList, Layer: CacheLayerMemory, Hit: 1},
+			{Operation: OperationGitPatch, Layer: CacheLayerMemory, Miss: 1},
+			{Operation: OperationGitPatch, Layer: CacheLayerDisk, Hit: 1},
 		}))
 	})
 
+	It("keeps the layers of one operation in separate rows", func() {
+		collector := NewCollector()
+		ctx := NewContext(context.Background(), collector)
+
+		// A lookup answered by the memory cache never reaches the disk cache, so it is
+		// one lookup on the memory row and nothing at all on the disk row.
+		CountCacheLookup(ctx, OperationGitPatch, CacheLayerMemory, CacheOutcomeHit, false)
+		// The next one misses in memory and is answered from disk: one lookup on each.
+		CountCacheLookup(ctx, OperationGitPatch, CacheLayerMemory, CacheOutcomeMiss, false)
+		CountCacheLookup(ctx, OperationGitPatch, CacheLayerDisk, CacheOutcomeHit, false)
+
+		Expect(collector.CacheSummary(ctx)).To(Equal([]CacheSummary{
+			{Operation: OperationGitPatch, Layer: CacheLayerMemory, Hit: 1, Miss: 1},
+			{Operation: OperationGitPatch, Layer: CacheLayerDisk, Hit: 1},
+		}))
+	})
+
+	DescribeTable("records nothing for a layer outside the closed enum",
+		func(layer CacheLayer) {
+			collector := NewCollector()
+			ctx := NewContext(context.Background(), collector)
+
+			CountCacheLookup(ctx, OperationGitPatch, layer, CacheOutcomeHit, false)
+
+			Expect(collector.CacheSummary(ctx)).To(BeEmpty())
+		},
+		Entry("an unset one", CacheLayer("")),
+		Entry("an invented one", CacheLayer("network")),
+		// The value is the layer name, not a rendering of it.
+		Entry("a differently spelled known one", CacheLayer("Memory")),
+	)
+
 	It("is a no-op without a collector in context", func() {
-		CountCacheLookup(context.Background(), OperationRegistryTagsList, CacheOutcomeHit, false)
+		CountCacheLookup(context.Background(), OperationRegistryTagsList, CacheLayerMemory, CacheOutcomeHit, false)
 	})
 
 	It("counts concurrent lookups exactly once each", func() {
@@ -84,13 +122,14 @@ var _ = Describe("Collector cache counters", func() {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				CountCacheLookup(ctx, OperationRegistryTagsList, CacheOutcomeMiss, true)
+				CountCacheLookup(ctx, OperationRegistryTagsList, CacheLayerMemory, CacheOutcomeMiss, true)
 			}()
 		}
 		wg.Wait()
 
 		Expect(collector.CacheSummary(ctx)).To(Equal([]CacheSummary{{
 			Operation: OperationRegistryTagsList,
+			Layer:     CacheLayerMemory,
 			Miss:      50,
 			Shared:    50,
 		}}))
@@ -104,16 +143,18 @@ var _ = Describe("Collector cache pending/commit flush", func() {
 		collector := NewCollector()
 		counting := NewContext(ctx, collector)
 
-		CountCacheLookup(counting, OperationRegistryTagsList, CacheOutcomeHit, false)
+		CountCacheLookup(counting, OperationRegistryTagsList, CacheLayerMemory, CacheOutcomeHit, false)
 		Expect(collector.PendingCacheSummary(ctx)).To(Equal([]CacheSummary{{
 			Operation: OperationRegistryTagsList,
+			Layer:     CacheLayerMemory,
 			Hit:       1,
 		}}))
 		collector.CommitFlush(ctx)
 
-		CountCacheLookup(counting, OperationRegistryTagsList, CacheOutcomeMiss, true)
+		CountCacheLookup(counting, OperationRegistryTagsList, CacheLayerMemory, CacheOutcomeMiss, true)
 		Expect(collector.PendingCacheSummary(ctx)).To(Equal([]CacheSummary{{
 			Operation: OperationRegistryTagsList,
+			Layer:     CacheLayerMemory,
 			Miss:      1,
 			Shared:    1,
 		}}))
@@ -122,6 +163,7 @@ var _ = Describe("Collector cache pending/commit flush", func() {
 		Expect(collector.PendingCacheSummary(ctx)).To(BeEmpty())
 		Expect(collector.CacheSummary(ctx)).To(Equal([]CacheSummary{{
 			Operation: OperationRegistryTagsList,
+			Layer:     CacheLayerMemory,
 			Hit:       1,
 			Miss:      1,
 			Shared:    1,
@@ -132,16 +174,17 @@ var _ = Describe("Collector cache pending/commit flush", func() {
 		collector := NewCollector()
 		counting := NewContext(ctx, collector)
 
-		CountCacheLookup(counting, OperationRegistryTagsList, CacheOutcomeHit, false)
+		CountCacheLookup(counting, OperationRegistryTagsList, CacheLayerMemory, CacheOutcomeHit, false)
 		Expect(collector.PendingCacheSummary(ctx)).To(HaveLen(1))
 
 		// Recorded after the snapshot the report was built from, while the file was being
 		// written: committing the flush must not swallow it.
-		CountCacheLookup(counting, OperationRegistryTagsList, CacheOutcomeMiss, false)
+		CountCacheLookup(counting, OperationRegistryTagsList, CacheLayerMemory, CacheOutcomeMiss, false)
 		collector.CommitFlush(ctx)
 
 		Expect(collector.PendingCacheSummary(ctx)).To(Equal([]CacheSummary{{
 			Operation: OperationRegistryTagsList,
+			Layer:     CacheLayerMemory,
 			Miss:      1,
 		}}))
 	})
@@ -150,12 +193,13 @@ var _ = Describe("Collector cache pending/commit flush", func() {
 		collector := NewCollector()
 		counting := NewContext(ctx, collector)
 
-		CountCacheLookup(counting, OperationRegistryTagsList, CacheOutcomeHit, false)
+		CountCacheLookup(counting, OperationRegistryTagsList, CacheLayerMemory, CacheOutcomeHit, false)
 		Expect(collector.PendingCacheSummary(ctx)).To(HaveLen(1))
 
-		CountCacheLookup(counting, OperationRegistryTagsList, CacheOutcomeHit, false)
+		CountCacheLookup(counting, OperationRegistryTagsList, CacheLayerMemory, CacheOutcomeHit, false)
 		Expect(collector.PendingCacheSummary(ctx)).To(Equal([]CacheSummary{{
 			Operation: OperationRegistryTagsList,
+			Layer:     CacheLayerMemory,
 			Hit:       2,
 		}}))
 	})
@@ -166,12 +210,12 @@ var _ = Describe("Collector cache pending/commit flush", func() {
 
 		var reported int
 		for range 3 {
-			CountCacheLookup(counting, OperationRegistryTagsList, CacheOutcomeHit, false)
+			CountCacheLookup(counting, OperationRegistryTagsList, CacheLayerMemory, CacheOutcomeHit, false)
 			pending := collector.PendingCacheSummary(ctx)
 			Expect(pending).To(HaveLen(1))
 			Expect(pending[0].Hit).To(BeNumerically(">=", 1))
 			reported += pending[0].Hit
-			CountCacheLookup(counting, OperationRegistryTagsList, CacheOutcomeHit, false)
+			CountCacheLookup(counting, OperationRegistryTagsList, CacheLayerMemory, CacheOutcomeHit, false)
 			collector.CommitFlush(ctx)
 		}
 		reported += collector.PendingCacheSummary(ctx)[0].Hit
@@ -183,7 +227,7 @@ var _ = Describe("Collector cache pending/commit flush", func() {
 		collector := NewCollector()
 		counting := NewContext(ctx, collector)
 
-		CountCacheLookup(counting, OperationRegistryTagsList, CacheOutcomeHit, false)
+		CountCacheLookup(counting, OperationRegistryTagsList, CacheLayerMemory, CacheOutcomeHit, false)
 		collector.CommitFlush(ctx)
 
 		Expect(collector.PendingCacheSummary(ctx)).To(HaveLen(1))

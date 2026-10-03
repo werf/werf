@@ -33,6 +33,7 @@ var _ = ginkgo.Describe("Local stage lookup cache counters", func() {
 		}))
 		gomega.Expect(collector.CacheSummary(ctx)).To(gomega.Equal([]opstats.CacheSummary{{
 			Operation: opstats.OperationDockerImageList,
+			Layer:     opstats.CacheLayerMemory,
 			Bypass:    1,
 		}}))
 	})
@@ -49,6 +50,7 @@ var _ = ginkgo.Describe("Local stage lookup cache counters", func() {
 
 			gomega.Expect(collector.CacheSummary(ctx)).To(gomega.Equal([]opstats.CacheSummary{{
 				Operation: opstats.OperationDockerImageList,
+				Layer:     opstats.CacheLayerMemory,
 				Hit:       1,
 				Miss:      1,
 			}}))
@@ -67,6 +69,7 @@ var _ = ginkgo.Describe("Local stage lookup cache counters", func() {
 
 		gomega.Expect(collector.CacheSummary(ctx)).To(gomega.Equal([]opstats.CacheSummary{{
 			Operation: opstats.OperationDockerImageList,
+			Layer:     opstats.CacheLayerMemory,
 			Miss:      1,
 		}}))
 	})
@@ -80,6 +83,7 @@ var _ = ginkgo.Describe("Local stage lookup cache counters", func() {
 
 		gomega.Expect(collector.CacheSummary(ctx)).To(gomega.Equal([]opstats.CacheSummary{{
 			Operation: opstats.OperationBuildahImageList,
+			Layer:     opstats.CacheLayerMemory,
 			Miss:      1,
 		}}))
 	})
@@ -152,6 +156,7 @@ var _ = ginkgo.Describe("Local stage lookup cache counters", func() {
 		gomega.Expect(backend.callCount()).To(gomega.Equal(1))
 		gomega.Expect(collector.CacheSummary(ctx)).To(gomega.Equal([]opstats.CacheSummary{{
 			Operation: opstats.OperationDockerImageList,
+			Layer:     opstats.CacheLayerMemory,
 			Hit:       waiters,
 			Miss:      1,
 		}}))

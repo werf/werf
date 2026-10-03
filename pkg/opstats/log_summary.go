@@ -18,6 +18,11 @@ const (
 	countColumnFormat = "%7s"
 )
 
+// Cache summary row: operation, cache layer and the six counters, separated by a
+// single space, 72 visible characters wide. A longer operation name or a counter
+// wider than its column widens the row instead of being clipped.
+const cacheRowFormat = "%-24s %-6s %7s %5s %5s %6s %6s %6s"
+
 // LogSummary prints the operations table, the cache summary table and the
 // stages line. The timeLabel and elapsed parameters are kept for call-site
 // compatibility and are not rendered: the command already reports its own
@@ -60,11 +65,11 @@ func logCacheTable(ctx context.Context, summary []CacheSummary) {
 	}
 
 	logBlock(ctx, "Cache summary", func() {
-		logRow(ctx, opColumnFormat+countColumnFormat+countColumnFormat+countColumnFormat+countColumnFormat+countColumnFormat+countColumnFormat,
-			"operation", "lookups", "hit", "miss", "bypass", "shared", "hit%")
+		logRow(ctx, cacheRowFormat,
+			"operation", "cache", "lookups", "hit", "miss", "bypass", "shared", "hit%")
 		for _, s := range summary {
-			logRow(ctx, opColumnFormat+countColumnFormat+countColumnFormat+countColumnFormat+countColumnFormat+countColumnFormat+countColumnFormat,
-				string(s.Operation), fmt.Sprintf("%d", s.lookups()), fmt.Sprintf("%d", s.Hit),
+			logRow(ctx, cacheRowFormat,
+				string(s.Operation), string(s.Layer), fmt.Sprintf("%d", s.lookups()), fmt.Sprintf("%d", s.Hit),
 				fmt.Sprintf("%d", s.Miss), fmt.Sprintf("%d", s.Bypass), fmt.Sprintf("%d", s.Shared), hitRate(s))
 		}
 		logboek.Context(ctx).LogFHighlight("lookups = hit + miss + bypass\n")

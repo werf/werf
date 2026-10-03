@@ -104,7 +104,7 @@ var _ = Describe("build report operations option", func() {
 			cmdData := &CmdData{BuildReportOperations: lo.ToPtr(true)}
 			ctx, finish := InitOperationsStatistics(newCtx(level.Default, &out), cmdData)
 
-			opstats.CountCacheLookup(ctx, opstats.OperationRegistryTagsList, opstats.CacheOutcomeHit, false)
+			opstats.CountCacheLookup(ctx, opstats.OperationRegistryTagsList, opstats.CacheLayerMemory, opstats.CacheOutcomeHit, false)
 			finish()
 
 			Expect(out.String()).To(ContainSubstring("Cache summary"))
