@@ -29,7 +29,7 @@ func LogSummary(ctx context.Context, collector *Collector, _ string, _ time.Dura
 
 	logOperationsTable(ctx, collector.Summary())
 	logCacheTable(ctx, collector.CacheSummary(ctx))
-	logStagesLine(ctx, collector.EventSummary())
+	logStagesAndRecoveryLines(ctx, collector.EventSummary())
 }
 
 func logOperationsTable(ctx context.Context, summary []OperationSummary) {
@@ -73,8 +73,8 @@ func logCacheTable(ctx context.Context, summary []CacheSummary) {
 	})
 }
 
-func logStagesLine(ctx context.Context, events []EventSummary) {
-	var reused, built int
+func logStagesAndRecoveryLines(ctx context.Context, events []EventSummary) {
+	var reused, built, discarded, broken, restarts int
 	var observed bool
 	for _, e := range events {
 		switch e.Event {
@@ -84,14 +84,26 @@ func logStagesLine(ctx context.Context, events []EventSummary) {
 		case EventStageBuilt:
 			built += e.Count
 			observed = true
+		case EventStageDiscarded:
+			discarded += e.Count
+			observed = true
+		case EventStageBroken:
+			broken += e.Count
+		case EventConveyorRestart:
+			restarts += e.Count
 		}
 	}
+
 	// A command that did no stage work shows no line rather than an invented zero.
-	if !observed {
-		return
+	if observed {
+		logboek.Context(ctx).LogFHighlight("Stages: %d reused, %d built, %d discarded\n", reused, built, discarded)
+		logboek.Context(ctx).LogFHighlight("discarded: built locally but another published stage was reused; included in reused\n")
 	}
 
-	logboek.Context(ctx).LogFHighlight("Stages: %d reused, %d built\n", reused, built)
+	// Recovery is about what went wrong, so a run that hit nothing shows no line.
+	if broken > 0 || restarts > 0 {
+		logboek.Context(ctx).LogFHighlight("Recovery: %d broken stage detections, %d conveyor restarts\n", broken, restarts)
+	}
 }
 
 func hitRate(s CacheSummary) string {

@@ -57,6 +57,7 @@ type operationsReport struct {
 	CacheOperations map[string]ReportCacheOperationRecord
 	StageCache      map[string]int
 	RegistryCache   map[string]int
+	Recovery        map[string]int
 }
 
 func decodeOperationsReport(data []byte) operationsReport {

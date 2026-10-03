@@ -62,12 +62,34 @@ const (
 	EventStageBuilt               Event = "built"
 	EventRegistryTagsCacheHit     Event = "registry tags cache hit"
 	EventRegistryTagsSharedResult Event = "registry tags shared result"
+
+	// EventStageDiscarded counts stages that were built locally and then thrown away
+	// because another publisher had already published a suitable stage. The reused
+	// stage is counted as reused too, so this is a subset of the reused stages and
+	// not an additional outcome.
+	EventStageDiscarded Event = "discarded"
+
+	// EventStageBroken counts stage reads, fetches and mutations that the stages
+	// storage rejected as a broken image. A stage that is missing, rejected or
+	// unavailable is not broken.
+	EventStageBroken Event = "broken stage detections"
+
+	// EventConveyorRestart counts conveyor attempts after the first one, i.e. the
+	// restarts caused by an unexpected stages storage state.
+	EventConveyorRestart Event = "conveyor restarts"
 )
 
 // IsRegistryEvent reports whether the event counts registry API requests rather
 // than stages; the build report and the console summary keep the two apart.
 func IsRegistryEvent(ctx context.Context, event Event) bool {
 	return event == EventRegistryTagsCacheHit || event == EventRegistryTagsSharedResult
+}
+
+// IsRecoveryEvent reports whether the event counts recovering from a broken or
+// conflicting storage state rather than how a stage or a registry request was
+// satisfied; the build report and the console summary keep those apart.
+func IsRecoveryEvent(ctx context.Context, event Event) bool {
+	return event == EventStageBroken || event == EventConveyorRestart
 }
 
 type ctxKeyType struct{}

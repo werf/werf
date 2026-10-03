@@ -31,6 +31,9 @@ var _ = Describe("ImagesReport operations summary", func() {
 				{Event: opstats.EventRegistryTagsCacheHit, Count: 3},
 				{Event: opstats.EventStageCacheHitRepo, Count: 2},
 				{Event: opstats.EventStageBuilt, Count: 1},
+				{Event: opstats.EventStageDiscarded, Count: 1},
+				{Event: opstats.EventStageBroken, Count: 2},
+				{Event: opstats.EventConveyorRestart, Count: 1},
 				{Event: opstats.EventRegistryTagsSharedResult, Count: 1},
 			},
 		)
@@ -48,12 +51,13 @@ var _ = Describe("ImagesReport operations summary", func() {
 				MaxTimeSeconds:   2,
 			},
 		}))
-		Expect(decoded.StageCache).To(Equal(map[string]int{"built": 1, "found in repo stages storage": 2}))
+		Expect(decoded.StageCache).To(Equal(map[string]int{"built": 1, "found in repo stages storage": 2, "discarded": 1}))
 		Expect(decoded.RegistryCache).To(Equal(map[string]int{"registry tags cache hit": 3, "registry tags shared result": 1}))
+		Expect(decoded.Recovery).To(Equal(map[string]int{"broken stage detections": 2, "conveyor restarts": 1}))
 	})
 
 	DescribeTable("omits a cache section that has no events",
-		func(events []opstats.EventSummary, stageCachePresent, registryCachePresent bool) {
+		func(events []opstats.EventSummary, stageCachePresent, registryCachePresent, recoveryPresent bool) {
 			report := NewImagesReport()
 			report.SetOperationsSummary(ctx, nil, events)
 
@@ -61,10 +65,12 @@ var _ = Describe("ImagesReport operations summary", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(strings.Contains(string(data), `"StageCache"`)).To(Equal(stageCachePresent))
 			Expect(strings.Contains(string(data), `"RegistryCache"`)).To(Equal(registryCachePresent))
+			Expect(strings.Contains(string(data), `"Recovery"`)).To(Equal(recoveryPresent))
 		},
-		Entry("stage events only", []opstats.EventSummary{{Event: opstats.EventStageBuilt, Count: 1}}, true, false),
-		Entry("registry events only", []opstats.EventSummary{{Event: opstats.EventRegistryTagsCacheHit, Count: 1}}, false, true),
-		Entry("no events", nil, false, false),
+		Entry("stage events only", []opstats.EventSummary{{Event: opstats.EventStageBuilt, Count: 1}}, true, false, false),
+		Entry("registry events only", []opstats.EventSummary{{Event: opstats.EventRegistryTagsCacheHit, Count: 1}}, false, true, false),
+		Entry("recovery events only", []opstats.EventSummary{{Event: opstats.EventStageBroken, Count: 1}}, false, false, true),
+		Entry("no events", nil, false, false, false),
 	)
 
 	It("omits aggregates from json when not set", func() {
@@ -75,6 +81,7 @@ var _ = Describe("ImagesReport operations summary", func() {
 		Expect(string(data)).NotTo(ContainSubstring("Operations"))
 		Expect(string(data)).NotTo(ContainSubstring("StageCache"))
 		Expect(string(data)).NotTo(ContainSubstring("RegistryCache"))
+		Expect(string(data)).NotTo(ContainSubstring("Recovery"))
 	})
 })
 

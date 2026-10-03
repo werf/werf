@@ -102,6 +102,7 @@ type ImagesReport struct {
 	CacheOperations  map[string]ReportCacheOperationRecord `json:"CacheOperations,omitempty"`
 	StageCache       map[string]int                        `json:"StageCache,omitempty"`
 	RegistryCache    map[string]int                        `json:"RegistryCache,omitempty"`
+	Recovery         map[string]int                        `json:"Recovery,omitempty"`
 }
 
 func NewImagesReport() *ImagesReport {
@@ -134,12 +135,16 @@ func (report *ImagesReport) SetOperationsSummary(ctx context.Context, operations
 
 	report.StageCache = make(map[string]int)
 	report.RegistryCache = make(map[string]int)
+	report.Recovery = make(map[string]int)
 	for _, e := range events {
-		if opstats.IsRegistryEvent(ctx, e.Event) {
+		switch {
+		case opstats.IsRegistryEvent(ctx, e.Event):
 			report.RegistryCache[string(e.Event)] = e.Count
-			continue
+		case opstats.IsRecoveryEvent(ctx, e.Event):
+			report.Recovery[string(e.Event)] = e.Count
+		default:
+			report.StageCache[string(e.Event)] = e.Count
 		}
-		report.StageCache[string(e.Event)] = e.Count
 	}
 }
 
