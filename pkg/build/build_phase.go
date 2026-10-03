@@ -1333,7 +1333,6 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, s
 	stg.SetDigest(stageDigest)
 
 	func() {
-		defer opstats.Observe(ctx, opstats.OperationStageDigestLockWait)()
 		stageMutex := phase.Conveyor.GetStageDigestMutex(stg.GetDigest())
 		if stageMutex.TryLock() {
 			return
