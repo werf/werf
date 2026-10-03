@@ -12,7 +12,7 @@ import (
 )
 
 var _ = ginkgo.Describe("Content anchor cache prepass", func() {
-	ginkgo.DescribeTable("does not refresh misses before parallel image processing",
+	ginkgo.DescribeTable("never refreshes a miss against the stages storage",
 		func(ctx ginkgo.SpecContext, imageCount int) {
 			storageManager := &anchorLookupStorageManager{
 				primaryStagesStorage:   &anchorPrimaryStagesStorage{},
@@ -42,8 +42,10 @@ var _ = ginkgo.Describe("Content anchor cache prepass", func() {
 
 			phase.StagesIterator = NewStagesIterator(phase.Conveyor)
 			gomega.Expect(phase.resolveContentAnchor(ctx, images[0], true)).To(gomega.Succeed())
-			gomega.Expect(storageManager.primaryLookups).To(gomega.Equal(1))
-			gomega.Expect(storageManager.secondaryLookups).To(gomega.Equal(1))
+			gomega.Expect(storageManager.primaryLookups).To(gomega.BeZero())
+			gomega.Expect(storageManager.secondaryLookups).To(gomega.BeZero())
+			gomega.Expect(storageManager.cachedPrimaryLookups).To(gomega.Equal(imageCount + 1))
+			gomega.Expect(storageManager.cachedSecondaryLookups).To(gomega.Equal(imageCount + 1))
 			gomega.Expect(images[0].GetContentTagDesc()).To(gomega.BeNil())
 
 			published := &imagePkg.StageDesc{
@@ -56,7 +58,8 @@ var _ = ginkgo.Describe("Content anchor cache prepass", func() {
 			storageManager.inPrimary = imagePkg.NewStageDescSet(published)
 			_, err := phase.BeforeImageStages(ctx, images[0])
 			gomega.Expect(err).NotTo(gomega.HaveOccurred())
-			gomega.Expect(storageManager.primaryLookups).To(gomega.Equal(2))
+			gomega.Expect(storageManager.primaryLookups).To(gomega.BeZero())
+			gomega.Expect(storageManager.cachedPrimaryLookups).To(gomega.Equal(imageCount + 2))
 			gomega.Expect(images[0].GetContentTagDesc()).To(gomega.Equal(published))
 			gomega.Expect(images[0].AnchorReused).To(gomega.BeTrue())
 		},

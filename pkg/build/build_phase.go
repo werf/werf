@@ -74,6 +74,13 @@ func (opts *IntrospectOptions) ImageStageShouldBeIntrospected(imageName, stageNa
 }
 
 func NewBuildPhase(c *Conveyor, opts BuildPhaseOptions) *BuildPhase {
+	if opts.ShouldBeBuiltMode {
+		// Checking that images are built must not change anything in any storage, whichever command
+		// asked for the check.
+		opts.SkipImageMetadataPublication = true
+		opts.SkipAddManagedImagesRecords = true
+	}
+
 	return &BuildPhase{
 		BasePhase:         BasePhase{c},
 		BuildPhaseOptions: opts,
@@ -89,7 +96,6 @@ type BuildPhase struct {
 	ImagesReport   *ImagesReport
 
 	buildContextArchive container_backend.BuildContextArchiver
-	anchorPrepass       bool
 }
 
 func GenerateImageEnv(werfImageName, imageName string) string {
@@ -261,7 +267,6 @@ func (phase *BuildPhase) resolveAvailableContentAnchors(ctx context.Context) err
 		}
 
 		prepass := *phase
-		prepass.anchorPrepass = true
 		prepass.StagesIterator = NewStagesIterator(phase.Conveyor)
 
 		var outBuf, errBuf bytes.Buffer
@@ -672,12 +677,17 @@ func (phase *BuildPhase) publishMultiplatformImageMetadata(ctx context.Context, 
 	container_backend.LogImageName(ctx, fullImageName)
 	container_backend.LogMultiplatformImageInfo(ctx, platforms)
 
-	if err := primaryStagesStorage.PostMultiplatformImage(ctx, phase.Conveyor.ProjectName(), img.GetStageID().String(), img.GetImagesInfoList(), platforms); err != nil {
-		return fmt.Errorf("unable to post multiplatform image %s %s: %w", name, img.GetStageID(), err)
+	if !phase.ShouldBeBuiltMode {
+		if err := primaryStagesStorage.PostMultiplatformImage(ctx, phase.Conveyor.ProjectName(), img.GetStageID().String(), img.GetImagesInfoList(), platforms); err != nil {
+			return fmt.Errorf("unable to post multiplatform image %s %s: %w", name, img.GetStageID(), err)
+		}
 	}
 
 	desc, err := primaryStagesStorage.GetStageDesc(ctx, phase.Conveyor.ProjectName(), img.GetStageID())
 	if err != nil {
+		if phase.ShouldBeBuiltMode && storage.IsErrStageNotFound(err) {
+			return fmt.Errorf("multiplatform image %s %s is not published in %s", name, img.GetStageID(), primaryStagesStorage.String())
+		}
 		return fmt.Errorf("unable to get image %s %s descriptor: %w", name, img.GetStageID(), err)
 	}
 	img.SetStageDesc(desc)
@@ -712,6 +722,17 @@ func (phase *BuildPhase) publishMultiplatformImageCustomTags(ctx context.Context
 	} else {
 		customTagStorage = stagesStorage
 		customTagStageDesc = img.GetStageDesc()
+	}
+
+	if phase.ShouldBeBuiltMode {
+		for _, tagFunc := range phase.CustomTagFuncList {
+			tag := tagFunc(name, img.GetStageID().String())
+			if err := customTagStorage.CheckStageCustomTag(ctx, customTagStageDesc, tag); err != nil {
+				return fmt.Errorf("check custom tag %q existence failed: %w", tag, err)
+			}
+		}
+
+		return nil
 	}
 
 	return logboek.Context(ctx).Default().LogProcess("Adding custom tags").
@@ -868,20 +889,22 @@ func (phase *BuildPhase) AfterImageStages(ctx context.Context, img *image.Image)
 }
 
 func (phase *BuildPhase) addManagedImage(ctx context.Context, name string) error {
-	if phase.Conveyor.ShouldAddManagedImagesRecords() {
-		metaStorage := phase.Conveyor.StorageManager.GetMetaStorage()
-		exist, err := metaStorage.IsManagedImageExist(ctx, phase.Conveyor.ProjectName(), name, storage.WithCache())
-		if err != nil {
-			return fmt.Errorf("unable to check existence of managed image: %w", err)
-		}
+	if phase.BuildOptions.SkipAddManagedImagesRecords || !phase.Conveyor.ShouldAddManagedImagesRecords() {
+		return nil
+	}
 
-		if exist {
-			return nil
-		}
+	metaStorage := phase.Conveyor.StorageManager.GetMetaStorage()
+	exist, err := metaStorage.IsManagedImageExist(ctx, phase.Conveyor.ProjectName(), name, storage.WithCache())
+	if err != nil {
+		return fmt.Errorf("unable to check existence of managed image: %w", err)
+	}
 
-		if err := metaStorage.AddManagedImage(ctx, phase.Conveyor.ProjectName(), name); err != nil {
-			return fmt.Errorf("unable to add image %q to the managed images of project %q: %w", name, phase.Conveyor.ProjectName(), err)
-		}
+	if exist {
+		return nil
+	}
+
+	if err := metaStorage.AddManagedImage(ctx, phase.Conveyor.ProjectName(), name); err != nil {
+		return fmt.Errorf("unable to add image %q to the managed images of project %q: %w", name, phase.Conveyor.ProjectName(), err)
 	}
 
 	return nil
@@ -1167,6 +1190,12 @@ func (phase *BuildPhase) afterImageStage(ctx context.Context, img *image.Image, 
 }
 
 func (phase *BuildPhase) findAndFetchStageFromSecondaryStagesStorage(ctx context.Context, img *image.Image, stg stage.Interface) (bool, error) {
+	// Promoting a stage out of a secondary stages storage copies it into the primary one, so a
+	// check that images are built must not look there at all.
+	if phase.ShouldBeBuiltMode {
+		return false, nil
+	}
+
 	foundSuitableStage := false
 
 	storageManager := phase.Conveyor.StorageManager
@@ -1242,13 +1271,7 @@ func (phase *BuildPhase) findAndFetchStageFromSecondaryStagesStorage(ctx context
 
 ScanSecondaryStagesStorageList:
 	for _, secondaryStagesStorage := range storageManager.GetSecondaryStagesStorageList() {
-		var secondaryStages imagePkg.StageDescSet
-		var err error
-		if phase.anchorPrepass {
-			secondaryStages, err = storageManager.GetStageDescSetByDigestFromStagesStorageCached(ctx, stg.LogDetailedName(), stg.GetDigest(), phase.getPrevNonEmptyStageCreationTsForStage(stg), secondaryStagesStorage)
-		} else {
-			secondaryStages, err = storageManager.GetStageDescSetByDigestFromStagesStorageWithCache(ctx, stg.LogDetailedName(), stg.GetDigest(), phase.getPrevNonEmptyStageCreationTsForStage(stg), secondaryStagesStorage)
-		}
+		secondaryStages, err := storageManager.GetStageDescSetByDigestFromStagesStorageCached(ctx, stg.LogDetailedName(), stg.GetDigest(), phase.getPrevNonEmptyStageCreationTsForStage(stg), secondaryStagesStorage)
 		if err != nil {
 			return false, err
 		} else {
@@ -1351,15 +1374,15 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, s
 	storageManager := phase.Conveyor.StorageManager
 	var stageDescSet imagePkg.StageDescSet
 	var err error
-	switch {
-	case phase.anchorPrepass:
-		stageDescSet, err = storageManager.GetStageDescSetByDigestFromStagesStorageCached(ctx, stg.LogDetailedName(), stageDigest, phase.getPrevNonEmptyStageCreationTsForStage(stg), storageManager.GetStagesStorage())
-	case phase.ShouldBeBuiltMode:
+	if phase.ShouldBeBuiltMode {
 		// A stale miss here would fail the build instead of reporting an existing stage, so the
 		// lookup must stay strictly fresh.
 		stageDescSet, err = storageManager.GetStageDescSetByDigestWithCache(ctx, stg.LogDetailedName(), stageDigest, phase.getPrevNonEmptyStageCreationTsForStage(stg))
-	default:
-		stageDescSet, err = storageManager.GetStageDescSetByDigestWithRecentCache(ctx, stg.LogDetailedName(), stageDigest, phase.getPrevNonEmptyStageCreationTsForStage(stg))
+	} else {
+		// One listing of the stages storage serves the whole build. A stage published by a
+		// concurrent builder after that listing is picked up by the fresh lookup every publication
+		// makes under the stage lock, so a stale miss costs at most one duplicated stage build.
+		stageDescSet, err = storageManager.GetStageDescSetByDigestFromStagesStorageCached(ctx, stg.LogDetailedName(), stageDigest, phase.getPrevNonEmptyStageCreationTsForStage(stg), storageManager.GetStagesStorage())
 	}
 	if err != nil {
 		return false, phase.Conveyor.GetStageDigestMutex(stg.GetDigest()).Unlock, err

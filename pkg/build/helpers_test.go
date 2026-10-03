@@ -356,7 +356,7 @@ func (m *publicationStorageManager) GetSecondaryStagesStorageList() []storage.St
 	return []storage.StagesStorage{m.secondary}
 }
 
-func (m *publicationStorageManager) GetStageDescSetByDigestFromStagesStorageWithCache(_ context.Context, _, _ string, _ int64, _ storage.StagesStorage) (imagePkg.StageDescSet, error) {
+func (m *publicationStorageManager) GetStageDescSetByDigestFromStagesStorageCached(_ context.Context, _, _ string, _ int64, _ storage.StagesStorage) (imagePkg.StageDescSet, error) {
 	return imagePkg.NewStageDescSet(m.secondaryDesc), nil
 }
 

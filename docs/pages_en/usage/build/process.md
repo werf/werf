@@ -97,6 +97,8 @@ The algorithm of stage selection in werf works as follows:
 
 If you run a build with storing images in the repository, werf will first check if the required stages exist in the local repository and copy the suitable stages from there, so that no rebuilding of those stages is necessary.
 
+Each stages storage is listed once per command, and that listing serves every stage lookup of the build, including the ones that find nothing. There is no expiry: a stage published by another builder after the listing is instead picked up by the fresh recheck that every publication performs under the stage lock (step 4 above), so a stale miss costs at most one duplicated stage build and never a duplicated published layer.
+
 </div>
 </div>
 
@@ -146,6 +148,17 @@ image: user
 cacheVersion: user-cache-version
 from: alpine:3.14
 ```
+
+### Checking that images are built
+
+`werf build --check-built-images` (aliases: `--require-built-images`, `-Z`, `$WERF_CHECK_BUILT_IMAGES`), and `--require-built-images` on the commands that process images without building them, check that every image the project needs is already published, and exit with `stages required` otherwise.
+
+The check is read-only and looks at the main repository only:
+
+- a stage found in a `--secondary-repo` is **not** promoted into the main repository, and secondary repositories are not listed at all — so a project whose stages only exist in a secondary repository fails the check until a regular build copies them over;
+- nothing is published: no stage, no manifest list for a multi-platform image, no custom tag, no managed-image record and no Git metadata. Custom tags are verified to exist instead of being created.
+
+Unlike a regular build, the check does not reuse the per-command listing described above: it lists the repository freshly, so that a stage published while the check runs is reported as built rather than missing.
 
 ## Parallelism and image assembly order
 
