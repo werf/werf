@@ -152,6 +152,9 @@ Also, can be specified with $WERF_EXPORT_ADD_LABEL_* (e.g. $WERF_EXPORT_ADD_LABE
 }
 
 func run(ctx context.Context, imageNameListFromArgs, tagTemplateList []string, extraLabels map[string]string) error {
+	ctx, logOperationsSummaryFn := common.InitOperationsStatistics(ctx, &commonCmdData)
+	defer logOperationsSummaryFn()
+
 	commonManager, ctx, err := common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
 		Cmd: &commonCmdData,
 		InitTrueGitWithOptions: &common.InitTrueGitOptions{

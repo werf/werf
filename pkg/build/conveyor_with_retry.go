@@ -59,9 +59,6 @@ func (wrapper *ConveyorWithRetryWrapper) WithRetryBlock(ctx context.Context, f f
 	})
 }
 
-// retryWithRestartCount counts every conveyor attempt after the first one as a
-// restart, so a planned backoff or a cancellation before the next attempt adds
-// nothing. The collector is taken from ctx, which outlives the attempts.
 func retryWithRestartCount(ctx context.Context, storageManager *manager.StorageManager, f func() error) error {
 	var attempt int
 	return manager.RetryOnUnexpectedStagesStorageState(ctx, storageManager, func() error {
