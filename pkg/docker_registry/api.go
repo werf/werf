@@ -41,6 +41,8 @@ type api struct {
 	httpTransport         http.RoundTripper
 	insecureHttpTransport http.RoundTripper
 	bearerTokens          *bearerTokenCache
+
+	useLibraryTagsPageSize bool
 }
 
 type apiOptions struct {
@@ -287,21 +289,41 @@ func (api *api) getRepoImageByDesc(ctx context.Context, originalTag string, desc
 	return repoImage, nil
 }
 
-func (api *api) list(ctx context.Context, reference string, extraListOptions ...remote.Option) ([]string, error) {
+func (api *api) list(ctx context.Context, reference string) ([]string, error) {
 	repo, err := name.NewRepository(reference, api.newRepositoryOptionsForHost(reference)...)
 	if err != nil {
 		return nil, fmt.Errorf("parsing repo %q: %w", reference, err)
 	}
 
-	listOptions := append(
-		api.defaultRemoteOptionsForHost(ctx, reference),
-		extraListOptions...,
-	)
-
-	tags, err := remote.List(repo, listOptions...)
+	registryHost := strings.ToLower(repo.RegistryStr())
+	pageSize, err := tagsPageSizeForRegistryHost(registryHost, api.useLibraryTagsPageSize)
 	if err != nil {
+		return nil, err
+	}
+
+	listOptions := func(pageSize int) []remote.Option {
+		options := api.defaultRemoteOptionsForHost(ctx, reference)
+		if pageSize != libraryTagsPageSize {
+			options = append(options, remote.WithPageSize(pageSize))
+		}
+		return options
+	}
+
+	tags, err := remote.List(repo, listOptions(pageSize)...)
+	if err == nil {
+		return tags, nil
+	}
+
+	if pageSize == libraryTagsPageSize || !isTagsPageSizeRejectedErr(err) {
 		return nil, fmt.Errorf("reading tags for %q: %w", repo, err)
 	}
+
+	tags, err = remote.List(repo, listOptions(libraryTagsPageSize)...)
+	if err != nil {
+		return nil, fmt.Errorf("reading tags for %q with the page size of the client library: %w", repo, err)
+	}
+
+	libraryTagsPageSizeHosts.Store(registryHost, struct{}{})
 
 	return tags, nil
 }
