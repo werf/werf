@@ -13,9 +13,13 @@ import (
 	"github.com/moby/moby/client/pkg/versions"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"golang.org/x/net/context"
+
+	"github.com/werf/werf/v3/pkg/opstats"
 )
 
 func Containers(ctx context.Context, options client.ContainerListOptions) ([]dockercontainer.Summary, error) {
+	defer opstats.Observe(ctx, "docker: container list")()
+
 	result, err := apiCli(ctx).ContainerList(ctx, options)
 	if err != nil {
 		return nil, err
@@ -44,6 +48,8 @@ func ContainerAttach(ctx context.Context, ref string, options client.ContainerAt
 }
 
 func ContainerInspect(ctx context.Context, ref string) (dockercontainer.InspectResponse, error) {
+	defer opstats.Observe(ctx, "docker: container inspect")()
+
 	result, err := apiCli(ctx).ContainerInspect(ctx, ref, client.ContainerInspectOptions{})
 	if err != nil {
 		return dockercontainer.InspectResponse{}, err
@@ -53,6 +59,8 @@ func ContainerInspect(ctx context.Context, ref string) (dockercontainer.InspectR
 }
 
 func ContainerCreate(ctx context.Context, config *dockercontainer.Config, platform *ocispec.Platform, name string) (string, error) {
+	defer opstats.Observe(ctx, "docker: container create")()
+
 	if err := CheckConnection(ctx, CheckConnectionOptions{}); err != nil {
 		return "", err
 	}
@@ -79,6 +87,8 @@ func ContainerCreate(ctx context.Context, config *dockercontainer.Config, platfo
 }
 
 func ContainerCommit(ctx context.Context, ref string, commitOptions client.ContainerCommitOptions) (string, error) {
+	defer opstats.Observe(ctx, "docker: container commit")()
+
 	response, err := apiCli(ctx).ContainerCommit(ctx, ref, commitOptions)
 	if err != nil {
 		return "", err
@@ -88,11 +98,15 @@ func ContainerCommit(ctx context.Context, ref string, commitOptions client.Conta
 }
 
 func ContainerRemove(ctx context.Context, ref string, options client.ContainerRemoveOptions) error {
+	defer opstats.Observe(ctx, "docker: container remove")()
+
 	_, err := apiCli(ctx).ContainerRemove(ctx, ref, options)
 	return err
 }
 
 func doCliCreate(ctx context.Context, c command.Cli, args ...string) error {
+	defer opstats.Observe(ctx, "docker: container create")()
+
 	cmd, err := lookupCliCommand(c, "create")
 	if err != nil {
 		return err
@@ -107,6 +121,8 @@ func CliCreate(ctx context.Context, args ...string) error {
 }
 
 func doCliRun(ctx context.Context, c command.Cli, args ...string) error {
+	defer opstats.Observe(ctx, "docker: container run")()
+
 	cmd, err := lookupCliCommand(c, "run")
 	if err != nil {
 		return err
@@ -143,6 +159,8 @@ func CliRun_RecordedOutput(ctx context.Context, args ...string) (string, error) 
 }
 
 func doCliRm(ctx context.Context, c command.Cli, args ...string) error {
+	defer opstats.Observe(ctx, "docker: container remove")()
+
 	cmd, err := lookupCliCommand(c, "rm")
 	if err != nil {
 		return err

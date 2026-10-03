@@ -165,6 +165,27 @@ var _ = Describe("Collector", func() {
 		}))
 	})
 
+	It("completes the observation only once a blocking Close has returned", func() {
+		collector := NewCollector()
+		ctx := NewContext(context.Background(), collector)
+
+		closer := &blockingCloser{Reader: strings.NewReader("payload"), entered: make(chan struct{}), release: make(chan struct{})}
+		rc := NewObservedReadCloser(closer, Observe(ctx, OperationImageSaveLoad))
+
+		closed := make(chan error, 1)
+		go func() { closed <- rc.Close() }()
+
+		Eventually(closer.entered).Should(BeClosed())
+		Expect(collector.Summary()).To(BeEmpty())
+
+		close(closer.release)
+		Eventually(closed).Should(Receive(BeNil()))
+
+		summary := collector.Summary()
+		Expect(summary).To(HaveLen(1))
+		Expect(summary[0].Count).To(Equal(1))
+	})
+
 	It("is a no-op without collector in context", func() {
 		done := Observe(context.Background(), OperationImagePull)
 		Expect(done).NotTo(BeNil())

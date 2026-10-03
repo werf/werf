@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"runtime"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -129,17 +130,83 @@ var _ container_backend.ContainerBackend = (*localImageListBackendStub)(nil)
 
 type localImageListBackendStub struct {
 	container_backend.ContainerBackend
+	name    string
 	images  image.ImagesList
 	err     error
 	options container_backend.ImagesOptions
-	mu      sync.Mutex
-	calls   int
+	// onImages, when set, runs after the call has been counted and before it answers, so a test
+	// can hold a listing in flight.
+	onImages func()
+	mu       sync.Mutex
+	calls    int
+}
+
+// String reports the backend identity the real backends report, which is what names the local
+// cache row.
+func (backend *localImageListBackendStub) String() string {
+	if backend.name == "" {
+		return "docker-server-backend"
+	}
+	return backend.name
 }
 
 func (backend *localImageListBackendStub) Images(_ context.Context, options container_backend.ImagesOptions) (image.ImagesList, error) {
 	backend.mu.Lock()
-	defer backend.mu.Unlock()
 	backend.calls++
 	backend.options = options
+	onImages := backend.onImages
+	backend.mu.Unlock()
+
+	if onImages != nil {
+		onImages()
+	}
+
+	backend.mu.Lock()
+	defer backend.mu.Unlock()
 	return backend.images, backend.err
+}
+
+func (backend *localImageListBackendStub) callCount() int {
+	backend.mu.Lock()
+	defer backend.mu.Unlock()
+	return backend.calls
+}
+
+// goroutinesWaitingForImagesCache counts the lookups parked on the cache mutex of the local
+// stages storage. The lookup holding it is inside the backend listing instead, so it has no
+// Mutex.Lock frame and is not counted.
+func goroutinesWaitingForImagesCache() int {
+	return goroutinesWithFrames(goroutineDump(),
+		"(*LocalStagesStorage).GetStagesIDsByDigest(",
+		"sync.(*Mutex).Lock(")
+}
+
+func goroutineDump() string {
+	for size := 1 << 20; size <= 8<<20; size *= 2 {
+		buf := make([]byte, size)
+		if n := runtime.Stack(buf, true); n < size {
+			return string(buf[:n])
+		}
+	}
+	Fail("the goroutine dump does not fit in 8MiB")
+	return ""
+}
+
+// goroutinesWithFrames counts the per-goroutine stacks of a runtime.Stack dump, which are
+// separated by a blank line, that contain every one of the given frames.
+func goroutinesWithFrames(dump string, frames ...string) int {
+	var count int
+	for _, stack := range strings.Split(dump, "\n\n") {
+		matched := true
+		for _, frame := range frames {
+			if !strings.Contains(stack, frame) {
+				matched = false
+				break
+			}
+		}
+		if matched {
+			count++
+		}
+	}
+	return count
 }

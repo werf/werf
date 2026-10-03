@@ -159,6 +159,16 @@ func (repo *Base) GetName() string {
 	return repo.Name
 }
 
+// cacheOutcome maps a cache lookup that either found a ready value or did not
+// onto the outcome recorded for it. Lookups that explicitly skip a usable layer
+// are a bypass and are classified by the caller instead.
+func cacheOutcome(hit bool) opstats.CacheOutcome {
+	if hit {
+		return opstats.CacheOutcomeHit
+	}
+	return opstats.CacheOutcomeMiss
+}
+
 func (repo *Base) getOrCreatePatch(ctx context.Context, repoPath, gitDir, repoID, workTreeCacheDir string, opts PatchOptions) (Patch, error) {
 	patchID := true_git.PatchOptions(opts).ID()
 
@@ -166,7 +176,9 @@ func (repo *Base) getOrCreatePatch(ctx context.Context, repoPath, gitDir, repoID
 	checksumMutex.Lock()
 	defer checksumMutex.Unlock()
 
-	if val, ok := repo.Cache.Patches.Load(patchID); ok {
+	val, ok := repo.Cache.Patches.Load(patchID)
+	defer opstats.CountCacheLookup(ctx, opstats.OperationGitPatch, opstats.CacheLayerMemory, cacheOutcome(ok), false)
+	if ok {
 		return val.(Patch), nil
 	}
 
@@ -217,10 +229,12 @@ func (repo *Base) createPatch(ctx context.Context, repoPath, gitDir, repoID, wor
 		defer werf.HostLocker().ReleaseLock(lock)
 	}
 
-	if patch, err := CommonGitDataManager.GetPatchFile(ctx, repoID, opts); err != nil {
+	cachedPatch, err := CommonGitDataManager.GetPatchFile(ctx, repoID, opts)
+	opstats.CountCacheLookup(ctx, opstats.OperationGitPatch, opstats.CacheLayerDisk, cacheOutcome(err == nil && cachedPatch != nil), false)
+	if err != nil {
 		return nil, err
-	} else if patch != nil {
-		return patch, err
+	} else if cachedPatch != nil {
+		return cachedPatch, nil
 	}
 
 	repository, err := repo.PlainOpen(repoPath)
@@ -376,7 +390,9 @@ func (repo *Base) getOrCreateArchive(ctx context.Context, repoPath, gitDir, repo
 	defer repo.Cache.archivesMutex.Unlock()
 
 	archiveID := true_git.ArchiveOptions(opts).ID()
-	if _, hasKey := repo.Cache.Archives[archiveID]; !hasKey {
+	_, hasKey := repo.Cache.Archives[archiveID]
+	defer opstats.CountCacheLookup(ctx, opstats.OperationGitArchive, opstats.CacheLayerMemory, cacheOutcome(hasKey), false)
+	if !hasKey {
 		archive, err := repo.CreateArchive(ctx, repoPath, gitDir, repoID, workTreeCacheDir, opts)
 		if err != nil {
 			return nil, err
@@ -404,10 +420,12 @@ func (repo *Base) createArchive(ctx context.Context, repoPath, gitDir, repoID, w
 		defer werf.HostLocker().ReleaseLock(lock)
 	}
 
-	if archive, err := CommonGitDataManager.GetArchiveFile(ctx, repoID, opts); err != nil {
+	cachedArchive, err := CommonGitDataManager.GetArchiveFile(ctx, repoID, opts)
+	opstats.CountCacheLookup(ctx, opstats.OperationGitArchive, opstats.CacheLayerDisk, cacheOutcome(err == nil && cachedArchive != nil), false)
+	if err != nil {
 		return nil, err
-	} else if archive != nil {
-		return archive, nil
+	} else if cachedArchive != nil {
+		return cachedArchive, nil
 	}
 
 	repository, err := repo.PlainOpen(repoPath)
@@ -553,7 +571,9 @@ func (repo *Base) getOrCreateChecksum(ctx context.Context, repoHandle repo_handl
 	checksumMutex.Lock()
 	defer checksumMutex.Unlock()
 
-	if _, hasKey := repo.Cache.Checksums.Load(checksumID); !hasKey {
+	_, hasKey := repo.Cache.Checksums.Load(checksumID)
+	defer opstats.CountCacheLookup(ctx, opstats.OperationGitChecksum, opstats.CacheLayerMemory, cacheOutcome(hasKey), false)
+	if !hasKey {
 		checksum, err := repo.CreateChecksum(ctx, repoHandle, opts)
 		if err != nil {
 			return "", err
