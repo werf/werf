@@ -48,19 +48,13 @@ func NewStorageManager(ctx context.Context, c *NewStorageManagerConfig) (*manage
 	return NewStorageManagerWithOptions(ctx, c)
 }
 
-// getStorageLockManager initializes synchronization for the storage manager.
-// Synchronization init writes to the primary repo (it registers a client-id
-// record there), so commands that only check for already built images get
-// host-local locks instead: they publish nothing, so there is nothing to
-// synchronize with other hosts. The configured synchronization address is still
-// validated, just without contacting any server.
 func getStorageLockManager(ctx context.Context, c *NewStorageManagerConfig, stagesStorage storage.PrimaryStagesStorage) (lock_manager.Interface, error) {
-	if IsImagesReadOnly(c.CmdData) {
+	if isImagesReadOnly(c.CmdData) {
 		var syncAddress string
 		if c.CmdData != nil {
 			syncAddress = option.PtrValueOrDefault(c.CmdData.Synchronization, "")
 		}
-		if err := ValidateSynchronizationParams(syncAddress, stagesStorage.Address()); err != nil {
+		if err := validateSynchronizationParams(syncAddress, stagesStorage.Address()); err != nil {
 			return nil, err
 		}
 		return lock_manager.NewGeneric(werf.HostLocker().Locker()), nil

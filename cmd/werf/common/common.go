@@ -1457,11 +1457,7 @@ func GetCheckBuiltImages(cmdData *CmdData) bool {
 	return option.PtrValueOrDefault(cmdData.CheckBuiltImages, false) || option.PtrValueOrDefault(cmdData.LegacyCheckBuiltImages, false)
 }
 
-// IsImagesReadOnly reports whether the command only checks for already built
-// images and so must not write anything into the repo, including during
-// initialization. --require-built-images on deploy-like commands is not
-// read-only: those commands publish metadata and images after the check.
-func IsImagesReadOnly(cmdData *CmdData) bool {
+func isImagesReadOnly(cmdData *CmdData) bool {
 	if cmdData == nil {
 		return false
 	}

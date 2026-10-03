@@ -53,7 +53,7 @@ func GetSynchronization(ctx context.Context, cmdData *CmdData, projectName strin
 		StagesStorage:         stagesStorage,
 		KubeConnectionOptions: cmdData.KubeConnectionOptions,
 	}
-	if err := ValidateSynchronizationParams(params.ServerAddress, params.StagesStorage.Address()); err != nil {
+	if err := validateSynchronizationParams(params.ServerAddress, params.StagesStorage.Address()); err != nil {
 		return nil, err
 	}
 
@@ -73,10 +73,7 @@ func GetSynchronization(ctx context.Context, cmdData *CmdData, projectName strin
 	}
 }
 
-// ValidateSynchronizationParams checks the configured synchronization address
-// against the stages storage without contacting any server, so that read-only
-// commands can reject a bad address without registering anything in the repo.
-func ValidateSynchronizationParams(serverAddress, stagesStorageAddress string) error {
+func validateSynchronizationParams(serverAddress, stagesStorageAddress string) error {
 	if serverAddress == "" {
 		return nil
 	}
