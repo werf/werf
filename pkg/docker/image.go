@@ -32,6 +32,7 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v3/pkg/container_backend/filter"
 	"github.com/werf/werf/v3/pkg/container_backend/prune"
+	"github.com/werf/werf/v3/pkg/opstats"
 )
 
 type CreateImageOptions struct {
@@ -94,6 +95,8 @@ func emptyTarArchive() (io.Reader, error) {
 }
 
 func Images(ctx context.Context, options client.ImageListOptions) ([]dockerImage.Summary, error) {
+	defer opstats.Observe(ctx, "docker: image list")()
+
 	result, err := apiCli(ctx).ImageList(ctx, options)
 	if err != nil {
 		return nil, err
@@ -113,6 +116,8 @@ func ImageExist(ctx context.Context, ref string) (bool, error) {
 }
 
 func ImageInspect(ctx context.Context, ref string) (*dockerImage.InspectResponse, error) {
+	defer opstats.Observe(ctx, "docker: image inspect")()
+
 	result, err := apiCli(ctx).ImageInspect(ctx, ref)
 	if err != nil {
 		return nil, err
@@ -129,6 +134,8 @@ type (
 // ImagesPrune containers using opts.Filters.
 // List of accepted filters is there https://github.com/moby/moby/blob/25.0/daemon/containerd/image_prune.go#L22
 func ImagesPrune(ctx context.Context, opts ImagesPruneOptions) (ImagesPruneReport, error) {
+	defer opstats.Observe(ctx, "docker: image prune")()
+
 	result, err := apiCli(ctx).ImagePrune(ctx, client.ImagePruneOptions{
 		Filters: mapBackendFiltersToImagesPruneFilters(opts.Filters),
 	})
@@ -153,6 +160,8 @@ func mapBackendFiltersToImagesPruneFilters(list filter.FilterList) client.Filter
 }
 
 func doCliPull(ctx context.Context, c command.Cli, args ...string) error {
+	defer opstats.Observe(ctx, "docker: image pull")()
+
 	cmd, err := lookupCliCommand(c, "pull")
 	if err != nil {
 		return err
@@ -230,6 +239,8 @@ func CliPullWithRetries(ctx context.Context, args ...string) error {
 }
 
 func doCliPush(ctx context.Context, c command.Cli, args ...string) error {
+	defer opstats.Observe(ctx, "docker: image push")()
+
 	cmd, err := lookupCliCommand(c, "push")
 	if err != nil {
 		return err
@@ -258,6 +269,8 @@ func CliPushWithRetries(ctx context.Context, args ...string) error {
 }
 
 func doCliTag(ctx context.Context, c command.Cli, args ...string) error {
+	defer opstats.Observe(ctx, "docker: image tag")()
+
 	cmd, err := lookupCliCommand(c, "tag")
 	if err != nil {
 		return err
@@ -272,6 +285,8 @@ func CliTag(ctx context.Context, args ...string) error {
 }
 
 func doCliRmi(ctx context.Context, c command.Cli, args ...string) error {
+	defer opstats.Observe(ctx, "docker: image remove")()
+
 	cmd, err := lookupCliCommand(c, "rmi")
 	if err != nil {
 		return err
@@ -300,6 +315,8 @@ type CliBuildOptions struct {
 }
 
 func CliBuild_LiveOutputWithCustomIn(ctx context.Context, rc io.ReadCloser, cliOpts CliBuildOptions) (string, error) {
+	defer opstats.Observe(ctx, "docker: image build")()
+
 	buildOpts := &commands.BuildOptions{
 		ContextPath:            cliOpts.ContextPath,
 		ExportLoad:             true,
@@ -376,10 +393,20 @@ func CliBuild_LiveOutputWithCustomIn(ctx context.Context, rc io.ReadCloser, cliO
 }
 
 func CliImageSaveToStream(ctx context.Context, imageName string) (io.ReadCloser, error) {
-	return apiCli(ctx).ImageSave(ctx, []string{imageName})
+	done := opstats.Observe(ctx, "docker: image save")
+
+	rc, err := apiCli(ctx).ImageSave(ctx, []string{imageName})
+	if err != nil {
+		done()
+		return nil, err
+	}
+
+	return opstats.NewObservedReadCloser(rc, done), nil
 }
 
 func CliLoadFromStream(ctx context.Context, input io.Reader) (string, error) {
+	defer opstats.Observe(ctx, "docker: image load")()
+
 	loadResponse, err := apiCli(ctx).ImageLoad(ctx, input)
 	if err != nil {
 		return "", fmt.Errorf("load failed: %w", err)
