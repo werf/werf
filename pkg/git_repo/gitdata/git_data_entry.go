@@ -15,11 +15,6 @@ type GitDataEntry interface {
 	GetCacheBasePath() string
 }
 
-// gitDataEntryRank is the removal priority band of an entry: entries of a
-// lower band are removed before entries of a higher one, regardless of age.
-// The order follows the cost of restoring the data: archives and patches are
-// rebuilt from a local mirror, a worktree is a checkout (plus a submodule
-// fetch when it has submodules), a mirror costs a full network fetch.
 type gitDataEntryRank int
 
 const (
@@ -29,8 +24,6 @@ const (
 	gitDataEntryRankMirror                 gitDataEntryRank = 3
 )
 
-// getGitDataEntryRank ranks full and shallow mirrors equally: both are
-// GitRepoDesc and both cost a network fetch.
 func getGitDataEntryRank(entry GitDataEntry) gitDataEntryRank {
 	switch desc := entry.(type) {
 	case *GitArchiveDesc, *GitPatchDesc:

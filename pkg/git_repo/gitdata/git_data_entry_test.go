@@ -3,8 +3,8 @@ package gitdata
 import (
 	"time"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/ginkgo/v2"
+	"github.com/onsi/gomega"
 )
 
 func archiveEntry(name string, ago time.Duration) GitDataEntry {
@@ -43,8 +43,8 @@ func entryNames(entries []GitDataEntry) []string {
 	return names
 }
 
-var _ = Describe("keepGitDataByLru", func() {
-	It("removes by priority band first and by age inside a band, against plain LRU order", func() {
+var _ = ginkgo.Describe("keepGitDataByLru", func() {
+	ginkgo.It("removes by priority band first and by age inside a band, against plain LRU order", func() {
 		// Ages are interleaved so that plain LRU would give the exact
 		// reverse of the expected order for the first and last entries.
 		entries := keepGitDataByLru([]GitDataEntry{
@@ -58,7 +58,7 @@ var _ = Describe("keepGitDataByLru", func() {
 			patchEntry("patch", 5*time.Hour),
 		})
 
-		Expect(entryNames(entries)).To(Equal([]string{
+		gomega.Expect(entryNames(entries)).To(gomega.Equal([]string{
 			"patch", "archive",
 			"worktree-older", "worktree-old",
 			"submodules-older", "submodules-old",
@@ -66,7 +66,7 @@ var _ = Describe("keepGitDataByLru", func() {
 		}))
 	})
 
-	It("never removes entries accessed within the preservation window", func() {
+	ginkgo.It("never removes entries accessed within the preservation window", func() {
 		entries := keepGitDataByLru([]GitDataEntry{
 			archiveEntry("archive-fresh", time.Hour),
 			worktreeEntry("worktree-fresh", 2*time.Hour+59*time.Minute, false),
@@ -74,24 +74,24 @@ var _ = Describe("keepGitDataByLru", func() {
 			mirrorEntry("mirror-stale", 3*time.Hour+time.Minute),
 		})
 
-		Expect(entryNames(entries)).To(Equal([]string{"mirror-stale"}))
+		gomega.Expect(entryNames(entries)).To(gomega.Equal([]string{"mirror-stale"}))
 	})
 
-	It("orders same-band entries of equal age by path", func() {
+	ginkgo.It("orders same-band entries of equal age by path", func() {
 		sameAge := time.Now().Add(-10 * time.Hour)
 		entries := keepGitDataByLru([]GitDataEntry{
 			&GitRepoDesc{Path: "bbb", LastAccessAt: sameAge},
 			&GitRepoDesc{Path: "aaa", LastAccessAt: sameAge},
 		})
 
-		Expect(entryNames(entries)).To(Equal([]string{"aaa", "bbb"}))
+		gomega.Expect(entryNames(entries)).To(gomega.Equal([]string{"aaa", "bbb"}))
 	})
 
-	It("ranks shallow and full mirrors equally, so only age separates them", func() {
+	ginkgo.It("ranks shallow and full mirrors equally, so only age separates them", func() {
 		shallow := mirrorEntry("shallow", 11*time.Hour)
 		full := mirrorEntry("full", 12*time.Hour)
 
-		Expect(getGitDataEntryRank(shallow)).To(Equal(getGitDataEntryRank(full)))
-		Expect(entryNames(keepGitDataByLru([]GitDataEntry{shallow, full}))).To(Equal([]string{"full", "shallow"}))
+		gomega.Expect(getGitDataEntryRank(shallow)).To(gomega.Equal(getGitDataEntryRank(full)))
+		gomega.Expect(entryNames(keepGitDataByLru([]GitDataEntry{shallow, full}))).To(gomega.Equal([]string{"full", "shallow"}))
 	})
 })

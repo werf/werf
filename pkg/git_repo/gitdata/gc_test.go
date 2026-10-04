@@ -17,7 +17,13 @@ var _ = Describe("removeGitDataEntries", func() {
 		path := filepath.Join(root, name)
 		Expect(os.MkdirAll(path, 0o755)).To(Succeed())
 		Expect(os.WriteFile(filepath.Join(path, "data"), []byte("x"), 0o644)).To(Succeed())
+		Expect(path).To(BeADirectory())
 		return &GitWorktreeDesc{Path: path, Size: size, CacheBasePath: root}
+	}
+
+	expectRemoved := func(path string) {
+		_, err := os.Stat(path)
+		Expect(os.IsNotExist(err)).To(BeTrue(), "expected %q to be gone, stat error: %v", path, err)
 	}
 
 	constUsage := func(usedBytes uint64) func() (uint64, error) {
@@ -42,8 +48,8 @@ var _ = Describe("removeGitDataEntries", func() {
 
 		Expect(err).NotTo(HaveOccurred())
 		Expect(freed).To(Equal(uint64(120)))
-		Expect(first.Path).NotTo(BeAnExistingFile())
-		Expect(second.Path).NotTo(BeAnExistingFile())
+		expectRemoved(first.Path)
+		expectRemoved(second.Path)
 		Expect(third.Path).To(BeADirectory())
 	})
 
@@ -59,7 +65,7 @@ var _ = Describe("removeGitDataEntries", func() {
 
 		Expect(err).NotTo(HaveOccurred())
 		Expect(freed).To(Equal(uint64(10)))
-		Expect(first.Path).NotTo(BeAnExistingFile())
+		expectRemoved(first.Path)
 		Expect(second.Path).To(BeADirectory())
 	})
 
@@ -75,7 +81,7 @@ var _ = Describe("removeGitDataEntries", func() {
 
 		Expect(err).NotTo(HaveOccurred())
 		Expect(freed).To(Equal(uint64(20)))
-		Expect(second.Path).NotTo(BeAnExistingFile())
+		expectRemoved(second.Path)
 	})
 
 	It("terminates on zero-size entries without freeing anything measurable", func(ctx SpecContext) {
@@ -91,7 +97,21 @@ var _ = Describe("removeGitDataEntries", func() {
 		Expect(err).NotTo(HaveOccurred())
 		Expect(freed).To(BeZero())
 		Expect(first.Path).NotTo(BeAnExistingFile())
-		Expect(second.Path).NotTo(BeAnExistingFile())
+		expectRemoved(second.Path)
+	})
+
+	It("removes nothing when there is nothing to free", func(ctx SpecContext) {
+		entry := newEntry("first", 10)
+
+		freed, err := removeGitDataEntries(ctx, []GitDataEntry{entry}, removeGitDataEntriesOptions{
+			BytesToFree:            0,
+			TargetVolumeUsageBytes: 10,
+			GetUsedBytes:           func() (uint64, error) { Fail("volume usage must not be read with an empty budget"); return 0, nil },
+		})
+
+		Expect(err).NotTo(HaveOccurred())
+		Expect(freed).To(BeZero())
+		Expect(entry.Path).To(BeADirectory())
 	})
 
 	It("removes nothing on dry run", func(ctx SpecContext) {

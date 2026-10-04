@@ -208,15 +208,11 @@ type removeGitDataEntriesOptions struct {
 	GetUsedBytes           func() (uint64, error)
 }
 
-// removeGitDataEntries removes entries in the given order until the estimated
-// sizes of the removed entries cover the budget, and returns that estimate.
-//
-// The budget is computed from the entry sizes rather than from the volume
-// usage because freed space is not observable in general: hard-linked data
-// stays until the last link goes, ZFS and snapshotted filesystems report the
-// drop with a delay or never. An actual drop to the target is therefore only
-// used to stop earlier, never to keep deleting past the original budget.
 func removeGitDataEntries(ctx context.Context, entries []GitDataEntry, options removeGitDataEntriesOptions) (uint64, error) {
+	if options.BytesToFree == 0 {
+		return 0, nil
+	}
+
 	var estimatedFreedBytes uint64
 
 	for _, entry := range entries {
@@ -242,6 +238,9 @@ func removeGitDataEntries(ctx context.Context, entries []GitDataEntry, options r
 			continue
 		}
 
+		// Hard links and snapshots can hide the space just freed, so the
+		// entry sizes stay the budget: an actual drop to the target may only
+		// stop the loop earlier, never extend it.
 		usedBytes, err := options.GetUsedBytes()
 		if err != nil {
 			logboek.Context(ctx).Warn().LogF("Unable to check volume usage, continuing by the estimated budget: %s\n", err)
