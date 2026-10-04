@@ -638,6 +638,24 @@ func (repo *Remote) PlainOpen() (*git.Repository, error) {
 	return gitRepoPlainOpen(repo.GetClonePath())
 }
 
+// WithRepository runs callback with an open handle of the mirror, holding the
+// shared GC lock for the whole call: lazily read objects (trees, blobs, refs)
+// stay readable even if a GC runs concurrently. commit is the SHA the caller
+// already resolved and needs present, or "" when callback resolves a ref itself.
+//
+// The handle and anything lazily backed by it (iterators, *object.Tree, blob
+// readers) must not outlive callback: after it returns the lock is released and
+// the mirror may be evicted. Read what is needed and copy it out.
+func (repo *Remote) WithRepository(ctx context.Context, commit string, callback func(*git.Repository) error) error {
+	return repo.withMirror(ctx, commit, func() error {
+		rawRepo, err := repo.PlainOpen()
+		if err != nil {
+			return fmt.Errorf("cannot open repo %q: %w", repo.String(), err)
+		}
+		return callback(rawRepo)
+	})
+}
+
 func (repo *Remote) HeadCommitHash(ctx context.Context) (string, error) {
 	var res string
 	err := repo.withMirror(ctx, "", func() (err error) {
