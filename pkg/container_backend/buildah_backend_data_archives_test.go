@@ -9,7 +9,6 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"strings"
 	"syscall"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -42,11 +41,6 @@ var _ = Describe("BuildahBackend data archives", func() {
 
 		archiveData := newTestTarArchive(map[string]string{"newfile.txt": "content"})
 		err := extractTarWithChown(archiveData, dstDir, &uid, &gid)
-		if runtime.GOOS != "linux" {
-			Expect(err).To(HaveOccurred())
-			Expect(strings.Contains(err.Error(), "chown")).To(BeTrue())
-			return
-		}
 
 		Expect(err).ToNot(HaveOccurred())
 		assertOwnership(filepath.Join(dstDir, "newfile.txt"), uid, gid)
@@ -82,11 +76,6 @@ var _ = Describe("BuildahBackend data archives", func() {
 			Owner:   "gitlab",
 			Group:   "gitlab",
 		}})
-		if runtime.GOOS != "linux" {
-			Expect(err).To(HaveOccurred())
-			Expect(strings.Contains(err.Error(), "chown")).To(BeTrue())
-			return
-		}
 
 		Expect(err).ToNot(HaveOccurred())
 		data, err := os.ReadFile(filepath.Join(rootMount, "app", "README.md"))
