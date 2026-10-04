@@ -167,7 +167,17 @@ func (repo *Base) getOrCreatePatch(ctx context.Context, repoPath, gitDir, repoID
 	defer checksumMutex.Unlock()
 
 	if val, ok := repo.Cache.Patches.Load(patchID); ok {
-		return val.(Patch), nil
+		// GC may have evicted the file since we cached it: GetPatchFile re-checks
+		// it on disk and refreshes its last access timestamp under the GC lock.
+		patchFile, err := CommonGitDataManager.GetPatchFile(ctx, repoID, opts)
+		if err != nil {
+			return nil, err
+		}
+		if patchFile != nil {
+			return val.(Patch), nil
+		}
+
+		repo.Cache.Patches.Delete(patchID)
 	}
 
 	patch, err := repo.CreatePatch(ctx, repoPath, gitDir, repoID, workTreeCacheDir, opts)
@@ -376,6 +386,19 @@ func (repo *Base) getOrCreateArchive(ctx context.Context, repoPath, gitDir, repo
 	defer repo.Cache.archivesMutex.Unlock()
 
 	archiveID := true_git.ArchiveOptions(opts).ID()
+	if _, hasKey := repo.Cache.Archives[archiveID]; hasKey {
+		// GC may have evicted the file since we cached it: GetArchiveFile
+		// re-checks it on disk and refreshes its last access timestamp under the
+		// GC lock.
+		archiveFile, err := CommonGitDataManager.GetArchiveFile(ctx, repoID, opts)
+		if err != nil {
+			return nil, err
+		}
+		if archiveFile == nil {
+			delete(repo.Cache.Archives, archiveID)
+		}
+	}
+
 	if _, hasKey := repo.Cache.Archives[archiveID]; !hasKey {
 		archive, err := repo.CreateArchive(ctx, repoPath, gitDir, repoID, workTreeCacheDir, opts)
 		if err != nil {
