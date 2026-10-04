@@ -59,7 +59,7 @@ var _ = Describe("buildah", func() {
 				defer wg.Done()
 				<-start
 				for i := 0; i < 1_000; i++ {
-					stderrBuf.String()
+					_ = stderrBuf.String()
 				}
 			}()
 
