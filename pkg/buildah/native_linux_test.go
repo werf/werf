@@ -324,6 +324,10 @@ location = "mirror.example.com"
 		})
 
 		It("should return nil when no config file exists", func() {
+			envConfigPath := tmpDir + "/absent-registries.conf"
+			Expect(os.MkdirAll(envConfigPath+".d", 0o755)).To(Succeed())
+			GinkgoT().Setenv("CONTAINERS_REGISTRIES_CONF", envConfigPath)
+
 			result, err := GetRegistryMirrorsFromConfig(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 			Expect(result).To(BeNil())
