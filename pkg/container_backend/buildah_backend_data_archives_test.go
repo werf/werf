@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -37,8 +38,7 @@ var _ = Describe("BuildahBackend data archives", func() {
 		preExistingDir := filepath.Join(dstDir, "preexisting")
 		Expect(os.MkdirAll(preExistingDir, 0o755)).To(Succeed())
 
-		uid := uint32(1001)
-		gid := uint32(1001)
+		uid, gid := testChownableOwnership()
 
 		archiveData := newTestTarArchive(map[string]string{"newfile.txt": "content"})
 		err := extractTarWithChown(archiveData, dstDir, &uid, &gid)
@@ -49,7 +49,7 @@ var _ = Describe("BuildahBackend data archives", func() {
 		}
 
 		Expect(err).ToNot(HaveOccurred())
-		assertOwnership(filepath.Join(dstDir, "newfile.txt"), 1001, 1001)
+		assertOwnership(filepath.Join(dstDir, "newfile.txt"), uid, gid)
 	})
 
 	It("extractTarWithChown works without ownership when uid/gid are nil", func() {
@@ -66,9 +66,10 @@ var _ = Describe("BuildahBackend data archives", func() {
 	It("applyDataArchives extracts and applies string owner/group", func(ctx SpecContext) {
 		var testCtx context.Context = logging.WithLogger(ctx)
 		rootMount := GinkgoT().TempDir()
+		uid, gid := testChownableOwnership()
 		Expect(os.MkdirAll(filepath.Join(rootMount, "etc"), 0o755)).To(Succeed())
-		Expect(os.WriteFile(filepath.Join(rootMount, "etc", "passwd"), []byte("gitlab:x:1001:1001::/home/gitlab:/bin/sh\n"), 0o644)).To(Succeed())
-		Expect(os.WriteFile(filepath.Join(rootMount, "etc", "group"), []byte("gitlab:x:1001:\n"), 0o644)).To(Succeed())
+		Expect(os.WriteFile(filepath.Join(rootMount, "etc", "passwd"), fmt.Appendf(nil, "gitlab:x:%d:%d::/home/gitlab:/bin/sh\n", uid, gid), 0o644)).To(Succeed())
+		Expect(os.WriteFile(filepath.Join(rootMount, "etc", "group"), fmt.Appendf(nil, "gitlab:x:%d:\n", gid), 0o644)).To(Succeed())
 		Expect(os.MkdirAll(filepath.Join(rootMount, "app"), 0o755)).To(Succeed())
 
 		archiveReader := newTestTarArchive(map[string]string{"README.md": "content"})
@@ -91,7 +92,7 @@ var _ = Describe("BuildahBackend data archives", func() {
 		data, err := os.ReadFile(filepath.Join(rootMount, "app", "README.md"))
 		Expect(err).ToNot(HaveOccurred())
 		Expect(string(data)).To(Equal("content"))
-		assertOwnership(filepath.Join(rootMount, "app", "README.md"), 1001, 1001)
+		assertOwnership(filepath.Join(rootMount, "app", "README.md"), uid, gid)
 	})
 
 	It("applyDataArchives without owner/group does not chown", func(ctx SpecContext) {
