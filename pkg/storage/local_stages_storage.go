@@ -190,11 +190,6 @@ func selectProjectStages(ctx context.Context, references []string, projectName, 
 	return resultStageIDs, nil
 }
 
-// refreshProjectListing returns the project listing that started no earlier than cutoff, joining
-// the listing already in flight for this project when there is one. A zero cutoff accepts any
-// listing. The reported flag says whether this call joined a listing started by someone else, and
-// it holds for every return, errors included; a call that joined one listing and then had to start
-// the next one is still reported as having joined, since it did share a request.
 func (storage *LocalStagesStorage) refreshProjectListing(ctx context.Context, projectName string, cutoff time.Time) (localProjectListing, bool, error) {
 	var joined bool
 	for {
@@ -213,10 +208,6 @@ func (storage *LocalStagesStorage) refreshProjectListing(ctx context.Context, pr
 	}
 }
 
-// waitProjectListing returns the project listing and whether this call joined a listing that was
-// already in flight instead of starting one. The role is decided under the flight mutex, before any
-// waiting, so every return reports it, including a canceled wait. A caller canceled before it was
-// admitted joined nothing and starts nothing.
 func (storage *LocalStagesStorage) waitProjectListing(ctx context.Context, projectName string) (localProjectListing, bool, error) {
 	if err := ctx.Err(); err != nil {
 		return localProjectListing{}, false, err
@@ -245,9 +236,6 @@ func (storage *LocalStagesStorage) waitProjectListing(ctx context.Context, proje
 	}
 }
 
-// runProjectListing lists the project once and hands the result to everyone waiting on the flight.
-// Publishing the result, dropping the entry and closing done happen in one critical section, so a
-// caller that found no entry is always the one that starts the next listing.
 func (storage *LocalStagesStorage) runProjectListing(ctx context.Context, projectName string, flight *localProjectFlight) {
 	listingStartedAt := time.Now()
 	storage.registerProjectListing(projectName)
@@ -268,8 +256,6 @@ func (storage *LocalStagesStorage) runProjectListing(ctx context.Context, projec
 	storage.listingFlightMutex.Unlock()
 }
 
-// registerProjectListing marks the project as being listed before the listing starts, so that a
-// stage published while it is in flight is preserved instead of being dropped by its result.
 func (storage *LocalStagesStorage) registerProjectListing(projectName string) {
 	storage.imagesCacheMutex.Lock()
 	defer storage.imagesCacheMutex.Unlock()
@@ -348,8 +334,6 @@ func trimLocalStageReference(reference string) string {
 	return strings.TrimPrefix(reference, "localhost/")
 }
 
-// rememberPublishedStage makes a stage this process just tagged visible to cached lookups, so that
-// a later stage of the same build reuses it instead of rebuilding it.
 func (storage *LocalStagesStorage) rememberPublishedStage(reference string) {
 	reference = trimLocalStageReference(reference)
 	projectName, tag := image.ParseRepositoryAndTag(reference)

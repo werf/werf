@@ -156,7 +156,7 @@ from: alpine:3.14
 The check is read-only, and stage discovery is limited to the main repository:
 
 - a stage found in a `--secondary-repo` is **not** promoted into the main repository, and secondary repositories are not listed at all — so a project whose stages only exist in a secondary repository fails the check until a regular build copies them over;
-- nothing is published: no stage, no manifest list for a multi-platform image, no custom tag, no managed-image record and no Git metadata. Custom tags are verified to exist instead of being created. The check also skips synchronization setup, which would otherwise register a client-id record in the repository, and takes host-local locks instead — nothing is published, so there is nothing to synchronize with other hosts;
+- nothing is published: no stage, no manifest list for a multi-platform image, no custom tag, no managed-image record and no Git metadata. Custom tags are verified to exist instead of being created. `werf build --check-built-images` and its aliases also skip synchronization registration and use host-local locks; other commands using `--require-built-images` retain their normal synchronization initialization;
 - the configured output is still validated, read-only: with a `--final-repo`, the final image is required to exist there and is not copied into it, so the check never reports an image as available at an address that does not have it.
 
 Unlike a regular build, the check never trusts a negative result of the per-command listing: when the listing shows no stage for a digest, the main repository is listed afresh, so that a stage published while the check runs is reported as built rather than missing. A stage already present in the listing is used as is.
