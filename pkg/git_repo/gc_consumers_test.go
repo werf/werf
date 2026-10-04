@@ -37,10 +37,20 @@ var _ = Describe("Git cache consumers under GC eviction", func() {
 		return utils.GetHeadCommit(ctx, sourceDir)
 	}
 
-	openRemote := func(branch, commit string) *git_repo.Remote {
+	openRemoteURL := func(url, branch, tag, commit string) *git_repo.Remote {
+		repo, err := git_repo.OpenRemoteRepo("test-mapping", url, nil)
+		Expect(err).NotTo(HaveOccurred())
+		repo.Branch = branch
+		repo.Tag = tag
+		repo.Commit = commit
+		return repo
+	}
+
+	openRemote := func(branch, tag, commit string) *git_repo.Remote {
 		repo, err := git_repo.OpenRemoteRepo("test-mapping", sourceDir, nil)
 		Expect(err).NotTo(HaveOccurred())
 		repo.Branch = branch
+		repo.Tag = tag
 		repo.Commit = commit
 		return repo
 	}
@@ -118,7 +128,7 @@ var _ = Describe("Git cache consumers under GC eviction", func() {
 		It("restores an evicted full mirror and keeps serving the originally resolved commit", func(ctx SpecContext) {
 			commit := commitFile(ctx, "data.txt", "v1")
 
-			repo := openRemote("main", "")
+			repo := openRemote("main", "", "")
 			Expect(repo.CloneAndFetch(ctx)).To(Succeed())
 			Expect(repo.ReadCommitFile(ctx, commit, "data.txt")).To(Equal([]byte("v1")))
 
@@ -132,7 +142,7 @@ var _ = Describe("Git cache consumers under GC eviction", func() {
 		It("restores an evicted shallow mirror and keeps serving the mapped commit", func(ctx SpecContext) {
 			commit := commitFile(ctx, "data.txt", "v1")
 
-			repo := openRemote("", commit)
+			repo := openRemote("", "", commit)
 			Expect(repo.CloneAndFetch(ctx)).To(Succeed())
 			Expect(repo.GetClonePath()).To(ContainSubstring("git_mirrors"))
 			Expect(repo.ReadCommitFile(ctx, commit, "data.txt")).To(Equal([]byte("v1")))
@@ -146,7 +156,7 @@ var _ = Describe("Git cache consumers under GC eviction", func() {
 		It("fails with a bounded error when the evicted commit is gone from the origin too", func(ctx SpecContext) {
 			commit := commitFile(ctx, "data.txt", "v1")
 
-			repo := openRemote("main", "")
+			repo := openRemote("main", "", "")
 			Expect(repo.CloneAndFetch(ctx)).To(Succeed())
 			Expect(repo.ReadCommitFile(ctx, commit, "data.txt")).To(Equal([]byte("v1")))
 
@@ -157,30 +167,127 @@ var _ = Describe("Git cache consumers under GC eviction", func() {
 			Expect(err).To(HaveOccurred())
 		})
 
-		It("fails with a bounded error when the commit is no longer advertised by the origin", func(ctx SpecContext) {
+		It("refetches a commit no longer advertised by any branch", func(ctx SpecContext) {
 			commitFile(ctx, "data.txt", "base")
 			gitInSource(ctx, "checkout", "-b", "side")
 			commit := commitFile(ctx, "data.txt", "v1")
 			gitInSource(ctx, "checkout", "main")
 
-			repo := openRemote("", "")
+			// A file:// origin is served by git-upload-pack like a real remote,
+			// without the object copying a local path clone does.
+			utils.RunSucceedCommand(ctx, sourceDir, "git", "config", "uploadpack.allowAnySHA1InWant", "true")
+			repo := openRemoteURL("file://"+sourceDir, "", "", "")
 			Expect(repo.CloneAndFetch(ctx)).To(Succeed())
 			Expect(repo.ReadCommitFile(ctx, commit, "data.txt")).To(Equal([]byte("v1")))
 
 			// The branch holding the commit is deleted, then GC takes the mirror:
-			// nothing can bring that commit back, and werf must say so instead of
-			// serving another commit.
+			// fetching all refs no longer brings the commit back, only asking the
+			// origin for the SHA itself does.
 			gitInSource(ctx, "branch", "-D", "side")
+			Expect(os.RemoveAll(repo.GetClonePath())).To(Succeed())
+
+			Expect(repo.ReadCommitFile(ctx, commit, "data.txt")).To(Equal([]byte("v1")))
+		})
+
+		It("fails with a bounded error when the origin refuses the commit", func(ctx SpecContext) {
+			commitFile(ctx, "data.txt", "base")
+			gitInSource(ctx, "checkout", "-b", "side")
+			commit := commitFile(ctx, "data.txt", "v1")
+			gitInSource(ctx, "checkout", "main")
+
+			repo := openRemoteURL("file://"+sourceDir, "", "", "")
+			Expect(repo.CloneAndFetch(ctx)).To(Succeed())
+			Expect(repo.ReadCommitFile(ctx, commit, "data.txt")).To(Equal([]byte("v1")))
+
+			// The origin itself drops the commit, so no fetch can bring it back.
+			gitInSource(ctx, "branch", "-D", "side")
+			gitInSource(ctx, "reflog", "expire", "--expire=now", "--all")
+			gitInSource(ctx, "gc", "--prune=now", "--quiet")
 			Expect(os.RemoveAll(repo.GetClonePath())).To(Succeed())
 
 			_, err := repo.ReadCommitFile(ctx, commit, "data.txt")
 			Expect(err).To(MatchError(ContainSubstring("commit " + commit + " is not available in origin")))
 		})
 
+		It("resolves the branch commit after the mirror was evicted", func(ctx SpecContext) {
+			commit := commitFile(ctx, "data.txt", "v1")
+
+			repo := openRemote("main", "", "")
+			Expect(repo.CloneAndFetch(ctx)).To(Succeed())
+
+			// Nothing resolved this branch yet: GetLatestCommitInfo asks for it
+			// per stage, and by then GC may already have taken the mirror.
+			Expect(os.RemoveAll(repo.GetClonePath())).To(Succeed())
+
+			Expect(repo.LatestBranchCommit(ctx, "main")).To(Equal(commit))
+		})
+
+		It("keeps serving the branch commit resolved before the mirror was evicted", func(ctx SpecContext) {
+			commit := commitFile(ctx, "data.txt", "v1")
+
+			repo := openRemote("main", "", "")
+			Expect(repo.CloneAndFetch(ctx)).To(Succeed())
+			Expect(repo.LatestBranchCommit(ctx, "main")).To(Equal(commit))
+
+			// The origin advances and GC takes the mirror. Re-resolving the
+			// branch would pin later stages of this build to a different commit
+			// than the ones already built.
+			commitFile(ctx, "data.txt", "v2")
+			Expect(os.RemoveAll(repo.GetClonePath())).To(Succeed())
+
+			Expect(repo.LatestBranchCommit(ctx, "main")).To(Equal(commit))
+			Expect(repo.ReadCommitFile(ctx, commit, "data.txt")).To(Equal([]byte("v1")))
+		})
+
+		It("keeps serving the tag commit resolved before the mirror was evicted", func(ctx SpecContext) {
+			commit := commitFile(ctx, "data.txt", "v1")
+			gitInSource(ctx, "tag", "v1")
+
+			repo := openRemote("", "v1", "")
+			Expect(repo.CloneAndFetch(ctx)).To(Succeed())
+			Expect(repo.TagCommit(ctx, "v1")).To(Equal(commit))
+
+			movedCommit := commitFile(ctx, "data.txt", "v2")
+			gitInSource(ctx, "tag", "-f", "v1", movedCommit)
+			Expect(os.RemoveAll(repo.GetClonePath())).To(Succeed())
+
+			Expect(repo.TagCommit(ctx, "v1")).To(Equal(commit))
+			Expect(repo.ReadCommitFile(ctx, commit, "data.txt")).To(Equal([]byte("v1")))
+		})
+
+		It("re-resolves the branch commit after an explicit fetch", func(ctx SpecContext) {
+			commit := commitFile(ctx, "data.txt", "v1")
+
+			repo := openRemote("main", "", "")
+			Expect(repo.CloneAndFetch(ctx)).To(Succeed())
+			Expect(repo.LatestBranchCommit(ctx, "main")).To(Equal(commit))
+
+			advanced := commitFile(ctx, "data.txt", "v2")
+			Expect(repo.FetchOrigin(ctx, git_repo.FetchOptions{})).To(Succeed())
+
+			Expect(repo.LatestBranchCommit(ctx, "main")).To(Equal(advanced))
+		})
+
+		It("keeps reading through a handle whose mirror was recreated by another process", func(ctx SpecContext) {
+			commit := commitFile(ctx, "data.txt", "v1")
+
+			repo := openRemote("main", "", "")
+			Expect(repo.CloneAndFetch(ctx)).To(Succeed())
+			Expect(repo.ReadCommitFile(ctx, commit, "data.txt")).To(Equal([]byte("v1")))
+
+			// Another werf process loses the mirror to GC and clones it again:
+			// the path exists, but every file behind the cached handle is new.
+			Expect(os.RemoveAll(repo.GetClonePath())).To(Succeed())
+			peer := openRemote("main", "", "")
+			Expect(peer.CloneAndFetch(ctx)).To(Succeed())
+
+			Expect(repo.ReadCommitFile(ctx, commit, "data.txt")).To(Equal([]byte("v1")))
+		})
+
 		It("refreshes the mirror last access timestamp on a read", func(ctx SpecContext) {
 			commit := commitFile(ctx, "data.txt", "v1")
 
-			repo := openRemote("main", "")
+			repo := openRemote("main", "", "")
 			Expect(repo.CloneAndFetch(ctx)).To(Succeed())
 
 			lastAccessPath := filepath.Join(repo.GetClonePath(), "last_access_at")
@@ -197,7 +304,7 @@ var _ = Describe("Git cache consumers under GC eviction", func() {
 		It("keeps the original go-git object-not-found retry working", func(ctx SpecContext) {
 			commit := commitFile(ctx, "data.txt", "v1")
 
-			repo := openRemote("main", "")
+			repo := openRemote("main", "", "")
 			Expect(repo.CloneAndFetch(ctx)).To(Succeed())
 			Expect(repo.ReadCommitFile(ctx, commit, "data.txt")).To(Equal([]byte("v1")))
 
@@ -212,10 +319,33 @@ var _ = Describe("Git cache consumers under GC eviction", func() {
 	})
 
 	Describe("GC exclusion", func() {
+		It("runs repo operations under a GC lock the caller already holds", func(ctx SpecContext) {
+			commit := commitFile(ctx, "data.txt", "v1")
+
+			repo := openRemote("main", "", "")
+			Expect(repo.CloneAndFetch(ctx)).To(Succeed())
+
+			// Dockerfile build context archiving takes the shared GC lock around
+			// git operations that take it again.
+			outerLock, err := manager.LockGC(ctx, true)
+			Expect(err).NotTo(HaveOccurred())
+			defer func() { Expect(werf.HostLocker().ReleaseLock(outerLock)).To(Succeed()) }()
+
+			done := make(chan struct{})
+			go func() {
+				defer GinkgoRecover()
+				defer close(done)
+				Expect(repo.ReadCommitFile(ctx, commit, "data.txt")).To(Equal([]byte("v1")))
+				Expect(repo.LatestBranchCommit(ctx, "main")).To(Equal(commit))
+			}()
+
+			Eventually(done, 30*time.Second).Should(BeClosed())
+		})
+
 		It("keeps GC out while a repo handle is in use and lets it in on release", func(ctx SpecContext) {
 			commit := commitFile(ctx, "data.txt", "v1")
 
-			repo := openRemote("main", "")
+			repo := openRemote("main", "", "")
 			Expect(repo.CloneAndFetch(ctx)).To(Succeed())
 
 			insideHandle := make(chan struct{})

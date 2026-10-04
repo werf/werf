@@ -632,16 +632,19 @@ func (repo *Base) withRepoHandle(ctx context.Context, commit string, f func(hand
 	mutex.Lock()
 	defer mutex.Unlock()
 
-	// The shared GC lock covers data recovery, handle initialization and the
-	// callback alike: a handle keeps the mirror object files and the prepared
-	// worktree open, so releasing the lock before f() lets GC delete the data
-	// being read. It is released on return, so a build never holds it whole.
+	// A handle keeps the mirror object files and the prepared worktree open, so
+	// the shared GC lock has to cover the callback too, not just the handle
+	// initialization. It is released on return: no build holds it as a whole.
 	if lock, err := CommonGitDataManager.LockGC(ctx, true); err != nil {
 		return err
 	} else {
 		defer werf.HostLocker().ReleaseLock(lock)
 	}
 
+	attempt := 0
+	retriesLimit := 1
+
+initCommitRepoHandle:
 	if repo.ensureRepoDataFunc != nil {
 		restored, err := repo.ensureRepoDataFunc(ctx, commit)
 		if err != nil {
@@ -652,10 +655,6 @@ func (repo *Base) withRepoHandle(ctx context.Context, commit string, f func(hand
 		}
 	}
 
-	attempt := 0
-	retriesLimit := 1
-
-initCommitRepoHandle:
 	if _, hasKey := repo.commitRepoHandle.Load(commit); !hasKey {
 		repoHandler, err := repo.initRepoHandleBackedByWorkTree(ctx, commit)
 		if err != nil {

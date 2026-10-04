@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/go-git/go-git/v5"
@@ -45,6 +46,69 @@ type Remote struct {
 	Commit string
 
 	kind mirrorKind
+
+	resolvedRefsMutex sync.Mutex
+	resolvedRefs      map[string]string
+}
+
+// Resolving the mapped branch or tag twice in one build must give the same
+// answer even if the origin moved meanwhile: the SHA resolved first is what
+// every later stage, digest and cache lookup of this build is built on. Only an
+// explicit fetch may change it.
+func (repo *Remote) resolvedRef(key string) (string, bool) {
+	repo.resolvedRefsMutex.Lock()
+	defer repo.resolvedRefsMutex.Unlock()
+
+	commit, ok := repo.resolvedRefs[key]
+	return commit, ok
+}
+
+func (repo *Remote) rememberResolvedRef(key, commit string) {
+	repo.resolvedRefsMutex.Lock()
+	defer repo.resolvedRefsMutex.Unlock()
+
+	if repo.resolvedRefs == nil {
+		repo.resolvedRefs = map[string]string{}
+	}
+	repo.resolvedRefs[key] = commit
+}
+
+func (repo *Remote) forgetResolvedRefs() {
+	repo.resolvedRefsMutex.Lock()
+	defer repo.resolvedRefsMutex.Unlock()
+
+	repo.resolvedRefs = nil
+}
+
+// mappedCommit is the SHA this repo is pinned to: the mapped commit, or the one
+// already resolved for the mapped tag or branch. Restoring an evicted mirror
+// must bring that SHA back instead of the current tip.
+func (repo *Remote) mappedCommit() string {
+	if repo.Commit != "" {
+		return repo.Commit
+	}
+
+	if repo.Tag != "" {
+		if commit, ok := repo.resolvedRef(resolvedTagRefKey(repo.Tag)); ok {
+			return commit
+		}
+	}
+
+	if repo.Branch != "" {
+		if commit, ok := repo.resolvedRef(resolvedBranchRefKey(repo.Branch)); ok {
+			return commit
+		}
+	}
+
+	return ""
+}
+
+func resolvedBranchRefKey(branch string) string {
+	return "branch:" + branch
+}
+
+func resolvedTagRefKey(tag string) string {
+	return "tag:" + tag
 }
 
 func OpenRemoteRepo(name, url string, auth *BasicAuthCredentials) (*Remote, error) {
@@ -79,11 +143,21 @@ func (repo *Remote) ValidateEndpoint() error {
 }
 
 func (repo *Remote) CreateDetachedMergeCommit(ctx context.Context, fromCommit, toCommit string) (string, error) {
-	return repo.createDetachedMergeCommit(ctx, repo.GetClonePath(), repo.GetClonePath(), repo.getWorkTreeCacheDir(repo.getRepoID()), fromCommit, toCommit)
+	var res string
+	err := repo.withMirror(ctx, toCommit, func() (err error) {
+		res, err = repo.createDetachedMergeCommit(ctx, repo.GetClonePath(), repo.GetClonePath(), repo.getWorkTreeCacheDir(repo.getRepoID()), fromCommit, toCommit)
+		return err
+	})
+	return res, err
 }
 
-func (repo *Remote) GetMergeCommitParents(_ context.Context, commit string) ([]string, error) {
-	return repo.getMergeCommitParents(repo.GetClonePath(), commit)
+func (repo *Remote) GetMergeCommitParents(ctx context.Context, commit string) ([]string, error) {
+	var res []string
+	err := repo.withMirror(ctx, commit, func() (err error) {
+		res, err = repo.getMergeCommitParents(repo.GetClonePath(), commit)
+		return err
+	})
+	return res, err
 }
 
 func (repo *Remote) StatusPathList(ctx context.Context, pathMatcher path_matcher.PathMatcher) ([]string, error) {
@@ -140,20 +214,40 @@ func (repo *Remote) resolveMirrorKind() (mirrorKind, error) {
 	return mirrorKindShallow, nil
 }
 
-func (repo *Remote) RemoteOriginUrl(_ context.Context) (string, error) {
-	return repo.remoteOriginUrl(repo.GetClonePath())
+func (repo *Remote) RemoteOriginUrl(ctx context.Context) (string, error) {
+	var res string
+	err := repo.withMirror(ctx, "", func() (err error) {
+		res, err = repo.remoteOriginUrl(repo.GetClonePath())
+		return err
+	})
+	return res, err
 }
 
 func (repo *Remote) IsEmpty(ctx context.Context) (bool, error) {
-	return repo.isEmpty(ctx, repo.GetClonePath())
+	var res bool
+	err := repo.withMirror(ctx, "", func() (err error) {
+		res, err = repo.isEmpty(ctx, repo.GetClonePath())
+		return err
+	})
+	return res, err
 }
 
 func (repo *Remote) IsShallowClone(ctx context.Context) (bool, error) {
-	return true_git.IsShallowClone(ctx, repo.GetClonePath())
+	var res bool
+	err := repo.withMirror(ctx, "", func() (err error) {
+		res, err = true_git.IsShallowClone(ctx, repo.GetClonePath())
+		return err
+	})
+	return res, err
 }
 
 func (repo *Remote) IsAncestor(ctx context.Context, ancestorCommit, descendantCommit string) (bool, error) {
-	return true_git.IsAncestor(ctx, ancestorCommit, descendantCommit, repo.GetClonePath())
+	var res bool
+	err := repo.withMirror(ctx, descendantCommit, func() (err error) {
+		res, err = true_git.IsAncestor(ctx, ancestorCommit, descendantCommit, repo.GetClonePath())
+		return err
+	})
+	return res, err
 }
 
 func (repo *Remote) CloneAndFetch(ctx context.Context) error {
@@ -448,6 +542,10 @@ func (repo *Remote) FetchOrigin(ctx context.Context, opts FetchOptions) error {
 		return nil
 	}
 
+	// An explicit fetch is the one place allowed to change what the mapped
+	// branch or tag resolves to.
+	repo.forgetResolvedRefs()
+
 	kind := repo.mirrorKind()
 
 	return repo.withMirrorKindLock(ctx, kind, func() error {
@@ -535,7 +633,12 @@ func (repo *Remote) PlainOpen() (*git.Repository, error) {
 }
 
 func (repo *Remote) HeadCommitHash(ctx context.Context) (string, error) {
-	return getHeadCommit(ctx, repo.GetClonePath())
+	var res string
+	err := repo.withMirror(ctx, "", func() (err error) {
+		res, err = getHeadCommit(ctx, repo.GetClonePath())
+		return err
+	})
+	return res, err
 }
 
 func (repo *Remote) HeadCommitTime(ctx context.Context) (*time.Time, error) {
@@ -567,8 +670,24 @@ func (repo *Remote) findReference(rawRepo *git.Repository, reference string) (st
 }
 
 func (repo *Remote) LatestBranchCommit(ctx context.Context, branch string) (string, error) {
-	var err error
+	if commit, ok := repo.resolvedRef(resolvedBranchRefKey(branch)); ok {
+		return commit, nil
+	}
 
+	var res string
+	if err := repo.withMirror(ctx, "", func() (err error) {
+		res, err = repo.latestBranchCommit(ctx, branch)
+		return err
+	}); err != nil {
+		return "", err
+	}
+
+	repo.rememberResolvedRef(resolvedBranchRefKey(branch), res)
+
+	return res, nil
+}
+
+func (repo *Remote) latestBranchCommit(ctx context.Context, branch string) (string, error) {
 	rawRepo, err := repo.PlainOpen()
 	if err != nil {
 		return "", fmt.Errorf("cannot open repo: %w", err)
@@ -588,8 +707,24 @@ func (repo *Remote) LatestBranchCommit(ctx context.Context, branch string) (stri
 }
 
 func (repo *Remote) TagCommit(ctx context.Context, tag string) (string, error) {
-	var err error
+	if commit, ok := repo.resolvedRef(resolvedTagRefKey(tag)); ok {
+		return commit, nil
+	}
 
+	var res string
+	if err := repo.withMirror(ctx, "", func() (err error) {
+		res, err = repo.tagCommit(ctx, tag)
+		return err
+	}); err != nil {
+		return "", err
+	}
+
+	repo.rememberResolvedRef(resolvedTagRefKey(tag), res)
+
+	return res, nil
+}
+
+func (repo *Remote) tagCommit(ctx context.Context, tag string) (string, error) {
 	rawRepo, err := repo.PlainOpen()
 	if err != nil {
 		return "", fmt.Errorf("cannot open repo: %w", err)
@@ -640,15 +775,30 @@ func peelToCommitHash(rawRepo *git.Repository, hash plumbing.Hash) (plumbing.Has
 }
 
 func (repo *Remote) GetOrCreatePatch(ctx context.Context, opts PatchOptions) (Patch, error) {
-	return repo.getOrCreatePatch(ctx, repo.GetClonePath(), repo.GetClonePath(), repo.getRepoID(), repo.getWorkTreeCacheDir(repo.getRepoID()), opts)
+	var res Patch
+	err := repo.withMirror(ctx, opts.ToCommit, func() (err error) {
+		res, err = repo.getOrCreatePatch(ctx, repo.GetClonePath(), repo.GetClonePath(), repo.getRepoID(), repo.getWorkTreeCacheDir(repo.getRepoID()), opts)
+		return err
+	})
+	return res, err
 }
 
 func (repo *Remote) GetOrCreateChangedPaths(ctx context.Context, fromCommit, toCommit string) ([]true_git.ChangedPath, error) {
-	return repo.getOrCreateChangedPaths(ctx, repo.GetClonePath(), fromCommit, toCommit)
+	var res []true_git.ChangedPath
+	err := repo.withMirror(ctx, toCommit, func() (err error) {
+		res, err = repo.getOrCreateChangedPaths(ctx, repo.GetClonePath(), fromCommit, toCommit)
+		return err
+	})
+	return res, err
 }
 
 func (repo *Remote) GetOrCreateArchive(ctx context.Context, opts ArchiveOptions) (Archive, error) {
-	return repo.getOrCreateArchive(ctx, repo.GetClonePath(), repo.GetClonePath(), repo.getRepoID(), repo.getWorkTreeCacheDir(repo.getRepoID()), opts)
+	var res Archive
+	err := repo.withMirror(ctx, opts.Commit, func() (err error) {
+		res, err = repo.getOrCreateArchive(ctx, repo.GetClonePath(), repo.GetClonePath(), repo.getRepoID(), repo.getWorkTreeCacheDir(repo.getRepoID()), opts)
+		return err
+	})
+	return res, err
 }
 
 func (repo *Remote) GetOrCreateChecksum(ctx context.Context, opts ChecksumOptions) (checksum string, err error) {
@@ -660,8 +810,15 @@ func (repo *Remote) GetOrCreateChecksum(ctx context.Context, opts ChecksumOption
 	return checksum, err
 }
 
+// IsCommitExists answers from the restored mirror: a missing commit is a
+// legitimate answer here, so it is not passed as a pin to withMirror.
 func (repo *Remote) IsCommitExists(ctx context.Context, commit string) (bool, error) {
-	return repo.isCommitExists(ctx, repo.GetClonePath(), repo.GetClonePath(), commit)
+	var res bool
+	err := repo.withMirror(ctx, "", func() (err error) {
+		res, err = repo.isCommitExists(ctx, repo.GetClonePath(), repo.GetClonePath(), commit)
+		return err
+	})
+	return res, err
 }
 
 func (repo *Remote) getRepoID() string {
@@ -691,18 +848,43 @@ func (repo *Remote) withMirrorKindLock(ctx context.Context, kind mirrorKind, f f
 	return werf.HostLocker().WithLock(ctx, repoIDLockName, opts, f)
 }
 
-func (repo *Remote) TagsList(_ context.Context) ([]string, error) {
-	return repo.tagsList(repo.GetClonePath())
+func (repo *Remote) TagsList(ctx context.Context) ([]string, error) {
+	var res []string
+	err := repo.withMirror(ctx, "", func() (err error) {
+		res, err = repo.tagsList(repo.GetClonePath())
+		return err
+	})
+	return res, err
 }
 
-func (repo *Remote) RemoteBranchesList(_ context.Context) ([]string, error) {
-	return repo.remoteBranchesList(repo.GetClonePath())
+func (repo *Remote) RemoteBranchesList(ctx context.Context) ([]string, error) {
+	var res []string
+	err := repo.withMirror(ctx, "", func() (err error) {
+		res, err = repo.remoteBranchesList(repo.GetClonePath())
+		return err
+	})
+	return res, err
 }
 
-// ensureMirrorData is called under the shared GC lock before every repo handle
-// use. It keeps the mirror's last_access_at honest (reads, not only clones,
-// are what keeps a mirror in use) and restores a mirror already evicted by a
-// GC of another werf process, reporting whether a restore happened.
+// withMirror runs f with the mirror present and protected from GC. commit is
+// the SHA a caller already resolved, or "" when f resolves one itself.
+func (repo *Remote) withMirror(ctx context.Context, commit string, f func() error) error {
+	if lock, err := CommonGitDataManager.LockGC(ctx, true); err != nil {
+		return err
+	} else {
+		defer werf.HostLocker().ReleaseLock(lock)
+	}
+
+	if _, err := repo.ensureMirrorData(ctx, commit); err != nil {
+		return err
+	}
+
+	return f()
+}
+
+// ensureMirrorData refreshes last_access_at (reads, not only clones, keep a
+// mirror in use) and restores a mirror an already running GC removed. The
+// caller must hold the shared GC lock. It reports whether a restore happened.
 func (repo *Remote) ensureMirrorData(ctx context.Context, commit string) (bool, error) {
 	if repo.IsDryRun {
 		return false, nil
@@ -721,22 +903,29 @@ func (repo *Remote) ensureMirrorData(ctx context.Context, commit string) (bool, 
 		return false, nil
 	}
 
-	logboek.Context(ctx).Warn().LogF("WARNING: The %s mirror of repo %q is gone from the local cache, restoring it for commit %s\n", kind, repo.String(), commit)
+	logboek.Context(ctx).Warn().LogF("WARNING: The %s mirror of repo %q is gone from the local cache, restoring it\n", kind, repo.String())
 
 	if err := repo.withMirrorKindLock(ctx, kind, func() error {
 		return repo.restoreMirror(ctx, kind, commit)
 	}); err != nil {
-		return false, fmt.Errorf("restore %s mirror of repo %q for commit %s: %w", kind, repo.String(), commit, err)
+		return false, fmt.Errorf("restore %s mirror of repo %q: %w", kind, repo.String(), err)
 	}
 
 	return true, nil
 }
 
-// restoreMirror re-creates the mirror around the commit the caller already
-// resolved. The commit is immutable input: a branch or tag that moved while
-// the build was running must never be silently substituted for it.
+// restoreMirror re-creates the mirror around commit, which is immutable input:
+// a branch or tag that moved meanwhile must not be substituted for it. With an
+// empty commit the mapping is restored as the initial clone and fetch would.
 func (repo *Remote) restoreMirror(ctx context.Context, kind mirrorKind, commit string) error {
+	if commit == "" {
+		commit = repo.mappedCommit()
+	}
+
 	if kind == mirrorKindShallow {
+		if commit == "" {
+			return repo.syncShallow(ctx)
+		}
 		return repo.restoreShallowMirror(ctx, commit)
 	}
 
@@ -752,6 +941,10 @@ func (repo *Remote) restoreMirror(ctx context.Context, kind mirrorKind, commit s
 	}
 	if err := repo.syncLocalBranches(ctx, rawRepo); err != nil {
 		return err
+	}
+
+	if commit == "" {
+		return nil
 	}
 
 	commitExists, err := repo.isCommitExists(ctx, clonePath, clonePath, commit)
@@ -770,11 +963,40 @@ func (repo *Remote) restoreMirror(ctx context.Context, kind mirrorKind, commit s
 	if err != nil {
 		return err
 	}
+	if commitExists {
+		return nil
+	}
+
+	// A force-pushed commit is reachable from no advertised ref, so ask the
+	// origin for the SHA itself before giving up. Servers may refuse it.
+	if err := repo.fetchCommitIntoFullMirror(ctx, clonePath, commit); err != nil {
+		return fmt.Errorf("commit %s is not available in origin %s: %w", commit, repo.Url, err)
+	}
+
+	commitExists, err = repo.isCommitExists(ctx, clonePath, clonePath, commit)
+	if err != nil {
+		return err
+	}
 	if !commitExists {
 		return fmt.Errorf("commit %s is not available in origin %s anymore", commit, repo.Url)
 	}
 
 	return nil
+}
+
+func (repo *Remote) fetchCommitIntoFullMirror(ctx context.Context, clonePath, commit string) error {
+	defer opstats.Observe(ctx, opstats.OperationGitFetch)()
+
+	env, cleanup, err := basicAuthEnv(repo.BasicAuth)
+	if err != nil {
+		return err
+	}
+	defer cleanup()
+
+	return true_git.Fetch(ctx, clonePath, true_git.FetchOptions{
+		Env:      env,
+		RefSpecs: map[string][]string{"origin": {fmt.Sprintf("+%s:refs/werf/commits/%s", commit, commit)}},
+	})
 }
 
 func (repo *Remote) restoreShallowMirror(ctx context.Context, commit string) error {
