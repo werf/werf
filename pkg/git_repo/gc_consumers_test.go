@@ -30,6 +30,19 @@ var _ = Describe("Git cache consumers under GC eviction", func() {
 		utils.RunSucceedCommand(ctx, sourceDir, "git", append([]string{"-c", "commit.gpgsign=false", "-c", "tag.gpgsign=false", "-c", "user.name=Test", "-c", "user.email=test@example.com"}, args...)...)
 	}
 
+	// forcePushUnrelatedRoot replaces the branch with a commit sharing no history
+	// with it, the way a force push does: the previous commit stays in the odb
+	// but is reachable from no ref.
+	forcePushUnrelatedRoot := func(ctx context.Context, content string) {
+		gitInSource(ctx, "checkout", "--orphan", "forced")
+		utils.WriteFile(filepath.Join(sourceDir, "data.txt"), []byte(content))
+		gitInSource(ctx, "add", "--", "data.txt")
+		gitInSource(ctx, "commit", "-m", "forced root")
+		gitInSource(ctx, "branch", "-f", "main", "HEAD")
+		gitInSource(ctx, "checkout", "main")
+		gitInSource(ctx, "branch", "-D", "forced")
+	}
+
 	commitFile := func(ctx context.Context, name, content string) string {
 		utils.WriteFile(filepath.Join(sourceDir, name), []byte(content))
 		gitInSource(ctx, "add", "--", name)
@@ -284,6 +297,59 @@ var _ = Describe("Git cache consumers under GC eviction", func() {
 			Expect(repo.ReadCommitFile(ctx, commit, "data.txt")).To(Equal([]byte("v1")))
 		})
 
+		It("refetches the pinned commit when a peer recloned a force-pushed origin", func(ctx SpecContext) {
+			utils.RunSucceedCommand(ctx, sourceDir, "git", "config", "uploadpack.allowAnySHA1InWant", "true")
+			commit := commitFile(ctx, "data.txt", "v1")
+
+			repo := openRemoteURL("file://"+sourceDir, "main", "", "")
+			Expect(repo.CloneAndFetch(ctx)).To(Succeed())
+			Expect(repo.LatestBranchCommit(ctx, "main")).To(Equal(commit))
+
+			forcePushUnrelatedRoot(ctx, "v2")
+
+			// GC takes our mirror and a peer clones the force-pushed origin into
+			// the same path: the directory is back, our commit is not.
+			Expect(os.RemoveAll(repo.GetClonePath())).To(Succeed())
+			peer := openRemoteURL("file://"+sourceDir, "main", "", "")
+			Expect(peer.CloneAndFetch(ctx)).To(Succeed())
+
+			Expect(repo.LatestBranchCommit(ctx, "main")).To(Equal(commit))
+			Expect(repo.ReadCommitFile(ctx, commit, "data.txt")).To(Equal([]byte("v1")))
+		})
+
+		It("fails with a bounded error when a force-pushed origin dropped the pinned commit", func(ctx SpecContext) {
+			utils.RunSucceedCommand(ctx, sourceDir, "git", "config", "uploadpack.allowAnySHA1InWant", "true")
+			commit := commitFile(ctx, "data.txt", "v1")
+
+			repo := openRemoteURL("file://"+sourceDir, "main", "", "")
+			Expect(repo.CloneAndFetch(ctx)).To(Succeed())
+			Expect(repo.LatestBranchCommit(ctx, "main")).To(Equal(commit))
+
+			forcePushUnrelatedRoot(ctx, "v2")
+			gitInSource(ctx, "reflog", "expire", "--expire=now", "--all")
+			gitInSource(ctx, "gc", "--prune=now", "--quiet")
+
+			Expect(os.RemoveAll(repo.GetClonePath())).To(Succeed())
+			peer := openRemoteURL("file://"+sourceDir, "main", "", "")
+			Expect(peer.CloneAndFetch(ctx)).To(Succeed())
+
+			_, err := repo.ReadCommitFile(ctx, commit, "data.txt")
+			Expect(err).To(MatchError(ContainSubstring("commit " + commit + " is not available in origin")))
+		})
+
+		It("fetches into a mirror evicted between clone and fetch", func(ctx SpecContext) {
+			commit := commitFile(ctx, "data.txt", "v1")
+
+			repo := openRemote("main", "", "")
+			Expect(repo.CloneAndFetch(ctx)).To(Succeed())
+
+			// Clone releases the GC lock before FetchOrigin takes over.
+			Expect(os.RemoveAll(repo.GetClonePath())).To(Succeed())
+
+			Expect(repo.FetchOrigin(ctx, git_repo.FetchOptions{})).To(Succeed())
+			Expect(repo.LatestBranchCommit(ctx, "main")).To(Equal(commit))
+		})
+
 		It("refreshes the mirror last access timestamp on a read", func(ctx SpecContext) {
 			commit := commitFile(ctx, "data.txt", "v1")
 
@@ -301,20 +367,19 @@ var _ = Describe("Git cache consumers under GC eviction", func() {
 			Expect(refreshed).To(BeTemporally(">", backdated.Add(time.Hour)))
 		})
 
-		It("keeps the original go-git object-not-found retry working", func(ctx SpecContext) {
+		It("recovers a mirror whose object files were removed under it", func(ctx SpecContext) {
 			commit := commitFile(ctx, "data.txt", "v1")
 
 			repo := openRemote("main", "", "")
 			Expect(repo.CloneAndFetch(ctx)).To(Succeed())
 			Expect(repo.ReadCommitFile(ctx, commit, "data.txt")).To(Equal([]byte("v1")))
 
-			// A mirror that is present but missing the object files: the handle
-			// retry path must surface the error instead of looping.
+			// The mirror dir survives but its objects do not, and the cached handle
+			// still points at them.
 			Expect(os.RemoveAll(filepath.Join(repo.GetClonePath(), "objects"))).To(Succeed())
 			Expect(os.MkdirAll(filepath.Join(repo.GetClonePath(), "objects"), 0o755)).To(Succeed())
 
-			_, err := repo.ReadCommitFile(ctx, commit, "data.txt")
-			Expect(err).To(HaveOccurred())
+			Expect(repo.ReadCommitFile(ctx, commit, "data.txt")).To(Equal([]byte("v1")))
 		})
 	})
 

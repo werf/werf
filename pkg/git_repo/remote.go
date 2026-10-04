@@ -363,6 +363,7 @@ func (repo *Remote) Clone(ctx context.Context) (bool, error) {
 		if err := repo.updateLastAccessAt(ctx, repo.clonePathForKind(kind)); err != nil {
 			return false, fmt.Errorf("error updating last access at timestamp: %w", err)
 		}
+
 		return false, nil
 	}
 
@@ -543,13 +544,18 @@ func (repo *Remote) FetchOrigin(ctx context.Context, opts FetchOptions) error {
 	}
 
 	// An explicit fetch is the one place allowed to change what the mapped
-	// branch or tag resolves to.
+	// branch or tag resolves to, so the memo is dropped before the mirror is
+	// ensured: the fetch must not be pinned to the SHA it is about to replace.
 	repo.forgetResolvedRefs()
 
 	kind := repo.mirrorKind()
 
-	return repo.withMirrorKindLock(ctx, kind, func() error {
-		return repo.fetchOriginFullCore(ctx, kind)
+	// Clone released the GC lock before returning, so the mirror this fetch
+	// targets can already be gone by now.
+	return repo.withMirror(ctx, "", func() error {
+		return repo.withMirrorKindLock(ctx, kind, func() error {
+			return repo.fetchOriginFullCore(ctx, kind)
+		})
 	})
 }
 
@@ -900,7 +906,33 @@ func (repo *Remote) ensureMirrorData(ctx context.Context, commit string) (bool, 
 		if err := repo.updateLastAccessAt(ctx, repo.clonePathForKind(kind)); err != nil {
 			return false, fmt.Errorf("error updating last access at timestamp: %w", err)
 		}
-		return false, nil
+
+		pin := commit
+		if pin == "" {
+			pin = repo.mappedCommit()
+		}
+		if pin == "" {
+			return false, nil
+		}
+
+		// The mirror dir being there does not mean it is still ours: GC may have
+		// taken it and a peer may have cloned a force-pushed origin into the same
+		// path, without the commit this build is pinned to.
+		pinExists, err := repo.isCommitExists(ctx, repo.clonePathForKind(kind), repo.clonePathForKind(kind), pin)
+		if err != nil {
+			return false, err
+		}
+		if pinExists {
+			return false, nil
+		}
+
+		if err := repo.withMirrorKindLock(ctx, kind, func() error {
+			return repo.recoverPinnedCommit(ctx, kind, pin)
+		}); err != nil {
+			return false, fmt.Errorf("recover commit %s in %s mirror of repo %q: %w", pin, kind, repo.String(), err)
+		}
+
+		return true, nil
 	}
 
 	logboek.Context(ctx).Warn().LogF("WARNING: The %s mirror of repo %q is gone from the local cache, restoring it\n", kind, repo.String())
@@ -978,6 +1010,42 @@ func (repo *Remote) restoreMirror(ctx context.Context, kind mirrorKind, commit s
 		return err
 	}
 	if !commitExists {
+		return fmt.Errorf("commit %s is not available in origin %s anymore", commit, repo.Url)
+	}
+
+	return nil
+}
+
+// recoverPinnedCommit fetches the pinned commit into a mirror that lost it. The
+// commit is asked for by SHA: it is reachable from no ref of the force-pushed
+// origin, and re-resolving the mapped ref would silently change the build.
+func (repo *Remote) recoverPinnedCommit(ctx context.Context, kind mirrorKind, commit string) error {
+	clonePath := repo.clonePathForKind(kind)
+
+	pinExists, err := repo.isCommitExists(ctx, clonePath, clonePath, commit)
+	if err != nil {
+		return err
+	}
+	if pinExists {
+		return nil
+	}
+
+	logboek.Context(ctx).Warn().LogF("WARNING: Commit %s is missing from the %s mirror of repo %q, fetching it again\n", commit, kind, repo.String())
+
+	if kind == mirrorKindShallow {
+		err = repo.shallowFetch(ctx, clonePath, fmt.Sprintf("+%s:refs/werf/commits/%s", commit, commit))
+	} else {
+		err = repo.fetchCommitIntoFullMirror(ctx, clonePath, commit)
+	}
+	if err != nil {
+		return fmt.Errorf("commit %s is not available in origin %s: %w", commit, repo.Url, err)
+	}
+
+	pinExists, err = repo.isCommitExists(ctx, clonePath, clonePath, commit)
+	if err != nil {
+		return err
+	}
+	if !pinExists {
 		return fmt.Errorf("commit %s is not available in origin %s anymore", commit, repo.Url)
 	}
 
