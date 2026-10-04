@@ -425,7 +425,7 @@ var _ = ginkgo.Describe("Local stage lookup cache maintenance", func() {
 		gomega.Expect(backend.calls).To(gomega.Equal(1))
 	})
 
-	ginkgo.It("reports which lookup ran the listing the others joined", func(ctx ginkgo.SpecContext) {
+	ginkgo.It("reports which lookups joined the listing another one ran", func(ctx ginkgo.SpecContext) {
 		backend := &localImageListBackendStub{images: warmSnapshot}
 		storage := NewLocalStagesStorage(backend)
 		listing, release := blockNextListing(backend)
@@ -433,26 +433,55 @@ var _ = ginkgo.Describe("Local stage lookup cache maintenance", func() {
 		leader := make(chan bool, 1)
 		go func() {
 			defer ginkgo.GinkgoRecover()
-			result, err := storage.refreshProjectListing(ctx, "project", time.Time{})
+			_, joined, err := storage.refreshProjectListing(ctx, "project", time.Time{})
 			gomega.Expect(err).NotTo(gomega.HaveOccurred())
-			leader <- result.listedHere
+			leader <- joined
 		}()
 		<-listing
 
-		joiningCtx, joined := listingRegistrations(ctx)
+		joiningCtx, registered := listingRegistrations(ctx)
 		joiner := make(chan bool, 1)
 		go func() {
 			defer ginkgo.GinkgoRecover()
-			result, err := storage.refreshProjectListing(joiningCtx, "project", time.Time{})
+			_, joined, err := storage.refreshProjectListing(joiningCtx, "project", time.Time{})
 			gomega.Expect(err).NotTo(gomega.HaveOccurred())
-			joiner <- result.listedHere
+			joiner <- joined
 		}()
-		gomega.Eventually(joined, blockedCallTimeout).Should(gomega.Receive())
+		gomega.Eventually(registered, blockedCallTimeout).Should(gomega.Receive())
 		close(release)
 
-		gomega.Eventually(leader, blockedCallTimeout).Should(gomega.Receive(gomega.BeTrue()))
-		gomega.Eventually(joiner, blockedCallTimeout).Should(gomega.Receive(gomega.BeFalse()))
+		gomega.Eventually(leader, blockedCallTimeout).Should(gomega.Receive(gomega.BeFalse()))
+		gomega.Eventually(joiner, blockedCallTimeout).Should(gomega.Receive(gomega.BeTrue()))
 		gomega.Expect(backend.callCount()).To(gomega.Equal(1))
+	})
+
+	ginkgo.It("keeps reporting the join of a lookup canceled while it waited", func(ctx ginkgo.SpecContext) {
+		backend := &localImageListBackendStub{images: warmSnapshot}
+		storage := NewLocalStagesStorage(backend)
+		listing, release := blockNextListing(backend)
+
+		go func() {
+			defer ginkgo.GinkgoRecover()
+			_, _, _ = storage.refreshProjectListing(ctx, "project", time.Time{})
+		}()
+		<-listing
+
+		joinerCtx, cancelJoiner := context.WithCancel(ctx)
+		joiningCtx, registered := listingRegistrations(joinerCtx)
+		joiner := make(chan bool, 1)
+		go func() {
+			defer ginkgo.GinkgoRecover()
+			_, joined, err := storage.refreshProjectListing(joiningCtx, "project", time.Time{})
+			gomega.Expect(err).To(gomega.MatchError(context.Canceled))
+			joiner <- joined
+		}()
+		gomega.Eventually(registered, blockedCallTimeout).Should(gomega.Receive())
+		cancelJoiner()
+
+		// Giving up on a listing somebody else is running does not unmake the join: the role is
+		// settled when the caller is admitted, before it waits for anything.
+		gomega.Eventually(joiner, blockedCallTimeout).Should(gomega.Receive(gomega.BeTrue()))
+		close(release)
 	})
 
 	ginkgo.It("makes every fresh lookup wait for a listing started after it", func(ctx ginkgo.SpecContext) {

@@ -11,7 +11,6 @@ import (
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/samber/lo"
-	"golang.org/x/sync/singleflight"
 	"sigs.k8s.io/yaml"
 
 	"github.com/werf/common-go/pkg/util"
@@ -40,7 +39,9 @@ type LocalStagesStorage struct {
 
 	imagesCacheMutex sync.Mutex
 	imagesCache      map[string]localProjectSnapshot
-	listingGroup     singleflight.Group
+
+	listingFlightMutex sync.Mutex
+	listingFlights     map[string]*localProjectFlight
 }
 
 // localProjectSnapshot is an immutable record of the stage references of a single project: the
@@ -57,9 +58,17 @@ type localProjectSnapshot struct {
 type localProjectListing struct {
 	references       []string
 	listingStartedAt time.Time
-	// listedHere reports that this call ran the listing itself instead of joining one already in
-	// flight, which is the only way to tell a coalesced lookup from the one that paid for it.
-	listedHere bool
+}
+
+// localProjectFlight is the listing of one project that is running right now. Which caller leads it
+// and which ones join it is decided by whether this entry was found, under the flight mutex, so the
+// roles are never inferred afterwards from a result a cancellation may have hidden. The entry is
+// removed and done is closed in the same critical section, so a caller either joins a listing that
+// will still answer it or starts the next one.
+type localProjectFlight struct {
+	done    chan struct{}
+	listing localProjectListing
+	err     error
 }
 
 func NewLocalStagesStorage(containerBackend container_backend.ContainerBackend) *LocalStagesStorage {
@@ -147,7 +156,7 @@ func (storage *LocalStagesStorage) GetStagesIDsByDigest(ctx context.Context, pro
 		return selectProjectStages(ctx, cached.references, projectName, digest, parentStageCreationTs)
 	}
 
-	listing, err := storage.refreshProjectListing(ctx, projectName, cutoff)
+	listing, _, err := storage.refreshProjectListing(ctx, projectName, cutoff)
 	if err != nil {
 		return nil, err
 	}
@@ -183,57 +192,80 @@ func selectProjectStages(ctx context.Context, references []string, projectName, 
 
 // refreshProjectListing returns the project listing that started no earlier than cutoff, joining
 // the listing already in flight for this project when there is one. A zero cutoff accepts any
-// listing.
-func (storage *LocalStagesStorage) refreshProjectListing(ctx context.Context, projectName string, cutoff time.Time) (localProjectListing, error) {
+// listing. The reported flag says whether this call joined a listing started by someone else, and
+// it holds for every return, errors included; a call that joined one listing and then had to start
+// the next one is still reported as having joined, since it did share a request.
+func (storage *LocalStagesStorage) refreshProjectListing(ctx context.Context, projectName string, cutoff time.Time) (localProjectListing, bool, error) {
+	var joined bool
 	for {
-		listing, err := storage.waitProjectListing(ctx, projectName)
+		listing, joinedNow, err := storage.waitProjectListing(ctx, projectName)
+		joined = joined || joinedNow
 		if err != nil {
-			return localProjectListing{}, err
+			return localProjectListing{}, joined, err
 		}
 		// The listing this call joined had already snapshotted the daemon before the caller took the
-		// locks the result has to cover, so it is unusable. The same group starts the next listing
-		// instead of running one in parallel, and it can only start after this one finished.
+		// locks the result has to cover, so it is unusable. The next listing can only start after
+		// this one finished, so waiting for it never runs two listings in parallel.
 		if listing.listingStartedAt.Before(cutoff) {
 			continue
 		}
-		return listing, nil
+		return listing, joined, nil
 	}
 }
 
-func (storage *LocalStagesStorage) waitProjectListing(ctx context.Context, projectName string) (localProjectListing, error) {
+// waitProjectListing returns the project listing and whether this call joined a listing that was
+// already in flight instead of starting one. The role is decided under the flight mutex, before any
+// waiting, so every return reports it, including a canceled wait. A caller canceled before it was
+// admitted joined nothing and starts nothing.
+func (storage *LocalStagesStorage) waitProjectListing(ctx context.Context, projectName string) (localProjectListing, bool, error) {
 	if err := ctx.Err(); err != nil {
-		return localProjectListing{}, err
+		return localProjectListing{}, false, err
 	}
 
-	var listedHere bool
-	resultChan := storage.listingGroup.DoChan(projectName, func() (interface{}, error) {
-		listedHere = true
-		listingStartedAt := time.Now()
-		storage.registerProjectListing(projectName)
-
-		images, err := storage.listImages(ctx, fmt.Sprintf(LocalStage_ImageRepoFormat, projectName))
-		if err != nil {
-			return nil, err
+	storage.listingFlightMutex.Lock()
+	flight, joined := storage.listingFlights[projectName]
+	if !joined {
+		flight = &localProjectFlight{done: make(chan struct{})}
+		if storage.listingFlights == nil {
+			storage.listingFlights = make(map[string]*localProjectFlight)
 		}
-
-		references := storage.storeProjectSnapshot(projectName, localStageReferences(images), listingStartedAt)
-		return localProjectListing{references: references, listingStartedAt: listingStartedAt}, nil
-	})
+		storage.listingFlights[projectName] = flight
+		// The listing runs on the context of the caller that started it, so canceling that caller
+		// still aborts the backend call, while a joiner giving up leaves the listing running for
+		// everyone else waiting on it.
+		go storage.runProjectListing(ctx, projectName, flight)
+	}
+	storage.listingFlightMutex.Unlock()
 
 	select {
 	case <-ctx.Done():
-		return localProjectListing{}, ctx.Err()
-	case result := <-resultChan:
-		if result.Err != nil {
-			return localProjectListing{}, result.Err
-		}
-		listing, ok := result.Val.(localProjectListing)
-		if !ok {
-			return localProjectListing{}, fmt.Errorf("unexpected type %T for project listing", result.Val)
-		}
-		listing.listedHere = listedHere
-		return listing, nil
+		return localProjectListing{}, joined, ctx.Err()
+	case <-flight.done:
+		return flight.listing, joined, flight.err
 	}
+}
+
+// runProjectListing lists the project once and hands the result to everyone waiting on the flight.
+// Publishing the result, dropping the entry and closing done happen in one critical section, so a
+// caller that found no entry is always the one that starts the next listing.
+func (storage *LocalStagesStorage) runProjectListing(ctx context.Context, projectName string, flight *localProjectFlight) {
+	listingStartedAt := time.Now()
+	storage.registerProjectListing(projectName)
+
+	var listing localProjectListing
+	images, err := storage.listImages(ctx, fmt.Sprintf(LocalStage_ImageRepoFormat, projectName))
+	if err == nil {
+		listing = localProjectListing{
+			references:       storage.storeProjectSnapshot(projectName, localStageReferences(images), listingStartedAt),
+			listingStartedAt: listingStartedAt,
+		}
+	}
+
+	storage.listingFlightMutex.Lock()
+	flight.listing, flight.err = listing, err
+	delete(storage.listingFlights, projectName)
+	close(flight.done)
+	storage.listingFlightMutex.Unlock()
 }
 
 // registerProjectListing marks the project as being listed before the listing starts, so that a

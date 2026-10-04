@@ -167,9 +167,9 @@ type listingRegistrationContext struct {
 	registered chan struct{}
 }
 
-// Done reports every wait for the cancellation channel. waitProjectListing registers the caller in
-// the singleflight group before it selects on ctx.Done, so a report proves this caller joined the
-// listing that is in flight right now, which no absence of its result can prove.
+// Done reports every wait for the cancellation channel. waitProjectListing settles the role of the
+// caller under the flight mutex before it selects on ctx.Done, so a report proves this caller joined
+// the listing that is in flight right now, which no absence of its result can prove.
 func (ctx *listingRegistrationContext) Done() <-chan struct{} {
 	ctx.registered <- struct{}{}
 	return ctx.Context.Done()
