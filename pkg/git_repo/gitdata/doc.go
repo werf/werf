@@ -110,7 +110,7 @@
 // requires_full. A new kind of artifact gets its own root with its own
 // version, its own wipeCacheDirs call and its own LRU collection.
 //
-// # Removal order
+// # Removal order and accounting
 //
 // Entries untouched for less than 3 hours are never removed (a parallel build
 // may be using them). The rest are removed in priority bands — archives and
@@ -118,4 +118,9 @@
 // shallow mirrors together — oldest first inside a band, so that the data that
 // is cheapest to rebuild goes before the data that costs a network fetch (see
 // getGitDataEntryRank).
+//
+// How much was freed is accounted by the sizes of the removed entries, not by
+// the volume usage: hard-linked data stays until the last link goes and
+// snapshotted filesystems report the drop late or never, so the usage is only
+// re-read to stop earlier once the target is actually reached.
 package gitdata
