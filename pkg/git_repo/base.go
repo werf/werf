@@ -36,6 +36,12 @@ type Base struct {
 	commitRepoHandleMutex sync.Map
 
 	initRepoHandleBackedByWorkTreeFunc func(context.Context, string) (repo_handle.Handle, error)
+
+	// ensureRepoDataFunc makes the local cache data backing this repo usable
+	// again before a handle is opened, and reports whether it had to restore it
+	// (in which case cached handles point at deleted object files). Nil for
+	// repos with nothing to restore, like a user's own local repo.
+	ensureRepoDataFunc func(ctx context.Context, commit string) (bool, error)
 }
 
 func NewBase(name string, initRepoHandleBackedByWorkTreeFunc func(context.Context, string) (repo_handle.Handle, error)) *Base {
@@ -625,6 +631,26 @@ func (repo *Base) withRepoHandle(ctx context.Context, commit string, f func(hand
 	mutex := util.MapLoadOrCreateMutex(&repo.commitRepoHandleMutex, commit)
 	mutex.Lock()
 	defer mutex.Unlock()
+
+	// The shared GC lock covers data recovery, handle initialization and the
+	// callback alike: a handle keeps the mirror object files and the prepared
+	// worktree open, so releasing the lock before f() lets GC delete the data
+	// being read. It is released on return, so a build never holds it whole.
+	if lock, err := CommonGitDataManager.LockGC(ctx, true); err != nil {
+		return err
+	} else {
+		defer werf.HostLocker().ReleaseLock(lock)
+	}
+
+	if repo.ensureRepoDataFunc != nil {
+		restored, err := repo.ensureRepoDataFunc(ctx, commit)
+		if err != nil {
+			return err
+		}
+		if restored {
+			repo.commitRepoHandle.Delete(commit)
+		}
+	}
 
 	attempt := 0
 	retriesLimit := 1

@@ -50,6 +50,7 @@ type Remote struct {
 func OpenRemoteRepo(name, url string, auth *BasicAuthCredentials) (*Remote, error) {
 	repo := &Remote{Url: url}
 	repo.Base = NewBase(name, repo.initRepoHandleBackedByWorkTree)
+	repo.Base.ensureRepoDataFunc = repo.ensureMirrorData
 	if auth != nil {
 		basicAuth, err := BasicAuthCredentialsHelper(auth)
 		if err != nil {
@@ -696,6 +697,116 @@ func (repo *Remote) TagsList(_ context.Context) ([]string, error) {
 
 func (repo *Remote) RemoteBranchesList(_ context.Context) ([]string, error) {
 	return repo.remoteBranchesList(repo.GetClonePath())
+}
+
+// ensureMirrorData is called under the shared GC lock before every repo handle
+// use. It keeps the mirror's last_access_at honest (reads, not only clones,
+// are what keeps a mirror in use) and restores a mirror already evicted by a
+// GC of another werf process, reporting whether a restore happened.
+func (repo *Remote) ensureMirrorData(ctx context.Context, commit string) (bool, error) {
+	if repo.IsDryRun {
+		return false, nil
+	}
+
+	kind := repo.mirrorKind()
+
+	exists, err := repo.isCloneExistsForKind(kind)
+	if err != nil {
+		return false, err
+	}
+	if exists {
+		if err := repo.updateLastAccessAt(ctx, repo.clonePathForKind(kind)); err != nil {
+			return false, fmt.Errorf("error updating last access at timestamp: %w", err)
+		}
+		return false, nil
+	}
+
+	logboek.Context(ctx).Warn().LogF("WARNING: The %s mirror of repo %q is gone from the local cache, restoring it for commit %s\n", kind, repo.String(), commit)
+
+	if err := repo.withMirrorKindLock(ctx, kind, func() error {
+		return repo.restoreMirror(ctx, kind, commit)
+	}); err != nil {
+		return false, fmt.Errorf("restore %s mirror of repo %q for commit %s: %w", kind, repo.String(), commit, err)
+	}
+
+	return true, nil
+}
+
+// restoreMirror re-creates the mirror around the commit the caller already
+// resolved. The commit is immutable input: a branch or tag that moved while
+// the build was running must never be silently substituted for it.
+func (repo *Remote) restoreMirror(ctx context.Context, kind mirrorKind, commit string) error {
+	if kind == mirrorKindShallow {
+		return repo.restoreShallowMirror(ctx, commit)
+	}
+
+	if err := repo.cloneFullCore(ctx, kind); err != nil {
+		return err
+	}
+
+	clonePath := repo.clonePathForKind(kind)
+
+	rawRepo, err := gitRepoPlainOpen(clonePath)
+	if err != nil {
+		return fmt.Errorf("open restored repo: %w", err)
+	}
+	if err := repo.syncLocalBranches(ctx, rawRepo); err != nil {
+		return err
+	}
+
+	commitExists, err := repo.isCommitExists(ctx, clonePath, clonePath, commit)
+	if err != nil {
+		return err
+	}
+	if commitExists {
+		return nil
+	}
+
+	if err := repo.fetchOriginFullCore(ctx, kind); err != nil {
+		return err
+	}
+
+	commitExists, err = repo.isCommitExists(ctx, clonePath, clonePath, commit)
+	if err != nil {
+		return err
+	}
+	if !commitExists {
+		return fmt.Errorf("commit %s is not available in origin %s anymore", commit, repo.Url)
+	}
+
+	return nil
+}
+
+func (repo *Remote) restoreShallowMirror(ctx context.Context, commit string) error {
+	shallowPath := repo.clonePathForKind(mirrorKindShallow)
+
+	if _, err := repo.ensureShallowMirror(ctx); err != nil {
+		return err
+	}
+
+	commitExists, err := repo.isCommitExists(ctx, shallowPath, shallowPath, commit)
+	if err != nil {
+		return err
+	}
+	if commitExists {
+		return nil
+	}
+
+	// Fetching the commit itself, not the mapped tag, is what pins the result:
+	// refs/werf/commits/<commit> also anchors the objects against git's own gc.
+	if err := repo.shallowFetch(ctx, shallowPath, fmt.Sprintf("+%s:refs/werf/commits/%s", commit, commit)); err != nil {
+		return err
+	}
+
+	commitExists, err = repo.isCommitExists(ctx, shallowPath, shallowPath, commit)
+	if err != nil {
+		return err
+	}
+	if !commitExists {
+		return fmt.Errorf("commit %s is not available in origin %s anymore", commit, repo.Url)
+	}
+
+	return nil
 }
 
 func (repo *Remote) initRepoHandleBackedByWorkTree(ctx context.Context, commit string) (repo_handle.Handle, error) {
