@@ -109,4 +109,13 @@
 // as a closed set and removes every child other than shallow/ and
 // requires_full. A new kind of artifact gets its own root with its own
 // version, its own wipeCacheDirs call and its own LRU collection.
+//
+// # Removal order
+//
+// Entries untouched for less than 3 hours are never removed (a parallel build
+// may be using them). The rest are removed in priority bands — archives and
+// patches, then plain worktrees, then worktrees with submodules, then full and
+// shallow mirrors together — oldest first inside a band, so that the data that
+// is cheapest to rebuild goes before the data that costs a network fetch (see
+// getGitDataEntryRank).
 package gitdata

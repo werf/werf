@@ -1,6 +1,7 @@
 package gitdata
 
 import (
+	"cmp"
 	"slices"
 	"time"
 
@@ -14,6 +15,36 @@ type GitDataEntry interface {
 	GetCacheBasePath() string
 }
 
+// gitDataEntryRank is the removal priority band of an entry: entries of a
+// lower band are removed before entries of a higher one, regardless of age.
+// The order follows the cost of restoring the data: archives and patches are
+// rebuilt from a local mirror, a worktree is a checkout (plus a submodule
+// fetch when it has submodules), a mirror costs a full network fetch.
+type gitDataEntryRank int
+
+const (
+	gitDataEntryRankArchiveOrPatch         gitDataEntryRank = 0
+	gitDataEntryRankWorktree               gitDataEntryRank = 1
+	gitDataEntryRankWorktreeWithSubmodules gitDataEntryRank = 2
+	gitDataEntryRankMirror                 gitDataEntryRank = 3
+)
+
+// getGitDataEntryRank ranks full and shallow mirrors equally: both are
+// GitRepoDesc and both cost a network fetch.
+func getGitDataEntryRank(entry GitDataEntry) gitDataEntryRank {
+	switch desc := entry.(type) {
+	case *GitArchiveDesc, *GitPatchDesc:
+		return gitDataEntryRankArchiveOrPatch
+	case *GitWorktreeDesc:
+		if desc.HasSubmodules {
+			return gitDataEntryRankWorktreeWithSubmodules
+		}
+		return gitDataEntryRankWorktree
+	default:
+		return gitDataEntryRankMirror
+	}
+}
+
 func shouldPreserveGitDataEntryByLru(entry GitDataEntry) bool {
 	return time.Since(entry.GetLastAccessAt()) < 3*time.Hour
 }
@@ -25,8 +56,20 @@ func keepGitDataByLru(entries []GitDataEntry) []GitDataEntry {
 	})
 
 	slices.SortFunc(filteredEntries, func(a, b GitDataEntry) int {
-		return a.GetLastAccessAt().Compare(b.GetLastAccessAt())
+		return cmp.Or(
+			cmp.Compare(getGitDataEntryRank(a), getGitDataEntryRank(b)),
+			a.GetLastAccessAt().Compare(b.GetLastAccessAt()),
+			cmp.Compare(getFirstGitDataEntryPath(a), getFirstGitDataEntryPath(b)),
+		)
 	})
 
 	return filteredEntries
+}
+
+func getFirstGitDataEntryPath(entry GitDataEntry) string {
+	paths := entry.GetPaths()
+	if len(paths) == 0 {
+		return ""
+	}
+	return paths[0]
 }

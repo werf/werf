@@ -44,6 +44,8 @@ The `--allowed-local-cache-volume-usage-margin` (`WERF_ALLOWED_LOCAL_CACHE_VOLUM
 
 > **Note:** Options within the same group (e.g., usage and margin for local cache) must use the same units. Mixing percentages and absolute units (e.g., `--allowed-local-cache-volume-usage=10GB --allowed-local-cache-volume-usage-margin=5`) is not allowed.
 
+The local git data cache is cleaned up by removing the data that is cheapest to rebuild first: git archives and patches, then worktrees without submodules, then worktrees with submodules, and git repository mirrors last. Within each group the least recently used data goes first, and data used within the last 3 hours is never removed.
+
 ## Turning off automatic cleaning
 
 The user can disable automatic cleanup of outdated host data using the `--disable-auto-host-cleanup` parameter (`WERF_DISABLE_AUTO_HOST_CLEANUP`). In this case, we recommend adding the `werf host cleanup` command to the list of cron jobs, e.g., as follows:

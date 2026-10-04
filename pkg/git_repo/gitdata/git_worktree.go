@@ -18,6 +18,7 @@ type GitWorktreeDesc struct {
 	LastAccessAt  time.Time
 	Size          uint64
 	CacheBasePath string
+	HasSubmodules bool
 }
 
 func (entry *GitWorktreeDesc) GetPaths() []string {
@@ -95,14 +96,38 @@ func GetGitWorktreesAndRemoveInvalid(ctx context.Context, cacheVersionRoot strin
 				continue
 			}
 
-			res = append(res, &GitWorktreeDesc{
+			desc := &GitWorktreeDesc{
 				Path:          worktreeDir,
 				Size:          size,
 				LastAccessAt:  lastAccessAt,
 				CacheBasePath: dir,
-			})
+			}
+
+			if !shouldPreserveGitDataEntryByLru(desc) {
+				desc.HasSubmodules = worktreeHasSubmodules(ctx, worktreeDir)
+			}
+
+			res = append(res, desc)
 		}
 	}
 
 	return res, nil
+}
+
+// worktreeHasSubmodules reports whether the checkout inside the worktree cache
+// dir carries submodules, which makes it more expensive to restore than a
+// plain checkout. A .gitmodules file is a conservative marker: a stale or
+// deinitialized one only delays removal. An unreadable dir is reported as
+// costly for the same reason — a misdetection here must never make an entry
+// cheaper to remove.
+func worktreeHasSubmodules(ctx context.Context, worktreeCacheDir string) bool {
+	_, err := os.Stat(filepath.Join(worktreeCacheDir, "worktree", ".gitmodules"))
+	if err == nil {
+		return true
+	}
+	if !os.IsNotExist(err) {
+		logboek.Context(ctx).Warn().LogF("Treating %q as a worktree with submodules: unable to check for .gitmodules: %s\n", worktreeCacheDir, err)
+		return true
+	}
+	return false
 }
