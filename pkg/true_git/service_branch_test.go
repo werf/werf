@@ -27,6 +27,7 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 		utils.MkdirAll(workTreeCacheDir)
 
 		utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "-c", "init.defaultBranch=main", "init")
+		utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "config", "commit.gpgsign", "false")
 
 		utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "checkout", "-b", "main")
 

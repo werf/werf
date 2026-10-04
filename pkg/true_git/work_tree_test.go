@@ -48,6 +48,7 @@ var _ = Describe("Work tree helpers", func() {
 				Expect(os.MkdirAll(mainWtDir, os.ModePerm)).To(Succeed())
 
 				utils.RunSucceedCommand(ctx, mainWtDir, "git", "-c", "init.defaultBranch=main", "init")
+				utils.RunSucceedCommand(ctx, mainWtDir, "git", "config", "commit.gpgsign", "false")
 
 				utils.RunSucceedCommand(ctx, mainWtDir, "git", "checkout", "-b", "main")
 
@@ -78,6 +79,7 @@ var _ = Describe("Work tree helpers", func() {
 			Expect(os.MkdirAll(mainWtDir, os.ModePerm)).To(Succeed())
 
 			utils.RunSucceedCommand(ctx, mainWtDir, "git", "-c", "init.defaultBranch=main", "init")
+			utils.RunSucceedCommand(ctx, mainWtDir, "git", "config", "commit.gpgsign", "false")
 
 			utils.RunSucceedCommand(ctx, mainWtDir, "git", "checkout", "-b", "main")
 
