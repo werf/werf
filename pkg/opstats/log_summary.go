@@ -18,6 +18,9 @@ const (
 	countColumnFormat = "%7s"
 )
 
+const operationRowFormat = opColumnFormat + timeColumnFormat + timeColumnFormat + timeColumnFormat +
+	timeColumnFormat + timeColumnFormat + countColumnFormat
+
 // Cache summary row: operation, cache layer and the six counters, separated by a
 // single space, 72 visible characters wide. A longer operation name or a counter
 // wider than its column widens the row instead of being clipped.
@@ -43,17 +46,19 @@ func logOperationsTable(ctx context.Context, summary []OperationSummary) {
 	}
 
 	logBlock(ctx, "Operations", func() {
-		logRow(ctx, opColumnFormat+timeColumnFormat+timeColumnFormat+timeColumnFormat+timeColumnFormat+timeColumnFormat,
-			"operation", "count", "sum", "union", "avg", "max")
+		logRow(ctx, operationRowFormat,
+			"operation", "count", "sum", "union", "avg", "max", "×")
 		for _, s := range summary {
-			var parallelism string
+			parallelism := "—"
 			if s.WallTime > 0 && s.TotalTime > s.WallTime {
-				parallelism = fmt.Sprintf("   ×%.1f (sum/union)", float64(s.TotalTime)/float64(s.WallTime))
+				parallelism = fmt.Sprintf("×%.1f", float64(s.TotalTime)/float64(s.WallTime))
 			}
-			logRow(ctx, opColumnFormat+timeColumnFormat+timeColumnFormat+timeColumnFormat+timeColumnFormat+timeColumnFormat+"%s",
+			logRow(ctx, operationRowFormat,
 				string(s.Operation), fmt.Sprintf("%d", s.Count), seconds(s.TotalTime), seconds(s.WallTime),
 				seconds(s.AvgTime), seconds(s.MaxTime), parallelism)
 		}
+		logboek.Context(ctx).LogFHighlight("\n")
+		logboek.Context(ctx).LogFHighlight("× = sum / union\n")
 		logboek.Context(ctx).LogFHighlight("sum: durations added; parallel calls counted separately\n")
 		logboek.Context(ctx).LogFHighlight("union: time with ≥1 active call; overlapping intervals counted once\n")
 	})
@@ -72,6 +77,7 @@ func logCacheTable(ctx context.Context, summary []CacheSummary) {
 				string(s.Operation), string(s.Layer), fmt.Sprintf("%d", s.lookups()), fmt.Sprintf("%d", s.Hit),
 				fmt.Sprintf("%d", s.Miss), fmt.Sprintf("%d", s.Bypass), fmt.Sprintf("%d", s.Shared), hitRate(s))
 		}
+		logboek.Context(ctx).LogFHighlight("\n")
 		logboek.Context(ctx).LogFHighlight("lookups = hit + miss + bypass\n")
 		logboek.Context(ctx).LogFHighlight("hit%% = hit / (hit + miss); bypass excluded\n")
 		logboek.Context(ctx).LogFHighlight("shared: calls joining an in-flight request; included in miss or bypass\n")

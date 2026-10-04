@@ -11,7 +11,7 @@ import (
 var _ = ginkgo.Describe("LogSummary", func() {
 	base := time.Now()
 
-	ginkgo.It("renders the operations table with its two legend lines and no command time", func() {
+	ginkgo.It("renders the operations table with its three legend lines and no command time", func() {
 		collector := NewCollector()
 		collector.add(OperationRegistryTagsList, base, base.Add(2*time.Second))
 		collector.add(OperationRegistryTagsList, base.Add(time.Second), base.Add(3*time.Second))
@@ -19,10 +19,14 @@ var _ = ginkgo.Describe("LogSummary", func() {
 		output := logSummaryOutput(collector)
 
 		gomega.Expect(output).To(gomega.MatchRegexp(`Operations`))
-		gomega.Expect(output).To(gomega.MatchRegexp(`operation\s+count\s+sum\s+union\s+avg\s+max`))
-		gomega.Expect(output).To(gomega.MatchRegexp(`registry: tags list\s+2\s+4\.00s\s+3\.00s\s+2\.00s\s+2\.00s\s+×1\.3 \(sum/union\)`))
-		gomega.Expect(output).To(gomega.ContainSubstring("sum: durations added; parallel calls counted separately\n"))
-		gomega.Expect(output).To(gomega.ContainSubstring("union: time with ≥1 active call; overlapping intervals counted once\n"))
+		gomega.Expect(output).To(gomega.MatchRegexp(`operation\s+count\s+sum\s+union\s+avg\s+max\s+×`))
+		gomega.Expect(output).To(gomega.MatchRegexp(`registry: tags list\s+2\s+4\.00s\s+3\.00s\s+2\.00s\s+2\.00s\s+×1\.3\s*\n`))
+		gomega.Expect(output).NotTo(gomega.ContainSubstring("(sum/union)"))
+		gomega.Expect(output).To(gomega.ContainSubstring(
+			"│ \n" +
+				"│ × = sum / union\n" +
+				"│ sum: durations added; parallel calls counted separately\n" +
+				"│ union: time with ≥1 active call; overlapping intervals counted once\n"))
 		gomega.Expect(output).NotTo(gomega.ContainSubstring("build time"))
 		gomega.Expect(output).NotTo(gomega.ContainSubstring("command time"))
 	})
@@ -36,11 +40,11 @@ var _ = ginkgo.Describe("LogSummary", func() {
 		output := logSummaryOutput(collector)
 
 		gomega.Expect(output).To(gomega.ContainSubstring(
-			"operation                            count       sum     union       avg       max\n"))
+			"operation                            count       sum     union       avg       max      ×\n"))
 		gomega.Expect(output).To(gomega.ContainSubstring(
-			"registry: image mutate and push          1     2.00s     2.00s     2.00s     2.00s\n"))
+			"registry: image mutate and push          1     2.00s     2.00s     2.00s     2.00s      —\n"))
 		gomega.Expect(output).To(gomega.ContainSubstring(
-			"git: clone                               1     1.00s     1.00s     1.00s     1.00s\n"))
+			"git: clone                               1     1.00s     1.00s     1.00s     1.00s      —\n"))
 	})
 
 	ginkgo.It("keeps the cache table columns aligned for the longest known cache operation, undefined hit rate included", func() {
@@ -94,11 +98,14 @@ var _ = ginkgo.Describe("LogSummary", func() {
 		}
 	})
 
-	ginkgo.It("omits the parallelism column for sequential calls", func() {
+	ginkgo.It("marks sequential calls without a redundant parallelism ratio", func() {
 		collector := NewCollector()
 		collector.add(OperationRegistryTagsList, base, base.Add(time.Second))
 
-		gomega.Expect(logSummaryOutput(collector)).NotTo(gomega.ContainSubstring("sum/union"))
+		output := logSummaryOutput(collector)
+
+		gomega.Expect(output).To(gomega.MatchRegexp(`registry: tags list\s+1\s+1\.00s\s+1\.00s\s+1\.00s\s+1\.00s\s+—\n`))
+		gomega.Expect(output).NotTo(gomega.ContainSubstring("×1."))
 	})
 
 	ginkgo.It("renders the cache table with its three legend lines", func() {
@@ -114,9 +121,11 @@ var _ = ginkgo.Describe("LogSummary", func() {
 		gomega.Expect(output).To(gomega.MatchRegexp(`Cache summary`))
 		gomega.Expect(output).To(gomega.MatchRegexp(`operation\s+cache\s+lookups\s+hit\s+miss\s+bypass\s+shared\s+hit%`))
 		gomega.Expect(output).To(gomega.MatchRegexp(`registry: tags list\s+memory\s+4\s+1\s+2\s+1\s+1\s+33%`))
-		gomega.Expect(output).To(gomega.ContainSubstring("lookups = hit + miss + bypass\n"))
-		gomega.Expect(output).To(gomega.ContainSubstring("hit% = hit / (hit + miss); bypass excluded\n"))
-		gomega.Expect(output).To(gomega.ContainSubstring("shared: calls joining an in-flight request; included in miss or bypass\n"))
+		gomega.Expect(output).To(gomega.ContainSubstring(
+			"│ \n" +
+				"│ lookups = hit + miss + bypass\n" +
+				"│ hit% = hit / (hit + miss); bypass excluded\n" +
+				"│ shared: calls joining an in-flight request; included in miss or bypass\n"))
 	})
 
 	ginkgo.DescribeTable("renders the hit rate",
