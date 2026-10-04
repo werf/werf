@@ -27,11 +27,6 @@ type gitRepository struct {
 	repo GitRepository
 }
 
-// withRepository runs f with an open handle of the repository. For a remote
-// repository the handle is held under the shared GC lock, so lazily read trees
-// and blobs stay readable while f runs; f must not let the handle escape.
-// commit is the SHA f needs present in the mirror, or "" when f resolves a ref
-// itself. Local repositories need no mirror, so they just open the worktree.
 func (g *gitRepository) withRepository(ctx context.Context, commit string, f func(*git.Repository) error) error {
 	if remote, ok := g.repo.(*git_repo.Remote); ok {
 		return remote.WithRepository(ctx, commit, f)

@@ -51,10 +51,6 @@ type Remote struct {
 	resolvedRefs      map[string]string
 }
 
-// Resolving the mapped branch or tag twice in one build must give the same
-// answer even if the origin moved meanwhile: the SHA resolved first is what
-// every later stage, digest and cache lookup of this build is built on. Only an
-// explicit fetch may change it.
 func (repo *Remote) resolvedRef(key string) (string, bool) {
 	repo.resolvedRefsMutex.Lock()
 	defer repo.resolvedRefsMutex.Unlock()
@@ -80,9 +76,6 @@ func (repo *Remote) forgetResolvedRefs() {
 	repo.resolvedRefs = nil
 }
 
-// mappedCommit is the SHA this repo is pinned to: the mapped commit, or the one
-// already resolved for the mapped tag or branch. Restoring an evicted mirror
-// must bring that SHA back instead of the current tip.
 func (repo *Remote) mappedCommit() string {
 	if repo.Commit != "" {
 		return repo.Commit
@@ -890,8 +883,6 @@ func (repo *Remote) RemoteBranchesList(ctx context.Context) ([]string, error) {
 	return res, err
 }
 
-// withMirror runs f with the mirror present and protected from GC. commit is
-// the SHA a caller already resolved, or "" when f resolves one itself.
 func (repo *Remote) withMirror(ctx context.Context, commit string, f func() error) error {
 	if lock, err := CommonGitDataManager.LockGC(ctx, true); err != nil {
 		return err
@@ -906,9 +897,6 @@ func (repo *Remote) withMirror(ctx context.Context, commit string, f func() erro
 	return f()
 }
 
-// ensureMirrorData refreshes last_access_at (reads, not only clones, keep a
-// mirror in use) and restores a mirror an already running GC removed. The
-// caller must hold the shared GC lock. It reports whether a restore happened.
 func (repo *Remote) ensureMirrorData(ctx context.Context, commit string) (bool, error) {
 	if repo.IsDryRun {
 		return false, nil
@@ -964,9 +952,6 @@ func (repo *Remote) ensureMirrorData(ctx context.Context, commit string) (bool, 
 	return true, nil
 }
 
-// restoreMirror re-creates the mirror around commit, which is immutable input:
-// a branch or tag that moved meanwhile must not be substituted for it. With an
-// empty commit the mapping is restored as the initial clone and fetch would.
 func (repo *Remote) restoreMirror(ctx context.Context, kind mirrorKind, commit string) error {
 	if commit == "" {
 		commit = repo.mappedCommit()
@@ -1034,9 +1019,6 @@ func (repo *Remote) restoreMirror(ctx context.Context, kind mirrorKind, commit s
 	return nil
 }
 
-// recoverPinnedCommit fetches the pinned commit into a mirror that lost it. The
-// commit is asked for by SHA: it is reachable from no ref of the force-pushed
-// origin, and re-resolving the mapped ref would silently change the build.
 func (repo *Remote) recoverPinnedCommit(ctx context.Context, kind mirrorKind, commit string) error {
 	clonePath := repo.clonePathForKind(kind)
 
