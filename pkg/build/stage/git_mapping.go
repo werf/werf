@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"context"
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -25,6 +26,7 @@ import (
 	"github.com/werf/werf/v3/pkg/git_repo"
 	"github.com/werf/werf/v3/pkg/path_matcher"
 	"github.com/werf/werf/v3/pkg/stapel"
+	"github.com/werf/werf/v3/pkg/werf"
 )
 
 type GitMapping struct {
@@ -309,6 +311,10 @@ func (gm *GitMapping) baseApplyPatchCommand(ctx context.Context, fromCommit, toC
 	if err != nil {
 		return nil, fmt.Errorf("cannot create patch paths list file: %w", err)
 	}
+	pathsListFile, err = gm.pinGitDataFile(pathsListFile.FilePath)
+	if err != nil {
+		return nil, err
+	}
 
 	commands := make([]string, 0)
 
@@ -379,6 +385,10 @@ getPathsLoop:
 	archiveFile, err := gm.prepareFilteredArchiveFile(ctx, patch, archive)
 	if err != nil {
 		return nil, fmt.Errorf("cannot prepare filtered archive file: %w", err)
+	}
+	archiveFile, err = gm.pinGitDataFile(archiveFile.FilePath)
+	if err != nil {
+		return nil, err
 	}
 
 	archiveType, err := gm.getArchiveType(ctx, toCommit)
@@ -522,6 +532,12 @@ func (gm *GitMapping) applyArchiveCommand(archiveFile *ContainerFileDescriptor, 
 }
 
 func (gm *GitMapping) PreparePatchForImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, prevBuiltImage, stageImage *StageImage) error {
+	lock, err := git_repo.CommonGitDataManager.LockGC(ctx, true)
+	if err != nil {
+		return err
+	}
+	defer werf.HostLocker().ReleaseLock(lock)
+
 	fromCommit, err := gm.GetBaseCommitForPrevBuiltImage(ctx, c, prevBuiltImage)
 	if err != nil {
 		return fmt.Errorf("unable to get base commit from built image: %w", err)
@@ -631,6 +647,12 @@ func filterTarArchive(ctx context.Context, in io.Reader, out io.Writer, includeP
 }
 
 func (gm *GitMapping) PrepareArchiveForImage(ctx context.Context, c Conveyor, cb container_backend.ContainerBackend, stageImage *StageImage) error {
+	lock, err := git_repo.CommonGitDataManager.LockGC(ctx, true)
+	if err != nil {
+		return err
+	}
+	defer werf.HostLocker().ReleaseLock(lock)
+
 	// FIXME: legacy stapel
 	// FIXME: file-archive type
 
@@ -801,6 +823,12 @@ func (gm *GitMapping) StageDependenciesChecksum(ctx context.Context, c Conveyor,
 }
 
 func (gm *GitMapping) PatchSize(ctx context.Context, c Conveyor, fromCommit string) (int64, error) {
+	lock, err := git_repo.CommonGitDataManager.LockGC(ctx, true)
+	if err != nil {
+		return 0, err
+	}
+	defer werf.HostLocker().ReleaseLock(lock)
+
 	toCommitInfo, err := gm.GetLatestCommitInfo(ctx, c)
 	if err != nil {
 		return 0, fmt.Errorf("unable to get latest commit info: %w", err)
@@ -878,6 +906,12 @@ func (gm *GitMapping) GetParamshash() string {
 }
 
 func (gm *GitMapping) GetPatchContent(ctx context.Context, c Conveyor, prevBuiltImage *StageImage) (string, error) {
+	lock, err := git_repo.CommonGitDataManager.LockGC(ctx, true)
+	if err != nil {
+		return "", err
+	}
+	defer werf.HostLocker().ReleaseLock(lock)
+
 	fromCommit, err := gm.GetBaseCommitForPrevBuiltImage(ctx, c, prevBuiltImage)
 	if err != nil {
 		return "", fmt.Errorf("unable to get base commit from built image for git mapping %s: %w", gm.GetFullName(), err)
@@ -975,9 +1009,35 @@ func (gm *GitMapping) isPatchEmptyByChangedPaths(ctx context.Context, fromCommit
 }
 
 func (gm *GitMapping) prepareArchiveFile(archive git_repo.Archive) (*ContainerFileDescriptor, error) {
+	return gm.pinGitDataFile(archive.GetFilePath())
+}
+
+func (gm *GitMapping) pinGitDataFile(source string) (*ContainerFileDescriptor, error) {
+	if err := os.MkdirAll(gm.ScriptsDir, 0o700); err != nil {
+		return nil, fmt.Errorf("create git input directory: %w", err)
+	}
+	dir, err := os.MkdirTemp(gm.ScriptsDir, "git-input-")
+	if err != nil {
+		return nil, fmt.Errorf("create git input pin: %w", err)
+	}
+	pinned := filepath.Join(dir, filepath.Base(source))
+	if err := os.Link(source, pinned); err != nil {
+		in, err := os.Open(source)
+		if err != nil {
+			return nil, fmt.Errorf("open git input %q: %w", source, err)
+		}
+		out, err := os.OpenFile(pinned, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600)
+		if err != nil {
+			return nil, fmt.Errorf("create git input copy: %w", errors.Join(err, in.Close()))
+		}
+		_, copyErr := io.Copy(out, in)
+		if err := errors.Join(copyErr, out.Close(), in.Close()); err != nil {
+			return nil, fmt.Errorf("copy git input %q: %w", source, err)
+		}
+	}
 	return &ContainerFileDescriptor{
-		FilePath:          archive.GetFilePath(),
-		ContainerFilePath: path.Join(gm.ContainerArchivesDir, filepath.ToSlash(util.GetRelativeToBaseFilepath(git_repo.CommonGitDataManager.GetArchivesCacheDir(), archive.GetFilePath()))),
+		FilePath:          pinned,
+		ContainerFilePath: path.Join(gm.ContainerScriptsDir, filepath.Base(dir), filepath.Base(source)),
 	}, nil
 }
 
