@@ -60,9 +60,6 @@ func removePath(path string, options ScanOptions) error {
 	return os.RemoveAll(path)
 }
 
-// readLastAccessAt is timestamps.ReadTimestampFile without its repair of a
-// corrupt file: collection must not write to the cache it scans. A missing or
-// corrupt timestamp yields the zero time, so LRU evicts the entry first.
 func readLastAccessAt(path string) (time.Time, error) {
 	data, err := os.ReadFile(path)
 	if os.IsNotExist(err) {
