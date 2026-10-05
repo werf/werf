@@ -2,13 +2,13 @@ package gitdata
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"time"
 
-	"github.com/werf/common-go/pkg/util/timestamps"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/volumeutils"
 )
@@ -47,8 +47,13 @@ func (entry *GitRepoDesc) GetCacheBasePath() string {
 //
 // Each repo dir is itself a bare full mirror and an independent LRU entry
 // with its own last_access_at.
-func GetGitReposAndRemoveInvalid(ctx context.Context, cacheVersionRoot string) ([]GitDataEntry, error) {
+//
+// An entry whose size or access marker cannot be read is preserved and left
+// out of the result; its error is joined into the returned error so the
+// caller can still report a failure after processing the readable entries.
+func GetGitReposAndRemoveInvalid(ctx context.Context, cacheVersionRoot string, options ScanOptions) ([]GitDataEntry, error) {
 	var res []GitDataEntry
+	var errs []error
 
 	// Check if cacheVersionRoot exists and is a directory
 	fileStat, err := os.Stat(cacheVersionRoot)
@@ -60,7 +65,7 @@ func GetGitReposAndRemoveInvalid(ctx context.Context, cacheVersionRoot string) (
 	}
 	if !fileStat.IsDir() {
 		logboek.Context(ctx).Warn().LogF("Removing invalid entry %q: not a directory\n", cacheVersionRoot)
-		if err := os.RemoveAll(cacheVersionRoot); err != nil {
+		if err := removePath(cacheVersionRoot, options); err != nil {
 			return nil, fmt.Errorf("unable to remove %q: %w", cacheVersionRoot, err)
 		}
 		return nil, nil
@@ -76,7 +81,7 @@ func GetGitReposAndRemoveInvalid(ctx context.Context, cacheVersionRoot string) (
 
 		if !repoDirInfo.IsDir() {
 			logboek.Context(ctx).Warn().LogF("Removing invalid entry %q: not a directory\n", repoPath)
-			if err := os.RemoveAll(repoPath); err != nil {
+			if err := removePath(repoPath, options); err != nil {
 				return nil, fmt.Errorf("unable to remove %q: %w", repoPath, err)
 			}
 			continue
@@ -84,16 +89,14 @@ func GetGitReposAndRemoveInvalid(ctx context.Context, cacheVersionRoot string) (
 
 		size, err := volumeutils.DirSizeBytes(repoPath)
 		if err != nil {
-			return nil, fmt.Errorf("error getting dir %q size: %w", repoPath, err)
+			errs = append(errs, fmt.Errorf("get dir %q size: %w", repoPath, err))
+			continue
 		}
 
 		lastAccessAtPath := filepath.Join(repoPath, "last_access_at")
-		lastAccessAt, err := timestamps.ReadTimestampFile(lastAccessAtPath)
+		lastAccessAt, err := readLastAccessAt(lastAccessAtPath)
 		if err != nil {
-			logboek.Context(ctx).Warn().LogF("Removing invalid entry %q: error reading last access timestamp file %q: %v\n", repoPath, lastAccessAtPath, err)
-			if err := os.RemoveAll(repoPath); err != nil {
-				return nil, fmt.Errorf("unable to remove %q: %w", repoPath, err)
-			}
+			errs = append(errs, fmt.Errorf("read repository access timestamp %q: %w", lastAccessAtPath, err))
 			continue
 		}
 
@@ -105,5 +108,5 @@ func GetGitReposAndRemoveInvalid(ctx context.Context, cacheVersionRoot string) (
 		})
 	}
 
-	return res, nil
+	return res, errors.Join(errs...)
 }

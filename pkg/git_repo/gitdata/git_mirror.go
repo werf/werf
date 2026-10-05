@@ -2,12 +2,12 @@ package gitdata
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 
-	"github.com/werf/common-go/pkg/util/timestamps"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/volumeutils"
 )
@@ -27,8 +27,12 @@ import (
 // requires_full marker is persistent metadata, not an LRU entry: a repo dir
 // holding only the marker is valid and kept. A repo dir with neither shallow
 // mirror nor marker is removed.
-func GetGitMirrorsAndRemoveInvalid(ctx context.Context, cacheVersionRoot string) ([]GitDataEntry, error) {
+//
+// An entry whose size or access marker cannot be read is preserved and left
+// out of the result; its error is joined into the returned error.
+func GetGitMirrorsAndRemoveInvalid(ctx context.Context, cacheVersionRoot string, options ScanOptions) ([]GitDataEntry, error) {
 	var res []GitDataEntry
+	var errs []error
 
 	fileStat, err := os.Stat(cacheVersionRoot)
 	if err != nil {
@@ -39,7 +43,7 @@ func GetGitMirrorsAndRemoveInvalid(ctx context.Context, cacheVersionRoot string)
 	}
 	if !fileStat.IsDir() {
 		logboek.Context(ctx).Warn().LogF("Removing invalid entry %q: not a directory\n", cacheVersionRoot)
-		if err := os.RemoveAll(cacheVersionRoot); err != nil {
+		if err := removePath(cacheVersionRoot, options); err != nil {
 			return nil, fmt.Errorf("unable to remove %q: %w", cacheVersionRoot, err)
 		}
 		return nil, nil
@@ -55,7 +59,7 @@ func GetGitMirrorsAndRemoveInvalid(ctx context.Context, cacheVersionRoot string)
 
 		if !repoDirInfo.IsDir() {
 			logboek.Context(ctx).Warn().LogF("Removing invalid entry %q: not a directory\n", repoPath)
-			if err := os.RemoveAll(repoPath); err != nil {
+			if err := removePath(repoPath, options); err != nil {
 				return nil, fmt.Errorf("unable to remove %q: %w", repoPath, err)
 			}
 			continue
@@ -63,7 +67,8 @@ func GetGitMirrorsAndRemoveInvalid(ctx context.Context, cacheVersionRoot string)
 
 		repoChildren, err := ioutil.ReadDir(repoPath)
 		if err != nil {
-			return nil, fmt.Errorf("error reading dir %q: %w", repoPath, err)
+			errs = append(errs, fmt.Errorf("read dir %q: %w", repoPath, err))
+			continue
 		}
 
 		var shallowFound, markerFound bool
@@ -78,7 +83,7 @@ func GetGitMirrorsAndRemoveInvalid(ctx context.Context, cacheVersionRoot string)
 				markerFound = true
 			default:
 				logboek.Context(ctx).Warn().LogF("Removing invalid entry %q\n", childPath)
-				if err := os.RemoveAll(childPath); err != nil {
+				if err := removePath(childPath, options); err != nil {
 					return nil, fmt.Errorf("unable to remove %q: %w", childPath, err)
 				}
 			}
@@ -86,7 +91,7 @@ func GetGitMirrorsAndRemoveInvalid(ctx context.Context, cacheVersionRoot string)
 
 		if !shallowFound && !markerFound {
 			logboek.Context(ctx).Warn().LogF("Removing invalid entry %q: no shallow mirror and no requires_full marker inside\n", repoPath)
-			if err := os.RemoveAll(repoPath); err != nil {
+			if err := removePath(repoPath, options); err != nil {
 				return nil, fmt.Errorf("unable to remove %q: %w", repoPath, err)
 			}
 			continue
@@ -100,16 +105,14 @@ func GetGitMirrorsAndRemoveInvalid(ctx context.Context, cacheVersionRoot string)
 
 		size, err := volumeutils.DirSizeBytes(shallowPath)
 		if err != nil {
-			return nil, fmt.Errorf("error getting dir %q size: %w", shallowPath, err)
+			errs = append(errs, fmt.Errorf("get dir %q size: %w", shallowPath, err))
+			continue
 		}
 
 		lastAccessAtPath := filepath.Join(shallowPath, "last_access_at")
-		lastAccessAt, err := timestamps.ReadTimestampFile(lastAccessAtPath)
+		lastAccessAt, err := readLastAccessAt(lastAccessAtPath)
 		if err != nil {
-			logboek.Context(ctx).Warn().LogF("Removing invalid entry %q: error reading last access timestamp file %q: %v\n", shallowPath, lastAccessAtPath, err)
-			if err := os.RemoveAll(shallowPath); err != nil {
-				return nil, fmt.Errorf("unable to remove %q: %w", shallowPath, err)
-			}
+			errs = append(errs, fmt.Errorf("read repository access timestamp %q: %w", lastAccessAtPath, err))
 			continue
 		}
 
@@ -121,5 +124,5 @@ func GetGitMirrorsAndRemoveInvalid(ctx context.Context, cacheVersionRoot string)
 		})
 	}
 
-	return res, nil
+	return res, errors.Join(errs...)
 }

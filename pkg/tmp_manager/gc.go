@@ -8,15 +8,18 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/werf/logboek"
+	"github.com/werf/werf/v2/pkg/werf"
 )
 
 var (
 	ErrPathRemoval = errors.New("path removal")
 
-	timeSince = time.Since // for stubbing in tests
+	timeSince    = time.Since // for stubbing in tests
+	onSameDevice = sameDevice
 )
 
 func ShouldRunAutoGC() (bool, error) {
@@ -56,20 +59,24 @@ func runGCForPaths(ctx context.Context, dryRun bool, paths []string) error {
 
 func collectPaths() ([]string, []string, error) {
 	gcPathList := []gcPath{
-		newGCPath(filepath.Join(getReleasedTmpDirs(), projectsServiceDir), 0),
-		newGCPath(filepath.Join(getCreatedTmpDirs(), projectsServiceDir), 0),
-		newGCPath(filepath.Join(getCreatedTmpDirs(), dockerConfigsServiceDir), time.Hour*6),
-		newGCPath(filepath.Join(getCreatedTmpDirs(), kubeConfigsServiceDir), 0),
-		newGCPath(filepath.Join(getCreatedTmpDirs(), werfConfigRendersServiceDir), 0),
-		newGCPath(filepath.Join(getCreatedTmpDirs(), contextArchivesDir), 0),
-		newGCPath(getContextTmpDir(), 0), // TODO: backward compatible cleaning (will be dropped in v3)
+		newGCPath(filepath.Join(getReleasedTmpDirs(), projectsServiceDir), "", 0),
+		newGCPath(filepath.Join(getCreatedTmpDirs(), projectsServiceDir), "", 0),
+		newGCPath(filepath.Join(getCreatedTmpDirs(), dockerConfigsServiceDir), "", time.Hour*6),
+		newGCPath(filepath.Join(getCreatedTmpDirs(), kubeConfigsServiceDir), "", 0),
+		newGCPath(filepath.Join(getCreatedTmpDirs(), werfConfigRendersServiceDir), "", 0),
+		newGCPath(filepath.Join(getCreatedTmpDirs(), contextArchivesDir), "", 0),
+		newGCPath(getContextTmpDir(), "", 0),
+		// Project dirs are not registered either until the command delegates the cleanup, and they
+		// hold the pinned git inputs of a build. They live directly in the tmp dir shared with
+		// everything else on the host, so only our own prefix is swept and no symlink is followed.
+		newNoFollowGCPath(werf.GetTmpDir(), projectDirPrefix, projectDirMaxAge),
 	}
 
 	dirSlices := make([][]string, 0, len(gcPathList))
 	symlinkSlices := make([][]string, 0, len(gcPathList))
 
 	for _, gcPathItem := range gcPathList {
-		dirs, symlinks, err := listDirAndFollowSymlinks(gcPathItem.path, gcPathItem.keepingTime)
+		dirs, symlinks, err := listDirAndFollowSymlinks(gcPathItem)
 		if err != nil {
 			return nil, nil, fmt.Errorf("list and filter path %v: %w", gcPathItem.path, err)
 		}
@@ -80,9 +87,15 @@ func collectPaths() ([]string, []string, error) {
 	return slices.Concat(dirSlices...), slices.Concat(symlinkSlices...), nil
 }
 
-// listDirAndFollowSymlinks returns list of dirs and symlinks
-func listDirAndFollowSymlinks(dir string, minFileAge time.Duration) ([]string, []string, error) {
-	if _, err := os.Stat(dir); errors.Is(err, fs.ErrNotExist) {
+// listDirAndFollowSymlinks returns list of dirs and symlinks. With a non-empty namePrefix only
+// entries carrying it are collected, which is what makes a dir shared with foreign files sweepable.
+// Symlink targets are collected only for registry dirs, where werf itself wrote the links; sweeping
+// a dir werf does not own must never delete whatever a foreign link happens to point at.
+func listDirAndFollowSymlinks(gcPathItem gcPath) ([]string, []string, error) {
+	dir, namePrefix, minFileAge := gcPathItem.path, gcPathItem.namePrefix, gcPathItem.keepingTime
+
+	dirInfo, err := os.Stat(dir)
+	if errors.Is(err, fs.ErrNotExist) {
 		return nil, nil, nil
 	} else if err != nil {
 		return nil, nil, fmt.Errorf("stat %v dir: %w", dir, err)
@@ -97,6 +110,10 @@ func listDirAndFollowSymlinks(dir string, minFileAge time.Duration) ([]string, [
 	listOfSymlinks := make([]string, 0, len(dirEntries))
 
 	for _, dirEntry := range dirEntries {
+		if !strings.HasPrefix(dirEntry.Name(), namePrefix) {
+			continue
+		}
+
 		info, err := dirEntry.Info()
 		if errors.Is(err, fs.ErrNotExist) {
 			continue
@@ -114,9 +131,16 @@ func listDirAndFollowSymlinks(dir string, minFileAge time.Duration) ([]string, [
 		switch info.Mode().Type() {
 		case os.ModeSymlink:
 			listOfSymlinks = append(listOfSymlinks, linkOrFilePath)
+			if !gcPathItem.followSymlinks {
+				continue
+			}
 		default:
+			// A filesystem mounted under a dir werf does not own keeps its data elsewhere; a
+			// recursive removal would empty it instead of reclaiming tmp space.
+			if !gcPathItem.followSymlinks && !onSameDevice(dirInfo, info) {
+				continue
+			}
 			listOfDirs = append(listOfDirs, linkOrFilePath)
-			// resolve only symlinks
 			continue
 		}
 
@@ -139,13 +163,25 @@ func listDirAndFollowSymlinks(dir string, minFileAge time.Duration) ([]string, [
 }
 
 type gcPath struct {
-	path        string
-	keepingTime time.Duration
+	path           string
+	namePrefix     string
+	keepingTime    time.Duration
+	followSymlinks bool
 }
 
-func newGCPath(path string, keepingTime time.Duration) gcPath {
+func newGCPath(path, namePrefix string, keepingTime time.Duration) gcPath {
+	return gcPath{
+		path:           path,
+		namePrefix:     namePrefix,
+		keepingTime:    keepingTime,
+		followSymlinks: true,
+	}
+}
+
+func newNoFollowGCPath(path, namePrefix string, keepingTime time.Duration) gcPath {
 	return gcPath{
 		path:        path,
+		namePrefix:  namePrefix,
 		keepingTime: keepingTime,
 	}
 }

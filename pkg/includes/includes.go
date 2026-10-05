@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 
@@ -79,7 +80,7 @@ func Init(ctx context.Context, opts InitIncludesOptions) ([]*Include, error) {
 			return nil, nil
 		}
 
-		lockInfo, err := getLockInfo(getLockInfoOptions{
+		lockInfo, err := getLockInfo(ctx, getLockInfoOptions{
 			includesConfig:         config,
 			createOrUpdateLockFile: opts.CreateOrUpdateLockFile,
 			useLatestVersion:       opts.UseLatestVersion,
@@ -122,21 +123,6 @@ func GetIncludes(ctx context.Context, cfg Config, lockInfo *LockInfo, remoteRepo
 					return fmt.Errorf("unable to get commit from lock info: %w", err)
 				}
 
-				repo, err := r.repo.PlainOpen()
-				if err != nil {
-					return fmt.Errorf("failed to open repository: %w", err)
-				}
-
-				commit, err := repo.CommitObject(plumbing.NewHash(commitFromLockInfo))
-				if err != nil {
-					return fmt.Errorf("failed to get commit object: %w", err)
-				}
-
-				tree, err := commit.Tree()
-				if err != nil {
-					return fmt.Errorf("failed to get tree: %w", err)
-				}
-
 				pm := path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{
 					BasePath:     inc.Add,
 					IncludeGlobs: inc.IncludePaths,
@@ -145,16 +131,38 @@ func GetIncludes(ctx context.Context, cfg Config, lockInfo *LockInfo, remoteRepo
 
 				logboek.Context(ctx).Debug().LogF("Using path matcher: basePath=%s, includeGlobs=%v, excludeGlobs=%v\n", inc.Add, inc.IncludePaths, inc.ExcludePaths)
 
+				var commitHash string
 				matchedMap := map[string]string{}
-				err = tree.Files().ForEach(func(f *object.File) error {
-					if pm.IsPathMatched(f.Name) {
-						newPath := prepareRelPath(f.Name, inc.Add, inc.To)
-						matchedMap[newPath] = f.Name
+
+				// The whole tree walk runs inside withRepository: the tree and its
+				// files are read lazily from the mirror, which a concurrent GC could
+				// otherwise evict mid-iteration.
+				err = r.withRepository(ctx, commitFromLockInfo, func(repo *git.Repository) error {
+					commit, err := repo.CommitObject(plumbing.NewHash(commitFromLockInfo))
+					if err != nil {
+						return fmt.Errorf("failed to get commit object: %w", err)
 					}
+					commitHash = commit.Hash.String()
+
+					tree, err := commit.Tree()
+					if err != nil {
+						return fmt.Errorf("failed to get tree: %w", err)
+					}
+
+					if err := tree.Files().ForEach(func(f *object.File) error {
+						if pm.IsPathMatched(f.Name) {
+							newPath := prepareRelPath(f.Name, inc.Add, inc.To)
+							matchedMap[newPath] = f.Name
+						}
+						return nil
+					}); err != nil {
+						return fmt.Errorf("failed to iterate over files: %w", err)
+					}
+
 					return nil
 				})
 				if err != nil {
-					return fmt.Errorf("failed to iterate over files: %w", err)
+					return err
 				}
 
 				if len(matchedMap) == 0 {
@@ -163,7 +171,7 @@ func GetIncludes(ctx context.Context, cfg Config, lockInfo *LockInfo, remoteRepo
 
 				include := &Include{
 					repo:       r.repo,
-					commitHash: commit.Hash.String(),
+					commitHash: commitHash,
 					objects:    matchedMap,
 				}
 

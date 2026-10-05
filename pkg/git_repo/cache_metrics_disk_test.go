@@ -3,6 +3,7 @@ package git_repo_test
 import (
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
@@ -68,7 +69,7 @@ var _ = ginkgo.Describe("Git data cache lookup counters", func() {
 		countedCtx := opstats.NewContext(ctx, collector)
 
 		repo := openRepo(ctx)
-		_, err := repo.GetOrCreateArchive(countedCtx, opts)
+		artifact, err := repo.GetOrCreateArchive(countedCtx, opts)
 		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		gomega.Expect(rows(ctx)).To(gomega.Equal(map[string]opstats.CacheSummary{
@@ -91,6 +92,23 @@ var _ = ginkgo.Describe("Git data cache lookup counters", func() {
 			"git: archive/memory": {Operation: opstats.OperationGitArchive, Layer: opstats.CacheLayerMemory, Hit: 1, Miss: 2},
 			"git: archive/disk":   {Operation: opstats.OperationGitArchive, Layer: opstats.CacheLayerDisk, Hit: 1, Miss: 1},
 		}))
+
+		gomega.Expect(os.Remove(artifact.GetFilePath())).To(gomega.Succeed())
+		rebuilt, err := repo.GetOrCreateArchive(countedCtx, opts)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		gomega.Expect(os.ReadFile(rebuilt.GetFilePath())).NotTo(gomega.BeEmpty())
+		gomega.Expect(rows(ctx)).To(gomega.Equal(map[string]opstats.CacheSummary{
+			"git: archive/memory": {Operation: opstats.OperationGitArchive, Layer: opstats.CacheLayerMemory, Hit: 1, Miss: 3},
+			"git: archive/disk":   {Operation: opstats.OperationGitArchive, Layer: opstats.CacheLayerDisk, Hit: 1, Miss: 2},
+		}))
+
+		gomega.Expect(os.WriteFile(strings.TrimSuffix(rebuilt.GetFilePath(), ".tar")+".meta.json", []byte("invalid"), 0o644)).To(gomega.Succeed())
+		_, err = repo.GetOrCreateArchive(countedCtx, opts)
+		gomega.Expect(err).To(gomega.HaveOccurred())
+		gomega.Expect(rows(ctx)).To(gomega.Equal(map[string]opstats.CacheSummary{
+			"git: archive/memory": {Operation: opstats.OperationGitArchive, Layer: opstats.CacheLayerMemory, Hit: 1, Miss: 4},
+			"git: archive/disk":   {Operation: opstats.OperationGitArchive, Layer: opstats.CacheLayerDisk, Hit: 1, Miss: 2},
+		}))
 	})
 
 	ginkgo.It("counts one patch lookup per layer the call actually reaches", func(ctx ginkgo.SpecContext) {
@@ -106,7 +124,7 @@ var _ = ginkgo.Describe("Git data cache lookup counters", func() {
 		countedCtx := opstats.NewContext(ctx, collector)
 
 		repo := openRepo(ctx)
-		_, err := repo.GetOrCreatePatch(countedCtx, opts)
+		artifact, err := repo.GetOrCreatePatch(countedCtx, opts)
 		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 		_, err = repo.GetOrCreatePatch(countedCtx, opts)
 		gomega.Expect(err).NotTo(gomega.HaveOccurred())
@@ -116,6 +134,15 @@ var _ = ginkgo.Describe("Git data cache lookup counters", func() {
 		gomega.Expect(rows(ctx)).To(gomega.Equal(map[string]opstats.CacheSummary{
 			"git: patch/memory": {Operation: opstats.OperationGitPatch, Layer: opstats.CacheLayerMemory, Hit: 1, Miss: 2},
 			"git: patch/disk":   {Operation: opstats.OperationGitPatch, Layer: opstats.CacheLayerDisk, Hit: 1, Miss: 1},
+		}))
+
+		gomega.Expect(os.Remove(artifact.GetFilePath())).To(gomega.Succeed())
+		rebuilt, err := repo.GetOrCreatePatch(countedCtx, opts)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		gomega.Expect(os.ReadFile(rebuilt.GetFilePath())).NotTo(gomega.BeEmpty())
+		gomega.Expect(rows(ctx)).To(gomega.Equal(map[string]opstats.CacheSummary{
+			"git: patch/memory": {Operation: opstats.OperationGitPatch, Layer: opstats.CacheLayerMemory, Hit: 1, Miss: 3},
+			"git: patch/disk":   {Operation: opstats.OperationGitPatch, Layer: opstats.CacheLayerDisk, Hit: 1, Miss: 2},
 		}))
 	})
 })

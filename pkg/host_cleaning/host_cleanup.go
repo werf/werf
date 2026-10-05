@@ -118,7 +118,7 @@ func RunHostCleanup(ctx context.Context, backend container_backend.ContainerBack
 	allowedLocalCacheVolumeUsageBytes := getRequirementInBytes(options.AllowedLocalCacheVolumeUsage, DefaultAllowedLocalCacheVolumeUsagePercentage, vuLocalCache.TotalBytes)
 	allowedLocalCacheVolumeUsageMarginBytes := getRequirementInBytes(options.AllowedLocalCacheVolumeUsageMargin, DefaultAllowedLocalCacheVolumeUsageMarginPercentage, vuLocalCache.TotalBytes)
 
-	if err := logboek.Context(ctx).Default().LogProcess("Running GC for git data").DoError(func() error {
+	gitErr := logboek.Context(ctx).Default().LogProcess("Running GC for git data").DoError(func() error {
 		if err := gitdata.RunGC(ctx, gitdata.RunGCOptions{
 			AllowedLocalCacheVolumeUsageBytes:       allowedLocalCacheVolumeUsageBytes,
 			AllowedLocalCacheVolumeUsageMarginBytes: allowedLocalCacheVolumeUsageMarginBytes,
@@ -127,19 +127,17 @@ func RunHostCleanup(ctx context.Context, backend container_backend.ContainerBack
 			return fmt.Errorf("git repo GC failed: %w", err)
 		}
 		return nil
-	}); err != nil {
-		return err
-	}
+	})
 
 	cleaner, err := NewLocalBackendCleaner(backend, werf.HostLocker().Locker())
 	if errors.Is(err, ErrUnsupportedContainerBackend) {
 		// if cleaner not implemented, skip cleaning
-		return nil
+		return gitErr
 	} else if err != nil {
-		return err
+		return errors.Join(gitErr, err)
 	}
 
-	return logboek.Context(ctx).Default().LogProcess("Running GC for local %s backend", cleaner.BackendName()).DoError(func() error {
+	backendErr := logboek.Context(ctx).Default().LogProcess("Running GC for local %s backend", cleaner.BackendName()).DoError(func() error {
 		backendStoragePath, err := cleaner.backendStoragePath(ctx, *options.BackendStoragePath)
 		if err != nil {
 			return fmt.Errorf("error getting backend storage path: %w", err)
@@ -165,6 +163,7 @@ func RunHostCleanup(ctx context.Context, backend container_backend.ContainerBack
 		}
 		return nil
 	})
+	return errors.Join(gitErr, backendErr)
 }
 
 func shouldRunAutoHostCleanup(ctx context.Context, backend container_backend.ContainerBackend, options AutoHostCleanupOptions) (bool, error) {
