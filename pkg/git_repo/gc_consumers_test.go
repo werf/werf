@@ -138,6 +138,42 @@ var _ = Describe("Git cache consumers under GC eviction", func() {
 	})
 
 	Describe("remote mirrors", func() {
+		DescribeTable("restores both commits needed by a two-commit operation", func(ctx SpecContext, operation string) {
+			utils.RunSucceedCommand(ctx, sourceDir, "git", "config", "uploadpack.allowAnySHA1InWant", "true")
+			commitFile(ctx, "data.txt", "base")
+			gitInSource(ctx, "checkout", "-b", "side")
+			from := commitFile(ctx, "side.txt", "side")
+			gitInSource(ctx, "checkout", "main")
+			to := commitFile(ctx, "data.txt", "main")
+			repo := openRemoteURL("file://"+sourceDir, "", "", "")
+			Expect(repo.CloneAndFetch(ctx)).To(Succeed())
+			gitInSource(ctx, "branch", "-D", "side")
+			Expect(os.RemoveAll(repo.GetClonePath())).To(Succeed())
+
+			switch operation {
+			case "patch":
+				patch, err := repo.GetOrCreatePatch(ctx, git_repo.PatchOptions{FromCommit: from, ToCommit: to, PathMatcher: path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{})})
+				Expect(err).NotTo(HaveOccurred())
+				Expect(patch.GetPaths()).To(ConsistOf("data.txt", "side.txt"))
+			case "changed paths":
+				paths, err := repo.GetOrCreateChangedPaths(ctx, from, to)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(paths).To(HaveLen(2))
+			case "ancestor":
+				Expect(repo.IsAncestor(ctx, from, to)).To(BeFalse())
+				Expect(repo.IsCommitExists(ctx, from)).To(BeTrue())
+			case "merge":
+				commit, err := repo.CreateDetachedMergeCommit(ctx, from, to)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(repo.GetMergeCommitParents(ctx, commit)).To(ConsistOf(from, to))
+			}
+		},
+			Entry("patch", "patch"),
+			Entry("changed paths", "changed paths"),
+			Entry("ancestor", "ancestor"),
+			Entry("merge", "merge"),
+		)
+
 		It("restores an evicted full mirror and keeps serving the originally resolved commit", func(ctx SpecContext) {
 			commit := commitFile(ctx, "data.txt", "v1")
 
