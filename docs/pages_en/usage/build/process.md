@@ -456,6 +456,10 @@ There are a number of additional repositories on top of the main repository:
 
 > **Caution!** For werf to operate properly, the container registry must be persistent, and cleaning should only be done with the `werf cleanup` special command.
 
+When listing tags, werf requests up to 1 000 000 tags per page, so listing even a large repository usually takes a few requests instead of hundreds. A container registry may answer with a smaller page and a pagination link, and werf follows such links. The larger the page, the larger the response werf holds in memory: a tag is at most 128 bytes, so a full page of a million tags can weigh over a hundred megabytes. Set `WERF_DOCKER_REGISTRY_TAGS_PAGE_SIZE` to another number of tags per page to change that, or to `0` to use the page size of the container registry client library (1000 tags). A negative or non-numeric value is an error.
+
+Amazon ECR limits pages to 1000 tags, so for the `ecr` container registry implementation and for `public.ecr.aws` werf uses the client library page size right away, whatever the environment variable says. If any other registry answers a listing with a recognized page size rejection, werf repeats that listing with the client library page size and, if that succeeds, keeps using this page size for that registry host until the werf command ends. Any other error is returned as is.
+
 ### Extra repository for final images
 
 If necessary, the so-called **final** repositories can be used to exclusively store the final images.

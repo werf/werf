@@ -27,6 +27,7 @@ func newDefaultImplementation(options defaultImplementationOptions) (*defaultImp
 func newDefaultAPIForImplementation(implementation string, options defaultImplementationOptions) (*defaultImplementation, error) {
 	d := &defaultImplementation{}
 	d.api = newAPI(options.apiOptions)
+	d.api.useLibraryTagsPageSize = implementation == AwsEcrImplementationName
 	d.Implementation = implementation
 	return d, nil
 }
