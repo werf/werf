@@ -93,8 +93,16 @@ func (repo *Remote) mappedCommit() string {
 		}
 	}
 
+	if repo.Tag == "" && repo.Branch == "" {
+		if commit, ok := repo.resolvedRef(resolvedHeadRefKey); ok {
+			return commit
+		}
+	}
+
 	return ""
 }
+
+const resolvedHeadRefKey = "head"
 
 func resolvedBranchRefKey(branch string) string {
 	return "branch:" + branch
@@ -670,13 +678,22 @@ func (repo *Remote) WithRepository(ctx context.Context, commit string, callback 
 }
 
 func (repo *Remote) HeadCommitHash(ctx context.Context) (string, error) {
+	if commit, ok := repo.resolvedRef(resolvedHeadRefKey); ok {
+		return commit, nil
+	}
+
 	var res string
-	err := repo.withMirror(ctx, "", func() error {
+	if err := repo.withMirror(ctx, "", func() error {
 		var err error
 		res, err = getHeadCommit(ctx, repo.GetClonePath())
 		return err
-	})
-	return res, err
+	}); err != nil {
+		return "", err
+	}
+
+	repo.rememberResolvedRef(resolvedHeadRefKey, res)
+
+	return res, nil
 }
 
 func (repo *Remote) HeadCommitTime(ctx context.Context) (*time.Time, error) {

@@ -1,7 +1,11 @@
 package git_repo_test
 
 import (
+	"archive/tar"
 	"context"
+	"errors"
+	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"sync"
@@ -288,6 +292,31 @@ var _ = Describe("Git cache consumers under GC eviction", func() {
 			Expect(repo.ReadCommitFile(ctx, commit, "data.txt")).To(Equal([]byte("v1")))
 		})
 
+		It("keeps serving the implicit HEAD commit resolved before the mirror was evicted", func(ctx SpecContext) {
+			commit := commitFile(ctx, "data.txt", "v1")
+
+			repo := openRemote("", "", "")
+			Expect(repo.CloneAndFetch(ctx)).To(Succeed())
+			Expect(repo.HeadCommitHash(ctx)).To(Equal(commit))
+
+			// The origin HEAD advances and GC takes the mirror: a mapping without
+			// branch, tag or commit resolves HEAD once per stage, and re-resolving
+			// it would build the archive from a commit the digest never saw.
+			commitFile(ctx, "data.txt", "v2")
+			Expect(os.RemoveAll(repo.GetClonePath())).To(Succeed())
+
+			head, err := repo.HeadCommitHash(ctx)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(head).To(Equal(commit))
+
+			archive, err := repo.GetOrCreateArchive(ctx, git_repo.ArchiveOptions{
+				Commit:      head,
+				PathMatcher: path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{}),
+			})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(readFileFromTar(archive.GetFilePath(), "data.txt")).To(Equal([]byte("v1")))
+		})
+
 		It("keeps serving the tag commit resolved before the mirror was evicted", func(ctx SpecContext) {
 			commit := commitFile(ctx, "data.txt", "v1")
 			gitInSource(ctx, "tag", "v1")
@@ -488,3 +517,26 @@ var _ = Describe("Git cache consumers under GC eviction", func() {
 		})
 	})
 })
+
+func readFileFromTar(archivePath, name string) ([]byte, error) {
+	file, err := os.Open(archivePath)
+	if err != nil {
+		return nil, fmt.Errorf("open archive %q: %w", archivePath, err)
+	}
+	defer file.Close()
+
+	reader := tar.NewReader(file)
+	for {
+		header, err := reader.Next()
+		if errors.Is(err, io.EOF) {
+			return nil, fmt.Errorf("no entry %q in archive %q", name, archivePath)
+		}
+		if err != nil {
+			return nil, fmt.Errorf("read archive %q: %w", archivePath, err)
+		}
+		if header.Name != name {
+			continue
+		}
+		return io.ReadAll(reader)
+	}
+}
