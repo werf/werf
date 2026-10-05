@@ -84,7 +84,7 @@ func (repo *Remote) cloneAndFetchShallow(ctx context.Context) error {
 
 		logboek.Context(ctx).Info().LogF("Falling back to full mirror for repo %q: %s\n", repo.String(), shallowErr)
 
-		if err := repo.downgradeToFull(ctx, persistMarker); err != nil {
+		if err := repo.downgradeToFull(ctx, persistMarker, true); err != nil {
 			return fmt.Errorf("shallow fetch failed and full mirror fallback also failed: %w; underlying shallow error: %v", err, shallowErr)
 		}
 
@@ -414,7 +414,7 @@ func (repo *Remote) ensureShallowMirror(ctx context.Context) (bool, error) {
 	return false, nil
 }
 
-func (repo *Remote) downgradeToFull(ctx context.Context, persistMarker bool) error {
+func (repo *Remote) downgradeToFull(ctx context.Context, persistMarker, verifyTarget bool) error {
 	return repo.withMirrorKindLock(ctx, mirrorKindFull, func() error {
 		exists, err := repo.isCloneExistsForKind(mirrorKindFull)
 		if err != nil {
@@ -442,8 +442,10 @@ func (repo *Remote) downgradeToFull(ctx context.Context, persistMarker bool) err
 			}
 		}
 
-		if err := repo.verifyTargetInFullMirror(ctx, repo.clonePathForKind(mirrorKindFull)); err != nil {
-			return err
+		if verifyTarget {
+			if err := repo.verifyTargetInFullMirror(ctx, repo.clonePathForKind(mirrorKindFull)); err != nil {
+				return err
+			}
 		}
 
 		if persistMarker {

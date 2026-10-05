@@ -1142,7 +1142,9 @@ func (repo *Remote) recoverPinnedCommitInShallowMirror(ctx context.Context, comm
 
 	logboek.Context(ctx).Info().LogF("Falling back to full mirror of repo %q to recover commit %s\n", repo.String(), commit)
 
-	if err := repo.downgradeToFull(ctx, bySHAErr != nil && isBySHAFetchRefusal(bySHAErr)); err != nil {
+	// The mapped tag or branch may have been deleted at origin since the pin was
+	// taken; only the pinned commit matters here, and it is checked below.
+	if err := repo.downgradeToFull(ctx, bySHAErr != nil && isBySHAFetchRefusal(bySHAErr), false); err != nil {
 		return fmt.Errorf("commit %s is not available in origin %s: %w", commit, repo.Url, errors.Join(bySHAErr, err))
 	}
 

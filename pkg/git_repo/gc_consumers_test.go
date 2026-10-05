@@ -232,6 +232,27 @@ var _ = Describe("Git cache consumers under GC eviction", func() {
 			Expect(repo.ReadCommitFile(ctx, commit, "data.txt")).To(Equal([]byte("v1")))
 		})
 
+		It("restores an evicted shallow tag mirror whose tag the origin has deleted", func(ctx SpecContext) {
+			commit := commitFile(ctx, "data.txt", "v1")
+			gitInSource(ctx, "tag", "-a", "v1", "-m", "release")
+			commitFile(ctx, "data.txt", "v2")
+			utils.RunSucceedCommand(ctx, sourceDir, "git", "config", "uploadpack.allowReachableSHA1InWant", "false")
+			GinkgoT().Setenv("GIT_CONFIG_COUNT", "1")
+			GinkgoT().Setenv("GIT_CONFIG_KEY_0", "protocol.version")
+			GinkgoT().Setenv("GIT_CONFIG_VALUE_0", "1")
+
+			repo := openRemoteURL("file://"+sourceDir, "", "v1", "")
+			Expect(repo.CloneAndFetch(ctx)).To(Succeed())
+			Expect(repo.TagCommit(ctx, "v1")).To(Equal(commit))
+
+			// The tag is gone from the origin, but the commit it pinned stays
+			// reachable from the branch, so the build must still see it.
+			gitInSource(ctx, "tag", "-d", "v1")
+			Expect(os.RemoveAll(repo.GetClonePath())).To(Succeed())
+
+			Expect(repo.ReadCommitFile(ctx, commit, "data.txt")).To(Equal([]byte("v1")))
+		})
+
 		It("fails with a bounded error when the evicted commit is gone from the origin too", func(ctx SpecContext) {
 			commit := commitFile(ctx, "data.txt", "v1")
 
