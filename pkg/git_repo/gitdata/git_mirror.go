@@ -105,11 +105,7 @@ func GetGitMirrorsAndRemoveInvalid(ctx context.Context, cacheVersionRoot string,
 		lastAccessAtPath := filepath.Join(shallowPath, "last_access_at")
 		lastAccessAt, err := readLastAccessAt(lastAccessAtPath)
 		if err != nil {
-			logboek.Context(ctx).Warn().LogF("Removing invalid entry %q: error reading last access timestamp file %q: %v\n", shallowPath, lastAccessAtPath, err)
-			if err := removePath(shallowPath, options); err != nil {
-				return nil, fmt.Errorf("unable to remove %q: %w", shallowPath, err)
-			}
-			continue
+			return nil, fmt.Errorf("read repository access timestamp %q: %w", lastAccessAtPath, err)
 		}
 
 		res = append(res, &GitRepoDesc{

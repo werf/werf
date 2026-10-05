@@ -89,11 +89,7 @@ func GetGitReposAndRemoveInvalid(ctx context.Context, cacheVersionRoot string, o
 		lastAccessAtPath := filepath.Join(repoPath, "last_access_at")
 		lastAccessAt, err := readLastAccessAt(lastAccessAtPath)
 		if err != nil {
-			logboek.Context(ctx).Warn().LogF("Removing invalid entry %q: error reading last access timestamp file %q: %v\n", repoPath, lastAccessAtPath, err)
-			if err := removePath(repoPath, options); err != nil {
-				return nil, fmt.Errorf("unable to remove %q: %w", repoPath, err)
-			}
-			continue
+			return nil, fmt.Errorf("read repository access timestamp %q: %w", lastAccessAtPath, err)
 		}
 
 		res = append(res, &GitRepoDesc{
