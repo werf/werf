@@ -1832,9 +1832,12 @@ E.g.:
 - automatically with werf cleanup command
 - manually with werf purge or werf host purge commands`)
 			logboek.Context(ctx).Warn().LogLn()
-			logboek.Context(ctx).Warn().LogLn(reasonNumberFunc() + `You are using --require-built-images flag (or WERF_REQUIRE_BUILT_IMAGES env) which requires images to be already built:
+			primaryStagesStorageAddress := phase.Conveyor.StorageManager.GetStagesStorage().String()
+			logboek.Context(ctx).Warn().LogLn(reasonNumberFunc() + fmt.Sprintf(`You are checking that images are already built (--check-built-images / --require-built-images / -Z flag, WERF_CHECK_BUILT_IMAGES / WERF_REQUIRE_BUILT_IMAGES env), so only the primary stages storage %[1]s has been searched:
 - If you expect images to be built and available in the registry, check the reasons above
-- If you want to build images instead of requiring them to be already built, remove --require-built-images flag / WERF_REQUIRE_BUILT_IMAGES env`)
+- Secondary stages storages (--secondary-repo and the implicit local one) are not consulted by the check and no stage is promoted into %[1]s
+- If the stage exists in a secondary stages storage only, publish it with an ordinary build first: werf build --repo %[1]s
+- If you want to build images instead of checking them, remove the flag / env`, primaryStagesStorageAddress))
 			logboek.Context(ctx).Warn().LogLn()
 		})
 }
