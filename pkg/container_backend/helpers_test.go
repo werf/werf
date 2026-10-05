@@ -1,10 +1,19 @@
 package container_backend
 
 import (
+	"context"
+	"io"
+	"net/http"
+	"net/http/httptest"
 	"os"
+	"strings"
 
+	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
 	"github.com/samber/lo"
+
+	"github.com/werf/werf/v2/pkg/docker"
+	"github.com/werf/werf/v2/pkg/opstats"
 )
 
 func testChownableOwnership() (uint32, uint32) {
@@ -20,4 +29,53 @@ func testChownableOwnership() (uint32, uint32) {
 	}
 
 	return uint32(uid), uint32(gid)
+}
+
+var _ BuildContextArchiver = (*stubBuildContextArchive)(nil)
+
+type stubBuildContextArchive struct {
+	BuildContextArchiver
+	path string
+}
+
+func (a *stubBuildContextArchive) Path() string { return a.path }
+
+// dockerDaemonContext points the docker client at a fake daemon serving handler and returns
+// a context carrying both that client and a fresh operation collector.
+func dockerDaemonContext(handler http.Handler) (context.Context, *opstats.Collector) {
+	server := httptest.NewServer(handler)
+	ginkgo.DeferCleanup(server.Close)
+	for _, key := range []string{"DOCKER_CONTEXT", "DOCKER_CONFIG", "DOCKER_TLS", "DOCKER_TLS_VERIFY", "DOCKER_CERT_PATH", "DOCKER_API_VERSION"} {
+		ginkgo.GinkgoT().Setenv(key, "")
+	}
+	ginkgo.GinkgoT().Setenv("DOCKER_HOST", "tcp://"+server.Listener.Addr().String())
+
+	ctx, err := docker.NewContext(context.Background())
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+
+	collector := opstats.NewCollector()
+	return opstats.NewContext(ctx, collector), collector
+}
+
+func daemonHandler(status int, body string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasSuffix(r.URL.Path, "/_ping") {
+			w.Header().Set("API-Version", "1.47")
+			w.Header().Set("OSType", "linux")
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(status)
+		_, err := io.WriteString(w, body)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+	}
+}
+
+func operationCount(collector *opstats.Collector, op opstats.Operation) int {
+	for _, summary := range collector.Summary() {
+		if summary.Operation == op {
+			return summary.Count
+		}
+	}
+	return 0
 }

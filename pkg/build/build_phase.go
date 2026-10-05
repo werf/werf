@@ -953,7 +953,6 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, s
 			}
 		}).
 		Do(func() {
-			defer opstats.Observe(ctx, opstats.OperationStageDigestLockWait)()
 			phase.Conveyor.GetStageDigestMutex(stg.GetDigest()).Lock()
 		})
 
@@ -1192,6 +1191,11 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 				stg.LogDetailedName(), stg.GetDigest(), stageDesc.Info.Name,
 			)
 
+			// Only a buildable stage actually built something here to throw away: a mutable
+			// stage has not been mutated yet at this point.
+			if stg.IsBuildable() {
+				opstats.CountEvent(ctx, opstats.EventStageDiscarded)
+			}
 			phase.countStageCacheHit(ctx)
 
 			i := phase.Conveyor.GetOrCreateStageImage(stageDesc.Info.Name, phase.StagesIterator.GetPrevImage(img, stg), stg, img)

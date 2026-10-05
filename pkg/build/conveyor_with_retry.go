@@ -6,6 +6,7 @@ import (
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
+	"github.com/werf/werf/v2/pkg/opstats"
 	"github.com/werf/werf/v2/pkg/storage/manager"
 	"github.com/werf/werf/v2/pkg/storage/synchronization/lock_manager"
 )
@@ -40,7 +41,7 @@ func (wrapper *ConveyorWithRetryWrapper) Terminate() error {
 }
 
 func (wrapper *ConveyorWithRetryWrapper) WithRetryBlock(ctx context.Context, f func(c *Conveyor) error) error {
-	return manager.RetryOnUnexpectedStagesStorageState(ctx, wrapper.StorageManager, func() error {
+	return retryWithRestartCount(ctx, wrapper.StorageManager, func() error {
 		newConveyor := NewConveyor(
 			wrapper.WerfConfig,
 			wrapper.GiterminismManager,
@@ -55,5 +56,16 @@ func (wrapper *ConveyorWithRetryWrapper) WithRetryBlock(ctx context.Context, f f
 		defer newConveyor.Terminate(ctx)
 
 		return f(newConveyor)
+	})
+}
+
+func retryWithRestartCount(ctx context.Context, storageManager *manager.StorageManager, f func() error) error {
+	var attempt int
+	return manager.RetryOnUnexpectedStagesStorageState(ctx, storageManager, func() error {
+		if attempt > 0 {
+			opstats.CountEvent(ctx, opstats.EventConveyorRestart)
+		}
+		attempt++
+		return f()
 	})
 }

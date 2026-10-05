@@ -13,6 +13,7 @@ import (
 	"github.com/werf/logboek"
 	registry_api "github.com/werf/werf/v2/pkg/docker_registry/api"
 	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/opstats"
 )
 
 const (
@@ -68,20 +69,33 @@ func (r *DockerRegistryWithCache) tryLoadTagsFromCache(cachedTagsID string, opts
 }
 
 func (r *DockerRegistryWithCache) getTagsListFromRegistry(ctx context.Context, reference string, opts ...Option) ([]string, error) {
+	outcome, sharedLookup := opstats.CacheOutcomeBypass, false
+	if makeOptions(opts...).cachedTags {
+		outcome = opstats.CacheOutcomeMiss
+	}
+	defer func() {
+		opstats.CountCacheLookup(ctx, opstats.OperationRegistryTagsList, opstats.CacheLayerMemory, outcome, sharedLookup)
+	}()
 	cachedTagsID := r.mustGetCachedTagsID(reference)
 	if tags, ok := r.tryLoadTagsFromCache(cachedTagsID, opts...); ok {
+		outcome = opstats.CacheOutcomeHit
+		opstats.CountEvent(ctx, opstats.EventRegistryTagsCacheHit)
 		return tags, nil
 	}
 
 	// Use singleflight to avoid multiple concurrent calls to the registry for the same reference
 	// This is useful when multiple goroutines try to fetch tags for the same reference at the same time.
 	// Will perform only one call to the registry and share the result among all goroutines.
+	leader := false
 	newTagsResp, err, shared := r.listTagsQueryGroup.Do(cachedTagsID, func() (interface{}, error) {
+		leader = true
 		tags, err := r.Interface.Tags(ctx, reference, opts...)
 		return tags, err
 	})
 
+	sharedLookup = !leader
 	if shared {
+		opstats.CountEvent(ctx, opstats.EventRegistryTagsSharedResult)
 		logboek.Context(ctx).Debug().LogF("Query list tags for %q was reused\n", cachedTagsID)
 	}
 
