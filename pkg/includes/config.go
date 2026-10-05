@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"gopkg.in/yaml.v3"
 
@@ -148,11 +149,11 @@ type getLockInfoOptions struct {
 	lockConfig             *lockConfig
 }
 
-func getLockInfo(opts getLockInfoOptions) (*LockInfo, error) {
+func getLockInfo(ctx context.Context, opts getLockInfoOptions) (*LockInfo, error) {
 	var lockConf *lockConfig
 
 	if opts.useLatestVersion {
-		cfg, err := createLockConfig(createLockConfigOptions{
+		cfg, err := createLockConfig(ctx, createLockConfigOptions{
 			includesConfig: opts.includesConfig,
 			remoteRepos:    opts.remoteRepos,
 		})
@@ -221,8 +222,8 @@ func CreateOrUpdateLockConfig(ctx context.Context, opts createLockConfigOptions)
 	return nil
 }
 
-func CreateLockConfig(_ context.Context, opts createLockConfigOptions) error {
-	locksConf, err := createLockConfig(opts)
+func CreateLockConfig(ctx context.Context, opts createLockConfigOptions) error {
+	locksConf, err := createLockConfig(ctx, opts)
 	if err != nil {
 		return fmt.Errorf("create lock config: %w", err)
 	}
@@ -231,7 +232,7 @@ func CreateLockConfig(_ context.Context, opts createLockConfigOptions) error {
 	return writeLockConfig(locksConf, includesLockPathAbs)
 }
 
-func createLockConfig(opts createLockConfigOptions) (lockConfig, error) {
+func createLockConfig(ctx context.Context, opts createLockConfigOptions) (lockConfig, error) {
 	includesMap := make(map[string]bool)
 	var lockConfs []includeLockConf
 	for _, c := range opts.includesConfig.Includes {
@@ -251,7 +252,7 @@ func createLockConfig(opts createLockConfigOptions) (lockConfig, error) {
 		}
 	}
 
-	newLockConfig, err := newLockConfig(lockConfs, opts.remoteRepos)
+	newLockConfig, err := newLockConfig(ctx, lockConfs, opts.remoteRepos)
 	if err != nil {
 		return lockConfig{}, fmt.Errorf("unable to update lock config: %w", err)
 	}
@@ -259,13 +260,13 @@ func createLockConfig(opts createLockConfigOptions) (lockConfig, error) {
 	return newLockConfig, nil
 }
 
-func newLockConfig(cfg []includeLockConf, remoteRepos *gitRepositoriesWithCache) (lockConfig, error) {
+func newLockConfig(ctx context.Context, cfg []includeLockConf, remoteRepos *gitRepositoriesWithCache) (lockConfig, error) {
 	newLockConfig := lockConfig{
 		IncludeLock: make([]includeLockConf, 0, len(cfg)),
 	}
 
 	for _, c := range cfg {
-		updated, err := c.updateCommit(remoteRepos)
+		updated, err := c.updateCommit(ctx, remoteRepos)
 		if err != nil {
 			return newLockConfig, err
 		}
@@ -304,27 +305,34 @@ func writeLockConfig(inputConfs lockConfig, configAbsPath string) error {
 	return nil
 }
 
-func (c *includeLockConf) updateCommit(remoteRepos *gitRepositoriesWithCache) (*includeLockConf, error) {
+func (c *includeLockConf) updateCommit(ctx context.Context, remoteRepos *gitRepositoriesWithCache) (*includeLockConf, error) {
 	r, err := remoteRepos.getRepository(c.Git)
 	if err != nil {
 		return nil, err
 	}
 
-	repo, err := r.repo.PlainOpen()
-	if err != nil {
-		return nil, fmt.Errorf("plain open: %w", err)
+	var pinnedCommit string
+	if plumbing.IsHash(c.Commit) {
+		pinnedCommit = c.Commit
 	}
 
-	commit, err := c.getCommit(repo)
-	if err != nil {
-		return nil, fmt.Errorf("get commit: %w", err)
+	var commitHash string
+	if err := r.withRepository(ctx, pinnedCommit, func(repo *git.Repository) error {
+		commit, err := c.getCommit(repo)
+		if err != nil {
+			return fmt.Errorf("get commit: %w", err)
+		}
+		commitHash = commit.Hash.String()
+		return nil
+	}); err != nil {
+		return nil, err
 	}
 
 	return &includeLockConf{
 		Git:    c.Git,
 		Branch: c.Branch,
 		Tag:    c.Tag,
-		Commit: commit.Hash.String(),
+		Commit: commitHash,
 	}, nil
 }
 

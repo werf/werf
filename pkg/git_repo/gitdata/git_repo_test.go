@@ -19,7 +19,7 @@ func writeMirror(mirrorPath string, ts time.Time) string {
 
 var _ = Describe("GetGitReposAndRemoveInvalid", func() {
 	It("returns nil, nil when root does not exist", func(ctx SpecContext) {
-		res, err := GetGitReposAndRemoveInvalid(ctx, filepath.Join(GinkgoT().TempDir(), "missing"))
+		res, err := GetGitReposAndRemoveInvalid(ctx, filepath.Join(GinkgoT().TempDir(), "missing"), ScanOptions{})
 		Expect(err).NotTo(HaveOccurred())
 		Expect(res).To(BeNil())
 	})
@@ -28,7 +28,7 @@ var _ = Describe("GetGitReposAndRemoveInvalid", func() {
 		root := filepath.Join(GinkgoT().TempDir(), "root")
 		Expect(os.WriteFile(root, []byte("x"), 0o644)).To(Succeed())
 
-		res, err := GetGitReposAndRemoveInvalid(ctx, root)
+		res, err := GetGitReposAndRemoveInvalid(ctx, root, ScanOptions{})
 		Expect(err).NotTo(HaveOccurred())
 		Expect(res).To(BeNil())
 		Expect(root).NotTo(BeAnExistingFile())
@@ -39,7 +39,7 @@ var _ = Describe("GetGitReposAndRemoveInvalid", func() {
 		stray := filepath.Join(root, "stray")
 		Expect(os.WriteFile(stray, []byte("x"), 0o644)).To(Succeed())
 
-		res, err := GetGitReposAndRemoveInvalid(ctx, root)
+		res, err := GetGitReposAndRemoveInvalid(ctx, root, ScanOptions{})
 		Expect(err).NotTo(HaveOccurred())
 		Expect(res).To(BeEmpty())
 		Expect(stray).NotTo(BeAnExistingFile())
@@ -51,7 +51,7 @@ var _ = Describe("GetGitReposAndRemoveInvalid", func() {
 		mirrorA := writeMirror(filepath.Join(root, "aaa"), now)
 		mirrorB := writeMirror(filepath.Join(root, "bbb"), now)
 
-		res, err := GetGitReposAndRemoveInvalid(ctx, root)
+		res, err := GetGitReposAndRemoveInvalid(ctx, root, ScanOptions{})
 		Expect(err).NotTo(HaveOccurred())
 		Expect(res).To(HaveLen(2))
 
@@ -76,7 +76,7 @@ var _ = Describe("GetGitReposAndRemoveInvalid", func() {
 			Expect(os.MkdirAll(brokenMirror, 0o755)).To(Succeed())
 			brokenSetup(filepath.Join(brokenMirror, "last_access_at"))
 
-			res, err := GetGitReposAndRemoveInvalid(ctx, root)
+			res, err := GetGitReposAndRemoveInvalid(ctx, root, ScanOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(res).To(HaveLen(2))
 

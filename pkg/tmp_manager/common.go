@@ -3,11 +3,14 @@ package tmp_manager
 import (
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/werf/werf/v2/pkg/werf"
 )
 
 const (
+	projectDirMaxAge = time.Hour * 24
+
 	projectsServiceDir          = "projects"
 	dockerConfigsServiceDir     = "docker_configs"
 	kubeConfigsServiceDir       = "kubeconfigs"

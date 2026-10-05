@@ -3,6 +3,7 @@ package gitdata
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -37,6 +38,11 @@ func (entry *GitArchiveDesc) GetCacheBasePath() string {
 	return entry.CacheBasePath
 }
 
+const (
+	archiveMetadataSuffix = ".meta.json"
+	archivePayloadSuffix  = ".tar"
+)
+
 // GetGitArchivesAndRemoveInvalid scans the given cacheVersionRoot directory and returns
 // a list of GitArchiveDesc for each valid git archive found. It removes invalid
 // entries and handles errors appropriately.
@@ -49,8 +55,12 @@ func (entry *GitArchiveDesc) GetCacheBasePath() string {
 // │   │   └── ... (other archive files)
 // │   └── ... (other hash prefixes)
 // └── ... (other repository hashes)
-func GetGitArchivesAndRemoveInvalid(ctx context.Context, cacheVersionRoot string) ([]GitDataEntry, error) {
+//
+// An entry whose metadata cannot be read is preserved with its payload and
+// left out of the result; its error is joined into the returned error.
+func GetGitArchivesAndRemoveInvalid(ctx context.Context, cacheVersionRoot string, options ScanOptions) ([]GitDataEntry, error) {
 	var res []GitDataEntry
+	var errs []error
 
 	fileStat, err := os.Stat(cacheVersionRoot)
 	if err != nil {
@@ -61,7 +71,7 @@ func GetGitArchivesAndRemoveInvalid(ctx context.Context, cacheVersionRoot string
 	}
 	if !fileStat.IsDir() {
 		logboek.Context(ctx).Warn().LogF("Removing invalid entry %q: not a directory\n", cacheVersionRoot)
-		if err := os.RemoveAll(cacheVersionRoot); err != nil {
+		if err := removePath(cacheVersionRoot, options); err != nil {
 			return nil, fmt.Errorf("unable to remove %q: %w", cacheVersionRoot, err)
 		}
 		return nil, nil
@@ -77,7 +87,7 @@ func GetGitArchivesAndRemoveInvalid(ctx context.Context, cacheVersionRoot string
 
 		if !repoHashInfo.IsDir() {
 			logboek.Context(ctx).Warn().LogF("Removing invalid entry %q: not a directory\n", repoHashDir)
-			if err := os.RemoveAll(repoHashDir); err != nil {
+			if err := removePath(repoHashDir, options); err != nil {
 				return nil, fmt.Errorf("unable to remove %q: %w", repoHashDir, err)
 			}
 			continue
@@ -85,7 +95,8 @@ func GetGitArchivesAndRemoveInvalid(ctx context.Context, cacheVersionRoot string
 
 		hashPrefixes, err := ioutil.ReadDir(repoHashDir)
 		if err != nil {
-			return nil, fmt.Errorf("error reading repo archives dir %q: %w", repoHashDir, err)
+			errs = append(errs, fmt.Errorf("read repo archives dir %q: %w", repoHashDir, err))
+			continue
 		}
 
 		for _, hashPrefixInfo := range hashPrefixes {
@@ -93,7 +104,7 @@ func GetGitArchivesAndRemoveInvalid(ctx context.Context, cacheVersionRoot string
 
 			if !hashPrefixInfo.IsDir() {
 				logboek.Context(ctx).Warn().LogF("Removing invalid entry %q: not a directory\n", hashPrefixDir)
-				if err := os.RemoveAll(hashPrefixDir); err != nil {
+				if err := removePath(hashPrefixDir, options); err != nil {
 					return nil, fmt.Errorf("unable to remove %q: %w", hashPrefixDir, err)
 				}
 				continue
@@ -101,63 +112,85 @@ func GetGitArchivesAndRemoveInvalid(ctx context.Context, cacheVersionRoot string
 
 			archiveFiles, err := ioutil.ReadDir(hashPrefixDir)
 			if err != nil {
-				return nil, fmt.Errorf("error reading repo archives from dir %q: %w", hashPrefixDir, err)
+				errs = append(errs, fmt.Errorf("read repo archives from dir %q: %w", hashPrefixDir, err))
+				continue
 			}
 
-			for _, archiveMetaOrTarFileInfo := range archiveFiles {
-				archiveMetaOrTarFilePath := filepath.Join(hashPrefixDir, archiveMetaOrTarFileInfo.Name())
+			regularFiles := make(map[string]os.FileInfo, len(archiveFiles))
+			for _, fileInfo := range archiveFiles {
+				filePath := filepath.Join(hashPrefixDir, fileInfo.Name())
 
-				if archiveMetaOrTarFileInfo.IsDir() {
-					logboek.Context(ctx).Warn().LogF("Removing invalid entry %q: not a file\n", archiveMetaOrTarFilePath)
-					if err := os.RemoveAll(archiveMetaOrTarFilePath); err != nil {
-						return nil, fmt.Errorf("unable to remove %q: %w", archiveMetaOrTarFilePath, err)
+				if !fileInfo.Mode().IsRegular() {
+					logboek.Context(ctx).Warn().LogF("Removing invalid entry %q: not a regular file\n", filePath)
+					if err := removePath(filePath, options); err != nil {
+						return nil, fmt.Errorf("unable to remove %q: %w", filePath, err)
 					}
 					continue
 				}
 
-				if strings.HasSuffix(archiveMetaOrTarFileInfo.Name(), ".meta.json") {
-					desc := &GitArchiveDesc{MetadataPath: archiveMetaOrTarFilePath, CacheBasePath: cacheVersionRoot}
+				regularFiles[fileInfo.Name()] = fileInfo
+			}
 
-					data, err := ioutil.ReadFile(archiveMetaOrTarFilePath)
-					if err != nil {
-						return nil, fmt.Errorf("error reading metadata file %q: %w", archiveMetaOrTarFilePath, err)
-					}
-					if err := json.Unmarshal(data, &desc.Metadata); err != nil {
-						logboek.Context(ctx).Warn().LogF("Removing invalid entry %q: unable to unmarshal json: %w\n", archiveMetaOrTarFilePath, err)
-						if err := os.RemoveAll(archiveMetaOrTarFilePath); err != nil {
-							return nil, fmt.Errorf("unable to remove %q: %w", archiveMetaOrTarFilePath, err)
-						}
-						continue
-					}
+			keptNames := make(map[string]bool, len(regularFiles))
 
-					archivePath := filepath.Join(hashPrefixDir, fmt.Sprintf("%s.tar", strings.TrimSuffix(archiveMetaOrTarFileInfo.Name(), ".meta.json")))
+			for _, fileInfo := range archiveFiles {
+				name := fileInfo.Name()
+				if _, ok := regularFiles[name]; !ok {
+					continue
+				}
+				if !strings.HasSuffix(name, archiveMetadataSuffix) {
+					continue
+				}
 
-					archiveInfo, err := os.Stat(archivePath)
-					if err != nil {
-						if os.IsNotExist(err) {
-							logboek.Context(ctx).Warn().LogF("Removing invalid entry %q: archive file does not exist\n", archivePath)
-							if err := os.RemoveAll(archiveMetaOrTarFilePath); err != nil {
-								return nil, fmt.Errorf("unable to remove %q: %w", archiveMetaOrTarFilePath, err)
-							}
-							continue
-						}
-						return nil, fmt.Errorf("error accessing %q: %w", archivePath, err)
-					}
+				metadataPath := filepath.Join(hashPrefixDir, name)
+				payloadName := strings.TrimSuffix(name, archiveMetadataSuffix) + archivePayloadSuffix
+				desc := &GitArchiveDesc{MetadataPath: metadataPath, CacheBasePath: cacheVersionRoot}
 
-					desc.ArchivePath = archivePath
-					desc.Size = uint64(archiveInfo.Size())
-					res = append(res, desc)
-				} else if strings.HasSuffix(archiveMetaOrTarFileInfo.Name(), ".tar") {
-					// This is a valid tar file, do nothing.
-				} else {
-					logboek.Context(ctx).Warn().LogF("Removing invalid entry %q: unknown file type\n", archiveMetaOrTarFilePath)
-					if err := os.RemoveAll(archiveMetaOrTarFilePath); err != nil {
-						return nil, fmt.Errorf("unable to remove %q: %w", archiveMetaOrTarFilePath, err)
-					}
+				data, err := ioutil.ReadFile(metadataPath)
+				if err != nil {
+					errs = append(errs, fmt.Errorf("read metadata file %q: %w", metadataPath, err))
+					keptNames[name] = true
+					keptNames[payloadName] = true
+					continue
+				}
+
+				if err := json.Unmarshal(data, &desc.Metadata); err != nil {
+					logboek.Context(ctx).Warn().LogF("Removing invalid entry %q: unable to unmarshal json: %s\n", metadataPath, err)
+					continue
+				}
+				if desc.Metadata == nil {
+					logboek.Context(ctx).Warn().LogF("Removing invalid entry %q: empty metadata\n", metadataPath)
+					continue
+				}
+
+				payloadInfo, ok := regularFiles[payloadName]
+				if !ok {
+					logboek.Context(ctx).Warn().LogF("Removing invalid entry %q: archive file does not exist\n", filepath.Join(hashPrefixDir, payloadName))
+					continue
+				}
+
+				desc.ArchivePath = filepath.Join(hashPrefixDir, payloadName)
+				desc.Size = uint64(payloadInfo.Size())
+				keptNames[name] = true
+				keptNames[payloadName] = true
+
+				res = append(res, desc)
+			}
+
+			for _, fileInfo := range archiveFiles {
+				name := fileInfo.Name()
+				if _, ok := regularFiles[name]; !ok || keptNames[name] {
+					continue
+				}
+
+				filePath := filepath.Join(hashPrefixDir, name)
+				logboek.Context(ctx).Warn().LogF("Removing invalid entry %q: no valid archive entry owns it\n", filePath)
+				if err := removePath(filePath, options); err != nil {
+					return res, fmt.Errorf("unable to remove %q: %w", filePath, err)
 				}
 			}
 		}
 	}
 
-	return res, nil
+	return res, errors.Join(errs...)
 }
