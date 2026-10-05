@@ -61,7 +61,7 @@ var _ = ginkgo.Describe("GetGitArchivesAndRemoveInvalid", func() {
 		ginkgo.Entry("payload absent", lo.ToPtr(`{"LastAccessTimestamp":7}`), nil),
 	)
 
-	ginkgo.It("keeps the valid neighbour of a broken entry sharing its id prefix", func(ctx ginkgo.SpecContext) {
+	ginkgo.It("keeps the valid neighbor of a broken entry sharing its id prefix", func(ctx ginkgo.SpecContext) {
 		writeCacheFile(metaPath("abc"), "null")
 		writeCacheFile(tarPath("abc"), "12345")
 		meta := writeCacheFile(metaPath("abcd"), `{"LastAccessTimestamp":7}`)

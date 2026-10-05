@@ -30,6 +30,15 @@
 // bump there leaks the old data forever but destroys nothing. The whole
 // local_cache is removed only by `werf host purge`.
 //
+// RunGC's dry-run does not modify these cache roots, including invalid entries
+// and stale version directories. Unreadable access markers stop collection;
+// unlike missing or malformed markers, I/O errors do not establish staleness.
+// Archive and patch payloads without valid metadata are incomplete entries.
+// Patch sidecars belong to the same entry and are reclaimed with its payload.
+// A stale local worktree with a missing origin precedes reusable entries in
+// LRU cleanup; its origin is rechecked before removal. This does not shorten
+// the access-age guard or make missing-origin detection an eager deletion.
+//
 // # Bumping a cache version
 //
 // A bump is allowed only when ALL of the following hold:
