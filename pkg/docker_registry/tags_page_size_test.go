@@ -17,6 +17,7 @@ import (
 
 var _ = ginkgo.Describe("registry tags page size", func() {
 	ginkgo.BeforeEach(func() {
+		ginkgo.GinkgoT().Setenv(tagsPageSizeEnv, "")
 		configDir := ginkgo.GinkgoT().TempDir()
 		gomega.Expect(os.WriteFile(filepath.Join(configDir, "config.json"), []byte(`{"auths":{}}`), 0o600)).To(gomega.Succeed())
 		ginkgo.GinkgoT().Setenv("DOCKER_CONFIG", configDir)
