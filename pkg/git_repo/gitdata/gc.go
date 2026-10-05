@@ -254,6 +254,13 @@ func removeGitDataEntries(ctx context.Context, entries []GitDataEntry, options r
 	var estimatedFreedBytes uint64
 
 	for _, entry := range entries {
+		if worktree, ok := entry.(*GitWorktreeDesc); ok && worktree.orphanedGitDir != "" {
+			if _, err := os.Stat(worktree.orphanedGitDir); err == nil {
+				continue
+			} else if !os.IsNotExist(err) {
+				return estimatedFreedBytes, fmt.Errorf("recheck worktree origin %q: %w", worktree.orphanedGitDir, err)
+			}
+		}
 		for _, path := range entry.GetPaths() {
 			logboek.Context(ctx).LogF("Removing %q inside scope %q\n", path, entry.GetCacheBasePath())
 

@@ -18,6 +18,7 @@ type GitDataEntry interface {
 type gitDataEntryRank int
 
 const (
+	gitDataEntryRankOrphanWorktree         gitDataEntryRank = -1
 	gitDataEntryRankArchiveOrPatch         gitDataEntryRank = 0
 	gitDataEntryRankWorktree               gitDataEntryRank = 1
 	gitDataEntryRankWorktreeWithSubmodules gitDataEntryRank = 2
@@ -29,6 +30,9 @@ func getGitDataEntryRank(entry GitDataEntry) gitDataEntryRank {
 	case *GitArchiveDesc, *GitPatchDesc:
 		return gitDataEntryRankArchiveOrPatch
 	case *GitWorktreeDesc:
+		if desc.orphanedGitDir != "" {
+			return gitDataEntryRankOrphanWorktree
+		}
 		if desc.HasSubmodules {
 			return gitDataEntryRankWorktreeWithSubmodules
 		}
