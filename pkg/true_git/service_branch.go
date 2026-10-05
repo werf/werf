@@ -383,8 +383,14 @@ func expandTilde(path string) string {
 // worktree always stays in detached HEAD and the branch ref is advanced with update-ref. A
 // checked-out branch is exclusive to one worktree, so a stale registration of another service
 // worktree (another WERF_HOME, a wiped cache) holding the branch would make checkout fail.
+// update-ref has no such protection, so the live-worktree check git would have made is
+// done explicitly: the branch name is user-controlled and may be a real branch.
 func prepareAndCheckoutServiceBranch(ctx context.Context, serviceWorktreeDir, sourceCommit, branchName string) error {
 	branchRef := "refs/heads/" + branchName
+
+	if err := ensureBranchNotCheckedOutElsewhere(ctx, serviceWorktreeDir, branchRef); err != nil {
+		return err
+	}
 
 	branchListCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: serviceWorktreeDir}, "branch", "--list", branchName)
 	if err := branchListCmd.Run(ctx); err != nil {
@@ -425,6 +431,30 @@ func prepareAndCheckoutServiceBranch(ctx context.Context, serviceWorktreeDir, so
 	updateRefCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: serviceWorktreeDir}, "update-ref", branchRef, "HEAD")
 	if err := updateRefCmd.Run(ctx); err != nil {
 		return fmt.Errorf("git update-ref command failed: %w", err)
+	}
+
+	return nil
+}
+
+func ensureBranchNotCheckedOutElsewhere(ctx context.Context, serviceWorktreeDir, branchRef string) error {
+	resolvedServiceWorktreeDir, err := filepath.EvalSymlinks(serviceWorktreeDir)
+	if err != nil {
+		return fmt.Errorf("unable to eval symlinks of %q: %w", serviceWorktreeDir, err)
+	}
+
+	worktrees, err := GetWorkTreeList(ctx, serviceWorktreeDir)
+	if err != nil {
+		return fmt.Errorf("unable to list worktrees: %w", err)
+	}
+
+	for _, wt := range worktrees {
+		if wt.Branch != branchRef || wt.Prunable {
+			continue
+		}
+		if resolvedPath, err := filepath.EvalSymlinks(wt.Path); err == nil && resolvedPath == resolvedServiceWorktreeDir {
+			continue
+		}
+		return fmt.Errorf("service branch %q is checked out at %q: choose another branch with --dev-branch or detach that worktree", strings.TrimPrefix(branchRef, "refs/heads/"), wt.Path)
 	}
 
 	return nil

@@ -68,6 +68,34 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 		Expect(commit).Should(Equal(sourceHeadCommit))
 	})
 
+	DescribeTable("refuses to advance a branch checked out in a live worktree",
+		func(specCtx SpecContext, holderDir func(ctx context.Context) string) {
+			ctx := logging.WithLogger(specCtx)
+
+			const branch = "held"
+			holder := holderDir(ctx)
+			utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "branch", branch, sourceHeadCommit)
+			utils.RunSucceedCommand(ctx, holder, "git", "checkout", "-q", branch)
+
+			utils.WriteFile(filepath.Join(sourceWorkTreeDir, "uncommitted.txt"), []byte("content"))
+
+			_, err := SyncSourceWorktreeWithServiceBranch(ctx, gitDir, sourceWorkTreeDir, workTreeCacheDir, sourceHeadCommit, SyncSourceWorktreeWithServiceBranchOptions{ServiceBranch: branch})
+			Expect(err).To(MatchError(ContainSubstring("checked out")))
+
+			Expect(utils.SucceedCommandOutputString(ctx, sourceWorkTreeDir, "git", "rev-parse", branch)).To(Equal(sourceHeadCommit + "\n"))
+			Expect(utils.GetHeadCommit(ctx, sourceWorkTreeDir)).To(Equal(sourceHeadCommit))
+			list, err := GetWorkTreeList(ctx, gitDir)
+			Expect(err).To(Succeed())
+			Expect(list).To(ContainElement(HaveField("Path", holder)))
+		},
+		Entry("the source worktree", func(context.Context) string { return sourceWorkTreeDir }),
+		Entry("another user worktree", func(ctx context.Context) string {
+			dir := filepath.Join(SuiteData.TestDirPath, "user-wt")
+			utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "worktree", "add", "--detach", dir)
+			return dir
+		}),
+	)
+
 	When("the service branch is held by a worktree whose directory no longer exists", func() {
 		BeforeEach(func(ctx SpecContext) {
 			staleWtDir := filepath.Join(SuiteData.TestDirPath, "stale-home", "worktree")
