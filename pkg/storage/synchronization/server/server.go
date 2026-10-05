@@ -99,7 +99,7 @@ func (server *handler) handleLanding(w http.ResponseWriter, r *http.Request) {
 </body>
 </html>
 `, DefaultAddress)
-	fmt.Fprintf(w, rawPage)
+	fmt.Fprint(w, rawPage)
 }
 
 func (server *handler) handleRequestByClientID(w http.ResponseWriter, r *http.Request) {
