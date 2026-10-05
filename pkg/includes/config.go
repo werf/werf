@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"gopkg.in/yaml.v3"
 
@@ -316,10 +317,13 @@ func (c *includeLockConf) updateCommit(ctx context.Context, remoteRepos *gitRepo
 		return nil, err
 	}
 
+	var pinnedCommit string
+	if plumbing.IsHash(c.Commit) {
+		pinnedCommit = c.Commit
+	}
+
 	var commitHash string
-	// Lock creation resolves the current ref, so no commit is pinned here: the
-	// resolution and the commit lookup must both happen under the shared lock.
-	if err := r.withRepository(ctx, "", func(repo *git.Repository) error {
+	if err := r.withRepository(ctx, pinnedCommit, func(repo *git.Repository) error {
 		commit, err := c.getCommit(repo)
 		if err != nil {
 			return fmt.Errorf("get commit: %w", err)

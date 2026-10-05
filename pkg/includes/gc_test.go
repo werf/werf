@@ -2,6 +2,7 @@ package includes
 
 import (
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 
 	"github.com/werf/werf/v3/pkg/git_repo"
 	"github.com/werf/werf/v3/pkg/werf"
+	"github.com/werf/werf/v3/test/pkg/utils"
 )
 
 func TestIncludesGC(t *testing.T) {
@@ -19,6 +21,41 @@ func TestIncludesGC(t *testing.T) {
 }
 
 var _ = ginkgo.Describe("Includes cache eviction", func() {
+	ginkgo.DescribeTable("resolves existing non-full-hash commit revisions",
+		func(ctx ginkgo.SpecContext, length int, suffix string) {
+			cfg, repos, commit := setupRemoteInclude(ctx)
+			cfg.Includes[0].Branch = ""
+			cfg.Includes[0].Commit = commit[:length] + suffix
+
+			lock, err := createLockConfig(ctx, createLockConfigOptions{includesConfig: cfg, remoteRepos: repos})
+			gomega.Expect(err).NotTo(gomega.HaveOccurred())
+			gomega.Expect(lock.IncludeLock).To(gomega.HaveLen(1))
+			gomega.Expect(lock.IncludeLock[0].Commit).To(gomega.Equal(commit))
+		},
+		ginkgo.Entry("odd abbreviation", 7, ""),
+		ginkgo.Entry("even abbreviation", 8, ""),
+		ginkgo.Entry("revision expression", 40, "^0"),
+	)
+
+	ginkgo.It("restores an explicit include commit after mirror eviction and force push", func(ctx ginkgo.SpecContext) {
+		cfg, repos, commit := setupRemoteInclude(ctx)
+		source := strings.TrimPrefix(cfg.Includes[0].Git, "file://")
+		utils.RunSucceedCommand(ctx, source, "git", "checkout", "--orphan", "replacement")
+		utils.RunSucceedCommand(ctx, source, "git", "-c", "user.name=Test", "-c", "user.email=test@example.com", "-c", "commit.gpgsign=false", "commit", "-m", "replacement")
+		utils.RunSucceedCommand(ctx, source, "git", "branch", "-M", "main")
+		repo, err := repos.getRepository(cfg.Includes[0].Git)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		remote, ok := repo.repo.(*git_repo.Remote)
+		gomega.Expect(ok).To(gomega.BeTrue())
+		gomega.Expect(os.RemoveAll(remote.GetClonePath())).To(gomega.Succeed())
+		cfg.Includes[0].Branch = ""
+		cfg.Includes[0].Commit = commit
+		lock, err := createLockConfig(ctx, createLockConfigOptions{includesConfig: cfg, remoteRepos: repos})
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		gomega.Expect(lock.IncludeLock).To(gomega.HaveLen(1))
+		gomega.Expect(lock.IncludeLock[0].Commit).To(gomega.Equal(commit))
+	})
+
 	ginkgo.It("restores a missing mirror before reading locked includes", func(ctx ginkgo.SpecContext) {
 		cfg, repos, commit := setupRemoteInclude(ctx)
 		info, err := getLockInfo(ctx, getLockInfoOptions{includesConfig: cfg, useLatestVersion: true, remoteRepos: repos})
