@@ -80,6 +80,7 @@ var _ = Describe("shallow shell git helpers", func() {
 		}
 
 		utils.RunSucceedCommand(ctx, sourcePath, "git", "-c", "init.defaultBranch=main", "init")
+		utils.RunSucceedCommand(ctx, sourcePath, "git", "config", "commit.gpgsign", "false")
 		gitInSource("checkout", "-b", "main")
 		gitInSource("commit", "--allow-empty", "-m", "c1")
 		gitInSource("commit", "--allow-empty", "-m", "c2")

@@ -20,5 +20,6 @@ func initGitRepo(t *testing.T, dir string) {
 	runGit(t, dir, "init")
 	runGit(t, dir, "config", "user.email", "test@werf.io")
 	runGit(t, dir, "config", "user.name", "test")
+	runGit(t, dir, "config", "commit.gpgsign", "false")
 	runGit(t, dir, "commit", "--allow-empty", "-m", "init")
 }

@@ -18,6 +18,7 @@ var _ = Describe("Git command", func() {
 		utils.MkdirAll(gitRepoPath)
 
 		utils.RunSucceedCommand(ctx, gitRepoPath, "git", "-c", "init.defaultBranch=main", "init")
+		utils.RunSucceedCommand(ctx, gitRepoPath, "git", "config", "commit.gpgsign", "false")
 
 		utils.RunSucceedCommand(ctx, gitRepoPath, "git", "checkout", "-b", "main")
 
