@@ -2,6 +2,7 @@ package build
 
 import (
 	"context"
+	"errors"
 	"sync"
 
 	"github.com/onsi/ginkgo/v2"
@@ -9,10 +10,7 @@ import (
 
 	"github.com/werf/werf/v3/pkg/build/image"
 	"github.com/werf/werf/v3/pkg/config"
-	"github.com/werf/werf/v3/pkg/giterminism_manager"
 	imagePkg "github.com/werf/werf/v3/pkg/image"
-	"github.com/werf/werf/v3/pkg/storage"
-	"github.com/werf/werf/v3/pkg/storage/manager"
 )
 
 var _ = ginkgo.Describe("Check mode image publication", func() {
@@ -71,6 +69,24 @@ var _ = ginkgo.Describe("Check mode image publication", func() {
 		gomega.Expect(stagesStorage.writes).To(gomega.BeEmpty())
 	})
 
+	ginkgo.DescribeTable("rejects a missing custom tag in check mode", func(ctx ginkgo.SpecContext, multiplatform bool) {
+		phase, stagesStorage := newPhase(true)
+		stagesStorage.customTagErr = errors.New("custom tag missing")
+		var err error
+		if multiplatform {
+			img := multiplatformImage()
+			gomega.Expect(phase.publishMultiplatformImageMetadata(ctx, "image0", img)).To(gomega.Succeed())
+			err = phase.publishMultiplatformImageCustomTags(ctx, "image0", img)
+		} else {
+			err = phase.publishImageMetadata(ctx, "image0", singlePlatformImage())
+		}
+		gomega.Expect(err).To(gomega.MatchError(gomega.ContainSubstring("custom tag missing")))
+		gomega.Expect(stagesStorage.writes).To(gomega.BeEmpty())
+	},
+		ginkgo.Entry("single-platform image", false),
+		ginkgo.Entry("multiplatform image", true),
+	)
+
 	ginkgo.It("reports a multiplatform image that was never published", func(ctx ginkgo.SpecContext) {
 		phase, stagesStorage := newPhase(true)
 		stagesStorage.desc = nil
@@ -96,88 +112,3 @@ var _ = ginkgo.Describe("Check mode image publication", func() {
 		}, []string{"AddManagedImage", "PostMultiplatformImage", "PutImageMetadata", "AddStageCustomTag", "RegisterStageCustomTag"}),
 	)
 })
-
-var _ giterminism_manager.Interface = (*checkModeGiterminismManager)(nil)
-
-type checkModeGiterminismManager struct {
-	giterminism_manager.Interface
-}
-
-func (m *checkModeGiterminismManager) HeadCommit(_ context.Context) string { return "headcommit" }
-
-var _ manager.StorageManagerInterface = (*checkModeStorageManager)(nil)
-
-type checkModeStorageManager struct {
-	manager.StorageManagerInterface
-	stagesStorage *checkModeStorage
-}
-
-func (m *checkModeStorageManager) GetStagesStorage() storage.PrimaryStagesStorage {
-	return m.stagesStorage
-}
-
-func (m *checkModeStorageManager) GetMetaStorage() storage.PrimaryStagesStorage {
-	return m.stagesStorage
-}
-
-func (m *checkModeStorageManager) GetFinalStagesStorage() storage.StagesStorage { return nil }
-
-var _ storage.PrimaryStagesStorage = (*checkModeStorage)(nil)
-
-// checkModeStorage records every mutating call so that a check-mode spec can assert that none
-// happened, instead of asserting that one particular write is skipped.
-type checkModeStorage struct {
-	storage.PrimaryStagesStorage
-	desc   *imagePkg.StageDesc
-	writes []string
-}
-
-func (s *checkModeStorage) String() string { return "check-mode-test" }
-
-func (s *checkModeStorage) ConstructStageImageName(projectName, digest string, creationTs int64) string {
-	return projectName + ":" + digest
-}
-
-func (s *checkModeStorage) GetStageDesc(_ context.Context, _ string, _ imagePkg.StageID) (*imagePkg.StageDesc, error) {
-	if s.desc == nil {
-		return nil, storage.ErrStageNotFound
-	}
-	return s.desc, nil
-}
-
-func (s *checkModeStorage) IsManagedImageExist(_ context.Context, _, _ string, _ ...storage.Option) (bool, error) {
-	return false, nil
-}
-
-func (s *checkModeStorage) IsImageMetadataExist(_ context.Context, _, _, _, _ string, _ ...storage.Option) (bool, error) {
-	return false, nil
-}
-
-func (s *checkModeStorage) CheckStageCustomTag(_ context.Context, _ *imagePkg.StageDesc, _ string) error {
-	return nil
-}
-
-func (s *checkModeStorage) AddManagedImage(_ context.Context, _, _ string) error {
-	s.writes = append(s.writes, "AddManagedImage")
-	return nil
-}
-
-func (s *checkModeStorage) PutImageMetadata(_ context.Context, _, _, _, _ string) error {
-	s.writes = append(s.writes, "PutImageMetadata")
-	return nil
-}
-
-func (s *checkModeStorage) PostMultiplatformImage(_ context.Context, _, _ string, _ []*imagePkg.Info, _ []string) error {
-	s.writes = append(s.writes, "PostMultiplatformImage")
-	return nil
-}
-
-func (s *checkModeStorage) AddStageCustomTag(_ context.Context, _ *imagePkg.StageDesc, _ string) error {
-	s.writes = append(s.writes, "AddStageCustomTag")
-	return nil
-}
-
-func (s *checkModeStorage) RegisterStageCustomTag(_ context.Context, _ string, _ *imagePkg.StageDesc, _ string) error {
-	s.writes = append(s.writes, "RegisterStageCustomTag")
-	return nil
-}

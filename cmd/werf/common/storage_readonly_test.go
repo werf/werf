@@ -1,106 +1,45 @@
 package common
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
-	"strings"
-	"sync"
 
-	"github.com/google/go-containerregistry/pkg/registry"
 	ginkgo "github.com/onsi/ginkgo/v2"
 	gomega "github.com/onsi/gomega"
 	"github.com/spf13/cobra"
 
-	"github.com/werf/werf/v3/pkg/docker_registry"
-	"github.com/werf/werf/v3/pkg/storage"
 	"github.com/werf/werf/v3/pkg/werf"
 )
-
-// writeRecordingRegistry fronts a real in-memory registry and records every
-// request that could modify it, so a test can assert that an initialization
-// path is read-only.
-type writeRecordingRegistry struct {
-	handler http.Handler
-
-	mu     sync.Mutex
-	writes []string
-}
-
-func (r *writeRecordingRegistry) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	switch req.Method {
-	case http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete:
-		r.mu.Lock()
-		r.writes = append(r.writes, req.Method+" "+req.URL.Path)
-		r.mu.Unlock()
-	}
-	r.handler.ServeHTTP(w, req)
-}
-
-func (r *writeRecordingRegistry) recordedWrites() []string {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	return append([]string(nil), r.writes...)
-}
-
-func (r *writeRecordingRegistry) forgetWrites() {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	r.writes = nil
-}
-
-// startRecordingRegistry returns the repo address of a fresh in-memory registry
-// together with its write recorder.
-func startRecordingRegistry(repo string) (string, *writeRecordingRegistry) {
-	recorder := &writeRecordingRegistry{handler: registry.New()}
-	server := httptest.NewServer(recorder)
-	ginkgo.DeferCleanup(server.Close)
-	return strings.TrimPrefix(server.URL, "http://") + "/" + repo, recorder
-}
-
-func storageManagerCmdData(args ...string) *CmdData {
-	command := &cobra.Command{}
-	data := &CmdData{}
-	SetupSecondaryStagesStorageOptions(data, command)
-	SetupCacheStagesStorageOptions(data, command)
-	SetupRepoOptions(data, command, RepoDataOptions{OptionalRepo: true})
-	SetupFinalRepo(data, command)
-	SetupMetaRepo(data, command)
-	SetupContainerRegistryMirror(data, command)
-	SetupSynchronization(data, command)
-	SetupCheckBuiltImages(data, command)
-	gomega.Expect(command.ParseFlags(args)).To(gomega.Succeed())
-	return data
-}
-
-func repoStagesStorageAt(ctx context.Context, address string) *storage.RepoStagesStorage {
-	client, err := docker_registry.NewDockerRegistry(ctx, address, docker_registry.DefaultImplementationName, docker_registry.DockerRegistryOptions{InsecureRegistry: true})
-	gomega.Expect(err).NotTo(gomega.HaveOccurred())
-	return storage.NewRepoStagesStorage(&storage.NewRepoStagesStorageOptions{RepoAddress: address, DockerRegistry: client})
-}
 
 var _ = ginkgo.Describe("Storage manager initialization in check mode", func() {
 	ginkgo.BeforeEach(func() {
 		gomega.Expect(werf.Init(ginkgo.GinkgoT().TempDir(), ginkgo.GinkgoT().TempDir())).To(gomega.Succeed())
 	})
 
-	ginkgo.It("writes nothing into an empty repo and never contacts the sync server", func(ctx ginkgo.SpecContext) {
+	ginkgo.DescribeTable("writes nothing into an empty repo and never contacts the sync server", func(ctx ginkgo.SpecContext, flag string) {
+		if flag == "" {
+			ginkgo.GinkgoT().Setenv("WERF_CHECK_BUILT_IMAGES", "true")
+		}
 		address, recorder := startRecordingRegistry("test/repo")
+		args := []string{"--repo", address, "--insecure-registry", "--synchronization", "https://synchronization.invalid"}
+		if flag != "" {
+			args = append(args, flag)
+		}
 
 		storageManager, err := NewStorageManager(ctx, &NewStorageManagerConfig{
 			ProjectName: "project",
-			CmdData: storageManagerCmdData(
-				"--repo", address,
-				"--insecure-registry",
-				"--synchronization", "https://synchronization.invalid",
-				"--check-built-images",
-			),
+			CmdData:     storageManagerCmdData(args...),
 		})
 
 		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 		gomega.Expect(storageManager.StorageLockManager).NotTo(gomega.BeNil())
 		gomega.Expect(recorder.recordedWrites()).To(gomega.BeEmpty())
-	})
+	},
+		ginkgo.Entry("check flag", "--check-built-images"),
+		ginkgo.Entry("legacy flag", "--require-built-images"),
+		ginkgo.Entry("short flag", "-Z"),
+		ginkgo.Entry("environment", ""),
+	)
 
 	ginkgo.It("still validates the synchronization address", func(ctx ginkgo.SpecContext) {
 		address, recorder := startRecordingRegistry("test/repo")
@@ -141,7 +80,7 @@ var _ = ginkgo.Describe("Storage manager initialization in check mode", func() {
 		gomega.Expect(recorder.recordedWrites()).To(gomega.BeEmpty())
 	})
 
-	ginkgo.It("registers the synchronization identity during ordinary initialization", func(ctx ginkgo.SpecContext) {
+	ginkgo.DescribeTable("registers the synchronization identity during ordinary initialization", func(ctx ginkgo.SpecContext, requireBuiltImages bool) {
 		address, recorder := startRecordingRegistry("test/repo")
 		syncServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 			defer ginkgo.GinkgoRecover()
@@ -150,17 +89,23 @@ var _ = ginkgo.Describe("Storage manager initialization in check mode", func() {
 		}))
 		ginkgo.DeferCleanup(syncServer.Close)
 
+		cmdData := storageManagerCmdData("--repo", address, "--insecure-registry", "--synchronization", syncServer.URL)
+		if requireBuiltImages {
+			command := &cobra.Command{}
+			SetupRequireBuiltImages(cmdData, command)
+			gomega.Expect(command.ParseFlags([]string{"--require-built-images"})).To(gomega.Succeed())
+		}
+
 		storageManager, err := NewStorageManager(ctx, &NewStorageManagerConfig{
 			ProjectName: "project",
-			CmdData: storageManagerCmdData(
-				"--repo", address,
-				"--insecure-registry",
-				"--synchronization", syncServer.URL,
-			),
+			CmdData:     cmdData,
 		})
 
 		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 		gomega.Expect(storageManager.StorageLockManager).NotTo(gomega.BeNil())
 		gomega.Expect(recorder.recordedWrites()).NotTo(gomega.BeEmpty())
-	})
+	},
+		ginkgo.Entry("build command", false),
+		ginkgo.Entry("require-built-images command", true),
+	)
 })

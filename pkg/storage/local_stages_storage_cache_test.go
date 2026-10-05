@@ -363,6 +363,20 @@ var _ = ginkgo.Describe("Local stage lookup cache maintenance", func() {
 		ginkgo.Entry("project refresh", true),
 	)
 
+	ginkgo.It("drops a published stage absent from a later fresh listing", func(ctx ginkgo.SpecContext) {
+		backend := newLocalPublishBackendStub(nil)
+		storage := NewLocalStagesStorage(backend)
+		gomega.Expect(cachedStages(ctx, storage, cachedDigestA)).To(gomega.BeEmpty())
+
+		gomega.Expect(storage.StoreImage(ctx, &localStageImageStub{name: "project:" + cachedTagA})).To(gomega.Succeed())
+		gomega.Expect(cachedStages(ctx, storage, cachedDigestA)).To(gomega.ConsistOf(cachedTagA))
+
+		fresh, err := storage.GetStagesIDsByDigest(ctx, "project", cachedDigestA, 0)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		gomega.Expect(fresh).To(gomega.BeEmpty())
+		gomega.Expect(cachedStages(ctx, storage, cachedDigestA)).To(gomega.BeEmpty())
+	})
+
 	ginkgo.It("serves cached lookups and records publications while a listing is in flight", func(ctx ginkgo.SpecContext) {
 		backend := newLocalPublishBackendStub(image.ImagesList{{RepoTags: []string{"project:" + cachedTagB}}})
 		storage := NewLocalStagesStorage(backend)
