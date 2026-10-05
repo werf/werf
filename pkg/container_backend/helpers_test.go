@@ -5,10 +5,12 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
+	"github.com/samber/lo"
 
 	"github.com/werf/werf/v3/pkg/docker"
 	"github.com/werf/werf/v3/pkg/opstats"
@@ -67,4 +69,19 @@ func operationCount(collector *opstats.Collector, op opstats.Operation) int {
 		}
 	}
 	return 0
+}
+
+func testChownableOwnership() (uint32, uint32) {
+	uid, gid := os.Getuid(), os.Getgid()
+	if uid == 0 {
+		return 1001, 1001
+	}
+
+	groups, err := os.Getgroups()
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+	if otherGid, found := lo.Find(groups, func(g int) bool { return g != gid }); found {
+		gid = otherGid
+	}
+
+	return uint32(uid), uint32(gid)
 }
