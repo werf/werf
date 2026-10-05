@@ -66,7 +66,7 @@ type CacheOutcome string
 const (
 	// CacheOutcomeHit is a usable cached result, including a cached empty one.
 	CacheOutcomeHit CacheOutcome = "hit"
-	// CacheOutcomeMiss is a lookup the cache could not satisfy, so the underlying call ran.
+	// CacheOutcomeMiss is a lookup the cache could not satisfy.
 	CacheOutcomeMiss CacheOutcome = "miss"
 	// CacheOutcomeBypass is a call that asked for a fresh result and never consulted the cache.
 	CacheOutcomeBypass CacheOutcome = "bypass"
