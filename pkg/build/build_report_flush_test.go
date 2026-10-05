@@ -20,7 +20,7 @@ var _ = Describe("createBuildReport operations flush", func() {
 		opstats.Observe(ctx, opstats.OperationStageBuild)()
 		opstats.CountEvent(ctx, opstats.EventStageBuilt)
 
-		failPhase := NewBuildPhase(nil, BuildPhaseOptions{BuildOptions: BuildOptions{
+		failPhase := NewBuildPhase(&Conveyor{}, BuildPhaseOptions{BuildOptions: BuildOptions{
 			ReportPath:   filepath.Join(GinkgoT().TempDir(), "missing-dir", "report.json"),
 			ReportFormat: ReportJSON,
 		}})
@@ -30,7 +30,7 @@ var _ = Describe("createBuildReport operations flush", func() {
 		opstats.CountEvent(ctx, opstats.EventStageBuilt)
 
 		reportPath := filepath.Join(GinkgoT().TempDir(), "report.json")
-		okPhase := NewBuildPhase(nil, BuildPhaseOptions{BuildOptions: BuildOptions{
+		okPhase := NewBuildPhase(&Conveyor{}, BuildPhaseOptions{BuildOptions: BuildOptions{
 			ReportPath:   reportPath,
 			ReportFormat: ReportJSON,
 		}})

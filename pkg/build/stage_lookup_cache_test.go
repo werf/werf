@@ -29,14 +29,16 @@ var _ = ginkgo.Describe("Build stage snapshot lookup", func() {
 		ginkgo.Entry("check mode", true),
 	)
 
-	ginkgo.It("preserves strict secondary lookup in check mode", func(ctx ginkgo.SpecContext) {
+	ginkgo.It("skips secondary lookup and promotion in check mode", func(ctx ginkgo.SpecContext) {
 		phase, img, stg, storageManager := newCachedLookupPhase(ctx)
 		phase.ShouldBeBuiltMode = true
+		storageManager.secondary = cachedLookupDesc("secondary", "secondary-content")
 		found, err := phase.findAndFetchStageFromSecondaryStagesStorage(ctx, img, stg)
 		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 		gomega.Expect(found).To(gomega.BeFalse())
-		gomega.Expect(storageManager.strictLookups).To(gomega.Equal(1))
+		gomega.Expect(storageManager.strictLookups).To(gomega.BeZero())
 		gomega.Expect(storageManager.cachedLookups).To(gomega.BeZero())
+		gomega.Expect(storageManager.copies).To(gomega.BeZero())
 	})
 
 	ginkgo.DescribeTable("checks primary storage under the publication lock before copying", func(ctx ginkgo.SpecContext, concurrentWinner bool) {

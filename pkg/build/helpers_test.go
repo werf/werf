@@ -10,6 +10,7 @@ import (
 	"github.com/werf/werf/v2/pkg/build/stage"
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
+	"github.com/werf/werf/v2/pkg/giterminism_manager"
 	imagePkg "github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/storage"
 	"github.com/werf/werf/v2/pkg/storage/manager"
@@ -76,11 +77,6 @@ func (m *cachedLookupStorageManager) GetStageDescSetByDigestFromStagesStorageCac
 	return imagePkg.NewStageDescSet(), nil
 }
 
-func (m *cachedLookupStorageManager) GetStageDescSetByDigestFromStagesStorageWithCache(context.Context, string, string, int64, storage.StagesStorage) (imagePkg.StageDescSet, error) {
-	m.strictLookups++
-	return imagePkg.NewStageDescSet(), nil
-}
-
 func (m *cachedLookupStorageManager) GetStageDescSetByDigestWithCache(context.Context, string, string, int64) (imagePkg.StageDescSet, error) {
 	m.strictLookups++
 	return imagePkg.NewStageDescSet(), nil
@@ -117,5 +113,103 @@ func (m *cachedLookupStorageManager) LockStage(context.Context, string, string) 
 
 func (m *cachedLookupStorageManager) Unlock(context.Context, lock_manager.LockHandle) error {
 	m.locked = false
+	return nil
+}
+
+var _ giterminism_manager.Interface = (*checkModeGiterminismManager)(nil)
+
+type checkModeGiterminismManager struct {
+	giterminism_manager.Interface
+}
+
+func (m *checkModeGiterminismManager) HeadCommit(_ context.Context) string { return "headcommit" }
+
+var _ manager.StorageManagerInterface = (*checkModeStorageManager)(nil)
+
+type checkModeStorageManager struct {
+	manager.StorageManagerInterface
+	stagesStorage *checkModeStorage
+}
+
+func (m *checkModeStorageManager) GetStagesStorage() storage.PrimaryStagesStorage {
+	return m.stagesStorage
+}
+
+func (m *checkModeStorageManager) GetFinalStagesStorage() storage.StagesStorage { return nil }
+
+var _ storage.PrimaryStagesStorage = (*checkModeStorage)(nil)
+
+type checkModeStorage struct {
+	storage.PrimaryStagesStorage
+	desc         *imagePkg.StageDesc
+	writes       []string
+	customTagErr error
+}
+
+func (s *checkModeStorage) String() string { return "check-mode-test" }
+
+func (s *checkModeStorage) ConstructStageImageName(projectName, digest string, creationTs int64) string {
+	return projectName + ":" + digest
+}
+
+func (s *checkModeStorage) GetStageDesc(_ context.Context, _ string, _ imagePkg.StageID) (*imagePkg.StageDesc, error) {
+	if s.desc == nil {
+		return nil, storage.ErrStageNotFound
+	}
+	return s.desc, nil
+}
+
+func (s *checkModeStorage) IsManagedImageExist(_ context.Context, _, _ string, _ ...storage.Option) (bool, error) {
+	return false, nil
+}
+
+func (s *checkModeStorage) IsImageMetadataExist(_ context.Context, _, _, _, _ string, _ ...storage.Option) (bool, error) {
+	return false, nil
+}
+
+func (s *checkModeStorage) CheckStageCustomTag(_ context.Context, _ *imagePkg.StageDesc, _ string) error {
+	return s.customTagErr
+}
+
+func (s *checkModeStorage) AddManagedImage(_ context.Context, _, _ string) error {
+	s.writes = append(s.writes, "AddManagedImage")
+	return nil
+}
+
+func (s *checkModeStorage) PutImageMetadata(_ context.Context, _, _, _, _ string) error {
+	s.writes = append(s.writes, "PutImageMetadata")
+	return nil
+}
+
+func (s *checkModeStorage) PostMultiplatformImage(_ context.Context, _, _ string, _ []*imagePkg.Info, _ []string) error {
+	s.writes = append(s.writes, "PostMultiplatformImage")
+	return nil
+}
+
+func (s *checkModeStorage) AddStageCustomTag(_ context.Context, _ *imagePkg.StageDesc, _ string) error {
+	s.writes = append(s.writes, "AddStageCustomTag")
+	return nil
+}
+
+func (s *checkModeStorage) RegisterStageCustomTag(_ context.Context, _ string, _ *imagePkg.StageDesc, _ string) error {
+	s.writes = append(s.writes, "RegisterStageCustomTag")
+	return nil
+}
+
+var _ storage.PrimaryStagesStorage = (*importMetadataStorageStub)(nil)
+
+type importMetadataStorageStub struct {
+	storage.PrimaryStagesStorage
+	metadata *storage.ImportMetadata
+	err      error
+	writes   int
+}
+
+func (s *importMetadataStorageStub) GetImportMetadata(context.Context, string, string) (*storage.ImportMetadata, error) {
+	return s.metadata, s.err
+}
+
+func (s *importMetadataStorageStub) PutImportMetadata(context.Context, string, *storage.ImportMetadata, storage.PutImportMetadataOptions) error {
+	s.writes++
 	return nil
 }
