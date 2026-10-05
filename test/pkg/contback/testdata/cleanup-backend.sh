@@ -8,7 +8,8 @@ case "$1" in
     ;;
   rmi)
     shift
-    if [ "${1:-}" = --no-prune ]; then shift; fi
+    test "${1:-}" = --no-prune
+    shift
     printf '%s\n' "$1" >> "$CLEANUP_CALLS"
     if [ "${CLEANUP_FAIL:-}" = 1 ]; then exit 42; fi
     if [ "${CLEANUP_NOOP:-}" != 1 ]; then

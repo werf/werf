@@ -151,6 +151,12 @@ func parseDockerCleanupImages(output []byte) ([]cleanupImage, error) {
 
 func projectImageReferences(images []cleanupImage, projectName string, repos []string) []string {
 	var refs []string
+	ownedRepos := make(map[string]bool)
+	for _, repo := range repos {
+		if named, err := reference.ParseNormalizedNamed(repo); err == nil {
+			ownedRepos[reference.FamiliarName(named)] = true
+		}
+	}
 	aliasedIDs := make(map[string]bool)
 	for _, img := range images {
 		if len(img.Names) != 0 {
@@ -171,7 +177,7 @@ func projectImageReferences(images []cleanupImage, projectName string, repos []s
 			}
 			repo := reference.FamiliarName(named)
 			base := path.Base(reference.Path(named))
-			if base == projectName || base == projectName+"-final" || slices.Contains(repos, repo) {
+			if base == projectName || base == projectName+"-final" || ownedRepos[repo] {
 				refs = append(refs, name)
 			}
 		}

@@ -3,9 +3,13 @@ package contback
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"testing"
+	"testing/synctest"
+	"time"
 
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
@@ -13,6 +17,35 @@ import (
 
 func TestCleanup(t *testing.T) {
 	gomega.RegisterFailHandler(ginkgo.Fail)
+	ginkgo.DescribeTable("Cleanup retry ceiling", func(progress bool) {
+		synctest.Test(t, func(_ *testing.T) {
+			defer ginkgo.GinkgoRecover()
+			ctx, cancel := context.WithTimeout(context.Background(), 110*time.Second)
+			defer cancel()
+			attempts := 0
+			started := time.Now()
+			err := cleanupImageReferences(ctx, "buildah", func() ([]string, error) {
+				if progress {
+					if attempts > 101 {
+						return nil, errors.New("cleanup exceeded pass ceiling")
+					}
+					return []string{fmt.Sprintf("owned-%d", attempts)}, nil
+				}
+				return []string{"owned"}, nil
+			}, func(context.Context, string) error {
+				attempts++
+				return errCleanupImageInUse
+			})
+			gomega.Expect(err).To(gomega.MatchError(gomega.ContainSubstring("test images remain")))
+			gomega.Expect(errors.Is(err, context.DeadlineExceeded)).To(gomega.BeFalse())
+			gomega.Expect(attempts).To(gomega.Equal(101))
+			if progress {
+				gomega.Expect(time.Since(started)).To(gomega.BeZero())
+			} else {
+				gomega.Expect(time.Since(started)).To(gomega.Equal(100 * time.Second))
+			}
+		})
+	}, ginkgo.Entry("stalled image-in-use removals", false), ginkgo.Entry("changing inventories", true))
 	ginkgo.RunSpecs(t, "Test resource cleanup")
 }
 
@@ -92,31 +125,29 @@ var _ = ginkgo.Describe("Project image cleanup", func() {
 	ginkgo.DescribeTable("executes cleanup and verifies the resulting inventory",
 		func(inventory, remaining, expectedRef string) {
 			dir := ginkgo.GinkgoT().TempDir()
+			cat, err := exec.LookPath("cat")
+			gomega.Expect(err).NotTo(gomega.HaveOccurred())
+			gomega.Expect(os.Symlink(cat, filepath.Join(dir, "cat"))).To(gomega.Succeed())
 			script, err := os.ReadFile("testdata/cleanup-backend.sh")
 			gomega.Expect(err).NotTo(gomega.HaveOccurred())
 			gomega.Expect(os.WriteFile(filepath.Join(dir, "docker"), script, 0o700)).To(gomega.Succeed())
 			inventoryPath := filepath.Join(dir, "inventory")
 			callsPath := filepath.Join(dir, "calls")
 			gomega.Expect(os.WriteFile(inventoryPath, []byte(inventory), 0o600)).To(gomega.Succeed())
-			ginkgo.GinkgoT().Setenv("PATH", dir+string(os.PathListSeparator)+os.Getenv("PATH"))
+			ginkgo.GinkgoT().Setenv("PATH", dir)
 			ginkgo.GinkgoT().Setenv("CLEANUP_INVENTORY", inventoryPath)
 			ginkgo.GinkgoT().Setenv("CLEANUP_CALLS", callsPath)
 			ginkgo.GinkgoT().Setenv("CLEANUP_REMAINING", remaining)
 			ginkgo.GinkgoT().Setenv("WERF_REPO", "")
 			ginkgo.GinkgoT().Setenv("WERF_FINAL_REPO", "")
-			removeImage := func(ctx context.Context, ref string) error {
-				_, err := cleanupCommand(ctx, "docker", []string{"rmi", ref})
-				return err
-			}
-
 			ginkgo.GinkgoT().Setenv("CLEANUP_FAIL", "1")
-			gomega.Expect(cleanupDockerProjectImages(context.Background(), "werf-test-one", nil, removeImage)).To(gomega.MatchError(gomega.ContainSubstring("exit status 42")))
+			gomega.Expect(CleanupProject(context.Background(), "werf-test-one", CleanupProjectOptions{})).To(gomega.MatchError(gomega.ContainSubstring("exit status 42")))
 			ginkgo.GinkgoT().Setenv("CLEANUP_FAIL", "0")
 			ginkgo.GinkgoT().Setenv("CLEANUP_NOOP", "1")
-			gomega.Expect(cleanupDockerProjectImages(context.Background(), "werf-test-one", nil, removeImage)).To(gomega.MatchError(gomega.ContainSubstring("test images remain")))
+			gomega.Expect(CleanupProject(context.Background(), "werf-test-one", CleanupProjectOptions{})).To(gomega.MatchError(gomega.ContainSubstring("test images remain")))
 			ginkgo.GinkgoT().Setenv("CLEANUP_NOOP", "0")
 			gomega.Expect(os.WriteFile(callsPath, nil, 0o600)).To(gomega.Succeed())
-			gomega.Expect(cleanupDockerProjectImages(context.Background(), "werf-test-one", nil, removeImage)).To(gomega.Succeed())
+			gomega.Expect(CleanupProject(context.Background(), "werf-test-one", CleanupProjectOptions{})).To(gomega.Succeed())
 			calls, err := os.ReadFile(callsPath)
 			gomega.Expect(err).NotTo(gomega.HaveOccurred())
 			gomega.Expect(string(calls)).To(gomega.Equal(expectedRef + "\n"))
@@ -136,6 +167,13 @@ var _ = ginkgo.Describe("Project image cleanup", func() {
 		ginkgo.Entry("tagless project image", []cleanupImage{{ID: "sha256:owned"}}, []string{"sha256:owned"}),
 		ginkgo.Entry("a tagless row with a foreign alias elsewhere", []cleanupImage{{ID: "owned"}, {ID: "owned", Names: []string{"foreign:keep"}}}, []string(nil)),
 		ginkgo.Entry("duplicate tags", []cleanupImage{{Names: []string{"werf-test-one:stage", "werf-test-one:stage"}}}, []string{"werf-test-one:stage"}),
+	)
+	ginkgo.DescribeTable("normalizes registered Docker Hub repositories", func(repo string) {
+		images := []cleanupImage{{Names: []string{"foo/bar:stage", "docker.io/foo/bar:other", "foo/foreign:keep"}}}
+		gomega.Expect(projectImageReferences(images, "werf-test-one", []string{repo})).To(gomega.Equal([]string{"docker.io/foo/bar:other", "foo/bar:stage"}))
+	},
+		ginkgo.Entry("canonical", "docker.io/foo/bar"),
+		ginkgo.Entry("familiar", "foo/bar"),
 	)
 	ginkgo.It("decodes Docker inventories", func() {
 		images, err := parseDockerCleanupImages([]byte("{\"ID\":\"sha256:owned\",\"Repository\":\"localhost:5000/werf-test-one\",\"Tag\":\"stage\"}\n"))
