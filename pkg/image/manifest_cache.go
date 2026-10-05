@@ -12,12 +12,18 @@ import (
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
+	"github.com/werf/werf/v3/pkg/opstats"
 	"github.com/werf/werf/v3/pkg/slug"
 	"github.com/werf/werf/v3/pkg/werf"
 )
 
 const (
 	ManifestCacheVersion = "5"
+
+	// manifestCacheOperation names the cache rows of this cache: it only holds
+	// stage descriptors of non-local stages storages, so a hit here is a registry
+	// image get that did not happen. The cache is on disk only, so no memory row.
+	manifestCacheOperation = opstats.Operation("registry: image get")
 )
 
 type ManifestCache struct {
@@ -51,6 +57,14 @@ func (cache *ManifestCache) GetImageInfo(ctx context.Context, storageName, image
 		defer cache.unlock(lock)
 	}
 
+	// Counted only past the lock: a lookup that never reached the cache is not one.
+	// Only a cached info returned to the caller is a hit; a missing, reset or
+	// unreadable record is a miss, as is a record the cache fails to refresh.
+	outcome := opstats.CacheOutcomeMiss
+	defer func() {
+		opstats.CountCacheLookup(ctx, manifestCacheOperation, opstats.CacheLayerDisk, outcome, false)
+	}()
+
 	now := time.Now()
 
 	record, err := cache.readRecord(ctx, storageName, imageName)
@@ -63,6 +77,9 @@ func (cache *ManifestCache) GetImageInfo(ctx context.Context, storageName, image
 			return nil, err
 		}
 
+		if record.Info != nil {
+			outcome = opstats.CacheOutcomeHit
+		}
 		return record.Info, nil
 	default:
 		return nil, nil

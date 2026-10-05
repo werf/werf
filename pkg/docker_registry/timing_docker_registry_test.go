@@ -89,67 +89,67 @@ func (r *fakeGenericApi) GetRepoImageConfigFile(_ context.Context, _ string) (*v
 	return &v1.ConfigFile{}, nil
 }
 
-func expectSingleMeasurement(collector *opstats.Collector, method string) {
+func expectSingleMeasurement(collector *opstats.Collector, operation string) {
 	GinkgoHelper()
 	summary := collector.Summary()
 	Expect(summary).To(HaveLen(1))
-	Expect(summary[0].Operation).To(Equal(opstats.Operation("registry: " + method)))
+	Expect(summary[0].Operation).To(Equal(opstats.Operation("registry: " + operation)))
 	Expect(summary[0].Count).To(Equal(1))
 }
 
 var _ = Describe("timingDockerRegistry", func() {
 	DescribeTable("records one measurement per method",
-		func(method string, call func(ctx context.Context, r Interface) error) {
+		func(operation string, call func(ctx context.Context, r Interface) error) {
 			collector := opstats.NewCollector()
 			ctx := opstats.NewContext(context.Background(), collector)
 
 			Expect(call(ctx, newTimingDockerRegistry(&fakeRegistry{}))).To(Succeed())
-			expectSingleMeasurement(collector, method)
+			expectSingleMeasurement(collector, operation)
 		},
-		Entry("CreateRepo", "CreateRepo", func(ctx context.Context, r Interface) error {
+		Entry("CreateRepo", "repository create", func(ctx context.Context, r Interface) error {
 			return r.CreateRepo(ctx, "repo")
 		}),
-		Entry("DeleteRepo", "DeleteRepo", func(ctx context.Context, r Interface) error {
+		Entry("DeleteRepo", "repository delete", func(ctx context.Context, r Interface) error {
 			return r.DeleteRepo(ctx, "repo")
 		}),
-		Entry("Tags", "Tags", func(ctx context.Context, r Interface) error {
+		Entry("Tags", "tags list", func(ctx context.Context, r Interface) error {
 			_, err := r.Tags(ctx, "repo")
 			return err
 		}),
-		Entry("IsTagExist", "IsTagExist", func(ctx context.Context, r Interface) error {
+		Entry("IsTagExist", "tag exists", func(ctx context.Context, r Interface) error {
 			_, err := r.IsTagExist(ctx, "repo:tag")
 			return err
 		}),
-		Entry("TagRepoImage", "TagRepoImage", func(ctx context.Context, r Interface) error {
+		Entry("TagRepoImage", "image tag", func(ctx context.Context, r Interface) error {
 			return r.TagRepoImage(ctx, &image.Info{}, "tag")
 		}),
-		Entry("GetRepoImage", "GetRepoImage", func(ctx context.Context, r Interface) error {
+		Entry("GetRepoImage", "image get", func(ctx context.Context, r Interface) error {
 			_, err := r.GetRepoImage(ctx, "repo:tag")
 			return err
 		}),
-		Entry("TryGetRepoImage", "TryGetRepoImage", func(ctx context.Context, r Interface) error {
+		Entry("TryGetRepoImage", "image try get", func(ctx context.Context, r Interface) error {
 			_, err := r.TryGetRepoImage(ctx, "repo:tag")
 			return err
 		}),
-		Entry("DeleteRepoImage", "DeleteRepoImage", func(ctx context.Context, r Interface) error {
+		Entry("DeleteRepoImage", "image delete", func(ctx context.Context, r Interface) error {
 			return r.DeleteRepoImage(ctx, &image.Info{})
 		}),
-		Entry("PushImage", "PushImage", func(ctx context.Context, r Interface) error {
+		Entry("PushImage", "image push", func(ctx context.Context, r Interface) error {
 			return r.PushImage(ctx, "repo:tag", &PushImageOptions{})
 		}),
-		Entry("MutateAndPushImage", "MutateAndPushImage", func(ctx context.Context, r Interface) error {
+		Entry("MutateAndPushImage", "image mutate and push", func(ctx context.Context, r Interface) error {
 			return r.MutateAndPushImage(ctx, "src", "dst")
 		}),
-		Entry("CopyImage", "CopyImage", func(ctx context.Context, r Interface) error {
+		Entry("CopyImage", "image copy", func(ctx context.Context, r Interface) error {
 			return r.CopyImage(ctx, "src", "dst", CopyImageOptions{})
 		}),
-		Entry("PushImageArchive", "PushImageArchive", func(ctx context.Context, r Interface) error {
+		Entry("PushImageArchive", "image archive push", func(ctx context.Context, r Interface) error {
 			return r.PushImageArchive(ctx, nil, "repo:tag")
 		}),
-		Entry("PullImageArchive", "PullImageArchive", func(ctx context.Context, r Interface) error {
+		Entry("PullImageArchive", "image archive pull", func(ctx context.Context, r Interface) error {
 			return r.PullImageArchive(ctx, io.Discard, "repo:tag")
 		}),
-		Entry("PushManifestList", "PushManifestList", func(ctx context.Context, r Interface) error {
+		Entry("PushManifestList", "manifest list push", func(ctx context.Context, r Interface) error {
 			return r.PushManifestList(ctx, "repo:tag", ManifestListOptions{})
 		}),
 	)
@@ -161,27 +161,27 @@ var _ = Describe("timingDockerRegistry", func() {
 		_, err := newTimingDockerRegistry(&failingRegistry{}).Tags(ctx, "repo")
 		Expect(err).To(MatchError("boom"))
 
-		expectSingleMeasurement(collector, "Tags")
+		expectSingleMeasurement(collector, "tags list")
 	})
 })
 
 var _ = Describe("timingGenericApi", func() {
 	DescribeTable("records one measurement per method",
-		func(method string, call func(ctx context.Context, api GenericApiInterface) error) {
+		func(operation string, call func(ctx context.Context, api GenericApiInterface) error) {
 			collector := opstats.NewCollector()
 			ctx := opstats.NewContext(context.Background(), collector)
 
 			Expect(call(ctx, newTimingGenericApi(&fakeGenericApi{}))).To(Succeed())
-			expectSingleMeasurement(collector, method)
+			expectSingleMeasurement(collector, operation)
 		},
-		Entry("GetRepoImage", "GetRepoImage", func(ctx context.Context, api GenericApiInterface) error {
+		Entry("GetRepoImage", "image get", func(ctx context.Context, api GenericApiInterface) error {
 			_, err := api.GetRepoImage(ctx, "repo:tag")
 			return err
 		}),
-		Entry("MutateAndPushImage", "MutateAndPushImage", func(ctx context.Context, api GenericApiInterface) error {
+		Entry("MutateAndPushImage", "image mutate and push", func(ctx context.Context, api GenericApiInterface) error {
 			return api.MutateAndPushImage(ctx, "src", "dst")
 		}),
-		Entry("GetRepoImageConfigFile", "GetRepoImageConfigFile", func(ctx context.Context, api GenericApiInterface) error {
+		Entry("GetRepoImageConfigFile", "image config get", func(ctx context.Context, api GenericApiInterface) error {
 			_, err := api.GetRepoImageConfigFile(ctx, "repo:tag")
 			return err
 		}),
