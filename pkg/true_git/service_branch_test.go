@@ -31,6 +31,11 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 	var workTreeCacheDir string
 	var sourceHeadCommit string
 	defaultOptions := SyncSourceWorktreeWithServiceBranchOptions{ServiceBranch: "_werf-dev"}
+	addUserWorktree := func(ctx context.Context) string {
+		dir := filepath.Join(SuiteData.TestDirPath, "user-wt")
+		utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "worktree", "add", "--detach", dir)
+		return dir
+	}
 
 	BeforeEach(func(ctx SpecContext) {
 		sourceWorkTreeDir = filepath.Join(SuiteData.TestDirPath, "source")
@@ -69,13 +74,15 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 	})
 
 	DescribeTable("refuses to advance a branch checked out in a live worktree",
-		func(specCtx SpecContext, holderDir func(ctx context.Context) string) {
+		func(specCtx SpecContext, holderDir func(ctx context.Context) string, afterCheckout func(dir string)) {
 			ctx := logging.WithLogger(specCtx)
 
 			const branch = "held"
 			holder := holderDir(ctx)
 			utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "branch", branch, sourceHeadCommit)
 			utils.RunSucceedCommand(ctx, holder, "git", "checkout", "-q", branch)
+			afterCheckout(holder)
+			defer func() { Expect(os.Chmod(holder, 0o755)).To(Succeed()) }()
 
 			utils.WriteFile(filepath.Join(sourceWorkTreeDir, "uncommitted.txt"), []byte("content"))
 
@@ -88,13 +95,28 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 			Expect(err).To(Succeed())
 			Expect(list).To(ContainElement(HaveField("Path", holder)))
 		},
-		Entry("the source worktree", func(context.Context) string { return sourceWorkTreeDir }),
-		Entry("another user worktree", func(ctx context.Context) string {
-			dir := filepath.Join(SuiteData.TestDirPath, "user-wt")
-			utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "worktree", "add", "--detach", dir)
-			return dir
+		Entry("the source worktree", func(context.Context) string { return sourceWorkTreeDir }, func(string) {}),
+		Entry("another user worktree", addUserWorktree, func(string) {}),
+		Entry("another user worktree whose directory is unreadable", addUserWorktree, func(dir string) {
+			Expect(os.Chmod(dir, 0o000)).To(Succeed())
 		}),
 	)
+
+	It("detaches a service worktree left on the service branch by an older werf instead of rejecting it", func(ctx context.Context) {
+		ctx = logging.WithLogger(ctx)
+
+		_, err := SyncSourceWorktreeWithServiceBranch(ctx, gitDir, sourceWorkTreeDir, workTreeCacheDir, sourceHeadCommit, defaultOptions)
+		Expect(err).Should(Succeed())
+
+		serviceWorktreeDir := filepath.Join(workTreeCacheDir, "worktree")
+		utils.RunSucceedCommand(ctx, serviceWorktreeDir, "git", "checkout", "-q", defaultOptions.ServiceBranch)
+
+		Expect(prepareServiceBranch(ctx, serviceWorktreeDir, sourceHeadCommit, defaultOptions.ServiceBranch)).Should(Succeed())
+
+		list, err := GetWorkTreeList(ctx, gitDir)
+		Expect(err).Should(Succeed())
+		Expect(list).ShouldNot(ContainElement(HaveField("Branch", "refs/heads/"+defaultOptions.ServiceBranch)))
+	})
 
 	When("the service branch is held by a worktree whose directory no longer exists", func() {
 		BeforeEach(func(ctx SpecContext) {

@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -63,7 +64,7 @@ func SyncSourceWorktreeWithServiceBranch(ctx context.Context, gitDir, sourceWork
 }
 
 func syncWorktreeWithServiceWorktreeBranch(ctx context.Context, sourceWorktreeDir, serviceWorktreeDir, worktreeCacheDir, sourceCommit, branchName string, globExcludeList []string) (string, error) {
-	if err := prepareAndCheckoutServiceBranch(ctx, serviceWorktreeDir, sourceCommit, branchName); err != nil {
+	if err := prepareServiceBranch(ctx, serviceWorktreeDir, sourceCommit, branchName); err != nil {
 		return "", fmt.Errorf("unable to get or prepare service branch head commit: %w", err)
 	}
 
@@ -379,17 +380,15 @@ func expandTilde(path string) string {
 	return path
 }
 
-// prepareAndCheckoutServiceBranch never checks the service branch itself out: the service
-// worktree always stays in detached HEAD and the branch ref is advanced with update-ref. A
-// checked-out branch is exclusive to one worktree, so a stale registration of another service
-// worktree (another WERF_HOME, a wiped cache) holding the branch would make checkout fail.
-// update-ref has no such protection, so the live-worktree check git would have made is
-// done explicitly: the branch name is user-controlled and may be a real branch.
-func prepareAndCheckoutServiceBranch(ctx context.Context, serviceWorktreeDir, sourceCommit, branchName string) error {
+// prepareServiceBranch keeps the service worktree in detached HEAD and advances the branch ref
+// with update-ref, so a stale registration of another service worktree holding the branch cannot
+// block it. update-ref lacks the checked-out-elsewhere protection of checkout, so that check is
+// made explicitly: the branch name is user-controlled and may be a real branch.
+func prepareServiceBranch(ctx context.Context, serviceWorktreeDir, sourceCommit, branchName string) error {
 	branchRef := "refs/heads/" + branchName
 
-	if err := ensureBranchNotCheckedOutElsewhere(ctx, serviceWorktreeDir, branchRef); err != nil {
-		return err
+	if err := ensureBranchNotCheckedOutElsewhere(ctx, serviceWorktreeDir, branchName); err != nil {
+		return fmt.Errorf("unable to use branch %q as service branch: %w", branchName, err)
 	}
 
 	branchListCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: serviceWorktreeDir}, "branch", "--list", branchName)
@@ -436,7 +435,9 @@ func prepareAndCheckoutServiceBranch(ctx context.Context, serviceWorktreeDir, so
 	return nil
 }
 
-func ensureBranchNotCheckedOutElsewhere(ctx context.Context, serviceWorktreeDir, branchRef string) error {
+// A registration whose directory is gone is skipped: that is the stale service worktree of
+// another WERF_HOME. A directory that exists but cannot be read is still a live worktree.
+func ensureBranchNotCheckedOutElsewhere(ctx context.Context, serviceWorktreeDir, branchName string) error {
 	resolvedServiceWorktreeDir, err := filepath.EvalSymlinks(serviceWorktreeDir)
 	if err != nil {
 		return fmt.Errorf("unable to eval symlinks of %q: %w", serviceWorktreeDir, err)
@@ -448,13 +449,16 @@ func ensureBranchNotCheckedOutElsewhere(ctx context.Context, serviceWorktreeDir,
 	}
 
 	for _, wt := range worktrees {
-		if wt.Branch != branchRef || wt.Prunable {
+		if wt.Branch != "refs/heads/"+branchName {
+			continue
+		}
+		if _, err := os.Lstat(wt.Path); errors.Is(err, fs.ErrNotExist) {
 			continue
 		}
 		if resolvedPath, err := filepath.EvalSymlinks(wt.Path); err == nil && resolvedPath == resolvedServiceWorktreeDir {
 			continue
 		}
-		return fmt.Errorf("service branch %q is checked out at %q: choose another branch with --dev-branch or detach that worktree", strings.TrimPrefix(branchRef, "refs/heads/"), wt.Path)
+		return fmt.Errorf("branch is checked out at %q, choose another branch with --dev-branch", wt.Path)
 	}
 
 	return nil
