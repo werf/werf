@@ -56,6 +56,13 @@ func newTagsListStorageManager(tagsListStatus int) (*StorageManager, *atomic.Int
 }
 
 func newBlockedTagsStorageManager(ctx context.Context) (*StorageManager, <-chan struct{}, func()) {
+	return newTagsStorageManagerBlockingListing(ctx, 1)
+}
+
+// newTagsStorageManagerBlockingListing serves an empty tags listing for every request but holds the
+// blockedListing-th one until the returned release is called, so that a listing started before a
+// publication can still be in flight when the publication is already visible to a new one.
+func newTagsStorageManagerBlockingListing(ctx context.Context, blockedListing int32) (*StorageManager, <-chan struct{}, func()) {
 	listingStarted, release := make(chan struct{}), make(chan struct{})
 	var releaseOnce sync.Once
 	releaseListing := func() { releaseOnce.Do(func() { close(release) }) }
@@ -63,7 +70,7 @@ func newBlockedTagsStorageManager(ctx context.Context) (*StorageManager, <-chan 
 	backend := registry.New()
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		defer ginkgo.GinkgoRecover()
-		if strings.HasSuffix(request.URL.Path, "/tags/list") && listings.Add(1) == 1 {
+		if strings.HasSuffix(request.URL.Path, "/tags/list") && listings.Add(1) == blockedListing {
 			close(listingStarted)
 			<-release
 			_, err := fmt.Fprint(writer, `{"name":"project/werf","tags":[]}`)

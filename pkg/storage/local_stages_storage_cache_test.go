@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
@@ -322,6 +321,18 @@ var _ = ginkgo.Describe("Local stage lookup cache maintenance", func() {
 		}, []string{cachedTagA}),
 	)
 
+	ginkgo.It("keeps a stage published right after a listing started", func(ctx ginkgo.SpecContext) {
+		backend := newLocalPublishBackendStub(nil)
+		storage := NewLocalStagesStorage(backend)
+		gomega.Expect(cachedStages(ctx, storage, cachedDigestA)).To(gomega.BeEmpty())
+
+		listingStartedSeq := storage.nextSequence()
+		gomega.Expect(storage.StoreImage(ctx, &localStageImageStub{name: "project:" + cachedTagA})).To(gomega.Succeed())
+		storage.storeProjectSnapshot("project", nil, listingStartedSeq)
+
+		gomega.Expect(cachedStages(ctx, storage, cachedDigestA)).To(gomega.ConsistOf(cachedTagA), "a publication recorded after the listing started must survive that listing, however close the two are")
+	})
+
 	ginkgo.DescribeTable("does not lose a stage published while a listing is in flight", func(ctx ginkgo.SpecContext, fresh bool) {
 		backend := newLocalPublishBackendStub(nil)
 		storage := NewLocalStagesStorage(backend)
@@ -351,7 +362,7 @@ var _ = ginkgo.Describe("Local stage lookup cache maintenance", func() {
 		gomega.Eventually(stored, blockedCallTimeout).Should(gomega.Receive(gomega.BeNil()))
 		close(release)
 
-		gomega.Eventually(lookup, blockedCallTimeout).Should(gomega.Receive(gomega.ConsistOf(cachedTagA)))
+		gomega.Eventually(lookup, blockedCallTimeout).Should(gomega.Receive(gomega.ConsistOf(cachedTagA)), "the listing must not drop the stage published while it was running")
 		gomega.Expect(cachedStages(ctx, storage, cachedDigestA)).To(gomega.ConsistOf(cachedTagA))
 		expectedCalls := 1
 		if fresh {
@@ -407,7 +418,7 @@ var _ = ginkgo.Describe("Local stage lookup cache maintenance", func() {
 		gomega.Eventually(stored, blockedCallTimeout).Should(gomega.Receive(gomega.BeNil()))
 		close(release)
 
-		gomega.Eventually(refreshed, blockedCallTimeout).Should(gomega.Receive(gomega.ConsistOf(cachedTagB)))
+		gomega.Eventually(refreshed, blockedCallTimeout).Should(gomega.Receive(gomega.ConsistOf(cachedTagB)), "the listing in flight must answer the fresh lookup that started it")
 		gomega.Expect(cachedStages(ctx, storage, cachedDigestA)).To(gomega.ConsistOf(cachedTagA))
 		gomega.Expect(backend.calls).To(gomega.Equal(2))
 	})
@@ -447,7 +458,7 @@ var _ = ginkgo.Describe("Local stage lookup cache maintenance", func() {
 		leader := make(chan bool, 1)
 		go func() {
 			defer ginkgo.GinkgoRecover()
-			_, joined, err := storage.refreshProjectListing(ctx, "project", time.Time{})
+			_, joined, err := storage.refreshProjectListing(ctx, "project", 0)
 			gomega.Expect(err).NotTo(gomega.HaveOccurred())
 			leader <- joined
 		}()
@@ -457,15 +468,15 @@ var _ = ginkgo.Describe("Local stage lookup cache maintenance", func() {
 		joiner := make(chan bool, 1)
 		go func() {
 			defer ginkgo.GinkgoRecover()
-			_, joined, err := storage.refreshProjectListing(joiningCtx, "project", time.Time{})
+			_, joined, err := storage.refreshProjectListing(joiningCtx, "project", 0)
 			gomega.Expect(err).NotTo(gomega.HaveOccurred())
 			joiner <- joined
 		}()
 		gomega.Eventually(registered, blockedCallTimeout).Should(gomega.Receive())
 		close(release)
 
-		gomega.Eventually(leader, blockedCallTimeout).Should(gomega.Receive(gomega.BeFalse()))
-		gomega.Eventually(joiner, blockedCallTimeout).Should(gomega.Receive(gomega.BeTrue()))
+		gomega.Eventually(leader, blockedCallTimeout).Should(gomega.Receive(gomega.BeFalse()), "the lookup that started the listing must not report a join")
+		gomega.Eventually(joiner, blockedCallTimeout).Should(gomega.Receive(gomega.BeTrue()), "the lookup admitted to a listing in flight must report a join")
 		gomega.Expect(backend.callCount()).To(gomega.Equal(1))
 	})
 
@@ -476,7 +487,7 @@ var _ = ginkgo.Describe("Local stage lookup cache maintenance", func() {
 
 		go func() {
 			defer ginkgo.GinkgoRecover()
-			_, _, _ = storage.refreshProjectListing(ctx, "project", time.Time{})
+			_, _, _ = storage.refreshProjectListing(ctx, "project", 0)
 		}()
 		<-listing
 
@@ -485,7 +496,7 @@ var _ = ginkgo.Describe("Local stage lookup cache maintenance", func() {
 		joiner := make(chan bool, 1)
 		go func() {
 			defer ginkgo.GinkgoRecover()
-			_, joined, err := storage.refreshProjectListing(joiningCtx, "project", time.Time{})
+			_, joined, err := storage.refreshProjectListing(joiningCtx, "project", 0)
 			gomega.Expect(err).To(gomega.MatchError(context.Canceled))
 			joiner <- joined
 		}()
@@ -494,7 +505,7 @@ var _ = ginkgo.Describe("Local stage lookup cache maintenance", func() {
 
 		// Giving up on a listing somebody else is running does not unmake the join: the role is
 		// settled when the caller is admitted, before it waits for anything.
-		gomega.Eventually(joiner, blockedCallTimeout).Should(gomega.Receive(gomega.BeTrue()))
+		gomega.Eventually(joiner, blockedCallTimeout).Should(gomega.Receive(gomega.BeTrue()), "a canceled joiner must still report the join it was admitted to")
 		close(release)
 	})
 
@@ -550,8 +561,8 @@ var _ = ginkgo.Describe("Local stage lookup cache maintenance", func() {
 		}
 		close(releases[1])
 
-		gomega.Eventually(fresh, blockedCallTimeout).Should(gomega.Receive(gomega.ConsistOf(cachedTagA, cachedTagA2)))
-		gomega.Eventually(fresh, blockedCallTimeout).Should(gomega.Receive(gomega.ConsistOf(cachedTagA, cachedTagA2)))
+		gomega.Eventually(fresh, blockedCallTimeout).Should(gomega.Receive(gomega.ConsistOf(cachedTagA, cachedTagA2)), "a fresh lookup must be answered by the listing started after it")
+		gomega.Eventually(fresh, blockedCallTimeout).Should(gomega.Receive(gomega.ConsistOf(cachedTagA, cachedTagA2)), "both fresh lookups must share the listing started after them")
 		gomega.Expect(backend.callCount()).To(gomega.Equal(2))
 	})
 

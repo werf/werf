@@ -803,7 +803,9 @@ func (m *StorageManager) GetStageDescSetByDigestFromStagesStorageWithCache(ctx c
 		return cachedStageDescSet, nil
 	}
 
-	return m.getStageDescSetByDigestFromStagesStorage(ctx, stageName, stageDigest, parentStageCreationTs, stagesStorage)
+	// A negative result decides whether a check fails the whole command, so the refresh must not
+	// join a listing that may have started before this request.
+	return m.getStageDescSetByDigestFromStagesStorage(ctx, stageName, stageDigest, parentStageCreationTs, stagesStorage, storage.WithCacheMaxAge(0))
 }
 
 // GetStageDescSetByDigestWithRecentCache is GetStageDescSetByDigestWithCache with a relaxed miss

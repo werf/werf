@@ -30,7 +30,8 @@ var _ = ginkgo.Describe("Discarded stage counting", func() {
 			}
 
 			collector := opstats.NewCollector()
-			gomega.Expect(phase.atomicBuildStageImage(opstats.NewContext(ctx, collector), img, stg)).To(gomega.Succeed())
+			_, err := phase.atomicBuildStageImage(opstats.NewContext(ctx, collector), img, stg)
+			gomega.Expect(err).To(gomega.Succeed())
 
 			gomega.Expect(eventCounts(collector)).To(gomega.Equal(expected))
 			if buildable {
