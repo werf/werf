@@ -71,6 +71,16 @@ var _ = ginkgo.DescribeTable("docker api operations", func(ctx ginkgo.SpecContex
 		_, err := CliLoadFromStream(ctx, strings.NewReader(""))
 		return err
 	}, false),
+	ginkgo.Entry("image import", opstats.Operation("docker: image import"), respondJSON(`{"status":"ok"}`), func(ctx context.Context) error {
+		return CreateImage(ctx, "img", CreateImageOptions{})
+	}, false),
+	ginkgo.Entry("image import failure", opstats.Operation("docker: image import"), http.HandlerFunc(respondError), func(ctx context.Context) error {
+		return CreateImage(ctx, "img", CreateImageOptions{})
+	}, true),
+	ginkgo.Entry("container attach failure", opstats.Operation("docker: container attach"), http.HandlerFunc(respondError), func(ctx context.Context) error {
+		_, err := ContainerAttach(ctx, "c", client.ContainerAttachOptions{})
+		return err
+	}, true),
 )
 
 var _ = ginkgo.Describe("docker container create", func() {
