@@ -170,9 +170,52 @@ func RunGC(ctx context.Context, options RunGCOptions) error {
 
 	gitDataEntries = keepGitDataByLru(gitDataEntries)
 
-	var freedBytes uint64
+	getUsedBytes := func() (uint64, error) {
+		vu, err := volumeutils.GetVolumeUsageByPath(ctx, werf.GetLocalCacheDir())
+		if err != nil {
+			return 0, fmt.Errorf("get volume usage by path %q: %w", werf.GetLocalCacheDir(), err)
+		}
+		return vu.UsedBytes, nil
+	}
 
-	for _, entry := range gitDataEntries {
+	estimatedFreedBytes, err := removeGitDataEntries(ctx, gitDataEntries, removeGitDataEntriesOptions{
+		BytesToFree:            bytesToFree,
+		TargetVolumeUsageBytes: targetVolumeUsageBytes,
+		DryRun:                 options.DryRun,
+		GetUsedBytes:           getUsedBytes,
+	})
+	if err != nil {
+		return err
+	}
+
+	logboek.Context(ctx).Default().LogF("Freed (estimated): %s\n", humanize.Bytes(estimatedFreedBytes))
+
+	if !options.DryRun {
+		if usedBytes, err := getUsedBytes(); err != nil {
+			logboek.Context(ctx).Warn().LogF("Unable to report volume usage after cleanup: %s\n", err)
+		} else {
+			logboek.Context(ctx).Default().LogF("Volume usage after cleanup: %s (was %s)\n", humanize.Bytes(usedBytes), humanize.Bytes(vu.UsedBytes))
+		}
+	}
+
+	return nil
+}
+
+type removeGitDataEntriesOptions struct {
+	BytesToFree            uint64
+	TargetVolumeUsageBytes uint64
+	DryRun                 bool
+	GetUsedBytes           func() (uint64, error)
+}
+
+func removeGitDataEntries(ctx context.Context, entries []GitDataEntry, options removeGitDataEntriesOptions) (uint64, error) {
+	if options.BytesToFree == 0 {
+		return 0, nil
+	}
+
+	var estimatedFreedBytes uint64
+
+	for _, entry := range entries {
 		for _, path := range entry.GetPaths() {
 			logboek.Context(ctx).LogF("Removing %q inside scope %q\n", path, entry.GetCacheBasePath())
 
@@ -181,18 +224,34 @@ func RunGC(ctx context.Context, options RunGCOptions) error {
 			}
 
 			if err := RemovePathWithEmptyParentDirsInsideScope(entry.GetCacheBasePath(), path); err != nil {
-				return fmt.Errorf("unable to remove %q: %w", path, err)
+				return estimatedFreedBytes, fmt.Errorf("unable to remove %q: %w", path, err)
 			}
 		}
 
-		freedBytes += entry.GetSize()
+		estimatedFreedBytes += entry.GetSize()
 
-		if freedBytes >= bytesToFree {
+		if estimatedFreedBytes >= options.BytesToFree {
+			break
+		}
+
+		if options.DryRun {
+			continue
+		}
+
+		// Hard links and snapshots can hide the space just freed, so the
+		// entry sizes stay the budget: an actual drop to the target may only
+		// stop the loop earlier, never extend it.
+		usedBytes, err := options.GetUsedBytes()
+		if err != nil {
+			logboek.Context(ctx).Warn().LogF("Unable to check volume usage, continuing by the estimated budget: %s\n", err)
+			continue
+		}
+		if usedBytes <= options.TargetVolumeUsageBytes {
 			break
 		}
 	}
 
-	return nil
+	return estimatedFreedBytes, nil
 }
 
 func RemovePathWithEmptyParentDirsInsideScope(scopeDir, path string) error {

@@ -1,6 +1,7 @@
 package gitdata
 
 import (
+	"cmp"
 	"slices"
 	"time"
 
@@ -14,6 +15,29 @@ type GitDataEntry interface {
 	GetCacheBasePath() string
 }
 
+type gitDataEntryRank int
+
+const (
+	gitDataEntryRankArchiveOrPatch         gitDataEntryRank = 0
+	gitDataEntryRankWorktree               gitDataEntryRank = 1
+	gitDataEntryRankWorktreeWithSubmodules gitDataEntryRank = 2
+	gitDataEntryRankMirror                 gitDataEntryRank = 3
+)
+
+func getGitDataEntryRank(entry GitDataEntry) gitDataEntryRank {
+	switch desc := entry.(type) {
+	case *GitArchiveDesc, *GitPatchDesc:
+		return gitDataEntryRankArchiveOrPatch
+	case *GitWorktreeDesc:
+		if desc.HasSubmodules {
+			return gitDataEntryRankWorktreeWithSubmodules
+		}
+		return gitDataEntryRankWorktree
+	default:
+		return gitDataEntryRankMirror
+	}
+}
+
 func shouldPreserveGitDataEntryByLru(entry GitDataEntry) bool {
 	return time.Since(entry.GetLastAccessAt()) < 3*time.Hour
 }
@@ -25,8 +49,20 @@ func keepGitDataByLru(entries []GitDataEntry) []GitDataEntry {
 	})
 
 	slices.SortFunc(filteredEntries, func(a, b GitDataEntry) int {
-		return a.GetLastAccessAt().Compare(b.GetLastAccessAt())
+		return cmp.Or(
+			cmp.Compare(getGitDataEntryRank(a), getGitDataEntryRank(b)),
+			a.GetLastAccessAt().Compare(b.GetLastAccessAt()),
+			cmp.Compare(getFirstGitDataEntryPath(a), getFirstGitDataEntryPath(b)),
+		)
 	})
 
 	return filteredEntries
+}
+
+func getFirstGitDataEntryPath(entry GitDataEntry) string {
+	paths := entry.GetPaths()
+	if len(paths) == 0 {
+		return ""
+	}
+	return paths[0]
 }

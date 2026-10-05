@@ -27,6 +27,18 @@ type gitRepository struct {
 	repo GitRepository
 }
 
+func (g *gitRepository) withRepository(ctx context.Context, commit string, f func(*git.Repository) error) error {
+	if remote, ok := g.repo.(*git_repo.Remote); ok {
+		return remote.WithRepository(ctx, commit, f)
+	}
+
+	repo, err := g.repo.PlainOpen()
+	if err != nil {
+		return fmt.Errorf("plain open: %w", err)
+	}
+	return f(repo)
+}
+
 type gitRepositoriesWithCache struct {
 	repositories map[string]*gitRepository
 }

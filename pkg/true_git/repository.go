@@ -38,6 +38,7 @@ type FetchOptions struct {
 	UpdateHeadOk         bool
 	RefSpecs             map[string][]string
 	BasicAuthCredentials *BasicAuth
+	Env                  []string
 }
 
 func IsShallowFileChangedSinceWeReadIt(err error) bool {
@@ -76,7 +77,7 @@ func Fetch(ctx context.Context, path string, options FetchOptions) error {
 		commandArgs = append(commandArgs, remoteRefSpecs...)
 	}
 
-	gitCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: path}, commandArgs...)
+	gitCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: path, Env: options.Env}, commandArgs...)
 
 	return gitCmd.Run(ctx)
 }
