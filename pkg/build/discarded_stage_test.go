@@ -13,7 +13,7 @@ var _ = ginkgo.Describe("Discarded stage counting", func() {
 
 	ginkgo.DescribeTable("counts only a locally built image thrown away for an already published one",
 		func(ctx ginkgo.SpecContext, buildable, published bool, expected map[opstats.Event]int) {
-			srv := newPublicationLockServer()
+			srv, _ := newPublicationLockServer()
 			primary := &publicationStorage{}
 			if published {
 				primary.desc = &imagePkg.StageDesc{
@@ -30,7 +30,8 @@ var _ = ginkgo.Describe("Discarded stage counting", func() {
 			}
 
 			collector := opstats.NewCollector()
-			gomega.Expect(phase.atomicBuildStageImage(opstats.NewContext(ctx, collector), img, stg)).To(gomega.Succeed())
+			_, err := phase.atomicBuildStageImage(opstats.NewContext(ctx, collector), img, stg)
+			gomega.Expect(err).To(gomega.Succeed())
 
 			gomega.Expect(eventCounts(collector)).To(gomega.Equal(expected))
 			if buildable {

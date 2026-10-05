@@ -24,3 +24,11 @@ func WithCache() Option {
 		o.dockerRegistryOptions = append(o.dockerRegistryOptions, docker_registry.WithCachedTags())
 	}
 }
+
+// WithFreshListing requires a listing started after this request, even if another is in flight.
+func WithFreshListing() Option {
+	return func(o *Options) {
+		o.withCache = false
+		o.dockerRegistryOptions = append(o.dockerRegistryOptions, docker_registry.WithFreshTags())
+	}
+}

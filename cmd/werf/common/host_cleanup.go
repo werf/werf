@@ -14,8 +14,12 @@ import (
 	"github.com/werf/werf/v2/pkg/util/option"
 )
 
+func skipAutoHostCleanup(cmdData *CmdData) bool {
+	return option.PtrValueOrDefault(cmdData.DisableAutoHostCleanup, false) || GetCheckBuiltImages(cmdData)
+}
+
 func RunAutoHostCleanup(ctx context.Context, cmdData *CmdData, containerBackend container_backend.ContainerBackend) error {
-	if *cmdData.DisableAutoHostCleanup {
+	if skipAutoHostCleanup(cmdData) {
 		return nil
 	}
 

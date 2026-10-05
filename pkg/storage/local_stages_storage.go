@@ -7,7 +7,7 @@ import (
 	"slices"
 	"strings"
 	"sync"
-	"time"
+	"sync/atomic"
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/samber/lo"
@@ -40,6 +40,8 @@ func IsImageDeletionFailedDueToUsingByContainerErr(err error) bool {
 type LocalStagesStorage struct {
 	ContainerBackend container_backend.ContainerBackend
 
+	sequence atomic.Uint64
+
 	imagesCacheMutex sync.Mutex
 	imagesCache      map[string]localProjectSnapshot
 
@@ -52,15 +54,21 @@ type LocalStagesStorage struct {
 // confirmed yet. Only the references are kept, not the image summaries, so the listing payload of
 // a daemon full of labeled images does not stay resident.
 type localProjectSnapshot struct {
-	initialized      bool
-	references       []string
-	listingStartedAt time.Time
-	pushedReferences map[string]time.Time
+	initialized       bool
+	references        []string
+	listingStartedSeq uint64
+	pushedReferences  map[string]uint64
 }
 
 type localProjectListing struct {
-	references       []string
-	listingStartedAt time.Time
+	references        []string
+	listingStartedSeq uint64
+}
+
+// nextSequence orders requests, listings and publications of this process against each other
+// without relying on the wall clock, whose resolution lets two of them share an instant.
+func (storage *LocalStagesStorage) nextSequence() uint64 {
+	return storage.sequence.Add(1)
 }
 
 // localProjectFlight is the listing of one project that is running right now. Which caller leads it
@@ -137,16 +145,16 @@ func (storage *LocalStagesStorage) GetStagesIDs(ctx context.Context, projectName
 }
 
 func (storage *LocalStagesStorage) GetStagesIDsByDigest(ctx context.Context, projectName, digest string, parentStageCreationTs int64, opts ...Option) ([]image.StageID, error) {
-	var cutoff time.Time
+	var requestSeq uint64
 	if !makeOptions(opts...).withCache {
 		// Recorded before anything else, so that a listing accepted by this call also covers every
 		// lock its caller already holds.
-		cutoff = time.Now()
+		requestSeq = storage.sequence.Load()
 	} else if cached, isCached := storage.loadProjectSnapshot(projectName); isCached {
 		return selectProjectStages(ctx, cached.references, projectName, digest, parentStageCreationTs)
 	}
 
-	listing, _, err := storage.refreshProjectListing(ctx, projectName, cutoff)
+	listing, _, err := storage.refreshProjectListing(ctx, projectName, requestSeq)
 	if err != nil {
 		return nil, err
 	}
@@ -180,7 +188,7 @@ func selectProjectStages(ctx context.Context, references []string, projectName, 
 	return resultStageIDs, nil
 }
 
-func (storage *LocalStagesStorage) refreshProjectListing(ctx context.Context, projectName string, cutoff time.Time) (localProjectListing, bool, error) {
+func (storage *LocalStagesStorage) refreshProjectListing(ctx context.Context, projectName string, requestSeq uint64) (localProjectListing, bool, error) {
 	var joined bool
 	for {
 		listing, joinedNow, err := storage.waitProjectListing(ctx, projectName)
@@ -191,7 +199,7 @@ func (storage *LocalStagesStorage) refreshProjectListing(ctx context.Context, pr
 		// The listing this call joined had already snapshotted the daemon before the caller took the
 		// locks the result has to cover, so it is unusable. The next listing can only start after
 		// this one finished, so waiting for it never runs two listings in parallel.
-		if listing.listingStartedAt.Before(cutoff) {
+		if listing.listingStartedSeq <= requestSeq {
 			continue
 		}
 		return listing, joined, nil
@@ -227,15 +235,15 @@ func (storage *LocalStagesStorage) waitProjectListing(ctx context.Context, proje
 }
 
 func (storage *LocalStagesStorage) runProjectListing(ctx context.Context, projectName string, flight *localProjectFlight) {
-	listingStartedAt := time.Now()
+	listingStartedSeq := storage.nextSequence()
 	storage.registerProjectListing(projectName)
 
 	var listing localProjectListing
 	images, err := storage.listImages(ctx, fmt.Sprintf(LocalStage_ImageRepoFormat, projectName))
 	if err == nil {
 		listing = localProjectListing{
-			references:       storage.storeProjectSnapshot(projectName, localStageReferences(images), listingStartedAt),
-			listingStartedAt: listingStartedAt,
+			references:        storage.storeProjectSnapshot(projectName, localStageReferences(images), listingStartedSeq),
+			listingStartedSeq: listingStartedSeq,
 		}
 	}
 
@@ -253,33 +261,33 @@ func (storage *LocalStagesStorage) registerProjectListing(projectName string) {
 	storage.putProjectSnapshot(projectName, storage.imagesCache[projectName])
 }
 
-func (storage *LocalStagesStorage) storeProjectSnapshot(projectName string, references []string, listingStartedAt time.Time) []string {
+func (storage *LocalStagesStorage) storeProjectSnapshot(projectName string, references []string, listingStartedSeq uint64) []string {
 	storage.imagesCacheMutex.Lock()
 	defer storage.imagesCacheMutex.Unlock()
 
 	entry := storage.imagesCache[projectName]
-	pushedReferences := map[string]time.Time{}
-	for reference, pushedAt := range entry.pushedReferences {
+	pushedReferences := map[string]uint64{}
+	for reference, pushedSeq := range entry.pushedReferences {
 		// A listing started after the publication is authoritative and drops the reference, so a
 		// stage removed from the daemon cannot stay cached forever.
-		if !pushedAt.After(listingStartedAt) || slices.Contains(references, reference) {
+		if pushedSeq <= listingStartedSeq || slices.Contains(references, reference) {
 			continue
 		}
 		references = append(references, reference)
-		pushedReferences[reference] = pushedAt
+		pushedReferences[reference] = pushedSeq
 	}
 
 	// A listing that started earlier carries an older snapshot of the daemon, whatever the order of
 	// completion: it must not drop references a later listing already confirmed.
-	if entry.initialized && entry.listingStartedAt.After(listingStartedAt) {
+	if entry.initialized && entry.listingStartedSeq > listingStartedSeq {
 		return references
 	}
 
 	storage.putProjectSnapshot(projectName, localProjectSnapshot{
-		initialized:      true,
-		references:       references,
-		listingStartedAt: listingStartedAt,
-		pushedReferences: pushedReferences,
+		initialized:       true,
+		references:        references,
+		listingStartedSeq: listingStartedSeq,
+		pushedReferences:  pushedReferences,
 	})
 	return references
 }
@@ -341,11 +349,11 @@ func (storage *LocalStagesStorage) rememberPublishedStage(reference string) {
 
 	pushedReferences := maps.Clone(entry.pushedReferences)
 	if pushedReferences == nil {
-		pushedReferences = map[string]time.Time{}
+		pushedReferences = map[string]uint64{}
 	}
 	// Recorded even when the reference is already listed: a listing in flight may have snapshotted
 	// the daemon without it.
-	pushedReferences[reference] = time.Now()
+	pushedReferences[reference] = storage.nextSequence()
 	entry.pushedReferences = pushedReferences
 
 	if entry.initialized && !slices.Contains(entry.references, reference) {

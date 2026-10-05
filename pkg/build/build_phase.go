@@ -732,10 +732,14 @@ func (phase *BuildPhase) onImageStage(ctx context.Context, img *image.Image, stg
 		stg.SetStageImage(i)
 
 		var fetchInfo fetchBaseImageForStageInfo
+		reusedPublishedStage := false
 		if stg.IsBuildable() {
 			info, err := phase.fetchBaseImageForStage(ctx, img, stg)
 			if err != nil {
-				return err
+				if !phase.reusePublishedStageAfterFailure(ctx, img, stg, err) {
+					return err
+				}
+				reusedPublishedStage = true
 			}
 			fetchInfo = info
 		} else {
@@ -745,19 +749,29 @@ func (phase *BuildPhase) onImageStage(ctx context.Context, img *image.Image, stg
 			}
 		}
 
-		if err = phase.prepareStageInstructions(ctx, img, stg); err != nil {
-			return err
+		if !reusedPublishedStage {
+			if err = phase.prepareStageInstructions(ctx, img, stg); err != nil {
+				return err
+			}
+
+			reused, err := phase.buildStage(ctx, img, stg)
+			if err != nil {
+				return err
+			}
+			reusedPublishedStage = reused
 		}
 
-		if err := phase.buildStage(ctx, img, stg); err != nil {
-			return err
+		if reusedPublishedStage {
+			stg.SetMeta(&stage.StageMeta{
+				Rebuilt: false,
+			})
+		} else {
+			stg.SetMeta(&stage.StageMeta{
+				Rebuilt:             true,
+				BaseImagePulled:     fetchInfo.BaseImagePulled,
+				BaseImageSourceType: fetchInfo.BaseImageSource,
+			})
 		}
-
-		stg.SetMeta(&stage.StageMeta{
-			Rebuilt:             true,
-			BaseImagePulled:     fetchInfo.BaseImagePulled,
-			BaseImageSourceType: fetchInfo.BaseImageSource,
-		})
 	}
 
 	// debug assertion
@@ -1084,12 +1098,67 @@ func (phase *BuildPhase) countStageCacheHit(ctx context.Context) {
 	}
 }
 
-func (phase *BuildPhase) buildStage(ctx context.Context, img *image.Image, stg stage.Interface) error {
+func (phase *BuildPhase) adoptPublishedStage(ctx context.Context, img *image.Image, stg stage.Interface, stageDesc *imagePkg.StageDesc) {
+	i := phase.Conveyor.GetOrCreateStageImage(stageDesc.Info.Name, phase.StagesIterator.GetPrevImage(img, stg), stg, img)
+	i.Image.SetStageDesc(stageDesc)
+	stg.SetStageImage(i)
+
+	// The stage digest remains the same, but the content digest may differ (e.g., the content digest of git and some user stages depends on the git commit).
+	contentDigest, exist := stageDesc.Info.Labels[imagePkg.WerfStageContentDigestLabel]
+	if !exist {
+		panic(fmt.Sprintf("expected stage %q content digest label to be set!", stg.Name()))
+	}
+	stg.SetContentDigest(contentDigest)
+}
+
+// reusePublishedStageAfterFailure checks under the stage lock whether another process has
+// published a stage with the same digest while this process was building it, so that a local
+// build failure does not fail the whole command over a stage that already exists.
+func (phase *BuildPhase) reusePublishedStageAfterFailure(ctx context.Context, img *image.Image, stg stage.Interface, buildErr error) bool {
+	lock, err := phase.Conveyor.StorageLockManager.LockStage(ctx, phase.Conveyor.ProjectName(), stg.GetDigest())
+	if err != nil {
+		logboek.Context(ctx).Warn().LogF("Unable to lock project %s digest %s to look for an already published stage: %s\n", phase.Conveyor.ProjectName(), stg.GetDigest(), err)
+		return false
+	}
+	defer func() {
+		if err := phase.Conveyor.StorageLockManager.Unlock(ctx, lock); err != nil {
+			logboek.Context(ctx).Warn().LogF("Unable to unlock project %s digest %s: %s\n", phase.Conveyor.ProjectName(), stg.GetDigest(), err)
+		}
+	}()
+
+	stageDescSet, err := phase.Conveyor.StorageManager.GetStageDescSetByDigest(ctx, stg.LogDetailedName(), stg.GetDigest(), phase.getPrevNonEmptyStageCreationTs())
+	if err != nil {
+		logboek.Context(ctx).Warn().LogF("Unable to get stage %s digest %s description list: %s\n", stg.LogDetailedName(), stg.GetDigest(), err)
+		return false
+	}
+
+	stageDesc, err := phase.Conveyor.StorageManager.SelectSuitableStageDesc(ctx, phase.Conveyor, stg, stageDescSet)
+	if err != nil {
+		logboek.Context(ctx).Warn().LogF("Unable to select suitable stage %s by digest %s: %s\n", stg.LogDetailedName(), stg.GetDigest(), err)
+		return false
+	}
+	if stageDesc == nil {
+		return false
+	}
+
+	logboek.Context(ctx).Warn().LogF(
+		"Reusing already published image %s for stage %s by digest %s, because building it locally failed: %s\n",
+		stageDesc.Info.Name, stg.LogDetailedName(), stg.GetDigest(), buildErr,
+	)
+	phase.countStageCacheHit(ctx)
+	phase.adoptPublishedStage(ctx, img, stg, stageDesc)
+
+	return true
+}
+
+// buildStage reports whether a stage published by another process has been reused instead of
+// the image this process was building.
+func (phase *BuildPhase) buildStage(ctx context.Context, img *image.Image, stg stage.Interface) (bool, error) {
 	if stg.IsBuildable() {
 		if !img.IsDockerfileImage && phase.Conveyor.UseLegacyStapelBuilder(phase.Conveyor.ContainerBackend) {
 			_, err := stapel.GetOrCreateContainer(ctx, img.TargetPlatform)
 			if err != nil {
-				return fmt.Errorf("get or create stapel container failed: %w", err)
+				return false, fmt.Errorf("get or create stapel container failed: %w", err)
 			}
 		}
 	}
@@ -1101,31 +1170,34 @@ func (phase *BuildPhase) buildStage(ctx context.Context, img *image.Image, stg s
 		container_backend.LogImageInfo(ctx, stg.GetStageImage().Image, phase.getPrevNonEmptyStageImageSize(), img.ShouldLogPlatform(), phase.getLogImageNetwork(img))
 	}
 
+	var reusedPublishedStage bool
 	if err := logboek.Context(ctx).Default().LogProcess("Building stage %s", stg.LogDetailedName()).
 		Options(func(options types.LogProcessOptionsInterface) {
 			options.InfoSectionFunc(infoSectionFunc)
 			options.Style(style.Highlight())
 		}).
-		DoError(func() (err error) {
+		DoError(func() error {
 			if err := stg.PreRun(ctx, phase.Conveyor); err != nil {
 				return fmt.Errorf("%s preRun failed: %w", stg.LogDetailedName(), err)
 			}
 
-			return phase.atomicBuildStageImage(ctx, img, stg)
+			reused, err := phase.atomicBuildStageImage(ctx, img, stg)
+			reusedPublishedStage = reused
+			return err
 		}); err != nil {
-		return err
+		return false, err
 	}
 
 	if phase.IntrospectOptions.ImageStageShouldBeIntrospected(img.GetName(), string(stg.Name())) {
 		if err := introspectStage(ctx, stg); err != nil {
-			return err
+			return false, err
 		}
 	}
 
-	return nil
+	return reusedPublishedStage, nil
 }
 
-func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.Image, stg stage.Interface) error {
+func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.Image, stg stage.Interface) (bool, error) {
 	stageImage := stg.GetStageImage()
 
 	if stg.IsBuildable() {
@@ -1145,7 +1217,11 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 			}
 			return nil
 		}); err != nil {
-			return fmt.Errorf("failed to build image for stage %s with digest %s: %w", stg.Name(), stg.GetDigest(), err)
+			buildErr := fmt.Errorf("failed to build image for stage %s with digest %s: %w", stg.Name(), stg.GetDigest(), err)
+			if phase.reusePublishedStageAfterFailure(ctx, img, stg, buildErr) {
+				return true, nil
+			}
+			return false, buildErr
 		}
 
 		if v := os.Getenv("WERF_TEST_ATOMIC_STAGE_BUILD__SLEEP_SECONDS_BEFORE_STAGE_SAVE"); v != "" {
@@ -1159,7 +1235,7 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 	var stageUnlocked bool
 	var unlockStage func()
 	if lock, err := phase.Conveyor.StorageLockManager.LockStage(ctx, phase.Conveyor.ProjectName(), stg.GetDigest()); err != nil {
-		return fmt.Errorf("unable to lock project %s digest %s: %w", phase.Conveyor.ProjectName(), stg.GetDigest(), err)
+		return false, fmt.Errorf("unable to lock project %s digest %s: %w", phase.Conveyor.ProjectName(), stg.GetDigest(), err)
 	} else {
 		unlockStage = func() {
 			if stageUnlocked {
@@ -1178,11 +1254,11 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 		var err error
 		stageDescSet, err = phase.Conveyor.StorageManager.GetStageDescSetByDigest(ctx, stg.LogDetailedName(), stg.GetDigest(), phase.getPrevNonEmptyStageCreationTs())
 		if err != nil {
-			return err
+			return false, err
 		}
 		stageDesc, err := phase.Conveyor.StorageManager.SelectSuitableStageDesc(ctx, phase.Conveyor, stg, stageDescSet)
 		if err != nil {
-			return err
+			return false, err
 		}
 
 		if stageDesc != nil {
@@ -1198,18 +1274,8 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 			}
 			phase.countStageCacheHit(ctx)
 
-			i := phase.Conveyor.GetOrCreateStageImage(stageDesc.Info.Name, phase.StagesIterator.GetPrevImage(img, stg), stg, img)
-			i.Image.SetStageDesc(stageDesc)
-			stg.SetStageImage(i)
-
-			// The stage digest remains the same, but the content digest may differ (e.g., the content digest of git and some user stages depends on the git commit).
-			contentDigest, exist := stageDesc.Info.Labels[imagePkg.WerfStageContentDigestLabel]
-			if exist {
-				stg.SetContentDigest(contentDigest)
-			} else {
-				panic(fmt.Sprintf("expected stage %q content digest label to be set!", stg.Name()))
-			}
-			return nil
+			phase.adoptPublishedStage(ctx, img, stg, stageDesc)
+			return false, nil
 		}
 	}
 
@@ -1258,7 +1324,7 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 
 		return nil
 	}); err != nil {
-		return err
+		return false, err
 	}
 
 	unlockStage()
@@ -1272,9 +1338,9 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 			LogDetailedName:  stg.LogDetailedName(),
 		},
 	); err != nil {
-		return fmt.Errorf("unable to copy stage %s into cache storages: %w", stageImage.Image.GetStageDesc().StageID.String(), err)
+		return false, fmt.Errorf("unable to copy stage %s into cache storages: %w", stageImage.Image.GetStageDesc().StageID.String(), err)
 	}
-	return nil
+	return false, nil
 }
 
 func introspectStage(ctx context.Context, s stage.Interface) error {
@@ -1388,9 +1454,12 @@ E.g.:
 - automatically with werf cleanup command
 - manually with werf purge or werf host purge commands`)
 			logboek.Context(ctx).Warn().LogLn()
-			logboek.Context(ctx).Warn().LogLn(reasonNumberFunc() + `You are using --require-built-images flag (or WERF_REQUIRE_BUILT_IMAGES env) which requires images to be already built:
+			primaryStagesStorageAddress := phase.Conveyor.StorageManager.GetStagesStorage().String()
+			logboek.Context(ctx).Warn().LogLn(reasonNumberFunc() + fmt.Sprintf(`You are checking that images are already built (--check-built-images / --require-built-images / -Z flag, WERF_CHECK_BUILT_IMAGES / WERF_REQUIRE_BUILT_IMAGES env), so only the primary stages storage %[1]s has been searched:
 - If you expect images to be built and available in the registry, check the reasons above
-- If you want to build images instead of requiring them to be already built, remove --require-built-images flag / WERF_REQUIRE_BUILT_IMAGES env`)
+- Secondary stages storages (--secondary-repo and the implicit local one) are not consulted by the check and no stage is promoted into %[1]s
+- If the stage exists in a secondary stages storage only, publish it with an ordinary build first: werf build --repo %[1]s
+- If you want to build images instead of checking them, remove the flag / env`, primaryStagesStorageAddress))
 			logboek.Context(ctx).Warn().LogLn()
 		})
 }
