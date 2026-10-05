@@ -81,6 +81,9 @@ var _ = ginkgo.Describe("Kubernetes storage lock acquisition statistics", func()
 		summary := collector.Summary()
 		gomega.Expect(summary).To(gomega.HaveLen(1))
 		gomega.Expect(summary[0].Operation).To(gomega.Equal(opstats.Operation("sync: lock acquire")))
-		gomega.Expect(summary[0].TotalTime).To(gomega.BeNumerically("<", configMapSetupDelay), "the timer must not cover creating the locking ConfigMap")
+		// The setup path sleeps twice (get, then create); the acquisition itself only needs
+		// headroom for a scheduler pause, so anything below one delay plus that headroom
+		// proves the timer skipped the setup.
+		gomega.Expect(summary[0].TotalTime).To(gomega.BeNumerically("<", configMapSetupDelay*3/2), "the timer must not cover creating the locking ConfigMap")
 	})
 })
