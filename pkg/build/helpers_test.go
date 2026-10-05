@@ -249,13 +249,15 @@ func readOperationsReport(path string) operationsReport {
 
 type publicationStorage struct {
 	storage.PrimaryStagesStorage
-	desc *imagePkg.StageDesc
+	desc   *imagePkg.StageDesc
+	writes int
 }
 
 var _ storage.PrimaryStagesStorage = (*publicationStorage)(nil)
 
 func (s *publicationStorage) String() string { return "publication-test" }
 func (s *publicationStorage) StoreImage(_ context.Context, img container_backend.LegacyImageInterface) error {
+	s.writes++
 	s.desc = &imagePkg.StageDesc{StageID: imagePkg.NewStageID("shared-digest", 100), Info: &imagePkg.Info{Name: img.Name(), Labels: map[string]string{imagePkg.WerfStageContentDigestLabel: "winner-content"}}}
 	return nil
 }
@@ -311,13 +313,14 @@ var _ stage.Interface = (*publicationStage)(nil)
 
 func (s *publicationStage) IsBuildable() bool { return false }
 func newPublicationPhase(ctx context.Context, m *publicationStorageManager, address string) (*BuildPhase, *image.Image, stage.Interface) {
-	conveyor := &Conveyor{werfConfig: &config.WerfConfig{Meta: &config.Meta{Project: "publication-project"}}, StorageManager: m, stageImages: make(map[string]*stage.StageImage), serviceRWMutex: make(map[string]*sync.RWMutex)}
+	conveyor := &Conveyor{werfConfig: &config.WerfConfig{Meta: &config.Meta{Project: "publication-project"}}, StorageManager: m, stageImages: make(map[string]*stage.StageImage), stageDigestMutex: make(map[string]*sync.Mutex), serviceRWMutex: make(map[string]*sync.RWMutex)}
 	var err error
 	conveyor.StorageLockManager, err = lock_manager.NewHttp(ctx, address, "shared-client-id")
 	gomega.Expect(err).To(gomega.Succeed())
 	phase := NewBuildPhase(conveyor, BuildPhaseOptions{})
 	phase.StagesIterator = NewStagesIterator(conveyor)
-	img := &image.Image{Name: "app", TargetPlatform: "linux/amd64", CommonImageOptions: image.CommonImageOptions{Conveyor: conveyor, ForceTargetPlatformLogging: true}}
+	img, err := image.NewImage(ctx, "linux/amd64", "app", image.NoBaseImage, image.ImageOptions{CommonImageOptions: image.CommonImageOptions{Conveyor: conveyor, StorageManager: m, ForceTargetPlatformLogging: true}})
+	gomega.Expect(err).To(gomega.Succeed())
 	stg := &publicationStage{BaseStage: stage.NewBaseStage(stage.Setup, &stage.BaseStageOptions{ImageName: "app"})}
 	stg.SetDigest("shared-digest")
 	stg.SetContentDigest("loser-content")
@@ -331,11 +334,18 @@ func newPublicationPhase(ctx context.Context, m *publicationStorageManager, addr
 	return phase, img, stg
 }
 
-func newPublicationLockServer() *httptest.Server {
+func newPublicationLockServer() (*httptest.Server, <-chan struct{}) {
 	backend := distributed_locker.NewOptimisticLockingStorageBasedBackend(optimistic_locking_store.NewInMemoryStore())
-	srv := httptest.NewServer(http.StripPrefix("/shared-client-id/locker", distributed_locker.NewHttpBackendHandler(backend)))
+	handler := http.StripPrefix("/shared-client-id/locker", distributed_locker.NewHttpBackendHandler(backend))
+	attempts := make(chan struct{}, 16)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		handler.ServeHTTP(w, r)
+		if r.URL.Path == "/shared-client-id/locker/acquire" {
+			attempts <- struct{}{}
+		}
+	}))
 	ginkgo.DeferCleanup(srv.Close)
-	return srv
+	return srv, attempts
 }
 
 type buildableStage struct{ *publicationStage }
@@ -344,16 +354,46 @@ var _ stage.Interface = (*buildableStage)(nil)
 
 func (s *buildableStage) IsBuildable() bool { return true }
 
+// reportedStage goes through the whole onImageStage path: it is buildable, needs no stapel
+// machinery and installs a builder stub on every stage image the phase creates for it.
+type reportedStage struct {
+	*buildableStage
+	buildErr error
+}
+
+var _ stage.Interface = (*reportedStage)(nil)
+
+func (s *reportedStage) IsStapelStage() bool { return false }
+
+func (s *reportedStage) HasPrevStage() bool { return false }
+
+func (s *reportedStage) GetDependencies(_ context.Context, _ stage.Conveyor, _ container_backend.ContainerBackend, _, _ *stage.StageImage, _ container_backend.BuildContextArchiver) (string, error) {
+	return "stage-dependencies", nil
+}
+
+func (s *reportedStage) PrepareImage(_ context.Context, _ stage.Conveyor, _ container_backend.ContainerBackend, _, _ *stage.StageImage, _ container_backend.BuildContextArchiver) error {
+	return nil
+}
+
+func (s *reportedStage) SetStageImage(stageImage *stage.StageImage) {
+	stageImage.Builder = &stageBuilderStub{
+		StageBuilder: stage_builder.NewStageBuilder(nil, "base", stageImage.Image),
+		buildErr:     s.buildErr,
+	}
+	s.buildableStage.SetStageImage(stageImage)
+}
+
 type stageBuilderStub struct {
-	stage_builder.StageBuilderInterface
-	builds int
+	*stage_builder.StageBuilder
+	builds   int
+	buildErr error
 }
 
 var _ stage_builder.StageBuilderInterface = (*stageBuilderStub)(nil)
 
 func (b *stageBuilderStub) Build(_ context.Context, _ container_backend.BuildOptions) error {
 	b.builds++
-	return nil
+	return b.buildErr
 }
 
 func eventCounts(collector *opstats.Collector) map[opstats.Event]int {
@@ -362,4 +402,20 @@ func eventCounts(collector *opstats.Collector) map[opstats.Event]int {
 		counts[e.Event] = e.Count
 	}
 	return counts
+}
+
+func (m *publicationStorageManager) GetSecondaryStagesStorageList() []storage.StagesStorage {
+	return nil
+}
+
+func (m *publicationStorageManager) GetStageDescSetByDigestWithCache(context.Context, string, string, int64) (imagePkg.StageDescSet, error) {
+	return imagePkg.NewStageDescSet(), nil
+}
+
+func (m *publicationStorageManager) FetchStage(context.Context, container_backend.ContainerBackend, stage.Interface) (manager.FetchStageInfo, error) {
+	return manager.FetchStageInfo{BaseImageSource: BaseImageSourceTypeRepo}, nil
+}
+
+func (m *publicationStorageManager) GetStageDescSetByDigestFromStagesStorageCached(context.Context, string, string, int64, storage.StagesStorage) (imagePkg.StageDescSet, error) {
+	return imagePkg.NewStageDescSet(), nil
 }

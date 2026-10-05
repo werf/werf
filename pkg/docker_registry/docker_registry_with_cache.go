@@ -28,7 +28,10 @@ const (
 
 type DockerRegistryWithCache struct {
 	Interface
-	cachedTagsMap *sync.Map
+	cachedTagsMap   *sync.Map
+	cacheWriteMu    sync.Mutex
+	listingSequence uint64
+	storedSequence  map[string]uint64
 
 	listTagsQueryGroup *singleflight.Group
 }
@@ -77,6 +80,16 @@ func (r *DockerRegistryWithCache) getTagsListFromRegistry(ctx context.Context, r
 		opstats.CountCacheLookup(ctx, opstats.OperationRegistryTagsList, opstats.CacheLayerMemory, outcome, sharedLookup)
 	}()
 	cachedTagsID := r.mustGetCachedTagsID(reference)
+	if makeOptions(opts...).freshTags {
+		outcome = opstats.CacheOutcomeBypass
+		sequence := r.nextListingSequence()
+		tags, err := r.Interface.Tags(ctx, reference, opts...)
+		if err != nil {
+			return nil, fmt.Errorf("fetch fresh tags for repo %q: %w", reference, err)
+		}
+		r.storeTagsToCache(cachedTagsID, tags, sequence)
+		return tags, nil
+	}
 	if tags, ok := r.tryLoadTagsFromCache(cachedTagsID, opts...); ok {
 		outcome = opstats.CacheOutcomeHit
 		opstats.CountEvent(ctx, opstats.EventRegistryTagsCacheHit)
@@ -89,7 +102,11 @@ func (r *DockerRegistryWithCache) getTagsListFromRegistry(ctx context.Context, r
 	leader := false
 	newTagsResp, err, shared := r.listTagsQueryGroup.Do(cachedTagsID, func() (interface{}, error) {
 		leader = true
+		sequence := r.nextListingSequence()
 		tags, err := r.Interface.Tags(ctx, reference, opts...)
+		if err == nil {
+			r.storeTagsToCache(cachedTagsID, tags, sequence)
+		}
 		return tags, err
 	})
 
@@ -108,8 +125,28 @@ func (r *DockerRegistryWithCache) getTagsListFromRegistry(ctx context.Context, r
 		return nil, err
 	}
 
-	r.cachedTagsMap.Store(cachedTagsID, newTagsList)
 	return newTagsList, nil
+}
+
+func (r *DockerRegistryWithCache) nextListingSequence() uint64 {
+	r.cacheWriteMu.Lock()
+	defer r.cacheWriteMu.Unlock()
+	r.listingSequence++
+	return r.listingSequence
+}
+
+// A slow earlier listing must not replace a newer authoritative result in the cache.
+func (r *DockerRegistryWithCache) storeTagsToCache(id string, tags []string, sequence uint64) {
+	r.cacheWriteMu.Lock()
+	defer r.cacheWriteMu.Unlock()
+	if r.storedSequence[id] > sequence {
+		return
+	}
+	if r.storedSequence == nil {
+		r.storedSequence = make(map[string]uint64)
+	}
+	r.storedSequence[id] = sequence
+	r.cachedTagsMap.Store(id, tags)
 }
 
 func castTagsList(tagsList interface{}) ([]string, error) {
@@ -194,13 +231,12 @@ func (r *DockerRegistryWithCache) startBackgroundCacheUpdater(ctx context.Contex
 							ctxWithTimeout, cancel := context.WithTimeout(ctx, timeout)
 							defer cancel()
 
-							tags, err := r.Tags(ctxWithTimeout, repo)
+							_, err := r.Tags(ctxWithTimeout, repo)
 							if err != nil {
 								logboek.Context(ctx).Debug().LogF("Failed to update tag cache for %q: %s\n", repo, err)
 								return err
 							}
 
-							r.cachedTagsMap.Store(repo, tags)
 							logboek.Context(ctx).Debug().LogF("Updated tag cache for %q\n", repo)
 							return nil
 						}); err != nil {
