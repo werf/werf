@@ -77,10 +77,10 @@ func (manager *Kubernetes) LockStage(
 	ctx context.Context,
 	projectName, digest string,
 ) (LockHandle, error) {
+	defer opstats.Observe(ctx, opstats.OperationStageLockWait)()
 	if locker, err := manager.getLockerForProject(ctx, projectName); err != nil {
 		return LockHandle{}, err
 	} else {
-		defer opstats.Observe(ctx, opstats.OperationStageLockWait)()
 		options := lockerPkg.SetupDefaultOptions(ctx, lockgate.AcquireOptions{})
 		_, lock, err := locker.Acquire(kubernetesStageLockName(projectName, digest), options)
 		return LockHandle{LockgateHandle: lock, ProjectName: projectName}, err

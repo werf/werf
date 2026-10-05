@@ -9,9 +9,13 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 	"golang.org/x/net/context"
+
+	"github.com/werf/werf/v2/pkg/opstats"
 )
 
 func Containers(ctx context.Context, options types.ContainerListOptions) ([]types.Container, error) {
+	defer opstats.Observe(ctx, "docker: container list")()
+
 	return apiCli(ctx).ContainerList(ctx, options)
 }
 
@@ -30,10 +34,14 @@ func ContainerAttach(ctx context.Context, ref string, options types.ContainerAtt
 }
 
 func ContainerInspect(ctx context.Context, ref string) (types.ContainerJSON, error) {
+	defer opstats.Observe(ctx, "docker: container inspect")()
+
 	return apiCli(ctx).ContainerInspect(ctx, ref)
 }
 
 func ContainerCommit(ctx context.Context, ref string, commitOptions types.ContainerCommitOptions) (string, error) {
+	defer opstats.Observe(ctx, "docker: container commit")()
+
 	response, err := apiCli(ctx).ContainerCommit(ctx, ref, commitOptions)
 	if err != nil {
 		return "", err
@@ -43,10 +51,14 @@ func ContainerCommit(ctx context.Context, ref string, commitOptions types.Contai
 }
 
 func ContainerRemove(ctx context.Context, ref string, options types.ContainerRemoveOptions) error {
+	defer opstats.Observe(ctx, "docker: container remove")()
+
 	return apiCli(ctx).ContainerRemove(ctx, ref, options)
 }
 
 func doCliCreate(ctx context.Context, c command.Cli, args ...string) error {
+	defer opstats.Observe(ctx, "docker: container create")()
+
 	return prepareCliCmd(ctx, container.NewCreateCommand(c), args...).Execute()
 }
 
@@ -57,6 +69,8 @@ func CliCreate(ctx context.Context, args ...string) error {
 }
 
 func doCliRun(ctx context.Context, c command.Cli, args ...string) error {
+	defer opstats.Observe(ctx, "docker: container run")()
+
 	return prepareCliCmd(ctx, container.NewRunCommand(c), args...).Execute()
 }
 
@@ -89,6 +103,8 @@ func CliRun_RecordedOutput(ctx context.Context, args ...string) (string, error) 
 }
 
 func doCliRm(ctx context.Context, c command.Cli, args ...string) error {
+	defer opstats.Observe(ctx, "docker: container remove")()
+
 	return prepareCliCmd(ctx, container.NewRmCommand(c), args...).Execute()
 }
 

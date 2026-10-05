@@ -50,6 +50,7 @@ import (
 	"github.com/werf/werf/v2/pkg/container_backend/filter"
 	"github.com/werf/werf/v2/pkg/container_backend/info"
 	"github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/opstats"
 	"github.com/werf/werf/v2/pkg/ssh_agent"
 )
 
@@ -335,6 +336,7 @@ func (b *NativeBuildah) GetDefaultPlatform() string {
 
 // Inspect returns nil, nil if image not found.
 func (b *NativeBuildah) Inspect(ctx context.Context, ref string) (*thirdparty.BuilderInfo, error) {
+	defer opstats.Observe(ctx, "buildah: image inspect")()
 	builder, err := b.getBuilderFromImage(ctx, ref, CommonOpts{})
 	if err != nil {
 		return nil, fmt.Errorf("error doing inspect: %w", err)
@@ -348,7 +350,8 @@ func (b *NativeBuildah) Inspect(ctx context.Context, ref string) (*thirdparty.Bu
 	return &buildInfo, nil
 }
 
-func (b *NativeBuildah) Tag(_ context.Context, ref, newRef string, opts TagOpts) error {
+func (b *NativeBuildah) Tag(ctx context.Context, ref, newRef string, opts TagOpts) error {
+	defer opstats.Observe(ctx, "buildah: image tag")()
 	image, err := b.getImage(ref, CommonOpts(opts))
 	if err != nil {
 		return err
@@ -362,6 +365,7 @@ func (b *NativeBuildah) Tag(_ context.Context, ref, newRef string, opts TagOpts)
 }
 
 func (b *NativeBuildah) Push(ctx context.Context, ref string, opts PushOpts) error {
+	defer opstats.Observe(ctx, "buildah: image push")()
 	// NOTICE: targetPlatform specified for push causes buildah to fail for some unknown reason
 	sysCtx, err := b.getSystemContext("")
 	if err != nil {
@@ -392,6 +396,7 @@ func (b *NativeBuildah) Push(ctx context.Context, ref string, opts PushOpts) err
 }
 
 func (b *NativeBuildah) BuildFromDockerfile(ctx context.Context, dockerfile string, opts BuildFromDockerfileOpts) (string, error) {
+	defer opstats.Observe(ctx, "buildah: image build")()
 	var targetPlatform string
 	var targetPlatforms []struct{ OS, Arch, Variant string }
 	if opts.TargetPlatform != "" {
@@ -467,6 +472,7 @@ func (b *NativeBuildah) BuildFromDockerfile(ctx context.Context, dockerfile stri
 }
 
 func (b *NativeBuildah) Mount(ctx context.Context, container string, opts MountOpts) (string, error) {
+	defer opstats.Observe(ctx, "buildah: container mount")()
 	builder, err := b.openContainerBuilder(ctx, container)
 	if err != nil {
 		return "", fmt.Errorf("unable to open container %q builder: %w", container, err)
@@ -476,6 +482,7 @@ func (b *NativeBuildah) Mount(ctx context.Context, container string, opts MountO
 }
 
 func (b *NativeBuildah) Umount(ctx context.Context, container string, opts UmountOpts) error {
+	defer opstats.Observe(ctx, "buildah: container unmount")()
 	builder, err := b.openContainerBuilder(ctx, container)
 	if err != nil {
 		return fmt.Errorf("unable to open container %q builder: %w", container, err)
@@ -485,6 +492,7 @@ func (b *NativeBuildah) Umount(ctx context.Context, container string, opts Umoun
 }
 
 func (b *NativeBuildah) RunCommand(ctx context.Context, container string, command []string, opts RunCommandOpts) error {
+	defer opstats.Observe(ctx, "buildah: container run")()
 	builder, err := b.openContainerBuilder(ctx, container)
 	if err != nil {
 		return fmt.Errorf("unable to open container %q builder: %w", container, err)
@@ -545,6 +553,7 @@ func (b *NativeBuildah) RunCommand(ctx context.Context, container string, comman
 }
 
 func (b *NativeBuildah) FromCommand(ctx context.Context, container, image string, opts FromCommandOpts) (string, error) {
+	defer opstats.Observe(ctx, "buildah: container create")()
 	sysCtx, err := b.getSystemContext(opts.TargetPlatform)
 	if err != nil {
 		return "", err
@@ -572,6 +581,7 @@ func (b *NativeBuildah) FromCommand(ctx context.Context, container, image string
 }
 
 func (b *NativeBuildah) Pull(ctx context.Context, ref string, opts PullOpts) (string, error) {
+	defer opstats.Observe(ctx, "buildah: image pull")()
 	sysCtx, err := b.getSystemContext(opts.TargetPlatform)
 	if err != nil {
 		return "", err
@@ -621,6 +631,7 @@ func (b *NativeBuildah) Pull(ctx context.Context, ref string, opts PullOpts) (st
 }
 
 func (b *NativeBuildah) Rm(ctx context.Context, ref string, opts RmOpts) error {
+	defer opstats.Observe(ctx, "buildah: container remove")()
 	builder, err := b.openContainerBuilder(ctx, ref)
 	if err != nil {
 		return fmt.Errorf("unable to open container %q builder: %w", ref, err)
@@ -630,6 +641,7 @@ func (b *NativeBuildah) Rm(ctx context.Context, ref string, opts RmOpts) error {
 }
 
 func (b *NativeBuildah) Rmi(ctx context.Context, ref string, opts RmiOpts) error {
+	defer opstats.Observe(ctx, "buildah: image remove")()
 	sysCtx, err := b.getSystemContext(opts.TargetPlatform)
 	if err != nil {
 		return err
@@ -650,6 +662,7 @@ func (b *NativeBuildah) Rmi(ctx context.Context, ref string, opts RmiOpts) error
 
 // PruneImages removes dangling images but not touches containers.
 func (b *NativeBuildah) PruneImages(ctx context.Context, opts PruneImagesOptions) (PruneImagesReport, error) {
+	defer opstats.Observe(ctx, "buildah: image prune")()
 	sysCtx, err := b.getSystemContext(opts.TargetPlatform)
 	if err != nil {
 		return PruneImagesReport{}, err
@@ -680,6 +693,8 @@ func (b *NativeBuildah) PruneImages(ctx context.Context, opts PruneImagesOptions
 }
 
 func (b *NativeBuildah) Commit(ctx context.Context, container string, opts CommitOpts) (string, error) {
+	defer opstats.Observe(ctx, "buildah: container commit")()
+
 	builder, err := b.openContainerBuilder(ctx, container)
 	if err != nil {
 		return "", fmt.Errorf("unable to open container %q builder: %w", container, err)
@@ -722,6 +737,7 @@ func (b *NativeBuildah) Commit(ctx context.Context, container string, opts Commi
 }
 
 func (b *NativeBuildah) Config(ctx context.Context, container string, opts ConfigOpts) error {
+	defer opstats.Observe(ctx, "buildah: container config")()
 	builder, err := b.openContainerBuilder(ctx, container)
 	if err != nil {
 		return fmt.Errorf("unable to open container %q builder: %w", container, err)
@@ -823,6 +839,7 @@ func (b *NativeBuildah) Config(ctx context.Context, container string, opts Confi
 }
 
 func (b *NativeBuildah) Copy(ctx context.Context, container, contextDir string, src []string, dst string, opts CopyOpts) error {
+	defer opstats.Observe(ctx, "buildah: container copy")()
 	builder, err := b.openContainerBuilder(ctx, container)
 	if err != nil {
 		return fmt.Errorf("unable to open container %q builder: %w", container, err)
@@ -847,6 +864,7 @@ func (b *NativeBuildah) Copy(ctx context.Context, container, contextDir string, 
 }
 
 func (b *NativeBuildah) Add(ctx context.Context, container string, src []string, dst string, opts AddOpts) error {
+	defer opstats.Observe(ctx, "buildah: container add")()
 	builder, err := b.openContainerBuilder(ctx, container)
 	if err != nil {
 		return fmt.Errorf("unable to open container %q builder: %w", container, err)
@@ -952,6 +970,7 @@ func (b *NativeBuildah) NewSessionTmpDir() (string, error) {
 }
 
 func (b *NativeBuildah) Images(ctx context.Context, opts ImagesOptions) (image.ImagesList, error) {
+	defer opstats.Observe(ctx, opstats.OperationBuildahImageList)()
 	sysCtx, err := b.getSystemContext(opts.TargetPlatform)
 	if err != nil {
 		return nil, err
@@ -1010,6 +1029,7 @@ func mapBackendOldFiltersToBuildahImageFilters(filters []util.Pair[string, strin
 }
 
 func (b *NativeBuildah) Containers(ctx context.Context, opts ContainersOptions) (image.ContainerList, error) {
+	defer opstats.Observe(ctx, "buildah: container list")()
 	builders, err := buildah.OpenAllBuilders(b.Store)
 	if err != nil {
 		return nil, err
@@ -1060,14 +1080,18 @@ SelectContainers:
 }
 
 func (b *NativeBuildah) SaveImageToStream(ctx context.Context, imageName string) (io.ReadCloser, error) {
+	done := opstats.Observe(ctx, "buildah: image save")
+
 	// NOTICE: targetPlatform specified for push causes buildah to fail for some unknown reason
 	sysCtx, err := b.getSystemContext("")
 	if err != nil {
+		done()
 		return nil, err
 	}
 
 	tmpFile, err := os.CreateTemp("", "buildah-img-*.tar")
 	if err != nil {
+		done()
 		return nil, err
 	}
 
@@ -1082,17 +1106,20 @@ func (b *NativeBuildah) SaveImageToStream(ctx context.Context, imageName string)
 
 	destinationRef, err := alltransports.ParseImageName(formatPathWithDockerArchiveTransport(tmpFile.Name()))
 	if err != nil {
+		done()
 		return nil, fmt.Errorf("error parsing destination ref from %q: %w", tmpFile.Name(), err)
 	}
 
 	if _, _, err = buildah.Push(ctx, imageName, destinationRef, pushOpts); err != nil {
+		done()
 		return nil, fmt.Errorf("error pushing image %q: %w", imageName, err)
 	}
 
-	return &fileRemoveOnClose{tmpFile}, nil
+	return opstats.NewObservedReadCloser(&fileRemoveOnClose{tmpFile}, done), nil
 }
 
 func (b *NativeBuildah) LoadImageFromStream(ctx context.Context, input io.Reader) (string, error) {
+	defer opstats.Observe(ctx, "buildah: image load")()
 	tmpFile, err := os.CreateTemp("", "buildah-img-*.tar")
 	if err != nil {
 		return "", err

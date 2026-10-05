@@ -272,6 +272,15 @@ func (repo *Remote) lsRemoteTag(ctx context.Context, fresh bool) (string, error)
 	cacheKey := repo.lsRemoteTagsCacheKey()
 
 	tags, cached := lsRemoteTagsCache[cacheKey]
+	outcome := opstats.CacheOutcomeHit
+	switch {
+	case fresh:
+		outcome = opstats.CacheOutcomeBypass
+	case !cached:
+		outcome = opstats.CacheOutcomeMiss
+	}
+	defer opstats.CountCacheLookup(ctx, opstats.OperationGitLsRemote, opstats.CacheLayerMemory, outcome, false)
+
 	if !cached || fresh {
 		done := opstats.Observe(ctx, opstats.OperationGitLsRemote)
 		defer done()
