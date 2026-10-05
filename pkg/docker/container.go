@@ -30,6 +30,10 @@ func ContainerExist(ctx context.Context, ref string) (bool, error) {
 }
 
 func ContainerAttach(ctx context.Context, ref string, options types.ContainerAttachOptions) (types.HijackedResponse, error) {
+	// Measures the attach call itself: the observation ends when the hijacked
+	// connection is handed to the caller, not when the streams are done with.
+	defer opstats.Observe(ctx, "docker: container attach")()
+
 	return apiCli(ctx).ContainerAttach(ctx, ref, options)
 }
 
