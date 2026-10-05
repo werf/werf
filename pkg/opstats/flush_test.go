@@ -41,6 +41,43 @@ var _ = Describe("Collector pending/commit flush", func() {
 		Expect(c.PendingEventSummary(ctx)).To(BeEmpty())
 	})
 
+	It("keeps the observations made while the report was written", func() {
+		c := NewCollector()
+		base := time.Now()
+
+		c.add(OperationStageBuild, base, base.Add(time.Second))
+		c.events[EventStageBuilt] = 1
+		Expect(c.PendingSummary(ctx)).To(HaveLen(1))
+		Expect(c.PendingEventSummary(ctx)).To(HaveLen(1))
+
+		// Recorded after the snapshot the report was built from, while the file was
+		// being written: committing the flush must not swallow them.
+		c.add(OperationStageBuild, base.Add(time.Second), base.Add(4*time.Second))
+		c.add(OperationImagePull, base, base.Add(2*time.Second))
+		c.events[EventStageBuilt] = 3
+		c.CommitFlush(ctx)
+
+		Expect(c.PendingSummary(ctx)).To(Equal([]OperationSummary{
+			{
+				Operation: OperationStageBuild,
+				Count:     1,
+				TotalTime: 3 * time.Second,
+				WallTime:  3 * time.Second,
+				AvgTime:   3 * time.Second,
+				MaxTime:   3 * time.Second,
+			},
+			{
+				Operation: OperationImagePull,
+				Count:     1,
+				TotalTime: 2 * time.Second,
+				WallTime:  2 * time.Second,
+				AvgTime:   2 * time.Second,
+				MaxTime:   2 * time.Second,
+			},
+		}))
+		Expect(c.PendingEventSummary(ctx)).To(Equal([]EventSummary{{Event: EventStageBuilt, Count: 2}}))
+	})
+
 	It("retains pending observations until the flush is committed", func() {
 		c := NewCollector()
 		base := time.Now()
