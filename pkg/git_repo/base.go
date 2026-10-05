@@ -165,6 +165,13 @@ func (repo *Base) GetName() string {
 	return repo.Name
 }
 
+func cacheOutcome(hit bool) opstats.CacheOutcome {
+	if hit {
+		return opstats.CacheOutcomeHit
+	}
+	return opstats.CacheOutcomeMiss
+}
+
 func (repo *Base) getOrCreatePatch(ctx context.Context, repoPath, gitDir, repoID, workTreeCacheDir string, opts PatchOptions) (Patch, error) {
 	patchID := true_git.PatchOptions(opts).ID()
 
@@ -172,6 +179,10 @@ func (repo *Base) getOrCreatePatch(ctx context.Context, repoPath, gitDir, repoID
 	checksumMutex.Lock()
 	defer checksumMutex.Unlock()
 
+	cacheHit := false
+	defer func() {
+		opstats.CountCacheLookup(ctx, opstats.OperationGitPatch, opstats.CacheLayerMemory, cacheOutcome(cacheHit), false)
+	}()
 	if val, ok := repo.Cache.Patches.Load(patchID); ok {
 		// GC may have evicted the file since we cached it: GetPatchFile re-checks
 		// it on disk and refreshes its last access timestamp under the GC lock.
@@ -180,6 +191,7 @@ func (repo *Base) getOrCreatePatch(ctx context.Context, repoPath, gitDir, repoID
 			return nil, err
 		}
 		if patchFile != nil {
+			cacheHit = true
 			return val.(Patch), nil
 		}
 
@@ -233,10 +245,12 @@ func (repo *Base) createPatch(ctx context.Context, repoPath, gitDir, repoID, wor
 		defer werf.HostLocker().ReleaseLock(lock)
 	}
 
-	if patch, err := CommonGitDataManager.GetPatchFile(ctx, repoID, opts); err != nil {
+	cachedPatch, err := CommonGitDataManager.GetPatchFile(ctx, repoID, opts)
+	opstats.CountCacheLookup(ctx, opstats.OperationGitPatch, opstats.CacheLayerDisk, cacheOutcome(err == nil && cachedPatch != nil), false)
+	if err != nil {
 		return nil, err
-	} else if patch != nil {
-		return patch, err
+	} else if cachedPatch != nil {
+		return cachedPatch, nil
 	}
 
 	repository, err := repo.PlainOpen(repoPath)
@@ -391,6 +405,10 @@ func (repo *Base) getOrCreateArchive(ctx context.Context, repoPath, gitDir, repo
 	repo.Cache.archivesMutex.Lock()
 	defer repo.Cache.archivesMutex.Unlock()
 
+	cacheHit := false
+	defer func() {
+		opstats.CountCacheLookup(ctx, opstats.OperationGitArchive, opstats.CacheLayerMemory, cacheOutcome(cacheHit), false)
+	}()
 	archiveID := true_git.ArchiveOptions(opts).ID()
 	if _, hasKey := repo.Cache.Archives[archiveID]; hasKey {
 		// GC may have evicted the file since we cached it: GetArchiveFile
@@ -405,7 +423,8 @@ func (repo *Base) getOrCreateArchive(ctx context.Context, repoPath, gitDir, repo
 		}
 	}
 
-	if _, hasKey := repo.Cache.Archives[archiveID]; !hasKey {
+	_, cacheHit = repo.Cache.Archives[archiveID]
+	if !cacheHit {
 		archive, err := repo.CreateArchive(ctx, repoPath, gitDir, repoID, workTreeCacheDir, opts)
 		if err != nil {
 			return nil, err
@@ -433,10 +452,12 @@ func (repo *Base) createArchive(ctx context.Context, repoPath, gitDir, repoID, w
 		defer werf.HostLocker().ReleaseLock(lock)
 	}
 
-	if archive, err := CommonGitDataManager.GetArchiveFile(ctx, repoID, opts); err != nil {
+	cachedArchive, err := CommonGitDataManager.GetArchiveFile(ctx, repoID, opts)
+	opstats.CountCacheLookup(ctx, opstats.OperationGitArchive, opstats.CacheLayerDisk, cacheOutcome(err == nil && cachedArchive != nil), false)
+	if err != nil {
 		return nil, err
-	} else if archive != nil {
-		return archive, nil
+	} else if cachedArchive != nil {
+		return cachedArchive, nil
 	}
 
 	repository, err := repo.PlainOpen(repoPath)
@@ -582,7 +603,9 @@ func (repo *Base) getOrCreateChecksum(ctx context.Context, repoHandle repo_handl
 	checksumMutex.Lock()
 	defer checksumMutex.Unlock()
 
-	if _, hasKey := repo.Cache.Checksums.Load(checksumID); !hasKey {
+	_, hasKey := repo.Cache.Checksums.Load(checksumID)
+	defer opstats.CountCacheLookup(ctx, opstats.OperationGitChecksum, opstats.CacheLayerMemory, cacheOutcome(hasKey), false)
+	if !hasKey {
 		checksum, err := repo.CreateChecksum(ctx, repoHandle, opts)
 		if err != nil {
 			return "", err

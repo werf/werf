@@ -368,6 +368,9 @@ func checkDetachDockerComposeOption(cmdData composeCmdData) error {
 }
 
 func runMain(ctx context.Context, dockerComposeCmdName string, cmdData composeCmdData, commonCmdData common.CmdData, followSupport bool) error {
+	ctx, logOperationsSummaryFn := common.InitOperationsStatistics(ctx, &commonCmdData)
+	defer logOperationsSummaryFn()
+
 	commonManager, ctx, err := common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
 		Cmd: &commonCmdData,
 		InitTrueGitWithOptions: &common.InitTrueGitOptions{

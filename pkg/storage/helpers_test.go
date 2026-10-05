@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"runtime"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -19,7 +20,9 @@ import (
 
 	"github.com/werf/werf/v3/pkg/container_backend"
 	"github.com/werf/werf/v3/pkg/docker_registry"
+	registry_api "github.com/werf/werf/v3/pkg/docker_registry/api"
 	"github.com/werf/werf/v3/pkg/image"
+	"github.com/werf/werf/v3/pkg/opstats"
 )
 
 const tagCacheStageDigest = "2222222222222222222222222222222222222222222222222222222c"
@@ -129,17 +132,121 @@ var _ container_backend.ContainerBackend = (*localImageListBackendStub)(nil)
 
 type localImageListBackendStub struct {
 	container_backend.ContainerBackend
+	name    string
 	images  image.ImagesList
 	err     error
 	options container_backend.ImagesOptions
-	mu      sync.Mutex
-	calls   int
+	// onImages, when set, runs after the call has been counted and before it answers, so a test
+	// can hold a listing in flight.
+	onImages func()
+	mu       sync.Mutex
+	calls    int
+}
+
+func (backend *localImageListBackendStub) String() string {
+	if backend.name == "" {
+		return "docker-server-backend"
+	}
+	return backend.name
 }
 
 func (backend *localImageListBackendStub) Images(_ context.Context, options container_backend.ImagesOptions) (image.ImagesList, error) {
 	backend.mu.Lock()
-	defer backend.mu.Unlock()
 	backend.calls++
 	backend.options = options
+	onImages := backend.onImages
+	backend.mu.Unlock()
+
+	if onImages != nil {
+		onImages()
+	}
+
+	backend.mu.Lock()
+	defer backend.mu.Unlock()
 	return backend.images, backend.err
+}
+
+func (backend *localImageListBackendStub) callCount() int {
+	backend.mu.Lock()
+	defer backend.mu.Unlock()
+	return backend.calls
+}
+
+// goroutinesWaitingForImagesCache counts the lookups parked on the cache mutex of the local
+// stages storage. The lookup holding it is inside the backend listing instead, so it has no
+// Mutex.Lock frame and is not counted.
+func goroutinesWaitingForImagesCache() int {
+	return goroutinesWithFrames(goroutineDump(),
+		"(*LocalStagesStorage).GetStagesIDsByDigest(",
+		"sync.(*Mutex).Lock(")
+}
+
+func goroutineDump() string {
+	for size := 1 << 20; size <= 8<<20; size *= 2 {
+		buf := make([]byte, size)
+		if n := runtime.Stack(buf, true); n < size {
+			return string(buf[:n])
+		}
+	}
+	Fail("the goroutine dump does not fit in 8MiB")
+	return ""
+}
+
+// goroutinesWithFrames counts the per-goroutine stacks of a runtime.Stack dump, which are
+// separated by a blank line, that contain every one of the given frames.
+func goroutinesWithFrames(dump string, frames ...string) int {
+	var count int
+	for _, stack := range strings.Split(dump, "\n\n") {
+		matched := true
+		for _, frame := range frames {
+			if !strings.Contains(stack, frame) {
+				matched = false
+				break
+			}
+		}
+		if matched {
+			count++
+		}
+	}
+	return count
+}
+
+var _ docker_registry.Interface = (*brokenStageRegistry)(nil)
+
+var _ container_backend.ContainerBackend = (*brokenStageBackend)(nil)
+
+type brokenStageRegistry struct {
+	*markerRegistry
+	err error
+}
+
+func (r *brokenStageRegistry) GetRepoImage(_ context.Context, _ string) (*image.Info, error) {
+	return nil, r.err
+}
+
+func (r *brokenStageRegistry) MutateAndPushImage(_ context.Context, _, _ string, _ ...registry_api.MutateOption) error {
+	return r.err
+}
+
+type brokenStageBackend struct {
+	container_backend.ContainerBackend
+	err error
+}
+
+func (b *brokenStageBackend) PullImageFromRegistry(_ context.Context, _ container_backend.LegacyImageInterface) error {
+	return b.err
+}
+
+func brokenCount(collector *opstats.Collector) int {
+	for _, e := range collector.EventSummary() {
+		if e.Event == opstats.EventStageBroken {
+			return e.Count
+		}
+	}
+	return 0
+}
+
+func collectingContext(ctx context.Context) (context.Context, *opstats.Collector) {
+	collector := opstats.NewCollector()
+	return opstats.NewContext(ctx, collector), collector
 }
