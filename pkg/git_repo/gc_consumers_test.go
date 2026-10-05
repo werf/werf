@@ -458,6 +458,27 @@ var _ = Describe("Git cache consumers under GC eviction", func() {
 			Expect(refreshed).To(BeTemporally(">", backdated.Add(time.Hour)))
 		})
 
+		It("refreshes the mirror last access timestamp when the clone already exists", func(ctx SpecContext) {
+			commitFile(ctx, "data.txt", "v1")
+
+			repo := openRemote("main", "", "")
+			Expect(repo.CloneAndFetch(ctx)).To(Succeed())
+
+			lastAccessPath := filepath.Join(repo.GetClonePath(), "last_access_at")
+			backdated := time.Now().Add(-7 * 24 * time.Hour)
+			Expect(timestamps.WriteTimestampFile(lastAccessPath, backdated)).To(Succeed())
+
+			// A second werf process finds the mirror already cloned: the marker
+			// it leaves is what keeps the host GC from evicting it mid-build.
+			cloned, err := repo.Clone(ctx)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(cloned).To(BeFalse())
+
+			refreshed, err := timestamps.ReadTimestampFile(lastAccessPath)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(refreshed).To(BeTemporally(">", backdated.Add(time.Hour)))
+		})
+
 		It("recovers a mirror whose object files were removed under it", func(ctx SpecContext) {
 			commit := commitFile(ctx, "data.txt", "v1")
 
