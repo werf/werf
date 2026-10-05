@@ -40,6 +40,22 @@ var _ = Describe("project dir", func() {
 		Expect(inUse).To(BeADirectory())
 	})
 
+	It("never removes what a symlink in the tmp dir points at", func() {
+		target := GinkgoT().TempDir()
+		Expect(os.WriteFile(filepath.Join(target, "data.txt"), []byte("payload"), 0o644)).To(Succeed())
+
+		link := filepath.Join(werf.GetTmpDir(), projectDirPrefix+"foreign")
+		Expect(os.Symlink(target, link)).To(Succeed())
+		// os.Chtimes follows the link, so the age of the link itself is faked instead
+		stubs.Stub(&timeSince, func(time.Time) time.Duration { return projectDirMaxAge + time.Hour })
+
+		Expect(RunGC(GinkgoT().Context(), false)).To(Succeed())
+		Expect(target).To(BeADirectory())
+		Expect(filepath.Join(target, "data.txt")).To(BeARegularFile())
+		// the link itself is werf-prefixed and orphaned, so it is swept
+		Expect(link).NotTo(BeAnExistingFile())
+	})
+
 	It("leaves foreign entries of the tmp dir alone", func() {
 		foreign := filepath.Join(werf.GetTmpDir(), "foreign-tool-data")
 		Expect(os.MkdirAll(foreign, 0o755)).To(Succeed())

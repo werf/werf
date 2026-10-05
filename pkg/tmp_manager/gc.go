@@ -71,15 +71,15 @@ func collectPaths() ([]string, []string, error) {
 		newGCPath(filepath.Join(getServiceTmpDir(), contextPinsServiceDir), "", contextPinMaxAge),
 		// Project dirs are not registered either until the command delegates the cleanup, and they
 		// hold the pinned git inputs of a build. They live directly in the tmp dir shared with
-		// everything else on the host, so only our own prefix is swept.
-		newGCPath(werf.GetTmpDir(), projectDirPrefix, projectDirMaxAge),
+		// everything else on the host, so only our own prefix is swept and no symlink is followed.
+		newNoFollowGCPath(werf.GetTmpDir(), projectDirPrefix, projectDirMaxAge),
 	}
 
 	dirSlices := make([][]string, 0, len(gcPathList))
 	symlinkSlices := make([][]string, 0, len(gcPathList))
 
 	for _, gcPathItem := range gcPathList {
-		dirs, symlinks, err := listDirAndFollowSymlinks(gcPathItem.path, gcPathItem.namePrefix, gcPathItem.keepingTime)
+		dirs, symlinks, err := listDirAndFollowSymlinks(gcPathItem)
 		if err != nil {
 			return nil, nil, fmt.Errorf("list and filter path %v: %w", gcPathItem.path, err)
 		}
@@ -92,7 +92,11 @@ func collectPaths() ([]string, []string, error) {
 
 // listDirAndFollowSymlinks returns list of dirs and symlinks. With a non-empty namePrefix only
 // entries carrying it are collected, which is what makes a dir shared with foreign files sweepable.
-func listDirAndFollowSymlinks(dir, namePrefix string, minFileAge time.Duration) ([]string, []string, error) {
+// Symlink targets are collected only for registry dirs, where werf itself wrote the links; sweeping
+// a dir werf does not own must never delete whatever a foreign link happens to point at.
+func listDirAndFollowSymlinks(gcPathItem gcPath) ([]string, []string, error) {
+	dir, namePrefix, minFileAge := gcPathItem.path, gcPathItem.namePrefix, gcPathItem.keepingTime
+
 	if _, err := os.Stat(dir); errors.Is(err, fs.ErrNotExist) {
 		return nil, nil, nil
 	} else if err != nil {
@@ -129,6 +133,9 @@ func listDirAndFollowSymlinks(dir, namePrefix string, minFileAge time.Duration) 
 		switch info.Mode().Type() {
 		case os.ModeSymlink:
 			listOfSymlinks = append(listOfSymlinks, linkOrFilePath)
+			if !gcPathItem.followSymlinks {
+				continue
+			}
 		default:
 			listOfDirs = append(listOfDirs, linkOrFilePath)
 			// resolve only symlinks
@@ -154,12 +161,22 @@ func listDirAndFollowSymlinks(dir, namePrefix string, minFileAge time.Duration) 
 }
 
 type gcPath struct {
-	path        string
-	namePrefix  string
-	keepingTime time.Duration
+	path           string
+	namePrefix     string
+	keepingTime    time.Duration
+	followSymlinks bool
 }
 
 func newGCPath(path, namePrefix string, keepingTime time.Duration) gcPath {
+	return gcPath{
+		path:           path,
+		namePrefix:     namePrefix,
+		keepingTime:    keepingTime,
+		followSymlinks: true,
+	}
+}
+
+func newNoFollowGCPath(path, namePrefix string, keepingTime time.Duration) gcPath {
 	return gcPath{
 		path:        path,
 		namePrefix:  namePrefix,
