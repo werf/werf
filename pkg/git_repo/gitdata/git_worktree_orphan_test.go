@@ -30,6 +30,24 @@ var _ = ginkgo.Describe("Orphan local worktree cleanup", func() {
 		gomega.Expect(candidates[0].GetPaths()).To(gomega.Equal([]string{dir}))
 	})
 
+	ginkgo.DescribeTable("preserves whitespace in an existing origin path",
+		func(suffix string) {
+			source := filepath.Join(ginkgo.GinkgoT().TempDir(), "git-dir"+suffix)
+			gomega.Expect(os.MkdirAll(source, 0o755)).To(gomega.Succeed())
+			createOrphanWorktreeFixture("local", "existing", source+"\n", time.Now().Add(-24*time.Hour))
+
+			entries, err := GetGitWorktreesAndRemoveInvalid(context.Background(), filepath.Join(werf.GetLocalCacheDir(), "worktrees"), ScanOptions{})
+			gomega.Expect(err).NotTo(gomega.HaveOccurred())
+			gomega.Expect(entries).To(gomega.HaveLen(1))
+			archive := &GitArchiveDesc{Size: 1, Metadata: &ArchiveMetadata{LastAccessTimestamp: time.Now().Add(-4 * time.Hour).Unix()}}
+			candidates := keepGitDataByLru(append(entries, archive))
+			gomega.Expect(candidates[0]).To(gomega.BeIdenticalTo(archive))
+		},
+		ginkgo.Entry("space", " "),
+		ginkgo.Entry("tab", "\t"),
+		ginkgo.Entry("newline", "\n"),
+	)
+
 	ginkgo.It("keeps the existing age guard for orphan worktrees", func() {
 		createOrphanWorktreeFixture("local", "fresh", filepath.Join(ginkgo.GinkgoT().TempDir(), "gone"), time.Now())
 		entries, err := GetGitWorktreesAndRemoveInvalid(context.Background(), filepath.Join(werf.GetLocalCacheDir(), "worktrees"), ScanOptions{})

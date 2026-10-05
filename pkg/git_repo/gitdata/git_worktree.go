@@ -106,7 +106,7 @@ func GetGitWorktreesAndRemoveInvalid(ctx context.Context, cacheVersionRoot strin
 					if err != nil && !os.IsNotExist(err) {
 						return nil, fmt.Errorf("read worktree origin in %q: %w", worktreeDir, err)
 					}
-					origin := strings.TrimSpace(string(data))
+					origin := strings.TrimSuffix(string(data), "\n")
 					if filepath.IsAbs(origin) {
 						if _, err := os.Stat(origin); os.IsNotExist(err) {
 							desc.orphanedGitDir = origin
