@@ -475,14 +475,15 @@ func (s *buildableStage) IsBuildable() bool { return true }
 
 type stageBuilderStub struct {
 	stage_builder.StageBuilderInterface
-	builds int
+	builds   int
+	buildErr error
 }
 
 var _ stage_builder.StageBuilderInterface = (*stageBuilderStub)(nil)
 
 func (b *stageBuilderStub) Build(_ context.Context, _ container_backend.BuildOptions) error {
 	b.builds++
-	return nil
+	return b.buildErr
 }
 
 func eventCounts(collector *opstats.Collector) map[opstats.Event]int {

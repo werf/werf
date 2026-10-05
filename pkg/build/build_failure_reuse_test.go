@@ -1,0 +1,59 @@
+package build
+
+import (
+	"errors"
+	"time"
+
+	"github.com/onsi/ginkgo/v2"
+	"github.com/onsi/gomega"
+
+	buildImage "github.com/werf/werf/v3/pkg/build/image"
+	"github.com/werf/werf/v3/pkg/build/stage"
+	imagePkg "github.com/werf/werf/v3/pkg/image"
+	"github.com/werf/werf/v3/pkg/opstats"
+)
+
+var _ = ginkgo.Describe("Stage reuse after a failed local build", func() {
+	ginkgo.BeforeEach(func() { ginkgo.GinkgoT().Setenv("WERF_DISABLE_PUBLISH_TAG_CACHE_SYNC", "") })
+
+	winnerDesc := &imagePkg.StageDesc{
+		StageID: imagePkg.NewStageID("shared-digest", 100),
+		Info:    &imagePkg.Info{Name: "repo:shared-digest-100", Labels: map[string]string{imagePkg.WerfStageContentDigestLabel: "winner-content"}},
+	}
+
+	newFailingBuild := func(ctx ginkgo.SpecContext, published bool) (*BuildPhase, *publicationStorage, <-chan struct{}, *buildImage.Image, stage.Interface) {
+		srv, attempts := newPublicationLockServer()
+		primary := &publicationStorage{}
+		if published {
+			primary.desc = winnerDesc
+		}
+		phase, img, stg := newPublicationPhase(ctx, &publicationStorageManager{primary: primary}, srv.URL, false, 10)
+		buildable := &buildableStage{publicationStage: stg.(*publicationStage)}
+		buildable.GetStageImage().Builder = &stageBuilderStub{buildErr: errors.New("builder exploded")}
+
+		return phase, primary, attempts, img, buildable
+	}
+
+	ginkgo.It("reuses a stage published by another process", func(ctx ginkgo.SpecContext) {
+		phase, primary, attempts, img, stg := newFailingBuild(ctx, true)
+		collector := opstats.NewCollector()
+
+		gomega.Expect(phase.atomicBuildStageImage(opstats.NewContext(ctx, collector), img, stg)).To(gomega.Succeed())
+
+		gomega.Expect(stg.GetStageImage().Image.GetStageDesc()).To(gomega.Equal(winnerDesc))
+		gomega.Expect(stg.GetContentDigest()).To(gomega.Equal("winner-content"))
+		gomega.Expect(eventCounts(collector)).To(gomega.Equal(map[opstats.Event]int{opstats.EventStageCacheHitRepo: 1}), "a failed build must be counted as a reused stage, not as a built or discarded one")
+		gomega.Expect(primary.writes).To(gomega.BeZero())
+		gomega.Eventually(attempts, 5*time.Second).Should(gomega.Receive(), "the fresh lookup must happen under the stage lock")
+	})
+
+	ginkgo.It("returns the build error when nothing has been published", func(ctx ginkgo.SpecContext) {
+		phase, primary, _, img, stg := newFailingBuild(ctx, false)
+		collector := opstats.NewCollector()
+
+		gomega.Expect(phase.atomicBuildStageImage(opstats.NewContext(ctx, collector), img, stg)).To(gomega.MatchError(gomega.ContainSubstring("builder exploded")))
+
+		gomega.Expect(eventCounts(collector)).To(gomega.BeEmpty())
+		gomega.Expect(primary.writes).To(gomega.BeZero())
+	})
+})
