@@ -2,6 +2,7 @@ package gitdata
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -53,8 +54,13 @@ func (entry *GitWorktreeDesc) GetCacheBasePath() string {
 // │   │   │   └── ... (repository files)
 // │   │   └── ... (other worktrees)
 // └── ... (other cache versions)
+//
+// An entry whose size, access marker or recorded origin cannot be read is
+// preserved and left out of the result; its error is joined into the returned
+// error.
 func GetGitWorktreesAndRemoveInvalid(ctx context.Context, cacheVersionRoot string, options ScanOptions) ([]GitDataEntry, error) {
 	var res []GitDataEntry
+	var errs []error
 
 	for _, subdir := range []string{"local", "remote"} {
 		dir := filepath.Join(cacheVersionRoot, subdir)
@@ -67,7 +73,8 @@ func GetGitWorktreesAndRemoveInvalid(ctx context.Context, cacheVersionRoot strin
 
 		worktreeDirs, err := ioutil.ReadDir(dir)
 		if err != nil {
-			return nil, fmt.Errorf("error reading dir %q: %w", dir, err)
+			errs = append(errs, fmt.Errorf("read dir %q: %w", dir, err))
+			continue
 		}
 
 		for _, worktreeDirInfo := range worktreeDirs {
@@ -83,13 +90,15 @@ func GetGitWorktreesAndRemoveInvalid(ctx context.Context, cacheVersionRoot strin
 
 			size, err := volumeutils.DirSizeBytes(worktreeDir)
 			if err != nil {
-				return nil, fmt.Errorf("error getting dir %q size: %w", worktreeDir, err)
+				errs = append(errs, fmt.Errorf("get dir %q size: %w", worktreeDir, err))
+				continue
 			}
 
 			lastAccessAtPath := filepath.Join(worktreeDir, "last_access_at")
 			lastAccessAt, err := readLastAccessAt(lastAccessAtPath)
 			if err != nil {
-				return nil, fmt.Errorf("read worktree access timestamp %q: %w", lastAccessAtPath, err)
+				errs = append(errs, fmt.Errorf("read worktree access timestamp %q: %w", lastAccessAtPath, err))
+				continue
 			}
 
 			desc := &GitWorktreeDesc{
@@ -102,18 +111,12 @@ func GetGitWorktreesAndRemoveInvalid(ctx context.Context, cacheVersionRoot strin
 			if !shouldPreserveGitDataEntryByLru(desc) {
 				desc.HasSubmodules = worktreeHasSubmodules(ctx, worktreeDir)
 				if subdir == "local" {
-					data, err := os.ReadFile(filepath.Join(worktreeDir, "git_dir"))
-					if err != nil && !os.IsNotExist(err) {
-						return nil, fmt.Errorf("read worktree origin in %q: %w", worktreeDir, err)
+					orphanedGitDir, err := orphanedWorktreeOrigin(worktreeDir)
+					if err != nil {
+						errs = append(errs, err)
+						continue
 					}
-					origin := strings.TrimSuffix(string(data), "\n")
-					if filepath.IsAbs(origin) {
-						if _, err := os.Stat(origin); os.IsNotExist(err) {
-							desc.orphanedGitDir = origin
-						} else if err != nil {
-							return nil, fmt.Errorf("inspect worktree origin %q: %w", origin, err)
-						}
-					}
+					desc.orphanedGitDir = orphanedGitDir
 				}
 			}
 
@@ -121,7 +124,27 @@ func GetGitWorktreesAndRemoveInvalid(ctx context.Context, cacheVersionRoot strin
 		}
 	}
 
-	return res, nil
+	return res, errors.Join(errs...)
+}
+
+func orphanedWorktreeOrigin(worktreeDir string) (string, error) {
+	data, err := os.ReadFile(filepath.Join(worktreeDir, "git_dir"))
+	if err != nil && !os.IsNotExist(err) {
+		return "", fmt.Errorf("read worktree origin in %q: %w", worktreeDir, err)
+	}
+
+	origin := strings.TrimSuffix(string(data), "\n")
+	if !filepath.IsAbs(origin) {
+		return "", nil
+	}
+
+	if _, err := os.Stat(origin); err == nil {
+		return "", nil
+	} else if !os.IsNotExist(err) {
+		return "", fmt.Errorf("inspect worktree origin %q: %w", origin, err)
+	}
+
+	return origin, nil
 }
 
 func worktreeHasSubmodules(ctx context.Context, worktreeCacheDir string) bool {

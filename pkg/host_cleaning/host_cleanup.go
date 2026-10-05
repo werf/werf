@@ -131,7 +131,9 @@ func RunHostCleanup(ctx context.Context, backend container_backend.ContainerBack
 	allowedLocalCacheVolumeUsageBytes := getRequirementInBytes(options.AllowedLocalCacheVolumeUsage, DefaultAllowedLocalCacheVolumeUsagePercentage, vuLocalCache.TotalBytes)
 	allowedLocalCacheVolumeUsageMarginBytes := getRequirementInBytes(options.AllowedLocalCacheVolumeUsageMargin, DefaultAllowedLocalCacheVolumeUsageMarginPercentage, vuLocalCache.TotalBytes)
 
-	if err := logboek.Context(ctx).Default().LogProcess("Running GC for git data").DoError(func() error {
+	// A failing git data GC must not keep the backend storage from being
+	// reclaimed: both failures are reported together at the end.
+	gitErr := logboek.Context(ctx).Default().LogProcess("Running GC for git data").DoError(func() error {
 		if err := gitdata.RunGC(ctx, gitdata.RunGCOptions{
 			AllowedLocalCacheVolumeUsageBytes:       allowedLocalCacheVolumeUsageBytes,
 			AllowedLocalCacheVolumeUsageMarginBytes: allowedLocalCacheVolumeUsageMarginBytes,
@@ -140,16 +142,14 @@ func RunHostCleanup(ctx context.Context, backend container_backend.ContainerBack
 			return fmt.Errorf("git repo GC failed: %w", err)
 		}
 		return nil
-	}); err != nil {
-		return err
-	}
+	})
 
 	cleaner, err := NewLocalBackendCleaner(backend, werf.HostLocker().Locker())
 	if errors.Is(err, ErrUnsupportedContainerBackend) {
 		// if cleaner not implemented, skip cleaning
-		return nil
+		return gitErr
 	} else if err != nil {
-		return err
+		return errors.Join(gitErr, err)
 	}
 
 	var gcReport RunGCReport
@@ -180,7 +180,7 @@ func RunHostCleanup(ctx context.Context, backend container_backend.ContainerBack
 		}
 		return nil
 	}); err != nil {
-		return err
+		return errors.Join(gitErr, err)
 	}
 
 	// The background cleanup output is invisible to the user, so leave a notice about it for the next werf run.
@@ -190,7 +190,7 @@ func RunHostCleanup(ctx context.Context, backend container_backend.ContainerBack
 		}
 	}
 
-	return nil
+	return gitErr
 }
 
 func shouldRunAutoHostCleanup(ctx context.Context, backend container_backend.ContainerBackend, options AutoHostCleanupOptions) (bool, error) {

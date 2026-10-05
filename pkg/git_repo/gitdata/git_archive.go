@@ -3,6 +3,7 @@ package gitdata
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -54,8 +55,12 @@ const (
 // │   │   └── ... (other archive files)
 // │   └── ... (other hash prefixes)
 // └── ... (other repository hashes)
+//
+// An entry whose metadata cannot be read is preserved with its payload and
+// left out of the result; its error is joined into the returned error.
 func GetGitArchivesAndRemoveInvalid(ctx context.Context, cacheVersionRoot string, options ScanOptions) ([]GitDataEntry, error) {
 	var res []GitDataEntry
+	var errs []error
 
 	fileStat, err := os.Stat(cacheVersionRoot)
 	if err != nil {
@@ -90,7 +95,8 @@ func GetGitArchivesAndRemoveInvalid(ctx context.Context, cacheVersionRoot string
 
 		hashPrefixes, err := ioutil.ReadDir(repoHashDir)
 		if err != nil {
-			return nil, fmt.Errorf("error reading repo archives dir %q: %w", repoHashDir, err)
+			errs = append(errs, fmt.Errorf("read repo archives dir %q: %w", repoHashDir, err))
+			continue
 		}
 
 		for _, hashPrefixInfo := range hashPrefixes {
@@ -106,7 +112,8 @@ func GetGitArchivesAndRemoveInvalid(ctx context.Context, cacheVersionRoot string
 
 			archiveFiles, err := ioutil.ReadDir(hashPrefixDir)
 			if err != nil {
-				return nil, fmt.Errorf("error reading repo archives from dir %q: %w", hashPrefixDir, err)
+				errs = append(errs, fmt.Errorf("read repo archives from dir %q: %w", hashPrefixDir, err))
+				continue
 			}
 
 			regularFiles := make(map[string]os.FileInfo, len(archiveFiles))
@@ -136,11 +143,15 @@ func GetGitArchivesAndRemoveInvalid(ctx context.Context, cacheVersionRoot string
 				}
 
 				metadataPath := filepath.Join(hashPrefixDir, name)
+				payloadName := strings.TrimSuffix(name, archiveMetadataSuffix) + archivePayloadSuffix
 				desc := &GitArchiveDesc{MetadataPath: metadataPath, CacheBasePath: cacheVersionRoot}
 
 				data, err := ioutil.ReadFile(metadataPath)
 				if err != nil {
-					return nil, fmt.Errorf("error reading metadata file %q: %w", metadataPath, err)
+					errs = append(errs, fmt.Errorf("read metadata file %q: %w", metadataPath, err))
+					keptNames[name] = true
+					keptNames[payloadName] = true
+					continue
 				}
 
 				if err := json.Unmarshal(data, &desc.Metadata); err != nil {
@@ -152,7 +163,6 @@ func GetGitArchivesAndRemoveInvalid(ctx context.Context, cacheVersionRoot string
 					continue
 				}
 
-				payloadName := strings.TrimSuffix(name, archiveMetadataSuffix) + archivePayloadSuffix
 				payloadInfo, ok := regularFiles[payloadName]
 				if !ok {
 					logboek.Context(ctx).Warn().LogF("Removing invalid entry %q: archive file does not exist\n", filepath.Join(hashPrefixDir, payloadName))
@@ -176,11 +186,11 @@ func GetGitArchivesAndRemoveInvalid(ctx context.Context, cacheVersionRoot string
 				filePath := filepath.Join(hashPrefixDir, name)
 				logboek.Context(ctx).Warn().LogF("Removing invalid entry %q: no valid archive entry owns it\n", filePath)
 				if err := removePath(filePath, options); err != nil {
-					return nil, fmt.Errorf("unable to remove %q: %w", filePath, err)
+					return res, fmt.Errorf("unable to remove %q: %w", filePath, err)
 				}
 			}
 		}
 	}
 
-	return res, nil
+	return res, errors.Join(errs...)
 }
