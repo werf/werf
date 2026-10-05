@@ -6,19 +6,20 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
-	"github.com/werf/common-go/pkg/util/timestamps"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v3/pkg/volumeutils"
 )
 
 type GitWorktreeDesc struct {
-	Path          string
-	LastAccessAt  time.Time
-	Size          uint64
-	CacheBasePath string
-	HasSubmodules bool
+	Path           string
+	LastAccessAt   time.Time
+	Size           uint64
+	CacheBasePath  string
+	HasSubmodules  bool
+	orphanedGitDir string
 }
 
 func (entry *GitWorktreeDesc) GetPaths() []string {
@@ -52,7 +53,7 @@ func (entry *GitWorktreeDesc) GetCacheBasePath() string {
 // │   │   │   └── ... (repository files)
 // │   │   └── ... (other worktrees)
 // └── ... (other cache versions)
-func GetGitWorktreesAndRemoveInvalid(ctx context.Context, cacheVersionRoot string) ([]GitDataEntry, error) {
+func GetGitWorktreesAndRemoveInvalid(ctx context.Context, cacheVersionRoot string, options ScanOptions) ([]GitDataEntry, error) {
 	var res []GitDataEntry
 
 	for _, subdir := range []string{"local", "remote"} {
@@ -74,7 +75,7 @@ func GetGitWorktreesAndRemoveInvalid(ctx context.Context, cacheVersionRoot strin
 
 			if !worktreeDirInfo.IsDir() {
 				logboek.Context(ctx).Warn().LogF("Removing invalid entry %q: not a directory\n", worktreeDir)
-				if err := os.RemoveAll(worktreeDir); err != nil {
+				if err := removePath(worktreeDir, options); err != nil {
 					return nil, fmt.Errorf("unable to remove %q: %w", worktreeDir, err)
 				}
 				continue
@@ -86,14 +87,9 @@ func GetGitWorktreesAndRemoveInvalid(ctx context.Context, cacheVersionRoot strin
 			}
 
 			lastAccessAtPath := filepath.Join(worktreeDir, "last_access_at")
-			lastAccessAt, err := timestamps.ReadTimestampFile(lastAccessAtPath)
+			lastAccessAt, err := readLastAccessAt(lastAccessAtPath)
 			if err != nil {
-				logboek.Context(ctx).Warn().LogF("Removing invalid entry %q: unable to read last access timestamp file %q: %s\n", worktreeDir, lastAccessAtPath, err)
-				if err := os.RemoveAll(worktreeDir); err != nil {
-					return nil, fmt.Errorf("unable to remove %q: %w", worktreeDir, err)
-				}
-
-				continue
+				return nil, fmt.Errorf("read worktree access timestamp %q: %w", lastAccessAtPath, err)
 			}
 
 			desc := &GitWorktreeDesc{
@@ -105,6 +101,20 @@ func GetGitWorktreesAndRemoveInvalid(ctx context.Context, cacheVersionRoot strin
 
 			if !shouldPreserveGitDataEntryByLru(desc) {
 				desc.HasSubmodules = worktreeHasSubmodules(ctx, worktreeDir)
+				if subdir == "local" {
+					data, err := os.ReadFile(filepath.Join(worktreeDir, "git_dir"))
+					if err != nil && !os.IsNotExist(err) {
+						return nil, fmt.Errorf("read worktree origin in %q: %w", worktreeDir, err)
+					}
+					origin := strings.TrimSuffix(string(data), "\n")
+					if filepath.IsAbs(origin) {
+						if _, err := os.Stat(origin); os.IsNotExist(err) {
+							desc.orphanedGitDir = origin
+						} else if err != nil {
+							return nil, fmt.Errorf("inspect worktree origin %q: %w", origin, err)
+						}
+					}
+				}
 			}
 
 			res = append(res, desc)
