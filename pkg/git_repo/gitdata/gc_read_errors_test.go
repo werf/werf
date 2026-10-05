@@ -3,6 +3,7 @@ package gitdata
 import (
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
@@ -19,13 +20,17 @@ var _ = ginkgo.Describe("Git cache access errors", func() {
 		gcFixture()
 	})
 	ginkgo.DescribeTable("preserves the unreadable entry, cleans the readable ones and still fails",
-		func(ctx ginkgo.SpecContext, relative, fileName, healthyRelative string) {
+		func(ctx ginkgo.SpecContext, relative, fileName, siblingRelative string) {
 			dir := filepath.Join(werf.GetLocalCacheDir(), relative)
 			unreadable := filepath.Join(dir, fileName)
-			healthy := filepath.Join(werf.GetLocalCacheDir(), healthyRelative)
 
 			gomega.Expect(os.RemoveAll(unreadable)).To(gomega.Succeed())
 			gomega.Expect(os.Symlink(fileName, unreadable)).To(gomega.Succeed())
+
+			// A readable entry collected by the same collector must still be
+			// reclaimed under volume pressure.
+			sibling := writeMirror(filepath.Join(werf.GetLocalCacheDir(), siblingRelative), time.Now().Add(-24*time.Hour))
+			writeCacheFile(filepath.Join(sibling, "payload"), "sibling payload")
 
 			gomega.Expect(RunGC(ctx, RunGCOptions{})).NotTo(gomega.Succeed())
 
@@ -34,19 +39,19 @@ var _ = ginkgo.Describe("Git cache access errors", func() {
 			gomega.Expect(err).NotTo(gomega.HaveOccurred())
 			gomega.Expect(target).To(gomega.Equal(fileName))
 
-			gomega.Expect(healthy).NotTo(gomega.BeADirectory())
+			expectGone(sibling)
 		},
 		ginkgo.Entry("full mirror access marker",
 			filepath.Join("git_repos", git_repo.GitReposCacheVersion, "valid"), "last_access_at",
-			filepath.Join("git_worktrees", git_repo.GitWorktreesCacheVersion, "local", "valid")),
+			filepath.Join("git_repos", git_repo.GitReposCacheVersion, "sibling")),
 		ginkgo.Entry("shallow mirror access marker",
 			filepath.Join("git_mirrors", git_repo.GitMirrorsCacheVersion, "valid", "shallow"), "last_access_at",
-			filepath.Join("git_repos", git_repo.GitReposCacheVersion, "valid")),
+			filepath.Join("git_mirrors", git_repo.GitMirrorsCacheVersion, "sibling", "shallow")),
 		ginkgo.Entry("worktree access marker",
 			filepath.Join("git_worktrees", git_repo.GitWorktreesCacheVersion, "local", "valid"), "last_access_at",
-			filepath.Join("git_repos", git_repo.GitReposCacheVersion, "valid")),
+			filepath.Join("git_worktrees", git_repo.GitWorktreesCacheVersion, "local", "sibling")),
 		ginkgo.Entry("worktree origin",
 			filepath.Join("git_worktrees", git_repo.GitWorktreesCacheVersion, "local", "valid"), "git_dir",
-			filepath.Join("git_repos", git_repo.GitReposCacheVersion, "valid")),
+			filepath.Join("git_worktrees", git_repo.GitWorktreesCacheVersion, "local", "sibling")),
 	)
 })
