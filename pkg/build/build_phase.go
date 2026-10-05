@@ -75,8 +75,6 @@ func (opts *IntrospectOptions) ImageStageShouldBeIntrospected(imageName, stageNa
 
 func NewBuildPhase(c *Conveyor, opts BuildPhaseOptions) *BuildPhase {
 	if opts.ShouldBeBuiltMode {
-		// Checking that images are built must not change anything in any storage, whichever command
-		// asked for the check.
 		opts.SkipImageMetadataPublication = true
 		opts.SkipAddManagedImagesRecords = true
 	}
