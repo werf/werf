@@ -51,19 +51,19 @@ func (cache *ManifestCache) GetImageInfo(ctx context.Context, storageName, image
 	logProcess.Start()
 	defer logProcess.End()
 
+	// Only a cached info returned to the caller is a hit; a missing, reset or
+	// unreadable record is a miss, as is a record the cache fails to refresh or
+	// one the cache could not even lock.
+	outcome := opstats.CacheOutcomeMiss
+	defer func() {
+		opstats.CountCacheLookup(ctx, manifestCacheOperation, opstats.CacheLayerDisk, outcome, false)
+	}()
+
 	if lock, err := cache.lock(ctx, storageName, imageName); err != nil {
 		return nil, err
 	} else {
 		defer cache.unlock(lock)
 	}
-
-	// Counted only past the lock: a lookup that never reached the cache is not one.
-	// Only a cached info returned to the caller is a hit; a missing, reset or
-	// unreadable record is a miss, as is a record the cache fails to refresh.
-	outcome := opstats.CacheOutcomeMiss
-	defer func() {
-		opstats.CountCacheLookup(ctx, manifestCacheOperation, opstats.CacheLayerDisk, outcome, false)
-	}()
 
 	now := time.Now()
 
