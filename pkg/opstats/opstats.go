@@ -247,6 +247,11 @@ type Collector struct {
 	// It is keyed per layer too, so flushing one layer never drops the deltas of
 	// another layer of the same operation.
 	pendingCache map[cacheKey]cacheCounters
+	// pendingOps and pendingEvents are the same checkpoint for the operation
+	// intervals and the event counters, captured by the last PendingSummary and
+	// PendingEventSummary.
+	pendingOps    map[Operation]int
+	pendingEvents map[Event]int
 }
 
 type cacheCounters struct {
@@ -296,13 +301,19 @@ func (c *Collector) Summary() []OperationSummary {
 }
 
 // PendingSummary returns the same stats as Summary but only for the intervals
-// recorded since the last CommitFlush, without advancing the flush mark. The
-// build report uses the pending/commit pair so that a report covers only the
+// recorded since the last CommitFlush, without advancing the flush mark, and
+// records the exact checkpoint that CommitFlush will advance to. The build
+// report uses the pending/commit pair so that a report covers only the
 // build that wrote it (e.g. across --follow iterations) and a failed report
 // write does not lose the pending observations.
 func (c *Collector) PendingSummary(ctx context.Context) []OperationSummary {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+
+	c.pendingOps = make(map[Operation]int, len(c.intervals))
+	for op, intervals := range c.intervals {
+		c.pendingOps[op] = len(intervals)
+	}
 
 	return summarizeOperations(c.intervals, c.flushedOps)
 }
@@ -362,6 +373,9 @@ func (c *Collector) EventSummary() []EventSummary {
 func (c *Collector) PendingEventSummary(ctx context.Context) []EventSummary {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+
+	c.pendingEvents = make(map[Event]int, len(c.events))
+	maps.Copy(c.pendingEvents, c.events)
 
 	return summarizeEvents(c.events, c.flushedEvents)
 }
@@ -432,9 +446,11 @@ func summarizeCache(counts, skipCounts map[cacheKey]cacheCounters) []CacheSummar
 	return res
 }
 
-// CommitFlush advances the flush mark past everything recorded so far, so the
-// next Pending* calls return only later observations. Call it after the report
-// consuming the pending summaries has been successfully delivered.
+// CommitFlush advances the flush mark to the checkpoints captured by the last
+// Pending* calls, so the next Pending* calls return only the observations made
+// after the report was built — those recorded while it was being written
+// included. Call it after the report consuming the pending summaries has been
+// successfully delivered.
 func (c *Collector) CommitFlush(ctx context.Context) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -442,19 +458,11 @@ func (c *Collector) CommitFlush(ctx context.Context) {
 	if c.pendingCache != nil {
 		c.flushedCache, c.pendingCache = c.pendingCache, nil
 	}
-
-	if c.flushedOps == nil {
-		c.flushedOps = make(map[Operation]int)
+	if c.pendingOps != nil {
+		c.flushedOps, c.pendingOps = c.pendingOps, nil
 	}
-	for op, intervals := range c.intervals {
-		c.flushedOps[op] = len(intervals)
-	}
-
-	if c.flushedEvents == nil {
-		c.flushedEvents = make(map[Event]int)
-	}
-	for event, count := range c.events {
-		c.flushedEvents[event] = count
+	if c.pendingEvents != nil {
+		c.flushedEvents, c.pendingEvents = c.pendingEvents, nil
 	}
 }
 

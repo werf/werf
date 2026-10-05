@@ -34,6 +34,8 @@ type CreateImageOptions struct {
 }
 
 func CreateImage(ctx context.Context, ref string, opts CreateImageOptions) error {
+	defer opstats.Observe(ctx, "docker: image import")()
+
 	var importOpts types.ImageImportOptions
 	if len(opts.Labels) > 0 {
 		changeOption := "LABEL"

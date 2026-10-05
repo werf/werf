@@ -81,6 +81,18 @@ var _ = ginkgo.Describe("ManifestCache lookup counters", func() {
 		}))
 	})
 
+	ginkgo.It("counts a lookup that could not be locked as a miss", func(ctx ginkgo.SpecContext) {
+		countedCtx := opstats.NewContext(logging.WithLogger(ctx), collector)
+		gomega.Expect(os.RemoveAll(filepath.Join(werf.GetServiceDir(), "locks"))).To(gomega.Succeed())
+
+		_, err := cache.GetImageInfo(countedCtx, storageName, "unlockable")
+		gomega.Expect(err).To(gomega.HaveOccurred())
+
+		gomega.Expect(rows(ctx)).To(gomega.Equal(map[string]opstats.CacheSummary{
+			"registry: image get/disk": {Operation: opstats.Operation("registry: image get"), Layer: opstats.CacheLayerDisk, Miss: 1},
+		}))
+	})
+
 	ginkgo.It("records nothing when no collector is bound", func(ctx ginkgo.SpecContext) {
 		_, err := cache.GetImageInfo(logging.WithLogger(ctx), storageName, "absent")
 		gomega.Expect(err).NotTo(gomega.HaveOccurred())
