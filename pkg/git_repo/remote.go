@@ -1087,15 +1087,80 @@ func (repo *Remote) recoverPinnedCommit(ctx context.Context, kind mirrorKind, co
 	logboek.Context(ctx).Warn().LogF("WARNING: Commit %s is missing from the %s mirror of repo %q, fetching it again\n", commit, kind, repo.String())
 
 	if kind == mirrorKindShallow {
-		err = repo.shallowFetch(ctx, clonePath, fmt.Sprintf("+%s:refs/werf/commits/%s", commit, commit))
-	} else {
-		err = repo.fetchCommitIntoFullMirror(ctx, clonePath, commit)
+		return repo.recoverPinnedCommitInShallowMirror(ctx, commit)
 	}
-	if err != nil {
+
+	if err := repo.fetchCommitIntoFullMirror(ctx, clonePath, commit); err != nil {
 		return fmt.Errorf("commit %s is not available in origin %s: %w", commit, repo.Url, err)
 	}
 
 	pinExists, err = repo.isCommitExists(ctx, clonePath, clonePath, commit)
+	if err != nil {
+		return err
+	}
+	if !pinExists {
+		return fmt.Errorf("commit %s is not available in origin %s anymore", commit, repo.Url)
+	}
+
+	return nil
+}
+
+// recoverPinnedCommitInShallowMirror brings commit back into the shallow
+// mirror. A by-SHA want is enough for most origins, but one serving protocol
+// v1 with uploadpack.allowReachableSHA1InWant disabled refuses it while still
+// advertising the mapped tag, so the same advertised-ref and full-mirror path
+// the initial shallow setup uses is tried next. Whatever recovers the mirror,
+// only the pinned commit counts: a tag that moved since never substitutes for
+// it.
+func (repo *Remote) recoverPinnedCommitInShallowMirror(ctx context.Context, commit string) error {
+	shallowPath := repo.clonePathForKind(mirrorKindShallow)
+
+	bySHAErr := repo.shallowFetch(ctx, shallowPath, fmt.Sprintf("+%s:refs/werf/commits/%s", commit, commit))
+	if bySHAErr == nil {
+		pinExists, err := repo.isCommitExists(ctx, shallowPath, shallowPath, commit)
+		if err != nil {
+			return err
+		}
+		if pinExists {
+			return nil
+		}
+	}
+
+	if repo.Tag != "" {
+		if err := repo.shallowFetch(ctx, shallowPath, fmt.Sprintf("+refs/tags/%s:refs/tags/%s", repo.Tag, repo.Tag)); err != nil {
+			logboek.Context(ctx).Debug().LogF("Unable to fetch tag %q of repo %q while recovering commit %s: %s\n", repo.Tag, repo.String(), commit, err)
+		} else {
+			pinExists, err := repo.isCommitExists(ctx, shallowPath, shallowPath, commit)
+			if err != nil {
+				return err
+			}
+			if pinExists {
+				return nil
+			}
+		}
+	}
+
+	logboek.Context(ctx).Info().LogF("Falling back to full mirror of repo %q to recover commit %s\n", repo.String(), commit)
+
+	if err := repo.downgradeToFull(ctx, bySHAErr != nil && isBySHAFetchRefusal(bySHAErr)); err != nil {
+		return fmt.Errorf("commit %s is not available in origin %s: %w", commit, repo.Url, errors.Join(bySHAErr, err))
+	}
+
+	fullPath := repo.clonePathForKind(mirrorKindFull)
+
+	pinExists, err := repo.isCommitExists(ctx, fullPath, fullPath, commit)
+	if err != nil {
+		return err
+	}
+	if pinExists {
+		return nil
+	}
+
+	if err := repo.fetchCommitIntoFullMirror(ctx, fullPath, commit); err != nil {
+		return fmt.Errorf("commit %s is not available in origin %s: %w", commit, repo.Url, err)
+	}
+
+	pinExists, err = repo.isCommitExists(ctx, fullPath, fullPath, commit)
 	if err != nil {
 		return err
 	}
@@ -1138,19 +1203,7 @@ func (repo *Remote) restoreShallowMirror(ctx context.Context, commit string) err
 
 	// Fetching the commit itself, not the mapped tag, is what pins the result:
 	// refs/werf/commits/<commit> also anchors the objects against git's own gc.
-	if err := repo.shallowFetch(ctx, shallowPath, fmt.Sprintf("+%s:refs/werf/commits/%s", commit, commit)); err != nil {
-		return err
-	}
-
-	commitExists, err = repo.isCommitExists(ctx, shallowPath, shallowPath, commit)
-	if err != nil {
-		return err
-	}
-	if !commitExists {
-		return fmt.Errorf("commit %s is not available in origin %s anymore", commit, repo.Url)
-	}
-
-	return nil
+	return repo.recoverPinnedCommitInShallowMirror(ctx, commit)
 }
 
 func (repo *Remote) initRepoHandleBackedByWorkTree(ctx context.Context, commit string) (repo_handle.Handle, error) {
