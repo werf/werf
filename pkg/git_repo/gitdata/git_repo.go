@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/werf/common-go/pkg/util/timestamps"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v3/pkg/volumeutils"
 )
@@ -47,7 +46,7 @@ func (entry *GitRepoDesc) GetCacheBasePath() string {
 //
 // Each repo dir is itself a bare full mirror and an independent LRU entry
 // with its own last_access_at.
-func GetGitReposAndRemoveInvalid(ctx context.Context, cacheVersionRoot string) ([]GitDataEntry, error) {
+func GetGitReposAndRemoveInvalid(ctx context.Context, cacheVersionRoot string, options ScanOptions) ([]GitDataEntry, error) {
 	var res []GitDataEntry
 
 	// Check if cacheVersionRoot exists and is a directory
@@ -60,7 +59,7 @@ func GetGitReposAndRemoveInvalid(ctx context.Context, cacheVersionRoot string) (
 	}
 	if !fileStat.IsDir() {
 		logboek.Context(ctx).Warn().LogF("Removing invalid entry %q: not a directory\n", cacheVersionRoot)
-		if err := os.RemoveAll(cacheVersionRoot); err != nil {
+		if err := removePath(cacheVersionRoot, options); err != nil {
 			return nil, fmt.Errorf("unable to remove %q: %w", cacheVersionRoot, err)
 		}
 		return nil, nil
@@ -76,7 +75,7 @@ func GetGitReposAndRemoveInvalid(ctx context.Context, cacheVersionRoot string) (
 
 		if !repoDirInfo.IsDir() {
 			logboek.Context(ctx).Warn().LogF("Removing invalid entry %q: not a directory\n", repoPath)
-			if err := os.RemoveAll(repoPath); err != nil {
+			if err := removePath(repoPath, options); err != nil {
 				return nil, fmt.Errorf("unable to remove %q: %w", repoPath, err)
 			}
 			continue
@@ -88,10 +87,10 @@ func GetGitReposAndRemoveInvalid(ctx context.Context, cacheVersionRoot string) (
 		}
 
 		lastAccessAtPath := filepath.Join(repoPath, "last_access_at")
-		lastAccessAt, err := timestamps.ReadTimestampFile(lastAccessAtPath)
+		lastAccessAt, err := readLastAccessAt(lastAccessAtPath)
 		if err != nil {
 			logboek.Context(ctx).Warn().LogF("Removing invalid entry %q: error reading last access timestamp file %q: %v\n", repoPath, lastAccessAtPath, err)
-			if err := os.RemoveAll(repoPath); err != nil {
+			if err := removePath(repoPath, options); err != nil {
 				return nil, fmt.Errorf("unable to remove %q: %w", repoPath, err)
 			}
 			continue

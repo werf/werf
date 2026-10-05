@@ -10,6 +10,8 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/dustin/go-humanize"
@@ -43,6 +45,40 @@ type RunGCOptions struct {
 	DryRun                                  bool
 }
 
+// ScanOptions tunes the collectors that scan a cache version root. With
+// DryRun set a collector only reports what it would remove and leaves the
+// cache untouched, including the invalid entries it normally reclaims; such
+// entries are reported and skipped, never returned as LRU candidates.
+type ScanOptions struct {
+	DryRun bool
+}
+
+func removePath(path string, options ScanOptions) error {
+	if options.DryRun {
+		return nil
+	}
+	return os.RemoveAll(path)
+}
+
+// readLastAccessAt is timestamps.ReadTimestampFile without its repair of a
+// corrupt file: collection must not write to the cache it scans. A missing or
+// corrupt timestamp yields the zero time, so LRU evicts the entry first.
+func readLastAccessAt(path string) (time.Time, error) {
+	data, err := os.ReadFile(path)
+	if os.IsNotExist(err) {
+		return time.Time{}, nil
+	} else if err != nil {
+		return time.Time{}, fmt.Errorf("error reading %q: %w", path, err)
+	}
+
+	sec, err := strconv.ParseInt(strings.TrimSpace(string(data)), 10, 64)
+	if err != nil {
+		return time.Time{}, nil
+	}
+
+	return time.Unix(sec, 0), nil
+}
+
 func RunGC(ctx context.Context, options RunGCOptions) error {
 	if lock, err := lockGC(ctx, false); err != nil {
 		return err
@@ -50,37 +86,39 @@ func RunGC(ctx context.Context, options RunGCOptions) error {
 		defer werf.HostLocker().ReleaseLock(lock)
 	}
 
+	scanOptions := ScanOptions{DryRun: options.DryRun}
+
 	{
 		cacheRoot := filepath.Join(werf.GetLocalCacheDir(), "git_repos")
-		if err := wipeCacheDirs(ctx, cacheRoot, []string{git_repo.GitReposCacheVersion}); err != nil {
+		if err := wipeCacheDirs(ctx, cacheRoot, []string{git_repo.GitReposCacheVersion}, scanOptions); err != nil {
 			return fmt.Errorf("unable to wipe old git repos cache dirs in %q: %w", cacheRoot, err)
 		}
 	}
 
 	{
 		cacheRoot := filepath.Join(werf.GetLocalCacheDir(), "git_mirrors")
-		if err := wipeCacheDirs(ctx, cacheRoot, []string{git_repo.GitMirrorsCacheVersion}); err != nil {
+		if err := wipeCacheDirs(ctx, cacheRoot, []string{git_repo.GitMirrorsCacheVersion}, scanOptions); err != nil {
 			return fmt.Errorf("unable to wipe old git mirrors cache dirs in %q: %w", cacheRoot, err)
 		}
 	}
 
 	{
 		cacheRoot := filepath.Join(werf.GetLocalCacheDir(), "git_worktrees")
-		if err := wipeCacheDirs(ctx, cacheRoot, []string{git_repo.GitWorktreesCacheVersion}); err != nil {
+		if err := wipeCacheDirs(ctx, cacheRoot, []string{git_repo.GitWorktreesCacheVersion}, scanOptions); err != nil {
 			return fmt.Errorf("unable to wipe old git worktrees cache dirs in %q: %w", cacheRoot, err)
 		}
 	}
 
 	{
 		cacheRoot := filepath.Join(werf.GetLocalCacheDir(), "git_archives")
-		if err := wipeCacheDirs(ctx, cacheRoot, []string{GitArchivesCacheVersion}); err != nil {
+		if err := wipeCacheDirs(ctx, cacheRoot, []string{GitArchivesCacheVersion}, scanOptions); err != nil {
 			return fmt.Errorf("unable to wipe old git archives cache dirs in %q: %w", cacheRoot, err)
 		}
 	}
 
 	{
 		cacheRoot := filepath.Join(werf.GetLocalCacheDir(), "git_patches")
-		if err := wipeCacheDirs(ctx, cacheRoot, []string{GitPatchesCacheVersion}); err != nil {
+		if err := wipeCacheDirs(ctx, cacheRoot, []string{GitPatchesCacheVersion}, scanOptions); err != nil {
 			return fmt.Errorf("unable to wipe old git patches cache dirs in %q: %w", cacheRoot, err)
 		}
 	}
@@ -116,7 +154,7 @@ func RunGC(ctx context.Context, options RunGCOptions) error {
 	{
 		cacheVersionRoot := filepath.Join(werf.GetLocalCacheDir(), "git_repos", git_repo.GitReposCacheVersion)
 
-		entries, err := GetGitReposAndRemoveInvalid(ctx, cacheVersionRoot)
+		entries, err := GetGitReposAndRemoveInvalid(ctx, cacheVersionRoot, scanOptions)
 		if err != nil {
 			return fmt.Errorf("unable to process git repos from %q: %w", cacheVersionRoot, err)
 		}
@@ -127,7 +165,7 @@ func RunGC(ctx context.Context, options RunGCOptions) error {
 	{
 		cacheVersionRoot := filepath.Join(werf.GetLocalCacheDir(), "git_mirrors", git_repo.GitMirrorsCacheVersion)
 
-		entries, err := GetGitMirrorsAndRemoveInvalid(ctx, cacheVersionRoot)
+		entries, err := GetGitMirrorsAndRemoveInvalid(ctx, cacheVersionRoot, scanOptions)
 		if err != nil {
 			return fmt.Errorf("unable to process git mirrors from %q: %w", cacheVersionRoot, err)
 		}
@@ -138,7 +176,7 @@ func RunGC(ctx context.Context, options RunGCOptions) error {
 	{
 		cacheVersionRoot := filepath.Join(werf.GetLocalCacheDir(), "git_worktrees", git_repo.GitWorktreesCacheVersion)
 
-		entries, err := GetGitWorktreesAndRemoveInvalid(ctx, cacheVersionRoot)
+		entries, err := GetGitWorktreesAndRemoveInvalid(ctx, cacheVersionRoot, scanOptions)
 		if err != nil {
 			return fmt.Errorf("unable to process git worktrees from %q: %w", cacheVersionRoot, err)
 		}
@@ -149,7 +187,7 @@ func RunGC(ctx context.Context, options RunGCOptions) error {
 	{
 		cacheVersionRoot := filepath.Join(werf.GetLocalCacheDir(), "git_archives", GitArchivesCacheVersion)
 
-		entries, err := GetGitArchivesAndRemoveInvalid(ctx, cacheVersionRoot)
+		entries, err := GetGitArchivesAndRemoveInvalid(ctx, cacheVersionRoot, scanOptions)
 		if err != nil {
 			return fmt.Errorf("unable to process git archives from %q: %w", cacheVersionRoot, err)
 		}
@@ -160,7 +198,7 @@ func RunGC(ctx context.Context, options RunGCOptions) error {
 	{
 		cacheVersionRoot := filepath.Join(werf.GetLocalCacheDir(), "git_patches", GitPatchesCacheVersion)
 
-		entries, err := GetGitPatchesAndRemoveInvalid(ctx, cacheVersionRoot)
+		entries, err := GetGitPatchesAndRemoveInvalid(ctx, cacheVersionRoot, scanOptions)
 		if err != nil {
 			return fmt.Errorf("unable to process git patches from %q: %w", cacheVersionRoot, err)
 		}
@@ -293,7 +331,7 @@ func RemovePathWithEmptyParentDirsInsideScope(scopeDir, path string) error {
 // stale ones: local_cache is shared by all werf versions on the host (see
 // package doc), and a version dir with recent file mtimes belongs to another
 // werf version that may be mid-build right now.
-func wipeCacheDirs(ctx context.Context, cacheRootDir string, keepCacheVersions []string) error {
+func wipeCacheDirs(ctx context.Context, cacheRootDir string, keepCacheVersions []string, options ScanOptions) error {
 	logboek.Context(ctx).Debug().LogF("wipeCacheDirs %q\n", cacheRootDir)
 
 	if _, err := os.Stat(cacheRootDir); os.IsNotExist(err) {
@@ -325,7 +363,9 @@ func wipeCacheDirs(ctx context.Context, cacheRootDir string, keepCacheVersions [
 			continue
 		}
 
-		if err = os.RemoveAll(versionedCacheDir); err != nil {
+		logboek.Context(ctx).Default().LogF("Removing stale cache version dir %q\n", versionedCacheDir)
+
+		if err = removePath(versionedCacheDir, options); err != nil {
 			return fmt.Errorf("unable to remove %q: %w", versionedCacheDir, err)
 		}
 	}

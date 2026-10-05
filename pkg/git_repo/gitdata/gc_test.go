@@ -144,7 +144,7 @@ var _ = Describe("wipeCacheDirs", func() {
 			root := GinkgoT().TempDir()
 			child := setup(root)
 
-			Expect(wipeCacheDirs(ctx, root, []string{"5"})).To(Succeed())
+			Expect(wipeCacheDirs(ctx, root, []string{"5"}, ScanOptions{})).To(Succeed())
 
 			if expectRemoved {
 				Expect(child).NotTo(BeAnExistingFile())

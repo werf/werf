@@ -43,7 +43,7 @@ var _ = ginkgo.Describe("GetGitWorktreesAndRemoveInvalid", func() {
 		// .gitmodules of a nested submodule checkout, not of the worktree itself.
 		nested := writeWorktree(root, "nested", staleTime, filepath.Join("worktree", "sub", ".gitmodules"))
 
-		res, err := GetGitWorktreesAndRemoveInvalid(ctx, root)
+		res, err := GetGitWorktreesAndRemoveInvalid(ctx, root, ScanOptions{})
 		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 		gomega.Expect(res).To(gomega.HaveLen(3))
 		gomega.Expect(findEntry(res, plain).HasSubmodules).To(gomega.BeFalse())
@@ -57,7 +57,7 @@ var _ = ginkgo.Describe("GetGitWorktreesAndRemoveInvalid", func() {
 		root := ginkgo.GinkgoT().TempDir()
 		fresh := writeWorktree(root, "fresh", time.Now(), filepath.Join("worktree", ".gitmodules"))
 
-		res, err := GetGitWorktreesAndRemoveInvalid(ctx, root)
+		res, err := GetGitWorktreesAndRemoveInvalid(ctx, root, ScanOptions{})
 		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 		gomega.Expect(findEntry(res, fresh).HasSubmodules).To(gomega.BeFalse())
 		gomega.Expect(keepGitDataByLru(res)).To(gomega.BeEmpty())

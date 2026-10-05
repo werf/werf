@@ -11,7 +11,7 @@ import (
 
 var _ = Describe("GetGitMirrorsAndRemoveInvalid", func() {
 	It("returns nil, nil when root does not exist", func(ctx SpecContext) {
-		res, err := GetGitMirrorsAndRemoveInvalid(ctx, filepath.Join(GinkgoT().TempDir(), "missing"))
+		res, err := GetGitMirrorsAndRemoveInvalid(ctx, filepath.Join(GinkgoT().TempDir(), "missing"), ScanOptions{})
 		Expect(err).NotTo(HaveOccurred())
 		Expect(res).To(BeNil())
 	})
@@ -23,7 +23,7 @@ var _ = Describe("GetGitMirrorsAndRemoveInvalid", func() {
 		marker := filepath.Join(repo, "requires_full")
 		Expect(os.WriteFile(marker, nil, 0o644)).To(Succeed())
 
-		res, err := GetGitMirrorsAndRemoveInvalid(ctx, root)
+		res, err := GetGitMirrorsAndRemoveInvalid(ctx, root, ScanOptions{})
 		Expect(err).NotTo(HaveOccurred())
 		Expect(res).To(BeEmpty())
 		Expect(marker).To(BeARegularFile())
@@ -34,7 +34,7 @@ var _ = Describe("GetGitMirrorsAndRemoveInvalid", func() {
 		now := time.Now().Truncate(time.Second)
 		shallow := writeMirror(filepath.Join(root, "abc", "shallow"), now)
 
-		res, err := GetGitMirrorsAndRemoveInvalid(ctx, root)
+		res, err := GetGitMirrorsAndRemoveInvalid(ctx, root, ScanOptions{})
 		Expect(err).NotTo(HaveOccurred())
 		Expect(res).To(HaveLen(1))
 		Expect(res[0].GetPaths()).To(ConsistOf(shallow))
@@ -49,7 +49,7 @@ var _ = Describe("GetGitMirrorsAndRemoveInvalid", func() {
 		marker := filepath.Join(root, "abc", "requires_full")
 		Expect(os.WriteFile(marker, nil, 0o644)).To(Succeed())
 
-		res, err := GetGitMirrorsAndRemoveInvalid(ctx, root)
+		res, err := GetGitMirrorsAndRemoveInvalid(ctx, root, ScanOptions{})
 		Expect(err).NotTo(HaveOccurred())
 		Expect(res).To(HaveLen(1))
 		Expect(res[0].GetPaths()).To(ConsistOf(shallow))
@@ -61,7 +61,7 @@ var _ = Describe("GetGitMirrorsAndRemoveInvalid", func() {
 		repo := filepath.Join(root, "abc")
 		Expect(os.MkdirAll(repo, 0o755)).To(Succeed())
 
-		res, err := GetGitMirrorsAndRemoveInvalid(ctx, root)
+		res, err := GetGitMirrorsAndRemoveInvalid(ctx, root, ScanOptions{})
 		Expect(err).NotTo(HaveOccurred())
 		Expect(res).To(BeEmpty())
 		Expect(repo).NotTo(BeAnExistingFile())
@@ -72,7 +72,7 @@ var _ = Describe("GetGitMirrorsAndRemoveInvalid", func() {
 		stray := filepath.Join(root, "stray")
 		Expect(os.WriteFile(stray, []byte("x"), 0o644)).To(Succeed())
 
-		res, err := GetGitMirrorsAndRemoveInvalid(ctx, root)
+		res, err := GetGitMirrorsAndRemoveInvalid(ctx, root, ScanOptions{})
 		Expect(err).NotTo(HaveOccurred())
 		Expect(res).To(BeEmpty())
 		Expect(stray).NotTo(BeAnExistingFile())
@@ -84,7 +84,7 @@ var _ = Describe("GetGitMirrorsAndRemoveInvalid", func() {
 		Expect(os.MkdirAll(repo, 0o755)).To(Succeed())
 		Expect(os.WriteFile(filepath.Join(repo, "shallow"), []byte("x"), 0o644)).To(Succeed())
 
-		res, err := GetGitMirrorsAndRemoveInvalid(ctx, root)
+		res, err := GetGitMirrorsAndRemoveInvalid(ctx, root, ScanOptions{})
 		Expect(err).NotTo(HaveOccurred())
 		Expect(res).To(BeEmpty())
 		Expect(repo).NotTo(BeAnExistingFile())
@@ -97,7 +97,7 @@ var _ = Describe("GetGitMirrorsAndRemoveInvalid", func() {
 		malformedMarker := filepath.Join(root, "abc", "requires_full")
 		Expect(os.MkdirAll(malformedMarker, 0o755)).To(Succeed())
 
-		res, err := GetGitMirrorsAndRemoveInvalid(ctx, root)
+		res, err := GetGitMirrorsAndRemoveInvalid(ctx, root, ScanOptions{})
 		Expect(err).NotTo(HaveOccurred())
 		Expect(res).To(HaveLen(1))
 		Expect(res[0].GetPaths()).To(ConsistOf(shallow))
@@ -111,7 +111,7 @@ var _ = Describe("GetGitMirrorsAndRemoveInvalid", func() {
 		leftover := filepath.Join(root, "abc", "requires_full.tmp")
 		Expect(os.WriteFile(leftover, nil, 0o644)).To(Succeed())
 
-		res, err := GetGitMirrorsAndRemoveInvalid(ctx, root)
+		res, err := GetGitMirrorsAndRemoveInvalid(ctx, root, ScanOptions{})
 		Expect(err).NotTo(HaveOccurred())
 		Expect(res).To(HaveLen(1))
 		Expect(leftover).NotTo(BeAnExistingFile())

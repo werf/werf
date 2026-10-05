@@ -50,7 +50,7 @@ func (entry *GitPatchDesc) GetCacheBasePath() string {
 // │   │   └── ... (other patch files)
 // │   └── ... (other hash groups)
 // └── ... (other repositories)
-func GetGitPatchesAndRemoveInvalid(ctx context.Context, cacheVersionRoot string) ([]GitDataEntry, error) {
+func GetGitPatchesAndRemoveInvalid(ctx context.Context, cacheVersionRoot string, options ScanOptions) ([]GitDataEntry, error) {
 	var res []GitDataEntry
 
 	if _, err := os.Stat(cacheVersionRoot); os.IsNotExist(err) {
@@ -69,7 +69,7 @@ func GetGitPatchesAndRemoveInvalid(ctx context.Context, cacheVersionRoot string)
 
 		if !repoDirInfo.IsDir() {
 			logboek.Context(ctx).Warn().LogF("Removing invalid entry %q: not a directory\n", repoDir)
-			if err := os.RemoveAll(repoDir); err != nil {
+			if err := removePath(repoDir, options); err != nil {
 				return nil, fmt.Errorf("unable to remove %q: %w", repoDir, err)
 			}
 			continue
@@ -85,7 +85,7 @@ func GetGitPatchesAndRemoveInvalid(ctx context.Context, cacheVersionRoot string)
 
 			if !hashGroupDirInfo.IsDir() {
 				logboek.Context(ctx).Warn().LogF("Removing invalid entry %q: not a directory\n", hashGroupDir)
-				if err := os.RemoveAll(hashGroupDir); err != nil {
+				if err := removePath(hashGroupDir, options); err != nil {
 					return nil, fmt.Errorf("unable to remove %q: %w", hashGroupDir, err)
 				}
 				continue
@@ -102,7 +102,7 @@ func GetGitPatchesAndRemoveInvalid(ctx context.Context, cacheVersionRoot string)
 				// Remove invalid entry: file must be a regular file.
 				if metaOrPatchFileInfo.IsDir() {
 					logboek.Context(ctx).Warn().LogF("Removing invalid entry %q: not a regular file\n", metaOrPathFilePath)
-					if err := os.RemoveAll(metaOrPathFilePath); err != nil {
+					if err := removePath(metaOrPathFilePath, options); err != nil {
 						return nil, fmt.Errorf("unable to remove %q: %w", metaOrPathFilePath, err)
 					}
 
@@ -120,7 +120,7 @@ func GetGitPatchesAndRemoveInvalid(ctx context.Context, cacheVersionRoot string)
 					err = json.Unmarshal(data, &desc.Metadata)
 					if err != nil {
 						logboek.Context(ctx).Warn().LogF("Removing invalid entry %q: unable to unmarshal json: %w\n", metaOrPathFilePath, err)
-						if err := os.RemoveAll(metaOrPathFilePath); err != nil {
+						if err := removePath(metaOrPathFilePath, options); err != nil {
 							return nil, fmt.Errorf("unable to remove %q: %w", metaOrPathFilePath, err)
 						}
 						continue
@@ -131,7 +131,7 @@ func GetGitPatchesAndRemoveInvalid(ctx context.Context, cacheVersionRoot string)
 					if err != nil {
 						if os.IsNotExist(err) {
 							logboek.Context(ctx).Warn().LogF("Removing invalid entry %q: patch file does not exist\n", patchPath)
-							if err := os.RemoveAll(metaOrPathFilePath); err != nil {
+							if err := removePath(metaOrPathFilePath, options); err != nil {
 								return nil, fmt.Errorf("unable to remove %q: %w", metaOrPathFilePath, err)
 							}
 
@@ -147,7 +147,7 @@ func GetGitPatchesAndRemoveInvalid(ctx context.Context, cacheVersionRoot string)
 				} else if strings.HasSuffix(metaOrPatchFileInfo.Name(), ".patch") {
 				} else {
 					logboek.Context(ctx).Warn().LogF("Removing invalid entry %q: unknown file type\n", metaOrPathFilePath)
-					if err := os.RemoveAll(metaOrPathFilePath); err != nil {
+					if err := removePath(metaOrPathFilePath, options); err != nil {
 						return nil, fmt.Errorf("unable to remove %q: %w", metaOrPathFilePath, err)
 					}
 				}
