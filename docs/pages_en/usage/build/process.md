@@ -151,7 +151,7 @@ from: alpine:3.14
 
 ### Checking that images are built
 
-`werf build --check-built-images` (aliases: `--require-built-images`, `-Z`, `$WERF_CHECK_BUILT_IMAGES`), and `--require-built-images` on the commands that process images without building them, check that every image the project needs is already published, and exit with `stages required` otherwise.
+`werf build --check-built-images` (aliases: `--require-built-images`, `-Z`, `$WERF_CHECK_BUILT_IMAGES`), and `--require-built-images` on the commands that process images without building them, check that every image the project needs is already published. Missing stages produce `stages required`; unavailable output images or custom tags also cause the check to fail.
 
 The check is read-only, and stage discovery is limited to the main repository:
 
