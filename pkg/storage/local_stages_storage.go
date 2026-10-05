@@ -19,6 +19,7 @@ import (
 	"github.com/werf/werf/v3/pkg/docker_registry"
 	"github.com/werf/werf/v3/pkg/docker_registry/api"
 	"github.com/werf/werf/v3/pkg/image"
+	"github.com/werf/werf/v3/pkg/opstats"
 )
 
 const (
@@ -146,21 +147,44 @@ func (storage *LocalStagesStorage) GetStagesIDs(ctx context.Context, projectName
 	return images.ConvertToStages()
 }
 
+func localImagesCacheOperation(backend container_backend.ContainerBackend) opstats.Operation {
+	if backend == nil {
+		return ""
+	}
+	switch backend.String() {
+	case "buildah-backend":
+		return opstats.OperationBuildahImageList
+	case "docker-server-backend":
+		return opstats.OperationDockerImageList
+	default:
+		return ""
+	}
+}
+
 func (storage *LocalStagesStorage) GetStagesIDsByDigest(ctx context.Context, projectName, digest string, parentStageCreationTs int64, opts ...Option) ([]image.StageID, error) {
 	var cutoff time.Time
-	if !makeOptions(opts...).withCache {
-		// Recorded before anything else, so that a listing accepted by this call also covers every
-		// lock its caller already holds.
+	withCache := makeOptions(opts...).withCache
+	if !withCache {
+		// Recorded before anything else, so the accepted listing covers locks the caller already holds.
 		cutoff = time.Now()
-	} else if cached, isCached := storage.loadProjectSnapshot(projectName); isCached {
-		return selectProjectStages(ctx, cached.references, projectName, digest, parentStageCreationTs)
 	}
-
-	listing, _, err := storage.refreshProjectListing(ctx, projectName, cutoff)
+	outcome := opstats.CacheOutcomeBypass
+	var shared bool
+	defer func() {
+		opstats.CountCacheLookup(ctx, localImagesCacheOperation(storage.ContainerBackend), opstats.CacheLayerMemory, outcome, shared)
+	}()
+	if withCache {
+		if cached, isCached := storage.loadProjectSnapshot(projectName); isCached {
+			outcome = opstats.CacheOutcomeHit
+			return selectProjectStages(ctx, cached.references, projectName, digest, parentStageCreationTs)
+		}
+		outcome = opstats.CacheOutcomeMiss
+	}
+	listing, joined, err := storage.refreshProjectListing(ctx, projectName, cutoff)
+	shared = joined
 	if err != nil {
 		return nil, err
 	}
-
 	return selectProjectStages(ctx, listing.references, projectName, digest, parentStageCreationTs)
 }
 

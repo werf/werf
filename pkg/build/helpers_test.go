@@ -21,8 +21,10 @@ import (
 	"github.com/werf/werf/v3/pkg/build/stage"
 	"github.com/werf/werf/v3/pkg/config"
 	"github.com/werf/werf/v3/pkg/container_backend"
+	"github.com/werf/werf/v3/pkg/container_backend/stage_builder"
 	"github.com/werf/werf/v3/pkg/giterminism_manager"
 	imagePkg "github.com/werf/werf/v3/pkg/image"
+	"github.com/werf/werf/v3/pkg/opstats"
 	"github.com/werf/werf/v3/pkg/storage"
 	"github.com/werf/werf/v3/pkg/storage/manager"
 	"github.com/werf/werf/v3/pkg/storage/synchronization/lock_manager"
@@ -54,9 +56,11 @@ func newReportPhase(reportPath string) *BuildPhase {
 }
 
 type operationsReport struct {
-	Operations    map[string]ReportOperationRecord
-	StageCache    map[string]int
-	RegistryCache map[string]int
+	Operations      map[string]ReportOperationRecord
+	CacheOperations map[string]map[string]ReportCacheOperationRecord
+	StageCache      map[string]int
+	RegistryCache   map[string]int
+	Recovery        map[string]int
 }
 
 func decodeOperationsReport(data []byte) operationsReport {
@@ -461,4 +465,30 @@ func (s *checkModeStorage) AddStageCustomTag(_ context.Context, _ *imagePkg.Stag
 func (s *checkModeStorage) RegisterStageCustomTag(_ context.Context, _ string, _ *imagePkg.StageDesc, _ string) error {
 	s.writes = append(s.writes, "RegisterStageCustomTag")
 	return nil
+}
+
+type buildableStage struct{ *publicationStage }
+
+var _ stage.Interface = (*buildableStage)(nil)
+
+func (s *buildableStage) IsBuildable() bool { return true }
+
+type stageBuilderStub struct {
+	stage_builder.StageBuilderInterface
+	builds int
+}
+
+var _ stage_builder.StageBuilderInterface = (*stageBuilderStub)(nil)
+
+func (b *stageBuilderStub) Build(_ context.Context, _ container_backend.BuildOptions) error {
+	b.builds++
+	return nil
+}
+
+func eventCounts(collector *opstats.Collector) map[opstats.Event]int {
+	counts := make(map[opstats.Event]int)
+	for _, e := range collector.EventSummary() {
+		counts[e.Event] = e.Count
+	}
+	return counts
 }
