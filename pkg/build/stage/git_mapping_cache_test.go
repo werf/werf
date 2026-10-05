@@ -163,6 +163,32 @@ var _ = ginkgo.Describe("Git mapping cache eviction", func() {
 		gomega.Expect(os.ReadFile(pathsListFile.FilePath)).To(gomega.Equal([]byte("/app/a.txt")))
 	})
 
+	ginkgo.DescribeTable("preserves the input file mode when it has to copy across filesystems",
+		func(mode os.FileMode) {
+			root := ginkgo.GinkgoT().TempDir()
+			source := filepath.Join(root, "stage.tar")
+			gomega.Expect(os.WriteFile(source, []byte("contents"), 0o600)).To(gomega.Succeed())
+			gomega.Expect(os.Chmod(source, mode)).To(gomega.Succeed())
+
+			originalLink := linkFile
+			linkFile = func(string, string) error { return syscall.EXDEV }
+			ginkgo.DeferCleanup(func() { linkFile = originalLink })
+
+			gm := NewGitMapping()
+			gm.ScriptsDir = filepath.Join(root, "scripts")
+			gm.ContainerScriptsDir = "/scripts"
+			pin, err := gm.pinGitDataFile(source)
+			gomega.Expect(err).NotTo(gomega.HaveOccurred())
+
+			info, err := os.Stat(pin.FilePath)
+			gomega.Expect(err).NotTo(gomega.HaveOccurred())
+			gomega.Expect(info.Mode().Perm()).To(gomega.Equal(mode))
+			gomega.Expect(os.ReadFile(pin.FilePath)).To(gomega.Equal([]byte("contents")))
+		},
+		ginkgo.Entry("executable", os.FileMode(0o755)),
+		ginkgo.Entry("group readable", os.FileMode(0o640)),
+	)
+
 	ginkgo.It("returns an error rather than a path to a missing input", func() {
 		root := ginkgo.GinkgoT().TempDir()
 		gm := NewGitMapping()

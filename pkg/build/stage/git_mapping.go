@@ -1004,6 +1004,8 @@ func (gm *GitMapping) prepareArchiveFile(archive git_repo.Archive) (*ContainerFi
 	return gm.pinGitDataFile(archive.GetFilePath())
 }
 
+var linkFile = os.Link // for stubbing in tests
+
 func (gm *GitMapping) pinGitDataFile(source string) (*ContainerFileDescriptor, error) {
 	desc, err := gm.newGitDataFile(filepath.Base(source))
 	if err != nil {
@@ -1011,18 +1013,26 @@ func (gm *GitMapping) pinGitDataFile(source string) (*ContainerFileDescriptor, e
 	}
 
 	pinned := desc.FilePath
-	if err := os.Link(source, pinned); err != nil {
+	if err := linkFile(source, pinned); err != nil {
 		in, err := os.Open(source)
 		if err != nil {
 			return nil, fmt.Errorf("open git input %q: %w", source, err)
 		}
-		out, err := os.OpenFile(pinned, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600)
+		info, err := in.Stat()
+		if err != nil {
+			return nil, fmt.Errorf("stat git input %q: %w", source, errors.Join(err, in.Close()))
+		}
+		out, err := os.OpenFile(pinned, os.O_CREATE|os.O_EXCL|os.O_WRONLY, info.Mode().Perm())
 		if err != nil {
 			return nil, fmt.Errorf("create git input copy: %w", errors.Join(err, in.Close()))
 		}
 		_, copyErr := io.Copy(out, in)
 		if err := errors.Join(copyErr, out.Close(), in.Close()); err != nil {
 			return nil, fmt.Errorf("copy git input %q: %w", source, err)
+		}
+		// O_CREATE obeys the umask, so the mode is set again explicitly.
+		if err := os.Chmod(pinned, info.Mode().Perm()); err != nil {
+			return nil, fmt.Errorf("set git input copy mode: %w", err)
 		}
 	}
 	return desc, nil
