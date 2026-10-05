@@ -18,7 +18,8 @@ import (
 var (
 	ErrPathRemoval = errors.New("path removal")
 
-	timeSince = time.Since // for stubbing in tests
+	timeSince    = time.Since // for stubbing in tests
+	onSameDevice = sameDevice
 )
 
 func ShouldRunAutoGC() (bool, error) {
@@ -97,7 +98,8 @@ func collectPaths() ([]string, []string, error) {
 func listDirAndFollowSymlinks(gcPathItem gcPath) ([]string, []string, error) {
 	dir, namePrefix, minFileAge := gcPathItem.path, gcPathItem.namePrefix, gcPathItem.keepingTime
 
-	if _, err := os.Stat(dir); errors.Is(err, fs.ErrNotExist) {
+	dirInfo, err := os.Stat(dir)
+	if errors.Is(err, fs.ErrNotExist) {
 		return nil, nil, nil
 	} else if err != nil {
 		return nil, nil, fmt.Errorf("stat %v dir: %w", dir, err)
@@ -137,8 +139,12 @@ func listDirAndFollowSymlinks(gcPathItem gcPath) ([]string, []string, error) {
 				continue
 			}
 		default:
+			// A filesystem mounted under a dir werf does not own keeps its data elsewhere; a
+			// recursive removal would empty it instead of reclaiming tmp space.
+			if !gcPathItem.followSymlinks && !onSameDevice(dirInfo, info) {
+				continue
+			}
 			listOfDirs = append(listOfDirs, linkOrFilePath)
-			// resolve only symlinks
 			continue
 		}
 

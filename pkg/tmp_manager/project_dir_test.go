@@ -56,6 +56,18 @@ var _ = Describe("project dir", func() {
 		Expect(link).NotTo(BeAnExistingFile())
 	})
 
+	It("never descends into a filesystem mounted under the tmp dir", func() {
+		mounted := filepath.Join(werf.GetTmpDir(), projectDirPrefix+"mounted")
+		Expect(os.MkdirAll(mounted, 0o755)).To(Succeed())
+		Expect(os.WriteFile(filepath.Join(mounted, "data.txt"), []byte("payload"), 0o644)).To(Succeed())
+		past := time.Now().Add(-projectDirMaxAge - time.Hour)
+		Expect(os.Chtimes(mounted, past, past)).To(Succeed())
+		stubs.Stub(&onSameDevice, func(_, entry os.FileInfo) bool { return entry.Name() != filepath.Base(mounted) })
+
+		Expect(RunGC(GinkgoT().Context(), false)).To(Succeed())
+		Expect(filepath.Join(mounted, "data.txt")).To(BeARegularFile())
+	})
+
 	It("leaves foreign entries of the tmp dir alone", func() {
 		foreign := filepath.Join(werf.GetTmpDir(), "foreign-tool-data")
 		Expect(os.MkdirAll(foreign, 0o755)).To(Succeed())
