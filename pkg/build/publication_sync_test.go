@@ -20,10 +20,10 @@ var _ = ginkgo.Describe("Distributed stage publication", func() {
 		first, firstImage, firstStage := newPublicationPhase(ctx, firstManager, srv.URL, anchor, 10)
 		second, secondImage, secondStage := newPublicationPhase(ctx, secondManager, srv.URL, anchor, secondParentTs)
 		firstDone, secondDone := make(chan error, 1), make(chan error, 1)
-		go func() { firstDone <- first.atomicBuildStageImage(ctx, firstImage, firstStage) }()
+		go func() { firstDone <- errorOf(first.atomicBuildStageImage(ctx, firstImage, firstStage)) }()
 		gomega.Eventually(firstManager.lookupStarted, 5*time.Second).Should(gomega.BeClosed())
 		gomega.Eventually(attempts, 5*time.Second).Should(gomega.Receive())
-		go func() { secondDone <- second.atomicBuildStageImage(ctx, secondImage, secondStage) }()
+		go func() { secondDone <- errorOf(second.atomicBuildStageImage(ctx, secondImage, secondStage)) }()
 		gomega.Eventually(attempts, 5*time.Second).Should(gomega.Receive())
 		blockedLookups := secondManager.lookups.Load()
 		close(firstManager.continueLookup)
@@ -52,7 +52,7 @@ var _ = ginkgo.Describe("Distributed stage publication", func() {
 		first, firstImage, firstStage := newPublicationPhase(ctx, firstManager, srv.URL, anchor, 10)
 		second, secondImage, secondStage := newPublicationPhase(ctx, secondManager, srv.URL, anchor, secondParentTs)
 		firstDone, secondDone := make(chan error, 1), make(chan error, 1)
-		go func() { firstDone <- first.atomicBuildStageImage(ctx, firstImage, firstStage) }()
+		go func() { firstDone <- errorOf(first.atomicBuildStageImage(ctx, firstImage, firstStage)) }()
 		gomega.Eventually(firstManager.lookupStarted, 5*time.Second).Should(gomega.BeClosed())
 		gomega.Eventually(attempts, 5*time.Second).Should(gomega.Receive())
 		go func() {
@@ -116,7 +116,8 @@ var _ = ginkgo.Describe("Distributed stage publication", func() {
 			storageManager.cacheErr = sentinel
 		}
 		phase, img, stg := newPublicationPhase(ctx, storageManager, srv.URL, true, 200)
-		gomega.Expect(phase.atomicBuildStageImage(ctx, img, stg)).To(gomega.MatchError(gomega.ContainSubstring("publication failure")))
+		_, err := phase.atomicBuildStageImage(ctx, img, stg)
+		gomega.Expect(err).To(gomega.MatchError(gomega.ContainSubstring("publication failure")))
 		gomega.Eventually(attempts, time.Second).Should(gomega.Receive())
 		other, _, _ := newPublicationPhase(ctx, &publicationStorageManager{primary: primary}, srv.URL, true, 200)
 		acquired := make(chan error, 1)

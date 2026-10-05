@@ -269,6 +269,7 @@ type publicationStorageManager struct {
 	parentTs       int64
 	secondary      *publicationStorage
 	secondaryDesc  *imagePkg.StageDesc
+	fetchErr       error
 	copies         atomic.Int32
 }
 
@@ -362,7 +363,14 @@ func (m *publicationStorageManager) GetSecondaryStagesStorageList() []storage.St
 }
 
 func (m *publicationStorageManager) GetStageDescSetByDigestFromStagesStorageCached(_ context.Context, _, _ string, _ int64, _ storage.StagesStorage) (imagePkg.StageDescSet, error) {
+	if m.secondaryDesc == nil {
+		return imagePkg.NewStageDescSet(), nil
+	}
 	return imagePkg.NewStageDescSet(m.secondaryDesc), nil
+}
+
+func (m *publicationStorageManager) FetchStage(_ context.Context, _ container_backend.ContainerBackend, _ stage.Interface) (manager.FetchStageInfo, error) {
+	return manager.FetchStageInfo{BaseImageSource: BaseImageSourceTypeRepo}, m.fetchErr
 }
 
 func (m *publicationStorageManager) CopySuitableStageDescByDigest(_ context.Context, desc *imagePkg.StageDesc, _, _ storage.StagesStorage, _ container_backend.ContainerBackend, _ string) (*imagePkg.StageDesc, error) {
@@ -473,8 +481,37 @@ var _ stage.Interface = (*buildableStage)(nil)
 
 func (s *buildableStage) IsBuildable() bool { return true }
 
+// reportedStage goes through the whole onImageStage path: it is buildable, needs no stapel
+// machinery and installs a builder stub on every stage image the phase creates for it.
+type reportedStage struct {
+	*buildableStage
+	buildErr error
+}
+
+var _ stage.Interface = (*reportedStage)(nil)
+
+func (s *reportedStage) IsStapelStage() bool { return false }
+
+func (s *reportedStage) HasPrevStage() bool { return false }
+
+func (s *reportedStage) GetDependencies(_ context.Context, _ stage.Conveyor, _ container_backend.ContainerBackend, _, _ *stage.StageImage, _ container_backend.BuildContextArchiver) (string, error) {
+	return "stage-dependencies", nil
+}
+
+func (s *reportedStage) PrepareImage(_ context.Context, _ stage.Conveyor, _ container_backend.ContainerBackend, _, _ *stage.StageImage, _ container_backend.BuildContextArchiver) error {
+	return nil
+}
+
+func (s *reportedStage) SetStageImage(stageImage *stage.StageImage) {
+	stageImage.Builder = &stageBuilderStub{
+		StageBuilder: stage_builder.NewStageBuilder(nil, "base", stageImage.Image),
+		buildErr:     s.buildErr,
+	}
+	s.buildableStage.SetStageImage(stageImage)
+}
+
 type stageBuilderStub struct {
-	stage_builder.StageBuilderInterface
+	*stage_builder.StageBuilder
 	builds   int
 	buildErr error
 }
@@ -485,6 +522,8 @@ func (b *stageBuilderStub) Build(_ context.Context, _ container_backend.BuildOpt
 	b.builds++
 	return b.buildErr
 }
+
+func errorOf(_ bool, err error) error { return err }
 
 func eventCounts(collector *opstats.Collector) map[opstats.Event]int {
 	counts := make(map[opstats.Event]int)
