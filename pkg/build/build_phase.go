@@ -792,9 +792,18 @@ func (phase *BuildPhase) findAndFetchStageFromSecondaryStagesStorage(ctx context
 		}
 
 		err := logboek.Context(ctx).Default().LogProcess("Copy suitable stage from secondary %s", secondaryStagesStorage.String()).DoError(func() error {
-			// Copy suitable stage from a secondary stages storage to the primary stages storage
-			// while primary stages storage lock for this digest is held
-			if stageDescCopy, err := storageManager.CopySuitableStageDescByDigest(ctx, secondaryStageDesc, secondaryStagesStorage, storageManager.GetStagesStorage(), phase.Conveyor.ContainerBackend, img.TargetPlatform); err != nil {
+			stageDescSet, err := storageManager.GetStageDescSetByDigest(ctx, stg.LogDetailedName(), stg.GetDigest(), phase.getPrevNonEmptyStageCreationTs())
+			if err != nil {
+				return err
+			}
+			stageDescCopy, err := storageManager.SelectSuitableStageDesc(ctx, phase.Conveyor, stg, stageDescSet)
+			if err != nil {
+				return err
+			}
+			if stageDescCopy == nil {
+				stageDescCopy, err = storageManager.CopySuitableStageDescByDigest(ctx, secondaryStageDesc, secondaryStagesStorage, storageManager.GetStagesStorage(), phase.Conveyor.ContainerBackend, img.TargetPlatform)
+			}
+			if err != nil {
 				return fmt.Errorf("unable to copy suitable stage %s from %s to %s: %w", secondaryStageDesc.StageID.String(), secondaryStagesStorage.String(), storageManager.GetStagesStorage().String(), err)
 			} else {
 				i := phase.Conveyor.GetOrCreateStageImage(stageDescCopy.Info.Name, phase.StagesIterator.GetPrevImage(img, stg), stg, img)
@@ -838,7 +847,13 @@ func (phase *BuildPhase) findAndFetchStageFromSecondaryStagesStorage(ctx context
 
 ScanSecondaryStagesStorageList:
 	for _, secondaryStagesStorage := range storageManager.GetSecondaryStagesStorageList() {
-		secondaryStages, err := storageManager.GetStageDescSetByDigestFromStagesStorageWithCache(ctx, stg.LogDetailedName(), stg.GetDigest(), phase.getPrevNonEmptyStageCreationTs(), secondaryStagesStorage)
+		var secondaryStages imagePkg.StageDescSet
+		var err error
+		if phase.ShouldBeBuiltMode {
+			secondaryStages, err = storageManager.GetStageDescSetByDigestFromStagesStorageWithCache(ctx, stg.LogDetailedName(), stg.GetDigest(), phase.getPrevNonEmptyStageCreationTs(), secondaryStagesStorage)
+		} else {
+			secondaryStages, err = storageManager.GetStageDescSetByDigestFromStagesStorageCached(ctx, stg.LogDetailedName(), stg.GetDigest(), phase.getPrevNonEmptyStageCreationTs(), secondaryStagesStorage)
+		}
 		if err != nil {
 			return false, err
 		} else {
@@ -921,7 +936,12 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, s
 		})
 
 	storageManager := phase.Conveyor.StorageManager
-	stageDescSet, err := storageManager.GetStageDescSetByDigestWithCache(ctx, stg.LogDetailedName(), stageDigest, phase.getPrevNonEmptyStageCreationTs())
+	var stageDescSet imagePkg.StageDescSet
+	if phase.ShouldBeBuiltMode {
+		stageDescSet, err = storageManager.GetStageDescSetByDigestWithCache(ctx, stg.LogDetailedName(), stageDigest, phase.getPrevNonEmptyStageCreationTs())
+	} else {
+		stageDescSet, err = storageManager.GetStageDescSetByDigestFromStagesStorageCached(ctx, stg.LogDetailedName(), stageDigest, phase.getPrevNonEmptyStageCreationTs(), storageManager.GetStagesStorage())
+	}
 	if err != nil {
 		return false, phase.Conveyor.GetStageDigestMutex(stg.GetDigest()).Unlock, err
 	}

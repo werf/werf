@@ -101,6 +101,8 @@ The algorithm of stage selection in werf works as follows:
 
 If you run a build with storing images in the repository, werf will first check if the required stages exist in the local repository and copy the suitable stages from there, so that no rebuilding of those stages is necessary.
 
+Stage lookups during ordinary builds reuse cached listings, including lookups that find nothing. Each listing is initialized on its first lookup. Fresh checks and successful local publications update the relevant cached listing. Before publishing a stage, werf performs a fresh check of the main repository under the stage lock (step 4 above): a stage published by another builder after the cached listing may cause redundant build work, but is checked again before publication.
+
 </div>
 </div>
 
