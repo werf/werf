@@ -49,8 +49,11 @@ type RunGCOptions struct {
 // DryRun set a collector only reports what it would remove and leaves the
 // cache untouched, including the invalid entries it normally reclaims; such
 // entries are reported and skipped, never returned as LRU candidates.
+// MissingWorktreeOrigins carries the answer of ProbeMissingLocalWorktreeOrigins,
+// so that no origin path is probed while the exclusive GC lock is held.
 type ScanOptions struct {
-	DryRun bool
+	DryRun                 bool
+	MissingWorktreeOrigins map[string]struct{}
 }
 
 func removePath(path string, options ScanOptions) error {
@@ -77,13 +80,16 @@ func readLastAccessAt(path string) (time.Time, error) {
 }
 
 func RunGC(ctx context.Context, options RunGCOptions) error {
+	worktreesCacheVersionRoot := filepath.Join(werf.GetLocalCacheDir(), "git_worktrees", git_repo.GitWorktreesCacheVersion)
+	missingWorktreeOrigins := ProbeMissingLocalWorktreeOrigins(ctx, worktreesCacheVersionRoot)
+
 	if lock, err := lockGC(ctx, false); err != nil {
 		return err
 	} else {
 		defer werf.HostLocker().ReleaseLock(lock)
 	}
 
-	scanOptions := ScanOptions{DryRun: options.DryRun}
+	scanOptions := ScanOptions{DryRun: options.DryRun, MissingWorktreeOrigins: missingWorktreeOrigins}
 
 	// An entry that cannot be read is preserved and skipped: its error is kept
 	// here so the readable entries are still reclaimed and the command still
@@ -177,7 +183,7 @@ func RunGC(ctx context.Context, options RunGCOptions) error {
 	}
 
 	{
-		cacheVersionRoot := filepath.Join(werf.GetLocalCacheDir(), "git_worktrees", git_repo.GitWorktreesCacheVersion)
+		cacheVersionRoot := worktreesCacheVersionRoot
 
 		entries, err := GetGitWorktreesAndRemoveInvalid(ctx, cacheVersionRoot, scanOptions)
 		if err != nil {

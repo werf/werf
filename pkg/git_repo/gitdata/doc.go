@@ -39,8 +39,10 @@
 // Archive and patch payloads without valid metadata are incomplete entries.
 // Patch sidecars belong to the same entry and are reclaimed with its payload.
 // A stale local worktree with a missing origin precedes reusable entries in
-// LRU cleanup; its origin is rechecked before removal. This does not shorten
-// the access-age guard or make missing-origin detection an eager deletion.
+// LRU cleanup; its origin is probed before the exclusive GC lock is taken and
+// rechecked before removal, and an origin that cannot be probed counts as
+// present. This does not shorten the access-age guard or make missing-origin
+// detection an eager deletion.
 //
 // # Bumping a cache version
 //

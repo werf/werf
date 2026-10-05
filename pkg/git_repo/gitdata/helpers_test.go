@@ -1,6 +1,7 @@
 package gitdata
 
 import (
+	"context"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -183,4 +184,15 @@ func entryNames(entries []GitDataEntry) []string {
 		names = append(names, entry.GetPaths()[0])
 	}
 	return names
+}
+
+// collectWorktrees drives the two halves of worktree collection the way RunGC
+// does: origins are probed first, outside the GC lock, and the collector only
+// consumes that answer.
+func collectWorktrees() ([]GitDataEntry, error) {
+	ctx := context.Background()
+	root := filepath.Join(werf.GetLocalCacheDir(), "worktrees")
+	return GetGitWorktreesAndRemoveInvalid(ctx, root, ScanOptions{
+		MissingWorktreeOrigins: ProbeMissingLocalWorktreeOrigins(ctx, root),
+	})
 }

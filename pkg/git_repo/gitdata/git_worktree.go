@@ -57,7 +57,8 @@ func (entry *GitWorktreeDesc) GetCacheBasePath() string {
 //
 // An entry whose size, access marker or recorded origin cannot be read is
 // preserved and left out of the result; its error is joined into the returned
-// error.
+// error. Whether a recorded origin still exists is NOT probed here: that answer
+// comes from ProbeMissingLocalWorktreeOrigins, which runs before the GC lock.
 func GetGitWorktreesAndRemoveInvalid(ctx context.Context, cacheVersionRoot string, options ScanOptions) ([]GitDataEntry, error) {
 	var res []GitDataEntry
 	var errs []error
@@ -110,13 +111,16 @@ func GetGitWorktreesAndRemoveInvalid(ctx context.Context, cacheVersionRoot strin
 
 			if !shouldPreserveGitDataEntryByLru(desc) {
 				desc.HasSubmodules = worktreeHasSubmodules(ctx, worktreeDir)
-				if subdir == "local" {
-					orphanedGitDir, err := orphanedWorktreeOrigin(worktreeDir)
-					if err != nil {
-						errs = append(errs, err)
-						continue
-					}
-					desc.orphanedGitDir = orphanedGitDir
+			}
+
+			if subdir == "local" {
+				origin, err := recordedWorktreeOrigin(worktreeDir)
+				if err != nil {
+					errs = append(errs, err)
+					continue
+				}
+				if _, missing := options.MissingWorktreeOrigins[origin]; missing {
+					desc.orphanedGitDir = origin
 				}
 			}
 
@@ -127,7 +131,56 @@ func GetGitWorktreesAndRemoveInvalid(ctx context.Context, cacheVersionRoot strin
 	return res, errors.Join(errs...)
 }
 
-func orphanedWorktreeOrigin(worktreeDir string) (string, error) {
+// ProbeMissingLocalWorktreeOrigins returns the recorded origins of LRU-eligible
+// local worktrees that are gone from the filesystem. It is meant to run BEFORE
+// the exclusive GC lock is taken: probing an origin on a hung network mount
+// would otherwise block every git cache user for as long as the mount hangs.
+// An origin that cannot be probed is left out — unknown is not orphaned, so the
+// worktree is cleaned by ordinary LRU order instead.
+func ProbeMissingLocalWorktreeOrigins(ctx context.Context, cacheVersionRoot string) map[string]struct{} {
+	dir := filepath.Join(cacheVersionRoot, "local")
+
+	worktreeDirs, err := ioutil.ReadDir(dir)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			logboek.Context(ctx).Warn().LogF("Unable to look up local worktree origins in %q: %s\n", dir, err)
+		}
+		return nil
+	}
+
+	res := map[string]struct{}{}
+
+	for _, worktreeDirInfo := range worktreeDirs {
+		if !worktreeDirInfo.IsDir() {
+			continue
+		}
+
+		worktreeDir := filepath.Join(dir, worktreeDirInfo.Name())
+
+		lastAccessAt, err := readLastAccessAt(filepath.Join(worktreeDir, "last_access_at"))
+		if err != nil {
+			continue
+		}
+		if shouldPreserveGitDataEntryByLru(&GitWorktreeDesc{LastAccessAt: lastAccessAt}) {
+			continue
+		}
+
+		origin, err := recordedWorktreeOrigin(worktreeDir)
+		if err != nil || origin == "" {
+			continue
+		}
+
+		if _, err := os.Stat(origin); os.IsNotExist(err) {
+			res[origin] = struct{}{}
+		} else if err != nil {
+			logboek.Context(ctx).Warn().LogF("Treating worktree origin %q as present: unable to inspect it: %s\n", origin, err)
+		}
+	}
+
+	return res
+}
+
+func recordedWorktreeOrigin(worktreeDir string) (string, error) {
 	data, err := os.ReadFile(filepath.Join(worktreeDir, "git_dir"))
 	if err != nil && !os.IsNotExist(err) {
 		return "", fmt.Errorf("read worktree origin in %q: %w", worktreeDir, err)
@@ -136,12 +189,6 @@ func orphanedWorktreeOrigin(worktreeDir string) (string, error) {
 	origin := strings.TrimSuffix(string(data), "\n")
 	if !filepath.IsAbs(origin) {
 		return "", nil
-	}
-
-	if _, err := os.Stat(origin); err == nil {
-		return "", nil
-	} else if !os.IsNotExist(err) {
-		return "", fmt.Errorf("inspect worktree origin %q: %w", origin, err)
 	}
 
 	return origin, nil
