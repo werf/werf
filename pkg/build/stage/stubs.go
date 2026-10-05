@@ -78,6 +78,10 @@ func (opts *LegacyContainerOptionsStub) AddLabel(labels map[string]string) {
 	}
 }
 
+var _ Conveyor = (*ConveyorStub)(nil)
+
+func (c *ConveyorStub) IsImagesReadOnly(_ context.Context) bool { return false }
+
 type ConveyorStub struct {
 	Conveyor
 

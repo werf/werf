@@ -101,6 +101,8 @@ The algorithm of stage selection in werf works as follows:
 
 If you run a build with storing images in the repository, werf will first check if the required stages exist in the local repository and copy the suitable stages from there, so that no rebuilding of those stages is necessary.
 
+Stage lookups during ordinary builds reuse cached listings, including lookups that find nothing. Each listing is initialized on its first lookup. Fresh checks and successful local publications update the relevant cached listing. Before publishing a stage, werf performs a fresh check of the main repository under the stage lock (step 4 above): a stage published by another builder after the cached listing may cause redundant build work, but is checked again before publication.
+
 </div>
 </div>
 
@@ -164,6 +166,21 @@ image: user
 cacheVersion: user-cache-version
 from: alpine:3.14
 ```
+
+### Checking that images are built
+
+`werf build --check-built-images` (aliases: `--require-built-images`, `-Z`, `$WERF_CHECK_BUILT_IMAGES`), and `--require-built-images` on the commands that process images without building them, check that every image the project needs is already published. Missing stages produce `stages required`; unavailable output images, custom tags or legacy import metadata also cause the check to fail.
+
+The check is read-only, and stage discovery is limited to the main repository:
+
+- a stage found in a `--secondary-repo` is **not** promoted into the main repository, and secondary stage lists are not requested — so a project whose stages only exist in a secondary repository fails the check until a regular build copies them over;
+- nothing is published: no stage, no manifest list for a multi-platform image, no custom tag, no managed-image record and no Git metadata. Custom tags are verified to exist instead of being created. `werf build --check-built-images` and its aliases also skip synchronization registration and use host-local locks; other commands using `--require-built-images` retain their normal synchronization initialization;
+- existing legacy import metadata may be read from primary or secondary storage without copying it. If import resolution yields missing, broken or empty metadata, the check fails instead of generating a checksum; run a regular build to create or repair that metadata;
+- the configured output is still validated, read-only: with a `--final-repo`, the final image is required to exist there and is not copied into it, so the check never reports an image as available at an address that does not have it.
+
+Unlike a regular build, the check never trusts a negative result of the per-command listing: when the listing shows no stage for a digest, the main repository is listed afresh, so that a stage published while the check runs is reported as built rather than missing. A stage already present in the listing is used as is.
+
+`werf stages copy` also transfers existing legacy import metadata whose checksums match the copied stages, including registry/archive round-trips and copies selected by a build report. Old archives without that metadata still require a regular build after restoring them before read-only checks can succeed.
 
 ## Parallelism and image assembly order
 

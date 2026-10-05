@@ -10,6 +10,7 @@ import (
 )
 
 type Conveyor interface {
+	IsImagesReadOnly(ctx context.Context) bool
 	GetImportMetadata(ctx context.Context, projectName, id string) (*storage.ImportMetadata, error)
 	FetchImportMetadata(ctx context.Context, projectName, id string) (*storage.ImportMetadata, error)
 	PutImportMetadata(ctx context.Context, projectName string, metadata *storage.ImportMetadata, opts storage.PutImportMetadataOptions) error

@@ -52,6 +52,7 @@ type Conveyor struct {
 	giterminismManager giterminism_manager.Interface
 	remoteGitRepos     map[string]*git_repo.Remote
 
+	imagesReadOnly                bool
 	shouldAddManagedImagesRecords bool
 
 	tmpDir string
@@ -1221,8 +1222,12 @@ func (c *Conveyor) GetImportMetadata(ctx context.Context, projectName, id string
 	return c.StorageManager.GetStagesStorage().GetImportMetadata(ctx, projectName, id)
 }
 
+func (c *Conveyor) IsImagesReadOnly(_ context.Context) bool {
+	return c.imagesReadOnly
+}
+
 func (c *Conveyor) FetchImportMetadata(ctx context.Context, projectName, id string) (*storage.ImportMetadata, error) {
-	return c.StorageManager.FetchImportMetadata(ctx, projectName, id)
+	return c.StorageManager.FetchImportMetadata(ctx, projectName, id, manager.FetchImportMetadataOptions{ReadOnly: c.imagesReadOnly})
 }
 
 func (c *Conveyor) PutImportMetadata(ctx context.Context, projectName string, metadata *storage.ImportMetadata, opts storage.PutImportMetadataOptions) error {

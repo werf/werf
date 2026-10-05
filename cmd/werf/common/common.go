@@ -1406,6 +1406,13 @@ func GetCheckBuiltImages(cmdData *CmdData) bool {
 	return option.PtrValueOrDefault(cmdData.CheckBuiltImages, false) || option.PtrValueOrDefault(cmdData.LegacyCheckBuiltImages, false)
 }
 
+func isImagesReadOnly(cmdData *CmdData) bool {
+	if cmdData == nil {
+		return false
+	}
+	return GetCheckBuiltImages(cmdData)
+}
+
 func GetAddLabels(cmdData *CmdData) []string {
 	return append(util.PredefinedValuesByEnvNamePrefix("WERF_ADD_LABEL_"), cmdData.ExtraLabels...)
 }

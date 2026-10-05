@@ -100,22 +100,34 @@ func GetSynchronization(ctx context.Context, cmdData *CmdData, projectName strin
 		ServerAddress: *cmdData.Synchronization,
 		StagesStorage: stagesStorage,
 	}
-	if params.ServerAddress != "" && !protocolIsLocal(params.ServerAddress) && protocolIsLocal(params.StagesStorage.Address()) {
-		return nil, fmt.Errorf("--synchronization (or WERF_SYNCHRONIZATION) is set to %q but --repo (or WERF_REPO) is not specified: --repo is required when using a non-local synchronization server", params.ServerAddress)
+	if err := validateSynchronizationParams(params.ServerAddress, params.StagesStorage.Address()); err != nil {
+		return nil, err
 	}
 
-	if params.ServerAddress == "" {
+	switch {
+	case params.ServerAddress == "":
 		return initDefault(ctx, params)
-	} else if protocolIsLocal(params.ServerAddress) {
+	case protocolIsLocal(params.ServerAddress):
 		return lock_manager.NewLocalSynchronization(ctx, params)
-	} else if protocolIsKube(params.ServerAddress) {
+	case protocolIsKube(params.ServerAddress):
 		checkSynchronizationKubernetesParamsForWarnings(ctx, cmdData)
 		return initKube(ctx, params)
-	} else if protocolIsHttpOrHttps(params.ServerAddress) {
+	default:
 		return lock_manager.NewHttpSynchronization(ctx, params)
-	} else {
-		return nil, fmt.Errorf("only --synchronization=%s or --synchronization=kubernetes://NAMESPACE or --synchronization=http[s]://HOST:PORT/CLIENT_ID is supported, got %q", storage.LocalStorageAddress, *cmdData.Synchronization)
 	}
+}
+
+func validateSynchronizationParams(serverAddress, stagesStorageAddress string) error {
+	if serverAddress == "" {
+		return nil
+	}
+	if !protocolIsLocal(serverAddress) && protocolIsLocal(stagesStorageAddress) {
+		return fmt.Errorf("--synchronization (or WERF_SYNCHRONIZATION) is set to %q but --repo (or WERF_REPO) is not specified: --repo is required when using a non-local synchronization server", serverAddress)
+	}
+	if !protocolIsLocal(serverAddress) && !protocolIsKube(serverAddress) && !protocolIsHttpOrHttps(serverAddress) {
+		return fmt.Errorf("only --synchronization=%s or --synchronization=kubernetes://NAMESPACE or --synchronization=http[s]://HOST:PORT/CLIENT_ID is supported, got %q", storage.LocalStorageAddress, serverAddress)
+	}
+	return nil
 }
 
 func protocolIsKube(address string) bool {

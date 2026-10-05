@@ -66,13 +66,14 @@ type StorageManagerInterface interface {
 	GetStageDescSetByDigest(ctx context.Context, stageName, stageDigest string, parentStageCreationTs int64) (image.StageDescSet, error)
 	GetStageDescSetByDigestWithCache(ctx context.Context, stageName, stageDigest string, parentStageCreationTs int64) (image.StageDescSet, error)
 	GetStageDescSetByDigestFromStagesStorage(ctx context.Context, stageName, stageDigest string, parentStageCreationTs int64, stagesStorage storage.StagesStorage) (image.StageDescSet, error)
+	GetStageDescSetByDigestFromStagesStorageCached(ctx context.Context, stageName, stageDigest string, parentStageCreationTs int64, stagesStorage storage.StagesStorage) (image.StageDescSet, error)
 	GetStageDescSetByDigestFromStagesStorageWithCache(ctx context.Context, stageName, stageDigest string, parentStageCreationTs int64, stagesStorage storage.StagesStorage) (image.StageDescSet, error)
 	GetStageDescSet(ctx context.Context) (image.StageDescSet, error)
 	GetStageDescSetWithCache(ctx context.Context) (image.StageDescSet, error)
 	GetFinalStageDescSet(ctx context.Context) (image.StageDescSet, error)
 
 	FetchStage(ctx context.Context, containerBackend container_backend.ContainerBackend, stg stage.Interface) (FetchStageInfo, error)
-	FetchImportMetadata(ctx context.Context, projectName, id string) (*storage.ImportMetadata, error)
+	FetchImportMetadata(ctx context.Context, projectName, id string, opts FetchImportMetadataOptions) (*storage.ImportMetadata, error)
 	SelectSuitableStageDesc(ctx context.Context, c stage.Conveyor, stg stage.Interface, stageDescSet image.StageDescSet) (*image.StageDesc, error)
 	CopySuitableStageDescByDigest(ctx context.Context, stageDesc *image.StageDesc, sourceStagesStorage, destinationStagesStorage storage.StagesStorage, containerBackend container_backend.ContainerBackend, targetPlatform string) (*image.StageDesc, error)
 	CopyStageIntoCacheStorages(ctx context.Context, stageID image.StageID, cacheStagesStorages []storage.StagesStorage, opts CopyStageIntoStorageOptions) error
@@ -613,7 +614,11 @@ func (m *StorageManager) FetchStage(ctx context.Context, containerBackend contai
 	return FetchStageInfo{BaseImagePulled: pulled, BaseImageSource: source}, nil
 }
 
-func (m *StorageManager) FetchImportMetadata(ctx context.Context, projectName, id string) (*storage.ImportMetadata, error) {
+type FetchImportMetadataOptions struct {
+	ReadOnly bool
+}
+
+func (m *StorageManager) FetchImportMetadata(ctx context.Context, projectName, id string, opts FetchImportMetadataOptions) (*storage.ImportMetadata, error) {
 	meta, err := m.StagesStorage.GetImportMetadata(ctx, projectName, id)
 	if err == nil {
 		return meta, nil
@@ -625,8 +630,10 @@ func (m *StorageManager) FetchImportMetadata(ctx context.Context, projectName, i
 	for _, secondaryStorage := range m.SecondaryStagesStorageList {
 		meta, err := secondaryStorage.GetImportMetadata(ctx, projectName, id)
 		if err == nil {
-			if putErr := m.StagesStorage.PutImportMetadata(ctx, projectName, meta, storage.PutImportMetadataOptions{}); putErr != nil {
-				logboek.Context(ctx).Warn().LogF("Failed to copy import metadata %s to primary storage: %s\n", id, putErr)
+			if !opts.ReadOnly {
+				if putErr := m.StagesStorage.PutImportMetadata(ctx, projectName, meta, storage.PutImportMetadataOptions{}); putErr != nil {
+					logboek.Context(ctx).Warn().LogF("Failed to copy import metadata %s to primary storage: %s\n", id, putErr)
+				}
 			}
 			return meta, nil
 		}
@@ -782,6 +789,10 @@ func (m *StorageManager) GetStageDescSetByDigestWithCache(ctx context.Context, s
 
 func (m *StorageManager) GetStageDescSetByDigest(ctx context.Context, stageName, stageDigest string, parentStageCreationTs int64) (image.StageDescSet, error) {
 	return m.GetStageDescSetByDigestFromStagesStorage(ctx, stageName, stageDigest, parentStageCreationTs, m.StagesStorage)
+}
+
+func (m *StorageManager) GetStageDescSetByDigestFromStagesStorageCached(ctx context.Context, stageName, stageDigest string, parentStageCreationTs int64, stagesStorage storage.StagesStorage) (image.StageDescSet, error) {
+	return m.getStageDescSetByDigestFromStagesStorage(ctx, stageName, stageDigest, parentStageCreationTs, stagesStorage, storage.WithCache())
 }
 
 func (m *StorageManager) GetStageDescSetByDigestFromStagesStorageWithCache(ctx context.Context, stageName, stageDigest string, parentStageCreationTs int64, stagesStorage storage.StagesStorage) (image.StageDescSet, error) {
