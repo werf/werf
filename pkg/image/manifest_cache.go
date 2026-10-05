@@ -43,7 +43,7 @@ func debugManifestCache() bool {
 	return os.Getenv("WERF_DEBUG_STAGES_STORAGE") == "1"
 }
 
-func (cache *ManifestCache) GetImageInfo(ctx context.Context, storageName, imageName string) (info *Info, err error) {
+func (cache *ManifestCache) GetImageInfo(ctx context.Context, storageName, imageName string) (*Info, error) {
 	logProcess := logboek.Context(ctx).Debug().LogProcess("-- ManifestCache.GetImageInfo %s %s", storageName, imageName)
 	if !debugManifestCache() {
 		logProcess.Disable()
@@ -60,11 +60,8 @@ func (cache *ManifestCache) GetImageInfo(ctx context.Context, storageName, image
 	// Counted only past the lock: a lookup that never reached the cache is not one.
 	// Only a cached info returned to the caller is a hit; a missing, reset or
 	// unreadable record is a miss, as is a record the cache fails to refresh.
+	outcome := opstats.CacheOutcomeMiss
 	defer func() {
-		outcome := opstats.CacheOutcomeMiss
-		if err == nil && info != nil {
-			outcome = opstats.CacheOutcomeHit
-		}
 		opstats.CountCacheLookup(ctx, manifestCacheOperation, opstats.CacheLayerDisk, outcome, false)
 	}()
 
@@ -80,6 +77,9 @@ func (cache *ManifestCache) GetImageInfo(ctx context.Context, storageName, image
 			return nil, err
 		}
 
+		if record.Info != nil {
+			outcome = opstats.CacheOutcomeHit
+		}
 		return record.Info, nil
 	default:
 		return nil, nil

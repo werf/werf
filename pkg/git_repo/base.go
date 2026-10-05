@@ -159,9 +159,6 @@ func (repo *Base) GetName() string {
 	return repo.Name
 }
 
-// cacheOutcome maps a cache lookup that either found a ready value or did not
-// onto the outcome recorded for it. Lookups that explicitly skip a usable layer
-// are a bypass and are classified by the caller instead.
 func cacheOutcome(hit bool) opstats.CacheOutcome {
 	if hit {
 		return opstats.CacheOutcomeHit

@@ -34,7 +34,6 @@ const (
 	// not holding or releasing it.
 	OperationStageLockWait Operation = "sync: lock acquire"
 
-	// Operations of the caching layers counted by CountCacheLookup.
 	OperationRegistryTagsList Operation = "registry: tags list"
 	OperationDockerImageList  Operation = "docker: image list"
 	OperationBuildahImageList Operation = "buildah: image list"
@@ -50,8 +49,6 @@ const (
 	CacheLayerDisk   CacheLayer = "disk"
 )
 
-// order places the layers in the order a lookup descends through them, memory
-// before disk, and reports whether the layer is one of the known ones.
 func (l CacheLayer) order() (int, bool) {
 	switch l {
 	case CacheLayerMemory:

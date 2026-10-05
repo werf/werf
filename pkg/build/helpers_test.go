@@ -21,7 +21,9 @@ import (
 	"github.com/werf/werf/v3/pkg/build/stage"
 	"github.com/werf/werf/v3/pkg/config"
 	"github.com/werf/werf/v3/pkg/container_backend"
+	"github.com/werf/werf/v3/pkg/container_backend/stage_builder"
 	imagePkg "github.com/werf/werf/v3/pkg/image"
+	"github.com/werf/werf/v3/pkg/opstats"
 	"github.com/werf/werf/v3/pkg/storage"
 	"github.com/werf/werf/v3/pkg/storage/manager"
 	"github.com/werf/werf/v3/pkg/storage/synchronization/lock_manager"
@@ -378,4 +380,30 @@ func (m *publicationStorageManager) GetStageDescSetByDigestWithCache(_ context.C
 		<-m.continueLookup
 	}
 	return imagePkg.NewStageDescSet(), nil
+}
+
+type buildableStage struct{ *publicationStage }
+
+var _ stage.Interface = (*buildableStage)(nil)
+
+func (s *buildableStage) IsBuildable() bool { return true }
+
+type stageBuilderStub struct {
+	stage_builder.StageBuilderInterface
+	builds int
+}
+
+var _ stage_builder.StageBuilderInterface = (*stageBuilderStub)(nil)
+
+func (b *stageBuilderStub) Build(_ context.Context, _ container_backend.BuildOptions) error {
+	b.builds++
+	return nil
+}
+
+func eventCounts(collector *opstats.Collector) map[opstats.Event]int {
+	counts := make(map[opstats.Event]int)
+	for _, e := range collector.EventSummary() {
+		counts[e.Event] = e.Count
+	}
+	return counts
 }

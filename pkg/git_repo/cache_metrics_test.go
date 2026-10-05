@@ -17,8 +17,6 @@ import (
 var _ = ginkgo.Describe("Git cache lookup counters", func() {
 	var collector *opstats.Collector
 
-	// rows indexes the collected counters by operation and layer so that a
-	// missing row and a zeroed row stay distinguishable.
 	rows := func(ctx ginkgo.SpecContext) map[string]opstats.CacheSummary {
 		res := make(map[string]opstats.CacheSummary)
 		for _, summary := range collector.CacheSummary(ctx) {
@@ -126,6 +124,9 @@ var _ = ginkgo.Describe("Git cache lookup counters", func() {
 
 		first, err := remote.GetOrCreateChecksum(countedCtx, opts)
 		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		gomega.Expect(rows(ctx)).To(gomega.Equal(map[string]opstats.CacheSummary{
+			"git: checksum/memory": {Operation: opstats.OperationGitChecksum, Layer: opstats.CacheLayerMemory, Miss: 1},
+		}))
 		second, err := remote.GetOrCreateChecksum(countedCtx, opts)
 		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 		gomega.Expect(second).To(gomega.Equal(first))

@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"context"
 	"errors"
 	"sync"
 	"time"
@@ -13,11 +12,6 @@ import (
 	"github.com/werf/werf/v3/pkg/image"
 	"github.com/werf/werf/v3/pkg/opstats"
 )
-
-func collectingContext(ctx context.Context) (context.Context, *opstats.Collector) {
-	collector := opstats.NewCollector()
-	return opstats.NewContext(ctx, collector), collector
-}
 
 var _ = ginkgo.Describe("Local stage lookup cache counters", func() {
 	ginkgo.It("counts a lookup without the cache option as a bypass", func(specCtx ginkgo.SpecContext) {

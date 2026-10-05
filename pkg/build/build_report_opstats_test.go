@@ -115,10 +115,8 @@ var _ = Describe("ImagesReport cache operations summary", func() {
 				"memory": {Lookups: 4, Bypass: 4},
 			},
 		}))
-		// The legacy sections keep their existing names and meanings.
 		Expect(decoded.StageCache).To(Equal(map[string]int{"built": 1}))
 		Expect(decoded.RegistryCache).To(Equal(map[string]int{"registry tags cache hit": 3}))
-		// A redundant hit rate is derivable and not serialized.
 		Expect(string(data)).NotTo(ContainSubstring("HitPercent"))
 	})
 

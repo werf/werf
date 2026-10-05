@@ -10,8 +10,6 @@ import (
 	"github.com/werf/logboek/pkg/types"
 )
 
-// Column widths of both tables. The operation column is shared so that the two
-// tables line up with each other.
 const (
 	opColumnFormat    = "%-32s"
 	timeColumnFormat  = "%10s"
@@ -105,13 +103,11 @@ func logStagesAndRecoveryLines(ctx context.Context, events []EventSummary) {
 		}
 	}
 
-	// A command that did no stage work shows no line rather than an invented zero.
 	if observed {
 		logboek.Context(ctx).LogFHighlight("Stages: %d reused, %d built, %d discarded\n", reused, built, discarded)
 		logboek.Context(ctx).LogFHighlight("discarded: built locally but another published stage was reused; included in reused\n")
 	}
 
-	// Recovery is about what went wrong, so a run that hit nothing shows no line.
 	if broken > 0 || restarts > 0 {
 		logboek.Context(ctx).LogFHighlight("Recovery: %d broken stage detections, %d conveyor restarts\n", broken, restarts)
 	}

@@ -1,33 +1,12 @@
 package build
 
 import (
-	"context"
-
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
 
-	"github.com/werf/werf/v3/pkg/build/stage"
-	"github.com/werf/werf/v3/pkg/container_backend"
-	"github.com/werf/werf/v3/pkg/container_backend/stage_builder"
 	imagePkg "github.com/werf/werf/v3/pkg/image"
 	"github.com/werf/werf/v3/pkg/opstats"
 )
-
-type buildableStage struct{ *publicationStage }
-
-var _ stage.Interface = (*buildableStage)(nil)
-
-func (s *buildableStage) IsBuildable() bool { return true }
-
-type stageBuilderStub struct {
-	stage_builder.StageBuilderInterface
-	builds int
-}
-
-func (b *stageBuilderStub) Build(_ context.Context, _ container_backend.BuildOptions) error {
-	b.builds++
-	return nil
-}
 
 var _ = ginkgo.Describe("Discarded stage counting", func() {
 	ginkgo.BeforeEach(func() { ginkgo.GinkgoT().Setenv("WERF_DISABLE_PUBLISH_TAG_CACHE_SYNC", "") })
@@ -66,11 +45,3 @@ var _ = ginkgo.Describe("Discarded stage counting", func() {
 			map[opstats.Event]int{opstats.EventStageBuilt: 1}),
 	)
 })
-
-func eventCounts(collector *opstats.Collector) map[opstats.Event]int {
-	counts := make(map[opstats.Event]int)
-	for _, e := range collector.EventSummary() {
-		counts[e.Event] = e.Count
-	}
-	return counts
-}
