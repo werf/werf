@@ -180,6 +180,8 @@ The check is read-only, and stage discovery is limited to the main repository:
 
 Unlike a regular build, the check never trusts a negative result of the per-command listing: when the listing shows no stage for a digest, the main repository is listed afresh, so that a stage published while the check runs is reported as built rather than missing. A stage already present in the listing is used as is.
 
+`werf stages copy` also transfers existing legacy import metadata whose checksums match the copied stages, including registry/archive round-trips and copies selected by a build report. Old archives without that metadata still require a regular build after restoring them before read-only checks can succeed.
+
 ## Parallelism and image assembly order
 
 <!-- reference: https://werf.io/docs/v2/internals/build_process.html#parallel-build -->

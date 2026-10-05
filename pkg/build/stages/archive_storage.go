@@ -63,6 +63,7 @@ func (s *ArchiveStorage) copyAllFromRemote(ctx context.Context, fromRemote *Remo
 	}
 
 	return s.Writer.WithTask(ctx, func(writer ArchiveStorageWriter) error {
+		var stageRefs []string
 		for _, stageId := range stageIds {
 			logboek.Context(ctx).Default().LogFDetails("Copying stage: %s\n", stageId)
 
@@ -72,6 +73,7 @@ func (s *ArchiveStorage) copyAllFromRemote(ctx context.Context, fromRemote *Remo
 			}
 
 			stageRef := stageDesc.Info.Name
+			stageRefs = append(stageRefs, stageRef)
 			tag := stageDesc.Info.Tag
 
 			if err := writer.WriteStageArchive(tag, func(w io.Writer) error {
@@ -81,7 +83,7 @@ func (s *ArchiveStorage) copyAllFromRemote(ctx context.Context, fromRemote *Remo
 			}
 		}
 
-		return nil
+		return s.writeImportMetadata(ctx, writer, fromRemote, opts.ProjectName, stageRefs)
 	})
 }
 
@@ -109,10 +111,12 @@ func (s *ArchiveStorage) copyCurrentBuildFromRemote(ctx context.Context, fromRem
 				}
 			}
 
+			var stageRefs []string
 			for _, infoGetter := range infoGetters {
 				logboek.Context(ctx).Default().LogFDetails("Copying stage: %s\n", infoGetter.Tag)
 
 				stageRef := infoGetter.GetName()
+				stageRefs = append(stageRefs, stageRef)
 				if err := writer.WriteStageArchive(infoGetter.Tag, func(w io.Writer) error {
 					return fromRemote.RegistryClient.PullImageArchive(ctx, w, stageRef)
 				}); err != nil {
@@ -120,7 +124,23 @@ func (s *ArchiveStorage) copyCurrentBuildFromRemote(ctx context.Context, fromRem
 				}
 			}
 
-			return nil
+			return s.writeImportMetadata(ctx, writer, fromRemote, opts.ProjectName, stageRefs)
 		})
 	})
+}
+
+func (s *ArchiveStorage) writeImportMetadata(ctx context.Context, writer ArchiveStorageWriter, fromRemote *RemoteStorage, projectName string, stageRefs []string) error {
+	metadataRefs, err := fromRemote.getImportMetadataImageRefs(ctx, projectName, stageRefs)
+	if err != nil {
+		return err
+	}
+	for _, metadataRef := range metadataRefs {
+		_, tag := image.ParseRepositoryAndTag(metadataRef)
+		if err := writer.WriteStageArchive(tag, func(w io.Writer) error {
+			return fromRemote.RegistryClient.PullImageArchive(ctx, w, metadataRef)
+		}); err != nil {
+			return fmt.Errorf("copy import metadata %s to archive: %w", metadataRef, err)
+		}
+	}
+	return nil
 }

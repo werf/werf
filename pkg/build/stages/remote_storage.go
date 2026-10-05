@@ -3,12 +3,14 @@ package stages
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/build"
 	"github.com/werf/werf/v2/pkg/docker_registry"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/ref"
+	"github.com/werf/werf/v2/pkg/storage"
 	"github.com/werf/werf/v2/pkg/storage/manager"
 )
 
@@ -67,6 +69,7 @@ func (s *RemoteStorage) copyCurrentBuildStagesFromRemote(ctx context.Context, fr
 			}
 		}
 
+		var stageRefs []string
 		for _, infoGetter := range infoGetters {
 			logboek.Context(ctx).Default().LogFDetails("Copying stage: %s\n", infoGetter.Tag)
 
@@ -79,13 +82,14 @@ func (s *RemoteStorage) copyCurrentBuildStagesFromRemote(ctx context.Context, fr
 			reference.Tag = infoGetter.Tag
 
 			infoGetterName := infoGetter.GetName()
+			stageRefs = append(stageRefs, infoGetterName)
 
 			if err = fromRemote.RegistryClient.CopyImage(ctx, infoGetterName, reference.FullName(), docker_registry.CopyImageOptions{}); err != nil {
 				return fmt.Errorf("error copying stage %s into %s: %w", infoGetterName, reference.FullName(), err)
 			}
 		}
 
-		return nil
+		return s.copyImportMetadata(ctx, fromRemote, opts.ProjectName, stageRefs)
 	})
 }
 
@@ -95,6 +99,7 @@ func (s *RemoteStorage) copyAllFromRemote(ctx context.Context, fromRemote *Remot
 		return fmt.Errorf("unable to get stages: %w", err)
 	}
 
+	var stageRefs []string
 	for _, stageId := range stageIds {
 		logboek.Context(ctx).Default().LogFDetails("Copying stage: %s\n", stageId)
 
@@ -112,13 +117,14 @@ func (s *RemoteStorage) copyAllFromRemote(ctx context.Context, fromRemote *Remot
 		reference.Tag = stageDesc.Info.Tag
 
 		stageName := stageDesc.Info.Name
+		stageRefs = append(stageRefs, stageName)
 
 		if err = fromRemote.RegistryClient.CopyImage(ctx, stageName, reference.FullName(), docker_registry.CopyImageOptions{}); err != nil {
 			return fmt.Errorf("error copying stage %s into %s: %w", stageName, reference.FullName(), err)
 		}
 	}
 
-	return nil
+	return s.copyImportMetadata(ctx, fromRemote, opts.ProjectName, stageRefs)
 }
 
 func (s *RemoteStorage) copyFromArchive(ctx context.Context, fromArchive *ArchiveStorage) error {
@@ -147,4 +153,58 @@ func (s *RemoteStorage) copyFromArchive(ctx context.Context, fromArchive *Archiv
 	}
 
 	return nil
+}
+
+func (s *RemoteStorage) copyImportMetadata(ctx context.Context, fromRemote *RemoteStorage, projectName string, stageRefs []string) error {
+	metadataRefs, err := fromRemote.getImportMetadataImageRefs(ctx, projectName, stageRefs)
+	if err != nil {
+		return err
+	}
+	for _, sourceRef := range metadataRefs {
+		_, tag := image.ParseRepositoryAndTag(sourceRef)
+		destinationRef := fmt.Sprintf("%s:%s", s.RegistryAddress.Repo, tag)
+		if err := fromRemote.RegistryClient.CopyImage(ctx, sourceRef, destinationRef, docker_registry.CopyImageOptions{}); err != nil {
+			return fmt.Errorf("copy import metadata %s into %s: %w", sourceRef, destinationRef, err)
+		}
+	}
+	return nil
+}
+
+func (s *RemoteStorage) getImportMetadataImageRefs(ctx context.Context, projectName string, stageRefs []string) ([]string, error) {
+	checksums := make(map[string]bool)
+	for _, stageRef := range stageRefs {
+		info, err := s.RegistryClient.GetRepoImage(ctx, stageRef)
+		if err != nil {
+			return nil, fmt.Errorf("get copied stage %s import references: %w", stageRef, err)
+		}
+		infos := append([]*image.Info{info}, info.Index...)
+		for _, platformInfo := range infos {
+			for label, value := range platformInfo.Labels {
+				if strings.HasPrefix(label, image.WerfImportChecksumLabelPrefix) && value != "" {
+					checksums[value] = true
+				}
+			}
+		}
+	}
+	if len(checksums) == 0 {
+		return nil, nil
+	}
+	ids, err := s.StorageManager.StagesStorage.GetImportMetadataIDs(ctx, projectName)
+	if err != nil {
+		return nil, fmt.Errorf("get import metadata IDs: %w", err)
+	}
+	var refs []string
+	for _, id := range ids {
+		metadata, err := s.StorageManager.StagesStorage.GetImportMetadata(ctx, projectName, id)
+		if storage.IsErrBrokenImage(err) || storage.IsErrImportMetadataNotFound(err) {
+			continue
+		}
+		if err != nil {
+			return nil, fmt.Errorf("get import metadata %s: %w", id, err)
+		}
+		if checksums[metadata.Checksum] {
+			refs = append(refs, fmt.Sprintf(storage.RepoImportMetadata_ImageNameFormat, s.RegistryAddress.Repo, id))
+		}
+	}
+	return refs, nil
 }
