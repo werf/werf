@@ -2,6 +2,7 @@ package gitdata
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -26,8 +27,12 @@ import (
 // requires_full marker is persistent metadata, not an LRU entry: a repo dir
 // holding only the marker is valid and kept. A repo dir with neither shallow
 // mirror nor marker is removed.
+//
+// An entry whose size or access marker cannot be read is preserved and left
+// out of the result; its error is joined into the returned error.
 func GetGitMirrorsAndRemoveInvalid(ctx context.Context, cacheVersionRoot string, options ScanOptions) ([]GitDataEntry, error) {
 	var res []GitDataEntry
+	var errs []error
 
 	fileStat, err := os.Stat(cacheVersionRoot)
 	if err != nil {
@@ -62,7 +67,8 @@ func GetGitMirrorsAndRemoveInvalid(ctx context.Context, cacheVersionRoot string,
 
 		repoChildren, err := ioutil.ReadDir(repoPath)
 		if err != nil {
-			return nil, fmt.Errorf("error reading dir %q: %w", repoPath, err)
+			errs = append(errs, fmt.Errorf("read dir %q: %w", repoPath, err))
+			continue
 		}
 
 		var shallowFound, markerFound bool
@@ -99,13 +105,15 @@ func GetGitMirrorsAndRemoveInvalid(ctx context.Context, cacheVersionRoot string,
 
 		size, err := volumeutils.DirSizeBytes(shallowPath)
 		if err != nil {
-			return nil, fmt.Errorf("error getting dir %q size: %w", shallowPath, err)
+			errs = append(errs, fmt.Errorf("get dir %q size: %w", shallowPath, err))
+			continue
 		}
 
 		lastAccessAtPath := filepath.Join(shallowPath, "last_access_at")
 		lastAccessAt, err := readLastAccessAt(lastAccessAtPath)
 		if err != nil {
-			return nil, fmt.Errorf("read repository access timestamp %q: %w", lastAccessAtPath, err)
+			errs = append(errs, fmt.Errorf("read repository access timestamp %q: %w", lastAccessAtPath, err))
+			continue
 		}
 
 		res = append(res, &GitRepoDesc{
@@ -116,5 +124,5 @@ func GetGitMirrorsAndRemoveInvalid(ctx context.Context, cacheVersionRoot string,
 		})
 	}
 
-	return res, nil
+	return res, errors.Join(errs...)
 }

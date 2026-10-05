@@ -25,7 +25,7 @@ var _ = Describe("tmp manager", func() {
 				defer stubs.Reset()
 
 				linkedDir, expectedFiles, expectedSymlinks := setup(linkedDir, targetDir, stubs)
-				actualFiles, actualSymlinks, err := listDirAndFollowSymlinks(linkedDir, keepingTime)
+				actualFiles, actualSymlinks, err := listDirAndFollowSymlinks(newGCPath(linkedDir, "", keepingTime))
 				Expect(err).NotTo(HaveOccurred())
 				Expect(actualFiles).To(Equal(expectedFiles))
 				Expect(actualSymlinks).To(Equal(expectedSymlinks))

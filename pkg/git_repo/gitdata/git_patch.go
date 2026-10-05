@@ -3,6 +3,7 @@ package gitdata
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -73,8 +74,13 @@ func patchSidecarParentName(name string) (string, bool) {
 // │   │   └── ... (other patch files)
 // │   └── ... (other hash groups)
 // └── ... (other repositories)
+//
+// An entry whose metadata cannot be read is preserved with its payload and
+// sidecars and left out of the result; its error is joined into the returned
+// error.
 func GetGitPatchesAndRemoveInvalid(ctx context.Context, cacheVersionRoot string, options ScanOptions) ([]GitDataEntry, error) {
 	var res []GitDataEntry
+	var errs []error
 
 	if _, err := os.Stat(cacheVersionRoot); os.IsNotExist(err) {
 		return nil, nil
@@ -100,7 +106,8 @@ func GetGitPatchesAndRemoveInvalid(ctx context.Context, cacheVersionRoot string,
 
 		hashGroupDirs, err := ioutil.ReadDir(repoDir)
 		if err != nil {
-			return nil, fmt.Errorf("error reading repo archives dir %q: %w", repoDir, err)
+			errs = append(errs, fmt.Errorf("read repo patches dir %q: %w", repoDir, err))
+			continue
 		}
 
 		for _, hashGroupDirInfo := range hashGroupDirs {
@@ -116,7 +123,8 @@ func GetGitPatchesAndRemoveInvalid(ctx context.Context, cacheVersionRoot string,
 
 			patchFiles, err := ioutil.ReadDir(hashGroupDir)
 			if err != nil {
-				return nil, fmt.Errorf("error reading repo patches from dir %q: %w", hashGroupDir, err)
+				errs = append(errs, fmt.Errorf("read repo patches from dir %q: %w", hashGroupDir, err))
+				continue
 			}
 
 			regularFiles := make(map[string]os.FileInfo, len(patchFiles))
@@ -151,11 +159,18 @@ func GetGitPatchesAndRemoveInvalid(ctx context.Context, cacheVersionRoot string,
 				}
 
 				metadataPath := filepath.Join(hashGroupDir, name)
+				payloadName := strings.TrimSuffix(name, patchMetadataSuffix) + patchPayloadSuffix
 				desc := &GitPatchDesc{MetadataPath: metadataPath, CacheBasePath: cacheVersionRoot}
 
 				data, err := ioutil.ReadFile(metadataPath)
 				if err != nil {
-					return nil, fmt.Errorf("error reading metadata file %q: %w", metadataPath, err)
+					errs = append(errs, fmt.Errorf("read metadata file %q: %w", metadataPath, err))
+					keptNames[name] = true
+					keptNames[payloadName] = true
+					for _, sidecarName := range sidecarNames[payloadName] {
+						keptNames[sidecarName] = true
+					}
+					continue
 				}
 
 				if err := json.Unmarshal(data, &desc.Metadata); err != nil {
@@ -167,7 +182,6 @@ func GetGitPatchesAndRemoveInvalid(ctx context.Context, cacheVersionRoot string,
 					continue
 				}
 
-				payloadName := strings.TrimSuffix(name, patchMetadataSuffix) + patchPayloadSuffix
 				payloadInfo, ok := regularFiles[payloadName]
 				if !ok {
 					logboek.Context(ctx).Warn().LogF("Removing invalid entry %q: patch file does not exist\n", filepath.Join(hashGroupDir, payloadName))
@@ -197,11 +211,11 @@ func GetGitPatchesAndRemoveInvalid(ctx context.Context, cacheVersionRoot string,
 				filePath := filepath.Join(hashGroupDir, name)
 				logboek.Context(ctx).Warn().LogF("Removing invalid entry %q: no valid patch entry owns it\n", filePath)
 				if err := removePath(filePath, options); err != nil {
-					return nil, fmt.Errorf("unable to remove %q: %w", filePath, err)
+					return res, fmt.Errorf("unable to remove %q: %w", filePath, err)
 				}
 			}
 		}
 	}
 
-	return res, nil
+	return res, errors.Join(errs...)
 }

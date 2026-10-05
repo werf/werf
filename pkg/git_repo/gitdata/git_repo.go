@@ -2,6 +2,7 @@ package gitdata
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -46,8 +47,13 @@ func (entry *GitRepoDesc) GetCacheBasePath() string {
 //
 // Each repo dir is itself a bare full mirror and an independent LRU entry
 // with its own last_access_at.
+//
+// An entry whose size or access marker cannot be read is preserved and left
+// out of the result; its error is joined into the returned error so the
+// caller can still report a failure after processing the readable entries.
 func GetGitReposAndRemoveInvalid(ctx context.Context, cacheVersionRoot string, options ScanOptions) ([]GitDataEntry, error) {
 	var res []GitDataEntry
+	var errs []error
 
 	// Check if cacheVersionRoot exists and is a directory
 	fileStat, err := os.Stat(cacheVersionRoot)
@@ -83,13 +89,15 @@ func GetGitReposAndRemoveInvalid(ctx context.Context, cacheVersionRoot string, o
 
 		size, err := volumeutils.DirSizeBytes(repoPath)
 		if err != nil {
-			return nil, fmt.Errorf("error getting dir %q size: %w", repoPath, err)
+			errs = append(errs, fmt.Errorf("get dir %q size: %w", repoPath, err))
+			continue
 		}
 
 		lastAccessAtPath := filepath.Join(repoPath, "last_access_at")
 		lastAccessAt, err := readLastAccessAt(lastAccessAtPath)
 		if err != nil {
-			return nil, fmt.Errorf("read repository access timestamp %q: %w", lastAccessAtPath, err)
+			errs = append(errs, fmt.Errorf("read repository access timestamp %q: %w", lastAccessAtPath, err))
+			continue
 		}
 
 		res = append(res, &GitRepoDesc{
@@ -100,5 +108,5 @@ func GetGitReposAndRemoveInvalid(ctx context.Context, cacheVersionRoot string, o
 		})
 	}
 
-	return res, nil
+	return res, errors.Join(errs...)
 }

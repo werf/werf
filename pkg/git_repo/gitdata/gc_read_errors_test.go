@@ -3,6 +3,7 @@ package gitdata
 import (
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
@@ -18,19 +19,39 @@ var _ = ginkgo.Describe("Git cache access errors", func() {
 		gomega.Expect(werf.Init("", "")).To(gomega.Succeed())
 		gcFixture()
 	})
-	ginkgo.DescribeTable("preserves a repository whose access marker cannot be read",
-		func(ctx ginkgo.SpecContext, relative string) {
+	ginkgo.DescribeTable("preserves the unreadable entry, cleans the readable ones and still fails",
+		func(ctx ginkgo.SpecContext, relative, fileName, siblingRelative string) {
 			dir := filepath.Join(werf.GetLocalCacheDir(), relative)
-			marker := filepath.Join(dir, "last_access_at")
-			gomega.Expect(os.Remove(marker)).To(gomega.Succeed())
-			gomega.Expect(os.Symlink("last_access_at", marker)).To(gomega.Succeed())
+			unreadable := filepath.Join(dir, fileName)
+
+			gomega.Expect(os.RemoveAll(unreadable)).To(gomega.Succeed())
+			gomega.Expect(os.Symlink(fileName, unreadable)).To(gomega.Succeed())
+
+			// A readable entry collected by the same collector must still be
+			// reclaimed under volume pressure.
+			sibling := writeMirror(filepath.Join(werf.GetLocalCacheDir(), siblingRelative), time.Now().Add(-24*time.Hour))
+			writeCacheFile(filepath.Join(sibling, "payload"), "sibling payload")
+
 			gomega.Expect(RunGC(ctx, RunGCOptions{})).NotTo(gomega.Succeed())
+
 			gomega.Expect(dir).To(gomega.BeADirectory())
-			target, err := os.Readlink(marker)
+			target, err := os.Readlink(unreadable)
 			gomega.Expect(err).NotTo(gomega.HaveOccurred())
-			gomega.Expect(target).To(gomega.Equal("last_access_at"))
+			gomega.Expect(target).To(gomega.Equal(fileName))
+
+			expectGone(sibling)
 		},
-		ginkgo.Entry("full", filepath.Join("git_repos", git_repo.GitReposCacheVersion, "valid")),
-		ginkgo.Entry("shallow", filepath.Join("git_mirrors", git_repo.GitMirrorsCacheVersion, "valid", "shallow")),
+		ginkgo.Entry("full mirror access marker",
+			filepath.Join("git_repos", git_repo.GitReposCacheVersion, "valid"), "last_access_at",
+			filepath.Join("git_repos", git_repo.GitReposCacheVersion, "sibling")),
+		ginkgo.Entry("shallow mirror access marker",
+			filepath.Join("git_mirrors", git_repo.GitMirrorsCacheVersion, "valid", "shallow"), "last_access_at",
+			filepath.Join("git_mirrors", git_repo.GitMirrorsCacheVersion, "sibling", "shallow")),
+		ginkgo.Entry("worktree access marker",
+			filepath.Join("git_worktrees", git_repo.GitWorktreesCacheVersion, "local", "valid"), "last_access_at",
+			filepath.Join("git_worktrees", git_repo.GitWorktreesCacheVersion, "local", "sibling")),
+		ginkgo.Entry("worktree origin",
+			filepath.Join("git_worktrees", git_repo.GitWorktreesCacheVersion, "local", "valid"), "git_dir",
+			filepath.Join("git_worktrees", git_repo.GitWorktreesCacheVersion, "local", "sibling")),
 	)
 })

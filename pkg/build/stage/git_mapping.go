@@ -311,10 +311,6 @@ func (gm *GitMapping) baseApplyPatchCommand(ctx context.Context, fromCommit, toC
 	if err != nil {
 		return nil, fmt.Errorf("cannot create patch paths list file: %w", err)
 	}
-	pathsListFile, err = gm.pinGitDataFile(pathsListFile.FilePath)
-	if err != nil {
-		return nil, err
-	}
 
 	commands := make([]string, 0)
 
@@ -385,10 +381,6 @@ getPathsLoop:
 	archiveFile, err := gm.prepareFilteredArchiveFile(ctx, patch, archive)
 	if err != nil {
 		return nil, fmt.Errorf("cannot prepare filtered archive file: %w", err)
-	}
-	archiveFile, err = gm.pinGitDataFile(archiveFile.FilePath)
-	if err != nil {
-		return nil, err
 	}
 
 	archiveType, err := gm.getArchiveType(ctx, toCommit)
@@ -1012,21 +1004,25 @@ func (gm *GitMapping) prepareArchiveFile(archive git_repo.Archive) (*ContainerFi
 	return gm.pinGitDataFile(archive.GetFilePath())
 }
 
+var linkFile = os.Link // for stubbing in tests
+
 func (gm *GitMapping) pinGitDataFile(source string) (*ContainerFileDescriptor, error) {
-	if err := os.MkdirAll(gm.ScriptsDir, 0o700); err != nil {
-		return nil, fmt.Errorf("create git input directory: %w", err)
-	}
-	dir, err := os.MkdirTemp(gm.ScriptsDir, "git-input-")
+	desc, err := gm.newGitDataFile(filepath.Base(source))
 	if err != nil {
-		return nil, fmt.Errorf("create git input pin: %w", err)
+		return nil, err
 	}
-	pinned := filepath.Join(dir, filepath.Base(source))
-	if err := os.Link(source, pinned); err != nil {
+
+	pinned := desc.FilePath
+	if err := linkFile(source, pinned); err != nil {
 		in, err := os.Open(source)
 		if err != nil {
 			return nil, fmt.Errorf("open git input %q: %w", source, err)
 		}
-		out, err := os.OpenFile(pinned, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600)
+		info, err := in.Stat()
+		if err != nil {
+			return nil, fmt.Errorf("stat git input %q: %w", source, errors.Join(err, in.Close()))
+		}
+		out, err := os.OpenFile(pinned, os.O_CREATE|os.O_EXCL|os.O_WRONLY, info.Mode().Perm())
 		if err != nil {
 			return nil, fmt.Errorf("create git input copy: %w", errors.Join(err, in.Close()))
 		}
@@ -1034,10 +1030,28 @@ func (gm *GitMapping) pinGitDataFile(source string) (*ContainerFileDescriptor, e
 		if err := errors.Join(copyErr, out.Close(), in.Close()); err != nil {
 			return nil, fmt.Errorf("copy git input %q: %w", source, err)
 		}
+		// O_CREATE obeys the umask, so the mode is set again explicitly.
+		if err := os.Chmod(pinned, info.Mode().Perm()); err != nil {
+			return nil, fmt.Errorf("set git input copy mode: %w", err)
+		}
+	}
+	return desc, nil
+}
+
+// newGitDataFile reserves a path for a build input inside a fresh directory of
+// the command-private ScriptsDir. Nothing else can observe or replace what is
+// written there, unlike the shared git data cache.
+func (gm *GitMapping) newGitDataFile(name string) (*ContainerFileDescriptor, error) {
+	if err := os.MkdirAll(gm.ScriptsDir, 0o700); err != nil {
+		return nil, fmt.Errorf("create git input directory: %w", err)
+	}
+	dir, err := os.MkdirTemp(gm.ScriptsDir, "git-input-")
+	if err != nil {
+		return nil, fmt.Errorf("create git input pin: %w", err)
 	}
 	return &ContainerFileDescriptor{
-		FilePath:          pinned,
-		ContainerFilePath: path.Join(gm.ContainerScriptsDir, filepath.Base(dir), filepath.Base(source)),
+		FilePath:          filepath.Join(dir, name),
+		ContainerFilePath: path.Join(gm.ContainerScriptsDir, filepath.Base(dir), name),
 	}, nil
 }
 
@@ -1045,23 +1059,9 @@ func (gm *GitMapping) pinGitDataFile(source string) (*ContainerFileDescriptor, e
 // It is used as a binary-safe fallback for text patches: instead of re-applying the entire git
 // mapping path scope, only the changed paths get overwritten in the target image.
 func (gm *GitMapping) prepareFilteredArchiveFile(ctx context.Context, patch git_repo.Patch, archive git_repo.Archive) (*ContainerFileDescriptor, error) {
-	filteredArchiveFilePath := filepath.Join(filepath.Dir(patch.GetFilePath()), fmt.Sprintf("%s.%s.archive", filepath.Base(patch.GetFilePath()), gm.GetParamshash()))
-	containerFilePath := path.Join(gm.ContainerPatchesDir, filepath.ToSlash(util.GetRelativeToBaseFilepath(git_repo.CommonGitDataManager.GetPatchesCacheDir(), filteredArchiveFilePath)))
-
-	fileDesc := &ContainerFileDescriptor{
-		FilePath:          filteredArchiveFilePath,
-		ContainerFilePath: containerFilePath,
-	}
-
-	fileExists := true
-	if _, err := os.Stat(fileDesc.FilePath); os.IsNotExist(err) {
-		fileExists = false
-	} else if err != nil {
-		return nil, fmt.Errorf("unable to get stat of path %s: %w", fileDesc.FilePath, err)
-	}
-
-	if fileExists {
-		return fileDesc, nil
+	fileDesc, err := gm.newGitDataFile(fmt.Sprintf("%s.%s.archive", filepath.Base(patch.GetFilePath()), gm.GetParamshash()))
+	if err != nil {
+		return nil, err
 	}
 
 	var includePaths []string
@@ -1078,7 +1078,7 @@ func (gm *GitMapping) prepareFilteredArchiveFile(ctx context.Context, patch git_
 	}
 	defer src.Close()
 
-	f, err := fileDesc.Open(os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0o666)
+	f, err := fileDesc.Open(os.O_RDWR|os.O_CREATE|os.O_EXCL, 0o666)
 	if err != nil {
 		return nil, fmt.Errorf("unable to open file `%s`: %w", fileDesc.FilePath, err)
 	}
@@ -1096,26 +1096,12 @@ func (gm *GitMapping) prepareFilteredArchiveFile(ctx context.Context, patch git_
 }
 
 func (gm *GitMapping) preparePatchPathsListFile(patch git_repo.Patch) (*ContainerFileDescriptor, error) {
-	pathsListFilePath := filepath.Join(filepath.Dir(patch.GetFilePath()), fmt.Sprintf("%s.%s.paths_list", filepath.Base(patch.GetFilePath()), gm.GetParamshash()))
-	containerFilePath := path.Join(gm.ContainerPatchesDir, filepath.ToSlash(util.GetRelativeToBaseFilepath(git_repo.CommonGitDataManager.GetPatchesCacheDir(), pathsListFilePath)))
-
-	fileDesc := &ContainerFileDescriptor{
-		FilePath:          pathsListFilePath,
-		ContainerFilePath: containerFilePath,
+	fileDesc, err := gm.newGitDataFile(fmt.Sprintf("%s.%s.paths_list", filepath.Base(patch.GetFilePath()), gm.GetParamshash()))
+	if err != nil {
+		return nil, err
 	}
 
-	fileExists := true
-	if _, err := os.Stat(fileDesc.FilePath); os.IsNotExist(err) {
-		fileExists = false
-	} else if err != nil {
-		return nil, fmt.Errorf("unable to get stat of path %s: %w", fileDesc.FilePath, err)
-	}
-
-	if fileExists {
-		return fileDesc, nil
-	}
-
-	f, err := fileDesc.Open(os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0o666)
+	f, err := fileDesc.Open(os.O_RDWR|os.O_CREATE|os.O_EXCL, 0o666)
 	if err != nil {
 		return nil, fmt.Errorf("unable to open file `%s`: %w", fileDesc.FilePath, err)
 	}

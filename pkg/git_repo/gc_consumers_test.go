@@ -1,7 +1,11 @@
 package git_repo_test
 
 import (
+	"archive/tar"
 	"context"
+	"errors"
+	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"sync"
@@ -202,6 +206,53 @@ var _ = Describe("Git cache consumers under GC eviction", func() {
 			Expect(repo.ReadCommitFile(ctx, commit, "data.txt")).To(Equal([]byte("v1")))
 		})
 
+		It("restores an evicted shallow tag mirror from an origin refusing by-SHA fetches", func(ctx SpecContext) {
+			commit := commitFile(ctx, "data.txt", "v1")
+			gitInSource(ctx, "tag", "-a", "v1", "-m", "release")
+			// The branch moves past the tag, so the pinned commit is no longer
+			// the tip of any advertised ref.
+			commitFile(ctx, "data.txt", "v2")
+			// The default on many servers: the tag is advertised, a direct SHA
+			// want is not, so only the initial setup fetch can succeed. Protocol
+			// v2 always allows reachable SHA wants, so the origin is spoken to
+			// over v1, the way a server pinned to it answers.
+			utils.RunSucceedCommand(ctx, sourceDir, "git", "config", "uploadpack.allowReachableSHA1InWant", "false")
+			GinkgoT().Setenv("GIT_CONFIG_COUNT", "1")
+			GinkgoT().Setenv("GIT_CONFIG_KEY_0", "protocol.version")
+			GinkgoT().Setenv("GIT_CONFIG_VALUE_0", "1")
+
+			repo := openRemoteURL("file://"+sourceDir, "", "v1", "")
+			Expect(repo.CloneAndFetch(ctx)).To(Succeed())
+			Expect(repo.GetClonePath()).To(ContainSubstring("git_mirrors"))
+			Expect(repo.TagCommit(ctx, "v1")).To(Equal(commit))
+
+			Expect(os.RemoveAll(repo.GetClonePath())).To(Succeed())
+
+			Expect(repo.TagCommit(ctx, "v1")).To(Equal(commit))
+			Expect(repo.ReadCommitFile(ctx, commit, "data.txt")).To(Equal([]byte("v1")))
+		})
+
+		It("restores an evicted shallow tag mirror whose tag the origin has deleted", func(ctx SpecContext) {
+			commit := commitFile(ctx, "data.txt", "v1")
+			gitInSource(ctx, "tag", "-a", "v1", "-m", "release")
+			commitFile(ctx, "data.txt", "v2")
+			utils.RunSucceedCommand(ctx, sourceDir, "git", "config", "uploadpack.allowReachableSHA1InWant", "false")
+			GinkgoT().Setenv("GIT_CONFIG_COUNT", "1")
+			GinkgoT().Setenv("GIT_CONFIG_KEY_0", "protocol.version")
+			GinkgoT().Setenv("GIT_CONFIG_VALUE_0", "1")
+
+			repo := openRemoteURL("file://"+sourceDir, "", "v1", "")
+			Expect(repo.CloneAndFetch(ctx)).To(Succeed())
+			Expect(repo.TagCommit(ctx, "v1")).To(Equal(commit))
+
+			// The tag is gone from the origin, but the commit it pinned stays
+			// reachable from the branch, so the build must still see it.
+			gitInSource(ctx, "tag", "-d", "v1")
+			Expect(os.RemoveAll(repo.GetClonePath())).To(Succeed())
+
+			Expect(repo.ReadCommitFile(ctx, commit, "data.txt")).To(Equal([]byte("v1")))
+		})
+
 		It("fails with a bounded error when the evicted commit is gone from the origin too", func(ctx SpecContext) {
 			commit := commitFile(ctx, "data.txt", "v1")
 
@@ -286,6 +337,31 @@ var _ = Describe("Git cache consumers under GC eviction", func() {
 
 			Expect(repo.LatestBranchCommit(ctx, "main")).To(Equal(commit))
 			Expect(repo.ReadCommitFile(ctx, commit, "data.txt")).To(Equal([]byte("v1")))
+		})
+
+		It("keeps serving the implicit HEAD commit resolved before the mirror was evicted", func(ctx SpecContext) {
+			commit := commitFile(ctx, "data.txt", "v1")
+
+			repo := openRemote("", "", "")
+			Expect(repo.CloneAndFetch(ctx)).To(Succeed())
+			Expect(repo.HeadCommitHash(ctx)).To(Equal(commit))
+
+			// The origin HEAD advances and GC takes the mirror: a mapping without
+			// branch, tag or commit resolves HEAD once per stage, and re-resolving
+			// it would build the archive from a commit the digest never saw.
+			commitFile(ctx, "data.txt", "v2")
+			Expect(os.RemoveAll(repo.GetClonePath())).To(Succeed())
+
+			head, err := repo.HeadCommitHash(ctx)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(head).To(Equal(commit))
+
+			archive, err := repo.GetOrCreateArchive(ctx, git_repo.ArchiveOptions{
+				Commit:      head,
+				PathMatcher: path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{}),
+			})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(readFileFromTar(archive.GetFilePath(), "data.txt")).To(Equal([]byte("v1")))
 		})
 
 		It("keeps serving the tag commit resolved before the mirror was evicted", func(ctx SpecContext) {
@@ -403,6 +479,27 @@ var _ = Describe("Git cache consumers under GC eviction", func() {
 			Expect(refreshed).To(BeTemporally(">", backdated.Add(time.Hour)))
 		})
 
+		It("refreshes the mirror last access timestamp when the clone already exists", func(ctx SpecContext) {
+			commitFile(ctx, "data.txt", "v1")
+
+			repo := openRemote("main", "", "")
+			Expect(repo.CloneAndFetch(ctx)).To(Succeed())
+
+			lastAccessPath := filepath.Join(repo.GetClonePath(), "last_access_at")
+			backdated := time.Now().Add(-7 * 24 * time.Hour)
+			Expect(timestamps.WriteTimestampFile(lastAccessPath, backdated)).To(Succeed())
+
+			// A second werf process finds the mirror already cloned: the marker
+			// it leaves is what keeps the host GC from evicting it mid-build.
+			cloned, err := repo.Clone(ctx)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(cloned).To(BeFalse())
+
+			refreshed, err := timestamps.ReadTimestampFile(lastAccessPath)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(refreshed).To(BeTemporally(">", backdated.Add(time.Hour)))
+		})
+
 		It("recovers a mirror whose object files were removed under it", func(ctx SpecContext) {
 			commit := commitFile(ctx, "data.txt", "v1")
 
@@ -488,3 +585,26 @@ var _ = Describe("Git cache consumers under GC eviction", func() {
 		})
 	})
 })
+
+func readFileFromTar(archivePath, name string) ([]byte, error) {
+	file, err := os.Open(archivePath)
+	if err != nil {
+		return nil, fmt.Errorf("open archive %q: %w", archivePath, err)
+	}
+	defer file.Close()
+
+	reader := tar.NewReader(file)
+	for {
+		header, err := reader.Next()
+		if errors.Is(err, io.EOF) {
+			return nil, fmt.Errorf("no entry %q in archive %q", name, archivePath)
+		}
+		if err != nil {
+			return nil, fmt.Errorf("read archive %q: %w", archivePath, err)
+		}
+		if header.Name != name {
+			continue
+		}
+		return io.ReadAll(reader)
+	}
+}

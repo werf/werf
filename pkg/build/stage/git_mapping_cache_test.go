@@ -1,7 +1,9 @@
 package stage
 
 import (
+	"archive/tar"
 	"errors"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"syscall"
@@ -11,7 +13,37 @@ import (
 
 	"github.com/werf/werf/v3/pkg/git_repo"
 	"github.com/werf/werf/v3/pkg/git_repo/gitdata"
+	"github.com/werf/werf/v3/pkg/true_git"
 )
+
+func writeTarFixture(path, name, content string) {
+	ginkgo.GinkgoHelper()
+	file, err := os.Create(path)
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+	writer := tar.NewWriter(file)
+	gomega.Expect(writer.WriteHeader(&tar.Header{Name: name, Mode: 0o644, Size: int64(len(content))})).To(gomega.Succeed())
+	_, err = writer.Write([]byte(content))
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+	gomega.Expect(writer.Close()).To(gomega.Succeed())
+	gomega.Expect(file.Close()).To(gomega.Succeed())
+}
+
+func listTree(root string) []string {
+	ginkgo.GinkgoHelper()
+	var res []string
+	gomega.Expect(filepath.WalkDir(root, func(path string, _ fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		relative, err := filepath.Rel(root, path)
+		if err != nil {
+			return err
+		}
+		res = append(res, relative)
+		return nil
+	})).To(gomega.Succeed())
+	return res
+}
 
 var _ = ginkgo.Describe("Git mapping cache eviction", func() {
 	ginkgo.It("keeps a prepared archive readable after its shared cache is removed", func() {
@@ -88,6 +120,74 @@ var _ = ginkgo.Describe("Git mapping cache eviction", func() {
 		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 		gomega.Expect(string(data)).To(gomega.Equal("cross-device"))
 	})
+
+	ginkgo.It("writes patch sidecars into the command directory instead of the shared cache", func(ctx ginkgo.SpecContext) {
+		root := ginkgo.GinkgoT().TempDir()
+		cache := filepath.Join(root, "cache")
+		patchDir := filepath.Join(cache, "repo", "ab")
+		gomega.Expect(os.MkdirAll(patchDir, 0o700)).To(gomega.Succeed())
+		originalManager := git_repo.CommonGitDataManager
+		git_repo.CommonGitDataManager = gitdata.NewGitDataManager(cache, cache, root)
+		ginkgo.DeferCleanup(func() { git_repo.CommonGitDataManager = originalManager })
+
+		patchPath := filepath.Join(patchDir, "abcd.patch")
+		gomega.Expect(os.WriteFile(patchPath, []byte("patch payload"), 0o644)).To(gomega.Succeed())
+		archivePath := filepath.Join(patchDir, "abcd.tar")
+		writeTarFixture(archivePath, "a.txt", "a contents")
+
+		gm := NewGitMapping()
+		gm.ScriptsDir = filepath.Join(root, "scripts")
+		gm.ContainerScriptsDir = "/scripts"
+		gm.ContainerPatchesDir = "/patches"
+		gm.To = "/app"
+		gm.SetGitRepo(&gitRepoStringStub{})
+		patch := &git_repo.PatchFile{FilePath: patchPath, Descriptor: &true_git.PatchDescriptor{Paths: []string{"a.txt"}}}
+
+		before := listTree(cache)
+
+		archiveFile, err := gm.prepareFilteredArchiveFile(ctx, patch, &git_repo.ArchiveFile{FilePath: archivePath})
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		pathsListFile, err := gm.preparePatchPathsListFile(patch)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+
+		gomega.Expect(listTree(cache)).To(gomega.Equal(before))
+
+		for _, file := range []*ContainerFileDescriptor{archiveFile, pathsListFile} {
+			relative, err := filepath.Rel(gm.ScriptsDir, file.FilePath)
+			gomega.Expect(err).NotTo(gomega.HaveOccurred())
+			gomega.Expect(relative).NotTo(gomega.HavePrefix(".."))
+			gomega.Expect(file.FilePath).To(gomega.BeAnExistingFile())
+			gomega.Expect(file.ContainerFilePath).To(gomega.Equal(filepath.ToSlash(filepath.Join(gm.ContainerScriptsDir, relative))))
+		}
+
+		gomega.Expect(os.ReadFile(pathsListFile.FilePath)).To(gomega.Equal([]byte("/app/a.txt")))
+	})
+
+	ginkgo.DescribeTable("preserves the input file mode when it has to copy across filesystems",
+		func(mode os.FileMode) {
+			root := ginkgo.GinkgoT().TempDir()
+			source := filepath.Join(root, "stage.tar")
+			gomega.Expect(os.WriteFile(source, []byte("contents"), 0o600)).To(gomega.Succeed())
+			gomega.Expect(os.Chmod(source, mode)).To(gomega.Succeed())
+
+			originalLink := linkFile
+			linkFile = func(string, string) error { return syscall.EXDEV }
+			ginkgo.DeferCleanup(func() { linkFile = originalLink })
+
+			gm := NewGitMapping()
+			gm.ScriptsDir = filepath.Join(root, "scripts")
+			gm.ContainerScriptsDir = "/scripts"
+			pin, err := gm.pinGitDataFile(source)
+			gomega.Expect(err).NotTo(gomega.HaveOccurred())
+
+			info, err := os.Stat(pin.FilePath)
+			gomega.Expect(err).NotTo(gomega.HaveOccurred())
+			gomega.Expect(info.Mode().Perm()).To(gomega.Equal(mode))
+			gomega.Expect(os.ReadFile(pin.FilePath)).To(gomega.Equal([]byte("contents")))
+		},
+		ginkgo.Entry("executable", os.FileMode(0o755)),
+		ginkgo.Entry("group readable", os.FileMode(0o640)),
+	)
 
 	ginkgo.It("returns an error rather than a path to a missing input", func() {
 		root := ginkgo.GinkgoT().TempDir()
