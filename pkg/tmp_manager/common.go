@@ -19,6 +19,10 @@ const (
 	// contextPinMaxAge is the age past which an unregistered context pin dir is considered orphaned:
 	// a build that takes longer than that loses its pin.
 	contextPinMaxAge = time.Hour * 24
+
+	// projectDirMaxAge is the same judgement as contextPinMaxAge for project dirs, which a
+	// killed process never registers either: a build running longer than that loses its dir.
+	projectDirMaxAge = time.Hour * 24
 )
 
 var (

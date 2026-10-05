@@ -8,9 +8,11 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/werf/logboek"
+	"github.com/werf/werf/v3/pkg/werf"
 )
 
 var (
@@ -56,24 +58,28 @@ func runGCForPaths(ctx context.Context, dryRun bool, paths []string) error {
 
 func collectPaths() ([]string, []string, error) {
 	gcPathList := []gcPath{
-		newGCPath(filepath.Join(getReleasedTmpDirs(), projectsServiceDir), 0),
-		newGCPath(filepath.Join(getCreatedTmpDirs(), projectsServiceDir), 0),
-		newGCPath(filepath.Join(getCreatedTmpDirs(), dockerConfigsServiceDir), time.Hour*6),
-		newGCPath(filepath.Join(getCreatedTmpDirs(), kubeConfigsServiceDir), 0),
-		newGCPath(filepath.Join(getCreatedTmpDirs(), werfConfigRendersServiceDir), 0),
-		newGCPath(filepath.Join(getCreatedTmpDirs(), contextArchivesDir), 0),
-		newGCPath(filepath.Join(getCreatedTmpDirs(), contextPinsServiceDir), 0),
+		newGCPath(filepath.Join(getReleasedTmpDirs(), projectsServiceDir), "", 0),
+		newGCPath(filepath.Join(getCreatedTmpDirs(), projectsServiceDir), "", 0),
+		newGCPath(filepath.Join(getCreatedTmpDirs(), dockerConfigsServiceDir), "", time.Hour*6),
+		newGCPath(filepath.Join(getCreatedTmpDirs(), kubeConfigsServiceDir), "", 0),
+		newGCPath(filepath.Join(getCreatedTmpDirs(), werfConfigRendersServiceDir), "", 0),
+		newGCPath(filepath.Join(getCreatedTmpDirs(), contextArchivesDir), "", 0),
+		newGCPath(filepath.Join(getCreatedTmpDirs(), contextPinsServiceDir), "", 0),
 		// A pin dir of a process killed before it delegated the cleanup is never registered, and its
 		// hard link keeps the git archive inode alive after the gitdata LRU evicted the archive. A pin
 		// lives for a single build, so anything older than the threshold is orphaned.
-		newGCPath(filepath.Join(getServiceTmpDir(), contextPinsServiceDir), contextPinMaxAge),
+		newGCPath(filepath.Join(getServiceTmpDir(), contextPinsServiceDir), "", contextPinMaxAge),
+		// Project dirs are not registered either until the command delegates the cleanup, and they
+		// hold the pinned git inputs of a build. They live directly in the tmp dir shared with
+		// everything else on the host, so only our own prefix is swept.
+		newGCPath(werf.GetTmpDir(), projectDirPrefix, projectDirMaxAge),
 	}
 
 	dirSlices := make([][]string, 0, len(gcPathList))
 	symlinkSlices := make([][]string, 0, len(gcPathList))
 
 	for _, gcPathItem := range gcPathList {
-		dirs, symlinks, err := listDirAndFollowSymlinks(gcPathItem.path, gcPathItem.keepingTime)
+		dirs, symlinks, err := listDirAndFollowSymlinks(gcPathItem.path, gcPathItem.namePrefix, gcPathItem.keepingTime)
 		if err != nil {
 			return nil, nil, fmt.Errorf("list and filter path %v: %w", gcPathItem.path, err)
 		}
@@ -84,8 +90,9 @@ func collectPaths() ([]string, []string, error) {
 	return slices.Concat(dirSlices...), slices.Concat(symlinkSlices...), nil
 }
 
-// listDirAndFollowSymlinks returns list of dirs and symlinks
-func listDirAndFollowSymlinks(dir string, minFileAge time.Duration) ([]string, []string, error) {
+// listDirAndFollowSymlinks returns list of dirs and symlinks. With a non-empty namePrefix only
+// entries carrying it are collected, which is what makes a dir shared with foreign files sweepable.
+func listDirAndFollowSymlinks(dir, namePrefix string, minFileAge time.Duration) ([]string, []string, error) {
 	if _, err := os.Stat(dir); errors.Is(err, fs.ErrNotExist) {
 		return nil, nil, nil
 	} else if err != nil {
@@ -101,6 +108,10 @@ func listDirAndFollowSymlinks(dir string, minFileAge time.Duration) ([]string, [
 	listOfSymlinks := make([]string, 0, len(dirEntries))
 
 	for _, dirEntry := range dirEntries {
+		if !strings.HasPrefix(dirEntry.Name(), namePrefix) {
+			continue
+		}
+
 		info, err := dirEntry.Info()
 		if errors.Is(err, fs.ErrNotExist) {
 			continue
@@ -144,12 +155,14 @@ func listDirAndFollowSymlinks(dir string, minFileAge time.Duration) ([]string, [
 
 type gcPath struct {
 	path        string
+	namePrefix  string
 	keepingTime time.Duration
 }
 
-func newGCPath(path string, keepingTime time.Duration) gcPath {
+func newGCPath(path, namePrefix string, keepingTime time.Duration) gcPath {
 	return gcPath{
 		path:        path,
+		namePrefix:  namePrefix,
 		keepingTime: keepingTime,
 	}
 }
