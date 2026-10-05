@@ -23,7 +23,6 @@ import (
 	"github.com/werf/werf/v2/pkg/container_backend/prune"
 	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/image"
-	"github.com/werf/werf/v2/pkg/opstats"
 	"github.com/werf/werf/v2/pkg/ssh_agent"
 	"github.com/werf/werf/v2/pkg/tmp_manager"
 )
@@ -86,7 +85,6 @@ func (backend *DockerServerBackend) CalculateDependencyImportChecksum(ctx contex
 }
 
 func (backend *DockerServerBackend) BuildDockerfile(ctx context.Context, _ []byte, opts BuildDockerfileOpts) (string, error) {
-	defer opstats.Observe(ctx, opstats.OperationStageBuild)()
 	switch {
 	case opts.BuildContextArchive == nil:
 		panic(fmt.Sprintf("BuildContextArchive can't be nil: %+v", opts))
@@ -200,7 +198,6 @@ func parseImageIDFromMetadata(path string) (string, error) {
 }
 
 func (backend *DockerServerBackend) BuildDockerfileStage(ctx context.Context, baseImage string, opts BuildDockerfileStageOptions, instructions ...InstructionInterface) (string, error) {
-	defer opstats.Observe(ctx, opstats.OperationStageBuild)()
 	logboek.Context(ctx).Error().LogF("Staged build of Dockerfile is not available for Docker Server backend.\n")
 	logboek.Context(ctx).Error().LogF("Please either:\n")
 	logboek.Context(ctx).Error().LogF(" * switch to Buildah backend;\n")
@@ -210,7 +207,6 @@ func (backend *DockerServerBackend) BuildDockerfileStage(ctx context.Context, ba
 }
 
 func (backend *DockerServerBackend) GetImageInfo(ctx context.Context, ref string, opts GetImageInfoOpts) (*image.Info, error) {
-	defer opstats.Observe(ctx, opstats.OperationImageInspect)()
 	inspect, err := docker.ImageInspect(ctx, ref)
 	if client.IsErrNotFound(err) {
 		return nil, nil
@@ -287,7 +283,6 @@ func (backend *DockerServerBackend) RemoveImage(ctx context.Context, img LegacyI
 }
 
 func (backend *DockerServerBackend) PullImageFromRegistry(ctx context.Context, img LegacyImageInterface) error {
-	defer opstats.Observe(ctx, opstats.OperationImagePull)()
 	if err := img.Pull(ctx); err != nil {
 		err = SanitizeError(err)
 		return fmt.Errorf("unable to pull image %s: %w", img.Name(), err)
@@ -307,12 +302,10 @@ func (backend *DockerServerBackend) Tag(ctx context.Context, ref, newRef string,
 }
 
 func (backend *DockerServerBackend) Push(ctx context.Context, ref string, opts PushOpts) error {
-	defer opstats.Observe(ctx, opstats.OperationImagePush)()
 	return docker.CliPushWithRetries(ctx, ref)
 }
 
 func (backend *DockerServerBackend) Pull(ctx context.Context, ref string, opts PullOpts) error {
-	defer opstats.Observe(ctx, opstats.OperationImagePull)()
 	var args []string
 	if opts.TargetPlatform != "" {
 		args = append(args, "--platform", opts.TargetPlatform)
@@ -479,16 +472,9 @@ func (backend *DockerServerBackend) PruneVolumes(ctx context.Context, options pr
 }
 
 func (backend *DockerServerBackend) SaveImageToStream(ctx context.Context, imageName string) (io.ReadCloser, error) {
-	done := opstats.Observe(ctx, opstats.OperationImageSaveLoad)
-	rc, err := docker.CliImageSaveToStream(ctx, imageName)
-	if err != nil {
-		done()
-		return nil, err
-	}
-	return opstats.NewObservedReadCloser(rc, done), nil
+	return docker.CliImageSaveToStream(ctx, imageName)
 }
 
 func (backend *DockerServerBackend) LoadImageFromStream(ctx context.Context, input io.Reader) (string, error) {
-	defer opstats.Observe(ctx, opstats.OperationImageSaveLoad)()
 	return docker.CliLoadFromStream(ctx, input)
 }

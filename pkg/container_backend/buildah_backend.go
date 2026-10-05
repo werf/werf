@@ -33,7 +33,6 @@ import (
 	"github.com/werf/werf/v2/pkg/container_backend/info"
 	"github.com/werf/werf/v2/pkg/container_backend/prune"
 	"github.com/werf/werf/v2/pkg/image"
-	"github.com/werf/werf/v2/pkg/opstats"
 	"github.com/werf/werf/v2/pkg/path_matcher"
 	"github.com/werf/werf/v2/pkg/tmp_manager"
 )
@@ -357,7 +356,6 @@ func (backend *BuildahBackend) applyCommands(ctx context.Context, container *con
 }
 
 func (backend *BuildahBackend) CalculateDependencyImportChecksum(ctx context.Context, dependencyImport DependencyImportSpec, opts CalculateDependencyImportChecksum) (string, error) {
-	defer opstats.Observe(ctx, opstats.OperationImportChecksum)()
 	// TODO(2.0): Take into account empty dirs
 
 	var container *containerDesc
@@ -789,8 +787,6 @@ func (backend *BuildahBackend) ensureRunMountImages(ctx context.Context, instrs 
 }
 
 func (backend *BuildahBackend) BuildDockerfileStage(ctx context.Context, baseImage string, opts BuildDockerfileStageOptions, instructions ...InstructionInterface) (string, error) {
-	defer opstats.Observe(ctx, opstats.OperationStageBuild)()
-
 	if err := backend.ensureRunMountImages(ctx, instructions, opts.CommonOpts); err != nil {
 		return "", err
 	}
@@ -844,7 +840,6 @@ func (backend *BuildahBackend) BuildDockerfileStage(ctx context.Context, baseIma
 }
 
 func (backend *BuildahBackend) BuildStapelStage(ctx context.Context, baseImage string, opts BuildStapelStageOptions) (string, error) {
-	defer opstats.Observe(ctx, opstats.OperationStageBuild)()
 	commonOpts := CommonOpts{TargetPlatform: opts.TargetPlatform}
 
 	var container *containerDesc
@@ -932,7 +927,6 @@ func (backend *BuildahBackend) BuildStapelStage(ctx context.Context, baseImage s
 
 // GetImageInfo returns nil, nil if image not found.
 func (backend *BuildahBackend) GetImageInfo(ctx context.Context, ref string, opts GetImageInfoOpts) (*image.Info, error) {
-	defer opstats.Observe(ctx, opstats.OperationImageInspect)()
 	inspectRef := ref
 	inspectedByCachedID := false
 	if opts.TargetPlatform != "" {
@@ -1039,7 +1033,6 @@ func (backend *BuildahBackend) Pull(ctx context.Context, ref string, opts PullOp
 	mu.Lock()
 	defer mu.Unlock()
 
-	defer opstats.Observe(ctx, opstats.OperationImagePull)()
 	var logWriter io.Writer
 	if logboek.Context(ctx).Info().IsAccepted() {
 		logWriter = logboek.Context(ctx).OutStream()
@@ -1073,7 +1066,6 @@ func (backend *BuildahBackend) Tag(ctx context.Context, ref, newRef string, opts
 }
 
 func (backend *BuildahBackend) Push(ctx context.Context, ref string, opts PushOpts) error {
-	defer opstats.Observe(ctx, opstats.OperationImagePush)()
 	var logWriter io.Writer
 	if logboek.Context(ctx).Info().IsAccepted() {
 		logWriter = logboek.Context(ctx).OutStream()
@@ -1101,7 +1093,6 @@ func (backend *BuildahBackend) TagImageByName(ctx context.Context, img LegacyIma
 }
 
 func (backend *BuildahBackend) BuildDockerfile(ctx context.Context, dockerfileContent []byte, opts BuildDockerfileOpts) (string, error) {
-	defer opstats.Observe(ctx, opstats.OperationStageBuild)()
 	buildArgs := make(map[string]string)
 	for _, argStr := range opts.BuildArgs {
 		argParts := strings.SplitN(argStr, "=", 2)
@@ -1504,17 +1495,14 @@ func (backend *BuildahBackend) PruneVolumes(_ context.Context, _ prune.Options) 
 }
 
 func (backend *BuildahBackend) SaveImageToStream(ctx context.Context, imageName string) (io.ReadCloser, error) {
-	done := opstats.Observe(ctx, opstats.OperationImageSaveLoad)
 	rc, err := backend.buildah.SaveImageToStream(ctx, imageName)
 	if err != nil {
-		done()
 		return nil, fmt.Errorf("unable to save image %q to stream: %w", imageName, err)
 	}
-	return opstats.NewObservedReadCloser(rc, done), nil
+	return rc, nil
 }
 
 func (backend *BuildahBackend) LoadImageFromStream(ctx context.Context, input io.Reader) (string, error) {
-	defer opstats.Observe(ctx, opstats.OperationImageSaveLoad)()
 	imageID, err := backend.buildah.LoadImageFromStream(ctx, input)
 	if err != nil {
 		return "", fmt.Errorf("unable to load image from stream: %w", err)
