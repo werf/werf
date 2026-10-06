@@ -4,15 +4,12 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
-	"testing"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/stretchr/testify/require"
 
 	"github.com/werf/common-go/pkg/graceful"
 	"github.com/werf/werf/v2/test/pkg/utils"
@@ -139,21 +136,4 @@ func gitInitRepoWithFile(ctx context.Context, dir, fileName, content string) {
 	Expect(os.WriteFile(filepath.Join(dir, fileName), []byte(content), 0o644)).To(Succeed())
 	gitSucceed(ctx, dir, "add", ".")
 	gitSucceed(ctx, dir, "commit", "-m", "content")
-}
-
-func runGit(t *testing.T, dir string, args ...string) string {
-	t.Helper()
-	cmd := exec.Command("git", append([]string{"-C", dir}, args...)...)
-	out, err := cmd.CombinedOutput()
-	require.NoError(t, err, "git %v: %s", args, out)
-	return string(out)
-}
-
-func initGitRepo(t *testing.T, dir string) {
-	t.Helper()
-	runGit(t, dir, "init")
-	runGit(t, dir, "config", "user.email", "test@werf.io")
-	runGit(t, dir, "config", "user.name", "test")
-	runGit(t, dir, "config", "commit.gpgsign", "false")
-	runGit(t, dir, "commit", "--allow-empty", "-m", "init")
 }

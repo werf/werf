@@ -374,3 +374,444 @@ var _ = ginkgo.Describe("build context archive content caching", func() {
 		gomega.Expect(lastEntryContents(openedContextEntries(ctx, archive))).To(gomega.HaveKeyWithValue("Dockerfile", "FROM scratch\n# uncommitted\n"))
 	})
 })
+
+var _ = ginkgo.Describe("build context archive checkout safety", func() {
+	ginkgo.It("checks committed attributes instead of dirty worktree attributes", func(ctx ginkgo.SpecContext) {
+		projectDir := newContentCachingRepo(ctx)
+		commitFiles(ctx, projectDir, map[string]string{".gitattributes": "app/included.txt text eol=crlf\n"})
+		_, before := cachedArchive(ctx, projectDir)
+		utils.WriteFile(filepath.Join(projectDir, ".gitattributes"), []byte("# no conversions\n"))
+		path, after := cachedArchive(ctx, projectDir)
+		gomega.Expect(os.SameFile(before, after)).To(gomega.BeTrue())
+		gomega.Expect(lastEntryContents(tarFileEntries(path))).To(gomega.HaveKeyWithValue("included.txt", "included\r\n"))
+	})
+
+	ginkgo.It("exports selected paths with executable modes, symlinks and unusual names", func(ctx ginkgo.SpecContext) {
+		projectDir := newContentCachingRepo(ctx)
+		requireGitAttributeSource(ctx, projectDir)
+		name := "-file\twith\nwhitespace"
+		commitFiles(ctx, projectDir, map[string]string{filepath.Join("app", name): "payload\n"})
+		utils.RunSucceedCommand(ctx, projectDir, "chmod", "+x", filepath.Join("app", name))
+		commitFiles(ctx, projectDir, nil)
+		path, _ := cachedArchive(ctx, projectDir)
+		entries := tarFileEntries(path)
+		gomega.Expect(lastEntryContents(entries)).To(gomega.HaveKeyWithValue(name, "payload\n"))
+		gomega.Expect(lastEntryContents(entries)).NotTo(gomega.HaveKey("ignored.txt"))
+		gomega.Expect(entryNamed(entries, name).Mode & 0o111).To(gomega.Equal(int64(0o111)))
+		gomega.Expect(entryNamed(entries, "link.txt").Linkname).To(gomega.Equal("included.txt"))
+	})
+
+	ginkgo.It("removes failed private exports and can retry", func(ctx ginkgo.SpecContext) {
+		projectDir := newContentCachingRepo(ctx)
+		requireGitAttributeSource(ctx, projectDir)
+		repo, err := git_repo.OpenLocalRepo(ctx, "own", projectDir, git_repo.OpenLocalRepoOptions{})
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		opts := git_repo.ArchiveOptions{
+			ContentChecksum: "export-cleanup-test",
+			Commit:          utils.GetHeadCommit(ctx, projectDir),
+			PathScope:       "app",
+			PathMatcher:     path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{BasePath: "app"}),
+		}
+		marker := filepath.Join(ginkgo.GinkgoT().TempDir(), "export-path")
+		originalPath := os.Getenv("PATH")
+		ginkgo.GinkgoT().Setenv("WERF_TEST_EXPORT_MARKER", marker)
+		interceptGitSubcommand("checkout-index", "for dir in \"$WERF_TMP_DIR\"/werf-*-git-context-*; do\n  test -d \"$dir\" || exit 98\n  printf '%s\\n' \"$dir\" > \"$WERF_TEST_EXPORT_MARKER\"\ndone\nexit 37")
+		_, err = repo.GetOrCreateArchive(ctx, opts)
+		gomega.Expect(err).To(gomega.MatchError(gomega.ContainSubstring("exit status 37")))
+		exportPath, err := os.ReadFile(marker)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		_, err = os.Stat(strings.TrimSpace(string(exportPath)))
+		gomega.Expect(os.IsNotExist(err)).To(gomega.BeTrue())
+
+		ginkgo.GinkgoT().Setenv("PATH", originalPath)
+		_, err = repo.GetOrCreateArchive(ctx, opts)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		remaining, err := filepath.Glob(filepath.Join(werf.GetTmpDir(), "werf-*-git-context-*"))
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		gomega.Expect(remaining).To(gomega.BeEmpty())
+	})
+
+	ginkgo.It("exports committed blobs instead of staged cached worktree files", func(ctx ginkgo.SpecContext) {
+		projectDir := newContentCachingRepo(ctx)
+		requireGitAttributeSource(ctx, projectDir)
+		marker := taintCachedContextAfterReset("printf 'staged\\n' > app/included.txt\n\"$real_git\" add -- app/included.txt")
+		path, _ := cachedArchive(ctx, projectDir)
+		gomega.Expect(lastEntryContents(tarFileEntries(path))).To(gomega.HaveKeyWithValue("included.txt", "included\n"))
+		indexPath, err := os.ReadFile(marker + ".indexpath")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		beforeIndex, err := os.ReadFile(marker + ".index")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		afterIndex, err := os.ReadFile(strings.TrimSpace(string(indexPath)))
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		gomega.Expect(afterIndex).To(gomega.Equal(beforeIndex))
+	})
+
+	ginkgo.It("exports with committed attributes instead of cached worktree attributes", func(ctx ginkgo.SpecContext) {
+		projectDir := newContentCachingRepo(ctx)
+		requireGitAttributeSource(ctx, projectDir)
+		commitFiles(ctx, projectDir, map[string]string{".gitattributes": "app/included.txt text eol=crlf\n"})
+		marker := taintCachedContextAfterReset("printf 'app/included.txt text eol=lf\\n' > .gitattributes")
+		path, _ := cachedArchive(ctx, projectDir)
+		gomega.Expect(lastEntryContents(tarFileEntries(path))).To(gomega.HaveKeyWithValue("included.txt", "included\r\n"))
+		workTreeDir, err := os.ReadFile(marker)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		attributes, err := os.ReadFile(filepath.Join(strings.TrimSpace(string(workTreeDir)), ".gitattributes"))
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		gomega.Expect(string(attributes)).To(gomega.Equal("app/included.txt text eol=lf\n"))
+	})
+
+	ginkgo.It("does not cache stale checkout bytes after conversion attributes are removed", func(ctx ginkgo.SpecContext) {
+		projectDir, err := filepath.EvalSymlinks(newContentCachingRepo(ctx))
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		requireGitAttributeSource(ctx, projectDir)
+		commitFiles(ctx, projectDir, map[string]string{".gitattributes": "app/included.txt text eol=crlf\n"})
+		convertedPath, _ := cachedArchive(ctx, projectDir)
+		gomega.Expect(lastEntryContents(tarFileEntries(convertedPath))).To(gomega.HaveKeyWithValue("included.txt", "included\r\n"))
+
+		utils.RunSucceedCommand(ctx, projectDir, "git", "rm", ".gitattributes")
+		commitFiles(ctx, projectDir, nil)
+		marker := taintCachedContextAfterReset("printf 'included\\r\\n' > app/included.txt")
+		path, info := cachedArchive(ctx, projectDir)
+		gomega.Expect(lastEntryContents(tarFileEntries(path))).To(gomega.HaveKeyWithValue("included.txt", "included\n"))
+		workTreeDir, err := os.ReadFile(marker)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		stale, err := os.ReadFile(filepath.Join(strings.TrimSpace(string(workTreeDir)), "app", "included.txt"))
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		gomega.Expect(string(stale)).To(gomega.Equal("included\r\n"))
+		indexPath, err := os.ReadFile(marker + ".indexpath")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		beforeIndex, err := os.ReadFile(marker + ".index")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		afterIndex, err := os.ReadFile(strings.TrimSpace(string(indexPath)))
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		gomega.Expect(afterIndex).To(gomega.Equal(beforeIndex))
+
+		commitFiles(ctx, projectDir, map[string]string{"outside.txt": "changed\n"})
+		reusedPath, reused := cachedArchive(ctx, projectDir)
+		gomega.Expect(os.SameFile(info, reused)).To(gomega.BeTrue())
+		gomega.Expect(lastEntryContents(tarFileEntries(reusedPath))).To(gomega.HaveKeyWithValue("included.txt", "included\n"))
+	})
+
+	ginkgo.DescribeTable("falls back when attribute inspection is unreliable",
+		func(ctx ginkgo.SpecContext, response string) {
+			projectDir := newContentCachingRepo(ctx)
+			configureProbeFilter(ctx, projectDir)
+			interceptGitCheckAttributes(response)
+			_, before := cachedArchive(ctx, projectDir)
+			commitFiles(ctx, projectDir, map[string]string{"outside.txt": "changed\n"})
+			_, after := cachedArchive(ctx, projectDir)
+			gomega.Expect(os.SameFile(before, after)).To(gomega.BeFalse())
+		},
+		ginkgo.Entry("unsupported Git option", "exit 129"),
+		ginkgo.Entry("warnings", "printf warning >&2; exit 0"),
+		ginkgo.Entry("truncated output", "printf invalid; exit 0"),
+		ginkgo.Entry("unexpected path", "printf 'not-selected\\000diff\\000set\\000'; exit 0"),
+	)
+
+	ginkgo.It("falls back when Git cannot report the external attribute files", func(ctx ginkgo.SpecContext) {
+		projectDir := newContentCachingRepo(ctx)
+		interceptGitSubcommand("var", "exit 129")
+		_, before := cachedArchive(ctx, projectDir)
+		commitFiles(ctx, projectDir, map[string]string{"outside.txt": "changed\n"})
+		_, after := cachedArchive(ctx, projectDir)
+		gomega.Expect(os.SameFile(before, after)).To(gomega.BeFalse())
+	})
+
+	ginkgo.DescribeTable("falls back for worktree-dependent configuration",
+		func(ctx ginkgo.SpecContext, key, value string) {
+			projectDir := newContentCachingRepo(ctx)
+			if key == "extensions.worktreeConfig" {
+				ginkgo.GinkgoT().Setenv("GIT_CONFIG_COUNT", "1")
+				ginkgo.GinkgoT().Setenv("GIT_CONFIG_KEY_0", key)
+				ginkgo.GinkgoT().Setenv("GIT_CONFIG_VALUE_0", value)
+			} else {
+				utils.RunSucceedCommand(ctx, projectDir, "git", "config", "--local", key, value)
+			}
+			_, before := cachedArchive(ctx, projectDir)
+			commitFiles(ctx, projectDir, map[string]string{"outside.txt": "changed\n"})
+			_, after := cachedArchive(ctx, projectDir)
+			gomega.Expect(os.SameFile(before, after)).To(gomega.BeFalse())
+		},
+		ginkgo.Entry("conditional include", "includeIf.gitdir:never/.path", "/nonexistent"),
+		ginkgo.Entry("worktree configuration", "extensions.worktreeConfig", "true"),
+		ginkgo.Entry("disabled symlink configuration", "core.symlinks", "false"),
+		ginkgo.Entry("attribute tree override", "attr.tree", "HEAD"),
+	)
+
+	ginkgo.It("keeps reusing the content-keyed archive under enabled symlinks", func(ctx ginkgo.SpecContext) {
+		projectDir := newContentCachingRepo(ctx)
+		requireGitAttributeSource(ctx, projectDir)
+		utils.RunSucceedCommand(ctx, projectDir, "git", "config", "--local", "core.symlinks", "true")
+		_, before := cachedArchive(ctx, projectDir)
+		commitFiles(ctx, projectDir, map[string]string{"outside.txt": "changed\n"})
+		_, after := cachedArchive(ctx, projectDir)
+		gomega.Expect(os.SameFile(before, after)).To(gomega.BeTrue())
+	})
+
+	ginkgo.It("re-keys the archive when checkout-relevant configuration changes", func(ctx ginkgo.SpecContext) {
+		projectDir := newContentCachingRepo(ctx)
+		requireGitAttributeSource(ctx, projectDir)
+		_, before := cachedArchive(ctx, projectDir)
+		utils.RunSucceedCommand(ctx, projectDir, "git", "config", "--local", "core.eol", "crlf")
+		_, after := cachedArchive(ctx, projectDir)
+		gomega.Expect(os.SameFile(before, after)).To(gomega.BeFalse(),
+			"core.eol changes the bytes a checkout produces for the same commit")
+	})
+
+	ginkgo.It("falls back when the attribute source is overridden", func(ctx ginkgo.SpecContext) {
+		projectDir := newContentCachingRepo(ctx)
+		ginkgo.GinkgoT().Setenv("GIT_ATTR_SOURCE", utils.GetHeadCommit(ctx, projectDir))
+		_, before := cachedArchive(ctx, projectDir)
+		commitFiles(ctx, projectDir, map[string]string{"outside.txt": "changed\n"})
+		_, after := cachedArchive(ctx, projectDir)
+		gomega.Expect(os.SameFile(before, after)).To(gomega.BeFalse())
+	})
+
+	ginkgo.It("falls back when the repository declares submodules", func(ctx ginkgo.SpecContext) {
+		projectDir := newContentCachingRepo(ctx)
+		commitFiles(ctx, projectDir, map[string]string{".gitmodules": ""})
+		_, before := cachedArchive(ctx, projectDir)
+		commitFiles(ctx, projectDir, map[string]string{"outside.txt": "changed\n"})
+		_, after := cachedArchive(ctx, projectDir)
+		gomega.Expect(os.SameFile(before, after)).To(gomega.BeFalse())
+	})
+
+	ginkgo.DescribeTable("reuses the content-keyed archive across an outside commit unless a custom filter may run",
+		func(ctx ginkgo.SpecContext, setup func(ctx context.Context, projectDir string), reused bool) {
+			projectDir := newContentCachingRepo(ctx)
+			if reused {
+				requireGitAttributeSource(ctx, projectDir)
+			}
+			setup(ctx, projectDir)
+
+			_, before := cachedArchive(ctx, projectDir)
+			commitFiles(ctx, projectDir, map[string]string{"outside.txt": "changed\n"})
+			_, after := cachedArchive(ctx, projectDir)
+
+			gomega.Expect(os.SameFile(before, after)).To(gomega.Equal(reused),
+				"a selected file that may be run through a custom filter must fall back to the commit-keyed archive")
+		},
+		ginkgo.Entry("a conversion attribute matching only a dockerignored file", func(ctx context.Context, projectDir string) {
+			commitFiles(ctx, projectDir, map[string]string{".gitattributes": "app/ignored.txt text eol=crlf\n"})
+		}, true),
+		ginkgo.Entry("a root .gitattributes converting an included file", func(ctx context.Context, projectDir string) {
+			commitFiles(ctx, projectDir, map[string]string{".gitattributes": "app/*.txt text eol=crlf\n"})
+		}, true),
+		ginkgo.Entry("text=auto over the whole tree", func(ctx context.Context, projectDir string) {
+			commitFiles(ctx, projectDir, map[string]string{".gitattributes": "* text=auto\n"})
+		}, true),
+		ginkgo.Entry("the legacy crlf attribute", func(ctx context.Context, projectDir string) {
+			commitFiles(ctx, projectDir, map[string]string{".gitattributes": "app/included.txt crlf\n"})
+		}, true),
+		ginkgo.Entry("disabled conversions", func(ctx context.Context, projectDir string) {
+			commitFiles(ctx, projectDir, map[string]string{".gitattributes": "app/included.txt -text\n"})
+		}, true),
+		ginkgo.Entry("ident expansion", func(ctx context.Context, projectDir string) {
+			commitFiles(ctx, projectDir, map[string]string{".gitattributes": "app/included.txt ident\n"})
+		}, true),
+		ginkgo.Entry("working-tree-encoding", func(ctx context.Context, projectDir string) {
+			commitFiles(ctx, projectDir, map[string]string{".gitattributes": "app/included.txt working-tree-encoding=UTF-8\n"})
+		}, true),
+		// A repository-wide LFS installation configures filter drivers for every project, so the drivers
+		// alone, without an attribute selecting one, must not cost content reuse.
+		ginkgo.Entry("installed filter drivers no attribute selects", func(ctx context.Context, projectDir string) {
+			for key, value := range map[string]string{
+				"filter.lfs.smudge":   "git-lfs smudge -- %f",
+				"filter.lfs.clean":    "git-lfs clean -- %f",
+				"filter.lfs.process":  "git-lfs filter-process",
+				"filter.lfs.required": "true",
+			} {
+				utils.RunSucceedCommand(ctx, projectDir, "git", "config", key, value)
+			}
+			commitFiles(ctx, projectDir, map[string]string{".gitattributes": "app/*.txt text eol=crlf\n"})
+		}, true),
+		ginkgo.Entry("a smudge filter", func(ctx context.Context, projectDir string) {
+			utils.RunSucceedCommand(ctx, projectDir, "git", "config", "filter.harmless.smudge", "cat")
+			commitFiles(ctx, projectDir, map[string]string{".gitattributes": "app/included.txt filter=harmless\n"})
+		}, false),
+		// git check-attr reports unset and unspecified attributes with the same words a filter may be
+		// named after, so a filter literally named "unspecified" must not read as "no filter".
+		ginkgo.Entry("a filter named like a check-attr marker", func(ctx context.Context, projectDir string) {
+			utils.RunSucceedCommand(ctx, projectDir, "git", "config", "filter.unspecified.smudge", "cat")
+			commitFiles(ctx, projectDir, map[string]string{".gitattributes": "app/included.txt filter=unspecified\n"})
+		}, false),
+		ginkgo.Entry("a filter named like the unset marker", func(ctx context.Context, projectDir string) {
+			utils.RunSucceedCommand(ctx, projectDir, "git", "config", "filter.unset.smudge", "cat")
+			commitFiles(ctx, projectDir, map[string]string{".gitattributes": "app/included.txt filter=unset\n"})
+		}, false),
+		ginkgo.Entry("an effective .git/info/attributes", func(ctx context.Context, projectDir string) {
+			utils.WriteFile(filepath.Join(projectDir, ".git/info/attributes"), []byte("app/*.txt text eol=crlf\n"))
+		}, true),
+		ginkgo.Entry("an effective core.attributesFile", func(ctx context.Context, projectDir string) {
+			attributesFile := filepath.Join(projectDir, "outside-attributes")
+			utils.WriteFile(attributesFile, []byte("*.txt text eol=crlf\n"))
+			utils.RunSucceedCommand(ctx, projectDir, "git", "config", "core.attributesFile", attributesFile)
+		}, true),
+	)
+
+	ginkgo.DescribeTable("re-keys the archive when attribute inputs outside the selected files change",
+		func(ctx ginkgo.SpecContext, prepare, mutate func(ctx context.Context, projectDir string)) {
+			projectDir := newContentCachingRepo(ctx)
+			requireGitAttributeSource(ctx, projectDir)
+			if prepare != nil {
+				prepare(ctx, projectDir)
+			}
+
+			beforePath, before := cachedArchive(ctx, projectDir)
+			mutate(ctx, projectDir)
+			afterPath, after := cachedArchive(ctx, projectDir)
+
+			gomega.Expect(os.SameFile(before, after)).To(gomega.BeFalse(),
+				"an attribute input change must not hit the archive cached under the previous attributes")
+			gomega.Expect(lastEntryContents(tarFileEntries(afterPath))).NotTo(gomega.HaveKey(".gitattributes"))
+
+			_, repeated := cachedArchive(ctx, projectDir)
+			gomega.Expect(os.SameFile(after, repeated)).To(gomega.BeTrue(),
+				"the new attributes must key a stable archive, not a per-build one")
+			commitFiles(ctx, projectDir, map[string]string{"outside.txt": "changed\n"})
+			_, reused := cachedArchive(ctx, projectDir)
+			gomega.Expect(os.SameFile(after, reused)).To(gomega.BeTrue(),
+				"the archive must stay eligible for reuse across an outside commit")
+			gomega.Expect(lastEntryContents(tarFileEntries(afterPath))).To(gomega.Equal(lastEntryContents(tarFileEntries(beforePath))),
+				"the scenario must keep archived file contents unchanged")
+		},
+		ginkgo.Entry("a root .gitattributes outside the context appears", nil, func(ctx context.Context, projectDir string) {
+			commitFiles(ctx, projectDir, map[string]string{".gitattributes": "nothing.txt ident\n"})
+		}),
+		ginkgo.Entry("a root .gitattributes matching only a dockerignored file changes", func(ctx context.Context, projectDir string) {
+			commitFiles(ctx, projectDir, map[string]string{".gitattributes": "app/ignored.txt ident\n"})
+		}, func(ctx context.Context, projectDir string) {
+			commitFiles(ctx, projectDir, map[string]string{".gitattributes": "app/ignored.txt text eol=crlf\n"})
+		}),
+		ginkgo.Entry("a dockerignored .gitattributes inside the context changes", func(ctx context.Context, projectDir string) {
+			commitFiles(ctx, projectDir, map[string]string{
+				"app/.dockerignore":  ".dockerignore\nignored.txt\n.gitattributes\n",
+				"app/.gitattributes": "ignored.txt ident\n",
+			})
+		}, func(ctx context.Context, projectDir string) {
+			commitFiles(ctx, projectDir, map[string]string{"app/.gitattributes": "ignored.txt text eol=crlf\n"})
+		}),
+		ginkgo.Entry("an attribute file is rewritten to a form that prints the same", func(ctx context.Context, projectDir string) {
+			commitFiles(ctx, projectDir, map[string]string{".gitattributes": "app/ignored.txt text\n"})
+		}, func(ctx context.Context, projectDir string) {
+			commitFiles(ctx, projectDir, map[string]string{".gitattributes": "app/ignored.txt text=set\n"})
+		}),
+	)
+
+	ginkgo.It("re-keys case-sensitive attribute matching when Git configuration changes", func(ctx ginkgo.SpecContext) {
+		projectDir := newContentCachingRepo(ctx)
+		requireGitAttributeSource(ctx, projectDir)
+		commitFiles(ctx, projectDir, map[string]string{".gitattributes": "APP/INCLUDED.TXT text eol=crlf\n"})
+		utils.RunSucceedCommand(ctx, projectDir, "git", "config", "core.ignorecase", "false")
+		beforePath, before := cachedArchive(ctx, projectDir)
+		gomega.Expect(lastEntryContents(tarFileEntries(beforePath))).To(gomega.HaveKeyWithValue("included.txt", "included\n"))
+		utils.RunSucceedCommand(ctx, projectDir, "git", "config", "core.ignorecase", "true")
+		afterPath, after := cachedArchive(ctx, projectDir)
+		gomega.Expect(os.SameFile(before, after)).To(gomega.BeFalse())
+		gomega.Expect(lastEntryContents(tarFileEntries(afterPath))).To(gomega.HaveKeyWithValue("included.txt", "included\r\n"))
+	})
+
+	ginkgo.It("keeps content reuse when system attributes are disabled", func(ctx ginkgo.SpecContext) {
+		projectDir := newContentCachingRepo(ctx)
+		requireGitAttributeSource(ctx, projectDir)
+		ginkgo.GinkgoT().Setenv("GIT_ATTR_NOSYSTEM", "1")
+		_, before := cachedArchive(ctx, projectDir)
+		commitFiles(ctx, projectDir, map[string]string{"outside.txt": "changed\n"})
+		_, after := cachedArchive(ctx, projectDir)
+		gomega.Expect(os.SameFile(before, after)).To(gomega.BeTrue())
+	})
+
+	ginkgo.It("distinguishes raw text rules that Git prints identically", func(ctx ginkgo.SpecContext) {
+		projectDir := newContentCachingRepo(ctx)
+		requireGitAttributeSource(ctx, projectDir)
+		commitFiles(ctx, projectDir, map[string]string{".gitattributes": "app/included.txt -text eol=crlf\n"})
+		beforePath, before := cachedArchive(ctx, projectDir)
+		gomega.Expect(lastEntryContents(tarFileEntries(beforePath))).To(gomega.HaveKeyWithValue("included.txt", "included\n"))
+
+		utils.WriteFile(filepath.Join(projectDir, ".gitattributes"), []byte("app/included.txt text=unset eol=crlf\n"))
+		utils.RunSucceedCommand(ctx, projectDir, "git", "add", ".gitattributes")
+		utils.RunSucceedCommand(ctx, projectDir, "git", "commit", "-m", "text value")
+		afterPath, after := cachedArchive(ctx, projectDir)
+		gomega.Expect(os.SameFile(before, after)).To(gomega.BeFalse())
+		gomega.Expect(lastEntryContents(tarFileEntries(afterPath))).To(gomega.HaveKeyWithValue("included.txt", "included\r\n"))
+		commitFiles(ctx, projectDir, map[string]string{"outside.txt": "changed\n"})
+		_, reused := cachedArchive(ctx, projectDir)
+		gomega.Expect(os.SameFile(after, reused)).To(gomega.BeTrue())
+	})
+
+	ginkgo.It("re-keys the archive when an external attribute file changes under the same commit", func(ctx ginkgo.SpecContext) {
+		projectDir := newContentCachingRepo(ctx)
+		requireGitAttributeSource(ctx, projectDir)
+		attributesFile := filepath.Join(projectDir, "outside-attributes")
+		utils.WriteFile(attributesFile, []byte("ignored.txt ident\n"))
+		utils.RunSucceedCommand(ctx, projectDir, "git", "config", "core.attributesFile", attributesFile)
+
+		beforePath, before := cachedArchive(ctx, projectDir)
+
+		utils.WriteFile(attributesFile, []byte("ignored.txt text eol=crlf\n"))
+		afterPath, after := cachedArchive(ctx, projectDir)
+
+		gomega.Expect(os.SameFile(before, after)).To(gomega.BeFalse(),
+			"an untracked attribute file must be keyed by its contents, not by its path")
+		gomega.Expect(lastEntryContents(tarFileEntries(afterPath))).To(gomega.Equal(lastEntryContents(tarFileEntries(beforePath))),
+			"the scenario must keep archived file contents unchanged")
+	})
+
+	ginkgo.It("probes the attribute inputs once per build", func(ctx ginkgo.SpecContext) {
+		projectDir := newContentCachingRepo(ctx)
+		requireGitAttributeSource(ctx, projectDir)
+		configureProbeFilter(ctx, projectDir)
+		giterminismManager := giterminismManagerOf(ctx, projectDir)
+
+		_, first := cachedArchiveOf(ctx, giterminismManager)
+
+		interceptGitCheckAttributes("exit 129")
+		for range 2 {
+			_, repeated := cachedArchiveOf(ctx, giterminismManager)
+			gomega.Expect(os.SameFile(first, repeated)).To(gomega.BeTrue(),
+				"the attribute inputs of one build must be probed once, not per context archive")
+		}
+
+		_, fresh := cachedArchive(ctx, projectDir)
+		gomega.Expect(os.SameFile(first, fresh)).To(gomega.BeFalse(),
+			"a new build must probe the attribute inputs again")
+	})
+
+	ginkgo.It("re-materializes the context when a root .gitattributes flips the line endings of an included file", func(ctx ginkgo.SpecContext) {
+		projectDir := newContentCachingRepo(ctx)
+		commitFiles(ctx, projectDir, map[string]string{".gitattributes": "app/*.txt text eol=crlf\n"})
+
+		beforePath, before := cachedArchive(ctx, projectDir)
+		gomega.Expect(lastEntryContents(tarFileEntries(beforePath))).To(gomega.HaveKeyWithValue("included.txt", "included\r\n"))
+
+		commitFiles(ctx, projectDir, map[string]string{".gitattributes": "app/*.txt text eol=lf\n"})
+		// Force a fresh checkout so byte assertions isolate archive reuse from worktree normalization.
+		gomega.Expect(os.RemoveAll(git_repo.GetWorkTreeCacheDir())).To(gomega.Succeed())
+
+		afterPath, after := cachedArchive(ctx, projectDir)
+		gomega.Expect(os.SameFile(before, after)).To(gomega.BeFalse(),
+			"flipping eol outside the context must not hit the archive cached for the previous line endings")
+		gomega.Expect(lastEntryContents(tarFileEntries(afterPath))).To(gomega.HaveKeyWithValue("included.txt", "included\n"))
+	})
+
+	ginkgo.It("resumes content reuse only once the attribute inputs are the original ones again", func(ctx ginkgo.SpecContext) {
+		projectDir := newContentCachingRepo(ctx)
+		requireGitAttributeSource(ctx, projectDir)
+		_, safe := cachedArchive(ctx, projectDir)
+
+		commitFiles(ctx, projectDir, map[string]string{".gitattributes": "app/*.txt text eol=crlf\n"})
+		_, converted := cachedArchive(ctx, projectDir)
+		gomega.Expect(os.SameFile(safe, converted)).To(gomega.BeFalse(), "the archive of the unconverted bytes must not be reused under a conversion attribute")
+
+		commitFiles(ctx, projectDir, map[string]string{".gitattributes": "# no conversions\n"})
+		_, neutralized := cachedArchive(ctx, projectDir)
+		gomega.Expect(os.SameFile(safe, neutralized)).To(gomega.BeFalse(), "different attribute rules must key a different archive")
+
+		utils.RunSucceedCommand(ctx, projectDir, "git", "rm", ".gitattributes")
+		commitFiles(ctx, projectDir, nil)
+		gomega.Expect(os.RemoveAll(git_repo.GetWorkTreeCacheDir())).To(gomega.Succeed())
+		restoredPath, restored := cachedArchive(ctx, projectDir)
+		gomega.Expect(os.SameFile(safe, restored)).To(gomega.BeTrue(), "removing the attribute file must return to the original content reuse")
+		gomega.Expect(lastEntryContents(tarFileEntries(restoredPath))).To(gomega.HaveKeyWithValue("included.txt", "included\n"))
+	})
+})
