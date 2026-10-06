@@ -1234,6 +1234,9 @@ func (repo *Remote) initRepoHandleBackedByWorkTree(ctx context.Context, commit s
 	if err != nil {
 		return nil, err
 	}
+	if !hasSubmodules {
+		return repo_handle.NewHandleWithoutSubmodules(ctx, repository), nil
+	}
 
 	var repoHandle repo_handle.Handle
 	if err := true_git.WithWorkTree(ctx, repo.GetClonePath(), repo.getWorkTreeCacheDir(repo.getRepoID()), commit, true_git.WithWorkTreeOptions{HasSubmodules: hasSubmodules}, func(preparedWorkTreeDir string) error {

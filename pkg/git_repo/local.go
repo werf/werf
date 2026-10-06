@@ -32,8 +32,10 @@ type Local struct {
 
 	headCommitHash string
 
-	statusResult *status.Result
-	mutex        sync.Mutex
+	statusResult               *status.Result
+	mutex                      sync.Mutex
+	dockerfileContextChecksums sync.Map
+	dockerfileContextMutex     sync.Map
 }
 
 type OpenLocalRepoOptions struct {

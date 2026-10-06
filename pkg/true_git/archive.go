@@ -7,9 +7,12 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"maps"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
+	"strings"
 
 	"github.com/go-git/go-git/v5/plumbing/filemode"
 
@@ -17,20 +20,31 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/git_repo/repo_handle"
 	"github.com/werf/werf/v2/pkg/path_matcher"
+	"github.com/werf/werf/v2/pkg/tmp_manager"
 	"github.com/werf/werf/v2/pkg/true_git/ls_tree"
 )
 
 type ArchiveOptions struct {
-	Commit      string
-	PathScope   string // Determines the directory that will get into the result (similar to <pathspec> in the git commands).
-	PathMatcher path_matcher.PathMatcher
-	FileRenames map[string]string // Files to rename during archiving. Git repo relative paths of original files as keys, new filenames (without base path) as values.
-	Owner       string
-	Group       string
+	// ContentChecksum identifies selected Git files and checkout inputs independently of the commit and matcher.
+	ContentChecksum string
+	Commit          string
+	PathScope       string // Determines the directory that will get into the result (similar to <pathspec> in the git commands).
+	PathMatcher     path_matcher.PathMatcher
+	FileRenames     map[string]string // Files to rename during archiving. Git repo relative paths of original files as keys, new filenames (without base path) as values.
+	Owner           string
+	Group           string
 }
 
 // TODO: 1.3 add git mapping type (dir, file, ...) to gitArchive stage digest
 func (opts ArchiveOptions) ID() string {
+	if opts.ContentChecksum != "" {
+		args := []string{"dockerfile-context-v3", opts.ContentChecksum, opts.PathScope, opts.Owner, opts.Group}
+		for _, path := range slices.Sorted(maps.Keys(opts.FileRenames)) {
+			args = append(args, path, opts.FileRenames[path])
+		}
+		return util.Sha256Hash(args...)
+	}
+
 	var renamedOldFilePaths, renamedNewFileNames []string
 	for renamedOldFilePath, renamedNewFileName := range opts.FileRenames {
 		renamedOldFilePaths = append(renamedOldFilePaths, renamedOldFilePath)
@@ -108,6 +122,52 @@ func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir s
 		return fmt.Errorf("lstree result is empty when writing tar archive. PathScope: %q. PathMatcher configuration: %q", opts.PathScope, opts.PathMatcher)
 	}
 	logProcess.End()
+
+	if opts.ContentChecksum != "" {
+		tmpDir, err := tmp_manager.TempDir(ctx, "git-context-")
+		if err != nil {
+			return fmt.Errorf("create Git context export directory: %w", err)
+		}
+		defer func() {
+			if err := os.RemoveAll(tmpDir); err != nil {
+				logboek.Context(ctx).Warn().LogF("Remove Git context export directory %q: %s\n", tmpDir, err)
+			}
+		}()
+		absTmpDir, err := filepath.Abs(tmpDir)
+		if err != nil {
+			return fmt.Errorf("resolve Git context export directory: %w", err)
+		}
+		tmpDir = absTmpDir
+		exportDir := filepath.Join(tmpDir, "files")
+		if err := os.Mkdir(exportDir, 0o700); err != nil {
+			return fmt.Errorf("create Git context files directory: %w", err)
+		}
+
+		var paths, entries []string
+		if err := result.Walk(func(entry *ls_tree.LsTreeEntry) error {
+			path := filepath.ToSlash(entry.FullFilepath)
+			paths = append(paths, path)
+			entries = append(entries, fmt.Sprintf("%o %s\t%s\x00", entry.Mode, entry.Hash.String(), path))
+			return nil
+		}); err != nil {
+			return fmt.Errorf("collect Git context export paths: %w", err)
+		}
+		cmdOpts := &GitCmdOptions{RepoDir: workTreeDir, Env: []string{
+			"GIT_ATTR_SOURCE=" + opts.Commit,
+			"GIT_INDEX_FILE=" + filepath.Join(tmpDir, "index"),
+		}}
+		indexCmd := NewGitCmd(ctx, cmdOpts, "-c", "core.hooksPath="+os.DevNull, "update-index", "-z", "--index-info")
+		indexCmd.Stdin = strings.NewReader(strings.Join(entries, ""))
+		if err := indexCmd.Run(ctx); err != nil {
+			return fmt.Errorf("prepare Git context export index: %w", err)
+		}
+		cmd := NewGitCmd(ctx, cmdOpts, "-c", "core.hooksPath="+os.DevNull, "checkout-index", "--prefix="+filepath.ToSlash(exportDir)+"/", "-z", "--stdin")
+		cmd.Stdin = strings.NewReader(strings.Join(paths, "\x00") + "\x00")
+		if err := cmd.Run(ctx); err != nil {
+			return fmt.Errorf("export Git context files: %w", err)
+		}
+		workTreeDir = exportDir
+	}
 
 	logProcess = logboek.Context(ctx).Debug().LogProcess("ls-tree result walk (%s)", opts.PathMatcher.String())
 	logProcess.Start()

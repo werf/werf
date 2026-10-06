@@ -1,6 +1,7 @@
 package tmp_manager
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"time"
@@ -10,12 +11,14 @@ import (
 
 const (
 	projectDirMaxAge = time.Hour * 24
+	contextPinMaxAge = time.Hour * 24
 
 	projectsServiceDir          = "projects"
 	dockerConfigsServiceDir     = "docker_configs"
 	kubeConfigsServiceDir       = "kubeconfigs"
 	werfConfigRendersServiceDir = "werf_config_renders"
 	contextArchivesDir          = "context"
+	contextPinsServiceDir       = "context_pins"
 )
 
 var (
@@ -25,6 +28,7 @@ var (
 	dockerConfigDirPrefix  = commonPrefix + "docker-config-"
 	kubeConfigDirPrefix    = commonPrefix + "kubeconfig-"
 	werfConfigRenderPrefix = commonPrefix + "config-render-"
+	contextPinDirPrefix    = commonPrefix + "context-pin-"
 )
 
 func getServiceTmpDir() string {
@@ -70,4 +74,8 @@ func newTmpFile(prefix string) (string, error) {
 	}
 
 	return path, nil
+}
+
+func TempDir(ctx context.Context, pattern string) (string, error) {
+	return os.MkdirTemp(werf.GetTmpDir(), commonPrefix+pattern)
 }

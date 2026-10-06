@@ -40,6 +40,10 @@ type stubBuildContextArchive struct {
 
 func (a *stubBuildContextArchive) Path() string { return a.path }
 
+func (a *stubBuildContextArchive) Open(ctx context.Context) (io.ReadCloser, error) {
+	return os.Open(a.path)
+}
+
 // dockerDaemonContext points the docker client at a fake daemon serving handler and returns
 // a context carrying both that client and a fresh operation collector.
 func dockerDaemonContext(handler http.Handler) (context.Context, *opstats.Collector) {

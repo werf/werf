@@ -50,21 +50,16 @@ var _ = ginkgo.Describe("private context archive", func() {
 		gomega.Expect(os.ReadFile(archive.Path())).To(gomega.Equal(before))
 	})
 
-	ginkgo.It("keeps each consumer readable when cached input is deleted and recreated", func() {
-		root := ginkgo.GinkgoT().TempDir()
-		source := filepath.Join(root, "shared.tar")
-		archive := &BuildContextArchive{extractionRootTmpDir: filepath.Join(root, "command")}
-		var pins []string
-		for _, data := range []string{"first context", "second context"} {
-			gomega.Expect(os.WriteFile(source, []byte(data), 0o600)).To(gomega.Succeed())
-			pin, err := archive.copyArchive(source)
-			gomega.Expect(err).NotTo(gomega.HaveOccurred())
-			pins = append(pins, pin)
-			gomega.Expect(os.Remove(source)).To(gomega.Succeed())
-		}
-		gomega.Expect(pins[0]).NotTo(gomega.Equal(pins[1]))
-		for i, data := range []string{"first context", "second context"} {
-			gomega.Expect(os.ReadFile(pins[i])).To(gomega.Equal([]byte(data)))
-		}
+	ginkgo.It("keeps each consumer readable when cached input is deleted and recreated", func(ctx ginkgo.SpecContext) {
+		project := newProjectRepo(ctx, contextStreamingProjectFiles())
+		first := dockerfileContextArchives(ctx, project, "one")[0]
+		firstEntries := openedContextEntries(ctx, first)
+		gomega.Expect(os.RemoveAll(filepath.Join(werf.GetLocalCacheDir(), "git_archives"))).To(gomega.Succeed())
+		commitFiles(ctx, project, map[string]string{"blob.bin": "new content"})
+		second := dockerfileContextArchives(ctx, project, "one")[0]
+		gomega.Expect(os.RemoveAll(filepath.Join(werf.GetLocalCacheDir(), "git_archives"))).To(gomega.Succeed())
+		gomega.Expect(openedContextEntries(ctx, first)).To(gomega.Equal(firstEntries))
+		gomega.Expect(lastEntryContents(openedContextEntries(ctx, first))["blob.bin"]).NotTo(gomega.Equal("new content"))
+		gomega.Expect(lastEntryContents(openedContextEntries(ctx, second))["blob.bin"]).To(gomega.Equal("new content"))
 	})
 })

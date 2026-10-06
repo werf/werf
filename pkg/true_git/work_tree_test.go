@@ -5,10 +5,13 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
+	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	"github.com/werf/common-go/pkg/graceful"
 	"github.com/werf/werf/v2/test/pkg/utils"
 )
 
@@ -48,11 +51,10 @@ var _ = Describe("Work tree helpers", func() {
 				Expect(os.MkdirAll(mainWtDir, os.ModePerm)).To(Succeed())
 
 				utils.RunSucceedCommand(ctx, mainWtDir, "git", "-c", "init.defaultBranch=main", "init")
-				utils.RunSucceedCommand(ctx, mainWtDir, "git", "config", "commit.gpgsign", "false")
 
 				utils.RunSucceedCommand(ctx, mainWtDir, "git", "checkout", "-b", "main")
 
-				utils.RunSucceedCommand(ctx, mainWtDir, "git", "commit", "--allow-empty", "-m", "Initial commit")
+				gitCommitSucceed(ctx, mainWtDir, "--allow-empty", "-m", "Initial commit")
 
 				utils.RunSucceedCommand(ctx, mainWtDir, "git", "worktree", "add", sideWtDir)
 
@@ -70,6 +72,117 @@ var _ = Describe("Work tree helpers", func() {
 		})
 	})
 
+	When("a stale index.lock is left in a cached worktree", func() {
+		var mainWtDir, sideWtDir string
+
+		BeforeEach(func(ctx SpecContext) {
+			mainWtDir = filepath.Join(SuiteData.TestDirPath, "main-wt")
+			sideWtDir = filepath.Join(SuiteData.TestDirPath, "side-wt")
+
+			Expect(os.MkdirAll(mainWtDir, os.ModePerm)).To(Succeed())
+			utils.RunSucceedCommand(ctx, mainWtDir, "git", "-c", "init.defaultBranch=main", "init")
+			utils.RunSucceedCommand(ctx, mainWtDir, "git", "checkout", "-b", "main")
+			gitCommitSucceed(ctx, mainWtDir, "--allow-empty", "-m", "Initial commit")
+			utils.RunSucceedCommand(ctx, mainWtDir, "git", "worktree", "add", "--detach", sideWtDir)
+		})
+
+		It("self-heals and switches the worktree", func(ctx SpecContext) {
+			commit := getHeadCommit(ctx, mainWtDir)
+
+			lockPath := strings.TrimSpace(utils.SucceedCommandOutputString(ctx, sideWtDir, "git", "rev-parse", "--git-path", "index.lock"))
+			if !filepath.IsAbs(lockPath) {
+				lockPath = filepath.Join(sideWtDir, lockPath)
+			}
+			Expect(os.WriteFile(lockPath, []byte("stale"), 0o644)).To(Succeed())
+
+			Expect(switchWorkTree(ctx, mainWtDir, sideWtDir, commit, false)).To(Succeed())
+		})
+	})
+
+	When("a cached worktree is broken beyond git's own checks", func() {
+		var mainWtDir, workTreeCacheDir string
+
+		BeforeEach(func(ctx SpecContext) {
+			mainWtDir = filepath.Join(SuiteData.TestDirPath, "main-wt")
+			workTreeCacheDir = filepath.Join(SuiteData.TestDirPath, "wt-cache")
+
+			Expect(os.MkdirAll(mainWtDir, os.ModePerm)).To(Succeed())
+			utils.RunSucceedCommand(ctx, mainWtDir, "git", "-c", "init.defaultBranch=main", "init")
+			utils.RunSucceedCommand(ctx, mainWtDir, "git", "checkout", "-b", "main")
+			gitCommitSucceed(ctx, mainWtDir, "--allow-empty", "-m", "Initial commit")
+		})
+
+		It("rebuilds the cached worktree from scratch and switches it to the commit", func(ctx SpecContext) {
+			firstCommit := getHeadCommit(ctx, mainWtDir)
+
+			workTreeDir, err := prepareWorkTree(ctx, mainWtDir, workTreeCacheDir, firstCommit, false)
+			Expect(err).To(Succeed())
+
+			gitCommitSucceed(ctx, mainWtDir, "--allow-empty", "-m", "Second commit")
+			secondCommit := getHeadCommit(ctx, mainWtDir)
+			Expect(secondCommit).NotTo(Equal(firstCommit))
+
+			indexPath := strings.TrimSpace(utils.SucceedCommandOutputString(ctx, workTreeDir, "git", "rev-parse", "--git-path", "index"))
+			if !filepath.IsAbs(indexPath) {
+				indexPath = filepath.Join(workTreeDir, indexPath)
+			}
+			Expect(os.WriteFile(indexPath, []byte("garbage"), 0o644)).To(Succeed())
+
+			consistent, err := verifyWorkTreeConsistency(ctx, mainWtDir, workTreeDir)
+			Expect(err).To(Succeed())
+			Expect(consistent).To(BeTrue())
+			Expect(switchWorkTree(ctx, mainWtDir, workTreeDir, secondCommit, false)).NotTo(Succeed())
+
+			healedWorkTreeDir, err := prepareWorkTree(ctx, mainWtDir, workTreeCacheDir, secondCommit, false)
+			Expect(err).To(Succeed())
+			Expect(healedWorkTreeDir).To(Equal(workTreeDir))
+			Expect(getHeadCommit(ctx, workTreeDir)).To(Equal(secondCommit))
+		})
+
+		It("keeps a healthy cached worktree intact when the context is canceled mid-switch", func(ctx SpecContext) {
+			firstCommit := getHeadCommit(ctx, mainWtDir)
+
+			workTreeDir, err := prepareWorkTree(ctx, mainWtDir, workTreeCacheDir, firstCommit, false)
+			Expect(err).To(Succeed())
+
+			hookStartedPath := filepath.Join(SuiteData.TestDirPath, "hook-started")
+			hookProceedPath := filepath.Join(SuiteData.TestDirPath, "hook-proceed")
+			hookPath := filepath.Join(SuiteData.TestDirPath, "blocking-smudge.sh")
+			hookScript := fmt.Sprintf("#!/bin/sh\ntouch %q\nfor i in $(seq 1 600); do [ -f %q ] && break; sleep 0.05; done\ncat\n", hookStartedPath, hookProceedPath)
+			Expect(os.WriteFile(hookPath, []byte(hookScript), 0o755)).To(Succeed())
+
+			utils.RunSucceedCommand(ctx, mainWtDir, "git", "config", "filter.block.smudge", hookPath)
+			Expect(os.WriteFile(filepath.Join(mainWtDir, ".gitattributes"), []byte("blocked.txt filter=block\n"), 0o644)).To(Succeed())
+			Expect(os.WriteFile(filepath.Join(mainWtDir, "blocked.txt"), []byte("v2"), 0o644)).To(Succeed())
+			utils.RunSucceedCommand(ctx, mainWtDir, "git", "add", ".gitattributes", "blocked.txt")
+			gitCommitSucceed(ctx, mainWtDir, "-m", "Second commit")
+			secondCommit := getHeadCommit(ctx, mainWtDir)
+
+			terminationCtx := graceful.WithTermination(ctx)
+			helperDone := make(chan struct{})
+			go func() {
+				defer close(helperDone)
+				for i := 0; i < 600; i++ {
+					if _, err := os.Stat(hookStartedPath); err == nil {
+						break
+					}
+					time.Sleep(50 * time.Millisecond)
+				}
+				graceful.Terminate(terminationCtx, fmt.Errorf("sibling task failed"), 1)
+				<-terminationCtx.Done()
+				Expect(os.WriteFile(hookProceedPath, []byte("go"), 0o644)).To(Succeed())
+			}()
+
+			_, err = prepareWorkTree(terminationCtx, mainWtDir, workTreeCacheDir, secondCommit, false)
+			Eventually(helperDone, "35s").Should(BeClosed())
+			Expect(err).NotTo(Succeed())
+			Expect(hookStartedPath).To(BeAnExistingFile(), "cancellation must have happened mid-switch")
+
+			Expect(workTreeDir).To(BeADirectory())
+			Expect(filepath.Join(workTreeDir, ".git")).To(BeAnExistingFile())
+		})
+	})
+
 	Describe("verifyWorkTreeConsistency", func() {
 		var mainWtDir, sideWtDir string
 		BeforeEach(func(ctx SpecContext) {
@@ -79,11 +192,10 @@ var _ = Describe("Work tree helpers", func() {
 			Expect(os.MkdirAll(mainWtDir, os.ModePerm)).To(Succeed())
 
 			utils.RunSucceedCommand(ctx, mainWtDir, "git", "-c", "init.defaultBranch=main", "init")
-			utils.RunSucceedCommand(ctx, mainWtDir, "git", "config", "commit.gpgsign", "false")
 
 			utils.RunSucceedCommand(ctx, mainWtDir, "git", "checkout", "-b", "main")
 
-			utils.RunSucceedCommand(ctx, mainWtDir, "git", "commit", "--allow-empty", "-m", "Initial commit")
+			gitCommitSucceed(ctx, mainWtDir, "--allow-empty", "-m", "Initial commit")
 
 			utils.RunSucceedCommand(ctx, mainWtDir, "git", "worktree", "add", sideWtDir)
 		})
