@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.7.1](https://github.com/werf/werf/compare/v3.7.0...v3.7.1) (2026-10-06)
+
+
+### Bug Fixes
+
+* **build:** preserve repository-specific SSH commands ([#8021](https://github.com/werf/werf/issues/8021)) ([9de53b9](https://github.com/werf/werf/commit/9de53b9c48509113d9464b4c3f2db1b2cabc7a64))
+
 ## [3.7.0](https://github.com/werf/werf/compare/v3.6.2...v3.7.0) (2026-10-06)
 
 
