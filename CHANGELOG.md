@@ -1,5 +1,23 @@
 # Changelog
 
+## [2.81.0](https://github.com/werf/werf/compare/v2.80.2...v2.81.0) (2026-10-06)
+
+
+### Features
+
+* **build:** report backend operations and cache outcomes ([#8010](https://github.com/werf/werf/issues/8010)) ([29b7062](https://github.com/werf/werf/commit/29b706258f5c6fe2d0458c4d65b60c8b7237cb20))
+
+
+### Bug Fixes
+
+* **build:** honor --check-built-images and --require-built-images flags ([#7996](https://github.com/werf/werf/issues/7996)) ([9bec3e6](https://github.com/werf/werf/commit/9bec3e6109b62268d11a35cd0399373d095c4f25))
+* **build:** keep builds working after Git cache cleanup ([#8017](https://github.com/werf/werf/issues/8017)) ([7db5e11](https://github.com/werf/werf/commit/7db5e11cfcd29764d3691e93931bf36112dec58b))
+* **build:** keep checks read-only and reuse concurrently built stages ([#8016](https://github.com/werf/werf/issues/8016)) ([6d2a0bf](https://github.com/werf/werf/commit/6d2a0bf85f6d310bfc5ca449750f55fb7b522cf6))
+* **build:** reduce registry tag-list pagination ([#8009](https://github.com/werf/werf/issues/8009)) ([a85eef6](https://github.com/werf/werf/commit/a85eef66887d4e972cdab98030ddf345223e03fc))
+* **build:** retain accurate operation statistics in build reports ([#8015](https://github.com/werf/werf/issues/8015)) ([a7437b2](https://github.com/werf/werf/commit/a7437b2ec4c5da8bc24069a8f188ca7563356ad2))
+* **build:** retry refused registry connections ([#8019](https://github.com/werf/werf/issues/8019)) ([bfe3753](https://github.com/werf/werf/commit/bfe37536ef564dfe55db15b49d1ff7f60fd59989))
+* **build:** reuse stage snapshots and keep build checks read-only ([#8011](https://github.com/werf/werf/issues/8011)) ([b9e06bb](https://github.com/werf/werf/commit/b9e06bb3b3c1ee24c660d7767082d4e516e58cf0))
+
 ## [2.80.2](https://github.com/werf/werf/compare/v2.80.1...v2.80.2) (2026-10-01)
 
 
