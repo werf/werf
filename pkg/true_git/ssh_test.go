@@ -77,7 +77,7 @@ var _ = Describe("Ssh multiplexing", func() {
 			{longAlias, "one", "/first-key", "22"},
 			{"first", "one", "/first-key", "2222"},
 		} {
-			args := []string{"-c", command + ` "$@"`, "ssh", "-G", "-F", config, "-p", connection.port, connection.alias, "git-upload-pack '" + connection.repo + "'"}
+			args := []string{command, "-G", "-F", config, "-p", connection.port, connection.alias, "git-upload-pack '" + connection.repo + "'"}
 			if shell == "busybox" {
 				args = append([]string{"sh"}, args...)
 			}
