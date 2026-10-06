@@ -325,11 +325,11 @@ var _ = ginkgo.Describe("build context archive content caching", func() {
 			gomega.Expect(entryNamed(entries, "included.txt").Mode & 0o777).To(gomega.Equal(int64(0o755)))
 		}),
 		ginkgo.Entry("a commit renaming an included file", func(ctx context.Context, projectDir string) {
-			utils.RunSucceedCommand(ctx, projectDir, "git", "mv", "app/included.txt", "app/renamed.txt")
+			utils.RunSucceedCommand(ctx, projectDir, "git", "mv", "app/included.txt", "app/included-renamed.txt")
 			commitFiles(ctx, projectDir, nil)
 		}, false, func(entries []tarEntry) {
 			gomega.Expect(lastEntryContents(entries)).To(gomega.SatisfyAll(
-				gomega.HaveKeyWithValue("renamed.txt", "included\n"),
+				gomega.HaveKeyWithValue("included-renamed.txt", "included\n"),
 				gomega.Not(gomega.HaveKey("included.txt")),
 			))
 		}),
