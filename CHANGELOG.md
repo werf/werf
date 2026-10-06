@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.81.1](https://github.com/werf/werf/compare/v2.81.0...v2.81.1) (2026-10-06)
+
+
+### Bug Fixes
+
+* **build:** reduce repeated git work in v2 builds ([#8020](https://github.com/werf/werf/issues/8020)) ([46f0294](https://github.com/werf/werf/commit/46f0294ede06d43dc3554f6136b545c2e81e6b91))
+
 ## [2.81.0](https://github.com/werf/werf/compare/v2.80.2...v2.81.0) (2026-10-06)
 
 
