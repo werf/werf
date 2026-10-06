@@ -43,7 +43,10 @@ var _ = Describe("Ssh multiplexing", func() {
 		Expect(Init(ctx, Options{})).To(Succeed())
 
 		command := gitSSHCommand(NewGitCmd(ctx, nil, "version"))
-		Expect(command).To(HavePrefix("ssh "))
+		Expect(filepath.Base(command)).To(Equal("ssh"))
+		wrapperInfo, err := os.Stat(command)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(wrapperInfo.Mode().Perm()).To(Equal(os.FileMode(0o700)))
 		Expect(controlDir(command)).To(HavePrefix(filepath.Join(os.TempDir(), "werf-ssh-")))
 
 		info, err := os.Stat(controlDir(command))
