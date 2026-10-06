@@ -38,12 +38,6 @@ func setupSSHMultiplexing(ctx context.Context) []string {
 		return nil
 	}
 
-	// git gives GIT_SSH_COMMAND precedence over core.sshCommand, so setting it
-	// would silently discard the ssh command, identity or proxy a user
-	// configured in the environment, the global or system config, or the
-	// repository the process runs in. A repository named with --dir is read
-	// like any other repository werf fetches into: its local config is not
-	// consulted here.
 	if os.Getenv("GIT_SSH_COMMAND") != "" || os.Getenv("GIT_SSH") != "" || configuredSSHCommand(ctx) != "" {
 		return nil
 	}
@@ -101,13 +95,20 @@ esac
 printf '%%s%%.40s' '%s' "$hash"
 )"`, sshControlPersist, hashCommand, controlPath)
 
-		if !sshSupportsMultiplexing(ctx, command, controlPath) {
+		// GIT_SSH stays below core.sshCommand in Git's precedence, including
+		// repository-local settings and conditional includes resolved later.
+		wrapper := filepath.Join(dir, "ssh")
+		if err := os.WriteFile(wrapper, []byte("#!/bin/sh\nexec "+command+" \"$@\"\n"), 0o700); err != nil {
+			os.RemoveAll(dir)
+			return nil
+		}
+		if !sshSupportsMultiplexing(ctx, fmt.Sprintf("%q", wrapper), controlPath) {
 			os.RemoveAll(dir)
 			return nil
 		}
 
 		sshControlDir = dir
-		return []string{"GIT_SSH_COMMAND=" + command}
+		return []string{"GIT_SSH=" + wrapper}
 	}
 
 	return nil

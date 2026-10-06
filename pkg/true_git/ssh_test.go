@@ -18,6 +18,9 @@ var _ = Describe("Ssh multiplexing", func() {
 	gitSSHCommand := func(cmd GitCmd) string {
 		var res string
 		for _, entry := range cmd.Env {
+			if value, ok := strings.CutPrefix(entry, "GIT_SSH="); ok {
+				res = value
+			}
 			if value, ok := strings.CutPrefix(entry, "GIT_SSH_COMMAND="); ok {
 				res = value
 			}
@@ -28,6 +31,8 @@ var _ = Describe("Ssh multiplexing", func() {
 	BeforeEach(func() {
 		GinkgoT().Setenv("GIT_SSH_COMMAND", "")
 		GinkgoT().Setenv("GIT_SSH", "")
+		Expect(os.Unsetenv("GIT_SSH_COMMAND")).To(Succeed())
+		Expect(os.Unsetenv("GIT_SSH")).To(Succeed())
 		GinkgoT().Setenv("GIT_CONFIG_GLOBAL", filepath.Join(shortTempDir(), "gitconfig"))
 		GinkgoT().Setenv("GIT_CONFIG_SYSTEM", filepath.Join(shortTempDir(), "gitconfig"))
 		DeferCleanup(CleanupSSHMultiplexing)
@@ -38,7 +43,10 @@ var _ = Describe("Ssh multiplexing", func() {
 		Expect(Init(ctx, Options{})).To(Succeed())
 
 		command := gitSSHCommand(NewGitCmd(ctx, nil, "version"))
-		Expect(command).To(HavePrefix("ssh "))
+		Expect(filepath.Base(command)).To(Equal("ssh"))
+		wrapperInfo, err := os.Stat(command)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(wrapperInfo.Mode().Perm()).To(Equal(os.FileMode(0o700)))
 		Expect(controlDir(command)).To(HavePrefix(filepath.Join(os.TempDir(), "werf-ssh-")))
 
 		info, err := os.Stat(controlDir(command))
@@ -69,7 +77,7 @@ var _ = Describe("Ssh multiplexing", func() {
 			{longAlias, "one", "/first-key", "22"},
 			{"first", "one", "/first-key", "2222"},
 		} {
-			args := []string{"-c", command + ` "$@"`, "ssh", "-G", "-F", config, "-p", connection.port, connection.alias, "git-upload-pack '" + connection.repo + "'"}
+			args := []string{command, "-G", "-F", config, "-p", connection.port, connection.alias, "git-upload-pack '" + connection.repo + "'"}
 			if shell == "busybox" {
 				args = append([]string{"sh"}, args...)
 			}
@@ -159,6 +167,39 @@ var _ = Describe("Ssh multiplexing", func() {
 			Expect(os.WriteFile(path, []byte("[core]\n\tsshCommand = ssh -i /tmp/key\n"), 0o600)).To(Succeed())
 			GinkgoT().Setenv("GIT_CONFIG_GLOBAL", path)
 		}),
+	)
+
+	DescribeTable("keeps the target repository SSH transport", func(ctx SpecContext, conditionalInclude bool) {
+		root := shortTempDir()
+		Expect(Init(ctx, Options{})).To(Succeed())
+		Expect(sshMultiplexingEnv).NotTo(BeEmpty())
+
+		repo := filepath.Join(root, "project")
+		gitInitRepo(ctx, repo)
+		custom := filepath.Join(root, "custom-ssh")
+		marker := filepath.Join(root, "custom-called")
+		Expect(os.WriteFile(custom, []byte("#!/bin/sh\ntouch '"+marker+"'\nexit 1\n"), 0o700)).To(Succeed())
+		if conditionalInclude {
+			included := filepath.Join(root, "included-config")
+			Expect(os.WriteFile(included, []byte("[core]\nsshCommand = "+custom+"\n"), 0o600)).To(Succeed())
+			Expect(os.WriteFile(os.Getenv("GIT_CONFIG_GLOBAL"), []byte("[includeIf \"gitdir:**/project/\"]\npath = "+included+"\n"), 0o600)).To(Succeed())
+		} else {
+			gitSucceed(ctx, repo, "config", "core.sshCommand", custom)
+		}
+
+		bin := filepath.Join(root, "bin")
+		Expect(os.Mkdir(bin, 0o700)).To(Succeed())
+		fallbackMarker := filepath.Join(root, "fallback-called")
+		Expect(os.WriteFile(filepath.Join(bin, "ssh"), []byte("#!/bin/sh\ntouch '"+fallbackMarker+"'\nexit 1\n"), 0o700)).To(Succeed())
+		GinkgoT().Setenv("PATH", bin+string(os.PathListSeparator)+os.Getenv("PATH"))
+
+		cmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: repo}, "ls-remote", "git@werf-probe:/repo")
+		Expect(cmd.Run(ctx)).NotTo(Succeed())
+		Expect(marker).To(BeAnExistingFile())
+		Expect(fallbackMarker).NotTo(BeAnExistingFile())
+	},
+		Entry("local config", false),
+		Entry("conditional include", true),
 	)
 
 	It("lets the caller environment win", func(ctx SpecContext) {
@@ -342,10 +383,7 @@ var _ = Describe("Ssh multiplexing", func() {
 })
 
 func controlDir(sshCommand string) string {
-	_, path, _ := strings.Cut(sshCommand, `printf '%s%.40s' '`)
-	path, _, _ = strings.Cut(path, `'`)
-
-	return filepath.Dir(path)
+	return filepath.Dir(sshCommand)
 }
 
 // The control path limit rejects a long directory before anything else, and
