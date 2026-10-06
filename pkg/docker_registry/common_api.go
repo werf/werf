@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"syscall"
 
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/google/go-containerregistry/pkg/v1/remote/transport"
@@ -92,10 +93,21 @@ func newHttpTransport(skipTlsVerify bool) http.RoundTripper {
 	t = werf.NewUserAgentTransport(t)
 
 	// Wrap the transport with retry logic.
-	t = transport.NewRetry(t)
+	t = transport.NewRetry(t, transport.WithRetryPredicate(isRetryableRegistryTransportError))
 
 	// Wrap the transport with rate limit logic.
 	t = transport2.NewTransport(t)
 
 	return t
+}
+
+func isRetryableRegistryTransportError(err error) bool {
+	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+		return false
+	}
+	if errors.Is(err, syscall.ECONNREFUSED) {
+		return true
+	}
+	temporary, ok := err.(interface{ Temporary() bool })
+	return ok && temporary.Temporary()
 }

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -15,6 +16,7 @@ import (
 	"sync/atomic"
 
 	"github.com/google/go-containerregistry/pkg/registry"
+	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
 	"golang.org/x/sync/singleflight"
@@ -447,4 +449,79 @@ func goroutinesWithFrames(dump string, frames ...string) int {
 		}
 	}
 	return count
+}
+
+type registryRetryFixture struct {
+	api           *api
+	reference     string
+	closedAddress string
+	tagStatus     int
+	tagDials      atomic.Int64
+	failure       func(context.Context, int) error
+}
+
+func newRegistryRetryFixture() *registryRetryFixture {
+	fixture := &registryRetryFixture{}
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+	fixture.closedAddress = listener.Addr().String()
+	gomega.Expect(listener.Close()).To(gomega.Succeed())
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer ginkgo.GinkgoRecover()
+		w.Header().Set("Content-Type", "application/json")
+		if r.URL.Path == "/v2/" {
+			_, err := io.WriteString(w, "{}")
+			gomega.Expect(err).NotTo(gomega.HaveOccurred())
+			return
+		}
+		if fixture.tagStatus != 0 {
+			w.WriteHeader(fixture.tagStatus)
+		}
+		_, err := io.WriteString(w, `{"name":"fixture","tags":["ok"]}`)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+	}))
+	ginkgo.DeferCleanup(server.Close)
+	original := remote.DefaultTransport
+	base := original.(*http.Transport).Clone()
+	base.DisableKeepAlives = true
+	base.DialContext = func(ctx context.Context, network, address string) (net.Conn, error) {
+		defer ginkgo.GinkgoRecover()
+		if ctx.Value(registryRetryContextKey{}) == true {
+			attempt := fixture.tagDials.Add(1)
+			if err := fixture.failure(ctx, int(attempt)); err != nil {
+				return nil, err
+			}
+		}
+		return (&net.Dialer{}).DialContext(ctx, network, address)
+	}
+	remote.DefaultTransport = base
+	ginkgo.DeferCleanup(func() { remote.DefaultTransport = original })
+	fixture.api = newAPI(apiOptions{InsecureRegistry: true})
+	fixture.api.httpTransport = &registryRetryRequestTransport{fixture.api.httpTransport}
+	fixture.api.insecureHttpTransport = &registryRetryRequestTransport{fixture.api.insecureHttpTransport}
+	fixture.reference = strings.TrimPrefix(server.URL, "http://") + "/fixture"
+	return fixture
+}
+
+func (f *registryRetryFixture) refusedDial(ctx context.Context) error {
+	conn, err := (&net.Dialer{}).DialContext(ctx, "tcp", f.closedAddress)
+	if conn != nil {
+		gomega.Expect(conn.Close()).To(gomega.Succeed())
+	}
+	gomega.Expect(err).To(gomega.MatchError(gomega.ContainSubstring("connection refused")))
+	return err
+}
+
+type (
+	registryRetryContextKey       struct{}
+	registryRetryRequestTransport struct{ underlying http.RoundTripper }
+)
+
+var _ http.RoundTripper = (*registryRetryRequestTransport)(nil)
+
+func (t *registryRetryRequestTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	if strings.HasSuffix(req.URL.Path, "/tags/list") {
+		req = req.WithContext(context.WithValue(req.Context(), registryRetryContextKey{}, true))
+	}
+	return t.underlying.RoundTrip(req)
 }
