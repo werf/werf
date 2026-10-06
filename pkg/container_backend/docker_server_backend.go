@@ -143,7 +143,7 @@ func (backend *DockerServerBackend) BuildDockerfile(ctx context.Context, _ []byt
 		fmt.Printf("[DOCKER BUILD] docker build %s\n", strings.Join(cliArgs, " "))
 	}
 
-	contextReader, err := os.Open(opts.BuildContextArchive.Path())
+	contextReader, err := opts.BuildContextArchive.Open(ctx)
 	if err != nil {
 		return "", fmt.Errorf("unable to open context archive %q: %w", opts.BuildContextArchive.Path(), err)
 	}

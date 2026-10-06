@@ -117,6 +117,14 @@ func NewConveyor(werfConfig *config.WerfConfig, giterminismManager giterminism_m
 		stageDigestMutex: map[string]*sync.Mutex{},
 	}
 
+	remoteGitTasksLimit := 1
+	if opts.Parallel {
+		remoteGitTasksLimit = 4
+		if opts.ParallelTasksLimit > 0 && opts.ParallelTasksLimit < int64(remoteGitTasksLimit) {
+			remoteGitTasksLimit = int(opts.ParallelTasksLimit)
+		}
+	}
+
 	c.imagesTree = image.NewImagesTree(werfConfig, image.ImagesTreeOptions{
 		CommonImageOptions: image.CommonImageOptions{
 			Conveyor:           c,
@@ -128,7 +136,8 @@ func NewConveyor(werfConfig *config.WerfConfig, giterminismManager giterminism_m
 			ContainerWerfDir:   c.containerWerfDir,
 			TmpDir:             c.tmpDir,
 		},
-		ImagesToProcess: opts.ImagesToProcess,
+		ImagesToProcess:     opts.ImagesToProcess,
+		RemoteGitTasksLimit: remoteGitTasksLimit,
 	})
 
 	return c

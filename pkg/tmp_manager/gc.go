@@ -66,6 +66,8 @@ func collectPaths() ([]string, []string, error) {
 		newGCPath(filepath.Join(getCreatedTmpDirs(), werfConfigRendersServiceDir), "", 0),
 		newGCPath(filepath.Join(getCreatedTmpDirs(), contextArchivesDir), "", 0),
 		newGCPath(getContextTmpDir(), "", 0),
+		newGCPath(filepath.Join(getCreatedTmpDirs(), contextPinsServiceDir), "", 0),
+		newGCPath(filepath.Join(getServiceTmpDir(), contextPinsServiceDir), "", contextPinMaxAge),
 		// Project dirs are not registered either until the command delegates the cleanup, and they
 		// hold the pinned git inputs of a build. They live directly in the tmp dir shared with
 		// everything else on the host, so only our own prefix is swept and no symlink is followed.

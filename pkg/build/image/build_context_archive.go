@@ -1,6 +1,7 @@
 package image
 
 import (
+	"archive/tar"
 	"context"
 	"errors"
 	"fmt"
@@ -19,8 +20,14 @@ import (
 	"github.com/werf/werf/v2/pkg/git_repo"
 	"github.com/werf/werf/v2/pkg/giterminism_manager"
 	"github.com/werf/werf/v2/pkg/path_matcher"
+	"github.com/werf/werf/v2/pkg/tmp_manager"
 	"github.com/werf/werf/v2/pkg/werf"
 )
+
+// createContextPinDir is a variable so that tests can put the pin on another filesystem.
+var createContextPinDir = tmp_manager.CreateContextPinDir
+
+var _ container_backend.BuildContextArchiver = (*BuildContextArchive)(nil)
 
 func NewBuildContextArchive(giterminismMgr giterminism_manager.Interface, extractionRootTmpDir string) *BuildContextArchive {
 	return &BuildContextArchive{
@@ -30,19 +37,14 @@ func NewBuildContextArchive(giterminismMgr giterminism_manager.Interface, extrac
 }
 
 type BuildContextArchive struct {
-	giterminismMgr       giterminism_manager.Interface
-	path                 string
-	extractionRootTmpDir string
-	extractionDir        string
+	giterminismMgr         giterminism_manager.Interface
+	path                   string
+	extractionRootTmpDir   string
+	extractionDir          string
+	contextAddFilesFromMem map[string][]byte
 }
 
 func (a *BuildContextArchive) Create(ctx context.Context, opts container_backend.BuildContextArchiveCreateOptions) error {
-	lock, err := git_repo.CommonGitDataManager.LockGC(ctx, true)
-	if err != nil {
-		return err
-	}
-	defer werf.HostLocker().ReleaseLock(lock)
-
 	contextPathRelativeToGitWorkTree := filepath.Join(a.giterminismMgr.RelativeToGitProjectDir(), opts.ContextGitSubDir)
 
 	dockerIgnorePathMatcher, err := createDockerIgnorePathMatcher(ctx, *a.giterminismMgr.(*giterminism_manager.Manager), opts.ContextGitSubDir, opts.DockerfileRelToContextPath)
@@ -50,22 +52,41 @@ func (a *BuildContextArchive) Create(ctx context.Context, opts container_backend
 		return fmt.Errorf("unable to create dockerignore path matcher: %w", err)
 	}
 
-	archive, err := a.giterminismMgr.LocalGitRepo().GetOrCreateArchive(ctx, git_repo.ArchiveOptions{
+	lock, err := git_repo.CommonGitDataManager.LockGC(ctx, true)
+	if err != nil {
+		return fmt.Errorf("lock git archive cache: %w", err)
+	}
+	defer werf.HostLocker().ReleaseLock(lock)
+
+	archiveOptions := git_repo.ArchiveOptions{
 		PathScope: contextPathRelativeToGitWorkTree,
 		PathMatcher: path_matcher.NewMultiPathMatcher(path_matcher.NewPathMatcher(
 			path_matcher.PathMatcherOptions{BasePath: contextPathRelativeToGitWorkTree}),
 			dockerIgnorePathMatcher,
 		),
 		Commit: a.giterminismMgr.HeadCommit(ctx),
-	})
+	}
+	if repo, ok := a.giterminismMgr.LocalGitRepo().(*git_repo.Local); ok {
+		archiveOptions.ContentChecksum, err = repo.GetDockerfileContextChecksum(ctx, git_repo.ChecksumOptions{
+			Commit: archiveOptions.Commit,
+			LsTreeOptions: git_repo.LsTreeOptions{
+				PathScope:   archiveOptions.PathScope,
+				PathMatcher: archiveOptions.PathMatcher,
+				AllFiles:    true,
+			},
+		})
+		if err != nil {
+			return fmt.Errorf("calculate build context checksum: %w", err)
+		}
+	}
+
+	archive, err := a.giterminismMgr.LocalGitRepo().GetOrCreateArchive(ctx, archiveOptions)
 	if err != nil {
 		return fmt.Errorf("unable to get or create archive: %w", err)
 	}
 
-	a.path, err = a.copyArchive(archive.GetFilePath())
-	if err != nil {
-		return err
-	}
+	a.path = archive.GetFilePath()
+	a.contextAddFilesFromMem = nil
 
 	addFilesFromMem := make(map[string][]byte)
 
@@ -79,19 +100,37 @@ func (a *BuildContextArchive) Create(ctx context.Context, opts container_backend
 		addFilesFromMem[opts.DockerfileRelToContextPath] = dockerFileContent
 	}
 
-	if len(opts.ContextAddFiles) > 0 || len(addFilesFromMem) > 0 {
-		if err := logboek.Context(ctx).Debug().LogProcess("Add contextAddFiles to build context archive %s", a.path).DoError(func() error {
-			a.path, err = context_manager.AddContextAddFilesToContextArchive(ctx, &context_manager.AddContextAddFilesToContextArchiveOpts{
-				OriginalArchivePath:    a.path,
-				ProjectDir:             a.giterminismMgr.ProjectDir(),
-				ContextDir:             opts.ContextGitSubDir,
-				ContextAddFiles:        opts.ContextAddFiles,
-				ContextAddFilesFromMem: addFilesFromMem,
-			})
-			return err
-		}); err != nil {
-			return fmt.Errorf("unable to add contextAddFiles to build context archive %s: %w", a.path, err)
+	if len(opts.ContextAddFiles) == 0 {
+		dir, err := createContextPinDir(ctx)
+		if err != nil {
+			return fmt.Errorf("create context archive directory: %w", err)
 		}
+
+		// Pin the cached inode against GC without copying it. Other filesystems fall back to a private copy.
+		pinnedPath := filepath.Join(dir, "archive.tar")
+		if err := os.Link(a.path, pinnedPath); err == nil {
+			a.path = pinnedPath
+			a.contextAddFilesFromMem = addFilesFromMem
+			return nil
+		} else {
+			logboek.Context(ctx).Debug().LogF("Unable to hard-link build context, falling back to a copy: %s\n", err)
+		}
+		if err := os.Remove(dir); err != nil {
+			return fmt.Errorf("remove unused context archive directory: %w", err)
+		}
+	}
+
+	if err := logboek.Context(ctx).Debug().LogProcess("Add contextAddFiles to build context archive %s", a.path).DoError(func() error {
+		a.path, err = context_manager.AddContextAddFilesToContextArchive(ctx, &context_manager.AddContextAddFilesToContextArchiveOpts{
+			OriginalArchivePath:    a.path,
+			ProjectDir:             a.giterminismMgr.ProjectDir(),
+			ContextDir:             opts.ContextGitSubDir,
+			ContextAddFiles:        opts.ContextAddFiles,
+			ContextAddFilesFromMem: addFilesFromMem,
+		})
+		return err
+	}); err != nil {
+		return fmt.Errorf("unable to add contextAddFiles to build context archive %s: %w", a.path, err)
 	}
 
 	return nil
@@ -99,6 +138,45 @@ func (a *BuildContextArchive) Create(ctx context.Context, opts container_backend
 
 func (a *BuildContextArchive) Path() string {
 	return a.path
+}
+
+// Open returns an independent context stream, including Dockerfile overrides. The caller must close it.
+func (a *BuildContextArchive) Open(ctx context.Context) (io.ReadCloser, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	source, err := os.Open(a.path)
+	if err != nil {
+		return nil, fmt.Errorf("open context archive %q: %w", a.path, err)
+	}
+	if len(a.contextAddFilesFromMem) == 0 {
+		return source, nil
+	}
+
+	reader, writer := io.Pipe()
+	stop := context.AfterFunc(ctx, func() {
+		writer.CloseWithError(ctx.Err())
+	})
+	go func() {
+		defer stop()
+		err := func() error {
+			tw := tar.NewWriter(writer)
+			if err := util.CopyTar(ctx, source, tw, util.CopyTarOptions{}); err != nil {
+				return fmt.Errorf("stream context archive: %w", err)
+			}
+			for name, data := range a.contextAddFilesFromMem {
+				if err := tw.WriteHeader(&tar.Header{Name: name, Mode: 0o600, Size: int64(len(data))}); err != nil {
+					return fmt.Errorf("write Dockerfile header: %w", err)
+				}
+				if _, err := tw.Write(data); err != nil {
+					return fmt.Errorf("write Dockerfile contents: %w", err)
+				}
+			}
+			return tw.Close()
+		}()
+		writer.CloseWithError(errors.Join(err, source.Close()))
+	}()
+	return reader, nil
 }
 
 func (a *BuildContextArchive) ExtractOrGetExtractedDir(ctx context.Context) (string, error) {
@@ -120,14 +198,17 @@ func (a *BuildContextArchive) ExtractOrGetExtractedDir(ctx context.Context) (str
 		return "", fmt.Errorf("unable to create context tmp dir: %w", err)
 	}
 
-	archiveReader, err := os.Open(a.path)
+	archiveReader, err := a.Open(ctx)
 	if err != nil {
-		return "", fmt.Errorf("unable to open context archive %q: %w", a.path, err)
+		a.CleanupExtractedDir(ctx)
+		return "", fmt.Errorf("open build context: %w", err)
 	}
 	defer archiveReader.Close()
 
 	if err := util.ExtractTar(archiveReader, a.extractionDir, util.ExtractTarOptions{}); err != nil {
-		return "", fmt.Errorf("unable to extract context tar to tmp context dir %q: %w", a.extractionDir, err)
+		err = fmt.Errorf("unable to extract context tar to tmp context dir %q: %w", a.extractionDir, err)
+		a.CleanupExtractedDir(ctx)
+		return "", err
 	}
 	return a.extractionDir, nil
 }
@@ -140,6 +221,7 @@ func (a *BuildContextArchive) CleanupExtractedDir(ctx context.Context) {
 	if err := os.RemoveAll(a.extractionDir); err != nil {
 		logboek.Context(ctx).Warn().LogF("WARNING: unable to remove extracted context dir %q: %s", a.extractionDir, err)
 	}
+	a.extractionDir = ""
 }
 
 func (a *BuildContextArchive) CalculateGlobsChecksum(ctx context.Context, globs []string, checkForArchives bool) (string, error) {
@@ -210,23 +292,4 @@ func (a *BuildContextArchive) CalculatePathsChecksum(ctx context.Context, paths 
 
 func dockerfileStageDependenciesDebug() bool {
 	return os.Getenv("WERF_DEBUG_DOCKERFILE_STAGE_DEPENDENCIES") == "1"
-}
-
-func (a *BuildContextArchive) copyArchive(source string) (string, error) {
-	if err := os.MkdirAll(a.extractionRootTmpDir, 0o700); err != nil {
-		return "", fmt.Errorf("create context archive directory: %w", err)
-	}
-	in, err := os.Open(source)
-	if err != nil {
-		return "", fmt.Errorf("open context archive: %w", err)
-	}
-	out, err := os.CreateTemp(a.extractionRootTmpDir, "context-*.tar")
-	if err != nil {
-		return "", fmt.Errorf("create private context archive: %w", errors.Join(err, in.Close()))
-	}
-	_, copyErr := io.Copy(out, in)
-	if err := errors.Join(copyErr, out.Close(), in.Close()); err != nil {
-		return "", fmt.Errorf("copy context archive: %w", err)
-	}
-	return out.Name(), nil
 }

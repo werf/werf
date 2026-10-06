@@ -32,6 +32,7 @@ type Options struct {
 
 func Init(ctx context.Context, opts Options) error {
 	liveGitOutput = opts.LiveGitOutput
+	sshMultiplexingEnv = setupSSHMultiplexing(ctx)
 
 	var err error
 
