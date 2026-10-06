@@ -1,5 +1,25 @@
 # Changelog
 
+## [3.7.0](https://github.com/werf/werf/compare/v3.6.2...v3.7.0) (2026-10-06)
+
+
+### Features
+
+* **build:** report backend operations and cache outcomes ([#8002](https://github.com/werf/werf/issues/8002)) ([d11e0d8](https://github.com/werf/werf/commit/d11e0d8c545b61243efdd602398bf227e898aa9c))
+
+
+### Bug Fixes
+
+* **build, cleanup:** keep git cache data usable across eviction and cleanup ([#8014](https://github.com/werf/werf/issues/8014)) ([f11886c](https://github.com/werf/werf/commit/f11886ce7e70d7383de38634df93b3fbd3ae89e8))
+* **build:** keep image checks read-only and reuse stages published by peers ([#8013](https://github.com/werf/werf/issues/8013)) ([8b1451c](https://github.com/werf/werf/commit/8b1451ceebf9ec9d9ffc56ed8d949ebf11f8b551))
+* **build:** recover evicted Git data and retain costly mirrors ([#8004](https://github.com/werf/werf/issues/8004)) ([b5d96a9](https://github.com/werf/werf/commit/b5d96a991a20d50e7238daabe571e58bbfd3f010))
+* **build:** reduce registry tag-list pagination ([#8001](https://github.com/werf/werf/issues/8001)) ([a49465a](https://github.com/werf/werf/commit/a49465a76dcf52727feb523e7ce88761d67ce65e))
+* **build:** report accurate operation timings and cache lookups ([#8012](https://github.com/werf/werf/issues/8012)) ([32319a3](https://github.com/werf/werf/commit/32319a3c5896aefdbea41a231167f88e30686302))
+* **build:** retry refused registry connections ([#8018](https://github.com/werf/werf/issues/8018)) ([a0b24e3](https://github.com/werf/werf/commit/a0b24e3d97c2ddee893770f9f1cf887b562c00b1))
+* **build:** reuse stage snapshots and keep build checks read-only ([#8003](https://github.com/werf/werf/issues/8003)) ([4f14924](https://github.com/werf/werf/commit/4f14924fe6af28b33313380307050eddb5490959))
+* **cleanup:** preserve cache data during dry runs and access errors ([#8007](https://github.com/werf/werf/issues/8007)) ([865c42b](https://github.com/werf/werf/commit/865c42b7616412e63ea9d8d6185fdd31f98b1438))
+* **test:** isolate native fixtures and restore baseline checks ([#8005](https://github.com/werf/werf/issues/8005)) ([941696b](https://github.com/werf/werf/commit/941696b57089fea7eae65964ef02e0afd95abec1))
+
 ## [3.6.2](https://github.com/werf/werf/compare/v3.6.1...v3.6.2) (2026-10-01)
 
 ### Compatibility
