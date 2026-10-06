@@ -460,7 +460,7 @@ func remotePreparationInputs(ctx context.Context, tree *ImagesTree) map[string][
 			gomega.Expect(err).NotTo(gomega.HaveOccurred())
 			values = append(values, mapping.To+":"+commit.Commit+":"+mapping.GetParamshash())
 		}
-		content, err := gitStage.GetDependencies(ctx, tree.Conveyor, nil, nil, nil, nil)
+		content, err := gitStage.GetNextStageDependencies(ctx, tree.Conveyor)
 		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 		inputs[key] = append(values, content)
 	}
