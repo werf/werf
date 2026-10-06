@@ -95,8 +95,8 @@ func main() {
 	common.ShutdownTelemetry(ctx, 0)
 }
 
-func onShutdown(_ context.Context, desc graceful.TerminationDescriptor) {
-	true_git.CleanupSSHMultiplexing()
+func onShutdown(ctx context.Context, desc graceful.TerminationDescriptor) {
+	true_git.CleanupSSHMultiplexing(ctx)
 
 	if desc.Signal() != nil {
 		logging.Default(fmt.Sprintf("Signal: %s", desc.Signal()))

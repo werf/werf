@@ -124,7 +124,7 @@ func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir s
 	logProcess.End()
 
 	if opts.ContentChecksum != "" {
-		tmpDir, err := tmp_manager.TempDir("git-context-")
+		tmpDir, err := tmp_manager.TempDir(ctx, "git-context-")
 		if err != nil {
 			return fmt.Errorf("create Git context export directory: %w", err)
 		}

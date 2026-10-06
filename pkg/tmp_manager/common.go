@@ -1,6 +1,7 @@
 package tmp_manager
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"time"
@@ -75,6 +76,6 @@ func newTmpFile(prefix string) (string, error) {
 	return path, nil
 }
 
-func TempDir(pattern string) (string, error) {
+func TempDir(ctx context.Context, pattern string) (string, error) {
 	return os.MkdirTemp(werf.GetTmpDir(), commonPrefix+pattern)
 }
