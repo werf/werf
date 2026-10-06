@@ -15,6 +15,7 @@ var _ = Describe("context pin dir", func() {
 	It("lives next to the local cache and is collected by the tmp GC", func(ctx SpecContext) {
 		stubs := gostub.New()
 		defer stubs.Reset()
+		stubs.Stub(&registrator, newGCRegistrator())
 
 		stubs.SetEnv("WERF_TMP_DIR", GinkgoT().TempDir())
 		stubs.SetEnv("WERF_HOME", GinkgoT().TempDir())
@@ -32,6 +33,7 @@ var _ = Describe("context pin dir", func() {
 	It("is collected by the tmp GC when orphaned by a killed process", func(ctx SpecContext) {
 		stubs := gostub.New()
 		defer stubs.Reset()
+		stubs.Stub(&registrator, newGCRegistrator())
 
 		stubs.SetEnv("WERF_TMP_DIR", GinkgoT().TempDir())
 		stubs.SetEnv("WERF_HOME", GinkgoT().TempDir())
