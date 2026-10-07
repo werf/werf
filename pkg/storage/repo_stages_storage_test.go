@@ -12,6 +12,7 @@ import (
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/docker_registry"
 	registry_api "github.com/werf/werf/v2/pkg/docker_registry/api"
+	"github.com/werf/werf/v2/pkg/docker_registry/container_registry_extensions"
 	"github.com/werf/werf/v2/pkg/image"
 )
 
@@ -59,6 +60,17 @@ func (r *pushImageRegistryStub) MutateAndPushImage(ctx context.Context, _, desti
 }
 
 var _ = Describe("RepoStagesStorage", func() {
+	It("publishes the scratch stage manifest in the OCI format", func(ctx SpecContext) {
+		registry := &pushImageRegistryStub{}
+		storage := &RepoStagesStorage{RepoAddress: "registry.example/project", DockerRegistry: registry}
+
+		ref := "registry.example/project:digest-1700000000"
+		Expect(storage.PostManifest(ctx, ref, container_backend.PostManifestOpts{Labels: []string{"werf=project"}})).To(Succeed())
+		Expect(registry.pushedRef).To(Equal(ref))
+		Expect(registry.pushedOpts.Labels).To(HaveKeyWithValue("werf", "project"))
+		Expect(registry.pushedOpts.ManifestFormat).To(Equal(container_registry_extensions.ManifestFormatOCI))
+	})
+
 	It("pushes a manifest-only image to the registry in PostManifest", func(ctx SpecContext) {
 		registry := &pushImageRegistryStub{}
 		storage := &RepoStagesStorage{DockerRegistry: registry}

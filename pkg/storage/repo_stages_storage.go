@@ -17,6 +17,7 @@ import (
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/docker_registry"
 	"github.com/werf/werf/v2/pkg/docker_registry/api"
+	"github.com/werf/werf/v2/pkg/docker_registry/container_registry_extensions"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/opstats"
 	"github.com/werf/werf/v2/pkg/slug"
@@ -1314,7 +1315,12 @@ func (storage *RepoStagesStorage) PostManifest(ctx context.Context, ref string, 
 		labels[parts[0]] = parts[1]
 	}
 
-	if err := storage.DockerRegistry.PushImage(ctx, ref, &docker_registry.PushImageOptions{Labels: labels}); err != nil {
+	// The scratch stage is the base of its descendants, and the docker backend with the containerd
+	// image store keeps its layer descriptor under the OCI manifests it assembles for them.
+	if err := storage.DockerRegistry.PushImage(ctx, ref, &docker_registry.PushImageOptions{
+		Labels:         labels,
+		ManifestFormat: container_registry_extensions.ManifestFormatOCI,
+	}); err != nil {
 		return fmt.Errorf("push manifest image %s: %w", ref, err)
 	}
 

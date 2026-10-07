@@ -13,12 +13,15 @@ import (
 
 var _ partial.UncompressedLayer = (*uncompressedLayer)(nil)
 
-var EmptyUncompressedLayer = newEmptyUncompressedLayer()
+var (
+	dockerEmptyUncompressedLayer = newEmptyUncompressedLayer(types.DockerLayer)
+	ociEmptyUncompressedLayer    = newEmptyUncompressedLayer(types.OCILayer)
+)
 
 // newEmptyUncompressedLayer returns a layer whose content is a valid empty tar archive.
 // A zero-byte body is not a parseable tar: registries accept it, but consumers such as
 // dive or docker save readers fail with EOF on every image that inherits the layer.
-func newEmptyUncompressedLayer() *uncompressedLayer {
+func newEmptyUncompressedLayer(mediaType types.MediaType) *uncompressedLayer {
 	var buf bytes.Buffer
 	if err := tar.NewWriter(&buf).Close(); err != nil {
 		panic(fmt.Sprintf("write empty tar archive: %s", err))
@@ -31,7 +34,7 @@ func newEmptyUncompressedLayer() *uncompressedLayer {
 
 	return &uncompressedLayer{
 		diffID:    diffID,
-		mediaType: types.DockerLayer,
+		mediaType: mediaType,
 		content:   buf.Bytes(),
 	}
 }
