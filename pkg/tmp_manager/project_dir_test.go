@@ -25,6 +25,51 @@ var _ = Describe("project dir", func() {
 		Expect(werf.Init("", "")).To(Succeed())
 	})
 
+	DescribeTable("collects orphaned project dirs across werf versions",
+		func(prefix string, age time.Duration, dryRun bool) {
+			past := time.Now().Add(-age)
+			foreignPaths := []string{
+				"foreign-tool-project-data-123",
+				"werf-v2.78.2-docker-config-123",
+				"werf-v2.78.2-context-123",
+			}
+			for _, name := range foreignPaths {
+				path := filepath.Join(werf.GetTmpDir(), name)
+				Expect(os.Mkdir(path, 0o755)).To(Succeed())
+				Expect(os.Chtimes(path, past, past)).To(Succeed())
+			}
+			shouldRun, err := ShouldRunAutoGC()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(shouldRun).To(BeFalse())
+
+			dir := filepath.Join(werf.GetTmpDir(), prefix+"123456789")
+			Expect(os.Mkdir(dir, 0o755)).To(Succeed())
+			payload := filepath.Join(dir, "data.txt")
+			Expect(os.WriteFile(payload, []byte("payload"), 0o644)).To(Succeed())
+			Expect(os.Chtimes(dir, past, past)).To(Succeed())
+
+			shouldRun, err = ShouldRunAutoGC()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(shouldRun).To(Equal(age >= projectDirMaxAge))
+			Expect(RunGC(context.Background(), dryRun)).To(Succeed())
+			if age >= projectDirMaxAge && !dryRun {
+				Expect(dir).NotTo(BeADirectory())
+			} else {
+				Expect(payload).To(BeARegularFile())
+			}
+			for _, name := range foreignPaths {
+				Expect(filepath.Join(werf.GetTmpDir(), name)).To(BeADirectory())
+			}
+		},
+		Entry("current version", projectDirPrefix, projectDirMaxAge+time.Hour, false),
+		Entry("v2.77.2", "werf-v2.77.2-project-data-", projectDirMaxAge+time.Hour, false),
+		Entry("v2.78.2", "werf-v2.78.2-project-data-", projectDirMaxAge+time.Hour, false),
+		Entry("v2.79.2", "werf-v2.79.2-project-data-", projectDirMaxAge+time.Hour, false),
+		Entry("prerelease", "werf-v2.79.3-alpha.1-project-data-", projectDirMaxAge+time.Hour, false),
+		Entry("fresh dir from another version", "werf-v2.78.2-project-data-", projectDirMaxAge-time.Hour, false),
+		Entry("dry run", "werf-v2.78.2-project-data-", projectDirMaxAge+time.Hour, true),
+	)
+
 	It("is collected by the tmp GC when orphaned by a killed process", func() {
 		orphaned, err := CreateProjectDir(context.Background())
 		Expect(err).NotTo(HaveOccurred())
@@ -45,7 +90,7 @@ var _ = Describe("project dir", func() {
 		target := GinkgoT().TempDir()
 		Expect(os.WriteFile(filepath.Join(target, "data.txt"), []byte("payload"), 0o644)).To(Succeed())
 
-		link := filepath.Join(werf.GetTmpDir(), projectDirPrefix+"foreign")
+		link := filepath.Join(werf.GetTmpDir(), "werf-v2.78.2-project-data-123")
 		Expect(os.Symlink(target, link)).To(Succeed())
 		// os.Chtimes follows the link, so the age of the link itself is faked instead
 		stubs.Stub(&timeSince, func(time.Time) time.Duration { return projectDirMaxAge + time.Hour })
@@ -58,7 +103,7 @@ var _ = Describe("project dir", func() {
 	})
 
 	It("never descends into a filesystem mounted under the tmp dir", func() {
-		mounted := filepath.Join(werf.GetTmpDir(), projectDirPrefix+"mounted")
+		mounted := filepath.Join(werf.GetTmpDir(), "werf-v2.78.2-project-data-123")
 		Expect(os.MkdirAll(mounted, 0o755)).To(Succeed())
 		Expect(os.WriteFile(filepath.Join(mounted, "data.txt"), []byte("payload"), 0o644)).To(Succeed())
 		past := time.Now().Add(-projectDirMaxAge - time.Hour)
