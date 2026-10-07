@@ -381,6 +381,8 @@ type WorktreeDescriptor struct {
 	Path        string
 	Head        string
 	Branch      string
+	Detached    bool
+	Locked      bool
 	Prunable    bool
 	PruneReason string
 }
@@ -407,6 +409,10 @@ func GetWorkTreeList(ctx context.Context, repoDir string) ([]WorktreeDescriptor,
 			worktreeDesc.Head = strings.TrimPrefix(line, "HEAD ")
 		case strings.HasPrefix(line, "branch "):
 			worktreeDesc.Branch = strings.TrimPrefix(line, "branch ")
+		case line == "detached":
+			worktreeDesc.Detached = true
+		case line == "locked" || strings.HasPrefix(line, "locked "):
+			worktreeDesc.Locked = true
 		case strings.HasPrefix(line, "prunable "):
 			worktreeDesc.Prunable = true
 			worktreeDesc.PruneReason = strings.TrimPrefix(line, "prunable ")

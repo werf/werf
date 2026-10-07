@@ -36,6 +36,10 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 		utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "worktree", "add", "--detach", dir)
 		return dir
 	}
+	checkoutBranch := func(ctx context.Context, holder, branch string) func() {
+		utils.RunSucceedCommand(ctx, holder, "git", "checkout", "-q", branch)
+		return func() {}
+	}
 
 	BeforeEach(func(ctx SpecContext) {
 		sourceWorkTreeDir = filepath.Join(SuiteData.TestDirPath, "source")
@@ -73,33 +77,70 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 		Expect(commit).Should(Equal(sourceHeadCommit))
 	})
 
-	DescribeTable("refuses to advance a branch checked out in a live worktree",
-		func(specCtx SpecContext, holderDir func(ctx context.Context) string, afterCheckout func(dir string)) {
+	DescribeTable("refuses to advance a branch occupied by a live worktree",
+		func(specCtx SpecContext, holderDir func(ctx context.Context) string, occupy func(ctx context.Context, holder, branch string) (restore func())) {
 			ctx := logging.WithLogger(specCtx)
 
 			const branch = "held"
 			holder := holderDir(ctx)
-			utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "branch", branch, sourceHeadCommit)
-			utils.RunSucceedCommand(ctx, holder, "git", "checkout", "-q", branch)
-			afterCheckout(holder)
-			defer func() { Expect(os.Chmod(holder, 0o755)).To(Succeed()) }()
+			for _, msg := range []string{"held 1", "held 2"} {
+				gitCommitSucceed(ctx, sourceWorkTreeDir, "--allow-empty", "-m", msg)
+			}
+			utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "branch", branch)
+			utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "reset", "-q", "--hard", sourceHeadCommit)
+			restore := occupy(ctx, holder, branch)
+			defer restore()
+			branchHead := utils.SucceedCommandOutputString(ctx, sourceWorkTreeDir, "git", "rev-parse", branch)
+			sourceHead := utils.GetHeadCommit(ctx, sourceWorkTreeDir)
 
 			utils.WriteFile(filepath.Join(sourceWorkTreeDir, "uncommitted.txt"), []byte("content"))
 
-			_, err := SyncSourceWorktreeWithServiceBranch(ctx, gitDir, sourceWorkTreeDir, workTreeCacheDir, sourceHeadCommit, SyncSourceWorktreeWithServiceBranchOptions{ServiceBranch: branch})
-			Expect(err).To(MatchError(ContainSubstring("checked out")))
+			_, err := SyncSourceWorktreeWithServiceBranch(ctx, gitDir, sourceWorkTreeDir, workTreeCacheDir, sourceHead, SyncSourceWorktreeWithServiceBranchOptions{ServiceBranch: branch})
+			Expect(err).To(MatchError(ContainSubstring("in use by worktree")))
 
-			Expect(utils.SucceedCommandOutputString(ctx, sourceWorkTreeDir, "git", "rev-parse", branch)).To(Equal(sourceHeadCommit + "\n"))
-			Expect(utils.GetHeadCommit(ctx, sourceWorkTreeDir)).To(Equal(sourceHeadCommit))
+			Expect(utils.SucceedCommandOutputString(ctx, sourceWorkTreeDir, "git", "rev-parse", branch)).To(Equal(branchHead))
+			Expect(utils.GetHeadCommit(ctx, sourceWorkTreeDir)).To(Equal(sourceHead))
 			list, err := GetWorkTreeList(ctx, gitDir)
 			Expect(err).To(Succeed())
 			Expect(list).To(ContainElement(HaveField("Path", holder)))
 		},
-		Entry("the source worktree", func(context.Context) string { return sourceWorkTreeDir }, func(string) {}),
-		Entry("another user worktree", addUserWorktree, func(string) {}),
-		Entry("another user worktree whose directory is unreadable", addUserWorktree, func(dir string) {
-			Expect(os.Chmod(dir, 0o000)).To(Succeed())
-		}),
+		Entry("checked out in the source worktree", func(context.Context) string { return sourceWorkTreeDir }, checkoutBranch),
+		Entry("checked out in another worktree", addUserWorktree, checkoutBranch),
+		Entry("checked out in another worktree whose directory is unreadable", addUserWorktree,
+			func(ctx context.Context, holder, branch string) func() {
+				checkoutBranch(ctx, holder, branch)
+				Expect(os.Chmod(holder, 0o000)).To(Succeed())
+				return func() { Expect(os.Chmod(holder, 0o755)).To(Succeed()) }
+			}),
+		Entry("being bisected in another worktree", addUserWorktree,
+			func(ctx context.Context, holder, branch string) func() {
+				checkoutBranch(ctx, holder, branch)
+				utils.RunSucceedCommand(ctx, holder, "git", "bisect", "start", "HEAD", "HEAD~2")
+				return func() {}
+			}),
+		Entry("being rebased in another worktree", addUserWorktree,
+			func(ctx context.Context, holder, branch string) func() {
+				checkoutBranch(ctx, holder, branch)
+				utils.WriteFile(filepath.Join(holder, "conflict"), []byte("ours"))
+				utils.RunSucceedCommand(ctx, holder, "git", "add", "conflict")
+				gitCommitSucceed(ctx, holder, "-m", "ours")
+				utils.RunSucceedCommand(ctx, holder, "git", "branch", "onto", sourceHeadCommit)
+				utils.RunSucceedCommand(ctx, holder, "git", "checkout", "-q", "onto")
+				utils.WriteFile(filepath.Join(holder, "conflict"), []byte("theirs"))
+				utils.RunSucceedCommand(ctx, holder, "git", "add", "conflict")
+				gitCommitSucceed(ctx, holder, "-m", "theirs")
+				utils.RunSucceedCommand(ctx, holder, "git", "checkout", "-q", branch)
+				_, err := utils.RunCommand(ctx, holder, "git", "rebase", "onto")
+				Expect(err).To(HaveOccurred(), "rebase must stop on the conflict")
+				return func() {}
+			}),
+		Entry("checked out in a locked worktree whose directory is unavailable", addUserWorktree,
+			func(ctx context.Context, holder, branch string) func() {
+				checkoutBranch(ctx, holder, branch)
+				utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "worktree", "lock", holder)
+				Expect(os.Rename(holder, holder+".away")).To(Succeed())
+				return func() { Expect(os.Rename(holder+".away", holder)).To(Succeed()) }
+			}),
 	)
 
 	It("detaches a service worktree left on the service branch by an older werf instead of rejecting it", func(ctx context.Context) {
