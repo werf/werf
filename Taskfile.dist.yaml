@@ -412,7 +412,7 @@ tasks:
     cmds:
       - task: test:ginkgo
         vars:
-          paths: '{{.paths | default "./pkg ./cmd ./schemas"}}'
+          paths: '{{.paths | default "./pkg ./cmd ./schemas ./test/pkg"}}'
           parallel: "{{.parallel}}"
 
   test:unit:embedded:

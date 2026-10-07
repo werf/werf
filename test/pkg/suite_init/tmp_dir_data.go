@@ -27,11 +27,10 @@ func SetupTmpDir(tmpDir, testDirPath *string) bool {
 	BeforeEach(func() {
 		*tmpDir = utils.GetTempDir()
 		*testDirPath = *tmpDir
-	})
-
-	AfterEach(func() {
-		err := os.RemoveAll(*tmpDir)
-		Expect(err).ShouldNot(HaveOccurred())
+		DeferCleanup(func() {
+			err := os.RemoveAll(*tmpDir)
+			Expect(err).ShouldNot(HaveOccurred())
+		})
 	})
 
 	return true

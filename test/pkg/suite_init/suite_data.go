@@ -11,6 +11,8 @@ import (
 )
 
 type SuiteData struct {
+	CleanupRepositories []string
+
 	*StubsData
 	*SynchronizedSuiteCallbacksData
 	*WerfBinaryData

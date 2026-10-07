@@ -25,4 +25,5 @@ var (
 	_ = SuiteData.SetupProjectName(suite_init.NewProjectNameData(SuiteData.StubsData))
 	_ = SuiteData.SetupTmp(suite_init.NewTmpDirData())
 	_ = SuiteData.SetupK8sDockerRegistry(suite_init.NewK8sDockerRegistryData(SuiteData.ProjectNameData, SuiteData.StubsData))
+	_ = SuiteData.SetupProjectCleanup()
 )

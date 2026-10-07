@@ -3,10 +3,7 @@ package e2e_export_test
 import (
 	"testing"
 
-	. "github.com/onsi/ginkgo/v2"
-
 	"github.com/werf/werf/v3/test/pkg/suite_init"
-	"github.com/werf/werf/v3/test/pkg/utils"
 )
 
 func TestExport(t *testing.T) {
@@ -27,7 +24,5 @@ var (
 	_ = SuiteData.SetupProjectName(suite_init.NewProjectNameData(SuiteData.StubsData))
 	_ = SuiteData.SetupTmp(suite_init.NewTmpDirData())
 
-	_ = AfterEach(func(ctx SpecContext) {
-		utils.RunSucceedCommand(ctx, "", SuiteData.WerfBinPath, "host", "purge", "--force", "--project-name", SuiteData.ProjectName)
-	})
+	_ = SuiteData.SetupProjectCleanup()
 )

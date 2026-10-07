@@ -27,18 +27,9 @@ func werfRunOutputWithSpecificImage(ctx context.Context, dir, image string, extr
 	return string(output)
 }
 
-func werfHostPurge(ctx context.Context, dir string, opts liveexec.ExecCommandOptions, extraArgs ...string) error {
-	return liveexec.ExecCommand(ctx, dir, SuiteData.WerfBinPath, opts, append([]string{"host", "purge"}, extraArgs...)...)
-}
-
 var _ = Describe("Stapel imports", func() {
-	BeforeEach(func() {})
-
+	SuiteData.SetupProjectCleanup()
 	Context("importing files and directories from artifact", func() {
-		AfterEach(func(ctx SpecContext) {
-			werfHostPurge(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{}, "--force")
-		})
-
 		It("should allow importing files and directories, optionally rename files and directories and merge directories", func(ctx SpecContext) {
 			SuiteData.CommitProjectWorktree(ctx, SuiteData.ProjectName, utils.FixturePath("imports_app_1", "001"), "initial commit")
 
@@ -165,10 +156,6 @@ var _ = Describe("Stapel imports", func() {
 	})
 
 	Context("caching by import source content digest", func() {
-		AfterEach(func(ctx SpecContext) {
-			werfHostPurge(ctx, SuiteData.GetProjectWorktree(SuiteData.ProjectName), liveexec.ExecCommandOptions{}, "--force")
-		})
-
 		It("should rebuild image when import source content digest changed", func(ctx SpecContext) {
 			SuiteData.CommitProjectWorktree(ctx, SuiteData.ProjectName, utils.FixturePath("import_metadata", "001"), "initial commit")
 

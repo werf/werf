@@ -18,7 +18,7 @@ func NewStubsData() *StubsData {
 }
 
 func SetupStubs(stubs *gostub.Stubs) bool {
-	return AfterEach(func() {
-		stubs.Reset()
+	return BeforeEach(func() {
+		DeferCleanup(stubs.Reset)
 	})
 }
