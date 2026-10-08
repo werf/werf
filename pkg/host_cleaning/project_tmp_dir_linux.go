@@ -29,7 +29,10 @@ func removeProjectTmpDir(ctx context.Context, backend container_backend.Containe
 		return fmt.Errorf("stat project tmp dir %q: %w", path, err)
 	}
 	if !info.IsDir() {
-		return os.RemoveAll(path)
+		if err := os.RemoveAll(path); err != nil {
+			return fmt.Errorf("remove project tmp entry %q: %w", path, err)
+		}
+		return nil
 	}
 	if err := checkProjectTmpMounts(path); err != nil {
 		return err
@@ -37,7 +40,7 @@ func removeProjectTmpDir(ctx context.Context, backend container_backend.Containe
 	if err := projectTmpRemoveAll(path); err == nil {
 		return nil
 	} else if !errors.Is(err, fs.ErrPermission) {
-		return err
+		return fmt.Errorf("remove project tmp dir %q: %w", path, err)
 	}
 
 	stat, ok := info.Sys().(*syscall.Stat_t)

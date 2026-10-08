@@ -44,7 +44,7 @@ func RunGC(ctx context.Context, options RunGCOptions) error {
 		// Keep registration links so a retry can still find targets outside the current tmp root.
 		return err
 	}
-	return runGCForPaths(ctx, options, pathsToRemove)
+	return runGCForPaths(ctx, RunGCOptions{DryRun: options.DryRun}, pathsToRemove)
 }
 
 func runGCForPaths(ctx context.Context, options RunGCOptions, paths []string) error {
