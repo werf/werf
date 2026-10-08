@@ -224,6 +224,7 @@ var _ = Describe("submodule local object store reuse", func() {
 		Expect(updateSubmodules(ctx, superGitDir, workTreeDir)).To(Succeed())
 
 		expectFileContent(filepath.Join(workTreeDir, "mid", "leaf", "leaf.txt"), "LEAF")
+		expectSubmoduleFile(superGitDir, workTreeDir, "leaf.txt", "LEAF", "mid", "leaf")
 	})
 
 	// An already-populated submodule is not re-cloned, so it is fetched from the URL recorded in the
@@ -299,6 +300,7 @@ var _ = Describe("submodule local object store reuse", func() {
 		Expect(updateSubmodules(ctx, superGitDir, workTreeDir)).To(Succeed())
 
 		expectFileContent(filepath.Join(workTreeDir, "mid", "leaf", "leaf.txt"), "second")
+		expectSubmoduleFile(superGitDir, workTreeDir, "leaf.txt", "second", "mid", "leaf")
 	})
 
 	// GitLab CI clones submodules shallow for GIT_SUBMODULE_DEPTH. A shallow store is not a partial
