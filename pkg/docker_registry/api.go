@@ -677,9 +677,6 @@ func (api *api) writeToRemote(ctx context.Context, ref name.Reference, imageOrIn
 
 		for upd := range c {
 			switch {
-			case upd.Error != nil && errors.Is(upd.Error, io.EOF):
-				logboek.Context(ctx).Debug().LogF("(%d/%d) done pushing image %q\n", upd.Complete, upd.Total, ref.String())
-				return nil
 			case upd.Error != nil:
 				return fmt.Errorf("error pushing image: %w", upd.Error)
 			default:
