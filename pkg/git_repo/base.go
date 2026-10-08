@@ -311,7 +311,7 @@ func (repo *Base) createPatch(ctx context.Context, repoPath, gitDir, repoID, wor
 				return nil, fmt.Errorf("unable to reset file %s: %w", tmpFile, err)
 			}
 
-			if err := true_git.WithWorkTree(ctx, gitDir, workTreeCacheDir, opts.FromCommit, true_git.WithWorkTreeOptions{HasSubmodules: true}, func(workTreeDir string) error {
+			if err := true_git.WithWorkTree(ctx, gitDir, workTreeCacheDir, opts.FromCommit, true_git.WithWorkTreeOptions{HasSubmodules: true, PreserveLFSPointers: true}, func(workTreeDir string) error {
 				return nil
 			}); err != nil {
 				return nil, fmt.Errorf("unable to switch worktree to commit %q: %w", opts.FromCommit, err)

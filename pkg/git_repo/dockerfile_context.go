@@ -160,7 +160,7 @@ func (repo *Local) calculateDockerfileContextChecksum(ctx context.Context, opts 
 	}
 	var paths []string
 	selected := make(map[string]bool)
-	attributeFiles := make(map[string]bool)
+	attributeFiles := map[string]bool{".lfsconfig": true}
 	if err := result.Walk(func(entry *ls_tree.LsTreeEntry) error {
 		name := filepath.ToSlash(entry.FullFilepath)
 		paths = append(paths, name)

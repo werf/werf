@@ -47,6 +47,24 @@ The _git mapping_ configuration for a remote repository has some additional para
 
 When a fixed `tag` or `commit` is specified, werf treats the ref as immutable and maintains a shallow mirror of the remote repository (`git fetch --depth=1`) instead of fetching the full history. If the target commit is already present in the local cache, werf skips network access entirely. For `branch`, as well as when the shallow fetch is refused by the git server or the repository uses submodules, werf automatically falls back to a full-history mirror.
 
+## Git LFS
+
+werf automatically replaces Git LFS pointers with object contents in Stapel Git mappings and Dockerfile build contexts. No extra `werf.yaml` directive or `git lfs install` is needed. Install `git-lfs` on the build host; it is required only when selected files contain LFS pointers.
+
+Pointers are recognized by their committed contents, even without `filter=lfs` in `.gitattributes` or after `git lfs untrack`. Exclude pointer files that should not be materialized using `excludePaths` or `.dockerignore`.
+
+During export, only files selected by `add`, `includePaths`, `excludePaths` or `.dockerignore` are downloaded. The downloaded object's size and SHA-256 must match the committed pointer. Missing objects and unsupported scenarios fail the build instead of adding pointers to the image. Host LFS include, exclude and skip-smudge settings do not suppress materialization of selected files. For this materialization, `lfs.skipdownloaderrors` and `GIT_LFS_SKIP_DOWNLOAD_ERRORS` are disabled to preserve download errors.
+
+Preparatory checkouts for `--dev` and virtual merge retain the host's native Git filters and may request LFS objects excluded from the export.
+
+Git LFS uses native Git transport configuration, including `url.*.insteadOf` from configuration files or environment variables, credential helpers, SSH authentication and the selected commit's `.lfsconfig`. Transport settings determine where and how objects are fetched; the committed pointer determines their required contents. Ordinary Git clone, fetch, status and add retain their existing behavior.
+
+Credentials supplied for the Git repository follow native Git LFS scoping: the origin scheme and host after `insteadOf` rewriting, including other paths and same-host redirects. Explicit `basicAuth` credentials take precedence over credential helpers for that origin. A separate LFS host uses its own authentication settings.
+
+Pointer extensions and LFS files inside submodules are not supported and cause an explicit error when selected. Ordinary submodules remain supported. Custom filters that transform file contents are outside the LFS materialization contract.
+
+Automatic LFS changes Git-stage digests, non-staged Dockerfile digests and Git archive cache identities. Existing Git stages and non-staged Dockerfile images rebuild once, including projects without LFS; old pointer archives are not reused. Materialized files are cached in the resulting archive; Git LFS also uses its native object storage.
+
 ## Using git mappings
 
 ### Copying directories

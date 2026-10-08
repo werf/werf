@@ -59,6 +59,7 @@ type PatchDescriptor struct {
 func Patch(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir string, withSubmodules bool, opts PatchOptions) (*PatchDescriptor, error) {
 	var res *PatchDescriptor
 
+	workTreeCacheDir += ".lfs-v1"
 	workTreeDir := workTreeCacheDir
 
 	if workTreePoolLimit != "" {
@@ -132,7 +133,7 @@ func writePatch(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir str
 	var cmd *exec.Cmd
 
 	if withSubmodules {
-		workTreeDir, err := prepareWorkTree(ctx, gitDir, workTreeCacheDir, opts.ToCommit, withSubmodules)
+		workTreeDir, err := prepareWorkTreeWithCheckoutOptions(ctx, gitDir, workTreeCacheDir, opts.ToCommit, withSubmodules, lfsCheckoutOptions())
 		if err != nil {
 			return nil, fmt.Errorf("cannot prepare work tree in cache %s for commit %s: %w", workTreeCacheDir, opts.ToCommit, err)
 		}

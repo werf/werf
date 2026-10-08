@@ -33,12 +33,13 @@ type ArchiveOptions struct {
 	FileRenames     map[string]string // Files to rename during archiving. Git repo relative paths of original files as keys, new filenames (without base path) as values.
 	Owner           string
 	Group           string
+	LFSCredentials  *LFSCredentials
 }
 
 // TODO: 1.3 add git mapping type (dir, file, ...) to gitArchive stage digest
 func (opts ArchiveOptions) ID() string {
 	if opts.ContentChecksum != "" {
-		args := []string{"dockerfile-context-v3", opts.ContentChecksum, opts.PathScope, opts.Owner, opts.Group}
+		args := []string{"dockerfile-context-v4-lfs", opts.ContentChecksum, opts.PathScope, opts.Owner, opts.Group}
 		for _, path := range slices.Sorted(maps.Keys(opts.FileRenames)) {
 			args = append(args, path, opts.FileRenames[path])
 		}
@@ -57,17 +58,20 @@ func (opts ArchiveOptions) ID() string {
 			opts.Commit,
 			opts.PathScope,
 			opts.PathMatcher.ID(),
+			"git-lfs-v1",
 		)...,
 	)
 }
 
 func ArchiveWithSubmodules(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir string, opts ArchiveOptions) error {
+	workTreeCacheDir += ".lfs-v1"
 	return withWorkTreeCacheLock(ctx, workTreeCacheDir, func() error {
 		return writeArchive(ctx, out, gitDir, workTreeCacheDir, true, opts)
 	})
 }
 
 func Archive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir string, opts ArchiveOptions) error {
+	workTreeCacheDir += ".lfs-v1"
 	return withWorkTreeCacheLock(ctx, workTreeCacheDir, func() error {
 		return writeArchive(ctx, out, gitDir, workTreeCacheDir, false, opts)
 	})
@@ -90,10 +94,11 @@ func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir s
 		return fmt.Errorf("bad work tree cache dir %s: %w", workTreeCacheDir, err)
 	}
 
-	workTreeDir, err := prepareWorkTree(ctx, gitDir, workTreeCacheDir, opts.Commit, withSubmodules)
+	workTreeDir, err := prepareWorkTreeWithCheckoutOptions(ctx, gitDir, workTreeCacheDir, opts.Commit, withSubmodules, lfsCheckoutOptions())
 	if err != nil {
 		return fmt.Errorf("cannot prepare work tree in cache %s for commit %s: %w", workTreeCacheDir, opts.Commit, err)
 	}
+	serviceWorkTreeDir := workTreeDir
 
 	repository, err := GitOpenWithCustomWorktreeDir(gitDir, workTreeDir)
 	if err != nil {
@@ -161,13 +166,19 @@ func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir s
 		if err := indexCmd.Run(ctx); err != nil {
 			return fmt.Errorf("prepare Git context export index: %w", err)
 		}
-		cmd := NewGitCmd(ctx, cmdOpts, "-c", "core.hooksPath="+os.DevNull, "checkout-index", "--prefix="+filepath.ToSlash(exportDir)+"/", "-z", "--stdin")
+		cmd := NewGitCmd(ctx, cmdOpts, slices.Concat(lfsCheckoutOptions(), []string{"-c", "core.hooksPath=" + os.DevNull, "checkout-index", "--prefix=" + filepath.ToSlash(exportDir) + "/", "-z", "--stdin"})...)
 		cmd.Stdin = strings.NewReader(strings.Join(paths, "\x00") + "\x00")
 		if err := cmd.Run(ctx); err != nil {
 			return fmt.Errorf("export Git context files: %w", err)
 		}
 		workTreeDir = exportDir
 	}
+
+	lfsFiles, cleanupLFSFiles, err := materializeLFSFiles(ctx, repoHandle, result, serviceWorkTreeDir, opts.LFSCredentials)
+	if err != nil {
+		return err
+	}
+	defer cleanupLFSFiles()
 
 	logProcess = logboek.Context(ctx).Debug().LogProcess("ls-tree result walk (%s)", opts.PathMatcher.String())
 	logProcess.Start()
@@ -233,11 +244,15 @@ func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir s
 
 		switch gitFileMode {
 		case filemode.Regular, filemode.Executable, filemode.Deprecated:
+			fileSize := info.Size()
+			if lfsFile, ok := lfsFiles[filepath.ToSlash(lsTreeEntry.FullFilepath)]; ok {
+				absFilepath, fileSize = lfsFile.path, lfsFile.size
+			}
 			header := &tar.Header{
 				Format:     tar.FormatGNU,
 				Name:       tarEntryName,
 				Mode:       int64(gitFileMode),
-				Size:       info.Size(),
+				Size:       fileSize,
 				ModTime:    info.ModTime(),
 				AccessTime: info.ModTime(),
 				ChangeTime: info.ModTime(),

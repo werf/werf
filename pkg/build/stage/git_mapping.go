@@ -886,6 +886,7 @@ func (gm *GitMapping) GetParamshash() string {
 	parts = append(parts, gm.Tag)
 	parts = append(parts, ":::")
 	parts = append(parts, gm.Commit)
+	parts = append(parts, ":::git-lfs-v1")
 
 	for _, part := range parts {
 		_, err = hash.Write([]byte(part))
