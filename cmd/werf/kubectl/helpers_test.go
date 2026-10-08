@@ -13,9 +13,26 @@ import (
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
 	"k8s.io/kubectl/pkg/cmd"
+
+	"github.com/werf/werf/v2/cmd/werf/common/templates"
 )
 
 func TestMain(m *testing.M) {
+	if os.Getenv("WERF_TEST_KUBECTL_CONFIG") == "1" {
+		command := NewCmd(context.Background())
+		usage := templates.UsageLine(command)
+		if err := command.ParseFlags(os.Args[2:]); err != nil {
+			panic(err)
+		}
+		if err := json.NewEncoder(os.Stdout).Encode([]string{
+			command.Flag("context").Value.String(),
+			command.Flag("insecure-skip-tls-verify").Value.String(),
+			usage,
+		}); err != nil {
+			panic(err)
+		}
+		os.Exit(0)
+	}
 	if os.Getenv("WERF_TEST_KUBECTL_COMMAND") == "1" {
 		if strings.HasPrefix(filepath.Base(os.Args[0]), "kubectl-") {
 			if err := json.NewEncoder(os.Stdout).Encode(os.Args[1:]); err != nil {
