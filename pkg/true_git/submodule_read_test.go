@@ -17,6 +17,7 @@ var _ = ginkgo.DescribeTable("read reused nested submodules",
 		setEnvForSpec("WERF_TMP_DIR", baseDir)
 		setEnvForSpec("WERF_HOME", filepath.Join(baseDir, "werf-home"))
 		gomega.Expect(werf.Init(baseDir, filepath.Join(baseDir, "werf-home"))).To(gomega.Succeed())
+		gomega.Expect(Init(ctx, Options{})).To(gomega.Succeed())
 		leafRemote := filepath.Join(baseDir, "leaf-remote")
 		gitInitRepoWithFile(ctx, leafRemote, "leaf.txt", "leaf content")
 		midRemote := filepath.Join(baseDir, "mid-remote")
