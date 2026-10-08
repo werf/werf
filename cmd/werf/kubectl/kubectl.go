@@ -57,6 +57,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupHomeDir(&commonCmdData, kubectlCmd, common.SetupHomeDirOptions{Persistent: true})
 	common.SetupTmpDir(&commonCmdData, kubectlCmd, common.SetupTmpDirOptions{Persistent: true})
 	common.SetupKubeConfigBase64(&commonCmdData, kubectlCmd)
+	kubectlCmd.Flags().AddFlagSet(kubectlCmd.PersistentFlags())
 
 	kubeConfigFlag := kubectlCmd.Flag("kubeconfig")
 	kubeConfigFlag.Usage = "Path to the kubeconfig file to use for CLI requests (default $WERF_KUBE_CONFIG, or $WERF_KUBECONFIG, or $KUBECONFIG). Ignored if kubeconfig passed as base64."
