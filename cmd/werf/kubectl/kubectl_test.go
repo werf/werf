@@ -33,7 +33,7 @@ var _ = ginkgo.DescribeTable("kubectl environment flags without installed plugin
 		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "%s", output)
 		var actual []string
 		gomega.Expect(json.Unmarshal(output, &actual)).To(gomega.Succeed())
-		gomega.Expect(actual).To(gomega.Equal(expected))
+		gomega.Expect(actual).To(gomega.Equal(append(expected, "kubectl [flags] [options]")))
 	},
 	ginkgo.Entry("defaults", "", "", []string{}, []string{"", "false"}),
 	ginkgo.Entry("context", "environment-context", "", []string{}, []string{"environment-context", "false"}),
