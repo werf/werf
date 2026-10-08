@@ -1,5 +1,20 @@
 # Changelog
 
+## [3.7.2](https://github.com/werf/werf/compare/v3.7.1...v3.7.2) (2026-10-08)
+
+
+### Bug Fixes
+
+* **build, stages:** make from:scratch images usable by buildah builds ([#7970](https://github.com/werf/werf/issues/7970)) ([292b479](https://github.com/werf/werf/commit/292b479863aba3e5d6e2cf8a0f998797670bd9a1))
+* **build:** prevent intermittent Buildah initialization failures ([#8038](https://github.com/werf/werf/issues/8038)) ([6c16c5e](https://github.com/werf/werf/commit/6c16c5ed9af246aa56bca2dd51ce045a7c53c74a))
+* **build:** stop rejecting initialized nested submodules ([#8040](https://github.com/werf/werf/issues/8040)) ([0200b89](https://github.com/werf/werf/commit/0200b8978a61fbedf00af75db74ddae56a0beae1))
+* **deploy:** pass root context from --set-root-json to templates ([#8027](https://github.com/werf/werf/issues/8027)) ([53cbba1](https://github.com/werf/werf/commit/53cbba12d8b718e92cee14857dc4f17b1f98780e))
+* **deploy:** preserve kubectl env defaults and command syntax ([#8032](https://github.com/werf/werf/issues/8032)) ([5f00809](https://github.com/werf/werf/commit/5f008094c6c7db241120e85a3880eaf093667192))
+* **deploy:** preserve release info annotations in release storage ([#8028](https://github.com/werf/werf/issues/8028)) ([18e00d3](https://github.com/werf/werf/commit/18e00d33acf811f7bc6648bd8577cf01da469f3a))
+* **deploy:** run kubectl plugins only through kubectl ([#8030](https://github.com/werf/werf/issues/8030)) ([11dd358](https://github.com/werf/werf/commit/11dd358c655cc207652aaef8c719503fe0935e87))
+* **giterminism:** preserve user worktrees in dev mode ([#7999](https://github.com/werf/werf/issues/7999)) ([cf22ac5](https://github.com/werf/werf/commit/cf22ac56296466dcb5d4c5fe1d4cac83a82b1b96))
+* **host-cleanup:** reclaim abandoned tmp data from older releases ([#8033](https://github.com/werf/werf/issues/8033)) ([875d345](https://github.com/werf/werf/commit/875d345f2349c500b2f66f8f3d3e0f660a5d9c2f))
+
 ## [3.7.1](https://github.com/werf/werf/compare/v3.7.0...v3.7.1) (2026-10-06)
 
 
