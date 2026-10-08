@@ -173,6 +173,13 @@ func prepareWorkTree(ctx context.Context, repoDir, workTreeCacheDir, commit stri
 					currentCommit = strings.TrimSpace(string(data))
 
 					if currentCommit == commit {
+						if withSubmodules {
+							if err := withRepoDirLock(ctx, repoDir, func() error {
+								return initSubmoduleConfig(ctx, repoDir, workTreeDir)
+							}); err != nil {
+								return "", fmt.Errorf("initialize cached submodule configuration: %w", err)
+							}
+						}
 						return workTreeDir, nil
 					}
 				} else {
