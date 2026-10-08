@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.81.2](https://github.com/werf/werf/compare/v2.81.1...v2.81.2) (2026-10-08)
+
+
+### Bug Fixes
+
+* **build, stages:** make from:scratch images usable by buildah builds ([#8025](https://github.com/werf/werf/issues/8025)) ([cbd1157](https://github.com/werf/werf/commit/cbd1157deaf328a901c017f1352617b08f96bcb3))
+* **build:** prevent intermittent Buildah initialization failures ([#8039](https://github.com/werf/werf/issues/8039)) ([5ba0d9d](https://github.com/werf/werf/commit/5ba0d9d6e492700af6cb4c4abd559485db815928))
+* **build:** stop rejecting initialized nested submodules ([#8037](https://github.com/werf/werf/issues/8037)) ([d139887](https://github.com/werf/werf/commit/d139887f288243a8212edc801daaf623d49e9754))
+* **deploy:** preserve kubectl env defaults and command syntax ([#8035](https://github.com/werf/werf/issues/8035)) ([cca9f53](https://github.com/werf/werf/commit/cca9f536f86602559461272ab70daa0a9296148f))
+* **deploy:** run kubectl plugins only through kubectl ([#8031](https://github.com/werf/werf/issues/8031)) ([b860ae9](https://github.com/werf/werf/commit/b860ae97895dbc9ecfc5904886b2a35da0932aaa))
+* **host-cleanup:** reclaim abandoned tmp data from older releases ([#8029](https://github.com/werf/werf/issues/8029)) ([dfc2aed](https://github.com/werf/werf/commit/dfc2aedb7fc4ce7a5361e115307f8791bb08d009))
+
 ## [2.81.1](https://github.com/werf/werf/compare/v2.81.0...v2.81.1) (2026-10-06)
 
 
