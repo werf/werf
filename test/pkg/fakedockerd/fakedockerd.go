@@ -56,7 +56,7 @@ func NewContext(ctx context.Context, daemon *Daemon) context.Context {
 // are the ones performed on the fixtures.
 type Daemon struct {
 	Containers []container.InspectResponse
-	Images map[string]image.InspectResponse
+	Images     map[string]image.InspectResponse
 
 	// AnonymousVolumes are the volume names the daemon reports as anonymous, the
 	// only ones a container removal with v=1 takes down with the container.

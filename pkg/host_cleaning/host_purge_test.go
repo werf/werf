@@ -41,7 +41,7 @@ var _ = ginkgo.Describe("HostPurge", func() {
 		})
 		daemon := &fakedockerd.Daemon{
 			Containers:       containers,
-			Images: purgeFixtureImages(),
+			Images:           purgeFixtureImages(),
 			AnonymousVolumes: []string{"vol-userdata", "vol-buildcache"},
 		}
 		dockerCtx := fakedockerd.NewContext(ctx, daemon)
