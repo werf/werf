@@ -36,6 +36,14 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 		utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "worktree", "add", "--detach", dir)
 		return dir
 	}
+	addUserWorktreeWithNewline := func(ctx context.Context) string {
+		if gitVersion.LessThan(semver.MustParse("2.36.0")) {
+			Skip("NUL-delimited worktree paths require Git >= 2.36")
+		}
+		dir := filepath.Join(SuiteData.TestDirPath, "user\nworktree")
+		utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "worktree", "add", "--detach", dir)
+		return dir
+	}
 	checkoutBranch := func(ctx context.Context, holder, branch string) func() {
 		utils.RunSucceedCommand(ctx, holder, "git", "checkout", "-q", branch)
 		return func() {}
@@ -88,24 +96,38 @@ var _ = Describe("SyncSourceWorktreeWithServiceBranch", func() {
 			}
 			utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "branch", branch)
 			utils.RunSucceedCommand(ctx, sourceWorkTreeDir, "git", "reset", "-q", "--hard", sourceHeadCommit)
+			indexPath := strings.TrimSuffix(utils.SucceedCommandOutputString(ctx, holder, "git", "rev-parse", "--git-path", "index"), "\n")
+			if !filepath.IsAbs(indexPath) {
+				indexPath = filepath.Join(holder, indexPath)
+			}
 			restore := occupy(ctx, holder, branch)
 			defer restore()
+			indexBefore, err := os.ReadFile(indexPath)
+			Expect(err).To(Succeed())
 			branchHead := utils.SucceedCommandOutputString(ctx, sourceWorkTreeDir, "git", "rev-parse", branch)
 			sourceHead := utils.GetHeadCommit(ctx, sourceWorkTreeDir)
 
 			utils.WriteFile(filepath.Join(sourceWorkTreeDir, "uncommitted.txt"), []byte("content"))
 
-			_, err := SyncSourceWorktreeWithServiceBranch(ctx, gitDir, sourceWorkTreeDir, workTreeCacheDir, sourceHead, SyncSourceWorktreeWithServiceBranchOptions{ServiceBranch: branch})
+			_, err = SyncSourceWorktreeWithServiceBranch(ctx, gitDir, sourceWorkTreeDir, workTreeCacheDir, sourceHead, SyncSourceWorktreeWithServiceBranchOptions{ServiceBranch: branch})
 			Expect(err).To(MatchError(ContainSubstring("in use by worktree")))
 
 			Expect(utils.SucceedCommandOutputString(ctx, sourceWorkTreeDir, "git", "rev-parse", branch)).To(Equal(branchHead))
 			Expect(utils.GetHeadCommit(ctx, sourceWorkTreeDir)).To(Equal(sourceHead))
+			Expect(os.ReadFile(indexPath)).To(Equal(indexBefore))
 			list, err := GetWorkTreeList(ctx, gitDir)
 			Expect(err).To(Succeed())
 			Expect(list).To(ContainElement(HaveField("Path", holder)))
 		},
 		Entry("checked out in the source worktree", func(context.Context) string { return sourceWorkTreeDir }, checkoutBranch),
 		Entry("checked out in another worktree", addUserWorktree, checkoutBranch),
+		Entry("checked out in a worktree with a newline in its path", addUserWorktreeWithNewline, checkoutBranch),
+		Entry("being bisected in a worktree with a newline in its path", addUserWorktreeWithNewline,
+			func(ctx context.Context, holder, branch string) func() {
+				checkoutBranch(ctx, holder, branch)
+				utils.RunSucceedCommand(ctx, holder, "git", "bisect", "start", "HEAD", "HEAD~2")
+				return func() {}
+			}),
 		Entry("checked out in another worktree whose directory is unreadable", addUserWorktree,
 			func(ctx context.Context, holder, branch string) func() {
 				checkoutBranch(ctx, holder, branch)
