@@ -89,18 +89,25 @@ var _ = ginkgo.Describe("project tmp permission cleanup", func() {
 		gomega.Expect(filepath.Join(project, "cache", "payload")).To(gomega.BeARegularFile())
 	})
 
-	ginkgo.It("does not elevate deletion of another user's directory", func(ctx ginkgo.SpecContext) {
+	ginkgo.DescribeTable("does not elevate deletion of another user's directory", func(ctx ginkgo.SpecContext, rootOwner bool) {
+		owner := uint32(os.Geteuid()) + 1
+		if rootOwner {
+			if os.Geteuid() == 0 {
+				ginkgo.Skip("root is the current user")
+			}
+			owner = 0
+		}
 		stubs.Stub(&projectTmpRemoveAll, func(string) error { return fs.ErrPermission })
 		stubs.Stub(&projectTmpLstat, func(path string) (os.FileInfo, error) {
 			info, err := os.Lstat(path)
 			if err == nil && path == project {
-				info.Sys().(*syscall.Stat_t).Uid = uint32(os.Geteuid()) + 1
+				info.Sys().(*syscall.Stat_t).Uid = owner
 			}
 			return info, err
 		})
 		gomega.Expect(removeProjectTmpDir(ctx, backend, project)).To(gomega.MatchError(gomega.ContainSubstring("owner differs from current user")))
 		gomega.Expect(filepath.Join(project, "cache", "payload")).To(gomega.BeARegularFile())
-	})
+	}, ginkgo.Entry("another unprivileged user", false), ginkgo.Entry("root", true))
 
 	ginkgo.It("rejects replacement of the selected directory before backend removal", func(ctx ginkgo.SpecContext) {
 		outside := ginkgo.GinkgoT().TempDir()
@@ -135,12 +142,22 @@ var _ = ginkgo.Describe("project tmp permission cleanup", func() {
 		gomega.Expect(filepath.Join(project, "cache", "payload")).To(gomega.BeARegularFile())
 	}, ginkgo.Entry("at the selected dir", "", false), ginkgo.Entry("inside the selected dir", "/cache", false), ginkgo.Entry("inside a relative path", "/cache", true))
 
-	ginkgo.It("rejects a bind source with a writable non-sticky ancestor", func(ctx ginkgo.SpecContext) {
-		stubs.Stub(&projectTmpRemoveAll, func(string) error { return fs.ErrPermission })
-		gomega.Expect(os.Chmod(werf.GetTmpDir(), 0o777)).To(gomega.Succeed())
+	ginkgo.DescribeTable("rejects a bind source with a writable non-sticky ancestor", func(ctx ginkgo.SpecContext, mode os.FileMode) {
+		writable := filepath.Join(project, "writable")
+		gomega.Expect(os.WriteFile(writable, []byte("remove"), 0o600)).To(gomega.Succeed())
+		gomega.Expect(os.Chtimes(project, past, past)).To(gomega.Succeed())
+		stubs.Stub(&projectTmpRemoveAll, func(string) error {
+			gomega.Expect(os.Remove(writable)).To(gomega.Succeed())
+			return fs.ErrPermission
+		})
+		gomega.Expect(os.Chmod(werf.GetTmpDir(), mode)).To(gomega.Succeed())
 		gomega.Expect(removeProjectTmpDir(ctx, backend, project)).To(gomega.MatchError(gomega.ContainSubstring("writable without the sticky bit")))
 		gomega.Expect(filepath.Join(project, "cache", "payload")).To(gomega.BeARegularFile())
-	})
+		gomega.Expect(os.Chmod(werf.GetTmpDir(), 0o700)).To(gomega.Succeed())
+		shouldRun, err := tmp_manager.ShouldRunAutoGC()
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		gomega.Expect(shouldRun).To(gomega.BeTrue())
+	}, ginkgo.Entry("group writable", os.FileMode(0o775)), ginkgo.Entry("world writable", os.FileMode(0o777)))
 
 	ginkgo.It("rejects a bind source with an ancestor owned by another user", func(ctx ginkgo.SpecContext) {
 		stubs.Stub(&projectTmpRemoveAll, func(string) error { return fs.ErrPermission })
