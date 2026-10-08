@@ -272,7 +272,8 @@ func lfsSmudgeGitOptionsAndEnv(ctx context.Context, workTreeDir string, credenti
 	}
 	// The secret is passed through the environment of this process only, never through arguments.
 	helper := fmt.Sprintf(`!f() { test "$1" = get || return 0; printf 'username=%%s\npassword=%%s\n' "$%s" "$%s"; }; f`, lfsCredentialsUserEnv, lfsCredentialsSecretEnv)
-	gitOptions = append(gitOptions, "-c", fmt.Sprintf("credential.%s://%s.helper=%s", origin.Scheme, origin.Host, helper))
+	helperKey := fmt.Sprintf("credential.%s://%s.helper", origin.Scheme, origin.Host)
+	gitOptions = append(gitOptions, "-c", helperKey+"=", "-c", helperKey+"="+helper)
 	env = append(env, lfsCredentialsUserEnv+"="+credentials.Username, lfsCredentialsSecretEnv+"="+credentials.Password)
 	return gitOptions, env, nil
 }

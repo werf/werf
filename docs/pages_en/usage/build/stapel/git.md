@@ -57,7 +57,7 @@ Only files selected by `add`, `includePaths`, `excludePaths` or `.dockerignore` 
 
 Git LFS uses native Git transport configuration, including `url.*.insteadOf` from configuration files or environment variables, credential helpers, SSH authentication and the selected commit's `.lfsconfig`. Transport settings determine where and how objects are fetched; the committed pointer determines their required contents. Ordinary Git clone, fetch, status and add retain their existing behavior.
 
-Credentials supplied for the Git repository follow native Git LFS scoping: the origin scheme and host after `insteadOf` rewriting, including other paths and same-host redirects. A separate LFS host uses its own authentication settings.
+Credentials supplied for the Git repository follow native Git LFS scoping: the origin scheme and host after `insteadOf` rewriting, including other paths and same-host redirects. Explicit `basicAuth` credentials take precedence over credential helpers for that origin. A separate LFS host uses its own authentication settings.
 
 Pointer extensions and LFS files inside submodules are not supported and cause an explicit error when selected. Ordinary submodules remain supported. Custom filters that transform file contents are outside the LFS materialization contract.
 

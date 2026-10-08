@@ -221,12 +221,29 @@ var _ = ginkgo.Describe("LFS public entrypoint regressions", func() {
 				gitSucceed(ctx, repoDir, append(config, "--unset-all", "credential."+server.server.URL+".helper")...)
 				explicit = &LFSCredentials{URL: origin, Username: "lfs-user", Password: "dummy-lfs-secret"}
 			}
+			if strings.HasPrefix(credentials, "explicit-stale-") {
+				gitSucceed(ctx, repoDir, "config", "--unset-all", "credential.helper")
+				staleHelper := `!f() { test "$1" = get || return 0; printf 'username=stale-user\npassword=stale-secret\n'; }; f`
+				if credentials == "explicit-stale-global" {
+					setEnvForSpec("GIT_CONFIG_GLOBAL", filepath.Join(SuiteData.TestDirPath, "stale-credentials.gitconfig"))
+					gitSucceed(ctx, repoDir, "config", "--global", "credential.helper", staleHelper)
+				} else {
+					setEnvForSpec("GIT_CONFIG_COUNT", "1")
+					setEnvForSpec("GIT_CONFIG_KEY_0", "credential.helper")
+					setEnvForSpec("GIT_CONFIG_VALUE_0", staleHelper)
+				}
+				_, controlErr := nativeLFSTestSmudge(ctx, repoDir, "payload.bin", lfsTestPointer(content))
+				gomega.Expect(controlErr).To(gomega.HaveOccurred())
+				gomega.Expect(server.unexpectedAuthorization.Load()).To(gomega.BeTrue(), "negative control must send stale helper credentials")
+				server.unexpectedAuthorization.Store(false)
+			}
 			var output bytes.Buffer
 			err := Archive(ctx, &output, filepath.Join(repoDir, ".git"), cacheDir, ArchiveOptions{
 				Commit: gitSucceedTrimmed(ctx, repoDir, "rev-parse", "HEAD"), PathScope: "payload.bin", LFSCredentials: explicit,
 				PathMatcher: path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{}),
 			})
 			gomega.Expect(leakedAuthorization.Load()).To(gomega.BeFalse(), "origin credentials must not reach another host")
+			gomega.Expect(server.unexpectedAuthorization.Load()).To(gomega.BeFalse(), "explicit credentials must take precedence over stale helpers")
 			gomega.Expect(err).NotTo(gomega.HaveOccurred())
 			gomega.Expect(readTestTar(output.Bytes())).To(gomega.Equal(map[string]string{".": content}))
 			gomega.Expect(server.authorizedRequests.Load()).To(gomega.BeNumerically(">", 0))
@@ -240,6 +257,8 @@ var _ = ginkgo.Describe("LFS public entrypoint regressions", func() {
 		ginkgo.Entry("explicit credentials and separate download host", "explicit", "direct"),
 		ginkgo.Entry("explicit credentials and cross-host redirect", "explicit", "redirect"),
 		ginkgo.Entry("explicit credentials after environment origin rewrite", "explicit-rewrite", "direct"),
+		ginkgo.Entry("explicit credentials override a stale global helper", "explicit-stale-global", "direct"),
+		ginkgo.Entry("explicit credentials override a stale environment helper", "explicit-stale-environment", "direct"),
 	)
 
 	ginkgo.DescribeTable("keeps origin credentials away from a cross-host LFS endpoint requiring authentication",
