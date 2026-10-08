@@ -92,6 +92,28 @@ func updateSubmodules(ctx context.Context, repoDir, workTreeDir string) error {
 			if retryErr := runUpdate(nil); retryErr != nil {
 				return fmt.Errorf("submodule update command failed: %w (local object store reuse had failed with: %s)", retryErr, err)
 			}
+			return nil
+		}
+
+		if len(localURLOpts) == 0 {
+			return nil
+		}
+
+		// git writes `submodule.<name>.url` and `.active` into a repository config only when the key
+		// is not already set in any scope. With the -c overrides above it always looks set, so a
+		// nested submodule whose parent config was freshly cloned from the store ends up checked out
+		// but unregistered there, and go-git, which decides "initialized" by that very section,
+		// refuses to open it. Re-running init without the overrides writes the section exactly as a
+		// plain update would; it is idempotent and heals service worktrees populated by earlier runs.
+		// A relative .gitmodules URL resolves against the parent's remote.origin.url, which may still
+		// be the store path here: only the section's presence matters, and the sync preceding every
+		// update rewrites the URL from .gitmodules once the submodule counts as active.
+		initArgs := make([]string, 0, len(includePathOpts)+6)
+		initArgs = append(initArgs, includePathOpts...)
+		initArgs = append(initArgs, "submodule", "foreach", "--recursive", "git", "submodule", "init")
+		submInitCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: workTreeDir}, initArgs...)
+		if err := submInitCmd.Run(ctx); err != nil {
+			return fmt.Errorf("nested submodule init command failed: %w", err)
 		}
 
 		return nil

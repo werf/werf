@@ -9,6 +9,8 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"github.com/werf/werf/v3/pkg/git_repo/repo_handle"
 )
 
 var _ = Describe("include.path forwarding", func() {
@@ -154,6 +156,28 @@ var _ = Describe("submodule local object store reuse", func() {
 		Expect(string(content)).To(Equal(expected))
 	}
 
+	// go-git treats a submodule as initialized only if its parent's repository config carries the
+	// section, and werf opens the service worktree through go-git, so a checked-out but unregistered
+	// nested submodule fails every command that reads a file from a commit.
+	expectNestedSubmoduleRegistered := func(ctx context.Context, parentName, nestedName string) {
+		GinkgoHelper()
+		worktreeGitDir, _, err := resolveWorkTreeGitDirs(ctx, workTreeDir)
+		Expect(err).ToNot(HaveOccurred())
+		parentWorktreeModuleDir := filepath.Join(worktreeGitDir, "modules", parentName)
+
+		url, err := gitConfigValue(ctx, parentWorktreeModuleDir, "submodule."+nestedName+".url")
+		Expect(err).ToNot(HaveOccurred())
+		Expect(url).ToNot(BeEmpty(), "nested submodule %q is not registered in %s", nestedName, parentWorktreeModuleDir)
+		active, err := gitConfigValue(ctx, parentWorktreeModuleDir, "submodule."+nestedName+".active")
+		Expect(err).ToNot(HaveOccurred())
+		Expect(active).To(Equal("true"))
+
+		repository, err := GitOpenWithCustomWorktreeDir("", workTreeDir)
+		Expect(err).ToNot(HaveOccurred())
+		_, err = repo_handle.NewHandle(repository)
+		Expect(err).ToNot(HaveOccurred())
+	}
+
 	It("checks a submodule out from the local store when its remote is gone", func(ctx SpecContext) {
 		subRemote := filepath.Join(baseDir, "sub-remote")
 		gitInitRepoWithFile(ctx, subRemote, "file.txt", "hello")
@@ -224,6 +248,49 @@ var _ = Describe("submodule local object store reuse", func() {
 		Expect(updateSubmodules(ctx, superGitDir, workTreeDir)).To(Succeed())
 
 		expectFileContent(filepath.Join(workTreeDir, "mid", "leaf", "leaf.txt"), "LEAF")
+		expectNestedSubmoduleRegistered(ctx, "mid", "leaf")
+	})
+
+	// A service worktree populated by a werf without the nested init is reused across runs and its
+	// submodules are never re-cloned, so the next update must register what the earlier one left
+	// unregistered.
+	It("registers a nested submodule an earlier run left unregistered in a warm work tree", func(ctx SpecContext) {
+		leafRemote := filepath.Join(baseDir, "leaf-remote")
+		gitInitRepoWithFile(ctx, leafRemote, "leaf.txt", "LEAF")
+
+		midRemote := filepath.Join(baseDir, "mid-remote")
+		gitInitRepo(ctx, midRemote)
+		gitAddSubmoduleSucceed(ctx, midRemote, leafRemote, "leaf")
+		gitSucceed(ctx, midRemote, "commit", "-m", "add leaf")
+
+		gitInitRepo(ctx, superRepo)
+		gitAddSubmoduleSucceed(ctx, superRepo, midRemote, "mid")
+		gitUpdateSubmodulesSucceed(ctx, superRepo, "--init", "--recursive")
+		gitSucceed(ctx, superRepo, "commit", "-m", "add mid")
+
+		Expect(os.RemoveAll(leafRemote)).To(Succeed())
+		Expect(os.RemoveAll(midRemote)).To(Succeed())
+
+		addWorkTree(ctx, headSHA(ctx, superRepo))
+		Expect(syncSubmodules(ctx, superGitDir, workTreeDir)).To(Succeed())
+		Expect(updateSubmodules(ctx, superGitDir, workTreeDir)).To(Succeed())
+
+		worktreeGitDir, _, err := resolveWorkTreeGitDirs(ctx, workTreeDir)
+		Expect(err).ToNot(HaveOccurred())
+		midWorktreeModuleDir := filepath.Join(worktreeGitDir, "modules", "mid")
+		if url, err := gitConfigValue(ctx, midWorktreeModuleDir, "submodule.leaf.url"); err == nil && url != "" {
+			gitSucceed(ctx, midWorktreeModuleDir, "config", "--remove-section", "submodule.leaf")
+		}
+		repository, err := GitOpenWithCustomWorktreeDir("", workTreeDir)
+		Expect(err).ToNot(HaveOccurred())
+		_, err = repo_handle.NewHandle(repository)
+		Expect(err).To(MatchError(ContainSubstring("submodule not initialized")), "the spec is only meaningful while go-git refuses an unregistered submodule")
+
+		Expect(syncSubmodules(ctx, superGitDir, workTreeDir)).To(Succeed())
+		Expect(updateSubmodules(ctx, superGitDir, workTreeDir)).To(Succeed())
+
+		expectFileContent(filepath.Join(workTreeDir, "mid", "leaf", "leaf.txt"), "LEAF")
+		expectNestedSubmoduleRegistered(ctx, "mid", "leaf")
 	})
 
 	// An already-populated submodule is not re-cloned, so it is fetched from the URL recorded in the
@@ -299,6 +366,7 @@ var _ = Describe("submodule local object store reuse", func() {
 		Expect(updateSubmodules(ctx, superGitDir, workTreeDir)).To(Succeed())
 
 		expectFileContent(filepath.Join(workTreeDir, "mid", "leaf", "leaf.txt"), "second")
+		expectNestedSubmoduleRegistered(ctx, "mid", "leaf")
 	})
 
 	// GitLab CI clones submodules shallow for GIT_SUBMODULE_DEPTH. A shallow store is not a partial
