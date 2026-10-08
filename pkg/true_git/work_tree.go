@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -75,6 +76,10 @@ func getWorkTreeCacheLockTimeout() time.Duration {
 }
 
 func prepareWorkTree(ctx context.Context, repoDir, workTreeCacheDir, commit string, withSubmodules bool) (string, error) {
+	return prepareWorkTreeWithCheckoutOptions(ctx, repoDir, workTreeCacheDir, commit, withSubmodules, nil)
+}
+
+func prepareWorkTreeWithCheckoutOptions(ctx context.Context, repoDir, workTreeCacheDir, commit string, withSubmodules bool, checkoutGitOptions []string) (string, error) {
 	if err := os.MkdirAll(workTreeCacheDir, os.ModePerm); err != nil {
 		return "", fmt.Errorf("unable to create dir %s: %w", workTreeCacheDir, err)
 	}
@@ -211,7 +216,7 @@ func prepareWorkTree(ctx context.Context, repoDir, workTreeCacheDir, commit stri
 				logboek.Context(ctx).Info().LogFDetails("Current commit: %s\n", currentCommit)
 			}
 
-			return switchWorkTree(ctx, repoDir, workTreeDir, commit, withSubmodules)
+			return switchWorkTreeWithCheckoutOptions(ctx, repoDir, workTreeDir, commit, withSubmodules, checkoutGitOptions)
 		})
 	}
 
@@ -319,10 +324,14 @@ InvalidDotGit:
 }
 
 func switchWorkTree(ctx context.Context, repoDir, workTreeDir, commit string, withSubmodules bool) error {
+	return switchWorkTreeWithCheckoutOptions(ctx, repoDir, workTreeDir, commit, withSubmodules, nil)
+}
+
+func switchWorkTreeWithCheckoutOptions(ctx context.Context, repoDir, workTreeDir, commit string, withSubmodules bool, checkoutGitOptions []string) error {
 	_, err := os.Stat(workTreeDir)
 	switch {
 	case os.IsNotExist(err):
-		wtAddCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: repoDir}, "worktree", "add", "--force", "--force", "--detach", workTreeDir, commit)
+		wtAddCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: repoDir}, slices.Concat(checkoutGitOptions, []string{"worktree", "add", "--force", "--force", "--detach", workTreeDir, commit})...)
 		if err = wtAddCmd.Run(ctx); err != nil {
 			return fmt.Errorf("git worktree add command failed: %w", err)
 		}
@@ -337,13 +346,13 @@ func switchWorkTree(ctx context.Context, repoDir, workTreeDir, commit string, wi
 			return err
 		}
 
-		checkoutCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: workTreeDir}, "checkout", "--force", "--detach", commit)
+		checkoutCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: workTreeDir}, slices.Concat(checkoutGitOptions, []string{"checkout", "--force", "--detach", commit})...)
 		if err = checkoutCmd.Run(ctx); err != nil {
 			return fmt.Errorf("git checkout command failed: %w", err)
 		}
 	}
 
-	resetCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: workTreeDir}, "reset", "--hard", commit)
+	resetCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: workTreeDir}, slices.Concat(checkoutGitOptions, []string{"reset", "--hard", commit})...)
 	if err = resetCmd.Run(ctx); err != nil {
 		return fmt.Errorf("git reset command failed: %w", err)
 	}
@@ -358,7 +367,7 @@ func switchWorkTree(ctx context.Context, repoDir, workTreeDir, commit string, wi
 			if err := syncSubmodules(ctx, repoDir, workTreeDir); err != nil {
 				return fmt.Errorf("cannot sync submodules: %w", err)
 			}
-			if err = updateSubmodules(ctx, repoDir, workTreeDir); err != nil {
+			if err = updateSubmodulesWithCheckoutOptions(ctx, repoDir, workTreeDir, checkoutGitOptions); err != nil {
 				return fmt.Errorf("cannot update submodules: %w", err)
 			}
 			return nil
@@ -367,9 +376,9 @@ func switchWorkTree(ctx context.Context, repoDir, workTreeDir, commit string, wi
 			return err
 		}
 
-		submResetArgs := []string{
+		submResetArgs := slices.Concat(checkoutGitOptions, []string{
 			"--work-tree", workTreeDir, "submodule", "foreach", "--recursive",
-		}
+		})
 		submResetArgs = append(submResetArgs, append([]string{"git"}, append(getCommonGitOptions(), "reset", "--hard")...)...)
 
 		submResetCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: workTreeDir}, submResetArgs...)

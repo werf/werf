@@ -33,6 +33,10 @@ func syncSubmodules(ctx context.Context, repoDir, workTreeDir string) error {
 }
 
 func updateSubmodules(ctx context.Context, repoDir, workTreeDir string) error {
+	return updateSubmodulesWithCheckoutOptions(ctx, repoDir, workTreeDir, nil)
+}
+
+func updateSubmodulesWithCheckoutOptions(ctx context.Context, repoDir, workTreeDir string, checkoutGitOptions []string) error {
 	logProcessMsg := fmt.Sprintf("Update submodules in work tree %q", workTreeDir)
 	return logboek.Context(ctx).Info().LogProcess(logProcessMsg).DoError(func() error {
 		includePathOpts, err := getIncludePathOptions(ctx, repoDir)
@@ -58,7 +62,8 @@ func updateSubmodules(ctx context.Context, repoDir, workTreeDir string) error {
 		}
 
 		runUpdate := func(reuseOpts []string) error {
-			updateArgs := make([]string, 0, len(includePathOpts)+len(reuseOpts)+8)
+			updateArgs := make([]string, 0, len(checkoutGitOptions)+len(includePathOpts)+len(reuseOpts)+8)
+			updateArgs = append(updateArgs, checkoutGitOptions...)
 			updateArgs = append(updateArgs, includePathOpts...)
 			if len(reuseOpts) > 0 {
 				// The redirects point submodule URLs at the on-disk module store, which git reaches

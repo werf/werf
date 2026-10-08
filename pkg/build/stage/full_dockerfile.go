@@ -406,7 +406,7 @@ func (s *FullDockerfileStage) dependenciesDigest(ctx context.Context, c Conveyor
 		dependencies = append(dependencies, s.imageCacheVersion)
 	}
 
-	return util.Sha256Hash(dependencies...), nil
+	return util.Sha256Hash(append(dependencies, "git-lfs-v1")...), nil
 }
 
 func (s *FullDockerfileStage) MutateImage(_ context.Context, _ ImageMutatorPusher, _, _ *StageImage) error {

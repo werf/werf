@@ -860,6 +860,9 @@ func (repo *Remote) GetOrCreateChangedPaths(ctx context.Context, fromCommit, toC
 }
 
 func (repo *Remote) GetOrCreateArchive(ctx context.Context, opts ArchiveOptions) (Archive, error) {
+	if repo.BasicAuth != nil {
+		opts.LFSCredentials = &true_git.LFSCredentials{URL: repo.Url, Username: repo.BasicAuth.Username, Password: repo.BasicAuth.Password}
+	}
 	var res Archive
 	err := repo.withMirror(ctx, opts.Commit, func() error {
 		var err error
