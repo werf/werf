@@ -8,7 +8,6 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
-	"strings"
 	"time"
 
 	"github.com/werf/logboek"
@@ -73,7 +72,8 @@ func collectPaths() ([]string, []string, error) {
 		// Project dirs are not registered either until the command delegates the cleanup, and they
 		// hold the pinned git inputs of a build. They live directly in the tmp dir shared with
 		// everything else on the host, so only our own prefix is swept and no symlink is followed.
-		newNoFollowGCPath(werf.GetTmpDir(), projectDirPrefix, projectDirMaxAge),
+		newNoFollowGCPath(werf.GetTmpDir(), "werf-*-project-data-*", projectDirMaxAge),
+		newNoFollowGCPath(werf.GetTmpDir(), "werf-project-data-*", projectDirMaxAge),
 	}
 
 	dirSlices := make([][]string, 0, len(gcPathList))
@@ -91,12 +91,12 @@ func collectPaths() ([]string, []string, error) {
 	return slices.Concat(dirSlices...), slices.Concat(symlinkSlices...), nil
 }
 
-// listDirAndFollowSymlinks returns list of dirs and symlinks. With a non-empty namePrefix only
-// entries carrying it are collected, which is what makes a dir shared with foreign files sweepable.
+// listDirAndFollowSymlinks returns list of dirs and symlinks. With a non-empty namePattern only
+// matching entries are collected, which is what makes a dir shared with foreign files sweepable.
 // Symlink targets are collected only for registry dirs, where werf itself wrote the links; sweeping
 // a dir werf does not own must never delete whatever a foreign link happens to point at.
 func listDirAndFollowSymlinks(gcPathItem gcPath) ([]string, []string, error) {
-	dir, namePrefix, minFileAge := gcPathItem.path, gcPathItem.namePrefix, gcPathItem.keepingTime
+	dir, namePattern, minFileAge := gcPathItem.path, gcPathItem.namePattern, gcPathItem.keepingTime
 
 	dirInfo, err := os.Stat(dir)
 	if errors.Is(err, fs.ErrNotExist) {
@@ -114,8 +114,12 @@ func listDirAndFollowSymlinks(gcPathItem gcPath) ([]string, []string, error) {
 	listOfSymlinks := make([]string, 0, len(dirEntries))
 
 	for _, dirEntry := range dirEntries {
-		if !strings.HasPrefix(dirEntry.Name(), namePrefix) {
-			continue
+		if namePattern != "" {
+			if matched, err := filepath.Match(namePattern, dirEntry.Name()); err != nil {
+				return nil, nil, fmt.Errorf("match GC path pattern %q: %w", namePattern, err)
+			} else if !matched {
+				continue
+			}
 		}
 
 		info, err := dirEntry.Info()
@@ -168,24 +172,24 @@ func listDirAndFollowSymlinks(gcPathItem gcPath) ([]string, []string, error) {
 
 type gcPath struct {
 	path           string
-	namePrefix     string
+	namePattern    string
 	keepingTime    time.Duration
 	followSymlinks bool
 }
 
-func newGCPath(path, namePrefix string, keepingTime time.Duration) gcPath {
+func newGCPath(path, namePattern string, keepingTime time.Duration) gcPath {
 	return gcPath{
 		path:           path,
-		namePrefix:     namePrefix,
+		namePattern:    namePattern,
 		keepingTime:    keepingTime,
 		followSymlinks: true,
 	}
 }
 
-func newNoFollowGCPath(path, namePrefix string, keepingTime time.Duration) gcPath {
+func newNoFollowGCPath(path, namePattern string, keepingTime time.Duration) gcPath {
 	return gcPath{
 		path:        path,
-		namePrefix:  namePrefix,
+		namePattern: namePattern,
 		keepingTime: keepingTime,
 	}
 }
