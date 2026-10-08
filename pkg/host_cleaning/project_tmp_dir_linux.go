@@ -11,6 +11,7 @@ import (
 
 	"github.com/moby/sys/mountinfo"
 	"github.com/samber/lo"
+	"golang.org/x/sys/unix"
 
 	"github.com/werf/werf/v3/pkg/container_backend"
 )
@@ -63,6 +64,9 @@ func removeProjectTmpDir(ctx context.Context, backend container_backend.Containe
 	if !currentInfo.IsDir() || !os.SameFile(info, currentInfo) {
 		return fmt.Errorf("project tmp dir %q changed before removal", path)
 	}
+	if err := restoreProjectTmpAge(canonical, info); err != nil {
+		return err
+	}
 	if err := checkProjectTmpParents(canonical); err != nil {
 		return err
 	}
@@ -78,13 +82,33 @@ func removeProjectTmpDir(ctx context.Context, backend container_backend.Containe
 	})
 	if len(dirs) > 0 {
 		if err := backend.RemoveHostDirs(ctx, canonical, dirs); err != nil {
-			return errors.Join(fmt.Errorf("remove project tmp dir %q with backend: %w", canonical, err), os.Chtimes(canonical, info.ModTime(), info.ModTime()))
+			return errors.Join(fmt.Errorf("remove project tmp dir %q with backend: %w", canonical, err), restoreProjectTmpAge(canonical, info))
 		}
 	}
 	if err := os.Remove(canonical); err != nil {
-		return errors.Join(fmt.Errorf("remove emptied project tmp dir %q: %w", canonical, err), os.Chtimes(canonical, info.ModTime(), info.ModTime()))
+		return errors.Join(fmt.Errorf("remove emptied project tmp dir %q: %w", canonical, err), restoreProjectTmpAge(canonical, info))
 	}
 	return nil
+}
+
+func restoreProjectTmpAge(path string, info os.FileInfo) error {
+	file, err := os.OpenFile(path, unix.O_PATH|unix.O_NOFOLLOW|unix.O_DIRECTORY, 0)
+	if err != nil {
+		return fmt.Errorf("open project tmp dir %q to restore age: %w", path, err)
+	}
+	currentInfo, err := file.Stat()
+	if err != nil {
+		return errors.Join(fmt.Errorf("stat project tmp dir %q to restore age: %w", path, err), file.Close())
+	}
+	if !os.SameFile(info, currentInfo) {
+		return errors.Join(fmt.Errorf("project tmp dir %q changed before restoring age", path), file.Close())
+	}
+	// Use the opened inode even when an unsafe ancestor is replaced.
+	err = os.Chtimes(fmt.Sprintf("/proc/self/fd/%d", file.Fd()), info.ModTime(), info.ModTime())
+	if err != nil {
+		err = fmt.Errorf("restore project tmp dir %q age: %w", path, err)
+	}
+	return errors.Join(err, file.Close())
 }
 
 func checkProjectTmpParents(path string) error {

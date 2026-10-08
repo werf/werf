@@ -10,6 +10,8 @@ import (
 	"slices"
 	"time"
 
+	"github.com/samber/lo"
+
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v3/pkg/werf"
 )
@@ -40,14 +42,18 @@ func RunGC(ctx context.Context, options RunGCOptions) error {
 		return fmt.Errorf("collect paths: %w", err)
 	}
 
-	if err := runGCForPaths(ctx, options, projectDirsToRemove); err != nil {
-		// Keep registration links so a retry can still find targets outside the current tmp root.
-		return err
-	}
-	return runGCForPaths(ctx, RunGCOptions{DryRun: options.DryRun}, pathsToRemove)
+	failed, dirsErr := runGCForPaths(ctx, options, projectDirsToRemove)
+	// Preserve only links needed to retry failed targets outside the current tmp root.
+	linksToRemove := lo.Filter(pathsToRemove, func(link string, _ int) bool {
+		target, err := os.Readlink(link)
+		return err != nil || !slices.Contains(failed, target)
+	})
+	_, linksErr := runGCForPaths(ctx, RunGCOptions{DryRun: options.DryRun}, linksToRemove)
+	return errors.Join(dirsErr, linksErr)
 }
 
-func runGCForPaths(ctx context.Context, options RunGCOptions, paths []string) error {
+func runGCForPaths(ctx context.Context, options RunGCOptions, paths []string) ([]string, error) {
+	var failed []string
 	removeErrors := make([]error, 0, len(paths))
 
 	for _, path := range paths {
@@ -62,11 +68,12 @@ func runGCForPaths(ctx context.Context, options RunGCOptions, paths []string) er
 			remove = func() error { return options.RemoveProjectDir(ctx, path) }
 		}
 		if err := remove(); err != nil {
+			failed = append(failed, path)
 			removeErrors = append(removeErrors, errors.Join(ErrPathRemoval, err))
 		}
 	}
 
-	return errors.Join(removeErrors...) // magic of errors.Join(): omit nil errors if they exist
+	return failed, errors.Join(removeErrors...)
 }
 
 func isProjectTmpDir(path string) bool {
