@@ -25,6 +25,7 @@ var _ = ginkgo.Describe("automatic Git LFS archives", func() {
 	var repoDir, cacheDir, commit string
 	ginkgo.BeforeEach(func(ctx ginkgo.SpecContext) {
 		isolateGitConfig()
+		gomega.Expect(Init(ctx, Options{})).To(gomega.Succeed())
 		setEnvForSpec("GIT_TERMINAL_PROMPT", "0")
 		setEnvForSpec("GIT_ASKPASS", "false")
 		setEnvForSpec("SSH_ASKPASS", "false")
