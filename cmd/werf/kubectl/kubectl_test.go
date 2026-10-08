@@ -21,6 +21,28 @@ func TestSuite(t *testing.T) {
 	ginkgo.RunSpecs(t, "kubectl suite")
 }
 
+var _ = ginkgo.DescribeTable("kubectl environment flags without installed plugins",
+	func(kubeContext, skipTLS string, args, expected []string) {
+		ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+		defer cancel()
+		command := exec.CommandContext(ctx, os.Args[0], append([]string{"version"}, args...)...)
+		command.Env = append(os.Environ(), "WERF_TEST_KUBECTL_CONFIG=1",
+			"WERF_SELF_INVOCATION_COMMAND=", "WERF_KUBE_CONTEXT="+kubeContext,
+			"WERF_SKIP_TLS_VERIFY_REGISTRY="+skipTLS, "PATH="+ginkgo.GinkgoT().TempDir())
+		output, err := command.CombinedOutput()
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "%s", output)
+		var actual []string
+		gomega.Expect(json.Unmarshal(output, &actual)).To(gomega.Succeed())
+		gomega.Expect(actual).To(gomega.Equal(expected))
+	},
+	ginkgo.Entry("defaults", "", "", []string{}, []string{"", "false"}),
+	ginkgo.Entry("context", "environment-context", "", []string{}, []string{"environment-context", "false"}),
+	ginkgo.Entry("TLS", "", "true", []string{}, []string{"", "true"}),
+	ginkgo.Entry("context and TLS", "environment-context", "true", []string{}, []string{"environment-context", "true"}),
+	ginkgo.Entry("explicit flags override environment", "environment-context", "true",
+		[]string{"--context=explicit-context", "--insecure-skip-tls-verify=false"}, []string{"explicit-context", "false"}),
+)
+
 var _ = ginkgo.Describe("kubectl plugin lookup", func() {
 	ginkgo.DescribeTable("pluginLookupArgs",
 		func(args []string, selfInvocationCommand string, expected []string) {
