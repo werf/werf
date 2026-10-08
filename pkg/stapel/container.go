@@ -22,52 +22,61 @@ type container struct {
 	Platform  string
 }
 
+func EnsureImage(ctx context.Context, targetPlatform string) error {
+	imageName := ImageName()
+	return werf.HostLocker().WithLock(ctx, stapelImageLockName(imageName), lockgate.AcquireOptions{Timeout: time.Second * 600}, func() error {
+		return ensureImage(ctx, imageName, targetPlatform)
+	})
+}
+
 func (c *container) Create(ctx context.Context) error {
-	imageLockName := stapelImageLockName(c.ImageName)
-	return werf.HostLocker().WithLock(ctx, imageLockName, lockgate.AcquireOptions{Timeout: time.Second * 600}, func() error {
-		name := fmt.Sprintf("--name=%s", c.Name)
-		volume := fmt.Sprintf("--volume=%s", c.Volume)
-		targetPlatform := c.Platform
-		if targetPlatform == "" {
-			targetPlatform = docker.GetDefaultPlatform()
-		}
-
-		if exist, err := docker.ImageExist(ctx, c.ImageName); err != nil {
+	return werf.HostLocker().WithLock(ctx, stapelImageLockName(c.ImageName), lockgate.AcquireOptions{Timeout: time.Second * 600}, func() error {
+		if err := ensureImage(ctx, c.ImageName, c.Platform); err != nil {
 			return err
-		} else if exist {
-			if targetPlatform != "" {
-				inspect, err := docker.ImageInspect(ctx, c.ImageName)
-				if err != nil {
-					return err
-				}
+		}
+		return docker.CliCreate(ctx, fmt.Sprintf("--name=%s", c.Name), fmt.Sprintf("--volume=%s", c.Volume), c.ImageName)
+	})
+}
 
-				actualSpec, err := platformutil.ParsePlatform(fmt.Sprintf("%s/%s", inspect.Os, inspect.Architecture))
-				if err != nil {
-					return fmt.Errorf("parse cached image platform: %w", err)
-				}
-				if inspect.Variant != "" {
-					actualSpec.Variant = inspect.Variant
-				}
+func ensureImage(ctx context.Context, imageName, targetPlatform string) error {
+	if targetPlatform == "" {
+		targetPlatform = docker.GetDefaultPlatform()
+	}
 
-				desiredSpec, err := platformutil.ParsePlatform(targetPlatform)
-				if err != nil {
-					return fmt.Errorf("parse target platform: %w", err)
-				}
-
-				if !platforms.Only(platforms.Normalize(desiredSpec)).Match(actualSpec) {
-					if err := acquireImage(ctx, c.ImageName, targetPlatform); err != nil {
-						return err
-					}
-				}
-			}
-		} else {
-			if err := acquireImage(ctx, c.ImageName, targetPlatform); err != nil {
+	if exist, err := docker.ImageExist(ctx, imageName); err != nil {
+		return err
+	} else if exist {
+		if targetPlatform != "" {
+			inspect, err := docker.ImageInspect(ctx, imageName)
+			if err != nil {
 				return err
 			}
-		}
 
-		return docker.CliCreate(ctx, name, volume, c.ImageName)
-	})
+			actualSpec, err := platformutil.ParsePlatform(fmt.Sprintf("%s/%s", inspect.Os, inspect.Architecture))
+			if err != nil {
+				return fmt.Errorf("parse cached image platform: %w", err)
+			}
+			if inspect.Variant != "" {
+				actualSpec.Variant = inspect.Variant
+			}
+
+			desiredSpec, err := platformutil.ParsePlatform(targetPlatform)
+			if err != nil {
+				return fmt.Errorf("parse target platform: %w", err)
+			}
+
+			if !platforms.Only(platforms.Normalize(desiredSpec)).Match(actualSpec) {
+				if err := acquireImage(ctx, imageName, targetPlatform); err != nil {
+					return err
+				}
+			}
+		}
+	} else {
+		if err := acquireImage(ctx, imageName, targetPlatform); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func acquireImage(ctx context.Context, imageName, targetPlatform string) error {
