@@ -199,6 +199,40 @@ var _ = ginkgo.Describe("project tmp permission cleanup", func() {
 		gomega.Expect(filepath.Join(project, "cache", "payload")).To(gomega.BeARegularFile())
 	})
 
+	ginkgo.It("preserves retry age after a partial backend failure", func(ctx ginkgo.SpecContext) {
+		stubs.Stub(&projectTmpRemoveAll, func(string) error { return fs.ErrPermission })
+		backend.EXPECT().RemoveHostDirs(ctx, project, gomock.Any()).DoAndReturn(func(context.Context, string, []string) error {
+			gomega.Expect(os.RemoveAll(filepath.Join(project, "cache"))).To(gomega.Succeed())
+			return context.DeadlineExceeded
+		})
+		gomega.Expect(errors.Is(removeProjectTmpDir(ctx, backend, project), context.DeadlineExceeded)).To(gomega.BeTrue())
+		info, err := os.Stat(project)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		gomega.Expect(info.ModTime()).To(gomega.Equal(past))
+		shouldRun, err := tmp_manager.ShouldRunAutoGC()
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		gomega.Expect(shouldRun).To(gomega.BeTrue())
+	})
+
+	ginkgo.DescribeTable("does not restore age on a replacement", func(symlink bool) {
+		info, err := os.Stat(project)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		gomega.Expect(os.Rename(project, project+"-original")).To(gomega.Succeed())
+		target := project
+		if symlink {
+			target = ginkgo.GinkgoT().TempDir()
+			gomega.Expect(os.Symlink(target, project)).To(gomega.Succeed())
+		} else {
+			gomega.Expect(os.Mkdir(project, 0o700)).To(gomega.Succeed())
+		}
+		before, err := os.Stat(target)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		gomega.Expect(restoreProjectTmpAge(project, info)).To(gomega.HaveOccurred())
+		after, err := os.Stat(target)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		gomega.Expect(after.ModTime()).To(gomega.Equal(before.ModTime()))
+	}, ginkgo.Entry("another inode", false), ginkgo.Entry("a symlink", true))
+
 	ginkgo.It("keeps a failed fallback discoverable and warns through host cleanup", func(ctx ginkgo.SpecContext) {
 		writable := filepath.Join(project, "writable")
 		gomega.Expect(os.WriteFile(writable, []byte("remove"), 0o600)).To(gomega.Succeed())
