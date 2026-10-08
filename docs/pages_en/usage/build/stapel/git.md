@@ -53,7 +53,9 @@ werf automatically replaces Git LFS pointers with object contents in Stapel Git 
 
 Pointers are recognized by their committed contents, even without `filter=lfs` in `.gitattributes` or after `git lfs untrack`. Exclude pointer files that should not be materialized using `excludePaths` or `.dockerignore`.
 
-Only files selected by `add`, `includePaths`, `excludePaths` or `.dockerignore` are downloaded. The downloaded object's size and SHA-256 must match the committed pointer. Missing objects and unsupported scenarios fail the build instead of adding pointers to the image. Host LFS include, exclude and skip-smudge settings do not suppress materialization of selected files.
+During export, only files selected by `add`, `includePaths`, `excludePaths` or `.dockerignore` are downloaded. The downloaded object's size and SHA-256 must match the committed pointer. Missing objects and unsupported scenarios fail the build instead of adding pointers to the image. Host LFS include, exclude and skip-smudge settings do not suppress materialization of selected files. For this materialization, `lfs.skipdownloaderrors` and `GIT_LFS_SKIP_DOWNLOAD_ERRORS` are disabled to preserve download errors.
+
+Preparatory checkouts for `--dev` and virtual merge retain the host's native Git filters and may request LFS objects excluded from the export.
 
 Git LFS uses native Git transport configuration, including `url.*.insteadOf` from configuration files or environment variables, credential helpers, SSH authentication and the selected commit's `.lfsconfig`. Transport settings determine where and how objects are fetched; the committed pointer determines their required contents. Ordinary Git clone, fetch, status and add retain their existing behavior.
 

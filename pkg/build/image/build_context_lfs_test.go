@@ -17,6 +17,10 @@ var _ = ginkgo.Describe("automatic LFS build context", func() {
 	ginkgo.It("exports selected objects with excluded .lfsconfig and refreshes changed pointers after warming the cache", func(ctx ginkgo.SpecContext) {
 		ginkgo.GinkgoT().Setenv("GIT_CONFIG_GLOBAL", os.DevNull)
 		ginkgo.GinkgoT().Setenv("GIT_CONFIG_SYSTEM", os.DevNull)
+		ginkgo.GinkgoT().Setenv("GIT_CONFIG_COUNT", "0")
+		ginkgo.GinkgoT().Setenv("GIT_CONFIG_PARAMETERS", "")
+		ginkgo.GinkgoT().Setenv("GIT_ATTR_SOURCE", "")
+		gomega.Expect(os.Unsetenv("GIT_ATTR_SOURCE")).To(gomega.Succeed())
 		content := "Dockerfile LFS content\x00"
 		oid := fmt.Sprintf("%x", sha256.Sum256([]byte(content)))
 		pointer := fmt.Sprintf("version https://git-lfs.github.com/spec/v1\noid sha256:%s\nsize %d\n", oid, len(content))
@@ -24,7 +28,9 @@ var _ = ginkgo.Describe("automatic LFS build context", func() {
 			"Dockerfile":          "FROM scratch\nCOPY assets/wanted.bin /payload/\n",
 			"assets/wanted.bin":   pointer,
 			"assets/excluded.bin": "version https://git-lfs.github.com/spec/v1\noid sha256:0000000000000000000000000000000000000000000000000000000000000000\nsize 7\n",
-			".dockerignore":       "assets/excluded.bin\n.lfsconfig\n",
+			".dockerignore":       "assets/excluded.bin\n.lfsconfig\nignored.txt\n",
+			".lfsconfig":          "[lfs]\n",
+			"ignored.txt":         "first\n",
 		}))
 		utils.WriteFile(filepath.Join(projectDir, ".git", "lfs", "objects", oid[:2], oid[2:4], oid), []byte(content))
 		utils.RunSucceedCommand(ctx, projectDir, "git", "remote", "add", "origin", "file://"+projectDir)
@@ -35,12 +41,25 @@ var _ = ginkgo.Describe("automatic LFS build context", func() {
 		gomega.Expect(entries).To(gomega.HaveKeyWithValue("assets/wanted.bin", content))
 		gomega.Expect(entries).NotTo(gomega.HaveKey("assets/excluded.bin"))
 
+		initialArchive, err := os.Stat(archive.Path())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		commitFiles(ctx, projectDir, map[string]string{"ignored.txt": "second\n"})
+		archive = NewBuildContextArchive(giterminismManagerOf(ctx, projectDir), ginkgo.GinkgoT().TempDir())
+		gomega.Expect(archive.Create(ctx, opts)).To(gomega.Succeed())
+		reusedArchive, err := os.Stat(archive.Path())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		gomega.Expect(os.SameFile(initialArchive, reusedArchive)).To(gomega.BeTrue(), "excluded ordinary change must reuse the cached archive")
+
 		commitFiles(ctx, projectDir, map[string]string{".lfsconfig": "[lfs]\nurl = file://" + projectDir + "\n"})
 		archive = NewBuildContextArchive(giterminismManagerOf(ctx, projectDir), ginkgo.GinkgoT().TempDir())
 		gomega.Expect(archive.Create(ctx, opts)).To(gomega.Succeed())
+		changedArchive, err := os.Stat(archive.Path())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		gomega.Expect(os.SameFile(reusedArchive, changedArchive)).To(gomega.BeFalse(), "excluded .lfsconfig must invalidate the cached archive")
 		entries = lastEntryContents(openedContextEntries(ctx, archive))
 		gomega.Expect(entries).To(gomega.HaveKeyWithValue("assets/wanted.bin", content))
 		gomega.Expect(entries).NotTo(gomega.HaveKey(".lfsconfig"))
+		gomega.Expect(entries).NotTo(gomega.HaveKey("ignored.txt"))
 		gomega.Expect(entries).NotTo(gomega.HaveKey("assets/excluded.bin"))
 
 		content = "updated Dockerfile LFS content\x00"

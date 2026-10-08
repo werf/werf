@@ -29,6 +29,7 @@ var _ = ginkgo.Describe("automatic Git LFS archives", func() {
 		setEnvForSpec("GIT_TERMINAL_PROMPT", "0")
 		setEnvForSpec("GIT_ASKPASS", "false")
 		setEnvForSpec("SSH_ASKPASS", "false")
+		setEnvForSpec("GIT_LFS_SKIP_DOWNLOAD_ERRORS", "0")
 		_, err := exec.LookPath("git-lfs")
 		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Git LFS archive specs require git-lfs")
 		repoDir = filepath.Join(SuiteData.TestDirPath, "repo")
@@ -77,14 +78,30 @@ var _ = ginkgo.Describe("automatic Git LFS archives", func() {
 		ginkgo.Entry("file scope with host selection settings", "assets/a.bin", "", nil, true),
 	)
 
-	ginkgo.It("fails for an included object unavailable on the server", func(ctx ginkgo.SpecContext) {
-		var output bytes.Buffer
-		err := Archive(ctx, &output, filepath.Join(repoDir, ".git"), cacheDir, ArchiveOptions{
-			Commit: commit, PathScope: "outside.bin", PathMatcher: path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{}),
-		})
-		gomega.Expect(err).To(gomega.HaveOccurred())
-		gomega.Expect(err.Error()).To(gomega.ContainSubstring("outside.bin"))
-	})
+	ginkgo.DescribeTable("preserves the download error for an included unavailable object",
+		func(ctx ginkgo.SpecContext, skipErrors string) {
+			switch skipErrors {
+			case "config":
+				gomega.Expect(os.WriteFile(filepath.Join(repoDir, ".lfsconfig"), []byte("[lfs]\nskipdownloaderrors = true\n"), 0o644)).To(gomega.Succeed())
+				gitSucceed(ctx, repoDir, "add", ".lfsconfig")
+				gitCommitSucceed(ctx, repoDir, "-m", "Skip native LFS download errors")
+				commit = gitSucceedTrimmed(ctx, repoDir, "rev-parse", "HEAD")
+			case "env":
+				setEnvForSpec("GIT_LFS_SKIP_DOWNLOAD_ERRORS", "1")
+			}
+			var output bytes.Buffer
+			err := Archive(ctx, &output, filepath.Join(repoDir, ".git"), cacheDir, ArchiveOptions{
+				Commit: commit, PathScope: "outside.bin", PathMatcher: path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{}),
+			})
+			gomega.Expect(err).To(gomega.HaveOccurred())
+			gomega.Expect(err.Error()).To(gomega.ContainSubstring("outside.bin"))
+			gomega.Expect(err.Error()).To(gomega.ContainSubstring("remote missing object"), "preserve the native LFS download error")
+			gomega.Expect(err.Error()).NotTo(gomega.ContainSubstring("does not match pointer size or SHA-256"))
+		},
+		ginkgo.Entry("without error suppression", ""),
+		ginkgo.Entry("with committed skipdownloaderrors", "config"),
+		ginkgo.Entry("with environment skipdownloaderrors", "env"),
+	)
 
 	ginkgo.DescribeTable("rejects successful smudge output that does not match the pointer",
 		func(ctx ginkgo.SpecContext, fakeContent string, correctOID bool) {
@@ -150,13 +167,23 @@ var _ = ginkgo.Describe("automatic Git LFS archives", func() {
 		gomega.Expect(requests.Load()).To(gomega.Equal(int32(2)))
 	})
 
-	ginkgo.It("requires git-lfs only for selected LFS pointers", func(ctx ginkgo.SpecContext) {
+	ginkgo.DescribeTable("uses native Git LFS plugin discovery only for selected pointers", func(ctx ginkgo.SpecContext, installed bool) {
 		gitPath, err := exec.LookPath("git")
 		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		lfsPath, err := exec.LookPath("git-lfs")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 		gitOnlyPath := filepath.Join(SuiteData.TestDirPath, "git-only")
+		gitExecPath := filepath.Join(SuiteData.TestDirPath, "git-exec")
 		gomega.Expect(os.Mkdir(gitOnlyPath, 0o755)).To(gomega.Succeed())
+		gomega.Expect(os.Mkdir(gitExecPath, 0o755)).To(gomega.Succeed())
 		gomega.Expect(os.Symlink(gitPath, filepath.Join(gitOnlyPath, "git"))).To(gomega.Succeed())
+		if installed {
+			gomega.Expect(os.Symlink(lfsPath, filepath.Join(gitExecPath, "git-lfs"))).To(gomega.Succeed())
+		}
 		setEnvForSpec("PATH", gitOnlyPath)
+		setEnvForSpec("GIT_EXEC_PATH", gitExecPath)
+		_, err = exec.LookPath("git-lfs")
+		gomega.Expect(err).To(gomega.HaveOccurred())
 		var output bytes.Buffer
 		opts := ArchiveOptions{Commit: commit, PathScope: ".gitattributes", PathMatcher: path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{})}
 		gomega.Expect(Archive(ctx, &output, filepath.Join(repoDir, ".git"), cacheDir, opts)).To(gomega.Succeed())
@@ -164,8 +191,16 @@ var _ = ginkgo.Describe("automatic Git LFS archives", func() {
 		opts.PathScope = "assets/a.bin"
 		output.Reset()
 		err = Archive(ctx, &output, filepath.Join(repoDir, ".git"), cacheDir, opts)
+		if installed {
+			gomega.Expect(err).NotTo(gomega.HaveOccurred(), "native Git must discover git-lfs through GIT_EXEC_PATH")
+			gomega.Expect(readTestTar(output.Bytes())).To(gomega.Equal(map[string]string{".": "real object contents\x00\xff"}))
+			return
+		}
 		gomega.Expect(err).To(gomega.MatchError(gomega.ContainSubstring("git-lfs is required")))
-	})
+	},
+		ginkgo.Entry("with git-lfs only in GIT_EXEC_PATH", true),
+		ginkgo.Entry("without git-lfs in PATH or GIT_EXEC_PATH", false),
+	)
 
 	ginkgo.It("rejects LFS pointers inside submodules", func(ctx ginkgo.SpecContext) {
 		gomega.Expect(Init(ctx, Options{})).To(gomega.Succeed())

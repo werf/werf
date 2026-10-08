@@ -11,7 +11,6 @@ import (
 	"io"
 	"net/url"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"regexp"
 	"slices"
@@ -191,7 +190,8 @@ func materializeLFSFiles(ctx context.Context, repoHandle repo_handle.Handle, res
 		return nil, noop, nil
 	}
 
-	if _, err := exec.LookPath("git-lfs"); err != nil {
+	cmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: workTreeDir}, "lfs", "version")
+	if err := cmd.Run(ctx); err != nil {
 		return nil, noop, fmt.Errorf("git-lfs is required to export Git LFS files: %w", err)
 	}
 
@@ -253,8 +253,8 @@ func lfsEntryHandle(handle repo_handle.Handle, path string) (repo_handle.Handle,
 
 func lfsSmudgeGitOptionsAndEnv(ctx context.Context, workTreeDir string, credentials *LFSCredentials) ([]string, []string, error) {
 	// Selected files must not be skipped by host or .lfsconfig fetch filters: the pointer is verified below.
-	gitOptions := []string{"-c", "lfs.fetchinclude=", "-c", "lfs.fetchexclude="}
-	env := []string{"GIT_LFS_SKIP_SMUDGE=0"}
+	gitOptions := []string{"-c", "lfs.fetchinclude=", "-c", "lfs.fetchexclude=", "-c", "lfs.skipdownloaderrors=false"}
+	env := []string{"GIT_LFS_SKIP_SMUDGE=0", "GIT_LFS_SKIP_DOWNLOAD_ERRORS=0"}
 	if credentials == nil {
 		return gitOptions, env, nil
 	}
