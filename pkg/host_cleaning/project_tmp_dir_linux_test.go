@@ -93,7 +93,7 @@ var _ = ginkgo.Describe("project tmp permission cleanup", func() {
 		stubs.Stub(&projectTmpRemoveAll, func(string) error { return fs.ErrPermission })
 		stubs.Stub(&projectTmpLstat, func(path string) (os.FileInfo, error) {
 			info, err := os.Lstat(path)
-			if err == nil {
+			if err == nil && path == project {
 				info.Sys().(*syscall.Stat_t).Uid = uint32(os.Geteuid()) + 1
 			}
 			return info, err
@@ -161,8 +161,35 @@ var _ = ginkgo.Describe("project tmp permission cleanup", func() {
 		gomega.Expect(filepath.Join(project, "cache", "payload")).To(gomega.BeARegularFile())
 	})
 
-	ginkgo.It("keeps a failed fallback discoverable and warns through host cleanup", func(ctx ginkgo.SpecContext) {
+	ginkgo.It("rechecks mounts after ordinary removal fails", func(ctx ginkgo.SpecContext) {
 		stubs.Stub(&projectTmpRemoveAll, func(string) error { return fs.ErrPermission })
+		checks := 0
+		stubs.Stub(&projectTmpMounts, func(mountinfo.FilterFunc) ([]*mountinfo.Info, error) {
+			checks++
+			if checks == 1 {
+				return nil, nil
+			}
+			return []*mountinfo.Info{{Mountpoint: filepath.Join(project, "cache")}}, nil
+		})
+		gomega.Expect(removeProjectTmpDir(ctx, backend, project)).To(gomega.MatchError(gomega.ContainSubstring("containing mountpoint")))
+		gomega.Expect(filepath.Join(project, "cache", "payload")).To(gomega.BeARegularFile())
+	})
+
+	ginkgo.It("reports a backend that returns success without removing the contents", func(ctx ginkgo.SpecContext) {
+		stubs.Stub(&projectTmpRemoveAll, func(string) error { return fs.ErrPermission })
+		backend.EXPECT().RemoveHostDirs(ctx, project, gomock.Any()).Return(nil)
+		gomega.Expect(errors.Is(removeProjectTmpDir(ctx, backend, project), syscall.ENOTEMPTY)).To(gomega.BeTrue())
+		gomega.Expect(filepath.Join(project, "cache", "payload")).To(gomega.BeARegularFile())
+	})
+
+	ginkgo.It("keeps a failed fallback discoverable and warns through host cleanup", func(ctx ginkgo.SpecContext) {
+		writable := filepath.Join(project, "writable")
+		gomega.Expect(os.WriteFile(writable, []byte("remove"), 0o600)).To(gomega.Succeed())
+		gomega.Expect(os.Chtimes(project, past, past)).To(gomega.Succeed())
+		stubs.Stub(&projectTmpRemoveAll, func(string) error {
+			gomega.Expect(os.RemoveAll(writable)).To(gomega.Succeed())
+			return fs.ErrPermission
+		})
 		failure := errors.New("backend unavailable")
 		var selected string
 		backend.EXPECT().RemoveHostDirs(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, mountDir string, _ []string) error {

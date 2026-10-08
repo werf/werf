@@ -91,5 +91,16 @@ var _ = ginkgo.Describe("project tmp removal callback", func() {
 		gomega.Expect(errors.Is(err, ErrPathRemoval)).To(gomega.BeTrue())
 		gomega.Expect(project).To(gomega.BeADirectory())
 		gomega.Expect(ordinary).NotTo(gomega.BeAnExistingFile())
+		shouldRun, err := ShouldRunAutoGC()
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		gomega.Expect(shouldRun).To(gomega.BeTrue())
+		var retried []string
+		gomega.Expect(RunGC(ctx, RunGCOptions{
+			RemoveProjectDir: func(_ context.Context, path string) error {
+				retried = append(retried, path)
+				return os.RemoveAll(path)
+			},
+		})).To(gomega.Succeed())
+		gomega.Expect(retried).To(gomega.ConsistOf(project))
 	})
 })

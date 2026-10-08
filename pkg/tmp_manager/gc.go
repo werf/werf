@@ -40,7 +40,11 @@ func RunGC(ctx context.Context, options RunGCOptions) error {
 		return fmt.Errorf("collect paths: %w", err)
 	}
 
-	return runGCForPaths(ctx, options, slices.Concat(projectDirsToRemove, pathsToRemove))
+	if err := runGCForPaths(ctx, options, projectDirsToRemove); err != nil {
+		// Keep registration links so a retry can still find targets outside the current tmp root.
+		return err
+	}
+	return runGCForPaths(ctx, options, pathsToRemove)
 }
 
 func runGCForPaths(ctx context.Context, options RunGCOptions, paths []string) error {
