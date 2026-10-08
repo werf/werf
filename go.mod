@@ -40,6 +40,7 @@ require (
 	github.com/moby/moby/api v1.56.0
 	github.com/moby/moby/client v0.6.0
 	github.com/moby/patternmatcher v0.6.1
+	github.com/moby/sys/mountinfo v0.7.2
 	github.com/onsi/ginkgo/v2 v2.33.0
 	github.com/onsi/gomega v1.43.1
 	github.com/opencontainers/go-digest v1.0.0
@@ -405,7 +406,6 @@ require (
 	github.com/moby/docker-image-spec v1.3.1 // indirect
 	github.com/moby/locker v1.0.1 // indirect
 	github.com/moby/spdystream v0.5.1 // indirect
-	github.com/moby/sys/mountinfo v0.7.2 // indirect
 	github.com/moby/sys/sequential v0.7.0 // indirect
 	github.com/moby/sys/signal v0.7.1 // indirect
 	github.com/moby/sys/symlink v0.3.0 // indirect

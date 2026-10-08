@@ -44,7 +44,7 @@ func RunGC(ctx context.Context, options RunGCOptions) error {
 		// Keep registration links so a retry can still find targets outside the current tmp root.
 		return err
 	}
-	return runGCForPaths(ctx, options, pathsToRemove)
+	return runGCForPaths(ctx, RunGCOptions{DryRun: options.DryRun}, pathsToRemove)
 }
 
 func runGCForPaths(ctx context.Context, options RunGCOptions, paths []string) error {
@@ -86,10 +86,8 @@ func collectPaths() ([]string, []string, error) {
 		newGCPath(filepath.Join(getCreatedTmpDirs(), kubeConfigsServiceDir), "", 0),
 		newGCPath(filepath.Join(getCreatedTmpDirs(), werfConfigRendersServiceDir), "", 0),
 		newGCPath(filepath.Join(getCreatedTmpDirs(), contextArchivesDir), "", 0),
+		newGCPath(getContextTmpDir(), "", 0),
 		newGCPath(filepath.Join(getCreatedTmpDirs(), contextPinsServiceDir), "", 0),
-		// A pin dir of a process killed before it delegated the cleanup is never registered, and its
-		// hard link keeps the git archive inode alive after the gitdata LRU evicted the archive. A pin
-		// lives for a single build, so anything older than the threshold is orphaned.
 		newGCPath(filepath.Join(getServiceTmpDir(), contextPinsServiceDir), "", contextPinMaxAge),
 		// Project dirs are not registered either until the command delegates the cleanup, and they
 		// hold the pinned git inputs of a build. They live directly in the tmp dir shared with
