@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Masterminds/semver"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
@@ -16,6 +17,54 @@ import (
 )
 
 var _ = Describe("Work tree helpers", func() {
+	BeforeEach(func(ctx SpecContext) {
+		Expect(Init(ctx, Options{})).To(Succeed())
+	})
+
+	DescribeTable("lists worktrees with Git before 2.36",
+		func(ctx SpecContext, mainName, linkedName, access string, wantError bool) {
+			mainDir := filepath.Join(SuiteData.TestDirPath, mainName)
+			linkedDir := filepath.Join(SuiteData.TestDirPath, linkedName)
+			Expect(os.MkdirAll(mainDir, 0o755)).To(Succeed())
+			utils.RunSucceedCommand(ctx, mainDir, "git", "init")
+			gitCommitSucceed(ctx, mainDir, "--allow-empty", "-m", "Initial commit")
+			utils.RunSucceedCommand(ctx, mainDir, "git", "worktree", "add", "--detach", linkedDir)
+			repoDir := mainDir
+			if access == "symlink" {
+				repoDir = filepath.Join(SuiteData.TestDirPath, "source-link")
+				Expect(os.Symlink(mainDir, repoDir)).To(Succeed())
+			} else if access == "relative" {
+				originalDir, err := os.Getwd()
+				Expect(err).To(Succeed())
+				DeferCleanup(func() { Expect(os.Chdir(originalDir)).To(Succeed()) })
+				Expect(os.Chdir(mainDir)).To(Succeed())
+				repoDir = "."
+			}
+
+			originalVersion := gitVersion
+			DeferCleanup(func() { gitVersion = originalVersion })
+			gitVersion = semver.MustParse("2.35.0")
+
+			list, err := GetWorkTreeList(ctx, repoDir)
+			if wantError {
+				Expect(err).To(MatchError(ContainSubstring("Git >= 2.36 required for worktree paths containing newlines")))
+				return
+			}
+			Expect(err).To(Succeed())
+			Expect(list).To(ConsistOf(
+				HaveField("Path", mainDir),
+				SatisfyAll(HaveField("Path", linkedDir), HaveField("Detached", BeTrue())),
+			))
+		},
+		Entry("ordinary paths", "main", "linked", "direct", false),
+		Entry("ordinary paths reached through a symlink", "main", "linked", "symlink", false),
+		Entry("ordinary paths reached from the current directory", "main", "linked", "relative", false),
+		Entry("newline in main path", "main\nworktree", "linked", "direct", true),
+		Entry("newline in main path reached through a symlink", "main\nworktree", "linked", "symlink", true),
+		Entry("newline in main path reached from the current directory", "main\nworktree", "linked", "relative", true),
+		Entry("newline in linked path", "main", "linked\nworktree", "direct", true),
+	)
+
 	Describe("resolveDotGitFile", func() {
 		It("parses correctly formatted dot git link file", func(ctx SpecContext) {
 			linkFile := filepath.Join(SuiteData.TestDirPath, ".git")
@@ -181,6 +230,54 @@ var _ = Describe("Work tree helpers", func() {
 			Expect(workTreeDir).To(BeADirectory())
 			Expect(filepath.Join(workTreeDir, ".git")).To(BeAnExistingFile())
 		})
+	})
+
+	When("the repository has a foreign worktree git reports as prunable", func() {
+		var mainWtDir, workTreeCacheDir, foreignWtDir string
+
+		BeforeEach(func(ctx SpecContext) {
+			mainWtDir = filepath.Join(SuiteData.TestDirPath, "main-wt")
+			workTreeCacheDir = filepath.Join(SuiteData.TestDirPath, "wt-cache")
+			foreignWtDir = filepath.Join(SuiteData.TestDirPath, "foreign-wt")
+
+			Expect(os.MkdirAll(mainWtDir, os.ModePerm)).To(Succeed())
+			utils.RunSucceedCommand(ctx, mainWtDir, "git", "-c", "init.defaultBranch=main", "init")
+			utils.RunSucceedCommand(ctx, mainWtDir, "git", "checkout", "-b", "main")
+			gitCommitSucceed(ctx, mainWtDir, "--allow-empty", "-m", "Initial commit")
+			utils.RunSucceedCommand(ctx, mainWtDir, "git", "worktree", "add", "--detach", foreignWtDir)
+
+			_, err := prepareWorkTree(ctx, mainWtDir, workTreeCacheDir, getHeadCommit(ctx, mainWtDir), false)
+			Expect(err).To(Succeed())
+		})
+
+		DescribeTable("keeps the foreign worktree registered",
+			func(ctx SpecContext, makePrunable, restore func(dir string)) {
+				makePrunable(foreignWtDir)
+				defer restore(foreignWtDir)
+
+				list, err := GetWorkTreeList(ctx, mainWtDir)
+				Expect(err).To(Succeed())
+				Expect(list).To(ContainElement(SatisfyAll(
+					HaveField("Path", foreignWtDir),
+					HaveField("Prunable", BeTrue()),
+				)), "precondition: git must report the foreign worktree as prunable")
+
+				_, err = prepareWorkTree(ctx, mainWtDir, workTreeCacheDir, getHeadCommit(ctx, mainWtDir), false)
+				Expect(err).To(Succeed())
+
+				list, err = GetWorkTreeList(ctx, mainWtDir)
+				Expect(err).To(Succeed())
+				Expect(list).To(ContainElement(HaveField("Path", foreignWtDir)))
+			},
+			Entry("when its directory was deleted", func(dir string) {
+				Expect(os.RemoveAll(dir)).To(Succeed())
+			}, func(string) {}),
+			Entry("when its directory is inaccessible", func(dir string) {
+				Expect(os.Chmod(dir, 0o000)).To(Succeed())
+			}, func(dir string) {
+				Expect(os.Chmod(dir, 0o755)).To(Succeed())
+			}),
+		)
 	})
 
 	Describe("verifyWorkTreeConsistency", func() {

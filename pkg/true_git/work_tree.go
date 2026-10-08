@@ -12,6 +12,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Masterminds/semver"
+
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/common-go/pkg/util/timestamps"
 	"github.com/werf/lockgate"
@@ -110,8 +112,6 @@ func prepareWorkTree(ctx context.Context, repoDir, workTreeCacheDir, commit stri
 		}
 
 		isWorkTreeRegistered := false
-		isWorkTreePrunable := false
-		var dirToPrune, pruneReason string
 
 		workTreeList, err := GetWorkTreeList(ctx, repoDir)
 		if err != nil {
@@ -121,20 +121,6 @@ func prepareWorkTree(ctx context.Context, repoDir, workTreeCacheDir, commit stri
 		for _, workTreeDesc := range workTreeList {
 			if filepath.ToSlash(workTreeDesc.Path) == filepath.ToSlash(resolvedWorkTreeDir) {
 				isWorkTreeRegistered = true
-			}
-			if workTreeDesc.Prunable {
-				isWorkTreePrunable = true
-				dirToPrune = workTreeDesc.Path
-				pruneReason = workTreeDesc.PruneReason
-			}
-		}
-
-		if isWorkTreePrunable {
-			logboek.Context(ctx).Default().LogFDetails("Detected prunable worktree %s due to %s\n", dirToPrune, pruneReason)
-			logboek.Context(ctx).Default().LogF("Removing invalidated work tree dir %q of repo %s\n", dirToPrune, repoDir)
-			err := RemoveWorkTree(ctx, repoDir, dirToPrune)
-			if err != nil {
-				return "", fmt.Errorf("unable to remove worktree %q: %w", dirToPrune, err)
 			}
 		}
 
@@ -404,19 +390,56 @@ type WorktreeDescriptor struct {
 	Path        string
 	Head        string
 	Branch      string
+	Detached    bool
+	Locked      bool
 	Prunable    bool
 	PruneReason string
 }
 
 func GetWorkTreeList(ctx context.Context, repoDir string) ([]WorktreeDescriptor, error) {
-	wtListCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: repoDir}, "worktree", "list", "--porcelain")
+	args := []string{"worktree", "list", "--porcelain"}
+	separator := "\x00"
+	if gitVersion.LessThan(semver.MustParse("2.36.0")) {
+		separator = "\n"
+		commonDirCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: repoDir}, "rev-parse", "--git-common-dir")
+		if err := commonDirCmd.Run(ctx); err != nil {
+			return nil, fmt.Errorf("resolve common git directory: %w", err)
+		}
+		commonDir := strings.TrimSuffix(commonDirCmd.OutBuf.String(), "\n")
+		if !filepath.IsAbs(commonDir) {
+			commonDir = filepath.Join(repoDir, commonDir)
+		}
+		commonDir, err := filepath.Abs(commonDir)
+		if err != nil {
+			return nil, fmt.Errorf("resolve absolute common git directory: %w", err)
+		}
+		commonDir, err = filepath.EvalSymlinks(commonDir)
+		if err != nil {
+			return nil, fmt.Errorf("resolve common git directory symlinks: %w", err)
+		}
+		if strings.Contains(commonDir, "\n") {
+			return nil, fmt.Errorf("Git >= 2.36 required for worktree paths containing newlines: %q", commonDir)
+		}
+		gitDirs, err := linkedWorktreeGitDirs(commonDir)
+		if err != nil {
+			return nil, err
+		}
+		for path := range gitDirs {
+			if strings.Contains(path, "\n") {
+				return nil, fmt.Errorf("Git >= 2.36 required for worktree paths containing newlines: %q", path)
+			}
+		}
+	} else {
+		args = append(args, "-z")
+	}
+	wtListCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: repoDir}, args...)
 	if err := wtListCmd.Run(ctx); err != nil {
 		return nil, fmt.Errorf("git worktree list command failed: %w", err)
 	}
 
 	var worktreeDesc *WorktreeDescriptor
 	var res []WorktreeDescriptor
-	for _, line := range strings.Split(wtListCmd.OutBuf.String(), "\n") {
+	for _, line := range strings.Split(wtListCmd.OutBuf.String(), separator) {
 		if line == "" && worktreeDesc == nil {
 			continue
 		} else if worktreeDesc == nil {
@@ -430,6 +453,10 @@ func GetWorkTreeList(ctx context.Context, repoDir string) ([]WorktreeDescriptor,
 			worktreeDesc.Head = strings.TrimPrefix(line, "HEAD ")
 		case strings.HasPrefix(line, "branch "):
 			worktreeDesc.Branch = strings.TrimPrefix(line, "branch ")
+		case line == "detached":
+			worktreeDesc.Detached = true
+		case line == "locked" || strings.HasPrefix(line, "locked "):
+			worktreeDesc.Locked = true
 		case strings.HasPrefix(line, "prunable "):
 			worktreeDesc.Prunable = true
 			worktreeDesc.PruneReason = strings.TrimPrefix(line, "prunable ")
@@ -440,9 +467,4 @@ func GetWorkTreeList(ctx context.Context, repoDir string) ([]WorktreeDescriptor,
 	}
 
 	return res, nil
-}
-
-func RemoveWorkTree(ctx context.Context, repoDir, workTreeDir string) error {
-	removeCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: repoDir}, "worktree", "remove", workTreeDir)
-	return removeCmd.Run(ctx)
 }
