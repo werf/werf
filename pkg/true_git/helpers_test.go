@@ -12,6 +12,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/werf/common-go/pkg/graceful"
+	"github.com/werf/werf/v3/pkg/git_repo/repo_handle"
 	"github.com/werf/werf/v3/test/pkg/utils"
 )
 
@@ -136,4 +137,27 @@ func gitInitRepoWithFile(ctx context.Context, dir, fileName, content string) {
 	Expect(os.WriteFile(filepath.Join(dir, fileName), []byte(content), 0o644)).To(Succeed())
 	gitSucceed(ctx, dir, "add", ".")
 	gitSucceed(ctx, dir, "commit", "-m", "content")
+}
+
+func expectSubmoduleFile(gitDir, workTreeDir, fileName, content string, submodulePaths ...string) {
+	GinkgoHelper()
+	repository, err := GitOpenWithCustomWorktreeDir(gitDir, workTreeDir)
+	Expect(err).ToNot(HaveOccurred())
+	handle, err := repo_handle.NewHandle(repository)
+	Expect(err).ToNot(HaveOccurred())
+	for _, path := range submodulePaths {
+		submodule, err := handle.Submodule(path)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(submodule.Status().Current).To(Equal(submodule.Status().Expected))
+		handle = submodule
+	}
+	head, err := handle.Repository().Head()
+	Expect(err).ToNot(HaveOccurred())
+	tree, err := handle.GetCommitTree(head.Hash())
+	Expect(err).ToNot(HaveOccurred())
+	entry, err := tree.FindEntry(fileName)
+	Expect(err).ToNot(HaveOccurred())
+	data, err := handle.ReadBlobObjectContent(entry.Hash)
+	Expect(err).ToNot(HaveOccurred())
+	Expect(string(data)).To(Equal(content))
 }
