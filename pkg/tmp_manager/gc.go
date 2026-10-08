@@ -71,6 +71,7 @@ func collectPaths() ([]string, []string, error) {
 		// hold the pinned git inputs of a build. They live directly in the tmp dir shared with
 		// everything else on the host, so only our own prefix is swept and no symlink is followed.
 		newNoFollowGCPath(werf.GetTmpDir(), "werf-*-project-data-*", projectDirMaxAge),
+		newNoFollowGCPath(werf.GetTmpDir(), "werf-project-data-*", projectDirMaxAge),
 	}
 
 	dirSlices := make([][]string, 0, len(gcPathList))

@@ -66,6 +66,9 @@ var _ = Describe("project dir", func() {
 		Entry("v2.78.2", "werf-v2.78.2-project-data-", projectDirMaxAge+time.Hour, false),
 		Entry("v2.79.2", "werf-v2.79.2-project-data-", projectDirMaxAge+time.Hour, false),
 		Entry("prerelease", "werf-v2.79.3-alpha.1-project-data-", projectDirMaxAge+time.Hour, false),
+		Entry("unversioned legacy dir", "werf-project-data-", projectDirMaxAge+time.Hour, false),
+		Entry("fresh unversioned legacy dir", "werf-project-data-", projectDirMaxAge-time.Hour, false),
+		Entry("unversioned legacy dir in dry run", "werf-project-data-", projectDirMaxAge+time.Hour, true),
 		Entry("fresh dir from another version", "werf-v2.78.2-project-data-", projectDirMaxAge-time.Hour, false),
 		Entry("dry run", "werf-v2.78.2-project-data-", projectDirMaxAge+time.Hour, true),
 	)
