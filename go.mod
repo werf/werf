@@ -506,5 +506,6 @@ replace (
 	github.com/docker/buildx => github.com/werf/3p-buildx v0.0.0-20260921140347-f09c144ec33b // temporary race fix; remove after docker/buildx#4007 merges
 	github.com/mattn/go-sqlite3 => github.com/mattn/go-sqlite3 v1.14.22 // v2.0.1+incompatible is a mistagged 2019 release bundling SQLite 3.30.1; the image blob-info cache needs sqlite_schema (SQLite >= 3.33)
 	github.com/spf13/cobra => github.com/werf/3p-cobra v0.0.0-20260403075225-552c82797324 // adds EnableErrorOnUnknownSubcommand, not yet in upstream
+	go.podman.io/storage => github.com/alexey-igrychev/container-libs/storage v1.63.1-0.20261008114302-204b1b85b362
 	oras.land/oras-go => github.com/werf/3p-oras-go v1.2.8-0.20260408140625-72dd516ce0aa // used by bundles, not maintained
 )
