@@ -20,7 +20,6 @@ jobs:
           - ${{ inputs.linuxAmd64Runner }}
         cr:
           - acr
-          - default
           - dockerhub
           - ecr
           - github
@@ -33,7 +32,7 @@ jobs:
       WERF_TEST_ACR_REGISTRY: ${{ secrets.WERF_TEST_ACR_REGISTRY }}
       WERF_TEST_ACR_USERNAME: ${{ secrets.WERF_TEST_ACR_USERNAME }}
 
-      WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_DEFAULT: 1
+      WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_DEFAULT: 0
       WERF_TEST_DEFAULT_PASSWORD: ${{ secrets.WERF_TEST_DEFAULT_PASSWORD }}
       WERF_TEST_DEFAULT_REGISTRY: ${{ secrets.WERF_TEST_DEFAULT_REGISTRY }}
       WERF_TEST_DEFAULT_USERNAME: ${{ secrets.WERF_TEST_DEFAULT_USERNAME }}
