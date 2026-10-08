@@ -368,14 +368,14 @@ func (backend *DockerServerBackend) String() string {
 
 func (backend *DockerServerBackend) RemoveHostDirs(ctx context.Context, mountDir string, dirs []string) error {
 	serviceImage, rmPath := getHostCleanupService()
-	var platformArgs []string
+	var args []string
 	if os.Getenv("WERF_HOST_CLEANUP_SERVICE_IMAGE") == "" {
 		platform := backend.GetRuntimePlatform()
 		if err := stapel.EnsureImage(ctx, platform); err != nil {
 			return fmt.Errorf("prepare stapel for host cleanup: %w", err)
 		}
 		if platform != "" {
-			platformArgs = []string{"--platform", platform}
+			args = []string{"--platform", platform}
 		}
 	}
 
@@ -388,7 +388,7 @@ func (backend *DockerServerBackend) RemoveHostDirs(ctx context.Context, mountDir
 	if err := csv.NewWriter(&mountSpec).WriteAll([][]string{{"type=bind", "source=" + mountDir, "target=" + util.ToLinuxContainerPath(mountDir)}}); err != nil {
 		return fmt.Errorf("encode host cleanup bind mount: %w", err)
 	}
-	args := append(platformArgs,
+	args = append(args,
 		"--rm",
 		"--mount", strings.TrimSuffix(mountSpec.String(), "\n"),
 		serviceImage,

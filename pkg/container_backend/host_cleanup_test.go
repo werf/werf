@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
@@ -34,14 +35,15 @@ var _ = ginkgo.Describe("host cleanup service", func() {
 		ginkgo.GinkgoT().Setenv("WERF_HOST_CLEANUP_SERVICE_IMAGE", override)
 		ginkgo.GinkgoT().Setenv("WERF_STAPEL_IMAGE_NAME", stapelName)
 		ginkgo.GinkgoT().Setenv("WERF_STAPEL_IMAGE_VERSION", stapelVersion)
-		var request struct {
+		type containerRequest struct {
 			Image      string
 			Cmd        []string
 			HostConfig struct {
 				Mounts []struct{ Type, Source, Target string }
 			}
 		}
-		inspected := false
+		requests := make(chan containerRequest, 1)
+		var inspected atomic.Bool
 		ctx, _ := dockerDaemonContext(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			defer ginkgo.GinkgoRecover()
 			w.Header().Set("Content-Type", "application/json")
@@ -52,11 +54,13 @@ var _ = ginkgo.Describe("host cleanup service", func() {
 			case strings.Contains(r.URL.Path, "/images/") && strings.HasSuffix(r.URL.Path, "/json"):
 				gomega.Expect(override).To(gomega.BeEmpty())
 				gomega.Expect(r.URL.Path).To(gomega.ContainSubstring(expectedImage))
-				inspected = true
+				inspected.Store(true)
 				_, err := io.WriteString(w, `{"Id":"sha256:1234","Os":"linux","Architecture":"amd64","Config":{}}`)
 				gomega.Expect(err).NotTo(gomega.HaveOccurred())
 			case strings.HasSuffix(r.URL.Path, "/containers/create"):
+				var request containerRequest
 				gomega.Expect(json.NewDecoder(r.Body).Decode(&request)).To(gomega.Succeed())
+				requests <- request
 				w.WriteHeader(http.StatusInternalServerError)
 				_, err := io.WriteString(w, `{"message":"cleanup create error"}`)
 				gomega.Expect(err).NotTo(gomega.HaveOccurred())
@@ -66,7 +70,9 @@ var _ = ginkgo.Describe("host cleanup service", func() {
 		}))
 		err := (&DockerServerBackend{}).RemoveHostDirs(ctx, mountDir, []string{mountDir + "/cache"})
 		gomega.Expect(err).To(gomega.MatchError(gomega.ContainSubstring("cleanup create error")))
-		gomega.Expect(inspected).To(gomega.Equal(override == ""))
+		gomega.Expect(inspected.Load()).To(gomega.Equal(override == ""))
+		var request containerRequest
+		gomega.Expect(requests).To(gomega.Receive(&request))
 		gomega.Expect(request.Image).To(gomega.Equal(expectedImage))
 		gomega.Expect(request.Cmd).To(gomega.Equal([]string{expectedCommand, "-rf", "--", mountDir + "/cache"}))
 		gomega.Expect(request.HostConfig.Mounts).To(gomega.HaveLen(1))
