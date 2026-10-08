@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.81.3](https://github.com/werf/werf/compare/v2.81.2...v2.81.3) (2026-10-08)
+
+
+### Bug Fixes
+
+* **giterminism:** preserve user worktrees in dev mode ([#8043](https://github.com/werf/werf/issues/8043)) ([dc4360b](https://github.com/werf/werf/commit/dc4360babe7cabe1fede5dcdcee92df5adaf6d11))
+
 ## [2.81.2](https://github.com/werf/werf/compare/v2.81.1...v2.81.2) (2026-10-08)
 
 
