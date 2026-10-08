@@ -1084,6 +1084,8 @@ github.com/werf/3p-buildx v0.0.0-20260921140347-f09c144ec33b h1:6kP2w50pGmyzMoz2
 github.com/werf/3p-buildx v0.0.0-20260921140347-f09c144ec33b/go.mod h1:caF6XsZtJ9OAE22LVRsl2OUz5eL+P0+cS2YrnKhuryA=
 github.com/werf/3p-cobra v0.0.0-20260403075225-552c82797324 h1:aqEM5aboMpBfsILjaxxRKhGFv9rGtNcd5YzMUDyVX+U=
 github.com/werf/3p-cobra v0.0.0-20260403075225-552c82797324/go.mod h1:7C1pvHqHw5A4vrJfjNwvOdzYu0Gml16OCs2GRiTUUS4=
+github.com/werf/3p-container-libs/storage v1.63.1-0.20261008114302-204b1b85b362 h1:m/EDLJSfSt+JX563gZyGE/uSZKu3qnItZUy8FYxM9VM=
+github.com/werf/3p-container-libs/storage v1.63.1-0.20261008114302-204b1b85b362/go.mod h1:z4Z9K+7GhKjWL/Y1O17+4f8a1KGijVeC9hr3tymhSOs=
 github.com/werf/3p-oras v0.9.1-0.20260408144000-3b8c77eb09e8 h1:QwXLtEoLw/d1Vj2Lk0KXUZA0dOE3h1n6OgONl4S6TKU=
 github.com/werf/3p-oras v0.9.1-0.20260408144000-3b8c77eb09e8/go.mod h1:XTePf8biMMCkqbuuWBZ24xOwo3hZej+BBM0uvd8aGqk=
 github.com/werf/common-go v0.0.0-20260831162604-46c3b45163be h1:r5zI64fcwZJfELi/uGgLV2YWOWx1QY9YW1yVkRba2do=
