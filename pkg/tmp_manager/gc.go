@@ -87,6 +87,9 @@ func collectPaths() ([]string, []string, error) {
 		newGCPath(filepath.Join(getCreatedTmpDirs(), werfConfigRendersServiceDir), "", 0),
 		newGCPath(filepath.Join(getCreatedTmpDirs(), contextArchivesDir), "", 0),
 		newGCPath(filepath.Join(getCreatedTmpDirs(), contextPinsServiceDir), "", 0),
+		// A pin dir of a process killed before it delegated the cleanup is never registered, and its
+		// hard link keeps the git archive inode alive after the gitdata LRU evicted the archive. A pin
+		// lives for a single build, so anything older than the threshold is orphaned.
 		newGCPath(filepath.Join(getServiceTmpDir(), contextPinsServiceDir), "", contextPinMaxAge),
 		// Project dirs are not registered either until the command delegates the cleanup, and they
 		// hold the pinned git inputs of a build. They live directly in the tmp dir shared with
