@@ -14,7 +14,7 @@ var _ = ginkgo.Describe("HostPurge", func() {
 	ginkgo.It("removes the stapel volumes of every version once nothing holds them in use", func() {
 		ctx := context.Background()
 		initWerfHomeDirs()
-		daemon := &fakedockerd.Daemon{Containers: purgeFixture()}
+		daemon := &fakedockerd.Daemon{Containers: purgeFixture(), Images: purgeFixtureImages()}
 		dockerCtx := fakedockerd.NewContext(ctx, daemon)
 
 		gomega.Expect(HostPurge(dockerCtx, newTestDockerServerBackend(), HostPurgeOptions{})).To(gomega.Succeed())
@@ -41,6 +41,7 @@ var _ = ginkgo.Describe("HostPurge", func() {
 		})
 		daemon := &fakedockerd.Daemon{
 			Containers:       containers,
+			Images: purgeFixtureImages(),
 			AnonymousVolumes: []string{"vol-userdata", "vol-buildcache"},
 		}
 		dockerCtx := fakedockerd.NewContext(ctx, daemon)
@@ -53,7 +54,7 @@ var _ = ginkgo.Describe("HostPurge", func() {
 	ginkgo.It("mutates nothing in dry run mode", func() {
 		ctx := context.Background()
 		initWerfHomeDirs()
-		daemon := &fakedockerd.Daemon{Containers: purgeFixture()}
+		daemon := &fakedockerd.Daemon{Containers: purgeFixture(), Images: purgeFixtureImages()}
 		dockerCtx := fakedockerd.NewContext(ctx, daemon)
 
 		gomega.Expect(HostPurge(dockerCtx, newTestDockerServerBackend(), HostPurgeOptions{DryRun: true})).To(gomega.Succeed())

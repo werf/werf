@@ -18,6 +18,7 @@ import (
 	"sync"
 
 	"github.com/moby/moby/api/types/container"
+	"github.com/moby/moby/api/types/image"
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
 
@@ -55,6 +56,7 @@ func NewContext(ctx context.Context, daemon *Daemon) context.Context {
 // are the ones performed on the fixtures.
 type Daemon struct {
 	Containers []container.InspectResponse
+	Images map[string]image.InspectResponse
 
 	// AnonymousVolumes are the volume names the daemon reports as anonymous, the
 	// only ones a container removal with v=1 takes down with the container.
@@ -131,7 +133,9 @@ func (d *Daemon) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case path == "/images/json":
 		d.writeJSON(w, http.StatusOK, []any{})
 	case imageInspectPath.MatchString(path):
-		d.writeError(w, http.StatusNotFound, "No such image")
+		d.inspectImage(w, imageInspectPath.FindStringSubmatch(path)[1])
+	case r.Method == http.MethodDelete && strings.HasPrefix(path, "/images/"):
+		d.removeImage(w, strings.TrimPrefix(path, "/images/"))
 	case path == "/containers/create":
 		d.createContainer(w)
 	case containerAttachPath.MatchString(path):
@@ -149,6 +153,27 @@ func (d *Daemon) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	default:
 		d.writeError(w, http.StatusNotImplemented, fmt.Sprintf("fake daemon: unexpected request %s %s", r.Method, path))
 	}
+}
+
+func (d *Daemon) inspectImage(w http.ResponseWriter, ref string) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	if image, ok := d.Images[ref]; ok {
+		d.writeJSON(w, http.StatusOK, image)
+		return
+	}
+	d.writeError(w, http.StatusNotFound, "No such image")
+}
+
+func (d *Daemon) removeImage(w http.ResponseWriter, ref string) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	if _, ok := d.Images[ref]; !ok {
+		d.writeError(w, http.StatusNotFound, "No such image")
+		return
+	}
+	delete(d.Images, ref)
+	d.writeJSON(w, http.StatusOK, []image.DeleteResponse{{Untagged: ref}})
 }
 
 func (d *Daemon) listContainers(w http.ResponseWriter, rawFilters string) {
