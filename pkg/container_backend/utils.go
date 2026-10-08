@@ -12,12 +12,12 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/ssh_agent"
+	"github.com/werf/werf/v2/pkg/stapel"
 )
 
 const (
 	SSHHostAuthSockPath      = "/run/host-services/ssh-auth.sock"
 	SSHContainerAuthSockPath = "/.werf/tmp/ssh-auth-sock"
-	hostCleanupServiceImage  = "alpine:3.14"
 )
 
 var (
@@ -87,11 +87,9 @@ func setSSHMountPoint(sshAuthSock string) (string, map[string]string) {
 	return vol, env
 }
 
-func getHostCleanupServiceImage() string {
-	imageName := hostCleanupServiceImage
-	if v := os.Getenv("WERF_HOST_CLEANUP_SERVICE_IMAGE"); v != "" {
-		imageName = v
+func getHostCleanupService() (string, string) {
+	if imageName := os.Getenv("WERF_HOST_CLEANUP_SERVICE_IMAGE"); imageName != "" {
+		return imageName, "rm"
 	}
-
-	return imageName
+	return stapel.ImageName(), stapel.RmBinPath()
 }

@@ -12,8 +12,10 @@ import (
 	"github.com/onsi/gomega"
 	"github.com/samber/lo"
 
+	"github.com/werf/werf/v2/pkg/buildah"
 	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/opstats"
+	"github.com/werf/werf/v2/test/pkg/buildahstub"
 )
 
 func testChownableOwnership() (uint32, uint32) {
@@ -82,4 +84,15 @@ func operationCount(collector *opstats.Collector, op opstats.Operation) int {
 		}
 	}
 	return 0
+}
+
+var _ buildah.Buildah = (*hostCleanupBuildah)(nil)
+
+type hostCleanupBuildah struct {
+	buildahstub.BuildahStub
+	runCommand func(context.Context, string, []string, buildah.RunCommandOpts) error
+}
+
+func (b *hostCleanupBuildah) RunCommand(ctx context.Context, container string, command []string, opts buildah.RunCommandOpts) error {
+	return b.runCommand(ctx, container, command, opts)
 }
