@@ -57,19 +57,21 @@ var _ = ginkgo.Describe("project tmp removal callback", func() {
 		gomega.Expect(filepath.Join(foreign, "data")).To(gomega.BeARegularFile())
 	}, ginkgo.Entry("cleanup", false), ginkgo.Entry("dry run", true))
 
-	ginkgo.It("limits the callback to project dirs directly inside the configured tmp dir", func(ctx ginkgo.SpecContext) {
+	ginkgo.It("uses the callback for registered projects from a previous tmp root", func(ctx ginkgo.SpecContext) {
 		ordinary := filepath.Join(werf.GetTmpDir(), "werf-v2.1.0-context-old")
 		outside := filepath.Join(ginkgo.GinkgoT().TempDir(), "werf-v2.1.0-project-data-old")
 		for _, path := range []string{ordinary, outside} {
 			gomega.Expect(os.Mkdir(path, 0o700)).To(gomega.Succeed())
 			gomega.Expect(registerPath(path, filepath.Join(getReleasedTmpDirs(), projectsServiceDir))).To(gomega.Succeed())
 		}
+		var removed []string
 		gomega.Expect(RunGC(ctx, RunGCOptions{
-			RemoveProjectDir: func(context.Context, string) error {
-				ginkgo.Fail("project removal callback received an unrelated path")
-				return nil
+			RemoveProjectDir: func(_ context.Context, path string) error {
+				removed = append(removed, path)
+				return os.RemoveAll(path)
 			},
 		})).To(gomega.Succeed())
+		gomega.Expect(removed).To(gomega.ConsistOf(outside))
 		gomega.Expect(ordinary).NotTo(gomega.BeAnExistingFile())
 		gomega.Expect(outside).NotTo(gomega.BeAnExistingFile())
 	})

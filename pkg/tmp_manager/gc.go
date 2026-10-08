@@ -66,9 +66,6 @@ func runGCForPaths(ctx context.Context, options RunGCOptions, paths []string) er
 }
 
 func isProjectTmpDir(path string) bool {
-	if filepath.Dir(path) != filepath.Clean(werf.GetTmpDir()) {
-		return false
-	}
 	for _, pattern := range []string{"werf-*-project-data-*", "werf-project-data-*"} {
 		if matched, err := filepath.Match(pattern, filepath.Base(path)); err == nil && matched {
 			return true

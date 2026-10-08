@@ -45,51 +45,71 @@ func removeProjectTmpDir(ctx context.Context, backend container_backend.Containe
 		return fmt.Errorf("remove project tmp dir %q: owner differs from current user: %w", path, fs.ErrPermission)
 	}
 
-	// A private sibling pins the bind source against replacement by another tmp user.
-	stage, err := os.MkdirTemp(filepath.Dir(path), filepath.Base(path)+"-cleanup-")
+	canonical, err := filepath.Abs(path)
 	if err != nil {
-		return fmt.Errorf("create project tmp cleanup dir: %w", err)
+		return fmt.Errorf("resolve project tmp dir %q: %w", path, err)
 	}
-	moved := filepath.Join(stage, "data")
-	if err := os.Rename(path, moved); err != nil {
-		return errors.Join(fmt.Errorf("stage project tmp dir %q: %w", path, err), os.Remove(stage))
-	}
-	if err := os.Chtimes(stage, info.ModTime(), info.ModTime()); err != nil {
-		return fmt.Errorf("preserve age of staged project tmp dir %q: %w", stage, err)
-	}
-	movedInfo, err := os.Lstat(moved)
+	canonical, err = filepath.EvalSymlinks(canonical)
 	if err != nil {
-		return fmt.Errorf("stat staged project tmp dir %q: %w", moved, err)
+		return fmt.Errorf("resolve project tmp dir %q: %w", path, err)
 	}
-	if !movedInfo.IsDir() || !os.SameFile(info, movedInfo) {
-		return fmt.Errorf("staged project tmp dir %q changed before removal", moved)
+	currentInfo, err := os.Lstat(canonical)
+	if err != nil {
+		return fmt.Errorf("stat project tmp dir %q before removal: %w", canonical, err)
 	}
-	if err := checkProjectTmpMounts(moved); err != nil {
+	if !currentInfo.IsDir() || !os.SameFile(info, currentInfo) {
+		return fmt.Errorf("project tmp dir %q changed before removal", path)
+	}
+	if err := checkProjectTmpParents(canonical); err != nil {
 		return err
 	}
-	entries, err := os.ReadDir(moved)
+	if err := checkProjectTmpMounts(canonical); err != nil {
+		return err
+	}
+	entries, err := os.ReadDir(canonical)
 	if err != nil {
-		return fmt.Errorf("read staged project tmp dir %q: %w", moved, err)
+		return fmt.Errorf("read project tmp dir %q: %w", canonical, err)
 	}
 	dirs := lo.Map(entries, func(entry os.DirEntry, _ int) string {
-		return filepath.Join(moved, entry.Name())
+		return filepath.Join(canonical, entry.Name())
 	})
 	if len(dirs) > 0 {
-		if err := backend.RemoveHostDirs(ctx, moved, dirs); err != nil {
-			return fmt.Errorf("remove staged project tmp dir %q with backend: %w", moved, err)
+		if err := backend.RemoveHostDirs(ctx, canonical, dirs); err != nil {
+			return errors.Join(fmt.Errorf("remove project tmp dir %q with backend: %w", canonical, err), os.Chtimes(canonical, info.ModTime(), info.ModTime()))
 		}
 	}
-	if err := os.Remove(moved); err != nil {
-		return fmt.Errorf("remove emptied project tmp dir %q: %w", moved, err)
-	}
-	if err := os.Remove(stage); err != nil {
-		return fmt.Errorf("remove project tmp cleanup dir %q: %w", stage, err)
+	if err := os.Remove(canonical); err != nil {
+		return errors.Join(fmt.Errorf("remove emptied project tmp dir %q: %w", canonical, err), os.Chtimes(canonical, info.ModTime(), info.ModTime()))
 	}
 	return nil
 }
 
+func checkProjectTmpParents(path string) error {
+	// A writable non-sticky ancestor lets another user replace the bind source.
+	for parent := filepath.Dir(path); ; parent = filepath.Dir(parent) {
+		info, err := projectTmpLstat(parent)
+		if err != nil {
+			return fmt.Errorf("stat project tmp parent %q: %w", parent, err)
+		}
+		stat, ok := info.Sys().(*syscall.Stat_t)
+		if !info.IsDir() || !ok || (stat.Uid != 0 && stat.Uid != uint32(os.Geteuid())) {
+			return fmt.Errorf("preserve project tmp dir %q: parent %q is not owned by root or the current user", path, parent)
+		}
+		if info.Mode().Perm()&0o022 != 0 && info.Mode()&os.ModeSticky == 0 {
+			return fmt.Errorf("preserve project tmp dir %q: parent %q is writable without the sticky bit", path, parent)
+		}
+		if parent == filepath.Dir(parent) {
+			return nil
+		}
+	}
+}
+
 func checkProjectTmpMounts(path string) error {
-	realPath, err := filepath.EvalSymlinks(path)
+	realPath, err := filepath.Abs(path)
+	if err != nil {
+		return fmt.Errorf("resolve project tmp dir %q: %w", path, err)
+	}
+	realPath, err = filepath.EvalSymlinks(realPath)
 	if err != nil {
 		return fmt.Errorf("resolve project tmp dir %q: %w", path, err)
 	}
