@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -24,12 +25,28 @@ var (
 	configFlags   *genericclioptions.ConfigFlags
 )
 
+// pluginLookupArgs turns the werf argv into the argv kubectl's plugin lookup
+// expects. kubectl drops the first element and searches PATH for
+// kubectl-<rest joined by "-">, so `werf kubectl argo rollouts get` must reach
+// it as [werf argo rollouts get] to find kubectl-argo-rollouts. A werf embedded
+// into another binary runs as `<binary> $WERF_SELF_INVOCATION_COMMAND kubectl`.
+// Any other werf command gets no arguments, which disables the lookup:
+// otherwise `werf foo` would exec a kubectl-foo binary found in PATH.
+func pluginLookupArgs(args []string, selfInvocationCommand string) []string {
+	cmdPath := append(strings.Fields(selfInvocationCommand), "kubectl")
+	if len(args) < 1+len(cmdPath) || !slices.Equal(args[1:1+len(cmdPath)], cmdPath) {
+		return args[:min(len(args), 1)]
+	}
+
+	return append([]string{args[0]}, args[1+len(cmdPath):]...)
+}
+
 func NewCmd(ctx context.Context) *cobra.Command {
 	configFlags = genericclioptions.NewConfigFlags(true).WithDeprecatedPasswordFlag()
 
 	kubectlCmd := cmd.NewDefaultKubectlCommandWithArgs(cmd.KubectlOptions{
 		PluginHandler: cmd.NewDefaultPluginHandler(plugin.ValidPluginFilenamePrefixes),
-		Arguments:     os.Args,
+		Arguments:     pluginLookupArgs(os.Args, os.Getenv("WERF_SELF_INVOCATION_COMMAND")),
 		ConfigFlags:   configFlags,
 		IOStreams:     genericclioptions.IOStreams{In: os.Stdin, Out: os.Stdout, ErrOut: os.Stderr},
 	})
