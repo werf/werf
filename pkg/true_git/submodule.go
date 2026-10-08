@@ -94,8 +94,29 @@ func updateSubmodules(ctx context.Context, repoDir, workTreeDir string) error {
 			}
 		}
 
-		return nil
+		return initSubmoduleConfig(ctx, repoDir, workTreeDir)
 	})
+}
+
+func initSubmoduleConfig(ctx context.Context, repoDir, workTreeDir string) error {
+	includePathOpts, err := getIncludePathOptions(ctx, repoDir)
+	if err != nil {
+		return err
+	}
+
+	// Temporary URL overrides can populate worktrees without persisting the registration go-git needs.
+	for _, args := range [][]string{
+		{"submodule", "init"},
+		{"submodule", "foreach", "--recursive", "git", "submodule", "init"},
+		{"submodule", "sync", "--recursive"},
+	} {
+		cmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: workTreeDir}, append(includePathOpts, args...)...)
+		if err := cmd.Run(ctx); err != nil {
+			return fmt.Errorf("git %s: %w", strings.Join(args, " "), err)
+		}
+	}
+
+	return nil
 }
 
 var submoduleReuseWarnOnce sync.Once
