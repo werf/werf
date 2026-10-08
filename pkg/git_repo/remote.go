@@ -1242,7 +1242,7 @@ func (repo *Remote) initRepoHandleBackedByWorkTree(ctx context.Context, commit s
 	}
 
 	var repoHandle repo_handle.Handle
-	if err := true_git.WithWorkTree(ctx, repo.GetClonePath(), repo.getWorkTreeCacheDir(repo.getRepoID()), commit, true_git.WithWorkTreeOptions{HasSubmodules: hasSubmodules}, func(preparedWorkTreeDir string) error {
+	if err := true_git.WithWorkTree(ctx, repo.GetClonePath(), repo.getWorkTreeCacheDir(repo.getRepoID()), commit, true_git.WithWorkTreeOptions{HasSubmodules: hasSubmodules, PreserveLFSPointers: true}, func(preparedWorkTreeDir string) error {
 		repositoryWithPreparedWorktree, err := true_git.GitOpenWithCustomWorktreeDir(repo.GetClonePath(), preparedWorkTreeDir)
 		if err != nil {
 			return err

@@ -28,10 +28,16 @@ const (
 )
 
 type WithWorkTreeOptions struct {
-	HasSubmodules bool
+	HasSubmodules       bool
+	PreserveLFSPointers bool
 }
 
 func WithWorkTree(ctx context.Context, gitDir, workTreeCacheDir, commit string, opts WithWorkTreeOptions, f func(workTreeDir string) error) error {
+	var checkoutGitOptions []string
+	if opts.PreserveLFSPointers {
+		workTreeCacheDir += ".lfs-v1"
+		checkoutGitOptions = lfsCheckoutOptions()
+	}
 	return withWorkTreeCacheLock(ctx, workTreeCacheDir, func() error {
 		var err error
 
@@ -45,7 +51,7 @@ func WithWorkTree(ctx context.Context, gitDir, workTreeCacheDir, commit string, 
 			return fmt.Errorf("bad work tree cache dir %s: %w", workTreeCacheDir, err)
 		}
 
-		workTreeDir, err := prepareWorkTree(ctx, gitDir, workTreeCacheDir, commit, opts.HasSubmodules)
+		workTreeDir, err := prepareWorkTreeWithCheckoutOptions(ctx, gitDir, workTreeCacheDir, commit, opts.HasSubmodules, checkoutGitOptions)
 		if err != nil {
 			return fmt.Errorf("cannot prepare worktree: %w", err)
 		}

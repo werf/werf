@@ -51,6 +51,8 @@ When a fixed `tag` or `commit` is specified, werf treats the ref as immutable an
 
 werf automatically replaces Git LFS pointers with object contents in Stapel Git mappings and Dockerfile build contexts. No extra `werf.yaml` directive or `git lfs install` is needed. Install `git-lfs` on the build host; it is required only when selected files contain LFS pointers.
 
+Pointers are recognized by their committed contents, even without `filter=lfs` in `.gitattributes` or after `git lfs untrack`. Exclude pointer files that should not be materialized using `excludePaths` or `.dockerignore`.
+
 Only files selected by `add`, `includePaths`, `excludePaths` or `.dockerignore` are downloaded. The downloaded object's size and SHA-256 must match the committed pointer. Missing objects and unsupported scenarios fail the build instead of adding pointers to the image. Host LFS include, exclude and skip-smudge settings do not suppress materialization of selected files.
 
 Git LFS uses native Git transport configuration, including `url.*.insteadOf` from configuration files or environment variables, credential helpers, SSH authentication and the selected commit's `.lfsconfig`. Transport settings determine where and how objects are fetched; the committed pointer determines their required contents. Ordinary Git clone, fetch, status and add retain their existing behavior.

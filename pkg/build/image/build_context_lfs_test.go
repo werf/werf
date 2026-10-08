@@ -54,4 +54,36 @@ var _ = ginkgo.Describe("automatic LFS build context", func() {
 		gomega.Expect(entries).To(gomega.HaveKeyWithValue("assets/wanted.bin", content))
 		gomega.Expect(entries).NotTo(gomega.HaveKey("assets/excluded.bin"))
 	})
+
+	ginkgo.It("ignores excluded unavailable LFS objects with ordinary submodules", func(ctx ginkgo.SpecContext) {
+		ginkgo.GinkgoT().Setenv("GIT_CONFIG_GLOBAL", os.DevNull)
+		ginkgo.GinkgoT().Setenv("GIT_CONFIG_SYSTEM", os.DevNull)
+		ginkgo.GinkgoT().Setenv("GIT_CONFIG_COUNT", "1")
+		ginkgo.GinkgoT().Setenv("GIT_CONFIG_KEY_0", "protocol.file.allow")
+		ginkgo.GinkgoT().Setenv("GIT_CONFIG_VALUE_0", "always")
+		ginkgo.GinkgoT().Setenv("GIT_CONFIG_PARAMETERS", "")
+		ginkgo.GinkgoT().Setenv("GIT_LFS_SKIP_SMUDGE", "0")
+		ginkgo.GinkgoT().Setenv("GIT_LFS_SKIP_DOWNLOAD_ERRORS", "0")
+		projectDir := newProjectRepo(ctx, dockerfileProjectFiles("\nimage: app\ndockerfile: Dockerfile\n", map[string]string{
+			"Dockerfile":     "FROM scratch\nCOPY wanted.txt /wanted.txt\n",
+			"wanted.txt":     "wanted content\n",
+			"excluded.bin":   "version https://git-lfs.github.com/spec/v1\noid sha256:0000000000000000000000000000000000000000000000000000000000000000\nsize 7\n",
+			".gitattributes": "*.bin filter=lfs diff=lfs merge=lfs -text\n",
+			".dockerignore":  "excluded.bin\nsub\n",
+		}))
+		subDir := ginkgo.GinkgoT().TempDir()
+		utils.RunSucceedCommand(ctx, subDir, "git", "init", "--initial-branch=main")
+		gomega.Expect(os.WriteFile(filepath.Join(subDir, "plain.txt"), []byte("ordinary submodule\n"), 0o644)).To(gomega.Succeed())
+		utils.RunSucceedCommand(ctx, subDir, "git", "add", ".")
+		utils.RunSucceedCommand(ctx, subDir, "git", "-c", "user.name=review", "-c", "user.email=review@example.invalid", "-c", "commit.gpgsign=false", "commit", "-m", "ordinary submodule")
+		utils.RunSucceedCommand(ctx, projectDir, "git", "submodule", "add", subDir, "sub")
+		utils.RunSucceedCommand(ctx, projectDir, "git", "-c", "user.name=review", "-c", "user.email=review@example.invalid", "-c", "commit.gpgsign=false", "commit", "-m", "add ordinary submodule")
+		utils.RunSucceedCommand(ctx, projectDir, "git", "remote", "add", "origin", "file://"+projectDir)
+		utils.RunSucceedCommand(ctx, projectDir, "git", "lfs", "install", "--local", "--skip-repo")
+		archive := NewBuildContextArchive(giterminismManagerOf(ctx, projectDir), ginkgo.GinkgoT().TempDir())
+		gomega.Expect(archive.Create(ctx, container_backend.BuildContextArchiveCreateOptions{DockerfileRelToContextPath: "Dockerfile"})).To(gomega.Succeed())
+		entries := lastEntryContents(openedContextEntries(ctx, archive))
+		gomega.Expect(entries).To(gomega.HaveKeyWithValue("wanted.txt", "wanted content\n"))
+		gomega.Expect(entries).NotTo(gomega.HaveKey("excluded.bin"))
+	})
 })

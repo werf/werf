@@ -86,7 +86,14 @@ var _ = ginkgo.Describe("automatic Git LFS archives", func() {
 	})
 
 	ginkgo.DescribeTable("rejects successful smudge output that does not match the pointer",
-		func(ctx ginkgo.SpecContext, fakeContent string) {
+		func(ctx ginkgo.SpecContext, fakeContent string, correctOID bool) {
+			if correctOID {
+				pointer := fmt.Sprintf("version https://git-lfs.github.com/spec/v1\noid sha256:%x\nsize %d\n", sha256.Sum256([]byte(fakeContent)), len(fakeContent)+1)
+				gomega.Expect(os.WriteFile(filepath.Join(repoDir, "assets", "a.bin"), []byte(pointer), 0o644)).To(gomega.Succeed())
+				gitSucceed(ctx, repoDir, "add", "assets/a.bin")
+				gitCommitSucceed(ctx, repoDir, "-m", "pointer with incorrect size")
+				commit = gitSucceedTrimmed(ctx, repoDir, "rev-parse", "HEAD")
+			}
 			if len(fakeContent) == len("real object contents\x00\xff") {
 				gomega.Expect(sha256.Sum256([]byte(fakeContent))).NotTo(gomega.Equal(sha256.Sum256([]byte("real object contents\x00\xff"))))
 			}
@@ -100,8 +107,9 @@ var _ = ginkgo.Describe("automatic Git LFS archives", func() {
 			})
 			gomega.Expect(err).To(gomega.MatchError(gomega.ContainSubstring("does not match pointer")))
 		},
-		ginkgo.Entry("SHA-256 mismatch with equal size", strings.Repeat("x", len("real object contents\x00\xff"))),
-		ginkgo.Entry("size mismatch", "short"),
+		ginkgo.Entry("SHA-256 mismatch with equal size", strings.Repeat("x", len("real object contents\x00\xff")), false),
+		ginkgo.Entry("size and SHA-256 mismatch", "short", false),
+		ginkgo.Entry("size mismatch with correct SHA-256", "short", true),
 	)
 
 	ginkgo.It("downloads public HTTP objects through the standard LFS batch API", func(ctx ginkgo.SpecContext) {
