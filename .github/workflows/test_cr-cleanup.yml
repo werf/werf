@@ -27,7 +27,7 @@ jobs:
       fail-fast: false
       matrix:
         implementation:
-          # - acr
+          - acr
           # - dockerhub
           - ecr
           # - gcr
