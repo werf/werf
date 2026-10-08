@@ -37,5 +37,5 @@ func purge(ctx context.Context, dryRun bool) error {
 		}
 	}
 
-	return runGCForPaths(ctx, dryRun, slices.Concat(projectDirsToRemove, filesToRemove))
+	return runGCForPaths(ctx, RunGCOptions{DryRun: dryRun}, slices.Concat(projectDirsToRemove, filesToRemove))
 }
