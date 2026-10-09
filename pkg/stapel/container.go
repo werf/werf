@@ -22,8 +22,7 @@ type container struct {
 	Platform  string
 }
 
-func EnsureImage(ctx context.Context, targetPlatform string) error {
-	imageName := ImageName()
+func EnsureImage(ctx context.Context, imageName, targetPlatform string) error {
 	return werf.HostLocker().WithLock(ctx, stapelImageLockName(imageName), lockgate.AcquireOptions{Timeout: time.Second * 600}, func() error {
 		return ensureImage(ctx, imageName, targetPlatform)
 	})

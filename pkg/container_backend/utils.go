@@ -87,9 +87,9 @@ func setSSHMountPoint(sshAuthSock string) (string, map[string]string) {
 	return vol, env
 }
 
-func getHostCleanupService() (string, string) {
+func getHostCleanupService(ctx context.Context) (string, string) {
 	if imageName := os.Getenv("WERF_HOST_CLEANUP_SERVICE_IMAGE"); imageName != "" {
 		return imageName, "rm"
 	}
-	return stapel.ImageName(), stapel.RmBinPath()
+	return stapel.HostCleanupImageName(ctx), stapel.RmBinPath()
 }

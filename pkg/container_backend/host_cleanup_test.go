@@ -35,6 +35,9 @@ var _ = ginkgo.Describe("host cleanup service", func() {
 		ginkgo.GinkgoT().Setenv("WERF_HOST_CLEANUP_SERVICE_IMAGE", override)
 		ginkgo.GinkgoT().Setenv("WERF_STAPEL_IMAGE_NAME", stapelName)
 		ginkgo.GinkgoT().Setenv("WERF_STAPEL_IMAGE_VERSION", stapelVersion)
+		if stapelName == "" && stapelVersion == "" {
+			gomega.Expect(stapel.ImageName()).To(gomega.Equal("registry.werf.io/werf/stapel:0.6.2"))
+		}
 		type containerRequest struct {
 			Image      string
 			Cmd        []string
@@ -80,7 +83,7 @@ var _ = ginkgo.Describe("host cleanup service", func() {
 		gomega.Expect(request.HostConfig.Mounts[0].Source).To(gomega.Equal(mountDir))
 		gomega.Expect(request.HostConfig.Mounts[0].Target).To(gomega.Equal(mountDir))
 	},
-		ginkgo.Entry("default Stapel", "", "", "", "registry.werf.io/werf/stapel:"+stapel.VERSION, "/.werf/stapel/embedded/bin/rm"),
+		ginkgo.Entry("default Stapel", "", "", "", "registry.werf.io/werf/stapel:0.7.2", "/.werf/stapel/embedded/bin/rm"),
 		ginkgo.Entry("configured Stapel mirror", "", "mirror.example/stapel", "custom", "mirror.example/stapel:custom", "/.werf/stapel/embedded/bin/rm"),
 		ginkgo.Entry("explicit cleanup image wins", "custom.example/cleanup:1", "mirror.example/stapel", "custom", "custom.example/cleanup:1", "rm"),
 	)
@@ -113,7 +116,7 @@ var _ = ginkgo.Describe("host cleanup service", func() {
 		gomega.Expect(runCalled).To(gomega.BeTrue())
 		gomega.Expect(stub.FromCommandImages).To(gomega.Equal([]string{expectedImage}))
 	},
-		ginkgo.Entry("default Stapel", "", "registry.werf.io/werf/stapel:"+stapel.VERSION, "/.werf/stapel/embedded/bin/rm"),
+		ginkgo.Entry("default Stapel", "", "registry.werf.io/werf/stapel:0.7.2", "/.werf/stapel/embedded/bin/rm"),
 		ginkgo.Entry("explicit cleanup image", "custom.example/cleanup:1", "custom.example/cleanup:1", "rm"),
 	)
 })
