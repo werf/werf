@@ -17,7 +17,6 @@ import (
 
 var _ = ginkgo.Describe("host cleanup Stapel image", func() {
 	ginkgo.BeforeEach(func() {
-		ginkgo.GinkgoT().Setenv("DOCKER_CONTEXT", "unused-stapel-test-context")
 		for _, key := range []string{"WERF_STAPEL_IMAGE_NAME", "WERF_STAPEL_IMAGE_VERSION"} {
 			ginkgo.GinkgoT().Setenv(key, "")
 		}
