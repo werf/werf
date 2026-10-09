@@ -109,6 +109,9 @@
 // it; the shallow-mirror worktree dir keeps the .shallow suffix. Changing the
 // naming scheme does not break old versions but orphans their entries: cache
 // misses plus garbage until LRU.
+// Committed-file reads, archive exports and patches use separate .lfs-v1 worktrees
+// with LFS smudging disabled, so cached checkouts from older versions cannot
+// determine exported LFS bytes.
 //
 // git_archives/<v>/<repoID>/<2 hex>/<id>.tar plus <id>.meta.json with a
 // LastAccessTimestamp field rewritten on every access. git_patches/<v> is the

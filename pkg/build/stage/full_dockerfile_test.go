@@ -93,7 +93,7 @@ FROM alpine:latest
 RUN echo hello
 `),
 				TestDependencies: &TestDependencies{
-					ExpectedDigest: "b9d5527ee7a7047747bce5fb5fd1d7ab2b687f141a91151620098b60c2ad0eae",
+					ExpectedDigest: "a72bb11e02d6c1fe6b27f7da25ce8aab93b0daf5f747a1176d23d78a8a70b29c",
 				},
 			}),
 
@@ -104,7 +104,7 @@ FROM alpine:latest
 RUN echo hello
 `),
 				TestDependencies: &TestDependencies{
-					ExpectedDigest: "b9d5527ee7a7047747bce5fb5fd1d7ab2b687f141a91151620098b60c2ad0eae",
+					ExpectedDigest: "a72bb11e02d6c1fe6b27f7da25ce8aab93b0daf5f747a1176d23d78a8a70b29c",
 					Dependencies: []*TestDependency{
 						{
 							ImageName:               "one",
@@ -131,7 +131,7 @@ RUN echo hello
 RUN echo {"name": "${IMAGE_ONE_NAME}", "repo": "${IMAGE_ONE_REPO}", "tag": "${IMAGE_ONE_TAG}"} >> images.json
 `),
 				TestDependencies: &TestDependencies{
-					ExpectedDigest: "6ab9de52e1aa389b7e0f684b052c8047dc6c1e01709e1daacc305e4c23211941",
+					ExpectedDigest: "6c35a67bea90301ea5e3597333797fcd4e524c2472ac45ad28e76f24bac17be3",
 					Dependencies: []*TestDependency{
 						{
 							ImageName:               "one",
@@ -156,7 +156,7 @@ FROM ${BASE_IMAGE}
 RUN echo hello
 `),
 				TestDependencies: &TestDependencies{
-					ExpectedDigest: "b9d5527ee7a7047747bce5fb5fd1d7ab2b687f141a91151620098b60c2ad0eae",
+					ExpectedDigest: "a72bb11e02d6c1fe6b27f7da25ce8aab93b0daf5f747a1176d23d78a8a70b29c",
 				},
 			}),
 
@@ -169,7 +169,7 @@ FROM ${BASE_IMAGE}
 RUN echo hello
 `),
 				TestDependencies: &TestDependencies{
-					ExpectedDigest: "573c4bd0f7480e27c266d55d3a020c7ec4acaebebf897d29cad78fded3b725c7",
+					ExpectedDigest: "603c1774c2be380583f4a82867f22ab8881151d9c3ffb724a48418548fc17658",
 					Dependencies: []*TestDependency{
 						{
 							ImageName:               "two",
@@ -192,7 +192,7 @@ FROM ${BASE_IMAGE}
 RUN echo hello
 `),
 				TestDependencies: &TestDependencies{
-					ExpectedDigest: "5b66aa2c1c9f0bf3a9089c52f04ddf4e47af055c4d1fe69d272cba24df372121",
+					ExpectedDigest: "088b32459d71b7d64fc7553f7f4e93b4c68f1b8fc89e7f258944333743c69ad0",
 					Dependencies: []*TestDependency{
 						{
 							ImageName:               "two",
@@ -215,7 +215,7 @@ FROM ${BASE_IMAGE}
 RUN echo hello
 `),
 				TestDependencies: &TestDependencies{
-					ExpectedDigest:    "08298d918e51f6572692ca642027870539a71c46beafd403719360928ffe11de",
+					ExpectedDigest:    "a5b64163d3563f09df25d9595092b23ec12dfa6af47b5db93729b137d50b6819",
 					ImageCacheVersion: "image-cache-version",
 					Dependencies:      []*TestDependency{},
 				},
@@ -320,14 +320,14 @@ RUN --mount=type=bind,from=build,source=/usr/local/test_project/dist,target=/usr
 			{
 				digest, err := stage.GetDependencies(ctx, conveyor, containerBackend, nil, stageImage, nil)
 				Expect(err).To(Succeed())
-				Expect(digest).To(Equal("65d219096bc3718c101995b00584d700de791027f2e2ca00635e428932478a1c"))
+				Expect(digest).To(Equal("5ba1cc3b688f4443fa48917fd7ac9528f3fde887d1f9e89945e9ba0673d16349"), "digest: %s", digest)
 			}
 
 			gitRepoStub.headCommitHash = "23a0884072c0d31b7c42dfaa7f0772cbfa33ec75"
 			{
 				digest, err := stage.GetDependencies(ctx, conveyor, containerBackend, nil, stageImage, nil)
 				Expect(err).To(Succeed())
-				Expect(digest).To(Equal("beb818f2c49f6501194c72449aff59e80be61b405ef39581b01dbf68da927609"))
+				Expect(digest).To(Equal("3b37d1ea006e26fc009e7251d605d3e6098850c04a47af06505e7cfd3b1c623d"), "digest: %s", digest)
 			}
 		})
 	})

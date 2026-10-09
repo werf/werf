@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -63,7 +64,7 @@ func SyncSourceWorktreeWithServiceBranch(ctx context.Context, gitDir, sourceWork
 }
 
 func syncWorktreeWithServiceWorktreeBranch(ctx context.Context, sourceWorktreeDir, serviceWorktreeDir, worktreeCacheDir, sourceCommit, branchName string, globExcludeList []string) (string, error) {
-	if err := prepareAndCheckoutServiceBranch(ctx, serviceWorktreeDir, sourceCommit, branchName); err != nil {
+	if err := prepareServiceBranch(ctx, serviceWorktreeDir, sourceCommit, branchName); err != nil {
 		return "", fmt.Errorf("unable to get or prepare service branch head commit: %w", err)
 	}
 
@@ -379,22 +380,32 @@ func expandTilde(path string) string {
 	return path
 }
 
-func prepareAndCheckoutServiceBranch(ctx context.Context, serviceWorktreeDir, sourceCommit, branchName string) error {
+// prepareServiceBranch keeps the service worktree in detached HEAD and advances the branch ref
+// with update-ref, so a stale registration of another service worktree holding the branch cannot
+// block it. update-ref lacks the checked-out-elsewhere protection of checkout, so that check is
+// made explicitly: the branch name is user-controlled and may be a real branch.
+func prepareServiceBranch(ctx context.Context, serviceWorktreeDir, sourceCommit, branchName string) error {
+	branchRef := "refs/heads/" + branchName
+
+	if err := ensureBranchNotOccupiedElsewhere(ctx, serviceWorktreeDir, branchName); err != nil {
+		return fmt.Errorf("unable to use branch %q as service branch: %w", branchName, err)
+	}
+
 	branchListCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: serviceWorktreeDir}, "branch", "--list", branchName)
 	if err := branchListCmd.Run(ctx); err != nil {
 		return fmt.Errorf("git branch list command failed: %w", err)
 	}
 
 	if branchListCmd.OutBuf.Len() == 0 {
-		checkoutCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: serviceWorktreeDir}, "checkout", "-b", branchName, sourceCommit)
-		if err := checkoutCmd.Run(ctx); err != nil {
-			return fmt.Errorf("git checkout command failed: %w", err)
+		updateRefCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: serviceWorktreeDir}, "update-ref", branchRef, sourceCommit)
+		if err := updateRefCmd.Run(ctx); err != nil {
+			return fmt.Errorf("git update-ref command failed: %w", err)
 		}
 
 		return nil
 	}
 
-	checkoutCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: serviceWorktreeDir}, "checkout", branchName)
+	checkoutCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: serviceWorktreeDir}, "checkout", "--detach", branchRef)
 	if err := checkoutCmd.Run(ctx); err != nil {
 		return fmt.Errorf("git checkout command failed: %w", err)
 	}
@@ -416,7 +427,119 @@ func prepareAndCheckoutServiceBranch(ctx context.Context, serviceWorktreeDir, so
 		return fmt.Errorf("git merge of source commit %q into service branch %q failed: %w\nNOTE: To continue you can remove the service branch %q with \"git branch -D %s\", but we would also ask you to report this issue to https://github.com/werf/werf/issues", sourceCommit, branchName, err, branchName, branchName)
 	}
 
+	updateRefCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: serviceWorktreeDir}, "update-ref", branchRef, "HEAD")
+	if err := updateRefCmd.Run(ctx); err != nil {
+		return fmt.Errorf("git update-ref command failed: %w", err)
+	}
+
 	return nil
+}
+
+// ensureBranchNotOccupiedElsewhere mirrors git's own checked-out-elsewhere rule: a branch is
+// occupied when another worktree has it checked out, or is in the middle of a rebase or bisect
+// started from it (HEAD is detached then and the porcelain list does not name the branch). The
+// only registration skipped is an unlocked one whose directory is gone — the stale service
+// worktree of another WERF_HOME. A directory that exists but cannot be read, or a locked
+// registration on unavailable storage, is still a live worktree.
+func ensureBranchNotOccupiedElsewhere(ctx context.Context, serviceWorktreeDir, branchName string) error {
+	resolvedServiceWorktreeDir, err := filepath.EvalSymlinks(serviceWorktreeDir)
+	if err != nil {
+		return fmt.Errorf("unable to eval symlinks of %q: %w", serviceWorktreeDir, err)
+	}
+
+	worktrees, err := GetWorkTreeList(ctx, serviceWorktreeDir)
+	if err != nil {
+		return fmt.Errorf("unable to list worktrees: %w", err)
+	}
+
+	commonDirCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: serviceWorktreeDir}, "rev-parse", "--git-common-dir")
+	if err := commonDirCmd.Run(ctx); err != nil {
+		return fmt.Errorf("git rev-parse command failed: %w", err)
+	}
+	commonDir := strings.TrimSpace(commonDirCmd.OutBuf.String())
+	if !filepath.IsAbs(commonDir) {
+		commonDir = filepath.Join(serviceWorktreeDir, commonDir)
+	}
+
+	gitDirByWorktreePath, err := linkedWorktreeGitDirs(commonDir)
+	if err != nil {
+		return err
+	}
+
+	for i, wt := range worktrees {
+		if resolvedPath, err := filepath.EvalSymlinks(wt.Path); err == nil && resolvedPath == resolvedServiceWorktreeDir {
+			continue
+		}
+
+		occupied := wt.Branch == "refs/heads/"+branchName
+		if !occupied && wt.Detached {
+			gitDir := commonDir
+			if i > 0 {
+				gitDir = gitDirByWorktreePath[filepath.Clean(wt.Path)]
+			}
+			if gitDir != "" {
+				occupied, err = isWorktreeRebasingOrBisectingBranch(gitDir, branchName)
+				if err != nil {
+					return err
+				}
+			}
+		}
+		if !occupied {
+			continue
+		}
+
+		if _, err := os.Lstat(wt.Path); errors.Is(err, fs.ErrNotExist) && !wt.Locked {
+			continue
+		}
+		return fmt.Errorf("branch is in use by worktree %q, choose another branch with --dev-branch", wt.Path)
+	}
+
+	return nil
+}
+
+// The porcelain list does not name the <common-dir>/worktrees/<id> entry of a worktree, and
+// its own .git file may be unreadable or gone, so the mapping is rebuilt from the gitdir
+// files git keeps on the main repository side.
+func linkedWorktreeGitDirs(commonDir string) (map[string]string, error) {
+	entries, err := os.ReadDir(filepath.Join(commonDir, "worktrees"))
+	if errors.Is(err, fs.ErrNotExist) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("unable to read %q: %w", filepath.Join(commonDir, "worktrees"), err)
+	}
+
+	res := make(map[string]string, len(entries))
+	for _, entry := range entries {
+		gitDir := filepath.Join(commonDir, "worktrees", entry.Name())
+		data, err := os.ReadFile(filepath.Join(gitDir, "gitdir"))
+		if err != nil {
+			continue
+		}
+		res[filepath.Dir(filepath.Clean(strings.TrimSpace(string(data))))] = gitDir
+	}
+	return res, nil
+}
+
+// Same files git consults in is_worktree_being_rebased / is_worktree_being_bisected.
+func isWorktreeRebasingOrBisectingBranch(gitDir, branchName string) (bool, error) {
+	for _, rel := range []string{
+		filepath.Join("rebase-merge", "head-name"),
+		filepath.Join("rebase-apply", "head-name"),
+		"BISECT_START",
+	} {
+		data, err := os.ReadFile(filepath.Join(gitDir, rel))
+		if errors.Is(err, fs.ErrNotExist) {
+			continue
+		}
+		if err != nil {
+			return false, fmt.Errorf("unable to read %q: %w", filepath.Join(gitDir, rel), err)
+		}
+		if name := strings.TrimPrefix(strings.TrimSpace(string(data)), "refs/heads/"); name == branchName {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 func revertExcludedChangesInDevIndex(ctx context.Context, serviceWorktreeDir, devIndexFile, sourceCommit, serviceBranchHeadCommit string, globExcludeList []string) error {

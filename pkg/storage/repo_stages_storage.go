@@ -404,7 +404,7 @@ func (storage *RepoStagesStorage) GetStageDesc(ctx context.Context, projectName 
 
 	imgInfo, err := storage.DockerRegistry.GetRepoImage(ctx, stageImageName)
 	if docker_registry.IsImageNotFoundError(err) {
-		return nil, ErrStageNotFound
+		return nil, fmt.Errorf("%w: inspect repo image %s: %w", ErrStageNotFound, stageImageName, err)
 	}
 	if docker_registry.IsBrokenImageError(err) {
 		opstats.CountEvent(ctx, opstats.EventStageBroken)

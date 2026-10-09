@@ -56,8 +56,10 @@ var _ = ginkgo.Describe("Remote object checksums", func() {
 				checksums = append(checksums, checksum)
 			}
 			gomega.Expect(checksums[0]).NotTo(gomega.Equal(checksums[1]))
-			_, err = os.Stat(remote.getWorkTreeCacheDir(remote.getRepoID()))
-			gomega.Expect(os.IsNotExist(err)).To(gomega.BeTrue())
+			for _, suffix := range []string{"", ".lfs-v1"} {
+				_, err = os.Stat(remote.getWorkTreeCacheDir(remote.getRepoID()) + suffix)
+				gomega.Expect(os.IsNotExist(err)).To(gomega.BeTrue())
+			}
 
 			for i, commit := range []string{firstCommit, secondCommit} {
 				err := true_git.WithWorkTree(ctx, remote.GetClonePath(), remote.getWorkTreeCacheDir(remote.getRepoID()), commit, true_git.WithWorkTreeOptions{}, func(worktree string) error {
@@ -100,7 +102,7 @@ var _ = ginkgo.Describe("Remote object checksums", func() {
 		opts := ChecksumOptions{Commit: utils.GetHeadCommit(ctx, source), LsTreeOptions: LsTreeOptions{PathScope: "sub", PathMatcher: path_matcher.NewTruePathMatcher(), AllFiles: true}}
 		first, err := remote.GetOrCreateChecksum(ctx, opts)
 		gomega.Expect(err).NotTo(gomega.HaveOccurred())
-		gomega.Expect(remote.getWorkTreeCacheDir(remote.getRepoID())).To(gomega.BeADirectory())
+		gomega.Expect(remote.getWorkTreeCacheDir(remote.getRepoID()) + ".lfs-v1").To(gomega.BeADirectory())
 		gomega.Expect(os.WriteFile(filepath.Join(source, "sub", "data"), []byte("second"), 0o644)).To(gomega.Succeed())
 		commitChecksumTestRepo(ctx, filepath.Join(source, "sub"))
 		utils.RunSucceedCommand(ctx, submodule, "git", "fetch", filepath.Join(source, "sub"), "HEAD")

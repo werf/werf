@@ -33,6 +33,17 @@ var _ = ginkgo.Describe("Broken stage counting", func() {
 		ginkgo.Entry("rejected stage lookup timeout", errors.New("context deadline exceeded"), gomega.MatchError(gomega.ContainSubstring("context deadline exceeded")), 0),
 	)
 
+	ginkgo.It("preserves the registry cause of a missing stage", func(ctx ginkgo.SpecContext) {
+		registryErr := fmt.Errorf("GET /v2/repo/manifests/tag: %s: manifest unknown", transport.ManifestUnknownErrorCode)
+		stages := newRepoStorage(&brokenStageRegistry{markerRegistry: newMarkerRegistry(), err: registryErr}, stagesRepo)
+
+		_, err := stages.GetStageDesc(ctx, proj, *image.NewStageID("digest", 100))
+
+		gomega.Expect(IsErrStageNotFound(err)).To(gomega.BeTrue())
+		gomega.Expect(errors.Is(err, registryErr)).To(gomega.BeTrue())
+		gomega.Expect(err.Error()).To(gomega.ContainSubstring(registryErr.Error()))
+	})
+
 	ginkgo.It("counts a stage fetch that pulled an image with an unknown blob", func(ctx ginkgo.SpecContext) {
 		collector := opstats.NewCollector()
 		stages := newRepoStorage(newMarkerRegistry(), stagesRepo)

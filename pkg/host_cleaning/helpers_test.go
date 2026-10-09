@@ -1,9 +1,11 @@
 package host_cleaning
 
 import (
+	"runtime"
 	"slices"
 
 	dockercontainer "github.com/moby/moby/api/types/container"
+	dockerimage "github.com/moby/moby/api/types/image"
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
 	"go.uber.org/mock/gomock"
@@ -71,4 +73,10 @@ func indexOfRequest(requests []string, request string) int {
 	index := slices.Index(requests, request)
 	gomega.ExpectWithOffset(1, index).NotTo(gomega.Equal(-1), "request %q was never served", request)
 	return index
+}
+
+func purgeFixtureImages() map[string]dockerimage.InspectResponse {
+	return map[string]dockerimage.InspectResponse{
+		stapel.ImageName(): {ID: "sha256:stapel-cleanup", Os: "linux", Architecture: runtime.GOARCH},
+	}
 }

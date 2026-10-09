@@ -33,6 +33,10 @@ func syncSubmodules(ctx context.Context, repoDir, workTreeDir string) error {
 }
 
 func updateSubmodules(ctx context.Context, repoDir, workTreeDir string) error {
+	return updateSubmodulesWithCheckoutOptions(ctx, repoDir, workTreeDir, nil)
+}
+
+func updateSubmodulesWithCheckoutOptions(ctx context.Context, repoDir, workTreeDir string, checkoutGitOptions []string) error {
 	logProcessMsg := fmt.Sprintf("Update submodules in work tree %q", workTreeDir)
 	return logboek.Context(ctx).Info().LogProcess(logProcessMsg).DoError(func() error {
 		includePathOpts, err := getIncludePathOptions(ctx, repoDir)
@@ -58,7 +62,8 @@ func updateSubmodules(ctx context.Context, repoDir, workTreeDir string) error {
 		}
 
 		runUpdate := func(reuseOpts []string) error {
-			updateArgs := make([]string, 0, len(includePathOpts)+len(reuseOpts)+8)
+			updateArgs := make([]string, 0, len(checkoutGitOptions)+len(includePathOpts)+len(reuseOpts)+8)
+			updateArgs = append(updateArgs, checkoutGitOptions...)
 			updateArgs = append(updateArgs, includePathOpts...)
 			if len(reuseOpts) > 0 {
 				// The redirects point submodule URLs at the on-disk module store, which git reaches
@@ -94,8 +99,29 @@ func updateSubmodules(ctx context.Context, repoDir, workTreeDir string) error {
 			}
 		}
 
-		return nil
+		return initSubmoduleConfig(ctx, repoDir, workTreeDir)
 	})
+}
+
+func initSubmoduleConfig(ctx context.Context, repoDir, workTreeDir string) error {
+	includePathOpts, err := getIncludePathOptions(ctx, repoDir)
+	if err != nil {
+		return err
+	}
+
+	// Temporary URL overrides can populate worktrees without persisting the registration go-git needs.
+	for _, args := range [][]string{
+		{"submodule", "init"},
+		{"submodule", "foreach", "--recursive", "git", "submodule", "init"},
+		{"submodule", "sync", "--recursive"},
+	} {
+		cmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: workTreeDir}, append(includePathOpts, args...)...)
+		if err := cmd.Run(ctx); err != nil {
+			return fmt.Errorf("git %s: %w", strings.Join(args, " "), err)
+		}
+	}
+
+	return nil
 }
 
 var submoduleReuseWarnOnce sync.Once

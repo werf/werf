@@ -8,9 +8,12 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/Masterminds/semver"
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/common-go/pkg/util/timestamps"
@@ -27,10 +30,16 @@ const (
 )
 
 type WithWorkTreeOptions struct {
-	HasSubmodules bool
+	HasSubmodules       bool
+	PreserveLFSPointers bool
 }
 
 func WithWorkTree(ctx context.Context, gitDir, workTreeCacheDir, commit string, opts WithWorkTreeOptions, f func(workTreeDir string) error) error {
+	var checkoutGitOptions []string
+	if opts.PreserveLFSPointers {
+		workTreeCacheDir += ".lfs-v1"
+		checkoutGitOptions = lfsCheckoutOptions()
+	}
 	return withWorkTreeCacheLock(ctx, workTreeCacheDir, func() error {
 		var err error
 
@@ -44,7 +53,7 @@ func WithWorkTree(ctx context.Context, gitDir, workTreeCacheDir, commit string, 
 			return fmt.Errorf("bad work tree cache dir %s: %w", workTreeCacheDir, err)
 		}
 
-		workTreeDir, err := prepareWorkTree(ctx, gitDir, workTreeCacheDir, commit, opts.HasSubmodules)
+		workTreeDir, err := prepareWorkTreeWithCheckoutOptions(ctx, gitDir, workTreeCacheDir, commit, opts.HasSubmodules, checkoutGitOptions)
 		if err != nil {
 			return fmt.Errorf("cannot prepare worktree: %w", err)
 		}
@@ -75,6 +84,10 @@ func getWorkTreeCacheLockTimeout() time.Duration {
 }
 
 func prepareWorkTree(ctx context.Context, repoDir, workTreeCacheDir, commit string, withSubmodules bool) (string, error) {
+	return prepareWorkTreeWithCheckoutOptions(ctx, repoDir, workTreeCacheDir, commit, withSubmodules, nil)
+}
+
+func prepareWorkTreeWithCheckoutOptions(ctx context.Context, repoDir, workTreeCacheDir, commit string, withSubmodules bool, checkoutGitOptions []string) (string, error) {
 	if err := os.MkdirAll(workTreeCacheDir, os.ModePerm); err != nil {
 		return "", fmt.Errorf("unable to create dir %s: %w", workTreeCacheDir, err)
 	}
@@ -110,8 +123,6 @@ func prepareWorkTree(ctx context.Context, repoDir, workTreeCacheDir, commit stri
 		}
 
 		isWorkTreeRegistered := false
-		isWorkTreePrunable := false
-		var dirToPrune, pruneReason string
 
 		workTreeList, err := GetWorkTreeList(ctx, repoDir)
 		if err != nil {
@@ -121,20 +132,6 @@ func prepareWorkTree(ctx context.Context, repoDir, workTreeCacheDir, commit stri
 		for _, workTreeDesc := range workTreeList {
 			if filepath.ToSlash(workTreeDesc.Path) == filepath.ToSlash(resolvedWorkTreeDir) {
 				isWorkTreeRegistered = true
-			}
-			if workTreeDesc.Prunable {
-				isWorkTreePrunable = true
-				dirToPrune = workTreeDesc.Path
-				pruneReason = workTreeDesc.PruneReason
-			}
-		}
-
-		if isWorkTreePrunable {
-			logboek.Context(ctx).Default().LogFDetails("Detected prunable worktree %s due to %s\n", dirToPrune, pruneReason)
-			logboek.Context(ctx).Default().LogF("Removing invalidated work tree dir %q of repo %s\n", dirToPrune, repoDir)
-			err := RemoveWorkTree(ctx, repoDir, dirToPrune)
-			if err != nil {
-				return "", fmt.Errorf("unable to remove worktree %q: %w", dirToPrune, err)
 			}
 		}
 
@@ -173,6 +170,13 @@ func prepareWorkTree(ctx context.Context, repoDir, workTreeCacheDir, commit stri
 					currentCommit = strings.TrimSpace(string(data))
 
 					if currentCommit == commit {
+						if withSubmodules {
+							if err := withRepoDirLock(ctx, repoDir, func() error {
+								return initSubmoduleConfig(ctx, repoDir, workTreeDir)
+							}); err != nil {
+								return "", fmt.Errorf("initialize cached submodule configuration: %w", err)
+							}
+						}
 						return workTreeDir, nil
 					}
 				} else {
@@ -204,7 +208,7 @@ func prepareWorkTree(ctx context.Context, repoDir, workTreeCacheDir, commit stri
 				logboek.Context(ctx).Info().LogFDetails("Current commit: %s\n", currentCommit)
 			}
 
-			return switchWorkTree(ctx, repoDir, workTreeDir, commit, withSubmodules)
+			return switchWorkTreeWithCheckoutOptions(ctx, repoDir, workTreeDir, commit, withSubmodules, checkoutGitOptions)
 		})
 	}
 
@@ -312,10 +316,14 @@ InvalidDotGit:
 }
 
 func switchWorkTree(ctx context.Context, repoDir, workTreeDir, commit string, withSubmodules bool) error {
+	return switchWorkTreeWithCheckoutOptions(ctx, repoDir, workTreeDir, commit, withSubmodules, nil)
+}
+
+func switchWorkTreeWithCheckoutOptions(ctx context.Context, repoDir, workTreeDir, commit string, withSubmodules bool, checkoutGitOptions []string) error {
 	_, err := os.Stat(workTreeDir)
 	switch {
 	case os.IsNotExist(err):
-		wtAddCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: repoDir}, "worktree", "add", "--force", "--force", "--detach", workTreeDir, commit)
+		wtAddCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: repoDir}, slices.Concat(checkoutGitOptions, []string{"worktree", "add", "--force", "--force", "--detach", workTreeDir, commit})...)
 		if err = wtAddCmd.Run(ctx); err != nil {
 			return fmt.Errorf("git worktree add command failed: %w", err)
 		}
@@ -330,13 +338,13 @@ func switchWorkTree(ctx context.Context, repoDir, workTreeDir, commit string, wi
 			return err
 		}
 
-		checkoutCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: workTreeDir}, "checkout", "--force", "--detach", commit)
+		checkoutCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: workTreeDir}, slices.Concat(checkoutGitOptions, []string{"checkout", "--force", "--detach", commit})...)
 		if err = checkoutCmd.Run(ctx); err != nil {
 			return fmt.Errorf("git checkout command failed: %w", err)
 		}
 	}
 
-	resetCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: workTreeDir}, "reset", "--hard", commit)
+	resetCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: workTreeDir}, slices.Concat(checkoutGitOptions, []string{"reset", "--hard", commit})...)
 	if err = resetCmd.Run(ctx); err != nil {
 		return fmt.Errorf("git reset command failed: %w", err)
 	}
@@ -351,7 +359,7 @@ func switchWorkTree(ctx context.Context, repoDir, workTreeDir, commit string, wi
 			if err := syncSubmodules(ctx, repoDir, workTreeDir); err != nil {
 				return fmt.Errorf("cannot sync submodules: %w", err)
 			}
-			if err = updateSubmodules(ctx, repoDir, workTreeDir); err != nil {
+			if err = updateSubmodulesWithCheckoutOptions(ctx, repoDir, workTreeDir, checkoutGitOptions); err != nil {
 				return fmt.Errorf("cannot update submodules: %w", err)
 			}
 			return nil
@@ -360,9 +368,9 @@ func switchWorkTree(ctx context.Context, repoDir, workTreeDir, commit string, wi
 			return err
 		}
 
-		submResetArgs := []string{
+		submResetArgs := slices.Concat(checkoutGitOptions, []string{
 			"--work-tree", workTreeDir, "submodule", "foreach", "--recursive",
-		}
+		})
 		submResetArgs = append(submResetArgs, append([]string{"git"}, append(getCommonGitOptions(), "reset", "--hard")...)...)
 
 		submResetCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: workTreeDir}, submResetArgs...)
@@ -397,19 +405,56 @@ type WorktreeDescriptor struct {
 	Path        string
 	Head        string
 	Branch      string
+	Detached    bool
+	Locked      bool
 	Prunable    bool
 	PruneReason string
 }
 
 func GetWorkTreeList(ctx context.Context, repoDir string) ([]WorktreeDescriptor, error) {
-	wtListCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: repoDir}, "worktree", "list", "--porcelain")
+	args := []string{"worktree", "list", "--porcelain"}
+	separator := "\x00"
+	if gitVersion.LessThan(semver.MustParse("2.36.0")) {
+		separator = "\n"
+		commonDirCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: repoDir}, "rev-parse", "--git-common-dir")
+		if err := commonDirCmd.Run(ctx); err != nil {
+			return nil, fmt.Errorf("resolve common git directory: %w", err)
+		}
+		commonDir := strings.TrimSuffix(commonDirCmd.OutBuf.String(), "\n")
+		if !filepath.IsAbs(commonDir) {
+			commonDir = filepath.Join(repoDir, commonDir)
+		}
+		commonDir, err := filepath.Abs(commonDir)
+		if err != nil {
+			return nil, fmt.Errorf("resolve absolute common git directory: %w", err)
+		}
+		commonDir, err = filepath.EvalSymlinks(commonDir)
+		if err != nil {
+			return nil, fmt.Errorf("resolve common git directory symlinks: %w", err)
+		}
+		if strings.Contains(commonDir, "\n") {
+			return nil, fmt.Errorf("Git >= 2.36 required for worktree paths containing newlines: %q", commonDir)
+		}
+		gitDirs, err := linkedWorktreeGitDirs(commonDir)
+		if err != nil {
+			return nil, err
+		}
+		for path := range gitDirs {
+			if strings.Contains(path, "\n") {
+				return nil, fmt.Errorf("Git >= 2.36 required for worktree paths containing newlines: %q", path)
+			}
+		}
+	} else {
+		args = append(args, "-z")
+	}
+	wtListCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: repoDir}, args...)
 	if err := wtListCmd.Run(ctx); err != nil {
 		return nil, fmt.Errorf("git worktree list command failed: %w", err)
 	}
 
 	var worktreeDesc *WorktreeDescriptor
 	var res []WorktreeDescriptor
-	for _, line := range strings.Split(wtListCmd.OutBuf.String(), "\n") {
+	for _, line := range strings.Split(wtListCmd.OutBuf.String(), separator) {
 		if line == "" && worktreeDesc == nil {
 			continue
 		} else if worktreeDesc == nil {
@@ -423,6 +468,10 @@ func GetWorkTreeList(ctx context.Context, repoDir string) ([]WorktreeDescriptor,
 			worktreeDesc.Head = strings.TrimPrefix(line, "HEAD ")
 		case strings.HasPrefix(line, "branch "):
 			worktreeDesc.Branch = strings.TrimPrefix(line, "branch ")
+		case line == "detached":
+			worktreeDesc.Detached = true
+		case line == "locked" || strings.HasPrefix(line, "locked "):
+			worktreeDesc.Locked = true
 		case strings.HasPrefix(line, "prunable "):
 			worktreeDesc.Prunable = true
 			worktreeDesc.PruneReason = strings.TrimPrefix(line, "prunable ")
@@ -433,9 +482,4 @@ func GetWorkTreeList(ctx context.Context, repoDir string) ([]WorktreeDescriptor,
 	}
 
 	return res, nil
-}
-
-func RemoveWorkTree(ctx context.Context, repoDir, workTreeDir string) error {
-	removeCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: repoDir}, "worktree", "remove", workTreeDir)
-	return removeCmd.Run(ctx)
 }

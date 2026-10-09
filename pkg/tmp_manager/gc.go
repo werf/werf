@@ -10,6 +10,8 @@ import (
 	"slices"
 	"time"
 
+	"github.com/samber/lo"
+
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v3/pkg/werf"
 )
@@ -29,31 +31,58 @@ func ShouldRunAutoGC() (bool, error) {
 	return len(projectDirsToRemove) > 0 || len(pathsToRemove) > 0, nil
 }
 
-func RunGC(ctx context.Context, dryRun bool) error {
+type RunGCOptions struct {
+	DryRun           bool
+	RemoveProjectDir func(context.Context, string) error
+}
+
+func RunGC(ctx context.Context, options RunGCOptions) error {
 	projectDirsToRemove, pathsToRemove, err := collectPaths()
 	if err != nil {
 		return fmt.Errorf("collect paths: %w", err)
 	}
 
-	return runGCForPaths(ctx, dryRun, slices.Concat(projectDirsToRemove, pathsToRemove))
+	failed, dirsErr := runGCForPaths(ctx, options, projectDirsToRemove)
+	// Preserve only links needed to retry failed targets outside the current tmp root.
+	linksToRemove := lo.Filter(pathsToRemove, func(link string, _ int) bool {
+		target, err := os.Readlink(link)
+		return err != nil || !slices.Contains(failed, target)
+	})
+	_, linksErr := runGCForPaths(ctx, RunGCOptions{DryRun: options.DryRun}, linksToRemove)
+	return errors.Join(dirsErr, linksErr)
 }
 
-func runGCForPaths(ctx context.Context, dryRun bool, paths []string) error {
+func runGCForPaths(ctx context.Context, options RunGCOptions, paths []string) ([]string, error) {
+	var failed []string
 	removeErrors := make([]error, 0, len(paths))
 
 	for _, path := range paths {
 		logboek.Context(ctx).Default().LogLn(path)
 
-		if dryRun {
+		if options.DryRun {
 			continue
 		}
 
-		if err := os.RemoveAll(path); err != nil {
+		remove := func() error { return os.RemoveAll(path) }
+		if options.RemoveProjectDir != nil && isProjectTmpDir(path) {
+			remove = func() error { return options.RemoveProjectDir(ctx, path) }
+		}
+		if err := remove(); err != nil {
+			failed = append(failed, path)
 			removeErrors = append(removeErrors, errors.Join(ErrPathRemoval, err))
 		}
 	}
 
-	return errors.Join(removeErrors...) // magic of errors.Join(): omit nil errors if they exist
+	return failed, errors.Join(removeErrors...)
+}
+
+func isProjectTmpDir(path string) bool {
+	for _, pattern := range []string{"werf-*-project-data-*", "werf-project-data-*"} {
+		if matched, err := filepath.Match(pattern, filepath.Base(path)); err == nil && matched {
+			return true
+		}
+	}
+	return false
 }
 
 func collectPaths() ([]string, []string, error) {

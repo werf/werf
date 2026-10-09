@@ -40,6 +40,7 @@ require (
 	github.com/moby/moby/api v1.56.0
 	github.com/moby/moby/client v0.6.0
 	github.com/moby/patternmatcher v0.6.1
+	github.com/moby/sys/mountinfo v0.7.2
 	github.com/onsi/ginkgo/v2 v2.33.0
 	github.com/onsi/gomega v1.43.1
 	github.com/opencontainers/go-digest v1.0.0
@@ -405,7 +406,6 @@ require (
 	github.com/moby/docker-image-spec v1.3.1 // indirect
 	github.com/moby/locker v1.0.1 // indirect
 	github.com/moby/spdystream v0.5.1 // indirect
-	github.com/moby/sys/mountinfo v0.7.2 // indirect
 	github.com/moby/sys/sequential v0.7.0 // indirect
 	github.com/moby/sys/signal v0.7.1 // indirect
 	github.com/moby/sys/symlink v0.3.0 // indirect
@@ -506,5 +506,6 @@ replace (
 	github.com/docker/buildx => github.com/werf/3p-buildx v0.0.0-20260921140347-f09c144ec33b // temporary race fix; remove after docker/buildx#4007 merges
 	github.com/mattn/go-sqlite3 => github.com/mattn/go-sqlite3 v1.14.22 // v2.0.1+incompatible is a mistagged 2019 release bundling SQLite 3.30.1; the image blob-info cache needs sqlite_schema (SQLite >= 3.33)
 	github.com/spf13/cobra => github.com/werf/3p-cobra v0.0.0-20260403075225-552c82797324 // adds EnableErrorOnUnknownSubcommand, not yet in upstream
+	go.podman.io/storage => github.com/werf/3p-container-libs/storage v1.63.1-0.20261008114302-204b1b85b362
 	oras.land/oras-go => github.com/werf/3p-oras-go v1.2.8-0.20260408140625-72dd516ce0aa // used by bundles, not maintained
 )

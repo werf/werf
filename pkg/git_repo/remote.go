@@ -860,6 +860,9 @@ func (repo *Remote) GetOrCreateChangedPaths(ctx context.Context, fromCommit, toC
 }
 
 func (repo *Remote) GetOrCreateArchive(ctx context.Context, opts ArchiveOptions) (Archive, error) {
+	if repo.BasicAuth != nil {
+		opts.LFSCredentials = &true_git.LFSCredentials{URL: repo.Url, Username: repo.BasicAuth.Username, Password: repo.BasicAuth.Password}
+	}
 	var res Archive
 	err := repo.withMirror(ctx, opts.Commit, func() error {
 		var err error
@@ -1239,7 +1242,7 @@ func (repo *Remote) initRepoHandleBackedByWorkTree(ctx context.Context, commit s
 	}
 
 	var repoHandle repo_handle.Handle
-	if err := true_git.WithWorkTree(ctx, repo.GetClonePath(), repo.getWorkTreeCacheDir(repo.getRepoID()), commit, true_git.WithWorkTreeOptions{HasSubmodules: hasSubmodules}, func(preparedWorkTreeDir string) error {
+	if err := true_git.WithWorkTree(ctx, repo.GetClonePath(), repo.getWorkTreeCacheDir(repo.getRepoID()), commit, true_git.WithWorkTreeOptions{HasSubmodules: hasSubmodules, PreserveLFSPointers: true}, func(preparedWorkTreeDir string) error {
 		repositoryWithPreparedWorktree, err := true_git.GitOpenWithCustomWorktreeDir(repo.GetClonePath(), preparedWorkTreeDir)
 		if err != nil {
 			return err
