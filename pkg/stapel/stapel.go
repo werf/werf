@@ -12,6 +12,7 @@ import (
 	"github.com/containerd/containerd/platforms"
 	cerrdefs "github.com/containerd/errdefs"
 	"github.com/moby/moby/client"
+	"github.com/samber/lo"
 
 	"github.com/werf/werf/v3/pkg/container_backend/thirdparty/platformutil"
 	"github.com/werf/werf/v3/pkg/docker"
@@ -25,6 +26,8 @@ const (
 
 	containerVolumeDestination = CONTAINER_MOUNT_ROOT + "/stapel"
 )
+
+const hostCleanupVersion = VERSION
 
 func getVersion() string {
 	version := VERSION
@@ -48,6 +51,14 @@ func isDefaultImageRef() bool {
 
 func ImageName() string {
 	return fmt.Sprintf("%s:%s", getImage(), getVersion())
+}
+
+func HostCleanupImageName(ctx context.Context) string {
+	version := hostCleanupVersion
+	if v := os.Getenv("WERF_STAPEL_IMAGE_VERSION"); v != "" {
+		version = v
+	}
+	return fmt.Sprintf("%s:%s", getImage(), version)
 }
 
 func containerName(version, targetPlatform string) string {
@@ -117,8 +128,10 @@ func Purge(ctx context.Context) error {
 		}
 	}
 
-	if err := rmiIfExist(ctx); err != nil {
-		errs = append(errs, err)
+	for _, imageName := range lo.Uniq([]string{ImageName(), HostCleanupImageName(ctx)}) {
+		if err := rmiIfExist(ctx, imageName); err != nil {
+			errs = append(errs, err)
+		}
 	}
 
 	return errors.Join(errs...)
@@ -210,14 +223,14 @@ func volumeHolders(ctx context.Context, volumeName, exceptID string) ([]string, 
 	return holders, nil
 }
 
-func rmiIfExist(ctx context.Context) error {
-	exist, err := docker.ImageExist(ctx, ImageName())
+func rmiIfExist(ctx context.Context, imageName string) error {
+	exist, err := docker.ImageExist(ctx, imageName)
 	if err != nil {
 		return err
 	}
 
 	if exist {
-		return docker.CliRmi(ctx, ImageName())
+		return docker.CliRmi(ctx, imageName)
 	}
 
 	return nil

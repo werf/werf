@@ -50,7 +50,7 @@ var _ = Describe("project dir", func() {
 			shouldRun, err = ShouldRunAutoGC()
 			Expect(err).NotTo(HaveOccurred())
 			Expect(shouldRun).To(Equal(age >= projectDirMaxAge))
-			Expect(RunGC(GinkgoT().Context(), dryRun)).To(Succeed())
+			Expect(RunGC(GinkgoT().Context(), RunGCOptions{DryRun: dryRun})).To(Succeed())
 			if age >= projectDirMaxAge && !dryRun {
 				Expect(dir).NotTo(BeADirectory())
 			} else {
@@ -84,7 +84,7 @@ var _ = Describe("project dir", func() {
 		past := time.Now().Add(-projectDirMaxAge - time.Hour)
 		Expect(os.Chtimes(orphaned, past, past)).To(Succeed())
 
-		Expect(RunGC(GinkgoT().Context(), false)).To(Succeed())
+		Expect(RunGC(GinkgoT().Context(), RunGCOptions{})).To(Succeed())
 		Expect(orphaned).NotTo(BeADirectory())
 		Expect(inUse).To(BeADirectory())
 	})
@@ -98,7 +98,7 @@ var _ = Describe("project dir", func() {
 		// os.Chtimes follows the link, so the age of the link itself is faked instead
 		stubs.Stub(&timeSince, func(time.Time) time.Duration { return projectDirMaxAge + time.Hour })
 
-		Expect(RunGC(GinkgoT().Context(), false)).To(Succeed())
+		Expect(RunGC(GinkgoT().Context(), RunGCOptions{})).To(Succeed())
 		Expect(target).To(BeADirectory())
 		Expect(filepath.Join(target, "data.txt")).To(BeARegularFile())
 		// the link itself is werf-prefixed and orphaned, so it is swept
@@ -113,7 +113,7 @@ var _ = Describe("project dir", func() {
 		Expect(os.Chtimes(mounted, past, past)).To(Succeed())
 		stubs.Stub(&onSameDevice, func(_, entry os.FileInfo) bool { return entry.Name() != filepath.Base(mounted) })
 
-		Expect(RunGC(GinkgoT().Context(), false)).To(Succeed())
+		Expect(RunGC(GinkgoT().Context(), RunGCOptions{})).To(Succeed())
 		Expect(filepath.Join(mounted, "data.txt")).To(BeARegularFile())
 	})
 
@@ -123,7 +123,7 @@ var _ = Describe("project dir", func() {
 		past := time.Now().Add(-projectDirMaxAge - time.Hour)
 		Expect(os.Chtimes(foreign, past, past)).To(Succeed())
 
-		Expect(RunGC(GinkgoT().Context(), false)).To(Succeed())
+		Expect(RunGC(GinkgoT().Context(), RunGCOptions{})).To(Succeed())
 		Expect(foreign).To(BeADirectory())
 	})
 })

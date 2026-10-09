@@ -100,7 +100,13 @@ func RunAutoHostCleanup(ctx context.Context, backend container_backend.Container
 
 func RunHostCleanup(ctx context.Context, backend container_backend.ContainerBackend, options HostCleanupOptions) error {
 	if err := logboek.Context(ctx).LogProcess("Running GC for tmp data").DoError(func() error {
-		if err := tmp_manager.RunGC(ctx, options.DryRun); errors.Is(err, tmp_manager.ErrPathRemoval) {
+		if err := tmp_manager.RunGC(ctx, tmp_manager.RunGCOptions{
+			DryRun: options.DryRun,
+			RemoveProjectDir: func(ctx context.Context, path string) error {
+				return removeProjectTmpDir(ctx, backend, path)
+			},
+		}); errors.Is(err, tmp_manager.ErrPathRemoval) {
+			logboek.Context(ctx).Warn().LogF("WARNING: unable to remove tmp data: %s\n", err)
 			return nil
 		} else if err != nil {
 			return fmt.Errorf("tmp files GC failed: %w", err)

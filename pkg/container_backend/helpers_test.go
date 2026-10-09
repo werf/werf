@@ -12,8 +12,10 @@ import (
 	"github.com/onsi/gomega"
 	"github.com/samber/lo"
 
+	"github.com/werf/werf/v3/pkg/buildah"
 	"github.com/werf/werf/v3/pkg/docker"
 	"github.com/werf/werf/v3/pkg/opstats"
+	"github.com/werf/werf/v3/test/pkg/buildahstub"
 )
 
 var _ BuildContextArchiver = (*stubBuildContextArchive)(nil)
@@ -84,4 +86,15 @@ func testChownableOwnership() (uint32, uint32) {
 	}
 
 	return uint32(uid), uint32(gid)
+}
+
+var _ buildah.Buildah = (*hostCleanupBuildah)(nil)
+
+type hostCleanupBuildah struct {
+	buildahstub.BuildahStub
+	runCommand func(context.Context, string, []string, buildah.RunCommandOpts) error
+}
+
+func (b *hostCleanupBuildah) RunCommand(ctx context.Context, container string, command []string, opts buildah.RunCommandOpts) error {
+	return b.runCommand(ctx, container, command, opts)
 }
