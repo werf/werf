@@ -20,7 +20,7 @@ jobs:
           - ${{ inputs.linuxAmd64Runner }}
         cr:
           - acr
-          #          - default
+          - dockerhub
           - ecr
           - github
           - harbor
@@ -37,7 +37,7 @@ jobs:
       WERF_TEST_DEFAULT_REGISTRY: ${{ secrets.WERF_TEST_DEFAULT_REGISTRY }}
       WERF_TEST_DEFAULT_USERNAME: ${{ secrets.WERF_TEST_DEFAULT_USERNAME }}
 
-      WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_DOCKERHUB: 0
+      WERF_TEST_DOCKER_REGISTRY_IMPLEMENTATION_DOCKERHUB: 1
       WERF_TEST_DOCKERHUB_PASSWORD: ${{ secrets.WERF_TEST_DOCKERHUB_PASSWORD }}
       WERF_TEST_DOCKERHUB_REGISTRY: ${{ secrets.WERF_TEST_DOCKERHUB_REGISTRY }}
       WERF_TEST_DOCKERHUB_USERNAME: ${{ secrets.WERF_TEST_DOCKERHUB_USERNAME }}
@@ -103,5 +103,5 @@ jobs:
 
       - name: Test
         run: |
-          task --yes -p test:e2e paths="test/e2e/container_registry" -- --focus="\[${{ matrix.cr }}\]" --flake-attempts=3 --keep-going
+          task --yes -p test:e2e paths="test/e2e/container_registry" -- --focus="\[${{ matrix.cr }}\]" --flake-attempts=${{ matrix.cr == 'dockerhub' && '1' || '3' }} --keep-going
           echo loadavg: $(cat /proc/loadavg)

@@ -5,6 +5,9 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
+	"sync/atomic"
+	"time"
 
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/name"
@@ -38,6 +41,38 @@ var _ = Describe("container registry implementation", func() {
 				if implData.WerfImplementationName != docker_registry.DefaultImplementationName {
 					DeferCleanup(func(ctx SpecContext) {
 						By("deleting the repository")
+						if implData.WerfImplementationName == docker_registry.DockerHubImplementationName {
+							ref, err := name.NewRepository(repo)
+							Expect(err).NotTo(HaveOccurred())
+							client := &http.Client{
+								Timeout: 15 * time.Second,
+								CheckRedirect: func(_ *http.Request, _ []*http.Request) error {
+									return http.ErrUseLastResponse
+								},
+							}
+							token, err := dockerHubToken(ctx, client, implData.RegistryOptions)
+							Expect(err).NotTo(HaveOccurred())
+							endpoint := "https://hub.docker.com/v2/repositories/" + ref.RepositoryStr() + "/"
+							Expect(dockerHubRepositoryExists(ctx, client, endpoint, token)).To(BeTrue())
+
+							Expect(registry.DeleteRepo(ctx, repo)).To(Succeed())
+							pollCtx, cancel := context.WithTimeout(ctx, 10*time.Minute)
+							defer cancel()
+							delay := 30 * time.Second
+							Eventually(func(ctx context.Context) (bool, error) {
+								exists, err := dockerHubRepositoryExists(ctx, client, endpoint, token)
+								if err != nil {
+									return false, StopTrying("check Docker Hub repository deletion").Wrap(err)
+								}
+								if exists {
+									retry := TryAgainAfter(delay)
+									delay = min(2*delay, 2*time.Minute)
+									return true, retry
+								}
+								return false, nil
+							}).WithContext(pollCtx).WithTimeout(10 * time.Minute).Should(BeFalse())
+							return
+						}
 						Expect(registry.DeleteRepo(ctx, repo)).To(Succeed())
 						Expect(registry.TryGetRepoImage(ctx, repo+":kept")).To(BeNil())
 					})
@@ -126,3 +161,27 @@ func getManifest(ctx context.Context, reference string, registryOptions docker_r
 
 	return manifest
 }
+
+var _ = DescribeTable("Docker Hub repository status", func(ctx SpecContext, status int, exists, fails bool) {
+	var requests atomic.Int32
+	server := httptest.NewServer(http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
+		requests.Add(1)
+		response.WriteHeader(status)
+	}))
+	defer server.Close()
+	actual, err := dockerHubRepositoryExists(ctx, server.Client(), server.URL+"/v2/repositories/account/project/", "test-token")
+	Expect(requests.Load()).To(Equal(int32(1)))
+	if fails {
+		Expect(err).To(HaveOccurred())
+		return
+	}
+	Expect(err).NotTo(HaveOccurred())
+	Expect(actual).To(Equal(exists))
+},
+	Entry("existing or pending repository", http.StatusOK, true, false),
+	Entry("deleted repository", http.StatusNotFound, false, false),
+	Entry("unauthorized is not deletion", http.StatusUnauthorized, false, true),
+	Entry("forbidden is not deletion", http.StatusForbidden, false, true),
+	Entry("rate limit is not deletion or retried", http.StatusTooManyRequests, false, true),
+	Entry("server error is not deletion", http.StatusInternalServerError, false, true),
+)
