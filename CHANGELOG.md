@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.8.0](https://github.com/werf/werf/compare/v3.7.2...v3.8.0) (2026-10-09)
+
+
+### Features
+
+* **build:** include Git LFS content automatically in images ([#8042](https://github.com/werf/werf/issues/8042)) ([186a839](https://github.com/werf/werf/commit/186a83943402e3c4345b65c2b7246cb540e92622))
+
+
+### Bug Fixes
+
+* **build:** report registry publication and lookup failures ([#8047](https://github.com/werf/werf/issues/8047)) ([e4d1903](https://github.com/werf/werf/commit/e4d19032a01e0f6d90472276d185f387597fa488))
+* **host-cleanup:** remove root-owned project temporary data ([#8050](https://github.com/werf/werf/issues/8050)) ([b2bd9cc](https://github.com/werf/werf/commit/b2bd9cc65f5568a893256e247d41beda2ff4dc5a))
+
 ## [3.7.2](https://github.com/werf/werf/compare/v3.7.1...v3.7.2) (2026-10-08)
 
 
