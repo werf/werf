@@ -51,7 +51,7 @@ var _ = ginkgo.Describe("embedded host cleanup image", func() {
 				n, err := io.Copy(io.Discard, r.Body)
 				gomega.Expect(err).NotTo(gomega.HaveOccurred())
 				loadedBytes = n
-				_, err = io.WriteString(w, `{"stream":"Loaded image\n"}`)
+				_, err = io.WriteString(w, `{"stream":"Loaded image: registry.werf.io/werf/stapel:0.7.2\n"}`)
 				gomega.Expect(err).NotTo(gomega.HaveOccurred())
 			case strings.HasSuffix(r.URL.Path, "/images/create"):
 				pulled = true
