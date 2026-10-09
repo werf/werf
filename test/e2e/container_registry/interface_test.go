@@ -3,13 +3,16 @@ package e2e_container_registry_test
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
+	"github.com/google/go-containerregistry/pkg/v1/remote/transport"
 	"github.com/google/go-containerregistry/pkg/v1/types"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -38,6 +41,43 @@ var _ = Describe("container registry implementation", func() {
 				if implData.WerfImplementationName != docker_registry.DefaultImplementationName {
 					DeferCleanup(func(ctx SpecContext) {
 						By("deleting the repository")
+						if implData.WerfImplementationName == docker_registry.DockerHubImplementationName {
+							ref, err := name.NewTag(repo + ":kept")
+							Expect(err).NotTo(HaveOccurred())
+							puller, err := remote.NewPuller(
+								remote.WithAuthFromKeychain(authn.DefaultKeychain),
+								remote.WithRetryBackoff(remote.Backoff{Steps: 1}),
+							)
+							Expect(err).NotTo(HaveOccurred())
+							_, err = puller.Head(ctx, ref)
+							Expect(err).NotTo(HaveOccurred())
+
+							Expect(registry.DeleteRepo(ctx, repo)).To(Succeed())
+							pollCtx, cancel := context.WithTimeout(ctx, time.Minute)
+							defer cancel()
+							registryHost := ref.Context().RegistryStr()
+							if registryHost == name.DefaultRegistry {
+								registryHost = "registry-1.docker.io"
+							}
+							delay := 5 * time.Second
+							Eventually(func(ctx context.Context) error {
+								_, err := puller.Head(ctx, ref)
+								if err == nil {
+									retry := TryAgainAfter(delay)
+									delay = min(2*delay, 20*time.Second)
+									return retry
+								}
+								var registryErr *transport.Error
+								if errors.As(err, &registryErr) && registryErr.StatusCode == http.StatusNotFound &&
+									registryErr.Request != nil && registryErr.Request.Method == http.MethodHead &&
+									registryErr.Request.URL.Host == registryHost &&
+									registryErr.Request.URL.Path == "/v2/"+ref.Context().RepositoryStr()+"/manifests/"+ref.Identifier() {
+									return nil
+								}
+								return StopTrying("check Docker Hub manifest deletion").Wrap(err)
+							}).WithContext(pollCtx).WithTimeout(time.Minute).Should(Succeed())
+							return
+						}
 						Expect(registry.DeleteRepo(ctx, repo)).To(Succeed())
 						Expect(registry.TryGetRepoImage(ctx, repo+":kept")).To(BeNil())
 					})

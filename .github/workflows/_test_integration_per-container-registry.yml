@@ -103,5 +103,5 @@ jobs:
 
       - name: Test
         run: |
-          task --yes -p test:e2e paths="test/e2e/container_registry" -- --focus="\[${{ matrix.cr }}\]" --flake-attempts=3 --keep-going
+          task --yes -p test:e2e paths="test/e2e/container_registry" -- --focus="\[${{ matrix.cr }}\]" --flake-attempts=${{ matrix.cr == 'dockerhub' && '1' || '3' }} --keep-going
           echo loadavg: $(cat /proc/loadavg)
