@@ -1216,7 +1216,7 @@ func (backend *BuildahBackend) String() string {
 }
 
 func (backend *BuildahBackend) RemoveHostDirs(ctx context.Context, mountDir string, dirs []string) error {
-	serviceImage := getHostCleanupServiceImage()
+	serviceImage, rmPath := getHostCleanupService(ctx)
 	var container *containerDesc
 	if c, err := backend.createContainers(ctx, []string{serviceImage}, CommonOpts{}); err != nil {
 		return fmt.Errorf("unable to create container based on %q: %w", serviceImage, err)
@@ -1233,7 +1233,7 @@ func (backend *BuildahBackend) RemoveHostDirs(ctx context.Context, mountDir stri
 		containerDirs = append(containerDirs, util.ToLinuxContainerPath(dir))
 	}
 
-	return backend.buildah.RunCommand(ctx, container.Name, append([]string{"rm", "-rf"}, containerDirs...), buildah.RunCommandOpts{
+	return backend.buildah.RunCommand(ctx, container.Name, append([]string{rmPath, "-rf", "--"}, containerDirs...), buildah.RunCommandOpts{
 		User:       "0:0",
 		WorkingDir: "/",
 		GlobalMounts: []*specs.Mount{

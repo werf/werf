@@ -10,6 +10,7 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
+	"github.com/samber/lo"
 
 	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/image"
@@ -20,6 +21,9 @@ const (
 	IMAGE                = "registry.werf.io/werf/stapel"
 	CONTAINER_MOUNT_ROOT = "/.werf"
 )
+
+// Cleanup needs an arm64 image without changing the Stapel build toolchain.
+const hostCleanupVersion = "0.7.2"
 
 func getVersion() string {
 	version := VERSION
@@ -39,6 +43,14 @@ func getImage() string {
 
 func ImageName() string {
 	return fmt.Sprintf("%s:%s", getImage(), getVersion())
+}
+
+func HostCleanupImageName(ctx context.Context) string {
+	version := hostCleanupVersion
+	if v := os.Getenv("WERF_STAPEL_IMAGE_VERSION"); v != "" {
+		version = v
+	}
+	return fmt.Sprintf("%s:%s", getImage(), version)
 }
 
 func getContainer(targetPlatform string) container {
@@ -94,21 +106,23 @@ func Purge(ctx context.Context) error {
 		}
 	}
 
-	if err := rmiIfExist(ctx); err != nil {
-		return err
+	for _, imageName := range lo.Uniq([]string{ImageName(), HostCleanupImageName(ctx)}) {
+		if err := rmiIfExist(ctx, imageName); err != nil {
+			return err
+		}
 	}
 
 	return nil
 }
 
-func rmiIfExist(ctx context.Context) error {
-	exist, err := docker.ImageExist(ctx, ImageName())
+func rmiIfExist(ctx context.Context, imageName string) error {
+	exist, err := docker.ImageExist(ctx, imageName)
 	if err != nil {
 		return err
 	}
 
 	if exist {
-		return docker.CliRmi(ctx, ImageName())
+		return docker.CliRmi(ctx, imageName)
 	}
 
 	return nil

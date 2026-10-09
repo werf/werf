@@ -2,6 +2,7 @@ package container_backend
 
 import (
 	"context"
+	"encoding/csv"
 	"errors"
 	"fmt"
 	"io"
@@ -24,6 +25,7 @@ import (
 	"github.com/werf/werf/v2/pkg/docker"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/ssh_agent"
+	"github.com/werf/werf/v2/pkg/stapel"
 	"github.com/werf/werf/v2/pkg/tmp_manager"
 )
 
@@ -365,17 +367,33 @@ func (backend *DockerServerBackend) String() string {
 }
 
 func (backend *DockerServerBackend) RemoveHostDirs(ctx context.Context, mountDir string, dirs []string) error {
+	serviceImage, rmPath := getHostCleanupService(ctx)
+	var args []string
+	if os.Getenv("WERF_HOST_CLEANUP_SERVICE_IMAGE") == "" {
+		platform := backend.GetRuntimePlatform()
+		if err := stapel.EnsureImage(ctx, serviceImage, platform); err != nil {
+			return fmt.Errorf("prepare stapel for host cleanup: %w", err)
+		}
+		if platform != "" {
+			args = []string{"--platform", platform}
+		}
+	}
+
 	var containerDirs []string
 	for _, dir := range dirs {
 		containerDirs = append(containerDirs, util.ToLinuxContainerPath(dir))
 	}
 
-	args := []string{
-		"--rm",
-		"--volume", fmt.Sprintf("%s:%s", mountDir, util.ToLinuxContainerPath(mountDir)),
-		getHostCleanupServiceImage(),
-		"rm", "-rf",
+	var mountSpec strings.Builder
+	if err := csv.NewWriter(&mountSpec).WriteAll([][]string{{"type=bind", "source=" + mountDir, "target=" + util.ToLinuxContainerPath(mountDir)}}); err != nil {
+		return fmt.Errorf("encode host cleanup bind mount: %w", err)
 	}
+	args = append(args,
+		"--rm",
+		"--mount", strings.TrimSuffix(mountSpec.String(), "\n"),
+		serviceImage,
+		rmPath, "-rf", "--",
+	)
 
 	args = append(args, containerDirs...)
 

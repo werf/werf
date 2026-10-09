@@ -26,7 +26,7 @@ var _ = Describe("context pin dir", func() {
 		Expect(dir).To(HavePrefix(werf.GetServiceDir() + string(os.PathSeparator)))
 		Expect(DelegateCleanup(ctx)).To(Succeed())
 
-		Expect(RunGC(ctx, false)).To(Succeed())
+		Expect(RunGC(ctx, RunGCOptions{})).To(Succeed())
 		Expect(dir).NotTo(BeADirectory())
 	})
 
@@ -49,7 +49,7 @@ var _ = Describe("context pin dir", func() {
 		past := time.Now().Add(-contextPinMaxAge - time.Hour)
 		Expect(os.Chtimes(orphaned, past, past)).To(Succeed())
 
-		Expect(RunGC(ctx, false)).To(Succeed())
+		Expect(RunGC(ctx, RunGCOptions{})).To(Succeed())
 		Expect(orphaned).NotTo(BeADirectory())
 		Expect(inUse).To(BeADirectory())
 	})
