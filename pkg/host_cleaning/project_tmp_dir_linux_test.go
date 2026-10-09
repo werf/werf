@@ -119,6 +119,20 @@ var _ = ginkgo.Describe("project tmp permission cleanup", func() {
 		gomega.Expect(filepath.Join(project, "cache", "payload")).To(gomega.BeARegularFile())
 	}, ginkgo.Entry("another unprivileged user", false), ginkgo.Entry("root", true))
 
+	ginkgo.It("checks ancestors above the immediate parent", func(ctx ginkgo.SpecContext) {
+		ancestor := filepath.Dir(werf.GetTmpDir())
+		stubs.Stub(&projectTmpRemoveAll, func(string) error { return fs.ErrPermission })
+		stubs.Stub(&projectTmpLstat, func(path string) (os.FileInfo, error) {
+			info, err := os.Lstat(path)
+			if err == nil && path == ancestor {
+				info.Sys().(*syscall.Stat_t).Uid = uint32(os.Geteuid()) + 1
+			}
+			return info, err
+		})
+		gomega.Expect(removeProjectTmpDir(ctx, backend, project)).To(gomega.MatchError(gomega.ContainSubstring("is not owned by root or the current user")))
+		gomega.Expect(filepath.Join(project, "cache", "payload")).To(gomega.BeARegularFile())
+	})
+
 	ginkgo.It("rejects replacement of the selected directory before backend removal", func(ctx ginkgo.SpecContext) {
 		outside := ginkgo.GinkgoT().TempDir()
 		sentinel := filepath.Join(outside, "keep")
