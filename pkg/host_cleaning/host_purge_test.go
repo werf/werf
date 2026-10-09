@@ -23,6 +23,7 @@ var _ = ginkgo.Describe("HostPurge", func() {
 		gomega.Expect(daemon.RemovedVolumes(ctx)).To(gomega.ConsistOf("vol-current", "vol-old"))
 
 		requests := daemon.Requests(ctx)
+		gomega.Expect(requests).To(gomega.ContainElement(gomega.HavePrefix("POST /containers/create")))
 		gomega.Expect(daemon.Images).To(gomega.BeEmpty())
 		gomega.Expect(indexOfRequest(requests, "DELETE /containers/build-container?force=1")).
 			To(gomega.BeNumerically("<", indexOfRequest(requests, "DELETE /volumes/vol-current")))
