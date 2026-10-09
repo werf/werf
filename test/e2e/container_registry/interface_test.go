@@ -3,16 +3,16 @@ package e2e_container_registry_test
 import (
 	"context"
 	"crypto/tls"
-	"errors"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
+	"sync/atomic"
 	"time"
 
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
-	"github.com/google/go-containerregistry/pkg/v1/remote/transport"
 	"github.com/google/go-containerregistry/pkg/v1/types"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -42,40 +42,35 @@ var _ = Describe("container registry implementation", func() {
 					DeferCleanup(func(ctx SpecContext) {
 						By("deleting the repository")
 						if implData.WerfImplementationName == docker_registry.DockerHubImplementationName {
-							ref, err := name.NewTag(repo + ":kept")
+							ref, err := name.NewRepository(repo)
 							Expect(err).NotTo(HaveOccurred())
-							puller, err := remote.NewPuller(
-								remote.WithAuthFromKeychain(authn.DefaultKeychain),
-								remote.WithRetryBackoff(remote.Backoff{Steps: 1}),
-							)
+							client := &http.Client{
+								Timeout: 15 * time.Second,
+								CheckRedirect: func(_ *http.Request, _ []*http.Request) error {
+									return http.ErrUseLastResponse
+								},
+							}
+							token, err := dockerHubToken(ctx, client, implData.RegistryOptions)
 							Expect(err).NotTo(HaveOccurred())
-							_, err = puller.Head(ctx, ref)
-							Expect(err).NotTo(HaveOccurred())
+							endpoint := "https://hub.docker.com/v2/repositories/" + ref.RepositoryStr() + "/"
+							Expect(dockerHubRepositoryExists(ctx, client, endpoint, token)).To(BeTrue())
 
 							Expect(registry.DeleteRepo(ctx, repo)).To(Succeed())
-							pollCtx, cancel := context.WithTimeout(ctx, time.Minute)
+							pollCtx, cancel := context.WithTimeout(ctx, 10*time.Minute)
 							defer cancel()
-							registryHost := ref.Context().RegistryStr()
-							if registryHost == name.DefaultRegistry {
-								registryHost = "registry-1.docker.io"
-							}
-							delay := 5 * time.Second
-							Eventually(func(ctx context.Context) error {
-								_, err := puller.Head(ctx, ref)
-								if err == nil {
+							delay := 30 * time.Second
+							Eventually(func(ctx context.Context) (bool, error) {
+								exists, err := dockerHubRepositoryExists(ctx, client, endpoint, token)
+								if err != nil {
+									return false, StopTrying("check Docker Hub repository deletion").Wrap(err)
+								}
+								if exists {
 									retry := TryAgainAfter(delay)
-									delay = min(2*delay, 20*time.Second)
-									return retry
+									delay = min(2*delay, 2*time.Minute)
+									return true, retry
 								}
-								var registryErr *transport.Error
-								if errors.As(err, &registryErr) && registryErr.StatusCode == http.StatusNotFound &&
-									registryErr.Request != nil && registryErr.Request.Method == http.MethodHead &&
-									registryErr.Request.URL.Host == registryHost &&
-									registryErr.Request.URL.Path == "/v2/"+ref.Context().RepositoryStr()+"/manifests/"+ref.Identifier() {
-									return nil
-								}
-								return StopTrying("check Docker Hub manifest deletion").Wrap(err)
-							}).WithContext(pollCtx).WithTimeout(time.Minute).Should(Succeed())
+								return false, nil
+							}).WithContext(pollCtx).WithTimeout(10 * time.Minute).Should(BeFalse())
 							return
 						}
 						Expect(registry.DeleteRepo(ctx, repo)).To(Succeed())
@@ -166,3 +161,27 @@ func getManifest(ctx context.Context, reference string, registryOptions docker_r
 
 	return manifest
 }
+
+var _ = DescribeTable("Docker Hub repository status", func(ctx SpecContext, status int, exists, fails bool) {
+	var requests atomic.Int32
+	server := httptest.NewServer(http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
+		requests.Add(1)
+		response.WriteHeader(status)
+	}))
+	defer server.Close()
+	actual, err := dockerHubRepositoryExists(ctx, server.Client(), server.URL+"/v2/repositories/account/project/", "test-token")
+	Expect(requests.Load()).To(Equal(int32(1)))
+	if fails {
+		Expect(err).To(HaveOccurred())
+		return
+	}
+	Expect(err).NotTo(HaveOccurred())
+	Expect(actual).To(Equal(exists))
+},
+	Entry("existing or pending repository", http.StatusOK, true, false),
+	Entry("deleted repository", http.StatusNotFound, false, false),
+	Entry("unauthorized is not deletion", http.StatusUnauthorized, false, true),
+	Entry("forbidden is not deletion", http.StatusForbidden, false, true),
+	Entry("rate limit is not deletion or retried", http.StatusTooManyRequests, false, true),
+	Entry("server error is not deletion", http.StatusInternalServerError, false, true),
+)
