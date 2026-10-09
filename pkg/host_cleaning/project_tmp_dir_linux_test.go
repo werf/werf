@@ -83,10 +83,20 @@ var _ = ginkgo.Describe("project tmp permission cleanup", func() {
 		gomega.Expect(entries).To(gomega.BeEmpty())
 	})
 
-	ginkgo.It("does not elevate a non-permission failure", func(ctx ginkgo.SpecContext) {
-		stubs.Stub(&projectTmpRemoveAll, func(string) error { return syscall.EIO })
+	ginkgo.It("preserves retry age after a partial non-permission failure without elevating", func(ctx ginkgo.SpecContext) {
+		writable := filepath.Join(project, "writable")
+		gomega.Expect(os.WriteFile(writable, []byte("remove"), 0o600)).To(gomega.Succeed())
+		gomega.Expect(os.Chtimes(project, past, past)).To(gomega.Succeed())
+		stubs.Stub(&projectTmpRemoveAll, func(string) error {
+			gomega.Expect(os.Remove(writable)).To(gomega.Succeed())
+			return syscall.EIO
+		})
 		gomega.Expect(errors.Is(removeProjectTmpDir(ctx, backend, project), syscall.EIO)).To(gomega.BeTrue())
 		gomega.Expect(filepath.Join(project, "cache", "payload")).To(gomega.BeARegularFile())
+		info, err := os.Stat(project)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		gomega.Expect(info.ModTime()).To(gomega.Equal(past))
+		gomega.Expect(tmp_manager.ShouldRunAutoGC()).To(gomega.BeTrue())
 	})
 
 	ginkgo.DescribeTable("does not elevate deletion of another user's directory", func(ctx ginkgo.SpecContext, rootOwner bool) {

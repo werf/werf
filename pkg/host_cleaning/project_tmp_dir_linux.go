@@ -41,7 +41,7 @@ func removeProjectTmpDir(ctx context.Context, backend container_backend.Containe
 	if err := projectTmpRemoveAll(path); err == nil {
 		return nil
 	} else if !errors.Is(err, fs.ErrPermission) {
-		return fmt.Errorf("remove project tmp dir %q: %w", path, err)
+		return errors.Join(fmt.Errorf("remove project tmp dir %q: %w", path, err), restoreProjectTmpAge(path, info))
 	}
 
 	stat, ok := info.Sys().(*syscall.Stat_t)

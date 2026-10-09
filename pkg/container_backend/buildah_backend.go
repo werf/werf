@@ -1107,7 +1107,7 @@ func (backend *BuildahBackend) String() string {
 }
 
 func (backend *BuildahBackend) RemoveHostDirs(ctx context.Context, mountDir string, dirs []string) error {
-	serviceImage, rmPath := getHostCleanupService()
+	serviceImage, rmPath := getHostCleanupService(ctx)
 	var container *containerDesc
 	if c, err := backend.createContainers(ctx, []string{serviceImage}, CommonOpts{}); err != nil {
 		return fmt.Errorf("unable to create container based on %q: %w", serviceImage, err)
