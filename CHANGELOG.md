@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.81.4](https://github.com/werf/werf/compare/v2.81.3...v2.81.4) (2026-10-09)
+
+
+### Bug Fixes
+
+* **host-cleanup:** remove root-owned project temporary data ([#8049](https://github.com/werf/werf/issues/8049)) ([fd98589](https://github.com/werf/werf/commit/fd98589e968cf585274b0e1bc19547f0648cbb4d))
+
 ## [2.81.3](https://github.com/werf/werf/compare/v2.81.2...v2.81.3) (2026-10-08)
 
 
