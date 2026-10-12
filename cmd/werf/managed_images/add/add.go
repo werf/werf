@@ -56,6 +56,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{})
 	common.SetupFinalRepo(&commonCmdData, cmd)
+	common.SetupMetaRepo(ctx, &commonCmdData, cmd)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read and write images to the specified repo")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
@@ -140,7 +141,7 @@ func run(ctx context.Context, imageName string) error {
 		return fmt.Errorf("unable to init storage manager: %w", err)
 	}
 
-	if err := storageManager.StagesStorage.AddManagedImage(ctx, projectName, common.GetManagedImageName(imageName)); err != nil {
+	if err := storageManager.GetMetaStorage(ctx).AddManagedImage(ctx, projectName, common.GetManagedImageName(imageName)); err != nil {
 		return fmt.Errorf("unable to add managed image %q for project %q: %w", imageName, projectName, err)
 	}
 

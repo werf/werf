@@ -3,7 +3,9 @@ package storage
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
+	"strings"
 	"sync"
 
 	"github.com/onsi/ginkgo/v2"
@@ -187,4 +189,147 @@ func brokenCount(collector *opstats.Collector) int {
 		}
 	}
 	return 0
+}
+
+var _ docker_registry.Interface = (*markerRegistry)(nil)
+
+type markerRegistry struct {
+	docker_registry.Interface
+
+	mu         sync.Mutex
+	images     map[string]*image.Info
+	pushCounts map[string]int
+	copyErr    error
+	copyNoop   bool
+}
+
+func newMarkerRegistry() *markerRegistry {
+	return &markerRegistry{
+		images:     map[string]*image.Info{},
+		pushCounts: map[string]int{},
+	}
+}
+
+func refTag(reference string) string {
+	i := strings.LastIndex(reference, ":")
+	if i < 0 {
+		return ""
+	}
+	return reference[i+1:]
+}
+
+func refRepo(reference string) string {
+	i := strings.LastIndex(reference, ":")
+	if i < 0 {
+		return reference
+	}
+	return reference[:i]
+}
+
+func (r *markerRegistry) PushImage(_ context.Context, reference string, opts *docker_registry.PushImageOptions) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	labels := map[string]string{}
+	if opts != nil {
+		for k, v := range opts.Labels {
+			labels[k] = v
+		}
+	}
+	r.images[reference] = &image.Info{Name: reference, Tag: refTag(reference), Labels: labels}
+	r.pushCounts[reference]++
+	return nil
+}
+
+func (r *markerRegistry) TryGetRepoImage(_ context.Context, reference string) (*image.Info, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return r.images[reference], nil
+}
+
+func (r *markerRegistry) GetRepoImage(_ context.Context, reference string) (*image.Info, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return r.images[reference], nil
+}
+
+func (r *markerRegistry) IsTagExist(_ context.Context, reference string, _ ...docker_registry.Option) (bool, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	_, ok := r.images[reference]
+	return ok, nil
+}
+
+func (r *markerRegistry) DeleteRepoImage(_ context.Context, repoImage *image.Info) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	delete(r.images, repoImage.Name)
+	return nil
+}
+
+func (r *markerRegistry) Tags(_ context.Context, reference string, _ ...docker_registry.Option) ([]string, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	var res []string
+	for name := range r.images {
+		if refRepo(name) == reference {
+			res = append(res, refTag(name))
+		}
+	}
+	return res, nil
+}
+
+func (r *markerRegistry) CopyImage(_ context.Context, sourceReference, destinationReference string, _ docker_registry.CopyImageOptions) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if r.copyErr != nil {
+		return r.copyErr
+	}
+	if r.copyNoop {
+		return nil
+	}
+	src := r.images[sourceReference]
+	if src == nil {
+		return fmt.Errorf("source %q not found", sourceReference)
+	}
+	labels := map[string]string{}
+	for k, v := range src.Labels {
+		labels[k] = v
+	}
+	r.images[destinationReference] = &image.Info{Name: destinationReference, Tag: refTag(destinationReference), Labels: labels}
+	return nil
+}
+
+func (r *markerRegistry) put(reference string, labels map[string]string) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.images[reference] = &image.Info{Name: reference, Tag: refTag(reference), Labels: labels}
+}
+
+func (r *markerRegistry) putIndex(reference string) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.images[reference] = &image.Info{Name: reference, Tag: refTag(reference), IsIndex: true}
+}
+
+func (r *markerRegistry) pushCount(reference string) int {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return r.pushCounts[reference]
+}
+
+func (r *markerRegistry) has(reference string) bool {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	_, ok := r.images[reference]
+	return ok
+}
+
+const (
+	stagesRepo = "registry.example/stages"
+	metaRepo   = "registry.example/meta"
+	proj       = "myproject"
+)
+
+func newRepoStorage(reg docker_registry.Interface, address string) *RepoStagesStorage {
+	return &RepoStagesStorage{RepoAddress: address, DockerRegistry: reg, skipMetaCheck: true}
 }

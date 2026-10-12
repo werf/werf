@@ -144,6 +144,10 @@ func (m *checkModeStorageManager) GetStagesStorage() storage.PrimaryStagesStorag
 	return m.stagesStorage
 }
 
+func (m *checkModeStorageManager) GetMetaStorage(_ context.Context) storage.PrimaryStagesStorage {
+	return m.stagesStorage
+}
+
 func (m *checkModeStorageManager) GetFinalStagesStorage() storage.StagesStorage { return nil }
 
 var _ storage.PrimaryStagesStorage = (*checkModeStorage)(nil)

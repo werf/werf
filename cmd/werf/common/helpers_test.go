@@ -1,6 +1,7 @@
 package common
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -51,6 +52,7 @@ func storageManagerCmdData(args ...string) *CmdData {
 	SetupCacheStagesStorageOptions(data, command)
 	SetupRepoOptions(data, command, RepoDataOptions{OptionalRepo: true})
 	SetupFinalRepo(data, command)
+	SetupMetaRepo(context.Background(), data, command)
 	SetupContainerRegistryMirror(data, command)
 	SetupSynchronization(data, command)
 	SetupCheckBuiltImages(data, command)

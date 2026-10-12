@@ -73,6 +73,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{OptionalRepo: false})
 	common.SetupFinalRepo(&commonCmdData, cmd)
+	common.SetupMetaRepo(ctx, &commonCmdData, cmd)
 	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultCleanupParallelTasksLimit)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and delete images from the specified repo")
@@ -217,7 +218,7 @@ func runCleanup(ctx context.Context, cmd *cobra.Command) error {
 		storageManager.EnableParallel(int(common.GetParallelTasksLimit(&commonCmdData)))
 	}
 
-	imagesNames, err := common.GetManagedImagesNames(ctx, projectName, storageManager.StagesStorage, werfConfig)
+	imagesNames, err := common.GetManagedImagesNames(ctx, projectName, storageManager.GetMetaStorage(ctx), werfConfig)
 	if err != nil {
 		return err
 	}

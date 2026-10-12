@@ -15,6 +15,7 @@ import (
 
 	"github.com/werf/werf/v2/pkg/cleaning/stage_manager"
 	"github.com/werf/werf/v2/pkg/cleanup_report"
+	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/storage"
 	"github.com/werf/werf/v2/pkg/storage/manager"
@@ -32,9 +33,11 @@ type fakePrimaryStagesStorage struct {
 	deleteRecordErrs map[string]error
 	deleteTagErrs    map[string]error
 
-	deletedImages  []image.StageID
-	deletedRecords []image.StageID
-	deletedTags    []string
+	deletedImages      []image.StageID
+	deletedRecords     []image.StageID
+	deletedTags        []string
+	unregisteredTags   []string
+	lastCleanupRecords []string
 }
 
 func (f *fakePrimaryStagesStorage) GetRejectedStageIDs(_ context.Context, _ ...storage.Option) ([]image.StageID, error) {
@@ -66,12 +69,14 @@ type fakeStorageManager struct {
 	manager.StorageManagerInterface
 
 	stages *fakePrimaryStagesStorage
+	meta   *fakePrimaryStagesStorage
 
 	importMetadataErrs map[string]error
 
 	stageDescSet       image.StageDescSet
 	finalStageDescSet  image.StageDescSet
 	deletedFinalStages []*image.StageDesc
+	deletedStages      []*image.StageDesc
 }
 
 func newFakeStorageManager() *fakeStorageManager {
@@ -536,4 +541,43 @@ var _ = ginkgo.Describe("Cleanup unused imports metadata", func() {
 
 		gomega.Expect(after).To(gomega.BeNumerically("<=", before+5), "deleteUnusedImportsMetadata must not leak a goroutine per skipped-early scan of the protected stage set")
 	})
+})
+
+var _ = ginkgo.Describe("Cleanup last cleanup record", func() {
+	ginkgo.DescribeTable("writes the record to the meta storage only for a real run, and previews deletions either way",
+		func(dryRun bool, expectedRecords []string) {
+			ginkgo.GinkgoT().Setenv("WERF_EXPERIMENTAL_IMPORT_BY_SOURCE_IMAGE_TAG", "true")
+			ctx := context.Background()
+			stageDesc := newTestStageDesc("example.com/primary", image.NewStageID("ff0011", 1748001122334))
+
+			storageManager := newFakeStorageManagerWithSplitStorages()
+			storageManager.stageDescSet = image.NewStageDescSet(stageDesc)
+
+			report := cleanup_report.NewReport(ctx, "cleanup", dryRun, "example.com/primary", cleanup_report.NewReportOptions{})
+			cleanup := &cleanupManager{
+				stageManager:      stage_manager.NewManager(),
+				StorageManager:    storageManager,
+				ProjectName:       "myproject",
+				DryRun:            dryRun,
+				WithoutKube:       true,
+				ConfigMetaCleanup: config.MetaCleanup{DisableGitHistoryBasedPolicy: true},
+				keepList:          NewKeepList(),
+				report:            report,
+			}
+
+			gomega.Expect(cleanup.run(ctx)).To(gomega.Succeed())
+
+			gomega.Expect(storageManager.meta.lastCleanupRecords).To(gomega.Equal(expectedRecords))
+			gomega.Expect(report.Deleted).To(gomega.Equal([]cleanup_report.Item{{
+				Type: cleanup_report.ItemTypeStage, Tag: stageDesc.Info.Tag,
+			}}), "the deletion preview must be identical in both modes")
+			if dryRun {
+				gomega.Expect(storageManager.deletedStages).To(gomega.BeEmpty())
+			} else {
+				gomega.Expect(storageManager.deletedStages).To(gomega.ConsistOf(stageDesc))
+			}
+		},
+		ginkgo.Entry("dry run must not write anything to the meta repo", true, []string(nil)),
+		ginkgo.Entry("real run records the cleanup", false, []string{"myproject"}),
+	)
 })

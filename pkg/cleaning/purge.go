@@ -95,7 +95,7 @@ func (m *purgeManager) run(ctx context.Context) error {
 		}
 	}
 
-	return nil
+	return m.deleteMetaRepoMarker(ctx)
 }
 
 func (m *purgeManager) deleteStageDescSet(ctx context.Context, stageDescSet image.StageDescSet, isFinal bool) error {
@@ -189,4 +189,52 @@ func (m *purgeManager) purgeRejectedStages(ctx context.Context) error {
 		return err
 	}
 	return nil
+}
+
+// deleteMetaRepoMarker runs last, so a purge that failed to delete some metadata
+// never leaves the meta-repo populated with the safeguard already gone.
+func (m *purgeManager) deleteMetaRepoMarker(ctx context.Context) error {
+	repo, ok := m.StorageManager.GetStagesStorage().(*storage.RepoStagesStorage)
+	if !ok {
+		return nil
+	}
+
+	metaRepoAddress, found, err := repo.GetMetaRepoMarker(ctx, m.ProjectName)
+	if err != nil {
+		return fmt.Errorf("unable to get meta-repo marker: %w", err)
+	}
+	if !found {
+		return nil
+	}
+
+	return logboek.Context(ctx).Default().LogProcess("Deleting meta-repo safeguard marker").DoError(func() error {
+		logboek.Context(ctx).Default().LogFWithCustomStyle(deletedStyle, "  meta-repo: %s\n", metaRepoAddress)
+
+		if m.DryRun {
+			return nil
+		}
+
+		meta := m.StorageManager.GetMetaStorage(ctx)
+		managed, err := meta.GetManagedImages(ctx, m.ProjectName, storage.WithFreshListing())
+		if err != nil {
+			return fmt.Errorf("verify managed images before removing meta-repo marker: %w", err)
+		}
+		_, metadata, err := meta.GetAllAndGroupImageMetadataByImageName(ctx, m.ProjectName, []string{}, storage.WithFreshListing())
+		if err != nil {
+			return fmt.Errorf("verify image metadata before removing meta-repo marker: %w", err)
+		}
+		customTags, err := meta.GetStageCustomTagMetadataIDs(ctx, storage.WithFreshListing())
+		if err != nil {
+			return fmt.Errorf("verify custom tag metadata before removing meta-repo marker: %w", err)
+		}
+		if len(managed)+len(metadata)+len(customTags) != 0 {
+			return fmt.Errorf("metadata remains in meta-repo %q after purge; keeping the safeguard marker; resolve deletion errors and retry purge", meta.Address())
+		}
+
+		if err := repo.RmMetaRepoMarker(ctx, m.ProjectName); err != nil {
+			return fmt.Errorf("unable to remove meta-repo marker: %w", err)
+		}
+
+		return nil
+	})
 }
