@@ -5,6 +5,10 @@ import (
 
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
+	"github.com/spf13/cobra"
+
+	"github.com/werf/nelm/pkg/featgate"
+	"github.com/werf/werf/v2/pkg/buildah"
 )
 
 var _ = ginkgo.Describe("List environment options", func() {
@@ -47,6 +51,31 @@ var _ = ginkgo.Describe("List environment options", func() {
 		ginkgo.Entry("WERF_EXTRA_APIVERSIONS", "WERF_EXTRA_APIVERSIONS", func(data *CmdData) *[]string { return &data.ExtraAPIVersions }),
 		ginkgo.Entry("WERF_LOOKUP_RESOURCES", "WERF_LOOKUP_RESOURCES", func(data *CmdData) *[]string { return &data.LocalLookupResourcesPaths }),
 	)
+	ginkgo.DescribeTable("uses schema environment defaults unless flags replace them", func(args, expected []string) {
+		ginkgo.GinkgoT().Setenv(featgate.FeatGateResourceValidation.EnvVarName(), "true")
+		ginkgo.GinkgoT().Setenv("WERF_RESOURCE_VALIDATION_SCHEMA", "/bare/{{.ResourceKind}}.json")
+		ginkgo.GinkgoT().Setenv("WERF_RESOURCE_VALIDATION_SCHEMA_1", "/suffix/{{.ResourceKind}}.json")
+		data := &CmdData{}
+		command := &cobra.Command{}
+		gomega.Expect(SetupResourceValidationFlags(data, command)).To(gomega.Succeed())
+		gomega.Expect(command.ParseFlags(args)).To(gomega.Succeed())
+		gomega.Expect(data.processFlags()).To(gomega.Succeed())
+		gomega.Expect(data.ValidationSchemas).To(gomega.Equal(expected))
+	},
+		ginkgo.Entry("environment defaults", []string{}, []string{"/bare/{{.ResourceKind}}.json", "/suffix/{{.ResourceKind}}.json"}),
+		ginkgo.Entry("explicit flags replace defaults", []string{"--resource-validation-schema=/cli/one.json", "--resource-validation-schema=/cli/two.json"}, []string{"/cli/one.json", "/cli/two.json"}),
+	)
+	ginkgo.It("combines registry mirrors from environment, flags and the backend", func() {
+		ginkgo.GinkgoT().Setenv("WERF_CONTAINER_REGISTRY_MIRROR", "bare.example")
+		ginkgo.GinkgoT().Setenv("WERF_CONTAINER_REGISTRY_MIRROR_1", "https://suffix.example")
+		data := &CmdData{}
+		command := &cobra.Command{}
+		SetupContainerRegistryMirror(data, command)
+		gomega.Expect(command.ParseFlags([]string{"--container-registry-mirror=cli.example", "--container-registry-mirror=bare.example"})).To(gomega.Succeed())
+		mirrors, err := GetContainerRegistryMirror(registryMirrorContext(), data, buildah.ModeDisabled)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		gomega.Expect(mirrors).To(gomega.Equal([]string{"https://bare.example", "https://suffix.example", "https://cli.example", "https://backend.example"}))
+	})
 	ginkgo.DescribeTable("combines build options with environment values", func(name string, get func(*CmdData) []string) {
 		ginkgo.GinkgoT().Setenv(name, "bare")
 		ginkgo.GinkgoT().Setenv(name+"_1", "suffixed")
