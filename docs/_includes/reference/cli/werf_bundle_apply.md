@@ -18,13 +18,13 @@ werf bundle apply [options]
       --add-annotation=[]
             Add annotation to deploying resources (can specify multiple).
             Format: annoName=annoValue.
-            Also, can be specified with $WERF_ADD_ANNOTATION_* (e.g.                                
+            Also, can be specified with $WERF_ADD_ANNOTATION or $WERF_ADD_ANNOTATION_* (e.g.        
             $WERF_ADD_ANNOTATION_1=annoName1=annoValue1,                                            
             $WERF_ADD_ANNOTATION_2=annoName2=annoValue2)
       --add-label=[]
             Add label to deploying resources (can specify multiple).
             Format: labelName=labelValue.
-            Also, can be specified with $WERF_ADD_LABEL_* (e.g.                                     
+            Also, can be specified with $WERF_ADD_LABEL or $WERF_ADD_LABEL_* (e.g.                  
             $WERF_ADD_LABEL_1=labelName1=labelValue1, $WERF_ADD_LABEL_2=labelName2=labelValue2)
       --atomic=false
             Enable auto rollback of the failed release to the previous deployed release version     
@@ -33,7 +33,8 @@ werf bundle apply [options]
             Enable auto rollback of the failed release to the previous deployed release version     
             when current deploy process have failed ($WERF_AUTO_ROLLBACK by default)
       --container-registry-mirror=[]
-            (Buildah-only) Use specified mirrors for docker.io
+            (Buildah-only) Use specified mirrors for docker.io ($WERF_CONTAINER_REGISTRY_MIRROR or  
+            $WERF_CONTAINER_REGISTRY_MIRROR_*)
       --debug-templates=false
             Enable debug mode for Go templates (default $WERF_DEBUG_TEMPLATES or false)
       --delete-propagation=""
@@ -117,7 +118,7 @@ werf bundle apply [options]
             Use user from Kubeconfig for current context (default $WERF_KUBE_CONTEXT_USER)
       --kube-impersonate-group=[]
             Sets Impersonate-Group headers when authenticating in Kubernetes. Can be also set with  
-            $WERF_KUBE_IMPERSONATE_GROUP_* environment variables
+            $WERF_KUBE_IMPERSONATE_GROUP or $WERF_KUBE_IMPERSONATE_GROUP_* environment variables
       --kube-impersonate-uid=""
             Sets Impersonate-Uid header when authenticating in Kubernetes (default                  
             $WERF_KUBE_IMPERSONATE_UID)
@@ -205,7 +206,7 @@ werf bundle apply [options]
             Add Helm release labels (can specify multiple). Kind of labels depends or release       
             storage driver.
             Format: labelName=labelValue.
-            Also, can be specified with $WERF_RELEASE_LABEL_* (e.g.                                 
+            Also, can be specified with $WERF_RELEASE_LABEL or $WERF_RELEASE_LABEL_* (e.g.          
             $WERF_RELEASE_LABEL_1=labelName1=labelValue1,                                           
             $WERF_RELEASE_LABEL_2=labelName2=labelValue2)
       --release-storage=""
@@ -256,50 +257,51 @@ werf bundle apply [options]
             Secret key (default $WERF_SECRET_KEY)
       --secret-values=[]
             Specify helm secret values in a YAML file (can specify multiple). Also, can be defined  
-            with $WERF_SECRET_VALUES_* (e.g. $WERF_SECRET_VALUES_ENV=.helm/secret_values_test.yaml, 
+            with $WERF_SECRET_VALUES or $WERF_SECRET_VALUES_* (e.g.                                 
+            $WERF_SECRET_VALUES_ENV=.helm/secret_values_test.yaml,                                  
             $WERF_SECRET_VALUES_DB=.helm/secret_values_db.yaml)
       --set=[]
             Set helm values on the command line (can specify multiple or separate values with       
             commas: key1=val1,key2=val2).
-            Also, can be defined with $WERF_SET_* (e.g. $WERF_SET_1=key1=val1,                      
+            Also, can be defined with $WERF_SET or $WERF_SET_* (e.g. $WERF_SET_1=key1=val1,         
             $WERF_SET_2=key2=val2)
       --set-docker-config-json-value=false
             Shortcut to set current docker config into the .Values.global.werf.dockerconfigjson
       --set-file=[]
             Set values from respective files specified via the command line (can specify multiple   
             or separate values with commas: key1=path1,key2=path2).
-            Also, can be defined with $WERF_SET_FILE_* (e.g. $WERF_SET_FILE_1=key1=path1,           
-            $WERF_SET_FILE_2=key2=val2)
+            Also, can be defined with $WERF_SET_FILE or $WERF_SET_FILE_* (e.g.                      
+            $WERF_SET_FILE_1=key1=path1, $WERF_SET_FILE_2=key2=val2)
       --set-json=[]
             Set new values, where the key is the value path and the value is JSON (can specify      
             multiple or separate values with commas: key1=val1,key2=val2).
-            Also, can be defined with $WERF_SET_JSON_* (e.g. $WERF_SET_JSON_1=key1=val1,            
-            $WERF_SET_JSON_2=key2=val2)
+            Also, can be defined with $WERF_SET_JSON or $WERF_SET_JSON_* (e.g.                      
+            $WERF_SET_JSON_1=key1=val1, $WERF_SET_JSON_2=key2=val2)
       --set-literal=[]
             Set new values, where the key is the value path and the value is the value. The value   
             will always become a literal string (can specify multiple or separate values with       
             commas: key1=val1,key2=val2).)
-            Also, can be defined with $WERF_SET_LITERAL_* (e.g. $WERF_SET_LITERAL_1=key1=val1,      
-            $WERF_SET_LITERAL_2=key2=val2)
+            Also, can be defined with $WERF_SET_LITERAL or $WERF_SET_LITERAL_* (e.g.                
+            $WERF_SET_LITERAL_1=key1=val1, $WERF_SET_LITERAL_2=key2=val2)
       --set-root-json=[]
             Set new keys in arbitrary things in the global root context ("$"), where the key is the 
             value path and the value is JSON. This is meant to be generated inside the program, so  
             use --set-json instead, unless you REALLY know what you are doing. Can specify multiple 
             or separate values with commas: key1=val1,key2=val2.
-            Also, can be defined with $WERF_SET_ROOT_JSON_* (e.g. $WERF_SET_ROOT_JSON_1=key1=val1,  
-            $WERF_SET_ROOT_JSON_2=key2=val2)
+            Also, can be defined with $WERF_SET_ROOT_JSON or $WERF_SET_ROOT_JSON_* (e.g.            
+            $WERF_SET_ROOT_JSON_1=key1=val1, $WERF_SET_ROOT_JSON_2=key2=val2)
       --set-runtime-json=[]
             Set new keys in $.Runtime, where the key is the value path and the value is JSON. This  
             is meant to be generated inside the program, so use --set-json instead, unless you know 
             what you are doing. Can specify multiple or separate values with commas:                
             key1=val1,key2=val2.
-            Also, can be defined with $WERF_SET_RUNTIME_JSON_* (e.g.                                
+            Also, can be defined with $WERF_SET_RUNTIME_JSON or $WERF_SET_RUNTIME_JSON_* (e.g.      
             $WERF_SET_RUNTIME_JSON_1=key1=val1, $WERF_SET_RUNTIME_JSON_2=key2=val2)
       --set-string=[]
             Set STRING helm values on the command line (can specify multiple or separate values     
             with commas: key1=val1,key2=val2).
-            Also, can be defined with $WERF_SET_STRING_* (e.g. $WERF_SET_STRING_1=key1=val1,        
-            $WERF_SET_STRING_2=key2=val2)
+            Also, can be defined with $WERF_SET_STRING or $WERF_SET_STRING_* (e.g.                  
+            $WERF_SET_STRING_1=key1=val1, $WERF_SET_STRING_2=key2=val2)
   -L, --skip-dependencies-repo-refresh=false
             Do not refresh helm chart repositories locally cached index
       --skip-tls-verify-helm-dependencies=false
@@ -325,7 +327,7 @@ werf bundle apply [options]
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
       --values=[]
             Specify helm values in a YAML file or a URL (can specify multiple). Also, can be        
-            defined with $WERF_VALUES_* (e.g. $WERF_VALUES_1=.helm/values_1.yaml,                   
+            defined with $WERF_VALUES or $WERF_VALUES_* (e.g. $WERF_VALUES_1=.helm/values_1.yaml,   
             $WERF_VALUES_2=.helm/values_2.yaml)
 ```
 

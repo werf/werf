@@ -138,19 +138,24 @@ var _ = ginkgo.DescribeTable("optional repository flags not registered by metada
 }, ginkgo.Entry("no flag group", (*RepoData)(nil)), ginkgo.Entry("no address flag", &RepoData{}), ginkgo.Entry("empty address", &RepoData{Address: lo.ToPtr("")}))
 
 var _ = ginkgo.DescribeTable("optional cache and secondary repository flags", func(registered bool) {
+	clearListEnv()
+	ginkgo.GinkgoT().Setenv("WERF_CACHE_REPO", "example.com/bare-cache")
 	ginkgo.GinkgoT().Setenv("WERF_CACHE_REPO_TEST", "example.com/cache")
+	ginkgo.GinkgoT().Setenv("WERF_SECONDARY_REPO", "example.com/bare-secondary")
 	ginkgo.GinkgoT().Setenv("WERF_SECONDARY_REPO_TEST", "example.com/secondary")
 	data := &CmdData{}
 	if registered {
 		data.CacheStagesStorage = lo.ToPtr([]string{"example.com/flag-cache"})
 		data.SecondaryStagesStorage = lo.ToPtr([]string{"example.com/flag-secondary"})
 	}
-	gomega.Expect(GetCacheStagesStorage(data)).To(gomega.ContainElement("example.com/cache"))
-	gomega.Expect(GetSecondaryStagesStorage(data)).To(gomega.ContainElement("example.com/secondary"))
+	expectedCache := []string{"example.com/bare-cache", "example.com/cache"}
+	expectedSecondary := []string{"example.com/bare-secondary", "example.com/secondary"}
 	if registered {
-		gomega.Expect(GetCacheStagesStorage(data)).To(gomega.ContainElement("example.com/flag-cache"))
-		gomega.Expect(GetSecondaryStagesStorage(data)).To(gomega.ContainElement("example.com/flag-secondary"))
+		expectedCache = append(expectedCache, "example.com/flag-cache")
+		expectedSecondary = append(expectedSecondary, "example.com/flag-secondary")
 	}
+	gomega.Expect(GetCacheStagesStorage(data)).To(gomega.Equal(expectedCache))
+	gomega.Expect(GetSecondaryStagesStorage(data)).To(gomega.Equal(expectedSecondary))
 }, ginkgo.Entry("unregistered", false), ginkgo.Entry("registered", true))
 
 var _ = ginkgo.DescribeTable("deferred metadata warning", func(selection string, warning bool) {

@@ -1,6 +1,7 @@
 package common
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -393,20 +394,20 @@ func (cmdData *CmdData) processFlags() error {
 		}
 	}
 
-	cmdData.KubeImpersonateGroups = append(util.PredefinedValuesByEnvNamePrefix("WERF_KUBE_IMPERSONATE_GROUP_"), cmdData.KubeImpersonateGroups...)
-	cmdData.ValuesSet = append(util.PredefinedValuesByEnvNamePrefix("WERF_SET_", "WERF_SET_STRING_", "WERF_SET_FILE_", "WERF_SET_DOCKER_CONFIG_JSON_VALUE"), cmdData.ValuesSet...)
-	cmdData.ValuesSetString = append(util.PredefinedValuesByEnvNamePrefix("WERF_SET_STRING_"), cmdData.ValuesSetString...)
-	cmdData.ValuesSetFile = append(util.PredefinedValuesByEnvNamePrefix("WERF_SET_FILE_"), cmdData.ValuesSetFile...)
-	cmdData.RootSetJSON = append(util.PredefinedValuesByEnvNamePrefix("WERF_SET_ROOT_JSON_"), cmdData.RootSetJSON...)
-	cmdData.RuntimeSetJSON = append(util.PredefinedValuesByEnvNamePrefix("WERF_SET_RUNTIME_JSON_"), cmdData.RuntimeSetJSON...)
-	cmdData.ValuesSetJSON = append(util.PredefinedValuesByEnvNamePrefix("WERF_SET_JSON_"), cmdData.ValuesSetJSON...)
-	cmdData.ValuesSetLiteral = append(util.PredefinedValuesByEnvNamePrefix("WERF_SET_LITERAL_"), cmdData.ValuesSetLiteral...)
-	cmdData.ValuesFiles = append(util.PredefinedValuesByEnvNamePrefix("WERF_VALUES_"), cmdData.ValuesFiles...)
-	cmdData.SecretValuesFiles = append(util.PredefinedValuesByEnvNamePrefix("WERF_SECRET_VALUES_"), cmdData.SecretValuesFiles...)
-	cmdData.ValidationSkip = append(util.PredefinedValuesByEnvNamePrefix("WERF_RESOURCE_VALIDATION_SKIP_"), cmdData.ValidationSkip...)
-	cmdData.ValidationExtraSchemas = append(util.PredefinedValuesByEnvNamePrefix("WERF_RESOURCE_VALIDATION_EXTRA_SCHEMA_"), cmdData.ValidationExtraSchemas...)
-	cmdData.ExtraAPIVersions = append(util.PredefinedValuesByEnvNamePrefix("WERF_EXTRA_APIVERSIONS_"), cmdData.ExtraAPIVersions...)
-	cmdData.LocalLookupResourcesPaths = append(util.PredefinedValuesByEnvNamePrefix("WERF_LOOKUP_RESOURCES_"), cmdData.LocalLookupResourcesPaths...)
+	cmdData.KubeImpersonateGroups = append(GetEnvValues(context.Background(), EnvValuesOptions{Name: "WERF_KUBE_IMPERSONATE_GROUP"}), cmdData.KubeImpersonateGroups...)
+	cmdData.ValuesSet = append(GetEnvValues(context.Background(), EnvValuesOptions{Name: "WERF_SET", Exclude: []string{"WERF_SET_STRING", "WERF_SET_FILE", "WERF_SET_JSON", "WERF_SET_LITERAL", "WERF_SET_ROOT_JSON", "WERF_SET_RUNTIME_JSON", "WERF_SET_DOCKER_CONFIG_JSON_VALUE"}}), cmdData.ValuesSet...)
+	cmdData.ValuesSetString = append(GetEnvValues(context.Background(), EnvValuesOptions{Name: "WERF_SET_STRING"}), cmdData.ValuesSetString...)
+	cmdData.ValuesSetFile = append(GetEnvValues(context.Background(), EnvValuesOptions{Name: "WERF_SET_FILE"}), cmdData.ValuesSetFile...)
+	cmdData.RootSetJSON = append(GetEnvValues(context.Background(), EnvValuesOptions{Name: "WERF_SET_ROOT_JSON"}), cmdData.RootSetJSON...)
+	cmdData.RuntimeSetJSON = append(GetEnvValues(context.Background(), EnvValuesOptions{Name: "WERF_SET_RUNTIME_JSON"}), cmdData.RuntimeSetJSON...)
+	cmdData.ValuesSetJSON = append(GetEnvValues(context.Background(), EnvValuesOptions{Name: "WERF_SET_JSON"}), cmdData.ValuesSetJSON...)
+	cmdData.ValuesSetLiteral = append(GetEnvValues(context.Background(), EnvValuesOptions{Name: "WERF_SET_LITERAL"}), cmdData.ValuesSetLiteral...)
+	cmdData.ValuesFiles = append(GetEnvValues(context.Background(), EnvValuesOptions{Name: "WERF_VALUES"}), cmdData.ValuesFiles...)
+	cmdData.SecretValuesFiles = append(GetEnvValues(context.Background(), EnvValuesOptions{Name: "WERF_SECRET_VALUES"}), cmdData.SecretValuesFiles...)
+	cmdData.ValidationSkip = append(GetEnvValues(context.Background(), EnvValuesOptions{Name: "WERF_RESOURCE_VALIDATION_SKIP"}), cmdData.ValidationSkip...)
+	cmdData.ValidationExtraSchemas = append(GetEnvValues(context.Background(), EnvValuesOptions{Name: "WERF_RESOURCE_VALIDATION_EXTRA_SCHEMA"}), cmdData.ValidationExtraSchemas...)
+	cmdData.ExtraAPIVersions = append(GetEnvValues(context.Background(), EnvValuesOptions{Name: "WERF_EXTRA_APIVERSIONS"}), cmdData.ExtraAPIVersions...)
+	cmdData.LocalLookupResourcesPaths = append(GetEnvValues(context.Background(), EnvValuesOptions{Name: "WERF_LOOKUP_RESOURCES"}), cmdData.LocalLookupResourcesPaths...)
 
 	return nil
 }
