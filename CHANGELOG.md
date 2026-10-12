@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.82.0](https://github.com/werf/werf/compare/v2.81.4...v2.82.0) (2026-10-12)
+
+
+### Features
+
+* **build, stapel:** expose git source provenance to build commands ([#8059](https://github.com/werf/werf/issues/8059)) ([4062888](https://github.com/werf/werf/commit/406288814cf69cb12b3bea590d730933ddfd7ae9))
+* **build:** support separate metadata repositories in v2 ([#8057](https://github.com/werf/werf/issues/8057)) ([59f4efe](https://github.com/werf/werf/commit/59f4efeda08c0857c3ede59e69effb7dfc4d37c9))
+
+
+### Bug Fixes
+
+* **build, deploy:** accept unsuffixed list environment variables ([#8053](https://github.com/werf/werf/issues/8053)) ([082b63e](https://github.com/werf/werf/commit/082b63edb18cb2f90ba0145fd8e66e31d3b5765d))
+
 ## [2.81.4](https://github.com/werf/werf/compare/v2.81.3...v2.81.4) (2026-10-09)
 
 
