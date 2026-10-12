@@ -214,21 +214,19 @@ In the example above the current commit hash will be inserted into the `echo ...
 
 ### Git source metadata
 
-For an image with a `git` directive, `WERF_GIT_SOURCES` is available to its user build instructions (`beforeInstall`, `install`, `beforeSetup`, `setup`) on both Stapel backends. It contains a JSON array with one record per mapping, including multiple mappings of the same repository. Array order is not significant; select a record by its source and mapping paths, not by index.
+`WERF_GIT_SOURCES` is available during `beforeInstall`, `install`, `beforeSetup` and `setup` for images with a `git` directive. It contains a JSON array with one record per mapping:
 
 | Field | Meaning |
 | --- | --- |
-| `source` | Remote repository URL with user information, query and fragment removed; `.` for the project repository. |
-| `tag`, `branch` | Explicit ref used to select the commit, or JSON `null`. A tag does not imply a branch. For a pinned commit or local mapping, both are `null`. |
-| `commit` | Full resolved commit SHA used for the mapping. |
-| `commitDate` | Committer date of that commit, in UTC RFC3339; neither author date nor build time. |
-| `add`, `to` | Normalized mapping paths: repository source and image destination. Include/exclude filters still apply to the exported files. |
+| `source` | Repository URL without credentials, query or fragment; `.` for the project repository. |
+| `tag`, `branch` | Configured ref or `null`. Both are `null` for local mappings and pinned commits; a tag does not imply a branch. |
+| `commit` | Full resolved commit SHA. |
+| `commitDate` | Committer date in UTC RFC3339. |
+| `add`, `to` | Normalized source and destination paths. |
 
-In `beforeInstall`, metadata describes the selected sources; the files are exported at the later `gitArchive` stage. The variable is build-time only: werf does not add it to the runtime image environment, save a metadata file, or propagate it through `import`. Instructions may explicitly save selected data in a file and import that file into another image. An image without its own `git` mappings receives no `WERF_GIT_SOURCES` from werf.
+The variable is build-time only and is not transferred through `import`. To use metadata in another image, save it to a file and import that file explicitly.
 
-`WERF_GIT_SOURCES` does not participate in checksums or trigger rebuilds. Existing cache rules remain unchanged. On a cache hit, user instructions do not run and any metadata they previously saved remains from that build. When an instruction runs, the variable describes the sources selected for the current build. `WERF_COMMIT_HASH` still means the project repository SHA, not a remote source SHA.
-
-For example, with a DCGM mapping to `/src/dcgm`, extract exactly one commit before invoking a patched CMake project that reads `DCGM_SOURCE_COMMIT`. This example requires `jq` in the build image:
+This example requires `jq` and a CMake project adapted to read `DCGM_SOURCE_COMMIT`. It selects exactly one mapping:
 
 ```yaml
 shell:
@@ -243,15 +241,7 @@ shell:
     cmake -S /src/dcgm -B /build/dcgm
 ```
 
-Do not combine the assignment with `export`: `export VAR=$(...)` can hide extraction failure. CMake consumes the ordinary environment variable, not werf JSON. The consumer must explicitly implement this fallback; setting the variable alone does not change upstream CMake's Git calls.
-
-This metadata records source provenance; it does not emulate `.git`:
-
-- `git describe` may need the nearest reachable tag, commit distance, abbreviated SHA and dirty suffix; the configured `tag` does not provide these.
-- `git log` and `git rev-list --count` need history, including author and committer information beyond this one date.
-- `git diff` and `git status` detect changes after export. Downstream patches, filtering or imports do not establish a clean checkout; preserve the consumer's dirty handling.
-- `git ls-files` needs the actual file inventory, which this array does not contain.
-- `git submodule status` needs gitlinks and individual submodule SHAs. The exporter includes submodule contents selected by the parent tree, but the parent mapping record is not a separate provenance record for each submodule. Independently declared mappings have their own records.
+Keep assignment and `export` separate so extraction errors are not hidden. The metadata does not replace Git history, dirty detection or individual submodule SHAs.
 
 ## Using build secrets
 
