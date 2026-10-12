@@ -489,43 +489,30 @@ Final repositories reduce image retrieval time and network load by bringing the 
 
 ### Separate repository for service metadata
 
-Use `--meta-repo` (`WERF_META_REPO`) to store managed-image records, image metadata used by Git-history cleanup, custom-tag metadata and the last-cleanup record separately from image stages:
+Use `--meta-repo` (`WERF_META_REPO`) to store project metadata separately from images:
 
 ```shell
 werf build --repo registry.example.org/project --meta-repo registry.example.org/project-meta
 ```
 
-Image manifests, custom-tag aliases, rejected-stage records and synchronization records remain in `--repo`. `--final-repo` still selects the repository for final images. Without `--meta-repo`, or when it resolves to the same repository as `--repo`, storage behavior remains unchanged unless an existing safeguard marker requires a separate meta-repo.
+Images and custom tags remain in `--repo`; `--final-repo` continues to select the repository for final images. Use each meta-repo for one project only. Different meta-repos do not isolate images stored in a shared `--repo`.
 
-Use each meta-repo for exactly one project: listing managed images and purging metadata are not scoped by project name.
-
-With local storage (`--repo=:local`, or an omitted `--repo` for commands supporting local storage), both `--meta-repo` and `WERF_META_REPO` are ignored, including invalid metadata addresses. Metadata stays in the same local storage and no metadata registry is accessed.
-
-The first metadata write creates a per-project marker in `--repo`. Clients supporting the safeguard reject a missing or conflicting `--meta-repo`; read-only operations only validate the marker. The marker does not migrate metadata and cannot stop older clients that do not understand it. After migration, supporting clients ignore metadata that unsupported clients write into the primary repo; `werf purge` with a separate meta-repo does not remove those records.
+Without `--meta-repo`, or when it refers to the same repository as `--repo`, storage behavior is unchanged. Local storage ignores `--meta-repo` and `WERF_META_REPO`, including invalid addresses. After switching to a separate meta-repo, use the same settings in every job: the safeguard rejects missing or conflicting settings, but cannot stop older clients that do not support it.
 
 #### Migrating an existing project
 
-1. Stop every writer and cleanup job using the repositories. Identify the image versions and import sources needed for rollback; retain them under explicit Git/Kubernetes cleanup policies or keep a separate backup before any deletion.
-2. Exclude clients without `--meta-repo` support. Configure the same project name, `--repo` and `--meta-repo` in every participating job, including manual commands and cleanup.
-3. From the project checkout, move existing metadata using the v2 binary with this backport:
+1. Stop builds, publication and cleanup. Preserve the images and import sources needed for rollback through explicit retention policies or a separate backup.
+2. Exclude clients without meta-repo support. From the project checkout, move all existing metadata:
 
    ```shell
    werf meta-repo migrate --from registry.example.org/project --to registry.example.org/project-meta
    ```
 
-   Migration copies metadata and checks the destination before deleting source records. `--remove-source=false` retains the source records, but these copies become stale once jobs write to the meta-repo. Migration leaves image manifests and aliases in place. If interrupted, keep writers and cleanup stopped and rerun the same migration.
-4. Check both versions' builds and required rollback images before enabling cleanup. Run `werf cleanup --repo registry.example.org/project --meta-repo registry.example.org/project-meta --dry-run`, inspect the candidates and retention settings, then schedule real cleanup only after validation.
-5. Resume writers with the common settings. Serialize cleanup against builds, publication and mutable-tag updates through the CI scheduler; builder synchronization is not a cleanup exclusion lock.
+   Image manifests stay in place. Source metadata is removed after the copy is verified; use `--remove-source=false` to retain it. If migration is interrupted, keep jobs stopped and rerun the command. Configuring an empty meta-repo without migrating can cause cleanup to delete needed images.
+3. Configure the same project name, `--repo` and `--meta-repo` in every job. Check builds and rollback images, then inspect cleanup candidates with `werf cleanup --repo registry.example.org/project --meta-repo registry.example.org/project-meta --dry-run` before enabling deletion.
+4. Resume jobs, scheduling cleanup separately from builds, publication and mutable-tag updates. Builder synchronization does not exclude cleanup.
 
-`werf meta-repo detach --repo registry.example.org/project` removes only the safeguard marker. It does not move metadata back and is not a rollback procedure. `werf purge` removes the marker after verifying that the project's metadata has been deleted.
-
-#### Sharing repositories with werf v3
-
-Use a v2 binary with this backport and enable `WERF_EXPERIMENTAL_IMPORT_BY_SOURCE_IMAGE_TAG=1` for every v2 build. This backport does not change the flag's default or the other v2 build semantics. Use v3 for cleanup, with the same project name and nonempty image names, repositories, Git history and retention policies. Parallel builders must use the same HTTP or Kubernetes synchronization backend and namespace; keep cleanup in a separate serialized job. Use separate `WERF_HOME` directories for the two versions. Do not rely on `:local` synchronization between versions while v3 host cleanup can remove lock files.
-
-Enabling the import flag does not rewrite existing images. Compatibility of images built with legacy checksum-based imports is not guaranteed: v3 cleanup does not follow that legacy import metadata. Inventory and rebuild or separately preserve such images and their import sources before allowing v3 to delete anything. Moving metadata alone does not make these images safe. All metadata for retained images, including internal import sources, must be migrated and preserved; direct source-stage labels alone are not a substitute for complete metadata.
-
-Different meta-repos sharing one stages repo do not isolate images. Retention applies to both versions together; a version number provides no protection. A shared mutable custom tag can be overwritten by either builder, so use distinct tags when both results must remain addressable. Equal stage IDs or cross-version cache reuse are not promised; the required property is preservation of retained images and their source stages. With `--final-repo`, do not rely on a Kubernetes reference to a custom-tag alias alone to protect rollback images: use content-based image references and explicit retention or the cleanup keep-list for their stage IDs.
+`werf meta-repo detach --repo registry.example.org/project` removes only the safeguard; it does not move metadata back and is not a migration rollback.
 
 ### Extra repository for quick access to the build cache
 
