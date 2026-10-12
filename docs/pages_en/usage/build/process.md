@@ -487,6 +487,33 @@ werf build --repo registry.mycompany.org/project --final-repo final-registry.myc
 
 Final repositories reduce image retrieval time and network load by bringing the container registry closer to the Kubernetes cluster on which the application is being deployed. Final repositories can also be used in the same container registry as the main repository (`--repo`), if necessary.
 
+### Separate repository for service metadata
+
+Use `--meta-repo` (`WERF_META_REPO`) to store project metadata separately from images:
+
+```shell
+werf build --repo registry.example.org/project --meta-repo registry.example.org/project-meta
+```
+
+Images and custom tags remain in `--repo`; `--final-repo` continues to select the repository for final images. Use each meta-repo for one project only. Different meta-repos do not isolate images stored in a shared `--repo`.
+
+Without `--meta-repo`, or when it refers to the same repository as `--repo`, storage behavior is unchanged. Local storage ignores `--meta-repo` and `WERF_META_REPO`, including invalid addresses. After switching to a separate meta-repo, use the same settings in every job: the safeguard rejects missing or conflicting settings, but cannot stop older clients that do not support it.
+
+#### Migrating an existing project
+
+1. Stop builds, publication and cleanup. Preserve the images and import sources needed for rollback through explicit retention policies or a separate backup.
+2. Exclude clients without meta-repo support. From the project checkout, move all existing metadata:
+
+   ```shell
+   werf meta-repo migrate --from registry.example.org/project --to registry.example.org/project-meta
+   ```
+
+   Image manifests stay in place. Source metadata is removed after the copy is verified; use `--remove-source=false` to retain it. If migration is interrupted, keep jobs stopped and rerun the command. Configuring an empty meta-repo without migrating can cause cleanup to delete needed images.
+3. Configure the same project name, `--repo` and `--meta-repo` in every job. Check builds and rollback images, then inspect cleanup candidates with `werf cleanup --repo registry.example.org/project --meta-repo registry.example.org/project-meta --dry-run` before enabling deletion.
+4. Resume jobs, scheduling cleanup separately from builds, publication and mutable-tag updates. Builder synchronization does not exclude cleanup.
+
+`werf meta-repo detach --repo registry.example.org/project` removes only the safeguard; it does not move metadata back and is not a migration rollback.
+
 ### Extra repository for quick access to the build cache
 
 You can specify one or more so-called **caching** repositories using the `--cache-repo` parameter.

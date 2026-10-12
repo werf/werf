@@ -15,12 +15,14 @@ import (
 
 	"github.com/werf/werf/v2/pkg/cleaning/stage_manager"
 	"github.com/werf/werf/v2/pkg/cleanup_report"
+	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/storage"
 	"github.com/werf/werf/v2/pkg/storage/manager"
 )
 
 type fakePrimaryStagesStorage struct {
+	address string
 	storage.PrimaryStagesStorage
 
 	mu sync.Mutex
@@ -32,9 +34,11 @@ type fakePrimaryStagesStorage struct {
 	deleteRecordErrs map[string]error
 	deleteTagErrs    map[string]error
 
-	deletedImages  []image.StageID
-	deletedRecords []image.StageID
-	deletedTags    []string
+	deletedImages      []image.StageID
+	deletedRecords     []image.StageID
+	deletedTags        []string
+	unregisteredTags   []string
+	lastCleanupRecords []string
 }
 
 func (f *fakePrimaryStagesStorage) GetRejectedStageIDs(_ context.Context, _ ...storage.Option) ([]image.StageID, error) {
@@ -66,12 +70,14 @@ type fakeStorageManager struct {
 	manager.StorageManagerInterface
 
 	stages *fakePrimaryStagesStorage
+	meta   *fakePrimaryStagesStorage
 
 	importMetadataErrs map[string]error
 
 	stageDescSet       image.StageDescSet
 	finalStageDescSet  image.StageDescSet
 	deletedFinalStages []*image.StageDesc
+	deletedStages      []*image.StageDesc
 }
 
 func newFakeStorageManager() *fakeStorageManager {
@@ -132,7 +138,7 @@ func TestDeleteRejectedStagesWithLinkedTags_OrderStageThenTagsThenMarker(t *test
 	stageID := image.NewStageID(digest, 1700000000)
 	otherStageID := image.NewStageID(digest, 1700000999)
 
-	sm := newFakeStorageManager()
+	sm := newFakeStorageManagerWithSplitStorages()
 	sm.stages.rejectedStageIDs = []image.StageID{*stageID}
 
 	customTagsByStageID := map[string][]string{
@@ -147,6 +153,8 @@ func TestDeleteRejectedStagesWithLinkedTags_OrderStageThenTagsThenMarker(t *test
 	assert.Equal(t, []image.StageID{*stageID}, sm.stages.deletedImages, "stage image deleted first")
 	assert.Equal(t, []string{"v1.0.0", "latest"}, sm.stages.deletedTags, "linked custom tags deleted next, in given order")
 	assert.Equal(t, []image.StageID{*stageID}, sm.stages.deletedRecords, "marker deleted last")
+	assert.Equal(t, []string{"v1.0.0", "latest"}, sm.meta.unregisteredTags, "linked custom-tag metadata removed from meta storage")
+	assert.Empty(t, sm.stages.unregisteredTags, "metadata must not be removed from stages storage")
 }
 
 func TestDeleteRejectedStagesWithLinkedTags_DryRun(t *testing.T) {
@@ -536,4 +544,77 @@ var _ = ginkgo.Describe("Cleanup unused imports metadata", func() {
 
 		gomega.Expect(after).To(gomega.BeNumerically("<=", before+5), "deleteUnusedImportsMetadata must not leak a goroutine per skipped-early scan of the protected stage set")
 	})
+})
+
+var _ = ginkgo.Describe("Cleanup last cleanup record", func() {
+	ginkgo.DescribeTable("preserves legacy writes and keeps separate-meta dry runs read-only",
+		func(dryRun bool, metaMode string, expectedRecords []string) {
+			ginkgo.GinkgoT().Setenv("WERF_EXPERIMENTAL_IMPORT_BY_SOURCE_IMAGE_TAG", "true")
+			ctx := context.Background()
+			stageDesc := newTestStageDesc("example.com/primary", image.NewStageID("ff0011", 1748001122334))
+
+			storageManager := newFakeStorageManager()
+			if metaMode != "default" {
+				storageManager = newFakeStorageManagerWithSplitStorages()
+				if metaMode == "equivalent" {
+					storageManager.meta.address = storageManager.stages.address
+				}
+			}
+			storageManager.stageDescSet = image.NewStageDescSet(stageDesc)
+
+			report := cleanup_report.NewReport(ctx, "cleanup", dryRun, "example.com/primary", cleanup_report.NewReportOptions{})
+			cleanup := &cleanupManager{
+				stageManager:      stage_manager.NewManager(),
+				StorageManager:    storageManager,
+				ProjectName:       "myproject",
+				DryRun:            dryRun,
+				WithoutKube:       true,
+				ConfigMetaCleanup: config.MetaCleanup{DisableGitHistoryBasedPolicy: true},
+				keepList:          NewKeepList(),
+				report:            report,
+			}
+
+			gomega.Expect(cleanup.run(ctx)).To(gomega.Succeed())
+
+			gomega.Expect(storageManager.GetMetaStorage(ctx).(*fakePrimaryStagesStorage).lastCleanupRecords).To(gomega.Equal(expectedRecords))
+			gomega.Expect(report.Deleted).To(gomega.Equal([]cleanup_report.Item{{
+				Type: cleanup_report.ItemTypeStage, Tag: stageDesc.Info.Tag,
+			}}), "the deletion preview must be identical in both modes")
+			if dryRun {
+				gomega.Expect(storageManager.deletedStages).To(gomega.BeEmpty())
+			} else {
+				gomega.Expect(storageManager.deletedStages).To(gomega.ConsistOf(stageDesc))
+			}
+		},
+		ginkgo.Entry("default dry run keeps the legacy cleanup record write", true, "default", []string{"myproject"}),
+		ginkgo.Entry("equivalent dry run keeps the legacy cleanup record write", true, "equivalent", []string{"myproject"}),
+		ginkgo.Entry("separate meta dry run writes nothing", true, "separate", []string(nil)),
+		ginkgo.Entry("default real run records the cleanup", false, "default", []string{"myproject"}),
+		ginkgo.Entry("equivalent real run records the cleanup", false, "equivalent", []string{"myproject"}),
+		ginkgo.Entry("separate meta real run records the cleanup", false, "separate", []string{"myproject"}),
+	)
+})
+
+var _ = ginkgo.Describe("Rejected custom-tag metadata compatibility", func() {
+	ginkgo.DescribeTable("unregisters immediately only with a separate meta repository", func(metaMode string, expected []string) {
+		ctx := context.Background()
+		sm := newFakeStorageManager()
+		if metaMode != "default" {
+			sm = newFakeStorageManagerWithSplitStorages()
+			if metaMode == "equivalent" {
+				sm.meta.address = sm.stages.address
+			}
+		}
+		stageID := image.NewStageID("deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef", 1700000000000)
+		sm.stages.rejectedStageIDs = []image.StageID{*stageID}
+		deleted, err := deleteRejectedStagesWithLinkedTags(ctx, sm, map[string][]string{stageID.String(): {"release"}}, false, nil)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		gomega.Expect(deleted).To(gomega.Equal([]string{stageID.String()}))
+		gomega.Expect(sm.stages.deletedTags).To(gomega.Equal([]string{"release"}))
+		gomega.Expect(sm.GetMetaStorage(ctx).(*fakePrimaryStagesStorage).unregisteredTags).To(gomega.Equal(expected))
+	},
+		ginkgo.Entry("default keeps legacy deferred cleanup", "default", []string(nil)),
+		ginkgo.Entry("equivalent repository keeps legacy deferred cleanup", "equivalent", []string(nil)),
+		ginkgo.Entry("separate repository unregisters metadata", "separate", []string{"release"}),
+	)
 })

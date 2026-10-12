@@ -67,3 +67,52 @@ func newTagsStorageManagerBlockingListing(ctx context.Context, blockedListing in
 		StagesStorage: storage.NewRepoStagesStorage(&storage.NewRepoStagesStorageOptions{RepoAddress: repoAddress, DockerRegistry: dockerRegistry}),
 	}, listingStarted, releaseListing
 }
+
+var _ storage.PrimaryStagesStorage = (*routingFakeStorage)(nil)
+
+type routingFakeStorage struct {
+	storage.PrimaryStagesStorage
+
+	mu sync.Mutex
+
+	rmImageMetadata     []string
+	rmManagedImage      []string
+	deleteCustomTag     []string
+	unregisterCustomTag []string
+	getCustomTagMeta    []string
+}
+
+func (f *routingFakeStorage) RmImageMetadata(_ context.Context, _, imageNameOrID, commit, stageID string) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.rmImageMetadata = append(f.rmImageMetadata, imageNameOrID+"/"+commit+"/"+stageID)
+	return nil
+}
+
+func (f *routingFakeStorage) RmManagedImage(_ context.Context, _, name string) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.rmManagedImage = append(f.rmManagedImage, name)
+	return nil
+}
+
+func (f *routingFakeStorage) DeleteStageCustomTag(_ context.Context, tag string) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.deleteCustomTag = append(f.deleteCustomTag, tag)
+	return nil
+}
+
+func (f *routingFakeStorage) UnregisterStageCustomTag(_ context.Context, tag string) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.unregisterCustomTag = append(f.unregisterCustomTag, tag)
+	return nil
+}
+
+func (f *routingFakeStorage) GetStageCustomTagMetadata(_ context.Context, id string) (*storage.CustomTagMetadata, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.getCustomTagMeta = append(f.getCustomTagMeta, id)
+	return &storage.CustomTagMetadata{Tag: id}, nil
+}

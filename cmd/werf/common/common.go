@@ -280,8 +280,15 @@ func NewCleanupReport(ctx context.Context, cmdData *CmdData, command string, dry
 		finalRepo = finalStagesStorage.Address()
 	}
 
-	return cleanup_report.NewReport(ctx, command, dryRun, storageManager.GetStagesStorage().Address(), cleanup_report.NewReportOptions{
+	repo := storageManager.GetStagesStorage().Address()
+	var metaRepo string
+	if metaAddress := storageManager.GetMetaStorage(ctx).Address(); metaAddress != repo {
+		metaRepo = metaAddress
+	}
+
+	return cleanup_report.NewReport(ctx, command, dryRun, repo, cleanup_report.NewReportOptions{
 		FinalRepo: finalRepo,
+		MetaRepo:  metaRepo,
 	}), reportPath, nil
 }
 
@@ -545,6 +552,11 @@ func SetupRepo(cmdData *CmdData, cmd *cobra.Command, opts RepoDataOptions) {
 func SetupFinalRepo(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.FinalRepo = NewRepoData("final-repo", RepoDataOptions{})
 	cmdData.FinalRepo.SetupCmd(cmd)
+}
+
+func SetupMetaRepo(ctx context.Context, cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.MetaRepo = NewRepoData("meta-repo", RepoDataOptions{OnlyAddress: true, OptionalRepo: true})
+	cmdData.MetaRepo.SetupCmd(cmd)
 }
 
 func SetupReleasesHistoryMax(cmdData *CmdData, cmd *cobra.Command) {
@@ -915,7 +927,7 @@ func GetStagesStorage(ctx context.Context, containerBackend container_backend.Co
 }
 
 func GetOptionalFinalStagesStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData) (storage.StagesStorage, error) {
-	if *cmdData.FinalRepo.Address == "" {
+	if cmdData.FinalRepo == nil || cmdData.FinalRepo.Address == nil || *cmdData.FinalRepo.Address == "" {
 		return nil, nil
 	}
 
@@ -934,6 +946,35 @@ func GetOptionalFinalStagesStorage(ctx context.Context, containerBackend contain
 		InsecureRegistry:      *cmdData.InsecureRegistry,
 		SkipTlsVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
 		InsecureRegistryHosts: insecureRegistryHosts,
+		SkipMetaCheck:         true,
+	})
+}
+
+func GetOptionalMetaStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData, stagesStorage storage.PrimaryStagesStorage, cleanupDisabled bool) (storage.PrimaryStagesStorage, error) {
+	separateMetaRepo, err := hasSeparateMetaRepo(ctx, cmdData)
+	if err != nil {
+		return nil, err
+	}
+	if !separateMetaRepo {
+		return stagesStorage, nil
+	}
+
+	buildahMode, _, err := GetBuildahMode()
+	if err != nil {
+		return nil, fmt.Errorf("unable to determine buildah mode: %w", err)
+	}
+
+	insecureRegistryHosts, err := GetInsecureRegistryHosts(ctx, cmdData, *buildahMode)
+	if err != nil {
+		return nil, fmt.Errorf("get insecure registry hosts: %w", err)
+	}
+
+	return cmdData.MetaRepo.CreateStagesStorage(ctx, &CreateStagesStorageOptions{
+		ContainerBackend:      containerBackend,
+		InsecureRegistry:      *cmdData.InsecureRegistry,
+		SkipTlsVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
+		InsecureRegistryHosts: insecureRegistryHosts,
+		CleanupDisabled:       cleanupDisabled,
 		SkipMetaCheck:         true,
 	})
 }
@@ -1341,11 +1382,18 @@ func HasKubeConfig(cmdData *CmdData) bool {
 }
 
 func GetCacheStagesStorage(cmdData *CmdData) []string {
-	return append(GetEnvValues(context.Background(), EnvValuesOptions{Name: "WERF_CACHE_REPO"}), *cmdData.CacheStagesStorage...)
+	res := GetEnvValues(context.Background(), EnvValuesOptions{Name: "WERF_CACHE_REPO"})
+	if cmdData.CacheStagesStorage == nil {
+		return res
+	}
+	return append(res, *cmdData.CacheStagesStorage...)
 }
 
 func GetSecondaryStagesStorage(cmdData *CmdData) []string {
 	res := GetEnvValues(context.Background(), EnvValuesOptions{Name: "WERF_SECONDARY_REPO"})
+	if cmdData.SecondaryStagesStorage == nil {
+		return res
+	}
 	return append(res, *cmdData.SecondaryStagesStorage...)
 }
 

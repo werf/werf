@@ -22,6 +22,9 @@ type NewStorageManagerConfig struct {
 
 	hostPurge bool
 
+	// SkipMetaRepoSafeguard is reserved for migration and detach commands.
+	SkipMetaRepoSafeguard bool
+
 	CleanupDisabled                bool
 	GitHistoryBasedCleanupDisabled bool
 	SkipMetaCheck                  bool
@@ -70,11 +73,17 @@ func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfi
 	if c.hostPurge {
 		stagesStorage = GetLocalStagesStorage(c.ContainerBackend)
 	} else {
+		separateMetaRepo, err := hasSeparateMetaRepo(ctx, c.CmdData)
+		if err != nil {
+			return nil, err
+		}
+		skipMetaCheck := c.SkipMetaCheck || separateMetaRepo
+
 		var stgErr error
 		stagesStorage, stgErr = GetStagesStorage(ctx, c.ContainerBackend, c.CmdData, GetStagesStorageOpts{
 			CleanupDisabled:                c.CleanupDisabled,
 			GitHistoryBasedCleanupDisabled: c.GitHistoryBasedCleanupDisabled,
-			SkipMetaCheck:                  c.SkipMetaCheck,
+			SkipMetaCheck:                  skipMetaCheck,
 		})
 		if stgErr != nil {
 			return nil, stgErr
@@ -90,6 +99,7 @@ func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfi
 		return &manager.StorageManager{
 			ProjectName:                c.ProjectName,
 			StagesStorage:              stagesStorage,
+			MetaStorage:                stagesStorage,
 			StorageLockManager:         storageLockManager,
 			FinalStagesStorage:         nil,
 			CacheStagesStorageList:     nil,
@@ -100,6 +110,18 @@ func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfi
 	finalStagesStorage, err := GetOptionalFinalStagesStorage(ctx, c.ContainerBackend, c.CmdData)
 	if err != nil {
 		return nil, fmt.Errorf("error get final stages storage: %w", err)
+	}
+
+	metaStorage, err := GetOptionalMetaStorage(ctx, c.ContainerBackend, c.CmdData, stagesStorage, c.CleanupDisabled)
+	if err != nil {
+		return nil, fmt.Errorf("error get meta storage: %w", err)
+	}
+
+	if !c.SkipMetaRepoSafeguard {
+		metaStorage, err = storage.SetupMetaRepoSafeguard(ctx, c.ProjectName, stagesStorage, metaStorage, c.CleanupDisabled)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	secondaryStagesStorageList, err := GetSecondaryStagesStorageList(ctx, stagesStorage, c.ContainerBackend, c.CmdData)
@@ -115,8 +137,30 @@ func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfi
 		StorageLockManager: storageLockManager,
 
 		StagesStorage:              stagesStorage,
+		MetaStorage:                metaStorage,
 		FinalStagesStorage:         finalStagesStorage,
 		CacheStagesStorageList:     cacheStagesStorageList,
 		SecondaryStagesStorageList: secondaryStagesStorageList,
 	}, nil
+}
+
+func hasSeparateMetaRepo(ctx context.Context, cmdData *CmdData) (bool, error) {
+	if cmdData == nil || cmdData.MetaRepo == nil || cmdData.MetaRepo.Address == nil || *cmdData.MetaRepo.Address == "" {
+		return false, nil
+	}
+	if cmdData.Repo == nil || cmdData.Repo.Address == nil {
+		return false, fmt.Errorf("--meta-repo requires --repo to be set")
+	}
+	if *cmdData.Repo.Address == "" || *cmdData.Repo.Address == storage.LocalStorageAddress {
+		return false, nil
+	}
+	repoAddress, err := storage.CanonicalRepoAddress(ctx, *cmdData.Repo.Address)
+	if err != nil {
+		return false, fmt.Errorf("parse --repo: %w", err)
+	}
+	metaAddress, err := storage.CanonicalRepoAddress(ctx, *cmdData.MetaRepo.Address)
+	if err != nil {
+		return false, fmt.Errorf("parse --meta-repo: %w", err)
+	}
+	return repoAddress != metaAddress, nil
 }
