@@ -13,6 +13,34 @@ import (
 )
 
 var _ = ginkgo.Describe("Purge meta-repo safeguard", func() {
+	ginkgo.DescribeTable("dry run preserves the safeguard and metadata",
+		func(withMetadata bool) {
+			ctx := context.Background()
+			gomega.Expect(werf.Init(ginkgo.GinkgoT().TempDir(), ginkgo.GinkgoT().TempDir())).To(gomega.Succeed())
+			registry := &purgeMarkerRegistry{images: map[string]*image.Info{}}
+			stages := storage.NewRepoStagesStorage(&storage.NewRepoStagesStorageOptions{RepoAddress: "example.com/stages", DockerRegistry: registry, SkipMetaCheck: true})
+			meta := storage.NewRepoStagesStorage(&storage.NewRepoStagesStorageOptions{RepoAddress: "example.com/meta", DockerRegistry: registry, SkipMetaCheck: true})
+			gomega.Expect(stages.PutMetaRepoMarker(ctx, "project", meta.Address())).To(gomega.Succeed())
+			if withMetadata {
+				gomega.Expect(meta.AddManagedImage(ctx, "project", "app")).To(gomega.Succeed())
+			}
+			beforeStages, err := registry.Tags(ctx, stages.Address())
+			gomega.Expect(err).NotTo(gomega.HaveOccurred())
+			beforeMeta, err := registry.Tags(ctx, meta.Address())
+			gomega.Expect(err).NotTo(gomega.HaveOccurred())
+			sm := &manager.StorageManager{ProjectName: "project", StagesStorage: stages, MetaStorage: meta}
+			gomega.Expect(Purge(ctx, "project", sm, PurgeOptions{DryRun: true})).To(gomega.Succeed())
+			afterStages, err := registry.Tags(ctx, stages.Address())
+			gomega.Expect(err).NotTo(gomega.HaveOccurred())
+			afterMeta, err := registry.Tags(ctx, meta.Address())
+			gomega.Expect(err).NotTo(gomega.HaveOccurred())
+			gomega.Expect(afterStages).To(gomega.ConsistOf(beforeStages))
+			gomega.Expect(afterMeta).To(gomega.ConsistOf(beforeMeta))
+		},
+		ginkgo.Entry("empty meta repository", false),
+		ginkgo.Entry("populated meta repository", true),
+	)
+
 	ginkgo.DescribeTable("retains the marker after registry deletion errors and removes it after a successful retry",
 		func(record string) {
 			ctx := context.Background()

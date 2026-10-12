@@ -236,7 +236,7 @@ func (m *cleanupManager) run(ctx context.Context) error {
 		}
 	}
 
-	if !m.DryRun {
+	if !m.DryRun || m.StorageManager.GetMetaStorage(ctx).Address() == m.StorageManager.GetStagesStorage().Address() {
 		if err := logboek.Context(ctx).LogProcess("Push last cleanup info to meta image").DoError(func() error {
 			err := m.StorageManager.GetMetaStorage(ctx).PostLastCleanupRecord(ctx, m.ProjectName)
 			if err != nil {
@@ -398,7 +398,7 @@ AppendNewImages:
 		})
 	}
 
-	return
+	return res
 }
 
 func (m *cleanupManager) deployedDockerImages(ctx context.Context) ([]*DeployedDockerImage, error) {
@@ -991,12 +991,14 @@ func deleteRejectedStagesWithLinkedTags(ctx context.Context, storageManager mana
 				logboek.Context(ctx).Warn().LogF("WARNING: Custom tag %s linked to rejected stage %s deletion failed: %s; marker kept for retry\n", customTag, stageIDStr, err)
 				return nil
 			}
-			if err := storageManager.GetMetaStorage(ctx).UnregisterStageCustomTag(ctx, customTag); err != nil {
-				if err := handleDeletionError(err); err != nil {
-					return err
+			if metaStorage := storageManager.GetMetaStorage(ctx); metaStorage.Address() != stagesStorage.Address() {
+				if err := metaStorage.UnregisterStageCustomTag(ctx, customTag); err != nil {
+					if err := handleDeletionError(err); err != nil {
+						return err
+					}
+					logboek.Context(ctx).Warn().LogF("WARNING: Custom tag %s metadata unregister for rejected stage %s failed: %s; marker kept for retry\n", customTag, stageIDStr, err)
+					return nil
 				}
-				logboek.Context(ctx).Warn().LogF("WARNING: Custom tag %s metadata unregister for rejected stage %s failed: %s; marker kept for retry\n", customTag, stageIDStr, err)
-				return nil
 			}
 			logboek.Context(ctx).Default().LogFWithCustomStyle(deletedStyle, "  tag: %s\n", customTag)
 			report.AddDeleted(ctx, cleanup_report.Item{Type: cleanup_report.ItemTypeCustomTag, Tag: customTag})

@@ -148,8 +148,11 @@ func hasSeparateMetaRepo(ctx context.Context, cmdData *CmdData) (bool, error) {
 	if cmdData == nil || cmdData.MetaRepo == nil || cmdData.MetaRepo.Address == nil || *cmdData.MetaRepo.Address == "" {
 		return false, nil
 	}
-	if cmdData.Repo == nil || cmdData.Repo.Address == nil || *cmdData.Repo.Address == "" {
+	if cmdData.Repo == nil || cmdData.Repo.Address == nil {
 		return false, fmt.Errorf("--meta-repo requires --repo to be set")
+	}
+	if *cmdData.Repo.Address == "" || *cmdData.Repo.Address == storage.LocalStorageAddress {
+		return false, nil
 	}
 	repoAddress, err := storage.CanonicalRepoAddress(ctx, *cmdData.Repo.Address)
 	if err != nil {

@@ -22,6 +22,7 @@ import (
 )
 
 type fakePrimaryStagesStorage struct {
+	address string
 	storage.PrimaryStagesStorage
 
 	mu sync.Mutex
@@ -546,13 +547,19 @@ var _ = ginkgo.Describe("Cleanup unused imports metadata", func() {
 })
 
 var _ = ginkgo.Describe("Cleanup last cleanup record", func() {
-	ginkgo.DescribeTable("writes the record to the meta storage only for a real run, and previews deletions either way",
-		func(dryRun bool, expectedRecords []string) {
+	ginkgo.DescribeTable("preserves legacy writes and keeps separate-meta dry runs read-only",
+		func(dryRun bool, metaMode string, expectedRecords []string) {
 			ginkgo.GinkgoT().Setenv("WERF_EXPERIMENTAL_IMPORT_BY_SOURCE_IMAGE_TAG", "true")
 			ctx := context.Background()
 			stageDesc := newTestStageDesc("example.com/primary", image.NewStageID("ff0011", 1748001122334))
 
-			storageManager := newFakeStorageManagerWithSplitStorages()
+			storageManager := newFakeStorageManager()
+			if metaMode != "default" {
+				storageManager = newFakeStorageManagerWithSplitStorages()
+				if metaMode == "equivalent" {
+					storageManager.meta.address = storageManager.stages.address
+				}
+			}
 			storageManager.stageDescSet = image.NewStageDescSet(stageDesc)
 
 			report := cleanup_report.NewReport(ctx, "cleanup", dryRun, "example.com/primary", cleanup_report.NewReportOptions{})
@@ -569,7 +576,7 @@ var _ = ginkgo.Describe("Cleanup last cleanup record", func() {
 
 			gomega.Expect(cleanup.run(ctx)).To(gomega.Succeed())
 
-			gomega.Expect(storageManager.meta.lastCleanupRecords).To(gomega.Equal(expectedRecords))
+			gomega.Expect(storageManager.GetMetaStorage(ctx).(*fakePrimaryStagesStorage).lastCleanupRecords).To(gomega.Equal(expectedRecords))
 			gomega.Expect(report.Deleted).To(gomega.Equal([]cleanup_report.Item{{
 				Type: cleanup_report.ItemTypeStage, Tag: stageDesc.Info.Tag,
 			}}), "the deletion preview must be identical in both modes")
@@ -579,7 +586,35 @@ var _ = ginkgo.Describe("Cleanup last cleanup record", func() {
 				gomega.Expect(storageManager.deletedStages).To(gomega.ConsistOf(stageDesc))
 			}
 		},
-		ginkgo.Entry("dry run must not write anything to the meta repo", true, []string(nil)),
-		ginkgo.Entry("real run records the cleanup", false, []string{"myproject"}),
+		ginkgo.Entry("default dry run keeps the legacy cleanup record write", true, "default", []string{"myproject"}),
+		ginkgo.Entry("equivalent dry run keeps the legacy cleanup record write", true, "equivalent", []string{"myproject"}),
+		ginkgo.Entry("separate meta dry run writes nothing", true, "separate", []string(nil)),
+		ginkgo.Entry("default real run records the cleanup", false, "default", []string{"myproject"}),
+		ginkgo.Entry("equivalent real run records the cleanup", false, "equivalent", []string{"myproject"}),
+		ginkgo.Entry("separate meta real run records the cleanup", false, "separate", []string{"myproject"}),
+	)
+})
+
+var _ = ginkgo.Describe("Rejected custom-tag metadata compatibility", func() {
+	ginkgo.DescribeTable("unregisters immediately only with a separate meta repository", func(metaMode string, expected []string) {
+		ctx := context.Background()
+		sm := newFakeStorageManager()
+		if metaMode != "default" {
+			sm = newFakeStorageManagerWithSplitStorages()
+			if metaMode == "equivalent" {
+				sm.meta.address = sm.stages.address
+			}
+		}
+		stageID := image.NewStageID("deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef", 1700000000000)
+		sm.stages.rejectedStageIDs = []image.StageID{*stageID}
+		deleted, err := deleteRejectedStagesWithLinkedTags(ctx, sm, map[string][]string{stageID.String(): {"release"}}, false, nil)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		gomega.Expect(deleted).To(gomega.Equal([]string{stageID.String()}))
+		gomega.Expect(sm.stages.deletedTags).To(gomega.Equal([]string{"release"}))
+		gomega.Expect(sm.GetMetaStorage(ctx).(*fakePrimaryStagesStorage).unregisteredTags).To(gomega.Equal(expected))
+	},
+		ginkgo.Entry("default keeps legacy deferred cleanup", "default", []string(nil)),
+		ginkgo.Entry("equivalent repository keeps legacy deferred cleanup", "equivalent", []string(nil)),
+		ginkgo.Entry("separate repository unregisters metadata", "separate", []string{"release"}),
 	)
 })

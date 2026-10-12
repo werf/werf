@@ -109,7 +109,8 @@ func (f *fakeStorageManager) GetMetaStorage(_ context.Context) storage.PrimarySt
 
 func newFakeStorageManagerWithSplitStorages() *fakeStorageManager {
 	f := newFakeStorageManager()
-	f.meta = &fakePrimaryStagesStorage{}
+	f.stages.address = "example.com/stages"
+	f.meta = &fakePrimaryStagesStorage{address: "example.com/meta"}
 	return f
 }
 
@@ -162,3 +163,5 @@ func (r *purgeMarkerRegistry) DeleteRepoImage(_ context.Context, info *image.Inf
 	delete(r.images, info.Name)
 	return nil
 }
+
+func (f *fakePrimaryStagesStorage) Address() string { return f.address }

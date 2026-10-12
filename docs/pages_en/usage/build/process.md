@@ -497,7 +497,11 @@ werf build --repo registry.example.org/project --meta-repo registry.example.org/
 
 Image manifests, custom-tag aliases, rejected-stage records and synchronization records remain in `--repo`. `--final-repo` still selects the repository for final images. Without `--meta-repo`, or when it resolves to the same repository as `--repo`, storage behavior remains unchanged unless an existing safeguard marker requires a separate meta-repo.
 
-The first metadata write creates a per-project marker in `--repo`. Clients supporting the safeguard reject a missing or conflicting `--meta-repo`; read-only operations only validate the marker. The marker does not migrate metadata and cannot stop older clients that do not understand it.
+Use each meta-repo for exactly one project: listing managed images and purging metadata are not scoped by project name.
+
+With local storage (`--repo=:local`, or an omitted `--repo` for commands supporting local storage), both `--meta-repo` and `WERF_META_REPO` are ignored, including invalid metadata addresses. Metadata stays in the same local storage and no metadata registry is accessed.
+
+The first metadata write creates a per-project marker in `--repo`. Clients supporting the safeguard reject a missing or conflicting `--meta-repo`; read-only operations only validate the marker. The marker does not migrate metadata and cannot stop older clients that do not understand it. After migration, supporting clients ignore metadata that unsupported clients write into the primary repo; `werf purge` with a separate meta-repo does not remove those records.
 
 #### Migrating an existing project
 

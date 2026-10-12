@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
@@ -34,6 +35,9 @@ var _ = ginkgo.Describe("meta repository routing", func() {
 			gomega.Expect(actual).To(gomega.BeIdenticalTo(stages))
 		},
 		ginkgo.Entry("local build", "", ""),
+		ginkgo.Entry("local with ignored invalid metadata", ":local", "invalid://metadata address"),
+		ginkgo.Entry("implicit local with ignored invalid metadata", "", "invalid://metadata address"),
+		ginkgo.Entry("local metadata with local repo", ":local", ":local"),
 		ginkgo.Entry("unset meta repo", "example.com/project", ""),
 		ginkgo.Entry("same address", "example.com/project", "example.com/project"),
 		ginkgo.Entry("equivalent tagged address", "example.com/project:old", "example.com/project:new"),
@@ -53,8 +57,8 @@ var _ = ginkgo.Describe("meta repository routing", func() {
 			gomega.Expect(actual).To(gomega.Equal(separate))
 		},
 		ginkgo.Entry("separate", "example.com/project", "example.com/metadata", true, ""),
-		ginkgo.Entry("requires repo", "", "example.com/metadata", false, "--meta-repo requires --repo to be set"),
-		ginkgo.Entry("rejects local repo", ":local", "example.com/metadata", false, "parse --repo"),
+		ginkgo.Entry("implicit local repo", "", "example.com/metadata", false, ""),
+		ginkgo.Entry("ignores metadata with local repo", ":local", "example.com/metadata", false, ""),
 		ginkgo.Entry("rejects local metadata", "example.com/project", ":local", false, "parse --meta-repo"),
 	)
 
@@ -182,3 +186,35 @@ var _ = ginkgo.DescribeTable("deferred metadata warning", func(selection string,
 	gomega.Expect(err).NotTo(gomega.HaveOccurred())
 	gomega.Expect(strings.Contains(output.String(), "has not been run for a long time")).To(gomega.Equal(warning))
 }, ginkgo.Entry("default retains warning", "unset", true), ginkgo.Entry("equivalent retains warning", "equivalent", true), ginkgo.Entry("separate suppresses primary warning", "separate", false))
+
+var _ = ginkgo.DescribeTable("local storage ignores metadata repository configuration", func(fromEnv, invalid, explicitLocal bool) {
+	ctx := context.Background()
+	gomega.Expect(werf.Init(ginkgo.GinkgoT().TempDir(), ginkgo.GinkgoT().TempDir())).To(gomega.Succeed())
+	meta, recorder := startRecordingRegistry("test/ignored-meta")
+	var requests atomic.Int64
+	handler := recorder.handler
+	recorder.handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests.Add(1)
+		handler.ServeHTTP(w, r)
+	})
+	if invalid {
+		meta += "/invalid address"
+	}
+	ginkgo.GinkgoT().Setenv("WERF_REPO", "")
+	args := []string{"--insecure-registry"}
+	if explicitLocal {
+		args = append(args, "--repo", ":local")
+	}
+	if fromEnv {
+		ginkgo.GinkgoT().Setenv("WERF_META_REPO", meta)
+	} else {
+		args = append(args, "--meta-repo", meta)
+	}
+	data := storageManagerCmdData(args...)
+	manager, err := NewStorageManager(ctx, &NewStorageManagerConfig{ProjectName: "project", ContainerBackend: &container_backend.DockerServerBackend{}, CmdData: data})
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+	gomega.Expect(manager.GetStagesStorage()).To(gomega.BeAssignableToTypeOf(&storage.LocalStagesStorage{}))
+	gomega.Expect(manager.GetMetaStorage(ctx)).To(gomega.BeIdenticalTo(manager.GetStagesStorage()))
+	gomega.Expect(requests.Load()).To(gomega.BeZero())
+}, ginkgo.Entry("CLI", false, false, true), ginkgo.Entry("CLI invalid address", false, true, true), ginkgo.Entry("environment", true, false, true), ginkgo.Entry("environment invalid address", true, true, true),
+	ginkgo.Entry("implicit local CLI", false, false, false), ginkgo.Entry("implicit local CLI invalid address", false, true, false), ginkgo.Entry("implicit local environment", true, false, false), ginkgo.Entry("implicit local environment invalid address", true, true, false))
