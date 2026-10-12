@@ -5,6 +5,9 @@ import (
 
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
+	"github.com/spf13/cobra"
+
+	"github.com/werf/werf/v3/pkg/buildah"
 )
 
 var _ = ginkgo.Describe("List environment options", func() {
@@ -47,13 +50,25 @@ var _ = ginkgo.Describe("List environment options", func() {
 		ginkgo.Entry("WERF_EXTRA_APIVERSIONS", "WERF_EXTRA_APIVERSIONS", func(data *CmdData) *[]string { return &data.ExtraAPIVersions }),
 		ginkgo.Entry("WERF_LOOKUP_RESOURCES", "WERF_LOOKUP_RESOURCES", func(data *CmdData) *[]string { return &data.LocalLookupResourcesPaths }),
 	)
+	ginkgo.It("combines registry mirrors from environment, flags and the backend", func() {
+		ginkgo.GinkgoT().Setenv("WERF_CONTAINER_REGISTRY_MIRROR", "bare.example")
+		ginkgo.GinkgoT().Setenv("WERF_CONTAINER_REGISTRY_MIRROR_1", "https://suffix.example")
+		data := &CmdData{}
+		command := &cobra.Command{}
+		SetupContainerRegistryMirror(data, command)
+		gomega.Expect(command.ParseFlags([]string{"--container-registry-mirror=cli.example", "--container-registry-mirror=bare.example"})).To(gomega.Succeed())
+		mirrors, err := GetContainerRegistryMirror(registryMirrorContext(), data, buildah.ModeDisabled)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		gomega.Expect(mirrors).To(gomega.Equal([]string{"https://bare.example", "https://suffix.example", "https://cli.example", "https://backend.example"}))
+	})
 	ginkgo.DescribeTable("combines build options with environment values", func(name string, get func(*CmdData) []string) {
 		ginkgo.GinkgoT().Setenv(name, "bare")
 		ginkgo.GinkgoT().Setenv(name+"_1", "suffixed")
 		cli := []string{"cli"}
-		data := &CmdData{CacheStagesStorage: &cli, SecondaryStagesStorage: &cli, AddCustomTag: &cli, SSHKeys: &cli, DevIgnore: &cli, ExtraLabels: cli, ExtraAnnotations: cli, ReleaseLabels: cli}
+		data := &CmdData{KubeScanNamespaces: &cli, CacheStagesStorage: &cli, SecondaryStagesStorage: &cli, AddCustomTag: &cli, SSHKeys: &cli, DevIgnore: &cli, ExtraLabels: cli, ExtraAnnotations: cli, ReleaseLabels: cli}
 		gomega.Expect(get(data)).To(gomega.Equal([]string{"bare", "suffixed", "cli"}))
 	},
+		ginkgo.Entry("namespace scan", "WERF_KUBE_SCAN_NAMESPACES", GetKubeScanNamespaces),
 		ginkgo.Entry("cache repo", "WERF_CACHE_REPO", GetCacheStagesStorage),
 		ginkgo.Entry("secondary repo", "WERF_SECONDARY_REPO", GetSecondaryStagesStorage),
 		ginkgo.Entry("custom tag", "WERF_ADD_CUSTOM_TAG", getAddCustomTag),
