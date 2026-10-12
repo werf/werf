@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.9.0](https://github.com/werf/werf/compare/v3.8.0...v3.9.0) (2026-10-12)
+
+
+### Features
+
+* **build, stapel:** expose git source provenance to build commands ([#8058](https://github.com/werf/werf/issues/8058)) ([9d73c38](https://github.com/werf/werf/commit/9d73c38d568bd6047451b26c2b82f176f54a1744))
+
+
+### Bug Fixes
+
+* **build, deploy:** accept unsuffixed list environment variables ([#8052](https://github.com/werf/werf/issues/8052)) ([3c803c6](https://github.com/werf/werf/commit/3c803c6b58ff326439145264fd78c15c663260a1))
+* **build:** ignore meta-repo when using local image storage ([#8056](https://github.com/werf/werf/issues/8056)) ([54ab5cc](https://github.com/werf/werf/commit/54ab5ccea808f5ffb460089bf3df3d85a0f420af))
+
 ## [3.8.0](https://github.com/werf/werf/compare/v3.7.2...v3.8.0) (2026-10-09)
 
 
