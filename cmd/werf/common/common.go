@@ -512,7 +512,7 @@ func GetFirstExistingKubeConfigBase64EnvVar() string {
 func SetupSecondaryStagesStorageOptions(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.SecondaryStagesStorage = new([]string)
 	cmd.Flags().StringArrayVarP(cmdData.SecondaryStagesStorage, "secondary-repo", "", []string{}, `Specify one or multiple secondary read-only repos with images that will be used as a cache.
-Also, can be specified with $WERF_SECONDARY_REPO_* (e.g. $WERF_SECONDARY_REPO_1=..., $WERF_SECONDARY_REPO_2=...)`)
+Also, can be specified with $WERF_SECONDARY_REPO or $WERF_SECONDARY_REPO_* (e.g. $WERF_SECONDARY_REPO_1=..., $WERF_SECONDARY_REPO_2=...)`)
 }
 
 func SetupAddCustomTag(cmdData *CmdData, cmd *cobra.Command) {
@@ -1391,7 +1391,11 @@ func GetCacheStagesStorage(cmdData *CmdData) []string {
 }
 
 func GetSecondaryStagesStorage(cmdData *CmdData) []string {
-	res := util.PredefinedValuesByEnvNamePrefix("WERF_SECONDARY_REPO_")
+	var res []string
+	if repo := os.Getenv("WERF_SECONDARY_REPO"); repo != "" {
+		res = append(res, repo)
+	}
+	res = append(res, util.PredefinedValuesByEnvNamePrefix("WERF_SECONDARY_REPO_")...)
 	if cmdData.SecondaryStagesStorage == nil {
 		return res
 	}
