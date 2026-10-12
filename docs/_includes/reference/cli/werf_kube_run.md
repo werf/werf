@@ -31,13 +31,13 @@ werf kube-run [options] [IMAGE_NAME] [-- COMMAND ARG...]
       --add-annotation=[]
             Add annotation to deploying resources (can specify multiple).
             Format: annoName=annoValue.
-            Also, can be specified with $WERF_ADD_ANNOTATION_* (e.g.                                
+            Also, can be specified with $WERF_ADD_ANNOTATION or $WERF_ADD_ANNOTATION_* (e.g.        
             $WERF_ADD_ANNOTATION_1=annoName1=annoValue1,                                            
             $WERF_ADD_ANNOTATION_2=annoName2=annoValue2)
       --add-label=[]
             Add label to deploying resources (can specify multiple).
             Format: labelName=labelValue.
-            Also, can be specified with $WERF_ADD_LABEL_* (e.g.                                     
+            Also, can be specified with $WERF_ADD_LABEL or $WERF_ADD_LABEL_* (e.g.                  
             $WERF_ADD_LABEL_1=labelName1=labelValue1, $WERF_ADD_LABEL_2=labelName2=labelValue2)
       --allow-includes-update=false
             Allow use includes latest versions (default $WERF_ALLOW_INCLUDES_UPDATE or false)
@@ -56,8 +56,8 @@ werf kube-run [options] [IMAGE_NAME] [-- COMMAND ARG...]
             will be populated when pushing newly built images into the primary repo and when        
             pulling existing images from the primary repo. Cache repo will be used to pull images   
             and to get manifests before making requests to the primary repo.
-            Also, can be specified with $WERF_CACHE_REPO_* (e.g. $WERF_CACHE_REPO_1=...,            
-            $WERF_CACHE_REPO_2=...)
+            Also, can be specified with $WERF_CACHE_REPO or $WERF_CACHE_REPO_* (e.g.                
+            $WERF_CACHE_REPO_1=..., $WERF_CACHE_REPO_2=...)
       --config=""
             Use custom configuration file (default $WERF_CONFIG or werf.yaml in the project         
             directory)
@@ -67,15 +67,16 @@ werf kube-run [options] [IMAGE_NAME] [-- COMMAND ARG...]
             Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf   
             in working directory)
       --container-registry-mirror=[]
-            (Buildah-only) Use specified mirrors for docker.io
+            (Buildah-only) Use specified mirrors for docker.io ($WERF_CONTAINER_REGISTRY_MIRROR or  
+            $WERF_CONTAINER_REGISTRY_MIRROR_*)
       --copy-from=[]
             Copy file/dir from container to local machine after user command execution. Example:    
             "/from/file:to". Can be specified multiple times. Can also be defined with              
-            "$WERF_COPY_FROM_*", e.g. "WERF_COPY_FROM_1=from:to".
+            "$WERF_COPY_FROM or $WERF_COPY_FROM_*", e.g. "WERF_COPY_FROM_1=from:to".
       --copy-to=[]
             Copy file/dir from local machine to container before user command execution. Example:   
             "from:/to/file". Can be specified multiple times. Can also be defined with              
-            "$WERF_COPY_TO_*", e.g. "WERF_COPY_TO_1=from:to".
+            "$WERF_COPY_TO or $WERF_COPY_TO_*", e.g. "WERF_COPY_TO_1=from:to".
       --debug-templates=false
             Enable debug mode for Go templates (default $WERF_DEBUG_TEMPLATES or false)
       --dev=false
@@ -87,8 +88,8 @@ werf kube-run [options] [IMAGE_NAME] [-- COMMAND ARG...]
       --dev-ignore=[]
             Add rules to ignore tracked and untracked changes in development mode (can specify      
             multiple).
-            Also, can be specified with $WERF_DEV_IGNORE_* (e.g. $WERF_DEV_IGNORE_TESTS=*_test.go,  
-            $WERF_DEV_IGNORE_DOCS=path/to/docs)
+            Also, can be specified with $WERF_DEV_IGNORE or $WERF_DEV_IGNORE_* (e.g.                
+            $WERF_DEV_IGNORE_TESTS=*_test.go, $WERF_DEV_IGNORE_DOCS=path/to/docs)
       --dir=""
             Use specified project directory where project’s werf.yaml and other configuration files 
             should reside (default $WERF_DIR or current working directory)
@@ -226,16 +227,16 @@ werf kube-run [options] [IMAGE_NAME] [-- COMMAND ARG...]
       --secondary-repo=[]
             Specify one or multiple secondary read-only repos with images that will be used as a    
             cache.
-            Also, can be specified with $WERF_SECONDARY_REPO_* (e.g. $WERF_SECONDARY_REPO_1=...,    
-            $WERF_SECONDARY_REPO_2=...)
+            Also, can be specified with $WERF_SECONDARY_REPO or $WERF_SECONDARY_REPO_* (e.g.        
+            $WERF_SECONDARY_REPO_1=..., $WERF_SECONDARY_REPO_2=...)
       --skip-tls-verify-registry=false
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)
       --ssh-key=[]
             Use only specific ssh key(s).
-            Can be specified with $WERF_SSH_KEY_* (e.g. $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa,         
-            $WERF_SSH_KEY_NODEJS=~/.ssh/nodejs_rsa).
-            Defaults to $WERF_SSH_KEY_*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}
+            Can be specified with $WERF_SSH_KEY or $WERF_SSH_KEY_* (e.g.                            
+            $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa, $WERF_SSH_KEY_NODEJS=~/.ssh/nodejs_rsa).
+            Defaults to $WERF_SSH_KEY or $WERF_SSH_KEY_*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}
   -S, --synchronization=""
             Address of synchronizer for multiple werf processes to work with a single repo.
             

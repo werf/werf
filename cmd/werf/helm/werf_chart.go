@@ -35,7 +35,7 @@ func InitRenderRelatedWerfChartParams(
 		wc.AddExtraAnnotationsAndLabels(nil, extraLabels)
 	}
 
-	wc.SetupSecretValueFiles(commonCmdData.SecretValuesFiles)
+	wc.SetupSecretValueFiles(append(common.GetEnvValues(ctx, common.EnvValuesOptions{Name: "WERF_SECRET_VALUES"}), commonCmdData.SecretValuesFiles...))
 	// NOTE: project-dir is the same as chart-dir for werf helm install/upgrade commands
 	// NOTE: project-dir is werf-project dir only for werf converge/dismiss commands
 
