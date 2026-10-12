@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/alessio/shellescape"
 	"github.com/google/uuid"
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 
@@ -1060,6 +1061,18 @@ func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *imag
 			"WERF_COMMIT_HASH":       headHash,
 			"WERF_COMMIT_TIME_HUMAN": headTime.String(),
 			"WERF_COMMIT_TIME_UNIX":  strconv.FormatInt(headTime.Unix(), 10),
+		}
+
+		if len(stg.GetGitMappings()) > 0 {
+			gitSources, err := stage.GitSourcesJSON(ctx, stg.GetGitMappings())
+			if err != nil {
+				return fmt.Errorf("prepare WERF_GIT_SOURCES: %w", err)
+			}
+			if phase.Conveyor.UseLegacyStapelBuilder(phase.Conveyor.ContainerBackend) {
+				stageImage.Builder.LegacyStapelStageBuilder().Container().AddServiceRunCommands("export WERF_GIT_SOURCES=" + shellescape.Quote(gitSources))
+			} else {
+				stageImage.Builder.StapelStageBuilder().AddBuildTimeEnvs(map[string]string{"WERF_GIT_SOURCES": gitSources})
+			}
 		}
 
 		if phase.Conveyor.UseLegacyStapelBuilder(phase.Conveyor.ContainerBackend) {
