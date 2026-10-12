@@ -24,8 +24,8 @@ werf synchronization [options]
       --dev-ignore=[]
             Add rules to ignore tracked and untracked changes in development mode (can specify      
             multiple).
-            Also, can be specified with $WERF_DEV_IGNORE_* (e.g. $WERF_DEV_IGNORE_TESTS=*_test.go,  
-            $WERF_DEV_IGNORE_DOCS=path/to/docs)
+            Also, can be specified with $WERF_DEV_IGNORE or $WERF_DEV_IGNORE_* (e.g.                
+            $WERF_DEV_IGNORE_TESTS=*_test.go, $WERF_DEV_IGNORE_DOCS=path/to/docs)
       --home-dir=""
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --host=""
@@ -68,7 +68,7 @@ werf synchronization [options]
             Use user from Kubeconfig for current context (default $WERF_KUBE_CONTEXT_USER)
       --kube-impersonate-group=[]
             Sets Impersonate-Group headers when authenticating in Kubernetes. Can be also set with  
-            $WERF_KUBE_IMPERSONATE_GROUP_* environment variables
+            $WERF_KUBE_IMPERSONATE_GROUP or $WERF_KUBE_IMPERSONATE_GROUP_* environment variables
       --kube-impersonate-uid=""
             Sets Impersonate-Uid header when authenticating in Kubernetes (default                  
             $WERF_KUBE_IMPERSONATE_UID)

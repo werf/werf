@@ -19,7 +19,7 @@ werf bundle publish [IMAGE_NAME...] [options]
       --add-annotation=[]
             Add annotation to deploying resources (can specify multiple).
             Format: annoName=annoValue.
-            Also, can be specified with $WERF_ADD_ANNOTATION_* (e.g.                                
+            Also, can be specified with $WERF_ADD_ANNOTATION or $WERF_ADD_ANNOTATION_* (e.g.        
             $WERF_ADD_ANNOTATION_1=annoName1=annoValue1,                                            
             $WERF_ADD_ANNOTATION_2=annoName2=annoValue2)
       --add-custom-tag=[]
@@ -29,12 +29,12 @@ werf bundle publish [IMAGE_NAME...] [options]
             is more than one image in the werf config);
             - %image_content_based_tag% to use a content-based tag.
             For cleaning custom tags and associated content-based tag are treated as one.
-            Also can be defined with $WERF_ADD_CUSTOM_TAG_* (e.g.                                   
+            Also can be defined with $WERF_ADD_CUSTOM_TAG or $WERF_ADD_CUSTOM_TAG_* (e.g.           
             $WERF_ADD_CUSTOM_TAG_1="%image%-tag1", $WERF_ADD_CUSTOM_TAG_2="%image%-tag2")
       --add-label=[]
             Add label to deploying resources (can specify multiple).
             Format: labelName=labelValue.
-            Also, can be specified with $WERF_ADD_LABEL_* (e.g.                                     
+            Also, can be specified with $WERF_ADD_LABEL or $WERF_ADD_LABEL_* (e.g.                  
             $WERF_ADD_LABEL_1=labelName1=labelValue1, $WERF_ADD_LABEL_2=labelName2=labelValue2)
       --allow-includes-update=false
             Allow use includes latest versions (default $WERF_ALLOW_INCLUDES_UPDATE or false)
@@ -77,8 +77,8 @@ werf bundle publish [IMAGE_NAME...] [options]
             will be populated when pushing newly built images into the primary repo and when        
             pulling existing images from the primary repo. Cache repo will be used to pull images   
             and to get manifests before making requests to the primary repo.
-            Also, can be specified with $WERF_CACHE_REPO_* (e.g. $WERF_CACHE_REPO_1=...,            
-            $WERF_CACHE_REPO_2=...)
+            Also, can be specified with $WERF_CACHE_REPO or $WERF_CACHE_REPO_* (e.g.                
+            $WERF_CACHE_REPO_1=..., $WERF_CACHE_REPO_2=...)
       --config=""
             Use custom configuration file (default $WERF_CONFIG or werf.yaml in the project         
             directory)
@@ -88,7 +88,8 @@ werf bundle publish [IMAGE_NAME...] [options]
             Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf   
             in working directory)
       --container-registry-mirror=[]
-            (Buildah-only) Use specified mirrors for docker.io
+            (Buildah-only) Use specified mirrors for docker.io ($WERF_CONTAINER_REGISTRY_MIRROR or  
+            $WERF_CONTAINER_REGISTRY_MIRROR_*)
       --debug-templates=false
             Enable debug mode for Go templates (default $WERF_DEBUG_TEMPLATES or false)
       --deno-binary-path=""
@@ -103,8 +104,8 @@ werf bundle publish [IMAGE_NAME...] [options]
       --dev-ignore=[]
             Add rules to ignore tracked and untracked changes in development mode (can specify      
             multiple).
-            Also, can be specified with $WERF_DEV_IGNORE_* (e.g. $WERF_DEV_IGNORE_TESTS=*_test.go,  
-            $WERF_DEV_IGNORE_DOCS=path/to/docs)
+            Also, can be specified with $WERF_DEV_IGNORE or $WERF_DEV_IGNORE_* (e.g.                
+            $WERF_DEV_IGNORE_TESTS=*_test.go, $WERF_DEV_IGNORE_DOCS=path/to/docs)
       --dir=""
             Use specified project directory where project’s werf.yaml and other configuration files 
             should reside (default $WERF_DIR or current working directory)
@@ -268,45 +269,46 @@ werf bundle publish [IMAGE_NAME...] [options]
       --secondary-repo=[]
             Specify one or multiple secondary read-only repos with images that will be used as a    
             cache.
-            Also, can be specified with $WERF_SECONDARY_REPO_* (e.g. $WERF_SECONDARY_REPO_1=...,    
-            $WERF_SECONDARY_REPO_2=...)
+            Also, can be specified with $WERF_SECONDARY_REPO or $WERF_SECONDARY_REPO_* (e.g.        
+            $WERF_SECONDARY_REPO_1=..., $WERF_SECONDARY_REPO_2=...)
       --secret-values=[]
             Specify helm secret values in a YAML file (can specify multiple). Also, can be defined  
-            with $WERF_SECRET_VALUES_* (e.g. $WERF_SECRET_VALUES_ENV=.helm/secret_values_test.yaml, 
+            with $WERF_SECRET_VALUES or $WERF_SECRET_VALUES_* (e.g.                                 
+            $WERF_SECRET_VALUES_ENV=.helm/secret_values_test.yaml,                                  
             $WERF_SECRET_VALUES_DB=.helm/secret_values_db.yaml)
       --set=[]
             Set helm values on the command line (can specify multiple or separate values with       
             commas: key1=val1,key2=val2).
-            Also, can be defined with $WERF_SET_* (e.g. $WERF_SET_1=key1=val1,                      
+            Also, can be defined with $WERF_SET or $WERF_SET_* (e.g. $WERF_SET_1=key1=val1,         
             $WERF_SET_2=key2=val2)
       --set-file=[]
             Set values from respective files specified via the command line (can specify multiple   
             or separate values with commas: key1=path1,key2=path2).
-            Also, can be defined with $WERF_SET_FILE_* (e.g. $WERF_SET_FILE_1=key1=path1,           
-            $WERF_SET_FILE_2=key2=val2)
+            Also, can be defined with $WERF_SET_FILE or $WERF_SET_FILE_* (e.g.                      
+            $WERF_SET_FILE_1=key1=path1, $WERF_SET_FILE_2=key2=val2)
       --set-json=[]
             Set new values, where the key is the value path and the value is JSON (can specify      
             multiple or separate values with commas: key1=val1,key2=val2).
-            Also, can be defined with $WERF_SET_JSON_* (e.g. $WERF_SET_JSON_1=key1=val1,            
-            $WERF_SET_JSON_2=key2=val2)
+            Also, can be defined with $WERF_SET_JSON or $WERF_SET_JSON_* (e.g.                      
+            $WERF_SET_JSON_1=key1=val1, $WERF_SET_JSON_2=key2=val2)
       --set-literal=[]
             Set new values, where the key is the value path and the value is the value. The value   
             will always become a literal string (can specify multiple or separate values with       
             commas: key1=val1,key2=val2).)
-            Also, can be defined with $WERF_SET_LITERAL_* (e.g. $WERF_SET_LITERAL_1=key1=val1,      
-            $WERF_SET_LITERAL_2=key2=val2)
+            Also, can be defined with $WERF_SET_LITERAL or $WERF_SET_LITERAL_* (e.g.                
+            $WERF_SET_LITERAL_1=key1=val1, $WERF_SET_LITERAL_2=key2=val2)
       --set-root-json=[]
             Set new keys in arbitrary things in the global root context ("$"), where the key is the 
             value path and the value is JSON. This is meant to be generated inside the program, so  
             use --set-json instead, unless you REALLY know what you are doing. Can specify multiple 
             or separate values with commas: key1=val1,key2=val2.
-            Also, can be defined with $WERF_SET_ROOT_JSON_* (e.g. $WERF_SET_ROOT_JSON_1=key1=val1,  
-            $WERF_SET_ROOT_JSON_2=key2=val2)
+            Also, can be defined with $WERF_SET_ROOT_JSON or $WERF_SET_ROOT_JSON_* (e.g.            
+            $WERF_SET_ROOT_JSON_1=key1=val1, $WERF_SET_ROOT_JSON_2=key2=val2)
       --set-string=[]
             Set STRING helm values on the command line (can specify multiple or separate values     
             with commas: key1=val1,key2=val2).
-            Also, can be defined with $WERF_SET_STRING_* (e.g. $WERF_SET_STRING_1=key1=val1,        
-            $WERF_SET_STRING_2=key2=val2)
+            Also, can be defined with $WERF_SET_STRING or $WERF_SET_STRING_* (e.g.                  
+            $WERF_SET_STRING_1=key1=val1, $WERF_SET_STRING_2=key2=val2)
   -L, --skip-dependencies-repo-refresh=false
             Do not refresh helm chart repositories locally cached index
       --skip-tls-verify-helm-dependencies=false
@@ -317,9 +319,9 @@ werf bundle publish [IMAGE_NAME...] [options]
             $WERF_SKIP_TLS_VERIFY_REGISTRY)
       --ssh-key=[]
             Use only specific ssh key(s).
-            Can be specified with $WERF_SSH_KEY_* (e.g. $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa,         
-            $WERF_SSH_KEY_NODEJS=~/.ssh/nodejs_rsa).
-            Defaults to $WERF_SSH_KEY_*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}
+            Can be specified with $WERF_SSH_KEY or $WERF_SSH_KEY_* (e.g.                            
+            $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa, $WERF_SSH_KEY_NODEJS=~/.ssh/nodejs_rsa).
+            Defaults to $WERF_SSH_KEY or $WERF_SSH_KEY_*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}
   -S, --synchronization=""
             Address of synchronizer for multiple werf processes to work with a single repo.
             
@@ -350,7 +352,7 @@ werf bundle publish [IMAGE_NAME...] [options]
             Also, can be defined with $WERF_USE_CUSTOM_TAG (e.g. $WERF_USE_CUSTOM_TAG="%image%-tag")
       --values=[]
             Specify helm values in a YAML file or a URL (can specify multiple). Also, can be        
-            defined with $WERF_VALUES_* (e.g. $WERF_VALUES_1=.helm/values_1.yaml,                   
+            defined with $WERF_VALUES or $WERF_VALUES_* (e.g. $WERF_VALUES_1=.helm/values_1.yaml,   
             $WERF_VALUES_2=.helm/values_2.yaml)
       --without-images=false
             Disable building of images defined in the werf.yaml (if any) and usage of such images   

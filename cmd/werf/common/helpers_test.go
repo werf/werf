@@ -2,17 +2,21 @@ package common
 
 import (
 	"context"
+	"io"
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"sync"
 
+	cliconfig "github.com/docker/cli/cli/config"
 	"github.com/google/go-containerregistry/pkg/registry"
 	ginkgo "github.com/onsi/ginkgo/v2"
 	gomega "github.com/onsi/gomega"
 	"github.com/spf13/cobra"
 
+	"github.com/werf/werf/v3/pkg/docker"
 	"github.com/werf/werf/v3/pkg/docker_registry"
 	"github.com/werf/werf/v3/pkg/storage"
 )
@@ -94,4 +98,41 @@ func repoStagesStorageAt(ctx context.Context, address string) *storage.RepoStage
 	client, err := docker_registry.NewDockerRegistry(ctx, address, docker_registry.DefaultImplementationName, docker_registry.DockerRegistryOptions{InsecureRegistry: true})
 	gomega.Expect(err).NotTo(gomega.HaveOccurred())
 	return storage.NewRepoStagesStorage(&storage.NewRepoStagesStorageOptions{RepoAddress: address, DockerRegistry: client})
+}
+
+func clearListEnv() {
+	for _, entry := range os.Environ() {
+		key, _, _ := strings.Cut(entry, "=")
+		if strings.HasPrefix(key, "WERF_") {
+			ginkgo.GinkgoT().Setenv(key, "")
+			gomega.Expect(os.Unsetenv(key)).To(gomega.Succeed())
+		}
+	}
+}
+
+func registryMirrorContext() context.Context {
+	oldDockerConfigDir, oldCLIConfigDir := docker.DockerConfigDir, cliconfig.Dir()
+	ginkgo.DeferCleanup(func() {
+		docker.DockerConfigDir = oldDockerConfigDir
+		cliconfig.SetDir(oldCLIConfigDir)
+	})
+	for _, key := range []string{"DOCKER_HOST", "DOCKER_CONTEXT", "DOCKER_CONFIG", "DOCKER_CERT_PATH", "DOCKER_TLS", "DOCKER_TLS_VERIFY", "DOCKER_API_VERSION"} {
+		ginkgo.GinkgoT().Setenv(key, "")
+	}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer ginkgo.GinkgoRecover()
+		w.Header().Set("API-Version", "1.47")
+		w.Header().Set("OSType", "linux")
+		if strings.HasSuffix(r.URL.Path, "/info") {
+			w.Header().Set("Content-Type", "application/json")
+			_, err := io.WriteString(w, `{"RegistryConfig":{"Mirrors":["https://backend.example","https://bare.example"]}}`)
+			gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		}
+	}))
+	ginkgo.DeferCleanup(server.Close)
+	ginkgo.GinkgoT().Setenv("DOCKER_HOST", "tcp://"+server.Listener.Addr().String())
+	gomega.Expect(docker.InitDockerConfig(docker.InitOptions{DockerConfigDir: ginkgo.GinkgoT().TempDir()})).To(gomega.Succeed())
+	ctx, err := docker.NewContext(context.Background())
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+	return ctx
 }

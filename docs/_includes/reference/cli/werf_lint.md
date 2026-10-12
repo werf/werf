@@ -28,13 +28,13 @@ werf lint [IMAGE_NAME...] [options]
       --add-annotation=[]
             Add annotation to deploying resources (can specify multiple).
             Format: annoName=annoValue.
-            Also, can be specified with $WERF_ADD_ANNOTATION_* (e.g.                                
+            Also, can be specified with $WERF_ADD_ANNOTATION or $WERF_ADD_ANNOTATION_* (e.g.        
             $WERF_ADD_ANNOTATION_1=annoName1=annoValue1,                                            
             $WERF_ADD_ANNOTATION_2=annoName2=annoValue2)
       --add-label=[]
             Add label to deploying resources (can specify multiple).
             Format: labelName=labelValue.
-            Also, can be specified with $WERF_ADD_LABEL_* (e.g.                                     
+            Also, can be specified with $WERF_ADD_LABEL or $WERF_ADD_LABEL_* (e.g.                  
             $WERF_ADD_LABEL_1=labelName1=labelValue1, $WERF_ADD_LABEL_2=labelName2=labelValue2)
       --allow-includes-update=false
             Allow use includes latest versions (default $WERF_ALLOW_INCLUDES_UPDATE or false)
@@ -54,8 +54,8 @@ werf lint [IMAGE_NAME...] [options]
             will be populated when pushing newly built images into the primary repo and when        
             pulling existing images from the primary repo. Cache repo will be used to pull images   
             and to get manifests before making requests to the primary repo.
-            Also, can be specified with $WERF_CACHE_REPO_* (e.g. $WERF_CACHE_REPO_1=...,            
-            $WERF_CACHE_REPO_2=...)
+            Also, can be specified with $WERF_CACHE_REPO or $WERF_CACHE_REPO_* (e.g.                
+            $WERF_CACHE_REPO_1=..., $WERF_CACHE_REPO_2=...)
       --config=""
             Use custom configuration file (default $WERF_CONFIG or werf.yaml in the project         
             directory)
@@ -65,7 +65,8 @@ werf lint [IMAGE_NAME...] [options]
             Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf   
             in working directory)
       --container-registry-mirror=[]
-            (Buildah-only) Use specified mirrors for docker.io
+            (Buildah-only) Use specified mirrors for docker.io ($WERF_CONTAINER_REGISTRY_MIRROR or  
+            $WERF_CONTAINER_REGISTRY_MIRROR_*)
       --debug-templates=false
             Enable debug mode for Go templates (default $WERF_DEBUG_TEMPLATES or false)
       --delete-propagation=""
@@ -83,8 +84,8 @@ werf lint [IMAGE_NAME...] [options]
       --dev-ignore=[]
             Add rules to ignore tracked and untracked changes in development mode (can specify      
             multiple).
-            Also, can be specified with $WERF_DEV_IGNORE_* (e.g. $WERF_DEV_IGNORE_TESTS=*_test.go,  
-            $WERF_DEV_IGNORE_DOCS=path/to/docs)
+            Also, can be specified with $WERF_DEV_IGNORE or $WERF_DEV_IGNORE_* (e.g.                
+            $WERF_DEV_IGNORE_TESTS=*_test.go, $WERF_DEV_IGNORE_DOCS=path/to/docs)
       --dir=""
             Use specified project directory where project’s werf.yaml and other configuration files 
             should reside (default $WERF_DIR or current working directory)
@@ -103,7 +104,8 @@ werf lint [IMAGE_NAME...] [options]
             Use specified environment (default $WERF_ENV)
       --extra-apiversions=[]
             Extra Kubernetes API versions passed to $.Capabilities.APIVersions. Can be also set     
-            with $WERF_EXTRA_APIVERSIONS_* environment variables, values can be comma-separated
+            with $WERF_EXTRA_APIVERSIONS or $WERF_EXTRA_APIVERSIONS_* environment variables, values 
+            can be comma-separated
       --final-images-only=true
             Process final images only ($WERF_FINAL_IMAGES_ONLY or true by default)
       --final-repo=""
@@ -206,7 +208,7 @@ werf lint [IMAGE_NAME...] [options]
             Use user from Kubeconfig for current context (default $WERF_KUBE_CONTEXT_USER)
       --kube-impersonate-group=[]
             Sets Impersonate-Group headers when authenticating in Kubernetes. Can be also set with  
-            $WERF_KUBE_IMPERSONATE_GROUP_* environment variables
+            $WERF_KUBE_IMPERSONATE_GROUP or $WERF_KUBE_IMPERSONATE_GROUP_* environment variables
       --kube-impersonate-uid=""
             Sets Impersonate-Uid header when authenticating in Kubernetes (default                  
             $WERF_KUBE_IMPERSONATE_UID)
@@ -267,8 +269,8 @@ werf lint [IMAGE_NAME...] [options]
             Manifest files used as a cluster stub for the lookup template function in non-remote    
             mode. Multi-document and kind:List supported. Namespaced resources must set             
             metadata.namespace, otherwise namespace-scoped lookups ignore the requested namespace.  
-            Can be also set with $WERF_LOOKUP_RESOURCES_* environment variables (can specify        
-            multiple)
+            Can be also set with $WERF_LOOKUP_RESOURCES or $WERF_LOOKUP_RESOURCES_* environment     
+            variables (can specify multiple)
       --loose-giterminism=false
             Loose werf giterminism mode restrictions
       --meta-repo=""
@@ -300,7 +302,7 @@ werf lint [IMAGE_NAME...] [options]
             $WERF_PARALLEL_TASKS_LIMIT or 5)
       --patches=[]
             Additional patches files (render patches for rendered resources, diff patches for drift 
-            detection). Also, can be defined with $WERF_PATCHES_* (e.g.                             
+            detection). Also, can be defined with $WERF_PATCHES or $WERF_PATCHES_* (e.g.            
             $WERF_PATCHES_1=.helm/patches_1.yaml, $WERF_PATCHES_2=.helm/patches_2.yaml)
       --platform=[]
             Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT]     
@@ -350,14 +352,14 @@ werf lint [IMAGE_NAME...] [options]
       --resource-validation-extra-schema=[]
             Extra json schema sources to validate resources (preferred over ebedded sources). Must  
             be a valid go template defining a http(s) URL, or an absolute path on local file        
-            system. Also, can be defined with $WERF_RESOURCE_VALIDATION_EXTRA_SCHEMA_* (eg. $WERF_RE
-            SOURCE_VALIDATION_EXTRA_SCHEMA_1=`https://raw.githubusercontent.com/datreeio/CRDs-catalo
-            g/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json`)
+            system. Also, can be defined with $WERF_RESOURCE_VALIDATION_EXTRA_SCHEMA or             
+            $WERF_RESOURCE_VALIDATION_EXTRA_SCHEMA_* (eg.                                           
+            $WERF_RESOURCE_VALIDATION_EXTRA_SCHEMA_1=`/path/to/schema.json`)
       --resource-validation-skip=[]
             Skip resource validation for resources with specified attributes (can specify           
             multiple). Format: key1=value1,key2=value2. Supported keys: group, version, kind, name, 
             namespace. Example: kind=Deployment,name=my-app. Also, can be defined with              
-            $WERF_RESOURCE_VALIDATION_SKIP_* (e.g.                                                  
+            $WERF_RESOURCE_VALIDATION_SKIP or $WERF_RESOURCE_VALIDATION_SKIP_* (e.g.                
             $WERF_RESOURCE_VALIDATION_SKIP_1=kind=Deployment,name=my-app)
       --runtime-annotations=[]
             Add annotations which will not trigger resource updates to all resources (default       
@@ -371,49 +373,50 @@ werf lint [IMAGE_NAME...] [options]
       --secondary-repo=[]
             Specify one or multiple secondary read-only repos with images that will be used as a    
             cache.
-            Also, can be specified with $WERF_SECONDARY_REPO_* (e.g. $WERF_SECONDARY_REPO_1=...,    
-            $WERF_SECONDARY_REPO_2=...)
+            Also, can be specified with $WERF_SECONDARY_REPO or $WERF_SECONDARY_REPO_* (e.g.        
+            $WERF_SECONDARY_REPO_1=..., $WERF_SECONDARY_REPO_2=...)
       --secret-key=""
             Secret key (default $WERF_SECRET_KEY)
       --secret-values=[]
             Specify helm secret values in a YAML file (can specify multiple). Also, can be defined  
-            with $WERF_SECRET_VALUES_* (e.g. $WERF_SECRET_VALUES_ENV=.helm/secret_values_test.yaml, 
+            with $WERF_SECRET_VALUES or $WERF_SECRET_VALUES_* (e.g.                                 
+            $WERF_SECRET_VALUES_ENV=.helm/secret_values_test.yaml,                                  
             $WERF_SECRET_VALUES_DB=.helm/secret_values_db.yaml)
       --set=[]
             Set helm values on the command line (can specify multiple or separate values with       
             commas: key1=val1,key2=val2).
-            Also, can be defined with $WERF_SET_* (e.g. $WERF_SET_1=key1=val1,                      
+            Also, can be defined with $WERF_SET or $WERF_SET_* (e.g. $WERF_SET_1=key1=val1,         
             $WERF_SET_2=key2=val2)
       --set-docker-config-json-value=false
             Shortcut to set current docker config into the .Values.global.werf.dockerconfigjson
       --set-file=[]
             Set values from respective files specified via the command line (can specify multiple   
             or separate values with commas: key1=path1,key2=path2).
-            Also, can be defined with $WERF_SET_FILE_* (e.g. $WERF_SET_FILE_1=key1=path1,           
-            $WERF_SET_FILE_2=key2=val2)
+            Also, can be defined with $WERF_SET_FILE or $WERF_SET_FILE_* (e.g.                      
+            $WERF_SET_FILE_1=key1=path1, $WERF_SET_FILE_2=key2=val2)
       --set-json=[]
             Set new values, where the key is the value path and the value is JSON (can specify      
             multiple or separate values with commas: key1=val1,key2=val2).
-            Also, can be defined with $WERF_SET_JSON_* (e.g. $WERF_SET_JSON_1=key1=val1,            
-            $WERF_SET_JSON_2=key2=val2)
+            Also, can be defined with $WERF_SET_JSON or $WERF_SET_JSON_* (e.g.                      
+            $WERF_SET_JSON_1=key1=val1, $WERF_SET_JSON_2=key2=val2)
       --set-literal=[]
             Set new values, where the key is the value path and the value is the value. The value   
             will always become a literal string (can specify multiple or separate values with       
             commas: key1=val1,key2=val2).)
-            Also, can be defined with $WERF_SET_LITERAL_* (e.g. $WERF_SET_LITERAL_1=key1=val1,      
-            $WERF_SET_LITERAL_2=key2=val2)
+            Also, can be defined with $WERF_SET_LITERAL or $WERF_SET_LITERAL_* (e.g.                
+            $WERF_SET_LITERAL_1=key1=val1, $WERF_SET_LITERAL_2=key2=val2)
       --set-root-json=[]
             Set new keys in arbitrary things in the global root context ("$"), where the key is the 
             value path and the value is JSON. This is meant to be generated inside the program, so  
             use --set-json instead, unless you REALLY know what you are doing. Can specify multiple 
             or separate values with commas: key1=val1,key2=val2.
-            Also, can be defined with $WERF_SET_ROOT_JSON_* (e.g. $WERF_SET_ROOT_JSON_1=key1=val1,  
-            $WERF_SET_ROOT_JSON_2=key2=val2)
+            Also, can be defined with $WERF_SET_ROOT_JSON or $WERF_SET_ROOT_JSON_* (e.g.            
+            $WERF_SET_ROOT_JSON_1=key1=val1, $WERF_SET_ROOT_JSON_2=key2=val2)
       --set-string=[]
             Set STRING helm values on the command line (can specify multiple or separate values     
             with commas: key1=val1,key2=val2).
-            Also, can be defined with $WERF_SET_STRING_* (e.g. $WERF_SET_STRING_1=key1=val1,        
-            $WERF_SET_STRING_2=key2=val2)
+            Also, can be defined with $WERF_SET_STRING or $WERF_SET_STRING_* (e.g.                  
+            $WERF_SET_STRING_1=key1=val1, $WERF_SET_STRING_2=key2=val2)
   -L, --skip-dependencies-repo-refresh=false
             Do not refresh helm chart repositories locally cached index
       --skip-tls-verify-helm-dependencies=false
@@ -427,9 +430,9 @@ werf lint [IMAGE_NAME...] [options]
             $WERF_SKIP_TLS_VERIFY_REGISTRY)
       --ssh-key=[]
             Use only specific ssh key(s).
-            Can be specified with $WERF_SSH_KEY_* (e.g. $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa,         
-            $WERF_SSH_KEY_NODEJS=~/.ssh/nodejs_rsa).
-            Defaults to $WERF_SSH_KEY_*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}
+            Can be specified with $WERF_SSH_KEY or $WERF_SSH_KEY_* (e.g.                            
+            $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa, $WERF_SSH_KEY_NODEJS=~/.ssh/nodejs_rsa).
+            Defaults to $WERF_SSH_KEY or $WERF_SSH_KEY_*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}
       --stub-tags=false
             Use stubs instead of real tags (default $WERF_STUB_TAGS)
   -S, --synchronization=""
@@ -464,7 +467,7 @@ werf lint [IMAGE_NAME...] [options]
             (default $WERF_VALIDATE)
       --values=[]
             Specify helm values in a YAML file or a URL (can specify multiple). Also, can be        
-            defined with $WERF_VALUES_* (e.g. $WERF_VALUES_1=.helm/values_1.yaml,                   
+            defined with $WERF_VALUES or $WERF_VALUES_* (e.g. $WERF_VALUES_1=.helm/values_1.yaml,   
             $WERF_VALUES_2=.helm/values_2.yaml)
       --without-images=false
             Disable building of images defined in the werf.yaml (if any) and usage of such images   

@@ -13,7 +13,6 @@ import (
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/spf13/cobra"
 
-	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v3/cmd/werf/common"
 	"github.com/werf/werf/v3/pkg/build"
@@ -70,7 +69,7 @@ func NewExportCmd(ctx context.Context) *cobra.Command {
 			}
 
 			result, err := common.InputArrayToKeyValueMap(
-				append(util.PredefinedValuesByEnvNamePrefix("WERF_EXPORT_ADD_LABEL_", "WERF_EXPORT_ADD_LABEL_SEPARATOR"), addLabelArray...),
+				append(common.GetEnvValues(ctx, common.EnvValuesOptions{Name: "WERF_EXPORT_ADD_LABEL", Exclude: []string{"WERF_EXPORT_ADD_LABEL_SEPARATOR"}}), addLabelArray...),
 				addLabelSeparator,
 				common.DefaultKeyValueSeparator,
 			)
@@ -137,7 +136,7 @@ It is necessary to use image name shortcut %image% or %image_slug% if multiple i
 
 	cmd.Flags().StringArrayVarP(&addLabelArray, "add-label", "", []string{}, fmt.Sprintf(`Add label to exported images (can specify multiple).
 Format: labelName=labelValue[<separator>labelName=labelValue ...]. The default separator is a newline (%q), but it can be customized using the --add-label-separator flag.
-Also, can be specified with $WERF_EXPORT_ADD_LABEL_* (e.g. $WERF_EXPORT_ADD_LABEL_1=labelName1=labelValue1, $WERF_EXPORT_ADD_LABEL_2=labelName2=labelValue2)`, defaultAddLabelSeparator))
+Also, can be specified with $WERF_EXPORT_ADD_LABEL or $WERF_EXPORT_ADD_LABEL_* (e.g. $WERF_EXPORT_ADD_LABEL_1=labelName1=labelValue1, $WERF_EXPORT_ADD_LABEL_2=labelName2=labelValue2)`, defaultAddLabelSeparator))
 
 	{
 		defaultValue := defaultAddLabelSeparator

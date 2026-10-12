@@ -28,13 +28,13 @@ werf rollback --revision 10
       --add-annotation=[]
             Add annotation to deploying resources (can specify multiple).
             Format: annoName=annoValue.
-            Also, can be specified with $WERF_ADD_ANNOTATION_* (e.g.                                
+            Also, can be specified with $WERF_ADD_ANNOTATION or $WERF_ADD_ANNOTATION_* (e.g.        
             $WERF_ADD_ANNOTATION_1=annoName1=annoValue1,                                            
             $WERF_ADD_ANNOTATION_2=annoName2=annoValue2)
       --add-label=[]
             Add label to deploying resources (can specify multiple).
             Format: labelName=labelValue.
-            Also, can be specified with $WERF_ADD_LABEL_* (e.g.                                     
+            Also, can be specified with $WERF_ADD_LABEL or $WERF_ADD_LABEL_* (e.g.                  
             $WERF_ADD_LABEL_1=labelName1=labelValue1, $WERF_ADD_LABEL_2=labelName2=labelValue2)
       --allow-includes-update=false
             Allow use includes latest versions (default $WERF_ALLOW_INCLUDES_UPDATE or false)
@@ -58,8 +58,8 @@ werf rollback --revision 10
       --dev-ignore=[]
             Add rules to ignore tracked and untracked changes in development mode (can specify      
             multiple).
-            Also, can be specified with $WERF_DEV_IGNORE_* (e.g. $WERF_DEV_IGNORE_TESTS=*_test.go,  
-            $WERF_DEV_IGNORE_DOCS=path/to/docs)
+            Also, can be specified with $WERF_DEV_IGNORE or $WERF_DEV_IGNORE_* (e.g.                
+            $WERF_DEV_IGNORE_TESTS=*_test.go, $WERF_DEV_IGNORE_DOCS=path/to/docs)
       --dir=""
             Use specified project directory where project’s werf.yaml and other configuration files 
             should reside (default $WERF_DIR or current working directory)
@@ -114,7 +114,7 @@ werf rollback --revision 10
             Use user from Kubeconfig for current context (default $WERF_KUBE_CONTEXT_USER)
       --kube-impersonate-group=[]
             Sets Impersonate-Group headers when authenticating in Kubernetes. Can be also set with  
-            $WERF_KUBE_IMPERSONATE_GROUP_* environment variables
+            $WERF_KUBE_IMPERSONATE_GROUP or $WERF_KUBE_IMPERSONATE_GROUP_* environment variables
       --kube-impersonate-uid=""
             Sets Impersonate-Uid header when authenticating in Kubernetes (default                  
             $WERF_KUBE_IMPERSONATE_UID)
@@ -197,7 +197,7 @@ werf rollback --revision 10
             $WERF_NO_VALUES_SCHEMA_VALIDATION)
       --patches=[]
             Additional patches files (diff patches for drift detection). Also, can be defined with  
-            $WERF_PATCHES_* (e.g. $WERF_PATCHES_1=.helm/patches_1.yaml,                             
+            $WERF_PATCHES or $WERF_PATCHES_* (e.g. $WERF_PATCHES_1=.helm/patches_1.yaml,            
             $WERF_PATCHES_2=.helm/patches_2.yaml)
       --release=""
             Use specified Helm release name (default [[ project ]]-[[ env ]] template or            
@@ -208,7 +208,7 @@ werf rollback --revision 10
             Add Helm release labels (can specify multiple). Kind of labels depends or release       
             storage driver.
             Format: labelName=labelValue.
-            Also, can be specified with $WERF_RELEASE_LABEL_* (e.g.                                 
+            Also, can be specified with $WERF_RELEASE_LABEL or $WERF_RELEASE_LABEL_* (e.g.          
             $WERF_RELEASE_LABEL_1=labelName1=labelValue1,                                           
             $WERF_RELEASE_LABEL_2=labelName2=labelValue2)
       --release-storage=""
@@ -224,14 +224,14 @@ werf rollback --revision 10
       --resource-validation-extra-schema=[]
             Extra json schema sources to validate resources (preferred over ebedded sources). Must  
             be a valid go template defining a http(s) URL, or an absolute path on local file        
-            system. Also, can be defined with $WERF_RESOURCE_VALIDATION_EXTRA_SCHEMA_* (eg. $WERF_RE
-            SOURCE_VALIDATION_EXTRA_SCHEMA_1=`https://raw.githubusercontent.com/datreeio/CRDs-catalo
-            g/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json`)
+            system. Also, can be defined with $WERF_RESOURCE_VALIDATION_EXTRA_SCHEMA or             
+            $WERF_RESOURCE_VALIDATION_EXTRA_SCHEMA_* (eg.                                           
+            $WERF_RESOURCE_VALIDATION_EXTRA_SCHEMA_1=`/path/to/schema.json`)
       --resource-validation-skip=[]
             Skip resource validation for resources with specified attributes (can specify           
             multiple). Format: key1=value1,key2=value2. Supported keys: group, version, kind, name, 
             namespace. Example: kind=Deployment,name=my-app. Also, can be defined with              
-            $WERF_RESOURCE_VALIDATION_SKIP_* (e.g.                                                  
+            $WERF_RESOURCE_VALIDATION_SKIP or $WERF_RESOURCE_VALIDATION_SKIP_* (e.g.                
             $WERF_RESOURCE_VALIDATION_SKIP_1=kind=Deployment,name=my-app)
       --revision=0
             Revision number to rollback to (if not specified, rolls back to previous revision)

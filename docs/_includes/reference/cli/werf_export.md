@@ -40,7 +40,7 @@ werf export [IMAGE_NAME...] [options]
             Format: labelName=labelValue[<separator>labelName=labelValue ...]. The default          
             separator is a newline ("\n"), but it can be customized using the --add-label-separator 
             flag.
-            Also, can be specified with $WERF_EXPORT_ADD_LABEL_* (e.g.                              
+            Also, can be specified with $WERF_EXPORT_ADD_LABEL or $WERF_EXPORT_ADD_LABEL_* (e.g.    
             $WERF_EXPORT_ADD_LABEL_1=labelName1=labelValue1,                                        
             $WERF_EXPORT_ADD_LABEL_2=labelName2=labelValue2)
       --add-label-separator="\n"
@@ -58,8 +58,8 @@ werf export [IMAGE_NAME...] [options]
             will be populated when pushing newly built images into the primary repo and when        
             pulling existing images from the primary repo. Cache repo will be used to pull images   
             and to get manifests before making requests to the primary repo.
-            Also, can be specified with $WERF_CACHE_REPO_* (e.g. $WERF_CACHE_REPO_1=...,            
-            $WERF_CACHE_REPO_2=...)
+            Also, can be specified with $WERF_CACHE_REPO or $WERF_CACHE_REPO_* (e.g.                
+            $WERF_CACHE_REPO_1=..., $WERF_CACHE_REPO_2=...)
       --config=""
             Use custom configuration file (default $WERF_CONFIG or werf.yaml in the project         
             directory)
@@ -69,7 +69,8 @@ werf export [IMAGE_NAME...] [options]
             Custom configuration templates directory (default $WERF_CONFIG_TEMPLATES_DIR or .werf   
             in working directory)
       --container-registry-mirror=[]
-            (Buildah-only) Use specified mirrors for docker.io
+            (Buildah-only) Use specified mirrors for docker.io ($WERF_CONTAINER_REGISTRY_MIRROR or  
+            $WERF_CONTAINER_REGISTRY_MIRROR_*)
       --debug-templates=false
             Enable debug mode for Go templates (default $WERF_DEBUG_TEMPLATES or false)
       --dev=false
@@ -81,8 +82,8 @@ werf export [IMAGE_NAME...] [options]
       --dev-ignore=[]
             Add rules to ignore tracked and untracked changes in development mode (can specify      
             multiple).
-            Also, can be specified with $WERF_DEV_IGNORE_* (e.g. $WERF_DEV_IGNORE_TESTS=*_test.go,  
-            $WERF_DEV_IGNORE_DOCS=path/to/docs)
+            Also, can be specified with $WERF_DEV_IGNORE or $WERF_DEV_IGNORE_* (e.g.                
+            $WERF_DEV_IGNORE_TESTS=*_test.go, $WERF_DEV_IGNORE_DOCS=path/to/docs)
       --dir=""
             Use specified project directory where project’s werf.yaml and other configuration files 
             should reside (default $WERF_DIR or current working directory)
@@ -220,16 +221,16 @@ werf export [IMAGE_NAME...] [options]
       --secondary-repo=[]
             Specify one or multiple secondary read-only repos with images that will be used as a    
             cache.
-            Also, can be specified with $WERF_SECONDARY_REPO_* (e.g. $WERF_SECONDARY_REPO_1=...,    
-            $WERF_SECONDARY_REPO_2=...)
+            Also, can be specified with $WERF_SECONDARY_REPO or $WERF_SECONDARY_REPO_* (e.g.        
+            $WERF_SECONDARY_REPO_1=..., $WERF_SECONDARY_REPO_2=...)
       --skip-tls-verify-registry=false
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)
       --ssh-key=[]
             Use only specific ssh key(s).
-            Can be specified with $WERF_SSH_KEY_* (e.g. $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa,         
-            $WERF_SSH_KEY_NODEJS=~/.ssh/nodejs_rsa).
-            Defaults to $WERF_SSH_KEY_*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}
+            Can be specified with $WERF_SSH_KEY or $WERF_SSH_KEY_* (e.g.                            
+            $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa, $WERF_SSH_KEY_NODEJS=~/.ssh/nodejs_rsa).
+            Defaults to $WERF_SSH_KEY or $WERF_SSH_KEY_*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}
   -S, --synchronization=""
             Address of synchronizer for multiple werf processes to work with a single repo.
             
