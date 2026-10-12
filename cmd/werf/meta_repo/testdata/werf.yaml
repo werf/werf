@@ -1,0 +1,5 @@
+project: meta-repo-test
+configVersion: 1
+---
+image: app
+from: scratch

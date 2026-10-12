@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 
 	"github.com/werf/common-go/pkg/util"
@@ -74,6 +75,8 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	cmd.Flags().BoolVar(&removeSource, "remove-source", util.GetBoolEnvironmentDefaultTrue("WERF_REMOVE_SOURCE"), "Delete the original metadata records from --from after they are verified present in --to (default $WERF_REMOVE_SOURCE or true if not specified)")
 
+	lo.Must0(common.SetupMinimalKubeConnectionFlags(&commonCmdData, cmd))
+
 	return cmd
 }
 
@@ -97,12 +100,13 @@ func run(ctx context.Context) error {
 		InitTrueGitWithOptions: &common.InitTrueGitOptions{
 			Options: true_git.Options{LiveGitOutput: *commonCmdData.LogDebug},
 		},
-		InitDockerRegistry:          true,
-		InitProcessContainerBackend: true,
-		InitWerf:                    true,
-		InitGitDataManager:          true,
-		InitManifestCache:           true,
-		InitLRUImagesCache:          true,
+		InitDockerRegistry:           true,
+		InitProcessContainerBackend:  true,
+		InitWerf:                     true,
+		InitGitDataManager:           true,
+		InitManifestCache:            true,
+		InitLRUImagesCache:           true,
+		SetupOndemandKubeInitializer: true,
 	})
 	if err != nil {
 		return fmt.Errorf("component init error: %w", err)

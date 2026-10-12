@@ -13,6 +13,7 @@ import (
 	"github.com/werf/werf/v2/pkg/config"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	imagePkg "github.com/werf/werf/v2/pkg/image"
+	"github.com/werf/werf/v2/pkg/storage/manager"
 )
 
 var _ = ginkgo.Describe("Check mode image publication", func() {
@@ -100,6 +101,25 @@ var _ = ginkgo.Describe("Check mode image publication", func() {
 		gomega.Expect(err).To(gomega.MatchError(gomega.ContainSubstring("is not published")))
 		gomega.Expect(stagesStorage.writes).To(gomega.BeEmpty())
 	})
+
+	ginkgo.DescribeTable("publishes metadata to separate meta storage and images to stages storage",
+		func(ctx ginkgo.SpecContext, multiplatform bool, expectedStageWrites []string) {
+			phase, stagesStorage := newPhase(false)
+			metaStorage := &checkModeStorage{}
+			phase.Conveyor.StorageManager = &manager.StorageManager{StagesStorage: stagesStorage, MetaStorage: metaStorage}
+			if multiplatform {
+				img := multiplatformImage()
+				gomega.Expect(phase.publishMultiplatformImageMetadata(ctx, "image0", img)).To(gomega.Succeed())
+				gomega.Expect(phase.publishMultiplatformImageCustomTags(ctx, "image0", img)).To(gomega.Succeed())
+			} else {
+				gomega.Expect(phase.publishImageMetadata(ctx, "image0", singlePlatformImage())).To(gomega.Succeed())
+			}
+			gomega.Expect(metaStorage.writes).To(gomega.ConsistOf("AddManagedImage", "PutImageMetadata", "RegisterStageCustomTag"))
+			gomega.Expect(stagesStorage.writes).To(gomega.ConsistOf(expectedStageWrites))
+		},
+		ginkgo.Entry("single-platform", false, []string{"AddStageCustomTag"}),
+		ginkgo.Entry("multiplatform", true, []string{"PostMultiplatformImage", "AddStageCustomTag"}),
+	)
 
 	ginkgo.DescribeTable("publishes outside check mode", func(ctx ginkgo.SpecContext, publish func(phase *BuildPhase) error, expectedWrites []string) {
 		phase, stagesStorage := newPhase(false)

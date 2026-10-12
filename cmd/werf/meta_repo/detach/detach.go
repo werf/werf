@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 
 	"github.com/werf/logboek"
@@ -66,6 +67,8 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	commonCmdData.SetupDebugTemplates(cmd)
 	commonCmdData.SetupAllowIncludesUpdate(cmd)
 
+	lo.Must0(common.SetupMinimalKubeConnectionFlags(&commonCmdData, cmd))
+
 	return cmd
 }
 
@@ -75,12 +78,13 @@ func run(ctx context.Context) error {
 		InitTrueGitWithOptions: &common.InitTrueGitOptions{
 			Options: true_git.Options{LiveGitOutput: *commonCmdData.LogDebug},
 		},
-		InitDockerRegistry:          true,
-		InitProcessContainerBackend: true,
-		InitWerf:                    true,
-		InitGitDataManager:          true,
-		InitManifestCache:           true,
-		InitLRUImagesCache:          true,
+		InitDockerRegistry:           true,
+		InitProcessContainerBackend:  true,
+		InitWerf:                     true,
+		InitGitDataManager:           true,
+		InitManifestCache:            true,
+		InitLRUImagesCache:           true,
+		SetupOndemandKubeInitializer: true,
 	})
 	if err != nil {
 		return fmt.Errorf("component init error: %w", err)

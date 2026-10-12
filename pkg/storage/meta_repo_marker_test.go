@@ -469,6 +469,35 @@ var _ = ginkgo.Describe("meta-repo marker", func() {
 			gomega.Expect(addr).To(gomega.Equal(metaRepo))
 		})
 
+		ginkgo.DescribeTable("migrates metadata names ending in -rejected without moving rejected stages",
+			func(ctx ginkgo.SpecContext, removeSource bool) {
+				stageID := image.NewStageID("2604b86b2c7a1c6d19c62601aadb19e7d5c6bb8f17bc2bf26a390ea7", 1700000000000)
+				gomega.Expect(stages.AddManagedImage(ctx, proj, "app-rejected")).To(gomega.Succeed())
+				gomega.Expect(stages.PutImageMetadata(ctx, proj, "app-rejected", "commit", stageID.String())).To(gomega.Succeed())
+				gomega.Expect(stages.RegisterStageCustomTag(ctx, proj, &image.StageDesc{StageID: stageID}, "release-rejected")).To(gomega.Succeed())
+				rejectedTag := stageID.String() + RepoRejectedStageImageRecord_ImageTagSuffix
+				reg.put(stagesRepo+":"+rejectedTag, map[string]string{image.WerfLabel: proj})
+
+				gomega.Expect(MigrateMetaRepo(ctx, proj, stages, meta, MigrateMetaRepoOptions{RemoveSource: removeSource})).To(gomega.Succeed())
+
+				managed, err := meta.GetManagedImages(ctx, proj)
+				gomega.Expect(err).NotTo(gomega.HaveOccurred())
+				gomega.Expect(managed).To(gomega.ContainElement("app-rejected"))
+				metadata, _, err := meta.GetAllAndGroupImageMetadataByImageName(ctx, proj, managed)
+				gomega.Expect(err).NotTo(gomega.HaveOccurred())
+				gomega.Expect(metadata["app-rejected"]).To(gomega.Equal(map[string][]string{stageID.String(): {"commit"}}))
+				customTag, err := meta.GetStageCustomTagMetadata(ctx, "release-rejected")
+				gomega.Expect(err).NotTo(gomega.HaveOccurred())
+				gomega.Expect(customTag).To(gomega.Equal(&CustomTagMetadata{StageID: stageID.String(), Tag: "release-rejected"}))
+				gomega.Expect(reg.has(stagesRepo + ":managed-image-app-rejected")).To(gomega.Equal(!removeSource))
+				gomega.Expect(reg.has(stagesRepo + ":custom-tag-meta-release-rejected")).To(gomega.Equal(!removeSource))
+				gomega.Expect(reg.has(stagesRepo + ":" + rejectedTag)).To(gomega.BeTrue())
+				gomega.Expect(reg.has(metaRepo + ":" + rejectedTag)).To(gomega.BeFalse())
+			},
+			ginkgo.Entry("copy", false),
+			ginkgo.Entry("move", true),
+		)
+
 		ginkgo.It("succeeds and plants the marker for a project with no metadata", func(ctx ginkgo.SpecContext) {
 			emptyReg := newMarkerRegistry()
 			src := newRepoStorage(emptyReg, stagesRepo)

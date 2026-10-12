@@ -502,7 +502,7 @@ werf build --repo registry.example.org/project --meta-repo registry.example.org/
 
 1. Остановите все сборки, публикации и очистку, использующие эти репозитории. Определите образы и источники импортов, необходимые для отката; защитите их явными политиками очистки по Git/Kubernetes или сохраните отдельную резервную копию до любых удалений.
 2. Исключите клиенты без поддержки `--meta-repo`. Настройте одинаковые имя проекта, `--repo` и `--meta-repo` во всех jobs, включая ручные команды и очистку.
-3. Из checkout проекта перенесите существующие метаданные штатной командой:
+3. Из checkout проекта перенесите существующие метаданные бинарником v2 с этим backport:
 
    ```shell
    werf meta-repo migrate --from registry.example.org/project --to registry.example.org/project-meta

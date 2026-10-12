@@ -503,7 +503,7 @@ The first metadata write creates a per-project marker in `--repo`. Clients suppo
 
 1. Stop every writer and cleanup job using the repositories. Identify the image versions and import sources needed for rollback; retain them under explicit Git/Kubernetes cleanup policies or keep a separate backup before any deletion.
 2. Exclude clients without `--meta-repo` support. Configure the same project name, `--repo` and `--meta-repo` in every participating job, including manual commands and cleanup.
-3. From the project checkout, move existing metadata using the supported command:
+3. From the project checkout, move existing metadata using the v2 binary with this backport:
 
    ```shell
    werf meta-repo migrate --from registry.example.org/project --to registry.example.org/project-meta

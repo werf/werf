@@ -97,9 +97,6 @@ func (storage *RepoStagesStorage) RmMetaRepoMarker(ctx context.Context, projectN
 }
 
 func isMetadataCandidateTag(tag string) bool {
-	if strings.HasSuffix(tag, RepoRejectedStageImageRecord_ImageTagSuffix) {
-		return false
-	}
 	switch {
 	case strings.HasPrefix(tag, RepoManagedImageRecord_ImageTagPrefix):
 		return true
