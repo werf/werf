@@ -967,6 +967,10 @@ func GetOptionalFinalStagesStorage(ctx context.Context, containerBackend contain
 }
 
 func GetOptionalMetaStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData, stagesStorage storage.PrimaryStagesStorage, cleanupDisabled bool) (storage.PrimaryStagesStorage, error) {
+	if stagesStorage.Address() == storage.LocalStorageAddress {
+		return stagesStorage, nil
+	}
+
 	if cmdData.MetaRepo == nil || cmdData.MetaRepo.Address == nil || *cmdData.MetaRepo.Address == "" {
 		return stagesStorage, nil
 	}
