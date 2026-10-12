@@ -46,6 +46,21 @@ func (m *MockGitRepo) EXPECT() *MockGitRepoMockRecorder {
 	return m.recorder
 }
 
+// CommitMetadata mocks base method.
+func (m *MockGitRepo) CommitMetadata(ctx context.Context, commit string) (git_repo.CommitMetadata, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CommitMetadata", ctx, commit)
+	ret0, _ := ret[0].(git_repo.CommitMetadata)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CommitMetadata indicates an expected call of CommitMetadata.
+func (mr *MockGitRepoMockRecorder) CommitMetadata(ctx, commit any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CommitMetadata", reflect.TypeOf((*MockGitRepo)(nil).CommitMetadata), ctx, commit)
+}
+
 // CreateDetachedMergeCommit mocks base method.
 func (m *MockGitRepo) CreateDetachedMergeCommit(ctx context.Context, fromCommit, toCommit string) (string, error) {
 	m.ctrl.T.Helper()
@@ -599,6 +614,21 @@ func NewMockgitRepo(ctrl *gomock.Controller) *MockgitRepo {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockgitRepo) EXPECT() *MockgitRepoMockRecorder {
 	return m.recorder
+}
+
+// CommitMetadata mocks base method.
+func (m *MockgitRepo) CommitMetadata(ctx context.Context, commit string) (git_repo.CommitMetadata, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CommitMetadata", ctx, commit)
+	ret0, _ := ret[0].(git_repo.CommitMetadata)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CommitMetadata indicates an expected call of CommitMetadata.
+func (mr *MockgitRepoMockRecorder) CommitMetadata(ctx, commit any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CommitMetadata", reflect.TypeOf((*MockgitRepo)(nil).CommitMetadata), ctx, commit)
 }
 
 // CreateDetachedMergeCommit mocks base method.

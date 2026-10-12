@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/fs"
 	"path/filepath"
+	"time"
 
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
@@ -60,3 +61,40 @@ type gitRepoNameStub struct{ git_repo.GitRepo }
 var _ git_repo.GitRepo = (*gitRepoNameStub)(nil)
 
 func (*gitRepoNameStub) GetName() string { return "fixture" }
+
+var _ git_repo.GitRepo = (*gitSourcesRepoStub)(nil)
+
+type gitSourcesRepoStub struct {
+	git_repo.GitRepo
+	local          bool
+	headCommitHash string
+	origin         string
+	checksum       string
+	date           time.Time
+}
+
+func (repo *gitSourcesRepoStub) IsLocal() bool   { return repo.local }
+func (repo *gitSourcesRepoStub) GetName() string { return "source" }
+func (repo *gitSourcesRepoStub) HeadCommitHash(context.Context) (string, error) {
+	return repo.headCommitHash, nil
+}
+
+func (repo *gitSourcesRepoStub) CommitMetadata(_ context.Context, commit string) (git_repo.CommitMetadata, error) {
+	return git_repo.CommitMetadata{Hash: commit, CommitterDate: repo.date}, nil
+}
+
+func (repo *gitSourcesRepoStub) RemoteOriginUrl(context.Context) (string, error) {
+	return repo.origin, nil
+}
+
+func (repo *gitSourcesRepoStub) TagCommit(context.Context, string) (string, error) {
+	return repo.headCommitHash, nil
+}
+
+func (repo *gitSourcesRepoStub) LatestBranchCommit(context.Context, string) (string, error) {
+	return repo.headCommitHash, nil
+}
+
+func (repo *gitSourcesRepoStub) IsCommitExists(context.Context, string) (bool, error) {
+	return true, nil
+}

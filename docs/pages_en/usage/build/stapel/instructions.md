@@ -353,6 +353,37 @@ shell:
 
 In the example above the current commit hash will be inserted into the `echo ...` command, but this will happen in the very last moment — when the build instructions will be interpreted and executed by the shell. This way there will be no "install" stage rebuilds on every commit.
 
+### Git source metadata
+
+`WERF_GIT_SOURCES` is available during `beforeInstall`, `install`, `beforeSetup` and `setup` for images with a `git` directive. It contains a JSON array with one record per mapping:
+
+| Field | Meaning |
+| --- | --- |
+| `source` | Repository URL without credentials, query or fragment; `.` for the project repository. |
+| `tag`, `branch` | Configured ref or `null`. Both are `null` for local mappings and pinned commits; a tag does not imply a branch. |
+| `commit` | Full resolved commit SHA. |
+| `commitDate` | Committer date in UTC RFC3339. |
+| `add`, `to` | Normalized source and destination paths. |
+
+The variable is build-time only and is not transferred through `import`. To use metadata in another image, save it to a file and import that file explicitly.
+
+This example requires `jq` and a CMake project adapted to read `DCGM_SOURCE_COMMIT`. It selects exactly one mapping:
+
+```yaml
+shell:
+  install:
+  - |
+    DCGM_SOURCE_COMMIT=$(printf '%s' "$WERF_GIT_SOURCES" | jq -er '
+      [.[] | select(.source == "https://github.com/NVIDIA/DCGM.git" and .to == "/src/dcgm")]
+      | if length == 1 then .[0].commit else error("expected exactly one DCGM mapping") end
+      | select(type == "string" and test("^[0-9a-f]{40}$"))
+    ') || exit 1
+    export DCGM_SOURCE_COMMIT
+    cmake -S /src/dcgm -B /build/dcgm
+```
+
+Keep assignment and `export` separate so extraction errors are not hidden. The metadata does not replace Git history, dirty detection or individual submodule SHAs.
+
 ## Using build secrets
 
 > **NOTE:** To use secrets in builds, you need to enable them explicitly in the giterminism settings. Learn more ([here]({{ "/usage/project_configuration/giterminism.html#using-build-secrets" | true_relative_url }}))
