@@ -3,21 +3,20 @@ package build
 import (
 	"fmt"
 	"sync"
-	"time"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/ginkgo/v2"
+	"github.com/onsi/gomega"
 )
 
-var _ = Describe("BuildPhase", func() {
-	Describe("stage digest mutex lifecycle", func() {
+var _ = ginkgo.Describe("BuildPhase", func() {
+	ginkgo.Describe("stage digest mutex lifecycle", func() {
 		var (
 			digestMutex *sync.Mutex
 
 			simulateCalculateStage func(shouldError bool) (bool, func(), error)
 		)
 
-		BeforeEach(func() {
+		ginkgo.BeforeEach(func() {
 			digestMutex = &sync.Mutex{}
 
 			simulateCalculateStage = func(shouldError bool) (bool, func(), error) {
@@ -35,7 +34,7 @@ var _ = Describe("BuildPhase", func() {
 			expectRelease bool
 		}
 
-		DescribeTable("cleanupFunc handling on error path",
+		ginkgo.DescribeTable("cleanupFunc handling on error path",
 			func(v onImageStageVariant) {
 				simulateOnImageStage := func(shouldError bool) error {
 					var cleanupFunc func()
@@ -62,27 +61,18 @@ var _ = Describe("BuildPhase", func() {
 				}
 
 				err := simulateOnImageStage(true)
-				Expect(err).To(HaveOccurred())
+				gomega.Expect(err).To(gomega.HaveOccurred())
 
-				done := make(chan struct{})
-				go func() {
-					digestMutex.Lock()
-					digestMutex.Unlock()
-					close(done)
-				}()
-
-				if v.expectRelease {
-					Eventually(done, 3*time.Second).Should(BeClosed())
-				} else {
-					Consistently(done, 500*time.Millisecond).ShouldNot(BeClosed())
-				}
+				acquired := digestMutex.TryLock()
+				digestMutex.Unlock()
+				gomega.Expect(acquired).To(gomega.Equal(v.expectRelease))
 			},
-			Entry("buggy: cleanupFunc not called on error path leaks mutex", onImageStageVariant{
+			ginkgo.Entry("buggy: cleanupFunc not called on error path leaks mutex", onImageStageVariant{
 				name:          "buggy",
 				callCleanup:   false,
 				expectRelease: false,
 			}),
-			Entry("fixed: cleanupFunc called on error path releases mutex", onImageStageVariant{
+			ginkgo.Entry("fixed: cleanupFunc called on error path releases mutex", onImageStageVariant{
 				name:          "fixed",
 				callCleanup:   true,
 				expectRelease: true,
