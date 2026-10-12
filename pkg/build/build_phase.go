@@ -1479,6 +1479,13 @@ func (phase *BuildPhase) prepareStageInstructions(ctx context.Context, img *imag
 			"WERF_COMMIT_TIME_HUMAN": headTime.String(),
 			"WERF_COMMIT_TIME_UNIX":  strconv.FormatInt(headTime.Unix(), 10),
 		}
+		if len(stg.GetGitMappings()) > 0 {
+			gitSources, err := stage.GitSourcesJSON(ctx, stg.GetGitMappings())
+			if err != nil {
+				return fmt.Errorf("prepare WERF_GIT_SOURCES: %w", err)
+			}
+			commitEnvs["WERF_GIT_SOURCES"] = gitSources
+		}
 
 		if phase.Conveyor.UseLegacyStapelBuilder(phase.Conveyor.ContainerBackend) {
 			stageImage.Builder.LegacyStapelStageBuilder().Container().AddBuildTimeEnv(commitEnvs)

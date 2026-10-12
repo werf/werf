@@ -83,6 +83,25 @@ func (repo *Base) HeadCommitTime(ctx context.Context) (*time.Time, error) {
 	panic("not implemented")
 }
 
+func (repo *Base) CommitMetadata(ctx context.Context, commit string) (CommitMetadata, error) {
+	var result CommitMetadata
+	if err := repo.withRepoHandle(ctx, commit, func(handle repo_handle.Handle) error {
+		hash, err := newHash(commit)
+		if err != nil {
+			return fmt.Errorf("parse commit hash: %w", err)
+		}
+		object, err := handle.Repository().CommitObject(hash)
+		if err != nil {
+			return fmt.Errorf("read commit object: %w", err)
+		}
+		result = CommitMetadata{Hash: object.Hash.String(), CommitterDate: object.Committer.When.UTC()}
+		return nil
+	}); err != nil {
+		return CommitMetadata{}, fmt.Errorf("read commit metadata: %w", err)
+	}
+	return result, nil
+}
+
 func (repo *Base) LatestBranchCommit(ctx context.Context, branch string) (string, error) {
 	panic("not implemented")
 }
