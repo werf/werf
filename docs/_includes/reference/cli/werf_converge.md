@@ -432,9 +432,8 @@ werf converge --repo registry.mydomain.com/web --env production
             Extra json schema sources to validate resources (preferred over ebedded sources). Must  
             be a valid go template defining a http(s) URL, or an absolute path on local file        
             system. Also, can be defined with $WERF_RESOURCE_VALIDATION_EXTRA_SCHEMA or             
-            $WERF_RESOURCE_VALIDATION_EXTRA_SCHEMA_* (eg. $WERF_RESOURCE_VALIDATION_EXTRA_SCHEMA_1=`
-            https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}
-            }_{{.ResourceAPIVersion}}.json`)
+            $WERF_RESOURCE_VALIDATION_EXTRA_SCHEMA_* (eg.                                           
+            $WERF_RESOURCE_VALIDATION_EXTRA_SCHEMA_1=`/path/to/schema.json`)
       --resource-validation-skip=[]
             Skip resource validation for resources with specified attributes (can specify           
             multiple). Format: key1=value1,key2=value2. Supported keys: group, version, kind, name, 
