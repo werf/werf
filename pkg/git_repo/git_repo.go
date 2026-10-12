@@ -69,6 +69,7 @@ type GitRepo interface {
 	GetOrCreatePatch(ctx context.Context, opts PatchOptions) (Patch, error)
 	HeadCommitHash(ctx context.Context) (string, error)
 	HeadCommitTime(ctx context.Context) (*time.Time, error)
+	CommitMetadata(ctx context.Context, commit string) (CommitMetadata, error)
 	IsAncestor(ctx context.Context, ancestorCommit, descendantCommit string) (bool, error)
 	IsCommitDirectoryExist(ctx context.Context, commit, path string) (bool, error)
 	IsCommitExists(ctx context.Context, commit string) (bool, error)
@@ -88,6 +89,11 @@ type GitRepo interface {
 
 	StatusPathList(ctx context.Context, pathMatcher path_matcher.PathMatcher) (list []string, err error)
 	ValidateStatusResult(ctx context.Context, pathMatcher path_matcher.PathMatcher) error
+}
+
+type CommitMetadata struct {
+	Hash          string
+	CommitterDate time.Time
 }
 
 type FetchOptions struct {

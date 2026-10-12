@@ -227,6 +227,37 @@ shell:
 
 В примере выше хэш текущего коммита будет подставлен в команду `echo ...`, но произойдет это в самый последний момент — на этапе выполнения инструкций shell'ом. Таким образом пересборок слоя install на каждом коммите происходить не будет.
 
+### Метаданные Git-источников
+
+`WERF_GIT_SOURCES` доступна в `beforeInstall`, `install`, `beforeSetup` и `setup` образов с директивой `git`. Значение — JSON-массив с одной записью на mapping:
+
+| Поле | Значение |
+| --- | --- |
+| `source` | URL репозитория без credentials, query и fragment; `.` для репозитория проекта. |
+| `tag`, `branch` | Заданный ref или `null`. Для local mappings и закреплённых коммитов оба поля равны `null`; тег не определяет ветку. |
+| `commit` | Полный resolved SHA коммита. |
+| `commitDate` | Дата committer в UTC RFC3339. |
+| `add`, `to` | Нормализованные пути источника и назначения. |
+
+Переменная доступна только при сборке и не переносится через `import`. Для передачи metadata в другой образ явно сохраните их в файл и импортируйте его.
+
+Пример требует `jq` и CMake-проект, адаптированный для чтения `DCGM_SOURCE_COMMIT`. Выбирается ровно один mapping:
+
+```yaml
+shell:
+  install:
+  - |
+    DCGM_SOURCE_COMMIT=$(printf '%s' "$WERF_GIT_SOURCES" | jq -er '
+      [.[] | select(.source == "https://github.com/NVIDIA/DCGM.git" and .to == "/src/dcgm")]
+      | if length == 1 then .[0].commit else error("expected exactly one DCGM mapping") end
+      | select(type == "string" and test("^[0-9a-f]{40}$"))
+    ') || exit 1
+    export DCGM_SOURCE_COMMIT
+    cmake -S /src/dcgm -B /build/dcgm
+```
+
+Разделяйте присваивание и `export`, чтобы не скрыть ошибку извлечения. Metadata не заменяют историю Git, определение dirty и отдельные SHA подмодулей.
+
 ## Использование сборочных секретов
 
 > **ЗАМЕЧАНИЕ:** Чтобы использовать секреты в сборках, их нужно явно разрешить в настройках гитерминизма. Подробнее ([здесь]({{ "/usage/project_configuration/giterminism.html#использование-сборочных-секретов" | true_relative_url }}))
