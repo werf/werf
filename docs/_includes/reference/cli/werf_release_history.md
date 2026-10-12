@@ -52,7 +52,7 @@ werf release history [options]
             Use user from Kubeconfig for current context (default $WERF_KUBE_CONTEXT_USER)
       --kube-impersonate-group=[]
             Sets Impersonate-Group headers when authenticating in Kubernetes. Can be also set with  
-            $WERF_KUBE_IMPERSONATE_GROUP_* environment variables
+            $WERF_KUBE_IMPERSONATE_GROUP or $WERF_KUBE_IMPERSONATE_GROUP_* environment variables
       --kube-impersonate-uid=""
             Sets Impersonate-Uid header when authenticating in Kubernetes (default                  
             $WERF_KUBE_IMPERSONATE_UID)

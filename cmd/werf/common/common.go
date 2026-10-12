@@ -146,7 +146,7 @@ The mode allows working with project files without doing redundant commits durin
 func setupDevIgnore(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.DevIgnore = new([]string)
 	cmd.Flags().StringArrayVarP(cmdData.DevIgnore, "dev-ignore", "", []string{}, `Add rules to ignore tracked and untracked changes in development mode (can specify multiple).
-Also, can be specified with $WERF_DEV_IGNORE_* (e.g. $WERF_DEV_IGNORE_TESTS=*_test.go, $WERF_DEV_IGNORE_DOCS=path/to/docs)`)
+Also, can be specified with $WERF_DEV_IGNORE or $WERF_DEV_IGNORE_* (e.g. $WERF_DEV_IGNORE_TESTS=*_test.go, $WERF_DEV_IGNORE_DOCS=path/to/docs)`)
 }
 
 func setupDevBranch(cmdData *CmdData, cmd *cobra.Command) {
@@ -173,8 +173,8 @@ func SetupHomeDir(cmdData *CmdData, cmd *cobra.Command, opts SetupHomeDirOptions
 func SetupSSHKey(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.SSHKeys = new([]string)
 	cmd.Flags().StringArrayVarP(cmdData.SSHKeys, "ssh-key", "", []string{}, `Use only specific ssh key(s).
-Can be specified with $WERF_SSH_KEY_* (e.g. $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa, $WERF_SSH_KEY_NODEJS=~/.ssh/nodejs_rsa).
-Defaults to $WERF_SSH_KEY_*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}`)
+Can be specified with $WERF_SSH_KEY or $WERF_SSH_KEY_* (e.g. $WERF_SSH_KEY_REPO=~/.ssh/repo_rsa, $WERF_SSH_KEY_NODEJS=~/.ssh/nodejs_rsa).
+Defaults to $WERF_SSH_KEY or $WERF_SSH_KEY_*, system ssh-agent or ~/.ssh/{id_rsa|id_dsa}`)
 }
 
 func SetupSaveBuildReport(cmdData *CmdData, cmd *cobra.Command) {
@@ -399,11 +399,11 @@ func SetupDefaultDeletePropagation(cmdData *CmdData, cmd *cobra.Command) {
 }
 
 func SetupExtraAPIVersions(cmdData *CmdData, cmd *cobra.Command) {
-	cmd.Flags().StringSliceVarP(&cmdData.ExtraAPIVersions, "extra-apiversions", "", []string{}, "Extra Kubernetes API versions passed to $.Capabilities.APIVersions. Can be also set with $WERF_EXTRA_APIVERSIONS_* environment variables, values can be comma-separated")
+	cmd.Flags().StringSliceVarP(&cmdData.ExtraAPIVersions, "extra-apiversions", "", []string{}, "Extra Kubernetes API versions passed to $.Capabilities.APIVersions. Can be also set with $WERF_EXTRA_APIVERSIONS or $WERF_EXTRA_APIVERSIONS_* environment variables, values can be comma-separated")
 }
 
 func SetupLocalLookupResourcesPaths(cmdData *CmdData, cmd *cobra.Command) {
-	cmd.Flags().StringArrayVarP(&cmdData.LocalLookupResourcesPaths, "lookup-resources", "", []string{}, "Manifest files used as a cluster stub for the lookup template function in non-remote mode. Multi-document and kind:List supported. Namespaced resources must set metadata.namespace, otherwise namespace-scoped lookups ignore the requested namespace. Can be also set with $WERF_LOOKUP_RESOURCES_* environment variables (can specify multiple)")
+	cmd.Flags().StringArrayVarP(&cmdData.LocalLookupResourcesPaths, "lookup-resources", "", []string{}, "Manifest files used as a cluster stub for the lookup template function in non-remote mode. Multi-document and kind:List supported. Namespaced resources must set metadata.namespace, otherwise namespace-scoped lookups ignore the requested namespace. Can be also set with $WERF_LOOKUP_RESOURCES or $WERF_LOOKUP_RESOURCES_* environment variables (can specify multiple)")
 }
 
 func SetupNoRemoveManualChanges(cmdData *CmdData, cmd *cobra.Command) {
@@ -413,7 +413,7 @@ func SetupNoRemoveManualChanges(cmdData *CmdData, cmd *cobra.Command) {
 func SetupReleaseLabel(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringArrayVarP(&cmdData.ReleaseLabels, "release-label", "", []string{}, `Add Helm release labels (can specify multiple). Kind of labels depends or release storage driver.
 Format: labelName=labelValue.
-Also, can be specified with $WERF_RELEASE_LABEL_* (e.g. $WERF_RELEASE_LABEL_1=labelName1=labelValue1, $WERF_RELEASE_LABEL_2=labelName2=labelValue2)`)
+Also, can be specified with $WERF_RELEASE_LABEL or $WERF_RELEASE_LABEL_* (e.g. $WERF_RELEASE_LABEL_1=labelName1=labelValue1, $WERF_RELEASE_LABEL_2=labelName2=labelValue2)`)
 }
 
 func SetupForceAdoption(cmdData *CmdData, cmd *cobra.Command) {
@@ -492,13 +492,13 @@ func SetupNamespace(cmdData *CmdData, cmd *cobra.Command, projectConfigParsed bo
 func SetupAddAnnotations(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringArrayVarP(&cmdData.ExtraAnnotations, "add-annotation", "", []string{}, `Add annotation to deploying resources (can specify multiple).
 Format: annoName=annoValue.
-Also, can be specified with $WERF_ADD_ANNOTATION_* (e.g. $WERF_ADD_ANNOTATION_1=annoName1=annoValue1, $WERF_ADD_ANNOTATION_2=annoName2=annoValue2)`)
+Also, can be specified with $WERF_ADD_ANNOTATION or $WERF_ADD_ANNOTATION_* (e.g. $WERF_ADD_ANNOTATION_1=annoName1=annoValue1, $WERF_ADD_ANNOTATION_2=annoName2=annoValue2)`)
 }
 
 func SetupAddLabels(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringArrayVarP(&cmdData.ExtraLabels, "add-label", "", []string{}, `Add label to deploying resources (can specify multiple).
 Format: labelName=labelValue.
-Also, can be specified with $WERF_ADD_LABEL_* (e.g. $WERF_ADD_LABEL_1=labelName1=labelValue1, $WERF_ADD_LABEL_2=labelName2=labelValue2)`)
+Also, can be specified with $WERF_ADD_LABEL or $WERF_ADD_LABEL_* (e.g. $WERF_ADD_LABEL_1=labelName1=labelValue1, $WERF_ADD_LABEL_2=labelName2=labelValue2)`)
 }
 
 func GetFirstExistingKubeConfigEnvVar() string {
@@ -522,7 +522,7 @@ The alias may contain the following shortcuts:
 - %image%, %image_slug% or %image_safe_slug% to use the image name (necessary if there is more than one image in the werf config);
 - %image_content_based_tag% to use a content-based tag.
 For cleaning custom tags and associated content-based tag are treated as one.
-Also can be defined with $WERF_ADD_CUSTOM_TAG_* (e.g. $WERF_ADD_CUSTOM_TAG_1="%image%-tag1", $WERF_ADD_CUSTOM_TAG_2="%image%-tag2")`)
+Also can be defined with $WERF_ADD_CUSTOM_TAG or $WERF_ADD_CUSTOM_TAG_* (e.g. $WERF_ADD_CUSTOM_TAG_1="%image%-tag1", $WERF_ADD_CUSTOM_TAG_2="%image%-tag2")`)
 }
 
 func SetupUseCustomTag(cmdData *CmdData, cmd *cobra.Command) {
@@ -538,7 +538,7 @@ Also, can be defined with $WERF_USE_CUSTOM_TAG (e.g. $WERF_USE_CUSTOM_TAG="%imag
 func SetupCacheStagesStorageOptions(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.CacheStagesStorage = new([]string)
 	cmd.Flags().StringArrayVarP(cmdData.CacheStagesStorage, "cache-repo", "", []string{}, `Specify one or multiple cache repos with images that will be used as a cache. Cache will be populated when pushing newly built images into the primary repo and when pulling existing images from the primary repo. Cache repo will be used to pull images and to get manifests before making requests to the primary repo.
-Also, can be specified with $WERF_CACHE_REPO_* (e.g. $WERF_CACHE_REPO_1=..., $WERF_CACHE_REPO_2=...)`)
+Also, can be specified with $WERF_CACHE_REPO or $WERF_CACHE_REPO_* (e.g. $WERF_CACHE_REPO_1=..., $WERF_CACHE_REPO_2=...)`)
 }
 
 func SetupRepoOptions(cmdData *CmdData, cmd *cobra.Command, opts RepoDataOptions) {
@@ -595,7 +595,7 @@ func SetupInsecureRegistry(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupContainerRegistryMirror(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.ContainerRegistryMirror = new([]string)
-	cmd.Flags().StringArrayVarP(cmdData.ContainerRegistryMirror, "container-registry-mirror", "", []string{}, "(Buildah-only) Use specified mirrors for docker.io")
+	cmd.Flags().StringArrayVarP(cmdData.ContainerRegistryMirror, "container-registry-mirror", "", []string{}, "(Buildah-only) Use specified mirrors for docker.io ($WERF_CONTAINER_REGISTRY_MIRROR or $WERF_CONTAINER_REGISTRY_MIRROR_*)")
 }
 
 func SetupSkipTlsVerifyRegistry(cmdData *CmdData, cmd *cobra.Command) {
@@ -1192,7 +1192,7 @@ func SetupKubeConnectionFlags(cmdData *CmdData, cmd *cobra.Command) error {
 	cmd.Flags().StringVarP(&cmdData.KubeContextCluster, "kube-context-cluster", "", os.Getenv("WERF_KUBE_CONTEXT_CLUSTER"), "Use cluster from Kubeconfig for current context (default $WERF_KUBE_CONTEXT_CLUSTER)")
 	SetupKubeContextCurrent(cmdData, cmd)
 	cmd.Flags().StringVarP(&cmdData.KubeContextUser, "kube-context-user", "", os.Getenv("WERF_KUBE_CONTEXT_USER"), "Use user from Kubeconfig for current context (default $WERF_KUBE_CONTEXT_USER)")
-	cmd.Flags().StringArrayVarP(&cmdData.KubeImpersonateGroups, "kube-impersonate-group", "", []string{}, "Sets Impersonate-Group headers when authenticating in Kubernetes. Can be also set with $WERF_KUBE_IMPERSONATE_GROUP_* environment variables")
+	cmd.Flags().StringArrayVarP(&cmdData.KubeImpersonateGroups, "kube-impersonate-group", "", []string{}, "Sets Impersonate-Group headers when authenticating in Kubernetes. Can be also set with $WERF_KUBE_IMPERSONATE_GROUP or $WERF_KUBE_IMPERSONATE_GROUP_* environment variables")
 	cmd.Flags().StringVarP(&cmdData.KubeImpersonateUID, "kube-impersonate-uid", "", os.Getenv("WERF_KUBE_IMPERSONATE_UID"), "Sets Impersonate-Uid header when authenticating in Kubernetes (default $WERF_KUBE_IMPERSONATE_UID)")
 	cmd.Flags().StringVarP(&cmdData.KubeImpersonateUser, "kube-impersonate-user", "", os.Getenv("WERF_KUBE_IMPERSONATE_USER"), "Sets Impersonate-User header when authenticating in Kubernetes (default $WERF_KUBE_IMPERSONATE_USER)")
 	cmd.Flags().StringVarP(&cmdData.KubeProxyURL, "kube-proxy-url", "", os.Getenv("WERF_KUBE_PROXY_URL"), "Proxy URL to use for proxying all requests to Kubernetes API (default $WERF_KUBE_PROXY_URL)")
@@ -1229,18 +1229,18 @@ func SetupChartRepoConnectionFlags(cmdData *CmdData, cmd *cobra.Command) error {
 func SetupValuesFlags(cmdData *CmdData, cmd *cobra.Command) error {
 	cmd.Flags().BoolVarP(&cmdData.DefaultValuesDisable, "disable-default-values", "", util.GetBoolEnvironmentDefaultFalse("WERF_DISABLE_DEFAULT_VALUES"), `Do not use values from the default .helm/values.yaml file (default $WERF_DISABLE_DEFAULT_VALUES or false)`)
 	cmd.Flags().StringArrayVarP(&cmdData.RootSetJSON, "set-root-json", "", []string{}, `Set new keys in arbitrary things in the global root context ("$"), where the key is the value path and the value is JSON. This is meant to be generated inside the program, so use --set-json instead, unless you REALLY know what you are doing. Can specify multiple or separate values with commas: key1=val1,key2=val2.
-Also, can be defined with $WERF_SET_ROOT_JSON_* (e.g. $WERF_SET_ROOT_JSON_1=key1=val1, $WERF_SET_ROOT_JSON_2=key2=val2)`)
-	cmd.Flags().StringArrayVarP(&cmdData.ValuesFiles, "values", "", []string{}, `Specify helm values in a YAML file or a URL (can specify multiple). Also, can be defined with $WERF_VALUES_* (e.g. $WERF_VALUES_1=.helm/values_1.yaml, $WERF_VALUES_2=.helm/values_2.yaml)`)
+Also, can be defined with $WERF_SET_ROOT_JSON or $WERF_SET_ROOT_JSON_* (e.g. $WERF_SET_ROOT_JSON_1=key1=val1, $WERF_SET_ROOT_JSON_2=key2=val2)`)
+	cmd.Flags().StringArrayVarP(&cmdData.ValuesFiles, "values", "", []string{}, `Specify helm values in a YAML file or a URL (can specify multiple). Also, can be defined with $WERF_VALUES or $WERF_VALUES_* (e.g. $WERF_VALUES_1=.helm/values_1.yaml, $WERF_VALUES_2=.helm/values_2.yaml)`)
 	cmd.Flags().StringArrayVarP(&cmdData.ValuesSet, "set", "", []string{}, `Set helm values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2).
-Also, can be defined with $WERF_SET_* (e.g. $WERF_SET_1=key1=val1, $WERF_SET_2=key2=val2)`)
+Also, can be defined with $WERF_SET or $WERF_SET_* (e.g. $WERF_SET_1=key1=val1, $WERF_SET_2=key2=val2)`)
 	cmd.Flags().StringArrayVarP(&cmdData.ValuesSetFile, "set-file", "", []string{}, `Set values from respective files specified via the command line (can specify multiple or separate values with commas: key1=path1,key2=path2).
-Also, can be defined with $WERF_SET_FILE_* (e.g. $WERF_SET_FILE_1=key1=path1, $WERF_SET_FILE_2=key2=val2)`)
+Also, can be defined with $WERF_SET_FILE or $WERF_SET_FILE_* (e.g. $WERF_SET_FILE_1=key1=path1, $WERF_SET_FILE_2=key2=val2)`)
 	cmd.Flags().StringArrayVarP(&cmdData.ValuesSetJSON, "set-json", "", []string{}, `Set new values, where the key is the value path and the value is JSON (can specify multiple or separate values with commas: key1=val1,key2=val2).
-Also, can be defined with $WERF_SET_JSON_* (e.g. $WERF_SET_JSON_1=key1=val1, $WERF_SET_JSON_2=key2=val2)`)
+Also, can be defined with $WERF_SET_JSON or $WERF_SET_JSON_* (e.g. $WERF_SET_JSON_1=key1=val1, $WERF_SET_JSON_2=key2=val2)`)
 	cmd.Flags().StringArrayVarP(&cmdData.ValuesSetLiteral, "set-literal", "", []string{}, `Set new values, where the key is the value path and the value is the value. The value will always become a literal string (can specify multiple or separate values with commas: key1=val1,key2=val2).)
-Also, can be defined with $WERF_SET_LITERAL_* (e.g. $WERF_SET_LITERAL_1=key1=val1, $WERF_SET_LITERAL_2=key2=val2)`)
+Also, can be defined with $WERF_SET_LITERAL or $WERF_SET_LITERAL_* (e.g. $WERF_SET_LITERAL_1=key1=val1, $WERF_SET_LITERAL_2=key2=val2)`)
 	cmd.Flags().StringArrayVarP(&cmdData.ValuesSetString, "set-string", "", []string{}, `Set STRING helm values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2).
-Also, can be defined with $WERF_SET_STRING_* (e.g. $WERF_SET_STRING_1=key1=val1, $WERF_SET_STRING_2=key2=val2)`)
+Also, can be defined with $WERF_SET_STRING or $WERF_SET_STRING_* (e.g. $WERF_SET_STRING_1=key1=val1, $WERF_SET_STRING_2=key2=val2)`)
 
 	return nil
 }
@@ -1257,7 +1257,7 @@ func SetupPatchesFlags(cmdData *CmdData, cmd *cobra.Command, opts SetupPatchesFl
 		"render patches for rendered resources, diff patches for drift detection",
 	)
 
-	cmd.Flags().StringArrayVarP(&cmdData.PatchesFiles, "patches", "", []string{}, fmt.Sprintf(`Additional patches files (%s). Also, can be defined with $WERF_PATCHES_* (e.g. $WERF_PATCHES_1=.helm/patches_1.yaml, $WERF_PATCHES_2=.helm/patches_2.yaml)`, patchKinds))
+	cmd.Flags().StringArrayVarP(&cmdData.PatchesFiles, "patches", "", []string{}, fmt.Sprintf(`Additional patches files (%s). Also, can be defined with $WERF_PATCHES or $WERF_PATCHES_* (e.g. $WERF_PATCHES_1=.helm/patches_1.yaml, $WERF_PATCHES_2=.helm/patches_2.yaml)`, patchKinds))
 	cmd.Flags().BoolVarP(&cmdData.DefaultPatchesDisable, "no-default-patches", "", util.GetBoolEnvironmentDefaultFalse("WERF_NO_DEFAULT_PATCHES"), `Ignore patches.yaml of the top-level chart and subcharts (default $WERF_NO_DEFAULT_PATCHES or false)`)
 }
 
@@ -1270,7 +1270,7 @@ func SetupSecretValuesFlags(cmdData *CmdData, cmd *cobra.Command) error {
 
 func SetupSecretValuesFileFlags(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(&cmdData.DefaultSecretValuesDisable, "disable-default-secret-values", "", util.GetBoolEnvironmentDefaultFalse("WERF_DISABLE_DEFAULT_SECRET_VALUES"), `Do not use secret values from the default .helm/secret-values.yaml file (default $WERF_DISABLE_DEFAULT_SECRET_VALUES or false)`)
-	cmd.Flags().StringArrayVarP(&cmdData.SecretValuesFiles, "secret-values", "", []string{}, `Specify helm secret values in a YAML file (can specify multiple). Also, can be defined with $WERF_SECRET_VALUES_* (e.g. $WERF_SECRET_VALUES_ENV=.helm/secret_values_test.yaml, $WERF_SECRET_VALUES_DB=.helm/secret_values_db.yaml)`)
+	cmd.Flags().StringArrayVarP(&cmdData.SecretValuesFiles, "secret-values", "", []string{}, `Specify helm secret values in a YAML file (can specify multiple). Also, can be defined with $WERF_SECRET_VALUES or $WERF_SECRET_VALUES_* (e.g. $WERF_SECRET_VALUES_ENV=.helm/secret_values_test.yaml, $WERF_SECRET_VALUES_DB=.helm/secret_values_db.yaml)`)
 }
 
 func SetupSecretKeyFlags(cmdData *CmdData, cmd *cobra.Command) {
@@ -1311,8 +1311,8 @@ func SetupResourceValidationFlags(cmdData *CmdData, cmd *cobra.Command) error {
 	}
 
 	cmd.Flags().BoolVarP(&cmdData.NoResourceValidation, "no-resource-validation", "", util.GetBoolEnvironmentDefaultFalse("WERF_NO_RESOURCE_VALIDATION"), "Disable resource validation (default $WERF_NO_RESOURCE_VALIDATION)")
-	cmd.Flags().StringArrayVarP(&cmdData.ValidationSkip, "resource-validation-skip", "", []string{}, "Skip resource validation for resources with specified attributes (can specify multiple). Format: key1=value1,key2=value2. Supported keys: group, version, kind, name, namespace. Example: kind=Deployment,name=my-app. Also, can be defined with $WERF_RESOURCE_VALIDATION_SKIP_* (e.g. $WERF_RESOURCE_VALIDATION_SKIP_1=kind=Deployment,name=my-app)")
-	cmd.Flags().StringArrayVarP(&cmdData.ValidationExtraSchemas, "resource-validation-extra-schema", "", []string{}, "Extra json schema sources to validate resources (preferred over ebedded sources). Must be a valid go template defining a http(s) URL, or an absolute path on local file system. Also, can be defined with $WERF_RESOURCE_VALIDATION_EXTRA_SCHEMA_* (eg. $WERF_RESOURCE_VALIDATION_EXTRA_SCHEMA_1='https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json')")
+	cmd.Flags().StringArrayVarP(&cmdData.ValidationSkip, "resource-validation-skip", "", []string{}, "Skip resource validation for resources with specified attributes (can specify multiple). Format: key1=value1,key2=value2. Supported keys: group, version, kind, name, namespace. Example: kind=Deployment,name=my-app. Also, can be defined with $WERF_RESOURCE_VALIDATION_SKIP or $WERF_RESOURCE_VALIDATION_SKIP_* (e.g. $WERF_RESOURCE_VALIDATION_SKIP_1=kind=Deployment,name=my-app)")
+	cmd.Flags().StringArrayVarP(&cmdData.ValidationExtraSchemas, "resource-validation-extra-schema", "", []string{}, "Extra json schema sources to validate resources (preferred over ebedded sources). Must be a valid go template defining a http(s) URL, or an absolute path on local file system. Also, can be defined with $WERF_RESOURCE_VALIDATION_EXTRA_SCHEMA or $WERF_RESOURCE_VALIDATION_EXTRA_SCHEMA_* (eg. $WERF_RESOURCE_VALIDATION_EXTRA_SCHEMA_1='https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json')")
 	cmd.Flags().DurationVarP(&cmdData.ValidationSchemaCacheLifetime, "resource-validation-cache-lifetime", "", defaultValidationCacheLifetime, "How long local schema cache will be valid. Also can be defined by $WERF_RESOURCE_VALIDATION_CACHE_LIFETIME")
 
 	if err := SetupNoValuesSchemaValidationFlag(cmdData, cmd); err != nil {
@@ -1371,11 +1371,11 @@ func SetupScanContextNamespaceOnly(cmdData *CmdData, cmd *cobra.Command) {
 func SetupKubeScanNamespaces(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.KubeScanNamespaces = new([]string)
 	cmd.Flags().StringArrayVarP(cmdData.KubeScanNamespaces, "kube-scan-namespaces", "", []string{}, `Kubernetes namespaces to scan for used images for each selected context (can specify multiple). Takes precedence over --scan-context-namespace-only when set.
-Also, can be specified with $WERF_KUBE_SCAN_NAMESPACES_* (e.g. $WERF_KUBE_SCAN_NAMESPACES_1=..., $WERF_KUBE_SCAN_NAMESPACES_2=...)`)
+Also, can be specified with $WERF_KUBE_SCAN_NAMESPACES or $WERF_KUBE_SCAN_NAMESPACES_* (e.g. $WERF_KUBE_SCAN_NAMESPACES_1=..., $WERF_KUBE_SCAN_NAMESPACES_2=...)`)
 }
 
 func GetKubeScanNamespaces(cmdData *CmdData) []string {
-	res := util.PredefinedValuesByEnvNamePrefix("WERF_KUBE_SCAN_NAMESPACES_")
+	res := GetEnvValues(context.Background(), EnvValuesOptions{Name: "WERF_KUBE_SCAN_NAMESPACES"})
 	if cmdData.KubeScanNamespaces == nil {
 		return res
 	}
@@ -1383,7 +1383,7 @@ func GetKubeScanNamespaces(cmdData *CmdData) []string {
 }
 
 func GetCacheStagesStorage(cmdData *CmdData) []string {
-	res := util.PredefinedValuesByEnvNamePrefix("WERF_CACHE_REPO_")
+	res := GetEnvValues(context.Background(), EnvValuesOptions{Name: "WERF_CACHE_REPO"})
 	if cmdData.CacheStagesStorage == nil {
 		return res
 	}
@@ -1391,11 +1391,7 @@ func GetCacheStagesStorage(cmdData *CmdData) []string {
 }
 
 func GetSecondaryStagesStorage(cmdData *CmdData) []string {
-	var res []string
-	if repo := os.Getenv("WERF_SECONDARY_REPO"); repo != "" {
-		res = append(res, repo)
-	}
-	res = append(res, util.PredefinedValuesByEnvNamePrefix("WERF_SECONDARY_REPO_")...)
+	res := GetEnvValues(context.Background(), EnvValuesOptions{Name: "WERF_SECONDARY_REPO"})
 	if cmdData.SecondaryStagesStorage == nil {
 		return res
 	}
@@ -1403,7 +1399,7 @@ func GetSecondaryStagesStorage(cmdData *CmdData) []string {
 }
 
 func GetContainerRegistryMirror(ctx context.Context, cmdData *CmdData, buildahMode buildah.Mode) ([]string, error) {
-	cmdMirrors := append(util.PredefinedValuesByEnvNamePrefix("WERF_CONTAINER_REGISTRY_MIRROR_"), *cmdData.ContainerRegistryMirror...)
+	cmdMirrors := append(GetEnvValues(context.Background(), EnvValuesOptions{Name: "WERF_CONTAINER_REGISTRY_MIRROR"}), *cmdData.ContainerRegistryMirror...)
 
 	var backendMirrors []string
 	if buildahMode != buildah.ModeDisabled {
@@ -1449,7 +1445,7 @@ func GetContainerRegistryMirror(ctx context.Context, cmdData *CmdData, buildahMo
 }
 
 func getAddCustomTag(cmdData *CmdData) []string {
-	return append(util.PredefinedValuesByEnvNamePrefix("WERF_ADD_CUSTOM_TAG_"), *cmdData.AddCustomTag...)
+	return append(GetEnvValues(context.Background(), EnvValuesOptions{Name: "WERF_ADD_CUSTOM_TAG"}), *cmdData.AddCustomTag...)
 }
 
 func GetRequireBuiltImages(cmdData *CmdData) bool {
@@ -1468,19 +1464,19 @@ func isImagesReadOnly(cmdData *CmdData) bool {
 }
 
 func GetAddLabels(cmdData *CmdData) []string {
-	return append(util.PredefinedValuesByEnvNamePrefix("WERF_ADD_LABEL_"), cmdData.ExtraLabels...)
+	return append(GetEnvValues(context.Background(), EnvValuesOptions{Name: "WERF_ADD_LABEL"}), cmdData.ExtraLabels...)
 }
 
 func GetAddAnnotations(cmdData *CmdData) []string {
-	return append(util.PredefinedValuesByEnvNamePrefix("WERF_ADD_ANNOTATION_"), cmdData.ExtraAnnotations...)
+	return append(GetEnvValues(context.Background(), EnvValuesOptions{Name: "WERF_ADD_ANNOTATION"}), cmdData.ExtraAnnotations...)
 }
 
 func GetReleaseLabel(cmdData *CmdData) []string {
-	return append(util.PredefinedValuesByEnvNamePrefix("WERF_RELEASE_LABEL_"), cmdData.ReleaseLabels...)
+	return append(GetEnvValues(context.Background(), EnvValuesOptions{Name: "WERF_RELEASE_LABEL"}), cmdData.ReleaseLabels...)
 }
 
 func GetSSHKey(cmdData *CmdData) []string {
-	return append(util.PredefinedValuesByEnvNamePrefix("WERF_SSH_KEY_"), *cmdData.SSHKeys...)
+	return append(GetEnvValues(context.Background(), EnvValuesOptions{Name: "WERF_SSH_KEY"}), *cmdData.SSHKeys...)
 }
 
 func GetIntrospectOptions(cmdData *CmdData, werfConfig *config.WerfConfig) (build.IntrospectOptions, error) {
@@ -1645,7 +1641,7 @@ func OpenGitRepo(ctx context.Context, cmdData *CmdData, workingDir, gitWorkTree 
 }
 
 func GetDevIgnore(cmdData *CmdData) []string {
-	return append(util.PredefinedValuesByEnvNamePrefix("WERF_DEV_IGNORE_"), *cmdData.DevIgnore...)
+	return append(GetEnvValues(context.Background(), EnvValuesOptions{Name: "WERF_DEV_IGNORE"}), *cmdData.DevIgnore...)
 }
 
 func ProcessLogOptions(cmdData *CmdData) error {
