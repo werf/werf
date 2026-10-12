@@ -200,8 +200,8 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	cmd.Flags().BoolVarP(&cmdData.Interactive, "interactive", "i", util.GetBoolEnvironmentDefaultFalse("WERF_INTERACTIVE"), "Enable interactive mode (default $WERF_INTERACTIVE or false if not specified)")
 	cmd.Flags().BoolVarP(&cmdData.AllocateTty, "tty", "t", util.GetBoolEnvironmentDefaultFalse("WERF_TTY"), "Allocate a TTY (default $WERF_TTY or false if not specified)")
 	cmd.Flags().BoolVarP(&cmdData.AutoPullSecret, "auto-pull-secret", "", util.GetBoolEnvironmentDefaultTrue("WERF_AUTO_PULL_SECRET"), "Automatically create docker config secret in the namespace and plug it via pod's imagePullSecrets for private registry access (default $WERF_AUTO_PULL_SECRET or true if not specified)")
-	cmd.Flags().StringArrayVarP(&cmdData.CopyFrom, "copy-from", "", []string{}, "Copy file/dir from container to local machine after user command execution. Example: \"/from/file:to\". Can be specified multiple times. Can also be defined with \"$WERF_COPY_FROM_*\", e.g. \"WERF_COPY_FROM_1=from:to\".")
-	cmd.Flags().StringArrayVarP(&cmdData.CopyTo, "copy-to", "", []string{}, "Copy file/dir from local machine to container before user command execution. Example: \"from:/to/file\". Can be specified multiple times. Can also be defined with \"$WERF_COPY_TO_*\", e.g. \"WERF_COPY_TO_1=from:to\".")
+	cmd.Flags().StringArrayVarP(&cmdData.CopyFrom, "copy-from", "", []string{}, "Copy file/dir from container to local machine after user command execution. Example: \"/from/file:to\". Can be specified multiple times. Can also be defined with \"$WERF_COPY_FROM or $WERF_COPY_FROM_*\", e.g. \"WERF_COPY_FROM_1=from:to\".")
+	cmd.Flags().StringArrayVarP(&cmdData.CopyTo, "copy-to", "", []string{}, "Copy file/dir from local machine to container before user command execution. Example: \"from:/to/file\". Can be specified multiple times. Can also be defined with \"$WERF_COPY_TO or $WERF_COPY_TO_*\", e.g. \"WERF_COPY_TO_1=from:to\".")
 
 	commonCmdData.SetupSkipImageSpecStage(cmd)
 	commonCmdData.SetupDebugTemplates(cmd)
@@ -1131,9 +1131,9 @@ func cleanCopyToLocalPath(rawPath string) (string, error) {
 }
 
 func getCopyFromRaw() []string {
-	return append(util.PredefinedValuesByEnvNamePrefix("WERF_COPY_FROM_"), cmdData.CopyFrom...)
+	return append(common.GetEnvValues(context.Background(), common.EnvValuesOptions{Name: "WERF_COPY_FROM"}), cmdData.CopyFrom...)
 }
 
 func getCopyToRaw() []string {
-	return append(util.PredefinedValuesByEnvNamePrefix("WERF_COPY_TO_"), cmdData.CopyTo...)
+	return append(common.GetEnvValues(context.Background(), common.EnvValuesOptions{Name: "WERF_COPY_TO"}), cmdData.CopyTo...)
 }

@@ -3,6 +3,7 @@ package common
 import (
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"sync"
 
@@ -56,4 +57,14 @@ func storageManagerCmdData(args ...string) *CmdData {
 	SetupCheckBuiltImages(data, command)
 	gomega.Expect(command.ParseFlags(args)).To(gomega.Succeed())
 	return data
+}
+
+func clearListEnv() {
+	for _, entry := range os.Environ() {
+		key, _, _ := strings.Cut(entry, "=")
+		if strings.HasPrefix(key, "WERF_") {
+			ginkgo.GinkgoT().Setenv(key, "")
+			gomega.Expect(os.Unsetenv(key)).To(gomega.Succeed())
+		}
+	}
 }
