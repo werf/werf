@@ -513,7 +513,7 @@ The first metadata write creates a per-project marker in `--repo`. Clients suppo
 4. Check both versions' builds and required rollback images before enabling cleanup. Run `werf cleanup --repo registry.example.org/project --meta-repo registry.example.org/project-meta --dry-run`, inspect the candidates and retention settings, then schedule real cleanup only after validation.
 5. Resume writers with the common settings. Serialize cleanup against builds, publication and mutable-tag updates through the CI scheduler; builder synchronization is not a cleanup exclusion lock.
 
-`werf meta-repo detach --repo registry.example.org/project` removes only the safeguard marker. It does not move metadata back and is not a rollback procedure. `werf purge` removes the marker only after successful deletion of the project's stages and metadata.
+`werf meta-repo detach --repo registry.example.org/project` removes only the safeguard marker. It does not move metadata back and is not a rollback procedure. `werf purge` removes the marker after verifying that the project's metadata has been deleted.
 
 #### Sharing repositories with werf v3
 

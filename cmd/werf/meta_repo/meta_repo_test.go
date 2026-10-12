@@ -25,6 +25,9 @@ var _ = ginkgo.Describe("Kubernetes synchronization", func() {
 		missingConfig := filepath.Join(dir, "missing-kubeconfig")
 		common.SetupOndemandKubeInitializer("stale-context", "stale-config", "", []string{}, "", "")
 		cmd := newCmd(context.Background())
+		for _, flag := range []string{"final-repo", "secondary-repo", "cache-repo"} {
+			gomega.Expect(cmd.Flags().Lookup(flag)).To(gomega.BeNil())
+		}
 		cmd.SetArgs(append(repoArgs, "--dir", dir, "--home-dir", filepath.Join(dir, "home"), "--tmp-dir", filepath.Join(dir, "tmp"), "--kube-config", missingConfig, "--synchronization", "kubernetes://meta-repo-test"))
 		var err error
 		gomega.Expect(func() { err = cmd.Execute() }).NotTo(gomega.Panic())

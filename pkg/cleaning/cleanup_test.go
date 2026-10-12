@@ -137,7 +137,7 @@ func TestDeleteRejectedStagesWithLinkedTags_OrderStageThenTagsThenMarker(t *test
 	stageID := image.NewStageID(digest, 1700000000)
 	otherStageID := image.NewStageID(digest, 1700000999)
 
-	sm := newFakeStorageManager()
+	sm := newFakeStorageManagerWithSplitStorages()
 	sm.stages.rejectedStageIDs = []image.StageID{*stageID}
 
 	customTagsByStageID := map[string][]string{
@@ -152,6 +152,8 @@ func TestDeleteRejectedStagesWithLinkedTags_OrderStageThenTagsThenMarker(t *test
 	assert.Equal(t, []image.StageID{*stageID}, sm.stages.deletedImages, "stage image deleted first")
 	assert.Equal(t, []string{"v1.0.0", "latest"}, sm.stages.deletedTags, "linked custom tags deleted next, in given order")
 	assert.Equal(t, []image.StageID{*stageID}, sm.stages.deletedRecords, "marker deleted last")
+	assert.Equal(t, []string{"v1.0.0", "latest"}, sm.meta.unregisteredTags, "linked custom-tag metadata removed from meta storage")
+	assert.Empty(t, sm.stages.unregisteredTags, "metadata must not be removed from stages storage")
 }
 
 func TestDeleteRejectedStagesWithLinkedTags_DryRun(t *testing.T) {

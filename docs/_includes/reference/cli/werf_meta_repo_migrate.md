@@ -16,13 +16,6 @@ werf meta-repo migrate [options]
 ```shell
       --allow-includes-update=false
             Allow use includes latest versions (default $WERF_ALLOW_INCLUDES_UPDATE or false)
-      --cache-repo=[]
-            Specify one or multiple cache repos with images that will be used as a cache. Cache     
-            will be populated when pushing newly built images into the primary repo and when        
-            pulling existing images from the primary repo. Cache repo will be used to pull images   
-            and to get manifests before making requests to the primary repo.
-            Also, can be specified with $WERF_CACHE_REPO_* (e.g. $WERF_CACHE_REPO_1=...,            
-            $WERF_CACHE_REPO_2=...)
       --config=""
             Use custom configuration file (default $WERF_CONFIG or werf.yaml in the project         
             directory)
@@ -55,28 +48,6 @@ werf meta-repo migrate [options]
             Command needs granted permissions to read and write images to --from and --to
       --env=""
             Use specified environment (default $WERF_ENV)
-      --final-repo=""
-            Container registry storage address (default $WERF_FINAL_REPO)
-      --final-repo-container-registry=""
-            Choose final-repo container registry implementation.
-            The following container registries are supported: ecr, acr, default, dockerhub, gcr,    
-            github, gitlab, harbor, quay.
-            Default $WERF_FINAL_REPO_CONTAINER_REGISTRY or auto mode (detect container registry by  
-            repo address).
-      --final-repo-docker-hub-password=""
-            final-repo Docker Hub password (default $WERF_FINAL_REPO_DOCKER_HUB_PASSWORD)
-      --final-repo-docker-hub-token=""
-            final-repo Docker Hub token (default $WERF_FINAL_REPO_DOCKER_HUB_TOKEN)
-      --final-repo-docker-hub-username=""
-            final-repo Docker Hub username (default $WERF_FINAL_REPO_DOCKER_HUB_USERNAME)
-      --final-repo-github-token=""
-            final-repo GitHub token (default $WERF_FINAL_REPO_GITHUB_TOKEN)
-      --final-repo-harbor-password=""
-            final-repo Harbor password (default $WERF_FINAL_REPO_HARBOR_PASSWORD)
-      --final-repo-harbor-username=""
-            final-repo Harbor username (default $WERF_FINAL_REPO_HARBOR_USERNAME)
-      --final-repo-quay-token=""
-            final-repo quay.io token (default $WERF_FINAL_REPO_QUAY_TOKEN)
       --from=""
             Container registry storage address (default $WERF_META_REPO_MIGRATE_FROM)
       --from-container-registry=""
@@ -151,11 +122,6 @@ werf meta-repo migrate [options]
       --remove-source=true
             Delete the original metadata records from --from after they are verified present in     
             --to (default $WERF_REMOVE_SOURCE or true if not specified)
-      --secondary-repo=[]
-            Specify one or multiple secondary read-only repos with images that will be used as a    
-            cache.
-            Also, can be specified with $WERF_SECONDARY_REPO_* (e.g. $WERF_SECONDARY_REPO_1=...,    
-            $WERF_SECONDARY_REPO_2=...)
       --skip-tls-verify-registry=false
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)

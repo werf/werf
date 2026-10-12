@@ -280,8 +280,15 @@ func NewCleanupReport(ctx context.Context, cmdData *CmdData, command string, dry
 		finalRepo = finalStagesStorage.Address()
 	}
 
-	return cleanup_report.NewReport(ctx, command, dryRun, storageManager.GetStagesStorage().Address(), cleanup_report.NewReportOptions{
+	repo := storageManager.GetStagesStorage().Address()
+	var metaRepo string
+	if metaAddress := storageManager.GetMetaStorage(ctx).Address(); metaAddress != repo {
+		metaRepo = metaAddress
+	}
+
+	return cleanup_report.NewReport(ctx, command, dryRun, repo, cleanup_report.NewReportOptions{
 		FinalRepo: finalRepo,
+		MetaRepo:  metaRepo,
 	}), reportPath, nil
 }
 
@@ -920,7 +927,7 @@ func GetStagesStorage(ctx context.Context, containerBackend container_backend.Co
 }
 
 func GetOptionalFinalStagesStorage(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData) (storage.StagesStorage, error) {
-	if *cmdData.FinalRepo.Address == "" {
+	if cmdData.FinalRepo == nil || cmdData.FinalRepo.Address == nil || *cmdData.FinalRepo.Address == "" {
 		return nil, nil
 	}
 
@@ -1375,11 +1382,19 @@ func HasKubeConfig(cmdData *CmdData) bool {
 }
 
 func GetCacheStagesStorage(cmdData *CmdData) []string {
-	return append(util.PredefinedValuesByEnvNamePrefix("WERF_CACHE_REPO_"), *cmdData.CacheStagesStorage...)
+	res := util.PredefinedValuesByEnvNamePrefix("WERF_CACHE_REPO_")
+	if cmdData.CacheStagesStorage == nil {
+		return res
+	}
+	return append(res, *cmdData.CacheStagesStorage...)
 }
 
 func GetSecondaryStagesStorage(cmdData *CmdData) []string {
-	return append(util.PredefinedValuesByEnvNamePrefix("WERF_SECONDARY_REPO_"), *cmdData.SecondaryStagesStorage...)
+	res := util.PredefinedValuesByEnvNamePrefix("WERF_SECONDARY_REPO_")
+	if cmdData.SecondaryStagesStorage == nil {
+		return res
+	}
+	return append(res, *cmdData.SecondaryStagesStorage...)
 }
 
 func GetContainerRegistryMirror(ctx context.Context, cmdData *CmdData, buildahMode buildah.Mode) ([]string, error) {
