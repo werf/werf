@@ -40,13 +40,13 @@ groups:
       - name: alpha
         version: 2.82.0
       - name: beta
-        version: 2.81.4
+        version: 2.82.0
       - name: ea
-        version: 2.80.2
+        version: 2.81.4
       - name: stable
-        version: 2.79.2
+        version: 2.80.2
       - name: rock-solid
-        version: 2.78.2
+        version: 2.79.2
   - name: "3"
     channels:
       - name: dev
