@@ -55,7 +55,7 @@ Running both versions or rolling back to v2 depends on shared configuration, sec
 
 - **Configuration.** After adopting v3 settings, do not assume the same `werf.yaml` will work in v2. Keep a v2-compatible configuration revision for rollback — see [building changes](#building).
 - **Secrets.** v3 reads old secrets, but an old client cannot read new v3 writes. Upgrade all readers before the first rewrite; switching the binary back to v2 does not restore the old format — see [encrypted secrets](#encrypted-secret-values).
-- **Registry.** A shared `--repo` means shared images: [protect rollback images](#protecting-rollback-images) from cleanup. A separate `--meta-repo` is optional and does not isolate images; if you choose one, follow the [metadata migration procedure](#optional-moving-metadata-to-a-separate-repository).
+- **Registry.** A shared `--repo` means shared images: [protect rollback images](#protecting-rollback-images) from cleanup.
 
 ## Building
 
@@ -189,40 +189,11 @@ git:
 
 `install` gets `[]`, `beforeSetup` gets `src/**/*`, and `setup` gets `**/*`. Changing a file outside `src` therefore does not by itself trigger `install` or `beforeSetup`, but triggers `setup` if it has instructions.
 
-If `install` and `setup` are declared:
+To keep a stage free of direct Git-file dependencies, specify `[]`; to always track all mapped files, specify `["**/*"]`. If you specify masks, include every file that affects the stage's result.
 
-```yaml
-git:
-  - add: /
-    to: /app
-    stageDependencies:
-      install:
-        - package-lock.json
-      setup:
-        - "src/**/*"
-```
+`[]` disables only the direct Git-file dependency. Changes to preceding stages, base images, commands and other inputs can still trigger a rebuild.
 
-The omitted `beforeSetup` gets `[]`: it precedes the last declared stage, `setup`. An empty list also establishes that boundary: with only `beforeSetup: []`, both `install` and `beforeSetup` have empty masks, while `setup` gets `**/*`.
-
-**The default is safer:** without dependency configuration, source changes rerun build commands. Builds may run more often. To keep a stage free of direct Git-file dependencies, specify `[]`; to always track all mapped files, specify `["**/*"]`. If you specify masks, include every file that affects the stage's result.
-
-`[]` disables only the direct Git-file dependency. Changes to preceding stages, base images, commands and other inputs can still trigger a rebuild. Masks do not create stages without instructions; `beforeInstall` is not part of this mechanism.
-
-A non-empty `stageDependencies` entry for a stage with no build instructions now causes an **error instead of a warning**. For example, this fragment fails validation when building:
-
-```yaml
-git:
-  - add: /
-    to: /app
-    stageDependencies:
-      install:
-        - "src/**/*"
-shell:
-  setup:
-    - cd /app && sh src/build.sh
-```
-
-Dependencies are declared for `install`, but only `setup` has commands. If the `src` files are inputs to those commands, move the masks from `stageDependencies.install` to `stageDependencies.setup`. If an `install` stage is intended, add `shell.install` instructions; if the dependency is unnecessary, remove it.
+A non-empty `stageDependencies` entry for a stage with no build instructions now causes an **error instead of a warning**. Move the masks to the stage with the corresponding commands, add the missing instructions, or remove the unnecessary dependency.
 
 See [Dependency on changes in the Git repo]({{ "/usage/build/stapel/instructions.html#dependency-on-changes-in-the-git-repo" | true_relative_url }}).
 
@@ -242,10 +213,6 @@ Fix unknown or misspelled keys in `werf-giterminism.yaml`: strict schema validat
 werf build --final-images-only=false
 werf config list --final-images-only=false
 ```
-
-### Synchronization server
-
-werf v3 retains synchronization for publishing built images. Continue using the same synchronization server for all builders that share a repository. The `--synchronization` / `-S` flag, `WERF_SYNCHRONIZATION`, and `werf synchronization` command remain supported. Registry builds use the public `synchronization.werf.io` service by default; local builds use local file locks.
 
 ### Buildah
 
@@ -268,7 +235,7 @@ If you install werf directly on a host or use your own container image, make sur
 | `netavark` | Wherever the Buildah backend runs, including chroot without network-using instructions. Backend initialization fails without it. |
 | `pasta` from the `passt` package | For rootless builds that configure a network. It is not invoked with `network: host`, `network: none`, or chroot mode. |
 
-`netavark` must be in one of `/usr/local/libexec/podman`, `/usr/local/lib/podman`, `/usr/libexec/podman`, `/usr/lib/podman` — `$PATH` is not searched. `pasta` is found in these directories or via `$PATH`.
+See [Network tools]({{ "/usage/build/backends.html#network-tools" | true_relative_url }}) for installation paths and considerations when sharing storage with Podman/Buildah.
 
 #### Network setting changes
 
@@ -281,7 +248,6 @@ Limitations and compatibility:
 - Images with `staged: true` still ignore image-level network settings; only `RUN --network=` on an individual instruction applies.
 - In `native-chroot`, Buildah forces host networking, so `network: none` does not provide isolation.
 - CNI cannot be restored. You can restore slirp4netns on an individual host via `CONTAINERS_CONF_OVERRIDE`: `default_rootless_network_cmd="slirp4netns"` in the `[network]` section.
-- If werf and system Podman/Buildah share storage, check their network settings separately, including `${graphroot}/defaultNetworkBackend`: upgrading werf does not migrate the system CLI configuration from CNI to netavark.
 
 ## Deployment
 
@@ -327,8 +293,6 @@ After — v3:
 annotations:
   werf.io/deploy-dependency-secret: state=ready,kind=Secret,version=v1,name=my-vault-secret,namespace=vault,external=true
 ```
-
-`external=true` always treats the dependency as an external resource. With the default `external=auto`, a dependency that matches no release resource is also treated as external, so a mistyped selector waits for a cluster resource instead of failing. To order deletion after an external resource is gone, use `werf.io/delete-dependency-<name>` with `state=absent`.
 
 See [Waiting for non-release (external) resources]({{ "/usage/deploy/deployment_order.html#waiting-for-non-release-external-resources-werf-only" | true_relative_url }}) and [Resource dependencies]({{ "/reference/deploy_annotations.html#resource-dependencies" | true_relative_url }}).
 
@@ -414,7 +378,6 @@ werf bundle publish --helm-compatible-chart=false
 
 Additional considerations:
 
-- Whole secret-file ciphertext can still be used as a value in `secret-values.yaml`.
 - Old encrypted scalars remain strings. To restore a number, boolean, timestamp or another type, re-enter the value with `werf helm secret values edit`.
 - **Comments on encrypted values are kept as cleartext. Do not put secrets in them.**
 
@@ -451,7 +414,7 @@ When reusing a completed image, the JSON build report may now contain `StagesSki
 
 If your scripts read the JSON report saved by `--save-deploy-report`, `--save-rollback-report` or `--save-uninstall-report`:
 
-The format identifier changed: the `"version": 3` number is replaced with the `"apiVersion": "v3"` string, and `version` is gone. The other fields — `release`, `namespace`, `revision`, `status`, `completedOperations`, `canceledOperations`, `failedOperations` — are unchanged. Update scripts that read or validate `version` to check `apiVersion == "v3"` instead.
+The format identifier changed: the `"version": 3` number is replaced with the `"apiVersion": "v3"` string, and `version` is gone. Update scripts that read or validate `version` to check `apiVersion == "v3"` instead.
 
 ### Removed flags and modes
 
@@ -466,30 +429,12 @@ Check scripts that pass old options: a removed flag causes an argument parsing e
 
 ### Protecting rollback images
 
-**Old images are not deleted merely by upgrading werf**, but `cleanup` v3 can remove v2 images under the retention policies. Their version does not give them separate protection. Keep the tags needed for rollback in a `--keep-list` file, one stage tag per line. Do not rely only on Kubernetes protection: a rollback image may no longer be referenced by any scanned resource.
+**With a shared `--repo`, v3 cleanup can delete v2 images.** Keep the stage tags needed for rollback in a `--keep-list` file, one per line: Kubernetes resources may no longer reference these images.
 
-Before the first real cleanup, check that rollback images are not listed for deletion. Use the same repositories, keep-list and Kubernetes access that the scheduled job will use:
+Before the first cleanup, ensure rollback images are not listed for deletion. Use the same repositories, keep-list and Kubernetes access as the scheduled job:
 
 ```shell
 werf cleanup --repo registry.example.com/app --dry-run --keep-list keep-list.txt
 ```
 
-If configured, also pass the same `--final-repo` and `--meta-repo` as in the build. Ensure the scan covers the clusters and namespaces using these images; `--without-kube` disables Kubernetes protection. Do not use `werf purge` to remove only v2 images: it deletes the project's images without cleanup's retention policies.
-
-### Optional: moving metadata to a separate repository
-
-**A separate `--meta-repo` is optional.** Without it, metadata stays in `--repo`; upgrading alone does not require moving it. If you choose a separate metadata repository for an existing project:
-
-1. Pause scheduled cleanup and old v2 jobs that write to the same repository during the transition.
-1. From the project directory, migrate its existing metadata **before the first cleanup with `--meta-repo`**:
-
-   ```shell
-   werf meta-repo migrate --from registry.example.com/app --to registry.example.com/app-meta
-   ```
-
-1. Use the same `--meta-repo registry.example.com/app-meta` in all subsequent v3 commands, including build, cleanup and purge. The images stay in `--repo`; only metadata moves. By default, migration removes the originals after verifying the copies; `--remove-source=false` keeps them.
-1. Recheck cleanup with `--dry-run` and the new `--meta-repo` before resuming the v3 cleanup job. Do not resume v2 cleanup against the migrated repository: it cannot see the current metadata in the new location.
-
-**Adding `--meta-repo` alone does not migrate old metadata.** New writes go to the separate repository, while cleanup no longer sees the metadata left in `--repo`. It can therefore delete images that should have been retained. The safeguard checks that subsequent commands use the same metadata address, **not that migration is complete**. `meta-repo detach` only removes the safeguard; it does not move metadata back.
-
-See [Container registry cleanup]({{ "/usage/cleanup/cr_cleanup.html" | true_relative_url }}) and [a separate metadata repository]({{ "/usage/build/process.html" | true_relative_url }}) for the full workflow.
+Pass the same `--final-repo` and `--meta-repo` used for building, if configured. Check coverage of the required clusters and namespaces; `--without-kube` disables Kubernetes protection. Do not use `werf purge` to remove only v2 images: it deletes the project's images without cleanup's retention policies. See [Container registry cleanup]({{ "/usage/cleanup/cr_cleanup.html" | true_relative_url }}).

@@ -36,6 +36,12 @@ Buildah включается установкой переменной окру�
 export WERF_BUILDAH_MODE=auto
 ```
 
+### Сетевые утилиты
+
+`netavark` должен находиться в одном из каталогов `/usr/local/libexec/podman`, `/usr/local/lib/podman`, `/usr/libexec/podman`, `/usr/lib/podman` — поиск по `$PATH` не выполняется. Для `pasta` используются эти каталоги и `$PATH`.
+
+Если werf и системный Podman/Buildah используют общее хранилище, проверяйте их сетевые настройки отдельно, включая `${graphroot}/defaultNetworkBackend`: обновление werf не переносит конфигурацию системного CLI с CNI на netavark.
+
 ### Конфигурация container registry
 
 При использовании Buildah werf читает настройки container registry из `registries.conf`.
