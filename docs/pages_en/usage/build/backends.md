@@ -36,6 +36,12 @@ Buildah can be enabled by setting the environment variable `WERF_BUILDAH_MODE` t
 export WERF_BUILDAH_MODE=auto
 ```
 
+### Network tools
+
+`netavark` must be in one of `/usr/local/libexec/podman`, `/usr/local/lib/podman`, `/usr/libexec/podman`, `/usr/lib/podman` — `$PATH` is not searched. `pasta` is found in these directories or via `$PATH`.
+
+If werf and system Podman/Buildah share storage, check their network settings separately, including `${graphroot}/defaultNetworkBackend`: upgrading werf does not migrate the system CLI configuration from CNI to netavark.
+
 ### Container registry configuration
 
 When using Buildah, werf reads container registry settings from `registries.conf`.
