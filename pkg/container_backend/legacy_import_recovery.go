@@ -40,13 +40,7 @@ func (c *LegacyStageImageContainer) runWithImportRecovery(ctx context.Context) e
 		c.importCommands = commands
 		return nil
 	}
-	if len(c.runCommands) != 0 || len(c.serviceRunCommands) != 0 {
-		if err := prepare(ctx); err != nil {
-			return err
-		}
-		return run(ctx)
-	}
-	return runImportAttempts(ctx, prepare, run, func(ctx context.Context) error {
+	return c.runImportAttempts(ctx, prepare, run, func(ctx context.Context) error {
 		err := docker.ContainerRemove(ctx, c.name, client.ContainerRemoveOptions{Force: true, RemoveVolumes: true})
 		if err != nil && !cerrdefs.IsNotFound(err) {
 			return fmt.Errorf("remove failed import container: %w", err)
@@ -55,7 +49,7 @@ func (c *LegacyStageImageContainer) runWithImportRecovery(ctx context.Context) e
 	})
 }
 
-func runImportAttempts(ctx context.Context, prepare, run, discard func(context.Context) error) error {
+func (c *LegacyStageImageContainer) runImportAttempts(ctx context.Context, prepare, run, discard func(context.Context) error) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
@@ -66,7 +60,7 @@ func runImportAttempts(ctx context.Context, prepare, run, discard func(context.C
 		return err
 	}
 	original := run(ctx)
-	if original == nil || ctx.Err() != nil || !isImportTransportError(original) {
+	if original == nil || ctx.Err() != nil || len(c.runCommands) != 0 || len(c.serviceRunCommands) != 0 || !isImportTransportError(original) {
 		return original
 	}
 	if err := discard(ctx); err != nil {
