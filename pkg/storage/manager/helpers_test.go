@@ -36,12 +36,17 @@ func newTagsListStorageManager(tagsListStatus int) (*StorageManager, *atomic.Int
 
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		defer ginkgo.GinkgoRecover()
+		writer.Header().Set("Docker-Distribution-API-Version", "registry/2.0")
 
 		if request.URL.Path == "/v2/" {
 			writer.WriteHeader(http.StatusOK)
 			return
 		}
 
+		if strings.Contains(request.URL.Path, "/manifests/") {
+			writer.WriteHeader(http.StatusNotFound)
+			return
+		}
 		gomega.Expect(request.URL.Path).To(gomega.HaveSuffix("/tags/list"))
 		tagsListRequests.Add(1)
 
@@ -84,6 +89,7 @@ func newTagsStorageManagerBlockingListing(ctx context.Context, blockedListing in
 	backend := registry.New()
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		defer ginkgo.GinkgoRecover()
+		writer.Header().Set("Docker-Distribution-API-Version", "registry/2.0")
 		if strings.HasSuffix(request.URL.Path, "/tags/list") && listings.Add(1) == blockedListing {
 			close(listingStarted)
 			<-release

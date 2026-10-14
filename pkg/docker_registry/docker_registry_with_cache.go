@@ -358,3 +358,12 @@ func readDurationEnv(ctx context.Context, envName string, fallback time.Duration
 
 	return parsed
 }
+
+func (r *DockerRegistryWithCache) TagsByPrefix(ctx context.Context, reference, prefix string) ([]string, error) {
+	opstats.CountCacheLookup(ctx, opstats.Operation("registry: tags list by prefix"), opstats.CacheLayerMemory, opstats.CacheOutcomeBypass, false)
+	return r.Interface.TagsByPrefix(ctx, reference, prefix)
+}
+
+func (r *DockerRegistryWithCache) ManifestExists(ctx context.Context, reference string) (bool, error) {
+	return r.Interface.ManifestExists(ctx, reference)
+}
