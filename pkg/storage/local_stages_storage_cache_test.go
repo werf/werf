@@ -35,7 +35,7 @@ var _ = ginkgo.Describe("Local stage lookup cache", func() {
 		}
 
 		gomega.Expect(backend.calls).To(gomega.Equal(1))
-		gomega.Expect(backend.options.Filters).To(gomega.Equal([]util.Pair[string, string]{util.NewPair("reference", "project")}))
+		gomega.Expect(backend.options.Filters).To(gomega.Equal([]util.Pair[string, string]{util.NewPair("reference", "project:*")}))
 	})
 
 	ginkgo.DescribeTable("selects stages of the requested digest from the project snapshot",
@@ -149,7 +149,7 @@ var _ = ginkgo.Describe("Local stage lookup cache", func() {
 		gomega.Expect(stageStrings(second)).To(gomega.ConsistOf(cachedTagA2))
 
 		gomega.Expect(backend.calls).To(gomega.Equal(2))
-		gomega.Expect(backend.options.Filters).To(gomega.Equal([]util.Pair[string, string]{util.NewPair("reference", "other")}))
+		gomega.Expect(backend.options.Filters).To(gomega.Equal([]util.Pair[string, string]{util.NewPair("reference", "other:*")}))
 	})
 
 	ginkgo.It("does not cache failed listings", func(ctx ginkgo.SpecContext) {
@@ -181,7 +181,7 @@ var _ = ginkgo.Describe("Local stage lookup cache", func() {
 		fresh, err := storage.GetStagesIDsByDigest(ctx, "project", cachedDigestA, 0)
 		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 		gomega.Expect(stageStrings(fresh)).To(gomega.ConsistOf(cachedTagA, cachedTagA2))
-		gomega.Expect(backend.options.Filters).To(gomega.Equal([]util.Pair[string, string]{util.NewPair("reference", "project")}))
+		gomega.Expect(backend.options.Filters).To(gomega.Equal([]util.Pair[string, string]{util.NewPair("reference", "project:*")}))
 		gomega.Expect(backend.calls).To(gomega.Equal(2))
 	})
 })
