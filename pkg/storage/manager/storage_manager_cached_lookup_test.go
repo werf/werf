@@ -39,9 +39,9 @@ var _ = ginkgo.Describe("Authoritative stage reconciliation wiring", func() {
 			var stages image.StageDescSet
 			gomega.Eventually(stale, 5*time.Second).Should(gomega.Receive(&stages))
 			gomega.Expect(stages.IsEmpty()).To(gomega.BeTrue())
-			cached, err := manager.GetStageDescSetByDigestFromStagesStorageCached(ctxWithLogger, "stage", missingStageDigest, 0, manager.StagesStorage)
+			freshAgain, err := manager.GetStageDescSetByDigest(ctxWithLogger, "stage", missingStageDigest, 0)
 			gomega.Expect(err).To(gomega.Succeed())
-			gomega.Expect(cached.Cardinality()).To(gomega.Equal(1), "a late older listing must not overwrite the fresh winner in the cache")
+			gomega.Expect(freshAgain.Cardinality()).To(gomega.Equal(1), "a late full listing must not hide the winner from authoritative lookup")
 		})
 		gomega.Eventually(listingStarted, 5*time.Second).Should(gomega.BeClosed())
 		winnerName := manager.StagesStorage.ConstructStageImageName(manager.ProjectName, missingStageDigest, 100)

@@ -143,3 +143,23 @@ func (r *DockerRegistryTracer) GetRepoImageConfigFile(ctx context.Context, refer
 	})
 	return
 }
+
+func (r *DockerRegistryTracer) TagsByPrefix(ctx context.Context, reference, prefix string) ([]string, error) {
+	var tags []string
+	err := logboek.Context(ctx).Default().LogProcess("DockerRegistryTracer.TagsByPrefix %q %q", reference, prefix).DoError(func() error {
+		var err error
+		tags, err = r.DockerRegistry.TagsByPrefix(ctx, reference, prefix)
+		return err
+	})
+	return tags, err
+}
+
+func (r *DockerRegistryTracer) ManifestExists(ctx context.Context, reference string) (bool, error) {
+	var exists bool
+	err := logboek.Context(ctx).Default().LogProcess("DockerRegistryTracer.ManifestExists %q", reference).DoError(func() error {
+		var err error
+		exists, err = r.DockerRegistry.ManifestExists(ctx, reference)
+		return err
+	})
+	return exists, err
+}

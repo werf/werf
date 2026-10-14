@@ -49,6 +49,7 @@ func newTagsStorageManagerBlockingListing(ctx context.Context, blockedListing in
 	backend := registry.New()
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		defer ginkgo.GinkgoRecover()
+		writer.Header().Set("Docker-Distribution-API-Version", "registry/2.0")
 		if strings.HasSuffix(request.URL.Path, "/tags/list") && listings.Add(1) == blockedListing {
 			close(listingStarted)
 			<-release
