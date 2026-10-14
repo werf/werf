@@ -107,19 +107,10 @@ func (i *LegacyStageImage) Build(ctx context.Context, options BuildOptions) erro
 		defer werf.HostLocker().ReleaseLock(lock)
 	}
 
-	if debugDockerRunCommand() {
-		runArgs, err := i.container.prepareRunArgs(ctx)
-		if err != nil {
-			return err
-		}
-
-		fmt.Printf("Docker run command (stage script piped to stdin):\n%s\n", i.container.prepareDebugRunCommand(runArgs))
-	}
-
-	if containerRunErr := i.container.run(ctx); containerRunErr != nil {
+	if containerRunErr := i.container.runWithImportRecovery(ctx); containerRunErr != nil {
 		if strings.HasPrefix(containerRunErr.Error(), "container run failed") {
 			if options.IntrospectBeforeError {
-				logboek.Context(ctx).Default().LogFDetails("Launched command: %s\n", strings.Join(i.container.prepareAllRunCommands(), " && "))
+				logboek.Context(ctx).Default().LogFDetails("Launched command: %s\n", strings.Join(i.container.diagnosticRunCommands(), " && "))
 
 				if err := logboek.Context(ctx).Streams().DoErrorWithoutProxyStreamDataFormatting(func() error {
 					return i.introspectBefore(ctx)
@@ -131,7 +122,7 @@ func (i *LegacyStageImage) Build(ctx context.Context, options BuildOptions) erro
 					return fmt.Errorf("introspect error failed: %w", err)
 				}
 
-				logboek.Context(ctx).Default().LogFDetails("Launched command: %s\n", strings.Join(i.container.prepareAllRunCommands(), " && "))
+				logboek.Context(ctx).Default().LogFDetails("Launched command: %s\n", strings.Join(i.container.diagnosticRunCommands(), " && "))
 
 				if err := logboek.Context(ctx).Streams().DoErrorWithoutProxyStreamDataFormatting(func() error {
 					return i.Introspect(ctx)

@@ -51,6 +51,7 @@ type LegacyContainer interface {
 	UserRunCommands() []string
 	UserCommitChanges() []string
 
+	SetImportCommandsPreparer(ctx context.Context, prepare func(context.Context) ([]string, error))
 	AddServiceRunCommands(commands ...string)
 	AddRunCommands(commands ...string)
 
