@@ -62,6 +62,14 @@ var _ = Describe("submodule shallow checkout from remotes", func() {
 		return gitSucceedTrimmed(ctx, dir, "rev-parse", "HEAD")
 	}
 
+	// `submodule add` records the remote's HEAD as the gitlink, so the remote was detached at the
+	// commit to pin. Put it back on its branch: a clone sees the branch tip, not the pin, which is
+	// what forces the separate depth-limited fetch of the pinned commit this suite is about.
+	restoreRemoteTip := func(ctx context.Context, remote, pinned string) {
+		gitSucceed(ctx, remote, "checkout", "-q", "main")
+		Expect(headSHA(ctx, remote)).ToNot(Equal(pinned), "the pinned commit must not be the remote's tip, or the pin fetch would never run")
+	}
+
 	switchWorkTreeSubmodules := func(ctx context.Context, commit string) error {
 		gitSucceed(ctx, workTreeDir, "checkout", "--force", "--detach", commit)
 		if err := syncSubmodules(ctx, superGitDir, workTreeDir); err != nil {
@@ -101,7 +109,8 @@ var _ = Describe("submodule shallow checkout from remotes", func() {
 		gitInitRepo(ctx, superRepo)
 		gitAddSubmoduleSucceed(ctx, superRepo, "file://"+subRemote, "sub")
 		gitSucceed(ctx, superRepo, "commit", "-m", "add submodule")
-		Expect(gitSucceedTrimmed(ctx, filepath.Join(superRepo, "sub"), "rev-parse", "HEAD")).To(Equal(pinned), "the pinned commit must not be the remote's tip, or no extra history could be told apart")
+		Expect(gitSucceedTrimmed(ctx, filepath.Join(superRepo, "sub"), "rev-parse", "HEAD")).To(Equal(pinned))
+		restoreRemoteTip(ctx, subRemote, pinned)
 		dropSuperprojectStore(ctx)
 
 		addWorkTree(ctx, headSHA(ctx, superRepo))
@@ -126,6 +135,7 @@ var _ = Describe("submodule shallow checkout from remotes", func() {
 		commitFile(ctx, midRemote, "mid.txt", "first")
 		gitAddSubmoduleSucceed(ctx, midRemote, "file://"+leafRemote, "leaf")
 		gitSucceed(ctx, midRemote, "commit", "-m", "add leaf")
+		restoreRemoteTip(ctx, leafRemote, leafPinned)
 		midPinned := headSHA(ctx, midRemote)
 		commitFile(ctx, midRemote, "mid.txt", "tip")
 		gitSucceed(ctx, midRemote, "checkout", "-q", midPinned)
@@ -133,6 +143,7 @@ var _ = Describe("submodule shallow checkout from remotes", func() {
 		gitInitRepo(ctx, superRepo)
 		gitAddSubmoduleSucceed(ctx, superRepo, "file://"+midRemote, "mid")
 		gitSucceed(ctx, superRepo, "commit", "-m", "add mid")
+		restoreRemoteTip(ctx, midRemote, midPinned)
 		dropSuperprojectStore(ctx)
 
 		addWorkTree(ctx, headSHA(ctx, superRepo))
@@ -222,6 +233,7 @@ var _ = Describe("submodule shallow checkout from remotes", func() {
 			gitAddSubmoduleSucceed(ctx, superRepo, "file://"+subRemote, "sub")
 			ruleOut(ctx)
 			gitSucceed(ctx, superRepo, "commit", "-m", "add submodule")
+			restoreRemoteTip(ctx, subRemote, pinned)
 			dropSuperprojectStore(ctx)
 
 			addWorkTree(ctx, headSHA(ctx, superRepo))
@@ -263,6 +275,7 @@ var _ = Describe("submodule shallow checkout from remotes", func() {
 		gitSucceed(ctx, filepath.Join(superRepo, "b-dumb"), "checkout", "-q", dumbPinned)
 		gitSucceed(ctx, superRepo, "add", "b-dumb")
 		gitSucceed(ctx, superRepo, "commit", "-m", "add submodules")
+		restoreRemoteTip(ctx, subRemote, subPinned)
 		dropSuperprojectStore(ctx)
 
 		addWorkTree(ctx, headSHA(ctx, superRepo))
