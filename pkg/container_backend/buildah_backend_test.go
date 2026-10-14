@@ -17,6 +17,7 @@ import (
 	"github.com/samber/lo"
 	"go.podman.io/storage"
 
+	commonutil "github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/level"
 	"github.com/werf/werf/v3/pkg/buildah"
@@ -451,6 +452,37 @@ var _ = Describe("BuildahBackend GetImageInfo", func() {
 		storageID = "5f1993108ca9f0e3b1a5bd4e1b6f2c7d8e9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c"
 	)
 
+	DescribeTable("selects repository digests using the inspected storage ID",
+		func(fromImageID, filterKey, filterValue, ref, repository string) {
+			fakeBuildah := &buildahstub.BuildahStub{}
+			fakeBuildah.InspectFunc = func(context.Context, string) (*thirdparty.BuilderInfo, error) {
+				inspect := &thirdparty.BuilderInfo{FromImageID: fromImageID}
+				inspect.Docker.Config = lo.ToPtr(lo.FromPtr(inspect.Docker.Config))
+				return inspect, nil
+			}
+			calls := 0
+			fakeBuildah.ImagesFunc = func(_ context.Context, opts buildah.ImagesOptions) (image.ImagesList, error) {
+				calls++
+				Expect(opts.Filters).To(Equal([]commonutil.Pair[string, string]{commonutil.NewPair(filterKey, filterValue)}))
+				return image.ImagesList{{ID: fromImageID, RepoDigests: []string{
+					"registry.example.org/foreign@sha256:" + storageID,
+					repository + "@sha256:" + storageID,
+				}}}, nil
+			}
+			info, err := NewBuildahBackend(fakeBuildah, BuildahBackendOptions{}).GetImageInfo(context.Background(), ref, GetImageInfoOpts{})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(calls).To(Equal(1))
+			Expect(info.Repository).To(Equal(repository))
+			Expect(info.Tag).To(Equal("tag"))
+			Expect(info.RepoDigest).To(Equal(repository + "@sha256:" + storageID))
+		},
+		Entry("unprefixed storage ID", storageID, "id", storageID, imageRef, "registry.example.org/project/stage"),
+		Entry("prefixed storage ID", "sha256:"+storageID, "id", storageID, imageRef, "registry.example.org/project/stage"),
+		Entry("missing storage ID retains reference fallback", "", "reference", imageRef, imageRef, "registry.example.org/project/stage"),
+		Entry("short reference", storageID, "id", storageID, "project:tag", "project"),
+		Entry("localhost reference", storageID, "id", storageID, "localhost/project:tag", "localhost/project"),
+	)
+
 	DescribeTable("derives the image ID from the container storage image ID",
 		func(fromImageID, legacyDockerID, expectedID string) {
 			fakeBuildah := &buildahstub.BuildahStub{}
@@ -491,11 +523,16 @@ var _ = Describe("BuildahBackend GetImageInfo", func() {
 
 		backend := NewBuildahBackend(fakeBuildah, BuildahBackendOptions{})
 		backend.storePulledImageID(imageRef, platform, "sha256:"+storageID)
+		fakeBuildah.ImagesFunc = func(_ context.Context, opts buildah.ImagesOptions) (image.ImagesList, error) {
+			Expect(opts.Filters).To(Equal([]commonutil.Pair[string, string]{commonutil.NewPair("id", storageID)}))
+			return image.ImagesList{{RepoDigests: []string{"registry.example.org/project/stage@sha256:" + storageID}}}, nil
+		}
 
 		info, err := backend.GetImageInfo(context.Background(), imageRef, GetImageInfoOpts{TargetPlatform: platform})
 		Expect(err).ToNot(HaveOccurred())
 		Expect(info).ToNot(BeNil())
 		Expect(info.ID).To(Equal("sha256:" + storageID))
+		Expect(info.RepoDigest).To(Equal("registry.example.org/project/stage@sha256:" + storageID))
 		Expect(fakeBuildah.InspectRefs).To(Equal([]string{"sha256:" + storageID}))
 	})
 
