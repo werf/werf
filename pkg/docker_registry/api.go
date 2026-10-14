@@ -260,6 +260,9 @@ func (api *api) getRepoImageByDesc(ctx context.Context, originalTag string, desc
 			return nil, err
 		}
 		repoImage.ID = manifest.Config.Digest.String()
+		if manifest.Config.Size <= 0 {
+			return nil, fmt.Errorf("%s: image %s config %s has invalid size %d", transport.ManifestInvalidErrorCode, ref.Name(), manifest.Config.Digest, manifest.Config.Size)
+		}
 
 		configFile, err := imageInfo.ConfigFile()
 		if err != nil {
