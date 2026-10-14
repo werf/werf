@@ -34,12 +34,12 @@ type DockerRegistryWithCache struct {
 	// cacheWriteMu serializes the load-modify-store sequences on cachedTagsMap. Entries stay
 	// immutable, so readers need no lock.
 	cacheWriteMu       sync.Mutex
+	uncachedTags       map[string]map[string]time.Time
 	listTagsQueryGroup *singleflight.Group
 }
 
-// AddCachedTag records a tag published to the registry outside the registry client, so that the
-// next cached tags lookup sees it. It only updates an already cached listing, never creates one,
-// and never refreshes its freshness timestamp. A reference that is not a tagged one is ignored.
+// AddCachedTag preserves newly observed tags across older in-flight listings without
+// creating a complete inventory or refreshing its age. Non-tagged references are ignored.
 func AddCachedTag(ctx context.Context, registry Interface, reference string) {
 	r, ok := registry.(*DockerRegistryWithCache)
 	if !ok {
@@ -62,6 +62,13 @@ func AddCachedTag(ctx context.Context, registry Interface, reference string) {
 
 	value, ok := r.cachedTagsMap.Load(cachedTagsID)
 	if !ok {
+		if r.uncachedTags == nil {
+			r.uncachedTags = make(map[string]map[string]time.Time)
+		}
+		if r.uncachedTags[cachedTagsID] == nil {
+			r.uncachedTags[cachedTagsID] = make(map[string]time.Time)
+		}
+		r.uncachedTags[cachedTagsID][referenceParts.tag] = time.Now()
 		return
 	}
 
@@ -84,7 +91,8 @@ func AddCachedTag(ctx context.Context, registry Interface, reference string) {
 	pushedTags[referenceParts.tag] = time.Now()
 
 	// updatedAt is left untouched: the listing itself is no fresher than it was.
-	r.cachedTagsMap.Store(cachedTagsID, tagsCacheEntry{tags: tags, updatedAt: entry.updatedAt, pushedTags: pushedTags})
+	entry.tags, entry.pushedTags = tags, pushedTags
+	r.cachedTagsMap.Store(cachedTagsID, entry)
 
 	logboek.Context(ctx).Debug().LogF("Added published tag %q to the tags cache of %q\n", referenceParts.tag, cachedTagsID)
 }
@@ -200,33 +208,40 @@ func (r *DockerRegistryWithCache) storeTagsToCache(cachedTagsID string, tags []s
 	r.cacheWriteMu.Lock()
 	defer r.cacheWriteMu.Unlock()
 
-	pushedTags := map[string]time.Time{}
+	observed := maps.Clone(r.uncachedTags[cachedTagsID])
+	if observed == nil {
+		observed = map[string]time.Time{}
+	}
 	if value, ok := r.cachedTagsMap.Load(cachedTagsID); ok {
-		if entry, err := castTagsEntry(value); err == nil && len(entry.pushedTags) > 0 {
-			cloned := false
-			for tag, pushedAt := range entry.pushedTags {
-				// A listing started after the publication is authoritative and drops the tag,
-				// so an externally deleted tag cannot stay cached forever.
-				if !pushedAt.After(listingStartedAt) || slices.Contains(tags, tag) {
-					continue
-				}
-				if !cloned {
-					tags, cloned = slices.Clone(tags), true
-				}
-				tags = append(tags, tag)
-				pushedTags[tag] = pushedAt
+		if entry, err := castTagsEntry(value); err == nil {
+			if entry.listingStartedAt.After(listingStartedAt) {
+				return entry.tags
 			}
+			maps.Copy(observed, entry.pushedTags)
 		}
 	}
-
-	r.cachedTagsMap.Store(cachedTagsID, tagsCacheEntry{tags: tags, updatedAt: time.Now(), pushedTags: pushedTags})
+	pushedTags := map[string]time.Time{}
+	cloned := false
+	for tag, observedAt := range observed {
+		if !observedAt.After(listingStartedAt) || slices.Contains(tags, tag) {
+			continue
+		}
+		if !cloned {
+			tags, cloned = slices.Clone(tags), true
+		}
+		tags = append(tags, tag)
+		pushedTags[tag] = observedAt
+	}
+	delete(r.uncachedTags, cachedTagsID)
+	r.cachedTagsMap.Store(cachedTagsID, tagsCacheEntry{tags: tags, updatedAt: time.Now(), pushedTags: pushedTags, listingStartedAt: listingStartedAt})
 	return tags
 }
 
 type tagsCacheEntry struct {
-	tags      []string
-	updatedAt time.Time
-	// pushedTags holds tags published locally but not yet confirmed by a registry listing.
+	listingStartedAt time.Time
+	tags             []string
+	updatedAt        time.Time
+	// pushedTags holds observed tags not yet confirmed by a registry listing.
 	pushedTags map[string]time.Time
 }
 

@@ -108,3 +108,36 @@ func newTagsStorageManagerBlockingListing(ctx context.Context, blockedListing in
 		StagesStorage: storage.NewRepoStagesStorage(&storage.NewRepoStagesStorageOptions{RepoAddress: repoAddress, DockerRegistry: dockerRegistry}),
 	}, listingStarted, releaseListing
 }
+
+func newRejectionSnapshotStorageManager(ctx context.Context) (*StorageManager, func(), <-chan struct{}, func()) {
+	var block atomic.Bool
+	started, release := make(chan struct{}), make(chan struct{})
+	var once sync.Once
+	releaseListing := func() { once.Do(func() { close(release) }) }
+	backend := registry.New()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer ginkgo.GinkgoRecover()
+		w.Header().Set("Docker-Distribution-API-Version", "registry/2.0")
+		if strings.HasSuffix(r.URL.Path, "/tags/list") && r.URL.Query().Get("last") == "" && block.CompareAndSwap(true, false) {
+			snapshot := httptest.NewRecorder()
+			backend.ServeHTTP(snapshot, r)
+			close(started)
+			<-release
+			for key, values := range snapshot.Header() {
+				w.Header()[key] = values
+			}
+			w.WriteHeader(snapshot.Code)
+			_, err := w.Write(snapshot.Body.Bytes())
+			gomega.Expect(err).NotTo(gomega.HaveOccurred())
+			return
+		}
+		backend.ServeHTTP(w, r)
+	}))
+	ginkgo.DeferCleanup(server.Close)
+	ginkgo.DeferCleanup(releaseListing)
+	address := strings.TrimPrefix(server.URL, "http://") + "/project/werf"
+	api, err := docker_registry.NewDockerRegistry(ctx, address, docker_registry.DefaultImplementationName, docker_registry.DockerRegistryOptions{InsecureRegistry: true})
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+	manager := &StorageManager{ProjectName: "test-project", StagesStorage: storage.NewRepoStagesStorage(&storage.NewRepoStagesStorageOptions{RepoAddress: address, DockerRegistry: api})}
+	return manager, func() { block.Store(true) }, started, releaseListing
+}

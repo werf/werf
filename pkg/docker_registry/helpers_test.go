@@ -697,6 +697,15 @@ func newPrefixRegistryFixture(tags []string, mode string) *prefixRegistryFixture
 			case "500":
 				w.WriteHeader(http.StatusInternalServerError)
 				return
+			case "404-undeclared":
+				w.WriteHeader(http.StatusNotFound)
+				return
+			case "null", "missing-tags", "error-object":
+				w.Header().Set("Docker-Distribution-API-Version", "registry/2.0")
+				body := map[string]string{"null": "null", "missing-tags": `{"name":"repo"}`, "error-object": `{"errors":["unsupported cursor"]}`}[mode]
+				_, err := io.WriteString(w, body)
+				gomega.Expect(err).NotTo(gomega.HaveOccurred())
+				return
 			case "400":
 				w.WriteHeader(http.StatusBadRequest)
 				return
@@ -714,8 +723,12 @@ func newPrefixRegistryFixture(tags []string, mode string) *prefixRegistryFixture
 				}
 			}
 		}
-		n, err := strconv.Atoi(query.Get("n"))
-		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		n := len(selected)
+		if raw := query.Get("n"); raw != "" {
+			parsed, err := strconv.Atoi(raw)
+			gomega.Expect(err).NotTo(gomega.HaveOccurred())
+			n = parsed
+		}
 		if mode == "short" && cursor != "" {
 			n = 3
 		}
@@ -728,6 +741,11 @@ func newPrefixRegistryFixture(tags []string, mode string) *prefixRegistryFixture
 			target := link.String()
 			if mode == "badlink" && cursor != "" {
 				target = "https://example.invalid" + target
+			}
+			if mode == "wrongcursor" && cursor != "" {
+				q.Set("last", "unrelated")
+				link.RawQuery = q.Encode()
+				target = link.String()
 			}
 			w.Header().Set("Link", "<"+target+">; rel=\"next\"")
 		}
