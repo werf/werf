@@ -59,6 +59,7 @@ func logOperationsTable(ctx context.Context, summary []OperationSummary) {
 		logboek.Context(ctx).LogFHighlight("× = sum / union\n")
 		logboek.Context(ctx).LogFHighlight("sum: durations added; parallel calls counted separately\n")
 		logboek.Context(ctx).LogFHighlight("union: time with ≥1 active call; overlapping intervals counted once\n")
+		logboek.Context(ctx).LogFHighlight("nested operations overlap across rows; row times are not additive\n")
 	})
 }
 

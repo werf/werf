@@ -149,6 +149,8 @@ func (phase *BuildPhase) BeforeImages(ctx context.Context) error {
 }
 
 func (phase *BuildPhase) calculateAnchorDigests(ctx context.Context) error {
+	defer opstats.Observe(ctx, opstats.OperationContentDigests)()
+
 	graph := phase.Conveyor.imagesTree.GetImagesGraph()
 	if graph == nil {
 		return nil
@@ -252,6 +254,8 @@ func (phase *BuildPhase) calculateAnchorDigest(ctx context.Context, img *image.I
 }
 
 func (phase *BuildPhase) resolveAvailableContentAnchors(ctx context.Context) error {
+	defer opstats.Observe(ctx, opstats.OperationContentCacheResolve)()
+
 	graph := phase.Conveyor.imagesTree.GetImagesGraph()
 	if graph == nil {
 		return nil

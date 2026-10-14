@@ -8,6 +8,7 @@ import (
 	"github.com/onsi/gomega"
 
 	"github.com/werf/werf/v3/pkg/git_repo/repo_handle"
+	"github.com/werf/werf/v3/pkg/opstats"
 	"github.com/werf/werf/v3/pkg/path_matcher"
 	"github.com/werf/werf/v3/pkg/true_git"
 	"github.com/werf/werf/v3/pkg/werf"
@@ -100,8 +101,17 @@ var _ = ginkgo.Describe("Remote object checksums", func() {
 		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 		gomega.Expect(remote.CloneAndFetch(ctx)).To(gomega.Succeed())
 		opts := ChecksumOptions{Commit: utils.GetHeadCommit(ctx, source), LsTreeOptions: LsTreeOptions{PathScope: "sub", PathMatcher: path_matcher.NewTruePathMatcher(), AllFiles: true}}
-		first, err := remote.GetOrCreateChecksum(ctx, opts)
+		collector := opstats.NewCollector()
+		observedCtx := opstats.NewContext(ctx, collector)
+		first, err := remote.GetOrCreateChecksum(observedCtx, opts)
 		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		for _, operation := range []opstats.Operation{opstats.OperationGitWorktree, opstats.OperationGitSubmoduleUpdate, opstats.OperationGitChecksum} {
+			gomega.Expect(collector.Summary()).To(gomega.ContainElement(gomega.SatisfyAll(
+				gomega.HaveField("Operation", operation),
+				gomega.HaveField("Count", 1),
+				gomega.HaveField("WallTime", gomega.BeNumerically(">", 0)),
+			)))
+		}
 		gomega.Expect(remote.getWorkTreeCacheDir(remote.getRepoID()) + ".lfs-v1").To(gomega.BeADirectory())
 		gomega.Expect(os.WriteFile(filepath.Join(source, "sub", "data"), []byte("second"), 0o644)).To(gomega.Succeed())
 		commitChecksumTestRepo(ctx, filepath.Join(source, "sub"))

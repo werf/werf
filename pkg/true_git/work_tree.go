@@ -19,6 +19,7 @@ import (
 	"github.com/werf/common-go/pkg/util/timestamps"
 	"github.com/werf/lockgate"
 	"github.com/werf/logboek"
+	"github.com/werf/werf/v3/pkg/opstats"
 	"github.com/werf/werf/v3/pkg/werf"
 )
 
@@ -63,13 +64,23 @@ func WithWorkTree(ctx context.Context, gitDir, workTreeCacheDir, commit string, 
 }
 
 func withWorkTreeCacheLock(ctx context.Context, workTreeCacheDir string, f func() error) error {
+	done := opstats.Observe(ctx, opstats.OperationGitLockWait)
+	defer done()
 	lockName := fmt.Sprintf("git_work_tree_cache %s", workTreeCacheDir)
-	return werf.HostLocker().WithLock(ctx, lockName, lockgate.AcquireOptions{Timeout: getWorkTreeCacheLockTimeout()}, f)
+	return werf.HostLocker().WithLock(ctx, lockName, lockgate.AcquireOptions{Timeout: getWorkTreeCacheLockTimeout()}, func() error {
+		done()
+		return f()
+	})
 }
 
 func withRepoDirLock(ctx context.Context, repoDir string, f func() error) error {
+	done := opstats.Observe(ctx, opstats.OperationGitLockWait)
+	defer done()
 	lockName := fmt.Sprintf("git_repo_dir %s", repoDir)
-	return werf.HostLocker().WithLock(ctx, lockName, lockgate.AcquireOptions{Timeout: 600 * time.Second}, f)
+	return werf.HostLocker().WithLock(ctx, lockName, lockgate.AcquireOptions{Timeout: 600 * time.Second}, func() error {
+		done()
+		return f()
+	})
 }
 
 func getWorkTreeCacheLockTimeout() time.Duration {
@@ -88,6 +99,8 @@ func prepareWorkTree(ctx context.Context, repoDir, workTreeCacheDir, commit stri
 }
 
 func prepareWorkTreeWithCheckoutOptions(ctx context.Context, repoDir, workTreeCacheDir, commit string, withSubmodules bool, checkoutGitOptions []string) (string, error) {
+	defer opstats.Observe(ctx, opstats.OperationGitWorktree)()
+
 	if err := os.MkdirAll(workTreeCacheDir, os.ModePerm); err != nil {
 		return "", fmt.Errorf("unable to create dir %s: %w", workTreeCacheDir, err)
 	}

@@ -22,6 +22,7 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v3/pkg/git_repo"
 	"github.com/werf/werf/v3/pkg/logging"
+	"github.com/werf/werf/v3/pkg/opstats"
 	"github.com/werf/werf/v3/pkg/volumeutils"
 	"github.com/werf/werf/v3/pkg/werf"
 )
@@ -427,6 +428,8 @@ func hasFreshFiles(path string) (bool, error) {
 }
 
 func lockGC(ctx context.Context, shared bool) (lockgate.LockHandle, error) {
+	defer opstats.Observe(ctx, opstats.OperationGitLockWait)()
+
 	_, handle, err := werf.HostLocker().AcquireLock(ctx, "git_data_manager", lockgate.AcquireOptions{Shared: shared})
 	return handle, err
 }
