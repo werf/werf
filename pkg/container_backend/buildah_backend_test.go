@@ -536,6 +536,36 @@ var _ = Describe("BuildahBackend GetImageInfo", func() {
 		Expect(fakeBuildah.InspectRefs).To(Equal([]string{"sha256:" + storageID}))
 	})
 
+	const manifestDigest = "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+	DescribeTable("retains the manifest digest of a cached platform image", func(ref string, listedDigests []string, inspectedDigest, expectedDigest string) {
+		fakeBuildah := &buildahstub.BuildahStub{}
+		fakeBuildah.InspectFunc = func(_ context.Context, inspectedRef string) (*thirdparty.BuilderInfo, error) {
+			Expect(inspectedRef).To(Equal("sha256:" + storageID))
+			inspect := &thirdparty.BuilderInfo{FromImageID: storageID, FromImageDigest: inspectedDigest}
+			inspect.Docker.Config = lo.ToPtr(lo.FromPtr(inspect.Docker.Config))
+			return inspect, nil
+		}
+		fakeBuildah.ImagesFunc = func(_ context.Context, opts buildah.ImagesOptions) (image.ImagesList, error) {
+			Expect(opts.Filters).To(Equal([]commonutil.Pair[string, string]{commonutil.NewPair("id", storageID)}))
+			return image.ImagesList{{ID: storageID, RepoDigests: listedDigests}}, nil
+		}
+		backend := NewBuildahBackend(fakeBuildah, BuildahBackendOptions{})
+		backend.storePulledImageID(ref, "linux/amd64", "sha256:"+storageID)
+		info, err := backend.GetImageInfo(context.Background(), ref, GetImageInfoOpts{TargetPlatform: "linux/amd64"})
+		Expect(err).NotTo(HaveOccurred())
+		Expect(info.ID).To(Equal("sha256:" + storageID))
+		Expect(info.RepoDigest).To(Equal(expectedDigest))
+	},
+		Entry("tagless image", imageRef, []string(nil), manifestDigest, "registry.example.org/project/stage@"+manifestDigest),
+		Entry("only a foreign alias remains", imageRef, []string{"registry.example.org/foreign@sha256:" + storageID}, manifestDigest, "registry.example.org/project/stage@"+manifestDigest),
+		Entry("normalizes Docker Hub repository", "docker.io/library/base:tag", []string(nil), manifestDigest, "base@"+manifestDigest),
+		Entry("digest-pinned reference", "registry.example.org/project/base@"+manifestDigest, []string(nil), manifestDigest, "registry.example.org/project/base@"+manifestDigest),
+		Entry("unprefixed image ID is not a repository", storageID, []string(nil), manifestDigest, ""),
+		Entry("prefixed image ID is not a repository", "sha256:"+storageID, []string(nil), manifestDigest, ""),
+		Entry("preserves an available repository digest", imageRef, []string{"registry.example.org/project/stage@sha256:" + storageID}, manifestDigest, "registry.example.org/project/stage@sha256:"+storageID),
+		Entry("does not invent a missing manifest digest", imageRef, []string(nil), "", ""),
+	)
+
 	It("returns no info for an image missing in local storage", func() {
 		info, err := NewBuildahBackend(&buildahstub.BuildahStub{}, BuildahBackendOptions{}).
 			GetImageInfo(context.Background(), imageRef, GetImageInfoOpts{})

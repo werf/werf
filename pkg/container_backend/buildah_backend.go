@@ -18,6 +18,7 @@ import (
 	"time"
 
 	securejoin "github.com/cyphar/filepath-securejoin"
+	"github.com/distribution/reference"
 	"github.com/google/uuid"
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
@@ -860,6 +861,11 @@ func (backend *BuildahBackend) GetImageInfo(ctx context.Context, ref string, opt
 		}
 		if len(list) > 0 {
 			repoDigest = image.ExtractRepoDigest(list[0].RepoDigests, repository)
+		}
+		if repoDigest == "" && inspect.FromImageDigest != "" {
+			if named, err := reference.ParseNormalizedNamed(ref); err == nil {
+				repoDigest = image.NormalizeRepository(named.Name()) + "@" + inspect.FromImageDigest
+			}
 		}
 	}
 
