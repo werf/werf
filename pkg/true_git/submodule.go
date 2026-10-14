@@ -13,6 +13,7 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
+	"github.com/werf/werf/v2/pkg/opstats"
 )
 
 func syncSubmodules(ctx context.Context, repoDir, workTreeDir string) error {
@@ -33,6 +34,8 @@ func syncSubmodules(ctx context.Context, repoDir, workTreeDir string) error {
 }
 
 func updateSubmodules(ctx context.Context, repoDir, workTreeDir string) error {
+	defer opstats.Observe(ctx, opstats.OperationGitSubmoduleUpdate)()
+
 	logProcessMsg := fmt.Sprintf("Update submodules in work tree %q", workTreeDir)
 	return logboek.Context(ctx).Info().LogProcess(logProcessMsg).DoError(func() error {
 		includePathOpts, err := getIncludePathOptions(ctx, repoDir)

@@ -902,6 +902,12 @@ func (repo *Remote) getWorkTreeCacheDir(repoID string) string {
 }
 
 func (repo *Remote) withMirrorKindLock(ctx context.Context, kind mirrorKind, f func() error) error {
+	done := opstats.Observe(ctx, opstats.OperationGitLockWait)
+	defer done()
+	withMirror := func() error {
+		done()
+		return f()
+	}
 	opts := lockgate.AcquireOptions{Timeout: 600 * time.Second}
 	repoIDLockName := fmt.Sprintf("remote_git.%s.%s", repo.getRepoID(), kind)
 
@@ -910,11 +916,11 @@ func (repo *Remote) withMirrorKindLock(ctx context.Context, kind mirrorKind, f f
 		// binaries for the shared full-mirror dir; matching it byte-for-byte is
 		// what gives cross-version exclusion on hosts with a shared WERF_HOME.
 		return werf.HostLocker().WithLock(ctx, fmt.Sprintf("remote_git_mapping.%s", repo.Name), opts, func() error {
-			return werf.HostLocker().WithLock(ctx, repoIDLockName, opts, f)
+			return werf.HostLocker().WithLock(ctx, repoIDLockName, opts, withMirror)
 		})
 	}
 
-	return werf.HostLocker().WithLock(ctx, repoIDLockName, opts, f)
+	return werf.HostLocker().WithLock(ctx, repoIDLockName, opts, withMirror)
 }
 
 func (repo *Remote) TagsList(ctx context.Context) ([]string, error) {
