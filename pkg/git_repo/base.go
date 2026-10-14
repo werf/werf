@@ -671,7 +671,9 @@ func (repo *Base) lsTreeResultWithExistingHandle(ctx context.Context, repoHandle
 
 func (repo *Base) withRepoHandle(ctx context.Context, commit string, f func(handle repo_handle.Handle) error) error {
 	mutex := util.MapLoadOrCreateMutex(&repo.commitRepoHandleMutex, commit)
+	done := opstats.Observe(ctx, opstats.OperationGitLockWait)
 	mutex.Lock()
+	done()
 	defer mutex.Unlock()
 
 	// A handle keeps the mirror object files and the prepared worktree open, so
