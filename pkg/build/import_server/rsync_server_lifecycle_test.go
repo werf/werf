@@ -62,7 +62,9 @@ exit %d
 		command := srv.GetCopyCommand(ctx, &config.Import{ArtifactExport: &config.ArtifactExport{ExportBase: &config.ExportBase{Add: "/source", To: filepath.Join(root, "target")}}})
 		gomega.Expect(command).To(gomega.ContainSubstring("fixture-secret"))
 		command = strings.NewReplacer(stapel.RsyncBinPath(), fake, stapel.HeadBinPath(), "head", stapel.MkdirBinPath(), "mkdir").Replace(command)
-		output, err := exec.CommandContext(ctx, "bash", "-ec", "set -x && "+command).CombinedOutput()
+		process := exec.CommandContext(ctx, "bash", "-ec", `script=$(</dev/stdin); eval "$script" < /dev/null`)
+		process.Stdin = strings.NewReader("set -x && " + command)
+		output, err := process.CombinedOutput()
 		if want == 0 {
 			gomega.Expect(err).NotTo(gomega.HaveOccurred(), string(output))
 			gomega.Expect(string(output)).To(gomega.ContainSubstring("copied"))

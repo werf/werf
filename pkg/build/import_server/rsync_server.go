@@ -235,7 +235,8 @@ func (srv *RsyncServer) GetCopyCommand(ctx context.Context, importConfig *config
 	// run rsync itself
 	args = append(args, rsyncCommand)
 
-	command := "(set +x; " + strings.Join(args, " && ") + ")"
+	// Bash 4.3 loses external command status when errexit leaves a subshell inside eval.
+	command := "(set +x; " + strings.Join(args, " && ") + " || exit $?)"
 
 	if debugImportServer() {
 		logboek.Context(ctx).Debug().LogF("Rsync server copy commands for import: artifact=%q image=%q add=%s to=%s includePaths=%v excludePaths=%v: %q\n", importConfig.ArtifactName, importConfig.ImageName, importConfig.Add, importConfig.To, importConfig.IncludePaths, importConfig.ExcludePaths, strings.ReplaceAll(command, srv.AuthPassword, "[REDACTED]"))
