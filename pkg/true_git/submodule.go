@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 
@@ -15,6 +16,8 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v3/pkg/opstats"
 )
+
+const disableShallowSubmodulesEnvVar = "WERF_DISABLE_SHALLOW_SUBMODULES"
 
 func syncSubmodules(ctx context.Context, repoDir, workTreeDir string) error {
 	logProcessMsg := fmt.Sprintf("Sync submodules in work tree %q", workTreeDir)
@@ -64,46 +67,259 @@ func updateSubmodulesWithCheckoutOptions(ctx context.Context, repoDir, workTreeD
 			})
 		}
 
-		runUpdate := func(reuseOpts []string) error {
-			updateArgs := make([]string, 0, len(checkoutGitOptions)+len(includePathOpts)+len(reuseOpts)+8)
-			updateArgs = append(updateArgs, checkoutGitOptions...)
-			updateArgs = append(updateArgs, includePathOpts...)
-			if len(reuseOpts) > 0 {
-				// The redirects point submodule URLs at the on-disk module store, which git reaches
-				// over the file transport — blocked by the default protocol.file.allow=user for
-				// submodules. Safe only because reuse is all-or-nothing: no URL read from committed
-				// .gitmodules is then used while the transport is relaxed (CVE-2022-39253 class).
-				// Ambient trusted configuration may still rewrite the store paths werf computes.
-				updateArgs = append(updateArgs, "-c", "protocol.file.allow=always")
-				updateArgs = append(updateArgs, reuseOpts...)
-			}
+		gitOpts := slices.Concat(checkoutGitOptions, includePathOpts)
+
+		if len(localURLOpts) > 0 {
+			updateArgs := slices.Clone(gitOpts)
+			// The redirects point submodule URLs at the on-disk module store, which git reaches
+			// over the file transport — blocked by the default protocol.file.allow=user for
+			// submodules. Safe only because reuse is all-or-nothing: no URL read from committed
+			// .gitmodules is then used while the transport is relaxed (CVE-2022-39253 class).
+			// Ambient trusted configuration may still rewrite the store paths werf computes.
+			updateArgs = append(updateArgs, "-c", "protocol.file.allow=always")
+			updateArgs = append(updateArgs, localURLOpts...)
 			updateArgs = append(updateArgs, "submodule", "update", "--checkout", "--force", "--init", "--recursive")
 
-			submUpdateCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: workTreeDir}, updateArgs...)
-			return submUpdateCmd.Run(ctx)
-		}
-
-		if err := runUpdate(localURLOpts); err != nil {
+			reuseCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: workTreeDir}, updateArgs...)
+			reuseErr := reuseCmd.Run(ctx)
+			if reuseErr == nil {
+				return finishSubmoduleUpdate(ctx, repoDir, workTreeDir)
+			}
 			// Reuse rests on where git keeps submodule git dirs and on -c reaching nested updates,
 			// neither of which git promises. Anything unanticipated there must cost a slower build,
-			// not a broken one, so fall back to the plain remote update this has always been.
-			if len(localURLOpts) == 0 || ctx.Err() != nil {
-				return fmt.Errorf("submodule update command failed: %w", err)
+			// not a broken one, so fall back to the remote update this has always been.
+			if ctx.Err() != nil {
+				return fmt.Errorf("submodule update command failed: %w", reuseErr)
 			}
-			logboek.Context(ctx).Warn().LogF("WARNING: unable to check out submodules from the local object store (%s), retrying from their remotes, which may request credentials.\n", err)
+			logboek.Context(ctx).Warn().LogF("WARNING: unable to check out submodules from the local object store (%s), retrying from their remotes, which may request credentials.\n", reuseErr)
 			// The failed attempt leaves the service worktree's own submodule git dirs pointing at the
 			// store, and an initialized submodule is never re-cloned, so the retry would inherit the
 			// very state that just failed. Discard them; they belong to this worktree alone.
 			if discardErr := discardWorktreeSubmoduleGitDirs(ctx, workTreeDir); discardErr != nil {
-				return fmt.Errorf("submodule update command failed: %w (unable to discard the failed attempt: %s)", err, discardErr)
+				return fmt.Errorf("submodule update command failed: %w (unable to discard the failed attempt: %s)", reuseErr, discardErr)
 			}
-			if retryErr := runUpdate(nil); retryErr != nil {
-				return fmt.Errorf("submodule update command failed: %w (local object store reuse had failed with: %s)", retryErr, err)
+			if err := updateSubmodulesFromRemotes(ctx, workTreeDir, gitOpts); err != nil {
+				return fmt.Errorf("%w (local object store reuse had failed with: %s)", err, reuseErr)
+			}
+			return finishSubmoduleUpdate(ctx, repoDir, workTreeDir)
+		}
+
+		if err := updateSubmodulesFromRemotes(ctx, workTreeDir, gitOpts); err != nil {
+			return err
+		}
+		return finishSubmoduleUpdate(ctx, repoDir, workTreeDir)
+	})
+}
+
+func finishSubmoduleUpdate(ctx context.Context, repoDir, workTreeDir string) error {
+	if err := pinSubmoduleCommits(ctx, workTreeDir); err != nil {
+		return err
+	}
+	return initSubmoduleConfig(ctx, repoDir, workTreeDir)
+}
+
+// pinSubmoduleCommits records the commit every populated submodule is checked out at under
+// refs/werf/commits/ in that submodule's git dir. A detached HEAD is the only thing holding such a
+// commit otherwise, so once the gitlink moves on the commit becomes unreachable: git's gc may prune
+// it, and `submodule update` sees it as missing and fetches it again when the gitlink moves back,
+// which in a shallow clone also happens for every switch to an older commit. The refs live and die
+// with the service worktree's submodule git dirs.
+func pinSubmoduleCommits(ctx context.Context, workTreeDir string) error {
+	pinCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: workTreeDir}, "submodule", "foreach", "--quiet", "--recursive", "git update-ref refs/werf/commits/$sha1 $sha1")
+	if err := pinCmd.Run(ctx); err != nil {
+		return fmt.Errorf("pin submodule commits: %w", err)
+	}
+	return nil
+}
+
+type submoduleUpdateParams struct {
+	workTreeDir string
+	rootGitDir  string
+	gitOpts     []string
+	shallow     bool
+}
+
+// updateSubmodulesFromRemotes checks the submodules of workTreeDir out from their remotes one at a
+// time and level by level instead of with a single recursive `git submodule update`, because that
+// is the only way to clone shallow selectively. --depth applies to every clone AND every fetch of
+// one update run, and a fetch with --depth into a full clone turns it shallow, losing history
+// behind the commits it holds. So a submodule is cloned or fetched with --depth=1 only when its
+// git dir in this worktree is absent or already shallow; one whose .gitmodules entry says
+// shallow=false, or whose name is unsafe to resolve into a git dir path, is left to git's defaults.
+// A failed shallow attempt is retried once in full for that submodule alone — a server without
+// shallow support or one refusing to serve an unadvertised commit still works, just slower.
+func updateSubmodulesFromRemotes(ctx context.Context, workTreeDir string, gitOpts []string) error {
+	rootGitDir, commonDir, err := resolveWorkTreeGitDirs(ctx, workTreeDir)
+	if err != nil {
+		return err
+	}
+
+	params := submoduleUpdateParams{
+		workTreeDir: workTreeDir,
+		rootGitDir:  rootGitDir,
+		gitOpts:     gitOpts,
+		// The full retry discards the failed shallow git dir, which in a main work tree would be the
+		// repository-wide submodule store, so only a linked work tree gets the shallow attempt at all.
+		shallow: !util.GetBoolEnvironmentDefaultFalse(disableShallowSubmodulesEnvVar) && util.IsSubpathOfBasePath(filepath.Join(commonDir, "worktrees"), rootGitDir),
+	}
+
+	return updateSubmoduleLevel(ctx, params, workTreeDir, rootGitDir)
+}
+
+func updateSubmoduleLevel(ctx context.Context, params submoduleUpdateParams, levelDir, levelGitDir string) error {
+	names, paths, err := parseGitmodulesPaths(ctx, &GitCmdOptions{RepoDir: levelDir}, "config", "-f", ".gitmodules")
+	if err != nil {
+		return err
+	}
+	if len(names) == 0 {
+		return nil
+	}
+
+	// Without paths `submodule init` honors submodule.active exactly like `update --init` does, and
+	// the per-path update then skips whatever stayed uninitialized.
+	initCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: levelDir}, append(slices.Clone(params.gitOpts), "submodule", "init")...)
+	if err := initCmd.Run(ctx); err != nil {
+		return fmt.Errorf("submodule init command failed: %w", err)
+	}
+
+	shallowDisabled, err := gitmodulesShallowDisabled(ctx, levelDir)
+	if err != nil {
+		return err
+	}
+
+	for i, name := range names {
+		path := paths[i]
+		pinnedCommit, err := lsTreeGitlink(ctx, levelDir, "HEAD", path)
+		if err != nil {
+			return err
+		}
+		if pinnedCommit == "" {
+			continue
+		}
+
+		displayPath, err := filepath.Rel(params.workTreeDir, filepath.Join(levelDir, path))
+		if err != nil {
+			return fmt.Errorf("resolve submodule path %s relative to %s: %w", filepath.Join(levelDir, path), params.workTreeDir, err)
+		}
+		displayPath = filepath.ToSlash(displayPath)
+
+		moduleDir := filepath.Join(levelGitDir, "modules", name)
+		shallow := false
+		if params.shallow && !shallowDisabled[name] && !submoduleNameUnsafe(name) {
+			if shallow, err = submoduleShallowEligible(moduleDir); err != nil {
+				return err
 			}
 		}
 
-		return initSubmoduleConfig(ctx, repoDir, workTreeDir)
-	})
+		logboek.Context(ctx).Info().LogF("Update submodule %s to %s (shallow: %t)\n", displayPath, pinnedCommit, shallow)
+		if err := updateSubmodulePath(ctx, params, levelDir, path, shallow); err != nil {
+			if !shallow || ctx.Err() != nil {
+				return fmt.Errorf("update submodule %s: %w", displayPath, err)
+			}
+			logboek.Context(ctx).Warn().LogF("WARNING: unable to check out submodule %s shallow, checking it out in full: %s\n", displayPath, err)
+			if err := discardShallowSubmodule(ctx, params, levelDir, path, moduleDir); err != nil {
+				return err
+			}
+			if err := updateSubmodulePath(ctx, params, levelDir, path, false); err != nil {
+				return fmt.Errorf("update submodule %s: %w", displayPath, err)
+			}
+		}
+
+		submoduleDir := filepath.Join(levelDir, path)
+		if _, err := os.Stat(filepath.Join(submoduleDir, ".git")); errors.Is(err, fs.ErrNotExist) {
+			continue
+		} else if err != nil {
+			return fmt.Errorf("unable to access %s: %w", filepath.Join(submoduleDir, ".git"), err)
+		}
+
+		// The nested git dir is read back from disk rather than assumed, so a name that resolves
+		// somewhere other than modules/<name> only costs its subtree the shallow attempt.
+		submoduleGitDir, _, err := resolveWorkTreeGitDirs(ctx, submoduleDir)
+		if err != nil {
+			return err
+		}
+		nestedParams := params
+		nestedParams.shallow = params.shallow && util.IsSubpathOfBasePath(filepath.Join(params.rootGitDir, "modules"), submoduleGitDir)
+		if err := updateSubmoduleLevel(ctx, nestedParams, submoduleDir, submoduleGitDir); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func updateSubmodulePath(ctx context.Context, params submoduleUpdateParams, levelDir, path string, shallow bool) error {
+	args := slices.Clone(params.gitOpts)
+	args = append(args, "submodule", "update", "--checkout", "--force")
+	if shallow {
+		args = append(args, "--depth=1")
+	}
+	args = append(args, "--", ":(literal)"+path)
+	updateCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: levelDir}, args...)
+	return updateCmd.Run(ctx)
+}
+
+// submoduleShallowEligible reports whether --depth=1 can reach moduleDir without taking history
+// away: an absent git dir is about to be cloned, and a shallow one has none to lose.
+func submoduleShallowEligible(moduleDir string) (bool, error) {
+	if _, err := os.Stat(moduleDir); errors.Is(err, fs.ErrNotExist) {
+		return true, nil
+	} else if err != nil {
+		return false, fmt.Errorf("unable to access %s: %w", moduleDir, err)
+	}
+	return util.FileExists(filepath.Join(moduleDir, "shallow"))
+}
+
+// discardShallowSubmodule removes what a failed shallow attempt left of one submodule so the full
+// retry clones it afresh: an existing shallow git dir is never re-cloned, and a plain fetch into it
+// would keep it shallow. A git dir without the shallow marker is left alone — it was never shallow
+// and holds history the retry must not destroy.
+func discardShallowSubmodule(ctx context.Context, params submoduleUpdateParams, levelDir, path, moduleDir string) error {
+	if !util.IsSubpathOfBasePath(filepath.Join(params.rootGitDir, "modules"), moduleDir) {
+		return fmt.Errorf("refusing to discard submodule git dir %s: outside of work tree git dir %s", moduleDir, params.rootGitDir)
+	}
+
+	isShallow, err := util.FileExists(filepath.Join(moduleDir, "shallow"))
+	if err != nil {
+		return fmt.Errorf("unable to access %s: %w", filepath.Join(moduleDir, "shallow"), err)
+	}
+	if !isShallow {
+		return nil
+	}
+
+	if err := os.RemoveAll(moduleDir); err != nil {
+		return fmt.Errorf("unable to discard submodule git dir %s: %w", moduleDir, err)
+	}
+	// The path is a gitlink of HEAD, checked by the caller, so no component leading to it is a
+	// symlink RemoveAll could follow out of the work tree.
+	if err := os.RemoveAll(filepath.Join(levelDir, path)); err != nil {
+		return fmt.Errorf("unable to discard submodule work tree %s: %w", filepath.Join(levelDir, path), err)
+	}
+	return nil
+}
+
+// gitmodulesShallowDisabled returns the submodule names whose .gitmodules entry explicitly sets
+// shallow to false: that is the one way a repository can rule the shallow attempt out for a
+// submodule, since git itself ignores the setting once --depth is given.
+func gitmodulesShallowDisabled(ctx context.Context, levelDir string) (map[string]bool, error) {
+	configCmd := NewGitCmd(ctx, &GitCmdOptions{RepoDir: levelDir}, "config", "-f", ".gitmodules", "--bool", "-z", "--get-regexp", "^submodule\\..*\\.shallow$")
+	if err := configCmd.Run(ctx); err != nil {
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) && exitErr.ExitCode() == 1 {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("git config command failed: %w", err)
+	}
+
+	disabled := make(map[string]bool)
+	for _, entry := range strings.Split(configCmd.OutBuf.String(), "\x00") {
+		key, value, found := strings.Cut(entry, "\n")
+		if !found || value != "false" {
+			continue
+		}
+		disabled[strings.TrimSuffix(strings.TrimPrefix(key, "submodule."), ".shallow")] = true
+	}
+	return disabled, nil
 }
 
 func initSubmoduleConfig(ctx context.Context, repoDir, workTreeDir string) error {
