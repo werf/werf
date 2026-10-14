@@ -107,16 +107,21 @@ func (s *DependenciesStage) dependenciesDigest(importSourceID func(importElm *co
 func (s *DependenciesStage) prepareImageWithLegacyStapelBuilder(ctx context.Context, c Conveyor, cr container_backend.ContainerBackend, _, stageImage *StageImage) error {
 	imageServiceCommitChangeOptions := stageImage.Builder.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions()
 
+	if len(s.imports) != 0 {
+		stageImage.Builder.LegacyStapelStageBuilder().Container().SetImportCommandsPreparer(ctx, func(ctx context.Context) ([]string, error) {
+			var commands []string
+			for _, elm := range s.imports {
+				sourceImageName := getSourceImageName(elm)
+				srv, err := c.GetImportServer(ctx, s.targetPlatform, sourceImageName, elm.ExternalImage)
+				if err != nil {
+					return nil, fmt.Errorf("get import server for image %q: %w", sourceImageName, err)
+				}
+				commands = append(commands, srv.GetCopyCommand(ctx, elm))
+			}
+			return commands, nil
+		})
+	}
 	for _, elm := range s.imports {
-		sourceImageName := getSourceImageName(elm)
-		srv, err := c.GetImportServer(ctx, s.targetPlatform, sourceImageName, elm.ExternalImage)
-		if err != nil {
-			return fmt.Errorf("unable to get import server for image %q: %w", sourceImageName, err)
-		}
-
-		command := srv.GetCopyCommand(ctx, elm)
-		stageImage.Builder.LegacyStapelStageBuilder().Container().AddServiceRunCommands(command)
-
 		sourceStageIDLabelKey := image.WerfImportSourceStageIDLabelPrefix + getImportID(elm)
 		sourceStageID := getSourceStageID(c, s.targetPlatform, elm)
 
