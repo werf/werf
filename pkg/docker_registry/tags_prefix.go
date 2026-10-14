@@ -183,6 +183,9 @@ func readPrefixPage(response *http.Response, endpoint, current *url.URL, require
 	case http.StatusBadRequest, http.StatusMethodNotAllowed, http.StatusNotImplemented:
 		return nil, nil, false, nil
 	case http.StatusNotFound:
+		if requireDeclaration && response.Header.Get("Docker-Distribution-API-Version") != "registry/2.0" {
+			return nil, nil, false, nil
+		}
 		return nil, nil, true, nil
 	}
 	if err := transport.CheckError(response, http.StatusOK); err != nil {
@@ -192,12 +195,19 @@ func readPrefixPage(response *http.Response, endpoint, current *url.URL, require
 		return nil, nil, false, nil
 	}
 	var page struct {
-		Tags []string `json:"tags"`
+		Tags json.RawMessage `json:"tags"`
 	}
 	if err := json.NewDecoder(io.LimitReader(response.Body, 4*1024*1024)).Decode(&page); err != nil {
 		return nil, nil, false, fmt.Errorf("decode prefix listing: %w", err)
 	}
-	if len(page.Tags) > prefixTagsPageSize {
+	if len(page.Tags) == 0 {
+		return nil, nil, false, nil
+	}
+	var tags []string
+	if err := json.Unmarshal(page.Tags, &tags); err != nil {
+		return nil, nil, false, fmt.Errorf("decode prefix tags: %w", err)
+	}
+	if len(tags) > prefixTagsPageSize {
 		return nil, nil, false, nil
 	}
 	var next *url.URL
@@ -223,5 +233,5 @@ func readPrefixPage(response *http.Response, endpoint, current *url.URL, require
 			}
 		}
 	}
-	return page.Tags, next, true, nil
+	return tags, next, true, nil
 }

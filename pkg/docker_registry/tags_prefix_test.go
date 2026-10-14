@@ -62,7 +62,7 @@ var _ = ginkgo.Describe("Authoritative prefix tag listing", func() {
 
 	ginkgo.DescribeTable("follows valid links and falls back on incompatible pagination", func(ctx ginkgo.SpecContext, mode string, fallback bool) {
 		tags := []string{"000", prefix, prefix + "-1", prefix + "-2", prefix + "-2-rejected", prefix + "-3", "zzz"}
-		if mode == "badlink" {
+		if mode == "badlink" || mode == "wrongcursor" {
 			for i := 0; i < 110; i++ {
 				tags = append(tags, fmt.Sprintf("%s-%04d", prefix, i+100))
 			}
@@ -88,7 +88,9 @@ var _ = ginkgo.Describe("Authoritative prefix tag listing", func() {
 		gomega.Expect(full).To(gomega.Equal(fallback))
 	}, ginkgo.Entry("short page with Link", "short", false), ginkgo.Entry("ignored cursor", "ignored", true),
 		ginkgo.Entry("unsorted", "unsorted", true), ginkgo.Entry("unsupported cursor", "400", true),
-		ginkgo.Entry("missing declaration", "undeclared", true), ginkgo.Entry("off-origin Link", "badlink", true))
+		ginkgo.Entry("missing declaration", "undeclared", true), ginkgo.Entry("off-origin Link", "badlink", true), ginkgo.Entry("wrong Link cursor", "wrongcursor", true),
+		ginkgo.Entry("undeclared cursor 404", "404-undeclared", true), ginkgo.Entry("null response", "null", true),
+		ginkgo.Entry("missing tags", "missing-tags", true), ginkgo.Entry("error response object", "error-object", true))
 
 	ginkgo.DescribeTable("propagates failures instead of returning empty inventory", func(ctx ginkgo.SpecContext, mode string) {
 		fixture := newPrefixRegistryFixture([]string{prefix}, mode)
@@ -155,4 +157,30 @@ var _ = ginkgo.Describe("Authoritative prefix tag listing", func() {
 		gomega.Expect(err).To(gomega.MatchError(context.Canceled))
 		gomega.Expect(fixture.requestLog()).To(gomega.BeEmpty())
 	})
+
+	for _, traced := range []bool{false, true} {
+		ginkgo.DescribeTable(fmt.Sprintf("preserves provider eligibility through registry wrappers (traced=%t)", traced), func(ctx ginkgo.SpecContext, implementation string, ranged bool) {
+			ginkgo.GinkgoT().Setenv("WERF_DEBUG_DOCKER_REGISTRY", fmt.Sprint(traced))
+			if traced {
+				ginkgo.GinkgoT().Setenv("WERF_DEBUG_DOCKER_REGISTRY", "1")
+			}
+			fixture := newPrefixRegistryFixture([]string{"000", prefix + "-100", "zzz"}, "")
+			registry, err := NewDockerRegistry(ctx, fixture.repository(), implementation, DockerRegistryOptions{InsecureRegistry: true})
+			gomega.Expect(err).NotTo(gomega.HaveOccurred())
+			tags, err := registry.TagsByPrefix(ctx, fixture.repository(), prefix)
+			gomega.Expect(err).NotTo(gomega.HaveOccurred())
+			gomega.Expect(tags).To(gomega.Equal([]string{prefix + "-100"}))
+			usedRange := false
+			for _, request := range fixture.requestLog() {
+				if strings.Contains(request, "/tags/list") && strings.Contains(request, "last=") {
+					usedRange = true
+				}
+			}
+			gomega.Expect(usedRange).To(gomega.Equal(ranged))
+		}, ginkgo.Entry("default", DefaultImplementationName, true), ginkgo.Entry("GitLab", GitLabRegistryImplementationName, true),
+			ginkgo.Entry("Harbor", HarborImplementationName, true), ginkgo.Entry("ECR", AwsEcrImplementationName, false),
+			ginkgo.Entry("ACR", AzureCrImplementationName, false), ginkgo.Entry("GCR", GcrImplementationName, false),
+			ginkgo.Entry("Quay", QuayImplementationName, false), ginkgo.Entry("Docker Hub", DockerHubImplementationName, false),
+			ginkgo.Entry("GitHub", GitHubPackagesImplementationName, false))
+	}
 })

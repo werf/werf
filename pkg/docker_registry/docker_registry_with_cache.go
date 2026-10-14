@@ -89,8 +89,7 @@ func (r *DockerRegistryWithCache) getTagsListFromRegistry(ctx context.Context, r
 		if err != nil {
 			return nil, fmt.Errorf("fetch fresh tags for repo %q: %w", reference, err)
 		}
-		r.storeTagsToCache(cachedTagsID, tags, sequence)
-		return tags, nil
+		return r.storeTagsToCache(cachedTagsID, tags, sequence), nil
 	}
 	if tags, ok := r.tryLoadTagsFromCache(cachedTagsID, opts...); ok {
 		outcome = opstats.CacheOutcomeHit
@@ -107,7 +106,7 @@ func (r *DockerRegistryWithCache) getTagsListFromRegistry(ctx context.Context, r
 		sequence := r.nextListingSequence()
 		tags, err := r.Interface.Tags(ctx, reference, opts...)
 		if err == nil {
-			r.storeTagsToCache(cachedTagsID, tags, sequence)
+			tags = r.storeTagsToCache(cachedTagsID, tags, sequence)
 		}
 		return tags, err
 	})
@@ -138,11 +137,16 @@ func (r *DockerRegistryWithCache) nextListingSequence() uint64 {
 }
 
 // A slow earlier listing must not replace a newer authoritative result in the cache.
-func (r *DockerRegistryWithCache) storeTagsToCache(id string, tags []string, sequence uint64) {
+func (r *DockerRegistryWithCache) storeTagsToCache(id string, tags []string, sequence uint64) []string {
 	r.cacheWriteMu.Lock()
 	defer r.cacheWriteMu.Unlock()
 	if r.storedSequence[id] > sequence {
-		return
+		if value, ok := r.cachedTagsMap.Load(id); ok {
+			if cached, err := castTagsList(value); err == nil {
+				return cached
+			}
+		}
+		return tags
 	}
 	if r.storedSequence == nil {
 		r.storedSequence = make(map[string]uint64)
@@ -159,6 +163,7 @@ func (r *DockerRegistryWithCache) storeTagsToCache(id string, tags []string, seq
 		r.publishedTags[id] = pending
 	}
 	r.cachedTagsMap.Store(id, tags)
+	return tags
 }
 
 func castTagsList(tagsList interface{}) ([]string, error) {
@@ -303,7 +308,7 @@ func (r *DockerRegistryWithCache) ManifestExists(ctx context.Context, reference 
 	return r.Interface.ManifestExists(ctx, reference)
 }
 
-// AddCachedTag preserves local publications without treating a partial inventory as a full listing.
+// AddCachedTag preserves observed tags across older listings without creating a full inventory.
 func AddCachedTag(ctx context.Context, registry Interface, reference string) {
 	r, ok := registry.(*DockerRegistryWithCache)
 	if !ok {
@@ -320,6 +325,13 @@ func AddCachedTag(ctx context.Context, registry Interface, reference string) {
 	id := parts.registry + "/" + parts.repository
 	r.cacheWriteMu.Lock()
 	defer r.cacheWriteMu.Unlock()
+	if r.publishedTags == nil {
+		r.publishedTags = make(map[string]map[string]uint64)
+	}
+	if r.publishedTags[id] == nil {
+		r.publishedTags[id] = make(map[string]uint64)
+	}
+	r.publishedTags[id][parts.tag] = r.listingSequence
 	value, ok := r.cachedTagsMap.Load(id)
 	if !ok {
 		return
@@ -331,13 +343,6 @@ func AddCachedTag(ctx context.Context, registry Interface, reference string) {
 	if !slices.Contains(tags, parts.tag) {
 		tags = append(slices.Clone(tags), parts.tag)
 	}
-	if r.publishedTags == nil {
-		r.publishedTags = make(map[string]map[string]uint64)
-	}
-	if r.publishedTags[id] == nil {
-		r.publishedTags[id] = make(map[string]uint64)
-	}
-	r.publishedTags[id][parts.tag] = r.listingSequence
 	r.cachedTagsMap.Store(id, tags)
 }
 

@@ -350,6 +350,9 @@ func (storage *RepoStagesStorage) GetStagesIDsByDigest(ctx context.Context, _, d
 			}
 			return nil, fmt.Errorf("unable to get digest and creation timestamp from rejected stage tag %q: %w", tag, err)
 		} else if parsedDigest == digest {
+			if o.fresh {
+				docker_registry.AddCachedTag(ctx, storage.DockerRegistry, storage.RepoAddress+":"+tag)
+			}
 			logboek.Context(ctx).Info().LogF("Found rejected stage %q\n", tag)
 			rejectedStages = append(rejectedStages, *image.NewStageID(digest, creationTs))
 		}
@@ -431,6 +434,7 @@ func (storage *RepoStagesStorage) GetStageDesc(ctx context.Context, projectName 
 	if rejected, err := storage.DockerRegistry.ManifestExists(ctx, rejectedImageName); err != nil {
 		return nil, fmt.Errorf("unable to check rejected image record %q: %w", rejectedImageName, err)
 	} else if rejected {
+		docker_registry.AddCachedTag(ctx, storage.DockerRegistry, rejectedImageName)
 		logboek.Context(ctx).Info().LogF("Stage digest %s creation timestamp %d image is rejected: ignore stage image\n", stageID.Digest, stageID.CreationTs)
 		return nil, ErrStageRejected
 	}
