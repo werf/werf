@@ -17,6 +17,20 @@ import (
 	"github.com/werf/werf/v3/pkg/storage"
 )
 
+func newManifestStorageManager(ctx context.Context) *StorageManager {
+	server := httptest.NewServer(registry.New())
+	ginkgo.DeferCleanup(server.Close)
+	repoAddress := strings.TrimPrefix(server.URL, "http://") + "/project/werf"
+	dockerRegistry, err := docker_registry.NewDockerRegistry(ctx, repoAddress, docker_registry.DefaultImplementationName, docker_registry.DockerRegistryOptions{InsecureRegistry: true})
+	gomega.Expect(err).To(gomega.Succeed())
+	return &StorageManager{
+		ProjectName: "test-project",
+		StagesStorage: storage.NewRepoStagesStorage(&storage.NewRepoStagesStorageOptions{
+			RepoAddress: repoAddress, DockerRegistry: dockerRegistry,
+		}),
+	}
+}
+
 func newTagsListStorageManager(tagsListStatus int) (*StorageManager, *atomic.Int32) {
 	var tagsListRequests atomic.Int32
 
