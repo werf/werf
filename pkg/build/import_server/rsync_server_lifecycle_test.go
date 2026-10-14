@@ -76,5 +76,5 @@ exit %d
 		gomega.Expect(string(output)).To(gomega.ContainSubstring("set +x"))
 		gomega.Expect(string(output)).NotTo(gomega.ContainSubstring("fixture-secret"))
 	}, ginkgo.Entry("successful copy", 0, 0, 0), ginkgo.Entry("stat transport failure", 10, 0, 10),
-		ginkgo.Entry("copy transport failure", 0, 10, 10), ginkgo.Entry("partial transfer", 0, 23, 23))
+		ginkgo.Entry("copy transport failure", 0, 10, 10), ginkgo.Entry("protocol stream failure", 0, 12, 12), ginkgo.Entry("partial transfer", 0, 23, 23))
 })

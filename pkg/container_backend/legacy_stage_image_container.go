@@ -125,7 +125,7 @@ func (c *LegacyStageImageContainer) prepareRunCommandArgs() []string {
 	// stdin already drained. The redirect only makes that explicit.
 	return []string{
 		"-i", c.imageRef(c.image.fromImage), "-ec",
-		`script=$(</dev/stdin); eval "$script" < /dev/null`,
+		`set +xv; script=$(</dev/stdin); eval "$script" < /dev/null`,
 	}
 }
 

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -29,7 +30,7 @@ var _ = ginkgo.Describe("Import stage recovery", func() {
 	ginkgo.It("refreshes commands and discards partial contents before one retry", func(ctx ginkgo.SpecContext) {
 		destination := filepath.Join(ginkgo.GinkgoT().TempDir(), "destination")
 		generation, attempts := 0, 0
-		err := runImportAttempts(ctx, func(context.Context) error { generation++; return nil }, func(context.Context) error {
+		err := (&LegacyStageImageContainer{}).runImportAttempts(ctx, func(context.Context) error { generation++; return nil }, func(context.Context) error {
 			attempts++
 			if attempts == 1 {
 				gomega.Expect(os.WriteFile(destination, []byte("partial"), 0o600)).To(gomega.Succeed())
@@ -55,7 +56,7 @@ var _ = ginkgo.Describe("Import stage recovery", func() {
 		if failure == "data" {
 			original = fmt.Errorf("original: %w", cli.StatusError{StatusCode: 23})
 		}
-		err := runImportAttempts(callCtx, func(context.Context) error {
+		err := (&LegacyStageImageContainer{}).runImportAttempts(callCtx, func(context.Context) error {
 			prepares++
 			if prepares == 2 && failure == "refresh" {
 				return errors.New("refresh failed")
@@ -85,7 +86,7 @@ var _ = ginkgo.Describe("Import stage recovery", func() {
 		cancel()
 		called := false
 		operation := func(context.Context) error { called = true; return nil }
-		gomega.Expect(runImportAttempts(callCtx, operation, operation, operation)).To(gomega.MatchError(context.Canceled))
+		gomega.Expect((&LegacyStageImageContainer{}).runImportAttempts(callCtx, operation, operation, operation)).To(gomega.MatchError(context.Canceled))
 		gomega.Expect(called).To(gomega.BeFalse())
 	})
 
@@ -100,4 +101,36 @@ var _ = ginkgo.Describe("Import stage recovery", func() {
 		gomega.Expect(strings.Join(c.prepareAllRunCommands(), "\n")).NotTo(gomega.ContainSubstring("fixture-secret"))
 		gomega.Expect(c.prepareAllRunCommands()).To(gomega.HaveLen(3))
 	})
+
+	ginkgo.DescribeTable("keeps inherited shell tracing away from import credentials", func(ctx ginkgo.SpecContext, options string) {
+		c := newLegacyStageImageContainer(&LegacyStageImage{fromImage: &LegacyStageImage{legacyBaseImage: &legacyBaseImage{name: "base"}}})
+		c.importCommands = []string{"(set +x; RSYNC_PASSWORD='fixture-secret' printf copied)"}
+		args := c.prepareRunCommandArgs()
+		process := exec.CommandContext(ctx, "bash", args[2], args[3])
+		process.Env = append(os.Environ(), "SHELLOPTS="+options)
+		process.Stdin = strings.NewReader(c.prepareRunCommand())
+		output, err := process.CombinedOutput()
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), string(output))
+		gomega.Expect(string(output)).To(gomega.ContainSubstring("copied"))
+		gomega.Expect(string(output)).NotTo(gomega.ContainSubstring("fixture-secret"))
+	}, ginkgo.Entry("xtrace", "xtrace"), ginkgo.Entry("verbose", "verbose"), ginkgo.Entry("both", "xtrace:verbose"))
+
+	ginkgo.DescribeTable("does not replay mixed command stages", func(ctx ginkgo.SpecContext, service bool) {
+		container := &LegacyStageImageContainer{}
+		if service {
+			container.AddServiceRunCommands("exit 10")
+		} else {
+			container.AddRunCommands("exit 10")
+		}
+		prepares, runs, discards := 0, 0, 0
+		original := cli.StatusError{StatusCode: 10}
+		err := container.runImportAttempts(ctx,
+			func(context.Context) error { prepares++; return nil },
+			func(context.Context) error { runs++; return original },
+			func(context.Context) error { discards++; return nil })
+		gomega.Expect(err).To(gomega.Equal(original))
+		gomega.Expect(prepares).To(gomega.Equal(1))
+		gomega.Expect(runs).To(gomega.Equal(1))
+		gomega.Expect(discards).To(gomega.BeZero())
+	}, ginkgo.Entry("user commands", false), ginkgo.Entry("service commands", true))
 })
