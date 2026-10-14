@@ -84,5 +84,11 @@ var _ = ginkgo.Describe("Buildah image metadata after retagging", func() {
 		gomega.Expect(after.ID).To(gomega.Equal(before.ID))
 		gomega.Expect(after.RepoDigest).To(gomega.Equal(before.RepoDigest))
 		gomega.Expect(after.RepoDigest).NotTo(gomega.Equal("registry.example.org/project/base@" + manifestDigests["arm64"]))
+		for _, length := range []int{8, 12, 64} {
+			byID, err := backend.GetImageInfo(context.Background(), imageIDs["amd64"][:length], GetImageInfoOpts{})
+			gomega.Expect(err).NotTo(gomega.HaveOccurred())
+			gomega.Expect(byID.ID).To(gomega.Equal(before.ID))
+			gomega.Expect(byID.RepoDigest).To(gomega.BeEmpty())
+		}
 	})
 })

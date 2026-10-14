@@ -862,7 +862,8 @@ func (backend *BuildahBackend) GetImageInfo(ctx context.Context, ref string, opt
 		if len(list) > 0 {
 			repoDigest = image.ExtractRepoDigest(list[0].RepoDigests, repository)
 		}
-		if repoDigest == "" && inspect.FromImageDigest != "" {
+		isImageID := inspect.FromImageID != "" && strings.HasPrefix(strings.TrimPrefix(inspect.FromImageID, "sha256:"), ref)
+		if repoDigest == "" && inspect.FromImageDigest != "" && !isImageID {
 			if named, err := reference.ParseNormalizedNamed(ref); err == nil {
 				repoDigest = image.NormalizeRepository(named.Name()) + "@" + inspect.FromImageDigest
 			}
