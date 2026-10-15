@@ -2,21 +2,28 @@ package migrate
 
 import (
 	"context"
+	"crypto/sha256"
+	"errors"
 	"fmt"
+	"time"
 
+	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v3/cmd/werf/common"
 	"github.com/werf/werf/v3/pkg/storage"
+	"github.com/werf/werf/v3/pkg/storage/synchronization/lock_manager"
 	"github.com/werf/werf/v3/pkg/tmp_manager"
 	"github.com/werf/werf/v3/pkg/true_git"
 )
 
 var (
-	commonCmdData common.CmdData
-	removeSource  bool
+	commonCmdData      common.CmdData
+	removeSource       bool
+	parallelTasksLimit int
+	migrationTimeout   time.Duration
 )
 
 func NewCmd(ctx context.Context) *cobra.Command {
@@ -28,6 +35,12 @@ func NewCmd(ctx context.Context) *cobra.Command {
 		Long:                  "Copy the project's managed-images, image-metadata-by-commit, custom-tag metadata and last-cleanup record from --from into --to, then record the meta-repo marker in --from so subsequent runs are forced to use the same --meta-repo. Copy is verified before any source record is removed.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
+			if parallelTasksLimit < 1 {
+				return fmt.Errorf("--parallel-tasks-limit must be positive")
+			}
+			if migrationTimeout < 0 {
+				return fmt.Errorf("--timeout must not be negative")
+			}
 
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
@@ -70,6 +83,17 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	commonCmdData.SetupAllowIncludesUpdate(cmd)
 
 	cmd.Flags().BoolVar(&removeSource, "remove-source", util.GetBoolEnvironmentDefaultTrue("WERF_REMOVE_SOURCE"), "Delete the original metadata records from --from after they are verified present in --to (default $WERF_REMOVE_SOURCE or true if not specified)")
+
+	parallelDefault, err := util.GetInt64EnvVar("WERF_PARALLEL_TASKS_LIMIT")
+	if err != nil {
+		panic(err)
+	}
+	cmd.Flags().IntVar(&parallelTasksLimit, "parallel-tasks-limit", int(lo.FromPtrOr(parallelDefault, 5)), "Maximum number of concurrent metadata operations, must be positive (default $WERF_PARALLEL_TASKS_LIMIT or 5)")
+	timeoutDefault, err := util.GetDurationEnvVar("WERF_META_REPO_MIGRATE_TIMEOUT")
+	if err != nil {
+		panic(err)
+	}
+	cmd.Flags().DurationVar(&migrationTimeout, "timeout", timeoutDefault, "Request cancellation of registry migration after this duration, starting after lock acquisition (e.g. 30m, 2h); 0 disables the limit (default $WERF_META_REPO_MIGRATE_TIMEOUT). Rerun the command to resume after interruption")
 
 	return cmd
 }
@@ -155,10 +179,37 @@ func run(ctx context.Context) error {
 		return fmt.Errorf("--to must be set to a container registry address different from --from")
 	}
 
-	if err := storage.MigrateMetaRepo(ctx, projectName, src, dst, storage.MigrateMetaRepoOptions{RemoveSource: removeSource}); err != nil {
+	if err := migrateWithLock(ctx, projectName, src, dst, storageManager.StorageLockManager, storage.MigrateMetaRepoOptions{RemoveSource: removeSource, ParallelTasksLimit: parallelTasksLimit}, migrationTimeout); err != nil {
 		return fmt.Errorf("unable to migrate metadata for project %q: %w", projectName, err)
 	}
 
 	logboek.Context(ctx).Default().LogF("Metadata for project %q migrated to meta-repo %s; safeguard enabled in %s\n", projectName, dst.Address(), src.Address())
 	return nil
+}
+
+func migrateWithLock(ctx context.Context, projectName string, src, dst *storage.RepoStagesStorage, locks lock_manager.Interface, opts storage.MigrateMetaRepoOptions, timeout time.Duration) error {
+	source, err := storage.CanonicalRepoAddress(src.Address())
+	if err != nil {
+		return err
+	}
+	lockName := fmt.Sprintf("meta-repo-migrate-%x", sha256.Sum256([]byte(source)))
+	var handle lock_manager.LockHandle
+	if err := logboek.Context(ctx).Default().LogProcess("Waiting for metadata migration lock on %s", source).DoError(func() error {
+		var err error
+		handle, err = locks.LockStage(ctx, projectName, lockName)
+		return err
+	}); err != nil {
+		return fmt.Errorf("lock metadata migration: %w", err)
+	}
+	if timeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, timeout)
+		defer cancel()
+	}
+	err = storage.MigrateMetaRepo(ctx, projectName, src, dst, opts)
+	unlockErr := locks.Unlock(context.WithoutCancel(ctx), handle)
+	if unlockErr != nil {
+		unlockErr = fmt.Errorf("unlock metadata migration: %w", unlockErr)
+	}
+	return errors.Join(err, unlockErr)
 }

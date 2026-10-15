@@ -321,7 +321,7 @@ var _ = Describe("meta-repo marker", func() {
 
 	Describe("collectMetadataRecords", func() {
 		collectedTags := func(ctx context.Context) []string {
-			records, err := stages.collectMetadataRecords(ctx)
+			records, err := stages.collectMetadataRecords(ctx, 1)
 			Expect(err).NotTo(HaveOccurred())
 			tags := make([]string, 0, len(records))
 			for _, rec := range records {
