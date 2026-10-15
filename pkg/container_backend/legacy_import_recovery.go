@@ -59,23 +59,26 @@ func (c *LegacyStageImageContainer) runImportAttempts(ctx context.Context, prepa
 	if err := ctx.Err(); err != nil {
 		return err
 	}
+	c.importDestinationDiscarded = false
 	original := run(ctx)
 	if original == nil || ctx.Err() != nil || len(c.runCommands) != 0 || len(c.serviceRunCommands) != 0 || !isImportTransportError(original) {
 		return original
 	}
 	if err := discard(ctx); err != nil {
-		return fmt.Errorf("import failed: %w; discard destination: %v", original, err)
+		return errors.Join(original, fmt.Errorf("discard import destination: %w", err))
 	}
+	c.importDestinationDiscarded = true
 	if ctx.Err() != nil {
 		return original
 	}
 	if err := prepare(ctx); err != nil {
-		return fmt.Errorf("import failed: %w; refresh imports: %v", original, err)
+		return errors.Join(original, fmt.Errorf("refresh imports: %w", err))
 	}
 	if ctx.Err() != nil {
 		return original
 	}
 	logboek.Context(ctx).Warn().LogLn("Retrying import stage in a clean container after a transport failure")
+	c.importDestinationDiscarded = false
 	if err := run(ctx); err != nil {
 		return errors.Join(original, err)
 	}

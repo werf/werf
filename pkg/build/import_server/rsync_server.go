@@ -150,14 +150,11 @@ func RunRsyncServer(ctx context.Context, dockerImageName, tmpDir, targetPlatform
 	if inspect.State == nil || !inspect.State.Running {
 		return nil, fmt.Errorf("import server %s stopped during startup", srv.DockerContainerName)
 	}
-	if inspect.NetworkSettings == nil {
-		return nil, fmt.Errorf("import server %s has no network settings", srv.DockerContainerName)
+	address, err := bridgeNetworkIPAddress(inspect.NetworkSettings)
+	if err != nil {
+		return nil, fmt.Errorf("get import server %s bridge address: %w", srv.DockerContainerName, err)
 	}
-	bridge := inspect.NetworkSettings.Networks["bridge"]
-	if bridge == nil || !bridge.IPAddress.IsValid() {
-		return nil, fmt.Errorf("import server %s has no bridge address", srv.DockerContainerName)
-	}
-	srv.IPAddress = bridge.IPAddress.String()
+	srv.IPAddress = address
 	srv.DockerImageName = inspect.Image
 	if srv.DockerImageName == "" {
 		return nil, fmt.Errorf("import server %s has no source image ID", srv.DockerContainerName)
@@ -198,8 +195,8 @@ func (srv *RsyncServer) Healthy(ctx context.Context) (bool, error) {
 	if inspect.State == nil || !inspect.State.Running || inspect.NetworkSettings == nil {
 		return false, nil
 	}
-	bridge := inspect.NetworkSettings.Networks["bridge"]
-	return bridge != nil && bridge.IPAddress.String() == srv.IPAddress && srv.IPAddress != "", nil
+	address, err := bridgeNetworkIPAddress(inspect.NetworkSettings)
+	return err == nil && address == srv.IPAddress && srv.IPAddress != "", nil
 }
 
 func (srv *RsyncServer) Shutdown(ctx context.Context) error {

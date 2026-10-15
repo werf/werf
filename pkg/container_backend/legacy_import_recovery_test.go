@@ -52,11 +52,12 @@ var _ = ginkgo.Describe("Import stage recovery", func() {
 		callCtx, cancel := context.WithCancel(ctx)
 		defer cancel()
 		runs, prepares := 0, 0
-		original := fmt.Errorf("original: %w", cli.StatusError{StatusCode: 10})
+		original := fmt.Errorf("container run failed: %w", cli.StatusError{StatusCode: 10})
 		if failure == "data" {
 			original = fmt.Errorf("original: %w", cli.StatusError{StatusCode: 23})
 		}
-		err := (&LegacyStageImageContainer{}).runImportAttempts(callCtx, func(context.Context) error {
+		container := &LegacyStageImageContainer{}
+		err := container.runImportAttempts(callCtx, func(context.Context) error {
 			prepares++
 			if prepares == 2 && failure == "refresh" {
 				return errors.New("refresh failed")
@@ -77,6 +78,10 @@ var _ = ginkgo.Describe("Import stage recovery", func() {
 		gomega.Expect(errors.Is(err, original)).To(gomega.BeTrue())
 		gomega.Expect(runs).To(gomega.Equal(expectedRuns))
 		gomega.Expect(prepares).To(gomega.Equal(expectedPrepares))
+		gomega.Expect(container.importDestinationDiscarded).To(gomega.Equal(failure == "refresh"))
+		if failure != "data" {
+			gomega.Expect(err.Error()).To(gomega.HavePrefix("container run failed"))
+		}
 	}, ginkgo.Entry("repeated transport failure", "repeat", 2, 2),
 		ginkgo.Entry("data failure", "data", 1, 1), ginkgo.Entry("canceled worker", "cancel", 1, 1),
 		ginkgo.Entry("replacement failure", "refresh", 1, 2), ginkgo.Entry("removal conflict", "remove", 1, 1))
