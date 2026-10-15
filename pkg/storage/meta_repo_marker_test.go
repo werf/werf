@@ -182,7 +182,7 @@ var _ = ginkgo.Describe("meta-repo marker", func() {
 
 	ginkgo.Describe("collectMetadataRecords", func() {
 		collectedTags := func(ctx context.Context) []string {
-			records, err := stages.collectMetadataRecords(ctx)
+			records, err := stages.collectMetadataRecords(ctx, 1)
 			gomega.Expect(err).NotTo(gomega.HaveOccurred())
 			tags := make([]string, 0, len(records))
 			for _, rec := range records {

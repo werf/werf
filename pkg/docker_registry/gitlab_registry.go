@@ -146,42 +146,42 @@ func (r *gitLabRegistry) DeleteRepoImage(ctx context.Context, repoImage *image.I
 	return nil
 }
 
-func (r *gitLabRegistry) deleteRepoImageManifestTagWithFullScope(_ context.Context, repoImage *image.Info) error {
+func (r *gitLabRegistry) deleteRepoImageManifestTagWithFullScope(ctx context.Context, repoImage *image.Info) error {
 	reference := strings.Join([]string{repoImage.Repository, repoImage.Tag}, ":")
-	return r.customDeleteRepoImage("/v2/%s/manifests/%s", reference, fullScopeFunc)
+	return r.customDeleteRepoImage(ctx, "/v2/%s/manifests/%s", reference, fullScopeFunc)
 }
 
-func (r *gitLabRegistry) deleteRepoImageManifestTagWithUniversalScope(_ context.Context, repoImage *image.Info) error {
+func (r *gitLabRegistry) deleteRepoImageManifestTagWithUniversalScope(ctx context.Context, repoImage *image.Info) error {
 	reference := strings.Join([]string{repoImage.Repository, repoImage.Tag}, ":")
-	return r.customDeleteRepoImage("/v2/%s/manifests/%s", reference, universalScopeFunc)
+	return r.customDeleteRepoImage(ctx, "/v2/%s/manifests/%s", reference, universalScopeFunc)
 }
 
-func (r *gitLabRegistry) deleteRepoImageTagWithUniversalScope(_ context.Context, repoImage *image.Info) error {
-	return r.deleteRepoImageTagWithCustomScope(repoImage, universalScopeFunc)
+func (r *gitLabRegistry) deleteRepoImageTagWithUniversalScope(ctx context.Context, repoImage *image.Info) error {
+	return r.deleteRepoImageTagWithCustomScope(ctx, repoImage, universalScopeFunc)
 }
 
-func (r *gitLabRegistry) deleteRepoImageTagWithFullScope(_ context.Context, repoImage *image.Info) error {
-	return r.deleteRepoImageTagWithCustomScope(repoImage, fullScopeFunc)
+func (r *gitLabRegistry) deleteRepoImageTagWithFullScope(ctx context.Context, repoImage *image.Info) error {
+	return r.deleteRepoImageTagWithCustomScope(ctx, repoImage, fullScopeFunc)
 }
 
-func (r *gitLabRegistry) deleteRepoImageWithUniversalScope(_ context.Context, repoImage *image.Info) error {
-	return r.deleteRepoImageWithCustomScope(repoImage, universalScopeFunc)
+func (r *gitLabRegistry) deleteRepoImageWithUniversalScope(ctx context.Context, repoImage *image.Info) error {
+	return r.deleteRepoImageWithCustomScope(ctx, repoImage, universalScopeFunc)
 }
 
-func (r *gitLabRegistry) deleteRepoImageWithFullScope(_ context.Context, repoImage *image.Info) error {
-	return r.deleteRepoImageWithCustomScope(repoImage, fullScopeFunc)
+func (r *gitLabRegistry) deleteRepoImageWithFullScope(ctx context.Context, repoImage *image.Info) error {
+	return r.deleteRepoImageWithCustomScope(ctx, repoImage, fullScopeFunc)
 }
 
-func (r *gitLabRegistry) deleteRepoImageTagWithCustomScope(repoImage *image.Info, scopeFunc func(ref name.Reference) []string) error {
+func (r *gitLabRegistry) deleteRepoImageTagWithCustomScope(ctx context.Context, repoImage *image.Info, scopeFunc func(ref name.Reference) []string) error {
 	reference := strings.Join([]string{repoImage.Repository, repoImage.Tag}, ":")
-	return r.customDeleteRepoImage("/v2/%s/tags/reference/%s", reference, scopeFunc)
+	return r.customDeleteRepoImage(ctx, "/v2/%s/tags/reference/%s", reference, scopeFunc)
 }
 
-func (r *gitLabRegistry) deleteRepoImageWithCustomScope(repoImage *image.Info, scopeFunc func(ref name.Reference) []string) error {
-	return r.customDeleteRepoImage("/v2/%s/manifests/%s", repoImage.RepoDigest, scopeFunc)
+func (r *gitLabRegistry) deleteRepoImageWithCustomScope(ctx context.Context, repoImage *image.Info, scopeFunc func(ref name.Reference) []string) error {
+	return r.customDeleteRepoImage(ctx, "/v2/%s/manifests/%s", repoImage.RepoDigest, scopeFunc)
 }
 
-func (r *gitLabRegistry) customDeleteRepoImage(endpointFormat, reference string, scopeFunc func(ref name.Reference) []string) error {
+func (r *gitLabRegistry) customDeleteRepoImage(ctx context.Context, endpointFormat, reference string, scopeFunc func(ref name.Reference) []string) error {
 	ref, err := name.ParseReference(reference, r.api.parseReferenceOptions()...)
 	if err != nil {
 		return fmt.Errorf("parsing reference %q: %w", reference, err)
@@ -193,7 +193,7 @@ func (r *gitLabRegistry) customDeleteRepoImage(endpointFormat, reference string,
 	}
 
 	scope := scopeFunc(ref)
-	tr, err := transport.New(ref.Context().Registry, auth, r.api.httpTransport, scope)
+	tr, err := transport.NewWithContext(ctx, ref.Context().Registry, auth, r.api.httpTransport, scope)
 	if err != nil {
 		return err
 	}
@@ -205,7 +205,7 @@ func (r *gitLabRegistry) customDeleteRepoImage(endpointFormat, reference string,
 		Path:   fmt.Sprintf(endpointFormat, ref.Context().RepositoryStr(), ref.Identifier()),
 	}
 
-	req, err := http.NewRequest(http.MethodDelete, u.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, u.String(), nil)
 	if err != nil {
 		return err
 	}

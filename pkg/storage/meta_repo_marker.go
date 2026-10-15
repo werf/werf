@@ -153,28 +153,43 @@ func isMetadataRecord(tag string, info *image.Info) bool {
 
 // collectMetadataRecords returns the metadata records stored in this repo, per
 // isMetadataRecord.
-func (storage *RepoStagesStorage) collectMetadataRecords(ctx context.Context) ([]metadataRecord, error) {
-	tags, err := storage.Tags(ctx, storage.RepoAddress, docker_registry.WithCachedTags())
-	if err != nil {
-		return nil, fmt.Errorf("unable to get repo %s tags: %w", storage.RepoAddress, err)
+func (storage *RepoStagesStorage) collectMetadataRecords(ctx context.Context, workers int) ([]metadataRecord, error) {
+	var tags []string
+	if err := runMetaMigrationPhase(ctx, "list source tags", 1, 1, metaMigrationProgressInterval, func(ctx context.Context, _ int) error {
+		var err error
+		tags, err = storage.Tags(ctx, storage.RepoAddress, docker_registry.WithCachedTags())
+		return err
+	}); err != nil {
+		return nil, fmt.Errorf("get repo %s tags: %w", storage.RepoAddress, err)
 	}
 
-	var res []metadataRecord
+	var candidates []string
 	for _, tag := range tags {
-		if !isMetadataCandidateTag(tag) {
-			continue
+		if isMetadataCandidateTag(tag) {
+			candidates = append(candidates, tag)
 		}
-
+	}
+	logboek.Context(ctx).Default().LogF("Metadata migration: found %d candidate tags among %d source tags\n", len(candidates), len(tags))
+	records := make([]metadataRecord, len(candidates))
+	if err := runMetaMigrationPhase(ctx, "inspect source metadata", len(candidates), workers, metaMigrationProgressInterval, func(ctx context.Context, index int) error {
+		tag := candidates[index]
 		fullImageName := fmt.Sprintf("%s:%s", storage.RepoAddress, tag)
 		img, err := storage.DockerRegistry.TryGetRepoImage(ctx, fullImageName)
 		if err != nil {
-			return nil, fmt.Errorf("unable to get repo image %q: %w", fullImageName, err)
+			return fmt.Errorf("get repo image %q: %w", fullImageName, err)
 		}
-		if img == nil || !isMetadataRecord(tag, img) {
-			continue
+		if img != nil && isMetadataRecord(tag, img) {
+			records[index] = metadataRecord{tag: tag, info: img}
 		}
-
-		res = append(res, metadataRecord{tag: tag, info: img})
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	var res []metadataRecord
+	for _, record := range records {
+		if record.info != nil {
+			res = append(res, record)
+		}
 	}
 	return res, nil
 }
@@ -335,7 +350,8 @@ func SetupMetaRepoSafeguard(ctx context.Context, projectName string, stagesStora
 }
 
 type MigrateMetaRepoOptions struct {
-	RemoveSource bool
+	RemoveSource       bool
+	ParallelTasksLimit int
 }
 
 // MigrateMetaRepo copies the project's metadata records from the source stages
@@ -363,12 +379,13 @@ func MigrateMetaRepo(ctx context.Context, projectName string, src, dst *RepoStag
 		return fmt.Errorf("--from %q already has a meta-repo safeguard for project %q pointing at %q; refusing to migrate to %q", src.Address(), projectName, markerAddr, dstCanonical)
 	}
 
-	records, err := src.collectMetadataRecords(ctx)
+	records, err := src.collectMetadataRecords(ctx, opts.ParallelTasksLimit)
 	if err != nil {
 		return err
 	}
 
-	for _, rec := range records {
+	if err := runMetaMigrationPhase(ctx, "copy metadata", len(records), opts.ParallelTasksLimit, metaMigrationProgressInterval, func(ctx context.Context, index int) error {
+		rec := records[index]
 		dstRef := fmt.Sprintf("%s:%s", dst.Address(), rec.tag)
 		existing, err := dst.DockerRegistry.TryGetRepoImage(ctx, dstRef)
 		if err != nil {
@@ -389,7 +406,7 @@ func MigrateMetaRepo(ctx context.Context, projectName string, src, dst *RepoStag
 			} else {
 				logboek.Context(ctx).Info().LogF("Skipping %s (already present in meta-repo)\n", rec.tag)
 			}
-			continue
+			return nil
 		}
 
 		srcRef := fmt.Sprintf("%s:%s", src.Address(), rec.tag)
@@ -397,6 +414,9 @@ func MigrateMetaRepo(ctx context.Context, projectName string, src, dst *RepoStag
 			return fmt.Errorf("unable to copy %s to %s: %w", srcRef, dstRef, err)
 		}
 		logboek.Context(ctx).Info().LogF("Copied %s to meta-repo\n", rec.tag)
+		return nil
+	}); err != nil {
+		return err
 	}
 
 	if err := src.PutMetaRepoMarker(ctx, projectName, dstCanonical); err != nil {
@@ -407,7 +427,8 @@ func MigrateMetaRepo(ctx context.Context, projectName string, src, dst *RepoStag
 		return nil
 	}
 
-	for _, rec := range records {
+	return runMetaMigrationPhase(ctx, "verify and remove source metadata", len(records), 1, metaMigrationProgressInterval, func(ctx context.Context, index int) error {
+		rec := records[index]
 		dstRef := fmt.Sprintf("%s:%s", dst.Address(), rec.tag)
 		img, err := dst.DockerRegistry.TryGetRepoImage(ctx, dstRef)
 		if err != nil {
@@ -420,6 +441,6 @@ func MigrateMetaRepo(ctx context.Context, projectName string, src, dst *RepoStag
 			return fmt.Errorf("unable to delete source %q: %w", rec.info.Name, err)
 		}
 		logboek.Context(ctx).Info().LogF("Removed source %s\n", rec.tag)
-	}
-	return nil
+		return nil
+	})
 }
