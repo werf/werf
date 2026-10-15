@@ -382,6 +382,9 @@ FindSuitableStages:
 			}
 			continue
 		} else {
+			if o.fresh {
+				docker_registry.AddCachedTag(ctx, storage.DockerRegistry, storage.RepoAddress+":"+tag)
+			}
 			stageID := image.NewStageID(digest, creationTs)
 
 			for _, rejectedStage := range rejectedStages {
