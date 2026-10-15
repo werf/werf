@@ -537,6 +537,43 @@ var _ = Describe("BuildahBackend GetImageInfo", func() {
 	})
 
 	const manifestDigest = "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+	DescribeTable("does not synthesize a repository digest outside a cached-ID lookup", func(targetPlatform, cachedID string) {
+		fakeBuildah := &buildahstub.BuildahStub{}
+		fakeBuildah.InspectFunc = func(_ context.Context, inspectedRef string) (*thirdparty.BuilderInfo, error) {
+			if inspectedRef != imageRef {
+				Expect(inspectedRef).To(Equal(cachedID))
+				return nil, fmt.Errorf("cached image unavailable: %w", storage.ErrImageUnknown)
+			}
+			inspect := &thirdparty.BuilderInfo{FromImageID: storageID, FromImageDigest: manifestDigest}
+			inspect.OCIv1.Platform = v1.Platform{OS: "linux", Architecture: "amd64"}
+			inspect.Docker.Config = lo.ToPtr(lo.FromPtr(inspect.Docker.Config))
+			return inspect, nil
+		}
+		fakeBuildah.ImagesFunc = func(_ context.Context, opts buildah.ImagesOptions) (image.ImagesList, error) {
+			Expect(opts.Filters).To(Equal([]commonutil.Pair[string, string]{commonutil.NewPair("id", storageID)}))
+			return image.ImagesList{{ID: storageID}}, nil
+		}
+		backend := NewBuildahBackend(fakeBuildah, BuildahBackendOptions{})
+		if cachedID != "" {
+			backend.storePulledImageID(imageRef, "linux/amd64", cachedID)
+		}
+		info, err := backend.GetImageInfo(context.Background(), imageRef, GetImageInfoOpts{TargetPlatform: targetPlatform})
+		Expect(err).NotTo(HaveOccurred())
+		Expect(info.ID).To(Equal("sha256:" + storageID))
+		Expect(info.RepoDigest).To(BeEmpty())
+		Expect(info.GetDigest()).To(BeEmpty())
+		if cachedID != "" && targetPlatform != "" {
+			Expect(fakeBuildah.InspectRefs).To(Equal([]string{cachedID, imageRef}))
+		} else {
+			Expect(fakeBuildah.InspectRefs).To(Equal([]string{imageRef}))
+		}
+	},
+		Entry("local image without a platform", "", ""),
+		Entry("platform requested without a cached ID", "linux/amd64", ""),
+		Entry("cached ID is ignored without a requested platform", "", "sha256:"+storageID),
+		Entry("stale cached ID falls back to the reference", "linux/amd64", "sha256:missing"),
+	)
+
 	DescribeTable("retains the manifest digest of a cached platform image", func(ref string, listedDigests []string, inspectedDigest, expectedDigest string) {
 		fakeBuildah := &buildahstub.BuildahStub{}
 		fakeBuildah.InspectFunc = func(_ context.Context, inspectedRef string) (*thirdparty.BuilderInfo, error) {
