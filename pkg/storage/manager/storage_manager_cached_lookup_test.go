@@ -38,10 +38,10 @@ var _ = ginkgo.Describe("Authoritative stage reconciliation wiring", func() {
 			releaseListing()
 			var stages image.StageDescSet
 			gomega.Eventually(stale, 5*time.Second).Should(gomega.Receive(&stages))
-			gomega.Expect(stages.IsEmpty()).To(gomega.BeTrue())
-			cached, err := manager.GetStageDescSetByDigestFromStagesStorageCached(ctxWithLogger, "stage", missingStageDigest, 0, manager.StagesStorage)
+			gomega.Expect(stages.Cardinality()).To(gomega.Equal(1))
+			freshAgain, err := manager.GetStageDescSetByDigestFromStagesStorageCached(ctxWithLogger, "stage", missingStageDigest, 0, manager.StagesStorage)
 			gomega.Expect(err).To(gomega.Succeed())
-			gomega.Expect(cached.Cardinality()).To(gomega.Equal(1), "a late older listing must not overwrite the fresh winner in the cache")
+			gomega.Expect(freshAgain.Cardinality()).To(gomega.Equal(1), "a late full listing must not hide the observed winner from cached lookup")
 		})
 		gomega.Eventually(listingStarted, 5*time.Second).Should(gomega.BeClosed())
 		winnerName := manager.StagesStorage.ConstructStageImageName(manager.ProjectName, missingStageDigest, 100)
@@ -87,7 +87,7 @@ var _ = ginkgo.Describe("Check mode stage lookup wiring", func() {
 		}()
 		ginkgo.DeferCleanup(func() {
 			releaseListing()
-			gomega.Eventually(stale, 5*time.Second).Should(gomega.Receive(gomega.BeEmpty()))
+			gomega.Eventually(stale, 5*time.Second).Should(gomega.Receive(gomega.HaveLen(1)))
 		})
 		gomega.Eventually(listingStarted, 5*time.Second).Should(gomega.BeClosed())
 
