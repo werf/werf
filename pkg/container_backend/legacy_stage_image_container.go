@@ -360,6 +360,7 @@ func (c *LegacyStageImageContainer) run(ctx context.Context) error {
 		return err
 	}
 
+	c.importDestinationDiscarded = false
 	RegisterRunningContainer(c.name, ctx)
 	err = docker.CliRunWithInput_LiveOutput(ctx, c.prepareRunCommand(ctx), runArgs...)
 	UnregisterRunningContainer(c.name)
