@@ -1,5 +1,21 @@
 # Changelog
 
+## [3.10.0](https://github.com/werf/werf/compare/v3.9.0...v3.10.0) (2026-10-15)
+
+
+### Features
+
+* **build:** fetch only the pinned commit of a submodule missing locally ([#8070](https://github.com/werf/werf/issues/8070)) ([dae2c2d](https://github.com/werf/werf/commit/dae2c2d2cf6ec0aacc9b4c3f98ab52ec0fe2bb22))
+* **deploy:** own Helm-compatible release storage with streamed reads ([#8061](https://github.com/werf/werf/issues/8061)) ([367a712](https://github.com/werf/werf/commit/367a7128fa52f3e7a8133d64b14fea17f7515e0f))
+
+
+### Bug Fixes
+
+* **build, stapel:** recover interrupted file imports ([#8074](https://github.com/werf/werf/issues/8074)) ([079791d](https://github.com/werf/werf/commit/079791d0bd52fd165fd9c6dfbca315f8e1d4b33c))
+* **build:** show git preparation in operations statistics ([#8068](https://github.com/werf/werf/issues/8068)) ([b2cd0c4](https://github.com/werf/werf/commit/b2cd0c40d7792460cb7111824189622e06b9ff79))
+* **build:** skip cached stages with invalid image config sizes ([#8065](https://github.com/werf/werf/issues/8065)) ([2f01f58](https://github.com/werf/werf/commit/2f01f583b50087099047b86a399fb14f74f6e5fc))
+* **cleanup:** speed up and report metadata migration progress ([#8078](https://github.com/werf/werf/issues/8078)) ([eb94043](https://github.com/werf/werf/commit/eb94043eb0ca1282c1b8476f7a96d509541a017b))
+
 ## [3.9.0](https://github.com/werf/werf/compare/v3.8.0...v3.9.0) (2026-10-12)
 
 
