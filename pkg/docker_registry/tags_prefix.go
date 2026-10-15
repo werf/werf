@@ -188,7 +188,7 @@ func readPrefixPage(response *http.Response, endpoint, current *url.URL, require
 		}
 		return nil, nil, true, nil
 	}
-	if response.StatusCode >= 300 && response.StatusCode < 400 {
+	if response.StatusCode > http.StatusOK && response.StatusCode < http.StatusBadRequest {
 		return nil, nil, false, nil
 	}
 	if err := transport.CheckError(response, http.StatusOK); err != nil {
