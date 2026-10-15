@@ -1,5 +1,20 @@
 # Changelog
 
+## [2.83.0](https://github.com/werf/werf/compare/v2.82.0...v2.83.0) (2026-10-15)
+
+
+### Features
+
+* **build:** fetch only the pinned commit of a submodule missing locally ([#8071](https://github.com/werf/werf/issues/8071)) ([8eeb30c](https://github.com/werf/werf/commit/8eeb30cf37c12bf3fb229ac669101f76e3a12029))
+
+
+### Bug Fixes
+
+* **build, stapel:** recover interrupted file imports ([#8076](https://github.com/werf/werf/issues/8076)) ([1fb67cd](https://github.com/werf/werf/commit/1fb67cdde4542b17ec0191a4bca3f039c2dd99a6))
+* **build:** show git preparation in operations statistics ([#8069](https://github.com/werf/werf/issues/8069)) ([c849c21](https://github.com/werf/werf/commit/c849c2100bbb50542aabb4f7b360da80208781a1))
+* **build:** skip cached stages with invalid image config sizes ([#8066](https://github.com/werf/werf/issues/8066)) ([3763b35](https://github.com/werf/werf/commit/3763b35ee07c24c9eff37f61302aa32ecaf1d5f9))
+* **cleanup:** speed up and report metadata migration progress ([#8079](https://github.com/werf/werf/issues/8079)) ([8eae981](https://github.com/werf/werf/commit/8eae9814a9c4a5e0494083501870328262625d07))
+
 ## [2.82.0](https://github.com/werf/werf/compare/v2.81.4...v2.82.0) (2026-10-12)
 
 
