@@ -109,6 +109,9 @@ werf meta-repo migrate [options]
             Enable verbose output (default $WERF_LOG_VERBOSE).
       --loose-giterminism=false
             Loose werf giterminism mode restrictions
+      --parallel-tasks-limit=5
+            Maximum number of concurrent metadata operations, must be positive (default             
+            $WERF_PARALLEL_TASKS_LIMIT or 5)
       --platform=[]
             Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT]     
             ($WERF_PLATFORM or $DOCKER_DEFAULT_PLATFORM by default)
@@ -133,6 +136,10 @@ werf meta-repo migrate [options]
             
             The same address should be specified for all werf processes that work with a single     
             repo. :local address allows execution of werf processes from a single host only
+      --timeout=0s
+            Request cancellation of registry migration after this duration, starting after lock     
+            acquisition (e.g. 30m, 2h); 0 disables the limit (default                               
+            $WERF_META_REPO_MIGRATE_TIMEOUT). Rerun the command to resume after interruption
       --tmp-dir=""
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
       --to=""

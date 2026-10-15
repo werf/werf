@@ -58,4 +58,19 @@ var _ = Describe("migrate command", func() {
 		Expect(flag).NotTo(BeNil())
 		Expect(flag.DefValue).To(Equal("true"))
 	})
+	It("rejects unsafe concurrency and timeout values before initialization", func() {
+		for arg, message := range map[string]string{"--parallel-tasks-limit=0": "--parallel-tasks-limit must be positive", "--timeout=-1s": "--timeout must not be negative"} {
+			cmd := NewCmd(context.Background())
+			cmd.SetArgs([]string{arg})
+			Expect(cmd.Execute()).To(MatchError(message))
+		}
+	})
+
+	It("reads the migration limits from environment", func() {
+		GinkgoT().Setenv("WERF_PARALLEL_TASKS_LIMIT", "7")
+		GinkgoT().Setenv("WERF_META_REPO_MIGRATE_TIMEOUT", "30m")
+		cmd := NewCmd(context.Background())
+		Expect(cmd.Flags().Lookup("parallel-tasks-limit").DefValue).To(Equal("7"))
+		Expect(cmd.Flags().Lookup("timeout").DefValue).To(Equal("30m0s"))
+	})
 })

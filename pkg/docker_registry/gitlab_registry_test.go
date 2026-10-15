@@ -300,3 +300,37 @@ var _ = ginkgo.DescribeTable("GitLab deletion authentication", func(allowWildcar
 	ginkgo.Entry("retries with wildcard scope and caches the successful scope", true),
 	ginkgo.Entry("does not try other deletion APIs when both scopes are denied", false),
 )
+
+var _ = ginkgo.DescribeTable("GitLab deletion cancellation", func(blockMethod string) {
+	started := make(chan struct{})
+	release := make(chan struct{})
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == blockMethod {
+			close(started)
+			select {
+			case <-r.Context().Done():
+			case <-release:
+			}
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+	ginkgo.DeferCleanup(server.Close)
+	ginkgo.DeferCleanup(func() { close(release) })
+	registry, err := newGitLabRegistry(gitLabRegistryOptions{})
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+	repository := strings.TrimPrefix(server.URL, "http://") + "/project/image"
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	result := make(chan error, 1)
+	go func() {
+		result <- registry.DeleteRepoImage(ctx, &image.Info{Name: repository + ":stage", Repository: repository, Tag: "stage"})
+	}()
+	gomega.Eventually(started).WithTimeout(time.Second).Should(gomega.BeClosed())
+	cancel()
+	gomega.Eventually(result).WithTimeout(time.Second).Should(gomega.Receive(&err))
+	gomega.Expect(errors.Is(err, context.Canceled)).To(gomega.BeTrue(), "error: %v", err)
+},
+	ginkgo.Entry("cancels registry authentication ping", http.MethodGet),
+	ginkgo.Entry("cancels the deletion request", http.MethodDelete),
+)
