@@ -172,6 +172,12 @@ var _ = Describe("submodule local object store reuse", func() {
 		Expect(updateSubmodules(ctx, superGitDir, workTreeDir)).To(Succeed())
 
 		expectFileContent(filepath.Join(workTreeDir, "sub", "file.txt"), "hello")
+
+		// The checked-out commit is held by a ref on this path too, not only after a remote update.
+		subSHA := strings.Fields(gitSucceed(ctx, superRepo, "ls-tree", "HEAD", "--", "sub"))[2]
+		worktreeGitDir, _, err := resolveWorkTreeGitDirs(ctx, workTreeDir)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(gitSucceedTrimmed(ctx, filepath.Join(worktreeGitDir, "modules", "sub"), "rev-parse", "--verify", "refs/werf/commits/"+subSHA)).To(Equal(subSHA))
 	})
 
 	// `git submodule add <url> third_party/sub` names the submodule after its path, and git stores it

@@ -16,6 +16,8 @@ werf supports Git submodules. If it detects that the files specified in the _git
 
 > All submodules in a project are bound to a specific commit. That way, all the collaborators get the same content. werf **does not initialize or update the submodules**. Instead, it merely uses these bound commits.
 
+When the submodule objects are not available in the local repository, werf fetches each missing submodule into its own service worktree as a shallow clone holding the remote's current tip and the bound commit without their history, falling back to a full clone for a submodule whose git server refuses the shallow fetch. Set `shallow = false` for a submodule in `.gitmodules` to always clone it in full, or set `WERF_DISABLE_SHALLOW_SUBMODULES=1` to disable shallow submodule clones entirely.
+
 Below is an example of a _git mapping_ configuration. In it, source files are added from a local repository (`/src` is the source and `/app` is the destination directory), while remote phantomjs source files are imported and saved in `/src/phantomjs`:
 
 ```yaml
