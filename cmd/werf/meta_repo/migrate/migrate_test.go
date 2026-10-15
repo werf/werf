@@ -58,4 +58,19 @@ var _ = ginkgo.Describe("migrate command", func() {
 		gomega.Expect(flag).NotTo(gomega.BeNil())
 		gomega.Expect(flag.DefValue).To(gomega.Equal("true"))
 	})
+	ginkgo.It("rejects unsafe concurrency and timeout values before initialization", func() {
+		for arg, message := range map[string]string{"--parallel-tasks-limit=0": "--parallel-tasks-limit must be positive", "--timeout=-1s": "--timeout must not be negative"} {
+			cmd := NewCmd(context.Background())
+			cmd.SetArgs([]string{arg})
+			gomega.Expect(cmd.Execute()).To(gomega.MatchError(message))
+		}
+	})
+
+	ginkgo.It("reads the migration limits from environment", func() {
+		ginkgo.GinkgoT().Setenv("WERF_PARALLEL_TASKS_LIMIT", "7")
+		ginkgo.GinkgoT().Setenv("WERF_META_REPO_MIGRATE_TIMEOUT", "30m")
+		cmd := NewCmd(context.Background())
+		gomega.Expect(cmd.Flags().Lookup("parallel-tasks-limit").DefValue).To(gomega.Equal("7"))
+		gomega.Expect(cmd.Flags().Lookup("timeout").DefValue).To(gomega.Equal("30m0s"))
+	})
 })
