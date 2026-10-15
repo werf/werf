@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -64,6 +65,7 @@ var _ = ginkgo.Describe("Import stage recovery", func() {
 			}
 			return nil
 		}, func(context.Context) error {
+			container.importDestinationDiscarded = false
 			runs++
 			if failure == "cancel" {
 				cancel()
@@ -119,6 +121,29 @@ var _ = ginkgo.Describe("Import stage recovery", func() {
 		gomega.Expect(string(output)).To(gomega.ContainSubstring("copied"))
 		gomega.Expect(string(output)).NotTo(gomega.ContainSubstring("fixture-secret"))
 	}, ginkgo.Entry("xtrace", "xtrace"), ginkgo.Entry("verbose", "verbose"), ginkgo.Entry("both", "xtrace:verbose"))
+
+	ginkgo.It("keeps the destination discarded when retry preparation fails before Docker run", func() {
+		ctx, _ := dockerDaemonContext(daemonHandler(http.StatusNotFound, `{"message":"No such image: pinned-base"}`))
+		backend := &DockerServerBackend{}
+		base := NewLegacyStageImage(&LegacyStageImage{}, "base", backend, "linux/amd64")
+		stage := NewLegacyStageImage(base, "destination", backend, "linux/amd64")
+		container := stage.container
+		container.baseImageID = "pinned-base"
+		runs := 0
+		err := container.runImportAttempts(ctx,
+			func(context.Context) error { return nil },
+			func(ctx context.Context) error {
+				runs++
+				if runs == 1 {
+					return fmt.Errorf("container run failed: %w", cli.StatusError{StatusCode: 12})
+				}
+				return container.run(ctx)
+			},
+			func(context.Context) error { return nil })
+		gomega.Expect(runs).To(gomega.Equal(2))
+		gomega.Expect(err).To(gomega.MatchError(gomega.ContainSubstring("image pinned-base is not available locally")))
+		gomega.Expect(container.importDestinationDiscarded).To(gomega.BeTrue())
+	})
 
 	ginkgo.DescribeTable("does not replay mixed command stages", func(ctx ginkgo.SpecContext, service bool) {
 		container := &LegacyStageImageContainer{}

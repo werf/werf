@@ -78,7 +78,6 @@ func (c *LegacyStageImageContainer) runImportAttempts(ctx context.Context, prepa
 		return original
 	}
 	logboek.Context(ctx).Warn().LogLn("Retrying import stage in a clean container after a transport failure")
-	c.importDestinationDiscarded = false
 	if err := run(ctx); err != nil {
 		return errors.Join(original, err)
 	}
