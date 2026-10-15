@@ -595,6 +595,9 @@ func newPrefixRegistryFixture(tags []string, mode string) *prefixRegistryFixture
 					gomega.Expect(err).NotTo(gomega.HaveOccurred())
 				}
 				return
+			case "204":
+				w.WriteHeader(http.StatusNoContent)
+				return
 			case "401":
 				w.WriteHeader(http.StatusUnauthorized)
 				return
