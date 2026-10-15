@@ -124,3 +124,13 @@ func (r *timingGenericApi) GetRepoImageConfigFile(ctx context.Context, reference
 	defer observeRegistry(ctx, "image config get")()
 	return r.GenericApiInterface.GetRepoImageConfigFile(ctx, reference)
 }
+
+func (r *timingDockerRegistry) TagsByPrefix(ctx context.Context, reference, prefix string) ([]string, error) {
+	defer observeRegistry(ctx, "tags list by prefix")()
+	return r.Interface.TagsByPrefix(ctx, reference, prefix)
+}
+
+func (r *timingDockerRegistry) ManifestExists(ctx context.Context, reference string) (bool, error) {
+	defer observeRegistry(ctx, "manifest exists")()
+	return r.Interface.ManifestExists(ctx, reference)
+}

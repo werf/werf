@@ -7,6 +7,7 @@ import (
 )
 
 type Options struct {
+	fresh                 bool
 	dockerRegistryOptions []docker_registry.Option
 	withCache             bool
 }
@@ -33,6 +34,7 @@ func WithCache() Option {
 // than maxAge, instead of requiring a fresh listing.
 func WithCacheMaxAge(maxAge time.Duration) Option {
 	return func(o *Options) {
+		o.fresh = maxAge <= 0
 		o.dockerRegistryOptions = append(o.dockerRegistryOptions, docker_registry.WithTagsMaxAge(maxAge))
 	}
 }
