@@ -21,6 +21,8 @@ type Interface interface {
 	CreateRepo(ctx context.Context, reference string) error
 	DeleteRepo(ctx context.Context, reference string) error
 	Tags(ctx context.Context, reference string, opts ...Option) ([]string, error)
+	TagsByPrefix(ctx context.Context, reference, prefix string) ([]string, error)
+	ManifestExists(ctx context.Context, reference string) (bool, error)
 	IsTagExist(ctx context.Context, reference string, opts ...Option) (bool, error)
 	TagRepoImage(ctx context.Context, repoImage *image.Info, tag string) error
 	TryGetRepoImage(ctx context.Context, reference string) (*image.Info, error)

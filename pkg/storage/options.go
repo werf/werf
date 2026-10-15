@@ -3,6 +3,7 @@ package storage
 import "github.com/werf/werf/v2/pkg/docker_registry"
 
 type Options struct {
+	fresh                 bool
 	withCache             bool
 	dockerRegistryOptions []docker_registry.Option
 }
@@ -29,6 +30,7 @@ func WithCache() Option {
 func WithFreshListing() Option {
 	return func(o *Options) {
 		o.withCache = false
+		o.fresh = true
 		o.dockerRegistryOptions = append(o.dockerRegistryOptions, docker_registry.WithFreshTags())
 	}
 }

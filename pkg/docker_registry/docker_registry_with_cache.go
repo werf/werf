@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -32,6 +33,7 @@ type DockerRegistryWithCache struct {
 	cacheWriteMu    sync.Mutex
 	listingSequence uint64
 	storedSequence  map[string]uint64
+	publishedTags   map[string]map[string]uint64
 
 	listTagsQueryGroup *singleflight.Group
 }
@@ -87,8 +89,7 @@ func (r *DockerRegistryWithCache) getTagsListFromRegistry(ctx context.Context, r
 		if err != nil {
 			return nil, fmt.Errorf("fetch fresh tags for repo %q: %w", reference, err)
 		}
-		r.storeTagsToCache(cachedTagsID, tags, sequence)
-		return tags, nil
+		return r.storeTagsToCache(cachedTagsID, tags, sequence), nil
 	}
 	if tags, ok := r.tryLoadTagsFromCache(cachedTagsID, opts...); ok {
 		outcome = opstats.CacheOutcomeHit
@@ -105,7 +106,7 @@ func (r *DockerRegistryWithCache) getTagsListFromRegistry(ctx context.Context, r
 		sequence := r.nextListingSequence()
 		tags, err := r.Interface.Tags(ctx, reference, opts...)
 		if err == nil {
-			r.storeTagsToCache(cachedTagsID, tags, sequence)
+			tags = r.storeTagsToCache(cachedTagsID, tags, sequence)
 		}
 		return tags, err
 	})
@@ -136,17 +137,33 @@ func (r *DockerRegistryWithCache) nextListingSequence() uint64 {
 }
 
 // A slow earlier listing must not replace a newer authoritative result in the cache.
-func (r *DockerRegistryWithCache) storeTagsToCache(id string, tags []string, sequence uint64) {
+func (r *DockerRegistryWithCache) storeTagsToCache(id string, tags []string, sequence uint64) []string {
 	r.cacheWriteMu.Lock()
 	defer r.cacheWriteMu.Unlock()
 	if r.storedSequence[id] > sequence {
-		return
+		if value, ok := r.cachedTagsMap.Load(id); ok {
+			if cached, err := castTagsList(value); err == nil {
+				return cached
+			}
+		}
+		return tags
 	}
 	if r.storedSequence == nil {
 		r.storedSequence = make(map[string]uint64)
 	}
 	r.storedSequence[id] = sequence
+	pending := make(map[string]uint64)
+	for tag, publishedAt := range r.publishedTags[id] {
+		if publishedAt >= sequence && !slices.Contains(tags, tag) {
+			tags = append(slices.Clone(tags), tag)
+			pending[tag] = publishedAt
+		}
+	}
+	if r.publishedTags != nil {
+		r.publishedTags[id] = pending
+	}
 	r.cachedTagsMap.Store(id, tags)
+	return tags
 }
 
 func castTagsList(tagsList interface{}) ([]string, error) {
@@ -185,15 +202,27 @@ func (r *DockerRegistryWithCache) IsTagExist(ctx context.Context, reference stri
 }
 
 func (r *DockerRegistryWithCache) TagRepoImage(ctx context.Context, repoImage *image.Info, tag string) error {
-	return r.Interface.TagRepoImage(ctx, repoImage, tag)
+	if err := r.Interface.TagRepoImage(ctx, repoImage, tag); err != nil {
+		return err
+	}
+	AddCachedTag(ctx, r, repoImage.Repository+":"+tag)
+	return nil
 }
 
 func (r *DockerRegistryWithCache) PushImage(ctx context.Context, reference string, opts *PushImageOptions) error {
-	return r.Interface.PushImage(ctx, reference, opts)
+	if err := r.Interface.PushImage(ctx, reference, opts); err != nil {
+		return err
+	}
+	AddCachedTag(ctx, r, reference)
+	return nil
 }
 
 func (r *DockerRegistryWithCache) MutateAndPushImage(ctx context.Context, sourceReference, destinationReference string, opts ...registry_api.MutateOption) error {
-	return r.Interface.MutateAndPushImage(ctx, sourceReference, destinationReference, opts...)
+	if err := r.Interface.MutateAndPushImage(ctx, sourceReference, destinationReference, opts...); err != nil {
+		return err
+	}
+	AddCachedTag(ctx, r, destinationReference)
+	return nil
 }
 
 func (r *DockerRegistryWithCache) DeleteRepoImage(ctx context.Context, repoImage *image.Info) error {
@@ -268,4 +297,67 @@ func readDurationEnv(ctx context.Context, envName string, fallback time.Duration
 	}
 
 	return parsed
+}
+
+func (r *DockerRegistryWithCache) TagsByPrefix(ctx context.Context, reference, prefix string) ([]string, error) {
+	opstats.CountCacheLookup(ctx, opstats.Operation("registry: tags list by prefix"), opstats.CacheLayerMemory, opstats.CacheOutcomeBypass, false)
+	return r.Interface.TagsByPrefix(ctx, reference, prefix)
+}
+
+func (r *DockerRegistryWithCache) ManifestExists(ctx context.Context, reference string) (bool, error) {
+	return r.Interface.ManifestExists(ctx, reference)
+}
+
+// AddCachedTag preserves observed tags across older listings without creating a full inventory.
+func AddCachedTag(ctx context.Context, registry Interface, reference string) {
+	r, ok := registry.(*DockerRegistryWithCache)
+	if !ok {
+		return
+	}
+	parts, err := r.parseReferenceParts(reference)
+	if err != nil {
+		logboek.Context(ctx).Debug().LogF("Parse published reference for tags cache: %s\n", err)
+		return
+	}
+	if parts.tag == "" || parts.digest != "" {
+		return
+	}
+	id := parts.registry + "/" + parts.repository
+	r.cacheWriteMu.Lock()
+	defer r.cacheWriteMu.Unlock()
+	if r.publishedTags == nil {
+		r.publishedTags = make(map[string]map[string]uint64)
+	}
+	if r.publishedTags[id] == nil {
+		r.publishedTags[id] = make(map[string]uint64)
+	}
+	r.publishedTags[id][parts.tag] = r.listingSequence
+	value, ok := r.cachedTagsMap.Load(id)
+	if !ok {
+		return
+	}
+	tags, err := castTagsList(value)
+	if err != nil {
+		return
+	}
+	if !slices.Contains(tags, parts.tag) {
+		tags = append(slices.Clone(tags), parts.tag)
+	}
+	r.cachedTagsMap.Store(id, tags)
+}
+
+func (r *DockerRegistryWithCache) CopyImage(ctx context.Context, sourceReference, destinationReference string, opts CopyImageOptions) error {
+	if err := r.Interface.CopyImage(ctx, sourceReference, destinationReference, opts); err != nil {
+		return err
+	}
+	AddCachedTag(ctx, r, destinationReference)
+	return nil
+}
+
+func (r *DockerRegistryWithCache) PushManifestList(ctx context.Context, reference string, opts ManifestListOptions) error {
+	if err := r.Interface.PushManifestList(ctx, reference, opts); err != nil {
+		return err
+	}
+	AddCachedTag(ctx, r, reference)
+	return nil
 }
