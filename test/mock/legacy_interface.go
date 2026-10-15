@@ -446,6 +446,18 @@ func (mr *MockLegacyContainerMockRecorder) ServiceCommitChangeOptions() *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ServiceCommitChangeOptions", reflect.TypeOf((*MockLegacyContainer)(nil).ServiceCommitChangeOptions))
 }
 
+// SetImportCommandsPreparer mocks base method.
+func (m *MockLegacyContainer) SetImportCommandsPreparer(ctx context.Context, prepare func(context.Context) ([]string, error)) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "SetImportCommandsPreparer", ctx, prepare)
+}
+
+// SetImportCommandsPreparer indicates an expected call of SetImportCommandsPreparer.
+func (mr *MockLegacyContainerMockRecorder) SetImportCommandsPreparer(ctx, prepare any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetImportCommandsPreparer", reflect.TypeOf((*MockLegacyContainer)(nil).SetImportCommandsPreparer), ctx, prepare)
+}
+
 // UserCommitChanges mocks base method.
 func (m *MockLegacyContainer) UserCommitChanges() []string {
 	m.ctrl.T.Helper()

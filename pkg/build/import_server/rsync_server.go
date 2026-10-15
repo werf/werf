@@ -10,9 +10,12 @@ import (
 	"path"
 	"sort"
 	"strings"
+	"time"
 
+	cerrdefs "github.com/containerd/errdefs"
 	"github.com/google/uuid"
 	dockercontainer "github.com/moby/moby/api/types/container"
+	"github.com/moby/moby/client"
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v3/pkg/config"
@@ -49,7 +52,10 @@ exclude = %s
 `, port, authUser, strings.Join(systemExcludeDirs, " "))
 }
 
+var _ ImportServer = (*RsyncServer)(nil)
+
 type RsyncServer struct {
+	runtimeDir             string
 	IPAddress              string
 	Port                   string
 	DockerContainerName    string
@@ -74,12 +80,31 @@ func RunRsyncServer(ctx context.Context, dockerImageName, tmpDir, targetPlatform
 		return nil, fmt.Errorf("unable to get or create stapel container: %w", err)
 	}
 
-	secretsFilePath := path.Join(tmpDir, "rsyncd.secrets")
-	if err := ioutil.WriteFile(secretsFilePath, []byte(fmt.Sprintf("%s:%s\n", srv.AuthUser, srv.AuthPassword)), 0o644); err != nil {
+	if strings.HasPrefix(dockerImageName, "sha256:") {
+		if _, err := docker.ImageInspect(ctx, dockerImageName); err != nil {
+			return nil, fmt.Errorf("inspect pinned import source: %w", err)
+		}
+	}
+	runtimeDir, err := os.MkdirTemp(tmpDir, "generation-")
+	if err != nil {
+		return nil, fmt.Errorf("create import server directory: %w", err)
+	}
+	srv.runtimeDir = runtimeDir
+	initialized := false
+	defer func() {
+		if !initialized {
+			if err := srv.Shutdown(ctx); err != nil {
+				logboek.Context(ctx).Warn().LogF("Clean up import server: %s\n", err)
+			}
+		}
+	}()
+
+	secretsFilePath := path.Join(runtimeDir, "rsyncd.secrets")
+	if err := ioutil.WriteFile(secretsFilePath, []byte(fmt.Sprintf("%s:%s\n", srv.AuthUser, srv.AuthPassword)), 0o600); err != nil {
 		return nil, fmt.Errorf("unable to write %s: %w", secretsFilePath, err)
 	}
 
-	rsyncConfPath := path.Join(tmpDir, "rsyncd.conf")
+	rsyncConfPath := path.Join(runtimeDir, "rsyncd.conf")
 	if err := ioutil.WriteFile(rsyncConfPath, []byte(buildRsyncdConf(rsyncServerPort, srv.AuthUser)), 0o644); err != nil {
 		return nil, fmt.Errorf("unable to write %s: %w", rsyncConfPath, err)
 	}
@@ -118,15 +143,23 @@ func RunRsyncServer(ctx context.Context, dockerImageName, tmpDir, targetPlatform
 		logboek.Context(ctx).Debug().LogF("Inspect container %s\n", srv.DockerContainerName)
 	}
 
-	if inspect, err := docker.ContainerInspect(ctx, srv.DockerContainerName); err != nil {
-		return nil, fmt.Errorf("unable to inspect import server container %s: %w", srv.DockerContainerName, err)
-	} else {
-		ipAddress, err := bridgeNetworkIPAddress(inspect.NetworkSettings)
-		if err != nil {
-			return nil, fmt.Errorf("unable to get import server container %s ip address: %w", srv.DockerContainerName, err)
-		}
-		srv.IPAddress = ipAddress
+	inspect, err := docker.ContainerInspect(ctx, srv.DockerContainerName)
+	if err != nil {
+		return nil, fmt.Errorf("inspect import server %s: %w", srv.DockerContainerName, err)
 	}
+	if inspect.State == nil || !inspect.State.Running {
+		return nil, fmt.Errorf("import server %s stopped during startup", srv.DockerContainerName)
+	}
+	address, err := bridgeNetworkIPAddress(inspect.NetworkSettings)
+	if err != nil {
+		return nil, fmt.Errorf("get import server %s bridge address: %w", srv.DockerContainerName, err)
+	}
+	srv.IPAddress = address
+	srv.DockerImageName = inspect.Image
+	if srv.DockerImageName == "" {
+		return nil, fmt.Errorf("import server %s has no source image ID", srv.DockerContainerName)
+	}
+	initialized = true
 
 	return srv, nil
 }
@@ -148,11 +181,34 @@ func bridgeNetworkIPAddress(settings *dockercontainer.NetworkSettings) (string, 
 	return bridge.IPAddress.String(), nil
 }
 
+func (srv *RsyncServer) Healthy(ctx context.Context) (bool, error) {
+	if err := ctx.Err(); err != nil {
+		return false, err
+	}
+	inspect, err := docker.ContainerInspect(ctx, srv.DockerContainerName)
+	if cerrdefs.IsNotFound(err) {
+		return false, nil
+	}
+	if err != nil {
+		return false, fmt.Errorf("inspect import server %s: %w", srv.DockerContainerName, err)
+	}
+	if inspect.State == nil || !inspect.State.Running || inspect.NetworkSettings == nil {
+		return false, nil
+	}
+	address, err := bridgeNetworkIPAddress(inspect.NetworkSettings)
+	return err == nil && address == srv.IPAddress && srv.IPAddress != "", nil
+}
+
 func (srv *RsyncServer) Shutdown(ctx context.Context) error {
-	ctx = context.WithoutCancel(ctx)
-	if output, err := docker.CliRm_RecordedOutput(ctx, "--force", srv.DockerContainerName); err != nil {
-		logboek.Context(ctx).Error().LogF("%s", output)
-		return fmt.Errorf("unable to remove container %s: %w", srv.DockerContainerName, err)
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), time.Minute)
+	defer cancel()
+	if err := docker.ContainerRemove(ctx, srv.DockerContainerName, client.ContainerRemoveOptions{Force: true, RemoveVolumes: true}); err != nil && !cerrdefs.IsNotFound(err) {
+		return fmt.Errorf("remove import server %s: %w", srv.DockerContainerName, err)
+	}
+	if srv.runtimeDir != "" {
+		if err := os.RemoveAll(srv.runtimeDir); err != nil {
+			return fmt.Errorf("remove import server directory: %w", err)
+		}
 	}
 	return nil
 }
@@ -194,10 +250,11 @@ func (srv *RsyncServer) GetCopyCommand(ctx context.Context, importConfig *config
 	// run rsync itself
 	args = append(args, rsyncCommand)
 
-	command := strings.Join(args, " && ")
+	// Bash 4.3 loses external command status when errexit leaves a subshell inside eval.
+	command := "(set +x; " + strings.Join(args, " && ") + " || exit $?)"
 
 	if debugImportServer() {
-		logboek.Context(ctx).Debug().LogF("Rsync server copy commands for import: image=%q add=%s to=%s includePaths=%v excludePaths=%v: %q\n", importConfig.From, importConfig.Add, importConfig.To, importConfig.IncludePaths, importConfig.ExcludePaths, command)
+		logboek.Context(ctx).Debug().LogF("Rsync server copy commands for import: image=%q add=%s to=%s includePaths=%v excludePaths=%v: %q\n", importConfig.From, importConfig.Add, importConfig.To, importConfig.IncludePaths, importConfig.ExcludePaths, strings.ReplaceAll(command, srv.AuthPassword, "[REDACTED]"))
 	}
 
 	return command
