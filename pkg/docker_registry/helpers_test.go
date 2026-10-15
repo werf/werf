@@ -577,6 +577,24 @@ func newPrefixRegistryFixture(tags []string, mode string) *prefixRegistryFixture
 		cursor := query.Get("last")
 		if cursor != "" {
 			switch mode {
+			case "redirect":
+				w.Header().Set("Location", "/unsupported-range")
+				w.WriteHeader(http.StatusTemporaryRedirect)
+				return
+			case "html", "wrong-tags-type", "oversized":
+				w.Header().Set("Docker-Distribution-API-Version", "registry/2.0")
+				body := "<html>unsupported range</html>"
+				if mode == "wrong-tags-type" {
+					body = `{"tags": {}}`
+				}
+				if mode == "oversized" {
+					body = `{"padding":"` + strings.Repeat("x", 4*1024*1024) + `","tags":["unrelated"]}`
+				}
+				_, err := io.WriteString(w, body)
+				if err != nil && mode != "oversized" {
+					gomega.Expect(err).NotTo(gomega.HaveOccurred())
+				}
+				return
 			case "401":
 				w.WriteHeader(http.StatusUnauthorized)
 				return

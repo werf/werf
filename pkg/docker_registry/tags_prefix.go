@@ -188,6 +188,9 @@ func readPrefixPage(response *http.Response, endpoint, current *url.URL, require
 		}
 		return nil, nil, true, nil
 	}
+	if response.StatusCode >= 300 && response.StatusCode < 400 {
+		return nil, nil, false, nil
+	}
 	if err := transport.CheckError(response, http.StatusOK); err != nil {
 		return nil, nil, false, fmt.Errorf("read prefix listing: %w", err)
 	}
@@ -198,14 +201,14 @@ func readPrefixPage(response *http.Response, endpoint, current *url.URL, require
 		Tags json.RawMessage `json:"tags"`
 	}
 	if err := json.NewDecoder(io.LimitReader(response.Body, 4*1024*1024)).Decode(&page); err != nil {
-		return nil, nil, false, fmt.Errorf("decode prefix listing: %w", err)
+		return nil, nil, false, nil
 	}
 	if len(page.Tags) == 0 {
 		return nil, nil, false, nil
 	}
 	var tags []string
 	if err := json.Unmarshal(page.Tags, &tags); err != nil {
-		return nil, nil, false, fmt.Errorf("decode prefix tags: %w", err)
+		return nil, nil, false, nil
 	}
 	if len(tags) > prefixTagsPageSize {
 		return nil, nil, false, nil

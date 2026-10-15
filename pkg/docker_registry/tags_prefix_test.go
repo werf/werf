@@ -90,6 +90,8 @@ var _ = ginkgo.Describe("Authoritative prefix tag listing", func() {
 		ginkgo.Entry("unsorted", "unsorted", true), ginkgo.Entry("unsupported cursor", "400", true),
 		ginkgo.Entry("missing declaration", "undeclared", true), ginkgo.Entry("off-origin Link", "badlink", true), ginkgo.Entry("wrong Link cursor", "wrongcursor", true),
 		ginkgo.Entry("undeclared cursor 404", "404-undeclared", true), ginkgo.Entry("null response", "null", true),
+		ginkgo.Entry("HTML response", "html", true), ginkgo.Entry("oversized response", "oversized", true),
+		ginkgo.Entry("redirect response", "redirect", true), ginkgo.Entry("wrong tags type", "wrong-tags-type", true),
 		ginkgo.Entry("missing tags", "missing-tags", true), ginkgo.Entry("error response object", "error-object", true))
 
 	ginkgo.DescribeTable("propagates failures instead of returning empty inventory", func(ctx ginkgo.SpecContext, mode string) {
