@@ -17,7 +17,13 @@ import (
 	"github.com/werf/werf/v2/pkg/stapel"
 )
 
+var _ LegacyContainer = (*LegacyStageImageContainer)(nil)
+
 type LegacyStageImageContainer struct {
+	prepareImports             func(context.Context) ([]string, error)
+	importCommands             []string
+	importDestinationDiscarded bool
+	baseImageID                string
 	image                      *LegacyStageImage
 	name                       string
 	runCommands                []string
@@ -52,6 +58,23 @@ func (c *LegacyStageImageContainer) UserRunCommands() []string {
 
 func (c *LegacyStageImageContainer) AddRunCommands(commands ...string) {
 	c.runCommands = append(c.runCommands, commands...)
+}
+
+func (c *LegacyStageImageContainer) SetImportCommandsPreparer(_ context.Context, prepare func(context.Context) ([]string, error)) {
+	c.prepareImports = prepare
+}
+
+func (c *LegacyStageImageContainer) diagnosticRunCommands() []string {
+	commands := c.prepareAllRunCommands()
+	for i, command := range commands {
+		for _, imported := range c.importCommands {
+			if command == imported {
+				commands[i] = ": '[import command redacted]'"
+				break
+			}
+		}
+	}
+	return commands
 }
 
 func (c *LegacyStageImageContainer) AddServiceRunCommands(commands ...string) {
@@ -103,12 +126,12 @@ func (c *LegacyStageImageContainer) prepareRunCommandArgs() []string {
 	// stdin already drained. The redirect only makes that explicit.
 	return []string{
 		"-i", c.imageRef(c.image.fromImage), "-ec",
-		`script=$(</dev/stdin); eval "$script" < /dev/null`,
+		`set +xv; script=$(</dev/stdin); eval "$script" < /dev/null`,
 	}
 }
 
 func (c *LegacyStageImageContainer) prepareDebugRunCommand(runArgs []string) string {
-	return fmt.Sprintf("printf '%%s' %s | docker run %s", shellescape.Quote(c.prepareRunCommand()), shellescape.QuoteCommand(runArgs))
+	return fmt.Sprintf("printf '%%s' %s | docker run %s", shellescape.Quote(strings.Join(c.diagnosticRunCommands(), " && ")), shellescape.QuoteCommand(runArgs))
 }
 
 func (c *LegacyStageImageContainer) prepareRunCommand() string {
@@ -132,12 +155,16 @@ func (c *LegacyStageImageContainer) prepareAllRunCommands() []string {
 	}
 
 	commands = append(commands, c.serviceRunCommands...)
+	commands = append(commands, c.importCommands...)
 	commands = append(commands, c.runCommands...)
 
 	return commands
 }
 
 func (c *LegacyStageImageContainer) imageRef(img *LegacyStageImage) string {
+	if img == c.image.fromImage && c.baseImageID != "" {
+		return c.baseImageID
+	}
 	if img.BuiltID() != "" {
 		return img.GetID()
 	}
@@ -307,6 +334,7 @@ func (c *LegacyStageImageContainer) run(ctx context.Context) error {
 		return err
 	}
 
+	c.importDestinationDiscarded = false
 	RegisterRunningContainer(c.name, ctx)
 	err = docker.CliRunWithInput_LiveOutput(ctx, c.prepareRunCommand(), runArgs...)
 	UnregisterRunningContainer(c.name)
