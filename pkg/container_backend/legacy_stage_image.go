@@ -117,7 +117,7 @@ func (i *LegacyStageImage) Build(ctx context.Context, options BuildOptions) erro
 				}); err != nil {
 					return fmt.Errorf("introspect error failed: %w", err)
 				}
-			} else if options.IntrospectAfterError {
+			} else if options.IntrospectAfterError && !i.container.importDestinationDiscarded {
 				if err := i.Commit(ctx); err != nil {
 					return fmt.Errorf("introspect error failed: %w", err)
 				}
@@ -131,8 +131,10 @@ func (i *LegacyStageImage) Build(ctx context.Context, options BuildOptions) erro
 				}
 			}
 
-			if err := i.container.rm(ctx); err != nil {
-				return fmt.Errorf("unable to remove container (original error %s): %w", containerRunErr, err)
+			if !i.container.importDestinationDiscarded {
+				if err := i.container.rm(ctx); err != nil {
+					return fmt.Errorf("unable to remove container (original error %s): %w", containerRunErr, err)
+				}
 			}
 		}
 

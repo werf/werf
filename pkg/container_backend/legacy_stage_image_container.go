@@ -22,6 +22,7 @@ var _ LegacyContainer = (*LegacyStageImageContainer)(nil)
 type LegacyStageImageContainer struct {
 	prepareImports             func(context.Context) ([]string, error)
 	importCommands             []string
+	importDestinationDiscarded bool
 	baseImageID                string
 	image                      *LegacyStageImage
 	name                       string
