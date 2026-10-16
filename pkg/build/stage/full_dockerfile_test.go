@@ -331,15 +331,83 @@ RUN --mount=type=bind,from=build,source=/usr/local/test_project/dist,target=/usr
 			}
 		})
 	})
+
+	When("Dockerfile bind-mounts a context file", func() {
+		It("changes the stage digest when the mounted file checksum changes", func(ctx SpecContext) {
+			dockerfile := []byte(`
+FROM alpine:latest
+RUN --mount=type=bind,source=uv.lock,target=uv.lock cat uv.lock
+RUN --mount=type=bind,from=build,source=/out,target=/out true
+RUN --mount=type=cache,target=/cache true
+RUN --mount=type=secret,id=token true
+RUN --mount=type=ssh true
+RUN --mount=type=tmpfs,target=/tmp true
+`)
+			dockerStages, dockerMetaArgs := testDockerfileToDockerStages(dockerfile)
+			stage := newTestFullDockerfileStage(dockerfile, "", nil, dockerStages, dockerMetaArgs, nil, "")
+			stage.dockerignorePathMatcher = path_matcher.NewTruePathMatcher()
+			gitRepo := &pathMatchingGitRepoStub{
+				LocalGitRepoStub: NewLocalGitRepoStub("9d8059842b6fde712c58315ca0ab4713d90761c0"),
+				path:             "uv.lock",
+				unmatchedPath:    "other.lock",
+			}
+			conveyor := NewConveyorStubForDependencies(NewGiterminismManagerStub(gitRepo, NewGiterminismInspectorStub()), nil)
+
+			digest, err := stage.GetDependencies(ctx, conveyor, nil, nil, nil, nil)
+			Expect(err).To(Succeed())
+
+			stableDigest, err := stage.GetDependencies(ctx, conveyor, nil, nil, nil, nil)
+			Expect(err).To(Succeed())
+			Expect(stableDigest).To(Equal(digest))
+
+			gitRepo.headCommitHash = "23a0884072c0d31b7c42dfaa7f0772cbfa33ec75"
+			changedDigest, err := stage.GetDependencies(ctx, conveyor, nil, nil, nil, nil)
+			Expect(err).To(Succeed())
+			Expect(changedDigest).NotTo(Equal(digest))
+		})
+
+		It("checksums a bind-mount source expanded from an ARG", func(ctx SpecContext) {
+			dockerfile := []byte(`
+FROM alpine:latest
+ARG LOCK=uv.lock
+RUN --mount=type=bind,source=$LOCK,target=/lock cat /lock
+`)
+			dockerStages, dockerMetaArgs := testDockerfileToDockerStages(dockerfile)
+			stage := newTestFullDockerfileStage(dockerfile, "", nil, dockerStages, dockerMetaArgs, nil, "")
+			stage.dockerignorePathMatcher = path_matcher.NewTruePathMatcher()
+			gitRepo := &pathMatchingGitRepoStub{
+				LocalGitRepoStub: NewLocalGitRepoStub("9d8059842b6fde712c58315ca0ab4713d90761c0"),
+				path:             "uv.lock",
+				unmatchedPath:    "other.lock",
+			}
+			conveyor := NewConveyorStubForDependencies(NewGiterminismManagerStub(gitRepo, NewGiterminismInspectorStub()), nil)
+
+			digest, err := stage.GetDependencies(ctx, conveyor, nil, nil, nil, nil)
+			Expect(err).To(Succeed())
+
+			stableDigest, err := stage.GetDependencies(ctx, conveyor, nil, nil, nil, nil)
+			Expect(err).To(Succeed())
+			Expect(stableDigest).To(Equal(digest))
+
+			gitRepo.headCommitHash = "23a0884072c0d31b7c42dfaa7f0772cbfa33ec75"
+			changedDigest, err := stage.GetDependencies(ctx, conveyor, nil, nil, nil, nil)
+			Expect(err).To(Succeed())
+			Expect(changedDigest).NotTo(Equal(digest))
+		})
+	})
 })
 
 type pathMatchingGitRepoStub struct {
 	*LocalGitRepoStub
-	path string
+	path          string
+	unmatchedPath string
 }
 
 func (repo *pathMatchingGitRepoStub) GetOrCreateChecksum(ctx context.Context, opts git_repo.ChecksumOptions) (string, error) {
 	Expect(opts.LsTreeOptions.PathMatcher.IsPathMatched(repo.path)).To(BeTrue())
+	if repo.unmatchedPath != "" {
+		Expect(opts.LsTreeOptions.PathMatcher.IsPathMatched(repo.unmatchedPath)).To(BeFalse())
+	}
 	return repo.LocalGitRepoStub.GetOrCreateChecksum(ctx, opts)
 }
 
