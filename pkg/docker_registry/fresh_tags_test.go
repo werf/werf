@@ -18,7 +18,12 @@ var _ = ginkgo.Describe("Authoritative tag listing", func() {
 			gomega.Expect(err).NotTo(gomega.HaveOccurred())
 			stale <- tags
 		}()
-		ginkgo.DeferCleanup(func() { close(inner.release) })
+		released := false
+		ginkgo.DeferCleanup(func() {
+			if !released {
+				close(inner.release)
+			}
+		})
 		gomega.Eventually(inner.started).Should(gomega.BeClosed())
 		fresh := make(chan []string, 1)
 		go func() {
@@ -29,6 +34,10 @@ var _ = ginkgo.Describe("Authoritative tag listing", func() {
 		}()
 		gomega.Eventually(fresh).Should(gomega.Receive(gomega.Equal([]string{"before", "winner"})))
 		gomega.Expect(inner.calls.Load()).To(gomega.Equal(int32(2)))
+		gomega.Expect(cachedEntry(registry, "example.test/repo").tags).To(gomega.ContainElement("winner"))
+		close(inner.release)
+		released = true
+		gomega.Eventually(stale).Should(gomega.Receive(gomega.Equal([]string{"before", "winner"})))
 		gomega.Expect(cachedEntry(registry, "example.test/repo").tags).To(gomega.ContainElement("winner"))
 	})
 
