@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.11.0](https://github.com/werf/werf/compare/v3.10.0...v3.11.0) (2026-10-16)
+
+
+### Features
+
+* **deploy:** expose release labels in the v3 release get result ([#8083](https://github.com/werf/werf/issues/8083)) ([fb58464](https://github.com/werf/werf/commit/fb5846472e0ee29233cf72107e9552cba09c19a6))
+* **deploy:** read release annotations from storage metadata ([#8084](https://github.com/werf/werf/issues/8084)) ([92f6abf](https://github.com/werf/werf/commit/92f6abfb2261b57046c7bb095e6682efc9b5aefd))
+
+
+### Bug Fixes
+
+* **deploy:** allow upgrades from legacy delete-dependency annotations ([#8081](https://github.com/werf/werf/issues/8081)) ([bdeb7c7](https://github.com/werf/werf/commit/bdeb7c7401070a6b10b611be48f596f2eb800c6d))
+
 ## [3.10.0](https://github.com/werf/werf/compare/v3.9.0...v3.10.0) (2026-10-15)
 
 
