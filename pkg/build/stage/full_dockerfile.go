@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strconv"
+	"strings"
 
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
@@ -364,6 +365,10 @@ func (s *FullDockerfileStage) dependenciesDigest(ctx context.Context, c Conveyor
 		stagesOnBuildDependencies = append(stagesOnBuildDependencies, onBuildDependencies)
 	}
 
+	// Expand reparses RUN mounts from the Dockerfile text. Restore stage indexes
+	// so a mount from another stage still contributes that stage's dependencies.
+	s.reapplyRunMountStageRefs()
+
 	for ind, stage := range s.dockerStages {
 		for relatedStageIndex, relatedStage := range s.dockerStages {
 			if ind == relatedStageIndex {
@@ -583,6 +588,37 @@ func (s *FullDockerfileStage) dockerfileInstructionDependencies(ctx context.Cont
 			}
 			dependencies = append(dependencies, checksum)
 		}
+	case *instructions.RunCommand:
+		resolvedValue, err := resolveValueFunc(c.String())
+		if err != nil {
+			return nil, nil, err
+		}
+		dependencies = append(dependencies, resolvedValue)
+
+		// Option values are filled in by Expand. Keep them literal so source
+		// paths use the same ARG/ENV resolution as COPY and ADD.
+		if err := c.Expand(func(word string) (string, error) {
+			return word, nil
+		}); err != nil {
+			return nil, nil, err
+		}
+
+		for _, mount := range instructions.GetMounts(c) {
+			if mount.Type != instructions.MountTypeBind || mount.From != "" || mount.Source == "" {
+				continue
+			}
+
+			resolvedSources, err := resolveSourcesFunc([]string{mount.Source})
+			if err != nil {
+				return nil, nil, err
+			}
+
+			checksum, err := s.calculateFilesChecksum(ctx, giterminismManager, resolvedSources, c.String())
+			if err != nil {
+				return nil, nil, err
+			}
+			dependencies = append(dependencies, checksum)
+		}
 	case *instructions.OnbuildCommand:
 		cDependencies, cOnBuildDependencies, err := s.dockerfileOnBuildInstructionDependencies(ctx, giterminismManager, resolvedDockerMetaArgsHash, resolvedDependenciesArgsHash, dockerStageID, c.Expression, false)
 		if err != nil {
@@ -603,6 +639,37 @@ func (s *FullDockerfileStage) dockerfileInstructionDependencies(ctx context.Cont
 	}
 
 	return dependencies, onBuildDependencies, nil
+}
+
+func (s *FullDockerfileStage) reapplyRunMountStageRefs() {
+	nameToIndex := make(map[string]string, len(s.dockerStages))
+	for i, stage := range s.dockerStages {
+		name := strings.ToLower(stage.Name)
+		if name != strconv.Itoa(i) {
+			nameToIndex[name] = strconv.Itoa(i)
+		}
+	}
+	if len(nameToIndex) == 0 {
+		return
+	}
+
+	for _, stage := range s.dockerStages {
+		for _, cmd := range stage.Commands {
+			run, ok := cmd.(*instructions.RunCommand)
+			if !ok {
+				continue
+			}
+
+			for _, mount := range instructions.GetMounts(run) {
+				if mount.From == "" {
+					continue
+				}
+				if index, ok := nameToIndex[strings.ToLower(mount.From)]; ok {
+					mount.From = index
+				}
+			}
+		}
+	}
 }
 
 func (s *FullDockerfileStage) dockerfileOnBuildInstructionDependencies(ctx context.Context, giterminismManager giterminism_manager.Interface, resolvedDockerMetaArgsHash, resolvedDependenciesArgsHash map[string]string, dockerStageID int, expression string, isBaseImageOnbuildInstruction bool) ([]string, []string, error) {
