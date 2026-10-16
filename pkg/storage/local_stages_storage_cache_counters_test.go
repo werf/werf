@@ -22,7 +22,7 @@ var _ = ginkgo.Describe("Local stage lookup cache counters", func() {
 		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		gomega.Expect(backend.options.Filters).To(gomega.Equal([]util.Pair[string, string]{
-			util.NewPair("reference", "project"),
+			util.NewPair("reference", "project:*"),
 		}))
 		gomega.Expect(collector.CacheSummary(ctx)).To(gomega.Equal([]opstats.CacheSummary{{
 			Operation: opstats.OperationDockerImageList,

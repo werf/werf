@@ -64,7 +64,7 @@ var _ = Describe("LocalStagesStorage", func() {
 					actualTags = append(actualTags, stage.String())
 				}
 				Expect(actualTags).To(ConsistOf(expectedTags))
-				Expect(backend.options.Filters).To(Equal([]util.Pair[string, string]{util.NewPair("reference", projectName)}))
+				Expect(backend.options.Filters).To(Equal([]util.Pair[string, string]{util.NewPair("reference", projectName+":*")}))
 				Expect(backend.images[0].RepoTags).To(Equal(originalTags))
 			},
 			Entry("matching label", "project", map[string]string{image.WerfLabel: "project"}, []string{"project:" + stageTag}, []string{stageTag}),

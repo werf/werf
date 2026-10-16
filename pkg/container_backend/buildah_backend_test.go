@@ -17,6 +17,7 @@ import (
 	"github.com/samber/lo"
 	"go.podman.io/storage"
 
+	commonutil "github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/logboek/pkg/level"
 	"github.com/werf/werf/v3/pkg/buildah"
@@ -451,6 +452,37 @@ var _ = Describe("BuildahBackend GetImageInfo", func() {
 		storageID = "5f1993108ca9f0e3b1a5bd4e1b6f2c7d8e9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c"
 	)
 
+	DescribeTable("selects repository digests using the inspected storage ID",
+		func(fromImageID, filterKey, filterValue, ref, repository string) {
+			fakeBuildah := &buildahstub.BuildahStub{}
+			fakeBuildah.InspectFunc = func(context.Context, string) (*thirdparty.BuilderInfo, error) {
+				inspect := &thirdparty.BuilderInfo{FromImageID: fromImageID}
+				inspect.Docker.Config = lo.ToPtr(lo.FromPtr(inspect.Docker.Config))
+				return inspect, nil
+			}
+			calls := 0
+			fakeBuildah.ImagesFunc = func(_ context.Context, opts buildah.ImagesOptions) (image.ImagesList, error) {
+				calls++
+				Expect(opts.Filters).To(Equal([]commonutil.Pair[string, string]{commonutil.NewPair(filterKey, filterValue)}))
+				return image.ImagesList{{ID: fromImageID, RepoDigests: []string{
+					"registry.example.org/foreign@sha256:" + storageID,
+					repository + "@sha256:" + storageID,
+				}}}, nil
+			}
+			info, err := NewBuildahBackend(fakeBuildah, BuildahBackendOptions{}).GetImageInfo(context.Background(), ref, GetImageInfoOpts{})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(calls).To(Equal(1))
+			Expect(info.Repository).To(Equal(repository))
+			Expect(info.Tag).To(Equal("tag"))
+			Expect(info.RepoDigest).To(Equal(repository + "@sha256:" + storageID))
+		},
+		Entry("unprefixed storage ID", storageID, "id", storageID, imageRef, "registry.example.org/project/stage"),
+		Entry("prefixed storage ID", "sha256:"+storageID, "id", storageID, imageRef, "registry.example.org/project/stage"),
+		Entry("missing storage ID retains reference fallback", "", "reference", imageRef, imageRef, "registry.example.org/project/stage"),
+		Entry("short reference", storageID, "id", storageID, "project:tag", "project"),
+		Entry("localhost reference", storageID, "id", storageID, "localhost/project:tag", "localhost/project"),
+	)
+
 	DescribeTable("derives the image ID from the container storage image ID",
 		func(fromImageID, legacyDockerID, expectedID string) {
 			fakeBuildah := &buildahstub.BuildahStub{}
@@ -491,13 +523,89 @@ var _ = Describe("BuildahBackend GetImageInfo", func() {
 
 		backend := NewBuildahBackend(fakeBuildah, BuildahBackendOptions{})
 		backend.storePulledImageID(imageRef, platform, "sha256:"+storageID)
+		fakeBuildah.ImagesFunc = func(_ context.Context, opts buildah.ImagesOptions) (image.ImagesList, error) {
+			Expect(opts.Filters).To(Equal([]commonutil.Pair[string, string]{commonutil.NewPair("id", storageID)}))
+			return image.ImagesList{{RepoDigests: []string{"registry.example.org/project/stage@sha256:" + storageID}}}, nil
+		}
 
 		info, err := backend.GetImageInfo(context.Background(), imageRef, GetImageInfoOpts{TargetPlatform: platform})
 		Expect(err).ToNot(HaveOccurred())
 		Expect(info).ToNot(BeNil())
 		Expect(info.ID).To(Equal("sha256:" + storageID))
+		Expect(info.RepoDigest).To(Equal("registry.example.org/project/stage@sha256:" + storageID))
 		Expect(fakeBuildah.InspectRefs).To(Equal([]string{"sha256:" + storageID}))
 	})
+
+	const manifestDigest = "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+	DescribeTable("does not synthesize a repository digest outside a cached-ID lookup", func(targetPlatform, cachedID string) {
+		fakeBuildah := &buildahstub.BuildahStub{}
+		fakeBuildah.InspectFunc = func(_ context.Context, inspectedRef string) (*thirdparty.BuilderInfo, error) {
+			if inspectedRef != imageRef {
+				Expect(inspectedRef).To(Equal(cachedID))
+				return nil, fmt.Errorf("cached image unavailable: %w", storage.ErrImageUnknown)
+			}
+			inspect := &thirdparty.BuilderInfo{FromImageID: storageID, FromImageDigest: manifestDigest}
+			inspect.OCIv1.Platform = v1.Platform{OS: "linux", Architecture: "amd64"}
+			inspect.Docker.Config = lo.ToPtr(lo.FromPtr(inspect.Docker.Config))
+			return inspect, nil
+		}
+		fakeBuildah.ImagesFunc = func(_ context.Context, opts buildah.ImagesOptions) (image.ImagesList, error) {
+			Expect(opts.Filters).To(Equal([]commonutil.Pair[string, string]{commonutil.NewPair("id", storageID)}))
+			return image.ImagesList{{ID: storageID}}, nil
+		}
+		backend := NewBuildahBackend(fakeBuildah, BuildahBackendOptions{})
+		if cachedID != "" {
+			backend.storePulledImageID(imageRef, "linux/amd64", cachedID)
+		}
+		info, err := backend.GetImageInfo(context.Background(), imageRef, GetImageInfoOpts{TargetPlatform: targetPlatform})
+		Expect(err).NotTo(HaveOccurred())
+		Expect(info.ID).To(Equal("sha256:" + storageID))
+		Expect(info.RepoDigest).To(BeEmpty())
+		Expect(info.GetDigest()).To(BeEmpty())
+		if cachedID != "" && targetPlatform != "" {
+			Expect(fakeBuildah.InspectRefs).To(Equal([]string{cachedID, imageRef}))
+		} else {
+			Expect(fakeBuildah.InspectRefs).To(Equal([]string{imageRef}))
+		}
+	},
+		Entry("local image without a platform", "", ""),
+		Entry("platform requested without a cached ID", "linux/amd64", ""),
+		Entry("cached ID is ignored without a requested platform", "", "sha256:"+storageID),
+		Entry("stale cached ID falls back to the reference", "linux/amd64", "sha256:missing"),
+	)
+
+	DescribeTable("retains the manifest digest of a cached platform image", func(ref string, listedDigests []string, inspectedDigest, expectedDigest string) {
+		fakeBuildah := &buildahstub.BuildahStub{}
+		fakeBuildah.InspectFunc = func(_ context.Context, inspectedRef string) (*thirdparty.BuilderInfo, error) {
+			Expect(inspectedRef).To(Equal("sha256:" + storageID))
+			inspect := &thirdparty.BuilderInfo{FromImageID: storageID, FromImageDigest: inspectedDigest}
+			inspect.Docker.Config = lo.ToPtr(lo.FromPtr(inspect.Docker.Config))
+			return inspect, nil
+		}
+		fakeBuildah.ImagesFunc = func(_ context.Context, opts buildah.ImagesOptions) (image.ImagesList, error) {
+			Expect(opts.Filters).To(Equal([]commonutil.Pair[string, string]{commonutil.NewPair("id", storageID)}))
+			return image.ImagesList{{ID: storageID, RepoDigests: listedDigests}}, nil
+		}
+		backend := NewBuildahBackend(fakeBuildah, BuildahBackendOptions{})
+		backend.storePulledImageID(ref, "linux/amd64", "sha256:"+storageID)
+		info, err := backend.GetImageInfo(context.Background(), ref, GetImageInfoOpts{TargetPlatform: "linux/amd64"})
+		Expect(err).NotTo(HaveOccurred())
+		Expect(info.ID).To(Equal("sha256:" + storageID))
+		Expect(info.RepoDigest).To(Equal(expectedDigest))
+	},
+		Entry("tagless image", imageRef, []string(nil), manifestDigest, "registry.example.org/project/stage@"+manifestDigest),
+		Entry("only a foreign alias remains", imageRef, []string{"registry.example.org/foreign@sha256:" + storageID}, manifestDigest, "registry.example.org/project/stage@"+manifestDigest),
+		Entry("normalizes Docker Hub repository", "docker.io/library/base:tag", []string(nil), manifestDigest, "base@"+manifestDigest),
+		Entry("digest-pinned reference", "registry.example.org/project/base@"+manifestDigest, []string(nil), manifestDigest, "registry.example.org/project/base@"+manifestDigest),
+		Entry("unprefixed image ID is not a repository", storageID, []string(nil), manifestDigest, ""),
+		Entry("short image ID is not a repository", storageID[:12], []string(nil), manifestDigest, ""),
+		Entry("a shorter resolved image ID is not a repository", storageID[:8], []string(nil), manifestDigest, ""),
+		Entry("hex repository name is not the resolved image ID", "deadbeef1234", []string(nil), manifestDigest, "deadbeef1234@"+manifestDigest),
+		Entry("explicit hex repository tag is not an image ID", storageID[:12]+":latest", []string(nil), manifestDigest, storageID[:12]+"@"+manifestDigest),
+		Entry("prefixed image ID is not a repository", "sha256:"+storageID, []string(nil), manifestDigest, ""),
+		Entry("preserves an available repository digest", imageRef, []string{"registry.example.org/project/stage@sha256:" + storageID}, manifestDigest, "registry.example.org/project/stage@sha256:"+storageID),
+		Entry("does not invent a missing manifest digest", imageRef, []string(nil), "", ""),
+	)
 
 	It("returns no info for an image missing in local storage", func() {
 		info, err := NewBuildahBackend(&buildahstub.BuildahStub{}, BuildahBackendOptions{}).
