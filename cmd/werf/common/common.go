@@ -1303,7 +1303,7 @@ func SetupSecretKeyFlags(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupTrackingFlags(cmdData *CmdData, cmd *cobra.Command) error {
 	SetupNoFinalTrackingFlag(cmdData, cmd)
-	cmd.PersistentFlags().BoolVarP(&cmdData.NoPodLogs, "no-pod-logs", "", false, "Disable Pod logs collection and printing (default $WERF_NO_POD_LOGS or false)")
+	cmd.PersistentFlags().BoolVarP(&cmdData.NoPodLogs, "no-pod-logs", "", util.GetBoolEnvironmentDefaultFalse("WERF_NO_POD_LOGS"), "Disable Pod logs collection and printing (default $WERF_NO_POD_LOGS or false)")
 	if err := SetupLegacyProgressTablePrintInterval(cmdData, cmd); err != nil {
 		return err
 	}
