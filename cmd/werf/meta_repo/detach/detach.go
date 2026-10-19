@@ -50,6 +50,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupSSHKey(&commonCmdData, cmd)
 
 	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{})
+	commonCmdData.Repo.SetupDeleteCredentials(ctx, cmd)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read and write images to --repo")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)

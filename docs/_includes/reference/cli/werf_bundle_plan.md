@@ -222,20 +222,6 @@ werf bundle plan [options]
             github, gitlab, harbor, quay.
             Default $WERF_REPO_CONTAINER_REGISTRY or auto mode (detect container registry by repo   
             address).
-      --repo-docker-hub-password=""
-            repo Docker Hub password (default $WERF_REPO_DOCKER_HUB_PASSWORD)
-      --repo-docker-hub-token=""
-            repo Docker Hub token (default $WERF_REPO_DOCKER_HUB_TOKEN)
-      --repo-docker-hub-username=""
-            repo Docker Hub username (default $WERF_REPO_DOCKER_HUB_USERNAME)
-      --repo-github-token=""
-            repo GitHub token (default $WERF_REPO_GITHUB_TOKEN)
-      --repo-harbor-password=""
-            repo Harbor password (default $WERF_REPO_HARBOR_PASSWORD)
-      --repo-harbor-username=""
-            repo Harbor username (default $WERF_REPO_HARBOR_USERNAME)
-      --repo-quay-token=""
-            repo quay.io token (default $WERF_REPO_QUAY_TOKEN)
       --resource-validation-cache-lifetime=48h0m0s
             How long local schema cache will be valid. Also can be defined by                       
             $WERF_RESOURCE_VALIDATION_CACHE_LIFETIME

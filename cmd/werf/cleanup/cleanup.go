@@ -71,7 +71,9 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupSecondaryStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{OptionalRepo: false})
+	commonCmdData.Repo.SetupDeleteCredentials(ctx, cmd)
 	common.SetupFinalRepo(&commonCmdData, cmd)
+	commonCmdData.FinalRepo.SetupDeleteCredentials(ctx, cmd)
 	common.SetupMetaRepo(&commonCmdData, cmd)
 	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultCleanupParallelTasksLimit)
 
