@@ -13,11 +13,27 @@ import (
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
 
+	"github.com/werf/werf/v2/pkg/build/stage"
 	"github.com/werf/werf/v2/pkg/container_backend"
 	"github.com/werf/werf/v2/pkg/docker_registry"
 	"github.com/werf/werf/v2/pkg/image"
 	"github.com/werf/werf/v2/pkg/storage"
 )
+
+type fetchStage struct {
+	stage.Interface
+	stageImage *stage.StageImage
+}
+
+var _ stage.Interface = (*fetchStage)(nil)
+
+func (s *fetchStage) GetStageImage() *stage.StageImage {
+	return s.stageImage
+}
+
+func (s *fetchStage) LogDetailedName() string {
+	return "stage"
+}
 
 type lookupBackend struct {
 	container_backend.ContainerBackend
