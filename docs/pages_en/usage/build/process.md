@@ -467,6 +467,28 @@ werf build --repo registry.mycompany.org/project --final-repo final-registry.myc
 
 Final repositories reduce image retrieval time and network load by bringing the container registry closer to the Kubernetes cluster on which the application is being deployed. Final repositories can also be used in the same container registry as the main repository (`--repo`), if necessary.
 
+With `werf build`, repeat `--final-repo` to publish final images and their custom tags into several repositories:
+
+```shell
+werf build --repo registry.example.org/stage \
+  --final-repo registry-one.example.org/prod \
+  --final-repo registry-two.example.org/prod
+```
+
+You can also set `WERF_FINAL_REPO` and `WERF_FINAL_REPO_1`, `WERF_FINAL_REPO_2`, etc. Set `WERF_FINAL_REPO` to select the first repository explicitly. The remaining environment entries are sorted lexicographically as `NAME=value` (for example, `_10` precedes `_1` and `_2`). Command-line flags replace the environment list. Duplicate addresses are processed once. The build report uses the first final repository. Other commands still accept one final repository.
+
+Copies of different images to their final repositories run in parallel, sharing the `--parallel-tasks-limit` across all images and destinations. The limit applies to image copies, not individual registry requests. A failure in any destination fails the command; copies already completed in other destinations remain available. Repeat the command to finish publication. `--check-built-images` and its aliases, including `--require-built-images`, only check that images and requested custom tags exist in **every** final repository; they do not copy images.
+
+To publish already built images without allowing a build, use `--promote-built-images` (or `WERF_PROMOTE_BUILT_IMAGES=true`):
+
+```shell
+werf build --promote-built-images --repo registry.example.org/stage \
+  --final-repo registry-one.example.org/prod \
+  --final-repo registry-two.example.org/prod
+```
+
+This mode reuses stages from the primary and secondary repositories and publishes final images and custom tags into every final repository. If a required stage is missing, the command fails before running build instructions. It requires at least one final repository and cannot be combined with `--check-built-images`, `--require-built-images`, `-Z`, or `WERF_CHECK_BUILT_IMAGES=true`. Unlike the read-only check, promotion can populate empty final repositories.
+
 ### Extra repository for service metadata
 
 By default, werf stores service metadata in the main repository (`--repo`) alongside image stages. If necessary, that metadata — image-metadata used for cleanup based on Git history, the managed images list, custom-tag metadata, and the last-cleanup record — can be stored in a separate repository via `--meta-repo`:

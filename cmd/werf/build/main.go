@@ -6,6 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v3/cmd/werf/common"
 	"github.com/werf/werf/v3/pkg/build"
@@ -20,6 +21,7 @@ import (
 var commonCmdData common.CmdData
 
 func NewCmd(ctx context.Context) *cobra.Command {
+	var promoteBuiltImages bool
 	ctx = common.NewContextWithCmdData(ctx, &commonCmdData)
 	cmd := common.SetCommandContext(ctx, common.SetCommandContext(ctx, &cobra.Command{
 		Use:   "build [IMAGE_NAME...]",
@@ -42,6 +44,15 @@ func NewCmd(ctx context.Context) *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
+			if promoteBuiltImages {
+				if common.GetCheckBuiltImages(&commonCmdData) {
+					return fmt.Errorf("--promote-built-images cannot be used with --check-built-images or its aliases")
+				}
+				addresses := commonCmdData.FinalRepo.Addresses
+				if len(addresses) == 0 || len(addresses) == 1 && addresses[0] == "" {
+					return fmt.Errorf("--promote-built-images requires at least one --final-repo")
+				}
+			}
 
 			defer global_warnings.PrintGlobalWarnings(ctx)
 
@@ -53,7 +64,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 			common.LogVersion()
 
 			return common.LogRunningTime(func() error {
-				return runMain(ctx, args)
+				return runMain(ctx, args, promoteBuiltImages)
 			})
 		},
 	}))
@@ -75,7 +86,8 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupSecondaryStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{OptionalRepo: true})
-	common.SetupFinalRepo(&commonCmdData, cmd)
+	commonCmdData.FinalRepo = common.NewRepoData("final-repo", common.RepoDataOptions{MultipleAddresses: true})
+	commonCmdData.FinalRepo.SetupCmd(cmd)
 	common.SetupMetaRepo(&commonCmdData, cmd)
 
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified repo, to pull base images")
@@ -103,6 +115,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 
 	common.SetupParallelOptions(&commonCmdData, cmd, common.DefaultBuildParallelTasksLimit)
 	common.SetupCheckBuiltImages(&commonCmdData, cmd)
+	cmd.Flags().BoolVar(&promoteBuiltImages, "promote-built-images", util.GetBoolEnvironmentDefaultFalse("WERF_PROMOTE_BUILT_IMAGES"), "Publish previously built images and custom tags into all final repos without running build instructions. Fail if a required stage is missing. Requires --final-repo; incompatible with --check-built-images and its aliases (default $WERF_PROMOTE_BUILT_IMAGES)")
 	common.SetupFollow(&commonCmdData, cmd)
 
 	common.SetupDisableAutoHostCleanup(&commonCmdData, cmd)
@@ -124,7 +137,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	return cmd
 }
 
-func runMain(ctx context.Context, imageNameListFromArgs []string) error {
+func runMain(ctx context.Context, imageNameListFromArgs []string, promoteBuiltImages bool) error {
 	ctx, logOperationsSummaryFn := common.InitOperationsStatistics(ctx, &commonCmdData)
 	defer logOperationsSummaryFn()
 
@@ -171,14 +184,14 @@ func runMain(ctx context.Context, imageNameListFromArgs []string) error {
 	if *commonCmdData.Follow {
 		logboek.LogOptionalLn()
 		return common.FollowGitHead(ctx, &commonCmdData, func(ctx context.Context, headCommitGiterminismManager *giterminism_manager.Manager) error {
-			return run(ctx, containerBackend, headCommitGiterminismManager, imageNameListFromArgs, *commonCmdData.FinalImagesOnly)
+			return run(ctx, containerBackend, headCommitGiterminismManager, imageNameListFromArgs, *commonCmdData.FinalImagesOnly, promoteBuiltImages)
 		})
 	} else {
-		return run(ctx, containerBackend, giterminismManager, imageNameListFromArgs, *commonCmdData.FinalImagesOnly)
+		return run(ctx, containerBackend, giterminismManager, imageNameListFromArgs, *commonCmdData.FinalImagesOnly, promoteBuiltImages)
 	}
 }
 
-func run(ctx context.Context, containerBackend container_backend.ContainerBackend, giterminismManager giterminism_manager.Interface, imageNameListFromArgs []string, finalImagesOnly bool) error {
+func run(ctx context.Context, containerBackend container_backend.ContainerBackend, giterminismManager giterminism_manager.Interface, imageNameListFromArgs []string, finalImagesOnly, promoteBuiltImages bool) error {
 	_, werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismManager, common.GetWerfConfigOptions(&commonCmdData, true))
 	if err != nil {
 		return fmt.Errorf("unable to load werf config: %w", err)
@@ -211,6 +224,7 @@ func run(ctx context.Context, containerBackend container_backend.ContainerBacken
 	if err != nil {
 		return err
 	}
+	buildOptions.PromoteBuiltImages = promoteBuiltImages
 
 	conveyorOptions, err := common.GetConveyorOptionsWithParallel(ctx, &commonCmdData, imagesToProcess, buildOptions)
 	if err != nil {
