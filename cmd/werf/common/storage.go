@@ -108,13 +108,13 @@ func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfi
 			StagesStorage:              stagesStorage,
 			MetaStorage:                stagesStorage,
 			StorageLockManager:         storageLockManager,
-			FinalStagesStorage:         nil,
+			FinalStagesStorageList:     nil,
 			CacheStagesStorageList:     nil,
 			SecondaryStagesStorageList: nil,
 		}, nil
 	}
 
-	finalStagesStorage, err := GetOptionalFinalStagesStorage(ctx, c.ContainerBackend, c.CmdData)
+	finalStagesStorageList, err := GetFinalStagesStorageList(ctx, c.ContainerBackend, c.CmdData)
 	if err != nil {
 		return nil, fmt.Errorf("error get final stages storage: %w", err)
 	}
@@ -145,7 +145,7 @@ func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfi
 
 		StagesStorage:              stagesStorage,
 		MetaStorage:                metaStorage,
-		FinalStagesStorage:         finalStagesStorage,
+		FinalStagesStorageList:     finalStagesStorageList,
 		CacheStagesStorageList:     cacheStagesStorageList,
 		SecondaryStagesStorageList: secondaryStagesStorageList,
 	}, nil

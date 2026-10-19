@@ -129,8 +129,11 @@ werf build [IMAGE_NAME...] [options]
             Use specified environment (default $WERF_ENV)
       --final-images-only=true
             Process final images only ($WERF_FINAL_IMAGES_ONLY or true by default)
-      --final-repo=""
-            Container registry storage address (default $WERF_FINAL_REPO)
+      --final-repo=[]
+            Container registry storage address (default $WERF_FINAL_REPO). Can be specified         
+            multiple times; the first repo is used in the build report. Also accepts numbered       
+            environment variables, e.g. $WERF_FINAL_REPO_1, $WERF_FINAL_REPO_2. Flags override      
+            environment values.
       --final-repo-container-registry=""
             Choose final-repo container registry implementation.
             The following container registries are supported: ecr, acr, default, dockerhub, gcr,    
@@ -217,6 +220,11 @@ werf build [IMAGE_NAME...] [options]
       --platform=[]
             Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT]     
             ($WERF_PLATFORM or $DOCKER_DEFAULT_PLATFORM by default)
+      --promote-built-images=false
+            Publish previously built images and custom tags into all final repos without running    
+            build instructions. Fail if a required stage is missing. Requires --final-repo;         
+            incompatible with --check-built-images and its aliases (default                         
+            $WERF_PROMOTE_BUILT_IMAGES)
       --repo=""
             Container registry storage address (default $WERF_REPO)
       --repo-container-registry=""

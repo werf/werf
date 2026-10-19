@@ -8,8 +8,9 @@ import (
 )
 
 type EnvValuesOptions struct {
-	Name    string
-	Exclude []string
+	Name                 string
+	Exclude              []string
+	NumberedSuffixesOnly bool
 }
 
 // GetEnvValues reads a non-empty bare value followed by suffixed values in lexical order.
@@ -22,6 +23,12 @@ func GetEnvValues(_ context.Context, opts EnvValuesOptions) []string {
 		name, value, _ := strings.Cut(entry, "=")
 		if name != opts.Name && !strings.HasPrefix(name, opts.Name+"_") {
 			continue
+		}
+		if opts.NumberedSuffixesOnly && name != opts.Name {
+			suffix := strings.TrimPrefix(name, opts.Name+"_")
+			if suffix == "" || strings.IndexFunc(suffix, func(c rune) bool { return c < '0' || c > '9' }) >= 0 {
+				continue
+			}
 		}
 		if name == opts.Name && value == "" {
 			continue

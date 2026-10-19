@@ -8,10 +8,16 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"sync/atomic"
 
+	"github.com/google/go-containerregistry/pkg/name"
+	"github.com/google/go-containerregistry/pkg/registry"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
+	"github.com/google/go-containerregistry/pkg/v1/empty"
+	"github.com/google/go-containerregistry/pkg/v1/mutate"
+	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
 
@@ -22,6 +28,7 @@ import (
 	"github.com/werf/werf/v3/pkg/config"
 	"github.com/werf/werf/v3/pkg/container_backend"
 	"github.com/werf/werf/v3/pkg/container_backend/stage_builder"
+	"github.com/werf/werf/v3/pkg/docker_registry"
 	"github.com/werf/werf/v3/pkg/giterminism_manager"
 	imagePkg "github.com/werf/werf/v3/pkg/image"
 	"github.com/werf/werf/v3/pkg/opstats"
@@ -29,6 +36,49 @@ import (
 	"github.com/werf/werf/v3/pkg/storage/manager"
 	"github.com/werf/werf/v3/pkg/storage/synchronization/lock_manager"
 )
+
+func newFinalRepoBuildPhase(ctx context.Context) (*BuildPhase, *manager.StorageManager) {
+	var storages []storage.StagesStorage
+	for range 3 {
+		server := httptest.NewServer(registry.New())
+		ginkgo.DeferCleanup(server.Close)
+		address := strings.TrimPrefix(server.URL, "http://") + "/project"
+		client, err := docker_registry.NewDockerRegistry(ctx, address, docker_registry.DefaultImplementationName, docker_registry.DockerRegistryOptions{InsecureRegistry: true})
+		gomega.Expect(err).To(gomega.Succeed())
+		storages = append(storages, storage.NewRepoStagesStorage(&storage.NewRepoStagesStorageOptions{RepoAddress: address, DockerRegistry: client}))
+	}
+	storageManager := &manager.StorageManager{
+		ProjectName:            "project",
+		StagesStorage:          storages[0].(*storage.RepoStagesStorage),
+		FinalStagesStorageList: storages[1:],
+	}
+	phase := newTestBuildPhase(storageManager, []string{"app"})
+	phase.Conveyor.werfConfig = &config.WerfConfig{Meta: &config.Meta{Project: "project"}}
+	phase.Conveyor.ParallelTasksLimit = 2
+	phase.SkipAddManagedImagesRecords = true
+	phase.SkipImageMetadataPublication = true
+	phase.CustomTagFuncList = []imagePkg.CustomTagFunc{func(_, _ string) string { return "release" }}
+	return phase, storageManager
+}
+
+func publishFinalRepoTestImage(ctx context.Context, storageManager *manager.StorageManager, architecture string, stageID imagePkg.StageID) *buildImage.Image {
+	img, err := buildImage.NewImage(ctx, "linux/"+architecture, "app", buildImage.NoBaseImage, buildImage.ImageOptions{IsFinal: true, UseCustomTag: true})
+	gomega.Expect(err).To(gomega.Succeed())
+	img.ForceTargetPlatformLogging = true
+	containerImage, err := mutate.ConfigFile(empty.Image, &v1.ConfigFile{OS: "linux", Architecture: architecture})
+	gomega.Expect(err).To(gomega.Succeed())
+	tag, err := name.NewTag(storageManager.StagesStorage.ConstructStageImageName(storageManager.ProjectName, stageID.Digest, stageID.CreationTs))
+	gomega.Expect(err).To(gomega.Succeed())
+	gomega.Expect(remote.Write(tag, containerImage, remote.WithContext(ctx))).To(gomega.Succeed())
+	desc, err := storageManager.StagesStorage.GetStageDesc(ctx, storageManager.ProjectName, stageID)
+	gomega.Expect(err).To(gomega.Succeed())
+	img.SetContentTagDesc(desc)
+	anchor := stage.NewBaseStage(stage.ImageSpec, &stage.BaseStageOptions{ImageName: img.Name})
+	anchor.SetContentAnchor(true)
+	anchor.SetStageImage(&stage.StageImage{Image: &exportLegacyImageStub{stageDesc: desc}})
+	img.SetStages([]stage.Interface{anchor})
+	return img
+}
 
 func newImage(name string, baseImageType buildImage.BaseImageType, opts buildImage.ImageOptions) *buildImage.Image {
 	img, err := buildImage.NewImage(context.Background(), "linux/amd64", name, baseImageType, opts)
@@ -138,6 +188,13 @@ func (m *exportStorageManager) GetStagesStorage() storage.PrimaryStagesStorage {
 
 func (m *exportStorageManager) GetFinalStagesStorage() storage.StagesStorage {
 	return m.finalStagesStorage
+}
+
+func (m *exportStorageManager) GetFinalStagesStorageList(context.Context) []storage.StagesStorage {
+	if m.finalStagesStorage == nil {
+		return nil
+	}
+	return []storage.StagesStorage{m.finalStagesStorage}
 }
 
 func (m *exportStorageManager) CopyStageIntoFinalStorage(_ context.Context, _ imagePkg.StageID, _ storage.StagesStorage, opts manager.CopyStageIntoStorageOptions) (*imagePkg.StageDesc, error) {
@@ -391,6 +448,14 @@ func (m *publicationStorageManager) GetStageDescSetByDigestWithCache(_ context.C
 	return imagePkg.NewStageDescSet(), nil
 }
 
+type promotionLookupStorageManager struct{ *publicationStorageManager }
+
+var _ manager.StorageManagerInterface = (*promotionLookupStorageManager)(nil)
+
+func (m *promotionLookupStorageManager) GetStageDescSetByDigestWithCache(ctx context.Context, name, digest string, parentTs int64) (imagePkg.StageDescSet, error) {
+	return m.GetStageDescSetByDigest(ctx, name, digest, parentTs)
+}
+
 var _ giterminism_manager.Interface = (*checkModeGiterminismManager)(nil)
 
 type checkModeGiterminismManager struct {
@@ -415,6 +480,10 @@ func (m *checkModeStorageManager) GetMetaStorage() storage.PrimaryStagesStorage 
 }
 
 func (m *checkModeStorageManager) GetFinalStagesStorage() storage.StagesStorage { return nil }
+
+func (m *checkModeStorageManager) GetFinalStagesStorageList(context.Context) []storage.StagesStorage {
+	return nil
+}
 
 var _ storage.PrimaryStagesStorage = (*checkModeStorage)(nil)
 
@@ -531,4 +600,86 @@ func eventCounts(collector *opstats.Collector) map[opstats.Event]int {
 		counts[e.Event] = e.Count
 	}
 	return counts
+}
+
+type finalPublicationStorageManager struct {
+	*manager.StorageManager
+	started       atomic.Int32
+	active        atomic.Int32
+	maximum       atomic.Int32
+	mutex         sync.Mutex
+	copied        []string
+	release       <-chan struct{}
+	blockedCopies map[string]bool
+	copyErr       error
+}
+
+var _ manager.StorageManagerInterface = (*finalPublicationStorageManager)(nil)
+
+func (m *finalPublicationStorageManager) CopyStageIntoFinalStorage(ctx context.Context, id imagePkg.StageID, destination storage.StagesStorage, _ manager.CopyStageIntoStorageOptions) (*imagePkg.StageDesc, error) {
+	m.started.Add(1)
+	active := m.active.Add(1)
+	defer m.active.Add(-1)
+	for old := m.maximum.Load(); active > old; old = m.maximum.Load() {
+		if m.maximum.CompareAndSwap(old, active) {
+			break
+		}
+	}
+	if m.blockedCopies == nil || m.blockedCopies[destination.Address()+":"+id.String()] {
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		case <-m.release:
+		}
+	}
+	if m.copyErr != nil {
+		return nil, m.copyErr
+	}
+	m.mutex.Lock()
+	m.copied = append(m.copied, destination.Address()+":"+id.String())
+	m.mutex.Unlock()
+	return &imagePkg.StageDesc{
+		StageID: imagePkg.NewStageID(id.Digest, id.CreationTs),
+		Info: &imagePkg.Info{
+			Name:       destination.Address() + ":" + id.String(),
+			Repository: destination.Address(),
+			Tag:        id.String(),
+		},
+	}, nil
+}
+
+func newFinalPublicationTestPhase(imageCount, repoCount int, limit int64, release <-chan struct{}) (*BuildPhase, *finalPublicationStorageManager, []string) {
+	storageManager := &finalPublicationStorageManager{
+		StorageManager: &manager.StorageManager{
+			ProjectName:   "project",
+			StagesStorage: &storage.LocalStagesStorage{},
+		},
+		release: release,
+	}
+	var names []string
+	for n := range imageCount {
+		names = append(names, fmt.Sprintf("app-%d", n))
+	}
+	for n := range repoCount {
+		storageManager.FinalStagesStorageList = append(storageManager.FinalStagesStorageList, storage.NewRepoStagesStorage(&storage.NewRepoStagesStorageOptions{RepoAddress: fmt.Sprintf("final-%d", n)}))
+	}
+	phase := newTestBuildPhase(storageManager, names)
+	phase.ImagesReport = NewImagesReport()
+	phase.Conveyor.ParallelTasksLimit = limit
+	phase.Conveyor.werfConfig = config.NewWerfConfig(&config.Meta{Project: "project"}, []config.ImageInterface{})
+	phase.Conveyor.werfConfig.Meta.Build.Platform = []string{"linux/amd64"}
+	var expectedCopies []string
+	for n, name := range names {
+		img := newTestImage(name, true)
+		img.AnchorReused = true
+		img.ForceTargetPlatformLogging = true
+		id := imagePkg.NewStageID(fmt.Sprintf("%056x", n+1), 1)
+		img.SetContentTagDesc(&imagePkg.StageDesc{StageID: id, Info: &imagePkg.Info{Repository: "primary", Name: "primary:" + id.String(), Tag: id.String()}})
+		img.SetStages([]stage.Interface{stage.NewBaseStage(stage.ImageSpec, &stage.BaseStageOptions{ImageName: name})})
+		phase.Conveyor.imagesTree.AppendImageForTests(img)
+		for _, destination := range storageManager.FinalStagesStorageList {
+			expectedCopies = append(expectedCopies, destination.Address()+":"+id.String())
+		}
+	}
+	return phase, storageManager, expectedCopies
 }

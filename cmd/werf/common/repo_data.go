@@ -87,6 +87,7 @@ type RepoData struct {
 	Name string
 
 	Address           *string
+	Addresses         []string
 	Implementation    *string // legacy
 	ContainerRegistry *string
 	DockerHubUsername *string
@@ -101,8 +102,9 @@ type RepoData struct {
 }
 
 type RepoDataOptions struct {
-	OnlyAddress  bool
-	OptionalRepo bool
+	OnlyAddress       bool
+	OptionalRepo      bool
+	MultipleAddresses bool
 }
 
 func NewRepoData(name string, opts RepoDataOptions) *RepoData {
@@ -110,7 +112,14 @@ func NewRepoData(name string, opts RepoDataOptions) *RepoData {
 }
 
 func (d *RepoData) GetAddress() (string, error) {
-	addr := *d.Address
+	var addr string
+	if d.MultipleAddresses {
+		if len(d.Addresses) > 0 {
+			addr = d.Addresses[0]
+		}
+	} else {
+		addr = *d.Address
+	}
 	if addr == "" {
 		addr = storage.LocalStorageAddress
 	}
@@ -182,6 +191,17 @@ func (repoData *RepoData) SetupDeleteCredentials(ctx context.Context, cmd *cobra
 
 func (repoData *RepoData) SetupAddressForRepoData(cmd *cobra.Command, paramName string, paramEnvNames []string) {
 	usage := fmt.Sprintf("Container registry storage address (default %s)", strings.Join(getParamEnvNamesForUsageDescription(paramEnvNames), ", "))
+	if repoData.MultipleAddresses {
+		var defaults []string
+		for _, envName := range paramEnvNames {
+			defaults = append(defaults, GetEnvValues(cmd.Context(), EnvValuesOptions{
+				Name:                 envName,
+				NumberedSuffixesOnly: true,
+			})...)
+		}
+		cmd.Flags().StringArrayVar(&repoData.Addresses, paramName, defaults, usage+". Can be specified multiple times; the first repo is used in the build report. Also accepts numbered environment variables, e.g. $WERF_FINAL_REPO_1, $WERF_FINAL_REPO_2. Flags override environment values.")
+		return
+	}
 
 	repoData.Address = new(string)
 	cmd.Flags().StringVarP(

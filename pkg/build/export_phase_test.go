@@ -71,7 +71,7 @@ var _ = ginkgo.Describe("Exporter", func() {
 	)
 
 	ginkgo.It("passes the initialized anchor when copying into the final repo", func(ctx ginkgo.SpecContext) {
-		gomega.Expect(phase.publishFinalImage(ctx, img.Name, img, storageManager.finalStagesStorage)).To(gomega.Succeed())
+		gomega.Expect(phase.publishFinalImage(ctx, img.Name, img)).To(gomega.Succeed())
 		gomega.Expect(storageManager.copyOptions.FetchStage).To(gomega.BeIdenticalTo(anchor))
 		gomega.Expect(img.GetContentTagDesc()).To(gomega.BeIdenticalTo(finalDesc))
 		gomega.Expect(anchor.GetStageImage().Image.GetStageDesc()).To(gomega.BeIdenticalTo(primaryDesc))
