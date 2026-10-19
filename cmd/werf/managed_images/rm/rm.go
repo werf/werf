@@ -54,6 +54,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupSecondaryStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupCacheStagesStorageOptions(&commonCmdData, cmd)
 	common.SetupRepoOptions(&commonCmdData, cmd, common.RepoDataOptions{})
+	commonCmdData.Repo.SetupDeleteCredentials(ctx, cmd)
 	common.SetupFinalRepo(&commonCmdData, cmd)
 	common.SetupMetaRepo(&commonCmdData, cmd)
 

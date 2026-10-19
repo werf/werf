@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 
 	"github.com/werf/werf/v3/pkg/container_backend"
@@ -139,19 +140,29 @@ func (d *RepoData) GetDockerRegistryOptions(insecureRegistry, skipTlsVerifyRegis
 	}
 
 	if !d.OnlyAddress {
-		opts.DockerHubUsername = *d.DockerHubUsername
-		opts.DockerHubPassword = *d.DockerHubPassword
-		opts.DockerHubToken = *d.DockerHubToken
-		opts.GitHubToken = *d.GitHubToken
-		opts.HarborUsername = *d.HarborUsername
-		opts.HarborPassword = *d.HarborPassword
-		opts.QuayToken = *d.QuayToken
+		opts.DockerHubUsername = lo.FromPtr(d.DockerHubUsername)
+		opts.DockerHubPassword = lo.FromPtr(d.DockerHubPassword)
+		opts.DockerHubToken = lo.FromPtr(d.DockerHubToken)
+		opts.GitHubToken = lo.FromPtr(d.GitHubToken)
+		opts.HarborUsername = lo.FromPtr(d.HarborUsername)
+		opts.HarborPassword = lo.FromPtr(d.HarborPassword)
+		opts.QuayToken = lo.FromPtr(d.QuayToken)
 	}
 
 	return opts
 }
 
 func (repoData *RepoData) SetupCmd(cmd *cobra.Command) {
+	repoNameUpper := strings.ToUpper(strings.ReplaceAll(repoData.Name, "-", "_"))
+	repoData.SetupAddressForRepoData(cmd, repoData.Name, []string{fmt.Sprintf("WERF_%s", repoNameUpper)})
+	if repoData.OnlyAddress {
+		return
+	}
+
+	repoData.SetupContainerRegistryForRepoData(cmd, repoData.Name+"-container-registry", []string{fmt.Sprintf("WERF_%s_CONTAINER_REGISTRY", repoNameUpper)})
+}
+
+func (repoData *RepoData) SetupDeleteCredentials(ctx context.Context, cmd *cobra.Command) {
 	repoNameUpper := strings.ToUpper(strings.ReplaceAll(repoData.Name, "-", "_"))
 	makeEnvVar := func(variableSuffix string) string {
 		return fmt.Sprintf("WERF_%s_%s", repoNameUpper, variableSuffix)
@@ -160,12 +171,6 @@ func (repoData *RepoData) SetupCmd(cmd *cobra.Command) {
 		return fmt.Sprintf("%s-%s", repoData.Name, optSuffix)
 	}
 
-	repoData.SetupAddressForRepoData(cmd, repoData.Name, []string{fmt.Sprintf("WERF_%s", repoNameUpper)})
-	if repoData.OnlyAddress {
-		return
-	}
-
-	repoData.SetupContainerRegistryForRepoData(cmd, makeOpt("container-registry"), []string{makeEnvVar("CONTAINER_REGISTRY")})
 	repoData.SetupDockerHubUsernameForRepoData(cmd, makeOpt("docker-hub-username"), []string{makeEnvVar("DOCKER_HUB_USERNAME")})
 	repoData.SetupDockerHubPasswordForRepoData(cmd, makeOpt("docker-hub-password"), []string{makeEnvVar("DOCKER_HUB_PASSWORD")})
 	repoData.SetupDockerHubTokenForRepoData(cmd, makeOpt("docker-hub-token"), []string{makeEnvVar("DOCKER_HUB_TOKEN")})

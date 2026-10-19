@@ -64,20 +64,6 @@ werf managed-images rm [options]
             github, gitlab, harbor, quay.
             Default $WERF_FINAL_REPO_CONTAINER_REGISTRY or auto mode (detect container registry by  
             repo address).
-      --final-repo-docker-hub-password=""
-            final-repo Docker Hub password (default $WERF_FINAL_REPO_DOCKER_HUB_PASSWORD)
-      --final-repo-docker-hub-token=""
-            final-repo Docker Hub token (default $WERF_FINAL_REPO_DOCKER_HUB_TOKEN)
-      --final-repo-docker-hub-username=""
-            final-repo Docker Hub username (default $WERF_FINAL_REPO_DOCKER_HUB_USERNAME)
-      --final-repo-github-token=""
-            final-repo GitHub token (default $WERF_FINAL_REPO_GITHUB_TOKEN)
-      --final-repo-harbor-password=""
-            final-repo Harbor password (default $WERF_FINAL_REPO_HARBOR_PASSWORD)
-      --final-repo-harbor-username=""
-            final-repo Harbor username (default $WERF_FINAL_REPO_HARBOR_USERNAME)
-      --final-repo-quay-token=""
-            final-repo quay.io token (default $WERF_FINAL_REPO_QUAY_TOKEN)
       --git-work-tree=""
             Use specified git work tree dir (default $WERF_WORK_TREE or lookup for directory that   
             contains .git in the current or parent directories)
