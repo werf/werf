@@ -270,6 +270,7 @@ func runApply(ctx context.Context) error {
 		RollbackGraphPath:          commonCmdData.RollbackGraphPath,
 		ShowSubchartNotes:          commonCmdData.ShowSubchartNotes,
 		TemplatesAllowDNS:          commonCmdData.TemplatesAllowDNS,
+		ReleaseHistoryLimit:        commonCmdData.ReleaseHistoryLimit,
 		ReleaseInstallRuntimeOptions: nelmcommon.ReleaseInstallRuntimeOptions{
 			ResourceValidationOptions:   commonCmdData.ResourceValidationOptions,
 			DefaultDeletePropagation:    commonCmdData.DefaultDeletePropagation,
@@ -282,7 +283,6 @@ func runApply(ctx context.Context) error {
 			NoRemoveManualChanges:       commonCmdData.NoRemoveManualChanges,
 			PatchesFiles:                commonCmdData.PatchesFiles,
 			DefaultPatchesDisable:       commonCmdData.DefaultPatchesDisable,
-			ReleaseHistoryLimit:         commonCmdData.ReleaseHistoryLimit,
 			ReleaseInfoAnnotations:      releaseInfoAnnotations,
 			ReleaseLabels:               releaseLabels,
 			ReleaseStorageDriver:        commonCmdData.ReleaseStorageDriver,
