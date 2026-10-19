@@ -509,7 +509,7 @@ func (m *StorageManager) FetchStage(ctx context.Context, containerBackend contai
 
 			stageDesc, err := getStageDesc(ctx, m.ProjectName, *stageID, stagesStorage, nil, getStageDescOptions{WithLocalManifestCache: true})
 			if err != nil {
-				return nil, fmt.Errorf("error getting stage %s description from %s: %w", stageID.String(), m.FinalStagesStorage.String(), err)
+				return nil, fmt.Errorf("error getting stage %s description from %s: %w", stageID.String(), stagesStorage.String(), err)
 			}
 			pulled = false
 			stageImage.SetStageDesc(stageDesc)
