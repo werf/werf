@@ -142,7 +142,7 @@ func (storage *LocalStagesStorage) deleteContainers(ctx context.Context, contain
 
 func (storage *LocalStagesStorage) GetStagesIDs(ctx context.Context, projectName string, opts ...Option) ([]image.StageID, error) {
 	imagesOpts := container_backend.ImagesOptions{}
-	imagesOpts.Filters = append(imagesOpts.Filters, util.NewPair("reference", fmt.Sprintf(LocalStage_ImageRepoFormat, projectName)))
+	imagesOpts.Filters = append(imagesOpts.Filters, util.NewPair("reference", fmt.Sprintf(LocalStage_ImageRepoFormat, projectName)+":*"))
 
 	images, err := storage.ContainerBackend.Images(ctx, imagesOpts)
 	if err != nil {
@@ -344,7 +344,7 @@ func (storage *LocalStagesStorage) putProjectSnapshot(projectName string, entry 
 
 func (storage *LocalStagesStorage) listImages(ctx context.Context, reference string) (image.ImagesList, error) {
 	images, err := storage.ContainerBackend.Images(ctx, container_backend.ImagesOptions{
-		Filters: []util.Pair[string, string]{util.NewPair("reference", reference)},
+		Filters: []util.Pair[string, string]{util.NewPair("reference", reference+":*")},
 	})
 	if err != nil {
 		return nil, fmt.Errorf("unable to get docker images: %w", err)

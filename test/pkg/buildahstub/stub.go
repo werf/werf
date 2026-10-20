@@ -16,6 +16,7 @@ type BuildahStub struct {
 	FromCommandFunc   func(ctx context.Context, container, image string, opts buildah.FromCommandOpts) (string, error)
 	PullFunc          func(ctx context.Context, ref string, opts buildah.PullOpts) (string, error)
 	InspectFunc       func(ctx context.Context, ref string) (*thirdparty.BuilderInfo, error)
+	ImagesFunc        func(ctx context.Context, opts buildah.ImagesOptions) (image.ImagesList, error)
 	FromCommandImages []string
 	PullRefs          []string
 	InspectRefs       []string
@@ -124,7 +125,10 @@ func (b *BuildahStub) Add(context.Context, string, []string, string, buildah.Add
 	return nil
 }
 
-func (b *BuildahStub) Images(context.Context, buildah.ImagesOptions) (image.ImagesList, error) {
+func (b *BuildahStub) Images(ctx context.Context, opts buildah.ImagesOptions) (image.ImagesList, error) {
+	if b.ImagesFunc != nil {
+		return b.ImagesFunc(ctx, opts)
+	}
 	return nil, nil
 }
 
