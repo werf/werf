@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.83.1](https://github.com/werf/werf/compare/v2.83.0...v2.83.1) (2026-10-19)
+
+
+### Bug Fixes
+
+* **build:** avoid panic on cache-repo errors without final-repo ([#8088](https://github.com/werf/werf/issues/8088)) ([acdca35](https://github.com/werf/werf/commit/acdca350932073444c4d385c3325de6bfc390b59))
+
 ## [2.83.0](https://github.com/werf/werf/compare/v2.82.0...v2.83.0) (2026-10-15)
 
 
