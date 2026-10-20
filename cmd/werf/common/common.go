@@ -856,12 +856,6 @@ func SetupRequireBuiltImages(cmdData *CmdData, cmd *cobra.Command) {
 func SetupCheckBuiltImages(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.CheckBuiltImages = new(bool)
 	cmd.Flags().BoolVarP(cmdData.CheckBuiltImages, "check-built-images", "", util.GetBoolEnvironmentDefaultFalse("WERF_CHECK_BUILT_IMAGES"), "Check that all used images are previously built and exist in repo. Exits with error if needed images are not cached and so require to run build instructions (default $WERF_CHECK_BUILT_IMAGES)")
-
-	cmdData.LegacyCheckBuiltImages = new(bool)
-	cmd.Flags().BoolVarP(cmdData.LegacyCheckBuiltImages, "require-built-images", "Z", false, "Check that all used images are previously built and exist in repo. Exits with error if needed images are not cached and so require to run build instructions")
-	if err := cmd.Flags().MarkHidden("require-built-images"); err != nil {
-		panic(err)
-	}
 }
 
 func SetupStubTags(cmdData *CmdData, cmd *cobra.Command) {
@@ -1476,7 +1470,7 @@ func GetRequireBuiltImages(cmdData *CmdData) bool {
 }
 
 func GetCheckBuiltImages(cmdData *CmdData) bool {
-	return option.PtrValueOrDefault(cmdData.CheckBuiltImages, false) || option.PtrValueOrDefault(cmdData.LegacyCheckBuiltImages, false)
+	return option.PtrValueOrDefault(cmdData.CheckBuiltImages, false)
 }
 
 func isImagesReadOnly(cmdData *CmdData) bool {

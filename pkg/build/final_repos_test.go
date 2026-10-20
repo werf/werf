@@ -21,10 +21,10 @@ import (
 
 var _ = ginkgo.Describe("Build with multiple final repos", func() {
 	ginkgo.DescribeTable("publishes images and custom tags into every destination",
-		func(ctx ginkgo.SpecContext, multiplatform, promote bool) {
+		func(ctx ginkgo.SpecContext, multiplatform, require bool) {
 			gomega.Expect(werf.Init(ginkgo.GinkgoT().TempDir(), "")).To(gomega.Succeed())
 			phase, storageManager := newFinalRepoBuildPhase(ctx)
-			phase.PromoteBuiltImages = promote
+			phase.RequireBuiltImages = require
 			first := publishFinalRepoTestImage(ctx, storageManager, "amd64", *imagePkg.NewStageID(fmt.Sprintf("%056x", 1), 1611836746968))
 			var published *imagePkg.StageDesc
 			var publish func() error
@@ -93,8 +93,8 @@ var _ = ginkgo.Describe("Build with multiple final repos", func() {
 		},
 		ginkgo.Entry("single-platform image", false, false),
 		ginkgo.Entry("multiplatform image including child manifests", true, false),
-		ginkgo.Entry("promote single-platform image", false, true),
-		ginkgo.Entry("promote multiplatform image including child manifests", true, true),
+		ginkgo.Entry("require single-platform image", false, true),
+		ginkgo.Entry("require multiplatform image including child manifests", true, true),
 	)
 
 	ginkgo.DescribeTable("bounds copies across images and final repos", func(ctx ginkgo.SpecContext, limit int64, expectedActive int32) {

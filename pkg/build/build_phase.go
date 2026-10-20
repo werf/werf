@@ -46,7 +46,7 @@ type BuildPhaseOptions struct {
 type BuildOptions struct {
 	ImageBuildOptions container_backend.BuildOptions
 	IntrospectOptions
-	PromoteBuiltImages bool
+	RequireBuiltImages bool
 
 	ReportPath       string
 	ReportFormat     ReportFormat
@@ -897,7 +897,7 @@ func (phase *BuildPhase) resolveContentAnchor(ctx context.Context, img *image.Im
 		if foundInPrimary && logResult {
 			phase.logContentAnchorReuse(ctx, img, stageDesc)
 		}
-	} else if (phase.ShouldBeBuiltMode || phase.PromoteBuiltImages) && logResult {
+	} else if (phase.ShouldBeBuiltMode || phase.RequireBuiltImages) && logResult {
 		logboek.Context(ctx).Warn().LogFHighlight("Content-based digest %s for image %s not found\n", anchor.GetDigest(), img.LogName())
 		logboek.Context(ctx).Warn().LogLn()
 	}
@@ -1146,8 +1146,8 @@ func (phase *BuildPhase) onImageStage(ctx context.Context, img *image.Image, stg
 	}
 
 	if !foundSuitableSecondaryStage {
-		if phase.PromoteBuiltImages {
-			return fmt.Errorf("promote image %q: required stage %s with digest %s not found; build images first without --promote-built-images or WERF_PROMOTE_BUILT_IMAGES", img.GetName(), stg.Name(), stg.GetDigest())
+		if phase.RequireBuiltImages {
+			return fmt.Errorf("image %q: required stage %s with digest %s not found; build images first without --require-built-images or WERF_REQUIRE_BUILT_IMAGES", img.GetName(), stg.Name(), stg.GetDigest())
 		}
 		if phase.ShouldBeBuiltMode {
 			phase.printShouldBeBuiltError(ctx, img, stg)
@@ -1421,7 +1421,7 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, s
 	storageManager := phase.Conveyor.StorageManager
 	var stageDescSet imagePkg.StageDescSet
 	var err error
-	if phase.ShouldBeBuiltMode || phase.PromoteBuiltImages {
+	if phase.ShouldBeBuiltMode || phase.RequireBuiltImages {
 		// A stale miss here would fail the build instead of reporting an existing stage, so the
 		// lookup must stay strictly fresh.
 		stageDescSet, err = storageManager.GetStageDescSetByDigestWithCache(ctx, stg.LogDetailedName(), stageDigest, phase.getPrevNonEmptyStageCreationTsForStage(stg))
@@ -1942,7 +1942,7 @@ E.g.:
 - manually with werf purge or werf host purge commands`)
 			logboek.Context(ctx).Warn().LogLn()
 			primaryStagesStorageAddress := phase.Conveyor.StorageManager.GetStagesStorage().String()
-			logboek.Context(ctx).Warn().LogLn(reasonNumberFunc() + fmt.Sprintf(`You are checking that images are already built (--check-built-images / --require-built-images / -Z flag, WERF_CHECK_BUILT_IMAGES / WERF_REQUIRE_BUILT_IMAGES env), so only the primary stages storage %[1]s has been searched:
+			logboek.Context(ctx).Warn().LogLn(reasonNumberFunc() + fmt.Sprintf(`You are checking that images are already built, so only the primary stages storage %[1]s has been searched:
 - If you expect images to be built and available in the registry, check the reasons above
 - Secondary stages storages (--secondary-repo and the implicit local one) are not consulted by the check and no stage is promoted into %[1]s
 - If the stage exists in a secondary stages storage only, publish it with an ordinary build first: werf build --repo %[1]s

@@ -220,11 +220,6 @@ werf build [IMAGE_NAME...] [options]
       --platform=[]
             Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT]     
             ($WERF_PLATFORM or $DOCKER_DEFAULT_PLATFORM by default)
-      --promote-built-images=false
-            Publish previously built images and custom tags into all final repos without running    
-            build instructions. Fail if a required stage is missing. Requires --final-repo;         
-            incompatible with --check-built-images and its aliases (default                         
-            $WERF_PROMOTE_BUILT_IMAGES)
       --repo=""
             Container registry storage address (default $WERF_REPO)
       --repo-container-registry=""
@@ -233,6 +228,10 @@ werf build [IMAGE_NAME...] [options]
             github, gitlab, harbor, quay.
             Default $WERF_REPO_CONTAINER_REGISTRY or auto mode (detect container registry by repo   
             address).
+  -Z, --require-built-images=false
+            Publish previously built images and custom tags without running build instructions.     
+            Reuse stages from primary and secondary repos; fail if a required stage is missing.     
+            Incompatible with --check-built-images (default $WERF_REQUIRE_BUILT_IMAGES)
       --save-build-report=false
             Save build report (by default $WERF_SAVE_BUILD_REPORT or false). Its path and format    
             configured with --build-report-path

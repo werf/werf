@@ -151,12 +151,12 @@ from: alpine:3.14
 
 ### Checking that images are built
 
-`werf build --check-built-images` (aliases: `--require-built-images`, `-Z`, `$WERF_CHECK_BUILT_IMAGES`), and `--require-built-images` on the commands that process images without building them, check that every image the project needs is already published. Missing stages produce `stages required`; unavailable output images or custom tags also cause the check to fail.
+`werf build --check-built-images` (or `$WERF_CHECK_BUILT_IMAGES`), and `--require-built-images` on the commands that process images without building them, check that every image the project needs is already published. Missing stages produce `stages required`; unavailable output images or custom tags also cause the check to fail.
 
 The check is read-only, and stage discovery is limited to the main repository:
 
 - a stage found in a `--secondary-repo` is **not** promoted into the main repository, and secondary repositories are not listed at all — so a project whose stages only exist in a secondary repository fails the check until a regular build copies them over;
-- nothing is published: no stage, no manifest list for a multi-platform image, no custom tag, no managed-image record and no Git metadata. Custom tags are verified to exist instead of being created. `werf build --check-built-images` and its aliases also skip synchronization registration and use host-local locks; other commands using `--require-built-images` retain their normal synchronization initialization. The automatic host cleanup is not run either, so a check never deletes local cache data or local backend images;
+- nothing is published: no stage, no manifest list for a multi-platform image, no custom tag, no managed-image record and no Git metadata. Custom tags are verified to exist instead of being created. `werf build --check-built-images` also skip synchronization registration and use host-local locks; other commands using `--require-built-images` retain their normal synchronization initialization. The automatic host cleanup is not run either, so a check never deletes local cache data or local backend images;
 - the configured output is still validated, read-only: with a `--final-repo`, the final image is required to exist there and is not copied into it, so the check never reports an image as available at an address that does not have it.
 
 Unlike a regular build, the check never trusts a negative result of the per-command listing: when the listing shows no stage for a digest, the main repository is listed afresh, so that a stage published while the check runs is reported as built rather than missing. A stage already present in the listing is used as is.
@@ -477,17 +477,19 @@ werf build --repo registry.example.org/stage \
 
 You can also set `WERF_FINAL_REPO` and `WERF_FINAL_REPO_1`, `WERF_FINAL_REPO_2`, etc. Set `WERF_FINAL_REPO` to select the first repository explicitly. The remaining environment entries are sorted lexicographically as `NAME=value` (for example, `_10` precedes `_1` and `_2`). Command-line flags replace the environment list. Duplicate addresses are processed once. The build report uses the first final repository. Other commands still accept one final repository.
 
-Copies of different images to their final repositories run in parallel, sharing the `--parallel-tasks-limit` across all images and destinations. The limit applies to image copies, not individual registry requests. A failure in any destination fails the command; copies already completed in other destinations remain available. Repeat the command to finish publication. `--check-built-images` and its aliases, including `--require-built-images`, only check that images and requested custom tags exist in **every** final repository; they do not copy images.
+Copies of different images to their final repositories run in parallel, sharing the `--parallel-tasks-limit` across all images and destinations. The limit applies to image copies, not individual registry requests. A failure in any destination fails the command; copies already completed in other destinations remain available. Repeat the command to finish publication. `--check-built-images` only checks that images and requested custom tags exist in **every** final repository; it does not copy images.
 
-To publish already built images without allowing a build, use `--promote-built-images` (or `WERF_PROMOTE_BUILT_IMAGES=true`):
+To publish already built images without allowing a build, use `--require-built-images` (or `-Z`, `WERF_REQUIRE_BUILT_IMAGES=true`):
 
 ```shell
-werf build --promote-built-images --repo registry.example.org/stage \
+werf build --require-built-images --repo registry.example.org/stage \
   --final-repo registry-one.example.org/prod \
   --final-repo registry-two.example.org/prod
 ```
 
-This mode reuses stages from the primary and secondary repositories and publishes final images and custom tags into every final repository. If a required stage is missing, the command fails before running build instructions. It requires at least one final repository and cannot be combined with `--check-built-images`, `--require-built-images`, `-Z`, or `WERF_CHECK_BUILT_IMAGES=true`. Unlike the read-only check, promotion can populate empty final repositories.
+This mode reuses stages from the primary and secondary repositories and publishes final images and custom tags into every final repository. If a required stage is missing, the command fails before running build instructions. Final repositories are optional: without them, publication uses the primary repository. The mode cannot be combined with `--check-built-images` or `WERF_CHECK_BUILT_IMAGES=true`. Unlike the read-only check, promotion can populate empty final repositories. Normal synchronization, metadata publication and automatic host cleanup remain enabled.
+
+`build --require-built-images` and `-Z` no longer act as aliases for `--check-built-images`: they may write to registries and need the corresponding permissions. Replace them with `--check-built-images` in read-only validation jobs. `WERF_REQUIRE_BUILT_IMAGES`, previously ignored by `build`, now prohibits running build instructions; unset it or use `--require-built-images=false` for ordinary builds.
 
 ### Extra repository for service metadata
 
