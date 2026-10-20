@@ -169,18 +169,30 @@ from: alpine:3.14
 
 ### Checking that images are built
 
-`werf build --check-built-images` (aliases: `--require-built-images`, `-Z`, `$WERF_CHECK_BUILT_IMAGES`), and `--require-built-images` on the commands that process images without building them, check that every image the project needs is already published. Missing stages produce `stages required`; unavailable output images, custom tags or legacy import metadata also cause the check to fail.
+`werf build --check-built-images` (or `$WERF_CHECK_BUILT_IMAGES`), and `--require-built-images` on the commands that process images without building them, check that every image the project needs is already published. Missing stages produce `stages required`; unavailable output images, custom tags or legacy import metadata also cause the check to fail.
 
 The check is read-only, and stage discovery is limited to the main repository:
 
 - a stage found in a `--secondary-repo` is **not** promoted into the main repository, and secondary stage lists are not requested — so a project whose stages only exist in a secondary repository fails the check until a regular build copies them over;
-- nothing is published: no stage, no manifest list for a multi-platform image, no custom tag, no managed-image record and no Git metadata. Custom tags are verified to exist instead of being created. `werf build --check-built-images` and its aliases also skip synchronization registration and use host-local locks; other commands using `--require-built-images` retain their normal synchronization initialization. The automatic host cleanup is not run either, so a check never deletes local cache data or local backend images.
+- nothing is published: no stage, no manifest list for a multi-platform image, no custom tag, no managed-image record and no Git metadata. Custom tags are verified to exist instead of being created. `werf build --check-built-images` also skips synchronization registration and uses host-local locks; other commands using `--require-built-images` retain their normal synchronization initialization. The automatic host cleanup is not run either, so a check never deletes local cache data or local backend images.
 - existing legacy import metadata may be read from primary or secondary storage without copying it. If import resolution yields missing, broken or empty metadata, the check fails instead of generating a checksum; run a regular build to create or repair that metadata;
 - the configured output is still validated, read-only: with a `--final-repo`, the final image is required to exist there and is not copied into it, so the check never reports an image as available at an address that does not have it.
 
 Unlike a regular build, the check never trusts a negative result of the per-command listing: when the listing shows no stage for a digest, the main repository is listed afresh, so that a stage published while the check runs is reported as built rather than missing. A stage already present in the listing is used as is.
 
 `werf stages copy` also transfers existing legacy import metadata whose checksums match the copied stages, including registry/archive round-trips and copies selected by a build report. Old archives without that metadata still require a regular build after restoring them before read-only checks can succeed.
+
+### Publishing previously built images
+
+`werf build --require-built-images` (or `-Z`, `WERF_REQUIRE_BUILT_IMAGES=true`) reuses primary and secondary stages and publishes images, custom tags and metadata without running build instructions. If a required stage is missing, the command fails. The optional `--final-repo` selects a separate destination; without it, publication uses the primary repository. Normal synchronization and automatic host cleanup remain enabled. Check and require modes cannot be enabled together.
+
+Legacy Stapel imports may still require a container backend: when import metadata is missing, broken or empty, require mode runs a checksum container and publishes the regenerated metadata. This does not execute stage build instructions.
+
+```shell
+werf build --require-built-images --repo registry.example.org/stage --final-repo registry.example.org/prod
+```
+
+`build --require-built-images` and `-Z` no longer act as aliases for `--check-built-images`: they may write to registries and need the corresponding permissions. Replace them with `--check-built-images` in read-only validation jobs. `WERF_REQUIRE_BUILT_IMAGES`, previously ignored by `build`, now prohibits running build instructions; unset it or use `--require-built-images=false` for ordinary builds.
 
 ## Parallelism and image assembly order
 

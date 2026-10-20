@@ -5,17 +5,26 @@ import (
 	"os/exec"
 	"slices"
 
+	"github.com/google/go-containerregistry/pkg/name"
+	"github.com/google/go-containerregistry/pkg/v1/remote"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	"github.com/werf/werf/v2/test/pkg/suite_init"
 	"github.com/werf/werf/v2/test/pkg/utils"
 	"github.com/werf/werf/v2/test/pkg/werf"
 )
 
 type checkBuiltImagesTestOptions struct {
 	setupEnvOptions
-	Args []string
-	Env  map[string]string
+	Args    []string
+	Env     map[string]string
+	Require bool
+}
+
+var checkBuiltImagesEnv = setupEnvOptions{
+	ContainerBackendMode: "docker",
+	WithLocalRepo:        true,
 }
 
 var _ = Describe("Check built images", Label("e2e", "build", "simple"), func() {
@@ -45,7 +54,11 @@ var _ = Describe("Check built images", Label("e2e", "build", "simple"), func() {
 			var checkExitErr *exec.ExitError
 			Expect(errors.As(checkErr, &checkExitErr)).To(BeTrue(), "expected werf build to exit with a non-zero status, got: %v", checkErr)
 			checkOut := string(checkOutBytes)
-			Expect(checkOut).To(ContainSubstring("stages required"))
+			if opts.Require {
+				Expect(checkOut).To(ContainSubstring("build images first without --require-built-images"))
+			} else {
+				Expect(checkOut).To(ContainSubstring("stages required"))
+			}
 			Expect(checkOut).NotTo(ContainSubstring("Building stage"))
 
 			By("state0: building images")
@@ -65,51 +78,74 @@ var _ = Describe("Check built images", Label("e2e", "build", "simple"), func() {
 			Expect(checkOut).NotTo(ContainSubstring("Building stage"))
 		},
 		Entry("with --check-built-images", checkBuiltImagesTestOptions{
-			setupEnvOptions: setupEnvOptions{
-				ContainerBackendMode: "vanilla-docker",
-				WithLocalRepo:        true,
-			},
-			Args: []string{"--check-built-images"},
+			setupEnvOptions: checkBuiltImagesEnv,
+			Args:            []string{"--check-built-images"},
 		}),
 		Entry("with --require-built-images", checkBuiltImagesTestOptions{
-			setupEnvOptions: setupEnvOptions{
-				ContainerBackendMode: "vanilla-docker",
-				WithLocalRepo:        true,
-			},
-			Args: []string{"--require-built-images"},
+			setupEnvOptions: checkBuiltImagesEnv,
+			Args:            []string{"--require-built-images"},
+			Require:         true,
+		}),
+		Entry("with --require-built-images for Stapel only", checkBuiltImagesTestOptions{
+			setupEnvOptions: checkBuiltImagesEnv,
+			Args:            []string{"stapel-shell", "--require-built-images"},
+			Require:         true,
+		}),
+		Entry("with --require-built-images for Stapel only using Buildah", checkBuiltImagesTestOptions{
+			setupEnvOptions: setupEnvOptions{ContainerBackendMode: "native-rootless", WithLocalRepo: true},
+			Args:            []string{"stapel-shell", "--require-built-images"},
+			Require:         true,
 		}),
 		Entry("with -Z", checkBuiltImagesTestOptions{
-			setupEnvOptions: setupEnvOptions{
-				ContainerBackendMode: "vanilla-docker",
-				WithLocalRepo:        true,
-			},
-			Args: []string{"-Z"},
+			setupEnvOptions: checkBuiltImagesEnv,
+			Args:            []string{"-Z"},
+			Require:         true,
 		}),
 		Entry("with WERF_CHECK_BUILT_IMAGES", checkBuiltImagesTestOptions{
-			setupEnvOptions: setupEnvOptions{
-				ContainerBackendMode: "vanilla-docker",
-				WithLocalRepo:        true,
-			},
-			Env: map[string]string{"WERF_CHECK_BUILT_IMAGES": "1"},
+			setupEnvOptions: checkBuiltImagesEnv,
+			Env:             map[string]string{"WERF_CHECK_BUILT_IMAGES": "1"},
+		}),
+		Entry("with WERF_REQUIRE_BUILT_IMAGES", checkBuiltImagesTestOptions{
+			setupEnvOptions: checkBuiltImagesEnv,
+			Env:             map[string]string{"WERF_REQUIRE_BUILT_IMAGES": "1"},
+			Require:         true,
 		}),
 	)
+})
 
-	It("should build images regardless of WERF_REQUIRE_BUILT_IMAGES", func(ctx SpecContext) {
-		By("initializing")
-		setupEnv(setupEnvOptions{
-			ContainerBackendMode: "vanilla-docker",
-			WithLocalRepo:        true,
-		})
-		SuiteData.Stubs.SetEnv("WERF_REQUIRE_BUILT_IMAGES", "1")
+var _ = Describe("Require built images publication", Label("e2e", "build", "simple"), func() {
+	DescribeTable("copies secondary stages and publishes the final repository without building", func(ctx SpecContext, opts setupEnvOptions) {
+		setupEnv(opts)
+		SuiteData.InitTestRepo(ctx, "repo0", "simple/state0")
+		project := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath("repo0"))
+		project.Build(ctx, &werf.BuildOptions{CommonOptions: werf.CommonOptions{ExtraArgs: []string{"dockerfile"}}})
 
-		By("state0: preparing test repo")
-		repoDirname := "repo0"
-		SuiteData.InitTestRepo(ctx, repoDirname, "simple/state0")
-		werfProject := werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
+		source := suite_init.TestRepo(SuiteData.ProjectName)
+		primary := suite_init.TestRepo(SuiteData.ProjectName + "-required")
+		finalRepo := suite_init.TestRepo(SuiteData.ProjectName + "-final")
+		args := []string{"dockerfile", "--repo", primary, "--secondary-repo", source, "--add-custom-tag", "release"}
+		args = append(args, "--final-repo", finalRepo)
 
-		By("state0: building images against an empty repo")
-		buildOut := werfProject.Build(ctx, nil)
-		Expect(buildOut).To(ContainSubstring("Building stage"))
-		Expect(buildOut).NotTo(ContainSubstring("stages required"))
-	})
+		checkOutput := project.Build(ctx, &werf.BuildOptions{CommonOptions: werf.CommonOptions{
+			ShouldFail: true,
+			ExtraArgs:  slices.Concat(args, []string{"--check-built-images"}),
+		}})
+		Expect(checkOutput).To(ContainSubstring("stages required"))
+
+		output := project.Build(ctx, &werf.BuildOptions{CommonOptions: werf.CommonOptions{
+			ExtraArgs: slices.Concat(args, []string{"--require-built-images"}),
+		}})
+		Expect(output).NotTo(ContainSubstring("Building stage"))
+		tag, err := name.NewTag(finalRepo+":release", name.Insecure)
+		Expect(err).NotTo(HaveOccurred())
+		manifest, err := remote.Get(tag, remote.WithContext(ctx))
+		Expect(err).NotTo(HaveOccurred())
+		Expect(manifest.Digest.String()).NotTo(BeEmpty())
+		project.Build(ctx, &werf.BuildOptions{CommonOptions: werf.CommonOptions{
+			ExtraArgs: slices.Concat(args, []string{"--check-built-images"}),
+		}})
+	},
+		Entry("Docker", setupEnvOptions{ContainerBackendMode: "docker", WithLocalRepo: true}),
+		Entry("Buildah", setupEnvOptions{ContainerBackendMode: "native-rootless", WithLocalRepo: true}),
+	)
 })

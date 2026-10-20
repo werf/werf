@@ -121,15 +121,26 @@ var _ = ginkgo.Describe("Check mode image publication", func() {
 		ginkgo.Entry("multiplatform", true, []string{"PostMultiplatformImage", "AddStageCustomTag"}),
 	)
 
-	ginkgo.DescribeTable("publishes outside check mode", func(ctx ginkgo.SpecContext, publish func(phase *BuildPhase) error, expectedWrites []string) {
+	ginkgo.DescribeTable("publishes outside check mode", func(ctx ginkgo.SpecContext, require bool, publish func(phase *BuildPhase) error, expectedWrites []string) {
 		phase, stagesStorage := newPhase(false)
+		phase.RequireBuiltImages = require
 		gomega.Expect(publish(phase)).To(gomega.Succeed())
 		gomega.Expect(stagesStorage.writes).To(gomega.ConsistOf(expectedWrites))
 	},
-		ginkgo.Entry("a single-platform image", func(phase *BuildPhase) error {
+		ginkgo.Entry("a single-platform image", false, func(phase *BuildPhase) error {
 			return phase.publishImageMetadata(context.Background(), "image0", singlePlatformImage())
 		}, []string{"AddManagedImage", "PutImageMetadata", "AddStageCustomTag", "RegisterStageCustomTag"}),
-		ginkgo.Entry("a multiplatform image", func(phase *BuildPhase) error {
+		ginkgo.Entry("a multiplatform image", false, func(phase *BuildPhase) error {
+			img := multiplatformImage()
+			if err := phase.publishMultiplatformImageMetadata(context.Background(), "image0", img); err != nil {
+				return err
+			}
+			return phase.publishMultiplatformImageCustomTags(context.Background(), "image0", img)
+		}, []string{"AddManagedImage", "PostMultiplatformImage", "PutImageMetadata", "AddStageCustomTag", "RegisterStageCustomTag"}),
+		ginkgo.Entry("a required single-platform image", true, func(phase *BuildPhase) error {
+			return phase.publishImageMetadata(context.Background(), "image0", singlePlatformImage())
+		}, []string{"AddManagedImage", "PutImageMetadata", "AddStageCustomTag", "RegisterStageCustomTag"}),
+		ginkgo.Entry("a required multiplatform image", true, func(phase *BuildPhase) error {
 			img := multiplatformImage()
 			if err := phase.publishMultiplatformImageMetadata(context.Background(), "image0", img); err != nil {
 				return err

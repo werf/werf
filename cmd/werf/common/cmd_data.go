@@ -47,10 +47,9 @@ type CmdData struct {
 	SecondaryStagesStorage *[]string
 	CacheStagesStorage     *[]string
 
-	CheckBuiltImages       *bool
-	LegacyCheckBuiltImages *bool // TODO(major): remove
-	RequireBuiltImages     *bool
-	StubTags               *bool
+	CheckBuiltImages   *bool
+	RequireBuiltImages *bool
+	StubTags           *bool
 
 	AddCustomTag *[]string
 	UseCustomTag *string
