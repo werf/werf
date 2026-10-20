@@ -3,6 +3,7 @@ package docker_registry
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -12,6 +13,7 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/google/go-containerregistry/pkg/v1/remote/transport"
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
 )
@@ -23,7 +25,7 @@ var _ = ginkgo.Describe("registry request body retries", func() {
 		ginkgo.GinkgoT().Setenv("DOCKER_CONFIG", configDir)
 	})
 
-	ginkgo.DescribeTable("publishes the complete manifest after a rejected upload", func(status int, useTLS bool) {
+	ginkgo.DescribeTable("preserves the manifest and registry result after a rejected upload", func(status int, useTLS bool, finalStatus int) {
 		fixture := newWritableBearerRegistryFixtureWithTLS(useTLS)
 		ginkgo.DeferCleanup(fixture.server.Close)
 		fixture.server.Config.SetKeepAlivesEnabled(false)
@@ -69,6 +71,14 @@ var _ = ginkgo.Describe("registry request body retries", func() {
 				return
 			}
 
+			if finalStatus != http.StatusCreated {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(finalStatus)
+				_, err := fmt.Fprint(w, `{"errors":[{"code":"DENIED","message":"fixture registry rejection"}]}`)
+				gomega.Expect(err).NotTo(gomega.HaveOccurred())
+				return
+			}
+
 			req.Body = io.NopCloser(bytes.NewReader(body))
 			backend.ServeHTTP(w, req)
 		})
@@ -77,7 +87,15 @@ var _ = ginkgo.Describe("registry request body retries", func() {
 		ref := strings.TrimPrefix(strings.TrimPrefix(fixture.server.URL, "http://"), "https://") + "/repo:retry"
 		ctx, cancel := context.WithCancel(context.Background())
 		ginkgo.DeferCleanup(cancel)
-		gomega.Expect(registry.PushImage(ctx, ref, &PushImageOptions{Labels: map[string]string{"retry": "complete"}})).To(gomega.Succeed())
+		err := registry.PushImage(ctx, ref, &PushImageOptions{Labels: map[string]string{"retry": "complete"}})
+		if finalStatus == http.StatusCreated {
+			gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		} else {
+			var registryErr *transport.Error
+			gomega.Expect(errors.As(err, &registryErr)).To(gomega.BeTrue(), "expected registry error, got %v", err)
+			gomega.Expect(registryErr.StatusCode).To(gomega.Equal(finalStatus))
+			gomega.Expect(err).To(gomega.MatchError(gomega.ContainSubstring("fixture registry rejection")))
+		}
 
 		mu.Lock()
 		bodies := append([][]byte(nil), manifests...)
@@ -88,13 +106,18 @@ var _ = ginkgo.Describe("registry request body retries", func() {
 		if status == http.StatusUnauthorized {
 			gomega.Expect(fixture.exchanges.Load()).To(gomega.Equal(int64(2)))
 		}
+		if finalStatus != http.StatusCreated {
+			return
+		}
 		info, err := registry.GetRepoImage(ctx, ref)
 		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 		gomega.Expect(info.Labels).To(gomega.HaveKeyWithValue("retry", "complete"))
 	},
-		ginkgo.Entry("renews the token", http.StatusUnauthorized, false),
-		ginkgo.Entry("renews the token over TLS", http.StatusUnauthorized, true),
-		ginkgo.Entry("recovers from rate limiting", http.StatusTooManyRequests, false),
-		ginkgo.Entry("recovers from service unavailability", http.StatusServiceUnavailable, false),
+		ginkgo.Entry("renews the token", http.StatusUnauthorized, false, http.StatusCreated),
+		ginkgo.Entry("renews the token over TLS", http.StatusUnauthorized, true, http.StatusCreated),
+		ginkgo.Entry("recovers from rate limiting", http.StatusTooManyRequests, false, http.StatusCreated),
+		ginkgo.Entry("recovers from service unavailability", http.StatusServiceUnavailable, false, http.StatusCreated),
+		ginkgo.Entry("reports a repeated authorization failure", http.StatusUnauthorized, false, http.StatusUnauthorized),
+		ginkgo.Entry("reports a registry rejection after token renewal", http.StatusUnauthorized, true, http.StatusForbidden),
 	)
 })
