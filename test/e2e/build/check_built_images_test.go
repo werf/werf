@@ -92,7 +92,7 @@ var _ = Describe("Check built images", Label("e2e", "build", "simple"), func() {
 			Require:         true,
 		}),
 		Entry("with --require-built-images for Stapel only using Buildah", checkBuiltImagesTestOptions{
-			setupEnvOptions: setupEnvOptions{ContainerBackendMode: "buildah"},
+			setupEnvOptions: setupEnvOptions{ContainerBackendMode: "native-rootless", WithLocalRepo: true},
 			Args:            []string{"stapel-shell", "--require-built-images"},
 			Require:         true,
 		}),
