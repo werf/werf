@@ -14,7 +14,7 @@ import (
 )
 
 var _ = ginkgo.Describe("automatic LFS build context", func() {
-	ginkgo.It("exports selected objects with excluded .lfsconfig and refreshes changed pointers after warming the cache", func(ctx ginkgo.SpecContext) {
+	ginkgo.DescribeTable("exports selected objects with excluded .lfsconfig and refreshes changed pointers after warming the cache", func(ctx ginkgo.SpecContext, contentCache bool) {
 		ginkgo.GinkgoT().Setenv("GIT_CONFIG_GLOBAL", os.DevNull)
 		ginkgo.GinkgoT().Setenv("GIT_CONFIG_SYSTEM", os.DevNull)
 		ginkgo.GinkgoT().Setenv("GIT_CONFIG_COUNT", "0")
@@ -32,6 +32,11 @@ var _ = ginkgo.Describe("automatic LFS build context", func() {
 			".lfsconfig":          "[lfs]\n",
 			"ignored.txt":         "first\n",
 		}))
+		if contentCache {
+			requireGitAttributeSource(ctx, projectDir)
+		} else {
+			interceptGitSubcommand("var", "exit 129")
+		}
 		utils.WriteFile(filepath.Join(projectDir, ".git", "lfs", "objects", oid[:2], oid[2:4], oid), []byte(content))
 		utils.RunSucceedCommand(ctx, projectDir, "git", "remote", "add", "origin", "file://"+projectDir)
 		archive := NewBuildContextArchive(giterminismManagerOf(ctx, projectDir), ginkgo.GinkgoT().TempDir())
@@ -43,12 +48,18 @@ var _ = ginkgo.Describe("automatic LFS build context", func() {
 
 		initialArchive, err := os.Stat(archive.Path())
 		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		archive = NewBuildContextArchive(giterminismManagerOf(ctx, projectDir), ginkgo.GinkgoT().TempDir())
+		gomega.Expect(archive.Create(ctx, opts)).To(gomega.Succeed())
+		repeatedArchive, err := os.Stat(archive.Path())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		gomega.Expect(os.SameFile(initialArchive, repeatedArchive)).To(gomega.BeTrue(), "the same commit must reuse the cached archive in either mode")
+
 		commitFiles(ctx, projectDir, map[string]string{"ignored.txt": "second\n"})
 		archive = NewBuildContextArchive(giterminismManagerOf(ctx, projectDir), ginkgo.GinkgoT().TempDir())
 		gomega.Expect(archive.Create(ctx, opts)).To(gomega.Succeed())
 		reusedArchive, err := os.Stat(archive.Path())
 		gomega.Expect(err).NotTo(gomega.HaveOccurred())
-		gomega.Expect(os.SameFile(initialArchive, reusedArchive)).To(gomega.BeTrue(), "excluded ordinary change must reuse the cached archive")
+		gomega.Expect(os.SameFile(initialArchive, reusedArchive)).To(gomega.Equal(contentCache), "excluded ordinary change must reuse only the content-keyed archive")
 
 		commitFiles(ctx, projectDir, map[string]string{".lfsconfig": "[lfs]\nurl = file://" + projectDir + "\n"})
 		archive = NewBuildContextArchive(giterminismManagerOf(ctx, projectDir), ginkgo.GinkgoT().TempDir())
@@ -72,7 +83,10 @@ var _ = ginkgo.Describe("automatic LFS build context", func() {
 		entries = lastEntryContents(openedContextEntries(ctx, archive))
 		gomega.Expect(entries).To(gomega.HaveKeyWithValue("assets/wanted.bin", content))
 		gomega.Expect(entries).NotTo(gomega.HaveKey("assets/excluded.bin"))
-	})
+	},
+		ginkgo.Entry("with content-keyed caching", true),
+		ginkgo.Entry("with commit-keyed caching when attribute discovery is unavailable", false),
+	)
 
 	ginkgo.It("ignores excluded unavailable LFS objects with ordinary submodules", func(ctx ginkgo.SpecContext) {
 		ginkgo.GinkgoT().Setenv("GIT_CONFIG_GLOBAL", os.DevNull)
