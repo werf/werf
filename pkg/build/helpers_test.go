@@ -423,3 +423,11 @@ func (m *publicationStorageManager) FetchStage(context.Context, container_backen
 func (m *publicationStorageManager) GetStageDescSetByDigestFromStagesStorageCached(context.Context, string, string, int64, storage.StagesStorage) (imagePkg.StageDescSet, error) {
 	return imagePkg.NewStageDescSet(), nil
 }
+
+type requireLookupStorageManager struct{ *publicationStorageManager }
+
+var _ manager.StorageManagerInterface = (*requireLookupStorageManager)(nil)
+
+func (m *requireLookupStorageManager) GetStageDescSetByDigestWithCache(ctx context.Context, name, digest string, parentTs int64) (imagePkg.StageDescSet, error) {
+	return m.GetStageDescSetByDigest(ctx, name, digest, parentTs)
+}

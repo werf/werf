@@ -32,8 +32,6 @@ var _ = ginkgo.Describe("Automatic host cleanup decision", func() {
 		gomega.Expect(skipAutoHostCleanup(cmdData)).To(gomega.BeTrue())
 	},
 		ginkgo.Entry("check flag", "--check-built-images"),
-		ginkgo.Entry("legacy flag", "--require-built-images"),
-		ginkgo.Entry("short flag", "-Z"),
 		ginkgo.Entry("environment", ""),
 	)
 

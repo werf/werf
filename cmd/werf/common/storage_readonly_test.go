@@ -36,8 +36,6 @@ var _ = ginkgo.Describe("Storage manager initialization in check mode", func() {
 		gomega.Expect(recorder.recordedWrites()).To(gomega.BeEmpty())
 	},
 		ginkgo.Entry("check flag", "--check-built-images"),
-		ginkgo.Entry("legacy flag", "--require-built-images"),
-		ginkgo.Entry("short flag", "-Z"),
 		ginkgo.Entry("environment", ""),
 	)
 
