@@ -333,66 +333,84 @@ RUN --mount=type=bind,from=build,source=/usr/local/test_project/dist,target=/usr
 	})
 
 	When("Dockerfile bind-mounts a context file", func() {
+		expectDigestTracks := func(ctx SpecContext, dockerfile, path, unmatched string) {
+			dockerStages, dockerMetaArgs := testDockerfileToDockerStages([]byte(dockerfile))
+			stage := newTestFullDockerfileStage([]byte(dockerfile), "", nil, dockerStages, dockerMetaArgs, nil, "")
+			stage.dockerignorePathMatcher = path_matcher.NewTruePathMatcher()
+			gitRepo := &pathMatchingGitRepoStub{
+				LocalGitRepoStub: NewLocalGitRepoStub("9d8059842b6fde712c58315ca0ab4713d90761c0"),
+				path:             path,
+				unmatchedPath:    unmatched,
+			}
+			conveyor := NewConveyorStubForDependencies(NewGiterminismManagerStub(gitRepo, NewGiterminismInspectorStub()), nil)
+
+			digest, err := stage.GetDependencies(ctx, conveyor, nil, nil, nil, nil)
+			Expect(err).To(Succeed())
+			stableDigest, err := stage.GetDependencies(ctx, conveyor, nil, nil, nil, nil)
+			Expect(err).To(Succeed())
+			Expect(stableDigest).To(Equal(digest))
+
+			gitRepo.headCommitHash = "23a0884072c0d31b7c42dfaa7f0772cbfa33ec75"
+			changedDigest, err := stage.GetDependencies(ctx, conveyor, nil, nil, nil, nil)
+			Expect(err).To(Succeed())
+			Expect(changedDigest).NotTo(Equal(digest))
+		}
+
 		It("changes the stage digest when the mounted file checksum changes", func(ctx SpecContext) {
-			dockerfile := []byte(`
+			expectDigestTracks(ctx, `
 FROM alpine:latest
+ARG UID=1000
+ENV MODE=755
 RUN --mount=type=bind,source=uv.lock,target=uv.lock cat uv.lock
 RUN --mount=type=bind,from=build,source=/out,target=/out true
-RUN --mount=type=cache,target=/cache true
+RUN --mount=type=cache,target=/cache,uid=$UID,mode=$MODE,source=other.lock true
 RUN --mount=type=secret,id=token true
 RUN --mount=type=ssh true
 RUN --mount=type=tmpfs,target=/tmp true
-`)
-			dockerStages, dockerMetaArgs := testDockerfileToDockerStages(dockerfile)
-			stage := newTestFullDockerfileStage(dockerfile, "", nil, dockerStages, dockerMetaArgs, nil, "")
-			stage.dockerignorePathMatcher = path_matcher.NewTruePathMatcher()
-			gitRepo := &pathMatchingGitRepoStub{
-				LocalGitRepoStub: NewLocalGitRepoStub("9d8059842b6fde712c58315ca0ab4713d90761c0"),
-				path:             "uv.lock",
-				unmatchedPath:    "other.lock",
-			}
-			conveyor := NewConveyorStubForDependencies(NewGiterminismManagerStub(gitRepo, NewGiterminismInspectorStub()), nil)
-
-			digest, err := stage.GetDependencies(ctx, conveyor, nil, nil, nil, nil)
-			Expect(err).To(Succeed())
-
-			stableDigest, err := stage.GetDependencies(ctx, conveyor, nil, nil, nil, nil)
-			Expect(err).To(Succeed())
-			Expect(stableDigest).To(Equal(digest))
-
-			gitRepo.headCommitHash = "23a0884072c0d31b7c42dfaa7f0772cbfa33ec75"
-			changedDigest, err := stage.GetDependencies(ctx, conveyor, nil, nil, nil, nil)
-			Expect(err).To(Succeed())
-			Expect(changedDigest).NotTo(Equal(digest))
+`, "uv.lock", "other.lock")
 		})
 
 		It("checksums a bind-mount source expanded from an ARG", func(ctx SpecContext) {
-			dockerfile := []byte(`
+			expectDigestTracks(ctx, `
 FROM alpine:latest
 ARG LOCK=uv.lock
 RUN --mount=type=bind,source=$LOCK,target=/lock cat /lock
-`)
-			dockerStages, dockerMetaArgs := testDockerfileToDockerStages(dockerfile)
-			stage := newTestFullDockerfileStage(dockerfile, "", nil, dockerStages, dockerMetaArgs, nil, "")
-			stage.dockerignorePathMatcher = path_matcher.NewTruePathMatcher()
-			gitRepo := &pathMatchingGitRepoStub{
-				LocalGitRepoStub: NewLocalGitRepoStub("9d8059842b6fde712c58315ca0ab4713d90761c0"),
-				path:             "uv.lock",
-				unmatchedPath:    "other.lock",
-			}
-			conveyor := NewConveyorStubForDependencies(NewGiterminismManagerStub(gitRepo, NewGiterminismInspectorStub()), nil)
+`, "uv.lock", "other.lock")
+		})
 
-			digest, err := stage.GetDependencies(ctx, conveyor, nil, nil, nil, nil)
-			Expect(err).To(Succeed())
+		It("checksums the build context when a bind source is omitted", func(ctx SpecContext) {
+			expectDigestTracks(ctx, `
+FROM alpine:latest
+RUN --mount=type=bind,target=/src cat /src/uv.lock > /out
+`, "uv.lock", "")
+		})
 
-			stableDigest, err := stage.GetDependencies(ctx, conveyor, nil, nil, nil, nil)
-			Expect(err).To(Succeed())
-			Expect(stableDigest).To(Equal(digest))
+		It("checksums the build context when the mount type and source are omitted", func(ctx SpecContext) {
+			expectDigestTracks(ctx, `
+FROM alpine:latest
+RUN --mount=target=/src cat /src/uv.lock
+`, "uv.lock", "")
+		})
 
-			gitRepo.headCommitHash = "23a0884072c0d31b7c42dfaa7f0772cbfa33ec75"
-			changedDigest, err := stage.GetDependencies(ctx, conveyor, nil, nil, nil, nil)
-			Expect(err).To(Succeed())
-			Expect(changedDigest).NotTo(Equal(digest))
+		It("checksums the build context when a bind source is explicitly empty", func(ctx SpecContext) {
+			expectDigestTracks(ctx, `
+FROM alpine:latest
+RUN --mount=type=bind,source=,target=/src cat /src/uv.lock
+`, "uv.lock", "")
+		})
+
+		It("checksums a literal bind source containing glob metacharacters", func(ctx SpecContext) {
+			expectDigestTracks(ctx, `
+FROM alpine:latest
+RUN --mount=type=bind,source=assets/[raw],target=/src cat /src/file
+`, "assets/[raw]/file", "assets/r/file")
+		})
+
+		It("checksums the whole context when a bind source variable is unresolved", func(ctx SpecContext) {
+			expectDigestTracks(ctx, `
+FROM alpine:latest
+RUN --mount=type=bind,source=$MISSING/file,target=/src cat /src/file
+`, "other.lock", "")
 		})
 	})
 })

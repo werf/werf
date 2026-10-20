@@ -595,25 +595,43 @@ func (s *FullDockerfileStage) dockerfileInstructionDependencies(ctx context.Cont
 		}
 		dependencies = append(dependencies, resolvedValue)
 
-		// Option values are filled in by Expand. Keep them literal so source
-		// paths use the same ARG/ENV resolution as COPY and ADD.
+		// Expand resolves ARG/ENV once before typed validation. Unmatched words
+		// keep the whole-context fallback used for an unresolved COPY source.
+		unmatched := map[string]struct{}{}
 		if err := c.Expand(func(word string) (string, error) {
-			return word, nil
+			if isBaseImageOnbuildInstruction {
+				return word, nil
+			}
+
+			argsArray := toArgsArray(s.DockerStageArgsHash(dockerStageID), s.DockerStageEnvs(dockerStageID))
+			if isOnbuildInstruction {
+				argsArray = toArgsArray(s.DockerStageEnvs(dockerStageID))
+			}
+
+			resolved, hasUnmatched, err := shlexProcessWordWithUnmatched(word, argsArray)
+			if err != nil {
+				return "", err
+			}
+			if hasUnmatched {
+				unmatched[resolved] = struct{}{}
+			}
+
+			return resolved, nil
 		}); err != nil {
 			return nil, nil, err
 		}
 
 		for _, mount := range instructions.GetMounts(c) {
-			if mount.Type != instructions.MountTypeBind || mount.From != "" || mount.Source == "" {
+			if mount.Type != instructions.MountTypeBind || mount.From != "" {
 				continue
 			}
 
-			resolvedSources, err := resolveSourcesFunc([]string{mount.Source})
-			if err != nil {
-				return nil, nil, err
+			source := mount.Source
+			if _, unresolved := unmatched[source]; unresolved || source == "" {
+				source = "."
 			}
 
-			checksum, err := s.calculateFilesChecksum(ctx, giterminismManager, resolvedSources, c.String())
+			checksum, err := s.calculateFilesChecksum(ctx, giterminismManager, []string{literalPathGlob(source)}, c.String())
 			if err != nil {
 				return nil, nil, err
 			}
@@ -755,6 +773,11 @@ func (s *FullDockerfileStage) SetupDockerImageBuilder(b stage_builder.Dockerfile
 	}
 
 	return nil
+}
+
+// literalPathGlob escapes doublestar metacharacters so a bind source is a path, not a COPY/ADD glob.
+func literalPathGlob(path string) string {
+	return strings.NewReplacer(`\`, `\\`, `*`, `\*`, `?`, `\?`, `[`, `\[`, `]`, `\]`, `{`, `\{`, `}`, `\}`).Replace(path)
 }
 
 func (s *FullDockerfileStage) calculateFilesChecksum(ctx context.Context, giterminismManager giterminism_manager.Interface, wildcards []string, dockerfileLine string) (string, error) {
