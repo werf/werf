@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.84.0](https://github.com/werf/werf/compare/v2.83.1...v2.84.0) (2026-10-20)
+
+
+### Features
+
+* **build:** publish cached images with require-built-images ([#8096](https://github.com/werf/werf/issues/8096)) ([bf5c561](https://github.com/werf/werf/commit/bf5c56112b1759b886690199ef161e876be94dc5))
+
 ## [2.83.1](https://github.com/werf/werf/compare/v2.83.0...v2.83.1) (2026-10-19)
 
 
