@@ -31,7 +31,7 @@ var _ = ginkgo.Describe("Require built images", func() {
 		}}
 		storageManager := &publicationStorageManager{primary: primary}
 		phase, img, stg := newPublicationPhase(ctx, storageManager, server.URL, false, 10)
-		phase.Conveyor.StorageManager = &promotionLookupStorageManager{storageManager}
+		phase.Conveyor.StorageManager = &requireLookupStorageManager{storageManager}
 		phase.RequireBuiltImages = true
 		reported := &reportedStage{buildableStage: &buildableStage{publicationStage: stg.(*publicationStage)}}
 

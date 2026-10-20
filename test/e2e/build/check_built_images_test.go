@@ -27,7 +27,7 @@ var checkBuiltImagesEnv = setupEnvOptions{
 	WithLocalRepo:        true,
 }
 
-var _ = Describe("Check built images", Label("e2e", "build", "simple"), entryLabels(checkBuiltImagesEnv), func() {
+var _ = Describe("Check built images", Label("e2e", "build", "simple"), func() {
 	DescribeTable("should check built images instead of building them",
 		func(ctx SpecContext, opts checkBuiltImagesTestOptions) {
 			By("initializing")
@@ -92,7 +92,7 @@ var _ = Describe("Check built images", Label("e2e", "build", "simple"), entryLab
 			Require:         true,
 		}),
 		backendEntry("with --require-built-images for Stapel only using Buildah", checkBuiltImagesTestOptions{
-			setupEnvOptions: setupEnvOptions{ContainerBackendMode: "buildah"},
+			setupEnvOptions: setupEnvOptions{ContainerBackendMode: "native-rootless", WithLocalRepo: true},
 			Args:            []string{"stapel-shell", "--require-built-images"},
 			Require:         true,
 		}),

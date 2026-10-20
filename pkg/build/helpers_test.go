@@ -448,11 +448,11 @@ func (m *publicationStorageManager) GetStageDescSetByDigestWithCache(_ context.C
 	return imagePkg.NewStageDescSet(), nil
 }
 
-type promotionLookupStorageManager struct{ *publicationStorageManager }
+type requireLookupStorageManager struct{ *publicationStorageManager }
 
-var _ manager.StorageManagerInterface = (*promotionLookupStorageManager)(nil)
+var _ manager.StorageManagerInterface = (*requireLookupStorageManager)(nil)
 
-func (m *promotionLookupStorageManager) GetStageDescSetByDigestWithCache(ctx context.Context, name, digest string, parentTs int64) (imagePkg.StageDescSet, error) {
+func (m *requireLookupStorageManager) GetStageDescSetByDigestWithCache(ctx context.Context, name, digest string, parentTs int64) (imagePkg.StageDescSet, error) {
 	return m.GetStageDescSetByDigest(ctx, name, digest, parentTs)
 }
 
