@@ -19,13 +19,21 @@ func NewTransport(underlying http.RoundTripper) http.RoundTripper {
 }
 
 func (t *transport) RoundTrip(req *http.Request) (*http.Response, error) {
+	if req.Body != nil && req.Body != http.NoBody && req.GetBody == nil {
+		return t.underlying.RoundTrip(req)
+	}
+
 	operation := func() (*http.Response, error) {
 		resp, err := t.underlying.RoundTrip(req)
 		if err != nil {
 			return nil, backoff.Permanent(err)
 		}
 
-		return backoffHttpRetryAfterHandler(resp)
+		result, err := backoffHttpRetryAfterHandler(resp)
+		if err != nil {
+			resp.Body.Close()
+		}
+		return result, err
 	}
 
 	notify := func(err error, duration time.Duration) {

@@ -86,7 +86,7 @@ func newHttpTransport(skipTlsVerify bool) http.RoundTripper {
 			dt.TLSNextProto = make(map[string]func(authority string, c *tls.Conn) http.RoundTripper)
 		}
 
-		t = dt
+		t = &requestBodyTransport{underlying: dt}
 	}
 
 	// Add werf User-Agent header.

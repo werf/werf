@@ -312,6 +312,18 @@ func (roundTrip bearerRoundTripperFunc) RoundTrip(req *http.Request) (*http.Resp
 	return roundTrip(req)
 }
 
+type trackedRequestBody struct {
+	io.Reader
+	closed bool
+}
+
+var _ io.ReadCloser = (*trackedRequestBody)(nil)
+
+func (body *trackedRequestBody) Close() error {
+	body.closed = true
+	return nil
+}
+
 var _ Interface = (*listingRegistryStub)(nil)
 
 type listingRegistryStub struct {
