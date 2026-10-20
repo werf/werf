@@ -86,6 +86,16 @@ var _ = Describe("Check built images", Label("e2e", "build", "simple"), entryLab
 			Args:            []string{"--require-built-images"},
 			Require:         true,
 		}),
+		backendEntry("with --require-built-images for Stapel only", checkBuiltImagesTestOptions{
+			setupEnvOptions: checkBuiltImagesEnv,
+			Args:            []string{"stapel-shell", "--require-built-images"},
+			Require:         true,
+		}),
+		backendEntry("with --require-built-images for Stapel only using Buildah", checkBuiltImagesTestOptions{
+			setupEnvOptions: setupEnvOptions{ContainerBackendMode: "buildah"},
+			Args:            []string{"stapel-shell", "--require-built-images"},
+			Require:         true,
+		}),
 		backendEntry("with -Z", checkBuiltImagesTestOptions{
 			setupEnvOptions: checkBuiltImagesEnv,
 			Args:            []string{"-Z"},
