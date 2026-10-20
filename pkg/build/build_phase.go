@@ -894,7 +894,11 @@ func (phase *BuildPhase) findAndFetchStageFromSecondaryStagesStorage(ctx context
 
 ScanSecondaryStagesStorageList:
 	for _, secondaryStagesStorage := range storageManager.GetSecondaryStagesStorageList() {
-		secondaryStages, err := storageManager.GetStageDescSetByDigestFromStagesStorageCached(ctx, stg.LogDetailedName(), stg.GetDigest(), phase.getPrevNonEmptyStageCreationTs(), secondaryStagesStorage)
+		lookup := storageManager.GetStageDescSetByDigestFromStagesStorageCached
+		if phase.RequireBuiltImages {
+			lookup = storageManager.GetStageDescSetByDigestFromStagesStorageWithCache
+		}
+		secondaryStages, err := lookup(ctx, stg.LogDetailedName(), stg.GetDigest(), phase.getPrevNonEmptyStageCreationTs(), secondaryStagesStorage)
 		if err != nil {
 			return false, err
 		} else {
