@@ -32,12 +32,17 @@ jobs:
           fetch-depth: 0
 
       - name: Install werf
-        uses: werf/actions/install@v2
+        uses: werf/trdl/actions/setup-app@v0.13.0
+        with:
+          preset: werf
+          group: "3"
+          channel: alpha
+          force: false
 
       - name: Deploy v2 docs to test
         run: |
           . $(werf ci-env github --as-file)
-          werf converge --virtual-merge=false
+          werf converge
         env:
           WERF_NAMESPACE: werfio-test
           WERF_DIR: docs
@@ -61,12 +66,17 @@ jobs:
           fetch-depth: 0
 
       - name: Install werf
-        uses: werf/actions/install@v2
+        uses: werf/trdl/actions/setup-app@v0.13.0
+        with:
+          preset: werf
+          group: "3"
+          channel: alpha
+          force: false
 
       - name: Deploy v1.2 docs to test
         run: |
           . $(werf ci-env github --as-file)
-          werf converge --virtual-merge=false
+          werf converge
         env:
           WERF_NAMESPACE: werfio-test
           WERF_DIR: docs
@@ -90,12 +100,17 @@ jobs:
           fetch-depth: 0
 
       - name: Install werf
-        uses: werf/actions/install@v2
+        uses: werf/trdl/actions/setup-app@v0.13.0
+        with:
+          preset: werf
+          group: "3"
+          channel: alpha
+          force: false
 
       - name: Deploy latest docs to test
         run: |
           . $(werf ci-env github --as-file)
-          werf converge --virtual-merge=false
+          werf converge
         env:
           WERF_NAMESPACE: werfio-test
           WERF_DIR: docs
