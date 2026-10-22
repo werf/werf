@@ -61,7 +61,7 @@ jobs:
         with:
           preset: werf
           group: "3"
-          channel: dev
+          channel: alpha
           force: false
 
       - name: Deploy

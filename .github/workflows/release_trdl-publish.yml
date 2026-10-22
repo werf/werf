@@ -63,7 +63,7 @@ jobs:
         with:
           preset: werf
           group: "3"
-          channel: dev
+          channel: alpha
           force: false
       - if: matrix.dest-registry == 'registry-write.werf.io'
         name: Login to werf registry

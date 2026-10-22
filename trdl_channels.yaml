@@ -49,5 +49,13 @@ groups:
         version: 2.80.2
   - name: "3"
     channels:
-      - name: dev
-        version: 3.12.0
+      - name: alpha
+        version: 3.12.1
+      - name: beta
+        version: 3.12.1
+      - name: ea
+        version: 3.12.1
+      - name: stable
+        version: 3.12.1
+      - name: rock-solid
+        version: 3.12.1
