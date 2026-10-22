@@ -88,6 +88,7 @@ Add templates, parameters, dependent charts, and more to the chart as needed. A 
   values.yaml
   values.schema.json
   secret-values.yaml        # only available in werf
+  patches.yaml              # only available in werf
   Chart.yaml
   Chart.lock
   README.md
@@ -114,6 +115,8 @@ Here:
 - `values.schema.json` — the JSON schema to validate `values.yaml`;
 
 - `secret-values.yaml` — (werf only) an encrypted declarative configuration file similar to `values.yaml`. Its decrypted contents are merged with `values.yaml` during manifest generation;
+
+- `patches.yaml` — (werf only) [patches]({{ "/usage/deploy/patches.html" | true_relative_url }}) that modify the rendered resources or make werf ignore changes in specific fields;
 
 - `Chart.yaml` — contains the main configuration and the chart metadata;
 

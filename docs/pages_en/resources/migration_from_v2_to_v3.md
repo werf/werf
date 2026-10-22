@@ -269,7 +269,7 @@ If you need an exception, use `--resource-validation-skip`; disable all resource
 
 ### Automatic patches and null
 
-**`patches.yaml` from the main chart and its dependencies is now read automatically.** An existing file with this name that served another purpose may change manifests or cause an error. Check it before deploying. Disable automatic loading with `--no-default-patches` or `WERF_NO_DEFAULT_PATCHES=true`.
+**`patches.yaml` from the main chart and its dependencies is now read automatically.** An existing file with this name that served another purpose may change manifests or cause an error. Check it before deploying. Disable automatic loading with `--no-default-patches` or `WERF_NO_DEFAULT_PATCHES=true`. See [Resource patches]({{ "/usage/deploy/patches.html" | true_relative_url }}) for what the file may contain.
 
 **Fields and list entries whose value is `null` are now removed recursively.** In v2, this required an experimental flag. An absent field and an explicit `null` are not always equivalent for Kubernetes and CRDs, so check resources that intentionally use `null`. There is no switch to restore the previous behavior.
 
