@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.84.1](https://github.com/werf/werf/compare/v2.84.0...v2.84.1) (2026-10-22)
+
+
+### Bug Fixes
+
+* **build:** prevent empty-body errors when retrying registry uploads ([#8100](https://github.com/werf/werf/issues/8100)) ([59bfe8b](https://github.com/werf/werf/commit/59bfe8bb7249b22ec4a3ea44d8c803a50fbfc71b))
+* **deploy:** use saved plans that contain a blind apply ([#8103](https://github.com/werf/werf/issues/8103)) ([8a834d7](https://github.com/werf/werf/commit/8a834d784c7ad9b1de8f4c091767413343a5522d))
+
 ## [2.84.0](https://github.com/werf/werf/compare/v2.83.1...v2.84.0) (2026-10-20)
 
 
