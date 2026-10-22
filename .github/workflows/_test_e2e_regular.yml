@@ -18,6 +18,10 @@ on:
       k8sMinor:
         default: 29
         type: string
+      useLocalCluster:
+        description: Use an isolated Kubernetes 1.29 cluster and registry on the runner
+        default: false
+        type: boolean
       coverage:
         default: false
         type: string
@@ -79,9 +83,38 @@ jobs:
       - name: Install ginkgo
         run: task -p deps:install:ginkgo
 
+      - name: Set up local Kubernetes and registry
+        if: inputs.useLocalCluster
+        run: |
+          curl -fsSLo "$RUNNER_TEMP/kind" https://github.com/kubernetes-sigs/kind/releases/download/v0.26.0/kind-linux-amd64
+          echo "d445b44c28297bc23fd67e51cc24bb294ae7b977712be2d4d312883d0835829b  $RUNNER_TEMP/kind" | sha256sum --check
+          chmod +x "$RUNNER_TEMP/kind"
+          docker network inspect kind >/dev/null 2>&1 || docker network create kind
+          docker run -d --name werf-e2e-registry --network kind -p 127.0.0.1:5000:5000 -e REGISTRY_STORAGE_DELETE_ENABLED=true registry:2
+          cat > "$RUNNER_TEMP/werf-e2e-kind.yaml" <<'EOF'
+          kind: Cluster
+          apiVersion: kind.x-k8s.io/v1alpha4
+          containerdConfigPatches:
+            - |
+              [plugins."io.containerd.grpc.v1.cri".registry.mirrors."localhost:5000"]
+                endpoint = ["http://werf-e2e-registry:5000"]
+          EOF
+          "$RUNNER_TEMP/kind" create cluster --name werf-e2e \
+            --image kindest/node:v1.29.12@sha256:62c0672ba99a4afd7396512848d6fc382906b8f33349ae68fb1dbfe549f70dec \
+            --config "$RUNNER_TEMP/werf-e2e-kind.yaml" \
+            --kubeconfig "$RUNNER_TEMP/werf-e2e.kubeconfig" --wait 120s
+          docker exec werf-e2e-control-plane kubectl --kubeconfig /etc/kubernetes/admin.conf version
+          mkdir -p "$HOME/.docker"
+          if [[ ! -f "$HOME/.docker/config.json" ]]; then
+            printf '{"auths":{}}\n' > "$HOME/.docker/config.json"
+          fi
+          echo "KUBECONFIG=$RUNNER_TEMP/werf-e2e.kubeconfig" >> "$GITHUB_ENV"
+
       - name: Test
         run: |
-          source ./scripts/ci/integration_k8s_tests_before_hook.sh
+          if [[ "${{ inputs.useLocalCluster }}" != "true" ]]; then
+            source ./scripts/ci/integration_k8s_tests_before_hook.sh
+          fi
           test -n "${{ inputs.packages }}" && paths=paths="$(echo ${{ inputs.packages }} | tr , ' ')"
           if ${{ inputs.coverage }}; then
             task -p test:e2e:${{ inputs.scope }} $paths -- --coverprofile="$(openssl rand -hex 6)-coverage.out" --keep-going --skip-package '${{ inputs.excludePackages }}'
@@ -92,9 +125,10 @@ jobs:
           echo loadavg: $(cat /proc/loadavg)
         env:
           WERF_TEST_K8S_BASE64_KUBECONFIG: ${{ secrets[format('WERF_TEST_K8S_BASE64_KUBECONFIG_{0}_{1}', inputs.k8sMajor, inputs.k8sMinor)] }}
-          WERF_TEST_K8S_DOCKER_REGISTRY: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY }}
-          WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME }}
-          WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD: ${{ secrets.WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD }}
+          WERF_TEST_K8S_DOCKER_REGISTRY: ${{ inputs.useLocalCluster && 'localhost:5000' || secrets.WERF_TEST_K8S_DOCKER_REGISTRY }}
+          WERF_TEST_K8S_DOCKER_REGISTRY_INSECURE: ${{ inputs.useLocalCluster && 'true' || 'false' }}
+          WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME: ${{ !inputs.useLocalCluster && secrets.WERF_TEST_K8S_DOCKER_REGISTRY_USERNAME || '' }}
+          WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD: ${{ !inputs.useLocalCluster && secrets.WERF_TEST_K8S_DOCKER_REGISTRY_PASSWORD || '' }}
 
       - if: inputs.coverage == 'true'
         name: Upload coverage artifact
@@ -102,3 +136,13 @@ jobs:
         with:
           name: coverage_e2e_regular
           path: coverage
+
+      - name: Clean up local Kubernetes and registry
+        if: always() && inputs.useLocalCluster
+        run: |
+          if [[ -x "$RUNNER_TEMP/kind" ]]; then
+            "$RUNNER_TEMP/kind" delete cluster --name werf-e2e
+          fi
+          if docker container inspect werf-e2e-registry >/dev/null 2>&1; then
+            docker rm -f werf-e2e-registry
+          fi

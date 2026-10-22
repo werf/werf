@@ -85,6 +85,7 @@ jobs:
     uses: ./.github/workflows/_test_e2e_regular.yml
     with:
       scope: simple
+      useLocalCluster: true
       forceSkip: ${{ github.event_name == 'pull_request' && needs.detect-changes.outputs.workflow_proceed == 'false' }}
     secrets: inherit
 
