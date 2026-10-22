@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.12.1](https://github.com/werf/werf/compare/v3.12.0...v3.12.1) (2026-10-21)
+
+
+### Bug Fixes
+
+* **deploy:** use saved plans that contain a blind apply ([#8102](https://github.com/werf/werf/issues/8102)) ([193a9d4](https://github.com/werf/werf/commit/193a9d40f551e3b8192b47531bb5bfa9aa46b54c))
+
 ## [3.12.0](https://github.com/werf/werf/compare/v3.11.0...v3.12.0) (2026-10-20)
 
 
