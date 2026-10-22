@@ -38,7 +38,7 @@ jobs:
         with:
           preset: werf
           group: "3"
-          channel: dev
+          channel: alpha
           force: false
 
       - name: Deploy v3 docs to test
@@ -73,7 +73,7 @@ jobs:
         with:
           preset: werf
           group: "3"
-          channel: dev
+          channel: alpha
           force: false
 
       - name: Deploy v2 docs to test
@@ -108,7 +108,7 @@ jobs:
         with:
           preset: werf
           group: "3"
-          channel: dev
+          channel: alpha
           force: false
 
       - name: Deploy v1.2 docs to test
@@ -143,7 +143,7 @@ jobs:
         with:
           preset: werf
           group: "3"
-          channel: dev
+          channel: alpha
           force: false
 
       - name: Deploy latest docs to test
