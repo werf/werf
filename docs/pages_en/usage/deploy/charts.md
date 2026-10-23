@@ -116,7 +116,7 @@ Here:
 
 - `secret-values.yaml` — (werf only) an encrypted declarative configuration file similar to `values.yaml`. Its decrypted contents are merged with `values.yaml` during manifest generation;
 
-- `patches.yaml` — (werf only) [patches]({{ "/usage/deploy/patches.html" | true_relative_url }}) that modify the rendered resources or make werf ignore changes in specific fields;
+- `patches.yaml` — (werf only) [patches]({{ "/usage/deploy/resource_patching.html" | true_relative_url }}) that modify the rendered resources or make werf ignore changes in specific fields;
 
 - `Chart.yaml` — contains the main configuration and the chart metadata;
 

@@ -91,7 +91,7 @@ entries:
                 url: /usage/deploy/resource_lifecycle.html
 
               - title: Resource patching
-                url: /usage/deploy/patches.html
+                url: /usage/deploy/resource_patching.html
 
               - title: Deployment scenarios
                 url: /usage/deploy/deployment_scenarios.html
@@ -258,7 +258,7 @@ entries:
                 url: /usage/deploy/resource_lifecycle.html
 
               - title: Патчинг ресурсов
-                url: /usage/deploy/patches.html
+                url: /usage/deploy/resource_patching.html
 
               - title: Планирование
                 url: /usage/deploy/planning.html

@@ -1,6 +1,6 @@
 ---
 title: Патчинг ресурсов
-permalink: usage/deploy/patches.html
+permalink: usage/deploy/resource_patching.html
 ---
 
 ## Обзор
