@@ -74,7 +74,7 @@ werf converge --patches .helm/patches-production.yaml
 2. `patches.yaml` основного чарта;
 3. файлы `--patches`.
 
-Источники отличаются:
+Чем отличаются источники:
 * На что действуют: `patches.yaml` — только на ресурсы своего чарта, включая его зависимые чарты; `--patches` — на все ресурсы релиза.
 * Чьи данные видят (только render-патчи): `patches.yaml` — `$Values`, `$Release`, `$Chart` и `$Capabilities` своего чарта; `--patches` — основного чарта.
 
