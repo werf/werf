@@ -1,5 +1,5 @@
 ---
-title: Патчи ресурсов
+title: Патчинг ресурсов
 permalink: usage/deploy/patches.html
 ---
 

@@ -1,5 +1,5 @@
 ---
-title: Resource patches
+title: Resource patching
 permalink: usage/deploy/patches.html
 ---
 

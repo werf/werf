@@ -722,7 +722,7 @@ entries:
               - title: Resource lifecycle
                 url: /usage/deploy/resource_lifecycle.html
 
-              - title: Resource patches
+              - title: Resource patching
                 url: /usage/deploy/patches.html
 
               - title: Deployment scenarios
@@ -889,7 +889,7 @@ entries:
               - title: Жизненный цикл ресурсов
                 url: /usage/deploy/resource_lifecycle.html
 
-              - title: Патчи ресурсов
+              - title: Патчинг ресурсов
                 url: /usage/deploy/patches.html
 
               - title: Планирование
