@@ -1,6 +1,7 @@
 package kubectl
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"os"
@@ -29,8 +30,10 @@ var _ = ginkgo.DescribeTable("kubectl environment flags without installed plugin
 		command.Env = append(os.Environ(), "WERF_TEST_KUBECTL_CONFIG=1",
 			"WERF_SELF_INVOCATION_COMMAND=", "WERF_KUBE_CONTEXT="+kubeContext,
 			"WERF_SKIP_TLS_VERIFY_REGISTRY="+skipTLS, "PATH="+ginkgo.GinkgoT().TempDir())
-		output, err := command.CombinedOutput()
-		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "%s", output)
+		var stderr bytes.Buffer
+		command.Stderr = &stderr
+		output, err := command.Output()
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "stdout: %s\nstderr: %s", output, stderr.String())
 		var actual []string
 		gomega.Expect(json.Unmarshal(output, &actual)).To(gomega.Succeed())
 		gomega.Expect(actual).To(gomega.Equal(append(expected, "kubectl [flags] [options]")))
@@ -112,8 +115,10 @@ var _ = ginkgo.DescribeTable("NewCmd plugin execution",
 		command.Env = append(os.Environ(), "WERF_TEST_KUBECTL_COMMAND=1",
 			"WERF_SELF_INVOCATION_COMMAND="+selfInvocationCommand,
 			"PATH="+dir)
-		output, err := command.CombinedOutput()
-		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "%s", output)
+		var stderr bytes.Buffer
+		command.Stderr = &stderr
+		output, err := command.Output()
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "stdout: %s\nstderr: %s", output, stderr.String())
 		if expectedArgs == nil {
 			gomega.Expect(string(output)).To(gomega.BeEmpty())
 			return
