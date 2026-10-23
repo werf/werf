@@ -88,6 +88,7 @@ maintainters:
   values.yaml
   values.schema.json
   secret-values.yaml        # Только в werf
+  patches.yaml              # Только в werf
   Chart.yaml
   Chart.lock
   README.md
@@ -114,6 +115,8 @@ maintainters:
 - `values.schema.json` — JSON-схема для валидации `values.yaml`;
 
 - `secret-values.yaml` — (только в werf) зашифрованный файл с декларативной конфигурацией, аналогичный `values.yaml`. Его расшифрованное содержимое объединяется с `values.yaml` во время формирования манифестов;
+
+- `patches.yaml` — (только в werf) [патчи]({{ "/usage/deploy/resource_patching.html" | true_relative_url }}), которые изменяют отрендеренные ресурсы или заставляют werf игнорировать изменения отдельных полей;
 
 - `Chart.yaml` — основная конфигурация и метаданные чарта;
 
