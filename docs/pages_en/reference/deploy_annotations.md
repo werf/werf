@@ -72,7 +72,7 @@ At least one of these parameters must be specified:
 - `version`: api version of a resource to depend on.
 
 Optional parameters:
-- `external`: `auto` (default), `true`, or `false`. Controls whether the dependency targets a release resource or an external cluster resource. With `auto`, if no matching resource is found in the release, the dependency is automatically treated as external and werf waits for it in the cluster. With `true`, always treated as external. With `false`, always treated as internal. When external, `name`, `kind`, and `version` must all be specified.
+- `external`: `auto` (default), `true`, or `false`. Controls whether the dependency targets a release resource or an external cluster resource. With `auto`, if no matching resource is found in the release, the dependency is automatically treated as external and werf waits for it in the cluster. With `true`, always treated as external. With `false`, always treated as internal. When external, `name`, `kind`, and `version` must all be specified. If `external` is omitted and `name`, `kind` or `version` is missing, the dependency is treated as internal.
 
 More info: [deployment order]({{ "/usage/deploy/deployment_order.html" | true_relative_url }})
 
@@ -153,7 +153,7 @@ At least one of these parameters must be specified:
 - `version`: api version of a resource to depend on.
 
 Optional parameters:
-- `external`: `auto` (default), `true`, or `false`. Controls whether the dependency targets a release resource or an external cluster resource. With `auto`, if no matching resource is found in the release, the dependency is automatically treated as external and werf waits for it to be deleted from the cluster. With `true`, always treated as external. With `false`, always treated as internal. When external, `name`, `kind`, and `version` must all be specified.
+- `external`: `auto` (default), `true`, or `false`. Controls whether the dependency targets a release resource or an external cluster resource. With `auto`, if no matching resource is found in the release, the dependency is automatically treated as external and werf waits for it to be deleted from the cluster. With `true`, always treated as external. With `false`, always treated as internal. When external, `name`, `kind`, and `version` must all be specified. If `external` is omitted and `name`, `kind` or `version` is missing, the dependency is treated as internal.
 
 More info: [deployment order]({{ "/usage/deploy/deployment_order.html" | true_relative_url }})
 
