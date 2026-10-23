@@ -333,3 +333,21 @@ const (
 func newRepoStorage(reg docker_registry.Interface, address string) *RepoStagesStorage {
 	return &RepoStagesStorage{RepoAddress: address, DockerRegistry: reg, skipMetaCheck: true}
 }
+
+var _ docker_registry.Interface = (*digestListingRegistry)(nil)
+
+type digestListingRegistry struct {
+	docker_registry.Interface
+	tags                   []string
+	fullCalls, prefixCalls int
+}
+
+func (r *digestListingRegistry) Tags(_ context.Context, _ string, _ ...docker_registry.Option) ([]string, error) {
+	r.fullCalls++
+	return r.tags, nil
+}
+
+func (r *digestListingRegistry) TagsByPrefix(_ context.Context, _, _ string) ([]string, error) {
+	r.prefixCalls++
+	return r.tags, nil
+}
