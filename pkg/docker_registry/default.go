@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v3/pkg/image"
@@ -13,7 +14,8 @@ const DefaultImplementationName = "default"
 
 type defaultImplementation struct {
 	*api
-	Implementation string
+	Implementation    string
+	prefixUnsupported sync.Map
 }
 
 type defaultImplementationOptions struct {

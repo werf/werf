@@ -10,6 +10,8 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"runtime"
+	"slices"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -635,4 +637,155 @@ func (t *registryRetryRequestTransport) RoundTrip(req *http.Request) (*http.Resp
 		req = req.WithContext(context.WithValue(req.Context(), registryRetryContextKey{}, true))
 	}
 	return t.underlying.RoundTrip(req)
+}
+
+type prefixRegistryFixture struct {
+	server   *httptest.Server
+	mu       sync.Mutex
+	requests []string
+}
+
+func newPrefixRegistryFixture(tags []string, mode string) *prefixRegistryFixture {
+	sort.Strings(tags)
+	f := &prefixRegistryFixture{}
+	f.server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer ginkgo.GinkgoRecover()
+		f.mu.Lock()
+		f.requests = append(f.requests, r.Method+" "+r.URL.RequestURI())
+		f.mu.Unlock()
+		if r.URL.Path == "/v2/" {
+			return
+		}
+		if strings.Contains(r.URL.Path, "/manifests/") {
+			tag := r.URL.Path[strings.LastIndex(r.URL.Path, "/")+1:]
+			if mode == "head405" && r.Method == http.MethodHead {
+				w.WriteHeader(http.StatusMethodNotAllowed)
+				return
+			}
+			if mode == "head500" {
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			if !slices.Contains(tags, tag) {
+				w.WriteHeader(http.StatusNotFound)
+				return
+			}
+			manifest := `{"schemaVersion":2,"mediaType":"application/vnd.oci.image.manifest.v1+json","config":{"mediaType":"application/vnd.oci.image.config.v1+json","digest":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","size":2},"layers":[]}`
+			w.Header().Set("Content-Type", "application/vnd.oci.image.manifest.v1+json")
+			w.Header().Set("Docker-Content-Digest", "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+			w.Header().Set("Content-Length", fmt.Sprint(len(manifest)))
+			if r.Method == http.MethodGet {
+				_, err := io.WriteString(w, manifest)
+				gomega.Expect(err).NotTo(gomega.HaveOccurred())
+			}
+			return
+		}
+		if !strings.HasSuffix(r.URL.Path, "/tags/list") {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		query := r.URL.Query()
+		cursor := query.Get("last")
+		if cursor != "" {
+			switch mode {
+			case "redirect":
+				w.Header().Set("Location", "/unsupported-range")
+				w.WriteHeader(http.StatusTemporaryRedirect)
+				return
+			case "html", "wrong-tags-type", "oversized":
+				w.Header().Set("Docker-Distribution-API-Version", "registry/2.0")
+				body := "<html>unsupported range</html>"
+				if mode == "wrong-tags-type" {
+					body = `{"tags": {}}`
+				}
+				if mode == "oversized" {
+					body = `{"padding":"` + strings.Repeat("x", 4*1024*1024) + `","tags":["unrelated"]}`
+				}
+				_, err := io.WriteString(w, body)
+				if err != nil && mode != "oversized" {
+					gomega.Expect(err).NotTo(gomega.HaveOccurred())
+				}
+				return
+			case "204":
+				w.WriteHeader(http.StatusNoContent)
+				return
+			case "401":
+				w.WriteHeader(http.StatusUnauthorized)
+				return
+			case "429":
+				w.WriteHeader(http.StatusTooManyRequests)
+				return
+			case "500":
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			case "404-undeclared":
+				w.WriteHeader(http.StatusNotFound)
+				return
+			case "null", "missing-tags", "error-object":
+				w.Header().Set("Docker-Distribution-API-Version", "registry/2.0")
+				body := map[string]string{"null": "null", "missing-tags": `{"name":"repo"}`, "error-object": `{"errors":["unsupported cursor"]}`}[mode]
+				_, err := io.WriteString(w, body)
+				gomega.Expect(err).NotTo(gomega.HaveOccurred())
+				return
+			case "400":
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+		}
+		if mode != "undeclared" {
+			w.Header().Set("Docker-Distribution-API-Version", "registry/2.0")
+		}
+		selected := slices.Clone(tags)
+		if cursor != "" && mode != "ignored" {
+			selected = nil
+			for _, tag := range tags {
+				if tag > cursor {
+					selected = append(selected, tag)
+				}
+			}
+		}
+		n := len(selected)
+		if raw := query.Get("n"); raw != "" {
+			parsed, err := strconv.Atoi(raw)
+			gomega.Expect(err).NotTo(gomega.HaveOccurred())
+			n = parsed
+		}
+		if mode == "short" && cursor != "" {
+			n = 3
+		}
+		if len(selected) > n {
+			selected = selected[:n]
+			link := *r.URL
+			q := link.Query()
+			q.Set("last", selected[len(selected)-1])
+			link.RawQuery = q.Encode()
+			target := link.String()
+			if mode == "badlink" && cursor != "" {
+				target = "https://example.invalid" + target
+			}
+			if mode == "wrongcursor" && cursor != "" {
+				q.Set("last", "unrelated")
+				link.RawQuery = q.Encode()
+				target = link.String()
+			}
+			w.Header().Set("Link", "<"+target+">; rel=\"next\"")
+		}
+		if mode == "unsorted" && cursor != "" && len(selected) > 1 {
+			selected[0], selected[1] = selected[1], selected[0]
+		}
+		w.Header().Set("Content-Type", "application/json")
+		gomega.Expect(json.NewEncoder(w).Encode(map[string]any{"name": "repo", "tags": selected})).To(gomega.Succeed())
+	}))
+	ginkgo.DeferCleanup(f.server.Close)
+	return f
+}
+
+func (f *prefixRegistryFixture) repository() string {
+	return strings.TrimPrefix(f.server.URL, "http://") + "/repo"
+}
+
+func (f *prefixRegistryFixture) requestLog() []string {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return slices.Clone(f.requests)
 }

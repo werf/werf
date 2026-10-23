@@ -334,3 +334,25 @@ func collectingContext(ctx context.Context) (context.Context, *opstats.Collector
 	collector := opstats.NewCollector()
 	return opstats.NewContext(ctx, collector), collector
 }
+
+var _ docker_registry.Interface = (*digestListingRegistry)(nil)
+
+type digestListingRegistry struct {
+	docker_registry.Interface
+	tags                   []string
+	fullCalls, prefixCalls int
+}
+
+func (r *digestListingRegistry) Tags(_ context.Context, _ string, _ ...docker_registry.Option) ([]string, error) {
+	r.fullCalls++
+	return r.tags, nil
+}
+
+func (r *digestListingRegistry) TagsByPrefix(_ context.Context, _, _ string) ([]string, error) {
+	r.prefixCalls++
+	return r.tags, nil
+}
+
+func (r *markerRegistry) ManifestExists(ctx context.Context, reference string) (bool, error) {
+	return r.IsTagExist(ctx, reference)
+}
