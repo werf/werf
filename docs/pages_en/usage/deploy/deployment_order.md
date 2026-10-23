@@ -212,6 +212,6 @@ metadata:
 
 The `myapp-config` ConfigMap will be deleted only after `myapp-leader-election` is gone from the cluster.
 
-When a dependency is external, `name`, `kind`, and `version` must all be specified. By default, werf looks for the resource in the release namespace; specify `namespace` to use a different one.
+When a dependency is external, `name`, `kind`, and `version` must all be specified. If `external` is omitted and `name`, `kind` or `version` is missing, the dependency is treated as internal. By default, werf looks for the resource in the release namespace; specify `namespace` to use a different one.
 
 
