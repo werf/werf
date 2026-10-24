@@ -413,12 +413,41 @@ RUN --mount=type=bind,source=$MISSING/file,target=/src cat /src/file
 `, "other.lock", "")
 		})
 
-		It("keeps tracking other mounts when a typed mount option references a base image variable", func(ctx SpecContext) {
+		It("checksums the whole context when a bind source is a single unresolved variable", func(ctx SpecContext) {
+			expectDigestTracks(ctx, `
+FROM alpine:latest
+RUN --mount=type=bind,source=$MISSING,target=/src cat /src/file
+`, "other.lock", "")
+		})
+
+		It("tracks a bind mount next to a typed mount option that references a base image variable", func(ctx SpecContext) {
 			expectDigestTracks(ctx, `
 FROM mcr.microsoft.com/dotnet/sdk:8.0
-RUN --mount=type=cache,target=/root/.nuget,uid=$APP_UID dotnet restore
+RUN --mount=type=bind,source=uv.lock,target=/lock --mount=type=cache,target=/root/.nuget,uid=$APP_UID dotnet restore
+`, "uv.lock", "other.lock")
+		})
+
+		It("tracks a bind mount in another RUN when mount options fail validation", func(ctx SpecContext) {
+			expectDigestTracks(ctx, `
+FROM mcr.microsoft.com/dotnet/sdk:8.0
+RUN --mount=type=cache,target=/root/.nuget,uid=$APP_UID,sharing=$SHARING dotnet restore
 RUN --mount=type=bind,source=uv.lock,target=/lock cat /lock
 `, "uv.lock", "other.lock")
+		})
+
+		It("keeps the digest of a RUN whose mount options fail validation", func(ctx SpecContext) {
+			dockerfile := []byte(`
+FROM mcr.microsoft.com/dotnet/sdk:8.0
+RUN --mount=type=cache,target=/root/.nuget,uid=$APP_UID,sharing=$SHARING dotnet restore
+`)
+			dockerStages, dockerMetaArgs := testDockerfileToDockerStages(dockerfile)
+			stage := newTestFullDockerfileStage(dockerfile, "", nil, dockerStages, dockerMetaArgs, nil, "")
+			stage.dockerignorePathMatcher = path_matcher.NewTruePathMatcher()
+			conveyor := NewConveyorStubForDependencies(NewGiterminismManagerStub(NewLocalGitRepoStub("9d8059842b6fde712c58315ca0ab4713d90761c0"), NewGiterminismInspectorStub()), nil)
+
+			digest, err := stage.GetDependencies(ctx, conveyor, nil, nil, nil, nil)
+			Expect(err).To(Succeed())
+			Expect(digest).To(Equal("ef2e8c5ffd542a5360f994fe861c2248a70b1141ab1b15976d390946feed79d3"))
 		})
 	})
 })

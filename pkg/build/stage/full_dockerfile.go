@@ -597,8 +597,10 @@ func (s *FullDockerfileStage) dockerfileInstructionDependencies(ctx context.Cont
 
 		// Expand resolves ARG/ENV once before typed validation. Unmatched words
 		// keep the whole-context fallback used for an unresolved COPY source.
-		// A typed option such as uid= referencing a base image ENV fails that
-		// validation here but builds fine, so the RUN keeps its pre-expansion digest.
+		// A base image ENV is unknown here, so a word made only of such variables
+		// becomes "0" to pass the numeric option checks; when validation still
+		// fails, the RUN contributes its resolved text only, as before bind-mount
+		// tracking.
 		unmatched := map[string]struct{}{}
 		if err := c.Expand(func(word string) (string, error) {
 			if isBaseImageOnbuildInstruction {
@@ -615,6 +617,9 @@ func (s *FullDockerfileStage) dockerfileInstructionDependencies(ctx context.Cont
 				return "", err
 			}
 			if hasUnmatched {
+				if resolved == "" {
+					resolved = "0"
+				}
 				unmatched[resolved] = struct{}{}
 			}
 
