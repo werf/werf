@@ -412,6 +412,14 @@ FROM alpine:latest
 RUN --mount=type=bind,source=$MISSING/file,target=/src cat /src/file
 `, "other.lock", "")
 		})
+
+		It("keeps tracking other mounts when a typed mount option references a base image variable", func(ctx SpecContext) {
+			expectDigestTracks(ctx, `
+FROM mcr.microsoft.com/dotnet/sdk:8.0
+RUN --mount=type=cache,target=/root/.nuget,uid=$APP_UID dotnet restore
+RUN --mount=type=bind,source=uv.lock,target=/lock cat /lock
+`, "uv.lock", "other.lock")
+		})
 	})
 })
 
