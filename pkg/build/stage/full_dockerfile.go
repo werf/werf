@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strconv"
+	"strings"
 
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
@@ -364,6 +365,10 @@ func (s *FullDockerfileStage) dependenciesDigest(ctx context.Context, c Conveyor
 		stagesOnBuildDependencies = append(stagesOnBuildDependencies, onBuildDependencies)
 	}
 
+	// Expand reparses RUN mounts from the Dockerfile text. Restore stage indexes
+	// so a mount from another stage still contributes that stage's dependencies.
+	s.reapplyRunMountStageRefs()
+
 	for ind, stage := range s.dockerStages {
 		for relatedStageIndex, relatedStage := range s.dockerStages {
 			if ind == relatedStageIndex {
@@ -583,6 +588,55 @@ func (s *FullDockerfileStage) dockerfileInstructionDependencies(ctx context.Cont
 			}
 			dependencies = append(dependencies, checksum)
 		}
+	case *instructions.RunCommand:
+		resolvedValue, err := resolveValueFunc(c.String())
+		if err != nil {
+			return nil, nil, err
+		}
+		dependencies = append(dependencies, resolvedValue)
+
+		// Expand resolves ARG/ENV once before typed validation. Unmatched words
+		// keep the whole-context fallback used for an unresolved COPY source.
+		unmatched := map[string]struct{}{}
+		if err := c.Expand(func(word string) (string, error) {
+			if isBaseImageOnbuildInstruction {
+				return word, nil
+			}
+
+			argsArray := toArgsArray(s.DockerStageArgsHash(dockerStageID), s.DockerStageEnvs(dockerStageID))
+			if isOnbuildInstruction {
+				argsArray = toArgsArray(s.DockerStageEnvs(dockerStageID))
+			}
+
+			resolved, hasUnmatched, err := shlexProcessWordWithUnmatched(word, argsArray)
+			if err != nil {
+				return "", err
+			}
+			if hasUnmatched {
+				unmatched[resolved] = struct{}{}
+			}
+
+			return resolved, nil
+		}); err != nil {
+			return nil, nil, err
+		}
+
+		for _, mount := range instructions.GetMounts(c) {
+			if mount.Type != instructions.MountTypeBind || mount.From != "" {
+				continue
+			}
+
+			source := mount.Source
+			if _, unresolved := unmatched[source]; unresolved || source == "" {
+				source = "."
+			}
+
+			checksum, err := s.calculateFilesChecksum(ctx, giterminismManager, []string{literalPathGlob(source)}, c.String())
+			if err != nil {
+				return nil, nil, err
+			}
+			dependencies = append(dependencies, checksum)
+		}
 	case *instructions.OnbuildCommand:
 		cDependencies, cOnBuildDependencies, err := s.dockerfileOnBuildInstructionDependencies(ctx, giterminismManager, resolvedDockerMetaArgsHash, resolvedDependenciesArgsHash, dockerStageID, c.Expression, false)
 		if err != nil {
@@ -603,6 +657,37 @@ func (s *FullDockerfileStage) dockerfileInstructionDependencies(ctx context.Cont
 	}
 
 	return dependencies, onBuildDependencies, nil
+}
+
+func (s *FullDockerfileStage) reapplyRunMountStageRefs() {
+	nameToIndex := make(map[string]string, len(s.dockerStages))
+	for i, stage := range s.dockerStages {
+		name := strings.ToLower(stage.Name)
+		if name != strconv.Itoa(i) {
+			nameToIndex[name] = strconv.Itoa(i)
+		}
+	}
+	if len(nameToIndex) == 0 {
+		return
+	}
+
+	for _, stage := range s.dockerStages {
+		for _, cmd := range stage.Commands {
+			run, ok := cmd.(*instructions.RunCommand)
+			if !ok {
+				continue
+			}
+
+			for _, mount := range instructions.GetMounts(run) {
+				if mount.From == "" {
+					continue
+				}
+				if index, ok := nameToIndex[strings.ToLower(mount.From)]; ok {
+					mount.From = index
+				}
+			}
+		}
+	}
 }
 
 func (s *FullDockerfileStage) dockerfileOnBuildInstructionDependencies(ctx context.Context, giterminismManager giterminism_manager.Interface, resolvedDockerMetaArgsHash, resolvedDependenciesArgsHash map[string]string, dockerStageID int, expression string, isBaseImageOnbuildInstruction bool) ([]string, []string, error) {
@@ -688,6 +773,11 @@ func (s *FullDockerfileStage) SetupDockerImageBuilder(b stage_builder.Dockerfile
 	}
 
 	return nil
+}
+
+// literalPathGlob escapes doublestar metacharacters so a bind source is a path, not a COPY/ADD glob.
+func literalPathGlob(path string) string {
+	return strings.NewReplacer(`\`, `\\`, `*`, `\*`, `?`, `\?`, `[`, `\[`, `]`, `\]`, `{`, `\{`, `}`, `\}`).Replace(path)
 }
 
 func (s *FullDockerfileStage) calculateFilesChecksum(ctx context.Context, giterminismManager giterminism_manager.Interface, wildcards []string, dockerfileLine string) (string, error) {
