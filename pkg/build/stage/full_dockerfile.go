@@ -24,6 +24,7 @@ import (
 	"github.com/werf/werf/v3/pkg/context_manager"
 	"github.com/werf/werf/v3/pkg/docker_registry"
 	"github.com/werf/werf/v3/pkg/dockerfile"
+	"github.com/werf/werf/v3/pkg/dockerfile/frontend"
 	"github.com/werf/werf/v3/pkg/git_repo"
 	"github.com/werf/werf/v3/pkg/giterminism_manager"
 	"github.com/werf/werf/v3/pkg/image"
@@ -365,9 +366,8 @@ func (s *FullDockerfileStage) dependenciesDigest(ctx context.Context, c Conveyor
 		stagesOnBuildDependencies = append(stagesOnBuildDependencies, onBuildDependencies)
 	}
 
-	// Expand reparses RUN mounts from the Dockerfile text. Restore stage indexes
-	// so a mount from another stage still contributes that stage's dependencies.
-	s.reapplyRunMountStageRefs()
+	// Expand reparses RUN mounts from the Dockerfile text, resetting from= back to stage names.
+	frontend.ResolveDockerStagesFromValue(s.dockerStages)
 
 	for ind, stage := range s.dockerStages {
 		for relatedStageIndex, relatedStage := range s.dockerStages {
@@ -597,6 +597,10 @@ func (s *FullDockerfileStage) dockerfileInstructionDependencies(ctx context.Cont
 
 		// Expand resolves ARG/ENV once before typed validation. Unmatched words
 		// keep the whole-context fallback used for an unresolved COPY source.
+		// A base image ENV is unknown here, so a word made only of such variables
+		// becomes "0" to pass the numeric option checks; when validation still
+		// fails, the RUN contributes its resolved text only, as before bind-mount
+		// tracking.
 		unmatched := map[string]struct{}{}
 		if err := c.Expand(func(word string) (string, error) {
 			if isBaseImageOnbuildInstruction {
@@ -613,12 +617,16 @@ func (s *FullDockerfileStage) dockerfileInstructionDependencies(ctx context.Cont
 				return "", err
 			}
 			if hasUnmatched {
+				if resolved == "" {
+					resolved = "0"
+				}
 				unmatched[resolved] = struct{}{}
 			}
 
 			return resolved, nil
 		}); err != nil {
-			return nil, nil, err
+			logboek.Context(ctx).Debug().LogF("Skip mount sources checksum for %q: %s\n", c.String(), err)
+			break
 		}
 
 		for _, mount := range instructions.GetMounts(c) {
@@ -657,37 +665,6 @@ func (s *FullDockerfileStage) dockerfileInstructionDependencies(ctx context.Cont
 	}
 
 	return dependencies, onBuildDependencies, nil
-}
-
-func (s *FullDockerfileStage) reapplyRunMountStageRefs() {
-	nameToIndex := make(map[string]string, len(s.dockerStages))
-	for i, stage := range s.dockerStages {
-		name := strings.ToLower(stage.Name)
-		if name != strconv.Itoa(i) {
-			nameToIndex[name] = strconv.Itoa(i)
-		}
-	}
-	if len(nameToIndex) == 0 {
-		return
-	}
-
-	for _, stage := range s.dockerStages {
-		for _, cmd := range stage.Commands {
-			run, ok := cmd.(*instructions.RunCommand)
-			if !ok {
-				continue
-			}
-
-			for _, mount := range instructions.GetMounts(run) {
-				if mount.From == "" {
-					continue
-				}
-				if index, ok := nameToIndex[strings.ToLower(mount.From)]; ok {
-					mount.From = index
-				}
-			}
-		}
-	}
 }
 
 func (s *FullDockerfileStage) dockerfileOnBuildInstructionDependencies(ctx context.Context, giterminismManager giterminism_manager.Interface, resolvedDockerMetaArgsHash, resolvedDependenciesArgsHash map[string]string, dockerStageID int, expression string, isBaseImageOnbuildInstruction bool) ([]string, []string, error) {
