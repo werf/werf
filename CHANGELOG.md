@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.12.2](https://github.com/werf/werf/compare/v3.12.1...v3.12.2) (2026-10-24)
+
+
+### Bug Fixes
+
+* **build:** bump lockgate to v0.2.1 to avoid deadlock at lock timeout boundary ([#8110](https://github.com/werf/werf/issues/8110)) ([d6c1329](https://github.com/werf/werf/commit/d6c1329e298de0b487abea0aaeb446d7f86de97b))
+* **deploy:** accept incomplete dependency annotations ([#8114](https://github.com/werf/werf/issues/8114)) ([c406ef8](https://github.com/werf/werf/commit/c406ef8cef1b8dd0bee1c13a31da6bd9688ad06d))
+
 ## [3.12.1](https://github.com/werf/werf/compare/v3.12.0...v3.12.1) (2026-10-21)
 
 
