@@ -13,12 +13,34 @@ If you wrote the diff you are reviewing now, say so explicitly in the report's V
 
 ## Before reviewing
 
-1. Ask the user for numbered acceptance criteria (DoD). If there are none, derive them from the PR description or the linked issue, mark them `(inferred)`, and proceed — do not stall, and do not invent criteria silently.
+1. Recover acceptance criteria from the user request, current task contract, PR description and linked issue. Mark derived criteria `(inferred)` and proceed. Ask only about unresolved choices that materially change the work; do not ask the user to repeat criteria already supplied.
 2. Resolve the base first: `git fetch`, then diff against the branch the PR actually targets. werf maintains release branches (`1.2`, `2.63`, `3`, …), so `main` is the wrong base for a backport. State the resolved base in the report. For uncommitted work, review `git diff` / `git diff --cached` instead.
 3. If the PR head is not checked out, take every `file:line` from that commit's blob (`git show <head>:<path>`), never from the worktree. The worktree sits on the base, so any file the PR itself changed has different line numbers there, and a comment anchored on a worktree line number lands on the wrong line — or is rejected outright.
 4. Read every changed file. Then trace callers of the changed exported symbols whose signature or behavior changed, and of anything crossing a persistence boundary — via LSP call hierarchy and references, not grep. LSP indexes the worktree, so when the head is not checked out it answers about the base: add a worktree at the head first, or read blobs and say in the report that call tracing was limited.
 5. For 10+ changed files, split the reading by area (e.g. new files, storage/cleanup, build pipeline) across subagents if your harness has them, and synthesize the findings yourself.
-6. If the worktree holds the branch and `task` works, run `task build` and `task test:unit` — a review that never compiled the change is an opinion. NEVER run `task format`: it would rewrite the diff under review.
+6. For runtime-affecting changes, require `task build` and `task test:unit` on the candidate in a supported environment. Apply the repeat-review rules below when reusing that evidence. Prose-only edits need no build. NEVER run `task format`: it would rewrite the diff under review.
+
+## Repeat reviews
+
+The first review covers the whole change. A subsequent review starts from the
+previously reviewed SHA, its open findings and the delta to the current candidate;
+trace affected callers and invariants beyond the diff. Verify the previous scope
+and evidence before reusing them. A prior ACCEPT never approves a new SHA.
+
+One full check per candidate and relevant environment is the default, with a named
+owner and inspectable revision, commands, exit statuses and logs. Reviewers validate
+that evidence and independently exercise changed behavior; they need not each rerun
+the entire suite. Record the reason before expanding: changed dependencies, base,
+build/test infrastructure, broad behavior impact, missing or unreliable evidence,
+or explicit repository/user requirements. A rebase requires inspecting the base
+and conflict-resolution changes as well as the patch.
+
+Documentation-only deltas need no code build unless they affect executable or
+generated inputs. Runtime-affecting changes still require the repository's final
+checks. For deletion, migration, security or concurrency changes, retain direct
+inspection and targeted failure-path checks and meaningful mutations; shared green
+logs cannot replace these. Report current SHA, reused evidence and its limits,
+new checks, remaining findings and verdict.
 
 ## Technical perspective
 
@@ -35,7 +57,7 @@ Cover the ones the diff actually touches; stay silent about the rest.
 
 ## Tests as evidence
 
-Passing tests, high coverage, and the author's confidence are not evidence of correctness, whoever wrote the diff. Read `test-the-tests/SKILL.md` and run its mutation loop against every load-bearing test: mutate the implementation and confirm the test fails, rather than reading the assertions and trusting they'd catch a regression. This is not optional — skipping it because the tests "look thorough" is exactly the failure mode it exists to catch.
+Passing tests are evidence with limits, not proof. Read `test-the-tests/SKILL.md` and mutate plausible regressions for load-bearing tests of changed behavior. In a repeat review, cover the delta and affected invariants rather than repeating mutations of unchanged behavior with valid evidence. A prose-only edit without executable behavior needs no synthetic mutation test.
 
 For a non-trivial or high-risk diff, or a diff that touches tests or verification infrastructure, also read `challenge-review/SKILL.md` as an independent challenge pass. It covers check-gaming detection (weakened assertions, quietly skipped tests, mocked-out critical behavior, and more) in one place, so this list doesn't drift from it again.
 
