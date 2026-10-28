@@ -62,8 +62,8 @@ require (
 	github.com/werf/3p-helm-for-werf-helm v0.0.0-20241217155820-089f92cd5c9d
 	github.com/werf/common-go v0.0.0-20260414103517-0558f83edc6d
 	github.com/werf/copy-recurse v0.3.1
-	github.com/werf/kubedog v0.13.1-0.20260912145640-ad1e8a134607
-	github.com/werf/kubedog-for-werf-helm v0.0.0-20241217155728-9d45c48b82b6
+	github.com/werf/kubedog v0.13.1-0.20261028084433-60827212f828
+	github.com/werf/kubedog-for-werf-helm v0.0.0-20261028084224-acddc89799e7
 	github.com/werf/lockgate v0.1.1
 	github.com/werf/logboek v0.7.1
 	github.com/werf/nelm v1.31.2-0.20261021180502-7d1c80c67c12
