@@ -58,7 +58,7 @@ overriden
 
 ## Parameter sources and their priority
 
-The `$.Values` dictionary is compiled by combining the parameters from the parameter sources in the following order:
+The `$.Values` dictionary is compiled by combining the parameters from the parameter sources in the following order, from the lowest priority to the highest:
 
 1. `values.yaml` of the current chart.
 2. `secret-values.yaml` of the current chart (werf only).
@@ -66,17 +66,21 @@ The `$.Values` dictionary is compiled by combining the parameters from the param
 4. The dictionary in `secret-values.yaml` of the parent chart (werf only), whose key is the alias or name of the current chart.
 5. Parameter files stored in the `WERF_VALUES_*` variable.
 6. Parameter files set by the `--values` option.
-7. Secret parameter files stored in the `WERF_SECRET_VALUES_*` variable.
-8. Secret parameter files set by the `-secret-values` option.
-9. Parameters in the set files stored in the `WERF_SET_FILE_*` variable.
-10. Parameters in the set files set by the `-set-file` option.
-11. Parameters stored in the `WERF_SET_STRING_*` variable.
-12. Parameters set by the `--set-string` option.
-13. Parameters stored in the `WERF_SET_*` variable.
-14. Parameters set by the `--set` option.
-15. werf auxiliary parameters.
-16. Parameters taken from the `export-values` directive of the parent chart (werf only).
-17. Parameters taken from the `import-values` directive of the child charts.
+7. Secret parameter files stored in the `WERF_SECRET_VALUES_*` variable (werf only).
+8. Secret parameter files set by the `--secret-values` option (werf only).
+9. Parameters stored in the `WERF_SET_JSON_*` variable.
+10. Parameters set by the `--set-json` option.
+11. Parameters stored in the `WERF_SET_*` variable.
+12. Parameters set by the `--set` option.
+13. Parameters stored in the `WERF_SET_STRING_*` variable.
+14. Parameters set by the `--set-string` option.
+15. Parameters in the set files stored in the `WERF_SET_FILE_*` variable.
+16. Parameters in the set files set by the `--set-file` option.
+17. Parameters stored in the `WERF_SET_LITERAL_*` variable.
+18. Parameters set by the `--set-literal` option.
+19. werf auxiliary parameters.
+
+Sources 5–19 are passed to the main chart. The parameters of a dependent chart are taken from the dictionary whose key is the alias or name of the dependent chart, so `--set mychild.myparam=value` overrides `myparam` from `values.yaml` and `secret-values.yaml` of the `mychild` chart and from the `mychild` dictionary of the parent chart.
 
 The rules for combining parameters:
 
@@ -86,7 +90,28 @@ The rules for combining parameters:
 
 * dictionaries are merged;
 
-* in case of a conflict, the parameters from the sources located higher in the list are overwritten by the parameters from the sources located lower in the list.
+* in case of a conflict, the parameters from the sources located higher in the list are overwritten by the parameters from the sources located lower in the list;
+
+* `null` set by the `--values`, `--secret-values` or `--set*` options removes the value of the parameter with the same key that comes from the sources located higher in the list.
+
+* `null` set for the whole dictionary of a dependent chart, e.g. `--set mychild=null`, removes only the parameters of this chart that come from the `--values`, `--secret-values` and `--set*` options: the chart keeps the parameters from its own `values.yaml` and `secret-values.yaml`, from the dictionary in `values.yaml` and `secret-values.yaml` of the parent chart, and the parameters exported to it from `values.yaml` of the parent chart, from the `--set*` options and from werf auxiliary parameters. If a parameter from the `--set*` options is exported to this chart, the `null` has no effect.
+
+The `export-values` and `import-values` directives copy parameters between the parent chart and its dependent charts (see below) and do not form sources of their own: the copy is made within each of the following sources, and the priority of the copied parameter is the priority of the source it came from (from the lowest to the highest):
+
+1. `values.yaml` of all charts and `secret-values.yaml` of the dependent charts.
+2. `secret-values.yaml` of the main chart.
+3. Parameter files (`WERF_VALUES_*` and `--values`).
+4. Secret parameter files (`WERF_SECRET_VALUES_*` and `--secret-values`).
+5. All `WERF_SET_*` variables and `--set*` options.
+6. werf auxiliary parameters.
+
+For example, with `--set g.repo=A --set-string mychild.image.repository=B` and `g.repo` exported to `mychild.image.repository`, the result is `A`: both options are in one source, where the exported parameter wins.
+
+* `export-values` copies a parameter of the parent chart to a dependent chart. Within one source, the exported parameter overrides the parameter of the dependent chart with the same key. Across sources, the parameter from the source located lower in the list wins. For example, `--set mychild.myparam=value` overrides a parameter that is exported to `mychild.myparam` from `values.yaml` of the parent chart, and a werf auxiliary parameter exported to `mychild.image.repository` overrides `mychild.image.repository` from `--values`.
+
+* `import-values` copies a dictionary of a dependent chart to the parent chart. Within one source, the parent chart's own parameter overrides the imported one with the same key. Across sources, the parameter from the source located lower in the list wins. For example, a dictionary imported from `--set mychild.mydict.myparam=value` overrides `mydict.myparam` from `values.yaml` of the parent chart.
+
+A parameter that cannot be copied is skipped with a warning: a value other than a dictionary exported to the root of a dependent chart, or a value other than a dictionary or `null` imported from a dependent chart. An imported `null` is copied as `null`.
 
 ## Parameterizing the chart
 
@@ -299,7 +324,7 @@ overriden
 
 ## Using the dependent chart parameters in the parent chart
 
-You can use the `import-values` directive in the parent chart to pass the parameters of the dependent chart to the parent one:
+You can use the `import-values` directive in the parent chart to pass the parameters of the dependent chart to the parent one. Only dictionaries (or `null`) can be imported, and the parent chart's own parameters override the imported ones:
 
 ```yaml
 # Chart.yaml:
@@ -307,25 +332,28 @@ name: myparent
 dependencies:
 - name: mychild
   import-values:
-  - child: myparam
-    parent: myparam
+  - child: mydict
+    parent: mydict
 ```
 
 ```yaml
 # values.yaml:
-myparam: original
+mydict:
+  myparam1: original
 ```
 
 ```yaml
 # charts/mychild/values.yaml:
-myparam: overriden
+mydict:
+  myparam1: imported
+  myparam2: imported
 ```
 
 {% raw %}
 
 ```
 # templates/example.yaml:
-{{ $.Values.myparam }}
+{{ $.Values.mydict.myparam1 }} {{ $.Values.mydict.myparam2 }}
 ```
 
 {% endraw %}
@@ -333,7 +361,7 @@ myparam: overriden
 Output:
 
 ```
-overriden
+original imported
 ```
 
 ## Global parameters
@@ -459,6 +487,12 @@ secret: 1000625c4f1d874f0ab853bf1db4e438ad6f054526e5dcf4fc8c10e551174904e6d0
 ```shell
 werf --secret-values .helm/secret-values-production.yaml
 ```
+
+### Secret parameters in the release
+
+werf saves the parameters from the `--values`, `--secret-values` and `--set*` options in the release, together with the parameters that `export-values` copies from them, and the parameters from `--secret-values` are saved in decrypted form. `werf release get --print-values` shows them, anyone who can read the release Secret in the cluster can read them, and changing only `--secret-values` creates a new release revision. Releases deployed with `--secret-values` by an earlier werf version get one new revision on the first deployment after the update. The parameters from `secret-values.yaml` of the charts are not saved among these parameters, but if `Chart.yaml` of the chart lists dependent charts in `dependencies`, the chart saved in the release contains them in decrypted form, and `werf release get --print-values` shows them too.
+
+`werf bundle publish` saves the `--secret-values` files in `secret-values.yaml` of the bundle, encrypted, so `werf bundle apply` does not save them in the release among the parameters of the options; as with any `secret-values.yaml`, they are saved decrypted in the chart in the release if the bundle lists dependent charts in `dependencies`.
 
 ## Information about the built images (werf only)
 

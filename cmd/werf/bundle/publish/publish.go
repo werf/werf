@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
@@ -21,9 +22,11 @@ import (
 	nelmcommon "github.com/werf/nelm/v2/pkg/common"
 	"github.com/werf/nelm/v2/pkg/featgate"
 	helmchart "github.com/werf/nelm/v2/pkg/helm/pkg/chart"
+	chartcommon "github.com/werf/nelm/v2/pkg/helm/pkg/chart/common"
 	chartcommonutil "github.com/werf/nelm/v2/pkg/helm/pkg/chart/common/util"
 	"github.com/werf/nelm/v2/pkg/helm/pkg/chart/loader"
 	chart "github.com/werf/nelm/v2/pkg/helm/pkg/chart/v2"
+	chartv2util "github.com/werf/nelm/v2/pkg/helm/pkg/chart/v2/util"
 	"github.com/werf/nelm/v2/pkg/helm/pkg/cli/values"
 	helm "github.com/werf/nelm/v2/pkg/helm/pkg/cmd"
 	"github.com/werf/nelm/v2/pkg/helm/pkg/downloader"
@@ -490,28 +493,19 @@ func createNewBundle(
 		}
 	}
 
-	var valsData []byte
-	{
-		p := getter.Getters()
-		vals, err := vals.MergeValues(nelmcommon.ContextWithHelmOptions(ctx, opts), p)
-		if err != nil {
-			return fmt.Errorf("unable to merge input values: %w", err)
-		}
-
-		bundleVals, err := makeBundleValues(ctx, v2Chrt, vals, serviceValues)
-		if err != nil {
-			return fmt.Errorf("unable to construct bundle values: %w", err)
-		}
-
-		valsData, err = yaml.Marshal(bundleVals)
-		if err != nil {
-			return fmt.Errorf("unable to marshal bundle values: %w", err)
-		}
+	chartSecretVals, customSecretVals, err := readRawSecretValues(ctx, v2Chrt, commonCmdData.SecretValuesFiles, commonCmdData.DefaultSecretValuesDisable)
+	if err != nil {
+		return fmt.Errorf("unable to read secret values: %w", err)
 	}
 
-	mergedSecretVals, err := mergeRawSecretValues(ctx, v2Chrt, commonCmdData.SecretValuesFiles, commonCmdData.DefaultSecretValuesDisable)
+	bundleVals, mergedSecretVals, err := makeBundleValuesAndSecretValues(nelmcommon.ContextWithHelmOptions(ctx, opts), v2Chrt, vals, serviceValues, chartSecretVals, customSecretVals)
 	if err != nil {
-		return fmt.Errorf("unable to merge secret values: %w", err)
+		return err
+	}
+
+	valsData, err := yaml.Marshal(bundleVals)
+	if err != nil {
+		return fmt.Errorf("unable to marshal bundle values: %w", err)
 	}
 
 	var secretValsData []byte
@@ -689,7 +683,12 @@ func writeBundleJsonMap(dataMap map[string]string, path string) error {
 }
 
 func makeBundleValues(ctx context.Context, chrt *chart.Chart, inputVals, serviceValues map[string]interface{}) (map[string]interface{}, error) {
-	vals, err := chartcommonutil.MergeInternal(ctx, inputVals, serviceValues, nil)
+	serviceValuesCopy, err := copystructure.Copy(serviceValues)
+	if err != nil {
+		return nil, fmt.Errorf("unable to copy service values: %w", err)
+	}
+
+	vals, err := chartcommonutil.MergeInternal(ctx, inputVals, serviceValuesCopy.(map[string]interface{}), nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to coalesce werf chart values: %w", err)
 	}
@@ -705,7 +704,12 @@ func makeBundleValues(ctx context.Context, chrt *chart.Chart, inputVals, service
 		valsCopy = make(map[string]interface{})
 	}
 
-	mergedVals, err := chartcommonutil.MergeValues(chrt, valsCopy)
+	// The dependencies keep their own values in the bundle: merged into the bundle values, their
+	// values.yaml would override their own secret-values.yaml.
+	rootChrt := *chrt
+	rootChrt.SetDependencies()
+
+	mergedVals, err := chartcommonutil.MergeValues(&rootChrt, valsCopy)
 	if err != nil {
 		return nil, fmt.Errorf("failed to merge chart values: %w", err)
 	}
@@ -715,35 +719,233 @@ func makeBundleValues(ctx context.Context, chrt *chart.Chart, inputVals, service
 	return valsCopy, nil
 }
 
-func mergeRawSecretValues(ctx context.Context, chrt *chart.Chart, customSecretValuesFiles []string, defaultSecretValuesDisable bool) (map[string]interface{}, error) {
-	var result map[string]interface{}
+func readRawSecretValues(ctx context.Context, chrt *chart.Chart, customSecretValuesFiles []string, defaultSecretValuesDisable bool) (map[string]interface{}, map[string]interface{}, error) {
+	var chartSecretVals map[string]interface{}
 
 	if !defaultSecretValuesDisable {
 		for _, f := range chrt.Files {
 			if f.Name == legacysecret.DefaultSecretValuesFileName {
-				vals := map[string]interface{}{}
-				if err := yaml.Unmarshal(f.Data, &vals); err != nil {
-					return nil, fmt.Errorf("unmarshal %s: %w", f.Name, err)
+				chartSecretVals = map[string]interface{}{}
+				if err := yaml.Unmarshal(f.Data, &chartSecretVals); err != nil {
+					return nil, nil, fmt.Errorf("unmarshal %s: %w", f.Name, err)
 				}
-				result = nelmcommon.LegacyCoalesceTablesFunc(vals, result)
 				break
 			}
 		}
 	}
 
+	var customSecretVals map[string]interface{}
+
 	for _, filePath := range customSecretValuesFiles {
 		data, err := nelmcommon.ChartFileReader.ReadChartFile(ctx, filePath)
 		if err != nil {
-			return nil, fmt.Errorf("read secret values file %q: %w", filePath, err)
+			return nil, nil, fmt.Errorf("read secret values file %q: %w", filePath, err)
 		}
 
 		vals := map[string]interface{}{}
 		if err := yaml.Unmarshal(data, &vals); err != nil {
-			return nil, fmt.Errorf("unmarshal secret values file %q: %w", filePath, err)
+			return nil, nil, fmt.Errorf("unmarshal secret values file %q: %w", filePath, err)
 		}
 
-		result = nelmcommon.LegacyCoalesceTablesFunc(vals, result)
+		customSecretVals = chartcommon.MergeMaps(customSecretVals, vals)
 	}
 
-	return result, nil
+	return chartSecretVals, customSecretVals, nil
+}
+
+// makeBundleValuesAndSecretValues returns the bundle values and the still encrypted bundle secret
+// values. The bundle secret values override the bundle values, which are built from --values,
+// --set* and service values, so the secret keys that these override at publish time are removed:
+// --values override only the chart secret values, --set* and service values override --secret-values
+// too. The --values that --secret-values override are left out of the bundle values, so that the
+// chart values under them are kept as in converge. Null values are kept, so that they still delete
+// the values below them. chartSecretVals and customSecretVals are pruned in place.
+func makeBundleValuesAndSecretValues(ctx context.Context, chrt *chart.Chart, vals *values.Options, serviceValues, chartSecretVals, customSecretVals map[string]interface{}) (map[string]interface{}, map[string]interface{}, error) {
+	p := getter.Getters()
+
+	fileVals, err := (&values.Options{ValueFiles: vals.ValueFiles}).MergeValues(ctx, p)
+	if err != nil {
+		return nil, nil, fmt.Errorf("unable to merge input values files: %w", err)
+	}
+
+	setOpts := *vals
+	setOpts.ValueFiles = nil
+	setFilesCache := map[string]string{}
+
+	if err := validateSetValues(ctx, chrt, &setOpts, p, setFilesCache, fileVals, customSecretVals); err != nil {
+		return nil, nil, err
+	}
+
+	removeOverriddenValues(fileVals, customSecretVals)
+
+	setVals, err := setOpts.MergeSetValues(ctx, p, map[string]interface{}{}, values.MergeSetValuesOptions{SetFilesCache: setFilesCache})
+	if err != nil {
+		return nil, nil, fmt.Errorf("unable to merge input set values: %w", err)
+	}
+
+	fileValsCopy, err := copystructure.Copy(fileVals)
+	if err != nil {
+		return nil, nil, fmt.Errorf("unable to copy input values: %w", err)
+	}
+
+	inputVals, err := setOpts.MergeSetValues(ctx, p, fileValsCopy.(map[string]interface{}), values.MergeSetValuesOptions{SetFilesCache: setFilesCache})
+	if err != nil {
+		// As in converge, --set* that are valid only over the exported values or the secret values
+		// are merged over --values instead of patching them.
+		fileValsCopy, err := copystructure.Copy(fileVals)
+		if err != nil {
+			return nil, nil, fmt.Errorf("unable to copy input values: %w", err)
+		}
+
+		setValsCopy, err := copystructure.Copy(setVals)
+		if err != nil {
+			return nil, nil, fmt.Errorf("unable to copy input set values: %w", err)
+		}
+
+		inputVals = chartcommon.MergeMaps(fileValsCopy.(map[string]interface{}), setValsCopy.(map[string]interface{}))
+	}
+
+	bundleVals, err := makeBundleValues(ctx, chrt, inputVals, serviceValues)
+	if err != nil {
+		return nil, nil, fmt.Errorf("unable to construct bundle values: %w", err)
+	}
+
+	setReplacedPaths := setValuesReplacedPaths(ctx, &setOpts, p, setFilesCache, setVals, nil)
+
+	fileValsWithExports, err := withExportedValues(chrt, fileVals, setReplacedPaths)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	removeOverriddenValues(chartSecretVals, fileValsWithExports)
+
+	for _, path := range setReplacedPaths {
+		replacedVals := map[string]interface{}{path[len(path)-1]: nil}
+		for i := len(path) - 2; i >= 0; i-- {
+			replacedVals = map[string]interface{}{path[i]: replacedVals}
+		}
+
+		removeOverriddenValues(customSecretVals, replacedVals)
+	}
+
+	for _, higherVals := range []map[string]interface{}{setVals, serviceValues} {
+		higherValsWithExports, err := withExportedValues(chrt, higherVals, nil)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		removeOverriddenValues(chartSecretVals, higherValsWithExports)
+		removeOverriddenValues(customSecretVals, higherValsWithExports)
+	}
+
+	return bundleVals, chartcommon.MergeMaps(chartSecretVals, customSecretVals), nil
+}
+
+// withExportedValues returns the values with export-values applied, as nelm applies them to each
+// values layer, so that the secret values at the paths that these values are exported to are
+// overridden too. The values at the replaced paths are removed, as a higher layer replaces them.
+func withExportedValues(chrt *chart.Chart, vals map[string]interface{}, replacedPaths [][]string) (map[string]interface{}, error) {
+	exported, _, err := chartv2util.ExportUserValues(chrt, vals, chartv2util.ExportUserValuesOptions{ReplacedPaths: replacedPaths})
+	if err != nil {
+		return nil, fmt.Errorf("unable to apply export-values: %w", err)
+	}
+
+	return exported, nil
+}
+
+// validateSetValues fails, as converge does, when --set* cannot be applied over --values and
+// --secret-values, neither with export-values applied nor without.
+func validateSetValues(ctx context.Context, chrt *chart.Chart, setOpts *values.Options, p getter.Providers, setFilesCache map[string]string, fileVals, customSecretVals map[string]interface{}) error {
+	exportedFileVals, err := withExportedValues(chrt, fileVals, nil)
+	if err != nil {
+		return err
+	}
+
+	exportedCustomSecretVals, err := withExportedValues(chrt, customSecretVals, nil)
+	if err != nil {
+		return err
+	}
+
+	if _, err := setOpts.MergeSetValues(ctx, p, chartcommon.MergeMaps(exportedFileVals, exportedCustomSecretVals), values.MergeSetValuesOptions{SetFilesCache: setFilesCache}); err == nil {
+		return nil
+	}
+
+	valsWithSecrets, err := copystructure.Copy(chartcommon.MergeMaps(fileVals, customSecretVals))
+	if err != nil {
+		return fmt.Errorf("unable to copy input values: %w", err)
+	}
+
+	if _, err := setOpts.MergeSetValues(ctx, p, valsWithSecrets.(map[string]interface{}), values.MergeSetValuesOptions{SetFilesCache: setFilesCache}); err != nil {
+		return fmt.Errorf("unable to merge input set values: %w", err)
+	}
+
+	return nil
+}
+
+const setValuesProbeKey = "\x00werf-probe"
+
+// setValuesReplacedPaths returns the paths at which --set* replace a map of the lower values instead
+// of merging into it, e.g. --set-json with an object. As in nelm, a path is replaced when a probe key
+// at this path is lost or --set* fail to apply over it.
+func setValuesReplacedPaths(ctx context.Context, setOpts *values.Options, p getter.Providers, setFilesCache map[string]string, setVals map[string]interface{}, path []string) [][]string {
+	var replacedPaths [][]string
+
+	for key, value := range setVals {
+		valueMap, ok := value.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		keyPath := append(slices.Clone(path), key)
+
+		probe := map[string]interface{}{setValuesProbeKey: true}
+		for i := len(keyPath) - 1; i >= 0; i-- {
+			probe = map[string]interface{}{keyPath[i]: probe}
+		}
+
+		withSetProbe, err := setOpts.MergeSetValues(ctx, p, probe, values.MergeSetValuesOptions{SetFilesCache: setFilesCache})
+		if err != nil {
+			replacedPaths = append(replacedPaths, keyPath)
+			continue
+		}
+
+		probeMap := withSetProbe
+		for _, pathKey := range keyPath {
+			probeMap, _ = probeMap[pathKey].(map[string]interface{})
+		}
+
+		if _, kept := probeMap[setValuesProbeKey]; !kept {
+			replacedPaths = append(replacedPaths, keyPath)
+			continue
+		}
+
+		replacedPaths = append(replacedPaths, setValuesReplacedPaths(ctx, setOpts, p, setFilesCache, valueMap, keyPath)...)
+	}
+
+	return replacedPaths
+}
+
+func removeOverriddenValues(vals, higherVals map[string]interface{}) {
+	for key, higherVal := range higherVals {
+		val, ok := vals[key]
+		if !ok {
+			continue
+		}
+
+		valMap, valIsMap := val.(map[string]interface{})
+		higherValMap, higherValIsMap := higherVal.(map[string]interface{})
+		if !valIsMap || !higherValIsMap {
+			delete(vals, key)
+			continue
+		}
+
+		if len(valMap) == 0 {
+			continue
+		}
+
+		removeOverriddenValues(valMap, higherValMap)
+		if len(valMap) == 0 {
+			delete(vals, key)
+		}
+	}
 }
