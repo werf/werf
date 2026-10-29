@@ -64,6 +64,10 @@ func LoadMetadata(files []*chart.ChartExtenderBufferedFile) (*chart.Metadata, er
 }
 
 func CopyChartDependenciesIntoCache(ctx context.Context, chartDir string, ch *chart.Chart) error {
+	if ch.Lock == nil {
+		return nil
+	}
+
 	metadataBytes, err := yaml.Marshal(ch.Metadata)
 	if err != nil {
 		return fmt.Errorf("unable to marshal chart metadata into yaml: %w", err)
