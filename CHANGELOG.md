@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.12.2](https://github.com/werf/werf/compare/v3.12.1...v3.12.2) (2026-10-29)
+
+
+### Bug Fixes
+
+* **build, dockerfile:** build when a RUN mount option uses a base ENV ([#8115](https://github.com/werf/werf/issues/8115)) ([17fb8f3](https://github.com/werf/werf/commit/17fb8f390e32a0da8cb2f69785e53108be62419e))
+* **build, dockerfile:** rebuild when a RUN bind-mount source changes ([#8080](https://github.com/werf/werf/issues/8080)) ([4e799ba](https://github.com/werf/werf/commit/4e799ba13cb29164cb3c8d39843ba0d00451279a)), closes [#6823](https://github.com/werf/werf/issues/6823)
+* **build:** bump lockgate to v0.2.1 to avoid deadlock at lock timeout boundary ([#8110](https://github.com/werf/werf/issues/8110)) ([d6c1329](https://github.com/werf/werf/commit/d6c1329e298de0b487abea0aaeb446d7f86de97b))
+* **build:** restore Docker Hub login for build and export ([#8118](https://github.com/werf/werf/issues/8118)) ([8a0da5b](https://github.com/werf/werf/commit/8a0da5b42e797172ef183aadaf44b6ff4ae30485))
+* **deploy, values:** let --values and --set override secret values ([#8117](https://github.com/werf/werf/issues/8117)) ([6b7d470](https://github.com/werf/werf/commit/6b7d47008fb93bf1fd5b1479bf7be55bfc9c7f91))
+* **deploy:** accept incomplete dependency annotations ([#8114](https://github.com/werf/werf/issues/8114)) ([c406ef8](https://github.com/werf/werf/commit/c406ef8cef1b8dd0bee1c13a31da6bd9688ad06d))
+
 ## [3.12.1](https://github.com/werf/werf/compare/v3.12.0...v3.12.1) (2026-10-21)
 
 
