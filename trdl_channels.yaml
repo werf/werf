@@ -38,7 +38,7 @@ groups:
   - name: "2"
     channels:
       - name: alpha
-        version: 2.84.0
+        version: 2.84.1
       - name: beta
         version: 2.84.0
       - name: ea
@@ -50,9 +50,9 @@ groups:
   - name: "3"
     channels:
       - name: alpha
-        version: 3.12.1
+        version: 3.12.2
       - name: beta
-        version: 3.12.1
+        version: 3.12.2
       - name: ea
         version: 3.12.1
       - name: stable
