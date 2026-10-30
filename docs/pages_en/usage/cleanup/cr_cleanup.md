@@ -160,7 +160,7 @@ cleanup:
 
 ### Image versions based on a pre-prepared list
 
-The `--keep-list` option allows you to provide a file that contains a list of tags to keep. Each tag should be written on a separate line and be valid. For example:
+The `--keep-list` option allows you to provide a file that contains a list of tags to keep. Each tag should be written on a separate line and be valid. A line can be either a stage tag or a custom tag added with `--add-custom-tag`: a custom tag keeps the stage it points to. For example:
 
 ```
 1e09fb543b4ef442ce5ed36bfeee6b27866bf1e68541db5995962b24-1749456960043
@@ -299,7 +299,7 @@ You can extract tags from the cleanup report as follows:
 - list of tags marked to be kept:
 
   ```bash
-  jq -r '.kept[] | select(.type == "stage") | .tag' .werf-cleanup-report.json > keep-list.txt
+  jq -r '.kept[] | select(.type == "stage" or .type == "customTag") | .tag' .werf-cleanup-report.json > keep-list.txt
   ```
 
 - list of tags marked to be deleted:

@@ -270,6 +270,18 @@ func (m *cleanupManager) markWhitelistStagesAsProtected() {
 			m.stageManager.MarkStageDescAsProtected(stageDesc, stage_manager.ProtectionReasonKeepList, false)
 		}
 	}
+
+	for stageID, customTagList := range m.stageManager.GetCustomTagsMetadata() {
+		for _, customTag := range customTagList {
+			if !m.keepList.ContainsOne(customTag) {
+				continue
+			}
+
+			if stageDesc := m.stageManager.GetStageDescByStageID(stageID); stageDesc != nil {
+				m.stageManager.MarkStageDescAsProtected(stageDesc, stage_manager.ProtectionReasonKeepList, false)
+			}
+		}
+	}
 }
 
 func (m *cleanupManager) purgeManagedImages(ctx context.Context) error {
