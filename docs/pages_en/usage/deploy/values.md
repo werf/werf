@@ -488,6 +488,14 @@ secret: 1000625c4f1d874f0ab853bf1db4e438ad6f054526e5dcf4fc8c10e551174904e6d0
 werf --secret-values .helm/secret-values-production.yaml
 ```
 
+### Compatibility of encrypted data between werf versions
+
+Starting with werf v3.3.0 (Nelm v2.0.0-alpha.1), secrets are encrypted with AES-GCM, and each parameter in a secret parameter file keeps its YAML type: `port: 8080` stays a number, `enabled: true` stays a boolean. Secrets encrypted by earlier versions are still read as before.
+
+Earlier werf and Nelm versions can't read secrets encrypted by newer ones and fail with a `decode file ...` error. Newer versions write secret parameter files and secret files in the new format with `werf helm secret values edit`, `werf helm secret ... encrypt` and `werf helm secret rotate-secret-key`, and always use it for encrypted plans saved with `werf plan --save-plan`. Every werf and Nelm that reads such data, including CI jobs and `werf bundle apply` of bundles that contain it, must be upgraded as well.
+
+Parameters encrypted by earlier versions don't store their type, so they are always read as strings: `port: 8080` becomes `port: "8080"`, which may fail `values.schema.json` validation or change template logic. Re-encrypting them, e.g. with `werf helm secret rotate-secret-key`, doesn't help, because the type is already lost. The only way to restore the type is to re-enter the parameter: open the file with `werf helm secret values edit` and remove the quotes, e.g. change `"8080"` to `8080`. Saving the file re-encrypts all of its parameters in the new format, with the types they have in the editor, so fix every such parameter in the same edit. When loading secret parameter files, werf warns about old-format parameters that look like numbers or booleans.
+
 ### Secret parameters in the release
 
 werf saves the parameters from the `--values`, `--secret-values` and `--set*` options in the release, together with the parameters that `export-values` copies from them, and the parameters from `--secret-values` are saved in decrypted form. `werf release get --print-values` shows them, anyone who can read the release Secret in the cluster can read them, and changing only `--secret-values` creates a new release revision. Releases deployed with `--secret-values` by an earlier werf version get one new revision on the first deployment after the update. The parameters from `secret-values.yaml` of the charts are not saved among these parameters, but if `Chart.yaml` of the chart lists dependent charts in `dependencies`, the chart saved in the release contains them in decrypted form, and `werf release get --print-values` shows them too.
