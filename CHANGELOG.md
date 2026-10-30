@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.13.0](https://github.com/werf/werf/compare/v3.12.2...v3.13.0) (2026-10-30)
+
+
+### Features
+
+* **cleanup:** keep a stage via its custom tag in --keep-list ([#8139](https://github.com/werf/werf/issues/8139)) ([ac43631](https://github.com/werf/werf/commit/ac43631fb5360250b17d7a36f51bfb9c0f95bb12))
+
 ## [3.12.2](https://github.com/werf/werf/compare/v3.12.1...v3.12.2) (2026-10-29)
 
 
