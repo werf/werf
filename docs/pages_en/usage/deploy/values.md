@@ -570,6 +570,8 @@ image:
   tag: a243949601ddc3d4133c4d5269ba23ed58cb8b18bf2b64047f35abd2-1598024377816
 ```
 
+`export-values` with `global.*` works the same way in `Chart.yaml` of a dependent chart: `global` there contains the global parameters of the main chart merged over those of the charts in between, the same as in the templates of the dependent chart, so `global.werf.images` can also be exported to the dependencies of a dependent chart.
+
 ## Release information
 
 werf stores release information in the properties of the `$.Release` object:
