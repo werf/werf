@@ -299,7 +299,7 @@ You can extract tags from the cleanup report as follows:
 - list of tags marked to be kept:
 
   ```bash
-  jq -r '.kept[] | select(.type == "stage") | .tag' .werf-cleanup-report.json > keep-list.txt
+  jq -r '.kept[] | select(.type == "stage" or .type == "customTag") | .tag' .werf-cleanup-report.json > keep-list.txt
   ```
 
 - list of tags marked to be deleted:

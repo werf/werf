@@ -298,7 +298,7 @@ werf cleanup --repo registry.mydomain.com/app --final-repo registry.mydomain.com
 - список сохраняемых тегов:
 
   ```bash
-  jq -r '.kept[] | select(.type == "stage") | .tag' .werf-cleanup-report.json > keep-list.txt
+  jq -r '.kept[] | select(.type == "stage" or .type == "customTag") | .tag' .werf-cleanup-report.json > keep-list.txt
   ```
 
 - список удаляемых тегов:

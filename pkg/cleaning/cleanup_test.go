@@ -569,9 +569,10 @@ var _ = ginkgo.Describe("Cleanup keep list", func() {
 
 			if expectKept {
 				gomega.Expect(storageManager.deletedStages).To(gomega.BeEmpty())
-				gomega.Expect(report.Kept).To(gomega.ContainElement(cleanup_report.Item{
-					Type: cleanup_report.ItemTypeStage, Tag: stageDesc.Info.Tag, Reason: "keep list",
-				}))
+				gomega.Expect(report.Kept).To(gomega.ConsistOf(
+					cleanup_report.Item{Type: cleanup_report.ItemTypeStage, Tag: stageDesc.Info.Tag, Reason: "keep list"},
+					cleanup_report.Item{Type: cleanup_report.ItemTypeCustomTag, Tag: "main"},
+				))
 				gomega.Expect(report.Deleted).To(gomega.ConsistOf(cleanup_report.Item{Type: cleanup_report.ItemTypeCustomTag, Tag: "orphan"}))
 			} else {
 				gomega.Expect(storageManager.deletedStages).To(gomega.ConsistOf(stageDesc))
