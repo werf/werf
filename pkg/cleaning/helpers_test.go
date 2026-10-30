@@ -78,7 +78,17 @@ func (f *fakeStorageManager) ForEachDeleteStage(ctx context.Context, _ manager.F
 	return nil
 }
 
-func (f *fakeStorageManager) ForEachGetStageCustomTagMetadata(_ context.Context, _ []string, _ func(context.Context, string, *storage.CustomTagMetadata, error) error) error {
+func (f *fakeStorageManager) ForEachGetStageCustomTagMetadata(ctx context.Context, ids []string, cb func(context.Context, string, *storage.CustomTagMetadata, error) error) error {
+	for _, id := range ids {
+		for _, metadata := range f.meta.customTags {
+			if metadata.Tag != id {
+				continue
+			}
+			if err := cb(ctx, id, metadata, nil); err != nil {
+				return err
+			}
+		}
+	}
 	return nil
 }
 
@@ -91,7 +101,11 @@ func (f *fakePrimaryStagesStorage) GetAllAndGroupImageMetadataByImageName(_ cont
 }
 
 func (f *fakePrimaryStagesStorage) GetStageCustomTagMetadataIDs(_ context.Context, _ ...storage.Option) ([]string, error) {
-	return nil, nil
+	ids := make([]string, 0, len(f.customTags))
+	for _, metadata := range f.customTags {
+		ids = append(ids, metadata.Tag)
+	}
+	return ids, nil
 }
 
 func (f *fakePrimaryStagesStorage) PostLastCleanupRecord(_ context.Context, projectName string) error {

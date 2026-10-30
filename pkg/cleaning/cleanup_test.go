@@ -38,6 +38,7 @@ type fakePrimaryStagesStorage struct {
 	deletedTags        []string
 	unregisteredTags   []string
 	lastCleanupRecords []string
+	customTags         []*storage.CustomTagMetadata
 }
 
 func (f *fakePrimaryStagesStorage) GetRejectedStageIDs(_ context.Context, _ ...storage.Option) ([]image.StageID, error) {
@@ -537,5 +538,53 @@ var _ = ginkgo.Describe("Cleanup last cleanup record", func() {
 		},
 		ginkgo.Entry("dry run must not write anything to the meta repo", true, []string(nil)),
 		ginkgo.Entry("real run records the cleanup", false, []string{"myproject"}),
+	)
+})
+
+var _ = ginkgo.Describe("Cleanup keep list", func() {
+	ginkgo.DescribeTable("protects a stage listed by its own tag or by a custom tag that points to it",
+		func(keepListTags []string, expectKept bool) {
+			ctx := context.Background()
+			stageDesc := newTestStageDesc("example.com/primary", image.NewStageID("ff0011", 1748001122334))
+
+			storageManager := newFakeStorageManager()
+			storageManager.stageDescSet = image.NewStageDescSet(stageDesc)
+			storageManager.meta.customTags = []*storage.CustomTagMetadata{
+				{StageID: stageDesc.StageID.String(), Tag: "main"},
+				{StageID: "ee0022-1748001122334", Tag: "orphan"},
+			}
+
+			report := cleanup_report.NewReport(ctx, "cleanup", false, "example.com/primary", cleanup_report.NewReportOptions{})
+			cleanup := &cleanupManager{
+				stageManager:      stage_manager.NewManager(),
+				StorageManager:    storageManager,
+				ProjectName:       "myproject",
+				WithoutKube:       true,
+				ConfigMetaCleanup: config.MetaCleanup{DisableGitHistoryBasedPolicy: true},
+				keepList:          NewKeepList(keepListTags...),
+				report:            report,
+			}
+
+			gomega.Expect(cleanup.run(ctx)).To(gomega.Succeed())
+
+			if expectKept {
+				gomega.Expect(storageManager.deletedStages).To(gomega.BeEmpty())
+				gomega.Expect(report.Kept).To(gomega.ContainElement(cleanup_report.Item{
+					Type: cleanup_report.ItemTypeStage, Tag: stageDesc.Info.Tag, Reason: "keep list",
+				}))
+				gomega.Expect(report.Deleted).To(gomega.ConsistOf(cleanup_report.Item{Type: cleanup_report.ItemTypeCustomTag, Tag: "orphan"}))
+			} else {
+				gomega.Expect(storageManager.deletedStages).To(gomega.ConsistOf(stageDesc))
+				gomega.Expect(report.Deleted).To(gomega.ConsistOf(
+					cleanup_report.Item{Type: cleanup_report.ItemTypeStage, Tag: stageDesc.Info.Tag},
+					cleanup_report.Item{Type: cleanup_report.ItemTypeCustomTag, Tag: "main"},
+					cleanup_report.Item{Type: cleanup_report.ItemTypeCustomTag, Tag: "orphan"},
+				))
+			}
+		},
+		ginkgo.Entry("by stage tag", []string{"ff0011-1748001122334"}, true),
+		ginkgo.Entry("by custom tag", []string{"main"}, true),
+		ginkgo.Entry("custom tag of a missing stage protects nothing", []string{"orphan"}, false),
+		ginkgo.Entry("unrelated tag protects nothing", []string{"other"}, false),
 	)
 })
