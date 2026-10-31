@@ -64,8 +64,8 @@ func nonSemverTagVersion(tag string, now time.Time) string {
 
 // chartTags returns the tags to push a chart with chartVersion under: the version itself and the tag the user asked for, if it differs, both with "+", invalid in a tag, encoded as Helm does.
 func chartTags(chartVersion, tag string) []string {
-	versionTag := strings.ReplaceAll(chartVersion, "+", "_")
-	tag = strings.ReplaceAll(tag, "+", "_")
+	versionTag := encodeTag(chartVersion)
+	tag = encodeTag(tag)
 	if tag == "" || tag == versionTag {
 		return []string{versionTag}
 	}

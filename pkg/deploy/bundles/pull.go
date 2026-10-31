@@ -31,7 +31,7 @@ type PullOptions struct {
 }
 
 func Pull(ctx context.Context, bundleRef, destDir string, bundlesRegistryClient *registry.Client, opts PullOptions) error {
-	r, err := ref.ParseReference(bundleRef)
+	r, err := ref.ParseReference(encodeAddrTag(bundleRef))
 	if err != nil {
 		return err
 	}

@@ -69,6 +69,7 @@ werf bundle copy [options]
             `archive:PATH_TO_ARCHIVE.tar.gz`, specify remote bundle with schema                     
             `[docker://]REPO[:TAG]` or without schema. A remote bundle gets its chart version from  
             TAG and is pushed under that version and under TAG; without TAG it keeps the chart      
-            version and the tag of the source bundle.
+            version and the tag of the source bundle, or, copied from an archive, which has no tag, 
+            is pushed under its chart version only. A `+` in TAG is pushed as `_`.
 ```
 
