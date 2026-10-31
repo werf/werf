@@ -72,3 +72,7 @@ func chartTags(chartVersion, tag string) []string {
 
 	return []string{versionTag, tag}
 }
+
+func encodeTag(tag string) string {
+	return strings.ReplaceAll(tag, "+", "_")
+}

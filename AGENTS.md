@@ -135,4 +135,4 @@ When a mistake was caused by a rule missing from AGENTS.md or CODESTYLE.md, prop
 
 `nelm`, `kubedog`, and `common-go` are ordinary versioned dependencies: fixing something inside them means a PR in that repository plus a version bump here — NEVER a local patch.
 
-`go.mod` also has a `replace` block pointing several dependencies at forks: `spf13/cobra` → `werf/3p-cobra`, `deislabs/oras` → `werf/3p-oras`, `oras.land/oras-go` → `werf/3p-oras-go`, `docker/buildx` → `werf/3p-buildx`, plus a downgrade pin for `mattn/go-sqlite3`. Buildah is NOT among them: it comes straight from `go.podman.io/buildah`, the path the project moved to in v1.44. ALWAYS check that block before trusting upstream documentation for these libraries.
+`go.mod` also has a `replace` block pointing several dependencies at forks: `spf13/cobra` → `werf/3p-cobra`, `docker/buildx` → `werf/3p-buildx`, plus a downgrade pin for `mattn/go-sqlite3`. Buildah is NOT among them: it comes straight from `go.podman.io/buildah`, the path the project moved to in v1.44. ALWAYS check that block before trusting upstream documentation for these libraries.

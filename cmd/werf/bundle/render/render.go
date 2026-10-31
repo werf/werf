@@ -176,10 +176,7 @@ func runRender(ctx context.Context) error {
 		bundlePath = filepath.Join(werf.GetServiceDir(), "tmp", "bundles", uuid.NewString())
 		defer os.RemoveAll(bundlePath)
 
-		if err := bundles.Pull(ctx, fmt.Sprintf("%s:%s", repoAddress, cmdData.Tag), bundlePath, bundlesRegistryClient, bundles.PullOptions{
-			HelmOptions: nelmcommon.HelmOptions{
-				ChartLoadOpts: nelmcommon.ChartLoadOptions{NoSecrets: true},
-			},
+		if err := bundles.Pull(ctx, repoAddress, cmdData.Tag, bundlePath, bundlesRegistryClient, bundles.PullOptions{
 			ProvenanceKeyring:  commonCmdData.ChartProvenanceKeyring,
 			ProvenanceStrategy: commonCmdData.ChartProvenanceStrategy,
 		}); err != nil {

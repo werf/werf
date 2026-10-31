@@ -186,10 +186,7 @@ func runApply(ctx context.Context) error {
 			return fmt.Errorf("construct bundles registry client: %w", err)
 		}
 
-		if err := bundles.Pull(ctx, fmt.Sprintf("%s:%s", repoAddress, cmdData.Tag), bundlePath, bundlesRegistryClient, bundles.PullOptions{
-			HelmOptions: nelmcommon.HelmOptions{
-				ChartLoadOpts: nelmcommon.ChartLoadOptions{NoSecrets: true},
-			},
+		if err := bundles.Pull(ctx, repoAddress, cmdData.Tag, bundlePath, bundlesRegistryClient, bundles.PullOptions{
 			ProvenanceKeyring:  commonCmdData.ChartProvenanceKeyring,
 			ProvenanceStrategy: commonCmdData.ChartProvenanceStrategy,
 		}); err != nil {

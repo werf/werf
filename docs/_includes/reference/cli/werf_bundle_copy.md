@@ -23,7 +23,8 @@ werf bundle copy [options]
             ~/.docker (in the order of priority)
             Command needs granted permissions to read, pull and push images into the specified repos
       --from=""
-            Source address of the bundle to copy, specify bundle archive using schema               
+            Source address of the bundle to copy, specify bundle archive (an OCI image layout, or   
+            an archive written by werf 3.12 or older) using schema                                  
             `archive:PATH_TO_ARCHIVE.tar.gz`, specify remote bundle with schema                     
             `[docker://]REPO:TAG` or without schema.
       --home-dir=""
@@ -65,11 +66,12 @@ werf bundle copy [options]
       --tmp-dir=""
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
       --to=""
-            Destination address of the bundle to copy, specify bundle archive using schema          
-            `archive:PATH_TO_ARCHIVE.tar.gz`, specify remote bundle with schema                     
-            `[docker://]REPO[:TAG]` or without schema. A remote bundle gets its chart version from  
-            TAG and is pushed under that version and under TAG; without TAG it keeps the chart      
-            version and the tag of the source bundle, or, copied from an archive, which has no tag, 
-            is pushed under its chart version only. A `+` in TAG is pushed as `_`.
+            Destination address of the bundle to copy, specify bundle archive, written as an OCI    
+            image layout, using schema `archive:PATH_TO_ARCHIVE.tar.gz`, specify remote bundle with 
+            schema `[docker://]REPO[:TAG]` or without schema. A remote bundle gets its chart        
+            version from TAG and is pushed under that version and under TAG; without TAG it keeps   
+            the chart version and the tag of the source bundle, or, copied from an archive written  
+            by werf 3.12 or older, which has no tag, is pushed under its chart version only. A `+`  
+            in TAG is pushed as `_`.
 ```
 

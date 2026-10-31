@@ -1,776 +1,264 @@
 package bundles
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"fmt"
-	"io"
-	"strings"
+	"os"
+	"path"
+	"path/filepath"
+	"regexp"
 
+	"github.com/google/go-containerregistry/pkg/name"
+	"github.com/google/go-containerregistry/pkg/v1/random"
+	"github.com/google/go-containerregistry/pkg/v1/remote"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/samber/lo"
 	"sigs.k8s.io/yaml"
 
+	"github.com/werf/nelm/v2/pkg/action"
+	"github.com/werf/nelm/v2/pkg/chartyaml"
 	nelmcommon "github.com/werf/nelm/v2/pkg/common"
-	chartcommon "github.com/werf/nelm/v2/pkg/helm/pkg/chart/common"
+	"github.com/werf/nelm/v2/pkg/helm/pkg/chart/loader"
 	chart "github.com/werf/nelm/v2/pkg/helm/pkg/chart/v2"
-	"github.com/werf/werf/v3/pkg/docker_registry"
+	chartv2util "github.com/werf/nelm/v2/pkg/helm/pkg/chart/v2/util"
+	"github.com/werf/nelm/v2/pkg/helm/pkg/registry"
+	"github.com/werf/nelm/v2/pkg/werfdata"
+	"github.com/werf/werf/v3/pkg/image"
 	"github.com/werf/werf/v3/pkg/logging"
-	bundles_registry "github.com/werf/werf/v3/pkg/ref"
 )
 
 var _ = Describe("Bundle copy", func() {
-	var ctx context.Context
+	var (
+		ctx                context.Context
+		fromRepo, toRepo   string
+		imageDigest        string
+		copyOpts           CopyOptions
+		testRegistryClient *registry.Client
+	)
 
-	BeforeEach(func(ctx0 context.Context) {
-		ctx = logging.WithLogger(ctx0)
-	})
-
-	It("should copy archive to archive", func() {
-		{
-			ch := &chart.Chart{
-				Metadata: &chart.Metadata{
-					APIVersion: "v2",
-					Name:       "test-bundle",
-					Version:    "0.1.0",
-					Type:       "application",
-				},
-				Values: map[string]interface{}{
-					"werf": map[string]interface{}{
-						"image": map[string]interface{}{
-							"image-1": "repo:tag-1",
-							"image-2": "repo:tag-2",
-							"image-3": "repo:tag-3",
-						},
-						"repo": "repo",
-					},
-				},
-				Raw: []*chartcommon.File{
-					{
-						Name: "values.yaml",
-						Data: []byte(`
-werf:
-  image:
-    image-1: repo:tag-1
-    image-2: repo:tag-2
-    image-3: repo:tag-3
-  repo: repo
-  `),
-					},
-				},
-			}
-
-			images := map[string][]byte{
-				"tag-1": []byte(`image-1-bytes`),
-				"tag-2": []byte(`image-2-bytes`),
-				"tag-3": []byte(`image-3-bytes`),
-			}
-
-			fromArchiveReaderStub := NewBundleArchiveStubReader(ch, images)
-			fromArchiveWriterStub := NewBundleArchiveStubWriter()
-			toArchiveReaderStub := NewBundleArchiveStubReader(nil, nil)
-			toArchiveWriterStub := NewBundleArchiveStubWriter()
-
-			from := NewBundleArchive(fromArchiveReaderStub, fromArchiveWriterStub)
-			to := NewBundleArchive(toArchiveReaderStub, toArchiveWriterStub)
-
-			Expect(from.CopyTo(ctx, to, copyToOptions{})).To(Succeed())
-			Expect(toArchiveWriterStub.StubChart.Metadata).To(Equal(fromArchiveReaderStub.StubChart.Metadata))
-			Expect(toArchiveWriterStub.StubChart.Values).To(Equal(fromArchiveReaderStub.StubChart.Values))
-
-			for imgName, imgData := range toArchiveWriterStub.ImagesByTag {
-				Expect(string(fromArchiveReaderStub.ImagesByTag[imgName])).To(Equal(string(imgData)))
-			}
+	BeforeEach(func() {
+		ctx = logging.WithLogger(context.Background())
+		registryHost := startTestRegistry()
+		fromRepo = registryHost + "/group/testproject"
+		toRepo = registryHost + "/org/newproject"
+		imageDigest = pushTestImage(fromRepo + ":tag-1")
+		testRegistryClient = newTestRegistryClient(ctx)
+		copyOpts = CopyOptions{
+			ChartRepoConnectionOptions: nelmcommon.ChartRepoConnectionOptions{ChartRepoInsecure: true},
+			RegistryCredentialsPath:    testCredentialsPath(),
 		}
 	})
 
-	It("should copy archive to remote", func() {
-		ch := &chart.Chart{
-			Metadata: &chart.Metadata{
-				APIVersion: "v2",
-				Name:       "test-bundle",
-				Version:    "0.1.0",
-				Type:       "application",
-			},
-			Values: map[string]interface{}{
-				"werf": map[string]interface{}{
-					"image": map[string]interface{}{
-						"image-1": "repo:tag-1",
-						"image-2": "repo:tag-2",
-						"image-3": "repo:tag-3",
-					},
-					"repo": "repo",
-				},
-			},
-			Raw: []*chartcommon.File{
-				{
-					Name: "values.yaml",
-					Data: []byte(`
-werf:
-  image:
-    image-1: repo:tag-1
-    image-2: repo:tag-2
-    image-3: repo:tag-3
-  repo: repo
-`),
-				},
-			},
-		}
+	DescribeTable("should copy a bundle published by werf 3.12 or older with its images and point its image values at the new repo",
+		func(copyBundle func(from, to string)) {
+			pushOldBundle(testRegistryClient, fromRepo, "1.2.3", oldBundleValues(fromRepo, imageDigest))
 
-		images := map[string][]byte{
-			"tag-1": []byte(`image-1-bytes`),
-			"tag-2": []byte(`image-2-bytes`),
-			"tag-3": []byte(`image-3-bytes`),
-		}
+			copyBundle(fromRepo+":1.2.3", toRepo+":4.5.6")
 
-		fromArchiveReaderStub := NewBundleArchiveStubReader(ch, images)
-		fromArchiveWriterStub := NewBundleArchiveStubWriter()
-		from := NewBundleArchive(fromArchiveReaderStub, fromArchiveWriterStub)
+			Expect(testImageDigest(toRepo + ":tag-1")).To(Equal(imageDigest))
 
-		addr, err := bundles_registry.ParseAddr("registry.example.com/group/testproject:1.2.3")
-		Expect(err).NotTo(HaveOccurred())
-		bundlesRegistryClient := NewBundlesRegistryClientStub()
-		registryClient := NewDockerRegistryStub()
-		to := NewRemoteBundle(addr.RegistryAddress, bundlesRegistryClient, registryClient)
+			ch := pullTestChart(ctx, testRegistryClient, toRepo, "4.5.6")
+			Expect(ch.Metadata.Name).To(Equal("newproject"))
+			Expect(ch.WerfDataFiles).To(BeEmpty())
+			Expect(ch.Values).To(Equal(oldBundleValues(toRepo, imageDigest)))
+		},
+		Entry("registry to registry", func(from, to string) {
+			Expect(Copy(ctx, from, to, copyOpts)).To(Succeed())
+		}),
+		Entry("registry to archive to registry", func(from, to string) {
+			archivePath := filepath.Join(GinkgoT().TempDir(), "bundle.tar.gz")
+			Expect(Copy(ctx, from, "archive:"+archivePath, copyOpts)).To(Succeed())
+			Expect(Copy(ctx, "archive:"+archivePath, to, copyOpts)).To(Succeed())
+		}),
+	)
 
-		Expect(from.CopyTo(ctx, to, copyToOptions{})).To(Succeed())
+	DescribeTable("should copy a chart with .werf-data with its images and point its image values at the new repo",
+		func(copyBundle func(from, to string)) {
+			Expect(Publish(ctx, writeTestChart(), fromRepo, "1.2.3", testRegistryClient, PublishOptions{
+				ChartPackOptions: werfDataChartPackOptions(ctx, fromRepo, imageDigest),
+			})).To(Succeed())
 
-		remoteChart := bundlesRegistryClient.StubCharts[addr.RegistryAddress.FullName()]
-		Expect(remoteChart).NotTo(BeNil())
+			copyBundle(fromRepo+":1.2.3", toRepo+":4.5.6")
 
-		VerifyChart(ctx, remoteChart, VerifyChartOptions{
-			ExpectedName:    "testproject",
-			ExpectedVersion: "1.2.3",
-			ExpectedRepo:    "registry.example.com/group/testproject",
-			ExpectedImages: map[string]string{
-				"image-1": "registry.example.com/group/testproject:tag-1",
-				"image-2": "registry.example.com/group/testproject:tag-2",
-				"image-3": "registry.example.com/group/testproject:tag-3",
-			},
-		})
+			Expect(testImageDigest(toRepo + ":tag-1")).To(Equal(imageDigest))
 
-		{
-			Expect(registryClient.ImagesByReference["registry.example.com/group/testproject:tag-1"]).To(Equal([]byte(`image-1-bytes`)))
-			Expect(registryClient.ImagesByReference["registry.example.com/group/testproject:tag-2"]).To(Equal([]byte(`image-2-bytes`)))
-			Expect(registryClient.ImagesByReference["registry.example.com/group/testproject:tag-3"]).To(Equal([]byte(`image-3-bytes`)))
-		}
-	})
+			ch := pullTestChart(ctx, testRegistryClient, toRepo, "4.5.6")
+			Expect(ch.Metadata.Name).To(Equal("newproject"))
+			Expect(ch.Values).To(BeEmpty())
+			Expect(ch.Metadata.Annotations[chartyaml.ImagesAnnotation]).To(ContainSubstring(toRepo + ":tag-1@" + imageDigest))
 
-	It("should copy remote to archive", func() {
-		ch := &chart.Chart{
-			Metadata: &chart.Metadata{
-				APIVersion: "v2",
-				Name:       "testproject",
-				Version:    "1.2.3",
-				Type:       "application",
-			},
-			Values: map[string]interface{}{
-				"werf": map[string]interface{}{
-					"image": map[string]interface{}{
-						"image-1": "registry.example.com/group/testproject:tag-1",
-						"image-2": "registry.example.com/group/testproject:tag-2",
-						"image-3": "registry.example.com/group/testproject:tag-3",
-					},
-					"repo": "registry.example.com/group/testproject",
-				},
-			},
-			Raw: []*chartcommon.File{
-				{
-					Name: "values.yaml",
-					Data: []byte(`
-werf:
-  image:
-    image-1: registry.example.com/group/testproject:tag-1
-    image-2: registry.example.com/group/testproject:tag-2
-    image-3: registry.example.com/group/testproject:tag-3
-  repo: registry.example.com/group/testproject
-`),
-				},
-			},
-		}
+			data, err := werfdata.Parse(ch.WerfDataFiles)
+			Expect(err).To(Succeed())
+			Expect(data.Metadata.Images).To(Equal([]string{"app"}))
+			Expect(data.ExtraValues).To(Equal(werfDataExtraValues(toRepo, imageDigest)))
+		},
+		Entry("registry to registry", func(from, to string) {
+			Expect(Copy(ctx, from, to, copyOpts)).To(Succeed())
+		}),
+		Entry("registry to archive to registry", func(from, to string) {
+			archivePath := filepath.Join(GinkgoT().TempDir(), "bundle.tar")
+			Expect(Copy(ctx, from, "archive:"+archivePath, copyOpts)).To(Succeed())
+			Expect(Copy(ctx, "archive:"+archivePath, to, copyOpts)).To(Succeed())
+		}),
+	)
 
-		addr, err := bundles_registry.ParseAddr("registry.example.com/group/testproject:1.2.3")
-		Expect(err).NotTo(HaveOccurred())
-		bundlesRegistryClient := NewBundlesRegistryClientStub()
-		registryClient := NewDockerRegistryStub()
-		from := NewRemoteBundle(addr.RegistryAddress, bundlesRegistryClient, registryClient)
+	DescribeTable("should keep the signature of a copy into a repo of the same name only when no werf values change",
+		func(chartPackOpts func() action.ChartPackOptions, expectedErr string) {
+			packOpts := chartPackOpts()
+			packOpts.Sign = true
+			packOpts.SignKey = "helm-test"
+			packOpts.SignKeyring = testKeyringPath("helm-test-key.secret")
+			Expect(Publish(ctx, writeTestChart(), fromRepo, "1.2.3", testRegistryClient, PublishOptions{ChartPackOptions: packOpts})).To(Succeed())
 
-		bundlesRegistryClient.StubCharts[addr.RegistryAddress.FullName()] = ch
-		registryClient.ImagesByReference["registry.example.com/group/testproject:tag-1"] = []byte(`image-1-bytes`)
-		registryClient.ImagesByReference["registry.example.com/group/testproject:tag-2"] = []byte(`image-2-bytes`)
-		registryClient.ImagesByReference["registry.example.com/group/testproject:tag-3"] = []byte(`image-3-bytes`)
+			sameNameRepo := path.Dir(toRepo) + "/" + path.Base(fromRepo)
+			Expect(Copy(ctx, fromRepo+":1.2.3", sameNameRepo, copyOpts)).To(Succeed())
 
-		toArchiveReaderStub := NewBundleArchiveStubReader(ch, nil)
-		toArchiveWriterStub := NewBundleArchiveStubWriter()
-		to := NewBundleArchive(toArchiveReaderStub, toArchiveWriterStub)
-
-		Expect(from.CopyTo(ctx, to, copyToOptions{})).To(Succeed())
-
-		newCh := toArchiveWriterStub.StubChart
-		Expect(newCh).NotTo(BeNil())
-
-		origRepo := ch.Values["werf"].(map[string]interface{})["repo"].(string)
-
-		VerifyChart(ctx, newCh, VerifyChartOptions{
-			ExpectedName:    "testproject",
-			ExpectedVersion: "1.2.3",
-			ExpectedRepo:    origRepo,
-			ExpectedImages: map[string]string{
-				"image-1": "registry.example.com/group/testproject:tag-1",
-				"image-2": "registry.example.com/group/testproject:tag-2",
-				"image-3": "registry.example.com/group/testproject:tag-3",
-			},
-		})
-
-		{
-			Expect(toArchiveWriterStub.ImagesByTag["tag-1"]).To(Equal([]byte(`image-1-bytes`)))
-			Expect(toArchiveWriterStub.ImagesByTag["tag-2"]).To(Equal([]byte(`image-2-bytes`)))
-			Expect(toArchiveWriterStub.ImagesByTag["tag-3"]).To(Equal([]byte(`image-3-bytes`)))
-		}
-	})
-
-	It("should copy remote to remote", func() {
-		ch := &chart.Chart{
-			Metadata: &chart.Metadata{
-				APIVersion: "v2",
-				Name:       "testproject",
-				Version:    "1.2.3",
-				Type:       "application",
-			},
-			Values: map[string]interface{}{
-				"werf": map[string]interface{}{
-					"image": map[string]interface{}{
-						"image-1": "registry.example.com/group/testproject:tag-1",
-						"image-2": "registry.example.com/group/testproject:tag-2",
-						"image-3": "registry.example.com/group/testproject:tag-3",
-					},
-					"repo": "registry.example.com/group/testproject",
-				},
-			},
-			Raw: []*chartcommon.File{
-				{
-					Name: "values.yaml",
-					Data: []byte(`
-werf:
-  image:
-    image-1: registry.example.com/group/testproject:tag-1
-    image-2: registry.example.com/group/testproject:tag-2
-    image-3: registry.example.com/group/testproject:tag-3
-  repo: registry.example.com/group/testproject
-`),
-				},
-			},
-		}
-
-		bundlesRegistryClient := NewBundlesRegistryClientStub()
-		registryClient := NewDockerRegistryStub()
-
-		fromAddr, err := bundles_registry.ParseAddr("registry.example.com/group/testproject:1.2.3")
-		Expect(err).NotTo(HaveOccurred())
-		from := NewRemoteBundle(fromAddr.RegistryAddress, bundlesRegistryClient, registryClient)
-		bundlesRegistryClient.StubCharts[fromAddr.RegistryAddress.FullName()] = ch
-		registryClient.ImagesByReference["registry.example.com/group/testproject:tag-1"] = []byte(`image-1-bytes`)
-		registryClient.ImagesByReference["registry.example.com/group/testproject:tag-2"] = []byte(`image-2-bytes`)
-		registryClient.ImagesByReference["registry.example.com/group/testproject:tag-3"] = []byte(`image-3-bytes`)
-
-		toAddr, err := bundles_registry.ParseAddr("registry2.example.com/group2/testproject2:4.5.6")
-		Expect(err).NotTo(HaveOccurred())
-		to := NewRemoteBundle(toAddr.RegistryAddress, bundlesRegistryClient, registryClient)
-
-		Expect(from.CopyTo(ctx, to, copyToOptions{})).To(Succeed())
-
-		newCh := bundlesRegistryClient.StubCharts[toAddr.RegistryAddress.FullName()]
-		Expect(newCh).NotTo(BeNil())
-
-		VerifyChart(ctx, newCh, VerifyChartOptions{
-			ExpectedName:    "testproject2",
-			ExpectedVersion: "4.5.6",
-			ExpectedRepo:    "registry2.example.com/group2/testproject2",
-			ExpectedImages: map[string]string{
-				"image-1": "registry2.example.com/group2/testproject2:tag-1",
-				"image-2": "registry2.example.com/group2/testproject2:tag-2",
-				"image-3": "registry2.example.com/group2/testproject2:tag-3",
-			},
-		})
-
-		{
-			Expect(registryClient.ImagesByReference["registry2.example.com/group2/testproject2:tag-1"]).To(Equal([]byte(`image-1-bytes`)))
-			Expect(registryClient.ImagesByReference["registry2.example.com/group2/testproject2:tag-2"]).To(Equal([]byte(`image-2-bytes`)))
-			Expect(registryClient.ImagesByReference["registry2.example.com/group2/testproject2:tag-3"]).To(Equal([]byte(`image-3-bytes`)))
-		}
-	})
-
-	It("should copy remote to remote updating global werf values", func() {
-		ch := &chart.Chart{
-			Metadata: &chart.Metadata{
-				APIVersion: "v2",
-				Name:       "testproject",
-				Version:    "1.2.3",
-				Type:       "application",
-			},
-			Values: map[string]interface{}{
-				"werf": map[string]interface{}{
-					"image": map[string]interface{}{
-						"myapp": "registry.example.com/group/testproject:tag-1",
-					},
-					"repo": "registry.example.com/group/testproject",
-				},
-				"global": map[string]interface{}{
-					"werf": map[string]interface{}{
-						"repo": "registry.example.com/group/testproject",
-						"images": map[string]interface{}{
-							"myapp": map[string]interface{}{
-								"registry":       "registry.example.com",
-								"namespace":      "group",
-								"name":           "testproject",
-								"tag":            "tag-1",
-								"digest":         "sha256:abcdef1234567890",
-								"tag_digest":     "tag-1@sha256:abcdef1234567890",
-								"image":          "registry.example.com/group/testproject",
-								"repository":     "group/testproject",
-								"ref":            "registry.example.com/group/testproject:tag-1@sha256:abcdef1234567890",
-								"ref_tag":        "registry.example.com/group/testproject:tag-1",
-								"repository_ref": "group/testproject:tag-1@sha256:abcdef1234567890",
-								"repository_tag": "group/testproject:tag-1",
-								"name_ref":       "testproject:tag-1@sha256:abcdef1234567890",
-								"name_tag":       "testproject:tag-1",
-							},
-						},
-					},
-				},
-			},
-			Raw: []*chartcommon.File{
-				{
-					Name: "values.yaml",
-					Data: []byte(`
-werf:
-  image:
-    myapp: registry.example.com/group/testproject:tag-1
-  repo: registry.example.com/group/testproject
-global:
-  werf:
-    repo: registry.example.com/group/testproject
-    images:
-      myapp:
-        registry: registry.example.com
-        namespace: group
-        name: testproject
-        tag: tag-1
-        digest: "sha256:abcdef1234567890"
-        tag_digest: "tag-1@sha256:abcdef1234567890"
-        image: registry.example.com/group/testproject
-        repository: group/testproject
-        ref: "registry.example.com/group/testproject:tag-1@sha256:abcdef1234567890"
-        ref_tag: "registry.example.com/group/testproject:tag-1"
-        repository_ref: "group/testproject:tag-1@sha256:abcdef1234567890"
-        repository_tag: "group/testproject:tag-1"
-        name_ref: "testproject:tag-1@sha256:abcdef1234567890"
-        name_tag: "testproject:tag-1"
-`),
-				},
-			},
-		}
-
-		bundlesRegistryClient := NewBundlesRegistryClientStub()
-		registryClient := NewDockerRegistryStub()
-
-		fromAddr, err := bundles_registry.ParseAddr("registry.example.com/group/testproject:1.2.3")
-		Expect(err).NotTo(HaveOccurred())
-		from := NewRemoteBundle(fromAddr.RegistryAddress, bundlesRegistryClient, registryClient)
-		bundlesRegistryClient.StubCharts[fromAddr.RegistryAddress.FullName()] = ch
-		registryClient.ImagesByReference["registry.example.com/group/testproject:tag-1"] = []byte(`image-1-bytes`)
-
-		toAddr, err := bundles_registry.ParseAddr("registry2.example.com/org/newproject:4.5.6")
-		Expect(err).NotTo(HaveOccurred())
-		to := NewRemoteBundle(toAddr.RegistryAddress, bundlesRegistryClient, registryClient)
-
-		Expect(from.CopyTo(ctx, to, copyToOptions{})).To(Succeed())
-
-		newCh := bundlesRegistryClient.StubCharts[toAddr.RegistryAddress.FullName()]
-		Expect(newCh).NotTo(BeNil())
-
-		globalVals := newCh.Values["global"].(map[string]interface{})
-		globalWerfVals := globalVals["werf"].(map[string]interface{})
-		Expect(globalWerfVals["repo"]).To(Equal("registry2.example.com/org/newproject"))
-
-		imagesVals := globalWerfVals["images"].(map[string]interface{})
-		myappVals := imagesVals["myapp"].(map[string]interface{})
-
-		Expect(myappVals["registry"]).To(Equal("registry2.example.com"))
-		Expect(myappVals["namespace"]).To(Equal("org"))
-		Expect(myappVals["name"]).To(Equal("newproject"))
-		Expect(myappVals["tag"]).To(Equal("tag-1"))
-		Expect(myappVals["digest"]).To(Equal("sha256:abcdef1234567890"))
-		Expect(myappVals["tag_digest"]).To(Equal("tag-1@sha256:abcdef1234567890"))
-		Expect(myappVals["image"]).To(Equal("registry2.example.com/org/newproject"))
-		Expect(myappVals["repository"]).To(Equal("org/newproject"))
-		Expect(myappVals["ref"]).To(Equal("registry2.example.com/org/newproject:tag-1@sha256:abcdef1234567890"))
-		Expect(myappVals["ref_tag"]).To(Equal("registry2.example.com/org/newproject:tag-1"))
-		Expect(myappVals["repository_ref"]).To(Equal("org/newproject:tag-1@sha256:abcdef1234567890"))
-		Expect(myappVals["repository_tag"]).To(Equal("org/newproject:tag-1"))
-		Expect(myappVals["name_ref"]).To(Equal("newproject:tag-1@sha256:abcdef1234567890"))
-		Expect(myappVals["name_tag"]).To(Equal("newproject:tag-1"))
-	})
-
-	It("should copy archive to remote without a tag keeping the chart version", func() {
-		ch := &chart.Chart{
-			Metadata: &chart.Metadata{
-				APIVersion: "v2",
-				Name:       "testproject",
-				Version:    "0.1.0",
-				Type:       "application",
-			},
-			Values: map[string]interface{}{
-				"werf": map[string]interface{}{
-					"image": map[string]interface{}{},
-					"repo":  "repo",
-				},
-			},
-			Raw: []*chartcommon.File{
-				{
-					Name: "values.yaml",
-					Data: []byte("werf:\n  image: {}\n  repo: repo\n"),
-				},
-			},
-		}
-
-		from := NewBundleArchive(NewBundleArchiveStubReader(ch, map[string][]byte{}), NewBundleArchiveStubWriter())
-
-		bundlesRegistryClient := NewBundlesRegistryClientStub()
-		toAddr := &bundles_registry.RegistryAddress{Reference: &bundles_registry.Reference{Repo: "registry.example.com/group/testproject"}}
-		Expect(from.CopyTo(ctx, NewRemoteBundle(toAddr, bundlesRegistryClient, NewDockerRegistryStub()), copyToOptions{})).To(Succeed())
-
-		Expect(bundlesRegistryClient.PushedRefs).To(Equal([]string{"registry.example.com/group/testproject:0.1.0"}))
-		Expect(bundlesRegistryClient.StubCharts["registry.example.com/group/testproject:0.1.0"].Metadata.Version).To(Equal("0.1.0"))
-	})
-
-	DescribeTable("should copy a signed remote bundle to remote keeping the original chart only when the copy changes nothing",
-		func(to string, values map[string]interface{}, expectedSigned bool) {
-			ch := &chart.Chart{
-				Metadata: &chart.Metadata{
-					APIVersion: "v2",
-					Name:       "signedchart",
-					Version:    "0.1.0",
-				},
-				Values: values,
-				Raw:    []*chartcommon.File{{Name: "values.yaml", Data: []byte("{}\n")}},
-			}
-
-			bundlesRegistryClient := NewBundlesRegistryClientStub()
-			registryClient := NewDockerRegistryStub()
-
-			fromAddr, err := bundles_registry.ParseAddr("registry.example.com/group/signedchart:0.1.0")
-			Expect(err).NotTo(HaveOccurred())
-			from := NewRemoteBundle(fromAddr.RegistryAddress, bundlesRegistryClient, registryClient)
-			bundlesRegistryClient.StubCharts[fromAddr.RegistryAddress.FullName()] = ch
-			bundlesRegistryClient.SignedCharts[fromAddr.RegistryAddress.FullName()] = true
-
-			toRef, err := bundles_registry.ParseReference(to)
-			Expect(err).NotTo(HaveOccurred())
-			if !strings.Contains(to, ":") {
-				toRef.Tag = ""
-			}
-			Expect(from.CopyTo(ctx, NewRemoteBundle(&bundles_registry.RegistryAddress{Reference: toRef}, bundlesRegistryClient, registryClient), copyToOptions{})).To(Succeed())
-
-			Expect(bundlesRegistryClient.PushedRefs).NotTo(BeEmpty())
-			pushedRef := bundlesRegistryClient.PushedRefs[0]
-			Expect(bundlesRegistryClient.SignedCharts[pushedRef]).To(Equal(expectedSigned))
-			if expectedSigned {
-				Expect(bundlesRegistryClient.TaggedCachedRefs).To(HaveKeyWithValue(pushedRef, fromAddr.RegistryAddress.FullName()))
+			err := Pull(ctx, sameNameRepo, "1.2.3", filepath.Join(GinkgoT().TempDir(), "bundle"), testRegistryClient, PullOptions{
+				ProvenanceKeyring:  testKeyringPath("helm-test-key.pub"),
+				ProvenanceStrategy: ProvenanceStrategyVerify,
+			})
+			if expectedErr == "" {
+				Expect(err).To(Succeed())
 			} else {
-				Expect(bundlesRegistryClient.TaggedCachedRefs).To(BeEmpty())
+				Expect(err).To(MatchError(ContainSubstring(expectedErr)))
 			}
 		},
-		Entry("unchanged: another repository with the same name, no tag",
-			"registry2.example.com/group2/signedchart", map[string]interface{}{"replicas": 1}, true),
-		Entry("unchanged: a tag equal to the version",
-			"registry2.example.com/group2/signedchart:0.1.0", map[string]interface{}{"replicas": 1}, true),
-		Entry("changed version",
-			"registry2.example.com/group2/signedchart:0.2.0", map[string]interface{}{"replicas": 1}, false),
-		Entry("changed name",
-			"registry2.example.com/group2/otherchart", map[string]interface{}{"replicas": 1}, false),
-		Entry("changed werf values",
-			"registry2.example.com/group2/signedchart", map[string]interface{}{"werf": map[string]interface{}{"repo": "registry.example.com/group/signedchart"}}, false),
+		Entry("no werf values", func() action.ChartPackOptions {
+			return action.ChartPackOptions{Destination: GinkgoT().TempDir()}
+		}, ""),
+		Entry("werf values", func() action.ChartPackOptions {
+			return werfDataChartPackOptions(ctx, fromRepo, imageDigest)
+		}, "the bundle is not signed"),
 	)
 
-	DescribeTable("should copy remote to remote under the version and the given tag",
-		func(fromTag, fromVersion, to, expectedVersion string, expectedPushedRefs []string) {
-			ch := &chart.Chart{
-				Metadata: &chart.Metadata{
-					APIVersion: "v2",
-					Name:       "testproject",
-					Version:    fromVersion,
-					Type:       "application",
-				},
-				Values: map[string]interface{}{
-					"werf": map[string]interface{}{
-						"image": map[string]interface{}{},
-						"repo":  "registry.example.com/group/testproject",
-					},
-				},
-				Raw: []*chartcommon.File{
-					{
-						Name: "values.yaml",
-						Data: []byte("werf:\n  image: {}\n  repo: registry.example.com/group/testproject\n"),
-					},
-				},
+	DescribeTable("should copy under the chart version and the tag",
+		func(fromTag, toTag, expectedVersion string, expectedTags []string) {
+			Expect(Publish(ctx, writeTestChart(), fromRepo, fromTag, testRegistryClient, PublishOptions{
+				ChartPackOptions: action.ChartPackOptions{Destination: GinkgoT().TempDir()},
+			})).To(Succeed())
+
+			to := toRepo
+			if toTag != "" {
+				to += ":" + toTag
 			}
 
-			bundlesRegistryClient := NewBundlesRegistryClientStub()
-			registryClient := NewDockerRegistryStub()
+			Expect(Copy(ctx, fromRepo+":"+fromTag, to, copyOpts)).To(Succeed())
 
-			fromAddr, err := bundles_registry.ParseAddr("registry.example.com/group/testproject:" + fromTag)
-			Expect(err).NotTo(HaveOccurred())
-			from := NewRemoteBundle(fromAddr.RegistryAddress, bundlesRegistryClient, registryClient)
-			bundlesRegistryClient.StubCharts[fromAddr.RegistryAddress.FullName()] = ch
+			repository, err := name.NewRepository(toRepo, name.Insecure)
+			Expect(err).To(Succeed())
+			tags, err := remote.List(repository)
+			Expect(err).To(Succeed())
+			Expect(tags).To(HaveLen(len(expectedTags)))
+			for _, expectedTag := range expectedTags {
+				Expect(tags).To(ContainElement(MatchRegexp(expectedTag)))
+			}
 
-			toAddr := &bundles_registry.RegistryAddress{Reference: &bundles_registry.Reference{Repo: "registry2.example.com/group2/testproject2", Tag: to}}
-			Expect(from.CopyTo(ctx, NewRemoteBundle(toAddr, bundlesRegistryClient, registryClient), copyToOptions{})).To(Succeed())
-
-			savedChart := bundlesRegistryClient.StubCharts[bundlesRegistryClient.PushedRefs[0]]
-			Expect(savedChart).NotTo(BeNil())
-			Expect(savedChart.Metadata.Version).To(MatchRegexp(expectedVersion))
-			Expect(bundlesRegistryClient.PushedRefs).To(Equal(lo.Map(expectedPushedRefs, func(pushedRef string, _ int) string {
-				return strings.ReplaceAll(pushedRef, "{version}", savedChart.Metadata.Version)
-			})))
+			versionTag, _ := lo.Find(tags, func(tag string) bool { return regexp.MustCompile(expectedTags[0]).MatchString(tag) })
+			Expect(pullTestChartVersion(ctx, testRegistryClient, toRepo, versionTag)).To(MatchRegexp(expectedVersion))
 		},
-		Entry("semver tag", "1.2.3", "1.2.3", "4.5.6", `^4\.5\.6$`,
-			[]string{"registry2.example.com/group2/testproject2:4.5.6"}),
-		Entry("semver tag with the v prefix", "1.2.3", "1.2.3", "v4.5.6", `^4\.5\.6$`,
-			[]string{"registry2.example.com/group2/testproject2:4.5.6", "registry2.example.com/group2/testproject2:v4.5.6"}),
-		Entry("non-semver tag", "1.2.3", "1.2.3", "latest", `^0\.0\.0-\d+-latest$`,
-			[]string{"registry2.example.com/group2/testproject2:{version}", "registry2.example.com/group2/testproject2:latest"}),
-		Entry("no tag keeps the source version and tag", "v1.2.3", "1.2.3", "", `^1\.2\.3$`,
-			[]string{"registry2.example.com/group2/testproject2:1.2.3", "registry2.example.com/group2/testproject2:v1.2.3"}),
-		Entry("no tag keeps the source version with build metadata", "1.2.3", "1.2.3+build.5", "", `^1\.2\.3\+build\.5$`,
-			[]string{"registry2.example.com/group2/testproject2:1.2.3_build.5", "registry2.example.com/group2/testproject2:1.2.3"}),
+		Entry("semver tag with the v prefix", "1.2.3", "v4.5.6", `^4\.5\.6$`, []string{`^4\.5\.6$`, `^v4\.5\.6$`}),
+		Entry("non-semver tag", "1.2.3", "latest", `^0\.0\.0-\d+-latest$`, []string{`^0\.0\.0-\d+-latest$`, `^latest$`}),
+		Entry("no tag keeps the source version and tag", "v1.2.3", "", `^1\.2\.3$`, []string{`^1\.2\.3$`, `^v1\.2\.3$`}),
+		Entry("source tag with build metadata", "1.2.3+build.5", "", `^1\.2\.3\+build\.5$`, []string{`^1\.2\.3_build\.5$`}),
+		Entry("destination tag with build metadata", "1.2.3", "4.5.6+build.5", `^4\.5\.6\+build\.5$`, []string{`^4\.5\.6_build\.5$`}),
 	)
+
+	It("should refuse a digest destination", func() {
+		Expect(Copy(ctx, fromRepo+":tag-1", toRepo+"@"+imageDigest, copyOpts)).To(MatchError(ContainSubstring("digest")))
+	})
 })
 
-type BundleArchiveStubReader struct {
-	StubChart   *chart.Chart
-	ImagesByTag map[string][]byte
+func pushTestImage(ref string) string {
+	img, err := random.Image(64, 1)
+	Expect(err).To(Succeed())
+
+	imageRef, err := name.ParseReference(ref, name.Insecure)
+	Expect(err).To(Succeed())
+	Expect(remote.Write(imageRef, img)).To(Succeed())
+
+	digest, err := img.Digest()
+	Expect(err).To(Succeed())
+
+	return digest.String()
 }
 
-func NewBundleArchiveStubReader(stubChart *chart.Chart, imagesByTag map[string][]byte) *BundleArchiveStubReader {
-	return &BundleArchiveStubReader{StubChart: stubChart, ImagesByTag: imagesByTag}
+func testImageDigest(ref string) string {
+	imageRef, err := name.ParseReference(ref, name.Insecure)
+	Expect(err).To(Succeed())
+
+	desc, err := remote.Head(imageRef)
+	Expect(err).To(Succeed())
+
+	return desc.Digest.String()
 }
 
-func (reader *BundleArchiveStubReader) String() string {
-	return "bundle-archive-stub-reader"
-}
+// oldBundleValues returns the values werf 3.12 and older publish the image and the repo in.
+func oldBundleValues(repo, digest string) map[string]interface{} {
+	imageVals, err := image.RebuildImageValuesMap(repo+":tag-1", digest)
+	Expect(err).To(Succeed())
 
-func (reader *BundleArchiveStubReader) ReadChartArchive() ([]byte, error) {
-	return ChartToBytes(reader.StubChart)
-}
-
-func (reader *BundleArchiveStubReader) ReadImageArchive(imageTag string) (*ImageArchiveReadCloser, error) {
-	data, hasTag := reader.ImagesByTag[imageTag]
-	if !hasTag {
-		return nil, fmt.Errorf("no image found by tag %q", imageTag)
-	}
-	return NewImageArchiveReadCloser(bytes.NewReader(data), func() error { return nil }), nil
-}
-
-type BundleArchiveStubWriter struct {
-	StubChart   *chart.Chart
-	ImagesByTag map[string][]byte
-}
-
-func NewBundleArchiveStubWriter() *BundleArchiveStubWriter {
-	return &BundleArchiveStubWriter{ImagesByTag: make(map[string][]byte)}
-}
-
-func (writer *BundleArchiveStubWriter) Open() error { return nil }
-
-func (writer *BundleArchiveStubWriter) WriteChartArchive(data []byte, opts nelmcommon.HelmOptions) error {
-	ch, err := BytesToChart(context.Background(), data, opts)
-	if err != nil {
-		return err
-	}
-
-	writer.StubChart = ch
-
-	return nil
-}
-
-func (writer *BundleArchiveStubWriter) WriteImageArchive(imageTag string, data []byte) error {
-	writer.ImagesByTag[imageTag] = data
-	return nil
-}
-
-func (writer *BundleArchiveStubWriter) Save() error { return nil }
-
-type BundlesRegistryClientStub struct {
-	StubCharts       map[string]*chart.Chart
-	SignedCharts     map[string]bool
-	PushedRefs       []string
-	TaggedCachedRefs map[string]string
-}
-
-func NewBundlesRegistryClientStub() *BundlesRegistryClientStub {
-	return &BundlesRegistryClientStub{
-		StubCharts:       make(map[string]*chart.Chart),
-		SignedCharts:     make(map[string]bool),
-		TaggedCachedRefs: make(map[string]string),
+	return map[string]interface{}{
+		"replicas": float64(1),
+		"werf": map[string]interface{}{
+			"env":   "production",
+			"image": map[string]interface{}{"app": repo + ":tag-1"},
+			"repo":  repo,
+		},
+		"global": map[string]interface{}{
+			"werf": map[string]interface{}{
+				"env":    "production",
+				"repo":   repo,
+				"images": map[string]interface{}{"app": imageVals},
+			},
+		},
 	}
 }
 
-func (client *BundlesRegistryClientStub) PullChartToCache(ctx context.Context, ref *bundles_registry.Reference, opts nelmcommon.HelmOptions) error {
-	return nil
+func werfDataExtraValues(repo, digest string) map[string]interface{} {
+	return lo.OmitByKeys(oldBundleValues(repo, digest), []string{"replicas"})
 }
 
-func (client *BundlesRegistryClientStub) LoadChart(ctx context.Context, ref *bundles_registry.Reference, opts nelmcommon.HelmOptions) (*chart.Chart, error) {
-	if ch, hasChart := client.StubCharts[ref.FullName()]; hasChart {
-		return ch, nil
-	}
-	return nil, fmt.Errorf("no chart found by address %s", ref.FullName())
-}
+func werfDataChartPackOptions(ctx context.Context, repo, digest string) action.ChartPackOptions {
+	extraValues := werfDataExtraValues(repo, digest)
 
-func (client *BundlesRegistryClientStub) SaveChartArchive(ctx context.Context, chartArchive, provenance []byte, ref *bundles_registry.Reference, opts nelmcommon.HelmOptions) error {
-	ch, err := BytesToChart(ctx, chartArchive, opts)
-	if err != nil {
-		return err
-	}
-
-	client.StubCharts[ref.FullName()] = ch
-	return nil
-}
-
-func (client *BundlesRegistryClientStub) PushChart(ctx context.Context, ref *bundles_registry.Reference, tags []string, opts nelmcommon.HelmOptions) error {
-	if _, hasChart := client.StubCharts[ref.FullName()]; !hasChart {
-		return fmt.Errorf("no chart saved by address %s", ref.FullName())
-	}
-
-	for _, tag := range tags {
-		client.PushedRefs = append(client.PushedRefs, fmt.Sprintf("%s:%s", ref.Repo, tag))
-	}
-
-	return nil
-}
-
-func (client *BundlesRegistryClientStub) TagCachedChart(ctx context.Context, from, to *bundles_registry.Reference, opts nelmcommon.HelmOptions) error {
-	ch, hasChart := client.StubCharts[from.FullName()]
-	if !hasChart {
-		return fmt.Errorf("no chart found by address %s", from.FullName())
-	}
-
-	client.StubCharts[to.FullName()] = ch
-	client.SignedCharts[to.FullName()] = client.SignedCharts[from.FullName()]
-	client.TaggedCachedRefs[to.FullName()] = from.FullName()
-
-	return nil
-}
-
-func (client *BundlesRegistryClientStub) IsChartSigned(ctx context.Context, ref *bundles_registry.Reference, opts nelmcommon.HelmOptions) (bool, error) {
-	return client.SignedCharts[ref.FullName()], nil
-}
-
-type DockerRegistryStub struct {
-	docker_registry.Interface
-
-	ImagesByReference map[string][]byte
-}
-
-func NewDockerRegistryStub() *DockerRegistryStub {
-	return &DockerRegistryStub{
-		ImagesByReference: make(map[string][]byte),
+	return action.ChartPackOptions{
+		Destination: GinkgoT().TempDir(),
+		ExtraValues: extraValues,
+		Images:      ChartImagesFromServiceValues(ctx, extraValues),
 	}
 }
 
-func (registry *DockerRegistryStub) PushImageArchive(ctx context.Context, archiveOpener docker_registry.ArchiveOpener, reference string) error {
-	readCloser, err := archiveOpener.Open()
-	if err != nil {
-		return fmt.Errorf("unable to open archive: %w", err)
-	}
+// pushOldBundle pushes a bundle the way werf 3.12 and older publish it: its values hold the image and
+// repo values and it has no .werf-data.
+func pushOldBundle(client *registry.Client, repo, version string, values map[string]interface{}) {
+	chartDir := GinkgoT().TempDir()
+	Expect(os.WriteFile(filepath.Join(chartDir, "Chart.yaml"), []byte("apiVersion: v2\nname: "+path.Base(repo)+"\nversion: "+version+"\n"), 0o644)).To(Succeed())
 
-	buf := bytes.NewBuffer(nil)
+	valuesYAML, err := yaml.Marshal(values)
+	Expect(err).To(Succeed())
+	Expect(os.WriteFile(filepath.Join(chartDir, "values.yaml"), valuesYAML, 0o644)).To(Succeed())
 
-	if _, err := io.Copy(buf, readCloser); err != nil {
-		return fmt.Errorf("error reading image archive: %w", err)
-	}
+	ch, err := loader.LoadDir(context.Background(), chartDir)
+	Expect(err).To(Succeed())
 
-	if err := readCloser.Close(); err != nil {
-		return fmt.Errorf("unable to close image archive reader: %w", err)
-	}
+	archivePath, err := chartv2util.Save(ch.(*chart.Chart), GinkgoT().TempDir())
+	Expect(err).To(Succeed())
 
-	registry.ImagesByReference[reference] = buf.Bytes()
+	archive, err := os.ReadFile(archivePath)
+	Expect(err).To(Succeed())
 
-	return nil
+	_, err = client.Push(archive, repo+":"+version)
+	Expect(err).To(Succeed())
 }
 
-func (registry *DockerRegistryStub) PullImageArchive(ctx context.Context, archiveWriter io.Writer, reference string) error {
-	data, hasImage := registry.ImagesByReference[reference]
-	if !hasImage {
-		return fmt.Errorf("image not found")
-	}
+func pullTestChart(ctx context.Context, client *registry.Client, repo, tag string) *chart.Chart {
+	bundleDir := filepath.Join(GinkgoT().TempDir(), "bundle")
+	Expect(Pull(ctx, repo, tag, bundleDir, client, PullOptions{})).To(Succeed())
 
-	if _, err := io.Copy(archiveWriter, bytes.NewReader(data)); err != nil {
-		return fmt.Errorf("error copying image archive: %w", err)
-	}
-	return nil
-}
+	ch, err := loader.Load(nelmcommon.ContextWithHelmOptions(ctx, nelmcommon.HelmOptions{
+		ChartLoadOpts: nelmcommon.ChartLoadOptions{NoSecrets: true},
+	}), bundleDir)
+	Expect(err).To(Succeed())
 
-func (registry *DockerRegistryStub) CopyImage(_ context.Context, sourceReference, destinationReference string, _ docker_registry.CopyImageOptions) error {
-	data, hasImage := registry.ImagesByReference[sourceReference]
-	if !hasImage {
-		return fmt.Errorf("source image not found")
-	}
-
-	registry.ImagesByReference[destinationReference] = data
-	return nil
-}
-
-type VerifyChartOptions struct {
-	ExpectedName    string
-	ExpectedVersion string
-	ExpectedRepo    string
-	ExpectedImages  map[string]string
-}
-
-func VerifyChart(ctx context.Context, ch *chart.Chart, opts VerifyChartOptions) {
-	Expect(ch.Metadata.Name).To(Equal(opts.ExpectedName))
-	Expect(ch.Metadata.Version).To(Equal(opts.ExpectedVersion))
-
-	werfVals := ch.Values["werf"].(map[string]interface{})
-
-	repoVal := werfVals["repo"].(string)
-	Expect(repoVal).To(Equal(opts.ExpectedRepo))
-
-	imagesVals := werfVals["image"].(map[string]interface{})
-
-	// No excess images in values, only expected
-	for imageName := range imagesVals {
-		Expect(opts.ExpectedImages[imageName]).NotTo(BeNil())
-	}
-	// All expected images are in values
-	for imageName, imageRef := range opts.ExpectedImages {
-		Expect(imagesVals[imageName]).NotTo(BeNil())
-		Expect(imagesVals[imageName].(string)).To(Equal(imageRef))
-	}
-
-	chValues, err := json.Marshal(ch.Values)
-	Expect(err).NotTo(HaveOccurred())
-
-	var valuesFile *chartcommon.File
-	for _, f := range ch.Raw {
-		if f.Name == "values.yaml" {
-			valuesFile = f
-			break
-		}
-	}
-	Expect(valuesFile).NotTo(BeNil())
-
-	var unmarshalledValues map[string]interface{}
-
-	Expect(yaml.Unmarshal(valuesFile.Data, &unmarshalledValues)).To(Succeed())
-
-	remarshalledValues, err := json.Marshal(unmarshalledValues)
-	Expect(err).NotTo(HaveOccurred())
-
-	fmt.Printf("Check chart loaded values:\n%s\n---\n", chValues)
-	fmt.Printf("Check chart values.yaml:\n%s\n---\n", remarshalledValues)
-	Expect(string(chValues)).To(Equal(string(remarshalledValues)))
+	return ch.(*chart.Chart)
 }
