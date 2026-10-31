@@ -38,7 +38,8 @@ func InitHelmRegistryClient(registryClient *registry.Client, dockerConfig string
 }
 
 // NewBundlesRegistryClient returns the client of the container registry the bundles are pushed
-// into and pulled from, connected as GetBundlesRegistryConnectionOptions says.
+// into and pulled from, connected as GetBundlesRegistryConnectionOptions says: over plain HTTP if
+// insecure, where verifying TLS certificates doesn't apply.
 func NewBundlesRegistryClient(ctx context.Context, commonCmdData *CmdData) (*registry.Client, error) {
 	clientOpts := []registry.ClientOption{
 		registry.ClientOptDebug(*commonCmdData.LogDebug),
@@ -65,12 +66,13 @@ func NewBundlesRegistryClient(ctx context.Context, commonCmdData *CmdData) (*reg
 	return client, nil
 }
 
-// GetBundlesRegistryConnectionOptions returns the options to connect to the container registry of
-// the bundles with. An insecure registry is accessed over plain HTTP, where verifying TLS
-// certificates doesn't apply.
+// GetBundlesRegistryConnectionOptions returns the options to connect to the container registries of
+// the bundles and their images with. Nelm accesses the bundle registries over plain HTTP if
+// insecure, and other registries, e.g. of the images of a bundle copy, over HTTPS, skipping TLS
+// verification if asked.
 func GetBundlesRegistryConnectionOptions(commonCmdData *CmdData) nelmcommon.ChartRepoConnectionOptions {
 	return nelmcommon.ChartRepoConnectionOptions{
 		ChartRepoInsecure:      *commonCmdData.InsecureRegistry,
-		ChartRepoSkipTLSVerify: *commonCmdData.SkipTlsVerifyRegistry && !*commonCmdData.InsecureRegistry,
+		ChartRepoSkipTLSVerify: *commonCmdData.SkipTlsVerifyRegistry,
 	}
 }

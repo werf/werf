@@ -5,6 +5,9 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"io"
+	"log"
+	"net/http/httptest"
 	"os"
 	"path"
 	"path/filepath"
@@ -12,6 +15,7 @@ import (
 	"strings"
 
 	"github.com/google/go-containerregistry/pkg/name"
+	ggcrregistry "github.com/google/go-containerregistry/pkg/registry"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/random"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
@@ -97,6 +101,27 @@ var _ = Describe("Bundle copy", func() {
 			Expect(imageRef).To(HavePrefix(toRepo+":tag-1@"), name)
 			testImageDigest(imageRef)
 		}
+	})
+
+	It("should copy from an insecure bundle registry images from a registry with an untrusted certificate", func() {
+		imageServer := httptest.NewTLSServer(ggcrregistry.New(ggcrregistry.Logger(log.New(io.Discard, "", 0))))
+		DeferCleanup(imageServer.Close)
+		imageRepo := strings.TrimPrefix(imageServer.URL, "https://") + "/group/image"
+
+		img, err := random.Image(64, 1)
+		Expect(err).To(Succeed())
+		imageRef, err := name.ParseReference(imageRepo + ":tag-1")
+		Expect(err).To(Succeed())
+		Expect(remote.Write(imageRef, img, remote.WithTransport(imageServer.Client().Transport))).To(Succeed())
+		digest, err := img.Digest()
+		Expect(err).To(Succeed())
+
+		pushOldBundle(testRegistryClient, fromRepo, "1.2.3", oldBundleValues(imageRepo, digest.String()))
+
+		copyOpts.ChartRepoConnectionOptions.ChartRepoSkipTLSVerify = true
+		Expect(Copy(ctx, fromRepo+":1.2.3", toRepo, copyOpts)).To(Succeed())
+
+		Expect(testImageDigest(toRepo + ":tag-1")).To(Equal(digest.String()))
 	})
 
 	DescribeTable("should copy a chart with .werf-data with its images and point its image values at the new repo",
