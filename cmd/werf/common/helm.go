@@ -4,7 +4,9 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"net"
 	"net/http"
+	"strings"
 
 	"github.com/werf/logboek"
 	nelmcommon "github.com/werf/nelm/v2/pkg/common"
@@ -39,7 +41,7 @@ func InitHelmRegistryClient(registryClient *registry.Client, dockerConfig string
 
 // NewBundlesRegistryClient returns the client of the container registry the bundles are pushed
 // into and pulled from, connected as GetBundlesRegistryConnectionOptions says: over plain HTTP if
-// insecure, where verifying TLS certificates doesn't apply.
+// insecure or, as Docker does, on a loopback host, where verifying TLS certificates doesn't apply.
 func NewBundlesRegistryClient(ctx context.Context, commonCmdData *CmdData) (*registry.Client, error) {
 	clientOpts := []registry.ClientOption{
 		registry.ClientOptDebug(*commonCmdData.LogDebug),
@@ -49,9 +51,11 @@ func NewBundlesRegistryClient(ctx context.Context, commonCmdData *CmdData) (*reg
 	}
 
 	connectionOpts := GetBundlesRegistryConnectionOptions(commonCmdData)
-	if connectionOpts.ChartRepoInsecure {
-		clientOpts = append(clientOpts, registry.ClientOptPlainHTTP())
-	} else if connectionOpts.ChartRepoSkipTLSVerify {
+	clientOpts = append(clientOpts, registry.ClientOptPlainHTTPHost(func(host string) bool {
+		return connectionOpts.ChartRepoInsecure || isLoopbackHost(host)
+	}))
+
+	if connectionOpts.ChartRepoSkipTLSVerify {
 		transport := http.DefaultTransport.(*http.Transport).Clone()
 		transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 
@@ -75,4 +79,19 @@ func GetBundlesRegistryConnectionOptions(commonCmdData *CmdData) nelmcommon.Char
 		ChartRepoInsecure:      *commonCmdData.InsecureRegistry,
 		ChartRepoSkipTLSVerify: *commonCmdData.SkipTlsVerifyRegistry,
 	}
+}
+
+// isLoopbackHost returns whether the registry host (host or host:port) is a loopback host.
+func isLoopbackHost(host string) bool {
+	if hostname, _, err := net.SplitHostPort(host); err == nil {
+		host = hostname
+	}
+
+	if host == "localhost" {
+		return true
+	}
+
+	ip := net.ParseIP(strings.Trim(host, "[]"))
+
+	return ip != nil && ip.IsLoopback()
 }
