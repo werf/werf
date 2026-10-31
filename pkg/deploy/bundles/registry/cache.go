@@ -157,8 +157,8 @@ func (cache *Cache) FetchReference(ctx context.Context, ref *ref.Reference, opts
 	return &r, nil
 }
 
-// StoreReference stores a chart archive under ref in cache as is
-func (cache *Cache) StoreReference(ctx context.Context, ref *ref.Reference, chartArchive []byte, opts nelmcommon.HelmOptions) (*CacheRefSummary, error) {
+// StoreReference stores a chart archive and its provenance file, if not nil, under ref in cache as is
+func (cache *Cache) StoreReference(ctx context.Context, ref *ref.Reference, chartArchive, provenance []byte, opts nelmcommon.HelmOptions) (*CacheRefSummary, error) {
 	if err := cache.init(); err != nil {
 		return nil, err
 	}
@@ -191,7 +191,16 @@ func (cache *Cache) StoreReference(ctx context.Context, ref *ref.Reference, char
 	r.Size = info.Size
 	r.Digest = info.Digest
 	r.CreatedAt = info.CreatedAt
-	manifest, _, err := cache.saveChartManifest(ctx, config, contentLayer)
+	layers := []ocispec.Descriptor{*contentLayer}
+	if provenance != nil {
+		if _, err := cache.storeBlob(ctx, provenance); err != nil {
+			return &r, err
+		}
+		provenanceLayer := cache.memoryStore.Add("", HelmChartProvenanceLayerMediaType, provenance)
+		r.ProvenanceLayer = &provenanceLayer
+		layers = append(layers, provenanceLayer)
+	}
+	manifest, _, err := cache.saveChartManifest(ctx, config, layers)
 	if err != nil {
 		return &r, err
 	}
@@ -328,11 +337,11 @@ func (cache *Cache) saveChartContentLayer(ctx context.Context, chartArchive []by
 }
 
 // saveChartManifest stores the chart manifest as json blob and returns a descriptor
-func (cache *Cache) saveChartManifest(ctx context.Context, config, contentLayer *ocispec.Descriptor) (*ocispec.Descriptor, bool, error) {
+func (cache *Cache) saveChartManifest(ctx context.Context, config *ocispec.Descriptor, layers []ocispec.Descriptor) (*ocispec.Descriptor, bool, error) {
 	manifest := ocispec.Manifest{
 		Versioned: specs.Versioned{SchemaVersion: 2},
 		Config:    *config,
-		Layers:    []ocispec.Descriptor{*contentLayer},
+		Layers:    layers,
 	}
 	manifestBytes, err := json.Marshal(manifest)
 	if err != nil {

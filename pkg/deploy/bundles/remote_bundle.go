@@ -72,7 +72,7 @@ func (bundle *RemoteBundle) WriteChart(ctx context.Context, ch *chart.Chart, opt
 	}
 
 	if err := logboek.Context(ctx).LogProcess("Saving bundle %s", cacheRef.FullName()).DoError(func() error {
-		if err := bundle.BundlesRegistryClient.SaveChartArchive(ctx, chartArchive, cacheRef, opts); err != nil {
+		if err := bundle.BundlesRegistryClient.SaveChartArchive(ctx, chartArchive, nil, cacheRef, opts); err != nil {
 			return fmt.Errorf("unable to save bundle %s to the local chart helm cache: %w", cacheRef.FullName(), err)
 		}
 		return nil

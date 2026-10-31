@@ -215,6 +215,8 @@ werf bundle copy --from example.org/bundles/mybundle:v1.0.0 --to other.example.o
 
 Подписанный чарт (с provenance-файлом Helm) сохраняет подпись при копировании без изменений. Если при копировании чарт меняется, например, переписываются ссылки на образы, меняется имя или версия, подпись удаляется с предупреждением.
 
+`werf bundle apply`, `werf bundle plan` и `werf bundle render` проверяют подпись бандла, скачанного из container registry, по публичным ключам из `--provenance-keyring`, если передан `--provenance-strategy=verify` (бандл без подписи вызывает ошибку) или `--provenance-strategy=verify-if-possible` (проверяется только подписанный бандл). `werf bundle render --bundle-dir` не может проверить подпись распакованного бандла и с `--provenance-strategy=verify` завершается ошибкой.
+
 ## Экспорт бандла из container registry в архив
 
 После публикации бандл может быть экспортирован из репозитория в локальный архив для дальнейшей дистрибуции иными способами с помощью команды `werf bundle copy`, например:

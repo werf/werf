@@ -216,6 +216,8 @@ The image references in a werf-published chart included as a dependent chart are
 
 A signed chart (with a Helm provenance file) keeps its signature when copied unchanged. If the copy changes the chart, e.g. rewrites the image references, renames it or changes its version, the signature is dropped with a warning.
 
+`werf bundle apply`, `werf bundle plan` and `werf bundle render` verify the signature of the bundle pulled from the container registry against the public keys from `--provenance-keyring` when `--provenance-strategy=verify` (an unsigned bundle fails) or `--provenance-strategy=verify-if-possible` (only a signed bundle is verified) is passed. `werf bundle render --bundle-dir` can't verify the signature of an unpacked bundle and fails with `--provenance-strategy=verify`.
+
 ## Exporting the bundle from the container registry to the archive
 
 After publication, the bundle can be exported from the repository to a local archive for distribution by other means using the `werf bundle copy` command, for example:

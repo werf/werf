@@ -254,9 +254,9 @@ func (c *Client) PullChartToCache(ctx context.Context, ref *ref.Reference, opts 
 	return err
 }
 
-// SaveChartArchive stores a chart archive in local cache as is
-func (c *Client) SaveChartArchive(ctx context.Context, chartArchive []byte, ref *ref.Reference, opts nelmcommon.HelmOptions) error {
-	r, err := c.cache.StoreReference(ctx, ref, chartArchive, opts)
+// SaveChartArchive stores a chart archive and its provenance file, if not nil, in local cache as is
+func (c *Client) SaveChartArchive(ctx context.Context, chartArchive, provenance []byte, ref *ref.Reference, opts nelmcommon.HelmOptions) error {
+	r, err := c.cache.StoreReference(ctx, ref, chartArchive, provenance, opts)
 	if err != nil {
 		return err
 	}
@@ -304,6 +304,30 @@ func (c *Client) LoadChart(ctx context.Context, ref *ref.Reference, opts nelmcom
 	}
 	c.printCacheRefSummary(r)
 	return r.Chart, nil
+}
+
+// LoadChartArchive returns the chart archive cached under ref and its provenance file, nil if the
+// chart is not signed
+func (c *Client) LoadChartArchive(ctx context.Context, ref *ref.Reference, opts nelmcommon.HelmOptions) ([]byte, []byte, error) {
+	r, err := c.cache.FetchReference(ctx, ref, opts)
+	if err != nil {
+		return nil, nil, err
+	}
+	if !r.Exists {
+		return nil, nil, errors.New(fmt.Sprintf("Chart not found: %s", ref.FullName()))
+	}
+	chartArchive, err := c.cache.fetchBlob(ctx, r.ContentLayer)
+	if err != nil {
+		return nil, nil, err
+	}
+	if r.ProvenanceLayer == nil {
+		return chartArchive, nil, nil
+	}
+	provenance, err := c.cache.fetchBlob(ctx, r.ProvenanceLayer)
+	if err != nil {
+		return nil, nil, err
+	}
+	return chartArchive, provenance, nil
 }
 
 // RemoveChart deletes a locally saved chart

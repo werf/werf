@@ -49,6 +49,14 @@ func Publish(ctx context.Context, chartDir, repo, tag string, bundlesRegistryCli
 		return fmt.Errorf("read chart archive: %w", err)
 	}
 
+	var provenance []byte
+	if packResult.ProvenancePath != "" {
+		provenance, err = os.ReadFile(packResult.ProvenancePath)
+		if err != nil {
+			return fmt.Errorf("read chart provenance file: %w", err)
+		}
+	}
+
 	tags := chartTags(packResult.ChartVersion, tag)
 
 	r, err := ref.ParseReference(fmt.Sprintf("%s:%s", repo, tags[0]))
@@ -57,7 +65,7 @@ func Publish(ctx context.Context, chartDir, repo, tag string, bundlesRegistryCli
 	}
 
 	if err := logboek.Context(ctx).Default().LogProcess("Saving bundle to the local chart helm cache").DoError(func() error {
-		if err := bundlesRegistryClient.SaveChartArchive(ctx, chartArchive, r, opts.HelmOptions); err != nil {
+		if err := bundlesRegistryClient.SaveChartArchive(ctx, chartArchive, provenance, r, opts.HelmOptions); err != nil {
 			return fmt.Errorf("unable to save bundle to the local chart helm cache: %w", err)
 		}
 

@@ -157,6 +157,10 @@ func runRender(ctx context.Context) error {
 
 	var bundlePath string
 	if isLocalBundle {
+		if commonCmdData.ChartProvenanceStrategy == bundles.ProvenanceStrategyVerify {
+			return fmt.Errorf("--provenance-strategy=%s can't verify the signature of the unpacked bundle in --bundle-dir: render the bundle from the container registry instead", bundles.ProvenanceStrategyVerify)
+		}
+
 		bundlePath = cmdData.BundleDir
 	} else {
 		bundlesRegistryClient, err := common.NewBundlesRegistryClient(ctx, &commonCmdData)
@@ -172,8 +176,12 @@ func runRender(ctx context.Context) error {
 		bundlePath = filepath.Join(werf.GetServiceDir(), "tmp", "bundles", uuid.NewString())
 		defer os.RemoveAll(bundlePath)
 
-		if err := bundles.Pull(ctx, fmt.Sprintf("%s:%s", repoAddress, cmdData.Tag), bundlePath, bundlesRegistryClient, nelmcommon.HelmOptions{
-			ChartLoadOpts: nelmcommon.ChartLoadOptions{NoSecrets: true},
+		if err := bundles.Pull(ctx, fmt.Sprintf("%s:%s", repoAddress, cmdData.Tag), bundlePath, bundlesRegistryClient, bundles.PullOptions{
+			HelmOptions: nelmcommon.HelmOptions{
+				ChartLoadOpts: nelmcommon.ChartLoadOptions{NoSecrets: true},
+			},
+			ProvenanceKeyring:  commonCmdData.ChartProvenanceKeyring,
+			ProvenanceStrategy: commonCmdData.ChartProvenanceStrategy,
 		}); err != nil {
 			return fmt.Errorf("pull bundle: %w", err)
 		}

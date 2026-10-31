@@ -58,7 +58,97 @@ var _ = Describe("Bundle publish", func() {
 		})
 		Expect(err).To(MatchError(ContainSubstring("werf bundle commands don't support Chart.yaml apiVersion v3 yet")))
 	})
+
+	DescribeTable("should verify the signature of a pulled bundle as requested",
+		func(ctx0 context.Context, publish func(ctx context.Context, repo string), strategy, expectedErr string) {
+			ctx := logging.WithLogger(ctx0)
+			repo := startTestRegistry() + "/group/app"
+			publish(ctx, repo)
+
+			err := Pull(ctx, repo+":1.0.0", filepath.Join(GinkgoT().TempDir(), "app"), newTestRegistryClient(ctx), PullOptions{
+				ProvenanceKeyring:  testKeyringPath("helm-test-key.pub"),
+				ProvenanceStrategy: strategy,
+			})
+			if expectedErr == "" {
+				Expect(err).To(Succeed())
+			} else {
+				Expect(err).To(MatchError(ContainSubstring(expectedErr)))
+			}
+		},
+		Entry("signed, verify", publishSignedTestChart, ProvenanceStrategyVerify, ""),
+		Entry("signed, verify if possible", publishSignedTestChart, ProvenanceStrategyVerifyIfPossible, ""),
+		Entry("tampered, verify", publishTamperedTestChart, ProvenanceStrategyVerify, "sha256 sum does not match"),
+		Entry("tampered, verify if possible", publishTamperedTestChart, ProvenanceStrategyVerifyIfPossible, "sha256 sum does not match"),
+		Entry("tampered, never", publishTamperedTestChart, "never", ""),
+		Entry("unsigned, verify", publishUnsignedTestChart, ProvenanceStrategyVerify, "the bundle is not signed"),
+		Entry("unsigned, verify if possible", publishUnsignedTestChart, ProvenanceStrategyVerifyIfPossible, ""),
+	)
+
+	It("should publish a signed chart with its signature", func(ctx0 context.Context) {
+		ctx := logging.WithLogger(ctx0)
+		repo := startTestRegistry() + "/group/app"
+		publishSignedTestChart(ctx, repo)
+
+		client := newTestRegistryClient(ctx)
+		r, err := ref.ParseReference(repo + ":1.0.0")
+		Expect(err).To(Succeed())
+		Expect(client.PullChartToCache(ctx, r, nelmcommon.HelmOptions{})).To(Succeed())
+		Expect(client.IsChartSigned(ctx, r, nelmcommon.HelmOptions{})).To(BeTrue())
+	})
 })
+
+func publishSignedTestChart(ctx context.Context, repo string) {
+	Expect(Publish(ctx, writeTestChart(), repo, "1.0.0", newTestRegistryClient(ctx), PublishOptions{
+		ChartPackOptions: signingChartPackOptions(),
+	})).To(Succeed())
+}
+
+func publishUnsignedTestChart(ctx context.Context, repo string) {
+	Expect(Publish(ctx, writeTestChart(), repo, "1.0.0", newTestRegistryClient(ctx), PublishOptions{
+		ChartPackOptions: action.ChartPackOptions{Destination: GinkgoT().TempDir()},
+	})).To(Succeed())
+}
+
+// publishTamperedTestChart publishes the archive of a chart with the signature of another one of
+// the same name and version.
+func publishTamperedTestChart(ctx context.Context, repo string) {
+	packOpts := signingChartPackOptions()
+	packOpts.Name = "app"
+	packOpts.Version = "1.0.0"
+	signed, err := action.ChartPack(ctx, writeTestChart(), packOpts)
+	Expect(err).To(Succeed())
+	provenance, err := os.ReadFile(signed.ProvenancePath)
+	Expect(err).To(Succeed())
+
+	tamperedChartDir := writeTestChart()
+	Expect(os.WriteFile(filepath.Join(tamperedChartDir, "values.yaml"), []byte("tampered: true\n"), 0o644)).To(Succeed())
+	tampered, err := action.ChartPack(ctx, tamperedChartDir, action.ChartPackOptions{Destination: GinkgoT().TempDir(), Name: "app", Version: "1.0.0"})
+	Expect(err).To(Succeed())
+	archive, err := os.ReadFile(tampered.ArchivePath)
+	Expect(err).To(Succeed())
+
+	r, err := ref.ParseReference(repo + ":1.0.0")
+	Expect(err).To(Succeed())
+	client := newTestRegistryClient(ctx)
+	Expect(client.SaveChartArchive(ctx, archive, provenance, r, nelmcommon.HelmOptions{})).To(Succeed())
+	Expect(client.PushChart(ctx, r, []string{r.Tag}, nelmcommon.HelmOptions{})).To(Succeed())
+}
+
+func signingChartPackOptions() action.ChartPackOptions {
+	return action.ChartPackOptions{
+		Destination: GinkgoT().TempDir(),
+		Sign:        true,
+		SignKey:     "helm-test",
+		SignKeyring: testKeyringPath("helm-test-key.secret"),
+	}
+}
+
+func testKeyringPath(name string) string {
+	keyringPath, err := filepath.Abs(filepath.Join("testdata", name))
+	Expect(err).To(Succeed())
+
+	return keyringPath
+}
 
 func startTestRegistry() string {
 	server := httptest.NewServer(ggcrregistry.New(ggcrregistry.Logger(log.New(io.Discard, "", 0))))
