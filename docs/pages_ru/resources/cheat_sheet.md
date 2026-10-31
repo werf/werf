@@ -103,7 +103,7 @@ werf kube-run --repo ghcr.io/group/project --env integration -- npm run acceptan
 
 ### Подготовка артефактов релиза (по желанию)
 
-Бандлы werf позволяют подготовить артефакты релиза, которые могут быть протестированы или развернуты позже (с помощью werf, Argo CD или Helm), и сохранить их в реестре контейнеров с указанным тегом.
+Бандлы werf позволяют подготовить артефакты релиза, которые могут быть протестированы или развернуты позже (с помощью werf, Argo CD или Helm), и сохранить их в реестре контейнеров с указанным тегом. Argo CD и Helm получают только собственные параметры чарта, если не передать им файлы параметров из `.werf-data/`, см. [Использование чарта с Helm, Argo CD и Flux]({{ "/usage/distribute/bundles.html#использование-чарта-с-helm-argo-cd-и-flux" | true_relative_url }}).
 
 Использовать тег semver, совместимый с OCI-чартом Helm:
 
@@ -111,7 +111,7 @@ werf kube-run --repo ghcr.io/group/project --env integration -- npm run acceptan
 werf bundle publish --repo ghcr.io/group/project --tag 1.0.0
 ```
 
-Использовать произвольный символьный тег:
+Использовать произвольный символьный тег (чарт получает prerelease-версию `0.0.0-<unix-время>-latest`):
 
 ```shell
 werf bundle publish --repo ghcr.io/group/project --tag latest
@@ -134,7 +134,7 @@ werf converge --require-built-images --repo ghcr.io/group/project --use-custom-t
 Развернуть ранее опубликованный бандл с тегом 1.0.0 в production:
 
 ```shell
-werf bundle apply --repo ghcr.io/group/project --env production --tag 1.0.0
+werf bundle apply --repo ghcr.io/group/project --env production --tag 1.0.0 --release project-production --namespace project-production
 ```
 
 ### Очистка реестра контейнеров
