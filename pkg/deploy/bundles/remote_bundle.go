@@ -8,7 +8,6 @@ import (
 
 	"sigs.k8s.io/yaml"
 
-	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	nelmcommon "github.com/werf/nelm/v2/pkg/common"
 	chart "github.com/werf/nelm/v2/pkg/helm/pkg/chart/v2"
@@ -143,9 +142,7 @@ func (bundle *RemoteBundle) CopyFromArchive(ctx context.Context, fromArchive *Bu
 		return err
 	}
 
-	if nameOverwrite := GetChartNameOverwrite(bundle.RegistryAddress.Repo, opts.RenameChart, opts.HelmCompatibleChart); nameOverwrite != nil {
-		ch.Metadata.Name = *nameOverwrite
-	}
+	ch.Metadata.Name = chartNameFromRepo(bundle.RegistryAddress.Repo)
 
 	if bundle.RegistryAddress.Tag != "" {
 		sv, err := BundleTagToChartVersion(ctx, bundle.RegistryAddress.Tag, time.Now())
@@ -224,7 +221,7 @@ func (bundle *RemoteBundle) CopyFromRemote(ctx context.Context, fromRemote *Remo
 		return err
 	}
 
-	ch.Metadata.Name = util.Reverse(strings.SplitN(util.Reverse(bundle.RegistryAddress.Repo), "/", 2)[0])
+	ch.Metadata.Name = chartNameFromRepo(bundle.RegistryAddress.Repo)
 
 	destination := bundle
 	if bundle.RegistryAddress.Tag == "" {

@@ -34,7 +34,7 @@ These changes affect existing projects even without configuration edits:
 | Readiness tracking | Condition types are matched case-sensitively. | Case-insensitively. | Check resources with `Ready` or `Available` conditions; [details](#readiness-tracking). |
 | Service values | `.Values.global.env` is populated automatically. | `.Values.global.werf.env` is populated automatically; the old key is no longer populated. | Temporary compatibility: `WERF_LEGACY_VALUES_GLOBAL_ENV=1`; [details](#values-and-environment-variables). |
 | Release storage | `HELM_DRIVER` is honored if `WERF_RELEASE_STORAGE` is not set. | `WERF_RELEASE_STORAGE` is used; without it, the default storage applies. | Transfer the variable's value; [details](#values-and-environment-variables). |
-| Published chart name | `--helm-compatible-chart=false`. | `--helm-compatible-chart=true`. | Pass `false` if you need the previous name; [details](#charts-and-bundles). |
+| Published chart name | `--helm-compatible-chart=false`. | Always the last path component of the repository; `--helm-compatible-chart` and `--rename-chart` are removed. | Expect `.Chart.Name` to change; [details](#charts-and-bundles). |
 | `.helmignore` | Does not filter files when werf reads the chart. | Filters files, including Helm's default rules. | Check exclusions before deploying; [details](#charts-and-bundles). |
 
 ### CI and automation
@@ -358,11 +358,7 @@ Without replacing `HELM_DRIVER`, werf uses its default release storage rather th
 
 Rules for dependent charts vary by how the chart is included — see [Charts and dependencies]({{ "/usage/deploy/charts.html#excluding-files-or-directories-from-the-chart" | true_relative_url }}).
 
-**`werf bundle publish` now defaults to `--helm-compatible-chart=true`.** The chart name in the published bundle's `Chart.yaml` becomes the last path component of the repository address, changing `.Chart.Name` and template paths. To keep the name from your `Chart.yaml`, pass:
-
-```shell
-werf bundle publish --helm-compatible-chart=false
-```
+**`werf bundle publish` and `werf bundle copy` always name the chart after the last path component of the repository address.** The chart name in the published bundle's `Chart.yaml` changes, and so do `.Chart.Name` and template paths. The `--helm-compatible-chart` and `--rename-chart` options are removed: Helm finds an OCI chart only in a repository named after the chart.
 
 ### Encrypted secret values
 

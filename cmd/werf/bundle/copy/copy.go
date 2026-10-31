@@ -65,9 +65,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 	commonCmdData.SetupPlatform(cmd)
 
-	commonCmdData.SetupHelmCompatibleChart(cmd, true)
-	commonCmdData.SetupRenameChart(cmd)
-
 	cmd.Flags().StringVarP(&cmdData.From, "from", "", os.Getenv("WERF_FROM"), "Source address of the bundle to copy, specify bundle archive using schema `archive:PATH_TO_ARCHIVE.tar.gz`, specify remote bundle with schema `[docker://]REPO:TAG` or without schema.")
 	cmd.Flags().StringVarP(&cmdData.To, "to", "", os.Getenv("WERF_TO"), "Destination address of the bundle to copy, specify bundle archive using schema `archive:PATH_TO_ARCHIVE.tar.gz`, specify remote bundle with schema `[docker://]REPO[:TAG]` or without schema. A remote bundle gets its chart version from TAG and is pushed under that version and under TAG; without TAG it keeps the chart version and the tag of the source bundle.")
 
@@ -146,10 +143,6 @@ func runCopy(ctx context.Context) error {
 		}
 	}
 
-	if commonCmdData.HelmCompatibleChart && commonCmdData.RenameChart != "" {
-		return fmt.Errorf("incompatible options specified, could not use --helm-compatible-chart and --rename-chart=%q at the same time", commonCmdData.RenameChart)
-	}
-
 	return logboek.Context(ctx).LogProcess("Copy bundle").DoError(func() error {
 		logboek.Context(ctx).LogFDetails("From: %s\n", fromAddr.String())
 		logboek.Context(ctx).LogFDetails("To: %s\n", toAddr.String())
@@ -158,8 +151,6 @@ func runCopy(ctx context.Context) error {
 			BundlesRegistryClient: bundlesRegistryClient,
 			FromRegistryClient:    fromRegistry,
 			ToRegistryClient:      toRegistry,
-			HelmCompatibleChart:   commonCmdData.HelmCompatibleChart,
-			RenameChart:           commonCmdData.RenameChart,
 			HelmOptions: nelmcommon.HelmOptions{
 				ChartLoadOpts: nelmcommon.ChartLoadOptions{
 					ChartType: nelmcommon.LegacyChartTypeBundle,

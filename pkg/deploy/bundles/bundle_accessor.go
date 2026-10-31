@@ -11,9 +11,7 @@ import (
 )
 
 type copyToOptions struct {
-	HelmCompatibleChart bool
-	RenameChart         string
-	HelmOptions         nelmcommon.HelmOptions
+	HelmOptions nelmcommon.HelmOptions
 }
 
 type BundleAccessor interface {

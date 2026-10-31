@@ -151,8 +151,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupAddAnnotations(&commonCmdData, cmd)
 	common.SetupAddLabels(&commonCmdData, cmd)
 	commonCmdData.SetupSkipDependenciesRepoRefresh(cmd)
-	commonCmdData.SetupHelmCompatibleChart(cmd, true)
-	commonCmdData.SetupRenameChart(cmd)
 
 	defaultTag := os.Getenv("WERF_TAG")
 	if defaultTag == "" {
@@ -452,9 +450,7 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 	opts.ChartLoadOpts.ChartType = nelmcommon.LegacyChartTypeBundle
 
 	return bundles.Publish(ctx, bundleTmpDir, fmt.Sprintf("%s:%s", bundleRepo, cmdData.Tag), bundlesRegistryClient, bundles.PublishOptions{
-		HelmCompatibleChart: commonCmdData.HelmCompatibleChart,
-		RenameChart:         commonCmdData.RenameChart,
-		HelmOptions:         opts,
+		HelmOptions: opts,
 	})
 }
 

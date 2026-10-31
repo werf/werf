@@ -14,9 +14,7 @@ import (
 )
 
 type PublishOptions struct {
-	HelmCompatibleChart bool
-	RenameChart         string
-	HelmOptions         nelmcommon.HelmOptions
+	HelmOptions nelmcommon.HelmOptions
 }
 
 func Publish(ctx context.Context, bundleDir, bundleRef string, bundlesRegistryClient *registry.Client, opts PublishOptions) error {
@@ -43,9 +41,7 @@ func Publish(ctx context.Context, bundleDir, bundleRef string, bundlesRegistryCl
 			return fmt.Errorf("unsupported chart type %T", ch)
 		}
 
-		if nameOverwrite := GetChartNameOverwrite(r.Repo, opts.RenameChart, opts.HelmCompatibleChart); nameOverwrite != nil {
-			v2ch.Metadata.Name = *nameOverwrite
-		}
+		v2ch.Metadata.Name = chartNameFromRepo(r.Repo)
 
 		tags = chartTags(v2ch.Metadata.Version, r.Tag)
 		r.Tag = tags[0]
