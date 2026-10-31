@@ -82,6 +82,8 @@ The `$.Values` dictionary is compiled by combining the parameters from the param
 
 Sources 5–19 are passed to the main chart. The parameters of a dependent chart are taken from the dictionary whose key is the alias or name of the dependent chart, so `--set mychild.myparam=value` overrides `myparam` from `values.yaml` and `secret-values.yaml` of the `mychild` chart and from the `mychild` dictionary of the parent chart.
 
+A chart published by `werf bundle publish` stores the publish-time parameters in `.werf-data/`, see [Bundles]({{ "/usage/distribute/bundles.html#deploying-a-bundle" | true_relative_url }}). If the main chart contains `.werf-data/`, e.g. `.helm` holds an unpacked published chart, `werf converge`, `werf plan`, `werf render` and `werf lint` apply its parameters between sources 4 and 5: the parameters of `--values`, `--secret-values` and `--set*` at publish time, then the werf auxiliary parameters computed at publish time. The parameters from `.werf-data/` of a werf-published dependent chart are applied right after sources 1 and 2 of that chart, so the parent chart overrides them.
+
 The rules for combining parameters:
 
 * basic data types are overwritten;

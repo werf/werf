@@ -57,7 +57,7 @@ Everything werf adds at publish time goes to `.werf-data/`:
 
 ```
 .werf-data/
-  metadata.yaml        # the format version (apiVersion: v2), the --set* options, annotations, labels, the release name and Namespace
+  metadata.yaml        # the format version (apiVersion: v2), the --set* options, the werf images, the --patches files, annotations, labels, the release name and Namespace
   values.yaml          # the --values files, merged in order
   secret-values.yaml   # the --secret-values files, merged in order, encrypted
   extra-values.yaml    # werf auxiliary parameters: images, repository, environment, commit
@@ -100,7 +100,7 @@ werf bundle publish --repo example.org/bundles/bundle2
 
 The `.helmignore` file of the chart filters the published chart the same way it filters any chart werf reads, see [Excluding files or directories from the chart]({{ "/usage/deploy/charts.html#excluding-files-or-directories-from-the-chart" | true_relative_url }}).
 
-The `--disable-default-values` and `--disable-default-secret-values` options of the `werf bundle publish` command are recorded in the chart: `werf bundle apply` then ignores `values.yaml` and `secret-values.yaml` of the chart, as `werf converge` does with these options. The files themselves stay in the chart, and Helm still uses `values.yaml`.
+The `--disable-default-values`, `--disable-default-secret-values` and `--no-default-patches` options of the `werf bundle publish` command are recorded in the chart: `werf bundle apply` then ignores `values.yaml`, `secret-values.yaml` and `patches.yaml` of the chart, as `werf converge` does with these options. The files themselves stay in the chart, and Helm still uses `values.yaml`.
 
 ## Using custom image tags
 
@@ -163,7 +163,7 @@ The one known difference from `werf converge` is `.Chart.Name` and `.Chart.Versi
 
 ## Using a published chart as a dependent chart
 
-When werf or Nelm deploys a chart that includes a werf-published chart as a dependent chart, the values from `.werf-data/` of the dependent chart become its default values, as if it were deployed alone with `werf converge`. The parent chart overrides them as usual. The secret values of the dependent chart are decrypted with the secret key of the deployment, and, like the parameters from `secret-values.yaml` of any dependent chart, are saved in the release in decrypted form. Its annotations and labels are ignored with a warning: the parent chart decides them.
+When werf or Nelm deploys a chart that includes a werf-published chart as a dependent chart, the values from `.werf-data/` of the dependent chart become its default values, as if it were deployed alone with `werf converge`. The parent chart overrides them as usual. The secret values of the dependent chart are decrypted with the secret key of the deployment, and, like the parameters from `secret-values.yaml` of any dependent chart, are saved in the release in decrypted form. Its release-wide inputs are ignored with a warning, since the parent chart decides them: annotations and labels, `--patches`, `--no-default-patches`, `--set-root-json` and the release name and Namespace. `werf bundle publish` always records the release name and Namespace, so deploying any werf-published dependent chart prints this warning.
 
 ## Changing a published chart
 
@@ -279,6 +279,8 @@ spec:
         - .werf-data/extra-values.yaml
       ignoreMissingValueFiles: true
 ```
+
+Argo CD pulls the chart from a container registry only if the repository (`example.org/bundles`) is registered in Argo CD as a Helm repository with `enableOCI: "true"`, e.g. in a repository Secret with `type: helm`.
 
 The following stays unavailable with Helm, Argo CD and Flux even with these values files:
 

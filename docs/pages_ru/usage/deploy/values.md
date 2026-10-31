@@ -82,6 +82,8 @@ overriden
 
 Источники 5–19 передаются в основной чарт. Параметры зависимого чарта берутся из словаря, у которого ключ — алиас или имя зависимого чарта, поэтому `--set mychild.myparam=value` перезаписывает `myparam` из `values.yaml` и `secret-values.yaml` чарта `mychild` и из словаря `mychild` родительского чарта.
 
+Чарт, опубликованный `werf bundle publish`, хранит параметры времени публикации в `.werf-data/`, см. [Бандлы]({{ "/usage/distribute/bundles.html#развёртывание-бандла" | true_relative_url }}). Если основной чарт содержит `.werf-data/`, например, `.helm` содержит распакованный опубликованный чарт, `werf converge`, `werf plan`, `werf render` и `werf lint` применяют его параметры между источниками 4 и 5: сначала параметры `--values`, `--secret-values` и `--set*` времени публикации, затем служебные параметры werf, вычисленные при публикации. Параметры из `.werf-data/` зависимого чарта, опубликованного werf, применяются сразу после источников 1 и 2 этого чарта, поэтому родительский чарт их переопределяет.
+
 Правила объединения параметров:
 
 * простые типы данных перезаписываются;
@@ -502,8 +504,8 @@ werf --secret-values .helm/secret-values-production.yaml
 set -euo pipefail
 umask 077
 
-values_files=(.helm/secret-values.yaml)  # every encrypted values file
-files=(.helm/secret/tls.crt)             # every file in secret/
+values_files=(.helm/secret-values.yaml)  # каждый зашифрованный файл параметров
+files=(.helm/secret/tls.crt)             # каждый файл в secret/
 
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
@@ -526,7 +528,7 @@ done
 n=0
 for f in ${values_files[@]+"${values_files[@]}"} ${files[@]+"${files[@]}"}; do n=$((n + 1)); cp "$tmp/$n.enc" "$f"; done
 
-echo "All files re-encrypted with the new key. Originals are in $backup, remove it once you have checked the result."
+echo "Все файлы перешифрованы новым ключом. Исходные файлы — в директории $backup, удалите её после проверки результата."
 ```
 
 Если скрипт остановится во время копирования, уже заменённые файлы будут зашифрованы новым ключом, а остальные — по-прежнему старым; все исходные файлы находятся в резервной директории.
