@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/werf/logboek"
@@ -74,7 +75,7 @@ func Publish(ctx context.Context, chartDir, repo, tag string, bundlesRegistryCli
 		return err
 	}
 
-	if err := logboek.Context(ctx).LogProcess("Pushing bundle %q", fmt.Sprintf("%s:%s", repo, tag)).DoError(func() error {
+	if err := logboek.Context(ctx).LogProcess("Pushing bundle %s with tags %s", repo, strings.Join(tags, ", ")).DoError(func() error {
 		return bundlesRegistryClient.PushChart(ctx, r, tags, opts.HelmOptions)
 	}); err != nil {
 		return err

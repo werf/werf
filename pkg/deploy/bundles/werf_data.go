@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 
 	"github.com/samber/lo"
 	"sigs.k8s.io/yaml"
@@ -81,10 +82,20 @@ func ResolveRelease(ctx context.Context, metadata *werfdata.Metadata, flags Rele
 		return flags, nil
 	}
 
-	flags.Release = lo.CoalesceOrEmpty(flags.Release, recorded.Name)
-	flags.Namespace = lo.CoalesceOrEmpty(flags.Namespace, recorded.Namespace)
+	var used []string
+	if flags.Release == "" && recorded.Name != "" {
+		flags.Release = recorded.Name
+		used = append(used, "release "+recorded.Name)
+	}
 
-	logboek.Context(ctx).Default().LogF("Using release %s and namespace %s recorded in %s for env %q\n", flags.Release, flags.Namespace, werfdata.DirName, recorded.Env)
+	if flags.Namespace == "" && recorded.Namespace != "" {
+		flags.Namespace = recorded.Namespace
+		used = append(used, "namespace "+recorded.Namespace)
+	}
+
+	if len(used) > 0 {
+		logboek.Context(ctx).Default().LogF("Using %s recorded in %s for env %q\n", strings.Join(used, " and "), werfdata.DirName, recorded.Env)
+	}
 
 	return flags, nil
 }
