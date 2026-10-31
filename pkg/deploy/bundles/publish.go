@@ -22,6 +22,11 @@ type PublishOptions struct {
 // Publish packs the chart and pushes it into repo under the chart version derived from tag and under
 // tag itself, both with "+" encoded as "_" as Helm does.
 func Publish(ctx context.Context, chartDir, repo, tag string, registryClient *registry.Client, opts PublishOptions) error {
+	repo, err := normalizeRepo(repo)
+	if err != nil {
+		return err
+	}
+
 	sv, err := BundleTagToChartVersion(ctx, tag, time.Now())
 	if err != nil {
 		return fmt.Errorf("unable to set chart version from bundle tag %q: %w", tag, err)

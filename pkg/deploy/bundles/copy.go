@@ -31,6 +31,16 @@ type CopyOptions struct {
 // "[docker://]REPO[:TAG]" or an archive "archive:PATH". The image values of a copy to a registry
 // are pointed at the new repository.
 func Copy(ctx context.Context, from, to string, opts CopyOptions) error {
+	from, err := normalizeAddr(from)
+	if err != nil {
+		return fmt.Errorf("parse source address: %w", err)
+	}
+
+	to, err = normalizeAddr(to)
+	if err != nil {
+		return fmt.Errorf("parse destination address: %w", err)
+	}
+
 	if err := action.ChartCopy(ctx, from, to, action.ChartCopyOptions{
 		ChartRepoConnectionOptions: opts.ChartRepoConnectionOptions,
 		ImagesFunc:                 bundleImages,

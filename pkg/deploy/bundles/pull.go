@@ -31,6 +31,11 @@ type PullOptions struct {
 // Pull downloads the bundle pushed into repo under tag and unpacks it into destDir. The tag is
 // literal, with "+" encoded as "_" as Helm does.
 func Pull(ctx context.Context, repo, tag, destDir string, registryClient *registry.Client, opts PullOptions) error {
+	repo, err := normalizeRepo(repo)
+	if err != nil {
+		return err
+	}
+
 	verify := opts.ProvenanceStrategy == ProvenanceStrategyVerify || opts.ProvenanceStrategy == ProvenanceStrategyVerifyIfPossible
 
 	bundleRef := fmt.Sprintf("%s:%s", repo, tag)
