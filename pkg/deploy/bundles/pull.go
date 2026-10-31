@@ -1,16 +1,22 @@
 package bundles
 
 import (
+	"bytes"
 	"context"
+	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
+
+	"github.com/samber/lo"
+	"sigs.k8s.io/yaml"
 
 	"github.com/werf/logboek"
-	nelmcommon "github.com/werf/nelm/v2/pkg/common"
+	"github.com/werf/nelm/v2/pkg/helm/pkg/chart/loader/archive"
 	chart "github.com/werf/nelm/v2/pkg/helm/pkg/chart/v2"
 	chartv2util "github.com/werf/nelm/v2/pkg/helm/pkg/chart/v2/util"
 	"github.com/werf/nelm/v2/pkg/helm/pkg/provenance"
-	"github.com/werf/werf/v3/pkg/deploy/bundles/registry"
-	"github.com/werf/werf/v3/pkg/ref"
+	"github.com/werf/nelm/v2/pkg/helm/pkg/registry"
 )
 
 const (
@@ -19,7 +25,6 @@ const (
 )
 
 type PullOptions struct {
-	HelmOptions nelmcommon.HelmOptions
 	// ProvenanceKeyring is the path to the keyring with the public keys to verify the signature with.
 	ProvenanceKeyring string
 	// ProvenanceStrategy, if ProvenanceStrategyVerify, requires the bundle to have a valid signature
@@ -28,68 +33,85 @@ type PullOptions struct {
 	ProvenanceStrategy string
 }
 
-func Pull(ctx context.Context, bundleRef, destDir string, bundlesRegistryClient *registry.Client, opts PullOptions) error {
-	r, err := ref.ParseReference(encodeAddrTag(bundleRef))
+// Pull downloads the bundle pushed into repo under tag and unpacks it into destDir. The tag is
+// literal, with "+" encoded as "_" as Helm does.
+func Pull(ctx context.Context, repo, tag, destDir string, registryClient *registry.Client, opts PullOptions) error {
+	repo, err := normalizeRepo(repo)
 	if err != nil {
 		return err
 	}
 
-	if err := logboek.Context(ctx).LogProcess("Pulling bundle %q", bundleRef).DoError(func() error {
-		return bundlesRegistryClient.PullChartToCache(ctx, r, opts.HelmOptions)
-	}); err != nil {
-		return err
-	}
+	verify := opts.ProvenanceStrategy == ProvenanceStrategyVerify || opts.ProvenanceStrategy == ProvenanceStrategyVerifyIfPossible
 
-	if err := logboek.Context(ctx).LogProcess("Exporting bundle %q", bundleRef).DoError(func() error {
-		ch, err := bundlesRegistryClient.LoadChart(ctx, r, opts.HelmOptions)
+	bundleRef := fmt.Sprintf("%s:%s", repo, tag)
+
+	var result *registry.PullResult
+	if err := logboek.Context(ctx).LogProcess("Pulling bundle %s", bundleRef).DoError(func() error {
+		var err error
+		result, err = registryClient.PullContext(ctx, fmt.Sprintf("%s:%s", repo, encodeTag(tag)), registry.PullOptWithProv(verify), registry.PullOptIgnoreMissingProv(true))
 		if err != nil {
-			return fmt.Errorf("unable to load pulled chart: %w", err)
-		}
-
-		if err := verifyCachedChart(ctx, bundlesRegistryClient, r, ch, opts); err != nil {
-			return fmt.Errorf("verify bundle %q signature: %w", bundleRef, err)
-		}
-
-		if destDir == "" {
-			err = chartv2util.SaveDir(ch, "")
-			if err != nil {
-				return err
-			}
-		} else {
-			err = chartv2util.SaveIntoDir(ch, destDir)
-			if err != nil {
-				return fmt.Errorf("unable to save chart into local destination directory %q: %w", destDir, err)
-			}
+			return fmt.Errorf("pull chart: %w", err)
 		}
 
 		return nil
 	}); err != nil {
 		return err
+	}
+
+	// The chart metadata in the OCI config is not checked against the chart, so only the chart
+	// archive is trusted.
+	metadata, err := chartArchiveMetadata(result.Chart.Data)
+	if err != nil {
+		return err
+	}
+
+	if verify {
+		if err := verifyChartArchive(ctx, bundleRef, result, metadata, opts); err != nil {
+			return fmt.Errorf("verify bundle %s signature: %w", bundleRef, err)
+		}
+	}
+
+	if err := os.MkdirAll(filepath.Dir(destDir), 0o755); err != nil {
+		return fmt.Errorf("create directory: %w", err)
+	}
+
+	expandDir, err := os.MkdirTemp(filepath.Dir(destDir), "expand-")
+	if err != nil {
+		return fmt.Errorf("create temporary directory: %w", err)
+	}
+	defer os.RemoveAll(expandDir)
+
+	if err := chartv2util.Expand(expandDir, bytes.NewReader(result.Chart.Data)); err != nil {
+		return fmt.Errorf("unpack chart: %w", err)
+	}
+
+	entries, err := os.ReadDir(expandDir)
+	if err != nil {
+		return fmt.Errorf("read unpacked chart: %w", err)
+	}
+
+	if len(entries) != 1 || !entries[0].IsDir() {
+		return fmt.Errorf("unpack chart: expected a single chart directory, got %d entries", len(entries))
+	}
+
+	if err := os.Rename(filepath.Join(expandDir, entries[0].Name()), destDir); err != nil {
+		return fmt.Errorf("move unpacked chart into %q: %w", destDir, err)
 	}
 
 	return nil
 }
 
-// verifyCachedChart verifies the cached chart archive against its provenance file as Helm verifies a
-// downloaded one, since the exported chart directory can't be verified. The strategies are the ones
-// Nelm's parseVerificationStrategy accepts: "later" and "never" verify nothing.
-func verifyCachedChart(ctx context.Context, bundlesRegistryClient *registry.Client, r *ref.Reference, ch *chart.Chart, opts PullOptions) error {
-	if opts.ProvenanceStrategy != ProvenanceStrategyVerify && opts.ProvenanceStrategy != ProvenanceStrategyVerifyIfPossible {
-		return nil
-	}
-
-	chartArchive, provenanceData, err := bundlesRegistryClient.LoadChartArchive(ctx, r, opts.HelmOptions)
-	if err != nil {
-		return fmt.Errorf("load cached chart archive: %w", err)
-	}
-
-	if provenanceData == nil {
+// verifyChartArchive verifies the chart archive against its provenance file with the name helm
+// package gives the archive, which the provenance file refers to: the archive is pushed under tags
+// that may differ from the chart version.
+func verifyChartArchive(ctx context.Context, bundleRef string, result *registry.PullResult, metadata *chart.Metadata, opts PullOptions) error {
+	if result.Prov.Digest == "" {
 		if opts.ProvenanceStrategy == ProvenanceStrategyVerifyIfPossible {
-			logboek.Context(ctx).Warn().LogF("Bundle %s is not signed, its signature is not verified\n", r.FullName())
+			logboek.Context(ctx).Warn().LogF("Bundle %s is not signed, its signature is not verified\n", bundleRef)
 			return nil
 		}
 
-		return fmt.Errorf("the bundle is not signed")
+		return errors.New("the bundle is not signed")
 	}
 
 	if opts.ProvenanceKeyring == "" {
@@ -101,12 +123,30 @@ func verifyCachedChart(ctx context.Context, bundlesRegistryClient *registry.Clie
 		return fmt.Errorf("load keyring: %w", err)
 	}
 
-	// The provenance file refers to the archive by the name helm package gives it.
-	if _, err := signatory.Verify(chartArchive, provenanceData, fmt.Sprintf("%s-%s.tgz", ch.Name(), ch.Metadata.Version)); err != nil {
+	if _, err := signatory.Verify(result.Chart.Data, result.Prov.Data, fmt.Sprintf("%s-%s.tgz", metadata.Name, metadata.Version)); err != nil {
 		return err
 	}
 
-	logboek.Context(ctx).Default().LogF("Bundle %s signature verified\n", r.FullName())
+	logboek.Context(ctx).Default().LogF("Bundle %s signature verified\n", bundleRef)
 
 	return nil
+}
+
+func chartArchiveMetadata(chartArchive []byte) (*chart.Metadata, error) {
+	files, err := archive.LoadArchiveFiles(bytes.NewReader(chartArchive))
+	if err != nil {
+		return nil, fmt.Errorf("read chart archive: %w", err)
+	}
+
+	chartYAML, found := lo.Find(files, func(f *archive.BufferedFile) bool { return f.Name == chartv2util.ChartfileName })
+	if !found {
+		return nil, fmt.Errorf("%s not found in chart archive", chartv2util.ChartfileName)
+	}
+
+	metadata := &chart.Metadata{}
+	if err := yaml.Unmarshal(chartYAML.Data, metadata); err != nil {
+		return nil, fmt.Errorf("parse %s: %w", chartv2util.ChartfileName, err)
+	}
+
+	return metadata, nil
 }

@@ -212,7 +212,9 @@ Example:
 werf bundle copy --from example.org/bundles/mybundle:v1.0.0 --to other.example.org/bundles/mybundle:v1.0.0
 ```
 
-The image references in a werf-published chart included as a dependent chart are not rewritten: it keeps the references to its original repository.
+The images are copied by digest, multi-platform images with all their platforms. The images of charts with `.werf-data/` included as dependent charts, at any depth, are copied too, and their `helm.sh/images` annotations and `.werf-data/extra-values.yaml` are rewritten for the destination repository. A bundle published by werf 3.12 or older and included as a dependent chart has no `.werf-data/`: its images are not copied and its values are not rewritten.
+
+A bundle published by werf 3.12 or older has no `.werf-data/`: its images are taken from the `werf.image` values, and the `werf.image`, `werf.repo` and `global.werf` values in its `values.yaml` are rewritten for the destination repository.
 
 A signed chart (with a Helm provenance file) keeps its signature when copied unchanged. If the copy changes the chart, e.g. rewrites the image references, renames it or changes its version, the signature is dropped with a warning.
 
@@ -226,7 +228,13 @@ After publication, the bundle can be exported from the repository to a local arc
 werf bundle copy --from example.org/bundles/mybundle:v1.0.0 --to archive:archive.tar.gz
 ```
 
-The archive doesn't keep the provenance file: exporting a signed bundle drops its signature with a warning, and a bundle imported from the archive is unsigned.
+The archive is a tar file, gzip-compressed if its name ends with `.gz` or `.tgz`, with an [OCI image layout](https://github.com/opencontainers/image-spec/blob/main/image-layout.md) inside (`oci-layout`, `index.json`, `blobs/sha256/…`). It holds the chart, with its provenance file if the chart is signed, and every image of the chart by digest:
+
+- multi-platform images are kept with all their platforms;
+- non-distributable (foreign) image layers are copied into the archive too;
+- referrers of the images, such as signatures and SBOMs attached to them, are not copied.
+
+werf 3.12 and older can't read these archives: import them with the current werf.
 
 ## Importing the bundle from the archive to the repository
 
@@ -237,6 +245,8 @@ werf bundle copy --from archive:archive.tar.gz --to other.example.org/bundles/my
 ```
 
 Then the newly published bundle (a chart and its images) can be used as usual.
+
+Archives written by werf 3.12 and older (`chart.tar.gz` and `images/*.tar.gz` inside) can still be imported. They have no tag, so without a tag in `--to` the bundle is pushed under its chart version only.
 
 ## Using the chart with Helm, Argo CD and Flux
 

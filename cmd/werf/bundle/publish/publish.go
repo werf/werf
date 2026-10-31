@@ -354,12 +354,6 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 
 	return bundles.Publish(ctx, filepath.Join(giterminismManager.ProjectDir(), chartDir), bundleRepo, cmdData.Tag, bundlesRegistryClient, bundles.PublishOptions{
 		ChartPackOptions: chartPackOpts,
-		HelmOptions: nelmcommon.HelmOptions{
-			ChartLoadOpts: nelmcommon.ChartLoadOptions{
-				ChartType: nelmcommon.LegacyChartTypeBundle,
-				NoSecrets: true,
-			},
-		},
 	})
 }
 
@@ -429,7 +423,7 @@ func newChartPackOptions(ctx context.Context, werfConfig *config.WerfConfig, ser
 		RepositoryConfig:       helm.Settings.RepositoryConfig,
 		RootSetJSON:            commonCmdData.RootSetJSON,
 		SecretValuesFiles:      commonCmdData.SecretValuesFiles,
-		TempDirPath:            lo.FromPtr(commonCmdData.TmpDir),
+		TempDirPath:            werf.GetTmpDir(),
 		ValuesFiles:            commonCmdData.ValuesFiles,
 		ValuesSet:              commonCmdData.ValuesSet,
 		ValuesSetFile:          commonCmdData.ValuesSetFile,

@@ -4,33 +4,36 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path"
 	"strings"
 	"time"
 
 	"github.com/werf/logboek"
 	"github.com/werf/nelm/v2/pkg/action"
-	nelmcommon "github.com/werf/nelm/v2/pkg/common"
-	"github.com/werf/werf/v3/pkg/deploy/bundles/registry"
-	"github.com/werf/werf/v3/pkg/ref"
+	"github.com/werf/nelm/v2/pkg/helm/pkg/registry"
 )
 
 type PublishOptions struct {
 	// ChartPackOptions are the options to pack the chart with. The chart name and version are set
-	// from bundleRef.
+	// from the repo and the tag.
 	ChartPackOptions action.ChartPackOptions
-	HelmOptions      nelmcommon.HelmOptions
 }
 
 // Publish packs the chart and pushes it into repo under the chart version derived from tag and under
 // tag itself, both with "+" encoded as "_" as Helm does.
-func Publish(ctx context.Context, chartDir, repo, tag string, bundlesRegistryClient *registry.Client, opts PublishOptions) error {
+func Publish(ctx context.Context, chartDir, repo, tag string, registryClient *registry.Client, opts PublishOptions) error {
+	repo, err := normalizeRepo(repo)
+	if err != nil {
+		return err
+	}
+
 	sv, err := BundleTagToChartVersion(ctx, tag, time.Now())
 	if err != nil {
 		return fmt.Errorf("unable to set chart version from bundle tag %q: %w", tag, err)
 	}
 
 	packOpts := opts.ChartPackOptions
-	packOpts.Name = chartNameFromRepo(repo)
+	packOpts.Name = path.Base(repo)
 	packOpts.Version = sv.String()
 
 	var packResult *action.ChartPackResult
@@ -60,23 +63,12 @@ func Publish(ctx context.Context, chartDir, repo, tag string, bundlesRegistryCli
 
 	tags := chartTags(packResult.ChartVersion, tag)
 
-	r, err := ref.ParseReference(fmt.Sprintf("%s:%s", repo, tags[0]))
-	if err != nil {
-		return fmt.Errorf("error parsing bundle ref: %w", err)
-	}
-
-	if err := logboek.Context(ctx).Default().LogProcess("Saving bundle to the local chart helm cache").DoError(func() error {
-		if err := bundlesRegistryClient.SaveChartArchive(ctx, chartArchive, provenance, r, opts.HelmOptions); err != nil {
-			return fmt.Errorf("unable to save bundle to the local chart helm cache: %w", err)
+	if err := logboek.Context(ctx).LogProcess("Pushing bundle %s with tags %s", repo, strings.Join(tags, ", ")).DoError(func() error {
+		if _, err := registryClient.PushContext(ctx, chartArchive, fmt.Sprintf("%s:%s", repo, packResult.ChartVersion), registry.PushOptProvData(provenance), registry.PushOptExtraTags(tags[1:])); err != nil {
+			return fmt.Errorf("push chart: %w", err)
 		}
 
 		return nil
-	}); err != nil {
-		return err
-	}
-
-	if err := logboek.Context(ctx).LogProcess("Pushing bundle %s with tags %s", repo, strings.Join(tags, ", ")).DoError(func() error {
-		return bundlesRegistryClient.PushChart(ctx, r, tags, opts.HelmOptions)
 	}); err != nil {
 		return err
 	}

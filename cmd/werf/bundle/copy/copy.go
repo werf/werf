@@ -8,11 +8,11 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/werf/logboek"
-	nelmcommon "github.com/werf/nelm/v2/pkg/common"
 	"github.com/werf/werf/v3/cmd/werf/common"
 	"github.com/werf/werf/v3/pkg/deploy/bundles"
-	"github.com/werf/werf/v3/pkg/docker_registry"
+	"github.com/werf/werf/v3/pkg/docker"
 	"github.com/werf/werf/v3/pkg/tmp_manager"
+	"github.com/werf/werf/v3/pkg/werf"
 	"github.com/werf/werf/v3/pkg/werf/global_warnings"
 )
 
@@ -55,14 +55,12 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified repos")
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
-	common.SetupContainerRegistryMirror(&commonCmdData, cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)
-	commonCmdData.SetupPlatform(cmd)
 
-	cmd.Flags().StringVarP(&cmdData.From, "from", "", os.Getenv("WERF_FROM"), "Source address of the bundle to copy, specify bundle archive using schema `archive:PATH_TO_ARCHIVE.tar.gz`, specify remote bundle with schema `[docker://]REPO:TAG` or without schema.")
-	cmd.Flags().StringVarP(&cmdData.To, "to", "", os.Getenv("WERF_TO"), "Destination address of the bundle to copy, specify bundle archive using schema `archive:PATH_TO_ARCHIVE.tar.gz`, specify remote bundle with schema `[docker://]REPO[:TAG]` or without schema. A remote bundle gets its chart version from TAG and is pushed under that version and under TAG; without TAG it keeps the chart version and the tag of the source bundle, or, copied from an archive, which has no tag, is pushed under its chart version only. A `+` in TAG is pushed as `_`.")
+	cmd.Flags().StringVarP(&cmdData.From, "from", "", os.Getenv("WERF_FROM"), "Source address of the bundle to copy, specify bundle archive (an OCI image layout, or an archive written by werf 3.12 or older) using schema `archive:PATH_TO_ARCHIVE.tar.gz`, specify remote bundle with schema `[docker://]REPO:TAG` or without schema.")
+	cmd.Flags().StringVarP(&cmdData.To, "to", "", os.Getenv("WERF_TO"), "Destination address of the bundle to copy, specify bundle archive, written as an OCI image layout, using schema `archive:PATH_TO_ARCHIVE.tar.gz`, specify remote bundle with schema `[docker://]REPO[:TAG]` or without schema. A remote bundle gets its chart version from TAG and is pushed under that version and under TAG; without TAG it keeps the chart version and the tag of the source bundle, or, copied from an archive written by werf 3.12 or older, which has no tag, is pushed under its chart version only. A `+` in TAG is pushed as `_`.")
 
 	return cmd
 }
@@ -70,7 +68,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 func runCopy(ctx context.Context) error {
 	_, ctx, err := common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
 		Cmd:                &commonCmdData,
-		InitDockerRegistry: true,
 		InitWerf:           true,
 		InitGitDataManager: true,
 	})
@@ -84,62 +81,22 @@ func runCopy(ctx context.Context) error {
 		}
 	}()
 
-	bundlesRegistryClient, err := common.NewBundlesRegistryClient(ctx, &commonCmdData)
-	if err != nil {
-		return err
-	}
-
 	if cmdData.From == "" {
 		return fmt.Errorf("--from=ADDRESS param required")
 	}
 
-	fromAddrRaw := cmdData.From
-
-	toAddrRaw := cmdData.To
-	if toAddrRaw == "" {
+	if cmdData.To == "" {
 		return fmt.Errorf("--to=ADDRESS param required")
 	}
 
-	fromAddr, err := bundles.ParseSourceAddr(fromAddrRaw)
-	if err != nil {
-		return fmt.Errorf("invalid from addr %q: %w", fromAddrRaw, err)
-	}
-
-	toAddr, err := bundles.ParseDestinationAddr(toAddrRaw)
-	if err != nil {
-		return fmt.Errorf("invalid to addr %q: %w", toAddrRaw, err)
-	}
-
-	var fromRegistry, toRegistry docker_registry.Interface
-
-	if fromAddr.RegistryAddress != nil {
-		fromRegistry, err = common.CreateDockerRegistry(ctx, fromAddr.RegistryAddress.Repo, *commonCmdData.InsecureRegistry, *commonCmdData.SkipTlsVerifyRegistry, nil)
-		if err != nil {
-			return err
-		}
-	}
-
-	if toAddr.RegistryAddress != nil {
-		toRegistry, err = common.CreateDockerRegistry(ctx, toAddr.RegistryAddress.Repo, *commonCmdData.InsecureRegistry, *commonCmdData.SkipTlsVerifyRegistry, nil)
-		if err != nil {
-			return err
-		}
-	}
-
 	return logboek.Context(ctx).LogProcess("Copy bundle").DoError(func() error {
-		logboek.Context(ctx).LogFDetails("From: %s\n", fromAddr.String())
-		logboek.Context(ctx).LogFDetails("To: %s\n", toAddr.String())
+		logboek.Context(ctx).LogFDetails("From: %s\n", cmdData.From)
+		logboek.Context(ctx).LogFDetails("To: %s\n", cmdData.To)
 
-		return bundles.Copy(ctx, fromAddr, toAddr, bundles.CopyOptions{
-			BundlesRegistryClient: bundlesRegistryClient,
-			FromRegistryClient:    fromRegistry,
-			ToRegistryClient:      toRegistry,
-			HelmOptions: nelmcommon.HelmOptions{
-				ChartLoadOpts: nelmcommon.ChartLoadOptions{
-					ChartType: nelmcommon.LegacyChartTypeBundle,
-					NoSecrets: true,
-				},
-			},
+		return bundles.Copy(ctx, cmdData.From, cmdData.To, bundles.CopyOptions{
+			ChartRepoConnectionOptions: common.GetBundlesRegistryConnectionOptions(&commonCmdData),
+			RegistryCredentialsPath:    docker.GetDockerConfigCredentialsFile(*commonCmdData.DockerConfig),
+			TempDirPath:                werf.GetTmpDir(),
 		})
 	})
 }

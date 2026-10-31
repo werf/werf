@@ -1,9 +1,13 @@
 package bundles
 
 import (
+	"archive/tar"
+	"bytes"
+	"compress/gzip"
 	"context"
 	"io"
 	"log"
+	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
@@ -17,10 +21,11 @@ import (
 	"github.com/samber/lo"
 
 	"github.com/werf/nelm/v2/pkg/action"
+	nelmchart "github.com/werf/nelm/v2/pkg/chart"
 	nelmcommon "github.com/werf/nelm/v2/pkg/common"
-	"github.com/werf/werf/v3/pkg/deploy/bundles/registry"
+	chartcommon "github.com/werf/nelm/v2/pkg/helm/pkg/chart/common"
+	"github.com/werf/nelm/v2/pkg/helm/pkg/registry"
 	"github.com/werf/werf/v3/pkg/logging"
-	"github.com/werf/werf/v3/pkg/ref"
 )
 
 var _ = Describe("Bundle publish", func() {
@@ -77,24 +82,85 @@ var _ = Describe("Bundle publish", func() {
 		Entry("128 characters", 128),
 	)
 
-	It("should refuse a chart with Chart.yaml apiVersion v3", func(ctx0 context.Context) {
+	It("should publish a chart with Chart.yaml apiVersion v3 that renders with its publish-time values", func(ctx0 context.Context) {
 		ctx := logging.WithLogger(ctx0)
 		chartDir := GinkgoT().TempDir()
 		Expect(os.WriteFile(filepath.Join(chartDir, "Chart.yaml"), []byte("apiVersion: v3\nname: app\nversion: 0.1.0\n"), 0o644)).To(Succeed())
+		Expect(os.WriteFile(filepath.Join(chartDir, "values.yaml"), []byte("chartValue: chart\n"), 0o644)).To(Succeed())
+		repo := startTestRegistry() + "/group/app"
 
-		err := Publish(ctx, chartDir, startTestRegistry()+"/group/app", "1.0.0", newTestRegistryClient(ctx), PublishOptions{
-			ChartPackOptions: action.ChartPackOptions{Destination: GinkgoT().TempDir()},
+		Expect(Publish(ctx, chartDir, repo, "1.0.0", newTestRegistryClient(ctx), PublishOptions{
+			ChartPackOptions: action.ChartPackOptions{
+				Destination: GinkgoT().TempDir(),
+				ExtraValues: map[string]interface{}{"werf": map[string]interface{}{"repo": repo}},
+			},
+		})).To(Succeed())
+
+		bundleDir := filepath.Join(GinkgoT().TempDir(), "bundle")
+		Expect(Pull(ctx, repo, "1.0.0", bundleDir, newTestRegistryClient(ctx), PullOptions{})).To(Succeed())
+
+		result, err := nelmchart.RenderChart(ctx, bundleDir, "release", "namespace", 1, nelmcommon.DeployTypeInstall, nil, nil, nelmchart.RenderChartOptions{
+			HelmOptions: nelmcommon.HelmOptions{
+				ChartLoadOpts: nelmcommon.ChartLoadOptions{ChartType: nelmcommon.LegacyChartTypeBundle},
+			},
+			LocalKubeVersion: "1.30.0",
 		})
-		Expect(err).To(MatchError(ContainSubstring("werf bundle commands don't support Chart.yaml apiVersion v3 yet")))
+		Expect(err).To(Succeed())
+		Expect(result.Values["Values"]).To(Equal(chartcommon.Values{
+			"chartValue": "chart",
+			"werf":       map[string]interface{}{"repo": repo},
+		}))
+	})
+
+	It("should pull a chart with apiVersion v1 keeping the dependencies in its Chart.yaml", func(ctx0 context.Context) {
+		ctx := logging.WithLogger(ctx0)
+		repo := startTestRegistry() + "/group/app"
+		chartYAML := `apiVersion: v1
+name: app
+version: 1.0.0
+dependencies:
+- name: sub
+  version: 0.1.0
+  alias: renamed
+  condition: renamed.enabled
+  export-values:
+  - parent: shared
+    child: imported
+`
+		_, err := newTestRegistryClient(ctx).Push(tarTestChart(map[string]string{
+			"app/Chart.yaml":                   chartYAML,
+			"app/values.yaml":                  "shared:\n  msg: from-parent\nrenamed:\n  enabled: true\n",
+			"app/charts/sub/Chart.yaml":        "apiVersion: v2\nname: sub\nversion: 0.1.0\n",
+			"app/charts/sub/templates/cm.yaml": "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: {{ .Chart.Name }}\ndata:\n  msg: {{ .Values.imported.msg }}\n",
+		}), repo+":1.0.0")
+		Expect(err).To(Succeed())
+
+		bundleDir := filepath.Join(GinkgoT().TempDir(), "bundle")
+		Expect(Pull(ctx, repo, "1.0.0", bundleDir, newTestRegistryClient(ctx), PullOptions{})).To(Succeed())
+
+		pulledChartYAML, err := os.ReadFile(filepath.Join(bundleDir, "Chart.yaml"))
+		Expect(err).To(Succeed())
+		Expect(string(pulledChartYAML)).To(Equal(chartYAML))
+
+		result, err := nelmchart.RenderChart(ctx, bundleDir, "release", "namespace", 1, nelmcommon.DeployTypeInstall, nil, nil, nelmchart.RenderChartOptions{
+			HelmOptions: nelmcommon.HelmOptions{
+				ChartLoadOpts: nelmcommon.ChartLoadOptions{ChartType: nelmcommon.LegacyChartTypeBundle},
+			},
+			LocalKubeVersion: "1.30.0",
+		})
+		Expect(err).To(Succeed())
+		Expect(result.ResourceSpecs).To(HaveLen(1))
+		Expect(result.ResourceSpecs[0].Unstruct.GetName()).To(Equal("renamed"))
+		Expect(result.ResourceSpecs[0].Unstruct.Object["data"]).To(Equal(map[string]interface{}{"msg": "from-parent"}))
 	})
 
 	DescribeTable("should verify the signature of a pulled bundle as requested",
-		func(ctx0 context.Context, publish func(ctx context.Context, repo string), strategy, expectedErr string) {
+		func(ctx0 context.Context, publish func(ctx context.Context, repo string), tag, strategy, expectedErr string) {
 			ctx := logging.WithLogger(ctx0)
 			repo := startTestRegistry() + "/group/app"
 			publish(ctx, repo)
 
-			err := Pull(ctx, repo+":1.0.0", filepath.Join(GinkgoT().TempDir(), "app"), newTestRegistryClient(ctx), PullOptions{
+			err := Pull(ctx, repo, tag, filepath.Join(GinkgoT().TempDir(), "app"), newTestRegistryClient(ctx), PullOptions{
 				ProvenanceKeyring:  testKeyringPath("helm-test-key.pub"),
 				ProvenanceStrategy: strategy,
 			})
@@ -104,13 +170,15 @@ var _ = Describe("Bundle publish", func() {
 				Expect(err).To(MatchError(ContainSubstring(expectedErr)))
 			}
 		},
-		Entry("signed, verify", publishSignedTestChart, ProvenanceStrategyVerify, ""),
-		Entry("signed, verify if possible", publishSignedTestChart, ProvenanceStrategyVerifyIfPossible, ""),
-		Entry("tampered, verify", publishTamperedTestChart, ProvenanceStrategyVerify, "sha256 sum does not match"),
-		Entry("tampered, verify if possible", publishTamperedTestChart, ProvenanceStrategyVerifyIfPossible, "sha256 sum does not match"),
-		Entry("tampered, never", publishTamperedTestChart, "never", ""),
-		Entry("unsigned, verify", publishUnsignedTestChart, ProvenanceStrategyVerify, "the bundle is not signed"),
-		Entry("unsigned, verify if possible", publishUnsignedTestChart, ProvenanceStrategyVerifyIfPossible, ""),
+		Entry("signed, verify", publishSignedTestChart, "1.0.0", ProvenanceStrategyVerify, ""),
+		Entry("signed, verify if possible", publishSignedTestChart, "1.0.0", ProvenanceStrategyVerifyIfPossible, ""),
+		Entry("signed, verify, the tag other than the version", publishSignedTestChart, "v1.0.0", ProvenanceStrategyVerify, ""),
+		Entry("tampered, verify", publishTamperedTestChart, "1.0.0", ProvenanceStrategyVerify, "sha256 sum does not match"),
+		Entry("tampered, verify if possible", publishTamperedTestChart, "1.0.0", ProvenanceStrategyVerifyIfPossible, "sha256 sum does not match"),
+		Entry("tampered, never", publishTamperedTestChart, "1.0.0", "never", ""),
+		Entry("unsigned, verify", publishUnsignedTestChart, "1.0.0", ProvenanceStrategyVerify, "the bundle is not signed"),
+		Entry("unsigned, verify if possible", publishUnsignedTestChart, "1.0.0", ProvenanceStrategyVerifyIfPossible, ""),
+		Entry("empty provenance file, verify if possible", publishEmptyProvenanceTestChart, "1.0.0", ProvenanceStrategyVerifyIfPossible, "verify bundle"),
 	)
 
 	DescribeTable("should refuse to verify the signature",
@@ -119,7 +187,7 @@ var _ = Describe("Bundle publish", func() {
 			repo := startTestRegistry() + "/group/app"
 			publishSignedTestChart(ctx, repo)
 
-			err := Pull(ctx, repo+":1.0.0", filepath.Join(GinkgoT().TempDir(), "app"), newTestRegistryClient(ctx), PullOptions{
+			err := Pull(ctx, repo, "1.0.0", filepath.Join(GinkgoT().TempDir(), "app"), newTestRegistryClient(ctx), PullOptions{
 				ProvenanceKeyring:  keyring,
 				ProvenanceStrategy: ProvenanceStrategyVerify,
 			})
@@ -134,26 +202,72 @@ var _ = Describe("Bundle publish", func() {
 		repo := startTestRegistry() + "/group/app"
 		publishUnsignedTestChart(ctx, repo)
 
-		Expect(Pull(ctx, repo+":1.0.0", filepath.Join(GinkgoT().TempDir(), "app"), newTestRegistryClient(ctx), PullOptions{
+		Expect(Pull(ctx, repo, "1.0.0", filepath.Join(GinkgoT().TempDir(), "app"), newTestRegistryClient(ctx), PullOptions{
 			ProvenanceStrategy: ProvenanceStrategyVerifyIfPossible,
 		})).To(Succeed())
 	})
+
+	It("should fail to verify if possible a signed bundle whose signature fails to download", func(ctx0 context.Context) {
+		ctx := logging.WithLogger(ctx0)
+		var failingBlob string
+		repo := startTestRegistryWith(func(next http.Handler) http.Handler {
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if failingBlob != "" && strings.HasSuffix(r.URL.Path, "/blobs/"+failingBlob) {
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+
+				next.ServeHTTP(w, r)
+			})
+		}) + "/group/app"
+		publishSignedTestChart(ctx, repo)
+
+		result, err := newTestRegistryClient(ctx).Pull(repo+":1.0.0", registry.PullOptWithProv(true))
+		Expect(err).To(Succeed())
+		failingBlob = result.Prov.Digest
+
+		err = Pull(ctx, repo, "1.0.0", filepath.Join(GinkgoT().TempDir(), "app"), newTestRegistryClient(ctx), PullOptions{
+			ProvenanceKeyring:  testKeyringPath("helm-test-key.pub"),
+			ProvenanceStrategy: ProvenanceStrategyVerifyIfPossible,
+		})
+		Expect(err).To(MatchError(ContainSubstring("500")))
+	})
+
+	DescribeTable("should pull a bundle by the tag it is published under",
+		func(ctx0 context.Context, tag, expectedVersion string) {
+			ctx := logging.WithLogger(ctx0)
+			repo := startTestRegistry() + "/group/app"
+			Expect(Publish(ctx, writeTestChart(), repo, tag, newTestRegistryClient(ctx), PublishOptions{
+				ChartPackOptions: signingChartPackOptions(),
+			})).To(Succeed())
+
+			bundleDir := filepath.Join(GinkgoT().TempDir(), "app")
+			Expect(Pull(ctx, repo, tag, bundleDir, newTestRegistryClient(ctx), PullOptions{
+				ProvenanceKeyring:  testKeyringPath("helm-test-key.pub"),
+				ProvenanceStrategy: ProvenanceStrategyVerify,
+			})).To(Succeed())
+
+			chartYAML, err := os.ReadFile(filepath.Join(bundleDir, "Chart.yaml"))
+			Expect(err).To(Succeed())
+			Expect(string(chartYAML)).To(MatchRegexp(`(?m)^version: ` + expectedVersion + `$`))
+		},
+		Entry("semver tag ending with .prov", "1.2.3-test.prov", `1\.2\.3-test\.prov`),
+		Entry("non-semver tag with +", "feature+build", `0\.0\.0-\d+-feature-build`),
+	)
 
 	It("should publish a signed chart with its signature", func(ctx0 context.Context) {
 		ctx := logging.WithLogger(ctx0)
 		repo := startTestRegistry() + "/group/app"
 		publishSignedTestChart(ctx, repo)
 
-		client := newTestRegistryClient(ctx)
-		r, err := ref.ParseReference(repo + ":1.0.0")
+		result, err := newTestRegistryClient(ctx).Pull(repo+":1.0.0", registry.PullOptWithProv(true))
 		Expect(err).To(Succeed())
-		Expect(client.PullChartToCache(ctx, r, nelmcommon.HelmOptions{})).To(Succeed())
-		Expect(client.IsChartSigned(ctx, r, nelmcommon.HelmOptions{})).To(BeTrue())
+		Expect(result.Prov.Data).NotTo(BeEmpty())
 	})
 })
 
 func publishSignedTestChart(ctx context.Context, repo string) {
-	Expect(Publish(ctx, writeTestChart(), repo, "1.0.0", newTestRegistryClient(ctx), PublishOptions{
+	Expect(Publish(ctx, writeTestChart(), repo, "v1.0.0", newTestRegistryClient(ctx), PublishOptions{
 		ChartPackOptions: signingChartPackOptions(),
 	})).To(Succeed())
 }
@@ -182,11 +296,18 @@ func publishTamperedTestChart(ctx context.Context, repo string) {
 	archive, err := os.ReadFile(tampered.ArchivePath)
 	Expect(err).To(Succeed())
 
-	r, err := ref.ParseReference(repo + ":1.0.0")
+	_, err = newTestRegistryClient(ctx).Push(archive, repo+":1.0.0", registry.PushOptProvData(provenance))
 	Expect(err).To(Succeed())
-	client := newTestRegistryClient(ctx)
-	Expect(client.SaveChartArchive(ctx, archive, provenance, r, nelmcommon.HelmOptions{})).To(Succeed())
-	Expect(client.PushChart(ctx, r, []string{r.Tag}, nelmcommon.HelmOptions{})).To(Succeed())
+}
+
+func publishEmptyProvenanceTestChart(ctx context.Context, repo string) {
+	packed, err := action.ChartPack(ctx, writeTestChart(), action.ChartPackOptions{Destination: GinkgoT().TempDir(), Name: "app", Version: "1.0.0"})
+	Expect(err).To(Succeed())
+	archive, err := os.ReadFile(packed.ArchivePath)
+	Expect(err).To(Succeed())
+
+	_, err = newTestRegistryClient(ctx).Push(archive, repo+":1.0.0", registry.PushOptProvData([]byte{}))
+	Expect(err).To(Succeed())
 }
 
 func signingChartPackOptions() action.ChartPackOptions {
@@ -206,22 +327,43 @@ func testKeyringPath(name string) string {
 }
 
 func startTestRegistry() string {
-	server := httptest.NewServer(ggcrregistry.New(ggcrregistry.Logger(log.New(io.Discard, "", 0))))
+	return startTestRegistryWith(func(next http.Handler) http.Handler { return next })
+}
+
+func startTestRegistryWith(wrap func(http.Handler) http.Handler) string {
+	server := httptest.NewServer(wrap(ggcrregistry.New(ggcrregistry.Logger(log.New(io.Discard, "", 0)))))
 	DeferCleanup(server.Close)
 
 	return strings.TrimPrefix(server.URL, "http://")
 }
 
 func newTestRegistryClient(ctx context.Context) *registry.Client {
-	tmpDir := GinkgoT().TempDir()
-
-	cache, err := registry.NewCache(registry.CacheOptRoot(filepath.Join(tmpDir, "cache")))
-	Expect(err).To(Succeed())
-
-	client, err := registry.NewClient(ctx, registry.ClientOptCredentialsFile(filepath.Join(tmpDir, "config.json")), registry.ClientOptInsecure(true), registry.ClientOptCache(cache))
+	client, err := registry.NewClient(registry.ClientOptCredentialsFile(testCredentialsPath()), registry.ClientOptPlainHTTP())
 	Expect(err).To(Succeed())
 
 	return client
+}
+
+func testCredentialsPath() string {
+	return filepath.Join(GinkgoT().TempDir(), "config.json")
+}
+
+// tarTestChart returns a chart archive with the files as given, which helm package would rewrite.
+func tarTestChart(files map[string]string) []byte {
+	var archive bytes.Buffer
+	gzipWriter := gzip.NewWriter(&archive)
+	tarWriter := tar.NewWriter(gzipWriter)
+
+	for _, name := range lo.Keys(files) {
+		Expect(tarWriter.WriteHeader(&tar.Header{Name: name, Mode: 0o644, Size: int64(len(files[name])), Typeflag: tar.TypeReg})).To(Succeed())
+		_, err := tarWriter.Write([]byte(files[name]))
+		Expect(err).To(Succeed())
+	}
+
+	Expect(tarWriter.Close()).To(Succeed())
+	Expect(gzipWriter.Close()).To(Succeed())
+
+	return archive.Bytes()
 }
 
 func writeTestChart() string {
@@ -232,13 +374,8 @@ func writeTestChart() string {
 }
 
 func pullTestChartVersion(ctx context.Context, client *registry.Client, repo, tag string) string {
-	r, err := ref.ParseReference(repo + ":" + tag)
+	result, err := client.Pull(repo + ":" + tag)
 	Expect(err).To(Succeed())
 
-	Expect(client.PullChartToCache(ctx, r, nelmcommon.HelmOptions{})).To(Succeed())
-
-	ch, err := client.LoadChart(ctx, r, nelmcommon.HelmOptions{})
-	Expect(err).To(Succeed())
-
-	return ch.Metadata.Version
+	return result.Chart.Meta.Version
 }

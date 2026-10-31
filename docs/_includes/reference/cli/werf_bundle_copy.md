@@ -15,15 +15,13 @@ werf bundle copy [options]
 {{ header }} Options
 
 ```shell
-      --container-registry-mirror=[]
-            (Buildah-only) Use specified mirrors for docker.io ($WERF_CONTAINER_REGISTRY_MIRROR or  
-            $WERF_CONTAINER_REGISTRY_MIRROR_*)
       --docker-config=""
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)
             Command needs granted permissions to read, pull and push images into the specified repos
       --from=""
-            Source address of the bundle to copy, specify bundle archive using schema               
+            Source address of the bundle to copy, specify bundle archive (an OCI image layout, or   
+            an archive written by werf 3.12 or older) using schema                                  
             `archive:PATH_TO_ARCHIVE.tar.gz`, specify remote bundle with schema                     
             `[docker://]REPO:TAG` or without schema.
       --home-dir=""
@@ -56,20 +54,18 @@ werf bundle copy [options]
             Specify custom log time format (default $WERF_LOG_TIME_FORMAT or RFC3339 format).
       --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
-      --platform=[]
-            Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT]     
-            ($WERF_PLATFORM or $DOCKER_DEFAULT_PLATFORM by default)
       --skip-tls-verify-registry=false
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)
       --tmp-dir=""
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
       --to=""
-            Destination address of the bundle to copy, specify bundle archive using schema          
-            `archive:PATH_TO_ARCHIVE.tar.gz`, specify remote bundle with schema                     
-            `[docker://]REPO[:TAG]` or without schema. A remote bundle gets its chart version from  
-            TAG and is pushed under that version and under TAG; without TAG it keeps the chart      
-            version and the tag of the source bundle, or, copied from an archive, which has no tag, 
-            is pushed under its chart version only. A `+` in TAG is pushed as `_`.
+            Destination address of the bundle to copy, specify bundle archive, written as an OCI    
+            image layout, using schema `archive:PATH_TO_ARCHIVE.tar.gz`, specify remote bundle with 
+            schema `[docker://]REPO[:TAG]` or without schema. A remote bundle gets its chart        
+            version from TAG and is pushed under that version and under TAG; without TAG it keeps   
+            the chart version and the tag of the source bundle, or, copied from an archive written  
+            by werf 3.12 or older, which has no tag, is pushed under its chart version only. A `+`  
+            in TAG is pushed as `_`.
 ```
 

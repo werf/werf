@@ -14,7 +14,6 @@ require (
 	github.com/cenkalti/backoff/v5 v5.0.3
 	github.com/containerd/containerd v1.7.35
 	github.com/deckarep/golang-set/v2 v2.9.0
-	github.com/deislabs/oras v1.1.0
 	github.com/djherbis/buffer v1.2.0
 	github.com/djherbis/nio/v3 v3.0.1
 	github.com/docker/buildx v0.33.0
@@ -22,7 +21,6 @@ require (
 	github.com/docker/distribution v2.8.3+incompatible
 	github.com/docker/docker v28.5.2+incompatible
 	github.com/docker/go-connections v0.8.1
-	github.com/docker/go-units v0.5.0
 	github.com/dustin/go-humanize v1.1.0
 	github.com/go-git/go-billy/v5 v5.9.1
 	github.com/go-git/go-git/v5 v5.19.2
@@ -32,7 +30,6 @@ require (
 	github.com/google/go-containerregistry v0.22.1
 	github.com/google/uuid v1.6.0
 	github.com/gookit/color v1.6.1
-	github.com/gosuri/uitable v0.0.4
 	github.com/goware/urlx v0.3.2
 	github.com/hofstadter-io/cinful v1.0.0
 	github.com/joho/godotenv v1.5.1
@@ -60,7 +57,7 @@ require (
 	github.com/werf/copy-recurse v0.3.1
 	github.com/werf/lockgate v0.2.1
 	github.com/werf/logboek v0.7.2-0.20260810094044-236a5f8ae9dd
-	github.com/werf/nelm/v2 v2.2.2-0.20261031075654-f21377c69f9c
+	github.com/werf/nelm/v2 v2.2.2-0.20261031083340-03374bf60bd3
 	go.opentelemetry.io/otel v1.46.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.46.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.46.0
@@ -140,6 +137,8 @@ require (
 	github.com/digitorus/timestamp v0.0.0-20231217203849-220c5c2851b7 // indirect
 	github.com/dlclark/regexp2/v2 v2.7.1 // indirect
 	github.com/docker/go-events v0.0.0-20250808211157-605354379745 // indirect
+	github.com/docker/go-units v0.5.0 // indirect
+	github.com/docker/libtrust v0.0.0-20150114040149-fa567046d9b1 // indirect
 	github.com/elliotchance/orderedmap/v3 v3.1.1 // indirect
 	github.com/envoyproxy/go-control-plane/envoy v1.39.0 // indirect
 	github.com/envoyproxy/protoc-gen-validate v1.3.3 // indirect
@@ -175,6 +174,7 @@ require (
 	github.com/googleapis/gax-go/v2 v2.23.0 // indirect
 	github.com/gosimple/slug v1.15.0 // indirect
 	github.com/gosimple/unidecode v1.0.1 // indirect
+	github.com/gosuri/uitable v0.0.4 // indirect
 	github.com/hashicorp/aws-sdk-go-base/v2 v2.0.0-beta.74 // indirect
 	github.com/hashicorp/go-getter v1.8.8 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
@@ -274,7 +274,6 @@ require (
 
 require (
 	dario.cat/mergo v1.0.2 // indirect
-	github.com/AdaLogics/go-fuzz-headers v0.0.0-20240806141605-e8a1dd7889d6 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20250102033503-faa5f7b0171c // indirect
 	github.com/BurntSushi/toml v1.6.0
 	github.com/MakeNowJust/heredoc v1.0.0 // indirect
@@ -283,7 +282,6 @@ require (
 	github.com/Microsoft/go-winio v0.6.3-0.20251027160822-ad3df93bed29 // indirect
 	github.com/Microsoft/hcsshim v0.15.0-rc.4 // indirect
 	github.com/ProtonMail/go-crypto v1.4.1 // indirect
-	github.com/Shopify/logrus-bugsnag v0.0.0-20230117174420-439a4b8ba167 // indirect
 	github.com/VividCortex/ewma v1.2.0 // indirect
 	github.com/aead/serpent v0.0.0-20160714141033-fba169763ea6 // indirect
 	github.com/agext/levenshtein v1.2.3 // indirect
@@ -306,7 +304,6 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/bmatcuk/doublestar/v4 v4.10.2
-	github.com/bugsnag/bugsnag-go v2.2.0+incompatible // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/chai2010/gettext-go v1.0.3 // indirect
 	github.com/chanced/caps v1.0.2 // indirect
@@ -343,7 +340,6 @@ require (
 	github.com/fsnotify/fsnotify v1.10.1 // indirect
 	github.com/fsouza/go-dockerclient v1.13.2 // indirect
 	github.com/fvbommel/sortorder v1.2.0 // indirect
-	github.com/garyburd/redigo v1.6.4 // indirect
 	github.com/go-errors/errors v1.5.1 // indirect
 	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect
 	github.com/go-gorp/gorp/v3 v3.1.0 // indirect
@@ -463,9 +459,6 @@ require (
 	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
 	github.com/xlab/treeprint v1.2.0 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
-	github.com/yvasiyarov/go-metrics v0.0.0-20150112132944-c25f46c4b940 // indirect
-	github.com/yvasiyarov/gorelic v0.0.7 // indirect
-	github.com/yvasiyarov/newrelic_platform_go v0.0.0-20160601141957-9c099fbc30e9 // indirect
 	github.com/zclconf/go-cty v1.17.0 // indirect
 	go.etcd.io/bbolt v1.5.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.70.0 // indirect
@@ -493,7 +486,6 @@ require (
 	k8s.io/component-helpers v0.37.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20260721132016-d427ff9ee9ad // indirect
 	k8s.io/metrics v0.37.0 // indirect
-	rsc.io/letsencrypt v0.0.3 // indirect
 	sigs.k8s.io/json v0.0.0-20250730193827-2d320260d730 // indirect
 	sigs.k8s.io/kustomize/api v0.21.1 // indirect
 	sigs.k8s.io/kustomize/kustomize/v5 v5.8.1 // indirect
@@ -502,10 +494,8 @@ require (
 )
 
 replace (
-	github.com/deislabs/oras => github.com/werf/3p-oras v0.9.1-0.20260408144000-3b8c77eb09e8 // used by bundles, not maintained
 	github.com/docker/buildx => github.com/werf/3p-buildx v0.0.0-20260921140347-f09c144ec33b // temporary race fix; remove after docker/buildx#4007 merges
 	github.com/mattn/go-sqlite3 => github.com/mattn/go-sqlite3 v1.14.22 // v2.0.1+incompatible is a mistagged 2019 release bundling SQLite 3.30.1; the image blob-info cache needs sqlite_schema (SQLite >= 3.33)
 	github.com/spf13/cobra => github.com/werf/3p-cobra v0.0.0-20260403075225-552c82797324 // adds EnableErrorOnUnknownSubcommand, not yet in upstream
 	go.podman.io/storage => github.com/werf/3p-container-libs/storage v1.63.1-0.20261008114302-204b1b85b362
-	oras.land/oras-go => github.com/werf/3p-oras-go v1.2.8-0.20260408140625-72dd516ce0aa // used by bundles, not maintained
 )
