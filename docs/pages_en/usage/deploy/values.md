@@ -488,6 +488,27 @@ secret: 1000625c4f1d874f0ab853bf1db4e438ad6f054526e5dcf4fc8c10e551174904e6d0
 werf --secret-values .helm/secret-values-production.yaml
 ```
 
+### Rotating the secret key
+
+To switch to a new secret key, decrypt each encrypted file with the old key and encrypt it with the new one:
+
+```shell
+WERF_SECRET_KEY=<old key> werf helm secret values decrypt .helm/secret-values.yaml -o /tmp/secret-values.yaml
+WERF_SECRET_KEY=<new key> werf helm secret values encrypt /tmp/secret-values.yaml -o .helm/secret-values.yaml
+rm /tmp/secret-values.yaml
+
+WERF_SECRET_KEY=<old key> werf helm secret file decrypt .helm/secret/tls.crt -o /tmp/tls.crt
+WERF_SECRET_KEY=<new key> werf helm secret file encrypt /tmp/tls.crt -o .helm/secret/tls.crt
+rm /tmp/tls.crt
+```
+
+Repeat this for every encrypted file:
+
+* secret parameter files (`werf helm secret values decrypt/encrypt`): `secret-values.yaml` of the main chart and of every dependent chart, the additional files passed with `--secret-values`, and `.werf-data/secret-values.yaml` of a published chart;
+* secret files (`werf helm secret file decrypt/encrypt`): every file in `secret/` of the main chart and of every dependent chart.
+
+Decrypt into a temporary file instead of piping one command into the other: if decryption fails, the pipe would pass empty input to encryption and overwrite the file. Remove the decrypted temporary files afterwards.
+
 ### Secret parameters in the release
 
 werf saves the parameters from the `--values`, `--secret-values` and `--set*` options in the release, together with the parameters that `export-values` copies from them, and the parameters from `--secret-values` are saved in decrypted form. `werf release get --print-values` shows them, anyone who can read the release Secret in the cluster can read them, and changing only `--secret-values` creates a new release revision. Releases deployed with `--secret-values` by an earlier werf version get one new revision on the first deployment after the update. The parameters from `secret-values.yaml` of the charts are not saved among these parameters, but if `Chart.yaml` of the chart lists dependent charts in `dependencies`, the chart saved in the release contains them in decrypted form, and `werf release get --print-values` shows them too.

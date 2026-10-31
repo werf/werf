@@ -488,6 +488,27 @@ secret: 1000625c4f1d874f0ab853bf1db4e438ad6f054526e5dcf4fc8c10e551174904e6d0
 werf --secret-values .helm/secret-values-production.yaml
 ```
 
+### Смена секретного ключа
+
+Чтобы перейти на новый секретный ключ, расшифруйте каждый зашифрованный файл старым ключом и зашифруйте его новым:
+
+```shell
+WERF_SECRET_KEY=<старый ключ> werf helm secret values decrypt .helm/secret-values.yaml -o /tmp/secret-values.yaml
+WERF_SECRET_KEY=<новый ключ> werf helm secret values encrypt /tmp/secret-values.yaml -o .helm/secret-values.yaml
+rm /tmp/secret-values.yaml
+
+WERF_SECRET_KEY=<старый ключ> werf helm secret file decrypt .helm/secret/tls.crt -o /tmp/tls.crt
+WERF_SECRET_KEY=<новый ключ> werf helm secret file encrypt /tmp/tls.crt -o .helm/secret/tls.crt
+rm /tmp/tls.crt
+```
+
+Повторите это для каждого зашифрованного файла:
+
+* файлов секретных параметров (`werf helm secret values decrypt/encrypt`): `secret-values.yaml` основного чарта и каждого зависимого чарта, дополнительных файлов, передаваемых через `--secret-values`, и `.werf-data/secret-values.yaml` опубликованного чарта;
+* секретных файлов (`werf helm secret file decrypt/encrypt`): каждого файла в `secret/` основного чарта и каждого зависимого чарта.
+
+Расшифровывайте во временный файл, а не передавайте вывод одной команды другой через pipe: если расшифровка не удастся, шифрование получит пустой ввод и перезапишет файл. После этого удалите расшифрованные временные файлы.
+
 ### Секретные параметры в релизе
 
 werf сохраняет в релизе параметры из опций `--values`, `--secret-values` и `--set*` вместе с параметрами, которые `export-values` копирует из них, причём параметры из `--secret-values` сохраняются в расшифрованном виде. Их показывает `werf release get --print-values`, их может прочитать любой, у кого есть доступ к Secret релиза в кластере, а изменение одних только `--secret-values` создаёт новую ревизию релиза. Релизы, развёрнутые с `--secret-values` более ранней версией werf, получают одну новую ревизию при первом развёртывании после обновления. Параметры из `secret-values.yaml` чартов среди этих параметров не сохраняются, но если в `Chart.yaml` чарта зависимые чарты перечислены в `dependencies`, сохранённый в релизе чарт содержит их в расшифрованном виде, и `werf release get --print-values` их тоже показывает.
