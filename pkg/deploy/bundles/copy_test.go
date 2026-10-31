@@ -160,6 +160,30 @@ var _ = Describe("Bundle copy", func() {
 		}, "the bundle is not signed"),
 	)
 
+	DescribeTable("should keep a signed bundle with werf values unchanged when copied into the same repo under the same version",
+		func(to func() string, tag string) {
+			packOpts := werfDataChartPackOptions(ctx, fromRepo, imageDigest)
+			packOpts.Sign = true
+			packOpts.SignKey = "helm-test"
+			packOpts.SignKeyring = testKeyringPath("helm-test-key.secret")
+			Expect(Publish(ctx, writeTestChart(), fromRepo, "1.0.0", testRegistryClient, PublishOptions{ChartPackOptions: packOpts})).To(Succeed())
+			source, err := testRegistryClient.Pull(fromRepo + ":1.0.0")
+			Expect(err).To(Succeed())
+
+			Expect(Copy(ctx, fromRepo+":1.0.0", to(), copyOpts)).To(Succeed())
+
+			copied, err := testRegistryClient.Pull(fromRepo + ":" + tag)
+			Expect(err).To(Succeed())
+			Expect(copied.Manifest.Digest).To(Equal(source.Manifest.Digest))
+			Expect(Pull(ctx, fromRepo, tag, filepath.Join(GinkgoT().TempDir(), "bundle"), testRegistryClient, PullOptions{
+				ProvenanceKeyring:  testKeyringPath("helm-test-key.pub"),
+				ProvenanceStrategy: ProvenanceStrategyVerify,
+			})).To(Succeed())
+		},
+		Entry("no tag", func() string { return fromRepo }, "1.0.0"),
+		Entry("the tag of the same version", func() string { return fromRepo + ":v1.0.0" }, "v1.0.0"),
+	)
+
 	DescribeTable("should copy under the chart version and the tag",
 		func(fromTag, toTag, expectedVersion string, expectedTags []string) {
 			Expect(Publish(ctx, writeTestChart(), fromRepo, fromTag, testRegistryClient, PublishOptions{

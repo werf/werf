@@ -1,7 +1,9 @@
 package bundles
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"sort"
 
@@ -119,8 +121,24 @@ func rewriteWerfDataImageValues(ch helmchart.Charter, accessor helmchart.Accesso
 		return fmt.Errorf("parse %s: %w", werfdata.DirName, err)
 	}
 
+	sourceExtraValues, err := json.Marshal(data.ExtraValues)
+	if err != nil {
+		return fmt.Errorf("marshal image values: %w", err)
+	}
+
 	if err := retargetImageValues(data.ExtraValues, repo); err != nil {
 		return err
+	}
+
+	extraValues, err := json.Marshal(data.ExtraValues)
+	if err != nil {
+		return fmt.Errorf("marshal image values: %w", err)
+	}
+
+	// The regenerated files are re-marshaled YAML, which may differ from the source files byte for
+	// byte with the same values, which would change the chart and drop its signature.
+	if bytes.Equal(extraValues, sourceExtraValues) {
+		return nil
 	}
 
 	files, err := data.ChartFiles()
