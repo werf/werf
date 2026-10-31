@@ -61,6 +61,14 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 	commonCmdData.SetupPlatform(cmd)
 
+	if err := cmd.Flags().MarkDeprecated("container-registry-mirror", "not used by bundle copy"); err != nil {
+		panic(err)
+	}
+
+	if err := cmd.Flags().MarkDeprecated("platform", "bundle copy keeps all platforms of the images"); err != nil {
+		panic(err)
+	}
+
 	cmd.Flags().StringVarP(&cmdData.From, "from", "", os.Getenv("WERF_FROM"), "Source address of the bundle to copy, specify bundle archive (an OCI image layout, or an archive written by werf 3.12 or older) using schema `archive:PATH_TO_ARCHIVE.tar.gz`, specify remote bundle with schema `[docker://]REPO:TAG` or without schema.")
 	cmd.Flags().StringVarP(&cmdData.To, "to", "", os.Getenv("WERF_TO"), "Destination address of the bundle to copy, specify bundle archive, written as an OCI image layout, using schema `archive:PATH_TO_ARCHIVE.tar.gz`, specify remote bundle with schema `[docker://]REPO[:TAG]` or without schema. A remote bundle gets its chart version from TAG and is pushed under that version and under TAG; without TAG it keeps the chart version and the tag of the source bundle, or, copied from an archive written by werf 3.12 or older, which has no tag, is pushed under its chart version only. A `+` in TAG is pushed as `_`.")
 
@@ -70,7 +78,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 func runCopy(ctx context.Context) error {
 	_, ctx, err := common.InitCommonComponents(ctx, common.InitCommonComponentsOptions{
 		Cmd:                &commonCmdData,
-		InitDockerRegistry: true,
 		InitWerf:           true,
 		InitGitDataManager: true,
 	})

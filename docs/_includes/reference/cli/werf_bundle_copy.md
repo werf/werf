@@ -15,9 +15,6 @@ werf bundle copy [options]
 {{ header }} Options
 
 ```shell
-      --container-registry-mirror=[]
-            (Buildah-only) Use specified mirrors for docker.io ($WERF_CONTAINER_REGISTRY_MIRROR or  
-            $WERF_CONTAINER_REGISTRY_MIRROR_*)
       --docker-config=""
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)
@@ -57,9 +54,6 @@ werf bundle copy [options]
             Specify custom log time format (default $WERF_LOG_TIME_FORMAT or RFC3339 format).
       --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
-      --platform=[]
-            Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT]     
-            ($WERF_PLATFORM or $DOCKER_DEFAULT_PLATFORM by default)
       --skip-tls-verify-registry=false
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)
