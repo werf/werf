@@ -54,6 +54,12 @@ var _ = Describe("Client", func() {
 
 		destinationRef := &ref.Reference{Repo: destinationRegistryHost + "/group2/signedchart", Tag: "0.1.0"}
 		Expect(client.TagCachedChart(ctx, sourceRef, destinationRef, nelmcommon.HelmOptions{})).To(Succeed())
+
+		for _, cachedRef := range []*ref.Reference{sourceRef, destinationRef} {
+			signed, err := client.IsChartSigned(ctx, cachedRef, nelmcommon.HelmOptions{})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(signed).To(BeTrue())
+		}
 		Expect(client.PushChart(ctx, destinationRef, []string{"0.1.0", "v0.1.0"}, nelmcommon.HelmOptions{})).To(Succeed())
 
 		for _, tag := range []string{"0.1.0", "v0.1.0"} {

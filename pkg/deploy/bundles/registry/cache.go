@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"maps"
 	"os"
 	"time"
 
@@ -254,7 +255,11 @@ func (cache *Cache) AddManifest(ctx context.Context, ref *ref.Reference, manifes
 	if err := cache.init(); err != nil {
 		return err
 	}
-	cache.ociStore.AddReference(ref.FullName(), *manifest)
+	// AddReference sets the ref name in the descriptor annotations, which may be shared with the
+	// index entry of another ref.
+	desc := *manifest
+	desc.Annotations = maps.Clone(manifest.Annotations)
+	cache.ociStore.AddReference(ref.FullName(), desc)
 	err := cache.ociStore.SaveIndex()
 	return err
 }
