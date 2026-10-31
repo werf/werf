@@ -97,12 +97,12 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupExtraRuntimeAnnotations(&commonCmdData, cmd)
 	common.SetupExtraRuntimeLabels(&commonCmdData, cmd)
 	common.SetupForceAdoption(&commonCmdData, cmd)
-	common.SetupNamespace(&commonCmdData, cmd, false)
+	common.SetupBundleNamespace(&commonCmdData, cmd)
 	common.SetupNetworkParallelism(&commonCmdData, cmd)
 	common.SetupNoFinalTrackingFlag(&commonCmdData, cmd)
 	common.SetupNoInstallCRDs(&commonCmdData, cmd)
 	common.SetupNoRemoveManualChanges(&commonCmdData, cmd)
-	common.SetupRelease(&commonCmdData, cmd, false)
+	common.SetupBundleRelease(&commonCmdData, cmd)
 	common.SetupReleaseInfoAnnotations(&commonCmdData, cmd)
 	common.SetupReleaseLabel(&commonCmdData, cmd)
 	common.SetupReleaseStorageDriver(&commonCmdData, cmd)
@@ -172,18 +172,46 @@ func runPlan(ctx context.Context) error {
 		return fmt.Errorf("get repo address: %w", err)
 	}
 
-	releaseNamespace := common.GetNamespace(&commonCmdData)
-	releaseName, err := common.GetRequiredRelease(&commonCmdData)
-	if err != nil {
-		return fmt.Errorf("get release name: %w", err)
-	}
-
 	bundlePath := filepath.Join(werf.GetServiceDir(), "tmp", "bundles", uuid.NewString())
 	defer os.RemoveAll(bundlePath)
 
 	bundlesRegistryClient, err := common.NewBundlesRegistryClient(ctx, &commonCmdData)
 	if err != nil {
 		return fmt.Errorf("construct bundles registry client: %w", err)
+	}
+
+	if err := bundles.Pull(ctx, fmt.Sprintf("%s:%s", repoAddress, cmdData.Tag), bundlePath, bundlesRegistryClient, bundles.PullOptions{
+		HelmOptions: nelmcommon.HelmOptions{
+			ChartLoadOpts: nelmcommon.ChartLoadOptions{NoSecrets: true},
+		},
+		ProvenanceKeyring:  commonCmdData.ChartProvenanceKeyring,
+		ProvenanceStrategy: commonCmdData.ChartProvenanceStrategy,
+	}); err != nil {
+		return fmt.Errorf("pull bundle: %w", err)
+	}
+
+	werfDataMetadata, hasWerfData, err := bundles.ReadWerfDataMetadata(ctx, bundlePath)
+	if err != nil {
+		return fmt.Errorf("read bundle metadata: %w", err)
+	}
+
+	release, err := bundles.ResolveRelease(ctx, werfDataMetadata, bundles.ReleaseFlags{
+		Release:   commonCmdData.Release,
+		Namespace: commonCmdData.Namespace,
+		Env:       commonCmdData.Environment,
+	})
+	if err != nil {
+		return fmt.Errorf("resolve release: %w", err)
+	}
+
+	releaseNamespace := cmp.Or(release.Namespace, common.GetNamespace(&commonCmdData))
+
+	releaseName := release.Release
+	if releaseName == "" {
+		releaseName, err = common.GetRequiredRelease(&commonCmdData)
+		if err != nil {
+			return fmt.Errorf("get release name: %w", err)
+		}
 	}
 
 	registryCredentialsPath := docker.GetDockerConfigCredentialsFile(*commonCmdData.DockerConfig)
@@ -198,25 +226,7 @@ func runPlan(ctx context.Context) error {
 		return fmt.Errorf("get service values: %w", err)
 	}
 
-	secretWorkDir, err := os.Getwd()
-	if err != nil {
-		return fmt.Errorf("get current working directory: %w", err)
-	}
-
-	if err := bundles.Pull(ctx, fmt.Sprintf("%s:%s", repoAddress, cmdData.Tag), bundlePath, bundlesRegistryClient, nelmcommon.HelmOptions{
-		ChartLoadOpts: nelmcommon.ChartLoadOptions{
-			DefaultSecretValuesDisable: commonCmdData.DefaultSecretValuesDisable,
-			DefaultValuesDisable:       commonCmdData.DefaultValuesDisable,
-			ExtraValues:                serviceValues,
-			SecretKeyIgnore:            commonCmdData.SecretKeyIgnore,
-			SecretValuesFiles:          commonCmdData.SecretValuesFiles,
-			SecretWorkDir:              secretWorkDir,
-		},
-	}); err != nil {
-		return fmt.Errorf("pull bundle: %w", err)
-	}
-
-	serviceAnnotations, extraAnnotations, extraLabels, err := getAnnotationsAndLabels(bundlePath)
+	serviceAnnotations, extraAnnotations, extraLabels, err := getAnnotationsAndLabels(bundlePath, hasWerfData)
 	if err != nil {
 		return fmt.Errorf("get annotations and labels: %w", err)
 	}
@@ -284,10 +294,23 @@ func runPlan(ctx context.Context) error {
 	return nil
 }
 
-func getAnnotationsAndLabels(bundleDir string) (map[string]string, map[string]string, map[string]string, error) {
-	bundleExtraAnnotations, err := readBundleJsonMap(filepath.Join(bundleDir, "extra_annotations.json"))
-	if err != nil {
-		return nil, nil, nil, fmt.Errorf("read bundle extra_annotations.json: %w", err)
+// getAnnotationsAndLabels returns the annotations and labels to deploy the bundle with. Those of a
+// bundle with .werf-data are applied by Nelm, the ones of a bundle published by werf <= 3.12 are
+// read from its extra_annotations.json and extra_labels.json.
+func getAnnotationsAndLabels(bundleDir string, hasWerfData bool) (map[string]string, map[string]string, map[string]string, error) {
+	var bundleExtraAnnotations, bundleExtraLabels map[string]string
+	if !hasWerfData {
+		var err error
+
+		bundleExtraAnnotations, err = readBundleJsonMap(filepath.Join(bundleDir, "extra_annotations.json"))
+		if err != nil {
+			return nil, nil, nil, fmt.Errorf("read bundle extra_annotations.json: %w", err)
+		}
+
+		bundleExtraLabels, err = readBundleJsonMap(filepath.Join(bundleDir, "extra_labels.json"))
+		if err != nil {
+			return nil, nil, nil, fmt.Errorf("read bundle extra_labels.json: %w", err)
+		}
 	}
 
 	userExtraAnnotations, err := common.GetUserExtraAnnotations(&commonCmdData)
@@ -310,11 +333,6 @@ func getAnnotationsAndLabels(bundleDir string) (map[string]string, map[string]st
 	serviceAnnotations["werf.io/version"] = werf.Version
 	if commonCmdData.Environment != "" {
 		serviceAnnotations["project.werf.io/env"] = commonCmdData.Environment
-	}
-
-	bundleExtraLabels, err := readBundleJsonMap(filepath.Join(bundleDir, "extra_labels.json"))
-	if err != nil {
-		return nil, nil, nil, fmt.Errorf("read bundle extra_labels.json: %w", err)
 	}
 
 	userExtraLabels, err := common.GetUserExtraLabels(&commonCmdData)

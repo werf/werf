@@ -126,6 +126,8 @@ Deno runtime is shipped inside werf, so an isolated environment only requires th
    ```
    TypeScript templates will be rendered and deployed using pre-compiled files from the chart bundle.
 
+To change such a chart and pack it again without network access, pass `--ts-no-rebuild` to `nelm chart pack`: it reuses the pre-compiled files instead of rebuilding them, see [Changing a published chart]({{ "/usage/distribute/bundles.html#changing-a-published-chart" | true_relative_url }}). Helm, Argo CD and Flux do not run TypeScript templates, so they do not deploy the resources these templates generate.
+
 ## SDK API overview
 
 TypeScript engine uses the [@nelm/chart-ts-sdk](https://github.com/werf/nelm-chart-ts-sdk) package.

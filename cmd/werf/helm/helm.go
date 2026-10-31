@@ -19,7 +19,6 @@ import (
 	helm_secret_file_edit "github.com/werf/werf/v3/cmd/werf/helm/secret/file/edit"
 	helm_secret_file_encrypt "github.com/werf/werf/v3/cmd/werf/helm/secret/file/encrypt"
 	helm_secret_generate_secret_key "github.com/werf/werf/v3/cmd/werf/helm/secret/generate_secret_key"
-	helm_secret_rotate_secret_key "github.com/werf/werf/v3/cmd/werf/helm/secret/rotate_secret_key"
 	helm_secret_values_decrypt "github.com/werf/werf/v3/cmd/werf/helm/secret/values/decrypt"
 	helm_secret_values_edit "github.com/werf/werf/v3/cmd/werf/helm/secret/values/edit"
 	helm_secret_values_encrypt "github.com/werf/werf/v3/cmd/werf/helm/secret/values/encrypt"
@@ -130,7 +129,6 @@ func secretCmd(ctx context.Context) *cobra.Command {
 		helm_secret_generate_secret_key.NewCmd(ctx),
 		helm_secret_encrypt.NewCmd(ctx),
 		helm_secret_decrypt.NewCmd(ctx),
-		helm_secret_rotate_secret_key.NewCmd(ctx),
 	)
 
 	return cmd

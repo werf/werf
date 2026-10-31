@@ -3,9 +3,11 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Publish bundle into the container registry. `werf bundle` contains built images defined in the `werf.yaml`, Helm chart, Service values which contain built images tags, any custom values and set values params provided during publish invocation, werf addon templates.
+Publish bundle into the container registry. The command builds the images defined in the `werf.yaml` and publishes the Helm chart together with them.
 
-Published into container registry bundle can be rolled out by the `werf bundle` command.
+The chart files are published as they are, with the chart name and version set from the repo and the tag. The publish-time inputs are stored in the `.werf-data` directory of the chart: the `--values`, the `--secret-values` (still encrypted, so no secret key is needed), the `--set*` params with the contents of the `--set-file` files, the `--patches`, the service values with the built images, the annotations, the labels and the release name and namespace. The built images are also listed in the `helm.sh/images` annotation of the `Chart.yaml`, which Helm-based tools read.
+
+Published into container registry bundle can be rolled out by the `werf bundle apply` command, which applies the stored publish-time inputs the same way `werf converge` applies them.
 
 {{ header }} Syntax
 
@@ -141,12 +143,6 @@ werf bundle publish [IMAGE_NAME...] [options]
       --giterminism-config=""
             Custom path to the giterminism configuration file relative to working directory         
             (default $WERF_GITERMINISM_CONFIG or werf-giterminism.yaml in working directory)
-  -C, --helm-compatible-chart=true
-            Set chart name in the Chart.yaml of the published chart to the last path component of   
-            container registry repo (for REGISTRY/PATH/TO/REPO address chart name will be REPO,     
-            more info https://helm.sh/docs/topics/registries/#oci-feature-deprecation-and-behavior-c
-            hanges-with-v370). In helm compatibility mode chart is fully conforming with the helm   
-            OCI registry requirements. Default true or $WERF_HELM_COMPATIBLE_CHART.
       --home-dir=""
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --insecure-helm-dependencies=false
@@ -211,18 +207,21 @@ werf bundle publish [IMAGE_NAME...] [options]
             Loose werf giterminism mode restrictions
       --meta-repo=""
             Container registry storage address (default $WERF_META_REPO)
+      --no-default-patches=false
+            Ignore patches.yaml of the top-level chart and subcharts (default                       
+            $WERF_NO_DEFAULT_PATCHES or false)
   -p, --parallel=true
             Run in parallel (default $WERF_PARALLEL or true)
       --parallel-tasks-limit=5
             Parallel tasks limit, set -1 to remove the limitation (default                          
             $WERF_PARALLEL_TASKS_LIMIT or 5)
+      --patches=[]
+            Additional patches files (render patches for rendered resources, diff patches for drift 
+            detection). Also, can be defined with $WERF_PATCHES or $WERF_PATCHES_* (e.g.            
+            $WERF_PATCHES_1=.helm/patches_1.yaml, $WERF_PATCHES_2=.helm/patches_2.yaml)
       --platform=[]
             Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT]     
             ($WERF_PLATFORM or $DOCKER_DEFAULT_PLATFORM by default)
-      --rename-chart=""
-            Force setting of chart name in the Chart.yaml of the published chart to the specified   
-            value (can be set by the $WERF_RENAME_CHART, no rename by default, could not be used    
-            together with the `--helm-compatible-chart` option).
       --repo=""
             Container registry storage address (default $WERF_REPO)
       --repo-container-registry=""
@@ -305,8 +304,12 @@ werf bundle publish [IMAGE_NAME...] [options]
             The same address should be specified for all werf processes that work with a single     
             repo. :local address allows execution of werf processes from a single host only
       --tag="latest"
-            Publish bundle into container registry repo by the provided tag ($WERF_TAG or latest by 
-            default)
+            Publish bundle into container registry repo by the provided tag and by the chart        
+            version: the tag itself if it is strict semver (a leading `v` is dropped), otherwise    
+            `0.0.0-<unix time>-<tag slug>`, where the slug is the lowercased tag with each run of   
+            characters other than letters and digits replaced by `-`, cut and suffixed with `-<8    
+            hex digits of the tag SHA-256>` if the version would be longer than 128 characters. A   
+            `+` in the pushed tags is replaced by `_` ($WERF_TAG or latest by default)
       --tmp-dir=""
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
       --use-build-report=false

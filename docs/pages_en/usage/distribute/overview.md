@@ -89,3 +89,5 @@ werf bundle publish --repo example.org/bundles/mybundle
 ```
 
 The above command will result in the `example.org/bundles/mybundle:latest` chart and its related built image being published.
+
+Third-party software gets only the chart's own values unless it is given the values files from `.werf-data/`, see [Using the chart with Helm, Argo CD and Flux]({{ "/usage/distribute/bundles.html#using-the-chart-with-helm-argo-cd-and-flux" | true_relative_url }}).

@@ -78,8 +78,13 @@ func (bundle *BundleArchive) CopyFromArchive(ctx context.Context, fromArchive *B
 		return err
 	}
 
+	imageVals, _, err := chartImageValues(ch)
+	if err != nil {
+		return err
+	}
+
 	if err := logboek.Context(ctx).LogProcess("Copy images from bundle archive").DoError(func() error {
-		if werfVals, ok := ch.Values["werf"].(map[string]interface{}); ok {
+		if werfVals, ok := imageVals["werf"].(map[string]interface{}); ok {
 			if imageVals, ok := werfVals["image"].(map[string]interface{}); ok {
 				for imageName, v := range imageVals {
 					if imageRef, ok := v.(string); ok {
@@ -130,6 +135,10 @@ func (bundle *BundleArchive) CopyFromRemote(ctx context.Context, fromRemote *Rem
 		return fmt.Errorf("unable to read chart from remote bundle: %w", err)
 	}
 
+	if err := warnIfProvenanceDropped(ctx, fromRemote, "bundle archives do not keep provenance files", opts.HelmOptions); err != nil {
+		return err
+	}
+
 	if err := bundle.Writer.Open(); err != nil {
 		return fmt.Errorf("unable to open target bundle archive: %w", err)
 	}
@@ -140,7 +149,12 @@ func (bundle *BundleArchive) CopyFromRemote(ctx context.Context, fromRemote *Rem
 		return err
 	}
 
-	if werfVals, ok := ch.Values["werf"].(map[string]interface{}); ok {
+	imageVals, _, err := chartImageValues(ch)
+	if err != nil {
+		return err
+	}
+
+	if werfVals, ok := imageVals["werf"].(map[string]interface{}); ok {
 		if imageVals, ok := werfVals["image"].(map[string]interface{}); ok {
 			for imageName, v := range imageVals {
 				if imageRef, ok := v.(string); ok {

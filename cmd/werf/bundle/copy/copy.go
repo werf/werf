@@ -9,11 +9,9 @@ import (
 
 	"github.com/werf/logboek"
 	nelmcommon "github.com/werf/nelm/v2/pkg/common"
-	helm "github.com/werf/nelm/v2/pkg/helm/pkg/cmd"
 	"github.com/werf/werf/v3/cmd/werf/common"
 	"github.com/werf/werf/v3/pkg/deploy/bundles"
 	"github.com/werf/werf/v3/pkg/docker_registry"
-	"github.com/werf/werf/v3/pkg/ref"
 	"github.com/werf/werf/v3/pkg/tmp_manager"
 	"github.com/werf/werf/v3/pkg/werf/global_warnings"
 )
@@ -63,11 +61,8 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupLogProjectDir(&commonCmdData, cmd)
 	commonCmdData.SetupPlatform(cmd)
 
-	commonCmdData.SetupHelmCompatibleChart(cmd, true)
-	commonCmdData.SetupRenameChart(cmd)
-
 	cmd.Flags().StringVarP(&cmdData.From, "from", "", os.Getenv("WERF_FROM"), "Source address of the bundle to copy, specify bundle archive using schema `archive:PATH_TO_ARCHIVE.tar.gz`, specify remote bundle with schema `[docker://]REPO:TAG` or without schema.")
-	cmd.Flags().StringVarP(&cmdData.To, "to", "", os.Getenv("WERF_TO"), "Destination address of the bundle to copy, specify bundle archive using schema `archive:PATH_TO_ARCHIVE.tar.gz`, specify remote bundle with schema `[docker://]REPO:TAG` or without schema.")
+	cmd.Flags().StringVarP(&cmdData.To, "to", "", os.Getenv("WERF_TO"), "Destination address of the bundle to copy, specify bundle archive using schema `archive:PATH_TO_ARCHIVE.tar.gz`, specify remote bundle with schema `[docker://]REPO[:TAG]` or without schema. A remote bundle gets its chart version from TAG and is pushed under that version and under TAG; without TAG it keeps the chart version and the tag of the source bundle, or, copied from an archive, which has no tag, is pushed under its chart version only. A `+` in TAG is pushed as `_`.")
 
 	return cmd
 }
@@ -89,8 +84,6 @@ func runCopy(ctx context.Context) error {
 		}
 	}()
 
-	helm.Settings.Debug = *commonCmdData.LogDebug
-
 	bundlesRegistryClient, err := common.NewBundlesRegistryClient(ctx, &commonCmdData)
 	if err != nil {
 		return err
@@ -107,12 +100,12 @@ func runCopy(ctx context.Context) error {
 		return fmt.Errorf("--to=ADDRESS param required")
 	}
 
-	fromAddr, err := ref.ParseAddr(fromAddrRaw)
+	fromAddr, err := bundles.ParseSourceAddr(fromAddrRaw)
 	if err != nil {
 		return fmt.Errorf("invalid from addr %q: %w", fromAddrRaw, err)
 	}
 
-	toAddr, err := ref.ParseAddr(toAddrRaw)
+	toAddr, err := bundles.ParseDestinationAddr(toAddrRaw)
 	if err != nil {
 		return fmt.Errorf("invalid to addr %q: %w", toAddrRaw, err)
 	}
@@ -133,10 +126,6 @@ func runCopy(ctx context.Context) error {
 		}
 	}
 
-	if commonCmdData.HelmCompatibleChart && commonCmdData.RenameChart != "" {
-		return fmt.Errorf("incompatible options specified, could not use --helm-compatible-chart and --rename-chart=%q at the same time", commonCmdData.RenameChart)
-	}
-
 	return logboek.Context(ctx).LogProcess("Copy bundle").DoError(func() error {
 		logboek.Context(ctx).LogFDetails("From: %s\n", fromAddr.String())
 		logboek.Context(ctx).LogFDetails("To: %s\n", toAddr.String())
@@ -145,8 +134,6 @@ func runCopy(ctx context.Context) error {
 			BundlesRegistryClient: bundlesRegistryClient,
 			FromRegistryClient:    fromRegistry,
 			ToRegistryClient:      toRegistry,
-			HelmCompatibleChart:   commonCmdData.HelmCompatibleChart,
-			RenameChart:           commonCmdData.RenameChart,
 			HelmOptions: nelmcommon.HelmOptions{
 				ChartLoadOpts: nelmcommon.ChartLoadOptions{
 					ChartType: nelmcommon.LegacyChartTypeBundle,

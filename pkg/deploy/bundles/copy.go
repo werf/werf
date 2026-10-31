@@ -11,8 +11,6 @@ import (
 type CopyOptions struct {
 	BundlesRegistryClient                BundlesRegistryClient
 	FromRegistryClient, ToRegistryClient docker_registry.Interface
-	HelmCompatibleChart                  bool
-	RenameChart                          string
 	HelmOptions                          nelmcommon.HelmOptions
 }
 
@@ -26,5 +24,5 @@ func Copy(ctx context.Context, fromAddr, toAddr *ref.Addr, opts CopyOptions) err
 		RegistryClient:        opts.ToRegistryClient,
 	})
 
-	return fromBundle.CopyTo(ctx, toBundle, copyToOptions{HelmCompatibleChart: opts.HelmCompatibleChart, RenameChart: opts.RenameChart, HelmOptions: opts.HelmOptions})
+	return fromBundle.CopyTo(ctx, toBundle, copyToOptions{HelmOptions: opts.HelmOptions})
 }

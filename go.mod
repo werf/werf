@@ -36,7 +36,6 @@ require (
 	github.com/goware/urlx v0.3.2
 	github.com/hofstadter-io/cinful v1.0.0
 	github.com/joho/godotenv v1.5.1
-	github.com/mitchellh/copystructure v1.2.0
 	github.com/moby/buildkit v0.33.0
 	github.com/moby/moby/api v1.56.0
 	github.com/moby/moby/client v0.6.0
@@ -61,7 +60,7 @@ require (
 	github.com/werf/copy-recurse v0.3.1
 	github.com/werf/lockgate v0.2.1
 	github.com/werf/logboek v0.7.2-0.20260810094044-236a5f8ae9dd
-	github.com/werf/nelm/v2 v2.2.2-0.20261028231030-35cb144b1f07
+	github.com/werf/nelm/v2 v2.2.2-0.20261031075654-f21377c69f9c
 	go.opentelemetry.io/otel v1.46.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.46.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.46.0
@@ -196,6 +195,7 @@ require (
 	github.com/lucasb-eyer/go-colorful v1.4.1 // indirect
 	github.com/miekg/dns v1.1.61 // indirect
 	github.com/mistifyio/go-zfs/v4 v4.0.0 // indirect
+	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/hashstructure/v2 v2.0.2 // indirect
 	github.com/moby/go-archive v0.2.0 // indirect
@@ -242,7 +242,7 @@ require (
 	github.com/valyala/fastjson v1.6.10 // indirect
 	github.com/vbauerster/cupwriter v0.0.4 // indirect
 	github.com/vektah/gqlparser/v2 v2.5.36 // indirect
-	github.com/werf/kubedog v0.13.1-0.20260915153156-438ef109f804 // indirect
+	github.com/werf/kubedog v0.13.1-0.20261029011008-97f4f131413e // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/xhit/go-str2duration/v2 v2.1.0 // indirect
 	github.com/yannh/kubeconform v0.7.0 // indirect

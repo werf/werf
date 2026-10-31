@@ -70,6 +70,26 @@ var _ = Describe("chart .helmignore rules", func() {
 		Entry("keeps an unmatched file", "mydir/\n", "templates/kept.yaml", false),
 	)
 
+	DescribeTable("never ignores the .werf-data directories of the chart and its vendored subcharts",
+		func(ctx SpecContext, helmignore, relPath string, isDir, expected bool) {
+			rules, err := parseChartIgnoreRules([]byte(helmignore), true)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(matchChartIgnoreRules(rules.rules, relPath, isDir)).To(Equal(expected))
+			if !isDir {
+				Expect(rules.IsFileIgnored(ctx, relPath)).To(Equal(expected))
+			}
+		},
+		Entry("keeps the directory matched by a directory rule", ".werf-data/\n", ".werf-data", true, false),
+		Entry("keeps the directory matched by a dotfile glob", ".*\n", ".werf-data", true, false),
+		Entry("keeps a file under a directory rule", ".werf-data/\n", ".werf-data/set-files/0", false, false),
+		Entry("keeps a file matched by a glob", "*.yaml\n", ".werf-data/values.yaml", false, false),
+		Entry("ignores a directory whose name only starts with .werf-data", ".*\n", ".werf-data-other", true, true),
+		Entry("keeps .werf-data of a vendored subchart, as Nelm's loaders do", "*.yaml\n", "charts/sub/.werf-data/values.yaml", false, false),
+		Entry("keeps .werf-data of a nested vendored subchart", ".*\n", "charts/sub/charts/subsub/.werf-data", true, false),
+		Entry("ignores .werf-data outside of the subchart roots", "*.yaml\n", "templates/.werf-data/values.yaml", false, true),
+	)
+
 	// The zero value is reachable through the exported API, where a nil rule set used to panic.
 	It("excludes nothing when the rule set is the zero value", func(ctx SpecContext) {
 		Expect(ChartIgnoreRules{}.IsFileIgnored(ctx, "templates/kept.yaml")).To(BeFalse())

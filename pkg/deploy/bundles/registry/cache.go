@@ -23,8 +23,8 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"maps"
 	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/containerd/containerd/content"
@@ -38,7 +38,6 @@ import (
 	nelmcommon "github.com/werf/nelm/v2/pkg/common"
 	"github.com/werf/nelm/v2/pkg/helm/pkg/chart/loader"
 	chart "github.com/werf/nelm/v2/pkg/helm/pkg/chart/v2"
-	chartv2util "github.com/werf/nelm/v2/pkg/helm/pkg/chart/v2/util"
 	"github.com/werf/werf/v3/pkg/ref"
 )
 
@@ -60,17 +59,18 @@ type (
 	// CacheRefSummary contains as much info as available describing a chart reference in cache
 	// Note: fields here are sorted by the order in which they are set in FetchReference method
 	CacheRefSummary struct {
-		Name         string
-		Repo         string
-		Tag          string
-		Exists       bool
-		Manifest     *ocispec.Descriptor
-		Config       *ocispec.Descriptor
-		ContentLayer *ocispec.Descriptor
-		Size         int64
-		Digest       digest.Digest
-		CreatedAt    time.Time
-		Chart        *chart.Chart
+		Name            string
+		Repo            string
+		Tag             string
+		Exists          bool
+		Manifest        *ocispec.Descriptor
+		Config          *ocispec.Descriptor
+		ContentLayer    *ocispec.Descriptor
+		ProvenanceLayer *ocispec.Descriptor
+		Size            int64
+		Digest          digest.Digest
+		CreatedAt       time.Time
+		Chart           *chart.Chart
 	}
 )
 
@@ -113,15 +113,16 @@ func (cache *Cache) FetchReference(ctx context.Context, ref *ref.Reference, opts
 			}
 			r.Manifest = &desc
 			r.Config = &manifest.Config
-			numLayers := len(manifest.Layers)
-			if numLayers != 1 {
-				return &r, errors.New(
-					fmt.Sprintf("manifest does not contain exactly 1 layer (total: %d)", numLayers))
-			}
-			var contentLayer *ocispec.Descriptor
+			var contentLayer, provenanceLayer *ocispec.Descriptor
 			for _, layer := range manifest.Layers {
-				if layer.MediaType == HelmChartContentLayerMediaType || layer.MediaType == HelmChartContentLayerFullMediaType {
+				switch {
+				case (layer.MediaType == HelmChartContentLayerMediaType || layer.MediaType == HelmChartContentLayerFullMediaType) && contentLayer == nil:
 					contentLayer = &layer
+				case layer.MediaType == HelmChartProvenanceLayerMediaType && provenanceLayer == nil:
+					provenanceLayer = &layer
+				default:
+					return &r, errors.New(
+						fmt.Sprintf("manifest contains an unexpected layer with mediatype %s: only one chart layer and one provenance layer are allowed", layer.MediaType))
 				}
 			}
 			if contentLayer == nil {
@@ -133,6 +134,7 @@ func (cache *Cache) FetchReference(ctx context.Context, ref *ref.Reference, opts
 					fmt.Sprintf("manifest layer with mediatype %s is of size 0", HelmChartContentLayerMediaType))
 			}
 			r.ContentLayer = contentLayer
+			r.ProvenanceLayer = provenanceLayer
 			info, err := cache.ociStore.Info(withOrasLogger(ctx, cache.out, cache.debug), contentLayer.Digest)
 			if err != nil {
 				return &r, err
@@ -144,14 +146,9 @@ func (cache *Cache) FetchReference(ctx context.Context, ref *ref.Reference, opts
 			if err != nil {
 				return &r, err
 			}
-			chrt, err := loader.LoadArchive(nelmcommon.ContextWithHelmOptions(ctx, opts), bytes.NewBuffer(contentBytes))
+			ch, err := loadChartArchive(ctx, contentBytes, opts)
 			if err != nil {
 				return &r, err
-			}
-
-			ch, ok := chrt.(*chart.Chart)
-			if !ok {
-				return &r, errors.Errorf("unsupported chart type %T", chrt)
 			}
 
 			r.Chart = ch
@@ -160,10 +157,14 @@ func (cache *Cache) FetchReference(ctx context.Context, ref *ref.Reference, opts
 	return &r, nil
 }
 
-// StoreReference stores a chart ref in cache
-func (cache *Cache) StoreReference(ctx context.Context, ref *ref.Reference, ch *chart.Chart, opts nelmcommon.HelmOptions) (*CacheRefSummary, error) {
+// StoreReference stores a chart archive and its provenance file, if not nil, under ref in cache as is
+func (cache *Cache) StoreReference(ctx context.Context, ref *ref.Reference, chartArchive, provenance []byte, opts nelmcommon.HelmOptions) (*CacheRefSummary, error) {
 	if err := cache.init(); err != nil {
 		return nil, err
+	}
+	ch, err := loadChartArchive(ctx, chartArchive, opts)
+	if err != nil {
+		return nil, fmt.Errorf("load chart archive: %w", err)
 	}
 	r := CacheRefSummary{
 		Name:  ref.FullName(),
@@ -178,7 +179,7 @@ func (cache *Cache) StoreReference(ctx context.Context, ref *ref.Reference, ch *
 		return &r, err
 	}
 	r.Config = config
-	contentLayer, _, err := cache.saveChartContentLayer(ctx, ch)
+	contentLayer, _, err := cache.saveChartContentLayer(ctx, chartArchive)
 	if err != nil {
 		return &r, err
 	}
@@ -190,12 +191,37 @@ func (cache *Cache) StoreReference(ctx context.Context, ref *ref.Reference, ch *
 	r.Size = info.Size
 	r.Digest = info.Digest
 	r.CreatedAt = info.CreatedAt
-	manifest, _, err := cache.saveChartManifest(ctx, config, contentLayer)
+	layers := []ocispec.Descriptor{*contentLayer}
+	if provenance != nil {
+		if _, err := cache.storeBlob(ctx, provenance); err != nil {
+			return &r, err
+		}
+		provenanceLayer := cache.memoryStore.Add("", HelmChartProvenanceLayerMediaType, provenance)
+		r.ProvenanceLayer = &provenanceLayer
+		layers = append(layers, provenanceLayer)
+	}
+	manifest, _, err := cache.saveChartManifest(ctx, config, layers)
 	if err != nil {
 		return &r, err
 	}
 	r.Manifest = manifest
 	return &r, nil
+}
+
+// loadChartArchive loads a chart archive with Chart.yaml apiVersion v1 or v2. The loader returns the
+// only other kind, apiVersion v3, as a chart type the bundle commands don't handle.
+func loadChartArchive(ctx context.Context, chartArchive []byte, opts nelmcommon.HelmOptions) (*chart.Chart, error) {
+	chrt, err := loader.LoadArchive(nelmcommon.ContextWithHelmOptions(ctx, opts), bytes.NewBuffer(chartArchive))
+	if err != nil {
+		return nil, err
+	}
+
+	ch, ok := chrt.(*chart.Chart)
+	if !ok {
+		return nil, errors.New("werf bundle commands don't support Chart.yaml apiVersion v3 yet")
+	}
+
+	return ch, nil
 }
 
 // DeleteReference deletes a chart ref from cache
@@ -245,7 +271,11 @@ func (cache *Cache) AddManifest(ctx context.Context, ref *ref.Reference, manifes
 	if err := cache.init(); err != nil {
 		return err
 	}
-	cache.ociStore.AddReference(ref.FullName(), *manifest)
+	// AddReference sets the ref name in the descriptor annotations, which may be shared with the
+	// index entry of another ref.
+	desc := *manifest
+	desc.Annotations = maps.Clone(manifest.Annotations)
+	cache.ociStore.AddReference(ref.FullName(), desc)
 	err := cache.ociStore.SaveIndex()
 	return err
 }
@@ -296,33 +326,22 @@ func (cache *Cache) saveChartConfig(ctx context.Context, ch *chart.Chart) (*ocis
 	return &descriptor, configExists, nil
 }
 
-// saveChartContentLayer stores the chart as tarball blob and returns a descriptor
-func (cache *Cache) saveChartContentLayer(ctx context.Context, ch *chart.Chart) (*ocispec.Descriptor, bool, error) {
-	destDir := filepath.Join(cache.rootDir, ".build")
-	os.MkdirAll(destDir, 0o755)
-	tmpFile, err := chartv2util.Save(ch, destDir)
-	defer os.Remove(tmpFile)
-	if err != nil {
-		return nil, false, errors.Wrap(err, "failed to save")
-	}
-	contentBytes, err := ioutil.ReadFile(tmpFile)
-	if err != nil {
-		return nil, false, err
-	}
-	contentExists, err := cache.storeBlob(ctx, contentBytes)
+// saveChartContentLayer stores the chart archive as blob and returns a descriptor
+func (cache *Cache) saveChartContentLayer(ctx context.Context, chartArchive []byte) (*ocispec.Descriptor, bool, error) {
+	contentExists, err := cache.storeBlob(ctx, chartArchive)
 	if err != nil {
 		return nil, contentExists, err
 	}
-	descriptor := cache.memoryStore.Add("", HelmChartContentLayerMediaType, contentBytes)
+	descriptor := cache.memoryStore.Add("", HelmChartContentLayerMediaType, chartArchive)
 	return &descriptor, contentExists, nil
 }
 
 // saveChartManifest stores the chart manifest as json blob and returns a descriptor
-func (cache *Cache) saveChartManifest(ctx context.Context, config, contentLayer *ocispec.Descriptor) (*ocispec.Descriptor, bool, error) {
+func (cache *Cache) saveChartManifest(ctx context.Context, config *ocispec.Descriptor, layers []ocispec.Descriptor) (*ocispec.Descriptor, bool, error) {
 	manifest := ocispec.Manifest{
 		Versioned: specs.Versioned{SchemaVersion: 2},
 		Config:    *config,
-		Layers:    []ocispec.Descriptor{*contentLayer},
+		Layers:    layers,
 	}
 	manifestBytes, err := json.Marshal(manifest)
 	if err != nil {
