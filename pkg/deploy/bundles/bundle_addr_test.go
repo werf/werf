@@ -3,6 +3,7 @@ package bundles
 import (
 	"context"
 	"path/filepath"
+	"strings"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -39,6 +40,11 @@ var _ = Describe("Bundle addresses", func() {
 		Entry("no tag", "registry.example.com/group/app", ""),
 		Entry("no tag with the schema", "docker://registry.example.com/group/app", ""),
 	)
+
+	It("should refuse a digest destination", func() {
+		_, err := ParseDestinationAddr("registry.example.com/group/app@sha256:" + strings.Repeat("a", 64))
+		Expect(err).To(MatchError("the destination of bundle copy can't be a digest: pass a tag or no tag"))
+	})
 
 	It("should parse an archive address", func() {
 		for _, parse := range []func(string) (*ref.Addr, error){ParseSourceAddr, ParseDestinationAddr} {

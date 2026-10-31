@@ -1,6 +1,7 @@
 package bundles
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -23,6 +24,10 @@ func ParseDestinationAddr(addr string) (*ref.Addr, error) {
 	}
 
 	if parsed.RegistryAddress != nil {
+		if strings.Contains(addr, "@") {
+			return nil, errors.New("the destination of bundle copy can't be a digest: pass a tag or no tag")
+		}
+
 		_, tag, _ := splitAddrTag(addr)
 		parsed.RegistryAddress.Tag = tag
 	}
