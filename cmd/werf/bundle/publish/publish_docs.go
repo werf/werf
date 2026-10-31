@@ -7,14 +7,22 @@ import (
 func GetBundlePublishDocs() structs.DocsStruct {
 	var docs structs.DocsStruct
 
-	docs.Long = `Publish bundle into the container registry. werf bundle contains built images defined in the werf.yaml, Helm chart, Service values which contain built images tags, any custom values and set values params provided during publish invocation, werf addon templates.
+	docs.Long = `Publish bundle into the container registry. The command builds the images defined in the werf.yaml and publishes the Helm chart together with them.
 
-Published into container registry bundle can be rolled out by the "werf bundle" command.`
+The chart files are published as they are, with the chart name and version set from the repo and the tag. The publish-time inputs are stored in the .werf-data directory of the chart: the --values, the --secret-values (still encrypted, so no secret key is needed), the --set* params with the contents of the --set-file files, the --patches, the service values with the built images, the annotations, the labels and the release name and namespace. The built images are also listed in the helm.sh/images annotation of the Chart.yaml.
 
-	docs.LongMD = "Publish bundle into the container registry. `werf bundle` contains built images defined " +
-		"in the `werf.yaml`, Helm chart, Service values which contain built images tags, any custom values " +
-		"and set values params provided during publish invocation, werf addon templates.\n\n" +
-		"Published into container registry bundle can be rolled out by the `werf bundle` command."
+Published into container registry bundle can be rolled out by the "werf bundle apply" command, which applies the stored publish-time inputs the same way "werf converge" applies them.`
+
+	docs.LongMD = "Publish bundle into the container registry. The command builds the images defined in the `werf.yaml` " +
+		"and publishes the Helm chart together with them.\n\n" +
+		"The chart files are published as they are, with the chart name and version set from the repo and the tag. " +
+		"The publish-time inputs are stored in the `.werf-data` directory of the chart: the `--values`, " +
+		"the `--secret-values` (still encrypted, so no secret key is needed), the `--set*` params with the contents " +
+		"of the `--set-file` files, the `--patches`, the service values with the built images, the annotations, " +
+		"the labels and the release name and namespace. The built images are also listed in the images annotation " +
+		"of the `Chart.yaml`, which Helm-based tools read.\n\n" +
+		"Published into container registry bundle can be rolled out by the `werf bundle apply` command, which applies " +
+		"the stored publish-time inputs the same way `werf converge` applies them."
 
 	return docs
 }
