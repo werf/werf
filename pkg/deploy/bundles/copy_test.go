@@ -629,7 +629,12 @@ func (client *BundlesRegistryClientStub) LoadChart(ctx context.Context, ref *bun
 	return nil, fmt.Errorf("no chart found by address %s", ref.FullName())
 }
 
-func (client *BundlesRegistryClientStub) SaveChart(ctx context.Context, ch *chart.Chart, ref *bundles_registry.Reference, opts nelmcommon.HelmOptions) error {
+func (client *BundlesRegistryClientStub) SaveChartArchive(ctx context.Context, chartArchive []byte, ref *bundles_registry.Reference, opts nelmcommon.HelmOptions) error {
+	ch, err := BytesToChart(ctx, chartArchive, opts)
+	if err != nil {
+		return err
+	}
+
 	client.StubCharts[ref.FullName()] = ch
 	return nil
 }

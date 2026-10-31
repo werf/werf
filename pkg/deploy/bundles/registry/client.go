@@ -254,9 +254,9 @@ func (c *Client) PullChartToCache(ctx context.Context, ref *ref.Reference, opts 
 	return err
 }
 
-// SaveChart stores a copy of chart in local cache
-func (c *Client) SaveChart(ctx context.Context, ch *chart.Chart, ref *ref.Reference, opts nelmcommon.HelmOptions) error {
-	r, err := c.cache.StoreReference(ctx, ref, ch, opts)
+// SaveChartArchive stores a chart archive in local cache as is
+func (c *Client) SaveChartArchive(ctx context.Context, chartArchive []byte, ref *ref.Reference, opts nelmcommon.HelmOptions) error {
+	r, err := c.cache.StoreReference(ctx, ref, chartArchive, opts)
 	if err != nil {
 		return err
 	}

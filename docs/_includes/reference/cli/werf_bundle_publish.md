@@ -205,11 +205,18 @@ werf bundle publish [IMAGE_NAME...] [options]
             Loose werf giterminism mode restrictions
       --meta-repo=""
             Container registry storage address (default $WERF_META_REPO)
+      --no-default-patches=false
+            Ignore patches.yaml of the top-level chart and subcharts (default                       
+            $WERF_NO_DEFAULT_PATCHES or false)
   -p, --parallel=true
             Run in parallel (default $WERF_PARALLEL or true)
       --parallel-tasks-limit=5
             Parallel tasks limit, set -1 to remove the limitation (default                          
             $WERF_PARALLEL_TASKS_LIMIT or 5)
+      --patches=[]
+            Additional patches files (render patches for rendered resources, diff patches for drift 
+            detection). Also, can be defined with $WERF_PATCHES or $WERF_PATCHES_* (e.g.            
+            $WERF_PATCHES_1=.helm/patches_1.yaml, $WERF_PATCHES_2=.helm/patches_2.yaml)
       --platform=[]
             Enable platform emulation when building images with werf, format: OS/ARCH[/VARIANT]     
             ($WERF_PLATFORM or $DOCKER_DEFAULT_PLATFORM by default)

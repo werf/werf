@@ -24,7 +24,6 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/containerd/containerd/content"
@@ -38,7 +37,6 @@ import (
 	nelmcommon "github.com/werf/nelm/v2/pkg/common"
 	"github.com/werf/nelm/v2/pkg/helm/pkg/chart/loader"
 	chart "github.com/werf/nelm/v2/pkg/helm/pkg/chart/v2"
-	chartv2util "github.com/werf/nelm/v2/pkg/helm/pkg/chart/v2/util"
 	"github.com/werf/werf/v3/pkg/ref"
 )
 
@@ -163,10 +161,18 @@ func (cache *Cache) FetchReference(ctx context.Context, ref *ref.Reference, opts
 	return &r, nil
 }
 
-// StoreReference stores a chart ref in cache
-func (cache *Cache) StoreReference(ctx context.Context, ref *ref.Reference, ch *chart.Chart, opts nelmcommon.HelmOptions) (*CacheRefSummary, error) {
+// StoreReference stores a chart archive under ref in cache as is
+func (cache *Cache) StoreReference(ctx context.Context, ref *ref.Reference, chartArchive []byte, opts nelmcommon.HelmOptions) (*CacheRefSummary, error) {
 	if err := cache.init(); err != nil {
 		return nil, err
+	}
+	chrt, err := loader.LoadArchive(nelmcommon.ContextWithHelmOptions(ctx, opts), bytes.NewBuffer(chartArchive))
+	if err != nil {
+		return nil, fmt.Errorf("load chart archive: %w", err)
+	}
+	ch, ok := chrt.(*chart.Chart)
+	if !ok {
+		return nil, errors.Errorf("unsupported chart type %T", chrt)
 	}
 	r := CacheRefSummary{
 		Name:  ref.FullName(),
@@ -181,7 +187,7 @@ func (cache *Cache) StoreReference(ctx context.Context, ref *ref.Reference, ch *
 		return &r, err
 	}
 	r.Config = config
-	contentLayer, _, err := cache.saveChartContentLayer(ctx, ch)
+	contentLayer, _, err := cache.saveChartContentLayer(ctx, chartArchive)
 	if err != nil {
 		return &r, err
 	}
@@ -299,24 +305,13 @@ func (cache *Cache) saveChartConfig(ctx context.Context, ch *chart.Chart) (*ocis
 	return &descriptor, configExists, nil
 }
 
-// saveChartContentLayer stores the chart as tarball blob and returns a descriptor
-func (cache *Cache) saveChartContentLayer(ctx context.Context, ch *chart.Chart) (*ocispec.Descriptor, bool, error) {
-	destDir := filepath.Join(cache.rootDir, ".build")
-	os.MkdirAll(destDir, 0o755)
-	tmpFile, err := chartv2util.Save(ch, destDir)
-	defer os.Remove(tmpFile)
-	if err != nil {
-		return nil, false, errors.Wrap(err, "failed to save")
-	}
-	contentBytes, err := ioutil.ReadFile(tmpFile)
-	if err != nil {
-		return nil, false, err
-	}
-	contentExists, err := cache.storeBlob(ctx, contentBytes)
+// saveChartContentLayer stores the chart archive as blob and returns a descriptor
+func (cache *Cache) saveChartContentLayer(ctx context.Context, chartArchive []byte) (*ocispec.Descriptor, bool, error) {
+	contentExists, err := cache.storeBlob(ctx, chartArchive)
 	if err != nil {
 		return nil, contentExists, err
 	}
-	descriptor := cache.memoryStore.Add("", HelmChartContentLayerMediaType, contentBytes)
+	descriptor := cache.memoryStore.Add("", HelmChartContentLayerMediaType, chartArchive)
 	return &descriptor, contentExists, nil
 }
 

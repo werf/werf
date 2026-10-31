@@ -62,8 +62,13 @@ func (bundle *RemoteBundle) WriteChart(ctx context.Context, ch *chart.Chart, opt
 	tags := chartTags(ch.Metadata.Version, bundle.RegistryAddress.Tag)
 	cacheRef := &bundles_registry.Reference{Repo: bundle.RegistryAddress.Repo, Tag: tags[0]}
 
+	chartArchive, err := ChartToBytes(ch)
+	if err != nil {
+		return fmt.Errorf("unable to dump chart to archive: %w", err)
+	}
+
 	if err := logboek.Context(ctx).LogProcess("Saving bundle %s", cacheRef.FullName()).DoError(func() error {
-		if err := bundle.BundlesRegistryClient.SaveChart(ctx, ch, cacheRef, opts); err != nil {
+		if err := bundle.BundlesRegistryClient.SaveChartArchive(ctx, chartArchive, cacheRef, opts); err != nil {
 			return fmt.Errorf("unable to save bundle %s to the local chart helm cache: %w", cacheRef.FullName(), err)
 		}
 		return nil
