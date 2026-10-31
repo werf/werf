@@ -113,6 +113,22 @@ var _ = Describe("Bundle publish", func() {
 		Entry("unsigned, verify if possible", publishUnsignedTestChart, ProvenanceStrategyVerifyIfPossible, ""),
 	)
 
+	DescribeTable("should refuse to verify the signature",
+		func(ctx0 context.Context, keyring, expectedErr string) {
+			ctx := logging.WithLogger(ctx0)
+			repo := startTestRegistry() + "/group/app"
+			publishSignedTestChart(ctx, repo)
+
+			err := Pull(ctx, repo+":1.0.0", filepath.Join(GinkgoT().TempDir(), "app"), newTestRegistryClient(ctx), PullOptions{
+				ProvenanceKeyring:  keyring,
+				ProvenanceStrategy: ProvenanceStrategyVerify,
+			})
+			Expect(err).To(MatchError(ContainSubstring(expectedErr)))
+		},
+		Entry("signed with another key", testKeyringPath("helm-password-key.secret"), "openpgp: signature made by unknown entity"),
+		Entry("without a keyring", "", "pass --provenance-keyring"),
+	)
+
 	It("should publish a signed chart with its signature", func(ctx0 context.Context) {
 		ctx := logging.WithLogger(ctx0)
 		repo := startTestRegistry() + "/group/app"
