@@ -154,7 +154,7 @@ werf bundle apply --repo example.org/bundles/mybundle --tag v1.0.0
 
 `--secret-values` команды `werf bundle publish` расшифровываются при развёртывании и сохраняются в релизе в расшифрованном виде, так же как `werf converge` сохраняет свои `--secret-values`, см. [Секретные параметры в релизе]({{ "/usage/deploy/values.html#секретные-параметры-в-релизе" | true_relative_url }}). Для их расшифровки нужен секретный ключ, которым они были зашифрованы при публикации.
 
-`werf bundle publish` сохраняет имя релиза и Namespace, вычисленные так же, как их вычисляет `werf converge` для указанного `--env`. `werf bundle apply`, `werf bundle plan` и `werf bundle render` используют их, если не переданы `--release` и `--namespace`. Если вы передаёте `--env`, отличный от использованного при публикации, укажите `--release` и `--namespace` явно.
+`werf bundle publish` сохраняет имя релиза и Namespace, вычисленные так же, как их вычисляет `werf converge` для указанного `--env`. `werf bundle apply`, `werf bundle plan` и `werf bundle render` используют их вместо непереданных `--release` и `--namespace`, в том числе когда не передан `--env`. Если вы передаёте непустой `--env`, отличный от использованного при публикации, сохранённые значения не используются и обязательны оба флага, `--release` и `--namespace`.
 
 Единственное известное отличие от `werf converge` — `.Chart.Name` и `.Chart.Version`: при `werf converge` шаблоны получают имя проекта и версию из `Chart.yaml` (по умолчанию `1.0.0`), а при `werf bundle apply` — имя репозитория и версию, полученную из тега. Поэтому лейбл вида {% raw %}`helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version }}`{% endraw %} различается, и переход релиза с `werf converge` на `werf bundle apply` один раз перезапускает его Pod'ы.
 

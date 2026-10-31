@@ -95,9 +95,9 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupChartProvenanceStrategy(&commonCmdData, cmd)
 	common.SetupExtraAPIVersions(&commonCmdData, cmd)
 	common.SetupKubeVersion(&commonCmdData, cmd)
-	common.SetupNamespace(&commonCmdData, cmd, false)
+	common.SetupBundleNamespace(&commonCmdData, cmd)
 	common.SetupNetworkParallelism(&commonCmdData, cmd)
-	common.SetupRelease(&commonCmdData, cmd, false)
+	common.SetupBundleRelease(&commonCmdData, cmd)
 	common.SetupReleaseStorageDriver(&commonCmdData, cmd)
 	common.SetupReleaseStorageSQLConnection(&commonCmdData, cmd)
 	common.SetupSetDockerConfigJsonValue(&commonCmdData, cmd)
@@ -184,9 +184,17 @@ func runRender(ctx context.Context) error {
 		return fmt.Errorf("read bundle metadata: %w", err)
 	}
 
-	releaseDefaults := bundles.ReleaseDefaults(ctx, werfDataMetadata, commonCmdData.Environment)
-	releaseNamespace := cmp.Or(commonCmdData.Namespace, releaseDefaults.Namespace, common.GetNamespace(&commonCmdData))
-	releaseName := cmp.Or(commonCmdData.Release, releaseDefaults.Name, common.GetOptionalRelease(&commonCmdData))
+	release, err := bundles.ResolveRelease(ctx, werfDataMetadata, bundles.ReleaseFlags{
+		Release:   commonCmdData.Release,
+		Namespace: commonCmdData.Namespace,
+		Env:       commonCmdData.Environment,
+	})
+	if err != nil {
+		return fmt.Errorf("resolve release: %w", err)
+	}
+
+	releaseNamespace := cmp.Or(release.Namespace, common.GetNamespace(&commonCmdData))
+	releaseName := cmp.Or(release.Release, common.GetOptionalRelease(&commonCmdData))
 	registryCredentialsPath := docker.GetDockerConfigCredentialsFile(*commonCmdData.DockerConfig)
 
 	serviceValues, err := deploy.GetBundleServiceValues(ctx, deploy.ServiceValuesOptions{

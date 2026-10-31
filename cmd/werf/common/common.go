@@ -490,6 +490,16 @@ func SetupNamespace(cmdData *CmdData, cmd *cobra.Command, projectConfigParsed bo
 	cmd.Flags().StringVarP(&cmdData.Namespace, "namespace", "", os.Getenv("WERF_NAMESPACE"), usage)
 }
 
+// SetupBundleRelease sets up --release for the commands deploying a published bundle.
+func SetupBundleRelease(cmdData *CmdData, cmd *cobra.Command) {
+	cmd.Flags().StringVarP(&cmdData.Release, "release", "", os.Getenv("WERF_RELEASE"), "Use specified Helm release name (default $WERF_RELEASE or the release name recorded in the bundle at publish, unless --env differs from the publish one)")
+}
+
+// SetupBundleNamespace sets up --namespace for the commands deploying a published bundle.
+func SetupBundleNamespace(cmdData *CmdData, cmd *cobra.Command) {
+	cmd.Flags().StringVarP(&cmdData.Namespace, "namespace", "", os.Getenv("WERF_NAMESPACE"), "Use specified Kubernetes namespace (default $WERF_NAMESPACE or the namespace recorded in the bundle at publish, unless --env differs from the publish one)")
+}
+
 func SetupAddAnnotations(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringArrayVarP(&cmdData.ExtraAnnotations, "add-annotation", "", []string{}, `Add annotation to deploying resources (can specify multiple).
 Format: annoName=annoValue.

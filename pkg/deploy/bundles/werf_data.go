@@ -13,6 +13,7 @@ import (
 	"github.com/samber/lo"
 	"sigs.k8s.io/yaml"
 
+	"github.com/werf/logboek"
 	"github.com/werf/nelm/v2/pkg/chartyaml"
 	chart "github.com/werf/nelm/v2/pkg/helm/pkg/chart/v2"
 	chartv2util "github.com/werf/nelm/v2/pkg/helm/pkg/chart/v2/util"
@@ -51,15 +52,41 @@ func ReadWerfDataMetadata(ctx context.Context, chartDir string) (*werfdata.Metad
 	return metadata, true, nil
 }
 
-// ReleaseDefaults returns the release name and namespace that werf bundle publish resolved, or empty
-// ones when env is set and differs from the environment they were resolved for, as converge would
-// resolve them differently.
-func ReleaseDefaults(ctx context.Context, metadata *werfdata.Metadata, env string) werfdata.ReleaseMetadata {
-	if metadata.Release == nil || (env != "" && env != metadata.Release.Env) {
-		return werfdata.ReleaseMetadata{}
+// ReleaseFlags are the release name, namespace and environment given to a bundle command.
+type ReleaseFlags struct {
+	Release   string
+	Namespace string
+	Env       string
+}
+
+// ResolveRelease fills in the release name and namespace not given in flags with the ones werf bundle
+// publish recorded. They are recorded for the environment of the publication, and converge would
+// resolve them differently for another one, so with another non-empty --env both must be given.
+// Without recorded ones, the flags are returned as is.
+func ResolveRelease(ctx context.Context, metadata *werfdata.Metadata, flags ReleaseFlags) (ReleaseFlags, error) {
+	recorded := metadata.Release
+	if recorded == nil {
+		return flags, nil
 	}
 
-	return *metadata.Release
+	if flags.Env != "" && flags.Env != recorded.Env {
+		if flags.Release == "" || flags.Namespace == "" {
+			return ReleaseFlags{}, fmt.Errorf("release defaults recorded for env %q are not used with --env %q: pass --release and --namespace", recorded.Env, flags.Env)
+		}
+
+		return flags, nil
+	}
+
+	if flags.Release != "" && flags.Namespace != "" {
+		return flags, nil
+	}
+
+	flags.Release = lo.CoalesceOrEmpty(flags.Release, recorded.Name)
+	flags.Namespace = lo.CoalesceOrEmpty(flags.Namespace, recorded.Namespace)
+
+	logboek.Context(ctx).Default().LogF("Using release %s and namespace %s recorded in %s for env %q\n", flags.Release, flags.Namespace, werfdata.DirName, recorded.Env)
+
+	return flags, nil
 }
 
 // ChartImagesFromServiceValues returns the helm.sh/images entries of the werf images in the service

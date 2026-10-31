@@ -16,7 +16,7 @@ var _ = Describe("Bundle .werf-data", func() {
 		metadata, hasWerfData, err := ReadWerfDataMetadata(ctx, GinkgoT().TempDir())
 		Expect(err).To(Succeed())
 		Expect(hasWerfData).To(BeFalse())
-		Expect(ReleaseDefaults(ctx, metadata, "")).To(Equal(werfdata.ReleaseMetadata{}))
+		Expect(ResolveRelease(ctx, metadata, ReleaseFlags{})).To(Equal(ReleaseFlags{}))
 	})
 
 	It("should read the metadata of a bundle with .werf-data", func(ctx context.Context) {
@@ -39,19 +39,39 @@ var _ = Describe("Bundle .werf-data", func() {
 		Expect(err).To(MatchError(ContainSubstring(`unsupported .werf-data/metadata.yaml apiVersion "v3"`)))
 	})
 
-	DescribeTable("should use the release defaults unless the environment differs",
-		func(ctx context.Context, release *werfdata.ReleaseMetadata, env string, expected werfdata.ReleaseMetadata) {
-			Expect(ReleaseDefaults(ctx, &werfdata.Metadata{Release: release}, env)).To(Equal(expected))
+	DescribeTable("should resolve the release from the flags and the release defaults",
+		func(ctx context.Context, release *werfdata.ReleaseMetadata, flags, expected ReleaseFlags) {
+			Expect(ResolveRelease(ctx, &werfdata.Metadata{Release: release}, flags)).To(Equal(expected))
 		},
-		Entry("no environment given",
-			&werfdata.ReleaseMetadata{Name: "app-production", Namespace: "app-ns", Env: "production"}, "",
-			werfdata.ReleaseMetadata{Name: "app-production", Namespace: "app-ns", Env: "production"}),
+		Entry("no flags",
+			recordedRelease, ReleaseFlags{},
+			ReleaseFlags{Release: "app-production", Namespace: "app-ns"}),
 		Entry("the same environment",
-			&werfdata.ReleaseMetadata{Name: "app-production", Namespace: "app-ns", Env: "production"}, "production",
-			werfdata.ReleaseMetadata{Name: "app-production", Namespace: "app-ns", Env: "production"}),
-		Entry("another environment",
-			&werfdata.ReleaseMetadata{Name: "app-production", Namespace: "app-ns", Env: "production"}, "staging",
-			werfdata.ReleaseMetadata{}),
-		Entry("no release recorded", nil, "", werfdata.ReleaseMetadata{}),
+			recordedRelease, ReleaseFlags{Env: "production"},
+			ReleaseFlags{Release: "app-production", Namespace: "app-ns", Env: "production"}),
+		Entry("the flags win",
+			recordedRelease, ReleaseFlags{Release: "release", Namespace: "namespace"},
+			ReleaseFlags{Release: "release", Namespace: "namespace"}),
+		Entry("only the namespace given",
+			recordedRelease, ReleaseFlags{Namespace: "namespace"},
+			ReleaseFlags{Release: "app-production", Namespace: "namespace"}),
+		Entry("another environment with both flags",
+			recordedRelease, ReleaseFlags{Release: "release", Namespace: "namespace", Env: "staging"},
+			ReleaseFlags{Release: "release", Namespace: "namespace", Env: "staging"}),
+		Entry("no release recorded",
+			nil, ReleaseFlags{Env: "staging"},
+			ReleaseFlags{Env: "staging"}),
+	)
+
+	DescribeTable("should require both flags for another environment",
+		func(ctx context.Context, flags ReleaseFlags) {
+			_, err := ResolveRelease(ctx, &werfdata.Metadata{Release: recordedRelease}, flags)
+			Expect(err).To(MatchError(`release defaults recorded for env "production" are not used with --env "staging": pass --release and --namespace`))
+		},
+		Entry("no flags", ReleaseFlags{Env: "staging"}),
+		Entry("only the release", ReleaseFlags{Release: "release", Env: "staging"}),
+		Entry("only the namespace", ReleaseFlags{Namespace: "namespace", Env: "staging"}),
 	)
 })
+
+var recordedRelease = &werfdata.ReleaseMetadata{Name: "app-production", Namespace: "app-ns", Env: "production"}

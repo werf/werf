@@ -97,13 +97,13 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupExtraRuntimeAnnotations(&commonCmdData, cmd)
 	common.SetupExtraRuntimeLabels(&commonCmdData, cmd)
 	common.SetupForceAdoption(&commonCmdData, cmd)
-	common.SetupNamespace(&commonCmdData, cmd, false)
+	common.SetupBundleNamespace(&commonCmdData, cmd)
 	common.SetupNetworkParallelism(&commonCmdData, cmd)
 	common.SetupNoInstallCRDs(&commonCmdData, cmd)
 	common.SetupNoRemoveManualChanges(&commonCmdData, cmd)
 	common.SetupNoShowNotes(&commonCmdData, cmd)
 	common.SetupNoCreateNamespace(&commonCmdData, cmd)
-	common.SetupRelease(&commonCmdData, cmd, false)
+	common.SetupBundleRelease(&commonCmdData, cmd)
 	common.SetupReleaseInfoAnnotations(&commonCmdData, cmd)
 	common.SetupReleaseLabel(&commonCmdData, cmd)
 	common.SetupReleaseStorageDriver(&commonCmdData, cmd)
@@ -197,12 +197,19 @@ func runApply(ctx context.Context) error {
 			return fmt.Errorf("read bundle metadata: %w", err)
 		}
 
-		releaseDefaults := bundles.ReleaseDefaults(ctx, werfDataMetadata, commonCmdData.Environment)
+		release, err := bundles.ResolveRelease(ctx, werfDataMetadata, bundles.ReleaseFlags{
+			Release:   commonCmdData.Release,
+			Namespace: commonCmdData.Namespace,
+			Env:       commonCmdData.Environment,
+		})
+		if err != nil {
+			return fmt.Errorf("resolve release: %w", err)
+		}
 
-		releaseNamespace = cmp.Or(commonCmdData.Namespace, releaseDefaults.Namespace, common.GetNamespace(&commonCmdData))
+		releaseNamespace = cmp.Or(release.Namespace, common.GetNamespace(&commonCmdData))
 
-		releaseName = releaseDefaults.Name
-		if commonCmdData.Release != "" || releaseName == "" {
+		releaseName = release.Release
+		if releaseName == "" {
 			releaseName, err = common.GetRequiredRelease(&commonCmdData)
 			if err != nil {
 				return fmt.Errorf("get release name: %w", err)
