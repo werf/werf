@@ -5,7 +5,10 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"errors"
 	"fmt"
+	"io"
+	"path"
 
 	"sigs.k8s.io/yaml"
 
@@ -16,6 +19,9 @@ import (
 	chartv2util "github.com/werf/nelm/v2/pkg/helm/pkg/chart/v2/util"
 )
 
+// ChartToBytes packs the chart. A chart with .werf-data gets its original Chart.yaml and Chart.lock
+// instead of the ones generated from the parsed metadata, so that their formatting survives: keep
+// them in sync with the metadata.
 func ChartToBytes(ch *chart.Chart) ([]byte, error) {
 	chartBytes := bytes.NewBuffer(nil)
 	zipper := gzip.NewWriter(chartBytes)
@@ -34,7 +40,76 @@ func ChartToBytes(ch *chart.Chart) ([]byte, error) {
 		return nil, fmt.Errorf("unable to close chart gzip: %w", err)
 	}
 
-	return chartBytes.Bytes(), nil
+	if len(ch.WerfDataFiles) == 0 {
+		return chartBytes.Bytes(), nil
+	}
+
+	replacements := map[string][]byte{}
+	for _, f := range ch.Raw {
+		if f.Name == chartv2util.ChartfileName || f.Name == "Chart.lock" {
+			replacements[path.Join(ch.Name(), f.Name)] = f.Data
+		}
+	}
+
+	result, err := replaceArchiveFiles(chartBytes.Bytes(), replacements)
+	if err != nil {
+		return nil, fmt.Errorf("write original Chart.yaml and Chart.lock: %w", err)
+	}
+
+	return result, nil
+}
+
+func replaceArchiveFiles(archive []byte, replacements map[string][]byte) ([]byte, error) {
+	gzipReader, err := gzip.NewReader(bytes.NewReader(archive))
+	if err != nil {
+		return nil, fmt.Errorf("read archive: %w", err)
+	}
+	defer gzipReader.Close()
+
+	result := bytes.NewBuffer(nil)
+	gzipWriter := gzip.NewWriter(result)
+	gzipWriter.Header = gzipReader.Header
+	tarReader := tar.NewReader(gzipReader)
+	tarWriter := tar.NewWriter(gzipWriter)
+
+	for {
+		header, err := tarReader.Next()
+		if errors.Is(err, io.EOF) {
+			break
+		}
+
+		if err != nil {
+			return nil, fmt.Errorf("read archive: %w", err)
+		}
+
+		body, err := io.ReadAll(tarReader)
+		if err != nil {
+			return nil, fmt.Errorf("read %q from archive: %w", header.Name, err)
+		}
+
+		if replacement, ok := replacements[header.Name]; ok {
+			body = replacement
+			header.Size = int64(len(body))
+		}
+
+		if err := tarWriter.WriteHeader(header); err != nil {
+			return nil, fmt.Errorf("write %q into archive: %w", header.Name, err)
+		}
+
+		if _, err := tarWriter.Write(body); err != nil {
+			return nil, fmt.Errorf("write %q into archive: %w", header.Name, err)
+		}
+	}
+
+	if err := tarWriter.Close(); err != nil {
+		return nil, fmt.Errorf("write archive: %w", err)
+	}
+
+	if err := gzipWriter.Close(); err != nil {
+		return nil, fmt.Errorf("write archive: %w", err)
+	}
+
+	return result.Bytes(), nil
 }
 
 func BytesToChart(ctx context.Context, data []byte, opts nelmcommon.HelmOptions) (*chart.Chart, error) {
