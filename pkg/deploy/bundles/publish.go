@@ -25,6 +25,7 @@ func Publish(ctx context.Context, bundleDir, bundleRef string, bundlesRegistryCl
 		return fmt.Errorf("error parsing bundle ref %q: %w", bundleRef, err)
 	}
 
+	var tags []string
 	if err := logboek.Context(ctx).Default().LogProcess("Saving bundle to the local chart helm cache").DoError(func() error {
 		path, err := filepath.Abs(bundleDir)
 		if err != nil {
@@ -46,6 +47,9 @@ func Publish(ctx context.Context, bundleDir, bundleRef string, bundlesRegistryCl
 			v2ch.Metadata.Name = *nameOverwrite
 		}
 
+		tags = chartTags(v2ch.Metadata.Version, r.Tag)
+		r.Tag = tags[0]
+
 		if err := bundlesRegistryClient.SaveChart(ctx, v2ch, r, opts.HelmOptions); err != nil {
 			return fmt.Errorf("unable to save bundle to the local chart helm cache: %w", err)
 		}
@@ -55,7 +59,7 @@ func Publish(ctx context.Context, bundleDir, bundleRef string, bundlesRegistryCl
 	}
 
 	if err := logboek.Context(ctx).LogProcess("Pushing bundle %q", bundleRef).DoError(func() error {
-		return bundlesRegistryClient.PushChart(ctx, r, opts.HelmOptions)
+		return bundlesRegistryClient.PushChart(ctx, r, tags, opts.HelmOptions)
 	}); err != nil {
 		return err
 	}

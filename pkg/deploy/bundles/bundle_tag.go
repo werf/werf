@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/Masterminds/semver"
@@ -41,4 +42,14 @@ func BundleTagToChartVersion(ctx context.Context, tag string, now time.Time) (*s
 	}
 
 	return sv, nil
+}
+
+// chartTags returns the tags to push a chart with chartVersion under: the version itself, encoded as Helm does, and the tag the user asked for, if it differs.
+func chartTags(chartVersion, tag string) []string {
+	versionTag := strings.ReplaceAll(chartVersion, "+", "_")
+	if tag == "" || tag == versionTag {
+		return []string{versionTag}
+	}
+
+	return []string{versionTag, tag}
 }

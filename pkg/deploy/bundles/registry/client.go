@@ -26,6 +26,7 @@ import (
 	"net/http"
 	"sort"
 
+	"github.com/containerd/containerd/remotes"
 	auth "github.com/deislabs/oras/pkg/auth/docker"
 	"github.com/deislabs/oras/pkg/content"
 	"github.com/deislabs/oras/pkg/oras"
@@ -132,8 +133,8 @@ func (c *Client) Logout(ctx context.Context, hostname string) error {
 	return nil
 }
 
-// PushChart uploads a chart to a registry
-func (c *Client) PushChart(ctx context.Context, ref *ref.Reference, opts nelmcommon.HelmOptions) error {
+// PushChart uploads the chart cached under ref to the registry under each of tags
+func (c *Client) PushChart(ctx context.Context, ref *ref.Reference, tags []string, opts nelmcommon.HelmOptions) error {
 	r, err := c.cache.FetchReference(ctx, ref, opts)
 	if err != nil {
 		return err
@@ -144,18 +145,22 @@ func (c *Client) PushChart(ctx context.Context, ref *ref.Reference, opts nelmcom
 	fmt.Fprintf(c.out, "The push refers to repository [%s]\n", r.Repo)
 	c.printCacheRefSummary(r)
 	layers := []ocispec.Descriptor{*r.ContentLayer}
-	_, err = oras.Push(withOrasLogger(ctx, c.out, c.debug), c.resolver, r.Name, c.cache.Provider(), layers,
-		oras.WithConfig(*r.Config), oras.WithNameValidation(nil))
-	if err != nil {
-		return err
-	}
 	s := ""
 	numLayers := len(layers)
 	if 1 < numLayers {
 		s = "s"
 	}
-	fmt.Fprintf(c.out,
-		"%s: pushed to remote (%d layer%s, %s total)\n", r.Tag, numLayers, s, byteCountBinary(r.Size))
+	for _, tag := range tags {
+		name := fmt.Sprintf("%s:%s", r.Repo, tag)
+		// The resolver remembers pushed descriptors and would skip the same manifest for the next tag.
+		pushCtx := remotes.WithMediaTypeKeyPrefix(ctx, ocispec.MediaTypeImageManifest, "manifest-"+tag)
+		if _, err := oras.Push(withOrasLogger(pushCtx, c.out, c.debug), c.resolver, name, c.cache.Provider(), layers,
+			oras.WithConfig(*r.Config), oras.WithNameValidation(nil)); err != nil {
+			return fmt.Errorf("push chart to %s: %w", name, err)
+		}
+		fmt.Fprintf(c.out,
+			"%s: pushed to remote (%d layer%s, %s total)\n", tag, numLayers, s, byteCountBinary(r.Size))
+	}
 	return nil
 }
 

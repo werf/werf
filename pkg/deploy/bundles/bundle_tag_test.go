@@ -36,3 +36,15 @@ var _ = Describe("BundleTagToChartVersion", func() {
 		Entry("capital V prefix", "V1.2.3", fmt.Sprintf("0.0.0-%d-v1-2-3", now.Unix())),
 	)
 })
+
+var _ = DescribeTable("chartTags",
+	func(chartVersion, tag string, expectedTags []string) {
+		Expect(chartTags(chartVersion, tag)).To(Equal(expectedTags))
+	},
+	Entry("tag equal to the version", "1.2.3", "1.2.3", []string{"1.2.3"}),
+	Entry("tag with the v prefix", "1.2.3", "v1.2.3", []string{"1.2.3", "v1.2.3"}),
+	Entry("non-semver tag", "0.0.0-1700000000-latest", "latest", []string{"0.0.0-1700000000-latest", "latest"}),
+	Entry("no tag", "1.2.3", "", []string{"1.2.3"}),
+	Entry("version with build metadata", "1.2.3+build.5", "", []string{"1.2.3_build.5"}),
+	Entry("tag equal to the encoded version", "1.2.3+build.5", "1.2.3_build.5", []string{"1.2.3_build.5"}),
+)

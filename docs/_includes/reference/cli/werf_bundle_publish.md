@@ -305,8 +305,9 @@ werf bundle publish [IMAGE_NAME...] [options]
             The same address should be specified for all werf processes that work with a single     
             repo. :local address allows execution of werf processes from a single host only
       --tag="latest"
-            Publish bundle into container registry repo by the provided tag ($WERF_TAG or latest by 
-            default)
+            Publish bundle into container registry repo by the provided tag and by the chart        
+            version: the tag itself if it is strict semver (without the leading `v`), otherwise     
+            `0.0.0-<unix time>-<tag>` ($WERF_TAG or latest by default)
       --tmp-dir=""
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
       --use-build-report=false

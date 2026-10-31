@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
+	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/spf13/cobra"
 
 	"github.com/werf/logboek"
@@ -67,7 +69,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	commonCmdData.SetupRenameChart(cmd)
 
 	cmd.Flags().StringVarP(&cmdData.From, "from", "", os.Getenv("WERF_FROM"), "Source address of the bundle to copy, specify bundle archive using schema `archive:PATH_TO_ARCHIVE.tar.gz`, specify remote bundle with schema `[docker://]REPO:TAG` or without schema.")
-	cmd.Flags().StringVarP(&cmdData.To, "to", "", os.Getenv("WERF_TO"), "Destination address of the bundle to copy, specify bundle archive using schema `archive:PATH_TO_ARCHIVE.tar.gz`, specify remote bundle with schema `[docker://]REPO:TAG` or without schema.")
+	cmd.Flags().StringVarP(&cmdData.To, "to", "", os.Getenv("WERF_TO"), "Destination address of the bundle to copy, specify bundle archive using schema `archive:PATH_TO_ARCHIVE.tar.gz`, specify remote bundle with schema `[docker://]REPO[:TAG]` or without schema. A remote bundle gets its chart version from TAG and is pushed under that version and under TAG; without TAG it keeps the chart version and the tag of the source bundle.")
 
 	return cmd
 }
@@ -117,6 +119,17 @@ func runCopy(ctx context.Context) error {
 		return fmt.Errorf("invalid to addr %q: %w", toAddrRaw, err)
 	}
 
+	if toAddr.RegistryAddress != nil {
+		hasTag, err := registryAddressHasTag(toAddrRaw)
+		if err != nil {
+			return fmt.Errorf("invalid to addr %q: %w", toAddrRaw, err)
+		}
+
+		if !hasTag {
+			toAddr.RegistryAddress.Tag = ""
+		}
+	}
+
 	var fromRegistry, toRegistry docker_registry.Interface
 
 	if fromAddr.RegistryAddress != nil {
@@ -155,4 +168,15 @@ func runCopy(ctx context.Context) error {
 			},
 		})
 	})
+}
+
+func registryAddressHasTag(addr string) (bool, error) {
+	reference, err := name.ParseReference(strings.TrimPrefix(addr, ref.RegistrySchema), name.WeakValidation, name.WithDefaultTag(""))
+	if err != nil {
+		return false, fmt.Errorf("parse registry address: %w", err)
+	}
+
+	tag, isTag := reference.(name.Tag)
+
+	return !isTag || tag.TagStr() != "", nil
 }

@@ -58,18 +58,21 @@ func (bundle *RemoteBundle) ReadChart(ctx context.Context, opts nelmcommon.HelmO
 }
 
 func (bundle *RemoteBundle) WriteChart(ctx context.Context, ch *chart.Chart, opts nelmcommon.HelmOptions) error {
-	if err := logboek.Context(ctx).LogProcess("Saving bundle %s", bundle.RegistryAddress.FullName()).DoError(func() error {
-		if err := bundle.BundlesRegistryClient.SaveChart(ctx, ch, bundle.RegistryAddress.Reference, opts); err != nil {
-			return fmt.Errorf("unable to save bundle %s to the local chart helm cache: %w", bundle.RegistryAddress.FullName(), err)
+	tags := chartTags(ch.Metadata.Version, bundle.RegistryAddress.Tag)
+	cacheRef := &bundles_registry.Reference{Repo: bundle.RegistryAddress.Repo, Tag: tags[0]}
+
+	if err := logboek.Context(ctx).LogProcess("Saving bundle %s", cacheRef.FullName()).DoError(func() error {
+		if err := bundle.BundlesRegistryClient.SaveChart(ctx, ch, cacheRef, opts); err != nil {
+			return fmt.Errorf("unable to save bundle %s to the local chart helm cache: %w", cacheRef.FullName(), err)
 		}
 		return nil
 	}); err != nil {
 		return err
 	}
 
-	if err := logboek.Context(ctx).LogProcess("Pushing bundle %s", bundle.RegistryAddress.FullName()).DoError(func() error {
-		if err := bundle.BundlesRegistryClient.PushChart(ctx, bundle.RegistryAddress.Reference, opts); err != nil {
-			return fmt.Errorf("unable to push bundle %s: %w", bundle.RegistryAddress.FullName(), err)
+	if err := logboek.Context(ctx).LogProcess("Pushing bundle %s with tags %s", bundle.RegistryAddress.Repo, strings.Join(tags, ", ")).DoError(func() error {
+		if err := bundle.BundlesRegistryClient.PushChart(ctx, cacheRef, tags, opts); err != nil {
+			return fmt.Errorf("unable to push bundle %s: %w", cacheRef.FullName(), err)
 		}
 		return nil
 	}); err != nil {
@@ -144,11 +147,13 @@ func (bundle *RemoteBundle) CopyFromArchive(ctx context.Context, fromArchive *Bu
 		ch.Metadata.Name = *nameOverwrite
 	}
 
-	sv, err := BundleTagToChartVersion(ctx, bundle.RegistryAddress.Tag, time.Now())
-	if err != nil {
-		return fmt.Errorf("unable to set chart version from bundle tag %q: %w", bundle.RegistryAddress.Tag, err)
+	if bundle.RegistryAddress.Tag != "" {
+		sv, err := BundleTagToChartVersion(ctx, bundle.RegistryAddress.Tag, time.Now())
+		if err != nil {
+			return fmt.Errorf("unable to set chart version from bundle tag %q: %w", bundle.RegistryAddress.Tag, err)
+		}
+		ch.Metadata.Version = sv.String()
 	}
-	ch.Metadata.Version = sv.String()
 
 	if err := bundle.WriteChart(ctx, ch, opts.HelmOptions); err != nil {
 		return fmt.Errorf("unable to write chart to remote bundle: %w", err)
@@ -221,13 +226,20 @@ func (bundle *RemoteBundle) CopyFromRemote(ctx context.Context, fromRemote *Remo
 
 	ch.Metadata.Name = util.Reverse(strings.SplitN(util.Reverse(bundle.RegistryAddress.Repo), "/", 2)[0])
 
-	sv, err := BundleTagToChartVersion(ctx, bundle.RegistryAddress.Tag, time.Now())
-	if err != nil {
-		return fmt.Errorf("unable to set chart version from bundle tag %q: %w", bundle.RegistryAddress.Tag, err)
+	destination := bundle
+	if bundle.RegistryAddress.Tag == "" {
+		destination = NewRemoteBundle(&bundles_registry.RegistryAddress{
+			Reference: &bundles_registry.Reference{Repo: bundle.RegistryAddress.Repo, Tag: fromRemote.RegistryAddress.Tag},
+		}, bundle.BundlesRegistryClient, bundle.RegistryClient)
+	} else {
+		sv, err := BundleTagToChartVersion(ctx, bundle.RegistryAddress.Tag, time.Now())
+		if err != nil {
+			return fmt.Errorf("unable to set chart version from bundle tag %q: %w", bundle.RegistryAddress.Tag, err)
+		}
+		ch.Metadata.Version = sv.String()
 	}
-	ch.Metadata.Version = sv.String()
 
-	if err := bundle.WriteChart(ctx, ch, opts.HelmOptions); err != nil {
+	if err := destination.WriteChart(ctx, ch, opts.HelmOptions); err != nil {
 		return fmt.Errorf("unable to write chart to destination remote bundle: %w", err)
 	}
 

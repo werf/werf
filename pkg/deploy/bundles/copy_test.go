@@ -6,9 +6,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"strings"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/samber/lo"
 	"sigs.k8s.io/yaml"
 
 	nelmcommon "github.com/werf/nelm/v2/pkg/common"
@@ -555,6 +557,91 @@ global:
 		Expect(myappVals["name_ref"]).To(Equal("newproject:tag-1@sha256:abcdef1234567890"))
 		Expect(myappVals["name_tag"]).To(Equal("newproject:tag-1"))
 	})
+
+	It("should copy archive to remote without a tag keeping the chart version", func() {
+		ch := &chart.Chart{
+			Metadata: &chart.Metadata{
+				APIVersion: "v2",
+				Name:       "testproject",
+				Version:    "0.1.0",
+				Type:       "application",
+			},
+			Values: map[string]interface{}{
+				"werf": map[string]interface{}{
+					"image": map[string]interface{}{},
+					"repo":  "repo",
+				},
+			},
+			Raw: []*chartcommon.File{
+				{
+					Name: "values.yaml",
+					Data: []byte("werf:\n  image: {}\n  repo: repo\n"),
+				},
+			},
+		}
+
+		from := NewBundleArchive(NewBundleArchiveStubReader(ch, map[string][]byte{}), NewBundleArchiveStubWriter())
+
+		bundlesRegistryClient := NewBundlesRegistryClientStub()
+		toAddr := &bundles_registry.RegistryAddress{Reference: &bundles_registry.Reference{Repo: "registry.example.com/group/testproject"}}
+		Expect(from.CopyTo(ctx, NewRemoteBundle(toAddr, bundlesRegistryClient, NewDockerRegistryStub()), copyToOptions{})).To(Succeed())
+
+		Expect(bundlesRegistryClient.PushedRefs).To(Equal([]string{"registry.example.com/group/testproject:0.1.0"}))
+		Expect(bundlesRegistryClient.StubCharts["registry.example.com/group/testproject:0.1.0"].Metadata.Version).To(Equal("0.1.0"))
+	})
+
+	DescribeTable("should copy remote to remote under the version and the given tag",
+		func(fromTag, fromVersion, to, expectedVersion string, expectedPushedRefs []string) {
+			ch := &chart.Chart{
+				Metadata: &chart.Metadata{
+					APIVersion: "v2",
+					Name:       "testproject",
+					Version:    fromVersion,
+					Type:       "application",
+				},
+				Values: map[string]interface{}{
+					"werf": map[string]interface{}{
+						"image": map[string]interface{}{},
+						"repo":  "registry.example.com/group/testproject",
+					},
+				},
+				Raw: []*chartcommon.File{
+					{
+						Name: "values.yaml",
+						Data: []byte("werf:\n  image: {}\n  repo: registry.example.com/group/testproject\n"),
+					},
+				},
+			}
+
+			bundlesRegistryClient := NewBundlesRegistryClientStub()
+			registryClient := NewDockerRegistryStub()
+
+			fromAddr, err := bundles_registry.ParseAddr("registry.example.com/group/testproject:" + fromTag)
+			Expect(err).NotTo(HaveOccurred())
+			from := NewRemoteBundle(fromAddr.RegistryAddress, bundlesRegistryClient, registryClient)
+			bundlesRegistryClient.StubCharts[fromAddr.RegistryAddress.FullName()] = ch
+
+			toAddr := &bundles_registry.RegistryAddress{Reference: &bundles_registry.Reference{Repo: "registry2.example.com/group2/testproject2", Tag: to}}
+			Expect(from.CopyTo(ctx, NewRemoteBundle(toAddr, bundlesRegistryClient, registryClient), copyToOptions{})).To(Succeed())
+
+			savedChart := bundlesRegistryClient.StubCharts[bundlesRegistryClient.PushedRefs[0]]
+			Expect(savedChart).NotTo(BeNil())
+			Expect(savedChart.Metadata.Version).To(MatchRegexp(expectedVersion))
+			Expect(bundlesRegistryClient.PushedRefs).To(Equal(lo.Map(expectedPushedRefs, func(pushedRef string, _ int) string {
+				return strings.ReplaceAll(pushedRef, "{version}", savedChart.Metadata.Version)
+			})))
+		},
+		Entry("semver tag", "1.2.3", "1.2.3", "4.5.6", `^4\.5\.6$`,
+			[]string{"registry2.example.com/group2/testproject2:4.5.6"}),
+		Entry("semver tag with the v prefix", "1.2.3", "1.2.3", "v4.5.6", `^4\.5\.6$`,
+			[]string{"registry2.example.com/group2/testproject2:4.5.6", "registry2.example.com/group2/testproject2:v4.5.6"}),
+		Entry("non-semver tag", "1.2.3", "1.2.3", "latest", `^0\.0\.0-\d+-latest$`,
+			[]string{"registry2.example.com/group2/testproject2:{version}", "registry2.example.com/group2/testproject2:latest"}),
+		Entry("no tag keeps the source version and tag", "v1.2.3", "1.2.3", "", `^1\.2\.3$`,
+			[]string{"registry2.example.com/group2/testproject2:1.2.3", "registry2.example.com/group2/testproject2:v1.2.3"}),
+		Entry("no tag keeps the source version with build metadata", "1.2.3", "1.2.3+build.5", "", `^1\.2\.3\+build\.5$`,
+			[]string{"registry2.example.com/group2/testproject2:1.2.3_build.5", "registry2.example.com/group2/testproject2:1.2.3"}),
+	)
 })
 
 type BundleArchiveStubReader struct {
@@ -613,6 +700,7 @@ func (writer *BundleArchiveStubWriter) Save() error { return nil }
 
 type BundlesRegistryClientStub struct {
 	StubCharts map[string]*chart.Chart
+	PushedRefs []string
 }
 
 func NewBundlesRegistryClientStub() *BundlesRegistryClientStub {
@@ -637,7 +725,15 @@ func (client *BundlesRegistryClientStub) SaveChart(ctx context.Context, ch *char
 	return nil
 }
 
-func (client *BundlesRegistryClientStub) PushChart(ctx context.Context, ref *bundles_registry.Reference, opts nelmcommon.HelmOptions) error {
+func (client *BundlesRegistryClientStub) PushChart(ctx context.Context, ref *bundles_registry.Reference, tags []string, opts nelmcommon.HelmOptions) error {
+	if _, hasChart := client.StubCharts[ref.FullName()]; !hasChart {
+		return fmt.Errorf("no chart saved by address %s", ref.FullName())
+	}
+
+	for _, tag := range tags {
+		client.PushedRefs = append(client.PushedRefs, fmt.Sprintf("%s:%s", ref.Repo, tag))
+	}
+
 	return nil
 }
 

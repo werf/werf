@@ -77,6 +77,8 @@ werf bundle copy [options]
       --to=""
             Destination address of the bundle to copy, specify bundle archive using schema          
             `archive:PATH_TO_ARCHIVE.tar.gz`, specify remote bundle with schema                     
-            `[docker://]REPO:TAG` or without schema.
+            `[docker://]REPO[:TAG]` or without schema. A remote bundle gets its chart version from  
+            TAG and is pushed under that version and under TAG; without TAG it keeps the chart      
+            version and the tag of the source bundle.
 ```
 
