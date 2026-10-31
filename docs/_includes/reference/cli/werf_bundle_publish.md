@@ -307,8 +307,9 @@ werf bundle publish [IMAGE_NAME...] [options]
             Publish bundle into container registry repo by the provided tag and by the chart        
             version: the tag itself if it is strict semver (without the leading `v`), otherwise     
             `0.0.0-<unix time>-<tag slug>`, where the slug is the lowercased tag with each run of   
-            characters other than letters and digits replaced by `-`. A `+` in the pushed tags is   
-            replaced by `_` ($WERF_TAG or latest by default)
+            characters other than letters and digits replaced by `-`, cut and suffixed with `-<8    
+            hex digits of the tag SHA-256>` if the version would be longer than 128 characters. A   
+            `+` in the pushed tags is replaced by `_` ($WERF_TAG or latest by default)
       --tmp-dir=""
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
       --use-build-report=false

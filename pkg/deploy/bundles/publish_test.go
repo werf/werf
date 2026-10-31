@@ -14,6 +14,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/samber/lo"
 
 	"github.com/werf/nelm/v2/pkg/action"
 	nelmcommon "github.com/werf/nelm/v2/pkg/common"
@@ -46,6 +47,34 @@ var _ = Describe("Bundle publish", func() {
 		Entry("semver tag with build metadata", "1.2.3+build.5", "1.2.3+build.5", []string{"1.2.3_build.5"}),
 		Entry("semver tag with the v prefix and build metadata", "v1.2.3+build.5", "1.2.3+build.5", []string{"1.2.3_build.5", "v1.2.3_build.5"}),
 		Entry("semver tag", "1.2.3", "1.2.3", []string{"1.2.3"}),
+	)
+
+	DescribeTable("should push a long non-semver tag as is and under a chart version that fits a tag",
+		func(ctx0 context.Context, tagLen int) {
+			ctx := logging.WithLogger(ctx0)
+			repo := startTestRegistry() + "/group/app"
+			tag := "feature_" + strings.Repeat("a", tagLen-len("feature_"))
+
+			Expect(Publish(ctx, writeTestChart(), repo, tag, newTestRegistryClient(ctx), PublishOptions{
+				ChartPackOptions: action.ChartPackOptions{Destination: GinkgoT().TempDir()},
+			})).To(Succeed())
+
+			repository, err := name.NewRepository(repo, name.Insecure)
+			Expect(err).To(Succeed())
+			tags, err := remote.List(repository)
+			Expect(err).To(Succeed())
+			Expect(tags).To(HaveLen(2))
+			Expect(tags).To(ContainElement(tag))
+
+			versionTag := lo.Without(tags, tag)[0]
+			Expect(len(versionTag)).To(BeNumerically("<=", 128))
+			Expect(versionTag).To(HavePrefix("0.0.0-"))
+			Expect(pullTestChartVersion(ctx, newTestRegistryClient(ctx), repo, versionTag)).To(Equal(versionTag))
+			Expect(pullTestChartVersion(ctx, newTestRegistryClient(ctx), repo, tag)).To(Equal(versionTag))
+		},
+		Entry("111 characters", 111),
+		Entry("112 characters", 112),
+		Entry("128 characters", 128),
 	)
 
 	It("should refuse a chart with Chart.yaml apiVersion v3", func(ctx0 context.Context) {

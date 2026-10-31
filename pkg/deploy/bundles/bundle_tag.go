@@ -2,6 +2,8 @@ package bundles
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"regexp"
 	"strings"
@@ -27,7 +29,7 @@ func BundleTagToChartVersion(ctx context.Context, tag string, now time.Time) (*s
 
 	// TODO: come up with a better idea for generating reproducible, consistent and monotonously increasing semver
 
-	tsWithTagVersion := fmt.Sprintf("0.0.0-%d-%s", now.Unix(), slug.Slug(tag))
+	tsWithTagVersion := nonSemverTagVersion(tag, now)
 	sv, err := semver.NewVersion(tsWithTagVersion)
 	if err == nil {
 		return sv, nil
@@ -42,6 +44,22 @@ func BundleTagToChartVersion(ctx context.Context, tag string, now time.Time) (*s
 	}
 
 	return sv, nil
+}
+
+// nonSemverTagVersion returns 0.0.0-<unix time>-<tag slug>. The chart is pushed under its version, so
+// a slug that would make the version longer than a tag can be is cut and suffixed with a hash of the
+// tag to tell such tags apart.
+func nonSemverTagVersion(tag string, now time.Time) string {
+	prefix := fmt.Sprintf("0.0.0-%d-", now.Unix())
+	tagSlug := slug.Slug(tag)
+
+	if len(prefix)+len(tagSlug) > slug.DockerTagMaxSize {
+		hash := sha256.Sum256([]byte(tag))
+		hashSuffix := "-" + hex.EncodeToString(hash[:])[:8]
+		tagSlug = strings.TrimRight(tagSlug[:slug.DockerTagMaxSize-len(prefix)-len(hashSuffix)], "-") + hashSuffix
+	}
+
+	return prefix + tagSlug
 }
 
 // chartTags returns the tags to push a chart with chartVersion under: the version itself and the tag the user asked for, if it differs, both with "+", invalid in a tag, encoded as Helm does.

@@ -3,6 +3,7 @@ package bundles
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -35,6 +36,9 @@ var _ = Describe("BundleTagToChartVersion", func() {
 		Entry("leading zero", "01.2.3", fmt.Sprintf("0.0.0-%d-01-2-3", now.Unix())),
 		Entry("capital V prefix", "V1.2.3", fmt.Sprintf("0.0.0-%d-v1-2-3", now.Unix())),
 		Entry("branch name", "feature/Foo_1", fmt.Sprintf("0.0.0-%d-feature-foo-1", now.Unix())),
+		Entry("tag whose version just fits a tag", strings.Repeat("a", 111), fmt.Sprintf("0.0.0-%d-%s", now.Unix(), strings.Repeat("a", 111))),
+		Entry("tag whose version doesn't fit a tag", strings.Repeat("a", 112), fmt.Sprintf("0.0.0-%d-%s-f5435300", now.Unix(), strings.Repeat("a", 102))),
+		Entry("tag whose truncated slug ends with a separator", strings.Repeat("a", 101)+"/"+strings.Repeat("b", 10), fmt.Sprintf("0.0.0-%d-%s-%s", now.Unix(), strings.Repeat("a", 101), "04dc2c3e")),
 	)
 })
 

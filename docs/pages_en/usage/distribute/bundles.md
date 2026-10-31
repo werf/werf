@@ -127,7 +127,7 @@ werf bundle publish --repo example.org/bundles/mybundle --tag v1.0.0
 The chart version is derived from the tag:
 
 * a strict semantic version (`MAJOR.MINOR.PATCH` with an optional prerelease and build, optionally prefixed with `v`) is used as is, without the `v` prefix: `v1.0.0` → `1.0.0`;
-* any other tag (`latest`, a commit SHA, a branch name, `1.2`, a number such as a date or a pipeline ID) gets the `0.0.0-<unix time>-<tag slug>` version, where the slug is the lowercased tag with each run of characters other than letters and digits replaced by `-`: `feature/Foo_1` → `0.0.0-<unix time>-feature-foo-1`.
+* any other tag (`latest`, a commit SHA, a branch name, `1.2`, a number such as a date or a pipeline ID) gets the `0.0.0-<unix time>-<tag slug>` version, where the slug is the lowercased tag with each run of characters other than letters and digits replaced by `-`: `feature_Foo_1` → `0.0.0-<unix time>-feature-foo-1`. If the version would be longer than 128 characters, the maximum length of a tag, the slug is cut and suffixed with `-` and the first 8 hex digits of the SHA-256 of the tag.
 
 werf pushes the chart under its version tag and also under the given tag if it differs, with `+` replaced by `_` in both, as Helm does: `--tag 1.0.0+build.5` publishes `1.0.0_build.5`. The command above publishes `example.org/bundles/mybundle:1.0.0` and `example.org/bundles/mybundle:v1.0.0`, both pointing to the same chart.
 
