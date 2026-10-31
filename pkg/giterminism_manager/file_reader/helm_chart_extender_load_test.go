@@ -180,7 +180,7 @@ var _ = Describe("LoadChartDir", func() {
 		))
 	})
 
-	It("keeps the root .werf-data directory whatever .helmignore says", func(ctx SpecContext) {
+	It("keeps the .werf-data directories whatever .helmignore says", func(ctx SpecContext) {
 		chartDir := writeChart(map[string]string{
 			".helmignore":                       ".werf-data/\nvalues.yaml\n",
 			"Chart.yaml":                        "name: test",
@@ -194,8 +194,8 @@ var _ = Describe("LoadChartDir", func() {
 
 		Expect(loadedNames(logging.WithLogger(ctx), chartDir)).To(ConsistOf(
 			".helmignore", "Chart.yaml", ".werf-data/metadata.yaml", ".werf-data/values.yaml", ".werf-data/set-files/0",
-			// only the root .werf-data is exempt, as in Nelm's loaders
-			"charts/sub/Chart.yaml",
+			// .werf-data of the chart and of its vendored subcharts is exempt, as in Nelm's loaders
+			"charts/sub/Chart.yaml", "charts/sub/.werf-data/values.yaml",
 		))
 	})
 
@@ -432,7 +432,7 @@ var _ = Describe("LoadChartDir", func() {
 			))
 		})
 
-		It("keeps the root .werf-data directory whatever .helmignore says", func(ctx SpecContext) {
+		It("keeps the .werf-data directories whatever .helmignore says", func(ctx SpecContext) {
 			chartDir := writeChart(map[string]string{
 				".helmignore":                       ".werf-data/\nvalues.yaml\n",
 				"Chart.yaml":                        "name: test",
@@ -446,8 +446,8 @@ var _ = Describe("LoadChartDir", func() {
 
 			Expect(loadedNames(logging.WithLogger(ctx), chartDir)).To(ConsistOf(
 				".helmignore", "Chart.yaml", ".werf-data/metadata.yaml", ".werf-data/values.yaml", ".werf-data/set-files/0",
-				// only the root .werf-data is exempt, as in Nelm's loaders
-				"charts/sub/Chart.yaml",
+				// .werf-data of the chart and of its vendored subcharts is exempt, as in Nelm's loaders
+				"charts/sub/Chart.yaml", "charts/sub/.werf-data/values.yaml",
 			))
 		})
 

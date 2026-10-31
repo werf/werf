@@ -6,16 +6,14 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	nelmcommon "github.com/werf/nelm/v2/pkg/common"
 	"github.com/werf/nelm/v2/pkg/helm/pkg/ignore"
+	"github.com/werf/nelm/v2/pkg/werfdata"
 )
-
-const werfDataDirName = ".werf-data"
 
 func (r FileReader) LocateChart(ctx context.Context, chartDir string) (string, error) {
 	chartDir, err := r.locateChart(ctx, chartDir)
@@ -221,21 +219,16 @@ func parseChartIgnoreRules(data []byte, hasIgnoreFile bool) (ChartIgnoreRules, e
 }
 
 // matchChartIgnoreRules reports whether the chart-relative path is ignored. A matched directory
-// is skipped along with its whole subtree, which is how helm applies directory rules. The root
-// .werf-data directory is never ignored, as in Nelm's chart loaders: it holds the publish-time
-// inputs of a published chart, which deploying or repacking the unpacked chart must not lose.
+// is skipped along with its whole subtree, which is how helm applies directory rules. The
+// .werf-data directories of the chart and its vendored subcharts are never ignored, as in Nelm's
+// chart loaders: they hold the publish-time inputs of a published chart, which deploying or
+// repacking the unpacked chart must not lose.
 func matchChartIgnoreRules(rules *ignore.Rules, relPath string, isDir bool) bool {
-	if rules == nil || isWerfDataPath(relPath) {
+	if rules == nil || werfdata.IsWerfDataFileInTree(filepath.ToSlash(relPath)) {
 		return false
 	}
 
 	return rules.Ignore(relPath, chartIgnoreFileInfo{path: relPath, isDir: isDir})
-}
-
-func isWerfDataPath(relPath string) bool {
-	slashPath := filepath.ToSlash(relPath)
-
-	return slashPath == werfDataDirName || strings.HasPrefix(slashPath, werfDataDirName+"/")
 }
 
 type chartIgnoreFileInfo struct {
