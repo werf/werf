@@ -78,10 +78,6 @@ func verifyCachedChart(ctx context.Context, bundlesRegistryClient *registry.Clie
 		return nil
 	}
 
-	if opts.ProvenanceKeyring == "" {
-		return fmt.Errorf("--provenance-strategy=%s needs the public keys to verify the signature with: pass --provenance-keyring", opts.ProvenanceStrategy)
-	}
-
 	chartArchive, provenanceData, err := bundlesRegistryClient.LoadChartArchive(ctx, r, opts.HelmOptions)
 	if err != nil {
 		return fmt.Errorf("load cached chart archive: %w", err)
@@ -94,6 +90,10 @@ func verifyCachedChart(ctx context.Context, bundlesRegistryClient *registry.Clie
 		}
 
 		return fmt.Errorf("the bundle is not signed")
+	}
+
+	if opts.ProvenanceKeyring == "" {
+		return fmt.Errorf("--provenance-strategy=%s needs the public keys to verify the signature with: pass --provenance-keyring", opts.ProvenanceStrategy)
 	}
 
 	signatory, err := provenance.NewFromKeyring(opts.ProvenanceKeyring, "")

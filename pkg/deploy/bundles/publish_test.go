@@ -129,6 +129,16 @@ var _ = Describe("Bundle publish", func() {
 		Entry("without a keyring", "", "pass --provenance-keyring"),
 	)
 
+	It("should deploy an unsigned bundle without a keyring if possible", func(ctx0 context.Context) {
+		ctx := logging.WithLogger(ctx0)
+		repo := startTestRegistry() + "/group/app"
+		publishUnsignedTestChart(ctx, repo)
+
+		Expect(Pull(ctx, repo+":1.0.0", filepath.Join(GinkgoT().TempDir(), "app"), newTestRegistryClient(ctx), PullOptions{
+			ProvenanceStrategy: ProvenanceStrategyVerifyIfPossible,
+		})).To(Succeed())
+	})
+
 	It("should publish a signed chart with its signature", func(ctx0 context.Context) {
 		ctx := logging.WithLogger(ctx0)
 		repo := startTestRegistry() + "/group/app"
