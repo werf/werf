@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"log"
+	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
@@ -160,6 +161,54 @@ var _ = Describe("Bundle publish", func() {
 		})).To(Succeed())
 	})
 
+	It("should fail to verify if possible a signed bundle whose signature fails to download", func(ctx0 context.Context) {
+		ctx := logging.WithLogger(ctx0)
+		var failingBlob string
+		repo := startTestRegistryWith(func(next http.Handler) http.Handler {
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if failingBlob != "" && strings.HasSuffix(r.URL.Path, "/blobs/"+failingBlob) {
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+
+				next.ServeHTTP(w, r)
+			})
+		}) + "/group/app"
+		publishSignedTestChart(ctx, repo)
+
+		result, err := newTestRegistryClient(ctx).Pull(repo+":1.0.0", registry.PullOptWithProv(true))
+		Expect(err).To(Succeed())
+		failingBlob = result.Prov.Digest
+
+		err = Pull(ctx, repo, "1.0.0", filepath.Join(GinkgoT().TempDir(), "app"), newTestRegistryClient(ctx), PullOptions{
+			ProvenanceKeyring:  testKeyringPath("helm-test-key.pub"),
+			ProvenanceStrategy: ProvenanceStrategyVerifyIfPossible,
+		})
+		Expect(err).To(MatchError(ContainSubstring("500")))
+	})
+
+	DescribeTable("should pull a bundle by the tag it is published under",
+		func(ctx0 context.Context, tag, expectedVersion string) {
+			ctx := logging.WithLogger(ctx0)
+			repo := startTestRegistry() + "/group/app"
+			Expect(Publish(ctx, writeTestChart(), repo, tag, newTestRegistryClient(ctx), PublishOptions{
+				ChartPackOptions: signingChartPackOptions(),
+			})).To(Succeed())
+
+			bundleDir := filepath.Join(GinkgoT().TempDir(), "app")
+			Expect(Pull(ctx, repo, tag, bundleDir, newTestRegistryClient(ctx), PullOptions{
+				ProvenanceKeyring:  testKeyringPath("helm-test-key.pub"),
+				ProvenanceStrategy: ProvenanceStrategyVerify,
+			})).To(Succeed())
+
+			chartYAML, err := os.ReadFile(filepath.Join(bundleDir, "Chart.yaml"))
+			Expect(err).To(Succeed())
+			Expect(string(chartYAML)).To(MatchRegexp(`(?m)^version: ` + expectedVersion + `$`))
+		},
+		Entry("semver tag ending with .prov", "1.2.3-test.prov", `1\.2\.3-test\.prov`),
+		Entry("non-semver tag with +", "feature+build", `0\.0\.0-\d+-feature-build`),
+	)
+
 	It("should publish a signed chart with its signature", func(ctx0 context.Context) {
 		ctx := logging.WithLogger(ctx0)
 		repo := startTestRegistry() + "/group/app"
@@ -222,7 +271,11 @@ func testKeyringPath(name string) string {
 }
 
 func startTestRegistry() string {
-	server := httptest.NewServer(ggcrregistry.New(ggcrregistry.Logger(log.New(io.Discard, "", 0))))
+	return startTestRegistryWith(func(next http.Handler) http.Handler { return next })
+}
+
+func startTestRegistryWith(wrap func(http.Handler) http.Handler) string {
+	server := httptest.NewServer(wrap(ggcrregistry.New(ggcrregistry.Logger(log.New(io.Discard, "", 0)))))
 	DeferCleanup(server.Close)
 
 	return strings.TrimPrefix(server.URL, "http://")
