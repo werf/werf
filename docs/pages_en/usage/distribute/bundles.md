@@ -234,6 +234,8 @@ The archive is a tar file, gzip-compressed if its name ends with `.gz` or `.tgz`
 - non-distributable (foreign) image layers are copied into the archive too;
 - referrers of the images, such as signatures and SBOMs attached to them, are not copied.
 
+werf 3.12 and older can't read these archives: import them with the current werf.
+
 ## Importing the bundle from the archive to the repository
 
 The exported to the archive bundle can be imported back into the same or another OCI repository using the `werf bundle copy` command, for example:
