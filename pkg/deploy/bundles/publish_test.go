@@ -1,6 +1,9 @@
 package bundles
 
 import (
+	"archive/tar"
+	"bytes"
+	"compress/gzip"
 	"context"
 	"io"
 	"log"
@@ -107,6 +110,48 @@ var _ = Describe("Bundle publish", func() {
 			"chartValue": "chart",
 			"werf":       map[string]interface{}{"repo": repo},
 		}))
+	})
+
+	It("should pull a chart with apiVersion v1 keeping the dependencies in its Chart.yaml", func(ctx0 context.Context) {
+		ctx := logging.WithLogger(ctx0)
+		repo := startTestRegistry() + "/group/app"
+		chartYAML := `apiVersion: v1
+name: app
+version: 1.0.0
+dependencies:
+- name: sub
+  version: 0.1.0
+  alias: renamed
+  condition: renamed.enabled
+  export-values:
+  - parent: shared
+    child: imported
+`
+		_, err := newTestRegistryClient(ctx).Push(tarTestChart(map[string]string{
+			"app/Chart.yaml":                   chartYAML,
+			"app/values.yaml":                  "shared:\n  msg: from-parent\nrenamed:\n  enabled: true\n",
+			"app/charts/sub/Chart.yaml":        "apiVersion: v2\nname: sub\nversion: 0.1.0\n",
+			"app/charts/sub/templates/cm.yaml": "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: {{ .Chart.Name }}\ndata:\n  msg: {{ .Values.imported.msg }}\n",
+		}), repo+":1.0.0")
+		Expect(err).To(Succeed())
+
+		bundleDir := filepath.Join(GinkgoT().TempDir(), "bundle")
+		Expect(Pull(ctx, repo, "1.0.0", bundleDir, newTestRegistryClient(ctx), PullOptions{})).To(Succeed())
+
+		pulledChartYAML, err := os.ReadFile(filepath.Join(bundleDir, "Chart.yaml"))
+		Expect(err).To(Succeed())
+		Expect(string(pulledChartYAML)).To(Equal(chartYAML))
+
+		result, err := nelmchart.RenderChart(ctx, bundleDir, "release", "namespace", 1, nelmcommon.DeployTypeInstall, nil, nil, nelmchart.RenderChartOptions{
+			HelmOptions: nelmcommon.HelmOptions{
+				ChartLoadOpts: nelmcommon.ChartLoadOptions{ChartType: nelmcommon.LegacyChartTypeBundle},
+			},
+			LocalKubeVersion: "1.30.0",
+		})
+		Expect(err).To(Succeed())
+		Expect(result.ResourceSpecs).To(HaveLen(1))
+		Expect(result.ResourceSpecs[0].Unstruct.GetName()).To(Equal("renamed"))
+		Expect(result.ResourceSpecs[0].Unstruct.Object["data"]).To(Equal(map[string]interface{}{"msg": "from-parent"}))
 	})
 
 	DescribeTable("should verify the signature of a pulled bundle as requested",
@@ -301,6 +346,24 @@ func newTestRegistryClient(ctx context.Context) *registry.Client {
 
 func testCredentialsPath() string {
 	return filepath.Join(GinkgoT().TempDir(), "config.json")
+}
+
+// tarTestChart returns a chart archive with the files as given, which helm package would rewrite.
+func tarTestChart(files map[string]string) []byte {
+	var archive bytes.Buffer
+	gzipWriter := gzip.NewWriter(&archive)
+	tarWriter := tar.NewWriter(gzipWriter)
+
+	for _, name := range lo.Keys(files) {
+		Expect(tarWriter.WriteHeader(&tar.Header{Name: name, Mode: 0o644, Size: int64(len(files[name])), Typeflag: tar.TypeReg})).To(Succeed())
+		_, err := tarWriter.Write([]byte(files[name]))
+		Expect(err).To(Succeed())
+	}
+
+	Expect(tarWriter.Close()).To(Succeed())
+	Expect(gzipWriter.Close()).To(Succeed())
+
+	return archive.Bytes()
 }
 
 func writeTestChart() string {
