@@ -19,7 +19,7 @@ Published into container registry bundle can be rolled out by the "werf bundle a
 		"The publish-time inputs are stored in the `.werf-data` directory of the chart: the `--values`, " +
 		"the `--secret-values` (still encrypted, so no secret key is needed), the `--set*` params with the contents " +
 		"of the `--set-file` files, the `--patches`, the service values with the built images, the annotations, " +
-		"the labels and the release name and namespace. The built images are also listed in the images annotation " +
+		"the labels and the release name and namespace. The built images are also listed in the `helm.sh/images` annotation " +
 		"of the `Chart.yaml`, which Helm-based tools read.\n\n" +
 		"Published into container registry bundle can be rolled out by the `werf bundle apply` command, which applies " +
 		"the stored publish-time inputs the same way `werf converge` applies them."

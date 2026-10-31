@@ -85,7 +85,17 @@ func GenMarkdownCustom(cmd *cobra.Command, w io.Writer) error {
 	return err
 }
 
+// replaceLinks turns the URLs outside of code spans into links.
 func replaceLinks(s string) string {
+	parts := strings.Split(s, "`")
+	for i := 0; i < len(parts); i += 2 {
+		parts[i] = replaceTextLinks(parts[i])
+	}
+
+	return strings.Join(parts, "`")
+}
+
+func replaceTextLinks(s string) string {
 	links := xurls.Relaxed.FindAllString(s, -1)
 	for _, link := range links {
 		linkText := link

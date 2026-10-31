@@ -287,7 +287,8 @@ werf render [IMAGE_NAME...] [options]
             Path to keyring containing public keys to verify chart provenance (default              
             $WERF_PROVENANCE_KEYRING)
       --provenance-strategy=""
-            Strategy for provenance verifying (default $WERF_PROVENANCE_STRATEGY).
+            Strategy for provenance verifying: verify, verify-if-possible, later or never (default  
+            $WERF_PROVENANCE_STRATEGY or never).
       --release=""
             Use specified Helm release name (default [[ project ]]-[[ env ]] template or            
             deploy.helmRelease custom template from werf.yaml or $WERF_RELEASE)
