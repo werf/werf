@@ -490,24 +490,48 @@ werf --secret-values .helm/secret-values-production.yaml
 
 ### Смена секретного ключа
 
-Чтобы перейти на новый секретный ключ, расшифруйте каждый зашифрованный файл старым ключом и зашифруйте его новым:
+Чтобы перейти на новый секретный ключ, расшифруйте каждый зашифрованный файл старым ключом и зашифруйте его новым. Охватите все зашифрованные файлы:
 
-```shell
-WERF_SECRET_KEY=<старый ключ> werf helm secret values decrypt .helm/secret-values.yaml -o /tmp/secret-values.yaml
-WERF_SECRET_KEY=<новый ключ> werf helm secret values encrypt /tmp/secret-values.yaml -o .helm/secret-values.yaml
-rm /tmp/secret-values.yaml
+* файлы секретных параметров: `secret-values.yaml` основного чарта и каждого зависимого чарта, а также дополнительные файлы, передаваемые через `--secret-values`;
+* секретные файлы: каждый файл в `secret/` основного чарта и каждого зависимого чарта.
 
-WERF_SECRET_KEY=<старый ключ> werf helm secret file decrypt .helm/secret/tls.crt -o /tmp/tls.crt
-WERF_SECRET_KEY=<новый ключ> werf helm secret file encrypt /tmp/tls.crt -o .helm/secret/tls.crt
-rm /tmp/tls.crt
+Сначала сгенерируйте новый ключ и сохраните его там, где вы храните секретные ключи, ещё до изменения файлов: `werf helm secret generate-secret-key`. Затем запустите скрипт ниже в директории проекта, передав старый ключ в `$OLD_SECRET_KEY`, а новый — в `$NEW_SECRET_KEY`, обе переменные экспортированы (ключ из файла `.werf_secret_key` нужно сначала экспортировать, например, `export OLD_SECRET_KEY="$(cat .werf_secret_key)"`). Скрипт останавливается на первой ошибке, перешифровывает все файлы, прежде чем изменить хотя бы один из них, и копирует исходные файлы в резервную директорию вне проекта, перечисляя их в файле `index`:
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+umask 077
+
+values_files=(.helm/secret-values.yaml)  # every encrypted values file
+files=(.helm/secret/tls.crt)             # every file in secret/
+
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
+
+rotate() {
+  WERF_SECRET_KEY="$OLD_SECRET_KEY" werf helm secret "$1" decrypt -o "$tmp/$3" "$2"
+  WERF_SECRET_KEY="$NEW_SECRET_KEY" werf helm secret "$1" encrypt -o "$tmp/$3.enc" "$tmp/$3"
+}
+
+n=0
+for f in ${values_files[@]+"${values_files[@]}"}; do n=$((n + 1)); rotate values "$f" "$n"; done
+for f in ${files[@]+"${files[@]}"}; do n=$((n + 1)); rotate file "$f" "$n"; done
+
+backup="$(mktemp -d "${TMPDIR:-/tmp}/secret-rotation-backup.XXXXXX")"
+n=0
+for f in ${values_files[@]+"${values_files[@]}"} ${files[@]+"${files[@]}"}; do
+  n=$((n + 1)); cp -p "$f" "$backup/$n"; printf '%s\t%s\n' "$n" "$f" >>"$backup/index"
+done
+
+n=0
+for f in ${values_files[@]+"${values_files[@]}"} ${files[@]+"${files[@]}"}; do n=$((n + 1)); cp "$tmp/$n.enc" "$f"; done
+
+echo "All files re-encrypted with the new key. Originals are in $backup, remove it once you have checked the result."
 ```
 
-Повторите это для каждого зашифрованного файла:
+Если скрипт остановится во время копирования, уже заменённые файлы будут зашифрованы новым ключом, а остальные — по-прежнему старым; все исходные файлы находятся в резервной директории.
 
-* файлов секретных параметров (`werf helm secret values decrypt/encrypt`): `secret-values.yaml` основного чарта и каждого зависимого чарта, дополнительных файлов, передаваемых через `--secret-values`, и `.werf-data/secret-values.yaml` опубликованного чарта;
-* секретных файлов (`werf helm secret file decrypt/encrypt`): каждого файла в `secret/` основного чарта и каждого зависимого чарта.
-
-Расшифровывайте во временный файл, а не передавайте вывод одной команды другой через pipe: если расшифровка не удастся, шифрование получит пустой ввод и перезапишет файл. После этого удалите расшифрованные временные файлы.
+Опубликованный чарт хранит `--secret-values` времени публикации в `.werf-data/secret-values.yaml`, зашифрованном ключом, использованным при публикации. Перешифруйте этот файл в распакованном чарте так же, затем упакуйте чарт и загрузите его заново, см. [Изменение опубликованного чарта]({{ "/usage/distribute/bundles.html#изменение-опубликованного-чарта" | true_relative_url }}).
 
 ### Секретные параметры в релизе
 

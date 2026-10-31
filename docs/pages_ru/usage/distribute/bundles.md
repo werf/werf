@@ -225,6 +225,8 @@ werf bundle copy --from example.org/bundles/mybundle:v1.0.0 --to other.example.o
 werf bundle copy --from example.org/bundles/mybundle:v1.0.0 --to archive:archive.tar.gz
 ```
 
+Архив не хранит provenance-файл: при экспорте подписанного бандла его подпись удаляется с предупреждением, а бандл, импортированный из архива, не подписан.
+
 ## Импорт бандла из архива в репозиторий
 
 Экспортированный в архив бандл можно снова импортировать в тот же или другой OCI-репозиторий командой `werf bundle copy`, например:
@@ -241,7 +243,7 @@ Helm, Argo CD и Flux устанавливают опубликованный ч
 
 > **Примечание**: в чартах, опубликованных werf 3.12 и более ранними версиями, ссылки на образы и опции `--values` и `--set*` команды `werf bundle publish` объединялись в `values.yaml`. В новых чартах этого нет, поэтому для развёртывания нового чарта через Helm, Argo CD или Flux нужны файлы параметров, описанные ниже.
 
-`.werf-data/values.yaml` (`--values` команды `werf bundle publish`) и `.werf-data/extra-values.yaml` (ссылки на образы и другие служебные параметры werf) — обычные YAML-файлы внутри чарта, поэтому их можно передать как файлы параметров.
+`.werf-data/values.yaml` (`--values` команды `werf bundle publish`) и `.werf-data/extra-values.yaml` (ссылки на образы и другие служебные параметры werf) — обычные YAML-файлы внутри чарта, поэтому их можно передать как файлы параметров. `werf bundle publish` всегда создаёт `.werf-data/extra-values.yaml`, а `.werf-data/values.yaml` — только если получает `--values`: либо перечислите только те файлы, которые есть в чарте, либо разрешите Flux и Argo CD пропускать отсутствующие файлы, как показано ниже.
 
 Flux, `HelmRelease`, чарт которого берётся из `HelmRepository` типа `oci`:
 
@@ -257,6 +259,7 @@ spec:
         - values.yaml
         - .werf-data/values.yaml
         - .werf-data/extra-values.yaml
+      ignoreMissingValuesFiles: true
 ```
 
 `valuesFiles` заменяет список файлов параметров по умолчанию, поэтому `values.yaml` нужно указать первым.
@@ -273,6 +276,7 @@ spec:
       valueFiles:
         - .werf-data/values.yaml
         - .werf-data/extra-values.yaml
+      ignoreMissingValueFiles: true
 ```
 
 Даже с этими файлами параметров в Helm, Argo CD и Flux недоступно следующее:
@@ -290,7 +294,7 @@ Helm помещает `.werf-data/` в `.Files` и сохраняет её в р
 
 Чарты, опубликованные werf 3.12 и более ранними версиями, текущая версия werf развёртывает без изменений.
 
-Текущий формат чарта (`apiVersion: v2` в `.werf-data/metadata.yaml`) требует werf v3 или Nelm v2 с поддержкой `.werf-data/`. Последние версии werf v2 и Nelm v1 отказываются развёртывать такой чарт, а также чарт, подключающий его как зависимый. Более ранние версии werf v2 и Nelm v1, werf 3.12 и более ранние версии, а также версии Nelm v2 без поддержки `.werf-data/` не отказываются: они развёртывают чарт только с его собственными параметрами, без ссылок на образы, параметров, секретов, аннотаций и лейблов `werf bundle publish`.
+Текущий формат чарта (`apiVersion: v2` в `.werf-data/metadata.yaml`) требует werf v3 или Nelm v2 с поддержкой `.werf-data/`. Релизы werf v2 и Nelm v1, включающие проверку ([werf/werf#8141](https://github.com/werf/werf/pull/8141), [werf/nelm#808](https://github.com/werf/nelm/pull/808)), отказываются развёртывать такой чарт, а также чарт, подключающий его как зависимый. Релизы werf v2 и Nelm v1 без этой проверки, werf 3.12 и более ранние версии, а также версии Nelm v2 без поддержки `.werf-data/` не отказываются: они развёртывают чарт только с его собственными параметрами, без ссылок на образы, параметров, секретов, аннотаций и лейблов `werf bundle publish`.
 
 ## Container registries, поддерживающие публикацию бандлов
 

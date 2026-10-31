@@ -226,6 +226,8 @@ After publication, the bundle can be exported from the repository to a local arc
 werf bundle copy --from example.org/bundles/mybundle:v1.0.0 --to archive:archive.tar.gz
 ```
 
+The archive doesn't keep the provenance file: exporting a signed bundle drops its signature with a warning, and a bundle imported from the archive is unsigned.
+
 ## Importing the bundle from the archive to the repository
 
 The exported to the archive bundle can be imported back into the same or another OCI repository using the `werf bundle copy` command, for example:
@@ -242,7 +244,7 @@ Helm, Argo CD and Flux install the published chart with its own `values.yaml` an
 
 > **Note**: charts published by werf 3.12 and earlier merged the image references and the `--values` and `--set*` options of `werf bundle publish` into `values.yaml`. The new charts do not, so a Helm, Argo CD or Flux deployment of a newly published chart needs the values files below.
 
-`.werf-data/values.yaml` (the `--values` of `werf bundle publish`) and `.werf-data/extra-values.yaml` (the image references and other werf auxiliary parameters) are plain YAML files inside the chart, so you can pass them as values files.
+`.werf-data/values.yaml` (the `--values` of `werf bundle publish`) and `.werf-data/extra-values.yaml` (the image references and other werf auxiliary parameters) are plain YAML files inside the chart, so you can pass them as values files. `werf bundle publish` always writes `.werf-data/extra-values.yaml`, but `.werf-data/values.yaml` only when it gets `--values`: either list only the files the chart has, or tell Flux and Argo CD to skip missing files, as below.
 
 Flux, a `HelmRelease` whose chart comes from a `HelmRepository` of the `oci` type:
 
@@ -258,6 +260,7 @@ spec:
         - values.yaml
         - .werf-data/values.yaml
         - .werf-data/extra-values.yaml
+      ignoreMissingValuesFiles: true
 ```
 
 `valuesFiles` replaces the default list of values files, so `values.yaml` must be listed first.
@@ -274,6 +277,7 @@ spec:
       valueFiles:
         - .werf-data/values.yaml
         - .werf-data/extra-values.yaml
+      ignoreMissingValueFiles: true
 ```
 
 The following stays unavailable with Helm, Argo CD and Flux even with these values files:
@@ -291,7 +295,7 @@ Helm puts `.werf-data/` into `.Files` and saves it in the release together with 
 
 Charts published by werf 3.12 and earlier are deployed by the current werf unchanged.
 
-The current chart format (`apiVersion: v2` in `.werf-data/metadata.yaml`) requires werf v3 or Nelm v2 with `.werf-data/` support. The latest versions of werf v2 and Nelm v1 refuse to deploy such a chart, as well as a chart that includes it as a dependent chart. Earlier werf v2 and Nelm v1 versions, werf 3.12 and earlier, and Nelm v2 versions without `.werf-data/` support do not refuse: they deploy the chart with its own values only, without the image references, the values, secrets, annotations and labels of `werf bundle publish`.
+The current chart format (`apiVersion: v2` in `.werf-data/metadata.yaml`) requires werf v3 or Nelm v2 with `.werf-data/` support. werf v2 and Nelm v1 releases that include the check ([werf/werf#8141](https://github.com/werf/werf/pull/8141), [werf/nelm#808](https://github.com/werf/nelm/pull/808)) refuse to deploy such a chart, as well as a chart that includes it as a dependent chart. werf v2 and Nelm v1 releases without the check, werf 3.12 and earlier, and Nelm v2 versions without `.werf-data/` support do not refuse: they deploy the chart with its own values only, without the image references, the values, secrets, annotations and labels of `werf bundle publish`.
 
 ## Container registries that support the publication of bundles
 

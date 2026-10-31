@@ -490,24 +490,48 @@ werf --secret-values .helm/secret-values-production.yaml
 
 ### Rotating the secret key
 
-To switch to a new secret key, decrypt each encrypted file with the old key and encrypt it with the new one:
+To switch to a new secret key, decrypt each encrypted file with the old key and encrypt it with the new one. Cover every encrypted file:
 
-```shell
-WERF_SECRET_KEY=<old key> werf helm secret values decrypt .helm/secret-values.yaml -o /tmp/secret-values.yaml
-WERF_SECRET_KEY=<new key> werf helm secret values encrypt /tmp/secret-values.yaml -o .helm/secret-values.yaml
-rm /tmp/secret-values.yaml
+* secret parameter files: `secret-values.yaml` of the main chart and of every dependent chart, and the additional files passed with `--secret-values`;
+* secret files: every file in `secret/` of the main chart and of every dependent chart.
 
-WERF_SECRET_KEY=<old key> werf helm secret file decrypt .helm/secret/tls.crt -o /tmp/tls.crt
-WERF_SECRET_KEY=<new key> werf helm secret file encrypt /tmp/tls.crt -o .helm/secret/tls.crt
-rm /tmp/tls.crt
+Generate the new key first and store it where you keep secret keys, before changing any file: `werf helm secret generate-secret-key`. Then run the script below in the project directory with the old key in `$OLD_SECRET_KEY` and the new one in `$NEW_SECRET_KEY`, both exported (a key kept in a `.werf_secret_key` file has to be exported first, e.g. `export OLD_SECRET_KEY="$(cat .werf_secret_key)"`). It stops at the first error, re-encrypts every file before changing any of them, and copies the originals to a backup directory outside the project, listed in its `index` file:
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+umask 077
+
+values_files=(.helm/secret-values.yaml)  # every encrypted values file
+files=(.helm/secret/tls.crt)             # every file in secret/
+
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
+
+rotate() {
+  WERF_SECRET_KEY="$OLD_SECRET_KEY" werf helm secret "$1" decrypt -o "$tmp/$3" "$2"
+  WERF_SECRET_KEY="$NEW_SECRET_KEY" werf helm secret "$1" encrypt -o "$tmp/$3.enc" "$tmp/$3"
+}
+
+n=0
+for f in ${values_files[@]+"${values_files[@]}"}; do n=$((n + 1)); rotate values "$f" "$n"; done
+for f in ${files[@]+"${files[@]}"}; do n=$((n + 1)); rotate file "$f" "$n"; done
+
+backup="$(mktemp -d "${TMPDIR:-/tmp}/secret-rotation-backup.XXXXXX")"
+n=0
+for f in ${values_files[@]+"${values_files[@]}"} ${files[@]+"${files[@]}"}; do
+  n=$((n + 1)); cp -p "$f" "$backup/$n"; printf '%s\t%s\n' "$n" "$f" >>"$backup/index"
+done
+
+n=0
+for f in ${values_files[@]+"${values_files[@]}"} ${files[@]+"${files[@]}"}; do n=$((n + 1)); cp "$tmp/$n.enc" "$f"; done
+
+echo "All files re-encrypted with the new key. Originals are in $backup, remove it once you have checked the result."
 ```
 
-Repeat this for every encrypted file:
+If the script stops while copying, the files it already replaced are encrypted with the new key and the rest still with the old one; every original is in the backup directory.
 
-* secret parameter files (`werf helm secret values decrypt/encrypt`): `secret-values.yaml` of the main chart and of every dependent chart, the additional files passed with `--secret-values`, and `.werf-data/secret-values.yaml` of a published chart;
-* secret files (`werf helm secret file decrypt/encrypt`): every file in `secret/` of the main chart and of every dependent chart.
-
-Decrypt into a temporary file instead of piping one command into the other: if decryption fails, the pipe would pass empty input to encryption and overwrite the file. Remove the decrypted temporary files afterwards.
+A published chart keeps the publish-time `--secret-values` in `.werf-data/secret-values.yaml`, encrypted with the key used at publish. Re-encrypt this file in the unpacked chart in the same way, then pack the chart and upload it again, see [Changing a published chart]({{ "/usage/distribute/bundles.html#changing-a-published-chart" | true_relative_url }}).
 
 ### Secret parameters in the release
 
