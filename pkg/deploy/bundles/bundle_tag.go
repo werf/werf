@@ -3,6 +3,7 @@ package bundles
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"time"
 
 	"github.com/Masterminds/semver"
@@ -11,16 +12,22 @@ import (
 	"github.com/werf/werf/v3/pkg/slug"
 )
 
+var strictSemverTagRegexp = regexp.MustCompile(`^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$`)
+
 func BundleTagToChartVersion(ctx context.Context, tag string, now time.Time) (*semver.Version, error) {
-	sv, err := semver.NewVersion(tag)
-	if err == nil {
+	if strictSemverTagRegexp.MatchString(tag) {
+		sv, err := semver.NewVersion(tag)
+		if err != nil {
+			return nil, fmt.Errorf("parse semver tag %q: %w", tag, err)
+		}
+
 		return sv, nil
 	}
 
 	// TODO: come up with a better idea for generating reproducible, consistent and monotonously increasing semver
 
 	tsWithTagVersion := fmt.Sprintf("0.0.0-%d-%s", now.Unix(), slug.Slug(tag))
-	sv, err = semver.NewVersion(tsWithTagVersion)
+	sv, err := semver.NewVersion(tsWithTagVersion)
 	if err == nil {
 		return sv, nil
 	}
