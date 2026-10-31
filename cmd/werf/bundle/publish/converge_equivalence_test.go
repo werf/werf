@@ -31,7 +31,12 @@ type convergeEquivalenceCase struct {
 	set                   []string
 	setJSON               []string
 	setFile               string
+	setRootJSON           []string
+	disableDefaultValues  bool
 	serviceValues         string
+
+	// expectedRoot are the expected keys of the root context besides .Values.
+	expectedRoot string
 
 	applyValues                     string
 	applySet                        []string
@@ -66,17 +71,21 @@ var _ = Describe("published bundle", func() {
 			serviceValues := parseValues(c.serviceValues)
 
 			converged := renderEquivalenceChart(ctx, chartDir, nelmcommon.LegacyChartTypeChart, nelmcommon.ValuesOptions{
-				ValuesFiles:   append(append([]string{}, valuesFiles...), applyValuesFiles...),
-				ValuesSet:     append(append([]string{}, c.set...), c.applySet...),
-				ValuesSetJSON: c.setJSON,
-				ValuesSetFile: setFile,
+				ValuesFiles:          append(append([]string{}, valuesFiles...), applyValuesFiles...),
+				ValuesSet:            append(append([]string{}, c.set...), c.applySet...),
+				ValuesSetJSON:        c.setJSON,
+				ValuesSetFile:        setFile,
+				RootSetJSON:          c.setRootJSON,
+				DefaultValuesDisable: c.disableDefaultValues,
 			}, secretValuesFiles, serviceValues, c.applyDisableDefaultSecretValues)
 
 			bundleDir := publishEquivalenceBundle(ctx, chartDir, nelmcommon.ValuesOptions{
-				ValuesFiles:   valuesFiles,
-				ValuesSet:     c.set,
-				ValuesSetJSON: c.setJSON,
-				ValuesSetFile: setFile,
+				ValuesFiles:          valuesFiles,
+				ValuesSet:            c.set,
+				ValuesSetJSON:        c.setJSON,
+				ValuesSetFile:        setFile,
+				RootSetJSON:          c.setRootJSON,
+				DefaultValuesDisable: c.disableDefaultValues,
 			}, secretValuesFiles, serviceValues)
 
 			Expect(os.RemoveAll(flagsDir)).To(Succeed())
@@ -92,6 +101,11 @@ var _ = Describe("published bundle", func() {
 			Expect(renderedValues(applied)).To(Equal(renderedValues(converged)))
 			Expect(renderedValues(converged)).To(Equal(parseValues(c.expectedValues)))
 			Expect(applied.ReleaseConfig).To(Equal(converged.ReleaseConfig))
+
+			for key, value := range parseValues(c.expectedRoot) {
+				Expect(applied.Values).To(HaveKeyWithValue(key, value))
+				Expect(converged.Values).To(HaveKeyWithValue(key, value))
+			}
 		},
 		Entry("1: --set beats an export from the chart values.yaml", convergeEquivalenceCase{
 			chartYAMLDependencies: "- name: sub\n  version: 1.0.0\n  export-values:\n  - parent: g\n    child: x",
@@ -206,6 +220,20 @@ var _ = Describe("published bundle", func() {
 
 			expectedValues: "file: from-file",
 		}),
+		Entry("--set-root-json", convergeEquivalenceCase{
+			chartValues: "a: chart\nb: chart",
+			setRootJSON: []string{`fromRoot={"k":"root"}`},
+
+			expectedValues: "a: chart\nb: chart",
+			expectedRoot:   "fromRoot:\n  k: root",
+		}),
+		Entry("--disable-default-values ignores the chart values.yaml", convergeEquivalenceCase{
+			chartValues:          "a: chart",
+			values:               "b: values",
+			disableDefaultValues: true,
+
+			expectedValues: "b: values",
+		}),
 		Entry("apply --set patches a list from publish --values", convergeEquivalenceCase{
 			values:   "l:\n- values-0\n- values-1",
 			applySet: []string{"l[1]=apply"},
@@ -289,6 +317,7 @@ func renderEquivalenceChart(ctx context.Context, chartDir string, chartType nelm
 				ChartType:                  chartType,
 				DefaultChartAPIVersion:     chart.APIVersionV2,
 				DefaultSecretValuesDisable: defaultSecretValuesDisable,
+				DefaultValuesDisable:       valuesOpts.DefaultValuesDisable,
 				ExtraValues:                serviceValues,
 				SecretValuesFiles:          secretValuesFiles,
 				SecretWorkDir:              chartDir,
