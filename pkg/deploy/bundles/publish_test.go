@@ -133,6 +133,7 @@ var _ = Describe("Bundle publish", func() {
 		Entry("tampered, never", publishTamperedTestChart, "1.0.0", "never", ""),
 		Entry("unsigned, verify", publishUnsignedTestChart, "1.0.0", ProvenanceStrategyVerify, "the bundle is not signed"),
 		Entry("unsigned, verify if possible", publishUnsignedTestChart, "1.0.0", ProvenanceStrategyVerifyIfPossible, ""),
+		Entry("empty provenance file, verify if possible", publishEmptyProvenanceTestChart, "1.0.0", ProvenanceStrategyVerifyIfPossible, "verify bundle"),
 	)
 
 	DescribeTable("should refuse to verify the signature",
@@ -251,6 +252,16 @@ func publishTamperedTestChart(ctx context.Context, repo string) {
 	Expect(err).To(Succeed())
 
 	_, err = newTestRegistryClient(ctx).Push(archive, repo+":1.0.0", registry.PushOptProvData(provenance))
+	Expect(err).To(Succeed())
+}
+
+func publishEmptyProvenanceTestChart(ctx context.Context, repo string) {
+	packed, err := action.ChartPack(ctx, writeTestChart(), action.ChartPackOptions{Destination: GinkgoT().TempDir(), Name: "app", Version: "1.0.0"})
+	Expect(err).To(Succeed())
+	archive, err := os.ReadFile(packed.ArchivePath)
+	Expect(err).To(Succeed())
+
+	_, err = newTestRegistryClient(ctx).Push(archive, repo+":1.0.0", registry.PushOptProvData([]byte{}))
 	Expect(err).To(Succeed())
 }
 
