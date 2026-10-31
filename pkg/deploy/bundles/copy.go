@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/samber/lo"
 
@@ -75,26 +76,28 @@ func bundleImages(ctx context.Context, ch helmchart.Charter) ([]chartyaml.Image,
 }
 
 // rewriteImageValues points the werf image and repo values at repo, where the images are copied
-// keeping their tags: .werf-data/extra-values.yaml of the chart and of its werf-published
-// dependencies, the chart values of a bundle published by werf <= 3.12.
-func rewriteImageValues(ctx context.Context, ch helmchart.Charter, repo string, _ map[string]string) error {
+// keeping their tags, and the image digests at the digests of the copies, which differ from the
+// source ones for images imported from a werf 3.12 archive: .werf-data/extra-values.yaml of the
+// chart and of its werf-published dependencies, the chart values of a bundle published by
+// werf <= 3.12.
+func rewriteImageValues(ctx context.Context, ch helmchart.Charter, repo string, imageMapping map[string]string) error {
 	accessor, err := helmchart.NewAccessor(ch)
 	if err != nil {
 		return fmt.Errorf("create chart accessor: %w", err)
 	}
 
 	if len(accessor.WerfDataFiles()) == 0 {
-		if err := retargetImageValues(accessor.Values(), repo); err != nil {
+		if err := retargetImageValues(accessor.Values(), repo, imageMapping); err != nil {
 			return err
 		}
-	} else if err := rewriteWerfDataImageValues(ch, accessor, repo); err != nil {
+	} else if err := rewriteWerfDataImageValues(ch, accessor, repo, imageMapping); err != nil {
 		return err
 	}
 
-	return rewriteDependencyImageValues(accessor, repo)
+	return rewriteDependencyImageValues(accessor, repo, imageMapping)
 }
 
-func rewriteDependencyImageValues(accessor helmchart.Accessor, repo string) error {
+func rewriteDependencyImageValues(accessor helmchart.Accessor, repo string, imageMapping map[string]string) error {
 	for _, dep := range accessor.Dependencies() {
 		depAccessor, err := helmchart.NewAccessor(dep)
 		if err != nil {
@@ -102,12 +105,12 @@ func rewriteDependencyImageValues(accessor helmchart.Accessor, repo string) erro
 		}
 
 		if len(depAccessor.WerfDataFiles()) > 0 {
-			if err := rewriteWerfDataImageValues(dep, depAccessor, repo); err != nil {
+			if err := rewriteWerfDataImageValues(dep, depAccessor, repo, imageMapping); err != nil {
 				return fmt.Errorf("dependency %q: %w", depAccessor.Name(), err)
 			}
 		}
 
-		if err := rewriteDependencyImageValues(depAccessor, repo); err != nil {
+		if err := rewriteDependencyImageValues(depAccessor, repo, imageMapping); err != nil {
 			return err
 		}
 	}
@@ -115,7 +118,7 @@ func rewriteDependencyImageValues(accessor helmchart.Accessor, repo string) erro
 	return nil
 }
 
-func rewriteWerfDataImageValues(ch helmchart.Charter, accessor helmchart.Accessor, repo string) error {
+func rewriteWerfDataImageValues(ch helmchart.Charter, accessor helmchart.Accessor, repo string, imageMapping map[string]string) error {
 	data, err := werfdata.Parse(accessor.WerfDataFiles())
 	if err != nil {
 		return fmt.Errorf("parse %s: %w", werfdata.DirName, err)
@@ -126,7 +129,7 @@ func rewriteWerfDataImageValues(ch helmchart.Charter, accessor helmchart.Accesso
 		return fmt.Errorf("marshal image values: %w", err)
 	}
 
-	if err := retargetImageValues(data.ExtraValues, repo); err != nil {
+	if err := retargetImageValues(data.ExtraValues, repo, imageMapping); err != nil {
 		return err
 	}
 
@@ -149,8 +152,9 @@ func rewriteWerfDataImageValues(ch helmchart.Charter, accessor helmchart.Accesso
 	return setWerfDataFiles(ch, files)
 }
 
-func retargetImageValues(vals map[string]interface{}, repo string) error {
+func retargetImageValues(vals map[string]interface{}, repo string, imageMapping map[string]string) error {
 	newImageRefs := make(map[string]string)
+	newImageDigests := make(map[string]string)
 
 	if werfVals, ok := vals["werf"].(map[string]interface{}); ok {
 		if imageVals, ok := werfVals["image"].(map[string]interface{}); ok {
@@ -169,13 +173,33 @@ func retargetImageValues(vals map[string]interface{}, repo string) error {
 
 				imageVals[imageName] = imageReference.FullName()
 				newImageRefs[imageName] = imageReference.FullName()
+
+				if digest := copiedImageDigest(imageMapping, imageRef); digest != "" {
+					newImageDigests[imageName] = digest
+				}
 			}
 		}
 
 		werfVals["repo"] = repo
 	}
 
-	return updateGlobalWerfValues(vals, repo, newImageRefs)
+	return updateGlobalWerfValues(vals, repo, newImageRefs, newImageDigests)
+}
+
+// copiedImageDigest returns the digest of the copy of the image imageRef, which the mapping of the
+// copied images may list with its digest.
+func copiedImageDigest(imageMapping map[string]string, imageRef string) string {
+	for sourceRef, copyRef := range imageMapping {
+		if sourceRef != imageRef && strings.Split(sourceRef, "@")[0] != imageRef {
+			continue
+		}
+
+		if _, digest, found := strings.Cut(copyRef, "@"); found {
+			return digest
+		}
+	}
+
+	return ""
 }
 
 func setWerfDataFiles(ch helmchart.Charter, files []*chartcommon.File) error {

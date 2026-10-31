@@ -1,15 +1,21 @@
 package bundles
 
 import (
+	"archive/tar"
+	"bytes"
+	"compress/gzip"
 	"context"
 	"os"
 	"path"
 	"path/filepath"
 	"regexp"
+	"strings"
 
 	"github.com/google/go-containerregistry/pkg/name"
+	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/random"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
+	"github.com/google/go-containerregistry/pkg/v1/tarball"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/samber/lo"
@@ -71,6 +77,27 @@ var _ = Describe("Bundle copy", func() {
 			Expect(Copy(ctx, "archive:"+archivePath, to, copyOpts)).To(Succeed())
 		}),
 	)
+
+	It("should point the image values of a bundle imported from a werf 3.12 archive at the imported images", func() {
+		img, err := random.Image(64, 1)
+		Expect(err).To(Succeed())
+
+		// The archive keeps the image layers but not its manifest, which the import rebuilds.
+		staleDigest := "sha256:" + strings.Repeat("a", 64)
+		archivePath := filepath.Join(GinkgoT().TempDir(), "bundle.tar.gz")
+		writeWerf3Archive(archivePath, oldBundleArchive(fromRepo, "1.2.3", oldBundleValues(fromRepo, staleDigest)), map[string]v1.Image{"tag-1": img})
+
+		Expect(Copy(ctx, "archive:"+archivePath, toRepo, copyOpts)).To(Succeed())
+
+		ch := pullTestChart(ctx, testRegistryClient, toRepo, "1.2.3")
+		images := ch.Values["global"].(map[string]interface{})["werf"].(map[string]interface{})["images"].(map[string]interface{})
+		Expect(images).NotTo(BeEmpty())
+		for name, imageVals := range images {
+			imageRef := imageVals.(map[string]interface{})["ref"].(string)
+			Expect(imageRef).To(HavePrefix(toRepo+":tag-1@"), name)
+			testImageDigest(imageRef)
+		}
+	})
 
 	DescribeTable("should copy a chart with .werf-data with its images and point its image values at the new repo",
 		func(copyBundle func(from, to string)) {
@@ -284,6 +311,11 @@ func werfDataChartPackOptions(ctx context.Context, repo, digest string) action.C
 // pushOldBundle pushes a bundle the way werf 3.12 and older publish it: its values hold the image and
 // repo values and it has no .werf-data.
 func pushOldBundle(client *registry.Client, repo, version string, values map[string]interface{}) {
+	_, err := client.Push(oldBundleArchive(repo, version, values), repo+":"+version)
+	Expect(err).To(Succeed())
+}
+
+func oldBundleArchive(repo, version string, values map[string]interface{}) []byte {
 	chartDir := GinkgoT().TempDir()
 	Expect(os.WriteFile(filepath.Join(chartDir, "Chart.yaml"), []byte("apiVersion: v2\nname: "+path.Base(repo)+"\nversion: "+version+"\n"), 0o644)).To(Succeed())
 
@@ -300,8 +332,40 @@ func pushOldBundle(client *registry.Client, repo, version string, values map[str
 	archive, err := os.ReadFile(archivePath)
 	Expect(err).To(Succeed())
 
-	_, err = client.Push(archive, repo+":"+version)
+	return archive
+}
+
+// writeWerf3Archive writes a bundle archive the way werf 3.12 and older write it: the chart archive
+// and an image tarball per image tag, gzipped.
+func writeWerf3Archive(path string, chartArchive []byte, images map[string]v1.Image) {
+	f, err := os.Create(path)
 	Expect(err).To(Succeed())
+	defer f.Close()
+
+	gzipWriter := gzip.NewWriter(f)
+	tarWriter := tar.NewWriter(gzipWriter)
+
+	writeMember := func(name string, data []byte) {
+		Expect(tarWriter.WriteHeader(&tar.Header{Name: name, Mode: 0o644, Size: int64(len(data)), Typeflag: tar.TypeReg})).To(Succeed())
+		_, err := tarWriter.Write(data)
+		Expect(err).To(Succeed())
+	}
+
+	writeMember("chart.tar.gz", chartArchive)
+
+	for tag, img := range images {
+		var imageTarball bytes.Buffer
+		imageGzipWriter := gzip.NewWriter(&imageTarball)
+		imageRef, err := name.NewTag("image:" + tag)
+		Expect(err).To(Succeed())
+		Expect(tarball.Write(imageRef, img, imageGzipWriter)).To(Succeed())
+		Expect(imageGzipWriter.Close()).To(Succeed())
+
+		writeMember("images/"+tag+".tar.gz", imageTarball.Bytes())
+	}
+
+	Expect(tarWriter.Close()).To(Succeed())
+	Expect(gzipWriter.Close()).To(Succeed())
 }
 
 func packTestChart(ctx context.Context, chartDir, name, destination string, opts action.ChartPackOptions) {
