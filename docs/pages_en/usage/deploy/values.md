@@ -295,7 +295,7 @@ overriden
 werf render --set-file mychild.myparam=mychild-myparam.txt  # or WERF_SET_FILE_PROD=mychild.myparam=mychild-myparam.txt werf render
 ```
 
-... or vie the `export-values` directive (werf only):
+... or vie the `export-values` directive (werf only, not supported in charts with `apiVersion: v3`):
 
 ```yaml
 # Chart.yaml:
