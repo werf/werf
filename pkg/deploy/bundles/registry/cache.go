@@ -146,14 +146,9 @@ func (cache *Cache) FetchReference(ctx context.Context, ref *ref.Reference, opts
 			if err != nil {
 				return &r, err
 			}
-			chrt, err := loader.LoadArchive(nelmcommon.ContextWithHelmOptions(ctx, opts), bytes.NewBuffer(contentBytes))
+			ch, err := loadChartArchive(ctx, contentBytes, opts)
 			if err != nil {
 				return &r, err
-			}
-
-			ch, ok := chrt.(*chart.Chart)
-			if !ok {
-				return &r, errors.Errorf("unsupported chart type %T", chrt)
 			}
 
 			r.Chart = ch
@@ -167,13 +162,9 @@ func (cache *Cache) StoreReference(ctx context.Context, ref *ref.Reference, char
 	if err := cache.init(); err != nil {
 		return nil, err
 	}
-	chrt, err := loader.LoadArchive(nelmcommon.ContextWithHelmOptions(ctx, opts), bytes.NewBuffer(chartArchive))
+	ch, err := loadChartArchive(ctx, chartArchive, opts)
 	if err != nil {
 		return nil, fmt.Errorf("load chart archive: %w", err)
-	}
-	ch, ok := chrt.(*chart.Chart)
-	if !ok {
-		return nil, errors.Errorf("unsupported chart type %T", chrt)
 	}
 	r := CacheRefSummary{
 		Name:  ref.FullName(),
@@ -206,6 +197,22 @@ func (cache *Cache) StoreReference(ctx context.Context, ref *ref.Reference, char
 	}
 	r.Manifest = manifest
 	return &r, nil
+}
+
+// loadChartArchive loads a chart archive with Chart.yaml apiVersion v1 or v2. The loader returns the
+// only other kind, apiVersion v3, as a chart type the bundle commands don't handle.
+func loadChartArchive(ctx context.Context, chartArchive []byte, opts nelmcommon.HelmOptions) (*chart.Chart, error) {
+	chrt, err := loader.LoadArchive(nelmcommon.ContextWithHelmOptions(ctx, opts), bytes.NewBuffer(chartArchive))
+	if err != nil {
+		return nil, err
+	}
+
+	ch, ok := chrt.(*chart.Chart)
+	if !ok {
+		return nil, errors.New("werf bundle commands don't support Chart.yaml apiVersion v3 yet")
+	}
+
+	return ch, nil
 }
 
 // DeleteReference deletes a chart ref from cache

@@ -47,6 +47,17 @@ var _ = Describe("Bundle publish", func() {
 		Entry("semver tag with the v prefix and build metadata", "v1.2.3+build.5", "1.2.3+build.5", []string{"1.2.3_build.5", "v1.2.3_build.5"}),
 		Entry("semver tag", "1.2.3", "1.2.3", []string{"1.2.3"}),
 	)
+
+	It("should refuse a chart with Chart.yaml apiVersion v3", func(ctx0 context.Context) {
+		ctx := logging.WithLogger(ctx0)
+		chartDir := GinkgoT().TempDir()
+		Expect(os.WriteFile(filepath.Join(chartDir, "Chart.yaml"), []byte("apiVersion: v3\nname: app\nversion: 0.1.0\n"), 0o644)).To(Succeed())
+
+		err := Publish(ctx, chartDir, startTestRegistry()+"/group/app", "1.0.0", newTestRegistryClient(ctx), PublishOptions{
+			ChartPackOptions: action.ChartPackOptions{Destination: GinkgoT().TempDir()},
+		})
+		Expect(err).To(MatchError(ContainSubstring("werf bundle commands don't support Chart.yaml apiVersion v3 yet")))
+	})
 })
 
 func startTestRegistry() string {
