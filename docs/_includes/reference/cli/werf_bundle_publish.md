@@ -304,7 +304,9 @@ werf bundle publish [IMAGE_NAME...] [options]
       --tag="latest"
             Publish bundle into container registry repo by the provided tag and by the chart        
             version: the tag itself if it is strict semver (without the leading `v`), otherwise     
-            `0.0.0-<unix time>-<tag>` ($WERF_TAG or latest by default)
+            `0.0.0-<unix time>-<tag slug>`, where the slug is the lowercased tag with each run of   
+            characters other than letters and digits replaced by `-`. A `+` in the pushed tags is   
+            replaced by `_` ($WERF_TAG or latest by default)
       --tmp-dir=""
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
       --use-build-report=false

@@ -127,9 +127,9 @@ werf bundle publish --repo example.org/bundles/mybundle --tag v1.0.0
 The chart version is derived from the tag:
 
 * a strict semantic version (`MAJOR.MINOR.PATCH` with an optional prerelease and build, optionally prefixed with `v`) is used as is, without the `v` prefix: `v1.0.0` → `1.0.0`;
-* any other tag (`latest`, a commit SHA, a branch name, `1.2`, a number such as a date or a pipeline ID) gets the `0.0.0-<unix time>-<tag>` version.
+* any other tag (`latest`, a commit SHA, a branch name, `1.2`, a number such as a date or a pipeline ID) gets the `0.0.0-<unix time>-<tag slug>` version, where the slug is the lowercased tag with each run of characters other than letters and digits replaced by `-`: `feature/Foo_1` → `0.0.0-<unix time>-feature-foo-1`.
 
-werf pushes the chart under its version tag (with `+` replaced by `_`, as Helm does) and also under the given tag if it differs. The command above publishes `example.org/bundles/mybundle:1.0.0` and `example.org/bundles/mybundle:v1.0.0`, both pointing to the same chart.
+werf pushes the chart under its version tag and also under the given tag if it differs, with `+` replaced by `_` in both, as Helm does: `--tag 1.0.0+build.5` publishes `1.0.0_build.5`. The command above publishes `example.org/bundles/mybundle:1.0.0` and `example.org/bundles/mybundle:v1.0.0`, both pointing to the same chart.
 
 A `0.0.0-…` version is a prerelease, so Helm, Argo CD and Flux skip it when selecting a version by a semver range: use a range like `>=0.0.0-0` or Helm's `--devel` option to select it. Two publications with a non-semver tag within the same second get the same version and overwrite each other. Such versions accumulate in the registry: werf cleanup does not remove them.
 

@@ -20,19 +20,16 @@ type PublishOptions struct {
 	HelmOptions      nelmcommon.HelmOptions
 }
 
-func Publish(ctx context.Context, chartDir, bundleRef string, bundlesRegistryClient *registry.Client, opts PublishOptions) error {
-	r, err := ref.ParseReference(bundleRef)
+// Publish packs the chart and pushes it into repo under the chart version derived from tag and under
+// tag itself, both with "+" encoded as "_" as Helm does.
+func Publish(ctx context.Context, chartDir, repo, tag string, bundlesRegistryClient *registry.Client, opts PublishOptions) error {
+	sv, err := BundleTagToChartVersion(ctx, tag, time.Now())
 	if err != nil {
-		return fmt.Errorf("error parsing bundle ref %q: %w", bundleRef, err)
-	}
-
-	sv, err := BundleTagToChartVersion(ctx, r.Tag, time.Now())
-	if err != nil {
-		return fmt.Errorf("unable to set chart version from bundle tag %q: %w", r.Tag, err)
+		return fmt.Errorf("unable to set chart version from bundle tag %q: %w", tag, err)
 	}
 
 	packOpts := opts.ChartPackOptions
-	packOpts.Name = chartNameFromRepo(r.Repo)
+	packOpts.Name = chartNameFromRepo(repo)
 	packOpts.Version = sv.String()
 
 	var packResult *action.ChartPackResult
@@ -52,8 +49,12 @@ func Publish(ctx context.Context, chartDir, bundleRef string, bundlesRegistryCli
 		return fmt.Errorf("read chart archive: %w", err)
 	}
 
-	tags := chartTags(packResult.ChartVersion, r.Tag)
-	r.Tag = tags[0]
+	tags := chartTags(packResult.ChartVersion, tag)
+
+	r, err := ref.ParseReference(fmt.Sprintf("%s:%s", repo, tags[0]))
+	if err != nil {
+		return fmt.Errorf("error parsing bundle ref: %w", err)
+	}
 
 	if err := logboek.Context(ctx).Default().LogProcess("Saving bundle to the local chart helm cache").DoError(func() error {
 		if err := bundlesRegistryClient.SaveChartArchive(ctx, chartArchive, r, opts.HelmOptions); err != nil {
@@ -65,7 +66,7 @@ func Publish(ctx context.Context, chartDir, bundleRef string, bundlesRegistryCli
 		return err
 	}
 
-	if err := logboek.Context(ctx).LogProcess("Pushing bundle %q", bundleRef).DoError(func() error {
+	if err := logboek.Context(ctx).LogProcess("Pushing bundle %q", fmt.Sprintf("%s:%s", repo, tag)).DoError(func() error {
 		return bundlesRegistryClient.PushChart(ctx, r, tags, opts.HelmOptions)
 	}); err != nil {
 		return err

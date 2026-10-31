@@ -34,6 +34,7 @@ var _ = Describe("BundleTagToChartVersion", func() {
 		Entry("all digits", "20240101", fmt.Sprintf("0.0.0-%d-20240101", now.Unix())),
 		Entry("leading zero", "01.2.3", fmt.Sprintf("0.0.0-%d-01-2-3", now.Unix())),
 		Entry("capital V prefix", "V1.2.3", fmt.Sprintf("0.0.0-%d-v1-2-3", now.Unix())),
+		Entry("branch name", "feature/Foo_1", fmt.Sprintf("0.0.0-%d-feature-foo-1", now.Unix())),
 	)
 })
 
@@ -47,4 +48,5 @@ var _ = DescribeTable("chartTags",
 	Entry("no tag", "1.2.3", "", []string{"1.2.3"}),
 	Entry("version with build metadata", "1.2.3+build.5", "", []string{"1.2.3_build.5"}),
 	Entry("tag equal to the encoded version", "1.2.3+build.5", "1.2.3_build.5", []string{"1.2.3_build.5"}),
+	Entry("tag with build metadata", "1.2.3+build.5", "v1.2.3+build.5", []string{"1.2.3_build.5", "v1.2.3_build.5"}),
 )

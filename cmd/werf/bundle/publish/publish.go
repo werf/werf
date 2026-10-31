@@ -143,7 +143,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	if defaultTag == "" {
 		defaultTag = "latest"
 	}
-	cmd.Flags().StringVarP(&cmdData.Tag, "tag", "", defaultTag, "Publish bundle into container registry repo by the provided tag and by the chart version: the tag itself if it is strict semver (without the leading `v`), otherwise `0.0.0-<unix time>-<tag>` ($WERF_TAG or latest by default)")
+	cmd.Flags().StringVarP(&cmdData.Tag, "tag", "", defaultTag, "Publish bundle into container registry repo by the provided tag and by the chart version: the tag itself if it is strict semver (without the leading `v`), otherwise `0.0.0-<unix time>-<tag slug>`, where the slug is the lowercased tag with each run of characters other than letters and digits replaced by `-`. A `+` in the pushed tags is replaced by `_` ($WERF_TAG or latest by default)")
 
 	return cmd
 }
@@ -352,7 +352,7 @@ func runPublish(ctx context.Context, imageNameListFromArgs []string) error {
 
 	ctx = common.SetupDenoContext(ctx)
 
-	return bundles.Publish(ctx, filepath.Join(giterminismManager.ProjectDir(), chartDir), fmt.Sprintf("%s:%s", bundleRepo, cmdData.Tag), bundlesRegistryClient, bundles.PublishOptions{
+	return bundles.Publish(ctx, filepath.Join(giterminismManager.ProjectDir(), chartDir), bundleRepo, cmdData.Tag, bundlesRegistryClient, bundles.PublishOptions{
 		ChartPackOptions: chartPackOpts,
 		HelmOptions: nelmcommon.HelmOptions{
 			ChartLoadOpts: nelmcommon.ChartLoadOptions{

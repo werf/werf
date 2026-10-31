@@ -44,9 +44,10 @@ func BundleTagToChartVersion(ctx context.Context, tag string, now time.Time) (*s
 	return sv, nil
 }
 
-// chartTags returns the tags to push a chart with chartVersion under: the version itself, encoded as Helm does, and the tag the user asked for, if it differs.
+// chartTags returns the tags to push a chart with chartVersion under: the version itself and the tag the user asked for, if it differs, both with "+", invalid in a tag, encoded as Helm does.
 func chartTags(chartVersion, tag string) []string {
 	versionTag := strings.ReplaceAll(chartVersion, "+", "_")
+	tag = strings.ReplaceAll(tag, "+", "_")
 	if tag == "" || tag == versionTag {
 		return []string{versionTag}
 	}
