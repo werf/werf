@@ -212,7 +212,7 @@ Example:
 werf bundle copy --from example.org/bundles/mybundle:v1.0.0 --to other.example.org/bundles/mybundle:v1.0.0
 ```
 
-The images are copied by digest, multi-platform images with all their platforms. The images of a werf-published chart included as a dependent chart are copied too and its `helm.sh/images` annotation is rewritten, but the image values in its `.werf-data/extra-values.yaml` are not: they keep the references to its original repository.
+The images are copied by digest, multi-platform images with all their platforms. The images of charts with `.werf-data/` included as dependent charts, at any depth, are copied too, and their `helm.sh/images` annotations and `.werf-data/extra-values.yaml` are rewritten for the destination repository. A bundle published by werf 3.12 or older and included as a dependent chart has no `.werf-data/`: its images are not copied and its values are not rewritten.
 
 A bundle published by werf 3.12 or older has no `.werf-data/`: its images are taken from the `werf.image` values, and the `werf.image`, `werf.repo` and `global.werf` values in its `values.yaml` are rewritten for the destination repository.
 

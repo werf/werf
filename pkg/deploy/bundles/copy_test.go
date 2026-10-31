@@ -102,6 +102,35 @@ var _ = Describe("Bundle copy", func() {
 		}),
 	)
 
+	It("should point the image values of werf-published dependencies at the new repo", func() {
+		leafDir := writeTestChart()
+		midDir := writeTestChart()
+		Expect(os.MkdirAll(filepath.Join(midDir, "charts"), 0o755)).To(Succeed())
+		packTestChart(ctx, leafDir, "leaf", filepath.Join(midDir, "charts"), werfDataChartPackOptions(ctx, fromRepo, imageDigest))
+
+		rootDir := writeTestChart()
+		Expect(os.MkdirAll(filepath.Join(rootDir, "charts"), 0o755)).To(Succeed())
+		packTestChart(ctx, midDir, "mid", filepath.Join(rootDir, "charts"), werfDataChartPackOptions(ctx, fromRepo, imageDigest))
+
+		Expect(Publish(ctx, rootDir, fromRepo, "1.2.3", testRegistryClient, PublishOptions{
+			ChartPackOptions: action.ChartPackOptions{Destination: GinkgoT().TempDir()},
+		})).To(Succeed())
+
+		Expect(Copy(ctx, fromRepo+":1.2.3", toRepo+":4.5.6", copyOpts)).To(Succeed())
+
+		Expect(testImageDigest(toRepo + ":tag-1")).To(Equal(imageDigest))
+
+		mid := pullTestChart(ctx, testRegistryClient, toRepo, "4.5.6").Dependencies()[0]
+		leaf := mid.Dependencies()[0]
+		for _, dep := range []*chart.Chart{mid, leaf} {
+			Expect(dep.Metadata.Annotations[chartyaml.ImagesAnnotation]).To(ContainSubstring(toRepo + ":tag-1@" + imageDigest))
+
+			data, err := werfdata.Parse(dep.WerfDataFiles)
+			Expect(err).To(Succeed())
+			Expect(data.ExtraValues).To(Equal(werfDataExtraValues(toRepo, imageDigest)))
+		}
+	})
+
 	DescribeTable("should keep the signature of a copy into a repo of the same name only when no werf values change",
 		func(chartPackOpts func() action.ChartPackOptions, expectedErr string) {
 			packOpts := chartPackOpts()
@@ -248,6 +277,14 @@ func pushOldBundle(client *registry.Client, repo, version string, values map[str
 	Expect(err).To(Succeed())
 
 	_, err = client.Push(archive, repo+":"+version)
+	Expect(err).To(Succeed())
+}
+
+func packTestChart(ctx context.Context, chartDir, name, destination string, opts action.ChartPackOptions) {
+	opts.Destination = destination
+	opts.Name = name
+	opts.Version = "1.0.0"
+	_, err := action.ChartPack(ctx, chartDir, opts)
 	Expect(err).To(Succeed())
 }
 

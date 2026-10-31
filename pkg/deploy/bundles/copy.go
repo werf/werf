@@ -73,8 +73,8 @@ func bundleImages(ctx context.Context, ch helmchart.Charter) ([]chartyaml.Image,
 }
 
 // rewriteImageValues points the werf image and repo values at repo, where the images are copied
-// keeping their tags: .werf-data/extra-values.yaml of a chart with .werf-data, the chart values of a
-// bundle published by werf <= 3.12.
+// keeping their tags: .werf-data/extra-values.yaml of the chart and of its werf-published
+// dependencies, the chart values of a bundle published by werf <= 3.12.
 func rewriteImageValues(ctx context.Context, ch helmchart.Charter, repo string, _ map[string]string) error {
 	accessor, err := helmchart.NewAccessor(ch)
 	if err != nil {
@@ -82,9 +82,38 @@ func rewriteImageValues(ctx context.Context, ch helmchart.Charter, repo string, 
 	}
 
 	if len(accessor.WerfDataFiles()) == 0 {
-		return retargetImageValues(accessor.Values(), repo)
+		if err := retargetImageValues(accessor.Values(), repo); err != nil {
+			return err
+		}
+	} else if err := rewriteWerfDataImageValues(ch, accessor, repo); err != nil {
+		return err
 	}
 
+	return rewriteDependencyImageValues(accessor, repo)
+}
+
+func rewriteDependencyImageValues(accessor helmchart.Accessor, repo string) error {
+	for _, dep := range accessor.Dependencies() {
+		depAccessor, err := helmchart.NewAccessor(dep)
+		if err != nil {
+			return fmt.Errorf("create dependency accessor: %w", err)
+		}
+
+		if len(depAccessor.WerfDataFiles()) > 0 {
+			if err := rewriteWerfDataImageValues(dep, depAccessor, repo); err != nil {
+				return fmt.Errorf("dependency %q: %w", depAccessor.Name(), err)
+			}
+		}
+
+		if err := rewriteDependencyImageValues(depAccessor, repo); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func rewriteWerfDataImageValues(ch helmchart.Charter, accessor helmchart.Accessor, repo string) error {
 	data, err := werfdata.Parse(accessor.WerfDataFiles())
 	if err != nil {
 		return fmt.Errorf("parse %s: %w", werfdata.DirName, err)
