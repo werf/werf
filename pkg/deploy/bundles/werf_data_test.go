@@ -30,6 +30,15 @@ var _ = Describe("Bundle .werf-data", func() {
 		Expect(metadata.Release).To(Equal(&werfdata.ReleaseMetadata{Name: "app-production", Namespace: "app-ns", Env: "production"}))
 	})
 
+	It("should report an unsupported apiVersion before unknown fields", func(ctx context.Context) {
+		chartDir := GinkgoT().TempDir()
+		Expect(os.MkdirAll(filepath.Join(chartDir, werfdata.DirName), 0o755)).To(Succeed())
+		Expect(os.WriteFile(filepath.Join(chartDir, werfdata.DirName, werfdata.MetadataFileName), []byte("apiVersion: v3\nnewField: true\n"), 0o644)).To(Succeed())
+
+		_, _, err := ReadWerfDataMetadata(ctx, chartDir)
+		Expect(err).To(MatchError(ContainSubstring(`unsupported .werf-data/metadata.yaml apiVersion "v3"`)))
+	})
+
 	DescribeTable("should use the release defaults unless the environment differs",
 		func(ctx context.Context, release *werfdata.ReleaseMetadata, env string, expected werfdata.ReleaseMetadata) {
 			Expect(ReleaseDefaults(ctx, &werfdata.Metadata{Release: release}, env)).To(Equal(expected))

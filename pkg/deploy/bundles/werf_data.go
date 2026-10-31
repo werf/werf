@@ -31,13 +31,21 @@ func ReadWerfDataMetadata(ctx context.Context, chartDir string) (*werfdata.Metad
 		return nil, false, fmt.Errorf("read %q: %w", metadataPath, err)
 	}
 
-	metadata := &werfdata.Metadata{}
-	if err := yaml.UnmarshalStrict(data, metadata); err != nil {
+	// A newer apiVersion may add fields, so check it before parsing strictly.
+	var versioned struct {
+		APIVersion string `json:"apiVersion"`
+	}
+	if err := yaml.Unmarshal(data, &versioned); err != nil {
 		return nil, false, fmt.Errorf("parse %q: %w", metadataPath, err)
 	}
 
-	if err := werfdata.CheckAPIVersion(metadata.APIVersion); err != nil {
+	if err := werfdata.CheckAPIVersion(versioned.APIVersion); err != nil {
 		return nil, false, err
+	}
+
+	metadata := &werfdata.Metadata{}
+	if err := yaml.UnmarshalStrict(data, metadata); err != nil {
+		return nil, false, fmt.Errorf("parse %q: %w", metadataPath, err)
 	}
 
 	return metadata, true, nil
