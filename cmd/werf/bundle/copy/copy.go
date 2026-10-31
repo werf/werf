@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 
 	"github.com/werf/logboek"
@@ -13,6 +12,7 @@ import (
 	"github.com/werf/werf/v3/pkg/deploy/bundles"
 	"github.com/werf/werf/v3/pkg/docker"
 	"github.com/werf/werf/v3/pkg/tmp_manager"
+	"github.com/werf/werf/v3/pkg/werf"
 	"github.com/werf/werf/v3/pkg/werf/global_warnings"
 )
 
@@ -106,7 +106,7 @@ func runCopy(ctx context.Context) error {
 		return bundles.Copy(ctx, cmdData.From, cmdData.To, bundles.CopyOptions{
 			ChartRepoConnectionOptions: common.GetBundlesRegistryConnectionOptions(&commonCmdData),
 			RegistryCredentialsPath:    docker.GetDockerConfigCredentialsFile(*commonCmdData.DockerConfig),
-			TempDirPath:                lo.FromPtr(commonCmdData.TmpDir),
+			TempDirPath:                werf.GetTmpDir(),
 		})
 	})
 }
