@@ -145,6 +145,9 @@ func (c *Client) PushChart(ctx context.Context, ref *ref.Reference, tags []strin
 	fmt.Fprintf(c.out, "The push refers to repository [%s]\n", r.Repo)
 	c.printCacheRefSummary(r)
 	layers := []ocispec.Descriptor{*r.ContentLayer}
+	if r.ProvenanceLayer != nil {
+		layers = append(layers, *r.ProvenanceLayer)
+	}
 	s := ""
 	numLayers := len(layers)
 	if 1 < numLayers {
@@ -264,6 +267,30 @@ func (c *Client) SaveChart(ctx context.Context, ch *chart.Chart, ref *ref.Refere
 	}
 	fmt.Fprintf(c.out, "%s: saved\n", r.Tag)
 	return nil
+}
+
+// TagCachedChart makes the chart cached under from available in the cache under to as is, its provenance included
+func (c *Client) TagCachedChart(ctx context.Context, from, to *ref.Reference, opts nelmcommon.HelmOptions) error {
+	r, err := c.cache.FetchReference(ctx, from, opts)
+	if err != nil {
+		return err
+	}
+	if !r.Exists {
+		return errors.New(fmt.Sprintf("Chart not found: %s", from.FullName()))
+	}
+	return c.cache.AddManifest(ctx, to, r.Manifest)
+}
+
+// IsChartSigned reports whether the chart cached under ref has a provenance file
+func (c *Client) IsChartSigned(ctx context.Context, ref *ref.Reference, opts nelmcommon.HelmOptions) (bool, error) {
+	r, err := c.cache.FetchReference(ctx, ref, opts)
+	if err != nil {
+		return false, err
+	}
+	if !r.Exists {
+		return false, errors.New(fmt.Sprintf("Chart not found: %s", ref.FullName()))
+	}
+	return r.ProvenanceLayer != nil, nil
 }
 
 // LoadChart retrieves a chart object by reference

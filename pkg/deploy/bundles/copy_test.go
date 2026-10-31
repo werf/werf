@@ -446,6 +446,55 @@ global:
 		Expect(bundlesRegistryClient.StubCharts["registry.example.com/group/testproject:0.1.0"].Metadata.Version).To(Equal("0.1.0"))
 	})
 
+	DescribeTable("should copy a signed remote bundle to remote keeping the original chart only when the copy changes nothing",
+		func(to string, values map[string]interface{}, expectedSigned bool) {
+			ch := &chart.Chart{
+				Metadata: &chart.Metadata{
+					APIVersion: "v2",
+					Name:       "signedchart",
+					Version:    "0.1.0",
+				},
+				Values: values,
+				Raw:    []*chartcommon.File{{Name: "values.yaml", Data: []byte("{}\n")}},
+			}
+
+			bundlesRegistryClient := NewBundlesRegistryClientStub()
+			registryClient := NewDockerRegistryStub()
+
+			fromAddr, err := bundles_registry.ParseAddr("registry.example.com/group/signedchart:0.1.0")
+			Expect(err).NotTo(HaveOccurred())
+			from := NewRemoteBundle(fromAddr.RegistryAddress, bundlesRegistryClient, registryClient)
+			bundlesRegistryClient.StubCharts[fromAddr.RegistryAddress.FullName()] = ch
+			bundlesRegistryClient.SignedCharts[fromAddr.RegistryAddress.FullName()] = true
+
+			toRef, err := bundles_registry.ParseReference(to)
+			Expect(err).NotTo(HaveOccurred())
+			if !strings.Contains(to, ":") {
+				toRef.Tag = ""
+			}
+			Expect(from.CopyTo(ctx, NewRemoteBundle(&bundles_registry.RegistryAddress{Reference: toRef}, bundlesRegistryClient, registryClient), copyToOptions{})).To(Succeed())
+
+			Expect(bundlesRegistryClient.PushedRefs).NotTo(BeEmpty())
+			pushedRef := bundlesRegistryClient.PushedRefs[0]
+			Expect(bundlesRegistryClient.SignedCharts[pushedRef]).To(Equal(expectedSigned))
+			if expectedSigned {
+				Expect(bundlesRegistryClient.TaggedCachedRefs).To(HaveKeyWithValue(pushedRef, fromAddr.RegistryAddress.FullName()))
+			} else {
+				Expect(bundlesRegistryClient.TaggedCachedRefs).To(BeEmpty())
+			}
+		},
+		Entry("unchanged: another repository with the same name, no tag",
+			"registry2.example.com/group2/signedchart", map[string]interface{}{"replicas": 1}, true),
+		Entry("unchanged: a tag equal to the version",
+			"registry2.example.com/group2/signedchart:0.1.0", map[string]interface{}{"replicas": 1}, true),
+		Entry("changed version",
+			"registry2.example.com/group2/signedchart:0.2.0", map[string]interface{}{"replicas": 1}, false),
+		Entry("changed name",
+			"registry2.example.com/group2/otherchart", map[string]interface{}{"replicas": 1}, false),
+		Entry("changed werf values",
+			"registry2.example.com/group2/signedchart", map[string]interface{}{"werf": map[string]interface{}{"repo": "registry.example.com/group/signedchart"}}, false),
+	)
+
 	DescribeTable("should copy remote to remote under the version and the given tag",
 		func(fromTag, fromVersion, to, expectedVersion string, expectedPushedRefs []string) {
 			ch := &chart.Chart{
@@ -555,13 +604,17 @@ func (writer *BundleArchiveStubWriter) WriteImageArchive(imageTag string, data [
 func (writer *BundleArchiveStubWriter) Save() error { return nil }
 
 type BundlesRegistryClientStub struct {
-	StubCharts map[string]*chart.Chart
-	PushedRefs []string
+	StubCharts       map[string]*chart.Chart
+	SignedCharts     map[string]bool
+	PushedRefs       []string
+	TaggedCachedRefs map[string]string
 }
 
 func NewBundlesRegistryClientStub() *BundlesRegistryClientStub {
 	return &BundlesRegistryClientStub{
-		StubCharts: make(map[string]*chart.Chart),
+		StubCharts:       make(map[string]*chart.Chart),
+		SignedCharts:     make(map[string]bool),
+		TaggedCachedRefs: make(map[string]string),
 	}
 }
 
@@ -591,6 +644,23 @@ func (client *BundlesRegistryClientStub) PushChart(ctx context.Context, ref *bun
 	}
 
 	return nil
+}
+
+func (client *BundlesRegistryClientStub) TagCachedChart(ctx context.Context, from, to *bundles_registry.Reference, opts nelmcommon.HelmOptions) error {
+	ch, hasChart := client.StubCharts[from.FullName()]
+	if !hasChart {
+		return fmt.Errorf("no chart found by address %s", from.FullName())
+	}
+
+	client.StubCharts[to.FullName()] = ch
+	client.SignedCharts[to.FullName()] = client.SignedCharts[from.FullName()]
+	client.TaggedCachedRefs[to.FullName()] = from.FullName()
+
+	return nil
+}
+
+func (client *BundlesRegistryClientStub) IsChartSigned(ctx context.Context, ref *bundles_registry.Reference, opts nelmcommon.HelmOptions) (bool, error) {
+	return client.SignedCharts[ref.FullName()], nil
 }
 
 type DockerRegistryStub struct {

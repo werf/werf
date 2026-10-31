@@ -130,6 +130,10 @@ func (bundle *BundleArchive) CopyFromRemote(ctx context.Context, fromRemote *Rem
 		return fmt.Errorf("unable to read chart from remote bundle: %w", err)
 	}
 
+	if err := warnIfProvenanceDropped(ctx, fromRemote, "bundle archives do not keep provenance files", opts.HelmOptions); err != nil {
+		return err
+	}
+
 	if err := bundle.Writer.Open(); err != nil {
 		return fmt.Errorf("unable to open target bundle archive: %w", err)
 	}

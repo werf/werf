@@ -60,17 +60,18 @@ type (
 	// CacheRefSummary contains as much info as available describing a chart reference in cache
 	// Note: fields here are sorted by the order in which they are set in FetchReference method
 	CacheRefSummary struct {
-		Name         string
-		Repo         string
-		Tag          string
-		Exists       bool
-		Manifest     *ocispec.Descriptor
-		Config       *ocispec.Descriptor
-		ContentLayer *ocispec.Descriptor
-		Size         int64
-		Digest       digest.Digest
-		CreatedAt    time.Time
-		Chart        *chart.Chart
+		Name            string
+		Repo            string
+		Tag             string
+		Exists          bool
+		Manifest        *ocispec.Descriptor
+		Config          *ocispec.Descriptor
+		ContentLayer    *ocispec.Descriptor
+		ProvenanceLayer *ocispec.Descriptor
+		Size            int64
+		Digest          digest.Digest
+		CreatedAt       time.Time
+		Chart           *chart.Chart
 	}
 )
 
@@ -113,15 +114,16 @@ func (cache *Cache) FetchReference(ctx context.Context, ref *ref.Reference, opts
 			}
 			r.Manifest = &desc
 			r.Config = &manifest.Config
-			numLayers := len(manifest.Layers)
-			if numLayers != 1 {
-				return &r, errors.New(
-					fmt.Sprintf("manifest does not contain exactly 1 layer (total: %d)", numLayers))
-			}
-			var contentLayer *ocispec.Descriptor
+			var contentLayer, provenanceLayer *ocispec.Descriptor
 			for _, layer := range manifest.Layers {
-				if layer.MediaType == HelmChartContentLayerMediaType || layer.MediaType == HelmChartContentLayerFullMediaType {
+				switch {
+				case (layer.MediaType == HelmChartContentLayerMediaType || layer.MediaType == HelmChartContentLayerFullMediaType) && contentLayer == nil:
 					contentLayer = &layer
+				case layer.MediaType == HelmChartProvenanceLayerMediaType && provenanceLayer == nil:
+					provenanceLayer = &layer
+				default:
+					return &r, errors.New(
+						fmt.Sprintf("manifest contains an unexpected layer with mediatype %s: only one chart layer and one provenance layer are allowed", layer.MediaType))
 				}
 			}
 			if contentLayer == nil {
@@ -133,6 +135,7 @@ func (cache *Cache) FetchReference(ctx context.Context, ref *ref.Reference, opts
 					fmt.Sprintf("manifest layer with mediatype %s is of size 0", HelmChartContentLayerMediaType))
 			}
 			r.ContentLayer = contentLayer
+			r.ProvenanceLayer = provenanceLayer
 			info, err := cache.ociStore.Info(withOrasLogger(ctx, cache.out, cache.debug), contentLayer.Digest)
 			if err != nil {
 				return &r, err
