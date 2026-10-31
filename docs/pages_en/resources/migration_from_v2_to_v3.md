@@ -35,6 +35,7 @@ These changes affect existing projects even without configuration edits:
 | Service values | `.Values.global.env` is populated automatically. | `.Values.global.werf.env` is populated automatically; the old key is no longer populated. | Temporary compatibility: `WERF_LEGACY_VALUES_GLOBAL_ENV=1`; [details](#values-and-environment-variables). |
 | Release storage | `HELM_DRIVER` is honored if `WERF_RELEASE_STORAGE` is not set. | `WERF_RELEASE_STORAGE` is used; without it, the default storage applies. | Transfer the variable's value; [details](#values-and-environment-variables). |
 | Published chart name | `--helm-compatible-chart=false`. | Always the last path component of the repository; `--helm-compatible-chart` and `--rename-chart` are removed. | Expect `.Chart.Name` to change; [details](#charts-and-bundles). |
+| Published chart format | Images and `werf bundle publish` values are merged into `values.yaml` of the chart. | Stored in `.werf-data/`; Helm, Argo CD and Flux get only the chart's own values; werf v2 cannot deploy the chart. | Pass `.werf-data/` values files to Helm, Argo CD and Flux; upgrade werf everywhere bundles are applied; [details](#charts-and-bundles). |
 | `.helmignore` | Does not filter files when werf reads the chart. | Filters files, including Helm's default rules. | Check exclusions before deploying; [details](#charts-and-bundles). |
 
 ### CI and automation
@@ -329,7 +330,7 @@ Deployment and release-inspection commands under `werf helm` are removed. For we
 
 These are **workflow replacements, not drop-in aliases**. `converge`, `render` and `lint` use the werf project rather than Helm's positional `RELEASE CHART` arguments. Check the new command's `--help`, pass the intended release and namespace explicitly, and adapt scripts that parse output. For example, `release get --print-values` includes computed values in its structured output; it does not reproduce `helm get values` output. For standalone Helm chart workflows, use the Helm CLI directly.
 
-`werf helm secret` and chart-management commands such as `werf helm dependency` remain available; the whole `werf helm` group has not been removed.
+`werf helm secret` and chart-management commands such as `werf helm dependency` remain available; the whole `werf helm` group has not been removed. `werf helm secret rotate-secret-key` is removed: it missed the secrets of dependent charts and of published charts. Rotate the key by decrypting each file with the old key and encrypting it with the new one, see [Rotating the secret key]({{ "/usage/deploy/values.html#rotating-the-secret-key" | true_relative_url }}).
 
 ### Uninstalling a release
 
@@ -359,6 +360,14 @@ Without replacing `HELM_DRIVER`, werf uses its default release storage rather th
 Rules for dependent charts vary by how the chart is included — see [Charts and dependencies]({{ "/usage/deploy/charts.html#excluding-files-or-directories-from-the-chart" | true_relative_url }}).
 
 **`werf bundle publish` and `werf bundle copy` always name the chart after the last path component of the repository address.** The chart name in the published bundle's `Chart.yaml` changes, and so do `.Chart.Name` and template paths. The `--helm-compatible-chart` and `--rename-chart` options are removed: Helm finds an OCI chart only in a repository named after the chart.
+
+**The published chart has a new format.** `werf bundle publish` no longer merges the image references and its `--values` and `--set*` options into `values.yaml` of the chart: the chart is published as is, and everything werf adds is stored in the `.werf-data/` directory of the chart. `werf bundle apply` deploys the same as `werf converge` with the same options — see [Bundles and charts]({{ "/usage/distribute/bundles.html" | true_relative_url }}).
+
+- **Helm, Argo CD and Flux get only the chart's own values.** Templates that use the image references render empty values. Pass `.werf-data/values.yaml` and `.werf-data/extra-values.yaml` as values files — see [the recipe]({{ "/usage/distribute/bundles.html#using-the-chart-with-helm-argo-cd-and-flux" | true_relative_url }}). The `--set*` options, secrets, annotations and labels of `werf bundle publish` stay unavailable there.
+- **werf v2 cannot deploy the new charts.** The latest werf v2 and Nelm v1 refuse them, earlier versions deploy them without images and publish-time values. Upgrade every environment that runs `werf bundle apply`, `plan` or `render` before publishing with v3. Charts published by v2 are still deployed by v3 unchanged.
+- **The chart version is taken only from a strict semver tag.** `--tag 1.2` or `--tag 20240101` no longer becomes `1.2.0` or `20240101.0.0`, but a `0.0.0-<unix time>-<tag>` prerelease version. The chart is pushed under its version tag in addition to the given tag.
+- **The `--secret-values` of `werf bundle publish` are saved in the release in decrypted form**, as `werf converge` saves its `--secret-values`, and `werf release get --print-values` shows them.
+- **`--disable-default-values` and `--disable-default-secret-values` of `werf bundle apply` ignore only the chart's own files**, not the values and images stored at publish time.
 
 ### Encrypted secret values
 
