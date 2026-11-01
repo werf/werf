@@ -759,7 +759,9 @@ func readRawSecretValues(ctx context.Context, chrt *chart.Chart, customSecretVal
 // --values override only the chart secret values, --set* and service values override --secret-values
 // too. The --values that --secret-values override are left out of the bundle values, so that the
 // chart values under them are kept as in converge. Null values are kept, so that they still delete
-// the values below them. chartSecretVals and customSecretVals are pruned in place.
+// the values below them. chartSecretVals and customSecretVals are pruned in place. The export-values
+// skipped because of the publish-time values are logged as warnings, except for the --values that
+// --secret-values override, as these are not in the bundle.
 func makeBundleValuesAndSecretValues(ctx context.Context, chrt *chart.Chart, vals *values.Options, serviceValues, chartSecretVals, customSecretVals map[string]interface{}) (map[string]interface{}, map[string]interface{}, error) {
 	p := getter.Getters()
 
@@ -812,10 +814,17 @@ func makeBundleValuesAndSecretValues(ctx context.Context, chrt *chart.Chart, val
 
 	setReplacedPaths := setValuesReplacedPaths(ctx, &setOpts, p, setFilesCache, setVals, nil)
 
-	fileValsWithExports, err := withExportedValues(chrt, fileVals, setReplacedPaths)
+	fileValsWithExports, skippedExports, err := withExportedValues(chrt, fileVals, setReplacedPaths)
 	if err != nil {
 		return nil, nil, err
 	}
+
+	_, customSecretValsSkippedExports, err := withExportedValues(chrt, customSecretVals, setReplacedPaths)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	skippedExports = append(skippedExports, customSecretValsSkippedExports...)
 
 	removeOverriddenValues(chartSecretVals, fileValsWithExports)
 
@@ -829,13 +838,19 @@ func makeBundleValuesAndSecretValues(ctx context.Context, chrt *chart.Chart, val
 	}
 
 	for _, higherVals := range []map[string]interface{}{setVals, serviceValues} {
-		higherValsWithExports, err := withExportedValues(chrt, higherVals, nil)
+		higherValsWithExports, higherValsSkippedExports, err := withExportedValues(chrt, higherVals, nil)
 		if err != nil {
 			return nil, nil, err
 		}
 
+		skippedExports = append(skippedExports, higherValsSkippedExports...)
+
 		removeOverriddenValues(chartSecretVals, higherValsWithExports)
 		removeOverriddenValues(customSecretVals, higherValsWithExports)
+	}
+
+	for _, warning := range lo.Uniq(skippedExports) {
+		logboek.Context(ctx).Warn().LogF("%s\n", warning)
 	}
 
 	return bundleVals, chartcommon.MergeMaps(chartSecretVals, customSecretVals), nil
@@ -843,25 +858,26 @@ func makeBundleValuesAndSecretValues(ctx context.Context, chrt *chart.Chart, val
 
 // withExportedValues returns the values with export-values applied, as nelm applies them to each
 // values layer, so that the secret values at the paths that these values are exported to are
-// overridden too. The values at the replaced paths are removed, as a higher layer replaces them.
-func withExportedValues(chrt *chart.Chart, vals map[string]interface{}, replacedPaths [][]string) (map[string]interface{}, error) {
-	exported, _, err := chartv2util.ExportUserValues(chrt, vals, chartv2util.ExportUserValuesOptions{ReplacedPaths: replacedPaths})
+// overridden too. The values at the replaced paths are removed, as a higher layer replaces them. It
+// also returns the messages about the exports skipped because of these values.
+func withExportedValues(chrt *chart.Chart, vals map[string]interface{}, replacedPaths [][]string) (map[string]interface{}, []string, error) {
+	exported, skipped, err := chartv2util.ExportUserValues(chrt, vals, chartv2util.ExportUserValuesOptions{ReplacedPaths: replacedPaths})
 	if err != nil {
-		return nil, fmt.Errorf("unable to apply export-values: %w", err)
+		return nil, nil, fmt.Errorf("unable to apply export-values: %w", err)
 	}
 
-	return exported, nil
+	return exported, skipped, nil
 }
 
 // validateSetValues fails, as converge does, when --set* cannot be applied over --values and
 // --secret-values, neither with export-values applied nor without.
 func validateSetValues(ctx context.Context, chrt *chart.Chart, setOpts *values.Options, p getter.Providers, setFilesCache map[string]string, fileVals, customSecretVals map[string]interface{}) error {
-	exportedFileVals, err := withExportedValues(chrt, fileVals, nil)
+	exportedFileVals, _, err := withExportedValues(chrt, fileVals, nil)
 	if err != nil {
 		return err
 	}
 
-	exportedCustomSecretVals, err := withExportedValues(chrt, customSecretVals, nil)
+	exportedCustomSecretVals, _, err := withExportedValues(chrt, customSecretVals, nil)
 	if err != nil {
 		return err
 	}

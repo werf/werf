@@ -1,13 +1,16 @@
 package publish
 
 import (
+	"bytes"
 	"context"
 	"os"
 	"path/filepath"
+	"strings"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	"github.com/werf/logboek"
 	chartcommon "github.com/werf/nelm/v2/pkg/helm/pkg/chart/common"
 	chartcommonutil "github.com/werf/nelm/v2/pkg/helm/pkg/chart/common/util"
 	chart "github.com/werf/nelm/v2/pkg/helm/pkg/chart/v2"
@@ -322,6 +325,95 @@ var _ = Describe("makeBundleValuesAndSecretValues", func() {
 
 			expectedSecretVals: "sub:\n  image:\n    repository: chart-secret",
 		}, ""),
+	)
+
+	DescribeTable("warns once about the export-values skipped because of the publish-time values",
+		func(c bundleValuesCase, expectedWarnings int) {
+			valsOpts := &values.Options{Values: c.set, JSONValues: c.setJSON}
+			if c.valuesFile != "" {
+				valuesFilePath := filepath.Join(GinkgoT().TempDir(), "values.yaml")
+				Expect(os.WriteFile(valuesFilePath, []byte(c.valuesFile), 0o644)).To(Succeed())
+				valsOpts.ValueFiles = []string{valuesFilePath}
+			}
+
+			publishChart := &chart.Chart{
+				Metadata: &chart.Metadata{
+					Name:       "root",
+					APIVersion: chart.APIVersionV2,
+					Version:    "1.0.0",
+					Dependencies: []*chart.Dependency{{
+						Name:         "sub",
+						Version:      "1.0.0",
+						ExportValues: []interface{}{map[string]interface{}{"parent": "g", "child": "."}},
+					}},
+				},
+			}
+			publishChart.AddDependency(&chart.Chart{
+				Metadata: &chart.Metadata{Name: "sub", APIVersion: chart.APIVersionV2, Version: "1.0.0"},
+			})
+
+			var output bytes.Buffer
+			ctx := logboek.NewContext(context.Background(), logboek.NewLogger(&output, &output))
+
+			bundleVals, bundleSecretVals, err := makeBundleValuesAndSecretValues(ctx, publishChart, valsOpts, parseValues(c.serviceVals), nil, parseValues(c.customSecretVals))
+			Expect(err).To(Succeed())
+			Expect(bundleVals).To(Equal(parseValues(c.expectedVals)))
+			Expect(bundleSecretVals).To(Equal(parseValues(c.expectedSecretVals)))
+			Expect(strings.Count(output.String(), `Skipping export-values of "g"`)).To(Equal(expectedWarnings), output.String())
+		},
+		Entry("a scalar from --set", bundleValuesCase{
+			set: []string{"g=scalar"},
+
+			expectedSecretVals: "{}",
+			expectedVals:       "g: scalar",
+		}, 1),
+		Entry("a scalar from --values", bundleValuesCase{
+			valuesFile: "g: scalar",
+
+			expectedSecretVals: "{}",
+			expectedVals:       "g: scalar",
+		}, 1),
+		Entry("a scalar from --secret-values", bundleValuesCase{
+			customSecretVals: "g: scalar",
+
+			expectedSecretVals: "g: scalar",
+			expectedVals:       "{}",
+		}, 1),
+		Entry("a scalar from service values", bundleValuesCase{
+			serviceVals: "g: scalar",
+
+			expectedSecretVals: "{}",
+			expectedVals:       "g: scalar",
+		}, 1),
+		Entry("a scalar from every publish-time layer", bundleValuesCase{
+			customSecretVals: "g: scalar",
+			valuesFile:       "g: scalar",
+			set:              []string{"g=scalar"},
+			serviceVals:      "g: scalar",
+
+			expectedSecretVals: "{}",
+			expectedVals:       "g: scalar",
+		}, 1),
+		Entry("a map", bundleValuesCase{
+			set: []string{"g.key=value"},
+
+			expectedSecretVals: "{}",
+			expectedVals:       "g:\n  key: value",
+		}, 0),
+		Entry("a scalar from --values replaced by --set-json", bundleValuesCase{
+			valuesFile: "g: scalar",
+			setJSON:    []string{`g={"key":"value"}`},
+
+			expectedSecretVals: "{}",
+			expectedVals:       "g:\n  key: value",
+		}, 0),
+		Entry("a scalar from --secret-values replaced by --set-json", bundleValuesCase{
+			customSecretVals: "g: scalar",
+			setJSON:          []string{`g={"key":"value"}`},
+
+			expectedSecretVals: "{}",
+			expectedVals:       "g:\n  key: value",
+		}, 0),
 	)
 
 	It("accepts --set* that are valid only over the not exported --values", func() {
