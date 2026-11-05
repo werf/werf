@@ -183,6 +183,39 @@ func (r *Result) Walk(f func(lsTreeEntry *LsTreeEntry) error) error {
 	})
 }
 
+type EntryRepository struct {
+	Handle repo_handle.Handle
+	// Path is relative to the main repository root, empty for the main repository.
+	Path   string
+	Commit string
+}
+
+func (r *Result) WalkWithRepository(ctx context.Context, repoHandle repo_handle.Handle, f func(repository EntryRepository, lsTreeEntry *LsTreeEntry) error) error {
+	repository := EntryRepository{Handle: repoHandle, Path: r.repositoryFullFilepath, Commit: r.commit}
+	if err := r.lsTreeEntriesWalk(func(lsTreeEntry *LsTreeEntry) error {
+		return f(repository, lsTreeEntry)
+	}); err != nil {
+		return err
+	}
+
+	sort.Slice(r.submodulesResults, func(i, j int) bool {
+		return r.submodulesResults[i].repositoryFullFilepath < r.submodulesResults[j].repositoryFullFilepath
+	})
+
+	for _, submoduleResult := range r.submodulesResults {
+		submoduleHandle, err := submoduleResult.submoduleRepository(repoHandle)
+		if err != nil {
+			return fmt.Errorf("get submodule %q repository: %w", submoduleResult.submodulePath, err)
+		}
+
+		if err := submoduleResult.Result.WalkWithRepository(ctx, submoduleHandle, f); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (r *Result) walkWithResult(f func(r *Result, sr *SubmoduleResult, lsTreeEntry *LsTreeEntry) error) error {
 	if err := r.lsTreeEntriesWalkWithResult(f); err != nil {
 		return err
