@@ -1536,7 +1536,7 @@ func GetIntrospectOptions(cmdData *CmdData, werfConfig *config.WerfConfig) (buil
 		}
 
 		if imageName != "*" && werfConfig.GetImage(imageName) == nil {
-			return introspectOptions, fmt.Errorf("specified image %q (%q) is not defined in werf.yaml", imageName, optionValue)
+			return introspectOptions, fmt.Errorf("specified image %q (%q) is not defined in %s", imageName, optionValue, werfConfig.SourceFilePathOrDefault())
 		}
 
 		if !isStageExist(stageName) {
