@@ -446,7 +446,9 @@ func (b *NativeBuildah) BuildFromDockerfile(ctx context.Context, dockerfile stri
 		Layers:                  true,
 		LayerLabels:             opts.Labels,
 		RemoveIntermediateCtrs:  true,
-		ForceRmIntermediateCtrs: false,
+		// With Layers, buildah keeps the working container of a failed build for manual
+		// debugging; werf never exposes it, so it would only pin images in the storage.
+		ForceRmIntermediateCtrs: true,
 		NoCache:                 false,
 		Labels:                  opts.Labels,
 	}
