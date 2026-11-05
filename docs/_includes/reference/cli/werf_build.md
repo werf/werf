@@ -90,6 +90,14 @@ werf build [IMAGE_NAME...] [options]
             Check that all used images are previously built and exist in repo. Exits with error if  
             needed images are not cached and so require to run build instructions (default          
             $WERF_CHECK_BUILT_IMAGES)
+      --compression-format=""
+            (Buildah-only) Compress image layers pushed to the container registry with the          
+            specified format: gzip or zstd ($WERF_COMPRESSION_FORMAT or gzip by default). Images    
+            with zstd layers are published with the OCI manifest format
+      --compression-level=""
+            (Buildah-only) Compress image layers pushed to the container registry with the          
+            specified level: 0-9 for gzip, 1-22 for zstd ($WERF_COMPRESSION_LEVEL or the default    
+            level of the compression format by default)
       --config=""
             Use custom configuration file (default $WERF_CONFIG or werf.yaml in the project         
             directory)

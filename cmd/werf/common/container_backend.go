@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/werf/common-go/pkg/util"
@@ -12,6 +13,7 @@ import (
 	"github.com/werf/werf/v3/pkg/buildah/thirdparty"
 	"github.com/werf/werf/v3/pkg/container_backend"
 	"github.com/werf/werf/v3/pkg/docker"
+	"github.com/werf/werf/v3/pkg/util/option"
 	"github.com/werf/werf/v3/pkg/werf"
 )
 
@@ -86,6 +88,56 @@ func GetBuildahStorageDriver() (*buildah.StorageDriver, error) {
 	return &storageDriver, nil
 }
 
+const (
+	compressionLevelMinGzip = 0
+	compressionLevelMaxGzip = 9
+	compressionLevelMinZstd = 1
+	compressionLevelMaxZstd = 22
+)
+
+type compressionOptions struct {
+	Format string
+	Level  *int
+}
+
+func (opts compressionOptions) isSet() bool {
+	return opts.Format != "" || opts.Level != nil
+}
+
+func getCompressionOptions(cmdData *CmdData) (compressionOptions, error) {
+	var opts compressionOptions
+
+	format := option.PtrValueOrDefault(cmdData.CompressionFormat, "")
+	switch format {
+	case "", buildah.CompressionFormatGzip, buildah.CompressionFormatZstd:
+		opts.Format = format
+	default:
+		return opts, fmt.Errorf("unexpected compression format specified: %s (expected %s or %s)", format, buildah.CompressionFormatGzip, buildah.CompressionFormatZstd)
+	}
+
+	rawLevel := option.PtrValueOrDefault(cmdData.CompressionLevel, "")
+	if rawLevel == "" {
+		return opts, nil
+	}
+
+	level, err := strconv.Atoi(rawLevel)
+	if err != nil {
+		return opts, fmt.Errorf("unexpected compression level specified: %s (expected an integer)", rawLevel)
+	}
+
+	minLevel, maxLevel := compressionLevelMinGzip, compressionLevelMaxGzip
+	if opts.Format == buildah.CompressionFormatZstd {
+		minLevel, maxLevel = compressionLevelMinZstd, compressionLevelMaxZstd
+	}
+
+	if level < minLevel || level > maxLevel {
+		return opts, fmt.Errorf("unexpected compression level specified: %d (expected %d-%d for the %s compression format)", level, minLevel, maxLevel, option.ValueOrDefault(opts.Format, buildah.CompressionFormatGzip))
+	}
+	opts.Level = &level
+
+	return opts, nil
+}
+
 func wrapContainerBackend(containerBackend container_backend.ContainerBackend) container_backend.ContainerBackend {
 	if os.Getenv("WERF_PERF_TEST_CONTAINER_RUNTIME") == "1" {
 		return container_backend.NewPerfCheckContainerBackend(containerBackend)
@@ -97,6 +149,11 @@ func InitProcessContainerBackend(ctx context.Context, cmdData *CmdData, registry
 	buildahMode, buildahIsolation, err := GetBuildahMode()
 	if err != nil {
 		return nil, ctx, fmt.Errorf("unable to determine buildah mode: %w", err)
+	}
+
+	compression, err := getCompressionOptions(cmdData)
+	if err != nil {
+		return nil, ctx, err
 	}
 
 	if *buildahMode != buildah.ModeDisabled {
@@ -129,6 +186,8 @@ func InitProcessContainerBackend(ctx context.Context, cmdData *CmdData, registry
 				RegistryMirrors:              registryMirrors,
 				InsecureRegistries:           insecureHosts,
 				StandaloneInsecureRegistries: standaloneInsecureHosts,
+				CompressionFormat:            compression.Format,
+				CompressionLevel:             compression.Level,
 			},
 			NativeModeOpts: buildah.NativeModeOpts{},
 		})
@@ -137,6 +196,10 @@ func InitProcessContainerBackend(ctx context.Context, cmdData *CmdData, registry
 		}
 
 		return wrapContainerBackend(container_backend.NewBuildahBackend(b, container_backend.BuildahBackendOptions{TmpDir: filepath.Join(werf.GetServiceDir(), "tmp", "buildah")})), ctx, nil
+	}
+
+	if compression.isSet() {
+		return nil, ctx, fmt.Errorf("--compression-format and --compression-level are supported only with the Buildah container backend (enable it with WERF_BUILDAH_MODE)")
 	}
 
 	newCtx, err := InitProcessDocker(ctx, cmdData, opts)

@@ -6,6 +6,7 @@ package buildah
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -24,6 +25,7 @@ import (
 
 	"github.com/containerd/containerd/platforms"
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
+	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/samber/lo"
 	"github.com/sirupsen/logrus"
@@ -34,6 +36,7 @@ import (
 	"go.podman.io/buildah/pkg/parse"
 	"go.podman.io/buildah/pkg/sshagent"
 	"go.podman.io/common/libimage"
+	imgimage "go.podman.io/image/v5/image"
 	"go.podman.io/image/v5/manifest"
 	imgstor "go.podman.io/image/v5/storage"
 	storageTransport "go.podman.io/image/v5/storage"
@@ -87,6 +90,8 @@ type NativeBuildah struct {
 	Insecure                bool
 	InsecureRegistries      []string
 
+	pushCompression pushCompression
+
 	Store storage.Store
 
 	defaultCommonBuildOptions    define.CommonBuildOptions
@@ -103,18 +108,23 @@ func (b *NativeBuildah) Info(ctx context.Context) (info.Info, error) {
 }
 
 func NewNativeBuildah(commonOpts CommonBuildahOpts, opts NativeModeOpts) (*NativeBuildah, error) {
+	pushCompression, err := newPushCompression(commonOpts.CompressionFormat, commonOpts.CompressionLevel)
+	if err != nil {
+		return nil, fmt.Errorf("unable to configure layer compression: %w", err)
+	}
+
 	b := &NativeBuildah{
 		Isolation:          *commonOpts.Isolation,
 		TmpDir:             commonOpts.TmpDir,
 		Insecure:           commonOpts.Insecure,
 		InsecureRegistries: commonOpts.InsecureRegistries,
+		pushCompression:    pushCompression,
 	}
 
 	if err := os.MkdirAll(b.TmpDir, os.ModePerm); err != nil {
 		return nil, fmt.Errorf("unable to create dir %q: %w", b.TmpDir, err)
 	}
 
-	var err error
 	b.InstanceTmpDir, err = ioutil.TempDir(b.TmpDir, "instance")
 	if err != nil {
 		return nil, fmt.Errorf("unable to create instance tmp dir: %w", err)
@@ -373,15 +383,25 @@ func (b *NativeBuildah) Push(ctx context.Context, ref string, opts PushOpts) err
 		return err
 	}
 
+	if b.pushCompression.ManifestType == imgspecv1.MediaTypeImageManifest {
+		if err := b.checkImageIsRepresentableAsOCI(ctx, ref, sysCtx); err != nil {
+			return err
+		}
+	}
+
 	pushOpts := buildah.PushOptions{
-		Compression:         define.Gzip,
 		SignaturePolicyPath: b.SignaturePolicyPath,
 		ReportWriter:        opts.LogWriter,
 		Store:               b.Store,
 		SystemContext:       sysCtx,
-		ManifestType:        manifest.DockerV2Schema2MediaType,
-		MaxRetries:          MaxPullPushRetries,
-		RetryDelay:          PullPushRetryDelay,
+		ManifestType:        b.pushCompression.ManifestType,
+		CompressionFormat:   b.pushCompression.Algorithm,
+		CompressionLevel:    b.pushCompression.Level,
+		// Keep blobs already present in the registry reusable regardless of the algorithm they were
+		// compressed with.
+		ForceCompressionFormat: false,
+		MaxRetries:             MaxPullPushRetries,
+		RetryDelay:             PullPushRetryDelay,
 	}
 
 	imageRef, err := alltransports.ParseImageName(fmt.Sprintf("docker://%s", ref))
@@ -391,6 +411,64 @@ func (b *NativeBuildah) Push(ctx context.Context, ref string, opts PushOpts) err
 
 	if _, _, err = buildah.Push(ctx, ref, imageRef, pushOpts); err != nil {
 		return fmt.Errorf("error pushing image %q: %w", ref, err)
+	}
+
+	return nil
+}
+
+// checkImageIsRepresentableAsOCI fails for images whose stored Docker config uses fields that the
+// OCI image format has no place for: pushing such an image as OCI would silently drop them.
+func (b *NativeBuildah) checkImageIsRepresentableAsOCI(ctx context.Context, ref string, sysCtx *imgtypes.SystemContext) error {
+	storeRef, err := storageTransport.Transport.ParseStoreReference(b.Store, ref)
+	if err != nil {
+		return fmt.Errorf("error parsing store reference from %q: %w", ref, err)
+	}
+
+	src, err := storeRef.NewImageSource(ctx, sysCtx)
+	if err != nil {
+		return fmt.Errorf("error opening image source for %q: %w", ref, err)
+	}
+	defer src.Close()
+
+	img, err := imgimage.FromUnparsedImage(ctx, sysCtx, imgimage.UnparsedInstance(src, nil))
+	if err != nil {
+		return fmt.Errorf("error reading image %q: %w", ref, err)
+	}
+
+	_, manifestType, err := img.Manifest(ctx)
+	if err != nil {
+		return fmt.Errorf("error reading manifest of image %q: %w", ref, err)
+	}
+
+	if manifestType != manifest.DockerV2Schema2MediaType {
+		return nil
+	}
+
+	rawConfig, err := img.ConfigBlob(ctx)
+	if err != nil {
+		return fmt.Errorf("error reading config of image %q: %w", ref, err)
+	}
+
+	storedImage := docker.V2Image{}
+	if err := json.Unmarshal(rawConfig, &storedImage); err != nil {
+		return fmt.Errorf("error unmarshalling config of image %q: %w", ref, err)
+	}
+
+	var dockerOnlyFields []string
+	if config := storedImage.Config; config != nil {
+		if config.Healthcheck != nil {
+			dockerOnlyFields = append(dockerOnlyFields, "HEALTHCHECK")
+		}
+		if len(config.OnBuild) > 0 {
+			dockerOnlyFields = append(dockerOnlyFields, "ONBUILD")
+		}
+		if len(config.Shell) > 0 {
+			dockerOnlyFields = append(dockerOnlyFields, "SHELL")
+		}
+	}
+
+	if len(dockerOnlyFields) > 0 {
+		return fmt.Errorf("unable to push image %q with compression format %q: this format requires the OCI image format, which has no %s, so these image config fields would be silently dropped; use the %q compression format for this image", ref, b.pushCompression.Format, strings.Join(dockerOnlyFields, ", "), CompressionFormatGzip)
 	}
 
 	return nil

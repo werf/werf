@@ -12,7 +12,11 @@ import (
 	"time"
 
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
+	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/samber/lo"
+	"go.podman.io/image/v5/manifest"
+	"go.podman.io/image/v5/pkg/compression"
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v3/pkg/buildah/thirdparty"
@@ -20,6 +24,16 @@ import (
 	"github.com/werf/werf/v3/pkg/container_backend/info"
 	"github.com/werf/werf/v3/pkg/image"
 	"github.com/werf/werf/v3/pkg/werf"
+)
+
+const (
+	CompressionFormatGzip = "gzip"
+	CompressionFormatZstd = "zstd"
+
+	gzipCompressionLevelMin = 0
+	gzipCompressionLevelMax = 9
+	zstdCompressionLevelMin = 1
+	zstdCompressionLevelMax = 22
 )
 
 const (
@@ -240,6 +254,58 @@ type CommonBuildahOpts struct {
 	RegistryMirrors              []string
 	InsecureRegistries           []string
 	StandaloneInsecureRegistries []string
+
+	// CompressionFormat is the algorithm used to compress layer blobs on push. Empty means gzip.
+	CompressionFormat string
+	// CompressionLevel is the compression level used by CompressionFormat. Nil means the default
+	// level of the algorithm.
+	CompressionLevel *int
+}
+
+// pushCompression is the push configuration derived from the requested compression format and
+// level. A nil Algorithm selects the containers/image default, which is gzip.
+type pushCompression struct {
+	Format       string
+	Algorithm    *compression.Algorithm
+	Level        *int
+	ManifestType string
+}
+
+func newPushCompression(format string, level *int) (pushCompression, error) {
+	switch format {
+	case "", CompressionFormatGzip:
+		if err := validateCompressionLevel(CompressionFormatGzip, level, gzipCompressionLevelMin, gzipCompressionLevelMax); err != nil {
+			return pushCompression{}, err
+		}
+
+		return pushCompression{
+			Format:       CompressionFormatGzip,
+			Level:        level,
+			ManifestType: manifest.DockerV2Schema2MediaType,
+		}, nil
+	case CompressionFormatZstd:
+		if err := validateCompressionLevel(CompressionFormatZstd, level, zstdCompressionLevelMin, zstdCompressionLevelMax); err != nil {
+			return pushCompression{}, err
+		}
+
+		// zstd blobs are only representable in the OCI image format.
+		return pushCompression{
+			Format:       CompressionFormatZstd,
+			Algorithm:    lo.ToPtr(compression.Zstd),
+			Level:        level,
+			ManifestType: imgspecv1.MediaTypeImageManifest,
+		}, nil
+	default:
+		return pushCompression{}, fmt.Errorf("unsupported compression format %q: expected %q or %q", format, CompressionFormatGzip, CompressionFormatZstd)
+	}
+}
+
+func validateCompressionLevel(format string, level *int, minLevel, maxLevel int) error {
+	if level == nil || (*level >= minLevel && *level <= maxLevel) {
+		return nil
+	}
+
+	return fmt.Errorf("unsupported compression level %d for compression format %q: expected a value between %d and %d", *level, format, minLevel, maxLevel)
 }
 
 type NativeModeOpts struct {
@@ -252,6 +318,10 @@ type BuildahOpts struct {
 }
 
 func NewBuildah(mode Mode, opts BuildahOpts) (b Buildah, err error) {
+	if _, err := newPushCompression(opts.CommonBuildahOpts.CompressionFormat, opts.CommonBuildahOpts.CompressionLevel); err != nil {
+		return b, fmt.Errorf("unable to configure layer compression: %w", err)
+	}
+
 	if opts.CommonBuildahOpts.Isolation == nil {
 		defIsolation, err := GetDefaultIsolation()
 		if err != nil {

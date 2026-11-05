@@ -708,6 +708,18 @@ func (api *api) PullImageArchive(ctx context.Context, archiveWriter io.Writer, r
 		return fmt.Errorf("unable to resolve image manifest for reference %q: %w", reference, err)
 	}
 
+	// The docker archive format has no media types: tarball.Image() reports every layer of a
+	// restored archive as a gzipped docker layer, which would turn zstd layers into a broken image.
+	manifest, err := img.Manifest()
+	if err != nil {
+		return fmt.Errorf("unable to read image manifest for reference %q: %w", reference, err)
+	}
+	for _, layer := range manifest.Layers {
+		if layer.MediaType == types.OCILayerZStd {
+			return fmt.Errorf("unable to save image %q to a docker archive: zstd-compressed layers are not supported by this format, copy the image directly between registries or rebuild it with gzip compression", reference)
+		}
+	}
+
 	c := make(chan v1.Update, 200)
 
 	go tarball.Write(ref, img, archiveWriter, tarball.WithProgress(c))
@@ -744,11 +756,9 @@ func (api *api) PushManifestList(ctx context.Context, reference string, opts Man
 	// FIXME(multiarch): If checksum tag, then we could simply check existing.
 	// FIXME(multiarch): ^^ This behavior should be controlled by an option.
 
-	var ii v1.ImageIndex
-	ii = empty.Index
-	ii = mutate.IndexMediaType(ii, types.DockerManifestList)
-
 	adds := make([]mutate.IndexAddendum, 0, len(opts.Manifests))
+	// A docker manifest list may not reference OCI manifests, which zstd layers require.
+	indexMediaType := types.DockerManifestList
 
 	for _, info := range opts.Manifests {
 		ref, err := name.ParseReference(info.Name, api.parseReferenceOptionsForHost(info.Name)...)
@@ -796,6 +806,10 @@ func (api *api) PushManifestList(ctx context.Context, reference string, opts Man
 			Add:        img,
 			Descriptor: *newdesc,
 		})
+		switch newdesc.MediaType {
+		case types.OCIManifestSchema1, types.OCIImageIndex:
+			indexMediaType = types.OCIImageIndex
+		}
 	}
 
 	// TODO(multiarch): research whether we could use digest-only manifest writing mode
@@ -807,6 +821,7 @@ func (api *api) PushManifestList(ctx context.Context, reference string, opts Man
 	// 		ref = ref.Context().Digest(digest.String())
 	// }
 
+	ii := mutate.IndexMediaType(empty.Index, indexMediaType)
 	ii = mutate.AppendManifests(ii, adds...)
 
 	digest, err := ii.Digest()

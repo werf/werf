@@ -609,6 +609,16 @@ func SetupContainerRegistryMirror(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringArrayVarP(cmdData.ContainerRegistryMirror, "container-registry-mirror", "", []string{}, "(Buildah-only) Use specified mirrors for docker.io ($WERF_CONTAINER_REGISTRY_MIRROR or $WERF_CONTAINER_REGISTRY_MIRROR_*)")
 }
 
+func SetupCompressionFormat(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.CompressionFormat = new(string)
+	cmd.Flags().StringVarP(cmdData.CompressionFormat, "compression-format", "", os.Getenv("WERF_COMPRESSION_FORMAT"), fmt.Sprintf("(Buildah-only) Compress image layers pushed to the container registry with the specified format: %s or %s ($WERF_COMPRESSION_FORMAT or %[1]s by default). Images with %[2]s layers are published with the OCI manifest format", buildah.CompressionFormatGzip, buildah.CompressionFormatZstd))
+}
+
+func SetupCompressionLevel(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.CompressionLevel = new(string)
+	cmd.Flags().StringVarP(cmdData.CompressionLevel, "compression-level", "", os.Getenv("WERF_COMPRESSION_LEVEL"), fmt.Sprintf("(Buildah-only) Compress image layers pushed to the container registry with the specified level: %d-%d for %s, %d-%d for %s ($WERF_COMPRESSION_LEVEL or the default level of the compression format by default)", compressionLevelMinGzip, compressionLevelMaxGzip, buildah.CompressionFormatGzip, compressionLevelMinZstd, compressionLevelMaxZstd, buildah.CompressionFormatZstd))
+}
+
 func SetupSkipTlsVerifyRegistry(cmdData *CmdData, cmd *cobra.Command) {
 	if cmdData.SkipTlsVerifyRegistry != nil {
 		return

@@ -76,6 +76,37 @@ werf can use either the `overlay` or `vfs` storage driver:
 
 In general, the default driver (`overlay`) should suffice. The storage driver can be specified using the environment variable `WERF_BUILDAH_STORAGE_DRIVER`.
 
+### Layer compression
+
+Image layers that werf pushes to the container registry are compressed with gzip at the compressor's default level. Commands that build images accept a different compression format and level:
+
+* `--compression-format` (`$WERF_COMPRESSION_FORMAT`): `gzip` (default) or `zstd`;
+* `--compression-level` (`$WERF_COMPRESSION_LEVEL`): `0`-`9` for `gzip`, `1`-`22` for `zstd`; by default the compression format's own default level is used.
+
+A command-line flag takes precedence over the environment variable. Both options are Buildah-only: a command that gets either of them with the Docker backend fails instead of silently building with gzip.
+
+Whether `zstd` or a lower `gzip` level pays off depends on the workload: the layer contents, the number of CPU cores available to the build, and the bandwidth to the container registry. Measure the publishing stage of your own project before and after the switch instead of assuming an improvement. `gzip` remains the conservative choice: it keeps the Docker schema2 manifest format and the layer media types that werf publishes today.
+
+For `gzip`, level `0` means a gzip stream without compression, not an uncompressed tar layer: the layer media type and the manifest format stay the same, only the compression work is skipped.
+
+#### Compatibility
+
+`zstd` layers require the OCI manifest format, so werf publishes images with such layers as OCI images instead of Docker schema2 images. Before switching, verify that the container registry, registry proxies, and every container runtime and tool that pulls these images accept OCI manifests and zstd layers — support for zstd layers is more recent than support for OCI manifests, and some registries reject unknown layer media types.
+
+There is no fallback: if the registry rejects the OCI manifest or the zstd layers, the publishing stage fails instead of silently pushing gzip layers.
+
+The OCI image format has no `HEALTHCHECK`, `ONBUILD` or `SHELL` image config fields. Rather than dropping them silently, werf refuses to publish an image that uses any of them with the `zstd` compression format, naming the fields and the image in the error. Use `gzip` for such images.
+
+zstd layers cannot be written into a docker archive: the archive format records them as gzip, which would corrupt the content. werf therefore rejects writing an image with zstd layers to a docker archive with `werf stages copy --to archive:PATH`, with a clear error instead of producing a mislabeled archive. Copying between container registries (`--from`/`--to` with a repository address) and `werf export` are not affected. If an archive is required, publish the image with `gzip`.
+
+#### Cache and already published layers
+
+The compression options affect neither the stage digests nor the build cache: stages that are already built stay in the cache and are reused as usual, and switching the compression format does not invalidate them.
+
+The selected format and level only apply to layers that werf compresses anew. Changing the settings does not convert layers that already exist: blobs already present in the container registry are reused as they are, so an image published after the switch may combine freshly pushed zstd layers with gzip layers published earlier. There is no guarantee that an image ever becomes fully zstd-compressed — an unchanged layer may keep being reused indefinitely.
+
+This also means that the effect of the switch shows up on cold builds, where the layers are compressed from scratch, and may be barely noticeable on warm builds, where most layers are reused from the cache or the registry.
+
 ### Ulimits
 
 By default, Buildah mode in werf inherits the system ulimits when launching build containers. Users can override these parameters using the `WERF_BUILDAH_ULIMIT` environment variable.
