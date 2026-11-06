@@ -27,6 +27,29 @@ type CleanupProjectOptions struct {
 	Repositories []string
 }
 
+type BuildahContainer struct {
+	ID      string
+	ImageID string
+	Names   []string
+}
+
+// BuildahStorageSnapshot is what the Buildah storage werf builds into holds for a test project:
+// the images labeled with the project and every container in the storage, whichever build
+// created it.
+type BuildahStorageSnapshot struct {
+	ProjectImageIDs []string
+	Containers      []BuildahContainer
+}
+
+// SnapshotBuildahStorage reads the storage in-process, so it sees the containers werf created
+// regardless of the buildah CLI version installed on the host.
+func SnapshotBuildahStorage(ctx context.Context, projectName string) (BuildahStorageSnapshot, error) {
+	if !strings.HasPrefix(projectName, "werf-test-") {
+		return BuildahStorageSnapshot{}, fmt.Errorf("refuse to snapshot non-test project %q", projectName)
+	}
+	return snapshotBuildahStorage(ctx, projectName)
+}
+
 func CleanupProject(ctx context.Context, projectName string, opts CleanupProjectOptions) error {
 	if !strings.HasPrefix(projectName, "werf-test-") || strings.ContainsAny(projectName, "/:*?[] \t\n") {
 		return fmt.Errorf("refuse cleanup of non-test project %q", projectName)
