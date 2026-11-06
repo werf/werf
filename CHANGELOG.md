@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.85.0](https://github.com/werf/werf/compare/v2.84.1...v2.85.0) (2026-11-06)
+
+
+### Features
+
+* **deploy:** refuse to deploy charts that require werf v3 ([#8141](https://github.com/werf/werf/issues/8141)) ([5ace974](https://github.com/werf/werf/commit/5ace97443a1f1e3619a60beea495f6fb397386df))
+
+
+### Bug Fixes
+
+* **build, buildah:** stop failed builds leaking working containers ([#8148](https://github.com/werf/werf/issues/8148)) ([a7d140a](https://github.com/werf/werf/commit/a7d140aa4b90e5ffd8ffa4349a608b9d84c80035))
+
 ## [2.84.1](https://github.com/werf/werf/compare/v2.84.0...v2.84.1) (2026-10-29)
 
 
