@@ -70,6 +70,10 @@ func (wc *WerfChartStub) ChartCreated(c *chart.Chart) error {
 
 // ChartLoaded method for the chart.Extender interface
 func (wc *WerfChartStub) ChartLoaded(files []*chart.ChartExtenderBufferedFile) error {
+	if err := refuseWerfData(files); err != nil {
+		return err
+	}
+
 	cwd, err := os.Getwd()
 	if err != nil {
 		return fmt.Errorf("error getting current process working directory: %w", err)
