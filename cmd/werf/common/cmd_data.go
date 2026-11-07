@@ -128,7 +128,6 @@ type CmdData struct {
 	ExtraRuntimeAnnotations          map[string]string
 	ExtraRuntimeLabels               map[string]string
 	ForceAdoption                    bool
-	HelmCompatibleChart              bool
 	InstallGraphPath                 string
 	KubeVersion                      string
 	LegacyKubeConfigPath             string
@@ -150,7 +149,6 @@ type CmdData struct {
 	ReleaseLabels                    []string
 	ReleaseStorageDriver             string
 	ReleaseStorageSQLConnection      string
-	RenameChart                      string
 	RollbackGraphPath                string
 	RollbackReportPath               string
 	SaveDeployReport                 bool
@@ -206,21 +204,6 @@ func (cmdData *CmdData) GetPlatform() []string {
 
 func (cmdData *CmdData) SetupSkipDependenciesRepoRefresh(cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(&cmdData.ChartRepoSkipUpdate, "skip-dependencies-repo-refresh", "L", util.GetBoolEnvironmentDefaultFalse("WERF_SKIP_DEPENDENCIES_REPO_REFRESH"), `Do not refresh helm chart repositories locally cached index`)
-}
-
-func (cmdData *CmdData) SetupHelmCompatibleChart(cmd *cobra.Command, defaultEnabled bool) {
-	var defaultVal bool
-	if defaultEnabled {
-		defaultVal = util.GetBoolEnvironmentDefaultTrue("WERF_HELM_COMPATIBLE_CHART")
-	} else {
-		defaultVal = util.GetBoolEnvironmentDefaultFalse("WERF_HELM_COMPATIBLE_CHART")
-	}
-
-	cmd.Flags().BoolVarP(&cmdData.HelmCompatibleChart, "helm-compatible-chart", "C", defaultVal, fmt.Sprintf(`Set chart name in the Chart.yaml of the published chart to the last path component of container registry repo (for REGISTRY/PATH/TO/REPO address chart name will be REPO, more info https://helm.sh/docs/topics/registries/#oci-feature-deprecation-and-behavior-changes-with-v370). In helm compatibility mode chart is fully conforming with the helm OCI registry requirements. Default %v or $WERF_HELM_COMPATIBLE_CHART.`, defaultEnabled))
-}
-
-func (cmdData *CmdData) SetupRenameChart(cmd *cobra.Command) {
-	cmd.Flags().StringVarP(&cmdData.RenameChart, "rename-chart", "", os.Getenv("WERF_RENAME_CHART"), `Force setting of chart name in the Chart.yaml of the published chart to the specified value (can be set by the $WERF_RENAME_CHART, no rename by default, could not be used together with the '--helm-compatible-chart' option).`)
 }
 
 func (cmdData *CmdData) SetupCreateIncludesLockFile() {

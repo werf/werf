@@ -1,0 +1,2 @@
+mydep:
+  greeting: parent-override

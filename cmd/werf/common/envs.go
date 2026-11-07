@@ -16,8 +16,7 @@ const (
 
 	DocsLongMD string = "docsLongMD"
 
-	WerfSecretKey    Env = "WERF_SECRET_KEY"
-	WerfOldSecretKey Env = "WERF_OLD_SECRET_KEY"
+	WerfSecretKey Env = "WERF_SECRET_KEY"
 )
 
 var envDescription = map[Env]string{
@@ -26,7 +25,6 @@ var envDescription = map[Env]string{
 Secret key also can be defined in files:
 * ~/.werf/global_secret_key (globally),
 * .werf_secret_key (per project)`,
-	WerfOldSecretKey: "Use specified old secret key to rotate secrets",
 }
 
 func EnvsDescription(envs ...Env) string {

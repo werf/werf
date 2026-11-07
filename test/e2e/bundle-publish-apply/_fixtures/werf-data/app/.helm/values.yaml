@@ -1,0 +1,5 @@
+fromValues: chart
+fromSecretValues: chart
+fromSet: chart
+fromSetFile: chart
+greeting: chart

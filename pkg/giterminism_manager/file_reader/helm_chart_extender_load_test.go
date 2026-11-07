@@ -180,6 +180,25 @@ var _ = Describe("LoadChartDir", func() {
 		))
 	})
 
+	It("keeps the .werf-data directories whatever .helmignore says", func(ctx SpecContext) {
+		chartDir := writeChart(map[string]string{
+			".helmignore":                       ".werf-data/\nvalues.yaml\n",
+			"Chart.yaml":                        "name: test",
+			"values.yaml":                       "a: 1",
+			".werf-data/metadata.yaml":          "apiVersion: v2",
+			".werf-data/values.yaml":            "a: 2",
+			".werf-data/set-files/0":            "contents",
+			"charts/sub/Chart.yaml":             "name: sub",
+			"charts/sub/.werf-data/values.yaml": "b: 1",
+		})
+
+		Expect(loadedNames(logging.WithLogger(ctx), chartDir)).To(ConsistOf(
+			".helmignore", "Chart.yaml", ".werf-data/metadata.yaml", ".werf-data/values.yaml", ".werf-data/set-files/0",
+			// .werf-data of the chart and of its vendored subcharts is exempt, as in Nelm's loaders
+			"charts/sub/Chart.yaml", "charts/sub/.werf-data/values.yaml",
+		))
+	})
+
 	It("drops the dotfiles under templates without a .helmignore", func(ctx SpecContext) {
 		chartDir := writeChart(map[string]string{
 			"Chart.yaml":          "name: test",
@@ -410,6 +429,25 @@ var _ = Describe("LoadChartDir", func() {
 
 			Expect(loadedNames(logging.WithLogger(ctx), chartDir)).To(ConsistOf(
 				".helmignore", "Chart.yaml", "templates/kept.yaml",
+			))
+		})
+
+		It("keeps the .werf-data directories whatever .helmignore says", func(ctx SpecContext) {
+			chartDir := writeChart(map[string]string{
+				".helmignore":                       ".werf-data/\nvalues.yaml\n",
+				"Chart.yaml":                        "name: test",
+				"values.yaml":                       "a: 1",
+				".werf-data/metadata.yaml":          "apiVersion: v2",
+				".werf-data/values.yaml":            "a: 2",
+				".werf-data/set-files/0":            "contents",
+				"charts/sub/Chart.yaml":             "name: sub",
+				"charts/sub/.werf-data/values.yaml": "b: 1",
+			})
+
+			Expect(loadedNames(logging.WithLogger(ctx), chartDir)).To(ConsistOf(
+				".helmignore", "Chart.yaml", ".werf-data/metadata.yaml", ".werf-data/values.yaml", ".werf-data/set-files/0",
+				// .werf-data of the chart and of its vendored subcharts is exempt, as in Nelm's loaders
+				"charts/sub/Chart.yaml", "charts/sub/.werf-data/values.yaml",
 			))
 		})
 

@@ -1,0 +1,6 @@
+apiVersion: v2
+name: parent
+version: 0.1.0
+dependencies:
+  - name: mydep
+    version: 1.0.0

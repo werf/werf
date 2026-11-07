@@ -352,7 +352,7 @@ func SetupChartProvenanceKeyring(cmdData *CmdData, cmd *cobra.Command) {
 }
 
 func SetupChartProvenanceStrategy(cmdData *CmdData, cmd *cobra.Command) {
-	cmd.Flags().StringVarP(&cmdData.ChartProvenanceStrategy, "provenance-strategy", "", os.Getenv("WERF_PROVENANCE_STRATEGY"), `Strategy for provenance verifying (default $WERF_PROVENANCE_STRATEGY).`)
+	cmd.Flags().StringVarP(&cmdData.ChartProvenanceStrategy, "provenance-strategy", "", os.Getenv("WERF_PROVENANCE_STRATEGY"), `Strategy for provenance verifying: verify, verify-if-possible, later or never (default $WERF_PROVENANCE_STRATEGY or never).`)
 }
 
 func SetupExtraRuntimeAnnotations(cmdData *CmdData, cmd *cobra.Command) {
@@ -488,6 +488,16 @@ func SetupNamespace(cmdData *CmdData, cmd *cobra.Command, projectConfigParsed bo
 	}
 
 	cmd.Flags().StringVarP(&cmdData.Namespace, "namespace", "", os.Getenv("WERF_NAMESPACE"), usage)
+}
+
+// SetupBundleRelease sets up --release for the commands deploying a published bundle.
+func SetupBundleRelease(cmdData *CmdData, cmd *cobra.Command) {
+	cmd.Flags().StringVarP(&cmdData.Release, "release", "", os.Getenv("WERF_RELEASE"), "Use specified Helm release name (default $WERF_RELEASE or the release name recorded in the bundle at publish, used without --env or with the publish one; with another non-empty --env both --release and --namespace are required)")
+}
+
+// SetupBundleNamespace sets up --namespace for the commands deploying a published bundle.
+func SetupBundleNamespace(cmdData *CmdData, cmd *cobra.Command) {
+	cmd.Flags().StringVarP(&cmdData.Namespace, "namespace", "", os.Getenv("WERF_NAMESPACE"), "Use specified Kubernetes namespace (default $WERF_NAMESPACE or the namespace recorded in the bundle at publish, used without --env or with the publish one; with another non-empty --env both --release and --namespace are required)")
 }
 
 func SetupAddAnnotations(cmdData *CmdData, cmd *cobra.Command) {

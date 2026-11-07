@@ -82,6 +82,8 @@ The `$.Values` dictionary is compiled by combining the parameters from the param
 
 Sources 5–19 are passed to the main chart. The parameters of a dependent chart are taken from the dictionary whose key is the alias or name of the dependent chart, so `--set mychild.myparam=value` overrides `myparam` from `values.yaml` and `secret-values.yaml` of the `mychild` chart and from the `mychild` dictionary of the parent chart.
 
+A chart published by `werf bundle publish` stores the publish-time parameters in `.werf-data/`, see [Bundles]({{ "/usage/distribute/bundles.html#deploying-a-bundle" | true_relative_url }}). If the main chart contains `.werf-data/`, e.g. `.helm` holds an unpacked published chart, `werf converge`, `werf plan`, `werf render` and `werf lint` apply its parameters right after sources 1 and 2 of the main chart, before source 5: the parameters of `--values`, `--secret-values` and `--set*` at publish time, then the werf auxiliary parameters computed at publish time. The parameters from `.werf-data/` of a werf-published dependent chart are applied right after sources 1 and 2 of that chart, so the parent chart overrides them.
+
 The rules for combining parameters:
 
 * basic data types are overwritten;
@@ -488,11 +490,56 @@ secret: 1000625c4f1d874f0ab853bf1db4e438ad6f054526e5dcf4fc8c10e551174904e6d0
 werf --secret-values .helm/secret-values-production.yaml
 ```
 
+### Rotating the secret key
+
+To switch to a new secret key, decrypt each encrypted file with the old key and encrypt it with the new one. Cover every encrypted file:
+
+* secret parameter files: `secret-values.yaml` of the main chart and of every dependent chart, and the additional files passed with `--secret-values`;
+* secret files: every file in `secret/` of the main chart and of every dependent chart.
+
+Generate the new key first and store it where you keep secret keys, before changing any file: `werf helm secret generate-secret-key`. Then run the script below in the project directory with the old key in `$OLD_SECRET_KEY` and the new one in `$NEW_SECRET_KEY`, both exported (a key kept in a `.werf_secret_key` file has to be exported first, e.g. `export OLD_SECRET_KEY="$(cat .werf_secret_key)"`). It stops at the first error, re-encrypts every file before changing any of them, and copies the originals to a backup directory outside the project, listed in its `index` file:
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+umask 077
+
+values_files=(.helm/secret-values.yaml)  # every encrypted values file
+files=(.helm/secret/tls.crt)             # every file in secret/
+
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
+
+rotate() {
+  WERF_SECRET_KEY="$OLD_SECRET_KEY" werf helm secret "$1" decrypt -o "$tmp/$3" "$2"
+  WERF_SECRET_KEY="$NEW_SECRET_KEY" werf helm secret "$1" encrypt -o "$tmp/$3.enc" "$tmp/$3"
+}
+
+n=0
+for f in ${values_files[@]+"${values_files[@]}"}; do n=$((n + 1)); rotate values "$f" "$n"; done
+for f in ${files[@]+"${files[@]}"}; do n=$((n + 1)); rotate file "$f" "$n"; done
+
+backup="$(mktemp -d "${TMPDIR:-/tmp}/secret-rotation-backup.XXXXXX")"
+n=0
+for f in ${values_files[@]+"${values_files[@]}"} ${files[@]+"${files[@]}"}; do
+  n=$((n + 1)); cp -p "$f" "$backup/$n"; printf '%s\t%s\n' "$n" "$f" >>"$backup/index"
+done
+
+n=0
+for f in ${values_files[@]+"${values_files[@]}"} ${files[@]+"${files[@]}"}; do n=$((n + 1)); cp "$tmp/$n.enc" "$f"; done
+
+echo "All files re-encrypted with the new key. Originals are in $backup, remove it once you have checked the result."
+```
+
+If the script stops while copying, the files it already replaced are encrypted with the new key and the rest still with the old one; every original is in the backup directory.
+
+A published chart keeps the publish-time `--secret-values` in `.werf-data/secret-values.yaml`, encrypted with the key used at publish. Re-encrypt this file in the unpacked chart in the same way, then pack the chart and upload it again, see [Changing a published chart]({{ "/usage/distribute/bundles.html#changing-a-published-chart" | true_relative_url }}).
+
 ### Secret parameters in the release
 
 werf saves the parameters from the `--values`, `--secret-values` and `--set*` options in the release, together with the parameters that `export-values` copies from them, and the parameters from `--secret-values` are saved in decrypted form. `werf release get --print-values` shows them, anyone who can read the release Secret in the cluster can read them, and changing only `--secret-values` creates a new release revision. Releases deployed with `--secret-values` by an earlier werf version get one new revision on the first deployment after the update. The parameters from `secret-values.yaml` of the charts are not saved among these parameters, but if `Chart.yaml` of the chart lists dependent charts in `dependencies`, the chart saved in the release contains them in decrypted form, and `werf release get --print-values` shows them too.
 
-`werf bundle publish` saves the `--secret-values` files in `secret-values.yaml` of the bundle, encrypted, so `werf bundle apply` does not save them in the release among the parameters of the options; as with any `secret-values.yaml`, they are saved decrypted in the chart in the release if the bundle lists dependent charts in `dependencies`.
+`werf bundle publish` stores the `--secret-values` files in `.werf-data/secret-values.yaml` of the published chart, encrypted. `werf bundle apply` decrypts them and saves them in the release in decrypted form among the parameters of the options, as `werf converge` does with `--secret-values`; `werf release get --print-values` shows them. Bundles published by werf 3.12 and earlier kept these files in `secret-values.yaml` of the chart, and `werf bundle apply` did not save their parameters in the release among the parameters of the options.
 
 ## Information about the built images (werf only)
 

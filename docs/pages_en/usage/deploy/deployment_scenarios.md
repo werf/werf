@@ -81,7 +81,7 @@ The third step is carried out by the `werf bundle apply` command, but you don't 
 werf bundle apply --tag latest --release myapp --namespace myapp-production --repo example.org/mycompany/myapp
 ```
 
-You will end up with the same result as with `werf converge`.
+You will end up with the same result as with `werf converge`, except for `.Chart.Name` and `.Chart.Version`, see [Deploying a bundle]({{ "/usage/distribute/bundles.html#deploying-a-bundle" | true_relative_url }}).
 
 You can separate the first and second steps as follows:
 

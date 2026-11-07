@@ -89,3 +89,5 @@ werf bundle publish --repo example.org/bundles/mybundle
 ```
 
 Результат: опубликован чарт `example.org/bundles/mybundle:latest` и связанный с ним собранный образ.
+
+Стороннее ПО получает только собственные параметры чарта, если не передать ему файлы параметров из `.werf-data/`, см. [Использование чарта с Helm, Argo CD и Flux]({{ "/usage/distribute/bundles.html#использование-чарта-с-helm-argo-cd-и-flux" | true_relative_url }}).

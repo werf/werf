@@ -103,7 +103,7 @@ werf kube-run --repo ghcr.io/group/project --env integration -- npm run acceptan
 
 ### Preparing a release artifact (optional)
 
-Use werf bundles to prepare release artifacts that can be tested or deployed later (using werf, Argo CD, or Helm), and save them to the container registry using the specified tag. 
+Use werf bundles to prepare release artifacts that can be tested or deployed later (using werf, Argo CD, or Helm), and save them to the container registry using the specified tag. Argo CD and Helm get only the chart's own values unless you pass them the values files from `.werf-data/`, see [Using the chart with Helm, Argo CD and Flux]({{ "/usage/distribute/bundles.html#using-the-chart-with-helm-argo-cd-and-flux" | true_relative_url }}).
 
 Using a semver tag that is compatible with the Helm OCI chart:
 
@@ -111,7 +111,7 @@ Using a semver tag that is compatible with the Helm OCI chart:
 werf bundle publish --repo ghcr.io/group/project --tag 1.0.0
 ```
 
-Using an arbitrary symbolic tag:
+Using an arbitrary symbolic tag (the chart gets a `0.0.0-<unix time>-latest` prerelease version):
 
 ```shell
 werf bundle publish --repo ghcr.io/group/project --tag latest
@@ -134,7 +134,7 @@ werf converge --require-built-images --repo ghcr.io/group/project --use-custom-t
 Deploying the previously published bundle with the 1.0.0 tag to production:
 
 ```shell
-werf bundle apply --repo ghcr.io/group/project --env production --tag 1.0.0
+werf bundle apply --repo ghcr.io/group/project --env production --tag 1.0.0 --release project-production --namespace project-production
 ```
 
 ### Cleaning up a container registry
