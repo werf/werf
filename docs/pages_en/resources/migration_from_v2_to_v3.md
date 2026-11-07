@@ -372,6 +372,7 @@ Rules for dependent charts vary by how the chart is included — see [Charts and
 - **The `--secret-values` of `werf bundle publish` are saved in the release in decrypted form**, as `werf converge` saves its `--secret-values`, and `werf release get --print-values` shows them.
 - **`--disable-default-values` and `--disable-default-secret-values` of `werf bundle apply` ignore only the chart's own files**, not the values and images stored at publish time.
 - **A recorded `--disable-default-values`, `--disable-default-secret-values` or `--no-default-patches` can't be cleared by `werf bundle publish`.** If the chart directory contains `.werf-data/` where one of them is recorded as `true`, e.g. an unpacked published chart committed to `.helm`, publishing without the option keeps it. Remove `defaultValuesDisable` or `defaultSecretValuesDisable` under `values` or `defaultPatchesDisable` from `.werf-data/metadata.yaml`: passing the option with `false` keeps the stored switch too.
+- **For bundles published by werf 3.12 and older, the annotations given to `werf bundle apply`, `plan` and `render` win over the bundle's `extra_annotations.json` per key**: `--add-annotation` and werf's service annotations such as `project.werf.io/env`. Previously the bundle's `project.werf.io/*` and `ci.werf.io/*` annotations won.
 
 ### Encrypted secret values
 
