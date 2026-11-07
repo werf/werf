@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-werf-values
+data:
+  werfCommitHash: {{ .Values.werf.commit.hash | quote }}
+  globalWerfCommitHash: {{ .Values.global.werf.commit.hash | quote }}

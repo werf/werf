@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-cfg
+data:
+  fromValues: {{ .Values.fromValues | quote }}
+  fromSecretValues: {{ .Values.fromSecretValues | quote }}
+  fromSet: {{ .Values.fromSet | quote }}
+  fromSetFile: {{ .Values.fromSetFile | quote }}
+  greeting: {{ .Values.greeting | quote }}
+  werfEnv: {{ .Values.werf.env | quote }}

@@ -1,0 +1,29 @@
+fromSecretValues: chart
+fromSet: from-set
+fromSetFile: from-set-file
+fromValues: from-values-file
+global:
+  werf:
+    commit:
+      date:
+        human: 2026-11-01 02:16:04 +0300 +0300
+        unix: 1793488564
+      hash: 737f33f16bac52938cee60221fee913c0bda334e
+    env: test
+    images: {}
+    name: werf-test-e2e-bundle-werf-data
+    repo: ""
+    version: v3.12.2
+greeting: chart
+werf:
+  commit:
+    date:
+      human: 2026-11-01 02:16:04 +0300 +0300
+      unix: 1793488564
+    hash: 737f33f16bac52938cee60221fee913c0bda334e
+  env: test
+  image: {}
+  name: werf-test-e2e-bundle-werf-data
+  repo: ""
+  tag: {}
+  version: v3.12.2
