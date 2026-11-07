@@ -17,6 +17,7 @@ var _ = ginkgo.Describe("content-based archive identity", func() {
 		ginkgo.Entry("unguarded keys", "dockerfile-context-v1"),
 		ginkgo.Entry("guarded content-only keys", "dockerfile-context-v2"),
 		ginkgo.Entry("archives before automatic LFS", "dockerfile-context-v3"),
+		ginkgo.Entry("archives before case-insensitive filesystem support", "dockerfile-context-v4-lfs"),
 	)
 
 	ginkgo.It("separates automatic LFS archives from legacy pointer archives", func() {
@@ -24,6 +25,11 @@ var _ = ginkgo.Describe("content-based archive identity", func() {
 		gomega.Expect(opts.ID()).NotTo(gomega.Equal(util.Sha256Hash(opts.Commit, opts.PathScope, opts.PathMatcher.ID())))
 		opts.FileRenames = map[string]string{"app/a": "b"}
 		gomega.Expect(opts.ID()).NotTo(gomega.Equal(util.Sha256Hash("app/a", "b", opts.Commit, opts.PathScope, opts.PathMatcher.ID())))
+	})
+
+	ginkgo.It("separates archives from those written before case-insensitive filesystem support", func() {
+		opts := ArchiveOptions{Commit: "commit-a", PathScope: "app", PathMatcher: path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{})}
+		gomega.Expect(opts.ID()).NotTo(gomega.Equal(util.Sha256Hash(opts.Commit, opts.PathScope, opts.PathMatcher.ID(), "git-lfs-v1")))
 	})
 
 	ginkgo.DescribeTable("keys content archives independently of commit and filter identity",
