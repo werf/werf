@@ -174,7 +174,9 @@ werf bundle render [options]
       --log-verbose=false
             Enable verbose output (default $WERF_LOG_VERBOSE).
       --namespace=""
-            Use specified Kubernetes namespace (default $WERF_NAMESPACE)
+            Use specified Kubernetes namespace (default $WERF_NAMESPACE or the namespace recorded   
+            in the bundle at publish, used without --env or with the publish one; with another      
+            non-empty --env both --release and --namespace are required)
       --network-parallelism=30
             Parallelize some network operations (default $WERF_NETWORK_PARALLELISM or 30)
       --no-default-patches=false
@@ -194,9 +196,12 @@ werf bundle render [options]
             Path to keyring containing public keys to verify chart provenance (default              
             $WERF_PROVENANCE_KEYRING)
       --provenance-strategy=""
-            Strategy for provenance verifying (default $WERF_PROVENANCE_STRATEGY).
+            Strategy for provenance verifying: verify, verify-if-possible, later or never (default  
+            $WERF_PROVENANCE_STRATEGY or never).
       --release=""
-            Use specified Helm release name (default $WERF_RELEASE)
+            Use specified Helm release name (default $WERF_RELEASE or the release name recorded in  
+            the bundle at publish, used without --env or with the publish one; with another         
+            non-empty --env both --release and --namespace are required)
       --release-storage=""
             How releases should be stored (default $WERF_RELEASE_STORAGE)
       --release-storage-sql-connection=""

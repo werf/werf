@@ -81,7 +81,7 @@ werf bundle publish --tag latest --repo example.org/mycompany/myapp
 werf bundle apply --tag latest --release myapp --namespace myapp-production --repo example.org/mycompany/myapp
 ```
 
-Конечный результат будет тот же самый, что и при использовании `werf converge`.
+Конечный результат будет тот же самый, что и при использовании `werf converge`, за исключением `.Chart.Name` и `.Chart.Version`, см. [Развёртывание бандла]({{ "/usage/distribute/bundles.html#развёртывание-бандла" | true_relative_url }}).
 
 Если требуется разделить первый и второй шаг, то это можно сделать так:
 
