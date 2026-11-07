@@ -26,6 +26,7 @@ import (
 	"net/http"
 	"sort"
 
+	"github.com/containerd/containerd/remotes"
 	auth "github.com/deislabs/oras/pkg/auth/docker"
 	"github.com/deislabs/oras/pkg/content"
 	"github.com/deislabs/oras/pkg/oras"
@@ -132,8 +133,8 @@ func (c *Client) Logout(ctx context.Context, hostname string) error {
 	return nil
 }
 
-// PushChart uploads a chart to a registry
-func (c *Client) PushChart(ctx context.Context, ref *ref.Reference, opts nelmcommon.HelmOptions) error {
+// PushChart uploads the chart cached under ref to the registry under each of tags
+func (c *Client) PushChart(ctx context.Context, ref *ref.Reference, tags []string, opts nelmcommon.HelmOptions) error {
 	r, err := c.cache.FetchReference(ctx, ref, opts)
 	if err != nil {
 		return err
@@ -144,18 +145,25 @@ func (c *Client) PushChart(ctx context.Context, ref *ref.Reference, opts nelmcom
 	fmt.Fprintf(c.out, "The push refers to repository [%s]\n", r.Repo)
 	c.printCacheRefSummary(r)
 	layers := []ocispec.Descriptor{*r.ContentLayer}
-	_, err = oras.Push(withOrasLogger(ctx, c.out, c.debug), c.resolver, r.Name, c.cache.Provider(), layers,
-		oras.WithConfig(*r.Config), oras.WithNameValidation(nil))
-	if err != nil {
-		return err
+	if r.ProvenanceLayer != nil {
+		layers = append(layers, *r.ProvenanceLayer)
 	}
 	s := ""
 	numLayers := len(layers)
 	if 1 < numLayers {
 		s = "s"
 	}
-	fmt.Fprintf(c.out,
-		"%s: pushed to remote (%d layer%s, %s total)\n", r.Tag, numLayers, s, byteCountBinary(r.Size))
+	for _, tag := range tags {
+		name := fmt.Sprintf("%s:%s", r.Repo, tag)
+		// The resolver remembers pushed descriptors and would skip the same manifest for the next tag.
+		pushCtx := remotes.WithMediaTypeKeyPrefix(ctx, ocispec.MediaTypeImageManifest, "manifest-"+tag)
+		if _, err := oras.Push(withOrasLogger(pushCtx, c.out, c.debug), c.resolver, name, c.cache.Provider(), layers,
+			oras.WithConfig(*r.Config), oras.WithNameValidation(nil)); err != nil {
+			return fmt.Errorf("push chart to %s: %w", name, err)
+		}
+		fmt.Fprintf(c.out,
+			"%s: pushed to remote (%d layer%s, %s total)\n", tag, numLayers, s, byteCountBinary(r.Size))
+	}
 	return nil
 }
 
@@ -246,9 +254,9 @@ func (c *Client) PullChartToCache(ctx context.Context, ref *ref.Reference, opts 
 	return err
 }
 
-// SaveChart stores a copy of chart in local cache
-func (c *Client) SaveChart(ctx context.Context, ch *chart.Chart, ref *ref.Reference, opts nelmcommon.HelmOptions) error {
-	r, err := c.cache.StoreReference(ctx, ref, ch, opts)
+// SaveChartArchive stores a chart archive and its provenance file, if not nil, in local cache as is
+func (c *Client) SaveChartArchive(ctx context.Context, chartArchive, provenance []byte, ref *ref.Reference, opts nelmcommon.HelmOptions) error {
+	r, err := c.cache.StoreReference(ctx, ref, chartArchive, provenance, opts)
 	if err != nil {
 		return err
 	}
@@ -259,6 +267,30 @@ func (c *Client) SaveChart(ctx context.Context, ch *chart.Chart, ref *ref.Refere
 	}
 	fmt.Fprintf(c.out, "%s: saved\n", r.Tag)
 	return nil
+}
+
+// TagCachedChart makes the chart cached under from available in the cache under to as is, its provenance included
+func (c *Client) TagCachedChart(ctx context.Context, from, to *ref.Reference, opts nelmcommon.HelmOptions) error {
+	r, err := c.cache.FetchReference(ctx, from, opts)
+	if err != nil {
+		return err
+	}
+	if !r.Exists {
+		return errors.New(fmt.Sprintf("Chart not found: %s", from.FullName()))
+	}
+	return c.cache.AddManifest(ctx, to, r.Manifest)
+}
+
+// IsChartSigned reports whether the chart cached under ref has a provenance file
+func (c *Client) IsChartSigned(ctx context.Context, ref *ref.Reference, opts nelmcommon.HelmOptions) (bool, error) {
+	r, err := c.cache.FetchReference(ctx, ref, opts)
+	if err != nil {
+		return false, err
+	}
+	if !r.Exists {
+		return false, errors.New(fmt.Sprintf("Chart not found: %s", ref.FullName()))
+	}
+	return r.ProvenanceLayer != nil, nil
 }
 
 // LoadChart retrieves a chart object by reference
@@ -272,6 +304,30 @@ func (c *Client) LoadChart(ctx context.Context, ref *ref.Reference, opts nelmcom
 	}
 	c.printCacheRefSummary(r)
 	return r.Chart, nil
+}
+
+// LoadChartArchive returns the chart archive cached under ref and its provenance file, nil if the
+// chart is not signed
+func (c *Client) LoadChartArchive(ctx context.Context, ref *ref.Reference, opts nelmcommon.HelmOptions) ([]byte, []byte, error) {
+	r, err := c.cache.FetchReference(ctx, ref, opts)
+	if err != nil {
+		return nil, nil, err
+	}
+	if !r.Exists {
+		return nil, nil, errors.New(fmt.Sprintf("Chart not found: %s", ref.FullName()))
+	}
+	chartArchive, err := c.cache.fetchBlob(ctx, r.ContentLayer)
+	if err != nil {
+		return nil, nil, err
+	}
+	if r.ProvenanceLayer == nil {
+		return chartArchive, nil, nil
+	}
+	provenance, err := c.cache.fetchBlob(ctx, r.ProvenanceLayer)
+	if err != nil {
+		return nil, nil, err
+	}
+	return chartArchive, provenance, nil
 }
 
 // RemoveChart deletes a locally saved chart
