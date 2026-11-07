@@ -4,13 +4,11 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"path/filepath"
 	"sync"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/werf/nelm/v2/pkg/action"
 	"github.com/werf/nelm/v2/pkg/helm/pkg/registry"
 	"github.com/werf/werf/v3/pkg/logging"
 )
@@ -50,13 +48,9 @@ var _ = DescribeTable("Docker Hub short repository names",
 		Expect(transport.hosts).NotTo(BeEmpty())
 		Expect(transport.hosts).To(HaveEach("registry-1.docker.io"))
 	},
-	Entry("publish", func(ctx context.Context, repo string, client *registry.Client) error {
-		return Publish(ctx, writeTestChart(), repo, "1.0.0", client, PublishOptions{
-			ChartPackOptions: action.ChartPackOptions{Destination: GinkgoT().TempDir()},
-		})
-	}),
-	Entry("pull", func(ctx context.Context, repo string, client *registry.Client) error {
-		return Pull(ctx, repo, "1.0.0", filepath.Join(GinkgoT().TempDir(), "app"), client, PullOptions{})
+	Entry("download", func(ctx context.Context, repo string, client *registry.Client) error {
+		_, err := Download(ctx, repo, "1.0.0", GinkgoT().TempDir(), client, DownloadOptions{})
+		return err
 	}),
 )
 

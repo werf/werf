@@ -35,7 +35,7 @@ var _ = Describe("Bundle publish", func() {
 			registryHost := startTestRegistry()
 			repo := registryHost + "/group/app"
 
-			Expect(Publish(ctx, writeTestChart(), repo, tag, newTestRegistryClient(ctx), PublishOptions{
+			Expect(Publish(ctx, writeTestChart(), repo, tag, PublishOptions{
 				ChartPackOptions: action.ChartPackOptions{Destination: GinkgoT().TempDir()},
 			})).To(Succeed())
 
@@ -60,7 +60,7 @@ var _ = Describe("Bundle publish", func() {
 			repo := startTestRegistry() + "/group/app"
 			tag := "feature_" + strings.Repeat("a", tagLen-len("feature_"))
 
-			Expect(Publish(ctx, writeTestChart(), repo, tag, newTestRegistryClient(ctx), PublishOptions{
+			Expect(Publish(ctx, writeTestChart(), repo, tag, PublishOptions{
 				ChartPackOptions: action.ChartPackOptions{Destination: GinkgoT().TempDir()},
 			})).To(Succeed())
 
@@ -89,7 +89,7 @@ var _ = Describe("Bundle publish", func() {
 
 			destination := GinkgoT().TempDir()
 
-			err := Publish(ctx, writeTestChart(), repo, tag, newTestRegistryClient(ctx), PublishOptions{
+			err := Publish(ctx, writeTestChart(), repo, tag, PublishOptions{
 				ChartPackOptions: action.ChartPackOptions{Destination: destination, ExtraValues: serviceValues(repo + ":" + imageTag)},
 			})
 			Expect(err).To(MatchError(ContainSubstring("bundle tag %q would overwrite the image \"backend\" %s:%s in the same repository: publish the bundle with another --tag or use another image tag", expectedTag, repo, imageTag)))
@@ -112,7 +112,7 @@ var _ = Describe("Bundle publish", func() {
 
 			destination := GinkgoT().TempDir()
 
-			err := Publish(ctx, writeTestChart(), repo, tag, newTestRegistryClient(ctx), PublishOptions{
+			err := Publish(ctx, writeTestChart(), repo, tag, PublishOptions{
 				ChartPackOptions: action.ChartPackOptions{Destination: destination},
 			})
 			Expect(err).To(MatchError(ContainSubstring("tag %q is not allowed: tags ending in \".prov\" address provenance files", tag)))
@@ -126,7 +126,7 @@ var _ = Describe("Bundle publish", func() {
 		ctx := logging.WithLogger(ctx0)
 		repo := startTestRegistry() + "/group/app"
 
-		Expect(Publish(ctx, writeTestChart(), repo, "1.2.3", newTestRegistryClient(ctx), PublishOptions{
+		Expect(Publish(ctx, writeTestChart(), repo, "1.2.3", PublishOptions{
 			ChartPackOptions: action.ChartPackOptions{Destination: GinkgoT().TempDir(), ExtraValues: globalWerfImagesValues(repo + "/images:1.2.3")},
 		})).To(Succeed())
 	})
@@ -138,17 +138,17 @@ var _ = Describe("Bundle publish", func() {
 		Expect(os.WriteFile(filepath.Join(chartDir, "values.yaml"), []byte("chartValue: chart\n"), 0o644)).To(Succeed())
 		repo := startTestRegistry() + "/group/app"
 
-		Expect(Publish(ctx, chartDir, repo, "1.0.0", newTestRegistryClient(ctx), PublishOptions{
+		Expect(Publish(ctx, chartDir, repo, "1.0.0", PublishOptions{
 			ChartPackOptions: action.ChartPackOptions{
 				Destination: GinkgoT().TempDir(),
 				ExtraValues: map[string]interface{}{"werf": map[string]interface{}{"repo": repo}},
 			},
 		})).To(Succeed())
 
-		bundleDir := filepath.Join(GinkgoT().TempDir(), "bundle")
-		Expect(Pull(ctx, repo, "1.0.0", bundleDir, newTestRegistryClient(ctx), PullOptions{})).To(Succeed())
+		bundlePath, err := Download(ctx, repo, "1.0.0", GinkgoT().TempDir(), newTestRegistryClient(ctx), DownloadOptions{})
+		Expect(err).To(Succeed())
 
-		result, err := nelmchart.RenderChart(ctx, bundleDir, "release", "namespace", 1, nelmcommon.DeployTypeInstall, nil, nil, nelmchart.RenderChartOptions{
+		result, err := nelmchart.RenderChart(ctx, bundlePath, "release", "namespace", 1, nelmcommon.DeployTypeInstall, nil, nil, nelmchart.RenderChartOptions{
 			HelmOptions: nelmcommon.HelmOptions{
 				ChartLoadOpts: nelmcommon.ChartLoadOptions{ChartType: nelmcommon.LegacyChartTypeBundle},
 			},
@@ -161,7 +161,7 @@ var _ = Describe("Bundle publish", func() {
 		}))
 	})
 
-	It("should pull a chart with apiVersion v1 keeping the dependencies in its Chart.yaml", func(ctx0 context.Context) {
+	It("should download a chart with apiVersion v1 that renders with the dependencies in its Chart.yaml", func(ctx0 context.Context) {
 		ctx := logging.WithLogger(ctx0)
 		repo := startTestRegistry() + "/group/app"
 		chartYAML := `apiVersion: v1
@@ -184,14 +184,10 @@ dependencies:
 		}), repo+":1.0.0")
 		Expect(err).To(Succeed())
 
-		bundleDir := filepath.Join(GinkgoT().TempDir(), "bundle")
-		Expect(Pull(ctx, repo, "1.0.0", bundleDir, newTestRegistryClient(ctx), PullOptions{})).To(Succeed())
-
-		pulledChartYAML, err := os.ReadFile(filepath.Join(bundleDir, "Chart.yaml"))
+		bundlePath, err := Download(ctx, repo, "1.0.0", GinkgoT().TempDir(), newTestRegistryClient(ctx), DownloadOptions{})
 		Expect(err).To(Succeed())
-		Expect(string(pulledChartYAML)).To(Equal(chartYAML))
 
-		result, err := nelmchart.RenderChart(ctx, bundleDir, "release", "namespace", 1, nelmcommon.DeployTypeInstall, nil, nil, nelmchart.RenderChartOptions{
+		result, err := nelmchart.RenderChart(ctx, bundlePath, "release", "namespace", 1, nelmcommon.DeployTypeInstall, nil, nil, nelmchart.RenderChartOptions{
 			HelmOptions: nelmcommon.HelmOptions{
 				ChartLoadOpts: nelmcommon.ChartLoadOptions{ChartType: nelmcommon.LegacyChartTypeBundle},
 			},
@@ -203,13 +199,13 @@ dependencies:
 		Expect(result.ResourceSpecs[0].Unstruct.Object["data"]).To(Equal(map[string]interface{}{"msg": "from-parent"}))
 	})
 
-	DescribeTable("should verify the signature of a pulled bundle as requested",
+	DescribeTable("should verify the signature of a downloaded bundle as requested",
 		func(ctx0 context.Context, publish func(ctx context.Context, repo string), tag, strategy, expectedErr string) {
 			ctx := logging.WithLogger(ctx0)
 			repo := startTestRegistry() + "/group/app"
 			publish(ctx, repo)
 
-			err := Pull(ctx, repo, tag, filepath.Join(GinkgoT().TempDir(), "app"), newTestRegistryClient(ctx), PullOptions{
+			_, err := Download(ctx, repo, tag, GinkgoT().TempDir(), newTestRegistryClient(ctx), DownloadOptions{
 				ProvenanceKeyring:  testKeyringPath("helm-test-key.pub"),
 				ProvenanceStrategy: strategy,
 			})
@@ -220,14 +216,14 @@ dependencies:
 			}
 		},
 		Entry("signed, verify", publishSignedTestChart, "1.0.0", ProvenanceStrategyVerify, ""),
-		Entry("signed, verify if possible", publishSignedTestChart, "1.0.0", ProvenanceStrategyVerifyIfPossible, ""),
+		Entry("signed, verify if possible", publishSignedTestChart, "1.0.0", "verify-if-possible", ""),
 		Entry("signed, verify, the tag other than the version", publishSignedTestChart, "v1.0.0", ProvenanceStrategyVerify, ""),
 		Entry("tampered, verify", publishTamperedTestChart, "1.0.0", ProvenanceStrategyVerify, "sha256 sum does not match"),
-		Entry("tampered, verify if possible", publishTamperedTestChart, "1.0.0", ProvenanceStrategyVerifyIfPossible, "sha256 sum does not match"),
+		Entry("tampered, verify if possible", publishTamperedTestChart, "1.0.0", "verify-if-possible", "sha256 sum does not match"),
 		Entry("tampered, never", publishTamperedTestChart, "1.0.0", "never", ""),
 		Entry("unsigned, verify", publishUnsignedTestChart, "1.0.0", ProvenanceStrategyVerify, "manifest does not contain a layer with mediatype application/vnd.cncf.helm.chart.provenance.v1.prov"),
-		Entry("unsigned, verify if possible", publishUnsignedTestChart, "1.0.0", ProvenanceStrategyVerifyIfPossible, ""),
-		Entry("empty provenance file, verify if possible", publishEmptyProvenanceTestChart, "1.0.0", ProvenanceStrategyVerifyIfPossible, "signature block not found"),
+		Entry("unsigned, verify if possible", publishUnsignedTestChart, "1.0.0", "verify-if-possible", ""),
+		Entry("empty provenance file, verify if possible", publishEmptyProvenanceTestChart, "1.0.0", "verify-if-possible", "signature block not found"),
 	)
 
 	DescribeTable("should refuse to verify the signature",
@@ -236,7 +232,7 @@ dependencies:
 			repo := startTestRegistry() + "/group/app"
 			publishSignedTestChart(ctx, repo)
 
-			err := Pull(ctx, repo, "1.0.0", filepath.Join(GinkgoT().TempDir(), "app"), newTestRegistryClient(ctx), PullOptions{
+			_, err := Download(ctx, repo, "1.0.0", GinkgoT().TempDir(), newTestRegistryClient(ctx), DownloadOptions{
 				ProvenanceKeyring:  keyring,
 				ProvenanceStrategy: ProvenanceStrategyVerify,
 			})
@@ -251,9 +247,10 @@ dependencies:
 		repo := startTestRegistry() + "/group/app"
 		publishUnsignedTestChart(ctx, repo)
 
-		Expect(Pull(ctx, repo, "1.0.0", filepath.Join(GinkgoT().TempDir(), "app"), newTestRegistryClient(ctx), PullOptions{
-			ProvenanceStrategy: ProvenanceStrategyVerifyIfPossible,
-		})).To(Succeed())
+		_, err := Download(ctx, repo, "1.0.0", GinkgoT().TempDir(), newTestRegistryClient(ctx), DownloadOptions{
+			ProvenanceStrategy: "verify-if-possible",
+		})
+		Expect(err).To(Succeed())
 	})
 
 	It("should fail to verify if possible a signed bundle whose signature fails to download", func(ctx0 context.Context) {
@@ -275,30 +272,25 @@ dependencies:
 		Expect(err).To(Succeed())
 		failingBlob = result.Prov.Digest
 
-		err = Pull(ctx, repo, "1.0.0", filepath.Join(GinkgoT().TempDir(), "app"), newTestRegistryClient(ctx), PullOptions{
+		_, err = Download(ctx, repo, "1.0.0", GinkgoT().TempDir(), newTestRegistryClient(ctx), DownloadOptions{
 			ProvenanceKeyring:  testKeyringPath("helm-test-key.pub"),
-			ProvenanceStrategy: ProvenanceStrategyVerifyIfPossible,
+			ProvenanceStrategy: "verify-if-possible",
 		})
 		Expect(err).To(MatchError(ContainSubstring("500")))
 	})
 
-	DescribeTable("should pull a bundle by the tag it is published under",
+	DescribeTable("should download a bundle by the tag it is published under",
 		func(ctx0 context.Context, tag, expectedVersion string) {
 			ctx := logging.WithLogger(ctx0)
 			repo := startTestRegistry() + "/group/app"
-			Expect(Publish(ctx, writeTestChart(), repo, tag, newTestRegistryClient(ctx), PublishOptions{
+			Expect(Publish(ctx, writeTestChart(), repo, tag, PublishOptions{
 				ChartPackOptions: signingChartPackOptions(),
 			})).To(Succeed())
 
-			bundleDir := filepath.Join(GinkgoT().TempDir(), "app")
-			Expect(Pull(ctx, repo, tag, bundleDir, newTestRegistryClient(ctx), PullOptions{
+			Expect(downloadTestChartVersion(ctx, repo, tag, DownloadOptions{
 				ProvenanceKeyring:  testKeyringPath("helm-test-key.pub"),
 				ProvenanceStrategy: ProvenanceStrategyVerify,
-			})).To(Succeed())
-
-			chartYAML, err := os.ReadFile(filepath.Join(bundleDir, "Chart.yaml"))
-			Expect(err).To(Succeed())
-			Expect(string(chartYAML)).To(MatchRegexp(`(?m)^version: ` + expectedVersion + `$`))
+			})).To(MatchRegexp(`^` + expectedVersion + `$`))
 		},
 		Entry("non-semver tag with +", "feature+build", `0\.0\.0-\d+-feature-build`),
 		Entry("semver tag with build metadata encoded as Helm does", "1.2.3_1", `1\.2\.3\+1`),
@@ -318,13 +310,13 @@ dependencies:
 })
 
 func publishSignedTestChart(ctx context.Context, repo string) {
-	Expect(Publish(ctx, writeTestChart(), repo, "v1.0.0", newTestRegistryClient(ctx), PublishOptions{
+	Expect(Publish(ctx, writeTestChart(), repo, "v1.0.0", PublishOptions{
 		ChartPackOptions: signingChartPackOptions(),
 	})).To(Succeed())
 }
 
 func publishUnsignedTestChart(ctx context.Context, repo string) {
-	Expect(Publish(ctx, writeTestChart(), repo, "1.0.0", newTestRegistryClient(ctx), PublishOptions{
+	Expect(Publish(ctx, writeTestChart(), repo, "1.0.0", PublishOptions{
 		ChartPackOptions: action.ChartPackOptions{Destination: GinkgoT().TempDir()},
 	})).To(Succeed())
 }

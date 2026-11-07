@@ -5,9 +5,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
-	"strings"
 
 	"github.com/werf/logboek"
 	nelmcommon "github.com/werf/nelm/v2/pkg/common"
@@ -17,7 +15,8 @@ import (
 
 // NewBundlesRegistryClient returns the client of the container registry the bundles are pushed
 // into and pulled from, connected as GetBundlesRegistryConnectionOptions says: over plain HTTP if
-// insecure or, as Docker does, on a loopback host, where verifying TLS certificates doesn't apply.
+// insecure or, as Nelm does, on a loopback host unless TLS verification is skipped, which asks for
+// HTTPS.
 func NewBundlesRegistryClient(ctx context.Context, commonCmdData *CmdData) (*registry.Client, error) {
 	// The client prints Helm's messages, e.g. about the media type of the charts of werf <= 3.12
 	// bundles being deprecated, which werf logs itself or which don't apply to werf bundles.
@@ -35,7 +34,7 @@ func NewBundlesRegistryClient(ctx context.Context, commonCmdData *CmdData) (*reg
 
 	connectionOpts := GetBundlesRegistryConnectionOptions(commonCmdData)
 	clientOpts = append(clientOpts, registry.ClientOptPlainHTTPHost(func(host string) bool {
-		return connectionOpts.ChartRepoInsecure || isLoopbackHost(host)
+		return connectionOpts.ChartRepoInsecure || !connectionOpts.ChartRepoSkipTLSVerify && registry.IsLoopbackHost(host)
 	}))
 
 	if connectionOpts.ChartRepoSkipTLSVerify {
@@ -62,19 +61,4 @@ func GetBundlesRegistryConnectionOptions(commonCmdData *CmdData) nelmcommon.Char
 		ChartRepoInsecure:      *commonCmdData.InsecureRegistry,
 		ChartRepoSkipTLSVerify: *commonCmdData.SkipTlsVerifyRegistry,
 	}
-}
-
-// isLoopbackHost returns whether the registry host (host or host:port) is a loopback host.
-func isLoopbackHost(host string) bool {
-	if hostname, _, err := net.SplitHostPort(host); err == nil {
-		host = hostname
-	}
-
-	if host == "localhost" {
-		return true
-	}
-
-	ip := net.ParseIP(strings.Trim(host, "[]"))
-
-	return ip != nil && ip.IsLoopback()
 }

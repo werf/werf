@@ -372,6 +372,7 @@ annotations:
 - **`--secret-values` команды `werf bundle publish` сохраняются в релизе в расшифрованном виде**, так же как `werf converge` сохраняет свои `--secret-values`, и их показывает `werf release get --print-values`.
 - **`--disable-default-values` и `--disable-default-secret-values` команды `werf bundle apply` игнорируют только собственные файлы чарта**, а не параметры и образы, сохранённые при публикации.
 - **Сохранённые `--disable-default-values`, `--disable-default-secret-values` или `--no-default-patches` нельзя сбросить через `werf bundle publish`.** Если директория чарта содержит `.werf-data/`, где одна из этих опций сохранена как `true`, например, распакованный опубликованный чарт закоммичен в `.helm`, публикация без этой опции её сохраняет. Удалите `defaultValuesDisable` или `defaultSecretValuesDisable` в `values` или `defaultPatchesDisable` из `.werf-data/metadata.yaml`: опция со значением `false` тоже сохраняет переключатель.
+- **Для бандлов, опубликованных werf 3.12 и более ранними версиями, аннотации, переданные `werf bundle apply`, `plan` и `render`, побеждают `extra_annotations.json` бандла по каждому ключу**: `--add-annotation` и служебные аннотации werf, например `project.werf.io/env`. Раньше побеждали аннотации `project.werf.io/*` и `ci.werf.io/*` бандла.
 
 ### Зашифрованные секреты
 

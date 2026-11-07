@@ -51,8 +51,8 @@ var _ = Describe("Bundle publish/apply with .werf-data", Label("e2e", "bundle-pu
 
 			By("applying the bundle without --release and --namespace")
 			dismissOnCleanup(werfProject, release, namespace)
-			applyOut := applyProject.RunCommand(ctx, []string{"bundle", "apply"}, werf.CommonOptions{})
-			Expect(applyOut).To(ContainSubstring(fmt.Sprintf(`Using release %s and namespace %s recorded in .werf-data for env "test"`, release, namespace)))
+			applyOut := applyProject.RunCommand(ctx, []string{"bundle", "apply", "--log-terminal-width", "1000"}, werf.CommonOptions{})
+			Expect(applyOut).To(ContainSubstring(fmt.Sprintf(`Using release name %q and release namespace %q recorded in .werf-data`, release, namespace)))
 
 			By("checking the release in the recorded namespace")
 			releaseGet := getRelease(ctx, applyProject, release, namespace)
@@ -157,7 +157,6 @@ var _ = Describe("Bundle publish/apply with .werf-data", Label("e2e", "bundle-pu
 			cm, err := clientFactory.Static().CoreV1().ConfigMaps(namespace).Get(ctx, "app-cfg", metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(cm.Annotations).To(HaveKeyWithValue("project.werf.io/name", SuiteData.ProjectName))
-			Expect(cm.Annotations).To(HaveKeyWithValue("project.werf.io/env", "test"))
 		},
 	)
 
@@ -239,7 +238,9 @@ var _ = Describe("Bundle publish/apply with .werf-data", Label("e2e", "bundle-pu
 			applyProject.BundleApply(ctx, release, namespace, &werf.BundleApplyOptions{
 				CommonOptions: werf.CommonOptions{ExtraArgs: []string{"--repo", bundleRepo, "--tag", "1.0.0"}},
 			})
-			v1Values := getRelease(ctx, applyProject, release, namespace).Values
+			v1Release := getRelease(ctx, applyProject, release, namespace)
+			Expect(v1Release.Release.Annotations).To(HaveKeyWithValue("project.werf.io/name", "werf-test-e2e-bundle-werf-data"))
+			v1Values := v1Release.Values
 			v1ConfigMapData := map[string]string{
 				"fromValues":       "from-values-file",
 				"fromSecretValues": "from-secret-values-file",
@@ -251,6 +252,7 @@ var _ = Describe("Bundle publish/apply with .werf-data", Label("e2e", "bundle-pu
 			cm := getConfigMap()
 			Expect(cm.Data).To(Equal(v1ConfigMapData))
 			Expect(cm.Annotations).To(HaveKeyWithValue("team", "v1"))
+			Expect(cm.Annotations).To(HaveKeyWithValue("project.werf.io/name", "werf-test-e2e-bundle-werf-data"))
 			Expect(cm.Labels).To(HaveKeyWithValue("tier", "v1"))
 
 			By("publishing and applying the bundle with .werf-data over the same release")
@@ -289,13 +291,32 @@ var _ = Describe("Bundle publish/apply with .werf-data", Label("e2e", "bundle-pu
 			Expect(cm.Data).To(Equal(v1ConfigMapData))
 			Expect(cm.Annotations).To(HaveKeyWithValue("team", "v1"))
 			Expect(cm.Labels).To(HaveKeyWithValue("tier", "v1"))
+
+			By("applying the bundle in the werf 3.12 format with service annotations overriding the bundle's")
+			applyProject.BundleApply(ctx, release, namespace, &werf.BundleApplyOptions{
+				CommonOptions: werf.CommonOptions{ExtraArgs: []string{
+					"--repo", bundleRepo, "--tag", "1.0.0", "--env", "other",
+					"--release-info-annotations", "project.werf.io/name=other",
+					"--runtime-annotations", "project.werf.io/name=other",
+					"--add-annotation", "ci.werf.io/commit=from-cli",
+				}},
+			})
+			releaseGet = getRelease(ctx, applyProject, release, namespace)
+			Expect(releaseGet.Release.Revision).To(Equal(4))
+			Expect(releaseGet.Release.Annotations).To(HaveKeyWithValue("project.werf.io/name", "other"))
+			Expect(releaseGet.Release.Annotations).To(HaveKeyWithValue("project.werf.io/env", "other"))
+			Expect(releaseGet.Release.Annotations).To(HaveKeyWithValue("ci.werf.io/commit", "from-cli"))
+			cm = getConfigMap()
+			Expect(cm.Annotations).To(HaveKeyWithValue("project.werf.io/name", "other"))
+			Expect(cm.Annotations).To(HaveKeyWithValue("project.werf.io/env", "other"))
 		},
 	)
 })
 
 type werfDataReleaseGetOutput struct {
 	Release struct {
-		Revision int `json:"revision"`
+		Annotations map[string]string `json:"annotations"`
+		Revision    int               `json:"revision"`
 	} `json:"release"`
 	Values map[string]any `json:"values"`
 }

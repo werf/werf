@@ -3,6 +3,7 @@ package publish
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -315,11 +316,6 @@ func runPublish(ctx context.Context, cmd *cobra.Command, imageNameListFromArgs [
 		return fmt.Errorf("getting helm chart dir failed: %w", err)
 	}
 
-	bundlesRegistryClient, err := common.NewBundlesRegistryClient(ctx, &commonCmdData)
-	if err != nil {
-		return err
-	}
-
 	nelmcommon.ChartFileReader = giterminismManager.FileManager
 
 	headHash, err := giterminismManager.LocalGitRepo().HeadCommitHash(ctx)
@@ -349,12 +345,26 @@ func runPublish(ctx context.Context, cmd *cobra.Command, imageNameListFromArgs [
 	chartPackOpts.Destination = filepath.Join(werf.GetServiceDir(), "tmp", "bundles", uuid.NewString())
 	defer os.RemoveAll(chartPackOpts.Destination)
 
-	chartPackOpts.RegistryCredentialsPath = docker.GetDockerConfigCredentialsFile(*commonCmdData.DockerConfig)
+	registryCredentialsPath := docker.GetDockerConfigCredentialsFile(*commonCmdData.DockerConfig)
+	chartPackOpts.RegistryCredentialsPath = registryCredentialsPath
 
 	ctx = common.SetupDenoContext(ctx)
+	ctx = action.SetupLogging(ctx, common.GetNelmLogLevel(&commonCmdData), action.SetupLoggingOptions{
+		ColorMode: *commonCmdData.LogColorMode,
+	})
 
-	return bundles.Publish(ctx, filepath.Join(giterminismManager.ProjectDir(), chartDir), bundleRepo, cmdData.Tag, bundlesRegistryClient, bundles.PublishOptions{
+	var registryStreamOut io.Writer
+	if *commonCmdData.LogDebug {
+		registryStreamOut = logboek.Context(ctx).OutStream()
+	}
+
+	return bundles.Publish(ctx, filepath.Join(giterminismManager.ProjectDir(), chartDir), bundleRepo, cmdData.Tag, bundles.PublishOptions{
 		ChartPackOptions: chartPackOpts,
+		ChartUploadOptions: action.ChartUploadOptions{
+			ChartRepoConnectionOptions: common.GetBundlesRegistryConnectionOptions(&commonCmdData),
+			LegacyLogRegistryStreamOut: registryStreamOut,
+			RegistryCredentialsPath:    registryCredentialsPath,
+		},
 	})
 }
 
