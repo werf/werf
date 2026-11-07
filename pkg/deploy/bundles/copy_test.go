@@ -160,7 +160,7 @@ var _ = Describe("Bundle copy", func() {
 
 	DescribeTable("should copy a chart with .werf-data with its images and point its image values at the new repo",
 		func(copyBundle func(from, to string)) {
-			Expect(Publish(ctx, writeTestChart(), fromRepo, "1.2.3", testRegistryClient, PublishOptions{
+			Expect(Publish(ctx, writeTestChart(), fromRepo, "1.2.3", PublishOptions{
 				ChartPackOptions: werfDataChartPackOptions(ctx, fromRepo, imageDigest),
 			})).To(Succeed())
 
@@ -198,7 +198,7 @@ var _ = Describe("Bundle copy", func() {
 		Expect(os.MkdirAll(filepath.Join(rootDir, "charts"), 0o755)).To(Succeed())
 		packTestChart(ctx, midDir, "mid", filepath.Join(rootDir, "charts"), werfDataChartPackOptions(ctx, fromRepo, imageDigest))
 
-		Expect(Publish(ctx, rootDir, fromRepo, "1.2.3", testRegistryClient, PublishOptions{
+		Expect(Publish(ctx, rootDir, fromRepo, "1.2.3", PublishOptions{
 			ChartPackOptions: action.ChartPackOptions{Destination: GinkgoT().TempDir()},
 		})).To(Succeed())
 
@@ -223,12 +223,12 @@ var _ = Describe("Bundle copy", func() {
 			packOpts.Sign = true
 			packOpts.SignKey = "helm-test"
 			packOpts.SignKeyring = testKeyringPath("helm-test-key.secret")
-			Expect(Publish(ctx, writeTestChart(), fromRepo, "1.2.3", testRegistryClient, PublishOptions{ChartPackOptions: packOpts})).To(Succeed())
+			Expect(Publish(ctx, writeTestChart(), fromRepo, "1.2.3", PublishOptions{ChartPackOptions: packOpts})).To(Succeed())
 
 			sameNameRepo := path.Dir(toRepo) + "/" + path.Base(fromRepo)
 			Expect(Copy(ctx, fromRepo+":1.2.3", sameNameRepo, copyOpts)).To(Succeed())
 
-			err := Pull(ctx, sameNameRepo, "1.2.3", filepath.Join(GinkgoT().TempDir(), "bundle"), testRegistryClient, PullOptions{
+			_, err := Download(ctx, sameNameRepo, "1.2.3", GinkgoT().TempDir(), testRegistryClient, DownloadOptions{
 				ProvenanceKeyring:  testKeyringPath("helm-test-key.pub"),
 				ProvenanceStrategy: ProvenanceStrategyVerify,
 			})
@@ -252,7 +252,7 @@ var _ = Describe("Bundle copy", func() {
 			packOpts.Sign = true
 			packOpts.SignKey = "helm-test"
 			packOpts.SignKeyring = testKeyringPath("helm-test-key.secret")
-			Expect(Publish(ctx, writeTestChart(), fromRepo, "1.0.0", testRegistryClient, PublishOptions{ChartPackOptions: packOpts})).To(Succeed())
+			Expect(Publish(ctx, writeTestChart(), fromRepo, "1.0.0", PublishOptions{ChartPackOptions: packOpts})).To(Succeed())
 			source, err := testRegistryClient.Pull(fromRepo + ":1.0.0")
 			Expect(err).To(Succeed())
 
@@ -261,10 +261,11 @@ var _ = Describe("Bundle copy", func() {
 			copied, err := testRegistryClient.Pull(fromRepo + ":" + tag)
 			Expect(err).To(Succeed())
 			Expect(copied.Manifest.Digest).To(Equal(source.Manifest.Digest))
-			Expect(Pull(ctx, fromRepo, tag, filepath.Join(GinkgoT().TempDir(), "bundle"), testRegistryClient, PullOptions{
+			_, err = Download(ctx, fromRepo, tag, GinkgoT().TempDir(), testRegistryClient, DownloadOptions{
 				ProvenanceKeyring:  testKeyringPath("helm-test-key.pub"),
 				ProvenanceStrategy: ProvenanceStrategyVerify,
-			})).To(Succeed())
+			})
+			Expect(err).To(Succeed())
 		},
 		Entry("no tag", func() string { return fromRepo }, "1.0.0"),
 		Entry("the tag of the same version", func() string { return fromRepo + ":v1.0.0" }, "v1.0.0"),
@@ -272,7 +273,7 @@ var _ = Describe("Bundle copy", func() {
 
 	DescribeTable("should copy under the chart version and the tag",
 		func(fromTag, toTag, expectedVersion string, expectedTags []string) {
-			Expect(Publish(ctx, writeTestChart(), fromRepo, fromTag, testRegistryClient, PublishOptions{
+			Expect(Publish(ctx, writeTestChart(), fromRepo, fromTag, PublishOptions{
 				ChartPackOptions: action.ChartPackOptions{Destination: GinkgoT().TempDir()},
 			})).To(Succeed())
 
@@ -440,12 +441,12 @@ func packTestChart(ctx context.Context, chartDir, name, destination string, opts
 }
 
 func pullTestChart(ctx context.Context, client *registry.Client, repo, tag string) *chart.Chart {
-	bundleDir := filepath.Join(GinkgoT().TempDir(), "bundle")
-	Expect(Pull(ctx, repo, tag, bundleDir, client, PullOptions{})).To(Succeed())
+	bundlePath, err := Download(ctx, repo, tag, GinkgoT().TempDir(), client, DownloadOptions{})
+	Expect(err).To(Succeed())
 
 	ch, err := loader.Load(nelmcommon.ContextWithHelmOptions(ctx, nelmcommon.HelmOptions{
 		ChartLoadOpts: nelmcommon.ChartLoadOptions{NoSecrets: true},
-	}), bundleDir)
+	}), bundlePath)
 	Expect(err).To(Succeed())
 
 	return ch.(*chart.Chart)

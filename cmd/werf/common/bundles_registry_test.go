@@ -35,8 +35,8 @@ var _ = DescribeTable("GetBundlesRegistryConnectionOptions",
 	Entry("both", true, true, nelmcommon.ChartRepoConnectionOptions{ChartRepoInsecure: true, ChartRepoSkipTLSVerify: true}),
 )
 
-var _ = DescribeTable("NewBundlesRegistryClient should publish and pull bundles on a plain HTTP registry on a loopback host",
-	func(ctx0 context.Context, insecure, skipTLSVerify bool) {
+var _ = DescribeTable("NewBundlesRegistryClient should publish and download bundles on a plain HTTP registry on a loopback host unless asked for HTTPS",
+	func(ctx0 context.Context, insecure, skipTLSVerify, expectedPlainHTTP bool) {
 		ctx := logging.WithLogger(ctx0)
 		server := httptest.NewServer(ggcrregistry.New(ggcrregistry.Logger(log.New(io.Discard, "", 0))))
 		DeferCleanup(server.Close)
@@ -52,16 +52,21 @@ var _ = DescribeTable("NewBundlesRegistryClient should publish and pull bundles 
 
 		chartDir := GinkgoT().TempDir()
 		Expect(os.WriteFile(filepath.Join(chartDir, "Chart.yaml"), []byte("apiVersion: v2\nname: app\nversion: 0.1.0\n"), 0o644)).To(Succeed())
-		Expect(bundles.Publish(ctx, chartDir, repo, "latest", client, bundles.PublishOptions{
+		Expect(bundles.Publish(ctx, chartDir, repo, "latest", bundles.PublishOptions{
 			ChartPackOptions: action.ChartPackOptions{Destination: GinkgoT().TempDir()},
 		})).To(Succeed())
 
-		Expect(bundles.Pull(ctx, repo, "latest", filepath.Join(GinkgoT().TempDir(), "app"), client, bundles.PullOptions{})).To(Succeed())
+		_, err = bundles.Download(ctx, repo, "latest", GinkgoT().TempDir(), client, bundles.DownloadOptions{})
+		if expectedPlainHTTP {
+			Expect(err).To(Succeed())
+		} else {
+			Expect(err).To(MatchError(ContainSubstring("http: server gave HTTP response to HTTPS client")))
+		}
 	},
-	Entry("no options", false, false),
-	Entry("insecure", true, false),
-	Entry("skip TLS verify", false, true),
-	Entry("insecure and skip TLS verify", true, true),
+	Entry("no options", false, false, true),
+	Entry("insecure", true, false, true),
+	Entry("skip TLS verify", false, true, false),
+	Entry("insecure and skip TLS verify", true, true, true),
 )
 
 var _ = DescribeTable("NewBundlesRegistryClient should print the registry client output only with debug logging",
@@ -82,10 +87,11 @@ var _ = DescribeTable("NewBundlesRegistryClient should print the registry client
 
 		chartDir := GinkgoT().TempDir()
 		Expect(os.WriteFile(filepath.Join(chartDir, "Chart.yaml"), []byte("apiVersion: v2\nname: app\nversion: 0.1.0\n"), 0o644)).To(Succeed())
-		Expect(bundles.Publish(ctx, chartDir, repo, "latest", client, bundles.PublishOptions{
+		Expect(bundles.Publish(ctx, chartDir, repo, "latest", bundles.PublishOptions{
 			ChartPackOptions: action.ChartPackOptions{Destination: GinkgoT().TempDir()},
 		})).To(Succeed())
-		Expect(bundles.Pull(ctx, repo, "latest", filepath.Join(GinkgoT().TempDir(), "app"), client, bundles.PullOptions{})).To(Succeed())
+		_, err = bundles.Download(ctx, repo, "latest", GinkgoT().TempDir(), client, bundles.DownloadOptions{})
+		Expect(err).To(Succeed())
 
 		if logDebug {
 			Expect(output.String()).To(ContainSubstring("Pulled: "))
@@ -95,19 +101,4 @@ var _ = DescribeTable("NewBundlesRegistryClient should print the registry client
 	},
 	Entry("without debug logging", false),
 	Entry("with debug logging", true),
-)
-
-var _ = DescribeTable("isLoopbackHost",
-	func(host string, expected bool) {
-		Expect(isLoopbackHost(host)).To(Equal(expected))
-	},
-	Entry("localhost with a port", "localhost:5000", true),
-	Entry("localhost", "localhost", true),
-	Entry("IPv4 loopback", "127.0.0.1:32768", true),
-	Entry("another IPv4 loopback", "127.1.2.3", true),
-	Entry("IPv6 loopback with a port", "[::1]:5000", true),
-	Entry("IPv6 loopback", "::1", true),
-	Entry("remote host", "registry.example.com", false),
-	Entry("remote IP", "10.0.0.1:5000", false),
-	Entry("Docker Hub", "registry-1.docker.io", false),
 )

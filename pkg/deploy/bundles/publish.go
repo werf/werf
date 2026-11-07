@@ -3,7 +3,6 @@ package bundles
 import (
 	"context"
 	"fmt"
-	"os"
 	"path"
 	"sort"
 	"strings"
@@ -21,11 +20,14 @@ type PublishOptions struct {
 	// ChartPackOptions are the options to pack the chart with. The chart name and version are set
 	// from the repo and the tag.
 	ChartPackOptions action.ChartPackOptions
+	// ChartUploadOptions are the options to push the packed chart with. The extra tags are set from
+	// the tag.
+	ChartUploadOptions action.ChartUploadOptions
 }
 
 // Publish packs the chart and pushes it into repo under the chart version derived from tag and under
 // tag itself, both with "+" encoded as "_" as Helm does.
-func Publish(ctx context.Context, chartDir, repo, tag string, registryClient *registry.Client, opts PublishOptions) error {
+func Publish(ctx context.Context, chartDir, repo, tag string, opts PublishOptions) error {
 	repo, err := normalizeRepo(repo)
 	if err != nil {
 		return err
@@ -46,6 +48,7 @@ func Publish(ctx context.Context, chartDir, repo, tag string, registryClient *re
 		return err
 	}
 
+	// Nelm refuses such tags only after packing, so fail before the images and dependencies are packed.
 	if err := checkChartTagsDoNotOverwriteImages(r.Repo, tags, packOpts.ExtraValues); err != nil {
 		return err
 	}
@@ -62,33 +65,16 @@ func Publish(ctx context.Context, chartDir, repo, tag string, registryClient *re
 		return err
 	}
 
-	chartArchive, err := os.ReadFile(packResult.ArchivePath)
-	if err != nil {
-		return fmt.Errorf("read chart archive: %w", err)
-	}
+	uploadOpts := opts.ChartUploadOptions
+	uploadOpts.ExtraTags = tags[1:]
 
-	var provenance []byte
-	if packResult.ProvenancePath != "" {
-		provenance, err = os.ReadFile(packResult.ProvenancePath)
-		if err != nil {
-			return fmt.Errorf("read chart provenance file: %w", err)
-		}
-	}
-
-	var pushResult *registry.PushResult
-	if err := logboek.Context(ctx).LogProcess("Pushing bundle %s with tags %s", repo, strings.Join(tags, ", ")).DoError(func() error {
-		if pushResult, err = registryClient.PushContext(ctx, chartArchive, fmt.Sprintf("%s:%s", repo, packResult.ChartVersion), registry.PushOptProvData(provenance), registry.PushOptExtraTags(tags[1:])); err != nil {
+	return logboek.Context(ctx).LogProcess("Pushing bundle %s with tags %s", repo, strings.Join(tags, ", ")).DoError(func() error {
+		if _, err := action.ChartUpload(ctx, packResult.ArchivePath, registry.OCIScheme+"://"+path.Dir(repo), uploadOpts); err != nil {
 			return fmt.Errorf("push chart: %w", err)
 		}
 
 		return nil
-	}); err != nil {
-		return err
-	}
-
-	logboek.Context(ctx).Default().LogF("Pushed bundle %s:%s (digest %s)\n", repo, tags[len(tags)-1], pushResult.Manifest.Digest)
-
-	return nil
+	})
 }
 
 // checkChartTagsDoNotOverwriteImages fails if a chart tag equals the tag of a werf image from the

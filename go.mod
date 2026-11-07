@@ -57,7 +57,7 @@ require (
 	github.com/werf/copy-recurse v0.3.1
 	github.com/werf/lockgate v0.2.1
 	github.com/werf/logboek v0.7.2-0.20260810094044-236a5f8ae9dd
-	github.com/werf/nelm/v2 v2.3.1-0.20261107082418-47a2d34e7842
+	github.com/werf/nelm/v2 v2.3.1-0.20261107085934-50cd8d8bd005
 	go.opentelemetry.io/otel v1.46.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.46.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.46.0
@@ -277,7 +277,7 @@ require (
 	github.com/Azure/go-ansiterm v0.0.0-20250102033503-faa5f7b0171c // indirect
 	github.com/BurntSushi/toml v1.6.0
 	github.com/MakeNowJust/heredoc v1.0.0 // indirect
-	github.com/Masterminds/semver/v3 v3.5.0
+	github.com/Masterminds/semver/v3 v3.5.0 // indirect
 	github.com/Masterminds/squirrel v1.5.4 // indirect
 	github.com/Microsoft/go-winio v0.6.3-0.20251027160822-ad3df93bed29 // indirect
 	github.com/Microsoft/hcsshim v0.15.0-rc.4 // indirect
