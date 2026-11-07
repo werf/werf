@@ -122,7 +122,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	if defaultTag == "" {
 		defaultTag = "latest"
 	}
-	cmd.Flags().StringVarP(&cmdData.Tag, "tag", "", defaultTag, "Provide exact tag version or semver-based pattern, werf will install or upgrade to the latest version of the specified bundle ($WERF_TAG or latest by default)")
+	cmd.Flags().StringVarP(&cmdData.Tag, "tag", "", defaultTag, "Tag of the bundle to install or upgrade to ($WERF_TAG or latest by default)")
 	cmd.Flags().BoolVarP(&cmdData.AutoRollback, "auto-rollback", "R", util.GetBoolEnvironmentDefaultFalse("WERF_AUTO_ROLLBACK"), "Enable auto rollback of the failed release to the previous deployed release version when current deploy process have failed ($WERF_AUTO_ROLLBACK by default)")
 	cmd.Flags().BoolVarP(&cmdData.AutoRollback, "atomic", "", util.GetBoolEnvironmentDefaultFalse("WERF_ATOMIC"), "Enable auto rollback of the failed release to the previous deployed release version when current deploy process have failed ($WERF_ATOMIC by default)")
 	cmd.Flags().StringVarP(&cmdData.PlanArtifactPath, "use-plan", "", os.Getenv("WERF_USE_PLAN_PATH"), "Use the gzip-compressed JSON plan file from the specified path during release install")
@@ -187,10 +187,7 @@ func runApply(ctx context.Context) error {
 			return fmt.Errorf("construct bundles registry client: %w", err)
 		}
 
-		if err := bundles.Pull(ctx, fmt.Sprintf("%s:%s", repoAddress, cmdData.Tag), bundlePath, bundlesRegistryClient, bundles.PullOptions{
-			HelmOptions: nelmcommon.HelmOptions{
-				ChartLoadOpts: nelmcommon.ChartLoadOptions{NoSecrets: true},
-			},
+		if err := bundles.Pull(ctx, repoAddress, cmdData.Tag, bundlePath, bundlesRegistryClient, bundles.PullOptions{
 			ProvenanceKeyring:  commonCmdData.ChartProvenanceKeyring,
 			ProvenanceStrategy: commonCmdData.ChartProvenanceStrategy,
 		}); err != nil {
