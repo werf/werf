@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path"
 	"sort"
 	"strings"
 	"time"
@@ -12,29 +13,27 @@ import (
 
 	"github.com/werf/logboek"
 	"github.com/werf/nelm/v2/pkg/action"
-	nelmcommon "github.com/werf/nelm/v2/pkg/common"
-	"github.com/werf/werf/v3/pkg/deploy/bundles/registry"
+	"github.com/werf/nelm/v2/pkg/helm/pkg/registry"
 	"github.com/werf/werf/v3/pkg/ref"
 )
 
 type PublishOptions struct {
 	// ChartPackOptions are the options to pack the chart with. The chart name and version are set
-	// from bundleRef.
+	// from the repo and the tag.
 	ChartPackOptions action.ChartPackOptions
-	HelmOptions      nelmcommon.HelmOptions
 }
 
 // Publish packs the chart and pushes it into repo under the chart version derived from tag and under
 // tag itself, both with "+" encoded as "_" as Helm does.
-func Publish(ctx context.Context, chartDir, repo, tag string, bundlesRegistryClient *registry.Client, opts PublishOptions) error {
-	sv, err := BundleTagToChartVersion(ctx, tag, time.Now())
+func Publish(ctx context.Context, chartDir, repo, tag string, registryClient *registry.Client, opts PublishOptions) error {
+	repo, err := normalizeRepo(repo)
 	if err != nil {
-		return fmt.Errorf("unable to set chart version from bundle tag %q: %w", tag, err)
+		return err
 	}
 
 	packOpts := opts.ChartPackOptions
-	packOpts.Name = chartNameFromRepo(repo)
-	packOpts.Version = sv.String()
+	packOpts.Name = path.Base(repo)
+	packOpts.Version = action.ChartVersionFromTag(ctx, tag, time.Now())
 
 	tags := chartTags(packOpts.Version, tag)
 
@@ -43,8 +42,8 @@ func Publish(ctx context.Context, chartDir, repo, tag string, bundlesRegistryCli
 		return fmt.Errorf("error parsing bundle ref: %w", err)
 	}
 
-	if strings.HasSuffix(tag, ".prov") {
-		return fmt.Errorf("tag %q is not allowed: tags ending in \".prov\" address provenance files", tag)
+	if err := checkTagIsNotProvenance(tag); err != nil {
+		return err
 	}
 
 	if err := checkChartTagsDoNotOverwriteImages(r.Repo, tags, packOpts.ExtraValues); err != nil {
@@ -76,9 +75,10 @@ func Publish(ctx context.Context, chartDir, repo, tag string, bundlesRegistryCli
 		}
 	}
 
-	if err := logboek.Context(ctx).Default().LogProcess("Saving bundle to the local chart helm cache").DoError(func() error {
-		if err := bundlesRegistryClient.SaveChartArchive(ctx, chartArchive, provenance, r, opts.HelmOptions); err != nil {
-			return fmt.Errorf("unable to save bundle to the local chart helm cache: %w", err)
+	var pushResult *registry.PushResult
+	if err := logboek.Context(ctx).LogProcess("Pushing bundle %s with tags %s", repo, strings.Join(tags, ", ")).DoError(func() error {
+		if pushResult, err = registryClient.PushContext(ctx, chartArchive, fmt.Sprintf("%s:%s", repo, packResult.ChartVersion), registry.PushOptProvData(provenance), registry.PushOptExtraTags(tags[1:])); err != nil {
+			return fmt.Errorf("push chart: %w", err)
 		}
 
 		return nil
@@ -86,11 +86,7 @@ func Publish(ctx context.Context, chartDir, repo, tag string, bundlesRegistryCli
 		return err
 	}
 
-	if err := logboek.Context(ctx).LogProcess("Pushing bundle %s with tags %s", repo, strings.Join(tags, ", ")).DoError(func() error {
-		return bundlesRegistryClient.PushChart(ctx, r, tags, opts.HelmOptions)
-	}); err != nil {
-		return err
-	}
+	logboek.Context(ctx).Default().LogF("Pushed bundle %s:%s (digest %s)\n", repo, tags[len(tags)-1], pushResult.Manifest.Digest)
 
 	return nil
 }
@@ -131,4 +127,27 @@ func checkChartTagsDoNotOverwriteImages(repo string, tags []string, serviceValue
 	}
 
 	return nil
+}
+
+// chartTags returns the tags to push a chart with chartVersion under: the version itself and the tag the user asked for, if it differs, both with "+", invalid in a tag, encoded as Helm does.
+func chartTags(chartVersion, tag string) []string {
+	versionTag := encodeTag(chartVersion)
+	tag = encodeTag(tag)
+	if tag == "" || tag == versionTag {
+		return []string{versionTag}
+	}
+
+	return []string{versionTag, tag}
+}
+
+func checkTagIsNotProvenance(tag string) error {
+	if strings.HasSuffix(tag, ".prov") {
+		return fmt.Errorf("tag %q is not allowed: tags ending in \".prov\" address provenance files", tag)
+	}
+
+	return nil
+}
+
+func encodeTag(tag string) string {
+	return strings.ReplaceAll(tag, "+", "_")
 }

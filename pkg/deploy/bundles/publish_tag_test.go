@@ -9,17 +9,16 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	"github.com/werf/nelm/v2/pkg/action"
 	"github.com/werf/werf/v3/pkg/logging"
 )
 
-var _ = Describe("BundleTagToChartVersion", func() {
+var _ = Describe("chart version from the bundle tag", func() {
 	now := time.Unix(1700000000, 0)
 
 	DescribeTable("should use only a strict semver tag as the chart version",
 		func(ctx context.Context, tag, expectedVersion string) {
-			sv, err := BundleTagToChartVersion(logging.WithLogger(ctx), tag, now)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(sv.String()).To(Equal(expectedVersion))
+			Expect(action.ChartVersionFromTag(logging.WithLogger(ctx), tag, now)).To(Equal(expectedVersion))
 		},
 		Entry("semver", "0.2.10", "0.2.10"),
 		Entry("semver with a prerelease", "1.24.425-prerelease11", "1.24.425-prerelease11"),

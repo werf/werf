@@ -117,7 +117,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	if defaultTag == "" {
 		defaultTag = "latest"
 	}
-	cmd.Flags().StringVarP(&cmdData.Tag, "tag", "", defaultTag, "Provide exact tag version or semver-based pattern, werf will install or upgrade to the latest version of the specified bundle ($WERF_TAG or latest by default)")
+	cmd.Flags().StringVarP(&cmdData.Tag, "tag", "", defaultTag, "Tag of the bundle to install or upgrade to ($WERF_TAG or latest by default)")
 	cmd.Flags().BoolVarP(&cmdData.DetailedExitCode, "exit-code", "", util.GetBoolEnvironmentDefaultFalse("WERF_EXIT_CODE"), "Return exit code 0 if no changes, 1 if error, 2 if resource changes planned, 3 if no resource changes planned, but release still should be installed (default $WERF_EXIT_CODE or false)")
 	cmd.Flags().BoolVarP(&cmdData.ShowInsignificantDiffs, "show-insignificant-diffs", "", util.GetBoolEnvironmentDefaultFalse("WERF_SHOW_INSIGNIFICANT_DIFFS"), "Show insignificant diff lines ($WERF_SHOW_INSIGNIFICANT_DIFFS by default)")
 	cmd.Flags().BoolVarP(&cmdData.ShowSensitiveDiffs, "show-sensitive-diffs", "", util.GetBoolEnvironmentDefaultFalse("WERF_SHOW_SENSITIVE_DIFFS"), "Show sensitive diff lines ($WERF_SHOW_SENSITIVE_DIFFS by default)")
@@ -181,10 +181,7 @@ func runPlan(ctx context.Context) error {
 		return fmt.Errorf("construct bundles registry client: %w", err)
 	}
 
-	if err := bundles.Pull(ctx, fmt.Sprintf("%s:%s", repoAddress, cmdData.Tag), bundlePath, bundlesRegistryClient, bundles.PullOptions{
-		HelmOptions: nelmcommon.HelmOptions{
-			ChartLoadOpts: nelmcommon.ChartLoadOptions{NoSecrets: true},
-		},
+	if err := bundles.Pull(ctx, repoAddress, cmdData.Tag, bundlePath, bundlesRegistryClient, bundles.PullOptions{
 		ProvenanceKeyring:  commonCmdData.ChartProvenanceKeyring,
 		ProvenanceStrategy: commonCmdData.ChartProvenanceStrategy,
 	}); err != nil {

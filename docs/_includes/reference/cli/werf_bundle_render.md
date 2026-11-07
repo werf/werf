@@ -271,8 +271,7 @@ werf bundle render [options]
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)
       --tag="latest"
-            Provide exact tag version or semver-based pattern, werf will render the latest version  
-            of the specified bundle ($WERF_TAG or latest by default)
+            Tag of the bundle to render ($WERF_TAG or latest by default)
       --templates-allow-dns=false
             Allow performing DNS requests in templating (default $WERF_TEMPLATES_ALLOW_DNS)
       --tmp-dir=""

@@ -6,7 +6,7 @@ import (
 	"github.com/werf/werf/v3/pkg/image"
 )
 
-func updateGlobalWerfValues(values map[string]interface{}, newRepo string, newImageRefs map[string]string) error {
+func updateGlobalWerfValues(values map[string]interface{}, newRepo string, newImageRefs, newImageDigests map[string]string) error {
 	globalVals, ok := values["global"].(map[string]interface{})
 	if !ok {
 		return nil
@@ -35,7 +35,10 @@ func updateGlobalWerfValues(values map[string]interface{}, newRepo string, newIm
 			continue
 		}
 
-		digest, _ := vals["digest"].(string)
+		digest, ok := newImageDigests[imageName]
+		if !ok {
+			digest, _ = vals["digest"].(string)
+		}
 
 		rebuilt, err := image.RebuildImageValuesMap(newRef, digest)
 		if err != nil {

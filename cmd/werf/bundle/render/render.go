@@ -111,7 +111,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 		defaultTag = "latest"
 	}
 	cmd.Flags().StringVarP(&cmdData.Tag, "tag", "", defaultTag,
-		"Provide exact tag version or semver-based pattern, werf will render the latest version of the specified bundle ($WERF_TAG or latest by default)")
+		"Tag of the bundle to render ($WERF_TAG or latest by default)")
 	cmd.Flags().BoolVarP(&cmdData.IncludeCRDs, "include-crds", "", util.GetBoolEnvironmentDefaultTrue("WERF_INCLUDE_CRDS"),
 		"Include CRDs in the templated output (default $WERF_INCLUDE_CRDS)")
 	cmd.Flags().StringVarP(&cmdData.RenderOutput, "output", "", os.Getenv("WERF_RENDER_OUTPUT"),
@@ -177,10 +177,7 @@ func runRender(ctx context.Context) error {
 		bundlePath = filepath.Join(werf.GetServiceDir(), "tmp", "bundles", uuid.NewString())
 		defer os.RemoveAll(bundlePath)
 
-		if err := bundles.Pull(ctx, fmt.Sprintf("%s:%s", repoAddress, cmdData.Tag), bundlePath, bundlesRegistryClient, bundles.PullOptions{
-			HelmOptions: nelmcommon.HelmOptions{
-				ChartLoadOpts: nelmcommon.ChartLoadOptions{NoSecrets: true},
-			},
+		if err := bundles.Pull(ctx, repoAddress, cmdData.Tag, bundlePath, bundlesRegistryClient, bundles.PullOptions{
 			ProvenanceKeyring:  commonCmdData.ChartProvenanceKeyring,
 			ProvenanceStrategy: commonCmdData.ChartProvenanceStrategy,
 		}); err != nil {

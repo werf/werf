@@ -328,8 +328,7 @@ werf bundle apply [options]
             Status progress period in seconds. Set -1 to stop showing status progress. Defaults to  
             $WERF_STATUS_PROGRESS_PERIOD_SECONDS or 5 seconds
       --tag="latest"
-            Provide exact tag version or semver-based pattern, werf will install or upgrade to the  
-            latest version of the specified bundle ($WERF_TAG or latest by default)
+            Tag of the bundle to install or upgrade to ($WERF_TAG or latest by default)
       --templates-allow-dns=false
             Allow performing DNS requests in templating (default $WERF_TEMPLATES_ALLOW_DNS)
   -t, --timeout=0
