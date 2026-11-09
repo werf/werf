@@ -2,6 +2,7 @@ package cleaning
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -273,7 +274,7 @@ func (m *cleanupManager) markWhitelistStagesAsProtected() {
 
 	for stageID, customTagList := range m.stageManager.GetCustomTagsMetadata() {
 		for _, customTag := range customTagList {
-			if !m.keepList.ContainsOne(customTag) {
+			if !m.keepList.ContainsOne(customTag.Tag) {
 				continue
 			}
 
@@ -294,14 +295,13 @@ func (m *cleanupManager) purgeImageMetadata(ctx context.Context) error {
 
 func (m *cleanupManager) skipStageIDsThatAreUsedInKubernetes(ctx context.Context, deployedDockerImages []*DeployedDockerImage) error {
 	handledDeployedStages := map[string]bool{}
-	handleTagFunc := func(tag, stageID string, f func()) {
-		dockerImageName := fmt.Sprintf("%s:%s", m.StorageManager.GetStagesStorage().Address(), tag)
+	handleTagFunc := func(dockerImageName, stageID string, f func()) {
 		for _, deployedDockerImage := range deployedDockerImages {
 			if deployedDockerImage.Name == dockerImageName {
 				if !handledDeployedStages[stageID] {
 					f()
 
-					logboek.Context(ctx).Default().LogFDetails("tag: %s\n", tag)
+					logboek.Context(ctx).Default().LogFDetails("name: %s\n", dockerImageName)
 					logboek.Context(ctx).Default().LogBlock("used by resources").Do(func() {
 						for _, cr := range deployedDockerImage.ContextResources {
 							for _, r := range cr.ResourcesNames {
@@ -320,17 +320,17 @@ func (m *cleanupManager) skipStageIDsThatAreUsedInKubernetes(ctx context.Context
 	}
 
 	for stageDesc := range m.stageManager.GetStageDescSet().Iter() {
-		tag := stageDesc.StageID.String()
 		stageID := stageDesc.StageID.String()
+		dockerImageName := fmt.Sprintf("%s:%s", m.StorageManager.GetStagesStorage().Address(), stageID)
 
-		handleTagFunc(tag, stageID, func() {
+		handleTagFunc(dockerImageName, stageID, func() {
 			m.stageManager.MarkStageDescAsProtected(stageDesc, stage_manager.ProtectionReasonKubernetesBasedPolicy, false)
 		})
 	}
 
 	for stageID, customTagList := range m.stageManager.GetCustomTagsMetadata() {
 		for _, customTag := range customTagList {
-			handleTagFunc(customTag, stageID, func() {
+			handleTagFunc(m.customTagImageName(customTag), stageID, func() {
 				stageDesc := m.stageManager.GetStageDescByStageID(stageID)
 				if stageDesc != nil {
 					// keep existent stage and associated custom tags
@@ -338,6 +338,9 @@ func (m *cleanupManager) skipStageIDsThatAreUsedInKubernetes(ctx context.Context
 				} else {
 					// keep custom tags that do not have associated existent stage
 					m.stageManager.ForgetCustomTagsByStageID(stageID)
+				}
+				if finalStageDesc := m.stageManager.GetFinalStageDescByStageID(stageID); finalStageDesc != nil {
+					m.stageManager.MarkFinalStageDescAsProtected(finalStageDesc, stage_manager.ProtectionReasonKubernetesBasedPolicy, false)
 				}
 			})
 		}
@@ -582,13 +585,28 @@ func (m *cleanupManager) printStageIDCommitListTable(ctx context.Context, imageN
 	}
 }
 
+func (m *cleanupManager) customTagImageName(tag storage.CustomTag) string {
+	repo := tag.Repo
+	if repo == "" {
+		repo = m.StorageManager.GetStagesStorage().Address()
+	}
+	return fmt.Sprintf("%s:%s", repo, tag.Tag)
+}
+
 func (m *cleanupManager) printStageIDCustomTagListTable(ctx context.Context) {
 	stageIDCustomTagList := m.stageManager.GetCustomTagsMetadata()
 	if len(stageIDCustomTagList) == 0 {
 		return
 	}
 
-	rows := m.prepareStageIDTableRows(ctx, stageIDCustomTagList)
+	stageIDCustomTagNameList := make(map[string][]string, len(stageIDCustomTagList))
+	for stageID, customTagList := range stageIDCustomTagList {
+		for _, customTag := range customTagList {
+			stageIDCustomTagNameList[stageID] = append(stageIDCustomTagNameList[stageID], customTag.String())
+		}
+	}
+
+	rows := m.prepareStageIDTableRows(ctx, stageIDCustomTagNameList)
 	if len(rows) != 0 {
 		tbl := table.New("Tag", "Custom tags")
 		tbl.WithWriter(logboek.Context(ctx).OutStream())
@@ -951,7 +969,7 @@ func (m *cleanupManager) deleteRejectedStagesWithLinkedTags(ctx context.Context)
 	return nil
 }
 
-func deleteRejectedStagesWithLinkedTags(ctx context.Context, storageManager manager.StorageManagerInterface, customTagsByStageID map[string][]string, dryRun bool, report *cleanup_report.Report) ([]string, error) {
+func deleteRejectedStagesWithLinkedTags(ctx context.Context, storageManager manager.StorageManagerInterface, customTagsByStageID map[string][]storage.CustomTag, dryRun bool, report *cleanup_report.Report) ([]string, error) {
 	stagesStorage := storageManager.GetStagesStorage()
 	rejectedStageIDs, err := stagesStorage.GetRejectedStageIDs(ctx, storage.WithCache())
 	if err != nil {
@@ -970,7 +988,7 @@ func deleteRejectedStagesWithLinkedTags(ctx context.Context, storageManager mana
 			report.AddDeleted(ctx, cleanup_report.Item{Type: cleanup_report.ItemTypeRejectedStage, Tag: stageIDStr})
 			for _, customTag := range customTagsByStageID[stageIDStr] {
 				logboek.Context(ctx).Default().LogFWithCustomStyle(deletedStyle, "  tag: %s\n", customTag)
-				report.AddDeleted(ctx, cleanup_report.Item{Type: cleanup_report.ItemTypeCustomTag, Tag: customTag})
+				report.AddDeleted(ctx, cleanup_report.Item{Type: cleanup_report.ItemTypeCustomTag, Tag: customTag.String()})
 			}
 			logboek.Context(ctx).Default().LogFWithCustomStyle(deletedStyle, "  tag: %s-rejected\n", stageIDStr)
 			report.AddDeleted(ctx, cleanup_report.Item{Type: cleanup_report.ItemTypeRejectedStageMarker, Tag: stageIDStr + "-rejected"})
@@ -1002,24 +1020,16 @@ func deleteRejectedStagesWithLinkedTags(ctx context.Context, storageManager mana
 
 		// 2. Linked custom tags — sequential (avoids parallel-of-parallel registry pressure).
 		// Fail-fast: leave marker untouched on any failure so the next cleanup retries.
-		metaStorage := storageManager.GetMetaStorage()
 		for _, customTag := range customTagsByStageID[stageIDStr] {
-			if err := stagesStorage.DeleteStageCustomTag(ctx, customTag); err != nil {
+			if err := storageManager.DeleteStageCustomTag(ctx, customTag); err != nil {
 				if err := handleDeletionError(err); err != nil {
 					return err
 				}
 				logboek.Context(ctx).Warn().LogF("WARNING: Custom tag %s linked to rejected stage %s deletion failed: %s; marker kept for retry\n", customTag, stageIDStr, err)
 				return nil
 			}
-			if err := metaStorage.UnregisterStageCustomTag(ctx, customTag); err != nil {
-				if err := handleDeletionError(err); err != nil {
-					return err
-				}
-				logboek.Context(ctx).Warn().LogF("WARNING: Custom tag %s metadata unregister for rejected stage %s failed: %s; marker kept for retry\n", customTag, stageIDStr, err)
-				return nil
-			}
 			logboek.Context(ctx).Default().LogFWithCustomStyle(deletedStyle, "  tag: %s\n", customTag)
-			report.AddDeleted(ctx, cleanup_report.Item{Type: cleanup_report.ItemTypeCustomTag, Tag: customTag})
+			report.AddDeleted(ctx, cleanup_report.Item{Type: cleanup_report.ItemTypeCustomTag, Tag: customTag.String()})
 		}
 
 		// 3. Rejected marker — only after stage image and all linked custom tags are gone.
@@ -1188,8 +1198,8 @@ func (m *cleanupManager) deleteUnusedCustomTags(ctx context.Context) error {
 		return nil
 	}
 
-	var customTagListToDelete []string
-	var customTagListToKeep []string
+	var customTagListToDelete []storage.CustomTag
+	var customTagListToKeep []storage.CustomTag
 	var numberOfCustomTags int
 	for stageID, customTagList := range stageIDCustomTagList {
 		numberOfCustomTags += len(customTagList)
@@ -1206,7 +1216,7 @@ func (m *cleanupManager) deleteUnusedCustomTags(ctx context.Context) error {
 			for _, customTag := range customTagListToKeep {
 				logboek.Context(ctx).Default().LogFWithCustomStyle(keptStyle, "  tag: %s\n", customTag)
 				logboek.Context(ctx).LogOptionalLn()
-				m.report.AddKept(ctx, cleanup_report.Item{Type: cleanup_report.ItemTypeCustomTag, Tag: customTag})
+				m.report.AddKept(ctx, cleanup_report.Item{Type: cleanup_report.ItemTypeCustomTag, Tag: customTag.String()})
 			}
 		})
 	}
@@ -1243,6 +1253,8 @@ Check --repo-github-token option.
 Be aware that the token provided to GitHub Actions workflow is not enough to remove package versions.`, err)
 	default:
 		if storage.IsImageDeletionFailedDueToUsingByContainerErr(err) {
+			return err
+		} else if errors.Is(err, manager.ErrCustomTagStorageUnavailable) {
 			return err
 		} else if strings.Contains(err.Error(), "UNAUTHORIZED") || strings.Contains(err.Error(), "UNSUPPORTED") {
 			return err

@@ -14,13 +14,13 @@ import (
 type Manager struct {
 	managedStageDescSet      *managedStageDescSet
 	finalManagedStageDescSet *managedStageDescSet
-	stageIDCustomTagList     map[string][]string
+	stageIDCustomTagList     map[string][]storage.CustomTag
 	imageMetadataList        []*imageMetadata
 }
 
 func NewManager() Manager {
 	return Manager{
-		stageIDCustomTagList:     map[string][]string{},
+		stageIDCustomTagList:     map[string][]storage.CustomTag{},
 		managedStageDescSet:      newManagedStageDescSet(image.NewStageDescSet()),
 		finalManagedStageDescSet: newManagedStageDescSet(image.NewStageDescSet()),
 	}
@@ -144,14 +144,14 @@ func (m *Manager) InitCustomTagsMetadata(ctx context.Context, storageManager man
 	return nil
 }
 
-func GetCustomTagsMetadata(ctx context.Context, storageManager manager.StorageManagerInterface) (map[string][]string, error) {
+func GetCustomTagsMetadata(ctx context.Context, storageManager manager.StorageManagerInterface) (map[string][]storage.CustomTag, error) {
 	stageCustomTagMetadataIDs, err := storageManager.GetMetaStorage().GetStageCustomTagMetadataIDs(ctx, storage.WithCache())
 	if err != nil {
 		return nil, fmt.Errorf("unable to get stage custom tag metadata IDs: %w", err)
 	}
 
 	var mutex sync.Mutex
-	stageIDCustomTagList := make(map[string][]string)
+	stageIDCustomTagList := make(map[string][]storage.CustomTag)
 	err = storageManager.ForEachGetStageCustomTagMetadata(ctx, stageCustomTagMetadataIDs, func(ctx context.Context, metadataID string, metadata *storage.CustomTagMetadata, err error) error {
 		if storage.IsErrCustomTagMetadataNotFound(err) || storage.IsErrBrokenImage(err) {
 			logboek.Context(ctx).Warn().LogF("WARNING: Skipping invalid custom tag metadata %s\n", metadataID)
@@ -164,7 +164,7 @@ func GetCustomTagsMetadata(ctx context.Context, storageManager manager.StorageMa
 		mutex.Lock()
 		defer mutex.Unlock()
 
-		stageIDCustomTagList[metadata.StageID] = append(stageIDCustomTagList[metadata.StageID], metadata.Tag)
+		stageIDCustomTagList[metadata.StageID] = append(stageIDCustomTagList[metadata.StageID], metadata.CustomTag())
 
 		return nil
 	})
@@ -321,11 +321,15 @@ func (m *Manager) GetStageDescByStageID(stageID string) *image.StageDesc {
 	return m.managedStageDescSet.GetStageDescByStageID(stageID)
 }
 
+func (m *Manager) GetFinalStageDescByStageID(stageID string) *image.StageDesc {
+	return m.finalManagedStageDescSet.GetStageDescByStageID(stageID)
+}
+
 func (m *Manager) ContainsStageDescByStageID(stageID string) bool {
 	return m.managedStageDescSet.GetStageDescByStageID(stageID) != nil
 }
 
-func (m *Manager) GetCustomTagsMetadata() map[string][]string {
+func (m *Manager) GetCustomTagsMetadata() map[string][]storage.CustomTag {
 	return m.stageIDCustomTagList
 }
 

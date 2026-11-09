@@ -66,11 +66,15 @@ func (f *fakePrimaryStagesStorage) DeleteStageCustomTag(_ context.Context, tag s
 	return f.deleteTagErrs[tag]
 }
 
-func (f *fakePrimaryStagesStorage) UnregisterStageCustomTag(_ context.Context, tag string) error {
+func (f *fakePrimaryStagesStorage) UnregisterStageCustomTag(_ context.Context, tag storage.CustomTag) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	f.unregisteredTags = append(f.unregisteredTags, tag)
-	return f.unregisterTagErrs[tag]
+	f.unregisteredTags = append(f.unregisteredTags, tag.String())
+	return f.unregisterTagErrs[tag.Tag]
+}
+
+func (f *fakePrimaryStagesStorage) Address() string {
+	return "example.com/primary"
 }
 
 type fakeStorageManager struct {
@@ -126,13 +130,26 @@ func (f *fakeStorageManager) ForEachRejectedStage(ctx context.Context, stageIDs 
 	return nil
 }
 
-func (f *fakeStorageManager) ForEachDeleteStageCustomTag(ctx context.Context, tags []string, cb func(ctx context.Context, tag string, err error) error) error {
+func (f *fakeStorageManager) ForEachDeleteStageCustomTag(ctx context.Context, tags []storage.CustomTag, cb func(ctx context.Context, tag storage.CustomTag, err error) error) error {
 	for _, tag := range tags {
-		if err := cb(ctx, tag, f.stages.deleteTagErrs[tag]); err != nil {
+		if err := cb(ctx, tag, f.DeleteStageCustomTag(ctx, tag)); err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+// DeleteStageCustomTag mirrors the real manager: the alias goes to the storage
+// of the tag's repo, the record to the meta storage. Only the primary repo is
+// known to this fake, so a tag of any other repo is an error.
+func (f *fakeStorageManager) DeleteStageCustomTag(ctx context.Context, tag storage.CustomTag) error {
+	if tag.Repo != "" && tag.Repo != f.stages.Address() {
+		return fmt.Errorf("%w: unknown custom tag repo %q", manager.ErrCustomTagStorageUnavailable, tag.Repo)
+	}
+	if err := f.stages.DeleteStageCustomTag(ctx, tag.Tag); err != nil {
+		return err
+	}
+	return f.meta.UnregisterStageCustomTag(ctx, tag)
 }
 
 func TestDeleteRejectedStagesWithLinkedTags_NoRejected(t *testing.T) {
@@ -154,9 +171,9 @@ func TestDeleteRejectedStagesWithLinkedTags_OrderStageThenTagsThenMarker(t *test
 	sm := newFakeStorageManager()
 	sm.stages.rejectedStageIDs = []image.StageID{*stageID}
 
-	customTagsByStageID := map[string][]string{
-		stageID.String():      {"v1.0.0", "latest"},
-		otherStageID.String(): {"unrelated"},
+	customTagsByStageID := map[string][]storage.CustomTag{
+		stageID.String():      {{Tag: "v1.0.0"}, {Tag: "latest"}},
+		otherStageID.String(): {{Tag: "unrelated"}},
 	}
 
 	deleted, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, customTagsByStageID, false, nil)
@@ -175,7 +192,7 @@ func TestDeleteRejectedStagesWithLinkedTags_DryRun(t *testing.T) {
 	sm := newFakeStorageManager()
 	sm.stages.rejectedStageIDs = []image.StageID{*stageID}
 
-	deleted, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, map[string][]string{stageID.String(): {"v1.0.0"}}, true, nil)
+	deleted, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, map[string][]storage.CustomTag{stageID.String(): {{Tag: "v1.0.0"}}}, true, nil)
 	require.NoError(t, err)
 	assert.Equal(t, []string{stageID.String()}, deleted)
 	assert.Empty(t, sm.stages.deletedImages, "dry run must not touch registry")
@@ -200,7 +217,7 @@ func TestDeleteRejectedStagesWithLinkedTags_StageImageNonFatalFailureKeepsMarker
 	sm.stages.rejectedStageIDs = []image.StageID{*stageID}
 	sm.stages.deleteImageErrs[stageID.String()] = errors.New("temporary network glitch")
 
-	deleted, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, map[string][]string{stageID.String(): {"v1.0.0"}}, false, nil)
+	deleted, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, map[string][]storage.CustomTag{stageID.String(): {{Tag: "v1.0.0"}}}, false, nil)
 	require.NoError(t, err)
 
 	assert.Empty(t, deleted, "stage image deletion failed: stage not reported deleted, retry on next cleanup")
@@ -230,7 +247,7 @@ func TestDeleteRejectedStagesWithLinkedTags_CustomTagFailureKeepsMarker(t *testi
 	sm.stages.rejectedStageIDs = []image.StageID{*stageID}
 	sm.stages.deleteTagErrs["v1.0.0"] = errors.New("temporary network glitch")
 
-	deleted, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, map[string][]string{stageID.String(): {"v1.0.0", "latest"}}, false, nil)
+	deleted, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, map[string][]storage.CustomTag{stageID.String(): {{Tag: "v1.0.0"}, {Tag: "latest"}}}, false, nil)
 	require.NoError(t, err)
 
 	assert.Empty(t, deleted, "stage with failed custom tag must NOT be reported deleted")
@@ -246,7 +263,7 @@ func TestDeleteRejectedStagesWithLinkedTags_RoutesUnregisterToMetaStorage(t *tes
 	sm := newFakeStorageManagerWithSplitStorages()
 	sm.stages.rejectedStageIDs = []image.StageID{*stageID}
 
-	deleted, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, map[string][]string{stageID.String(): {"v1.0.0", "latest"}}, false, nil)
+	deleted, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, map[string][]storage.CustomTag{stageID.String(): {{Tag: "v1.0.0"}, {Tag: "latest"}}}, false, nil)
 	require.NoError(t, err)
 
 	assert.Equal(t, []string{stageID.String()}, deleted)
@@ -265,7 +282,7 @@ func TestDeleteRejectedStagesWithLinkedTags_UnregisterFailureKeepsMarker(t *test
 	sm.stages.rejectedStageIDs = []image.StageID{*stageID}
 	sm.meta.unregisterTagErrs["v1.0.0"] = errors.New("temporary network glitch")
 
-	deleted, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, map[string][]string{stageID.String(): {"v1.0.0", "latest"}}, false, nil)
+	deleted, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, map[string][]storage.CustomTag{stageID.String(): {{Tag: "v1.0.0"}, {Tag: "latest"}}}, false, nil)
 	require.NoError(t, err)
 
 	assert.Empty(t, deleted, "stage with failed metadata unregister must NOT be reported deleted")
@@ -302,7 +319,7 @@ func TestDeleteRejectedStagesWithLinkedTags_ReportRecordsEachSubAction(t *testin
 
 	report := newTestReport()
 
-	_, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, map[string][]string{stageID.String(): {"v1.0.0", "latest"}}, false, report)
+	_, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, map[string][]storage.CustomTag{stageID.String(): {{Tag: "v1.0.0"}, {Tag: "latest"}}}, false, report)
 	require.NoError(t, err)
 
 	assert.ElementsMatch(t, []cleanup_report.Item{
@@ -316,7 +333,7 @@ func TestDeleteRejectedStagesWithLinkedTags_ReportRecordsEachSubAction(t *testin
 
 func TestDeleteRejectedStagesWithLinkedTags_ReportDryRunMatchesRealRun(t *testing.T) {
 	stageID := image.NewStageID("deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef", 1700000000)
-	customTagsByStageID := map[string][]string{stageID.String(): {"v1.0.0", "latest"}}
+	customTagsByStageID := map[string][]storage.CustomTag{stageID.String(): {{Tag: "v1.0.0"}, {Tag: "latest"}}}
 
 	realSM := newFakeStorageManager()
 	realSM.stages.rejectedStageIDs = []image.StageID{*stageID}
@@ -343,7 +360,7 @@ func TestDeleteRejectedStagesWithLinkedTags_ReportSkipsFailedCustomTagAndCancele
 
 	report := newTestReport()
 
-	_, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, map[string][]string{stageID.String(): {"v1.0.0", "latest"}}, false, report)
+	_, err := deleteRejectedStagesWithLinkedTags(context.Background(), sm, map[string][]storage.CustomTag{stageID.String(): {{Tag: "v1.0.0"}, {Tag: "latest"}}}, false, report)
 	require.NoError(t, err)
 
 	assert.Equal(t, []cleanup_report.Item{
@@ -373,12 +390,12 @@ func TestDeleteRejectedStagesWithLinkedTags_NilReportChangesNothing(t *testing.T
 
 	withReport := newFakeStorageManager()
 	withReport.stages.rejectedStageIDs = []image.StageID{*stageID}
-	deletedWith, err := deleteRejectedStagesWithLinkedTags(context.Background(), withReport, map[string][]string{stageID.String(): {"v1.0.0"}}, false, newTestReport())
+	deletedWith, err := deleteRejectedStagesWithLinkedTags(context.Background(), withReport, map[string][]storage.CustomTag{stageID.String(): {{Tag: "v1.0.0"}}}, false, newTestReport())
 	require.NoError(t, err)
 
 	withoutReport := newFakeStorageManager()
 	withoutReport.stages.rejectedStageIDs = []image.StageID{*stageID}
-	deletedWithout, err := deleteRejectedStagesWithLinkedTags(context.Background(), withoutReport, map[string][]string{stageID.String(): {"v1.0.0"}}, false, nil)
+	deletedWithout, err := deleteRejectedStagesWithLinkedTags(context.Background(), withoutReport, map[string][]storage.CustomTag{stageID.String(): {{Tag: "v1.0.0"}}}, false, nil)
 	require.NoError(t, err)
 
 	assert.Equal(t, deletedWith, deletedWithout)
@@ -393,15 +410,26 @@ func TestDeleteCustomTags_ReportRecordsOnlySucceeded(t *testing.T) {
 
 	report := newTestReport()
 
-	require.NoError(t, deleteCustomTags(context.Background(), sm, []string{"kept-alive", "broken"}, false, report))
+	require.NoError(t, deleteCustomTags(context.Background(), sm, []storage.CustomTag{{Tag: "kept-alive"}, {Tag: "broken"}}, false, report))
 
 	assert.Equal(t, []cleanup_report.Item{
 		{Type: cleanup_report.ItemTypeCustomTag, Tag: "kept-alive"},
 	}, report.Deleted, "a tag logged as deleted after a failed deletion must not be reported")
 }
 
+func TestDeleteCustomTags_UnreachableRepoFailsInsteadOfBeingSkipped(t *testing.T) {
+	sm := newFakeStorageManager()
+	report := newTestReport()
+
+	err := deleteCustomTags(context.Background(), sm, []storage.CustomTag{{Repo: "example.com/elsewhere", Tag: "main"}}, false, report)
+
+	require.ErrorIs(t, err, manager.ErrCustomTagStorageUnavailable)
+	assert.Empty(t, sm.stages.deletedTags, "nothing may be deleted from the primary repo in place of the unreachable one")
+	assert.Empty(t, report.Deleted)
+}
+
 func TestDeleteCustomTags_ReportDryRunMatchesRealRun(t *testing.T) {
-	tags := []string{"one", "two"}
+	tags := []storage.CustomTag{{Tag: "one"}, {Tag: "two"}}
 
 	realReport := newTestReport()
 	require.NoError(t, deleteCustomTags(context.Background(), newFakeStorageManager(), tags, false, realReport))
@@ -587,5 +615,43 @@ var _ = ginkgo.Describe("Cleanup keep list", func() {
 		ginkgo.Entry("by custom tag", []string{"main"}, true),
 		ginkgo.Entry("custom tag of a missing stage protects nothing", []string{"orphan"}, false),
 		ginkgo.Entry("unrelated tag protects nothing", []string{"other"}, false),
+	)
+})
+
+var _ = ginkgo.Describe("Cleanup Kubernetes-based policy for custom tags", func() {
+	ginkgo.DescribeTable("protects the stage a deployed custom tag points to, in the repository the tag lives in",
+		func(customTag storage.CustomTag, deployedImage string, primaryExists, expectPrimaryProtected, expectFinalProtected bool) {
+			ctx := context.Background()
+			stageID := image.NewStageID("ff0011", 1748001122334)
+			primaryStageDesc := newTestStageDesc("example.com/primary", stageID)
+			finalStageDesc := newTestStageDesc("example.com/primary/install", stageID)
+
+			storageManager := newFakeStorageManager()
+			storageManager.stageDescSet = image.NewStageDescSet()
+			if primaryExists {
+				storageManager.stageDescSet.Add(primaryStageDesc)
+			}
+			storageManager.finalStageDescSet = image.NewStageDescSet(finalStageDesc)
+			storageManager.meta.customTags = []*storage.CustomTagMetadata{
+				{StageID: stageID.String(), Tag: customTag.Tag, Repo: customTag.Repo},
+			}
+
+			stageManager := stage_manager.NewManager()
+			gomega.Expect(stageManager.InitStageDescSet(ctx, storageManager)).To(gomega.Succeed())
+			gomega.Expect(stageManager.InitFinalStageDescSet(ctx, storageManager)).To(gomega.Succeed())
+			gomega.Expect(stageManager.InitCustomTagsMetadata(ctx, storageManager)).To(gomega.Succeed())
+
+			cleanup := &cleanupManager{stageManager: stageManager, StorageManager: storageManager}
+			deployed := []*DeployedDockerImage{{Name: deployedImage}}
+			gomega.Expect(cleanup.skipStageIDsThatAreUsedInKubernetes(ctx, deployed)).To(gomega.Succeed())
+
+			gomega.Expect(stageManager.GetProtectedStageDescSet().Contains(primaryStageDesc)).To(gomega.Equal(expectPrimaryProtected))
+			gomega.Expect(stageManager.GetFinalProtectedStageDescSet().Contains(finalStageDesc)).To(gomega.Equal(expectFinalProtected))
+		},
+		ginkgo.Entry("primary-repo tag deployed", storage.CustomTag{Tag: "main"}, "example.com/primary:main", true, true, true),
+		ginkgo.Entry("final-repo tag deployed", storage.CustomTag{Repo: "example.com/primary/install", Tag: "main"}, "example.com/primary/install:main", true, true, true),
+		ginkgo.Entry("final-repo tag deployed, primary stage already gone", storage.CustomTag{Repo: "example.com/primary/install", Tag: "main"}, "example.com/primary/install:main", false, false, true),
+		ginkgo.Entry("final-repo tag is not matched by the primary repo name", storage.CustomTag{Repo: "example.com/primary/install", Tag: "main"}, "example.com/primary:main", true, false, false),
+		ginkgo.Entry("undeployed tag protects nothing", storage.CustomTag{Tag: "main"}, "example.com/other:main", true, false, false),
 	)
 })

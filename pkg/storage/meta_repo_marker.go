@@ -262,14 +262,14 @@ func (s *metaRepoMarkerStorage) RmImageMetadata(ctx context.Context, projectName
 	return s.PrimaryStagesStorage.RmImageMetadata(ctx, projectName, imageNameOrManagedImageNameOrImageMetadataID, commit, stageID)
 }
 
-func (s *metaRepoMarkerStorage) RegisterStageCustomTag(ctx context.Context, projectName string, stageDesc *image.StageDesc, tag string) error {
+func (s *metaRepoMarkerStorage) RegisterStageCustomTag(ctx context.Context, projectName string, stageDesc *image.StageDesc, tag CustomTag) error {
 	if err := s.ensure(ctx); err != nil {
 		return err
 	}
 	return s.PrimaryStagesStorage.RegisterStageCustomTag(ctx, projectName, stageDesc, tag)
 }
 
-func (s *metaRepoMarkerStorage) UnregisterStageCustomTag(ctx context.Context, tag string) error {
+func (s *metaRepoMarkerStorage) UnregisterStageCustomTag(ctx context.Context, tag CustomTag) error {
 	if err := s.ensure(ctx); err != nil {
 		return err
 	}

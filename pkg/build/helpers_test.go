@@ -469,6 +469,7 @@ var _ manager.StorageManagerInterface = (*checkModeStorageManager)(nil)
 type checkModeStorageManager struct {
 	manager.StorageManagerInterface
 	stagesStorage *checkModeStorage
+	finalStorages []storage.StagesStorage
 }
 
 func (m *checkModeStorageManager) GetStagesStorage() storage.PrimaryStagesStorage {
@@ -482,19 +483,28 @@ func (m *checkModeStorageManager) GetMetaStorage() storage.PrimaryStagesStorage 
 func (m *checkModeStorageManager) GetFinalStagesStorage() storage.StagesStorage { return nil }
 
 func (m *checkModeStorageManager) GetFinalStagesStorageList(context.Context) []storage.StagesStorage {
-	return nil
+	return m.finalStorages
 }
 
 var _ storage.PrimaryStagesStorage = (*checkModeStorage)(nil)
 
 type checkModeStorage struct {
 	storage.PrimaryStagesStorage
-	desc         *imagePkg.StageDesc
-	writes       []string
-	customTagErr error
+	address        string
+	desc           *imagePkg.StageDesc
+	writes         []string
+	registeredTags []storage.CustomTag
+	customTagErr   error
 }
 
 func (s *checkModeStorage) String() string { return "check-mode-test" }
+
+func (s *checkModeStorage) Address() string {
+	if s.address != "" {
+		return s.address
+	}
+	return "check-mode-test"
+}
 
 func (s *checkModeStorage) ConstructStageImageName(projectName, digest string, creationTs int64) string {
 	return projectName + ":" + digest
@@ -539,8 +549,9 @@ func (s *checkModeStorage) AddStageCustomTag(_ context.Context, _ *imagePkg.Stag
 	return nil
 }
 
-func (s *checkModeStorage) RegisterStageCustomTag(_ context.Context, _ string, _ *imagePkg.StageDesc, _ string) error {
+func (s *checkModeStorage) RegisterStageCustomTag(_ context.Context, _ string, _ *imagePkg.StageDesc, tag storage.CustomTag) error {
 	s.writes = append(s.writes, "RegisterStageCustomTag")
+	s.registeredTags = append(s.registeredTags, tag)
 	return nil
 }
 

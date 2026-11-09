@@ -64,6 +64,14 @@ werf build --repo REPO --add-custom-tag main --add-custom-tag latest --add-custo
 werf build --repo REPO --add-custom-tag "%image%-latest"
 ```
 
+С `--final-repo` произвольные теги добавляются в final-репозиторий, а не в `--repo`. werf запоминает, в каком репозитории находится каждый произвольный тег, поэтому `werf cleanup` удаляет тег из этого репозитория вместе со стадией, а одно и то же имя тега можно использовать сразу в нескольких final-репозиториях — например, опубликовать `app` как `REPO:main`, а `app/install` как `REPO/install:main`:
+
+```shell
+werf build --repo REPO
+werf build app --repo REPO --require-built-images --add-custom-tag main
+werf build app/install --repo REPO --require-built-images --final-repo REPO/install --add-custom-tag main
+```
+
 > **ЗАМЕЧАНИЕ:** При использовании опций создаются **дополнительные теги-алиасы**, ссылающиеся на автоматические теги-хэши. Полное отключение создания автоматических тегов не предусматривается.
 
 ## Послойное кэширование образов

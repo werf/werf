@@ -148,5 +148,33 @@ func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfi
 		FinalStagesStorageList:     finalStagesStorageList,
 		CacheStagesStorageList:     cacheStagesStorageList,
 		SecondaryStagesStorageList: secondaryStagesStorageList,
+		NewStagesStorageByAddress: func(ctx context.Context, address string) (storage.StagesStorage, error) {
+			return getStagesStorageByAddress(ctx, c.ContainerBackend, c.CmdData, address)
+		},
 	}, nil
+}
+
+// getStagesStorageByAddress creates a stages storage for an arbitrary
+// repository with the primary repo credentials and registry options.
+func getStagesStorageByAddress(ctx context.Context, containerBackend container_backend.ContainerBackend, cmdData *CmdData, address string) (storage.StagesStorage, error) {
+	buildahMode, _, err := GetBuildahMode()
+	if err != nil {
+		return nil, fmt.Errorf("unable to determine buildah mode: %w", err)
+	}
+
+	insecureRegistryHosts, err := GetInsecureRegistryHosts(ctx, cmdData, *buildahMode)
+	if err != nil {
+		return nil, fmt.Errorf("get insecure registry hosts: %w", err)
+	}
+
+	repoData := *cmdData.Repo
+	repoData.MultipleAddresses = false
+	repoData.Address = &address
+	return repoData.CreateStagesStorage(ctx, &CreateStagesStorageOptions{
+		ContainerBackend:      containerBackend,
+		InsecureRegistry:      *cmdData.InsecureRegistry,
+		SkipTlsVerifyRegistry: *cmdData.SkipTlsVerifyRegistry,
+		InsecureRegistryHosts: insecureRegistryHosts,
+		SkipMetaCheck:         true,
+	})
 }

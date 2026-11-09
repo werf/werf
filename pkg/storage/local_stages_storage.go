@@ -568,11 +568,11 @@ func (storage *LocalStagesStorage) GetStageCustomTagMetadata(_ context.Context, 
 	return nil, fmt.Errorf("not implemented")
 }
 
-func (storage *LocalStagesStorage) RegisterStageCustomTag(_ context.Context, _ string, _ *image.StageDesc, tag string) error {
+func (storage *LocalStagesStorage) RegisterStageCustomTag(_ context.Context, _ string, _ *image.StageDesc, _ CustomTag) error {
 	return nil
 }
 
-func (storage *LocalStagesStorage) UnregisterStageCustomTag(_ context.Context, _ string) error {
+func (storage *LocalStagesStorage) UnregisterStageCustomTag(_ context.Context, _ CustomTag) error {
 	return nil
 }
 

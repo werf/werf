@@ -461,11 +461,11 @@ var _ = Describe("meta-repo marker", func() {
 			}),
 			Entry("RegisterStageCustomTag", func(ctx context.Context, d *metaRepoMarkerStorage) error {
 				stageDesc := &image.StageDesc{StageID: image.NewStageID("digest", 1)}
-				return d.RegisterStageCustomTag(ctx, proj, stageDesc, "release")
+				return d.RegisterStageCustomTag(ctx, proj, stageDesc, CustomTag{Tag: "release"})
 			}),
 			Entry("UnregisterStageCustomTag", func(ctx context.Context, d *metaRepoMarkerStorage) error {
 				reg.put(makeRepoCustomTagMetadataRecord(metaRepo, "release"), nil)
-				return d.UnregisterStageCustomTag(ctx, "release")
+				return d.UnregisterStageCustomTag(ctx, CustomTag{Tag: "release"})
 			}),
 			Entry("PostLastCleanupRecord", func(ctx context.Context, d *metaRepoMarkerStorage) error {
 				return d.PostLastCleanupRecord(ctx, proj)

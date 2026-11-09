@@ -478,8 +478,8 @@ func (storage *RepoStagesStorage) DeleteStageCustomTag(ctx context.Context, tag 
 	return nil
 }
 
-func (storage *RepoStagesStorage) addStageCustomTagMetadata(ctx context.Context, projectName string, stageDesc *image.StageDesc, tag string) error {
-	fullImageName := makeRepoCustomTagMetadataRecord(storage.RepoAddress, tag)
+func (storage *RepoStagesStorage) addStageCustomTagMetadata(ctx context.Context, projectName string, stageDesc *image.StageDesc, tag CustomTag) error {
+	fullImageName := makeRepoCustomTagMetadataRecord(storage.RepoAddress, tag.metadataID())
 	metadata := newCustomTagMetadata(stageDesc.StageID.String(), tag)
 	opts := &docker_registry.PushImageOptions{
 		Labels: metadata.ToLabels(),
@@ -495,8 +495,8 @@ func (storage *RepoStagesStorage) addStageCustomTagMetadata(ctx context.Context,
 	return nil
 }
 
-func (storage *RepoStagesStorage) deleteStageCustomTagMetadata(ctx context.Context, tagOrID string) error {
-	fullImageName := makeRepoCustomTagMetadataRecord(storage.RepoAddress, tagOrID)
+func (storage *RepoStagesStorage) deleteStageCustomTagMetadata(ctx context.Context, tag CustomTag) error {
+	fullImageName := makeRepoCustomTagMetadataRecord(storage.RepoAddress, tag.metadataID())
 	imgInfo, err := storage.DockerRegistry.GetRepoImage(ctx, fullImageName)
 	if err != nil {
 		return fmt.Errorf("unable to get repo image %q info: %w", fullImageName, err)
@@ -513,8 +513,8 @@ func (storage *RepoStagesStorage) deleteStageCustomTagMetadata(ctx context.Conte
 	return nil
 }
 
-func (storage *RepoStagesStorage) GetStageCustomTagMetadata(ctx context.Context, tagOrID string) (*CustomTagMetadata, error) {
-	fullImageName := makeRepoCustomTagMetadataRecord(storage.RepoAddress, tagOrID)
+func (storage *RepoStagesStorage) GetStageCustomTagMetadata(ctx context.Context, id string) (*CustomTagMetadata, error) {
+	fullImageName := makeRepoCustomTagMetadataRecord(storage.RepoAddress, id)
 	img, err := storage.DockerRegistry.GetRepoImage(ctx, fullImageName)
 	if err != nil {
 		if docker_registry.IsImageNotFoundError(err) {
@@ -554,14 +554,14 @@ func (storage *RepoStagesStorage) GetStageCustomTagMetadataIDs(ctx context.Conte
 	return res, nil
 }
 
-func (storage *RepoStagesStorage) RegisterStageCustomTag(ctx context.Context, projectName string, stageDesc *image.StageDesc, tag string) error {
+func (storage *RepoStagesStorage) RegisterStageCustomTag(ctx context.Context, projectName string, stageDesc *image.StageDesc, tag CustomTag) error {
 	if err := storage.addStageCustomTagMetadata(ctx, projectName, stageDesc, tag); err != nil {
 		return fmt.Errorf("unable to add stage custom tag metadata: %w", err)
 	}
 	return nil
 }
 
-func (storage *RepoStagesStorage) UnregisterStageCustomTag(ctx context.Context, tag string) error {
+func (storage *RepoStagesStorage) UnregisterStageCustomTag(ctx context.Context, tag CustomTag) error {
 	if err := storage.deleteStageCustomTagMetadata(ctx, tag); err != nil {
 		return fmt.Errorf("unable to delete stage custom tag metadata: %w", err)
 	}
@@ -864,8 +864,8 @@ func (storage *RepoStagesStorage) Address() string {
 	return storage.RepoAddress
 }
 
-func makeRepoCustomTagMetadataRecord(repoAddress, tag string) string {
-	return fmt.Sprintf(RepoCustomTagMetadata_ImageNameFormat, repoAddress, slug.LimitedSlug(tag, 48))
+func makeRepoCustomTagMetadataRecord(repoAddress, id string) string {
+	return fmt.Sprintf(RepoCustomTagMetadata_ImageNameFormat, repoAddress, id)
 }
 
 func makeRepoManagedImageRecord(repoAddress, imageNameOrManagedImageName string) string {

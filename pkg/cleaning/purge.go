@@ -148,7 +148,7 @@ func (m *purgeManager) deleteCustomTags(ctx context.Context) error {
 	}
 
 	if err := logboek.Context(ctx).LogProcess("Deleting custom tags").DoError(func() error {
-		var customTagList []string
+		var customTagList []storage.CustomTag
 		for _, list := range stageIDCustomTagList {
 			customTagList = append(customTagList, list...)
 		}
@@ -165,24 +165,24 @@ func (m *purgeManager) deleteCustomTags(ctx context.Context) error {
 	return nil
 }
 
-func deleteCustomTags(ctx context.Context, storageManager manager.StorageManagerInterface, customTagList []string, dryRun bool, report *cleanup_report.Report) error {
+func deleteCustomTags(ctx context.Context, storageManager manager.StorageManagerInterface, customTagList []storage.CustomTag, dryRun bool, report *cleanup_report.Report) error {
 	if dryRun {
 		for _, customTag := range customTagList {
 			logboek.Context(ctx).Default().LogFWithCustomStyle(deletedStyle, "  tag: %s\n", customTag)
 			logboek.Context(ctx).Default().LogOptionalLn()
-			report.AddDeleted(ctx, cleanup_report.Item{Type: cleanup_report.ItemTypeCustomTag, Tag: customTag})
+			report.AddDeleted(ctx, cleanup_report.Item{Type: cleanup_report.ItemTypeCustomTag, Tag: customTag.String()})
 		}
 
 		return nil
 	}
 
-	if err := storageManager.ForEachDeleteStageCustomTag(ctx, customTagList, func(ctx context.Context, tag string, err error) error {
+	if err := storageManager.ForEachDeleteStageCustomTag(ctx, customTagList, func(ctx context.Context, tag storage.CustomTag, err error) error {
 		if err != nil {
 			if err := handleDeletionError(err); err != nil {
 				return err
 			}
 		} else {
-			report.AddDeleted(ctx, cleanup_report.Item{Type: cleanup_report.ItemTypeCustomTag, Tag: tag})
+			report.AddDeleted(ctx, cleanup_report.Item{Type: cleanup_report.ItemTypeCustomTag, Tag: tag.String()})
 		}
 
 		logboek.Context(ctx).Default().LogFWithCustomStyle(deletedStyle, "  tag: %s\n", tag)

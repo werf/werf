@@ -11,6 +11,7 @@ import (
 	"github.com/werf/werf/v3/pkg/build/image"
 	"github.com/werf/werf/v3/pkg/config"
 	imagePkg "github.com/werf/werf/v3/pkg/image"
+	"github.com/werf/werf/v3/pkg/storage"
 )
 
 var _ = ginkgo.Describe("Check mode image publication", func() {
@@ -110,5 +111,21 @@ var _ = ginkgo.Describe("Check mode image publication", func() {
 			}
 			return phase.publishMultiplatformImageCustomTags(context.Background(), "image0", img)
 		}, []string{"AddManagedImage", "PostMultiplatformImage", "PutImageMetadata", "AddStageCustomTag", "RegisterStageCustomTag"}),
+	)
+
+	ginkgo.DescribeTable("records the repo a custom tag was placed in", func(ctx ginkgo.SpecContext, finalRepo, expectedRepo string) {
+		phase, stagesStorage := newPhase(false)
+		stagesStorage.address = "registry.example.com/app"
+		if finalRepo != "" {
+			phase.Conveyor.StorageManager.(*checkModeStorageManager).finalStorages = []storage.StagesStorage{
+				&checkModeStorage{address: finalRepo, desc: stageDesc},
+			}
+		}
+
+		gomega.Expect(phase.publishImageMetadata(ctx, "image0", singlePlatformImage())).To(gomega.Succeed())
+		gomega.Expect(stagesStorage.registeredTags).To(gomega.Equal([]storage.CustomTag{{Repo: expectedRepo, Tag: "custom"}}))
+	},
+		ginkgo.Entry("tag in the stages repo has no repo", "", ""),
+		ginkgo.Entry("tag in a final repo carries that repo", "registry.example.com/app/install", "registry.example.com/app/install"),
 	)
 })

@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 	"testing"
 
@@ -23,6 +24,7 @@ type fakeRegistry struct {
 
 	tryGetInfo map[string]*image.Info
 	tryGetErr  map[string]error
+	repoImages map[string]*image.Info
 
 	deleteErrs map[string][]error
 	deleteCall map[string]int
@@ -53,6 +55,15 @@ func (r *fakeRegistry) TryGetRepoImage(_ context.Context, reference string) (*im
 		return nil, err
 	}
 	return r.tryGetInfo[reference], nil
+}
+
+func (r *fakeRegistry) GetRepoImage(_ context.Context, reference string) (*image.Info, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if info, ok := r.repoImages[reference]; ok {
+		return info, nil
+	}
+	return nil, fmt.Errorf("%s: MANIFEST_UNKNOWN", reference)
 }
 
 func (r *fakeRegistry) DeleteRepoImage(_ context.Context, info *image.Info) error {

@@ -13,6 +13,7 @@ const (
 
 	WerfCustomTagMetadataStageIDLabel = "stage-id"
 	WerfCustomTagMetadataTag          = "tag"
+	WerfCustomTagMetadataRepoLabel    = "repo"
 
 	WerfMountTmpDirLabel          = "werf-mount-type-tmp-dir"
 	WerfMountBuildDirLabel        = "werf-mount-type-build-dir"

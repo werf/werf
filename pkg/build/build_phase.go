@@ -984,7 +984,11 @@ func (phase *BuildPhase) addCustomImageTags(ctx context.Context, imageName strin
 		DoError(func() error {
 			for _, tagFunc := range customTagFuncList {
 				tag := tagFunc(imageName, stageDesc.Info.Tag)
-				if err := addCustomImageTag(ctx, phase.Conveyor.ProjectName(), stagesStorage, primaryStagesStorage, stageDesc, tag); err != nil {
+				customTag := storage.CustomTag{Tag: tag}
+				if !storage.SameRepoAddress(stagesStorage.Address(), phase.Conveyor.StorageManager.GetStagesStorage().Address()) {
+					customTag.Repo = stagesStorage.Address()
+				}
+				if err := addCustomImageTag(ctx, phase.Conveyor.ProjectName(), stagesStorage, primaryStagesStorage, stageDesc, customTag); err != nil {
 					return err
 				}
 			}
@@ -993,17 +997,17 @@ func (phase *BuildPhase) addCustomImageTags(ctx context.Context, imageName strin
 		})
 }
 
-func addCustomImageTag(ctx context.Context, projectName string, stagesStorage storage.StagesStorage, primaryStagesStorage storage.PrimaryStagesStorage, stageDesc *imagePkg.StageDesc, tag string) error {
-	return logboek.Context(ctx).Default().LogProcess("tag %s", tag).
+func addCustomImageTag(ctx context.Context, projectName string, stagesStorage storage.StagesStorage, primaryStagesStorage storage.PrimaryStagesStorage, stageDesc *imagePkg.StageDesc, tag storage.CustomTag) error {
+	return logboek.Context(ctx).Default().LogProcess("tag %s", tag.Tag).
 		DoError(func() error {
-			if err := stagesStorage.AddStageCustomTag(ctx, stageDesc, tag); err != nil {
-				return fmt.Errorf("unable to add stage %s custom tag %s in the storage %s: %w", stageDesc.StageID.String(), tag, stagesStorage.String(), err)
+			if err := stagesStorage.AddStageCustomTag(ctx, stageDesc, tag.Tag); err != nil {
+				return fmt.Errorf("unable to add stage %s custom tag %s in the storage %s: %w", stageDesc.StageID.String(), tag.Tag, stagesStorage.String(), err)
 			}
 			if err := primaryStagesStorage.RegisterStageCustomTag(ctx, projectName, stageDesc, tag); err != nil {
-				return fmt.Errorf("unable to register stage %s custom tag %s in the primary storage %s: %w", stageDesc.StageID.String(), tag, primaryStagesStorage.String(), err)
+				return fmt.Errorf("unable to register stage %s custom tag %s in the primary storage %s: %w", stageDesc.StageID.String(), tag.Tag, primaryStagesStorage.String(), err)
 			}
 
-			logboek.Context(ctx).LogFDetails("  name: %s:%s\n", stageDesc.Info.Repository, tag)
+			logboek.Context(ctx).LogFDetails("  name: %s:%s\n", stageDesc.Info.Repository, tag.Tag)
 
 			return nil
 		})

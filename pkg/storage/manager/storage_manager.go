@@ -107,7 +107,8 @@ type StorageManagerInterface interface {
 	ForEachRmImageMetadata(ctx context.Context, projectName, imageNameOrID string, stageIDCommitList map[string][]string, f func(ctx context.Context, commit, stageID string, err error) error) error
 	ForEachRmManagedImage(ctx context.Context, projectName string, managedImages []string, f func(ctx context.Context, managedImage string, err error) error) error
 	ForEachGetStageCustomTagMetadata(ctx context.Context, ids []string, f func(ctx context.Context, metadataID string, metadata *storage.CustomTagMetadata, err error) error) error
-	ForEachDeleteStageCustomTag(ctx context.Context, ids []string, f func(ctx context.Context, tag string, err error) error) error
+	ForEachDeleteStageCustomTag(ctx context.Context, tags []storage.CustomTag, f func(ctx context.Context, tag storage.CustomTag, err error) error) error
+	DeleteStageCustomTag(ctx context.Context, tag storage.CustomTag) error
 }
 
 // NOTE: FetchStage is a legacy option, which could in theory be removed.
@@ -211,6 +212,12 @@ type StorageManager struct {
 	FinalStagesStorageList     []storage.StagesStorage
 	CacheStagesStorageList     []storage.StagesStorage
 	SecondaryStagesStorageList []storage.StagesStorage
+
+	// Creates a stages storage for a repository a custom tag was placed in when
+	// that repository is neither the primary one nor among the final repos.
+	NewStagesStorageByAddress func(ctx context.Context, address string) (storage.StagesStorage, error)
+	customTagStoragesMux      sync.Mutex
+	customTagStorages         map[string]storage.StagesStorage
 
 	// These will be released automatically when current process exits
 	SharedHostImagesLocks   []lockgate.LockHandle
@@ -1117,21 +1124,69 @@ func (m *StorageManager) ForEachRejectedStage(ctx context.Context, stageIDs []im
 	})
 }
 
-func (m *StorageManager) ForEachDeleteStageCustomTag(ctx context.Context, ids []string, f func(ctx context.Context, tag string, err error) error) error {
-	return parallel.DoTasks(ctx, len(ids), parallel.DoTasksOptions{
+func (m *StorageManager) ForEachDeleteStageCustomTag(ctx context.Context, tags []storage.CustomTag, f func(ctx context.Context, tag storage.CustomTag, err error) error) error {
+	return parallel.DoTasks(ctx, len(tags), parallel.DoTasksOptions{
 		MaxNumberOfWorkers: m.MaxNumberOfWorkers(),
 	}, func(ctx context.Context, taskId int) error {
-		id := ids[taskId]
+		tag := tags[taskId]
 
-		if err := m.StagesStorage.DeleteStageCustomTag(ctx, id); err != nil {
-			return f(ctx, id, fmt.Errorf("unable to delete stage custom tag: %w", err))
-		}
-		if err := m.GetMetaStorage().UnregisterStageCustomTag(ctx, id); err != nil {
-			return f(ctx, id, fmt.Errorf("unable to unregister stage custom tag: %w", err))
+		if err := m.DeleteStageCustomTag(ctx, tag); err != nil {
+			return f(ctx, tag, err)
 		}
 
-		return f(ctx, id, nil)
+		return f(ctx, tag, nil)
 	})
+}
+
+// ErrCustomTagStorageUnavailable marks a failure to reach the repository a
+// custom tag lives in; unlike a registry deletion error it is not retried
+// silently, because deleting from any other repository would be wrong.
+var ErrCustomTagStorageUnavailable = errors.New("custom tag storage unavailable")
+
+// DeleteStageCustomTag removes the tag from the repository it was placed in and
+// drops its metadata record.
+func (m *StorageManager) DeleteStageCustomTag(ctx context.Context, tag storage.CustomTag) error {
+	stagesStorage, err := m.getCustomTagStagesStorage(ctx, tag.Repo)
+	if err != nil {
+		return fmt.Errorf("unable to get stages storage for custom tag %s: %w", tag, err)
+	}
+	if err := stagesStorage.DeleteStageCustomTag(ctx, tag.Tag); err != nil {
+		return fmt.Errorf("unable to delete stage custom tag: %w", err)
+	}
+	if err := m.GetMetaStorage().UnregisterStageCustomTag(ctx, tag); err != nil {
+		return fmt.Errorf("unable to unregister stage custom tag: %w", err)
+	}
+	return nil
+}
+
+func (m *StorageManager) getCustomTagStagesStorage(ctx context.Context, repo string) (storage.StagesStorage, error) {
+	if repo == "" || storage.SameRepoAddress(repo, m.StagesStorage.Address()) {
+		return m.StagesStorage, nil
+	}
+	for _, finalStagesStorage := range m.FinalStagesStorageList {
+		if storage.SameRepoAddress(finalStagesStorage.Address(), repo) {
+			return finalStagesStorage, nil
+		}
+	}
+
+	m.customTagStoragesMux.Lock()
+	defer m.customTagStoragesMux.Unlock()
+
+	if stagesStorage, ok := m.customTagStorages[repo]; ok {
+		return stagesStorage, nil
+	}
+	if m.NewStagesStorageByAddress == nil {
+		return nil, fmt.Errorf("%w: repository %q is neither the stages repo nor a final repo", ErrCustomTagStorageUnavailable, repo)
+	}
+	stagesStorage, err := m.NewStagesStorageByAddress(ctx, repo)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %w", ErrCustomTagStorageUnavailable, err)
+	}
+	if m.customTagStorages == nil {
+		m.customTagStorages = map[string]storage.StagesStorage{}
+	}
+	m.customTagStorages[repo] = stagesStorage
+	return stagesStorage, nil
 }
 
 func (m *StorageManager) ForEachGetStageCustomTagMetadata(ctx context.Context, ids []string, f func(ctx context.Context, metadataID string, metadata *storage.CustomTagMetadata, err error) error) error {

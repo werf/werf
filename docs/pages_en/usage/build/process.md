@@ -64,6 +64,14 @@ The tag template may include the following parameters:
 werf build --repo REPO --add-custom-tag "%image%-latest"
 ```
 
+With `--final-repo`, custom tags are added in the final repository rather than in `--repo`. werf records which repository each custom tag lives in, so `werf cleanup` removes the tag from that repository when its stage is deleted, and the same tag name can be used in several final repositories at once, e.g. to publish `app` as `REPO:main` and `app/install` as `REPO/install:main`:
+
+```shell
+werf build --repo REPO
+werf build app --repo REPO --require-built-images --add-custom-tag main
+werf build app/install --repo REPO --require-built-images --final-repo REPO/install --add-custom-tag main
+```
+
 > **NOTE:** When you use the options listed above, werf still creates the **additional alias tags** that reference the automatic hash tags. It is not possible to completely disable auto-tagging.
 
 ## Layer-by-layer image caching
