@@ -7,12 +7,19 @@ import (
 	"strings"
 
 	"github.com/distribution/reference"
+	"github.com/samber/lo"
 
 	"github.com/werf/werf/v3/pkg/slug"
 )
 
+const defaultWerfConfigName = "werf.yaml"
+
 type WerfConfig struct {
-	Meta        *Meta
+	Meta *Meta
+	// SourceFilePath is the project-relative path of the werf config file this config was loaded
+	// from. Empty for configs that were not loaded from a file.
+	SourceFilePath string
+
 	images      []ImageInterface
 	imagesCache map[string]ImageInterface
 }
@@ -37,6 +44,10 @@ func (c *WerfConfig) getSpecificImages(imagesToProcess ImagesToProcess) []ImageI
 	}
 
 	return resultImages
+}
+
+func (c *WerfConfig) SourceFilePathOrDefault() string {
+	return lo.Ternary(c.SourceFilePath == "", defaultWerfConfigName, c.SourceFilePath)
 }
 
 func (c *WerfConfig) Images(onlyFinal bool) []ImageInterface {

@@ -57,7 +57,7 @@ func matchPattern(name, pattern string) (bool, error) {
 	return match, nil
 }
 
-func filterUsingIncludePatterns(allImageNames, includePatterns []string) (map[string]bool, error) {
+func filterUsingIncludePatterns(allImageNames, includePatterns []string, configSourceFilePath string) (map[string]bool, error) {
 	finalImages := make(map[string]bool)
 	if len(includePatterns) == 0 {
 		for _, name := range allImageNames {
@@ -79,7 +79,7 @@ func filterUsingIncludePatterns(allImageNames, includePatterns []string) (map[st
 			}
 		}
 		if !found {
-			return nil, fmt.Errorf("no image matches pattern %q", pattern)
+			return nil, fmt.Errorf("no image matches pattern %q in %s", pattern, configSourceFilePath)
 		}
 	}
 	return finalImages, nil
@@ -131,7 +131,7 @@ func NewImagesToProcess(werfConfig *WerfConfig, imageNameList []string, onlyFina
 		return ImagesToProcess{}, err
 	}
 
-	finalImages, err := filterUsingIncludePatterns(allImageNames, includePatterns)
+	finalImages, err := filterUsingIncludePatterns(allImageNames, includePatterns, werfConfig.SourceFilePathOrDefault())
 	if err != nil {
 		return ImagesToProcess{}, err
 	}
