@@ -1,0 +1,12 @@
+project: werf-test-e2e-cleanup
+configVersion: 1
+cleanup:
+  disableGitHistoryBasedPolicy: true
+---
+image: app
+dockerfile: Dockerfile
+---
+image: app/install
+dockerfile: Dockerfile
+args:
+  FLAVOR: install
