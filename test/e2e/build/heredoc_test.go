@@ -8,7 +8,6 @@ import (
 
 	"github.com/werf/werf/v3/test/pkg/contback"
 	"github.com/werf/werf/v3/test/pkg/report"
-	"github.com/werf/werf/v3/test/pkg/werf"
 )
 
 type heredocTestOptions struct {
@@ -68,51 +67,38 @@ var _ = Describe("Build with staged dockerfile and heredoc", Label("e2e", "build
 			FixtureRelPath: "heredoc/multiple",
 			Verify:         []string{"test -f /file1", "test -f /file2", "echo -e 'I am\\nfirst' | diff /file1 -", "echo -e 'I am\\nsecond' | diff /file2 -"},
 		}),
-	)
-
-	DescribeTable("should fail and return error message with unsupported heredoc syntax",
-		func(ctx SpecContext, testOpts heredocTestOptions) {
-			By("initializing")
-			setupEnv(testOpts.setupEnvOptions)
-			contback.SkipIfUnavailable(testOpts.ContainerBackendMode)
-
-			By("heredoc: starting")
-			{
-				repoDirName := "repo0"
-				fixtureRelPath := testOpts.FixtureRelPath
-
-				By("heredoc: preparing test repo")
-				SuiteData.InitTestRepo(ctx, repoDirName, fixtureRelPath)
-
-				By("heredoc: building image")
-				werfProject := newWerfProject(repoDirName)
-				buildOut := werfProject.Build(ctx, &werf.BuildOptions{
-					CommonOptions: werf.CommonOptions{
-						ShouldFail: true,
-					},
-				})
-
-				By("heredoc: checking error messages")
-				Expect(buildOut).To(ContainSubstring(testOpts.Verify[0]))
-			}
-		},
-		backendEntry("with unsupported COPY heredoc and local repo using Native Buildah with rootless isolation", heredocTestOptions{
+		backendEntry("with COPY heredoc and local repo using Native Buildah with rootless isolation", heredocTestOptions{
 			setupEnvOptions: setupEnvOptions{
 				ContainerBackendMode:        "native-rootless",
 				WithLocalRepo:               true,
 				WithStagedDockerfileBuilder: true,
 			},
 			FixtureRelPath: "heredoc/copy",
-			Verify:         []string{"heredoc is not supported with COPY command"},
+			Verify: []string{
+				"echo 'Content of file 1' | diff /file1.txt -",
+				`test "$(stat -c %a /file1.txt)" = 644`,
+				`test "$(stat -c %a /install.sh)" = 755`,
+				`grep -qxF 'echo "$GREETING"' /install.sh`,
+				`test "$(stat -c %u:%g /owned.txt)" = 1000:1000`,
+				"echo 'hello world' | diff /expanded.txt -",
+				"echo 'from context' | diff /dir/context.txt -",
+				"echo a | diff /dir/A -",
+				"echo b | diff /dir/B -",
+			},
 		}),
-		backendEntry("with unsupported ADD heredoc and local repo using Native Buildah with rootless isolation", heredocTestOptions{
+		backendEntry("with ADD heredoc and local repo using Native Buildah with rootless isolation", heredocTestOptions{
 			setupEnvOptions: setupEnvOptions{
 				ContainerBackendMode:        "native-rootless",
 				WithLocalRepo:               true,
 				WithStagedDockerfileBuilder: true,
 			},
 			FixtureRelPath: "heredoc/add",
-			Verify:         []string{"heredoc is not supported with ADD command"},
+			Verify: []string{
+				"echo 'Content of file 1' | diff /file1.txt -",
+				`test "$(stat -c %a /file1.txt)" = 644`,
+				`test "$(stat -c %a /install.sh)" = 755`,
+				`grep -qxF 'echo "$GREETING"' /install.sh`,
+			},
 		}),
 	)
 })

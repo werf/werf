@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 	"maps"
+	"slices"
+
+	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 
 	"github.com/werf/werf/v3/pkg/build/stage"
 	"github.com/werf/werf/v3/pkg/config"
@@ -147,6 +150,29 @@ func (stg *Base[T, BT]) contentSourcePaths(c stage.Conveyor, sourcePaths []strin
 	}
 
 	return resolvedSourcePaths, nil
+}
+
+func (stg *Base[T, BT]) expandSourceContents(sourceContents []instructions.SourceContent, env map[string]string, opts dockerfile.ExpandOptions) ([]instructions.SourceContent, error) {
+	expandedSourceContents := slices.Clone(sourceContents)
+	if stg.instruction.ExpanderFactory == nil {
+		return expandedSourceContents, nil
+	}
+
+	opts.Raw = true
+	expander := stg.instruction.ExpanderFactory.GetExpander(opts)
+	for i, content := range expandedSourceContents {
+		if !content.Expand {
+			continue
+		}
+
+		data, err := expander.ProcessWordWithMap(content.Data, env)
+		if err != nil {
+			return nil, fmt.Errorf("expand heredoc %q: %w", content.Path, err)
+		}
+		expandedSourceContents[i].Data = data
+	}
+
+	return expandedSourceContents, nil
 }
 
 func (stg *Base[T, BT]) expandedEnvWithDependenciesArgs(dependenciesArgs map[string]string) map[string]string {
