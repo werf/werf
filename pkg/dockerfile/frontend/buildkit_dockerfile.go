@@ -78,10 +78,6 @@ func NewDockerfileStageFromBuildkitStage(index int, werfImageName string, stage 
 
 		switch instrData := cmd.(type) {
 		case *instructions.AddCommand:
-			if dockerfile.InstructionUsesUnsupportedHeredoc(instrData) {
-				return nil, fmt.Errorf(`unsupported ADD "%s": heredoc is not supported with ADD command`, instrData.String())
-			}
-
 			if instr, err := createAndExpandInstruction(instrData, expanderFactory, env); err != nil {
 				return nil, err
 			} else {
@@ -120,10 +116,6 @@ func NewDockerfileStageFromBuildkitStage(index int, werfImageName string, stage 
 				i = instr
 			}
 		case *instructions.CopyCommand:
-			if dockerfile.InstructionUsesUnsupportedHeredoc(instrData) {
-				return nil, fmt.Errorf(`unsupported COPY "%s": heredoc is not supported with COPY command`, instrData.String())
-			}
-
 			if instr, err := createAndExpandInstruction(instrData, expanderFactory, env); err != nil {
 				return nil, err
 			} else {
