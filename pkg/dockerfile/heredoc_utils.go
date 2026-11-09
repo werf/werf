@@ -1,8 +1,6 @@
 package dockerfile
 
 import (
-	"fmt"
-	"regexp"
 	"strings"
 
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
@@ -25,24 +23,4 @@ func MapToCorrectHeredocCmd(cmdLine instructions.ShellDependantCmdLine) (string,
 	}
 
 	return full, true
-}
-
-func InstructionUsesUnsupportedHeredoc(cmd InstructionDataInterface) bool {
-	heredocPattern := `%s <<(-?)\s*([^<]*)$`
-
-	var name, val string
-
-	switch instrData := cmd.(type) {
-	case *instructions.AddCommand:
-		name = instrData.Name()
-		val = instrData.String()
-	case *instructions.CopyCommand:
-		name = instrData.Name()
-		val = instrData.String()
-	default:
-		return false
-	}
-
-	reHeredoc := regexp.MustCompile(fmt.Sprintf(heredocPattern, name))
-	return len(reHeredoc.FindStringSubmatch(val)) > 0
 }

@@ -34,6 +34,12 @@ func (stg *Add) ExpandInstruction(c stage.Conveyor, env map[string]string) error
 
 	stg.backendInstruction.AddCommand = *stg.instruction.Data
 
+	sourceContents, err := stg.expandSourceContents(stg.instruction.Data.SourceContents, env, dockerfile.ExpandOptions{})
+	if err != nil {
+		return err
+	}
+	stg.backendInstruction.SourceContents = sourceContents
+
 	return nil
 }
 
@@ -43,14 +49,19 @@ func (stg *Add) GetContentDependencies(ctx context.Context, c stage.Conveyor, bu
 		return "", err
 	}
 
-	return stg.getDependencies(ctx, buildContextArchive, sourcePaths)
+	sourceContents, err := stg.expandSourceContents(stg.instruction.Data.SourceContents, stg.GetExpandedEnvForContent(), dockerfile.ExpandOptions{SkipUnsetEnv: true})
+	if err != nil {
+		return "", err
+	}
+
+	return stg.getDependencies(ctx, buildContextArchive, sourcePaths, sourceContents)
 }
 
 func (stg *Add) GetDependencies(ctx context.Context, c stage.Conveyor, cb container_backend.ContainerBackend, prevImage, prevBuiltImage *stage.StageImage, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
-	return stg.getDependencies(ctx, buildContextArchive, stg.instruction.Data.SourcePaths)
+	return stg.getDependencies(ctx, buildContextArchive, stg.instruction.Data.SourcePaths, stg.backendInstruction.SourceContents)
 }
 
-func (stg *Add) getDependencies(ctx context.Context, buildContextArchive container_backend.BuildContextArchiver, checksumSourcePaths []string) (string, error) {
+func (stg *Add) getDependencies(ctx context.Context, buildContextArchive container_backend.BuildContextArchiver, checksumSourcePaths []string, sourceContents []instructions.SourceContent) (string, error) {
 	var args []string
 
 	args = append(args, append([]string{"Sources"}, stg.instruction.Data.SourcePaths...)...)
@@ -61,6 +72,9 @@ func (stg *Add) getDependencies(ctx context.Context, buildContextArchive contain
 	// appended only when set to keep digests of already built ADD stages intact
 	if len(stg.instruction.Data.ExcludePatterns) > 0 {
 		args = append(args, append([]string{"ExcludePatterns"}, stg.instruction.Data.ExcludePatterns...)...)
+	}
+	for _, content := range sourceContents {
+		args = append(args, "SourceContent", content.Path, content.Data)
 	}
 
 	var fileGlobSrc []string
