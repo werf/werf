@@ -111,7 +111,7 @@ Simply run `werf converge`: TypeScript templates will be rendered with Node.js a
 
 ## Deploying into isolated environments
 
-An isolated environment requires only Node.js 26 or newer on the target machine and the chart itself to be self-contained:
+An isolated environment requires only Node.js on the target machine and the chart itself to be self-contained:
 
 1. Publish the chart:
    ```shell
