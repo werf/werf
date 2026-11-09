@@ -374,6 +374,13 @@ annotations:
 - **Сохранённые `--disable-default-values`, `--disable-default-secret-values` или `--no-default-patches` нельзя сбросить через `werf bundle publish`.** Если директория чарта содержит `.werf-data/`, где одна из этих опций сохранена как `true`, например, распакованный опубликованный чарт закоммичен в `.helm`, публикация без этой опции её сохраняет. Удалите `defaultValuesDisable` или `defaultSecretValuesDisable` в `values` или `defaultPatchesDisable` из `.werf-data/metadata.yaml`: опция со значением `false` тоже сохраняет переключатель.
 - **Для бандлов, опубликованных werf 3.12 и более ранними версиями, аннотации, переданные `werf bundle apply`, `plan` и `render`, побеждают `extra_annotations.json` бандла по каждому ключу**: `--add-annotation` и служебные аннотации werf, например `project.werf.io/env`. Раньше побеждали аннотации `project.werf.io/*` и `ci.werf.io/*` бандла.
 
+### TypeScript-чарты
+
+**TypeScript-чарты рендерятся с помощью Node.js вместо Deno.** Для развёртывания чарта с директорией `ts/` на хосте должны быть установлены Node.js 26 или новее и менеджер пакетов (npm, pnpm или yarn).
+
+- **Бандлы, собранные под Deno, больше не рендерятся.** Пересоберите их с `@nelm/chart-ts-sdk` 0.2.0, включая закоммиченный `ts/dist/bundle.js`, и опубликуйте бандлы заново.
+- **`ts/deno.json` заменяется на `ts/package.json` и `ts/tsconfig.json`.** Создайте их так же, как это делает `werf chart ts init`, и перенесите зависимости из `deno.json` в `package.json`.
+
 ### Зашифрованные секреты
 
 **Старый клиент не сможет прочитать секрет, записанный v3; возможности записать прежний формат нет.** Соблюдайте порядок обновления:

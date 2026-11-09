@@ -374,6 +374,13 @@ Rules for dependent charts vary by how the chart is included — see [Charts and
 - **A recorded `--disable-default-values`, `--disable-default-secret-values` or `--no-default-patches` can't be cleared by `werf bundle publish`.** If the chart directory contains `.werf-data/` where one of them is recorded as `true`, e.g. an unpacked published chart committed to `.helm`, publishing without the option keeps it. Remove `defaultValuesDisable` or `defaultSecretValuesDisable` under `values` or `defaultPatchesDisable` from `.werf-data/metadata.yaml`: passing the option with `false` keeps the stored switch too.
 - **For bundles published by werf 3.12 and older, the annotations given to `werf bundle apply`, `plan` and `render` win over the bundle's `extra_annotations.json` per key**: `--add-annotation` and werf's service annotations such as `project.werf.io/env`. Previously the bundle's `project.werf.io/*` and `ci.werf.io/*` annotations won.
 
+### TypeScript charts
+
+**TypeScript charts are rendered with Node.js instead of Deno.** Deploying a chart with a `ts/` directory requires Node.js 26 or newer and a package manager (npm, pnpm or yarn) on the host.
+
+- **Bundles built for Deno no longer render.** Rebuild them with `@nelm/chart-ts-sdk` 0.2.0, including a committed `ts/dist/bundle.js`, and publish the bundles again.
+- **`ts/deno.json` is replaced by `ts/package.json` and `ts/tsconfig.json`.** Create them as `werf chart ts init` does and move the dependencies from `deno.json` to `package.json`.
+
 ### Encrypted secret values
 
 **An old client cannot read a secret written by v3, and there is no option to write the previous format.** Follow this upgrade order:
