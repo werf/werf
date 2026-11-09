@@ -15,6 +15,12 @@ Note that the cleanup does not free up space occupied by the images in the conta
 
 > The issue of cleaning up images in the container registry and our approach to addressing it are covered in detail in the article [The problem of "smart" cleanup of container images and addressing it in werf](https://www.cncf.io/blog/2020/10/15/overcoming-the-challenges-of-cleaning-up-container-images/)
 
+### What cleanup deletes
+
+werf deletes only what it has published itself and recorded in its metadata: stages in the repository given by `--repo`, their copies in the repositories given by `--final-repo`, and custom tags added with `--add-custom-tag`. A custom tag is deleted from the repository it was added to, including a final repository that was used with `--final-repo` during the build but is not passed to `werf cleanup`; such a repository is accessed with the credentials and registry options of `--repo`.
+
+A tag added to a stage by other means (for example, with `crane tag` or `regctl image copy` into the stages repository) is unknown to werf. It does not protect the stage, and the registry removes it together with the stage manifest when the stage is deleted. Use `--add-custom-tag` to publish an image under a stable name, or protect the stage with the [keep-list](#image-versions-based-on-a-pre-prepared-list).
+
 ## Automating the container registry cleanup
 
 Perform the following steps to automate the removal of irrelevant image versions from the container registry:
@@ -160,7 +166,7 @@ cleanup:
 
 ### Image versions based on a pre-prepared list
 
-The `--keep-list` option allows you to provide a file that contains a list of tags to keep. Each tag should be written on a separate line and be valid. A line can be either a stage tag or a custom tag added with `--add-custom-tag`: a custom tag keeps the stage it points to. For example:
+The `--keep-list` option allows you to provide a file that contains a list of tags to keep. Each tag should be written on a separate line and be valid. A line can be either a stage tag or a custom tag added with `--add-custom-tag`: a custom tag keeps the stage it points to. A custom tag name keeps the stage in every repository of the project where that tag exists; write `REPO/install:main` to keep only the tag of one repository. For example:
 
 ```
 1e09fb543b4ef442ce5ed36bfeee6b27866bf1e68541db5995962b24-1749456960043

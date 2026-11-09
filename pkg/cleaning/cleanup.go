@@ -274,7 +274,7 @@ func (m *cleanupManager) markWhitelistStagesAsProtected() {
 
 	for stageID, customTagList := range m.stageManager.GetCustomTagsMetadata() {
 		for _, customTag := range customTagList {
-			if !m.keepList.ContainsOne(customTag.Tag) {
+			if !m.keepList.ContainsAny(customTag.Tag, m.customTagImageName(customTag)) {
 				continue
 			}
 
@@ -297,7 +297,7 @@ func (m *cleanupManager) skipStageIDsThatAreUsedInKubernetes(ctx context.Context
 	handledDeployedStages := map[string]bool{}
 	handleTagFunc := func(dockerImageName, stageID string, f func()) {
 		for _, deployedDockerImage := range deployedDockerImages {
-			if deployedDockerImage.Name == dockerImageName {
+			if sameImageName(deployedDockerImage.Name, dockerImageName) {
 				if !handledDeployedStages[stageID] {
 					f()
 
@@ -583,6 +583,21 @@ func (m *cleanupManager) printStageIDCommitListTable(ctx context.Context, imageN
 
 		logboek.Context(ctx).LogOptionalLn()
 	}
+}
+
+// sameImageName compares "REPO:TAG" references with the repository part
+// canonicalised, so a pod running docker.io/acme/app:main matches
+// index.docker.io/acme/app:main.
+func sameImageName(a, b string) bool {
+	if a == b {
+		return true
+	}
+	aRepo, aTag, aOk := strings.Cut(a, ":")
+	bRepo, bTag, bOk := strings.Cut(b, ":")
+	if !aOk || !bOk || aTag != bTag {
+		return false
+	}
+	return storage.SameRepoAddress(aRepo, bRepo)
 }
 
 func (m *cleanupManager) customTagImageName(tag storage.CustomTag) string {

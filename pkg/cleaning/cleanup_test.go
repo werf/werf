@@ -9,6 +9,7 @@ import (
 
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -23,7 +24,8 @@ import (
 type fakePrimaryStagesStorage struct {
 	storage.PrimaryStagesStorage
 
-	mu sync.Mutex
+	address string
+	mu      sync.Mutex
 
 	rejectedStageIDs []image.StageID
 	rejectedErr      error
@@ -74,14 +76,18 @@ func (f *fakePrimaryStagesStorage) UnregisterStageCustomTag(_ context.Context, t
 }
 
 func (f *fakePrimaryStagesStorage) Address() string {
+	if f.address != "" {
+		return f.address
+	}
 	return "example.com/primary"
 }
 
 type fakeStorageManager struct {
 	manager.StorageManagerInterface
 
-	stages *fakePrimaryStagesStorage
-	meta   *fakePrimaryStagesStorage
+	knownRepos []string
+	stages     *fakePrimaryStagesStorage
+	meta       *fakePrimaryStagesStorage
 
 	stageDescSet       image.StageDescSet
 	finalStageDescSet  image.StageDescSet
@@ -143,7 +149,7 @@ func (f *fakeStorageManager) ForEachDeleteStageCustomTag(ctx context.Context, ta
 // of the tag's repo, the record to the meta storage. Only the primary repo is
 // known to this fake, so a tag of any other repo is an error.
 func (f *fakeStorageManager) DeleteStageCustomTag(ctx context.Context, tag storage.CustomTag) error {
-	if tag.Repo != "" && tag.Repo != f.stages.Address() {
+	if tag.Repo != "" && tag.Repo != f.stages.Address() && !lo.Contains(f.knownRepos, tag.Repo) {
 		return fmt.Errorf("%w: unknown custom tag repo %q", manager.ErrCustomTagStorageUnavailable, tag.Repo)
 	}
 	if err := f.stages.DeleteStageCustomTag(ctx, tag.Tag); err != nil {
@@ -616,6 +622,41 @@ var _ = ginkgo.Describe("Cleanup keep list", func() {
 		ginkgo.Entry("custom tag of a missing stage protects nothing", []string{"orphan"}, false),
 		ginkgo.Entry("unrelated tag protects nothing", []string{"other"}, false),
 	)
+
+	ginkgo.DescribeTable("addresses a custom tag of one repository as REPO:TAG",
+		func(keepListTags []string, expectKept bool) {
+			ctx := context.Background()
+			stageDesc := newTestStageDesc("example.com/primary", image.NewStageID("ff0011", 1748001122334))
+
+			storageManager := newFakeStorageManager()
+			storageManager.knownRepos = []string{"example.com/primary/install"}
+			storageManager.stageDescSet = image.NewStageDescSet(stageDesc)
+			storageManager.meta.customTags = []*storage.CustomTagMetadata{
+				{StageID: stageDesc.StageID.String(), Tag: "main", Repo: "example.com/primary/install"},
+			}
+
+			cleanup := &cleanupManager{
+				stageManager:      stage_manager.NewManager(),
+				StorageManager:    storageManager,
+				ProjectName:       "myproject",
+				WithoutKube:       true,
+				ConfigMetaCleanup: config.MetaCleanup{DisableGitHistoryBasedPolicy: true},
+				keepList:          NewKeepList(keepListTags...),
+				report:            cleanup_report.NewReport(ctx, "cleanup", false, "example.com/primary", cleanup_report.NewReportOptions{}),
+			}
+
+			gomega.Expect(cleanup.run(ctx)).To(gomega.Succeed())
+
+			if expectKept {
+				gomega.Expect(storageManager.deletedStages).To(gomega.BeEmpty())
+			} else {
+				gomega.Expect(storageManager.deletedStages).To(gomega.ConsistOf(stageDesc))
+			}
+		},
+		ginkgo.Entry("bare name keeps the tag wherever it lives", []string{"main"}, true),
+		ginkgo.Entry("the tag's own repository keeps it", []string{"example.com/primary/install:main"}, true),
+		ginkgo.Entry("the same name in another repository keeps nothing", []string{"example.com/primary:main"}, false),
+	)
 })
 
 var _ = ginkgo.Describe("Cleanup Kubernetes-based policy for custom tags", func() {
@@ -654,4 +695,25 @@ var _ = ginkgo.Describe("Cleanup Kubernetes-based policy for custom tags", func(
 		ginkgo.Entry("final-repo tag is not matched by the primary repo name", storage.CustomTag{Repo: "example.com/primary/install", Tag: "main"}, "example.com/primary:main", true, false, false),
 		ginkgo.Entry("undeployed tag protects nothing", storage.CustomTag{Tag: "main"}, "example.com/other:main", true, false, false),
 	)
+
+	ginkgo.It("matches a deployed image whose repository is spelled differently", func() {
+		ctx := context.Background()
+		stageID := image.NewStageID("ff0011", 1748001122334)
+		stageDesc := newTestStageDesc("docker.io/acme/app", stageID)
+
+		storageManager := newFakeStorageManager()
+		storageManager.stages.address = "docker.io/acme/app"
+		storageManager.stageDescSet = image.NewStageDescSet(stageDesc)
+		storageManager.meta.customTags = []*storage.CustomTagMetadata{{StageID: stageID.String(), Tag: "main"}}
+
+		stageManager := stage_manager.NewManager()
+		gomega.Expect(stageManager.InitStageDescSet(ctx, storageManager)).To(gomega.Succeed())
+		gomega.Expect(stageManager.InitCustomTagsMetadata(ctx, storageManager)).To(gomega.Succeed())
+
+		cleanup := &cleanupManager{stageManager: stageManager, StorageManager: storageManager}
+		deployed := []*DeployedDockerImage{{Name: "index.docker.io/acme/app:main"}}
+		gomega.Expect(cleanup.skipStageIDsThatAreUsedInKubernetes(ctx, deployed)).To(gomega.Succeed())
+
+		gomega.Expect(stageManager.GetProtectedStageDescSet().Contains(stageDesc)).To(gomega.BeTrue())
+	})
 })

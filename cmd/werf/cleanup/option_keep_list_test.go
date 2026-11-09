@@ -43,6 +43,24 @@ var _ = Describe("keep list", func() {
 			Succeed(),
 		),
 		Entry(
+			"should accept a custom tag addressed by its repository",
+			"registry.example.com/app/install:main\n",
+			Equal(cleaning.NewKeepList("registry.example.com/app/install:main")),
+			Succeed(),
+		),
+		Entry(
+			"should reject a repository without a tag",
+			"registry.example.com/app/install\n",
+			BeNil(),
+			HaveOccurred(),
+		),
+		Entry(
+			"should reject a digest reference",
+			"registry.example.com/app@sha256:0000000000000000000000000000000000000000000000000000000000000000\n",
+			BeNil(),
+			HaveOccurred(),
+		),
+		Entry(
 			"should return filled keep list with data",
 			`1e09fb543b4ef442ce5ed36bfeee6b27866bf1e68541db5995962b24-1749456960043
 18c3b56662bedc24f4b8fd9e13845b01cc25c49295f479ac33397e27-1749456950030

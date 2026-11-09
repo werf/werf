@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"regexp"
 
 	"github.com/spf13/cobra"
 	"go.podman.io/image/v5/docker/reference"
@@ -41,7 +42,7 @@ func parseKeepList(filename string) (cleaning.KeepList, error) {
 		switch {
 		case tag == "":
 			continue
-		case reference.TagRegexp.MatchString(tag):
+		case isTag(tag), isRepoWithTag(tag):
 			keepList.Add(tag)
 		default:
 			return nil, fmt.Errorf("unable to parse tag %q", tag)
@@ -53,4 +54,17 @@ func parseKeepList(filename string) (cleaning.KeepList, error) {
 	}
 
 	return keepList, nil
+}
+
+var tagRegexp = regexp.MustCompile(`^` + reference.TagRegexp.String() + `$`)
+
+func isTag(line string) bool {
+	return tagRegexp.MatchString(line)
+}
+
+// isRepoWithTag accepts "REPO:TAG" lines, which address a custom tag in one
+// repository only; a bare tag name keeps the tag in every repository.
+func isRepoWithTag(line string) bool {
+	matches := reference.ReferenceRegexp.FindStringSubmatch(line)
+	return matches != nil && matches[2] != "" && matches[3] == ""
 }
