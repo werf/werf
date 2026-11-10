@@ -42,9 +42,9 @@ groups:
       - name: beta
         version: 2.84.1
       - name: ea
-        version: 2.84.0
+        version: 2.84.1
       - name: stable
-        version: 2.83.0
+        version: 2.84.0
       - name: rock-solid
         version: 2.83.0
   - name: "3"
