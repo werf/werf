@@ -54,7 +54,7 @@ groups:
       - name: beta
         version: 3.12.2
       - name: ea
-        version: 3.12.1
+        version: 3.12.2
       - name: stable
         version: 3.12.1
       - name: rock-solid
