@@ -883,12 +883,8 @@ func SetupKubeVersion(cmdData *CmdData, cmd *cobra.Command) {
 }
 
 func SetupTSOptions(cmdData *CmdData, cmd *cobra.Command) {
-	cmd.Flags().BoolVarP(&cmdData.IgnoreBundleJS, "ignore-bundle-js", "", util.GetBoolEnvironmentDefaultFalse("WERF_IGNORE_BUNDLE_JS"), "Do not use the existing bundle.js file. Requires TypeScript source files and Deno to rebuild (default $WERF_IGNORE_BUNDLE_JS)")
-	SetupDenoBinaryPath(cmdData, cmd)
-}
-
-func SetupDenoBinaryPath(cmdData *CmdData, cmd *cobra.Command) {
-	cmd.Flags().StringVarP(&cmdData.DenoBinaryPath, "deno-binary-path", "", os.Getenv("WERF_DENO_BINARY_PATH"), "Path to the Deno binary to use instead of auto-downloading (default $WERF_DENO_BINARY_PATH)")
+	cmd.Flags().BoolVarP(&cmdData.IgnoreBundleJS, "ignore-bundle-js", "", util.GetBoolEnvironmentDefaultFalse("WERF_IGNORE_BUNDLE_JS"), "Do not use the existing bundle.js file. Requires TypeScript source files to rebuild (default $WERF_IGNORE_BUNDLE_JS)")
+	cmd.Flags().StringVarP(&cmdData.NodeBinaryPath, "node-binary-path", "", os.Getenv("WERF_NODE_BINARY_PATH"), "Path to the Node.js binary to use instead of the one in PATH (default $WERF_NODE_BINARY_PATH)")
 }
 
 func allStagesNames() []string {

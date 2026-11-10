@@ -286,7 +286,7 @@ func runApply(ctx context.Context) error {
 			ReleaseStorageSQLConnection: commonCmdData.ReleaseStorageSQLConnection,
 		},
 		IgnoreBundleJS: commonCmdData.IgnoreBundleJS,
-		DenoBinaryPath: commonCmdData.DenoBinaryPath,
+		NodeBinaryPath: commonCmdData.NodeBinaryPath,
 	}); err != nil {
 		return fmt.Errorf("release install: %w", err)
 	}

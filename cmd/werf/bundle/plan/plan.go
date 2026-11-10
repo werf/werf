@@ -268,7 +268,7 @@ func runPlan(ctx context.Context) error {
 			ShowInsignificantDiffs: cmdData.ShowInsignificantDiffs,
 		},
 		IgnoreBundleJS: commonCmdData.IgnoreBundleJS,
-		DenoBinaryPath: commonCmdData.DenoBinaryPath,
+		NodeBinaryPath: commonCmdData.NodeBinaryPath,
 	}); err != nil {
 		return fmt.Errorf("release plan install: %w", err)
 	}

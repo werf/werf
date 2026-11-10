@@ -104,7 +104,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupKubeConfigBase64(&commonCmdData, cmd)
 	common.SetupLegacyKubeConfigPath(&commonCmdData, cmd)
 	common.SetupKubeContextCurrent(&commonCmdData, cmd)
-	common.SetupDenoBinaryPath(&commonCmdData, cmd)
 
 	common.SetupSaveBuildReport(&commonCmdData, cmd)
 	common.SetupBuildReportPath(&commonCmdData, cmd)
@@ -418,7 +417,6 @@ func newChartPackOptions(ctx context.Context, werfConfig *config.WerfConfig, ser
 		DefaultChartAPIVersion:     chart.APIVersionV2,
 		DefaultPatchesDisable:      commonCmdData.DefaultPatchesDisable,
 		DefaultSecretValuesDisable: commonCmdData.DefaultSecretValuesDisable,
-		DenoBinaryPath:             commonCmdData.DenoBinaryPath,
 		ExtraAnnotations:           extraAnnotations,
 		ExtraLabels:                extraLabels,
 		ExtraRuntimeAnnotations:    serviceAnnotations,

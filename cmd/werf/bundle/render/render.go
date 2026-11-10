@@ -247,7 +247,7 @@ func runRender(ctx context.Context) error {
 		ShowStandaloneCRDs:          cmdData.IncludeCRDs,
 		TemplatesAllowDNS:           commonCmdData.TemplatesAllowDNS,
 		IgnoreBundleJS:              commonCmdData.IgnoreBundleJS,
-		DenoBinaryPath:              commonCmdData.DenoBinaryPath,
+		NodeBinaryPath:              commonCmdData.NodeBinaryPath,
 	}); err != nil {
 		return fmt.Errorf("chart render: %w", err)
 	}

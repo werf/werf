@@ -492,7 +492,7 @@ func run(
 		ShowSubchartNotes:          commonCmdData.ShowSubchartNotes,
 		TemplatesAllowDNS:          commonCmdData.TemplatesAllowDNS,
 		IgnoreBundleJS:             commonCmdData.IgnoreBundleJS,
-		DenoBinaryPath:             commonCmdData.DenoBinaryPath,
+		NodeBinaryPath:             commonCmdData.NodeBinaryPath,
 		ReleaseHistoryLimit:        commonCmdData.ReleaseHistoryLimit,
 		ReleaseInstallRuntimeOptions: nelmcommon.ReleaseInstallRuntimeOptions{
 			ResourceValidationOptions:   commonCmdData.ResourceValidationOptions,

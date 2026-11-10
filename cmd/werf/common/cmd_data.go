@@ -160,7 +160,7 @@ type CmdData struct {
 	UninstallReportPath              string
 	UseDeployReport                  bool
 	IgnoreBundleJS                   bool
-	DenoBinaryPath                   string
+	NodeBinaryPath                   string
 }
 
 func (cmdData *CmdData) SetupFinalImagesOnly(cmd *cobra.Command, defaultEnabled bool) {
