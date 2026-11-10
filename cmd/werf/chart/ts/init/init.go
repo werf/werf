@@ -99,8 +99,6 @@ func runChartTSInit(ctx context.Context, chartDir string) error {
 		ColorMode: *commonCmdData.LogColorMode,
 	})
 
-	ctx = common.SetupDenoContext(ctx)
-
 	if err := action.ChartTSInit(ctx, action.ChartTSInitOptions{
 		ChartDirPath:      chartPath,
 		ChartName:         werfConfig.Meta.Project,

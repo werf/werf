@@ -348,7 +348,6 @@ func runPublish(ctx context.Context, cmd *cobra.Command, imageNameListFromArgs [
 	registryCredentialsPath := docker.GetDockerConfigCredentialsFile(*commonCmdData.DockerConfig)
 	chartPackOpts.RegistryCredentialsPath = registryCredentialsPath
 
-	ctx = common.SetupDenoContext(ctx)
 	ctx = action.SetupLogging(ctx, common.GetNelmLogLevel(&commonCmdData), action.SetupLoggingOptions{
 		ColorMode: *commonCmdData.LogColorMode,
 	})

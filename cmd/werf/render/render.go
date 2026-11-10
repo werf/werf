@@ -401,8 +401,6 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 	})
 	engine.Debug = commonCmdData.DebugTemplates
 
-	ctx = common.SetupDenoContext(ctx)
-
 	if _, err := action.ChartRender(ctx, action.ChartRenderOptions{
 		KubeConnectionOptions:       commonCmdData.KubeConnectionOptions,
 		ChartRepoConnectionOptions:  commonCmdData.ChartRepoConnectionOptions,

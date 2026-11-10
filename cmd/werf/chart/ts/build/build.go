@@ -99,8 +99,6 @@ func runChartTSBuild(ctx context.Context, chartDir string) error {
 		ColorMode: *commonCmdData.LogColorMode,
 	})
 
-	ctx = common.SetupDenoContext(ctx)
-
 	if err := action.ChartTSBuild(ctx, action.ChartTSBuildOptions{
 		ChartDirPath:   chartPath,
 		DenoBinaryPath: commonCmdData.DenoBinaryPath,
