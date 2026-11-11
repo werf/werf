@@ -357,21 +357,48 @@ func exportArchiveFiles(ctx context.Context, repoHandle repo_handle.Handle, resu
 	return exportedFiles, nil
 }
 
-// groupPathsCaseInsensitively splits paths into groups where no two paths are equal ignoring case,
-// so that every group can be checked out into its own directory on a case-insensitive filesystem.
+// groupPathsCaseInsensitively splits slash-separated paths into groups where no path is equal ignoring case
+// to another path or to a parent directory of another path, so that every group can be checked out
+// into its own directory on a case-insensitive filesystem. Parent directories equal ignoring case do not
+// conflict with each other. Each path goes to the first group it does not conflict with.
 func groupPathsCaseInsensitively(paths []string) [][]string {
-	var groups [][]string
-	seen := map[string]int{}
+	type pathGroup struct {
+		paths []string
+		files map[string]bool
+		dirs  map[string]bool
+	}
+
+	var groups []*pathGroup
 	for _, path := range paths {
 		key := strings.ToLower(path)
-		group := seen[key]
-		seen[key]++
-		if group == len(groups) {
-			groups = append(groups, nil)
+		var parents []string
+		for i, char := range key {
+			if char == '/' {
+				parents = append(parents, key[:i])
+			}
 		}
-		groups[group] = append(groups[group], path)
+
+		index := slices.IndexFunc(groups, func(group *pathGroup) bool {
+			return !group.files[key] && !group.dirs[key] && !slices.ContainsFunc(parents, func(parent string) bool { return group.files[parent] })
+		})
+		if index == -1 {
+			groups = append(groups, &pathGroup{files: map[string]bool{}, dirs: map[string]bool{}})
+			index = len(groups) - 1
+		}
+
+		group := groups[index]
+		group.paths = append(group.paths, path)
+		group.files[key] = true
+		for _, parent := range parents {
+			group.dirs[parent] = true
+		}
 	}
-	return groups
+
+	var result [][]string
+	for _, group := range groups {
+		result = append(result, group.paths)
+	}
+	return result
 }
 
 func applyOwnership(header *tar.Header, opts ArchiveOptions) {
