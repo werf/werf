@@ -12,8 +12,10 @@ permalink: reference/werf_images.html
 - `registry.werf.io/werf/werf:<group>` (например, `registry.werf.io/werf/werf:3`);
 - `registry.werf.io/werf/werf:<group>-<channel>` (например, `registry.werf.io/werf/werf:3-stable`);
 - `registry.werf.io/werf/werf:<group>-<channel>-<os>` (например, `registry.werf.io/werf/werf:3-stable-alpine`);
+- `registry.werf.io/werf/werf:<group>-<channel>-<os>-node` (например, `registry.werf.io/werf/werf:3-stable-ubuntu-node`);
 - `registry.werf.io/werf/werf:<version>` (например, `registry.werf.io/werf/werf:3.6.1`);
-- `registry.werf.io/werf/werf:<version>-<os>` (например, `registry.werf.io/werf/werf:3.6.1-alpine`).
+- `registry.werf.io/werf/werf:<version>-<os>` (например, `registry.werf.io/werf/werf:3.6.1-alpine`);
+- `registry.werf.io/werf/werf:<version>-<os>-node` (например, `registry.werf.io/werf/werf:3.6.1-ubuntu-node`).
 
 Где:
 
@@ -21,3 +23,5 @@ permalink: reference/werf_images.html
 - `<channel>`: канал выпуска `alpha`, `beta`, `ea`, `stable` (по умолчанию) или `rock-solid`;
 - `<os>`: операционная система `alpine` (по умолчанию), `ubuntu` или `fedora`.
 - `<version>`: версия (например, `3.6.1`). Если версия релиза содержит `+fix` (например, `3.6.1+fix1`), то версия будет приведена к `3.6.1.fix1`.
+
+Образы с суффиксом `-node` включают Node.js для рендеринга TypeScript-чартов.
