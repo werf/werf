@@ -1,5 +1,5 @@
 {{ $_ := set . "App" "argocd-cmp-sidecar" }}
-{{ $_ := set . "Distros" (list "ubuntu") }}
+{{ $_ := set . "Distros" (list "ubuntu" "ubuntu-node") }}
 {{ $_ := set . "DefaultGroupName" "2" }}
 {{ $_ := set . "DefaultChannelName" "stable" }}
 {{ $_ := set . "DefaultDistroName" "ubuntu" }}
