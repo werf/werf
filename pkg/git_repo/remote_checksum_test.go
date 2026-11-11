@@ -123,4 +123,33 @@ var _ = ginkgo.Describe("Remote object checksums", func() {
 		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 		gomega.Expect(second).NotTo(gomega.Equal(first))
 	})
+
+	ginkgo.It("ignores a .gitmodules entry whose gitlink is gone from the tree", func(ctx ginkgo.SpecContext) {
+		source := newChecksumTestRepo(ctx)
+		gitmodules := "[submodule \"theme_common\"]\n\tpath = theme_common\n\turl = https://127.0.0.1:1/unreachable/theme.git\n"
+		gomega.Expect(os.WriteFile(filepath.Join(source, ".gitmodules"), []byte(gitmodules), 0o644)).To(gomega.Succeed())
+		gomega.Expect(os.WriteFile(filepath.Join(source, "data"), []byte("content"), 0o644)).To(gomega.Succeed())
+		commitChecksumTestRepo(ctx, source)
+		remote, err := OpenRemoteRepo("stale-gitmodules-checksums", source, nil)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		gomega.Expect(remote.CloneAndFetch(ctx)).To(gomega.Succeed())
+		opts := ChecksumOptions{Commit: utils.GetHeadCommit(ctx, source), LsTreeOptions: LsTreeOptions{PathMatcher: path_matcher.NewTruePathMatcher(), AllFiles: true}}
+		checksum, err := remote.GetOrCreateChecksum(ctx, opts)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		gomega.Expect(checksum).NotTo(gomega.BeEmpty())
+	})
+
+	ginkgo.It("does not read the index of a repository without submodules", func(ctx ginkgo.SpecContext) {
+		source := newChecksumTestRepo(ctx)
+		gomega.Expect(os.WriteFile(filepath.Join(source, "data"), []byte("content"), 0o644)).To(gomega.Succeed())
+		commitChecksumTestRepo(ctx, source)
+		// go-git cannot decode a split index, so reading it would fail here.
+		utils.RunSucceedCommand(ctx, source, "git", "update-index", "--split-index")
+		local, err := OpenLocalRepo(ctx, "split-index-checksums", source, OpenLocalRepoOptions{})
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		opts := ChecksumOptions{Commit: utils.GetHeadCommit(ctx, source), LsTreeOptions: LsTreeOptions{PathMatcher: path_matcher.NewTruePathMatcher(), AllFiles: true}}
+		checksum, err := local.GetOrCreateChecksum(ctx, opts)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		gomega.Expect(checksum).NotTo(gomega.BeEmpty())
+	})
 })
