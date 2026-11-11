@@ -16,13 +16,16 @@ var _ = ginkgo.Describe("content-based archive identity", func() {
 		},
 		ginkgo.Entry("unguarded keys", "dockerfile-context-v1"),
 		ginkgo.Entry("guarded content-only keys", "dockerfile-context-v2"),
+		ginkgo.Entry("archives before case-insensitive filesystem support", "dockerfile-context-v3"),
 	)
 
-	ginkgo.It("keeps the legacy identity when content checksums are not requested", func() {
+	ginkgo.It("separates archives from those written before case-insensitive filesystem support", func() {
 		opts := ArchiveOptions{Commit: "commit-a", PathScope: "app", PathMatcher: path_matcher.NewPathMatcher(path_matcher.PathMatcherOptions{})}
-		gomega.Expect(opts.ID()).To(gomega.Equal(util.Sha256Hash(opts.Commit, opts.PathScope, opts.PathMatcher.ID())))
+		gomega.Expect(opts.ID()).NotTo(gomega.Equal(util.Sha256Hash(opts.Commit, opts.PathScope, opts.PathMatcher.ID())))
+		gomega.Expect(opts.ID()).To(gomega.Equal(util.Sha256Hash(opts.Commit, opts.PathScope, opts.PathMatcher.ID(), "git-archive-v2")))
 		opts.FileRenames = map[string]string{"app/a": "b"}
-		gomega.Expect(opts.ID()).To(gomega.Equal(util.Sha256Hash("app/a", "b", opts.Commit, opts.PathScope, opts.PathMatcher.ID())))
+		gomega.Expect(opts.ID()).NotTo(gomega.Equal(util.Sha256Hash("app/a", "b", opts.Commit, opts.PathScope, opts.PathMatcher.ID())))
+		gomega.Expect(opts.ID()).To(gomega.Equal(util.Sha256Hash("app/a", "b", opts.Commit, opts.PathScope, opts.PathMatcher.ID(), "git-archive-v2")))
 	})
 
 	ginkgo.DescribeTable("keys content archives independently of commit and filter identity",

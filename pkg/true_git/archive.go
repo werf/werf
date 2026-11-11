@@ -2,11 +2,9 @@ package true_git
 
 import (
 	"archive/tar"
-	"bytes"
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"maps"
 	"os"
 	"path/filepath"
@@ -14,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/filemode"
 
 	"github.com/werf/common-go/pkg/util"
@@ -38,7 +37,7 @@ type ArchiveOptions struct {
 // TODO: 1.3 add git mapping type (dir, file, ...) to gitArchive stage digest
 func (opts ArchiveOptions) ID() string {
 	if opts.ContentChecksum != "" {
-		args := []string{"dockerfile-context-v3", opts.ContentChecksum, opts.PathScope, opts.Owner, opts.Group}
+		args := []string{"dockerfile-context-v4", opts.ContentChecksum, opts.PathScope, opts.Owner, opts.Group}
 		for _, path := range slices.Sorted(maps.Keys(opts.FileRenames)) {
 			args = append(args, path, opts.FileRenames[path])
 		}
@@ -57,6 +56,7 @@ func (opts ArchiveOptions) ID() string {
 			opts.Commit,
 			opts.PathScope,
 			opts.PathMatcher.ID(),
+			"git-archive-v2",
 		)...,
 	)
 }
@@ -105,6 +105,12 @@ func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir s
 		return err
 	}
 
+	commit, err := repoHandle.Repository().CommitObject(plumbing.NewHash(opts.Commit))
+	if err != nil {
+		return fmt.Errorf("read commit %s: %w", opts.Commit, err)
+	}
+	modTime := commit.Committer.When
+
 	tw := tar.NewWriter(out)
 	logProcess := logboek.Context(ctx).Debug().LogProcess("ls-tree (%s)", opts.PathMatcher.String())
 	logProcess.Start()
@@ -123,50 +129,23 @@ func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir s
 	}
 	logProcess.End()
 
-	if opts.ContentChecksum != "" {
-		tmpDir, err := tmp_manager.TempDir(ctx, "git-context-")
-		if err != nil {
-			return fmt.Errorf("create Git context export directory: %w", err)
+	tmpDir, err := tmp_manager.TempDir(ctx, "git-context-")
+	if err != nil {
+		return fmt.Errorf("create Git files export directory: %w", err)
+	}
+	defer func() {
+		if err := os.RemoveAll(tmpDir); err != nil {
+			logboek.Context(ctx).Warn().LogF("Remove Git files export directory %q: %s\n", tmpDir, err)
 		}
-		defer func() {
-			if err := os.RemoveAll(tmpDir); err != nil {
-				logboek.Context(ctx).Warn().LogF("Remove Git context export directory %q: %s\n", tmpDir, err)
-			}
-		}()
-		absTmpDir, err := filepath.Abs(tmpDir)
-		if err != nil {
-			return fmt.Errorf("resolve Git context export directory: %w", err)
-		}
-		tmpDir = absTmpDir
-		exportDir := filepath.Join(tmpDir, "files")
-		if err := os.Mkdir(exportDir, 0o700); err != nil {
-			return fmt.Errorf("create Git context files directory: %w", err)
-		}
+	}()
+	absTmpDir, err := filepath.Abs(tmpDir)
+	if err != nil {
+		return fmt.Errorf("resolve Git files export directory: %w", err)
+	}
 
-		var paths, entries []string
-		if err := result.Walk(func(entry *ls_tree.LsTreeEntry) error {
-			path := filepath.ToSlash(entry.FullFilepath)
-			paths = append(paths, path)
-			entries = append(entries, fmt.Sprintf("%o %s\t%s\x00", entry.Mode, entry.Hash.String(), path))
-			return nil
-		}); err != nil {
-			return fmt.Errorf("collect Git context export paths: %w", err)
-		}
-		cmdOpts := &GitCmdOptions{RepoDir: workTreeDir, Env: []string{
-			"GIT_ATTR_SOURCE=" + opts.Commit,
-			"GIT_INDEX_FILE=" + filepath.Join(tmpDir, "index"),
-		}}
-		indexCmd := NewGitCmd(ctx, cmdOpts, "-c", "core.hooksPath="+os.DevNull, "update-index", "-z", "--index-info")
-		indexCmd.Stdin = strings.NewReader(strings.Join(entries, ""))
-		if err := indexCmd.Run(ctx); err != nil {
-			return fmt.Errorf("prepare Git context export index: %w", err)
-		}
-		cmd := NewGitCmd(ctx, cmdOpts, "-c", "core.hooksPath="+os.DevNull, "checkout-index", "--prefix="+filepath.ToSlash(exportDir)+"/", "-z", "--stdin")
-		cmd.Stdin = strings.NewReader(strings.Join(paths, "\x00") + "\x00")
-		if err := cmd.Run(ctx); err != nil {
-			return fmt.Errorf("export Git context files: %w", err)
-		}
-		workTreeDir = exportDir
+	exportedFiles, err := exportArchiveFiles(ctx, repoHandle, result, workTreeDir, absTmpDir)
+	if err != nil {
+		return err
 	}
 
 	logProcess = logboek.Context(ctx).Debug().LogProcess("ls-tree result walk (%s)", opts.PathMatcher.String())
@@ -174,24 +153,18 @@ func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir s
 
 	creadedDirEntries := make(map[string]bool)
 
-	if err := result.Walk(func(lsTreeEntry *ls_tree.LsTreeEntry) error {
+	if err := result.WalkWithRepository(ctx, repoHandle, func(entryRepository ls_tree.EntryRepository, lsTreeEntry *ls_tree.LsTreeEntry) error {
 		if debugArchive() {
 			logboek.Context(ctx).Debug().LogF("ls-tree entry %s\n", lsTreeEntry.FullFilepath)
 		}
 
 		gitFileMode := lsTreeEntry.Mode
-		absFilepath := filepath.Join(workTreeDir, lsTreeEntry.FullFilepath)
 
 		var tarEntryName string
 		if renameToFileName, willRename := opts.FileRenames[filepath.ToSlash(filepath.Clean(lsTreeEntry.FullFilepath))]; willRename {
 			tarEntryName = renameToFileName
 		} else {
 			tarEntryName = filepath.ToSlash(util.GetRelativeToBaseFilepath(opts.PathScope, lsTreeEntry.FullFilepath))
-		}
-
-		info, err := os.Lstat(absFilepath)
-		if err != nil {
-			return fmt.Errorf("lstat %q failed: %w", absFilepath, err)
 		}
 
 		dirEntry := filepath.Dir(tarEntryName)
@@ -217,9 +190,9 @@ func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir s
 					Name:       p,
 					Typeflag:   tar.TypeDir,
 					Mode:       0o775,
-					ModTime:    info.ModTime(),
-					AccessTime: info.ModTime(),
-					ChangeTime: info.ModTime(),
+					ModTime:    modTime,
+					AccessTime: modTime,
+					ChangeTime: modTime,
 				}
 				applyOwnership(header, opts)
 
@@ -233,14 +206,20 @@ func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir s
 
 		switch gitFileMode {
 		case filemode.Regular, filemode.Executable, filemode.Deprecated:
+			absFilepath := exportedFiles[filepath.ToSlash(lsTreeEntry.FullFilepath)]
+			info, err := os.Stat(absFilepath)
+			if err != nil {
+				return fmt.Errorf("stat file %s: %w", absFilepath, err)
+			}
+
 			header := &tar.Header{
 				Format:     tar.FormatGNU,
 				Name:       tarEntryName,
 				Mode:       int64(gitFileMode),
 				Size:       info.Size(),
-				ModTime:    info.ModTime(),
-				AccessTime: info.ModTime(),
-				ChangeTime: info.ModTime(),
+				ModTime:    modTime,
+				AccessTime: modTime,
+				ChangeTime: modTime,
 			}
 
 			applyOwnership(header, opts)
@@ -269,33 +248,20 @@ func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir s
 				logboek.Context(ctx).Debug().LogF("Added archive file %q\n", tarEntryName)
 			}
 		case filemode.Symlink:
-			isSymlink := info.Mode()&os.ModeSymlink != 0
-
-			var linkname string
-			if isSymlink {
-				linkname, err = os.Readlink(absFilepath)
-				if err != nil {
-					return fmt.Errorf("cannot read symlink %s: %w", absFilepath, err)
-				}
-			} else {
-				data, err := ioutil.ReadFile(absFilepath)
-				if err != nil {
-					return fmt.Errorf("cannot read file %s: %w", absFilepath, err)
-				}
-
-				linkname = string(bytes.TrimSpace(data))
+			linkname, err := entryRepository.Handle.ReadBlobObjectContent(lsTreeEntry.Hash)
+			if err != nil {
+				return fmt.Errorf("read symlink %s: %w", lsTreeEntry.FullFilepath, err)
 			}
 
 			header := &tar.Header{
 				Format:     tar.FormatGNU,
 				Typeflag:   tar.TypeSymlink,
 				Name:       tarEntryName,
-				Linkname:   linkname,
+				Linkname:   string(linkname),
 				Mode:       int64(gitFileMode),
-				Size:       info.Size(),
-				ModTime:    info.ModTime(),
-				AccessTime: info.ModTime(),
-				ChangeTime: info.ModTime(),
+				ModTime:    modTime,
+				AccessTime: modTime,
+				ChangeTime: modTime,
 			}
 
 			applyOwnership(header, opts)
@@ -327,6 +293,85 @@ func writeArchive(ctx context.Context, out io.Writer, gitDir, workTreeCacheDir s
 	}
 
 	return nil
+}
+
+// exportArchiveFiles checks out regular files with Git filters applied. Paths that differ only by case
+// go to separate directories, otherwise they overwrite each other on case-insensitive filesystems.
+func exportArchiveFiles(ctx context.Context, repoHandle repo_handle.Handle, result *ls_tree.Result, workTreeDir, tmpDir string) (map[string]string, error) {
+	var repositories []ls_tree.EntryRepository
+	entriesByRepository := map[string][]*ls_tree.LsTreeEntry{}
+	if err := result.WalkWithRepository(ctx, repoHandle, func(repository ls_tree.EntryRepository, entry *ls_tree.LsTreeEntry) error {
+		if entry.Mode != filemode.Regular && entry.Mode != filemode.Executable && entry.Mode != filemode.Deprecated {
+			return nil
+		}
+		if _, ok := entriesByRepository[repository.Path]; !ok {
+			repositories = append(repositories, repository)
+		}
+		entriesByRepository[repository.Path] = append(entriesByRepository[repository.Path], entry)
+		return nil
+	}); err != nil {
+		return nil, fmt.Errorf("collect Git files to export: %w", err)
+	}
+
+	exportedFiles := map[string]string{}
+	for repositoryIndex, repository := range repositories {
+		repositoryDir := filepath.Join(workTreeDir, repository.Path)
+		var indexEntries, paths []string
+		for _, entry := range entriesByRepository[repository.Path] {
+			path, err := filepath.Rel(repository.Path, entry.FullFilepath)
+			if err != nil {
+				return nil, fmt.Errorf("get Git file %q path in repository %q: %w", entry.FullFilepath, repository.Path, err)
+			}
+			path = filepath.ToSlash(path)
+			indexEntries = append(indexEntries, fmt.Sprintf("%o %s\t%s\x00", entry.Mode, entry.Hash.String(), path))
+			paths = append(paths, path)
+		}
+
+		groups := groupPathsCaseInsensitively(paths)
+		for group, groupPaths := range groups {
+			for _, path := range groupPaths {
+				exportedFiles[filepath.ToSlash(filepath.Join(repository.Path, path))] = filepath.Join(tmpDir, fmt.Sprintf("%d-%d", repositoryIndex, group), path)
+			}
+		}
+
+		cmdOpts := &GitCmdOptions{RepoDir: repositoryDir, Env: []string{
+			"GIT_ATTR_SOURCE=" + repository.Commit,
+			"GIT_INDEX_FILE=" + filepath.Join(tmpDir, fmt.Sprintf("index-%d", repositoryIndex)),
+		}}
+		indexCmd := NewGitCmd(ctx, cmdOpts, "-c", "core.hooksPath="+os.DevNull, "update-index", "-z", "--index-info")
+		indexCmd.Stdin = strings.NewReader(strings.Join(indexEntries, ""))
+		if err := indexCmd.Run(ctx); err != nil {
+			return nil, fmt.Errorf("prepare Git files export index: %w", err)
+		}
+
+		for group, paths := range groups {
+			exportDir := filepath.Join(tmpDir, fmt.Sprintf("%d-%d", repositoryIndex, group))
+			cmd := NewGitCmd(ctx, cmdOpts, "-c", "core.hooksPath="+os.DevNull, "checkout-index", "--prefix="+filepath.ToSlash(exportDir)+"/", "-z", "--stdin")
+			cmd.Stdin = strings.NewReader(strings.Join(paths, "\x00") + "\x00")
+			if err := cmd.Run(ctx); err != nil {
+				return nil, fmt.Errorf("export Git files to %s (distinct Git paths may be one path on this filesystem, e.g. on a case- or Unicode normalization-insensitive one): %w", exportDir, err)
+			}
+		}
+	}
+
+	return exportedFiles, nil
+}
+
+// groupPathsCaseInsensitively splits paths into groups where no two paths are equal ignoring case,
+// so that every group can be checked out into its own directory on a case-insensitive filesystem.
+func groupPathsCaseInsensitively(paths []string) [][]string {
+	var groups [][]string
+	seen := map[string]int{}
+	for _, path := range paths {
+		key := strings.ToLower(path)
+		group := seen[key]
+		seen[key]++
+		if group == len(groups) {
+			groups = append(groups, nil)
+		}
+		groups[group] = append(groups[group], path)
+	}
+	return groups
 }
 
 func applyOwnership(header *tar.Header, opts ArchiveOptions) {
