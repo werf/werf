@@ -1,5 +1,5 @@
 {{ $_ := set . "App" "werf" }}
-{{ $_ := set . "Distros" (list "alpine" "ubuntu" "centos" "fedora") }}
+{{ $_ := set . "Distros" (list "alpine" "ubuntu" "centos" "fedora" "ubuntu-node" "centos-node" "fedora-node") }}
 {{ $_ := set . "DefaultGroupName" "2" }}
 {{ $_ := set . "DefaultChannelName" "stable" }}
 {{ $_ := set . "DefaultDistroName" "alpine" }}
