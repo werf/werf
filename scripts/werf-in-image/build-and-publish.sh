@@ -34,7 +34,7 @@ export WERF_EXPORT_ADD_LABEL_AH1=io.artifacthub.package.readme-url=https://raw.g
 
 if [[ "$FORCE_PUBLISH" == "true" ]]; then
   echo "FORCE_PUBLISH is true — exporting all images"
-  export --config "$2.yaml" --tag "$DEST_SUBREPO/$2:%image%"
+  werf export --config "$2.yaml" --tag "$DEST_SUBREPO/$2:%image%"
   exit 0
 fi
 
@@ -79,6 +79,11 @@ for ch in "${changed_channels[@]}"; do
     glob_patterns+=("latest")
   fi
 done
+
+if [[ ${#glob_patterns[@]} -eq 0 ]]; then
+  echo "No channel changed — nothing to export"
+  exit 0
+fi
 
 glob_patterns=($(printf "%s\n" "${glob_patterns[@]}" | sort -u))
 export_globs=$(IFS=" "; echo "${glob_patterns[*]}")
