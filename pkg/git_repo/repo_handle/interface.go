@@ -2,12 +2,15 @@ package repo_handle
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/filemode"
+	"github.com/go-git/go-git/v5/plumbing/format/index"
 	"github.com/go-git/go-git/v5/plumbing/object"
 )
 
@@ -70,8 +73,24 @@ func getSubmoduleHandleList(parentRepository *git.Repository, mutex *sync.Mutex)
 	if err != nil {
 		return nil, err
 	}
+	if len(ss) == 0 {
+		return nil, nil
+	}
+
+	idx, err := parentRepository.Storer.Index()
+	if err != nil {
+		return nil, fmt.Errorf("unable to read index: %w", err)
+	}
 
 	for _, s := range ss {
+		// A .gitmodules entry left behind after the gitlink was removed is not a submodule for git,
+		// so `git submodule init` never registers it and go-git would report it as uninitialized.
+		if entry, err := idx.Entry(s.Config().Path); errors.Is(err, index.ErrEntryNotFound) || (err == nil && entry.Mode != filemode.Submodule) {
+			continue
+		} else if err != nil {
+			return nil, fmt.Errorf("unable to look up submodule %q in index: %w", s.Config().Path, err)
+		}
+
 		submoduleRepository, err := s.Repository()
 		if err != nil {
 			return nil, fmt.Errorf("unable to get submodule %q repository: %w", s.Config().Path, err)
