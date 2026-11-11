@@ -10,8 +10,9 @@ import (
 )
 
 const (
-	projectDirMaxAge = time.Hour * 24
-	contextPinMaxAge = time.Hour * 24
+	projectDirMaxAge    = time.Hour * 24
+	contextPinMaxAge    = time.Hour * 24
+	gitContextDirMaxAge = time.Hour * 24
 
 	projectsServiceDir          = "projects"
 	dockerConfigsServiceDir     = "docker_configs"
