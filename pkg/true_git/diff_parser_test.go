@@ -26,12 +26,13 @@ var _ = Describe("diffParser", func() {
 
 	DescribeTable("deleted text file paths",
 		func(filename string) {
+			isolateGitConfig()
 			dir := GinkgoT().TempDir()
 			Expect(os.Mkdir(filepath.Join(dir, "src"), 0o755)).To(Succeed())
 			path := "src/" + filename
 			Expect(os.WriteFile(filepath.Join(dir, path), []byte("content\n"), 0o644)).To(Succeed())
 
-			cmd := exec.Command("git", "diff", "--no-index", "--", path, "/dev/null")
+			cmd := exec.Command("git", "-c", "core.quotePath=false", "diff", "--no-index", "--", path, "/dev/null")
 			cmd.Dir = dir
 			diff, err := cmd.Output()
 			Expect(err).To(BeAssignableToTypeOf(&exec.ExitError{}))
