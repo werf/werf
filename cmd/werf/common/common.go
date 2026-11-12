@@ -22,14 +22,12 @@ import (
 	"github.com/werf/nelm/v2/pkg/helm/pkg/chart/loader"
 	"github.com/werf/nelm/v2/pkg/helm/pkg/engine"
 	"github.com/werf/nelm/v2/pkg/log"
-	"github.com/werf/nelm/v2/pkg/ts"
 	"github.com/werf/werf/v3/pkg/build"
 	"github.com/werf/werf/v3/pkg/build/stage"
 	"github.com/werf/werf/v3/pkg/buildah"
 	"github.com/werf/werf/v3/pkg/cleanup_report"
 	"github.com/werf/werf/v3/pkg/config"
 	"github.com/werf/werf/v3/pkg/container_backend"
-	"github.com/werf/werf/v3/pkg/deno"
 	"github.com/werf/werf/v3/pkg/docker"
 	"github.com/werf/werf/v3/pkg/docker_registry"
 	"github.com/werf/werf/v3/pkg/git_repo"
@@ -885,25 +883,8 @@ func SetupKubeVersion(cmdData *CmdData, cmd *cobra.Command) {
 }
 
 func SetupTSOptions(cmdData *CmdData, cmd *cobra.Command) {
-	cmd.Flags().BoolVarP(&cmdData.IgnoreBundleJS, "ignore-bundle-js", "", util.GetBoolEnvironmentDefaultFalse("WERF_IGNORE_BUNDLE_JS"), "Do not use the existing bundle.js file. Requires TypeScript source files and Deno to rebuild (default $WERF_IGNORE_BUNDLE_JS)")
-	SetupDenoBinaryPath(cmdData, cmd)
-}
-
-func SetupDenoBinaryPath(cmdData *CmdData, cmd *cobra.Command) {
-	cmd.Flags().StringVarP(&cmdData.DenoBinaryPath, "deno-binary-path", "", os.Getenv("WERF_DENO_BINARY_PATH"), "Path to the Deno binary to use instead of auto-downloading (default $WERF_DENO_BINARY_PATH)")
-}
-
-// SetupDenoContext puts the embedded Deno data into ctx, so nelm can extract
-// the embedded binary lazily — only when a chart actually contains TypeScript.
-func SetupDenoContext(ctx context.Context) context.Context {
-	compressed, embedded := deno.EmbeddedDenoData()
-	if !embedded {
-		return ctx
-	}
-
-	return ts.NewContextWithTSOptions(ctx, common.TypeScriptOptions{
-		EmbeddedDenoCompressed: compressed,
-	})
+	cmd.Flags().BoolVarP(&cmdData.IgnoreBundleJS, "ignore-bundle-js", "", util.GetBoolEnvironmentDefaultFalse("WERF_IGNORE_BUNDLE_JS"), "Do not use the existing bundle.js file. Requires TypeScript source files to rebuild (default $WERF_IGNORE_BUNDLE_JS)")
+	cmd.Flags().StringVarP(&cmdData.NodeBinaryPath, "node-binary-path", "", os.Getenv("WERF_NODE_BINARY_PATH"), "Path to the Node.js binary to use instead of the one in PATH (default $WERF_NODE_BINARY_PATH)")
 }
 
 func allStagesNames() []string {

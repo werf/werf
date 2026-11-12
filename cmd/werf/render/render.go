@@ -401,8 +401,6 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 	})
 	engine.Debug = commonCmdData.DebugTemplates
 
-	ctx = common.SetupDenoContext(ctx)
-
 	if _, err := action.ChartRender(ctx, action.ChartRenderOptions{
 		KubeConnectionOptions:       commonCmdData.KubeConnectionOptions,
 		ChartRepoConnectionOptions:  commonCmdData.ChartRepoConnectionOptions,
@@ -439,7 +437,7 @@ func runRender(ctx context.Context, imageNameListFromArgs []string) error {
 		ShowStandaloneCRDs:          cmdData.IncludeCRDs,
 		TemplatesAllowDNS:           commonCmdData.TemplatesAllowDNS,
 		IgnoreBundleJS:              commonCmdData.IgnoreBundleJS,
-		DenoBinaryPath:              commonCmdData.DenoBinaryPath,
+		NodeBinaryPath:              commonCmdData.NodeBinaryPath,
 	}); err != nil {
 		return fmt.Errorf("chart render: %w", err)
 	}

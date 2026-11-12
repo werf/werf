@@ -463,8 +463,6 @@ func run(
 	})
 	engine.Debug = commonCmdData.DebugTemplates
 
-	ctx = common.SetupDenoContext(ctx)
-
 	if _, err := action.ReleaseInstall(ctx, releaseName, releaseNamespace, action.ReleaseInstallOptions{
 		KubeConnectionOptions:      commonCmdData.KubeConnectionOptions,
 		ChartRepoConnectionOptions: commonCmdData.ChartRepoConnectionOptions,
@@ -494,7 +492,7 @@ func run(
 		ShowSubchartNotes:          commonCmdData.ShowSubchartNotes,
 		TemplatesAllowDNS:          commonCmdData.TemplatesAllowDNS,
 		IgnoreBundleJS:             commonCmdData.IgnoreBundleJS,
-		DenoBinaryPath:             commonCmdData.DenoBinaryPath,
+		NodeBinaryPath:             commonCmdData.NodeBinaryPath,
 		ReleaseHistoryLimit:        commonCmdData.ReleaseHistoryLimit,
 		ReleaseInstallRuntimeOptions: nelmcommon.ReleaseInstallRuntimeOptions{
 			ResourceValidationOptions:   commonCmdData.ResourceValidationOptions,

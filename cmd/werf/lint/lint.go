@@ -389,8 +389,6 @@ func runLint(ctx context.Context, imageNameListFromArgs []string) error {
 	})
 	engine.Debug = commonCmdData.DebugTemplates
 
-	ctx = common.SetupDenoContext(ctx)
-
 	if err := action.ChartLint(ctx, action.ChartLintOptions{
 		KubeConnectionOptions:       commonCmdData.KubeConnectionOptions,
 		ChartRepoConnectionOptions:  commonCmdData.ChartRepoConnectionOptions,
@@ -429,7 +427,7 @@ func runLint(ctx context.Context, imageNameListFromArgs []string) error {
 		Remote:                      cmdData.Validate,
 		TemplatesAllowDNS:           commonCmdData.TemplatesAllowDNS,
 		IgnoreBundleJS:              commonCmdData.IgnoreBundleJS,
-		DenoBinaryPath:              commonCmdData.DenoBinaryPath,
+		NodeBinaryPath:              commonCmdData.NodeBinaryPath,
 	}); err != nil {
 		return fmt.Errorf("chart lint: %w", err)
 	}
