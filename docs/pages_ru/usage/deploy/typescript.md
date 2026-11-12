@@ -3,8 +3,6 @@ title: TypeScript-шаблоны
 permalink: usage/deploy/typescript.html
 ---
 
-> **Обратите внимание**: TypeScript-шаблоны — экспериментальная функция. Для включения установите переменную окружения `NELM_FEAT_TYPESCRIPT=true`.
-
 ## Обзор
 
 Помимо [Helm-шаблонов]({{ "/usage/deploy/templates.html" | true_relative_url }}), werf поддерживает генерацию Kubernetes-манифестов с помощью TypeScript. Helm-шаблоны и TypeScript-шаблоны могут сосуществовать в одном чарте — полученные манифесты объединяются в единый мульти-документный YAML.
