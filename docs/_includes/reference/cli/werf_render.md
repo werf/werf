@@ -69,9 +69,6 @@ werf render [IMAGE_NAME...] [options]
             $WERF_CONTAINER_REGISTRY_MIRROR_*)
       --debug-templates=false
             Enable debug mode for Go templates (default $WERF_DEBUG_TEMPLATES or false)
-      --deno-binary-path=""
-            Path to the Deno binary to use instead of auto-downloading (default                     
-            $WERF_DENO_BINARY_PATH)
       --dev=false
             Enable development mode (default $WERF_DEV).
             The mode allows working with project files without doing redundant commits during       
@@ -122,8 +119,8 @@ werf render [IMAGE_NAME...] [options]
       --home-dir=""
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --ignore-bundle-js=false
-            Do not use the existing bundle.js file. Requires TypeScript source files and Deno to    
-            rebuild (default $WERF_IGNORE_BUNDLE_JS)
+            Do not use the existing bundle.js file. Requires TypeScript source files to rebuild     
+            (default $WERF_IGNORE_BUNDLE_JS)
       --ignore-secret-key=false
             Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)
       --include-crds=true
@@ -268,6 +265,9 @@ werf render [IMAGE_NAME...] [options]
       --no-values-schema-validation=false
             Disable values validation against JSON schema (default                                  
             $WERF_NO_VALUES_SCHEMA_VALIDATION)
+      --node-binary-path=""
+            Path to the Node.js binary to use instead of the one in PATH (default                   
+            $WERF_NODE_BINARY_PATH)
       --output=""
             Write render output to the specified file instead of stdout ($WERF_RENDER_OUTPUT by     
             default)
