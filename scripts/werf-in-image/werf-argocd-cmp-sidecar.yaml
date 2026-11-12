@@ -1,7 +1,8 @@
 {{ $_ := set . "App" "argocd-cmp-sidecar" }}
-{{ $_ := set . "Distros" (list "ubuntu") }}
+{{ $_ := set . "Distros" (list "ubuntu" "ubuntu-node") }}
 {{ $_ := set . "DefaultGroupName" "2" }}
 {{ $_ := set . "DefaultChannelName" "stable" }}
 {{ $_ := set . "DefaultDistroName" "ubuntu" }}
+{{ $_ := set . "NodeMinVersion" "3.13.0" }}
 
 {{ include "templates/base_config.tmpl" . }}
