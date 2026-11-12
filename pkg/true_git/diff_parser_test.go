@@ -52,6 +52,7 @@ var _ = Describe("diffParser", func() {
 		Entry("plain name", "normal.txt"),
 		Entry("space", "with space.txt"),
 		Entry("double quote", "we\"ird.txt"),
+		Entry("quote and space", "we\"ird name.txt"),
 		Entry("backslash", "back\\slash.txt"),
 		Entry("tab", "tab\tname.txt"),
 		Entry("newline", "new\nline.txt"),

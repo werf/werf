@@ -387,6 +387,7 @@ func (p *diffParser) trimFileBaseFilepath(path string) string {
 }
 
 func (p *diffParser) handleDeleteFilePath(line string) error {
+	line = strings.TrimRight(line, "\t")
 	pathWithPrefix := strings.TrimPrefix(line, "--- ")
 	isPathQuoted := strings.HasPrefix(pathWithPrefix, "\"") && strings.HasSuffix(pathWithPrefix, "\"")
 	if isPathQuoted {
