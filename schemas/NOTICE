@@ -1,0 +1,10 @@
+chart.json is derived from the Chart.yaml schema of JSON Schema Store
+(https://json.schemastore.org/chart.json), licensed under the Apache License,
+Version 2.0.
+
+JSON Schema Store
+Copyright 2015-Current Mads Kristensen and Contributors
+
+The file has been modified by the werf authors: the werf `export-values`
+directive is described, the chart metadata that werf fills in is optional, and
+the directives werf does not support are dropped.

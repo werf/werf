@@ -61,6 +61,24 @@ ENV DEPENDENCY=$BASE_IMAGE
 FROM scratch
 ENV DEPENDENCY=$BASE_IMAGE_SUFFIX
 `, false),
+	Entry("COPY heredoc body expanding the arg", `
+FROM scratch
+COPY <<EOF /dependency.txt
+$BASE_IMAGE
+EOF
+`, true),
+	Entry("ADD heredoc body expanding the arg", `
+FROM scratch
+ADD <<EOF /dependency.txt
+$BASE_IMAGE
+EOF
+`, true),
+	Entry("COPY heredoc body with a quoted delimiter", `
+FROM scratch
+COPY <<"EOF" /dependency.txt
+$BASE_IMAGE
+EOF
+`, false),
 )
 
 var _ = Describe("resolved dependency input mapping", func() {

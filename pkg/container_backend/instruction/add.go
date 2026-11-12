@@ -19,10 +19,20 @@ func NewAdd(i instructions.AddCommand) *Add {
 }
 
 func (i *Add) UsesBuildContext() bool {
-	return true
+	return len(i.SourcePaths) > 0
 }
 
 func (i *Add) Apply(ctx context.Context, containerName string, drv buildah.Buildah, drvOpts buildah.CommonOpts, buildContextArchive container_backend.BuildContextArchiver) error {
+	if len(i.SourcePaths) > 0 {
+		if err := i.addSourcePaths(ctx, containerName, drv, drvOpts, buildContextArchive); err != nil {
+			return err
+		}
+	}
+
+	return copySourceContents(ctx, containerName, drv, drvOpts, i.SourceContents, i.DestPath, i.Chown, i.Chmod)
+}
+
+func (i *Add) addSourcePaths(ctx context.Context, containerName string, drv buildah.Buildah, drvOpts buildah.CommonOpts, buildContextArchive container_backend.BuildContextArchiver) error {
 	var contextDir string
 	if i.UsesBuildContext() {
 		var err error

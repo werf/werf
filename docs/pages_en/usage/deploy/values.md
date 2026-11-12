@@ -107,11 +107,11 @@ The `export-values` and `import-values` directives copy parameters between the p
 5. All `WERF_SET_*` variables and `--set*` options.
 6. werf auxiliary parameters.
 
-For example, with `--set g.repo=A --set-string mychild.image.repository=B` and `g.repo` exported to `mychild.image.repository`, the result is `A`: both options are in one source, where the exported parameter wins.
+All `WERF_SET_*` variables and `--set*` options form one source here, not separate sources 9–18 as in the list of sources for `$.Values`. Their order still applies when they set the same or an overlapping key, e.g. with `--set-json 'myparam=1' --set myparam=2` the result is `2`. With `--set g.repo=A --set-string mychild.image.repository=B` and `g.repo` exported to `mychild.image.repository`, the result is `A`: both options are in one source, where the exported parameter wins. Likewise, with `--set-json 'mydict.myparam="A"' --set mychild.mydict.myparam=B` and the `mydict` dictionary of `mychild` imported into `mydict`, the result is `A`: both options are in one source, where the parent chart's own parameter wins, although `--set` has a higher priority than `--set-json` in the list of sources for `$.Values`.
 
-* `export-values` copies a parameter of the parent chart to a dependent chart. Within one source, the exported parameter overrides the parameter of the dependent chart with the same key. Across sources, the parameter from the source located lower in the list wins. For example, `--set mychild.myparam=value` overrides a parameter that is exported to `mychild.myparam` from `values.yaml` of the parent chart, and a werf auxiliary parameter exported to `mychild.image.repository` overrides `mychild.image.repository` from `--values`.
+* `export-values` copies a parameter of the parent chart to a dependent chart. Within one source, the exported parameter overrides the parameter of the dependent chart with the same key. Across sources, the parameter from the source located lower in the list wins. For example, `--set mychild.myparam=value` overrides a parameter that is exported to `mychild.myparam` from `values.yaml` of the parent chart, and a werf auxiliary parameter exported to `mychild.image.repository` overrides `mychild.image.repository` from `--values`. If the exported parameter is itself exported to another dependent chart, e.g. `parent: mysibling.myparam`, it is copied after that export, regardless of the order of the dependencies in `Chart.yaml`. If several `export-values` write the same parameter, the one declared later wins.
 
-* `import-values` copies a dictionary of a dependent chart to the parent chart. Within one source, the parent chart's own parameter overrides the imported one with the same key. Across sources, the parameter from the source located lower in the list wins. For example, a dictionary imported from `--set mychild.mydict.myparam=value` overrides `mydict.myparam` from `values.yaml` of the parent chart.
+* `import-values` copies a dictionary of a dependent chart to the parent chart. Within one source, the parent chart's own parameter overrides the imported one with the same key. Across sources, the parameter from the source located lower in the list wins. For example, a dictionary imported from `--set mychild.mydict.myparam=value` overrides `mydict.myparam` from `values.yaml` of the parent chart. As in Helm, imports are not chained: a dictionary imported into the parameters of another dependent chart, e.g. `parent: mysibling.mydict`, is not imported again by the `import-values` of that chart.
 
 A parameter that cannot be copied is skipped with a warning: a value other than a dictionary exported to the root of a dependent chart, or a value other than a dictionary or `null` imported from a dependent chart. An imported `null` is copied as `null`.
 
@@ -297,7 +297,7 @@ overriden
 werf render --set-file mychild.myparam=mychild-myparam.txt  # or WERF_SET_FILE_PROD=mychild.myparam=mychild-myparam.txt werf render
 ```
 
-... or vie the `export-values` directive (werf only):
+... or vie the `export-values` directive (werf only, not supported in charts with `apiVersion: v3`):
 
 ```yaml
 # Chart.yaml:
@@ -534,6 +534,14 @@ echo "All files re-encrypted with the new key. Originals are in $backup, remove 
 If the script stops while copying, the files it already replaced are encrypted with the new key and the rest still with the old one; every original is in the backup directory.
 
 A published chart keeps the publish-time `--secret-values` in `.werf-data/secret-values.yaml`, encrypted with the key used at publish. Re-encrypt this file in the unpacked chart in the same way, then pack the chart and upload it again, see [Changing a published chart]({{ "/usage/distribute/bundles.html#changing-a-published-chart" | true_relative_url }}).
+
+### Compatibility of encrypted data between werf versions
+
+Starting with werf v3.3.0 (Nelm v2.0.0-alpha.1), secrets are encrypted with AES-GCM, and each parameter in a secret parameter file keeps its YAML type: `port: 8080` stays a number, `enabled: true` stays a boolean. Secrets encrypted by earlier versions are still read as before.
+
+Earlier werf and Nelm versions can't decrypt secrets encrypted by newer ones and fail, e.g. with a `decode file ...` error for a secret parameter file. Newer versions write secret parameter files and secret files in the new format with `werf helm secret values edit` and `werf helm secret ... encrypt`, including when rotating the secret key, and always use it for encrypted plans saved with `werf plan --save-plan`. Every werf and Nelm that reads such data, including CI jobs and `werf bundle apply` of bundles that contain it, must be upgraded as well.
+
+Parameters encrypted by earlier versions don't store their type, so they are always read as strings: `port: 8080` becomes `port: "8080"`, which may fail `values.schema.json` validation or change template logic. Re-encrypting them, e.g. when rotating the secret key, doesn't help, because the type is already lost. The only way to restore the type is to re-enter the parameter: open the file with `werf helm secret values edit` and remove the quotes, e.g. change `"8080"` to `8080`. Only the parameters you change are re-encrypted, the others keep their old encryption. When loading secret parameter files, werf warns about old-format parameters that look like numbers or booleans (`werf render` and `werf bundle render` show warnings only with `--log-quiet=false` or `--log-debug`).
 
 ### Secret parameters in the release
 

@@ -94,8 +94,14 @@ var _ = Describe("ImagesToProcess", func() {
 
 			It("should return error for non-existing image", func() {
 				_, err := NewImagesToProcess(werfConfig, []string{"nonexistent"}, false, false)
-				Expect(err).To(HaveOccurred())
-				Expect(err.Error()).To(ContainSubstring("no image matches pattern"))
+				Expect(err).To(MatchError(`no image matches pattern "nonexistent" in werf.yaml`))
+			})
+
+			It("should name the config file the images were loaded from", func() {
+				werfConfig.SourceFilePath = "another.werf.yaml"
+
+				_, err := NewImagesToProcess(werfConfig, []string{"nonexistent"}, false, false)
+				Expect(err).To(MatchError(`no image matches pattern "nonexistent" in another.werf.yaml`))
 			})
 		})
 
