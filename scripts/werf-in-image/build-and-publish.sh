@@ -42,6 +42,7 @@ NEW="../../trdl_channels.yaml"
 OLD="../../trdl_channels_old.yaml"
 
 changed_channels=()
+changed_last_channels=()
 new_versions=()
 glob_patterns=()
 
@@ -60,9 +61,15 @@ for i in $(seq 0 $((group_count - 1))); do
       echo "Channel changed: $group:$channel: $old_version → $new_version"
       changed_channels+=("$group:$channel:$new_version")
       new_versions+=("$new_version")
+
+      if [[ $j -eq $((channel_count - 1)) ]]; then
+        changed_last_channels+=("$group:$channel")
+      fi
     fi
   done
 done
+
+final_images=$(werf config list --final-images-only --config "$2.yaml")
 
 for v in "${new_versions[@]}"; do
   glob_patterns+=("${v//+/.}*")
@@ -78,6 +85,21 @@ for ch in "${changed_channels[@]}"; do
     glob_patterns+=("$group")
     glob_patterns+=("latest")
   fi
+done
+
+# <group>-<distro> images are built from the last channel of the group, -node ones only for versions from NodeMinVersion.
+for gc in "${changed_last_channels[@]}"; do
+  group=${gc%%:*}
+  channel=${gc#*:}
+
+  while read -r image; do
+    [[ "$image" == "$group-$channel-"* ]] || continue
+
+    group_distro_image="$group-${image#"$group-$channel-"}"
+    if grep -qxF "$group_distro_image" <<< "$final_images"; then
+      glob_patterns+=("$group_distro_image")
+    fi
+  done <<< "$final_images"
 done
 
 if [[ ${#glob_patterns[@]} -eq 0 ]]; then
