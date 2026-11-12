@@ -15,7 +15,7 @@ The images follow the naming convention:
 - `registry.werf.io/werf/werf:<group>-<channel>-<os>-node` (e.g., `registry.werf.io/werf/werf:3-stable-ubuntu-node`);
 - `registry.werf.io/werf/werf:<version>` (e.g., `registry.werf.io/werf/werf:3.6.1`);
 - `registry.werf.io/werf/werf:<version>-<os>` (e.g., `registry.werf.io/werf/werf:3.6.1-alpine`);
-- `registry.werf.io/werf/werf:<version>-<os>-node` (e.g., `registry.werf.io/werf/werf:3.6.1-ubuntu-node`).
+- `registry.werf.io/werf/werf:<version>-<os>-node` (e.g., `registry.werf.io/werf/werf:3.13.0-ubuntu-node`).
 
 Where:
 

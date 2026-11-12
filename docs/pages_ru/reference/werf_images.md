@@ -15,7 +15,7 @@ permalink: reference/werf_images.html
 - `registry.werf.io/werf/werf:<group>-<channel>-<os>-node` (например, `registry.werf.io/werf/werf:3-stable-ubuntu-node`);
 - `registry.werf.io/werf/werf:<version>` (например, `registry.werf.io/werf/werf:3.6.1`);
 - `registry.werf.io/werf/werf:<version>-<os>` (например, `registry.werf.io/werf/werf:3.6.1-alpine`);
-- `registry.werf.io/werf/werf:<version>-<os>-node` (например, `registry.werf.io/werf/werf:3.6.1-ubuntu-node`).
+- `registry.werf.io/werf/werf:<version>-<os>-node` (например, `registry.werf.io/werf/werf:3.13.0-ubuntu-node`).
 
 Где:
 
