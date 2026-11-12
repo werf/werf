@@ -65,7 +65,7 @@ for i in $(seq 0 $((group_count - 1))); do
 done
 
 for v in "${new_versions[@]}"; do
-  glob_patterns+=("$v*")
+  glob_patterns+=("${v//+/.}*")
 done
 
 for ch in "${changed_channels[@]}"; do
