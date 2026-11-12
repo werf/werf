@@ -2,6 +2,9 @@ package true_git
 
 import (
 	"bytes"
+	"os"
+	"os/exec"
+	"path/filepath"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -20,6 +23,40 @@ var _ = Describe("diffParser", func() {
 		out = &bytes.Buffer{}
 		pathMatcher = path_matcher.NewTruePathMatcher()
 	})
+
+	DescribeTable("deleted text file paths",
+		func(filename string) {
+			dir := GinkgoT().TempDir()
+			Expect(os.Mkdir(filepath.Join(dir, "src"), 0o755)).To(Succeed())
+			path := "src/" + filename
+			Expect(os.WriteFile(filepath.Join(dir, path), []byte("content\n"), 0o644)).To(Succeed())
+
+			cmd := exec.Command("git", "diff", "--no-index", "--", path, "/dev/null")
+			cmd.Dir = dir
+			diff, err := cmd.Output()
+			Expect(err).To(BeAssignableToTypeOf(&exec.ExitError{}))
+			Expect(err.(*exec.ExitError).ExitCode()).To(Equal(1))
+
+			parser = makeDiffParser(out, "", pathMatcher, nil)
+			Expect(parser.HandleStdout(diff)).To(Succeed())
+			Expect(parser.PathsToRemove).To(Equal([]string{path}))
+
+			parser = makeDiffParser(out, "src", pathMatcher, nil)
+			Expect(parser.HandleStdout(diff)).To(Succeed())
+			Expect(parser.PathsToRemove).To(Equal([]string{filename}))
+
+			parser = makeDiffParser(out, "src", pathMatcher, map[string]string{path: "renamed.txt"})
+			Expect(parser.HandleStdout(diff)).To(Succeed())
+			Expect(parser.PathsToRemove).To(Equal([]string{"renamed.txt"}))
+		},
+		Entry("plain name", "normal.txt"),
+		Entry("space", "with space.txt"),
+		Entry("double quote", "we\"ird.txt"),
+		Entry("backslash", "back\\slash.txt"),
+		Entry("tab", "tab\tname.txt"),
+		Entry("newline", "new\nline.txt"),
+		Entry("non-ASCII", "caf\u00e9.txt"),
+	)
 
 	Describe("handleShortBinaryHeader", func() {
 		Context("when deleting a binary file with short format (Binary files ... differ)", func() {

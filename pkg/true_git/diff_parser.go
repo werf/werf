@@ -387,9 +387,23 @@ func (p *diffParser) trimFileBaseFilepath(path string) string {
 }
 
 func (p *diffParser) handleDeleteFilePath(line string) error {
-	path := p.applyFileRenames(strings.TrimPrefix(line, "--- a/"))
+	pathWithPrefix := strings.TrimPrefix(line, "--- ")
+	isPathQuoted := strings.HasPrefix(pathWithPrefix, "\"") && strings.HasSuffix(pathWithPrefix, "\"")
+	if isPathQuoted {
+		unquotedPath, err := strconv.Unquote(pathWithPrefix)
+		if err != nil {
+			return fmt.Errorf("unquote deleted diff path %#v: %w", pathWithPrefix, err)
+		}
+		pathWithPrefix = unquotedPath
+	}
+
+	path := p.applyFileRenames(strings.TrimPrefix(pathWithPrefix, "a/"))
 	newPath := p.trimFileBaseFilepath(path)
-	newLine := fmt.Sprintf("--- a/%s", newPath)
+	newPathWithPrefix := "a/" + newPath
+	if isPathQuoted {
+		newPathWithPrefix = strconv.Quote(newPathWithPrefix)
+	}
+	newLine := "--- " + newPathWithPrefix
 
 	p.state = diffBody
 	p.PathsToRemove = appendUnique(p.PathsToRemove, newPath)
