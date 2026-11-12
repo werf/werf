@@ -101,6 +101,7 @@ func collectPaths() ([]string, []string, error) {
 		// everything else on the host, so only our own prefix is swept and no symlink is followed.
 		newNoFollowGCPath(werf.GetTmpDir(), "werf-*-project-data-*", projectDirMaxAge),
 		newNoFollowGCPath(werf.GetTmpDir(), "werf-project-data-*", projectDirMaxAge),
+		newNoFollowGCPath(werf.GetTmpDir(), "werf-*-git-context-*", gitContextDirMaxAge),
 	}
 
 	dirSlices := make([][]string, 0, len(gcPathList))
