@@ -3,5 +3,6 @@
 {{ $_ := set . "DefaultGroupName" "2" }}
 {{ $_ := set . "DefaultChannelName" "stable" }}
 {{ $_ := set . "DefaultDistroName" "alpine" }}
+{{ $_ := set . "NodeMinVersion" "3.13.0" }}
 
 {{ include "templates/base_config.tmpl" . }}

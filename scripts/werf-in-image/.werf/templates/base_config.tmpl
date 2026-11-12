@@ -31,7 +31,19 @@ cleanup:
 
 {{ $_ := set $ "ChannelVersion" $.DefaultChannelVersion }}
 
+{{/* -node images are built only for versions that render TypeScript charts with Node.js. */}}
+{{- $nodeVersionExists := false }}
+{{- range $_, $groupObject := $trdlChannelsValues.groups }}
+  {{- if (eq $groupObject.name "1.0") }}{{- continue }}{{- end }}
+  {{- range $_, $channelObject := $groupObject.channels }}
+    {{- if semverCompare (printf ">=%s" $.NodeMinVersion) $channelObject.version }}
+      {{- $nodeVersionExists = true }}
+    {{- end }}
+  {{- end }}
+{{- end }}
+
 {{- range $distroInd, $distroName := $.Distros }}
+  {{- if and (hasSuffix "-node" $distroName) (not $nodeVersionExists) }}{{- continue }}{{- end }}
   {{ $_ := set $ "DistroName" $distroName }}
   {{- include "<app>-<distro>" $ }}
 {{- end }}
@@ -65,6 +77,7 @@ cleanup:
 {{- include "<group>-<channel>" $ }}
 
     {{- range $distroInd, $distroName := $.Distros }}
+      {{- if and (hasSuffix "-node" $distroName) (semverCompare (printf "<%s" $.NodeMinVersion) $.ChannelVersion) }}{{- continue }}{{- end }}
       {{ $_ := set $ "DistroName" $distroName }}
         {{- if not (has (printf "%s-%s" $.ChannelVersion $.DistroName) $uniqueChannelVersions) }}
           {{ $uniqueChannelVersions = append $uniqueChannelVersions (printf "%s-%s" $.ChannelVersion $.DistroName) }}
@@ -76,6 +89,7 @@ cleanup:
   {{- end }}
 
   {{- range $distroInd, $distroName := $.Distros }}
+    {{- if and (hasSuffix "-node" $distroName) (semverCompare (printf "<%s" $.NodeMinVersion) $.ChannelVersion) }}{{- continue }}{{- end }}
     {{ $_ := set $ "DistroName" $distroName }}
 
 {{- include "<group>-<distro>" $ }}

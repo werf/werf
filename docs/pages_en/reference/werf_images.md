@@ -24,4 +24,4 @@ Where:
 - `<os>`: operating system, such as `alpine` (default), `ubuntu`, or `fedora`;
 - `<version>`: version (e.g., `3.6.1`). If the release version includes `+fix` (e.g., `3.6.1+fix1`), it will be converted to `3.6.1.fix1` version.
 
-Images with the `-node` suffix include Node.js for rendering TypeScript charts.
+Images with the `-node` suffix include Node.js for rendering TypeScript charts. They are published starting from the werf version that renders TypeScript charts with Node.js.
