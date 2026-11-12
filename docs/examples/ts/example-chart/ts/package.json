@@ -1,0 +1,16 @@
+{
+  "name": "ts-chart-example-ts",
+  "version": "0.0.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "nelm-chart-ts dev --input-file input.example.yaml",
+    "typecheck": "tsc"
+  },
+  "dependencies": {
+    "@nelm/chart-ts-sdk": "^0.2.0"
+  },
+  "devDependencies": {
+    "typescript": "~6.0.3"
+  }
+}
