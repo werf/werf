@@ -48,6 +48,17 @@ werf run [options] [IMAGE_NAME] [-- COMMAND ARG...]
             and to get manifests before making requests to the primary repo.
             Also, can be specified with $WERF_CACHE_REPO or $WERF_CACHE_REPO_* (e.g.                
             $WERF_CACHE_REPO_1=..., $WERF_CACHE_REPO_2=...)
+      --compression-format=""
+            Compress image layers pushed to the container registry with the specified format: gzip, 
+            zstd or none for uncompressed layers ($WERF_COMPRESSION_FORMAT or gzip by default).     
+            Images with zstd or none layers are published with the OCI manifest format. The         
+            compression settings in werf.yaml take precedence. The Docker container backend         
+            supports this option only with the containerd image store
+      --compression-level=""
+            Compress image layers pushed to the container registry with the specified level: 0-9    
+            for gzip, 1-22 for zstd ($WERF_COMPRESSION_LEVEL or the default level of the            
+            compression format by default). The compression settings in werf.yaml take precedence.  
+            The Docker container backend supports this option only with the containerd image store
       --config=""
             Use custom configuration file (default $WERF_CONFIG or werf.yaml in the project         
             directory)

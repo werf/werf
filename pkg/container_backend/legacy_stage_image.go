@@ -21,6 +21,7 @@ type LegacyStageImage struct {
 	builtID             string
 	commitChangeOptions LegacyCommitChangeOptions
 	targetPlatform      string
+	layerCompression    image.LayerCompression
 
 	// TODO: remove after refactoring
 	buildServiceLabels map[string]string
@@ -39,8 +40,17 @@ func (i *LegacyStageImage) GetTargetPlatform() string {
 	return i.targetPlatform
 }
 
+func (i *LegacyStageImage) GetLayerCompression() image.LayerCompression {
+	return i.layerCompression
+}
+
+func (i *LegacyStageImage) SetLayerCompression(compression image.LayerCompression) {
+	i.layerCompression = compression
+}
+
 func (i *LegacyStageImage) GetCopy() LegacyImageInterface {
 	ni := NewLegacyStageImage(i.fromImage, i.name, i.ContainerBackend, i.targetPlatform)
+	ni.SetLayerCompression(i.layerCompression)
 	if stageDesc := i.GetStageDesc(); stageDesc != nil {
 		ni.SetStageDesc(stageDesc.GetCopy())
 	} else if info := i.GetInfo(); info != nil {

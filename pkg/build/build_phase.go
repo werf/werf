@@ -246,6 +246,7 @@ func (phase *BuildPhase) calculateAnchorDigest(ctx context.Context, img *image.I
 	digest, err := calculateDigest(ctx, string(anchor.Name()), "", nil, phase.Conveyor, calculateDigestOptions{
 		TargetPlatform:    img.TargetPlatform,
 		BuildCacheVersion: imagePkg.BuildCacheVersion,
+		LayerCompression:  img.LayerCompression().DigestInput(),
 		Anchor:            true,
 		HolisticInputs:    holisticInputs,
 	})
@@ -790,6 +791,12 @@ func (phase *BuildPhase) ImageProcessingShouldBeStopped(_ context.Context, _ *im
 }
 
 func (phase *BuildPhase) BeforeImageStages(ctx context.Context, img *image.Image) (deferFn func(), err error) {
+	// Without stapel build support stapel stages are committed containers, which the backend cannot
+	// compress differently.
+	if !img.IsDockerfileImage && !img.LayerCompression().IsDefault() && !phase.Conveyor.ContainerBackend.HasStapelBuildSupport() {
+		return nil, fmt.Errorf("image %q: layer compression settings are not supported for stapel images with the Docker container backend, use the Buildah container backend", img.GetName())
+	}
+
 	phase.StagesIterator = NewStagesIterator(phase.Conveyor)
 
 	if stageDesc := img.GetContentTagDesc(); stageDesc != nil {
@@ -1273,7 +1280,7 @@ func (phase *BuildPhase) findAndFetchStageFromSecondaryStagesStorage(ctx context
 				return err
 			}
 			if stageDescCopy == nil {
-				stageDescCopy, err = storageManager.CopySuitableStageDescByDigest(ctx, secondaryStageDesc, secondaryStagesStorage, storageManager.GetStagesStorage(), phase.Conveyor.ContainerBackend, img.TargetPlatform)
+				stageDescCopy, err = storageManager.CopySuitableStageDescByDigest(ctx, secondaryStageDesc, secondaryStagesStorage, storageManager.GetStagesStorage(), phase.Conveyor.ContainerBackend, img.TargetPlatform, img.LayerCompression())
 			}
 			if err != nil {
 				return fmt.Errorf("unable to copy suitable stage %s from %s to %s: %w", secondaryStageDesc.StageID.String(), secondaryStagesStorage.String(), storageManager.GetStagesStorage().String(), err)
@@ -1371,6 +1378,7 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, s
 	var opts calculateDigestOptions
 	opts.TargetPlatform = img.TargetPlatform
 	opts.BuildCacheVersion = imagePkg.BuildCacheVersion
+	opts.LayerCompression = img.LayerCompression().DigestInput()
 
 	var stageDependencies string
 	var prevNonEmptyStage stage.Interface
@@ -1463,6 +1471,7 @@ func (phase *BuildPhase) calculateStage(ctx context.Context, img *image.Image, s
 		stageContentSig, err = calculateDigest(ctx, fmt.Sprintf("%s-content", stg.Name()), "", stg, phase.Conveyor, calculateDigestOptions{
 			TargetPlatform:    img.TargetPlatform,
 			BuildCacheVersion: imagePkg.BuildCacheVersion,
+			LayerCompression:  img.LayerCompression().DigestInput(),
 		})
 		if err != nil {
 			return false, phase.Conveyor.GetStageDigestMutex(stg.GetDigest()).Unlock, fmt.Errorf("unable to calculate stage %s content digest: %w", stg.Name(), err)
@@ -1688,6 +1697,7 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 		if err := logboek.Context(ctx).Streams().DoErrorWithTag(fmt.Sprintf("%s/%s", img.LogName(), stg.Name()), img.LogTagStyle(), func() error {
 			opts := phase.ImageBuildOptions
 			opts.TargetPlatform = img.TargetPlatform
+			opts.LayerCompression = img.LayerCompression()
 			if err := stageImage.Builder.Build(ctx, opts); err != nil {
 				err = container_backend.SanitizeError(err)
 				return fmt.Errorf("error building stage %s: %w", stg.Name(), err)
@@ -1832,7 +1842,9 @@ func introspectStage(ctx context.Context, s stage.Interface) error {
 type calculateDigestOptions struct {
 	TargetPlatform    string
 	BuildCacheVersion string
-	BaseImage         string
+	// LayerCompression is empty for the default compression, keeping the digests of such stages.
+	LayerCompression string
+	BaseImage        string
 	// Anchor switches calculateDigest to the anchor path:
 	// Sha3_224(BuildCacheVersion, TargetPlatform, HolisticInputs...).
 	Anchor         bool
@@ -1842,6 +1854,9 @@ type calculateDigestOptions struct {
 func calculateDigest(ctx context.Context, stageName, stageDependencies string, prevNonEmptyStage stage.Interface, conveyor *Conveyor, opts calculateDigestOptions) (string, error) {
 	if opts.Anchor {
 		args := []string{opts.BuildCacheVersion, opts.TargetPlatform}
+		if opts.LayerCompression != "" {
+			args = append(args, "layer-compression="+opts.LayerCompression)
+		}
 		for _, s := range opts.HolisticInputs {
 			if s == "" {
 				continue
@@ -1863,6 +1878,11 @@ func calculateDigest(ctx context.Context, stageName, stageDependencies string, p
 	if opts.TargetPlatform != "" {
 		checksumArgs = append(checksumArgs, opts.TargetPlatform)
 		checksumArgsNames = append(checksumArgsNames, "TargetPlatform")
+	}
+
+	if opts.LayerCompression != "" {
+		checksumArgs = append(checksumArgs, opts.LayerCompression)
+		checksumArgsNames = append(checksumArgsNames, "LayerCompression")
 	}
 
 	checksumArgs = append(checksumArgs, opts.BuildCacheVersion, stageName, stageDependencies)

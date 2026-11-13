@@ -153,7 +153,16 @@ func mutateIndex(ctx context.Context, index v1.ImageIndex, dest name.Reference, 
 		return nil, nil, fmt.Errorf("getting image index manifest: %w", err)
 	}
 
-	newIndex := mutate.IndexMediaType(empty.Index, types.DockerManifestList)
+	// A docker manifest list may not reference OCI manifests, which zstd layers require.
+	newIndexMediaType := types.DockerManifestList
+	for _, desc := range indexManifest.Manifests {
+		switch desc.MediaType {
+		case types.OCIManifestSchema1, types.OCIImageIndex:
+			newIndexMediaType = types.OCIImageIndex
+		}
+	}
+
+	newIndex := mutate.IndexMediaType(empty.Index, newIndexMediaType)
 	addenda := make([]mutate.IndexAddendum, 0, len(indexManifest.Manifests))
 
 	for _, desc := range indexManifest.Manifests {

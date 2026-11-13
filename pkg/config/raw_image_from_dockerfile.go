@@ -25,6 +25,7 @@ type rawImageFromDockerfile struct {
 	Platform        []string               `yaml:"platform,omitempty"`
 	RawSecrets      []*rawSecret           `yaml:"secrets,omitempty"`
 	RawImageSpec    *rawImageSpec          `yaml:"imageSpec,omitempty"`
+	Compression     *rawCompression        `yaml:"compression,omitempty"`
 
 	doc          *doc `yaml:"-"` // parent
 	isFillStaged bool `yaml:"-"` // indicates whether 'staged' field is explicitly set in the image section
@@ -138,6 +139,7 @@ func (c *rawImageFromDockerfile) toImageFromDockerfileDirective(giterminismManag
 
 	image.Staged = c.Staged
 	image.platform = append([]string{}, c.Platform...)
+	image.compression = c.Compression.toDirective()
 	image.raw = c
 
 	secrets, err := GetValidatedSecrets(c.RawSecrets, giterminismManager, c.doc)

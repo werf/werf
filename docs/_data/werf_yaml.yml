@@ -39,6 +39,26 @@ sections:
             description:
               en: "Enable layer-by-layer caching of Dockerfile instructions in container registry globally for all images"
               ru: "Включить послойное кеширование инструкций Dockerfile в container registry глобально для всех образов"
+          - name: compression
+            description:
+              en: Compression of the layers of all images published to the container registry
+              ru: Сжатие слоёв всех образов, публикуемых в container registry
+            collapsible: true
+            isCollapsedByDefault: false
+            detailsArticle:
+              en: "/usage/build/backends.html#layer-compression"
+              ru: "/usage/build/backends.html#сжатие-слоёв"
+            directives:
+              - name: format
+                value: "string"
+                description:
+                  en: "Compression format of the image layers: gzip (default), zstd or none for uncompressed layers"
+                  ru: "Формат сжатия слоёв образа: gzip (по умолчанию), zstd или none для несжатых слоёв"
+              - name: level
+                value: "int"
+                description:
+                  en: "Compression level: 0-9 for gzip, 1-22 for zstd (the default level of the format by default)"
+                  ru: "Уровень сжатия: 0-9 для gzip, 1-22 для zstd (по умолчанию — уровень по умолчанию формата)"
           - name: imageSpec
             description:
               en: Global image configuration options according to the OCI specification, which will be applied to all images
@@ -290,6 +310,27 @@ sections:
           en: List of target platforms for this image (for example ['linux/amd64', 'linux/arm64', 'linux/arm/v8'])
           ru: Список целевых платформ для данного образа (например ['linux/amd64', 'linux/arm64', 'linux/arm/v8'])
         value: "[ string, ... ]"
+      - &image-compression
+        name: compression
+        description:
+          en: Compression of the image layers published to the container registry (overrides build.compression)
+          ru: Сжатие слоёв образа, публикуемых в container registry (переопределяет build.compression)
+        collapsible: true
+        isCollapsedByDefault: false
+        detailsArticle:
+          en: "/usage/build/backends.html#layer-compression"
+          ru: "/usage/build/backends.html#сжатие-слоёв"
+        directives:
+          - name: format
+            value: "string"
+            description:
+              en: "Compression format of the image layers: gzip (default), zstd or none for uncompressed layers"
+              ru: "Формат сжатия слоёв образа: gzip (по умолчанию), zstd или none для несжатых слоёв"
+          - name: level
+            value: "int"
+            description:
+              en: "Compression level: 0-9 for gzip, 1-22 for zstd (the default level of the format by default)"
+              ru: "Уровень сжатия: 0-9 для gzip, 1-22 для zstd (по умолчанию — уровень по умолчанию формата)"
       - name: contextAddFiles
         value: "[ string, ... ]"
         description:
@@ -525,6 +566,7 @@ sections:
           en: List of target platforms for this image (for example ['linux/amd64', 'linux/arm64', 'linux/arm/v8'])
           ru: Список целевых платформ для данного образа (например ['linux/amd64', 'linux/arm64', 'linux/arm/v8'])
         value: "[ string, ... ]"
+      - << : *image-compression
       - name: from
         value: "string"
         description:

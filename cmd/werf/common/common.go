@@ -32,6 +32,7 @@ import (
 	"github.com/werf/werf/v3/pkg/docker_registry"
 	"github.com/werf/werf/v3/pkg/git_repo"
 	"github.com/werf/werf/v3/pkg/giterminism_manager"
+	"github.com/werf/werf/v3/pkg/image"
 	"github.com/werf/werf/v3/pkg/logging"
 	"github.com/werf/werf/v3/pkg/opstats"
 	"github.com/werf/werf/v3/pkg/storage"
@@ -605,6 +606,16 @@ func SetupInsecureRegistry(cmdData *CmdData, cmd *cobra.Command) {
 func SetupContainerRegistryMirror(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.ContainerRegistryMirror = new([]string)
 	cmd.Flags().StringArrayVarP(cmdData.ContainerRegistryMirror, "container-registry-mirror", "", []string{}, "(Buildah-only) Use specified mirrors for docker.io ($WERF_CONTAINER_REGISTRY_MIRROR or $WERF_CONTAINER_REGISTRY_MIRROR_*)")
+}
+
+func SetupCompressionFormat(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.CompressionFormat = new(string)
+	cmd.Flags().StringVarP(cmdData.CompressionFormat, "compression-format", "", os.Getenv("WERF_COMPRESSION_FORMAT"), fmt.Sprintf("Compress image layers pushed to the container registry with the specified format: %s, %s or %s for uncompressed layers ($WERF_COMPRESSION_FORMAT or %[1]s by default). Images with %[2]s or %[3]s layers are published with the OCI manifest format. The compression settings in werf.yaml take precedence. The Docker container backend supports this option only with the containerd image store", image.LayerCompressionGzip, image.LayerCompressionZstd, image.LayerCompressionNone))
+}
+
+func SetupCompressionLevel(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.CompressionLevel = new(string)
+	cmd.Flags().StringVarP(cmdData.CompressionLevel, "compression-level", "", os.Getenv("WERF_COMPRESSION_LEVEL"), fmt.Sprintf("Compress image layers pushed to the container registry with the specified level: %d-%d for %s, %d-%d for %s ($WERF_COMPRESSION_LEVEL or the default level of the compression format by default). The compression settings in werf.yaml take precedence. The Docker container backend supports this option only with the containerd image store", image.LayerCompressionLevelMinGzip, image.LayerCompressionLevelMaxGzip, image.LayerCompressionGzip, image.LayerCompressionLevelMinZstd, image.LayerCompressionLevelMaxZstd, image.LayerCompressionZstd))
 }
 
 func SetupSkipTlsVerifyRegistry(cmdData *CmdData, cmd *cobra.Command) {

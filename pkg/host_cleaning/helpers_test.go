@@ -38,7 +38,7 @@ func purgeFixture() []dockercontainer.InspectResponse {
 }
 
 func newTestDockerServerBackend() *container_backend.DockerServerBackend {
-	return container_backend.NewDockerServerBackend(mock.NewMockLocker(gomock.NewController(ginkgo.GinkgoT())))
+	return container_backend.NewDockerServerBackend(mock.NewMockLocker(gomock.NewController(ginkgo.GinkgoT())), container_backend.DockerServerBackendOptions{})
 }
 
 func stapelFixtureContainer(id, version, platformSuffix, volumeName string) dockercontainer.InspectResponse {

@@ -314,6 +314,8 @@ type CliBuildOptions struct {
 	ExtraHosts     []string
 	SSH            string
 	Secrets        []string
+	// ExportAttrs are attributes of the exporter that loads the built image into the daemon.
+	ExportAttrs map[string]string
 }
 
 func CliBuild_LiveOutputWithCustomIn(ctx context.Context, rc io.ReadCloser, cliOpts CliBuildOptions) (string, error) {
@@ -330,6 +332,10 @@ func CliBuild_LiveOutputWithCustomIn(ctx context.Context, rc io.ReadCloser, cliO
 		ExtraHosts:             cliOpts.ExtraHosts,
 		ProvenanceResponseMode: string(confutil.MetadataProvenanceModeDisabled),
 		Attests:                buildflags.Attests{{Type: "provenance", Disabled: true}},
+	}
+
+	if len(cliOpts.ExportAttrs) > 0 {
+		buildOpts.Exports = []*buildflags.ExportEntry{{Type: "docker", Attrs: cliOpts.ExportAttrs}}
 	}
 
 	if len(cliOpts.BuildArgs) > 0 {

@@ -69,7 +69,7 @@ func main() {
 	}
 	log.Print(builderInfo)
 
-	if err := b.Push(ctx, newImage, buildah.PushOpts{LogWriter: os.Stdout}); err != nil {
+	if err := b.Push(ctx, newImage, buildah.PushOpts{CommonOpts: buildah.CommonOpts{LogWriter: os.Stdout}}); err != nil {
 		log.Fatal(err)
 	}
 

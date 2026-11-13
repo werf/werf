@@ -52,7 +52,7 @@ var _ = Describe("Legacy stage script", Label("e2e", "build", "legacy-stage-scri
 
 		DescribeTable("executes the complete script with closed command stdin", func(ctx SpecContext, script string, exitCode int) {
 			buildCtx := utils.WithDependencies(ctx)
-			backend := container_backend.NewDockerServerBackend(werf.HostLocker().Locker())
+			backend := container_backend.NewDockerServerBackend(werf.HostLocker().Locker(), container_backend.DockerServerBackendOptions{})
 			base := container_backend.NewLegacyStageImage(nil, legacyStageScriptBaseImage, backend, "linux/amd64")
 			stage := container_backend.NewLegacyStageImage(base, SuiteData.ProjectName, backend, "linux/amd64")
 			stage.BuilderContainer().AddRunCommands(script, "printf complete > /stage-complete")

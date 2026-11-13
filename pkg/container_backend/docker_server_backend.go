@@ -9,7 +9,9 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/containerd/containerd/platforms"
@@ -40,12 +42,87 @@ var (
 
 type DockerServerBackend struct {
 	locker lockgate.Locker
+
+	layerCompression    image.LayerCompression
+	checkImageStoreOnce sync.Once
+	checkImageStoreErr  error
 }
 
-func NewDockerServerBackend(locker lockgate.Locker) *DockerServerBackend {
+type DockerServerBackendOptions struct {
+	// CompressionFormat and CompressionLevel select how the layers of built images are compressed.
+	// Empty values keep the daemon default.
+	CompressionFormat string
+	CompressionLevel  *int
+}
+
+func NewDockerServerBackend(locker lockgate.Locker, opts DockerServerBackendOptions) *DockerServerBackend {
 	return &DockerServerBackend{
-		locker: locker,
+		locker:           locker,
+		layerCompression: image.LayerCompression{Format: opts.CompressionFormat, Level: opts.CompressionLevel},
 	}
+}
+
+// compressionExportAttrs returns the BuildKit image exporter attributes for the requested layer
+// compression. The layers are compressed when the image is exported into the daemon, and docker
+// push uploads them as stored, so the compression has to be decided at build time.
+//
+// Without compression settings the daemon default is kept. An explicit gzip is forced too: with the
+// containerd image store BuildKit otherwise reuses a zstd or uncompressed variant of a layer that
+// the daemon already has.
+func compressionExportAttrs(compression image.LayerCompression) map[string]string {
+	if !compression.IsSet() {
+		return nil
+	}
+	format, level := compression.Format, compression.Level
+
+	attrs := map[string]string{
+		// Base image layers keep the compression they were pulled with unless forced.
+		"force-compression": "true",
+	}
+	switch format {
+	case "", image.LayerCompressionGzip:
+		attrs["compression"] = "gzip"
+	case image.LayerCompressionZstd:
+		attrs["compression"] = "zstd"
+		attrs["oci-mediatypes"] = "true"
+	case image.LayerCompressionNone:
+		attrs["compression"] = "uncompressed"
+		attrs["oci-mediatypes"] = "true"
+	}
+	if level != nil {
+		attrs["compression-level"] = strconv.Itoa(*level)
+	}
+
+	return attrs
+}
+
+// checkLayerCompressionSupported fails unless the daemon uses the containerd image store: the
+// classic image store keeps layers uncompressed and always pushes them gzip-compressed, ignoring
+// the exporter compression attributes.
+func (backend *DockerServerBackend) checkLayerCompressionSupported(ctx context.Context) error {
+	backend.checkImageStoreOnce.Do(func() {
+		daemonInfo, err := docker.Info(ctx)
+		if err != nil {
+			backend.checkImageStoreErr = fmt.Errorf("unable to determine the Docker image store: %w", err)
+			return
+		}
+
+		if !isContainerdImageStore(daemonInfo.DriverStatus) {
+			backend.checkImageStoreErr = fmt.Errorf("layer compression settings require the containerd image store with the Docker container backend, but the Docker daemon uses the %q storage driver: enable the containerd image store in the Docker daemon or use the Buildah container backend", daemonInfo.Driver)
+		}
+	})
+
+	return backend.checkImageStoreErr
+}
+
+func isContainerdImageStore(driverStatus [][2]string) bool {
+	for _, status := range driverStatus {
+		if status[0] == "driver-type" && status[1] == "io.containerd.snapshotter.v1" {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (backend *DockerServerBackend) Info(ctx context.Context) (info.Info, error) {
@@ -117,6 +194,19 @@ func (backend *DockerServerBackend) BuildDockerfile(ctx context.Context, dockerf
 		ExtraHosts:     opts.AddHost,
 		SSH:            sshOpt,
 		Secrets:        opts.Secrets,
+	}
+	compression := backend.layerCompression
+	if opts.LayerCompression.IsSet() {
+		compression = opts.LayerCompression
+	}
+	buildOpts.ExportAttrs = compressionExportAttrs(compression)
+
+	// The classic image store ignores the exporter attributes and publishes gzip layers anyway, which
+	// only matters for a compression other than the default one.
+	if !compression.IsDefault() {
+		if err := backend.checkLayerCompressionSupported(ctx); err != nil {
+			return "", err
+		}
 	}
 
 	// A dockerfile outside the build context cannot be addressed within the context archive

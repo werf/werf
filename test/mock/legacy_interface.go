@@ -140,6 +140,20 @@ func (mr *MockLegacyImageInterfaceMockRecorder) GetFinalStageDesc() *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFinalStageDesc", reflect.TypeOf((*MockLegacyImageInterface)(nil).GetFinalStageDesc))
 }
 
+// GetLayerCompression mocks base method.
+func (m *MockLegacyImageInterface) GetLayerCompression() image.LayerCompression {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetLayerCompression")
+	ret0, _ := ret[0].(image.LayerCompression)
+	return ret0
+}
+
+// GetLayerCompression indicates an expected call of GetLayerCompression.
+func (mr *MockLegacyImageInterfaceMockRecorder) GetLayerCompression() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLayerCompression", reflect.TypeOf((*MockLegacyImageInterface)(nil).GetLayerCompression))
+}
+
 // GetStageDesc mocks base method.
 func (m *MockLegacyImageInterface) GetStageDesc() *image.StageDesc {
 	m.ctrl.T.Helper()

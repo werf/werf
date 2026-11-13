@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/werf/common-go/pkg/util"
@@ -12,6 +13,8 @@ import (
 	"github.com/werf/werf/v3/pkg/buildah/thirdparty"
 	"github.com/werf/werf/v3/pkg/container_backend"
 	"github.com/werf/werf/v3/pkg/docker"
+	"github.com/werf/werf/v3/pkg/image"
+	"github.com/werf/werf/v3/pkg/util/option"
 	"github.com/werf/werf/v3/pkg/werf"
 )
 
@@ -86,6 +89,24 @@ func GetBuildahStorageDriver() (*buildah.StorageDriver, error) {
 	return &storageDriver, nil
 }
 
+func getCompressionOptions(cmdData *CmdData) (image.LayerCompression, error) {
+	opts := image.LayerCompression{Format: option.PtrValueOrDefault(cmdData.CompressionFormat, "")}
+
+	if rawLevel := option.PtrValueOrDefault(cmdData.CompressionLevel, ""); rawLevel != "" {
+		level, err := strconv.Atoi(rawLevel)
+		if err != nil {
+			return opts, fmt.Errorf("unexpected compression level specified: %s (expected an integer)", rawLevel)
+		}
+		opts.Level = &level
+	}
+
+	if err := opts.Validate(); err != nil {
+		return opts, fmt.Errorf("invalid --compression-format or --compression-level: %w", err)
+	}
+
+	return opts, nil
+}
+
 func wrapContainerBackend(containerBackend container_backend.ContainerBackend) container_backend.ContainerBackend {
 	if os.Getenv("WERF_PERF_TEST_CONTAINER_RUNTIME") == "1" {
 		return container_backend.NewPerfCheckContainerBackend(containerBackend)
@@ -97,6 +118,11 @@ func InitProcessContainerBackend(ctx context.Context, cmdData *CmdData, registry
 	buildahMode, buildahIsolation, err := GetBuildahMode()
 	if err != nil {
 		return nil, ctx, fmt.Errorf("unable to determine buildah mode: %w", err)
+	}
+
+	compression, err := getCompressionOptions(cmdData)
+	if err != nil {
+		return nil, ctx, err
 	}
 
 	if *buildahMode != buildah.ModeDisabled {
@@ -129,6 +155,8 @@ func InitProcessContainerBackend(ctx context.Context, cmdData *CmdData, registry
 				RegistryMirrors:              registryMirrors,
 				InsecureRegistries:           insecureHosts,
 				StandaloneInsecureRegistries: standaloneInsecureHosts,
+				CompressionFormat:            compression.Format,
+				CompressionLevel:             compression.Level,
 			},
 			NativeModeOpts: buildah.NativeModeOpts{},
 		})
@@ -145,7 +173,10 @@ func InitProcessContainerBackend(ctx context.Context, cmdData *CmdData, registry
 	}
 	ctx = newCtx
 
-	return wrapContainerBackend(container_backend.NewDockerServerBackend(werf.HostLocker().Locker())), ctx, nil
+	return wrapContainerBackend(container_backend.NewDockerServerBackend(werf.HostLocker().Locker(), container_backend.DockerServerBackendOptions{
+		CompressionFormat: compression.Format,
+		CompressionLevel:  compression.Level,
+	})), ctx, nil
 }
 
 // InitProcessDockerOptions.RequireDaemon tells whether the command actually talks to the Docker

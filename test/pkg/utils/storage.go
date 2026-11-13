@@ -13,13 +13,13 @@ import (
 
 func NewStagesStorage(ctx context.Context, stagesStorageAddress, implementationName string, dockerRegistryOptions docker_registry.DockerRegistryOptions) storage.PrimaryStagesStorage {
 	if stagesStorageAddress == storage.LocalStorageAddress {
-		return storage.NewLocalStagesStorage(container_backend.NewDockerServerBackend(werf.HostLocker().Locker()))
+		return storage.NewLocalStagesStorage(container_backend.NewDockerServerBackend(werf.HostLocker().Locker(), container_backend.DockerServerBackendOptions{}))
 	} else {
 		dockerRegistry, err := docker_registry.NewDockerRegistry(ctx, stagesStorageAddress, implementationName, dockerRegistryOptions)
 		Expect(err).ShouldNot(HaveOccurred())
 		return storage.NewRepoStagesStorage(&storage.NewRepoStagesStorageOptions{
 			RepoAddress:      stagesStorageAddress,
-			ContainerBackend: container_backend.NewDockerServerBackend(werf.HostLocker().Locker()),
+			ContainerBackend: container_backend.NewDockerServerBackend(werf.HostLocker().Locker(), container_backend.DockerServerBackendOptions{}),
 			DockerRegistry:   dockerRegistry,
 		})
 	}

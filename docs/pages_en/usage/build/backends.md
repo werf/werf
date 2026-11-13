@@ -97,3 +97,57 @@ Format: `WERF_BUILDAH_ULIMIT=type:softlimit[:hardlimit][,type:softlimit[:hardlim
 * `rttime`: maximum real-time execution between blocking syscalls.
 * `sigpending`: maximum number of pending signals (ulimit -i).
 * `stack`: maximum stack size (ulimit -s).
+
+## Layer compression
+
+Image layers that werf publishes to the container registry are compressed with gzip at the compressor's default level. The compression can be changed for all images or for a particular image:
+
+* `--compression-format` (`$WERF_COMPRESSION_FORMAT`) and `--compression-level` (`$WERF_COMPRESSION_LEVEL`) of the commands that build images apply to every image;
+* the `build.compression` directive of the werf.yaml meta section applies to every image and takes precedence over the command-line options;
+* the `compression` directive of an image takes precedence over both and replaces them as a whole: a level set for all images does not carry over to an image with its own format.
+
+```yaml
+project: models
+configVersion: 1
+build:
+  compression:
+    format: zstd
+    level: 19
+---
+image: weights-streamed
+dockerfile: Dockerfile.weights
+compression:
+  format: none
+```
+
+The available formats:
+
+* `gzip` (default): levels `0`-`9`, the Docker image format;
+* `zstd`: levels `1`-`22`, the OCI image format with the `application/vnd.oci.image.layer.v1.tar+zstd` layers;
+* `none`: uncompressed layers, the OCI image format with the `application/vnd.oci.image.layer.v1.tar` layers; no level.
+
+If the level is omitted, the default level of the format is used. For `gzip`, level `0` produces a gzip stream without compression, not an uncompressed layer: the layer media type stays gzip.
+
+Whether a format pays off depends on the layer contents and on the consumers: `zstd` saves registry space and download time at the cost of decompression CPU, `none` avoids decompression entirely at the cost of space and traffic. Measure your own images before switching.
+
+### Cache
+
+A compression other than gzip at the default level is part of the stage digests: stages of an image with such a compression are built and published separately from the stages of images with other settings, and changing the compression of an image rebuilds its stages. Images without compression settings keep their digests and their cache.
+
+All layers of such an image, including the layers of its base image, are published with the selected format: layers that the container registry already has in another format are compressed anew instead of being reused.
+
+### Container backends
+
+With Buildah, layers are compressed when the image is published.
+
+With Docker, layers are compressed when the image is built, so the Docker daemon has to use the [containerd image store](https://docs.docker.com/engine/storage/containerd/). With the classic image store, which always publishes gzip layers, werf fails before building an image that has compression settings. Stapel images do not support compression settings with Docker: werf fails before building them.
+
+With the containerd image store, an image built without compression settings keeps the daemon default: BuildKit may reuse a zstd or uncompressed variant of a layer that the daemon already has for another image. Set `format: gzip` for images that must be published with gzip layers on such a daemon.
+
+### Compatibility
+
+`zstd` and `none` layers require the OCI image format. Before switching, verify that the container registry, registry proxies, and every container runtime and tool that pulls these images accept OCI manifests and these layer media types. There is no fallback: if the registry rejects them, publishing fails.
+
+The OCI image format has no `HEALTHCHECK`, `ONBUILD` or `SHELL` image config fields. Rather than dropping them silently, werf with Buildah refuses to publish an image that uses any of them with the `zstd` or `none` format, naming the fields and the image in the error. Use `gzip` for such images.
+
+`zstd` and uncompressed layers cannot be written into a docker archive: the archive format records every layer as gzip. werf therefore rejects writing such an image to a docker archive with `werf stages copy --to archive:PATH`. Copying between container registries is not affected.

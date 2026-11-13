@@ -117,6 +117,75 @@
         "type": "string"
       }
     },
+    "compression": {
+      "description": "Compression of the image layers published to the container registry (gzip by default).",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "format": {
+          "description": "Compression format: gzip (Docker image format), zstd or none for uncompressed layers (both in the OCI image format).",
+          "type": "string",
+          "enum": [
+            "gzip",
+            "zstd",
+            "none"
+          ]
+        },
+        "level": {
+          "description": "Compression level: 0-9 for gzip, 1-22 for zstd. The default level of the format is used when omitted; not allowed with none.",
+          "type": "integer"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "format": {
+                "const": "zstd"
+              }
+            },
+            "required": [
+              "format"
+            ]
+          },
+          "then": {
+            "properties": {
+              "level": {
+                "minimum": 1,
+                "maximum": 22
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "level": {
+                "minimum": 0,
+                "maximum": 9
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "format": {
+                "const": "none"
+              }
+            },
+            "required": [
+              "format"
+            ]
+          },
+          "then": {
+            "not": {
+              "required": [
+                "level"
+              ]
+            }
+          }
+        }
+      ]
+    },
     "cacheVersion": {
       "description": "Cache version. Change it to invalidate the build cache.",
       "type": [
@@ -569,6 +638,9 @@
               "description": "Common list of target platforms for all images (for example ['linux/amd64', 'linux/arm64', 'linux/arm/v8']).",
               "$ref": "#/definitions/platform"
             },
+            "compression": {
+              "$ref": "#/definitions/compression"
+            },
             "staged": {
               "description": "Enable layer-by-layer caching of Dockerfile instructions in container registry globally for all images.",
               "type": "boolean"
@@ -792,6 +864,9 @@
         "platform": {
           "description": "List of target platforms for this image (for example ['linux/amd64', 'linux/arm64', 'linux/arm/v8']).",
           "$ref": "#/definitions/platform"
+        },
+        "compression": {
+          "$ref": "#/definitions/compression"
         },
         "target": {
           "description": "Specific Dockerfile stage (the last one by default, similar to `docker build --target`).",
@@ -1236,6 +1311,9 @@
         "platform": {
           "description": "List of target platforms for this image (for example ['linux/amd64', 'linux/arm64', 'linux/arm/v8']).",
           "$ref": "#/definitions/platform"
+        },
+        "compression": {
+          "$ref": "#/definitions/compression"
         },
         "from": {
           "description": "The base image: another image from werf.yaml (e.g. `backend`), an external image with a tag/digest (e.g. `nginx:1.25`, `nginx@sha256:...`), or `scratch`.\nhttps://werf.io/docs/latest/usage/build/stapel/base.html#from",
