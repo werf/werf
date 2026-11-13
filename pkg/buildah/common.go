@@ -29,6 +29,7 @@ import (
 const (
 	CompressionFormatGzip = "gzip"
 	CompressionFormatZstd = "zstd"
+	CompressionFormatNone = "none"
 
 	gzipCompressionLevelMin = 0
 	gzipCompressionLevelMax = 9
@@ -188,6 +189,12 @@ type ImagesOptions struct {
 	Filters []util.Pair[string, string]
 }
 
+type PushOpts struct {
+	CommonOpts
+	// LayerCompression overrides CommonBuildahOpts.CompressionFormat and CompressionLevel when set.
+	LayerCompression image.LayerCompression
+}
+
 type ContainersOptions struct {
 	CommitOpts
 	Filters []image.ContainerFilter
@@ -196,7 +203,6 @@ type ContainersOptions struct {
 type (
 	FromCommandOpts       CommonOpts
 	BuildFromCommandsOpts CommonOpts
-	PushOpts              CommonOpts
 	PullOpts              CommonOpts
 	TagOpts               CommonOpts
 	MountOpts             CommonOpts
@@ -255,7 +261,8 @@ type CommonBuildahOpts struct {
 	InsecureRegistries           []string
 	StandaloneInsecureRegistries []string
 
-	// CompressionFormat is the algorithm used to compress layer blobs on push. Empty means gzip.
+	// CompressionFormat is the algorithm used to compress layer blobs on push. Empty means gzip,
+	// CompressionFormatNone pushes uncompressed layers.
 	CompressionFormat string
 	// CompressionLevel is the compression level used by CompressionFormat. Nil means the default
 	// level of the algorithm.
@@ -269,6 +276,9 @@ type pushCompression struct {
 	Algorithm    *compression.Algorithm
 	Level        *int
 	ManifestType string
+	// Force recompresses layer blobs that the registry already has in another format instead of
+	// reusing them, so that every layer is published with the requested compression.
+	Force bool
 }
 
 func newPushCompression(format string, level *int) (pushCompression, error) {
@@ -278,10 +288,14 @@ func newPushCompression(format string, level *int) (pushCompression, error) {
 			return pushCompression{}, err
 		}
 
+		// gzip is forced even by default: otherwise a zstd or uncompressed variant of a layer that the
+		// registry already has would be reused. Forcing requires the algorithm to be set explicitly.
 		return pushCompression{
 			Format:       CompressionFormatGzip,
+			Algorithm:    lo.ToPtr(compression.Gzip),
 			Level:        level,
 			ManifestType: manifest.DockerV2Schema2MediaType,
+			Force:        true,
 		}, nil
 	case CompressionFormatZstd:
 		if err := validateCompressionLevel(CompressionFormatZstd, level, zstdCompressionLevelMin, zstdCompressionLevelMax); err != nil {
@@ -294,9 +308,21 @@ func newPushCompression(format string, level *int) (pushCompression, error) {
 			Algorithm:    lo.ToPtr(compression.Zstd),
 			Level:        level,
 			ManifestType: imgspecv1.MediaTypeImageManifest,
+			Force:        true,
+		}, nil
+	case CompressionFormatNone:
+		if level != nil {
+			return pushCompression{}, fmt.Errorf("unsupported compression level %d for compression format %q: uncompressed layers have no compression level", *level, CompressionFormatNone)
+		}
+
+		// Uncompressed layers are published in the OCI image format as application/vnd.oci.image.layer.v1.tar.
+		// The destination wrapper decompresses every layer instead of forcing a compression algorithm.
+		return pushCompression{
+			Format:       CompressionFormatNone,
+			ManifestType: imgspecv1.MediaTypeImageManifest,
 		}, nil
 	default:
-		return pushCompression{}, fmt.Errorf("unsupported compression format %q: expected %q or %q", format, CompressionFormatGzip, CompressionFormatZstd)
+		return pushCompression{}, fmt.Errorf("unsupported compression format %q: expected %q, %q or %q", format, CompressionFormatGzip, CompressionFormatZstd, CompressionFormatNone)
 	}
 }
 

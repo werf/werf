@@ -6,6 +6,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	"github.com/werf/common-go/pkg/util"
 	imagePkg "github.com/werf/werf/v3/pkg/image"
 )
 
@@ -79,6 +80,30 @@ var _ = Describe("anchor holistic digest", func() {
 		changed := base
 		changed.BuildCacheVersion = "cache-v2"
 		Expect(anchorDigestWithOptions(changed)).NotTo(Equal(anchorDigestWithOptions(base)))
+	})
+
+	It("keeps the digest for the default layer compression and changes it otherwise", func() {
+		deps := []string{"from-digest"}
+		base := calculateDigestOptions{BuildCacheVersion: imagePkg.BuildCacheVersion, TargetPlatform: targetPlatform, Anchor: true, HolisticInputs: deps}
+		Expect(anchorDigestWithOptions(base)).To(Equal(util.Sha3_224Hash(imagePkg.BuildCacheVersion, targetPlatform, "from-digest")),
+			"the default compression must not change existing digests")
+
+		zstd := base
+		zstd.LayerCompression = "zstd"
+		Expect(anchorDigestWithOptions(zstd)).NotTo(Equal(anchorDigestWithOptions(base)))
+
+		none := base
+		none.LayerCompression = "none"
+		Expect(anchorDigestWithOptions(none)).NotTo(Equal(anchorDigestWithOptions(zstd)))
+
+		chainBase := calculateDigestOptions{BuildCacheVersion: imagePkg.BuildCacheVersion, TargetPlatform: targetPlatform}
+		chainZstd := chainBase
+		chainZstd.LayerCompression = "zstd"
+		baseDigest, err := calculateDigest(context.Background(), "install", "deps", nil, nil, chainBase)
+		Expect(err).NotTo(HaveOccurred())
+		zstdDigest, err := calculateDigest(context.Background(), "install", "deps", nil, nil, chainZstd)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(zstdDigest).NotTo(Equal(baseDigest))
 	})
 
 	It("changes when the target platform changes", func() {

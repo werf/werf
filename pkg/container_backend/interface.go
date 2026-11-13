@@ -17,10 +17,15 @@ type CommonOpts struct {
 
 type (
 	TagOpts          CommonOpts
-	PushOpts         CommonOpts
 	PullOpts         CommonOpts
 	GetImageInfoOpts CommonOpts
 )
+
+type PushOpts struct {
+	CommonOpts
+	// LayerCompression overrides the compression the backend was configured with when set.
+	LayerCompression image.LayerCompression
+}
 
 type RmOpts struct {
 	CommonOpts
@@ -45,6 +50,8 @@ type BuildDockerfileOpts struct {
 	Labels               []string
 	Tags                 []string
 	Secrets              []string
+	// LayerCompression overrides the compression the backend was configured with when set.
+	LayerCompression image.LayerCompression
 }
 
 type BuildDockerfileStageOptions struct {
@@ -54,6 +61,7 @@ type BuildDockerfileStageOptions struct {
 
 type BuildOptions struct {
 	TargetPlatform        string
+	LayerCompression      image.LayerCompression
 	Network               string
 	IntrospectBeforeError bool
 	IntrospectAfterError  bool

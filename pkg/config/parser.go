@@ -748,6 +748,10 @@ func prepareWerfConfig(giterminismManager giterminism_manager.Interface, rawImag
 				image.ImageSpec = &merged
 			}
 
+			if !image.compression.IsSet() {
+				image.compression = meta.Build.Compression
+			}
+
 			if util.GetBoolEnvironmentDefaultFalse("WERF_FORCE_STAGED_DOCKERFILE") {
 				image.Staged = true
 			} else if !rawImage.isFillStaged {
@@ -768,6 +772,9 @@ func prepareWerfConfig(giterminismManager giterminism_manager.Interface, rawImag
 				if meta.Build.ImageSpec != nil && image.final {
 					merged := mergeImageSpec(meta.Build.ImageSpec, image.ImageSpec)
 					image.ImageSpec = &merged
+				}
+				if !image.compression.IsSet() {
+					image.compression = meta.Build.Compression
 				}
 				images = append(images, image)
 			}

@@ -88,6 +88,8 @@ type ConveyorOptions struct {
 	ImagesToProcess    config.ImagesToProcess
 	UseBuildReport     bool
 	BuildReportPath    string
+	// LayerCompression applies to the images without compression settings in werf.yaml.
+	LayerCompression imagePkg.LayerCompression
 }
 
 func NewConveyor(werfConfig *config.WerfConfig, giterminismManager giterminism_manager.Interface, projectDir, baseTmpDir string, containerBackend container_backend.ContainerBackend, storageManager manager.StorageManagerInterface, storageLockManager lock_manager.Interface, opts ConveyorOptions) *Conveyor {
@@ -135,6 +137,8 @@ func NewConveyor(werfConfig *config.WerfConfig, giterminismManager giterminism_m
 			ProjectName:        c.ProjectName(),
 			ContainerWerfDir:   c.containerWerfDir,
 			TmpDir:             c.tmpDir,
+
+			DefaultLayerCompression: opts.LayerCompression,
 		},
 		ImagesToProcess:     opts.ImagesToProcess,
 		RemoteGitTasksLimit: remoteGitTasksLimit,
@@ -1096,10 +1100,16 @@ func (c *Conveyor) GetOrCreateStageImage(name string, prevStageImage *stage.Stag
 	}
 
 	i := container_backend.NewLegacyStageImage(extractLegacyStageImage(prevStageImage), name, c.ContainerBackend, img.TargetPlatform)
+	i.SetLayerCompression(img.LayerCompression())
 
 	resolvePrevStageBaseImage := func(prevStageImage *stage.StageImage) string {
 		if prevStageImage == nil || prevStageImage.Image == nil {
 			return ""
+		}
+		// Publishing a stage in the OCI image format converts its config, so the ID in the description
+		// of a published stage does not address the local image built before; its tag does.
+		if prevStageImage.Image.GetLayerCompression().PublishesOCIImage() {
+			return prevStageImage.Image.Name()
 		}
 		if stageDesc := prevStageImage.Image.GetStageDesc(); stageDesc != nil && stageDesc.Info != nil {
 			if _, err := digest.Parse(stageDesc.Info.ID); err == nil {

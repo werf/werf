@@ -36,22 +36,14 @@ var _ = ginkgo.DescribeTable("Layer compression options", func(env map[string]st
 	ginkgo.Entry("level environment", map[string]string{"WERF_COMPRESSION_LEVEL": "5"}, nil, "", lo.ToPtr(5), ""),
 	ginkgo.Entry("level flag wins over environment", map[string]string{"WERF_COMPRESSION_LEVEL": "5"}, []string{"--compression-level", "1"}, "", lo.ToPtr(1), ""),
 	ginkgo.Entry("max zstd level", nil, []string{"--compression-format", "zstd", "--compression-level", "22"}, "zstd", lo.ToPtr(22), ""),
-	ginkgo.Entry("unknown format", nil, []string{"--compression-format", "none"}, "", nil, "unexpected compression format specified: none"),
+	ginkgo.Entry("none format", nil, []string{"--compression-format", "none"}, "none", nil, ""),
+	ginkgo.Entry("unknown format", nil, []string{"--compression-format", "lz4"}, "", nil, `unexpected compression format "lz4"`),
+	ginkgo.Entry("none format with a level", nil, []string{"--compression-format", "none", "--compression-level", "0"}, "", nil, "the none compression format has no level"),
+	ginkgo.Entry("none format from environment with a level", map[string]string{"WERF_COMPRESSION_FORMAT": "none", "WERF_COMPRESSION_LEVEL": "1"}, nil, "", nil, "the none compression format has no level"),
 	ginkgo.Entry("non-integer level", nil, []string{"--compression-level", "fast"}, "", nil, "unexpected compression level specified: fast"),
 	ginkgo.Entry("gzip level above the gzip range", nil, []string{"--compression-level", "10"}, "", nil, "expected 0-9 for the gzip compression format"),
 	ginkgo.Entry("zstd level below the zstd range", nil, []string{"--compression-format", "zstd", "--compression-level", "0"}, "", nil, "expected 1-22 for the zstd compression format"),
 	ginkgo.Entry("gzip level above the gzip range from environment", map[string]string{"WERF_COMPRESSION_LEVEL": "10"}, nil, "", nil, "expected 0-9 for the gzip compression format"),
-)
-
-var _ = ginkgo.DescribeTable("Layer compression options are rejected by the Docker container backend", func(ctx ginkgo.SpecContext, args []string, expectedError string) {
-	clearListEnv()
-
-	_, _, err := InitProcessContainerBackend(ctx, compressionCmdData(args...), nil, InitProcessDockerOptions{})
-
-	gomega.Expect(err).To(gomega.MatchError(gomega.ContainSubstring(expectedError)))
-},
-	ginkgo.Entry("format", []string{"--compression-format", "zstd"}, "supported only with the Buildah container backend"),
-	ginkgo.Entry("level", []string{"--compression-level", "0"}, "supported only with the Buildah container backend"),
 )
 
 var _ = ginkgo.Describe("Commands without layer compression flags", func() {

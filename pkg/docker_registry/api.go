@@ -709,14 +709,18 @@ func (api *api) PullImageArchive(ctx context.Context, archiveWriter io.Writer, r
 	}
 
 	// The docker archive format has no media types: tarball.Image() reports every layer of a
-	// restored archive as a gzipped docker layer, which would turn zstd layers into a broken image.
+	// restored archive as a gzipped docker layer, which would turn zstd layers into a broken image
+	// and silently compress uncompressed ones.
 	manifest, err := img.Manifest()
 	if err != nil {
 		return fmt.Errorf("unable to read image manifest for reference %q: %w", reference, err)
 	}
 	for _, layer := range manifest.Layers {
-		if layer.MediaType == types.OCILayerZStd {
+		switch layer.MediaType {
+		case types.OCILayerZStd:
 			return fmt.Errorf("unable to save image %q to a docker archive: zstd-compressed layers are not supported by this format, copy the image directly between registries or rebuild it with gzip compression", reference)
+		case types.DockerUncompressedLayer, types.OCIUncompressedLayer:
+			return fmt.Errorf("unable to save image %q to a docker archive: uncompressed layers would be published gzip-compressed when the archive is restored, copy the image directly between registries or rebuild it with gzip compression", reference)
 		}
 	}
 

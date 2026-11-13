@@ -12,6 +12,7 @@ package config
 import (
 	reflect "reflect"
 
+	image "github.com/werf/werf/v3/pkg/image"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -51,6 +52,20 @@ func (m *MockImageInterface) CacheVersion() string {
 func (mr *MockImageInterfaceMockRecorder) CacheVersion() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CacheVersion", reflect.TypeOf((*MockImageInterface)(nil).CacheVersion))
+}
+
+// Compression mocks base method.
+func (m *MockImageInterface) Compression() image.LayerCompression {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Compression")
+	ret0, _ := ret[0].(image.LayerCompression)
+	return ret0
+}
+
+// Compression indicates an expected call of Compression.
+func (mr *MockImageInterfaceMockRecorder) Compression() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Compression", reflect.TypeOf((*MockImageInterface)(nil).Compression))
 }
 
 // GetFrom mocks base method.

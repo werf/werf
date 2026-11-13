@@ -383,8 +383,15 @@ func (b *NativeBuildah) Push(ctx context.Context, ref string, opts PushOpts) err
 		return err
 	}
 
-	if b.pushCompression.ManifestType == imgspecv1.MediaTypeImageManifest {
-		if err := b.checkImageIsRepresentableAsOCI(ctx, ref, sysCtx); err != nil {
+	pushCompression := b.pushCompression
+	if opts.LayerCompression.IsSet() {
+		if pushCompression, err = newPushCompression(opts.LayerCompression.Format, opts.LayerCompression.Level); err != nil {
+			return err
+		}
+	}
+
+	if pushCompression.ManifestType == imgspecv1.MediaTypeImageManifest {
+		if err := b.checkImageIsRepresentableAsOCI(ctx, ref, sysCtx, pushCompression.Format); err != nil {
 			return err
 		}
 	}
@@ -394,14 +401,15 @@ func (b *NativeBuildah) Push(ctx context.Context, ref string, opts PushOpts) err
 		ReportWriter:        opts.LogWriter,
 		Store:               b.Store,
 		SystemContext:       sysCtx,
-		ManifestType:        b.pushCompression.ManifestType,
-		CompressionFormat:   b.pushCompression.Algorithm,
-		CompressionLevel:    b.pushCompression.Level,
-		// Keep blobs already present in the registry reusable regardless of the algorithm they were
-		// compressed with.
-		ForceCompressionFormat: false,
+		ManifestType:           pushCompression.ManifestType,
+		CompressionFormat:      pushCompression.Algorithm,
+		CompressionLevel:       pushCompression.Level,
+		ForceCompressionFormat: pushCompression.Force,
 		MaxRetries:             MaxPullPushRetries,
 		RetryDelay:             PullPushRetryDelay,
+	}
+	if pushCompression.Format == CompressionFormatNone {
+		pushOpts.DestinationLookupReferenceFunc = lookupUncompressedDestination
 	}
 
 	imageRef, err := alltransports.ParseImageName(fmt.Sprintf("docker://%s", ref))
@@ -418,7 +426,7 @@ func (b *NativeBuildah) Push(ctx context.Context, ref string, opts PushOpts) err
 
 // checkImageIsRepresentableAsOCI fails for images whose stored Docker config uses fields that the
 // OCI image format has no place for: pushing such an image as OCI would silently drop them.
-func (b *NativeBuildah) checkImageIsRepresentableAsOCI(ctx context.Context, ref string, sysCtx *imgtypes.SystemContext) error {
+func (b *NativeBuildah) checkImageIsRepresentableAsOCI(ctx context.Context, ref string, sysCtx *imgtypes.SystemContext, compressionFormat string) error {
 	storeRef, err := storageTransport.Transport.ParseStoreReference(b.Store, ref)
 	if err != nil {
 		return fmt.Errorf("error parsing store reference from %q: %w", ref, err)
@@ -468,7 +476,7 @@ func (b *NativeBuildah) checkImageIsRepresentableAsOCI(ctx context.Context, ref 
 	}
 
 	if len(dockerOnlyFields) > 0 {
-		return fmt.Errorf("unable to push image %q with compression format %q: this format requires the OCI image format, which has no %s, so these image config fields would be silently dropped; use the %q compression format for this image", ref, b.pushCompression.Format, strings.Join(dockerOnlyFields, ", "), CompressionFormatGzip)
+		return fmt.Errorf("unable to push image %q with compression format %q: this format requires the OCI image format, which has no %s, so these image config fields would be silently dropped; use the %q compression format for this image", ref, compressionFormat, strings.Join(dockerOnlyFields, ", "), CompressionFormatGzip)
 	}
 
 	return nil

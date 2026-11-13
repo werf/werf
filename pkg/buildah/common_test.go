@@ -10,7 +10,7 @@ import (
 
 var _ = Describe("push compression", func() {
 	DescribeTable("newPushCompression",
-		func(format string, level *int, expectedAlgorithm, expectedManifestType string) {
+		func(format string, level *int, expectedAlgorithm, expectedManifestType string, expectedForce bool) {
 			compressionOpts, err := newPushCompression(format, level)
 			Expect(err).NotTo(HaveOccurred())
 			if expectedAlgorithm == "" {
@@ -21,12 +21,15 @@ var _ = Describe("push compression", func() {
 			}
 			Expect(compressionOpts.Level).To(Equal(level))
 			Expect(compressionOpts.ManifestType).To(Equal(expectedManifestType))
+			Expect(compressionOpts.Force).To(Equal(expectedForce))
 		},
-		Entry("empty format keeps the library default and the Docker manifest", "", nil, "", manifest.DockerV2Schema2MediaType),
-		Entry("empty format with level keeps the Docker manifest", "", lo.ToPtr(9), "", manifest.DockerV2Schema2MediaType),
-		Entry("gzip keeps the Docker manifest", CompressionFormatGzip, lo.ToPtr(0), "", manifest.DockerV2Schema2MediaType),
-		Entry("zstd switches to the OCI manifest", CompressionFormatZstd, nil, compression.Zstd.Name(), "application/vnd.oci.image.manifest.v1+json"),
-		Entry("zstd with level switches to the OCI manifest", CompressionFormatZstd, lo.ToPtr(22), compression.Zstd.Name(), "application/vnd.oci.image.manifest.v1+json"),
+		Entry("empty format forces gzip with the Docker manifest", "", nil, compression.Gzip.Name(), manifest.DockerV2Schema2MediaType, true),
+		Entry("empty format with level forces gzip with the Docker manifest", "", lo.ToPtr(9), compression.Gzip.Name(), manifest.DockerV2Schema2MediaType, true),
+		Entry("explicit gzip forces gzip with the Docker manifest", CompressionFormatGzip, nil, compression.Gzip.Name(), manifest.DockerV2Schema2MediaType, true),
+		Entry("gzip with level forces gzip with the Docker manifest", CompressionFormatGzip, lo.ToPtr(0), compression.Gzip.Name(), manifest.DockerV2Schema2MediaType, true),
+		Entry("zstd switches to the OCI manifest", CompressionFormatZstd, nil, compression.Zstd.Name(), "application/vnd.oci.image.manifest.v1+json", true),
+		Entry("zstd with level switches to the OCI manifest", CompressionFormatZstd, lo.ToPtr(22), compression.Zstd.Name(), "application/vnd.oci.image.manifest.v1+json", true),
+		Entry("none switches to the OCI manifest", CompressionFormatNone, nil, "", "application/vnd.oci.image.manifest.v1+json", false),
 	)
 
 	DescribeTable("newPushCompression rejects unsupported values",
@@ -34,7 +37,8 @@ var _ = Describe("push compression", func() {
 			_, err := newPushCompression(format, level)
 			Expect(err).To(MatchError(ContainSubstring(expectedError)))
 		},
-		Entry("unknown format", "none", nil, `unsupported compression format "none"`),
+		Entry("unknown format", "lz4", nil, `unsupported compression format "lz4"`),
+		Entry("none with a level", CompressionFormatNone, lo.ToPtr(0), `unsupported compression level 0 for compression format "none"`),
 		Entry("unknown format with a valid level", "lz4", lo.ToPtr(1), `unsupported compression format "lz4"`),
 		Entry("format is case-sensitive", "GZIP", nil, `unsupported compression format "GZIP"`),
 		Entry("gzip level above the maximum", CompressionFormatGzip, lo.ToPtr(10), `unsupported compression level 10 for compression format "gzip": expected a value between 0 and 9`),
@@ -46,9 +50,9 @@ var _ = Describe("push compression", func() {
 
 	It("rejects compression options before initializing the backend", func() {
 		_, err := NewBuildah(ModeNative, BuildahOpts{
-			CommonBuildahOpts: CommonBuildahOpts{CompressionFormat: "none"},
+			CommonBuildahOpts: CommonBuildahOpts{CompressionFormat: "lz4"},
 		})
-		Expect(err).To(MatchError(ContainSubstring(`unsupported compression format "none"`)))
+		Expect(err).To(MatchError(ContainSubstring(`unsupported compression format "lz4"`)))
 	})
 
 	It("rejects an out of range compression level before initializing the backend", func() {
