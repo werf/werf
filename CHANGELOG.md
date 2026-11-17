@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.13.1](https://github.com/werf/werf/compare/v3.13.0...v3.13.1) (2026-11-17)
+
+
+### Bug Fixes
+
+* **build:** remove deleted files with quoted git paths ([#8171](https://github.com/werf/werf/issues/8171)) ([af603db](https://github.com/werf/werf/commit/af603dba60cf148191318d3842cadad771526698))
+* **host-cleanup:** stop skipping all images after the first ones in use ([#8175](https://github.com/werf/werf/issues/8175)) ([21968c6](https://github.com/werf/werf/commit/21968c6fcfcaf44f929a360e36d344b79374ac04))
+
 ## [3.13.0](https://github.com/werf/werf/compare/v3.12.2...v3.13.0) (2026-11-12)
 
 
