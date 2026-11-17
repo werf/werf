@@ -92,6 +92,7 @@ func GetWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfConfi
 			env:                                 opts.Env,
 			debugTemplates:                      opts.DebugTemplates,
 		})
+		path = werfConfigPath
 		if err != nil {
 			return fmt.Errorf("unable to render werf config: %w", err)
 		}
@@ -159,14 +160,18 @@ func GetWerfConfig(ctx context.Context, customWerfConfigRelPath, customWerfConfi
 		if err != nil {
 			return err
 		}
+		werfConfig.SourceFilePath = werfConfigPath
 
-		path = werfConfigPath
 		config = werfConfig
 
 		return nil
 	})
 	if err != nil {
-		return "", nil, err
+		if path == "" {
+			return "", nil, err
+		}
+
+		return "", nil, fmt.Errorf("%s: %w", path, err)
 	}
 
 	return path, config, nil
@@ -259,7 +264,7 @@ func renderWerfConfigYaml(ctx context.Context, opts renderWerfConfigYamlOpts) (s
 		relWerfConfigPath:  opts.customWerfConfigRelPath,
 	})
 	if err != nil {
-		return "", "", err
+		return configPath, "", err
 	}
 
 	templateData := make(map[string]interface{})
@@ -271,12 +276,12 @@ func renderWerfConfigYaml(ctx context.Context, opts renderWerfConfigYamlOpts) (s
 
 	headHash, err := opts.giterminismManager.LocalGitRepo().HeadCommitHash(ctx)
 	if err != nil {
-		return "", "", fmt.Errorf("unable to get HEAD commit hash: %w", err)
+		return configPath, "", fmt.Errorf("unable to get HEAD commit hash: %w", err)
 	}
 
 	headTime, err := opts.giterminismManager.LocalGitRepo().HeadCommitTime(ctx)
 	if err != nil {
-		return "", "", fmt.Errorf("unable to get HEAD commit time: %w", err)
+		return configPath, "", fmt.Errorf("unable to get HEAD commit time: %w", err)
 	}
 
 	templateData["Commit"] = map[string]interface{}{
@@ -289,7 +294,7 @@ func renderWerfConfigYaml(ctx context.Context, opts renderWerfConfigYamlOpts) (s
 
 	config, err := executeTemplate(tmpl, "werfConfig", templateData)
 	if err != nil {
-		return "", "", detailedTemplateError(tmpl, detailedTemplateErrorData{
+		return configPath, "", detailedTemplateError(tmpl, detailedTemplateErrorData{
 			templateName: "werfConfig",
 		}, opts.debugTemplates, err)
 	}
@@ -310,7 +315,7 @@ func parseWerfConfig(ctx context.Context, opts parseWerfConfigOpts) (string, err
 	}
 
 	if _, err := opts.tmpl.Parse(string(configData)); err != nil {
-		return "", err
+		return configPath, err
 	}
 
 	return configPath, nil

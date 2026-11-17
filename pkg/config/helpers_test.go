@@ -2,6 +2,7 @@ package config
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"io"
 	"io/fs"
@@ -9,12 +10,19 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/santhosh-tekuri/jsonschema/v6"
 	yamlv2 "gopkg.in/yaml.v2"
 	"gopkg.in/yaml.v3"
 
 	"github.com/werf/common-go/pkg/util"
+	"github.com/werf/werf/v3/pkg/git_repo"
+	"github.com/werf/werf/v3/pkg/git_repo/gitdata"
+	"github.com/werf/werf/v3/pkg/giterminism_manager"
+	"github.com/werf/werf/v3/pkg/true_git"
+	"github.com/werf/werf/v3/pkg/werf"
+	"github.com/werf/werf/v3/test/pkg/utils"
 )
 
 const werfSchemaPath = "../../schemas/werf.json"
@@ -104,6 +112,47 @@ func parseStapelImageGitLocals(data string) ([]*GitLocal, error) {
 	}
 
 	return stapelImage.Git.Local, nil
+}
+
+func newProjectRepo(ctx context.Context, files map[string]string) string {
+	tmpDir := ginkgo.GinkgoT().TempDir()
+	homeDir := ginkgo.GinkgoT().TempDir()
+	ginkgo.GinkgoT().Setenv("WERF_TMP_DIR", tmpDir)
+	ginkgo.GinkgoT().Setenv("WERF_HOME", homeDir)
+	Expect(werf.Init(tmpDir, homeDir)).To(Succeed())
+	Expect(true_git.Init(ctx, true_git.Options{})).To(Succeed())
+	gitDataManager, err := gitdata.GetHostGitDataManager(ctx)
+	Expect(err).NotTo(HaveOccurred())
+	oldManager := git_repo.CommonGitDataManager
+	ginkgo.DeferCleanup(func() { git_repo.CommonGitDataManager = oldManager })
+	Expect(git_repo.Init(gitDataManager)).To(Succeed())
+
+	projectDir := filepath.Join(tmpDir, "project")
+	utils.MkdirAll(projectDir)
+	utils.RunSucceedCommand(ctx, projectDir, "git", "init", "--initial-branch=main")
+	utils.RunSucceedCommand(ctx, projectDir, "git", "config", "user.name", "Test")
+	utils.RunSucceedCommand(ctx, projectDir, "git", "config", "user.email", "test@example.com")
+	utils.RunSucceedCommand(ctx, projectDir, "git", "config", "commit.gpgsign", "false")
+
+	for name, data := range files {
+		utils.WriteFile(filepath.Join(projectDir, name), []byte(data))
+	}
+	utils.RunSucceedCommand(ctx, projectDir, "git", "add", ".")
+	utils.RunSucceedCommand(ctx, projectDir, "git", "commit", "-m", "test state")
+
+	return projectDir
+}
+
+func getWerfConfigFromProjectRepo(ctx context.Context, files map[string]string, customWerfConfigRelPath string) (string, *WerfConfig, error) {
+	projectDir := newProjectRepo(ctx, files)
+
+	repo, err := git_repo.OpenLocalRepo(ctx, "own", projectDir, git_repo.OpenLocalRepoOptions{})
+	Expect(err).NotTo(HaveOccurred())
+
+	giterminismManager, err := giterminism_manager.NewManager(ctx, "", projectDir, repo, utils.GetHeadCommit(ctx, projectDir), giterminism_manager.NewManagerOptions{})
+	Expect(err).NotTo(HaveOccurred())
+
+	return GetWerfConfig(ctx, customWerfConfigRelPath, "", "", giterminismManager, WerfConfigOptions{})
 }
 
 func nonTemplatedWerfYamlFixtures(root string) []string {

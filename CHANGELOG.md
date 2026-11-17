@@ -1,5 +1,49 @@
 # Changelog
 
+## [3.13.0](https://github.com/werf/werf/compare/v3.12.2...v3.13.0) (2026-11-12)
+
+
+### Features
+
+* **bundle:** deploy published bundles exactly like converge ([#8142](https://github.com/werf/werf/issues/8142)) ([a19d6fc](https://github.com/werf/werf/commit/a19d6fc8032fbe826a1ced6b5984873b15055f8d))
+* **cleanup:** keep a stage via its custom tag in --keep-list ([#8139](https://github.com/werf/werf/issues/8139)) ([ac43631](https://github.com/werf/werf/commit/ac43631fb5360250b17d7a36f51bfb9c0f95bb12))
+* **deploy, secrets:** warn about secret values that lost their type in the legacy format ([#8122](https://github.com/werf/werf/issues/8122)) ([9dd67b6](https://github.com/werf/werf/commit/9dd67b697805c37a6ef88d0a7ccadd7812d55a9e))
+* **deploy:** render TypeScript charts with Node.js instead of Deno ([#8167](https://github.com/werf/werf/issues/8167)) ([8eb35aa](https://github.com/werf/werf/commit/8eb35aa8b044b361897180388655b23f627df7e5))
+* **deploy:** render TypeScript charts without NELM_FEAT_TYPESCRIPT ([#8169](https://github.com/werf/werf/issues/8169)) ([253dc5c](https://github.com/werf/werf/commit/253dc5ca63e26a4d371c59e3c8b4564d344dc727))
+* **deploy:** validate Chart.yaml with export-values in IDEs ([#8153](https://github.com/werf/werf/issues/8153)) ([a07beb7](https://github.com/werf/werf/commit/a07beb776a20b6144f6f4c3df020ec713a481134)), closes [#6886](https://github.com/werf/werf/issues/6886)
+
+
+### Bug Fixes
+
+* **build, buildah:** stop failed builds leaking working containers ([#8146](https://github.com/werf/werf/issues/8146)) ([f374ada](https://github.com/werf/werf/commit/f374ada561b642da12297f3e5e506d7af7cbc1e9))
+* **build, dockerfile:** support COPY and ADD heredocs with staged: true ([#8155](https://github.com/werf/werf/issues/8155)) ([4eb2c26](https://github.com/werf/werf/commit/4eb2c26b1abe5a9751e5e6f8fb2ed7970026d483)), closes [#6521](https://github.com/werf/werf/issues/6521)
+* **build:** archive git files and directories that differ only by case on macOS ([#8163](https://github.com/werf/werf/issues/8163)) ([0206211](https://github.com/werf/werf/commit/0206211b4657d3b353c2ed2e98e7b428ae3d7d80))
+* **build:** keep git files that differ only by case intact on macOS ([#8147](https://github.com/werf/werf/issues/8147)) ([f805b27](https://github.com/werf/werf/commit/f805b27abcf5843d2a788e0b1aa4e71dc88bce56))
+* **build:** name the actual config file in errors ([#8154](https://github.com/werf/werf/issues/8154)) ([34fefd5](https://github.com/werf/werf/commit/34fefd5a3a0cc55a2230fad5f677f1c497726373)), closes [#3635](https://github.com/werf/werf/issues/3635)
+* **build:** stop git mappings failing on a stale .gitmodules entry ([#8162](https://github.com/werf/werf/issues/8162)) ([135f50c](https://github.com/werf/werf/commit/135f50c98a819b812fba8b0d3bb63f4ddb1672ea))
+* **bundle:** warn on publish about export-values skipped because of a non-map value ([#8135](https://github.com/werf/werf/issues/8135)) ([77b7cc2](https://github.com/werf/werf/commit/77b7cc26b2e0039bbc259350fffe0dd2322d6169))
+* **deploy, values:** apply secret-values.yaml of v3 subcharts and subcharts not listed in dependencies ([#8129](https://github.com/werf/werf/issues/8129)) ([43ebfcd](https://github.com/werf/werf/commit/43ebfcd0e4386adb2f1a798a311a3a81e08ed4b9))
+* **deploy, values:** export-values from --values, --set and service values reach a subchart out of its dependency version range ([#8127](https://github.com/werf/werf/issues/8127)) ([95e2df4](https://github.com/werf/werf/commit/95e2df4e231f828d6fd7627451aaf4773949cb40))
+* **deploy, values:** export-values of global.* in dependent charts see the main chart globals ([#8130](https://github.com/werf/werf/issues/8130)) ([2a10f42](https://github.com/werf/werf/commit/2a10f425a23c60ac6ae5b9683813c5d957c43c4d))
+* **deploy, values:** warn about export-values and import-values paths set in no values ([#8137](https://github.com/werf/werf/issues/8137)) ([3274dc8](https://github.com/werf/werf/commit/3274dc879073e5f18fc0d0379920e80f7154ed17))
+* **deploy:** apply publish-time values of a dependency chart that is out of the version range of its alias ([#8159](https://github.com/werf/werf/issues/8159)) ([c4b5ec1](https://github.com/werf/werf/commit/c4b5ec156dd6996e6b79e31687310ddaf432751b))
+* **deploy:** export-values from chart values no longer depend on the order of dependencies ([#8134](https://github.com/werf/werf/issues/8134)) ([59a2023](https://github.com/werf/werf/commit/59a202373fc47cb7b67a2396d5a048d56d9a3cc7))
+* **deploy:** import-values of apiVersion v3 charts see --values and --set*, export-values warn ([#8133](https://github.com/werf/werf/issues/8133)) ([260d35d](https://github.com/werf/werf/commit/260d35d6dcfb45a3e127217eee4bff9e8125d126))
+* **deploy:** lookalike keys such as `werf-io/weight` no longer act as `werf.io/*` and `helm.sh/*` annotations ([#8132](https://github.com/werf/werf/issues/8132)) ([698281e](https://github.com/werf/werf/commit/698281ee24ccd182d20dacdd407e7149e5646249))
+* **deploy:** mark revisions left pending by an interrupted converge as failed after the next successful deploy ([#8131](https://github.com/werf/werf/issues/8131)) ([1d745c8](https://github.com/werf/werf/commit/1d745c80443b09cf4d16833c4e1b4a634d9e0b99))
+* **deploy:** repeated converge of a chart with an internal state=ready deploy-dependency is skipped when nothing changed ([#8123](https://github.com/werf/werf/issues/8123)) ([7bd4e80](https://github.com/werf/werf/commit/7bd4e8069ed81ef69585e11de26e0eaa607f1dac))
+* **deploy:** repeated converge with a numeric --set is skipped as up to date ([#8128](https://github.com/werf/werf/issues/8128)) ([88ffae8](https://github.com/werf/werf/commit/88ffae8ec1e0dc648679463556d60d5239d98229))
+* **deploy:** resources removed from the chart are deleted after a stuck or failed deploy ([#8125](https://github.com/werf/werf/issues/8125)) ([c82e7b8](https://github.com/werf/werf/commit/c82e7b8a2b368cc299ef1832e8d263423806d0d5))
+* **deploy:** values and dependency warnings follow the nelm log level and go to stderr ([#8136](https://github.com/werf/werf/issues/8136)) ([59e5066](https://github.com/werf/werf/commit/59e50668661eb1cea49a5a4048a146dc79625c03))
+* **deploy:** warn when a deployed resource is already being deleted ([#8124](https://github.com/werf/werf/issues/8124)) ([eda6a00](https://github.com/werf/werf/commit/eda6a00cd3df27abcb21a3c9671a7d0f36f71ff0))
+* **host-cleanup:** remove git archive export directories left by a killed werf ([#8165](https://github.com/werf/werf/issues/8165)) ([e1fc194](https://github.com/werf/werf/commit/e1fc194811e5d57bd14a04699aadc9ec3597b1f8))
+* **secrets:** do not keep the secret key in the werf process environment after plan ([#8126](https://github.com/werf/werf/issues/8126)) ([49df20e](https://github.com/werf/werf/commit/49df20e91badbb4ec0f0a26fa01330c630529158))
+
+
+### Performance Improvements
+
+* **deploy:** order export-values of charts with many dependencies faster ([#8138](https://github.com/werf/werf/issues/8138)) ([cd1c659](https://github.com/werf/werf/commit/cd1c6590968976febfb7c6ad066b54830dd0ad24))
+
 ## [3.12.2](https://github.com/werf/werf/compare/v3.12.1...v3.12.2) (2026-10-29)
 
 

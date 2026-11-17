@@ -16,7 +16,7 @@ werf supports Git submodules. If it detects that the files specified in the _git
 
 > All submodules in a project are bound to a specific commit. That way, all the collaborators get the same content. werf **does not initialize or update the submodules**. Instead, it merely uses these bound commits.
 
-When the submodule objects are not available in the local repository, werf fetches each missing submodule into its own service worktree as a shallow clone holding the remote's current tip and the bound commit without their history, falling back to a full clone for a submodule whose git server refuses the shallow fetch. Set `shallow = false` for a submodule in `.gitmodules` to always clone it in full, or set `WERF_DISABLE_SHALLOW_SUBMODULES=1` to disable shallow submodule clones entirely.
+When the submodule objects are not available in the local repository, werf fetches each missing submodule into its own service worktree as a shallow clone holding the remote's current tip and the bound commit without their history, falling back to a full clone for a submodule whose git server refuses the shallow fetch. Set `shallow = false` for a submodule in `.gitmodules` to always clone it in full, or set `WERF_DISABLE_SHALLOW_SUBMODULES=1` to disable shallow submodule clones entirely. Fetching requires access to the submodule repositories (see [Accessing submodules](#accessing-submodules)).
 
 Below is an example of a _git mapping_ configuration. In it, source files are added from a local repository (`/src` is the source and `/app` is the destination directory), while remote phantomjs source files are imported and saved in `/src/phantomjs`:
 
@@ -243,6 +243,38 @@ git:
 - add: /assets
   to: /app/assets
 ```
+
+## Accessing submodules
+
+werf reuses the submodule objects from the local repository when every submodule, including nested ones, is initialized there at its bound commit, for example after `git submodule update --init --recursive` or a CI checkout with submodules enabled. Otherwise werf prints a warning naming the submodules that prevent the reuse and fetches all submodules from the URLs in `.gitmodules`, using the Git configuration, credential helpers and SSH agent available to werf. Without access to a private submodule, the build fails with an error like:
+
+```
+fatal: could not read Username for 'https://github.com': No such device or address
+```
+
+To provide access, use one of the following options:
+
+- Use a relative URL in `.gitmodules` when the submodule is hosted on the same Git server as the project. Git resolves it against the project remote, so the submodule is fetched with the same access as the project:
+
+  ```ini
+  [submodule "example"]
+    path = example
+    url = ../repo.git
+  ```
+
+- Rewrite the submodule URL to include a token. The user name part depends on the Git hosting, for example `https://oauth2:<TOKEN>@gitlab.com/...` for GitLab:
+
+  ```shell
+  git config --global url."https://<TOKEN>@github.com/org/repo.git".insteadOf "https://github.com/org/repo.git"
+  ```
+
+- Rewrite the submodule URL to use SSH and make the key available to werf (see [using the SSH agent]({{ "/usage/build/process.html#using-the-ssh-agent" | true_relative_url }})):
+
+  ```shell
+  git config --global url."git@github.com:org/repo.git".insteadOf "https://github.com/org/repo.git"
+  ```
+
+Do not commit tokens to `.gitmodules`. In CI, prefer passing the rewrite through the job environment (`GIT_CONFIG_COUNT=1`, `GIT_CONFIG_KEY_0=url.https://<TOKEN>@github.com/.insteadOf`, `GIT_CONFIG_VALUE_0=https://github.com/`) or a credential helper, so the token is not written to `~/.gitconfig`.
 
 ## Working with remote repositories
 

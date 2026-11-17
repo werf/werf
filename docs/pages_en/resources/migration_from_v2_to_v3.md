@@ -38,6 +38,7 @@ These changes affect existing projects even without configuration edits:
 | Published chart format | Images and `werf bundle publish` values are merged into `values.yaml` of the chart. | Stored in `.werf-data/`; Helm, Argo CD and Flux get only the chart's own values; werf v2 cannot deploy the chart. | Pass `.werf-data/` values files to Helm, Argo CD and Flux; upgrade werf everywhere bundles are applied; [details](#charts-and-bundles). |
 | Bundle archive | `werf bundle copy --to archive:` writes the chart archive and a tarball per image. | An OCI image layout with the chart, its provenance file and all platforms of the images; werf v2 can't read it. | Import archives with v3, which still reads v2 archives; [details](#charts-and-bundles). |
 | `.helmignore` | Does not filter files when werf reads the chart. | Filters files, including Helm's default rules. | Check exclusions before deploying; [details](#charts-and-bundles). |
+| TypeScript charts | `ts/` is ignored without `NELM_FEAT_TYPESCRIPT=true`; rendered with Deno. | Always rendered, with Node.js. | Install Node.js 26+ and rebuild bundles; [details](#typescript-charts). |
 
 ### CI and automation
 
@@ -373,6 +374,14 @@ Rules for dependent charts vary by how the chart is included — see [Charts and
 - **`--disable-default-values` and `--disable-default-secret-values` of `werf bundle apply` ignore only the chart's own files**, not the values and images stored at publish time.
 - **A recorded `--disable-default-values`, `--disable-default-secret-values` or `--no-default-patches` can't be cleared by `werf bundle publish`.** If the chart directory contains `.werf-data/` where one of them is recorded as `true`, e.g. an unpacked published chart committed to `.helm`, publishing without the option keeps it. Remove `defaultValuesDisable` or `defaultSecretValuesDisable` under `values` or `defaultPatchesDisable` from `.werf-data/metadata.yaml`: passing the option with `false` keeps the stored switch too.
 - **For bundles published by werf 3.12 and older, the annotations given to `werf bundle apply`, `plan` and `render` win over the bundle's `extra_annotations.json` per key**: `--add-annotation` and werf's service annotations such as `project.werf.io/env`. Previously the bundle's `project.werf.io/*` and `ci.werf.io/*` annotations won.
+
+### TypeScript charts
+
+**TypeScript charts are rendered with Node.js instead of Deno.** Deploying a chart with a `ts/` directory requires Node.js 26 or newer and a package manager (npm, pnpm or yarn) on the host.
+
+- **`NELM_FEAT_TYPESCRIPT` is no longer needed.** A chart with `ts/src` is always rendered, even if the flag was not set in v2.
+- **Bundles built for Deno no longer render.** Rebuild them with `@nelm/chart-ts-sdk` 0.2.0, including a committed `ts/dist/bundle.js`, and publish the bundles again.
+- **`ts/deno.json` is replaced by `ts/package.json` and `ts/tsconfig.json`.** Create them as `werf chart ts init` does and move the dependencies from `deno.json` to `package.json`.
 
 ### Encrypted secret values
 

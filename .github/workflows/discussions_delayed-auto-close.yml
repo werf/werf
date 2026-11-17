@@ -1,0 +1,158 @@
+name: discussions:delayed-auto-close
+
+on:
+  schedule:
+    - cron: "0 8 * * *"
+  discussion:
+    types:
+      - labeled
+  discussion_comment:
+    types:
+      - created
+  workflow_dispatch:
+
+jobs:
+  manage:
+    if: github.repository == 'werf/werf' && (github.event_name != 'discussion' || github.event.label.name == 'solved')
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    permissions:
+      discussions: write
+    steps:
+      - uses: actions/github-script@v8
+        with:
+          script: |
+            const label = 'solved';
+            const delayMs = 7 * 24 * 60 * 60 * 1000;
+            const bot = 'github-actions';
+            const marker = '<!-- discussions:delayed-auto-close -->';
+            const notice = `${marker}\nThis discussion is marked as solved and will be closed in 7 days if there is no further activity. Leave a comment to keep it open.`;
+            const closeMessage = 'This discussion appears to be resolved, so we’re closing it for now. If you have further questions, please feel free to start a new discussion at any time.';
+            const { owner, repo } = context.repo;
+
+            async function getDiscussion(number) {
+              const { repository } = await github.graphql(`
+                query($owner: String!, $repo: String!, $number: Int!) {
+                  repository(owner: $owner, name: $repo) {
+                    discussion(number: $number) {
+                      id
+                      closed
+                      labels(first: 100) { nodes { id name } }
+                      comments(last: 100) {
+                        nodes {
+                          body
+                          createdAt
+                          author { login }
+                          replies(last: 100) { nodes { createdAt author { login } } }
+                        }
+                      }
+                    }
+                  }
+                }`, { owner, repo, number });
+              return repository.discussion;
+            }
+
+            async function comment(discussion, body) {
+              await github.graphql(`
+                mutation($id: ID!, $body: String!) {
+                  addDiscussionComment(input: { discussionId: $id, body: $body }) { clientMutationId }
+                }`, { id: discussion.id, body });
+            }
+
+            async function removeLabel(discussion, labelId) {
+              await github.graphql(`
+                mutation($id: ID!, $labelId: ID!) {
+                  removeLabelsFromLabelable(input: { labelableId: $id, labelIds: [$labelId] }) { clientMutationId }
+                }`, { id: discussion.id, labelId });
+            }
+
+            async function close(discussion) {
+              await github.graphql(`
+                mutation($id: ID!) {
+                  closeDiscussion(input: { discussionId: $id, reason: RESOLVED }) { clientMutationId }
+                }`, { id: discussion.id });
+            }
+
+            async function manage(number, event) {
+              const discussion = await getDiscussion(number);
+              const solvedLabel = discussion.labels.nodes.find((l) => l.name === label);
+              if (discussion.closed || !solvedLabel) return;
+
+              if (event === 'discussion') {
+                await comment(discussion, notice);
+                core.info(`#${number}: labeled, notice posted`);
+                return;
+              }
+
+              if (event === 'discussion_comment') {
+                if (context.payload.comment.user.login === `${bot}[bot]`) return;
+                // A label applied after this comment was posted must not be removed because of it.
+                const labelsAtComment = context.payload.discussion.labels;
+                if (Array.isArray(labelsAtComment) && !labelsAtComment.some((l) => l.name === label)) return;
+                await removeLabel(discussion, solvedLabel.id);
+                core.info(`#${number}: new comment, label removed`);
+                return;
+              }
+
+              const comments = discussion.comments.nodes;
+              const notices = comments.filter((c) => c.author?.login === bot && c.body.includes(marker));
+              const noticeAt = notices.length ? Date.parse(notices[notices.length - 1].createdAt) : null;
+              const activityAt = Math.max(0, ...comments
+                .flatMap((c) => [c, ...c.replies.nodes])
+                .filter((c) => c.author?.login !== bot)
+                .map((c) => Date.parse(c.createdAt)));
+
+              if (noticeAt === null) {
+                await comment(discussion, notice);
+                core.info(`#${number}: no notice found, notice posted`);
+              } else if (activityAt > noticeAt) {
+                await removeLabel(discussion, solvedLabel.id);
+                core.info(`#${number}: activity after notice, label removed`);
+              } else if (Date.now() - noticeAt >= delayMs) {
+                await comment(discussion, closeMessage);
+                await close(discussion);
+                await removeLabel(discussion, solvedLabel.id);
+                core.info(`#${number}: closed`);
+              }
+            }
+
+            if (context.eventName === 'discussion' || context.eventName === 'discussion_comment') {
+              await manage(context.payload.discussion.number, context.eventName);
+              return;
+            }
+
+            const failed = [];
+            let cursor = null;
+            do {
+              const { repository } = await github.graphql(`
+                query($owner: String!, $repo: String!, $cursor: String) {
+                  repository(owner: $owner, name: $repo) {
+                    discussions(first: 100, after: $cursor, states: OPEN, orderBy: { field: CREATED_AT, direction: ASC }) {
+                      pageInfo { hasNextPage endCursor }
+                      nodes { number labels(first: 100) { nodes { name } } }
+                    }
+                  }
+                }`, { owner, repo, cursor });
+              const page = repository.discussions;
+              for (const d of page.nodes) {
+                if (!d.labels.nodes.some((l) => l.name === label)) continue;
+                try {
+                  await manage(d.number, context.eventName);
+                } catch (err) {
+                  core.error(`#${d.number}: ${err.message}`);
+                  failed.push(d.number);
+                }
+              }
+              cursor = page.pageInfo.hasNextPage ? page.pageInfo.endCursor : null;
+            } while (cursor);
+
+            if (failed.length) core.setFailed(`Failed to process discussions: ${failed.map((n) => `#${n}`).join(', ')}`);
+
+  notify:
+    if: github.event_name == 'schedule' && github.repository == 'werf/werf' && always()
+    needs: manage
+    uses: werf/common-ci/.github/workflows/notification.yml@main
+    secrets:
+      loopNotificationGroup: ${{ secrets.LOOP_NOTIFICATION_GROUP }}
+      webhook: ${{ secrets.LOOP_NOTIFICATION_WEBHOOK }}
+      notificationChannel: ${{ secrets.LOOP_NOTIFICATION_CHANNEL }}

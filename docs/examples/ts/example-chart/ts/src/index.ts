@@ -1,4 +1,4 @@
-import { WerfRenderContext, RenderResult, render } from '@nelm/chart-ts-sdk';
+import { type WerfRenderContext, type RenderResult, render } from '@nelm/chart-ts-sdk';
 import { newDeployment } from './deployment.ts';
 import { newService } from './service.ts';
 

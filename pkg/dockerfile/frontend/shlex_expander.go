@@ -17,8 +17,13 @@ func NewShlexExpanderFactory(escapeToken rune) *ShlexExpanderFactory {
 }
 
 func (factory *ShlexExpanderFactory) GetExpander(opts dockerfile.ExpandOptions) dockerfile.Expander {
-	shlex := shell.NewLex(factory.EscapeToken)
+	escapeToken := factory.EscapeToken
+	if opts.Raw {
+		escapeToken = '\\'
+	}
+	shlex := shell.NewLex(escapeToken)
 	shlex.SkipUnsetEnv = opts.SkipUnsetEnv
+	shlex.SkipProcessQuotes = opts.Raw
 	return &shlexExpander{lex: shlex}
 }
 

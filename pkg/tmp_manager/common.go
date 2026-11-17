@@ -23,6 +23,10 @@ const (
 	// projectDirMaxAge is the same judgement as contextPinMaxAge for project dirs, which a
 	// killed process never registers either: a build running longer than that loses its dir.
 	projectDirMaxAge = time.Hour * 24
+
+	// gitContextDirMaxAge is the same judgement for git archive export dirs, which only a deferred
+	// call removes: an archive export running longer than that loses its dir and fails.
+	gitContextDirMaxAge = time.Hour * 24
 )
 
 var (

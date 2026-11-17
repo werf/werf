@@ -60,13 +60,19 @@ keywords:
   - apps
 annotations:
   anyAdditionalInfo: here
-maintainters:
+maintainers:
   - name: John Doe
     email: john@example.org
     url: https://john.example.org
 ```
 
 Полученный чарт уже можно развернуть или опубликовать, хотя в таком виде от него мало пользы. Теперь вам понадобится, по меньшей мере, либо добавить шаблоны в директорию `templates`, либо подключить зависимые чарты.
+
+{% include pages/ru/json_schema.md.liquid file="Chart.yaml" schema="chart.json" file_match='"Chart.yaml"' %}
+
+Эта схема поддерживает расширение werf `export-values` в зависимостях чарта. Расширение работает при `apiVersion: v1` или `apiVersion: v2` чарта; `apiVersion: v3` его не поддерживает (версия формата чарта не совпадает с версией werf). В отличие от стандартной схемы Helm, она разрешает не указывать метаданные основного чарта, которые заполняет werf: `apiVersion`, `name` и `version`. В зависимых чартах эти метаданные по-прежнему необходимы.
+
+Используйте эту схему для чартов, развёртываемых через werf, вместо стандартной схемы Helm, а не вместе с ней. Если редактор продолжает считать `export-values` неизвестным полем, явно выберите схему werf комментарием `yaml-language-server` в самом файле, как показано выше.
 
 ## Добавление файлов в чарт
 

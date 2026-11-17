@@ -384,6 +384,8 @@ func dependencyArgsReachContent(stages []instructions.Stage, dependencyArgKeys [
 	}
 
 	lex := shell.NewLex(escapeToken)
+	heredocLex := shell.NewLex('\\')
+	heredocLex.SkipProcessQuotes = true
 	for _, dockerStage := range stages {
 		for _, command := range dockerStage.Commands {
 			if _, ok := command.(*instructions.RunCommand); ok && dependencyArgsReachRun {
@@ -394,6 +396,23 @@ func dependencyArgsReachContent(stages []instructions.Stage, dependencyArgKeys [
 					if _, ok := dependencyArgs[arg.Key]; ok {
 						return true, nil
 					}
+				}
+			}
+
+			var sourceContents []instructions.SourceContent
+			switch typedCommand := command.(type) {
+			case *instructions.CopyCommand:
+				sourceContents = typedCommand.SourceContents
+			case *instructions.AddCommand:
+				sourceContents = typedCommand.SourceContents
+			}
+			for _, content := range sourceContents {
+				if !content.Expand {
+					continue
+				}
+				result, err := heredocLex.ProcessWordWithMatches(content.Data, shell.EnvsFromSlice(dependencyEnv))
+				if err != nil || len(result.Matched) > 0 {
+					return true, nil
 				}
 			}
 

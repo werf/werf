@@ -38,6 +38,7 @@ permalink: resources/migration_from_v2_to_v3.html
 | Формат публикуемого чарта | Образы и параметры `werf bundle publish` объединяются в `values.yaml` чарта. | Хранятся в `.werf-data/`; Helm, Argo CD и Flux получают только собственные параметры чарта; werf v2 не может развернуть чарт. | Передайте Helm, Argo CD и Flux файлы параметров из `.werf-data/`; обновите werf везде, где применяются бандлы; [подробнее](#чарты-и-бандлы). |
 | Архив бандла | `werf bundle copy --to archive:` записывает архив чарта и tar-архив на каждый образ. | OCI image layout с чартом, его provenance-файлом и всеми платформами образов; werf v2 не может его прочитать. | Импортируйте архивы v3, который по-прежнему читает архивы v2; [подробнее](#чарты-и-бандлы). |
 | `.helmignore` | Не фильтрует файлы при чтении чарта werf. | Фильтрует файлы, включая правила Helm по умолчанию. | Проверьте исключения перед деплоем; [подробнее](#чарты-и-бандлы). |
+| TypeScript-чарты | Без `NELM_FEAT_TYPESCRIPT=true` директория `ts/` игнорируется; рендер через Deno. | Рендерятся всегда, через Node.js. | Установите Node.js 26+ и пересоберите бандлы; [подробнее](#typescript-чарты). |
 
 ### CI и автоматизация
 
@@ -373,6 +374,14 @@ annotations:
 - **`--disable-default-values` и `--disable-default-secret-values` команды `werf bundle apply` игнорируют только собственные файлы чарта**, а не параметры и образы, сохранённые при публикации.
 - **Сохранённые `--disable-default-values`, `--disable-default-secret-values` или `--no-default-patches` нельзя сбросить через `werf bundle publish`.** Если директория чарта содержит `.werf-data/`, где одна из этих опций сохранена как `true`, например, распакованный опубликованный чарт закоммичен в `.helm`, публикация без этой опции её сохраняет. Удалите `defaultValuesDisable` или `defaultSecretValuesDisable` в `values` или `defaultPatchesDisable` из `.werf-data/metadata.yaml`: опция со значением `false` тоже сохраняет переключатель.
 - **Для бандлов, опубликованных werf 3.12 и более ранними версиями, аннотации, переданные `werf bundle apply`, `plan` и `render`, побеждают `extra_annotations.json` бандла по каждому ключу**: `--add-annotation` и служебные аннотации werf, например `project.werf.io/env`. Раньше побеждали аннотации `project.werf.io/*` и `ci.werf.io/*` бандла.
+
+### TypeScript-чарты
+
+**TypeScript-чарты рендерятся с помощью Node.js вместо Deno.** Для развёртывания чарта с директорией `ts/` на хосте должны быть установлены Node.js 26 или новее и менеджер пакетов (npm, pnpm или yarn).
+
+- **`NELM_FEAT_TYPESCRIPT` больше не нужен.** Чарт с `ts/src` рендерится всегда, даже если в v2 флаг не задавался.
+- **Бандлы, собранные под Deno, больше не рендерятся.** Пересоберите их с `@nelm/chart-ts-sdk` 0.2.0, включая закоммиченный `ts/dist/bundle.js`, и опубликуйте бандлы заново.
+- **`ts/deno.json` заменяется на `ts/package.json` и `ts/tsconfig.json`.** Создайте их так же, как это делает `werf chart ts init`, и перенесите зависимости из `deno.json` в `package.json`.
 
 ### Зашифрованные секреты
 

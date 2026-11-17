@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"io"
+	"os"
+	"path/filepath"
 
 	"github.com/onsi/gomega"
 
@@ -111,4 +113,53 @@ func (*copyArchiveStub) CalculateGlobsChecksum(context.Context, []string, contai
 
 func (*copyArchiveStub) CleanupExtractedDir(context.Context) {
 	panic("unexpected archive CleanupExtractedDir")
+}
+
+type heredocCopyCall struct {
+	Dir      string
+	Sources  []string
+	Dest     string
+	Chown    string
+	Chmod    string
+	Contents map[string]string
+}
+
+type heredocBackendStub struct {
+	buildahstub.BuildahStub
+	copies       []heredocCopyCall
+	adds         [][]string
+	heredocDirs  []string
+	heredocModes map[string]os.FileMode
+}
+
+var _ buildah.Buildah = (*heredocBackendStub)(nil)
+
+func (backend *heredocBackendStub) Copy(_ context.Context, name, dir string, src []string, dst string, opts buildah.CopyOpts) error {
+	gomega.Expect(name).To(gomega.Equal("destination"))
+	call := heredocCopyCall{Dir: dir, Sources: src, Dest: dst, Chown: opts.Chown, Chmod: opts.Chmod}
+	if dir != "/source" {
+		call.Contents = make(map[string]string)
+		for _, s := range src {
+			data, err := os.ReadFile(filepath.Join(dir, s))
+			gomega.Expect(err).NotTo(gomega.HaveOccurred())
+			call.Contents[s] = string(data)
+
+			info, err := os.Stat(filepath.Join(dir, s))
+			gomega.Expect(err).NotTo(gomega.HaveOccurred())
+			if backend.heredocModes == nil {
+				backend.heredocModes = make(map[string]os.FileMode)
+			}
+			backend.heredocModes[s] = info.Mode().Perm()
+		}
+		call.Dir = ""
+		backend.heredocDirs = append(backend.heredocDirs, dir)
+	}
+	backend.copies = append(backend.copies, call)
+	return nil
+}
+
+func (backend *heredocBackendStub) Add(_ context.Context, name string, src []string, _ string, _ buildah.AddOpts) error {
+	gomega.Expect(name).To(gomega.Equal("destination"))
+	backend.adds = append(backend.adds, src)
+	return nil
 }

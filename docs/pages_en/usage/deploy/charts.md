@@ -60,13 +60,19 @@ keywords:
   - apps
 annotations:
   anyAdditionalInfo: here
-maintainters:
+maintainers:
   - name: John Doe
     email: john@example.org
     url: https://john.example.org
 ```
 
 The resulting chart may be deployed or published, although there is little use of it as it is. You will have to add templates to the `templates` directory or include dependent charts to make it more useful.
+
+{% include pages/en/json_schema.md.liquid file="Chart.yaml" schema="chart.json" file_match='"Chart.yaml"' %}
+
+This schema supports the werf `export-values` extension in chart dependencies. The extension works with chart `apiVersion: v1` or `apiVersion: v2`; it is not supported by chart `apiVersion: v3` (which is separate from the werf version). Unlike the standard Helm schema, it allows the main chart metadata that werf fills in (`apiVersion`, `name` and `version`) to be omitted. Dependent charts still need their own metadata.
+
+Use this schema for charts deployed with werf, not as an additional schema alongside the standard Helm schema. If the editor still reports `export-values` as an unknown property, use the file-level `yaml-language-server` comment above to select the werf schema explicitly.
 
 ## Adding files to a chart
 

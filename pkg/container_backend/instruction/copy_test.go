@@ -23,7 +23,7 @@ var _ = ginkgo.Describe("Copy source lifecycle", func() {
 			ctx, cancel := context.WithCancel(logboek.NewContext(context.Background(), logger))
 			defer cancel()
 			backend.cancel = cancel
-			instruction := NewCopy(instructions.CopyCommand{From: "source-image"})
+			instruction := NewCopy(instructions.CopyCommand{From: "source-image", SourcesAndDest: instructions.SourcesAndDest{SourcePaths: []string{"file"}}})
 			err := instruction.Apply(ctx, "destination", backend, buildah.CommonOpts{}, &copyArchiveStub{})
 			gomega.Expect(backend.calls).To(gomega.Equal(expected))
 			if failure == "" || failure == "unmount" || failure == "remove" {
@@ -55,7 +55,7 @@ var _ = ginkgo.Describe("Copy source lifecycle", func() {
 		logger := logboek.NewLogger(&output, &output)
 		logger.Streams().SetWidth(1000)
 		ctx := logboek.NewContext(context.Background(), logger)
-		err := NewCopy(instructions.CopyCommand{From: "source-image"}).Apply(ctx, "destination", backend, buildah.CommonOpts{}, &copyArchiveStub{})
+		err := NewCopy(instructions.CopyCommand{From: "source-image", SourcesAndDest: instructions.SourcesAndDest{SourcePaths: []string{"file"}}}).Apply(ctx, "destination", backend, buildah.CommonOpts{}, &copyArchiveStub{})
 		gomega.Expect(errors.Is(err, backend.err)).To(gomega.BeTrue())
 		gomega.Expect(err.Error()).NotTo(gomega.ContainSubstring("remove failed"))
 		gomega.Expect(output.String()).To(gomega.ContainSubstring("remove failed"))
@@ -64,13 +64,13 @@ var _ = ginkgo.Describe("Copy source lifecycle", func() {
 	ginkgo.It("releases the source when copy panics without swallowing the panic", func() {
 		backend := &copyBackendStub{failure: "panic"}
 		gomega.Expect(func() {
-			NewCopy(instructions.CopyCommand{From: "source-image"}).Apply(context.Background(), "destination", backend, buildah.CommonOpts{}, &copyArchiveStub{})
+			NewCopy(instructions.CopyCommand{From: "source-image", SourcesAndDest: instructions.SourcesAndDest{SourcePaths: []string{"file"}}}).Apply(context.Background(), "destination", backend, buildah.CommonOpts{}, &copyArchiveStub{})
 		}).To(gomega.PanicWith("copy panicked"))
 		gomega.Expect(backend.calls).To(gomega.Equal([]string{"from", "mount", "copy", "unmount", "remove"}))
 	})
 	ginkgo.It("does not create or clean a container for build-context copies", func() {
 		backend := &copyBackendStub{}
-		instruction := NewCopy(instructions.CopyCommand{})
+		instruction := NewCopy(instructions.CopyCommand{SourcesAndDest: instructions.SourcesAndDest{SourcePaths: []string{"file"}}})
 		gomega.Expect(instruction.Apply(context.Background(), "destination", backend, buildah.CommonOpts{}, &copyArchiveStub{})).To(gomega.Succeed())
 		gomega.Expect(backend.calls).To(gomega.Equal([]string{"copy"}))
 	})

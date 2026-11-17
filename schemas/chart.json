@@ -1,0 +1,221 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$comment": "Derived from the Chart.yaml schema of JSON Schema Store (https://json.schemastore.org/chart.json), Apache-2.0, Copyright 2015-Current Mads Kristensen and Contributors. Modified by the werf authors: the werf `export-values` directive is described, the metadata werf fills in is optional, and the directives werf does not support are dropped.",
+  "title": "Chart.yaml",
+  "description": "Metadata of a Helm chart deployed with werf. In the main chart `apiVersion`, `name` and `version` may be omitted: werf fills them in.\nhttps://werf.io/docs/latest/usage/deploy/charts.html",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "apiVersion": {
+      "description": "The version of the chart format.",
+      "enum": [
+        "v1",
+        "v2",
+        "v3"
+      ]
+    },
+    "name": {
+      "description": "The name of the chart. For a dependent chart stored in `charts/`, it must match the directory name.",
+      "type": "string"
+    },
+    "version": {
+      "description": "The version of the chart, a SemVer 2 version.",
+      "type": "string"
+    },
+    "kubeVersion": {
+      "description": "SemVer constraints on the Kubernetes versions the chart is deployed into, e.g. `~1.20.3`. The deployment fails if the cluster version does not satisfy them.",
+      "type": "string"
+    },
+    "type": {
+      "description": "The type of the chart. A library chart holds only named templates for use in other charts and deploys nothing.",
+      "default": "application",
+      "enum": [
+        "application",
+        "library"
+      ]
+    },
+    "description": {
+      "description": "A single-sentence description of the chart.",
+      "type": "string"
+    },
+    "keywords": {
+      "description": "Keywords describing the chart.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "home": {
+      "description": "The address of the project home page.",
+      "type": "string"
+    },
+    "sources": {
+      "description": "Addresses of the project source code.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "icon": {
+      "description": "The address of an SVG or PNG image used as the chart icon.",
+      "type": "string"
+    },
+    "appVersion": {
+      "description": "The version of the application packaged in the chart. Informational and unrelated to `version`; quote it to keep the YAML parser from reading it as a number.",
+      "type": "string"
+    },
+    "deprecated": {
+      "description": "Whether the chart is deprecated.",
+      "type": "boolean"
+    },
+    "annotations": {
+      "description": "Additional information about the chart, uninterpreted by werf and available to other tools.",
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "maintainers": {
+      "description": "The maintainers of the chart.",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/maintainer"
+      }
+    },
+    "dependencies": {
+      "description": "Dependent charts deployed together with this chart.\nhttps://werf.io/docs/latest/usage/deploy/charts.html#including-additional-charts",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/dependency"
+      }
+    }
+  },
+  "definitions": {
+    "maintainer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "description": "The name of the maintainer.",
+          "type": "string"
+        },
+        "email": {
+          "description": "The email address of the maintainer.",
+          "type": "string"
+        },
+        "url": {
+          "description": "The address of a page about the maintainer.",
+          "type": "string"
+        }
+      }
+    },
+    "dependency": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "description": "The name of the dependent chart. For a chart stored in `charts/`, it must match the directory name.",
+          "type": "string"
+        },
+        "version": {
+          "description": "The version of the dependent chart, a SemVer 2 version or range.",
+          "type": "string"
+        },
+        "repository": {
+          "description": "The address of the chart repository, or its alias from `helm repo add` as `@myrepo` or `alias:myrepo`. Omit it or leave it empty for a chart stored in `charts/`.",
+          "type": "string"
+        },
+        "condition": {
+          "description": "A path in the parameters resolving to a boolean that enables or disables the dependent chart, e.g. `mychild.enabled`.",
+          "type": "string"
+        },
+        "tags": {
+          "description": "Tags that enable or disable the dependent chart together with the other charts having them.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "alias": {
+          "description": "The name to deploy the dependent chart under. Needed to add the same chart more than once.",
+          "type": "string"
+        },
+        "import-values": {
+          "description": "Parameters of the dependent chart copied into the parameters of the parent chart.\nhttps://werf.io/docs/latest/usage/deploy/values.html",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/importValue"
+          }
+        },
+        "export-values": {
+          "description": "werf only, in charts with `apiVersion` `v1` or `v2`. Parameters of the parent chart copied into the parameters of the dependent chart.\nhttps://werf.io/docs/latest/usage/deploy/values.html",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/exportValue"
+          }
+        }
+      }
+    },
+    "importValue": {
+      "description": "A path under `exports` in the parameters of the dependent chart, copied into the root of the parameters of the parent chart, or a mapping of the source path to the destination path.",
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "child",
+            "parent"
+          ],
+          "properties": {
+            "child": {
+              "description": "The source path in the parameters of the dependent chart.",
+              "type": "string"
+            },
+            "parent": {
+              "description": "The destination path in the parameters of the parent chart.",
+              "type": "string"
+            }
+          }
+        }
+      ]
+    },
+    "exportValue": {
+      "description": "A path under `exports` in the parameters of the parent chart, copied into the root of the parameters of the dependent chart, or a mapping of the source path to the destination path.",
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "parent",
+            "child"
+          ],
+          "properties": {
+            "parent": {
+              "description": "The source path in the parameters of the parent chart. The root of the parameters cannot be exported.",
+              "type": "string",
+              "not": {
+                "pattern": "^\\s*\\.?\\s*$"
+              }
+            },
+            "child": {
+              "description": "The destination path in the parameters of the dependent chart. An empty path or `.` is the root of the parameters, into which only a dictionary can be copied.",
+              "type": "string"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -12,6 +12,8 @@ type InstructionDataInterface interface {
 
 type ExpandOptions struct {
 	SkipUnsetEnv bool
+	// Raw expands heredoc contents the way BuildKit does: quotes are kept and the escape token is always a backslash.
+	Raw bool
 }
 
 type DockerfileStageInstructionInterface interface {
