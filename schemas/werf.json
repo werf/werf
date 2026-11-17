@@ -132,7 +132,7 @@
           ]
         },
         "level": {
-          "description": "Compression level: 0-9 for gzip, 1-22 for zstd. The default level of the format is used when omitted; not allowed with none.",
+          "description": "Compression level: 0-9 for gzip, 1-22 for zstd. The default level of the format is used when omitted; not allowed with none. Applies only to layers not yet published in this format.",
           "type": "integer"
         }
       },

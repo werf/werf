@@ -57,8 +57,8 @@ sections:
               - name: level
                 value: "int"
                 description:
-                  en: "Compression level: 0-9 for gzip, 1-22 for zstd (the default level of the format by default)"
-                  ru: "Уровень сжатия: 0-9 для gzip, 1-22 для zstd (по умолчанию — уровень по умолчанию формата)"
+                  en: "Compression level: 0-9 for gzip, 1-22 for zstd (the default level of the format by default). Applies only to layers not yet published in this format"
+                  ru: "Уровень сжатия: 0-9 для gzip, 1-22 для zstd (по умолчанию — уровень по умолчанию формата). Применяется только к слоям, ещё не опубликованным в этом формате"
           - name: imageSpec
             description:
               en: Global image configuration options according to the OCI specification, which will be applied to all images
@@ -329,8 +329,8 @@ sections:
           - name: level
             value: "int"
             description:
-              en: "Compression level: 0-9 for gzip, 1-22 for zstd (the default level of the format by default)"
-              ru: "Уровень сжатия: 0-9 для gzip, 1-22 для zstd (по умолчанию — уровень по умолчанию формата)"
+              en: "Compression level: 0-9 for gzip, 1-22 for zstd (the default level of the format by default). Applies only to layers not yet published in this format"
+              ru: "Уровень сжатия: 0-9 для gzip, 1-22 для zstd (по умолчанию — уровень по умолчанию формата). Применяется только к слоям, ещё не опубликованным в этом формате"
       - name: contextAddFiles
         value: "[ string, ... ]"
         description:

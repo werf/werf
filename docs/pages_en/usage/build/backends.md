@@ -128,11 +128,13 @@ The available formats:
 
 If the level is omitted, the default level of the format is used. For `gzip`, level `0` produces a gzip stream without compression, not an uncompressed layer: the layer media type stays gzip.
 
+The level applies only to layers that have not yet been published in the selected format. A layer that the container backend has already compressed with the same format, for this or another image and at any level, is reused as is: base image layers and cached layers keep the level they were first published with.
+
 Whether a format pays off depends on the layer contents and on the consumers: `zstd` saves registry space and download time at the cost of decompression CPU, `none` avoids decompression entirely at the cost of space and traffic. Measure your own images before switching.
 
 ### Cache
 
-A compression other than gzip at the default level is part of the stage digests: stages of an image with such a compression are built and published separately from the stages of images with other settings, and changing the compression of an image rebuilds its stages. Images without compression settings keep their digests and their cache.
+The `zstd` and `none` formats are part of the stage digests: stages of an image with such a format are built and published separately from the stages of images with other formats, and changing the format of an image rebuilds its stages. The `gzip` format and the level are not part of the stage digests: images without compression settings keep their digests and their cache, and changing only the level does not rebuild stages.
 
 All layers of such an image, including the layers of its base image, are published with the selected format: layers that the container registry already has in another format are compressed anew instead of being reused.
 

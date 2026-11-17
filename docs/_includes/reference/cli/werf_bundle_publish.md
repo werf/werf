@@ -90,8 +90,9 @@ werf bundle publish [IMAGE_NAME...] [options]
       --compression-level=""
             Compress image layers pushed to the container registry with the specified level: 0-9    
             for gzip, 1-22 for zstd ($WERF_COMPRESSION_LEVEL or the default level of the            
-            compression format by default). The compression settings in werf.yaml take precedence.  
-            The Docker container backend supports this option only with the containerd image store
+            compression format by default). The level applies only to layers not yet published in   
+            this format. The compression settings in werf.yaml take precedence. The Docker          
+            container backend supports this option only with the containerd image store
       --config=""
             Use custom configuration file (default $WERF_CONFIG or werf.yaml in the project         
             directory)

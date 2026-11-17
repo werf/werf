@@ -615,7 +615,7 @@ func SetupCompressionFormat(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupCompressionLevel(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.CompressionLevel = new(string)
-	cmd.Flags().StringVarP(cmdData.CompressionLevel, "compression-level", "", os.Getenv("WERF_COMPRESSION_LEVEL"), fmt.Sprintf("Compress image layers pushed to the container registry with the specified level: %d-%d for %s, %d-%d for %s ($WERF_COMPRESSION_LEVEL or the default level of the compression format by default). The compression settings in werf.yaml take precedence. The Docker container backend supports this option only with the containerd image store", image.LayerCompressionLevelMinGzip, image.LayerCompressionLevelMaxGzip, image.LayerCompressionGzip, image.LayerCompressionLevelMinZstd, image.LayerCompressionLevelMaxZstd, image.LayerCompressionZstd))
+	cmd.Flags().StringVarP(cmdData.CompressionLevel, "compression-level", "", os.Getenv("WERF_COMPRESSION_LEVEL"), fmt.Sprintf("Compress image layers pushed to the container registry with the specified level: %d-%d for %s, %d-%d for %s ($WERF_COMPRESSION_LEVEL or the default level of the compression format by default). The level applies only to layers not yet published in this format. The compression settings in werf.yaml take precedence. The Docker container backend supports this option only with the containerd image store", image.LayerCompressionLevelMinGzip, image.LayerCompressionLevelMaxGzip, image.LayerCompressionGzip, image.LayerCompressionLevelMinZstd, image.LayerCompressionLevelMaxZstd, image.LayerCompressionZstd))
 }
 
 func SetupSkipTlsVerifyRegistry(cmdData *CmdData, cmd *cobra.Command) {

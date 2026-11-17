@@ -1,9 +1,6 @@
 package image
 
-import (
-	"fmt"
-	"strconv"
-)
+import "fmt"
 
 const (
 	LayerCompressionGzip = "gzip"
@@ -65,20 +62,13 @@ func (c LayerCompression) IsDefault() bool {
 	return (c.Format == "" || c.Format == LayerCompressionGzip) && c.Level == nil
 }
 
-// DigestInput is the stage digest input for the compression: empty for the default, so that
-// stages built without compression settings keep their digests.
+// DigestInput is the stage digest input for the compression: the format only, empty for gzip, so that
+// stages built without compression settings keep their digests. The level is left out: when publishing,
+// container backends reuse a layer already compressed with the same format regardless of its level.
 func (c LayerCompression) DigestInput() string {
-	if c.IsDefault() {
+	if c.Format == "" || c.Format == LayerCompressionGzip {
 		return ""
 	}
 
-	format := c.Format
-	if format == "" {
-		format = LayerCompressionGzip
-	}
-	if c.Level == nil {
-		return format
-	}
-
-	return format + ":" + strconv.Itoa(*c.Level)
+	return c.Format
 }

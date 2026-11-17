@@ -28,15 +28,15 @@ var _ = Describe("LayerCompression", func() {
 		Entry("none with a level", LayerCompression{Format: LayerCompressionNone, Level: lo.ToPtr(0)}, "the none compression format has no level"),
 	)
 
-	DescribeTable("DigestInput keeps the default out of stage digests",
+	DescribeTable("DigestInput keeps gzip and the level out of stage digests",
 		func(compression LayerCompression, expected string) {
 			Expect(compression.DigestInput()).To(Equal(expected))
 		},
 		Entry("default", LayerCompression{}, ""),
 		Entry("explicit gzip", LayerCompression{Format: LayerCompressionGzip}, ""),
-		Entry("gzip level", LayerCompression{Level: lo.ToPtr(1)}, "gzip:1"),
+		Entry("gzip level", LayerCompression{Level: lo.ToPtr(1)}, ""),
 		Entry("zstd", LayerCompression{Format: LayerCompressionZstd}, "zstd"),
-		Entry("zstd level", LayerCompression{Format: LayerCompressionZstd, Level: lo.ToPtr(19)}, "zstd:19"),
+		Entry("zstd level", LayerCompression{Format: LayerCompressionZstd, Level: lo.ToPtr(19)}, "zstd"),
 		Entry("none", LayerCompression{Format: LayerCompressionNone}, "none"),
 	)
 })

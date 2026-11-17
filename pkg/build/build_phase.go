@@ -1842,7 +1842,7 @@ func introspectStage(ctx context.Context, s stage.Interface) error {
 type calculateDigestOptions struct {
 	TargetPlatform    string
 	BuildCacheVersion string
-	// LayerCompression is empty for the default compression, keeping the digests of such stages.
+	// LayerCompression is empty for gzip, keeping the digests of stages without compression settings.
 	LayerCompression string
 	BaseImage        string
 	// Anchor switches calculateDigest to the anchor path:
