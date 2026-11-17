@@ -397,10 +397,10 @@ func (b *NativeBuildah) Push(ctx context.Context, ref string, opts PushOpts) err
 	}
 
 	pushOpts := buildah.PushOptions{
-		SignaturePolicyPath: b.SignaturePolicyPath,
-		ReportWriter:        opts.LogWriter,
-		Store:               b.Store,
-		SystemContext:       sysCtx,
+		SignaturePolicyPath:    b.SignaturePolicyPath,
+		ReportWriter:           opts.LogWriter,
+		Store:                  b.Store,
+		SystemContext:          sysCtx,
 		ManifestType:           pushCompression.ManifestType,
 		CompressionFormat:      pushCompression.Algorithm,
 		CompressionLevel:       pushCompression.Level,
@@ -516,22 +516,22 @@ func (b *NativeBuildah) BuildFromDockerfile(ctx context.Context, dockerfile stri
 
 	commonBuildOpts := b.defaultCommonBuildOptions
 	buildOpts := define.BuildOptions{
-		Isolation:               define.Isolation(b.Isolation),
-		Args:                    opts.BuildArgs,
-		SignaturePolicyPath:     b.SignaturePolicyPath,
-		ReportWriter:            opts.LogWriter,
-		OutputFormat:            buildah.Dockerv2ImageManifest,
-		SystemContext:           sysCtx,
-		NamespaceOptions:        nsOpts,
-		ConfigureNetwork:        netPolicy,
-		CommonBuildOpts:         &commonBuildOpts,
-		Target:                  opts.Target,
-		Platforms:               targetPlatforms,
-		MaxPullPushRetries:      MaxPullPushRetries,
-		PullPushRetryDelay:      PullPushRetryDelay,
-		Layers:                  true,
-		LayerLabels:             opts.Labels,
-		RemoveIntermediateCtrs:  true,
+		Isolation:              define.Isolation(b.Isolation),
+		Args:                   opts.BuildArgs,
+		SignaturePolicyPath:    b.SignaturePolicyPath,
+		ReportWriter:           opts.LogWriter,
+		OutputFormat:           buildah.Dockerv2ImageManifest,
+		SystemContext:          sysCtx,
+		NamespaceOptions:       nsOpts,
+		ConfigureNetwork:       netPolicy,
+		CommonBuildOpts:        &commonBuildOpts,
+		Target:                 opts.Target,
+		Platforms:              targetPlatforms,
+		MaxPullPushRetries:     MaxPullPushRetries,
+		PullPushRetryDelay:     PullPushRetryDelay,
+		Layers:                 true,
+		LayerLabels:            opts.Labels,
+		RemoveIntermediateCtrs: true,
 		// With Layers, buildah keeps the working container of a failed build for manual
 		// debugging; werf never exposes it, so it would only pin images in the storage.
 		ForceRmIntermediateCtrs: true,

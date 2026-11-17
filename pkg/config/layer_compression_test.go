@@ -11,7 +11,7 @@ import (
 )
 
 var _ = Describe("layer compression in werf.yaml", func() {
-	prepare := func(metaYaml string, stapelYaml, dockerfileYaml string) *WerfConfig {
+	prepare := func(metaYaml, stapelYaml, dockerfileYaml string) *WerfConfig {
 		parentStack = util.NewStack()
 		giterminismManager := NewGiterminismManagerStub(NewLocalGitRepoStub("9d8059842b6fde712c58315ca0ab4713d90761c0"))
 
