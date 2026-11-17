@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.85.1](https://github.com/werf/werf/compare/v2.85.0...v2.85.1) (2026-11-17)
+
+
+### Bug Fixes
+
+* **host-cleanup:** stop skipping all images after the first ones in use ([#8174](https://github.com/werf/werf/issues/8174)) ([fb0663e](https://github.com/werf/werf/commit/fb0663ed58e9ec6dde7512e7cafe99552191d922))
+
 ## [2.85.0](https://github.com/werf/werf/compare/v2.84.1...v2.85.0) (2026-11-12)
 
 
