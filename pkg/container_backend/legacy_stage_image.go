@@ -108,6 +108,13 @@ func (i *LegacyStageImage) Build(ctx context.Context, options BuildOptions) erro
 		}
 	}
 
+	// Fail before running the stage container rather than after it.
+	if !i.layerCompression.IsDefault() {
+		if err := i.ContainerBackend.(*DockerServerBackend).checkLayerCompressionSupported(ctx); err != nil {
+			return err
+		}
+	}
+
 	containerLockName := ContainerLockName(i.container.Name())
 	if _, lock, err := werf.HostLocker().AcquireLock(ctx, containerLockName, lockgate.AcquireOptions{}); err != nil {
 		return fmt.Errorf("failed to lock %s: %w", containerLockName, err)
@@ -155,6 +162,15 @@ func (i *LegacyStageImage) Build(ctx context.Context, options BuildOptions) erro
 
 	if err := i.container.rm(ctx); err != nil {
 		return err
+	}
+
+	if i.layerCompression.IsSet() {
+		compressedID, err := i.ContainerBackend.(*DockerServerBackend).RecompressImage(ctx, i.builtID, i.layerCompression, i.GetTargetPlatform())
+		if err != nil {
+			return err
+		}
+		i.buildImage = newLegacyBaseImage(compressedID, i.ContainerBackend)
+		i.builtID = compressedID
 	}
 
 	if info, err := i.ContainerBackend.GetImageInfo(ctx, i.MustGetBuiltID(), GetImageInfoOpts{}); err != nil {

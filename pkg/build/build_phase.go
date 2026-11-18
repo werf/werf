@@ -791,12 +791,6 @@ func (phase *BuildPhase) ImageProcessingShouldBeStopped(_ context.Context, _ *im
 }
 
 func (phase *BuildPhase) BeforeImageStages(ctx context.Context, img *image.Image) (deferFn func(), err error) {
-	// Without stapel build support stapel stages are committed containers, which the backend cannot
-	// compress differently.
-	if !img.IsDockerfileImage && !img.LayerCompression().IsDefault() && !phase.Conveyor.ContainerBackend.HasStapelBuildSupport() {
-		return nil, fmt.Errorf("image %q: layer compression settings are not supported for stapel images with the Docker container backend, use the Buildah container backend", img.GetName())
-	}
-
 	phase.StagesIterator = NewStagesIterator(phase.Conveyor)
 
 	if stageDesc := img.GetContentTagDesc(); stageDesc != nil {

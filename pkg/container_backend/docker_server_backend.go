@@ -1,6 +1,8 @@
 package container_backend
 
 import (
+	"archive/tar"
+	"bytes"
 	"context"
 	"encoding/csv"
 	"errors"
@@ -264,6 +266,59 @@ func (backend *DockerServerBackend) BuildDockerfile(ctx context.Context, dockerf
 
 	if Debug() {
 		fmt.Printf("[DOCKER BUILD] extracted image ID: %s\n", newID)
+	}
+
+	return newID, nil
+}
+
+// RecompressImage re-exports a local image through BuildKit with the requested layer compression and
+// returns the ID of the new image. Images committed from containers bypass BuildKit, so this is the only
+// way to compress their layers: docker push uploads the layers as the daemon stores them. Layers that
+// the daemon already holds in the requested format are reused, so only new layers get compressed.
+func (backend *DockerServerBackend) RecompressImage(ctx context.Context, imageID string, compression image.LayerCompression, targetPlatform string) (string, error) {
+	if !compression.IsDefault() {
+		if err := backend.checkLayerCompressionSupported(ctx); err != nil {
+			return "", err
+		}
+	}
+
+	// BuildKit resolves an image ID in FROM as a docker.io repository, so the image needs a local tag.
+	tmpRef := fmt.Sprintf("werf-layer-compression-%s:latest", util.GenerateConsistentRandomString(10))
+	if err := docker.CliTag(ctx, imageID, tmpRef); err != nil {
+		return "", fmt.Errorf("unable to tag image %s: %w", imageID, err)
+	}
+	defer func() {
+		if err := docker.CliRmi(ctx, tmpRef); err != nil {
+			logboek.Context(ctx).Error().LogF("ERROR: unable to remove temporary image tag %s: %s\n", tmpRef, err)
+		}
+	}()
+
+	dockerfile := []byte(fmt.Sprintf("FROM %s\n", tmpRef))
+	var contextArchive bytes.Buffer
+	tw := tar.NewWriter(&contextArchive)
+	if err := tw.WriteHeader(&tar.Header{Name: "Dockerfile", Mode: 0o644, Size: int64(len(dockerfile))}); err != nil {
+		return "", fmt.Errorf("unable to write build context: %w", err)
+	}
+	if _, err := tw.Write(dockerfile); err != nil {
+		return "", fmt.Errorf("unable to write build context: %w", err)
+	}
+	if err := tw.Close(); err != nil {
+		return "", fmt.Errorf("unable to write build context: %w", err)
+	}
+
+	var platforms []string
+	if targetPlatform != "" {
+		platforms = []string{targetPlatform}
+	}
+
+	newID, err := docker.CliBuild_LiveOutputWithCustomIn(ctx, io.NopCloser(&contextArchive), docker.CliBuildOptions{
+		ContextPath:    "-",
+		DockerfileName: "Dockerfile",
+		Platforms:      platforms,
+		ExportAttrs:    compressionExportAttrs(compression),
+	})
+	if err != nil {
+		return "", fmt.Errorf("unable to compress the layers of image %s: %w", imageID, err)
 	}
 
 	return newID, nil

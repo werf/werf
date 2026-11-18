@@ -26,8 +26,10 @@ var _ = Describe("Layer compression", Label("e2e", "build", "compression", "simp
 			_, buildReport := reportProject.BuildWithReport(ctx, SuiteData.GetBuildReportPath("report0.json"), nil)
 
 			for imageName, expectedLayerMediaType := range map[string]types.MediaType{
-				"none": types.OCIUncompressedLayer,
-				"zstd": types.OCILayerZStd,
+				"none":        types.OCIUncompressedLayer,
+				"zstd":        types.OCILayerZStd,
+				"stapel-none": types.OCIUncompressedLayer,
+				"stapel-zstd": types.OCILayerZStd,
 			} {
 				By("checking the published manifest of image " + imageName)
 				ref, err := name.ParseReference(buildReport.Images[imageName].DockerImageName, name.Insecure)

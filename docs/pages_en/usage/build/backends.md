@@ -142,7 +142,7 @@ All layers of such an image, including the layers of its base image, are publish
 
 With Buildah, layers are compressed when the image is published.
 
-With Docker, layers are compressed when the image is built, so the Docker daemon has to use the [containerd image store](https://docs.docker.com/engine/storage/containerd/). With the classic image store, which always publishes gzip layers, werf fails before building an image that has compression settings. Stapel images do not support compression settings with Docker: werf fails before building them.
+With Docker, layers are compressed when the image is built, so the Docker daemon has to use the [containerd image store](https://docs.docker.com/engine/storage/containerd/). With the classic image store, which always publishes gzip layers, werf fails before building an image that has compression settings. Stapel stages are built by committing a container, which bypasses BuildKit, so with compression settings werf re-exports every committed stage through BuildKit with the selected compression; layers that are already in this format are reused, so only the new layer of the stage is compressed.
 
 With the containerd image store, an image built without compression settings keeps the daemon default: BuildKit may reuse a zstd or uncompressed variant of a layer that the daemon already has for another image. Set `format: gzip` for images that must be published with gzip layers on such a daemon.
 
