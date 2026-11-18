@@ -75,6 +75,7 @@ type markerRegistry struct {
 	pushCounts map[string]int
 	copyErr    error
 	copyNoop   bool
+	deleteErr  error
 }
 
 func newMarkerRegistry() *markerRegistry {
@@ -136,6 +137,9 @@ func (r *markerRegistry) IsTagExist(_ context.Context, reference string, _ ...do
 func (r *markerRegistry) DeleteRepoImage(_ context.Context, repoImage *image.Info) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	if r.deleteErr != nil {
+		return r.deleteErr
+	}
 	delete(r.images, repoImage.Name)
 	return nil
 }
@@ -321,7 +325,9 @@ var _ = Describe("meta-repo marker", func() {
 
 	Describe("collectMetadataRecords", func() {
 		collectedTags := func(ctx context.Context) []string {
-			records, err := stages.collectMetadataRecords(ctx, 1)
+			sourceTags, err := stages.listMetaMigrationSourceTags(ctx)
+			Expect(err).NotTo(HaveOccurred())
+			records, err := stages.collectMetadataRecords(ctx, sourceTags, 1)
 			Expect(err).NotTo(HaveOccurred())
 			tags := make([]string, 0, len(records))
 			for _, rec := range records {
@@ -618,6 +624,40 @@ var _ = Describe("meta-repo marker", func() {
 			Expect(addr).To(Equal(metaRepo))
 		})
 
+		It("takes a source holding only synchronization records for a stages repo without metadata", func(ctx SpecContext) {
+			emptyReg := newMarkerRegistry()
+			emptyReg.put(stagesRepo+":client-id-abc-123", map[string]string{image.WerfLabel: proj})
+			emptyReg.put(stagesRepo+":sync-server", map[string]string{image.WerfLabel: proj})
+			src := newRepoStorage(emptyReg, stagesRepo)
+			dst := newRepoStorage(emptyReg, metaRepo)
+			Expect(MigrateMetaRepo(ctx, proj, src, dst, MigrateMetaRepoOptions{})).To(Succeed())
+			addr, found, _ := src.GetMetaRepoMarker(ctx, proj)
+			Expect(found).To(BeTrue())
+			Expect(addr).To(Equal(metaRepo))
+		})
+
+		It("asks for the stages repo on a re-run over a source that holds nothing but the marker", func(ctx SpecContext) {
+			emptyReg := newMarkerRegistry()
+			src := newRepoStorage(emptyReg, stagesRepo)
+			dst := newRepoStorage(emptyReg, metaRepo)
+			Expect(MigrateMetaRepo(ctx, proj, src, dst, MigrateMetaRepoOptions{})).To(Succeed())
+
+			err := MigrateMetaRepo(ctx, proj, src, dst, MigrateMetaRepoOptions{})
+			Expect(err).To(MatchError(ContainSubstring("pass the project's stages repo as --repo")))
+
+			Expect(MigrateMetaRepo(ctx, proj, src, dst, MigrateMetaRepoOptions{StagesRepo: src})).To(Succeed())
+		})
+
+		It("migrates a source with stages that is also named as the stages repo", func(ctx SpecContext) {
+			Expect(MigrateMetaRepo(ctx, proj, stages, meta, MigrateMetaRepoOptions{StagesRepo: newRepoStorage(reg, stagesRepo+":latest")})).To(Succeed())
+
+			Expect(reg.has(metaRepo + ":managed-image-app")).To(BeTrue())
+			addr, found, err := stages.GetMetaRepoMarker(ctx, proj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(found).To(BeTrue())
+			Expect(addr).To(Equal(metaRepo))
+		})
+
 		It("is idempotent and skips already-present destination records", func(ctx SpecContext) {
 			reg.put(metaRepo+":managed-image-app", map[string]string{image.WerfLabel: proj})
 			Expect(MigrateMetaRepo(ctx, proj, stages, meta, MigrateMetaRepoOptions{})).To(Succeed())
@@ -722,6 +762,9 @@ var _ = Describe("meta-repo marker", func() {
 			err := MigrateMetaRepo(ctx, proj, stages, meta, MigrateMetaRepoOptions{RemoveSource: true})
 			Expect(err).To(HaveOccurred())
 			Expect(reg.has(stagesRepo + ":managed-image-app")).To(BeTrue())
+			_, found, err := stages.GetMetaRepoMarker(ctx, proj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(found).To(BeFalse(), "the marker must not point at a meta-repo that lacks the metadata")
 		})
 
 		It("removes source after a verified copy", func(ctx SpecContext) {
@@ -752,6 +795,169 @@ var _ = Describe("meta-repo marker", func() {
 			Expect(MigrateMetaRepo(ctx, proj, stages, meta, MigrateMetaRepoOptions{})).To(Succeed())
 			Expect(reg.has(metaRepo + ":managed-image-legacy")).To(BeTrue())
 			Expect(reg.has(stagesRepo + ":managed-image-legacy")).To(BeTrue())
+		})
+	})
+
+	Describe("MigrateMetaRepo between meta-repos", func() {
+		const newMetaRepo = "registry.example/new-meta"
+
+		var oldMeta, newMeta *RepoStagesStorage
+
+		oldMetaMarkerRef := fmt.Sprintf("%s:%s%s", metaRepo, RepoMetaRepoMarker_ImageTagPrefix, getMetaRepoMarkerID(proj))
+
+		BeforeEach(func() {
+			oldMeta = newRepoStorage(reg, metaRepo)
+			newMeta = newRepoStorage(reg, newMetaRepo)
+			reg.put(stagesRepo+":stage-1", map[string]string{image.WerfLabel: proj, image.WerfStageContentDigestLabel: "deadbeef"})
+			reg.put(metaRepo+":managed-image-app", map[string]string{image.WerfLabel: proj})
+			reg.put(metaRepo+":meta-abc_commit_stage", map[string]string{image.WerfLabel: proj})
+		})
+
+		DescribeTable("moves the metadata and points the stages repo safeguard at the new meta-repo",
+			func(ctx SpecContext, initialMarker string) {
+				if initialMarker != "" {
+					Expect(stages.PutMetaRepoMarker(ctx, proj, initialMarker)).To(Succeed())
+				}
+
+				Expect(MigrateMetaRepo(ctx, proj, oldMeta, newMeta, MigrateMetaRepoOptions{StagesRepo: stages, RemoveSource: true})).To(Succeed())
+
+				Expect(reg.has(newMetaRepo + ":managed-image-app")).To(BeTrue())
+				Expect(reg.has(newMetaRepo + ":meta-abc_commit_stage")).To(BeTrue())
+				Expect(reg.has(metaRepo + ":managed-image-app")).To(BeFalse())
+				Expect(reg.has(metaRepo + ":meta-abc_commit_stage")).To(BeFalse())
+
+				addr, found, err := stages.GetMetaRepoMarker(ctx, proj)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(found).To(BeTrue())
+				Expect(addr).To(Equal(newMetaRepo))
+				Expect(reg.has(oldMetaMarkerRef)).To(BeFalse(), "nothing reads a marker stored in a meta-repo")
+
+				_, err = SetupMetaRepoSafeguard(ctx, proj, stages, newMeta, false)
+				Expect(err).NotTo(HaveOccurred())
+				_, err = SetupMetaRepoSafeguard(ctx, proj, stages, oldMeta, false)
+				Expect(err).To(MatchError(ContainSubstring("they must match")))
+			},
+			Entry("when the safeguard points at the old meta-repo", metaRepo),
+			Entry("when the stages repo has no safeguard yet", ""),
+			Entry("when an interrupted run already switched the safeguard", newMetaRepo),
+		)
+
+		It("refuses when the stages repo safeguard points at an unrelated meta-repo", func(ctx SpecContext) {
+			Expect(stages.PutMetaRepoMarker(ctx, proj, "registry.example/other")).To(Succeed())
+
+			err := MigrateMetaRepo(ctx, proj, oldMeta, newMeta, MigrateMetaRepoOptions{StagesRepo: stages, RemoveSource: true})
+			Expect(err).To(MatchError(ContainSubstring("refusing to migrate")))
+
+			Expect(reg.has(newMetaRepo + ":managed-image-app")).To(BeFalse())
+			Expect(reg.has(metaRepo + ":managed-image-app")).To(BeTrue())
+			addr, _, err := stages.GetMetaRepoMarker(ctx, proj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(addr).To(Equal("registry.example/other"))
+		})
+
+		It("refuses to move the metadata into the stages repo itself", func(ctx SpecContext) {
+			Expect(stages.PutMetaRepoMarker(ctx, proj, metaRepo)).To(Succeed())
+
+			err := MigrateMetaRepo(ctx, proj, oldMeta, newRepoStorage(reg, stagesRepo+":latest"), MigrateMetaRepoOptions{StagesRepo: stages, RemoveSource: true})
+			Expect(err).To(MatchError(ContainSubstring("same repository as --repo")))
+
+			Expect(reg.has(stagesRepo + ":managed-image-app")).To(BeFalse())
+			Expect(reg.has(metaRepo + ":managed-image-app")).To(BeTrue())
+			addr, _, err := stages.GetMetaRepoMarker(ctx, proj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(addr).To(Equal(metaRepo))
+		})
+
+		It("leaves the stages repo safeguard on the old meta-repo when a copy fails", func(ctx SpecContext) {
+			Expect(stages.PutMetaRepoMarker(ctx, proj, metaRepo)).To(Succeed())
+			reg.copyErr = fmt.Errorf("boom")
+
+			err := MigrateMetaRepo(ctx, proj, oldMeta, newMeta, MigrateMetaRepoOptions{StagesRepo: stages, RemoveSource: true})
+			Expect(err).To(MatchError(ContainSubstring("boom")))
+
+			Expect(reg.has(metaRepo + ":managed-image-app")).To(BeTrue())
+			addr, _, err := stages.GetMetaRepoMarker(ctx, proj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(addr).To(Equal(metaRepo))
+		})
+
+		It("switches the stages repo safeguard before removing the source records", func(ctx SpecContext) {
+			Expect(stages.PutMetaRepoMarker(ctx, proj, metaRepo)).To(Succeed())
+			reg.deleteErr = fmt.Errorf("boom")
+
+			err := MigrateMetaRepo(ctx, proj, oldMeta, newMeta, MigrateMetaRepoOptions{StagesRepo: stages, RemoveSource: true})
+			Expect(err).To(MatchError(ContainSubstring("boom")))
+
+			Expect(reg.has(newMetaRepo + ":managed-image-app")).To(BeTrue())
+			addr, _, err := stages.GetMetaRepoMarker(ctx, proj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(addr).To(Equal(newMetaRepo))
+		})
+
+		It("moves a metadata record whose tag ends like a rejected-stage record", func(ctx SpecContext) {
+			Expect(stages.PutMetaRepoMarker(ctx, proj, metaRepo)).To(Succeed())
+			reg.put(metaRepo+":managed-image-app-rejected", map[string]string{image.WerfLabel: proj})
+
+			Expect(MigrateMetaRepo(ctx, proj, oldMeta, newMeta, MigrateMetaRepoOptions{StagesRepo: stages, RemoveSource: true})).To(Succeed())
+
+			Expect(reg.has(newMetaRepo + ":managed-image-app-rejected")).To(BeTrue())
+			Expect(reg.has(metaRepo + ":managed-image-app-rejected")).To(BeFalse())
+		})
+
+		It("refuses a source that holds stages when another repo is named as the stages repo", func(ctx SpecContext) {
+			const otherStagesRepo = "registry.example/other-stages"
+			reg.put(stagesRepo+":managed-image-app", map[string]string{image.WerfLabel: proj})
+			otherStages := newRepoStorage(reg, otherStagesRepo)
+
+			err := MigrateMetaRepo(ctx, proj, stages, newMeta, MigrateMetaRepoOptions{StagesRepo: otherStages, RemoveSource: true})
+			Expect(err).To(MatchError(ContainSubstring("is not a meta-repo")))
+
+			Expect(reg.has(newMetaRepo + ":managed-image-app")).To(BeFalse())
+			Expect(reg.has(stagesRepo + ":managed-image-app")).To(BeTrue())
+			_, found, err := otherStages.GetMetaRepoMarker(ctx, proj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(found).To(BeFalse())
+		})
+
+		It("refuses a source that holds metadata but no stages unless the stages repo is given", func(ctx SpecContext) {
+			Expect(stages.PutMetaRepoMarker(ctx, proj, metaRepo)).To(Succeed())
+			reg.put(metaRepo+":client-id-abc-123", map[string]string{image.WerfLabel: proj})
+			reg.put(metaRepo+":sync-server", map[string]string{image.WerfLabel: proj})
+
+			err := MigrateMetaRepo(ctx, proj, oldMeta, newMeta, MigrateMetaRepoOptions{RemoveSource: true})
+			Expect(err).To(MatchError(ContainSubstring("pass the project's stages repo as --repo")))
+
+			Expect(reg.has(newMetaRepo + ":managed-image-app")).To(BeFalse())
+			Expect(reg.has(metaRepo + ":managed-image-app")).To(BeTrue())
+			addr, _, err := stages.GetMetaRepoMarker(ctx, proj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(addr).To(Equal(metaRepo))
+		})
+
+		It("refuses a meta-repo that an earlier run emptied and left with nothing but a marker", func(ctx SpecContext) {
+			Expect(stages.PutMetaRepoMarker(ctx, proj, metaRepo)).To(Succeed())
+			Expect(reg.DeleteRepoImage(ctx, &image.Info{Name: metaRepo + ":managed-image-app"})).To(Succeed())
+			Expect(reg.DeleteRepoImage(ctx, &image.Info{Name: metaRepo + ":meta-abc_commit_stage"})).To(Succeed())
+			reg.put(metaRepo+":client-id-abc-123", map[string]string{image.WerfLabel: proj})
+			reg.put(oldMetaMarkerRef, map[string]string{image.WerfLabel: proj, RepoMetaRepoMarker_LabelMetaRepo: newMetaRepo})
+
+			err := MigrateMetaRepo(ctx, proj, oldMeta, newMeta, MigrateMetaRepoOptions{RemoveSource: true})
+			Expect(err).To(MatchError(ContainSubstring("pass the project's stages repo as --repo")))
+
+			Expect(reg.pushCount(oldMetaMarkerRef)).To(BeZero())
+			addr, _, err := stages.GetMetaRepoMarker(ctx, proj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(addr).To(Equal(metaRepo))
+		})
+
+		It("migrates a stage-less source that is explicitly named as the stages repo", func(ctx SpecContext) {
+			Expect(MigrateMetaRepo(ctx, proj, oldMeta, newMeta, MigrateMetaRepoOptions{StagesRepo: newRepoStorage(reg, metaRepo+":latest")})).To(Succeed())
+
+			Expect(reg.has(newMetaRepo + ":managed-image-app")).To(BeTrue())
+			addr, found, err := oldMeta.GetMetaRepoMarker(ctx, proj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(found).To(BeTrue())
+			Expect(addr).To(Equal(newMetaRepo))
 		})
 	})
 })

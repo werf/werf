@@ -13,6 +13,7 @@ import (
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v3/cmd/werf/common"
+	"github.com/werf/werf/v3/pkg/container_backend"
 	"github.com/werf/werf/v3/pkg/storage"
 	"github.com/werf/werf/v3/pkg/storage/synchronization/lock_manager"
 	"github.com/werf/werf/v3/pkg/tmp_manager"
@@ -21,6 +22,7 @@ import (
 
 var (
 	commonCmdData      common.CmdData
+	stagesRepoAddress  string
 	removeSource       bool
 	parallelTasksLimit int
 	migrationTimeout   time.Duration
@@ -31,8 +33,8 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	cmd := common.SetCommandContext(ctx, &cobra.Command{
 		Use:                   "migrate",
 		DisableFlagsInUseLine: true,
-		Short:                 "Move existing project metadata from --from into --to and enable the safeguard.",
-		Long:                  "Copy the project's managed-images, image-metadata-by-commit, custom-tag metadata and last-cleanup record from --from into --to, then record the meta-repo marker in --from so subsequent runs are forced to use the same --meta-repo. Copy is verified before any source record is removed.",
+		Short:                 "Move existing project metadata from --from into --to and point the safeguard at --to.",
+		Long:                  "Copy the project's managed-images, image-metadata-by-commit, custom-tag metadata and last-cleanup record from --from into --to, then record the meta-repo marker in the project's stages repo so subsequent runs are forced to use --to as --meta-repo. The stages repo is --from by default. To move metadata from one meta-repo to another, pass the stages repo as --repo: the marker there is switched to --to, and --from gets no marker. Copy is verified before any source record is removed.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 			if parallelTasksLimit < 1 {
@@ -71,8 +73,9 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	setupFromRepo(&commonCmdData, cmd)
 	commonCmdData.MetaRepo = common.NewRepoData("to", common.RepoDataOptions{OnlyAddress: true})
 	commonCmdData.MetaRepo.SetupAddressForRepoData(cmd, "to", []string{"WERF_META_REPO_MIGRATE_TO"})
+	cmd.Flags().StringVar(&stagesRepoAddress, "repo", "", "Stages repo of the project, where the meta-repo safeguard is recorded. Set it when --from is itself a meta-repo, to move metadata from one meta-repo to another (default --from)")
 
-	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read and write images to --from and --to")
+	common.SetupDockerConfig(&commonCmdData, cmd, "Command needs granted permissions to read and write images to --from, --to and --repo")
 	common.SetupContainerRegistryMirror(&commonCmdData, cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)
@@ -179,12 +182,51 @@ func run(ctx context.Context) error {
 		return fmt.Errorf("--to must be set to a container registry address different from --from")
 	}
 
-	if err := migrateWithLock(ctx, projectName, src, dst, storageManager.StorageLockManager, storage.MigrateMetaRepoOptions{RemoveSource: removeSource, ParallelTasksLimit: parallelTasksLimit}, migrationTimeout); err != nil {
+	opts := storage.MigrateMetaRepoOptions{RemoveSource: removeSource, ParallelTasksLimit: parallelTasksLimit}
+	safeguardRepo := src
+	if stagesRepoAddress != "" {
+		opts.StagesRepo, err = newStagesRepo(ctx, containerBackend)
+		if err != nil {
+			return fmt.Errorf("init --repo storage: %w", err)
+		}
+		safeguardRepo = opts.StagesRepo
+	}
+
+	if err := migrateWithLock(ctx, projectName, src, dst, storageManager.StorageLockManager, opts, migrationTimeout); err != nil {
 		return fmt.Errorf("unable to migrate metadata for project %q: %w", projectName, err)
 	}
 
-	logboek.Context(ctx).Default().LogF("Metadata for project %q migrated to meta-repo %s; safeguard enabled in %s\n", projectName, dst.Address(), src.Address())
+	logboek.Context(ctx).Default().LogF("Metadata for project %q migrated from %s to meta-repo %s; safeguard in stages repo %s now requires --meta-repo %s\n", projectName, src.Address(), dst.Address(), safeguardRepo.Address(), dst.Address())
 	return nil
+}
+
+func newStagesRepo(ctx context.Context, containerBackend container_backend.ContainerBackend) (*storage.RepoStagesStorage, error) {
+	buildahMode, _, err := common.GetBuildahMode()
+	if err != nil {
+		return nil, fmt.Errorf("determine buildah mode: %w", err)
+	}
+	insecureRegistryHosts, err := common.GetInsecureRegistryHosts(ctx, &commonCmdData, *buildahMode)
+	if err != nil {
+		return nil, fmt.Errorf("get insecure registry hosts: %w", err)
+	}
+
+	repoData := common.NewRepoData("repo", common.RepoDataOptions{OnlyAddress: true})
+	repoData.Address = &stagesRepoAddress
+	stagesStorage, err := repoData.CreateStagesStorage(ctx, &common.CreateStagesStorageOptions{
+		ContainerBackend:      containerBackend,
+		InsecureRegistry:      *commonCmdData.InsecureRegistry,
+		SkipTlsVerifyRegistry: *commonCmdData.SkipTlsVerifyRegistry,
+		InsecureRegistryHosts: insecureRegistryHosts,
+		SkipMetaCheck:         true,
+	})
+	if err != nil {
+		return nil, err
+	}
+	stagesRepo, ok := stagesStorage.(*storage.RepoStagesStorage)
+	if !ok {
+		return nil, fmt.Errorf("--repo must be a container registry address")
+	}
+	return stagesRepo, nil
 }
 
 func migrateWithLock(ctx context.Context, projectName string, src, dst *storage.RepoStagesStorage, locks lock_manager.Interface, opts storage.MigrateMetaRepoOptions, timeout time.Duration) error {

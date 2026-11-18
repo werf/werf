@@ -3,7 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Copy the project's managed-images, image-metadata-by-commit, custom-tag metadata and last-cleanup record from --from into --to, then record the meta-repo marker in --from so subsequent runs are forced to use the same --meta-repo. Copy is verified before any source record is removed.
+Copy the project's managed-images, image-metadata-by-commit, custom-tag metadata and last-cleanup record from --from into --to, then record the meta-repo marker in the project's stages repo so subsequent runs are forced to use --to as --meta-repo. The stages repo is --from by default. To move metadata from one meta-repo to another, pass the stages repo as --repo: the marker there is switched to --to, and --from gets no marker. Copy is verified before any source record is removed.
 
 {{ header }} Syntax
 
@@ -46,7 +46,7 @@ werf meta-repo migrate [options]
       --docker-config=""
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or  
             ~/.docker (in the order of priority)
-            Command needs granted permissions to read and write images to --from and --to
+            Command needs granted permissions to read and write images to --from, --to and --repo
       --env=""
             Use specified environment (default $WERF_ENV)
       --from=""
@@ -118,6 +118,10 @@ werf meta-repo migrate [options]
       --remove-source=true
             Delete the original metadata records from --from after they are verified present in     
             --to (default $WERF_REMOVE_SOURCE or true if not specified)
+      --repo=""
+            Stages repo of the project, where the meta-repo safeguard is recorded. Set it when      
+            --from is itself a meta-repo, to move metadata from one meta-repo to another (default   
+            --from)
       --skip-tls-verify-registry=false
             Skip TLS certificate validation when accessing a registry (default                      
             $WERF_SKIP_TLS_VERIFY_REGISTRY)

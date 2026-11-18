@@ -53,8 +53,10 @@ var _ = BeforeEach(func(ctx SpecContext) {
 })
 
 func SetupMetaRepo(ctx context.Context) {
-	metaRepo := fmt.Sprintf("%s-meta", SuiteData.K8sDockerRegistryRepo)
+	UseMetaRepo(ctx, fmt.Sprintf("%s-meta", SuiteData.K8sDockerRegistryRepo))
+}
 
+func UseMetaRepo(ctx context.Context, metaRepo string) {
 	SuiteData.MetaStorage = utils.NewStagesStorage(ctx, metaRepo, "default", docker_registry.DockerRegistryOptions{})
 	SuiteData.Stubs.SetEnv("WERF_META_REPO", metaRepo)
 }

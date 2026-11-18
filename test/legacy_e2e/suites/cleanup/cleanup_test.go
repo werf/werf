@@ -517,6 +517,49 @@ var _ = Describe("cleanup command", func() {
 
 				Expect(StagesCount(ctx)).Should(Equal(count), "stages of the pushed branch keep their git-history protection through the migration")
 			})
+
+			Context("between meta-repos", func() {
+				var oldMetaRepo, newMetaRepo string
+
+				BeforeEach(func(ctx SpecContext) {
+					SetupMetaRepo(ctx)
+					oldMetaRepo = SuiteData.MetaStorage.Address()
+					newMetaRepo = fmt.Sprintf("%s-meta-new", SuiteData.K8sDockerRegistryRepo)
+
+					utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
+					Expect(MetaManagedImagesCount(ctx)).Should(BeNumerically(">", 0), "managed-image records in the old meta-repo before migration")
+					Expect(MetaImageMetadata(ctx, imageName)).ShouldNot(BeEmpty(), "image-metadata records in the old meta-repo before migration")
+					addr, found := MetaRepoMarker(ctx)
+					Expect(found).To(BeTrue(), "the build plants the marker in stages-repo")
+					Expect(addr).Should(HaveSuffix("-meta"), "the marker points at the old meta-repo")
+				})
+
+				It("should point the stages-repo marker at the new meta-repo when --repo is given", func(ctx SpecContext) {
+					utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "meta-repo", "migrate", "--repo", SuiteData.StagesStorage.Address(), "--from", oldMetaRepo, "--to", newMetaRepo)
+
+					Expect(MetaManagedImagesCount(ctx)).Should(Equal(0), "managed-image records deleted from the old meta-repo")
+					Expect(MetaImageMetadata(ctx, imageName)).Should(BeEmpty(), "image-metadata records deleted from the old meta-repo")
+					addr, found := MetaRepoMarker(ctx)
+					Expect(found).To(BeTrue())
+					Expect(addr).Should(HaveSuffix("-meta-new"), "the marker points at the new meta-repo")
+
+					UseMetaRepo(ctx, newMetaRepo)
+					Expect(MetaManagedImagesCount(ctx)).Should(BeNumerically(">", 0), "managed-image records moved to the new meta-repo")
+					Expect(MetaImageMetadata(ctx, imageName)).ShouldNot(BeEmpty(), "image-metadata records moved to the new meta-repo")
+					utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
+				})
+
+				It("should refuse a meta-repo as --from when --repo is not given", func(ctx SpecContext) {
+					out, err := utils.RunCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "meta-repo", "migrate", "--from", oldMetaRepo, "--to", newMetaRepo)
+					Expect(err).Should(HaveOccurred())
+					Expect(string(out)).Should(ContainSubstring("pass the project's stages repo as --repo"))
+
+					Expect(MetaManagedImagesCount(ctx)).Should(BeNumerically(">", 0), "managed-image records stay in the old meta-repo")
+					addr, found := MetaRepoMarker(ctx)
+					Expect(found).To(BeTrue())
+					Expect(addr).Should(HaveSuffix("-meta"), "the marker still points at the old meta-repo")
+				})
+			})
 		})
 	})
 })
