@@ -15,6 +15,7 @@ RUN wget https://github.com/upx/upx/releases/download/v5.2.0/upx-5.2.0-amd64_lin
 ADD cmd /.werf-deps/cmd
 ADD pkg /.werf-deps/pkg
 ADD go.mod go.sum Taskfile.dist.yaml /.werf-deps/
+ADD schemas /.werf-deps/schemas
 ADD scripts /.werf-deps/scripts
 
 RUN cd /.werf-deps && \
