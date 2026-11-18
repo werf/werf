@@ -335,9 +335,10 @@ var _ = Describe("LocalBackendCleaner", func() {
 
 			stubs.StubFunc(&cleaner.volumeutilsGetVolumeUsageByPath, vuStub, nil)
 
-			report, err := cleaner.cleanupWerfImages(ctx, RunGCOptions{}, vu, 40.00)
+			report, imagesNotRemoved, err := cleaner.cleanupWerfImages(ctx, RunGCOptions{}, vu, 40.00)
 			Expect(err).To(Succeed())
 			Expect(report).To(Equal(expectedReport))
+			Expect(imagesNotRemoved).To(BeZero())
 		},
 		Entry(
 			"should call cleaner.volumeutilsGetVolumeUsageByPath() two times if after first cleanup iteration reclaimed space not enough",
@@ -377,6 +378,77 @@ var _ = Describe("LocalBackendCleaner", func() {
 			cleanupReport{},
 		),
 	)
+
+	It("cleanupWerfImages should go on with the next images if a batch of images in use freed nothing", func(ctx context.Context) {
+		ctx = logging.WithLogger(ctx)
+
+		images := image.ImagesList{
+			{ID: "used-by-stopped-container", Size: 300, RepoDigests: []string{"used-digest"}},
+			{ID: "two", Size: 300, RepoDigests: []string{"two-digest"}},
+			{ID: "three", Size: 300, RepoDigests: []string{"three-digest"}},
+		}
+
+		backend.EXPECT().Images(ctx, buildImagesOptions(
+			filter.DanglingFalse.ToPair(),
+			util.NewPair("label", image.WerfLabel),
+		)).Return(images, nil)
+		backend.EXPECT().Images(ctx, buildImagesOptions(
+			filter.DanglingFalse.ToPair(),
+			util.NewPair("label", image.WerfLabel),
+			util.NewPair("label", "werf-stage-signature"), // v1.1 legacy images
+		)).Return(image.ImagesList{}, nil)
+		stubs.StubFunc(&cleaner.werfGetWerfLastRunAtV1_1, time.Unix(1, 0), nil)
+
+		gomock.InOrder(
+			backend.EXPECT().Rmi(ctx, "used-digest", container_backend.RmiOpts{}).Return(errors.New("image is being used by stopped container")),
+			backend.EXPECT().Rmi(ctx, "two-digest", container_backend.RmiOpts{}).Return(nil),
+		)
+
+		volumeUsages := []volumeutils.VolumeUsage{
+			{UsedBytes: 800, TotalBytes: 1000},
+			{UsedBytes: 500, TotalBytes: 1000},
+		}
+		stubs.Stub(&cleaner.volumeutilsGetVolumeUsageByPath, func(context.Context, string) (volumeutils.VolumeUsage, error) {
+			vu := volumeUsages[0]
+			volumeUsages = volumeUsages[1:]
+			return vu, nil
+		})
+
+		report, imagesNotRemoved, err := cleaner.cleanupWerfImages(ctx, RunGCOptions{}, volumeutils.VolumeUsage{UsedBytes: 800, TotalBytes: 1000}, 600)
+		Expect(err).To(Succeed())
+		Expect(report).To(Equal(cleanupReport{
+			ItemsDeleted:   []string{"two"},
+			SpaceReclaimed: 300,
+		}))
+		Expect(imagesNotRemoved).To(Equal(1))
+		Expect(volumeUsages).To(BeEmpty())
+	})
+
+	It("cleanupWerfImages should list only the first batch of images in dry-run mode", func(ctx context.Context) {
+		ctx = logging.WithLogger(ctx)
+
+		images := image.ImagesList{
+			{ID: "one", Size: 300, RepoDigests: []string{"one-digest"}},
+			{ID: "two", Size: 300, RepoDigests: []string{"two-digest"}},
+		}
+
+		backend.EXPECT().Images(ctx, buildImagesOptions(
+			filter.DanglingFalse.ToPair(),
+			util.NewPair("label", image.WerfLabel),
+		)).Return(images, nil)
+		backend.EXPECT().Images(ctx, buildImagesOptions(
+			filter.DanglingFalse.ToPair(),
+			util.NewPair("label", image.WerfLabel),
+			util.NewPair("label", "werf-stage-signature"), // v1.1 legacy images
+		)).Return(image.ImagesList{}, nil)
+		stubs.StubFunc(&cleaner.werfGetWerfLastRunAtV1_1, time.Unix(1, 0), nil)
+		stubs.StubFunc(&cleaner.volumeutilsGetVolumeUsageByPath, volumeutils.VolumeUsage{}, errors.New("volume usage must not be measured in dry-run mode"))
+
+		report, imagesNotRemoved, err := cleaner.cleanupWerfImages(ctx, RunGCOptions{DryRun: true}, volumeutils.VolumeUsage{UsedBytes: 800, TotalBytes: 1000}, 600)
+		Expect(err).To(Succeed())
+		Expect(report).To(Equal(cleanupReport{ItemsDeleted: []string{"one"}}))
+		Expect(imagesNotRemoved).To(BeZero())
+	})
 
 	DescribeTable("removeImageByRepoTags",
 		func(ctx context.Context, runOpts RunGCOptions, img image.Summary, lockNames, acquiredLocks []string, rmiErr error, expectedOk bool) {

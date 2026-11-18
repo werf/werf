@@ -370,8 +370,10 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 	}
 
 	// Step 4. Remove werf images
+	var werfImagesNotRemoved int
 	err = logboek.Context(ctx).LogBlock("Cleanup werf images").DoError(func() error {
-		reportWerfImages, err := cleaner.cleanupWerfImages(ctx, options, vu, targetVolumeUsageBytes)
+		reportWerfImages, imagesNotRemoved, err := cleaner.cleanupWerfImages(ctx, options, vu, targetVolumeUsageBytes)
+		werfImagesNotRemoved = imagesNotRemoved
 		if err != nil {
 			return err
 		}
@@ -411,6 +413,13 @@ func (cleaner *LocalBackendCleaner) RunGC(ctx context.Context, options RunGCOpti
 		logboek.Context(ctx).Info().LogF("NOTE:  - old temporary service files /tmp/werf-project-data-* and /tmp/werf-config-render-*;\n")
 		logboek.Context(ctx).Info().LogF("NOTE:  - least recently used werf images except local stages storage images (images built with 'werf build' without '--repo' param, or with '--stages-storage=:local' param for the werf v1.1).\n")
 		logboek.Context(ctx).Info().LogOptionalLn()
+
+		if werfImagesNotRemoved > 0 {
+			logboek.Context(ctx).LogOptionalLn()
+			logboek.Context(ctx).LogF("NOTE: %d werf images were not removed because they are in use by containers, including stopped ones, or by running werf processes.\n", werfImagesNotRemoved)
+			logboek.Context(ctx).LogF("NOTE: Remove the stopped containers to let werf clean up these images, or use --force ($WERF_FORCE) to remove images used by containers.\n")
+			logboek.Context(ctx).LogOptionalLn()
+		}
 	}
 
 	return report, nil
@@ -551,16 +560,17 @@ func (cleaner *LocalBackendCleaner) cleanupWerfContainers(ctx context.Context, o
 	return report.Normalize(), nil
 }
 
-func (cleaner *LocalBackendCleaner) cleanupWerfImages(ctx context.Context, options RunGCOptions, vu volumeutils.VolumeUsage, targetVolumeUsageBytes uint64) (cleanupReport, error) {
+func (cleaner *LocalBackendCleaner) cleanupWerfImages(ctx context.Context, options RunGCOptions, vu volumeutils.VolumeUsage, targetVolumeUsageBytes uint64) (cleanupReport, int, error) {
 	images, err := cleaner.werfImages(ctx)
 	if err != nil {
-		return cleanupReport{}, err
+		return cleanupReport{}, 0, err
 	}
 
 	report := cleanupReport{
 		ItemsDeleted:   make([]string, 0, len(images)),
 		SpaceReclaimed: 0,
 	}
+	imagesNotRemoved := 0
 
 	// 1. Start the cleaning loop.
 	startIndex := 0
@@ -585,42 +595,47 @@ func (cleaner *LocalBackendCleaner) cleanupWerfImages(ctx context.Context, optio
 			if len(imgSummary.RepoTags) > 0 {
 				ok, err = cleaner.removeImageByRepoTags(ctx, options, imgSummary)
 				if err != nil {
-					return report, err
+					return report, imagesNotRemoved, err
 				}
 			} else if len(imgSummary.RepoDigests) > 0 {
 				ok, err = cleaner.removeImageByRepoDigests(ctx, options, imgSummary)
 				if err != nil {
-					return report, err
+					return report, imagesNotRemoved, err
 				}
+			} else {
+				continue
 			}
 
 			if ok {
 				report.ItemsDeleted = append(report.ItemsDeleted, imgSummary.ID)
+			} else {
+				imagesNotRemoved++
 			}
+		}
+
+		// Nothing is removed in dry-run mode, so the volume usage cannot tell whether the batch was enough.
+		if options.DryRun {
+			break
 		}
 
 		// 6. Re-calculate actual volume usage after deletion.
 		// This is an expensive operation, so we do it once per batch.
 		vuAfter, err := cleaner.volumeutilsGetVolumeUsageByPath(ctx, options.StoragePath)
 		if err != nil {
-			return report, fmt.Errorf("error getting volume usage by path %q: %w", options.StoragePath, err)
+			return report, imagesNotRemoved, fmt.Errorf("error getting volume usage by path %q: %w", options.StoragePath, err)
 		}
 
-		// 7. If no space was reclaimed (e.g., due to filesystem specifics or shared layers, or disk
-		// usage grew concurrently), we must stop here — before accounting for it below — to avoid
-		// both an infinite loop on the same images and an underflowing SpaceReclaimed total.
-		if vuAfter.UsedBytes >= vu.UsedBytes {
-			break
-		}
-
-		report.SpaceReclaimed += vu.UsedBytes - vuAfter.UsedBytes
+		// 7. The batch might free nothing: its images can be in use, share layers with other images,
+		// or the volume usage can grow concurrently. Go on with the next batch anyway: startIndex
+		// only grows, so the loop ends at the end of the list at the latest.
+		report.SpaceReclaimed += lo.Ternary(vu.UsedBytes > vuAfter.UsedBytes, vu.UsedBytes-vuAfter.UsedBytes, 0)
 
 		// 8. Update disk state and move to the next set of images.
 		vu = vuAfter
 		startIndex = n + 1
 	}
 
-	return report.Normalize(), nil
+	return report.Normalize(), imagesNotRemoved, nil
 }
 
 func (cleaner *LocalBackendCleaner) removeImageByRepoTags(ctx context.Context, options RunGCOptions, imgSummary image.Summary) (bool, error) {
@@ -633,7 +648,7 @@ func (cleaner *LocalBackendCleaner) removeImageByRepoTags(ctx context.Context, o
 		// We can assert this because we had remove all dandling images before via pruning.
 		if ref == "<none>:<none>" {
 			if err := cleaner.removeImageRef(ctx, ref, options); err != nil {
-				logboek.Context(ctx).Info().LogF("Cannot remove local image by ID %q: %s\n", imgSummary.ID, err)
+				logboek.Context(ctx).LogF("Cannot remove local image by ID %q: %s\n", imgSummary.ID, err)
 				unRemovedCount++
 			}
 		} else {
@@ -645,7 +660,7 @@ func (cleaner *LocalBackendCleaner) removeImageByRepoTags(ctx context.Context, o
 			}
 
 			if err := cleaner.removeImageRef(ctx, ref, options); err != nil {
-				logboek.Context(ctx).Info().LogF("Cannot remove local image by repo tag %q: %s\n", ref, err)
+				logboek.Context(ctx).LogF("Cannot remove local image by repo tag %q: %s\n", ref, err)
 				unRemovedCount++
 			}
 		}
@@ -660,7 +675,7 @@ func (cleaner *LocalBackendCleaner) removeImageByRepoDigests(ctx context.Context
 
 	for _, repoDigest := range imgSummary.RepoDigests {
 		if err := cleaner.removeImageRef(ctx, repoDigest, options); err != nil {
-			logboek.Context(ctx).Info().LogF("Cannot remove local image by repo digest %q: %s\n", repoDigest, err)
+			logboek.Context(ctx).LogF("Cannot remove local image by repo digest %q: %s\n", repoDigest, err)
 			unRemovedCount++
 		}
 	}
