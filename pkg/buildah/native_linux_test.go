@@ -14,6 +14,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/samber/lo"
 	"go.podman.io/buildah/define"
 	"go.podman.io/buildah/docker"
 	"go.podman.io/common/libimage"
@@ -21,6 +22,7 @@ import (
 	"go.podman.io/storage"
 
 	"github.com/werf/common-go/pkg/util"
+	"github.com/werf/werf/v3/pkg/image"
 )
 
 var _ = Describe("buildah", func() {
@@ -830,11 +832,27 @@ location = "dropin-mirror.example.com"
 	})
 })
 
+var _ = Describe("NewBuildah", func() {
+	It("rejects an unknown compression format before initializing the backend", func() {
+		_, err := NewBuildah(ModeNative, BuildahOpts{
+			CommonBuildahOpts: CommonBuildahOpts{TmpDir: GinkgoT().TempDir(), LayerCompression: image.LayerCompression{Format: "lz4"}},
+		})
+		Expect(err).To(MatchError(ContainSubstring(`unable to configure layer compression: unexpected compression format "lz4"`)))
+	})
+
+	It("rejects an out of range compression level before initializing the backend", func() {
+		_, err := NewBuildah(ModeNative, BuildahOpts{
+			CommonBuildahOpts: CommonBuildahOpts{TmpDir: GinkgoT().TempDir(), LayerCompression: image.LayerCompression{Format: image.LayerCompressionZstd, Level: lo.ToPtr(100)}},
+		})
+		Expect(err).To(MatchError(ContainSubstring("unexpected compression level 100: expected 1-22 for the zstd compression format")))
+	})
+})
+
 var _ = Describe("NativeBuildah.Push", func() {
 	DescribeTable("refuses to push an image whose Docker-only config fields OCI cannot hold",
 		func(config docker.V2Image, expectedFields string) {
 			store, ref := newStoreWithImage(config)
-			nativeBuildah := &NativeBuildah{Store: store, pushCompression: mustPushCompression(CompressionFormatZstd, nil)}
+			nativeBuildah := &NativeBuildah{Store: store, pushCompression: mustPushCompression(image.LayerCompressionZstd, nil)}
 
 			err := nativeBuildah.Push(context.Background(), ref, PushOpts{})
 			Expect(err).To(MatchError(ContainSubstring(expectedFields)))
@@ -861,7 +879,7 @@ var _ = Describe("NativeBuildah.Push", func() {
 			err := nativeBuildah.Push(ctx, ref, PushOpts{})
 			Expect(err).To(MatchError(ContainSubstring("error pushing image")))
 		},
-		Entry("zstd compression without Docker-only config fields", CompressionFormatZstd, dockerConfig(docker.Config{Entrypoint: []string{"/bin/true"}})),
+		Entry("zstd compression without Docker-only config fields", image.LayerCompressionZstd, dockerConfig(docker.Config{Entrypoint: []string{"/bin/true"}})),
 		Entry("default compression with Docker-only config fields", "", dockerConfig(docker.Config{
 			Healthcheck: &docker.HealthConfig{Test: []string{"CMD-SHELL", "true"}},
 			OnBuild:     []string{"RUN true"},

@@ -13,6 +13,8 @@ import (
 	"go.podman.io/buildah/docker"
 	"go.podman.io/image/v5/manifest"
 	"go.podman.io/storage"
+
+	"github.com/werf/werf/v3/pkg/image"
 )
 
 func newStoreWithImage(config docker.V2Image) (storage.Store, string) {
@@ -55,7 +57,7 @@ func dockerConfig(config docker.Config) docker.V2Image {
 func mustPushCompression(format string, level *int) pushCompression {
 	ginkgo.GinkgoHelper()
 
-	compressionOpts, err := newPushCompression(format, level)
+	compressionOpts, err := newPushCompression(image.LayerCompression{Format: format, Level: level})
 	gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 	return compressionOpts

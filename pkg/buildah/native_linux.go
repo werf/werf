@@ -108,7 +108,7 @@ func (b *NativeBuildah) Info(ctx context.Context) (info.Info, error) {
 }
 
 func NewNativeBuildah(commonOpts CommonBuildahOpts, opts NativeModeOpts) (*NativeBuildah, error) {
-	pushCompression, err := newPushCompression(commonOpts.CompressionFormat, commonOpts.CompressionLevel)
+	pushCompression, err := newPushCompression(commonOpts.LayerCompression)
 	if err != nil {
 		return nil, fmt.Errorf("unable to configure layer compression: %w", err)
 	}
@@ -385,7 +385,7 @@ func (b *NativeBuildah) Push(ctx context.Context, ref string, opts PushOpts) err
 
 	pushCompression := b.pushCompression
 	if opts.LayerCompression.IsSet() {
-		if pushCompression, err = newPushCompression(opts.LayerCompression.Format, opts.LayerCompression.Level); err != nil {
+		if pushCompression, err = newPushCompression(opts.LayerCompression); err != nil {
 			return err
 		}
 	}
@@ -408,7 +408,7 @@ func (b *NativeBuildah) Push(ctx context.Context, ref string, opts PushOpts) err
 		MaxRetries:             MaxPullPushRetries,
 		RetryDelay:             PullPushRetryDelay,
 	}
-	if pushCompression.Format == CompressionFormatNone {
+	if pushCompression.Format == image.LayerCompressionNone {
 		pushOpts.DestinationLookupReferenceFunc = lookupUncompressedDestination
 	}
 
@@ -476,7 +476,7 @@ func (b *NativeBuildah) checkImageIsRepresentableAsOCI(ctx context.Context, ref 
 	}
 
 	if len(dockerOnlyFields) > 0 {
-		return fmt.Errorf("unable to push image %q with compression format %q: this format requires the OCI image format, which has no %s, so these image config fields would be silently dropped; use the %q compression format for this image", ref, compressionFormat, strings.Join(dockerOnlyFields, ", "), CompressionFormatGzip)
+		return fmt.Errorf("unable to push image %q with compression format %q: this format requires the OCI image format, which has no %s, so these image config fields would be silently dropped; use the %q compression format for this image", ref, compressionFormat, strings.Join(dockerOnlyFields, ", "), image.LayerCompressionGzip)
 	}
 
 	return nil

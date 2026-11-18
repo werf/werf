@@ -155,8 +155,7 @@ func InitProcessContainerBackend(ctx context.Context, cmdData *CmdData, registry
 				RegistryMirrors:              registryMirrors,
 				InsecureRegistries:           insecureHosts,
 				StandaloneInsecureRegistries: standaloneInsecureHosts,
-				CompressionFormat:            compression.Format,
-				CompressionLevel:             compression.Level,
+				LayerCompression:             compression,
 			},
 			NativeModeOpts: buildah.NativeModeOpts{},
 		})

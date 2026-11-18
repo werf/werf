@@ -27,17 +27,6 @@ import (
 )
 
 const (
-	CompressionFormatGzip = "gzip"
-	CompressionFormatZstd = "zstd"
-	CompressionFormatNone = "none"
-
-	gzipCompressionLevelMin = 0
-	gzipCompressionLevelMax = 9
-	zstdCompressionLevelMin = 1
-	zstdCompressionLevelMax = 22
-)
-
-const (
 	DefaultShmSize          = "65536k"
 	DefaultContainersConfig = `
 [network]
@@ -191,7 +180,7 @@ type ImagesOptions struct {
 
 type PushOpts struct {
 	CommonOpts
-	// LayerCompression overrides CommonBuildahOpts.CompressionFormat and CompressionLevel when set.
+	// LayerCompression overrides CommonBuildahOpts.LayerCompression when set.
 	LayerCompression image.LayerCompression
 }
 
@@ -261,12 +250,8 @@ type CommonBuildahOpts struct {
 	InsecureRegistries           []string
 	StandaloneInsecureRegistries []string
 
-	// CompressionFormat is the algorithm used to compress layer blobs on push. Empty means gzip,
-	// CompressionFormatNone pushes uncompressed layers.
-	CompressionFormat string
-	// CompressionLevel is the compression level used by CompressionFormat. Nil means the default
-	// level of the algorithm.
-	CompressionLevel *int
+	// LayerCompression is how layer blobs are compressed on push unless PushOpts.LayerCompression is set.
+	LayerCompression image.LayerCompression
 }
 
 // pushCompression is the push configuration derived from the requested compression format and
@@ -281,57 +266,39 @@ type pushCompression struct {
 	Force bool
 }
 
-func newPushCompression(format string, level *int) (pushCompression, error) {
-	switch format {
-	case "", CompressionFormatGzip:
-		if err := validateCompressionLevel(CompressionFormatGzip, level, gzipCompressionLevelMin, gzipCompressionLevelMax); err != nil {
-			return pushCompression{}, err
-		}
+func newPushCompression(layerCompression image.LayerCompression) (pushCompression, error) {
+	if err := layerCompression.Validate(); err != nil {
+		return pushCompression{}, err
+	}
 
-		// gzip is forced even by default: otherwise a zstd or uncompressed variant of a layer that the
-		// registry already has would be reused. Forcing requires the algorithm to be set explicitly.
-		return pushCompression{
-			Format:       CompressionFormatGzip,
-			Algorithm:    lo.ToPtr(compression.Gzip),
-			Level:        level,
-			ManifestType: manifest.DockerV2Schema2MediaType,
-			Force:        true,
-		}, nil
-	case CompressionFormatZstd:
-		if err := validateCompressionLevel(CompressionFormatZstd, level, zstdCompressionLevelMin, zstdCompressionLevelMax); err != nil {
-			return pushCompression{}, err
-		}
-
+	switch layerCompression.Format {
+	case image.LayerCompressionZstd:
 		// zstd blobs are only representable in the OCI image format.
 		return pushCompression{
-			Format:       CompressionFormatZstd,
+			Format:       image.LayerCompressionZstd,
 			Algorithm:    lo.ToPtr(compression.Zstd),
-			Level:        level,
+			Level:        layerCompression.Level,
 			ManifestType: imgspecv1.MediaTypeImageManifest,
 			Force:        true,
 		}, nil
-	case CompressionFormatNone:
-		if level != nil {
-			return pushCompression{}, fmt.Errorf("unsupported compression level %d for compression format %q: uncompressed layers have no compression level", *level, CompressionFormatNone)
-		}
-
+	case image.LayerCompressionNone:
 		// Uncompressed layers are published in the OCI image format as application/vnd.oci.image.layer.v1.tar.
 		// The destination wrapper decompresses every layer instead of forcing a compression algorithm.
 		return pushCompression{
-			Format:       CompressionFormatNone,
+			Format:       image.LayerCompressionNone,
 			ManifestType: imgspecv1.MediaTypeImageManifest,
 		}, nil
 	default:
-		return pushCompression{}, fmt.Errorf("unsupported compression format %q: expected %q, %q or %q", format, CompressionFormatGzip, CompressionFormatZstd, CompressionFormatNone)
+		// gzip is forced even by default: otherwise a zstd or uncompressed variant of a layer that the
+		// registry already has would be reused. Forcing requires the algorithm to be set explicitly.
+		return pushCompression{
+			Format:       image.LayerCompressionGzip,
+			Algorithm:    lo.ToPtr(compression.Gzip),
+			Level:        layerCompression.Level,
+			ManifestType: manifest.DockerV2Schema2MediaType,
+			Force:        true,
+		}, nil
 	}
-}
-
-func validateCompressionLevel(format string, level *int, minLevel, maxLevel int) error {
-	if level == nil || (*level >= minLevel && *level <= maxLevel) {
-		return nil
-	}
-
-	return fmt.Errorf("unsupported compression level %d for compression format %q: expected a value between %d and %d", *level, format, minLevel, maxLevel)
 }
 
 type NativeModeOpts struct {
@@ -344,10 +311,6 @@ type BuildahOpts struct {
 }
 
 func NewBuildah(mode Mode, opts BuildahOpts) (b Buildah, err error) {
-	if _, err := newPushCompression(opts.CommonBuildahOpts.CompressionFormat, opts.CommonBuildahOpts.CompressionLevel); err != nil {
-		return b, fmt.Errorf("unable to configure layer compression: %w", err)
-	}
-
 	if opts.CommonBuildahOpts.Isolation == nil {
 		defIsolation, err := GetDefaultIsolation()
 		if err != nil {
