@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/werf/logboek"
 	"github.com/werf/werf/v3/pkg/container_backend"
 	"github.com/werf/werf/v3/pkg/storage"
 	"github.com/werf/werf/v3/pkg/storage/manager"
@@ -77,6 +78,7 @@ func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfi
 		opt(c)
 	}
 	var stagesStorage storage.PrimaryStagesStorage
+	cmdData := c.CmdData
 
 	if c.hostPurge {
 		stagesStorage = GetLocalStagesStorage(c.ContainerBackend)
@@ -94,6 +96,23 @@ func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfi
 		})
 		if stgErr != nil {
 			return nil, stgErr
+		}
+		if !c.skipMetaRepoSafeguard {
+			var err error
+			cmdData, err = resolveMetaRepo(ctx, c.ProjectName, c.CmdData, stagesStorage)
+			if err != nil {
+				return nil, fmt.Errorf("resolve meta repo: %w", err)
+			}
+			if cmdData != c.CmdData {
+				stagesStorage, err = GetStagesStorage(ctx, c.ContainerBackend, cmdData, GetStagesStorageOpts{
+					CleanupDisabled:                c.CleanupDisabled,
+					GitHistoryBasedCleanupDisabled: c.GitHistoryBasedCleanupDisabled,
+					SkipMetaCheck:                  true,
+				})
+				if err != nil {
+					return nil, err
+				}
+			}
 		}
 	}
 
@@ -119,7 +138,7 @@ func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfi
 		return nil, fmt.Errorf("error get final stages storage: %w", err)
 	}
 
-	metaStorage, err := GetOptionalMetaStorage(ctx, c.ContainerBackend, c.CmdData, stagesStorage, c.CleanupDisabled)
+	metaStorage, err := GetOptionalMetaStorage(ctx, c.ContainerBackend, cmdData, stagesStorage, c.CleanupDisabled)
 	if err != nil {
 		return nil, fmt.Errorf("error get meta storage: %w", err)
 	}
@@ -149,4 +168,37 @@ func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfi
 		CacheStagesStorageList:     cacheStagesStorageList,
 		SecondaryStagesStorageList: secondaryStagesStorageList,
 	}, nil
+}
+
+func resolveMetaRepo(ctx context.Context, projectName string, cmdData *CmdData, stagesStorage storage.PrimaryStagesStorage) (*CmdData, error) {
+	repoStages, ok := stagesStorage.(*storage.RepoStagesStorage)
+	if !ok || cmdData.MetaRepo != nil && option.PtrValueOrDefault(cmdData.MetaRepo.Address, "") != "" {
+		return cmdData, nil
+	}
+
+	address, found, err := repoStages.GetMetaRepoMarker(ctx, projectName)
+	if err != nil {
+		return nil, err
+	}
+	if !found || address == "" {
+		return cmdData, nil
+	}
+
+	metaAddress, err := storage.CanonicalRepoAddress(address)
+	if err != nil {
+		return nil, fmt.Errorf("parse meta-repo marker for project %q: %w", projectName, err)
+	}
+	repoAddress, err := storage.CanonicalRepoAddress(repoStages.Address())
+	if err != nil {
+		return nil, err
+	}
+	if metaAddress == repoAddress {
+		return nil, fmt.Errorf("meta-repo marker for project %q in %s points to the same repository", projectName, repoAddress)
+	}
+
+	resolved := *cmdData
+	resolved.MetaRepo = NewRepoData("meta-repo", RepoDataOptions{OnlyAddress: true, OptionalRepo: true})
+	resolved.MetaRepo.Address = &metaAddress
+	logboek.Context(ctx).Default().LogF("Using meta-repo %s detected from the marker for project %q in %s\n", metaAddress, projectName, repoAddress)
+	return &resolved, nil
 }
