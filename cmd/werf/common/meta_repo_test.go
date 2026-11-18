@@ -1,13 +1,17 @@
 package common
 
 import (
+	"bytes"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 
 	ginkgo "github.com/onsi/ginkgo/v2"
 	gomega "github.com/onsi/gomega"
 
+	"github.com/werf/logboek"
 	"github.com/werf/werf/v3/pkg/werf"
 )
 
@@ -16,6 +20,85 @@ var _ = ginkgo.Describe("Meta repo autodetection", func() {
 		clearListEnv()
 		gomega.Expect(werf.Init(ginkgo.GinkgoT().TempDir(), ginkgo.GinkgoT().TempDir())).To(gomega.Succeed())
 	})
+
+	ginkgo.DescribeTable("checks cleanup warnings only when metadata belongs to the primary repo", func(ctx ginkgo.SpecContext, separateMeta bool) {
+		address, recorder := startRecordingRegistry("test/repo")
+		handler := recorder.handler
+		recorder.handler = http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+			if request.URL.Path != "/v2/test/repo/tags/list" {
+				handler.ServeHTTP(writer, request)
+				return
+			}
+			defer ginkgo.GinkgoRecover()
+			tags := make([]string, 100)
+			for index := range tags {
+				tags[index] = "fixture-tag-" + strconv.Itoa(index)
+			}
+			writer.Header().Set("Content-Type", "application/json")
+			gomega.Expect(json.NewEncoder(writer).Encode(map[string]interface{}{"name": "test/repo", "tags": tags})).To(gomega.Succeed())
+		})
+		if separateMeta {
+			metaAddress, _ := startRecordingRegistry("test/meta")
+			gomega.Expect(repoStagesStorageAt(ctx, address).PutMetaRepoMarker(ctx, "project", metaAddress)).To(gomega.Succeed())
+		}
+		var output bytes.Buffer
+		logger := logboek.NewLogger(&output, &output)
+		logger.Streams().DisableLineWrapping()
+		runCtx := logboek.NewContext(ctx, logger)
+		storageManager, err := NewStorageManager(runCtx, &NewStorageManagerConfig{
+			ProjectName: "project",
+			CmdData:     storageManagerCmdData("--repo", address, "--insecure-registry", "--check-built-images"),
+		})
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		output.Reset()
+		_, err = storageManager.GetStagesStorage().GetManagedImages(runCtx, "project")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		if separateMeta {
+			gomega.Expect(output.String()).NotTo(gomega.ContainSubstring("command has not been run for a long time"))
+		} else {
+			gomega.Expect(output.String()).To(gomega.ContainSubstring("command has not been run for a long time"))
+		}
+	},
+		ginkgo.Entry("primary metadata emits the warning", false),
+		ginkgo.Entry("autodetected metadata suppresses the warning", true),
+	)
+
+	ginkgo.It("revalidates the marker before the first metadata write", func(ctx ginkgo.SpecContext) {
+		address, recorder := startRecordingRegistry("test/repo")
+		metaAddress, metaRecorder := startRecordingRegistry("test/meta")
+		stages := repoStagesStorageAt(ctx, address)
+		gomega.Expect(stages.PutMetaRepoMarker(ctx, "project", metaAddress)).To(gomega.Succeed())
+		storageManager, err := NewStorageManager(ctx, &NewStorageManagerConfig{
+			ProjectName: "project",
+			CmdData:     storageManagerCmdData("--repo", address, "--insecure-registry", "--check-built-images"),
+		})
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		gomega.Expect(stages.PutMetaRepoMarker(ctx, "project", "registry.example/changed")).To(gomega.Succeed())
+		recorder.forgetWrites()
+		err = storageManager.GetMetaStorage().AddManagedImage(ctx, "project", "app")
+		gomega.Expect(err).To(gomega.MatchError(gomega.ContainSubstring("they must match")))
+		gomega.Expect(recorder.recordedWrites()).To(gomega.BeEmpty())
+		gomega.Expect(metaRecorder.recordedWrites()).To(gomega.BeEmpty())
+	})
+
+	ginkgo.DescribeTable("reads the marker once during initialization", func(ctx ginkgo.SpecContext, present bool) {
+		address, recorder := startRecordingRegistry("test/repo")
+		metaAddress, _ := startRecordingRegistry("test/meta")
+		if present {
+			gomega.Expect(repoStagesStorageAt(ctx, address).PutMetaRepoMarker(ctx, "project", metaAddress)).To(gomega.Succeed())
+		}
+		markerPath := "/v2/test/repo/manifests/werf-meta-repo-marker-project"
+		before := recorder.requestCount(http.MethodGet, markerPath)
+		_, err := NewStorageManager(ctx, &NewStorageManagerConfig{
+			ProjectName: "project",
+			CmdData:     storageManagerCmdData("--repo", address, "--insecure-registry", "--check-built-images"),
+		})
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		gomega.Expect(recorder.requestCount(http.MethodGet, markerPath) - before).To(gomega.Equal(1))
+	},
+		ginkgo.Entry("present marker", true),
+		ginkgo.Entry("absent marker", false),
+	)
 
 	ginkgo.DescribeTable("resolves settings without overriding explicit addresses", func(ctx ginkgo.SpecContext, marker, configured string, fromEnv bool, expected, errorText string) {
 		address, recorder := startRecordingRegistry("test/repo")
@@ -124,7 +207,10 @@ var _ = ginkgo.Describe("Meta repo autodetection", func() {
 			ProjectName: "project",
 			CmdData:     storageManagerCmdData("--repo", address, "--insecure-registry", "--check-built-images"),
 		})
-		gomega.Expect(err).To(gomega.MatchError(gomega.ContainSubstring("403")))
+		gomega.Expect(err).To(gomega.MatchError(gomega.SatisfyAll(
+			gomega.ContainSubstring("resolve meta repo"),
+			gomega.ContainSubstring("403"),
+		)))
 	})
 
 	ginkgo.It("does not fall back when the detected meta repo denies access", func(ctx ginkgo.SpecContext) {

@@ -3,7 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Remove the per-project meta-repo marker from --repo so werf no longer forces --meta-repo usage. Metadata already stored in the meta-repo is NOT moved back.
+Remove the per-project meta-repo marker from --repo, disabling automatic meta-repo detection and address validation. Subsequent runs without --meta-repo or WERF_META_REPO read and write metadata in --repo. Metadata already stored in the meta-repo is NOT moved back; cleanup may delete needed images when using incomplete metadata.
 
 {{ header }} Syntax
 

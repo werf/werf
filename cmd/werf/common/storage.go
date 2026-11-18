@@ -78,6 +78,7 @@ func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfi
 		opt(c)
 	}
 	var stagesStorage storage.PrimaryStagesStorage
+	var marker *storage.MetaRepoMarker
 	cmdData := c.CmdData
 
 	if c.hostPurge {
@@ -99,7 +100,7 @@ func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfi
 		}
 		if !c.skipMetaRepoSafeguard {
 			var err error
-			cmdData, err = resolveMetaRepo(ctx, c.ProjectName, c.CmdData, stagesStorage)
+			cmdData, marker, err = resolveMetaRepo(ctx, c.ProjectName, c.CmdData, stagesStorage)
 			if err != nil {
 				return nil, fmt.Errorf("resolve meta repo: %w", err)
 			}
@@ -144,7 +145,7 @@ func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfi
 	}
 
 	if !c.skipMetaRepoSafeguard {
-		metaStorage, err = storage.SetupMetaRepoSafeguard(ctx, c.ProjectName, stagesStorage, metaStorage, c.CleanupDisabled)
+		metaStorage, err = storage.SetupMetaRepoSafeguardWithOptions(ctx, c.ProjectName, stagesStorage, metaStorage, c.CleanupDisabled, storage.SetupMetaRepoSafeguardOptions{Marker: marker})
 		if err != nil {
 			return nil, err
 		}
@@ -170,35 +171,36 @@ func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfi
 	}, nil
 }
 
-func resolveMetaRepo(ctx context.Context, projectName string, cmdData *CmdData, stagesStorage storage.PrimaryStagesStorage) (*CmdData, error) {
+func resolveMetaRepo(ctx context.Context, projectName string, cmdData *CmdData, stagesStorage storage.PrimaryStagesStorage) (*CmdData, *storage.MetaRepoMarker, error) {
 	repoStages, ok := stagesStorage.(*storage.RepoStagesStorage)
 	if !ok || cmdData.MetaRepo != nil && option.PtrValueOrDefault(cmdData.MetaRepo.Address, "") != "" {
-		return cmdData, nil
+		return cmdData, nil, nil
 	}
 
 	address, found, err := repoStages.GetMetaRepoMarker(ctx, projectName)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
+	marker := &storage.MetaRepoMarker{Address: address, Found: found}
 	if !found || address == "" {
-		return cmdData, nil
+		return cmdData, marker, nil
 	}
 
 	metaAddress, err := storage.CanonicalRepoAddress(address)
 	if err != nil {
-		return nil, fmt.Errorf("parse meta-repo marker for project %q: %w", projectName, err)
+		return nil, nil, fmt.Errorf("parse meta-repo marker for project %q: %w", projectName, err)
 	}
 	repoAddress, err := storage.CanonicalRepoAddress(repoStages.Address())
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	if metaAddress == repoAddress {
-		return nil, fmt.Errorf("meta-repo marker for project %q in %s points to the same repository", projectName, repoAddress)
+		return nil, nil, fmt.Errorf("meta-repo marker for project %q in %s points to the same repository", projectName, repoAddress)
 	}
 
 	resolved := *cmdData
 	resolved.MetaRepo = NewRepoData("meta-repo", RepoDataOptions{OnlyAddress: true, OptionalRepo: true})
 	resolved.MetaRepo.Address = &metaAddress
 	logboek.Context(ctx).Default().LogF("Using meta-repo %s detected from the marker for project %q in %s\n", metaAddress, projectName, repoAddress)
-	return &resolved, nil
+	return &resolved, marker, nil
 }
