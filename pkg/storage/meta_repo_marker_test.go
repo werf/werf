@@ -496,34 +496,34 @@ var _ = Describe("meta-repo marker", func() {
 
 		It("skips non-registry stages storage", func(ctx SpecContext) {
 			local := NewLocalStagesStorage(nil)
-			got, err := SetupMetaRepoSafeguard(ctx, proj, local, meta, false)
+			got, err := SetupMetaRepoSafeguard(ctx, proj, local, meta, false, SetupMetaRepoSafeguardOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(got).To(BeIdenticalTo(meta))
 		})
 
 		It("legacy: no flag, no marker → passthrough", func(ctx SpecContext) {
-			got, err := SetupMetaRepoSafeguard(ctx, proj, stages, stages, false)
+			got, err := SetupMetaRepoSafeguard(ctx, proj, stages, stages, false, SetupMetaRepoSafeguardOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(got).To(BeIdenticalTo(stages))
 		})
 
 		It("no flag but marker present → hard error", func(ctx SpecContext) {
 			Expect(stages.PutMetaRepoMarker(ctx, proj, metaRepo)).To(Succeed())
-			_, err := SetupMetaRepoSafeguard(ctx, proj, stages, stages, false)
+			_, err := SetupMetaRepoSafeguard(ctx, proj, stages, stages, false, SetupMetaRepoSafeguardOptions{})
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("pass --meta-repo"))
 		})
 
 		It("rejects a malformed marker (present, no address)", func(ctx SpecContext) {
 			reg.put(markerRef(proj), map[string]string{image.WerfLabel: proj})
-			_, err := SetupMetaRepoSafeguard(ctx, proj, stages, meta, false)
+			_, err := SetupMetaRepoSafeguard(ctx, proj, stages, meta, false, SetupMetaRepoSafeguardOptions{})
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("malformed"))
 		})
 
 		It("configured + matching marker → decorated", func(ctx SpecContext) {
 			Expect(stages.PutMetaRepoMarker(ctx, proj, metaRepo)).To(Succeed())
-			got, err := SetupMetaRepoSafeguard(ctx, proj, stages, meta, false)
+			got, err := SetupMetaRepoSafeguard(ctx, proj, stages, meta, false, SetupMetaRepoSafeguardOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			_, ok := got.(*metaRepoMarkerStorage)
 			Expect(ok).To(BeTrue())
@@ -531,21 +531,21 @@ var _ = Describe("meta-repo marker", func() {
 
 		It("configured + mismatching marker → hard error", func(ctx SpecContext) {
 			Expect(stages.PutMetaRepoMarker(ctx, proj, "registry.example/other")).To(Succeed())
-			_, err := SetupMetaRepoSafeguard(ctx, proj, stages, meta, false)
+			_, err := SetupMetaRepoSafeguard(ctx, proj, stages, meta, false, SetupMetaRepoSafeguardOptions{})
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("they must match"))
 		})
 
 		It("configured + no marker + metadata already in --repo → decorated", func(ctx SpecContext) {
 			reg.put(stagesRepo+":managed-image-app", map[string]string{image.WerfLabel: proj})
-			got, err := SetupMetaRepoSafeguard(ctx, proj, stages, meta, false)
+			got, err := SetupMetaRepoSafeguard(ctx, proj, stages, meta, false, SetupMetaRepoSafeguardOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			_, ok := got.(*metaRepoMarkerStorage)
 			Expect(ok).To(BeTrue())
 		})
 
 		It("configured + no marker + clean repo → decorated", func(ctx SpecContext) {
-			got, err := SetupMetaRepoSafeguard(ctx, proj, stages, meta, false)
+			got, err := SetupMetaRepoSafeguard(ctx, proj, stages, meta, false, SetupMetaRepoSafeguardOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			_, ok := got.(*metaRepoMarkerStorage)
 			Expect(ok).To(BeTrue())
@@ -554,7 +554,7 @@ var _ = Describe("meta-repo marker", func() {
 		It("meta-repo equal to repo + marker to a distinct repo → hard error", func(ctx SpecContext) {
 			Expect(stages.PutMetaRepoMarker(ctx, proj, metaRepo)).To(Succeed())
 			sameMeta := newRepoStorage(reg, stagesRepo)
-			_, err := SetupMetaRepoSafeguard(ctx, proj, stages, sameMeta, false)
+			_, err := SetupMetaRepoSafeguard(ctx, proj, stages, sameMeta, false, SetupMetaRepoSafeguardOptions{})
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("resolves to the same repository as --repo"))
 			Expect(err.Error()).To(ContainSubstring(metaRepo))
@@ -563,7 +563,7 @@ var _ = Describe("meta-repo marker", func() {
 
 		It("refuses when the marker tag is occupied by a multi-platform stage image", func(ctx SpecContext) {
 			reg.putIndex(markerRef(proj))
-			_, err := SetupMetaRepoSafeguard(ctx, proj, stages, meta, false)
+			_, err := SetupMetaRepoSafeguard(ctx, proj, stages, meta, false, SetupMetaRepoSafeguardOptions{})
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("reserves that tag for the meta-repo safeguard"))
 			Expect(err.Error()).NotTo(ContainSubstring("malformed"))
@@ -574,14 +574,14 @@ var _ = Describe("meta-repo marker", func() {
 				image.WerfLabel:                   proj,
 				image.WerfStageContentDigestLabel: "deadbeef",
 			})
-			_, err := SetupMetaRepoSafeguard(ctx, proj, stages, meta, false)
+			_, err := SetupMetaRepoSafeguard(ctx, proj, stages, meta, false, SetupMetaRepoSafeguardOptions{})
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("reserves that tag for the meta-repo safeguard"))
 		})
 
 		It("meta-repo equal to repo + no marker → passthrough", func(ctx SpecContext) {
 			sameMeta := newRepoStorage(reg, stagesRepo)
-			got, err := SetupMetaRepoSafeguard(ctx, proj, stages, sameMeta, false)
+			got, err := SetupMetaRepoSafeguard(ctx, proj, stages, sameMeta, false, SetupMetaRepoSafeguardOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			_, ok := got.(*metaRepoMarkerStorage)
 			Expect(ok).To(BeFalse())

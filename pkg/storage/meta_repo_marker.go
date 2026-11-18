@@ -293,15 +293,6 @@ const (
 	metaRepoMarkerOccupiedMsg = "%q is a stage image or custom tag alias, but werf reserves that tag for the meta-repo safeguard; rename or remove that tag"
 )
 
-// SetupMetaRepoSafeguard validates the per-project meta-repo marker and, when a
-// distinct meta-repo is in use, returns a decorated meta storage that plants the
-// marker on the first real metadata write. It is a no-op for non-registry stages
-// storage. A --meta-repo canonicalizing to --repo is still validated against the
-// marker, since that spelling would otherwise defeat the safeguard.
-func SetupMetaRepoSafeguard(ctx context.Context, projectName string, stagesStorage, metaStorage PrimaryStagesStorage, cleanupDisabled bool) (PrimaryStagesStorage, error) {
-	return SetupMetaRepoSafeguardWithOptions(ctx, projectName, stagesStorage, metaStorage, cleanupDisabled, SetupMetaRepoSafeguardOptions{})
-}
-
 type MetaRepoMarker struct {
 	Address string
 	Found   bool
@@ -311,9 +302,13 @@ type SetupMetaRepoSafeguardOptions struct {
 	Marker *MetaRepoMarker
 }
 
-// SetupMetaRepoSafeguardWithOptions can reuse the marker read while resolving
-// the meta repo. Metadata writes still revalidate the marker independently.
-func SetupMetaRepoSafeguardWithOptions(ctx context.Context, projectName string, stagesStorage, metaStorage PrimaryStagesStorage, cleanupDisabled bool, opts SetupMetaRepoSafeguardOptions) (PrimaryStagesStorage, error) {
+// SetupMetaRepoSafeguard validates the per-project meta-repo marker and, when a
+// distinct meta-repo is in use, returns a decorated meta storage that plants the
+// marker on the first real metadata write. It is a no-op for non-registry stages
+// storage. A --meta-repo canonicalizing to --repo is still validated against the
+// marker, since that spelling would otherwise defeat the safeguard. Options can
+// supply the marker read during resolution; metadata writes revalidate it.
+func SetupMetaRepoSafeguard(ctx context.Context, projectName string, stagesStorage, metaStorage PrimaryStagesStorage, cleanupDisabled bool, opts SetupMetaRepoSafeguardOptions) (PrimaryStagesStorage, error) {
 	repoStages, ok := stagesStorage.(*RepoStagesStorage)
 	if !ok {
 		return metaStorage, nil

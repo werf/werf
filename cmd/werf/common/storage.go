@@ -145,7 +145,7 @@ func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfi
 	}
 
 	if !c.skipMetaRepoSafeguard {
-		metaStorage, err = storage.SetupMetaRepoSafeguardWithOptions(ctx, c.ProjectName, stagesStorage, metaStorage, c.CleanupDisabled, storage.SetupMetaRepoSafeguardOptions{Marker: marker})
+		metaStorage, err = storage.SetupMetaRepoSafeguard(ctx, c.ProjectName, stagesStorage, metaStorage, c.CleanupDisabled, storage.SetupMetaRepoSafeguardOptions{Marker: marker})
 		if err != nil {
 			return nil, err
 		}
