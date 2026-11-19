@@ -64,7 +64,7 @@ The chart's `ts/src/context.ts` exports the `ChartContext` type, an alias for th
 
 The codebase can be organized as you wish. The only requirement is that `ts/src/index.ts` exists, and `render` function from `@nelm/chart-ts-sdk` **must** be called. Otherwise, no TypeScript rendering happens.
 
-To render templates locally, use the `dev` script from `ts/package.json`:
+To render templates locally in an environment that is very close to how werf runs Node.js, use the `dev` script from `ts/package.json`:
 
 ```shell
 cd .helm/ts
