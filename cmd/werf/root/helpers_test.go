@@ -17,6 +17,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -32,7 +33,9 @@ import (
 	helmchart "github.com/werf/nelm/v2/pkg/helm/pkg/chart/v2"
 	helmregistry "github.com/werf/nelm/v2/pkg/helm/pkg/registry"
 	"github.com/werf/werf/v3/cmd/werf/common"
+	"github.com/werf/werf/v3/pkg/docker_registry"
 	"github.com/werf/werf/v3/pkg/logging"
+	"github.com/werf/werf/v3/pkg/storage"
 )
 
 const dockerCommandArgsEnv = "WERF_TEST_DOCKER_COMMAND_ARGS"
@@ -81,6 +84,11 @@ func runDockerCommand(args []string) int {
 
 func dockerCommand(dir, dockerHost string, args ...string) (string, string, int) {
 	ginkgo.GinkgoHelper()
+	return dockerCommandWithHome(dir, dockerHost, ginkgo.GinkgoT().TempDir(), args...)
+}
+
+func dockerCommandWithHome(dir, dockerHost, werfHome string, args ...string) (string, string, int) {
+	ginkgo.GinkgoHelper()
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, os.Args[0])
@@ -92,7 +100,7 @@ func dockerCommand(dir, dockerHost string, args ...string) (string, string, int)
 		cmd.Env = append(cmd.Env, entry)
 	}
 	cmd.Env = append(cmd.Env, dockerCommandArgsEnv+"="+strings.Join(append(args, "--dir", dir, "--docker-config", filepath.Join(dir, ".docker")), "\n"),
-		"HOME="+ginkgo.GinkgoT().TempDir(), "XDG_CONFIG_HOME="+ginkgo.GinkgoT().TempDir(), "XDG_CACHE_HOME="+ginkgo.GinkgoT().TempDir(), "WERF_HOME="+ginkgo.GinkgoT().TempDir(), "WERF_TELEMETRY=0", "WERF_DISABLE_AUTO_HOST_CLEANUP=1", "WERF_BUILDAH_MODE=docker", "DOCKER_HOST="+dockerHost)
+		"HOME="+ginkgo.GinkgoT().TempDir(), "XDG_CONFIG_HOME="+ginkgo.GinkgoT().TempDir(), "XDG_CACHE_HOME="+ginkgo.GinkgoT().TempDir(), "WERF_HOME="+werfHome, "WERF_TELEMETRY=0", "WERF_DISABLE_AUTO_HOST_CLEANUP=1", "WERF_BUILDAH_MODE=docker", "DOCKER_HOST="+dockerHost)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout, cmd.Stderr = &stdout, &stderr
 	err := cmd.Run()
@@ -237,6 +245,51 @@ func authenticatedRegistry(dir string) (*httptest.Server, *atomic.Int32) {
 	gomega.Expect(err).NotTo(gomega.HaveOccurred())
 	gomega.Expect(os.WriteFile(filepath.Join(configDir, "config.json"), data, 0o600)).To(gomega.Succeed())
 	return server, requests
+}
+
+type writeRecordingRegistry struct {
+	handler http.Handler
+
+	mu     sync.Mutex
+	writes []string
+}
+
+var _ http.Handler = (*writeRecordingRegistry)(nil)
+
+func (r *writeRecordingRegistry) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	switch req.Method {
+	case http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete:
+		r.mu.Lock()
+		r.writes = append(r.writes, req.Method+" "+req.URL.Path)
+		r.mu.Unlock()
+	}
+	r.handler.ServeHTTP(w, req)
+}
+
+func (r *writeRecordingRegistry) recordedWrites() []string {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return append([]string(nil), r.writes...)
+}
+
+func (r *writeRecordingRegistry) forgetWrites() {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.writes = nil
+}
+
+func startRecordingRegistry(repo string) (string, *writeRecordingRegistry) {
+	recorder := &writeRecordingRegistry{handler: registry.New(registry.Logger(log.New(io.Discard, "", 0)))}
+	server := httptest.NewServer(recorder)
+	ginkgo.DeferCleanup(server.Close)
+	return strings.TrimPrefix(server.URL, "http://") + "/" + repo, recorder
+}
+
+func repoStagesStorageAt(ctx context.Context, address string) *storage.RepoStagesStorage {
+	ginkgo.GinkgoHelper()
+	client, err := docker_registry.NewDockerRegistry(ctx, address, docker_registry.DefaultImplementationName, docker_registry.DockerRegistryOptions{InsecureRegistry: true})
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+	return storage.NewRepoStagesStorage(&storage.NewRepoStagesStorageOptions{RepoAddress: address, DockerRegistry: client})
 }
 
 func addOCIDependency(dir, registryURL string) {
