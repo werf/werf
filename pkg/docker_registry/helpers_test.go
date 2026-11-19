@@ -25,10 +25,10 @@ import (
 	"github.com/werf/werf/v3/pkg/opstats"
 )
 
-func registryErrorAt(code transport.ErrorCode, path string) error {
+func registryErrorAt(status int, code transport.ErrorCode, message, path string) error {
 	return fmt.Errorf("getting image: %w", &transport.Error{
-		Errors:     []transport.Diagnostic{{Code: code, Message: "injected"}},
-		StatusCode: http.StatusNotFound,
+		Errors:     []transport.Diagnostic{{Code: code, Message: message}},
+		StatusCode: status,
 		Request:    httptest.NewRequest(http.MethodGet, path, nil),
 	})
 }

@@ -2,6 +2,8 @@ package docker_registry
 
 import (
 	"errors"
+	"net/http"
+	"slices"
 	"strings"
 
 	"github.com/google/go-containerregistry/pkg/v1/remote/transport"
@@ -44,13 +46,26 @@ func IsImageNotFoundError(err error) bool {
 	return isErrorMatched(err, NotFoundImageCodes) || IsHarborNotFoundError(err)
 }
 
-// IsTagNotFoundError tells a missing tag from a found tag whose child manifest or blob is missing.
+// Harbor answers NOT_FOUND where the distribution spec says MANIFEST_UNKNOWN.
+var tagNotFoundCodes = []transport.ErrorCode{
+	transport.ManifestUnknownErrorCode,
+	transport.NameUnknownErrorCode,
+	"NOT_FOUND",
+}
+
+// IsTagNotFoundError reports that the registry answered the request for the tag itself with 404
+// and a not-found code. A found tag whose child manifest or blob is missing does not match.
 func IsTagNotFoundError(err error, tag string) bool {
 	var transportErr *transport.Error
-	if !IsImageNotFoundError(err) || !errors.As(err, &transportErr) || transportErr.Request == nil {
+	if !errors.As(err, &transportErr) || transportErr.StatusCode != http.StatusNotFound || transportErr.Request == nil {
 		return false
 	}
-	return strings.HasSuffix(transportErr.Request.URL.Path, "/manifests/"+tag)
+	if !strings.HasSuffix(transportErr.Request.URL.Path, "/manifests/"+tag) {
+		return false
+	}
+	return slices.ContainsFunc(transportErr.Errors, func(diagnostic transport.Diagnostic) bool {
+		return slices.Contains(tagNotFoundCodes, diagnostic.Code)
+	})
 }
 
 func IsHarborNotFoundError(err error) bool {

@@ -249,7 +249,9 @@ func authenticatedRegistry(dir string) (*httptest.Server, *atomic.Int32) {
 
 type registryFault struct {
 	pathPart string
+	status   int
 	code     string
+	message  string
 }
 
 type writeRecordingRegistry struct {
@@ -271,7 +273,7 @@ func (r *writeRecordingRegistry) ServeHTTP(w http.ResponseWriter, req *http.Requ
 		r.mu.Unlock()
 	}
 	if fault := r.fault.Load(); fault != nil && strings.Contains(req.URL.Path, fault.pathPart) {
-		http.Error(w, fmt.Sprintf(`{"errors":[{"code":%q,"message":"injected fault"}]}`, fault.code), http.StatusNotFound)
+		http.Error(w, fmt.Sprintf(`{"errors":[{"code":%q,"message":%q}]}`, fault.code, fault.message), fault.status)
 		return
 	}
 	r.handler.ServeHTTP(w, req)
