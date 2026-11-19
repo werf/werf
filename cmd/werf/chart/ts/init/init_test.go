@@ -48,7 +48,7 @@ var _ = ginkgo.Describe("chart ts init", func() {
 		gomega.Expect(files).To(gomega.ConsistOf(
 			"input.example.yaml", "package.json", "tsconfig.json", "tsconfig.app.json", "tsconfig.test.json",
 			"src/context.ts", "src/deployment.ts", "src/deployment.test.ts",
-			"src/helpers.ts", "src/index.ts", "src/service.ts", "src/values.test.json",
+			"src/helpers.ts", "src/index.ts", "src/service.ts",
 		))
 
 		gomega.Expect(readScaffoldFile(tsDir, "src/context.ts")).To(gomega.Equal(
@@ -58,9 +58,6 @@ var _ = ginkgo.Describe("chart ts init", func() {
 		gomega.Expect(yaml.Unmarshal([]byte(readScaffoldFile(tsDir, "input.example.yaml")), &input)).To(gomega.Succeed())
 		gomega.Expect(input).To(gomega.HaveKeyWithValue("Chart", gomega.HaveKeyWithValue("Name", "scaffold-test")))
 		gomega.Expect(input).To(gomega.HaveKeyWithValue("Values", gomega.HaveKeyWithValue("global", gomega.HaveKey("werf"))))
-		var testValues map[string]any
-		gomega.Expect(json.Unmarshal([]byte(readScaffoldFile(tsDir, "src/values.test.json")), &testValues)).To(gomega.Succeed())
-		gomega.Expect(testValues).To(gomega.HaveKeyWithValue("global", input["Values"].(map[string]any)["global"]))
 
 		var config map[string]any
 		gomega.Expect(json.Unmarshal([]byte(readScaffoldFile(tsDir, "tsconfig.json")), &config)).To(gomega.Succeed())
@@ -68,6 +65,9 @@ var _ = ginkgo.Describe("chart ts init", func() {
 		gomega.Expect(config).To(gomega.HaveKeyWithValue("references", gomega.ConsistOf(
 			map[string]any{"path": "./tsconfig.app.json"}, map[string]any{"path": "./tsconfig.test.json"},
 		)))
+		var testConfig map[string]any
+		gomega.Expect(json.Unmarshal([]byte(readScaffoldFile(tsDir, "tsconfig.test.json")), &testConfig)).To(gomega.Succeed())
+		gomega.Expect(testConfig).To(gomega.HaveKeyWithValue("compilerOptions", gomega.Not(gomega.HaveKey("resolveJsonModule"))))
 
 		var pkg struct {
 			Name            string            `json:"name"`
