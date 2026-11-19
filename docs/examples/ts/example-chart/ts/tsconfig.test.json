@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "types": [
+      "node"
+    ],
+    "tsBuildInfoFile": "./.dev/tsconfig.test.tsbuildinfo"
+  },
+  "include": [
+    "src"
+  ],
+  "exclude": []
+}

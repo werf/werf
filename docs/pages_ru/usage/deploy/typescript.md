@@ -60,9 +60,11 @@ werf chart ts init
 
 Откройте директорию `ts/` в редакторе как обычный TypeScript-проект для Node.js. Работайте с ним так же, как с любой TypeScript-кодовой базой — запускайте скрипты, пишите тесты, используйте отладчик.
 
+В файле `ts/src/context.ts` экспортируется тип `ChartContext` — псевдоним типа `WerfRenderContext` из SDK. Используйте `ChartContext` в коде чарта.
+
 Структуру кодовой базы можно организовать по своему усмотрению. Единственное требование — файл `ts/src/index.ts` должен существовать, и функция `render` из `@nelm/chart-ts-sdk` **обязательно** должна быть вызвана. Иначе рендеринг TypeScript не произойдёт.
 
-Для отладки рендеринга шаблонов в окружении, максимально близком к тому, как werf запускает Node.js, используйте скрипт `dev` из `ts/package.json`:
+Для локального рендеринга шаблонов используйте скрипт `dev` из `ts/package.json`:
 
 ```shell
 cd .helm/ts
@@ -81,8 +83,9 @@ npm install kubernetes-models
 ```typescript
 // .helm/ts/src/deployment.ts:
 import { Deployment } from 'kubernetes-models/apps/v1';
+import type { ChartContext } from './context.ts';
 
-export function newDeployment($: WerfRenderContext): object {
+export function newDeployment($: ChartContext): object {
   return new Deployment({
     metadata: { name: 'myapp' },
     spec: {
@@ -100,6 +103,26 @@ werf lint --dev
 ```shell
 werf render --dev
 ```
+
+### Тестирование
+
+Можно использовать [встроенные средства тестирования Node.js](https://nodejs.org/api/test.html) или специализированные библиотеки для тестирования JavaScript/TypeScript. Команда `werf chart ts init` создаёт пример теста в `ts/src/deployment.test.ts`. Запускайте тесты из `.helm/ts/`:
+
+```shell
+npm test
+```
+
+### Отладка
+
+В созданном проекте есть скрипт `dev:debug`, который ожидает подключения отладчика перед выполнением кода чарта. Запускайте его из `.helm/ts/`:
+
+```shell
+npm run dev:debug
+```
+
+Для запуска скрипта используйте конфигурацию отладки npm в своей IDE.
+
+При отладке изоляция отключена. Для проверки рендеринга с обычными ограничениями используйте `npm run dev`.
 
 ## Как развернуть чарт с TypeScript-шаблонами
 

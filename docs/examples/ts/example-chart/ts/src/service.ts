@@ -1,7 +1,7 @@
-import type { WerfRenderContext } from '@nelm/chart-ts-sdk';
+import type { ChartContext } from './context.ts';
 import { getFullname, getLabels, getSelectorLabels } from './helpers.ts';
 
-export function newService($: WerfRenderContext): object {
+export function newService($: ChartContext): object {
   return {
     apiVersion: 'v1',
     kind: 'Service',
