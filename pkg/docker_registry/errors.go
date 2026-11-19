@@ -1,6 +1,7 @@
 package docker_registry
 
 import (
+	"errors"
 	"strings"
 
 	"github.com/google/go-containerregistry/pkg/v1/remote/transport"
@@ -41,6 +42,15 @@ func IsBrokenImageError(err error) bool {
 
 func IsImageNotFoundError(err error) bool {
 	return isErrorMatched(err, NotFoundImageCodes) || IsHarborNotFoundError(err)
+}
+
+// IsTagNotFoundError tells a missing tag from a found tag whose child manifest or blob is missing.
+func IsTagNotFoundError(err error, tag string) bool {
+	var transportErr *transport.Error
+	if !IsImageNotFoundError(err) || !errors.As(err, &transportErr) || transportErr.Request == nil {
+		return false
+	}
+	return strings.HasSuffix(transportErr.Request.URL.Path, "/manifests/"+tag)
 }
 
 func IsHarborNotFoundError(err error) bool {

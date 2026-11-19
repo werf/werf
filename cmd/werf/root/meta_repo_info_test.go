@@ -1,10 +1,15 @@
 package root
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
 
+	"github.com/google/go-containerregistry/pkg/name"
+	"github.com/google/go-containerregistry/pkg/v1/empty"
+	"github.com/google/go-containerregistry/pkg/v1/mutate"
+	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
 
@@ -96,18 +101,37 @@ var _ = ginkgo.Describe("meta-repo info", func() {
 		ginkgo.Entry("debug", "--log-debug"),
 	)
 
-	ginkgo.DescribeTable("fails when the marker tag exists but cannot be read", func(ctx ginkgo.SpecContext, outputFormat string) {
+	markerRef := func() string {
+		return fmt.Sprintf(storage.RepoMetaRepoMarker_ImageNameFormat, repo, project)
+	}
+
+	putMarker := func(ctx context.Context) {
+		ginkgo.GinkgoHelper()
 		gomega.Expect(stages.PutMetaRepoMarker(ctx, project, metaRepo)).To(gomega.Succeed())
-		recorder.blobsUnreadable.Store(true)
+	}
+
+	putIndexAtMarkerTag := func(ctx context.Context) {
+		ginkgo.GinkgoHelper()
+		ref, err := name.ParseReference(markerRef(), name.Insecure)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		index := mutate.AppendManifests(empty.Index, mutate.IndexAddendum{Add: empty.Image})
+		gomega.Expect(remote.WriteIndex(ref, index, remote.WithContext(ctx))).To(gomega.Succeed())
+	}
+
+	ginkgo.DescribeTable("fails when the marker tag exists but cannot be read", func(ctx ginkgo.SpecContext, plant func(context.Context), fault registryFault, outputFormat string) {
+		plant(ctx)
+		recorder.fault.Store(&fault)
 
 		stdout, stderr, code := info("--output-format", outputFormat)
 
 		gomega.Expect(code).To(gomega.Equal(1), "stdout: %s", stdout)
 		gomega.Expect(stdout).To(gomega.BeEmpty())
-		gomega.Expect(stderr).To(gomega.And(gomega.ContainSubstring("werf-meta-repo-marker-"+project), gomega.ContainSubstring("BLOB_UNKNOWN")))
+		gomega.Expect(stderr).To(gomega.And(gomega.ContainSubstring("werf-meta-repo-marker-"+project), gomega.ContainSubstring(fault.code)))
 	},
-		ginkgo.Entry("text", "text"),
-		ginkgo.Entry("json", "json"),
+		ginkgo.Entry("config blob is missing, text", putMarker, registryFault{pathPart: "/blobs/", code: "BLOB_UNKNOWN"}, "text"),
+		ginkgo.Entry("config blob is missing, json", putMarker, registryFault{pathPart: "/blobs/", code: "BLOB_UNKNOWN"}, "json"),
+		ginkgo.Entry("child manifest of an index is missing, text", putIndexAtMarkerTag, registryFault{pathPart: "/manifests/sha256:", code: "MANIFEST_UNKNOWN"}, "text"),
+		ginkgo.Entry("child manifest of an index is missing, json", putIndexAtMarkerTag, registryFault{pathPart: "/manifests/sha256:", code: "MANIFEST_UNKNOWN"}, "json"),
 	)
 
 	ginkgo.It("fails on a marker without a meta-repo address and points at detach", func(ctx ginkgo.SpecContext) {
@@ -121,8 +145,7 @@ var _ = ginkgo.Describe("meta-repo info", func() {
 	})
 
 	ginkgo.It("fails when the reserved tag is occupied by a stage image", func(ctx ginkgo.SpecContext) {
-		markerRef := fmt.Sprintf(storage.RepoMetaRepoMarker_ImageNameFormat, repo, project)
-		gomega.Expect(stages.DockerRegistry.PushImage(ctx, markerRef, &docker_registry.PushImageOptions{
+		gomega.Expect(stages.DockerRegistry.PushImage(ctx, markerRef(), &docker_registry.PushImageOptions{
 			Labels: map[string]string{image.WerfStageContentDigestLabel: "digest"},
 		})).To(gomega.Succeed())
 

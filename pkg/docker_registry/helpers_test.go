@@ -17,12 +17,21 @@ import (
 
 	"github.com/google/go-containerregistry/pkg/registry"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
+	"github.com/google/go-containerregistry/pkg/v1/remote/transport"
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
 	"golang.org/x/sync/singleflight"
 
 	"github.com/werf/werf/v3/pkg/opstats"
 )
+
+func registryErrorAt(code transport.ErrorCode, path string) error {
+	return fmt.Errorf("getting image: %w", &transport.Error{
+		Errors:     []transport.Diagnostic{{Code: code, Message: "injected"}},
+		StatusCode: http.StatusNotFound,
+		Request:    httptest.NewRequest(http.MethodGet, path, nil),
+	})
+}
 
 type bearerRegistryFixture struct {
 	server     *httptest.Server

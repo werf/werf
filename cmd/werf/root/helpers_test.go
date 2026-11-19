@@ -247,10 +247,15 @@ func authenticatedRegistry(dir string) (*httptest.Server, *atomic.Int32) {
 	return server, requests
 }
 
+type registryFault struct {
+	pathPart string
+	code     string
+}
+
 type writeRecordingRegistry struct {
 	handler http.Handler
 
-	blobsUnreadable atomic.Bool
+	fault atomic.Pointer[registryFault]
 
 	mu     sync.Mutex
 	writes []string
@@ -259,15 +264,15 @@ type writeRecordingRegistry struct {
 var _ http.Handler = (*writeRecordingRegistry)(nil)
 
 func (r *writeRecordingRegistry) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	if r.blobsUnreadable.Load() && strings.Contains(req.URL.Path, "/blobs/") {
-		http.Error(w, `{"errors":[{"code":"BLOB_UNKNOWN","message":"blob unknown to registry"}]}`, http.StatusNotFound)
-		return
-	}
 	switch req.Method {
 	case http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete:
 		r.mu.Lock()
 		r.writes = append(r.writes, req.Method+" "+req.URL.Path)
 		r.mu.Unlock()
+	}
+	if fault := r.fault.Load(); fault != nil && strings.Contains(req.URL.Path, fault.pathPart) {
+		http.Error(w, fmt.Sprintf(`{"errors":[{"code":%q,"message":"injected fault"}]}`, fault.code), http.StatusNotFound)
+		return
 	}
 	r.handler.ServeHTTP(w, req)
 }
