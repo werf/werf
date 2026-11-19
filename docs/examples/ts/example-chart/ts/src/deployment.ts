@@ -1,7 +1,7 @@
-import type { WerfRenderContext } from '@nelm/chart-ts-sdk';
+import type { ChartContext } from './context.ts';
 import { getFullname, getLabels, getSelectorLabels } from './helpers.ts';
 
-export function newDeployment($: WerfRenderContext): object {
+export function newDeployment($: ChartContext): object {
   const name = getFullname($);
 
   return {

@@ -60,9 +60,11 @@ werf chart ts init
 
 Open the `ts/` directory in your editor as a regular Node.js/TypeScript project. You can work with it the same way you would with any TypeScript codebase — run scripts, write tests, use a debugger.
 
+The chart's `ts/src/context.ts` exports the `ChartContext` type, an alias for the SDK's `WerfRenderContext`. Use `ChartContext` in your chart code.
+
 The codebase can be organized as you wish. The only requirement is that `ts/src/index.ts` exists, and `render` function from `@nelm/chart-ts-sdk` **must** be called. Otherwise, no TypeScript rendering happens.
 
-To debug templates rendering in an environment that is very close to how werf runs Node.js, you can use the `dev` script from `ts/package.json`:
+To render templates locally in an environment that is very close to how werf runs Node.js, use the `dev` script from `ts/package.json`:
 
 ```shell
 cd .helm/ts
@@ -81,8 +83,9 @@ The dependency is added to `package.json` automatically. Now you can import and 
 ```typescript
 // .helm/ts/src/deployment.ts:
 import { Deployment } from 'kubernetes-models/apps/v1';
+import type { ChartContext } from './context.ts';
 
-export function newDeployment($: WerfRenderContext): object {
+export function newDeployment($: ChartContext): object {
   return new Deployment({
     metadata: { name: 'myapp' },
     spec: {
@@ -100,6 +103,26 @@ werf lint --dev
 ```shell
 werf render --dev
 ```
+
+### Testing
+
+You can use the [Node.js test runner](https://nodejs.org/api/test.html) or specialized JavaScript/TypeScript testing libraries. `werf chart ts init` creates an example test in `ts/src/deployment.test.ts`. Run the tests from `.helm/ts/`:
+
+```shell
+npm test
+```
+
+### Debugging
+
+The generated project includes a `dev:debug` script that waits for a debugger before running the chart. Run it from `.helm/ts/`:
+
+```shell
+npm run dev:debug
+```
+
+Use your IDE's npm debug configuration to launch the script.
+
+Debug mode disables the sandbox. Use `npm run dev` to check rendering with normal restrictions.
 
 ## How to deploy a chart with TypeScript templates
 

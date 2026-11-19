@@ -5,12 +5,16 @@
   "private": true,
   "scripts": {
     "dev": "nelm-chart-ts dev --input-file input.example.yaml",
-    "typecheck": "tsc"
+    "dev:debug": "nelm-chart-ts dev --input-file input.example.yaml --inspect-brk",
+    "typecheck": "tsc --build",
+    "test": "node --import=tsx --test \"src/**/*.test.ts\""
   },
   "dependencies": {
     "@nelm/chart-ts-sdk": "^0.2.0"
   },
   "devDependencies": {
+    "@types/node": "^26.6.6",
+    "tsx": "^4.23.15",
     "typescript": "~6.0.3"
   }
 }
