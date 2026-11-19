@@ -80,8 +80,35 @@ var _ = ginkgo.Describe("meta-repo info", func() {
 
 		gomega.Expect(code).To(gomega.BeZero(), "stderr: %s", stderr)
 		gomega.Expect(stdout).To(gomega.MatchJSON(fmt.Sprintf(`{"project":%q,"repo":%q,"safeguardEnabled":false,"metaRepo":""}`, project, repo)))
-		gomega.Expect(noticePath).To(gomega.BeAnExistingFile(), "the notice must stay for a command which can show it")
+		gomega.Expect(stderr).To(gomega.ContainSubstring("Automatic host cleanup ran in background"))
 	})
+
+	ginkgo.DescribeTable("keeps machine-readable output parseable with diagnostic logs enabled", func(ctx ginkgo.SpecContext, logFlag string) {
+		gomega.Expect(stages.PutMetaRepoMarker(ctx, project, metaRepo)).To(gomega.Succeed())
+
+		stdout, stderr, code := info("--output-format", "json", logFlag)
+
+		gomega.Expect(code).To(gomega.BeZero(), "stderr: %s", stderr)
+		gomega.Expect(stdout).To(gomega.MatchJSON(fmt.Sprintf(`{"project":%q,"repo":%q,"safeguardEnabled":true,"metaRepo":%q}`, project, repo, metaRepo)))
+		gomega.Expect(stderr).NotTo(gomega.BeEmpty(), "diagnostic logs must go to stderr")
+	},
+		ginkgo.Entry("verbose", "--log-verbose"),
+		ginkgo.Entry("debug", "--log-debug"),
+	)
+
+	ginkgo.DescribeTable("fails when the marker tag exists but cannot be read", func(ctx ginkgo.SpecContext, outputFormat string) {
+		gomega.Expect(stages.PutMetaRepoMarker(ctx, project, metaRepo)).To(gomega.Succeed())
+		recorder.blobsUnreadable.Store(true)
+
+		stdout, stderr, code := info("--output-format", outputFormat)
+
+		gomega.Expect(code).To(gomega.Equal(1), "stdout: %s", stdout)
+		gomega.Expect(stdout).To(gomega.BeEmpty())
+		gomega.Expect(stderr).To(gomega.And(gomega.ContainSubstring("werf-meta-repo-marker-"+project), gomega.ContainSubstring("BLOB_UNKNOWN")))
+	},
+		ginkgo.Entry("text", "text"),
+		ginkgo.Entry("json", "json"),
+	)
 
 	ginkgo.It("fails on a marker without a meta-repo address and points at detach", func(ctx ginkgo.SpecContext) {
 		gomega.Expect(stages.PutMetaRepoMarker(ctx, project, "")).To(gomega.Succeed())

@@ -250,6 +250,8 @@ func authenticatedRegistry(dir string) (*httptest.Server, *atomic.Int32) {
 type writeRecordingRegistry struct {
 	handler http.Handler
 
+	blobsUnreadable atomic.Bool
+
 	mu     sync.Mutex
 	writes []string
 }
@@ -257,6 +259,10 @@ type writeRecordingRegistry struct {
 var _ http.Handler = (*writeRecordingRegistry)(nil)
 
 func (r *writeRecordingRegistry) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	if r.blobsUnreadable.Load() && strings.Contains(req.URL.Path, "/blobs/") {
+		http.Error(w, `{"errors":[{"code":"BLOB_UNKNOWN","message":"blob unknown to registry"}]}`, http.StatusNotFound)
+		return
+	}
 	switch req.Method {
 	case http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete:
 		r.mu.Lock()

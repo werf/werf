@@ -14,7 +14,6 @@ import (
 	"github.com/werf/werf/v3/pkg/storage"
 	"github.com/werf/werf/v3/pkg/tmp_manager"
 	"github.com/werf/werf/v3/pkg/true_git"
-	"github.com/werf/werf/v3/pkg/werf/global_warnings"
 )
 
 const (
@@ -48,13 +47,15 @@ func NewCmd(ctx context.Context) *cobra.Command {
 			if cmdData.OutputFormat != outputFormatText && cmdData.OutputFormat != outputFormatJSON {
 				return fmt.Errorf("--output-format must be %q or %q, got %q", outputFormatText, outputFormatJSON, cmdData.OutputFormat)
 			}
-			if cmdData.OutputFormat == outputFormatJSON {
-				global_warnings.SuppressGlobalWarnings = true
-			}
 
 			if err := common.ProcessLogOptions(&commonCmdData); err != nil {
 				common.PrintHelp(cmd)
 				return err
+			}
+
+			if cmdData.OutputFormat == outputFormatJSON {
+				// stdout carries only the JSON document.
+				ctx = logboek.NewContext(ctx, logboek.Context(ctx).NewSubLogger(os.Stderr, os.Stderr))
 			}
 
 			return run(ctx)
@@ -81,7 +82,6 @@ func NewCmd(ctx context.Context) *cobra.Command {
 	common.SetupContainerRegistryMirror(&commonCmdData, cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)
-	common.SetupLogProjectDir(&commonCmdData, cmd)
 
 	commonCmdData.SetupPlatform(cmd)
 	commonCmdData.SetupDebugTemplates(cmd)
@@ -144,7 +144,7 @@ func run(ctx context.Context) error {
 		return fmt.Errorf("--repo must be a container registry address")
 	}
 
-	metaRepoAddress, found, err := repo.GetMetaRepoMarker(ctx, projectName)
+	metaRepoAddress, found, err := repo.InspectMetaRepoMarker(ctx, projectName)
 	if err != nil {
 		return fmt.Errorf("read meta-repo marker: %w", err)
 	}

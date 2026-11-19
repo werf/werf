@@ -69,8 +69,6 @@ werf meta-repo info [options]
       --log-pretty=true
             Enable emojis, auto line wrapping and log process border (default $WERF_LOG_PRETTY or   
             true).
-      --log-project-dir=false
-            Print current project directory path (default $WERF_LOG_PROJECT_DIR)
       --log-quiet=false
             Disable explanatory output (default $WERF_LOG_QUIET).
       --log-terminal-width=-1
