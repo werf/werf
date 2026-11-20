@@ -12,7 +12,11 @@ import (
 	"time"
 
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
+	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/samber/lo"
+	"go.podman.io/image/v5/manifest"
+	"go.podman.io/image/v5/pkg/compression"
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v3/pkg/buildah/thirdparty"
@@ -174,6 +178,12 @@ type ImagesOptions struct {
 	Filters []util.Pair[string, string]
 }
 
+type PushOpts struct {
+	CommonOpts
+	// LayerCompression overrides CommonBuildahOpts.LayerCompression when set.
+	LayerCompression image.LayerCompression
+}
+
 type ContainersOptions struct {
 	CommitOpts
 	Filters []image.ContainerFilter
@@ -182,7 +192,6 @@ type ContainersOptions struct {
 type (
 	FromCommandOpts       CommonOpts
 	BuildFromCommandsOpts CommonOpts
-	PushOpts              CommonOpts
 	PullOpts              CommonOpts
 	TagOpts               CommonOpts
 	MountOpts             CommonOpts
@@ -240,6 +249,56 @@ type CommonBuildahOpts struct {
 	RegistryMirrors              []string
 	InsecureRegistries           []string
 	StandaloneInsecureRegistries []string
+
+	// LayerCompression is how layer blobs are compressed on push unless PushOpts.LayerCompression is set.
+	LayerCompression image.LayerCompression
+}
+
+// pushCompression is the push configuration derived from the requested compression format and
+// level. A nil Algorithm selects the containers/image default, which is gzip.
+type pushCompression struct {
+	Format       string
+	Algorithm    *compression.Algorithm
+	Level        *int
+	ManifestType string
+	// Force recompresses layer blobs that the registry already has in another format instead of
+	// reusing them, so that every layer is published with the requested compression.
+	Force bool
+}
+
+func newPushCompression(layerCompression image.LayerCompression) (pushCompression, error) {
+	if err := layerCompression.Validate(); err != nil {
+		return pushCompression{}, err
+	}
+
+	switch layerCompression.Format {
+	case image.LayerCompressionZstd:
+		// zstd blobs are only representable in the OCI image format.
+		return pushCompression{
+			Format:       image.LayerCompressionZstd,
+			Algorithm:    lo.ToPtr(compression.Zstd),
+			Level:        layerCompression.Level,
+			ManifestType: imgspecv1.MediaTypeImageManifest,
+			Force:        true,
+		}, nil
+	case image.LayerCompressionNone:
+		// Uncompressed layers are published in the OCI image format as application/vnd.oci.image.layer.v1.tar.
+		// The destination wrapper decompresses every layer instead of forcing a compression algorithm.
+		return pushCompression{
+			Format:       image.LayerCompressionNone,
+			ManifestType: imgspecv1.MediaTypeImageManifest,
+		}, nil
+	default:
+		// gzip is forced even by default: otherwise a zstd or uncompressed variant of a layer that the
+		// registry already has would be reused. Forcing requires the algorithm to be set explicitly.
+		return pushCompression{
+			Format:       image.LayerCompressionGzip,
+			Algorithm:    lo.ToPtr(compression.Gzip),
+			Level:        layerCompression.Level,
+			ManifestType: manifest.DockerV2Schema2MediaType,
+			Force:        true,
+		}, nil
+	}
 }
 
 type NativeModeOpts struct {

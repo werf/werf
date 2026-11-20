@@ -34,6 +34,12 @@ func GetConveyorOptions(ctx context.Context, commonCmdData *CmdData, imagesToPro
 
 	conveyorOptions.DeferBuildLog = GetDeferredBuildLog(ctx, commonCmdData)
 
+	layerCompression, err := getCompressionOptions(commonCmdData)
+	if err != nil {
+		return build.ConveyorOptions{}, err
+	}
+	conveyorOptions.LayerCompression = layerCompression
+
 	useBuildReport := GetUseBuildReport(commonCmdData)
 	buildReportPath := GetBuildReportPath(commonCmdData)
 

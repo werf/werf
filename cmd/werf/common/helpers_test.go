@@ -21,6 +21,15 @@ import (
 	"github.com/werf/werf/v3/pkg/storage"
 )
 
+func compressionCmdData(args ...string) *CmdData {
+	command := &cobra.Command{}
+	data := &CmdData{}
+	SetupCompressionFormat(data, command)
+	SetupCompressionLevel(data, command)
+	gomega.Expect(command.ParseFlags(args)).To(gomega.Succeed())
+	return data
+}
+
 func synchronizationTestStorage(ctx context.Context) *storage.RepoStagesStorage {
 	server := httptest.NewServer(registry.New())
 	ginkgo.DeferCleanup(server.Close)

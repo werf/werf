@@ -67,6 +67,8 @@ type CmdData struct {
 	keepStagesBuiltWithinLastNHours *uint64
 	WithoutKube                     *bool
 	ContainerRegistryMirror         *[]string
+	CompressionFormat               *string
+	CompressionLevel                *string
 
 	LooseGiterminism *bool
 	Dev              *bool

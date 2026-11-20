@@ -26,6 +26,7 @@ type rawStapelImage struct {
 	Network          string           `yaml:"network,omitempty"`
 	RawSecrets       []*rawSecret     `yaml:"secrets,omitempty"`
 	RawImageSpec     *rawImageSpec    `yaml:"imageSpec,omitempty"`
+	Compression      *rawCompression  `yaml:"compression,omitempty"`
 
 	doc *doc `yaml:"-"` // parent
 
@@ -154,6 +155,7 @@ func (c *rawStapelImage) toStapelImageBaseDirective(giterminismManager gitermini
 
 	imageBase.cacheVersion = c.CacheVersion
 	imageBase.platform = append([]string{}, c.Platform...)
+	imageBase.compression = c.Compression.toDirective()
 	imageBase.Network = c.Network
 
 	for _, git := range c.RawGit {

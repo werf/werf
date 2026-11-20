@@ -1,0 +1,32 @@
+project: werf-test-e2e-build-layer-compression
+configVersion: 1
+
+---
+image: none
+dockerfile: Dockerfile
+compression:
+  format: none
+
+---
+image: zstd
+dockerfile: Dockerfile
+compression:
+  format: zstd
+
+---
+image: stapel-none
+from: registry.werf.io/base/alpine:3.21
+compression:
+  format: none
+shell:
+  install:
+  - echo layer-compression > /file
+
+---
+image: stapel-zstd
+from: registry.werf.io/base/alpine:3.21
+compression:
+  format: zstd
+shell:
+  install:
+  - echo layer-compression > /file

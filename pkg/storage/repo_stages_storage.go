@@ -662,7 +662,10 @@ func (storage *RepoStagesStorage) StoreImage(ctx context.Context, img container_
 		}
 	}
 
-	if err := storage.ContainerBackend.Push(ctx, img.Name(), container_backend.PushOpts{TargetPlatform: img.GetTargetPlatform()}); err != nil {
+	if err := storage.ContainerBackend.Push(ctx, img.Name(), container_backend.PushOpts{
+		CommonOpts:       container_backend.CommonOpts{TargetPlatform: img.GetTargetPlatform()},
+		LayerCompression: img.GetLayerCompression(),
+	}); err != nil {
 		return fmt.Errorf("unable to push image %q: %w", img.Name(), err)
 	}
 

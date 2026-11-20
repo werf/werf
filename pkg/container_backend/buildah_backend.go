@@ -964,10 +964,10 @@ func (backend *BuildahBackend) Push(ctx context.Context, ref string, opts PushOp
 		logWriter = io.Discard
 	}
 
-	return backend.buildah.Push(
-		ctx, ref,
-		buildah.PushOpts(backend.getBuildahCommonOpts(ctx, false, logWriter, opts.TargetPlatform)),
-	)
+	return backend.buildah.Push(ctx, ref, buildah.PushOpts{
+		CommonOpts:       backend.getBuildahCommonOpts(ctx, false, logWriter, opts.TargetPlatform),
+		LayerCompression: opts.LayerCompression,
+	})
 }
 
 func (backend *BuildahBackend) TagImageByName(ctx context.Context, img LegacyImageInterface) error {

@@ -5,6 +5,7 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v3/pkg/giterminism_manager"
+	"github.com/werf/werf/v3/pkg/image"
 )
 
 type StapelImageBase struct {
@@ -25,6 +26,7 @@ type StapelImageBase struct {
 	cacheVersion string
 	final        bool
 	platform     []string
+	compression  image.LayerCompression
 	raw          *rawStapelImage
 }
 
@@ -50,6 +52,10 @@ func (c *StapelImageBase) IsFinal() bool {
 
 func (c *StapelImageBase) Platform() []string {
 	return c.platform
+}
+
+func (c *StapelImageBase) Compression() image.LayerCompression {
+	return c.compression
 }
 
 func (c *StapelImageBase) GetFrom() string {
