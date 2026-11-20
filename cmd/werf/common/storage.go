@@ -137,7 +137,7 @@ func NewStorageManagerWithOptions(ctx context.Context, c *NewStorageManagerConfi
 	}
 	cacheStagesStorageList, err := GetCacheStagesStorageList(ctx, stagesStorage, c.ContainerBackend, c.CmdData)
 	if err != nil {
-		return nil, fmt.Errorf("error get chache storage list: %w", err)
+		return nil, fmt.Errorf("error get cache storage list: %w", err)
 	}
 	return &manager.StorageManager{
 		ProjectName:        c.ProjectName,

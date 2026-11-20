@@ -49,7 +49,7 @@ func GetConveyorOptions(ctx context.Context, commonCmdData *CmdData, imagesToPro
 	return conveyorOptions, nil
 }
 
-// GetDeferredBuildLog returns true if build log should be catched and printed on error.
+// GetDeferredBuildLog returns true if build log should be caught and printed on error.
 // Default rules are follows:
 // - If --require-built-images is specified catch log and print on error.
 // - Hide log messages if --log-quiet is specified.
