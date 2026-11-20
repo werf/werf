@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.14.0](https://github.com/werf/werf/compare/v3.13.1...v3.14.0) (2026-11-20)
+
+
+### Features
+
+* **deploy:** control resource deletion stages with delete-on ([#8186](https://github.com/werf/werf/issues/8186)) ([c70682f](https://github.com/werf/werf/commit/c70682f20f2425e6e0cf280a894208e3780a3d04))
+* **deploy:** generate TypeScript charts with runnable tests ([#8183](https://github.com/werf/werf/issues/8183)) ([270ca31](https://github.com/werf/werf/commit/270ca318a49ea9df0bae38ccf0b07ab33aab6c18))
+
 ## [3.13.1](https://github.com/werf/werf/compare/v3.13.0...v3.13.1) (2026-11-17)
 
 
