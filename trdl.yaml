@@ -1,6 +1,5 @@
 docker_image: registry.werf.io/werf/builder:9ea24e9e1f269f7b7a44aac2e92a4cd585f5b8be@sha256:6da2296177236816007b9d16560160cb12977517ad3b760c3cc2f50ed6a6ea1c
 commands:
-  - TASK_X_REMOTE_TASKFILES=1 task --yes -C 2 -o group build:dist:all version={{ .Tag }}
+  - TASK_X_REMOTE_TASKFILES=1 GOFLAGS=-p=2 task --yes -C 1 -o group build:dist:all version={{ .Tag }}
   - TASK_X_REMOTE_TASKFILES=1 task --yes verify:binaries:dist:all version={{ .Tag }}
-  - TASK_X_REMOTE_TASKFILES=1 task --yes compress:binaries:dist:all version={{ .Tag }}
   - cp -a ./dist/{{ .Tag }}/* /result

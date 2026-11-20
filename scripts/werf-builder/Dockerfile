@@ -3,14 +3,10 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV TASK_X_REMOTE_TASKFILES=1
 
 RUN apt-get -y update && \
-    apt-get -y install apt-utils gcc-aarch64-linux-gnu libbtrfs-dev file xz-utils &&  \
+    apt-get -y install apt-utils gcc-aarch64-linux-gnu libbtrfs-dev file &&  \
     curl -sSLO https://github.com/go-task/task/releases/download/v3.33.1/task_linux_amd64.deb && \
     apt-get -y install ./task_linux_amd64.deb && \
     rm -rf ./task_linux_amd64.deb /var/cache/apt/* /var/lib/apt/lists/* /var/log/*
-
-RUN wget https://github.com/upx/upx/releases/download/v5.2.0/upx-5.2.0-amd64_linux.tar.xz && \
-    tar xf upx-5.2.0-amd64_linux.tar.xz &&  mv upx-5.2.0-amd64_linux/upx /usr/local/bin/ && \
-    rm -rf upx-5.2.0-amd64_linux.tar.xz upx-5.2.0-amd64_linux
 
 ADD cmd /.werf-deps/cmd
 ADD pkg /.werf-deps/pkg
