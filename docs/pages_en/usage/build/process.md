@@ -510,6 +510,19 @@ To prevent metadata from splitting between the two repositories (which can make 
 - omitting `--meta-repo`, or passing a different one, is a **hard error** — including a `--meta-repo` that resolves to the same repository as `--repo`;
 - read-only commands only validate the marker and never write it, so pull-only credentials keep working.
 
+To find out whether `--repo` is bound to a meta-repo and to which one, run `werf meta-repo info`. The command only reads the marker and changes nothing:
+
+```shell
+werf meta-repo info --repo registry.mycompany.org/project
+```
+
+```
+Meta-repo path: registry.mycompany.org/project-meta
+Safeguard status: enabled
+```
+
+The address is printed in the normalized form stored in the marker, so its spelling may differ from the value passed to `--meta-repo`. When there is no marker, the command reports `Safeguard status: disabled`. Pass `--output-format json` to get the same data in a machine-readable form.
+
 #### Adopting `--meta-repo` on an existing project
 
 Passing `--meta-repo` to a project that already has metadata in `--repo` is allowed: new metadata goes to the meta-repo right away. The metadata already in `--repo` does not follow, though, and werf reading only `--meta-repo` cannot see it — so move it before the first `cleanup`, which would otherwise decide the fate of stages from an incomplete picture and delete images that are still in use:

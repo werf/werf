@@ -47,6 +47,7 @@ import (
 	managed_images_ls "github.com/werf/werf/v3/cmd/werf/managed_images/ls"
 	managed_images_rm "github.com/werf/werf/v3/cmd/werf/managed_images/rm"
 	meta_repo_detach "github.com/werf/werf/v3/cmd/werf/meta_repo/detach"
+	meta_repo_info "github.com/werf/werf/v3/cmd/werf/meta_repo/info"
 	meta_repo_migrate "github.com/werf/werf/v3/cmd/werf/meta_repo/migrate"
 	"github.com/werf/werf/v3/cmd/werf/plan"
 	"github.com/werf/werf/v3/cmd/werf/purge"
@@ -237,6 +238,7 @@ func metaRepoCmd(ctx context.Context) *cobra.Command {
 		Short: "Migrate metadata into a separate meta-repo and manage the meta-repo safeguard",
 	})
 	cmd.AddCommand(
+		meta_repo_info.NewCmd(ctx),
 		meta_repo_migrate.NewCmd(ctx),
 		meta_repo_detach.NewCmd(ctx),
 	)

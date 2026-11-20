@@ -1,0 +1,1 @@
+show whether --repo is bound to a meta-repo for the project and to which one.

@@ -64,6 +64,25 @@ func (storage *RepoStagesStorage) GetMetaRepoMarker(ctx context.Context, project
 	return img.Labels[RepoMetaRepoMarker_LabelMetaRepo], true, nil
 }
 
+// InspectMetaRepoMarker is GetMetaRepoMarker for reporting the marker state: a
+// marker tag that exists but cannot be read is an error, not an absent marker.
+func (storage *RepoStagesStorage) InspectMetaRepoMarker(ctx context.Context, projectName string) (string, bool, error) {
+	markerTag := RepoMetaRepoMarker_ImageTagPrefix + getMetaRepoMarkerID(projectName)
+	fullImageName := fmt.Sprintf("%s:%s", storage.RepoAddress, markerTag)
+
+	img, err := storage.DockerRegistry.GetRepoImage(ctx, fullImageName)
+	if docker_registry.IsTagNotFoundError(err, markerTag) {
+		return "", false, nil
+	}
+	if err != nil {
+		return "", false, fmt.Errorf("unable to get meta-repo marker %q: %w", fullImageName, err)
+	}
+	if isStageImageOrAlias(img) {
+		return "", false, fmt.Errorf(metaRepoMarkerOccupiedMsg, fullImageName)
+	}
+	return img.Labels[RepoMetaRepoMarker_LabelMetaRepo], true, nil
+}
+
 func (storage *RepoStagesStorage) PutMetaRepoMarker(ctx context.Context, projectName, metaRepoAddress string) error {
 	fullImageName := makeRepoMetaRepoMarkerRecord(storage.RepoAddress, projectName)
 
