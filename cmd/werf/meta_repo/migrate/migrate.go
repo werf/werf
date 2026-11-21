@@ -32,7 +32,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 		Use:                   "migrate",
 		DisableFlagsInUseLine: true,
 		Short:                 "Move existing project metadata from --from into --to and enable the safeguard.",
-		Long:                  "Copy the project's managed-images, image-metadata-by-commit, custom-tag metadata and last-cleanup record from --from into --to, then record the meta-repo marker in --from so subsequent runs are forced to use the same --meta-repo. Copy is verified before any source record is removed.",
+		Long:                  "Copy the project's managed-images, image-metadata-by-commit, custom-tag metadata and last-cleanup record from --from into --to, then record the meta-repo marker in --from so subsequent runs automatically use --to when no meta-repo address is configured. Explicit meta-repo addresses must match the marker. Copy is verified before any source record is removed.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 			if parallelTasksLimit < 1 {

@@ -501,14 +501,22 @@ werf build --repo registry.mycompany.org/project --meta-repo registry.mycompany.
 
 (Rejected-stage markers and the custom-tag aliases on stage images stay in `--repo` because they are tied to stage images.)
 
-Separating metadata from stages is useful when the repository accumulates a large number of service tags. image-metadata records are written per image, per commit and per stage, so under active development they quickly outnumber the stage images themselves, while every werf operation that resolves a stage lists the whole tag set of `--repo` and filters it. Moving the metadata into `--meta-repo` keeps that listing proportional to the stages alone. Every werf command (`build`, `cleanup`, `purge`, etc.) must be invoked with the same `--meta-repo` value.
+Separating metadata from stages is useful when the repository accumulates a large number of service tags. image-metadata records are written per image, per commit and per stage, so under active development they quickly outnumber the stage images themselves, while every werf operation that resolves a stage lists the whole tag set of `--repo` and filters it. Moving the metadata into `--meta-repo` keeps that listing proportional to the stages alone. Every werf command (`build`, `cleanup`, `purge`, etc.) must use the same metadata repository, either explicitly or through automatic detection.
 
 #### Safeguard against inconsistent `--meta-repo` usage
 
 To prevent metadata from splitting between the two repositories (which can make cleanup delete in-use images), werf records a per-project marker in `--repo` on the first metadata write to a `--meta-repo`. Afterwards the marker is enforced on every run:
 
-- omitting `--meta-repo`, or passing a different one, is a **hard error** — including a `--meta-repo` that resolves to the same repository as `--repo`;
-- read-only commands only validate the marker and never write it, so pull-only credentials keep working.
+- when neither `--meta-repo` nor `WERF_META_REPO` specifies a non-empty address, werf automatically uses the address recorded in the marker and logs the choice. Without a marker, metadata stays in `--repo`;
+- an explicit address must match the marker. A different address is a **hard error**, including a `--meta-repo` that resolves to the same repository as `--repo`;
+- an invalid marker or a registry access error stops the operation. werf never falls back to writing metadata into `--repo` when the detected meta-repo is unavailable;
+- read-only commands only read the marker and never write it. Credentials must permit the required operations on the detected meta-repo as well as `--repo`.
+
+Detection uses the marker for the current project in the primary `--repo`, not in secondary or cache repositories. Local storage is unchanged. `--meta-repo=` clears an environment-provided address and enables detection. The `meta-repo migrate` and `meta-repo detach` commands retain their explicit source and destination behavior.
+
+The marker is registry-held configuration: protect it from unauthorized modification. Set `--meta-repo` explicitly to pin the expected address, particularly for cleanup and purge. Automatic detection does not migrate existing metadata and does not change older werf binaries: clients without this feature still need explicit configuration where supported, and metadata left in `--repo` must be migrated before cleanup.
+
+**Automatic detection trusts the marker, including for cleanup and purge.** If the marker is removed by a registry retention policy, repository recreation or `meta-repo detach`, runs without an explicit address cannot distinguish that loss from a project that never used a separate meta-repo: they read and write metadata in `--repo`. Cleanup can then delete needed images because it sees incomplete metadata. Exclude marker tags from registry retention and pin the expected meta-repo address in cleanup and purge jobs. A modified marker can redirect an unpinned job to another repository accessible with its credentials, including metadata deletion there; restrict write access to the primary repository and scope deletion credentials to the intended repositories. Explicit configuration detects a conflicting marker, but does not restore lost metadata or prove that migration is complete.
 
 #### Adopting `--meta-repo` on an existing project
 

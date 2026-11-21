@@ -44,13 +44,20 @@ func (transport *synchronizationDNSFailureTransport) RoundTrip(request *http.Req
 type writeRecordingRegistry struct {
 	handler http.Handler
 
-	mu     sync.Mutex
-	writes []string
+	mu       sync.Mutex
+	writes   []string
+	requests map[string]int
 }
 
 var _ http.Handler = (*writeRecordingRegistry)(nil)
 
 func (r *writeRecordingRegistry) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	r.mu.Lock()
+	if r.requests == nil {
+		r.requests = make(map[string]int)
+	}
+	r.requests[req.Method+" "+req.URL.Path]++
+	r.mu.Unlock()
 	switch req.Method {
 	case http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete:
 		r.mu.Lock()
@@ -64,6 +71,12 @@ func (r *writeRecordingRegistry) recordedWrites() []string {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	return append([]string(nil), r.writes...)
+}
+
+func (r *writeRecordingRegistry) requestCount(method, path string) int {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return r.requests[method+" "+path]
 }
 
 func (r *writeRecordingRegistry) forgetWrites() {
