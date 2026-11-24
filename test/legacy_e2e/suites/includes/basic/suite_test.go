@@ -37,7 +37,7 @@ var (
 )
 
 func setupEnv(opts setupEnvOptions) {
-	SuiteData.Stubs.SetEnv("WERF_BUILDAH_MODE", opts.ContainerBackendMode)
+	SuiteData.SetContainerBackendMode(opts.ContainerBackendMode)
 
 	if opts.WithLocalRepo {
 		SuiteData.Stubs.SetEnv(

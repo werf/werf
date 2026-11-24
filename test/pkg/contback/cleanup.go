@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path"
@@ -23,8 +24,11 @@ type cleanupImage struct {
 
 var errCleanupImageInUse = errors.New("test image is still in use")
 
+const cleanupBusyGracePeriod = 30 * time.Second
+
 type CleanupProjectOptions struct {
 	Repositories []string
+	BackendModes []string
 }
 
 type BuildahContainer struct {
@@ -55,19 +59,32 @@ func CleanupProject(ctx context.Context, projectName string, opts CleanupProject
 		return fmt.Errorf("refuse cleanup of non-test project %q", projectName)
 	}
 
+	useDocker, useBuildah := len(opts.BackendModes) == 0, len(opts.BackendModes) == 0
+	for _, mode := range opts.BackendModes {
+		switch mode {
+		case "", "docker":
+			useDocker = true
+		case "native-rootless", "native-chroot", "auto", "default":
+			useBuildah = true
+		default:
+			useDocker, useBuildah = true, true
+		}
+	}
 	var cleanupErrors []error
 	repos := append(slices.Clone(opts.Repositories), os.Getenv("WERF_REPO"), os.Getenv("WERF_FINAL_REPO"))
-	if _, err := exec.LookPath("docker"); err == nil {
-		if err := cleanupDockerProjectImages(ctx, projectName, repos, func(ctx context.Context, ref string) error {
-			_, err := cleanupCommand(ctx, "docker", []string{"rmi", "--no-prune", ref})
-			return err
-		}); err != nil {
-			cleanupErrors = append(cleanupErrors, err)
+	if useDocker {
+		if _, err := exec.LookPath("docker"); err == nil {
+			if err := cleanupDockerProjectImages(ctx, projectName, repos, func(ctx context.Context, ref string) error {
+				_, err := cleanupCommand(ctx, "docker", []string{"rmi", "--no-prune", ref})
+				return err
+			}); err != nil {
+				cleanupErrors = append(cleanupErrors, err)
+			}
+		} else if !errors.Is(err, exec.ErrNotFound) {
+			cleanupErrors = append(cleanupErrors, fmt.Errorf("locate docker CLI: %w", err))
 		}
-	} else if !errors.Is(err, exec.ErrNotFound) {
-		cleanupErrors = append(cleanupErrors, fmt.Errorf("locate docker CLI: %w", err))
 	}
-	if buildahAvailable() {
+	if useBuildah && buildahAvailable() {
 		if err := cleanupBuildahProject(ctx, projectName, repos); err != nil {
 			cleanupErrors = append(cleanupErrors, err)
 		}
@@ -89,23 +106,35 @@ func cleanupDockerProjectImages(ctx context.Context, projectName string, repos [
 		return projectImageReferences(images, projectName, repos), nil
 	}
 
-	return cleanupImageReferences(ctx, "docker", list, removeImage)
+	return cleanupImageReferences(ctx, "docker", io.Discard, list, removeImage)
 }
 
-func cleanupImageReferences(ctx context.Context, backend string, list func() ([]string, error), removeImage func(context.Context, string) error) error {
+func cleanupImageReferences(ctx context.Context, backend string, diagnostics io.Writer, list func() ([]string, error), removeImage func(context.Context, string) error) error {
 	refs, err := list()
 	if err != nil {
 		return fmt.Errorf("list %s test images: %w", backend, err)
 	}
+	var busySince time.Time
+	reportedBusy := make(map[string]bool)
 	for pass := 0; len(refs) > 0; pass++ {
 		var cleanupErrors []error
-		onlyInUseErrors := true
+		allRefsBusy := true
 		for _, ref := range refs {
 			if err := removeImage(ctx, ref); err != nil {
 				if !errors.Is(err, errCleanupImageInUse) {
-					onlyInUseErrors = false
+					allRefsBusy = false
+				} else {
+					if busySince.IsZero() {
+						busySince = time.Now()
+					}
+					if !reportedBusy[ref] {
+						fmt.Fprintf(diagnostics, "%s cleanup: image %q is still in use: %v\n", backend, ref, err)
+						reportedBusy[ref] = true
+					}
 				}
 				cleanupErrors = append(cleanupErrors, fmt.Errorf("remove %s test image %q: %w", backend, ref, err))
+			} else {
+				allRefsBusy = false
 			}
 		}
 		remaining, err := list()
@@ -117,7 +146,11 @@ func cleanupImageReferences(ctx context.Context, backend string, list func() ([]
 			return nil
 		}
 		cleanupErr := errors.Join(cleanupErrors...)
-		if slices.Equal(refs, remaining) && onlyInUseErrors && errors.Is(cleanupErr, errCleanupImageInUse) && pass < 100 {
+		unchanged := slices.Equal(refs, remaining)
+		if !unchanged {
+			busySince = time.Time{}
+		}
+		if unchanged && allRefsBusy && time.Since(busySince) < cleanupBusyGracePeriod && pass < 100 {
 			timer := time.NewTimer(time.Second)
 			select {
 			case <-ctx.Done():
@@ -125,7 +158,7 @@ func cleanupImageReferences(ctx context.Context, backend string, list func() ([]
 				return errors.Join(cleanupErr, fmt.Errorf("wait for %s test images to be released: %w", backend, ctx.Err()))
 			case <-timer.C:
 			}
-		} else if slices.Equal(refs, remaining) || pass >= 100 {
+		} else if unchanged || pass >= 100 {
 			cleanupErrors = append(cleanupErrors, fmt.Errorf("%s test images remain: %s", backend, strings.Join(remaining, ", ")))
 			return errors.Join(cleanupErrors...)
 		}

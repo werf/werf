@@ -8,11 +8,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"syscall"
 	"time"
 
+	"github.com/onsi/ginkgo/v2"
 	"go.podman.io/common/libimage"
 	"go.podman.io/storage"
 	"go.podman.io/storage/pkg/unshare"
@@ -71,11 +73,11 @@ func runNamespaceJob(env string, job func(ctx context.Context) error) {
 
 // runInBuildahNamespace re-executes the test binary inside the buildah user namespace (the
 // rootless containers storage is only accessible from there) with env=value set, which the
-// child's init recognizes, and returns the child's stdout.
-func runInBuildahNamespace(ctx context.Context, env, value string) ([]byte, error) {
+// child's init recognizes, and forwards the child's stdout to the caller.
+func runInBuildahNamespace(ctx context.Context, env, value string, stdout io.Writer) error {
 	executable, err := os.Executable()
 	if err != nil {
-		return nil, fmt.Errorf("find test executable: %w", err)
+		return fmt.Errorf("find test executable: %w", err)
 	}
 	command := exec.CommandContext(ctx, "buildah", "unshare", executable)
 	if os.Geteuid() == 0 {
@@ -89,11 +91,11 @@ func runInBuildahNamespace(ctx context.Context, env, value string) ([]byte, erro
 	command.WaitDelay = 5 * time.Second
 	var stderr bytes.Buffer
 	command.Stderr = &stderr
-	stdout, err := command.Output()
-	if err != nil {
-		return nil, fmt.Errorf("%w: %s", err, stderr.String())
+	command.Stdout = stdout
+	if err := command.Run(); err != nil {
+		return fmt.Errorf("%w: %s", err, stderr.String())
 	}
-	return stdout, nil
+	return nil
 }
 
 func cleanupBuildahProject(ctx context.Context, projectName string, repos []string) error {
@@ -101,19 +103,19 @@ func cleanupBuildahProject(ctx context.Context, projectName string, repos []stri
 	if err != nil {
 		return fmt.Errorf("encode cleanup request: %w", err)
 	}
-	if _, err := runInBuildahNamespace(ctx, cleanupProjectEnv, string(request)); err != nil {
+	if err := runInBuildahNamespace(ctx, cleanupProjectEnv, string(request), ginkgo.GinkgoWriter); err != nil {
 		return fmt.Errorf("clean buildah project images: %w", err)
 	}
 	return nil
 }
 
 func snapshotBuildahStorage(ctx context.Context, projectName string) (BuildahStorageSnapshot, error) {
-	output, err := runInBuildahNamespace(ctx, storageSnapshotEnv, projectName)
-	if err != nil {
+	var output bytes.Buffer
+	if err := runInBuildahNamespace(ctx, storageSnapshotEnv, projectName, &output); err != nil {
 		return BuildahStorageSnapshot{}, fmt.Errorf("snapshot buildah storage: %w", err)
 	}
 	var snapshot BuildahStorageSnapshot
-	if err := json.Unmarshal(output, &snapshot); err != nil {
+	if err := json.Unmarshal(output.Bytes(), &snapshot); err != nil {
 		return BuildahStorageSnapshot{}, fmt.Errorf("decode buildah storage snapshot: %w", err)
 	}
 	return snapshot, nil
@@ -187,9 +189,9 @@ func cleanupBuildahProjectInNamespace(ctx context.Context, request cleanupProjec
 			}
 		}
 		if onlyInUseErrors {
-			return errors.Join(errCleanupImageInUse, err)
+			return fmt.Errorf("%w: %w", errCleanupImageInUse, err)
 		}
 		return err
 	}
-	return cleanupImageReferences(ctx, "buildah", list, removeImage)
+	return cleanupImageReferences(ctx, "buildah", os.Stdout, list, removeImage)
 }

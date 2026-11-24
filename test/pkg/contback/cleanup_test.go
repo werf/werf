@@ -4,9 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
+	"strings"
 	"testing"
 	"testing/synctest"
 	"time"
@@ -24,7 +27,8 @@ func TestCleanup(t *testing.T) {
 			defer cancel()
 			attempts := 0
 			started := time.Now()
-			err := cleanupImageReferences(ctx, "buildah", func() ([]string, error) {
+			inUse := fmt.Errorf("container owner-id: %w", errCleanupImageInUse)
+			err := cleanupImageReferences(ctx, "buildah", io.Discard, func() ([]string, error) {
 				if progress {
 					if attempts > 101 {
 						return nil, errors.New("cleanup exceeded pass ceiling")
@@ -34,18 +38,60 @@ func TestCleanup(t *testing.T) {
 				return []string{"owned"}, nil
 			}, func(context.Context, string) error {
 				attempts++
-				return errCleanupImageInUse
+				if !progress {
+					<-time.After(2 * time.Second)
+				}
+				return inUse
 			})
 			gomega.Expect(err).To(gomega.MatchError(gomega.ContainSubstring("test images remain")))
 			gomega.Expect(errors.Is(err, context.DeadlineExceeded)).To(gomega.BeFalse())
-			gomega.Expect(attempts).To(gomega.Equal(101))
 			if progress {
+				gomega.Expect(attempts).To(gomega.Equal(101))
 				gomega.Expect(time.Since(started)).To(gomega.BeZero())
 			} else {
-				gomega.Expect(time.Since(started)).To(gomega.Equal(100 * time.Second))
+				gomega.Expect(err.Error()).To(gomega.ContainSubstring("owner-id"))
+				gomega.Expect(attempts).To(gomega.Equal(11))
+				gomega.Expect(time.Since(started)).To(gomega.Equal(32 * time.Second))
 			}
 		})
 	}, ginkgo.Entry("stalled image-in-use removals", false), ginkgo.Entry("changing inventories", true))
+	ginkgo.It("removes a busy image released near the end of the grace period", func() {
+		synctest.Test(t, func(_ *testing.T) {
+			defer ginkgo.GinkgoRecover()
+			var firstConflict time.Time
+			refs := []string{"owned"}
+			err := cleanupImageReferences(context.Background(), "buildah", io.Discard, func() ([]string, error) { return refs, nil }, func(context.Context, string) error {
+				if firstConflict.IsZero() {
+					<-time.After(40 * time.Second)
+					firstConflict = time.Now()
+				}
+				if time.Since(firstConflict) < 29*time.Second {
+					return errCleanupImageInUse
+				}
+				refs = nil
+				return nil
+			})
+			gomega.Expect(err).NotTo(gomega.HaveOccurred())
+			gomega.Expect(refs).To(gomega.BeEmpty())
+		})
+	})
+	ginkgo.It("starts a new busy window after a reference is removed", func() {
+		synctest.Test(t, func(_ *testing.T) {
+			defer ginkgo.GinkgoRecover()
+			started := time.Now()
+			refs := []string{"first", "second"}
+			err := cleanupImageReferences(context.Background(), "buildah", io.Discard, func() ([]string, error) { return refs, nil }, func(_ context.Context, ref string) error {
+				elapsed := time.Since(started)
+				if ref == "first" && elapsed >= 20*time.Second || ref == "second" && elapsed >= 45*time.Second {
+					refs = refs[1:]
+					return nil
+				}
+				return errCleanupImageInUse
+			})
+			gomega.Expect(err).NotTo(gomega.HaveOccurred())
+			gomega.Expect(time.Since(started)).To(gomega.Equal(45 * time.Second))
+		})
+	})
 	ginkgo.RunSpecs(t, "Test resource cleanup")
 }
 
@@ -53,7 +99,7 @@ var _ = ginkgo.Describe("Project image cleanup", func() {
 	ginkgo.It("does not retry an unrelated removal error alongside a busy image", func() {
 		attempts := 0
 		permanentErr := errors.New("permission denied")
-		err := cleanupImageReferences(context.Background(), "buildah", func() ([]string, error) {
+		err := cleanupImageReferences(context.Background(), "buildah", io.Discard, func() ([]string, error) {
 			return []string{"busy", "inaccessible"}, nil
 		}, func(_ context.Context, ref string) error {
 			attempts++
@@ -65,27 +111,46 @@ var _ = ginkgo.Describe("Project image cleanup", func() {
 		gomega.Expect(errors.Is(err, permanentErr)).To(gomega.BeTrue())
 		gomega.Expect(attempts).To(gomega.Equal(2))
 	})
+	ginkgo.It("does not retry an unchanged no-op reference alongside a busy image", func() {
+		attempts := 0
+		err := cleanupImageReferences(context.Background(), "buildah", io.Discard, func() ([]string, error) {
+			return []string{"busy", "unchanged"}, nil
+		}, func(_ context.Context, ref string) error {
+			attempts++
+			gomega.Expect(attempts).To(gomega.BeNumerically("<=", 2))
+			if ref == "busy" {
+				return errCleanupImageInUse
+			}
+			return nil
+		})
+		gomega.Expect(err).To(gomega.MatchError(gomega.ContainSubstring("test images remain: busy, unchanged")))
+	})
 	ginkgo.It("waits for a concurrent build to release an image without force", func() {
 		remaining := []string{"owned"}
 		attempts := 0
-		err := cleanupImageReferences(context.Background(), "buildah", func() ([]string, error) {
+		var diagnostics strings.Builder
+		err := cleanupImageReferences(context.Background(), "buildah", &diagnostics, func() ([]string, error) {
 			return remaining, nil
 		}, func(context.Context, string) error {
 			attempts++
-			if attempts == 1 {
-				return errCleanupImageInUse
+			if attempts > 1 {
+				gomega.Expect(diagnostics.String()).To(gomega.ContainSubstring(`"owned"`))
+				gomega.Expect(strings.Count(diagnostics.String(), "container owner-id")).To(gomega.Equal(1))
+			}
+			if attempts <= 2 {
+				return fmt.Errorf("container owner-id: %w", errCleanupImageInUse)
 			}
 			remaining = nil
 			return nil
 		})
 		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 		gomega.Expect(remaining).To(gomega.BeEmpty())
-		gomega.Expect(attempts).To(gomega.Equal(2))
+		gomega.Expect(attempts).To(gomega.Equal(3))
 	})
 	ginkgo.It("stops waiting on cancellation and reports the retained image", func() {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
-		err := cleanupImageReferences(ctx, "buildah", func() ([]string, error) {
+		err := cleanupImageReferences(ctx, "buildah", io.Discard, func() ([]string, error) {
 			return []string{"owned"}, nil
 		}, func(context.Context, string) error {
 			cancel()
@@ -94,6 +159,20 @@ var _ = ginkgo.Describe("Project image cleanup", func() {
 		gomega.Expect(errors.Is(err, context.Canceled)).To(gomega.BeTrue())
 		gomega.Expect(errors.Is(err, errCleanupImageInUse)).To(gomega.BeTrue())
 		gomega.Expect(err.Error()).To(gomega.ContainSubstring("owned"))
+	})
+	ginkgo.It("does not retry a no-op removal on the basis of an earlier conflict", func() {
+		attempts := 0
+		err := cleanupImageReferences(context.Background(), "buildah", io.Discard, func() ([]string, error) {
+			return []string{"owned"}, nil
+		}, func(context.Context, string) error {
+			attempts++
+			if attempts == 1 {
+				return errCleanupImageInUse
+			}
+			gomega.Expect(attempts).To(gomega.Equal(2))
+			return nil
+		})
+		gomega.Expect(err).To(gomega.MatchError(gomega.ContainSubstring("test images remain: owned")))
 	})
 	ginkgo.It("rescans after deleting a dependent child image", func() {
 		dir := ginkgo.GinkgoT().TempDir()
@@ -204,4 +283,25 @@ var _ = ginkgo.Describe("Project image cleanup", func() {
 		ginkgo.GinkgoT().Setenv("PATH", dir)
 		gomega.Expect(CleanupProject(context.Background(), "werf-test-one", CleanupProjectOptions{})).To(gomega.MatchError(gomega.ContainSubstring("exit status 42")))
 	})
+	ginkgo.DescribeTable("selects the project's backends", func(modes []string, wantDocker, wantBuildah bool) {
+		dir := ginkgo.GinkgoT().TempDir()
+		gomega.Expect(os.WriteFile(filepath.Join(dir, "docker"), []byte("#!/bin/sh\nexit 42\n"), 0o700)).To(gomega.Succeed())
+		canStubUnshare := runtime.GOOS == "linux" && os.Geteuid() != 0
+		if canStubUnshare {
+			gomega.Expect(os.WriteFile(filepath.Join(dir, "buildah"), []byte("#!/bin/sh\ntest \"$1\" = unshare || exit 1\nexit 43\n"), 0o700)).To(gomega.Succeed())
+		}
+		ginkgo.GinkgoT().Setenv("PATH", dir)
+		err := CleanupProject(context.Background(), "werf-test-one", CleanupProjectOptions{BackendModes: modes})
+		if !wantDocker && !(wantBuildah && canStubUnshare) {
+			gomega.Expect(err).NotTo(gomega.HaveOccurred())
+			return
+		}
+		gomega.Expect(err).To(gomega.HaveOccurred())
+		gomega.Expect(strings.Contains(err.Error(), "exit status 42")).To(gomega.Equal(wantDocker))
+		gomega.Expect(strings.Contains(err.Error(), "exit status 43")).To(gomega.Equal(wantBuildah && canStubUnshare))
+	}, ginkgo.Entry("default Docker", []string{""}, true, false), ginkgo.Entry("explicit Docker", []string{"docker"}, true, false),
+		ginkgo.Entry("native rootless", []string{"native-rootless"}, false, true), ginkgo.Entry("native chroot", []string{"native-chroot"}, false, true),
+		ginkgo.Entry("auto", []string{"auto"}, false, true), ginkgo.Entry("default", []string{"default"}, false, true),
+		ginkgo.Entry("both modes used before teardown", []string{"docker", "native-rootless"}, true, true),
+		ginkgo.Entry("no mode recorded", nil, true, true), ginkgo.Entry("unknown mode", []string{"unknown"}, true, true))
 })
