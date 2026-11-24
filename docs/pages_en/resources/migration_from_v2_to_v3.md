@@ -3,457 +3,545 @@ title: Migration from v2 to v3
 permalink: resources/migration_from_v2_to_v3.html
 ---
 
-Start with the summary, then check the sections relevant to your build, deployment and CI. For rollback or parallel use of v2, read the [compatibility requirements](#compatibility-with-v2). Removed features require edits before upgrading; renaming deprecated keys can wait.
+Migrate in three stages:
 
-## Default behavior changes
+1. [**Before upgrading**](#before-upgrading-find-problems-with-v3-keep-deploying-with-v2): run werf v3 in a branch to find what needs changing, and fix it in a form werf v2 also accepts. Production keeps deploying with v2. Prepare the CI changes that work only in v3.
+2. [**Upgrading**](#upgrading): switch to v3 in a fixed order. The new secret and bundle formats can't be undone by switching back.
+3. [**After upgrading**](#after-upgrading): check the defaults that changed and remove compatibility settings.
 
-If you enabled experimental features in v2, some changes already apply to your environment.
+Go through the [checklist](#checklist) and skip what doesn't apply to your project. Every removed command, flag and variable is listed in the [reference](#reference-removed-commands-flags-and-variables).
 
-These changes affect existing projects even without configuration edits:
+## Checklist
 
-### Building and caching
+**Before upgrading (v2 still deploys):**
 
-| Where | Before — v2 | After — v3 | What to check or how to restore the previous behavior |
-|---|---|---|---|
-| Building and listing images | `build` builds and `config list` lists non-final images too. | Final images are selected by default; builds also include their required dependencies. | `--final-images-only=false`; [details](#which-images-are-built-and-listed). |
-| Git file changes in Stapel | Without `stageDependencies`, file changes alone do not rerun Shell commands. | Without `stageDependencies`, changing any file added from Git triggers a rebuild from the first configured Shell stage (`install`, `beforeSetup` or `setup`) onward. Conceptually, this is like `COPY` before `RUN` in a Dockerfile. | Configure `stageDependencies` if not every file should trigger a rebuild — [details](#git-dependencies-of-build-stages). |
-| File import cache in Stapel | Depends on selected files. | Depends on the source image. | Additional rebuilds are possible; [details](#file-imports). |
+- **Everyone:** [upgrade to the latest v2](#upgrade-to-the-latest-v2), [run v3 to find problems](#find-problems-with-v3) and [fix what it reports](#fix-what-v3-reports).
 
-### Deployment and bundles
+Then check the [changes v3 doesn't report](#changes-v3-doesnt-report) that apply to you:
 
-**Before the first `werf plan`, check [sensitive data redaction](#sensitive-data-in-diffs): the previous annotation no longer hides the entire resource.** This is especially important for shared CI logs.
+- **Stapel:** [set `stageDependencies` explicitly](#stapel-git-dependencies-of-stages), [check imports](#stapel-imports).
+- **Dockerfile:** [check the builder, ignore files and Git LFS](#dockerfile).
+- **Native Buildah:** [install netavark and pasta, check network settings](#buildah).
+- **Charts:** [update templates and annotations](#charts-templates-and-annotations), [check values and secrets](#charts-values-and-secrets), [check `.helmignore` and `patches.yaml`](#charts-files-werf-now-reads-differently).
 
-| Where | Before — v2 | After — v3 | What to check or how to restore the previous behavior |
-|---|---|---|---|
-| Resource validation | Schema validation is off without an experimental flag. | Enabled. | Fix manifests or configure exceptions; [details](#resource-and-values-validation). |
-| `patches.yaml` | Not applied automatically. | Files from the main chart and dependent charts are applied automatically. | Check their contents; disable with `--no-default-patches`; [details](#automatic-patches-and-null). |
-| `null` in manifests | Preserved without an experimental cleanup flag. | Fields and list entries whose value is `null` are removed. | Check CRDs and intentional `null` values; [details](#automatic-patches-and-null). |
-| Sensitive data in diffs | `Secret` resources and resources annotated with `werf.io/sensitive: "true"` are hidden except for identifying fields. | Only `data.*` and `stringData.*` are hidden by default. | Set sensitive paths; [details](#sensitive-data-in-diffs). |
-| External dependencies | `<name>.external-dependency.werf.io/resource` waits for a resource outside the release. | The annotation is ignored with a warning. | Replace with `werf.io/deploy-dependency-<name>`; [details](#external-dependency-annotations). |
-| Resource deletion | Dependents are deleted with `Foreground` propagation. | `Background` propagation. | `--delete-propagation=Foreground`; [details](#resource-deletion-and-recreation). |
-| Readiness tracking | Condition types are matched case-sensitively. | Case-insensitively. | Check resources with `Ready` or `Available` conditions; [details](#readiness-tracking). |
-| Service values | `.Values.global.env` is populated automatically. | `.Values.global.werf.env` is populated automatically; the old key is no longer populated. | Temporary compatibility: `WERF_LEGACY_VALUES_GLOBAL_ENV=1`; [details](#values-and-environment-variables). |
-| Release storage | `HELM_DRIVER` is honored if `WERF_RELEASE_STORAGE` is not set. | `WERF_RELEASE_STORAGE` is used; without it, the default storage applies. | Transfer the variable's value; [details](#values-and-environment-variables). |
-| Published chart name | `--helm-compatible-chart=false`. | Always the last path component of the repository; `--helm-compatible-chart` and `--rename-chart` are removed. | Expect `.Chart.Name` to change; [details](#charts-and-bundles). |
-| Published chart format | Images and `werf bundle publish` values are merged into `values.yaml` of the chart. | Stored in `.werf-data/`; Helm, Argo CD and Flux get only the chart's own values; werf v2 cannot deploy the chart. | Pass `.werf-data/` values files to Helm, Argo CD and Flux; upgrade werf everywhere bundles are applied; [details](#charts-and-bundles). |
-| Bundle archive | `werf bundle copy --to archive:` writes the chart archive and a tarball per image. | An OCI image layout with the chart, its provenance file and all platforms of the images; werf v2 can't read it. | Import archives with v3, which still reads v2 archives; [details](#charts-and-bundles). |
-| `.helmignore` | Does not filter files when werf reads the chart. | Filters files, including Helm's default rules. | Check exclusions before deploying; [details](#charts-and-bundles). |
-| TypeScript charts | `ts/` is ignored without `NELM_FEAT_TYPESCRIPT=true`; rendered with Deno. | Always rendered, with Node.js. | Install Node.js 26+ and rebuild bundles; [details](#typescript-charts). |
+And [prepare CI](#prepare-ci):
 
-### CI and automation
+- **CI:** [replace `werf helm` commands](#ci-werf-helm-commands), [remove dropped flags and variables](#ci-flags-variables-and-environment), [accept the new exit codes and report formats](#ci-exit-codes-and-reports).
 
-| Where | Before — v2 | After — v3 | What to check or how to restore the previous behavior |
-|---|---|---|---|
-| Credentials in `ci-env` | `DOCKER_AUTH_CONFIG` requires explicit opt-in. | A non-empty variable is selected automatically unless the choice is explicit. | `--use-docker-auth-config=false`; [details](#registry-credentials). |
+**Upgrading:**
 
-**Separately — CI contract changes, not new defaults:**
+- **Everyone:** [switch in this order](#order-of-the-switch): protect rollback history, switch runners, migrate SQL release storage, upgrade everything that reads secrets or deploys bundles, then publish bundles and edit secrets.
+- **SQL release storage:** [run the storage migration with a privileged role](#release-storage) before other v3 jobs use it.
+- **TypeScript charts:** [move to Node.js](#typescript-charts).
+- **Bundles:** [upgrade consumers before publishing, check the chart name](#bundles).
+- **Secrets:** [upgrade all readers before writing secrets](#secrets).
+- **Everyone:** [expect a full rebuild and protect rollback images](#first-build-and-cleanup), [check the first deploy](#first-deploy).
 
-- With `--exit-code` enabled, code `3` means a release-only update — see [Plan exit codes](#plan-exit-codes).
-- When reusing an image, the JSON build report may contain `StagesSkipped: true` without `Stages` — see [Build report format](#build-report-format).
-- The JSON deploy report identifies its format with `apiVersion` instead of `version` — see [Deploy report format](#deploy-report-format).
+**After upgrading:**
 
-## Compatibility with v2
+- **Everyone:** [check the changed defaults](#check-the-changed-defaults), [remove compatibility settings](#clean-up).
+- **Go code importing werf:** [change the module path](#go-module-path).
 
-Running both versions or rolling back to v2 depends on shared configuration, secrets and registry state, not just the binaries:
+## Before upgrading: find problems with v3, keep deploying with v2
 
-- **Configuration.** After adopting v3 settings, do not assume the same `werf.yaml` will work in v2. Keep a v2-compatible configuration revision for rollback — see [building changes](#building).
-- **Secrets.** v3 reads old secrets, but an old client cannot read new v3 writes. Upgrade all readers before the first rewrite; switching the binary back to v2 does not restore the old format — see [encrypted secrets](#encrypted-secret-values).
-- **Registry.** A shared `--repo` means shared images: [protect rollback images](#protecting-rollback-images) from cleanup.
+In this stage, production CI keeps using werf v2. You run v3 only to find problems, and fix each one in a form that v2 also accepts, so the fixes can be merged one by one. The sections below say how for each change.
 
-## Building
+### Upgrade to the latest v2
 
-**Expect a full rebuild of images after moving to v3. Account for it when planning the upgrade.**
+Upgrade to the latest werf v2. Older v2 releases deploy bundles published by v3 without their values instead of refusing them.
 
-### Images instead of artifacts
+### Find problems with v3
 
-**Required for Stapel using `artifact`:** Replace `artifact: builder` with this fragment:
+1. Install werf v3 next to v2: on your machine or in a separate CI job.
+2. In a branch, run these v3 commands for each environment. Pass `werf render` and `werf lint` the same `--values`, `--secret-values` and `--set*` as your deploy jobs:
 
-```yaml
-image: builder
-final: false
-```
+   ```shell
+   werf config render --env ENV
+   werf render --env ENV --stub-tags --validate=false
+   werf lint --env ENV --stub-tags --validate=false
+   ```
 
-Keep the other image settings unchanged.
+   They don't build, push or deploy, and don't need the cluster. Skip `render` and `lint` if the project has no chart. Pass the secret key as usual. Without the key, add `--ignore-secret-key`; secret values then aren't checked. `werf render` prints Secret data: run it where the output isn't shared, or write it to a private file with `--output`.
+3. v3 may stop at the first error. Fix it using the [table below](#fix-what-v3-reports), and run again until the commands pass. Also fix the deprecation warnings that `werf lint` or `werf build` print. If v3 rejects a flag (`unknown flag`), use its replacement from [CI: flags](#ci-flags-variables-and-environment).
+4. Check each fix with v2 too (`werf render`, `werf build`, your tests) before merging it: production still deploys with v2.
+5. Compare `werf render` output of v2 and v3 for each environment: [values priority](#charts-values-and-secrets) and other silent changes show up only there.
 
-**Required for Stapel using `disableGitAfterPatch`:** remove the directive from `werf.yaml`; it is no longer supported, and an unknown key is a configuration error. v2 suggested it for keeping artifact behavior when replacing `artifact` with `image`. There is no equivalent switch in v3. Use `git.stageDependencies` to control which changes rerun build instructions, but this does not disable updates to the Git files themselves — see [Git dependencies of build stages](#git-dependencies-of-build-stages).
+Then go through the [changes v3 doesn't report](#changes-v3-doesnt-report). To try a v3 build, run `werf build` on a separate runner, with a separate `--repo` and without the production `--final-repo`, `--cache-repo`, `--meta-repo` and custom tags.
 
-### Image names
+**Don't run v3 `build`, `converge`, `plan` or `cleanup` against production repositories, runners or release storage before [the switch](#order-of-the-switch):** v3 rebuilds all images, can't share a runner with v2, migrates SQL release storage if you use it, and its cleanup can delete v2 images.
 
-Nameless stapel images (`image: ~`) are no longer supported — give every image a name.
+### Fix what v3 reports
 
-Names are now checked when loading the configuration. Latin letters, digits, `_`, `.`, `-` and `+` are allowed, with optional `/`-separated segments. Each segment must start with a letter or digit and end with a letter, digit or `+`. `modules/controller` is valid; an empty name, whitespace, `/api`, `api-` and `modules//controller` cause a configuration error. Check names produced by Go templates as well.
+All these fixes also work in v2.
 
-### One `from` key for image references
+| v3 reports | Fix |
+|---|---|
+| `... is a forbidden property` in `werf-giterminism.yaml` | v2 ignored the key. Remove it to keep the v2 behavior, or fix its name to turn the setting on. See the [giterminism reference]({{ "/reference/werf_giterminism_yaml.html" | true_relative_url }}). |
+| `artifact` ("cannot recognize type of config section") | Make it an image with `final: false`, and replace `fromArtifact` with `from` and `import[].artifact` with `import[].from`: see [the example below](#replacing-an-artifact). |
+| `ansible` | Rewrite the steps as `shell:` commands, or move the image to a Dockerfile. |
+| `docker` | Move the settings to `imageSpec.config`, see [Changing image configuration spec]({{ "/usage/build/images.html#changing-image-configuration-spec" | true_relative_url }}). In v2, `docker` had no effect in an image with `disableGitAfterPatch: true`: moving it applies these settings for the first time, so delete `docker` instead to keep the v2 result. If v2 CI passes `--skip-image-spec-stage`, v2 ignores `imageSpec`, so the settings are lost until you switch: make this change together with the binary. |
+| `import[].stage` | Remove it: imports now copy from the finished source image. For an intermediate result, import from a separate image with `final: false`. |
+| An image without a name | Name it, and use {% raw %}`{{ index .Values.werf.image "NAME" }}`{% endraw %} instead of `.Values.werf.nameless_image`. |
+| `disableGitAfterPatch` | Remove it: Git files are always updated. |
+| Deprecated `fromImage`, `import[].image`, `dependencies[].image` | Rename them to `from`, `import[].from`, `dependencies[].from`. Don't set an old key and its new key together. |
+| An external image without a tag or digest | Add one: `from: ubuntu` becomes `from: ubuntu:latest`, which is the image v2 pulled. Don't add a tag to images from `werf.yaml`. Rename an image called `scratch`: the name is reserved. |
+| An invalid image name | Use Latin letters, digits, `_`, `.`, `-` and `+` in segments separated by `/`. Each segment starts with a letter or digit and ends with a letter, digit or `+`. |
+| `to` of `git` or `import` ending with `/` | Remove the slash (keep `to: /` as is), and check where the files go: [Destination path rules]({{ "/usage/build/stapel/imports.html#destination-path-rules" | true_relative_url }}). |
+| A number or boolean in annotations or labels | Quote it: `example.com/replicas: "3"` or {% raw %}`{{ .Values.replicas | quote }}`{% endraw %}. v2 dropped such values with a warning, so the first deploy adds them to live resources: remove the ones you don't need. |
+| Values or a schema rejected by `values.schema.json` validation | Fix the values or the schema: v2 often hid these errors. Schemas without `$schema` are now checked as JSON Schema 2020-12; add `"$schema": "http://json-schema.org/draft-07/schema#"` to keep draft-07. The error text changed: update scripts that parse it. `--no-values-schema-validation` skips the check temporarily in v3; v2 doesn't have the flag. |
 
-**Renaming can wait:** `fromImage`, `import.image` and `dependencies.image` still work in v3 with a warning. When replacing a key, use only one: specifying both the old and new key is an error.
-
-| Where | Old key | New key |
-|---|---|---|
-| Stapel base image | `fromImage: base` | `from: base` |
-| File import in Stapel | `import.image` | `import.from` |
-| Image dependency | `dependencies.image` | `dependencies.from` |
-
-A name from `werf.yaml`, such as `base`, refers to an internal image; a reference with a tag or digest, such as `alpine:3.20`, refers to an external image. The nested `imports` block in `dependencies` still passes image information rather than copying files.
-
-Renaming `import.image` does not replace the mandatory removal of `import.stage` — see [file imports](#file-imports).
-
-#### External image with an explicit tag
-
-**Required for external references in a base `from` or `import.from`:** specify a tag or digest. For example, replace `from: ubuntu` with `from: ubuntu:latest`, `from: ubuntu:TAG`, or `from: ubuntu@sha256:...`. Internal image names from `werf.yaml` do not need a tag.
-
-### Builders and image configuration
-
-**For Dockerfiles using the Docker backend:** the legacy Docker builder is no longer available. BuildKit was already the default in v2, but `DOCKER_BUILDKIT=0` or `false` allowed opting back into the old builder. In v3, this variable does not restore that mode: check your Dockerfiles and environment with BuildKit.
-
-**For staged Dockerfiles:** `WERF_STAGED_DOCKERFILE_VERSION=v1` no longer selects the old implementation.
-
-**Required for Stapel using `ansible:`:** the Ansible builder is removed. Rewrite `ansible:` steps using the Shell builder; renaming the key is not enough.
-
-**Required for Stapel using `docker:`:** the directive is removed. Move its settings to `imageSpec.config`, translating field names and formats. For example, for a stapel image fragment:
+#### Replacing an artifact
 
 <table>
-<thead><tr><th scope="col">Before — v2</th><th scope="col">After — v3</th></tr></thead>
+<thead><tr><th scope="col">Before</th><th scope="col">After</th></tr></thead>
 <tbody><tr>
 <td markdown="1">
 
 ```yaml
-docker:
-  WORKDIR: /app
-  ENV:
-    APP_ENV: production
+artifact: builder
+from: alpine:3.20
+# ...
+---
+image: app
+fromArtifact: builder
+import:
+- artifact: builder
+  add: /out
+  to: /app
+  before: setup
 ```
 
 </td>
 <td markdown="1">
 
 ```yaml
-imageSpec:
-  config:
-    workingDir: /app
-    env:
-      APP_ENV: production
+image: builder
+final: false
+from: alpine:3.20
+# ...
+---
+image: app
+from: builder
+import:
+- from: builder
+  add: /out
+  to: /app
+  before: setup
 ```
 
 </td>
 </tr></tbody>
 </table>
 
-See [Changing image configuration spec]({{ "/usage/build/images.html#changing-image-configuration-spec" | true_relative_url }}) for the full set of fields.
+An artifact didn't get Git updates after its first build; an image does. If the artifact's instructions process files from Git, set `stageDependencies` of that stage to those files: with v2 defaults the files update but the result built from them doesn't.
 
-### File imports
+### Changes v3 doesn't report
 
-For Stapel images using the `import` directive.
+The commands above don't reliably catch these changes, so check the ones that apply to your project.
 
-**Import caching now depends on the source image**, rather than checksums of the selected files as it did by default in v2. Changing the source image can rebuild the importing image even if the copied files are unchanged. `includePaths`/`excludePaths` still select which files to copy, but no longer isolate the cache from other source-image changes. If those rebuilds are expensive, put the imported output in a separate, narrowly scoped image.
+#### Stapel: Git dependencies of stages
 
-**You must remove `import.stage`.** Imports use the completed source image, not a selected intermediate stage. If you need an intermediate result, make it a separate image. `before`/`after` still control when the import runs in the **destination** image.
-
-For example, an import fragment referencing the `builder` image after removing `stage` and optionally renaming `image` to `from`:
-
-```yaml
-import:
-  - from: builder
-    add: /out/message.txt
-    to: /message.txt
-    before: setup
-```
-
-**A trailing slash in export/import `to:` is now an error**, except for the root path `to: /`. Previously werf stripped it with a warning, although users could expect it to mean “copy into this directory”. Check the intended destination before changing `to: /usr/sbin/` to `to: /usr/sbin`:
-
-- If `add` is a directory, its contents are merged into `to`.
-- If `add` is a file, it is copied into `to` when `to` is an existing directory; otherwise `to` is the file's destination path. To avoid depending on whether the containing directory exists, specify the full filename, for example `to: /etc/app/config.yaml`, and ensure that path is not a directory.
-
-See [Destination path rules]({{ "/usage/build/stapel/imports.html#destination-path-rules" | true_relative_url }}) for details.
-
-### Git dependencies of build stages
-
-For Stapel with Git mappings: `git.stageDependencies` determines which Git file changes trigger Shell-stage rebuilds.
-
-In v3, **an omitted setting and an explicit empty list can mean different things**:
-
-| Setting | Before — v2 | After — v3 |
-|---|---|---|
-| The entire block is absent or `{}` | Stages have no direct Git-file dependency. | All three stages get `**/*`: all files in the git mapping are tracked, respecting `includePaths`/`excludePaths`. |
-| Explicit stage masks | Matching files are tracked. | The same behavior. |
-| An explicit `[]` for a stage | No direct Git-file dependency. | The same behavior; the stage counts as explicitly declared. |
-
-In a partially filled block, omitted stages **before the last explicitly declared stage** get `[]`, and those **after it** get `**/*`. The order is always `install` → `beforeSetup` → `setup`, regardless of YAML key order. The rule applies independently to each git mapping. In v2, every omitted stage had no Git-file dependency regardless of its position: the new `**/*` defaults after the last declared stage can cause additional rebuilds.
-
-For example, only `beforeSetup` is declared:
+**Set `install`, `beforeSetup` and `setup` explicitly** in each git mapping with Shell instructions, so that v2 and v3 behave the same: masks of the files that should rerun the stage, `["**/*"]` for all files, or `[]` for none. For example, if only `beforeSetup` uses `src/`:
 
 ```yaml
 git:
-  - add: /
-    to: /app
-    stageDependencies:
-      beforeSetup:
-        - "src/**/*"
+- add: /
+  to: /app
+  stageDependencies:
+    install: []
+    beforeSetup: ["src/**/*"]
+    setup: []
 ```
 
-`install` gets `[]`, `beforeSetup` gets `src/**/*`, and `setup` gets `**/*`. Changing a file outside `src` therefore does not by itself trigger `install` or `beforeSetup`, but triggers `setup` if it has instructions.
+| Setting | v2 | v3 |
+|---|---|---|
+| No `stageDependencies`, or `{}` | Git changes rerun no stages. | All three stages get `**/*`: every file of the mapping, respecting `includePaths`/`excludePaths`. |
+| Some stages set | Omitted stages don't depend on Git. | In the order `install` → `beforeSetup` → `setup`, omitted stages before the last set one get `[]`, those after it get `**/*`. See [Masks of the stages that are not set]({{ "/usage/build/stapel/instructions.html#masks-of-the-stages-that-are-not-set" | true_relative_url }}). |
 
-To keep a stage free of direct Git-file dependencies, specify `[]`; to always track all mapped files, specify `["**/*"]`. If you specify masks, include every file that affects the stage's result.
+**A non-empty entry for a stage without instructions** is an error at `werf build` (`[]` is fine); the commands above don't report it. Move the masks to the stage with instructions, or set the entry to `[]`.
 
-`[]` disables only the direct Git-file dependency. Changes to preceding stages, base images, commands and other inputs can still trigger a rebuild.
-
-A non-empty `stageDependencies` entry for a stage with no build instructions now causes an **error instead of a warning**. Move the masks to the stage with the corresponding commands, add the missing instructions, or remove the unnecessary dependency.
+**Commands that change files from Git.** On the Docker backend, v2 stopped the build with a `git apply` conflict when a later Git change touched a file that a command had modified. v3 silently overwrites the touched files with the files from Git. Find these commands, then either make the stage that changes the files depend on their sources in `stageDependencies`, or write the generated files outside the mapped paths.
 
 See [Dependency on changes in the Git repo]({{ "/usage/build/stapel/instructions.html#dependency-on-changes-in-the-git-repo" | true_relative_url }}).
 
-### Validation of werf-giterminism.yaml
+#### Stapel: imports
 
-Fix unknown or misspelled keys in `werf-giterminism.yaml`: strict schema validation no longer lets them be silently ignored.
+**Several imports into one directory.** v2 automatically excluded one import's paths from another when their `to` paths were equal or nested; v3 copies them as written, in order. To keep the v2 result, add the excluded paths to `excludePaths` (works in v2 too). v2 prints them in the build log as `import[... excludePaths=[...]]`: for imports into `/app/bin` and `/app/bin/tools`, the first one excludes `tools`.
 
-### Which images are built and listed
+**Import caching.** An importing image is now rebuilt whenever the source image changes, even if the copied files are the same. If that's expensive, import from a small separate image.
 
-`werf build` and other build-triggering commands now default to `--final-images-only=true`, as `converge`, `render`, `export`, `plan`, `lint` and `bundle publish` already did. Orphan non-final images that no final image references are no longer built by default.
+#### Dockerfile
 
-`werf config list` also lists only final images by default; its deprecated `--images-only` alias is removed.
+- **BuildKit only.** `DOCKER_BUILDKIT=0` no longer selects the legacy Docker builder. Remove the variable and check that your Dockerfiles build with BuildKit; this works in v2 too.
+- **Docker 19.03 or newer** is required for the Docker backend.
+- **Staged Dockerfiles** (`staged: true`) use a new implementation: check that these images build with v3.
+- **Ignore files.** werf now filters the build context itself on both backends, using the first file that exists: `<Dockerfile>.dockerignore`, `<Dockerfile>.containerignore`, `.dockerignore`, `.containerignore`. There's no warning about the change, so check the files in the image after switching.
 
-**To keep the previous behavior:**
+  | Backend | What changes | To keep the v2 result |
+  |---|---|---|
+  | Docker | v2 ignored `.containerignore` and `<Dockerfile>.containerignore`. If a context has only those, their rules now apply. | Add an empty file that comes earlier in the list above: `.dockerignore` for `.containerignore`, `<Dockerfile>.dockerignore` for `<Dockerfile>.containerignore`. To get the v3 result already in v2, copy the rules to `.dockerignore` instead. |
+  | Buildah | Buildah read `.containerignore` before `.dockerignore`. If a context has both, v3 uses `.dockerignore`. | Put the rules that v2 applied into the file v3 picks first, from the list above, Dockerfile-specific files included. Also check `contextAddFiles`: files that an ignore file removed can now reach the image through a broad `COPY`. |
 
-```shell
-werf build --final-images-only=false
-werf config list --final-images-only=false
-```
+- **Git LFS.** Contents of Git LFS files are now included in Stapel git mappings and Dockerfile contexts. If your repositories use LFS, install `git-lfs` where werf runs and make sure LFS objects can be downloaded.
 
-### Buildah
+#### Buildah
 
-This section applies if you use the native Buildah backend. It switched from CNI/slirp4netns to netavark/pasta: prepare the environment before upgrading according to how you run werf.
+**netavark and pasta replace CNI and slirp4netns.**
 
-#### Official werf image
+- With the official werf image, switch to the v3 image, not only the binary: it includes netavark. It's based on newer Alpine, Fedora and Ubuntu 24.04, so rebuild derived images and check that `pasta` is there for rootless builds with a network.
+- With your own installation, install `netavark` (always needed, chroot mode too) and `pasta` from `passt` (rootless builds with a network). v2 doesn't use them, so you can install them in advance.
+- To use slirp4netns instead of pasta, set `default_rootless_network_cmd="slirp4netns"` in the `[network]` section via `CONTAINERS_CONF_OVERRIDE`. CNI can't be used. See [Network tools]({{ "/usage/build/backends.html#network-tools" | true_relative_url }}).
 
-Update the **werf container image to v3**, not just the binary inside it. The image already includes `netavark`; you do not need to install it separately on the runner host to run werf in that container.
+**Network settings.** Native Buildah now applies `network:` of Dockerfile images and `--backend-network`, which v2 ignored. Only `default`, `host` and `none` are supported: replace `bridge` and Docker network names, and check builds that relied on host networking. Images with `staged: true` still ignore image-level settings: use `RUN --network=`. In `native-chroot` mode the network is always the host's, so `network: none` doesn't isolate the build.
 
-The official Ubuntu werf images are now based on Ubuntu 24.04. Rebuild and check any images you derive from them.
+#### Charts: templates and annotations
 
-For rootless builds that configure a network, also check that `pasta` is available inside the container under the conditions below; having `netavark` alone is not enough. If it is missing, add it to your derived image.
+**`.Values.global.env` is no longer set.** Use `.Values.global.werf.env` instead (or `.Values.werf.env` in the main chart) in templates and `values.schema.json`. v2 sets both unless `WERF_EXPERIMENT_NO_GLOBAL_SERVICE_VALUES` is enabled, so unset that variable first and check `werf render` on v2. If you can't migrate in time, `WERF_LEGACY_VALUES_GLOBAL_ENV=1` makes v3 set the old key temporarily.
 
-#### Your own installation or image
-
-If you install werf directly on a host or use your own container image, make sure the dependencies are available **where werf runs**:
-
-| Component | Where it is required |
-|---|---|
-| `netavark` | Wherever the Buildah backend runs, including chroot without network-using instructions. Backend initialization fails without it. |
-| `pasta` from the `passt` package | For rootless builds that configure a network. It is not invoked with `network: host`, `network: none`, or chroot mode. |
-
-See [Network tools]({{ "/usage/build/backends.html#network-tools" | true_relative_url }}) for installation paths and considerations when sharing storage with Podman/Buildah.
-
-#### Network setting changes
-
-These changes apply both inside and outside the official image.
-
-**Check network settings.** Native Buildah now honors `network:` and `--backend-network` for non-staged Dockerfile builds; they used to be silently ignored. Only `default`, `host` and `none` are supported: `bridge` and Docker network names now cause an error.
-
-Limitations and compatibility:
-
-- Images with `staged: true` still ignore image-level network settings; only `RUN --network=` on an individual instruction applies.
-- In `native-chroot`, Buildah forces host networking, so `network: none` does not provide isolation.
-- CNI cannot be restored. You can restore slirp4netns on an individual host via `CONTAINERS_CONF_OVERRIDE`: `default_rootless_network_cmd="slirp4netns"` in the `[network]` section.
-
-## Deployment
-
-After configuring [sensitive data redaction](#sensitive-data-in-diffs), review the plan before the first `werf converge`: changes to values, patches and file exclusion rules can affect manifests without a warning.
-
-### Sensitive data in diffs
-
-By default in v2, only identifying fields remained visible for `Secret` resources and any resource annotated with `werf.io/sensitive: "true"`. In v3, only values at `data.*` and `stringData.*` are automatically hidden. Other fields, including metadata and secret key names, may be visible; hidden values are replaced with length and hash information.
-
-**The `werf.io/sensitive: "true"` annotation no longer guarantees redaction of an entire arbitrary resource.** If sensitive data is stored in fields such as `spec`, specify its JSONPath expressions with `werf.io/sensitive-paths`, for example `"$.spec.token"`. This annotation replaces the default path list rather than extending it: include `$.data.*` and `$.stringData.*` as well if you need to keep Secret data redacted. Encrypting `secret-values.yaml` does not define redaction rules for fields in rendered resources.
-
-### Resource and values validation
-
-**Kubernetes resource schema validation is enabled by default.** In v2, it required an experimental flag. Manifests that previously passed may now be rejected before they are applied. Fix the resource or schema; use `--resource-validation-extra-schema` for additional schemas. The old `--local-resource-validation`, `--resource-validation-kube-version` and `--resource-validation-schema` flags are removed.
-
-If you need an exception, use `--resource-validation-skip`; disable all resource validation with `--no-resource-validation`. Do not disable validation for every resource just to accommodate one unsupported type.
-
-**`values.schema.json` validation already existed in v2, but error handling is stricter.** Previously, an error about forbidden service values could turn the entire validation result into a warning, including errors in user values. Now werf retries validation without service values and fails if user values do not match the schema. Fix the values or schema; temporarily disable this check with `--no-values-schema-validation`.
-
-### Automatic patches and null
-
-**`patches.yaml` from the main chart and its dependencies is now read automatically.** An existing file with this name that served another purpose may change manifests or cause an error. Check it before deploying. Disable automatic loading with `--no-default-patches` or `WERF_NO_DEFAULT_PATCHES=true`. See [Resource patching]({{ "/usage/deploy/resource_patching.html" | true_relative_url }}) for what the file may contain.
-
-**Fields and list entries whose value is `null` are now removed recursively.** In v2, this required an experimental flag. An absent field and an explicit `null` are not always equivalent for Kubernetes and CRDs, so check resources that intentionally use `null`. There is no switch to restore the previous behavior.
-
-**Non-string values in `metadata.annotations` and `metadata.labels` now fail rendering** with a `decode resource` error. In v2, such values were silently dropped. Quote numbers and booleans in templates, for example `example.com/replicas: "3"`. Resources already stored in a release are not rejected: their invalid entries are dropped with a warning.
-
-### External dependency annotations
-
-**Required if you wait for resources outside the release:** the `<name>.external-dependency.werf.io/resource` and `<name>.external-dependency.werf.io/namespace` annotations are no longer supported. werf prints a warning and does not wait for the resource. Replace them with `werf.io/deploy-dependency-<name>`, specifying `kind`, `version`, `name` and, for a group resource, `group`.
-
-Before — v2:
+**External dependencies.** v3 ignores `<name>.external-dependency.werf.io/resource` and `/namespace` annotations, with a warning. Add `werf.io/deploy-dependency-<name>` **without** `external=` next to them, and remove the old ones after switching:
 
 ```yaml
 annotations:
+  # Used by v2. Remove after switching.
   secret.external-dependency.werf.io/resource: secret/my-vault-secret
   secret.external-dependency.werf.io/namespace: vault
+  # Used by v3.
+  werf.io/deploy-dependency-secret: state=present,kind=Secret,version=v1,name=my-vault-secret,namespace=vault
 ```
 
-After — v3:
+- v2 ignores the new annotation if no release resource matches it; v3 waits for the resource in the cluster. v3 warns about the old annotations on every command until you remove them.
+- Set `kind`, `version` and `name`; `group` for resources outside the core API group; and `namespace` for namespaced resources ({% raw %}`{{ .Release.Namespace }}`{% endraw %} for the release namespace): otherwise a release resource with the same name in another namespace also matches.
+- `state=present` waits for the resource to exist, as before; `state=ready` also waits for readiness.
+- After switching, you can add `external=true` so that only the cluster is searched. After you remove the old annotations, the next deploy may still warn about them once, because the previous release has them.
+- The one-key form `<name>.external-dependency.werf.io: <apiVersion>:<kind>[:<namespace>]:<name>` is replaced the same way. See [Resource dependencies]({{ "/reference/deploy_annotations.html#resource-dependencies" | true_relative_url }}).
+
+**`<name>.dependency.werf.io`** is now ignored without a warning. Replace it with `werf.io/deploy-dependency-<name>`, which v2 understands too, and add `external=false` together with switching (v2 rejects it):
+
+```yaml
+# Before
+db.dependency.werf.io: apps/v1:StatefulSet:postgres
+# After
+werf.io/deploy-dependency-db: state=present,group=apps,version=v1,kind=StatefulSet,name=postgres,namespace={% raw %}{{ .Release.Namespace }}{% endraw %}
+```
+
+**Annotation keys like `werf-io/weight` or `helm-sh/hook`** worked in v2 as `werf.io/weight` and `helm.sh/hook`. They are now ordinary annotations: rename them to the real keys.
+
+**Explicit `null` values** are now removed from manifests. Set a real value where a missing field means something else to Kubernetes or a CRD.
+
+**Sensitive fields in diffs.** For `Secret` resources and resources annotated `werf.io/sensitive: "true"`, v2 diffs hid all values; v3 hides only `data.*` and `stringData.*`. **Before the first v3 plan**, list every field to hide in `werf.io/sensitive-paths`, including `$.data.*` and `$.stringData.*` if needed: the annotation replaces the default list. It works in v2 too, where it immediately replaces hiding the whole resource. Check the first plans in private output, and don't use `--show-sensitive-diffs` where logs are shared.
 
 ```yaml
 annotations:
-  werf.io/deploy-dependency-secret: state=ready,kind=Secret,version=v1,name=my-vault-secret,namespace=vault,external=true
+  werf.io/sensitive-paths: "$.spec.token,$.data.*,$.stringData.*"
 ```
 
-See [Waiting for non-release (external) resources]({{ "/usage/deploy/deployment_order.html#waiting-for-non-release-external-resources-werf-only" | true_relative_url }}) and [Resource dependencies]({{ "/reference/deploy_annotations.html#resource-dependencies" | true_relative_url }}).
+**Deletion propagation** is now `Background`: werf doesn't wait for dependents of a deleted resource, such as its Pods. If a later step needs them gone, set `werf.io/delete-propagation: Foreground` on the resource (works in v2 too), or `--delete-propagation=Foreground` for all resources.
 
-### Resource deletion and recreation
+**`.Capabilities`.** `.Capabilities.HelmVersion` reports Helm 4: update templates that check it. Without cluster access, `werf render`, `werf lint` and `werf bundle render` assume Kubernetes `1.36.0` instead of `1.20.0`; pass `--kube-version` if templates depend on it.
 
-**Resources are now deleted with `Background` propagation by default**, instead of `Foreground`. werf no longer waits for the dependents of a deleted resource, such as the Pods of a Deployment, to disappear before proceeding. If a subsequent step depends on that, set `werf.io/delete-propagation: Foreground` on the resource or pass `--delete-propagation=Foreground` / `WERF_DELETE_PROPAGATION=Foreground`.
+#### Charts: values and secrets
 
-**A resource with `helm.sh/resource-policy` can no longer be recreated.** When an immutable field changes, the deploy fails with `cannot recreate the resource ... because its deletion is prohibited` instead of deleting and recreating the resource. Revert the field or remove the annotation for that deploy.
+**Keys set in both secret and non-secret values.** In v2, the chart's `secret-values.yaml` and `--secret-values` overrode `--values` and all `--set*`. v3 orders values as documented, from lowest to highest: `values.yaml`, the chart's `secret-values.yaml`, `--values`, `--secret-values`, `--set-json`, `--set`, `--set-string`, `--set-file`, `--set-literal`, werf's service values. To keep the secret value on both versions, remove the same key from `--values` and `--set*`. See [Parameter sources and their priority]({{ "/usage/deploy/values.html#parameter-sources-and-their-priority" | true_relative_url }}).
 
-### Readiness tracking
+**Decrypted secrets in the release storage.** v3 stores the decrypted `--secret-values` in the release like other values, and so do subcharts' `secret-values.yaml` and secret values stored in bundles: `werf release get --print-values` shows them, and changing only `--secret-values` creates a new revision. Before switching, restrict access to the release storage (Secrets, ConfigMaps or SQL) and to `werf release get` output as you do for the secrets themselves. See [Secret parameters in the release]({{ "/usage/deploy/values.html#secret-parameters-in-the-release" | true_relative_url }}).
 
-Condition types are now matched case-insensitively. In v2, a CamelCase condition such as `Ready` or `Available` on a custom resource did not match the built-in `ready` rules, and the resource counted as ready immediately. Now werf waits for that condition to become `True`. If a custom resource never sets it, the deploy times out: set `werf.io/track-termination-mode: NonBlocking` on the resource or fix the controller.
+**`export-values` and `import-values`** now also apply to `--values`, `--secret-values`, `--set*` and werf's service values. A subchart key you set directly now loses to an exported parent value from the same or a higher source: `--set backend.config.greeting=x` loses to an exported `--set backendConfig.greeting=y`. Set the parent key instead, or remove the export.
 
-### Offline rendering
+**`global.werf` service values** are always set now (`WERF_EXPERIMENT_NO_GLOBAL_SERVICE_VALUES` is removed). If you used that variable, check that schemas accept them.
 
-Without cluster access, `werf render`, `werf lint` and `werf bundle render` now assume Kubernetes `1.36.0` instead of `1.20.0`. `.Capabilities.KubeVersion` changes accordingly, so templates that branch on it may render differently. Pass `--kube-version` to pin the previous version.
+**New secret values keep their type.** Values entered as unquoted numbers or booleans reach templates as numbers or booleans: quote them if templates expect strings. Existing encrypted values stay strings. Comments on encrypted values are stored in cleartext: don't put secrets in them.
 
-### Replacing removed werf helm commands
+#### Charts: files werf now reads differently
 
-Deployment and release-inspection commands under `werf helm` are removed. For werf projects, use the dedicated commands:
+**`.helmignore`** is now applied, and excluded files disappear from rendered manifests and bundles without a warning. Review it in charts and subcharts. Unlike `.gitignore`, a leading `!` keeps only what matches; `**` is an error; Helm's default rules exclude dot-prefixed files and directories directly under `templates/` even without `.helmignore`. See [Excluding files or directories from the chart]({{ "/usage/deploy/charts.html#excluding-files-or-directories-from-the-chart" | true_relative_url }}).
 
-| Before — v2 | After — v3 |
-|---|---|
-| `werf helm install` / `werf helm upgrade` | `werf converge` to install or update the project |
-| `werf helm template` | `werf render` |
-| `werf helm lint` | `werf lint` |
-| `werf helm list` | `werf release list` |
-| `werf helm get …` / `werf helm status` | `werf release get --release NAME --namespace NAMESPACE` |
-| `werf helm history NAME` | `werf release history --release NAME --namespace NAMESPACE` |
-| `werf helm rollback NAME REVISION` | `werf rollback --release NAME --namespace NAMESPACE --revision REVISION` |
-| `werf helm uninstall NAME` | `werf dismiss --release NAME --namespace NAMESPACE` |
-| `werf helm test` | Use the standalone `helm test` command; werf has no replacement command. |
-| `werf helm plugin` | Manage and run plugins with Helm CLI directly; werf no longer loads Helm plugins. |
+**`patches.yaml`** in the root of a chart or subchart is now read as [resource patches]({{ "/usage/deploy/resource_patching.html" | true_relative_url }}). Rename a file with this name if it's for something else, or pass `--no-default-patches` in v3.
 
-These are **workflow replacements, not drop-in aliases**. `converge`, `render` and `lint` use the werf project rather than Helm's positional `RELEASE CHART` arguments. Check the new command's `--help`, pass the intended release and namespace explicitly, and adapt scripts that parse output. For example, `release get --print-values` includes computed values in its structured output; it does not reproduce `helm get values` output. For standalone Helm chart workflows, use the Helm CLI directly.
+**`.werf-data/`** in the chart root is now read as bundle data and is never excluded by `.helmignore`. Rename an unrelated directory with this name.
 
-`werf helm secret` and chart-management commands such as `werf helm dependency` remain available; the whole `werf helm` group has not been removed. `werf helm secret rotate-secret-key` is removed: it missed the secrets of dependent charts and of published charts. Rotate the key by decrypting each file with the old key and encrypting it with the new one, see [Rotating the secret key]({{ "/usage/deploy/values.html#rotating-the-secret-key" | true_relative_url }}).
+### Prepare CI
 
-### Uninstalling a release
+Removed commands and flags fail only when CI runs v3, so prepare these changes in advance.
 
-`werf dismiss` now always uses the new uninstall implementation, which v2 enabled with `WERF_EXPERIMENT_NEW_DISMISS`. The old implementation selector and `--with-hooks` flag are removed. Do not carry that flag into v3 scripts: check release and hook removal in a test environment. Deleting the namespace still requires `--with-namespace`.
+#### CI: `werf helm` commands
 
-### Values and environment variables
+Deploy and release commands under `werf helm` are removed.
 
-| Where | Before — v2 | After — v3 |
+| v2 | v3 | Works in v2 |
 |---|---|---|
-| Main chart and dependency templates | `.Values.global.env` | `.Values.global.werf.env` |
-| Release storage selection | `HELM_DRIVER` | `WERF_RELEASE_STORAGE` |
+| `werf helm install`, `werf helm upgrade` | `werf converge`, which installs or upgrades as needed | Yes |
+| `werf helm template` | `werf render` | Yes |
+| `werf helm lint` | `werf lint` | Yes |
+| `werf helm uninstall NAME` | `werf dismiss --release NAME --namespace NAMESPACE` | Yes |
+| `werf helm rollback NAME REVISION` | `werf rollback --release NAME --namespace NAMESPACE --revision REVISION` | Yes |
+| `werf helm list` | `werf release list` | No |
+| `werf helm get …`, `werf helm status` | `werf release get --release NAME --namespace NAMESPACE` | No |
+| `werf helm history NAME` | `werf release history --release NAME --namespace NAMESPACE` | No |
+| `werf helm test`, `werf helm plugin` | No replacement in werf or Nelm: use the Helm CLI | — |
 
-The old `.Values.global.env` key can render as an empty value without an error. Set `WERF_LEGACY_VALUES_GLOBAL_ENV=1` for temporary compatibility.
+Replace the commands that work in v2 now. Switch the others together with the binary. For a chart without a werf project, use Nelm.
 
-Without replacing `HELM_DRIVER`, werf uses its default release storage rather than the storage previously selected by that variable.
+`werf converge`, `render` and `lint` take the werf project instead of Helm's `RELEASE CHART` arguments: pass `--release NAME --namespace NAMESPACE` to keep the old target. Their output, and that of `werf release`, differs from `werf helm`:
 
-**Helm's path variables are no longer read.** `HELM_CACHE_HOME`, `HELM_CONFIG_HOME` and `HELM_DATA_HOME` are ignored: the chart repository list and the chart cache are located via `XDG_CONFIG_HOME` and `XDG_CACHE_HOME`, by default `~/.config/helm` and `~/.cache/helm` on Linux. These XDG variables specify parent directories: for example, with `XDG_CONFIG_HOME=/custom/config`, werf reads `/custom/config/helm/repositories.yaml`, not `/custom/config/repositories.yaml`. To reuse repositories added in v2 under a custom `HELM_CONFIG_HOME`, copy their `repositories.yaml` into the new `helm` directory, or add the repositories again. Setting `XDG_CONFIG_HOME` to the old `HELM_CONFIG_HOME` alone does not preserve the location.
+- `werf release get` prints the whole release, including Secret data: don't save its output where logs are shared. With `--print-values` it adds `.values`: the chart defaults merged with the stored values, including decrypted `--secret-values`, not only the values you passed as with `werf helm get values`. Get them with `--output-format json | jq .values`.
+- `werf release list` lists all namespaces if `--namespace` isn't set. Use `--output-format json` in scripts.
+- Don't pass werf's service values to `werf render` yourself (`--set werf.image.app=...`): a strict schema rejects them. Use `--stub-tags`, a real `--repo`, or `--without-images` if the chart renders without image references.
 
-### Charts and bundles
+**Other `werf helm` commands** (`secret`, `dependency`, `repo` and others) remain, but:
 
-**In v3, `.helmignore` applies when reading the chart.** Excluded files disappear from the rendered manifests and the published bundle **without a warning**.
+- they no longer accept Kubernetes connection flags (see the [reference](#flags)), but `werf helm get-release` and `werf helm get-autogenerated-values` keep their own `--namespace`; Helm-based subcommands ignore `--log-*`, use `HELM_DEBUG=true`;
+- `werf helm registry login` no longer gives builds and deploys registry access: use `werf cr login` or `docker login`, which work in v2 too;
+- `werf helm secret rotate-secret-key` is removed: re-encrypt each file, see [Rotating the secret key]({{ "/usage/deploy/values.html#rotating-the-secret-key" | true_relative_url }});
+- `werf helm repo update` fails if any repository fails.
 
-- Even without `.helmignore`, Helm's default rules exclude dot-prefixed files and directories directly under `templates/`. Directories are excluded with their contents.
-- `**` now causes an error, although it previously had no effect.
-- A leading `!` previously had no effect. It now excludes everything that does not match the pattern, usually leaving the chart empty. Do not use it to undo earlier exclusions as in `.gitignore`.
+**werf no longer works as `helm`** through a `helm` symlink or `WERF_HELM3_MODE`. Use Nelm instead, or the Helm CLI where a tool needs the `helm` binary.
 
-Rules for dependent charts vary by how the chart is included — see [Charts and dependencies]({{ "/usage/deploy/charts.html#excluding-files-or-directories-from-the-chart" | true_relative_url }}).
+#### CI: flags, variables and environment
 
-**`werf bundle publish` and `werf bundle copy` always name the chart after the last path component of the repository address.** The chart name in the published bundle's `Chart.yaml` changes, and so do `.Chart.Name` and template paths. The `--helm-compatible-chart` and `--rename-chart` options are removed: Helm finds an OCI chart only in a repository named after the chart.
+Removed flags are argument errors in v3; the [reference](#reference-removed-commands-flags-and-variables) lists them all. Flags that did nothing in v2 (marked "had no effect" there, plus `--force-adoption` on render commands and registry API credential flags on commands other than `cleanup`, `purge`, `managed-images rm` and `meta-repo detach`) can be removed now. Remove these together with switching the binary, because they change what v2 does:
 
-**The published chart has a new format.** `werf bundle publish` no longer merges the image references and its `--values` and `--set*` options into `values.yaml` of the chart: the chart is published as is, and everything werf adds is stored in the `.werf-data/` directory of the chart. `werf bundle apply` deploys the same as `werf converge` with the same options — see [Bundles and charts]({{ "/usage/distribute/bundles.html" | true_relative_url }}).
+- `--virtual-merge`, `--skip-image-spec-stage`, `--show-verbose-diffs`.
+- `--with-hooks` on `werf dismiss`: v2 deletes hooks by default; v3 never deletes them on dismiss. Where hooks must go with the release, set `werf.io/ownership: release` on them, delete them separately, or use `--with-namespace`.
+- `--helm-compatible-chart` and `--rename-chart` on `werf bundle publish`: see [Bundles](#bundles).
+- `--set-runtime-json` is removed, and v3 no longer sets `.Runtime`. **Also unset `WERF_SET_RUNTIME_JSON` and `WERF_SET_RUNTIME_JSON_*`**: v3 would read them as `--set` values. Replace it with one of:
 
-- **Helm, Argo CD and Flux get only the chart's own values.** Templates that use the image references render empty values. Pass `.werf-data/values.yaml` and `.werf-data/extra-values.yaml` as values files — see [the recipe]({{ "/usage/distribute/bundles.html#using-the-chart-with-helm-argo-cd-and-flux" | true_relative_url }}). The `--set*` options, secrets, annotations and labels of `werf bundle publish` stay unavailable there.
-- **werf v2 cannot deploy the new charts.** werf v2 and Nelm v1 releases that include the check ([werf/werf#8141](https://github.com/werf/werf/pull/8141), [werf/nelm#808](https://github.com/werf/nelm/pull/808)) refuse them, releases without the check deploy them without images and publish-time values. Upgrade every environment that runs `werf bundle apply`, `plan` or `render` before publishing with v3. Charts published by v2 are still deployed by v3 unchanged.
-- **The chart version is taken only from a strict semver tag.** `--tag 1.2` or `--tag 20240101` no longer becomes `1.2.0` or `20240101.0.0`, but a `0.0.0-<unix time>-<tag slug>` prerelease version (the slug is the lowercased tag with each run of characters other than letters and digits replaced by `-`). The chart is pushed under its version tag in addition to the given tag.
-- **`werf bundle copy` writes bundle archives as an [OCI image layout](https://github.com/opencontainers/image-spec/blob/main/image-layout.md)** instead of the chart archive and a tarball per image. The archive keeps all platforms of multi-platform images, where v2 kept one, and the provenance file of a signed chart, which v2 dropped. werf v2 can't read the new archives; v3 still imports archives written by v2. See [Exporting the bundle]({{ "/usage/distribute/bundles.html#exporting-the-bundle-from-the-container-registry-to-the-archive" | true_relative_url }}).
-- **`--platform` and `--container-registry-mirror` are removed from `werf bundle copy`**, where they had no effect.
-- **The `--secret-values` of `werf bundle publish` are saved in the release in decrypted form**, as `werf converge` saves its `--secret-values`, and `werf release get --print-values` shows them.
-- **`--disable-default-values` and `--disable-default-secret-values` of `werf bundle apply` ignore only the chart's own files**, not the values and images stored at publish time.
-- **A recorded `--disable-default-values`, `--disable-default-secret-values` or `--no-default-patches` can't be cleared by `werf bundle publish`.** If the chart directory contains `.werf-data/` where one of them is recorded as `true`, e.g. an unpacked published chart committed to `.helm`, publishing without the option keeps it. Remove `defaultValuesDisable` or `defaultSecretValuesDisable` under `values` or `defaultPatchesDisable` from `.werf-data/metadata.yaml`: passing the option with `false` keeps the stored switch too.
-- **For bundles published by werf 3.12 and older, the annotations given to `werf bundle apply`, `plan` and `render` win over the bundle's `extra_annotations.json` per key**: `--add-annotation` and werf's service annotations such as `project.werf.io/env`. Previously the bundle's `project.werf.io/*` and `ci.werf.io/*` annotations won.
+  {% raw %}
+  ```shell
+  # v2. Template: {{ $.Runtime.ci.job }}
+  --set-runtime-json 'ci={"job":"42"}'
+
+  # v3, templates unchanged (works in subcharts too). Template: {{ $.Runtime.ci.job }}
+  --set-root-json 'Runtime.ci={"job":"42"}'
+
+  # v3, data in values. Template: {{ $.Values.ci.job }}
+  --set-json 'ci={"job":"42"}'
+  ```
+  {% endraw %}
+
+  v2 accepts `--set-root-json` but replaces `.Runtime` with its own, so switch it together with the binary. With `--set-json`, the data is stored in the release, may need to be allowed by `values.schema.json`, and reaches a subchart only under `global` or the subchart's key, such as `backend.ci`.
+
+**Variables to change:**
+
+| v2 | v3 |
+|---|---|
+| `HELM_DRIVER` | `WERF_RELEASE_STORAGE` (or `--release-storage`); works in v2 too. Without it, werf doesn't find releases stored in ConfigMaps or SQL and creates new ones in Secrets. |
+| `HELM_CONFIG_HOME`, `HELM_CACHE_HOME`, `HELM_DATA_HOME`, `HELM_REPOSITORY_*` | Not read when rendering and deploying. Put `repositories.yaml` in `$XDG_CONFIG_HOME/helm/` (by default `~/.config/helm/` on Linux, `~/Library/Preferences/helm/` on macOS), and unset `HELM_REPOSITORY_CONFIG`, `HELM_REPOSITORY_CACHE`, `HELM_CONTENT_CACHE`: `werf helm repo` would still write there. |
+| `DOCKER_AUTH_CONFIG` with `werf ci-env` | Now used automatically for the CI session's Docker config instead of copying the existing one. To keep copying the existing config, set `WERF_USE_DOCKER_AUTH_CONFIG=false` (works in v2 too). |
+| `WERF_LOG_COLOR_MODE` from `werf ci-env` | No longer exported: set it yourself if CI relied on it. Don't force it to `on` where `werf render` output is parsed: render commands now follow it. |
+| `WERF_CONVERGE_ENABLE_IMAGES_PARAMS` | Remove: positional image names of `werf converge` and `werf plan` now always select images. |
+
+**Other changes:**
+
+- **`--runtime-annotations` and `--runtime-labels`** no longer update a resource when only their values change, as werf's service annotations already didn't in v2. Use `--add-annotation`/`--add-label` with your own key for metadata that must reach live resources.
+- `werf config list` lists only final images by default: pass `--final-images-only=false` (works in v2 too) where scripts need all images.
+- `werf ci-env github` no longer logs in to `docker.pkg.github.com`: use `ghcr.io`.
+- `werf kubectl` is kubectl 1.37: `autoscale --cpu-percent` is deprecated in favor of `--cpu=N%` (v2 doesn't accept `--cpu`), and `debug --profile` defaults to `general`, with `legacy` deprecated. `KUBECTL_KUBERC=false` stops a host kuberc file from affecting it.
+- macOS 12 or newer and Linux kernel 3.2 or newer are required.
+
+#### CI: exit codes and reports
+
+Update parsers to accept both formats before switching:
+
+- **`werf plan --exit-code` and `werf bundle plan --exit-code`** can return `3`: no resource changes, but the release still has to be installed or updated. Don't treat it as an error or skip the deploy.
+
+  | Code | Meaning |
+  |---|---|
+  | `0` | No changes. |
+  | `1` | Error. |
+  | `2` | Resource changes are planned. |
+  | `3` | Only the release needs to be installed or updated. |
+
+- **Build report.** When a whole image is reused, the JSON report can have `StagesSkipped: true` and no `Stages`. That's not an error.
+- **Deploy, rollback and uninstall reports** (`--save-deploy-report` and others) have `"apiVersion": "v3"` instead of `"version": 3`.
+- **Saved plans** from v2 are rejected by v3: run `werf plan --save-plan PATH` again with v3. Plans contain the release values, including decrypted secret values, and are encrypted only if the secret key is passed: store them like secrets.
+- **`werf render` output** has a new resource order, no longer adds empty `annotations: {}`/`labels: {}` to resources without them, and includes werf's service annotations. Regenerate saved copies you compare it with.
+- **Images** no longer have the `werf.io/base-image-id` label (`werf.io/parent-stage-id` records the parent stage instead), the `werf-import-checksum-*` labels and the `werf-git-*-virtual-merge` labels, and no longer get `COLUMNS`, `WERF_COMMIT_*` and `SSH_AUTH_SOCK` in `ENV`. Images based on v2-built images still inherit them: drop them with `imageSpec.config.removeEnv` and `removeLabels`.
+
+## Upgrading
+
+### Order of the switch
+
+Some effects of v3 stay if you switch back to v2. Switch in this order:
+
+1. **Protect rollback history.** If you deployed with `werf converge --use-plan`, v2 ignored `--releases-history-max` and may have kept all revisions. The first v3 command that creates a revision of such a release removes old revisions down to the limit (5 by default). To keep more for a rollback, raise `--releases-history-max` in every deploy and rollback job before switching them.
+2. **Switch runners.** Don't run werf v2 and v3 at the same time on the same runner or with the same container backend storage: v3 host cleanup can remove a lock file while a v2 job is acquiring it, so the lock no longer protects the v2 build, and cleanup can delete its stage images. A separate `WERF_HOME` doesn't help. Wait for v2 jobs on a runner to finish before switching it, or migrate on separate runners.
+3. **SQL release storage**, if used: [run the storage migration](#release-storage) before any v3 job uses it.
+4. **Upgrade everything that reads secrets or deploys bundles:** developer machines, CI jobs, jobs that apply saved plans, every environment that runs `werf bundle apply`, `plan` or `render`. Switch the prepared CI changes at the same time. With the official werf image, switch to the v3 image.
+5. **Only then publish bundles with v3 and edit secrets:** see [Bundles](#bundles) and [Secrets](#secrets).
+
+### Release storage
+
+If releases are stored in SQL (`--release-storage=sql`), v3 adds a `nelm_release_annotations_v1` table and records migrations in `nelm_migrations`. Every v3 command that opens the storage runs the migration, including `plan` and `release list`.
+
+1. Before any v3 job uses the storage, run `werf release list` against it once with a role that can create tables and reference `releases_v1`. Don't create the tables by hand: werf would try to create them again.
+2. Row-level security is enabled on `nelm_release_annotations_v1` without policies, so other roles can't read its rows. Create RLS policies for every role that needs these rows, including read-only roles, matching those for `releases_v1`.
 
 ### TypeScript charts
 
-**TypeScript charts are rendered with Node.js instead of Deno.** Deploying a chart with a `ts/` directory requires Node.js 26 or newer and a package manager (npm, pnpm or yarn) on the host.
+TypeScript charts are now rendered with Node.js instead of Deno and are always enabled. v3 can't render a chart built for Deno, so prepare these steps in the v3 branch and switch them together with the binary.
 
-- **`NELM_FEAT_TYPESCRIPT` is no longer needed.** A chart with `ts/src` is always rendered, even if the flag was not set in v2.
-- **Bundles built for Deno no longer render.** Rebuild them with `@nelm/chart-ts-sdk` 0.2.0, including a committed `ts/dist/bundle.js`, and publish the bundles again.
-- **`ts/deno.json` is replaced by `ts/package.json` and `ts/tsconfig.json`.** Create them as `werf chart ts init` does and move the dependencies from `deno.json` to `package.json`.
+1. **Install Node.js 26 or newer** wherever a chart with `ts/src` is rendered or deployed: CI runners and deploy images. The `ubuntu-node`, `centos-node` and `fedora-node` werf images include it. If `node` isn't in `PATH`, pass `--node-binary-path`.
+2. **Move the chart to `@nelm/chart-ts-sdk` 0.2.0:** replace `ts/deno.json` with `ts/package.json` and `ts/tsconfig.json` as `werf chart ts init` creates them, and move the dependencies.
+3. **Generate and commit a lock file** with npm, pnpm, yarn or bun (`deno.lock` doesn't count). A clean build of the chart (`werf chart ts build`, `werf bundle publish`) needs that package manager in `PATH` to install dependencies. Deploying a built chart needs neither the package manager nor the lock file, only Node.js.
+4. **Rebuild `ts/dist/bundle.js`** and publish bundles again: bundles built for Deno don't render.
+5. **Publish a test bundle** and deploy it with v3 before switching production.
 
-### Encrypted secret values
+Also:
 
-**An old client cannot read a secret written by v3, and there is no option to write the previous format.** Follow this upgrade order:
+- `NELM_FEAT_TYPESCRIPT` is no longer needed: a chart with `ts/src/index.ts` or `ts/src/index.js` is rendered even if the variable wasn't set in v2. Remove `ts/` if you don't use it.
+- `--deno-binary-path` becomes `--node-binary-path`. `werf helm package` no longer builds TypeScript bundles: use `werf bundle publish`.
 
-1. Upgrade **every** environment that reads the repository's secrets to werf v3 or nelm v2: developer machines, CI jobs, and jobs applying saved deploy plans.
-1. Only then create, edit or rotate secrets. An old werf or nelm must not handle the repository after secrets are re-encrypted.
+### Bundles
 
-| Before — v2 | After — v3 |
+`werf bundle publish` now publishes the chart unchanged and stores what werf adds in `.werf-data/`: image references, `--values`, encrypted `--secret-values`, `--set*`, patches, annotations and labels, the release name and namespace. `werf bundle apply` gives the same result as `werf converge` with the same options, except for `.Chart.Name` and `.Chart.Version`. See [Bundles and charts]({{ "/usage/distribute/bundles.html" | true_relative_url }}).
+
+**Upgrade consumers before publishing.** werf 2.85.0 and later v2 releases, and Nelm v1 releases after 1.31.3, refuse a bundle published by v3. werf 2.84 and earlier and Nelm 1.31.3 and earlier ignore what `.werf-data/` stores: they deploy the bundle **without images and published values**, or fail later, without saying why.
+
+1. Upgrade every environment that runs `werf bundle apply`, `plan` or `render`, every `werf lint` or `werf converge` of a chart that depends on a bundle, and every Nelm that installs bundles.
+2. Publish a test bundle with a value used in a template, and check in each environment that the value reaches the rendered manifests.
+
+v3 still deploys bundles published by v2, except TypeScript charts built for Deno: publish those again.
+
+**Check the chart name before the first apply.** `werf bundle publish` and `werf bundle copy` to a registry now always name the chart after the last part of the repository path, as Helm requires for OCI charts. `.Chart.Name` and template paths change accordingly. **If resource names use `.Chart.Name` and the name changes, the first v3 apply creates resources with new names and deletes the old ones**, unless a resource policy keeps them. If only labels in an immutable selector use it, the apply fails, or recreates the resource if its delete policy allows that.
+
+1. On v2, publish a test bundle with a separate tag, to the production repository or to a test repository whose path ends the same way, with `--helm-compatible-chart` and **without** `--rename-chart` or `WERF_RENAME_CHART`: it gets the same name as in v3. Bundles published this way already have the v3 name.
+2. Compare `werf bundle render` of the current bundle and the test one, and review `werf bundle plan` of the test bundle against the existing release before applying.
+3. To keep resource names, publish to a repository whose path ends with the old chart name, or don't use `.Chart.Name` in resource names.
+4. When switching, remove `--helm-compatible-chart` and `--rename-chart`.
+
+**Helm, Argo CD and Flux** now get only the chart's own values, so image references render empty. Pass `.werf-data/values.yaml` and `.werf-data/extra-values.yaml` as values files: see [Using the chart with Helm, Argo CD and Flux]({{ "/usage/distribute/bundles.html#using-the-chart-with-helm-argo-cd-and-flux" | true_relative_url }}). `.werf-data/values.yaml` may be missing, so allow it. These tools still don't get published `--set*`, secrets, annotations and labels.
+
+**Other changes:**
+
+- **Chart version.** Only a semver `--tag` (`1.2.3`, also `v1.2.3`) becomes the chart version; `1.2` becomes a `0.0.0-<unix time>-1-2` prerelease, which semver ranges in Helm, Argo CD and Flux skip unless prereleases are allowed. The chart is also pushed under its version tag.
+- **Tags.** `werf bundle publish` refuses a tag that would overwrite one of the bundle's images in the same repository. Other images and charts in the repository aren't checked: don't reuse their tags.
+- **Secret key.** Publishing no longer needs it (`--secret-key` and `--ignore-secret-key` are removed); deploying does.
+- **Release name and namespace** come from the bundle: pass `--release` and `--namespace` when applying with a different `--env`.
+- **`werf.io/release-channel`** isn't stored any more: pass `--add-annotation werf.io/release-channel=<channel>` to `werf bundle apply`.
+- **Archives.** `werf bundle copy --to archive:` writes an [OCI image layout](https://github.com/opencontainers/image-spec/blob/main/image-layout.md) that v2 can't read: use v3 on both sides (v3 still reads v2 archives). Image signatures, SBOMs and other referrers aren't copied: copy them separately. `--platform` and `--container-registry-mirror` are removed.
+- **`--disable-default-values`/`--disable-default-secret-values`** of `werf bundle apply` don't disable values stored at publish. If a committed `.werf-data/metadata.yaml` (for example in an unpacked chart in `.helm`) records `defaultValuesDisable` or `defaultSecretValuesDisable` (under `values`) or `defaultPatchesDisable`, publishing keeps it: remove the key to turn the default back on.
+- **v2 bundles.** `--runtime-annotations` and `--release-info-annotations` of `werf bundle apply` and `plan` now win over `project.werf.io/*`, `ci.werf.io/*` and `werf.io/release-channel` from the bundle's `extra_annotations.json`.
+
+### Secrets
+
+v3 encrypts secrets with authenticated AES-GCM. **werf v2 and Nelm v1 can't read secrets written by v3, and v3 can't write the old format.** v3 reads old secrets.
+
+1. Upgrade every environment that reads the repository's secrets: developer machines, CI jobs and jobs that apply saved plans.
+2. Only then create, edit or rotate secrets. After that, don't use v2 or Nelm v1 with the repository: switching the binary back doesn't restore the old format.
+
+To give an existing value a number or boolean type, enter it again with `werf helm secret values edit`.
+
+### First build and cleanup
+
+**The first v3 build rebuilds all images:** stages built by v2 aren't reused. Plan time and registry space for it.
+
+**Non-final images.** `werf build` and `werf config list` now default to `--final-images-only=true`. `werf build` builds non-final images only if a final image needs them; `werf config list` lists only final images. Pass `--final-images-only=false` to build or list all images. The `--images-only` flag of `werf config list` is removed.
+
+**v3 cleanup can delete v2 images.** Cleanup deletes images that aren't used in Kubernetes. If v2 and v3 use the same `--repo`, the images you need to roll back to v2 are no longer used after the switch. Before the first cleanup:
+
+1. List their tags in a file, one per line. If CI adds mutable custom tags (`--add-custom-tag`), the first v3 build moves them to new images: record the digests or content tags of the v2 images instead.
+2. Run cleanup with `--dry-run` and the same repositories and Kubernetes access as the scheduled job, and check that these tags aren't deleted:
+
+   ```shell
+   werf cleanup --repo registry.example.com/app --dry-run --keep-list keep-list.txt
+   ```
+
+3. Pass `--keep-list keep-list.txt` to the scheduled cleanup.
+
+Pass the same `--final-repo` and `--meta-repo` as for building, if any. `--without-kube` turns off the protection of images used in Kubernetes. Don't remove v2 images with `werf purge`: it ignores retention policies. See [Container registry cleanup]({{ "/usage/cleanup/cr_cleanup.html" | true_relative_url }}).
+
+### First deploy
+
+Before the first `werf converge` with v3:
+
+1. If CI logs are shared, make sure [sensitive fields are hidden](#charts-templates-and-annotations).
+2. Compare `werf render` of v2 and v3 for each environment. Values priority, `export-values`, `.helmignore`, `patches.yaml`, removed `null` values and Helm 4 can change manifests without an error.
+3. Review `werf plan`. Created and deleted CRDs show a full diff only with `--show-verbose-crd-diffs`.
+
+Releases whose stored values change, for example releases deployed with `--secret-values`, get one new revision.
+
+## After upgrading
+
+### Check the changed defaults
+
+These changes apply without configuration changes. Check them on the first deploys:
+
+| What | v2 | v3 | What to check |
+|---|---|---|---|
+| Resource validation | Off unless `NELM_FEAT_RESOURCE_VALIDATION=true`. | Resources are checked against schemas of Kubernetes and popular CRDs embedded in the binary. | Fix rejected resources. Skip some with `--resource-validation-skip` (for example `kind=MyKind`), add schemas with `--resource-validation-extra-schema`, or turn validation off with `--no-resource-validation`. |
+| Readiness of custom resources | `Ready`/`Available` conditions weren't recognized, so the resource was ready at once. | werf waits for the condition to become `True`. | If a resource never sets it, fix its controller, or set `werf.io/track-termination-mode: NonBlocking` on it. This doesn't make it ready: a `state=ready` dependency on it still waits. |
+| Dependencies on resources outside the release | A `werf.io/deploy-dependency-*` or `delete-dependency-*` annotation that matched no release resource was ignored. | If it has `kind`, `version` and `name`, werf waits for the resource in the cluster. | Add `external=false` to keep ignoring it, or remove the annotation. |
+| `werf dismiss` | The old implementation unless `WERF_EXPERIMENT_NEW_DISMISS` was set. | Always the new one. | Check release and hook removal in a test environment. `--with-namespace` still deletes the namespace. |
+| Images passed to `converge`/`plan` | Ignored unless `WERF_CONVERGE_ENABLE_IMAGES_PARAMS` was set. | Only these images are built and passed to the chart. | All resources are still deployed. |
+| OCI charts | Pulled by tag. | Pulled by one manifest digest; provenance, if verified, is checked against it. | To verify provenance, pass `--provenance-strategy=verify` and `--provenance-keyring`. For registries with a self-signed certificate, add the CA to the system trust store. |
+| Helm engine | Helm 3. | Helm 4.2. | Compare `werf render` output: template functions, merging of values and chart loading follow Helm 4. |
+
+### Clean up
+
+- Remove the `NELM_FEAT_*` and `WERF_EXPERIMENT*` variables and the other variables listed in the [reference](#environment-variables). Keep `NELM_FEAT_PERIODIC_STACK_TRACES` and `NELM_FEAT_ADOPT_DECKHOUSE_CONTROLLER_FIELDS` if you use them.
+- Remove the old external dependency annotations you kept for v2.
+- Rename `fromImage`, `import[].image` and `dependencies[].image` to `from` if you haven't yet.
+- If you set `WERF_LEGACY_VALUES_GLOBAL_ENV=1`, replace `.Values.global.env` and remove the variable.
+- When you no longer need a rollback, remove the v2 images from the keep-list.
+
+### Go module path
+
+The werf Go module path is now `github.com/werf/werf/v3`. Build or install werf from `github.com/werf/werf/v3/cmd/werf`, and replace `github.com/werf/werf/v2/` with `github.com/werf/werf/v3/` in imports.
+
+## Reference: removed commands, flags and variables
+
+### Commands
+
+| Removed | Replacement |
 |---|---|
-| Secrets in AES-CBC format | Existing values remain readable; new writes use the new format. |
-| The original YAML type of an encrypted value was not recorded | Newly encrypted YAML values retain their type and style. |
+| `werf helm install`, `upgrade`, `template`, `lint`, `uninstall`, `rollback` | See [CI: `werf helm` commands](#ci-werf-helm-commands) |
+| `werf helm get`, `history`, `list`, `status` | `werf release get`, `history`, `list` |
+| `werf helm test`, `werf helm plugin` | The Helm CLI (werf and Nelm have no equivalent) |
+| `werf helm secret rotate-secret-key` | Re-encrypt files one by one |
+| `helm` symlink to werf, `WERF_HELM3_MODE` | Nelm, or the Helm CLI where the `helm` binary is required |
 
-Additional considerations:
+### Flags
 
-- Old encrypted scalars remain strings. To restore a number, boolean, timestamp or another type, re-enter the value with `werf helm secret values edit`.
-- **Comments on encrypted values are kept as cleartext. Do not put secrets in them.**
+| Flag | Where | What to do |
+|---|---|---|
+| `--virtual-merge` | Build and deploy commands | Remove |
+| `--skip-image-spec-stage` | Build and deploy commands | Remove; `imageSpec` is always applied |
+| `--set-runtime-json` | Deploy commands | `--set-root-json 'Runtime.<key>=...'`, see [CI: flags](#ci-flags-variables-and-environment) |
+| `--show-verbose-diffs` | `werf plan`, `werf bundle plan` | Remove; diffs of created and deleted resources are always shown, except CRDs (`--show-verbose-crd-diffs`) |
+| `--force-adoption` | `werf render`, `werf bundle render` | Remove; other commands keep it |
+| `--helm-compatible-chart`, `-C`, `--rename-chart` | `werf bundle publish`, `werf bundle copy` | Remove; see [Bundles](#bundles) |
+| `--secret-key`, `--ignore-secret-key` | `werf bundle publish` | Remove |
+| `--platform`, `--container-registry-mirror` | `werf bundle copy` | Remove |
+| `--with-hooks` | `werf dismiss` | Remove |
+| `--images-only` | `werf config list` | `--final-images-only` |
+| `--local-resource-validation`, `--resource-validation-kube-version`, `--resource-validation-schema` | Deploy commands | Remove; use `--resource-validation-extra-schema` for extra schemas |
+| `--repo-docker-hub-*`, `--repo-github-token`, `--repo-harbor-*`, `--repo-quay-token` and the `--final-repo-*` ones | Commands other than `cleanup`, `purge`, `managed-images rm`, `meta-repo detach` | Remove; the environment variables can stay |
+| `-n`, `--namespace`, `--kube-config`, `--kube-config-base64`, `--kube-context`, `--status-progress-period`, `--hooks-status-progress-period` | `werf helm` subcommands | Remove; `get-release` and `get-autogenerated-values` keep `--namespace` |
+| `--no-update`, `--fail-on-repo-update-fail` | `werf helm repo` | Remove |
+| `--kube-config`, `--kube-config-base64`, `--kube-context` | `werf meta-repo migrate`, `detach` | Use `--synchronization=kubernetes://NAMESPACE[:CONTEXT][@CONFIG_PATH]` |
+| `--docker-compose-bin-path` | `werf compose` | Remove |
+| `--deno-binary-path` | Rendering and TypeScript commands | `--node-binary-path` on rendering commands; remove elsewhere |
+| `--docker-config`, `--releases-history-max`, `--insecure-helm-dependencies` | `werf helm` (before the subcommand) | Remove; set them on the subcommand where it has them |
+| `--insecure-helm-dependencies` | `werf build`, `bundle copy`, `cleanup`, `compose`, `dismiss`, `export`, `managed-images`, `purge`, `run`, `stage image` | Remove; had no effect there |
+| `--hooks-status-progress-period` | `werf converge`, `bundle apply`, `dismiss`, `rollback`, `plan`, `render` | Remove; had no effect there |
+| `--status-progress-period`, `--releases-history-max` | `werf plan`, `werf render` | Remove; had no effect there |
+| `--timeout`, `-t` | `werf plan` | Remove; had no effect there |
 
-## CI and scripts
+### Environment variables
 
-### Registry credentials
-
-If you configure CI with `werf ci-env`:
-
-`werf ci-env` now automatically uses a non-empty `DOCKER_AUTH_CONFIG` if neither `--use-docker-auth-config` nor `WERF_USE_DOCKER_AUTH_CONFIG` is set. In v2, this required explicit opt-in.
-
-With this choice, the Docker config is created from `DOCKER_AUTH_CONFIG` **instead of copying the existing config**, not merged with it. Credentials and credential helpers from the previous config may no longer be used. Restore the previous choice with `--use-docker-auth-config=false` or `WERF_USE_DOCKER_AUTH_CONFIG=false`.
-
-### Plan exit codes
-
-With `--exit-code` enabled, `werf plan` and `werf bundle plan` now always distinguish resource changes from release-only updates. In v2, the extended set of codes required an experimental flag.
-
-| Code | Meaning |
+| Variable | What to do |
 |---|---|
-| `0` | No changes. |
-| `1` | An error. |
-| `2` | Resource changes are planned. |
-| `3` | Resources do not change, but the release needs to be installed or updated. |
-
-Update CI if it only accepts `0` and `2`. Code `3` is not an error, but is not a reason to automatically skip applying the plan either. Without `--exit-code`, a successful plan does not start returning `2` or `3`.
-
-### Build report format
-
-If your scripts read the JSON build report:
-
-When reusing a completed image, the JSON build report may now contain `StagesSkipped: true` without a `Stages` field. In v2, `Stages` was present, although it could be `null`. Parsers must tolerate the missing field and not treat it as an error or as an indication that the image is not ready.
-
-### Deploy report format
-
-If your scripts read the JSON report saved by `--save-deploy-report`, `--save-rollback-report` or `--save-uninstall-report`:
-
-The format identifier changed: the `"version": 3` number is replaced with the `"apiVersion": "v3"` string, and `version` is gone. Update scripts that read or validate `version` to check `apiVersion == "v3"` instead.
-
-### Removed flags and modes
-
-Check scripts that pass old options: a removed flag causes an argument parsing error even if it previously did nothing.
-
-- `--virtual-merge` / `WERF_VIRTUAL_MERGE`, `--skip-image-spec-stage` / `WERF_SKIP_IMAGE_SPEC_STAGE`, `--set-runtime-json` and `--show-verbose-diffs` are removed.
-- `--force-adoption` is removed from `werf render` and `werf bundle render`, where it had no effect. Other deploy commands keep it.
-- Helm mode via `WERF_HELM3_MODE` and invoking the werf binary under the name `helm` are removed; use supported werf commands or the standalone Helm CLI.
-- Positional image names in `converge` and `plan` now take effect without `WERF_CONVERGE_ENABLE_IMAGES_PARAMS`. Check that stray arguments have not become image selectors; selecting images does not by itself limit which Kubernetes resources are deployed.
-
-## Registry cleanup
-
-### Protecting rollback images
-
-**With a shared `--repo`, v3 cleanup can delete v2 images.** Keep the stage tags needed for rollback in a `--keep-list` file, one per line: Kubernetes resources may no longer reference these images.
-
-Before the first cleanup, ensure rollback images are not listed for deletion. Use the same repositories, keep-list and Kubernetes access as the scheduled job:
-
-```shell
-werf cleanup --repo registry.example.com/app --dry-run --keep-list keep-list.txt
-```
-
-Pass the same `--final-repo` and `--meta-repo` used for building, if configured. Check coverage of the required clusters and namespaces; `--without-kube` disables Kubernetes protection. Do not use `werf purge` to remove only v2 images: it deletes the project's images without cleanup's retention policies. See [Container registry cleanup]({{ "/usage/cleanup/cr_cleanup.html" | true_relative_url }}).
+| `HELM_DRIVER` | `WERF_RELEASE_STORAGE` |
+| `HELM_CONFIG_HOME`, `HELM_CACHE_HOME`, `HELM_DATA_HOME`, `HELM_REPOSITORY_*` | `XDG_CONFIG_HOME`, `XDG_CACHE_HOME`, `XDG_DATA_HOME` |
+| `DOCKER_BUILDKIT=0` | Remove; BuildKit is always used |
+| `WERF_STAGED_DOCKERFILE_VERSION` | Remove |
+| `WERF_HELM3_MODE` | Remove |
+| `WERF_OLD_SECRET_KEY` | Remove together with `werf helm secret rotate-secret-key` |
+| `WERF_DISABLE_GIT_COMMIT_ANCESTRY_CHECK`, `WERF_EXPERIMENTAL_STAPEL_IMPORT_PERMISSIONS`, `WERF_EXPERIMENTAL_STAPEL_ARM` | Remove |
+| `WERF_DOCKER_IMAGE_NAME` in the env-format build report | Name the image and read `WERF_<NAME>_DOCKER_IMAGE_NAME` |
+| `WERF_EXPERIMENT_NEW_DISMISS`, `WERF_EXPERIMENTAL_IMPORT_BY_SOURCE_IMAGE_TAG`, `WERF_CONVERGE_ENABLE_IMAGES_PARAMS` | Remove; the behavior is always on |
+| `WERF_EXPERIMENT_NO_GLOBAL_SERVICE_VALUES` | Remove; `global.werf` service values are always set |
+| `NELM_FEAT_PREVIEW_V2`, `NELM_FEAT_RESOURCE_VALIDATION`, `NELM_FEAT_CLEAN_NULL_FIELDS`, `NELM_FEAT_FIELD_SENSITIVE`, `NELM_FEAT_MORE_DETAILED_EXIT_CODE_FOR_PLAN`, `NELM_FEAT_CASE_INSENSITIVE_CONDITION_TRACKING`, `NELM_FEAT_TYPESCRIPT` | Remove; the behavior is always on |
+| `WERF_SET_RUNTIME_JSON`, `WERF_SET_RUNTIME_JSON_*` | Unset: v3 would read them as `--set` values. Use `WERF_SET_ROOT_JSON_*` or `WERF_SET_JSON_*`, see [CI: flags](#ci-flags-variables-and-environment) |
+| `WERF_DENO_BINARY_PATH` | `WERF_NODE_BINARY_PATH` |
+| `WERF_VIRTUAL_MERGE`, `WERF_SKIP_IMAGE_SPEC_STAGE`, `WERF_SHOW_VERBOSE_DIFFS`, `WERF_HELM_COMPATIBLE_CHART`, `WERF_RENAME_CHART`, `WERF_WITH_HOOKS`, `WERF_DOCKER_COMPOSE_BIN_PATH`, `WERF_LOCAL_RESOURCE_VALIDATION`, `WERF_RESOURCE_VALIDATION_KUBE_VERSION`, `WERF_RESOURCE_VALIDATION_SCHEMA` | Remove together with their flags |
