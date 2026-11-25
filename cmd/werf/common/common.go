@@ -50,7 +50,7 @@ const (
 	DefaultSaveBuildReport       = false
 	DefaultBuildReportPathJSON   = ".werf-build-report.json"
 	DefaultUseBuildReport        = false
-	DefaultBuildReportOperations = false
+	DefaultBuildReportOperations = true
 
 	DefaultSaveCleanupReport     = false
 	DefaultCleanupReportPathJSON = ".werf-cleanup-report.json"
@@ -193,7 +193,7 @@ func SetupUseBuildReport(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupBuildReportOperations(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.BuildReportOperations = new(bool)
-	cmd.Flags().BoolVarP(cmdData.BuildReportOperations, "build-report-operations", "", util.GetBoolEnvironmentDefaultFalse("WERF_BUILD_REPORT_OPERATIONS"), fmt.Sprintf("Collect low-level operations statistics for the whole command run: add Operations, StageCache and RegistryCache sections to the build report and print operations summary before the command exits (by default $WERF_BUILD_REPORT_OPERATIONS or %t). Also enabled by --log-debug", DefaultBuildReportOperations))
+	cmd.Flags().BoolVarP(cmdData.BuildReportOperations, "build-report-operations", "", util.GetBoolEnvironmentDefaultTrue("WERF_BUILD_REPORT_OPERATIONS"), fmt.Sprintf("Collect low-level operations statistics for the whole command run: add Operations, StageCache and RegistryCache sections to the build report and print operations summary before the command exits (by default $WERF_BUILD_REPORT_OPERATIONS or %t). Also enabled by --log-debug", DefaultBuildReportOperations))
 }
 
 func GetSaveBuildReport(cmdData *CmdData) bool {
