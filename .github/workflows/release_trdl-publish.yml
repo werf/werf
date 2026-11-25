@@ -117,7 +117,6 @@ jobs:
       - name: Update GitHub releases based on trdl_channels.yaml
         env:
           GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
-          LATEST_MAJOR: "2"
         run: |
           check_release_exists() {
             local version=$1
@@ -159,6 +158,19 @@ jobs:
               fi
             done < trdl_channels.yaml
 
+            latest_major=$(
+              for key in "${!VERSION_CHANNELS[@]}"; do
+                if [[ ${VERSION_CHANNELS[$key]} == *stable* ]]; then
+                  echo "${key%:*}"
+                fi
+              done | sort -V | tail -n 1
+            )
+            if [[ -z $latest_major ]]; then
+              echo "No group with a stable version found in trdl_channels.yaml"
+              exit 1
+            fi
+            echo "Latest release is the stable version of group $latest_major"
+
             for key in "${!VERSION_CHANNELS[@]}"; do
               version="${key#*:}"
               group="${key%:*}"
@@ -169,7 +181,7 @@ jobs:
                 expected_title="$tag [$channels]"
                 current_title=$(get_release_name "$tag")
                 expected_is_latest=false
-                if [[ $group == "$LATEST_MAJOR" && $channels == *stable* ]]; then
+                if [[ $group == "$latest_major" && $channels == *stable* ]]; then
                   expected_is_latest=true
                 fi
                 current_is_latest=false
@@ -181,8 +193,8 @@ jobs:
                   if [[ $expected_is_latest == true ]]; then
                     echo "Updating $tag (group $group): stable, latest"
                     gh release edit "$tag" --title "$expected_title" --latest --prerelease=false || true
-                  elif [[ $channels == *rock-solid* ]]; then
-                    echo "Updating $tag (group $group): rock-solid, not latest"
+                  elif [[ $channels == *stable* || $channels == *rock-solid* ]]; then
+                    echo "Updating $tag (group $group): stable or rock-solid, not latest"
                     gh release edit "$tag" --title "$expected_title" --latest=false --prerelease=false || true
                   else
                     echo "Updating $tag (group $group): prerelease, not latest, channels=$channels"
