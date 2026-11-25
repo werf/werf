@@ -70,3 +70,25 @@ func releaseConfigMapData(ctx context.Context, werfProject *werf.Project, args [
 
 	return nil
 }
+
+func clusterConfigMapAnnotations(ctx context.Context, clientFactory *kube.ClientFactory, werfProject *werf.Project) map[string]string {
+	ginkgo.GinkgoHelper()
+
+	cm, err := clientFactory.Static().CoreV1().ConfigMaps(werfProject.Namespace(ctx)).Get(ctx, "test1", metav1.GetOptions{})
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+
+	return cm.Annotations
+}
+
+func releaseAnnotations(output string) map[string]string {
+	ginkgo.GinkgoHelper()
+
+	var get struct {
+		Release struct {
+			Annotations map[string]string `json:"annotations"`
+		} `json:"release"`
+	}
+	gomega.Expect(json.Unmarshal([]byte(output), &get)).To(gomega.Succeed())
+
+	return get.Release.Annotations
+}

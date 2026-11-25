@@ -13,6 +13,7 @@ import (
 	"github.com/werf/logboek"
 	"github.com/werf/nelm/v2/pkg/action"
 	"github.com/werf/werf/v3/cmd/werf/common"
+	"github.com/werf/werf/v3/pkg/config"
 	"github.com/werf/werf/v3/pkg/config/deploy_params"
 	"github.com/werf/werf/v3/pkg/giterminism_manager"
 	"github.com/werf/werf/v3/pkg/true_git"
@@ -148,8 +149,12 @@ func run(ctx context.Context) error {
 	}
 
 	serviceAnnotations["werf.io/version"] = werf.Version
-	serviceAnnotations["project.werf.io/name"] = projectName
-	serviceAnnotations["project.werf.io/env"] = commonCmdData.Environment
+	if projectName != "" {
+		serviceAnnotations["project.werf.io/name"] = projectName
+	}
+	if commonCmdData.Environment != "" {
+		serviceAnnotations["project.werf.io/env"] = commonCmdData.Environment
+	}
 
 	extraLabels, err := common.GetUserExtraLabels(&commonCmdData)
 	if err != nil {
@@ -203,46 +208,48 @@ func run(ctx context.Context) error {
 }
 
 func getNamespaceAndRelease(ctx context.Context, gitFound bool, giterminismMgr giterminism_manager.Interface) (string, string, string, error) {
-	namespaceSpecified := commonCmdData.Namespace != ""
-	releaseSpecified := commonCmdData.Release != ""
+	namespace := commonCmdData.Namespace
+	release := commonCmdData.Release
 
-	var namespace string
-	var release string
-	var project string
-	if namespaceSpecified && releaseSpecified {
-		namespace = commonCmdData.Namespace
-		release = commonCmdData.Release
-	} else if gitFound {
-		common.ProcessLogProjectDir(&commonCmdData, giterminismMgr.ProjectDir())
-
-		_, werfConfig, err := common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismMgr, common.GetWerfConfigOptions(&commonCmdData, true))
-		if err != nil {
-			return "", "", "", fmt.Errorf("unable to load werf config: %w", err)
-		}
-		logboek.LogOptionalLn()
-
-		project = werfConfig.Meta.Project
-
-		if namespaceSpecified {
-			namespace = commonCmdData.Namespace
-		} else {
-			namespace, err = deploy_params.GetKubernetesNamespace(commonCmdData.Namespace, commonCmdData.Environment, werfConfig)
-			if err != nil {
-				return "", "", "", err
-			}
+	if !gitFound {
+		if namespace == "" || release == "" {
+			return "", "", "", fmt.Errorf("no git with werf project found: rollback should either be executed in a git repository, or with --namespace and --release specified")
 		}
 
-		if releaseSpecified {
-			release = commonCmdData.Release
-		} else {
-			release, err = deploy_params.GetHelmRelease(commonCmdData.Release, commonCmdData.Environment, namespace, werfConfig)
-			if err != nil {
-				return "", "", "", err
-			}
-		}
-	} else {
-		return "", "", "", fmt.Errorf("no git with werf project found: rollback should either be executed in a git repository, or with --namespace and --release specified")
+		return namespace, release, "", nil
 	}
 
-	return namespace, release, project, nil
+	common.ProcessLogProjectDir(&commonCmdData, giterminismMgr.ProjectDir())
+
+	var werfConfig *config.WerfConfig
+	var err error
+	if namespace != "" && release != "" && *commonCmdData.ConfigPath == "" {
+		_, werfConfig, err = common.GetOptionalWerfConfig(ctx, &commonCmdData, giterminismMgr, common.GetWerfConfigOptions(&commonCmdData, true))
+	} else {
+		_, werfConfig, err = common.GetRequiredWerfConfig(ctx, &commonCmdData, giterminismMgr, common.GetWerfConfigOptions(&commonCmdData, true))
+	}
+	if err != nil {
+		return "", "", "", fmt.Errorf("unable to load werf config: %w", err)
+	}
+
+	if werfConfig == nil {
+		return namespace, release, "", nil
+	}
+	logboek.LogOptionalLn()
+
+	if namespace == "" {
+		namespace, err = deploy_params.GetKubernetesNamespace(commonCmdData.Namespace, commonCmdData.Environment, werfConfig)
+		if err != nil {
+			return "", "", "", err
+		}
+	}
+
+	if release == "" {
+		release, err = deploy_params.GetHelmRelease(commonCmdData.Release, commonCmdData.Environment, namespace, werfConfig)
+		if err != nil {
+			return "", "", "", err
+		}
+	}
+
+	return namespace, release, werfConfig.Meta.Project, nil
 }
