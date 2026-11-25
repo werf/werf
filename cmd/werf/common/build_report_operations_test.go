@@ -18,25 +18,25 @@ import (
 
 var _ = Describe("build report operations option", func() {
 	Describe("SetupBuildReportOperations", func() {
-		It("defaults to false", func() {
+		It("defaults to true", func() {
 			cmdData := &CmdData{}
 			SetupBuildReportOperations(cmdData, &cobra.Command{})
-			Expect(GetBuildReportOperations(cmdData)).To(BeFalse())
+			Expect(GetBuildReportOperations(cmdData)).To(BeTrue())
 		})
 
-		It("is enabled by the flag", func() {
+		It("is disabled by the flag", func() {
 			cmdData := &CmdData{}
 			cmd := &cobra.Command{}
 			SetupBuildReportOperations(cmdData, cmd)
-			Expect(cmd.Flags().Parse([]string{"--build-report-operations"})).To(Succeed())
-			Expect(GetBuildReportOperations(cmdData)).To(BeTrue())
+			Expect(cmd.Flags().Parse([]string{"--build-report-operations=false"})).To(Succeed())
+			Expect(GetBuildReportOperations(cmdData)).To(BeFalse())
 		})
 
-		It("is enabled by $WERF_BUILD_REPORT_OPERATIONS", func() {
-			GinkgoT().Setenv("WERF_BUILD_REPORT_OPERATIONS", "1")
+		It("is disabled by $WERF_BUILD_REPORT_OPERATIONS", func() {
+			GinkgoT().Setenv("WERF_BUILD_REPORT_OPERATIONS", "0")
 			cmdData := &CmdData{}
 			SetupBuildReportOperations(cmdData, &cobra.Command{})
-			Expect(GetBuildReportOperations(cmdData)).To(BeTrue())
+			Expect(GetBuildReportOperations(cmdData)).To(BeFalse())
 		})
 	})
 
