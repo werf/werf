@@ -113,4 +113,94 @@ var _ = ginkgo.Describe("Release lifecycle", ginkgo.Label("e2e", "converge", "si
 			gomega.Expect(listAfterDismiss.Releases).To(gomega.BeEmpty())
 		},
 	)
+
+	ginkgo.It("should not write empty project annotations on rollback",
+		func(ctx ginkgo.SpecContext) {
+			ginkgo.By("initializing")
+			repoDirname := "repo1"
+			setupEnv()
+
+			clientFactory := werf.NewKubeClientFactory(ctx)
+
+			SuiteData.InitTestRepo(ctx, repoDirname, "simple/state0")
+			werfProject = werf.NewProject(SuiteData.WerfBinPath, SuiteData.GetTestRepoPath(repoDirname))
+
+			outsideDir := ginkgo.GinkgoT().TempDir()
+			releaseFlags := []string{"--release", werfProject.Release(ctx), "--namespace", werfProject.Namespace(ctx)}
+			rollbackArgs := append([]string{"rollback"}, releaseFlags...)
+			releaseGetArgs := append([]string{"release", "get", "--output-format", "json"}, releaseFlags...)
+
+			ginkgo.By("converge: deploy two revisions")
+			werfProject.Converge(ctx, &werf.ConvergeOptions{})
+			SuiteData.UpdateTestRepo(ctx, repoDirname, "simple/state1")
+			werfProject.Converge(ctx, &werf.ConvergeOptions{})
+
+			gomega.Expect(clusterConfigMapAnnotations(ctx, clientFactory, werfProject)).To(gomega.And(
+				gomega.HaveKeyWithValue("project.werf.io/name", SuiteData.ProjectName),
+				gomega.HaveKeyWithValue("project.werf.io/env", "test"),
+			))
+
+			ginkgo.By("rollback inside the project with --release and --namespace: check project annotations are kept")
+			utils.RunSucceedCommand(ctx, werfProject.GitRepoPath, SuiteData.WerfBinPath, rollbackArgs...)
+
+			gomega.Expect(clusterConfigMapData(ctx, clientFactory, werfProject)).To(gomega.Equal(map[string]string{"key1": "value1"}))
+			gomega.Expect(clusterConfigMapAnnotations(ctx, clientFactory, werfProject)).To(gomega.And(
+				gomega.HaveKeyWithValue("project.werf.io/name", SuiteData.ProjectName),
+				gomega.HaveKeyWithValue("project.werf.io/env", "test"),
+			), "configmap")
+			gomega.Expect(releaseAnnotations(utils.SucceedCommandOutputString(ctx, werfProject.GitRepoPath, SuiteData.WerfBinPath, releaseGetArgs...))).To(gomega.And(
+				gomega.HaveKeyWithValue("project.werf.io/name", SuiteData.ProjectName),
+				gomega.HaveKeyWithValue("project.werf.io/env", "test"),
+			), "release")
+
+			ginkgo.By("converge: deploy state1 before the rollback outside the project with --env")
+			werfProject.Converge(ctx, &werf.ConvergeOptions{})
+
+			ginkgo.By("rollback outside the project with --env: check only project.werf.io/env is written")
+			utils.RunSucceedCommand(ctx, outsideDir, SuiteData.WerfBinPath, rollbackArgs...)
+
+			gomega.Expect(clusterConfigMapData(ctx, clientFactory, werfProject)).To(gomega.Equal(map[string]string{"key1": "value1"}))
+			gomega.Expect(clusterConfigMapAnnotations(ctx, clientFactory, werfProject)).To(gomega.And(
+				gomega.Not(gomega.HaveKey("project.werf.io/name")),
+				gomega.HaveKeyWithValue("project.werf.io/env", "test"),
+			), "configmap")
+			gomega.Expect(releaseAnnotations(utils.SucceedCommandOutputString(ctx, outsideDir, SuiteData.WerfBinPath, releaseGetArgs...))).To(gomega.And(
+				gomega.Not(gomega.HaveKey("project.werf.io/name")),
+				gomega.HaveKeyWithValue("project.werf.io/env", "test"),
+			), "release")
+
+			ginkgo.By("converge: deploy state1 before the rollback outside the project without --env")
+			werfProject.Converge(ctx, &werf.ConvergeOptions{})
+
+			ginkgo.By("rollback outside the project without --env: check no project annotations are written")
+			SuiteData.Stubs.UnsetEnv("WERF_ENV")
+			utils.RunSucceedCommand(ctx, outsideDir, SuiteData.WerfBinPath, rollbackArgs...)
+
+			gomega.Expect(clusterConfigMapData(ctx, clientFactory, werfProject)).To(gomega.Equal(map[string]string{"key1": "value1"}))
+			gomega.Expect(clusterConfigMapAnnotations(ctx, clientFactory, werfProject)).NotTo(gomega.Or(
+				gomega.HaveKey("project.werf.io/name"),
+				gomega.HaveKey("project.werf.io/env"),
+			), "configmap")
+			gomega.Expect(releaseAnnotations(utils.SucceedCommandOutputString(ctx, outsideDir, SuiteData.WerfBinPath, releaseGetArgs...))).NotTo(gomega.Or(
+				gomega.HaveKey("project.werf.io/name"),
+				gomega.HaveKey("project.werf.io/env"),
+			), "release")
+
+			ginkgo.By("rollback with --release, --namespace and a missing --config: check it fails without a new revision")
+			_, err := utils.RunCommand(ctx, werfProject.GitRepoPath, SuiteData.WerfBinPath, append(rollbackArgs, "--config", "missing.yaml")...)
+			gomega.Expect(err).To(gomega.HaveOccurred())
+
+			var get releaseGetOutput
+			gomega.Expect(json.Unmarshal([]byte(utils.SucceedCommandOutputString(ctx, outsideDir, SuiteData.WerfBinPath, releaseGetArgs...)), &get)).To(gomega.Succeed())
+			gomega.Expect(get.Release.Revision).To(gomega.Equal(7))
+
+			ginkgo.By("rollback with --release and --namespace from a git repo without werf.yaml: check it succeeds")
+			gitDir := ginkgo.GinkgoT().TempDir()
+			utils.RunSucceedCommand(ctx, gitDir, "git", "init", "-q")
+			utils.RunSucceedCommand(ctx, gitDir, "git", "-c", "user.name=test", "-c", "user.email=test@example.com", "commit", "-q", "--allow-empty", "-m", "init")
+			utils.RunSucceedCommand(ctx, gitDir, SuiteData.WerfBinPath, rollbackArgs...)
+
+			gomega.Expect(clusterConfigMapData(ctx, clientFactory, werfProject)).To(gomega.Equal(map[string]string{"key1": "value2"}))
+		},
+	)
 })
