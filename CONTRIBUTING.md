@@ -86,10 +86,19 @@ You can also check the existing [issues](https://github.com/werf/werf/issues), [
 ### Test resource cleanup
 
 Image-building suites register `SuiteData.SetupProjectCleanup()` after their
-project, stubs and temporary-directory setup. It defers local Docker and available
-Buildah image cleanup until content-check containers have been removed, while the
+project, stubs and temporary-directory setup. It defers local image cleanup
+until content-check containers have been removed, while the
 test environment and temporary directory still exist. Cleanup has its own bounded
 Ginkgo context; failures to remove selected references fail the spec.
+
+Use `SuiteData.SetContainerBackendMode(mode)` before using a backend (and before
+any availability check that can skip the spec). It sets `WERF_BUILDAH_MODE` and
+records the mode for cleanup. In a mixed spec, register each backend, including
+an initial Docker build; a mode passed only in a child command's environment is
+not visible to the hook. An ordinary spec with no recorded modes and an empty or
+`docker` setting cleans Docker only. With another inherited setting and no record,
+the hook conservatively checks both stores, as it does for an unrecognized mode.
+Mode records do not carry over to the next spec.
 
 Selection requires the exact `werf` project label and a project repository,
 `WERF_REPO`, `WERF_FINAL_REPO`, or a repository explicitly recorded in
@@ -101,10 +110,19 @@ On Linux, the test executable is re-executed as a cleanup worker before Ginkgo
 starts, with a JSON request in `_WERF_TEST_CLEANUP_PROJECT`. The worker opens the
 native storage once for listing, removal and verification. Non-root callers use
 `buildah unshare`; the parent owns its process group and kills it on cancellation.
-Docker cleanup is skipped only when its CLI is absent from PATH. Buildah cleanup
-is skipped outside Linux or when its CLI is absent from PATH. An installed runtime
+Docker cleanup runs for a selected Docker store when its CLI is on PATH. Selected
+Buildah cleanup requires Linux and the Buildah CLI on PATH. An installed runtime
 that fails to initialize rootless execution, list images or remove them is an
 error, not a successful cleanup.
+
+On the first image-in-use error for each reference, the Buildah worker reports the
+reference and the storage error (including its container ID) to the spec log.
+If the inventory is unchanged, it retries only when every remaining reference
+returned an image-in-use error; any other error or a removal that had no effect
+fails cleanup instead. The 30-second retry window starts at the first observed
+conflict, not the start of cleanup. A changed inventory starts a fresh window on
+the next conflict. The window is checked between passes; the enclosing spec
+deadline still bounds the operation.
 
 This cleanup does not delete remote registry data, shared base images, BuildKit
 cache, or shared werf caches. In particular, project build-dir mounts under

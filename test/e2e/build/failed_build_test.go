@@ -17,8 +17,8 @@ var _ = Describe("Failed Dockerfile build", Label("e2e", "build", "failed-build"
 	DescribeTable("leaves no working container in the Buildah storage",
 		func(ctx SpecContext, opts setupEnvOptions) {
 			By("initializing")
-			contback.SkipIfUnavailable(opts.ContainerBackendMode)
 			setupEnv(opts)
+			contback.SkipIfUnavailable(opts.ContainerBackendMode)
 			// The background cleaner removes werf containers and would hide a leaked one.
 			SuiteData.Stubs.SetEnv("WERF_DISABLE_AUTO_HOST_CLEANUP", "1")
 

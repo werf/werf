@@ -12,6 +12,7 @@ import (
 
 type SuiteData struct {
 	CleanupRepositories []string
+	cleanupBackendModes []string
 
 	*StubsData
 	*SynchronizedSuiteCallbacksData

@@ -94,6 +94,7 @@ var _ = Describe("Images dependencies", Label("e2e", "build", "extra"), func() {
 	})
 	When("dockerfile image uses COPY --from stage and external image", func() {
 		It("should build staged dockerfile with COPY --from correctly", Label(suite_init.LabelNeedsBuildah), func(ctx SpecContext) {
+			SuiteData.SetContainerBackendMode("auto")
 			contback.SkipIfUnavailable("auto")
 
 			SuiteData.CommitProjectWorktree(
@@ -106,11 +107,7 @@ var _ = Describe("Images dependencies", Label("e2e", "build", "extra"), func() {
 				werfBuild(
 					ctx,
 					SuiteData.GetProjectWorktree(SuiteData.ProjectName),
-					liveexec.ExecCommandOptions{
-						Env: map[string]string{
-							"WERF_BUILDAH_MODE": "auto",
-						},
-					},
+					liveexec.ExecCommandOptions{},
 				),
 			).To(Succeed())
 		})

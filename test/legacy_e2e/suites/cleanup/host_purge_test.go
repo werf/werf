@@ -1,6 +1,11 @@
 package cleanup_test
 
 import (
+	"os"
+	"path/filepath"
+	"strings"
+	"time"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
@@ -10,6 +15,8 @@ import (
 )
 
 var _ = Describe("host purge command", func() {
+	SuiteData.SetupProjectCleanup()
+
 	BeforeEach(func(ctx SpecContext) {
 		Expect(werf.Init(SuiteData.TmpDir, "")).To(Succeed())
 		SuiteData.Stubs.UnsetEnv("WERF_REPO")
@@ -32,10 +39,28 @@ var _ = Describe("host purge command", func() {
 
 	When("project name specified", func() {
 		Context("when there is running container based on werf image", func() {
+			var id string
+			containerExists := func(ctx SpecContext) bool {
+				return utils.SucceedCommandOutputString(ctx, "", "docker", "ps", "--all", "--quiet", "--filter", "id="+id) != ""
+			}
 			BeforeEach(func(ctx SpecContext) {
 				utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "build")
 
-				utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "run", "--docker-options", "-d", "--", "/bin/sleep", "30")
+				const cidFile = "purge-container.cid"
+				out, runErr := utils.RunCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "run", "--docker-options", "-d --cidfile="+cidFile, "--", "/bin/sleep", "3600")
+				content, readErr := os.ReadFile(filepath.Join(SuiteData.TestDirPath, cidFile))
+				id = strings.TrimSpace(string(content))
+				if id != "" {
+					DeferCleanup(func(ctx SpecContext) {
+						if containerExists(ctx) {
+							utils.RunSucceedCommand(ctx, "", "docker", "rm", "--force", id)
+						}
+					}, NodeTimeout(time.Minute))
+				}
+				Expect(runErr).NotTo(HaveOccurred(), string(out))
+				Expect(readErr).NotTo(HaveOccurred())
+				Expect(id).NotTo(BeEmpty())
+				Expect(containerExists(ctx)).To(BeTrue())
 			})
 
 			It("should fail with specific error", func(ctx SpecContext) {
@@ -54,6 +79,7 @@ var _ = Describe("host purge command", func() {
 				utils.RunSucceedCommand(ctx, SuiteData.TestDirPath, SuiteData.WerfBinPath, "host", "purge", "--force")
 
 				Expect(StagesCount(ctx)).Should(Equal(0))
+				Expect(containerExists(ctx)).To(BeFalse())
 			})
 		})
 	})

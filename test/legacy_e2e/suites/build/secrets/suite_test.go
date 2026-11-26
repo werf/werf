@@ -31,7 +31,7 @@ var (
 )
 
 func setupEnv(opts testOptions) {
-	SuiteData.Stubs.SetEnv("WERF_BUILDAH_MODE", opts.ContainerBackendMode)
+	SuiteData.SetContainerBackendMode(opts.ContainerBackendMode)
 
 	if opts.WithStagedDockerfileBuilder {
 		SuiteData.Stubs.SetEnv("WERF_FORCE_STAGED_DOCKERFILE", "1")

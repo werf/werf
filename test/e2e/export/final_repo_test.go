@@ -21,11 +21,11 @@ import (
 var _ = ginkgo.Describe("Export with a final repo", ginkgo.Label("e2e", "export", "final-repo"), func() {
 	ginkgo.DescribeTable("exports the same image before and after content-anchor reuse",
 		func(ctx ginkgo.SpecContext, backendMode string, local bool) {
+			SuiteData.SetContainerBackendMode(backendMode)
 			contback.SkipIfUnavailable(backendMode)
 			setupEnv()
 			SuiteData.Stubs.SetEnv("WERF_INSECURE_REGISTRY", "1")
 			SuiteData.Stubs.SetEnv("WERF_SKIP_TLS_VERIFY_REGISTRY", "1")
-			SuiteData.Stubs.SetEnv("WERF_BUILDAH_MODE", backendMode)
 			if local {
 				SuiteData.Stubs.SetEnv("WERF_REPO", ":local")
 			}
@@ -90,11 +90,11 @@ var _ = ginkgo.Describe("Export with a final repo", ginkgo.Label("e2e", "export"
 
 	ginkgo.DescribeTable("exports from a build report without the local final-repo alias",
 		func(ctx ginkgo.SpecContext, backendMode string) {
+			SuiteData.SetContainerBackendMode(backendMode)
 			contback.SkipIfUnavailable(backendMode)
 			setupEnv()
 			SuiteData.Stubs.SetEnv("WERF_INSECURE_REGISTRY", "1")
 			SuiteData.Stubs.SetEnv("WERF_SKIP_TLS_VERIFY_REGISTRY", "1")
-			SuiteData.Stubs.SetEnv("WERF_BUILDAH_MODE", backendMode)
 			SuiteData.Stubs.SetEnv("WERF_REPO", ":local")
 
 			finalRepo := suite_init.TestRepo(fmt.Sprintf("werf-export-final-%s", utils.GetRandomString(10)))
