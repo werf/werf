@@ -524,6 +524,20 @@ To release the safeguard, run `werf meta-repo detach --repo registry.mycompany.o
 
 `werf purge` removes the marker as its last step, after the project's stages and metadata are deleted. A re-created project can therefore be built without `--meta-repo` again, with no `werf meta-repo detach` needed. If the purge fails partway, the marker is left in place so that the metadata still in `--meta-repo` stays protected.
 
+#### Moving metadata to another `--meta-repo`
+
+To replace the meta-repo of a project with another one, run `migrate` with the current meta-repo as `--from` and pass the stages repository as `--repo`:
+
+```shell
+werf meta-repo migrate --repo registry.mycompany.org/project --from registry.mycompany.org/project-meta --to registry.mycompany.org/project-meta-new
+```
+
+The marker lives in the stages repository, so that is where `migrate` switches it from the old meta-repo to `--to`; `--from` gets no marker. From then on every werf command must be invoked with the new `--meta-repo`.
+
+To keep the marker from ending up in the wrong repository, `migrate` checks what `--from` holds. Without `--repo` it treats `--from` as the stages repository and refuses to run if `--from` holds metadata or a marker but no stages; if `--from` really is a stages repository that holds no stages, say so by passing it as `--repo` too. With a `--repo` that differs from `--from`, it refuses a `--from` that holds stages or any other tags that are not werf metadata.
+
+werf runs that are in progress during the migration may still write metadata to the old meta-repo, so pause the project's pipelines for the migration. If some runs did overlap with it, run the same command again once they are over: it moves the managed-image and image-metadata records they left behind. For custom-tag metadata and the last-cleanup record the copy already in the new meta-repo is kept, with a warning, and the one from the old meta-repo is not carried over. With the default `--remove-source`, the old meta-repo then holds only the synchronization records werf writes itself (`client-id-*` tags) and can be deleted.
+
 ### Extra repository for quick access to the build cache
 
 You can specify one or more so-called **caching** repositories using the `--cache-repo` parameter.

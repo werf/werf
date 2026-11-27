@@ -15,7 +15,9 @@ var _ = ginkgo.Describe("Synchronization metadata isolation", func() {
 		gomega.Expect(primary.PostSyncServerRecord(ctx, proj, server)).To(gomega.Succeed())
 		gomega.Expect(primary.PutImageMetadata(ctx, proj, "app", "commit", "stage")).To(gomega.Succeed())
 
-		records, err := primary.collectMetadataRecords(ctx, 1)
+		tags, err := primary.listMetaMigrationSourceTags(ctx)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		records, err := primary.collectMetadataRecords(ctx, tags, 1)
 		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 		gomega.Expect(records).To(gomega.HaveLen(1))
 		gomega.Expect(records[0].tag).To(gomega.HavePrefix(RepoImageMetadataByCommitRecord_ImageTagPrefix))

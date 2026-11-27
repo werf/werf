@@ -111,6 +111,7 @@ var _ = Describe("Metadata migration progress", func() {
 		interrupted := &interruptedMigrationRegistry{Interface: reg}
 		src := newRepoStorage(reg, "registry.example/source")
 		dst := newRepoStorage(interrupted, "registry.example/meta")
+		reg.put("registry.example/source:stage-1", map[string]string{})
 		for i := range 12 {
 			reg.put(fmt.Sprintf("registry.example/source:managed-image-app%d", i), map[string]string{})
 		}

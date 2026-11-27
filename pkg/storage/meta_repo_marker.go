@@ -6,6 +6,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/samber/lo"
+
 	"github.com/werf/logboek"
 	"github.com/werf/werf/v3/pkg/docker_registry"
 	"github.com/werf/werf/v3/pkg/image"
@@ -97,9 +99,6 @@ func (storage *RepoStagesStorage) RmMetaRepoMarker(ctx context.Context, projectN
 }
 
 func isMetadataCandidateTag(tag string) bool {
-	if strings.HasSuffix(tag, RepoRejectedStageImageRecord_ImageTagSuffix) {
-		return false
-	}
 	switch {
 	case strings.HasPrefix(tag, RepoManagedImageRecord_ImageTagPrefix):
 		return true
@@ -117,6 +116,20 @@ func isMetadataCandidateTag(tag string) bool {
 type metadataRecord struct {
 	tag  string
 	info *image.Info
+}
+
+// The marker and synchronization records are not stages repo content: werf writes them into any repo passed as --repo.
+func findStagesRepoTag(tags []string) (string, bool) {
+	return lo.Find(tags, func(tag string) bool {
+		return !isMetadataCandidateTag(tag) &&
+			!strings.HasPrefix(tag, RepoMetaRepoMarker_ImageTagPrefix) &&
+			!strings.HasPrefix(tag, RepoClientIDRecord_ImageTagPrefix) &&
+			tag != RepoSyncServerRecord_ImageTagPrefix
+	})
+}
+
+func isMetadataOrMarkerTag(tag string) bool {
+	return isMetadataCandidateTag(tag) || strings.HasPrefix(tag, RepoMetaRepoMarker_ImageTagPrefix)
 }
 
 // isStageImageOrAlias reports whether a record found at a reserved tag is really
@@ -154,9 +167,7 @@ func isMetadataRecord(tag string, info *image.Info) bool {
 	return true
 }
 
-// collectMetadataRecords returns the metadata records stored in this repo, per
-// isMetadataRecord.
-func (storage *RepoStagesStorage) collectMetadataRecords(ctx context.Context, workers int) ([]metadataRecord, error) {
+func (storage *RepoStagesStorage) listMetaMigrationSourceTags(ctx context.Context) ([]string, error) {
 	var tags []string
 	if err := runMetaMigrationPhase(ctx, "list source tags", 1, 1, metaMigrationProgressInterval, func(ctx context.Context, _ int) error {
 		var err error
@@ -165,7 +176,12 @@ func (storage *RepoStagesStorage) collectMetadataRecords(ctx context.Context, wo
 	}); err != nil {
 		return nil, fmt.Errorf("get repo %s tags: %w", storage.RepoAddress, err)
 	}
+	return tags, nil
+}
 
+// collectMetadataRecords returns the metadata records stored in this repo under
+// the given tags, per isMetadataRecord.
+func (storage *RepoStagesStorage) collectMetadataRecords(ctx context.Context, tags []string, workers int) ([]metadataRecord, error) {
 	var candidates []string
 	for _, tag := range tags {
 		if isMetadataCandidateTag(tag) {
@@ -355,12 +371,16 @@ func SetupMetaRepoSafeguard(ctx context.Context, projectName string, stagesStora
 type MigrateMetaRepoOptions struct {
 	RemoveSource       bool
 	ParallelTasksLimit int
+	// StagesRepo is the project's stages repo when src is a meta-repo; nil means src is the stages repo.
+	StagesRepo *RepoStagesStorage
 }
 
-// MigrateMetaRepo copies the project's metadata records from the source stages
-// repo into the destination meta-repo (copy-first, idempotent), plants the
-// marker in the source, and — with RemoveSource — deletes each source original
-// only after its destination copy is verified present.
+// MigrateMetaRepo copies the project's metadata records from src into the
+// destination meta-repo (copy-first, idempotent), points the safeguard marker
+// of the project's stages repo at the destination, and — with RemoveSource —
+// deletes each source original only after its destination copy is verified
+// present. The stages repo is src itself unless opts.StagesRepo names another
+// one, which is how metadata moves from one meta-repo to another.
 func MigrateMetaRepo(ctx context.Context, projectName string, src, dst *RepoStagesStorage, opts MigrateMetaRepoOptions) error {
 	srcCanonical, err := CanonicalRepoAddress(src.Address())
 	if err != nil {
@@ -374,15 +394,43 @@ func MigrateMetaRepo(ctx context.Context, projectName string, src, dst *RepoStag
 		return fmt.Errorf("--to %q resolves to the same repository as --from %q; nothing to migrate", dst.Address(), src.Address())
 	}
 
-	markerAddr, markerFound, err := src.GetMetaRepoMarker(ctx, projectName)
+	markerRepo := src
+	if opts.StagesRepo != nil {
+		stagesCanonical, err := CanonicalRepoAddress(opts.StagesRepo.Address())
+		if err != nil {
+			return err
+		}
+		if stagesCanonical == dstCanonical {
+			return fmt.Errorf("--to %q resolves to the same repository as --repo %q; a meta-repo must differ from the stages repo", dst.Address(), opts.StagesRepo.Address())
+		}
+		if stagesCanonical != srcCanonical {
+			markerRepo = opts.StagesRepo
+		}
+	}
+	betweenMetaRepos := markerRepo != src
+
+	markerAddr, markerFound, err := markerRepo.GetMetaRepoMarker(ctx, projectName)
 	if err != nil {
 		return err
 	}
-	if markerFound && markerAddr != "" && markerAddr != dstCanonical {
-		return fmt.Errorf("--from %q already has a meta-repo safeguard for project %q pointing at %q; refusing to migrate to %q", src.Address(), projectName, markerAddr, dstCanonical)
+	markerMatches := markerAddr == dstCanonical || betweenMetaRepos && markerAddr == srcCanonical
+	if markerFound && markerAddr != "" && !markerMatches {
+		return fmt.Errorf("%s %q already has a meta-repo safeguard for project %q pointing at %q; refusing to migrate from %q to %q", lo.Ternary(betweenMetaRepos, "--repo", "--from"), markerRepo.Address(), projectName, markerAddr, srcCanonical, dstCanonical)
 	}
 
-	records, err := src.collectMetadataRecords(ctx, opts.ParallelTasksLimit)
+	tags, err := src.listMetaMigrationSourceTags(ctx)
+	if err != nil {
+		return err
+	}
+	stagesRepoTag, holdsStages := findStagesRepoTag(tags)
+	if betweenMetaRepos && holdsStages {
+		return fmt.Errorf("--from %q is not a meta-repo: it holds %q, which is neither a metadata record nor a werf service record; drop --repo if --from is the stages repo of project %q", src.Address(), stagesRepoTag, projectName)
+	}
+	if opts.StagesRepo == nil && !holdsStages && lo.SomeBy(tags, isMetadataOrMarkerTag) {
+		return fmt.Errorf("--from %q holds no stages, so it looks like a meta-repo, and the safeguard of project %q lives in its stages repo; pass the project's stages repo as --repo to point its safeguard at --to, or --repo %q if --from really is the stages repo", src.Address(), projectName, src.Address())
+	}
+
+	records, err := src.collectMetadataRecords(ctx, tags, opts.ParallelTasksLimit)
 	if err != nil {
 		return err
 	}
@@ -422,7 +470,7 @@ func MigrateMetaRepo(ctx context.Context, projectName string, src, dst *RepoStag
 		return err
 	}
 
-	if err := src.PutMetaRepoMarker(ctx, projectName, dstCanonical); err != nil {
+	if err := markerRepo.PutMetaRepoMarker(ctx, projectName, dstCanonical); err != nil {
 		return err
 	}
 

@@ -30,8 +30,17 @@ var _ = Describe("migrate command", func() {
 		Expect(toFlag).NotTo(BeNil())
 		Expect(toFlag.DefValue).To(Equal("registry.example.com/project-meta"))
 
-		Expect(cmd.Flags().Lookup("repo")).To(BeNil())
 		Expect(cmd.Flags().Lookup("meta-repo")).To(BeNil())
+	})
+
+	It("takes the stages repo only from the flag, never from the generic env", func() {
+		GinkgoT().Setenv("WERF_REPO", "registry.example.com/generic")
+
+		cmd := NewCmd(context.Background())
+
+		repoFlag := cmd.Flags().Lookup("repo")
+		Expect(repoFlag).NotTo(BeNil())
+		Expect(repoFlag.DefValue).To(BeEmpty())
 	})
 
 	It("exposes command-scoped source registry credential flags but not the destination", func() {
