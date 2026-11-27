@@ -388,24 +388,29 @@ func (repo *Remote) Clone(ctx context.Context) (bool, error) {
 		return false, nil
 	}
 
-	return true, repo.withMirrorKindLock(ctx, kind, func() error {
-		return repo.cloneFullCore(ctx, kind)
+	var cloned bool
+	err = repo.withMirrorKindLock(ctx, kind, func() error {
+		var err error
+		cloned, err = repo.cloneFullCore(ctx, kind)
+		return err
 	})
+
+	return cloned, err
 }
 
-func (repo *Remote) cloneFullCore(ctx context.Context, kind mirrorKind) error {
+func (repo *Remote) cloneFullCore(ctx context.Context, kind mirrorKind) (bool, error) {
 	clonePath := repo.clonePathForKind(kind)
 
 	exists, err := repo.isCloneExistsForKind(kind)
 	if err != nil {
-		return err
+		return false, err
 	}
 	if exists {
 		if err := repo.updateLastAccessAt(ctx, clonePath); err != nil {
-			return fmt.Errorf("error updating last access at timestamp: %w", err)
+			return false, fmt.Errorf("error updating last access at timestamp: %w", err)
 		}
 
-		return nil
+		return false, nil
 	}
 
 	doneClone := opstats.Observe(ctx, opstats.OperationGitClone)
@@ -414,7 +419,7 @@ func (repo *Remote) cloneFullCore(ctx context.Context, kind mirrorKind) error {
 	logboek.Context(ctx).Default().LogFDetails("Clone %s\n", repo.Url)
 
 	if err := os.MkdirAll(filepath.Dir(clonePath), 0o755); err != nil {
-		return fmt.Errorf("unable to create dir %s: %w", filepath.Dir(clonePath), err)
+		return false, fmt.Errorf("unable to create dir %s: %w", filepath.Dir(clonePath), err)
 	}
 
 	removeStaleCloneTmpDirs(ctx, clonePath)
@@ -429,25 +434,25 @@ func (repo *Remote) cloneFullCore(ctx context.Context, kind mirrorKind) error {
 	}
 
 	if _, err := git.PlainCloneContext(ctx, tmpPath, true, cloneOpts); err != nil {
-		return fmt.Errorf("unable to clone repo: %w", err)
+		return false, fmt.Errorf("unable to clone repo: %w", err)
 	}
 
 	if err := timestamps.WriteTimestampFile(filepath.Join(tmpPath, "last_access_at"), time.Now()); err != nil {
-		return fmt.Errorf("error writing last access at timestamp: %w", err)
+		return false, fmt.Errorf("error writing last access at timestamp: %w", err)
 	}
 
 	peerWon, err := renameCloneIntoPlace(tmpPath, clonePath)
 	if err != nil {
-		return err
+		return false, err
 	}
 	if peerWon {
 		// Stop the clone observation before the fetch so git fetch is not
 		// recorded inside the git clone interval.
 		doneClone()
-		return repo.fetchOriginFullCore(ctx, kind)
+		return true, repo.fetchOriginFullCore(ctx, kind)
 	}
 
-	return nil
+	return true, nil
 }
 
 // cloneTmpStalenessWindow encodes the same judgement as gitdata's
@@ -1027,8 +1032,12 @@ func (repo *Remote) restoreMirror(ctx context.Context, kind mirrorKind, commit s
 		return repo.restoreShallowMirror(ctx, commit)
 	}
 
-	if err := repo.cloneFullCore(ctx, kind); err != nil {
+	cloned, err := repo.cloneFullCore(ctx, kind)
+	if err != nil {
 		return err
+	}
+	if !cloned && commit == "" {
+		return repo.fetchOriginFullCore(ctx, kind)
 	}
 
 	clonePath := repo.clonePathForKind(kind)
