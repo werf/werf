@@ -106,6 +106,12 @@ Selection requires the exact `werf` project label and a project repository,
 must record those exact repositories. Foreign aliases are retained; removal does
 not force-delete containers or prune unselected image ancestors.
 
+After removing Docker tags, cleanup inspects their original image IDs in a
+batch. Only IDs with no remaining tags or repository digests are selected for
+removal. A full project listing still verifies the result and discovers other
+remaining references. If inspection is inconclusive, cleanup uses the full
+listing instead.
+
 On Linux, the test executable is re-executed as a cleanup worker before Ginkgo
 starts, with a JSON request in `_WERF_TEST_CLEANUP_PROJECT`. The worker opens the
 native storage once for listing, removal and verification. Non-root callers use

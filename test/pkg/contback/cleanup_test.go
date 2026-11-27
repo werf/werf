@@ -174,6 +174,62 @@ var _ = ginkgo.Describe("Project image cleanup", func() {
 		})
 		gomega.Expect(err).To(gomega.MatchError(gomega.ContainSubstring("test images remain: owned")))
 	})
+	ginkgo.DescribeTable("verifies stage cleanup with a final full inventory", func(ctx ginkgo.SpecContext, inspectError, expectedLists string) {
+		dir := ginkgo.GinkgoT().TempDir()
+		stub := `#!/bin/sh
+set -eu
+case "$1" in
+	images) if test -f "$0.removed-id"; then echo final; else echo list; fi >> "$0.calls"; cat "$0.inventory" ;;
+	image) test "$2" = inspect; shift 2; printf '%s\n' "$@" > "$0.ids"; cat "$0.inspect"; cat "$0.error" >&2; exit 1 ;;
+  *) exit 42 ;;
+esac
+`
+		binary := filepath.Join(dir, "docker")
+		gomega.Expect(os.WriteFile(binary, []byte(stub), 0o700)).To(gomega.Succeed())
+		ginkgo.GinkgoT().Setenv("PATH", dir+string(os.PathListSeparator)+os.Getenv("PATH"))
+		const stageID = "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+		const otherID = "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+		const digestID = "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+		const deletedID = "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+		row := func(id, repo, tag string) string {
+			return fmt.Sprintf("{\"ID\":%q,\"Repository\":%q,\"Tag\":%q}\n", id, repo, tag)
+		}
+		foreign := row(otherID, "neighbor", "keep") + fmt.Sprintf("{\"ID\":%q,\"Repository\":\"neighbor\",\"Tag\":\"<none>\",\"Digest\":%q}\n", digestID, digestID)
+		inventory := binary + ".inventory"
+		const project = "werf-test-one"
+		remaining := map[string]string{project + ":shared": row(otherID, project, "shared"), project + ":digest": row(digestID, project, "digest"), project + ":stage": row(stageID, project, "stage"), project + ":deleted": row(deletedID, project, "deleted")}
+		writeInventory := func() error {
+			contents := foreign
+			for _, value := range remaining {
+				contents += value
+			}
+			return os.WriteFile(inventory, []byte(contents), 0o600)
+		}
+		gomega.Expect(writeInventory()).To(gomega.Succeed())
+		inspected := fmt.Sprintf(`[{"Id":%q,"RepoTags":[],"RepoDigests":[]},{"Id":%q,"RepoTags":["neighbor:keep"]},{"Id":%q,"RepoDigests":["neighbor@%s"]}]`, stageID, otherID, digestID, digestID)
+		gomega.Expect(os.WriteFile(binary+".inspect", []byte(inspected), 0o600)).To(gomega.Succeed())
+		gomega.Expect(os.WriteFile(binary+".error", []byte(inspectError+deletedID+"\n"), 0o600)).To(gomega.Succeed())
+		var removed []string
+		remove := func(_ context.Context, ref string) error {
+			removed = append(removed, ref)
+			delete(remaining, ref)
+			if ref == "werf-test-one:stage" {
+				remaining[stageID] = row(stageID, "<none>", "<none>")
+			} else if ref == stageID {
+				gomega.Expect(os.WriteFile(binary+".removed-id", nil, 0o600)).To(gomega.Succeed())
+			}
+			return writeInventory()
+		}
+		gomega.Expect(cleanupDockerProjectImages(ctx, "werf-test-one", nil, remove)).To(gomega.Succeed())
+		gomega.Expect(removed).To(gomega.ConsistOf(project+":shared", project+":digest", project+":deleted", project+":stage", stageID))
+		ids, err := os.ReadFile(binary + ".ids")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		gomega.Expect(strings.Fields(string(ids))).To(gomega.ConsistOf(stageID, otherID, digestID, deletedID))
+		calls, err := os.ReadFile(binary + ".calls")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		gomega.Expect(string(calls)).To(gomega.Equal(expectedLists))
+	}, ginkgo.Entry("two full inventories when an inspected ID is already gone", "Error response from daemon: No such image: ", "list\nfinal\n"),
+		ginkgo.Entry("rescans on an unexpected inspect failure", "daemon error for ", "list\nlist\nfinal\n"))
 	ginkgo.It("rescans after deleting a dependent child image", func() {
 		dir := ginkgo.GinkgoT().TempDir()
 		script, err := os.ReadFile("testdata/cleanup-backend.sh")

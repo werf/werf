@@ -93,7 +93,15 @@ func CleanupProject(ctx context.Context, projectName string, opts CleanupProject
 }
 
 func cleanupDockerProjectImages(ctx context.Context, projectName string, repos []string, removeImage func(context.Context, string) error) error {
+	var taggedIDs []string
 	list := func() ([]string, error) {
+		if len(taggedIDs) > 0 {
+			dangling := inspectDanglingDockerImages(ctx, taggedIDs)
+			taggedIDs = nil
+			if len(dangling) > 0 {
+				return dangling, nil
+			}
+		}
 		args := []string{"images", "--filter", "label=werf=" + projectName, "--all", "--no-trunc", "--digests", "--format", "{{json .}}"}
 		output, err := cleanupCommand(ctx, "docker", args)
 		if err != nil {
@@ -103,10 +111,58 @@ func cleanupDockerProjectImages(ctx context.Context, projectName string, repos [
 		if err != nil {
 			return nil, err
 		}
-		return projectImageReferences(images, projectName, repos), nil
+		refs := projectImageReferences(images, projectName, repos)
+		for _, image := range images {
+			if len(image.Names) == 1 && image.ID != "" {
+				if _, owned := slices.BinarySearch(refs, image.Names[0]); owned {
+					taggedIDs = append(taggedIDs, image.ID)
+				}
+			}
+		}
+		slices.Sort(taggedIDs)
+		taggedIDs = slices.Compact(taggedIDs)
+		return refs, nil
 	}
 
-	return cleanupImageReferences(ctx, "docker", io.Discard, list, removeImage)
+	return cleanupImageReferences(ctx, "docker", io.Discard, list, func(ctx context.Context, ref string) error {
+		err := removeImage(ctx, ref)
+		if err != nil {
+			taggedIDs = nil
+		}
+		return err
+	})
+}
+
+func inspectDanglingDockerImages(ctx context.Context, ids []string) []string {
+	args := append([]string{"image", "inspect"}, ids...)
+	output, err := exec.CommandContext(ctx, "docker", args...).Output()
+	if err != nil {
+		var exitErr *exec.ExitError
+		if ctx.Err() != nil || !errors.As(err, &exitErr) || exitErr.ExitCode() != 1 {
+			return nil
+		}
+		for line := range strings.SplitSeq(strings.TrimSpace(string(exitErr.Stderr)), "\n") {
+			id, missing := strings.CutPrefix(line, "Error response from daemon: No such image: ")
+			if _, known := slices.BinarySearch(ids, id); !missing || !known {
+				return nil
+			}
+		}
+	}
+	var images []struct {
+		ID          string
+		RepoTags    []string
+		RepoDigests []string
+	}
+	if err := json.Unmarshal(output, &images); err != nil {
+		return nil
+	}
+	var dangling []string
+	for _, image := range images {
+		if _, known := slices.BinarySearch(ids, image.ID); known && len(image.RepoTags) == 0 && len(image.RepoDigests) == 0 {
+			dangling = append(dangling, image.ID)
+		}
+	}
+	return dangling
 }
 
 func cleanupImageReferences(ctx context.Context, backend string, diagnostics io.Writer, list func() ([]string, error), removeImage func(context.Context, string) error) error {
