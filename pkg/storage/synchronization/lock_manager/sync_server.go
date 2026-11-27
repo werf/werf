@@ -27,7 +27,7 @@ func GetOrCreateSyncServer(ctx context.Context, projectName, serverAddress strin
 		if errors.Is(err, ErrNoSyncServerFound) {
 			createErr := CreateSyncServerRecord(ctx, projectName, serverAddress, stagesStorage)
 			if createErr != nil {
-				return "", fmt.Errorf("can't create synchronization server record: %w", err)
+				return "", fmt.Errorf("can't create synchronization server record: %w", createErr)
 			}
 			return serverAddress, nil
 
