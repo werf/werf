@@ -21,7 +21,7 @@ func NewCmd(ctx context.Context) *cobra.Command {
 		Use:                   "detach",
 		DisableFlagsInUseLine: true,
 		Short:                 "Remove the meta-repo safeguard marker for the project from --repo.",
-		Long:                  "Remove the per-project meta-repo marker from --repo so werf no longer forces --meta-repo usage. Metadata already stored in the meta-repo is NOT moved back.",
+		Long:                  "Remove the per-project meta-repo marker from --repo, disabling automatic meta-repo detection and address validation. Subsequent runs without --meta-repo or WERF_META_REPO read and write metadata in --repo. Metadata already stored in the meta-repo is NOT moved back; cleanup may delete needed images when using incomplete metadata.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 
@@ -142,6 +142,6 @@ func run(ctx context.Context) error {
 	if metaRepoAddress == "" {
 		metaRepoAddress = "unknown meta-repo"
 	}
-	logboek.Context(ctx).Warn().LogF("Safeguard removed for project %q. Metadata remains in meta-repo %q and was NOT moved back; werf runs without --meta-repo will no longer be blocked and may read stale metadata from %s.\n", projectName, metaRepoAddress, repo.Address())
+	logboek.Context(ctx).Warn().LogF("Safeguard removed for project %q. Metadata remains in meta-repo %q and was NOT moved back; werf runs without --meta-repo or WERF_META_REPO will now read and write metadata in %s instead of automatically using the meta-repo. Cleanup may delete needed images when using incomplete metadata.\n", projectName, metaRepoAddress, repo.Address())
 	return nil
 }
