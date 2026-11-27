@@ -287,7 +287,7 @@ var _ = ginkgo.Describe("Project image cleanup", func() {
 		gomega.Expect(remaining).To(gomega.BeEmpty())
 	})
 	ginkgo.DescribeTable("executes cleanup and verifies the resulting inventory",
-		func(inventory, remaining, expectedRef string) {
+		func(inventory, remaining, expectedRef, inspectFailure string) {
 			dir := ginkgo.GinkgoT().TempDir()
 			cat, err := exec.LookPath("cat")
 			gomega.Expect(err).NotTo(gomega.HaveOccurred())
@@ -311,7 +311,17 @@ var _ = ginkgo.Describe("Project image cleanup", func() {
 			gomega.Expect(CleanupProject(context.Background(), "werf-test-one", CleanupProjectOptions{})).To(gomega.MatchError(gomega.ContainSubstring("test images remain")))
 			ginkgo.GinkgoT().Setenv("CLEANUP_NOOP", "0")
 			gomega.Expect(os.WriteFile(callsPath, nil, 0o600)).To(gomega.Succeed())
+			if inspectFailure != "" {
+				ginkgo.GinkgoT().Setenv("CLEANUP_INSPECT_EXIT", "2")
+				gomega.Expect(os.WriteFile(filepath.Join(dir, "docker.error"), []byte(inspectFailure), 0o600)).To(gomega.Succeed())
+			}
 			gomega.Expect(CleanupProject(context.Background(), "werf-test-one", CleanupProjectOptions{})).To(gomega.Succeed())
+			if inspectFailure != "" {
+				gomega.Expect(ginkgo.CurrentSpecReport().CapturedGinkgoWriterOutput).To(gomega.And(
+					gomega.ContainSubstring("docker cleanup for werf-test-one: falling back to full inventory"),
+					gomega.ContainSubstring(inspectFailure),
+				))
+			}
 			calls, err := os.ReadFile(callsPath)
 			gomega.Expect(err).NotTo(gomega.HaveOccurred())
 			gomega.Expect(string(calls)).To(gomega.Equal(expectedRef + "\n"))
@@ -319,7 +329,8 @@ var _ = ginkgo.Describe("Project image cleanup", func() {
 			gomega.Expect(err).NotTo(gomega.HaveOccurred())
 			gomega.Expect(string(actual)).To(gomega.Equal(remaining))
 		},
-		ginkgo.Entry("Docker preserves a foreign alias", "{\"ID\":\"owned\",\"Repository\":\"localhost:5000/werf-test-one\",\"Tag\":\"stage\"}\n{\"ID\":\"owned\",\"Repository\":\"foreign\",\"Tag\":\"keep\"}\n", "{\"ID\":\"owned\",\"Repository\":\"foreign\",\"Tag\":\"keep\"}\n", "localhost:5000/werf-test-one:stage"),
+		ginkgo.Entry("Docker preserves a foreign alias", "{\"ID\":\"owned\",\"Repository\":\"localhost:5000/werf-test-one\",\"Tag\":\"stage\"}\n{\"ID\":\"owned\",\"Repository\":\"foreign\",\"Tag\":\"keep\"}\n", "{\"ID\":\"owned\",\"Repository\":\"foreign\",\"Tag\":\"keep\"}\n", "localhost:5000/werf-test-one:stage", ""),
+		ginkgo.Entry("reports the inspect fallback reason in the spec log", `{"ID":"owned","Repository":"werf-test-one","Tag":"stage"}`, "", "werf-test-one:stage", "inspect fixture unavailable"),
 	)
 	ginkgo.DescribeTable("selects only project references",
 		func(images []cleanupImage, expected []string) {
