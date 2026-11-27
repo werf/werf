@@ -429,7 +429,7 @@ func (repo *Remote) downgradeToFull(ctx context.Context, persistMarker, verifyTa
 				return err
 			}
 		} else {
-			if err := repo.cloneFullCore(ctx, mirrorKindFull); err != nil {
+			if _, err := repo.cloneFullCore(ctx, mirrorKindFull); err != nil {
 				return err
 			}
 

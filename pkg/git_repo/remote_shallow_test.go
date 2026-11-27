@@ -11,6 +11,7 @@ import (
 
 	"github.com/go-git/go-git/v5"
 	gitconfig "github.com/go-git/go-git/v5/config"
+	"github.com/go-git/go-git/v5/plumbing"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
@@ -120,6 +121,61 @@ var _ = Describe("Remote shallow mirror", func() {
 			resolvedCommit, err := otherRepo.LatestBranchCommit(ctx, "other")
 			Expect(err).NotTo(HaveOccurred())
 			Expect(resolvedCommit).To(Equal(otherCommit))
+		})
+
+		Context("when a peer cloned a single-branch full mirror while it waited for the lock", func() {
+			var mainCommit, otherCommit string
+
+			BeforeEach(func(ctx SpecContext) {
+				mainCommit = utils.GetHeadCommit(ctx, sourceDir)
+				gitInSource(ctx, "checkout", "-b", "other")
+				gitInSource(ctx, "commit", "--allow-empty", "-m", "other")
+				otherCommit = utils.GetHeadCommit(ctx, sourceDir)
+				gitInSource(ctx, "checkout", "main")
+
+				mainRepo := openRemote("main", "", "")
+				Expect(mainRepo.CloneAndFetch(ctx)).To(Succeed())
+
+				rawRepo, err := git.PlainOpen(mainRepo.GetClonePath())
+				Expect(err).NotTo(HaveOccurred())
+				_, err = rawRepo.Reference(plumbing.NewRemoteReferenceName("origin", "other"), true)
+				Expect(err).To(MatchError(plumbing.ErrReferenceNotFound))
+			})
+
+			It("reports the mirror as not cloned so the branch gets fetched", func(ctx SpecContext) {
+				otherRepo := openRemote("other", "", "")
+				Expect(otherRepo.withMirrorKindLock(ctx, mirrorKindFull, func() error {
+					cloned, err := otherRepo.cloneFullCore(ctx, mirrorKindFull)
+					Expect(cloned).To(BeFalse())
+					return err
+				})).To(Succeed())
+				Expect(otherRepo.FetchOrigin(ctx, FetchOptions{})).To(Succeed())
+
+				resolvedCommit, err := otherRepo.LatestBranchCommit(ctx, "other")
+				Expect(err).NotTo(HaveOccurred())
+				Expect(resolvedCommit).To(Equal(otherCommit))
+			})
+
+			It("fetches the branch when restoring the mirror without a pinned commit", func(ctx SpecContext) {
+				otherRepo := openRemote("other", "", "")
+				Expect(otherRepo.mappedCommit()).To(BeEmpty())
+				Expect(otherRepo.withMirrorKindLock(ctx, mirrorKindFull, func() error {
+					return otherRepo.restoreMirror(ctx, mirrorKindFull, "")
+				})).To(Succeed())
+
+				resolvedCommit, err := otherRepo.LatestBranchCommit(ctx, "other")
+				Expect(err).NotTo(HaveOccurred())
+				Expect(resolvedCommit).To(Equal(otherCommit))
+			})
+
+			It("restores the mirror without fetching when the pinned commit is already in it", func(ctx SpecContext) {
+				gitInSource(ctx, "branch", "-D", "other")
+
+				otherRepo := openRemote("other", "", "")
+				Expect(otherRepo.withMirrorKindLock(ctx, mirrorKindFull, func() error {
+					return otherRepo.restoreMirror(ctx, mirrorKindFull, mainCommit)
+				})).To(Succeed())
+			})
 		})
 	})
 
