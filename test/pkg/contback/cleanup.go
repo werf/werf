@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/distribution/reference"
+	"github.com/onsi/ginkgo/v2"
 )
 
 type cleanupImage struct {
@@ -74,7 +75,7 @@ func CleanupProject(ctx context.Context, projectName string, opts CleanupProject
 	repos := append(slices.Clone(opts.Repositories), os.Getenv("WERF_REPO"), os.Getenv("WERF_FINAL_REPO"))
 	if useDocker {
 		if _, err := exec.LookPath("docker"); err == nil {
-			if err := cleanupDockerProjectImages(ctx, projectName, repos, func(ctx context.Context, ref string) error {
+			if err := cleanupDockerProjectImages(ctx, projectName, repos, ginkgo.GinkgoWriter, func(ctx context.Context, ref string) error {
 				_, err := cleanupCommand(ctx, "docker", []string{"rmi", "--no-prune", ref})
 				return err
 			}); err != nil {
@@ -92,13 +93,15 @@ func CleanupProject(ctx context.Context, projectName string, opts CleanupProject
 	return errors.Join(cleanupErrors...)
 }
 
-func cleanupDockerProjectImages(ctx context.Context, projectName string, repos []string, removeImage func(context.Context, string) error) error {
+func cleanupDockerProjectImages(ctx context.Context, projectName string, repos []string, diagnostics io.Writer, removeImage func(context.Context, string) error) error {
 	var taggedIDs []string
 	list := func() ([]string, error) {
 		if len(taggedIDs) > 0 {
-			dangling := inspectDanglingDockerImages(ctx, taggedIDs)
+			dangling, err := inspectDanglingDockerImages(ctx, taggedIDs)
 			taggedIDs = nil
-			if len(dangling) > 0 {
+			if err != nil {
+				fmt.Fprintf(diagnostics, "docker cleanup for %s: falling back to full inventory: %v\n", projectName, err)
+			} else if len(dangling) > 0 {
 				return dangling, nil
 			}
 		}
@@ -124,7 +127,7 @@ func cleanupDockerProjectImages(ctx context.Context, projectName string, repos [
 		return refs, nil
 	}
 
-	return cleanupImageReferences(ctx, "docker", io.Discard, list, func(ctx context.Context, ref string) error {
+	return cleanupImageReferences(ctx, "docker", diagnostics, list, func(ctx context.Context, ref string) error {
 		err := removeImage(ctx, ref)
 		if err != nil {
 			taggedIDs = nil
@@ -133,18 +136,18 @@ func cleanupDockerProjectImages(ctx context.Context, projectName string, repos [
 	})
 }
 
-func inspectDanglingDockerImages(ctx context.Context, ids []string) []string {
+func inspectDanglingDockerImages(ctx context.Context, ids []string) ([]string, error) {
 	args := append([]string{"image", "inspect"}, ids...)
 	output, err := exec.CommandContext(ctx, "docker", args...).Output()
 	if err != nil {
 		var exitErr *exec.ExitError
-		if ctx.Err() != nil || !errors.As(err, &exitErr) || exitErr.ExitCode() != 1 {
-			return nil
+		if ctx.Err() != nil || !errors.As(err, &exitErr) {
+			return nil, fmt.Errorf("inspect stage images: %w", err)
 		}
 		for line := range strings.SplitSeq(strings.TrimSpace(string(exitErr.Stderr)), "\n") {
 			id, missing := strings.CutPrefix(line, "Error response from daemon: No such image: ")
-			if _, known := slices.BinarySearch(ids, id); !missing || !known {
-				return nil
+			if _, known := slices.BinarySearch(ids, id); exitErr.ExitCode() != 1 || !missing || !known {
+				return nil, fmt.Errorf("inspect stage images: %w: %s", err, line)
 			}
 		}
 	}
@@ -154,15 +157,18 @@ func inspectDanglingDockerImages(ctx context.Context, ids []string) []string {
 		RepoDigests []string
 	}
 	if err := json.Unmarshal(output, &images); err != nil {
-		return nil
+		return nil, fmt.Errorf("decode inspected stage images: %w", err)
 	}
 	var dangling []string
 	for _, image := range images {
-		if _, known := slices.BinarySearch(ids, image.ID); known && len(image.RepoTags) == 0 && len(image.RepoDigests) == 0 {
+		if _, known := slices.BinarySearch(ids, image.ID); !known {
+			return nil, fmt.Errorf("inspect returned unrequested image ID %q", image.ID)
+		}
+		if len(image.RepoTags) == 0 && len(image.RepoDigests) == 0 {
 			dangling = append(dangling, image.ID)
 		}
 	}
-	return dangling
+	return dangling, nil
 }
 
 func cleanupImageReferences(ctx context.Context, backend string, diagnostics io.Writer, list func() ([]string, error), removeImage func(context.Context, string) error) error {

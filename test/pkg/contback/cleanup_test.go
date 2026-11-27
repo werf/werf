@@ -2,6 +2,7 @@ package contback
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -174,30 +175,33 @@ var _ = ginkgo.Describe("Project image cleanup", func() {
 		})
 		gomega.Expect(err).To(gomega.MatchError(gomega.ContainSubstring("test images remain: owned")))
 	})
-	ginkgo.DescribeTable("verifies stage cleanup with a final full inventory", func(ctx ginkgo.SpecContext, inspectError, expectedLists string) {
+	const deletedID = "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+	const unrequestedID = "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+	ginkgo.DescribeTable("verifies stage cleanup with a final full inventory", func(ctx ginkgo.SpecContext, exitCode int, inspectError, extraID, fallbackReason string) {
 		dir := ginkgo.GinkgoT().TempDir()
-		stub := `#!/bin/sh
-set -eu
-case "$1" in
-	images) if test -f "$0.removed-id"; then echo final; else echo list; fi >> "$0.calls"; cat "$0.inventory" ;;
-	image) test "$2" = inspect; shift 2; printf '%s\n' "$@" > "$0.ids"; cat "$0.inspect"; cat "$0.error" >&2; exit 1 ;;
-  *) exit 42 ;;
-esac
-`
+		script, err := os.ReadFile("testdata/cleanup-backend.sh")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 		binary := filepath.Join(dir, "docker")
-		gomega.Expect(os.WriteFile(binary, []byte(stub), 0o700)).To(gomega.Succeed())
+		gomega.Expect(os.WriteFile(binary, script, 0o700)).To(gomega.Succeed())
 		ginkgo.GinkgoT().Setenv("PATH", dir+string(os.PathListSeparator)+os.Getenv("PATH"))
 		const stageID = "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 		const otherID = "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
 		const digestID = "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
-		const deletedID = "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
 		row := func(id, repo, tag string) string {
 			return fmt.Sprintf("{\"ID\":%q,\"Repository\":%q,\"Tag\":%q}\n", id, repo, tag)
 		}
 		foreign := row(otherID, "neighbor", "keep") + fmt.Sprintf("{\"ID\":%q,\"Repository\":\"neighbor\",\"Tag\":\"<none>\",\"Digest\":%q}\n", digestID, digestID)
 		inventory := binary + ".inventory"
+		ginkgo.GinkgoT().Setenv("CLEANUP_INVENTORY", inventory)
 		const project = "werf-test-one"
-		remaining := map[string]string{project + ":shared": row(otherID, project, "shared"), project + ":digest": row(digestID, project, "digest"), project + ":stage": row(stageID, project, "stage"), project + ":deleted": row(deletedID, project, "deleted")}
+		remaining := map[string]string{project + ":shared": row(otherID, project, "shared"), project + ":digest": row(digestID, project, "digest"), project + ":stage": row(stageID, project, "stage")}
+		wantIDs := []string{stageID, otherID, digestID}
+		wantRemoved := []string{project + ":shared", project + ":digest", project + ":stage", stageID}
+		if inspectError != "" {
+			remaining[project+":deleted"] = row(deletedID, project, "deleted")
+			wantIDs = append(wantIDs, deletedID)
+			wantRemoved = append(wantRemoved, project+":deleted")
+		}
 		writeInventory := func() error {
 			contents := foreign
 			for _, value := range remaining {
@@ -206,9 +210,19 @@ esac
 			return os.WriteFile(inventory, []byte(contents), 0o600)
 		}
 		gomega.Expect(writeInventory()).To(gomega.Succeed())
-		inspected := fmt.Sprintf(`[{"Id":%q,"RepoTags":[],"RepoDigests":[]},{"Id":%q,"RepoTags":["neighbor:keep"]},{"Id":%q,"RepoDigests":["neighbor@%s"]}]`, stageID, otherID, digestID, digestID)
-		gomega.Expect(os.WriteFile(binary+".inspect", []byte(inspected), 0o600)).To(gomega.Succeed())
-		gomega.Expect(os.WriteFile(binary+".error", []byte(inspectError+deletedID+"\n"), 0o600)).To(gomega.Succeed())
+		inspected := []map[string]any{
+			{"Id": stageID, "RepoTags": []string{}, "RepoDigests": []string{}},
+			{"Id": otherID, "RepoTags": []string{"neighbor:keep"}},
+			{"Id": digestID, "RepoDigests": []string{"neighbor@" + digestID}},
+		}
+		if extraID != "" {
+			inspected = append(inspected, map[string]any{"Id": extraID})
+		}
+		output, err := json.Marshal(inspected)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		gomega.Expect(os.WriteFile(binary+".inspect", output, 0o600)).To(gomega.Succeed())
+		gomega.Expect(os.WriteFile(binary+".error", []byte(inspectError), 0o600)).To(gomega.Succeed())
+		ginkgo.GinkgoT().Setenv("CLEANUP_INSPECT_EXIT", fmt.Sprint(exitCode))
 		var removed []string
 		remove := func(_ context.Context, ref string) error {
 			removed = append(removed, ref)
@@ -220,16 +234,29 @@ esac
 			}
 			return writeInventory()
 		}
-		gomega.Expect(cleanupDockerProjectImages(ctx, "werf-test-one", nil, remove)).To(gomega.Succeed())
-		gomega.Expect(removed).To(gomega.ConsistOf(project+":shared", project+":digest", project+":deleted", project+":stage", stageID))
+		var diagnostics strings.Builder
+		gomega.Expect(cleanupDockerProjectImages(ctx, "werf-test-one", nil, &diagnostics, remove)).To(gomega.Succeed())
+		gomega.Expect(removed).To(gomega.ConsistOf(wantRemoved))
 		ids, err := os.ReadFile(binary + ".ids")
 		gomega.Expect(err).NotTo(gomega.HaveOccurred())
-		gomega.Expect(strings.Fields(string(ids))).To(gomega.ConsistOf(stageID, otherID, digestID, deletedID))
-		calls, err := os.ReadFile(binary + ".calls")
+		gomega.Expect(strings.Fields(string(ids))).To(gomega.ConsistOf(wantIDs))
+		calls, err := os.ReadFile(binary + ".listings")
 		gomega.Expect(err).NotTo(gomega.HaveOccurred())
-		gomega.Expect(string(calls)).To(gomega.Equal(expectedLists))
-	}, ginkgo.Entry("two full inventories when an inspected ID is already gone", "Error response from daemon: No such image: ", "list\nfinal\n"),
-		ginkgo.Entry("rescans on an unexpected inspect failure", "daemon error for ", "list\nlist\nfinal\n"))
+		log := diagnostics.String()
+		if fallbackReason != "" {
+			gomega.Expect(string(calls)).To(gomega.Equal("list\nlist\nfinal\n"))
+			gomega.Expect(log).To(gomega.ContainSubstring("docker cleanup for werf-test-one: falling back to full inventory"))
+			gomega.Expect(log).To(gomega.ContainSubstring(fallbackReason))
+		} else {
+			gomega.Expect(string(calls)).To(gomega.Equal("list\nfinal\n"))
+			gomega.Expect(log).NotTo(gomega.ContainSubstring("falling back to full inventory"))
+		}
+	}, ginkgo.Entry("two full inventories after successful inspection", 0, "", "", ""),
+		ginkgo.Entry("two full inventories when an inspected ID is already gone", 1, "Error response from daemon: No such image: "+deletedID, "", ""),
+		ginkgo.Entry("rescans on an unexpected exit code despite a known missing ID", 2, "Error response from daemon: No such image: "+deletedID, "", "exit status 2"),
+		ginkgo.Entry("rescans when the missing ID was not requested", 1, "Error response from daemon: No such image: "+unrequestedID, "", unrequestedID),
+		ginkgo.Entry("rescans when inspect returns an unrequested ID", 0, "", unrequestedID, unrequestedID),
+		ginkgo.Entry("rescans on an unexpected inspect failure", 1, "daemon error", "", "daemon error"))
 	ginkgo.It("rescans after deleting a dependent child image", func() {
 		dir := ginkgo.GinkgoT().TempDir()
 		script, err := os.ReadFile("testdata/cleanup-backend.sh")
@@ -250,9 +277,11 @@ esac
 			if !childRemoved {
 				return errors.New("parent has a child")
 			}
+			_, err := os.Stat(filepath.Join(dir, "docker.ids"))
+			gomega.Expect(err).To(gomega.MatchError(os.ErrNotExist))
 			return os.WriteFile(inventoryPath, nil, 0o600)
 		}
-		gomega.Expect(cleanupDockerProjectImages(context.Background(), "werf-test-one", nil, removeImage)).To(gomega.Succeed())
+		gomega.Expect(cleanupDockerProjectImages(context.Background(), "werf-test-one", nil, io.Discard, removeImage)).To(gomega.Succeed())
 		remaining, err := os.ReadFile(inventoryPath)
 		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 		gomega.Expect(remaining).To(gomega.BeEmpty())
