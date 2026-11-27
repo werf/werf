@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.85.2](https://github.com/werf/werf/compare/v2.85.1...v2.85.2) (2026-11-27)
+
+
+### Bug Fixes
+
+* **deploy:** a just-updated Deployment is reported ready before its rollout ([#8202](https://github.com/werf/werf/issues/8202)) ([e60699a](https://github.com/werf/werf/commit/e60699a2dd19a74f6c07c464414eaaa68a6984cb))
+
 ## [2.85.1](https://github.com/werf/werf/compare/v2.85.0...v2.85.1) (2026-11-17)
 
 
