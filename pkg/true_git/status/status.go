@@ -1,7 +1,6 @@
 package status
 
 import (
-	"bufio"
 	"context"
 	"fmt"
 	"os"
@@ -38,20 +37,20 @@ func Status(ctx context.Context, workTreeDir string) (r Result, err error) {
 func status(ctx context.Context, workTreeDir string) (Result, error) {
 	result := Result{}
 
-	statusCmd := true_git.NewGitCmd(ctx, &true_git.GitCmdOptions{RepoDir: workTreeDir}, "-c", "core.quotePath=false", "status", "--porcelain=v2", "--untracked-files=all", "--no-renames")
+	statusCmd := true_git.NewGitCmd(ctx, &true_git.GitCmdOptions{RepoDir: workTreeDir}, "status", "--porcelain=v2", "-z", "--untracked-files=all", "--no-renames")
 	if err := statusCmd.Run(ctx); err != nil {
 		return result, fmt.Errorf("git status command failed: %w", err)
 	}
 
 	detailedErrFunc := func(err error) error {
-		return fmt.Errorf("%w\n\ncommand: %q\noutput:\n%s", err, statusCmd, statusCmd.OutErrBuf)
+		return fmt.Errorf("%w\n\ncommand: %q\noutput:\n%s", err, statusCmd, strings.ReplaceAll(statusCmd.OutErrBuf.String(), "\x00", "\n"))
 	}
 
-	scanner := bufio.NewScanner(statusCmd.OutBuf)
-	for scanner.Scan() {
-		entryLine := scanner.Text()
+	// With -z entries are NUL-terminated and paths are printed verbatim, without C-style quoting.
+	for _, entryLine := range strings.SplitAfter(statusCmd.OutBuf.String(), "\x00") {
+		entryLine = strings.TrimSuffix(entryLine, "\x00")
 		if len(entryLine) == 0 {
-			return result, detailedErrFunc(fmt.Errorf("invalid git status line format: \"\""))
+			continue
 		}
 
 		formatTypeCode := entryLine[0]
@@ -90,7 +89,7 @@ type ordinaryEntry struct {
 
 // 1 <XY> <sub> <mH> <mI> <mW> <hH> <hI> <path>
 func parseOrdinaryEntry(r *Result, entryLine string) error {
-	fields := strings.Split(entryLine, " ")
+	fields := strings.SplitN(entryLine, " ", 9)
 	entry := ordinaryEntry{
 		xy:   fields[1],
 		sub:  fields[2],
@@ -99,7 +98,7 @@ func parseOrdinaryEntry(r *Result, entryLine string) error {
 		mw:   fields[5],
 		hH:   fields[6],
 		hI:   fields[7],
-		path: strings.Join(fields[8:], " "), // name with spaces
+		path: fields[8],
 		raw:  entryLine,
 	}
 
@@ -183,7 +182,7 @@ type unmergedEntry struct {
 
 // u <xy> <sub> <m1> <m2> <m3> <mW> <h1> <h2> <h3> <path>
 func parseUnmergedEntry(result *Result, entryLine string) error {
-	fields := strings.Fields(entryLine)
+	fields := strings.SplitN(entryLine, " ", 11)
 	entry := unmergedEntry{
 		xy:   fields[1],
 		sub:  fields[2],
@@ -194,7 +193,7 @@ func parseUnmergedEntry(result *Result, entryLine string) error {
 		h1:   fields[7],
 		h2:   fields[8],
 		h3:   fields[9],
-		path: strings.Join(fields[10:], " "), // name with spaces
+		path: fields[10],
 		raw:  entryLine,
 	}
 
@@ -225,9 +224,8 @@ type untrackedEntry struct {
 
 // ? <path>
 func parseUntrackedEntry(result *Result, entryLine string) error {
-	fields := strings.Fields(entryLine)
 	entry := untrackedEntry{
-		path: strings.Join(fields[1:], " "), // name with spaces
+		path: strings.TrimPrefix(entryLine, "? "),
 		raw:  entryLine,
 	}
 
