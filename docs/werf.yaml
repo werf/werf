@@ -79,7 +79,7 @@ git:
     - '**/*'
 ---
 image: web
-from: nginx:stable-alpine
+from: nginx:1.30.7-alpine
 shell:
   setup:
     - |
