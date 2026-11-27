@@ -1,5 +1,7 @@
 package config
 
+import "github.com/werf/werf/v3/pkg/image"
+
 //go:generate mockgen -source image_interface.go -package config -destination image_interface_mock.go
 
 type ImageInterface interface {
@@ -8,6 +10,7 @@ type ImageInterface interface {
 	IsStapel() bool
 	IsFinal() bool
 	Platform() []string
+	Compression() image.LayerCompression
 	GetFrom() string
 	SetFromExternal()
 

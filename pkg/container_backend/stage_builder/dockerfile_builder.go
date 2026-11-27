@@ -44,6 +44,7 @@ func (b *DockerfileBuilder) Build(ctx context.Context, opts container_backend.Bu
 	finalOpts := b.BuildDockerfileOptions
 	finalOpts.BuildContextArchive = b.BuildContextArchive
 	finalOpts.TargetPlatform = opts.TargetPlatform
+	finalOpts.LayerCompression = opts.LayerCompression
 	if opts.Network != "" {
 		finalOpts.Network = opts.Network
 	}

@@ -37,6 +37,26 @@ var _ = Describe("werf.yaml JSON schema", func() {
 			Expect(parseWerfDocument(document)).To(Succeed())
 			Expect(schema.Validate(yamlDocument(document))).To(Succeed())
 		},
+		Entry("compression for all images", `
+configVersion: 1
+project: app
+build:
+  compression:
+    format: zstd
+    level: 19
+`),
+		Entry("uncompressed layers of a Dockerfile image", `
+image: app
+dockerfile: Dockerfile
+compression:
+  format: none
+`),
+		Entry("gzip level of a stapel image", `
+image: app
+from: alpine:3.20
+compression:
+  level: 0
+`),
 		Entry("bare numbers and booleans where werf reads strings", `
 image: app
 from: alpine:3.20
@@ -306,6 +326,39 @@ imageSpec:
 			Expect(parseWerfDocument(document)).NotTo(Succeed())
 			Expect(schema.Validate(yamlDocument(document))).NotTo(Succeed())
 		},
+		Entry("compression with an unknown format", `
+image: app
+from: alpine:3.20
+compression:
+  format: lz4
+`),
+		Entry("compression with a gzip level out of range", `
+image: app
+dockerfile: Dockerfile
+compression:
+  level: 10
+`),
+		Entry("compression with a zstd level out of range", `
+configVersion: 1
+project: app
+build:
+  compression:
+    format: zstd
+    level: 0
+`),
+		Entry("compression none with a level", `
+image: app
+from: alpine:3.20
+compression:
+  format: none
+  level: 1
+`),
+		Entry("compression with an unknown directive", `
+image: app
+dockerfile: Dockerfile
+compression:
+  algorithm: zstd
+`),
 		Entry("meta without project", `
 configVersion: 1
 `),

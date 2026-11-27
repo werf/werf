@@ -250,9 +250,12 @@ func newLegacyImageForFromScratchTests(name string) *legacyImageForFromScratchTe
 	return &legacyImageForFromScratchTests{name: name}
 }
 
-func (i *legacyImageForFromScratchTests) Name() string               { return i.name }
-func (i *legacyImageForFromScratchTests) SetName(name string)        { i.name = name }
-func (i *legacyImageForFromScratchTests) GetTargetPlatform() string  { return "" }
+func (i *legacyImageForFromScratchTests) Name() string              { return i.name }
+func (i *legacyImageForFromScratchTests) SetName(name string)       { i.name = name }
+func (i *legacyImageForFromScratchTests) GetTargetPlatform() string { return "" }
+func (i *legacyImageForFromScratchTests) GetLayerCompression() imagePkg.LayerCompression {
+	return imagePkg.LayerCompression{}
+}
 func (i *legacyImageForFromScratchTests) Pull(context.Context) error { panic("unexpected call") }
 func (i *legacyImageForFromScratchTests) Push(context.Context) error { panic("unexpected call") }
 func (i *legacyImageForFromScratchTests) SetBuildServiceLabels(labels map[string]string) {

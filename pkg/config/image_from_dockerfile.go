@@ -6,6 +6,7 @@ import (
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v3/pkg/giterminism_manager"
+	"github.com/werf/werf/v3/pkg/image"
 )
 
 type ImageFromDockerfile struct {
@@ -25,6 +26,7 @@ type ImageFromDockerfile struct {
 
 	cacheVersion string
 	platform     []string
+	compression  image.LayerCompression
 	final        bool
 	raw          *rawImageFromDockerfile
 }
@@ -76,6 +78,10 @@ func (c *ImageFromDockerfile) IsFinal() bool {
 
 func (c *ImageFromDockerfile) Platform() []string {
 	return c.platform
+}
+
+func (c *ImageFromDockerfile) Compression() image.LayerCompression {
+	return c.compression
 }
 
 func (c *ImageFromDockerfile) GetFrom() string {

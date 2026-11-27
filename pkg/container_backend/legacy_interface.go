@@ -13,6 +13,7 @@ type LegacyImageInterface interface {
 	SetName(name string)
 
 	GetTargetPlatform() string
+	GetLayerCompression() image.LayerCompression
 
 	Pull(ctx context.Context) error
 	Push(ctx context.Context) error

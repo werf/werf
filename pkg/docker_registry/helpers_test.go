@@ -15,12 +15,19 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/google/go-containerregistry/pkg/registry"
+	v1 "github.com/google/go-containerregistry/pkg/v1"
+	"github.com/google/go-containerregistry/pkg/v1/empty"
+	"github.com/google/go-containerregistry/pkg/v1/mutate"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
+	"github.com/google/go-containerregistry/pkg/v1/static"
+	"github.com/google/go-containerregistry/pkg/v1/types"
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
 	"golang.org/x/sync/singleflight"
 
+	"github.com/werf/werf/v3/pkg/image"
 	"github.com/werf/werf/v3/pkg/opstats"
 )
 
@@ -635,4 +642,74 @@ func (t *registryRetryRequestTransport) RoundTrip(req *http.Request) (*http.Resp
 		req = req.WithContext(context.WithValue(req.Context(), registryRetryContextKey{}, true))
 	}
 	return t.underlying.RoundTrip(req)
+}
+
+type manifestListChild struct {
+	platform        string
+	manifestType    types.MediaType
+	configType      types.MediaType
+	layerType       types.MediaType
+	expectedTypeOut types.MediaType
+}
+
+var (
+	dockerChild = manifestListChild{
+		platform:        "linux/amd64",
+		manifestType:    types.DockerManifestSchema2,
+		configType:      types.DockerConfigJSON,
+		layerType:       types.DockerLayer,
+		expectedTypeOut: types.DockerManifestSchema2,
+	}
+	ociZstdChild = manifestListChild{
+		platform:        "linux/arm64",
+		manifestType:    types.OCIManifestSchema1,
+		configType:      types.OCIConfigJSON,
+		layerType:       types.OCILayerZStd,
+		expectedTypeOut: types.OCIManifestSchema1,
+	}
+	ociGzipChild = manifestListChild{
+		platform:        "linux/amd64",
+		manifestType:    types.OCIManifestSchema1,
+		configType:      types.OCIConfigJSON,
+		layerType:       types.OCILayer,
+		expectedTypeOut: types.OCIManifestSchema1,
+	}
+)
+
+func buildChildImage(child manifestListChild) v1.Image {
+	platform, err := v1.ParsePlatform(child.platform)
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+
+	img, err := mutate.Append(empty.Image, mutate.Addendum{
+		Layer: static.NewLayer([]byte("layer-"+child.platform), child.layerType),
+	})
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+
+	cf, err := img.ConfigFile()
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+	cf.OS, cf.Architecture, cf.Variant = platform.OS, platform.Architecture, platform.Variant
+	img, err = mutate.ConfigFile(img, cf)
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+
+	img = mutate.MediaType(img, child.manifestType)
+	img = mutate.ConfigMediaType(img, child.configType)
+
+	return img
+}
+
+func pushChildImages(ctx context.Context, registryAPI *api, repo string, children []manifestListChild) ([]*image.Info, []string) {
+	manifests := make([]*image.Info, 0, len(children))
+	platforms := make([]string, 0, len(children))
+
+	for i, child := range children {
+		ref := fmt.Sprintf("%s:child-%d", repo, i)
+		parsedRef, err := name.ParseReference(ref, registryAPI.parseReferenceOptionsForHost(ref)...)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		gomega.Expect(registryAPI.writeToRemote(ctx, parsedRef, buildChildImage(child))).To(gomega.Succeed())
+
+		manifests = append(manifests, &image.Info{Name: ref})
+		platforms = append(platforms, child.platform)
+	}
+
+	return manifests, platforms
 }

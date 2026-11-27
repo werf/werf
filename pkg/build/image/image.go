@@ -48,6 +48,8 @@ type CommonImageOptions struct {
 	TmpDir             string
 
 	ForceTargetPlatformLogging bool
+
+	DefaultLayerCompression image.LayerCompression
 }
 
 type ImageOptions struct {
@@ -180,6 +182,24 @@ func (i *Image) GetDependencyNames() []string {
 
 func (i *Image) LogName() string {
 	return logging.ImageLogName(i.Name)
+}
+
+// LayerCompression is the compression of the image layers: from werf.yaml, or the default one when
+// werf.yaml has no compression settings for the image.
+func (i *Image) LayerCompression() image.LayerCompression {
+	var compression image.LayerCompression
+	switch {
+	case i.DockerfileImageConfig != nil:
+		compression = i.DockerfileImageConfig.Compression()
+	case i.StapelImageConfig != nil:
+		compression = i.StapelImageConfig.Compression()
+	}
+
+	if compression.IsSet() {
+		return compression
+	}
+
+	return i.DefaultLayerCompression
 }
 
 func (i *Image) ShouldLogPlatform() bool {

@@ -116,6 +116,8 @@ func NewExportCmd(ctx context.Context) *cobra.Command {
 	common.SetupInsecureRegistry(&commonCmdData, cmd)
 	common.SetupSkipTlsVerifyRegistry(&commonCmdData, cmd)
 	common.SetupContainerRegistryMirror(&commonCmdData, cmd)
+	common.SetupCompressionFormat(&commonCmdData, cmd)
+	common.SetupCompressionLevel(&commonCmdData, cmd)
 
 	common.SetupLogOptions(&commonCmdData, cmd)
 	common.SetupLogProjectDir(&commonCmdData, cmd)

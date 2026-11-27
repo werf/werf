@@ -430,7 +430,7 @@ func (m *publicationStorageManager) FetchStage(_ context.Context, _ container_ba
 	return manager.FetchStageInfo{BaseImageSource: BaseImageSourceTypeRepo}, m.fetchErr
 }
 
-func (m *publicationStorageManager) CopySuitableStageDescByDigest(_ context.Context, desc *imagePkg.StageDesc, _, _ storage.StagesStorage, _ container_backend.ContainerBackend, _ string) (*imagePkg.StageDesc, error) {
+func (m *publicationStorageManager) CopySuitableStageDescByDigest(_ context.Context, desc *imagePkg.StageDesc, _, _ storage.StagesStorage, _ container_backend.ContainerBackend, _ string, _ imagePkg.LayerCompression) (*imagePkg.StageDesc, error) {
 	m.copies.Add(1)
 	m.primary.mutex.Lock()
 	defer m.primary.mutex.Unlock()
@@ -708,7 +708,7 @@ func (m *secondaryLookupStorageManager) GetStageDescSetByDigestFromStagesStorage
 	return m.lookup.GetStageDescSetByDigestFromStagesStorageWithCache(ctx, name, digest, parentTs, stagesStorage)
 }
 
-func (m *secondaryLookupStorageManager) CopySuitableStageDescByDigest(_ context.Context, desc *imagePkg.StageDesc, _, _ storage.StagesStorage, _ container_backend.ContainerBackend, _ string) (*imagePkg.StageDesc, error) {
+func (m *secondaryLookupStorageManager) CopySuitableStageDescByDigest(_ context.Context, desc *imagePkg.StageDesc, _, _ storage.StagesStorage, _ container_backend.ContainerBackend, _ string, _ imagePkg.LayerCompression) (*imagePkg.StageDesc, error) {
 	copied := *desc
 	info := *desc.Info
 	info.Name = "repo:shared-digest-100"
