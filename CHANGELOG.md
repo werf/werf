@@ -1,5 +1,23 @@
 # Changelog
 
+## [3.14.0](https://github.com/werf/werf/compare/v3.13.1...v3.14.0) (2026-11-27)
+
+
+### Features
+
+* **deploy:** control resource deletion stages with delete-on ([#8186](https://github.com/werf/werf/issues/8186)) ([c70682f](https://github.com/werf/werf/commit/c70682f20f2425e6e0cf280a894208e3780a3d04))
+* **deploy:** generate TypeScript charts with runnable tests ([#8183](https://github.com/werf/werf/issues/8183)) ([270ca31](https://github.com/werf/werf/commit/270ca318a49ea9df0bae38ccf0b07ab33aab6c18))
+
+
+### Bug Fixes
+
+* **deploy:** a just-updated Deployment is reported ready before its rollout ([#8198](https://github.com/werf/werf/issues/8198)) ([585dd58](https://github.com/werf/werf/commit/585dd58e910f6e5fc0a43ed7cf9fc118e71289f1))
+* **deploy:** an interrupted converge with --auto-rollback leaves the release pending instead of rolling it back ([#8208](https://github.com/werf/werf/issues/8208)) ([9b5010d](https://github.com/werf/werf/commit/9b5010d3e17a3671b2e65df6ab9e559ac09afd1e))
+* **deploy:** auto-rollback fails after a failed resource apply ([#8206](https://github.com/werf/werf/issues/8206)) ([09d88b1](https://github.com/werf/werf/commit/09d88b1974eed717faccda20db7b16a4eddac451))
+* **deploy:** deploy fails when the history limit prunes an earlier deployed revision ([#8193](https://github.com/werf/werf/issues/8193)) ([749368a](https://github.com/werf/werf/commit/749368a241aa04c7b635e15072af979a4d18ab87))
+* **deploy:** release is never up to date after rollback ([#8194](https://github.com/werf/werf/issues/8194)) ([1268edf](https://github.com/werf/werf/commit/1268edf37ad025ab07e2ce9a1a4a866e0deb38fa))
+* **deploy:** stop werf rollback from writing empty project annotations ([#8195](https://github.com/werf/werf/issues/8195)) ([3c80e54](https://github.com/werf/werf/commit/3c80e54ea27644cbb3f87bf0233fd13108c1a3a1))
+
 ## [3.13.1](https://github.com/werf/werf/compare/v3.13.0...v3.13.1) (2026-11-17)
 
 
