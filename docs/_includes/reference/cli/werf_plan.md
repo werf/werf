@@ -383,7 +383,7 @@ werf plan --repo registry.mydomain.com/web --env production
             How long local schema cache will be valid. Also can be defined by                       
             $WERF_RESOURCE_VALIDATION_CACHE_LIFETIME
       --resource-validation-extra-schema=[]
-            Extra json schema sources to validate resources (preferred over ebedded sources). Must  
+            Extra json schema sources to validate resources (preferred over embedded sources). Must  
             be a valid go template defining a http(s) URL, or an absolute path on local file        
             system. Also, can be defined with $WERF_RESOURCE_VALIDATION_EXTRA_SCHEMA or             
             $WERF_RESOURCE_VALIDATION_EXTRA_SCHEMA_* (eg.                                           
